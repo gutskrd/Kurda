@@ -708,6 +708,12 @@ export {
   waterDropSvg,
   wateringCanSvg,
   type TreeOptions,
+  TREE_SKIES,
+  treeCloudSvg,
+  treeSceneSvg,
+  treeSkyAt,
+  type TreeSceneOptions,
+  type TreeSky,
 } from './art/index.js';
 /**
  * The art's metals, for the parts of a screen drawn around an emblem — a

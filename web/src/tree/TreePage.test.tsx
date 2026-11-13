@@ -50,15 +50,25 @@ beforeEach(() => {
 });
 
 describe('TreePage', () => {
-  it('offers the kinds that are free to start from before a tree is planted, and plants the one chosen', async () => {
+  it('offers the seeds that are free to start from before a tree is planted, shows the tree the picked one will be, and plants it', async () => {
     const planted = mine(view({ species: 'hinar', waterings: 0, water: 1, plantedOn: TODAY }));
     const calls = server({ 'GET /me/tree': mine(null), 'POST /me/tree/plant': planted });
     renderApp(<TreePage />);
     expect(await screen.findByRole('heading', { name: 'Plant your tree' })).toBeInTheDocument();
-    // the four starters, each with its Kurdish name and what it means; nothing that has to be bought
+    // the four starters, each a seed to pick with its Kurdish name and what it means; nothing that has to be bought
+    const seeds = screen.getAllByRole('radio');
+    expect(seeds).toHaveLength(4);
     for (const name of ['Berû', 'Hinar', 'Behîv', 'Bî']) expect(screen.getByText(name)).toBeInTheDocument();
     expect(screen.getByText('Pomegranate')).toBeInTheDocument();
     expect(screen.queryByText('Dara Şevê')).toBeNull();
+    // the first is picked to begin with, and what stands in the scene is the tree it will be
+    expect(screen.getByRole('radio', { name: /Berû/ })).toBeChecked();
+    expect(screen.getByRole('region', { name: 'Berû (Oak)' })).toBeInTheDocument();
+    expect(screen.getByText('The oak of the Zagros: slow to grow, and it outlasts everything.')).toBeInTheDocument();
+    // picking another changes the tree shown, and plants nothing
+    await userEvent.click(screen.getByRole('radio', { name: /Hinar/ }));
+    expect(screen.getByRole('region', { name: 'Hinar (Pomegranate)' })).toBeInTheDocument();
+    expect(calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
     await userEvent.click(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' }));
     expect(calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'hinar' });
     // the seed, with the water to bring it up
@@ -102,6 +112,81 @@ describe('TreePage', () => {
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'It grew!' })).toBeNull());
     expect(screen.getByText('Water: 1')).toBeInTheDocument();
     expect(screen.getByText('Oak · Sapling · Day 13')).toBeInTheDocument();
+  });
+
+  it('plays the pour in the scene, lets the tree be seen to grow where it stands, and only then says that it grew', async () => {
+    const before = view({ waterings: 6, water: 2 });
+    const after = view({ waterings: 7, water: 1 });
+    server({ 'GET /me/tree': mine(before), 'POST /me/tree/water': { tree: after, poured: 1, grew: 3, harvests: 0, zer: 0, revived: false } satisfies Watered });
+    const { container } = renderApp(<TreePage />);
+    const water = await screen.findByRole('button', { name: 'Water the tree' });
+    await userEvent.click(water);
+    // the can is over the tree, and there is no pouring twice
+    await waitFor(() => expect(container.querySelector('.tree-pour-can')).not.toBeNull());
+    expect(container.querySelectorAll('.tree-pour-drop').length).toBeGreaterThan(8);
+    expect(water).toBeDisabled();
+    expect(screen.queryByRole('dialog', { name: 'It grew!' })).toBeNull();
+    // it still shows the tree as it was: what the water did comes once it has landed
+    expect(screen.getByText('Oak · Seedling · Day 13')).toBeInTheDocument();
+    // then it grows in the scene itself, out of a burst of light, before anything is said
+    await waitFor(() => expect(container.querySelector('.tree-burst')).not.toBeNull(), { timeout: 3000 });
+    expect(container.querySelector('.tree-stage-art.is-grown')).not.toBeNull();
+    expect(screen.getByText('Oak · Sapling · Day 13')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'It grew!' })).toBeNull();
+    expect(await screen.findByRole('dialog', { name: 'It grew!' }, { timeout: 3000 })).toBeInTheDocument();
+    expect(container.querySelector('.tree-burst')).toBeNull();
+  });
+
+  it('stands in the sky of the learner’s own hour, with what is in the air round that kind of tree', async () => {
+    const hours = vi.spyOn(Date.prototype, 'getHours').mockReturnValue(22);
+    server({ 'GET /me/tree': mine(view({ species: 'behiv', waterings: 30 })) });
+    const { container, unmount } = renderApp(<TreePage />);
+    await screen.findByRole('heading', { name: 'Behîv' });
+    expect(container.querySelector('.tree-stage')).toHaveClass('is-night');
+    // an almond in blossom lets its petals go
+    expect(container.querySelector('.tree-ambient')).toHaveClass('is-petals');
+    expect(container.querySelectorAll('.tree-scene-cloud')).toHaveLength(3);
+    // all of it is decoration: none of it is read out
+    expect(container.querySelector('.tree-scene')).toHaveAttribute('aria-hidden', 'true');
+    expect(container.querySelector('.tree-ambient')).toHaveAttribute('aria-hidden', 'true');
+    unmount();
+    hours.mockReturnValue(6);
+    server({ 'GET /me/tree': mine(view({ waterings: 1 })) });
+    const morning = renderApp(<TreePage />);
+    await screen.findByRole('heading', { name: 'Berû' });
+    expect(morning.container.querySelector('.tree-stage')).toHaveClass('is-dawn');
+    expect(morning.container.querySelector('.tree-ambient')).toHaveClass('is-motes');
+  });
+
+  it('floats a thought of water by a tree that wants some, and stills the air round one left to wilt', async () => {
+    server({ 'GET /me/tree': mine(view({ waterings: 15, water: 1, lastWateredOn: '2026-11-08' })) });
+    const { container, unmount } = renderApp(<TreePage />);
+    expect(await screen.findByText('Wilting')).toBeInTheDocument();
+    expect(container.querySelector('.tree-thought')).not.toBeNull();
+    expect(container.querySelector('.tree-ambient')).toBeNull();
+    unmount();
+    server({ 'GET /me/tree': mine(view()) });
+    const well = renderApp(<TreePage />);
+    await screen.findByRole('heading', { name: 'Berû' });
+    expect(well.container.querySelector('.tree-thought')).toBeNull();
+  });
+
+  it('shows what is being grown toward: the next stage in its ring, or what a full-grown tree bears', async () => {
+    server({ 'GET /me/tree': mine(view({ waterings: 9, water: 3 })) });
+    const { container, unmount } = renderApp(<TreePage />);
+    const ring = await screen.findByRole('progressbar', { name: 'Next: Young tree' });
+    // two of the seven waterings to the next stage: the ring is closed by that share
+    const fill = ring.querySelector<SVGCircleElement>('.tree-goal-fill');
+    const round = Number(fill?.style.strokeDasharray);
+    expect(Number(fill?.style.strokeDashoffset) / round).toBeCloseTo(1 - 2 / 7, 4);
+    // the picture in it is the stage after this one, not this one again
+    expect(ring.querySelector('.tree-goal-art .tree-art')).not.toBeNull();
+    expect(container.querySelectorAll('.tree-art')).toHaveLength(2);
+    unmount();
+    server({ 'GET /me/tree': mine(view({ waterings: 45, water: 0 })) });
+    renderApp(<TreePage />);
+    const harvest = await screen.findByRole('progressbar', { name: 'Next harvest' });
+    expect(harvest.querySelector('.tree-goal-art .tree-art')).toBeNull();
   });
 
   it('pours all that is held at once, and celebrates a harvest with what it paid', async () => {

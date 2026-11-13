@@ -85,6 +85,7 @@ import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
 import { TINY_BADGE, hasBadgeGlyph } from './badges.js';
 import { dayMedalSvg, streakMedalSvg } from './medals.js';
 import { TREE_FOOT, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
+import { TREE_SKIES, treeCloudSvg, treeSceneSvg, treeSkyAt } from './tree-scene.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml, wholePath } from './svg.js';
 import { characterArt } from '../characters/index.js';
@@ -1757,6 +1758,40 @@ describe('the learner’s tree', () => {
     const bare = treeSvg({ species: 'bi', stage: 6, health: 'withered', title: 'x' });
     expect(bare).not.toContain('#80ba45');
     expect(treeSvg({ species: 'bi', stage: 6, title: 'x' })).toContain('#80ba45');
+  });
+
+  it('knows the sky of an hour: dawn, day, dusk and night, round the clock', () => {
+    expect([0, 4, 5, 7, 8, 12, 16, 17, 19, 20, 23].map(treeSkyAt)).toEqual(['night', 'night', 'dawn', 'dawn', 'day', 'day', 'day', 'dusk', 'dusk', 'night', 'night']);
+    for (let hour = 0; hour < 24; hour++) expect(TREE_SKIES).toContain(treeSkyAt(hour));
+  });
+
+  it('draws the scene a tree stands in for every sky, each its own picture, and fades it round a tree left dry', () => {
+    const scenes = TREE_SKIES.map((sky) => treeSceneSvg({ sky, size: 360, title: 'The sky' }));
+    for (const scene of scenes) checkSvg(scene, 360);
+    expect(new Set(scenes).size).toBe(TREE_SKIES.length);
+    // three ridges of mountains under every sky; stars only once the light goes
+    for (const scene of scenes) expect(count(scene, 'path')).toBeGreaterThanOrEqual(3);
+    expect(count(treeSceneSvg({ sky: 'night' }), 'circle')).toBeGreaterThan(count(treeSceneSvg({ sky: 'dusk' }), 'circle'));
+    expect(count(treeSceneSvg({ sky: 'dusk' }), 'circle')).toBeGreaterThan(count(treeSceneSvg({ sky: 'day' }), 'circle'));
+    // the same sky twice is the same string; dry, its colours have gone toward dust
+    expect(treeSceneSvg({ sky: 'day' })).toBe(treeSceneSvg({ sky: 'day' }));
+    expect(treeSceneSvg({ sky: 'day', dry: 1 })).not.toBe(treeSceneSvg({ sky: 'day' }));
+    expect(treeSceneSvg({ sky: 'day' })).toContain('#52aeee');
+    expect(treeSceneSvg({ sky: 'day', dry: 1 })).not.toContain('#52aeee');
+    // it is light enough to sit behind every tree
+    for (const scene of scenes) expect(scene.length).toBeLessThan(8_000);
+    // two on a page keep their gradients apart
+    const a = checkSvg(treeSceneSvg({ sky: 'dawn', title: 'The sky', idPrefix: 'a' }), 360);
+    for (const id of checkSvg(treeSceneSvg({ sky: 'dawn', title: 'The sky', idPrefix: 'b' }), 360)) expect(a.has(id)).toBe(false);
+    expect(() => treeSceneSvg({ sky: 'day', size: 0 })).toThrow(RangeError);
+  });
+
+  it('draws a cloud for each sky, in that sky’s colours', () => {
+    const clouds = TREE_SKIES.map((sky) => treeCloudSvg({ sky, size: 120, title: 'A cloud' }));
+    for (const cloud of clouds) checkSvg(cloud, 120);
+    expect(new Set(clouds).size).toBe(TREE_SKIES.length);
+    expect(treeCloudSvg({ sky: 'day' })).toContain('#ffffff');
+    expect(treeCloudSvg({ sky: 'night' })).not.toContain('#ffffff');
   });
 
   it('refuses a size that is not one', () => {

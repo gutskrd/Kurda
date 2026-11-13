@@ -40,6 +40,20 @@
   flex: none;
   line-height: 0;
 }
+/* drawn at one size and shown at whatever holds it */
+.tree-art.is-fluid,
+.water-drop.is-fluid,
+.watering-can.is-fluid {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+}
+.water-drop > svg,
+.watering-can > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 
 /* ──────────────────────────────────────────────────────────────── the page */
 .tree-page {
@@ -52,86 +66,523 @@
   margin: 0;
   color: var(--ink-3);
 }
-/* where the tree stands: a soft light in its own colour, and nothing else */
+
+/*
+ * Where the tree stands: the sky of the hour, down to the mountains. The
+ * scene's picture is square and laid at the foot of the stage, so on a wide
+ * page it is the top of the sky that is cut off.
+ */
 .tree-stage {
   position: relative;
-  display: grid;
-  place-items: center;
-  min-height: 340px;
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 470px;
   border-radius: var(--r-xl);
-  background:
-    radial-gradient(120% 80% at 50% 100%, color-mix(in srgb, var(--tree, #4fb24f) 26%, transparent), transparent 70%),
-    linear-gradient(180deg, color-mix(in srgb, var(--tree, #4fb24f) 9%, var(--surface-solid)), var(--surface-solid));
+  /* the sky's own colour, until its picture is in */
+  background: #a3daf8;
   overflow: hidden;
+  isolation: isolate;
+}
+.tree-stage.is-dawn {
+  background: #f4cbbd;
+}
+.tree-stage.is-dusk {
+  background: #c75d8e;
+}
+.tree-stage.is-night {
+  background: #1a2656;
 }
 .tree-stage.is-waiting {
-  background: none;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+}
+.tree-scene,
+.tree-ambient,
+.tree-pour,
+.tree-burst,
+.tree-cheer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tree-scene-sky {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  aspect-ratio: 1;
+}
+.tree-scene-sky > svg,
+.tree-scene-cloud > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* a cloud crosses the whole stage, however wide, and comes round again */
+.tree-scene-cloud {
+  position: absolute;
+  left: 0;
+  aspect-ratio: 1;
+  animation: tree-cloud linear infinite;
+}
+@keyframes tree-cloud {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(620px);
+  }
+}
+
+/* what is in the air round the tree */
+.tree-ambient i {
+  position: absolute;
+  display: block;
+  animation: linear infinite;
+}
+/* light in the sun: it rises, and is gone */
+.tree-ambient.is-motes i {
+  bottom: 14%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffdf0 0 30%, rgba(255, 246, 190, 0.5) 45%, rgba(255, 246, 190, 0) 72%);
+  animation-name: tree-mote;
+  animation-timing-function: ease-in-out;
+}
+@keyframes tree-mote {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(calc(var(--scale) * 0.6));
+  }
+  18% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--drift), -210px) scale(var(--scale));
+  }
+}
+/* petals, and an autumn tree's leaves: down, turning as they come */
+.tree-ambient.is-petals i,
+.tree-ambient.is-leaves i {
+  top: 16%;
+  width: 10px;
+  height: 7px;
+  border-radius: 80% 20% 70% 30%;
+  background: #ffd3df;
+  animation-name: tree-fall;
+}
+.tree-ambient.is-petals i:nth-child(3n) {
+  background: #f9b2c8;
+}
+.tree-ambient.is-petals i:nth-child(3n + 1) {
+  background: #fff0f4;
+}
+.tree-ambient.is-leaves i {
+  width: 12px;
+  height: 8px;
+  border-radius: 80% 10%;
+  background: #f9a424;
+}
+.tree-ambient.is-leaves i:nth-child(3n) {
+  background: #e2611d;
+}
+.tree-ambient.is-leaves i:nth-child(3n + 1) {
+  background: #ffcb3a;
+}
+@keyframes tree-fall {
+  0% {
+    opacity: 0;
+    transform: translate(0, -12px) rotate(0deg) scale(var(--scale));
+  }
+  12% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(calc(var(--drift) * -0.6), 130px) rotate(260deg) scale(var(--scale));
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--drift), 280px) rotate(560deg) scale(var(--scale));
+  }
+}
+/* the night tree's fireflies: each wanders round its own place, and its light comes and goes */
+.tree-ambient.is-fireflies i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbd6 0 26%, rgba(255, 233, 130, 0.65) 42%, rgba(255, 233, 130, 0) 72%);
+  animation-name: tree-firefly;
+  animation-timing-function: ease-in-out;
+}
+@keyframes tree-firefly {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: translate(0, 0) scale(var(--scale));
+  }
+  25% {
+    opacity: 1;
+    transform: translate(var(--drift), -16px) scale(var(--scale));
+  }
+  50% {
+    opacity: 0.3;
+    transform: translate(calc(var(--drift) * 0.4), -30px) scale(var(--scale));
+  }
+  75% {
+    opacity: 1;
+    transform: translate(calc(var(--drift) * -0.5), -12px) scale(var(--scale));
+  }
+}
+
+/* the tree's own square of the stage, standing at its foot */
+.tree-stage-plot {
+  position: absolute;
+  bottom: 2%;
+  left: 50%;
+  height: 94%;
+  aspect-ratio: 1;
+  translate: -50% 0;
+  touch-action: manipulation;
+}
+/* on its island it rises and sinks a little, as if it breathed */
+.tree-stage-bob {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: tree-bob 7.5s ease-in-out infinite;
+}
+@keyframes tree-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5%);
+  }
 }
 .tree-stage-art {
-  max-width: 100%;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 83.3%;
+}
+/* arriving with the page */
+.tree-stage-art.is-shown {
+  animation: tree-arrive 760ms var(--ease-spring) both;
+}
+@keyframes tree-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(5%) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* grown into: up from its foot out of the light, a little past its size and back */
+.tree-stage-art.is-grown {
+  animation: tree-grow 1050ms var(--ease-spring) both;
+}
+@keyframes tree-grow {
+  0% {
+    opacity: 0.2;
+    filter: brightness(2) saturate(0.5);
+    transform: scale(0.5);
+  }
+  40% {
+    opacity: 1;
+    filter: brightness(1.3);
+  }
+  72% {
+    filter: none;
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+/* a seed just planted: dropped into its heap of earth, where it settles */
+.tree-stage-art.is-planted .tree-art-plant {
+  animation: tree-plant 950ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
+}
+@keyframes tree-plant {
+  0% {
+    opacity: 0;
+    transform: translateY(-62%) rotate(-16deg);
+  }
+  16% {
+    opacity: 1;
+  }
+  52% {
+    transform: translateY(0) rotate(5deg);
+  }
+  68% {
+    transform: translateY(-4.5%) rotate(-2deg);
+  }
+  84% {
+    transform: translateY(0) rotate(1deg);
+  }
+  100% {
+    transform: none;
+  }
 }
 /* watered: the plant starts, the way anything does that is given a drink */
 .tree-stage.is-pouring .tree-art-plant {
-  animation: tree-drink 900ms var(--ease-spring) 260ms both;
+  animation: tree-drink 1000ms var(--ease-spring) 520ms both;
 }
 @keyframes tree-drink {
   0% {
     transform: scale(1, 1);
   }
-  30% {
-    transform: scale(1.04, 0.94);
+  22% {
+    transform: scale(1.05, 0.93);
   }
-  60% {
-    transform: scale(0.97, 1.05);
+  48% {
+    transform: scale(0.96, 1.06);
+  }
+  72% {
+    transform: scale(1.02, 0.98);
   }
   100% {
     transform: scale(1, 1);
   }
 }
-/* the can, tipped over the tree, and what falls from its rose */
-.tree-pour {
+/* while it grows, the sky lightens over it */
+.tree-stage.is-growing .tree-scene-sky {
+  animation: tree-hush 1150ms ease-out both;
+}
+@keyframes tree-hush {
+  0%,
+  100% {
+    filter: none;
+  }
+  30% {
+    filter: brightness(1.18);
+  }
+}
+
+/* the thought of a tree that wants water: it floats by its top, and nods */
+.tree-thought {
   position: absolute;
-  top: 10px;
-  inset-inline-end: 12%;
-  animation: tree-can 1050ms var(--ease-out) both;
-  transform-origin: 80% 80%;
+  top: var(--thought, 6%);
+  inset-inline-start: 62%;
+  display: grid;
+  place-items: center;
+  width: 15%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(20, 30, 50, 0.22);
+  animation: tree-thought 2.8s ease-in-out infinite;
+}
+.tree-thought > .water-drop {
+  width: 56%;
+}
+.tree-thought::before,
+.tree-thought::after {
+  position: absolute;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 3px 8px rgba(20, 30, 50, 0.18);
+  content: '';
+}
+.tree-thought::before {
+  bottom: -14%;
+  inset-inline-start: 2%;
+  width: 26%;
+  height: 26%;
+}
+.tree-thought::after {
+  bottom: -30%;
+  inset-inline-start: -12%;
+  width: 14%;
+  height: 14%;
+}
+.tree-stage.is-wilting .tree-thought,
+.tree-stage.is-withered .tree-thought {
+  animation-duration: 1.6s;
+}
+@keyframes tree-thought {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-7%) scale(1.05);
+  }
+}
+
+/* the can: it comes in over the tree's shoulder, tips, pours, and goes */
+.tree-pour-can {
+  position: absolute;
+  top: 0;
+  left: 56%;
+  width: 31%;
+  transform-origin: 52% 65%;
+  animation: tree-can 1450ms var(--ease-out) both;
 }
 @keyframes tree-can {
   0% {
     opacity: 0;
-    transform: translateY(-10px) rotate(0deg);
+    transform: translate(46%, -34%) rotate(14deg);
   }
-  18% {
+  16% {
     opacity: 1;
-    transform: translateY(0) rotate(-34deg);
+    transform: translate(0, 0) rotate(0deg);
+  }
+  28% {
+    transform: translate(0, 0) rotate(-40deg);
   }
   78% {
     opacity: 1;
-    transform: translateY(0) rotate(-34deg);
+    transform: translate(0, 2%) rotate(-36deg);
   }
   100% {
     opacity: 0;
-    transform: translateY(-6px) rotate(-8deg);
+    transform: translate(30%, -30%) rotate(6deg);
   }
 }
-.tree-pour-drops i {
+/* the water: from the can's rose down to where it lands on the tree */
+.tree-pour-drop {
   position: absolute;
-  top: 42px;
-  left: -2px;
+  top: 22%;
+  left: 56%;
+  display: block;
   opacity: 0;
-  animation: tree-drop 520ms ease-in calc(220ms + var(--i) * 110ms) both;
+  animation: tree-drop 520ms cubic-bezier(0.5, 0, 0.9, 0.6) var(--wait) both;
 }
 @keyframes tree-drop {
   0% {
+    top: 22%;
+    left: 56%;
     opacity: 0;
-    transform: translate(calc(var(--i) * -5px), 0) scale(0.7);
+    transform: scale(0.6);
   }
-  20% {
+  14% {
+    opacity: 1;
+  }
+  86% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    top: var(--land, 60%);
+    left: calc(50% + var(--aside));
+    opacity: 0;
+    transform: scale(1.3, 0.5);
+  }
+}
+/* and where it reaches the ground, a ring goes out from the foot of the tree */
+.tree-pour-ring {
+  position: absolute;
+  top: 83.3%;
+  left: 50%;
+  width: 52%;
+  height: 9%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  opacity: 0;
+  translate: -50% -50%;
+  animation: tree-ring 760ms ease-out 760ms both;
+}
+.tree-pour-ring.is-second {
+  animation-delay: 980ms;
+}
+@keyframes tree-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.12);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* growing: a light goes off behind it, and its leaves fly out */
+.tree-burst-light {
+  position: absolute;
+  top: 56%;
+  left: 50%;
+  width: 70%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 240, 0.98) 0 22%, rgba(255, 244, 180, 0.7) 42%, rgba(255, 244, 180, 0) 70%);
+  translate: -50% -50%;
+  animation: tree-burst-light 1000ms ease-out both;
+}
+@keyframes tree-burst-light {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  22% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translate(calc(var(--i) * -9px - 14px), 120px) scale(1);
+    transform: scale(1.9);
+  }
+}
+.tree-burst i {
+  position: absolute;
+  top: 56%;
+  left: 50%;
+  width: 11px;
+  height: 7px;
+  border-radius: 80% 10%;
+  background: var(--tree, #4fb24f);
+  opacity: 0;
+  animation: tree-burst-leaf 950ms cubic-bezier(0.1, 0.7, 0.3, 1) var(--wait) both;
+}
+.tree-burst i:nth-child(3n) {
+  background: #fff3a8;
+}
+.tree-burst i:nth-child(3n + 1) {
+  background: color-mix(in srgb, var(--tree, #4fb24f) 60%, #ffffff);
+}
+@keyframes tree-burst-leaf {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--turn)) translateY(-10px) scale(0.5);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--turn)) translateY(-190px) rotate(200deg) scale(1.1);
+  }
+}
+
+/* drunk: sparks stand round it for a moment */
+.tree-cheer i {
+  position: absolute;
+  width: 5%;
+  aspect-ratio: 1;
+  background: #fff6c0;
+  clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
+  opacity: 0;
+  animation: tree-spark 760ms ease-out var(--wait) both;
+}
+@keyframes tree-spark {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--turn)) scale(0.2);
+  }
+  40% {
+    opacity: 1;
+    transform: rotate(calc(var(--turn) + 40deg)) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(calc(var(--turn) + 90deg)) scale(0.3);
   }
 }
 
@@ -163,61 +614,91 @@
   font-weight: 600;
 }
 
-/* how far to what comes next */
+/* how far to what comes next: what is being grown toward, in a ring that closes as it is watered */
 .tree-growth {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
   padding: 14px 16px;
   border-radius: var(--r-lg);
   background: var(--surface-solid);
 }
-.tree-growth-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: baseline;
+.tree-goal {
+  position: relative;
+  flex: none;
+  width: 84px;
+  height: 84px;
 }
-.tree-growth-next {
-  color: var(--ink);
-  font-weight: 700;
-}
-.tree-growth-count {
-  color: var(--ink-3);
-  font-size: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-.tree-bar {
-  height: 10px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  overflow: hidden;
-}
-.tree-bar > span {
+.tree-goal-ring {
   display: block;
   width: 100%;
   height: 100%;
-  border-radius: inherit;
-  background: var(--tree, #4fb24f);
-  transform: scaleX(var(--to));
-  transform-origin: 0 50%;
-  transition: transform var(--dur-progress, 400ms) var(--ease-out);
+  transform: rotate(-90deg);
 }
-[dir='rtl'] .tree-bar > span {
-  transform-origin: 100% 50%;
+.tree-goal-track,
+.tree-goal-fill {
+  fill: none;
+  stroke-width: 6;
+}
+.tree-goal-track {
+  stroke: var(--surface-2);
+}
+.tree-goal-fill {
+  stroke: var(--tree, #4fb24f);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 700ms var(--ease-spring);
+}
+.tree-goal-art {
+  position: absolute;
+  inset: 11px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--tree, #4fb24f) 12%, var(--surface-2));
+  overflow: hidden;
+}
+.tree-growth-text {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+}
+.tree-growth-next {
+  color: var(--ink);
+  font-size: 1.06rem;
+  font-weight: 800;
+}
+.tree-growth-count {
+  justify-self: start;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  /* a new count comes in with a start: something was added */
+  animation: tree-count 420ms var(--ease-spring) both;
+}
+[dir='rtl'] .tree-growth-count {
+  justify-self: end;
+}
+@keyframes tree-count {
+  from {
+    transform: scale(1.3);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 /* its seven stages as a row of beads: the ones behind it filled, the one it is at ringed */
 .tree-steps {
   display: flex;
   gap: 6px;
-  justify-content: center;
-  margin: 2px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 .tree-steps li {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--surface-2);
 }
@@ -226,13 +707,12 @@
 }
 .tree-steps li.is-now {
   background: var(--surface-solid);
-  box-shadow: inset 0 0 0 2px var(--tree, #4fb24f);
+  box-shadow: inset 0 0 0 2.5px var(--tree, #4fb24f);
 }
 .tree-harvests {
   margin: 0;
   color: var(--ink-3);
   font-size: var(--text-secondary);
-  text-align: center;
 }
 
 /* the water held, and the pouring of it */
@@ -287,19 +767,91 @@
 }
 
 /* ─────────────────────────────────────────── choosing a tree, and the nursery */
-.tree-choices,
-.tree-kinds {
+/* the seeds to choose from: one to a kind, the picked one held up in its own colour */
+.tree-seeds {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
   margin: 0;
   padding: 0;
-  list-style: none;
+  border: 0;
+}
+.tree-seed {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  padding: 8px 2px 10px;
+  border-radius: var(--r-lg);
+  background: var(--surface-solid);
+  box-shadow: inset 0 0 0 2px transparent;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.tree-seed.is-picked {
+  background: color-mix(in srgb, var(--tree) 14%, var(--surface-solid));
+  box-shadow: inset 0 0 0 2.5px var(--tree);
+  transform: translateY(-3px);
+}
+.tree-seed:has(input:focus-visible) {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+/* the seed's picture closes in on the seed itself */
+.tree-seed-art {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  overflow: hidden;
+}
+.tree-seed-art > .tree-art {
+  position: absolute;
+  top: -50px;
+  left: -28px;
+}
+.tree-seed.is-picked .tree-seed-art > .tree-art {
+  animation: tree-seed-hop 520ms var(--ease-spring);
+}
+@keyframes tree-seed-hop {
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-9px) rotate(-5deg);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+.tree-seed-name {
+  color: var(--ink);
+  font-weight: 800;
+}
+/* what the name means: small enough to stay on a line in a quarter of a phone's width, and hyphenated where it cannot */
+.tree-seed-meaning {
+  max-width: 100%;
+  color: var(--ink-3);
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.25;
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 .tree-choices-more {
   margin: 0;
   color: var(--ink-3);
   font-size: var(--text-secondary);
   text-align: center;
+}
+.tree-kinds {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 .tree-kind {
   display: grid;
@@ -532,14 +1084,27 @@
   gap: 8px;
 }
 
+/* for a reader who has asked for less motion, the scene is a still picture: nothing drifts, falls, floats or starts */
 @media (prefers-reduced-motion: reduce) {
   .tree-art-plant.is-swaying,
+  .tree-scene-cloud,
+  .tree-stage-bob,
+  .tree-stage-art,
+  .tree-stage-art .tree-art-plant,
   .tree-stage.is-pouring .tree-art-plant,
-  .tree-pour,
-  .tree-pour-drops i {
+  .tree-thought,
+  .tree-growth-count,
+  .tree-seed.is-picked .tree-seed-art > .tree-art {
     animation: none;
   }
-  .tree-bar > span {
+  .tree-ambient,
+  .tree-pour,
+  .tree-burst,
+  .tree-cheer {
+    display: none;
+  }
+  .tree-goal-fill,
+  .tree-seed {
     transition: none;
   }
 }

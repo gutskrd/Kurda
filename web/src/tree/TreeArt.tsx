@@ -12,7 +12,8 @@ import './tree.css';
  * for (the server knows one newer than the page) is not drawn at all.
  *
  * `title` names it for a screen reader; leave it empty where the words beside
- * it already say what it is.
+ * it already say what it is. `fluid`, it fills whatever holds it (which gives
+ * it its size, and keeps it square) and `size` is only how finely it is drawn.
  */
 export function TreeArt({
   species,
@@ -21,6 +22,7 @@ export function TreeArt({
   size,
   title = '',
   alive = false,
+  fluid = false,
   className,
 }: {
   species: string;
@@ -29,6 +31,7 @@ export function TreeArt({
   size: number;
   title?: string;
   alive?: boolean;
+  fluid?: boolean;
   className?: string;
 }): React.JSX.Element | null {
   const id = `t${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
@@ -44,7 +47,7 @@ export function TreeArt({
   // a withered tree does not sway: there is nothing on it for the air to move
   const still = health === 'withered' || stage === 0;
   return (
-    <span className={`tree-art${className ? ` ${className}` : ''}`} style={{ width: size, height: size }} {...named}>
+    <span className={`tree-art${fluid ? ' is-fluid' : ''}${className ? ` ${className}` : ''}`} style={fluid ? undefined : { width: size, height: size }} {...named}>
       {'whole' in layers ? (
         <span className="tree-art-layer" dangerouslySetInnerHTML={layers.whole} />
       ) : (
@@ -61,16 +64,16 @@ export function TreeArt({
   );
 }
 
-/** A drop of water, drawn: beside a count of water, and falling from the can. */
-export function WaterDrop({ size }: { size: number }): React.JSX.Element {
+/** A drop of water, drawn: beside a count of water, and falling from the can. `fluid`, it fills what holds it. */
+export function WaterDrop({ size, fluid = false }: { size: number; fluid?: boolean }): React.JSX.Element {
   const id = `w${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
   const markup = useMemo(() => ({ __html: waterDropSvg({ size, idPrefix: id }) }), [size, id]);
-  return <span className="water-drop" style={{ width: size, height: size }} aria-hidden="true" dangerouslySetInnerHTML={markup} />;
+  return <span className={`water-drop${fluid ? ' is-fluid' : ''}`} style={fluid ? undefined : { width: size, height: size }} aria-hidden="true" dangerouslySetInnerHTML={markup} />;
 }
 
-/** The watering can, drawn. */
-export function WateringCan({ size }: { size: number }): React.JSX.Element {
+/** The watering can, drawn. `fluid`, it fills what holds it. */
+export function WateringCan({ size, fluid = false }: { size: number; fluid?: boolean }): React.JSX.Element {
   const id = `c${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
   const markup = useMemo(() => ({ __html: wateringCanSvg({ size, idPrefix: id }) }), [size, id]);
-  return <span className="watering-can" style={{ width: size, height: size }} aria-hidden="true" dangerouslySetInnerHTML={markup} />;
+  return <span className={`watering-can${fluid ? ' is-fluid' : ''}`} style={fluid ? undefined : { width: size, height: size }} aria-hidden="true" dangerouslySetInnerHTML={markup} />;
 }
