@@ -2349,8 +2349,8 @@
                   "payload": {
                     "prompt": "Hevalo is looking for breakfast. Tell him: “The bread is in the basket.”",
                     "accepted": [
-                      "Nan di seleyê de ye.",
-                      "Nan di seleyê de ye"
+                      "Nan di selikê de ye.",
+                      "Nan di selikê de ye"
                     ],
                     "voice": "hamo"
                   }
@@ -2388,10 +2388,10 @@
                   "position": 8,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Write the whole sentence: “Sêv … seleyê de ne.” (The apples are in the basket.)",
+                    "prompt": "Write the whole sentence: “Sêv … selikê de ne.” (The apples are in the basket.)",
                     "accepted": [
-                      "Sêv di seleyê de ne.",
-                      "Sêv di seleyê de ne"
+                      "Sêv di selikê de ne.",
+                      "Sêv di selikê de ne"
                     ],
                     "voice": "hamo"
                   }

@@ -6,7 +6,7 @@
     "titleEn": "The Kurmanji Road"
   },
   "characters": {
-    "hamo": "Hamo is the warm uncle of Sêvan, a village of apple orchards below the mountains, and the main voice of the road. Steady, patient and easily pleased, he laughs at his own stories (often before the end of them), lifts the near end of his full black moustache when he is pleased with you, and is proudest of that moustache above everything he owns. A miss gets one raised brow and a thoughtful look, never a cross word. He wears the traditional suit with a green pştên, keeps the orchard, drinks tea from dawn to dusk, is never quite on time, and knows a proverb or a tale for every moment. He is Xezal’s maternal uncle (her xal), husband of Nazê, father of Baran and Hêvî, and son of Dapîr Şemsê.",
+    "hamo": "Hamo is the warm uncle of Sêvan, a village of apple orchards below the mountains, and the main voice of the road. Steady, patient and easily pleased, he laughs at his own stories (often before the end of them), lifts the near end of his full black moustache when he is pleased with you, and is proudest of that moustache above everything he owns. A miss gets one raised brow and a thoughtful look, never a cross word. He wears the traditional suit with a green piştên, keeps the orchard, drinks tea from dawn to dusk, is never quite on time, and knows a proverb or a tale for every moment. He is Xezal’s maternal uncle (her xal), husband of Nazê, father of Baran and Hêvî, and son of Dapîr Şemsê.",
     "xezo": "Xezal is Hamo’s niece, the daughter of his sister Gulîstan. She lives in Amed, studies at the university there and comes to the village to visit; Hamo calls her Xezo, which she pretends to hate. Bright, quick and a little cheeky, she teases her uncle about his moustache and his timekeeping, giggles with her shoulders, tilts her head to listen and winks when you get something right; a miss gets a short pout that is gone in a moment, because she is on your side. She knows the city and the village alike, bargains better than anyone at the market, and in the last units has to decide whether to take a teaching post far away in Hewlêr.",
     "hevalo": "Hevalo is the young deer who is the learner’s guide: he brings you to Hamo’s gate in the first lesson and walks the whole road beside you. His name means “O friend!”, which Xezal finds very funny. Curious about everything and quick on his feet, he hops when he is pleased, tilts his head when something puzzles him and pricks up both ears at anything new. He is always hungry for apples and always the first suspect when apples go missing, cheeky in a sweet way and kind when you get something wrong. He speaks little — a guide’s word here and there — and on the summer pastures he meets Zerê, a shy wild doe, and gives her his last apple."
   },
@@ -116,7 +116,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "Bi xêr hatî!", "en": "Welcome! (to one person)", "pos": "phrase", "forms": ["bi", "xêr", "hatî"]},
-                {"ku": "Bi xêr bimînî!", "en": "Thank you! (the answer to a welcome: may you stay well)", "pos": "phrase", "forms": ["bi", "xêr", "bimînî"]},
+                {"ku": "Ser çavan!", "en": "Thank you! (the answer to a welcome; word for word “on my eyes”)", "pos": "phrase", "forms": ["ser", "çavan"]},
                 {"ku": "e / ye", "en": "is (e after a consonant, ye after a vowel)", "pos": "cop", "forms": ["e", "ye"]},
                 {"ku": "sêv", "en": "apple", "pos": "noun", "gender": "f", "forms": ["sêv", "sêvên", "sêvan", "sêvek", "sêva", "sêvê", "sêveke"]},
                 {"ku": "birçî", "en": "hungry", "pos": "adj", "forms": ["birçî"]},
@@ -363,6 +363,7 @@
                 {"ku": "Bi xatirê te!", "en": "Goodbye! (said by the one who leaves, to one person)", "pos": "phrase", "forms": ["bi", "xatirê", "te"]},
                 {"ku": "Bi xatirê we!", "en": "Goodbye! (to more than one person)", "pos": "phrase", "forms": ["bi", "xatirê", "we"]},
                 {"ku": "Bi xêr û silamet!", "en": "Safe journey! (the answer to “Bi xatirê te!”)", "pos": "phrase", "forms": ["bi", "xêr", "û", "silamet"]},
+                {"ku": "Bi xêr bimînî!", "en": "Stay well! (a goodbye said by the one who leaves, to one person)", "pos": "phrase", "forms": ["bi", "xêr", "bimînî"]},
                 {"ku": "sibe", "en": "tomorrow", "pos": "adv", "forms": ["sibe"]},
                 {"ku": "malbat", "en": "family", "pos": "noun", "gender": "f", "forms": ["malbat", "malbatên", "malbatan", "malbatek", "malbata", "malbatê", "malbateke"]}
               ]
@@ -489,7 +490,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "pismam", "en": "cousin (the son of your father’s brother)", "pos": "noun", "gender": "m", "forms": ["pismam", "pismamên", "pismaman", "pismamek", "pismamê", "pismamekî", "pismamî"]},
-                {"ku": "dotmet", "en": "cousin (the daughter of your father’s sister)", "pos": "noun", "gender": "f", "forms": ["dotmet", "dotmetên", "dotmetan", "dotmetek", "dotmeta", "dotmetê", "dotmeteke"]},
+                {"ku": "keçmet", "en": "cousin (the daughter of your father’s sister)", "pos": "noun", "gender": "f", "forms": ["keçmet", "keçmetên", "keçmetan", "keçmetek", "keçmeta", "keçmetê", "keçmeteke"]},
                 {"ku": "kurxal", "en": "cousin (the son of your mother’s brother)", "pos": "noun", "gender": "m", "forms": ["kurxal", "kurxalên", "kurxalan", "kurxalek", "kurxalê", "kurxalekî", "kurxalî"]},
                 {"ku": "nevî", "en": "grandchild", "pos": "noun", "gender": "mf", "forms": ["nevî", "neviyên", "neviyan", "neviyek", "neviyê", "neviyekî", "neviyî", "neviya", "neviyeke"]},
                 {"ku": "delal", "en": "dear, lovely", "pos": "adj", "forms": ["delal"]},
@@ -570,7 +571,7 @@
                 {"ku": "heşt", "en": "eight", "pos": "num", "forms": ["heşt"]},
                 {"ku": "neh", "en": "nine", "pos": "num", "forms": ["neh"]},
                 {"ku": "deh", "en": "ten", "pos": "num", "forms": ["deh"]},
-                {"ku": "sele", "en": "basket", "pos": "noun", "gender": "f", "forms": ["sele", "seleyên", "seleyan", "seleyek", "seleya", "seleyê", "seleyeke"]}
+                {"ku": "selik", "en": "basket", "pos": "noun", "gender": "f", "forms": ["selik", "selikên", "selikan", "selikek", "selika", "selikê", "selikeke"]}
               ]
             },
             {
@@ -1213,7 +1214,7 @@
               "beat": "Hamo and Mîrza haggle over a copper teapot: “Bi sed û pêncî!” — “Na, bi sed!” Xezal steps in, smiles sweetly, and gets it for eighty. Mîrza laughs and gives in.",
               "voice": "hamo",
               "new": [
-                {"ku": "çaydank", "en": "teapot", "pos": "noun", "gender": "f", "forms": ["çaydank", "çaydankên", "çaydankan", "çaydankek", "çaydanka", "çaydankê", "çaydankeke"]},
+                {"ku": "çaydank", "en": "teapot", "pos": "noun", "gender": "m", "forms": ["çaydank", "çaydankên", "çaydankan", "çaydankek", "çaydankê", "çaydankekî", "çaydankî"]},
                 {"ku": "kêm", "en": "less; few", "pos": "adj", "forms": ["kêm"]},
                 {"ku": "bes", "en": "enough", "pos": "adv", "forms": ["bes"]},
                 {"ku": "temam", "en": "OK; complete", "pos": "adj", "forms": ["temam"]},
@@ -1255,7 +1256,7 @@
               "beat": "The great apple mystery. Mîrza asks everyone. Bozo looks away. Hevalo, very quickly: “Ez nizanim! Ez qet nizanim!”",
               "voice": "hevalo",
               "new": [
-                {"ku": "na-", "en": "not (the negative present: naçim, nakim)", "pos": "particle", "forms": ["naçim", "naçî", "naçe", "naçin", "nayêm", "nayî", "nayê", "nayên", "nakim", "nakî", "nake", "nakin", "nabînim", "nabînî", "nabîne", "nabînin", "nabêjim", "nabêjî", "nabêje", "nabêjin", "nanêrim", "nanêrî", "nanêre", "nanêrin", "naaxivim", "naaxivî", "naaxive", "naaxivin", "nakirim", "nakirî", "nakire", "nakirin", "nafiroşim", "nafiroşî", "nafiroşe", "nafiroşin", "nadim", "nadî", "nade", "nadin", "nagerim", "nagerî", "nagere", "nagerin", "naxebitim", "naxebitî", "naxebite", "naxebitin", "naxwazim", "naxwazî", "naxwaze", "naxwazin", "naxwim", "naxwî", "naxwe", "naxwin", "venaxwim", "venaxwî", "venaxwe", "venaxwin"]},
+                {"ku": "na-", "en": "not (the negative present: naçim, nakim)", "pos": "particle", "forms": ["naçim", "naçî", "naçe", "naçin", "nayêm", "nayî", "nayê", "nayên", "nakim", "nakî", "nake", "nakin", "nabînim", "nabînî", "nabîne", "nabînin", "nabêjim", "nabêjî", "nabêje", "nabêjin", "nanêrim", "nanêrî", "nanêre", "nanêrin", "naxivim", "naxivî", "naxive", "naxivin", "nakirim", "nakirî", "nakire", "nakirin", "nafiroşim", "nafiroşî", "nafiroşe", "nafiroşin", "nadim", "nadî", "nade", "nadin", "nagerim", "nagerî", "nagere", "nagerin", "naxebitim", "naxebitî", "naxebite", "naxebitin", "naxwazim", "naxwazî", "naxwaze", "naxwazin", "naxwim", "naxwî", "naxwe", "naxwin", "venaxwim", "venaxwî", "venaxwe", "venaxwin"]},
                 {"ku": "ni-", "en": "not (with zanîn and karîn: nizanim, nikarim)", "pos": "particle", "forms": ["nizanim", "nizanî", "nizane", "nizanin", "nikarim", "nikarî", "nikare", "nikarin"]},
                 {"ku": "qet", "en": "(not) at all; never", "pos": "adv", "forms": ["qet"]},
                 {"ku": "rastî", "en": "truth", "pos": "noun", "gender": "f", "forms": ["rastî", "rastiyên", "rastiyan", "rastiyek", "rastiya", "rastiyê", "rastiyeke"]},
@@ -2095,7 +2096,7 @@
               "new": [
                 {"ku": "gotar", "en": "speech; article", "pos": "noun", "gender": "f", "forms": ["gotar", "gotarên", "gotaran", "gotarek", "gotara", "gotarê", "gotareke"]},
                 {"ku": "kaxez", "en": "paper", "pos": "noun", "gender": "m", "forms": ["kaxez", "kaxezên", "kaxezan", "kaxezek", "kaxezê", "kaxezekî", "kaxezî"]},
-                {"ku": "jiber kirin", "en": "to learn by heart", "pos": "verb", "forms": ["jiber", "kirin"]},
+                {"ku": "ji ber kirin", "en": "to learn by heart", "pos": "verb", "forms": ["ji", "ber", "kirin"]},
                 {"ku": "ji bîr kirin", "en": "to forget", "pos": "verb", "forms": ["ji", "bîr", "kirin"]},
                 {"ku": "anîn", "en": "to bring", "pos": "verb", "forms": ["anîn", "tînim", "tînî", "tîne", "tînin", "natînim", "natîne", "bînim", "bîne"]}
               ]
@@ -2132,13 +2133,13 @@
               "titleKu": "Kincên Newrozê",
               "titleEn": "Newroz clothes",
               "focus": "build",
-              "beat": "Nazê has sewn new clothes for everyone: a dress for Hêvî, a waistcoat for Baran, and for Hamo a new green pştên that he wears straight away, over his pyjamas.",
+              "beat": "Nazê has sewn new clothes for everyone: a dress for Hêvî, a waistcoat for Baran, and for Hamo a new green piştên that he wears straight away, over his pyjamas.",
               "voice": "hamo",
               "new": [
                 {"ku": "kinc", "en": "clothes, garment", "pos": "noun", "gender": "m", "forms": ["kinc", "kincên", "kincan", "kincek", "kincê", "kincekî", "kincî"]},
                 {"ku": "li xwe kirin", "en": "to put on (clothes)", "pos": "phrase", "forms": ["li", "xwe", "kirin"]},
                 {"ku": "şal û şapik", "en": "the traditional men’s suit", "pos": "phrase", "forms": ["şal", "û", "şapik"]},
-                {"ku": "pştên", "en": "sash (worn at the waist)", "pos": "noun", "gender": "m", "forms": ["pştên", "pştênên", "pştênan", "pştênek", "pştênê", "pştênekî", "pştênî"]},
+                {"ku": "piştên", "en": "sash (worn at the waist)", "pos": "noun", "gender": "m", "forms": ["piştên", "piştênên", "piştênan", "piştênek", "piştênê", "piştênekî", "piştênî"]},
                 {"ku": "gerdenî", "en": "necklace", "pos": "noun", "gender": "f", "forms": ["gerdenî", "gerdeniyên", "gerdeniyan", "gerdeniyek", "gerdeniya", "gerdeniyê", "gerdeniyeke"]},
                 {"ku": "xemilandin", "en": "to decorate", "pos": "verb", "forms": ["xemilandin", "dixemilînim", "dixemilîne", "bixemilîne"]}
               ]
@@ -2484,7 +2485,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "zozan", "en": "summer pasture(s) in the mountains", "pos": "noun", "forms": ["zozan", "zozanê", "zozanan"]},
-                {"ku": "çamûr", "en": "mud", "pos": "noun", "gender": "f", "forms": ["çamûr", "çamûrên", "çamûran", "çamûrek", "çamûra", "çamûrê", "çamûreke"]},
+                {"ku": "herî", "en": "mud", "pos": "noun", "gender": "f", "forms": ["herî", "heriyên", "heriyan", "heriyek", "heriya", "heriyê", "heriyeke"]},
                 {"ku": "rewş", "en": "situation, condition", "pos": "noun", "gender": "f", "forms": ["rewş", "rewşên", "rewşan", "rewşek", "rewşa", "rewşê", "rewşeke"]},
                 {"ku": "aram", "en": "calm", "pos": "adj", "forms": ["aram"]},
                 {"ku": "nediyar", "en": "unknown, unclear", "pos": "adj", "forms": ["nediyar"]}
@@ -2722,7 +2723,7 @@
                 {"ku": "heywan", "en": "animal", "pos": "noun", "gender": "m", "forms": ["heywan", "heywanên", "heywanan", "heywanek", "heywanê", "heywanekî", "heywanî"]},
                 {"ku": "kûvî", "en": "wild", "pos": "adj", "forms": ["kûvî"]},
                 {"ku": "xezal", "en": "gazelle", "pos": "noun", "gender": "f", "forms": ["xezal", "xezalên", "xezalan", "xezalek", "xezala", "xezalê", "xezaleke"]},
-                {"ku": "pezkûvî", "en": "deer", "pos": "noun", "gender": "m", "forms": ["pezkûvî", "pezkûviyên", "pezkûviyan", "pezkûviyek", "pezkûviyê", "pezkûviyekî", "pezkûviyî", "pezkûviya"]}
+                {"ku": "ask", "en": "deer", "pos": "noun", "forms": ["ask", "askên", "askan", "askek", "askê", "aska", "askekî", "askeke"]}
               ]
             }
           ]
@@ -2839,7 +2840,7 @@
                 {"ku": "xeletî", "en": "mistake", "pos": "noun", "gender": "f", "forms": ["xeletî", "xeletiyên", "xeletiyan", "xeletiyek", "xeletiya", "xeletiyê", "xeletiyeke"]},
                 {"ku": "tevî", "en": "with, including", "pos": "prep", "forms": ["tevî"]},
                 {"ku": "bi tevahî", "en": "completely", "pos": "phrase", "forms": ["bi", "tevahî"]},
-                {"ku": "ji ber xeletiyê", "en": "by mistake", "pos": "phrase", "forms": ["ji", "ber", "xeletiyê"]}
+                {"ku": "bi şaşî", "en": "by mistake", "pos": "phrase", "forms": ["bi", "şaşî"]}
               ]
             },
             {
@@ -3495,7 +3496,7 @@
               "new": [
                 {"ku": "Hebû tunebû", "en": "once upon a time (there was, there wasn’t)", "pos": "phrase", "forms": ["hebû", "tunebû"]},
                 {"ku": "sobe", "en": "stove", "pos": "noun", "gender": "f", "forms": ["sobe", "sobeyên", "sobeyan", "sobeyek", "sobeya", "sobeyê", "sobeyeke"]},
-                {"ku": "şevbuhêrk", "en": "a winter evening of stories and visits", "pos": "noun", "gender": "f", "forms": ["şevbuhêrk", "şevbuhêrkên", "şevbuhêrkan", "şevbuhêrkek", "şevbuhêrka", "şevbuhêrkê", "şevbuhêrkeke"]},
+                {"ku": "şevbêrk", "en": "a winter evening of stories and visits", "pos": "noun", "gender": "f", "forms": ["şevbêrk", "şevbêrkên", "şevbêrkan", "şevbêrkek", "şevbêrka", "şevbêrkê", "şevbêrkeke"]},
                 {"ku": "çîrokbêj", "en": "storyteller", "pos": "noun", "gender": "mf", "forms": ["çîrokbêj", "çîrokbêjên", "çîrokbêjan", "çîrokbêjek", "çîrokbêjê", "çîrokbêjekî", "çîrokbêjî", "çîrokbêja", "çîrokbêjeke"]},
                 {"ku": "dengbêj", "en": "dengbêj, the traditional singer of tales", "pos": "noun", "gender": "mf", "forms": ["dengbêj", "dengbêjên", "dengbêjan", "dengbêjek", "dengbêjê", "dengbêjekî", "dengbêjî", "dengbêja", "dengbêjeke"]}
               ]
@@ -3607,7 +3608,6 @@
                 {"ku": "mêvandarî", "en": "hospitality", "pos": "noun", "gender": "f", "forms": ["mêvandarî", "mêvandariyên", "mêvandariyan", "mêvandariyek", "mêvandariya", "mêvandariyê", "mêvandariyeke"]},
                 {"ku": "mêvanperwer", "en": "hospitable", "pos": "adj", "forms": ["mêvanperwer"]},
                 {"ku": "Mala te ava!", "en": "Thank you! (may your house prosper)", "pos": "phrase", "forms": ["mala", "te", "ava"]},
-                {"ku": "Ser çavan!", "en": "With pleasure! (literally: on my eyes)", "pos": "phrase", "forms": ["ser", "çavan"]},
                 {"ku": "Xêr e?", "en": "Is everything all right? What brings you?", "pos": "phrase", "forms": ["xêr", "e"]},
                 {"ku": "sifre", "en": "the cloth a meal is laid on; a meal spread", "pos": "noun", "gender": "f", "forms": ["sifre", "sifreyên", "sifreyan", "sifreyek", "sifreya", "sifreyê", "sifreyeke"]}
               ]
@@ -3671,7 +3671,7 @@
           "titleKu": "Gotinên pêşiyan",
           "titleEn": "Proverbs",
           "grammar": "proverbs and how they are built (… çiqas … be jî, …; the general present: … dibe, … derdixe), and a retold tale in the past with dialogue",
-          "grammarMd": "Proverbs — **gotinên pêşiyan**, “the sayings of those before” — are short and often use the general present:\n\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.\n- *Zimanê şîrîn mar ji qulê derdixe.* A sweet tongue brings the snake out of its hole.\n- *Dilop bi dilop gol çêdibe.* Drop by drop a lake is made.\n\n**çiqas … be jî** means *however … it is*: *Çiya çiqas bilind be jî, rê di ser re heye.* However high the mountain, there is a way over it.\n\nIn a tale, the past and the dialogue come together: *Rovî got: “Tu kîjan dixwazî?” Hirçê got: “Yên li ser erdê!”* The fox said: “Which do you want?” The bear said: “The ones above the ground!”",
+          "grammarMd": "Proverbs — **gotinên pêşiyan**, “the sayings of those before” — are short and often use the general present:\n\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.\n- *Gotina xweş mar ji qulê derdixe.* A kind word brings the snake out of its hole.\n- *Av dilop dilop dibe gol.* Drop by drop, water becomes a lake.\n\n**çiqas … be jî** means *however … it is*: *Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.* However high the mountain, one day a road will cross it.\n\nIn a tale, the past and the dialogue come together: *Rovî got: “Tu kîjan dixwazî?” Hirçê got: “Yên li ser erdê!”* The fox said: “Which do you want?” The bear said: “The ones above the ground!”",
           "lessons": [
             {
               "key": "u12s3l1",
@@ -3700,9 +3700,9 @@
               "voice": "hamo",
               "new": [
                 {"ku": "Mêvan mêvanê Xwedê ye.", "en": "The guest is God’s guest.", "pos": "phrase", "forms": ["mêvan", "mêvanê", "xwedê", "ye"]},
-                {"ku": "Zimanê şîrîn mar ji qulê derdixe.", "en": "A sweet tongue brings the snake out of its hole.", "pos": "phrase", "forms": ["zimanê", "şîrîn", "mar", "ji", "qulê", "derdixe"]},
-                {"ku": "Dilop bi dilop gol çêdibe.", "en": "Drop by drop a lake is made.", "pos": "phrase", "forms": ["dilop", "bi", "gol", "çêdibe"]},
-                {"ku": "Çiya çiqas bilind be jî, rê di ser re heye.", "en": "However high the mountain, there is a way over it.", "pos": "phrase", "forms": ["çiya", "çiqas", "bilind", "be", "jî", "rê", "di", "ser", "re", "heye"]},
+                {"ku": "Gotina xweş mar ji qulê derdixe.", "en": "A kind word brings the snake out of its hole.", "pos": "phrase", "forms": ["gotina", "xweş", "mar", "ji", "qulê", "derdixe"]},
+                {"ku": "Av dilop dilop dibe gol.", "en": "Drop by drop, water becomes a lake.", "pos": "phrase", "forms": ["av", "dilop", "dibe", "gol"]},
+                {"ku": "Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.", "en": "However high the mountain, one day a road will cross it.", "pos": "phrase", "forms": ["çiya", "çiqas", "bilind", "be", "jî", "wê", "rojekê", "rê", "pê", "bikeve"]},
                 {"ku": "dilop", "en": "drop", "pos": "noun", "gender": "f", "forms": ["dilop", "dilopên", "dilopan", "dilopek", "dilopa", "dilopê", "dilopeke"]},
                 {"ku": "mar", "en": "snake", "pos": "noun", "gender": "m", "forms": ["mar", "marên", "maran", "marek", "marê", "marekî", "marî"]}
               ]
@@ -3823,52 +3823,16 @@
     }
   ],
   "doubts": [
-    {"ku": "bimînî", "reason": "the reply to “Bi xêr hatî!” — check that “Bi xêr bimînî!” is the reply the owner wants taught (others say “Xêr li te be!”)"},
-    {"ku": "silamet", "reason": "“Bi xêr û silamet” — the standard spelling of silamet (also seen as selamet)"},
-    {"ku": "dotmet", "reason": "dotmet (daughter of the father’s sister) and kurxal (son of the mother’s brother) — confirm these are the terms the owner wants for Baran and Xezal"},
-    {"ku": "gore", "reason": "gore (sock): confirm gender (goreya / gorê) and that it is the word wanted over “çorap”"},
-    {"ku": "sele", "reason": "sele (basket): confirm it over selik / sebet"},
-    {"ku": "erebe", "reason": "erebe (car) is common in speech; confirm it over otomobîl / tirimbêl for the course"},
-    {"ku": "çente", "reason": "çente (bag): confirm masculine (çenteyê min)"},
-    {"ku": "serşok", "reason": "serşok (bathroom): confirm feminine and that it is preferred over hemam"},
-    {"ku": "li ser kevir", "reason": "the tip teaches that a masculine noun after a preposition usually stays bare (li ser kevir) while the written standard also allows the oblique -î (li ser kevirî): confirm the rule to teach"},
-    {"ku": "tu têyî", "reason": "2nd person present of hatin: the course uses “tu têyî” (also heard “tu tê”)"},
-    {"ku": "kartol", "reason": "kartol (potato): confirm feminine (kartola)"},
-    {"ku": "zeytûn", "reason": "zeytûn (olive): confirm gender (zeytûna / zeytûnê)"},
-    {"ku": "çaydank", "reason": "çaydank (teapot): confirm over çaydan, and feminine"},
-    {"ku": "naaxivim", "reason": "negative of axaftin: naaxivim (some write naxivim)"},
-    {"ku": "Xem meke", "reason": "the course writes the negative imperative with me- as the written standard does (meke); everyday speech and the stories also say “Xem neke”"},
-    {"ku": "di saet duduyan de", "reason": "the oblique of the numbers in clock times: duduyan (2), sisiyan (3) — confirm, and whether “di saet du de” is preferred for the course"},
-    {"ku": "razan", "reason": "present radizim / radizî / radize: confirm against “radizêm” heard in some areas"},
-    {"ku": "traktor", "reason": "traktor (tractor): gender — the plan writes it feminine (traktorê); confirm"},
-    {"ku": "ajotin", "reason": "present of ajotin: diajom / diajo (also heard dajom) — confirm"},
-    {"ku": "me-", "reason": "the negative imperative: the course teaches meke / meçe / mexwe (the written standard); “neke / neçe” are as common in speech"},
-    {"ku": "bila", "reason": "“bila” + subjunctive (bila ew bê): standard; confirm the spelling over “bira”"},
-    {"ku": "pêlekan", "reason": "pêlekan (stairs): confirm over pêlik / derence"},
-    {"ku": "jiber kirin", "reason": "jiber kirin (learn by heart): also written ji ber kirin / jiberkirin — confirm the course spelling"},
-    {"ku": "pştên", "reason": "pştên (sash): the word in Hamo’s drawing notes; confirm spelling (also piştên / pişten) and gender"},
-    {"ku": "girîn", "reason": "present of girîn: ez digirîm, ew digirî — confirm the 3rd person (digirî) and the course spelling"},
-    {"ku": "bêhna xwe vedan", "reason": "present of vedan in this phrase: bêhna xwe vedidim, imperative bêhna xwe vede — confirm"},
-    {"ku": "kuxik", "reason": "kuxik (cough): confirm gender"},
-    {"ku": "çamûr", "reason": "çamûr (mud): confirm over herî (which also means “most”) / qor"},
-    {"ku": "zozan", "reason": "zozan: gender and the usual form (li zozanan / li zozanê)"},
-    {"ku": "vegeriya", "reason": "-în verbs in the past: the course follows the stories (vegeriya, reviya, tirsiya, qediya, firiya, meşiya, geriya; but kenî, sekinî, girî, fikirî, xebitî) — confirm each, as vegerî / revî are also standard"},
-    {"ku": "pûng", "reason": "pûng (wild mint): confirm gender"},
-    {"ku": "pezkûvî", "reason": "pezkûvî (deer): confirm as the word for a wild deer (also “ask” for a gazelle or roe deer)"},
-    {"ku": "hilkişîn", "reason": "present and past of hilkişîn (to climb): hildikişim, hilkişiya — confirm"},
-    {"ku": "ji ber xeletiyê", "reason": "“by mistake”: the plan teaches ji ber xeletiyê; confirm over bi xeletî / bi şaşî"},
-    {"ku": "danîn", "reason": "imperative of danîn: deyne (also dayne) — confirm"},
-    {"ku": "avêtin", "reason": "subjunctive of avêtin: bavêjim / bavêje — confirm"},
-    {"ku": "ard", "reason": "ard (flour): the stories write “ar” — confirm which the course should use"},
-    {"ku": "zewicîn", "reason": "past of zewicîn: ew zewicîn / zewiciyan — confirm which to teach"},
-    {"ku": "hemşîre", "reason": "hemşîre (nurse) is the common word; confirm over “nexweşvan”"},
-    {"ku": "vegeriyame", "reason": "present perfect of the -iya verbs: vegeriyame / vegeriyaye — confirm"},
-    {"ku": "şevbuhêrk", "reason": "şevbuhêrk (winter evening gathering): confirm spelling (also şevbêrk)"},
-    {"ku": "eger", "reason": "heke and eger (if) are both taught; confirm the course should keep both"},
-    {"ku": "malik", "reason": "malik (verse of a song): confirm over “beyt” / “benda”"},
-    {"ku": "Dilop bi dilop gol çêdibe", "reason": "proverb wording: confirm (also “Dilop dilop dibe gol”)"},
-    {"ku": "Çiya çiqas bilind be jî, rê di ser re heye", "reason": "proverb wording: confirm that this is a known saying and its usual form"},
-    {"ku": "Zimanê şîrîn mar ji qulê derdixe", "reason": "proverb wording: confirm"},
-    {"ku": "Oxir be", "reason": "“Oxir be” (good luck / farewell): confirm spelling (also oxir be / uxur be)"}
+    {"ku": "Ser çavan!", "reason": "the answer to “Bi xêr hatî!”: the course now teaches “Ser çavan!” (the dictionaries’ reply; a university course uses “Di nav xêrê de bî”), and keeps “Bi xêr bimînî!” for the one who leaves — confirm"},
+    {"ku": "Bi xêr û silamet", "reason": "the stayer’s answer to “Bi xatirê te!”: the course teaches “Bi xêr û silamet!”; “Oxir be!” and “Bi xêr biçî!” are as common, and some write “silametî” — confirm"},
+    {"ku": "keçmet", "reason": "Xezal is Baran’s keçmet (daughter of his father’s sister) and he is her kurxal: keçmet replaces dotmet, which no dictionary has — confirm"},
+    {"ku": "ask", "reason": "ask is the word for deer (pezkûvî is a wild sheep or goat); its gender is not marked in the dictionaries — confirm, and whether the owner prefers xezal or mamiz anywhere"},
+    {"ku": "herî", "reason": "herî (mud, feminine) replaces çamûr, a loan; some write herrî to keep it apart from herî “most” — confirm the spelling"},
+    {"ku": "piştên", "reason": "piştên (sash) is the only attested spelling; its gender (the course treats it as masculine) is not in the dictionaries — confirm"},
+    {"ku": "zozan", "reason": "zozan: dictionaries disagree on its gender; the course mostly uses it in the plural (li zozanan) — confirm"},
+    {"ku": "me-", "reason": "the negative imperative: the course keeps the me- of the written standard (meke, meçe, Xem meke); in writing today ne- (neke, Xem neke) is about ten times as common, and both are correct — confirm which the owner wants taught"},
+    {"ku": "çaydank", "reason": "çaydank (teapot) is masculine in the dictionaries (çaydankê, çaydankekî), not feminine as first planned — confirm"},
+    {"ku": "Gotina xweş mar ji qulê derdixe", "reason": "the three proverbs now follow the collections: “Gotina xweş mar ji qulê derdixe”, “Av dilop dilop dibe gol”, “Çiya çiqas bilind be jî, wê rojekê rê pê bikeve” — confirm they are the forms the owner knows"},
+    {"ku": "ji ber kirin", "reason": "learn by heart is written ji ber kirin (ji ber dikim); the noun is jiberkirin — confirm"}
   ]
 }

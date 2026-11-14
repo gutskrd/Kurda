@@ -1760,9 +1760,9 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez gotara xwe jiber dikim.",
+                    "say": "Ez gotara xwe ji ber dikim.",
                     "voice": "hamo",
-                    "prompt": "Xezal finds her uncle talking to the hens. What is he doing? “Ez gotara xwe jiber dikim.”",
+                    "prompt": "Xezal finds her uncle talking to the hens. What is he doing? “Ez gotara xwe ji ber dikim.”",
                     "options": [
                       "I’m forgetting my speech.",
                       "I’m learning my speech by heart.",
@@ -1804,7 +1804,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez gotara xwe jiber dikim. Mirîşk li min dinêrin.",
+                        "text": "Ez gotara xwe ji ber dikim. Mirîşk li min dinêrin.",
                         "en": "I’m learning my speech by heart. The hens are watching me."
                       },
                       {
@@ -1914,8 +1914,8 @@
                     "voice": "hamo",
                     "prompt": "Complete Hamo’s line: “Ez gotara xwe … dikim.” (I’m learning my speech by heart.) Type the whole sentence.",
                     "accepted": [
-                      "Ez gotara xwe jiber dikim.",
-                      "Ez gotara xwe jiber dikim"
+                      "Ez gotara xwe ji ber dikim.",
+                      "Ez gotara xwe ji ber dikim"
                     ]
                   }
                 },
@@ -2248,7 +2248,7 @@
                         "right": "the traditional men’s suit"
                       },
                       {
-                        "left": "pştên",
+                        "left": "piştên",
                         "right": "sash"
                       },
                       {
@@ -2269,8 +2269,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo can’t wait: “I want to put on the new sash.”",
                     "accepted": [
-                      "Ez dixwazim pştênê nû li xwe bikim.",
-                      "Ez dixwazim pştênê nû li xwe bikim"
+                      "Ez dixwazim piştênê nû li xwe bikim.",
+                      "Ez dixwazim piştênê nû li xwe bikim"
                     ]
                   }
                 },
@@ -2278,9 +2278,9 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "say": "Hamo pştênê nû li xwe dike, li ser cilên xewê!",
+                    "say": "Hamo piştênê nû li xwe dike, li ser cilên xewê!",
                     "voice": "hamo",
-                    "prompt": "Xezal walks into the kitchen and bursts out laughing. Why? “Hamo pştênê nû li xwe dike, li ser cilên xewê!”",
+                    "prompt": "Xezal walks into the kitchen and bursts out laughing. Why? “Hamo piştênê nû li xwe dike, li ser cilên xewê!”",
                     "accepted": [
                       "Hamo is putting on the new sash, over his pyjamas!",
                       "Hamo puts on the new sash over his pyjamas!",
@@ -2307,9 +2307,9 @@
                   "payload": {
                     "prompt": "Nazê holds up Hamo’s present. Which words say “a green sash”?",
                     "options": [
-                      "pştêneke kesk",
-                      "pştênekî kesk",
-                      "pştênek kesk"
+                      "piştêneke kesk",
+                      "piştênekî kesk",
+                      "piştênek kesk"
                     ],
                     "correctIndex": 1
                   }

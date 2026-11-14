@@ -704,8 +704,8 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Ev ne lepê gur e, Hevalo. Ev lingê pezkûviyekî ye!",
-                    "prompt": "Xezal looks at what Hevalo pushes under the door. What does she say? “Ev ne lepê gur e, Hevalo. Ev lingê pezkûviyekî ye!”",
+                    "say": "Ev ne lepê gur e, Hevalo. Ev lingê askekî ye!",
+                    "prompt": "Xezal looks at what Hevalo pushes under the door. What does she say? “Ev ne lepê gur e, Hevalo. Ev lingê askekî ye!”",
                     "accepted": [
                       "That’s not a wolf’s paw, Hevalo. That’s a deer’s foot!",
                       "That’s not a wolf’s paw, Hevalo. That’s a deer’s foot",
@@ -2238,7 +2238,7 @@
           "position": 3,
           "titleKu": "Gotinên pêşiyan",
           "titleEn": "Proverbs",
-          "grammarMd": "Proverbs — **gotinên pêşiyan**, “the sayings of those before” — are short and often use the general present:\n\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.\n- *Zimanê şîrîn mar ji qulê derdixe.* A sweet tongue brings the snake out of its hole.\n- *Dilop bi dilop gol çêdibe.* Drop by drop a lake is made.\n\n**çiqas … be jî** means *however … it is*: *Çiya çiqas bilind be jî, rê di ser re heye.* However high the mountain, there is a way over it.\n\nIn a tale, the past and the dialogue come together: *Rovî got: “Tu kîjan dixwazî?” Hirçê got: “Yên li ser erdê!”* The fox said: “Which do you want?” The bear said: “The ones above the ground!”",
+          "grammarMd": "Proverbs — **gotinên pêşiyan**, “the sayings of those before” — are short and often use the general present:\n\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.\n- *Gotina xweş mar ji qulê derdixe.* A kind word brings the snake out of its hole.\n- *Av dilop dilop dibe gol.* Drop by drop, water becomes a lake.\n\n**çiqas … be jî** means *however … it is*: *Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.* However high the mountain, one day a road will cross it.\n\nIn a tale, the past and the dialogue come together: *Rovî got: “Tu kîjan dixwazî?” Hirçê got: “Yên li ser erdê!”* The fox said: “Which do you want?” The bear said: “The ones above the ground!”",
           "lessons": [
             {
               "key": "u12s3l1",
@@ -2539,11 +2539,11 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Dapîr dibêje: “Zimanê şîrîn mar ji qulê derdixe.”",
+                    "say": "Dapîr dibêje: “Gotina xweş mar ji qulê derdixe.”",
                     "voice": "hamo",
-                    "prompt": "Dapîr answers the fox’s tale with a proverb. Hamo says it again for you. What does it mean? «Dapîr dibêje: “Zimanê şîrîn mar ji qulê derdixe.”»",
+                    "prompt": "Dapîr answers the fox’s tale with a proverb. Hamo says it again for you. What does it mean? «Dapîr dibêje: “Gotina xweş mar ji qulê derdixe.”»",
                     "options": [
-                      "Grandma says: “A sweet tongue brings the snake out of its hole.”",
+                      "Grandma says: “A kind word brings the snake out of its hole.”",
                       "Grandma says: “A snake has a sweet tongue.”",
                       "Grandma says: “Don’t put your hand in a snake’s hole.”"
                     ],
@@ -2560,16 +2560,16 @@
                         "right": "The guest is God’s guest."
                       },
                       {
-                        "left": "Zimanê şîrîn mar ji qulê derdixe.",
-                        "right": "A sweet tongue brings the snake out of its hole."
+                        "left": "Gotina xweş mar ji qulê derdixe.",
+                        "right": "A kind word brings the snake out of its hole."
                       },
                       {
-                        "left": "Dilop bi dilop gol çêdibe.",
-                        "right": "Drop by drop a lake is made."
+                        "left": "Av dilop dilop dibe gol.",
+                        "right": "Drop by drop, water becomes a lake."
                       },
                       {
-                        "left": "Çiya çiqas bilind be jî, rê di ser re heye.",
-                        "right": "However high the mountain, there is a way over it."
+                        "left": "Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.",
+                        "right": "However high the mountain, one day a road will cross it."
                       },
                       {
                         "left": "dilop",
@@ -2604,10 +2604,10 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Say it in Kurdish: “Drop by drop a lake is made.”",
+                    "prompt": "Say it in Kurdish: “Drop by drop, water becomes a lake.”",
                     "accepted": [
-                      "Dilop bi dilop gol çêdibe.",
-                      "Dilop bi dilop gol çêdibe"
+                      "Av dilop dilop dibe gol.",
+                      "Av dilop dilop dibe gol"
                     ],
                     "voice": "hamo"
                   }
@@ -2631,8 +2631,8 @@
                     "prompt": "Baran saves one coin every day in a tin. Which proverb fits him?",
                     "options": [
                       "Mêvan mêvanê Xwedê ye.",
-                      "Dilop bi dilop gol çêdibe.",
-                      "Zimanê şîrîn mar ji qulê derdixe."
+                      "Av dilop dilop dibe gol.",
+                      "Gotina xweş mar ji qulê derdixe."
                     ],
                     "correctIndex": 1
                   }
@@ -2643,8 +2643,8 @@
                   "payload": {
                     "prompt": "Complete Dapîr’s proverb: “Çiya çiqas bilind be jî, …”",
                     "accepted": [
-                      "Çiya çiqas bilind be jî, rê di ser re heye.",
-                      "Çiya çiqas bilind be jî, rê di ser re heye"
+                      "Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.",
+                      "Çiya çiqas bilind be jî, wê rojekê rê pê bikeve"
                     ],
                     "voice": "hamo"
                   }
@@ -2653,15 +2653,16 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "say": "Çiya çiqas bilind be jî, rê di ser re heye.",
-                    "prompt": "Dapîr looks at Xezal when she says this one. What does it mean? “Çiya çiqas bilind be jî, rê di ser re heye.”",
+                    "say": "Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.",
+                    "prompt": "Dapîr looks at Xezal when she says this one. What does it mean? “Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.”",
                     "accepted": [
-                      "However high the mountain, there is a way over it.",
-                      "However high the mountain, there is a way over it",
-                      "However high the mountain is, there is a road over it.",
-                      "However high the mountain is, there is a road over it",
-                      "No matter how high the mountain, there’s a way over it.",
-                      "No matter how high the mountain, there’s a way over it"
+                      "However high the mountain, one day a road will cross it.",
+                      "However high the mountain, one day a road will cross it",
+                      "However high the mountain is, one day a road will cross it.",
+                      "However high the mountain is, one day a road will cross it",
+                      "No matter how high the mountain, one day a road will cross it.",
+                      "No matter how high the mountain, one day there will be a road over it.",
+                      "However high the mountain, one day a way will be found over it."
                     ],
                     "voice": "hamo"
                   }
@@ -2709,8 +2710,8 @@
                   "position": 12,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Say the snake proverb, slowly, the way Dapîr does: “A sweet tongue brings the snake out of its hole.”",
-                    "reference": "Zimanê şîrîn mar ji qulê derdixe.",
+                    "prompt": "Say the snake proverb, slowly, the way Dapîr does: “A kind word brings the snake out of its hole.”",
+                    "reference": "Gotina xweş mar ji qulê derdixe.",
                     "voice": "hamo"
                   }
                 },
@@ -2797,18 +2798,18 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ya min: “Dilop bi dilop gol çêdibe.”",
-                        "en": "Mine: “Drop by drop a lake is made.”"
+                        "text": "Ya min: “Av dilop dilop dibe gol.”",
+                        "en": "Mine: “Drop by drop, water becomes a lake.”"
                       },
                       {
                         "speaker": 0,
-                        "text": "Baş e! Dayê dibêje: “Çiya çiqas bilind be jî, rê di ser re heye.”",
-                        "en": "Good! Mum says: “However high the mountain, there is a way over it.”"
+                        "text": "Baş e! Dayê dibêje: “Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.”",
+                        "en": "Good! Mum says: “However high the mountain, one day a road will cross it.”"
                       },
                       {
                         "speaker": 1,
-                        "text": "Zimanê şîrîn mar ji qulê derdixe!",
-                        "en": "A sweet tongue brings the snake out of its hole!"
+                        "text": "Gotina xweş mar ji qulê derdixe!",
+                        "en": "A kind word brings the snake out of its hole!"
                       },
                       {
                         "speaker": 0,
@@ -2848,7 +2849,7 @@
                     ],
                     "prompt": "Gotina Hevalo çi ye?",
                     "options": [
-                      "Dilop bi dilop gol çêdibe.",
+                      "Av dilop dilop dibe gol.",
                       "Sêvek her roj, doktor ji derî dûr!",
                       "Mêvan mêvanê Xwedê ye."
                     ],

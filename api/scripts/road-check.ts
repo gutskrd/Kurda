@@ -4,23 +4,34 @@
  *   tsx scripts/road-check.ts            the plan and every unit file written so far
  *   tsx scripts/road-check.ts 3          the plan and unit 3
  *   tsx scripts/road-check.ts 3 4        the plan and units 3 and 4
+ *   tsx scripts/road-check.ts --hamo 3   unit 3 as if it were already marked as written for Hamo
+ *                                        alone, so a writer can see what is left before marking it
  *
  * Prints every problem with its place (lesson key, exercise position, field),
  * then what the units checked add up to: lessons, exercises, minutes, and
  * who records how much. Exits 1 when there is any problem, so a writer can
  * run it after each lesson and a unit lands only when it is clean.
  */
-import { checkRoad, checkRoadPlan, formatProblem, loadRoadPlan } from '../src/content/road-check.js';
+import { ROAD_RECORDER, checkRoad, checkRoadPlan, formatProblem, loadRoadPlan } from '../src/content/road-check.js';
 
 function main(): void {
   const args = process.argv.slice(2);
-  const units = args.map(Number);
-  if (units.some((n) => !Number.isInteger(n) || n < 1 || n > 12)) {
-    console.error('usage: tsx scripts/road-check.ts [unit 1–12 ...]');
+  const asHamo = args.includes('--hamo');
+  const units = args.filter((a) => a !== '--hamo').map(Number);
+  if (units.some((n) => !Number.isInteger(n) || n < 1 || n > 12) || (asHamo && units.length === 0)) {
+    console.error('usage: tsx scripts/road-check.ts [--hamo] [unit 1–12 ...] (--hamo needs the units it is for)');
     process.exit(2);
   }
 
   const plan = loadRoadPlan();
+  // checked as if marked for Hamo alone: the chapter and every lesson in it his
+  if (asHamo) {
+    for (const unit of plan.units) {
+      if (!units.includes(unit.number)) continue;
+      unit.recorder = ROAD_RECORDER;
+      for (const skill of unit.skills) for (const lesson of skill.lessons) lesson.voice = ROAD_RECORDER;
+    }
+  }
   const planProblems = checkRoadPlan(plan);
   const { problems, stats } = checkRoad({ plan, units: units.length > 0 ? units : undefined });
   const all = [...planProblems, ...problems];

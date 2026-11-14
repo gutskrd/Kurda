@@ -1297,7 +1297,7 @@
                         "right": "cousin (father’s brother’s son)"
                       },
                       {
-                        "left": "dotmet",
+                        "left": "keçmet",
                         "right": "cousin (father’s sister’s daughter)"
                       },
                       {
@@ -1358,7 +1358,7 @@
                     "options": [
                       "Ew kurxalê Xezalê ye.",
                       "Ew pismamê Xezalê ye.",
-                      "Ew dotmeta Xezalê ye."
+                      "Ew keçmeta Xezalê ye."
                     ],
                     "correctIndex": 0
                   }
@@ -1369,8 +1369,8 @@
                   "payload": {
                     "prompt": "Xezal explains who is whose cousin, slowly. Type what you hear.",
                     "accepted": [
-                      "Baran kurxalê min e, ez dotmeta wî me.",
-                      "Baran kurxalê min e, ez dotmeta wî me"
+                      "Baran kurxalê min e, ez keçmeta wî me.",
+                      "Baran kurxalê min e, ez keçmeta wî me"
                     ],
                     "voice": "xezo"
                   }
@@ -1471,8 +1471,8 @@
                   "payload": {
                     "prompt": "Help Xezal finish her explanation: “I am Baran’s cousin.”",
                     "accepted": [
-                      "Ez dotmeta Baran im.",
-                      "Ez dotmeta Baran im"
+                      "Ez keçmeta Baran im.",
+                      "Ez keçmeta Baran im"
                     ],
                     "voice": "xezo"
                   }
@@ -1484,7 +1484,7 @@
                     "prompt": "Hevalo is lost: “Xezal, Baran kî ye?” Which is Xezal’s right answer?",
                     "options": [
                       "Ew kurxalê min e.",
-                      "Ew dotmeta min e.",
+                      "Ew keçmeta min e.",
                       "Ew pismamê min e."
                     ],
                     "correctIndex": 0
@@ -2334,7 +2334,7 @@
                         "right": "ten"
                       },
                       {
-                        "left": "sele",
+                        "left": "selik",
                         "right": "basket"
                       }
                     ],
@@ -2375,10 +2375,10 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Sele (basket) is feminine and ends in a vowel. Which is right?",
+                    "prompt": "Selik (basket) is feminine. Which is right?",
                     "options": [
-                      "seleya dapîrê",
-                      "seleyê dapîrê",
+                      "selika dapîrê",
+                      "selikê dapîrê",
                       "sela dapîrê"
                     ],
                     "correctIndex": 0
@@ -2457,8 +2457,8 @@
                   "payload": {
                     "prompt": "Xezal peeps into the basket. Type what she says.",
                     "accepted": [
-                      "Seleya dapîrê biçûk e, lê sêv mezin in.",
-                      "Seleya dapîrê biçûk e, lê sêv mezin in"
+                      "Selika dapîrê biçûk e, lê sêv mezin in.",
+                      "Selika dapîrê biçûk e, lê sêv mezin in"
                     ],
                     "voice": "xezo"
                   }
@@ -2512,8 +2512,8 @@
                   "payload": {
                     "prompt": "Tell Xezal who the basket is for: “The basket is for Grandma.”",
                     "accepted": [
-                      "Sele ji bo dapîrê ye.",
-                      "Sele ji bo dapîrê ye"
+                      "Selik ji bo dapîrê ye.",
+                      "Selik ji bo dapîrê ye"
                     ],
                     "voice": "hamo"
                   }

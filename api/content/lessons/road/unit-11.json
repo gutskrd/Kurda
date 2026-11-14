@@ -2894,8 +2894,8 @@
                   "payload": {
                     "prompt": "Xezal points at the hens in the yard. Type what you hear.",
                     "accepted": [
-                      "Mirîşk guhdarên baş in, ew qet naaxivin.",
-                      "Mirîşk guhdarên baş in, ew qet naaxivin"
+                      "Mirîşk guhdarên baş in, ew qet naxivin.",
+                      "Mirîşk guhdarên baş in, ew qet naxivin"
                     ],
                     "voice": "xezo"
                   }
@@ -4228,7 +4228,7 @@
                         "right": "stove"
                       },
                       {
-                        "left": "şevbuhêrk",
+                        "left": "şevbêrk",
                         "right": "a winter evening of stories"
                       },
                       {
@@ -4300,7 +4300,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Şevbuhêrk! Wekî zemanê berê.",
+                        "text": "Şevbêrk! Wekî zemanê berê.",
                         "en": "A winter evening of stories! Like in the old days."
                       },
                       {
@@ -4349,8 +4349,8 @@
                   "payload": {
                     "prompt": "Say it in Kurdish: “The winter evening of stories is an old tradition of the villages.”",
                     "accepted": [
-                      "Şevbuhêrk kevneşopeke kevn a gundan e.",
-                      "Şevbuhêrk kevneşopeke kevn a gundan e"
+                      "Şevbêrk kevneşopeke kevn a gundan e.",
+                      "Şevbêrk kevneşopeke kevn a gundan e"
                     ],
                     "voice": "hamo"
                   }
@@ -4361,8 +4361,8 @@
                   "payload": {
                     "prompt": "Dapîr remembers the old winters, and Hamo says it again for you. Type what you hear.",
                     "accepted": [
-                      "Dengbêjan li şevbuhêrkan stranên kevn digotin.",
-                      "Dengbêjan li şevbuhêrkan stranên kevn digotin"
+                      "Dengbêjan li şevbêrkan stranên kevn digotin.",
+                      "Dengbêjan li şevbêrkan stranên kevn digotin"
                     ],
                     "voice": "hamo"
                   }

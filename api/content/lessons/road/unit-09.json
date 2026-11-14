@@ -1816,7 +1816,7 @@
                         "right": "gazelle"
                       },
                       {
-                        "left": "pezkûvî",
+                        "left": "ask",
                         "right": "deer"
                       }
                     ]
@@ -1850,8 +1850,8 @@
                     "voice": "hamo",
                     "prompt": "What does the creature look like? Type the next line of the message.",
                     "accepted": [
-                      "Ew wek pezkûviyekî ye, lê ji mirovan direve.",
-                      "Ew wek pezkûviyekî ye, lê ji mirovan direve"
+                      "Ew wek askekî ye, lê ji mirovan direve.",
+                      "Ew wek askekî ye, lê ji mirovan direve"
                     ]
                   }
                 },
@@ -1859,9 +1859,9 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Pezkûvî? Ez jî pezkûvî me!",
+                    "say": "Ask? Ez jî ask im!",
                     "voice": "hevalo",
-                    "prompt": "Hevalo’s ears shoot straight up. What does he say? “Pezkûvî? Ez jî pezkûvî me!”",
+                    "prompt": "Hevalo’s ears shoot straight up. What does he say? “Ask? Ez jî ask im!”",
                     "options": [
                       "A deer? I’m a deer too!",
                       "A deer? I’m afraid of deer!",
@@ -1949,9 +1949,9 @@
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "say": "Hevalo pezkûviyekî ciwan e, lê ew ne kûvî ye.",
+                    "say": "Hevalo askekî ciwan e, lê ew ne kûvî ye.",
                     "voice": "hamo",
-                    "prompt": "Hamo explains the difference to Baran. What does he say? “Hevalo pezkûviyekî ciwan e, lê ew ne kûvî ye.”",
+                    "prompt": "Hamo explains the difference to Baran. What does he say? “Hevalo askekî ciwan e, lê ew ne kûvî ye.”",
                     "accepted": [
                       "Hevalo is a young deer, but he isn’t wild.",
                       "Hevalo is a young deer, but he isn’t wild",
@@ -3283,9 +3283,9 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ji ber xeletiyê ez çûm gundekî din.",
+                    "say": "Bi şaşî ez çûm gundekî din.",
                     "voice": "hamo",
-                    "prompt": "How did that happen? Hamo explains with great dignity. “Ji ber xeletiyê ez çûm gundekî din.”",
+                    "prompt": "How did that happen? Hamo explains with great dignity. “Bi şaşî ez çûm gundekî din.”",
                     "options": [
                       "By mistake I went to another village.",
                       "On purpose I went to another village.",
@@ -3333,11 +3333,11 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Which sentence says “I got completely lost”?",
+                    "prompt": "Which sentence says “By mistake I got completely lost”?",
                     "options": [
-                      "Ez bi tevahî winda bûm.",
-                      "Ez bi tevahî winda bû.",
-                      "Ez bi tevahî winda dibim."
+                      "Bi şaşî ez bi tevahî winda bûm.",
+                      "Bi şaşî ez bi tevahî winda bû.",
+                      "Bi şaşî ez bi tevahî winda dibim."
                     ],
                     "correctIndex": 0
                   }
@@ -3359,12 +3359,12 @@
                   "type": "writing",
                   "payload": {
                     "voice": "hamo",
-                    "prompt": "Hamo insists it was an accident. Complete: “Ez ji ber … çûm gundekî din.” (By mistake I went to another village.)",
+                    "prompt": "Hamo insists it was an accident. Complete: “Ez bi … çûm gundekî din.” (By mistake I went to another village.)",
                     "accepted": [
-                      "Ez ji ber xeletiyê çûm gundekî din.",
-                      "Ez ji ber xeletiyê çûm gundekî din",
-                      "Ji ber xeletiyê ez çûm gundekî din.",
-                      "Ji ber xeletiyê ez çûm gundekî din"
+                      "Ez bi şaşî çûm gundekî din.",
+                      "Ez bi şaşî çûm gundekî din",
+                      "Bi şaşî ez çûm gundekî din.",
+                      "Bi şaşî ez çûm gundekî din"
                     ]
                   }
                 },

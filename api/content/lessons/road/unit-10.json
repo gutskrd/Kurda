@@ -508,9 +508,9 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Li keviya mêrgê du pezkûvî hene.",
+                    "say": "Li keviya mêrgê du ask hene.",
                     "voice": "xezo",
-                    "prompt": "At dusk, Xezal grabs your arm and points. What does she whisper? “Li keviya mêrgê du pezkûvî hene.”",
+                    "prompt": "At dusk, Xezal grabs your arm and points. What does she whisper? “Li keviya mêrgê du ask hene.”",
                     "options": [
                       "There are two deer at the edge of the meadow.",
                       "There are two deer in the middle of the meadow.",
@@ -557,7 +557,7 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Bêdeng be! Li keviya mêrgê du pezkûvî hene.",
+                        "text": "Bêdeng be! Li keviya mêrgê du ask hene.",
                         "en": "Quiet! There are two deer at the edge of the meadow."
                       },
                       {
@@ -709,8 +709,8 @@
                     "voice": "xezo",
                     "prompt": "Describe the other deer. Say: “The male deer is big.”",
                     "accepted": [
-                      "Pezkûviyê nêr mezin e.",
-                      "Pezkûviyê nêr mezin e"
+                      "Askê nêr mezin e.",
+                      "Askê nêr mezin e"
                     ]
                   }
                 },
@@ -720,7 +720,7 @@
                   "payload": {
                     "voice": "xezo",
                     "prompt": "Say what everyone is thinking: “The female deer is very beautiful.”",
-                    "reference": "Pezkûviya mê gelek spehî ye."
+                    "reference": "Aska mê gelek spehî ye."
                   }
                 },
                 {

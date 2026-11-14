@@ -504,10 +504,10 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Bi xêr bimînî!",
-                    "prompt": "A guest always answers a welcome with “Bi xêr bimînî!” What does it mean?",
+                    "say": "Ser çavan!",
+                    "prompt": "A guest answers a welcome with “Ser çavan!” — word for word, “on my eyes”. What does it mean?",
                     "options": [
-                      "Thank you! (may you stay well)",
+                      "Thank you! (glad to be here)",
                       "Welcome!",
                       "Hello!"
                     ],
@@ -525,7 +525,7 @@
                         "right": "Welcome!"
                       },
                       {
-                        "left": "Bi xêr bimînî!",
+                        "left": "Ser çavan!",
                         "right": "Thank you! (to a welcome)"
                       },
                       {
@@ -567,8 +567,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Silav! Bi xêr bimînî!",
-                        "en": "Hello! Thank you! (may you stay well)"
+                        "text": "Silav! Ser çavan!",
+                        "en": "Hello! Thank you! (glad to be here)"
                       },
                       {
                         "speaker": 0,
@@ -671,10 +671,10 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Now answer him the way every good guest does: “Thank you!” (may you stay well)",
+                    "prompt": "Now answer him the way every good guest does: “Thank you!” (the answer to a welcome)",
                     "accepted": [
-                      "Bi xêr bimînî!",
-                      "Bi xêr bimînî"
+                      "Ser çavan!",
+                      "Ser çavan"
                     ],
                     "voice": "hamo"
                   }
@@ -714,8 +714,8 @@
                   "position": 12,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Answer Hamo’s welcome the way every guest does: “Bi xêr bimînî!” (Thank you! — may you stay well)",
-                    "reference": "Bi xêr bimînî!",
+                    "prompt": "Answer Hamo’s welcome the way every guest does: “Ser çavan!” (Thank you! — word for word, “on my eyes”)",
+                    "reference": "Ser çavan!",
                     "voice": "hamo"
                   }
                 },
@@ -737,7 +737,7 @@
                   "payload": {
                     "prompt": "Hamo says to you: “Bi xêr hatî!” What do you answer?",
                     "options": [
-                      "Bi xêr bimînî!",
+                      "Ser çavan!",
                       "Bi xêr hatî!",
                       "Fermo!"
                     ],
@@ -3829,6 +3829,10 @@
                       {
                         "left": "malbat",
                         "right": "family"
+                      },
+                      {
+                        "left": "Bi xêr bimînî!",
+                        "right": "Stay well! (from the one who leaves)"
                       }
                     ],
                     "voice": "hamo"
@@ -4018,8 +4022,8 @@
                   "position": 12,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Practise for the day you leave: thank Hamo and say goodbye: “Spas! Bi xatirê te.” (Thanks! Goodbye.)",
-                    "reference": "Spas! Bi xatirê te.",
+                    "prompt": "Practise for the day you leave: thank Hamo and say goodbye the warm way: “Spas! Bi xêr bimînî.” (Thanks! Stay well.)",
+                    "reference": "Spas! Bi xêr bimînî.",
                     "voice": "hamo"
                   }
                 },
@@ -4049,6 +4053,21 @@
                       "Tomorrow",
                       "Today",
                       "Now"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bi xêr bimînî!",
+                    "prompt": "Hamo teaches you one more goodbye, the one he says himself when he leaves a house: “Bi xêr bimînî!” (stay well). Who says it?",
+                    "options": [
+                      "The one who leaves",
+                      "The one who stays",
+                      "The one who arrives"
                     ],
                     "correctIndex": 0,
                     "voice": "hamo"

@@ -2822,7 +2822,7 @@
                         "right": "summer pastures"
                       },
                       {
-                        "left": "çamûr",
+                        "left": "herî",
                         "right": "mud"
                       },
                       {
@@ -2889,7 +2889,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Xalo, binêre! Baran tê… tije çamûr e!",
+                        "text": "Xalo, binêre! Baran tê… tije herî ye!",
                         "en": "Uncle, look! Baran is coming… he’s covered in mud!"
                       },
                       {
@@ -2912,7 +2912,7 @@
                     "options": [
                       "Bi kêf û bi stran.",
                       "Bi Şîrînê re.",
-                      "Tije çamûr û bêdeng."
+                      "Tije herî û bêdeng."
                     ],
                     "correctIndex": 2
                   }
@@ -2967,9 +2967,9 @@
                   "payload": {
                     "prompt": "Which sentence says “Baran is covered in mud”?",
                     "options": [
-                      "Baran vala çamûr e.",
-                      "Baran tije çamûr in.",
-                      "Baran tije çamûr e."
+                      "Baran vala herî ye.",
+                      "Baran tije herî ne.",
+                      "Baran tije herî ye."
                     ],
                     "correctIndex": 2
                   }
