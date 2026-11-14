@@ -104,7 +104,7 @@ import {
   letterShadowSvg,
   letterWindowSvg,
 } from './letters.js';
-import { PIGEON_POSES } from './pigeon.js';
+import { PIGEON_PECK, PIGEON_POSES, PIGEON_REACH } from './pigeon.js';
 import {
   LETTER_FAR_OFF,
   LETTER_NOTES,
@@ -1976,7 +1976,7 @@ describe('the letters’ pictures', () => {
     expect(keys[keys.length - 1]).toMatchObject({ at: 1, seen: 0 });
     for (let i = 1; i < keys.length; i++) expect(keys[i]!.at).toBeGreaterThan(keys[i - 1]!.at);
     // how far across its own square a pigeon reaches in any pose, with a letter, either way round (measured in a browser)
-    const reach = { x0: 0.07, x1: 0.91, y0: 0.28, y1: 0.95 };
+    const reach = { x0: 0.24, x1: 0.88, y0: 0.21, y1: 0.86 };
     const share = LETTER_SILL.birdShare;
     const [cx, cy] = [LETTER_SILL.x / 120 - (share * LETTER_BIRD_FEET.x) / 120 + share / 2, LETTER_SILL.y / 120 - (share * LETTER_BIRD_FEET.y) / 120 + share / 2];
     const open = { x0: LETTER_OPENING.x0 / 120, x1: LETTER_OPENING.x1 / 120, y0: LETTER_OPENING.y0 / 120, y1: LETTER_OPENING.y1 / 120 };
@@ -2040,7 +2040,7 @@ describe('the pigeon at play', () => {
     for (const play of [...Object.values(LETTER_PLAY), ...Object.values(LETTER_PLAY_BESIDE)]) {
       const heldAt = (t: number): boolean => {
         let held = false;
-        for (const [at, pose, letter] of play.poses) if (at <= t) held = letter && pose !== 'happy' && pose !== 'sleep';
+        for (const [at, pose, letter] of play.poses) if (at <= t) held = letter && pose !== 'happy' && pose !== 'sleep' && pose !== 'peck';
         return held;
       };
       // read straight between the keys, which leans more near a key than the eased motion does
@@ -2128,8 +2128,8 @@ describe('the pigeon at play', () => {
         let shape = '';
         for (const [at, pose, letter] of play.poses) {
           if (at > t) break;
-          const held = letter && pose !== 'happy' && pose !== 'sleep';
-          shape = `${pose === 'turn' ? 'turn' : pose === 'front' || pose === 'hello' ? 'front' : 'perched'}${held ? '+letter' : ''}`;
+          const held = letter && pose !== 'happy' && pose !== 'sleep' && pose !== 'peck';
+          shape = `${pose === 'turn' || pose === 'peck' ? pose : pose === 'front' || pose === 'hello' ? 'front' : 'perched'}${held ? '+letter' : ''}`;
         }
         return shape;
       };
@@ -2153,14 +2153,15 @@ describe('the pigeon at play', () => {
   });
 
   it('brings its beak down to the letter on the sill when it picks it up or lays it down', () => {
-    // the tip of its beak, standing, about its feet, in shares of its own square
-    const beak = [(21.3 * LETTER_BIRD_FEET.scale) / 120, (-11.1 * LETTER_BIRD_FEET.scale) / 120] as const;
+    // the tip of its beak as it pecks, about its feet, in shares of its own square
+    const beak = [(PIGEON_PECK.beak[0] * LETTER_BIRD_FEET.scale) / 120, (PIGEON_PECK.beak[1] * LETTER_BIRD_FEET.scale) / 120] as const;
     for (const play of [LETTER_PLAY.before, LETTER_PLAY.after, LETTER_PLAY.fetch, LETTER_PLAY.take]) {
-      const peck = play.moves.find((m) => m.tilt >= 30)!;
-      const a = (peck.tilt * Math.PI) / 180;
-      const [x, y] = [beak[0] * Math.cos(a) - beak[1] * Math.sin(a) + peck.x, beak[0] * Math.sin(a) + beak[1] * Math.cos(a) + peck.y];
-      expect(Math.abs(x - play.letterAt)).toBeLessThan(0.04);
-      expect(Math.abs(y)).toBeLessThan(0.04);
+      const [at] = play.poses.find(([, pose]) => pose === 'peck')!;
+      // where it stands as it pecks: the last key at or before the peck, which is upright again as the picture changes
+      const where = [...play.moves].reverse().find((m) => m.at <= at)!;
+      expect(where.tilt).toBe(0);
+      expect(Math.abs(where.x + beak[0] - play.letterAt)).toBeLessThan(0.02);
+      expect(Math.abs(where.y + beak[1])).toBeLessThan(0.04);
     }
   });
 });
@@ -2177,13 +2178,13 @@ describe('the life round the window', () => {
     const own = letterSillBox('own');
     const visitor = letterSillBox('visitor');
     // how far across its own square a pigeon reaches, as in the flight test above
-    const reach = { x0: 0.07, x1: 0.91 };
+    const reach = { x0: 0.24, x1: 0.88 };
     expect(own.left + own.size * reach.x0).toBeGreaterThan(10 / 120);
     // facing left, the visitor's tail is on the right: it ends before the pot
     expect(visitor.left + visitor.size * (1 - reach.x0)).toBeLessThan(84 / 120);
     // the two face each other with a clear space between their beaks, standing, pecking, or holding a letter
     const unit = (spot: LetterSpot): number => LETTER_BIRD_FEET.scale * LETTER_SILL_SPOTS[spot].share;
-    const beak = { standing: 21.3, pecking: 21.3 * Math.cos(Math.PI / 6) + 11.1 * Math.sin(Math.PI / 6), letter: 32 };
+    const beak = { standing: PIGEON_REACH.beak, pecking: PIGEON_PECK.reach, letter: PIGEON_REACH.letter };
     const gap = (ownReach: number, visitorReach: number): number =>
       LETTER_SILL_SPOTS.visitor.x - visitorReach * unit('visitor') - (LETTER_SILL_SPOTS.own.x + ownReach * unit('own'));
     expect(gap(beak.standing, beak.standing)).toBeGreaterThan(8);
@@ -2207,7 +2208,7 @@ describe('the life round the window', () => {
   });
 
   it('flies from every spot to the same place far off, wholly inside the window once it is behind the room', () => {
-    const reach = { x0: 0.07, x1: 0.91, y0: 0.28, y1: 0.95 };
+    const reach = { x0: 0.24, x1: 0.88, y0: 0.21, y1: 0.86 };
     for (const spot of Object.keys(LETTER_SILL_SPOTS) as LetterSpot[]) {
       const keys = letterFlightFrom(spot);
       const box = letterSillBox(spot);

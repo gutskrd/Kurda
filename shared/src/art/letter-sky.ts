@@ -39,8 +39,8 @@ export type LetterSpot = 'alone' | 'own' | 'visitor';
  */
 export const LETTER_SILL_SPOTS: Readonly<Record<LetterSpot, { x: number; share: number }>> = {
   alone: { x: LETTER_SILL.x, share: LETTER_SILL.birdShare },
-  own: { x: 31, share: 0.36 },
-  visitor: { x: 63.5, share: 0.36 },
+  own: { x: 27, share: 0.36 },
+  visitor: { x: 67.5, share: 0.36 },
 };
 
 /**
