@@ -15,13 +15,19 @@
  * theirs, through the usual review. A chapter with nothing to record never
  * goes online by itself, since there is nothing to wait for.
  *
+ * A chapter's story — the one Hamo tells at its end, a story whose slug
+ * names the chapter (`road-01-…`, shared `roadStoryChapter`) — belongs to it
+ * the same way: its sentences are recordings the chapter waits for, and it
+ * is published, and approved, together with the lessons. A story added to a
+ * chapter already online goes online on its own once its sentences are in.
+ *
  * `publishRecordedChapters` checks every chapter and publishes the ready ones;
  * `RoadChapterWatch` runs it after each take is saved, one run at a time, so
  * a burst of takes costs one check after another, never two at once.
  */
 import type pg from 'pg';
 import type { FastifyBaseLogger } from 'fastify';
-import { conversationClips, lessonAudioKey, lessonAudioTargets } from '@kurda/shared';
+import { conversationClips, lessonAudioKey, lessonAudioTargets, roadStoryChapter } from '@kurda/shared';
 import { ROAD_COURSE } from './road-seed.js';
 
 type Log = Pick<FastifyBaseLogger, 'info' | 'warn'>;
@@ -35,7 +41,9 @@ export interface RoadChapter {
   lessons: number;
   /** of them, places with a published lesson */
   published: number;
-  /** the recordings the chapter's lessons play */
+  /** the chapter's story, the one Hamo tells at its end, when it has one */
+  story: { slug: string; title: string; online: boolean } | null;
+  /** the recordings the chapter's lessons and story play */
   lines: number;
   /** of them, recorded */
   recorded: number;
@@ -101,6 +109,37 @@ async function places(db: Pick<pg.Pool, 'query'>, course: string, unit: number |
   return out;
 }
 
+interface StoryRow {
+  id: string;
+  slug: string;
+  title: string;
+  status: string;
+  sentence_keys: string[];
+}
+
+/**
+ * The chapters' stories that are not archived, by chapter; or only chapter
+ * `unit`'s, locked first when `lock`. A story whose length falls between the
+ * bands cannot be published (the table refuses it), so it is left out rather
+ * than hold its chapter back; the content tests keep the road's in a band.
+ */
+async function chapterStories(db: Pick<pg.Pool, 'query'>, unit: number | null = null, lock = false): Promise<Map<number, StoryRow>> {
+  const pattern = unit === null ? 'road-__-%' : `road-${String(unit).padStart(2, '0')}-%`;
+  const { rows } = await db.query<StoryRow>(
+    `SELECT id, slug, title, status, sentence_keys FROM stories
+      WHERE slug LIKE $1 AND status IN ('draft', 'in_review', 'published') AND length IS NOT NULL
+      ORDER BY slug${lock ? ' FOR UPDATE' : ''}`,
+    [pattern],
+  );
+  const out = new Map<number, StoryRow>();
+  for (const r of rows) {
+    const n = roadStoryChapter(r.slug);
+    // one story a chapter: the first by slug, if an editor ever made two
+    if (n !== null && !out.has(n)) out.set(n, r);
+  }
+  return out;
+}
+
 /** Which of `keys` have a take; `lock` share-locks them, so none can go before the caller commits. */
 async function recorded(db: Pick<pg.Pool, 'query'>, keys: readonly string[], lock: boolean): Promise<Set<string>> {
   if (keys.length === 0) return new Set();
@@ -108,9 +147,17 @@ async function recorded(db: Pick<pg.Pool, 'query'>, keys: readonly string[], loc
   return new Set(rows.map((r) => r.key));
 }
 
-function summarize(position: number, list: readonly PlaceRow[], made: ReadonlySet<string>): RoadChapter & { keys: string[]; waiting: PlaceRow[] } {
+type Summary = RoadChapter & { keys: string[]; waiting: PlaceRow[]; waitingStory: StoryRow | null };
+
+function keysOf(list: readonly PlaceRow[], story: StoryRow | undefined): Set<string> {
   const keys = new Set<string>();
   for (const p of list) for (const k of chapterKeys(p.exercises)) keys.add(k);
+  for (const k of story?.sentence_keys ?? []) if (k) keys.add(k);
+  return keys;
+}
+
+function summarize(position: number, list: readonly PlaceRow[], story: StoryRow | undefined, made: ReadonlySet<string>): Summary {
+  const keys = keysOf(list, story);
   const first = list[0]!;
   return {
     position,
@@ -118,31 +165,62 @@ function summarize(position: number, list: readonly PlaceRow[], made: ReadonlySe
     titleEn: first.title_en,
     lessons: list.length,
     published: list.filter((p) => p.out).length,
+    story: story ? { slug: story.slug, title: story.title, online: story.status === 'published' } : null,
     lines: keys.size,
     recorded: [...keys].filter((k) => made.has(k)).length,
     online: list.every((p) => p.out),
     keys: [...keys],
-    // what going online publishes: each place not out yet, with its first version waiting
+    // what going online publishes: each place not out yet, with its first version waiting, and the story if it waits
     waiting: list.filter((p) => !p.out),
+    waitingStory: story && story.status !== 'published' ? story : null,
   };
 }
 
-/** The course's chapters in order, with how far each has been recorded and whether it is online. */
-export async function roadChapters(pool: pg.Pool, course: string = ROAD_COURSE): Promise<RoadChapter[]> {
-  const byUnit = await places(pool, course);
-  const all = [...new Set([...byUnit.values()].flatMap((list) => list.flatMap((p) => [...chapterKeys(p.exercises)])))];
-  const made = await recorded(pool, all, false);
+/** Every chapter of the course with its story, and which of all their recordings are made. */
+async function survey(
+  db: Pick<pg.Pool, 'query'>,
+  course: string,
+  withStories: boolean,
+): Promise<{ byUnit: Map<number, PlaceRow[]>; stories: Map<number, StoryRow>; made: Set<string> }> {
+  const [byUnit, stories] = await Promise.all([places(db, course), withStories ? chapterStories(db) : Promise.resolve(new Map<number, StoryRow>())]);
+  const all = [...new Set([...byUnit].flatMap(([n, list]) => [...keysOf(list, stories.get(n))]))];
+  return { byUnit, stories, made: await recorded(db, all, false) };
+}
+
+/**
+ * The course's chapters in order, with how far each has been recorded and
+ * whether it is online. The chapters' stories are the road's (`withStories`):
+ * a course of a test's own has none unless it says so.
+ */
+export async function roadChapters(pool: pg.Pool, course: string = ROAD_COURSE, withStories = course === ROAD_COURSE): Promise<RoadChapter[]> {
+  const { byUnit, stories, made } = await survey(pool, course, withStories);
   return [...byUnit.keys()]
     .sort((a, b) => a - b)
     .map((n) => {
-      const c = summarize(n, byUnit.get(n)!, made);
-      return { position: c.position, titleKu: c.titleKu, titleEn: c.titleEn, lessons: c.lessons, published: c.published, lines: c.lines, recorded: c.recorded, online: c.online };
+      const c = summarize(n, byUnit.get(n)!, stories.get(n), made);
+      return {
+        position: c.position,
+        titleKu: c.titleKu,
+        titleEn: c.titleEn,
+        lessons: c.lessons,
+        published: c.published,
+        story: c.story,
+        lines: c.lines,
+        recorded: c.recorded,
+        online: c.online,
+      };
     });
 }
 
-/** Whether a chapter can go online now: not online, every waiting place at its first version, and every line recorded. */
-function ready(c: ReturnType<typeof summarize>): boolean {
-  return !c.online && c.lines > 0 && c.recorded === c.lines && c.waiting.every((p) => p.version === 1 && (p.status === 'draft' || p.status === 'in_review'));
+/**
+ * Whether a chapter can go online now — not online, every waiting place at its
+ * first version, and every line recorded — or, once online, whether a story
+ * added to it since can follow, its own sentences all recorded.
+ */
+function ready(c: Summary): boolean {
+  if (c.lines === 0 || c.recorded !== c.lines) return false;
+  if (c.online) return c.waitingStory !== null;
+  return c.waiting.every((p) => p.version === 1 && (p.status === 'draft' || p.status === 'in_review'));
 }
 
 /**
@@ -150,11 +228,9 @@ function ready(c: ReturnType<typeof summarize>): boolean {
  * by position. Each goes online in its own transaction, which locks its
  * lessons and the takes they play and checks again before it publishes.
  */
-export async function publishRecordedChapters(pool: pg.Pool, log: Log, course: string = ROAD_COURSE): Promise<number[]> {
-  const byUnit = await places(pool, course);
-  const all = [...new Set([...byUnit.values()].flatMap((list) => list.flatMap((p) => [...chapterKeys(p.exercises)])))];
-  const made = await recorded(pool, all, false);
-  const candidates = [...byUnit.keys()].sort((a, b) => a - b).filter((n) => ready(summarize(n, byUnit.get(n)!, made)));
+export async function publishRecordedChapters(pool: pg.Pool, log: Log, course: string = ROAD_COURSE, withStories = course === ROAD_COURSE): Promise<number[]> {
+  const { byUnit, stories, made } = await survey(pool, course, withStories);
+  const candidates = [...byUnit.keys()].sort((a, b) => a - b).filter((n) => ready(summarize(n, byUnit.get(n)!, stories.get(n), made)));
 
   const published: number[] = [];
   for (const n of candidates) {
@@ -162,18 +238,27 @@ export async function publishRecordedChapters(pool: pg.Pool, log: Log, course: s
     try {
       await client.query('BEGIN');
       const now = (await places(client, course, n, true)).get(n);
-      const chapter = now ? summarize(n, now, await recorded(client, [...new Set(now.flatMap((p) => [...chapterKeys(p.exercises)]))], true)) : null;
+      const story = withStories ? (await chapterStories(client, n, true)).get(n) : undefined;
+      const chapter = now ? summarize(n, now, story, await recorded(client, [...keysOf(now, story)], true)) : null;
       if (!chapter || !ready(chapter)) {
         await client.query('ROLLBACK');
         continue;
       }
       const ids = chapter.waiting.map((p) => p.lesson_id);
-      await client.query(`UPDATE lessons SET status = 'published', published_at = now() WHERE id = ANY($1::uuid[])`, [ids]);
+      if (ids.length > 0) await client.query(`UPDATE lessons SET status = 'published', published_at = now() WHERE id = ANY($1::uuid[])`, [ids]);
+      if (chapter.waitingStory) {
+        await client.query(
+          `UPDATE stories SET status = 'published', published_at = now(), review_status = 'approved', reviewed_at = now(), updated_at = now() WHERE id = $1`,
+          [chapter.waitingStory.id],
+        );
+      }
       await client.query('COMMIT');
       published.push(n);
       log.info(
-        { course, chapter: n, lessons: ids.length, recordings: chapter.lines },
-        `road chapter ${n} (${chapter.titleEn}) is online: all ${chapter.lines} recordings made, ${ids.length} lessons published`,
+        { course, chapter: n, lessons: ids.length, story: chapter.waitingStory?.slug ?? null, recordings: chapter.lines },
+        `road chapter ${n} (${chapter.titleEn}) is online: all ${chapter.lines} recordings made, ${ids.length} lessons` +
+          (chapter.waitingStory ? ` and its story ‘${chapter.waitingStory.title}’` : '') +
+          ' published',
       );
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
@@ -198,6 +283,7 @@ export class RoadChapterWatch {
     private readonly pool: pg.Pool,
     private readonly log: Log,
     private readonly course: string = ROAD_COURSE,
+    private readonly withStories = course === ROAD_COURSE,
   ) {}
 
   /** Check the chapters soon; resolves when this request's run is over. */
@@ -210,7 +296,7 @@ export class RoadChapterWatch {
       do {
         this.again = false;
         try {
-          await publishRecordedChapters(this.pool, this.log, this.course);
+          await publishRecordedChapters(this.pool, this.log, this.course, this.withStories);
         } catch (err) {
           this.log.warn({ err }, 'checking the road chapters failed');
         }

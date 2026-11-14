@@ -28,7 +28,8 @@ describe('the starter story files', () => {
     for (const file of STARTER_STORY_FILES) {
       const parsed = parseStoryFile(JSON.parse(await readFile(file, 'utf8')), 'draft');
       expect(parsed.issues).toEqual([]);
-      expect(parsed.drafts.length).toBeGreaterThanOrEqual(8);
+      // the chapters' stories arrive one chapter at a time; the starters are a library of their own
+      expect(parsed.drafts.length).toBeGreaterThanOrEqual(file.pathname.endsWith('/road.json') ? 1 : 8);
       for (const draft of parsed.drafts) {
         expect(slugs.has(draft.slug)).toBe(false);
         slugs.add(draft.slug);

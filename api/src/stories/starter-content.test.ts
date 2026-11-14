@@ -48,7 +48,8 @@ interface StarterStory {
 const read = (name: string): StarterStory[] =>
   JSON.parse(readFileSync(fileURLToPath(new URL(`../../content/stories/${name}`, import.meta.url)), 'utf8')).stories;
 
-const stories = [...read('kurmanci.json'), ...read('sorani.json')];
+// the starter stories, and the ones Hamo tells at the end of each chapter of the road
+const stories = [...read('kurmanci.json'), ...read('sorani.json'), ...read('road.json')];
 
 /**
  * The reader and the studio cut a sentence after any full stop, so a sentence

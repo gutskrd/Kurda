@@ -64,6 +64,18 @@ import {
 /** A slug: lower-case Latin letters, digits and dashes, as the stories table checks it. */
 export const STORY_SLUG_PATTERN = /^[a-z0-9-]{3,80}$/;
 
+/**
+ * The chapter of the Kurmanji Road a story ends, when it is one: the story
+ * Hamo tells at a chapter's end has a slug that starts with the chapter's
+ * number (`road-01-li-ber-deriye-sor`). It is recorded in Hamo's voice and
+ * goes online with its chapter. Null for any other story.
+ */
+export function roadStoryChapter(slug: string): number | null {
+  const m = /^road-(\d{2})-[a-z0-9-]+$/.exec(slug);
+  const n = m ? Number(m[1]) : 0;
+  return n >= 1 && n <= 12 ? n : null;
+}
+
 export function isStorySlug(v: unknown): v is string {
   return typeof v === 'string' && STORY_SLUG_PATTERN.test(v);
 }

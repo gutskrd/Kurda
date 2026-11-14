@@ -1,0 +1,116 @@
+{
+  "stories": [
+    {
+      "slug": "road-01-mevan-cay-u-sev",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 1,
+      "category": "everyday",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Mêvan, çay û sêv",
+      "summary": "Mêvanek li mala Hamo ye. Lê sêv li ku ne?",
+      "body": "Silav! Ez Hamo me. Mala min li Sêvanê ye. Sêvan gundekî pir xweşik e. Baxçe li vir e, û sêv li wir in.\n\nÎro mêvanek li mala min e. Mêvan ji welatekî dûr e, lê niha ew li vir e. Ez kêfxweş im: “Bi xêr hatî!” Mêvan jî kêfxweş e: “Ser çavan!”\n\nXezal jî li vir e. Xezal xwarziya min e. Ew ji Amedê ye. Lê ji min re ew Xezo ye!\n\nÊvar e. Em hemû li baxçe ne. Çay germ e û pir xweş e.\n\nLê sêv li ku ne? Sêv ne li wir in! Hevalo li baxçe ye. Ew ne birçî ye. Ew tenê westiyayî ye. Û ew pir kêfxweş e!",
+      "translations": {
+        "en": "Hello! I am Hamo. My home is in Sêvan. Sêvan is a very beautiful village. The orchard is here, and the apples are there.\n\nToday there is a guest at my home. The guest is from a faraway country, but now they are here. I am glad: “Welcome!” The guest is glad too: “Thank you!”\n\nXezal is here too. Xezal is my niece. She is from Amed. But to me she is Xezo!\n\nIt is evening. We are all in the orchard. The tea is hot and very good.\n\nBut where are the apples? The apples are not there! Hevalo is in the orchard. He is not hungry. He is just tired. And he is very happy!"
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Mala Hamo li ku ye?",
+          "promptEn": "Where is Hamo’s home?",
+          "options": [
+            "Li Sêvanê",
+            "Li Amedê",
+            "Li welatekî dûr"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Mala min li Sêvanê ye.”",
+          "explanationEn": "Hamo says: “My home is in Sêvan.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Mêvan ji ku derê ye?",
+          "promptEn": "Where is the guest from?",
+          "options": [
+            "Ji Sêvanê",
+            "Ji welatekî dûr",
+            "Ji Amedê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Mêvan ji welatekî dûr e.”",
+          "explanationEn": "The story says: “The guest is from a faraway country.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast an şaş? Ji Hamo re, navê Xezalê Xezo ye.",
+          "promptEn": "True or false? To Hamo, Xezal’s name is Xezo.",
+          "options": [
+            "Rast",
+            "Şaş"
+          ],
+          "correctIndex": 0,
+          "explanation": "Rast e. Hamo dibêje: “Ji min re ew Xezo ye!”",
+          "explanationEn": "True. Hamo says: “To me she is Xezo!”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Êvar e. Hemû li ku ne?",
+          "promptEn": "It is evening. Where is everyone?",
+          "options": [
+            "Li baxçe",
+            "Li Amedê",
+            "Li bajêr"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Em hemû li baxçe ne.”",
+          "explanationEn": "Hamo says: “We are all in the orchard.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Çay çawa ye?",
+          "promptEn": "What is the tea like?",
+          "options": [
+            "Germ û pir xweş e",
+            "Sar e",
+            "Ne xweş e"
+          ],
+          "correctIndex": 0,
+          "explanation": "Çîrok dibêje: “Çay germ e û pir xweş e.”",
+          "explanationEn": "The story says: “The tea is hot and very good.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Hevalo ne birçî ye?",
+          "promptEn": "Why is Hevalo not hungry?",
+          "options": [
+            "Wî hemû sêv xwarin.",
+            "Ew nexweş e.",
+            "Ew li Amedê ye."
+          ],
+          "correctIndex": 0,
+          "explanation": "Sêv ne li wir in, û Hevalo westiyayî û kêfxweş e: wî hemû sêv xwarin!",
+          "explanationEn": "The apples are gone, and Hevalo is tired and happy: he ate all the apples!",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
+        }
+      ]
+    }
+  ]
+}

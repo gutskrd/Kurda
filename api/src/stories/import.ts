@@ -276,8 +276,12 @@ export async function importStories(pool: pg.Pool, raw: unknown, options: StoryI
   return result;
 }
 
-/** Where the starter stories are, beside the other content the API ships with. */
-export const STARTER_STORY_FILES = ['kurmanci.json', 'sorani.json'].map(
+/**
+ * Where the starter stories are, beside the other content the API ships with:
+ * the starter stories, and the stories Hamo tells at the end of each chapter of
+ * the road (road.json), which go online with their chapter (content/road-chapters.ts).
+ */
+export const STARTER_STORY_FILES = ['kurmanci.json', 'sorani.json', 'road.json'].map(
   (name) => new URL(`../../content/stories/${name}`, import.meta.url),
 );
 

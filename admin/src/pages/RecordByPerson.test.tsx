@@ -161,7 +161,17 @@ describe('the people', () => {
       mine: ['hamo'],
       ownVoicesOnly: true,
       chapters: [
-        { ...chapter, position: 1, titleKu: 'Silav', titleEn: 'Hello', lines: 240, recorded: 240, published: 16, online: true },
+        {
+          ...chapter,
+          position: 1,
+          titleKu: 'Silav',
+          titleEn: 'Hello',
+          lines: 240,
+          recorded: 240,
+          published: 16,
+          online: true,
+          story: { slug: 'road-01-mevan-cay-u-sev', title: 'Mêvan, çay û sêv', online: true },
+        },
         { ...chapter, position: 2, titleKu: 'Malbat', titleEn: 'Family', lines: 250, recorded: 249 },
         { ...chapter, position: 3, titleKu: 'Mal û gund', titleEn: 'House and village', lines: 230, recorded: 230 },
       ],
@@ -176,6 +186,7 @@ describe('the people', () => {
     ]);
     expect(within(rows[1]!).getByRole('progressbar', { name: 'Chapter 2 recorded' })).toHaveAttribute('aria-valuenow', '249');
     expect(within(rows[1]!).getByText('249 of 250 recorded')).toBeInTheDocument();
+    expect(within(rows[0]!).getByText('240 of 240 recorded · with Hamo’s story ‘Mêvan, çay û sêv’')).toBeInTheDocument();
   });
 
   it('tells a voice actor with no voice linked yet who links one', async () => {

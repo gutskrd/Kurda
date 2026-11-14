@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { CONVERSATION_ID, conversationClips, lessonAudioKey, lessonAudioTargets, shownInPrompt } from '@kurda/shared';
+import { CONVERSATION_ID, conversationClips, lessonAudioKey, lessonAudioTargets, roadStoryChapter, shownInPrompt, storyParagraphs } from '@kurda/shared';
 import { InvalidExercisePayloadError, validateExercisePayload } from './exercises.js';
 import { courseContentSchema } from './import.js';
 import type { ExerciseType } from './repository.js';
@@ -539,6 +539,92 @@ export function checkRoad(options: RoadCheckOptions = {}): RoadCheck {
   for (const voice of courseRecordings.values()) stats.recordings[voice] += 1;
   stats.minutes = Math.round((stats.exercises * 15) / 60);
   return { problems, stats };
+}
+
+// ---------- the chapters' stories ----------
+
+/** Where the stories Hamo tells at the end of each chapter are kept: seeded with the starter stories (stories/import.ts). */
+export const ROAD_STORIES_FILE = new URL('../../content/stories/road.json', import.meta.url);
+
+/** The level of the story at the end of each chapter, as the stories table counts them: A1 1, A2 2, B1 3. */
+const STORY_LEVEL: Record<string, number> = { A1: 1, A2: 2, B1: 3 };
+
+/** At most this share of a story's words may be ones the learner has not met by its chapter's end, each glossed. */
+export const STORY_NEW_WORDS_MAX = 0.02;
+
+export interface RoadStoryInput {
+  slug: string;
+  dialect?: string;
+  level?: number;
+  title?: string;
+  body?: string;
+  glossary?: Array<{ term?: string; meanings?: { en?: string } }>;
+  questions?: Array<{ options?: unknown[]; correctIndex?: number; prompt?: string }>;
+}
+
+/**
+ * The story at the end of each chapter, held to what the chapter taught: a
+ * slug that names its chapter (`road-NN-…`), one story a chapter, Kurmancî at
+ * the chapter's level, Hawar letters and a capital at each sentence, and
+ * words the learner has met by the chapter's last lesson — at most 2 % new,
+ * every one of them glossed (Hu & Nation's 98 % for reading with ease).
+ * Questions point at one of their own options.
+ */
+export function checkRoadStories(plan: RoadPlan, stories: readonly RoadStoryInput[]): RoadProblem[] {
+  const lex = lexiconOf(plan);
+  const problems: RoadProblem[] = [];
+  const seen = new Map<number, string>();
+  for (const story of stories) {
+    const at = (message: string, field?: string): void => void problems.push({ lesson: story.slug, field, message });
+    const n = roadStoryChapter(story.slug);
+    const unit = n === null ? undefined : plan.units.find((u) => u.number === n);
+    if (n === null || !unit) {
+      at('slug should be road-NN-… with NN the chapter it ends (01–12)', 'slug');
+      continue;
+    }
+    if (seen.has(n)) at(`chapter ${n} already has a story: ${seen.get(n)}`, 'slug');
+    seen.set(n, story.slug);
+    if (story.dialect !== 'kurmanci') at('dialect should be kurmanci', 'dialect');
+    if (story.level !== STORY_LEVEL[unit.cefr]) at(`level should be ${STORY_LEVEL[unit.cefr]} (${unit.cefr})`, 'level');
+    const body = story.body ?? '';
+    if (body.trim() === '') {
+      at('has no text', 'body');
+      continue;
+    }
+    for (const p of orthographyProblems(story.title ?? '', false)) at(p, 'title');
+    storyParagraphs(body).forEach((paragraph, pi) => {
+      for (const p of orthographyProblems(paragraph.replace(/[“”«»]/g, ''), true)) at(p, `body ¶${pi + 1}`);
+    });
+    // the chapter's last lesson is the furthest the learner has come
+    const last = Math.max(...lex.lessons.filter((l) => l.unit.number === n).map((l) => l.index));
+    const glossed = new Set((story.glossary ?? []).flatMap((g) => kurdishWords(g.term ?? '')));
+    const words = kurdishWords(body).filter((w) => !/^\d+$/.test(w));
+    const unmet = words.filter((w) => (lex.firstUse.get(w) ?? Infinity) > last);
+    for (const w of new Set(unmet)) if (!glossed.has(w)) at(`“${w}” is not met by the end of chapter ${n}: gloss it, or say it with words the chapter taught`, 'body');
+    if (words.length > 0 && unmet.length / words.length > STORY_NEW_WORDS_MAX) {
+      at(`${unmet.length} of its ${words.length} words are new by chapter ${n} (at most ${Math.round(STORY_NEW_WORDS_MAX * 100)} %)`, 'body');
+    }
+    for (const g of story.glossary ?? []) {
+      if (!g.term || !body.includes(g.term)) at(`glossary term “${g.term ?? ''}” is not in the story`, 'glossary');
+      if (!g.meanings?.en) at(`glossary term “${g.term ?? ''}” has no English meaning`, 'glossary');
+    }
+    (story.questions ?? []).forEach((q, qi) => {
+      const options = Array.isArray(q.options) ? q.options.length : 0;
+      if (typeof q.correctIndex !== 'number' || q.correctIndex < 0 || q.correctIndex >= options) at('correctIndex must point at an option', `questions[${qi}]`);
+    });
+  }
+  return problems;
+}
+
+/** The stories file as written, or none while it is not there yet. */
+export function loadRoadStories(): RoadStoryInput[] {
+  try {
+    const raw = JSON.parse(readFileSync(ROAD_STORIES_FILE, 'utf8')) as { stories?: RoadStoryInput[] };
+    return Array.isArray(raw.stories) ? raw.stories : [];
+  } catch (err) {
+    if ((err as { code?: string }).code === 'ENOENT') return [];
+    throw err;
+  }
 }
 
 function conversationIds(doc: unknown): string[] {

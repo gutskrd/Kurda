@@ -258,7 +258,7 @@ function Chapters({ chapters }: { chapters: readonly RoadChapter[] }): React.JSX
                 <div className="progress-bar" style={{ width: `${c.lines === 0 ? 0 : (c.recorded / c.lines) * 100}%` }} />
               </div>
               <span className="subtle rp-chapter-count">
-                {c.recorded} of {c.lines} recorded
+                {c.recorded} of {c.lines} recorded{c.story ? ` · with Hamo’s story ‘${c.story.title}’` : ''}
               </span>
             </li>
           );

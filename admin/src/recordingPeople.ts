@@ -44,7 +44,9 @@ export interface RoadChapter {
   titleEn: string;
   lessons: number;
   published: number;
-  /** the recordings its lessons play, and how many are made */
+  /** the story Hamo tells at the chapter's end, which goes online with it; absent from an older server */
+  story?: { slug: string; title: string; online: boolean } | null;
+  /** the recordings its lessons and story play, and how many are made */
   lines: number;
   recorded: number;
   online: boolean;

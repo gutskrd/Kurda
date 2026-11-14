@@ -2,7 +2,8 @@
  * A chapter of the road going online by itself against real Postgres: not
  * while one line is still unrecorded, then every lesson of it at once when
  * the last take is in; never twice; never a chapter with nothing to record;
- * and never over a lesson an editor is reworking.
+ * never over a lesson an editor is reworking; and the chapter's story, told
+ * by Hamo, waited for and published with it.
  *
  * Each run builds a course of its own, so the road itself is never touched.
  */
@@ -24,6 +25,8 @@ describe.skipIf(!DATABASE_URL)('road chapters going online (integration)', () =>
   let pool: pg.Pool;
   let repo: ContentRepository;
   const keys: string[] = [];
+  // the story told at the end of chapter 1 of this test's course: road-01-…, as the road names them
+  const storySlug = `road-01-test-${s}`;
 
   async function record(text: string, key = lessonAudioKey(text)): Promise<void> {
     keys.push(key);
@@ -71,6 +74,12 @@ describe.skipIf(!DATABASE_URL)('road chapters going online (integration)', () =>
     const two = await repo.createSkill(await repo.createUnit(courseId, 2, 'Malbat', 'Family'), 1, 'Malbat', 'Family');
     const c = await repo.createLesson(two, 1, 'Dê', 'Mother');
     await repo.addExercise(c, 1, 'multiple_choice', { prompt: 'Which is right?', options: ['Ez baş im.', 'Ez baş î.'], correctIndex: 0 });
+    // chapter 1's story: two sentences, each a recording the chapter waits for
+    await pool.query(
+      `INSERT INTO stories (slug, dialect, level, title, body, word_count, length, sentence_keys, status, source)
+       VALUES ($1, 'kurmanci', 1, 'Sêv', $2, 70, 'short', $3, 'draft', 'starter')`,
+      [storySlug, 'Hevalo birçî ye. Sêv xweş e.', [lessonAudioKey('Hevalo birçî ye.'), lessonAudioKey('Sêv xweş e.')]],
+    );
   });
 
   afterAll(async () => {
@@ -81,6 +90,7 @@ describe.skipIf(!DATABASE_URL)('road chapters going online (integration)', () =>
       [course],
     );
     await pool.query(`DELETE FROM courses WHERE slug = $1`, [course]);
+    await pool.query(`DELETE FROM stories WHERE slug = $1`, [storySlug]);
     await pool.query(`DELETE FROM lesson_audio WHERE key = ANY($1::text[])`, [keys]);
     await pool.end();
   });
@@ -91,17 +101,19 @@ describe.skipIf(!DATABASE_URL)('road chapters going online (integration)', () =>
     await record('sêv');
     await record('Bi xêr bimînî!');
     await record('Fermo, sêvek!', conversationLineKey(conversation, 0, 'Fermo, sêvek!'));
-    expect(await publishRecordedChapters(pool, quiet, course)).toEqual([]);
-    expect(await roadChapters(pool, course)).toEqual([
-      { position: 1, titleKu: 'Silav', titleEn: 'Hello', lessons: 2, published: 0, lines: 6, recorded: 5, online: false },
-      { position: 2, titleKu: 'Malbat', titleEn: 'Family', lessons: 1, published: 0, lines: 0, recorded: 0, online: false },
+    await record('Hevalo birçî ye.');
+    await record('Sêv xweş e.');
+    expect(await publishRecordedChapters(pool, quiet, course, true)).toEqual([]);
+    expect(await roadChapters(pool, course, true)).toEqual([
+      { position: 1, titleKu: 'Silav', titleEn: 'Hello', lessons: 2, published: 0, story: { slug: storySlug, title: 'Sêv', online: false }, lines: 8, recorded: 7, online: false },
+      { position: 2, titleKu: 'Malbat', titleEn: 'Family', lessons: 1, published: 0, story: null, lines: 0, recorded: 0, online: false },
     ]);
     expect((await statuses()).map((r) => r[3])).toEqual(['draft', 'draft', 'draft']);
   });
 
   it('puts the whole chapter online once its last line is in, and only once; a chapter with nothing to record stays as it is', async () => {
     await record('Spas!', conversationLineKey(conversation, 1, 'Spas!'));
-    const watch = new RoadChapterWatch(pool, quiet, course);
+    const watch = new RoadChapterWatch(pool, quiet, course, true);
     // a burst of takes makes one run after the one going, not one each
     await Promise.all([watch.nudge(), watch.nudge(), watch.nudge()]);
     expect(await statuses()).toEqual([
@@ -109,8 +121,11 @@ describe.skipIf(!DATABASE_URL)('road chapters going online (integration)', () =>
       [1, 2, 1, 'published'],
       [2, 1, 1, 'draft'],
     ]);
-    expect((await roadChapters(pool, course))[0]).toMatchObject({ published: 2, lines: 6, recorded: 6, online: true });
-    expect(await publishRecordedChapters(pool, quiet, course)).toEqual([]);
+    expect((await roadChapters(pool, course, true))[0]).toMatchObject({ published: 2, lines: 8, recorded: 8, online: true, story: { online: true } });
+    // the story went online with its chapter, approved, as learners are shown only approved stories
+    const story = await pool.query(`SELECT status, review_status, published_at IS NOT NULL published FROM stories WHERE slug = $1`, [storySlug]);
+    expect(story.rows).toEqual([{ status: 'published', review_status: 'approved', published: true }]);
+    expect(await publishRecordedChapters(pool, quiet, course, true)).toEqual([]);
   });
 
   it('leaves a lesson an editor reworks after it went out to them', async () => {
@@ -120,7 +135,7 @@ describe.skipIf(!DATABASE_URL)('road chapters going online (integration)', () =>
       [course],
     )).rows;
     await repo.newLessonVersion(first!.id);
-    expect(await publishRecordedChapters(pool, quiet, course)).toEqual([]);
+    expect(await publishRecordedChapters(pool, quiet, course, true)).toEqual([]);
     expect((await statuses()).filter((r) => r[0] === 1)).toEqual([
       [1, 1, 1, 'published'],
       [1, 1, 2, 'draft'],

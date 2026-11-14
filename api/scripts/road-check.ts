@@ -7,12 +7,14 @@
  *   tsx scripts/road-check.ts --hamo 3   unit 3 as if it were already marked as written for Hamo
  *                                        alone, so a writer can see what is left before marking it
  *
+ * Each chapter's story (content/stories/road.json) is checked with it.
+ *
  * Prints every problem with its place (lesson key, exercise position, field),
  * then what the units checked add up to: lessons, exercises, minutes, and
  * who records how much. Exits 1 when there is any problem, so a writer can
  * run it after each lesson and a unit lands only when it is clean.
  */
-import { ROAD_RECORDER, checkRoad, checkRoadPlan, formatProblem, loadRoadPlan } from '../src/content/road-check.js';
+import { ROAD_RECORDER, checkRoad, checkRoadPlan, checkRoadStories, formatProblem, loadRoadPlan, loadRoadStories } from '../src/content/road-check.js';
 
 function main(): void {
   const args = process.argv.slice(2);
@@ -34,7 +36,9 @@ function main(): void {
   }
   const planProblems = checkRoadPlan(plan);
   const { problems, stats } = checkRoad({ plan, units: units.length > 0 ? units : undefined });
-  const all = [...planProblems, ...problems];
+  // and the stories Hamo tells at the chapters' ends: those of the units asked about, or all of them
+  const stories = loadRoadStories().filter((st) => units.length === 0 || units.some((n) => st.slug.startsWith(`road-${String(n).padStart(2, '0')}-`)));
+  const all = [...planProblems, ...problems, ...checkRoadStories(plan, stories)];
   for (const p of all) console.log(formatProblem(p));
 
   const per = (counts: Record<string, number>): string => {
