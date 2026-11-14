@@ -6,21 +6,26 @@
     "titleEn": "The Kurmanji Road"
   },
   "characters": {
-    "hamo": "Hamo is the warm uncle of Sêvan, a village of apple orchards below the mountains, and the main voice of the road. Steady, patient and easily pleased, he laughs at his own stories (often before the end of them), lifts the near end of his full black moustache when he is pleased with you, and is proudest of that moustache above everything he owns. A miss gets one raised brow and a thoughtful look, never a cross word. He wears the traditional suit with a green piştên, keeps the orchard, drinks tea from dawn to dusk, is never quite on time, and knows a proverb or a tale for every moment. He is Xezal’s maternal uncle (her xal), husband of Nazê, father of Baran and Hêvî, and son of Dapîr Şemsê.",
-    "xezo": "Xezal is Hamo’s niece, the daughter of his sister Gulîstan. She lives in Amed, studies at the university there and comes to the village to visit; Hamo calls her Xezo, which she pretends to hate. Bright, quick and a little cheeky, she teases her uncle about his moustache and his timekeeping, giggles with her shoulders, tilts her head to listen and winks when you get something right; a miss gets a short pout that is gone in a moment, because she is on your side. She knows the city and the village alike, bargains better than anyone at the market, and in the last units has to decide whether to take a teaching post far away in Hewlêr.",
+    "hamo": "Hamo is the warm heart of Sêvan, a village of apple orchards below the mountains, and the main voice of the road. He was born and grew up in Kobanî, where his father Ibrahîm and his mother Edûl still live, and his younger brother Evdila and his sisters Lorîn and Cîhan; as children he and Lorîn spent their summers in Sêvan with their aunt, and as a young man he came back to the village and stayed. He has never married: he lives behind the blue gate with Hevalo and the old apple orchard, the neighbours’ children call him Xalo Hamo, and Dapîr Şemsê has opinions about that. He speaks standard Kurmanji with the warmth and a few of the words of Kobanî. Steady, patient and easily pleased, he laughs at his own stories (often before the end of them), lifts the near end of his full black moustache when he is pleased with you, and is proudest of that moustache above everything he owns. A miss gets one raised brow and a thoughtful look, never a cross word. He wears the traditional suit with a green piştên, keeps the orchard, drinks tea from dawn to dusk, is never quite on time, and knows a proverb or a tale for every moment.",
+    "xezo": "Xezal comes from Amed and lives in Sêvan: she came for a year to help at the village school while she studies to be a teacher, and rents the upstairs room at Dapîr Şemsê’s. She is not Hamo’s family, but they are as close as family: like the village children she calls him Xalo Hamo, and he calls her Xezo, which she pretends to hate. Bright, quick and a little cheeky, she teases Hamo about his moustache and his timekeeping, giggles with her shoulders, tilts her head to listen and winks when you get something right; a miss gets a short pout that is gone in a moment, because she is on your side. She knows the city and the village alike, bargains better than anyone at the market, and in the last units has to decide whether to take a teaching post far away in Hewlêr.",
     "hevalo": "Hevalo is the young deer who is the learner’s guide: he brings you to Hamo’s gate in the first lesson and walks the whole road beside you. His name means “O friend!”, which Xezal finds very funny. Curious about everything and quick on his feet, he hops when he is pleased, tilts his head when something puzzles him and pricks up both ears at anything new. He is always hungry for apples and always the first suspect when apples go missing, cheeky in a sweet way and kind when you get something wrong. He speaks little — a guide’s word here and there — and on the summer pastures he meets Zerê, a shy wild doe, and gives her his last apple."
   },
-  "core": ["û", "ji", "li", "bi", "jî", "an", "ku", "re", "ve"],
+  "core": ["û", "ji", "li", "bi", "jî", "an", "ku", "re", "ve", "wey", "lo", "îcar"],
   "names": [
-    {"name": "Hamo", "kind": "person", "en": "Hamo, the uncle", "forms": ["Hamo"]},
-    {"name": "Xezal", "kind": "person", "en": "Xezal, Hamo’s niece", "forms": ["Xezal", "Xezalê"]},
+    {"name": "Hamo", "kind": "person", "en": "Hamo, from Kobanî, at home in Sêvan", "forms": ["Hamo"]},
+    {"name": "Xezal", "kind": "person", "en": "Xezal, from Amed, the young teacher in Sêvan", "forms": ["Xezal", "Xezalê"]},
     {"name": "Xezo", "kind": "person", "en": "what Hamo calls Xezal", "forms": ["Xezo"]},
     {"name": "Hevalo", "kind": "person", "en": "the deer, the learner’s guide", "forms": ["Hevalo"]},
-    {"name": "Nazê", "kind": "person", "en": "Hamo’s wife", "forms": ["Nazê"]},
-    {"name": "Baran", "kind": "person", "en": "Hamo’s son, nine", "forms": ["Baran"]},
-    {"name": "Hêvî", "kind": "person", "en": "Hamo’s daughter, six", "forms": ["Hêvî", "Hêviyê"]},
-    {"name": "Şemsê", "kind": "person", "en": "Dapîr Şemsê, Hamo’s mother", "forms": ["Şemsê"]},
-    {"name": "Gulîstan", "kind": "person", "en": "Hamo’s sister, Xezal’s mother", "forms": ["Gulîstan", "Gulîstanê"]},
+    {"name": "Nazê", "kind": "person", "en": "Hamo’s neighbour", "forms": ["Nazê"]},
+    {"name": "Baran", "kind": "person", "en": "Nazê’s son, nine", "forms": ["Baran"]},
+    {"name": "Hêvî", "kind": "person", "en": "Nazê’s daughter, six", "forms": ["Hêvî", "Hêviyê"]},
+    {"name": "Şemsê", "kind": "person", "en": "Dapîr Şemsê, the village grandmother", "forms": ["Şemsê"]},
+    {"name": "Gulîstan", "kind": "person", "en": "Xezal’s mother, in Amed", "forms": ["Gulîstan", "Gulîstanê"]},
+    {"name": "Ibrahîm", "kind": "person", "en": "Hamo’s father, in Kobanî", "forms": ["Ibrahîm"]},
+    {"name": "Edûl", "kind": "person", "en": "Hamo’s mother, in Kobanî", "forms": ["Edûl", "Edûlê"]},
+    {"name": "Evdila", "kind": "person", "en": "Hamo’s younger brother", "forms": ["Evdila"]},
+    {"name": "Lorîn", "kind": "person", "en": "Hamo’s younger sister, in Kobanî", "forms": ["Lorîn", "Lorînê"]},
+    {"name": "Cîhan", "kind": "person", "en": "Hamo’s youngest sister", "forms": ["Cîhan", "Cîhanê"]},
     {"name": "Ferhad", "kind": "person", "en": "the neighbour", "forms": ["Ferhad"]},
     {"name": "Mîrza", "kind": "person", "en": "the fruit seller at the market", "forms": ["Mîrza"]},
     {"name": "Şîrîn", "kind": "person", "en": "the doctor, Hamo’s old schoolmate", "forms": ["Şîrîn", "Şîrînê"]},
@@ -28,20 +33,21 @@
     {"name": "Hêlîn", "kind": "person", "en": "Baran’s teacher", "forms": ["Hêlîn", "Hêlînê"]},
     {"name": "Bozo", "kind": "animal", "en": "Hamo’s grey donkey", "forms": ["Bozo"]},
     {"name": "Şêro", "kind": "animal", "en": "Hamo’s dog", "forms": ["Şêro"]},
-    {"name": "Gewrê", "kind": "animal", "en": "Xezal’s cat in Amed", "forms": ["Gewrê"]},
+    {"name": "Gewrê", "kind": "animal", "en": "Xezal’s cat, at home in Amed", "forms": ["Gewrê"]},
     {"name": "Zerê", "kind": "animal", "en": "the wild doe on the summer pastures", "forms": ["Zerê"]},
     {"name": "Kawa", "kind": "person", "en": "Kawa the blacksmith of the Newroz tale", "forms": ["Kawa", "Kawayê"]},
     {"name": "Şengê", "kind": "person", "en": "a kid in the folk tale", "forms": ["Şengê"]},
     {"name": "Pengê", "kind": "person", "en": "a kid in the folk tale", "forms": ["Pengê"]},
     {"name": "Newroz", "kind": "festival", "en": "Newroz, the new year on 21 March", "forms": ["Newroz", "Newrozê", "Newroza"]},
-    {"name": "Sêvan", "kind": "place", "en": "Hamo’s village", "forms": ["Sêvan", "Sêvanê"]},
+    {"name": "Sêvan", "kind": "place", "en": "the village where Hamo lives", "forms": ["Sêvan", "Sêvanê"]},
     {"name": "Amed", "kind": "place", "en": "Amed, the city", "forms": ["Amed", "Amedê"]},
     {"name": "Hewlêr", "kind": "place", "en": "Hewlêr, the city", "forms": ["Hewlêr", "Hewlêrê"]},
     {"name": "Wan", "kind": "place", "en": "Wan, the city and the lake", "forms": ["Wan", "Wanê"]},
     {"name": "Mêrdîn", "kind": "place", "en": "Mêrdîn, the city", "forms": ["Mêrdîn", "Mêrdînê"]},
     {"name": "Qamişlo", "kind": "place", "en": "Qamişlo, the city", "forms": ["Qamişlo", "Qamişloyê"]},
     {"name": "Duhok", "kind": "place", "en": "Duhok, the city", "forms": ["Duhok", "Duhokê"]},
-    {"name": "Kobanî", "kind": "place", "en": "Kobanî, the town", "forms": ["Kobanî", "Kobaniyê"]},
+    {"name": "Kobanî", "kind": "place", "en": "Kobanî, the town Hamo comes from", "forms": ["Kobanî", "Kobaniyê"]},
+    {"name": "Miştenûr", "kind": "place", "en": "Miştenûr, the hill above Kobanî", "forms": ["Miştenûr", "Miştenûrê"]},
     {"name": "Sine", "kind": "place", "en": "Sine, the city", "forms": ["Sine", "Sineyê"]},
     {"name": "Dêrsim", "kind": "place", "en": "Dêrsim, the city", "forms": ["Dêrsim", "Dêrsimê"]},
     {"name": "Cizîr", "kind": "place", "en": "Cizîr, the town on the Tigris", "forms": ["Cizîr", "Cizîrê"]},
@@ -61,7 +67,7 @@
       "cefr": "A1",
       "titleKu": "Silav",
       "titleEn": "Hello",
-      "story": "You step off the bus at the edge of Sêvan, a village of apple orchards under the mountains, with Hevalo the young deer as your guide. At a blue gate Hamo welcomes you — the warm uncle with the proudest moustache in the valley. Before the tea is even poured, his niece Xezal runs up the lane from the Amed bus, and Hamo calls her Xezo, which she pretends to hate. Over four small scenes you learn to say hello, to say who you are and where you are from, and to ask how everyone is — while Hevalo keeps disappearing towards the apple trees.",
+      "story": "You step off the bus at the edge of Sêvan, a village of apple orchards under the mountains, with Hevalo the young deer as your guide. At a blue gate Hamo welcomes you: born and raised in Kobanî, at home in Sêvan for thirty years, and owner of the proudest moustache in the valley. Before the tea is even poured, Xezal runs up the lane: she is from Amed, helps at the village school this year, and Hamo calls her Xezo, which she pretends to hate. Over four small scenes you learn to say hello, to say who you are and where you are from, and to ask how everyone is — while Hevalo keeps disappearing towards the apple trees.",
       "recorder": "hamo",
       "skills": [
         {
@@ -136,7 +142,7 @@
                 {"ku": "ew", "en": "he, she, it; that", "pos": "pron", "forms": ["ew"]},
                 {"ku": "xweş", "en": "nice, pleasant, tasty", "pos": "adj", "forms": ["xweş"]},
                 {"ku": "germ", "en": "hot, warm", "pos": "adj", "forms": ["germ"]},
-                {"ku": "xal", "en": "uncle (your mother’s brother)", "pos": "noun", "gender": "m", "forms": ["xal", "xalên", "xalan", "xalek", "xalê", "xalekî", "xalî", "xalo"]}
+                {"ku": "xal", "en": "uncle (your mother’s brother); xalo is also how you call an older man warmly", "pos": "noun", "gender": "m", "forms": ["xal", "xalên", "xalan", "xalek", "xalê", "xalekî", "xalî", "xalo"]}
               ]
             }
           ]
@@ -377,7 +383,7 @@
       "cefr": "A1",
       "titleKu": "Malbat",
       "titleEn": "Family",
-      "story": "The whole family gathers at Hamo’s house: his wife Nazê, their son Baran (nine, full of questions), their daughter Hêvî (six, shy until she is not) and Hamo’s mother, Dapîr Şemsê, who knows everybody’s business. The photos come out, the hens are counted, ages are guessed — Dapîr will not tell hers — and Xezal finds the family’s greatest secret: a photo of young Hamo without his moustache. Everyone has something to show: a brother, a sister, a donkey called Bozo. Hevalo has no apples, and makes sure everyone notices.",
+      "story": "Tea at Hamo’s, and the neighbours come too: Nazê from next door with Baran (nine, full of questions) and Hêvî (six, shy until she is not), and Dapîr Şemsê, the village grandmother, who knows everybody’s business. Hamo has never married, and Dapîr has opinions about that; his own family looks down from the photos on the wall, his father with his flute among them, far away in Kobanî. Ages are guessed — Dapîr will not tell hers — the hens are counted, and Xezal finds the greatest secret in the house: a photo of young Hamo without his moustache. Everyone has someone to show: a brother, a sister, a donkey called Bozo. Hevalo has no apples, and makes sure everyone notices.",
       "recorder": "hamo",
       "skills": [
         {
@@ -697,7 +703,7 @@
       "cefr": "A1",
       "titleKu": "Mal û gund",
       "titleEn": "House and village",
-      "story": "With the child’s map from the old box, Xezal, Hevalo and you search for the spot marked X: through every room of the house, past the blue doors and white walls of the village, up on the roof and down by the spring — while Hamo swears he knows nothing and grins under his moustache. Someone else is searching too: a fresh X appears on a windowsill. Under the walnut tree by the spring the treasure is found at last — marbles, and half of an old photo of young Hamo and his sister Gulîstan. Where is the other half? In Amed. And tomorrow is market day.",
+      "story": "In an old box in Hamo’s house Xezal finds a child’s map of Sêvan, drawn long ago by Hamo and his sister Lorîn when they spent their summers here with their aunt. With the map, Xezal, Hevalo and you search for the spot marked X: through every room of the house, past the blue doors and white walls of the village, up on the roof and down by the spring — while Hamo swears he knows nothing and grins under his moustache. Someone else is searching too: a fresh X appears on a windowsill. Under the walnut tree by the spring the treasure is found at last — marbles, and half of an old photo of young Hamo and Lorîn. Where is the other half? In Kobanî. And tomorrow is market day.",
       "recorder": "hamo",
       "skills": [
         {
@@ -1013,7 +1019,7 @@
       "cefr": "A1",
       "titleKu": "Bazar",
       "titleEn": "The market",
-      "story": "Market day in the town below the village. Hamo, Xezal, Hevalo and you ride down with Bozo, who is wearing his hat. The present tense comes alive as everyone goes, comes, looks, wants, buys and eats. Mîrza the fruit seller and Hamo haggle like the old friends they are — though Mîrza swears Hamo still owes him for a melon from twenty years ago — and Xezal bargains better than both of them. Then Mîrza’s apple crate is found empty, every witness says “Ez nizanim”, and a certain deer has a very round belly. On the way home Xezal gets a phone call: she must go back to Amed on Saturday, and her mother wants everyone to come.",
+      "story": "Market day in the town below the village. Hamo, Xezal, Hevalo and you ride down with Bozo, who is wearing his hat. The present tense comes alive as everyone goes, comes, looks, wants, buys and eats. Mîrza the fruit seller and Hamo haggle like the old friends they are — though Mîrza swears Hamo still owes him for a melon from twenty years ago — and Xezal bargains better than both of them. Then Mîrza’s apple crate is found empty, every witness says “Ez nizanim”, and a certain deer has a very round belly. On the way home Hamo’s phone rings: it is Lorîn in Kobanî. She has the other half of the photo, their mother wants to see everyone, and they are expected on Saturday.",
       "recorder": "hamo",
       "skills": [
         {
@@ -1326,7 +1332,7 @@
       "cefr": "A2",
       "titleKu": "Roj û dem",
       "titleEn": "Days and time",
-      "story": "Xezal has to be back in Amed on Saturday, so the whole family plans the week around her: the days on Dapîr’s wall calendar fill up, the months and birthdays are argued over (Hamo does not know his own — “the year of the big snow”), and the clock becomes the week’s great enemy. Hamo’s day runs on tea: up with the rooster, tea, the orchard, tea, a nap, tea. He promises to be on time for the Saturday bus. On Saturday morning his alarm rings at eight — in the evening — and the family arrives in the square just in time to see the bus disappear round the bend.",
+      "story": "Saturday is the day for Kobanî, so the whole village plans the week around it: the days on Dapîr’s wall calendar fill up, the months and birthdays are argued over (Hamo does not know his own — “the year of the big snow”), and the clock becomes the week’s great enemy. Hamo’s day runs on tea: up with the rooster, tea, the orchard, tea, a nap, tea. He promises to be on time for the Saturday bus. On Saturday morning his alarm rings at eight — in the evening — and everyone arrives in the square just in time to see the bus disappear round the bend.",
       "recorder": "hamo",
       "skills": [
         {
@@ -1642,7 +1648,7 @@
       "cefr": "A2",
       "titleKu": "Bajar",
       "titleEn": "The city",
-      "story": "With the bus gone, Ferhad drives everyone to the main road on his tractor, and a minibus takes them the rest of the way to Amed. The city is Xezal’s world: crowded avenues, the ancient black walls, tall buildings, a bookshop, a bakery and a fourth-floor flat with no lift. Hamo is amazed by everything and gets lost twice. Xezal’s mother Gulîstan, Hamo’s sister, opens her door — and her own tin: the other half of the old photo, and a note in their father’s hand that says something is waiting for them on the hill at Newroz. The imperative is everywhere (were, rûne, bixwe, meke!), and so are divê and dikarim.",
+      "story": "With the bus gone, Ferhad drives everyone to the main road on his tractor, and a minibus takes them the rest of the way to Kobanî. The town is Hamo’s world: the streets of his childhood, the market, the bakery where he bought bread at seven, the hill of Miştenûr above the houses, and his parents’ house with the fig tree in the yard. He is so happy that he gets lost twice, in his own town. His mother Edûl will not let anyone stand up from the table, his father Ibrahîm takes his flute down from the wall, and Lorîn opens her old tin: the other half of the photo, and a promise from their childhood — one day their father would play for them again by a Newroz fire. This Newroz, Ibrahîm says, he will come to Sêvan and keep it. The imperative is everywhere (were, rûne, bixwe, meke!), and so are divê and dikarim.",
       "recorder": "hamo",
       "skills": [
         {
@@ -1954,7 +1960,7 @@
       "cefr": "A2",
       "titleKu": "Hewa û Newroz",
       "titleEn": "Weather and Newroz",
-      "story": "They reach Sêvan just before the snow closes the pass, and the village waits out the last of the winter by the stove. Then the sun comes back, the snow melts, the streams roar and the whole family gets ready for Newroz: Nazê sews new clothes, Baran gathers firewood, Xezal plans the govend and Hamo practises a speech that nobody wants to hear. The future is on everyone’s lips — ez ê …, em ê … — and what everyone wants to do. On Newroz night, by the fire on their father’s hill, Hamo and Gulîstan lift a flat stone and find a shepherd’s flute and a note: keep the song going. The next morning Hamo cannot get out of bed.",
+      "story": "They reach Sêvan just before the snow closes the pass, and the village waits out the last of the winter by the stove. Then the sun comes back, the snow melts, the streams roar and the whole village gets ready for Newroz: Nazê sews new clothes, Baran gathers firewood, Xezal plans the govend and Hamo practises a speech that nobody wants to hear. The future is on everyone’s lips — ez ê …, em ê … — and what everyone wants to do. On Newroz eve a car comes up the road from Kobanî, as promised. By the fire on the hill, Ibrahîm plays his old shepherd’s flute, and then puts it into his son’s hands: keep the song going. The next morning Hamo cannot get out of bed.",
       "recorder": "hamo",
       "skills": [
         {
@@ -2268,7 +2274,7 @@
       "cefr": "A2",
       "titleKu": "Laş û tenduristî",
       "titleEn": "Body and health",
-      "story": "After all that govend, Hamo’s back has given up, and Hamo turns out to be the most dramatic patient in the valley. Xezal nurses him, the family fusses, and the doctor who comes up from the town is Şîrîn, his old schoolmate, who beat him at every race when they were children and still teases him about it. Body words, aches and feelings, the doctor’s questions (“Ez te dibînim — where does it hurt?”) and a village moustache contest with comparisons and superlatives. Honey is forbidden; a jar goes missing; a moustache is sticky. Hamo gets better — but Baran comes home late one evening, muddy and silent, and will not say what happened.",
+      "story": "After all that govend, Hamo’s back has given up, and Hamo turns out to be the most dramatic patient in the valley. Xezal nurses him, the neighbours fuss, and the doctor who comes up from the town is Şîrîn, who went to school with him in Kobanî, beat him at every race and still teases him about it. Body words, aches and feelings, the doctor’s questions (“Ez te dibînim — where does it hurt?”) and a village moustache contest with comparisons and superlatives. Honey is forbidden; a jar goes missing; a moustache is sticky. Hamo gets better — but Baran, the neighbours’ boy, comes home late one evening, muddy and silent, and will not say what happened.",
       "recorder": "hamo",
       "skills": [
         {
@@ -2582,7 +2588,7 @@
       "cefr": "A2",
       "titleKu": "Duh",
       "titleEn": "Yesterday",
-      "story": "Baran finally tells what happened yesterday: he took Bozo to the river, Bozo saw a goat and ran off up the valley, Baran followed, got lost, sat down under a walnut tree and fell asleep — and came home in the dark by the stars, to find that Bozo had been home for hours, eating Dapîr’s mint. Then everyone tells their own yesterday, and Hamo tells the stories of long ago: the wolf he met at nine (it gets bigger every time; Dapîr says it was a dog), the old days at the pastures, Dapîr’s own youth. A message comes down from Bişar the shepherd: a strange visitor comes to his tent every night. Hamo decides: this summer, the whole family goes up to the zozan.",
+      "story": "Baran finally tells what happened yesterday: he took Bozo to the river, Bozo saw a goat and ran off up the valley, Baran followed, got lost, sat down under a walnut tree and fell asleep — and came home in the dark by the stars, to find that Bozo had been home for hours, eating Dapîr’s mint. Then everyone tells their own yesterday, and Hamo tells the stories of long ago: the wolf he met in Kobanî at nine (it gets bigger every time; on the telephone his mother says it was the neighbours’ dog), his first summer in Sêvan, Dapîr’s own youth. A message comes down from Bişar the shepherd: a strange visitor comes to his tent every night. Hamo decides: this summer, everyone goes up to the zozan.",
       "recorder": "hamo",
       "skills": [
         {
@@ -2892,7 +2898,7 @@
       "cefr": "B1",
       "titleKu": "Zozan",
       "titleEn": "The summer pastures",
-      "story": "The familiar shepherd on the path is Bişar, and he leads the family up to the zozan, the high summer pastures, where his black tents stand by a cold spring. Life up there is milk and bread and work: milking at dawn, churning butter, baking bread on the saj, songs at night under more stars than Baran can count. The mysterious visitor is a wild doe, Zerê, who comes for salt — and for Hevalo, who gives her his apples. Following the two deer, the family finds a hidden lake and an old stone house: Dapîr’s summer home when she was a girl, where Hamo’s father once played his flute for her. The past now has objects — min nan xwar, te çi kir?, me ew dîtin — and memories run in the past continuous. On the way down, Xezal’s phone finds a signal and a job offer, far away.",
+      "story": "The familiar shepherd on the path is Bişar, and he leads everyone up to the zozan, the high summer pastures, where his black tents stand by a cold spring. Life up there is milk and bread and work: milking at dawn, churning butter, baking bread on the saj, songs at night under more stars than Baran can count. The mysterious visitor is a wild doe, Zerê, who comes for salt — and for Hevalo, who gives her his apples. Following the two deer, they find a hidden lake and an old stone house: Dapîr’s summer home when she was a girl, where, she says, a young flute player from Kobanî once played for the shepherds — and it was Hamo’s father. The past now has objects — min nan xwar, te çi kir?, me ew dîtin — and memories run in the past continuous. On the way down, Xezal’s phone finds a signal and a job offer, far away.",
       "recorder": "hamo",
       "skills": [
         {
@@ -3203,7 +3209,7 @@
       "cefr": "B1",
       "titleKu": "Kar û xwendin",
       "titleEn": "Work and school",
-      "story": "Xezal finally says it: a school in Hewlêr has offered her a post as a teacher, and she is afraid to leave — the village, her mother, her uncle. Hamo goes quiet, strokes his moustache, and then smiles, though his eyes are wet. Over the autumn the family talks about work (everyone in the village has a trade, and an opinion), about school (Baran has to give a talk about Sêvan in front of the whole school, and is terrified), and about plans and dreams. The present perfect says what has been done (min biryar daye) and the linking words say why (ji ber ku, loma, lê, dema ku). Xezal decides to go after the winter, and promises to come home for every Newroz. Hamo makes a plan of his own: every winter night, one of his father’s stories.",
+      "story": "Xezal finally says it: a school in Hewlêr has offered her a post as a teacher, and she is afraid to leave — the village, the children she teaches, and Hamo, who has become like an uncle to her. Hamo goes quiet, strokes his moustache, and then smiles, though his eyes are wet. He telephones his father in Kobanî, and Ibrahîm tells Xezal what he once told his own son, the day Hamo left Kobanî for Sêvan: go, but don’t forget your roots. Over the autumn everyone talks about work (everyone in the village has a trade, and an opinion), about school (Baran has to give a talk about Sêvan in front of the whole school, and is terrified), and about plans and dreams. The present perfect says what has been done (min biryar daye) and the linking words say why (ji ber ku, loma, lê, dema ku). Xezal decides to go after the winter, and promises to come back for every Newroz. Hamo makes a plan of his own: every winter night, one of the tales his father told him.",
       "recorder": "hamo",
       "skills": [
         {
@@ -3520,7 +3526,7 @@
       "cefr": "B1",
       "titleKu": "Çîrok û stran",
       "titleEn": "Stories and songs",
-      "story": "The last winter by the stove. Each night Hamo tells one of his father’s tales — Şengê and Pengê and the wolf at the door, the fox who shared a field with the bear — while Dapîr answers every tale with a proverb and the children act them out (Hevalo makes a terrible wolf: too friendly). One snowy night travellers knock: a dengbêj and his daughter, who sing for their supper and turn out to have known Hamo’s father; their song about his flute is missing its last verse, until it is found on the back of an old note. Conditions (heke tu derî vekî …) and reported speech (wî got ku …) join everything the road has taught. Spring comes, and with it the farewell govend; at the blue gate where the road began, Hamo, Hevalo and you send Xezal off to Hewlêr: “Rêya te vekirî be!” And under the apple tree, a new sapling she planted for Hevalo.",
+      "story": "The last winter by the stove. Each night Hamo tells one of his father’s tales — Şengê and Pengê and the wolf at the door, the fox who shared a field with the bear — while Dapîr answers every tale with a proverb and the children act them out (Hevalo makes a terrible wolf: too friendly). One snowy night travellers knock: a dengbêj and his daughter, who sing for their supper — and their song about a flute player from Kobanî is missing its last verse, until Hamo telephones his father and Ibrahîm sings it down the line. Conditions (heke tu derî vekî …) and reported speech (wî got ku …) join everything the road has taught. Spring comes, and with it the farewell govend; at the blue gate where the road began, Hamo, Hevalo and you send Xezal off to Hewlêr: “Rêya te vekirî be!” And under the apple tree, a new sapling she planted for Hevalo.",
       "recorder": "hamo",
       "skills": [
         {
