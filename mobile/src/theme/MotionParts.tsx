@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
-import { Animated, Pressable, View, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import { Animated, View, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import { Pressable } from './Pressable';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo, timing, useEnter, usePop, usePressScale, useShake } from './animate';
 import { ENTRANCE, duration, pressedDim } from './motion';

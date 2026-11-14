@@ -3,13 +3,13 @@ import {
   AccessibilityInfo,
   findNodeHandle,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { haptic } from '../feedback/haptics';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';

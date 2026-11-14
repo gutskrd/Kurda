@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Animated,
-  Pressable,
   ScrollView,
   Share,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';

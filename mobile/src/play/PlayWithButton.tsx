@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';

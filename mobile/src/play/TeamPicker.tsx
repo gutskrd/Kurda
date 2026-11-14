@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import type { MultiGame, MultiSeat, UnitTone } from '@kurda/shared';
 import type { Translate } from '../api/errors';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';

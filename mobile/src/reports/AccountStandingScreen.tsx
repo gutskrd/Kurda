@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useNavigation } from '@react-navigation/native';
 import type { AccountStanding, AppealView, RestrictionScope, StandingSanction } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';

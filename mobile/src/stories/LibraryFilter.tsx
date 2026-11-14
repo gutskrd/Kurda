@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import {
   DEFAULT_STORY_SORT,
   STORY_DIALECTS,

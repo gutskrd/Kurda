@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
+import { Animated, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
+import { Pressable } from '../../theme/Pressable';
 import { isSoraniDialect, letterDiff, type DiffSegment, type ExerciseType, type RecordingVoice } from '@kurda/shared';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';

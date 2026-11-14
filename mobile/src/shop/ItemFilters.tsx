@@ -2,7 +2,6 @@ import { useRef, useState, type ReactNode } from 'react';
 import {
   Image,
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +9,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { haptic } from '../feedback/haptics';
 import { ITEM_SORTS, itemCategory, type ItemCategory, type ItemSort } from '@kurda/shared';
 import { assetUrl } from '../api/env';

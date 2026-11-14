@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import Svg, { Defs, Ellipse, RadialGradient, Stop as GradientStop } from 'react-native-svg';
 import { PATH_GEOMETRY, PATH_MOTION, PATH_RETURN, PATH_STOP_ART, type PathStop, type UnitTone } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';

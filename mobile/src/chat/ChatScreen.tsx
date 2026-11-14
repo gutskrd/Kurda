@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import type { GiftCard, GiftTier } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../auth/AuthContext';

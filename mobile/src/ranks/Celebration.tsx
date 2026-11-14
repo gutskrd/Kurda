@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
-import { AccessibilityInfo, Animated, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, Animated, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { DarkScheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';

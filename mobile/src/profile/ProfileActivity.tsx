@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { FeedCard, FeedCardSkeleton } from '../feed/FeedCard';
 import { SkeletonText } from '../theme/Skeleton';

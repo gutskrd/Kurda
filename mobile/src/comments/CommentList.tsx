@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { SendButton } from '../chat/SendButton';

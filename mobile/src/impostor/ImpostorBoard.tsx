@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import {
   IMPOSTOR_CLUE_LIMITS,
   dialectDirection,

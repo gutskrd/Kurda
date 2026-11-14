@@ -1,5 +1,6 @@
 import { useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from './Pressable';
 import { layout, radii, spacing, typography } from './tokens';
 import { useTheme } from './ThemeProvider';
 import { useDirection } from '../reports/direction';

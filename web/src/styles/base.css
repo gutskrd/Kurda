@@ -10,6 +10,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /* the app draws its own pressed look, only for a real press (lib/press.ts), so the browser's grey tap flash is not wanted over it */
+  -webkit-tap-highlight-color: transparent;
   /*
    * The top bar stays over the page, so anything the browser brings into view
    * — a link to a section, the next field on Tab, the previous one on

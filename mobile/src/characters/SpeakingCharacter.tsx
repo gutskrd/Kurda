@@ -3,12 +3,12 @@ import {
   Animated,
   Platform,
   Easing,
-  Pressable,
   StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { SvgXml } from 'react-native-svg';
 import {
   BLINK_STEPS,

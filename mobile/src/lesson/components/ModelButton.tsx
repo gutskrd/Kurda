@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Pressable } from '../../theme/Pressable';
 import { radii } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Icon } from '../../theme/Icon';

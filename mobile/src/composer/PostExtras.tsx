@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Pressable, StyleSheet, Text, View, type AccessibilityActionEvent, type PressableProps } from 'react-native';
+import { StyleSheet, Text, View, type AccessibilityActionEvent, type PressableProps } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import type { FeedImage, PostMediaView } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';

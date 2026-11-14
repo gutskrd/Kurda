@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { heldRow, heldDim } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { describeError, isMaintenance } from '../api/errors';

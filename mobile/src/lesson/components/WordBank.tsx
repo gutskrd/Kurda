@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Pressable, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, StyleSheet, View } from 'react-native';
+import { Pressable } from '../../theme/Pressable';
 import { liftTile, placeTile, scriptDialect, tileAnswer } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useReducedMotion } from '../../a11y/useReducedMotion';

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Alert, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useNavigation } from '@react-navigation/native';
 import type { ApiError } from '../api/types';
 import { isMaintenance, type Translate } from '../api/errors';

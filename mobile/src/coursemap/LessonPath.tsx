@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Animated, Dimensions, Easing, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Animated, Dimensions, Easing, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import {
   PATH_GEOMETRY,
   PATH_MOTION,

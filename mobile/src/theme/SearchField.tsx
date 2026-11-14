@@ -1,5 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react';
-import { Pressable, StyleSheet, TextInput, View, type ReturnKeyTypeOptions, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, TextInput, View, type ReturnKeyTypeOptions, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable } from './Pressable';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';

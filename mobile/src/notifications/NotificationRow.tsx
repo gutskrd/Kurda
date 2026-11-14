@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef } from 'react';
-import { Animated, Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, Image, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { SvgXml } from 'react-native-svg';
 import { badgeSvg, gameEmblemSvg, leagueEmblemSvg, letterEnvelopeSvg, type NoticePicture } from '@kurda/shared';
 import MASCOT from '../../assets/mascot-deer.png';

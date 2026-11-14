@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Animated, Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Animated, Modal, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable } from './Pressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { fontScaleCap, radii, spacing, typography } from './tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';

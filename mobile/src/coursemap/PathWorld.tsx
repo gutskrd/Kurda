@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { SvgXml } from 'react-native-svg';
 import {
   PATH_LANDMARK_LOOP,

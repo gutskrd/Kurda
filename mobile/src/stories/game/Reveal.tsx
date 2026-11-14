@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../../theme/Pressable';
 import type { StoryDetail, StoryGameView } from '@kurda/shared';
 import { useAuth } from '../../auth/AuthContext';
 import { describeError } from '../../api/errors';

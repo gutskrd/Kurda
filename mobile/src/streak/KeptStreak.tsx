@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { PATH_RETURN, fireLevel, fireSizeToFit } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
