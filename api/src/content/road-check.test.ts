@@ -92,6 +92,17 @@ describe('the stories at the chapters’ ends', () => {
     expect(checkRoadStories(plan, [glossed]).map(formatProblem).filter((t) => t.includes('spehî'))).toEqual([]);
     expect(checkRoadStories(plan, [{ ...tale, slug: 'chapter-one' }, { ...tale, level: 2 }]).map(formatProblem)).toContain('chapter-one slug: slug should be road-NN-… with NN the chapter it ends (01–12)');
   });
+
+  it('ask their questions in words the chapter taught too', () => {
+    const tale = { slug: 'road-01-test', dialect: 'kurmanci', level: 1, title: 'Sêv', body: 'Ez Hamo me. Sêv pir xweşik e, û Hevalo birçî ye. Ez kêfxweş im, tu jî kêfxweş î.' };
+    const asked = (prompt: string, options: string[]) => checkRoadStories(plan, [{ ...tale, questions: [{ prompt, options, correctIndex: 0 }] }]).map(formatProblem);
+    expect(asked('Kî birçî ye?', ['Hevalo', 'Hamo'])).toEqual([]);
+    expect(asked('Çima Hevalo birçî ye?', ['Wî sêv nexwar.', 'Ew nexweş e.'])).toEqual([
+      'road-01-test questions[0]: “çima” is not met by the end of chapter 1: ask with words the chapter taught',
+      'road-01-test questions[0]: “wî” is not met by the end of chapter 1: ask with words the chapter taught',
+      'road-01-test questions[0]: “nexwar” is not met by the end of chapter 1: ask with words the chapter taught',
+    ]);
+  });
 });
 
 // ---------- the example ----------

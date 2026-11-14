@@ -81,34 +81,49 @@
           "evidenceSentence": 1
         },
         {
-          "kind": "detail",
-          "prompt": "Çay çawa ye?",
-          "promptEn": "What is the tea like?",
+          "kind": "vocabulary",
+          "prompt": "Çay germ e. “Germ” çi ye?",
+          "promptEn": "The tea is “germ”. What does “germ” mean?",
           "options": [
-            "Germ û pir xweş e",
-            "Sar e",
+            "Pir sar e",
+            "Ne sar e",
             "Ne xweş e"
           ],
-          "correctIndex": 0,
-          "explanation": "Çîrok dibêje: “Çay germ e û pir xweş e.”",
-          "explanationEn": "The story says: “The tea is hot and very good.”",
+          "correctIndex": 1,
+          "explanation": "Çay germ e û pir xweş e: ew ne sar e.",
+          "explanationEn": "The tea is hot and very good: it is not cold.",
           "evidenceParagraph": 3,
           "evidenceSentence": 2
         },
         {
           "kind": "inference",
-          "prompt": "Çima Hevalo ne birçî ye?",
-          "promptEn": "Why is Hevalo not hungry?",
+          "prompt": "Sêv ne li wir in. Kî ne birçî ye, û pir kêfxweş e?",
+          "promptEn": "The apples are gone. Who is not hungry, and very happy?",
           "options": [
-            "Wî hemû sêv xwarin.",
-            "Ew nexweş e.",
-            "Ew li Amedê ye."
+            "Hevalo",
+            "Hamo",
+            "Mêvan"
           ],
           "correctIndex": 0,
-          "explanation": "Sêv ne li wir in, û Hevalo westiyayî û kêfxweş e: wî hemû sêv xwarin!",
-          "explanationEn": "The apples are gone, and Hevalo is tired and happy: he ate all the apples!",
+          "explanation": "Sêv ne li wir in, û Hevalo ne birçî ye. Ew tenê westiyayî û pir kêfxweş e. Belê, Hevalo!",
+          "explanationEn": "The apples are gone, and Hevalo is not hungry. He is just tired and very happy. Yes, Hevalo!",
           "evidenceParagraph": 4,
-          "evidenceSentence": 1
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "gist",
+          "prompt": "Îro kî li mala Hamo ye?",
+          "promptEn": "Who is at Hamo’s home today?",
+          "options": [
+            "Tenê Hamo",
+            "Mêvanek, Xezal û Hevalo",
+            "Malbata Xezalê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Mêvanek li mala Hamo ye, Xezal jî li vir e, û Hevalo li baxçe ye.",
+          "explanationEn": "A guest is at Hamo’s home, Xezal is here too, and Hevalo is in the orchard.",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         }
       ]
     }

@@ -611,15 +611,20 @@ export function checkRoadStories(plan: RoadPlan, stories: readonly RoadStoryInpu
     (story.questions ?? []).forEach((q, qi) => {
       const options = Array.isArray(q.options) ? q.options.length : 0;
       if (typeof q.correctIndex !== 'number' || q.correctIndex < 0 || q.correctIndex >= options) at('correctIndex must point at an option', `questions[${qi}]`);
+      // a question is read in Kurdish first, so it asks with the words the learner has, as the story does
+      const asked = [q.prompt ?? '', ...(Array.isArray(q.options) ? q.options.filter((o): o is string => typeof o === 'string') : [])].join(' ');
+      for (const w of new Set(kurdishWords(asked).filter((x) => !/^\d+$/.test(x)))) {
+        if ((lex.firstUse.get(w) ?? Infinity) > last && !glossed.has(w)) at(`“${w}” is not met by the end of chapter ${n}: ask with words the chapter taught`, `questions[${qi}]`);
+      }
     });
   }
   return problems;
 }
 
-/** The stories file as written, or none while it is not there yet. */
-export function loadRoadStories(): RoadStoryInput[] {
+/** The stories file as written (or another file in its shape, a draft a writer checks), or none while it is not there yet. */
+export function loadRoadStories(file: URL | string = ROAD_STORIES_FILE): RoadStoryInput[] {
   try {
-    const raw = JSON.parse(readFileSync(ROAD_STORIES_FILE, 'utf8')) as { stories?: RoadStoryInput[] };
+    const raw = JSON.parse(readFileSync(file, 'utf8')) as { stories?: RoadStoryInput[] };
     return Array.isArray(raw.stories) ? raw.stories : [];
   } catch (err) {
     if ((err as { code?: string }).code === 'ENOENT') return [];
