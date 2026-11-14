@@ -151,6 +151,7 @@ import type { RecordingFileOptions } from './speakers/recording-file.js';
 import { StoriesService } from './stories/service.js';
 import { StoryAdminService } from './stories/admin-service.js';
 import { registerStoryRoutes } from './stories/routes.js';
+import { registerBookRoutes } from './books/routes.js';
 import { registerStoryAdminRoutes } from './stories/admin-routes.js';
 import { seedStarterStories } from './stories/import.js';
 import type { FerhengSource } from '@kurda/shared';
@@ -719,6 +720,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // native speaker to publish. Not under test, where they would be stories no
     // test asked for (the seeding has its own tests).
     registerStoryRoutes(app, new StoriesService(app.db, app.cache));
+    // and the Hevalo book: the road's chapters that are online, as a PDF to keep
+    registerBookRoutes(app);
     registerStoryAdminRoutes(app, new StoryAdminService(app.db, app.cache));
     if (config.NODE_ENV !== 'test') {
       app.addHook('onReady', async () => {
