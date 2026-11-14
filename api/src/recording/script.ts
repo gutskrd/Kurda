@@ -509,6 +509,8 @@ function addLessons(builder: Builder, exercises: readonly ExerciseInput[]): void
       const nameOf = (part: unknown): string | null => {
         const who = typeof part === 'number' ? speakers[part] : undefined;
         if (!isRecord(who)) return null;
+        // the learner's own line, which they say back: the one acted to
+        if (who.learner === true) return 'You (the learner)';
         return isSpeakerId(who.character) ? characterName(who.character) : str(who.name);
       };
       for (const c of conversationClips(ex.payload)) {

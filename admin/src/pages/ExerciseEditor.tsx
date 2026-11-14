@@ -1,5 +1,8 @@
 import { useId } from 'react';
-import { CHARACTER_NAMES, CONVERSATION_LIMITS as CONV, SPEAKERS, conversationSpeaker, isSpeakerId, type SpeakerId } from '@kurda/shared';
+import { CHARACTER_NAMES, CONVERSATION_LIMITS as CONV, SPEAKERS, conversationSpeaker, isSpeakerId, learnerPart, type SpeakerId } from '@kurda/shared';
+
+/** The value the part picker gives the learner's own part. */
+const LEARNER = 'learner';
 import { EXERCISE_TYPES, TYPE_HINT, TYPE_NAME, blankPayload, type Exercise, type ExerciseType, type Issue, type Payload } from '../lessons';
 import { toPreview } from '../preview';
 import { Checkbox, Field, Icon } from '../ui';
@@ -366,11 +369,15 @@ function ConversationFields({
   const speakers = Array.isArray(p.speakers) ? (p.speakers as Array<Record<string, unknown>>) : [];
   const lines = Array.isArray(p.lines) ? (p.lines as Array<Record<string, unknown>>) : [];
   const characterOf = (i: number): SpeakerId | null => (isSpeakerId(speakers[i]?.character) ? (speakers[i]!.character as SpeakerId) : null);
+  const learnerAt = (i: number): boolean => speakers[i]?.learner === true;
   const nameOf = (i: number): string => {
     const who = characterOf(i);
-    return who ? CHARACTER_NAMES[who] : `Person ${i + 1}`;
+    return who ? CHARACTER_NAMES[who] : learnerAt(i) ? 'the learner' : `Person ${i + 1}`;
   };
-  const cast = (i: number, who: SpeakerId): void => set({ speakers: speakers.map((s, j) => (j === i ? conversationSpeaker(who) : s)) });
+  // the learner's own part, when a character talks with them: one at most
+  const learnerFree = !speakers.some((_, j) => learnerAt(j));
+  const cast = (i: number, who: SpeakerId | typeof LEARNER): void =>
+    set({ speakers: speakers.map((s, j) => (j === i ? (who === LEARNER ? learnerPart() : conversationSpeaker(who)) : s)) });
   // the characters nobody plays yet: a new part is the first of them
   const free = SPEAKERS.filter((who) => !speakers.some((_, j) => characterOf(j) === who));
   const setLine = (i: number, patch: Record<string, unknown>): void => set({ lines: lines.map((l, j) => (j === i ? { ...l, ...patch } : l)) });
@@ -401,7 +408,7 @@ function ConversationFields({
 
       <fieldset className="ex-list cv-people">
         <legend>Who takes part</legend>
-        <div className="field-hint">Each character plays one part and is who learners see saying its lines. Each part is recorded by its own speaker.</div>
+        <div className="field-hint">Each character plays one part and is who learners see saying its lines. Each part is recorded by its own speaker. The learner can take a part too, when a character talks with them: those lines are theirs to read and say, and nobody records them.</div>
         {speakers.map((_, i) => (
           <div key={i} className="ex-list-row cv-person">
             <span className={`cv-swatch part-${i}`} aria-hidden="true" />
@@ -409,17 +416,18 @@ function ConversationFields({
               id={at(`speakers.${i}.character`)}
               aria-label={`Who plays part ${i + 1}`}
               aria-invalid={problem(issues, `speakers.${i}.character`) ? true : undefined}
-              value={characterOf(i) ?? ''}
+              value={learnerAt(i) ? LEARNER : (characterOf(i) ?? '')}
               disabled={readOnly}
-              onChange={(e) => (isSpeakerId(e.target.value) ? cast(i, e.target.value) : undefined)}
+              onChange={(e) => (e.target.value === LEARNER ? cast(i, LEARNER) : isSpeakerId(e.target.value) ? cast(i, e.target.value) : undefined)}
             >
-              {characterOf(i) === null && <option value="">Choose a character</option>}
+              {characterOf(i) === null && !learnerAt(i) && <option value="">Choose a character</option>}
               {/* a character already playing another part is not offered again */}
               {SPEAKERS.filter((who) => who === characterOf(i) || free.includes(who)).map((who) => (
                 <option key={who} value={who}>
                   {CHARACTER_NAMES[who]}
                 </option>
               ))}
+              {(learnerAt(i) || learnerFree) && <option value={LEARNER}>The learner (their own lines, not recorded)</option>}
             </select>
             {!readOnly && speakers.length > CONV.speakersMin && (
               <button
@@ -445,6 +453,12 @@ function ConversationFields({
             Add {CHARACTER_NAMES[free[0]]}
           </button>
         )}
+        {!readOnly && speakers.length < CONV.speakersMax && learnerFree && (
+          <button type="button" className="ghost ex-add" onClick={() => set({ speakers: [...speakers, learnerPart()] })}>
+            <Icon name="plus" />
+            Add the learner
+          </button>
+        )}
       </fieldset>
 
       <fieldset className="ex-list cv-lines">
@@ -463,7 +477,7 @@ function ConversationFields({
               >
                 {speakers.map((_, j) => (
                   <option key={j} value={j}>
-                    {nameOf(j)}
+                    {learnerAt(j) ? 'The learner' : nameOf(j)}
                   </option>
                 ))}
               </select>

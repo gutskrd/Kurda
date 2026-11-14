@@ -145,7 +145,7 @@ describe('the road’s folder', () => {
       },
     };
     const summary = await seedRoadLessons(pool as never, { info: () => undefined, warn: (...args: unknown[]) => void warned.push(args) }, { dir: at });
-    expect(summary).toEqual({ files: 1, seeded: [], occupied: [], invalid: [], failed: [], already: 0 });
+    expect(summary).toEqual({ files: 1, seeded: [], occupied: [], invalid: [], failed: [], already: 0, refreshed: [] });
     expect(warned).toHaveLength(1);
   });
 

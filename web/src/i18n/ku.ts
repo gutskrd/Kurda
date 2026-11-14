@@ -1688,6 +1688,7 @@ export const ku: Catalogue = {
   'lesson.match.keys': '1–{n} karteke kurdî hildibijêre, Shift+hejmar wateya wê',
   'lesson.conversation.ask': 'Guh bide axaftinê, paşê bersiv bide',
   'lesson.conversation.lines': 'Axaftin',
+  'lesson.conversation.you': 'Tu',
   'lesson.conversation.play': 'Axaftinê lêxe',
   'lesson.conversation.stop': 'Rawestîne',
   'lesson.conversation.showTranslation': 'Wergerê nîşan bide',

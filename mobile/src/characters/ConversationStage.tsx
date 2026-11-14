@@ -5,8 +5,9 @@ import {
   characterArt,
   conversationLineVoice,
   gazeTargets,
-  isSpeakerId,
   lookAcross,
+  stageCast,
+  stageLines,
   standTogether,
   togetherBackdrop,
   type ConversationLine,
@@ -46,9 +47,9 @@ const HEADROOM = spacing.md;
 const HOP_ROOM = 0.3;
 
 /** The character playing each part, when every part has one this app can draw; else null, and the conversation is read without a stage. */
-export function conversationCast(speakers: readonly { character?: unknown }[]): SpeakerId[] | null {
-  const cast = speakers.map((s) => s.character);
-  return cast.length > 0 && cast.every(isSpeakerId) ? cast : null;
+export function conversationCast(speakers: readonly { character?: unknown; learner?: unknown }[]): SpeakerId[] | null {
+  // the learner's own part is the one the characters face, not one of them
+  return stageCast(speakers);
 }
 
 /**
@@ -91,8 +92,11 @@ export function ConversationStage({
   const backdrop = useMemo(() => (width > 0 && places.length > 0 ? togetherBackdrop(places, width, height, { dark }) : null), [places, width, height, dark]);
   const hop = Math.round(height * HOP_ROOM);
 
-  const line = at === null ? undefined : lines[at];
-  const looks = gazeTargets(places.length, lines, at);
+  // each line by who says it on the stage; a learner's line by nobody there, so whoever is there looks out at them
+  const staged = useMemo(() => stageLines(speakers, lines), [speakers, lines]);
+  const line = at === null ? undefined : staged[at];
+  const spoken = at === null ? undefined : lines[at];
+  const looks = gazeTargets(places.length, staged, at);
 
   return (
     <View
@@ -110,8 +114,8 @@ export function ConversationStage({
           const art = characterArt(place.id);
           // the one whose line it is says it, in the voice of the character playing the part; the rest listen
           const said =
-            line !== undefined && at !== null && line.speaker === place.part
-              ? { voice: conversationLineVoice(speakers, line, voices[at]), text: line.text, player, playing, source }
+            line !== undefined && spoken !== undefined && at !== null && line.speaker === place.part
+              ? { voice: conversationLineVoice(speakers, spoken, voices[at]), text: spoken.text, player, playing, source }
               : { player: null, playing: false, quiet: true };
           return (
             <View

@@ -5,6 +5,7 @@ import {
   SPEAKERS,
   answerKey,
   conversationSpeaker,
+  learnerPart,
   foldDiacritics,
   lessonAudioKey,
   normalizeKurdish,
@@ -123,18 +124,31 @@ export const writingPayloadSchema = z.object({
  * something — a part with no lines is a person nobody hears, and a part
  * nobody can record. Each part is one of the characters, called by its name,
  * and no character plays two: the one a learner sees say a line is always
- * that line's own.
+ * that line's own. One part may instead be the learner's own (`learner:
+ * true`), when a character talks with them: its lines are theirs to read and
+ * say, and nobody records them, so at least one character takes part too.
  */
 export const conversationPayloadSchema = z
   .object({
     id: z.string().regex(CONVERSATION_ID, 'must be 6–32 lower-case letters and digits'),
     title: z.string().min(1).max(CONV.titleMax).optional(),
-    // each part is one of the characters, and is called by the character's own name whatever name was sent
+    // each part is one of the characters, called by the character's own name whatever name was sent, or the learner's own
     speakers: z
-      .array(z.object({ name: z.string().max(CONV.nameMax).optional(), character: z.enum(SPEAKERS, { error: 'needs a character: Hevalo, Hamo or Xezo' }) }))
+      .array(
+        z
+          .object({
+            name: z.string().max(CONV.nameMax).optional(),
+            character: z.enum(SPEAKERS, { error: 'needs a character: Hevalo, Hamo or Xezo' }).optional(),
+            learner: z.literal(true).optional(),
+          })
+          .superRefine((s, ctx) => {
+            if (s.learner && s.character) ctx.addIssue({ code: 'custom', path: ['character'], message: 'the learner’s own part has no character' });
+            if (!s.learner && !s.character) ctx.addIssue({ code: 'custom', path: ['character'], message: 'needs a character: Hevalo, Hamo or Xezo' });
+          }),
+      )
       .min(CONV.speakersMin)
       .max(CONV.speakersMax)
-      .transform((speakers) => speakers.map((s) => conversationSpeaker(s.character))),
+      .transform((speakers) => speakers.map((s) => (s.learner || !s.character ? learnerPart() : conversationSpeaker(s.character)))),
     lines: z
       .array(
         z.object({
@@ -162,13 +176,20 @@ export const conversationPayloadSchema = z
     });
     const cast = new Set<string>();
     p.speakers.forEach((speaker, i) => {
-      // one character plays one part: who says a line is never in doubt
-      if (cast.has(speaker.character)) ctx.addIssue({ code: 'custom', path: ['speakers', i, 'character'], message: `${speaker.name} already has a part` });
-      cast.add(speaker.character);
+      // one character plays one part, and the learner one: who says a line is never in doubt
+      const who = speaker.character ?? 'learner';
+      if (cast.has(who)) {
+        ctx.addIssue({ code: 'custom', path: ['speakers', i, speaker.character ? 'character' : 'learner'], message: `${speaker.character ? speaker.name : 'the learner'} already has a part` });
+      }
+      cast.add(who);
       if (!p.lines.some((line) => line.speaker === i)) {
         ctx.addIssue({ code: 'custom', path: ['speakers', i], message: 'says nothing: give them a line or remove them' });
       }
     });
+    // the learner talks with someone: a conversation of theirs alone has nobody to hear
+    if (p.speakers.every((speaker) => speaker.character === null)) {
+      ctx.addIssue({ code: 'custom', path: ['speakers'], message: 'needs a character for the learner to talk with' });
+    }
   });
 
 const PAYLOAD_SCHEMAS = {
@@ -364,7 +385,7 @@ export function sanitizeExercise(
       const p = parsed.data as ConversationPayload;
       return {
         ...(p.title ? { title: p.title } : {}),
-        speakers: p.speakers.map((s) => ({ name: s.name, character: s.character })),
+        speakers: p.speakers.map((s) => (s.learner ? { name: s.name, character: null, learner: true as const } : { name: s.name, character: s.character })),
         lines: p.lines.map((l) => (l.en ? { speaker: l.speaker, text: l.text, en: l.en } : { speaker: l.speaker, text: l.text })),
         prompt: p.prompt,
         options: optionOrder(p.options.length, seed).map((i) => p.options[i]!),

@@ -1684,6 +1684,7 @@ export const es: Catalogue = {
   'lesson.match.keys': '1–{n} elige una tarjeta en kurdo; Mayús+número, su significado',
   'lesson.conversation.ask': 'Escucha la conversación y luego responde',
   'lesson.conversation.lines': 'La conversación',
+  'lesson.conversation.you': 'Tú',
   'lesson.conversation.play': 'Reproducir la conversación',
   'lesson.conversation.stop': 'Detener',
   'lesson.conversation.showTranslation': 'Mostrar la traducción',

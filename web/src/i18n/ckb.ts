@@ -1692,6 +1692,7 @@ export const ckb: Catalogue = {
   'lesson.match.keys': '1–{n} کارتێکی کوردی هەڵدەبژێرێت، Shift+ژمارە واتاکەی',
   'lesson.conversation.ask': 'گوێ لە گفتوگۆکە بگرە، پاشان وەڵام بدەرەوە',
   'lesson.conversation.lines': 'گفتوگۆکە',
+  'lesson.conversation.you': 'تۆ',
   'lesson.conversation.play': 'گفتوگۆکە لێبدە',
   'lesson.conversation.stop': 'وەستان',
   'lesson.conversation.showTranslation': 'وەرگێڕان پیشان بدە',

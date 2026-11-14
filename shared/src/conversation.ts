@@ -2,7 +2,9 @@
  * Conversations in lessons: two or three of the characters talking, line by
  * line, and then a question about what was said. Each part is one character
  * (Hamo, Xezo or the deer, Hevalo), called by its own name, and only that
- * character is ever shown saying its lines.
+ * character is ever shown saying its lines — or the learner's own part, when
+ * a character talks with them: those lines are the learner's to read (and
+ * say), shown as theirs, and nobody records them.
  *
  * Each part is recorded by whoever plays it, wherever they are, so a line's
  * recording is filed under its conversation and its part as well as its words:
@@ -44,15 +46,54 @@ export const CONVERSATION_LIMITS = {
  */
 export const CONVERSATION_ID = /^[a-z0-9]{6,32}$/;
 
-/** One part: the character who says its lines, and its name, which is the character's own. */
+/**
+ * One part: the character who says its lines, and its name, which is the
+ * character's own; or the learner's part, which no character plays.
+ */
 export interface ConversationSpeaker {
   name: string;
-  character: SpeakerId;
+  /** null only for the learner's own part */
+  character: SpeakerId | null;
+  /** the learner's own part: its lines are theirs, shown as theirs, never recorded */
+  learner?: true;
 }
 
 /** The part a character plays, called by its name. */
 export function conversationSpeaker(character: SpeakerId): ConversationSpeaker {
   return { name: CHARACTER_NAMES[character], character };
+}
+
+/** The learner's own part, named "you" in Kurmancî here; each app shows it in the learner's language. */
+export function learnerPart(): ConversationSpeaker {
+  return { name: 'Tu', character: null, learner: true };
+}
+
+/** Whether a part is the learner's own. */
+export function isLearnerPart(speaker: unknown): boolean {
+  return isRecord(speaker) && speaker.learner === true;
+}
+
+/**
+ * The characters who stand on a conversation's stage, in their parts' order:
+ * every part but the learner's, who is the one they face. Null when a part
+ * has no character to draw, or no part has one.
+ */
+export function stageCast(speakers: readonly { character?: unknown; learner?: unknown }[]): SpeakerId[] | null {
+  const cast = speakers.filter((s) => s.learner !== true).map((s) => s.character);
+  return cast.length > 0 && cast.every(isSpeakerId) ? cast : null;
+}
+
+/**
+ * Each line as the stage sees it: its speaker by place on the stage, and a
+ * learner's line by nobody there (one past the last place), so whoever is on
+ * the stage looks out at the learner while they speak.
+ */
+export function stageLines<L extends { speaker: number }>(speakers: readonly { learner?: unknown }[], lines: readonly L[]): L[] {
+  const place = new Map<number, number>();
+  speakers.forEach((s, part) => {
+    if (s.learner !== true) place.set(part, place.size);
+  });
+  return lines.map((l) => ({ ...l, speaker: place.get(l.speaker) ?? place.size }));
 }
 
 export interface ConversationLine {
@@ -129,7 +170,8 @@ export function conversationClips(payload: unknown): ConversationClip[] {
   payload.lines.forEach((line, index) => {
     if (!isRecord(line) || typeof line.text !== 'string' || typeof line.speaker !== 'number') return;
     const who = speakers[line.speaker];
-    if (!isRecord(who)) return;
+    // the learner says their own lines: nothing to record
+    if (!isRecord(who) || who.learner === true) return;
     const character = isSpeakerId(who.character) ? who.character : null;
     const name = character ? CHARACTER_NAMES[character] : typeof who.name === 'string' ? who.name : null;
     if (name === null) return;

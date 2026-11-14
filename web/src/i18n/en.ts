@@ -1771,6 +1771,7 @@ export const en = {
   // a conversation: two to four people talking, then a question about it (learn/Conversation.tsx)
   'lesson.conversation.ask': 'Listen to the conversation, then answer',
   'lesson.conversation.lines': 'The conversation',
+  'lesson.conversation.you': 'You',
   'lesson.conversation.play': 'Play conversation',
   'lesson.conversation.stop': 'Stop',
   'lesson.conversation.showTranslation': 'Show translation',

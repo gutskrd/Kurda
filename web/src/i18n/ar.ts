@@ -1680,6 +1680,7 @@ export const ar: Catalogue = {
   'lesson.match.keys': 'المفاتيح 1–{n} تختار بطاقة كردية، وShift مع الرقم يختار معناها',
   'lesson.conversation.ask': 'استمع إلى المحادثة، ثم أجب',
   'lesson.conversation.lines': 'المحادثة',
+  'lesson.conversation.you': 'أنت',
   'lesson.conversation.play': 'تشغيل المحادثة',
   'lesson.conversation.stop': 'إيقاف',
   'lesson.conversation.showTranslation': 'إظهار الترجمة',

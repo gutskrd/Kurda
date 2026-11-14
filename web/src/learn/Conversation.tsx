@@ -86,8 +86,9 @@ function usePlayThrough(audio: ReadonlyArray<string | null>): PlayThrough {
 }
 
 /**
- * Two or three of the characters talking, then a question about what they
- * said, asked and graded as a multiple-choice item is (`Choices`).
+ * Two or three of the characters talking — or one of them talking with the
+ * learner — then a question about what they said, asked and graded as a
+ * multiple-choice item is (`Choices`).
  *
  * They stand together on a stage above, looking at each other, and whoever
  * says the line playing now says it, mouth moving with it: always that line's
@@ -95,10 +96,12 @@ function usePlayThrough(audio: ReadonlyArray<string | null>): PlayThrough {
  * to line). The lines are speech bubbles in order: the first speaker's on the
  * start side, everyone else's across from them, each speaker in a tint of
  * their own and named over every line, so who says what never rests on
- * colour. A line with a recording has its own small button, and "Play
- * conversation" hears every recorded line through, marking the one being
- * heard (`aria-current`) and keeping it in view. The English of each line is
- * there for a learner who asks for it.
+ * colour. The learner's own lines, when they have a part, are theirs: on the
+ * end side under "You", to read and say back, never recorded. A line with a
+ * recording has its own small button, and "Play conversation" hears every
+ * recorded line through, marking the one being heard (`aria-current`) and
+ * keeping it in view. The English of each line is there for a learner who
+ * asks for it.
  */
 export function Conversation(props: ExerciseProps): React.JSX.Element {
   const { exercise, dialect, feedback } = props;
@@ -156,20 +159,23 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
           const who = speakers[line.speaker];
           const src = audio[i];
           const now = at === i;
+          const yours = who?.learner === true;
           // three speakers at most, each with a tint of their own; anything out of range reads as the first
           const tint = line.speaker > 0 && line.speaker < CONVERSATION_LIMITS.speakersMax ? line.speaker : 0;
+          const name = yours ? t('lesson.conversation.you') : who?.name;
           return (
             <li
               key={i}
               ref={now ? heard : undefined}
-              className={`lesson-line is-part-${tint}${tint > 0 ? ' is-end' : ''}${now ? ' is-heard' : ''}`}
+              className={`lesson-line ${yours ? 'is-you is-end' : `is-part-${tint}${tint > 0 ? ' is-end' : ''}`}${now ? ' is-heard' : ''}`}
               aria-current={now || undefined}
             >
               <div className="lesson-line-bubble">
-                {who && (
+                {name && (
                   <span className="lesson-line-name">
-                    <span lang={lang} dir={dir}>
-                      {who.name}
+                    {/* the learner's own part is named in their language, a character in Kurdish */}
+                    <span lang={yours ? undefined : lang} dir={yours ? undefined : dir}>
+                      {name}
                     </span>
                     <span className="sr-only">: </span>
                   </span>
@@ -183,7 +189,7 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
                   </span>
                 )}
               </div>
-              {src && <PlayButton round src={src} label={t('lesson.conversation.hearLine', { number: i + 1, name: who?.name ?? '' })} />}
+              {src && <PlayButton round src={src} label={t('lesson.conversation.hearLine', { number: i + 1, name: name ?? '' })} />}
             </li>
           );
         })}

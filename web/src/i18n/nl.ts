@@ -1686,6 +1686,7 @@ export const nl: Catalogue = {
   'lesson.match.keys': '1–{n} kiest een Koerdische kaart, Shift+cijfer de betekenis',
   'lesson.conversation.ask': 'Luister naar het gesprek en geef dan antwoord',
   'lesson.conversation.lines': 'Het gesprek',
+  'lesson.conversation.you': 'Jij',
   'lesson.conversation.play': 'Gesprek afspelen',
   'lesson.conversation.stop': 'Stoppen',
   'lesson.conversation.showTranslation': 'Vertaling tonen',

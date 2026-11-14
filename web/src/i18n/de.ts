@@ -1686,6 +1686,7 @@ export const de: Catalogue = {
   'lesson.match.keys': '1–{n} wählt eine kurdische Karte, Umschalt+Zahl ihre Bedeutung',
   'lesson.conversation.ask': 'Hör dir das Gespräch an und antworte dann',
   'lesson.conversation.lines': 'Das Gespräch',
+  'lesson.conversation.you': 'Du',
   'lesson.conversation.play': 'Gespräch abspielen',
   'lesson.conversation.stop': 'Stopp',
   'lesson.conversation.showTranslation': 'Übersetzung zeigen',

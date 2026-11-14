@@ -1681,6 +1681,7 @@ export const tr: Catalogue = {
   'lesson.match.keys': '1–{n} bir Kürtçe kart seçer, Shift+rakam anlamını',
   'lesson.conversation.ask': 'Konuşmayı dinle, sonra yanıtla',
   'lesson.conversation.lines': 'Konuşma',
+  'lesson.conversation.you': 'Sen',
   'lesson.conversation.play': 'Konuşmayı oynat',
   'lesson.conversation.stop': 'Durdur',
   'lesson.conversation.showTranslation': 'Çeviriyi göster',

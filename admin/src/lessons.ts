@@ -234,10 +234,18 @@ function conversationIssues(p: Payload, out: Issue[]): void {
   const speakers = Array.isArray(p.speakers) ? (p.speakers as Array<Record<string, unknown>>) : [];
   const lines = Array.isArray(p.lines) ? (p.lines as Array<Record<string, unknown>>) : [];
   if (str(p.title).length > CONV.titleMax) out.push({ path: 'title', message: `The title is longer than ${CONV.titleMax} characters.` });
-  if (speakers.length < CONV.speakersMin) out.push({ path: 'speakers', message: 'A conversation needs at least two of the characters.' });
-  if (speakers.length > CONV.speakersMax) out.push({ path: 'speakers', message: `At most ${CONV.speakersMax}: there are ${CONV.speakersMax} characters.` });
+  if (speakers.length < CONV.speakersMin) out.push({ path: 'speakers', message: 'A conversation needs two parts: two characters, or a character and the learner.' });
+  if (speakers.length > CONV.speakersMax) out.push({ path: 'speakers', message: `At most ${CONV.speakersMax} parts.` });
+  if (speakers.length > 0 && speakers.every((s) => s.learner === true)) out.push({ path: 'speakers', message: 'The learner needs a character to talk with.' });
   const cast = new Set<string>();
   speakers.forEach((s, i) => {
+    // the learner's own part: theirs to read and say, recorded by nobody
+    if (s.learner === true) {
+      if (cast.has('learner')) out.push({ path: `speakers.${i}.character`, message: 'The learner already has a part.' });
+      cast.add('learner');
+      if (!lines.some((l) => l.speaker === i)) out.push({ path: `speakers.${i}`, message: 'The learner says nothing: give them a line or remove them.' });
+      return;
+    }
     if (!isSpeakerId(s.character)) {
       out.push({ path: `speakers.${i}.character`, message: `Person ${i + 1}: choose who plays the part.` });
       return;
@@ -273,7 +281,7 @@ function conversationIssues(p: Payload, out: Issue[]): void {
 function conversationForSave(p: Payload): Payload {
   const t = (v: unknown): string => str(v).trim();
   const speakers = (Array.isArray(p.speakers) ? (p.speakers as Array<Record<string, unknown>>) : []).map((s) =>
-    isSpeakerId(s.character) ? conversationSpeaker(s.character) : { name: t(s.name) },
+    s.learner === true ? { learner: true } : isSpeakerId(s.character) ? conversationSpeaker(s.character) : { name: t(s.name) },
   );
   const lines = (Array.isArray(p.lines) ? (p.lines as Array<Record<string, unknown>>) : []).map((l) => ({
     speaker: l.speaker,

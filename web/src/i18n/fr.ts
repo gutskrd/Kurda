@@ -1685,6 +1685,7 @@ export const fr: Catalogue = {
   'lesson.match.keys': '1–{n} choisit une carte kurde, Maj+chiffre son sens',
   'lesson.conversation.ask': 'Écoute la conversation, puis réponds',
   'lesson.conversation.lines': 'La conversation',
+  'lesson.conversation.you': 'Toi',
   'lesson.conversation.play': 'Écouter la conversation',
   'lesson.conversation.stop': 'Arrêter',
   'lesson.conversation.showTranslation': 'Afficher la traduction',

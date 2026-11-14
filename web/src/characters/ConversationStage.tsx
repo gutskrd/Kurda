@@ -3,8 +3,9 @@ import {
   characterArt,
   conversationLineVoice,
   gazeTargets,
-  isSpeakerId,
   lookAcross,
+  stageCast,
+  stageLines,
   standTogether,
   togetherBackdrop,
   type ConversationLine,
@@ -57,6 +58,9 @@ function useHeardLine(audio: ReadonlyArray<string | null>, at: number | null): n
  * them (shared `gazeTargets`, `lookAcross`). A face drawn turned a little is
  * stood the other way round where that would turn it from the others.
  *
+ * The learner's own part, when they have one, is not on the stage: they are
+ * the one the characters face, so a character talking with them looks out.
+ *
  * Decorative: the lines below say who says what; the stage shows it. Nothing
  * at all for a conversation with a part no character plays.
  */
@@ -92,10 +96,13 @@ export function ConversationStage({
     return () => watch.disconnect();
   }, []);
   const heard = useHeardLine(audio, at);
-  const cast = speakers.map((s) => s.character);
-  const complete = cast.length > 0 && cast.every((c) => isSpeakerId(c));
+  // the characters on stage, in order; the learner's own part stands in front of it, not on it
+  const cast = stageCast(speakers);
+  const complete = cast !== null;
   // the cast as one string, so a new array of the same characters changes nothing
-  const castKey = complete ? cast.join(',') : '';
+  const castKey = cast ? cast.join(',') : '';
+  // each line by who says it on stage; the learner's lines by nobody there, so whoever is on stage looks out at them
+  const staged = useMemo(() => stageLines(speakers, lines), [speakers, lines]);
   const rtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
   const places = useMemo(() => {
     const ids = castKey ? (castKey.split(',') as SpeakerId[]) : [];
@@ -119,8 +126,9 @@ export function ConversationStage({
   );
   if (!complete || !backdrops) return null;
 
-  const looks = gazeTargets(places.length, lines, heard);
-  const line = heard !== null ? lines[heard] : undefined;
+  const looks = gazeTargets(places.length, staged, heard);
+  const line = heard !== null ? staged[heard] : undefined;
+  const said = heard !== null ? lines[heard] : undefined;
   const hop = Math.round(height * HOP_ROOM);
   return (
     <div
@@ -150,8 +158,8 @@ export function ConversationStage({
                 audio={soundPlayer}
                 // the part's own line, said by the part's own character; nobody else speaks while it plays
                 src={src}
-                voice={src && line ? conversationLineVoice(speakers, line, voices[saying!]) : null}
-                text={src && line ? line.text : null}
+                voice={src && said ? conversationLineVoice(speakers, said, voices[saying!]) : null}
+                text={src && said ? said.text : null}
                 quiet={!src}
                 gaze={lookAcross(place, other)}
                 mirrored={place.mirrored}

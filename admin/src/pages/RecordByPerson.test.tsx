@@ -154,6 +154,30 @@ describe('the people', () => {
     expect(screen.getByText('7 lines still to record across every voice.')).toBeInTheDocument();
   });
 
+  it('lists the road’s chapters with how much of each is recorded, and which are online', async () => {
+    const chapter = { lessons: 16, published: 0, online: false };
+    const listing: PeopleListing = {
+      people: [HAMO],
+      mine: ['hamo'],
+      ownVoicesOnly: true,
+      chapters: [
+        { ...chapter, position: 1, titleKu: 'Silav', titleEn: 'Hello', lines: 240, recorded: 240, published: 16, online: true },
+        { ...chapter, position: 2, titleKu: 'Malbat', titleEn: 'Family', lines: 250, recorded: 249 },
+        { ...chapter, position: 3, titleKu: 'Mal û gund', titleEn: 'House and village', lines: 230, recorded: 230 },
+      ],
+    };
+    show(null, on('GET', '/admin/recording/people', json(listing)));
+    const chapters = await screen.findByRole('region', { name: 'Chapters' });
+    const rows = within(chapters).getAllByRole('listitem');
+    expect(rows.map((r) => r.querySelector('.rp-chapter-head')!.textContent)).toEqual([
+      '1. Silav HelloOnline',
+      '2. Malbat Family1 line to go',
+      '3. Mal û gund House and villageGoing online',
+    ]);
+    expect(within(rows[1]!).getByRole('progressbar', { name: 'Chapter 2 recorded' })).toHaveAttribute('aria-valuenow', '249');
+    expect(within(rows[1]!).getByText('249 of 250 recorded')).toBeInTheDocument();
+  });
+
   it('tells a voice actor with no voice linked yet who links one', async () => {
     show(null, on('GET', '/admin/recording/people', json({ people: [], mine: [], ownVoicesOnly: true })));
     expect(await screen.findByText('No voice is linked to your account yet')).toBeInTheDocument();

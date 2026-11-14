@@ -948,6 +948,11 @@ html:has(.lesson-bar) {
   --line-tint: var(--gold-soft);
   --line-edge: color-mix(in srgb, var(--gold) 45%, transparent);
 }
+/* the learner's own lines: their colour, the way a message they sent would be */
+.lesson-line.is-you {
+  --line-tint: color-mix(in srgb, var(--bubble-mine) 18%, transparent);
+  --line-edge: color-mix(in srgb, var(--bubble-mine) 50%, transparent);
+}
 .lesson-line-bubble {
   display: grid;
   gap: 2px;

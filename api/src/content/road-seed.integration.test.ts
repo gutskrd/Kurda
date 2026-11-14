@@ -2,7 +2,9 @@
  * Seeding the road's lessons against real Postgres: each once, as a draft at
  * its own unit, skill and place, with the course, units and skills made when
  * missing; never again after an editor deletes it; never over a lesson an
- * editor put in its place; and never stopped by a broken file.
+ * editor put in its place; never stopped by a broken file; and an untouched
+ * draft brought up to its rewritten file, while one an editor saved, sent
+ * for review or published is left alone.
  *
  * Each run seeds a course of its own, whose markers are filed under its slug
  * (`roadSeedName`), so the road itself is never touched.
@@ -37,10 +39,11 @@ describe.skipIf(!DATABASE_URL)('road lessons (integration)', () => {
   const s = Date.now().toString(36);
   const fresh = `road-a-${s}`;
   const edited = `road-b-${s}`;
+  const rewritten = `road-c-${s}`;
   let pool: pg.Pool;
   let repo: ContentRepository;
   const dirs: string[] = [];
-  const courses = [fresh, edited];
+  const courses = [fresh, edited, rewritten];
 
   /** A folder holding these unit files. */
   async function folder(files: Record<string, unknown>): Promise<URL> {
@@ -90,7 +93,7 @@ describe.skipIf(!DATABASE_URL)('road lessons (integration)', () => {
     it('makes the course, its units and skills, and puts every lesson in as a draft at its place', async () => {
       const log = recorder();
       const summary = await seedRoadLessons(pool, log, { dir, course: fresh });
-      expect(summary).toEqual({ files: 2, seeded: ['u01s1l1', 'u01s1l2', 'u02s1l1'], occupied: [], invalid: [], failed: [], already: 0 });
+      expect(summary).toEqual({ files: 2, seeded: ['u01s1l1', 'u01s1l2', 'u02s1l1'], occupied: [], invalid: [], failed: [], already: 0, refreshed: [] });
       expect(log.lines.filter((l) => l.level === 'warn')).toEqual([]);
       expect(log.lines.at(-1)!.msg).toMatch(/^road lessons: 3 seeded as drafts/);
 
@@ -155,12 +158,91 @@ describe.skipIf(!DATABASE_URL)('road lessons (integration)', () => {
         ]),
       });
       const summary = await seedRoadLessons(pool, recorder(), { dir: later, course: fresh });
-      expect(summary).toMatchObject({ seeded: ['u01s1l3'], already: 2 });
-      // the lesson seeded before is the editors' now: a changed file does not change it
+      expect(summary).toMatchObject({ seeded: ['u01s1l3'], already: 2, refreshed: ['u01s1l1'] });
+      // the lesson seeded before was never touched, so it follows its file; the deleted one stays deleted
       expect((await lessonsOf(fresh)).map((l) => [l.position, l.title_en])).toEqual([
-        [1, 'Arriving'],
+        [1, 'Arriving, rewritten'],
         [3, 'At the door'],
       ]);
+    });
+  });
+
+  describe('from a file rewritten since', () => {
+    /** One unit of `rewritten` with these lessons, its skill's note and its unit's title as given. */
+    function unitFile(lessons: Parameters<typeof roadUnitFile>[2], note: string, unitTitle: string) {
+      const file = roadUnitFile(rewritten, 1, lessons) as { units: Array<Record<string, unknown> & { skills: Array<Record<string, unknown>> }> };
+      file.units[0]!.titleEn = unitTitle;
+      file.units[0]!.skills[0]!.grammarMd = note;
+      return file;
+    }
+
+    async function exercisesOf(lessonId: string) {
+      const { rows } = await pool.query<{ type: string; payload: Record<string, unknown> }>(`SELECT type, payload FROM exercises WHERE lesson_id = $1 ORDER BY position`, [lessonId]);
+      return rows;
+    }
+
+    async function skillAndUnit() {
+      const { rows } = await pool.query<{ grammar_md: string | null; unit: string }>(
+        `SELECT s.grammar_md, u.title_en unit FROM skills s JOIN units u ON u.id = s.unit_id JOIN courses c ON c.id = u.course_id WHERE c.slug = $1`,
+        [rewritten],
+      );
+      return rows[0];
+    }
+
+    beforeAll(async () => {
+      const first = await folder({ 'unit-01.json': unitFile([{ key: 'u01s1l1', position: 1 }, { key: 'u01s1l2', position: 2 }], 'Old note.', 'Old unit') });
+      await seedRoadLessons(pool, recorder(), { dir: first, course: rewritten });
+    });
+
+    it('brings an untouched draft up to its file, and leaves a draft an editor saved as they left it', async () => {
+      const [one, two] = await lessonsOf(rewritten);
+      // an editor's save raises the lesson's lock_version, as the console's does
+      await pool.query(`UPDATE lessons SET title_en = 'Their title', lock_version = lock_version + 1 WHERE id = $1`, [two!.id]);
+      const fresh = [{ position: 1, type: 'translate', payload: { voice: 'hamo', prompt: 'Thanks a lot', accepted: ['Gelek spas!', 'Gelek spas'] } }];
+      const dir = await folder({
+        'unit-01.json': unitFile(
+          [
+            { key: 'u01s1l1', position: 1, titleEn: 'New one', exercises: fresh },
+            { key: 'u01s1l2', position: 2, titleEn: 'New two', exercises: fresh },
+          ],
+          'New note.',
+          'New unit',
+        ),
+      });
+      const log = recorder();
+      const summary = await seedRoadLessons(pool, log, { dir, course: rewritten });
+      expect(summary).toMatchObject({ seeded: [], already: 2, refreshed: ['u01s1l1'] });
+      expect(log.lines.at(-1)!.msg).toMatch(/2 seeded before \(1 of them refreshed from their files\)/);
+      expect((await lessonsOf(rewritten)).map((l) => [l.position, l.version, l.status, l.title_en])).toEqual([
+        [1, 1, 'draft', 'New one'],
+        [2, 1, 'draft', 'Their title'],
+      ]);
+      expect(await exercisesOf(one!.id)).toEqual([{ type: 'translate', payload: fresh[0]!.payload }]);
+      expect((await exercisesOf(two!.id)).map((e) => e.type)).toEqual(['match_pairs', 'multiple_choice', 'translate', 'conversation']);
+      // a skill with an edited lesson keeps its note, and its unit its title
+      expect(await skillAndUnit()).toEqual({ grammar_md: 'Old note.', unit: 'Old unit' });
+
+      // the same files again change nothing
+      expect(await seedRoadLessons(pool, recorder(), { dir, course: rewritten })).toMatchObject({ refreshed: [] });
+    });
+
+    it('gives a skill and unit whose lessons are all untouched their file’s note and title, and never touches a lesson in review or published', async () => {
+      const [, two] = await lessonsOf(rewritten);
+      await pool.query(`DELETE FROM lessons WHERE id = $1`, [two!.id]);
+      const dir = await folder({ 'unit-01.json': unitFile([{ key: 'u01s1l1', position: 1, titleEn: 'Newer one' }], 'Newest note.', 'Newest unit') });
+      expect(await seedRoadLessons(pool, recorder(), { dir, course: rewritten })).toMatchObject({ refreshed: ['u01s1l1'] });
+      expect(await skillAndUnit()).toEqual({ grammar_md: 'Newest note.', unit: 'Newest unit' });
+
+      for (const status of ['in_review', 'published']) {
+        const [one] = await lessonsOf(rewritten);
+        await pool.query(`UPDATE lessons SET status = $2 WHERE id = $1`, [one!.id, status]);
+        const again = await folder({ 'unit-01.json': unitFile([{ key: 'u01s1l1', position: 1, titleEn: `After ${status}` }], 'Another note.', 'Another unit') });
+        expect(await seedRoadLessons(pool, recorder(), { dir: again, course: rewritten })).toMatchObject({ refreshed: [] });
+        expect((await lessonsOf(rewritten)).map((l) => l.title_en)).toEqual(['Newer one']);
+        expect(await skillAndUnit()).toEqual({ grammar_md: 'Newest note.', unit: 'Newest unit' });
+        // back to a draft for the next round; a published version can only be retired, which lets the course be cleaned up after
+        await pool.query(`UPDATE lessons SET status = $2 WHERE id = $1`, [one!.id, status === 'in_review' ? 'draft' : 'archived']);
+      }
     });
   });
 
@@ -230,7 +312,7 @@ describe.skipIf(!DATABASE_URL)('road lessons (integration)', () => {
     it('starts quietly when no unit has been written yet', async () => {
       const empty = await folder({ 'plan.json': {} });
       const log = recorder();
-      expect(await seedRoadLessons(pool, log, { dir: empty, course: edited })).toEqual({ files: 0, seeded: [], occupied: [], invalid: [], failed: [], already: 0 });
+      expect(await seedRoadLessons(pool, log, { dir: empty, course: edited })).toEqual({ files: 0, seeded: [], occupied: [], invalid: [], failed: [], already: 0, refreshed: [] });
       expect(log.lines).toEqual([]);
     });
   });

@@ -171,6 +171,7 @@ import { makePushSendJob, pushRecorded } from './jobs/push-jobs.js';
 import { ContentAdminService } from './content/admin-service.js';
 import { seedStarterLessons } from './content/starter-lessons.js';
 import { seedRoadLessons } from './content/road-seed.js';
+import { RoadChapterWatch } from './content/road-chapters.js';
 import { seedStarterGameContent } from './games/starters.js';
 import { seedStarterLibrary } from './games/starter-library.js';
 import { registerContentAdminRoutes } from './content/admin-routes.js';
@@ -704,8 +705,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDictionaryImportRoutes(app, options.ferheng);
     // recordings for the alphabet page, made in the admin panel
     registerAlphabetAudioRoutes(app, config);
-    // and of the Kurdish the lessons use, which lessons deliver with their exercises
-    registerLessonAudioRoutes(app, config);
+    // and of the Kurdish the lessons use, which lessons deliver with their exercises; each take may finish a chapter
+    // of the Kurmanji Road, which then goes online by itself (content/road-chapters.ts) — not under test, where no road is seeded
+    const roadChapters = new RoadChapterWatch(app.db, app.log);
+    registerLessonAudioRoutes(app, config, config.NODE_ENV === 'test' ? undefined : () => void roadChapters.nudge());
     // and who says each of those recordings, chosen or changed after it was made
     registerRecordingVoiceRoutes(app, config, options.recordingFiles);
     // and everything each voice has to say, person by person, for the "Record by person" page; the Road's
@@ -730,6 +733,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       app.addHook('onReady', async () => {
         await seedStarterLessons(app.db, app.log);
         await seedRoadLessons(app.db, app.log);
+        // a chapter whose every line was recorded before its lessons arrived goes online now
+        await roadChapters.nudge();
         // and the learning games' starters: the first case, made of the Road's own lines once those are there (games/starters.ts),
         // then each game's first set of rows, made once from the course and published (games/starter-library.ts)
         await seedStarterGameContent(app.db, app.log);

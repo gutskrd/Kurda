@@ -3280,6 +3280,7 @@ export type TranslationKey =
   | 'lesson.conversation.prompt'
   | 'lesson.conversation.promptRead'
   | 'lesson.conversation.playAll'
+  | 'lesson.conversation.you'
   | 'lesson.conversation.stop'
   | 'lesson.conversation.playLine'
   | 'lesson.conversation.showTranslation'
@@ -6850,6 +6851,7 @@ const en: Catalog = {
   'lesson.conversation.prompt': 'Listen to the conversation, then answer',
   'lesson.conversation.promptRead': 'Read the conversation, then answer',
   'lesson.conversation.playAll': 'Play conversation',
+  'lesson.conversation.you': 'You',
   'lesson.conversation.stop': 'Stop',
   'lesson.conversation.playLine': 'Play line {n}, said by {name}',
   'lesson.conversation.showTranslation': 'Show translation',
@@ -10418,6 +10420,7 @@ const ku: Catalog = {
   'lesson.conversation.prompt': 'Guh bide axaftinê, paşê bersiva pirsê bide',
   'lesson.conversation.promptRead': 'Axaftinê bixwîne, paşê bersiva pirsê bide',
   'lesson.conversation.playAll': 'Axaftinê lêxe',
+  'lesson.conversation.you': 'Tu',
   'lesson.conversation.stop': 'Rawestîne',
   'lesson.conversation.playLine': 'Rêza {n} ya ku {name} dibêje lêxe',
   'lesson.conversation.showTranslation': 'Wergera îngilîzî nîşan bide',
@@ -13986,6 +13989,7 @@ const de: Catalog = {
   'lesson.conversation.prompt': 'Hör dir das Gespräch an und antworte dann',
   'lesson.conversation.promptRead': 'Lies das Gespräch und antworte dann',
   'lesson.conversation.playAll': 'Gespräch abspielen',
+  'lesson.conversation.you': 'Du',
   'lesson.conversation.stop': 'Stopp',
   'lesson.conversation.playLine': 'Zeile {n} abspielen, gesprochen von {name}',
   'lesson.conversation.showTranslation': 'Englische Übersetzung zeigen',
@@ -17554,6 +17558,7 @@ const es: Catalog = {
   'lesson.conversation.prompt': 'Escucha la conversación y luego responde',
   'lesson.conversation.promptRead': 'Lee la conversación y luego responde',
   'lesson.conversation.playAll': 'Reproducir la conversación',
+  'lesson.conversation.you': 'Tú',
   'lesson.conversation.stop': 'Detener',
   'lesson.conversation.playLine': 'Reproducir la línea {n}, dicha por {name}',
   'lesson.conversation.showTranslation': 'Mostrar la traducción al inglés',
@@ -21122,6 +21127,7 @@ const tr: Catalog = {
   'lesson.conversation.prompt': 'Konuşmayı dinle, sonra cevap ver',
   'lesson.conversation.promptRead': 'Konuşmayı oku, sonra cevap ver',
   'lesson.conversation.playAll': 'Konuşmayı oynat',
+  'lesson.conversation.you': 'Sen',
   'lesson.conversation.stop': 'Durdur',
   'lesson.conversation.playLine': '{n}. satırı oynat ({name})',
   'lesson.conversation.showTranslation': 'Çeviriyi göster',
@@ -24690,6 +24696,7 @@ const ar: Catalog = {
   'lesson.conversation.prompt': 'استمع إلى المحادثة ثم أجب',
   'lesson.conversation.promptRead': 'اقرأ المحادثة ثم أجب',
   'lesson.conversation.playAll': 'تشغيل المحادثة',
+  'lesson.conversation.you': 'أنت',
   'lesson.conversation.stop': 'إيقاف',
   'lesson.conversation.playLine': 'تشغيل السطر {n} بصوت {name}',
   'lesson.conversation.showTranslation': 'اعرض الترجمة',
@@ -28258,6 +28265,7 @@ const fr: Catalog = {
   'lesson.conversation.prompt': 'Écoute la conversation, puis réponds',
   'lesson.conversation.promptRead': 'Lis la conversation, puis réponds',
   'lesson.conversation.playAll': 'Écouter la conversation',
+  'lesson.conversation.you': 'Toi',
   'lesson.conversation.stop': 'Arrêter',
   'lesson.conversation.playLine': 'Écouter la réplique {n}, dite par {name}',
   'lesson.conversation.showTranslation': 'Afficher la traduction anglaise',
@@ -31826,6 +31834,7 @@ const nl: Catalog = {
   'lesson.conversation.prompt': 'Luister naar het gesprek en antwoord dan',
   'lesson.conversation.promptRead': 'Lees het gesprek en antwoord dan',
   'lesson.conversation.playAll': 'Gesprek afspelen',
+  'lesson.conversation.you': 'Jij',
   'lesson.conversation.stop': 'Stoppen',
   'lesson.conversation.playLine': 'Regel {n} afspelen, gezegd door {name}',
   'lesson.conversation.showTranslation': 'Engelse vertaling tonen',
@@ -35395,6 +35404,7 @@ const ckb: Catalog = {
   'lesson.conversation.prompt': 'گوێ لە گفتوگۆکە بگرە، پاشان وەڵامی پرسیارەکە بدەرەوە',
   'lesson.conversation.promptRead': 'گفتوگۆکە بخوێنەوە، پاشان وەڵامی پرسیارەکە بدەرەوە',
   'lesson.conversation.playAll': 'گفتوگۆکە لێبدە',
+  'lesson.conversation.you': 'تۆ',
   'lesson.conversation.stop': 'بوەستێنە',
   'lesson.conversation.playLine': 'دێڕی {n} کە {name} دەیڵێت لێبدە',
   'lesson.conversation.showTranslation': 'وەرگێڕانی ئینگلیزی پیشان بدە',
