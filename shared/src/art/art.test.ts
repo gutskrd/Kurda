@@ -107,7 +107,8 @@ import {
 import { PIGEON_POSES } from './pigeon.js';
 import {
   LETTER_FAR_OFF,
-  LETTER_HEARTS,
+  LETTER_NOTES,
+  LETTER_PLAY_BESIDE,
   LETTER_SILL_SPOTS,
   LETTER_SKY,
   LETTER_SPRITES,
@@ -2016,6 +2017,11 @@ describe('the pigeon at play', () => {
     expect(fetch.letter[0]).toMatchObject({ y: 0, seen: 1 });
     expect(fetch.moves[fetch.moves.length - 1]).toMatchObject(still);
     expect(fetch.poses[fetch.poses.length - 1]!.slice(1)).toEqual(['perched', true]);
+    // answered, it takes the answer that dropped where its own letter lay, and ends as ready to fly
+    const take = LETTER_PLAY.take;
+    expect(take.letterAt).toBe(after.letterAt);
+    expect(take.moves[take.moves.length - 1]).toMatchObject(still);
+    expect(take.poses[take.poses.length - 1]!.slice(1)).toEqual(['perched', true]);
     expect(after.moves[after.moves.length - 1]).toMatchObject(still);
     // the idle play goes round and round, so it ends as it begins
     const idle = LETTER_PLAY.idle;
@@ -2089,7 +2095,7 @@ describe('the pigeon at play', () => {
   it('brings its beak down to the letter on the sill when it picks it up or lays it down', () => {
     // the tip of its beak, standing, about its feet, in shares of its own square
     const beak = [(21.3 * LETTER_BIRD_FEET.scale) / 120, (-11.1 * LETTER_BIRD_FEET.scale) / 120] as const;
-    for (const play of [LETTER_PLAY.before, LETTER_PLAY.after, LETTER_PLAY.fetch]) {
+    for (const play of [LETTER_PLAY.before, LETTER_PLAY.after, LETTER_PLAY.fetch, LETTER_PLAY.take]) {
       const peck = play.moves.find((m) => m.tilt >= 30)!;
       const a = (peck.tilt * Math.PI) / 180;
       const [x, y] = [beak[0] * Math.cos(a) - beak[1] * Math.sin(a) + peck.x, beak[0] * Math.sin(a) + beak[1] * Math.cos(a) + peck.y];
@@ -2115,8 +2121,21 @@ describe('the life round the window', () => {
     expect(own.left + own.size * reach.x0).toBeGreaterThan(10 / 120);
     // facing left, the visitor's tail is on the right: it ends before the pot
     expect(visitor.left + visitor.size * (1 - reach.x0)).toBeLessThan(84 / 120);
-    // their beaks meet in the middle, a little apart
-    expect(LETTER_SILL_SPOTS.own.x).toBeLessThan(LETTER_SILL_SPOTS.visitor.x);
+    // the two face each other with a clear space between their beaks, standing, pecking, or holding a letter
+    const unit = (spot: LetterSpot): number => LETTER_BIRD_FEET.scale * LETTER_SILL_SPOTS[spot].share;
+    const beak = { standing: 21.3, pecking: 21.3 * Math.cos(Math.PI / 6) + 11.1 * Math.sin(Math.PI / 6), letter: 32 };
+    const gap = (ownReach: number, visitorReach: number): number =>
+      LETTER_SILL_SPOTS.visitor.x - visitorReach * unit('visitor') - (LETTER_SILL_SPOTS.own.x + ownReach * unit('own'));
+    expect(gap(beak.standing, beak.standing)).toBeGreaterThan(8);
+    expect(gap(beak.pecking, beak.pecking)).toBeGreaterThan(5);
+    expect(gap(beak.standing, beak.letter)).toBeGreaterThan(3);
+    // and neither turns round, or steps toward the other, while the two are there
+    for (const play of [...Object.values(LETTER_PLAY_BESIDE), LETTER_PLAY.fetch, LETTER_PLAY.take]) {
+      for (const m of play.moves) {
+        expect(m.sx).toBeGreaterThan(0);
+        expect(m.x).toBeLessThanOrEqual(0.012);
+      }
+    }
     expect(own.top + own.size * (LETTER_BIRD_FEET.y / 120)).toBeCloseTo(LETTER_SILL.y / 120, 6);
     const shift = letterSillShift('alone', 'own');
     const alone = letterSillBox('alone');
@@ -2195,9 +2214,10 @@ describe('the life round the window', () => {
     expect(letterDrifts('spring', 'day')).toEqual(letterDrifts('spring', 'day'));
   });
 
-  it('raises the hearts between the two birds, up from the sill and fading', () => {
-    for (const heart of LETTER_HEARTS) {
-      const [first, last] = [heart.keys[0]!, heart.keys[heart.keys.length - 1]!];
+  it('raises a few notes of birdsong from between the two birds, up from the sill and fading', () => {
+    for (const note of LETTER_NOTES) {
+      expect(note.sprite).toBe('note');
+      const [first, last] = [note.keys[0]!, note.keys[note.keys.length - 1]!];
       expect(first.x).toBeGreaterThan(LETTER_SILL_SPOTS.own.x / 120);
       expect(first.x).toBeLessThan(LETTER_SILL_SPOTS.visitor.x / 120);
       expect(last.y).toBeLessThan(first.y);

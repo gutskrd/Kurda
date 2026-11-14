@@ -53,7 +53,8 @@ export {
 } from './letters.js';
 export {
   LETTER_FAR_OFF,
-  LETTER_HEARTS,
+  LETTER_NOTES,
+  LETTER_PLAY_BESIDE,
   LETTER_SILL_SPOTS,
   LETTER_SKY,
   LETTER_SPRITES,

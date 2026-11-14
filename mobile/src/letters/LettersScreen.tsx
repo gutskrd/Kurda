@@ -245,9 +245,9 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
       return;
     }
     haptic('celebrate');
-    // your letter drops onto the sill, their bird takes it home, and hearts rise between the two
+    // your letter drops onto the sill, their bird takes it home, and the two birds chirp to each other
     setMoment({ kind: 'answered', person: res.data.person, threadId: res.data.threadId });
-    setScene((s) => s && { ...s, visitor: { kind: 'leaving', bird: visitor.person.bird, how: 'answered' }, hearts: (s.hearts ?? 0) + 1 });
+    setScene((s) => s && { ...s, visitor: { kind: 'leaving', bird: visitor.person.bird, how: 'answered' }, song: (s.song ?? 0) + 1 });
   };
 
   const sendOn = async (): Promise<void> => {

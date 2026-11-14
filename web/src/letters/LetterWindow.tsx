@@ -2,9 +2,10 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 're
 import {
   LETTER_BIRD_FEET,
   LETTER_FLIGHT,
-  LETTER_HEARTS,
+  LETTER_NOTES,
   LETTER_PLANT_SWAY,
   LETTER_PLAY,
+  LETTER_PLAY_BESIDE,
   LETTER_SILL,
   LETTER_SILL_SPOTS,
   LETTER_SKY,
@@ -55,8 +56,11 @@ import { useTreeSky } from '../tree/TreeScene';
  *   - a bird called to your window (`visitor`) comes down from the sky,
  *     lands, lays its letter before it and stays, facing your bird, which has
  *     hopped aside to make room; answered, your letter drops onto the sill and
- *     it takes it home; sent on, it picks its own letter up again and goes;
- *   - when two people become pen pals, hearts rise between the two birds.
+ *     it takes it home; sent on, it picks its own letter up again and goes.
+ *     The two keep a friendly distance: neither turns round or steps toward
+ *     the other while they are both there;
+ *   - when two people become pen pals, the two birds chirp to each other and
+ *     a few notes of birdsong rise between them.
  * The pigeons' shadows, and their letters', lie on the sill by themselves.
  *
  * Only transform and opacity move. A reader who asked for less motion sees
@@ -69,8 +73,8 @@ export interface WindowScene {
   visitor: { kind: 'none' } | { kind: 'arriving'; bird: number } | { kind: 'here'; bird: number } | { kind: 'leaving'; bird: number; how: 'answered' | 'sent-on' };
   /** the birds out there, by colour, the next to come first */
   sky: readonly number[];
-  /** raised once each time this changes: two people have just become pen pals */
-  hearts?: number;
+  /** sung once each time this changes: two people have just become pen pals */
+  song?: number;
 }
 
 /** A spot's square on the sill as a style, and the middle of it on the window, which a flight turns about. */
@@ -510,21 +514,37 @@ function FlightCopy({ copyRef, life, spot, facingLeft }: { copyRef: React.Ref<HT
 }
 
 /** A bird on the sill, between its flights: standing (asleep at night if it may sleep), playing, or settled again with the letter it brought. */
-function OnSill({ life, flight, spot, facingLeft, asleep }: { life: Life; flight: Flight; spot: LetterSpot; facingLeft: boolean; asleep: boolean }): React.JSX.Element | null {
+function OnSill({
+  life,
+  flight,
+  spot,
+  facingLeft,
+  asleep,
+  beside,
+}: {
+  life: Life;
+  flight: Flight;
+  spot: LetterSpot;
+  facingLeft: boolean;
+  asleep: boolean;
+  /** another bird is on the sill: it plays without turning round toward it */
+  beside: boolean;
+}): React.JSX.Element | null {
   const bird = birdOf(life);
   const { phase, setPhase } = flight;
   if (bird === null || phase === 'flight') return null;
   const dir = facingLeft ? -1 : 1;
+  const plays = beside ? LETTER_PLAY_BESIDE : LETTER_PLAY;
   if (phase === 'play' && life.kind === 'leaving') return <Playing key="play" bird={bird} spot={spot} play={life.play} facingLeft={facingLeft} onEnd={() => setPhase('flight')} />;
-  if (phase === 'after') return <Playing key="after" bird={bird} spot={spot} play={LETTER_PLAY.after} facingLeft={facingLeft} onEnd={() => setPhase('settled')} />;
+  if (phase === 'after') return <Playing key="after" bird={bird} spot={spot} play={plays.after} facingLeft={facingLeft} onEnd={() => setPhase('settled')} />;
   if (phase === 'settled')
     return (
       <>
         <SillLetter spot={spot} style={sillLetterPlace(LETTER_PLAY.after.letterAt, dir)} />
-        <Playing key="settled" bird={bird} spot={spot} play={LETTER_PLAY.idle} facingLeft={facingLeft} />
+        <Playing key="settled" bird={bird} spot={spot} play={plays.idle} facingLeft={facingLeft} />
       </>
     );
-  return asleep ? <Asleep bird={bird} spot={spot} /> : <Playing key="idle" bird={bird} spot={spot} play={LETTER_PLAY.idle} facingLeft={facingLeft} />;
+  return asleep ? <Asleep bird={bird} spot={spot} /> : <Playing key="idle" bird={bird} spot={spot} play={plays.idle} facingLeft={facingLeft} />;
 }
 
 /** The shadow a flying bird leaves on the sill, from its spot, moved by its flight (`useFlight`). */
@@ -580,7 +600,7 @@ function ownLife(own: WindowScene['own']): Life {
 /** A visitor's part in the scene, as a life on the sill: answered, your letter drops before it and it takes it; sent on, it picks its own up again. */
 function visitorLife(visitor: WindowScene['visitor']): Life {
   if (visitor.kind === 'none') return visitor;
-  if (visitor.kind === 'leaving') return { kind: 'leaving', bird: visitor.bird, play: visitor.how === 'answered' ? LETTER_PLAY.before : LETTER_PLAY.fetch };
+  if (visitor.kind === 'leaving') return { kind: 'leaving', bird: visitor.bird, play: visitor.how === 'answered' ? LETTER_PLAY.take : LETTER_PLAY.fetch };
   return visitor;
 }
 
@@ -614,16 +634,16 @@ export function LetterWindow({
     if (visitor.kind === 'arriving' && visitorFlight.phase === 'settled') landed.current?.();
   }, [visitor.kind, visitorFlight.phase]);
   const drifts = useMemo(() => letterDrifts(treeSeasonAt(new Date()), sky), [sky]);
-  // hearts rise once each time two people become pen pals, and are gone again after
-  const [hearts, setHearts] = useState<number | null>(null);
-  const seenHearts = useRef(scene.hearts);
+  // the notes rise once each time two people become pen pals, and are gone again after
+  const [song, setSong] = useState<number | null>(null);
+  const seenSong = useRef(scene.song);
   useEffect(() => {
-    if (scene.hearts === seenHearts.current) return;
-    seenHearts.current = scene.hearts;
-    setHearts(scene.hearts ?? null);
-    const done = window.setTimeout(() => setHearts(null), 2800);
+    if (scene.song === seenSong.current) return;
+    seenSong.current = scene.song;
+    setSong(scene.song ?? null);
+    const done = window.setTimeout(() => setSong(null), 2800);
     return () => window.clearTimeout(done);
-  }, [scene.hearts]);
+  }, [scene.song]);
 
   // the pointer over the window turns the country behind its frame
   const look = (e: React.PointerEvent<HTMLDivElement>): void => {
@@ -665,13 +685,13 @@ export function LetterWindow({
       <Layer part="light" sky={sky} id={id} />
       <span className="lw-own" ref={hop} style={{ transformOrigin: `${(LETTER_SILL_SPOTS[ownSpot].x / 120) * 100}% ${(LETTER_SILL.y / 120) * 100}%` }}>
         <FlightShade flight={ownFlight} spot={ownSpot} facingLeft={ownBack} back={ownBack} />
-        <OnSill life={own} flight={ownFlight} spot={ownSpot} facingLeft={false} asleep={sky === 'night'} />
+        <OnSill life={own} flight={ownFlight} spot={ownSpot} facingLeft={false} asleep={sky === 'night'} beside={visitor.kind !== 'none'} />
       </span>
       <FlightShade flight={visitorFlight} spot="visitor" facingLeft={visitorBack} back={visitorBack} />
-      <OnSill life={visitor} flight={visitorFlight} spot="visitor" facingLeft asleep={false} />
+      <OnSill life={visitor} flight={visitorFlight} spot="visitor" facingLeft asleep={false} beside />
       {ownFlight.phase === 'flight' && <FlightCopy copyRef={ownFlight.inside} life={own} spot={ownSpot} facingLeft={ownBack} />}
       {visitorFlight.phase === 'flight' && <FlightCopy copyRef={visitorFlight.inside} life={visitor} spot="visitor" facingLeft={visitorBack} />}
-      {hearts !== null && <Drifts key={hearts} drifts={LETTER_HEARTS} depth={0} once className="lw-hearts" />}
+      {song !== null && <Drifts key={song} drifts={LETTER_NOTES} depth={0} once className="lw-song" />}
     </div>
   );
 }
