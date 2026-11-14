@@ -517,6 +517,12 @@ export * from './stories.js';
 export * from './story-authoring.js';
 /** The pictures a story can wear as its cover: the shop's backgrounds, keyed as `stories.cover` stores them. */
 export * from './story-covers.js';
+/**
+ * The Stories' riddles and proverbs: their lists and translations, what
+ * counts as solving a riddle, the day's riddle and proverb, and the shapes
+ * the learner routes send.
+ */
+export * from './lore.js';
 
 /**
  * Inviting friends to any online game and playing again (play), gifts that

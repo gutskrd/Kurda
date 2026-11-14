@@ -175,6 +175,7 @@ import { seedRoadLessons } from './content/road-seed.js';
 import { RoadChapterWatch } from './content/road-chapters.js';
 import { seedStarterGameContent } from './games/starters.js';
 import { seedStarterLibrary } from './games/starter-library.js';
+import { seedStarterLore } from './lore/starters.js';
 import { registerContentAdminRoutes } from './content/admin-routes.js';
 import { UserAdminService } from './admin/user-admin-service.js';
 import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
@@ -742,6 +743,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
         // then each game's first set of rows, made once from the course and published (games/starter-library.ts)
         await seedStarterGameContent(app.db, app.log);
         await seedStarterLibrary(app.db, app.log, app.cache);
+        // and the Stories' starter riddles and proverbs, each once as a draft for a native speaker (lore/starters.ts)
+        await seedStarterLore(app.db, app.log);
       });
     }
     // the push and notification services set up with the leagues, above

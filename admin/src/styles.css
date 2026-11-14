@@ -983,6 +983,30 @@ button.st-cover.is-on { background: var(--surface-strong); border-color: var(--t
 .st-translation-source { margin: 0; padding-inline-start: 22px; display: grid; gap: 10px; font-size: 14px; line-height: 1.6; color: var(--text-2); }
 .st-translation-source li::marker { color: var(--text-dim); font-size: 12px; }
 @media (min-width: 900px) { .st-translation-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+/* a translated heading sits beside the Kurdish one: the reader shows a section's title over it in either language */
+.st-translation-source li.is-heading { font-weight: 600; color: var(--text); }
+/* one language's title, questions and what comes after reading, under its text, the whole width; the Kurdish under each field */
+.st-tr-parts, .st-tr-footer { grid-column: 1 / -1; display: grid; gap: 12px; min-width: 0; }
+.st-tr-group { border: none; margin: 0; padding: 10px 0 0; border-top: 1px solid var(--separator); display: grid; gap: 12px; min-width: 0; }
+.st-tr-group > legend { font-weight: 600; padding: 0; }
+.st-tr-question { display: grid; gap: 8px; }
+.st-tr-options { display: grid; gap: 6px; padding-inline-start: 12px; }
+.st-tr-option { display: grid; gap: 2px; }
+.st-tr-original { font-size: 12.5px; margin-top: 2px; }
+.st-tr-footer { padding-top: 10px; border-top: 1px solid var(--separator); }
+.st-tr-review { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.st-tr-review .st-review-note { flex-basis: 100%; }
+.st-tr-actions { flex-wrap: wrap; gap: 8px; }
+
+/* a saga's sections, listed under the text's facts; a heading paragraph stands out in the preview */
+.st-sections { margin: 6px 0 0; padding-inline-start: 22px; font-size: 13.5px; color: var(--text-2); display: grid; gap: 2px; }
+.st-para.is-heading .st-sentences { font-weight: 600; }
+
+/* sources, questions to think about and notes: one row each, removed by the button at its foot */
+.st-sources, .st-source, .st-reflection, .st-note { display: grid; gap: 8px; min-width: 0; }
+.st-source, .st-note { padding: 10px 0; border-top: 1px solid var(--separator); }
+.st-source .st-remove, .st-reflection .st-remove, .st-note .st-remove { justify-self: start; }
+.st-add { justify-self: start; }
 
 .st-audio { list-style: none; margin: 0; padding: 0; display: grid; }
 .st-audio-row { padding: 2px 0; }

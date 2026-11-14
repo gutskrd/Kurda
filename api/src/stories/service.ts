@@ -12,6 +12,11 @@
  * Questions never leave through the reading API. The games read them through
  * `getPublishedForGame` / `pickRandomPublished` and keep them server-side.
  *
+ * Besides its text a story may carry its title and summary per language, its
+ * sections (headings in the text), questions to think about, notes and
+ * sources; all of them reach the reader. Which translations a native speaker
+ * has reviewed is the editors' business and never leaves here.
+ *
  * A signed-in reader gets their own record beside each story (`me`): the
  * bookmark, where they got to, their best quiz, how often they played it
  * today. Those rows are read per request and never cached; the shared shape
@@ -20,14 +25,19 @@
 import { randomBytes } from 'node:crypto';
 import type pg from 'pg';
 import {
+  STORY_LENGTHS,
   cefrOf,
   countStoryWords,
+  isAppLocale,
+  isStoryHeading,
   lessonAudioKey,
   readingMinutes,
   storyAudioSentences,
   storyLengthFor,
   storyParagraphs,
+  storySections,
   storySentences,
+  type AppLocale,
   type QuestionKind,
   type RecordingVoice,
   type StoryAudioCoverage,
@@ -41,8 +51,13 @@ import {
   type StoryLibrary,
   type StoryListItem,
   type StoryMe,
+  type StoryMetaTranslation,
   type StoryNarration,
   type StoryNarrationSentence,
+  type StoryNote,
+  type StoryQuestionTranslation,
+  type StoryReflection,
+  type StorySourceEntry,
   type StoryTradition,
 } from '@kurda/shared';
 import type { Cache } from '../cache/cache.js';
@@ -85,8 +100,11 @@ export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 /** A story learners may read: published, and approved by a reviewer (publishing requires it; the check in the table keeps it). */
 export const PUBLISHED_SQL = `s.status = 'published' AND s.review_status = 'approved'`;
 
+/** The lengths in their order, as an SQL array for `array_position`, so the hub can sort by length. */
+export const LENGTH_ORDER_SQL = `ARRAY[${STORY_LENGTHS.map((l) => `'${l}'`).join(',')}]`;
+
 /** The order the hub lists stories in: easiest first, then shortest, then by title. */
-export const STORY_ORDER_SQL = `s.level, array_position(ARRAY['short','medium','long'], s.length), s.title`;
+export const STORY_ORDER_SQL = `s.level, array_position(${LENGTH_ORDER_SQL}, s.length), s.title`;
 
 /**
  * True when every sentence the reader can play has a studio recording — one
@@ -104,7 +122,7 @@ export const AUDIO_COUNT_SQL = `cardinality(s.sentence_keys) AS recordable_count
 
 /** The columns a list item is made from (`listItem`), from the stories table as `s`. */
 export const LIST_COLUMNS = `s.id, s.slug, s.title, s.summary, s.dialect, s.language, s.level, s.length, s.word_count, s.reading_minutes,
-  s.category, s.tradition, s.author, s.featured, s.cover, s.published_at, ${AUDIO_COUNT_SQL}`;
+  s.category, s.tradition, s.author, s.featured, s.cover, s.published_at, s.meta_translations, ${AUDIO_COUNT_SQL}`;
 
 /**
  * How the dictionary spells a story's variety. Its entries were imported
@@ -217,6 +235,8 @@ export interface PublishedStoryQuestion {
   explanationEn: string | null;
   evidenceParagraph: number | null;
   evidenceSentence: number | null;
+  /** by interface language, the options in the order of `options` */
+  translations: Record<string, StoryQuestionTranslation>;
 }
 
 /** A published story with its whole bank, for a game to build its plan and snapshot from. */
@@ -265,6 +285,7 @@ export interface ListRow {
   featured: boolean;
   cover: string | null;
   published_at: Date | null;
+  meta_translations: Record<string, StoryMetaTranslation> | null;
   recordable_count: number;
   recorded_count: number;
 }
@@ -277,6 +298,9 @@ interface DetailRow extends ListRow {
   source_url: string | null;
   attribution_note: string | null;
   translation_group: string | null;
+  reflections: StoryReflection[] | null;
+  notes: StoryNote[] | null;
+  sources: StorySourceEntry[] | null;
 }
 
 interface StoryRow {
@@ -305,6 +329,8 @@ export interface QuestionRow {
   explanation_en: string | null;
   evidence_paragraph: number | null;
   evidence_sentence: number | null;
+  /** by interface language (migration 1751000520000) */
+  translations: Record<string, StoryQuestionTranslation> | null;
 }
 
 export function questionFromRow(r: QuestionRow): PublishedStoryQuestion {
@@ -320,6 +346,38 @@ export function questionFromRow(r: QuestionRow): PublishedStoryQuestion {
     explanationEn: r.explanation_en,
     evidenceParagraph: r.evidence_paragraph,
     evidenceSentence: r.evidence_sentence,
+    translations: r.translations ?? {},
+  };
+}
+
+/**
+ * A map by interface language as a reader is sent it: only languages the app
+ * is offered in (the saves check it; this keeps a hand-written row from
+ * reaching the apps). Shared by the reader's lists and detail and the games.
+ */
+export function byAppLocale<T>(map: Record<string, T> | null | undefined): Partial<Record<AppLocale, T>> {
+  const out: Partial<Record<AppLocale, T>> = {};
+  if (!map || typeof map !== 'object') return out;
+  for (const [locale, value] of Object.entries(map)) if (isAppLocale(locale) && value !== null && value !== undefined) out[locale] = value;
+  return out;
+}
+
+/** What a story carries besides its text, as the reader gets it: each translation map cut to the app's languages. */
+export function companionsForReader(row: {
+  reflections: StoryReflection[] | null;
+  notes: StoryNote[] | null;
+  sources: StorySourceEntry[] | null;
+}): Pick<StoryDetail, 'reflections' | 'notes' | 'sources'> {
+  return {
+    reflections: (row.reflections ?? []).map((r) => ({ text: r.text, translations: byAppLocale(r.translations) })),
+    notes: (row.notes ?? []).map((n) => ({ kind: n.kind, title: n.title, body: n.body, translations: byAppLocale(n.translations) })),
+    sources: (row.sources ?? []).map((src) => ({
+      title: src.title,
+      type: src.type,
+      ...(src.author ? { author: src.author } : {}),
+      ...(src.url ? { url: src.url } : {}),
+      ...(src.note ? { note: src.note } : {}),
+    })),
   };
 }
 
@@ -351,6 +409,7 @@ export function listItem(r: ListRow): StoryListItem {
     featured: r.featured,
     cover: r.cover,
     publishedAt: r.published_at?.toISOString() ?? null,
+    metaTranslations: byAppLocale(r.meta_translations),
   };
 }
 
@@ -396,6 +455,8 @@ export function narrationOf(
   let recordable = 0;
   let startMs = 0;
   paragraphs.forEach((paragraph, p) => {
+    // a section heading is read by nobody (storyAudioSentences)
+    if (isStoryHeading(paragraph)) return;
     storySentences(paragraph).forEach((sentence, i) => {
       const key = lessonAudioKey(sentence);
       if (key === '' || !/\p{L}/u.test(sentence)) return;
@@ -619,7 +680,8 @@ export class StoriesService {
     const byId = UUID_RE.test(idOrSlug);
     if (!byId && !/^[a-z0-9-]{3,80}$/.test(idOrSlug)) return null;
     const res = await this.pool.query<DetailRow>(
-      `SELECT ${LIST_COLUMNS}, s.body, s.glossary, s.translations, s.story_source, s.source_url, s.attribution_note, s.translation_group
+      `SELECT ${LIST_COLUMNS}, s.body, s.glossary, s.translations, s.story_source, s.source_url, s.attribution_note, s.translation_group,
+              s.reflections, s.notes, s.sources
        FROM stories s
        WHERE ${byId ? 's.id = $1::uuid' : 's.slug = $1'} AND ${PUBLISHED_SQL}`,
       [idOrSlug],
@@ -650,6 +712,7 @@ export class StoriesService {
       ...listItem({ ...row, recorded_count: Object.keys(audio).length, recordable_count: keys.size }),
       fullyNarrated,
       paragraphs,
+      sections: storySections(paragraphs),
       glossary,
       audio,
       ...(Object.keys(voices).length > 0 ? { voices } : {}),
@@ -659,6 +722,7 @@ export class StoriesService {
       attributionNote: row.attribution_note,
       versions: versions?.rows ?? [],
       narration: narrationOf(paragraphs, audio, durations),
+      ...companionsForReader(row),
       ...(me ? { me: me.get(row.id) ?? emptyMe() } : {}),
     };
   }

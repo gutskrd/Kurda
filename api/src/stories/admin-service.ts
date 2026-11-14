@@ -13,9 +13,20 @@
  *
  * Editorial review is separate from publication. A reviewer approves a story
  * (`review`), and only an approved story can be published; a change to its
- * content — title, summary, text, glossary, questions, translations — sends an
- * approved story back to unreviewed, while a change to how it is filed
- * (category, tradition, attribution, cover, reading time) does not.
+ * content — title, summary, text, glossary, questions, reflections, notes,
+ * translations — sends an approved story back to unreviewed, while a change to
+ * how it is filed (category, tradition, attribution, sources, cover, reading
+ * time) does not.
+ *
+ * Translations have a second way in. The whole-story save (`update`) still
+ * takes them with everything else, only while the story is a draft or in
+ * review, and still counts a changed translation as changed content — a
+ * restructured text and its translations are saved together that way. One
+ * language can also be corrected on its own (`saveTranslation`), in any status
+ * but archived and without unpublishing: the Kurdish approval stays, since the
+ * Kurdish did not change, and that language is marked unreviewed until a
+ * native speaker of it says otherwise (`reviewTranslation`). Either way, each
+ * language whose translation changed is marked unreviewed.
  *
  * `validateStory` (@kurda/shared) decides what may be saved: at the draft
  * stage an unfinished story is fine (no text yet, between lengths, too few
@@ -39,7 +50,10 @@ import {
   letterKey,
   readingMinutes,
   storySlugFor,
+  tidyQuestionTranslations,
+  tidyStoryCompanions,
   validateStory,
+  type AppLocale,
   type CefrLevel,
   type StoryAudioCoverage,
   type StoryCategory,
@@ -48,8 +62,16 @@ import {
   type StoryInput,
   type StoryLanguage,
   type StoryLength,
+  type StoryMetaTranslation,
+  type StoryNoteInput,
+  type StoryNoteTranslation,
   type StoryQuestionInput,
+  type StoryQuestionTranslation,
+  type StoryReflectionInput,
+  type StorySourceInput,
   type StoryTradition,
+  type StoryTranslationReviewEntry,
+  type StoryTranslationReviewStatus,
   type StoryValidation,
 } from '@kurda/shared';
 import { AuditService } from '../admin/audit-service.js';
@@ -127,6 +149,14 @@ export interface AdminStory {
   attributionNote: string | null;
   /** by interface language, the whole text as the editor typed it */
   translations: Record<string, string>;
+  /** by interface language, the title and summary */
+  metaTranslations: Record<string, StoryMetaTranslation>;
+  /** open questions to think about after reading, each with its translations */
+  reflections: StoryReflectionInput[];
+  notes: StoryNoteInput[];
+  sources: StorySourceInput[];
+  /** by interface language, whether a native speaker has read its translation; a language with none is unreviewed */
+  translationReview: Record<string, StoryTranslationReviewEntry>;
   cover: string | null;
   /** the editor's reading time, null for the estimate (`readingMinutes` is whichever applies) */
   readingMinutesOverride: number | null;
@@ -233,6 +263,11 @@ interface StoryRow {
   reviewed_at: Date | null;
   review_note: string | null;
   translation_group: string | null;
+  meta_translations: Record<string, StoryMetaTranslation> | null;
+  reflections: StoryReflectionInput[] | null;
+  notes: StoryNoteInput[] | null;
+  sources: StorySourceInput[] | null;
+  translation_review: Record<string, StoryTranslationReviewEntry> | null;
   recordable_count: number;
   recorded_count: number;
 }
@@ -240,12 +275,14 @@ interface StoryRow {
 const STORY_COLUMNS = `s.id, s.slug, s.dialect, s.language, s.level, s.title, s.summary, s.body, s.word_count, s.length, s.glossary,
   s.status, s.lock_version, s.source, s.published_at, s.created_at, s.updated_at,
   s.category, s.tradition, s.author, s.story_source, s.source_url, s.attribution_note, s.translations, s.cover, s.reading_minutes,
-  s.featured, s.featured_at, s.review_status, s.reviewed_by, s.reviewed_at, s.review_note, s.translation_group, ${AUDIO_COUNT_SQL}`;
+  s.featured, s.featured_at, s.review_status, s.reviewed_by, s.reviewed_at, s.review_note, s.translation_group,
+  s.meta_translations, s.reflections, s.notes, s.sources, s.translation_review, ${AUDIO_COUNT_SQL}`;
 
 function trimmedOrNull(v: string | null | undefined): string | null {
-  const t = v?.trim();
+  const t = typeof v === 'string' ? v.trim() : '';
   return t ? t : null;
 }
+
 
 /**
  * What is stored: titles, options and translations trimmed, an empty optional
@@ -283,6 +320,7 @@ export function tidyStory<T extends StoryInput>(story: T): T {
       explanationEn: trimmedOrNull(q.explanationEn),
       evidenceParagraph: q.evidenceParagraph ?? null,
       evidenceSentence: q.evidenceSentence ?? null,
+      translations: tidyQuestionTranslations(q.translations),
     })),
     category: trimmedOrNull(story.category),
     tradition: (story.tradition ?? 'original').trim(),
@@ -293,7 +331,68 @@ export function tidyStory<T extends StoryInput>(story: T): T {
     translations,
     cover: trimmedOrNull(story.cover),
     readingMinutes: story.readingMinutes ?? null,
+    ...tidyStoryCompanions(story),
+    ...(story.translationReview !== undefined ? { translationReview: story.translationReview } : {}),
   };
+}
+
+/** A map's entries in key order, for comparing two maps whatever order jsonb kept them in. */
+function sorted<T>(map: Record<string, T> | null | undefined): Array<[string, T]> {
+  return Object.entries(map ?? {}).sort(([a], [b]) => a.localeCompare(b));
+}
+
+/**
+ * Everything of a story in one interface language, in one fixed order: its
+ * text, title and summary, each question, each reflection and each note in
+ * that language. Two equal strings are the same translation; a change to any
+ * of it is what marks the language unreviewed.
+ */
+export function canonicalLocale(story: StoryInput, locale: string): string {
+  const meta = story.metaTranslations?.[locale];
+  return JSON.stringify([
+    story.translations?.[locale] ?? null,
+    meta?.title ?? null,
+    meta?.summary ?? null,
+    story.questions.map((q) => {
+      const t = q.translations?.[locale];
+      return t ? [t.prompt, t.options, t.explanation ?? null] : null;
+    }),
+    (story.reflections ?? []).map((r) => r.translations?.[locale] ?? null),
+    (story.notes ?? []).map((n) => {
+      const t = n.translations?.[locale];
+      return t ? [t.title, t.body] : null;
+    }),
+  ]);
+}
+
+/** Every interface language any part of a story is translated into. */
+export function translatedLocales(story: StoryInput): string[] {
+  const out = new Set<string>([...Object.keys(story.translations ?? {}), ...Object.keys(story.metaTranslations ?? {})]);
+  for (const q of story.questions) for (const l of Object.keys(q.translations ?? {})) out.add(l);
+  for (const r of story.reflections ?? []) for (const l of Object.keys(r.translations ?? {})) out.add(l);
+  for (const n of story.notes ?? []) for (const l of Object.keys(n.translations ?? {})) out.add(l);
+  return [...out].sort();
+}
+
+/**
+ * The per-language review after a change: each language whose translation
+ * changed (or appeared, or went) is unreviewed again — a native speaker read
+ * something else — and the others keep what they had. A language with nothing
+ * left in it keeps no entry.
+ */
+export function reviewAfterChange(
+  before: StoryInput,
+  after: StoryInput,
+  review: Record<string, StoryTranslationReviewEntry> | null | undefined,
+): Record<string, StoryTranslationReviewEntry> {
+  const out: Record<string, StoryTranslationReviewEntry> = {};
+  const now = new Set(translatedLocales(after));
+  for (const locale of new Set([...translatedLocales(before), ...now, ...Object.keys(review ?? {})])) {
+    if (!now.has(locale)) continue;
+    const kept = review?.[locale];
+    out[locale] = kept && canonicalLocale(before, locale) === canonicalLocale(after, locale) ? kept : { status: 'unreviewed' };
+  }
+  return out;
 }
 
 /**
@@ -301,8 +400,9 @@ export function tidyStory<T extends StoryInput>(story: T): T {
  * was given — for telling whether an import or a save changed what a
  * reviewer read. The content is what the reader meets: title, summary, text,
  * glossary (terms and meanings, not their dictionary links), questions,
- * translations. Where the story is filed and who it is attributed to are not
- * content, and changing them does not undo a review.
+ * reflections, notes, and every translation of them. Where the story is filed,
+ * who it is attributed to and its sources are not content, and changing them
+ * does not undo a review.
  */
 export function canonicalContent(story: StoryInput): string {
   return JSON.stringify([
@@ -323,7 +423,10 @@ export function canonicalContent(story: StoryInput): string {
       q.evidenceParagraph,
       q.evidenceSentence,
     ]),
-    Object.entries(story.translations ?? {}).sort(([a], [b]) => a.localeCompare(b)),
+    sorted(story.translations),
+    (story.reflections ?? []).map((r) => r.text),
+    (story.notes ?? []).map((n) => [n.kind, n.title, n.body]),
+    translatedLocales(story).map((locale) => [locale, canonicalLocale(story, locale)]),
   ]);
 }
 
@@ -339,6 +442,7 @@ function questionInput(r: QuestionRow): AdminStoryQuestion {
     explanationEn: r.explanation_en,
     evidenceParagraph: r.evidence_paragraph,
     evidenceSentence: r.evidence_sentence,
+    translations: r.translations ?? {},
   };
 }
 
@@ -362,6 +466,11 @@ export function storyInputOf(row: StoryRow, questions: readonly StoryQuestionInp
     translations: row.translations ?? {},
     cover: row.cover,
     readingMinutes: row.reading_minutes,
+    metaTranslations: row.meta_translations ?? {},
+    reflections: row.reflections ?? [],
+    notes: row.notes ?? [],
+    sources: row.sources ?? [],
+    translationReview: row.translation_review ?? {},
   };
 }
 
@@ -424,7 +533,7 @@ export async function matchGlossary(db: Executor, dialect: StoryDialect, glossar
 }
 
 /** How many fixed values `saveStory` binds, so a caller's own `set` clause can number its parameters after them (`saveParam`). */
-const SAVE_VALUES = 20;
+const SAVE_VALUES = 25;
 
 /** The placeholder of the i-th (from 1) extra parameter a caller adds to `saveStory`'s `set`. */
 export function saveParam(i: number): string {
@@ -439,7 +548,8 @@ export function saveParam(i: number): string {
  * Used by the admin routes, the importer and the starter seeding, so a story
  * is stored the same way whichever door it came in by: the word count, the
  * length, the recording keys and the glossary's dictionary links always
- * match the text.
+ * match the text. The per-language review is written as the story carries it
+ * (none when it carries none): the caller decides it (`reviewAfterChange`).
  */
 export async function saveStory(
   db: Executor,
@@ -471,6 +581,11 @@ export async function saveStory(
     JSON.stringify(story.translations ?? {}),
     story.cover,
     story.readingMinutes,
+    JSON.stringify(story.metaTranslations ?? {}),
+    JSON.stringify(story.reflections ?? []),
+    JSON.stringify(story.notes ?? []),
+    JSON.stringify(story.sources ?? []),
+    JSON.stringify(story.translationReview ?? {}),
   ];
   let id: string;
   if ('insert' in target) {
@@ -478,8 +593,10 @@ export async function saveStory(
     const res = await db.query<{ id: string }>(
       `INSERT INTO stories (slug, dialect, language, level, title, summary, body, word_count, length, glossary, sentence_keys,
                             category, tradition, author, story_source, source_url, attribution_note, translations, cover, reading_minutes,
+                            meta_translations, reflections, notes, sources, translation_review,
                             source, created_by, updated_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $12, $13, $14, $15, $16, $17, $18::jsonb, $19, $20, $21, $22, $22)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $12, $13, $14, $15, $16, $17, $18::jsonb, $19, $20,
+               $21::jsonb, $22::jsonb, $23::jsonb, $24::jsonb, $25::jsonb, $26, $27, $27)
        ${target.insert.skipIfSlugTaken ? 'ON CONFLICT (slug) DO NOTHING' : ''}
        RETURNING id`,
       [...values, target.insert.source, target.insert.createdBy],
@@ -491,7 +608,8 @@ export async function saveStory(
     await db.query(
       `UPDATE stories SET slug = $2, dialect = $3, language = $4, level = $5, title = $6, summary = $7, body = $8, word_count = $9,
               length = $10, glossary = $11::jsonb, sentence_keys = $12, category = $13, tradition = $14, author = $15, story_source = $16,
-              source_url = $17, attribution_note = $18, translations = $19::jsonb, cover = $20, reading_minutes = $21
+              source_url = $17, attribution_note = $18, translations = $19::jsonb, cover = $20, reading_minutes = $21,
+              meta_translations = $22::jsonb, reflections = $23::jsonb, notes = $24::jsonb, sources = $25::jsonb, translation_review = $26::jsonb
               ${target.set ? `, ${target.set}` : ''}
        WHERE id = $1`,
       [target.id, ...values, ...extra],
@@ -503,11 +621,12 @@ export async function saveStory(
   if (story.questions.length > 0) {
     await db.query(
       `INSERT INTO story_questions (story_id, position, kind, prompt, prompt_en, options, correct_index,
-                                    explanation, explanation_en, evidence_paragraph, evidence_sentence)
+                                    explanation, explanation_en, evidence_paragraph, evidence_sentence, translations)
        SELECT $1::uuid, q.position, q.kind, q.prompt, q.prompt_en, q.options, q.correct_index,
-              q.explanation, q.explanation_en, q.evidence_paragraph, q.evidence_sentence
+              q.explanation, q.explanation_en, q.evidence_paragraph, q.evidence_sentence, COALESCE(q.translations, '{}'::jsonb)
          FROM jsonb_to_recordset($2::jsonb) AS q(position int, kind text, prompt text, prompt_en text, options jsonb, correct_index int,
-                                                 explanation text, explanation_en text, evidence_paragraph int, evidence_sentence int)`,
+                                                 explanation text, explanation_en text, evidence_paragraph int, evidence_sentence int,
+                                                 translations jsonb)`,
       [
         id,
         JSON.stringify(
@@ -522,6 +641,7 @@ export async function saveStory(
             explanation_en: q.explanationEn,
             evidence_paragraph: q.evidenceParagraph,
             evidence_sentence: q.evidenceSentence,
+            translations: q.translations ?? {},
           })),
         ),
       ],
@@ -552,6 +672,78 @@ export interface ActionContext {
   requestId?: string | null;
   /** why, for the audit (the importer says it was the import) */
   reason?: string | null;
+}
+
+/**
+ * One language of a story as an editor corrects it (PUT
+ * /admin/stories/:id/translations/:locale). Each part is optional: left out,
+ * it stays as it is; null (or, in a list, a null entry) removes it. The lists
+ * line up with the story's own — one entry per question of the bank, per
+ * reflection, per note, in their order — so they are sent whole or not at all.
+ */
+export interface LocaleTranslationInput {
+  /** the whole text in this language, paragraph for paragraph, headings included */
+  body?: string | null;
+  title?: string | null;
+  summary?: string | null;
+  questions?: Array<StoryQuestionTranslation | null>;
+  reflections?: Array<string | null>;
+  notes?: Array<StoryNoteTranslation | null>;
+}
+
+/** The problems of a whole-story check that are about one language's translation, and nothing else. */
+function localeProblems(problems: StoryValidation['errors'], locale: string): StoryValidation['errors'] {
+  const own = new RegExp(
+    `^(?:(?:translations|metaTranslations)\\.${locale}|(?:questions|reflections|notes)\\[\\d+\\]\\.translations\\.${locale})(?:$|[.[])`,
+  );
+  return problems.filter((p) => own.test(p.path));
+}
+
+/** `story` with one language's parts replaced by what `input` says of them. */
+function withLocale(story: StoryInput, locale: string, input: LocaleTranslationInput): StoryInput {
+  const put = <T>(map: Record<string, T> | undefined, value: T | null | undefined): Record<string, T> => {
+    const next = { ...(map ?? {}) };
+    if (value === null || value === undefined) delete next[locale];
+    else next[locale] = value;
+    return next;
+  };
+  const next: StoryInput = { ...story };
+  if (input.body !== undefined) next.translations = put(story.translations, input.body);
+  if (input.title !== undefined || input.summary !== undefined) {
+    const was = story.metaTranslations?.[locale] ?? {};
+    const meta = {
+      ...was,
+      ...(input.title !== undefined ? { title: input.title ?? undefined } : {}),
+      ...(input.summary !== undefined ? { summary: input.summary ?? undefined } : {}),
+    };
+    next.metaTranslations = put(story.metaTranslations, meta);
+  }
+  if (input.questions) next.questions = story.questions.map((q, i) => ({ ...q, translations: put(q.translations, input.questions![i]) }));
+  if (input.reflections) next.reflections = (story.reflections ?? []).map((r, i) => ({ ...r, translations: put(r.translations, input.reflections![i]) }));
+  if (input.notes) next.notes = (story.notes ?? []).map((n, i) => ({ ...n, translations: put(n.translations, input.notes![i]) }));
+  return next;
+}
+
+/**
+ * What a save left out, as stored: the title and summary per language, the
+ * reflections, notes and sources, and a question's translations — the last
+ * only for a question whose Kurdish is as stored at its place, since a
+ * translation of other words would no longer be one. An editor opened before
+ * these existed saves without them, and must not delete them by doing so.
+ */
+function keepUnsent<T extends StoryInput>(input: T, stored: StoryInput): T {
+  const same = (a: StoryQuestionInput, b: StoryQuestionInput | undefined): boolean =>
+    b !== undefined && a.prompt.trim() === b.prompt.trim() && JSON.stringify(a.options.map((o) => o.trim())) === JSON.stringify(b.options.map((o) => o.trim()));
+  return {
+    ...input,
+    metaTranslations: input.metaTranslations ?? stored.metaTranslations,
+    reflections: input.reflections ?? stored.reflections,
+    notes: input.notes ?? stored.notes,
+    sources: input.sources ?? stored.sources,
+    questions: input.questions.map((q, i) =>
+      q.translations !== undefined ? q : { ...q, translations: same(q, stored.questions[i]) ? (stored.questions[i]!.translations ?? {}) : {} },
+    ),
+  };
 }
 
 /** A category as an editor writes it. */
@@ -708,6 +900,11 @@ export class StoryAdminService {
       sourceUrl: row.source_url,
       attributionNote: row.attribution_note,
       translations: row.translations ?? {},
+      metaTranslations: row.meta_translations ?? {},
+      reflections: row.reflections ?? [],
+      notes: row.notes ?? [],
+      sources: row.sources ?? [],
+      translationReview: row.translation_review ?? {},
       cover: row.cover,
       readingMinutesOverride: row.reading_minutes,
       status: row.status,
@@ -739,7 +936,9 @@ export class StoryAdminService {
 
   /** A new draft. Without a slug it gets one from its title (`storySlugFor`), made unique. */
   async create(input: StoryInput & { slug?: string | null }, ctx: ActionContext, options: SaveOptions = {}): Promise<AdminStory> {
-    const story = tidyStory(input);
+    const tidy = tidyStory(input);
+    // nobody has reviewed a translation that has only now been written
+    const story = { ...tidy, translationReview: reviewAfterChange({ ...tidy, translations: {}, metaTranslations: {}, questions: [], reflections: [], notes: [] }, tidy, {}) };
     const validation = validateStory(story, 'draft');
     if (validation.errors.length > 0) throw invalid(validation);
     const id = await this.tx(async (client) => {
@@ -786,11 +985,14 @@ export class StoryAdminService {
    * Replace a draft (or a story in review) with what the editor sent, if
    * nobody changed it since they loaded it. A change to the content of an
    * approved story takes its approval away: the reviewer read something else.
+   * Translations are part of what is sent and of that content, as they always
+   * were: a translation changed here resets the approval too, and its language
+   * is marked unreviewed. To correct a translation alone — and on a published
+   * story — `saveTranslation` is the way.
    */
   async update(id: string, input: StoryDraft, lockVersion: number, ctx: ActionContext, options: SaveOptions = {}): Promise<AdminStory> {
-    const story = tidyStory(input);
-    const validation = validateStory(story, 'draft');
-    if (validation.errors.length > 0) throw invalid(validation);
+    const sent = validateStory(tidyStory(input), 'draft');
+    if (sent.errors.length > 0) throw invalid(sent);
     await this.tx(async (client) => {
       const current = await this.lockStory(client, id, lockVersion);
       if (current.status !== 'draft' && current.status !== 'in_review') {
@@ -801,8 +1003,14 @@ export class StoryAdminService {
         );
       }
       const before = (await this.questionsOf(client, [id])).get(id) ?? [];
-      const contentChanged = canonicalContent(storyInputOf(current, before)) !== canonicalContent(story);
+      const stored = storyInputOf(current, before);
+      const tidy = tidyStory(keepUnsent(input, stored));
+      const validation = validateStory(tidy, 'draft');
+      if (validation.errors.length > 0) throw invalid(validation);
+      const contentChanged = canonicalContent(stored) !== canonicalContent(tidy);
       const resetReview = contentChanged && current.review_status === 'approved';
+      // who reviewed which translation is never taken from the editor's save: it follows from what changed
+      const story = { ...tidy, translationReview: reviewAfterChange(stored, tidy, current.translation_review) };
       try {
         await saveStory(client, story, {
           id,
@@ -958,6 +1166,128 @@ export class StoryAdminService {
       reason: ctx.reason ?? null,
       requestId: ctx.requestId ?? null,
     });
+  }
+
+  /**
+   * Correct one language of a story — its text, title and summary, questions,
+   * reflections and notes in that language, any of them — in any status but
+   * archived, published included, without taking it offline. The Kurdish is
+   * not touched, so the story's approval stays; the language is marked
+   * unreviewed (its native speaker has not read the new words). Only that
+   * language's problems refuse the save (422 INVALID with their paths), so a
+   * fix to one translation is never held up by another. Audited with the
+   * language before and after; a live story's lists are refreshed at once.
+   */
+  async saveTranslation(
+    id: string,
+    locale: AppLocale,
+    input: LocaleTranslationInput,
+    ctx: ActionContext & { lockVersion: number },
+  ): Promise<AdminStory> {
+    const live = await this.tx(async (client) => {
+      const row = await this.lockStory(client, id, ctx.lockVersion);
+      if (row.status === 'archived') throw new AppError('NOT_EDITABLE', 409, 'an archived story cannot be edited');
+      const questions = (await this.questionsOf(client, [id])).get(id) ?? [];
+      const before = storyInputOf(row, questions);
+      for (const [field, list, have] of [
+        ['questions', input.questions, questions.length],
+        ['reflections', input.reflections, before.reflections?.length ?? 0],
+        ['notes', input.notes, before.notes?.length ?? 0],
+      ] as const) {
+        if (list && list.length !== have) {
+          throw invalid({
+            errors: [{ code: 'TRANSLATION_COUNT', path: field, message: `the story has ${have} ${field} and this translation ${list.length}: send one for each, in order` }],
+            warnings: [],
+          });
+        }
+      }
+      const after = tidyStory(withLocale(before, locale, input));
+      const checked = validateStory(after, 'draft');
+      const errors = localeProblems(checked.errors, locale);
+      if (errors.length > 0) throw invalid({ errors, warnings: localeProblems(checked.warnings, locale) });
+      const was = canonicalLocale(before, locale);
+      if (canonicalLocale(after, locale) === was) return false;
+
+      const review = { ...(row.translation_review ?? {}) };
+      if (translatedLocales(after).includes(locale)) review[locale] = { status: 'unreviewed' };
+      else delete review[locale];
+      const res = await client.query<{ lock_version: number }>(
+        `UPDATE stories SET translations = $2::jsonb, meta_translations = $3::jsonb, reflections = $4::jsonb, notes = $5::jsonb,
+                translation_review = $6::jsonb, lock_version = lock_version + 1, updated_by = $7
+          WHERE id = $1 RETURNING lock_version`,
+        [
+          id,
+          JSON.stringify(after.translations),
+          JSON.stringify(after.metaTranslations ?? {}),
+          JSON.stringify(after.reflections ?? []),
+          JSON.stringify(after.notes ?? []),
+          JSON.stringify(review),
+          ctx.adminId,
+        ],
+      );
+      // the questions keep their ids (a game's plan names them): only their translations change
+      if (input.questions) {
+        await client.query(
+          `UPDATE story_questions q SET translations = t.translations
+             FROM jsonb_to_recordset($2::jsonb) AS t(id uuid, translations jsonb)
+            WHERE q.id = t.id AND q.story_id = $1`,
+          [id, JSON.stringify(questions.map((q, i) => ({ id: q.id, translations: after.questions[i]!.translations ?? {} })))],
+        );
+      }
+      await this.audit.record(client, {
+        adminId: ctx.adminId,
+        action: 'story.translation',
+        targetType: 'story',
+        targetId: id,
+        before: { slug: row.slug, status: row.status, locale, translation: JSON.parse(was), review: row.translation_review?.[locale] ?? null, lockVersion: row.lock_version },
+        after: { slug: row.slug, status: row.status, locale, translation: JSON.parse(canonicalLocale(after, locale)), review: review[locale] ?? null, lockVersion: res.rows[0]!.lock_version },
+        reason: ctx.reason ?? null,
+        requestId: ctx.requestId ?? null,
+      });
+      return row.status === 'published';
+    });
+    if (live) await bustStoryLists(this.cache);
+    return (await this.get(id))!;
+  }
+
+  /**
+   * Record whether a native speaker has read one language's translation, with
+   * who, when and a note. Learners see a translation either way; this is the
+   * editors' record of which ones have been checked. Audited.
+   */
+  async reviewTranslation(
+    id: string,
+    locale: AppLocale,
+    input: { status: StoryTranslationReviewStatus; note?: string | null },
+    ctx: ActionContext & { lockVersion: number },
+  ): Promise<AdminStory> {
+    await this.tx(async (client) => {
+      const row = await this.lockStory(client, id, ctx.lockVersion);
+      if (row.status === 'archived') throw new AppError('BAD_STATE', 409, 'an archived story is not reviewed');
+      const questions = (await this.questionsOf(client, [id])).get(id) ?? [];
+      if (!translatedLocales(storyInputOf(row, questions)).includes(locale)) {
+        throw new AppError('NOTHING_TO_REVIEW', 409, 'the story has no translation in this language yet');
+      }
+      const note = trimmedOrNull(input.note);
+      const entry: StoryTranslationReviewEntry = { status: input.status, by: ctx.adminId, at: new Date().toISOString(), ...(note ? { note } : {}) };
+      const res = await client.query<{ lock_version: number }>(
+        `UPDATE stories SET translation_review = jsonb_set(translation_review, ARRAY[$2::text], $3::jsonb, true),
+                lock_version = lock_version + 1, updated_by = $4
+          WHERE id = $1 RETURNING lock_version`,
+        [id, locale, JSON.stringify(entry), ctx.adminId],
+      );
+      await this.audit.record(client, {
+        adminId: ctx.adminId,
+        action: 'story.translation.review',
+        targetType: 'story',
+        targetId: id,
+        before: { slug: row.slug, locale, review: row.translation_review?.[locale] ?? null, lockVersion: row.lock_version },
+        after: { slug: row.slug, locale, review: entry, lockVersion: res.rows[0]!.lock_version },
+        reason: ctx.reason ?? null,
+        requestId: ctx.requestId ?? null,
+      });
+    });
+    return (await this.get(id))!;
   }
 
   /** Put a story in the library's Featured row, or take it out. A live story's row changes at once. */

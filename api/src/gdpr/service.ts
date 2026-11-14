@@ -748,6 +748,8 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`DELETE FROM game_sessions WHERE user_id = $1`);
   await q(`DELETE FROM game_seen WHERE user_id = $1`);
   await q(`DELETE FROM game_progress WHERE user_id = $1`);
+  // the Stories' riddles: which they tried, the hints they took, which they solved
+  await q(`DELETE FROM riddle_progress WHERE user_id = $1`);
   // the voices they recorded for the course, and their name off the links they made for others
   await q(`DELETE FROM recording_voices WHERE user_id = $1`);
   await q(`UPDATE recording_voices SET linked_by = NULL WHERE linked_by = $1`);

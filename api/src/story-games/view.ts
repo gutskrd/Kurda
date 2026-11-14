@@ -1,4 +1,6 @@
 import {
+  isAppLocale,
+  type AppLocale,
   type GameAccess,
   type QuestionCount,
   type StoryDialect,
@@ -11,6 +13,7 @@ import {
   type StoryGameView,
   type StoryLength,
   type StoryLevel,
+  type StoryQuestionTranslation,
   type TextDuring,
   type TimerSeconds,
 } from '@kurda/shared';
@@ -151,6 +154,20 @@ function phasePlayer(p: ViewPlayer, answeredNow: boolean): PhasePlayer {
 const iso = (d: Date | null): string | null => (d ? d.toISOString() : null);
 
 /**
+ * A planned question's translations as a view carries them: only interface
+ * languages, and the explanation only once the answer is out (the reveal and
+ * the review) — before that an explanation could give the answer away.
+ */
+function translationsOf(q: PlannedQuestion, withExplanation: boolean): Partial<Record<AppLocale, StoryQuestionTranslation>> {
+  const out: Partial<Record<AppLocale, StoryQuestionTranslation>> = {};
+  for (const [locale, t] of Object.entries(q.translations ?? {})) {
+    if (!isAppLocale(locale) || !t) continue;
+    out[locale] = { prompt: t.prompt, options: t.options, ...(withExplanation && t.explanation ? { explanation: t.explanation } : {}) };
+  }
+  return out;
+}
+
+/**
  * One viewer's view of a game. Pure: everything it needs is in `input`.
  *
  * It never carries another member's user id — seats are the only handle —
@@ -209,6 +226,7 @@ export function renderView(input: ViewInput): StoryGameView {
       explanationEn: planned.explanationEn,
       evidenceParagraph: planned.evidenceParagraph,
       evidenceSentence: planned.evidenceSentence,
+      translations: translationsOf(planned, true),
       answeredCount: currentAnswers.length,
       correctCount: currentAnswers.filter((a) => a.correct).length,
       myChoice: myCurrent?.choice ?? null,
@@ -248,6 +266,7 @@ export function renderView(input: ViewInput): StoryGameView {
       explanationEn: q.explanationEn,
       evidenceParagraph: q.evidenceParagraph,
       evidenceSentence: q.evidenceSentence,
+      translations: translationsOf(q, true),
     }));
     results = {
       storySlug: input.storySlug,
@@ -307,6 +326,7 @@ export function renderView(input: ViewInput): StoryGameView {
           prompt: planned.prompt,
           promptEn: planned.promptEn,
           options: planned.options,
+          translations: translationsOf(planned, false),
           myChoice: myCurrent?.choice ?? null,
         }
       : null,

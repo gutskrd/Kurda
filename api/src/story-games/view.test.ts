@@ -20,6 +20,7 @@ const plan: PlannedQuestion[] = [0, 1, 2].map((i) =>
     explanationEn: 'e',
     evidenceParagraph: i === 2 ? null : i,
     evidenceSentence: null,
+    translations: { de: { prompt: `f${i}`, options: ['A', 'B', 'C'], explanation: 'E' }, xx: { prompt: 'x', options: ['x', 'y', 'z'] } },
   }),
 );
 
@@ -152,6 +153,8 @@ describe('renderView', () => {
     });
     expect(v.question).toMatchObject({ index: 1, total: 3, myChoice: plan[1]!.correctIndex });
     expect(JSON.stringify(v.question)).not.toContain('correct');
+    // the question in the interface languages, without the explanation that could give the answer away
+    expect(v.question!.translations).toEqual({ de: { prompt: 'f1', options: plan[1]!.translations!.de!.options } });
     expect(v.reveal).toBeNull();
     expect(v.answeredCount).toBe(1);
     expect(v.players.map((p) => p.score)).toEqual([100, 200]);
@@ -180,6 +183,7 @@ describe('renderView', () => {
       correctCount: 1,
       myCorrect: false,
     });
+    expect(v.reveal!.translations).toEqual({ de: { prompt: 'f0', options: plan[0]!.translations!.de!.options, explanation: 'E' } });
     expect(v.question!.index).toBe(0);
     expect(v.results).toBeNull();
     expect(v.phaseEndsAt).toBeNull();

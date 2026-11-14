@@ -17,6 +17,7 @@ import {
   type QuestionKind,
   type StoryDialect,
   type StoryProblem,
+  type StoryTranslationReviewStatus,
   type StoryValidation,
 } from '@kurda/shared';
 import {
@@ -30,7 +31,8 @@ import {
   blankForm,
   blankGloss,
   blankQuestion,
-  contentChanged,
+  changedBesidesTranslations,
+  changedLocales,
   describePath,
   draftFromForm,
   editorReducer,
@@ -42,14 +44,18 @@ import {
   isDirty,
   isEditable,
   kindTally,
+  kurdishChanged,
   levelOptions,
   liveChecks,
   localeName,
+  localeTranslationPayload,
   looksRandomSlug,
   needsNativeReview,
   opening,
   problemsAt,
   textFacts,
+  translatedLocales,
+  withLocaleFrom,
   type AdminStory,
   type EditorAction,
   type GlossRow,
@@ -60,11 +66,21 @@ import {
   type StoryForm,
 } from '../stories';
 import { setLeaveGuard } from '../nav';
-import { featureStory, getStory, listCategories, reviewStory, runStoryAction, storyFailure, type StoryFailure } from '../storiesApi';
+import {
+  featureStory,
+  getStory,
+  listCategories,
+  reviewStory,
+  reviewStoryTranslation,
+  runStoryAction,
+  saveStoryTranslation,
+  storyFailure,
+  type StoryFailure,
+} from '../storiesApi';
 import { Badge, Banner, Icon, Loading, PageHeader, Time, useDialogs, useLoad, type ConfirmOptions } from '../ui';
 import { AudioSection } from './StoryAudioSection';
 import { Field, ProblemList, ReadOnly, described, type FieldProblems, type ProblemTone } from './StoryEditorFields';
-import { AttributionSection, LibraryFields, TranslationsSection } from './StoryLibraryFields';
+import { AfterReadingSection, AttributionSection, LibraryFields, TranslationsSection } from './StoryLibraryFields';
 import { StoryPreview } from './StoryPreview';
 import { ReviewSection, VersionsSection } from './StoryReviewSections';
 import { STATUS_TONE, storyRecordHref } from './StoryList';
@@ -77,8 +93,8 @@ const DONE: Record<Exclude<StoryAction, 'delete'>, string> = {
   archive: 'Archived.',
 };
 
-/** What the editor was doing while a request was out: an action, a reload, a review or a feature change. */
-type Busy = StoryAction | 'reload' | 'review' | 'feature' | null;
+/** What the editor was doing while a request was out: an action, a reload, a review, a feature change, or one language's save or review. */
+type Busy = StoryAction | 'reload' | 'review' | 'feature' | 'translation' | null;
 
 const NOT_DONE: Record<StoryAction, string> = {
   save: 'Not saved',
@@ -151,6 +167,8 @@ export function StoryEditor({
   const [phase, setPhase] = useState<'loading' | 'ready' | 'failed'>(id && !initial ? 'loading' : 'ready');
   const [loadProblem, setLoadProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState<Busy>(null);
+  /** the language a save or review of its own is out for */
+  const [busyLocale, setBusyLocale] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(
     initial ? { tone: 'ok', text: 'Saved.' } : null,
   );
@@ -254,9 +272,15 @@ export function StoryEditor({
 
   const canSave = editable && !busy && !conflict && checks.blocking.length === 0 && (dirty || story === null);
   const canSubmit = editable && !busy && !conflict && checks.blocking.length === 0 && checks.beforePublish.length === 0;
-  // publishing waits for a reviewer, and an approval is of the words as they are: edits to them need it again
+  // the languages with unsaved translations, and whether anything else is unsaved: a language is saved on its own
+  // only against the story as it is stored, and a save of translations alone keeps the approval
+  const changed = useMemo(() => changedLocales(form, loaded), [form, loaded]);
+  const besides = useMemo(() => changedBesidesTranslations(form, loaded), [form, loaded]);
+  const savedLocales = useMemo(() => translatedLocales(draftFromForm(loaded)), [loaded]);
+  const translationsOnly = story !== null && dirty && !besides && changed.length > 0;
+  // publishing waits for a reviewer, and an approval is of the words as they are: edits to the Kurdish need it again
   const approved = story?.reviewStatus === 'approved';
-  const reapprove = approved && contentChanged(form, loaded);
+  const reapprove = approved && kurdishChanged(form, loaded);
   const canPublish = canSubmit && approved && !reapprove;
   const textChanged = story !== null && draftFromForm(form).body !== draftFromForm(loaded).body;
 
@@ -338,8 +362,102 @@ export function StoryEditor({
   const refused = (what: string, err: unknown): void => {
     const failure = storyFailure(err);
     if (failure.kind === 'stale' || failure.kind === 'state') setConflict({ kind: failure.kind, message: failure.message });
-    else setNotice({ tone: 'error', text: `${what}: ${failure.message}.` });
+    else {
+      if (failure.kind === 'invalid' && failure.validation) setServer(failure.validation);
+      setNotice({ tone: 'error', text: `${what}: ${failure.message}.${failure.kind === 'invalid' && failure.validation ? ' The problems are listed under Checks.' : ''}` });
+    }
   };
+
+  /**
+   * One language as the server saved it: the story's new version, and that
+   * language taken into the form and into what counts as saved, while every
+   * other unsaved edit stays where it is.
+   */
+  const savedLocale = (next: AdminStory, locales: readonly string[]): void => {
+    const from = formFromStory(next, { previous: form });
+    setStory(next);
+    setLoaded((l) => locales.reduce((f, locale) => withLocaleFrom(f, from, locale), l));
+    for (const locale of locales) dispatchForm({ type: 'tr/merge', locale, from });
+  };
+
+  /**
+   * Save each language in `locales` on its own, in turn, from the version
+   * `start`: the approval of the Kurdish stays, and a published story stays
+   * online. Stops at the first refusal, keeping what was saved before it.
+   */
+  async function saveLocales(start: AdminStory, locales: readonly string[]): Promise<{ story: AdminStory; failure: StoryFailure | null }> {
+    let current = start;
+    const done: string[] = [];
+    for (const locale of locales) {
+      try {
+        current = await saveStoryTranslation(current, locale, localeTranslationPayload(form, locale));
+        done.push(locale);
+      } catch (err) {
+        if (done.length > 0 && mounted.current) savedLocale(current, done);
+        return { story: current, failure: storyFailure(err) };
+      }
+    }
+    return { story: current, failure: null };
+  }
+
+  /** "Save this language": one language's translation, on a published story too. */
+  async function saveLocale(locale: string): Promise<void> {
+    if (!story) return;
+    setBusy('translation');
+    setBusyLocale(locale);
+    setNotice(null);
+    setServer(null);
+    const { story: next, failure } = await saveLocales(story, [locale]);
+    if (!mounted.current) return;
+    setBusy(null);
+    setBusyLocale(null);
+    if (failure) {
+      if (failure.kind === 'stale' || failure.kind === 'state') setConflict({ kind: failure.kind, message: failure.message });
+      else {
+        if (failure.kind === 'invalid' && failure.validation) setServer(failure.validation);
+        setNotice({ tone: 'error', text: `The ${localeName(locale)} translation was not saved: ${failure.message}.` });
+      }
+      return;
+    }
+    savedLocale(next, [locale]);
+    setNotice({
+      tone: 'ok',
+      text: `Saved the ${localeName(locale)} translation${next.status === 'published' ? ': learners reading in it have it now' : ''}. It is marked as needing review until a native speaker has read it.`,
+    });
+  }
+
+  /** "Mark reviewed" / "Needs review": a native speaker's verdict on one language, with a note for the record. */
+  async function reviewLocale(locale: string, status: StoryTranslationReviewStatus): Promise<void> {
+    if (!story) return;
+    const name = localeName(locale);
+    const note = await dialogs.prompt({
+      title: status === 'reviewed' ? `Mark the ${name} translation reviewed?` : `Mark the ${name} translation as needing review?`,
+      body:
+        status === 'reviewed'
+          ? `A native speaker of ${name} has read all of it as it is saved now: the text, the title, the questions and what comes after reading.`
+          : 'It stays online; this is the record that someone should read it again.',
+      label: 'Note (optional)',
+      confirmLabel: status === 'reviewed' ? 'Mark reviewed' : 'Needs review',
+      multiline: true,
+      maxLength: STORY_REVIEW_NOTE_MAX,
+      validate: () => null,
+    });
+    if (note === null || !mounted.current) return;
+    setBusy('translation');
+    setBusyLocale(locale);
+    setNotice(null);
+    try {
+      refresh(await reviewStoryTranslation(story, locale, status, note.trim() || null));
+      setNotice({ tone: 'ok', text: status === 'reviewed' ? `The ${name} translation is marked reviewed.` : `The ${name} translation is marked as needing review.` });
+    } catch (err) {
+      refused(`The ${name} review was not recorded`, err);
+    } finally {
+      if (mounted.current) {
+        setBusy(null);
+        setBusyLocale(null);
+      }
+    }
+  }
 
   /** Approve the story, or withdraw its approval, with a note for the record if the reviewer wants one. */
   async function review(approve: boolean): Promise<void> {
@@ -446,7 +564,25 @@ export function StoryEditor({
     setBusy(action);
     setNotice(null);
     setServer(null);
-    const outcome = await runStoryAction(action, { story, form, dirty });
+    let base = { story, form, dirty };
+    // translations alone changed: each language is saved on its own, which keeps the approval (and the action goes on from there)
+    if (story && translationsOnly && (action === 'save' || action === 'submit' || action === 'publish')) {
+      const saved = await saveLocales(story, changed);
+      if (!mounted.current) return;
+      if (saved.failure) {
+        setBusy(null);
+        report(action, saved.failure, saved.story !== story);
+        return;
+      }
+      const f = show(saved.story, form);
+      if (action === 'save') {
+        setBusy(null);
+        setNotice({ tone: 'ok', text: 'Saved. Only translations changed, so each language was saved on its own and the approval stays.' });
+        return;
+      }
+      base = { story: saved.story, form: f, dirty: false };
+    }
+    const outcome = await runStoryAction(action, base);
     if (!mounted.current) return;
     setBusy(null);
     if (outcome.ok) {
@@ -593,7 +729,8 @@ export function StoryEditor({
       {status === 'published' && (
         <div className="card st-banner">
           Published: learners can read it, so it cannot be edited. To change it, unpublish it first. It then leaves the app until
-          it is published again; games already under way keep their own copy.
+          it is published again; games already under way keep their own copy. Its translations can still be corrected, one language at a
+          time, under Translations: the story stays online and approved.
         </div>
       )}
       {status === 'archived' && (
@@ -723,7 +860,7 @@ export function StoryEditor({
               path="body"
               label="The story"
               problems={at('body')}
-              hint="Paragraphs are separated by an empty line. Write numbers and abbreviations out: the reader and the audio studio cut sentences at every full stop."
+              hint="Paragraphs are separated by an empty line. A paragraph of its own starting with “## ” heads a section (a saga needs at least two). Write numbers and abbreviations out: the reader and the audio studio cut sentences at every full stop."
             >
               <textarea
                 {...described('body', at('body'))}
@@ -741,7 +878,22 @@ export function StoryEditor({
               {' · '}
               {facts.length ? <span>{LENGTH_NAME[facts.length]}</span> : <span className="st-nolength">no length yet</span>}
               {' · '}about {facts.minutes} min to read
+              {facts.sections.length > 0 && (
+                <>
+                  {' · '}
+                  {facts.sections.length} section{facts.sections.length === 1 ? '' : 's'}
+                </>
+              )}
             </div>
+            {facts.sections.length > 0 && (
+              <ol className="st-sections" aria-label="Sections" lang={script.lang} dir={script.dir}>
+                {facts.sections.map((sec) => (
+                  <li key={sec.paragraph}>
+                    {sec.title} <span className="subtle">(paragraph {sec.paragraph + 1})</span>
+                  </li>
+                ))}
+              </ol>
+            )}
             <div className="row st-bands" aria-label={`${DIALECT_NAME[form.dialect]} lengths`}>
               {STORY_LENGTHS.map((l) => (
                 <span key={l} className={`badge${facts.length === l ? ' ok' : ''}`}>
@@ -768,7 +920,29 @@ export function StoryEditor({
             )}
           </section>
 
-          <TranslationsSection form={form} dispatch={dispatch} at={at} facts={facts} />
+          <TranslationsSection
+            form={form}
+            dispatch={dispatch}
+            at={at}
+            facts={facts}
+            story={story}
+            readOnly={busy !== null || status === 'archived'}
+            locales={{
+              changed,
+              saved: savedLocales,
+              blocked: !story
+                ? 'Save the story first: then each language can be saved on its own.'
+                : conflict
+                  ? 'Reload the story first.'
+                  : besides
+                    ? 'The story has other unsaved changes: save them first, since a language is checked against the story as it is saved.'
+                    : null,
+              busy: busyLocale,
+              blocking: checks.blocking,
+              onSave: (locale) => void saveLocale(locale),
+              onReview: (locale, status) => void reviewLocale(locale, status),
+            }}
+          />
 
           <section className="card st-section" aria-labelledby="st-gloss" id={fieldId('glossary')} tabIndex={-1}>
             <div className="row st-section-head">
@@ -871,6 +1045,7 @@ export function StoryEditor({
             </button>
           </section>
 
+          <AfterReadingSection form={form} dispatch={dispatch} at={at} />
           <AudioSection story={story} textChanged={textChanged} onAudio={(audio) => setStory((s) => (s ? { ...s, audio } : s))} />
           <VersionsSection story={story} form={form} dispatch={dispatch} />
           <ReviewSection story={story} busy={busy !== null || conflict !== null} contentPending={Boolean(reapprove)} onReview={(a) => void review(a)} />
@@ -927,9 +1102,11 @@ function ParagraphPreview({
   const path = `body.paragraphs[${index}]`;
   const n = paragraph.sentences.length;
   return (
-    <div className="st-para" id={fieldId(path)} tabIndex={-1}>
+    <div className={`st-para${paragraph.heading !== null ? ' is-heading' : ''}`} id={fieldId(path)} tabIndex={-1}>
       <div className="st-para-head subtle">
-        Paragraph {index + 1} · {n} sentence{n === 1 ? '' : 's'} · {paragraph.words} words
+        {paragraph.heading !== null
+          ? `Paragraph ${index + 1} · section heading, not read aloud`
+          : `Paragraph ${index + 1} · ${n} sentence${n === 1 ? '' : 's'} · ${paragraph.words} words`}
       </div>
       <ol className="st-sentences" dir={script.dir}>
         {paragraph.sentences.map((s, i) => (

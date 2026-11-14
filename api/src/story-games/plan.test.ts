@@ -103,4 +103,24 @@ describe('planQuestion', () => {
     // the right answer is not always in the same place
     expect(positions.size).toBe(3);
   });
+
+  it('shuffles each translation’s options the same way, so the right answer is one index in every language', () => {
+    const translated: BankQuestion = {
+      ...q(3, 'detail'),
+      translations: {
+        de: { prompt: 'Frage 3', options: ['richtig 3', 'falsch 3 a', 'falsch 3 b'], explanation: 'Weil.' },
+        // one option short: left out rather than shuffled wrong
+        fr: { prompt: 'Question 3', options: ['juste 3', 'faux 3'] },
+      },
+    };
+    for (const id of games) {
+      const p = planQuestion(id, translated);
+      expect(p.translations!.de!.options[p.correctIndex]).toBe('richtig 3');
+      expect(p.translations!.de!.options.map((o) => o.replace('richtig', 'right').replace('falsch', 'wrong'))).toEqual(p.options);
+      expect(p.translations!.de!.explanation).toBe('Weil.');
+      expect(p.translations).not.toHaveProperty('fr');
+    }
+    // a bank question without translations plans with none
+    expect(planQuestion('g', q(3, 'detail')).translations).toEqual({});
+  });
 });

@@ -1,6 +1,8 @@
 /**
- * Stories: short Kurdish texts Hevalo writes, to read and then be quizzed on —
- * alone, with a friend, or with a group (it replaced the ranked quiz).
+ * Stories: Kurdish texts Hevalo writes, to read and then be quizzed on —
+ * alone, with a friend, or with a group (it replaced the ranked quiz). Most
+ * are short; a legend (a saga) runs to over a thousand words in sections,
+ * each opened by a heading paragraph (`## Title`).
  *
  * Shared because four programs have to agree on every number here. The API
  * refuses a setting the clients offered, or accepts one they never offer; the
@@ -17,6 +19,7 @@ import { foldVariantChar, isInvisibleChar, lessonAudioKey } from './lesson-audio
 import type { RecordingVoice } from './lipsync/speakers.js';
 import type { RatedState } from './ranks.js';
 import { isSoraniDialect } from './lesson-answers.js';
+import type { AppLocale } from './locales.js';
 
 /** The two varieties Hevalo teaches, spelled as the rhyme games store them. */
 export const STORY_DIALECTS = ['kurmanci', 'sorani'] as const;
@@ -160,12 +163,15 @@ export function categoryName(category: StoryCategory, locale: string): string {
   return typeof own === 'string' && own.trim() !== '' ? own : category.name.en;
 }
 
-/** The text-length presets a host chooses from. */
-export const STORY_LENGTHS = ['short', 'medium', 'long'] as const;
+/**
+ * The text-length presets a host chooses from. A saga is a legend told in
+ * sections (at least two headings), long enough to read over a sitting or two.
+ */
+export const STORY_LENGTHS = ['short', 'medium', 'long', 'saga'] as const;
 export type StoryLength = (typeof STORY_LENGTHS)[number];
 
 export function isStoryLength(v: unknown): v is StoryLength {
-  return v === 'short' || v === 'medium' || v === 'long';
+  return (STORY_LENGTHS as readonly unknown[]).includes(v);
 }
 
 export interface WordBand {
@@ -185,11 +191,13 @@ export const STORY_WORD_BANDS: Readonly<Record<StoryDialect, Readonly<Record<Sto
     short: { min: 60, max: 120 },
     medium: { min: 150, max: 250 },
     long: { min: 300, max: 450 },
+    saga: { min: 600, max: 1600 },
   },
   sorani: {
     short: { min: 50, max: 100 },
     medium: { min: 125, max: 210 },
     long: { min: 250, max: 380 },
+    saga: { min: 500, max: 1400 },
   },
 };
 
@@ -224,6 +232,9 @@ export function lengthMinutes(dialect: StoryDialect, length: StoryLength): { min
   return { min: readingMinutes(dialect, band.min), max: readingMinutes(dialect, band.max) };
 }
 
+/** However long the text, a duo or group reads it for half an hour at most before the questions start on their own. */
+export const READING_HARD_CAP_MAX_SECONDS = 1800;
+
 /**
  * The reading phase of a duo or group. Questions start as soon as every active
  * player says they have finished. The host may start them earlier only after
@@ -232,11 +243,12 @@ export function lengthMinutes(dialect: StoryDialect, length: StoryLength): { min
  * shown a countdown while reading.
  */
 export function readingSoftCapSeconds(dialect: StoryDialect, words: number): number {
-  return Math.max(60, Math.ceil((words / READING_WPM[dialect].slow) * 60));
+  // never past the hard cap's ceiling: a saga read by a slow reader would otherwise let the host cut in only after the questions began
+  return Math.min(READING_HARD_CAP_MAX_SECONDS, Math.max(60, Math.ceil((words / READING_WPM[dialect].slow) * 60)));
 }
 
 export function readingHardCapSeconds(dialect: StoryDialect, words: number): number {
-  return Math.min(1800, readingSoftCapSeconds(dialect, words) * 2 + 60);
+  return Math.min(READING_HARD_CAP_MAX_SECONDS, readingSoftCapSeconds(dialect, words) * 2 + 60);
 }
 
 /** The question-count presets. */
@@ -251,6 +263,7 @@ export const QUESTION_COUNTS_BY_LENGTH: Readonly<Record<StoryLength, readonly Qu
   short: [3, 5],
   medium: [3, 5, 10],
   long: [5, 10],
+  saga: [5, 10],
 };
 
 /** The count a setup screen starts on for each length. */
@@ -258,6 +271,7 @@ export const DEFAULT_QUESTION_COUNT: Readonly<Record<StoryLength, QuestionCount>
   short: 3,
   medium: 5,
   long: 5,
+  saga: 5,
 };
 
 export function isAllowedQuestionCount(length: StoryLength, count: unknown): count is QuestionCount {
@@ -273,6 +287,7 @@ export const MIN_QUESTION_BANK: Readonly<Record<StoryLength, number>> = {
   short: 6,
   medium: 12,
   long: 15,
+  saga: 15,
 };
 
 /** A story never needs more than this many questions. */
@@ -293,7 +308,8 @@ export const MAX_OPTIONS = 4;
 /** Limits the editor and the API both enforce. */
 export const STORY_TITLE_MAX = 120;
 export const STORY_SUMMARY_MAX = 300;
-export const STORY_BODY_MAX = 6000;
+/** A saga of 1,600 Kurmancî words, headings included, with room to spare. */
+export const STORY_BODY_MAX = 16_000;
 export const QUESTION_PROMPT_MAX = 300;
 export const QUESTION_OPTION_MAX = 160;
 /** One line: the reveal shows it beside the answer for a few seconds. */
@@ -309,7 +325,7 @@ export const STORY_SOURCE_MAX = 300;
 export const STORY_SOURCE_URL_MAX = 500;
 export const STORY_ATTRIBUTION_NOTE_MAX = 600;
 /** A full translation runs longer than the Kurdish it translates; English about half again. */
-export const STORY_TRANSLATION_MAX = 9000;
+export const STORY_TRANSLATION_MAX = 24_000;
 /** The key of a shared background picture, which the apps draw as the cover. */
 export const STORY_COVER_MAX = 80;
 /** An editor's reading time stands in for the estimate; two hours is more than any story here. */
@@ -317,6 +333,18 @@ export const STORY_READING_MINUTES_MAX = 120;
 /** A reviewer's note: why approval was given or withdrawn. */
 export const STORY_REVIEW_NOTE_MAX = 600;
 export const STORY_CATEGORY_NAME_MAX = 60;
+/** A section heading is one short line (`## Title`), not a sentence of the story. */
+export const STORY_HEADING_MAX = 80;
+/** Open questions to think about after reading: a handful, each a sentence or two. */
+export const STORY_REFLECTIONS_MAX = 6;
+export const STORY_REFLECTION_MAX = 400;
+/** Notes beside a legend (what is history, what is legend, how the versions differ, what a custom means). */
+export const STORY_NOTES_MAX = 4;
+export const STORY_NOTE_TITLE_MAX = 120;
+export const STORY_NOTE_BODY_MAX = 2400;
+/** The sources a telling draws on, each with its kind. */
+export const STORY_SOURCES_MAX = 8;
+export const STORY_SOURCE_NOTE_MAX = 300;
 
 /**
  * Seconds per question. 0 means no timer: the question closes when everyone
@@ -440,6 +468,44 @@ export function storyParagraphs(body: string): string[] {
     .filter((p) => p.length > 0);
 }
 
+/**
+ * A paragraph that heads a section: it starts with "## " and has a title
+ * after it. Headings are paragraphs of their own, so a translation keeps the
+ * same paragraphs (`## Translated title` in the same place) and every index
+ * into the paragraphs — evidence, reading position, narration — stays one
+ * list. A heading is not a sentence of the story: nobody records it, the
+ * glossary does not mark it, and it is not counted as words.
+ */
+export function isStoryHeading(paragraph: string): boolean {
+  return paragraph.startsWith('## ') && paragraph.slice(3).trim() !== '';
+}
+
+/** The title of a heading paragraph ("## Kela Dimdimê" → "Kela Dimdimê"), or null for any other paragraph. */
+export function storyHeadingTitle(paragraph: string): string | null {
+  return isStoryHeading(paragraph) ? paragraph.slice(3).trim() : null;
+}
+
+/** A section of a story: its heading's title, and the index of the heading paragraph in the story's paragraphs. */
+export interface StorySection {
+  title: string;
+  paragraph: number;
+}
+
+/**
+ * The sections of a story, in order: one per heading paragraph. The
+ * paragraphs before the first heading are the story's introduction, and
+ * belong to no section; a story without headings has none.
+ */
+export function storySections(body: string | readonly string[]): StorySection[] {
+  const paragraphs = typeof body === 'string' ? storyParagraphs(body) : body;
+  const out: StorySection[] = [];
+  paragraphs.forEach((paragraph, i) => {
+    const title = storyHeadingTitle(paragraph);
+    if (title !== null) out.push({ title, paragraph: i });
+  });
+  return out;
+}
+
 // a sentence ends at . ! ? … the Arabic question mark or full stop, with any
 // closing quotes or brackets after it, followed by whitespace or the end
 const SENTENCE_END = /([.!?…؟۔]+["'”’»“)\]]*)(\s+|$)/g;
@@ -469,19 +535,25 @@ export function storySentences(paragraph: string): string[] {
 // lone dash or a number does not count
 const HAS_LETTER = /\p{L}/u;
 
+/** The words of a text, its section headings left out: the length bands measure the story, not its headings. */
 export function countStoryWords(body: string): number {
   let n = 0;
-  for (const token of body.split(/\s+/)) if (token && HAS_LETTER.test(token)) n += 1;
+  for (const paragraph of body.replace(/\r\n?/g, '\n').split(/\n\s*\n/)) {
+    if (isStoryHeading(paragraph.trim())) continue;
+    for (const token of paragraph.split(/\s+/)) if (token && HAS_LETTER.test(token)) n += 1;
+  }
   return n;
 }
 
 /**
  * The sentences of a story that can be recorded, in reading order, per
  * paragraph: those with a letter in them and a non-empty recording key (a
- * "* * *" scene break or a lone "?!" is not something anyone says). The reader,
- * the studio listing and "fully narrated" all count from this.
+ * "* * *" scene break or a lone "?!" is not something anyone says), and none
+ * of a section heading's. The reader, the studio listing and "fully narrated"
+ * all count from this.
  */
 export function storyAudioSentences(paragraph: string): string[] {
+  if (isStoryHeading(paragraph)) return [];
   return storySentences(paragraph).filter((s) => HAS_LETTER.test(s) && lessonAudioKey(s) !== '');
 }
 
@@ -546,8 +618,10 @@ export interface GlossSpan {
  * بەردار), longest terms first, never overlapping, letter variants and case
  * ignored. The editor's validation, the web reader and the phone reader all
  * mark from this, so a term the editor accepted is a term the reader shows.
+ * A section heading is never marked: it is a title, not text to read closely.
  */
 export function glossSpans(paragraph: string, glossary: readonly StoryGlossEntry[]): GlossSpan[] {
+  if (isStoryHeading(paragraph)) return [];
   const hay = foldForMatch(paragraph.normalize('NFC'));
   const taken: Array<[number, number]> = [];
   const spans: GlossSpan[] = [];
@@ -575,6 +649,104 @@ export function glossSpans(paragraph: string, glossary: readonly StoryGlossEntry
   }
   return spans.sort((a, b) => a.start - b.start);
 }
+
+// ---------------------------------------------------------------------------
+// What a story carries besides its text: its title and summary in other
+// languages, questions to think about, notes, sources, and which of its
+// translations a native speaker has read. A legend uses all of them; a short
+// story may use none. Each Kurdish string (a reflection, a note) is written in
+// the story's own variety, with its translations per interface language.
+// ---------------------------------------------------------------------------
+
+/** A story's title and summary in an interface language; either may be left out (the reader then shows the Kurdish). */
+export interface StoryMetaTranslation {
+  title?: string;
+  summary?: string;
+}
+
+/** An open question to think about after reading — no right answer, nothing scored. */
+export interface StoryReflection {
+  text: string;
+  translations: Partial<Record<AppLocale, string>>;
+}
+
+/**
+ * What a note beside a story is about: what is known as history, what is
+ * legend, how the versions differ, or what a custom or object in it means.
+ * A legend is presented as a legend, so this is said in its own place rather
+ * than left to the summary.
+ */
+export const STORY_NOTE_KINDS = ['history', 'legend', 'versions', 'culture'] as const;
+export type StoryNoteKind = (typeof STORY_NOTE_KINDS)[number];
+
+export function isStoryNoteKind(v: unknown): v is StoryNoteKind {
+  return (STORY_NOTE_KINDS as readonly unknown[]).includes(v);
+}
+
+export interface StoryNoteTranslation {
+  title: string;
+  body: string;
+}
+
+export interface StoryNote {
+  kind: StoryNoteKind;
+  title: string;
+  body: string;
+  translations: Partial<Record<AppLocale, StoryNoteTranslation>>;
+}
+
+/**
+ * What a source is: a historical record, a legend as collected, an oral
+ * telling, a literary work (an epic such as Ehmedê Xanî's Mem û Zîn), or an
+ * adaptation someone made of one of those.
+ */
+export const STORY_SOURCE_TYPES = ['historical', 'legendary', 'oral', 'literary', 'adapted'] as const;
+export type StorySourceType = (typeof STORY_SOURCE_TYPES)[number];
+
+export function isStorySourceType(v: unknown): v is StorySourceType {
+  return (STORY_SOURCE_TYPES as readonly unknown[]).includes(v);
+}
+
+/** One source a telling draws on. `url` is https only. */
+export interface StorySourceEntry {
+  title: string;
+  author?: string;
+  url?: string;
+  type: StorySourceType;
+  note?: string;
+}
+
+/**
+ * A question in an interface language: the prompt, the options in the same
+ * order as the Kurdish ones (so the same index is right in every language),
+ * and the explanation shown at the reveal.
+ */
+export interface StoryQuestionTranslation {
+  prompt: string;
+  options: string[];
+  explanation?: string;
+}
+
+/** Whether a native speaker of an interface language has read the story's translation into it. */
+export const STORY_TRANSLATION_REVIEW_STATUSES = ['unreviewed', 'reviewed'] as const;
+export type StoryTranslationReviewStatus = (typeof STORY_TRANSLATION_REVIEW_STATUSES)[number];
+
+export function isStoryTranslationReviewStatus(v: unknown): v is StoryTranslationReviewStatus {
+  return v === 'unreviewed' || v === 'reviewed';
+}
+
+/** One language's review: its state, who set it and when, and why. A language with no entry is unreviewed. */
+export interface StoryTranslationReviewEntry {
+  status: StoryTranslationReviewStatus;
+  /** the reviewer's user id */
+  by?: string;
+  /** ISO time */
+  at?: string;
+  note?: string;
+}
+
+/** Per interface language. Kept for editors only: learners are never sent it. */
+export type StoryTranslationReview = Partial<Record<AppLocale, StoryTranslationReviewEntry>>;
 
 // ---------------------------------------------------------------------------
 // API shapes. The API returns these; the web and phone apps render them.
@@ -633,6 +805,8 @@ export interface StoryListItem {
   /** the key of a shared background picture to draw as the cover, or null for the plain card */
   cover: string | null;
   publishedAt: string | null;
+  /** the title and summary in interface languages, where they have been translated ({} when none is) */
+  metaTranslations: Partial<Record<AppLocale, StoryMetaTranslation>>;
   /** the caller's own record, only when they are signed in */
   me?: StoryMe;
 }
@@ -686,7 +860,10 @@ export function narrationAt(narration: StoryNarration, ms: number): { index: num
  * has happened to the story since). Never carries its questions.
  */
 export interface StoryDetail extends StoryListItem {
+  /** the text's paragraphs; a section heading is a paragraph of its own, starting with "## " */
   paragraphs: string[];
+  /** one per heading, in order (`storySections`); the paragraphs before the first are the introduction; [] without headings */
+  sections: StorySection[];
   glossary: StoryGlossEntry[];
   /** studio recordings by `lessonAudioKey(sentence)`, only for sentences that have one */
   audio: Record<string, string>;
@@ -703,6 +880,12 @@ export interface StoryDetail extends StoryListItem {
   versions: Array<{ id: string; slug: string; dialect: StoryDialect; language: StoryLanguage }>;
   /** the recorded sentences as one track; null when none is recorded */
   narration: StoryNarration | null;
+  /** questions to think about after reading, in the story's variety with their translations */
+  reflections: StoryReflection[];
+  /** what is history and what is legend, how the versions differ, what a custom means */
+  notes: StoryNote[];
+  /** where the telling comes from, beside the single `source` an older story names */
+  sources: StorySourceEntry[];
 }
 
 /** The library's front page (GET /stories/library). Personal rows are empty for an anonymous caller. */
@@ -858,6 +1041,8 @@ export interface StoryGameQuestion {
   promptEn: string | null;
   /** already shuffled for this game; answer with the index into this array */
   options: string[];
+  /** the prompt and options in interface languages, the options shuffled as `options` are; never an explanation before the reveal */
+  translations: Partial<Record<AppLocale, StoryQuestionTranslation>>;
   /** the option this viewer chose, once they have */
   myChoice: number | null;
 }
@@ -871,6 +1056,8 @@ export interface StoryGameReveal {
   evidenceParagraph: number | null;
   /** sentence index within that paragraph (storySentences), when the editor set one */
   evidenceSentence: number | null;
+  /** the question in interface languages, its options in this game's order, with the explanation where there is one */
+  translations: Partial<Record<AppLocale, StoryQuestionTranslation>>;
   answeredCount: number;
   correctCount: number;
   myChoice: number | null;
@@ -889,6 +1076,8 @@ export interface StoryGameReviewItem {
   explanationEn: string | null;
   evidenceParagraph: number | null;
   evidenceSentence: number | null;
+  /** as on the reveal: the question in interface languages, in this game's option order */
+  translations: Partial<Record<AppLocale, StoryQuestionTranslation>>;
 }
 
 export interface StoryGameStanding {

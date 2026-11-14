@@ -34,6 +34,12 @@
  * A game's item view never carries anything worked out from its answer: no
  * key hashed from the sentence, no stable id of the identity behind a tile.
  * What an item is known by is its place in the round.
+ *
+ * Most engines are the registry's games, and play by their entries: the
+ * varieties they are played in and what a round alone pays. An engine that is
+ * not one of them — the proverbs' round of the Stories (lore/proverb-round.ts)
+ * — brings those two rules itself (`rules`), and is made and answered here
+ * the same way.
  */
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
@@ -47,6 +53,7 @@ import {
   type GameDialect,
   type GameDifficulty,
   type LearnGameId,
+  type ProverbRoundGame,
   type SoloAnswerResult,
   type SoloItemState,
   type SoloResults,
@@ -73,9 +80,21 @@ export interface RoundAsk {
   seed: string;
 }
 
+/** What a round can be made of: a registry game, or a round of the Stories' proverbs. */
+export type SoloGameId = LearnGameId | ProverbRoundGame;
+
+/** What a registry game's entry says of its rounds, and an engine outside the registry says itself. */
+export interface SoloRules {
+  dialects: readonly GameDialect[];
+  /** the XP ledger source a round pays from; null for a round that pays no XP */
+  source: string | null;
+}
+
 /** A game's rules for a solo round. */
 export interface SoloEngine<Item extends StoredItem, View, Answer, Hint, Correction> {
-  game: LearnGameId;
+  game: SoloGameId;
+  /** for an engine that is not a registry game: its varieties and what it pays (a registry game's come from its entry) */
+  rules?: SoloRules;
   /** how a try is sent (validated before it is graded) */
   answer: z.ZodType<Answer>;
   /** a round's items and what it decided about the round as a whole; null when there is not enough approved content */
@@ -121,7 +140,7 @@ type AnyEngine = SoloEngine<StoredItem, any, any, any, any>;
 interface SessionRow {
   id: string;
   user_id: string;
-  game: LearnGameId;
+  game: SoloGameId;
   dialect: GameDialect;
   difficulty: GameDifficulty;
   items: StoredItem[];
@@ -161,7 +180,7 @@ function statesOf(total: number, answers: readonly AnswerRow[]): SoloItemState[]
 }
 
 export class SoloService {
-  private readonly engines = new Map<LearnGameId, AnyEngine>();
+  private readonly engines = new Map<SoloGameId, AnyEngine>();
 
   constructor(
     private readonly pool: pg.Pool,
@@ -173,14 +192,25 @@ export class SoloService {
   }
 
   /** The games a round can be made of here. */
-  games(): LearnGameId[] {
+  games(): SoloGameId[] {
     return [...this.engines.keys()];
   }
 
-  private engine(game: LearnGameId): AnyEngine {
+  private engine(game: SoloGameId): AnyEngine {
     const engine = this.engines.get(game);
     if (!engine) throw new AppError('GAME_NOT_FOUND', 404, 'no such game to play alone');
     return engine;
+  }
+
+  /**
+   * Where an engine's rounds are played and what one pays: its registry
+   * entry's — only the lessons' exercises pay when played alone
+   * (`paysAlone`) — or the engine's own.
+   */
+  private rules(engine: AnyEngine): SoloRules {
+    if (engine.rules) return engine.rules;
+    const game = learnGame(engine.game as LearnGameId);
+    return { dialects: game.dialects, source: paysAlone(game.id) ? game.xpSources[0]! : null };
   }
 
   /**
@@ -190,7 +220,7 @@ export class SoloService {
    * answered right). One statement, so it costs a round no more than one
    * trip; the UPDATE's row locks make two at once give a round up once.
    */
-  private async replaceOpen(db: Pick<pg.Pool, 'query'>, userId: string, game: LearnGameId, dialect: GameDialect): Promise<void> {
+  private async replaceOpen(db: Pick<pg.Pool, 'query'>, userId: string, game: SoloGameId, dialect: GameDialect): Promise<void> {
     await db.query(
       `WITH gone AS (
          UPDATE game_sessions SET expires_at = now(), meta = meta || '{"abandoned": true}'::jsonb
@@ -238,9 +268,9 @@ export class SoloService {
    * (it reads the pools on connections of its own), and the insert gives up
    * again whatever round a request racing this one opened meanwhile.
    */
-  async create(userId: string, game: LearnGameId, dialect: GameDialect, difficulty: GameDifficulty): Promise<SoloSessionView<unknown>> {
+  async create(userId: string, game: SoloGameId, dialect: GameDialect, difficulty: GameDifficulty): Promise<SoloSessionView<unknown>> {
     const engine = this.engine(game);
-    if (!learnGame(game).dialects.includes(dialect)) throw new AppError('BAD_REQUEST', 400, 'this game is not played in that variety');
+    if (!this.rules(engine).dialects.includes(dialect)) throw new AppError('BAD_REQUEST', 400, 'this game is not played in that variety');
     await this.replaceOpen(this.pool, userId, game, dialect);
     const id = randomUUID();
     const round = await engine.build({ userId, dialect, difficulty, seed: id }, this.pool);
@@ -315,7 +345,7 @@ export class SoloService {
   }
 
   /** The newest round of a game in a variety this learner left unfinished and can still come back to. */
-  async open(userId: string, game: LearnGameId, dialect: GameDialect): Promise<string | null> {
+  async open(userId: string, game: SoloGameId, dialect: GameDialect): Promise<string | null> {
     const res = await this.pool.query<{ id: string }>(
       `SELECT id FROM game_sessions
         WHERE user_id = $1 AND game = $2 AND dialect = $3 AND finished_at IS NULL AND expires_at > now()
@@ -358,7 +388,7 @@ export class SoloService {
           correction: done ? engine.correction(item, last, row.dialect) : null,
           why: done ? engine.why(item) : null,
           // what it would pay, before the finish checks the repeat window again and that the round was learning; nothing in a game that pays none
-          xp: paysAlone(row.game) ? answerXp(item.level, { correct, firstTry, repeat: item.repeat === true }) : 0,
+          xp: this.rules(engine).source !== null ? answerXp(item.level, { correct, firstTry, repeat: item.repeat === true }) : 0,
           repeat: item.repeat === true,
         };
       };
@@ -451,7 +481,7 @@ export class SoloService {
         firstTry: states[i]!.firstTry,
       }));
       // only the lessons' exercises pay; a game played alone is scored and counted, and earns no XP
-      const source = paysAlone(row.game) ? learnGame(row.game).xpSources[0]! : null;
+      const source = this.rules(engine).source;
       const results = await payRound(client, this.deps, { sessionId: row.id, userId, game: row.game, source, items, now });
       await engine.finished?.(client, { userId, dialect: row.dialect, meta: row.meta, items: row.items, results });
       await client.query(

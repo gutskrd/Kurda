@@ -1,9 +1,9 @@
 import type pg from 'pg';
 import { describe, expect, it } from 'vitest';
-import { lessonAudioKey, validateStory, type StoryDialect, type StoryLength } from '@kurda/shared';
+import { lessonAudioKey, validateStory, type StoryDialect, type StoryLength, type StoryQuestionInput } from '@kurda/shared';
 import { Cache, type CacheClient } from '../cache/cache.js';
 import { testStory } from '../test/stories.js';
-import { tidyStory } from './admin-service.js';
+import { canonicalContent, reviewAfterChange, tidyStory } from './admin-service.js';
 import { storyInputFrom } from './schema.js';
 import { StoriesService, audioCoverage, bustStoryLists, listItem, narrationOf, storyTextFacts, type ListRow, type StoryPage } from './service.js';
 
@@ -68,6 +68,7 @@ const listRow = (slug: string): ListRow & { total: number } => ({
   featured: false,
   cover: null,
   published_at: null,
+  meta_translations: {},
   recordable_count: 10,
   recorded_count: 0,
   total: 1,
@@ -206,10 +207,45 @@ describe('tidyStory', () => {
   });
 });
 
+describe('what a legend carries, as stored', () => {
+  const base = tidyStory(storyInputFrom(testStory('legend', { length: 'saga' }) as never));
+
+  it('is trimmed like the rest, a part left empty dropped', () => {
+    const tidy = tidyStory({
+      ...base,
+      metaTranslations: { en: { title: ' The legend ', summary: ' ' }, de: { title: ' ', summary: '' } },
+      reflections: [{ text: ' Çima? ', translations: { en: ' Why? ', de: ' ' } }],
+      notes: [{ kind: ' legend ', title: ' Efsane ', body: ' Ne dîrok e. ', translations: { en: { title: ' ', body: ' ' } } }],
+      sources: [{ title: ' Mem û Zîn ', author: ' ', url: null, type: 'literary', note: ' A note ' }],
+      questions: base.questions.map((q, i): StoryQuestionInput => ({
+        ...q,
+        translations: i === 0 ? { de: { prompt: ' Frage? ', options: [' a ', 'b', 'c'], explanation: ' ' }, fr: { prompt: '', options: ['', '', ''] } } : {},
+      })),
+    });
+    expect(tidy.metaTranslations).toEqual({ en: { title: 'The legend' } });
+    expect(tidy.reflections).toEqual([{ text: 'Çima?', translations: { en: 'Why?' } }]);
+    expect(tidy.notes).toEqual([{ kind: 'legend', title: 'Efsane', body: 'Ne dîrok e.', translations: {} }]);
+    expect(tidy.sources).toEqual([{ title: 'Mem û Zîn', type: 'literary', note: 'A note' }]);
+    expect(tidy.questions[0]!.translations).toEqual({ de: { prompt: 'Frage?', options: ['a', 'b', 'c'] } });
+  });
+
+  it('marks unreviewed only the languages whose translation changed, and counts every translation as content', () => {
+    const before = { ...base, metaTranslations: { en: { title: 'The legend' }, de: { title: 'Die Legende' } } };
+    const reviewed = { en: { status: 'reviewed' as const, by: '2f1c2b3a-1d4e-4f5a-8b6c-7d8e9f0a1b2c' }, de: { status: 'reviewed' as const } };
+    const after = { ...before, metaTranslations: { ...before.metaTranslations, de: { title: 'Die alte Legende' } }, translations: { fr: 'x' } };
+    expect(reviewAfterChange(before, after, reviewed)).toEqual({ en: reviewed.en, de: { status: 'unreviewed' }, fr: { status: 'unreviewed' } });
+    // a language whose translation is gone keeps no entry
+    expect(reviewAfterChange(before, { ...before, metaTranslations: { en: { title: 'The legend' } } }, reviewed)).toEqual({ en: reviewed.en });
+    expect(canonicalContent(after)).not.toBe(canonicalContent(before));
+    // the sources are where it comes from, not what a reviewer read
+    expect(canonicalContent({ ...before, sources: [{ title: 'x', type: 'oral' }] })).toBe(canonicalContent(before));
+  });
+});
+
 describe('the test stories', () => {
   it('are whole stories, in both varieties and every length', () => {
     for (const dialect of ['kurmanci', 'sorani'] as StoryDialect[]) {
-      for (const length of ['short', 'medium', 'long'] as StoryLength[]) {
+      for (const length of ['short', 'medium', 'long', 'saga'] as StoryLength[]) {
         const story = testStory(`x-${dialect}-${length}`, { dialect, length });
         expect(storyTextFacts(dialect, story.body).length).toBe(length);
         expect(validateStory(storyInputFrom(story as never), 'publish')).toEqual({ errors: [], warnings: [] });

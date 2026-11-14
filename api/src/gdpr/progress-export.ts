@@ -8,8 +8,8 @@ import type pg from 'pg';
  * league seasons archived
  * before Game Ranks, the stories they kept on their shelf and how far they
  * read each one, the dictionary words they saved, their rounds of the
- * learning games with how far up each ladder they climbed, and the levels
- * buildings in The Village reached.
+ * learning games with how far up each ladder they climbed, the riddles they
+ * tried, and the levels buildings in The Village reached.
  *
  * A story or a word is named by what they saw (its slug and title, its
  * headword and dialect) rather than by the row ids that join them, which
@@ -82,6 +82,11 @@ export async function exportProgress(db: Executor, userId: string): Promise<Reco
          FROM game_sessions WHERE user_id = $1 ORDER BY created_at`,
     ),
     learningGameProgress: await q(`SELECT game, dialect, step, updated_at FROM game_progress WHERE user_id = $1 ORDER BY game, dialect`),
+    // the Stories' riddles they met: the hints they took, their guesses, when each was solved or its answer shown, and what a solve paid
+    riddles: await q(
+      `SELECT c.payload->>'slug' AS slug, c.dialect, r.hints_used, r.guesses, r.solved_at, r.revealed_at, r.xp_awarded, r.created_at, r.updated_at
+         FROM riddle_progress r JOIN game_content c ON c.id = r.content_id WHERE r.user_id = $1 ORDER BY r.created_at`,
+    ),
     // the village their learning built: when it was founded, and each level reached, when it was shown and the Zêr it paid
     kingdomVillage: (await q(`SELECT founded_at, intro_seen_at FROM kingdom_villages WHERE user_id = $1`))[0] ?? null,
     kingdomLevels: await q(

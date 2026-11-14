@@ -165,6 +165,7 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
         featured: false,
         cover: null,
         publishedAt: expect.any(String),
+        metaTranslations: {},
       });
       // nobody is signed in: no personal record on any of them
       expect(stories.some((st) => 'me' in st)).toBe(false);
@@ -356,6 +357,7 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
         explanationEn: 'The story says so.',
         evidenceParagraph: 0,
         evidenceSentence: 0,
+        translations: {},
       });
       for (const name of ['draft', 'review', 'archived']) expect(await service.getPublishedForGame(ids[name]!)).toBeNull();
       expect(await service.getPublishedForGame('00000000-0000-4000-8000-000000000000')).toBeNull();

@@ -15,8 +15,8 @@ export const KURMANCI_PARAGRAPHS = [
 /** One paragraph of 65 words: a short Soranî story. */
 export const SORANI_PARAGRAPHS = ['ژیان لە گوندێکی بچووک دەژی. '.repeat(13).trim()];
 
-/** How many copies of the paragraphs make a text of each length (Kurmancî 82 / 164 / 328 words, Soranî 65 / 130 / 260). */
-const COPIES: Record<StoryLength, number> = { short: 1, medium: 2, long: 4 };
+/** How many copies of the paragraphs make a text of each length (Kurmancî 82 / 164 / 328 / 656 words, Soranî 65 / 130 / 260 / 520). */
+const COPIES: Record<StoryLength, number> = { short: 1, medium: 2, long: 4, saga: 8 };
 
 export interface TestQuestion {
   kind: string;
@@ -28,6 +28,8 @@ export interface TestQuestion {
   explanationEn: string | null;
   evidenceParagraph: number | null;
   evidenceSentence: number | null;
+  /** by interface language, as `StoryQuestionInput` carries them */
+  translations?: Record<string, { prompt: string; options: string[]; explanation?: string }>;
 }
 
 export interface TestStory extends StoryLibraryInput {
@@ -40,6 +42,12 @@ export interface TestStory extends StoryLibraryInput {
   glossary: Array<{ term: string; meanings: Record<string, string> }>;
   questions: TestQuestion[];
 }
+
+/** The two section headings of a test saga, per variety. */
+export const SAGA_HEADINGS: Record<StoryDialect, [string, string]> = {
+  kurmanci: ['## Beşa yekem', '## Beşa duyem'],
+  sorani: ['## بەشی یەکەم', '## بەشی دووەم'],
+};
 
 const KINDS = ['detail', 'vocabulary', 'detail', 'sequence', 'inference'];
 
@@ -69,7 +77,11 @@ export function testStory(
   const { length = 'short', ...rest } = over;
   const dialect = rest.dialect ?? 'kurmanci';
   const paragraphs = dialect === 'sorani' ? SORANI_PARAGRAPHS : KURMANCI_PARAGRAPHS;
-  const body = Array.from({ length: COPIES[length] }, () => paragraphs.join('\n\n')).join('\n\n');
+  const copies = Array.from({ length: COPIES[length] }, () => paragraphs.join('\n\n'));
+  // a saga is told in sections: the first copy is its introduction, and each half of the rest opens with a heading
+  const [first, second] = SAGA_HEADINGS[dialect];
+  const parts = length === 'saga' ? [copies[0]!, first, ...copies.slice(1, 4), second, ...copies.slice(4)] : copies;
+  const body = parts.join('\n\n');
   return {
     slug,
     dialect,

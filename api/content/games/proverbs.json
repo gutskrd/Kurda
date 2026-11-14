@@ -1,0 +1,2289 @@
+{
+  "proverbs": [
+    {
+      "slug": "kmr-av-dilop-dilop",
+      "dialect": "kmr",
+      "text": "Av dilop dilop dibe gol.",
+      "themes": [
+        "patience",
+        "hard-work"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [],
+      "exampleKu": "Rêzan her êvar pênc peyvên nû hîn dibe û dibêje ku ev pir kêm e. Dapîra wî dikene: “Kurê min, av dilop dilop dibe gol. Sala bê tu yê pirtûkeke kurdî bixwînî.”",
+      "translations": {
+        "ckb": {
+          "translation": "ئاو دڵۆپ دڵۆپ دەبێتە گۆم.",
+          "meaning": "هەوڵی بچووک و بەردەوام، کە کۆ دەبێتەوە، دەبێتە شتێکی گەورە.",
+          "explanation": "وێنەکە گۆمێکە کە دڵۆپ دڵۆپ پڕ دەبێت: هیچ دڵۆپێک بە تەنیا بەرچاو ناکەوێت، بەڵام هیچیشیان بەفیڕۆ ناچێت. کورمانجەکان بەم پەندە دڵی ئەو کەسە دەدەنەوە کە پێی وایە ماندووبوونی ڕۆژانەی بێسوودە، هەروەها بۆ پاشەکەوتکردنی کەم کەمیش دەیڵێن.",
+          "example": "ڕێزان هەموو ئێوارەیەک پێنج وشەی نوێ فێر دەبێت و گلەیی دەکات کە ئەمە زۆر کەمە. داپیری پێدەکەنێت: «کوڕم، ئاو دڵۆپ دڵۆپ دەبێتە گۆم. ساڵی داهاتوو کتێبێکی کوردی دەخوێنیتەوە.»"
+        },
+        "en": {
+          "translation": "Drop by drop, water becomes a lake.",
+          "literal": "Water becomes a pond drop by drop.",
+          "meaning": "Small, steady efforts add up to something big.",
+          "explanation": "The picture is a pond filling one drop at a time: no single drop matters, yet none is wasted. Kurds say it to someone who feels their small daily effort is pointless, and about saving a little at a time.",
+          "example": "Rêzan learns five new words every evening and complains that it is far too few. His grandmother laughs: “My boy, drop by drop, water becomes a lake. Next year you’ll be reading a Kurdish book.”",
+          "equivalent": "Many a little makes a mickle."
+        },
+        "nl": {
+          "translation": "Druppel voor druppel wordt water een meer.",
+          "literal": "Water wordt druppel druppel een vijver.",
+          "meaning": "Kleine, volgehouden inspanningen groeien uit tot iets groots.",
+          "explanation": "Het beeld is een vijver die zich druppel voor druppel vult: één druppel stelt niets voor, maar geen enkele gaat verloren. Koerden zeggen het tegen iemand die denkt dat zijn kleine dagelijkse moeite zinloos is, en ook over beetje bij beetje sparen.",
+          "example": "Rêzan leert elke avond vijf nieuwe woorden en klaagt dat het veel te weinig is. Zijn oma lacht: “Jongen, druppel voor druppel wordt water een meer. Volgend jaar lees je een Koerdisch boek.”",
+          "equivalent": "Vele kleintjes maken een grote."
+        },
+        "de": {
+          "translation": "Tropfen für Tropfen wird das Wasser zum See.",
+          "literal": "Wasser wird Tropfen um Tropfen ein Teich.",
+          "meaning": "Kleine, beharrliche Schritte ergeben am Ende etwas Großes.",
+          "explanation": "Das Bild ist ein Teich, der sich Tropfen für Tropfen füllt: Ein einzelner Tropfen zählt kaum, aber keiner geht verloren. Man sagt es jemandem, der seine tägliche kleine Mühe für sinnlos hält, und auch beim Sparen in kleinen Beträgen.",
+          "example": "Rêzan lernt jeden Abend fünf neue Wörter und beklagt sich, das sei viel zu wenig. Seine Oma lacht: „Junge, Tropfen für Tropfen wird das Wasser zum See. Nächstes Jahr liest du ein kurdisches Buch.“",
+          "equivalent": "Kleinvieh macht auch Mist."
+        },
+        "es": {
+          "translation": "Gota a gota, el agua se hace lago.",
+          "literal": "El agua se vuelve charca gota a gota.",
+          "meaning": "Los esfuerzos pequeños y constantes acaban sumando algo grande.",
+          "explanation": "La imagen es una charca que se llena gota a gota: ninguna gota importa por sí sola, pero ninguna se pierde. Se le dice a quien cree que su pequeño esfuerzo diario no sirve de nada, y también cuando se ahorra poco a poco.",
+          "example": "Rêzan aprende cinco palabras nuevas cada noche y se queja de que son muy pocas. Su abuela se ríe: «Hijo, gota a gota, el agua se hace lago. El año que viene estarás leyendo un libro en kurdo».",
+          "equivalent": "Grano a grano, hinche la gallina el papo."
+        },
+        "fr": {
+          "translation": "Goutte à goutte, l’eau devient un lac.",
+          "literal": "L’eau devient une mare goutte à goutte.",
+          "meaning": "Les petits efforts répétés finissent par faire quelque chose de grand.",
+          "explanation": "L’image est celle d’une mare qui se remplit goutte à goutte : aucune goutte ne compte seule, mais aucune n’est perdue. On le dit à quelqu’un qui croit que son petit effort quotidien ne sert à rien, et aussi quand on économise peu à peu.",
+          "example": "Rêzan apprend cinq mots nouveaux chaque soir et se plaint que c’est bien trop peu. Sa grand-mère rit : « Mon garçon, goutte à goutte, l’eau devient un lac. L’an prochain, tu liras un livre en kurde. »",
+          "equivalent": "Les petits ruisseaux font les grandes rivières."
+        },
+        "tr": {
+          "translation": "Su damla damla göl olur.",
+          "meaning": "Küçük ama sürekli çabalar sonunda büyük bir şeye dönüşür.",
+          "explanation": "İmge, damla damla dolan bir gölettir: tek bir damla bir şey ifade etmez ama hiçbiri boşa gitmez. Günlük küçük emeğinin işe yaramadığını düşünen birine ve azar azar para biriktirirken söylenir.",
+          "example": "Rêzan her akşam beş yeni kelime öğreniyor ve bunun çok az olduğundan yakınıyor. Babaannesi gülüyor: “Oğlum, su damla damla göl olur. Seneye Kürtçe bir kitap okuyor olacaksın.”",
+          "equivalent": "Damlaya damlaya göl olur."
+        },
+        "ar": {
+          "translation": "الماءُ قطرةً قطرةً يصيرُ بحيرة.",
+          "literal": "يصير الماء بركةً قطرةً قطرة.",
+          "meaning": "الجهود الصغيرة المتواصلة تتراكم حتى تصبح شيئًا كبيرًا.",
+          "explanation": "الصورة بركةٌ تمتلئ قطرةً بعد قطرة: لا قيمة لقطرة وحدها، لكن لا تضيع منها قطرة. يقوله الكرد لمن يظن أن جهده اليومي الصغير بلا فائدة، ويقولونه أيضًا في الادّخار شيئًا فشيئًا.",
+          "example": "يتعلّم ريزان كل مساء خمس كلمات جديدة ويشكو أنها قليلة جدًا. تضحك جدّته: «يا بنيّ، الماء قطرةً قطرةً يصير بحيرة. في العام القادم ستقرأ كتابًا بالكردية.»",
+          "equivalent": "أوّلُ الغيثِ قَطْرٌ ثمّ يَنْهَمِرُ."
+        }
+      },
+      "sources": [
+        {
+          "title": "Pêvek:Gotinên Pêşiyan (proverb appendix)",
+          "author": "Wîkîferheng (Kurdish Wiktionary)",
+          "url": "https://ku.wiktionary.org/wiki/P%C3%AAvek:Gotin%C3%AAn_P%C3%AA%C5%9Fiyan",
+          "note": "Listed verbatim under A: “Av dilop dilop dibe gol.” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Pêvek:Hezarav",
+          "author": "Wîkîferheng (Kurdish Wiktionary)",
+          "url": "https://ku.wiktionary.org/wiki/P%C3%AAvek:Hezarav",
+          "note": "Includes it among the entries of this appendix (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Hin Gotinên Pêşiyan…",
+          "author": "ÇandName",
+          "url": "https://candname.com/gotinen-pesiyan-3/",
+          "note": "Listed verbatim in a Kurmancî proverb list (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Eigengesammelte kurdische Sprichwörter aus allen Teilen Kurdistans",
+          "author": "Ismail Zagros (blog, 2013; reposted on Kurdipedia)",
+          "note": "Given with a German rendering, “Tropfen für Tropfen wird das Wasser zu einem Meer” (seen through a search-engine excerpt; the page itself could not be opened from this session). Read online at ismailzagros.blogspot.com."
+        },
+        {
+          "title": "Vekolînek Derbarê Gotinên Peşiyan Ên Kurmancî De / A Research About Kurmanji Proverbs, Mukaddime 6(2), 2015",
+          "author": "Mustafa Öztürk",
+          "url": "https://dergipark.org.tr/tr/pub/mukaddime/issue/19680/210184",
+          "note": "The article sets a Turkish (damla damla göl olur) and a Persian parallel beside the Kurdish image (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Course wording confirmed verbatim; no change needed. Gol is a pond or small lake; the course’s “lake” is fine. No Soranî form was checked, so none is given as a variant."
+    },
+    {
+      "slug": "kmr-zimane-sirin-mar",
+      "dialect": "kmr",
+      "text": "Zimanê şîrîn mar ji qulê derdixe.",
+      "themes": [
+        "wisdom",
+        "respect"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [
+        {
+          "text": "Peyva xweş mar ji qulê derdixe.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "The same proverb with peyv (word); found alongside the main form in the Kurmancî sources."
+        },
+        {
+          "text": "Zarê şîrîn mar ji qulê derdixe.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "With zar (mouth, speech); given on a Spanish-language page about Kurdish lore with the gloss “las palabras dulces sacan a la serpiente de su agujero”."
+        },
+        {
+          "text": "بە قسەی خۆش مار لە کون دێتە دەر.",
+          "dialect": "ckb",
+          "region": null,
+          "note": "Soranî form recorded by Alaaddin Sajadi, who explains that with a sweet tongue a person can get past every obstacle."
+        }
+      ],
+      "exampleKu": "Baran ji ber dengê bilind ê muzîkê bi hêrs li deriyê cîran xist, lê kesî derî venekir. Diya wî got: “Bi aramî silav bide û rica bike. Zimanê şîrîn mar ji qulê derdixe.” Baran careke din bi nermî li derî xist, û cîran bi rûkenî deng nizm kir.",
+      "translations": {
+        "ckb": {
+          "translation": "زمانی شیرین مار لە کون دەردەهێنێت.",
+          "meaning": "قسەی نەرم و بە ڕێز ئەوە بەدەست دەهێنێت کە زۆر و توڕەیی ناتوانن.",
+          "explanation": "مارێک کە لە کونەکەیدا خۆی شاردووەتەوە بە هاوار و لێدان دەرناچێت، بەڵام پەندەکە دەڵێت قسەی خۆش ئەویش دەردەهێنێت. کاتێک کەسێک خەریکە دەمەقاڵێ دەکات یان بە زۆر داوای شتێک دەکات، بەم پەندە بیری دەخەنەوە کە نەرمی دەرگا دەکاتەوە.",
+          "example": "باران لەبەر دەنگی بەرزی مۆسیقا بە توڕەییەوە لە دەرگای دراوسێکەی دەدات، بەڵام کەس دەرگا ناکاتەوە. دایکی دەڵێت: «بە هێمنی سڵاوی لێ بکە و داوای لێ بکە. زمانی شیرین مار لە کون دەردەهێنێت.» باران دیسان بە نەرمی لە دەرگا دەدات و دراوسێکە بە ڕووخۆشییەوە دەنگەکە دادەگرێت.",
+          "equivalent": "بە قسەی خۆش مار لە کون دێتە دەر."
+        },
+        "en": {
+          "translation": "A sweet tongue draws the snake from its hole.",
+          "meaning": "Kind, gentle words get what force and anger cannot.",
+          "explanation": "A snake hiding in its hole will not come out for shouting or poking, yet the proverb says gentle speech can coax out even so wary a creature. People say it when someone is about to argue or make demands, as a reminder that courtesy opens doors.",
+          "example": "Baran hammers angrily on the neighbour’s door because of the loud music, but nobody opens. His mother says: “Greet him calmly and ask. A sweet tongue draws the snake from its hole.” Baran knocks again, gently, and the neighbour turns the music down with a smile.",
+          "equivalent": "You catch more flies with honey than with vinegar."
+        },
+        "nl": {
+          "translation": "Een zoete tong lokt de slang uit haar hol.",
+          "meaning": "Met vriendelijke woorden bereik je wat met dwang en woede niet lukt.",
+          "explanation": "Een slang die zich in haar hol verstopt, komt niet naar buiten als je schreeuwt of prikt, maar volgens het spreekwoord lokt een zachte stem zelfs haar naar buiten. Je zegt het als iemand op het punt staat ruzie te maken of iets te eisen: beleefdheid opent deuren.",
+          "example": "Baran bonkt kwaad op de deur van de buren vanwege de harde muziek, maar niemand doet open. Zijn moeder zegt: “Groet hem rustig en vraag het. Een zoete tong lokt de slang uit haar hol.” Baran klopt nog eens, zachtjes, en de buurman zet glimlachend de muziek zachter.",
+          "equivalent": "Met honing vang je meer vliegen dan met azijn."
+        },
+        "de": {
+          "translation": "Eine süße Zunge lockt die Schlange aus ihrem Loch.",
+          "meaning": "Mit freundlichen Worten erreicht man, was Zwang und Zorn nicht schaffen.",
+          "explanation": "Eine Schlange, die sich in ihrem Loch versteckt, kommt weder auf Geschrei noch auf Stochern heraus, doch freundliche Rede lockt sogar sie hervor. Man sagt es, wenn jemand gerade streiten oder fordern will: Höflichkeit öffnet Türen.",
+          "example": "Baran hämmert wütend an die Tür des Nachbarn, weil die Musik so laut ist, aber niemand öffnet. Seine Mutter sagt: „Grüß ihn ruhig und bitte ihn. Eine süße Zunge lockt die Schlange aus ihrem Loch.“ Baran klopft noch einmal, sanft, und der Nachbar dreht lächelnd leiser.",
+          "equivalent": "Der Ton macht die Musik."
+        },
+        "es": {
+          "translation": "La lengua dulce saca a la serpiente de su agujero.",
+          "meaning": "Con palabras amables se consigue lo que no logran la fuerza ni el enfado.",
+          "explanation": "Una serpiente escondida en su agujero no sale a gritos ni a golpes, pero el refrán dice que la palabra suave hace salir incluso a ella. Se dice cuando alguien está a punto de discutir o de exigir algo: la cortesía abre puertas.",
+          "example": "Baran aporrea enfadado la puerta del vecino por la música alta, pero nadie abre. Su madre le dice: «Salúdalo con calma y pídeselo. La lengua dulce saca a la serpiente de su agujero». Baran vuelve a llamar, suavemente, y el vecino baja la música con una sonrisa.",
+          "equivalent": "Más moscas se cazan con miel que con hiel."
+        },
+        "fr": {
+          "translation": "La langue douce fait sortir le serpent de son trou.",
+          "meaning": "Les mots aimables obtiennent ce que la force et la colère n’obtiennent pas.",
+          "explanation": "Un serpent caché dans son trou ne sort ni pour les cris ni pour les coups de bâton, mais le proverbe dit qu’une parole douce le fait sortir. On le dit à quelqu’un qui s’apprête à se disputer ou à exiger : la politesse ouvre les portes.",
+          "example": "Baran tambourine avec colère à la porte du voisin à cause de la musique trop forte, mais personne n’ouvre. Sa mère lui dit : « Salue-le calmement et demande-lui. La langue douce fait sortir le serpent de son trou. » Baran frappe de nouveau, doucement, et le voisin baisse la musique en souriant.",
+          "equivalent": "On attrape plus de mouches avec du miel qu’avec du vinaigre."
+        },
+        "tr": {
+          "translation": "Tatlı dil yılanı deliğinden çıkarır.",
+          "meaning": "Güzel ve yumuşak söz, zorla ve öfkeyle elde edilemeyeni elde eder.",
+          "explanation": "Deliğine saklanmış yılan bağırmakla ya da dürtmekle çıkmaz; atasözüne göre yumuşak söz onu bile dışarı çıkarır. Birisi tartışmaya ya da bir şeyi zorla istemeye hazırlanırken, nezaketin kapıları açtığını hatırlatmak için söylenir. Türkçede de aynı sözle bilinir.",
+          "example": "Baran yüksek müzik yüzünden komşunun kapısını öfkeyle yumrukluyor ama kimse açmıyor. Annesi diyor ki: “Sakin sakin selam ver, rica et. Tatlı dil yılanı deliğinden çıkarır.” Baran kapıyı bu kez nazikçe çalıyor ve komşu gülümseyerek müziği kısıyor."
+        },
+        "ar": {
+          "translation": "اللسانُ الحلوُ يُخرِجُ الحيّةَ من جُحرها.",
+          "meaning": "الكلام اللطيف يحقّق ما لا تحقّقه القوة ولا الغضب.",
+          "explanation": "الحيّة المختبئة في جحرها لا تخرج بالصراخ ولا بالنكز، لكن المثل يقول إن الكلمة اللينة تُخرجها. يُقال لمن يوشك أن يتشاجر أو يطالب بشيء بحدّة، تذكيرًا بأن اللطف يفتح الأبواب.",
+          "example": "يطرق باران باب الجار بغضب بسبب الموسيقى العالية، لكن أحدًا لا يفتح. تقول له أمه: «سلّم عليه بهدوء واطلب منه. اللسان الحلو يُخرج الحيّة من جحرها.» يطرق باران مرة أخرى برفق، فيخفض الجار الصوت مبتسمًا.",
+          "equivalent": "الكلمة الحلوة بتطلّع الحيّة من وكرها."
+        }
+      },
+      "sources": [
+        {
+          "title": "Ortak Atasözlerinin Hikâyeleri 4 (Farsî, Kurmancî, Zazakî), Bingöl Üniversitesi Yaşayan Diller Enstitüsü Dergisi 3(6), 2017",
+          "author": "Hasan Çiftçi",
+          "url": "https://www.bingol.edu.tr/documents/Ortak%20Atas%C3%B6zlerinin%20Hikayeleri-4%20Hasan%20%C3%87%C4%B0FTC%C4%B0.pdf",
+          "note": "Comparative article on proverbs shared by Persian, Kurmancî and Zazakî; the search excerpt showed the snake proverb with the Turkish form “Tatlı dil yılanı deliğinden çıkarır” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Xwençe, Cild I: Gotinên Pêşiyan, Kilam-Dîlok û Çîrok (Kurdish Institute of Paris digital library)",
+          "author": "Zeynelabidîn Zinar",
+          "url": "https://bnk.institutkurde.org/images/pdf/CJWHVYR8LN.pdf",
+          "note": "The snake proverb appears in Zinar’s collection; the excerpt showed the forms “Zimanê şîrîn…” and “Peyva xweş…” across the results without saying which page has which (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Lêkolînek li ser gotinên pêşiyan, beşa yekê",
+          "author": "Çiya Mazî (rojava.net, 2021)",
+          "url": "https://rojava.net/blog/2021/08/21/ciya-mazi-lekolinek-li-ser-gotinen-pesiyan-bese-yeke/",
+          "note": "Discusses the proverb beside a saying that sweet words are good in place of wounds (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Her zimanek meriveke",
+          "author": "Hindik-Rindik (blog)",
+          "url": "https://zinarexamo.blogspot.com/2021/03/her-zimanek-meriveke.html",
+          "note": "Blog post using the proverb (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "La leyenda de Şahmaran",
+          "author": "Amistad Kurdistán (blog)",
+          "url": "https://amistadkurdistan.wordpress.com/la-leyenda-de-sahmaran/",
+          "note": "Gives “Zare serina, mar ji qulê derdixe” with a Spanish gloss (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "پەندی پێشینان, a section of مێژووی ئەدەبی کوردی (History of Kurdish Literature)",
+          "author": "Alaaddin Sajadi (Vejin Books)",
+          "url": "https://books.vejin.net/ck/text/27381",
+          "note": "Soranî form “بە قسەی خۆش مار لە کون دێتە دەر” with Sajadi’s explanation (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Course form “Gotina xweş mar ji qulê derdixe” was not found verbatim. The attested Kurmancî forms are “Zimanê şîrîn…” and “Peyva xweş…”; Soranî has “بە قسەی خۆش…” (qise = gotin). Decide whether the course switches to “Zimanê şîrîn” or keeps “Gotina xweş” as a variant. The Arabic equivalent is a Levantine colloquial saying given from general knowledge; confirm with an Arabic speaker. The course now teaches this attested form; it taught “Gotina xweş …”, which no collection consulted has."
+    },
+    {
+      "slug": "kmr-ciya-ciqas-bilind",
+      "dialect": "kmr",
+      "text": "Çiya çiqas bilind be, rê pê dikeve.",
+      "themes": [
+        "courage",
+        "patience"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [
+        {
+          "text": "Çiya çiqas bilind be, wê rê pê keve.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "The same proverb with the future (wê … keve), from another Kurmancî list; the form the course teaches."
+        },
+        {
+          "text": "Çiya çiqas bilind be, dîsa rojekê riya mirov pê dikeve.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "Amed Tîgrîs, entry 1038 (scanned text, normalised here): “one day a person’s road will still pass over it”."
+        }
+      ],
+      "exampleKu": "Xezal du caran ji ezmûna ajotinê derbas nebû û dixwaze dev jê berde. Bavê wê dibêje: “Keça min, çiya çiqas bilind be, rê pê dikeve. Hefteya bê dîsa biceribîne.”",
+      "translations": {
+        "ckb": {
+          "translation": "چیا هەرچەندە بەرز بێت، ڕێگای پێدا دەکەوێت.",
+          "meaning": "هیچ کۆسپێک ئەوەندە گەورە نییە کە ڕێگایەکی بەسەردا نەدۆزرێتەوە.",
+          "explanation": "چیا گەورەترین بەربەستی کوردستانە، بەڵام ڕێگا بە بەرزترین گەردەنەکانیشدا تێدەپەڕێت. پەندەکە دڵی ئەو کەسە دەداتەوە کە کارێکی لە پێشە و بە مەحاڵی دەزانێت؛ جاری واش هەیە مانای ئەوەیە کە کەس ئەوەندە بەرز نییە دەستی پێ نەگات.",
+          "example": "خەزاڵ دوو جار لە تاقیکردنەوەی شۆفێری دەرنەچووە و دەیەوێت وازی لێ بهێنێت. باوکی دەڵێت: «کچم، چیا هەرچەندە بەرز بێت، ڕێگای پێدا دەکەوێت. هەفتەی داهاتوو دیسان هەوڵ بدەرەوە.»"
+        },
+        "en": {
+          "translation": "However high the mountain, a road will cross it.",
+          "literal": "However high the mountain may be, a road falls upon it.",
+          "meaning": "No obstacle is so great that a way over it cannot be found.",
+          "explanation": "Mountains are the great barrier of Kurdish country, yet paths cross even the highest passes. The proverb encourages someone facing a task that looks impossible; in some uses it also warns that no one is so lofty that they will never be reached.",
+          "example": "Xezal has failed her driving test twice and wants to give up. Her father says: “My girl, however high the mountain, a road will cross it. Try again next week.”",
+          "equivalent": "Where there’s a will, there’s a way."
+        },
+        "nl": {
+          "translation": "Hoe hoog de berg ook is, er loopt een weg overheen.",
+          "meaning": "Geen hindernis is zo groot dat er geen weg overheen te vinden is.",
+          "explanation": "Bergen zijn de grote barrière van het Koerdische land, maar zelfs over de hoogste passen lopen paden. Het spreekwoord bemoedigt wie voor een schijnbaar onmogelijke taak staat; soms betekent het ook dat niemand zo hoog staat dat hij onbereikbaar blijft.",
+          "example": "Xezal is twee keer gezakt voor haar rijexamen en wil het opgeven. Haar vader zegt: “Meisje, hoe hoog de berg ook is, er loopt een weg overheen. Probeer het volgende week opnieuw.”",
+          "equivalent": "Waar een wil is, is een weg."
+        },
+        "de": {
+          "translation": "Wie hoch der Berg auch ist, ein Weg führt über ihn.",
+          "meaning": "Kein Hindernis ist so groß, dass sich kein Weg darüber findet.",
+          "explanation": "Berge sind die große Schranke des kurdischen Landes, und doch führen Pfade selbst über die höchsten Pässe. Das Sprichwort ermutigt jemanden vor einer scheinbar unmöglichen Aufgabe; manchmal heißt es auch, dass niemand so hoch steht, dass man ihn nie erreicht.",
+          "example": "Xezal ist zweimal durch die Fahrprüfung gefallen und will aufgeben. Ihr Vater sagt: „Mädchen, wie hoch der Berg auch ist, ein Weg führt über ihn. Versuch es nächste Woche noch einmal.“",
+          "equivalent": "Wo ein Wille ist, ist auch ein Weg."
+        },
+        "es": {
+          "translation": "Por alta que sea la montaña, un camino la cruza.",
+          "meaning": "No hay obstáculo tan grande que no se le encuentre un paso.",
+          "explanation": "Las montañas son la gran barrera del país kurdo, y aun así hay senderos que cruzan los puertos más altos. El refrán anima a quien tiene delante una tarea que parece imposible; a veces también quiere decir que nadie está tan alto que no se le pueda alcanzar.",
+          "example": "Xezal ha suspendido dos veces el examen de conducir y quiere dejarlo. Su padre le dice: «Hija, por alta que sea la montaña, un camino la cruza. Vuelve a intentarlo la semana que viene».",
+          "equivalent": "Querer es poder."
+        },
+        "fr": {
+          "translation": "Si haute que soit la montagne, un chemin la franchit.",
+          "meaning": "Aucun obstacle n’est si grand qu’on ne trouve un passage.",
+          "explanation": "Les montagnes sont la grande barrière du pays kurde, et pourtant des sentiers franchissent les cols les plus hauts. Le proverbe encourage celui qui fait face à une tâche qui semble impossible ; il veut parfois dire aussi que personne n’est placé si haut qu’on ne puisse l’atteindre.",
+          "example": "Xezal a raté deux fois l’examen du permis et veut abandonner. Son père lui dit : « Ma fille, si haute que soit la montagne, un chemin la franchit. Réessaie la semaine prochaine. »",
+          "equivalent": "Vouloir, c’est pouvoir."
+        },
+        "tr": {
+          "translation": "Dağ ne kadar yüksek olursa olsun, üstünden yol geçer.",
+          "meaning": "Hiçbir engel, üzerinden bir yol bulunamayacak kadar büyük değildir.",
+          "explanation": "Dağlar Kürt coğrafyasının en büyük engelidir, ama en yüksek geçitlerden bile patikalar geçer. Atasözü, imkânsız görünen bir işle karşı karşıya kalanı yüreklendirir; bazen de kimsenin ulaşılamayacak kadar yüksekte olmadığını anlatır.",
+          "example": "Xezal ehliyet sınavından iki kez kaldı ve bırakmak istiyor. Babası diyor ki: “Kızım, dağ ne kadar yüksek olursa olsun, üstünden yol geçer. Gelecek hafta yine dene.”",
+          "equivalent": "Dağ ne kadar yüce olsa yol üstünden geçer."
+        },
+        "ar": {
+          "translation": "مهما علا الجبلُ، فإنّ طريقًا يعبُره.",
+          "meaning": "لا عقبة أكبر من أن يُوجَد فوقها طريق.",
+          "explanation": "الجبال هي الحاجز الأكبر في بلاد الكرد، ومع ذلك تعبر الدروب أعلى الممرّات. يشجّع المثل من يواجه مهمة تبدو مستحيلة، وقد يعني أحيانًا أن لا أحد في مكانة من العلوّ تجعله بعيدًا عن المنال.",
+          "example": "رسبت خزال في امتحان القيادة مرتين وتريد أن تستسلم. يقول لها أبوها: «يا ابنتي، مهما علا الجبل فإن طريقًا يعبره. جرّبي مرة أخرى الأسبوع القادم.»",
+          "equivalent": "مَن سارَ على الدَّربِ وَصَلَ."
+        }
+      },
+      "sources": [
+        {
+          "title": "6762 Gotinên Pêşiyan (Weşanên Rewşen, Stockholm 2001), scanned copy",
+          "author": "Amed Tîgrîs",
+          "note": "Entry 1038 in the scanned text: “Çiya çiqas bilind be dîsa rojeke riya mirov pe dikev[e]” (OCR spelling) (seen through a search-engine excerpt; the page itself could not be opened from this session). Read online at www.yek-dem.com."
+        },
+        {
+          "title": "Gotinên Pêşiyan",
+          "author": "ÇandName",
+          "url": "https://candname.com/gotinen-pesiyan-4/",
+          "note": "Search across this and the next two lists showed “Çiya çiqas bilin[d] be, rê pê dikeve” with the Turkish “Dağ ne kadar yüce olsa yol üstünden geçer”, and “Çiya çiqas bilind be wê rê pêkeve”; the excerpt did not say which page has which (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Kürtçe Atasözleri / Gotinên Pêşiyan",
+          "author": "Bernamegeh",
+          "url": "https://www.bernamegeh.org/kurtce-atasozleri-gotinen-pesiyan/",
+          "note": "One of the lists in the same search (see above) (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên Pêşiyan / Kürtçe Atasözleri",
+          "author": "Bernamegeh",
+          "url": "https://www.bernamegeh.org/gotinen-pesiyankurtce-atasozleri/",
+          "note": "One of the lists in the same search (see above) (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Course form “Çiya çiqas bilind be jî, wê rojekê rê pê bikeve” is close but not found verbatim: the sources have “… rê pê dikeve”, “… wê rê pê keve” and Tîgrîs’s “… dîsa rojekê riya mirov pê dikeve”. Reviewer: “rê pê ketin” can also mean “to have occasion to go there”, so Tîgrîs’s form may rather mean “one day your road will lead you there (so never say never)”. Confirm which reading grandmothers mean."
+    },
+    {
+      "slug": "kmr-mevan-mevane-xwede",
+      "dialect": "kmr",
+      "text": "Mêvan mêvanê Xwedê ye.",
+      "themes": [
+        "respect",
+        "family"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [
+        {
+          "text": "Mêvan mêvanê Xwedê ne.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "Plural form (guests are God’s guests), quoted in a Kurmancî folklore article."
+        },
+        {
+          "text": "Qedrê mêvana, qedrê Xwedê.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "A related saying on Kurdish Wikiquote: the honour shown to a guest is honour shown to God."
+        },
+        {
+          "text": "Gava mêvan tên, behra xwe jî bi xwe re tînin.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "A related saying: when guests come, they bring their own share with them, so no host need fear the cost."
+        }
+      ],
+      "exampleKu": "Nîvê şevê rêwiyekî ku erebeya wî li rê xera bûbû li derî xist. Dapîrê berê xwe da bûka xwe: “Ka xwarinê germ bike, mêvan mêvanê Xwedê ye.”",
+      "translations": {
+        "ckb": {
+          "translation": "میوان میوانی خوایە.",
+          "meaning": "هەر کەسێک لە دەرگات بدات، دەبێت بە ڕێزەوە پێشوازی لێ بکرێت.",
+          "explanation": "میوان، تەنانەت ئەگەر نەناسراویش بێت، وەک ئەوە سەیر دەکرێت کە خوا ناردبێتی، بۆیە گەڕاندنەوەی یان خراپ خزمەتکردنی شەرمە. کاتێک میوانێکی چاوەڕواننەکراو دێت دەیڵێن، و بۆ بیرخستنەوەی ماڵەکە کە باشترین خواردن و باشترین جێگا هی میوانە.",
+          "example": "نیوەشەو ڕێبوارێک کە ئۆتۆمبێلەکەی لە ڕێگا تێکچووە لە دەرگا دەدات. داپیرە ڕوو دەکاتە بووکەکەی: «خواردنەکە گەرم بکەرەوە، میوان میوانی خوایە.»"
+        },
+        "en": {
+          "translation": "The guest is God’s guest.",
+          "meaning": "Whoever comes to your door must be welcomed and honoured, whoever they are.",
+          "explanation": "A guest, even a stranger, is treated as if God himself had sent them, so turning them away or serving them badly is shameful. Kurds say it when an unexpected visitor arrives, and to remind the household that the best food and the best place belong to the guest.",
+          "example": "At midnight a traveller whose car has broken down knocks at the door. Grandmother turns to her daughter-in-law: “Warm up some food, the guest is God’s guest.”",
+          "context": "Hospitality is one of the most valued Kurdish customs. One article quotes the fuller saying: “The guest is God’s guest; if the guest leaves content, God is pleased with the host.”"
+        },
+        "nl": {
+          "translation": "Een gast is een gast van God.",
+          "meaning": "Wie er ook aan je deur komt, je ontvangt hem gastvrij en met eer.",
+          "explanation": "Een gast, zelfs een vreemde, wordt behandeld alsof God hem zelf gestuurd heeft; hem wegsturen of slecht bedienen is een schande. Koerden zeggen het als er onverwacht bezoek komt, en om het huishouden eraan te herinneren dat het beste eten en de beste plek voor de gast zijn.",
+          "example": "Midden in de nacht klopt een reiziger aan wiens auto onderweg kapot is gegaan. Oma draait zich naar haar schoondochter: “Warm wat eten op, een gast is een gast van God.”",
+          "context": "Gastvrijheid is een van de meest gewaardeerde Koerdische gewoonten. Een artikel citeert de langere vorm: “De gast is Gods gast; als de gast tevreden vertrekt, is God tevreden over de gastheer.”"
+        },
+        "de": {
+          "translation": "Der Gast ist Gottes Gast.",
+          "meaning": "Wer auch immer an deine Tür kommt, wird gastfreundlich und ehrenvoll aufgenommen.",
+          "explanation": "Ein Gast, selbst ein Fremder, wird behandelt, als hätte Gott ihn geschickt; ihn abzuweisen oder schlecht zu bewirten, ist eine Schande. Man sagt es, wenn unerwarteter Besuch kommt, und um den Haushalt daran zu erinnern, dass das beste Essen und der beste Platz dem Gast gehören.",
+          "example": "Mitten in der Nacht klopft ein Reisender, dessen Auto liegen geblieben ist. Die Großmutter wendet sich an ihre Schwiegertochter: „Mach etwas Essen warm, der Gast ist Gottes Gast.“",
+          "equivalent": "Gast im Haus, Gott im Haus.",
+          "context": "Gastfreundschaft gehört zu den wichtigsten kurdischen Werten. Ein Artikel zitiert die längere Form: „Der Gast ist Gottes Gast; geht der Gast zufrieden, ist Gott mit dem Gastgeber zufrieden.“"
+        },
+        "es": {
+          "translation": "El huésped es huésped de Dios.",
+          "meaning": "A quien llame a tu puerta hay que recibirlo con hospitalidad y honor, sea quien sea.",
+          "explanation": "Un huésped, aunque sea un desconocido, se trata como si Dios mismo lo hubiera enviado; rechazarlo o atenderlo mal es una vergüenza. Se dice cuando llega una visita inesperada, y para recordar a la casa que la mejor comida y el mejor sitio son para el huésped.",
+          "example": "A medianoche llama a la puerta un viajero al que se le ha averiado el coche. La abuela se vuelve hacia su nuera: «Calienta algo de comida, el huésped es huésped de Dios».",
+          "context": "La hospitalidad es una de las costumbres kurdas más valoradas. Un artículo cita la forma larga: «El huésped es huésped de Dios; si el huésped se va contento, Dios está contento con el anfitrión»."
+        },
+        "fr": {
+          "translation": "L’hôte est l’hôte de Dieu.",
+          "meaning": "Quiconque frappe à ta porte doit être accueilli et honoré, quel qu’il soit.",
+          "explanation": "Un hôte, même inconnu, est traité comme si Dieu l’avait envoyé ; le renvoyer ou mal le servir est une honte. On le dit quand arrive une visite imprévue, et pour rappeler à la maisonnée que le meilleur repas et la meilleure place reviennent à l’invité.",
+          "example": "À minuit, un voyageur dont la voiture est tombée en panne frappe à la porte. La grand-mère se tourne vers sa belle-fille : « Fais réchauffer à manger, l’hôte est l’hôte de Dieu. »",
+          "context": "L’hospitalité est l’une des coutumes kurdes les plus estimées. Un article cite la forme longue : « L’hôte est l’hôte de Dieu ; si l’hôte repart content, Dieu est content de celui qui l’a reçu. »"
+        },
+        "tr": {
+          "translation": "Misafir Tanrı misafiridir.",
+          "meaning": "Kapına kim gelirse gelsin, misafirperverlikle ve saygıyla karşılanır.",
+          "explanation": "Misafir, yabancı bile olsa, Tanrı göndermiş gibi ağırlanır; onu geri çevirmek ya da kötü ağırlamak ayıptır. Beklenmedik bir misafir geldiğinde ve en iyi yemeğin, en iyi yerin misafire ait olduğunu hatırlatmak için söylenir.",
+          "example": "Gece yarısı arabası yolda bozulan bir yolcu kapıyı çalıyor. Nine gelinine dönüyor: “Hadi yemeği ısıt, misafir Tanrı misafiridir.”",
+          "context": "Türkçedeki “Tanrı misafiri” deyimi de habersiz gelen konuğu anlatır. Bir makale sözün uzun biçimini aktarır: “Misafir Tanrı misafiridir; misafir memnun giderse Tanrı da ev sahibinden razı olur.”"
+        },
+        "ar": {
+          "translation": "الضيفُ ضيفُ الله.",
+          "meaning": "كلّ من يطرق بابك يُستقبَل بالكرم والإكرام، أيًّا كان.",
+          "explanation": "يُعامَل الضيف، ولو كان غريبًا، كأن الله أرسله، فردُّه أو التقصير في خدمته عيب. يقوله الكرد حين يصل زائر غير متوقَّع، وليذكّروا أهل البيت بأن أطيب الطعام وأفضل مكان للضيف.",
+          "example": "في منتصف الليل يطرق الباب مسافرٌ تعطّلت سيارته في الطريق. تلتفت الجدّة إلى كنّتها: «سخّني الطعام، الضيف ضيف الله.»",
+          "context": "الكرم من أعزّ العادات الكردية. ويورد أحد المقالات الصيغة الأطول: «الضيف ضيف الله، فإذا رضي الضيف رضي الله عن المضيف.»"
+        }
+      },
+      "sources": [
+        {
+          "title": "Bi Hûr û Girên Xwe ve Zarê",
+          "author": "Seregola Intabê",
+          "url": "https://www.seregolaintabe.com/bi-hur-u-giren-xwe-ve-zare/",
+          "note": "Quotes the saying in speech: “mêvan, mêvanê Xwedê ye, ku mêvan xweşhal û razî be, Xwedê jî ji meriv razî dibe” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Pexşanname 3",
+          "author": "Zimannas (blog)",
+          "url": "https://zimannas.wordpress.com/2016/01/19/p-e-x-s-a-n-n-a-m-e-3/",
+          "note": "Gives the plural form “Mêvan mêvanê Xwedê ne” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên pêşiyan N-Z",
+          "author": "Wikiquote (Kurdish)",
+          "url": "https://ku.wikiquote.org/wiki/Gotin%C3%AAn_p%C3%AA%C5%9Fiyan_N-Z",
+          "note": "Lists “Qedrê mêvana qedrê Xwedê” among other guest sayings (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên Pêşiyan / Kürtçe Atasözleri",
+          "author": "Bernamegeh",
+          "url": "https://www.bernamegeh.org/gotinen-pesiyankurtce-atasozleri/",
+          "note": "Lists “Gava mêvan tên behra xwe jî bi xwe re tînin” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Course wording confirmed as a form used in speech; it is quoted rather than listed in the collections seen. The Soranî rendering is a translation, not a checked Soranî proverb."
+    },
+    {
+      "slug": "kmr-ser-ser-e",
+      "dialect": "kmr",
+      "text": "Şêr şêr e, çi jin e, çi mêr e.",
+      "themes": [
+        "courage",
+        "respect"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [],
+      "exampleKu": "Dema ku agir bi axurê ket, Nazê yekem kes bû ku bi satilekê avê bazda. Piştre cîranekî pîr got: “Şêr şêr e, çi jin e, çi mêr e.”",
+      "translations": {
+        "ckb": {
+          "translation": "شێر شێرە، چ ژن بێت چ پیاو.",
+          "meaning": "ئازایەتی و توانا هی مرۆڤەکەیە، نەک هی ژن بوون یان پیاو بوون.",
+          "explanation": "شێر وێنەی ئازایەتییە؛ پەندەکە دەڵێت کەسی ئازا و بە توانا شێرە، ژن بێت یان پیاو. بۆ ستایشی ژنێک دەگوترێت کە کارێکی ئازایانە یان قورسی کردووە، زۆر جار باشتر لە پیاوانی دەوروبەری.",
+          "example": "کاتێک ئاگر لە تەویلەکە بەردەبێت، نازێ یەکەم کەسە کە بە سەتڵێک ئاوەوە ڕادەکات. دواتر دراوسێیەکی پیر دەڵێت: «شێر شێرە، چ ژن بێت چ پیاو.»",
+          "context": "لە فەرهەنگی ویکیدا هاتووە کە بۆ ژنانی بە توانا دەگوترێت کە ئەرکی خۆیان لە هەندێک پیاو باشتر جێبەجێ دەکەن. ئەمڕۆ زۆر جار وەک نیشانەی یەکسانی لە کەلەپووری زارەکیی کوردیدا دەهێنرێتەوە."
+        },
+        "en": {
+          "translation": "A lion is a lion, whether woman or man.",
+          "meaning": "Courage and ability belong to the person, not to being a man or a woman.",
+          "explanation": "The lion is the image of bravery; the proverb says a brave, capable person is a lion whatever their sex. It is said in praise of a woman who has done something bold or hard, often better than men around her.",
+          "example": "When fire breaks out in the barn, Nazê is the first to run with a bucket of water. Afterwards an old neighbour says: “A lion is a lion, whether woman or man.”",
+          "context": "The dictionary entry says it is said of capable women who do their duty better than some men. Today it is often quoted as a sign of equality in Kurdish oral tradition and is linked with women fighters; one scholar argues it rather reflects an older code in which valour, not sex, is what earns respect."
+        },
+        "nl": {
+          "translation": "Een leeuw is een leeuw, of het nu een vrouw is of een man.",
+          "meaning": "Moed en kunnen horen bij de persoon, niet bij man of vrouw zijn.",
+          "explanation": "De leeuw staat voor dapperheid; het spreekwoord zegt dat een moedig, bekwaam mens een leeuw is, welk geslacht ook. Je zegt het als lof voor een vrouw die iets gedurfds of zwaars heeft gedaan, vaak beter dan de mannen om haar heen.",
+          "example": "Als er brand uitbreekt in de stal, rent Nazê als eerste met een emmer water. Na afloop zegt een oude buurman: “Een leeuw is een leeuw, of het nu een vrouw is of een man.”",
+          "context": "Volgens het woordenboek zegt men het over bekwame vrouwen die hun plicht beter doen dan sommige mannen. Tegenwoordig wordt het vaak aangehaald als teken van gelijkheid in de Koerdische mondelinge traditie en verbonden met vrouwelijke strijders; één onderzoeker meent dat het eerder een oude erecode weerspiegelt waarin dapperheid, niet geslacht, respect oplevert."
+        },
+        "de": {
+          "translation": "Ein Löwe ist ein Löwe, ob Frau oder Mann.",
+          "meaning": "Mut und Können gehören dem Menschen, nicht dem Geschlecht.",
+          "explanation": "Der Löwe steht für Tapferkeit; das Sprichwort sagt, dass ein mutiger, fähiger Mensch ein Löwe ist, gleich welchen Geschlechts. Man sagt es anerkennend über eine Frau, die etwas Kühnes oder Schweres getan hat, oft besser als die Männer um sie herum.",
+          "example": "Als im Stall Feuer ausbricht, rennt Nazê als Erste mit einem Eimer Wasser los. Danach sagt ein alter Nachbar: „Ein Löwe ist ein Löwe, ob Frau oder Mann.“",
+          "context": "Laut Wörterbuch sagt man es über fähige Frauen, die ihre Pflicht besser erfüllen als manche Männer. Heute wird es oft als Zeichen der Gleichheit in der kurdischen mündlichen Überlieferung zitiert und mit Kämpferinnen verbunden; eine Forscherin sieht darin eher einen alten Ehrenkodex, in dem Tapferkeit und nicht das Geschlecht Achtung verschafft."
+        },
+        "es": {
+          "translation": "León es león, sea mujer o sea hombre.",
+          "meaning": "El valor y la capacidad son de la persona, no de ser hombre o mujer.",
+          "explanation": "El león es la imagen de la valentía; el refrán dice que una persona valiente y capaz es un león, sea del sexo que sea. Se dice para elogiar a una mujer que ha hecho algo audaz o difícil, a menudo mejor que los hombres que la rodean.",
+          "example": "Cuando se declara un incendio en el establo, Nazê es la primera en correr con un cubo de agua. Después, un vecino anciano dice: «León es león, sea mujer o sea hombre».",
+          "context": "El diccionario dice que se aplica a mujeres capaces que cumplen su deber mejor que algunos hombres. Hoy se cita a menudo como muestra de igualdad en la tradición oral kurda y se asocia con las combatientes; una investigadora sostiene que refleja más bien un antiguo código en el que el respeto lo da el valor, no el sexo."
+        },
+        "fr": {
+          "translation": "Un lion est un lion, qu’il soit femme ou homme.",
+          "meaning": "Le courage et la valeur appartiennent à la personne, pas au fait d’être homme ou femme.",
+          "explanation": "Le lion est l’image de la bravoure ; le proverbe dit qu’une personne courageuse et capable est un lion, quel que soit son sexe. On le dit pour saluer une femme qui a fait quelque chose d’audacieux ou de difficile, souvent mieux que les hommes autour d’elle.",
+          "example": "Quand le feu prend dans l’étable, Nazê est la première à courir avec un seau d’eau. Ensuite, un vieux voisin dit : « Un lion est un lion, qu’il soit femme ou homme. »",
+          "context": "Selon le dictionnaire, on le dit des femmes capables qui font leur devoir mieux que certains hommes. Aujourd’hui on le cite souvent comme signe d’égalité dans la tradition orale kurde et on l’associe aux combattantes ; une chercheuse y voit plutôt un ancien code d’honneur où c’est la bravoure, et non le sexe, qui vaut le respect."
+        },
+        "tr": {
+          "translation": "Aslan aslandır, ister kadın olsun ister erkek.",
+          "meaning": "Cesaret ve yetenek kişinin kendisine aittir, kadın ya da erkek olmasına değil.",
+          "explanation": "Aslan yiğitliğin simgesidir; atasözü cesur ve becerikli kişinin, cinsiyeti ne olursa olsun, aslan olduğunu söyler. Cesur ya da zor bir iş yapan, çoğu zaman çevresindeki erkeklerden daha iyisini yapan bir kadını övmek için söylenir.",
+          "example": "Ahırda yangın çıkınca kovayla ilk koşan Nazê oluyor. Sonra yaşlı bir komşu diyor ki: “Aslan aslandır, ister kadın olsun ister erkek.”",
+          "context": "Sözlüğe göre görevini bazı erkeklerden daha iyi yapan yetenekli kadınlar için söylenir. Bugün sıkça Kürt sözlü geleneğindeki eşitliğin işareti olarak anılır ve kadın savaşçılarla ilişkilendirilir; bir araştırmacı ise sözün, saygıyı cinsiyetin değil yiğitliğin kazandırdığı eski bir değerler düzenini yansıttığını savunur."
+        },
+        "ar": {
+          "translation": "الأسدُ أسدٌ، امرأةً كان أو رجلًا.",
+          "meaning": "الشجاعة والقدرة صفة الإنسان نفسه، لا صفة كونه رجلًا أو امرأة.",
+          "explanation": "الأسد صورة الشجاعة، والمثل يقول إن الإنسان الشجاع القادر أسدٌ أيًّا كان جنسه. يُقال في مدح امرأة قامت بعمل جريء أو شاقّ، وكثيرًا ما أتقنته أكثر من الرجال حولها.",
+          "example": "حين تشتعل النار في الإسطبل تكون نازي أول من يركض بدلو ماء. وبعد ذلك يقول جارٌ عجوز: «الأسد أسد، امرأةً كان أو رجلًا.»",
+          "context": "يذكر القاموس أنه يُقال في النساء القادرات اللواتي يؤدّين واجبهن أفضل من بعض الرجال. ويُستشهد به اليوم كثيرًا دليلًا على المساواة في التراث الشفهي الكردي ويُربط بالمقاتلات، بينما ترى إحدى الباحثات أنه يعكس منظومة قيم قديمة يُنال فيها الاحترام بالشجاعة لا بالجنس."
+        }
+      },
+      "sources": [
+        {
+          "title": "şêr şêr e, çi jin e, çi mêr e (entry)",
+          "author": "Wîkîferheng (Kurdish Wiktionary)",
+          "url": "https://ku.wiktionary.org/wiki/%C5%9F%C3%AAr_%C5%9F%C3%AAr_e,_%C3%A7i_jin_e,_%C3%A7i_m%C3%AAr_e",
+          "note": "Own entry with the definition “ji bo jinên xudan şiyan tê gotin ku erkê xwe ji hindek zilaman baştir dikin” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Reading Kurdish Heritage Anew: Women’s Representation, Intimate Citizenship, and Moral Empowerment (book chapter)",
+          "author": "Springer",
+          "url": "https://link.springer.com/chapter/10.1007/978-3-031-83537-7_6",
+          "note": "Discusses the proverb’s modern use as a sign of gender equality and its link with women fighters, and argues it reflects another value system (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Kurdish-behdini-language-resources: Proverbs_BehdiniArabic-BehdiniLatini-English.csv",
+          "author": "Jad-deeb (GitHub, MIT licence)",
+          "url": "https://github.com/Jad-deeb/Kurdish-behdini-language-resources",
+          "note": "Row “شێر شێرە، چ ژنە چ مێرە / şêr şêre, çi jne çi mêre” (read in full)"
+        }
+      ],
+      "notes": "Well attested. The context lines summarise a scholarly argument; check the wording of that summary before publishing. As recorded in Arabic script: شێر شێرە، چ ژنە چ مێرە (Badînî spelling in Arabic script (Latin: “Şêr şêre, çi jne çi mêre”), from a Behdînî dataset)."
+    },
+    {
+      "slug": "kmr-av-di-serkaniye",
+      "dialect": "kmr",
+      "text": "Av di serkaniyê de şêlû dibe.",
+      "themes": [
+        "human-nature",
+        "wisdom"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [
+        {
+          "text": "Av ji serî şêlû dibe.",
+          "dialect": "kmr",
+          "region": "some areas, unnamed in the source",
+          "note": "Amed Tîgrîs records this as the form said in some areas (the water is muddied from the top); the areas are not named in the excerpt."
+        }
+      ],
+      "exampleKu": "Ji karmendan re tê gotin ku dereng nemînin, lê rêvebir bi xwe her roj saet deh tê. Hevkarekî kevin bi pistepist dibêje: “Av di serkaniyê de şêlû dibe.”",
+      "translations": {
+        "ckb": {
+          "translation": "ئاو لە سەرچاوەوە لێڵ دەبێت.",
+          "meaning": "کاتێک شتەکان تێکدەچن، هەڵەکە زۆر جار لە سەرەوە یان لە سەرچاوەوە دەست پێدەکات.",
+          "explanation": "ئەگەر جۆگەلەیەک لێڵ بێت، کێشەکە لە سەرچاوەکەی سەرەوەیە، نەک لە گوندی خوارەوە. ئەم پەندە دەڵێن کاتێک سەرۆک، گەورە یان دایک و باوک گلەیی لە هەڵەیەک دەکەن کە خۆیان نموونەی بوون.",
+          "example": "بە فەرمانبەران دەگوترێت درەنگ نەکەون، بەڵام بەڕێوەبەر خۆی هەموو ڕۆژێک کاتژمێر دە دێت. هاوکارێکی کۆن بە چرپە دەڵێت: «ئاو لە سەرچاوەوە لێڵ دەبێت.»"
+        },
+        "en": {
+          "translation": "The water is muddied at the spring.",
+          "meaning": "When things go wrong, the fault usually starts at the top or at the source.",
+          "explanation": "If a stream runs muddy, the trouble began upstream at the spring, not in the village below. Kurds say it when leaders, elders or parents complain about faults they themselves set an example for.",
+          "example": "The staff are told off for arriving late, but the manager himself comes in at ten every day. An old colleague whispers: “The water is muddied at the spring.”",
+          "equivalent": "A fish rots from the head."
+        },
+        "nl": {
+          "translation": "Het water wordt troebel bij de bron.",
+          "meaning": "Als het misgaat, begint de fout meestal bovenaan of bij de bron.",
+          "explanation": "Als een beek troebel stroomt, zit het probleem stroomopwaarts bij de bron, niet in het dorp beneden. Koerden zeggen het wanneer leiders, ouderen of ouders klagen over fouten waarvoor ze zelf het voorbeeld gaven.",
+          "example": "Het personeel krijgt op z’n kop omdat het te laat komt, maar de manager zelf komt elke dag om tien uur binnen. Een oude collega fluistert: “Het water wordt troebel bij de bron.”",
+          "equivalent": "De vis begint te stinken aan de kop."
+        },
+        "de": {
+          "translation": "Das Wasser trübt sich an der Quelle.",
+          "meaning": "Wenn etwas schiefläuft, beginnt der Fehler meist oben oder an der Quelle.",
+          "explanation": "Fließt ein Bach trüb, liegt das Übel oben an der Quelle, nicht unten im Dorf. Man sagt es, wenn Vorgesetzte, Ältere oder Eltern über Fehler klagen, für die sie selbst das Vorbild sind.",
+          "example": "Die Angestellten werden fürs Zuspätkommen gerügt, aber der Chef selbst kommt jeden Tag um zehn. Ein alter Kollege flüstert: „Das Wasser trübt sich an der Quelle.“",
+          "equivalent": "Der Fisch stinkt vom Kopf her."
+        },
+        "es": {
+          "translation": "El agua se enturbia en el manantial.",
+          "meaning": "Cuando algo va mal, la culpa suele empezar arriba o en el origen.",
+          "explanation": "Si un arroyo baja turbio, el problema está arriba, en el manantial, no en el pueblo de abajo. Se dice cuando quienes mandan, los mayores o los padres se quejan de faltas de las que ellos mismos dan ejemplo.",
+          "example": "A los empleados les llaman la atención por llegar tarde, pero el jefe llega todos los días a las diez. Un compañero veterano susurra: «El agua se enturbia en el manantial»."
+        },
+        "fr": {
+          "translation": "L’eau se trouble à la source.",
+          "meaning": "Quand les choses vont mal, la faute commence le plus souvent en haut ou à la source.",
+          "explanation": "Si un ruisseau coule trouble, le mal vient de la source, en amont, et non du village en bas. On le dit quand des chefs, des aînés ou des parents se plaignent de fautes dont ils donnent eux-mêmes l’exemple.",
+          "example": "On reproche aux employés d’arriver en retard, mais le directeur lui-même arrive tous les jours à dix heures. Un ancien collègue chuchote : « L’eau se trouble à la source. »",
+          "equivalent": "Le poisson pourrit par la tête."
+        },
+        "tr": {
+          "translation": "Su kaynağında bulanır.",
+          "meaning": "Bir şeyler ters gittiğinde hata çoğunlukla tepeden ya da kaynaktan başlar.",
+          "explanation": "Dere bulanık akıyorsa sorun aşağıdaki köyde değil, yukarıdaki pınardadır. Yöneticiler, büyükler ya da anne babalar, örneğini kendilerinin verdiği kusurlardan yakındığında söylenir.",
+          "example": "Çalışanlar geç kaldıkları için azar işitiyor, ama müdürün kendisi her gün saat onda geliyor. Eski bir iş arkadaşı fısıldıyor: “Su kaynağında bulanır.”",
+          "equivalent": "Su başından bulanır."
+        },
+        "ar": {
+          "translation": "الماءُ يتعكّرُ من منبعه.",
+          "meaning": "حين تسوء الأمور يبدأ الخلل في الغالب من الأعلى أو من الأصل.",
+          "explanation": "إذا جرى الجدول عكرًا فالعلّة في النبع أعلاه لا في القرية أسفله. يقوله الكرد حين يشكو الرؤساء أو الكبار أو الآباء من أخطاء هم أنفسهم قدوتها.",
+          "example": "يُوبَّخ الموظفون على التأخر، بينما يصل المدير نفسه كل يوم في العاشرة. يهمس زميل قديم: «الماء يتعكّر من منبعه.»",
+          "equivalent": "إذا كان ربُّ البيتِ بالدفِّ ضاربًا، فشيمةُ أهلِ البيتِ كلِّهمُ الرقصُ."
+        }
+      },
+      "sources": [
+        {
+          "title": "6762 Gotinên Pêşiyan (Weşanên Rewşen, Stockholm 2001), scanned copy",
+          "author": "Amed Tîgrîs",
+          "note": "Gives “Av di serkaniye de şelû dibe” and adds that in some areas people say “Av ji serî şelû dibe” (seen through a search-engine excerpt; the page itself could not be opened from this session). Read online at www.yek-dem.com."
+        },
+        {
+          "title": "Hin Gotinên Pêşiyan…",
+          "author": "ÇandName",
+          "url": "https://candname.com/gotinen-pesiyan-3/",
+          "note": "Listed in a Kurmancî proverb list (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên Pêşiyan / Kürtçe Atasözleri",
+          "author": "Bernamegeh",
+          "url": "https://www.bernamegeh.org/gotinen-pesiyankurtce-atasozleri/",
+          "note": "Listed in a Kurdish–Turkish proverb list (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Pêvek:Gotinên Pêşiyan (proverb appendix)",
+          "author": "Wîkîferheng (Kurdish Wiktionary)",
+          "url": "https://ku.wiktionary.org/wiki/P%C3%AAvek:Gotin%C3%AAn_P%C3%AA%C5%9Fiyan",
+          "note": "Listed in the proverb appendix (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Çavkaniyên ji Çanda Kurdî di Nûra Qelban de (article)",
+          "author": "ResearchGate",
+          "url": "https://www.researchgate.net/publication/324842012_Cavkaniyen_ji_Canda_Kurdi_di_Nura_Qelban_de",
+          "note": "Cited as an example from tradition, next to a related saying about well water and a muddy spring (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Well attested. The Soranî line is a translation; a Soranî form was not checked."
+    },
+    {
+      "slug": "kmr-kurme-dare",
+      "dialect": "kmr",
+      "text": "Kurmê darê ne ji darê be, dar narize.",
+      "themes": [
+        "trust",
+        "human-nature"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [
+        {
+          "text": "Kurmê darê ne ji darê be, zewala darê tune.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "Another collection ends with “the tree would know no decline”."
+        },
+        {
+          "text": "Kurmê darê ne ji darê be, dar nakeve.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "Another ending: “the tree would not fall”."
+        }
+      ],
+      "exampleKu": "Dikandar nedizanî çima pere ji kasê winda dibin, heta ku dît ku şagirtê wî yê herî bawerpêkirî ye. Jina wî got: “Kurmê darê ne ji darê be, dar narize.”",
+      "translations": {
+        "ckb": {
+          "translation": "ئەگەر کرمی دار لە خودی دارەکە نەبێت، دار ناڕزێت.",
+          "meaning": "خراپترین زیان لە ناوەوە دێت، لە یەکێک لە خۆت.",
+          "explanation": "دار زیاتر بە کرمێک دەڕووخێت کە لە ناو داری خۆیدا پەیدا دەبێت، نەک بە با. بۆ ناپاکیی خزمێک، هاوکارێک یان ئەندامێکی کۆمەڵ دەگوترێت، و زۆر جاریش بۆ ناکۆکییەکانی ناو خودی کوردان.",
+          "example": "دوکاندارەکە تێناگات بۆچی پارە لە سندووقەکە ون دەبێت، تا دەزانێت کە شاگردە هەرە متمانەپێکراوەکەی خۆیەتی. ژنەکەی دەڵێت: «ئەگەر کرمی دار لە خودی دارەکە نەبێت، دار ناڕزێت.»",
+          "context": "نووسەران زۆر جار کاتی باسکردنی ململانێی ناوخۆیی دەیهێننەوە؛ ستوونێکی ڕۆژنامەیەک تەنها ناوی «کرمی دار»ـە."
+        },
+        "en": {
+          "translation": "If the worm were not from the tree itself, the tree would not rot.",
+          "literal": "If the tree’s worm is not from the tree, the tree does not rot.",
+          "meaning": "The worst harm comes from within, from one of your own.",
+          "explanation": "A tree is not brought down by the wind so much as by the worm that grows inside its own wood. Kurds say it about betrayal by a relative, a colleague or a member of the community, and often about divisions among Kurds themselves.",
+          "example": "The shopkeeper can’t understand why money keeps vanishing from the till, until he finds that it is his most trusted apprentice. His wife says: “If the worm were not from the tree itself, the tree would not rot.”",
+          "context": "Writers often quote it when describing internal conflict; a newspaper column is titled simply “Kurmê darê”."
+        },
+        "nl": {
+          "translation": "Als de worm niet uit de boom zelf kwam, zou de boom niet rotten.",
+          "meaning": "De ergste schade komt van binnenuit, van iemand van je eigen kring.",
+          "explanation": "Een boom gaat niet zozeer door de wind ten onder als wel door de worm die in zijn eigen hout groeit. Koerden zeggen het over verraad door een familielid, collega of iemand uit de gemeenschap, en vaak over verdeeldheid onder Koerden zelf.",
+          "example": "De winkelier begrijpt niet waarom er steeds geld uit de kassa verdwijnt, tot hij ontdekt dat het zijn meest vertrouwde leerling is. Zijn vrouw zegt: “Als de worm niet uit de boom zelf kwam, zou de boom niet rotten.”"
+        },
+        "de": {
+          "translation": "Käme der Wurm nicht aus dem Baum selbst, würde der Baum nicht faulen.",
+          "meaning": "Der schlimmste Schaden kommt von innen, von einem der Eigenen.",
+          "explanation": "Ein Baum fällt weniger durch den Wind als durch den Wurm, der in seinem eigenen Holz wächst. Man sagt es über Verrat durch Verwandte, Kollegen oder jemanden aus der Gemeinschaft, oft auch über die Zerstrittenheit unter Kurden selbst.",
+          "example": "Der Ladenbesitzer versteht nicht, warum ständig Geld aus der Kasse verschwindet, bis er merkt, dass es sein vertrautester Lehrling ist. Seine Frau sagt: „Käme der Wurm nicht aus dem Baum selbst, würde der Baum nicht faulen.“"
+        },
+        "es": {
+          "translation": "Si el gusano no saliera del propio árbol, el árbol no se pudriría.",
+          "meaning": "El peor daño viene de dentro, de uno de los tuyos.",
+          "explanation": "A un árbol no lo derriba tanto el viento como el gusano que crece en su propia madera. Se dice de la traición de un pariente, un colega o alguien de la comunidad, y a menudo de las divisiones entre los propios kurdos.",
+          "example": "El tendero no entiende por qué desaparece dinero de la caja, hasta que descubre que es su aprendiz de más confianza. Su mujer le dice: «Si el gusano no saliera del propio árbol, el árbol no se pudriría».",
+          "equivalent": "No hay peor cuña que la del mismo palo."
+        },
+        "fr": {
+          "translation": "Si le ver ne venait pas de l’arbre lui-même, l’arbre ne pourrirait pas.",
+          "meaning": "Le pire mal vient de l’intérieur, de l’un des siens.",
+          "explanation": "Un arbre tombe moins sous le vent que sous le ver qui naît dans son propre bois. On le dit de la trahison d’un parent, d’un collègue ou d’un membre de la communauté, et souvent des divisions entre Kurdes eux-mêmes.",
+          "example": "Le commerçant ne comprend pas pourquoi l’argent disparaît de la caisse, jusqu’au jour où il découvre que c’est son apprenti le plus fidèle. Sa femme lui dit : « Si le ver ne venait pas de l’arbre lui-même, l’arbre ne pourrirait pas. »",
+          "equivalent": "On n’est jamais trahi que par les siens."
+        },
+        "tr": {
+          "translation": "Ağacın kurdu ağacın kendisinden olmasa, ağaç çürümez.",
+          "meaning": "En büyük zarar içeriden, insanın kendi çevresinden gelir.",
+          "explanation": "Ağacı rüzgârdan çok kendi odununda türeyen kurt yıkar. Bir akrabanın, iş arkadaşının ya da topluluktan birinin ihaneti için, çoğu zaman da Kürtlerin kendi aralarındaki bölünmeler için söylenir.",
+          "example": "Dükkâncı kasadan neden sürekli para eksildiğini anlamıyor, ta ki en güvendiği çırağı olduğunu görene dek. Karısı diyor ki: “Ağacın kurdu ağacın kendisinden olmasa, ağaç çürümez.”",
+          "equivalent": "Baltaya sap olmasa ağaç kesilmez."
+        },
+        "ar": {
+          "translation": "لو لم تكن دودةُ الشجرةِ منها، لما نَخِرَت الشجرة.",
+          "meaning": "أشدّ الأذى يأتي من الداخل، من أحد أهلك.",
+          "explanation": "لا تسقط الشجرة بالريح بقدر ما تسقط بالدودة التي تنشأ في خشبها. يقوله الكرد في خيانة قريب أو زميل أو فرد من الجماعة، وكثيرًا ما يقولونه في الانقسامات بين الكرد أنفسهم.",
+          "example": "لا يفهم صاحب الدكان لماذا يختفي المال من الصندوق، حتى يكتشف أن الفاعل صبيّه الأكثر ثقة. تقول زوجته: «لو لم تكن دودة الشجرة منها، لما نخرت الشجرة.»",
+          "equivalent": "حاميها حراميها."
+        }
+      },
+      "sources": [
+        {
+          "title": "Xwençe, Cild I: Gotinên Pêşiyan, Kilam-Dîlok û Çîrok (Kurdish Institute of Paris digital library)",
+          "author": "Zeynelabidîn Zinar",
+          "url": "https://bnk.institutkurde.org/images/pdf/CJWHVYR8LN.pdf",
+          "note": "One of three forms found across the search results; the excerpt gave “… zewala darê tune”, “… dar nakeve” and “… dar narize” without saying which collection has which (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên Pêşiyan",
+          "author": "ÇandName",
+          "url": "https://candname.com/gotinen-pesiyan-4/",
+          "note": "Listed in a Kurmancî proverb list (see note above on forms) (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Kurmê darê (column)",
+          "author": "Yeni Özgür Politika",
+          "url": "https://www.ozgurpolitika.com/haberi--kurme-dare-145359",
+          "note": "Newspaper column titled “Kurmê darê” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Article quoting “Kurmê darê”",
+          "author": "DiyarName",
+          "url": "https://diyarname.com/news.php?Idx=1926",
+          "note": "Article quoting the proverb when discussing internal conflict (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Three endings are attested; the main text uses “dar narize”. Reviewer: say which ending is most familiar."
+    },
+    {
+      "slug": "kmr-birina-xeberan",
+      "dialect": "kmr",
+      "text": "Birîna xeberan ji birîna şûr xirabtir e.",
+      "themes": [
+        "wisdom",
+        "respect"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [
+        {
+          "text": "Birîna şûr sax dibe, birîna xeberê sax nabe.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "Zeynelabidîn Zinar’s collection: the sword wound heals, the wound of words does not (excerpt spelling “Birîna şûra sax dibe, bira xebera sax nabe”)."
+        },
+        {
+          "text": "Birîna şûr rihet dibe, lê birîna zimên rihet nabe.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "Quoted in a blog essay, which notes that Armenian and Turkish have the same saying."
+        }
+      ],
+      "exampleKu": "Di nav pevçûnê de Dilanê gotineke dilşikên ji birayê xwe re got. Bavê wan got: “Birîna xeberan ji birîna şûr xirabtir e. Here, lêborînê jê bixwaze.”",
+      "translations": {
+        "ckb": {
+          "translation": "برینی قسە لە برینی شمشێر خراپترە.",
+          "meaning": "قسەی ناشیرین لە لێدان قووڵتر و درێژتر ئازار دەدات.",
+          "explanation": "برینی شمشێر بە کات سارێژ دەبێت، بەڵام جوێن لە دڵ و لە بیری بنەماڵەدا دەمێنێتەوە. بە کەسێک دەگوترێت کە قسەی ڕەقی کردووە، یان بۆ ئاگادارکردنەوە پێش ئەوەی دەمەقاڵێیەک لە دەست دەربچێت. لێرەدا «خەبەر» بە مانای قسەی ڕەق و جوێنە.",
+          "example": "لە کاتی دەمەقاڵێدا دیلان قسەیەکی دڵشکێن بە براکەی دەڵێت. باوکیان دەڵێت: «برینی قسە لە برینی شمشێر خراپترە. بڕۆ داوای لێبوردنی لێ بکە.»"
+        },
+        "en": {
+          "translation": "The wound of words is worse than the wound of the sword.",
+          "meaning": "Cruel words hurt longer and deeper than physical blows.",
+          "explanation": "A cut from a blade closes in time, but an insult stays in the heart and in the family’s memory. Kurds say it to someone who has spoken harshly, or to warn before a quarrel gets out of hand. Here xeber means harsh or insulting words.",
+          "example": "In a quarrel, Dilan says something cruel to her brother. Their father says: “The wound of words is worse than the wound of the sword. Go and apologise.”"
+        },
+        "nl": {
+          "translation": "Een wond van woorden is erger dan een wond van het zwaard.",
+          "meaning": "Wrede woorden doen dieper en langer pijn dan slagen.",
+          "explanation": "Een snee van een kling heelt na verloop van tijd, maar een belediging blijft in het hart en in het geheugen van de familie. Koerden zeggen het tegen iemand die hard heeft gesproken, of als waarschuwing voordat een ruzie uit de hand loopt. Xeber betekent hier harde of beledigende woorden.",
+          "example": "Tijdens een ruzie zegt Dilan iets gemeens tegen haar broer. Hun vader zegt: “Een wond van woorden is erger dan een wond van het zwaard. Ga je excuses aanbieden.”"
+        },
+        "de": {
+          "translation": "Die Wunde der Worte ist schlimmer als die Wunde des Schwertes.",
+          "meaning": "Grausame Worte verletzen tiefer und länger als Schläge.",
+          "explanation": "Ein Schnitt von der Klinge heilt mit der Zeit, eine Beleidigung aber bleibt im Herzen und im Gedächtnis der Familie. Man sagt es zu jemandem, der hart gesprochen hat, oder als Warnung, bevor ein Streit ausufert. Xeber bedeutet hier harte, beleidigende Worte.",
+          "example": "Im Streit sagt Dilan etwas Gemeines zu ihrem Bruder. Der Vater sagt: „Die Wunde der Worte ist schlimmer als die Wunde des Schwertes. Geh und entschuldige dich.“"
+        },
+        "es": {
+          "translation": "La herida de las palabras es peor que la herida de la espada.",
+          "meaning": "Las palabras crueles duelen más hondo y por más tiempo que los golpes.",
+          "explanation": "Un corte de espada se cierra con el tiempo, pero un insulto se queda en el corazón y en la memoria de la familia. Se le dice a quien ha hablado con dureza, o como aviso antes de que una discusión se descontrole. Aquí xeber significa palabras duras o insultos.",
+          "example": "En plena discusión, Dilan le dice algo cruel a su hermano. Su padre le dice: «La herida de las palabras es peor que la herida de la espada. Ve a pedirle perdón».",
+          "equivalent": "Más hiere mala palabra que espada afilada."
+        },
+        "fr": {
+          "translation": "La blessure des mots est pire que celle de l’épée.",
+          "meaning": "Les paroles cruelles blessent plus profondément et plus longtemps que les coups.",
+          "explanation": "Une entaille de lame finit par se refermer, mais une insulte reste dans le cœur et dans la mémoire de la famille. On le dit à quelqu’un qui a parlé durement, ou pour avertir avant qu’une dispute ne dégénère. Xeber désigne ici les mots durs ou injurieux.",
+          "example": "Au cours d’une dispute, Dilan dit quelque chose de méchant à son frère. Leur père dit : « La blessure des mots est pire que celle de l’épée. Va lui demander pardon. »",
+          "equivalent": "Un coup de langue est pire qu’un coup de lance."
+        },
+        "tr": {
+          "translation": "Sözün açtığı yara kılıç yarasından beterdir.",
+          "meaning": "Acımasız sözler, darbelerden daha derin ve daha uzun süre acıtır.",
+          "explanation": "Kılıcın açtığı yara zamanla kapanır, ama hakaret yürekte ve ailenin belleğinde kalır. Sert konuşmuş birine ya da bir kavga çığırından çıkmadan önce uyarı olarak söylenir. Buradaki xeber, sert ya da kırıcı söz demektir.",
+          "example": "Kavga sırasında Dilan ağabeyine kırıcı bir söz söylüyor. Babaları diyor ki: “Sözün açtığı yara kılıç yarasından beterdir. Git, ondan özür dile.”",
+          "equivalent": "Kılıç yarası geçer, dil yarası geçmez."
+        },
+        "ar": {
+          "translation": "جرحُ الكلام أسوأُ من جرحِ السيف.",
+          "meaning": "الكلمات القاسية تؤلم أعمق وأطول من الضرب.",
+          "explanation": "جرح النصل يلتئم مع الوقت، أما الإهانة فتبقى في القلب وفي ذاكرة العائلة. يقوله الكرد لمن تكلّم بقسوة، أو تحذيرًا قبل أن يخرج شجار عن السيطرة. وكلمة «xeber» هنا تعني الكلام الجارح.",
+          "example": "في أثناء شجار تقول ديلان لأخيها كلامًا جارحًا. يقول أبوهما: «جرح الكلام أسوأ من جرح السيف. اذهبي واعتذري منه.»",
+          "equivalent": "جراحاتُ السِّنانِ لها التئامٌ، ولا يلتامُ ما جرحَ اللسانُ."
+        }
+      },
+      "sources": [
+        {
+          "title": "Gotinên pêşiyan A-E",
+          "author": "Wikiquote (Kurdish)",
+          "url": "https://ku.wikiquote.org/wiki/Gotin%C3%AAn_p%C3%AA%C5%9Fiyan_A-E",
+          "note": "Lists “Birîna xeberan ji birîna şûr xiravtir e” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên Pêşîyan (B)",
+          "author": "Siddik Bozarslan (Rûpela Nû)",
+          "url": "https://www.rupelanu.com/gotinen-pesiyan-b-1313-201158170149150150155-1829yy.htm",
+          "note": "Gives “Birîna xeberan, ji birîna şûr xirabtir e” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Xwençe, Cild I: Gotinên Pêşiyan, Kilam-Dîlok û Çîrok (Kurdish Institute of Paris digital library)",
+          "author": "Zeynelabidîn Zinar",
+          "url": "https://bnk.institutkurde.org/images/pdf/CJWHVYR8LN.pdf",
+          "note": "Gives the variant about the sword wound healing and the wound of words not healing (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Hestiyê zimên tuneye lê dikare hestiyan bişkênîne",
+          "author": "Kovara Azarema (blog)",
+          "url": "https://blog.kovarazarema.com/hestiye-zimen-tuneye-le-dikare-hestiyan-biskenine/",
+          "note": "Quotes “Birîna şûr rihet dibe, lê birîna zimên rihet nabe” and notes the Armenian and Turkish parallels (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Well attested; spelling varies between xirab and xirav. The French and Spanish equivalents are from general knowledge; check them."
+    },
+    {
+      "slug": "kmr-doste-bi-xer",
+      "dialect": "kmr",
+      "text": "Dostê bi xêr ji birayê bêxêr çêtir e.",
+      "themes": [
+        "friendship",
+        "family"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [],
+      "exampleKu": "Dema ku Azad nexweş ket, birayê wî yê li bajêr carekê jî telefon nekir, lê hevalê wî yê zarokatiyê her roj xwarin jê re anî. Diya Azad got: “Dostê bi xêr ji birayê bêxêr çêtir e.”",
+      "translations": {
+        "ckb": {
+          "translation": "دۆستی بە خێر لە برای بێ خێر باشترە.",
+          "meaning": "خزمایەتی بە تەنیا بەس نییە؛ ئەوەی لە پاڵتدا دەوەستێت لە خوێنێک باشترە کە نایوەستێت.",
+          "explanation": "لە کۆمەڵگەی کوردیدا برا پشتی مرۆڤە، هەر ئەمەش پەندەکە تیژ دەکات: دۆستێک کە چاکەت لەگەڵ دەکات لە برایەک باشترە کە هیچت بۆ ناکات. کاتێک خێزان کەسێک بە جێ دەهێڵێت و دۆستێک دەگاتە فریای، بە دڵتەنگییەوە دەگوترێت.",
+          "example": "کاتێک ئازاد نەخۆش دەکەوێت، براکەی لە شار جارێکیش تەلەفۆن ناکات، بەڵام هاوڕێی منداڵییەکەی هەموو ڕۆژێک خواردنی بۆ دەهێنێت. دایکی ئازاد دەڵێت: «دۆستی بە خێر لە برای بێ خێر باشترە.»"
+        },
+        "en": {
+          "translation": "A good friend is better than a worthless brother.",
+          "literal": "A friend with goodness is better than a brother without goodness.",
+          "meaning": "Kinship alone means little; the one who stands by you is worth more than blood that does not.",
+          "explanation": "Brothers are supposed to be a person’s strength in Kurdish society, which is what gives the proverb its sting: a friend who does you good outweighs a brother who does nothing for you. It is said with some bitterness when family lets someone down and a friend steps in.",
+          "example": "When Azad falls ill, his brother in the city never phones once, but his childhood friend brings him food every day. Azad’s mother says: “A good friend is better than a worthless brother.”"
+        },
+        "nl": {
+          "translation": "Een goede vriend is beter dan een broer die niets waard is.",
+          "meaning": "Verwantschap alleen zegt weinig; wie je bijstaat, is meer waard dan bloed dat het niet doet.",
+          "explanation": "In de Koerdische samenleving hoort een broer je steun te zijn, en dat maakt het spreekwoord zo scherp: een vriend die je goed doet, weegt zwaarder dan een broer die niets voor je doet. Het wordt met enige bitterheid gezegd als familie iemand laat vallen en een vriend inspringt.",
+          "example": "Als Azad ziek wordt, belt zijn broer in de stad geen enkele keer, maar zijn jeugdvriend brengt hem elke dag eten. Azads moeder zegt: “Een goede vriend is beter dan een broer die niets waard is.”"
+        },
+        "de": {
+          "translation": "Ein guter Freund ist besser als ein nichtsnutziger Bruder.",
+          "meaning": "Verwandtschaft allein zählt wenig; wer zu dir steht, ist mehr wert als Blut, das es nicht tut.",
+          "explanation": "In der kurdischen Gesellschaft soll der Bruder der Rückhalt sein, und gerade das macht das Sprichwort so scharf: Ein Freund, der dir Gutes tut, wiegt mehr als ein Bruder, der nichts für dich tut. Man sagt es mit einiger Bitterkeit, wenn die Familie jemanden im Stich lässt und ein Freund einspringt.",
+          "example": "Als Azad krank wird, ruft sein Bruder in der Stadt kein einziges Mal an, aber sein Jugendfreund bringt ihm jeden Tag Essen. Azads Mutter sagt: „Ein guter Freund ist besser als ein nichtsnutziger Bruder.“"
+        },
+        "es": {
+          "translation": "Más vale amigo bueno que hermano que no vale nada.",
+          "meaning": "El parentesco por sí solo vale poco; quien te apoya vale más que la sangre que no lo hace.",
+          "explanation": "En la sociedad kurda el hermano debe ser el apoyo de uno, y eso es lo que da filo al refrán: un amigo que te hace bien pesa más que un hermano que no hace nada por ti. Se dice con cierta amargura cuando la familia falla y un amigo da la cara.",
+          "example": "Cuando Azad cae enfermo, su hermano de la ciudad no llama ni una vez, pero su amigo de la infancia le lleva comida todos los días. La madre de Azad dice: «Más vale amigo bueno que hermano que no vale nada»."
+        },
+        "fr": {
+          "translation": "Un ami bienveillant vaut mieux qu’un frère bon à rien.",
+          "meaning": "La parenté seule ne suffit pas ; celui qui te soutient vaut plus que le sang qui ne le fait pas.",
+          "explanation": "Dans la société kurde, le frère doit être le soutien de chacun, et c’est ce qui donne au proverbe son tranchant : un ami qui te fait du bien pèse plus qu’un frère qui ne fait rien pour toi. On le dit avec une pointe d’amertume quand la famille fait défaut et qu’un ami prend le relais.",
+          "example": "Quand Azad tombe malade, son frère, en ville, n’appelle pas une seule fois, mais son ami d’enfance lui apporte à manger chaque jour. La mère d’Azad dit : « Un ami bienveillant vaut mieux qu’un frère bon à rien. »"
+        },
+        "tr": {
+          "translation": "Hayırlı dost, hayırsız kardeşten iyidir.",
+          "meaning": "Akrabalık tek başına bir şey ifade etmez; yanında duran, durmayan kandan daha değerlidir.",
+          "explanation": "Kürt toplumunda erkek kardeş insanın sırtını dayadığı kişidir; atasözünü keskin yapan da budur: sana iyilik eden dost, senin için hiçbir şey yapmayan kardeşten üstündür. Aile birini yüzüstü bırakıp bir dost yardıma koştuğunda biraz da kırgınlıkla söylenir.",
+          "example": "Azad hastalanınca şehirdeki ağabeyi bir kez bile aramıyor, ama çocukluk arkadaşı ona her gün yemek getiriyor. Azad’ın annesi diyor ki: “Hayırlı dost, hayırsız kardeşten iyidir.”"
+        },
+        "ar": {
+          "translation": "الصديقُ الخيِّرُ خيرٌ من أخٍ لا خيرَ فيه.",
+          "meaning": "القرابة وحدها لا تكفي؛ من يقف إلى جانبك أثمن من دمٍ لا يقف.",
+          "explanation": "الأخ في المجتمع الكردي سند الإنسان، وهذا ما يعطي المثل حدّته: صديق يصنع إليك الخير أرجح من أخ لا يفعل لك شيئًا. يُقال بشيء من المرارة حين يخذل الأهلُ أحدًا ويهبّ صديق لنجدته.",
+          "example": "حين يمرض آزاد لا يتصل به أخوه المقيم في المدينة ولو مرة، بينما يحمل إليه صديق طفولته الطعام كل يوم. تقول أمّ آزاد: «الصديق الخيّر خير من أخ لا خير فيه.»",
+          "equivalent": "رُبَّ أخٍ لكَ لم تلدْهُ أمُّك."
+        }
+      },
+      "sources": [
+        {
+          "title": "Eigengesammelte kurdische Sprichwörter aus allen Teilen Kurdistans",
+          "author": "Ismail Zagros (blog, 2013; reposted on Kurdipedia)",
+          "note": "Listed as “Dostê bi xêr ji birayê bêxêr çêtire” with a German rendering (seen through a search-engine excerpt; the page itself could not be opened from this session). Read online at ismailzagros.blogspot.com."
+        },
+        {
+          "title": "Kurdische Sprichwörter, Redewendungen und Weisheiten, Teil II",
+          "author": "bk-luebeck.eu",
+          "url": "https://www.bk-luebeck.eu/sprichwoerter-kurdische-2.html",
+          "note": "Same Kurmancî line with a German rendering (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Kurdische Sprichwörter (forum thread)",
+          "author": "kurdis.net",
+          "note": "Same line in a forum thread of Kurdish proverbs (seen through a search-engine excerpt; the page itself could not be opened from this session). Read online at kurdis.net."
+        }
+      ],
+      "notes": "All three witnesses are private or community collections, not scholarly ones; confirm the saying is familiar."
+    },
+    {
+      "slug": "kmr-dost-di-roja-teng",
+      "dialect": "kmr",
+      "text": "Dost di roja teng de belû dibe.",
+      "themes": [
+        "friendship",
+        "trust"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [
+        {
+          "text": "Dostî çê li royê reş aşkare dibe.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "Wîkîferheng’s proverb appendix: good friendship shows itself on a black day (royê is a regional pronunciation of rojê)."
+        }
+      ],
+      "exampleKu": "Dema ku lehiyê zeviyên wan xera kirin, gelek kesan tenê telefon kir, lê Şêro bi traktora xwe hat û sê rojan alîkarî kir. Bavê Rêzan got: “Dost di roja teng de belû dibe.”",
+      "translations": {
+        "ckb": {
+          "translation": "دۆست لە ڕۆژی تەنگانەدا دەردەکەوێت.",
+          "meaning": "تەنها کاتێک لە تەنگانەدایت دەزانیت دۆستی ڕاستەقینەت کێیە.",
+          "explanation": "«ڕۆژی تەنگ» ڕۆژی پێویستی، نەخۆشی یان لەدەستدانە. لە کاتی خۆشیدا هەموو کەس ڕووخۆشە؛ پەندەکە دەڵێت ڕۆژی وا دۆستی ڕاستەقینە لە ئەوانی تر جیا دەکاتەوە، و بە سوپاسەوە یان بە دڵشکاوییەوە دەگوترێت.",
+          "example": "کاتێک لافاو کێڵگەکانیان وێران دەکات، زۆر کەس تەنها تەلەفۆن دەکەن، بەڵام شێرۆ بە تراکتۆرەکەیەوە دێت و سێ ڕۆژ یارمەتییان دەدات. باوکی ڕێزان دەڵێت: «دۆست لە ڕۆژی تەنگانەدا دەردەکەوێت.»"
+        },
+        "en": {
+          "translation": "A friend shows himself on a hard day.",
+          "literal": "A friend becomes evident on the narrow day.",
+          "meaning": "You only learn who your real friends are when you are in trouble.",
+          "explanation": "A roja teng is a narrow, tight day: a day of need, illness or loss. Anyone can be pleasant when life is easy; the proverb says such a day sorts true friends from the rest, and people say it with gratitude, or with disappointment.",
+          "example": "When the flood ruins their fields, many people just phone, but Şêro comes with his tractor and helps for three days. Rêzan’s father says: “A friend shows himself on a hard day.”",
+          "equivalent": "A friend in need is a friend indeed."
+        },
+        "nl": {
+          "translation": "Op een zware dag zie je wie je vriend is.",
+          "literal": "Een vriend wordt zichtbaar op de nauwe dag.",
+          "meaning": "Pas als je in moeilijkheden zit, merk je wie je echte vrienden zijn.",
+          "explanation": "Een roja teng is een benauwde dag: een dag van nood, ziekte of verlies. Als alles goed gaat, is iedereen aardig; zo’n dag scheidt de echte vrienden van de rest, en men zegt het dankbaar, of teleurgesteld.",
+          "example": "Als de overstroming hun akkers verwoest, bellen veel mensen alleen maar, maar Şêro komt met zijn tractor en helpt drie dagen mee. Rêzans vader zegt: “Op een zware dag zie je wie je vriend is.”",
+          "equivalent": "In nood leert men zijn vrienden kennen."
+        },
+        "de": {
+          "translation": "Am schweren Tag zeigt sich der Freund.",
+          "literal": "Der Freund wird am engen Tag sichtbar.",
+          "meaning": "Wer deine wahren Freunde sind, merkst du erst in der Not.",
+          "explanation": "Ein roja teng ist ein enger Tag: ein Tag der Not, der Krankheit oder des Verlusts. Wenn alles gut geht, ist jeder freundlich; ein solcher Tag trennt die echten Freunde von den übrigen, und man sagt es dankbar oder enttäuscht.",
+          "example": "Als die Flut ihre Felder verwüstet, rufen viele nur an, aber Şêro kommt mit seinem Traktor und hilft drei Tage lang. Rêzans Vater sagt: „Am schweren Tag zeigt sich der Freund.“",
+          "equivalent": "Freunde erkennt man in der Not."
+        },
+        "es": {
+          "translation": "El amigo se conoce en el día difícil.",
+          "literal": "El amigo se hace visible en el día estrecho.",
+          "meaning": "Solo cuando estás en apuros descubres quiénes son tus verdaderos amigos.",
+          "explanation": "Un roja teng es un día estrecho: un día de necesidad, enfermedad o pérdida. Cuando todo va bien cualquiera es amable; un día así separa a los amigos de verdad de los demás, y se dice con gratitud o con decepción.",
+          "example": "Cuando la riada arrasa sus campos, mucha gente solo llama por teléfono, pero Şêro viene con su tractor y ayuda tres días. El padre de Rêzan dice: «El amigo se conoce en el día difícil».",
+          "equivalent": "En la necesidad se conoce al amigo."
+        },
+        "fr": {
+          "translation": "C’est au jour difficile que l’ami se montre.",
+          "literal": "L’ami devient visible au jour étroit.",
+          "meaning": "On ne sait qui sont ses vrais amis que lorsqu’on est dans la peine.",
+          "explanation": "Un roja teng est un jour étroit : un jour de besoin, de maladie ou de deuil. Quand tout va bien, chacun est aimable ; un tel jour sépare les vrais amis des autres, et on le dit avec gratitude, ou avec déception.",
+          "example": "Quand l’inondation ravage leurs champs, beaucoup se contentent de téléphoner, mais Şêro vient avec son tracteur et aide pendant trois jours. Le père de Rêzan dit : « C’est au jour difficile que l’ami se montre. »",
+          "equivalent": "C’est dans le besoin qu’on reconnaît ses amis."
+        },
+        "tr": {
+          "translation": "Dost dar günde belli olur.",
+          "meaning": "Gerçek dostlarının kim olduğunu ancak başın sıkıştığında anlarsın.",
+          "explanation": "Roja teng “dar gün”dür: ihtiyaç, hastalık ya da kayıp günü. Her şey yolundayken herkes güler yüzlüdür; böyle bir gün gerçek dostu ötekilerden ayırır. Minnetle de söylenir, hayal kırıklığıyla da.",
+          "example": "Sel tarlalarını harap edince pek çok kişi yalnızca telefon ediyor, ama Şêro traktörüyle gelip üç gün yardım ediyor. Rêzan’ın babası diyor ki: “Dost dar günde belli olur.”",
+          "equivalent": "Dost kara günde belli olur."
+        },
+        "ar": {
+          "translation": "الصديقُ يَظهرُ في يومِ الضيق.",
+          "meaning": "لا تعرف أصدقاءك الحقيقيين إلا حين تقع في شدّة.",
+          "explanation": "«اليوم الضيّق» يوم الحاجة أو المرض أو الفقد. في الرخاء يبتسم الجميع، أما يوم كهذا فيميّز الصديق الحق من غيره، ويُقال المثل امتنانًا أو خيبةً.",
+          "example": "حين يجرف الفيضان حقولهم يكتفي كثيرون بالاتصال هاتفيًا، أما شيرو فيأتي بجرّاره ويساعدهم ثلاثة أيام. يقول والد ريزان: «الصديق يظهر في يوم الضيق.»",
+          "equivalent": "الصديقُ وقتَ الضيق."
+        }
+      },
+      "sources": [
+        {
+          "title": "Kurdische Sprichwörter, Redewendungen und Weisheiten, Teil II",
+          "author": "bk-luebeck.eu",
+          "url": "https://www.bk-luebeck.eu/sprichwoerter-kurdische-2.html",
+          "note": "Given as “Dost di roja tengda beludibe” with a German rendering about the friend proving himself in hard times (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Pêvek:Gotinên Pêşiyan (proverb appendix)",
+          "author": "Wîkîferheng (Kurdish Wiktionary)",
+          "url": "https://ku.wiktionary.org/wiki/P%C3%AAvek:Gotin%C3%AAn_P%C3%AA%C5%9Fiyan",
+          "note": "Gives “Dostî çê li royê reş aşkare dibe” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên pêşiyan F-M",
+          "author": "Wikiquote (Kurdish)",
+          "url": "https://ku.wikiquote.org/wiki/Gotin%C3%AAn_p%C3%AA%C5%9Fiyan_F-M",
+          "note": "Has the related “Mêrê çê di roja teng da fêm dibe” (see kmr-mere-ce-roja-teng) (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Main form from a community site, spelling normalised (tengda → teng de, beludibe → belû dibe). The Wîkîferheng variant is better sourced; reviewer may prefer it as the main text."
+    },
+    {
+      "slug": "kmr-bav-ber-bi-zarok",
+      "dialect": "kmr",
+      "text": "Bav ber bi zarok diçe, zarok ber bi çiya diçe.",
+      "themes": [
+        "family",
+        "human-nature"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [],
+      "exampleKu": "Dapîr her hefte xwarinê çêdike û ji neviyê xwe yê li zanîngehê re dişîne, lê ew hefteyê carekê jî bi zorê telefon dike. Dapîr dikene û dibêje: “Bav ber bi zarok diçe, zarok ber bi çiya diçe.”",
+      "translations": {
+        "ckb": {
+          "translation": "باوک بەرەو منداڵ دەچێت، منداڵ بەرەو چیا دەچێت.",
+          "meaning": "خۆشەویستیی دایک و باوک بەرەو منداڵ دەڕوات، بەڵام دڵی منداڵ بەرەو جیهانی فراوان دەڕوات.",
+          "explanation": "باوک هەر بەرەو منداڵەکەی دەڕوات، بەڵام منداڵ ڕووی لە چیایە، لە ژیانێکی سەربەخۆ. پەندەکە زیاتر بە زەردەخەنەوە دەگوترێت نەک بە گلەیی: خۆشەویستی وەک ئاو بەرەو خوار دەڕوات، لە دایک و باوکەوە بۆ منداڵ، زیاتر لەوەی بگەڕێتەوە.",
+          "example": "داپیرە هەموو هەفتەیەک خواردن ئامادە دەکات و بۆ نەوەکەی لە زانکۆ دەینێرێت، بەڵام ئەو بە زەحمەت هەفتەی جارێک تەلەفۆن دەکات. داپیرە پێدەکەنێت و دەڵێت: «باوک بەرەو منداڵ دەچێت، منداڵ بەرەو چیا دەچێت.»"
+        },
+        "en": {
+          "translation": "The father goes toward the child; the child goes toward the mountain.",
+          "meaning": "Parents’ love flows down to their children, while children’s hearts turn outward to the wide world.",
+          "explanation": "The parent keeps walking toward the child, but the child is already heading off toward the mountains, toward a life of their own. The proverb is said with a smile rather than a complaint: love runs downhill, from parents to children, more than it runs back.",
+          "example": "Every week Grandma cooks and sends food to her grandson at university, and he barely manages to call once a week. She laughs and says: “The father goes toward the child; the child goes toward the mountain.”"
+        },
+        "nl": {
+          "translation": "De vader gaat naar het kind, het kind gaat naar de berg.",
+          "meaning": "De liefde van ouders stroomt naar hun kinderen, terwijl het hart van kinderen zich naar de wijde wereld keert.",
+          "explanation": "De ouder blijft naar het kind toe lopen, maar het kind trekt al richting de bergen, naar een eigen leven. Het spreekwoord klinkt eerder met een glimlach dan als klacht: liefde stroomt bergaf, van ouders naar kinderen, meer dan terug.",
+          "example": "Oma kookt elke week en stuurt eten naar haar kleinzoon aan de universiteit, en hij belt met moeite één keer per week. Ze lacht en zegt: “De vader gaat naar het kind, het kind gaat naar de berg.”"
+        },
+        "de": {
+          "translation": "Der Vater geht zum Kind, das Kind geht zum Berg.",
+          "meaning": "Die Liebe der Eltern fließt zu den Kindern, während das Herz der Kinder sich der weiten Welt zuwendet.",
+          "explanation": "Die Eltern gehen immer wieder auf das Kind zu, doch das Kind zieht schon in die Berge, in ein eigenes Leben. Man sagt es eher mit einem Lächeln als klagend: Liebe fließt bergab, von den Eltern zu den Kindern, mehr als zurück.",
+          "example": "Oma kocht jede Woche und schickt ihrem Enkel an der Uni Essen, und er schafft es kaum, einmal pro Woche anzurufen. Sie lacht und sagt: „Der Vater geht zum Kind, das Kind geht zum Berg.“"
+        },
+        "es": {
+          "translation": "El padre va hacia el hijo; el hijo va hacia la montaña.",
+          "meaning": "El amor de los padres baja hacia los hijos, mientras el corazón de los hijos se vuelve hacia el ancho mundo.",
+          "explanation": "El padre sigue caminando hacia el hijo, pero el hijo ya va camino de las montañas, hacia una vida propia. El refrán se dice más con una sonrisa que como queja: el amor corre cuesta abajo, de padres a hijos, más que de vuelta.",
+          "example": "La abuela cocina cada semana y le manda comida a su nieto a la universidad, y él a duras penas llama una vez por semana. Ella se ríe y dice: «El padre va hacia el hijo; el hijo va hacia la montaña»."
+        },
+        "fr": {
+          "translation": "Le père va vers l’enfant, l’enfant va vers la montagne.",
+          "meaning": "L’amour des parents descend vers les enfants, tandis que le cœur des enfants se tourne vers le vaste monde.",
+          "explanation": "Le parent marche toujours vers l’enfant, mais l’enfant part déjà vers les montagnes, vers une vie à lui. Le proverbe se dit plutôt avec un sourire qu’en reproche : l’amour coule vers le bas, des parents aux enfants, plus qu’il ne remonte.",
+          "example": "Chaque semaine, la grand-mère cuisine et envoie à manger à son petit-fils à l’université, et il appelle à peine une fois par semaine. Elle rit et dit : « Le père va vers l’enfant, l’enfant va vers la montagne. »"
+        },
+        "tr": {
+          "translation": "Baba çocuğa gider, çocuk dağa gider.",
+          "meaning": "Anne babanın sevgisi çocuğa akar, çocuğun yüreği ise geniş dünyaya döner.",
+          "explanation": "Ebeveyn hep çocuğuna doğru yürür, ama çocuk çoktan dağlara, kendi hayatına doğru yola çıkmıştır. Atasözü sitemden çok bir gülümsemeyle söylenir: sevgi yokuş aşağı akar, anne babadan çocuğa, geri döndüğünden daha çok.",
+          "example": "Nine her hafta yemek yapıp üniversitedeki torununa gönderiyor, o ise haftada bir zar zor arıyor. Nine gülüp diyor ki: “Baba çocuğa gider, çocuk dağa gider.”"
+        },
+        "ar": {
+          "translation": "الأبُ يمضي نحو ولده، والولدُ يمضي نحو الجبل.",
+          "meaning": "محبة الوالدين تنساب نحو الأبناء، بينما تتجه قلوب الأبناء إلى العالم الواسع.",
+          "explanation": "يظل الأب يسير نحو ابنه، أما الابن فقد مضى نحو الجبال، نحو حياته الخاصة. يُقال المثل بابتسامة لا بعتاب: المحبة تنحدر كالماء من الآباء إلى الأبناء أكثر مما تعود إليهم.",
+          "example": "تطبخ الجدة كل أسبوع وترسل الطعام إلى حفيدها في الجامعة، وهو بالكاد يتصل مرة في الأسبوع. تضحك وتقول: «الأب يمضي نحو ولده، والولد يمضي نحو الجبل.»"
+        }
+      },
+      "sources": [
+        {
+          "title": "Pêvek:Gotinên Pêşiyan (proverb appendix)",
+          "author": "Wîkîferheng (Kurdish Wiktionary)",
+          "url": "https://ku.wiktionary.org/wiki/P%C3%AAvek:Gotin%C3%AAn_P%C3%AA%C5%9Fiyan",
+          "note": "Listed under B: “Bav ber bi zarok diçe, zarok ber bi çiya diçe.” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "One source, and the collection gives no explanation: the reading “love flows down, not back” is mine. Reviewer: confirm the meaning grandmothers give it."
+    },
+    {
+      "slug": "kmr-bave-mirov-pista",
+      "dialect": "kmr",
+      "text": "Bavê mirov pişta mirov e.",
+      "themes": [
+        "family"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [],
+      "exampleKu": "Dema ku Hejar dikana xwe ya yekem vekir, bavê wî her sibe pê re diçû dikanê û pere jî deyn dabûyê. Hejar ji hevalên xwe re got: “Bavê mirov pişta mirov e.”",
+      "translations": {
+        "ckb": {
+          "translation": "باوکی مرۆڤ پشتی مرۆڤە.",
+          "meaning": "باوک ئەو پاڵپشتەیە کە پشتی پێ دەبەستیت و ئەو پارێزەرەیە کە لە پشتتەوە دەوەستێت.",
+          "explanation": "لە کوردیدا «پشت» ئەو کەسەیە کە لە پشتتەوە دەوەستێت: پاڵپشتت دەکات و خەڵک حسابی بۆ دەکەن. پەندەکە دەڵێت ئەو کەسە پێش هەموو کەسێک باوکتە، و بە سوپاسەوە دەگوترێت، یان بە خەمەوە کاتێک باوک نەماوە.",
+          "example": "کاتێک هەژار یەکەم دوکانی دەکاتەوە، باوکی هەموو بەیانییەک لەگەڵی دەچێتە دوکان و قەرزیشی داوەتێ. هەژار بە هاوڕێکانی دەڵێت: «باوکی مرۆڤ پشتی مرۆڤە.»"
+        },
+        "en": {
+          "translation": "A person’s father is their back.",
+          "literal": "One’s father is one’s back.",
+          "meaning": "A father is the support you lean on and the protection behind you.",
+          "explanation": "In Kurdish, your pişt, your back, is whoever stands behind you: the one who supports you and whom others must reckon with. The proverb says that this person is first of all your father, and it is said with gratitude, or with grief when a father is gone.",
+          "example": "When Hejar opens his first shop, his father goes with him every morning and has lent him money too. Hejar tells his friends: “A person’s father is their back.”"
+        },
+        "nl": {
+          "translation": "Je vader is je rug.",
+          "meaning": "Een vader is de steun waarop je leunt en de bescherming achter je.",
+          "explanation": "In het Koerdisch is je pişt, je rug, degene die achter je staat: wie je steunt en met wie anderen rekening moeten houden. Het spreekwoord zegt dat dat in de eerste plaats je vader is; men zegt het dankbaar, of met verdriet als een vader er niet meer is.",
+          "example": "Als Hejar zijn eerste winkel opent, gaat zijn vader elke ochtend mee en heeft hij hem ook geld geleend. Hejar zegt tegen zijn vrienden: “Je vader is je rug.”"
+        },
+        "de": {
+          "translation": "Der Vater ist dein Rücken.",
+          "meaning": "Der Vater ist die Stütze, an die man sich lehnt, und der Schutz im Rücken.",
+          "explanation": "Im Kurdischen ist dein pişt, dein Rücken, wer hinter dir steht: wer dich stützt und mit wem andere rechnen müssen. Das Sprichwort sagt, dass das zuerst der Vater ist; man sagt es dankbar, oder mit Trauer, wenn der Vater nicht mehr da ist.",
+          "example": "Als Hejar seinen ersten Laden eröffnet, geht sein Vater jeden Morgen mit und hat ihm auch Geld geliehen. Hejar sagt zu seinen Freunden: „Der Vater ist dein Rücken.“"
+        },
+        "es": {
+          "translation": "El padre es la espalda de uno.",
+          "meaning": "El padre es el apoyo en el que uno se recuesta y la protección que lleva detrás.",
+          "explanation": "En kurdo, tu pişt, tu espalda, es quien está detrás de ti: quien te apoya y con quien los demás tienen que contar. El refrán dice que ese es ante todo tu padre; se dice con gratitud, o con pena cuando el padre ya no está.",
+          "example": "Cuando Hejar abre su primera tienda, su padre lo acompaña cada mañana y además le ha prestado dinero. Hejar les dice a sus amigos: «El padre es la espalda de uno»."
+        },
+        "fr": {
+          "translation": "Le père, c’est notre dos.",
+          "meaning": "Le père est l’appui sur lequel on s’adosse et la protection qu’on a derrière soi.",
+          "explanation": "En kurde, ton pişt, ton dos, c’est celui qui se tient derrière toi : celui qui te soutient et avec qui les autres doivent compter. Le proverbe dit que c’est d’abord ton père ; on le dit avec gratitude, ou avec tristesse quand le père n’est plus là.",
+          "example": "Quand Hejar ouvre sa première boutique, son père l’accompagne chaque matin et lui a aussi prêté de l’argent. Hejar dit à ses amis : « Le père, c’est notre dos. »"
+        },
+        "tr": {
+          "translation": "İnsanın babası sırtıdır.",
+          "meaning": "Baba, insanın yaslandığı destek ve arkasındaki korumadır.",
+          "explanation": "Kürtçede insanın pişt’i, yani sırtı, arkasında duran kişidir: ona destek olan ve başkalarının hesaba kattığı kişi. Atasözü bu kişinin her şeyden önce baba olduğunu söyler; minnetle, ya da baba artık yoksa hüzünle söylenir.",
+          "example": "Hejar ilk dükkânını açınca babası her sabah onunla dükkâna gidiyor, üstelik ona borç da vermiş. Hejar arkadaşlarına diyor ki: “İnsanın babası sırtıdır.”"
+        },
+        "ar": {
+          "translation": "أبو المرءِ ظهرُه.",
+          "meaning": "الأب هو السند الذي يُتّكأ عليه والحماية التي تقف خلفك.",
+          "explanation": "في الكردية «ظهرك» هو من يقف خلفك: من يسندك ومن يحسب الناس حسابه. والمثل يقول إن هذا هو أبوك قبل أي أحد، ويُقال امتنانًا، أو حزنًا حين يرحل الأب.",
+          "example": "حين يفتتح هجار أول دكان له يرافقه أبوه كل صباح، وقد أقرضه مالًا أيضًا. يقول هجار لأصدقائه: «أبو المرء ظهره.»"
+        }
+      },
+      "sources": [
+        {
+          "title": "Pêvek:Gotinên Pêşiyan (proverb appendix)",
+          "author": "Wîkîferheng (Kurdish Wiktionary)",
+          "url": "https://ku.wiktionary.org/wiki/P%C3%AAvek:Gotin%C3%AAn_P%C3%AA%C5%9Fiyan",
+          "note": "A search excerpt over Kurmancî proverb lists gave “Bavê mirov pişta mirov e” next to “Bav ber bi zarok diçe…”; the exact page was not visible, most likely this appendix (section B) (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Weakest attribution in the set: the line came from a search summary that did not name its page. Confirm the saying and its source before publishing, or drop it."
+    },
+    {
+      "slug": "kmr-keda-helal",
+      "dialect": "kmr",
+      "text": "Keda helal dibe mû naqete, keda heram bibe werîs jî diqete.",
+      "themes": [
+        "hard-work",
+        "trust"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [],
+      "exampleKu": "Cîranê wan bi xapandinê zû dewlemend bû, lê di nav du salan de her tiştê xwe winda kir. Kalo got: “Keda helal dibe mû naqete, keda heram bibe werîs jî diqete.”",
+      "translations": {
+        "ckb": {
+          "translation": "ڕەنجی حەڵاڵ ببێتە موو ناپچڕێت، ڕەنجی حەرام ببێتە گوریسیش دەپچڕێت.",
+          "meaning": "ئەوەی بە دروستی پەیدا دەکرێت دەمێنێت هەرچەندە کەم بێت؛ ئەوەی بە فێڵ پەیدا دەکرێت هەڵدەوەشێتەوە هەرچەندە زۆر بێت.",
+          "explanation": "«ڕەنج» ئەو ماندووبوونەیە کە دەیدەیت و ئەو بژێوییەیە کە پێی دەگەیت. بژێوییەکی حەڵاڵ لەوانەیە وەک موو باریک بێت و هەر بمێنێت؛ بژێوییەکی حەرام لەوانەیە وەک گوریس بەهێز دیار بێت و هەر بپچڕێت. کاتێک کەسێک بە فێڵ دەوڵەمەند دەبێت دەیڵێن، یان بۆ دڵدانەوەی کەسێک کە کەم بەڵام بە دروستی پەیدا دەکات.",
+          "example": "دراوسێکەیان بە فێڵ زوو دەوڵەمەند بوو، بەڵام لە ماوەی دوو ساڵدا هەموو شتێکی لەدەست دا. کاڵۆ دەڵێت: «ڕەنجی حەڵاڵ ببێتە موو ناپچڕێت، ڕەنجی حەرام ببێتە گوریسیش دەپچڕێت.»"
+        },
+        "en": {
+          "translation": "Honest earnings, thin as a hair, do not snap; dishonest earnings, thick as a rope, still break.",
+          "literal": "Lawful labour, (even) if it becomes a hair, does not snap; unlawful labour, even if it becomes a rope, snaps.",
+          "meaning": "What is earned honestly lasts, however little; what is gained by cheating falls apart, however much.",
+          "explanation": "Ked is the labour you put in and the living it brings. A living earned rightly may be thin as a hair and still hold; one gained wrongly may look strong as a rope and still give way. Kurds say it when someone gets rich by cheating, or to comfort someone who earns little but honestly.",
+          "example": "The neighbour got rich quickly by cheating, but lost everything within two years. Old Kalo says: “Honest earnings, thin as a hair, do not snap; dishonest earnings, thick as a rope, still break.”",
+          "equivalent": "Ill-gotten gains never prosper."
+        },
+        "nl": {
+          "translation": "Eerlijk verdiend loon breekt niet, al is het dun als een haar; oneerlijk verdiend breekt, al is het dik als een touw.",
+          "meaning": "Wat eerlijk verdiend is, blijft, hoe weinig ook; wat met bedrog is verkregen, valt uiteen, hoe veel ook.",
+          "explanation": "Ked is de arbeid die je erin steekt en het bestaan dat die oplevert. Een eerlijk bestaan kan dun zijn als een haar en toch houden; een oneerlijk bestaan kan sterk lijken als een touw en toch knappen. Koerden zeggen het als iemand door bedrog rijk wordt, of om iemand te troosten die weinig maar eerlijk verdient.",
+          "example": "De buurman werd snel rijk door bedrog, maar verloor binnen twee jaar alles. De oude Kalo zegt: “Eerlijk verdiend loon breekt niet, al is het dun als een haar; oneerlijk verdiend breekt, al is het dik als een touw.”",
+          "equivalent": "Gestolen goed gedijt niet."
+        },
+        "de": {
+          "translation": "Redlich Verdientes reißt nicht, und wär’s ein Haar; unredlich Verdientes reißt, und wär’s ein Seil.",
+          "meaning": "Was ehrlich verdient ist, hält, so wenig es auch ist; was durch Betrug gewonnen ist, zerfällt, so viel es auch ist.",
+          "explanation": "Ked ist die Arbeit, die man hineinsteckt, und das Auskommen, das sie bringt. Ein redliches Auskommen kann dünn sein wie ein Haar und doch halten; ein unredliches kann stark aussehen wie ein Seil und doch reißen. Man sagt es, wenn jemand durch Betrug reich wird, oder zum Trost für jemanden, der wenig, aber ehrlich verdient.",
+          "example": "Der Nachbar wurde durch Betrug schnell reich, verlor aber binnen zwei Jahren alles. Der alte Kalo sagt: „Redlich Verdientes reißt nicht, und wär’s ein Haar; unredlich Verdientes reißt, und wär’s ein Seil.“",
+          "equivalent": "Unrecht Gut gedeiht nicht."
+        },
+        "es": {
+          "translation": "Lo ganado con honradez no se rompe aunque sea un pelo; lo mal ganado se rompe aunque sea una soga.",
+          "meaning": "Lo que se gana honradamente dura, aunque sea poco; lo que se consigue con trampas se deshace, aunque sea mucho.",
+          "explanation": "Ked es el trabajo que uno pone y el sustento que da. Un sustento honrado puede ser fino como un pelo y aguantar; uno deshonesto puede parecer fuerte como una soga y romperse. Se dice cuando alguien se enriquece con trampas, o para consolar a quien gana poco pero honradamente.",
+          "example": "El vecino se hizo rico deprisa a base de engaños, pero lo perdió todo en dos años. El viejo Kalo dice: «Lo ganado con honradez no se rompe aunque sea un pelo; lo mal ganado se rompe aunque sea una soga».",
+          "equivalent": "Lo mal ganado se lo lleva el diablo."
+        },
+        "fr": {
+          "translation": "Le gain honnête, fût-il un cheveu, ne casse pas ; le gain malhonnête, fût-il une corde, se rompt.",
+          "meaning": "Ce qui est gagné honnêtement dure, si peu que ce soit ; ce qui est acquis par la tricherie se défait, si gros que ce soit.",
+          "explanation": "Ked, c’est le travail qu’on y met et la subsistance qu’il rapporte. Un gagne-pain honnête peut être mince comme un cheveu et tenir ; un gain malhonnête peut paraître solide comme une corde et céder. On le dit quand quelqu’un s’enrichit en trichant, ou pour consoler celui qui gagne peu mais honnêtement.",
+          "example": "Le voisin s’est vite enrichi en trichant, mais il a tout perdu en deux ans. Le vieux Kalo dit : « Le gain honnête, fût-il un cheveu, ne casse pas ; le gain malhonnête, fût-il une corde, se rompt. »",
+          "equivalent": "Bien mal acquis ne profite jamais."
+        },
+        "tr": {
+          "translation": "Helal emek kıl olsa kopmaz, haram emek urgan olsa da kopar.",
+          "meaning": "Dürüstçe kazanılan az da olsa kalıcıdır; hileyle elde edilen çok da olsa dağılır.",
+          "explanation": "Ked, insanın harcadığı emek ve bu emekten gelen rızıktır. Helal rızık kıl kadar ince olsa da dayanır; haram kazanç urgan kadar sağlam görünse de kopar. Birisi hileyle zengin olduğunda ya da az ama dürüst kazanan birini teselli etmek için söylenir.",
+          "example": "Komşu hileyle çabucak zengin oldu ama iki yıl içinde her şeyini kaybetti. Yaşlı Kalo diyor ki: “Helal emek kıl olsa kopmaz, haram emek urgan olsa da kopar.”"
+        },
+        "ar": {
+          "translation": "الكسبُ الحلالُ لو صار شعرةً لا ينقطع، والكسبُ الحرامُ لو صار حبلًا ينقطع.",
+          "meaning": "ما يُكسب بالحلال يدوم ولو كان قليلًا، وما يُنال بالغشّ يتبدّد ولو كان كثيرًا.",
+          "explanation": "«الكد» هو الجهد الذي تبذله والرزق الذي يأتي به. قد يكون الرزق الحلال رقيقًا كالشعرة ويصمد، وقد يبدو الكسب الحرام متينًا كالحبل وينقطع. يقوله الكرد حين يغتني أحد بالغش، أو مواساةً لمن يكسب قليلًا لكن بالحلال.",
+          "example": "اغتنى الجار بسرعة بالغش، لكنه خسر كل شيء خلال سنتين. يقول العجوز كالو: «الكسب الحلال لو صار شعرة لا ينقطع، والكسب الحرام لو صار حبلًا ينقطع.»"
+        }
+      },
+      "sources": [
+        {
+          "title": "GOTINÊN PÊŞIYAN – Kürtçe Atasözleri (PDF)",
+          "author": "kupdf.net (uploaded collection)",
+          "url": "https://kupdf.net/download/gotinen-peiyan-krte-ataszleri_5af4d868e2b6f5fa62f796d0_pdf",
+          "note": "A search excerpt over Kurdish–Turkish proverb lists gave “Keda helal dibe mû naqete, keda haram bibe werîs jî diqete.” with a Turkish gloss; the excerpt did not say which of these lists it came from (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên Pêşiyan",
+          "author": "Materyalên Kurdî (blog)",
+          "url": "https://materyalenkurdi.wordpress.com/2018/11/27/gotinen-pesiyan/",
+          "note": "One of the lists in the same search (see above) (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên Pêşiyan",
+          "author": "ÇandName",
+          "url": "https://candname.com/gotinen-pesiyan-4/",
+          "note": "One of the lists in the same search (see above) (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Attribution is to a group of community lists, not one named page; confirm. Spelling normalised from haram to heram. The first clause “dibe mû naqete” is elliptical as recorded; a reviewer may prefer “Keda helal bibe mû jî naqete …”."
+    },
+    {
+      "slug": "kmr-deste-xebiti",
+      "dialect": "kmr",
+      "text": "Destê xebitî li ser zikê têr e.",
+      "themes": [
+        "hard-work"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [],
+      "exampleKu": "Hemû havînê Berfînê li bostanê xebitî, dema ku hevalên wê li ber deryayê bûn. Zivistanê, dema ku wê bi pereyên xwe kompîturek kirî, diya wê got: “Destê xebitî li ser zikê têr e.”",
+      "translations": {
+        "ckb": {
+          "translation": "دەستی ماندوو لەسەر سکی تێرە.",
+          "meaning": "هەر کەسێک بە دەستی خۆی کار بکات برسی نامێنێت.",
+          "explanation": "وێنەکە سادەیە: دەستێک کە هەموو ڕۆژ کاری کردووە لەسەر سکێکی تێر دەحەسێتەوە. بۆ ستایشی کارکردن دەگوترێت، یان بۆ هاندانی کەسێکی تەمبەڵ بەرەو کار.",
+          "example": "هەموو هاوین بەرفین لە باخچەی سەوزەدا کاری کرد، کاتێک هاوڕێکانی لە کەناری دەریا بوون. لە زستاندا، کاتێک بە پارەی خۆی کۆمپیوتەرێک دەکڕێت، دایکی دەڵێت: «دەستی ماندوو لەسەر سکی تێرە.»"
+        },
+        "en": {
+          "translation": "The hand that works rests on a full belly.",
+          "literal": "The hand that has worked is on a full belly.",
+          "meaning": "Whoever works with their hands will not go hungry.",
+          "explanation": "The image is simple: a hand that has worked all day comes to rest on a well-fed stomach. Kurds say it to praise hard work, or to nudge someone idle toward a job.",
+          "example": "All summer Berfîn worked in the vegetable garden while her friends were at the seaside. In winter, when she buys a computer with her own money, her mother says: “The hand that works rests on a full belly.”"
+        },
+        "nl": {
+          "translation": "De hand die werkt, rust op een volle buik.",
+          "meaning": "Wie met zijn handen werkt, lijdt geen honger.",
+          "explanation": "Het beeld is eenvoudig: een hand die de hele dag gewerkt heeft, komt tot rust op een goed gevulde buik. Koerden zeggen het om hard werken te prijzen, of om iemand die lui is een zetje te geven.",
+          "example": "De hele zomer werkte Berfîn in de moestuin terwijl haar vriendinnen aan zee waren. Als ze in de winter van haar eigen geld een computer koopt, zegt haar moeder: “De hand die werkt, rust op een volle buik.”"
+        },
+        "de": {
+          "translation": "Die Hand, die arbeitet, ruht auf einem vollen Bauch.",
+          "meaning": "Wer mit seinen Händen arbeitet, muss nicht hungern.",
+          "explanation": "Das Bild ist einfach: Eine Hand, die den ganzen Tag gearbeitet hat, ruht auf einem satten Bauch. Man sagt es, um Fleiß zu loben oder um jemanden, der faulenzt, zur Arbeit anzustoßen.",
+          "example": "Den ganzen Sommer hat Berfîn im Gemüsegarten gearbeitet, während ihre Freundinnen am Meer waren. Als sie im Winter von ihrem eigenen Geld einen Computer kauft, sagt ihre Mutter: „Die Hand, die arbeitet, ruht auf einem vollen Bauch.“",
+          "equivalent": "Wer nicht arbeitet, soll auch nicht essen."
+        },
+        "es": {
+          "translation": "La mano que trabaja descansa sobre la barriga llena.",
+          "meaning": "Quien trabaja con sus manos no pasa hambre.",
+          "explanation": "La imagen es sencilla: una mano que ha trabajado todo el día acaba descansando sobre un estómago bien lleno. Se dice para alabar el trabajo duro o para animar a un perezoso a ponerse manos a la obra.",
+          "example": "Todo el verano Berfîn trabajó en la huerta mientras sus amigas estaban en la playa. En invierno, cuando se compra un ordenador con su propio dinero, su madre le dice: «La mano que trabaja descansa sobre la barriga llena»."
+        },
+        "fr": {
+          "translation": "La main qui travaille repose sur un ventre plein.",
+          "meaning": "Qui travaille de ses mains ne connaît pas la faim.",
+          "explanation": "L’image est simple : une main qui a travaillé toute la journée se pose sur un ventre bien rempli. On le dit pour louer le travail, ou pour pousser un paresseux à s’y mettre.",
+          "example": "Tout l’été, Berfîn a travaillé au potager pendant que ses amies étaient au bord de la mer. L’hiver venu, quand elle s’achète un ordinateur avec son propre argent, sa mère lui dit : « La main qui travaille repose sur un ventre plein. »"
+        },
+        "tr": {
+          "translation": "Çalışan el tok karnın üstündedir.",
+          "meaning": "Elleriyle çalışan aç kalmaz.",
+          "explanation": "İmge yalındır: bütün gün çalışmış bir el, iyice doymuş bir karnın üstünde dinlenir. Çalışkanlığı övmek ya da tembel birini işe yöneltmek için söylenir.",
+          "example": "Bütün yaz Berfîn, arkadaşları denizdeyken bostanda çalıştı. Kışın kendi parasıyla bir bilgisayar alınca annesi diyor ki: “Çalışan el tok karnın üstündedir.”"
+        },
+        "ar": {
+          "translation": "اليدُ العاملةُ على بطنٍ شبعان.",
+          "meaning": "من يعمل بيديه لا يجوع.",
+          "explanation": "الصورة بسيطة: يدٌ عملت طوال النهار تستريح على بطن ممتلئ. يُقال في مدح الكدّ، أو لحثّ الكسول على العمل.",
+          "example": "عملت برفين طوال الصيف في بستان الخضار بينما كانت صديقاتها على شاطئ البحر. وفي الشتاء، حين تشتري حاسوبًا بمالها الخاص، تقول لها أمها: «اليد العاملة على بطن شبعان.»",
+          "equivalent": "مَن زَرَعَ حَصَد."
+        }
+      },
+      "sources": [
+        {
+          "title": "GOTINÊN PÊŞIYAN – Kürtçe Atasözleri (PDF)",
+          "author": "kupdf.net (uploaded collection)",
+          "url": "https://kupdf.net/download/gotinen-peiyan-krte-ataszleri_5af4d868e2b6f5fa62f796d0_pdf",
+          "note": "Same search as kmr-keda-helal: gave “Destê xebıti lı ser zıkê têre.” with a Turkish gloss (a working hand rests on a full stomach), and said a Kurdish–Turkish collection lists the same line; the exact page was not named (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên Pêşiyan",
+          "author": "Materyalên Kurdî (blog)",
+          "url": "https://materyalenkurdi.wordpress.com/2018/11/27/gotinen-pesiyan/",
+          "note": "One of the lists in the same search (see above) (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Weak attribution, like kmr-keda-helal; confirm. Spelling normalised from Turkish-keyboard forms (xebıti, lı, zıkê) to xebitî, li, zikê."
+    },
+    {
+      "slug": "kmr-xudane-sebre",
+      "dialect": "kmr",
+      "text": "Xudanê sebrê bîye mîrê Misirê.",
+      "themes": [
+        "patience"
+      ],
+      "tradition": "regional",
+      "region": "Kurds of Central Anatolia",
+      "variants": [
+        {
+          "text": "Xwedanê sebrê bûye mîrê Misrê.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "The same words in standard Kurmancî spelling, for learners; not found in this form in the sources."
+        }
+      ],
+      "exampleKu": "Mîrza sê salan li benda destûra xebatê ma û her car dosya wî vegeriya. Roja ku nameya erênî hat, apê wî yê ji Konyayê got: “Min ji te re negotibû? Xudanê sebrê bîye mîrê Misirê.”",
+      "translations": {
+        "ckb": {
+          "translation": "خاوەن سەبر بوو بە میری میسر.",
+          "meaning": "سەبر، هەرچەندە درێژ بێت، لە کۆتاییدا پاداشت دەدرێتەوە، جاری وا هەیە لە هەموو هیوایەک زیاتر.",
+          "explanation": "پەندەکە بە ئەگەری زۆر ئاماژەیە بۆ چیرۆکی یووسف: فڕێدرایە ناو بیر، فرۆشرا و زیندانی کرا، سەبری گرت و بوو بە گەورەی میسر. کوردانی ئەنادۆڵی ناوەڕاست بە کەسێکی دەڵێن کە لە چاوەڕوانیی درێژ ماندوو بووە، تا دڵنیای بکەنەوە کە خۆڕاگری بەری دەبێت.",
+          "example": "میرزا سێ ساڵ چاوەڕێی مۆڵەتی کار بوو و هەموو جارێک دۆسیەکەی گەڕێنرایەوە. ئەو ڕۆژەی نامەی ڕەزامەندی دێت، مامی کە خەڵکی قونیەیە دەڵێت: «پێم نەگوتی؟ خاوەن سەبر بوو بە میری میسر.»",
+          "context": "فەرهەنگی ویکیی کوردی ئەم پەندە دەداتە پاڵ کوردانی ئەنادۆڵی ناوەڕاست (دەوروبەری قونیە و ئەنقەرە)؛ «بییە» و «میسرێ» شێوەی زاراوەی ئەوانن."
+        },
+        "en": {
+          "translation": "The one who had patience became the ruler of Egypt.",
+          "literal": "The master of patience became the emir of Egypt.",
+          "meaning": "Patience, however long, is rewarded in the end, sometimes beyond all hope.",
+          "explanation": "The line most likely points to the story of Joseph, Yûsif in Kurdish: thrown into a well, sold and imprisoned, he waited and became lord of Egypt. Central Anatolian Kurds say it to someone worn out by a long wait, promising that endurance pays off.",
+          "example": "Mîrza waited three years for his work permit, and every time his file came back. On the day the letter of approval arrives, his uncle from Konya says: “Didn’t I tell you? The one who had patience became the ruler of Egypt.”",
+          "equivalent": "Good things come to those who wait.",
+          "context": "The Kurdish Wiktionary attributes it to the Kurds of Central Anatolia (around Konya, Ankara and Aksaray), whose ancestors settled there centuries ago; bîye and Misirê are their dialect forms."
+        },
+        "nl": {
+          "translation": "Wie geduld had, werd vorst van Egypte.",
+          "meaning": "Geduld, hoe lang ook, wordt uiteindelijk beloond, soms boven alle verwachting.",
+          "explanation": "De zin verwijst waarschijnlijk naar het verhaal van Jozef, Yûsif in het Koerdisch: in een put gegooid, verkocht en gevangengezet, wachtte hij en werd heer van Egypte. Koerden uit Centraal-Anatolië zeggen het tegen iemand die moe is van lang wachten: volharding loont.",
+          "example": "Mîrza wachtte drie jaar op zijn werkvergunning en elke keer kwam zijn dossier terug. Op de dag dat de goedkeuring komt, zegt zijn oom uit Konya: “Heb ik het je niet gezegd? Wie geduld had, werd vorst van Egypte.”",
+          "equivalent": "Geduld is een schone zaak.",
+          "context": "Het Koerdische Wiktionary schrijft het toe aan de Koerden van Centraal-Anatolië (rond Konya, Ankara en Aksaray); bîye en Misirê zijn hun dialectvormen."
+        },
+        "de": {
+          "translation": "Wer Geduld hatte, wurde Fürst von Ägypten.",
+          "meaning": "Geduld, so lang sie dauert, wird am Ende belohnt, manchmal über alle Hoffnung hinaus.",
+          "explanation": "Der Satz spielt wohl auf die Geschichte Josefs an, kurdisch Yûsif: in einen Brunnen geworfen, verkauft und eingekerkert, wartete er und wurde Herr über Ägypten. Kurden aus Zentralanatolien sagen es jemandem, der vom langen Warten zermürbt ist: Ausdauer zahlt sich aus.",
+          "example": "Mîrza hat drei Jahre auf seine Arbeitserlaubnis gewartet, und jedes Mal kam seine Akte zurück. Am Tag, als die Zusage kommt, sagt sein Onkel aus Konya: „Hab ich’s dir nicht gesagt? Wer Geduld hatte, wurde Fürst von Ägypten.“",
+          "equivalent": "Geduld bringt Rosen.",
+          "context": "Das kurdische Wiktionary ordnet es den Kurden Zentralanatoliens zu (um Konya, Ankara und Aksaray); bîye und Misirê sind ihre Dialektformen."
+        },
+        "es": {
+          "translation": "Quien tuvo paciencia llegó a ser señor de Egipto.",
+          "meaning": "La paciencia, por larga que sea, acaba teniendo premio, a veces más allá de toda esperanza.",
+          "explanation": "La frase alude probablemente a la historia de José, Yûsif en kurdo: arrojado a un pozo, vendido y encarcelado, esperó y llegó a señor de Egipto. Los kurdos de Anatolia central se lo dicen a quien está agotado por una larga espera: la constancia tiene recompensa.",
+          "example": "Mîrza esperó tres años su permiso de trabajo y cada vez le devolvían el expediente. El día que llega la carta de aprobación, su tío de Konya le dice: «¿No te lo dije? Quien tuvo paciencia llegó a ser señor de Egipto».",
+          "equivalent": "Con paciencia se gana el cielo.",
+          "context": "El Wikcionario kurdo lo atribuye a los kurdos de Anatolia central (en torno a Konya, Ankara y Aksaray); bîye y Misirê son formas de su dialecto."
+        },
+        "fr": {
+          "translation": "Celui qui eut de la patience devint seigneur d’Égypte.",
+          "meaning": "La patience, si longue soit-elle, finit par être récompensée, parfois au-delà de tout espoir.",
+          "explanation": "La phrase renvoie sans doute à l’histoire de Joseph, Yûsif en kurde : jeté dans un puits, vendu, emprisonné, il patienta et devint maître de l’Égypte. Les Kurdes d’Anatolie centrale le disent à quelqu’un épuisé par une longue attente : la persévérance paie.",
+          "example": "Mîrza a attendu trois ans son permis de travail, et chaque fois son dossier lui revenait. Le jour où arrive la lettre d’accord, son oncle de Konya lui dit : « Je ne te l’avais pas dit ? Celui qui eut de la patience devint seigneur d’Égypte. »",
+          "equivalent": "Patience et longueur de temps font plus que force ni que rage.",
+          "context": "Le Wiktionnaire kurde l’attribue aux Kurdes d’Anatolie centrale (autour de Konya, Ankara et Aksaray) ; bîye et Misirê sont des formes de leur dialecte."
+        },
+        "tr": {
+          "translation": "Sabreden Mısır’a emir olmuş.",
+          "literal": "Sabrın sahibi Mısır’ın emiri olmuş.",
+          "meaning": "Sabır ne kadar uzun sürerse sürsün, sonunda karşılığını bulur, hatta umulanın ötesinde.",
+          "explanation": "Söz büyük olasılıkla Yusuf kıssasına gönderme yapar: kuyuya atılan, satılan, zindana düşen Yusuf sabretti ve Mısır’ın başına geçti. Orta Anadolu Kürtleri bunu uzun bir bekleyişten bıkmış birine, dayanmanın sonunda karşılık bulacağını anlatmak için söyler.",
+          "example": "Mîrza çalışma izni için üç yıl bekledi ve dosyası her seferinde geri döndü. Onay mektubunun geldiği gün Konyalı amcası diyor ki: “Ben sana demedim mi? Sabreden Mısır’a emir olmuş.”",
+          "equivalent": "Sabreden derviş muradına ermiş.",
+          "context": "Kürtçe Vikisözlük sözü Orta Anadolu Kürtlerine (Konya, Ankara, Aksaray çevresi) dayandırır; bîye ve Misirê onların ağız biçimleridir."
+        },
+        "ar": {
+          "translation": "صاحبُ الصبرِ صار أميرَ مصر.",
+          "meaning": "الصبر، مهما طال، يُكافأ في النهاية، وأحيانًا بما يفوق كل رجاء.",
+          "explanation": "تشير العبارة على الأرجح إلى قصة يوسف: أُلقي في البئر وبيع وسُجن، فصبر حتى صار عزيز مصر. يقوله كرد الأناضول الأوسط لمن أنهكه الانتظار الطويل، وعدًا بأن الصبر يؤتي ثمره.",
+          "example": "انتظر ميرزا ثلاث سنوات تصريح العمل، وكان ملفه يُعاد إليه في كل مرة. ويوم تصل رسالة الموافقة يقول له عمّه القادم من قونية: «ألم أقل لك؟ صاحب الصبر صار أمير مصر.»",
+          "equivalent": "الصبرُ مفتاحُ الفَرَج.",
+          "context": "ينسب الويكاموس الكردي المثل إلى كرد الأناضول الأوسط (حول قونية وأنقرة وأقسراي)، و«bîye» و«Misirê» من صيغ لهجتهم."
+        }
+      },
+      "sources": [
+        {
+          "title": "Pêvek:Gotinên Pêşiyan (proverb appendix)",
+          "author": "Wîkîferheng (Kurdish Wiktionary)",
+          "url": "https://ku.wiktionary.org/wiki/P%C3%AAvek:Gotin%C3%AAn_P%C3%AA%C5%9Fiyan",
+          "note": "Gives “Xudanê sebrê bîye mîrê misirê” and attributes it to the Kurds of Central Anatolia (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên Pêşiyan / Kürtçe Atasözleri",
+          "author": "Bernamegeh",
+          "url": "https://www.bernamegeh.org/gotinen-pesiyankurtce-atasozleri/",
+          "note": "Lists the same saying (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Regional. The link to the story of Joseph is my reading, not stated in the sources; confirm. The Central Anatolian towns named in “context” come from general knowledge of where these communities live, not from the source; check before publishing. The Turkish translation is adapted from the known Turkish idiom; a more literal one is in “literal”."
+    },
+    {
+      "slug": "kmr-ciya-rasti-ciya",
+      "dialect": "kmr",
+      "text": "Çiya rastî çiya nayê, meriv rastî merivan tê.",
+      "themes": [
+        "life-experience",
+        "friendship"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [
+        {
+          "text": "Çiya bi çiya nakevin, çav li çavan dikevin.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "Another form: mountains do not meet mountains, but eyes meet eyes; given in a Kurmancî–Turkish dictionary entry."
+        }
+      ],
+      "exampleKu": "Li balafirgeha Hewlêrê Sîpan rastî mamosteyê xwe yê dibistana seretayî hat, ku bîst sal bû ew nedîtibû. Mamoste ew hembêz kir û got: “Çiya rastî çiya nayê, meriv rastî merivan tê!”",
+      "translations": {
+        "ckb": {
+          "translation": "چیا تووشی چیا نابێت، بەڵام مرۆڤ تووشی مرۆڤ دەبێت.",
+          "meaning": "ڕێگاکان دیسان بەیەک دەگەنەوە: ئەوانەی لێک جیا دەبنەوە ڕۆژێک یەکتر دەبیننەوە، بۆیە بە باشی لێک جیا ببنەوە.",
+          "explanation": "چیاکان بۆ هەمیشە لە جێی خۆیان دەمێننەوە و هەرگیز بەیەک ناگەن، بەڵام مرۆڤ دەجووڵێت و زوو یان درەنگ دیسان یەکتر دەبینن. بە خۆشییەوە لە دیدارێکی چاوەڕواننەکراودا دەگوترێت، بۆ دڵدانەوە لە کاتی جیابوونەوەدا، و وەک ئاگادارییەکی بێدەنگ کە لەگەڵ خەڵک باش بە چونکە دیسان دەیانبینیتەوە.",
+          "example": "لە فڕۆکەخانەی هەولێر سیپان تووشی مامۆستای قوتابخانەی سەرەتایی دەبێت کە بیست ساڵ بوو نەیدیبوو. مامۆستاکە باوەشی پێدا دەکات و دەڵێت: «چیا تووشی چیا نابێت، بەڵام مرۆڤ تووشی مرۆڤ دەبێت!»"
+        },
+        "en": {
+          "translation": "Mountain never meets mountain, but people meet people.",
+          "meaning": "Paths cross again: people who part will meet one day, so part on good terms.",
+          "explanation": "Mountains stand fixed for ever and never come together, but people move, and sooner or later they meet again. It is said with joy at an unexpected reunion, as comfort at a parting, and as a quiet warning to treat people well because you will see them again.",
+          "example": "At Erbil airport Sîpan runs into his primary-school teacher, whom he hasn’t seen for twenty years. The teacher hugs him and says: “Mountain never meets mountain, but people meet people!”",
+          "equivalent": "Friends may meet, but mountains never greet."
+        },
+        "nl": {
+          "translation": "Een berg ontmoet nooit een berg, maar mensen ontmoeten mensen.",
+          "meaning": "Wegen kruisen elkaar opnieuw: wie uit elkaar gaat, ziet elkaar ooit terug, dus ga in goede verstandhouding uiteen.",
+          "explanation": "Bergen staan voor altijd op hun plek en komen nooit samen, maar mensen bewegen en vroeg of laat zien ze elkaar weer. Men zegt het blij bij een onverwacht weerzien, als troost bij een afscheid, en als stille waarschuwing om mensen goed te behandelen omdat je ze terugziet.",
+          "example": "Op de luchthaven van Erbil loopt Sîpan zijn juf van de basisschool tegen het lijf, die hij twintig jaar niet heeft gezien. Ze omhelst hem en zegt: “Een berg ontmoet nooit een berg, maar mensen ontmoeten mensen!”"
+        },
+        "de": {
+          "translation": "Berg trifft nie auf Berg, aber Mensch trifft auf Mensch.",
+          "meaning": "Die Wege kreuzen sich wieder: Wer sich trennt, sieht sich eines Tages wieder, also trenne dich im Guten.",
+          "explanation": "Berge stehen für immer an ihrem Ort und kommen nie zusammen, Menschen aber bewegen sich und treffen sich früher oder später wieder. Man sagt es voller Freude bei einem unerwarteten Wiedersehen, als Trost beim Abschied und als leise Mahnung, Menschen gut zu behandeln, weil man sie wiedersieht.",
+          "example": "Am Flughafen Erbil läuft Sîpan seinem Grundschullehrer über den Weg, den er zwanzig Jahre nicht gesehen hat. Der Lehrer umarmt ihn und sagt: „Berg trifft nie auf Berg, aber Mensch trifft auf Mensch!“",
+          "equivalent": "Berg und Tal kommen nicht zusammen, wohl aber die Menschen."
+        },
+        "es": {
+          "translation": "La montaña nunca se encuentra con la montaña, pero las personas sí se encuentran.",
+          "meaning": "Los caminos vuelven a cruzarse: quienes se separan se verán algún día, así que despídete en buenos términos.",
+          "explanation": "Las montañas se quedan para siempre en su sitio y nunca se juntan, pero las personas se mueven y tarde o temprano vuelven a verse. Se dice con alegría en un reencuentro inesperado, como consuelo en una despedida, y como aviso discreto de tratar bien a la gente porque la volverás a ver.",
+          "example": "En el aeropuerto de Erbil, Sîpan se topa con su maestro de primaria, al que no veía desde hacía veinte años. El maestro lo abraza y le dice: «¡La montaña nunca se encuentra con la montaña, pero las personas sí se encuentran!»."
+        },
+        "fr": {
+          "translation": "La montagne ne rencontre jamais la montagne, mais les gens se rencontrent.",
+          "meaning": "Les chemins se recroisent : ceux qui se quittent se reverront un jour, alors quittez-vous en bons termes.",
+          "explanation": "Les montagnes restent à jamais à leur place et ne se rejoignent pas, mais les gens bougent et finissent par se retrouver. On le dit avec joie lors de retrouvailles inattendues, pour consoler au moment d’une séparation, et comme discret avertissement de bien traiter les gens, puisqu’on les reverra.",
+          "example": "À l’aéroport d’Erbil, Sîpan tombe sur son instituteur de l’école primaire, qu’il n’avait pas vu depuis vingt ans. L’instituteur le serre dans ses bras : « La montagne ne rencontre jamais la montagne, mais les gens se rencontrent ! »",
+          "equivalent": "Il n’y a que les montagnes qui ne se rencontrent pas."
+        },
+        "tr": {
+          "translation": "Dağ dağa kavuşmaz, insan insana kavuşur.",
+          "meaning": "Yollar yeniden kesişir: ayrılanlar bir gün yine karşılaşır, o yüzden iyi ayrılmak gerekir.",
+          "explanation": "Dağlar sonsuza dek yerinde durur ve hiç buluşmaz, ama insanlar hareket eder ve er geç yine karşılaşır. Beklenmedik bir karşılaşmada sevinçle, bir ayrılıkta teselli olarak ve insanlara iyi davranmak gerektiğine dair sessiz bir uyarı olarak söylenir. Türkçede de aynı biçimiyle bilinir.",
+          "example": "Erbil havalimanında Sîpan, yirmi yıldır görmediği ilkokul öğretmeniyle karşılaşıyor. Öğretmen ona sarılıp diyor ki: “Dağ dağa kavuşmaz, insan insana kavuşur!”"
+        },
+        "ar": {
+          "translation": "الجبلُ لا يلتقي بالجبل، لكنّ الإنسانَ يلتقي بالإنسان.",
+          "meaning": "الدروب تتقاطع من جديد: من يفترقون يلتقون يومًا، فليكن الفراق بالحسنى.",
+          "explanation": "الجبال ثابتة في أماكنها إلى الأبد ولا تلتقي، أما الناس فيتنقّلون ويلتقون عاجلًا أو آجلًا. يُقال فرحًا بلقاء غير متوقَّع، وعزاءً عند الوداع، وتنبيهًا هادئًا إلى حسن معاملة الناس لأنك ستراهم ثانية.",
+          "example": "في مطار أربيل يصادف سيبان معلّمه في المدرسة الابتدائية الذي لم يره منذ عشرين عامًا. يعانقه المعلّم ويقول: «الجبل لا يلتقي بالجبل، لكنّ الإنسان يلتقي بالإنسان!»"
+        }
+      },
+      "sources": [
+        {
+          "title": "Kêşeya wergera biwêj û gotinên pêşiyan (article on translating Kurdish idioms and proverbs)",
+          "author": "DergiPark",
+          "url": "https://dergipark.org.tr/en/download/article-file/2237644",
+          "note": "A search excerpt on Kurdish–Turkish proverb equivalents gave “Çiya rastî çîya nayê, meriv rastî merivan tê” with the Turkish “Dağ dağa kavuşmaz, insan insana kavuşur”; the excerpt did not make clear whether it came from this article or the comparative study below (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Kürtçe ve Türkçedeki Atasözlerinin Karşılaştırmalı Biçimde İncelenmesi (article)",
+          "author": "ResearchGate",
+          "url": "https://www.researchgate.net/publication/343725510_KURTCE_VE_TURKCEDEKI_ATASOZLERININ_KARSILASTIRMALI_BICIMDE_INCELENMESI_Comparative_Study_of_Proverbs_in_Kurdish_and_Turkish_Format",
+          "note": "Comparative study of Kurdish and Turkish proverbs returned by the same search (see above) (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "çiya: Kurmanji–Turkish dictionary entry",
+          "author": "Glosbe",
+          "url": "https://tr.glosbe.com/ku/tr/%C3%A7iya",
+          "note": "Gives “çiya bi çiya nakevin, çav li çavan dikevin” with a Turkish gloss on people who are apart meeting again (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "6762 Gotinên Pêşiyan (Weşanên Rewşen, Stockholm 2001), scanned copy",
+          "author": "Amed Tîgrîs",
+          "note": "Entry 1037 is a proverb about mountains not meeting mountains (wording not visible in the excerpt) (seen through a search-engine excerpt; the page itself could not be opened from this session). Read online at www.yek-dem.com."
+        }
+      ],
+      "notes": "Attested, but both Kurmancî forms reached me second-hand; confirm the wording (rastî … hatin) and which form is commoner."
+    },
+    {
+      "slug": "kmr-mere-ce-roja-teng",
+      "dialect": "kmr",
+      "text": "Mêrê çê di roja teng de fêm dibe.",
+      "themes": [
+        "courage",
+        "trust"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [],
+      "exampleKu": "Dema ku bahoz li gund rabû, her kes reviya malan, lê Cemîl ma û pez yek bi yek xist axurê. Pîrejinekê got: “Mêrê çê di roja teng de fêm dibe.”",
+      "translations": {
+        "ckb": {
+          "translation": "پیاوی چاک لە ڕۆژی تەنگانەدا دەناسرێتەوە.",
+          "meaning": "نرخ و ئازایەتیی ڕاستەقینە لە کاتی تەنگانەدا دەردەکەوێت، نەک لە کاتی ئاسوودەییدا.",
+          "explanation": "کاتێک هیچ مەترسییەک نییە هەموو کەس دەتوانێت ئازا دیار بێت؛ ڕۆژی تەنگ، ڕۆژی مەترسی و پێویستی، دەری دەخات کێ دەچەسپێت. «مێر» بە مانای پیاو و بە پێی بەکارهێنانی کۆن کەسی ئازایە؛ ئەمڕۆ بۆ هەر کەسێک دەگوترێت کە سەری خۆی لەدەست نادات و کار دەکات کاتێک ئەوانی تر هەڵدێن.",
+          "example": "کاتێک زریان لە گوند هەڵدەکات، هەموو کەس ڕادەکەنە ماڵەوە، بەڵام جەمیل دەمێنێتەوە و مەڕەکان یەک یەک دەخاتە ناو تەویلەکە. پیرێژنێک دەڵێت: «پیاوی چاک لە ڕۆژی تەنگانەدا دەناسرێتەوە.»"
+        },
+        "en": {
+          "translation": "A good man is known on a hard day.",
+          "literal": "A good man is understood on the narrow day.",
+          "meaning": "Real worth and courage show in a crisis, not in easy times.",
+          "explanation": "Anyone can look brave when nothing is at stake; a roja teng, a narrow day of danger or need, shows who will stand firm. Mêr means a man and, by old usage, a brave person; today people say it of anyone who keeps their head and acts when others run.",
+          "example": "When the storm hits the village, everyone runs indoors, but Cemîl stays and drives the sheep into the fold one by one. An old woman says: “A good man is known on a hard day.”"
+        },
+        "nl": {
+          "translation": "Een goed mens leer je kennen op een zware dag.",
+          "literal": "Een goede man wordt begrepen op de nauwe dag.",
+          "meaning": "Echte waarde en moed blijken in een crisis, niet als het makkelijk gaat.",
+          "explanation": "Iedereen kan dapper lijken als er niets op het spel staat; een roja teng, een benauwde dag van gevaar of nood, laat zien wie standhoudt. Mêr betekent man en, naar oud gebruik, een moedig mens; vandaag zegt men het van iedereen die het hoofd koel houdt en handelt als anderen wegrennen.",
+          "example": "Als de storm over het dorp trekt, rent iedereen naar binnen, maar Cemîl blijft en drijft de schapen één voor één de kooi in. Een oude vrouw zegt: “Een goed mens leer je kennen op een zware dag.”"
+        },
+        "de": {
+          "translation": "Den wackeren Mann erkennt man am schweren Tag.",
+          "literal": "Der gute Mann wird am engen Tag erkannt.",
+          "meaning": "Wahrer Wert und Mut zeigen sich in der Not, nicht in leichten Zeiten.",
+          "explanation": "Mutig wirken kann jeder, wenn nichts auf dem Spiel steht; ein roja teng, ein enger Tag der Gefahr oder Not, zeigt, wer standhält. Mêr heißt Mann und nach altem Gebrauch ein tapferer Mensch; heute sagt man es über jeden, der den Kopf behält und handelt, wenn andere davonlaufen.",
+          "example": "Als der Sturm über das Dorf zieht, rennen alle ins Haus, aber Cemîl bleibt und treibt die Schafe einzeln in den Stall. Eine alte Frau sagt: „Den wackeren Mann erkennt man am schweren Tag.“"
+        },
+        "es": {
+          "translation": "Al hombre de bien se le conoce en el día difícil.",
+          "literal": "El hombre bueno se entiende en el día estrecho.",
+          "meaning": "El verdadero valor se muestra en la crisis, no en los tiempos fáciles.",
+          "explanation": "Cualquiera parece valiente cuando no hay nada en juego; un roja teng, un día estrecho de peligro o necesidad, muestra quién se mantiene firme. Mêr significa hombre y, según el uso antiguo, persona valiente; hoy se dice de cualquiera que no pierde la cabeza y actúa cuando los demás huyen.",
+          "example": "Cuando la tormenta azota el pueblo, todos corren a sus casas, pero Cemîl se queda y mete las ovejas en el redil una a una. Una anciana dice: «Al hombre de bien se le conoce en el día difícil»."
+        },
+        "fr": {
+          "translation": "C’est au jour difficile qu’on reconnaît l’homme de valeur.",
+          "literal": "L’homme bon se comprend au jour étroit.",
+          "meaning": "La vraie valeur et le courage se révèlent dans l’épreuve, pas dans les temps faciles.",
+          "explanation": "Tout le monde peut paraître brave quand rien n’est en jeu ; un roja teng, un jour étroit de danger ou de besoin, montre qui tient bon. Mêr veut dire homme et, selon l’usage ancien, personne courageuse ; aujourd’hui on le dit de quiconque garde la tête froide et agit quand les autres fuient.",
+          "example": "Quand la tempête s’abat sur le village, tout le monde court se mettre à l’abri, mais Cemîl reste et fait rentrer les moutons un à un dans la bergerie. Une vieille femme dit : « C’est au jour difficile qu’on reconnaît l’homme de valeur. »"
+        },
+        "tr": {
+          "translation": "İyi adam dar günde belli olur.",
+          "meaning": "Gerçek değer ve cesaret kolay zamanlarda değil, sıkıntı anında ortaya çıkar.",
+          "explanation": "Ortada risk yokken herkes yiğit görünebilir; roja teng, yani tehlike ya da sıkıntı günü, kimin dayanacağını gösterir. Mêr “erkek” ve eski kullanımda “yiğit” demektir; bugün başkaları kaçarken soğukkanlılığını koruyup harekete geçen herkes için söylenir.",
+          "example": "Fırtına köyü vurunca herkes evlere kaçıyor, ama Cemîl kalıp koyunları tek tek ağıla sokuyor. Yaşlı bir kadın diyor ki: “İyi adam dar günde belli olur.”"
+        },
+        "ar": {
+          "translation": "الرجلُ الطيّبُ يُعرَفُ في يومِ الضيق.",
+          "meaning": "تظهر القيمة الحقيقية والشجاعة في الشدّة لا في أوقات الرخاء.",
+          "explanation": "يستطيع أي أحد أن يبدو شجاعًا حين لا يكون هناك ما يُخسر؛ أما «اليوم الضيّق»، يوم الخطر أو الحاجة، فيكشف من يثبت. و«mêr» تعني الرجل، وفي الاستعمال القديم الشجاع، ويقال اليوم في كل من يحتفظ برباطة جأشه ويتصرّف حين يهرب الآخرون.",
+          "example": "حين تضرب العاصفة القرية يهرع الجميع إلى البيوت، لكن جميل يبقى ويُدخل الغنم إلى الحظيرة واحدة واحدة. تقول عجوز: «الرجل الطيّب يُعرف في يوم الضيق.»"
+        }
+      },
+      "sources": [
+        {
+          "title": "Gotinên pêşiyan F-M",
+          "author": "Wikiquote (Kurdish)",
+          "url": "https://ku.wikiquote.org/wiki/Gotin%C3%AAn_p%C3%AA%C5%9Fiyan_F-M",
+          "note": "The excerpt of this list showed “Mêrê çê di roja teng da fêm dibe” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Gotinên Pêşîyan (B)",
+          "author": "Siddik Bozarslan (Rûpela Nû)",
+          "url": "https://www.rupelanu.com/gotinen-pesiyan-b-1313-201158170149150150155-1829yy.htm",
+          "note": "A second search over Kurmancî proverb collections (this one among them) showed the same line, “Mêrê çê di roja teng da fêm dibe”; the excerpt did not name the page (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Spelling normalised (da → de). Gendered wording (mêr) kept as attested; the explanation says how it is used today."
+    },
+    {
+      "slug": "kmr-dinya-gulek-e",
+      "dialect": "kmr",
+      "text": "Dinya gulek e, bêhn bike û bide hevalê xwe.",
+      "themes": [
+        "life-experience",
+        "friendship"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [],
+      "exampleKu": "Rênas dixwest gîtara xwe ya kevin bifiroşe, lê dît ku kurê cîranan dixwaze fêrî lêxistinê bibe. Wî gîtar diyarî wî kir û got: “Dinya gulek e, bêhn bike û bide hevalê xwe.”",
+      "translations": {
+        "ckb": {
+          "translation": "دنیا گوڵێکە، بۆنی بکە و بیدە بە هاوڕێکەت.",
+          "meaning": "ژیان کورتە و بۆ بەشکردنە؛ چێژ لەوەی هەتە ببینە و با ئەوانی تریش چێژی لێ ببینن.",
+          "explanation": "گوڵ بۆ ماوەیەکی کورت جوانە و ئەگەر بیگوشیت سیس دەبێت؛ باشترین کار ئەوەیە بۆنی بکەیت و بیدەیتە دەستی کەسێکی تر. کاتی بەخشینی شتێک، بەشکردنی خۆشییەک، یان بیرخستنەوەی کەسێک کە بە شتەکانەوە نەنووسێت، دەگوترێت.",
+          "example": "ڕێناس دەیویست گیتارە کۆنەکەی بفرۆشێت، بەڵام بینی کوڕی دراوسێکەیان زۆر حەز دەکات فێری لێدان ببێت. گیتارەکەی پێ بەخشی و گوتی: «دنیا گوڵێکە، بۆنی بکە و بیدە بە هاوڕێکەت.»"
+        },
+        "en": {
+          "translation": "The world is a flower: smell it and pass it to your friend.",
+          "meaning": "Life is short and meant to be shared; enjoy what you have and let others enjoy it too.",
+          "explanation": "A flower is lovely for a moment and wilts if you clutch it; its best use is to breathe in its scent and hand it on. The proverb is said when giving something away, sharing good fortune, or reminding someone not to cling to things.",
+          "example": "Rênas meant to sell his old guitar, then saw that the neighbours’ son longed to learn to play. He gives it to him and says: “The world is a flower: smell it and pass it to your friend.”"
+        },
+        "nl": {
+          "translation": "De wereld is een bloem: ruik eraan en geef hem door aan je vriend.",
+          "meaning": "Het leven is kort en om te delen; geniet van wat je hebt en laat anderen er ook van genieten.",
+          "explanation": "Een bloem is even mooi en verwelkt als je hem vastklemt; je kunt hem het best even ruiken en doorgeven. Men zegt het bij het weggeven van iets, het delen van geluk, of om iemand eraan te herinneren zich niet aan dingen vast te klampen.",
+          "example": "Rênas wilde zijn oude gitaar verkopen, maar zag dat de zoon van de buren dolgraag wilde leren spelen. Hij geeft hem de gitaar en zegt: “De wereld is een bloem: ruik eraan en geef hem door aan je vriend.”"
+        },
+        "de": {
+          "translation": "Die Welt ist eine Blume: Riech an ihr und reich sie deinem Freund.",
+          "meaning": "Das Leben ist kurz und zum Teilen da; genieße, was du hast, und lass andere mitgenießen.",
+          "explanation": "Eine Blume ist einen Augenblick lang schön und welkt, wenn man sie festhält; am besten riecht man an ihr und gibt sie weiter. Man sagt es, wenn man etwas verschenkt, Glück teilt oder jemanden daran erinnert, nicht an Dingen zu kleben.",
+          "example": "Rênas wollte seine alte Gitarre verkaufen, sah dann aber, dass der Nachbarsjunge unbedingt spielen lernen wollte. Er schenkt sie ihm und sagt: „Die Welt ist eine Blume: Riech an ihr und reich sie deinem Freund.“"
+        },
+        "es": {
+          "translation": "El mundo es una flor: huélela y pásasela a tu amigo.",
+          "meaning": "La vida es breve y está para compartirla; disfruta lo que tienes y deja que otros lo disfruten.",
+          "explanation": "Una flor es hermosa un momento y se marchita si la aprietas; lo mejor es aspirar su aroma y pasarla. Se dice al regalar algo, al compartir una alegría o para recordar a alguien que no se aferre a las cosas.",
+          "example": "Rênas pensaba vender su vieja guitarra, pero vio que el hijo de los vecinos se moría por aprender a tocar. Se la regala y le dice: «El mundo es una flor: huélela y pásasela a tu amigo»."
+        },
+        "fr": {
+          "translation": "Le monde est une fleur : respire-la et passe-la à ton ami.",
+          "meaning": "La vie est courte et faite pour être partagée ; profite de ce que tu as et laisse les autres en profiter.",
+          "explanation": "Une fleur est belle un instant et se fane si on la serre ; le mieux est d’en respirer le parfum et de la passer. On le dit en donnant quelque chose, en partageant un bonheur, ou pour rappeler à quelqu’un de ne pas s’accrocher aux choses.",
+          "example": "Rênas voulait vendre sa vieille guitare, puis il a vu que le fils des voisins rêvait d’apprendre à jouer. Il la lui offre en disant : « Le monde est une fleur : respire-la et passe-la à ton ami. »"
+        },
+        "tr": {
+          "translation": "Dünya bir çiçektir, kokla ve dostuna ver.",
+          "meaning": "Hayat kısadır ve paylaşmak içindir; elindekinin tadını çıkar, başkaları da çıkarsın.",
+          "explanation": "Çiçek bir an güzeldir, sıkıca tutarsan solar; en iyisi kokusunu içine çekip başkasına uzatmaktır. Bir şey hediye ederken, bir sevinci paylaşırken ya da birine eşyaya bağlanmamasını hatırlatırken söylenir.",
+          "example": "Rênas eski gitarını satmak istiyordu, ama komşunun oğlunun çalmayı öğrenmeye can attığını gördü. Gitarı ona hediye edip diyor ki: “Dünya bir çiçektir, kokla ve dostuna ver.”"
+        },
+        "ar": {
+          "translation": "الدنيا وردة، فشُمَّها ثم أعطِها لصديقك.",
+          "meaning": "الحياة قصيرة وهي للمشاركة؛ استمتع بما عندك ودع غيرك يستمتع به.",
+          "explanation": "الوردة جميلة لحظةً وتذبل إن قبضت عليها؛ وخير ما تفعله أن تشمّ عبيرها ثم تناولها لغيرك. يُقال عند إهداء شيء، أو مشاركة فرحة، أو لتذكير أحد بألّا يتشبّث بالأشياء.",
+          "example": "كان ريناس ينوي بيع غيتاره القديم، ثم رأى أن ابن الجيران يتوق إلى تعلّم العزف. فأهداه إياه وقال: «الدنيا وردة، فشمّها ثم أعطها لصديقك.»"
+        }
+      },
+      "sources": [
+        {
+          "title": "Kurdische Sprichwörter, Redewendungen und Weisheiten, Teil II",
+          "author": "bk-luebeck.eu",
+          "url": "https://www.bk-luebeck.eu/sprichwoerter-kurdische-2.html",
+          "note": "Given as “Dinya guleke, bêhn bike û bide hevalê xwe” with a German rendering (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Single community-site witness; confirm the saying is known and that it is a folk proverb rather than a poet’s line."
+    },
+    {
+      "slug": "kmr-mirov-bes-bi-axe",
+      "dialect": "kmr",
+      "text": "Mirov bes bi axê têr dibe.",
+      "themes": [
+        "human-nature"
+      ],
+      "tradition": "regional",
+      "region": "Behdînan",
+      "variants": [],
+      "exampleKu": "Apê Fewzî xwediyê sê dikanan e û dîsa jî dixwaze ya çaran veke. Jina wî serê xwe dihejîne: “Mirov bes bi axê têr dibe.”",
+      "translations": {
+        "ckb": {
+          "translation": "مرۆڤ تەنها بە خۆڵ تێر دەبێت.",
+          "meaning": "چاوچنۆکیی مرۆڤ لە ژیاندا هەرگیز تێر نابێت؛ تەنها گۆڕ کۆتایی بە زیاتر ویستن دەهێنێت.",
+          "explanation": "«ئاخ» لێرەدا خۆڵە، خۆڵی گۆڕ. پەندەکە دەڵێت مرۆڤ هەرچەند کۆ بکاتەوە، ئارەزووی زیاتر تا کاتی ناشتنی لەگەڵی دەمێنێت. بە نیوە گاڵتە و نیوە خەمەوە بۆ کەسێک دەگوترێت کە زۆری هەیە و هێشتا زیاتری دەوێت.",
+          "example": "مام فەوزی خاوەنی سێ دوکانە و هێشتا دەیەوێت چوارەمیش بکاتەوە. ژنەکەی سەری ڕادەوەشێنێت: «مرۆڤ تەنها بە خۆڵ تێر دەبێت.»",
+          "context": "لە شیعری فارسیدا هەمان وێنە هەیە: سەعدی دەڵێت چاوی چاوچنۆک یان بە قەناعەت پڕ دەبێت یان بە خۆڵی گۆڕ."
+        },
+        "en": {
+          "translation": "Only earth fills a person.",
+          "literal": "A person is filled only by earth.",
+          "meaning": "Human greed is never satisfied in life; only the grave puts an end to wanting more.",
+          "explanation": "Axe is earth, the soil of the grave. The proverb says that however much a person gathers, the appetite for more lasts until they are buried. It is said, half amused and half sad, of someone who already has plenty and still wants more.",
+          "example": "Uncle Fewzî owns three shops and still wants to open a fourth. His wife shakes her head: “Only earth fills a person.”",
+          "context": "Persian poetry has the same image: Saadi writes that the greedy eye is filled either by contentment or by the earth of the grave."
+        },
+        "nl": {
+          "translation": "Alleen aarde maakt een mens verzadigd.",
+          "meaning": "Menselijke hebzucht wordt in het leven nooit gestild; pas het graf maakt een eind aan meer willen.",
+          "explanation": "Ax is aarde, de grond van het graf. Het spreekwoord zegt dat hoeveel iemand ook verzamelt, de honger naar meer blijft tot hij begraven wordt. Men zegt het half geamuseerd, half triest over iemand die al genoeg heeft en toch meer wil.",
+          "example": "Oom Fewzî heeft drie winkels en wil toch een vierde openen. Zijn vrouw schudt haar hoofd: “Alleen aarde maakt een mens verzadigd.”",
+          "context": "De Perzische dichtkunst kent hetzelfde beeld: Saadi schrijft dat het hebzuchtige oog gevuld wordt door tevredenheid of door de aarde van het graf."
+        },
+        "de": {
+          "translation": "Satt wird der Mensch erst von der Erde.",
+          "meaning": "Menschliche Gier wird im Leben nie gestillt; erst das Grab setzt dem Mehr-Wollen ein Ende.",
+          "explanation": "Ax ist Erde, die Erde des Grabes. Das Sprichwort sagt: Wie viel ein Mensch auch anhäuft, der Hunger nach mehr bleibt, bis man ihn begräbt. Man sagt es halb belustigt, halb traurig über jemanden, der schon genug hat und noch mehr will.",
+          "example": "Onkel Fewzî besitzt drei Läden und will trotzdem einen vierten eröffnen. Seine Frau schüttelt den Kopf: „Satt wird der Mensch erst von der Erde.“",
+          "context": "Die persische Dichtung kennt dasselbe Bild: Saadi schreibt, das gierige Auge werde entweder von Genügsamkeit oder von der Graberde gefüllt."
+        },
+        "es": {
+          "translation": "Al hombre solo lo sacia la tierra.",
+          "meaning": "La codicia humana nunca se sacia en vida; solo la tumba pone fin a querer más.",
+          "explanation": "Ax es la tierra, la tierra de la tumba. El refrán dice que, por mucho que uno acumule, las ganas de más duran hasta que lo entierran. Se dice medio en broma, medio con pena, de quien ya tiene de sobra y aún quiere más.",
+          "example": "El tío Fewzî tiene tres tiendas y aun así quiere abrir una cuarta. Su mujer niega con la cabeza: «Al hombre solo lo sacia la tierra».",
+          "context": "La poesía persa tiene la misma imagen: Saadi escribe que el ojo codicioso solo lo llena la mesura o la tierra de la tumba."
+        },
+        "fr": {
+          "translation": "Seule la terre rassasie l’homme.",
+          "meaning": "L’avidité humaine n’est jamais comblée de son vivant ; seule la tombe met fin au désir d’avoir plus.",
+          "explanation": "Ax, c’est la terre, celle de la tombe. Le proverbe dit que, quoi qu’on amasse, l’appétit d’avoir plus dure jusqu’à l’enterrement. On le dit, mi-amusé, mi-triste, de quelqu’un qui a déjà beaucoup et en veut encore.",
+          "example": "L’oncle Fewzî possède trois boutiques et veut pourtant en ouvrir une quatrième. Sa femme secoue la tête : « Seule la terre rassasie l’homme. »",
+          "context": "La poésie persane connaît la même image : Saadi écrit que l’œil avide n’est comblé que par la modération ou par la terre de la tombe."
+        },
+        "tr": {
+          "translation": "İnsanı ancak toprak doyurur.",
+          "meaning": "İnsanın hırsı hayattayken hiç doymaz; daha fazlasını istemeye ancak mezar son verir.",
+          "explanation": "Ax topraktır, mezarın toprağı. Atasözü, insan ne kadar biriktirirse biriktirsin, daha fazlasına duyduğu açlığın gömülene kadar sürdüğünü söyler. Zaten çok şeyi olup yine de daha fazlasını isteyen biri için yarı şaka yarı hüzünle söylenir.",
+          "example": "Fewzî amcanın üç dükkânı var, yine de dördüncüsünü açmak istiyor. Karısı başını sallıyor: “İnsanı ancak toprak doyurur.”",
+          "equivalent": "İnsanın gözünü bir avuç toprak doyurur."
+        },
+        "ar": {
+          "translation": "لا يُشبِعُ الإنسانَ إلا التراب.",
+          "meaning": "لا يشبع طمع الإنسان في حياته، ولا يضع حدًّا لرغبته في المزيد إلا القبر.",
+          "explanation": "«ax» هنا هي التراب، تراب القبر. يقول المثل إن الإنسان مهما جمع تبقى شهوته إلى المزيد حتى يُدفن. يُقال نصف مازح ونصف حزين عمّن عنده الكثير ولا يزال يريد المزيد.",
+          "example": "يملك العمّ فوزي ثلاثة دكاكين ولا يزال يريد أن يفتح رابعًا. تهزّ زوجته رأسها: «لا يُشبع الإنسانَ إلا التراب.»",
+          "context": "يقارب الحديث المشهور: «ولا يملأ جوفَ ابنِ آدمَ إلا التراب»."
+        }
+      },
+      "sources": [
+        {
+          "title": "Kurdish-behdini-language-resources: Proverbs_BehdiniArabic-BehdiniLatini-English.csv",
+          "author": "Jad-deeb (GitHub, MIT licence)",
+          "url": "https://github.com/Jad-deeb/Kurdish-behdini-language-resources",
+          "note": "Row “مروڤ بەس ب ئاخێ تێر دبیت / mirov bes bi axê têr di bît”, English “People just by soil will be full” (read in full)"
+        }
+      ],
+      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. The main text is normalised to standard Latin Kurmancî. As recorded in Arabic script: مروڤ بەس ب ئاخێ تێر دبیت (Badînî form in Arabic script as recorded (Latin there: “mirov bes bi axê têr di bît”))."
+    },
+    {
+      "slug": "kmr-heta-niva-desti",
+      "dialect": "kmr",
+      "text": "Heta nîva destî reş nebe, tama devî xweş nabe.",
+      "themes": [
+        "hard-work"
+      ],
+      "tradition": "regional",
+      "region": "Behdînan",
+      "variants": [],
+      "exampleKu": "Zozan gazinan dike ku divê ew jî di berhevkirina gûzan de alîkariyê bike. Dapîra wê destên xwe yên reşbûyî nîşanî wê dide: “Heta nîva destî reş nebe, tama devî xweş nabe.” Êvarê, nanê bi gûz tameke din dide.",
+      "translations": {
+        "ckb": {
+          "translation": "تا ناوەڕاستی دەستت ڕەش نەبێت، تامی دەمت خۆش نابێت.",
+          "meaning": "تەنها چێژ لەو شتە دەبینیت کە بە دەستی خۆت بۆی ماندوو بوویت.",
+          "explanation": "چنینی گوێز، ئاگر کردنەوە یان کارکردن لە زەوی ناولەپ ڕەش دەکات. پەندەکە دەڵێت پاداشتەکە تەنها بۆ ئەو کەسە خۆشە کە ئەو کارەی کردووە، و بە منداڵان و بە هەر کەسێک دەگوترێت کە حەز ناکات یارمەتی بدات.",
+          "example": "زۆزان گلەیی دەکات کە دەبێت ئەویش لە چنینی گوێزدا یارمەتی بدات. داپیرەی دەستە ڕەشبووەکانی نیشان دەدات: «تا ناوەڕاستی دەستت ڕەش نەبێت، تامی دەمت خۆش نابێت.» ئێوارە نانی گوێزدار تامێکی تری هەیە."
+        },
+        "en": {
+          "translation": "Until your palm turns black, your mouth won’t taste sweetness.",
+          "literal": "Until the middle of the hand is black, the taste of the mouth is not good.",
+          "meaning": "You only truly enjoy what you have worked for with your own hands.",
+          "explanation": "Harvesting walnuts, tending fires or working the soil stains the palms dark. The proverb says the reward tastes good only to the one who has done that work, and it is said to children and to anyone reluctant to lend a hand.",
+          "example": "Zozan grumbles that she has to help with the walnut harvest. Her grandmother shows her stained hands: “Until your palm turns black, your mouth won’t taste sweetness.” That evening the walnut bread tastes different.",
+          "equivalent": "No pain, no gain."
+        },
+        "nl": {
+          "translation": "Zolang je handpalm niet zwart is, smaakt niets je zoet.",
+          "literal": "Zolang het midden van de hand niet zwart is, is de smaak van de mond niet goed.",
+          "meaning": "Je geniet pas echt van wat je met je eigen handen hebt verdiend.",
+          "explanation": "Walnoten oogsten, vuur stoken of de grond bewerken kleurt de handpalmen donker. Het spreekwoord zegt dat de beloning alleen goed smaakt voor wie dat werk heeft gedaan; men zegt het tegen kinderen en tegen iedereen die geen hand wil uitsteken.",
+          "example": "Zozan moppert dat ze moet helpen bij de walnotenoogst. Haar oma laat haar gevlekte handen zien: “Zolang je handpalm niet zwart is, smaakt niets je zoet.” Die avond smaakt het walnotenbrood anders."
+        },
+        "de": {
+          "translation": "Solange die Handfläche nicht schwarz ist, schmeckt dem Mund nichts süß.",
+          "literal": "Solange die Mitte der Hand nicht schwarz ist, ist der Geschmack des Mundes nicht gut.",
+          "meaning": "Richtig genießen kann man nur, wofür man selbst mit den Händen gearbeitet hat.",
+          "explanation": "Walnussernte, Feuermachen oder Feldarbeit färben die Handflächen dunkel. Das Sprichwort sagt, dass der Lohn nur dem schmeckt, der diese Arbeit getan hat; man sagt es Kindern und allen, die nicht mit anpacken wollen.",
+          "example": "Zozan murrt, weil sie bei der Walnussernte helfen muss. Ihre Oma zeigt ihr die fleckigen Hände: „Solange die Handfläche nicht schwarz ist, schmeckt dem Mund nichts süß.“ Am Abend schmeckt das Walnussbrot anders.",
+          "equivalent": "Ohne Fleiß kein Preis."
+        },
+        "es": {
+          "translation": "Hasta que no se te ennegrezca la palma, nada te sabrá dulce.",
+          "literal": "Hasta que el centro de la mano no esté negro, el sabor de la boca no es bueno.",
+          "meaning": "Solo se disfruta de verdad lo que uno se ha ganado con sus propias manos.",
+          "explanation": "Varear nueces, encender el fuego o trabajar la tierra oscurece las palmas. El refrán dice que la recompensa solo le sabe bien a quien ha hecho ese trabajo; se les dice a los niños y a cualquiera que no quiere echar una mano.",
+          "example": "Zozan refunfuña porque tiene que ayudar en la cosecha de nueces. Su abuela le enseña las manos manchadas: «Hasta que no se te ennegrezca la palma, nada te sabrá dulce». Esa noche, el pan de nueces sabe distinto.",
+          "equivalent": "No hay atajo sin trabajo."
+        },
+        "fr": {
+          "translation": "Tant que la paume n’a pas noirci, rien n’a bon goût en bouche.",
+          "literal": "Tant que le milieu de la main n’est pas noir, le goût de la bouche n’est pas bon.",
+          "meaning": "On ne savoure vraiment que ce qu’on a gagné de ses propres mains.",
+          "explanation": "Récolter les noix, faire le feu ou travailler la terre noircit les paumes. Le proverbe dit que la récompense n’a de goût que pour celui qui a fait ce travail ; on le dit aux enfants et à tous ceux qui rechignent à mettre la main à la pâte.",
+          "example": "Zozan bougonne parce qu’elle doit aider à la récolte des noix. Sa grand-mère lui montre ses mains tachées : « Tant que la paume n’a pas noirci, rien n’a bon goût en bouche. » Le soir, le pain aux noix a un autre goût.",
+          "equivalent": "On n’a rien sans rien."
+        },
+        "tr": {
+          "translation": "Avucun ortası kararmadıkça ağzının tadı tatlanmaz.",
+          "meaning": "İnsan ancak kendi eliyle emek verdiği şeyin tadını gerçekten çıkarır.",
+          "explanation": "Ceviz toplamak, ateş yakmak ya da toprağı işlemek avuçları karartır. Atasözü, ödülün yalnızca o emeği vermiş olana tatlı geleceğini söyler; çocuklara ve el atmak istemeyen herkese söylenir.",
+          "example": "Zozan ceviz hasadına yardım etmek zorunda olduğu için söyleniyor. Ninesi lekeli ellerini gösteriyor: “Avucun ortası kararmadıkça ağzının tadı tatlanmaz.” O akşam cevizli ekmeğin tadı bambaşka.",
+          "equivalent": "Emek olmadan yemek olmaz."
+        },
+        "ar": {
+          "translation": "ما لم يسودَّ باطنُ كفّك، لن يطيبَ طعمُ فمك.",
+          "meaning": "لا يستمتع المرء حقًّا إلا بما تعب فيه بيديه.",
+          "explanation": "جني الجوز وإيقاد النار والعمل في الأرض تسوّد باطن الكف. يقول المثل إن الثمرة لا تطيب إلا لمن قام بذلك العمل، ويُقال للأطفال ولكل من يتقاعس عن المساعدة.",
+          "example": "تتذمّر زوزان لأن عليها أن تساعد في قطاف الجوز. تريها جدّتها يديها الملطّختين: «ما لم يسودّ باطن كفّك، لن يطيب طعم فمك.» وفي المساء يكون لخبز الجوز طعم آخر.",
+          "equivalent": "مَن جدَّ وجد."
+        }
+      },
+      "sources": [
+        {
+          "title": "Kurdish-behdini-language-resources: Proverbs_BehdiniArabic-BehdiniLatini-English.csv",
+          "author": "Jad-deeb (GitHub, MIT licence)",
+          "url": "https://github.com/Jad-deeb/Kurdish-behdini-language-resources",
+          "note": "Row “حەتا نیڤا دەستی رەش نە بیت، تاما دەڤی خوش نا بیت”, English “Until the middle of the hand is black, the taste of the mouth won’t be good” (read in full)"
+        }
+      ],
+      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. Normalised to standard Latin Kurmancî (bît → be, xoş → xweş). The walnut image in the explanation is mine; the proverb only says the palm is black. As recorded in Arabic script: حەتا نیڤا دەستی ڕەش نەبیت، تاما دەڤی خۆش نابیت (Badînî form in Arabic script as recorded (Latin there: “ḧeta nîva destî reş ne bît, tama devî xoş na bît”))."
+    },
+    {
+      "slug": "kmr-ezmane-direj",
+      "dialect": "kmr",
+      "text": "Ezmanê dirêj darkukê serê xwedanî ye.",
+      "themes": [
+        "mistakes",
+        "wisdom"
+      ],
+      "tradition": "regional",
+      "region": "Behdînan",
+      "variants": [],
+      "exampleKu": "Bawer di dawetê de hemû sirên malbatê ji mêvanan re gotin, û niha bi xizmên xwe re li hev nayê. Xaltîka wî dibêje: “Min ji te re negot? Ezmanê dirêj darkukê serê xwedanî ye.”",
+      "translations": {
+        "ckb": {
+          "translation": "زمانی درێژ دارکوتکەی سەری خاوەنەکەیەتی.",
+          "meaning": "زۆر قسەکردن هەمیشە تووشی گرفتت دەکات.",
+          "explanation": "دارکوتکە بێ وەستان لە دار دەدات؛ زمانی درێژ و بێ لغاویش هەمان کار بە خاوەنەکەی دەکات و دەمەقاڵێ، شەرمەزاری و لۆمەی بۆ دەهێنێت. کاتێک کەسێک نهێنییەک یان قسەیەکی ناشیرینی دەرپەڕاندووە و ئێستا باجەکەی دەدات، دەگوترێت. «ئەزمان» وشەی بادینییە بۆ زمان.",
+          "example": "باوەر لە زەماوەندەکەدا هەموو نهێنییەکانی خێزانی بۆ میوانەکان گێڕایەوە، و ئێستا لەگەڵ خزمەکانی ناکۆکە. پوورەکەی دەڵێت: «پێم نەگوتی؟ زمانی درێژ دارکوتکەی سەری خاوەنەکەیەتی.»"
+        },
+        "en": {
+          "translation": "A long tongue is a woodpecker on its owner’s head.",
+          "literal": "The long tongue is the woodpecker of its owner’s head.",
+          "meaning": "Talking too much keeps getting you into trouble.",
+          "explanation": "A woodpecker hammers at wood without stopping; a long, loose tongue does the same to its owner, bringing quarrels, shame and blame down on them. People say it after someone has blurted out a secret or an unkind remark and is now paying for it. Ezman is the Behdînî word for tongue (ziman elsewhere).",
+          "example": "At the wedding Bawer told the guests all the family’s secrets, and now he is at odds with his relatives. His aunt says: “Didn’t I tell you? A long tongue is a woodpecker on its owner’s head.”",
+          "equivalent": "A still tongue makes a wise head."
+        },
+        "nl": {
+          "translation": "Een lange tong is een specht op het hoofd van zijn eigenaar.",
+          "meaning": "Wie te veel praat, haalt zich telkens problemen op de hals.",
+          "explanation": "Een specht hamert onophoudelijk op hout; een lange, losse tong doet hetzelfde met zijn eigenaar en bezorgt hem ruzie, schaamte en verwijt. Men zegt het als iemand een geheim of een gemene opmerking heeft laten ontsnappen en daar nu voor boet. Ezman is het Behdînî-woord voor tong (elders ziman).",
+          "example": "Op de bruiloft vertelde Bawer de gasten alle familiegeheimen, en nu ligt hij overhoop met zijn familie. Zijn tante zegt: “Heb ik het je niet gezegd? Een lange tong is een specht op het hoofd van zijn eigenaar.”",
+          "equivalent": "Spreken is zilver, zwijgen is goud."
+        },
+        "de": {
+          "translation": "Eine lange Zunge ist ein Specht auf dem Kopf ihres Besitzers.",
+          "meaning": "Wer zu viel redet, bringt sich immer wieder in Schwierigkeiten.",
+          "explanation": "Ein Specht hämmert unablässig aufs Holz; eine lange, lose Zunge tut dasselbe mit ihrem Besitzer und bringt ihm Streit, Schande und Vorwürfe ein. Man sagt es, wenn jemand ein Geheimnis oder eine böse Bemerkung ausgeplaudert hat und nun dafür büßt. Ezman ist das behdînische Wort für Zunge (sonst ziman).",
+          "example": "Auf der Hochzeit hat Bawer den Gästen alle Familiengeheimnisse erzählt, und jetzt ist er mit der Verwandtschaft zerstritten. Seine Tante sagt: „Hab ich’s dir nicht gesagt? Eine lange Zunge ist ein Specht auf dem Kopf ihres Besitzers.“",
+          "equivalent": "Reden ist Silber, Schweigen ist Gold."
+        },
+        "es": {
+          "translation": "La lengua larga es un pájaro carpintero en la cabeza de su dueño.",
+          "meaning": "Hablar de más te mete en líos una y otra vez.",
+          "explanation": "El pájaro carpintero golpea la madera sin parar; una lengua larga y suelta hace lo mismo con su dueño y le trae peleas, vergüenza y reproches. Se dice cuando alguien ha soltado un secreto o un comentario hiriente y ahora lo está pagando. Ezman es la palabra behdiní para lengua (ziman en otras zonas).",
+          "example": "En la boda, Bawer contó a los invitados todos los secretos de la familia, y ahora está peleado con sus parientes. Su tía le dice: «¿No te lo dije? La lengua larga es un pájaro carpintero en la cabeza de su dueño».",
+          "equivalent": "Por la boca muere el pez."
+        },
+        "fr": {
+          "translation": "Une langue trop longue est un pic-vert sur la tête de son maître.",
+          "meaning": "Trop parler finit toujours par vous attirer des ennuis.",
+          "explanation": "Le pic frappe le bois sans relâche ; une langue longue et bien pendue fait de même avec son maître et lui attire disputes, honte et reproches. On le dit quand quelqu’un a laissé échapper un secret ou une méchanceté et le paie à présent. Ezman est le mot behdînî pour langue (ailleurs ziman).",
+          "example": "Au mariage, Bawer a raconté aux invités tous les secrets de famille, et le voilà fâché avec ses proches. Sa tante lui dit : « Je ne te l’avais pas dit ? Une langue trop longue est un pic-vert sur la tête de son maître. »",
+          "equivalent": "La parole est d’argent, le silence est d’or."
+        },
+        "tr": {
+          "translation": "Uzun dil, sahibinin başında bir ağaçkakandır.",
+          "meaning": "Çok konuşmak insanın başına durmadan iş açar.",
+          "explanation": "Ağaçkakan durmaksızın ağaca vurur; uzun ve tutulmaz bir dil de sahibine aynısını yapar, ona kavga, utanç ve suçlama getirir. Biri bir sırrı ya da kırıcı bir sözü ağzından kaçırıp şimdi bedelini ödediğinde söylenir. Ezman, Behdînî ağzında dil demektir (başka yerlerde ziman).",
+          "example": "Bawer düğünde ailenin bütün sırlarını misafirlere anlattı, şimdi de akrabalarıyla küs. Teyzesi diyor ki: “Ben sana demedim mi? Uzun dil, sahibinin başında bir ağaçkakandır.”",
+          "equivalent": "Ağzından çıkanı kulağın duysun."
+        },
+        "ar": {
+          "translation": "اللسانُ الطويلُ نقّارُ خشبٍ على رأسِ صاحبه.",
+          "meaning": "كثرة الكلام تجرّ على صاحبها المتاعب مرة بعد مرة.",
+          "explanation": "نقّار الخشب يضرب الخشب بلا توقف، واللسان الطويل المنفلت يفعل الشيء نفسه بصاحبه فيجلب عليه الخصام والخجل واللوم. يُقال حين يُفشي أحدٌ سرًّا أو يتفوّه بكلمة جارحة ثم يدفع ثمنها. و«ezman» هي كلمة اللسان في لهجة بهدينان.",
+          "example": "في العرس أفشى باور للضيوف كل أسرار العائلة، وهو الآن على خلاف مع أقاربه. تقول خالته: «ألم أقل لك؟ اللسان الطويل نقّار خشب على رأس صاحبه.»",
+          "equivalent": "لسانُك حصانُك، إن صُنتَه صانك، وإن خُنتَه خانك."
+        }
+      },
+      "sources": [
+        {
+          "title": "Kurdish-behdini-language-resources: Proverbs_BehdiniArabic-BehdiniLatini-English.csv",
+          "author": "Jad-deeb (GitHub, MIT licence)",
+          "url": "https://github.com/Jad-deeb/Kurdish-behdini-language-resources",
+          "note": "Row “ئەزمانێ درێژ داركوكێ سەرێ خودانییە / ezmanê dirêj darkukê serê xodanîye”, English “The long tongue is his own head’s woodpecker” (read in full)"
+        }
+      ],
+      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. Badînî words kept (ezman for ziman, darkuk for darkutk, xwedanî); only spelling of xodanî → xwedanî is normalised. The ckb rendering uses دارکوتکە; check the Soranî word for woodpecker. As recorded in Arabic script: ئەزمانێ درێژ دارکوکێ سەرێ خودانییە (Badînî form in Arabic script as recorded)."
+    },
+    {
+      "slug": "kmr-sam-sekir-e",
+      "dialect": "kmr",
+      "text": "Şam şekir e, belê welat şîrîntir e.",
+      "themes": [
+        "life-experience",
+        "family"
+      ],
+      "tradition": "regional",
+      "region": "Behdînan",
+      "variants": [],
+      "exampleKu": "Rojan bîst sal in li Almanyayê dijî, lê her havîn vedigere gundê xwe yê nêzî Zaxoyê. Dema ku heval dipirsin çima, ew dikene: “Şam şekir e, belê welat şîrîntir e.”",
+      "translations": {
+        "ckb": {
+          "translation": "شام شەکرە، بەڵام نیشتمان شیرینترە.",
+          "meaning": "شوێنی بێگانە هەرچەند خۆش بێت، نیشتمانی خۆت خۆشەویستترە.",
+          "explanation": "شام، دیمەشق، نیشانەی شاری دەوڵەمەند و شیرینی باشوور بوو، ئەو شوێنەی خەڵک بۆ بازرگانی و بژێوی دەچوونە ئەوێ. پەندەکە دان بەوەدا دەنێت کە شەکرە، بەڵام هێشتا ماڵی خۆی پێ باشترە؛ ئەوانەی لە دوورن دەیڵێن، و بەوانیش دەگوترێت.",
+          "example": "ڕۆژان بیست ساڵە لە ئەڵمانیا دەژی، بەڵام هەموو هاوینێک دەگەڕێتەوە گوندەکەی لە نزیک زاخۆ. کاتێک هاوڕێکانی دەپرسن بۆچی، پێدەکەنێت: «شام شەکرە، بەڵام نیشتمان شیرینترە.»"
+        },
+        "en": {
+          "translation": "Damascus is sugar, but the homeland is sweeter.",
+          "meaning": "However pleasant a foreign place may be, your own homeland is dearer.",
+          "explanation": "Şam, Damascus, stood for the rich, sweet city of the south, the place people went to trade and make a living. The proverb grants that it is sugar and still prefers home; it is said by those who live far away, and to them.",
+          "example": "Rojan has lived in Germany for twenty years, but every summer he goes back to his village near Zaxo. When friends ask why, he smiles: “Damascus is sugar, but the homeland is sweeter.”",
+          "equivalent": "East or West, home is best."
+        },
+        "nl": {
+          "translation": "Damascus is suiker, maar het vaderland is zoeter.",
+          "meaning": "Hoe aangenaam een vreemde plek ook is, je eigen land is je dierbaarder.",
+          "explanation": "Şam, Damascus, stond voor de rijke, zoete stad in het zuiden, waar men heen trok om handel te drijven en de kost te verdienen. Het spreekwoord geeft toe dat het suiker is en verkiest toch het eigen land; men zegt het als men ver weg woont, en tegen wie ver weg woont.",
+          "example": "Rojan woont al twintig jaar in Duitsland, maar elke zomer gaat hij terug naar zijn dorp bij Zaxo. Als vrienden vragen waarom, lacht hij: “Damascus is suiker, maar het vaderland is zoeter.”",
+          "equivalent": "Oost west, thuis best."
+        },
+        "de": {
+          "translation": "Damaskus ist Zucker, doch die Heimat ist süßer.",
+          "meaning": "Wie angenehm ein fremder Ort auch ist, die eigene Heimat ist einem lieber.",
+          "explanation": "Şam, Damaskus, stand für die reiche, süße Stadt im Süden, in die man zum Handeln und Broterwerb zog. Das Sprichwort räumt ein, dass sie Zucker ist, und zieht doch die Heimat vor; man sagt es, wenn man in der Ferne lebt, und zu denen, die dort leben.",
+          "example": "Rojan lebt seit zwanzig Jahren in Deutschland, aber jeden Sommer fährt er zurück in sein Dorf bei Zaxo. Wenn Freunde fragen, warum, lächelt er: „Damaskus ist Zucker, doch die Heimat ist süßer.“",
+          "equivalent": "Trautes Heim, Glück allein."
+        },
+        "es": {
+          "translation": "Damasco es azúcar, pero la tierra propia es más dulce.",
+          "meaning": "Por agradable que sea un lugar extraño, la patria de uno es más querida.",
+          "explanation": "Şam, Damasco, era la ciudad rica y dulce del sur, adonde se iba a comerciar y a ganarse la vida. El refrán concede que es azúcar y aun así prefiere la tierra propia; lo dicen quienes viven lejos, y se les dice a ellos.",
+          "example": "Rojan lleva veinte años viviendo en Alemania, pero cada verano vuelve a su pueblo cerca de Zaxo. Cuando sus amigos le preguntan por qué, sonríe: «Damasco es azúcar, pero la tierra propia es más dulce».",
+          "equivalent": "Como en casa, en ningún sitio."
+        },
+        "fr": {
+          "translation": "Damas est sucre, mais le pays natal est plus doux.",
+          "meaning": "Si agréable que soit un lieu étranger, le pays natal reste le plus cher.",
+          "explanation": "Şam, Damas, représentait la ville riche et douce du sud, où l’on allait commercer et gagner sa vie. Le proverbe concède qu’elle est sucre et préfère pourtant le pays ; on le dit quand on vit loin, et à ceux qui vivent loin.",
+          "example": "Rojan vit en Allemagne depuis vingt ans, mais chaque été il retourne dans son village près de Zaxo. Quand ses amis lui demandent pourquoi, il sourit : « Damas est sucre, mais le pays natal est plus doux. »",
+          "equivalent": "On n’est jamais si bien que chez soi."
+        },
+        "tr": {
+          "translation": "Şam şekerdir, ama vatan daha tatlıdır.",
+          "meaning": "Yaban ellerin bir yeri ne kadar hoş olursa olsun, insanın kendi yurdu daha azizdir.",
+          "explanation": "Şam, güneyin zengin ve tatlı şehriydi; insanlar ticaret yapmaya, ekmek parası kazanmaya oraya giderdi. Atasözü onun şeker olduğunu kabul eder ama yine de yurdu yeğler; gurbette yaşayanlar söyler, onlara da söylenir.",
+          "example": "Rojan yirmi yıldır Almanya’da yaşıyor, ama her yaz Zaxo yakınlarındaki köyüne dönüyor. Arkadaşları nedenini sorunca gülümsüyor: “Şam şekerdir, ama vatan daha tatlıdır.”"
+        },
+        "ar": {
+          "translation": "الشامُ سُكّر، لكنّ الوطنَ أحلى.",
+          "meaning": "مهما طاب المكان الغريب يبقى الوطن أعزّ.",
+          "explanation": "كانت الشام، أي دمشق، رمز المدينة الغنية الحلوة في الجنوب، يقصدها الناس للتجارة وطلب الرزق. يسلّم المثل بأنها سُكّر، ومع ذلك يفضّل الوطن عليها؛ يقوله من يعيش بعيدًا، ويُقال له.",
+          "example": "يعيش روجان في ألمانيا منذ عشرين عامًا، لكنه يعود كل صيف إلى قريته قرب زاخو. وحين يسأله أصدقاؤه عن السبب يبتسم: «الشام سكّر، لكنّ الوطن أحلى.»",
+          "equivalent": "بلادي وإن جارت عليّ عزيزةٌ، وأهلي وإن ضنّوا عليّ كرامُ."
+        }
+      },
+      "sources": [
+        {
+          "title": "Kurdish-behdini-language-resources: Proverbs_BehdiniArabic-BehdiniLatini-English.csv",
+          "author": "Jad-deeb (GitHub, MIT licence)",
+          "url": "https://github.com/Jad-deeb/Kurdish-behdini-language-resources",
+          "note": "Row “شام شەكرە بەلێ وەلات شرینترە / şam şekire belê welat şirîntire”, English “Damascus is sugar but homeland is sweeter” (read in full)"
+        }
+      ],
+      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. It is probably known well beyond Behdînan, but only this witness was read. Belê (but) kept as recorded; standard Kurmancî would say lê. The trade-route explanation of Şam is mine. As recorded in Arabic script: شام شەکرە بەلێ وەلات شرینترە (Badînî form in Arabic script as recorded (Latin there: “şam şekire belê welat şirîntire”))."
+    },
+    {
+      "slug": "ckb-berd-le-cey-xoy",
+      "dialect": "ckb",
+      "text": "بەرد لە جێی خۆی سەنگینە.",
+      "themes": [
+        "respect",
+        "life-experience"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [
+        {
+          "text": "بەرد لە جێی خۆیا سەنگینە.",
+          "dialect": "ckb",
+          "region": null,
+          "note": "Wording quoted from Pîremêrd’s proverbs, with the older locative ending ـا."
+        },
+        {
+          "text": "بەرد لە جێگای خۆی قورس و گرانە.",
+          "dialect": "ckb",
+          "region": "Mukriyan",
+          "note": "The gloss given where Mela Xefûrî Debbaxî uses the proverb in verse."
+        },
+        {
+          "text": "Her berek li cihê xo bi qedr e.",
+          "dialect": "kmr",
+          "region": "Behdînan",
+          "note": "Badînî Kurmancî: every stone is valued in its own place (ھەر بەرەك ل جھێ خو بقەدرە)."
+        }
+      ],
+      "exampleKu": "لە شارە گەورەکەدا کەس ئاراسی نەدەناسی، بەڵام لە گوندەکەی خۆی هەموو کەس بۆ ڕاوێژ دێنە لای. باپیری زەردەخەنەیەک دەکات و دەڵێت: «بەرد لە جێی خۆی سەنگینە.»",
+      "translations": {
+        "ku": {
+          "translation": "Kevir li cihê xwe giran e.",
+          "meaning": "Mirov li cihê xwe, di nav kesên xwe de, xwedî qedr û giranî ye.",
+          "explanation": "Kevirek li cihê xwe bi giranî rûdine û bi hêsanî nayê lebitandin; gava ji wir tê rakirin, ew giranî namîne. Mirov jî wisa ye: di gund, malbat û karê xwe de gotina wî tê guhdarîkirin. Gava kesek li cihê xwe tê naskirin, yan gava kesek dixwaze cihê xwe yê bi rûmet berde, tê gotin.",
+          "example": "Li bajarê mezin kesî Aras nas nedikir, lê li gundê wî her kes ji bo şîretan tê ba wî. Bapîrê wî dibişire û dibêje: “Kevir li cihê xwe giran e.”",
+          "equivalent": "Her berek li cihê xo bi qedr e."
+        },
+        "en": {
+          "translation": "A stone is heavy in its own place.",
+          "meaning": "A person carries weight and respect in their own place, among their own people.",
+          "explanation": "A stone settled where it belongs sits heavy and hard to shift; lift it out and that weight is gone. So with people: in their village, family or trade their word counts. It is said when someone is honoured at home though unknown elsewhere, or to warn against leaving the place where one is respected.",
+          "example": "In the big city nobody knew Aras, but back in his village everyone comes to him for advice. His grandfather smiles: “A stone is heavy in its own place.”"
+        },
+        "nl": {
+          "translation": "Een steen is zwaar op zijn eigen plek.",
+          "meaning": "Een mens heeft gewicht en aanzien op zijn eigen plek, onder zijn eigen mensen.",
+          "explanation": "Een steen die op zijn plaats ligt, ligt zwaar en is moeilijk te verschuiven; til hem weg en dat gewicht verdwijnt. Zo ook met mensen: in hun dorp, familie of vak telt hun woord. Men zegt het als iemand thuis geëerd wordt maar elders onbekend is, of als waarschuwing om de plek waar men gerespecteerd wordt niet zomaar te verlaten.",
+          "example": "In de grote stad kende niemand Aras, maar in zijn dorp komt iedereen bij hem om raad. Zijn opa glimlacht: “Een steen is zwaar op zijn eigen plek.”"
+        },
+        "de": {
+          "translation": "Ein Stein ist schwer an seinem Platz.",
+          "meaning": "Ein Mensch hat Gewicht und Ansehen an seinem eigenen Ort, unter den Seinen.",
+          "explanation": "Ein Stein, der an seinem Platz liegt, liegt schwer und ist kaum zu bewegen; hebt man ihn heraus, ist das Gewicht dahin. So ist es mit Menschen: In ihrem Dorf, ihrer Familie, ihrem Handwerk zählt ihr Wort. Man sagt es, wenn jemand daheim geehrt, anderswo aber unbekannt ist, oder als Warnung, den Ort, an dem man geachtet wird, nicht leichtfertig zu verlassen.",
+          "example": "In der großen Stadt kannte niemand Aras, aber in seinem Dorf kommen alle zu ihm, um Rat zu holen. Sein Großvater lächelt: „Ein Stein ist schwer an seinem Platz.“"
+        },
+        "es": {
+          "translation": "La piedra pesa en su sitio.",
+          "meaning": "Uno tiene peso y respeto en su propio lugar, entre los suyos.",
+          "explanation": "Una piedra asentada donde le corresponde pesa y cuesta moverla; sácala de ahí y ese peso desaparece. Igual pasa con las personas: en su pueblo, su familia o su oficio, su palabra cuenta. Se dice cuando alguien es respetado en su tierra aunque fuera nadie lo conozca, o para advertir que no conviene dejar el lugar donde uno es respetado.",
+          "example": "En la gran ciudad nadie conocía a Aras, pero en su pueblo todos acuden a él en busca de consejo. Su abuelo sonríe: «La piedra pesa en su sitio»."
+        },
+        "fr": {
+          "translation": "La pierre est lourde à sa place.",
+          "meaning": "On a du poids et du respect à sa propre place, parmi les siens.",
+          "explanation": "Une pierre posée là où elle doit être pèse lourd et se déplace mal ; retirez-la, et ce poids disparaît. Il en va de même des gens : dans leur village, leur famille ou leur métier, leur parole compte. On le dit quand quelqu’un est honoré chez lui mais inconnu ailleurs, ou pour mettre en garde contre l’abandon du lieu où l’on est respecté.",
+          "example": "Dans la grande ville, personne ne connaissait Aras, mais dans son village tout le monde vient lui demander conseil. Son grand-père sourit : « La pierre est lourde à sa place. »"
+        },
+        "tr": {
+          "translation": "Taş yerinde ağırdır.",
+          "meaning": "İnsanın ağırlığı ve itibarı kendi yerinde, kendi insanlarının arasındadır.",
+          "explanation": "Yerine oturmuş bir taş ağır durur, kolay kımıldamaz; oradan kaldırınca o ağırlık kalmaz. İnsan da öyledir: köyünde, ailesinde ya da zanaatında sözü geçer. Birisi memleketinde saygı görüp başka yerde tanınmadığında ya da saygı gördüğü yeri bırakmamak için uyarı olarak söylenir. Türkçede de aynı sözle bilinir.",
+          "example": "Büyük şehirde kimse Aras’ı tanımıyordu, ama köyünde herkes ona akıl danışmaya geliyor. Dedesi gülümsüyor: “Taş yerinde ağırdır.”"
+        },
+        "ar": {
+          "translation": "الحجرُ ثقيلٌ في مكانه.",
+          "meaning": "للمرء وزنه ومكانته في موضعه وبين أهله.",
+          "explanation": "الحجر الراسخ في موضعه ثقيل يصعب تحريكه، فإذا انتُزع منه زال ذلك الثقل. وكذلك الناس: في قريتهم وأسرتهم وصنعتهم يُسمع قولهم. يُقال حين يُكرَّم أحدٌ في بلده وهو مجهول في غيره، أو تحذيرًا من ترك المكان الذي يُحترَم فيه المرء.",
+          "example": "لم يكن أحد يعرف آراس في المدينة الكبيرة، أما في قريته فالجميع يقصدونه للمشورة. يبتسم جدّه ويقول: «الحجر ثقيل في مكانه.»"
+        }
+      },
+      "sources": [
+        {
+          "title": "پەندی پێشینان",
+          "author": "Wikipedia (Central Kurdish)",
+          "url": "https://ckb.wikipedia.org/wiki/%D9%BE%DB%95%D9%86%D8%AF%DB%8C_%D9%BE%DB%8E%D8%B4%DB%8C%D9%86%D8%A7%D9%86",
+          "note": "Listed among the examples as “بەرد لە جێ ی خۆی سەنگینە” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "پەندەکانی پیرەمێرد (channel publishing Pîremêrd’s proverbs)",
+          "author": "Pîremêrd (Telegram channel)",
+          "url": "https://t.me/s/pandakanipiramerd?before=2811",
+          "note": "A post of Pîremêrd’s proverbs gives “بەرد لە جێی خۆیا سەنگینە” inside a longer saying (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "دیاری مەهاباد / پەندی پێشینان",
+          "author": "Mela Xefûrî Debbaxî (paswecity blog edition)",
+          "url": "https://paswecity.wordpress.com/2022/08/31/1-122/",
+          "note": "Debbaxî uses it in verse; the editor glosses it “بەرد لە جێگای خۆی قورس و گرانە”: a person is weightier in their own setting (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Kurdish-behdini-language-resources: Proverbs_BehdiniArabic-BehdiniLatini-English.csv",
+          "author": "Jad-deeb (GitHub, MIT licence)",
+          "url": "https://github.com/Jad-deeb/Kurdish-behdini-language-resources",
+          "note": "Badînî row “ھەر بەرەك ل جھێ خو بقەدرە / her berek li cihê xo bi qedre”, English “Every rock in it’s own place is respected” (read in full)"
+        }
+      ],
+      "notes": "Well attested in Soranî. The Kurmancî translation “Kevir li cihê xwe giran e” is a rendering; I did not find it attested."
+    },
+    {
+      "slug": "ckb-beri-roj-be-bejing",
+      "dialect": "ckb",
+      "text": "بەری ڕۆژ بە بێژنگ ناگیرێت.",
+      "themes": [
+        "trust",
+        "wisdom"
+      ],
+      "tradition": "traditional",
+      "region": null,
+      "variants": [
+        {
+          "text": "Roj bi bêjingê nayê veşartin.",
+          "dialect": "kmr",
+          "region": null,
+          "note": "Kurmancî counterpart: the sun cannot be hidden with a sieve; its own entry in the Kurdish Wiktionary, which also gives the spelling bêjinkê."
+        }
+      ],
+      "exampleKu": "دارا دەڵێت با پەنجەرەکەی شکاند، بەڵام تۆپەکەی لە ناو ژوورەکەدا کەوتووە. دایکی سەیرێکی تۆپەکە دەکات: «کوڕم، بەری ڕۆژ بە بێژنگ ناگیرێت.» دارا سەری دادەخات و ڕاستییەکە دەڵێت.",
+      "translations": {
+        "ku": {
+          "translation": "Berê rojê bi bêjingê nayê girtin.",
+          "literal": "The face of the sun is not held back with a sieve.",
+          "meaning": "Rastiyeke eşkere nayê veşartin, çawa ku kes nikare rojê bi bêjingê bigire.",
+          "explanation": "Bêjing pir qul e: tu çiqas wê bilind bikî jî, ronahiya rojê di qulan re derbas dibe. Pend ji bo kesê ku dixwaze tiştekî eşkere veşêre yan înkar bike tê gotin, û dibêje ku rastî dê derkeve holê.",
+          "example": "Dara dibêje ku bayê pencere şikand, lê topa wî di nav odeyê de ye. Diya wî li topê dinêre: “Kurê min, berê rojê bi bêjingê nayê girtin.” Dara serê xwe dixe ber xwe û rastiyê dibêje.",
+          "equivalent": "Roj bi bêjingê nayê veşartin."
+        },
+        "en": {
+          "translation": "You can’t block out the sun with a sieve.",
+          "literal": "The face of the sun is not held back with a sieve.",
+          "meaning": "An obvious truth cannot be hidden, however hard someone tries.",
+          "explanation": "A sieve is full of holes: hold it up as you like, the sunlight still pours through. The proverb is said to someone trying to cover up or deny something plain to see, and it means the truth will come out.",
+          "example": "Dara says the wind broke the window, but his football is lying in the room. His mother looks at the ball: “Son, you can’t block out the sun with a sieve.” Dara hangs his head and tells the truth.",
+          "equivalent": "Truth will out."
+        },
+        "nl": {
+          "translation": "Je kunt de zon niet met een zeef afschermen.",
+          "meaning": "Een duidelijke waarheid laat zich niet verbergen, hoe hard iemand het ook probeert.",
+          "explanation": "Een zeef zit vol gaten: houd hem omhoog zoals je wilt, het zonlicht stroomt er toch doorheen. Men zegt het tegen iemand die iets wat voor iedereen zichtbaar is wil verdoezelen of ontkennen: de waarheid komt toch boven.",
+          "example": "Dara zegt dat de wind het raam heeft gebroken, maar zijn voetbal ligt in de kamer. Zijn moeder kijkt naar de bal: “Jongen, je kunt de zon niet met een zeef afschermen.” Dara laat zijn hoofd hangen en vertelt de waarheid.",
+          "equivalent": "Al is de leugen nog zo snel, de waarheid achterhaalt haar wel."
+        },
+        "de": {
+          "translation": "Die Sonne lässt sich nicht mit einem Sieb verdecken.",
+          "meaning": "Eine offensichtliche Wahrheit lässt sich nicht verbergen, so sehr man es auch versucht.",
+          "explanation": "Ein Sieb ist voller Löcher: Man kann es halten, wie man will, das Sonnenlicht dringt trotzdem hindurch. Man sagt es zu jemandem, der etwas Offenkundiges vertuschen oder leugnen will: Die Wahrheit kommt ans Licht.",
+          "example": "Dara sagt, der Wind habe das Fenster zerbrochen, aber sein Fußball liegt im Zimmer. Seine Mutter schaut auf den Ball: „Junge, die Sonne lässt sich nicht mit einem Sieb verdecken.“ Dara senkt den Kopf und sagt die Wahrheit.",
+          "equivalent": "Die Sonne bringt es an den Tag."
+        },
+        "es": {
+          "translation": "No se puede tapar el sol con un colador.",
+          "meaning": "Una verdad evidente no se puede ocultar, por mucho que alguien lo intente.",
+          "explanation": "Un colador está lleno de agujeros: lo pongas como lo pongas, la luz del sol pasa igual. Se le dice a quien intenta encubrir o negar algo que salta a la vista, y quiere decir que la verdad acabará saliendo.",
+          "example": "Dara dice que el viento rompió la ventana, pero su balón está en el cuarto. Su madre mira el balón: «Hijo, no se puede tapar el sol con un colador». Dara agacha la cabeza y dice la verdad.",
+          "equivalent": "La verdad, como el aceite, siempre sale a flote."
+        },
+        "fr": {
+          "translation": "On ne cache pas le soleil avec une passoire.",
+          "meaning": "Une vérité évidente ne se cache pas, quoi qu’on fasse.",
+          "explanation": "Une passoire est pleine de trous : tenez-la comme vous voulez, la lumière du soleil passe quand même. On le dit à quelqu’un qui tente de dissimuler ou de nier ce qui saute aux yeux : la vérité finira par se savoir.",
+          "example": "Dara dit que le vent a cassé la fenêtre, mais son ballon est dans la chambre. Sa mère regarde le ballon : « Mon fils, on ne cache pas le soleil avec une passoire. » Dara baisse la tête et dit la vérité.",
+          "equivalent": "La vérité finit toujours par éclater."
+        },
+        "tr": {
+          "translation": "Güneş kalburla örtülmez.",
+          "meaning": "Apaçık bir gerçek, ne kadar uğraşılsa da gizlenemez.",
+          "explanation": "Kalbur delik deşiktir: nasıl tutarsan tut, güneşin ışığı yine içinden geçer. Herkesin gördüğü bir şeyi örtbas etmeye ya da inkâr etmeye çalışan birine söylenir; gerçeğin er geç ortaya çıkacağını anlatır.",
+          "example": "Dara pencereyi rüzgârın kırdığını söylüyor, ama futbol topu odanın ortasında duruyor. Annesi topa bakıyor: “Oğlum, güneş kalburla örtülmez.” Dara başını öne eğip doğruyu söylüyor.",
+          "equivalent": "Güneş balçıkla sıvanmaz."
+        },
+        "ar": {
+          "translation": "الشمسُ لا تُحجَبُ بغربال.",
+          "meaning": "الحقيقة الواضحة لا يمكن إخفاؤها مهما حاول المرء.",
+          "explanation": "الغربال كثير الثقوب، فمهما رفعته ينفذ ضوء الشمس منه. يُقال لمن يحاول التستّر على أمر جليّ أو إنكاره، ومعناه أن الحقيقة ستظهر لا محالة.",
+          "example": "يقول دارا إن الريح كسرت النافذة، لكن كرته ملقاة في الغرفة. تنظر أمه إلى الكرة: «يا بنيّ، الشمس لا تُحجب بغربال.» فيطأطئ دارا رأسه ويقول الحقيقة.",
+          "equivalent": "الشمسُ ما بتتغطّى بغربال."
+        }
+      },
+      "sources": [
+        {
+          "title": "پەندی پێشینان",
+          "author": "Wikipedia (Central Kurdish)",
+          "url": "https://ckb.wikipedia.org/wiki/%D9%BE%DB%95%D9%86%D8%AF%DB%8C_%D9%BE%DB%8E%D8%B4%DB%8C%D9%86%D8%A7%D9%86",
+          "note": "Given as the first example: “بەری ڕۆژ بە بێژنگ ناگیرێت” (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "پەندی پێشینان",
+          "author": "Zaniary",
+          "url": "https://zaniary.com/blog/624f44a957a7e",
+          "note": "Listed verbatim (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "١٥٠ پەندی پێشینانی کوردی",
+          "author": "Xelk",
+          "url": "https://2019.xelk.org/111136/",
+          "note": "Listed verbatim in the 150-proverb list (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "گوتن وپەندێت پێشینان",
+          "author": "Kurd Folklore (Google Sites)",
+          "url": "https://sites.google.com/site/kurdfolklore/%DA%AF%D9%88%D8%AA%D9%86/%DA%AF%D9%88%D8%AA%D9%86-%D9%88%D9%BE%DB%95%D9%86%D8%AF%DB%8E%D8%AA-%D9%BE%DB%8E%D8%B4%DB%8C%D9%86%D8%A7%D9%86",
+          "note": "Gives the Badînî form “بەرێ روژێ ب [ب] بێژنگی نا گریت” beside other sayings (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "roj bi bêjingê nayê veşartin (entry)",
+          "author": "Wîkîferheng (Kurdish Wiktionary)",
+          "url": "https://ku.wiktionary.org/wiki/roj_bi_b%C3%AAjing%C3%AA_nay%C3%AA_ve%C5%9Fartin",
+          "note": "Kurmancî counterpart “roj bi bêjingê nayê veşartin”, marked as a proverb, spelling variant bêjinkê (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        },
+        {
+          "title": "Lêkolînek li ser gotinên pêşiyan, beşa duyê",
+          "author": "Çiya Mazî (rojava.net, 2021)",
+          "url": "https://rojava.net/blog/2021/08/23/ciya-mazi-lekolinek-li-ser-gotinen-pesiyan-bese-duye/",
+          "note": "Uses the Kurmancî form as an example of a proverb stating a testable truth (seen through a search-engine excerpt; the page itself could not be opened from this session)."
+        }
+      ],
+      "notes": "Well attested in Soranî and Kurmancî. The Kurmancî translation given under “ku” is a close rendering; the attested Kurmancî proverb is in “equivalent”. Reviewer: check the reading of بەری ڕۆژ (the sun’s face or light). As recorded in Arabic script: بەرێ روژێ ب بێژنگێ ناگریت (Badînî form in Arabic script, as given on a Kurdish folklore site)."
+    }
+  ]
+}

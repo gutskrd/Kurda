@@ -10,6 +10,12 @@
  * what a published story must be: a question bank big enough for its length,
  * and evidence for every reveal down to the sentence. Each bank is also written
  * in the order a game asks it, so the file is reviewed the way players meet it.
+ *
+ * The legends (legends.json) are held to more: each is a saga told in sections,
+ * passes the whole check a published story passes, carries a few questions to
+ * think about, its notes and its sources, and is translated whole into every
+ * language it is translated into at all — a learner reading in German meets
+ * no question left in English.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -18,16 +24,19 @@ import {
   LESSON_AUDIO_TEXT_MAX,
   MIN_QUESTION_BANK,
   QUESTION_EXPLANATION_MAX,
+  SAGA_MIN_SECTIONS,
   countStoryWords,
   glossSpans,
   normalizeKurdish,
   storyAudioSentences,
   storyLengthFor,
   storyParagraphs,
+  storySections,
   storySentences,
   type StoryDialect,
   type StoryGlossEntry,
 } from '@kurda/shared';
+import { parseStoryFile } from './import.js';
 
 interface StarterQuestion {
   kind: string;
@@ -45,11 +54,23 @@ interface StarterStory {
   questions: StarterQuestion[];
 }
 
-const read = (name: string): StarterStory[] =>
-  JSON.parse(readFileSync(fileURLToPath(new URL(`../../content/stories/${name}`, import.meta.url)), 'utf8')).stories;
+const file = (name: string): { stories: unknown[] } =>
+  JSON.parse(readFileSync(fileURLToPath(new URL(`../../content/stories/${name}`, import.meta.url)), 'utf8'));
+const read = (name: string): StarterStory[] => file(name).stories as StarterStory[];
 
-// the starter stories, and the ones Hamo tells at the end of each chapter of the road
-const stories = [...read('kurmanci.json'), ...read('sorani.json'), ...read('road.json')];
+interface StarterLegend extends StarterStory {
+  translations?: Record<string, string>;
+  metaTranslations?: Record<string, { title?: string; summary?: string }>;
+  reflections?: Array<{ text: string; translations?: Record<string, string> }>;
+  notes?: Array<{ kind: string; translations?: Record<string, unknown> }>;
+  sources?: Array<{ title: string; type: string }>;
+  questions: Array<StarterQuestion & { translations?: Record<string, unknown> }>;
+}
+
+const legends = read('legends.json') as StarterLegend[];
+
+// the starter stories, the ones Hamo tells at the end of each chapter of the road, and the legends
+const stories = [...read('kurmanci.json'), ...read('sorani.json'), ...read('road.json'), ...legends];
 
 /**
  * The reader and the studio cut a sentence after any full stop, so a sentence
@@ -155,6 +176,48 @@ describe('the starter stories', () => {
         }
       });
       expect(problems).toEqual([]);
+    });
+  });
+});
+
+describe('the legends', () => {
+  it('are a file of stories in the import shape, seeded with the other starters', () => {
+    expect(Array.isArray(file('legends.json').stories)).toBe(true);
+    expect(parseStoryFile(file('legends.json'), 'draft').issues).toEqual([]);
+  });
+
+  describe.each(legends.map((l) => [l.slug, l] as const))('%s', (_slug, legend) => {
+    it('is a saga told in sections', () => {
+      expect(storyLengthFor(legend.dialect, countStoryWords(legend.body))).toBe('saga');
+      expect(storySections(legend.body).length).toBeGreaterThanOrEqual(SAGA_MIN_SECTIONS);
+    });
+
+    it('passes the whole check a published story passes', () => {
+      expect(parseStoryFile({ stories: [legend] }, 'publish').issues).toEqual([]);
+    });
+
+    it('carries a few questions to think about, its notes and its sources', () => {
+      expect(legend.reflections?.length ?? 0).toBeGreaterThanOrEqual(3);
+      expect(legend.reflections?.length ?? 0).toBeLessThanOrEqual(4);
+      expect(legend.notes?.length ?? 0).toBeGreaterThanOrEqual(1);
+      expect(legend.sources?.length ?? 0).toBeGreaterThanOrEqual(2);
+    });
+
+    it('is translated whole into every language it is translated into', () => {
+      const missing: string[] = [];
+      for (const locale of Object.keys(legend.translations ?? {})) {
+        if (!legend.metaTranslations?.[locale]?.title) missing.push(`${locale}: title`);
+        legend.questions.forEach((q, i) => {
+          if (!q.translations?.[locale]) missing.push(`${locale}: question ${i}`);
+        });
+        legend.reflections?.forEach((r, i) => {
+          if (!r.translations?.[locale]) missing.push(`${locale}: reflection ${i}`);
+        });
+        legend.notes?.forEach((n, i) => {
+          if (!n.translations?.[locale]) missing.push(`${locale}: note ${i}`);
+        });
+      }
+      expect(missing).toEqual([]);
     });
   });
 });

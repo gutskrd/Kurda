@@ -34,16 +34,26 @@
  * Reviewing, publishing, unpublishing, archiving, deleting and importing are
  * audited, the row before and after, beside the automatic audit of every
  * admin call.
+ *
+ * Riddles and proverbs (shared/src/lore.ts) are rows here too, for this
+ * workflow, though they belong to no game. Their translations are reviewed
+ * one language at a time beside the row (content-translations.ts), and come
+ * with the row when it is opened. A riddle's level is never chosen: it is
+ * its difficulty's (`RIDDLE_LEVELS`), set here whatever the editor sent. Two
+ * live riddles, or two live proverbs, never share a slug, which names them in
+ * the learner routes (409 SLUG_TAKEN).
  */
 import type pg from 'pg';
 import {
   GAME_CONTENT_KINDS,
   GAME_LEVELS,
   LEARN_GAMES,
+  RIDDLE_LEVELS,
   checkGameContent,
   contentHeadline,
   foldForDialect,
   gameOfKind,
+  isLoreKind,
   lessonAudioKey,
   sentenceShape,
   storySentences,
@@ -58,6 +68,7 @@ import {
   type GameDialect,
   type GameLevel,
   type PublishedLine,
+  type RiddleContent,
 } from '@kurda/shared';
 import { AuditService } from '../admin/audit-service.js';
 import type { Cache } from '../cache/cache.js';
@@ -66,6 +77,7 @@ import { AppError } from '../plugins/errors.js';
 import { bustAvailability, type GameAvailabilityService } from './availability.js';
 import { bustGamePools, type TrustedSources, type VocabularyWord } from './sources.js';
 import { passageDrafts, sentenceDrafts, wordCardDrafts, type ContentDraft } from './content-drafts.js';
+import type { GameContentTranslations } from './content-translations.js';
 
 /** A row as the admin panel lists and edits it (@kurda/shared `AdminGameContent`). */
 export type GameContentRow = AdminGameContent;
@@ -183,6 +195,18 @@ function levelOk(level: number): boolean {
   return (GAME_LEVELS as readonly number[]).includes(level);
 }
 
+/** The level a row is stored at: the editor's, but a riddle's is its difficulty's. */
+function levelFor(kind: GameContentKind, payload: GameContentPayload, level: number): number {
+  return kind === 'riddle' ? RIDDLE_LEVELS[(payload as RiddleContent).difficulty] : level;
+}
+
+/** A riddle or a proverb saved under a slug a live one of its kind already has. */
+function slugTaken(err: unknown): AppError | null {
+  const e = err as { code?: string; constraint?: string };
+  if (e?.code !== '23505' || e.constraint !== 'game_content_lore_slug') return null;
+  return new AppError('SLUG_TAKEN', 409, 'another one of this kind already has this slug: choose another', { errors: [{ path: 'slug', message: 'this slug is taken' }] });
+}
+
 /**
  * A card made of a picked word (word-cards.ts) keeps the Kurdish it was
  * copied with: its word is never typed over. What is not Kurdish — meanings
@@ -217,6 +241,8 @@ export class GameContentAdminService {
     private readonly sources: TrustedSources,
     private readonly availability: GameAvailabilityService,
     private readonly cache: Cache | null = null,
+    /** a riddle's or a proverb's translations, sent with the row when it is opened */
+    private readonly translations: GameContentTranslations | null = null,
   ) {
     this.audit = new AuditService(pool);
   }
@@ -274,18 +300,26 @@ export class GameContentAdminService {
   async get(id: string, db: Pick<pg.Pool, 'query'> = this.pool): Promise<GameContentRow | null> {
     if (!UUID_RE.test(id)) return null;
     const res = await db.query<Row>(`SELECT ${COLUMNS} ${FROM} WHERE c.id = $1 AND ${KNOWN_KIND}`, [id]);
-    return res.rows[0] ? shape(res.rows[0]) : null;
+    const row = res.rows[0];
+    if (!row) return null;
+    const out = shape(row);
+    if (isLoreKind(row.kind) && this.translations) out.translations = await this.translations.forRow(row.id, row, db);
+    return out;
   }
 
   async create(input: { kind: GameContentKind; dialect: GameDialect; level: number; payload: unknown }, ctx: ActionContext): Promise<GameContentRow> {
     if (!levelOk(input.level)) throw invalid([{ path: 'level', message: 'a level is 1 to 5' }]);
     const checked = checkGameContent(input.kind, input.dialect, input.payload);
     if (!checked.ok) throw invalid(checked.issues);
-    const res = await this.pool.query<{ id: string }>(
-      `INSERT INTO game_content (kind, dialect, level, payload, source, created_by, updated_by)
-       VALUES ($1, $2, $3, $4::jsonb, 'admin', $5, $5) RETURNING id`,
-      [input.kind, input.dialect, input.level, JSON.stringify(checked.payload), ctx.adminId],
-    );
+    const res = await this.pool
+      .query<{ id: string }>(
+        `INSERT INTO game_content (kind, dialect, level, payload, source, created_by, updated_by)
+         VALUES ($1, $2, $3, $4::jsonb, 'admin', $5, $5) RETURNING id`,
+        [input.kind, input.dialect, levelFor(input.kind, checked.payload, input.level), JSON.stringify(checked.payload), ctx.adminId],
+      )
+      .catch((err: unknown) => {
+        throw slugTaken(err) ?? err;
+      });
     return (await this.get(res.rows[0]!.id))!;
   }
 
@@ -314,14 +348,19 @@ export class GameContentAdminService {
       if (!checked.ok) throw invalid(checked.issues);
       const retyped = retypedKurdish(row, checked.payload);
       if (retyped.length > 0) throw invalid(retyped);
-      const changed = row.level !== input.level || canonical(row.payload) !== canonical(checked.payload);
+      const level = levelFor(row.kind, checked.payload, input.level);
+      const changed = row.level !== level || canonical(row.payload) !== canonical(checked.payload);
       const reset = changed && row.review_status === 'approved';
-      await client.query(
-        `UPDATE game_content SET level = $2, payload = $3::jsonb, lock_version = lock_version + 1, updated_by = $4
-                ${reset ? `, review_status = 'unreviewed', reviewed_by = NULL, reviewed_at = NULL, review_note = NULL` : ''}
-          WHERE id = $1`,
-        [id, input.level, JSON.stringify(checked.payload), ctx.adminId],
-      );
+      await client
+        .query(
+          `UPDATE game_content SET level = $2, payload = $3::jsonb, lock_version = lock_version + 1, updated_by = $4
+                  ${reset ? `, review_status = 'unreviewed', reviewed_by = NULL, reviewed_at = NULL, review_note = NULL` : ''}
+            WHERE id = $1`,
+          [id, level, JSON.stringify(checked.payload), ctx.adminId],
+        )
+        .catch((err: unknown) => {
+          throw slugTaken(err) ?? err;
+        });
     });
     return (await this.get(id))!;
   }
@@ -404,13 +443,17 @@ export class GameContentAdminService {
     await this.tx(async (client) => {
       const row = await this.lock(client, id, ctx.lockVersion);
       if (row.status === 'published') throw new AppError('BAD_STATE', 409, 'unpublish it before deleting it');
+      // a riddle's or a proverb's translations go with it, and into the record with it
+      const translations = isLoreKind(row.kind)
+        ? (await client.query(`SELECT locale, payload, review_status FROM game_content_translations WHERE content_id = $1 ORDER BY locale`, [id])).rows
+        : null;
       await client.query(`DELETE FROM game_content WHERE id = $1`, [id]);
       await this.audit.record(client, {
         adminId: ctx.adminId,
         action: 'game_content.delete',
         targetType: 'game_content',
         targetId: id,
-        before: { kind: row.kind, dialect: row.dialect, level: row.level, payload: row.payload, status: row.status, origin: row.origin },
+        before: { kind: row.kind, dialect: row.dialect, level: row.level, payload: row.payload, status: row.status, origin: row.origin, ...(translations ? { translations } : {}) },
         after: null,
         requestId: ctx.requestId ?? null,
       });
