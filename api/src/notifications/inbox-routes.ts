@@ -5,7 +5,7 @@ import type { InboxService } from './inbox-service.js';
 
 const idParam = z.object({ id: z.uuid() });
 
-/** In-app notification inbox: list, unread badge, mark-read (KUR-097). */
+/** In-app notification inbox: list, unread badge, mark-read, and taking one away (KUR-097). */
 export function registerInboxRoutes(app: FastifyInstance, inbox: InboxService): void {
   /** Last 50 notifications, newest first. */
   app.get('/me/notifications', { preHandler: requireAuth }, async (req) => ({
@@ -28,6 +28,17 @@ export function registerInboxRoutes(app: FastifyInstance, inbox: InboxService): 
         const still = await inbox.unreadCount(req.user!.id);
         return reply.code(200).send({ ok: true, unread: still });
       }
+      return { ok: true, unread: await inbox.unreadCount(req.user!.id) };
+    },
+  );
+
+  /** Take one away for good (owner-scoped: someone else's id is a 404, as one already gone is). */
+  app.delete(
+    '/me/notifications/:id',
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    async (req, reply) => {
+      const removed = await inbox.remove(req.user!.id, (req.params as z.infer<typeof idParam>).id);
+      if (!removed) return reply.code(404).send({ code: 'NOT_FOUND', message: 'notification not found' });
       return { ok: true, unread: await inbox.unreadCount(req.user!.id) };
     },
   );

@@ -1980,6 +1980,8 @@ export const en = {
   'shop.confirmTitle': 'Buy {name}?',
   'shop.finalNote': 'Every purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
   'shop.giftFinal': 'Gifts are final too: once it’s sent, it’s theirs to keep.',
+  'shop.bird.title': 'Your pen pal bird',
+  'shop.balance': 'You have {zer} Zêr.',
 
   // ---- items by kind: the Shop, the inventory and the gift picker (shop/ItemBrowser) ----
   'items.kinds': 'Kinds of item',
@@ -3915,6 +3917,14 @@ export const en = {
   'notifications.markAllRead': 'Mark all as read',
   'notifications.markRead': 'Mark as read',
   'notifications.markReadWhat': 'Mark as read: {what}',
+  'notifications.delete': 'Delete',
+  'notifications.deleteWhat': 'Delete: {what}',
+  'notifications.filter.label': 'Show notifications',
+  'notifications.filter.all': 'All',
+  'notifications.filter.people': 'People',
+  'notifications.filter.games': 'Games',
+  'notifications.filter.progress': 'Progress',
+  'notifications.filter.hevalo': 'From Hevalo',
   'notifications.settings': 'Notification settings',
   'notifications.loadFailed': 'Your notifications didn’t load this time. They’re safe — try again in a moment.',
   'learn.view.label': 'Lessons, stories or games',

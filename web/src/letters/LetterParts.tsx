@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { LETTER_MAX, letterBirdSvg, letterProblem, type LetterItem, type LetterProblem } from '@kurda/shared';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -37,19 +37,31 @@ export function LetterPaper({
   sendLabel,
   busy,
   onSend,
+  onCancel,
   error,
+  autoFocus = false,
 }: {
   label: string;
   /** what sending it is called, when it is not your own bird that takes it */
   sendLabel?: string;
   busy: boolean;
   onSend: (body: string) => void;
+  /** putting the paper away again, for a letter that was started by choice */
+  onCancel?: () => void;
   /** what the server answered, when it refused */
   error?: string | null;
+  /** opened by asking to write: the pen goes to the paper, and the paper is brought into view */
+  autoFocus?: boolean;
 }): React.JSX.Element {
   const t = useT();
   const id = useId();
+  const sheet = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState('');
+  useEffect(() => {
+    if (!autoFocus) return;
+    sheet.current?.focus({ preventScroll: true });
+    sheet.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+  }, [autoFocus]);
   const [tried, setTried] = useState(false);
   const problem = letterProblem(body);
   // a letter still being started is not yet too short
@@ -68,6 +80,7 @@ export function LetterPaper({
         {label}
       </label>
       <textarea
+        ref={sheet}
         id={`${id}-body`}
         className="letter-paper-sheet"
         value={body}
@@ -90,9 +103,16 @@ export function LetterPaper({
       <p id={`${id}-problem`} className="letter-paper-problem" role="alert">
         {shown ?? error ?? ''}
       </p>
-      <button type="submit" className="btn btn-primary letter-paper-send" disabled={busy}>
-        {busy ? t('letters.sending') : (sendLabel ?? t('letters.send'))}
-      </button>
+      <div className="letter-paper-actions">
+        {onCancel && (
+          <button type="button" className="btn btn-ghost letter-paper-cancel" onClick={onCancel} disabled={busy}>
+            {t('common.cancel')}
+          </button>
+        )}
+        <button type="submit" className="btn btn-primary letter-paper-send" disabled={busy}>
+          {busy ? t('letters.sending') : (sendLabel ?? t('letters.send'))}
+        </button>
+      </div>
     </form>
   );
 }

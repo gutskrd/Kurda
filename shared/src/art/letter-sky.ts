@@ -43,7 +43,11 @@ export const LETTER_SILL_SPOTS: Readonly<Record<LetterSpot, { x: number; share: 
   visitor: { x: 63.5, share: 0.36 },
 };
 
-/** A play kept in place: where it turned round to look behind it, it hops on the spot instead, so it never swings its tail toward a bird beside it. */
+/**
+ * A play kept in place: where it turned round to look behind it, it only
+ * turns to glance at you and back, so it never swings its tail toward a bird
+ * beside it.
+ */
 function inPlace(play: LetterPlay): LetterPlay {
   return { ...play, moves: play.moves.map((m) => ({ ...m, sx: Math.abs(m.sx) })) };
 }
@@ -51,7 +55,8 @@ function inPlace(play: LetterPlay): LetterPlay {
 /**
  * The plays of a bird with another beside it on the sill: the same as on its
  * own, but never turning round, so the two keep their distance while one
- * lands, lays its letter down and waits, and the other plays at home.
+ * lands, lays its letter down, waves hello to you and waits, and the other
+ * plays at home.
  */
 export const LETTER_PLAY_BESIDE: Readonly<Record<'after' | 'idle', LetterPlay>> = {
   after: inPlace(LETTER_PLAY.after),

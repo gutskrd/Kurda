@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { RefreshControl, SectionList, StyleSheet, View } from 'react-native';
-import { isPlayGame, type IncomingInvite } from '@kurda/shared';
+import { isPlayGame, noticeFiltersFor, noticePicture, noticeShows, type IncomingInvite, type NoticeFilter } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -10,18 +10,19 @@ import { HeaderButton } from '../navigation/HeaderButton';
 import { layout, spacing } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
+import { Chips } from '../theme/Chips';
+import { useListEntrance } from '../theme/animate';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
-import { groupNotices, noticeActor, noticeKind, noticeTime, resolveDeepLink, type InboxItem, type NoticeGroup } from './inbox.js';
+import { groupNotices, noticeActor, noticeKind, noticeWhen, resolveDeepLink, type InboxItem, type NoticeFriend, type NoticeGroup } from './inbox.js';
 import { followDeepLink, notificationText } from './followLink';
 import { NotificationHeading, NotificationListSkeleton, NotificationRow } from './NotificationRow';
-import { NOTICE } from './rowMetrics';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { EmptyState } from '../theme/EmptyState';
 import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
 import { useUnread } from '../messages/unread';
-import { refreshFelt } from '../feedback/haptics';
+import { haptic, refreshFelt } from '../feedback/haptics';
 import { listInvites } from '../play/api';
 import { liveInvites } from '../play/invites';
 import { GAME_NAME_KEY } from '../play/labels';
@@ -32,23 +33,53 @@ const GROUP_TITLE: Record<NoticeGroup, TranslationKey> = {
   earlier: 'notifications.group.earlier',
 };
 
+const FILTER_LABEL: Record<NoticeFilter, TranslationKey> = {
+  all: 'notifications.filter.all',
+  people: 'notifications.filter.people',
+  games: 'notifications.filter.games',
+  progress: 'notifications.filter.progress',
+  hevalo: 'notifications.filter.hevalo',
+};
+
+/** Ids, as a set that is replaced rather than changed, so React sees each change. */
+const plus = (set: ReadonlySet<string>, id: string): ReadonlySet<string> => new Set(set).add(id);
+const minus = (set: ReadonlySet<string>, id: string): ReadonlySet<string> => {
+  const next = new Set(set);
+  next.delete(id);
+  return next;
+};
+
+/** Pieces said one after the other by a screen reader, each ended once: a body that already ends its sentence is not given a second full stop. */
+function sentences(parts: ReadonlyArray<string | null>): string {
+  return parts.filter((p): p is string => Boolean(p)).reduce((all, part) => (all ? `${all}${/[.!?…؟]$/.test(all) ? ' ' : '. '}${part}` : part), '');
+}
+
 /**
- * The notification list (KUR-097): invites, gifts, badges, the league and
- * notices from Hevalo, newest first. Opened from the bell on Home.
+ * The notification list (KUR-097): invites, gifts, letters, badges, the
+ * league and news from Hevalo, newest first. Opened from the bell on Home.
  *
  * Cut into Today, This week and Earlier, because a list of fifty with nothing
  * between them makes "what happened since I last looked" a job of reading
- * timestamps. Each row says who or what it is from with a picture, what
- * happened in a sentence, and when in a few quiet characters at the end.
+ * timestamps; and, when there is more than one kind of thing in it, a row of
+ * filters over it (People, Games, Progress, From Hevalo — shared notices.ts,
+ * the same as the website's). A filter whose last notification is taken away
+ * falls back to everything.
  *
- * An unread one is marked three ways — a dot, a tinted row, and the word a
- * screen reader hears — and reading them here takes the dot off the bell.
+ * Each row is drawn by NotificationRow: who it is from, what happened and
+ * when, and a picture of what it is about. Reading one here takes the dot off
+ * the bell. A row pulled aside opens on the notification settings and the way
+ * to take it away; one row is open at a time, and a tap anywhere on the list,
+ * or scrolling it, closes it rather than opening anything.
+ *
+ * Taking one away is said to the server and shown at once: the row slides off
+ * and closes up, and comes back only if the server would not take it away for
+ * a reason other than its already being gone.
  *
  * On a tablet the list is a column in the middle, as the shop's and the
  * season's are, rather than rows stretched across the whole screen.
  */
 export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
-  const { client } = useAuth();
+  const { client, isGuest } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -57,26 +88,42 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   const [refreshing, setRefreshing] = useState(false);
   // the invites that can still be answered: who sent each, and whether "Join" still means anything
   const [invites, setInvites] = useState<IncomingInvite[]>([]);
+  // who sent a gift or a letter: the server names them by id, and they are almost always a friend
+  const [friends, setFriends] = useState<NoticeFriend[]>([]);
   // the moderators' caring message, opened with its helpline (reports/CaringMessage.tsx)
   const [caring, setCaring] = useState<CaringMessage | null>(null);
+  const [filter, setFilter] = useState<NoticeFilter>('all');
+  // one row open at a time, and the list held still while a finger pulls one
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [swiping, setSwiping] = useState(false);
+  // taken away: on their way out (still drawn, leaving), then gone from the list
+  const [leaving, setLeaving] = useState<ReadonlySet<string>>(() => new Set());
+  const [removed, setRemoved] = useState<ReadonlySet<string>>(() => new Set());
   const { report } = useUnread();
   const bottom = useScreenBottomInset(spacing.lg);
 
-  // the bell's dot follows what is read here, without asking the server again
+  const live = useMemo(() => (items ?? []).filter((i) => !removed.has(i.id)), [items, removed]);
+
+  // the bell's dot follows what is read and taken away here, without asking the server again
   useEffect(() => {
-    if (items) report({ notifications: items.filter((i) => !i.readAt).length });
-  }, [items, report]);
+    if (items) report({ notifications: live.filter((i) => !i.readAt && !leaving.has(i.id)).length });
+  }, [items, live, leaving, report]);
 
   const load = useCallback(async () => {
-    const [res, live] = await Promise.all([client.get<{ notifications: InboxItem[] }>('/me/notifications'), listInvites(client)]);
-    if (live.ok) setInvites(liveInvites(live.data.incoming, Date.now()));
+    const [res, invited, social] = await Promise.all([
+      client.get<{ notifications: InboxItem[] }>('/me/notifications'),
+      listInvites(client),
+      isGuest ? null : client.get<{ friends?: NoticeFriend[] }>('/me/social'),
+    ]);
+    if (invited.ok) setInvites(liveInvites(invited.data.incoming, Date.now()));
+    if (social?.ok) setFriends(social.data.friends ?? []);
     if (res.ok) {
       setItems(res.data.notifications);
       setError(null);
     } else {
       setError(res.error);
     }
-  }, [client]);
+  }, [client, isGuest]);
 
   useFocusEffect(useCallback(() => void load(), [load]));
 
@@ -111,26 +158,61 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
     [client, navigation],
   );
 
-  const hasUnread = (items ?? []).some((i) => !i.readAt);
-  const sections = useMemo(() => groupNotices(items ?? []).map((g) => ({ key: g.key, data: g.items })), [items]);
+  /**
+   * Take one away: it starts leaving at once and the server is told; if the
+   * server would not (and it was not simply gone already), it comes back.
+   */
+  const remove = useCallback(
+    (item: InboxItem) => {
+      setOpenId(null);
+      setLeaving((s) => plus(s, item.id));
+      haptic('tap');
+      void client.delete(`/me/notifications/${item.id}`).then((res) => {
+        if (res.ok || res.error.status === 404) return;
+        setLeaving((s) => minus(s, item.id));
+        setRemoved((s) => minus(s, item.id));
+      });
+    },
+    [client],
+  );
+
+  const gone = useCallback((id: string) => {
+    setRemoved((s) => plus(s, id));
+    setLeaving((s) => minus(s, id));
+  }, []);
+
+  const filters = useMemo(() => noticeFiltersFor(live), [live]);
+  // a filter whose last notification was taken away falls back to everything
+  const current = filters.includes(filter) ? filter : 'all';
+  const hasUnread = live.some((i) => !i.readAt && !leaving.has(i.id));
+  const sections = useMemo(
+    () => groupNotices(live.filter((i) => noticeShows(i, current))).map((g) => ({ key: g.key, data: g.items })),
+    [live, current],
+  );
+  // where each row stands in the whole list, for the stagger as it arrives
+  const order = useMemo(() => new Map(sections.flatMap((s) => s.data).map((i, n) => [i.id, n])), [sections]);
+  const entering = useListEntrance(items !== null);
 
   const renderItem = useCallback(
-    ({ item }: { item: InboxItem }) => {
-      const actor = noticeActor(item, invites);
+    ({ item, section }: { item: InboxItem; section: { key: NoticeGroup } }) => {
+      const actor = noticeActor(item, invites, friends);
       const unread = !item.readAt;
       // an invite that can still be answered names its host, in the reader's words
-      const live = item.data.kind === 'play_invite' && actor && isPlayGame(item.data.game);
-      const text = live
+      const joinable = item.data.kind === 'play_invite' && actor && isPlayGame(item.data.game);
+      const text = joinable
         ? { title: t('play.banner.invited', { name: actor.name, game: t(GAME_NAME_KEY[item.data.game as keyof typeof GAME_NAME_KEY]) }), body: '' }
-        : notificationText(item, t, locale);
-      const time = noticeTime(item.createdAt, t, locale);
+        : item.data.kind === 'gift' && actor
+          ? // a gift from somebody the app can name says who it is from
+            { title: t('gift.banner.body', { name: actor.name }), body: notificationText(item, t, locale).body }
+          : notificationText(item, t, locale);
+      const time = noticeWhen(item.createdAt, section.key, t, locale);
       // Join only while there is a game to join, Open only on a gift not yet opened
-      const action = live
+      const action = joinable
         ? { label: t('play.banner.join'), onPress: () => open(item) }
         : item.data.kind === 'gift' && unread
           ? { label: t('gift.banner.open'), onPress: () => open(item) }
           : null;
-      const label = [unread ? t('messages.filter.unread') : null, text.title, text.body || null, time].filter(Boolean).join('. ');
+      const label = sentences([unread ? t('messages.filter.unread') : null, text.title, text.body || null, time]);
       return (
         <NotificationRow
           title={text.title}
@@ -139,13 +221,30 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
           unread={unread}
           actor={actor}
           kind={noticeKind(item)}
+          picture={noticePicture(item)}
           label={label}
-          onPress={() => open(item)}
+          // a tap while a row is open only closes it: the finger was busy with that row, not asking for this one
+          onPress={() => (openId !== null ? setOpenId(null) : open(item))}
           action={action}
+          open={openId === item.id}
+          leaving={leaving.has(item.id)}
+          enter={entering(order.get(item.id) ?? 0)}
+          onOpen={(on) => {
+            if (on) haptic('tap');
+            setOpenId(on ? item.id : null);
+          }}
+          onRemove={() => remove(item)}
+          onGone={() => gone(item.id)}
+          onTouch={() => setOpenId((was) => (was === item.id ? was : null))}
+          onSwiping={setSwiping}
+          onSettings={() => {
+            setOpenId(null);
+            navigation.navigate('Notifications');
+          }}
         />
       );
     },
-    [invites, locale, open, t],
+    [entering, friends, gone, invites, leaving, locale, navigation, open, openId, order, remove, t],
   );
 
   return (
@@ -160,7 +259,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
         <AsyncBoundary
           loading={items === null}
           error={items === null ? error : null}
-          isEmpty={items?.length === 0}
+          isEmpty={items !== null && live.length === 0}
           onRetry={() => void load()}
           skeleton={<NotificationListSkeleton />}
           empty={
@@ -176,6 +275,21 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
             sections={sections}
             keyExtractor={(i) => i.id}
             renderItem={renderItem}
+            ListHeaderComponent={
+              filters.length > 2 ? (
+                <View style={styles.filters} role="group" accessibilityLabel={t('notifications.filter.label')}>
+                  <Chips
+                    options={filters}
+                    value={current}
+                    onChange={(f) => {
+                      setOpenId(null);
+                      setFilter(f);
+                    }}
+                    labelOf={(f) => t(FILTER_LABEL[f])}
+                  />
+                </View>
+              ) : null
+            }
             renderSectionHeader={({ section }) => (
               <NotificationHeading
                 title={t(GROUP_TITLE[section.key])}
@@ -183,8 +297,9 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
                 action={section.key === sections[0]?.key && hasUnread ? { label: t('notifications.markAllRead'), onPress: markAll } : null}
               />
             )}
-            ItemSeparatorComponent={Gap}
             stickySectionHeadersEnabled={false}
+            scrollEnabled={!swiping}
+            onScrollBeginDrag={() => setOpenId(null)}
             style={styles.list}
             contentContainerStyle={[styles.column, { paddingBottom: bottom + spacing.lg }]}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.textSecondary} />}
@@ -197,14 +312,11 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   );
 }
 
-function Gap(): React.JSX.Element {
-  return <View style={styles.gap} />;
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   list: { flex: 1 },
-  // the same column the skeleton draws (NotificationRow.tsx), so the rows land where it stood
-  column: { width: '100%', maxWidth: layout.column, alignSelf: 'center', paddingHorizontal: layout.gutter - NOTICE.padH },
-  gap: { height: NOTICE.rowGap },
+  // the same column the skeleton draws (NotificationRow.tsx), so the rows land where it stood; the rows run to its edges
+  column: { width: '100%', maxWidth: layout.column, alignSelf: 'center' },
+  // the chips scroll out to the column's edges from inside the gutter (theme/Chips.tsx)
+  filters: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
 });

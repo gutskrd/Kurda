@@ -38,6 +38,53 @@
   gap: var(--space-4);
   margin-bottom: var(--space-5);
 }
+/* the window, and on it the one control that is about your own bird: which bird it is */
+.letters-window {
+  position: relative;
+  width: min(100%, 380px);
+}
+.letters-window .lw {
+  width: 100%;
+}
+.letters-change {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 13px 0 11px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) ease;
+}
+/* a finger needs more room than the pill shows */
+.letters-change::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+.letters-change:hover {
+  box-shadow: var(--shadow), 0 0 0 1px var(--border-strong);
+}
+.letters-change:active {
+  transform: scale(0.97);
+}
+.letters-change:focus-visible {
+  outline: 2px solid var(--focus, #3d8bd9);
+  outline-offset: 2px;
+}
 /*
  * The window in its layers (LetterWindow.tsx). Each layer is the same square;
  * the country behind the frame is moved by the pointer (`--px`, `--py`, -1 to
@@ -302,9 +349,12 @@
 .letters-hero-text {
   display: grid;
   justify-items: center;
-  gap: var(--space-2);
-  max-width: 440px;
+  gap: var(--space-3);
+  width: min(100%, 380px);
   text-align: center;
+}
+.letters-hero-text:empty {
+  display: none;
 }
 .letters-status {
   margin: 0;
@@ -319,22 +369,93 @@
   font-size: 1.0625rem;
 }
 .letters-write {
-  min-width: 220px;
+  justify-self: stretch;
+  min-height: 48px;
 }
 
-/* the birds out there: how many, and the way to call one */
+/* the birds out there: a few of them as they look, how many there are, and the way to call one, as one card */
 .letters-sky {
+  justify-self: stretch;
   display: grid;
-  justify-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'birds text'
+    'action action';
+  align-items: center;
+  gap: 12px 14px;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  text-align: start;
+}
+.letters-sky.is-empty {
+  grid-template-columns: 1fr;
+  grid-template-areas: 'text';
+  padding-bottom: 14px;
+}
+.letters-sky-birds {
+  grid-area: birds;
+  display: flex;
+}
+/* the birds overlap a little, each ringed in the card's colour so they read as birds, not a blot */
+.letters-sky-birds .letter-badge {
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.letters-sky-birds .letter-badge + .letter-badge {
+  margin-inline-start: -11px;
+}
+.letters-sky-text {
+  grid-area: text;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  line-height: 1.45;
+  text-wrap: pretty;
 }
 .letters-call {
-  min-width: 220px;
+  grid-area: action;
+  width: 100%;
+}
+.letters-sky-done {
+  grid-area: action;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  line-height: 1.4;
 }
 .letters-status--quiet {
   color: var(--ink-3);
   font-size: var(--text-secondary);
+}
+/* a quiet way out, set in line with the words around it rather than in a button's padding */
+.letters-text-button {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--text-secondary);
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.letters-text-button:hover {
+  color: var(--ink);
+  text-decoration-color: currentColor;
+}
+.letters-text-button:focus-visible {
+  outline: 2px solid var(--focus, #3d8bd9);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.letters-text-button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 /* sending a visiting bird on asks once, in place */
 .letters-ask {
@@ -476,9 +597,21 @@
   color: var(--danger, #d8493b);
   font-size: var(--text-secondary);
 }
+.letter-paper-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-2);
+}
 .letter-paper-send {
-  justify-self: start;
   min-width: 200px;
+}
+/* on a phone the send takes the width it can, the way out of it kept small beside it */
+@media (max-width: 520px) {
+  .letter-paper-send {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 /* ---- a letter, read ------------------------------------------------------------------- */
@@ -654,23 +787,52 @@
 /* ---- how it works --------------------------------------------------------------------- */
 .letters-how {
   margin-top: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
   color: var(--ink-3);
   font-size: var(--text-secondary);
 }
 .letters-how summary {
-  min-height: 44px;
+  min-height: 52px;
   display: flex;
   align-items: center;
-  color: var(--ink-2);
-  font-weight: 600;
+  gap: 10px;
+  padding: 0 14px;
+  color: var(--ink);
+  font-weight: 650;
   cursor: pointer;
+  list-style: none;
+}
+.letters-how summary::-webkit-details-marker {
+  display: none;
+}
+.letters-how summary:focus-visible {
+  outline: 2px solid var(--focus, #3d8bd9);
+  outline-offset: 2px;
+  border-radius: var(--r-lg);
+}
+.letters-how-icon {
+  flex: none;
+  color: var(--ink-3);
+}
+/* the chevron turns down as the lines open under it */
+.letters-how-open {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--ink-3);
+  rotate: 90deg;
+  transition: rotate var(--dur-fast) var(--ease-out);
+}
+.letters-how[open] .letters-how-open {
+  rotate: -90deg;
 }
 .letters-how ul {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   margin: 0;
-  padding-inline-start: 1.2em;
-  line-height: 1.45;
+  padding: 0 18px 16px calc(14px + 18px + 10px);
+  line-height: 1.5;
 }
 
 /* ---- one correspondence ------------------------------------------------------------- */

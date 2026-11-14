@@ -6,7 +6,7 @@ import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
 import { ErrorState } from '../components/states';
-import { ChevronIcon } from '../components/icons';
+import { ChevronIcon, HelpIcon, PaletteIcon } from '../components/icons';
 import { ReportSheet } from '../reports/ReportSheet';
 import { LetterWindow, type WindowScene } from './LetterWindow';
 import { BirdBadge, LetterPaper, LetterSheet } from './LetterParts';
@@ -213,10 +213,13 @@ export function LettersPage(): React.JSX.Element {
     home.reload();
   }
 
+  // the picker takes the place of whatever is open under the window, the paper included, so the button always does what it says
   function startChanging(): void {
     if (!data) return;
     setPicked(data.bird);
     setBirdError(null);
+    setError(null);
+    setMoment({ kind: 'rest' });
     setChanging(true);
   }
 
@@ -225,11 +228,18 @@ export function LettersPage(): React.JSX.Element {
   const canCall = data.refusal === null && !here && room && data.birdsOut > 0 && data.callsLeft > 0;
   const visitorName = visitor?.person.name ?? '';
 
-  // the birds out there, how many, and the way to call one
+  // the birds out there: the first few of them as they look, how many there are, and the way to call one
   const sky =
     data.refusal === null && room && !here ? (
-      <div className="letters-sky">
-        <p className="letters-status">
+      <div className={`letters-sky${data.birdsOut === 0 ? ' is-empty' : ''}`}>
+        {data.sky.length > 0 && (
+          <span className="letters-sky-birds" aria-hidden="true">
+            {data.sky.slice(0, 4).map((bird, i) => (
+              <BirdBadge key={`${i}-${bird}`} bird={bird} size={34} />
+            ))}
+          </span>
+        )}
+        <p className="letters-sky-text">
           {data.birdsOut === 0 ? t('letters.sky.none') : data.birdsOut === 1 ? t('letters.sky.one') : t('letters.sky.many', { count: data.birdsOut })}
         </p>
         {data.birdsOut > 0 &&
@@ -238,15 +248,12 @@ export function LettersPage(): React.JSX.Element {
               {busy ? t('letters.calling') : t('letters.call')}
             </button>
           ) : (
-            <p className="letters-status letters-status--quiet">{t('letters.callsDone')}</p>
+            <p className="letters-sky-done">{t('letters.callsDone')}</p>
           ))}
       </div>
     ) : null;
-  const change = (
-    <button type="button" className="btn btn-ghost btn-sm" onClick={startChanging}>
-      {t('letters.bird.change')}
-    </button>
-  );
+  // your own bird can be changed while it is home and nothing else is happening at the window: the button sits on the window itself
+  const canChange = data.refusal === null && data.birdChosen && !out && !here && !choosing && (moment.kind === 'rest' || moment.kind === 'writing');
 
   let status: React.ReactNode;
   if (data.refusal === 'birth_month')
@@ -329,23 +336,16 @@ export function LettersPage(): React.JSX.Element {
         }}
       />
     );
-  else if (!room)
-    status = (
-      <>
-        <p className="letters-status">{t('letters.full', { max: PEN_PALS_MAX })}</p>
-        {change}
-      </>
-    );
+  else if (!room) status = <p className="letters-status">{t('letters.full', { max: PEN_PALS_MAX })}</p>;
+  // while a letter is being written the paper is the one thing under the window
+  else if (moment.kind === 'writing') status = null;
   else
     status = (
       <>
-        {moment.kind !== 'writing' && (
-          <button type="button" className="btn btn-primary letters-write" onClick={() => setMoment({ kind: 'writing' })}>
-            {t('letters.write')}
-          </button>
-        )}
+        <button type="button" className="btn btn-primary letters-write" onClick={() => setMoment({ kind: 'writing' })}>
+          {t('letters.write')}
+        </button>
         {sky}
-        {change}
       </>
     );
 
@@ -357,14 +357,22 @@ export function LettersPage(): React.JSX.Element {
       </header>
 
       <section className="letters-hero">
-        {shown && (
-          <LetterWindow
-            scene={shown}
-            onOwnGone={ownGone}
-            onVisitorGone={visitorGone}
-            onVisitorLanded={() => setScene((s) => (s && s.visitor.kind === 'arriving' ? { ...s, visitor: { kind: 'here', bird: s.visitor.bird } } : s))}
-          />
-        )}
+        <div className="letters-window">
+          {shown && (
+            <LetterWindow
+              scene={shown}
+              onOwnGone={ownGone}
+              onVisitorGone={visitorGone}
+              onVisitorLanded={() => setScene((s) => (s && s.visitor.kind === 'arriving' ? { ...s, visitor: { kind: 'here', bird: s.visitor.bird } } : s))}
+            />
+          )}
+          {canChange && (
+            <button type="button" className="letters-change" onClick={startChanging}>
+              <PaletteIcon size={15} />
+              {t('letters.bird.change')}
+            </button>
+          )}
+        </div>
         <div className="letters-hero-text" aria-live="polite">
           {status}
           {error && !here && moment.kind !== 'writing' && (
@@ -375,7 +383,19 @@ export function LettersPage(): React.JSX.Element {
         </div>
       </section>
 
-      {moment.kind === 'writing' && canWrite && <LetterPaper label={t('letters.yourLetter')} busy={busy} onSend={(body) => void send(body)} error={error} />}
+      {moment.kind === 'writing' && canWrite && (
+        <LetterPaper
+          label={t('letters.yourLetter')}
+          busy={busy}
+          onSend={(body) => void send(body)}
+          onCancel={() => {
+            setError(null);
+            setMoment({ kind: 'rest' });
+          }}
+          error={error}
+          autoFocus
+        />
+      )}
 
       {here && visitor && (
         <section className={`letters-arrived${scene.visitor.kind === 'arriving' ? ' is-landing' : ''}`} aria-label={t('letters.visitor.title', { name: visitorName })}>
@@ -401,7 +421,7 @@ export function LettersPage(): React.JSX.Element {
               </div>
             </div>
           ) : (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAskingOn(true)} disabled={busy}>
+            <button type="button" className="letters-text-button" onClick={() => setAskingOn(true)} disabled={busy}>
               {t('letters.visitor.sendOn')}
             </button>
           )}
@@ -434,7 +454,11 @@ export function LettersPage(): React.JSX.Element {
       </section>
 
       <details className="letters-how">
-        <summary>{t('letters.how.title')}</summary>
+        <summary>
+          <HelpIcon size={18} className="letters-how-icon" />
+          <span>{t('letters.how.title')}</span>
+          <ChevronIcon size={16} className="letters-how-open" />
+        </summary>
         <ul>
           <li>{t('letters.how.call')}</li>
           <li>{t('letters.how.ages')}</li>

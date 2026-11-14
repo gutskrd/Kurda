@@ -9,7 +9,23 @@
 export * from './keys.js';
 export { badgeSvg, badgeShineSvg, badgeShines, badgeColour, SMALL_BADGE, type BadgeOptions, type BadgeShineOptions, type BadgeState } from './badges.js';
 export { dayMedalSvg, streakMedalSvg, type DayMedal, type MedalOptions } from './medals.js';
-export { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSeasonAir, treeSvg, waterDropSvg, wateringCanSvg, type TreeOptions, type TreeSeasonAir } from './trees.js';
+export { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeRig, treeSeasonAir, treeSvg, waterDropSvg, wateringCanSvg, type TreeOptions, type TreeRig, type TreeSeasonAir } from './trees.js';
+export {
+  TREE_DRINK,
+  TREE_GROW,
+  TREE_PLANT_DROP,
+  TREE_REVIVE,
+  TREE_SHAKE,
+  TREE_SWAY,
+  TREE_SWING,
+  TREE_WAVE,
+  TREE_WAVE_AT,
+  treeGrowFrom,
+  treeHeft,
+  treePhase,
+  treeSwayDeg,
+  treeWave,
+} from './tree-motion.js';
 export {
   TREE_SKIES,
   TREE_STUDIO,

@@ -24,6 +24,7 @@ import { SlidersHorizontal } from '@phosphor-icons/react/dist/icons/SlidersHoriz
 import { ArrowUUpRight } from '@phosphor-icons/react/dist/icons/ArrowUUpRight';
 import { Crop } from '@phosphor-icons/react/dist/icons/Crop';
 import { Pencil } from '@phosphor-icons/react/dist/icons/Pencil';
+import { Palette } from '@phosphor-icons/react/dist/icons/Palette';
 import { BookOpen } from '@phosphor-icons/react/dist/icons/BookOpen';
 import { BookOpenText } from '@phosphor-icons/react/dist/icons/BookOpenText';
 import { Bell } from '@phosphor-icons/react/dist/icons/Bell';
@@ -207,6 +208,8 @@ export const ChainIcon = named(LinkGlyph, 22);
 export const ImpostorIcon = named(Detective, 22);
 /** Across to the other side: a player moved to the other team. */
 export const SwapIcon = named(ArrowsLeftRight, 18);
+/** Choosing how something of yours looks, such as which bird carries your letters. */
+export const PaletteIcon = named(Palette, 18);
 export const WaveformIcon = named(Waveform, 22);
 /* the landing page's pictures of a lesson: a clip to play, a word to say */
 export const PlayIcon = named(Play, 22, 'fill');

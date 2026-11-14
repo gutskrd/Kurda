@@ -14,6 +14,9 @@ import { CoinIcon, GemIcon, GiftIcon } from '../components/icons';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
 import { RefreshedNotice, type InventoryWithNotice } from '../shop/RefreshedItems';
 import { BuyConfirm } from '../shop/BuyConfirm';
+import { YourBird, useLettersHome } from '../shop/YourBird';
+import { YourTree } from '../shop/YourTree';
+import { useTree } from '../tree/useTree';
 import {
   FilterToggle,
   ItemSearch,
@@ -136,6 +139,11 @@ function boughtMessage(category: string): MessageKey {
  * Buying something that costs anything asks first, and says that the purchase
  * is final: nothing bought can be handed back for Zêr or gems.
  *
+ * Over the catalogue, what of yours the Shop can change: the bird that carries
+ * your letters, and the tree you grow (shop/YourBird.tsx, shop/YourTree.tsx),
+ * each bought or swapped here as on its own page, with the Zêr shown at the
+ * top following whatever is spent on either.
+ *
  * Buying only grants ownership; equipping happens in Edit Profile. All prices,
  * ownership and payment are server-authoritative (POST /shop/purchase and
  * /shop/gift validate the price and move the money atomically); the client
@@ -152,6 +160,9 @@ export function Shop(): React.JSX.Element {
   const wallet = useApiGet<{ balances: { zer: number; gems?: number } }>('/me/wallet', { fresh: true });
   const [view, setView] = useShopView();
   const ids = useIdPrefix('shop');
+  // your bird and your tree are asked for with the catalogue, so they arrive with it rather than after it
+  const letters = useLettersHome();
+  const tree = useTree();
 
   /** balances learned since the wallet was read: a purchase or a gift answers with the new one */
   const [known, setKnown] = useState<Partial<Record<Currency, number>>>({});
@@ -182,6 +193,9 @@ export function Shop(): React.JSX.Element {
     },
     [balanceOf],
   );
+
+  /** The Zêr a new bird or a tree kind left, which the balance at the top and every price then go by. */
+  const learnZer = useCallback((zer: number) => setKnown((k) => ({ ...k, zer })), []);
 
   const ownedSkus = useMemo(() => {
     const s = new Set((inventory.data?.items ?? []).map((i) => i.sku));
@@ -364,6 +378,9 @@ export function Shop(): React.JSX.Element {
       <RefreshedNotice inventory={inventory.data} />
 
       <GiftsReceived onEquipHint={() => setMsg(null)} />
+
+      <YourBird home={letters} zer={zer} onZer={learnZer} />
+      <YourTree tree={tree} zer={zer} onZer={learnZer} />
 
       {/* the catalogue only grows, and scrolling all of it to find one thing is
           not browsing — it is searching, badly */}

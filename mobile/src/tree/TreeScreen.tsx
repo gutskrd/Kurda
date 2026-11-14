@@ -2,7 +2,27 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useFocusEffect } from '@react-navigation/native';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
-import { TREE_FOOT, TREE_FULL, TREE_STAGES, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSeasonAir, type TreeSeason, type TreeSpecies, type TreeStage, type TreeView } from '@kurda/shared';
+import {
+  TREE_DRINK,
+  TREE_FOOT,
+  TREE_FULL,
+  TREE_GROW,
+  TREE_PLANT_DROP,
+  TREE_REVIVE,
+  TREE_SHAKE,
+  TREE_STAGES,
+  TREE_TOP,
+  TREE_WATER_LANDS,
+  hasTreeArt,
+  treeColour,
+  treeGrowFrom,
+  treeHeft,
+  treeSeasonAir,
+  type TreeSeason,
+  type TreeSpecies,
+  type TreeStage,
+  type TreeView,
+} from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { describeError } from '../api/errors';
@@ -35,6 +55,12 @@ const GROW_MS = 1150;
 
 /** What the screen is in the middle of: nothing, the can pouring, or the tree growing under it. */
 type Phase = 'idle' | 'pour' | 'grow';
+
+/** The tree as it stood before the water: kept a moment over the new one, which grows out of it or is revived from under it. */
+interface Was {
+  tree: TreeView;
+  kind: 'grow' | 'revive';
+}
 
 /** What a pour did that is worth stopping for: it grew, or a full-grown tree bore. */
 interface Moment {
@@ -89,6 +115,14 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const [planted, setPlanted] = useState(0);
   const [cheer, setCheer] = useState(0);
   const [moment, setMoment] = useState<Moment | null>(null);
+  const [was, setWas] = useState<Was | null>(null);
+  const fade = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (fade.current) clearTimeout(fade.current);
+    },
+    [],
+  );
   const [note, setNote] = useState<string | null>(null);
   const [nursery, setNursery] = useState(false);
   const after = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -153,15 +187,17 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
   /** What the water did, shown once it has landed. */
   const settle = useCallback(
-    (was: MyTree, watered: Watered, still: boolean) => {
-      setData({ ...was, tree: watered.tree, zer: was.zer + watered.zer });
+    (before: MyTree, watered: Watered, still: boolean) => {
+      setData({ ...before, tree: watered.tree, zer: before.zer + watered.zer });
       if (watered.grew !== null) {
         const say = (): void => {
           setPhase('idle');
+          setWas(null);
           setMoment({ kind: 'grew', tree: watered.tree, zer: watered.zer });
         };
         if (still) return say();
-        // it grows where it stands, and is looked at, before anything is said about it
+        // it grows where it stands, out of the tree it was, and is looked at, before anything is said about it
+        if (before.tree) setWas({ tree: before.tree, kind: 'grow' });
         setGrown((n) => n + 1);
         setPhase('grow');
         haptic('celebrate');
@@ -170,6 +206,12 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
         return;
       }
       setPhase('idle');
+      if (!still && before.tree && before.tree.health !== watered.tree.health) {
+        // brought back: the tree as it drooped fades off the one the water revived
+        setWas({ tree: before.tree, kind: 'revive' });
+        if (fade.current) clearTimeout(fade.current);
+        fade.current = setTimeout(() => setWas(null), TREE_REVIVE.ms);
+      }
       if (!still) setCheer((n) => n + 1);
       if (watered.harvests > 0) setMoment({ kind: 'harvest', tree: watered.tree, zer: watered.zer });
       else if (watered.revived) setNote(t('tree.revived'));
@@ -228,7 +270,7 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                 </Text>
               </View>
 
-              <Stage tree={tree} season={season} side={side} phase={phase} grown={grown} planted={planted} cheer={cheer} label={treeTitle(t, tree)} />
+              <Stage tree={tree} was={was} season={season} side={side} phase={phase} grown={grown} planted={planted} cheer={cheer} label={treeTitle(t, tree)} />
 
               {tree.health !== 'fresh' ? (
                 <View style={[styles.health, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]} accessible testID="tree-health">
@@ -347,6 +389,7 @@ function run(clock: Animated.Value, duration: number, easing: (t: number) => num
  */
 function Stage({
   tree,
+  was,
   season,
   side,
   phase,
@@ -356,6 +399,7 @@ function Stage({
   label,
 }: {
   tree: TreeView;
+  was: Was | null;
   season: TreeSeason;
   side: number;
   phase: Phase;
@@ -373,6 +417,7 @@ function Stage({
   const bob = useRef(new Animated.Value(0)).current;
   const pour = useRef(new Animated.Value(0)).current;
   const grow = useRef(new Animated.Value(1)).current;
+  const revive = useRef(new Animated.Value(1)).current;
   // a seed that was planted a moment ago starts above its heap of earth, so it is never seen in it before it falls
   const drop = useRef(new Animated.Value(planted > 0 && tree.stage === 0 ? 0 : 1)).current;
   const shake = useRef(new Animated.Value(0)).current;
@@ -401,12 +446,15 @@ function Stage({
   }, [phase, pour]);
   // before the new picture is painted, so the grown tree is not seen at its full size for a frame and then small
   useLayoutEffect(() => {
-    if (grown > 0 && !reduce) run(grow, GROW_MS);
+    if (grown > 0 && !reduce) run(grow, TREE_GROW.ms);
   }, [grown, grow, reduce]);
+  useLayoutEffect(() => {
+    if (was?.kind === 'revive' && !reduce) run(revive, TREE_REVIVE.ms, Easing.inOut(Easing.quad));
+  }, [was, revive, reduce]);
   useLayoutEffect(() => {
     if (planted === 0) return;
     if (reduce) drop.setValue(1);
-    else run(drop, 950);
+    else run(drop, TREE_PLANT_DROP.ms);
   }, [planted, drop, reduce]);
   useEffect(() => {
     if (cheer > 0 && !reduce) run(spark, 1100);
@@ -415,31 +463,50 @@ function Stage({
   const poke = (): void => {
     if (reduce || phase !== 'idle') return;
     haptic('select');
-    run(shake, 680, Easing.out(Easing.quad));
+    run(shake, TREE_SHAKE.ms, Easing.out(Easing.quad));
   };
 
-  // the whole picture: in with the screen, and up from its foot out of the light when it has grown
+  // the whole picture: in with the screen, and rising a little as if it breathed
   const whole = {
-    opacity: Animated.multiply(arrive.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 1, 1] }), grow.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0.2, 1, 1] })),
+    opacity: arrive.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 1, 1] }),
     transform: [
       { translateY: Animated.add(arrive.interpolate({ inputRange: [0, 1], outputRange: [size * 0.05, 0] }), bob.interpolate({ inputRange: [0, 1], outputRange: [0, -size * 0.015] })) },
-      { scale: Animated.multiply(arrive.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1] }), grow.interpolate({ inputRange: [0, 0.72, 1], outputRange: [0.5, 1.05, 1] })) },
+      { scale: arrive.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1] }) },
     ],
   };
-  // the plant alone: dropped in as a seed, shaken when touched, and the start it gives as it drinks
+  // grown (shared `TREE_GROW`): the new plant comes up from the old one's size, a little past its own and back, as the old one swells toward it and goes
+  const from = was?.kind === 'grow' ? treeGrowFrom(was.tree.stage, tree.stage) : 1;
+  const heft = treeHeft(tree.stage);
+  // watered (shared `TREE_DRINK`): where in the pour each of its stretches falls, and how far, by the plant's heft
+  const drinkAt = [0, ...TREE_DRINK.stops.map((t) => (TREE_DRINK.delayMs + t * TREE_DRINK.ms) / POUR_MS), 1];
+  const stretch = (by: readonly number[]): Animated.AnimatedInterpolation<number> =>
+    pour.interpolate({ inputRange: drinkAt, outputRange: [1, ...by.map((k) => 1 + (k - 1) * heft), 1] });
+  const grows = grow.interpolate({ inputRange: [0, 0.72, 1], outputRange: [from, TREE_GROW.past, 1] });
+  // the plant alone: dropped in as a seed, grown, shaken when touched, and the start it gives as it drinks
   const plantOf = {
+    opacity: grow.interpolate({ inputRange: [0, TREE_GROW.inBy, 1], outputRange: [0, 1, 1] }),
     transform: [
-      { translateY: drop.interpolate({ inputRange: [0, 0.52, 0.68, 0.84, 1], outputRange: [-size * 0.62, 0, -size * 0.045, 0, 0] }) },
+      { translateY: drop.interpolate({ inputRange: [...TREE_PLANT_DROP.stops], outputRange: TREE_PLANT_DROP.y.map((y) => y * size) }) },
       {
         rotate: Animated.add(
-          drop.interpolate({ inputRange: [0, 0.52, 0.68, 0.84, 1], outputRange: [-16, 5, -2, 1, 0] }),
-          shake.interpolate({ inputRange: [0, 0.2, 0.4, 0.6, 0.8, 1], outputRange: [0, -2.8, 2.3, -1.3, 0.6, 0] }),
+          drop.interpolate({ inputRange: [...TREE_PLANT_DROP.stops], outputRange: [...TREE_PLANT_DROP.turn] }),
+          shake.interpolate({ inputRange: TREE_SHAKE.turns.map((_, i) => i / (TREE_SHAKE.turns.length - 1)), outputRange: TREE_SHAKE.turns.map((turn) => turn * heft) }),
         ).interpolate({ inputRange: [-30, 30], outputRange: ['-30deg', '30deg'] }),
       },
-      { scaleX: pour.interpolate({ inputRange: [0, 0.35, 0.5, 0.66, 0.82, 1], outputRange: [1, 1, 1.05, 0.96, 1.02, 1] }) },
-      { scaleY: pour.interpolate({ inputRange: [0, 0.35, 0.5, 0.66, 0.82, 1], outputRange: [1, 1, 0.93, 1.06, 0.98, 1] }) },
+      { scaleX: Animated.multiply(stretch(TREE_DRINK.sx), grows) },
+      { scaleY: Animated.multiply(stretch(TREE_DRINK.sy), grows) },
     ],
   };
+  // the tree that was, over the new one while it goes: swelling as it fades when it has grown, only fading when it has been revived
+  const goes = grow.interpolate({ inputRange: [0, TREE_GROW.outFrom, TREE_GROW.outBy], outputRange: [1, 1, 0], extrapolate: 'clamp' });
+  const leaving =
+    was?.kind === 'grow'
+      ? {
+          plant: { opacity: goes, transform: [{ scale: grow.interpolate({ inputRange: [0, TREE_GROW.outBy], outputRange: [1, 1 / from], extrapolate: 'clamp' }) }] },
+          soil: { opacity: goes },
+          whole: {},
+        }
+      : { plant: {}, soil: {}, whole: { opacity: revive.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) } };
   const lands = TREE_WATER_LANDS[tree.stage] ?? 0.5;
   const top = Math.max(0.02, (TREE_TOP[tree.stage] ?? 0.2) - 0.12);
 
@@ -449,6 +516,11 @@ function Stage({
       <Pressable accessible={false} onPress={poke} style={[styles.plot, { width: size, height: size, bottom }]} testID="tree-plot">
         <Animated.View style={[{ width: size, height: size, transformOrigin: FOOT }, whole]}>
           <TreeArt species={tree.species} stage={tree.stage} health={tree.health} season={season} size={size} label={label} alive plant={plantOf} />
+          {was && !reduce ? (
+            <Animated.View {...UNSEEN} style={[StyleSheet.absoluteFill, leaving.whole]} testID={`tree-was-${was.kind}`}>
+              <TreeArt species={was.tree.species} stage={was.tree.stage} health={was.tree.health} season={season} size={size} alive plant={leaving.plant} soil={leaving.soil} />
+            </Animated.View>
+          ) : null}
         </Animated.View>
 
         {tree.health !== 'fresh' && phase === 'idle' ? (

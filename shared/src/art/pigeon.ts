@@ -17,7 +17,9 @@
  * its back, blinking, chirping happily with its eyes screwed up and its beak
  * open (as the owner's playful birds do), waving the wing, asleep, and
  * flying with its wings down, which an app shows in turn with the wings up
- * for a beat.
+ * for a beat. Turning round, it is seen turned three-quarters toward you and
+ * then facing you (after the owner's front and three-quarter references),
+ * so that it turns as a round bird does rather than flipping like a card.
  *
  * It is drawn about its feet at 0,0, facing right, a unit to five of the
  * reference's pixels: about fifty-five units from tail to beak. Its shadow on
@@ -27,9 +29,16 @@
 import type { Drawing } from './svg.js';
 import { linearAt, mix, n, radialAt, radialBox } from './svg.js';
 
-/** What the pigeon is doing. Flying is two pictures, its wings up and its wings down, which an app shows in turn. */
-export type PigeonPose = 'perched' | 'blink' | 'happy' | 'wave' | 'sleep' | 'wings-up' | 'wings-down';
-export const PIGEON_POSES: readonly PigeonPose[] = ['perched', 'blink', 'happy', 'wave', 'sleep', 'wings-up', 'wings-down'];
+/**
+ * What the pigeon is doing. Flying is two pictures, its wings up and its wings
+ * down, which an app shows in turn. Turning round is two more: turned
+ * three-quarters toward you (`turn`, facing right like the others, mirrored
+ * for the other way) and facing you (`front`, the same either way round);
+ * facing you, it can wave a wing at you with its eyes screwed up for joy
+ * (`hello`), which an app shows in turn with `front`.
+ */
+export type PigeonPose = 'perched' | 'blink' | 'happy' | 'wave' | 'sleep' | 'wings-up' | 'wings-down' | 'turn' | 'front' | 'hello';
+export const PIGEON_POSES: readonly PigeonPose[] = ['perched', 'blink', 'happy', 'wave', 'sleep', 'wings-up', 'wings-down', 'turn', 'front', 'hello'];
 
 /** The deep the dark parts are taken toward: a night violet, never black. */
 const DUSK = '#1d1838';
@@ -218,6 +227,141 @@ function sleeping(dr: Drawing): void {
   stroke(dr, z(18.6, -29, 2.6) + z(22.8, -35.6, 3.4) + z(28, -43.6, 4.2), '#9b97c9', 1.3);
 }
 
+// ───────────────────────────────────────────── turned toward you, and facing you
+
+/**
+ * Facing you, as the owner's turnaround draws a pigeon from in front: the
+ * head a dome, a little narrower than the breast, and the shoulders widening
+ * out under it from about the height of the eyes.
+ */
+const FRONT_BODY =
+  'M0 -24.8C5.4 -24.8 9.1 -21.2 9.4 -16.4C9.6 -13.6 10.2 -11.4 11.4 -9.2C12.8 -6.8 12.9 -3.4 11 -1.4C9 0.4 4.4 0.4 0 0.4C-4.4 0.4 -9 0.4 -11 -1.4C-12.9 -3.4 -12.8 -6.8 -11.4 -9.2C-10.2 -11.4 -9.6 -13.6 -9.4 -16.4C-9.1 -21.2 -5.4 -24.8 0 -24.8Z';
+/** The crest from in front: its two feathers side by side, leaning a little apart. */
+const FRONT_CREST = 'M-1.5 -24.4C-2.6 -25.3 -2.9 -26.5 -2.3 -27.6C-1.3 -27 -0.5 -25.9 -0.2 -24.6ZM0.4 -24.7C0.6 -25.9 1.3 -26.9 2.4 -27.3C2.6 -26.2 2.2 -25.2 1.6 -24.4Z';
+/** Where the head's colour ends on the breast: a collar of small scallops, as the owner's pigeons have. */
+const FRONT_COLLAR =
+  'M-13 -26V-9.6Q-11.4 -7.8 -9.6 -9.2Q-8 -7.4 -6.2 -8.8Q-4.6 -7 -3 -8.4Q-1.5 -6.6 0 -8.2Q1.5 -6.6 3 -8.4Q4.6 -7 6.2 -8.8Q8 -7.4 9.6 -9.2Q11.4 -7.8 13 -9.6V-26Z';
+/** The right wing from in front, folded at the side behind the breast: only its outer edge shows past the body. The left is its mirror. */
+const FRONT_WING = { cx: 11.4, cy: -6.4, rx: 3.9, ry: 6.2, turn: -10 } as const;
+/** The beak from in front, pointing at you and a little down: small, under the pale bump at its root. */
+const FRONT_BEAK = 'M-1.25 -11.8C-0.6 -12.05 0.6 -12.05 1.25 -11.8L0.3 -9.5C0.15 -9.25 -0.15 -9.25 -0.3 -9.5Z';
+/** The eyes are on the sides of the head, as a pigeon's are: from in front each is cut by the head's own outline. */
+const FRONT_EYES = { x: 8.95, y: -13.4, rx: 1.15, ry: 1.7 } as const;
+
+/** Its legs from in front, a little apart, each with its toes spread toward you. */
+const FRONT_FEET = 'M-3.2 -2V0.4M-3.2 0.4L-4.7 1.3M-3.2 0.4V1.6M-3.2 0.4L-1.7 1.3M3.2 -2V0.4M3.2 0.4L1.7 1.3M3.2 0.4V1.6M3.2 0.4L4.7 1.3';
+/** Its legs turned three-quarters, the nearer one a little back and the further one ahead of it. */
+const TURNED_FEET = 'M-0.4 -2V0.4M-2.4 1.1L1.6 0.9M-0.4 0.4L1 1.5M4.4 -2V0.3M2.6 0.9L6.4 0.6M4.4 0.3L5.8 1.3';
+
+/** How the side-on drawing is narrowed for the pigeon turned three-quarters: the body, the tail going away behind it, and the wing on its nearer side, moved back along its flank. */
+const TURNED = { body: 0.8, tail: 0.78, crest: 0.76, wing: 0.76, wingAt: -3.6 } as const;
+/** The beak turned three-quarters: from the front of the face out past its outline, pointing past you a little down, as in the owner's turnaround. */
+const TURNED_BEAK = 'M12.6 -11.2C14.4 -11.5 16.6 -10.8 17.4 -9.8C17.7 -9.3 17.2 -8.9 16.6 -9C15.3 -9.1 13.9 -9 12.8 -9Z';
+
+/** A cheek's glow: teal (or pink) in the middle, out through the blush to nothing at its rim. */
+function cheekGlow(dr: Drawing, p: Plumage): string {
+  const glow = dr.id('k');
+  dr.def(radialBox(glow, [[0, p.cheek, 1], [0.42, p.cheek, 0.9], [0.7, p.blush, 0.7], [1, p.blush, 0]]));
+  return glow;
+}
+
+/** An open eye at `x`, `y`, narrowed by `squeeze` as the face turns away, leaning `lean` degrees, with its brow a little over it. */
+function eye(dr: Drawing, p: Plumage, x: number, y: number, lean: number, squeeze = 1, brow = true): void {
+  dr.add(`<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(0.74 * squeeze)}" ry="1.42" fill="${EYE}" transform="rotate(${n(lean)} ${n(x)} ${n(y)})"/>`);
+  if (brow) stroke(dr, `M${n(x - 0.9 * squeeze)} ${n(y - 3.3)}Q${n(x)} ${n(y - 3.9)} ${n(x + 0.9 * squeeze)} ${n(y - 3.3)}`, p.brow, 0.6);
+}
+
+/** A letter in its beak seen from in front: the envelope hanging down before its breast, held by the middle of its top edge. */
+function frontLetter(dr: Drawing): void {
+  fill(dr, 'M-5.6 -7.6L6.4 -8L6.8 1.8L-5.2 2.2Z', PAPER_EDGE);
+  fill(dr, 'M-5.9 -8.4L6.1 -8.8L6.5 1L-5.5 1.4Z', PAPER);
+  stroke(dr, 'M-5.9 -8.4L0.3 -3.2L6.1 -8.8', PAPER_EDGE, 0.8);
+  dr.add(`<circle cx="0.3" cy="-3.4" r="1.7" fill="${SEAL}"/>`);
+}
+
+/**
+ * The pigeon facing you, as it is for a moment in the middle of turning
+ * round, or while it stops to look at you: the deep colour of its head all
+ * down its front, a folded wing at each side with the ends of its bars
+ * showing, an eye either side of the beak with the cheeks glowing under
+ * them, and the beak pointing at you. A letter in its beak hangs before its
+ * breast.
+ */
+function facingYou(dr: Drawing, p: Plumage, letter: boolean, waving = false): void {
+  // the wings first, folded behind the breast, so only their outer edges and the ends of their bars show at its sides
+  for (const side of [1, -1]) {
+    const w = FRONT_WING;
+    // waving, the wing on your right is lifted out and up from its shoulder, as a hand is
+    const lift = waving && side === 1 ? ` rotate(-118 ${n(w.cx - 1)} ${n(w.cy - 4.6)})` : '';
+    dr.add(`<g transform="${side === 1 ? '' : 'scale(-1 1)'}${lift}">`);
+    const shape = `M${n(w.cx)} ${n(w.cy - w.ry)}A${n(w.rx)} ${n(w.ry)} 0 1 1 ${n(w.cx)} ${n(w.cy + w.ry)}A${n(w.rx)} ${n(w.ry)} 0 1 1 ${n(w.cx)} ${n(w.cy - w.ry)}Z`;
+    dr.add(`<g transform="rotate(${n(w.turn)} ${n(w.cx)} ${n(w.cy)})">`);
+    fill(dr, shape, p.wing);
+    dr.add(`<g clip-path="url(#${dr.clip(shape)})">`);
+    // seen edge on, the ends of the wing's bars make one dark line round its outer rim
+    stroke(dr, `M${n(w.cx + 1.6)} ${n(w.cy - 3.8)}Q${n(w.cx + 3.4)} ${n(w.cy + 0.2)} ${n(w.cx + 1.4)} ${n(w.cy + 4.6)}`, p.bar, 0.95);
+    dr.add('</g></g></g>');
+  }
+  // the breast a little lighter than the head, the head's colour coming down to a scalloped collar
+  const breast = mix(p.head, p.rear, 0.34);
+  fill(dr, FRONT_BODY, breast);
+  dr.add(`<g clip-path="url(#${dr.clip(FRONT_BODY)})">`);
+  fill(dr, FRONT_COLLAR, p.head);
+  dr.add(`<ellipse cx="0" cy="-1.8" rx="7.6" ry="3.2" fill="${p.belly}" opacity="0.3"/>`);
+  const glow = cheekGlow(dr, p);
+  for (const side of [1, -1]) dr.add(`<circle cx="${n(6.8 * side)}" cy="-10.6" r="2.3" fill="url(#${glow})"/>`);
+  // each eye on its side of the head, as much of it showing as the head's outline lets
+  const e = FRONT_EYES;
+  for (const side of [1, -1]) dr.add(`<ellipse cx="${n(e.x * side)}" cy="${n(e.y)}" rx="${n(e.rx)}" ry="${n(e.ry)}" fill="${EYE}"/>`);
+  dr.add('</g>');
+  fill(dr, FRONT_CREST, p.head);
+  if (letter) frontLetter(dr);
+  // the pale bump at the root of the beak, then the beak under it
+  for (const side of [1, -1]) dr.add(`<circle cx="${n(0.68 * side)}" cy="-12.3" r="0.78" fill="${p.face}"/>`);
+  fill(dr, FRONT_BEAK, BEAK);
+}
+
+/**
+ * The pigeon turned three-quarters toward you, facing right, on its way
+ * round: shorter from tail to beak than side on, the tail going away behind
+ * it, the folded wing on its nearer side, the nearer eye well in on its face
+ * and the further one just showing past the beak, which points past you. A
+ * letter in its beak hangs turned with it.
+ */
+function turnedToYou(dr: Drawing, p: Plumage, letter: boolean): void {
+  dr.add(`<g transform="scale(${TURNED.tail} 1)">`);
+  fill(dr, TAIL, p.tail);
+  stroke(dr, TAIL_STRIPES, p.stripe, 0.7);
+  dr.add('</g>');
+  const fade = dr.id('f');
+  // turned, more of its front is seen, so the deep colour of the head comes further back and fades in more softly
+  dr.def(linearAt(fade, [[0, p.rear], [0.28, p.rear], [0.64, p.head], [1, p.head]], -20, 0, 20, 0));
+  dr.add(`<g transform="scale(${TURNED.body} 1)">`);
+  fill(dr, BODY, `url(#${fade})`);
+  dr.add(`<g clip-path="url(#${dr.clip(BODY)})">`);
+  dr.add(`<ellipse cx="6" cy="-1.8" rx="7.6" ry="3" fill="${p.belly}" opacity="0.38"/>`);
+  // the further eye is on the side of the head turned away: it sits on the head's outline, as much of it showing as that lets
+  dr.add(`<ellipse cx="19.1" cy="-13.2" rx="${n(1.15 / TURNED.body)}" ry="1.65" fill="${EYE}"/>`);
+  dr.add('</g></g>');
+  dr.add(`<g transform="scale(${TURNED.crest} 1)">`);
+  fill(dr, CREST, p.head);
+  dr.add('</g>');
+  const glow = cheekGlow(dr, p);
+  dr.add(`<circle cx="4.2" cy="-9.4" r="3" fill="url(#${glow})"/>`);
+  eye(dr, p, 7.2, -12.8, 8);
+  if (letter) {
+    dr.add('<g transform="matrix(0.72 0 0 1 0.2 0)">');
+    heldLetter(dr);
+    dr.add('</g>');
+  }
+  fill(dr, TURNED_BEAK, BEAK);
+  // the pale bump at the root of the beak
+  dr.add(`<circle cx="13.4" cy="-11.1" r="0.85" fill="${p.face}"/>`);
+  dr.add(`<g transform="translate(${TURNED.wingAt} 0) scale(${TURNED.wing} 1)">`);
+  wing(dr, p, WING_FOLDED);
+  dr.add('</g>');
+}
+
 /** Whether a pigeon in `pose` has a letter in its beak when given one: a sleeping or chirping pigeon holds none. */
 export function pigeonHolds(pose: PigeonPose, letter: boolean): boolean {
   return letter && pose !== 'sleep' && pose !== 'happy';
@@ -240,9 +384,17 @@ export function pigeonShadow(dr: Drawing, pose: PigeonPose = 'perched', letter =
   const blot = (cx: number, cy: number, rx: number, ry: number, strength = 1): string =>
     `<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(rx)}" ry="${n(ry)}" fill="url(#${soft})"${strength === 1 ? '' : ` opacity="${n(strength)}"`}/>`;
   dr.add('<g opacity="0.26">');
+  const holds = pigeonHolds(pose, letter);
   if (pose === 'sleep') dr.add(blot(0.4, 1.2, 19, 3.2) + blot(-24, 1.8, 8, 1.4, 0.55));
-  else dr.add(blot(0.6, 1.5, 18.4, 3) + blot(-25, 2, 9, 1.6, 0.55) + blot(2.6, 1.1, 6.6, 1.4));
-  if (pigeonHolds(pose, letter)) dr.add(blot(25.4, 1.7, 8, 2.1));
+  else if (pose === 'front' || pose === 'hello') {
+    // facing you it is round and as wide as it is deep, its feet side by side
+    dr.add(blot(0, 1.4, 13, 3) + blot(-3.2, 1.1, 3.4, 1.1) + blot(3.2, 1.1, 3.4, 1.1));
+    if (holds) dr.add(blot(0.4, 2.2, 7.2, 1.8));
+  } else if (pose === 'turn') {
+    dr.add(blot(0.6, 1.5, 15.6, 3) + blot(-20.4, 2, 7, 1.4, 0.55) + blot(2, 1.1, 6, 1.4));
+    if (holds) dr.add(blot(20.2, 1.7, 6.4, 2));
+  } else dr.add(blot(0.6, 1.5, 18.4, 3) + blot(-25, 2, 9, 1.6, 0.55) + blot(2.6, 1.1, 6.6, 1.4));
+  if (holds && pose !== 'front' && pose !== 'hello' && pose !== 'turn') dr.add(blot(25.4, 1.7, 8, 2.1));
   dr.add('</g>');
 }
 
@@ -257,6 +409,14 @@ export function pigeon(dr: Drawing, hex: string, pose: PigeonPose = 'perched', l
   const flying = pose === 'wings-up' || pose === 'wings-down';
   const standing = !flying && pose !== 'sleep';
   if (!flying && shadow) pigeonShadow(dr, pose, letter);
+  if (pose === 'front' || pose === 'hello' || pose === 'turn') {
+    stroke(dr, pose === 'turn' ? TURNED_FEET : FRONT_FEET, FEET, 1.15);
+    dr.add('<g transform="translate(0 -2.2)">');
+    if (pose === 'turn') turnedToYou(dr, p, letter);
+    else facingYou(dr, p, letter, pose === 'hello');
+    dr.add('</g>');
+    return;
+  }
   if (standing) {
     // two short legs, each with three toes on the ground
     stroke(dr, 'M0 -2V0.4M-2.2 1H2.2M0 0.4L1.4 1.4M5.2 -2V0.4M3 1H7.4M5.2 0.4L6.6 1.4', FEET, 1.15);

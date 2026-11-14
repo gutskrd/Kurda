@@ -16,6 +16,7 @@ describe.skipIf(!DATABASE_URL)('notification inbox (integration)', () => {
   const suffix = Date.now().toString(36);
   let userId = '';
   let otherId = '';
+  const tokens = new Map<string, string>();
 
   async function register(name: string, ip: string): Promise<string> {
     const res = await app.inject({
@@ -31,6 +32,7 @@ describe.skipIf(!DATABASE_URL)('notification inbox (integration)', () => {
       },
       remoteAddress: ip,
     });
+    tokens.set(res.json().user.id, res.json().tokens.accessToken);
     return res.json().user.id;
   }
 
@@ -73,5 +75,22 @@ describe.skipIf(!DATABASE_URL)('notification inbox (integration)', () => {
     expect(await inbox.markAllRead(userId)).toBe(2);
     expect(await inbox.unreadCount(userId)).toBe(0);
     expect(await inbox.markAllRead(userId)).toBe(0); // nothing left
+  });
+
+  it('takes one away for its owner only, through the route as well', async () => {
+    await inbox.record(userId, { category: 'friends', title: 'Four', body: 'b4' });
+    const [four] = await inbox.list(userId);
+    expect(four!.title).toBe('Four');
+    expect(await inbox.remove(otherId, four!.id)).toBe(false); // not the owner
+    // an account is used once its email is confirmed
+    await pool.query('UPDATE users SET email_verified_at = now() WHERE id = $1', [userId]);
+    const headers = { authorization: `Bearer ${tokens.get(userId)!}` };
+    const removed = await app.inject({ method: 'DELETE', url: `/me/notifications/${four!.id}`, headers });
+    expect(removed.statusCode).toBe(200);
+    expect(removed.json()).toEqual({ ok: true, unread: 0 });
+    expect((await inbox.list(userId)).map((i) => i.title)).toEqual(['Three', 'Two', 'One']);
+    // gone already, or never theirs: nothing to take away
+    expect((await app.inject({ method: 'DELETE', url: `/me/notifications/${four!.id}`, headers })).statusCode).toBe(404);
+    expect((await app.inject({ method: 'DELETE', url: '/me/notifications/not-an-id', headers })).statusCode).toBe(400);
   });
 });

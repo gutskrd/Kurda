@@ -41,3 +41,54 @@
     flex: 1 1 auto;
   }
 }
+
+/*
+ * The bird and the tree ask here too, with their picture over the question:
+ * then the dialog is centred on the picture, as the tree page's own question
+ * is, and its two answers share the width under it.
+ */
+.buy-confirm.has-art {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+.buy-confirm-art {
+  display: grid;
+  place-items: center;
+  margin: 6px 0 14px;
+}
+.buy-confirm.has-art .buy-confirm-title {
+  /* clear of the ×, on both sides, so the centred question stays centred */
+  margin-inline: 40px;
+}
+.buy-confirm.has-art .buy-confirm-price {
+  justify-content: center;
+  margin-bottom: 2px;
+}
+.buy-confirm.has-art .buy-confirm-actions {
+  width: 100%;
+  justify-content: stretch;
+}
+.buy-confirm.has-art .buy-confirm-actions > * {
+  flex: 1 1 0;
+}
+/* what is held, quieter than the price it is read against */
+.buy-confirm-balance {
+  margin: 0 0 12px;
+  color: var(--ink-3);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+/* how many are missing: the one number that matters when the balance falls short */
+.buy-confirm-short {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+.buy-confirm-error {
+  margin: 12px 0 0;
+  color: var(--danger);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}

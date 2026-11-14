@@ -111,11 +111,12 @@ export function NotificationsBell(): React.JSX.Element | null {
   if (!present || status !== 'signedIn') return null;
 
   const label = unread > 0 ? t('notifications.bellUnread', { count: unread }) : t('notifications.title');
-  const items = data.notifications;
+  // one taken away is gone from the list at once, and the empty state shows when the last one goes
+  const items = data.notifications.filter((n) => !reads.isRemoved(n));
 
   let body: React.ReactNode;
   if (items.length > 0) {
-    body = <NotificationList items={items} reads={reads} onFollow={() => setOpen(false)} />;
+    body = <NotificationList items={items} reads={reads} onFollow={() => setOpen(false)} settingsTo={NOTIFICATION_SETTINGS_PATH} />;
   } else if (loading) {
     body = <NotificationsSkeleton />;
   } else if (failed) {

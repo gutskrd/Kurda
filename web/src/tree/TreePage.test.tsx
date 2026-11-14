@@ -128,13 +128,30 @@ describe('TreePage', () => {
     expect(screen.queryByRole('dialog', { name: 'It grew!' })).toBeNull();
     // it still shows the tree as it was: what the water did comes once it has landed
     expect(screen.getByText('Oak · Seedling · Day 13')).toBeInTheDocument();
-    // then it grows in the scene itself, out of a burst of light, before anything is said
+    // then it grows in the scene itself, out of a burst of light and out of the tree it was, before anything is said
     await waitFor(() => expect(container.querySelector('.tree-burst')).not.toBeNull(), { timeout: 3000 });
     expect(container.querySelector('.tree-stage-art.is-grown')).not.toBeNull();
+    expect(container.querySelector('.tree-stage-art.is-leaving.is-grow')).not.toBeNull();
     expect(screen.getByText('Oak · Sapling · Day 13')).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'It grew!' })).toBeNull();
     expect(await screen.findByRole('dialog', { name: 'It grew!' }, { timeout: 3000 })).toBeInTheDocument();
     expect(container.querySelector('.tree-burst')).toBeNull();
+    expect(container.querySelector('.tree-stage-art.is-leaving')).toBeNull();
+  });
+
+  it('hangs a swing from a great tree that is well, in the breeze with it, and none from one left to wilt', async () => {
+    server({ 'GET /me/tree': mine(view({ waterings: 40 })) });
+    const { container, unmount } = renderApp(<TreePage />);
+    await screen.findByRole('heading', { name: 'Berû' });
+    const plant = container.querySelector('.tree-stage-art .tree-art-plant');
+    // the swing hangs from the plant, inside its breeze; the front over its foot stands still with the ground
+    expect(plant?.querySelector('.tree-art-sway.is-swaying > .tree-art-swing')).not.toBeNull();
+    expect(container.querySelector('.tree-stage-art .tree-art > .tree-art-front')).not.toBeNull();
+    unmount();
+    server({ 'GET /me/tree': mine(view({ waterings: 40, lastWateredOn: '2026-11-08' })) });
+    const dry = renderApp(<TreePage />);
+    expect(await screen.findByText('Wilting')).toBeInTheDocument();
+    expect(dry.container.querySelector('.tree-art-swing')).toBeNull();
   });
 
   it('stands in the scene of the learner’s own season, with the season blowing past it', async () => {

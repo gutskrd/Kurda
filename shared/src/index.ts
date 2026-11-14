@@ -736,12 +736,28 @@ export {
   TREE_WATER_LANDS,
   hasTreeArt,
   treeColour,
+  treeRig,
   treeSeasonAir,
   treeSvg,
   waterDropSvg,
   wateringCanSvg,
   type TreeOptions,
+  type TreeRig,
   type TreeSeasonAir,
+  TREE_DRINK,
+  TREE_GROW,
+  TREE_PLANT_DROP,
+  TREE_REVIVE,
+  TREE_SHAKE,
+  TREE_SWAY,
+  TREE_SWING,
+  TREE_WAVE,
+  TREE_WAVE_AT,
+  treeGrowFrom,
+  treeHeft,
+  treePhase,
+  treeSwayDeg,
+  treeWave,
   TREE_SKIES,
   treeAir,
   treeCloudSvg,
@@ -890,3 +906,6 @@ export * from './games/multi/order.js';
 export * from './games/impostor/rules.js';
 export * from './games/impostor/couch.js';
 export * from './pending-signup.js';
+
+/** How a notification is sorted into the list's filters and pictured at the end of its row. */
+export * from './notices.js';

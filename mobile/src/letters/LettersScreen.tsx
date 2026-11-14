@@ -166,6 +166,8 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   const here = visitor !== null && scene?.visitor.kind !== 'leaving' && scene?.visitor.kind !== 'none';
   // the bird is chosen at home, while nothing else is going on: the first time before the first letter, later whenever wanted
   const choosing = home !== null && home.refusal === null && !out && !here && moment.kind === 'rest' && (!home.birdChosen || changing);
+  // your own bird can be changed while it is home and nothing else is happening at the window: the button sits on the window itself
+  const canChange = home !== null && home.refusal === null && home.birdChosen && !out && !here && !choosing && (moment.kind === 'rest' || moment.kind === 'writing');
   const pick = picked ?? home?.bird ?? 0;
   const shown = useMemo<WindowScene | null>(
     () => (choosing && scene?.own.kind === 'home' ? { ...scene, own: { kind: 'home', bird: pick } } : scene),
@@ -315,10 +317,13 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     setPicked(null);
     setScene((s) => s && { ...s, own: { kind: 'home', bird: res.ok ? res.data.bird : pick } });
   };
+  // the picker takes the place of whatever is open under the window, the paper included, so the button always does what it says
   const startChanging = (): void => {
     if (!home) return;
     setPicked(home.bird);
     setBirdError(null);
+    setError(null);
+    setMoment({ kind: 'rest' });
     setChanging(true);
   };
 
@@ -331,31 +336,40 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   if (home && scene) {
     const room = home.roomForMore;
     const canCall = home.refusal === null && !here && room && home.birdsOut > 0 && home.callsLeft > 0;
-    // the birds out there, how many, and the way to call one
+    // the birds out there: the first few of them as they look, how many there are, and the way to call one, as one card
     const sky =
       home.refusal === null && room && !here ? (
-        <View style={styles.sky}>
-          <Text style={quiet} testID="letters-sky">
-            {home.birdsOut === 0 ? t('letters.sky.none') : home.birdsOut === 1 ? t('letters.sky.one') : t('letters.sky.many', { count: home.birdsOut })}
-          </Text>
+        <View style={[styles.sky, { backgroundColor: colors.surface, borderColor: colors.separator }]}>
+          <View style={[styles.skyTop, { flexDirection: dir.row }]}>
+            {home.sky.length > 0 ? (
+              <View style={[styles.skyBirds, { flexDirection: dir.row }]}>
+                {home.sky.slice(0, 4).map((bird, i) => (
+                  <View key={`${i}-${bird}`} style={[styles.skyBird, i > 0 ? styles.skyBirdOver : null, { borderColor: colors.surface }]}>
+                    <BirdBadge bird={bird} size={32} />
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            <Text style={[styles.skyText, dir.text, { color: colors.textSecondary }]} testID="letters-sky">
+              {home.birdsOut === 0 ? t('letters.sky.none') : home.birdsOut === 1 ? t('letters.sky.one') : t('letters.sky.many', { count: home.birdsOut })}
+            </Text>
+          </View>
           {home.birdsOut > 0 ? (
             home.callsLeft > 0 ? (
               <ClayButton
                 label={calling ? t('letters.calling') : t('letters.call')}
                 onPress={() => void call()}
-                variant="outline"
                 busy={calling}
                 disabled={busy || !canCall}
                 style={styles.wide}
                 testID="letters-call"
               />
             ) : (
-              <Text style={[styles.status, styles.quiet, { color: colors.textSecondary }]}>{t('letters.callsDone')}</Text>
+              <Text style={[styles.skyText, dir.text, { color: colors.textSecondary }]}>{t('letters.callsDone')}</Text>
             )
           ) : null}
         </View>
       ) : null;
-    const change = <ClayButton label={t('letters.bird.change')} onPress={startChanging} variant="outline" testID="letters-bird-change" />;
 
     if (home.refusal === 'birth_month') status = <Text style={quiet}>{t('letters.refusal.birthMonth')}</Text>;
     else if (home.refusal === 'restricted') status = <Text style={quiet}>{t('letters.refusal.restricted')}</Text>;
@@ -424,21 +438,14 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           }}
         />
       );
-    else if (!room)
-      status = (
-        <>
-          <Text style={quiet}>{t('letters.full', { max: PEN_PALS_MAX })}</Text>
-          {change}
-        </>
-      );
+    else if (!room) status = <Text style={quiet}>{t('letters.full', { max: PEN_PALS_MAX })}</Text>;
+    // while a letter is being written the paper is the one thing under the window
+    else if (moment.kind === 'writing') status = null;
     else
       status = (
         <>
-          {moment.kind !== 'writing' ? (
-            <ClayButton label={t('letters.write')} onPress={() => setMoment({ kind: 'writing' })} tone="primary" style={styles.wide} testID="letters-write" />
-          ) : null}
+          <ClayButton label={t('letters.write')} onPress={() => setMoment({ kind: 'writing' })} tone="primary" style={styles.wide} testID="letters-write" />
           {sky}
-          {change}
         </>
       );
   }
@@ -458,7 +465,25 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           ) : (
             <>
               <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('letters.lead')}</Text>
-              {shown && size > 0 ? <LetterWindow scene={shown} size={size} onOwnGone={ownGone} onVisitorGone={visitorGone} onVisitorLanded={visitorLanded} /> : null}
+              {shown ? (
+                <View>
+                  {size > 0 ? <LetterWindow scene={shown} size={size} onOwnGone={ownGone} onVisitorGone={visitorGone} onVisitorLanded={visitorLanded} /> : null}
+                  {/* the one control that is about your own bird, which bird it is, sits on the window itself */}
+                  {canChange ? (
+                    <PressableScale
+                      onPress={startChanging}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('letters.bird.change')}
+                      hitSlop={8}
+                      testID="letters-bird-change"
+                      style={[styles.change, { flexDirection: dir.row, backgroundColor: colors.surface, borderColor: colors.separator }]}
+                    >
+                      <Icon name="palette" size={15} color={colors.textPrimary} />
+                      <Text style={[styles.changeText, { color: colors.textPrimary }]}>{t('letters.bird.change')}</Text>
+                    </PressableScale>
+                  ) : null}
+                </View>
+              ) : null}
               <View style={styles.hero} accessibilityLiveRegion="polite">
                 {status}
                 {error && !here && moment.kind !== 'writing' ? (
@@ -469,7 +494,18 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
               </View>
 
               {moment.kind === 'writing' && canWrite ? (
-                <LetterPaper label={t('letters.yourLetter')} busy={busy} onSend={(body) => void send(body)} error={error} testID="letters-paper" />
+                <LetterPaper
+                  label={t('letters.yourLetter')}
+                  busy={busy}
+                  onSend={(body) => void send(body)}
+                  onCancel={() => {
+                    setError(null);
+                    setMoment({ kind: 'rest' });
+                  }}
+                  error={error}
+                  autoFocus
+                  testID="letters-paper"
+                />
               ) : null}
 
               {here && visitor ? (
@@ -556,23 +592,28 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
               </View>
 
               <View style={styles.section}>
-                <PressableScale
-                  onPress={() => setHowOpen((o) => !o)}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: howOpen }}
-                  testID="letters-how"
-                  style={[styles.howHead, { flexDirection: dir.row }]}
-                >
-                  <Text style={[styles.howTitle, { color: colors.textPrimary }]}>{t('letters.how.title')}</Text>
-                  <Icon name="chevron-down" size={16} color={colors.textSecondary} style={howOpen ? styles.flipped : undefined} />
-                </PressableScale>
-                {howOpen
-                  ? (['letters.how.call', 'letters.how.ages', 'letters.how.turns', 'letters.how.safe'] as const).map((key) => (
-                      <Text key={key} style={[styles.howLine, dir.text, { color: colors.textSecondary }]}>
-                        {t(key)}
-                      </Text>
-                    ))
-                  : null}
+                <View style={[styles.how, { backgroundColor: colors.surface, borderColor: colors.separator }]}>
+                  <PressableScale
+                    onPress={() => setHowOpen((o) => !o)}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: howOpen }}
+                    testID="letters-how"
+                    style={[styles.howHead, { flexDirection: dir.row }]}
+                  >
+                    <Icon name="question" size={18} color={colors.textSecondary} />
+                    <Text style={[styles.howTitle, dir.text, { color: colors.textPrimary }]}>{t('letters.how.title')}</Text>
+                    <Icon name="chevron-down" size={16} color={colors.textSecondary} style={howOpen ? styles.flipped : undefined} />
+                  </PressableScale>
+                  {howOpen ? (
+                    <View style={styles.howLines}>
+                      {(['letters.how.call', 'letters.how.ages', 'letters.how.turns', 'letters.how.safe'] as const).map((key) => (
+                        <Text key={key} style={[styles.howLine, dir.text, { color: colors.textSecondary }]}>
+                          {t(key)}
+                        </Text>
+                      ))}
+                    </View>
+                  ) : null}
+                </View>
               </View>
             </>
           )}
@@ -604,7 +645,27 @@ const styles = StyleSheet.create({
   strong: { fontWeight: typography.weights.bold },
   quiet: { fontSize: typography.sizes.sm, lineHeight: 20 },
   wide: { alignSelf: 'stretch' },
-  sky: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
+  sky: { alignSelf: 'stretch', gap: spacing.md - 2, padding: spacing.md, borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth * 2 },
+  skyTop: { alignItems: 'center', gap: spacing.md - 2 },
+  skyBirds: { alignItems: 'center' },
+  // the birds overlap a little, each ringed in the card's colour so they read as birds, not a blot
+  skyBird: { borderRadius: radii.pill, borderWidth: 2 },
+  skyBirdOver: { marginStart: -12 },
+  skyText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
+  change: {
+    position: 'absolute',
+    top: spacing.sm + 2,
+    end: spacing.sm + 2,
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 34,
+    paddingHorizontal: spacing.md - 4,
+    borderRadius: radii.pill,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+  },
+  changeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  how: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth * 2, paddingHorizontal: spacing.md },
+  howLines: { gap: spacing.sm, paddingBottom: spacing.md, paddingStart: 18 + spacing.sm + 2 },
   visitor: { gap: spacing.md },
   note: { fontSize: typography.sizes.sm, lineHeight: 20 },
   ask: { gap: spacing.sm },
@@ -619,8 +680,8 @@ const styles = StyleSheet.create({
   palTurn: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   newBadge: { paddingHorizontal: spacing.sm + 2, paddingVertical: 2, borderRadius: radii.pill },
   newText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  howHead: { alignItems: 'center', justifyContent: 'space-between', minHeight: MIN_TOUCH_TARGET },
-  howTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  howHead: { alignItems: 'center', gap: spacing.sm + 2, minHeight: MIN_TOUCH_TARGET + 6 },
+  howTitle: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   flipped: { transform: [{ rotate: '180deg' }] },
   howLine: { fontSize: typography.sizes.sm, lineHeight: 20 },
 });
