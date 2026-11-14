@@ -126,6 +126,2261 @@
           "evidenceSentence": null
         }
       ]
+    },
+    {
+      "slug": "road-02-mevane-be-simbel",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 1,
+      "category": "family",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Mêvanê bê simbêl",
+      "summary": "Li mala Hamo wêneyekî kevn heye: mêvanekî ciwan û bê simbêl. Ew kî ye?",
+      "body": "Silav, heval! Ev wêneyên malbata min in. Ev bavê min e. Simbêlê wî pir mezin e. Yê min jî!\n\nEv diya min e, Dapîr Şemsê. Ew bîst salî ye, bi rastî! Ev jî xwişka min e, Gulîstan, diya Xezalê.\n\nÛ ev wêneyê biçûk? Ev wêneyekî kevn e. Mêrekî ciwan e, nozdeh salî û bê simbêl. Ew mêvanek e.\n\nLê Xezal pir kêfxweş e, û Dapîr jî: “Ev mêvan Hamo ye!” Erê, ew ez im. Lê Xezal jî nozdeh salî ye, û simbêlê wê jî tune!\n\nJi kerema xwe, heval: ev wêne tenê ji me re ye. Lê wêne li ku ye? Hevalo li baxçe ye, û ew pir kêfxweş e. Niha wêneyê bê simbêl tune. Spas, Hevalo!",
+      "translations": {
+        "en": "Hello, friend! These are my family’s photos. This is my father. His moustache is very big. So is mine!\n\nThis is my mother, Dapîr Şemsê. She is twenty, really! And this is my sister, Gulîstan, Xezal’s mother.\n\nAnd this little photo? It is an old photo. A young man, nineteen and without a moustache. He is a guest.\n\nBut Xezal is delighted, and so is Dapîr: “This guest is Hamo!” Yes, it is me. But Xezal is nineteen too, and she has no moustache either!\n\nPlease, friend: this photo is just for us. But where is the photo? Hevalo is in the orchard, and he is very happy. Now there is no photo without a moustache. Thank you, Hevalo!"
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Simbêlê bavê Hamo çawa ye?",
+          "promptEn": "What is Hamo’s father’s moustache like?",
+          "options": [
+            "Pir mezin e",
+            "Biçûk e",
+            "Nû ye"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Simbêlê wî pir mezin e.”",
+          "explanationEn": "Hamo says: “His moustache is very big.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Gulîstan kî ye?",
+          "promptEn": "Who is Gulîstan?",
+          "options": [
+            "Jina Hamo",
+            "Diya Xezalê",
+            "Dapîra Xezalê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Ev jî xwişka min e, Gulîstan, diya Xezalê.”",
+          "explanationEn": "Hamo says: “And this is my sister, Gulîstan, Xezal’s mother.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Ev wêneyekî kevn e.” “Kevn” çi ye?",
+          "promptEn": "“It is an old photo.” What does “kevn” mean?",
+          "options": [
+            "Ne mezin e",
+            "Ne xweş e",
+            "Ne nû ye"
+          ],
+          "correctIndex": 2,
+          "explanation": "Wêne kevn e: ew ne nû ye.",
+          "explanationEn": "The photo is old: it is not new.",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Mêrekî ciwan e.” “Ciwan” çi ye?",
+          "promptEn": "“A young man.” What does “ciwan” mean?",
+          "options": [
+            "Ne pîr e",
+            "Ne baş e",
+            "Ne kurd e"
+          ],
+          "correctIndex": 0,
+          "explanation": "Mêrê wêneyê nozdeh salî ye: ew ne pîr e.",
+          "explanationEn": "The man in the photo is nineteen: he is not old.",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Mêrê ciwan çend salî ye?",
+          "promptEn": "How old is the young man?",
+          "options": [
+            "Bîst",
+            "Nozdeh",
+            "Neh"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Mêrekî ciwan e, nozdeh salî û bê simbêl.”",
+          "explanationEn": "Hamo says: “A young man, nineteen and without a moustache.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast an şaş? Simbêlê Xezalê heye.",
+          "promptEn": "True or false? Xezal has a moustache.",
+          "options": [
+            "Rast",
+            "Şaş"
+          ],
+          "correctIndex": 1,
+          "explanation": "Şaş e. Hamo dibêje: “Simbêlê wê jî tune!”",
+          "explanationEn": "False. Hamo says: “She has no moustache either!”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo kêfxweş e: “Spas, Hevalo!” Çi rast e?",
+          "promptEn": "Hamo is pleased: “Thank you, Hevalo!” What is true?",
+          "options": [
+            "Hevalo birçî ye",
+            "Simbêlê Hamo tune",
+            "Wêneyê bê simbêl tune"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hevalo li baxçe ye û pir kêfxweş e. “Niha wêneyê bê simbêl tune.”",
+          "explanationEn": "Hevalo is in the orchard and very happy. “Now there is no photo without a moustache.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "gist",
+          "prompt": "Wêneyê kevn wêneyê kê ye?",
+          "promptEn": "Whose photo is the old photo?",
+          "options": [
+            "Wêneyê mêvanekî ye",
+            "Wêneyê Hamo ye, bê simbêl",
+            "Wêneyê bavê Hamo ye"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje “ew mêvanek e”, lê: “Erê, ew ez im.”",
+          "explanationEn": "Hamo says “he is a guest”, but: “Yes, it is me.”",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        }
+      ]
+    },
+    {
+      "slug": "road-03-du-xezine",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 1,
+      "category": "village",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Du xezîne",
+      "summary": "Li bin dara gûzê xezîneyeke kevn heye. Lê nîşana nû ya li pencereyê ya kê ye?",
+      "body": "Belê, heval: nexşeya kevn ya min û Gulîstanê ye. Xezîneya me li bin dara gûzê ye, li kêleka kaniyê: gog û nîvê wêneyekî. Nîvek li cem min e, nîvek li Amedê ye.\n\nLê li pencereyê nîşaneke nû heye. Ew ne ya min e, ne ya Xezalê ye. Xezal aciz e. Ez bêdeng im, lê li bin simbêlê min, ez kêfxweş im.\n\nTenê ji te re: nîşana nû ya Hêviyê ye! Hêvî biçûk e, lê zîrek e. Xezîneya wê sêveke sor e, ji bo Hevalo. Ew li bin pencereyê ye, di nav kulîlkên zer de.\n\nLê bêhna sêvê pir xweş e. Niha li wir tenê kulîlk hene, û Hevalo pir kêfxweş e. Ji bo Hevalo, her xezîne sêv e!",
+      "translations": {
+        "en": "Yes, friend: the old map is mine and Gulîstan’s. Our treasure is under the walnut tree, next to the spring: marbles and half of a photo. One half is with me, one half is in Amed.\n\nBut there is a new mark on the window. It is not mine, and it is not Xezal’s. Xezal is cross. I say nothing, but under my moustache I am pleased.\n\nJust between us: the new mark is Hêvî’s! Hêvî is little, but she is clever. Her treasure is a red apple, for Hevalo. It is under the window, among the yellow flowers.\n\nBut the apple smells very good. Now there are only flowers there, and Hevalo is very happy. For Hevalo, every treasure is an apple!"
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Nexşeya kevn ya kê ye?",
+          "promptEn": "Whose is the old map?",
+          "options": [
+            "Ya Hamo û Gulîstanê",
+            "Ya Xezalê",
+            "Ya Hêviyê"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Nexşeya kevn ya min û Gulîstanê ye.”",
+          "explanationEn": "Hamo says: “The old map is mine and Gulîstan’s.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Xezîneya kevn li ku ye?",
+          "promptEn": "Where is the old treasure?",
+          "options": [
+            "Li ser banê malê",
+            "Li bin dara gûzê",
+            "Di metbexê de"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Xezîneya me li bin dara gûzê ye, li kêleka kaniyê.”",
+          "explanationEn": "“Our treasure is under the walnut tree, next to the spring.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Nîvek li cem Hamo ye. Û nîvek jî li ku ye?",
+          "promptEn": "One half is with Hamo. And where is the other half?",
+          "options": [
+            "Li Sêvanê",
+            "Li bin pencereyê",
+            "Li Amedê"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo dibêje: “Nîvek li cem min e, nîvek li Amedê ye.”",
+          "explanationEn": "Hamo says: “One half is with me, one half is in Amed.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "Gog û nîvê wêneyekî: ev xezîne ye. “Xezîne” çi ye?",
+          "promptEn": "Marbles and half of a photo: this is a “xezîne”. What is a “xezîne”?",
+          "options": [
+            "Tiştên veşartî",
+            "Kulîlkên zer",
+            "Pencereyeke nû"
+          ],
+          "correctIndex": 0,
+          "explanation": "Xezîne tiştên veşartî ne: “gog û nîvê wêneyekî”, li bin dara gûzê.",
+          "explanationEn": "A treasure is hidden things: “marbles and half of a photo”, under the walnut tree.",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Xezîneya Hêviyê çi ye?",
+          "promptEn": "What is Hêvî’s treasure?",
+          "options": [
+            "Sêveke kesk",
+            "Sêveke sor",
+            "Gogeke şîn"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Xezîneya wê sêveke sor e, ji bo Hevalo.”",
+          "explanationEn": "Hamo says: “Her treasure is a red apple, for Hevalo.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "Kîjan xezîne nû ye?",
+          "promptEn": "Which treasure is new?",
+          "options": [
+            "Ya Hêviyê",
+            "Ya Hamo",
+            "Ya Gulîstanê"
+          ],
+          "correctIndex": 0,
+          "explanation": "Nexşe kevn e, lê nîşana li pencereyê nû ye: “nîşana nû ya Hêviyê ye!”",
+          "explanationEn": "The map is old, but the mark on the window is new: “the new mark is Hêvî’s!”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Niha li bin pencereyê sêv tune. Kî kêfxweş e?",
+          "promptEn": "Now there is no apple under the window. Who is happy?",
+          "options": [
+            "Xezal",
+            "Hevalo",
+            "Bozo"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Niha li wir tenê kulîlk hene, û Hevalo pir kêfxweş e.”",
+          "explanationEn": "“Now there are only flowers there, and Hevalo is very happy.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "gist",
+          "prompt": "Li gundê Hamo çend xezîne hene?",
+          "promptEn": "How many treasures are there in Hamo’s village?",
+          "options": [
+            "Yek",
+            "Du",
+            "Sê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Du: xezîneya Hamo û Gulîstanê li bin dara gûzê, û ya Hêviyê li bin pencereyê.",
+          "explanationEn": "Two: Hamo and Gulîstan’s under the walnut tree, and Hêvî’s under the window.",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        }
+      ]
+    },
+    {
+      "slug": "road-04-zebese-bist-sali",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 1,
+      "category": "everyday",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Zebeşê bîst salî",
+      "summary": "Mîrza dibêje ku deynekî Hamo hîn heye: zebeşekî bîst salî! Ew bi çend e?",
+      "body": "Îro roja bazarê ye. Em hemû diçin bajêr: ez, Xezal, Hevalo û Bozo. Kumê Bozo li ser serê wî ye.\n\nTu dizanî, heval? Mîrza fêkî difiroşe, û ew hevalê min ê kevn e. Em çay vedixwin û henekan dikin. Paşê Mîrza dibêje ku deynê wî li ser min e: zebeşek!\n\nZebeşek? Ew zebeş bîst salî ye! Lê Mîrza sed dixwaze. Sed? Pir biha ye!\n\nPaşê Xezal tê. Ew dibêje: “Mîrza, ev zebeş kevn e. Zebeşê kevn erzan e. Bi deh?” Mîrza dikene: “Temam, temam!”\n\nEz deh didim. Niha deynê min tune, û ez pir kêfxweş im! Lê sindoqa sêvan vala ye, û zikê Hevalo tije ye. Hevalo li asman dinêre. Deynekî nû heye!",
+      "translations": {
+        "en": "Today is market day. We are all going to town: me, Xezal, Hevalo and Bozo. Bozo’s hat is on his head.\n\nYou know, friend? Mîrza sells fruit, and he is my old friend. We drink tea and joke. Then Mîrza says I owe him: a watermelon!\n\nA watermelon? That watermelon is twenty years old! But Mîrza wants a hundred. A hundred? That is far too expensive!\n\nThen Xezal steps in. She says: “Mîrza, this watermelon is old. An old watermelon is cheap. Ten?” Mîrza laughs: “OK, OK!”\n\nI pay ten. Now I owe nothing, and I am very happy! But the apple crate is empty, and Hevalo’s belly is full. Hevalo is looking at the sky. There is a new debt!"
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Mîrza çi difiroşe?",
+          "promptEn": "What does Mîrza sell?",
+          "options": [
+            "Penîr",
+            "Fêkî",
+            "Pirtûk"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Mîrza fêkî difiroşe.”",
+          "explanationEn": "Hamo says: “Mîrza sells fruit.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Pêşî Hamo û Mîrza çi dikin?",
+          "promptEn": "What do Hamo and Mîrza do first?",
+          "options": [
+            "Çay vedixwin",
+            "Pere didin",
+            "Sêvan dikirin"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Em çay vedixwin û henekan dikin.” Paşê Mîrza dibêje ku deynekî Hamo heye.",
+          "explanationEn": "“We drink tea and joke.” Then Mîrza says Hamo owes him something.",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Deynê Hamo çi ye?",
+          "promptEn": "What does Hamo owe?",
+          "options": [
+            "Çaydankek",
+            "Kîloyek sêv",
+            "Zebeşek"
+          ],
+          "correctIndex": 2,
+          "explanation": "Mîrza dibêje ku deynê wî li ser Hamo ye: “zebeşek!”",
+          "explanationEn": "Mîrza says Hamo owes him: “a watermelon!”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Zebeş çend salî ye?",
+          "promptEn": "How old is the watermelon?",
+          "options": [
+            "Bîst",
+            "Deh",
+            "Sed"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Ew zebeş bîst salî ye!”",
+          "explanationEn": "Hamo says: “That watermelon is twenty years old!”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Zebeşê kevn erzan e.” “Erzan” çi ye?",
+          "promptEn": "“An old watermelon is cheap.” What does “erzan” mean?",
+          "options": [
+            "Ne kevn e",
+            "Ne biha ye",
+            "Ne teze ye"
+          ],
+          "correctIndex": 1,
+          "explanation": "Erzan ne biha ye: Xezal sed nade, ew deh dide.",
+          "explanationEn": "Cheap is not expensive: Xezal does not offer a hundred, she offers ten.",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Di dawiyê de Hamo çend dide?",
+          "promptEn": "In the end, how much does Hamo pay?",
+          "options": [
+            "Sed",
+            "Bîst",
+            "Deh"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo dibêje: “Ez deh didim.”",
+          "explanationEn": "Hamo says: “I pay ten.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima sindoqa sêvan vala ye?",
+          "promptEn": "Why is the apple crate empty?",
+          "options": [
+            "Mîrza sêvan difiroşe",
+            "Hevalo sêvan dixwe",
+            "Bozo sêvan dixwe"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Sindoqa sêvan vala ye, û zikê Hevalo tije ye.”",
+          "explanationEn": "“The apple crate is empty, and Hevalo’s belly is full.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "gist",
+          "prompt": "Hamo ji bo çi pere dide Mîrza?",
+          "promptEn": "What is Hamo paying Mîrza for?",
+          "options": [
+            "Ji bo deynekî kevn",
+            "Ji bo çaya Mîrza",
+            "Ji bo kumê Bozo"
+          ],
+          "correctIndex": 0,
+          "explanation": "Ji bo zebeşê bîst salî: “Niha deynê min tune.” Lê deynekî nû heye!",
+          "explanationEn": "For the twenty-year-old watermelon: “Now I owe nothing.” But there is a new debt!",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        }
+      ]
+    },
+    {
+      "slug": "road-05-penc-deqiqe",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 2,
+      "category": "family",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Pênc deqîqe",
+      "summary": "Hamo soz dide ku roja Şemiyê ew bi wext e. Lê pênc deqîqeyên Hamo dirêj in!",
+      "body": "Tu dizanî, heval? Carinan ez dereng im. Baş e, gelek caran. Lê roja Şemiyê Xezal vedigere Amedê, û em hemû bi wê re diçin. Ez soz didim: ez bi wext im! Soza Hamo soz e.\n\nOtobûs di saet heştan de ji meydanê diçe. Sê saetên min hene, lê ez tenê ji saeta çayê bawer dikim. Êvara Înê ez wê amade dikim: heşt. Hevalo li saetê dinêre. Çi heye, Hevalo? Heşt heşt e!\n\nRoja Şemiyê ez di saet pêncan de şiyar dibim. Cara yekem, ez zû me! Ez li kaniyê rûyê xwe dişom. Çay amade ye, cilên min jî.\n\nSaet pênc û nîv e. Heta otobûsê du saet û nîv hene. Ez dibêjim: “Tenê pênc deqîqe.” Û ez radizim.\n\nJi nişka ve dengê Xezalê tê. Saet heşt û çaryek e! Saeta min deng nake. Em hemû dibezin, Dapîr jî! Hevalo pêşî dibeze, lê otobûs nasekine. Ez bang dikim, lê êdî otobûs tune.\n\nÊvar e. Em hemû li malê ne, û kes naxive. Saet heşt e, ya êvarê. Ji nişka ve dengê saeta min tê! Hemû li min dinêrin. Ez radibim û dibêjim: “Baş e. Kî çay dixwaze?”",
+      "translations": {
+        "en": "You know, friend? Sometimes I am late. All right, often. But on Saturday Xezal goes back to Amed, and we are all going with her. I give my word: I will be on time! Hamo’s promise is a promise.\n\nThe bus leaves the square at eight. I have three clocks, but I only trust the tea clock. On Friday evening I set it: eight. Hevalo looks at the clock. What is it, Hevalo? Eight is eight!\n\nOn Saturday I wake up at five. For the first time, I am early! I wash my face at the spring. The tea is ready, and so are my clothes.\n\nIt is half past five. There are two and a half hours until the bus. I tell myself: “Just five minutes.” And I go to sleep.\n\nSuddenly I hear Xezal’s voice. It is a quarter past eight! My clock is not ringing. We all run, Dapîr too! Hevalo runs ahead, but the bus does not stop. I call out, but the bus is gone.\n\nIt is evening. We are all at home, and nobody says a word. It is eight o’clock, in the evening. Suddenly my clock rings! Everyone looks at me. I get up and say: “Right. Who wants tea?”"
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Otobûs kengî diçe?",
+          "promptEn": "When does the bus leave?",
+          "options": [
+            "Di saet pêncan de",
+            "Di saet heştan de",
+            "Di saet nehan de"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Otobûs di saet heştan de ji meydanê diçe.”",
+          "explanationEn": "“The bus leaves the square at eight.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Otobûs ji ku derê diçe?",
+          "promptEn": "Where does the bus leave from?",
+          "options": [
+            "Ji meydanê",
+            "Ji bazarê",
+            "Ji dibistanê"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Otobûs di saet heştan de ji meydanê diçe.”",
+          "explanationEn": "“The bus leaves the square at eight.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Hamo ji kîjan saetê bawer dike?",
+          "promptEn": "Which clock does Hamo trust?",
+          "options": [
+            "Ji saeta Dapîrê",
+            "Ji telefona Xezalê",
+            "Ji saeta çayê"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo dibêje: “Ez tenê ji saeta çayê bawer dikim.”",
+          "explanationEn": "Hamo says: “I only trust the tea clock.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Ez bi wext im!” Ev çi ye?",
+          "promptEn": "“Ez bi wext im!” What does it mean?",
+          "options": [
+            "Ez ne dereng im",
+            "Ez westiyayî me",
+            "Ez birçî me"
+          ],
+          "correctIndex": 0,
+          "explanation": "Bi wext: ne dereng. Hamo soz dide: “Ez bi wext im!”",
+          "explanationEn": "On time: not late. Hamo promises: “I will be on time!”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Roja Şemiyê Hamo kengî şiyar dibe?",
+          "promptEn": "When does Hamo wake up on Saturday?",
+          "options": [
+            "Di saet heştan de",
+            "Di saet pêncan de",
+            "Di saet nehan de"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Roja Şemiyê ez di saet pêncan de şiyar dibim.”",
+          "explanationEn": "Hamo says: “On Saturday I wake up at five.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo dibêje: “Cara yekem, ez zû me!” Çima?",
+          "promptEn": "Hamo says: “For the first time, I am early!” Why?",
+          "options": [
+            "Ew her gav zû ye",
+            "Ew gelek caran dereng e",
+            "Ew qet şiyar nabe"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Carinan ez dereng im. Baş e, gelek caran.”",
+          "explanationEn": "Hamo says: “Sometimes I am late. All right, often.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Saet pênc û nîv e. Paşê Hamo çi dike?",
+          "promptEn": "It is half past five. What does Hamo do next?",
+          "options": [
+            "Ew diçe meydanê",
+            "Ew dibeze",
+            "Ew radize"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo dibêje: “Tenê pênc deqîqe.” Û ew radize.",
+          "explanationEn": "Hamo says: “Just five minutes.” And he goes to sleep.",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast an şaş? Saet heşt û çaryek e, û saeta Hamo deng dike.",
+          "promptEn": "True or false? It is a quarter past eight, and Hamo’s clock is ringing.",
+          "options": [
+            "Rast",
+            "Şaş"
+          ],
+          "correctIndex": 1,
+          "explanation": "Şaş e. Hamo dibêje: “Saeta min deng nake.”",
+          "explanationEn": "False. Hamo says: “My clock is not ringing.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Kî pêşî dibeze?",
+          "promptEn": "Who runs ahead?",
+          "options": [
+            "Dapîr",
+            "Xezal",
+            "Hevalo"
+          ],
+          "correctIndex": 2,
+          "explanation": "“Hevalo pêşî dibeze, lê otobûs nasekine.”",
+          "explanationEn": "“Hevalo runs ahead, but the bus does not stop.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 4
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Kes naxive.” Malbat çawa ye?",
+          "promptEn": "“Nobody says a word.” What is the family like?",
+          "options": [
+            "Bêdeng e",
+            "Kêfxweş e",
+            "Birçî ye"
+          ],
+          "correctIndex": 0,
+          "explanation": "Kes naxive: hemû bêdeng in, û xemgîn in.",
+          "explanationEn": "Nobody speaks: they are all quiet, and sad.",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Saeta Hamo kengî deng dike?",
+          "promptEn": "When does Hamo’s clock ring?",
+          "options": [
+            "Di saet heştan de, sibehê",
+            "Di saet heştan de, êvarî",
+            "Qet deng nake"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Saet heşt e, ya êvarê. Ji nişka ve dengê saeta min tê!”",
+          "explanationEn": "“It is eight o’clock, in the evening. Suddenly my clock rings!”",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "inference",
+          "prompt": "Di dawiyê de, hemû li Hamo dinêrin. Hamo çi dike?",
+          "promptEn": "At the end, everyone looks at Hamo. What does Hamo do?",
+          "options": [
+            "Ew dibeze meydanê",
+            "Ew çay dide malbatê",
+            "Ew dîsa radize"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo radibe û dibêje: “Baş e. Kî çay dixwaze?”",
+          "explanationEn": "Hamo gets up and says: “Right. Who wants tea?”",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 6
+        },
+        {
+          "kind": "gist",
+          "prompt": "Çima malbat roja Şemiyê naçe Amedê?",
+          "promptEn": "Why does the family not go to Amed on Saturday?",
+          "options": [
+            "Xezal nexweş e û li malê dimîne",
+            "Hamo dîsa radize, û otobûs diçe",
+            "Saeta Dapîrê deng nake"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje “tenê pênc deqîqe” û radize. Paşê “êdî otobûs tune.”",
+          "explanationEn": "Hamo says “just five minutes” and goes to sleep. Then “the bus is gone.”",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        }
+      ]
+    },
+    {
+      "slug": "road-06-nameya-bave-me",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 2,
+      "category": "family",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Nameya bavê me",
+      "summary": "Li Amedê, Gulîstan qutiya xwe vedike. Di qutiyê de çi heye?",
+      "body": "Were, heval, rûne! Çayê vexwe, ew hîn germ e. Amed gelek mezin e. Cade dirêj in, avahî bilind in, û hemû cade wek hev in. Ez du caran winda dibim!\n\nMala Gulîstanê li qatê dawî ye. Ez li her qatî disekinim û li Amedê dinêrim. Bêguman, ne ji bo bêhnvedanê! Paşê Gulîstan derî vedike.\n\nGulîstan xwişka min a biçûk e, lê li vê malê ew mezin e. Ew dibêje ku ez rûnim, û ez rûdinim. Ew dibêje ku ez bixwim, û ez dixwim. Ew dibêje ku ez dîsa bixwim, û ez dîsa dixwim!\n\nPiştî şîvê, Gulîstan qutiya xwe vedike. Di qutiyê de nîvê din ê wêneyê heye, û nameyek jî. Ev nameya bavê me ye!\n\nDivê ez wê bixwînim, lê ez nikarim. Berçavka min li ku ye? Ne li ser maseyê ye, ne di çenteyê min de ye. Li ser serê min e! Bavê me dinivîse: “Li Newrozê, li ser girê…” Paşê tiştek tune. Divê em li Newrozê biçin wî girî!\n\nHevalo jî li nameyê dinêre. Hevalo, mexwe! Ew ne sêv e! Gulîstan dikene û ji Xezalê re dibêje: “Binêre, ew wek bavê min e!” Ez bêdeng im. Paşê em çay vedixwin, ez û xwişka min, wek du zarokan.",
+      "translations": {
+        "en": "Come, friend, sit down! Drink your tea, it is still hot. Amed is very big. The avenues are long, the buildings are tall, and all the avenues look the same. I get lost twice!\n\nGulîstan’s flat is on the top floor. I stop on every floor and look at Amed. Not to catch my breath, of course! Then Gulîstan opens the door.\n\nGulîstan is my little sister, but in this house she is the boss. She tells me to sit down, and I sit down. She tells me to eat, and I eat. She tells me to eat again, and I eat again!\n\nAfter dinner, Gulîstan opens her tin. In the tin is the other half of the photo, and a letter too. It is our father’s letter!\n\nI must read it, but I cannot. Where are my glasses? Not on the table, not in my bag. On my head! Our father writes: “At Newroz, on the hill…” After that, nothing. At Newroz we must go to that hill!\n\nHevalo looks at the letter too. Hevalo, don’t eat it! It is not an apple! Gulîstan laughs and says to Xezal: “Look, he is just like my father!” I say nothing. Then we drink tea, my sister and I, like two children."
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Hamo li Amedê çend caran winda dibe?",
+          "promptEn": "How many times does Hamo get lost in Amed?",
+          "options": [
+            "Carekê",
+            "Du caran",
+            "Sê caran"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Ez du caran winda dibim!”",
+          "explanationEn": "Hamo says: “I get lost twice!”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Mala Gulîstanê li ku ye?",
+          "promptEn": "Where is Gulîstan’s flat?",
+          "options": [
+            "Li qatê dawî",
+            "Li qatê yekem",
+            "Li jêr, li quncikê"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Mala Gulîstanê li qatê dawî ye.”",
+          "explanationEn": "“Gulîstan’s flat is on the top floor.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Hamo li her qatî disekine?",
+          "promptEn": "Why does Hamo stop on every floor?",
+          "options": [
+            "Ew westiyayî ye",
+            "Ew li Hevalo digere",
+            "Ew li benda Xezalê ye"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje “ne ji bo bêhnvedanê”, lê pêlekan gelek in: ew westiyayî ye.",
+          "explanationEn": "Hamo says “not to catch my breath”, but there are a lot of stairs: he is tired.",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Gulîstan kî ye?",
+          "promptEn": "Who is Gulîstan?",
+          "options": [
+            "Xwişka Hamo ya mezin",
+            "Xwişka Hamo ya biçûk",
+            "Keça Hamo"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Gulîstan xwişka min a biçûk e.”",
+          "explanationEn": "Hamo says: “Gulîstan is my little sister.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Gulîstan dibêje ku Hamo çi bike?",
+          "promptEn": "What does Gulîstan tell Hamo to do?",
+          "options": [
+            "Rabe û biçe derve",
+            "Rûne û bixwe",
+            "Bixwîne û binivîse"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Ew dibêje ku ez rûnim… Ew dibêje ku ez bixwim.”",
+          "explanationEn": "“She tells me to sit down… She tells me to eat.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Ez rûdinim.” Hamo çi dike?",
+          "promptEn": "“Ez rûdinim.” What is Hamo doing?",
+          "options": [
+            "Ew radibe",
+            "Ew diçe derve",
+            "Ew li ser kursiyê ye"
+          ],
+          "correctIndex": 2,
+          "explanation": "Rûniştin: Hamo li ser kursiyê ye.",
+          "explanationEn": "Sitting down: Hamo is on a chair.",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Gulîstan kengî qutiya xwe vedike?",
+          "promptEn": "When does Gulîstan open her tin?",
+          "options": [
+            "Berî şîvê",
+            "Piştî şîvê",
+            "Serê sibehê"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Piştî şîvê, Gulîstan qutiya xwe vedike.”",
+          "explanationEn": "“After dinner, Gulîstan opens her tin.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Di qutiyê de çi heye?",
+          "promptEn": "What is in the tin?",
+          "options": [
+            "Gog û nîvê wêneyekî",
+            "Nîvê din ê wêneyê û nameyek",
+            "Pere û kilîteke kevn"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Di qutiyê de nîvê din ê wêneyê heye, û nameyek jî.”",
+          "explanationEn": "“In the tin is the other half of the photo, and a letter too.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Berçavka Hamo li ku ye?",
+          "promptEn": "Where are Hamo’s glasses?",
+          "options": [
+            "Li ser maseyê",
+            "Di çenteyê wî de",
+            "Li ser serê wî"
+          ],
+          "correctIndex": 2,
+          "explanation": "Ne li ser maseyê, ne di çenteyê de: “Li ser serê min e!”",
+          "explanationEn": "Not on the table, not in the bag: “On my head!”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Bavê Hamo di nameyê de çi dinivîse?",
+          "promptEn": "What does Hamo’s father write in the letter?",
+          "options": [
+            "Li Newrozê, li ser girê…",
+            "Li Amedê, li qatê dawî…",
+            "Li Sêvanê, li bin darê…"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Bavê me dinivîse: Li Newrozê, li ser girê…” Paşê tiştek tune.",
+          "explanationEn": "“Our father writes: At Newroz, on the hill…” After that, nothing.",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 4
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo dibêje: “Hevalo, mexwe!” Hevalo çi dixwaze?",
+          "promptEn": "Hamo says: “Hevalo, don’t eat it!” What does Hevalo want?",
+          "options": [
+            "Nameyê bixwe",
+            "Çayê vexwe",
+            "Li ser kursiyê rûne"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hevalo li nameyê dinêre, û Hamo dibêje: “Ew ne sêv e!”",
+          "explanationEn": "Hevalo is looking at the letter, and Hamo says: “It is not an apple!”",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Gulîstan dibêje: “Ew wek bavê min e!” Ew kî ye?",
+          "promptEn": "Gulîstan says: “He is just like my father!” Who is “he”?",
+          "options": [
+            "Hevalo",
+            "Hamo",
+            "Pirtûkfiroş"
+          ],
+          "correctIndex": 1,
+          "explanation": "Berçavk li ser serê Hamo ye, û ew nameya bavê xwe dixwîne: ew wek bavê xwe ye.",
+          "explanationEn": "Hamo’s glasses are on his head, and he is reading his father’s letter: he is just like his father.",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "gist",
+          "prompt": "Li mala Gulîstanê, Hamo çi dibîne?",
+          "promptEn": "At Gulîstan’s flat, what does Hamo find?",
+          "options": [
+            "Nameya bavê xwe û nîvê din ê wêneyê",
+            "Pirtûkeke nû û kovarek",
+            "Behrê û balafirgehê"
+          ],
+          "correctIndex": 0,
+          "explanation": "Di qutiya Gulîstanê de nîvê din ê wêneyê û nameya bavê wan heye.",
+          "explanationEn": "In Gulîstan’s tin are the other half of the photo and their father’s letter.",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        }
+      ]
+    },
+    {
+      "slug": "road-07-sercopi",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 2,
+      "category": "celebrations",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Serçopî",
+      "summary": "Sibe Hamo dê bibe serçopî: çokên wî pîr in, lê simbêlê wî ne pîr e!",
+      "body": "Şeva berî Newrozê ye, û ez nikarim razim. Sibe ez ê bibim serçopî! Ez ê destmala kesk bigirim û pêşî biçim. Hemû gund dê li simbêlê min binêre.\n\nTu dizanî, çokên min pîr in. Lê Xezal dibêje ku simbêlê min ne pîr e. Rast e. Ez radibim û çay vedixwim. Çay ji bo çokan jî baş e.\n\nSibehê baran dibare, paşê tav derdikeve. Baran bereket e! Hemû xelk li ser gir e. Gotara min? Ew di zikê Hevalo de ye. Ne xem e.\n\nBaran defê lêdixe, Ferhad jî zirneyê lêdixe. Destmal di destê min de ye, û ez pêşî diçim. Li pişt min Xezal, Hêvî û hemû gund in. Saetek, du saet: ez hîn direqisim!\n\nÊvarê agir hêdî hêdî diçe. Ez û Gulîstan li bin kevirê bavê xwe dinêrin. Li wir qutiyek heye. Di qutiyê de bilûrek û nameyek hene. Name dibêje: “Stranê bidomînin.”\n\nEz bilûrê lêdixim. Deng gelek xirab e, û Hevalo ditirse. Paşê Dapîr bilûrê digire, û strana bavê min ji bilûrê tê. Ez digirîm? Na, na. Dûman di çavên min de ye.\n\nBaş e, bavo. Ez ê stranê bidomînim: bi govendê, ne bi bilûrê! Sala bê ez ê dîsa bibim serçopî. Lê îro? Îro ez ji nivînê ranabim. Pişta min diêşe!",
+      "translations": {
+        "en": "It’s the night before Newroz, and I can’t sleep. Tomorrow I’ll lead the govend! I’ll hold the green handkerchief and go first. The whole village will be looking at my moustache.\n\nYou know, my knees are old. But Xezal says my moustache isn’t old. It’s true. I get up and drink some tea. Tea is good for knees too.\n\nIn the morning it rains, then the sun comes out. Rain is a blessing! Everyone is up on the hill. My speech? It’s in Hevalo’s belly. Never mind.\n\nBaran plays the drum, and Ferhad plays the zurna. The handkerchief is in my hand, and I go first. Behind me come Xezal, Hêvî and the whole village. One hour, two hours: I’m still dancing!\n\nIn the evening the fire slowly dies down. Gulîstan and I look under our father’s stone. There is a tin there. In the tin there are a flute and a note. The note says: “Keep the song going.”\n\nI play the flute. The sound is terrible, and Hevalo is frightened. Then Dapîr takes the flute, and my father’s tune comes out of it. Am I crying? No, no. There’s smoke in my eyes.\n\nAll right, Father. I’ll keep the song going: with the govend, not with the flute! Next year I’ll lead the govend again. But today? Today I’m not getting out of bed. My back hurts!"
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Sibe Hamo dê bibe çi?",
+          "promptEn": "What will Hamo be tomorrow?",
+          "options": [
+            "Şivan",
+            "Serçopî",
+            "Hesinkar"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Sibe ez ê bibim serçopî!”",
+          "explanationEn": "Hamo says: “Tomorrow I’ll lead the govend!”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Serçopî çi di destê xwe de digire?",
+          "promptEn": "What does the leader of the govend hold in his hand?",
+          "options": [
+            "Bilûrê",
+            "Defê",
+            "Destmala kesk"
+          ],
+          "correctIndex": 2,
+          "explanation": "“Ez ê destmala kesk bigirim û pêşî biçim.”",
+          "explanationEn": "“I’ll hold the green handkerchief and go first.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Çokên Hamo pîr in. Xezal çi dibêje?",
+          "promptEn": "Hamo’s knees are old. What does Xezal say?",
+          "options": [
+            "Simbêlê wî ne pîr e",
+            "Pişta wî pîr e",
+            "Çokên wî ciwan in"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Xezal dibêje ku simbêlê min ne pîr e.”",
+          "explanationEn": "“Xezal says my moustache isn’t old.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "Hamo dibêje: “Baran bereket e!” Li vir “bereket” çi ye?",
+          "promptEn": "Hamo says: “Rain is a blessing!” What is a “bereket” here?",
+          "options": [
+            "Tiştekî sar",
+            "Tiştekî xirab",
+            "Tiştekî baş"
+          ],
+          "correctIndex": 2,
+          "explanation": "Baran dibare, û Hamo kêfxweş e: “Baran bereket e!”",
+          "explanationEn": "It rains, and Hamo is glad: “Rain is a blessing!”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Sibehê, pêşî çi tê: baran an tav?",
+          "promptEn": "In the morning, what comes first: rain or sun?",
+          "options": [
+            "Tav",
+            "Baran"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Sibehê baran dibare, paşê tav derdikeve.”",
+          "explanationEn": "“In the morning it rains, then the sun comes out.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Gotara Hamo li ser kaxez e. Niha kaxez li ku ye?",
+          "promptEn": "Hamo’s speech is on paper. Where is the paper now?",
+          "options": [
+            "Di destê Hamo de",
+            "Li ser gir",
+            "Di zikê Hevalo de"
+          ],
+          "correctIndex": 2,
+          "explanation": "“Gotara min? Ew di zikê Hevalo de ye.” Hevalo kaxezê dixwe!",
+          "explanationEn": "“My speech? It’s in Hevalo’s belly.” Hevalo eats the paper!",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Kî zirneyê lêdixe?",
+          "promptEn": "Who plays the zurna?",
+          "options": [
+            "Ferhad",
+            "Baran",
+            "Hamo"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Baran defê lêdixe, Ferhad jî zirneyê lêdixe.”",
+          "explanationEn": "“Baran plays the drum, and Ferhad plays the zurna.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Îro çima pişta Hamo diêşe?",
+          "promptEn": "Why does Hamo’s back hurt today?",
+          "options": [
+            "Ew du saetan direqise",
+            "Ew bilûrê lêdixe",
+            "Ew li bin kevir dinêre"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo du saetan direqise: “Saetek, du saet: ez hîn direqisim!”",
+          "explanationEn": "Hamo dances for two hours: “One hour, two hours: I’m still dancing!”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Di qutiyê de çi hene?",
+          "promptEn": "What is in the tin?",
+          "options": [
+            "Sêv û gûz",
+            "Destmal û gotar",
+            "Bilûrek û nameyek"
+          ],
+          "correctIndex": 2,
+          "explanation": "“Di qutiyê de bilûrek û nameyek hene.”",
+          "explanationEn": "“In the tin there are a flute and a note.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "inference",
+          "prompt": "Name dibêje: “Stranê bidomînin.” Ev gotina kê ye?",
+          "promptEn": "The note says: “Keep the song going.” Whose words are these?",
+          "options": [
+            "Gotina Xezalê",
+            "Gotina bavê Hamo",
+            "Gotina Ferhad"
+          ],
+          "correctIndex": 1,
+          "explanation": "Qutî li bin kevirê bavê wan e: ev gotina bavê Hamo ye.",
+          "explanationEn": "The tin is under their father’s stone: these are the words of Hamo’s father.",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Kî pêşî bilûrê lêdixe?",
+          "promptEn": "Who plays the flute first?",
+          "options": [
+            "Dapîr",
+            "Hamo",
+            "Xezal"
+          ],
+          "correctIndex": 1,
+          "explanation": "Pêşî Hamo: “Ez bilûrê lêdixim.” Paşê Dapîr bilûrê digire.",
+          "explanationEn": "First Hamo: “I play the flute.” Then Dapîr takes the flute.",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo dibêje: “Dûman di çavên min de ye.” Bi rastî çi heye?",
+          "promptEn": "Hamo says: “There’s smoke in my eyes.” What is really going on?",
+          "options": [
+            "Agir hîn mezin e",
+            "Hêsir di çavên wî de ne",
+            "Ew westiyayî ye"
+          ],
+          "correctIndex": 1,
+          "explanation": "Strana bavê wî tê, û ew dibêje: “Ez digirîm? Na, na.”",
+          "explanationEn": "His father’s tune plays, and he says: “Am I crying? No, no.”",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 5
+        },
+        {
+          "kind": "detail",
+          "prompt": "Hamo dê stranê çawa bidomîne?",
+          "promptEn": "How will Hamo keep the song going?",
+          "options": [
+            "Bi bilûrê",
+            "Bi gotarê",
+            "Bi govendê"
+          ],
+          "correctIndex": 2,
+          "explanation": "“Ez ê stranê bidomînim: bi govendê, ne bi bilûrê!”",
+          "explanationEn": "“I’ll keep the song going: with the govend, not with the flute!”",
+          "evidenceParagraph": 6,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok li ser çi ye?",
+          "promptEn": "What is this story about?",
+          "options": [
+            "Zivistan û berfa Sêvanê",
+            "Newroza Hamo: govend û bilûr",
+            "Bazar û sêvên Mîrza"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo serçopî ye, bilûra bavê xwe dibîne, û sibe pişta wî diêşe.",
+          "explanationEn": "Hamo leads the govend, finds his father’s flute, and the next day his back hurts.",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        }
+      ]
+    },
+    {
+      "slug": "road-08-simbele-sirin",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 2,
+      "category": "everyday",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Simbêlê şîrîn",
+      "summary": "Bi şev hingiv qedexe ye û Hevalo şûşeyan diparêze, lê sibehê şûşeyek vala ye!",
+      "body": "Şîrîn hevala min a dibistanê ye. Niha ew doktor e, û ew hîn jî ji min zûtir dibeze. Ew dibêje ku nexweşiya min ne ciddî ye. Çay baş e, lê bi şev hingiv qedexe ye! Tu dizanî, hingiv ji hemû dermanan baştir e.\n\nCîranên me dilovan in. Her yek bi şûşeyek hingiv tê serdanê. Xezal hemû şûşeyan digire, û Hevalo wan diparêze.\n\nŞev e, û hemû mal radize. Pişta min diêşe, stûyê min diêşe, û dilê min hingiv dixwaze. Ez hêdî hêdî diçim cem şûşeyan.\n\nHevalo li ber şûşeyan e. Ew li min dinêre, û ez li wî dinêrim. Paşê ez sêveke sor didim wî. Hevalo sêvê dixwe û li pencereyê dinêre.\n\nEz tenê tiliya xwe ya biçûk dikim nav hingiv. Ew jî diêşe, û hingiv derman e! Paşê tiliyeke din. Şev dirêj e, û deh tiliyên min hene.\n\nSibehê ez çaya xwe vedixwim. Xezal şûşeyeke vala tîne û dibêje: “Diz kî ye?” Ez dibêjim ku ez bêguneh im. Hevalo jî bêguneh e: ew tenê ji sêvan hez dike. Lê Xezal li simbêlê min dinêre û dikene.\n\nMirovên wêrek rastiyê dibêjin, ne wisa? Baş e: diz ez im. Lê ev nehêniya min û te ye. Û simbêlê min? Ew hîn jî şîrîn e.",
+      "translations": {
+        "en": "Şîrîn is my old schoolmate. Now she’s a doctor, and she still runs faster than I do. She says my illness isn’t serious. Tea is fine, but honey at night is forbidden! You know, honey is better than any medicine.\n\nOur neighbours are kind. Each of them comes to visit with a jar of honey. Xezal takes all the jars, and Hevalo guards them.\n\nIt’s night, and the whole house is asleep. My back hurts, my neck hurts, and my heart wants honey. Slowly, slowly, I go over to the jars.\n\nHevalo is in front of the jars. He looks at me, and I look at him. Then I give him a red apple. Hevalo eats the apple and looks out of the window.\n\nI only put my little finger in the honey. It hurts too, and honey is medicine! Then another finger. The night is long, and I have ten fingers.\n\nIn the morning I drink my tea. Xezal brings in an empty jar and says: “Who is the thief?” I say I am innocent. Hevalo is innocent too: he only likes apples. But Xezal looks at my moustache and laughs.\n\nBrave people tell the truth, don’t they? All right: the thief is me. But this is our secret, yours and mine. And my moustache? It’s still sweet."
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Şîrîn kî ye?",
+          "promptEn": "Who is Şîrîn?",
+          "options": [
+            "Xwişka Nazê",
+            "Doktor û hevala Hamo",
+            "Cîraneke Hamo ya nû"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Şîrîn hevala min a dibistanê ye. Niha ew doktor e.”",
+          "explanationEn": "“Şîrîn is my old schoolmate. Now she’s a doctor.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Kî zûtir dibeze: Hamo an Şîrîn?",
+          "promptEn": "Who runs faster: Hamo or Şîrîn?",
+          "options": [
+            "Hamo",
+            "Şîrîn"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Ew hîn jî ji min zûtir dibeze.”",
+          "explanationEn": "“She still runs faster than I do.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Şîrîn dibêje ku bi şev çi qedexe ye?",
+          "promptEn": "What does Şîrîn say is forbidden at night?",
+          "options": [
+            "Hingiv",
+            "Çay",
+            "Sêv"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Çay baş e, lê bi şev hingiv qedexe ye!”",
+          "explanationEn": "“Tea is fine, but honey at night is forbidden!”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "Hingiv qedexe ye. “Qedexe” çi ye?",
+          "promptEn": "Honey is forbidden. What does “qedexe” mean?",
+          "options": [
+            "Tu dikarî bikî",
+            "Tu nikarî bikî",
+            "Divê tu bikî"
+          ],
+          "correctIndex": 1,
+          "explanation": "Bi şev hingiv qedexe ye: Hamo nikare bi şev hingiv bixwe.",
+          "explanationEn": "Honey at night is forbidden: Hamo can’t eat honey at night.",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Ji bo Hamo, çi ji hemû dermanan baştir e?",
+          "promptEn": "For Hamo, what is better than any medicine?",
+          "options": [
+            "Çay",
+            "Hingiv",
+            "Sêv"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Tu dizanî, hingiv ji hemû dermanan baştir e.”",
+          "explanationEn": "“You know, honey is better than any medicine.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Kî şûşeyan diparêze?",
+          "promptEn": "Who guards the jars?",
+          "options": [
+            "Xezal",
+            "Nazê",
+            "Hevalo"
+          ],
+          "correctIndex": 2,
+          "explanation": "“Xezal hemû şûşeyan digire, û Hevalo wan diparêze.”",
+          "explanationEn": "“Xezal takes all the jars, and Hevalo guards them.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Bi şev çi diêşe?",
+          "promptEn": "At night, what hurts?",
+          "options": [
+            "Pişt û stûyê Hamo",
+            "Serê Hevalo",
+            "Lingên Xezalê"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Pişta min diêşe, stûyê min diêşe, û dilê min hingiv dixwaze.”",
+          "explanationEn": "“My back hurts, my neck hurts, and my heart wants honey.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Hamo sêveke sor dide Hevalo?",
+          "promptEn": "Why does Hamo give Hevalo a red apple?",
+          "options": [
+            "Ji bo ku Hevalo sax bibe",
+            "Ji bo ku Hamo hingiv bixwe",
+            "Ji bo ku Hevalo bireqise"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hevalo sêvê dixwe û li pencereyê dinêre, ne li şûşeyan.",
+          "explanationEn": "Hevalo eats the apple and looks out of the window, not at the jars.",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Hamo pêşî çi dike nav hingiv?",
+          "promptEn": "What does Hamo put in the honey first?",
+          "options": [
+            "Hemû destê xwe",
+            "Sêveke sor",
+            "Tiliya xwe ya biçûk"
+          ],
+          "correctIndex": 2,
+          "explanation": "“Ez tenê tiliya xwe ya biçûk dikim nav hingiv.” Paşê tiliyeke din.",
+          "explanationEn": "“I only put my little finger in the honey.” Then another finger.",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "Xezal şûşeyeke vala tîne. Di şûşeyeke vala de çi heye?",
+          "promptEn": "Xezal brings an empty jar. What is in an empty jar?",
+          "options": [
+            "Tiştek tune",
+            "Hingiv heye",
+            "Av heye"
+          ],
+          "correctIndex": 0,
+          "explanation": "Şûşe vala ye: di şûşeyê de hingiv tune.",
+          "explanationEn": "The jar is empty: there is no honey in it.",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Hevalo ji çi hez dike?",
+          "promptEn": "What does Hevalo like?",
+          "options": [
+            "Ji hingiv",
+            "Ji sêvan",
+            "Ji çayê"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Hevalo jî bêguneh e: ew tenê ji sêvan hez dike.”",
+          "explanationEn": "“Hevalo is innocent too: he only likes apples.”",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Xezal li simbêlê Hamo dinêre û dikene?",
+          "promptEn": "Why does Xezal look at Hamo’s moustache and laugh?",
+          "options": [
+            "Simbêlê wî dirêj e",
+            "Hingiv li ser simbêlê wî ye",
+            "Simbêlê wî spî ye"
+          ],
+          "correctIndex": 1,
+          "explanation": "Simbêlê Hamo hîn jî şîrîn e: hingiv li ser wî ye.",
+          "explanationEn": "Hamo’s moustache is still sweet: there is honey on it.",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 4
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Hamo dibêje: “Diz ez im”?",
+          "promptEn": "Why does Hamo say: “The thief is me”?",
+          "options": [
+            "Ji ber ku ew nexweş e",
+            "Ji ber ku ew wêrek e",
+            "Ji ber ku Hevalo dikene"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Mirovên wêrek rastiyê dibêjin, ne wisa? Baş e: diz ez im.”",
+          "explanationEn": "“Brave people tell the truth, don’t they? All right: the thief is me.”",
+          "evidenceParagraph": 6,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok li ser çi ye?",
+          "promptEn": "What is this story about?",
+          "options": [
+            "Pêşbirka simbêlan",
+            "Doktor û derziyek",
+            "Hamo, hingiv û nehêniyek"
+          ],
+          "correctIndex": 2,
+          "explanation": "Bi şev hingiv qedexe ye, lê Hamo hingiv dixwe, û ev nehêniya wî ye.",
+          "explanationEn": "Honey at night is forbidden, but Hamo eats some, and that is his secret.",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        }
+      ]
+    },
+    {
+      "slug": "road-09-gure-min",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 2,
+      "category": "family",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Gurê min",
+      "summary": "Her sal gurê Hamo mezintir dibe, lê îro ew ji bo Baran rastiyê dibêje.",
+      "body": "Duh Bozo reviya, û Baran li dû wî winda bû. Lê bi şev ew bi stêrkan vegeriya malê. Îro êvarê em hemû li ber agir rûdinin û çay vedixwin. Baran neh salî ye. Tu dizanî? Dema ku gur hat, ez jî neh salî bûm.\n\nHer sal ez çîroka gur dibêjim, û her sal gur mezintir dibe. Par ew wek kerekî bû. Îsal ew wek hespekî bû. Dapîr tenê dibêje: “Ew kûçikê şivan bû.”\n\nÎro ez ji bo Baran rastiyê dibêjim. Ez bi tena serê xwe li zozanan bûm. Ez jî winda bûm, wek Baran. Şev bû, û li dora min tarîtî bû.\n\nHingê ji daristanê heywanekî mezin derket. Ez gelek tirsiyam. Ez reviyam, û ez ketim avê! Ez di nav avê de rûniştim, sar û tenê.\n\nHeywan hat cem min. Ew ne gur bû, ne jî hesp bû. Ew kûçikê şivan bû, û ew pir dilovan bû. Ew heta berbangê li kêleka min ma. Di berbangê de em bi hev re vegeriyan malê.\n\nBelê, Dapîr rast dibêje. Lê Baran? Ew bi tena serê xwe vegeriya, bi stêrkan. Kî ji me herî wêrek e? Baran, kurê min!\n\nBaran dikene, û Dapîr ji min re çayeke din tîne. Û gurê min? Sala bê ew ê hîn mezintir bibe. Ev kevneşopa me ye!",
+      "translations": {
+        "en": "Yesterday Bozo ran away, and Baran got lost going after him. But at night he came home by the stars. This evening we are all sitting by the fire, drinking tea. Baran is nine. You know what? When the wolf came, I was nine too.\n\nEvery year I tell the story of the wolf, and every year the wolf gets bigger. Last year it was like a donkey. This year it was like a horse. Dapîr only says: “It was the shepherd’s dog.”\n\nToday I am telling the truth, for Baran. I was up on the summer pastures all on my own. I got lost too, like Baran. It was night, and all around me was darkness.\n\nThen a big animal came out of the forest. I was very frightened. I ran, and I fell into the water! I sat there in the water, cold and alone.\n\nThe animal came up to me. It wasn’t a wolf, and it wasn’t a horse either. It was the shepherd’s dog, and it was very kind. It stayed beside me until dawn. At dawn we went home together.\n\nYes, Dapîr is right. But Baran? He came home all on his own, by the stars. Which of us is the bravest? Baran, my boy!\n\nBaran laughs, and Dapîr brings me another tea. And my wolf? Next year it will be even bigger. That’s our tradition!"
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Duh çi bû?",
+          "promptEn": "What happened yesterday?",
+          "options": [
+            "Bozo reviya û Baran winda bû",
+            "Hamo û Xezal çûn bajêr",
+            "Dapîr çû zozanan"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Duh Bozo reviya, û Baran li dû wî winda bû.”",
+          "explanationEn": "“Yesterday Bozo ran away, and Baran got lost going after him.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Baran çawa vegeriya malê?",
+          "promptEn": "How did Baran get back home?",
+          "options": [
+            "Bi Bozo re",
+            "Bi stêrkan",
+            "Bi kûçikekî re"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Lê bi şev ew bi stêrkan vegeriya malê.”",
+          "explanationEn": "“But at night he came home by the stars.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Dema ku gur hat, Hamo çend salî bû?",
+          "promptEn": "When the wolf came, how old was Hamo?",
+          "options": [
+            "Heşt salî",
+            "Deh salî",
+            "Neh salî"
+          ],
+          "correctIndex": 2,
+          "explanation": "“Dema ku gur hat, ez jî neh salî bûm.”",
+          "explanationEn": "“When the wolf came, I was nine too.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 5
+        },
+        {
+          "kind": "inference",
+          "prompt": "Par gur wek kerekî bû, îsal wek hespekî. Sala bê ew ê çawa be?",
+          "promptEn": "Last year the wolf was like a donkey, this year like a horse. What will it be like next year?",
+          "options": [
+            "Biçûktir",
+            "Mezintir",
+            "Wekhev"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Her sal ez çîroka gur dibêjim, û her sal gur mezintir dibe.”",
+          "explanationEn": "“Every year I tell the story of the wolf, and every year the wolf gets bigger.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Dapîr çi dibêje?",
+          "promptEn": "What does Dapîr say?",
+          "options": [
+            "Ew hirç bû",
+            "Ew gur bû",
+            "Ew kûçikê şivan bû"
+          ],
+          "correctIndex": 2,
+          "explanation": "Dapîr tenê dibêje: “Ew kûçikê şivan bû.”",
+          "explanationEn": "Dapîr only says: “It was the shepherd’s dog.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Îro Hamo ji bo kê rastiyê dibêje?",
+          "promptEn": "Who is Hamo telling the truth for today?",
+          "options": [
+            "Ji bo Xezalê",
+            "Ji bo Dapîrê",
+            "Ji bo Baran"
+          ],
+          "correctIndex": 2,
+          "explanation": "“Îro ez ji bo Baran rastiyê dibêjim.”",
+          "explanationEn": "“Today I am telling the truth, for Baran.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Çi pêşî bû?",
+          "promptEn": "What happened first?",
+          "options": [
+            "Hamo reviya û ket avê",
+            "Heywanek ji daristanê derket"
+          ],
+          "correctIndex": 1,
+          "explanation": "Pêşî heywanek ji daristanê derket. Paşê Hamo reviya û ket avê.",
+          "explanationEn": "First an animal came out of the forest. Then Hamo ran and fell into the water.",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Ez gelek tirsiyam.” Hamo çi dibêje?",
+          "promptEn": "“Ez gelek tirsiyam.” What is Hamo saying?",
+          "options": [
+            "Ez kêfxweş bûm",
+            "Tirsa min hebû",
+            "Ez westiyayî bûm"
+          ],
+          "correctIndex": 1,
+          "explanation": "Heywanek derket, û Hamo reviya: tirsa wî hebû.",
+          "explanationEn": "An animal came out, and Hamo ran: he was afraid.",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Hamo li ku rûnişt, sar û tenê?",
+          "promptEn": "Where did Hamo sit, cold and alone?",
+          "options": [
+            "Li bin dara gûzê",
+            "Di nav avê de",
+            "Li ser zinarekî"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Ez di nav avê de rûniştim, sar û tenê.”",
+          "explanationEn": "“I sat there in the water, cold and alone.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Kûçik heta berbangê li ku ma?",
+          "promptEn": "Where did the dog stay until dawn?",
+          "options": [
+            "Li kêleka Hamo",
+            "Li ber konê şivan",
+            "Li daristanê"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Ew heta berbangê li kêleka min ma.”",
+          "explanationEn": "“It stayed beside me until dawn.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Berbang” kengî ye?",
+          "promptEn": "When is “berbang”?",
+          "options": [
+            "Nîvê şevê",
+            "Dema ku roj hiltê",
+            "Êvarê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Di berbangê de roj hiltê, û Hamo û kûçik vegeriyan malê.",
+          "explanationEn": "At dawn the sun rises, and Hamo and the dog went home.",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 4
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Hamo dibêje ku Baran herî wêrek e?",
+          "promptEn": "Why does Hamo say that Baran is the bravest?",
+          "options": [
+            "Baran ji guran natirse",
+            "Baran ji Hamo mezintir e",
+            "Baran bi tena serê xwe vegeriya"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo û kûçik bi hev re vegeriyan, lê Baran bi tena serê xwe.",
+          "explanationEn": "Hamo and the dog came home together, but Baran came home on his own.",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "“Ev kevneşopa me ye!” Sala bê Hamo dê çi bike?",
+          "promptEn": "“That’s our tradition!” What will Hamo do next year?",
+          "options": [
+            "Ew ê dîsa çîroka gur bibêje",
+            "Ew ê biçe daristanê",
+            "Ew ê kûçikekî bikire"
+          ],
+          "correctIndex": 0,
+          "explanation": "Her sal Hamo çîroka gur dibêje, û sala bê gur dê hîn mezintir bibe.",
+          "explanationEn": "Every year Hamo tells the wolf story, and next year the wolf will be even bigger.",
+          "evidenceParagraph": 6,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok li ser çi ye?",
+          "promptEn": "What is this story about?",
+          "options": [
+            "Dawetek li zozanan",
+            "Hamo û gur: çîroka rast",
+            "Bozo û kera Ferhad"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo çîroka gur dibêje, û vê carê rastiyê dibêje.",
+          "explanationEn": "Hamo tells the wolf story, and this time he tells the truth.",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        }
+      ]
+    },
+    {
+      "slug": "road-10-ke-got-bizin",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 3,
+      "category": "village",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Kê got bizin?",
+      "summary": "Şeva yekem li zozanan, Hamo li ber kon tiştek dît: bizinek… an na?",
+      "body": "Li Sêvanê her kes dipirse: “Kê got ku Zerê tenê bizinek e?” Ez dibêjim ku bîra min nayê. Lê ez ê rastiyê ji te re bibêjim.\n\nŞeva me ya yekem li zozanan bû. Em hemû di konê Bişar de razan. Nîvê şevê Xezalê dengek bihîst, û ez jî şiyar bûm. Min serê xwe ji kon derxist. Li derve tarî bû, lê li ber kevirê xwê tiştek hebû.\n\nEz pir westiyayî bûm, û simbêlê min jî westiyayî bû. Min bi dengekî nizm got: “Ev tenê bizinek e. Raze, Xezo.” Paşê ez dîsa razam. Bişar tiştek negot. Ew tenê dikenî.\n\nÊvara din, li keviya mêrgê, me du ask dîtin. Ya mê pir spehî bû, û çavên wê mezin bûn. Ew li Hevalo dinêrî. Sêva Hevalo ket erdê, lê wî sêva xwe jî nedît.\n\nMe li ber agir çay vedixwar. Bişar got ku ew her şev xwê li ser wî kevirî datîne. Wê demê min fêm kir: bizina min a nîvê şevê ev ask bû! Min navê wê kir Zerê, ji ber ku rengê wê mîna zêr e.\n\nNiha her kes dipirse, û ez simbêlê xwe bilind dikim: “Bîra min nayê.” Min hemû havîn di deftera xwe de nivîsî. Gol, xaniyê Dapîrê, nanê min ê reş jî. Tenê bizin ne di defterê de ye. Ew bizin qet tunebû, ne wisa? Te jî tiştek nedît.",
+      "translations": {
+        "en": "In Sêvan everyone is asking: “Who said Zerê is just a goat?” I say I don’t remember. But I will tell you the truth.\n\nIt was our first night on the zozan. We all slept in Bişar’s tent. In the middle of the night Xezal heard a sound, and I woke up too. I put my head out of the tent. Outside it was dark, but by the salt stone there was something.\n\nI was very tired, and my moustache was tired too. I said in a low voice: “It’s just a goat. Go to sleep, Xezo.” Then I went back to sleep. Bişar said nothing. He just kept laughing.\n\nThe next evening, at the edge of the meadow, we saw two deer. The doe was very beautiful, and her eyes were big. She was looking at Hevalo. Hevalo’s apple fell to the ground, but he didn’t even see his apple.\n\nWe were drinking tea by the fire. Bişar said that he puts salt on that stone every night. Then I understood: my midnight goat was this deer! I named her Zerê, because her colour is like gold.\n\nNow everyone asks, and I lift my moustache: “I don’t remember.” I wrote the whole summer down in my notebook. The lake, Dapîr’s house, even my black bread. Only the goat is not in the notebook. That goat never existed, did it? You didn’t see anything either."
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Şeva yekem, kê dengek bihîst?",
+          "promptEn": "On the first night, who heard a sound?",
+          "options": [
+            "Bişar",
+            "Xezal",
+            "Hevalo"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Nîvê şevê Xezalê dengek bihîst.”",
+          "explanationEn": "Hamo says: “In the middle of the night Xezal heard a sound.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Nîvê şevê” kengî ye?",
+          "promptEn": "When is “nîvê şevê”?",
+          "options": [
+            "Sibehê, dema ku roj tê",
+            "Dema ku tarî ye û her kes radize",
+            "Êvarê, dema ku em çay vedixwin"
+          ],
+          "correctIndex": 1,
+          "explanation": "Nîvê şevê li derve tarî bû, û her kes di kon de radiza.",
+          "explanationEn": "In the middle of the night it was dark outside, and everyone was asleep in the tent.",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo çima got ku ew tenê bizinek e?",
+          "promptEn": "Why did Hamo say it was just a goat?",
+          "options": [
+            "Ji ber ku ew pir westiyayî bû",
+            "Ji ber ku Bişar wisa got",
+            "Ji ber ku Xezal ditirsiya"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Ez pir westiyayî bûm.” Wî baş nedît.",
+          "explanationEn": "Hamo says: “I was very tired.” He didn’t see well.",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Dema ku Hamo got “bizinek e”, Bişar çi kir?",
+          "promptEn": "When Hamo said “it’s a goat”, what did Bişar do?",
+          "options": [
+            "Wî got ku ew ask e",
+            "Ew rabû û çû derve",
+            "Wî tiştek negot; ew tenê dikenî"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo dibêje: “Bişar tiştek negot. Ew tenê dikenî.”",
+          "explanationEn": "Hamo says: “Bişar said nothing. He just kept laughing.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 4
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Pêşî çi qewimî?",
+          "promptEn": "What happened first?",
+          "options": [
+            "Hamo navê askê kir Zerê",
+            "Hamo got: “Ev tenê bizinek e.”",
+            "Bişar behsa xwê kir"
+          ],
+          "correctIndex": 1,
+          "explanation": "Pêşî Hamo got: “Ev tenê bizinek e.” Paşê Bişar behsa xwê kir.",
+          "explanationEn": "First Hamo said: “It’s just a goat.” Later Bişar talked about the salt.",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Êvara din, du ask li ku bûn?",
+          "promptEn": "The next evening, where were the two deer?",
+          "options": [
+            "Li keviya mêrgê",
+            "Li ber golê",
+            "Li ber konê Bişar"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Li keviya mêrgê, me du ask dîtin.”",
+          "explanationEn": "Hamo says: “At the edge of the meadow, we saw two deer.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "Ya mê pir spehî bû. “Spehî” çi ye?",
+          "promptEn": "The doe was very “spehî”. What does “spehî” mean?",
+          "options": [
+            "Pir biçûk",
+            "Pir westiyayî",
+            "Pir xweşik"
+          ],
+          "correctIndex": 2,
+          "explanation": "Spehî mîna xweşik e: “Ya mê pir spehî bû.”",
+          "explanationEn": "Spehî is like xweşik, beautiful: “The doe was very beautiful.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima sêva Hevalo ket erdê?",
+          "promptEn": "Why did Hevalo’s apple fall to the ground?",
+          "options": [
+            "Ji ber ku ew têr bû",
+            "Ji ber ku aska mê li wî dinêrî",
+            "Ji ber ku Hamo ew girt"
+          ],
+          "correctIndex": 1,
+          "explanation": "Aska mê li Hevalo dinêrî, û wî sêva xwe jî nedît.",
+          "explanationEn": "The doe was looking at Hevalo, and he didn’t even see his apple.",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Bişar her şev çi dike?",
+          "promptEn": "What does Bişar do every night?",
+          "options": [
+            "Ew nan li ser sêlê dipêje",
+            "Ew çay ji Hamo re tîne",
+            "Ew xwê li ser kevirekî datîne"
+          ],
+          "correctIndex": 2,
+          "explanation": "Bişar got ku ew her şev xwê li ser wî kevirî datîne.",
+          "explanationEn": "Bişar said that he puts salt on that stone every night.",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Piştî ku Bişar behsa xwê kir, Hamo çi fêm kir?",
+          "promptEn": "After Bişar talked about the salt, what did Hamo understand?",
+          "options": [
+            "Ku bizina wî a şevê ask bû",
+            "Ku Xezal pir westiyayî bû",
+            "Ku Hevalo sêv xwarin"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Bizina min a nîvê şevê ev ask bû!”",
+          "explanationEn": "Hamo says: “My midnight goat was this deer!”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Hamo çima navê wê kir Zerê?",
+          "promptEn": "Why did Hamo name her Zerê?",
+          "options": [
+            "Ji ber ku Xezalê wisa got",
+            "Ji ber ku rengê wê mîna zêr e",
+            "Ji ber ku ew xwê dixwe"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Rengê wê mîna zêr e.”",
+          "explanationEn": "Hamo says: “Her colour is like gold.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast an şaş? Bizin di deftera Hamo de ye.",
+          "promptEn": "True or false? The goat is in Hamo’s notebook.",
+          "options": [
+            "Rast",
+            "Şaş"
+          ],
+          "correctIndex": 1,
+          "explanation": "Şaş e. Hamo dibêje: “Tenê bizin ne di defterê de ye.”",
+          "explanationEn": "False. Hamo says: “Only the goat is not in the notebook.”",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo dibêje: “Bîra min nayê.” Ew rast dibêje?",
+          "promptEn": "Hamo says: “I don’t remember.” Is he telling the truth?",
+          "options": [
+            "Erê, Xezalê got ku Zerê bizin e",
+            "Na, wî bi xwe ew got",
+            "Erê, Bişar got ku Zerê bizin e"
+          ],
+          "correctIndex": 1,
+          "explanation": "Na. Şeva yekem Hamo bi xwe got: “Ev tenê bizinek e.”",
+          "explanationEn": "No. On the first night Hamo himself said: “It’s just a goat.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok li ser çi ye?",
+          "promptEn": "What is this story about?",
+          "options": [
+            "Xezal li zozanan winda bû",
+            "Hamo li zozanan nanek şewitand",
+            "Hamo şevê Zerê dît û got ku ew bizin e"
+          ],
+          "correctIndex": 2,
+          "explanation": "Şevê Hamo Zerê dît, lê wî got: “Ev tenê bizinek e.”",
+          "explanationEn": "At night Hamo saw Zerê, but he said: “It’s just a goat.”",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        }
+      ]
+    },
+    {
+      "slug": "road-11-seva-bave-min",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 3,
+      "category": "family",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Sêva bavê min",
+      "summary": "Xezal diçe Hewlêrê, û Hamo dixwaze tiştekî ji bo rê bide wê: lê çi?",
+      "body": "Xezal piştî zivistanê diçe Hewlêrê. Ew ji dûriyê ditirse, û ez wê fêm dikim. Ez dixwazim tiştekî ji bo rê bidim wê. Lê çi?\n\nDema ku ez xort bûm, ez jî ji gund çûm Amedê. Wê demê simbêlê min hê tunebû. Erê, rast e! Xezalê wêneyê wê demê dîtiye, û ew hê jî dikene.\n\nSibeha ku ez çûm, bavê min li ber dara sêvê ya kevn bû. Wî sêvek ji darê girt û da min. Wî got ku ez biçim, lê rehên xwe ji bîr nekim. Min fêm nekir, lê min sêv bi xwe re bir.\n\nLi Amedê ez bûm karker, û min tûrên ardê hilgirtin. Bajar mezin û qelebalix bû, loma ez her roj winda dibûm. Çaya Amedê jî ne mîna çaya me bû. Lê min sêv nexwar. Min ew li ber pencereyê danî. Ew li wir bû, sor û biçûk, mîna Sêvanê.\n\nZivistan derbas bû, û sêv kevn bû. Wê demê min gotina bavê xwe fêm kir. Ez vegeriyam, ji ber ku rehên min li vir bûn. Û ji ber ku Nazê li vir bû. Bi kurtî: ji ber Nazê.\n\nNiha ez dizanim ez ê çi bidim Xezalê. Sêvek? Na, Hevalo wê dixwe. Min biryar daye. Her şev li ber sobeyê, ez ê çîrokeke bavê xwe ji wê re vebêjim. Hevalo sêvan dixwe, lê çîrokan naxwe. Ez hêvî dikim.",
+      "translations": {
+        "en": "Xezal is going to Hewlêr after the winter. She is afraid of the distance, and I understand her. I want to give her something for the road. But what?\n\nWhen I was a young man, I left the village for Amed too. Back then I had no moustache yet. Yes, it’s true! Xezal has seen the photo from those days, and she is still laughing.\n\nThe morning I left, my father was standing by the old apple tree. He took an apple from the tree and gave it to me. He said that I should go, but not forget my roots. I didn’t understand, but I took the apple with me.\n\nIn Amed I became a worker, and I carried sacks of flour. The city was big and crowded, so I got lost every day. Even the tea in Amed was not like ours. But I didn’t eat the apple. I put it by the window. There it sat, red and small, like Sêvan.\n\nThe winter passed, and the apple grew old. Then I understood my father’s words. I came back because my roots were here. And because Nazê was here. In short: because of Nazê.\n\nNow I know what I will give Xezal. An apple? No, Hevalo would eat it. I have decided. Every night by the stove, I will tell her one of my father’s tales. Hevalo eats apples, but he doesn’t eat stories. I hope."
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Xezal kengî diçe Hewlêrê?",
+          "promptEn": "When is Xezal going to Hewlêr?",
+          "options": [
+            "Sibe sibehê",
+            "Piştî zivistanê",
+            "Îro êvarê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Xezal piştî zivistanê diçe Hewlêrê.”",
+          "explanationEn": "Hamo says: “Xezal is going to Hewlêr after the winter.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Hamo Xezalê fêm dike?",
+          "promptEn": "Why does Hamo understand Xezal?",
+          "options": [
+            "Ji ber ku ew jî carekê ji gund çû",
+            "Ji ber ku ew jî mamoste ye",
+            "Ji ber ku ew Hewlêrê baş nas dike"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Dema ku ez xort bûm, ez jî ji gund çûm Amedê.”",
+          "explanationEn": "Hamo says: “When I was a young man, I left the village for Amed too.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Xort” kî ye?",
+          "promptEn": "Who is a “xort”?",
+          "options": [
+            "Mirovekî pîr",
+            "Keçikeke biçûk",
+            "Mirovekî ciwan"
+          ],
+          "correctIndex": 2,
+          "explanation": "Xort mirovekî ciwan e: “Dema ku ez xort bûm…”",
+          "explanationEn": "A xort is a young man: “When I was a young man…”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Dema ku Hamo xort bû, çi hê tunebû?",
+          "promptEn": "When Hamo was a young man, what did he not have yet?",
+          "options": [
+            "Simbêlê wî",
+            "Çenteyê wî",
+            "Navê wî"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Wê demê simbêlê min hê tunebû.”",
+          "explanationEn": "Hamo says: “Back then I had no moustache yet.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Sibeha ku Hamo çû, bavê wî çi da wî?",
+          "promptEn": "The morning Hamo left, what did his father give him?",
+          "options": [
+            "Bilûrek",
+            "Sêvek",
+            "Nameyek"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Wî sêvek ji darê girt û da min.”",
+          "explanationEn": "Hamo says: “He took an apple from the tree and gave it to me.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Bavê Hamo çi got?",
+          "promptEn": "What did Hamo’s father say?",
+          "options": [
+            "Ku ew li gund bimîne",
+            "Ku ew sêvê bixwe",
+            "Ku ew biçe, lê rehên xwe ji bîr neke"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo dibêje: “Wî got ku ez biçim, lê rehên xwe ji bîr nekim.”",
+          "explanationEn": "Hamo says: “He said that I should go, but not forget my roots.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Li Amedê karê Hamo çi bû?",
+          "promptEn": "What was Hamo’s job in Amed?",
+          "options": [
+            "Ew aşpêj bû",
+            "Ew karker bû",
+            "Ew mamoste bû"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Li Amedê ez bûm karker.”",
+          "explanationEn": "Hamo says: “In Amed I became a worker.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "Bajar qelebalix bû. Ango çi?",
+          "promptEn": "The city was “qelebalix”. What does that mean?",
+          "options": [
+            "Gelek mirov li wir bûn",
+            "Bajar pir biçûk bû",
+            "Kes li wir tunebû"
+          ],
+          "correctIndex": 0,
+          "explanation": "Li bajarekî qelebalix gelek mirov hene: “Bajar mezin û qelebalix bû.”",
+          "explanationEn": "A crowded city has many people: “The city was big and crowded.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Hamo her roj winda dibû?",
+          "promptEn": "Why did Hamo get lost every day?",
+          "options": [
+            "Ji ber ku ew pir westiyayî bû",
+            "Ji ber ku bajar mezin û qelebalix bû",
+            "Ji ber ku sêv li ber pencereyê bû"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Bajar mezin û qelebalix bû, loma ez her roj winda dibûm.”",
+          "explanationEn": "Hamo says: “The city was big and crowded, so I got lost every day.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast an şaş? Li Amedê, Hamo sêva bavê xwe xwar.",
+          "promptEn": "True or false? In Amed, Hamo ate his father’s apple.",
+          "options": [
+            "Rast",
+            "Şaş"
+          ],
+          "correctIndex": 1,
+          "explanation": "Şaş e. Hamo dibêje: “Min sêv nexwar. Min ew li ber pencereyê danî.”",
+          "explanationEn": "False. Hamo says: “I didn’t eat the apple. I put it by the window.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Hamo kengî gotina bavê xwe fêm kir?",
+          "promptEn": "When did Hamo understand his father’s words?",
+          "options": [
+            "Sibeha ku ew çû Amedê",
+            "Dema ku Xezal çû Hewlêrê",
+            "Dema ku zivistan derbas bû û sêv kevn bû"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo dibêje: “Zivistan derbas bû, û sêv kevn bû. Wê demê min gotina bavê xwe fêm kir.”",
+          "explanationEn": "Hamo says: “The winter passed, and the apple grew old. Then I understood my father’s words.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo çima vegeriya Sêvanê?",
+          "promptEn": "Why did Hamo come back to Sêvan?",
+          "options": [
+            "Ji ber ku karê wî tunebû",
+            "Ji ber rehên xwe, û ji ber Nazê",
+            "Ji ber ku ew li bajêr winda bû"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Rehên min li vir bûn. Û Nazê li vir bû.”",
+          "explanationEn": "Hamo says: “My roots were here. And Nazê was here.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo çima sêv nade Xezalê?",
+          "promptEn": "Why doesn’t Hamo give Xezal an apple?",
+          "options": [
+            "Ji ber ku Hevalo wê dixwe",
+            "Ji ber ku sêv kevn in",
+            "Ji ber ku Xezal sêvan naxwe"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Sêvek? Na, Hevalo wê dixwe.”",
+          "explanationEn": "Hamo says: “An apple? No, Hevalo would eat it.”",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok li ser çi ye?",
+          "promptEn": "What is this story about?",
+          "options": [
+            "Hamo li Amedê winda bû û qet venegeriya",
+            "Bavê Hamo sêvek da wî; niha Hamo dê çîrokan bide Xezalê",
+            "Xezal sêvek da Hevalo û çû Hewlêrê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Bavê Hamo sêvek da wî. Niha Hamo dê her şev çîrokeke bavê xwe ji Xezalê re vebêje.",
+          "explanationEn": "Hamo’s father gave him an apple. Now Hamo will tell Xezal a tale every night.",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        }
+      ]
+    },
+    {
+      "slug": "road-12-sitila-hevalo",
+      "dialect": "kurmanci",
+      "language": "ku",
+      "level": 3,
+      "category": "family",
+      "tradition": "original",
+      "author": "Hevalo",
+      "source": null,
+      "sourceUrl": null,
+      "attributionNote": null,
+      "cover": null,
+      "readingMinutes": null,
+      "title": "Şitila Hevalo",
+      "summary": "Şeva berî ku Xezal biçe, Hamo ji pencereyê tiştek dît, lê wî tiştek negot.",
+      "body": "Rêya me dirêj bû, ne wisa? Hemû zivistanê min çîrokên bavê xwe vegotin. Îro dora çîroka min e. Ew ne dirêj e, ji ber ku çaya min hê germ e.\n\nŞeva berî ku Xezal biçe, xew nehat çavên min. Ez rabûm û min çay çêkir. Ji pencereyê min Xezal û Hevalo li bin dara sêvê ya kevn dîtin.\n\nWê bi dizî şitilek çand, û Hevalo bi guhên bilind temaşe kir. Min malika dawî ya bavê xwe bi bîr anî: “Dareke nû biçînin.” Min tiştek negot. Simbêlê min jî tiştek negot.\n\nSibehê, li ber deriyê şîn, min got: “Rêya te vekirî be, Xezo.” Xezalê got ku ez simbêlê xwe biparêzim. Hevalo sêva dawî xwar, û otobûs çû.\n\nPiştî hefteyekê kartek ji Hewlêrê hat. Xezal dipirse ka simbêlê min baş e. Ew dinivîse ku em li bin dara kevn binêrin. Baran û Hêvî bezîn baxçe, û ez jî. Ez pir ecêbmayî bûm. Pir! Tu dizanî, ez lîstikvanekî baş im.\n\nNiha Hevalo her roj li ber şitila xwe rûdine û li benda sêvan e. Ez jê re dibêjim ku sêv dê piştî çend salan bên. Ew bawer nake.\n\nHeke tu rojekê dîsa bêyî Sêvanê, li deriyê şîn bixe. Ez ê derî vekim, çimkî tu ne gur î. Çay dê germ be. Rêya te vekirî be! Binêre, Hevalo jî dixwaze bi te re bê. Na, Hevalo. Tu li cem şitila xwe dimînî.",
+      "translations": {
+        "en": "Our road was a long one, wasn’t it? All winter I told my father’s tales. Today it is my own story’s turn. It isn’t long, because my tea is still hot.\n\nThe night before Xezal left, sleep would not come to me. I got up and made tea. From the window I saw Xezal and Hevalo under the old apple tree.\n\nShe secretly planted a sapling, and Hevalo watched with his ears pricked up. I remembered my father’s last verse: “Plant a new tree.” I said nothing. Even my moustache said nothing.\n\nIn the morning, at the blue gate, I said: “May your road be open, Xezo.” Xezal said that I should take good care of my moustache. Hevalo ate the last apple, and the bus left.\n\nA week later a card came from Hewlêr. Xezal asks whether my moustache is well. She writes that we should look under the old tree. Baran and Hêvî ran to the orchard, and so did I. I was very surprised. Very! You know, I am a good actor.\n\nNow Hevalo sits by his sapling every day, waiting for apples. I tell him the apples will come in a few years. He doesn’t believe me.\n\nIf you come back to Sêvan one day, knock at the blue gate. I will open the door, because you are not the wolf. The tea will be hot. May your road be open! Look, Hevalo wants to come with you too. No, Hevalo. You stay with your sapling."
+      },
+      "glossary": [],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Hemû zivistanê Hamo çi kir?",
+          "promptEn": "What did Hamo do all winter?",
+          "options": [
+            "Wî li Hewlêrê kar kir",
+            "Wî çîrokên bavê xwe vegotin",
+            "Wî şitilek çand"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Hemû zivistanê min çîrokên bavê xwe vegotin.”",
+          "explanationEn": "Hamo says: “All winter I told my father’s tales.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima çîroka Hamo ne dirêj e?",
+          "promptEn": "Why isn’t Hamo’s story a long one?",
+          "options": [
+            "Ji ber ku çaya wî hê germ e",
+            "Ji ber ku ew westiyayî ye",
+            "Ji ber ku Hevalo birçî ye"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Ew ne dirêj e, ji ber ku çaya min hê germ e.”",
+          "explanationEn": "Hamo says: “It isn’t long, because my tea is still hot.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Xew nehat çavên min.” Ango çi?",
+          "promptEn": "“Sleep did not come to my eyes.” What does that mean?",
+          "options": [
+            "Hamo baş raza",
+            "Hamo li Hewlêrê bû",
+            "Hamo şiyar ma"
+          ],
+          "correctIndex": 2,
+          "explanation": "Xew nehat, loma Hamo şiyar ma: “Ez rabûm û min çay çêkir.”",
+          "explanationEn": "Sleep did not come, so Hamo stayed awake: “I got up and made tea.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Ji pencereyê, Hamo Xezal li ku dît?",
+          "promptEn": "From the window, where did Hamo see Xezal?",
+          "options": [
+            "Li ber deriyê şîn",
+            "Li bin dara sêvê ya kevn",
+            "Li ber sobeyê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Min Xezal û Hevalo li bin dara sêvê ya kevn dîtin.”",
+          "explanationEn": "Hamo says: “I saw Xezal and Hevalo under the old apple tree.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Xezalê li bin darê çi kir?",
+          "promptEn": "What did Xezal do under the tree?",
+          "options": [
+            "Wê şitilek çand",
+            "Wê sêvek da Hevalo",
+            "Wê nameyek nivîsî"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Wê bi dizî şitilek çand.”",
+          "explanationEn": "Hamo says: “She secretly planted a sapling.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "Xezalê “bi dizî” şitilek çand. “Bi dizî” çi ye?",
+          "promptEn": "Xezal planted a sapling “bi dizî”. What does “bi dizî” mean?",
+          "options": [
+            "Bêyî ku kes bibîne",
+            "Bi dengekî bilind",
+            "Bi hemû malbatê re"
+          ],
+          "correctIndex": 0,
+          "explanation": "Bi dizî ango bêyî ku kes bibîne: Xezalê şevê şitil çand.",
+          "explanationEn": "Bi dizî means without anyone seeing: Xezal planted the sapling at night.",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Xezalê şitilek çand?",
+          "promptEn": "Why did Xezal plant a sapling?",
+          "options": [
+            "Ji ber ku Hamo wisa got",
+            "Ji ber ku Hevalo birçî bû",
+            "Wekî ku malika dawî ya bapîr dibêje"
+          ],
+          "correctIndex": 2,
+          "explanation": "Malika dawî ya bavê Hamo dibêje: “Dareke nû biçînin.”",
+          "explanationEn": "The last verse by Hamo’s father says: “Plant a new tree.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Li ber deriyê şîn, Xezalê çi got?",
+          "promptEn": "At the blue gate, what did Xezal say?",
+          "options": [
+            "Ku Hamo bi wê re bê Hewlêrê",
+            "Ku Hamo simbêlê xwe biparêze",
+            "Ku Hamo şitilê biçîne"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Xezalê got ku ez simbêlê xwe biparêzim.”",
+          "explanationEn": "Hamo says: “Xezal said that I should take good care of my moustache.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Piştî ku otobûs çû, çi hat?",
+          "promptEn": "After the bus left, what came?",
+          "options": [
+            "Mêvanek di berfê de",
+            "Dengbêjek û keça wî",
+            "Kartek ji Hewlêrê"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo dibêje: “Piştî hefteyekê kartek ji Hewlêrê hat.”",
+          "explanationEn": "Hamo says: “A week later a card came from Hewlêr.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Xezal di kartê de çi dipirse?",
+          "promptEn": "What does Xezal ask in the card?",
+          "options": [
+            "Ka simbêlê Hamo baş e",
+            "Ka Hevalo sêv xwarin",
+            "Ka berf hatiye"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Xezal dipirse ka simbêlê min baş e.”",
+          "explanationEn": "Hamo says: “Xezal asks whether my moustache is well.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo çima dibêje ku ew lîstikvanekî baş e?",
+          "promptEn": "Why does Hamo say he is a good actor?",
+          "options": [
+            "Ji ber ku ew di şanoyê de hirç bû",
+            "Ji ber ku ew xwe ecêbmayî nîşan da",
+            "Ji ber ku Xezal lîstikvan e"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo şitil şevê dît, lê li ber zarokan ew “pir ecêbmayî” bû.",
+          "explanationEn": "Hamo saw the sapling at night, but in front of the children he was “very surprised”.",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 6
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast an şaş? Hevalo bawer dike ku sêv dê piştî çend salan bên.",
+          "promptEn": "True or false? Hevalo believes the apples will come in a few years.",
+          "options": [
+            "Rast",
+            "Şaş"
+          ],
+          "correctIndex": 1,
+          "explanation": "Şaş e. Hamo jê re dibêje, lê “Ew bawer nake.”",
+          "explanationEn": "False. Hamo tells him so, but “He doesn’t believe me.”",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Heke tu dîsa bêyî Sêvanê, Hamo dê çi bike?",
+          "promptEn": "If you come back to Sêvan, what will Hamo do?",
+          "options": [
+            "Ew ê derî veke",
+            "Ew ê here Hewlêrê",
+            "Ew ê dareke nû biçîne"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “Ez ê derî vekim, çimkî tu ne gur î.”",
+          "explanationEn": "Hamo says: “I will open the door, because you are not the wolf.”",
+          "evidenceParagraph": 6,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok li ser çi ye?",
+          "promptEn": "What is this story about?",
+          "options": [
+            "Hamo û Xezal bi hev re çûn Hewlêrê",
+            "Hamo şitila Xezalê dît, lê tiştek negot",
+            "Hevalo hemû sêvên baxçe xwarin"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo şevê şitila Xezalê dît, lê wî tiştek negot, heta ku karta wê hat.",
+          "explanationEn": "Hamo saw Xezal’s sapling at night, but said nothing until her card came.",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        }
+      ]
     }
   ]
 }
