@@ -288,9 +288,10 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 1680, x: 0.035, y: -0.045 },
       { at: 1880, x: 0.07, y: 0, sx: 1.06, sy: 0.92 },
       { at: 2000, sx: 1, sy: 1 },
-      { at: 2200, tilt: 30 },
-      { at: 2400, tilt: 30 },
-      { at: 2600, tilt: 0 },
+      // it leans in, and bows on its legs to peck the letter up
+      { at: 2139, tilt: 14 },
+      { at: 2140, tilt: 0 },
+      { at: 2600 },
       // a little hop as it turns to you with the letter, and another as it turns back
       { at: 2620 },
       { at: 2670, y: -0.03 },
@@ -311,6 +312,7 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [560, 'perched', false],
       [1040, 'happy', false],
       [1600, 'perched', false],
+      [2140, 'peck', false],
       // it takes the letter into its beak as its head comes back up, so the letter never swings below the sill
       [2590, 'perched', true],
       [2640, 'turn', true],
@@ -325,7 +327,7 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [4460, 'wings-down', true],
       [4640, 'perched', true],
     ],
-    letterAt: 0.37,
+    letterAt: 0.32,
     letter: [
       { at: 0, y: -0.55, seen: 0 },
       { at: 160, y: -0.5, seen: 1 },
@@ -345,9 +347,9 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 0, sx: 1.08, sy: 0.9 },
       { at: 240, sx: 1, sy: 1 },
       { at: 300 },
-      { at: 560, tilt: 30 },
-      { at: 800, tilt: 30 },
-      { at: 1040, tilt: 0 },
+      { at: 499, tilt: 14 },
+      { at: 500, tilt: 0 },
+      { at: 1040 },
       { at: 1180, tilt: -7 },
       { at: 1320, tilt: 7 },
       { at: 1460, tilt: -5 },
@@ -373,6 +375,8 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [0, 'perched', true],
       // it lets the letter go before its head goes down, so the letter never swings below the sill
       [300, 'perched', false],
+      [500, 'peck', false],
+      [840, 'perched', false],
       [1968, 'happy', false],
       [2544, 'perched', false],
       [2688, 'blink', false],
@@ -390,7 +394,7 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [4700, 'turn', false],
       [4770, 'perched', false],
     ],
-    letterAt: 0.3,
+    letterAt: 0.25,
     letter: [
       { at: 0, y: 0, seen: 0 },
       { at: 296, y: 0, seen: 0 },
@@ -410,10 +414,10 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 880 },
       { at: 930, y: -0.03 },
       { at: 990, y: 0 },
-      { at: 1040, tilt: 0 },
-      { at: 1300, tilt: 30 },
-      { at: 1560, tilt: 30 },
-      { at: 1820, tilt: 0 },
+      { at: 1040 },
+      { at: 1399, tilt: 14 },
+      { at: 1400, tilt: 0 },
+      { at: 1820 },
       { at: 1860 },
       { at: 1994.5, y: -0.04 },
       { at: 1995, sx: -1 },
@@ -432,6 +436,7 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [310, 'front', false],
       [900, 'turn', false],
       [970, 'perched', false],
+      [1400, 'peck', false],
       [1810, 'perched', true],
       [1880, 'turn', true],
       [1950, 'front', true],
@@ -445,7 +450,7 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [3210, 'wings-down', true],
       [3440, 'perched', true],
     ],
-    letterAt: 0.3,
+    letterAt: 0.25,
     letter: [
       { at: 0, y: 0, seen: 1 },
       { at: 1806, y: 0, seen: 1 },
@@ -462,9 +467,9 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 204, tilt: -10 },
       { at: 612, tilt: -10 },
       { at: 884, tilt: 0 },
-      { at: 1156, tilt: 30 },
-      { at: 1428, tilt: 30 },
-      { at: 1700, tilt: 0 },
+      { at: 1279, tilt: 14 },
+      { at: 1280, tilt: 0 },
+      { at: 1700 },
       { at: 1740 },
       { at: 1874.5, y: -0.04 },
       { at: 1875, sx: -1 },
@@ -481,6 +486,7 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [0, 'perched', false],
       [816, 'happy', false],
       [1020, 'perched', false],
+      [1280, 'peck', false],
       [1690, 'perched', true],
       [1760, 'turn', true],
       [1830, 'front', true],
@@ -494,7 +500,7 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [3090, 'wings-down', true],
       [3320, 'perched', true],
     ],
-    letterAt: 0.3,
+    letterAt: 0.25,
     letter: [
       { at: 0, y: -0.55, seen: 0 },
       { at: 102, y: -0.5, seen: 1 },
@@ -519,10 +525,12 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 2175, x: 0.012, y: -0.02, tilt: 4 },
       { at: 2400, x: 0, y: 0, tilt: 0 },
       { at: 3900 },
-      { at: 4350, tilt: 30 },
-      { at: 4650, tilt: 18 },
-      { at: 4950, tilt: 30 },
-      { at: 5400, tilt: 0 },
+      { at: 4299, tilt: 14 },
+      { at: 4300, tilt: 0 },
+      { at: 4600 },
+      { at: 4799, tilt: 14 },
+      { at: 4800, tilt: 0 },
+      { at: 5400 },
       { at: 7200 },
       { at: 7500, tilt: -12 },
       { at: 8700, tilt: -12 },
@@ -544,6 +552,10 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [0, 'perched', false],
       [750, 'blink', false],
       [900, 'perched', false],
+      [4300, 'peck', false],
+      [4600, 'perched', false],
+      [4800, 'peck', false],
+      [5150, 'perched', false],
       [6000, 'blink', false],
       [6150, 'perched', false],
       [9300, 'happy', false],
@@ -634,9 +646,9 @@ export function letterPlayShadow(play: LetterPlay): {
   return { moves, shapes, letter };
 }
 
-/** The shape of the shadow a pigeon casts in `pose`: side on, turned three-quarters, or facing you (waving or not, it is the same round). */
+/** The shape of the shadow a pigeon casts in `pose`: side on, bowed to peck, turned three-quarters, or facing you (waving or not, it is the same round). */
 function shadowShape(pose: PigeonPose): PigeonPose {
-  return pose === 'turn' ? 'turn' : pose === 'front' || pose === 'hello' ? 'front' : 'perched';
+  return pose === 'turn' || pose === 'peck' ? pose : pose === 'front' || pose === 'hello' ? 'front' : 'perched';
 }
 
 /**
@@ -898,16 +910,18 @@ export interface LetterBirdOptions {
  * How a pigeon is framed for its portrait: where its feet go on the square,
  * and how big it is drawn. Its portrait is of it facing you, as somebody's
  * picture is, its head and body filling the round and its feet just showing;
- * a portrait in a pose seen side on is framed on its head and breast.
+ * a portrait in a pose seen side on shows the whole of it, its round body in
+ * the middle.
  */
-const PORTRAIT = { x: 60, y: 103, scale: 3.25 } as const;
-const PORTRAIT_SIDE = { x: 52, y: 86, scale: 2.2 } as const;
+const PORTRAIT = { x: 60, y: 112, scale: 2.8 } as const;
+const PORTRAIT_SIDE = { x: 60, y: 104, scale: 2.4 } as const;
 
 /** A member's pigeon, on its own transparent square: standing, blinking, waving, asleep, or flying with its wings up or down. */
 export function letterBirdSvg(opts: LetterBirdOptions): string {
   const size = checkSize(opts.size, 120);
-  const hex = LETTER_BIRDS[opts.bird];
-  if (!hex) throw new RangeError(`art: no bird ${String(opts.bird)}`);
+  // a kind of pigeon by name, or the grey's markings in a colour
+  const kind = LETTER_BIRDS[opts.bird];
+  if (!kind) throw new RangeError(`art: no bird ${String(opts.bird)}`);
   const pose = opts.pose ?? (opts.portrait ? 'front' : 'perched');
   const flip = opts.facingLeft ? -1 : 1;
   const shadow = opts.shadow !== false;
@@ -915,7 +929,7 @@ export function letterBirdSvg(opts: LetterBirdOptions): string {
   const { x, y, scale } = !opts.portrait ? LETTER_BIRD_FEET : pose === 'front' || pose === 'hello' ? PORTRAIT : PORTRAIT_SIDE;
   // a pigeon facing left stands on the same feet, mirrored about them: its square fits it either way round
   dr.add(`<g transform="translate(${n(x)} ${n(y)}) scale(${n(scale * flip)} ${n(scale)})">`);
-  pigeon(dr, hex, pose, opts.letter === true, shadow);
+  pigeon(dr, kind, pose, opts.letter === true, shadow);
   dr.add('</g>');
   return dr.svg(size, opts.title ?? 'A pigeon');
 }

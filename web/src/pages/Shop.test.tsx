@@ -571,7 +571,7 @@ describe('Shop: your bird and your tree', () => {
       const group = screen.getByRole('radiogroup', { name: 'Choose a new bird' });
       expect(within(group).getAllByRole('radio')).toHaveLength(8);
       expect(within(group).getByRole('radio', { name: 'Pink bird, your bird now' })).toBeChecked();
-      expect(within(group).getByRole('radio', { name: 'Orange bird' })).not.toBeChecked();
+      expect(within(group).getByRole('radio', { name: 'Brown bird' })).not.toBeChecked();
       // what a new one costs, against what there is, before anything is picked
       expect(screen.getByText('A new bird costs 500 Zêr. You have 1,200 Zêr.')).toBeInTheDocument();
       expect(screen.getByText('Pink bird, your bird now', { selector: '.yours-picked span' })).toBeInTheDocument();
@@ -589,12 +589,12 @@ describe('Shop: your bird and your tree', () => {
       renderApp(<Shop />, ['/app/shop']);
       const group = await screen.findByRole('radiogroup', { name: 'Choose your bird' });
       expect(screen.getByText('Your bird carries your letters. Your first one is free; a new one later costs 500 Zêr.')).toBeInTheDocument();
-      await userEvent.click(within(group).getByRole('radio', { name: 'Orange bird' }));
+      await userEvent.click(within(group).getByRole('radio', { name: 'Brown bird' }));
       await userEvent.click(screen.getByRole('button', { name: 'This is my bird' }));
       // free, so simply taken: no dialog, nothing spent
       expect(screen.queryByRole('dialog')).toBeNull();
       await waitFor(() => expect(calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
-      expect(await screen.findByRole('radio', { name: 'Orange bird, your bird now' })).toBeChecked();
+      expect(await screen.findByRole('radio', { name: 'Brown bird, your bird now' })).toBeChecked();
       expect(balance()).toBe('1,200 Zêr');
     });
 
@@ -604,10 +604,10 @@ describe('Shop: your bird and your tree', () => {
         'POST /letters/bird': ok(letters({ bird: 4, zer: 700 })),
       });
       renderApp(<Shop />, ['/app/shop']);
-      await userEvent.click(await screen.findByRole('radio', { name: 'Orange bird' }));
+      await userEvent.click(await screen.findByRole('radio', { name: 'Brown bird' }));
       await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
 
-      const ask = await screen.findByRole('dialog', { name: 'Buy Orange bird?' });
+      const ask = await screen.findByRole('dialog', { name: 'Buy Brown bird?' });
       expect(within(ask).getByText('500 Zêr')).toBeInTheDocument();
       expect(within(ask).getByText('You have 1,200 Zêr.')).toBeInTheDocument();
       expect(within(ask).getByText(/Every purchase is final/)).toBeInTheDocument();
@@ -619,11 +619,11 @@ describe('Shop: your bird and your tree', () => {
       expect(calls.some((c) => c.path === '/letters/bird')).toBe(false);
       expect(screen.getByRole('radio', { name: 'Pink bird, your bird now' })).toBeChecked();
 
-      await userEvent.click(screen.getByRole('radio', { name: 'Orange bird' }));
+      await userEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
       await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Get this bird · 500 Zêr' }));
       await waitFor(() => expect(calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
-      expect(await screen.findByRole('radio', { name: 'Orange bird, your bird now' })).toBeChecked();
+      expect(await screen.findByRole('radio', { name: 'Brown bird, your bird now' })).toBeChecked();
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
       // what is left, at the top of the Shop and under the birds
       expect(balance()).toBe('700 Zêr');
@@ -633,7 +633,7 @@ describe('Shop: your bird and your tree', () => {
     it('says how many Zêr are missing when the balance is short, and does not offer the buy', async () => {
       const calls = signedInShop({ 'GET /letters': ok(letters({ zer: 300 })) }, { zer: 300 });
       renderApp(<Shop />, ['/app/shop']);
-      await userEvent.click(await screen.findByRole('radio', { name: 'Orange bird' }));
+      await userEvent.click(await screen.findByRole('radio', { name: 'Brown bird' }));
       expect(screen.getByText('You need 200 more Zêr.')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' })).toBeDisabled();
       expect(calls.some((c) => c.path === '/letters/bird')).toBe(false);
@@ -645,9 +645,9 @@ describe('Shop: your bird and your tree', () => {
         'POST /letters/bird': { status: 402, json: { code: 'INSUFFICIENT_FUNDS', message: 'not enough' } },
       });
       renderApp(<Shop />, ['/app/shop']);
-      await userEvent.click(await screen.findByRole('radio', { name: 'Orange bird' }));
+      await userEvent.click(await screen.findByRole('radio', { name: 'Brown bird' }));
       await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
-      const ask = await screen.findByRole('dialog', { name: 'Buy Orange bird?' });
+      const ask = await screen.findByRole('dialog', { name: 'Buy Brown bird?' });
       await userEvent.click(within(ask).getByRole('button', { name: 'Get this bird · 500 Zêr' }));
       // the dialog stays, with the balance as it now is and the gap to close
       expect(await within(ask).findByText('You need 400 more Zêr.')).toBeInTheDocument();
@@ -662,13 +662,13 @@ describe('Shop: your bird and your tree', () => {
         'POST /letters/bird': { status: 409, json: { code: 'LETTER_BIRD_SAME', message: 'this bird is already yours' } },
       });
       renderApp(<Shop />, ['/app/shop']);
-      await userEvent.click(await screen.findByRole('radio', { name: 'Orange bird' }));
+      await userEvent.click(await screen.findByRole('radio', { name: 'Brown bird' }));
       await userEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
       await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Get this bird · 500 Zêr' }));
       // no error to read: the dialog goes, and the bird is the one the server says is yours
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
       expect(screen.queryByRole('alert')).toBeNull();
-      expect(await screen.findByRole('radio', { name: 'Orange bird, your bird now' })).toBeChecked();
+      expect(await screen.findByRole('radio', { name: 'Brown bird, your bird now' })).toBeChecked();
     });
   });
 

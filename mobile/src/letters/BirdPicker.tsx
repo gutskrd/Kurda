@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { LETTER_BIRDS, LETTER_BIRD_PRICE } from '@kurda/shared';
+import { LETTER_BIRD_ORDER, LETTER_BIRD_PRICE } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { formatNumber } from '../i18n/format';
@@ -10,15 +10,15 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { BirdBadge } from './LetterParts';
 
-/** Each bird by its colour, for whoever cannot see the picture: in the order of the shared LETTER_BIRDS. */
+/** Each bird by its name (its kind or its colour), for whoever cannot see the picture: by its number in the shared LETTER_BIRDS. */
 export const BIRD_NAMES: readonly TranslationKey[] = [
-  'letters.bird.lavender',
+  'letters.bird.grey',
   'letters.bird.sky',
   'letters.bird.rose',
   'letters.bird.green',
-  'letters.bird.orange',
+  'letters.bird.brown',
   'letters.bird.teal',
-  'letters.bird.yellow',
+  'letters.bird.white',
   'letters.bird.violet',
 ];
 
@@ -69,7 +69,7 @@ export function BirdPicker({
         {first ? t('letters.bird.chooseLead', { price: number(LETTER_BIRD_PRICE) }) : t('letters.bird.changeLead', { price: number(LETTER_BIRD_PRICE), zer: number(zer) })}
       </Text>
       <View style={styles.birds} accessibilityRole="radiogroup" accessibilityLabel={title}>
-        {LETTER_BIRDS.map((_, bird) => {
+        {LETTER_BIRD_ORDER.map((bird) => {
           const name = t(BIRD_NAMES[bird]!);
           const mine = !first && bird === current;
           return (
