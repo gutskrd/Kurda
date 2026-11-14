@@ -906,3 +906,6 @@ export * from './games/multi/order.js';
 export * from './games/impostor/rules.js';
 export * from './games/impostor/couch.js';
 export * from './pending-signup.js';
+
+/** How a notification is sorted into the list's filters and pictured at the end of its row. */
+export * from './notices.js';

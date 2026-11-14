@@ -129,6 +129,15 @@ export class InboxService {
     return (res.rowCount ?? 0) > 0;
   }
 
+  /**
+   * Take one notification out of the list for good, as its owner can from the
+   * list itself; returns false if it isn't theirs (or is already gone).
+   */
+  async remove(userId: string, id: string): Promise<boolean> {
+    const res = await this.pool.query(`DELETE FROM notifications WHERE id = $1 AND user_id = $2`, [id, userId]);
+    return (res.rowCount ?? 0) > 0;
+  }
+
   /** Mark every unread notification read; returns how many changed. */
   async markAllRead(userId: string): Promise<number> {
     const res = await this.pool.query(

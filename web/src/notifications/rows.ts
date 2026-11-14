@@ -1,4 +1,7 @@
 import type { RailNotification } from '../social/useSocialRail';
+import type { MessageKey } from '../i18n/en';
+
+type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
  * What a notification is about, as one of a few kinds, each drawn with its own
@@ -86,4 +89,21 @@ export function splitAtName(text: string, name: string | null | undefined): [str
   const at = text.indexOf(name);
   if (at < 0) return null;
   return [text.slice(0, at), name, text.slice(at + name.length)];
+}
+
+/**
+ * When a notification came, short enough to sit after its words on the same
+ * line: "just now", "6m", "20h" today, a day count this week, and the date
+ * itself for anything older, where a count of days stops meaning much.
+ */
+export function noteWhen(createdAt: string, group: NoteGroupKey, t: Translate, date: Intl.DateTimeFormat, now: number = Date.now()): string {
+  const at = Date.parse(createdAt);
+  if (Number.isNaN(at)) return t('time.aWhileAgo');
+  if (group === 'earlier') return date.format(new Date(at));
+  const minutes = Math.max(0, Math.floor((now - at) / 60_000));
+  if (minutes < 1) return t('time.justNow');
+  if (minutes < 60) return t('time.minutes', { count: minutes });
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return t('time.hours', { count: hours });
+  return t('time.daysAgo', { count: Math.floor(hours / 24) });
 }

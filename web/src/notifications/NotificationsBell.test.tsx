@@ -135,6 +135,53 @@ describe('NotificationsBell', () => {
     expect(screen.queryByRole('button', { name: /Mark as read/ })).not.toBeInTheDocument();
   });
 
+  it('takes one away at once, tells the server, and keeps the others', async () => {
+    signIn();
+    const posts = serve([
+      { id: 'n1', category: 'social', title: 'One', body: null, createdAt: now(), readAt: null },
+      { id: 'n2', category: 'social', title: 'Two', body: null, createdAt: now(), readAt: null },
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete: One' }));
+    await waitFor(() => expect(posts).toContain('DELETE /me/notifications/n1'));
+    await waitFor(() => expect(screen.queryByText('One')).not.toBeInTheDocument());
+    expect(screen.getByText('Two')).toBeInTheDocument();
+    // the count of new ones follows at once
+    expect(screen.getByText('1 unread')).toBeInTheDocument();
+  });
+
+  it('offers a filter for each kind it has, and shows only that kind under it', async () => {
+    signIn();
+    serve([
+      { id: 'n1', category: 'friends', title: 'A gift', body: null, createdAt: now(), readAt: null, data: { kind: 'gift' } },
+      { id: 'n2', category: 'streak', title: 'Keep your streak', body: null, createdAt: now(), readAt: null },
+      { id: 'n3', category: 'events', title: 'Newroz is coming', body: null, createdAt: now(), readAt: null },
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
+    const filters = screen.getByRole('group', { name: 'Show notifications' });
+    expect(within(filters).getAllByRole('button').map((b) => b.textContent)).toEqual(['All', 'People', 'Progress', 'From Hevalo']);
+    expect(within(filters).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(within(filters).getByRole('button', { name: 'Progress' }));
+    expect(screen.getByText('Keep your streak')).toBeInTheDocument();
+    expect(screen.queryByText('Newroz is coming')).not.toBeInTheDocument();
+    expect(screen.queryByText('You have a gift')).not.toBeInTheDocument();
+  });
+
+  it('shows what one is about, drawn at the end of its row, where it can be drawn', async () => {
+    signIn();
+    serve([
+      { id: 'n1', category: 'progress', title: 'Promoted', body: null, createdAt: now(), readAt: null, data: { kind: 'league_promotion', tier: 'kani' } },
+      { id: 'n2', category: 'events', title: 'Newroz is coming', body: null, createdAt: now(), readAt: null },
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
+    await screen.findByText('Newroz is coming');
+    expect(document.querySelectorAll('.note-picture')).toHaveLength(1);
+    expect(document.querySelector('.note-picture--league svg')).not.toBeNull();
+  });
+
   it('files them under Today, This week and Earlier', async () => {
     signIn();
     const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
