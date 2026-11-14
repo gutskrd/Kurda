@@ -2,6 +2,7 @@
 import { isValidElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { STORY_COVERS } from '@kurda/shared';
 import type { AdminStory, AdminStorySummary } from '../stories';
 import { failure, fakeApi, json, on, type Call, type Route } from '../test/fetch';
 import { button, choose, click, render, settle, text, type } from '../test/dom';
@@ -491,7 +492,8 @@ describe('the editor', () => {
     api.use(on('PUT', AT, (call) => json(storyFixture({ ...(call.body as object), lockVersion: 5 }))));
     const c = await open(`#/stories/${STORY_ID}`);
     const covers = c.querySelector('.st-covers')!;
-    expect(covers.querySelectorAll('[role="radio"]')).toHaveLength(28);
+    // every shared cover, and None
+    expect(covers.querySelectorAll('[role="radio"]')).toHaveLength(STORY_COVERS.length + 1);
     expect(button(covers, 'None')!.getAttribute('aria-checked')).toBe('true');
     expect(c.querySelector('.st-pv-cover')!.classList.contains('is-kilim')).toBe(true);
     await click(button(covers, 'Blue lake'));

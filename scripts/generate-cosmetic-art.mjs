@@ -743,13 +743,14 @@ export async function renderAll(outRoot, { only = null, log = () => {} } = {}) {
     written.push(job.file);
     log(`  ${job.file.padEnd(64)} ${(files[k].length / 1024).toFixed(0).padStart(4)}KB`);
   });
-  // the folders are this script's: whatever it did not just write goes
+  // the folders are this script's: whatever it did not just write goes, except the legends' own covers
+  // (backgrounds/story-<key>.webp), which scripts/cosmetic-art/story-covers.mjs paints into the same folder
   if (!only) {
     for (const dir of OWNED_DIRS) {
       const abs = path.join(outRoot, ...dir.split('/'));
       for (const f of fs.readdirSync(abs)) {
         const rel = `${dir}/${f}`;
-        if (written.includes(rel)) continue;
+        if (written.includes(rel) || rel.startsWith('backgrounds/story-')) continue;
         fs.rmSync(path.join(abs, f), { recursive: true });
         log(`  ${rel.padEnd(64)} removed`);
       }

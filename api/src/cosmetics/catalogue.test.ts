@@ -115,7 +115,8 @@ describe('the cosmetic catalogue', () => {
 
   it('has a row for every background and icon on disk', () => {
     const named = new Set(rows().map((r) => r.assetKey));
-    const orphans = [...files('backgrounds'), ...files('icons')].filter((f) => !named.has(f));
+    // a legend's own cover (backgrounds/story-<key>.webp) is the library's, not for sale, so no shop row names it
+    const orphans = [...files('backgrounds'), ...files('icons')].filter((f) => !named.has(f) && !f.startsWith('backgrounds/story-'));
     expect(orphans).toEqual([]);
   });
 
