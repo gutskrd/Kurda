@@ -919,8 +919,9 @@ const PORTRAIT_SIDE = { x: 60, y: 104, scale: 2.4 } as const;
 /** A member's pigeon, on its own transparent square: standing, blinking, waving, asleep, or flying with its wings up or down. */
 export function letterBirdSvg(opts: LetterBirdOptions): string {
   const size = checkSize(opts.size, 120);
-  const hex = LETTER_BIRDS[opts.bird];
-  if (!hex) throw new RangeError(`art: no bird ${String(opts.bird)}`);
+  // a kind of pigeon by name, or the grey's markings in a colour
+  const kind = LETTER_BIRDS[opts.bird];
+  if (!kind) throw new RangeError(`art: no bird ${String(opts.bird)}`);
   const pose = opts.pose ?? (opts.portrait ? 'front' : 'perched');
   const flip = opts.facingLeft ? -1 : 1;
   const shadow = opts.shadow !== false;
@@ -928,7 +929,7 @@ export function letterBirdSvg(opts: LetterBirdOptions): string {
   const { x, y, scale } = !opts.portrait ? LETTER_BIRD_FEET : pose === 'front' || pose === 'hello' ? PORTRAIT : PORTRAIT_SIDE;
   // a pigeon facing left stands on the same feet, mirrored about them: its square fits it either way round
   dr.add(`<g transform="translate(${n(x)} ${n(y)}) scale(${n(scale * flip)} ${n(scale)})">`);
-  pigeon(dr, hex, pose, opts.letter === true, shadow);
+  pigeon(dr, kind, pose, opts.letter === true, shadow);
   dr.add('</g>');
   return dr.svg(size, opts.title ?? 'A pigeon');
 }

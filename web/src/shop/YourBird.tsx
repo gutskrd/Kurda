@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LETTER_BIRDS, LETTER_BIRD_PRICE, isLetterBird, type LettersHome } from '@kurda/shared';
+import { LETTER_BIRD_ORDER, LETTER_BIRD_PRICE, isLetterBird, type LettersHome } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -125,7 +125,7 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
             <Skeleton line w="38%" />
             <Skeleton line w="62%" style={{ marginTop: 8 }} />
             <div className="yours-birds yours-birds--waiting">
-              {LETTER_BIRDS.map((_, bird) => (
+              {LETTER_BIRD_ORDER.map((bird) => (
                 <Skeleton key={bird} circle size={52} />
               ))}
             </div>
@@ -220,7 +220,7 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
         </p>
         {/* native radios under one name: the arrow keys move through them, and a screen reader says each by its colour */}
         <div className="yours-birds" role="radiogroup" aria-labelledby={titleId}>
-          {LETTER_BIRDS.map((_, bird) => {
+          {LETTER_BIRD_ORDER.map((bird) => {
             const mine = !first && bird === data.bird;
             return (
               <label key={bird} className={`yours-bird${bird === pick ? ' is-picked' : ''}${won === bird ? ' is-won' : ''}`}>

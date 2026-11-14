@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
-import { LETTER_BIRDS, LETTER_BIRD_PRICE, isLetterBird, type LettersHome } from '@kurda/shared';
+import { LETTER_BIRD_ORDER, LETTER_BIRD_PRICE, isLetterBird, type LettersHome } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { describeError, isMaintenance } from '../api/errors';
 import type { ApiError } from '../api/types';
@@ -202,7 +202,7 @@ function BirdSheet({
         {first ? t('letters.bird.chooseLead', { price: number(LETTER_BIRD_PRICE) }) : t('letters.bird.changeLead', { price: number(LETTER_BIRD_PRICE), zer: number(zer) })}
       </Text>
       <View style={[styles.birds, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={title}>
-        {LETTER_BIRDS.map((_, bird) => {
+        {LETTER_BIRD_ORDER.map((bird) => {
           const mine = !first && bird === data.bird;
           const on = bird === picked;
           return (

@@ -100,15 +100,23 @@ export function letterProblem(text: string): LetterProblem | null {
 // ───────────────────────────────────────────────────────────── the birds
 
 /**
- * The colours a pen pal pigeon can be. Each member chooses theirs once, for
- * free, and pays for another after (`LETTER_BIRD_PRICE`); until they choose,
- * it is picked from their id, so it is the same pigeon on every screen and
- * every phone. The apps draw it (art/letters.ts) from its number here.
- * Soft colours, the first the lavender of the owner's reference pigeon; its
- * pale rump, wing, bars, tail and cheek are worked out from the one colour
- * of its head (art/pigeon.ts).
+ * The pen pal pigeons there are. Each member chooses theirs once, for free,
+ * and pays for another after (`LETTER_BIRD_PRICE`); until they choose, it is
+ * picked from their id, so it is the same pigeon on every screen and every
+ * phone. The apps draw it (art/letters.ts) from its number here.
+ *
+ * Three are the owner's reference pigeons, each a kind with its own
+ * markings, named (art/pigeon.ts `PIGEON_KINDS`): grey, white and brown. The
+ * other five are the grey's markings worn in a soft colour, every shade of it
+ * worked out from the one colour. A bird keeps its number for good, as that is
+ * what a member's choice is kept as: the three kinds took the places of the
+ * three colours nearest them (lavender, orange and yellow), so everyone still
+ * has a bird. The order they are offered in is `LETTER_BIRD_ORDER`.
  */
-export const LETTER_BIRDS = ['#8784c7', '#6fa8e2', '#e88aa6', '#7dbf8f', '#f0a46c', '#55b7ae', '#e5bf55', '#b183d4'] as const;
+export const LETTER_BIRDS = ['grey', '#6fa8e2', '#e88aa6', '#7dbf8f', 'brown', '#55b7ae', 'white', '#b183d4'] as const;
+
+/** The order the birds are offered in: the three kinds of the reference first (grey, white, brown), then the colours. */
+export const LETTER_BIRD_ORDER: readonly number[] = [0, 6, 4, 1, 2, 3, 5, 7];
 
 /**
  * What a new bird costs, in Zêr, once you have one: the first bird you choose

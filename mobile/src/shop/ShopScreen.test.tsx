@@ -384,7 +384,7 @@ describe('your bird and your tree, in the Shop', () => {
       const group = await screen.findByRole('radiogroup', { name: 'Choose a new bird' });
       expect(within(group).getAllByRole('radio')).toHaveLength(8);
       expect(within(group).getByRole('radio', { name: 'Pink bird, your bird now' }).getAttribute('aria-checked')).toBe('true');
-      expect(within(group).getByRole('radio', { name: 'Orange bird' }).getAttribute('aria-checked')).toBe('false');
+      expect(within(group).getByRole('radio', { name: 'Brown bird' }).getAttribute('aria-checked')).toBe('false');
       expect(screen.getByText('A new bird costs 500 Zêr. You have 550 Zêr.')).toBeTruthy();
       // the bird that is yours already cannot be bought again
       expect(disabled('shop-bird-get')).toBe(true);
@@ -394,25 +394,25 @@ describe('your bird and your tree, in the Shop', () => {
       const client = openOwn({ 'GET /letters': ok(letters({ birdChosen: false, bird: 1 })), 'POST /letters/bird': ok(letters({ bird: 4 })) });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Choose your bird' }));
       expect(screen.getByText('Your bird carries your letters. Your first one is free; a new one later costs 500 Zêr.')).toBeTruthy();
-      fireEvent.click(screen.getByRole('radio', { name: 'Orange bird' }));
+      fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       fireEvent.click(screen.getByRole('button', { name: 'This is my bird' }));
       await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
       // free, so nothing was asked
       expect(Alert.alert).not.toHaveBeenCalled();
-      expect(await screen.findByText('Orange bird, your bird now')).toBeTruthy();
+      expect(await screen.findByText('Brown bird, your bird now')).toBeTruthy();
       fireEvent.click(screen.getByTestId('shop-bird-done'));
-      expect(await screen.findByRole('button', { name: 'Your pen pal bird, Orange bird' })).toBeTruthy();
+      expect(await screen.findByRole('button', { name: 'Your pen pal bird, Brown bird' })).toBeTruthy();
     });
 
     it('asks first before a new bird, as the Shop asks before a purchase, with its price and the balance', async () => {
       const client = openOwn({ 'GET /letters': ok(letters()), 'POST /letters/bird': ok(letters({ bird: 4, zer: 50 })) });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
-      fireEvent.click(screen.getByRole('radio', { name: 'Orange bird' }));
+      fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       expect(disabled('shop-bird-get')).toBe(false);
       fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
       expect(Alert.alert).toHaveBeenCalledWith(
         'Confirm purchase',
-        'Spend 500 Zêr on Orange bird?\nYou have 550 Zêr.\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
+        'Spend 500 Zêr on Brown bird?\nYou have 550 Zêr.\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
         expect.any(Array),
       );
       expect(client.calls.some((c) => c.path === '/letters/bird')).toBe(false);
@@ -421,14 +421,14 @@ describe('your bird and your tree, in the Shop', () => {
       expect(buttons.map((b) => b.text)).toEqual(['Cancel', 'Buy']);
       buttons[1]!.onPress!();
       await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
-      expect(await screen.findByText('Orange bird, your bird now')).toBeTruthy();
+      expect(await screen.findByText('Brown bird, your bird now')).toBeTruthy();
       expect(screen.getAllByText('50').length).toBeGreaterThanOrEqual(1);
     });
 
     it('says how many Zêr are missing when the balance is short, and does not offer the buy', async () => {
       const client = openOwn({ 'GET /letters': ok(letters({ zer: 300 })) }, { zer: 300, gems: 0 });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
-      fireEvent.click(screen.getByRole('radio', { name: 'Orange bird' }));
+      fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       expect(screen.getByText('You need 200 more Zêr.')).toBeTruthy();
       expect(disabled('shop-bird-get')).toBe(true);
       fireEvent.click(screen.getByTestId('shop-bird-get'));
@@ -447,7 +447,7 @@ describe('your bird and your tree, in the Shop', () => {
         },
       });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
-      fireEvent.click(screen.getByRole('radio', { name: 'Orange bird' }));
+      fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
       (vi.mocked(Alert.alert).mock.calls[0]![2] as Array<{ onPress?: () => void }>)[1]!.onPress!();
       expect(await screen.findByText('You need 400 more Zêr.')).toBeTruthy();

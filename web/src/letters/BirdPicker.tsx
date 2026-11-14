@@ -1,18 +1,18 @@
 import { useId } from 'react';
-import { LETTER_BIRDS, LETTER_BIRD_PRICE } from '@kurda/shared';
+import { LETTER_BIRD_ORDER, LETTER_BIRD_PRICE } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { BirdBadge } from './LetterParts';
 
-/** Each bird by its colour, for whoever cannot see the picture: in the order of the shared LETTER_BIRDS. */
+/** Each bird by its name (its kind or its colour), for whoever cannot see the picture: by its number in the shared LETTER_BIRDS. */
 export const BIRD_NAMES: readonly MessageKey[] = [
-  'letters.bird.lavender',
+  'letters.bird.grey',
   'letters.bird.sky',
   'letters.bird.rose',
   'letters.bird.green',
-  'letters.bird.orange',
+  'letters.bird.brown',
   'letters.bird.teal',
-  'letters.bird.yellow',
+  'letters.bird.white',
   'letters.bird.violet',
 ];
 
@@ -61,7 +61,7 @@ export function BirdPicker({
       </p>
       <p className="letters-status">{first ? t('letters.bird.chooseLead', { price: number(LETTER_BIRD_PRICE) }) : t('letters.bird.changeLead', { price: number(LETTER_BIRD_PRICE), zer: number(zer) })}</p>
       <fieldset className="letters-birds" aria-labelledby={titleId}>
-        {LETTER_BIRDS.map((_, bird) => (
+        {LETTER_BIRD_ORDER.map((bird) => (
           <label key={bird} className={`letters-bird${bird === picked ? ' is-picked' : ''}`}>
             <input type="radio" name="letter-bird" className="sr-only" checked={bird === picked} onChange={() => onPick(bird)} disabled={busy} />
             <BirdBadge bird={bird} size={48} />
