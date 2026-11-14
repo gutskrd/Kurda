@@ -272,11 +272,13 @@
   justify-items: center;
   gap: var(--space-2);
 }
+/* two even rows of four */
 .letters-birds {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-2);
+  max-width: 290px;
   margin: var(--space-2) 0;
   padding: 0;
   border: 0;

@@ -13,7 +13,7 @@ import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { LetterThread, LettersHome } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
-import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
 import { LettersScreen } from './LettersScreen';
 import { LetterThreadScreen } from './LetterThreadScreen';
@@ -94,6 +94,60 @@ describe('the letters screen', () => {
     expect(screen.getByText('Baran’s bird came to your window')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Write back to Baran' }));
     expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD });
+  });
+
+  it('asks for a bird to be chosen first, for free, before the first letter', async () => {
+    let chosen: number | null = null;
+    const client = fakeClient({
+      'GET /letters': () => Promise.resolve(ok(home(chosen === null ? { birdChosen: false, bird: 1 } : { bird: chosen }))),
+      'POST /letters/bird': (body: unknown) => {
+        chosen = (body as { bird: number }).bird;
+        return Promise.resolve(ok(home({ bird: chosen })));
+      },
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(await screen.findByTestId('letters-bird-picker')).toBeTruthy();
+    expect(screen.getByText('Choose your bird')).toBeTruthy();
+    expect(screen.queryByTestId('letters-write')).toBeNull();
+    fireEvent.click(screen.getByRole('radio', { name: 'Teal bird' }));
+    fireEvent.click(screen.getByTestId('letters-bird-confirm'));
+    expect(await screen.findByTestId('letters-write')).toBeTruthy();
+    expect(client.calls.find((c) => c.path === '/letters/bird')?.body).toEqual({ bird: 5 });
+  });
+
+  it('asks Zêr for a new bird, says how many are missing, and lets the bird stay as it is', async () => {
+    const client = fakeClient({ 'GET /letters': ok(home({ bird: 1, zer: 120 })) });
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('letters-bird-change'));
+    expect(screen.getByText('A new bird costs 500 Zêr. You have 120 Zêr.')).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Sky-blue bird, your bird now' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: 'Green bird' }));
+    expect(screen.getByText('You need 380 more Zêr.')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('letters-bird-confirm'));
+    fireEvent.click(screen.getByTestId('letters-bird-keep'));
+    expect(await screen.findByTestId('letters-write')).toBeTruthy();
+    expect(client.calls.some((c) => c.path === '/letters/bird')).toBe(false);
+  });
+
+  it('pays for a new bird once another is picked, and says so when the Zêr fall short', async () => {
+    let zer = 900;
+    const client = fakeClient({
+      'GET /letters': () => Promise.resolve(ok(home({ bird: 1, zer }))),
+      'POST /letters/bird': () => {
+        zer = 120;
+        return Promise.resolve(fail({ code: 'INSUFFICIENT_FUNDS', status: 402 }));
+      },
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('letters-bird-change'));
+    fireEvent.click(screen.getByRole('radio', { name: 'Green bird' }));
+    fireEvent.click(screen.getByTestId('letters-bird-confirm'));
+    await waitFor(() => expect(client.calls.find((c) => c.path === '/letters/bird')?.body).toEqual({ bird: 3 }));
+    // another phone spent them meanwhile: the screen reads them again and says what is missing
+    expect(await screen.findByText('You need 380 more Zêr.')).toBeTruthy();
   });
 
   it('refuses a letter with a link before the bird leaves, and sends nothing', async () => {

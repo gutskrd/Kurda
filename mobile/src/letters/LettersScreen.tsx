@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { BIRD_OUT_DAYS, PEN_PALS_MAX, type BirdOutResult, type LetterItem, type LetterPerson, type LettersHome } from '@kurda/shared';
@@ -20,6 +20,7 @@ import { haptic } from '../feedback/haptics';
 import { LetterWindow, type WindowScene } from './LetterWindow';
 import { BirdBadge, LetterPaper, LetterSheet } from './LetterParts';
 import { letterErrorText } from './errors';
+import { BirdPicker } from './BirdPicker';
 
 /** What the screen shows under the window: as it stands, writing, a bird on its way, or a letter just come. */
 type Moment =
@@ -38,7 +39,10 @@ const WINDOW_MAX = 300;
  * pen pals you write to. The same screen as the website's /app/letters
  * (web/src/letters/LettersPage.tsx).
  *
- * At the top, your window. With your bird at home there is one thing to do —
+ * At the top, your window. The first time, you choose your bird there: the
+ * one on the sill takes the colour of whichever you pick, and choosing it is
+ * free; a new bird later costs Zêr, said before anything is paid. With your
+ * bird at home there is one thing to do —
  * write a letter — and sending it is watched rather than read: the bird takes
  * it in its beak and flies off. If another bird is out, theirs comes to your
  * window in the same moment with their letter, read here at once; if not, the
@@ -64,6 +68,10 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   const [busy, setBusy] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [howOpen, setHowOpen] = useState(false);
+  // choosing a new bird after the first, and the one picked while choosing, which the window shows on the sill
+  const [changing, setChanging] = useState(false);
+  const [picked, setPicked] = useState<number | null>(null);
+  const [birdError, setBirdError] = useState<string | null>(null);
 
   const load = useCallback(async (): Promise<void> => {
     const res = await client.get<LettersHome>('/letters');
@@ -134,6 +142,42 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
 
   const out = (home?.out != null || moment.kind === 'waiting') && moment.kind !== 'arrived';
   const canWrite = home !== null && home.refusal === null && !out && home.roomForMore;
+  // the bird is chosen at home, while nothing else is going on: the first time before the first letter, later whenever wanted
+  const choosing = home !== null && home.refusal === null && !out && moment.kind === 'rest' && (!home.birdChosen || changing);
+  const pick = picked ?? home?.bird ?? 0;
+  const shown = useMemo<WindowScene | null>(() => (choosing && scene?.kind === 'home' ? { kind: 'home', bird: pick } : scene), [choosing, scene, pick]);
+
+  const chooseBird = async (): Promise<void> => {
+    if (!home) return;
+    setBusy(true);
+    setBirdError(null);
+    const res = await client.post<LettersHome>('/letters/bird', { bird: pick });
+    setBusy(false);
+    // spent meanwhile, in another tab or on another phone: the Zêr there are now say how many are missing
+    if (!res.ok && res.error.code === 'INSUFFICIENT_FUNDS') {
+      haptic('error');
+      void load();
+      return;
+    }
+    // the same bird again is no change: there is nothing to pay and nothing to say
+    if (!res.ok && res.error.code !== 'LETTER_BIRD_SAME') {
+      haptic('error');
+      setBirdError(describeError(res.error, t));
+      return;
+    }
+    haptic('celebrate');
+    if (res.ok) setHome(res.data);
+    setChanging(false);
+    setPicked(null);
+    setScene({ kind: 'home', bird: res.ok ? res.data.bird : pick });
+  };
+  const startChanging = (): void => {
+    if (!home) return;
+    setPicked(home.bird);
+    setBirdError(null);
+    setChanging(true);
+  };
+  const change = <ClayButton label={t('letters.bird.change')} onPress={startChanging} variant="outline" testID="letters-bird-change" />;
 
   let status: React.ReactNode = null;
   if (home) {
@@ -151,9 +195,41 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           <ClayButton label={t('letters.recall')} onPress={() => void recall()} variant="outline" busy={busy} testID="letters-recall" />
         </>
       );
-    else if (!home.roomForMore) status = <Text style={[styles.status, { color: colors.textSecondary }]}>{t('letters.full', { max: PEN_PALS_MAX })}</Text>;
+    else if (choosing)
+      status = (
+        <BirdPicker
+          first={!home.birdChosen}
+          current={home.bird}
+          picked={pick}
+          zer={home.zer}
+          busy={busy}
+          error={birdError}
+          onPick={(bird) => {
+            haptic('select');
+            setPicked(bird);
+            setBirdError(null);
+          }}
+          onConfirm={() => void chooseBird()}
+          onCancel={() => {
+            setChanging(false);
+            setPicked(null);
+          }}
+        />
+      );
+    else if (!home.roomForMore)
+      status = (
+        <>
+          <Text style={[styles.status, { color: colors.textSecondary }]}>{t('letters.full', { max: PEN_PALS_MAX })}</Text>
+          {change}
+        </>
+      );
     else if (moment.kind !== 'writing')
-      status = <ClayButton label={t('letters.write')} onPress={() => setMoment({ kind: 'writing' })} tone="primary" style={styles.write} testID="letters-write" />;
+      status = (
+        <>
+          <ClayButton label={t('letters.write')} onPress={() => setMoment({ kind: 'writing' })} tone="primary" style={styles.write} testID="letters-write" />
+          {change}
+        </>
+      );
   }
 
   return (
@@ -168,7 +244,7 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           ) : (
             <>
               <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('letters.lead')}</Text>
-              {scene && size > 0 ? <LetterWindow scene={scene} size={size} onDone={scene.kind === 'leaving' ? flown : undefined} /> : null}
+              {shown && size > 0 ? <LetterWindow scene={shown} size={size} onDone={shown.kind === 'leaving' ? flown : undefined} /> : null}
               <View style={styles.hero} accessibilityLiveRegion="polite">
                 {status}
               </View>

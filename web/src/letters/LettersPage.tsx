@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BIRD_OUT_DAYS, LETTER_BIRD_PRICE, PEN_PALS_MAX, type BirdOutResult, type LettersHome, type LetterItem, type LetterPerson } from '@kurda/shared';
+import { BIRD_OUT_DAYS, PEN_PALS_MAX, type BirdOutResult, type LettersHome, type LetterItem, type LetterPerson } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
-import { useLocale, useT } from '../i18n/I18nProvider';
+import { useT } from '../i18n/I18nProvider';
 import { ErrorState } from '../components/states';
 import { ChevronIcon } from '../components/icons';
 import { LetterWindow, type WindowScene } from './LetterWindow';
@@ -44,7 +44,6 @@ type Moment =
  */
 export function LettersPage(): React.JSX.Element {
   const t = useT();
-  const locale = useLocale();
   const { client } = useAuth();
   const home = useApiGet<LettersHome>('/letters', { fresh: true });
   const [moment, setMoment] = useState<Moment>({ kind: 'rest' });
@@ -105,8 +104,9 @@ export function LettersPage(): React.JSX.Element {
     setBirdError(null);
     const res = await client.post<LettersHome>('/letters/bird', { bird: pick });
     setBusy(false);
+    // spent meanwhile, in another tab: the Zêr there are now say how many are missing
     if (!res.ok && res.error.code === 'INSUFFICIENT_FUNDS') {
-      setBirdError(t('letters.bird.short', { count: new Intl.NumberFormat(locale).format(Math.max(1, LETTER_BIRD_PRICE - data.zer)) }));
+      home.reload();
       return;
     }
     // the same bird again is no change: there is nothing to pay and nothing to say
