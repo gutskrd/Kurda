@@ -517,6 +517,8 @@ export class GdprService {
     );
     // the bird they chose to carry them, and how often they changed it
     const letterBird = await this.pool.query(`SELECT bird, changes, chosen_at, updated_at FROM letter_birds WHERE user_id = $1`, [userId]);
+    // the birds they called to their window, and how each visit ended; the letters those birds carried are their writers' words
+    const birdsCalled = await this.pool.query(`SELECT called_at, ended_at, outcome FROM letter_visits WHERE visitor_id = $1 ORDER BY called_at`, [userId]);
     // what they wrote to the support address from this account's address, and
     // what they were answered; who on the team answered is not theirs
     // the devices and networks that have signed in to the account, by when,
@@ -563,6 +565,7 @@ export class GdprService {
       gameRanks: ranks,
       lettersWritten: letters.rows,
       letterBird: letterBird.rows[0] ?? null,
+      birdsCalled: birdsCalled.rows,
       supportEmails: support.rows,
       // XP, leagues, streaks, badges, the story shelf and the saved words (gdpr/progress-export.ts)
       progress: await exportProgress(this.pool, userId),
@@ -757,8 +760,9 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   // and every correspondence with a pen pal, both sides of it, as with messages
   await q(`DELETE FROM letters WHERE sender_id = $1 OR recipient_id = $1`);
   await q(`DELETE FROM letter_threads WHERE user_lo = $1 OR user_hi = $1`);
-  // and the bird they chose to carry them
+  // and the bird they chose to carry them, and the birds they called to their window
   await q(`DELETE FROM letter_birds WHERE user_id = $1`);
+  await q(`DELETE FROM letter_visits WHERE visitor_id = $1`);
   await q(`DELETE FROM group_messages WHERE sender_id = $1`);
   // and a gift posted in a group for them alone, a message about nobody else;
   // one to several friends stays for the others, its card no longer listing a

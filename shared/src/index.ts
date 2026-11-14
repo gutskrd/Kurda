@@ -478,6 +478,7 @@ export {
 
 /** Letters by bird: pen pals writing in Kurdish, within an age band, carried by each writer's bird. */
 export {
+  BIRD_CALLS_PER_DAY,
   BIRD_OUT_DAYS,
   LETTERS_PER_DAY,
   LETTER_AGE_BANDS,
@@ -486,6 +487,8 @@ export {
   LETTER_MAX,
   LETTER_MIN,
   PEN_PALS_MAX,
+  SKY_BIRDS_SHOWN,
+  VISIT_HOURS,
   isLetterBird,
   letterAgeBand,
   letterBirdOf,
@@ -496,9 +499,11 @@ export {
   type LetterPerson,
   type LetterProblem,
   type LetterThread,
+  type LetterVisitor,
   type LettersHome,
   type LettersRefusal,
   type PenPal,
+  type VisitorAnswer,
 } from './letters.js';
 
 /**
