@@ -100,13 +100,13 @@ function sillLetterPlace(at: number, dir: number): React.CSSProperties {
 }
 
 /** A letter in its envelope, lying on the sill: placed on the pigeon's own square, as its play measures it. */
-function SillLetter({ style, innerRef }: { style: React.CSSProperties; innerRef?: React.Ref<HTMLSpanElement> }): React.JSX.Element {
+function SillLetter({ style, seen = 1, innerRef }: { style: React.CSSProperties; seen?: number; innerRef?: React.Ref<HTMLSpanElement> }): React.JSX.Element {
   const id = `e${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
   const svg = useMemo(() => ({ __html: letterEnvelopeSvg({ size: 120, idPrefix: id }) }), [id]);
   return (
     <span className="lw-bird" style={PLACE}>
       <span className="lw-sill-letter" style={style}>
-        <span className="lw-sill-letter-art" ref={innerRef} dangerouslySetInnerHTML={svg} />
+        <span className="lw-sill-letter-art" ref={innerRef} style={{ opacity: seen }} dangerouslySetInnerHTML={svg} />
       </span>
     </span>
   );
@@ -156,12 +156,11 @@ function Playing({ bird, play, facingLeft = false, onEnd }: { bird: number; play
 
   // standing still, it is seen as the play leaves it (or, going round, as it starts)
   const settled = (show: (typeof shows)[number]): number => (play.loop ? show.steps[0]![1] : show.steps[show.steps.length - 1]![1]);
-  const lastLetter = play.letter[play.letter.length - 1];
+  // the letter is seen as the play starts it until its own clock runs, so it never shows for a moment where it has not yet fallen
+  const letterSeen = (still ? play.letter[play.letter.length - 1] : play.letter[0])?.seen ?? 0;
   return (
     <>
-      {play.letter.length > 0 && (
-        <SillLetter style={{ ...sillLetterPlace(play.letterAt, dir), opacity: still ? (lastLetter?.seen ?? 0) : undefined }} innerRef={letter} />
-      )}
+      {play.letter.length > 0 && <SillLetter style={sillLetterPlace(play.letterAt, dir)} seen={letterSeen} innerRef={letter} />}
       <span className="lw-bird" style={PLACE}>
         <span className="lw-play" ref={body}>
           {shows.map((show, i) => (

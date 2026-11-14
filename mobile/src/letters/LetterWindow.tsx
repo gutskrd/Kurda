@@ -66,9 +66,9 @@ const BOX = {
 };
 const MIDDLE = `${(BOX.left + BOX.size / 2) * 100}% ${(BOX.top + BOX.size / 2) * 100}%`;
 
-/** Shown up to `at` of a clock and not after (or, `after`, the other way about). */
-const until = (clock: Animated.Value, at: number, after = false): Animated.AnimatedInterpolation<number> =>
-  clock.interpolate({ inputRange: [0, at, Math.min(1, at + 0.001), 1], outputRange: after ? [0, 0, 1, 1] : [1, 1, 0, 0] });
+/** Shown up to `at` of a clock and not after. */
+const until = (clock: Animated.Value, at: number): Animated.AnimatedInterpolation<number> =>
+  clock.interpolate({ inputRange: [0, at, Math.min(1, at + 0.001), 1], outputRange: [1, 1, 0, 0] });
 
 /** A clock that goes from 0 to 1 and back for as long as the screen is in front, `ms` each way, starting `from` along. */
 function useSwing(alive: boolean, ms: number, from = 0): Animated.Value {
