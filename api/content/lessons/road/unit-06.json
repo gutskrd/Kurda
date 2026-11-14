@@ -460,11 +460,10 @@
                   "position": 15,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Hamo turns left again. Call after him: “Straight on, Uncle!”",
+                    "prompt": "Hamo turns left again. Call after him: “Straight on!”",
                     "accepted": [
-                      "Rasterast, Xalo!",
-                      "Rasterast, Xalo",
-                      "Rasterast Xalo"
+                      "Rasterast!",
+                      "Rasterast"
                     ],
                     "voice": "hamo"
                   }

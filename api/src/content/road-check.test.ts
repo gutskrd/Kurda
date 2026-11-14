@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ROAD_COURSE,
+  addressesHamo,
   checkRoad,
   checkRoadPlan,
   formatProblem,
@@ -287,6 +288,38 @@ describe('the road’s check, on an example unit', () => {
       for (const li of [0, 1]) for (const ex of lessonOf(doc, li).exercises) if (ex.payload.voice) ex.payload.voice = 'xezo';
     });
     expect(allXezal.text).toContain('unit 1: Hamo records 0 % of the unit’s sentences (at least 65 %)');
+  });
+
+  it('never has Hamo record a line said to him, by his name or as uncle', () => {
+    const { text } = check((doc) => {
+      lessonOf(doc, 1).exercises[6]!.payload.voice = 'hamo';
+      lessonOf(doc, 0).exercises[9]!.payload.accepted = ['Silav, xalo!', 'Silav xalo'];
+    });
+    expect(text).toContain('u01s1l2 #7: Hamo would say “Spas, Hamo!” to himself: model it without his name (the learner says it to him)');
+    expect(text).toContain('u01s1l1 #10: Hamo would say “Silav, xalo!” to himself: model it without his name (the learner says it to him)');
+    // his own name in a sentence about himself is no greeting to himself
+    expect(addressesHamo('Ez Hamo me.')).toBe(false);
+    expect(addressesHamo('Navê min Hamo ye.')).toBe(false);
+    expect(addressesHamo('Xalo! Xalo!')).toBe(true);
+  });
+
+  it('holds a chapter written for Hamo alone to his voice: every recording his, and every conversation him and the learner', () => {
+    const { text } = check(undefined, (p) => {
+      p.units[0]!.recorder = 'hamo';
+    });
+    expect(text).toContain('u01s1l1 #6 payload.voice: is recorded by xezo: Hamo records every line of the road, so tell it through him, or show it written');
+    expect(text).toContain('u01s1l2 #1 payload.speakers[1]: part 2 is xezo: a conversation is Hamo talking with the learner (a part with learner: true)');
+    // the same conversation with the learner in Xezal's part passes, whatever the learner says to him
+    const withYou = check(
+      (doc) => {
+        for (const li of [0, 1]) for (const ex of lessonOf(doc, li).exercises) if (ex.payload.voice === 'xezo') ex.payload.voice = 'hamo';
+        (lessonOf(doc, 1).exercises[0]!.payload.speakers as unknown[])[1] = { learner: true };
+      },
+      (p) => {
+        p.units[0]!.recorder = 'hamo';
+      },
+    );
+    expect(withYou.text.filter((t) => /recorded by|part 2|lines\[/.test(t))).toEqual([]);
   });
 
   it('asks for the Kurdish an item is about to be in its prompt, where the learner can read it and hear it', () => {

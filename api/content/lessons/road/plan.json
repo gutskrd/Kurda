@@ -62,6 +62,7 @@
       "titleKu": "Silav",
       "titleEn": "Hello",
       "story": "You step off the bus at the edge of Sêvan, a village of apple orchards under the mountains, with Hevalo the young deer as your guide. At a blue gate Hamo welcomes you — the warm uncle with the proudest moustache in the valley. Before the tea is even poured, his niece Xezal runs up the lane from the Amed bus, and Hamo calls her Xezo, which she pretends to hate. Over four small scenes you learn to say hello, to say who you are and where you are from, and to ask how everyone is — while Hevalo keeps disappearing towards the apple trees.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -154,7 +155,7 @@
               "titleEn": "My name is Xezal",
               "focus": "meet",
               "beat": "A young woman with a huge bag runs up the lane: Hamo’s niece from Amed. “Silav! Navê min Xezal e!” Hamo hugs her: “Ew Xezo ye!” — “Xezal, Xalo!”",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "nav", "en": "name", "pos": "noun", "gender": "m", "forms": ["nav", "navên", "navan", "navek", "navê", "navekî", "navî"]},
                 {"ku": "min", "en": "my; me", "pos": "pron", "forms": ["min"]},
@@ -171,7 +172,7 @@
               "titleEn": "What is your name?",
               "focus": "build",
               "beat": "Xezal asks your name and the deer’s. When she hears “Hevalo” she laughs so hard she has to sit down on her bag: a deer called “Friend!”",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "kî", "en": "who", "pos": "question", "forms": ["kî"]},
                 {"ku": "ne", "en": "not (with the copula: ez ne … im)", "pos": "particle", "forms": ["ne"]},
@@ -230,7 +231,7 @@
               "titleEn": "In the orchard",
               "focus": "meet",
               "beat": "Everyone hunts for the deer. You find Hevalo in the orchard under the oldest apple tree, his cheeks suspiciously round.",
-              "voice": "hevalo",
+              "voice": "hamo",
               "new": [
                 {"ku": "baxçe", "en": "garden, orchard", "pos": "noun", "gender": "m", "forms": ["baxçe", "baxçeyên", "baxçeyan", "baxçeyek", "baxçeyê", "baxçeyekî", "baxçeyî"]},
                 {"ku": "gund", "en": "village", "pos": "noun", "gender": "m", "forms": ["gund", "gundên", "gundan", "gundek", "gundê", "gundekî", "gundî"]},
@@ -264,7 +265,7 @@
               "titleEn": "From Amed",
               "focus": "talk",
               "beat": "Xezal says Amed is the most beautiful place in the world; Hamo says Sêvan is; Hevalo, with his mouth full, says the apples are.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "xweşik", "en": "beautiful, pretty", "pos": "adj", "forms": ["xweşik"]},
                 {"ku": "pir", "en": "very; many", "pos": "adv", "forms": ["pir"]},
