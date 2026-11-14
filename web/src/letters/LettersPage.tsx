@@ -269,6 +269,11 @@ export function LettersPage(): React.JSX.Element {
           <Link to={`/app/letters/${moment.threadId}`} className="btn btn-secondary">
             {t('letters.pals.open', { name: moment.person.name })}
           </Link>
+          {canWrite && (
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMoment({ kind: 'writing' })}>
+              {t('letters.write')}
+            </button>
+          )}
           {sky}
         </>
       );
