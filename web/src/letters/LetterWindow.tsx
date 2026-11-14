@@ -184,6 +184,8 @@ export function LetterWindow({ scene, onDone }: { scene: WindowScene; onDone?: (
       {ROOM.map((part) => (
         <Layer key={part} part={part} sky={sky} id={id} />
       ))}
+      {/* the light lies on the sill, so a pigeon standing there is over it, never under it */}
+      <Layer part="light" sky={sky} id={id} />
       {scene.kind === 'home' && <Resting bird={scene.bird} asleep={sky === 'night'} />}
       {flier !== null && landed === 'no' && (
         <span className="lw-flight" ref={inside}>
@@ -193,7 +195,6 @@ export function LetterWindow({ scene, onDone }: { scene: WindowScene; onDone?: (
         </span>
       )}
       {scene.kind === 'arriving' && landed !== 'no' && <Resting bird={scene.bird} asleep={false} landed={landed === 'waving'} facingLeft />}
-      <Layer part="light" sky={sky} id={id} />
     </div>
   );
 }

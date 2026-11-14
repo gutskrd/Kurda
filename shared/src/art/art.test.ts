@@ -1943,7 +1943,7 @@ describe('the letters’ pictures', () => {
     expect(keys[keys.length - 1]).toMatchObject({ at: 1, seen: 0 });
     for (let i = 1; i < keys.length; i++) expect(keys[i]!.at).toBeGreaterThan(keys[i - 1]!.at);
     // how far across its own square a pigeon reaches in any pose, with a letter, either way round (measured in a browser)
-    const reach = { x0: 0.01, x1: 0.96, y0: 0.21, y1: 0.97 };
+    const reach = { x0: 0.07, x1: 0.91, y0: 0.28, y1: 0.95 };
     const share = LETTER_SILL.birdShare;
     const [cx, cy] = [LETTER_SILL.x / 120 - (share * LETTER_BIRD_FEET.x) / 120 + share / 2, LETTER_SILL.y / 120 - (share * LETTER_BIRD_FEET.y) / 120 + share / 2];
     const open = { x0: LETTER_OPENING.x0 / 120, x1: LETTER_OPENING.x1 / 120, y0: LETTER_OPENING.y0 / 120, y1: LETTER_OPENING.y1 / 120 };

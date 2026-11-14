@@ -146,7 +146,7 @@ const OPENING = { x0: 25.4, y0: 21.4, x1: 94.6, y1: 85.4 } as const;
 export const LETTER_OPENING = OPENING;
 const SILL_FRONT = { x0: 10, x1: 110, y: 96, depth: 4.8 } as const;
 
-/** The layers of the window, back to front. */
+/** The layers of the window, back to front. A pigeon on the sill stands over all of them, the light on the sill included: it lies under its feet. */
 export const LETTER_WINDOW_PARTS = ['sky', 'clouds', 'far', 'near', 'room', 'left', 'right', 'light'] as const;
 export type LetterWindowPart = (typeof LETTER_WINDOW_PARTS)[number];
 
@@ -166,7 +166,7 @@ export const LETTER_WINDOW_DEPTH: Readonly<Record<LetterWindowPart, number>> = {
 export const LETTER_SILL = { x: 50, y: 93.4, birdShare: 0.46 } as const;
 
 /** Where a pigeon's feet are on its own square, and how much bigger than its own drawing it is drawn there. */
-export const LETTER_BIRD_FEET = { x: 60, y: 100, scale: 1.7 } as const;
+export const LETTER_BIRD_FEET = { x: 60, y: 100, scale: 1.5 } as const;
 
 /**
  * The way a pigeon flies off with a letter, out through the window and away

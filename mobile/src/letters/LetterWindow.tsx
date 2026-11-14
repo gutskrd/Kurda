@@ -254,10 +254,11 @@ export function LetterWindow({ scene, size, onDone }: { scene: WindowScene; size
       <Layer part="room" sky={sky} size={size} id={id} />
       <Layer part="left" sky={sky} size={size} id={id} style={casement(true)} />
       <Layer part="right" sky={sky} size={size} id={id} style={casement(false)} />
+      {/* the light lies on the sill, so a pigeon standing there is over it, never under it */}
+      <Layer part="light" sky={sky} size={size} id={id} style={light} />
       {scene.kind === 'home' ? <Resting bird={scene.bird} asleep={sky === 'night'} size={size} /> : null}
       {flier !== null && landed === 'no' ? <Flying bird={flier} facingLeft={back} size={size} flight={flight} beat={beat} seen={inRoom} /> : null}
       {scene.kind === 'arriving' && landed !== 'no' ? <Resting bird={scene.bird} asleep={false} landed={landed === 'waving'} facingLeft size={size} /> : null}
-      <Layer part="light" sky={sky} size={size} id={id} style={light} />
     </View>
   );
 }
