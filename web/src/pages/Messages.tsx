@@ -265,10 +265,18 @@ function LettersRow(): React.JSX.Element | null {
   if (!data || !Array.isArray(data.penPals)) return null;
   const unread = data.penPals.reduce((n, p) => n + p.unread, 0);
   const waiting = data.penPals.find((p) => p.yourTurn);
-  const line = waiting ? t('letters.row.yourTurn', { name: waiting.person.name }) : data.out ? t('letters.out.title') : t('letters.row.invite');
+  // a bird at your window waits for you first, then a pen pal's letter, then your own bird out
+  const visitor = data.visitor ?? null;
+  const line = visitor
+    ? t('letters.visitor.title', { name: visitor.person.name })
+    : waiting
+      ? t('letters.row.yourTurn', { name: waiting.person.name })
+      : data.out
+        ? t('letters.out.title')
+        : t('letters.row.invite');
   return (
-    // gold only while a letter waits on you, like the requests above; otherwise one quiet row among the conversations
-    <Link to="/app/letters" className={`chat-requests chat-letters${waiting || unread > 0 ? ' is-waiting' : ''}`}>
+    // gold only while a letter or a bird waits on you, like the requests above; otherwise one quiet row among the conversations
+    <Link to="/app/letters" className={`chat-requests chat-letters${visitor || waiting || unread > 0 ? ' is-waiting' : ''}`}>
       <BirdBadge bird={data.bird} size={48} />
       <span className="chat-convo-body">
         <span className="chat-convo-name">{t('letters.title')}</span>

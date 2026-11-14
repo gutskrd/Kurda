@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
-import type { BirdOutResult, LetterThread, LettersHome } from '@kurda/shared';
+import type { BirdOutResult, LetterThread, LetterVisitor, LettersHome, VisitorAnswer } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
 import { LettersPage } from './LettersPage';
 import { LetterThreadPage } from './LetterThreadPage';
@@ -12,7 +12,28 @@ afterEach(() => {
   localStorage.clear();
 });
 
-const home = (over: Partial<LettersHome> = {}): LettersHome => ({ refusal: null, bird: 2, birdChosen: true, zer: 0, out: null, penPals: [], roomForMore: true, ...over });
+const home = (over: Partial<LettersHome> = {}): LettersHome => ({
+  refusal: null,
+  bird: 2,
+  birdChosen: true,
+  zer: 0,
+  out: null,
+  visitor: null,
+  birdsOut: 0,
+  sky: [],
+  callsLeft: 5,
+  homecoming: null,
+  penPals: [],
+  roomForMore: true,
+  ...over,
+});
+const baran = { id: 'baran', name: 'Baran', bird: 4 };
+const visitor: LetterVisitor = {
+  person: baran,
+  letter: { id: 'l1', mine: false, body: 'Silav! Ez Baran im.', removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
+  since: '2026-11-14T09:00:00.000Z',
+  leavesAt: '2026-11-15T09:00:00.000Z',
+};
 const letter = 'Silav! Navê min Rojda ye. Tu çawa yî?';
 
 /** Signed in, with the letters API answering from `answers` (method and path to body), and every request kept. */
@@ -40,7 +61,7 @@ describe('letters by bird', () => {
     signIn({ 'GET /letters': home() });
     renderApp(<LettersPage />, ['/app/letters']);
     expect(await screen.findByRole('button', { name: 'Write a letter' })).toBeInTheDocument();
-    expect(screen.getByText('No pen pals yet. Send your bird out, and someone will write back.')).toBeInTheDocument();
+    expect(screen.getByText('No pen pals yet. Call a bird to your window, or send yours out, and someone will write back.')).toBeInTheDocument();
   });
 
   it('says in plain words that nobody else has a bird out, when yours flies off to wait', async () => {
@@ -56,24 +77,52 @@ describe('letters by bird', () => {
     expect(document.querySelector('.lw-bird')).toBeNull();
   });
 
-  it('shows the letter their bird brought, when the two birds meet', async () => {
-    const met: BirdOutResult = {
-      kind: 'met',
-      threadId: '11111111-2222-4333-8444-555555555555',
-      person: { id: 'baran', name: 'Baran', bird: 4 },
-      letter: { id: 'l1', mine: false, body: 'Silav Rojda! Ez Baran im.', removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
-    };
-    signIn({ 'GET /letters': home(), 'POST /letters/out': met });
+  it('shows how many birds are out, calls one down with its letter, and answers it with the same bird', async () => {
+    const answered: VisitorAnswer = { threadId: '11111111-2222-4333-8444-555555555555', person: baran, letter: { ...visitor.letter, id: 'l2', mine: true, body: 'Silav' } };
+    const calls = signIn({ 'GET /letters': home({ birdsOut: 2, sky: [4, 6] }), 'POST /letters/call': { visitor }, 'POST /letters/visitor': answered });
     renderApp(<LettersPage />, ['/app/letters']);
-    await userEvent.click(await screen.findByRole('button', { name: 'Write a letter' }));
-    await userEvent.type(screen.getByLabelText('Your letter'), letter);
-    await userEvent.click(screen.getByRole('button', { name: 'Send your bird' }));
-    expect(await screen.findByText('Silav Rojda! Ez Baran im.')).toBeInTheDocument();
-    // their pigeon has landed on your sill and laid their letter down beside it (at once, in a page that cannot animate)
+    expect(await screen.findByText('2 birds are out there, each carrying a letter from someone your age.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Call a bird' }));
+    // their bird has come down to the window with its letter, beside yours
+    expect(await screen.findByText('Silav! Ez Baran im.')).toBeInTheDocument();
+    expect(await screen.findByText('Baran’s bird is at your window')).toBeInTheDocument();
+    await waitFor(() => expect(document.querySelectorAll('.lw-play').length).toBe(2));
+    // your own bird stays home while it is here
+    expect(screen.queryByRole('button', { name: 'Write a letter' })).toBeNull();
+    // a single word is a letter
+    await userEvent.type(screen.getByLabelText('Your answer to Baran'), 'Silav');
+    await userEvent.click(screen.getByRole('button', { name: 'Send it home with Baran’s bird' }));
+    expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/visitor'))?.body).toEqual({ body: 'Silav' });
+    expect(await screen.findByText('You and Baran are pen pals now')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open your letters with Baran' })).toHaveAttribute('href', `/app/letters/${answered.threadId}`);
+  });
+
+  it('asks once before sending a visiting bird on its way', async () => {
+    const calls = signIn({ 'GET /letters': home({ visitor }) });
+    renderApp(<LettersPage />, ['/app/letters']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Send it on its way' }));
+    expect(screen.getByText('Send Baran’s bird on? It flies back out for someone else and won’t come to your window again.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Keep it here' }));
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+    await userEvent.click(screen.getByRole('button', { name: 'Send it on its way' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Yes, send it on' }));
+    expect(calls.some((c) => c.method === 'DELETE' && c.url.includes('/letters/visitor'))).toBe(true);
+  });
+
+  it('says when every call of the day is made, and when no bird is out', async () => {
+    signIn({ 'GET /letters': home({ birdsOut: 3, sky: [1, 2, 3], callsLeft: 0 }) });
+    renderApp(<LettersPage />, ['/app/letters']);
+    expect(await screen.findByText('That’s all the birds you can call today. Call again tomorrow.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Call a bird' })).toBeNull();
+  });
+
+  it('shows your bird home with an answer, and the way to read it', async () => {
+    signIn({ 'GET /letters': home({ homecoming: { threadId: 't9', person: baran } }) });
+    renderApp(<LettersPage />, ['/app/letters']);
+    expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Read it' })).toHaveAttribute('href', '/app/letters/t9');
+    // it has landed and laid the letter on the sill (at once, in a page that cannot animate)
     await waitFor(() => expect(document.querySelector('.lw-sill-letter')).not.toBeNull());
-    expect(document.querySelector('.lw-play')).not.toBeNull();
-    expect(screen.getByText('Baran’s bird came to your window')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Write back to Baran' })).toHaveAttribute('href', `/app/letters/${met.threadId}`);
   });
 
   it('refuses a letter with a link before the bird leaves, and says what to take out', async () => {

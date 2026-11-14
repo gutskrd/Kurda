@@ -29,16 +29,19 @@ const PROBLEM: Record<LetterProblem, MessageKey> = {
  * A sheet of lined paper to write a letter on, and the bird's send. What the
  * server would refuse is said under it as it is written — a link, a phone
  * number, too long — so nothing is refused after the bird has left; that it is
- * too short is said only once somebody tries to send it, not while they are
- * still starting.
+ * still empty is said only once somebody tries to send it. A single word is a
+ * letter.
  */
 export function LetterPaper({
   label,
+  sendLabel,
   busy,
   onSend,
   error,
 }: {
   label: string;
+  /** what sending it is called, when it is not your own bird that takes it */
+  sendLabel?: string;
   busy: boolean;
   onSend: (body: string) => void;
   /** what the server answered, when it refused */
@@ -88,7 +91,7 @@ export function LetterPaper({
         {shown ?? error ?? ''}
       </p>
       <button type="submit" className="btn btn-primary letter-paper-send" disabled={busy}>
-        {busy ? t('letters.sending') : t('letters.send')}
+        {busy ? t('letters.sending') : (sendLabel ?? t('letters.send'))}
       </button>
     </form>
   );

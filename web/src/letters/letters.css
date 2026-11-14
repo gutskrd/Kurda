@@ -114,8 +114,63 @@
     transform: scaleX(0.92);
   }
 }
+/* the plant in the pot sways in the air coming in, about the pot's rim */
+.lw-layer--plant .lw-layer-art {
+  transform-origin: var(--plant-x) var(--plant-y);
+  animation: lw-sway var(--plant-ms) ease-in-out infinite alternate;
+}
+@keyframes lw-sway {
+  from {
+    transform: rotate(calc(var(--plant-turn) * -1));
+  }
+  to {
+    transform: rotate(var(--plant-turn));
+  }
+}
 .lw-layer--light .lw-layer-art {
   animation: lw-glow 9s ease-in-out infinite alternate;
+}
+
+/*
+ * The life round the window (LetterWindow.tsx, from the shared
+ * letter-sky.ts): the birds out there and what the air carries past, each a
+ * small square moved over the window by its own path, its wings or a
+ * butterfly's beating on the spot.
+ */
+.lw-drift {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  aspect-ratio: 1;
+  will-change: transform, opacity;
+}
+.lw-drift-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.lw-drift-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.lw-drift-art--flap {
+  animation: lw-flap 260ms ease-in-out infinite alternate;
+}
+@keyframes lw-flap {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0.3);
+  }
+}
+/* your own bird's place: it hops aside for a visitor, and back when it goes */
+.lw-own {
+  position: absolute;
+  inset: 0;
+  display: block;
 }
 @keyframes lw-glow {
   from {
@@ -232,6 +287,7 @@
   }
   .lw-layer,
   .lw-layer-art,
+  .lw-drift-art--flap,
   .lw-bird--asleep,
   .lw-pose--up,
   .lw-pose--down {
@@ -264,6 +320,37 @@
 }
 .letters-write {
   min-width: 220px;
+}
+
+/* the birds out there: how many, and the way to call one */
+.letters-sky {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.letters-call {
+  min-width: 220px;
+}
+.letters-status--quiet {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+/* sending a visiting bird on asks once, in place */
+.letters-ask {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.letters-ask-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+/* a called bird's letter unfolds once the bird has landed with it */
+.letters-arrived.is-landing .letter-sheet,
+.letters-arrived.is-landing .letter-paper {
+  animation: letters-unfold 0.5s var(--ease-out) 2.6s both;
 }
 
 /* ---- choosing your bird (BirdPicker.tsx) ----------------------------------------------- */
@@ -473,7 +560,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .letters-arrived .letter-sheet {
+  .letters-arrived .letter-sheet,
+  .letters-arrived.is-landing .letter-sheet,
+  .letters-arrived.is-landing .letter-paper {
     animation: none;
   }
 }
