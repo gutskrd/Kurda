@@ -104,7 +104,7 @@ import {
   letterShadowSvg,
   letterWindowSvg,
 } from './letters.js';
-import { PIGEON_PECK, PIGEON_POSES, PIGEON_REACH } from './pigeon.js';
+import { PIGEON_PECK, PIGEON_POSES, PIGEON_REACH, pigeonBeakTip, pigeonHolds } from './pigeon.js';
 import {
   LETTER_FAR_OFF,
   LETTER_NOTES,
@@ -2129,7 +2129,7 @@ describe('the pigeon at play', () => {
         for (const [at, pose, letter] of play.poses) {
           if (at > t) break;
           const held = letter && pose !== 'happy' && pose !== 'sleep' && pose !== 'peck';
-          shape = `${pose === 'turn' || pose === 'peck' ? pose : pose === 'front' || pose === 'hello' ? 'front' : 'perched'}${held ? '+letter' : ''}`;
+          shape = `${pose === 'turn' || pose === 'peck' || pose === 'peck-2' ? pose : pose === 'front' || pose === 'hello' ? 'front' : 'perched'}${held ? '+letter' : ''}`;
         }
         return shape;
       };
@@ -2153,16 +2153,39 @@ describe('the pigeon at play', () => {
   });
 
   it('brings its beak down to the letter on the sill when it picks it up or lays it down', () => {
-    // the tip of its beak as it pecks, about its feet, in shares of its own square
-    const beak = [(PIGEON_PECK.beak[0] * LETTER_BIRD_FEET.scale) / 120, (PIGEON_PECK.beak[1] * LETTER_BIRD_FEET.scale) / 120] as const;
+    // the tip of its beak as it pecks, and the middle of a letter held there, about its feet, in shares of its own square
+    const share = (v: number): number => (v * LETTER_BIRD_FEET.scale) / 120;
     for (const play of [LETTER_PLAY.before, LETTER_PLAY.after, LETTER_PLAY.fetch, LETTER_PLAY.take]) {
       const [at] = play.poses.find(([, pose]) => pose === 'peck')!;
-      // where it stands as it pecks: the last key at or before the peck, which is upright again as the picture changes
+      // where it stands as it pecks: upright on its feet, the bow is all in the picture
       const where = [...play.moves].reverse().find((m) => m.at <= at)!;
       expect(where.tilt).toBe(0);
-      expect(Math.abs(where.x + beak[0] - play.letterAt)).toBeLessThan(0.02);
-      expect(Math.abs(where.y + beak[1])).toBeLessThan(0.04);
+      expect(Math.abs(where.x + share(PIGEON_PECK.letter) - play.letterAt)).toBeLessThan(0.005);
+      expect(Math.abs(where.y + share(PIGEON_PECK.beak[1]))).toBeLessThan(0.02);
     }
+  });
+
+  it('goes down to peck and comes up again through the pictures between, never jumping from upright to bowed', () => {
+    const depth: Record<string, number> = { 'peck-1': 1, 'peck-2': 2, peck: 3 };
+    for (const play of [...Object.values(LETTER_PLAY), ...Object.values(LETTER_PLAY_BESIDE)]) {
+      play.poses.forEach(([, pose], i) => {
+        const next = play.poses[i + 1]?.[1];
+        if (next === undefined) return;
+        const [a, b] = [depth[pose] ?? 0, depth[next] ?? 0];
+        // one step down or up the bow at a time
+        if (a || b) expect(Math.abs(a - b)).toBeLessThanOrEqual(1);
+      });
+    }
+  });
+
+  it('holds a letter only where it hangs clear of the sill', () => {
+    // side on, the letter hangs straight down from the tip of its beak: wherever it is held, its foot is over the sill
+    for (const pose of ['perched', 'blink', 'wave', 'bob', 'peck-1', 'peck-2', 'peck'] as const) {
+      if (pigeonHolds(pose, true)) expect(pigeonBeakTip(pose)[1] + PIGEON_REACH.hang).toBeLessThanOrEqual(0.3);
+    }
+    // bowed all the way down, its beak is at the sill, so there it has let the letter go
+    expect(pigeonHolds('peck', true)).toBe(false);
+    expect(pigeonBeakTip('peck')).toEqual(PIGEON_PECK.beak);
   });
 });
 
