@@ -1,0 +1,989 @@
+/* ---- The Stories section's riddles and proverbs (lore/*.tsx) ------------------- */
+/*
+ * The two companion shelves read the way the stories do: the Kurdish is the
+ * large, calm thing on the page, in the display face (or Vazirmatn for
+ * Soranî), the reader's language sits quietly under it, and everything else
+ * is small and grey around it. One column with room to breathe, rows rather
+ * than cards, hairlines rather than shadows. Gold means something earned — a
+ * riddle solved, the XP it paid — and nothing else. Logical properties
+ * throughout, so a Soranî or Arabic page mirrors by itself; only opacity and
+ * transform move, and base.css stills them under reduced motion.
+ */
+
+/* Soranî in a face made for Arabic script, wherever a riddle's or a proverb's words appear */
+.lore-page [lang='ckb'],
+.lore-shelves [lang='ckb'],
+.lore-round [lang='ckb'] {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+}
+
+/*
+ * Kurdish in the other script from the page — a Kurmancî riddle on a Soranî
+ * page, a Soranî one on an English page — keeps its own direction inside the
+ * line but lines up with the page, so a list does not zigzag from one edge to
+ * the other. A field to type in keeps its own side.
+ */
+.lore-page :is(p, span, h1, h2, h3, li)[dir],
+.lore-round :is(p, span, h1, h2, h3, li, button)[dir] {
+  /* Chromium knows the value only by its prefixed name */
+  text-align: -webkit-match-parent;
+  text-align: match-parent;
+}
+
+/* ---- the three shelves, under Learn's own switch ------------------------------- */
+/*
+ * A segmented choice a size down from Learn's switch: three equal parts, the
+ * shelf you are on in the page's ink as every chosen one is. Each part names
+ * its shelf in Kurdish, with what that means in the reader's language under
+ * it, in smaller type.
+ */
+.lore-shelves {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  max-width: 560px;
+  margin: var(--space-4) 0 var(--space-6);
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.lore-shelf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 6px 8px;
+  border-radius: var(--r-md);
+  color: var(--ink-3);
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+.lore-shelf:hover {
+  color: var(--ink);
+}
+.lore-shelf:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.lore-shelf.is-on {
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+.lore-shelf-name {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+.lore-shelf-name[lang='ckb'] {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.lore-shelf-meaning {
+  font-size: var(--text-caption);
+  line-height: 1.25;
+  opacity: 0.85;
+}
+.lore-shelf.is-on .lore-shelf-meaning {
+  opacity: 0.8;
+}
+
+/* ---- a list page: the line under the shelves, its tools, the day's pick, the rows -- */
+.lore-head,
+.lore-daily,
+.lore-section,
+.lore-solved-count,
+.lore-guest,
+.lore-round-invite,
+.lore-page > .state {
+  max-width: 760px;
+}
+.lore-head {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.lore-lede {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--ink-2);
+  font-size: var(--text-body);
+  line-height: 1.55;
+}
+.lore-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.lore-variety {
+  margin: 0;
+}
+.lore-variety-option {
+  position: relative;
+}
+.lore-variety-option input,
+.lore-filter-chip input,
+.lore-mode input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.lore-variety-option:has(input:focus-visible),
+.lore-filter-chip:has(input:focus-visible),
+.lore-mode:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.lore-toggle {
+  min-height: 34px;
+}
+
+/* the eyebrow over a block: what it is, small and quiet */
+.lore-eyebrow {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+.lore-eyebrow:focus {
+  outline: none;
+}
+/* the Kurdish words themselves */
+.lore-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+.lore-display[lang='ckb'] {
+  font-weight: 500;
+}
+/* the reader's language under the Kurdish */
+.lore-translated {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  line-height: 1.55;
+}
+.lore-meta {
+  /* only the block margins: the inline start is the dots' own offset (stories.css) */
+  margin-block: 0;
+}
+.lore-kind {
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+/* the riddle and the proverb of the day: the one thing on the page set larger */
+.lore-daily {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--glass-rim);
+}
+.lore-daily-text {
+  margin: 0;
+  max-width: 34ch;
+  font-size: clamp(1.35rem, 3.2vw, 1.75rem);
+  line-height: 1.35;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.lore-daily-text[lang='ckb'] {
+  line-height: 1.85;
+}
+.lore-daily-meaning {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+}
+.lore-daily-go {
+  margin: var(--space-2) 0 0;
+}
+@media (max-width: 520px) {
+  .lore-daily {
+    padding: var(--space-5) var(--space-4);
+    border-radius: var(--r-lg);
+  }
+  .lore-daily-go .btn {
+    width: 100%;
+  }
+}
+
+/* "Solved: 3 of 12", and a hairline that fills */
+.lore-solved-count {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 var(--space-6);
+}
+.lore-solved-text {
+  font-size: var(--text-secondary);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.lore-solved-bar {
+  height: 3px;
+  max-width: 320px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.lore-solved-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  border-radius: inherit;
+  transition: width var(--dur-progress) var(--ease-out);
+}
+.lore-guest {
+  margin-top: 0;
+}
+
+.lore-section {
+  margin-bottom: var(--space-8);
+}
+.lore-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  border: 0;
+}
+.lore-filter-chip {
+  position: relative;
+}
+
+/* the rows: a list, not a wall of cards — a hairline between each */
+.lore-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--separator);
+}
+.lore-list > li {
+  border-bottom: 1px solid var(--separator);
+}
+.lore-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-2);
+  margin-inline: calc(-1 * var(--space-2));
+  border-radius: var(--r-md);
+  color: inherit;
+  text-decoration: none;
+  transition: background var(--dur-fast) ease;
+}
+.lore-row:hover {
+  background: var(--surface);
+}
+.lore-row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
+}
+.lore-row-text {
+  display: grid;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.lore-row-question {
+  font-size: 1.15rem;
+  line-height: 1.45;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.lore-row-question[lang='ckb'] {
+  font-size: 1.08rem;
+  line-height: 1.85;
+}
+.lore-row-translation {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  line-height: 1.5;
+}
+.lore-row-go {
+  flex: none;
+  color: var(--ink-4);
+}
+.lore-row-go:dir(rtl) {
+  transform: scaleX(-1);
+}
+.lore-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.lore-state.is-solved {
+  color: var(--gold-ink);
+  font-weight: 600;
+}
+.lore-none {
+  color: var(--ink-3);
+}
+
+/* ---- a riddle, its answer, a proverb: one column at a reading width ------------- */
+.lore-riddle-page,
+.lore-answer-page,
+.lore-proverb-page {
+  max-width: 720px;
+  padding-top: 32px;
+  padding-bottom: 80px;
+}
+@media (max-width: 640px) {
+  .lore-riddle-page,
+  .lore-answer-page,
+  .lore-proverb-page {
+    padding-top: 18px;
+    padding-bottom: calc(40px + env(safe-area-inset-bottom));
+  }
+}
+.lore-riddle-page .back-link,
+.lore-answer-page .back-link,
+.lore-proverb-page .back-link {
+  margin-bottom: var(--space-6);
+}
+.lore-riddle,
+.lore-answer-article,
+.lore-proverb,
+.lore-ask {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* the question, large and set like a line from a book */
+.lore-question {
+  margin: 0 0 var(--space-2);
+  max-width: 30ch;
+  font-size: clamp(1.6rem, 4.2vw, 2.25rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.lore-question[lang='ckb'] {
+  letter-spacing: normal;
+  line-height: 1.75;
+}
+/* the question again above its answer, smaller, as a quotation */
+.lore-question.is-quoted {
+  margin: 0;
+  max-width: 40ch;
+  font-size: clamp(1.2rem, 2.6vw, 1.45rem);
+  color: var(--ink-2);
+}
+.lore-question-tr {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  margin-top: calc(-1 * var(--space-2));
+}
+.lore-tr-toggle {
+  color: var(--ink-3);
+}
+.lore-question-tr .lore-translated {
+  animation: lore-unfold var(--dur-slow) var(--ease-out);
+}
+
+/* the guess */
+.lore-guess {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.lore-guess-label {
+  font-weight: 600;
+}
+.lore-guess-row {
+  display: flex;
+  gap: var(--space-2);
+}
+.lore-guess-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.15rem;
+}
+.lore-guess-input[lang='ckb'] {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+}
+.lore-help {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  line-height: 1.5;
+}
+.lore-verdict {
+  margin: 0;
+  min-height: 1.5em;
+  color: var(--ink-2);
+}
+.lore-verdict.is-wrong {
+  animation: lore-unfold var(--dur) var(--ease-out);
+}
+.lore-pays {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+
+/* the hints, each unfolding where it is asked for */
+.lore-hints {
+  display: grid;
+  gap: var(--space-3);
+}
+.lore-hint-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lore-hint {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  animation: lore-unfold var(--dur-slow) var(--ease-out);
+}
+.lore-hint-n {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--ink-2);
+}
+.lore-hint-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.lore-hint-text {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+.lore-hint-text[lang='ckb'] {
+  line-height: 1.85;
+}
+.lore-hint-ask {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+}
+.lore-hint-left {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+
+/* Show the answer, and the one question before it */
+.lore-reveal {
+  margin: var(--space-2) 0 0;
+}
+.lore-reveal .link-btn {
+  color: var(--ink-3);
+}
+.lore-confirm {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+  animation: lore-unfold var(--dur-slow) var(--ease-out);
+}
+.lore-confirm p,
+.lore-confirm-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: 550;
+  line-height: 1.5;
+}
+.lore-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* a riddle already solved, or its answer already seen */
+.lore-done {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  margin-top: var(--space-2);
+}
+.lore-done-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.lore-done.is-solved .lore-done-title {
+  color: var(--gold-ink);
+}
+.lore-riddle-foot {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+/* challenge a friend, and the word on what happened */
+.lore-challenge {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.lore-challenge-said {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+
+/* ---- the answer: the moment, then the card arriving ---------------------------- */
+.lore-moment {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.lore-seal {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 45%, transparent);
+  animation: lore-seal 520ms var(--ease-spring) both;
+}
+.lore-moment-text {
+  display: grid;
+  gap: 2px;
+}
+.lore-moment-text strong {
+  font-size: var(--text-body);
+}
+.lore-moment-xp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--gold-ink);
+  font-weight: 650;
+  font-size: var(--text-secondary);
+  animation: lore-unfold var(--dur-slow) var(--ease-out) 240ms both;
+}
+.lore-was {
+  margin: 0;
+  color: var(--gold-ink);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+}
+.lore-answer-card {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--glass-rim);
+  animation: lore-arrive var(--dur-slow) var(--ease-emphasis) both;
+}
+.is-solved-now .lore-answer-card {
+  animation-delay: 120ms;
+}
+.lore-answer {
+  margin: 0;
+  font-size: clamp(1.9rem, 5vw, 2.6rem);
+  line-height: 1.2;
+  color: var(--ink);
+}
+.lore-answer[lang='ckb'] {
+  line-height: 1.6;
+}
+.lore-answer-tr {
+  font-size: var(--text-body);
+  color: var(--ink-2);
+}
+.lore-prose {
+  margin: 0 0 var(--space-3);
+  max-width: 62ch;
+  color: var(--ink-2);
+  font-size: var(--text-body);
+  line-height: 1.65;
+}
+.lore-prose[lang='ckb'] {
+  line-height: 1.95;
+}
+.lore-translated.lore-prose {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.lore-riddle > .lore-section,
+.lore-answer-article > .lore-section,
+.lore-proverb > .lore-section {
+  /* the column's own gap already stands between them */
+  margin-bottom: var(--space-2);
+}
+.lore-section > .story-section-title {
+  margin-bottom: var(--space-3);
+}
+
+/* where it was found */
+.lore-sources {
+  display: grid;
+  gap: var(--space-2);
+}
+.lore-sources-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-secondary);
+  font-weight: 650;
+  color: var(--ink-2);
+}
+.lore-source-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lore-source {
+  display: grid;
+  gap: 2px;
+  padding-inline-start: var(--space-3);
+  border-inline-start: 2px solid var(--border);
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.lore-source-title {
+  color: var(--ink-2);
+  font-weight: 550;
+}
+.lore-source-title a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.lore-source-note {
+  font-size: var(--text-caption);
+}
+
+/* the way on */
+.lore-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+.lore-all-done {
+  margin: 0;
+  color: var(--gold-ink);
+  font-weight: 600;
+}
+@media (max-width: 520px) {
+  .lore-next > .btn-primary {
+    flex: 1 1 100%;
+  }
+}
+
+/* ---- a proverb ---------------------------------------------------------------- */
+/* set like a line of verse: the display face, generous leading, a measure of its own */
+.lore-verse {
+  text-wrap: balance;
+}
+.lore-proverb-text {
+  margin: 0;
+  max-width: 24ch;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.lore-proverb-text[lang='ckb'] {
+  letter-spacing: normal;
+  line-height: 1.7;
+}
+.lore-proverb-tr {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--ink-2);
+}
+.lore-proverb-tr:is([lang='ar'], [lang='ckb']) {
+  font-style: normal;
+}
+.lore-literal {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.lore-label {
+  font-weight: 650;
+  color: var(--ink-2);
+}
+.lore-meaning {
+  margin: 0 0 var(--space-3);
+  max-width: 54ch;
+  font-size: 1.1rem;
+  font-weight: 550;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.lore-scene-ku {
+  margin: 0 0 var(--space-3);
+  max-width: 60ch;
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--border-strong);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.lore-scene-ku[lang='ckb'] {
+  line-height: 2;
+}
+.lore-scene .lore-translated {
+  padding-inline-start: var(--space-4);
+}
+.lore-equivalent {
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.lore-variants {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lore-variant {
+  display: grid;
+  gap: 4px;
+}
+.lore-variant-text {
+  font-size: 1.15rem;
+  line-height: 1.45;
+}
+.lore-variant-text[lang='ckb'] {
+  line-height: 1.85;
+}
+.lore-variant-note {
+  max-width: 62ch;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.lore-themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.lore-themes .story-chip {
+  text-decoration: none;
+}
+
+/* the round, offered at the foot of the proverbs */
+.lore-round-invite {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+/* ---- the round on the proverbs -------------------------------------------------- */
+.lore-modes {
+  display: grid;
+  gap: var(--space-2);
+}
+@media (min-width: 560px) {
+  .lore-modes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.lore-mode {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.lore-mode:hover {
+  background: var(--surface);
+}
+.lore-mode.is-on {
+  border-color: var(--ink);
+  background: var(--surface-2);
+}
+.lore-mode-name {
+  font-weight: 650;
+}
+.lore-mode-line {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.lore-round-item {
+  display: grid;
+  gap: var(--space-4);
+}
+.lore-round-prompt {
+  margin: 0;
+  max-width: 28ch;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.35;
+}
+.lore-round-prompt[lang='ckb'] {
+  line-height: 1.8;
+}
+.lore-round-scene {
+  margin: 0;
+  max-width: 62ch;
+  font-size: var(--text-body);
+  line-height: 1.65;
+  color: var(--ink);
+}
+.lore-options {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lore-option {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-body);
+  line-height: 1.45;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
+}
+.lore-option.lore-display {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+.lore-option[lang='ckb'] {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+  line-height: 1.8;
+}
+.lore-option:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.lore-option:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+  transition-duration: 80ms;
+}
+.lore-option:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.lore-option:disabled {
+  cursor: default;
+}
+.lore-option.is-struck {
+  border-style: dashed;
+  color: var(--ink-4);
+  text-decoration: line-through;
+}
+.lore-option.is-right {
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--ink);
+}
+.lore-correction {
+  display: grid;
+  gap: 4px;
+}
+.lore-correction-text {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.45;
+}
+.lore-met {
+  max-width: 640px;
+}
+
+/* ---- movement: small, and only where something arrives -------------------------- */
+@keyframes lore-unfold {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lore-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lore-seal {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1189,6 +1189,341 @@
   text-underline-offset: 3px;
 }
 
+/* ---- a legend: its chapters, its title in the reader's language, what follows the reading (Legend.tsx) ---- */
+/* the title and summary in the reader's language: under the Kurdish, quieter, never instead of it */
+.story-title-tr {
+  margin: -4px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--ink-3);
+}
+.story-title-tr:is([lang='ar'], [lang='ckb']) {
+  font-style: normal;
+}
+.story-summary-tr {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* the introduction, set apart from the chapters: a word above it, a step larger and a shade softer */
+.story-para > .story-intro-label {
+  margin: 0 0 6px;
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+.story-para.is-intro > p[lang]:not(.story-translation) {
+  font-size: 1.06em;
+  color: var(--ink-2);
+}
+/* a chapter's title: the display face, room above it, its number small over it, its translation small under it */
+.story-chapter {
+  margin: 2.4em 0 1.1em;
+}
+.story-chapter > .story-chapter-n {
+  margin: 0 0 4px;
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+.story-chapter-title {
+  margin: 0;
+  max-width: 24em;
+  font-family: var(--font-display);
+  font-size: calc(var(--story-size) * 1.6rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.story-chapter-title[lang='ckb'] {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+  letter-spacing: normal;
+  line-height: 1.6;
+}
+.story-chapter > .story-chapter-tr {
+  margin: 4px 0 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-secondary);
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+/* the chapters as a book's contents, with a line of segments for how far through them the reader is */
+.story-contents {
+  margin-bottom: 26px;
+}
+.story-contents-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+.story-contents-head .story-section-title {
+  margin-bottom: 8px;
+}
+.story-contents-count {
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.story-contents-bar {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+.story-contents-bar > li {
+  flex: 1;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  transition: background var(--dur) var(--ease-out);
+}
+.story-contents-bar > li.is-read {
+  background: var(--gold);
+}
+.story-contents-bar > li.is-here:not(.is-read) {
+  background: var(--ink-3);
+}
+.story-contents-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--separator);
+}
+.story-contents-list > li {
+  border-bottom: 1px solid var(--separator);
+}
+.story-contents-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 6px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background var(--dur-fast) ease;
+}
+.story-contents-item:hover {
+  background: var(--surface);
+}
+.story-contents-item:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
+}
+.story-contents-n {
+  flex: none;
+  width: 22px;
+  font-size: var(--text-caption);
+  font-weight: 650;
+  color: var(--ink-4);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.story-contents-item.is-here .story-contents-n {
+  color: var(--ink);
+}
+.story-contents-text {
+  display: grid;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.story-contents-name,
+.story-contents-tr {
+  /* a title in the other script lines up with the list, keeping its own direction inside */
+  /* Chromium knows the value only by its prefixed name */
+  text-align: -webkit-match-parent;
+  text-align: match-parent;
+}
+.story-contents-name {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.story-contents-name[lang='ckb'] {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+  line-height: 1.7;
+}
+.story-contents-item.is-intro .story-contents-name {
+  font-family: var(--font-sans);
+  font-size: var(--text-secondary);
+  color: var(--ink-2);
+}
+.story-contents-tr {
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+}
+.story-contents-mark {
+  flex: none;
+  color: var(--gold-ink);
+}
+/* in the reader's tools: where the reader is, and the way to any chapter */
+.story-chapter-pick select {
+  max-width: min(16rem, 52vw);
+  height: 36px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background-color: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.story-chapter-pick select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+@media (pointer: coarse) {
+  .story-chapter-pick select {
+    height: 44px;
+  }
+}
+
+/* "Think about it": open questions, numbered quietly, nothing to answer into */
+.story-think {
+  margin: 0 0 26px;
+}
+.story-think-lede {
+  margin: 0 0 14px;
+  max-width: 60ch;
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.story-think-list {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding-inline-start: 1.4em;
+}
+.story-think-item::marker {
+  color: var(--ink-4);
+  font-size: var(--text-secondary);
+}
+.story-think-ku {
+  margin: 0;
+  max-width: 36em;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.story-think-ku[lang='ckb'] {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+  line-height: 1.9;
+}
+.story-think-tr {
+  margin: 4px 0 0;
+  max-width: 60ch;
+  font-size: var(--text-secondary);
+  line-height: 1.55;
+  color: var(--ink-3);
+}
+
+/* "About this story": the notes, then the sources, in one quiet column */
+.story-about-full {
+  margin-top: 8px;
+}
+.story-about-full > .story-section-title {
+  margin-bottom: 14px;
+}
+.story-note {
+  margin-bottom: 22px;
+}
+.story-note-kind {
+  margin: 0 0 2px;
+  font-size: var(--text-caption);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--ink-4);
+}
+.story-note-title {
+  margin: 0 0 6px;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: 650;
+  color: var(--ink-2);
+}
+.story-note p {
+  max-width: 62ch;
+  line-height: 1.65;
+}
+.story-note p[lang='ckb'] {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+  line-height: 1.95;
+}
+.story-note-ku {
+  margin-top: 4px;
+}
+.story-note-ku summary {
+  width: fit-content;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+.story-note-ku-title {
+  font-weight: 650;
+  color: var(--ink-2);
+}
+.story-note-attribution {
+  font-style: italic;
+}
+.story-sources-title {
+  margin: 0 0 10px;
+  font-family: var(--font-sans);
+  font-size: var(--text-secondary);
+  font-weight: 650;
+  color: var(--ink-2);
+}
+.story-source-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.story-source {
+  display: grid;
+  gap: 2px;
+  padding-inline-start: 12px;
+  border-inline-start: 2px solid var(--border);
+}
+.story-source-type {
+  font-size: var(--text-caption);
+  font-weight: 650;
+  color: var(--ink-4);
+}
+.story-source-name {
+  color: var(--ink-2);
+  font-weight: 550;
+}
+.story-source-note {
+  font-size: var(--text-caption);
+}
+
 /*
  * The player (ReaderControls.tsx): among a game's tools it is a quiet row of
  * buttons; docked under the reader it is one bar in ink — the primary colour,
@@ -1913,7 +2248,8 @@
   margin: -6px 0 0;
   color: var(--ink-3);
   font-size: 0.95rem;
-  /* English runs left to right, but sits on the page's own side */
+  /* English runs left to right, but sits on the page's own side (Chromium knows the value only by its prefixed name) */
+  text-align: -webkit-match-parent;
   text-align: match-parent;
 }
 .sg-english {
@@ -1990,7 +2326,26 @@ button.sg-option:focus-visible {
 .sg-option-text[lang='ckb'] {
   line-height: 1.7;
 }
+/* an option in the reader's language, under the Kurdish: its own line, the tag staying beside the Kurdish */
+.sg-option:has(.sg-option-tr) {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.sg-option-tr {
+  order: 3;
+  flex-basis: 100%;
+  padding-inline-start: 46px;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+.sg-review-answers .sg-option-tr {
+  padding: 0;
+  margin: 2px 0 0;
+}
 .sg-option-tag {
+  order: 2;
   flex: none;
   font-size: 0.78rem;
   font-weight: 600;

@@ -11,10 +11,10 @@ import {
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { CheckIcon, CloseIcon } from '../components/icons';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import { RankResult } from '../ranks/RankResult';
 import { STORIES_LIBRARY, readerPath } from './api';
-import { Evidence, playerName, type Announce } from './GameParts';
+import { Evidence, helpDir, playerName, questionHelp, type Announce } from './GameParts';
 import { rememberedEnglish, showEnglishFor } from './prefs';
 import { PlayerReport } from '../reports/PlayerReport';
 
@@ -211,6 +211,7 @@ function BoardRow({ s, total }: { s: StoryGameStanding; total: number }): React.
 /** Every question again, the missed ones first and open; the rest folded. */
 function Review({ view, items, story }: { view: StoryGameView; items: StoryGameReviewItem[]; story: StoryDetail | null }): React.JSX.Element {
   const t = useT();
+  const locale = useLocale();
   const english = showEnglishFor(view.settings.level, rememberedEnglish());
   const { lang, dir } = storyTextDirection(view.settings.dialect);
   const missed = (i: StoryGameReviewItem) => i.myChoice !== i.correctIndex;
@@ -222,6 +223,8 @@ function Review({ view, items, story }: { view: StoryGameView; items: StoryGameR
       </h3>
       {ordered.map((item) => {
         const wrong = missed(item);
+        // the question in the reader's language where it has been translated into it, else in English
+        const help = english ? questionHelp(item, locale, view.settings.dialect) : null;
         return (
           <details key={item.index} className={`sg-review-item${wrong ? ' is-missed' : ''}`} open={wrong}>
             <summary>
@@ -234,9 +237,9 @@ function Review({ view, items, story }: { view: StoryGameView; items: StoryGameR
                 {item.prompt}
               </span>
             </summary>
-            {item.promptEn && english && (
-              <p className="sg-prompt-en" lang="en" dir="ltr">
-                {item.promptEn}
+            {help?.prompt && (
+              <p className="sg-prompt-en" lang={help.lang} dir={helpDir(help.lang)}>
+                {help.prompt}
               </p>
             )}
             <dl className="sg-review-answers">
@@ -246,6 +249,11 @@ function Review({ view, items, story }: { view: StoryGameView; items: StoryGameR
                   <dd lang={item.myChoice === null ? undefined : lang} dir={item.myChoice === null ? undefined : dir}>
                     {item.myChoice === null ? t('stories.game.noAnswer') : item.options[item.myChoice]}
                   </dd>
+                  {item.myChoice !== null && help?.options?.[item.myChoice] && (
+                    <dd className="sg-option-tr" lang={help.lang} dir={helpDir(help.lang)}>
+                      {help.options[item.myChoice]}
+                    </dd>
+                  )}
                 </div>
               )}
               <div>
@@ -253,6 +261,11 @@ function Review({ view, items, story }: { view: StoryGameView; items: StoryGameR
                 <dd lang={lang} dir={dir}>
                   {item.options[item.correctIndex]}
                 </dd>
+                {help?.options?.[item.correctIndex] && (
+                  <dd className="sg-option-tr" lang={help.lang} dir={helpDir(help.lang)}>
+                    {help.options[item.correctIndex]}
+                  </dd>
+                )}
               </div>
             </dl>
             {item.explanation && (
@@ -260,9 +273,9 @@ function Review({ view, items, story }: { view: StoryGameView; items: StoryGameR
                 {item.explanation}
               </p>
             )}
-            {item.explanationEn && english && (
-              <p className="sg-explain-en" lang="en" dir="ltr">
-                {item.explanationEn}
+            {help?.explanation && (
+              <p className="sg-explain-en" lang={help.lang} dir={helpDir(help.lang)}>
+                {help.explanation}
               </p>
             )}
             <Evidence story={story} paragraph={item.evidenceParagraph} sentence={item.evidenceSentence} />

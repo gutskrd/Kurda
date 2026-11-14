@@ -29,7 +29,7 @@ const question = (over: Partial<StoryGameView> = {}): StoryGameView =>
     status: 'question',
     code: null,
     settings: { ...gameView().settings, timerSeconds: 0 },
-    question: { index: 0, total: 3, kind: 'detail', prompt: 'Rojîn çend salî ye?', promptEn: 'How old is Rojîn?', options: ['Heşt', 'Deh', 'Diwanzdeh'], myChoice: null },
+    question: { index: 0, total: 3, kind: 'detail', prompt: 'Rojîn çend salî ye?', promptEn: 'How old is Rojîn?', options: ['Heşt', 'Deh', 'Diwanzdeh'], myChoice: null, translations: {} },
     ...over,
   });
 
@@ -457,6 +457,7 @@ describe('the answer', () => {
           correctCount: 0,
           myChoice: 0,
           myCorrect: false,
+          translations: {},
         },
       }),
       'POST /story-games/g-1/continue': question({ version: 3 }),
@@ -491,6 +492,7 @@ describe('the answer, in English', () => {
           correctCount: 1,
           myChoice: 1,
           myCorrect: true,
+          translations: {},
         },
       }),
     });
@@ -518,8 +520,8 @@ describe('the results', () => {
         ],
         me: { place: 1, score: 400, correct: 4, answered: 5, total: 5, xp: 15, learningCounted: true },
         review: [
-          { index: 0, kind: 'detail', prompt: 'Pirsa yekem?', promptEn: null, options: ['a', 'b'], correctIndex: 0, myChoice: 0, explanation: null, explanationEn: null, evidenceParagraph: null, evidenceSentence: null },
-          { index: 1, kind: 'detail', prompt: 'Pirsa duyem?', promptEn: null, options: ['a', 'b'], correctIndex: 1, myChoice: 0, explanation: null, explanationEn: null, evidenceParagraph: null, evidenceSentence: null },
+          { index: 0, kind: 'detail', prompt: 'Pirsa yekem?', promptEn: null, options: ['a', 'b'], correctIndex: 0, myChoice: 0, explanation: null, explanationEn: null, evidenceParagraph: null, evidenceSentence: null, translations: {} },
+          { index: 1, kind: 'detail', prompt: 'Pirsa duyem?', promptEn: null, options: ['a', 'b'], correctIndex: 1, myChoice: 0, explanation: null, explanationEn: null, evidenceParagraph: null, evidenceSentence: null, translations: {} },
         ],
       },
       settings: { ...gameView().settings, questionCount: 5 },

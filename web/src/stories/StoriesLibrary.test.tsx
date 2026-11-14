@@ -269,7 +269,7 @@ describe('the library’s sort and filter panel', () => {
     expect(names(group('Kurdish'))).toEqual(['Either', 'Kurmancî', 'Soranî']);
     expect(within(group('Kurdish')).getByRole('radio', { name: 'Kurmancî' })).toHaveAccessibleDescription('Northern Kurdish · Latin letters');
     expect(within(group('Kurdish')).getByRole('radio', { name: 'Soranî' })).toHaveAccessibleDescription('Central Kurdish · Arabic script');
-    expect(names(group('Length'))).toEqual(['Any length', 'Short', 'Medium', 'Long']);
+    expect(names(group('Length'))).toEqual(['Any length', 'Short', 'Medium', 'Long', 'In chapters']);
     expect(within(group('Length')).getByRole('radio', { name: 'Short' })).toHaveAccessibleDescription('1–2 min');
     const aloud = within(panel()).getByRole('switch', { name: 'Read aloud' });
     expect(aloud).toHaveAttribute('aria-checked', 'false');

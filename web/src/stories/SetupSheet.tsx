@@ -42,6 +42,8 @@ export const LENGTH_KEY: Record<StoryLength, MessageKey> = {
   short: 'stories.length.short',
   medium: 'stories.length.medium',
   long: 'stories.length.long',
+  // a legend told in chapters
+  saga: 'stories.length.saga',
 };
 
 /** The story a game is set up on, when one is already chosen (the reader, a lobby). */

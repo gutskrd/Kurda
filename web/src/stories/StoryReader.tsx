@@ -33,6 +33,7 @@ import { SetupSheet } from './SetupSheet';
 import { PlayWordButton, SaveWordButton, StoryText } from './StoryText';
 import { useReadingProgress } from './useReadingProgress';
 import { useStoryAudio } from './useStoryAudio';
+import { AboutStory, ChapterContents, ChapterPicker, Reflections, hasAbout, localeDir, ownLocale, useChapterPosition, useMetaTranslation } from './Legend';
 
 type Load = { state: 'loading' } | { state: 'ready'; story: StoryDetail } | { state: 'gone' } | { state: 'error'; message: string };
 
@@ -161,6 +162,13 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
     setBookmarkProblem(t('stories.library.bookmarkFailed'));
   }
 
+  // a legend's chapters: where the reader is among them, and how far they have read, from the saved place and the page
+  const sections = useMemo(() => story.sections ?? [], [story.sections]);
+  const position = useChapterPosition(text, sections);
+  const furthest = Math.max(position.furthest, me && me.share > 0 ? me.paragraph : -1);
+  const meta = useMetaTranslation(story);
+  const about = hasAbout(story);
+
   const left = minutesLeft({ readingMinutes: story.readingMinutes, me: me ?? undefined });
   const finished = me?.finishedAt !== null && me?.finishedAt !== undefined;
   const narrated = narratedKey(story);
@@ -188,6 +196,12 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
           <h1 id="story-title" className="story-title" lang={lang} dir={dir}>
             {story.title}
           </h1>
+          {/* the title in the reader's language, under the Kurdish one, which stays the story's own */}
+          {meta.title && (
+            <p className="story-title-tr" lang={meta.title.lang} dir={localeDir(meta.title.lang)}>
+              {meta.title.text}
+            </p>
+          )}
           <p className="story-byline">
             <span>{t(TRADITION_KEY[story.tradition])}</span>
             {story.author && <span>{story.author}</span>}
@@ -196,6 +210,11 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
           {story.summary && (
             <p className="story-summary" lang={lang} dir={dir}>
               {story.summary}
+            </p>
+          )}
+          {meta.summary && (
+            <p className="story-summary-tr" lang={meta.summary.lang} dir={localeDir(meta.summary.lang)}>
+              {meta.summary.text}
             </p>
           )}
           <div className="story-overview-actions">
@@ -238,12 +257,21 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
         </div>
       </header>
 
+      <ChapterContents
+        story={{ dialect: story.dialect, sections, paragraphs: story.paragraphs }}
+        translation={locale === ownLocale(story.dialect) ? null : translation}
+        current={position.current}
+        furthest={furthest}
+        finished={finished}
+        onJump={scrollToParagraph}
+      />
       <KeyVocabulary glossary={story.glossary} dialect={story.dialect} />
       <CheckBlock story={story} me={me} id="story-check" />
 
       <div className="story-reader" ref={text}>
         <div className="story-tools">
           <TextSizeControl step={size} onChange={changeSize} />
+          <ChapterPicker sections={sections} current={position.current} onJump={scrollToParagraph} />
           {left !== null && <span className="story-tools-left">{t('stories.library.minutesLeft', { count: left })}</span>}
         </div>
         {resume !== null && (
@@ -266,7 +294,8 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
           translations={translation}
           observe={signedIn ? observe : undefined}
         />
-        {(story.source || story.attributionNote) && (
+        {/* a story with notes or sources says where it comes from after reading, with the rest of it */}
+        {!about && (story.source || story.attributionNote) && (
           <footer className="story-about">
             <h2 className="story-section-title">{t('stories.overview.aboutTitle')}</h2>
             {story.source && (
@@ -294,6 +323,8 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
       </div>
 
       <CheckBlock story={story} me={me} id="story-check-end" />
+      <Reflections story={story} />
+      <AboutStory story={story} />
     </article>
   );
 }
