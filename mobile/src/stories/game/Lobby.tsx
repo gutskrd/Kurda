@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../../theme/Pressable';
 import {
   MAX_PLAYERS,
   MIN_PLAYERS_TO_START,

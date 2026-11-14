@@ -1,6 +1,7 @@
 import { useCallback, useState, type Ref } from 'react';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { PressableScale } from '../theme/MotionParts';
 import { gameOfTheDay, type IncomingInvite, type MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';

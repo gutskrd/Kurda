@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { AccessibilityInfo, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { requestCooldownDays, type GroupRejoinRequest } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, AppState, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, Animated, AppState, Platform, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import {
@@ -677,6 +678,8 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
         </View>
       </View>
       <Pressable
+        // the card is turned while it is held: it turns the moment it is touched, nothing scrolls under it
+        pressDelay={0}
         onPressIn={reader ? undefined : show}
         onPressOut={reader ? undefined : hide}
         // someone listening to the phone cannot press and hold: for them a tap turns the card, and another turns it back

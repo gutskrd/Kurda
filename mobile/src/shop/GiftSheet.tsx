@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';

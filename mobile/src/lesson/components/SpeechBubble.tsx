@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '../../theme/Pressable';
 import type { RecordingVoice } from '@kurda/shared';
 import { CharacterStage } from '../../characters/CharacterStage';
 import { HevaloWindow } from '../../characters/HevaloWindow';

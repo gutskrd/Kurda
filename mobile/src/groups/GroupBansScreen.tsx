@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { AccessibilityInfo, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import type { GroupBan } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';

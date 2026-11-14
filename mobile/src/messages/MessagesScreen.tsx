@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
-import { Animated, type FlatList, Pressable, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, type FlatList, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { groupLimits, type LettersHome, type LimitDetails } from '@kurda/shared';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';

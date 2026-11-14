@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -11,6 +10,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { isSoraniDialect } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';

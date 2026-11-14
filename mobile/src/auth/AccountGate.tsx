@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useNavigation } from '@react-navigation/native';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';

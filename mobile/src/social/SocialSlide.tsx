@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Animated, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';

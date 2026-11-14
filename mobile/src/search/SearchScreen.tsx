@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { matchedParts } from '@kurda/shared';
 import { useNavigation, useScrollToTop } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import type { RootNavigation } from '../navigation/rootStack';

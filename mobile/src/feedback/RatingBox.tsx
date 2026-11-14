@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, BackHandler, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AccessibilityInfo, BackHandler, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { haptic } from './haptics';
 import {
   APP_FEEDBACK_CATEGORIES,

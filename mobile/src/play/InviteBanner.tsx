@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { AccessibilityInfo, Animated, Easing, findNodeHandle, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, findNodeHandle, Platform, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { DeclineReason, IncomingInvite } from '@kurda/shared';

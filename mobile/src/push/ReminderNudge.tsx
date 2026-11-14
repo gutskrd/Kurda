@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';

@@ -5,11 +5,11 @@ import {
   Easing,
   Image,
   Modal,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import type { EquippableCategory, GiftCard } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { assetUrl } from '../api/env';

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import Svg, { Circle } from 'react-native-svg';
 import { categoryName, type StoryCategory, type StoryDialect, type StoryGameSummary, type StoryLibrary, type StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';

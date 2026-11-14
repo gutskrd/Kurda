@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, type ReactNode } from 'react';
-import { Animated, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Icon, type IconName } from '../theme/Icon';

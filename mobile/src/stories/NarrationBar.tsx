@@ -1,5 +1,6 @@
 import { useRef } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { PressableScale, heldDim } from '../theme/MotionParts';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';

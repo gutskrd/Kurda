@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CHEST_HOP_LAND, CHEST_HOP_MS, celebrationPlan, type ChestOpening, type ChestTier } from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';

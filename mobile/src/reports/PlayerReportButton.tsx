@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import type { PlayGame } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';

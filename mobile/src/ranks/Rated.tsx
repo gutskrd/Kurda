@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { haptic } from '../feedback/haptics';
 import type { ExpectedGains, RankedGame, RatedState } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';

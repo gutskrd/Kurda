@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AccessibilityInfo, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { MenuIn, PressableScale, heldDim } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import type { GiftUserEvent } from '@kurda/shared';

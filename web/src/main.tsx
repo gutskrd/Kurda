@@ -4,6 +4,7 @@ import { App } from './App';
 import { preloadCatalogue } from './i18n/catalogues';
 import { applyTheme, watchSystemTheme } from './theme/theme';
 import { startArtOverrides } from './art/overrides';
+import { installPressFeedback } from './lib/press';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -58,6 +59,8 @@ watchSystemTheme();
  * last list is drawn until then, and the built-in art when there is none.
  */
 startArtOverrides();
+// a button shows pressed only for a real press, never for a finger that is scrolling (lib/press.ts)
+installPressFeedback();
 
 /*
  * The language before the app.

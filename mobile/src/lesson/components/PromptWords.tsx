@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type TextStyle } from 'react-native';
+import { Modal, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type TextStyle } from 'react-native';
+import { Pressable } from '../../theme/Pressable';
 import Svg, { Line } from 'react-native-svg';
 import { scriptDialect, type PromptToken } from '@kurda/shared';
 import { useI18n } from '../../i18n/I18nContext';

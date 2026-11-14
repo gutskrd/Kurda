@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { I18nManager, Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { I18nManager, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import {
   ALPHABET_MEANINGS,
   exampleMeaningLocale,

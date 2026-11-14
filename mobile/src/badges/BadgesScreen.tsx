@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { PressableScale } from '../theme/MotionParts';
 import { SHOWCASE_SIZE, badgeColour, hasBadgeArt, nearestBadges, type BadgeView, type BadgesResponse } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';

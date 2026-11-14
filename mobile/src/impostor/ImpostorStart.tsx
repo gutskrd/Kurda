@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { COUCH_WAYS, impostorCategoriesInOrder, impostorCategoryTone, impostorWayTone, meaningIn, type CouchWay } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import { InviteSheet } from '../play/InviteSheet';

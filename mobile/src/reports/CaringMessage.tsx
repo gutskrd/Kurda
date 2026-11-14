@@ -1,4 +1,5 @@
-import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton } from '../theme/glass';

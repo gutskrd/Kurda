@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type TextStyle } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, ScrollView, StyleSheet, Text, View, useWindowDimensions, type TextStyle } from 'react-native';
+import { Pressable } from '../../theme/Pressable';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import {
   FIRE_VIEW,

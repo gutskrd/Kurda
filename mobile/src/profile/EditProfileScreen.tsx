@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { useNavigation, usePreventRemove, type NavigationAction } from '@react-navigation/native';
 import { PressableScale, heldDim } from '../theme/MotionParts';
 import { countriesIn, foldDiacritics } from '@kurda/shared';

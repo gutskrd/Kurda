@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { fireLevel } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { GoalPicker } from '../goals/GoalPicker';

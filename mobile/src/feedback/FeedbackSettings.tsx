@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, Modal, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { SettingsRow } from '../settings/list';
 import { Icon } from '../theme/Icon';

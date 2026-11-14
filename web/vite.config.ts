@@ -1,12 +1,15 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { pressStyles } from './src/lib/pressStyles';
 
 // The web app talks to the existing Render API cross-origin via VITE_API_URL
 // (see src/lib/config.ts). For local dev against a locally-running API you can
 // point VITE_API_URL at http://localhost:3000; there's no build-time secret.
 export default defineConfig({
   plugins: [react()],
+  // a pressed look shows only for a real press, and a hover look only where something can hover (src/lib/pressStyles.ts)
+  css: { postcss: { plugins: [pressStyles()] } },
   server: { port: 5174 },
   build: { outDir: 'dist', sourcemap: false },
   // In this monorepo mobile pins a different React patch, so tests can otherwise

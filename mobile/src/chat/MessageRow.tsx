@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import type { ChatMessage } from '../gifts/api';
 import { useI18n } from '../i18n/I18nContext';
 import { InitialsAvatar } from '../profile/InitialsAvatar';

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -238,6 +239,8 @@ function TabButton({
   const press = usePressScale();
   return (
     <Pressable
+      // the tab bar is outside anything that scrolls, so it answers the moment it is touched
+      pressDelay={0}
       onPress={onPress}
       onLongPress={onLongPress}
       delayLongPress={400}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Animated, Easing, Pressable, Share, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Animated, Easing, Share, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable } from '../theme/Pressable';
 import * as Clipboard from 'expo-clipboard';
 import { buildJoinLink, formatJoinCode, type PlayGame } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
