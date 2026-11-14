@@ -36,8 +36,8 @@ import { BirdPicker } from './BirdPicker';
 /**
  * What the screen is showing under the window: the letters as they stand,
  * writing your own letter, your bird on its way out, your answer on its way
- * home with somebody's bird, that bird sent on, or your own bird home with an
- * answer.
+ * home with somebody's bird, that bird sent on, your own bird home with an
+ * answer, or a pen pal's bird come with their next letter.
  */
 type Moment =
   | { kind: 'rest' }
@@ -47,25 +47,33 @@ type Moment =
   | { kind: 'waiting' }
   | { kind: 'answered'; person: LetterPerson; threadId: string }
   | { kind: 'sentOn'; name: string }
-  | { kind: 'homecoming'; person: LetterPerson; threadId: string };
+  | { kind: 'homecoming'; person: LetterPerson; threadId: string }
+  | { kind: 'arrival'; person: LetterPerson; threadId: string };
 
 /** The window is as wide as the screen allows, and no wider than a hand's width of sky. */
 const WINDOW_MAX = 300;
 
 /**
  * The screen's first look at what the server says: your bird where it is, a
- * bird at the window still there, and your bird home with an answer landing,
- * said in words under it.
+ * bird at the window still there, your bird home with an answer landing, or
+ * else a pen pal's bird coming in with their next letter, said in words
+ * under it.
  */
 function firstLook(home: LettersHome): { scene: WindowScene; moment: Moment } {
   const back = home.homecoming !== null && home.out === null;
+  const pal = !home.visitor && !back ? home.arrival : null;
   return {
     scene: {
       own: home.out ? { kind: 'away' } : back ? { kind: 'arriving', bird: home.bird } : { kind: 'home', bird: home.bird },
-      visitor: home.visitor ? { kind: 'here', bird: home.visitor.person.bird } : { kind: 'none' },
+      visitor: home.visitor ? { kind: 'here', bird: home.visitor.person.bird } : pal ? { kind: 'arriving', bird: pal.person.bird } : { kind: 'none' },
       sky: home.sky,
     },
-    moment: back && home.homecoming ? { kind: 'homecoming', person: home.homecoming.person, threadId: home.homecoming.threadId } : { kind: 'rest' },
+    moment:
+      back && home.homecoming
+        ? { kind: 'homecoming', person: home.homecoming.person, threadId: home.homecoming.threadId }
+        : pal
+          ? { kind: 'arrival', person: pal.person, threadId: pal.threadId }
+          : { kind: 'rest' },
   };
 }
 
@@ -86,7 +94,9 @@ function firstLook(home: LettersHome): { scene: WindowScene; moment: Moment } {
  * home and the two of you are pen pals; or send it on its way, asked once
  * first, for somebody else. While it is there your own bird stays home. When
  * your own bird comes home from somebody's window with their answer, the
- * screen shows it landing, and the way to read it.
+ * screen shows it landing, and the way to read it; and every letter a pen
+ * pal writes after that comes to the window by their own bird, which lands
+ * beside yours and lays the letter on the sill until it is read.
  *
  * Under it your pen pals, the one most recently written to first, each with
  * whose turn it is, and one short list of how it works. Reporting and
@@ -152,7 +162,7 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
       const look = firstLook(home);
       setScene(look.scene);
       setVisitor(home.visitor);
-      if (look.moment.kind === 'homecoming') setMoment(look.moment);
+      if (look.moment.kind === 'homecoming' || look.moment.kind === 'arrival') setMoment(look.moment);
       return;
     }
     // read again: the birds out there are as the screen now says
@@ -397,11 +407,11 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
             <Text style={quiet}>{t('letters.visitor.body')}</Text>
           </>
         );
-    else if (moment.kind === 'homecoming') {
+    else if (moment.kind === 'homecoming' || moment.kind === 'arrival') {
       const { person, threadId } = moment;
       status = (
         <>
-          <Text style={strong}>{t('letters.home.title', { name: person.name })}</Text>
+          <Text style={strong}>{moment.kind === 'homecoming' ? t('letters.home.title', { name: person.name }) : t('letters.arrival.title', { name: person.name })}</Text>
           <ClayButton label={t('letters.home.read')} onPress={() => openThread(threadId)} tone="primary" style={styles.wide} testID="letters-home-read" />
         </>
       );

@@ -2315,6 +2315,7 @@ export type TranslationKey =
   | 'letters.pals.open'
   | 'letters.home.title'
   | 'letters.home.read'
+  | 'letters.arrival.title'
   | 'letters.out.visiting'
   | 'letters.error.visitorHere'
   | 'letters.error.noBirds'
@@ -5382,6 +5383,7 @@ const en: Catalog = {
   'letters.pals.open': 'Open your letters with {name}',
   'letters.home.title': 'Your bird came home with a letter from {name}',
   'letters.home.read': 'Read it',
+  'letters.arrival.title': '{name}’s bird brought you a letter',
   'letters.out.visiting': 'Someone has called your bird to their window and is reading your letter right now.',
   'letters.error.visitorHere': 'A bird is at your window. Answer it or send it on first.',
   'letters.error.noBirds': 'No bird is out for you right now. Try again a little later.',
@@ -8949,6 +8951,7 @@ const ku: Catalog = {
   'letters.pals.open': 'Nameyên xwe yên bi {name} re veke',
   'letters.home.title': 'Teyrê te bi nameyeke {name} vegeriya malê',
   'letters.home.read': 'Bixwîne',
+  'letters.arrival.title': 'Teyrê {name} nameyek ji te re anî',
   'letters.out.visiting': 'Kesekî gazî teyrê te kiriye ber pencereya xwe û niha nameya te dixwîne.',
   'letters.error.visitorHere': 'Teyrek li ber pencereya te ye. Pêşî bersivê bide an bihêle bila biçe.',
   'letters.error.noBirds': 'Niha tu teyr ji bo te li derve nîne. Piçekî din dîsa biceribîne.',
@@ -12516,6 +12519,7 @@ const de: Catalog = {
   'letters.pals.open': 'Deine Briefe mit {name} öffnen',
   'letters.home.title': 'Dein Vogel ist mit einem Brief von {name} heimgekommen',
   'letters.home.read': 'Lesen',
+  'letters.arrival.title': 'Der Vogel von {name} hat dir einen Brief gebracht',
   'letters.out.visiting': 'Jemand hat deinen Vogel an sein Fenster gerufen und liest gerade deinen Brief.',
   'letters.error.visitorHere': 'An deinem Fenster sitzt ein Vogel. Antworte ihm zuerst oder lass ihn weiterfliegen.',
   'letters.error.noBirds': 'Gerade ist kein Vogel für dich unterwegs. Versuch es etwas später noch einmal.',
@@ -16083,6 +16087,7 @@ const es: Catalog = {
   'letters.pals.open': 'Abrir tus cartas con {name}',
   'letters.home.title': 'Tu pájaro volvió a casa con una carta de {name}',
   'letters.home.read': 'Leerla',
+  'letters.arrival.title': 'El pájaro de {name} te ha traído una carta',
   'letters.out.visiting': 'Alguien ha llamado a tu pájaro a su ventana y está leyendo tu carta ahora mismo.',
   'letters.error.visitorHere': 'Hay un pájaro en tu ventana. Contéstale o deja que siga antes.',
   'letters.error.noBirds': 'Ahora no hay ningún pájaro fuera para ti. Prueba un poco más tarde.',
@@ -19650,6 +19655,7 @@ const tr: Catalog = {
   'letters.pals.open': '{name} ile mektuplarını aç',
   'letters.home.title': 'Kuşun {name} adlı kişiden bir mektupla eve döndü',
   'letters.home.read': 'Oku',
+  'letters.arrival.title': '{name} adlı kişinin kuşu sana bir mektup getirdi',
   'letters.out.visiting': 'Biri kuşunu penceresine çağırdı ve şu an mektubunu okuyor.',
   'letters.error.visitorHere': 'Pencerende bir kuş var. Önce ona cevap ver ya da yoluna devam etsin.',
   'letters.error.noBirds': 'Şu an senin için dışarıda kuş yok. Biraz sonra yeniden dene.',
@@ -23217,6 +23223,7 @@ const ar: Catalog = {
   'letters.pals.open': 'افتح رسائلك مع {name}',
   'letters.home.title': 'عاد طائرك إلى البيت برسالة من {name}',
   'letters.home.read': 'اقرأها',
+  'letters.arrival.title': 'جاءك طائر {name} برسالة',
   'letters.out.visiting': 'نادى أحدهم طائرك إلى نافذته ويقرأ رسالتك الآن.',
   'letters.error.visitorHere': 'هناك طائر عند نافذتك. ردّ عليه أو دعه يذهب أولًا.',
   'letters.error.noBirds': 'لا يوجد طائر لك في الخارج الآن. حاول بعد قليل.',
@@ -26784,6 +26791,7 @@ const fr: Catalog = {
   'letters.pals.open': 'Ouvrir tes lettres avec {name}',
   'letters.home.title': 'Ton oiseau est rentré avec une lettre de {name}',
   'letters.home.read': 'La lire',
+  'letters.arrival.title': 'L’oiseau de {name} t’a apporté une lettre',
   'letters.out.visiting': 'Quelqu’un a appelé ton oiseau à sa fenêtre et lit ta lettre en ce moment.',
   'letters.error.visitorHere': 'Un oiseau est à ta fenêtre. Réponds-lui ou laisse-le repartir d’abord.',
   'letters.error.noBirds': 'Aucun oiseau n’est dehors pour toi en ce moment. Réessaie un peu plus tard.',
@@ -30351,6 +30359,7 @@ const nl: Catalog = {
   'letters.pals.open': 'Je brieven met {name} openen',
   'letters.home.title': 'Je vogel is thuisgekomen met een brief van {name}',
   'letters.home.read': 'Lezen',
+  'letters.arrival.title': 'De vogel van {name} heeft je een brief gebracht',
   'letters.out.visiting': 'Iemand heeft je vogel naar zijn raam geroepen en leest nu je brief.',
   'letters.error.visitorHere': 'Er zit een vogel bij je raam. Beantwoord hem eerst of laat hem doorvliegen.',
   'letters.error.noBirds': 'Er is nu geen vogel buiten voor jou. Probeer het straks nog eens.',
@@ -33919,6 +33928,7 @@ const ckb: Catalog = {
   'letters.pals.open': 'نامەکانت لەگەڵ {name} بکەرەوە',
   'letters.home.title': 'باڵندەکەت بە نامەیەکی {name} گەڕایەوە ماڵەوە',
   'letters.home.read': 'بیخوێنەرەوە',
+  'letters.arrival.title': 'باڵندەکەی {name} نامەیەکی بۆت هێنا',
   'letters.out.visiting': 'کەسێک بانگی باڵندەکەتی کردووە بۆ بەر پەنجەرەکەی و ئێستا نامەکەت دەخوێنێتەوە.',
   'letters.error.visitorHere': 'باڵندەیەک لە بەر پەنجەرەکەتە. سەرەتا وەڵامی بدەرەوە یان با بڕوات.',
   'letters.error.noBirds': 'ئێستا هیچ باڵندەیەک بۆ تۆ لە دەرەوە نییە. کەمێکی تر دیسان هەوڵ بدەرەوە.',

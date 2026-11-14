@@ -23,6 +23,7 @@ const home = (over: Partial<LettersHome> = {}): LettersHome => ({
   sky: [],
   callsLeft: 5,
   homecoming: null,
+  arrival: null,
   penPals: [],
   roomForMore: true,
   ...over,
@@ -123,6 +124,24 @@ describe('letters by bird', () => {
     expect(screen.getByRole('link', { name: 'Read it' })).toHaveAttribute('href', '/app/letters/t9');
     // it has landed and laid the letter on the sill (at once, in a page that cannot animate)
     await waitFor(() => expect(document.querySelector('.lw-sill-letter')).not.toBeNull());
+  });
+
+  it('brings a pen pal’s next letter to the window by their own bird, and the way to read it', async () => {
+    signIn({ 'GET /letters': home({ arrival: { threadId: 't9', person: baran } }) });
+    renderApp(<LettersPage />, ['/app/letters']);
+    expect(await screen.findByText('Baran’s bird brought you a letter')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Read it' })).toHaveAttribute('href', '/app/letters/t9');
+    // their bird has landed beside yours and laid the letter on the sill
+    await waitFor(() => expect(document.querySelector('.lw-sill-letter')).not.toBeNull());
+    expect(screen.queryByText('Your bird came home with a letter from Baran')).toBeNull();
+  });
+
+  it('lets your own bird home with an answer come before a pen pal’s bird', async () => {
+    const rojin = { id: 'rojin', name: 'Rojîn', bird: 5 };
+    signIn({ 'GET /letters': home({ homecoming: { threadId: 't9', person: baran }, arrival: { threadId: 't8', person: rojin } }) });
+    renderApp(<LettersPage />, ['/app/letters']);
+    expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeInTheDocument();
+    expect(screen.queryByText('Rojîn’s bird brought you a letter')).toBeNull();
   });
 
   it('refuses a letter with a link before the bird leaves, and says what to take out', async () => {

@@ -921,6 +921,7 @@ export const ckb: Catalogue = {
   'letters.pals.open': 'نامەکانت لەگەڵ {name} بکەرەوە',
   'letters.home.title': 'باڵندەکەت بە نامەیەکی {name} گەڕایەوە ماڵەوە',
   'letters.home.read': 'بیخوێنەرەوە',
+  'letters.arrival.title': 'باڵندەکەی {name} نامەیەکی بۆت هێنا',
   'letters.out.visiting': 'کەسێک بانگی باڵندەکەتی کردووە بۆ بەر پەنجەرەکەی و ئێستا نامەکەت دەخوێنێتەوە.',
   'letters.error.visitorHere': 'باڵندەیەک لە بەر پەنجەرەکەتە. سەرەتا وەڵامی بدەرەوە یان با بڕوات.',
   'letters.error.noBirds': 'ئێستا هیچ باڵندەیەک بۆ تۆ لە دەرەوە نییە. کەمێکی تر دیسان هەوڵ بدەرەوە.',

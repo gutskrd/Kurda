@@ -913,6 +913,7 @@ export const es: Catalogue = {
   'letters.pals.open': 'Abrir tus cartas con {name}',
   'letters.home.title': 'Tu pájaro volvió a casa con una carta de {name}',
   'letters.home.read': 'Leerla',
+  'letters.arrival.title': 'El pájaro de {name} te ha traído una carta',
   'letters.out.visiting': 'Alguien ha llamado a tu pájaro a su ventana y está leyendo tu carta ahora mismo.',
   'letters.error.visitorHere': 'Hay un pájaro en tu ventana. Contéstale o deja que siga antes.',
   'letters.error.noBirds': 'Ahora no hay ningún pájaro fuera para ti. Prueba un poco más tarde.',

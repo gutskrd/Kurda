@@ -975,6 +975,7 @@ export const en = {
   'letters.pals.open': 'Open your letters with {name}',
   'letters.home.title': 'Your bird came home with a letter from {name}',
   'letters.home.read': 'Read it',
+  'letters.arrival.title': '{name}’s bird brought you a letter',
   'letters.out.visiting': 'Someone has called your bird to their window and is reading your letter right now.',
   'letters.error.visitorHere': 'A bird is at your window. Answer it or send it on first.',
   'letters.error.noBirds': 'No bird is out for you right now. Try again a little later.',

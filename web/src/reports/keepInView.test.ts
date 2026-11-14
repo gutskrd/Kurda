@@ -20,6 +20,22 @@ afterEach(() => {
 });
 
 describe('keepInView', () => {
+  it('opens a menu downward when opening upward would put it under the bar at the top', () => {
+    vi.stubGlobal('innerWidth', 390);
+    // the ⋯ is just under the bar: its menu, opening upward, would start at -60
+    const el = drawn({ left: 100, right: 276, top: -60, height: 120 }, null);
+    keepInView(el);
+    expect(el.style.top).toBe('calc(100% + 8px)');
+    expect(el.style.bottom).toBe('auto');
+  });
+
+  it('leaves a menu opening upward where there is room for it', () => {
+    vi.stubGlobal('innerWidth', 390);
+    const el = drawn({ left: 100, right: 276, top: 300, height: 120 }, null);
+    keepInView(el);
+    expect(el.style.top).toBe('');
+  });
+
   it('moves a menu back inside the window', () => {
     vi.stubGlobal('innerWidth', 390);
     const el = drawn({ left: 324, right: 500 }, null);

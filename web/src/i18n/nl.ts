@@ -915,6 +915,7 @@ export const nl: Catalogue = {
   'letters.pals.open': 'Je brieven met {name} openen',
   'letters.home.title': 'Je vogel is thuisgekomen met een brief van {name}',
   'letters.home.read': 'Lezen',
+  'letters.arrival.title': 'De vogel van {name} heeft je een brief gebracht',
   'letters.out.visiting': 'Iemand heeft je vogel naar zijn raam geroepen en leest nu je brief.',
   'letters.error.visitorHere': 'Er zit een vogel bij je raam. Beantwoord hem eerst of laat hem doorvliegen.',
   'letters.error.noBirds': 'Er is nu geen vogel buiten voor jou. Probeer het straks nog eens.',

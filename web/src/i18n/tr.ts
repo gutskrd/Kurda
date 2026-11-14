@@ -910,6 +910,7 @@ export const tr: Catalogue = {
   'letters.pals.open': '{name} ile mektuplarını aç',
   'letters.home.title': 'Kuşun {name} adlı kişiden bir mektupla eve döndü',
   'letters.home.read': 'Oku',
+  'letters.arrival.title': '{name} adlı kişinin kuşu sana bir mektup getirdi',
   'letters.out.visiting': 'Biri kuşunu penceresine çağırdı ve şu an mektubunu okuyor.',
   'letters.error.visitorHere': 'Pencerende bir kuş var. Önce ona cevap ver ya da yoluna devam etsin.',
   'letters.error.noBirds': 'Şu an senin için dışarıda kuş yok. Biraz sonra yeniden dene.',

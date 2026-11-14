@@ -36,6 +36,7 @@ const home = (over: Partial<LettersHome> = {}): LettersHome => ({
   sky: [],
   callsLeft: 5,
   homecoming: null,
+  arrival: null,
   penPals: [],
   roomForMore: true,
   ...over,
@@ -175,6 +176,23 @@ describe('the letters screen', () => {
     expect(await screen.findByTestId('letters-write')).toBeTruthy();
     expect(screen.queryByText('Your bird came home with a letter from Baran')).toBeNull();
     expect(screen.queryByTestId('letter-on-sill')).toBeNull();
+  });
+
+  it('brings a pen pal’s next letter to the window by their own bird, and the way to read it', async () => {
+    let arrival: LettersHome['arrival'] = { threadId: THREAD, person: baran };
+    testAuth.client = fakeClient({ 'GET /letters': () => Promise.resolve(ok(home({ arrival }))) } as never);
+    phoneWide();
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
+    // their bird has landed beside yours and laid the letter on the sill
+    await waitFor(() => expect(screen.getByTestId('letter-on-sill')).toBeTruthy());
+    fireEvent.click(screen.getByTestId('letters-home-read'));
+    expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD });
+    // read there and come back to: their bird has gone, and the screen is as it was
+    arrival = null;
+    act(() => refocus());
+    expect(await screen.findByTestId('letters-write')).toBeTruthy();
+    expect(screen.queryByText('Baran’s bird brought you a letter')).toBeNull();
   });
 
   it('asks for a bird to be chosen first, for free, before the first letter', async () => {

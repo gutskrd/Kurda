@@ -205,6 +205,12 @@ export interface LettersHome {
   callsLeft: number;
   /** your bird home from somebody's window with their answer, not yet read: the correspondence it opened */
   homecoming: { threadId: string; person: LetterPerson } | null;
+  /**
+   * A pen pal's bird come to your window with their next letter, not yet
+   * read: every letter after the first answer is carried by the writer's
+   * own bird. The newest of them when there are several.
+   */
+  arrival: { threadId: string; person: LetterPerson } | null;
   penPals: PenPal[];
   /** whether there is room for another pen pal */
   roomForMore: boolean;

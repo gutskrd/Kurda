@@ -17,8 +17,8 @@ import './letters.css';
 /**
  * What the page is showing under the window: the letters page as it stands,
  * writing your own letter, your bird on its way out, your answer on its way
- * home with somebody's bird, that bird sent on, or your own bird home with an
- * answer.
+ * home with somebody's bird, that bird sent on, your own bird home with an
+ * answer, or a pen pal's bird come with their next letter.
  */
 type Moment =
   | { kind: 'rest' }
@@ -28,7 +28,8 @@ type Moment =
   | { kind: 'waiting' }
   | { kind: 'answered'; person: LetterPerson; threadId: string }
   | { kind: 'sentOn'; name: string }
-  | { kind: 'homecoming'; person: LetterPerson; threadId: string };
+  | { kind: 'homecoming'; person: LetterPerson; threadId: string }
+  | { kind: 'arrival'; person: LetterPerson; threadId: string };
 
 /**
  * Letters by bird (/app/letters): writing to somebody new in Kurdish, and
@@ -44,7 +45,9 @@ type Moment =
  * letter home and the two of you are pen pals; or send it on its way, for
  * somebody else. While it is there your own bird stays home. When your own
  * bird comes home from somebody's window with their answer, the page shows
- * it landing, and the way to read it.
+ * it landing, and the way to read it; and every letter a pen pal writes
+ * after that comes to the window by their own bird, which lands beside yours
+ * and lays the letter on the sill until it is read.
  *
  * Under it, your pen pals, the one most recently written to first, each with
  * whose turn it is, and how it all works in a few lines at the foot.
@@ -71,15 +74,18 @@ export function LettersPage(): React.JSX.Element {
   useEffect(() => {
     if (!data) return;
     if (!scene) {
-      // the first look: your bird where it is, a bird at the window still there, and your bird home with an answer landing
+      // the first look: your bird where it is, a bird at the window still there, your bird home with an answer landing,
+      // or else a pen pal's bird coming in with their letter
       const back = data.homecoming && !data.out;
+      const pal = !data.visitor && !back ? data.arrival : null;
       setScene({
         own: data.out ? { kind: 'away' } : back ? { kind: 'arriving', bird: data.bird } : { kind: 'home', bird: data.bird },
-        visitor: data.visitor ? { kind: 'here', bird: data.visitor.person.bird } : { kind: 'none' },
+        visitor: data.visitor ? { kind: 'here', bird: data.visitor.person.bird } : pal ? { kind: 'arriving', bird: pal.person.bird } : { kind: 'none' },
         sky: data.sky,
       });
       setVisitor(data.visitor);
       if (back && data.homecoming) setMoment({ kind: 'homecoming', person: data.homecoming.person, threadId: data.homecoming.threadId });
+      else if (pal) setMoment({ kind: 'arrival', person: pal.person, threadId: pal.threadId });
       return;
     }
     // read again: the birds out there are as the page now says
@@ -295,10 +301,12 @@ export function LettersPage(): React.JSX.Element {
           <p className="letters-status">{t('letters.visitor.body')}</p>
         </>
       );
-  else if (moment.kind === 'homecoming')
+  else if (moment.kind === 'homecoming' || moment.kind === 'arrival')
     status = (
       <>
-        <p className="letters-status letters-status--strong">{t('letters.home.title', { name: moment.person.name })}</p>
+        <p className="letters-status letters-status--strong">
+          {moment.kind === 'homecoming' ? t('letters.home.title', { name: moment.person.name }) : t('letters.arrival.title', { name: moment.person.name })}
+        </p>
         <Link to={`/app/letters/${moment.threadId}`} className="btn btn-primary">
           {t('letters.home.read')}
         </Link>

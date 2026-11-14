@@ -339,6 +339,7 @@ describe('your bird and your tree, in the Shop', () => {
     sky: [],
     callsLeft: 5,
     homecoming: null,
+    arrival: null,
     penPals: [],
     roomForMore: true,
     ...over,

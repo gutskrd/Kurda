@@ -909,6 +909,7 @@ export const ar: Catalogue = {
   'letters.pals.open': 'افتح رسائلك مع {name}',
   'letters.home.title': 'عاد طائرك إلى البيت برسالة من {name}',
   'letters.home.read': 'اقرأها',
+  'letters.arrival.title': 'جاءك طائر {name} برسالة',
   'letters.out.visiting': 'نادى أحدهم طائرك إلى نافذته ويقرأ رسالتك الآن.',
   'letters.error.visitorHere': 'هناك طائر عند نافذتك. ردّ عليه أو دعه يذهب أولًا.',
   'letters.error.noBirds': 'لا يوجد طائر لك في الخارج الآن. حاول بعد قليل.',

@@ -39,7 +39,9 @@ import type { WalletService } from '../wallet/service.js';
  * calls it to their window (`call`). It waits there while its letter is read;
  * answered (`answer`), it carries the answer home and the two are pen pals;
  * sent on (`sendOn`), or left unanswered a day, it flies back out for
- * somebody else, and never comes to that window again.
+ * somebody else, and never comes to that window again. After that each
+ * letter is carried by its writer's own bird, which waits at the other's
+ * window until the letter is read (`home().arrival`).
  *
  * Safety is the shape of the thing rather than a layer over it:
  *   - nobody chooses whom they write to; a call brings the bird that has
@@ -330,7 +332,7 @@ export class LetterService {
           [userId, band],
         )
       : null;
-    // your bird home from a window with an answer you have not opened yet
+    // your bird home from a window with an answer you have not opened yet: their first letter, the answer it carried home
     const home = await this.pool.query<{ thread_id: string; other: string; name: string; bird: number | null }>(
       `SELECT v.thread_id, o.id AS other, ${NAME_SQL('o')} AS name, ${BIRD_SQL('o')} AS bird
          FROM letter_visits v
@@ -339,11 +341,27 @@ export class LetterService {
          JOIN users o ON o.id = v.visitor_id AND o.deleted_at IS NULL
         WHERE v.outcome = 'answered'
           AND EXISTS (SELECT 1 FROM letters a WHERE a.thread_id = v.thread_id AND a.recipient_id = $1 AND a.status = 'delivered' AND a.read_at IS NULL)
+          AND (SELECT count(*) FROM letters b WHERE b.thread_id = v.thread_id AND b.sender_id = v.visitor_id AND b.status IN ('delivered','removed')) = 1
         ORDER BY v.ended_at DESC
         LIMIT 1`,
       [userId],
     );
     const back = home.rows[0];
+    // a pen pal's bird at your window with a letter after that first one: each later letter comes by its writer's own bird
+    const came = await this.pool.query<{ thread_id: string; other: string; name: string; bird: number | null }>(
+      `SELECT l.thread_id, o.id AS other, ${NAME_SQL('o')} AS name, ${BIRD_SQL('o')} AS bird
+         FROM letters l
+         JOIN letter_threads t ON t.id = l.thread_id AND t.ended_at IS NULL
+         JOIN users o ON o.id = l.sender_id AND o.deleted_at IS NULL
+        WHERE l.recipient_id = $1 AND l.status = 'delivered' AND l.read_at IS NULL
+          AND EXISTS (
+            SELECT 1 FROM letters e
+             WHERE e.thread_id = l.thread_id AND e.sender_id = l.sender_id AND e.status IN ('delivered','removed') AND e.delivered_at < l.delivered_at)
+        ORDER BY l.delivered_at DESC, l.id
+        LIMIT 1`,
+      [userId],
+    );
+    const pal = came.rows[0];
     return {
       refusal: !band ? 'birth_month' : restricted ? 'restricted' : null,
       bird: personOf(userId, me.name, chosen.rows[0]?.bird ?? null).bird,
@@ -355,6 +373,7 @@ export class LetterService {
       sky: (sky?.rows ?? []).map((r) => personOf(r.sender_id, '', r.bird).bird),
       callsLeft: Math.max(0, BIRD_CALLS_PER_DAY - (await this.callsToday(this.pool, userId))),
       homecoming: back ? { threadId: back.thread_id, person: personOf(back.other, back.name, back.bird) } : null,
+      arrival: pal ? { threadId: pal.thread_id, person: personOf(pal.other, pal.name, pal.bird) } : null,
       penPals,
       roomForMore: open < PEN_PALS_MAX,
     };

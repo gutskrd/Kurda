@@ -917,6 +917,7 @@ export const ku: Catalogue = {
   'letters.pals.open': 'Nameyên xwe yên bi {name} re veke',
   'letters.home.title': 'Teyrê te bi nameyeke {name} vegeriya malê',
   'letters.home.read': 'Bixwîne',
+  'letters.arrival.title': 'Teyrê {name} nameyek ji te re anî',
   'letters.out.visiting': 'Kesekî gazî teyrê te kiriye ber pencereya xwe û niha nameya te dixwîne.',
   'letters.error.visitorHere': 'Teyrek li ber pencereya te ye. Pêşî bersivê bide an bihêle bila biçe.',
   'letters.error.noBirds': 'Niha tu teyr ji bo te li derve nîne. Piçekî din dîsa biceribîne.',

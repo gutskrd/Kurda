@@ -915,6 +915,7 @@ export const de: Catalogue = {
   'letters.pals.open': 'Deine Briefe mit {name} öffnen',
   'letters.home.title': 'Dein Vogel ist mit einem Brief von {name} heimgekommen',
   'letters.home.read': 'Lesen',
+  'letters.arrival.title': 'Der Vogel von {name} hat dir einen Brief gebracht',
   'letters.out.visiting': 'Jemand hat deinen Vogel an sein Fenster gerufen und liest gerade deinen Brief.',
   'letters.error.visitorHere': 'An deinem Fenster sitzt ein Vogel. Antworte ihm zuerst oder lass ihn weiterfliegen.',
   'letters.error.noBirds': 'Gerade ist kein Vogel für dich unterwegs. Versuch es etwas später noch einmal.',

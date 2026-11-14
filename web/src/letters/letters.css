@@ -855,6 +855,11 @@
   gap: var(--space-3);
   margin: var(--space-2) 0 var(--space-5);
 }
+/* the pen pal's ⋯ is at the top of the page: its menu opens downward, clear of the bar above */
+.letters-thread-menu .user-menu {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
 .letters-thread-name {
   flex: 1;
   min-width: 0;

@@ -85,6 +85,7 @@ describe('Messages', () => {
       sky: [],
       callsLeft: 5,
       homecoming: null,
+      arrival: null,
       penPals: [{ threadId: 't1', person: { id: 'u-rojin', name: 'Rojin', bird: 2 }, lastLetterAt: '2026-11-13T10:00:00.000Z', yourTurn: true, unread: 0 }],
       roomForMore: true,
     };
