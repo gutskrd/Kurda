@@ -1,15 +1,31 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { TREE_FOOT, hasTreeArt, treeSvg, waterDropSvg, wateringCanSvg, type TreeHealth, type TreeSeason, type TreeStage } from '@kurda/shared';
+import {
+  TREE_FOOT,
+  TREE_SWAY,
+  TREE_SWING,
+  TREE_WAVE,
+  TREE_WAVE_AT,
+  hasTreeArt,
+  treePhase,
+  treeRig,
+  treeSvg,
+  treeSwayDeg,
+  treeWave,
+  waterDropSvg,
+  wateringCanSvg,
+  type TreeHealth,
+  type TreeSeason,
+  type TreeStage,
+} from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useTreeSeason } from './season';
 
 const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
 
-/** How long the plant takes to lean one way and back, and how far, in degrees. */
-const SWAY_MS = 6400;
-const SWAY_DEG = 0.9;
+/** The swing's wave: the breeze's, a little later. */
+const SWING_WAVE = treeWave(TREE_SWING.lag);
 
 let drawings = 0;
 /** An id prefix of this drawing's own, so two trees on a screen (or one left behind in the stack, in the browser build) never share a clip. */
@@ -23,13 +39,48 @@ function useArtId(): string {
 }
 
 /**
+ * The breeze, as one clock from 0 to 1 over its period on the native thread:
+ * started where the shared clock has it (`treePhase`), so a tree drawn again
+ * — grown, revived, or come back to the front — carries on swaying where it
+ * was instead of starting over with a jerk.
+ */
+function useBreeze(on: boolean): Animated.Value {
+  const clock = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!on) return;
+    const phase = treePhase(Date.now());
+    clock.setValue(phase);
+    const lap = (from: number): Animated.CompositeAnimation => Animated.timing(clock, { toValue: 1, duration: (1 - from) * TREE_SWAY.ms, easing: Easing.linear, useNativeDriver: true });
+    let loop: Animated.CompositeAnimation | null = null;
+    let stopped = false;
+    const first = lap(phase);
+    first.start(({ finished }) => {
+      if (!finished || stopped) return;
+      clock.setValue(0);
+      loop = Animated.loop(lap(0));
+      loop.start();
+    });
+    return () => {
+      stopped = true;
+      first.stop();
+      loop?.stop();
+    };
+  }, [on, clock]);
+  return clock;
+}
+
+/**
  * A tree, drawn (shared `art/trees.ts`), the same picture the website shows.
  *
- * `alive`, it is drawn in its two layers: the ground, which stands still,
- * and the plant over it, which sways a little about its foot while the
- * screen is the one in front, and which `plant` can move besides (the start
- * it gives as it is watered). Otherwise it is one still picture, which is
- * what a profile and a list want. A kind this build has no drawing for is
+ * `alive`, it is drawn in its layers: the ground, which stands still; the
+ * plant over it, which sways about its foot in the shared breeze
+ * (`TREE_SWAY`) while the screen is the one in front, and which `plant` can
+ * move besides (dropped in as a seed, grown, watered, shaken); the swing a
+ * great tree has, which hangs from the plant and leans a little after it,
+ * its seat level; and the front, which stands still over the plant's foot.
+ * `soil` moves the ground and the front together (the fade as one stage's
+ * picture gives way to the next). Otherwise it is one still picture, which
+ * is what a profile and a list want. A kind this build has no drawing for is
  * not drawn at all.
  *
  * It is drawn in a season, standing on its round of grass with its long
@@ -47,6 +98,7 @@ export function TreeArt({
   label = '',
   alive = false,
   plant,
+  soil,
   style,
 }: {
   species: string;
@@ -58,34 +110,31 @@ export function TreeArt({
   alive?: boolean;
   /** more movement for the plant alone, laid over its sway */
   plant?: Animated.WithAnimatedValue<ViewStyle>;
+  /** movement for the ground and the front, which stand still otherwise */
+  soil?: Animated.WithAnimatedValue<ViewStyle>;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element | null {
   const id = useArtId();
   const moving = useMotionAlive();
   const today = useTreeSeason();
   const drawnIn = season ?? today;
-  const sway = useRef(new Animated.Value(0)).current;
   // a withered tree does not sway, nor a seed: there is nothing on them for the air to move
-  const sways = alive && moving && health !== 'withered' && stage > 0;
-  useEffect(() => {
-    if (!sways) {
-      sway.setValue(0);
-      return;
-    }
-    const half = { duration: SWAY_MS / 2, easing: Easing.inOut(Easing.sin), useNativeDriver: true };
-    const loop = Animated.loop(Animated.sequence([Animated.timing(sway, { toValue: 1, ...half }), Animated.timing(sway, { toValue: -1, ...half })]));
-    loop.start();
-    return () => loop.stop();
-  }, [sways, sway]);
+  const deg = treeSwayDeg(stage);
+  const sways = alive && moving && health !== 'withered' && deg > 0;
+  const clock = useBreeze(sways);
   const xml = useMemo(() => {
     if (!hasTreeArt(species)) return null;
     const base = { species, stage, health, size, season: drawnIn };
-    if (!alive) return { whole: treeSvg({ ...base, idPrefix: id }), ground: null, plant: null };
-    return { whole: null, ground: treeSvg({ ...base, part: 'ground', idPrefix: `${id}g` }), plant: treeSvg({ ...base, part: 'plant', idPrefix: `${id}p` }) };
+    if (!alive) return { whole: treeSvg({ ...base, idPrefix: id }), ground: null, plant: null, swing: null, front: null, hang: null };
+    const rig = treeRig({ species, stage, health });
+    const part = (p: 'ground' | 'plant' | 'swing' | 'front', key: string): string => treeSvg({ ...base, part: p, idPrefix: `${id}${key}` });
+    return { whole: null, ground: part('ground', 'g'), plant: part('plant', 'p'), swing: rig.swing ? part('swing', 's') : null, front: rig.front ? part('front', 'f') : null, hang: rig.swing };
   }, [species, stage, health, size, alive, id, drawnIn]);
   if (!xml) return null;
   const named = label ? { accessible: true, accessibilityRole: 'image' as const, accessibilityLabel: label } : HIDDEN;
   const foot = `${TREE_FOOT.x * 100}% ${TREE_FOOT.y * 100}%`;
+  const lean = sways ? [{ rotate: clock.interpolate({ inputRange: TREE_WAVE_AT as number[], outputRange: TREE_WAVE.map((w) => `${Math.round(w * deg * 1000) / 1000}deg`) }) }] : [];
+  const swinging = sways ? [{ skewX: clock.interpolate({ inputRange: TREE_WAVE_AT as number[], outputRange: SWING_WAVE.map((w) => `${Math.round(w * TREE_SWING.deg * 1000) / 1000}deg`) }) }] : [];
   return (
     <View {...named} style={[{ width: size, height: size }, style]} testID="tree-art">
       <View {...HIDDEN} pointerEvents="none" style={StyleSheet.absoluteFill}>
@@ -93,15 +142,24 @@ export function TreeArt({
           <SvgXml xml={xml.whole} width={size} height={size} />
         ) : (
           <>
-            <SvgXml xml={xml.ground} width={size} height={size} />
-            <Animated.View
-              style={[StyleSheet.absoluteFill, { transformOrigin: foot, transform: [{ rotate: sway.interpolate({ inputRange: [-1, 1], outputRange: [`-${SWAY_DEG}deg`, `${SWAY_DEG}deg`] }) }] }]}
-              testID="tree-art-plant"
-            >
-              <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: foot }, plant]}>
+            <Animated.View style={[StyleSheet.absoluteFill, soil]}>
+              <SvgXml xml={xml.ground} width={size} height={size} />
+            </Animated.View>
+            <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: foot }, plant]} testID="tree-art-plant">
+              <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: foot, transform: lean }]}>
                 <SvgXml xml={xml.plant} width={size} height={size} />
+                {xml.swing !== null && xml.hang ? (
+                  <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: `${xml.hang.x * 100}% ${xml.hang.y * 100}%`, transform: swinging }]} testID="tree-art-swing">
+                    <SvgXml xml={xml.swing} width={size} height={size} />
+                  </Animated.View>
+                ) : null}
               </Animated.View>
             </Animated.View>
+            {xml.front !== null ? (
+              <Animated.View style={[StyleSheet.absoluteFill, soil]}>
+                <SvgXml xml={xml.front} width={size} height={size} />
+              </Animated.View>
+            ) : null}
           </>
         )}
       </View>

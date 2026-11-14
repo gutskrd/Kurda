@@ -40,13 +40,26 @@ describe('the tree’s screen, moving', () => {
     // it still shows the tree as it was: what the water did comes once it has landed
     expect(screen.getByText('Oak · Seedling · Day 13')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'It grew!' })).toBeNull();
-    // then it grows in the scene itself, out of a burst of light, before anything is said
+    // then it grows in the scene itself, out of a burst of light and out of the tree it was, before anything is said
     await waitFor(() => expect(screen.queryByTestId('tree-burst')).not.toBeNull(), { timeout: 3000 });
+    expect(screen.getByTestId('tree-was-grow')).toBeTruthy();
     expect(screen.queryByTestId('tree-pour')).toBeNull();
     expect(screen.getByText('Oak · Sapling · Day 13')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'It grew!' })).toBeNull();
     expect(await screen.findByRole('heading', { name: 'It grew!' }, { timeout: 3000 })).toBeTruthy();
     expect(screen.queryByTestId('tree-burst')).toBeNull();
+    expect(screen.queryByTestId('tree-was-grow')).toBeNull();
+  });
+
+  it('hangs a swing from a great tree that is well, and none from one left to wilt', async () => {
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 40 }))) });
+    const well = renderWithProviders(<TreeScreen onExit={() => undefined} />);
+    expect(await screen.findByTestId('tree-art-swing')).toBeTruthy();
+    well.unmount();
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 40, lastWateredOn: '2026-11-08' }))) });
+    renderWithProviders(<TreeScreen onExit={() => undefined} />);
+    await screen.findByTestId('tree-health');
+    expect(screen.queryByTestId('tree-art-swing')).toBeNull();
   });
 
   it('stands sparks round a tree that has drunk without growing', async () => {

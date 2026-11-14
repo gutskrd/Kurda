@@ -1,5 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { TREE_FULL, TREE_STAGES, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSeasonAir, type TreeSeason, type TreeSpecies, type TreeStage, type TreeView } from '@kurda/shared';
+import {
+  TREE_FULL,
+  TREE_REVIVE,
+  TREE_SHAKE,
+  TREE_STAGES,
+  TREE_TOP,
+  TREE_WATER_LANDS,
+  hasTreeArt,
+  treeColour,
+  treeGrowFrom,
+  treeHeft,
+  treeSeasonAir,
+  type TreeSeason,
+  type TreeSpecies,
+  type TreeStage,
+  type TreeView,
+} from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, LinkButton } from '../components/Button';
 import { CoinIcon } from '../components/icons';
@@ -25,6 +41,12 @@ const GROW_MS = 1150;
 
 /** What the page is in the middle of: nothing, the can pouring, or the tree growing under it. */
 type Phase = 'idle' | 'pour' | 'grow';
+
+/** The tree as it stood before the water: kept a moment over the new one, which grows out of it or is revived from under it. */
+interface Was {
+  tree: TreeView;
+  kind: 'grow' | 'revive';
+}
 
 /** What a pour did that is worth stopping for: it grew, or a full-grown tree bore. */
 interface Moment {
@@ -74,10 +96,18 @@ export function TreePage(): React.JSX.Element {
   const [planted, setPlanted] = useState(0);
   const [cheer, setCheer] = useState(0);
   const [moment, setMoment] = useState<Moment | null>(null);
+  const [was, setWas] = useState<Was | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [nursery, setNursery] = useState(false);
   const timer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const fade = useRef<number | undefined>(undefined);
+  useEffect(
+    () => () => {
+      window.clearTimeout(timer.current);
+      window.clearTimeout(fade.current);
+    },
+    [],
+  );
   const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
 
   const plant = useCallback(
@@ -135,10 +165,12 @@ export function TreePage(): React.JSX.Element {
         if (watered.grew !== null) {
           const say = (): void => {
             setPhase('idle');
+            setWas(null);
             setMoment({ kind: 'grew', tree: watered.tree, zer: watered.zer });
           };
           if (still) return say();
-          // it grows where it stands, and is looked at, before anything is said about it
+          // it grows where it stands, out of the tree it was, and is looked at, before anything is said about it
+          setWas({ tree: data.tree!, kind: 'grow' });
           setGrown((n) => n + 1);
           setPhase('grow');
           playLessonSound('complete');
@@ -146,6 +178,12 @@ export function TreePage(): React.JSX.Element {
           return;
         }
         setPhase('idle');
+        if (!still && data.tree!.health !== watered.tree.health) {
+          // brought back: the tree as it drooped fades off the one the water revived
+          setWas({ tree: data.tree!, kind: 'revive' });
+          window.clearTimeout(fade.current);
+          fade.current = window.setTimeout(() => setWas(null), TREE_REVIVE.ms);
+        }
         if (!still) setCheer((n) => n + 1);
         if (watered.harvests > 0) setMoment({ kind: 'harvest', tree: watered.tree, zer: watered.zer });
         else if (watered.revived) setNote(t('tree.revived'));
@@ -203,7 +241,7 @@ export function TreePage(): React.JSX.Element {
         </p>
       </div>
 
-      <Stage tree={tree} season={season} phase={phase} grown={grown} planted={planted} cheer={cheer} label={treeTitle(t, tree)} />
+      <Stage tree={tree} was={was} season={season} phase={phase} grown={grown} planted={planted} cheer={cheer} label={treeTitle(t, tree)} />
 
       {tree.health !== 'fresh' && (
         <p className={`tree-health is-${tree.health}`} role="status">
@@ -343,6 +381,7 @@ const SPARKS = [
  */
 function Stage({
   tree,
+  was,
   season,
   phase,
   grown,
@@ -351,6 +390,7 @@ function Stage({
   label,
 }: {
   tree: TreeView;
+  was: Was | null;
   season: TreeSeason;
   phase: Phase;
   grown: number;
@@ -360,17 +400,21 @@ function Stage({
 }): React.JSX.Element {
   const plot = useRef<HTMLSpanElement>(null);
   const shake = (): void => {
-    const plantOf = plot.current?.querySelector<HTMLElement>('.tree-art-plant');
+    const plantOf = plot.current?.querySelector<HTMLElement>('.tree-stage-art:not(.is-leaving) .tree-art-start');
     if (!plantOf || typeof plantOf.animate !== 'function' || prefersReducedMotion() || phase !== 'idle') return;
+    // laid over the breeze, which carries on under it: a great tree only stirs where a sprout bends right over
+    const heft = treeHeft(tree.stage);
     plantOf.animate(
-      [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-2.8deg)' }, { transform: 'rotate(2.3deg)' }, { transform: 'rotate(-1.3deg)' }, { transform: 'rotate(0.6deg)' }, { transform: 'rotate(0deg)' }],
-      { duration: 680, easing: 'ease-out' },
+      TREE_SHAKE.turns.map((turn) => ({ transform: `rotate(${Math.round(turn * heft * 100) / 100}deg)` })),
+      { duration: TREE_SHAKE.ms, easing: 'ease-out' },
     );
   };
   // how the picture comes in: grown into, dropped in as a seed just planted, or simply arriving with the page
   const came = grown > 0 ? 'is-grown' : planted > 0 && tree.stage === 0 ? 'is-planted' : 'is-shown';
   // where the water lands on the picture, and where a thirsty tree's thought floats: beside its top, wherever that is at its stage
-  const places = { '--land': `${TREE_WATER_LANDS[tree.stage] * 100}%`, '--thought': `${Math.max(2, TREE_TOP[tree.stage] * 100 - 12)}%` } as React.CSSProperties;
+  const places = { '--land': `${TREE_WATER_LANDS[tree.stage] * 100}%`, '--thought': `${Math.max(2, TREE_TOP[tree.stage] * 100 - 12)}%`, '--heft': treeHeft(tree.stage) } as React.CSSProperties;
+  // grown, the new tree comes up from the old one's size and the old one swells toward the new one's as it goes
+  const from = was?.kind === 'grow' ? treeGrowFrom(was.tree.stage, tree.stage) : 1;
   return (
     <section
       className={`tree-stage is-${season} is-${tree.health}${phase === 'pour' ? ' is-pouring' : ''}${phase === 'grow' ? ' is-growing' : ''}`}
@@ -381,9 +425,14 @@ function Stage({
       <TreeSeasonAmbient air={hasTreeArt(tree.species) ? treeSeasonAir(tree.species, tree.stage, tree.health, season) : null} />
       <span className="tree-stage-plot" ref={plot} style={{ ...TREE_PLACE, ...places }} onPointerDown={shake}>
         <span className="tree-stage-bob">
-          <span key={`${grown}:${planted}`} className={`tree-stage-art ${came}`}>
+          <span key={`${grown}:${planted}`} className={`tree-stage-art ${came}`} style={{ '--grow-from': from } as React.CSSProperties}>
             <TreeArt species={tree.species} stage={tree.stage} health={tree.health} season={season} size={420} alive fluid />
           </span>
+          {was ? (
+            <span key={`was:${grown}:${was.kind}`} className={`tree-stage-art is-leaving is-${was.kind}`} style={{ '--grow-to': Math.round((1 / from) * 1000) / 1000 } as React.CSSProperties} aria-hidden="true">
+              <TreeArt species={was.tree.species} stage={was.tree.stage} health={was.tree.health} season={season} size={420} alive fluid />
+            </span>
+          ) : null}
         </span>
         {tree.health !== 'fresh' && phase === 'idle' && (
           <span className="tree-thought" aria-hidden="true">

@@ -1749,15 +1749,16 @@ describe('the learner’s tree', () => {
     expect(treeSvg({ species: 'bi', stage: 6, part: 'plant', title: 'x' })).not.toContain('#49a7dc');
   });
 
-  it('comes in two layers that are the whole between them: the ground, which stands still, and the plant on it', () => {
+  it('comes in layers that are the whole between them: the ground, which stands still, the plant on it, its swing and its front', () => {
     for (const species of ['beru', 'bi', 'kaj'] as const) {
       for (const stage of [0, 2, 6] as const) {
         const whole = treeSvg({ species, stage, title: 'A tree' });
         const ground = treeSvg({ species, stage, part: 'ground', title: 'A tree' });
         const plant = treeSvg({ species, stage, part: 'plant', title: 'A tree' });
+        const more = (['swing', 'front'] as const).map((part) => treeSvg({ species, stage, part, title: 'A tree' }));
         checkSvg(ground, 240);
         checkSvg(plant, 240);
-        for (const tag of ['path', 'ellipse']) expect(count(ground, tag) + count(plant, tag), `${species} ${stage} ${tag}`).toBe(count(whole, tag));
+        for (const tag of ['path', 'ellipse']) expect(count(ground, tag) + count(plant, tag) + more.reduce((a, svg) => a + count(svg, tag), 0), `${species} ${stage} ${tag}`).toBe(count(whole, tag));
         // the two can be on a page together
         const ids = checkSvg(ground, 240);
         for (const id of checkSvg(plant, 240)) expect(ids.has(id)).toBe(false);
