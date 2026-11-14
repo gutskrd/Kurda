@@ -9,7 +9,10 @@ import {
   LETTER_WINDOW_DEPTH,
   letterBirdSvg,
   letterEnvelopeSvg,
+  letterFlightShadow,
+  letterPlayShadow,
   letterPlayShows,
+  letterShadowSvg,
   letterWindowSvg,
   treeSkyAt,
   type LetterPlay,
@@ -42,6 +45,10 @@ import { radii } from '../theme/tokens';
  *   - `arriving`: a pigeon comes from far off with its letter, in through the
  *     window and lands; it shakes its feathers, lays the letter on the sill,
  *     chirps, hops round to look about, waves, and stays at home there.
+ * The pigeon's shadow, and the shadow of the letter in its beak or lying on
+ * the sill, are laid on the sill by themselves: they stay there under the
+ * pigeon when it hops, fade as it rises and come back as it lands.
+ *
  * Only transform and opacity move, on the native driver, and the loops stop
  * while the screen is not in front. A reader who asked for less motion sees
  * the window still and each flight as it ends, at once. The picture is
@@ -66,6 +73,9 @@ const BOX = {
 };
 const MIDDLE = `${(BOX.left + BOX.size / 2) * 100}% ${(BOX.top + BOX.size / 2) * 100}%`;
 
+/** The moment a pigeon taking off leaves the sill (and, landing backwards, comes down on it): it stands until then. */
+const LIFT = LETTER_FLIGHT.keys[1]!.at;
+
 /** Shown up to `at` of a clock and not after. */
 const until = (clock: Animated.Value, at: number): Animated.AnimatedInterpolation<number> =>
   clock.interpolate({ inputRange: [0, at, Math.min(1, at + 0.001), 1], outputRange: [1, 1, 0, 0] });
@@ -83,10 +93,22 @@ function useSwing(alive: boolean, ms: number, from = 0): Animated.Value {
   return value;
 }
 
-/** One picture of a pigeon on its square, placed on the sill of a window `size` wide. */
+/** One picture of a pigeon on its square, placed on the sill of a window `size` wide; its shadow is laid on the sill by itself (`Shade`). */
 function Pose({ bird, pose, letter = false, facingLeft = false, size, style }: { bird: number; pose: PigeonPose; letter?: boolean; facingLeft?: boolean; size: number; style?: Animated.WithAnimatedValue<ViewStyle> }): React.JSX.Element {
   const id = useRef(nextId()).current;
-  const xml = useMemo(() => letterBirdSvg({ bird, pose, letter, facingLeft, size: 120, idPrefix: id }), [bird, pose, letter, facingLeft, id]);
+  const xml = useMemo(() => letterBirdSvg({ bird, pose, letter, facingLeft, shadow: false, size: 120, idPrefix: id }), [bird, pose, letter, facingLeft, id]);
+  const box = size * BOX.size;
+  return (
+    <Animated.View style={[{ position: 'absolute', left: size * BOX.left, top: size * BOX.top, width: box, height: box }, style]}>
+      <SvgXml xml={xml} width={box} height={box} />
+    </Animated.View>
+  );
+}
+
+/** The shadow a pigeon casts on the sill of a window `size` wide, on its square placed there, with the shadow of a letter in its beak (`letter`). */
+function Shade({ pose = 'perched', letter = false, facingLeft = false, size, style }: { pose?: PigeonPose; letter?: boolean; facingLeft?: boolean; size: number; style?: Animated.WithAnimatedValue<ViewStyle> }): React.JSX.Element {
+  const id = useRef(nextId()).current;
+  const xml = useMemo(() => letterShadowSvg({ pose, letter, facingLeft, size: 120, idPrefix: id }), [pose, letter, facingLeft, id]);
   const box = size * BOX.size;
   return (
     <Animated.View style={[{ position: 'absolute', left: size * BOX.left, top: size * BOX.top, width: box, height: box }, style]}>
@@ -97,8 +119,10 @@ function Pose({ bird, pose, letter = false, facingLeft = false, size, style }: {
 
 /** Where a pigeon's feet are on its own square, as shares of it: what it leans and turns about. */
 const FEET = { x: LETTER_BIRD_FEET.x / 120, y: LETTER_BIRD_FEET.y / 120 } as const;
+/** The feet on the window's square: what a pigeon on the sill, and its shadow, turn and grow about. */
+const FEET_ORIGIN = `${(BOX.left + BOX.size * FEET.x) * 100}% ${(BOX.top + BOX.size * FEET.y) * 100}%`;
 
-/** A pigeon asleep on the sill at night, breathing. */
+/** A pigeon asleep on the sill at night, breathing over its shadow. */
 function Asleep({ bird, size }: { bird: number; size: number }): React.JSX.Element {
   const alive = useMotionAlive();
   const clock = useRef(new Animated.Value(0)).current;
@@ -112,19 +136,40 @@ function Asleep({ bird, size }: { bird: number; size: number }): React.JSX.Eleme
   const foot = `50% ${(BOX.top + BOX.size * FEET.y) * 100}%`;
   const breathe = { transformOrigin: foot, transform: [{ scaleX: clock.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.025, 1] }) }, { scaleY: clock.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.035, 1] }) }] };
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, breathe]} testID="letter-pigeon-asleep">
-      <Pose bird={bird} pose="sleep" size={size} />
-    </Animated.View>
+    <>
+      <Shade pose="sleep" size={size} />
+      <Animated.View style={[StyleSheet.absoluteFill, breathe]} testID="letter-pigeon-asleep">
+        <Pose bird={bird} pose="sleep" size={size} />
+      </Animated.View>
+    </>
   );
 }
 
 /** Where a letter lies on the sill: its own square, as a share of a pigeon's, and how far down that square the bottom of the envelope is. */
 const SILL_LETTER = { share: 0.24, foot: 92 / 120 } as const;
 
-/** A letter in its envelope lying on the sill, `at` (shares of the pigeon's square) in front of the feet of a pigeon facing the way `dir` says, in a window `size` wide. */
-function SillLetter({ at, dir, size, style }: { at: number; dir: number; size: number; style?: Animated.WithAnimatedValue<ViewStyle> }): React.JSX.Element {
+/**
+ * A letter in its envelope lying on the sill over its shadow, `at` (shares of
+ * the pigeon's square) in front of the feet of a pigeon facing the way `dir`
+ * says, in a window `size` wide. The letter coming down (`style`) and its
+ * shadow growing under it (`shadeStyle`) are moved by the play.
+ */
+function SillLetter({
+  at,
+  dir,
+  size,
+  style,
+  shadeStyle,
+}: {
+  at: number;
+  dir: number;
+  size: number;
+  style?: Animated.WithAnimatedValue<ViewStyle>;
+  shadeStyle?: Animated.WithAnimatedValue<ViewStyle>;
+}): React.JSX.Element {
   const id = useRef(nextId()).current;
   const xml = useMemo(() => letterEnvelopeSvg({ size: 120, idPrefix: id }), [id]);
+  const shadow = useMemo(() => letterEnvelopeSvg({ shadow: true, size: 120, idPrefix: `${id}s` }), [id]);
   const box = size * BOX.size;
   const side = box * SILL_LETTER.share;
   const left = size * BOX.left + box * (FEET.x + at * dir) - side / 2;
@@ -133,6 +178,9 @@ function SillLetter({ at, dir, size, style }: { at: number; dir: number; size: n
   const lying = { transformOrigin: `50% ${SILL_LETTER.foot * 100}%`, transform: [{ scaleY: 0.62 }, { rotate: '-4deg' }] };
   return (
     <View style={[{ position: 'absolute', left, top, width: side, height: side }, lying]} pointerEvents="none" testID="letter-on-sill">
+      <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: '50% 62%' }, shadeStyle]}>
+        <SvgXml xml={shadow} width={side} height={side} />
+      </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, style]}>
         <SvgXml xml={xml} width={side} height={side} />
       </Animated.View>
@@ -143,8 +191,8 @@ function SillLetter({ at, dir, size, style }: { at: number; dir: number; size: n
 /**
  * A pigeon playing on the sill (LETTER_PLAY), as the website plays it: every
  * picture its play shows laid one on another and switched on the play's own
- * clock, the pigeon moved about its feet, and a letter on the sill when the
- * play has one. It plays once and says so (`onEnd`), or, an idle play, round
+ * clock, the pigeon moved about its feet over its shadow on the sill
+ * (letterPlayShadow), and a letter on the sill when the play has one. It plays once and says so (`onEnd`), or, an idle play, round
  * and round while the screen is in front. A reader who asked for less motion
  * sees how it ends.
  */
@@ -153,6 +201,7 @@ function Playing({ bird, play, facingLeft = false, size, onEnd }: { bird: number
   const alive = useMotionAlive();
   const clock = useRef(new Animated.Value(0)).current;
   const shows = useMemo(() => letterPlayShows(play), [play]);
+  const shadow = useMemo(() => letterPlayShadow(play), [play]);
   const ended = useRef(onEnd);
   ended.current = onEnd;
   const dir = facingLeft ? -1 : 1;
@@ -177,7 +226,7 @@ function Playing({ bird, play, facingLeft = false, size, onEnd }: { bird: number
   const at = play.moves.map((m) => m.at);
   const ease = { easing: Easing.inOut(Easing.quad) };
   const moved = {
-    transformOrigin: `${(BOX.left + BOX.size * FEET.x) * 100}% ${(BOX.top + BOX.size * FEET.y) * 100}%`,
+    transformOrigin: FEET_ORIGIN,
     transform: [
       { translateX: clock.interpolate({ inputRange: at, outputRange: play.moves.map((m) => m.x * dir * box), ...ease }) },
       { translateY: clock.interpolate({ inputRange: at, outputRange: play.moves.map((m) => m.y * box), ...ease }) },
@@ -186,6 +235,20 @@ function Playing({ bird, play, facingLeft = false, size, onEnd }: { bird: number
       { scaleY: clock.interpolate({ inputRange: at, outputRange: play.moves.map((m) => m.sy), ...ease }) },
     ],
   };
+  // the shadow keeps to the sill: it goes along under the pigeon but never up with it
+  const shadeAt = shadow.moves.map((k) => k.at);
+  const shaded = {
+    transformOrigin: FEET_ORIGIN,
+    opacity: clock.interpolate({ inputRange: shadeAt, outputRange: shadow.moves.map((k) => k.seen), ...ease }),
+    transform: [
+      { translateX: clock.interpolate({ inputRange: shadeAt, outputRange: shadow.moves.map((k) => k.x * dir * box), ...ease }) },
+      { scaleX: clock.interpolate({ inputRange: shadeAt, outputRange: shadow.moves.map((k) => k.sx), ...ease }) },
+      { scaleY: clock.interpolate({ inputRange: shadeAt, outputRange: shadow.moves.map((k) => k.sy), ...ease }) },
+    ],
+  };
+  // the shadow with a letter's in it is laid only for a play in which the pigeon holds one, and switched with the plain one
+  const holds = shadow.holding.some(([, seen]) => seen === 1);
+  const held = holds ? clock.interpolate({ inputRange: shadow.holding.map(([t]) => t), outputRange: shadow.holding.map(([, seen]) => seen) }) : null;
   const letterAt = play.letter.map((k) => k.at);
   const letterMoves = play.letter.length
     ? {
@@ -193,9 +256,19 @@ function Playing({ bird, play, facingLeft = false, size, onEnd }: { bird: number
         transform: [{ translateY: clock.interpolate({ inputRange: letterAt, outputRange: play.letter.map((k) => k.y * box), ...ease }) }],
       }
     : null;
+  const letterShade = shadow.letter.length
+    ? {
+        opacity: clock.interpolate({ inputRange: letterAt, outputRange: shadow.letter.map((k) => k.seen) }),
+        transform: [{ scale: clock.interpolate({ inputRange: letterAt, outputRange: shadow.letter.map((k) => k.size), ...ease }) }],
+      }
+    : undefined;
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none" testID={`letter-pigeon-${play === LETTER_PLAY.idle ? 'home' : 'playing'}`}>
-      {letterMoves ? <SillLetter at={play.letterAt} dir={dir} size={size} style={letterMoves} /> : null}
+      <Animated.View style={[StyleSheet.absoluteFill, shaded]}>
+        <Shade facingLeft={facingLeft} size={size} style={held ? { opacity: Animated.subtract(1, held) } : undefined} />
+        {held ? <Shade letter facingLeft={facingLeft} size={size} style={{ opacity: held }} /> : null}
+      </Animated.View>
+      {letterMoves ? <SillLetter at={play.letterAt} dir={dir} size={size} style={letterMoves} shadeStyle={letterShade} /> : null}
       <Animated.View style={[StyleSheet.absoluteFill, moved]}>
         {shows.map((show) => (
           <Pose
@@ -231,7 +304,7 @@ function Flying({ bird, facingLeft, size, flight, beat, seen }: { bird: number; 
     ],
   };
   // it stands for the first moment of a take-off, and the last of a landing (the flight clock runs backwards for one coming in)
-  const standing = until(flight, 0.12);
+  const standing = until(flight, LIFT);
   const winging = Animated.subtract(1, standing);
   const up = until(beat, 0.5);
   const down = Animated.subtract(1, up);
@@ -240,6 +313,31 @@ function Flying({ bird, facingLeft, size, flight, beat, seen }: { bird: number; 
       <Pose bird={bird} pose="perched" letter facingLeft={facingLeft} size={size} style={{ opacity: standing }} />
       <Pose bird={bird} pose="wings-up" letter facingLeft={facingLeft} size={size} style={{ opacity: Animated.multiply(winging, up) }} />
       <Pose bird={bird} pose="wings-down" letter facingLeft={facingLeft} size={size} style={{ opacity: Animated.multiply(winging, down) }} />
+    </Animated.View>
+  );
+}
+
+/**
+ * The shadow of a flight on the sill (letterFlightShadow), on the same
+ * `flight` clock as the pigeon: under it as it goes, gone as it rises, and
+ * back under it as one coming in comes down.
+ */
+function FlightShade({ facingLeft, size, flight }: { facingLeft: boolean; size: number; flight: Animated.Value }): React.JSX.Element {
+  const keys = useMemo(() => letterFlightShadow(), []);
+  const at = keys.map((k) => k.at);
+  const box = size * BOX.size;
+  const shaded = {
+    transformOrigin: FEET_ORIGIN,
+    opacity: flight.interpolate({ inputRange: at, outputRange: keys.map((k) => k.seen) }),
+    transform: [
+      { translateX: flight.interpolate({ inputRange: at, outputRange: keys.map((k) => k.x * box) }) },
+      { scaleX: flight.interpolate({ inputRange: at, outputRange: keys.map((k) => k.sx) }) },
+      { scaleY: flight.interpolate({ inputRange: at, outputRange: keys.map((k) => k.sy) }) },
+    ],
+  };
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, shaded]} pointerEvents="none">
+      <Shade letter facingLeft={facingLeft} size={size} />
     </Animated.View>
   );
 }
@@ -336,6 +434,7 @@ export function LetterWindow({ scene, size, onDone }: { scene: WindowScene; size
       <Layer part="right" sky={sky} size={size} id={id} style={casement(false)} />
       {/* the light lies on the sill, so a pigeon standing there is over it, never under it */}
       <Layer part="light" sky={sky} size={size} id={id} style={light} />
+      {flier !== null ? <FlightShade facingLeft={back} size={size} flight={flight} /> : null}
       {scene.kind === 'home' ? (sky === 'night' ? <Asleep bird={scene.bird} size={size} /> : <Playing key="idle" bird={scene.bird} play={LETTER_PLAY.idle} size={size} />) : null}
       {scene.kind === 'leaving' && phase === 'before' ? <Playing key="before" bird={scene.bird} play={LETTER_PLAY.before} size={size} onEnd={() => setPhase('flight')} /> : null}
       {flier !== null ? <Flying bird={flier} facingLeft={back} size={size} flight={flight} beat={beat} seen={inRoom} /> : null}

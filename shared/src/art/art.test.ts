@@ -98,7 +98,10 @@ import {
   LETTER_WINDOW_PARTS,
   letterBirdSvg,
   letterEnvelopeSvg,
+  letterFlightShadow,
+  letterPlayShadow,
   letterPlayShows,
+  letterShadowSvg,
   letterWindowSvg,
 } from './letters.js';
 import { PIGEON_POSES } from './pigeon.js';
@@ -1917,8 +1920,11 @@ describe('the letters’ pictures', () => {
         checkSvg(letterBirdSvg({ bird, pose, letter: true, facingLeft: true, size: 120 }), 120);
       }
       checkSvg(letterBirdSvg({ bird, portrait: true, size: 120 }), 120);
+      checkSvg(letterBirdSvg({ bird, letter: true, shadow: false, size: 120 }), 120);
     }
+    for (const pose of PIGEON_POSES) checkSvg(letterShadowSvg({ pose, letter: true, facingLeft: true, size: 120 }), 120);
     checkSvg(letterEnvelopeSvg({ size: 120 }), 120);
+    checkSvg(letterEnvelopeSvg({ shadow: true, size: 120 }), 120);
     expect(() => letterWindowSvg({ part: 'roof' as never })).toThrow(RangeError);
   });
 
@@ -2008,6 +2014,57 @@ describe('the pigeon at play', () => {
       };
       for (let t = 0; t <= 1; t += 0.01) expect(shows.reduce((sum, show) => sum + seenAt(show, t), 0)).toBe(1);
     }
+  });
+
+  it('casts a shadow of the bird and of the letter it holds, which the window can lay on the sill by itself', () => {
+    // drawn with the pigeon unless the window lays it, and with a second shape for a letter in its beak
+    const blots = (svg: string): number => (svg.match(/<ellipse/g) ?? []).length;
+    expect(blots(letterShadowSvg({ letter: true }))).toBe(blots(letterShadowSvg()) + 1);
+    expect(blots(letterShadowSvg({ pose: 'happy', letter: true }))).toBe(blots(letterShadowSvg({ pose: 'happy' })));
+    const shaded = letterBirdSvg({ bird: 2, letter: true, idPrefix: 'x' });
+    const bare = letterBirdSvg({ bird: 2, letter: true, shadow: false, idPrefix: 'x' });
+    expect(blots(shaded) - blots(bare)).toBe(blots(letterShadowSvg({ letter: true })));
+  });
+
+  it('keeps the shadows on the sill, fainter while the pigeon or the letter is up, and the letter’s with the letter in its beak', () => {
+    for (const play of Object.values(LETTER_PLAY)) {
+      const shadow = letterPlayShadow(play);
+      shadow.moves.forEach((k, i) => {
+        const m = play.moves[i]!;
+        // on the ground it is all there; up in a hop it is less, and never gone
+        if (m.y === 0) expect(k.seen).toBe(1);
+        if (m.y < 0) expect(k.seen).toBeLessThan(1);
+        expect(k.seen).toBeGreaterThan(0);
+        expect(Math.sign(k.sx)).toBe(Math.sign(m.sx));
+      });
+      // it holds the letter, and casts its shadow, exactly while a picture with the letter in its beak is seen
+      const holdingAt = (t: number): number => {
+        let seen = 0;
+        for (const [at, s] of shadow.holding) if (at <= t) seen = s;
+        return seen;
+      };
+      const posedAt = (t: number): boolean => {
+        let held = false;
+        for (const [at, pose, letter] of play.poses) if (at <= t) held = letter && pose !== 'happy' && pose !== 'sleep';
+        return held;
+      };
+      for (let t = 0; t <= 1; t += 0.01) expect(holdingAt(t)).toBe(posedAt(t) ? 1 : 0);
+      // a letter on the sill has its shadow fullest when it lies there, less while it is coming down
+      shadow.letter.forEach((k, i) => {
+        const l = play.letter[i]!;
+        if (l.y === 0) expect(k.seen).toBe(l.seen);
+        else if (l.seen === 0) expect(k.seen).toBe(0);
+        else expect(k.seen).toBeLessThan(l.seen);
+      });
+    }
+  });
+
+  it('lays a flight’s shadow on the sill as the pigeon stands, and takes it away as it rises', () => {
+    const keys = letterFlightShadow();
+    expect(keys.map((k) => k.at)).toEqual(LETTER_FLIGHT.keys.map((k) => k.at));
+    expect(keys[0]).toMatchObject({ x: 0, sx: 1, sy: 1, seen: 1 });
+    // gone by the time it is through the window, where it is drawn behind the room
+    for (const k of keys) if (k.at >= LETTER_FLIGHT.behindAt) expect(k.seen).toBe(0);
   });
 
   it('brings its beak down to the letter on the sill when it picks it up or lays it down', () => {

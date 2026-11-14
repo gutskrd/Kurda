@@ -91,16 +91,28 @@ export function letterProblem(text: string): LetterProblem | null {
 // ───────────────────────────────────────────────────────────── the birds
 
 /**
- * The colours a pen pal pigeon can be: each member's own, picked from their
- * id so it is the same pigeon on every screen and every phone, without
- * anything stored. The apps draw it (art/letters.ts) from its number here.
+ * The colours a pen pal pigeon can be. Each member chooses theirs once, for
+ * free, and pays for another after (`LETTER_BIRD_PRICE`); until they choose,
+ * it is picked from their id, so it is the same pigeon on every screen and
+ * every phone. The apps draw it (art/letters.ts) from its number here.
  * Soft colours, the first the lavender of the owner's reference pigeon; its
  * pale rump, wing, bars, tail and cheek are worked out from the one colour
  * of its head (art/pigeon.ts).
  */
 export const LETTER_BIRDS = ['#8784c7', '#6fa8e2', '#e88aa6', '#7dbf8f', '#f0a46c', '#55b7ae', '#e5bf55', '#b183d4'] as const;
 
-/** Somebody's bird: a number into `LETTER_BIRDS`, from their id. */
+/**
+ * What a new bird costs, in Zêr, once you have one: the first bird you choose
+ * is free, and is yours until you choose another.
+ */
+export const LETTER_BIRD_PRICE = 500;
+
+/** Whether `bird` is one of the birds there are (a number into `LETTER_BIRDS`). */
+export function isLetterBird(bird: unknown): bird is number {
+  return typeof bird === 'number' && Number.isInteger(bird) && bird >= 0 && bird < LETTER_BIRDS.length;
+}
+
+/** Somebody's bird before they choose one: a number into `LETTER_BIRDS`, from their id. */
 export function letterBirdOf(userId: string): number {
   let h = 2166136261;
   for (let i = 0; i < userId.length; i++) {
@@ -150,6 +162,10 @@ export interface LettersHome {
   /** null when this account can write; otherwise why not */
   refusal: LettersRefusal | null;
   bird: number;
+  /** whether the bird was chosen: until it is, the first choice is free (`LETTER_BIRD_PRICE` after) */
+  birdChosen: boolean;
+  /** the Zêr there is to pay for a new bird with */
+  zer: number;
   /** your bird out with a letter, looking for somebody, and since when */
   out: { since: string } | null;
   penPals: PenPal[];

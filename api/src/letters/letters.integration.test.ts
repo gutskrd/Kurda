@@ -1,17 +1,20 @@
 /**
  * Letters by bird against real Postgres: two birds meeting, pen pals writing
  * in turn, the bands that never mix, blocks and goodbyes, what a letter may
- * not hold, a report on a letter, and a closed account taking its letters.
+ * not hold, a report on a letter, a closed account taking its letters, and
+ * choosing a bird: free the first time, paid for in Zêr after.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import type { BirdOutResult, LetterThread, LettersHome } from '@kurda/shared';
+import { LETTER_BIRD_PRICE, letterBirdOf, type BirdOutResult, type LetterThread, type LettersHome } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { bornYearsAgo } from '../test/age.js';
 import { moderationKit, type Person } from '../test/moderation-kit.js';
 import { eraseAccountData } from '../gdpr/service.js';
+import { WalletService } from '../wallet/service.js';
+import { LETTER_BIRD_REASON } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -52,7 +55,16 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM users WHERE id = ANY($1::uuid[])`, [people.map((p) => p.id)]);
+    // a bird paid for leaves a line in the ledger, which only the ledger's keeper may take away
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL kurda.ledger_admin = 'on'`);
+      await client.query(`DELETE FROM users WHERE id = ANY($1::uuid[])`, [people.map((p) => p.id)]);
+      await client.query('COMMIT');
+    } finally {
+      client.release();
+    }
     await pool.end();
     await app.close();
   });
@@ -194,5 +206,44 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
     const left = await pool.query(`SELECT 1 FROM letters WHERE thread_id = $1`, [met.threadId]);
     expect(left.rowCount).toBe(0);
     expect((await home(b)).penPals).toHaveLength(0);
+  });
+
+  it('lets a bird be chosen once for free, shows it to pen pals, and asks Zêr for another', async () => {
+    const [a, b] = [await adult('birda'), await adult('birdb')];
+    const choose = (p: Person, bird: number) => call('POST', '/letters/bird', p.token, { bird });
+    const before = await home(a);
+    expect(before).toMatchObject({ bird: letterBirdOf(a.id), birdChosen: false, zer: 0 });
+
+    // the first choice costs nothing, even with no Zêr at all
+    const mine = (letterBirdOf(a.id) + 3) % 8;
+    const chosen = await choose(a, mine);
+    expect(chosen.statusCode, chosen.body).toBe(200);
+    expect(chosen.json()).toMatchObject({ bird: mine, birdChosen: true, zer: 0 });
+
+    // a pen pal sees the bird chosen, at the meeting and after
+    await out(a);
+    const met = await out(b);
+    if (met.kind !== 'met') throw new Error('the birds did not meet');
+    expect(met.person.bird).toBe(mine);
+    expect((await home(b)).penPals[0]!.person.bird).toBe(mine);
+
+    // the same bird again is no change, and another is paid for
+    expect((await choose(a, mine)).statusCode).toBe(409);
+    const other = (mine + 1) % 8;
+    const short = await choose(a, other);
+    expect(short.statusCode).toBe(402);
+    expect((await home(a)).bird).toBe(mine);
+    const wallet = new WalletService(pool);
+    await wallet.credit({ userId: a.id, currency: 'zer', amount: LETTER_BIRD_PRICE + 40, reason: 'test_grant', idempotencyKey: `lt-bird-${a.id}` });
+    const changed = await choose(a, other);
+    expect(changed.statusCode, changed.body).toBe(200);
+    expect(changed.json()).toMatchObject({ bird: other, birdChosen: true, zer: 40 });
+    const ledger = await pool.query(`SELECT amount FROM wallet_ledger WHERE user_id = $1 AND reason = $2`, [a.id, LETTER_BIRD_REASON]);
+    expect(ledger.rows.map((r) => Number(r.amount))).toEqual([-LETTER_BIRD_PRICE]);
+
+    // no such bird, and the bird goes with a closed account
+    expect((await choose(a, 8)).statusCode).toBe(404);
+    await eraseAccountData(pool, a.id);
+    expect((await pool.query(`SELECT 1 FROM letter_birds WHERE user_id = $1`, [a.id])).rowCount).toBe(0);
   });
 });

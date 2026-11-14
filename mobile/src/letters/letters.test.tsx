@@ -25,7 +25,7 @@ const LETTER = 'Silav! Navê min Rojda ye. Tu çawa yî? Ez kurdî hîn dibim.';
 const THREAD = '6f9b1c2e-1d2a-4b3c-8d4e-5f6a7b8c9d0e';
 const baran = { id: 'u-baran', name: 'Baran', bird: 3 };
 
-const home = (over: Partial<LettersHome> = {}): LettersHome => ({ refusal: null, bird: 1, out: null, penPals: [], roomForMore: true, ...over });
+const home = (over: Partial<LettersHome> = {}): LettersHome => ({ refusal: null, bird: 1, birdChosen: true, zer: 0, out: null, penPals: [], roomForMore: true, ...over });
 const thread = (over: Partial<LetterThread> = {}): LetterThread => ({
   threadId: THREAD,
   person: baran,

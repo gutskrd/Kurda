@@ -2,7 +2,9 @@ import type pg from 'pg';
 import {
   BIRD_OUT_DAYS,
   LETTERS_PER_DAY,
+  LETTER_BIRD_PRICE,
   PEN_PALS_MAX,
+  isLetterBird,
   letterAgeBand,
   letterBirdOf,
   letterProblem,
@@ -21,6 +23,7 @@ import { notBlockedSql } from '../friends/blocked.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { Notification } from '../push/service.js';
 import { activeRestriction } from '../moderation/sanctions-service.js';
+import type { WalletService } from '../wallet/service.js';
 
 /**
  * Letters by bird (shared/src/letters.ts says what they are): sending a bird
@@ -39,7 +42,13 @@ import { activeRestriction } from '../moderation/sanctions-service.js';
  *     (`letterProblem`), and the words the rest of the app filters are masked;
  *   - a person muted from chat by moderation cannot write letters either, and
  *     a letter can be reported like a message, with the letters around it kept.
+ *
+ * Each member chooses their bird once, for free; another after that is paid
+ * for in Zêr (`chooseBird`). Until they choose, their bird comes from their id.
  */
+
+/** The ledger's name for paying for a new bird. */
+export const LETTER_BIRD_REASON = 'letter_bird';
 
 /** What the service needs from the rest of the app: the word filter and the mute, and a way to tell somebody a letter has come. */
 export interface LetterDeps {
@@ -53,6 +62,8 @@ export interface LetterDeps {
   /** pushes a line already written (jobs/push-jobs.ts `pushRecorded`) */
   push?: (userId: string, notification: Notification) => Promise<void>;
   log?: { warn(obj: unknown, msg: string): void };
+  /** pays for a new bird; without it a bird can be chosen once and not changed */
+  wallet?: Pick<WalletService, 'debitWithin' | 'balances'>;
 }
 
 /** SQL: the age in whole years of the user behind `alias`, the birth month counted as the younger age (users/age.ts). */
@@ -96,7 +107,11 @@ const toItem = (row: LetterRow, me: string): LetterItem => ({
   readAt: row.read_at ? row.read_at.toISOString() : null,
 });
 
-const personOf = (id: string, name: string): LetterPerson => ({ id, name, bird: letterBirdOf(id) });
+/** Somebody as the letters show them: the bird they chose, or the one their id gives them until they choose. */
+const personOf = (id: string, name: string, bird: number | null): LetterPerson => ({ id, name, bird: isLetterBird(bird) ? bird : letterBirdOf(id) });
+
+/** SQL: the bird the user behind `alias` chose, or NULL before they choose one. `alias` is a literal from this file. */
+const BIRD_SQL = (alias: string): string => `(SELECT lb.bird FROM letter_birds lb WHERE lb.user_id = ${alias}.id)`;
 
 /**
  * SQL: it is `me`'s turn to write in the correspondence `thread` — the other
@@ -191,14 +206,14 @@ export class LetterService {
   /** The letters page: your bird, whether it is out, and your pen pals, the one most recently written to first. */
   async home(userId: string): Promise<LettersHome> {
     const me = await this.me(this.pool, userId);
-    const bird = letterBirdOf(userId);
+    const chosen = await this.pool.query<{ bird: number }>(`SELECT bird FROM letter_birds WHERE user_id = $1`, [userId]);
     const known = me.birth_year !== null && me.birth_month !== null;
     const restricted = (await activeRestriction(this.pool, userId, 'chat')) !== null || (await this.deps.moderation?.isChatMuted(userId)) === true;
     await this.comeHome(this.pool, userId);
     const open = await this.openThreads(this.pool, userId);
     const out = await this.pool.query<{ created_at: Date }>(`SELECT created_at FROM letters WHERE sender_id = $1 AND status = 'flying'`, [userId]);
-    const pals = await this.pool.query<{ id: string; other: string; name: string; last_letter_at: Date; your_turn: boolean; unread: number }>(
-      `SELECT t.id, o.id AS other, ${NAME_SQL('o')} AS name, t.last_letter_at,
+    const pals = await this.pool.query<{ id: string; other: string; name: string; bird: number | null; last_letter_at: Date; your_turn: boolean; unread: number }>(
+      `SELECT t.id, o.id AS other, ${NAME_SQL('o')} AS name, ${BIRD_SQL('o')} AS bird, t.last_letter_at,
               ${YOUR_TURN_SQL('t.id', '$1::uuid')} AS your_turn,
               (SELECT count(*)::int FROM letters l WHERE l.thread_id = t.id AND l.recipient_id = $1 AND l.status = 'delivered' AND l.read_at IS NULL) AS unread
          FROM letter_threads t
@@ -209,18 +224,63 @@ export class LetterService {
     );
     const penPals: PenPal[] = pals.rows.map((p) => ({
       threadId: p.id,
-      person: personOf(p.other, p.name),
+      person: personOf(p.other, p.name, p.bird),
       lastLetterAt: p.last_letter_at.toISOString(),
       yourTurn: p.your_turn,
       unread: p.unread,
     }));
     return {
       refusal: !known ? 'birth_month' : restricted ? 'restricted' : null,
-      bird,
+      bird: personOf(userId, me.name, chosen.rows[0]?.bird ?? null).bird,
+      birdChosen: chosen.rows.length > 0,
+      zer: (await this.deps.wallet?.balances(userId))?.zer ?? 0,
       out: out.rows[0] ? { since: out.rows[0].created_at.toISOString() } : null,
       penPals,
       roomForMore: open < PEN_PALS_MAX,
     };
+  }
+
+  /**
+   * Choose your bird. The first choice is free; another after it costs
+   * `LETTER_BIRD_PRICE` Zêr, paid in the same transaction that changes it, so
+   * the bird and the payment go together or not at all. Each change is paid
+   * under a key of its own (the how-manyth change it is), so a request sent
+   * twice pays once: the second finds the bird already chosen. 404
+   * LETTER_BIRD_NOT_FOUND for no such bird, 409 LETTER_BIRD_SAME for the bird
+   * already yours, 402 INSUFFICIENT_FUNDS without the Zêr for a new one.
+   */
+  async chooseBird(userId: string, bird: number): Promise<LettersHome> {
+    if (!isLetterBird(bird)) throw new AppError('LETTER_BIRD_NOT_FOUND', 404, 'no such bird');
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await this.me(client, userId);
+      const first = await client.query(`INSERT INTO letter_birds (user_id, bird) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING`, [userId, bird]);
+      if ((first.rowCount ?? 0) === 0) {
+        const had = await client.query<{ bird: number; changes: number }>(`SELECT bird, changes FROM letter_birds WHERE user_id = $1 FOR UPDATE`, [userId]);
+        const row = had.rows[0]!;
+        if (row.bird === bird) throw new AppError('LETTER_BIRD_SAME', 409, 'this bird is already yours');
+        // the app always pays through the wallet; without one a chosen bird stays as it is
+        if (!this.deps.wallet) throw new AppError('LETTER_BIRD_CHOSEN', 409, 'a bird once chosen cannot be changed here');
+        const change = row.changes + 1;
+        await this.deps.wallet.debitWithin(client, {
+          userId,
+          currency: 'zer',
+          amount: LETTER_BIRD_PRICE,
+          reason: LETTER_BIRD_REASON,
+          refId: String(bird),
+          idempotencyKey: `letter-bird:${userId}:${change}`,
+        });
+        await client.query(`UPDATE letter_birds SET bird = $2, changes = $3, updated_at = now() WHERE user_id = $1`, [userId, bird, change]);
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+    return this.home(userId);
   }
 
   /**
@@ -234,7 +294,7 @@ export class LetterService {
   async sendOut(userId: string, raw: string): Promise<BirdOutResult> {
     const text = await this.cleaned(userId, raw);
     const client = await this.pool.connect();
-    let met: { otherId: string; name: string; threadId: string; letter: LetterItem; writerName: string } | null = null;
+    let met: { otherId: string; name: string; bird: number | null; threadId: string; letter: LetterItem; writerName: string } | null = null;
     let since: Date | null = null;
     try {
       await client.query('BEGIN');
@@ -248,8 +308,8 @@ export class LetterService {
       if (flying.rowCount) throw new AppError('BIRD_OUT', 409, 'your bird is already out');
       if ((await this.openThreads(client, userId)) >= PEN_PALS_MAX) throw new AppError('PEN_PALS_FULL', 409, 'you have as many pen pals as there is room for');
 
-      const waiting = await client.query<{ id: string; sender_id: string; body: string; created_at: Date; name: string }>(
-        `SELECT l.id, l.sender_id, l.body, l.created_at, ${NAME_SQL('u')} AS name
+      const waiting = await client.query<{ id: string; sender_id: string; body: string; created_at: Date; name: string; bird: number | null }>(
+        `SELECT l.id, l.sender_id, l.body, l.created_at, ${NAME_SQL('u')} AS name, ${BIRD_SQL('u')} AS bird
            FROM letters l JOIN users u ON u.id = l.sender_id
           WHERE l.status = 'flying' AND l.age_band = $2 AND l.sender_id <> $1
             AND l.created_at > now() - make_interval(days => $3)
@@ -281,7 +341,7 @@ export class LetterService {
            VALUES ($1, $2, $3, $4, $5, 'delivered', now())`,
           [userId, theirs.sender_id, threadId, text, band],
         );
-        met = { otherId: theirs.sender_id, name: theirs.name, threadId, letter: toItem(delivered.rows[0]!, userId), writerName: me.name };
+        met = { otherId: theirs.sender_id, name: theirs.name, bird: theirs.bird, threadId, letter: toItem(delivered.rows[0]!, userId), writerName: me.name };
       } else {
         const out = await client.query<{ created_at: Date }>(
           `INSERT INTO letters (sender_id, body, age_band) VALUES ($1, $2, $3) RETURNING created_at`,
@@ -298,7 +358,7 @@ export class LetterService {
     }
     if (met) {
       await this.tell(met.otherId, met.threadId, userId, met.writerName);
-      return { kind: 'met', threadId: met.threadId, person: personOf(met.otherId, met.name), letter: met.letter };
+      return { kind: 'met', threadId: met.threadId, person: personOf(met.otherId, met.name, met.bird), letter: met.letter };
     }
     return { kind: 'waiting', since: since!.toISOString() };
   }
@@ -325,7 +385,7 @@ export class LetterService {
     const closed = t.ended || !t.sameBand;
     return {
       threadId,
-      person: personOf(t.other, t.name),
+      person: personOf(t.other, t.name, t.bird),
       letters,
       yourTurn: !closed && (await this.yourTurn(this.pool, threadId, userId)),
       closed,
@@ -337,9 +397,9 @@ export class LetterService {
     userId: string,
     threadId: string,
     lock = false,
-  ): Promise<{ other: string; name: string; ended: boolean; sameBand: boolean }> {
-    const r = await db.query<{ other: string; name: string; ended: boolean; same_band: boolean; blocked: boolean }>(
-      `SELECT o.id AS other, ${NAME_SQL('o')} AS name, t.ended_at IS NOT NULL AS ended,
+  ): Promise<{ other: string; name: string; bird: number | null; ended: boolean; sameBand: boolean }> {
+    const r = await db.query<{ other: string; name: string; bird: number | null; ended: boolean; same_band: boolean; blocked: boolean }>(
+      `SELECT o.id AS other, ${NAME_SQL('o')} AS name, ${BIRD_SQL('o')} AS bird, t.ended_at IS NOT NULL AS ended,
               (${letterBandSql('o')} IS NOT NULL AND ${letterBandSql('o')} = ${letterBandSql('me')}) AS same_band,
               NOT ${notBlockedSql('t.user_lo', 't.user_hi')} AS blocked
          FROM letter_threads t
@@ -351,7 +411,7 @@ export class LetterService {
     const row = r.rows[0];
     // across a block a correspondence is not there at all, as everywhere else
     if (!row || row.blocked) throw new AppError('NOT_FOUND', 404, 'no such letters');
-    return { other: row.other, name: row.name, ended: row.ended, sameBand: row.same_band };
+    return { other: row.other, name: row.name, bird: row.bird, ended: row.ended, sameBand: row.same_band };
   }
 
   private async yourTurn(db: Pick<pg.Pool, 'query'>, threadId: string, userId: string): Promise<boolean> {

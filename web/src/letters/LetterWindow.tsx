@@ -8,7 +8,10 @@ import {
   LETTER_WINDOW_PARTS,
   letterBirdSvg,
   letterEnvelopeSvg,
+  letterFlightShadow,
+  letterPlayShadow,
   letterPlayShows,
+  letterShadowSvg,
   letterWindowSvg,
   type LetterPlay,
   type LetterWindowPart,
@@ -38,6 +41,10 @@ import { useTreeSky } from '../tree/TreeScene';
  *   - `arriving`: a pigeon comes from far off with its letter, in through the
  *     window and lands; it shakes its feathers, lays the letter on the sill,
  *     chirps, hops round to look about, waves, and stays at home there.
+ * The pigeon's shadow, and the shadow of the letter in its beak or lying on
+ * the sill, are laid on the sill by themselves: they stay there under the
+ * pigeon when it hops, fade as it rises and come back as it lands.
+ *
  * Only transform and opacity move. A reader who asked for less motion sees
  * the window still and each play and flight as it ends. The whole picture is
  * decoration: the page says in words what the pigeon is doing.
@@ -59,6 +66,17 @@ function flightFrames(back: boolean): Keyframe[] {
   return back ? frames.reverse().map((f) => ({ ...f, offset: 1 - f.offset })) : frames;
 }
 
+/** The moment a pigeon taking off leaves the sill (and, landing backwards, comes down on it): it stands until then, and beats its wings from then on. */
+const LIFT = LETTER_FLIGHT.keys[1]!.at;
+/** How a flight goes over its time: a pigeon leaving gathers speed, one coming in slows to land. Everything in a flight runs on it, so what happens at a place in the flight happens there. */
+const FLIGHT_EASING = { out: 'cubic-bezier(0.5, 0, 0.75, 0.6)', in: 'cubic-bezier(0.2, 0.6, 0.35, 1)' } as const;
+
+/** The shadow of a flight on the sill (letterFlightShadow), as keyframes for the pigeon's square: under it as it goes, gone as it rises. */
+function flightShadowFrames(back: boolean): Keyframe[] {
+  const frames = letterFlightShadow().map((k) => ({ offset: k.at, opacity: k.seen, transform: `translate(${k.x * 100}%, 0) scale(${k.sx}, ${k.sy})` }));
+  return back ? frames.reverse().map((f) => ({ ...f, offset: 1 - f.offset })) : frames;
+}
+
 /** Shown before `at` and not after (or, `after`, the other way about): which of the two copies of a flying pigeon is seen, the one in the room or the one outside. */
 function seenFrames(at: number, after: boolean): Keyframe[] {
   const [before, then] = after ? [0, 1] : [1, 0];
@@ -70,19 +88,45 @@ function seenFrames(at: number, after: boolean): Keyframe[] {
   ];
 }
 
-/** One picture of a pigeon on its square, placed on the sill. */
-function Pose({ bird, pose, letter = false, facingLeft = false, className = '' }: { bird: number; pose: PigeonPose; letter?: boolean; facingLeft?: boolean; className?: string }): React.JSX.Element {
+/** One picture of a pigeon on its square, placed on the sill; its shadow is laid on the sill by itself (`Shade`). */
+function Pose({
+  bird,
+  pose,
+  letter = false,
+  facingLeft = false,
+  className = '',
+  style,
+}: {
+  bird: number;
+  pose: PigeonPose;
+  letter?: boolean;
+  facingLeft?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+}): React.JSX.Element {
   const id = `b${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
-  const svg = useMemo(() => ({ __html: letterBirdSvg({ bird, pose, letter, facingLeft, size: 120, idPrefix: id }) }), [bird, pose, letter, facingLeft, id]);
-  return <span className={`lw-pose ${className}`} dangerouslySetInnerHTML={svg} />;
+  const svg = useMemo(() => ({ __html: letterBirdSvg({ bird, pose, letter, facingLeft, shadow: false, size: 120, idPrefix: id }) }), [bird, pose, letter, facingLeft, id]);
+  return <span className={`lw-pose ${className}`} style={style} dangerouslySetInnerHTML={svg} />;
 }
 
-/** A pigeon asleep on the sill at night, breathing. */
+/** The shadow a pigeon casts on the sill, on its square placed there, with the shadow of a letter in its beak (`letter`). */
+function Shade({ pose = 'perched', letter = false, facingLeft = false, style }: { pose?: PigeonPose; letter?: boolean; facingLeft?: boolean; style?: React.CSSProperties }): React.JSX.Element {
+  const id = `s${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
+  const svg = useMemo(() => ({ __html: letterShadowSvg({ pose, letter, facingLeft, size: 120, idPrefix: id }) }), [pose, letter, facingLeft, id]);
+  return <span className="lw-pose" style={style} dangerouslySetInnerHTML={svg} />;
+}
+
+/** A pigeon asleep on the sill at night, breathing over its shadow. */
 function Asleep({ bird, facingLeft = false }: { bird: number; facingLeft?: boolean }): React.JSX.Element {
   return (
-    <span className="lw-bird lw-bird--asleep" style={PLACE}>
-      <Pose bird={bird} pose="sleep" facingLeft={facingLeft} />
-    </span>
+    <>
+      <span className="lw-bird" style={PLACE}>
+        <Shade pose="sleep" facingLeft={facingLeft} />
+      </span>
+      <span className="lw-bird lw-bird--asleep" style={PLACE}>
+        <Pose bird={bird} pose="sleep" facingLeft={facingLeft} />
+      </span>
+    </>
   );
 }
 
@@ -99,13 +143,31 @@ function sillLetterPlace(at: number, dir: number): React.CSSProperties {
   };
 }
 
-/** A letter in its envelope, lying on the sill: placed on the pigeon's own square, as its play measures it. */
-function SillLetter({ style, seen = 1, innerRef }: { style: React.CSSProperties; seen?: number; innerRef?: React.Ref<HTMLSpanElement> }): React.JSX.Element {
+/**
+ * A letter in its envelope, lying on the sill over its shadow: placed on the
+ * pigeon's own square, as its play measures it. The letter coming down and
+ * its shadow growing under it are moved by the play (`innerRef`, `shadeRef`).
+ */
+function SillLetter({
+  style,
+  seen = 1,
+  shadeSeen = seen,
+  innerRef,
+  shadeRef,
+}: {
+  style: React.CSSProperties;
+  seen?: number;
+  shadeSeen?: number;
+  innerRef?: React.Ref<HTMLSpanElement>;
+  shadeRef?: React.Ref<HTMLSpanElement>;
+}): React.JSX.Element {
   const id = `e${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
   const svg = useMemo(() => ({ __html: letterEnvelopeSvg({ size: 120, idPrefix: id }) }), [id]);
+  const shade = useMemo(() => ({ __html: letterEnvelopeSvg({ shadow: true, size: 120, idPrefix: `${id}s` }) }), [id]);
   return (
     <span className="lw-bird" style={PLACE}>
       <span className="lw-sill-letter" style={style}>
+        <span className="lw-sill-letter-art lw-sill-letter-shade" ref={shadeRef} style={{ opacity: shadeSeen }} dangerouslySetInnerHTML={shade} />
         <span className="lw-sill-letter-art" ref={innerRef} style={{ opacity: seen }} dangerouslySetInnerHTML={svg} />
       </span>
     </span>
@@ -115,15 +177,22 @@ function SillLetter({ style, seen = 1, innerRef }: { style: React.CSSProperties;
 /**
  * A pigeon playing on the sill (LETTER_PLAY): every picture its play shows
  * laid one on another and switched on the play's own clock, the pigeon moved
- * about its feet, and a letter on the sill when the play has one. It plays
- * once and says so (`onEnd`), or, an idle play, round and round. A page that
- * cannot animate, or a reader who asked for less motion, sees how it ends.
+ * about its feet over its shadow on the sill (letterPlayShadow), and a letter
+ * on the sill when the play has one. It plays once and says so (`onEnd`), or,
+ * an idle play, round and round. A page that cannot animate, or a reader who
+ * asked for less motion, sees how it ends.
  */
 function Playing({ bird, play, facingLeft = false, onEnd }: { bird: number; play: LetterPlay; facingLeft?: boolean; onEnd?: () => void }): React.JSX.Element {
   const body = useRef<HTMLSpanElement>(null);
   const layers = useRef<Array<HTMLSpanElement | null>>([]);
   const letter = useRef<HTMLSpanElement>(null);
+  const shade = useRef<HTMLSpanElement>(null);
+  const shades = useRef<Array<HTMLSpanElement | null>>([]);
+  const letterShade = useRef<HTMLSpanElement>(null);
   const shows = useMemo(() => letterPlayShows(play), [play]);
+  const shadow = useMemo(() => letterPlayShadow(play), [play]);
+  // the shadow with a letter's in it is laid only for a play in which the pigeon holds one, and switched with the plain one
+  const holds = shadow.holding.some(([, seen]) => seen === 1);
   const ended = useRef(onEnd);
   ended.current = onEnd;
   const [still, setStill] = useState(false);
@@ -150,17 +219,48 @@ function Playing({ bird, play, facingLeft = false, onEnd }: { bird: number; play
     if (letter.current && play.letter.length) {
       runs.push(letter.current.animate(play.letter.map((k) => ({ offset: k.at, opacity: k.seen, transform: `translateY(${(k.y / SILL_LETTER.share) * 100}%)` })), timing));
     }
+    if (letterShade.current && shadow.letter.length) {
+      runs.push(letterShade.current.animate(shadow.letter.map((k) => ({ offset: k.at, opacity: k.seen, transform: `scale(${k.size})` })), timing));
+    }
+    // the shadow keeps to the sill: it goes along under the pigeon but never up with it
+    if (shade.current) {
+      runs.push(
+        shade.current.animate(
+          shadow.moves.map((k) => ({ offset: k.at, easing: 'ease-in-out', opacity: k.seen, transform: `translate(${k.x * dir * 100}%, 0) scale(${k.sx}, ${k.sy})` })),
+          timing,
+        ),
+      );
+    }
+    if (holds) {
+      const [plain, held] = shades.current;
+      if (plain) runs.push(plain.animate(shadow.holding.map(([at, seen]) => ({ offset: at, opacity: 1 - seen })), timing));
+      if (held) runs.push(held.animate(shadow.holding.map(([at, seen]) => ({ offset: at, opacity: seen })), timing));
+    }
     if (!play.loop) moving.onfinish = () => ended.current?.();
     return () => runs.forEach((r) => r.cancel());
-  }, [play, shows, dir]);
+  }, [play, shows, shadow, holds, dir]);
 
   // standing still, it is seen as the play leaves it (or, going round, as it starts)
   const settled = (show: (typeof shows)[number]): number => (play.loop ? show.steps[0]![1] : show.steps[show.steps.length - 1]![1]);
   // the letter is seen as the play starts it until its own clock runs, so it never shows for a moment where it has not yet fallen
   const letterSeen = (still ? play.letter[play.letter.length - 1] : play.letter[0])?.seen ?? 0;
+  const letterShadeSeen = (still ? shadow.letter[shadow.letter.length - 1] : shadow.letter[0])?.seen ?? 0;
+  const heldAt = (still ? shadow.holding[shadow.holding.length - 1] : shadow.holding[0])?.[1] ?? 0;
   return (
     <>
-      {play.letter.length > 0 && <SillLetter style={sillLetterPlace(play.letterAt, dir)} seen={letterSeen} innerRef={letter} />}
+      <span className="lw-bird" style={PLACE}>
+        <span className="lw-shadow" ref={shade}>
+          <span className="lw-play-pose" ref={(el) => void (shades.current[0] = el)} style={{ opacity: holds ? 1 - heldAt : 1 }}>
+            <Shade facingLeft={facingLeft} />
+          </span>
+          {holds && (
+            <span className="lw-play-pose" ref={(el) => void (shades.current[1] = el)} style={{ opacity: heldAt }}>
+              <Shade letter facingLeft={facingLeft} />
+            </span>
+          )}
+        </span>
+      </span>
+      {play.letter.length > 0 && <SillLetter style={sillLetterPlace(play.letterAt, dir)} seen={letterSeen} shadeSeen={letterShadeSeen} innerRef={letter} shadeRef={letterShade} />}
       <span className="lw-bird" style={PLACE}>
         <span className="lw-play" ref={body}>
           {shows.map((show, i) => (
@@ -174,12 +274,17 @@ function Playing({ bird, play, facingLeft = false, onEnd }: { bird: number; play
   );
 }
 
-/** A pigeon in flight on the window's square: standing at the start, then its wings beating, up and down by turns. */
+/**
+ * A pigeon in flight on the window's square: standing at the start, then its
+ * wings beating, up and down by turns; or, landing, beating them until it is
+ * down and then standing. When it stands and when it beats is moved on the
+ * flight's own clock (LetterWindow), so it stands exactly while it is on the sill.
+ */
 function Flying({ bird, facingLeft, back }: { bird: number; facingLeft: boolean; back: boolean }): React.JSX.Element {
   return (
     <span className="lw-bird" style={PLACE}>
-      <Pose bird={bird} pose="perched" letter facingLeft={facingLeft} className={back ? 'lw-pose--landing' : 'lw-pose--takeoff'} />
-      <span className={`lw-wings ${back ? 'lw-wings--landing' : 'lw-wings--takeoff'}`}>
+      <Pose bird={bird} pose="perched" letter facingLeft={facingLeft} className="lw-flight-stand" style={{ opacity: back ? 0 : 1 }} />
+      <span className="lw-wings" style={{ opacity: back ? 1 : 0 }}>
         <Pose bird={bird} pose="wings-up" letter facingLeft={facingLeft} className="lw-pose--up" />
         <Pose bird={bird} pose="wings-down" letter facingLeft={facingLeft} className="lw-pose--down" />
       </span>
@@ -209,6 +314,7 @@ export function LetterWindow({ scene, onDone }: { scene: WindowScene; onDone?: (
   const frame = useRef<HTMLDivElement>(null);
   const inside = useRef<HTMLSpanElement>(null);
   const outside = useRef<HTMLSpanElement>(null);
+  const flightShade = useRef<HTMLSpanElement>(null);
   const [phase, setPhase] = useState<Phase>('rest');
   const done = useRef(onDone);
   done.current = onDone;
@@ -231,13 +337,24 @@ export function LetterWindow({ scene, onDone }: { scene: WindowScene; onDone?: (
       finish();
       return;
     }
-    const timing = { duration: LETTER_FLIGHT.ms, easing: 'linear', fill: 'forwards' as const };
+    // Everything in the flight runs on the one eased clock, so that the pigeon
+    // goes behind the room only once it is through the window, and stands only
+    // while it is on the sill: a pigeon coming in slows as it lands, and on a
+    // clock of its own the swap came while it was already low over the sill,
+    // still behind the wall.
+    const timing = { duration: LETTER_FLIGHT.ms, easing: back ? FLIGHT_EASING.in : FLIGHT_EASING.out, fill: 'forwards' as const };
     // the copy in the room is seen until the pigeon is through the window, the one outside from then on
     const swap = back ? 1 - LETTER_FLIGHT.behindAt : LETTER_FLIGHT.behindAt;
-    const runs = copies.flatMap((copy, i) => [
-      copy!.animate(flightFrames(back), { ...timing, easing: back ? 'cubic-bezier(0.2, 0.6, 0.35, 1)' : 'cubic-bezier(0.5, 0, 0.75, 0.6)' }),
-      (copy!.firstElementChild as HTMLElement).animate(seenFrames(swap, (i === 1) !== back), timing),
-    ]);
+    const lift = back ? 1 - LIFT : LIFT;
+    const runs = copies.flatMap((copy, i) => {
+      const flight = [copy!.animate(flightFrames(back), timing), (copy!.firstElementChild as HTMLElement).animate(seenFrames(swap, (i === 1) !== back), timing)];
+      const stand = copy!.querySelector<HTMLElement>('.lw-flight-stand');
+      const wings = copy!.querySelector<HTMLElement>('.lw-wings');
+      if (stand) flight.push(stand.animate(seenFrames(lift, back), timing));
+      if (wings) flight.push(wings.animate(seenFrames(lift, !back), timing));
+      return flight;
+    });
+    if (flightShade.current) runs.push(flightShade.current.animate(flightShadowFrames(back), timing));
     runs[0]!.onfinish = finish;
     return () => runs.forEach((r) => r.cancel());
   }, [phase, back]);
@@ -273,6 +390,13 @@ export function LetterWindow({ scene, onDone }: { scene: WindowScene; onDone?: (
       ))}
       {/* the light lies on the sill, so a pigeon standing there is over it, never under it */}
       <Layer part="light" sky={sky} id={id} />
+      {flier !== null && (
+        <span className="lw-bird" style={PLACE}>
+          <span className="lw-shadow" ref={flightShade} style={{ opacity: back ? 0 : 1 }}>
+            <Shade letter facingLeft={back} />
+          </span>
+        </span>
+      )}
       {scene.kind === 'home' && (asleep ? <Asleep bird={scene.bird} /> : <Playing key="idle" bird={scene.bird} play={LETTER_PLAY.idle} />)}
       {scene.kind === 'leaving' && phase === 'before' && <Playing key="before" bird={scene.bird} play={LETTER_PLAY.before} onEnd={() => setPhase('flight')} />}
       {flier !== null && (

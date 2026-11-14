@@ -47,7 +47,6 @@
 .lw {
   --px: 0;
   --py: 0;
-  --flight-ms: 2600ms;
   --beat-ms: 240ms;
   position: relative;
   width: min(100%, 340px);
@@ -152,17 +151,32 @@
 .lw-play {
   transform-origin: 50% 83.33%;
 }
+/* a shadow lies on the sill under the pigeon's feet, and grows and shrinks about them */
+.lw-shadow {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform-origin: 50% 83.33%;
+}
 .lw-sill-letter {
   position: absolute;
   aspect-ratio: 1;
   transform: scaleY(0.62) rotate(-4deg);
   transform-origin: 50% 76.7%;
 }
+.lw-sill-letter-art {
+  position: absolute;
+  inset: 0;
+}
 .lw-sill-letter-art,
 .lw-sill-letter-art svg {
   display: block;
   width: 100%;
   height: 100%;
+}
+/* the shadow of a letter coming down grows about where it will lie */
+.lw-sill-letter-shade {
+  transform-origin: 50% 62%;
 }
 /* asleep at night: it breathes */
 .lw-bird--asleep {
@@ -180,45 +194,12 @@
 }
 /*
  * A flight is moved as a whole about the pigeon's middle (LetterWindow.tsx,
- * from the shared LETTER_FLIGHT); here it stands to take off and then beats
- * its wings, up and down by turns, or beats them all the way in and stands as
- * it lands.
+ * from the shared LETTER_FLIGHT), and when it stands and when it beats its
+ * wings is switched on the flight's own clock there; here its wings beat, up
+ * and down by turns.
  */
 .lw-flight {
   transform-origin: var(--middle);
-}
-.lw-pose--takeoff {
-  animation: lw-first var(--flight-ms) step-end both;
-}
-.lw-wings--takeoff {
-  animation: lw-then var(--flight-ms) step-end both;
-}
-/* landing is taking off backwards: the wings beat until the last moment, and then it stands */
-.lw-wings--landing {
-  animation: lw-then var(--flight-ms) step-end reverse both;
-}
-.lw-pose--landing {
-  animation: lw-first var(--flight-ms) step-end reverse both;
-}
-@keyframes lw-first {
-  0%,
-  11% {
-    opacity: 1;
-  }
-  12%,
-  100% {
-    opacity: 0;
-  }
-}
-@keyframes lw-then {
-  0%,
-  11% {
-    opacity: 0;
-  }
-  12%,
-  100% {
-    opacity: 1;
-  }
 }
 .lw-wings {
   position: absolute;
@@ -243,6 +224,12 @@
 
 /* for a reader who asked for less motion the window is a still picture, and a pigeon simply stands */
 @media (prefers-reduced-motion: reduce) {
+  .letters-bird {
+    transition: none;
+  }
+  .letters-bird:hover {
+    transform: none;
+  }
   .lw-layer,
   .lw-layer-art,
   .lw-bird--asleep,
@@ -277,6 +264,66 @@
 }
 .letters-write {
   min-width: 220px;
+}
+
+/* ---- choosing your bird (BirdPicker.tsx) ----------------------------------------------- */
+.letters-picker {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+.letters-birds {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+  padding: 0;
+  border: 0;
+}
+/* each bird a round button; the one picked ringed in the ink colour, a ring that shows in forced colours too */
+.letters-bird {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    transform 160ms var(--ease-out),
+    border-color 160ms var(--ease-out);
+}
+.letters-bird:hover {
+  transform: translateY(-2px);
+}
+.letters-bird.is-picked {
+  border-color: var(--ink);
+}
+.letters-bird:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+/* the bird that is yours now, marked with a small dot when choosing another */
+.letters-bird-mine {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--ink);
+}
+.letters-picker-actions {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+}
+.letters-picker-error {
+  margin: 0;
+  color: var(--danger, #d8493b);
+  font-size: var(--text-secondary);
 }
 
 /* ---- the paper ------------------------------------------------------------------------- */

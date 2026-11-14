@@ -12,7 +12,7 @@ afterEach(() => {
   localStorage.clear();
 });
 
-const home = (over: Partial<LettersHome> = {}): LettersHome => ({ refusal: null, bird: 2, out: null, penPals: [], roomForMore: true, ...over });
+const home = (over: Partial<LettersHome> = {}): LettersHome => ({ refusal: null, bird: 2, birdChosen: true, zer: 0, out: null, penPals: [], roomForMore: true, ...over });
 const letter = 'Silav! Navê min Rojda ye. Tu çawa yî?';
 
 /** Signed in, with the letters API answering from `answers` (method and path to body), and every request kept. */
@@ -84,6 +84,45 @@ describe('letters by bird', () => {
     expect(screen.getByText('Take out the link: letters can’t carry links.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Send your bird' }));
     expect(calls.some((c) => c.method === 'POST' && c.url.includes('/letters'))).toBe(false);
+  });
+
+  it('asks for a bird to be chosen first, for free, and shows the one picked on the sill', async () => {
+    const answers: Record<string, unknown> = { 'GET /letters': home({ birdChosen: false, bird: 2 }), 'POST /letters/bird': home({ bird: 5 }) };
+    const calls = signIn(answers);
+    renderApp(<LettersPage />, ['/app/letters']);
+    expect(await screen.findByText('Choose your bird')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Write a letter' })).toBeNull();
+    expect(screen.getByRole('radio', { name: 'Pink bird' })).toBeChecked();
+    await userEvent.click(screen.getByRole('radio', { name: 'Teal bird' }));
+    answers['GET /letters'] = home({ bird: 5 });
+    await userEvent.click(screen.getByRole('button', { name: 'This is my bird' }));
+    expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/bird'))?.body).toEqual({ bird: 5 });
+    expect(await screen.findByRole('button', { name: 'Write a letter' })).toBeInTheDocument();
+  });
+
+  it('asks Zêr for a new bird, says how many are missing, and lets the bird stay as it is', async () => {
+    const calls = signIn({ 'GET /letters': home({ bird: 2, zer: 120 }) });
+    renderApp(<LettersPage />, ['/app/letters']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Change bird' }));
+    expect(screen.getByText('A new bird costs 500 Zêr. You have 120 Zêr.')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Pink bird, your bird now' })).toBeChecked();
+    await userEvent.click(screen.getByRole('radio', { name: 'Green bird' }));
+    expect(screen.getByText('You need 380 more Zêr.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Keep my bird' }));
+    expect(await screen.findByRole('button', { name: 'Write a letter' })).toBeInTheDocument();
+    expect(calls.some((c) => c.url.includes('/letters/bird'))).toBe(false);
+  });
+
+  it('pays for a new bird only once another is picked', async () => {
+    const calls = signIn({ 'GET /letters': home({ bird: 2, zer: 900 }), 'POST /letters/bird': home({ bird: 3, zer: 400 }) });
+    renderApp(<LettersPage />, ['/app/letters']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Change bird' }));
+    const buy = screen.getByRole('button', { name: 'Get this bird · 500 Zêr' });
+    expect(buy).toBeDisabled();
+    await userEvent.click(screen.getByRole('radio', { name: 'Green bird' }));
+    await userEvent.click(buy);
+    expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/bird'))?.body).toEqual({ bird: 3 });
   });
 
   it('asks for a birth month before anybody can write', async () => {

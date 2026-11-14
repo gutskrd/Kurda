@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BIRD_OUT_DAYS, PEN_PALS_MAX, type BirdOutResult, type LettersHome, type LetterItem, type LetterPerson } from '@kurda/shared';
+import { BIRD_OUT_DAYS, LETTER_BIRD_PRICE, PEN_PALS_MAX, type BirdOutResult, type LettersHome, type LetterItem, type LetterPerson } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import { ErrorState } from '../components/states';
 import { ChevronIcon } from '../components/icons';
 import { LetterWindow, type WindowScene } from './LetterWindow';
 import { BirdBadge, LetterPaper, LetterSheet } from './LetterParts';
+import { BirdPicker } from './BirdPicker';
 import { letterErrorText } from './errors';
 import './letters.css';
 
@@ -25,8 +26,11 @@ type Moment =
  * Letters by bird (/app/letters): writing to somebody new in Kurdish, and
  * the pen pals you write to.
  *
- * At the top, your window. With your bird at home there is one thing to do —
- * write a letter — and sending it is watched rather than read: the bird takes
+ * At the top, your window. The first time, you choose your bird there: the
+ * one on the sill takes the colour of whichever you pick, and choosing it is
+ * free; a new bird later costs Zêr, said before anything is paid. With your
+ * bird at home there is one thing to do — write a letter — and sending it is
+ * watched rather than read: the bird takes
  * it in its beak and flies off. If another bird is out, theirs comes to your
  * window in the same moment with their letter, and it is read here at once;
  * if not, the sill stays empty and the page says, in plain words, that nobody
@@ -40,6 +44,7 @@ type Moment =
  */
 export function LettersPage(): React.JSX.Element {
   const t = useT();
+  const locale = useLocale();
   const { client } = useAuth();
   const home = useApiGet<LettersHome>('/letters', { fresh: true });
   const [moment, setMoment] = useState<Moment>({ kind: 'rest' });
@@ -47,11 +52,21 @@ export function LettersPage(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   // a bird on its way: what the window acts out, until it has
   const [scene, setScene] = useState<WindowScene | null>(null);
+  // choosing a new bird after the first, and the one picked while choosing, which the window shows on the sill
+  const [changing, setChanging] = useState(false);
+  const [picked, setPicked] = useState<number | null>(null);
+  const [birdError, setBirdError] = useState<string | null>(null);
 
   const data = home.data;
   useEffect(() => {
     if (data && !scene) setScene(data.out ? { kind: 'away' } : { kind: 'home', bird: data.bird });
   }, [data, scene]);
+
+  const out = data !== null && (data.out !== null || moment.kind === 'waiting') && moment.kind !== 'arrived';
+  // the bird is chosen at home, while nothing else is going on: the first time before the first letter, later whenever wanted
+  const choosing = data !== null && data.refusal === null && !out && moment.kind === 'rest' && (!data.birdChosen || changing);
+  const pick = picked ?? data?.bird ?? 0;
+  const shown = useMemo<WindowScene | null>(() => (choosing && scene?.kind === 'home' ? { kind: 'home', bird: pick } : scene), [choosing, scene, pick]);
 
   if (home.error && !data) return <ErrorState message={home.error} onRetry={home.reload} />;
   if (!data) return <div className="container letters-page" aria-busy="true" />;
@@ -84,6 +99,34 @@ export function LettersPage(): React.JSX.Element {
     home.reload();
   }
 
+  async function chooseBird(): Promise<void> {
+    if (!data) return;
+    setBusy(true);
+    setBirdError(null);
+    const res = await client.post<LettersHome>('/letters/bird', { bird: pick });
+    setBusy(false);
+    if (!res.ok && res.error.code === 'INSUFFICIENT_FUNDS') {
+      setBirdError(t('letters.bird.short', { count: new Intl.NumberFormat(locale).format(Math.max(1, LETTER_BIRD_PRICE - data.zer)) }));
+      return;
+    }
+    // the same bird again is no change: there is nothing to pay and nothing to say
+    if (!res.ok && res.error.code !== 'LETTER_BIRD_SAME') {
+      setBirdError(describeError(res.error, t));
+      return;
+    }
+    setChanging(false);
+    setPicked(null);
+    setScene({ kind: 'home', bird: res.ok ? res.data.bird : pick });
+    home.reload();
+  }
+
+  function startChanging(): void {
+    if (!data) return;
+    setPicked(data.bird);
+    setBirdError(null);
+    setChanging(true);
+  }
+
   async function recall(): Promise<void> {
     if (!data) return;
     setBusy(true);
@@ -96,8 +139,12 @@ export function LettersPage(): React.JSX.Element {
     }
   }
 
-  const out = (data.out !== null || moment.kind === 'waiting') && moment.kind !== 'arrived';
   const canWrite = data.refusal === null && !out && data.roomForMore;
+  const change = (
+    <button type="button" className="btn btn-ghost btn-sm" onClick={startChanging}>
+      {t('letters.bird.change')}
+    </button>
+  );
 
   return (
     <div className="container letters-page">
@@ -107,7 +154,7 @@ export function LettersPage(): React.JSX.Element {
       </header>
 
       <section className="letters-hero">
-        {scene && <LetterWindow scene={scene} onDone={scene.kind === 'leaving' ? flown : undefined} />}
+        {shown && <LetterWindow scene={shown} onDone={shown.kind === 'leaving' ? flown : undefined} />}
         <div className="letters-hero-text" aria-live="polite">
           {data.refusal === 'birth_month' ? (
             <>
@@ -130,12 +177,36 @@ export function LettersPage(): React.JSX.Element {
                 {t('letters.recall')}
               </button>
             </>
+          ) : choosing ? (
+            <BirdPicker
+              first={!data.birdChosen}
+              current={data.bird}
+              picked={pick}
+              zer={data.zer}
+              busy={busy}
+              error={birdError}
+              onPick={(bird) => {
+                setPicked(bird);
+                setBirdError(null);
+              }}
+              onConfirm={() => void chooseBird()}
+              onCancel={() => {
+                setChanging(false);
+                setPicked(null);
+              }}
+            />
           ) : !data.roomForMore ? (
-            <p className="letters-status">{t('letters.full', { max: PEN_PALS_MAX })}</p>
+            <>
+              <p className="letters-status">{t('letters.full', { max: PEN_PALS_MAX })}</p>
+              {change}
+            </>
           ) : moment.kind === 'writing' ? null : (
-            <button type="button" className="btn btn-primary letters-write" onClick={() => setMoment({ kind: 'writing' })}>
-              {t('letters.write')}
-            </button>
+            <>
+              <button type="button" className="btn btn-primary letters-write" onClick={() => setMoment({ kind: 'writing' })}>
+                {t('letters.write')}
+              </button>
+              {change}
+            </>
           )}
         </div>
       </section>

@@ -7,6 +7,7 @@ import { requireUnrestricted } from '../moderation/restrictions.js';
 import type { LetterService } from './service.js';
 
 const threadParam = z.object({ threadId: z.uuid() });
+const birdBody = z.object({ bird: z.number().int().min(0).max(99) });
 // a little room over the letter's own limit: the service counts it after trimming and says which rule it broke
 const letterBody = z.object({ body: z.string().min(1).max(LETTER_MAX + 200) });
 
@@ -14,6 +15,7 @@ const letterBody = z.object({ body: z.string().min(1).max(LETTER_MAX + 200) });
  * Letters by bird (letters/service.ts).
  *
  *   GET    /letters                      your bird, whether it is out, your pen pals
+ *   POST   /letters/bird                 choose your bird: free the first time, Zêr after
  *   POST   /letters/out                  send a bird out to somebody new
  *   DELETE /letters/out                  call your bird back
  *   GET    /letters/threads/:threadId    a correspondence, its letters marked read
@@ -27,6 +29,13 @@ const letterBody = z.object({ body: z.string().min(1).max(LETTER_MAX + 200) });
  */
 export function registerLetterRoutes(app: FastifyInstance, letters: LetterService): void {
   app.get('/letters', { preHandler: requireAccount }, async (req) => letters.home(req.user!.id));
+
+  // the service says which birds there are, and takes the payment for a new one
+  app.post(
+    '/letters/bird',
+    { schema: { body: birdBody }, config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } }, preHandler: requireAccount },
+    async (req) => letters.chooseBird(req.user!.id, (req.body as { bird: number }).bird),
+  );
 
   app.post(
     '/letters/out',
