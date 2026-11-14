@@ -344,7 +344,8 @@ describe('the recording script', () => {
 describe('the Kurmanji Road in the script', () => {
   it('has every line the studio would ask for from all of the Road’s units, each person’s from the plan', async () => {
     const files = await readRoadFiles(ROAD_DIR);
-    const plan = planFrom(JSON.parse(await readFile(new URL('plan.json', ROAD_DIR), 'utf8')));
+    const raw = JSON.parse(await readFile(new URL('plan.json', ROAD_DIR), 'utf8')) as { units: Array<{ recorder?: string }> };
+    const plan = planFrom(raw);
     expect(new Set(files.lessons.map((l) => l.unit.position))).toEqual(new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]));
     const exercises: ExerciseInput[] = files.lessons.flatMap((l) =>
       l.exercises.map((e) =>
@@ -368,10 +369,10 @@ describe('the Kurmanji Road in the script', () => {
     }
     expect(lines.every((l) => !l.live && l.places.every((p) => p.status === 'draft'))).toBe(true);
     expect(peopleOf(lines, plan).map((p) => p.id)).toEqual(['hamo', 'xezo', 'hevalo', 'narrator-kmr', 'narrator-ckb']);
-    // Hamo is the road's main voice
+    // every chapter of the road is written for Hamo alone, so each goes online once he has recorded it
     const counts = new Map(peopleOf(lines, plan).map((p) => [p.id, lines.filter((l) => l.voice === p.id).length]));
-    expect(counts.get('hamo')!).toBeGreaterThan(counts.get('xezo')!);
-    expect(counts.get('hevalo')!).toBeGreaterThan(0);
+    expect(counts.get('hamo')!).toBe(lines.length);
+    expect(raw.units.every((u) => u.recorder === 'hamo')).toBe(true);
   });
 });
 

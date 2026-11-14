@@ -95,7 +95,7 @@
               "titleKu": "Ez Hamo me",
               "titleEn": "I am Hamo",
               "focus": "build",
-              "beat": "“Ez Hamo me,” he says, and gives the end of his moustache a proud little lift. Hevalo introduces you as a guest and a friend — and Hamo laughs: the deer’s own name means “friend!”",
+              "beat": "“Ez Hamo me,” he says, and gives the end of his moustache a proud little lift. Hevalo nudges you forward with his nose, guest and friend — and Hamo laughs: the deer’s own name means “friend!”",
               "voice": "hamo",
               "new": [
                 {"ku": "î / yî", "en": "are (with tu: î after a consonant, yî after a vowel)", "pos": "cop", "forms": ["î", "yî"]},
@@ -377,7 +377,8 @@
       "cefr": "A1",
       "titleKu": "Malbat",
       "titleEn": "Family",
-      "story": "The whole family gathers at Hamo’s house: his wife Nazê, their son Baran (nine, full of questions), their daughter Hêvî (six, shy until she is not) and Hamo’s mother, Dapîr Şemsê, who knows everybody’s business. The photos come out, the hens are counted, ages are guessed — Dapîr will not tell hers — and Xezal finds the family’s greatest secret: a photo of young Hamo without his moustache. Everyone has something to show: a brother, a sister, a donkey called Bozo. Hevalo has no apples, and says so.",
+      "story": "The whole family gathers at Hamo’s house: his wife Nazê, their son Baran (nine, full of questions), their daughter Hêvî (six, shy until she is not) and Hamo’s mother, Dapîr Şemsê, who knows everybody’s business. The photos come out, the hens are counted, ages are guessed — Dapîr will not tell hers — and Xezal finds the family’s greatest secret: a photo of young Hamo without his moustache. Everyone has something to show: a brother, a sister, a donkey called Bozo. Hevalo has no apples, and makes sure everyone notices.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -427,7 +428,7 @@
               "titleEn": "The old photo",
               "focus": "talk",
               "beat": "Xezal finds an old photo behind the others: a young man with no moustache at all. “Ev kî ye?” Hamo goes red. Dapîr laughs until she cries: it is Hamo.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "kevn", "en": "old (of things)", "pos": "adj", "forms": ["kevn"]},
                 {"ku": "nû", "en": "new", "pos": "adj", "forms": ["nû"]},
@@ -470,7 +471,7 @@
               "titleEn": "Where is Bozo?",
               "focus": "meet",
               "beat": "Hevalo follows his nose and finds Bozo in Dapîr’s flower bed, eating her roses one by one. Dapîr is not amused; Bozo is delighted.",
-              "voice": "hevalo",
+              "voice": "hamo",
               "new": [
                 {"ku": "kulîlk", "en": "flower", "pos": "noun", "gender": "f", "forms": ["kulîlk", "kulîlkên", "kulîlkan", "kulîlkek", "kulîlka", "kulîlkê", "kulîlkeke"]},
                 {"ku": "dar", "en": "tree; wood", "pos": "noun", "gender": "f", "forms": ["dar", "darên", "daran", "darek", "dara", "darê", "dareke"]},
@@ -505,7 +506,7 @@
               "titleEn": "Whose is it?",
               "focus": "talk",
               "beat": "A mountain of shoes at the door. Xezal sorts them out: the biggest pair is Hamo’s, the tiniest Hêvî’s, and nothing at all is Hevalo’s.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "kê", "en": "whose; whom (kî after a preposition or the ezafe)", "pos": "question", "forms": ["kê"]},
                 {"ku": "pêlav", "en": "shoe", "pos": "noun", "gender": "f", "forms": ["pêlav", "pêlavên", "pêlavan", "pêlavek", "pêlava", "pêlavê", "pêlaveke"]},
@@ -643,7 +644,7 @@
               "titleEn": "I have a cat",
               "focus": "build",
               "beat": "Xezal shows a photo of her cat Gewrê, at home in Amed. Baran tops it at once: “Kerekî me heye: Bozo!”",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "bizin", "en": "goat", "pos": "noun", "gender": "f", "forms": ["bizin", "bizinên", "bizinan", "bizinek", "bizina", "bizinê", "bizineke"]},
                 {"ku": "berx", "en": "lamb", "pos": "noun", "gender": "m", "forms": ["berx", "berxên", "berxan", "berxek", "berxê", "berxekî", "berxî"]},
@@ -697,6 +698,7 @@
       "titleKu": "Mal û gund",
       "titleEn": "House and village",
       "story": "With the child’s map from the old box, Xezal, Hevalo and you search for the spot marked X: through every room of the house, past the blue doors and white walls of the village, up on the roof and down by the spring — while Hamo swears he knows nothing and grins under his moustache. Someone else is searching too: a fresh X appears on a windowsill. Under the walnut tree by the spring the treasure is found at last — marbles, and half of an old photo of young Hamo and his sister Gulîstan. Where is the other half? In Amed. And tomorrow is market day.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -746,7 +748,7 @@
               "titleEn": "The old map",
               "focus": "talk",
               "beat": "Xezal and you read the map together: the house is there, the spring is there, and the X is outside. Hamo “innocently” offers to help — and points the wrong way.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "li derve", "en": "outside", "pos": "adv", "forms": ["li", "derve"]},
                 {"ku": "li hundir", "en": "inside", "pos": "adv", "forms": ["li", "hundir"]},
@@ -807,7 +809,7 @@
               "titleEn": "The blue door",
               "focus": "build",
               "beat": "The map’s next clue is “a blue door by a white wall”. Xezal is triumphant — until she counts three blue doors in the village.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "qehweyî", "en": "brown", "pos": "adj", "forms": ["qehweyî"]},
                 {"ku": "gewr", "en": "grey", "pos": "adj", "forms": ["gewr"]},
@@ -824,7 +826,7 @@
               "titleEn": "Red apple, green apple",
               "focus": "talk",
               "beat": "Hamo and Xezal argue: red apples or green ones? Hevalo settles it the only way a deer can — he eats one of each. Then he spots the next clue on a tree.",
-              "voice": "hevalo",
+              "voice": "hamo",
               "new": [
                 {"ku": "pel", "en": "leaf", "pos": "noun", "gender": "m", "forms": ["pel", "pelên", "pelan", "pelek", "pelê", "pelekî", "pelî"]},
                 {"ku": "fêkî", "en": "fruit", "pos": "noun", "gender": "m", "forms": ["fêkî", "fêkiyên", "fêkiyan", "fêkiyek", "fêkiyê", "fêkiyekî", "fêkiyî"]},
@@ -976,7 +978,7 @@
               "titleEn": "In the village square",
               "focus": "talk",
               "beat": "Xezal and you in the square: the neighbours want to know who you are. Ferhad has news — tomorrow is market day in the town, and everyone is going.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "bazar", "en": "market", "pos": "noun", "gender": "f", "forms": ["bazar", "bazarên", "bazaran", "bazarek", "bazara", "bazarê", "bazareke"]},
                 {"ku": "dirêj", "en": "long; tall", "pos": "adj", "forms": ["dirêj"]},
@@ -1012,6 +1014,7 @@
       "titleKu": "Bazar",
       "titleEn": "The market",
       "story": "Market day in the town below the village. Hamo, Xezal, Hevalo and you ride down with Bozo, who is wearing his hat. The present tense comes alive as everyone goes, comes, looks, wants, buys and eats. Mîrza the fruit seller and Hamo haggle like the old friends they are — though Mîrza swears Hamo still owes him for a melon from twenty years ago — and Xezal bargains better than both of them. Then Mîrza’s apple crate is found empty, every witness says “Ez nizanim”, and a certain deer has a very round belly. On the way home Xezal gets a phone call: she must go back to Amed on Saturday, and her mother wants everyone to come.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -1059,7 +1062,7 @@
               "titleKu": "Bazar mezin e",
               "titleEn": "The market is big",
               "focus": "talk",
-              "beat": "The market roars with voices. Hamo knows every seller and tells you who sells what, then hugs Mîrza like a long-lost brother; Hevalo says he is “only looking” at the apples.",
+              "beat": "The market roars with voices. Hamo knows every seller and tells you who sells what, then hugs Mîrza like a long-lost brother; Hevalo stands very still by the apples, as if he were only looking.",
               "voice": "hamo",
               "new": [
                 {"ku": "firoşkar", "en": "seller", "pos": "noun", "gender": "mf", "forms": ["firoşkar", "firoşkarên", "firoşkaran", "firoşkarek", "firoşkarê", "firoşkarekî", "firoşkarî", "firoşkara", "firoşkareke"]},
@@ -1118,7 +1121,7 @@
               "titleEn": "I can!",
               "focus": "build",
               "beat": "Xezal says she can carry everything; she can bargain; she can find the best honey in the market. Hamo strokes his moustache: “Tu dikarî? Baş e!”",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "karîn", "en": "can, to be able", "pos": "verb", "forms": ["karîn", "dikarim", "dikarî", "dikare", "dikarin"]},
                 {"ku": "hinar", "en": "pomegranate", "pos": "noun", "gender": "f", "forms": ["hinar", "hinarên", "hinaran", "hinarek", "hinara", "hinarê", "hinareke"]},
@@ -1195,7 +1198,7 @@
               "titleEn": "A hundred and a thousand",
               "focus": "build",
               "beat": "Xezal does the sums for the whole list on her phone and announces the total: Hamo pretends to faint into Bozo’s baskets.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "not", "en": "ninety", "pos": "num", "forms": ["not"]},
                 {"ku": "sed", "en": "a hundred", "pos": "num", "forms": ["sed"]},
@@ -1253,8 +1256,8 @@
               "titleKu": "Ez nizanim",
               "titleEn": "I don’t know",
               "focus": "meet",
-              "beat": "The great apple mystery. Mîrza asks everyone. Bozo looks away. Hevalo, very quickly: “Ez nizanim! Ez qet nizanim!”",
-              "voice": "hevalo",
+              "beat": "The great apple mystery. Mîrza asks everyone. Bozo looks away. Hevalo shakes his head very, very fast, and Hamo puts it into words for him: “Ez nizanim! Ez qet nizanim!”",
+              "voice": "hamo",
               "new": [
                 {"ku": "na-", "en": "not (the negative present: naçim, nakim)", "pos": "particle", "forms": ["naçim", "naçî", "naçe", "naçin", "nayêm", "nayî", "nayê", "nayên", "nakim", "nakî", "nake", "nakin", "nabînim", "nabînî", "nabîne", "nabînin", "nabêjim", "nabêjî", "nabêje", "nabêjin", "nanêrim", "nanêrî", "nanêre", "nanêrin", "naxivim", "naxivî", "naxive", "naxivin", "nakirim", "nakirî", "nakire", "nakirin", "nafiroşim", "nafiroşî", "nafiroşe", "nafiroşin", "nadim", "nadî", "nade", "nadin", "nagerim", "nagerî", "nagere", "nagerin", "naxebitim", "naxebitî", "naxebite", "naxebitin", "naxwazim", "naxwazî", "naxwaze", "naxwazin", "naxwim", "naxwî", "naxwe", "naxwin", "venaxwim", "venaxwî", "venaxwe", "venaxwin"]},
                 {"ku": "ni-", "en": "not (with zanîn and karîn: nizanim, nikarim)", "pos": "particle", "forms": ["nizanim", "nizanî", "nizane", "nizanin", "nikarim", "nikarî", "nikare", "nikarin"]},
@@ -1270,8 +1273,8 @@
               "titleKu": "Ez ne birçî me",
               "titleEn": "I’m not hungry",
               "focus": "build",
-              "beat": "Xezal questions Hevalo like a detective. Is he hungry? “Na, ez ne birçî me.” Then why is his belly so round? “Ez nizanim.” Then why…? “Hê na!”",
-              "voice": "xezo",
+              "beat": "Xezal turns detective and whispers the questions to her uncle, who asks them in his big voice. Is Hevalo hungry? He shakes his head. Then why is his belly so round? Then why is his mouth red? Hamo answers for the deer with a wink: “Hê na!”",
+              "voice": "hamo",
               "new": [
                 {"ku": "zik", "en": "belly, stomach", "pos": "noun", "gender": "m", "forms": ["zik", "zikên", "zikan", "zikek", "zikê", "zikekî", "zikî"]},
                 {"ku": "tije", "en": "full", "pos": "adj", "forms": ["tije"]},
@@ -1324,6 +1327,7 @@
       "titleKu": "Roj û dem",
       "titleEn": "Days and time",
       "story": "Xezal has to be back in Amed on Saturday, so the whole family plans the week around her: the days on Dapîr’s wall calendar fill up, the months and birthdays are argued over (Hamo does not know his own — “the year of the big snow”), and the clock becomes the week’s great enemy. Hamo’s day runs on tea: up with the rooster, tea, the orchard, tea, a nap, tea. He promises to be on time for the Saturday bus. On Saturday morning his alarm rings at eight — in the evening — and the family arrives in the square just in time to see the bus disappear round the bend.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -1373,7 +1377,7 @@
               "titleEn": "When are you leaving?",
               "focus": "talk",
               "beat": "Xezal tells Baran she leaves on Saturday. Baran protests loudly; Hêvî hides Xezal’s shoes. Hamo settles it: “Şemiyê? Em hemû bi te re tên!”",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "kengî", "en": "when", "pos": "question", "forms": ["kengî"]},
                 {"ku": "mayîn", "en": "to stay, to remain", "pos": "verb", "forms": ["mayîn", "dimînim", "dimînî", "dimîne", "dimînin", "namînim", "namîne"]},
@@ -1526,7 +1530,7 @@
               "titleEn": "Uncle, you’re late!",
               "focus": "talk",
               "beat": "Xezal times Hamo’s morning with her phone. “Five minutes” is an hour; “I’m coming” is two. Nazê confirms it with a laugh: it has been like this for twenty years.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "taştê", "en": "breakfast", "pos": "noun", "gender": "f", "forms": ["taştê", "taştêyên", "taştêyan", "taştêyek", "taştêya", "taştêyê", "taştêyeke"]},
                 {"ku": "firavîn", "en": "lunch", "pos": "noun", "gender": "f", "forms": ["firavîn", "firavînên", "firavînan", "firavînek", "firavîna", "firavînê", "firavîneke"]},
@@ -1585,7 +1589,7 @@
               "titleEn": "I go every day",
               "focus": "build",
               "beat": "Xezal describes her week in Amed: the bus at seven, the university, football with her friends on Thursdays, music on Fridays. Baran decides he will live in Amed too.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "zanîngeh", "en": "university", "pos": "noun", "gender": "f", "forms": ["zanîngeh", "zanîngehên", "zanîngehan", "zanîngehek", "zanîngeha", "zanîngehê", "zanîngeheke"]},
                 {"ku": "otobûs", "en": "bus", "pos": "noun", "gender": "f", "forms": ["otobûs", "otobûsên", "otobûsan", "otobûsek", "otobûsa", "otobûsê", "otobûseke"]},
@@ -1620,7 +1624,7 @@
               "titleEn": "The bus is leaving!",
               "focus": "review",
               "beat": "Saturday. The alarm rings — at eight in the evening, set the night before. Everyone runs to the square; Hevalo races after the bus, but it is gone round the bend. How will they get to Amed now?",
-              "voice": "hevalo",
+              "voice": "hamo",
               "new": [
                 {"ku": "bezîn", "en": "to run", "pos": "verb", "forms": ["bezîn", "dibezim", "dibezî", "dibeze", "dibezin"]},
                 {"ku": "sekinîn", "en": "to stop; to wait", "pos": "verb", "forms": ["sekinîn", "disekinim", "disekinî", "disekine", "disekinin", "nasekinim", "nasekine"]},
@@ -1639,6 +1643,7 @@
       "titleKu": "Bajar",
       "titleEn": "The city",
       "story": "With the bus gone, Ferhad drives everyone to the main road on his tractor, and a minibus takes them the rest of the way to Amed. The city is Xezal’s world: crowded avenues, the ancient black walls, tall buildings, a bookshop, a bakery and a fourth-floor flat with no lift. Hamo is amazed by everything and gets lost twice. Xezal’s mother Gulîstan, Hamo’s sister, opens her door — and her own tin: the other half of the old photo, and a note in their father’s hand that says something is waiting for them on the hill at Newroz. The imperative is everywhere (were, rûne, bixwe, meke!), and so are divê and dikarim.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -1706,7 +1711,7 @@
               "titleEn": "Xezal’s home",
               "focus": "review",
               "beat": "Up four floors of stairs to Xezal’s flat; Hamo stops on every landing to “admire the view”. Gulîstan opens the door, and brother and sister look at each other: “Xezîne?” She smiles: “Li cem min e.”",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "qat", "en": "floor, storey", "pos": "noun", "gender": "m", "forms": ["qat", "qatên", "qatan", "qatek", "qatê", "qatekî", "qatî"]},
                 {"ku": "pêlekan", "en": "stairs", "pos": "noun", "gender": "f", "forms": ["pêlekan", "pêlekanên", "pêlekanan", "pêlekanek", "pêlekana", "pêlekanê", "pêlekaneke"]},
@@ -1765,7 +1770,7 @@
               "titleEn": "Don’t, Uncle!",
               "focus": "talk",
               "beat": "Hamo wants four sugars in his tea, a nap on the sofa and to phone the whole village on Gulîstan’s phone. Xezal: “Meke! Meke! Meke!” Gulîstan laughs until she cries.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "meke / mekin", "en": "don’t!", "pos": "verb", "forms": ["meke", "mekin"]},
                 {"ku": "meçe / meçin", "en": "don’t go!", "pos": "verb", "forms": ["meçe", "meçin"]},
@@ -1855,7 +1860,7 @@
               "titleEn": "The way home",
               "focus": "review",
               "beat": "Hamo goes out for bread and gets lost. Xezal guides him by phone, street by street: “Here rasterast… paşê li çepê…” He arrives an hour later — with the bread, and with new friends from the bakery.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "firne", "en": "bakery", "pos": "noun", "gender": "f", "forms": ["firne", "firneyên", "firneyan", "firneyek", "firneya", "firneyê", "firneyeke"]},
                 {"ku": "nanpêj", "en": "baker", "pos": "noun", "gender": "mf", "forms": ["nanpêj", "nanpêjên", "nanpêjan", "nanpêjek", "nanpêjê", "nanpêjekî", "nanpêjî", "nanpêja", "nanpêjeke"]},
@@ -1931,7 +1936,7 @@
               "titleEn": "Goodbye, Amed!",
               "focus": "review",
               "beat": "The last evening in Amed. Gulîstan will come to the village for Newroz; Xezal packs; Hevalo has packed only apples. Then the news on the radio: snow is coming, and the mountain road may close.",
-              "voice": "hevalo",
+              "voice": "hamo",
               "new": [
                 {"ku": "nûçe", "en": "news", "pos": "noun", "gender": "f", "forms": ["nûçe", "nûçeyên", "nûçeyan", "nûçeyek", "nûçeya", "nûçeyê", "nûçeyeke"]},
                 {"ku": "girtî", "en": "closed", "pos": "adj", "forms": ["girtî"]},
@@ -1950,6 +1955,7 @@
       "titleKu": "Hewa û Newroz",
       "titleEn": "Weather and Newroz",
       "story": "They reach Sêvan just before the snow closes the pass, and the village waits out the last of the winter by the stove. Then the sun comes back, the snow melts, the streams roar and the whole family gets ready for Newroz: Nazê sews new clothes, Baran gathers firewood, Xezal plans the govend and Hamo practises a speech that nobody wants to hear. The future is on everyone’s lips — ez ê …, em ê … — and what everyone wants to do. On Newroz night, by the fire on their father’s hill, Hamo and Gulîstan lift a flat stone and find a shepherd’s flute and a note: keep the song going. The next morning Hamo cannot get out of bed.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -1999,7 +2005,7 @@
               "titleEn": "The road is closed",
               "focus": "talk",
               "beat": "The village is cut off by snow. Xezal and Hamo watch from the window: will it melt before Newroz? Outside, Hevalo builds a snow deer with a carrot for a nose, and eats the nose.",
-              "voice": "hevalo",
+              "voice": "hamo",
               "new": [
                 {"ku": "qeşa", "en": "ice", "pos": "noun", "gender": "f", "forms": ["qeşa", "qeşayên", "qeşayan", "qeşayek", "qeşaya", "qeşayê", "qeşayeke"]},
                 {"ku": "bahoz", "en": "storm", "pos": "noun", "gender": "f", "forms": ["bahoz", "bahozên", "bahozan", "bahozek", "bahoza", "bahozê", "bahozeke"]},
@@ -2058,7 +2064,7 @@
               "titleEn": "Tomorrow we’ll see",
               "focus": "build",
               "beat": "Xezal makes plans for the future — Newroz, the summer, next year’s exams — and dreams aloud of teaching children one day. Hamo listens and says nothing, which is unusual.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "paşeroj", "en": "the future", "pos": "noun", "gender": "f", "forms": ["paşeroj", "paşerojên", "paşerojan", "paşerojek", "paşeroja", "paşerojê", "paşerojeke"]},
                 {"ku": "wê demê", "en": "then, at that time", "pos": "phrase", "forms": ["wê", "demê"]},
@@ -2117,7 +2123,7 @@
               "titleEn": "The govend",
               "focus": "meet",
               "beat": "Xezal teaches Baran and Hêvî the govend steps in the yard, with Hamo’s old radio for music; the hens dance too, in their way.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "govend", "en": "govend, the circle dance", "pos": "noun", "gender": "f", "forms": ["govend", "govendên", "govendan", "govendek", "govenda", "govendê", "govendeke"]},
                 {"ku": "reqisîn", "en": "to dance", "pos": "verb", "forms": ["reqisîn", "direqisim", "direqisî", "direqise", "direqisin", "bireqisim", "bireqise", "bireqisî", "bireqisin"]},
@@ -2151,7 +2157,7 @@
               "titleEn": "I want you to come",
               "focus": "talk",
               "beat": "Xezal wants Hamo to lead the govend at the front of the line. Hamo says his knees are too old. Xezal says his moustache is not. Hamo agrees to lead.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "çok", "en": "knee", "pos": "noun", "gender": "f", "forms": ["çok", "çokên", "çokan", "çokek", "çoka", "çokê", "çokeke"]},
                 {"ku": "serçopî", "en": "leader of the govend (at the head of the line)", "pos": "noun", "gender": "mf", "forms": ["serçopî", "serçopiyên", "serçopiyan", "serçopiyek", "serçopiyê", "serçopiyekî", "serçopiyî", "serçopiya", "serçopiyeke"]},
@@ -2263,6 +2269,7 @@
       "titleKu": "Laş û tenduristî",
       "titleEn": "Body and health",
       "story": "After all that govend, Hamo’s back has given up, and Hamo turns out to be the most dramatic patient in the valley. Xezal nurses him, the family fusses, and the doctor who comes up from the town is Şîrîn, his old schoolmate, who beat him at every race when they were children and still teases him about it. Body words, aches and feelings, the doctor’s questions (“Ez te dibînim — where does it hurt?”) and a village moustache contest with comparisons and superlatives. Honey is forbidden; a jar goes missing; a moustache is sticky. Hamo gets better — but Baran comes home late one evening, muddy and silent, and will not say what happened.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -2312,7 +2319,7 @@
               "titleEn": "Uncle is ill",
               "focus": "talk",
               "beat": "Xezal nurses her uncle: medicine, rest, no getting up. Hamo wants tea, honey and sympathy, in that order, and complains in a voice so weak that it can be heard in the next village.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "derman", "en": "medicine", "pos": "noun", "gender": "m", "forms": ["derman", "dermanên", "dermanan", "dermanek", "dermanê", "dermanekî", "dermanî"]},
                 {"ku": "bêhna xwe vedan", "en": "to rest", "pos": "phrase", "forms": ["bêhna", "xwe", "vedan", "vedidim", "vedidî", "vedide", "vedidin", "vede", "vedin", "vedim"]},
@@ -2371,7 +2378,7 @@
               "titleEn": "I love you",
               "focus": "build",
               "beat": "Xezal tells Hamo that everybody loves him — even when he is impossible. Hamo is touched, then annoyed at being touched, then touched again.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "hêrs", "en": "anger", "pos": "noun", "gender": "f", "forms": ["hêrs", "hêrsên", "hêrsan", "hêrsek", "hêrsa", "hêrsê", "hêrseke"]},
                 {"ku": "tirs", "en": "fear", "pos": "noun", "gender": "f", "forms": ["tirs", "tirsên", "tirsan", "tirsek", "tirsa", "tirsê", "tirseke"]},
@@ -2406,7 +2413,7 @@
               "titleEn": "Honey is forbidden!",
               "focus": "review",
               "beat": "The villagers visit Hamo, each with a jar of honey; Xezal confiscates every jar and puts Hevalo on guard. In the morning one jar is empty — and Hamo’s moustache is suspiciously sticky.",
-              "voice": "hevalo",
+              "voice": "hamo",
               "new": [
                 {"ku": "şûşe", "en": "bottle, jar; glass", "pos": "noun", "gender": "f", "forms": ["şûşe", "şûşeyên", "şûşeyan", "şûşeyek", "şûşeya", "şûşeyê", "şûşeyeke"]},
                 {"ku": "parastin", "en": "to guard, to protect", "pos": "verb", "forms": ["parastin", "diparêzim", "diparêzî", "diparêze", "diparêzin", "biparêzim", "biparêze"]},
@@ -2541,7 +2548,7 @@
               "titleEn": "Baran, are you all right?",
               "focus": "talk",
               "beat": "Xezal gently asks Baran what is wrong. He only says “Sibe ez ê bibêjim.” Then Hevalo sits next to him and offers him his last apple — and that, everyone agrees, is a very big moment.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "nehênî", "en": "secret", "pos": "noun", "gender": "f", "forms": ["nehênî", "nehêniyên", "nehêniyan", "nehêniyek", "nehêniya", "nehêniyê", "nehêniyeke"]},
                 {"ku": "hembêz kirin", "en": "to hug", "pos": "verb", "forms": ["hembêz", "kirin"]},
@@ -2576,6 +2583,7 @@
       "titleKu": "Duh",
       "titleEn": "Yesterday",
       "story": "Baran finally tells what happened yesterday: he took Bozo to the river, Bozo saw a goat and ran off up the valley, Baran followed, got lost, sat down under a walnut tree and fell asleep — and came home in the dark by the stars, to find that Bozo had been home for hours, eating Dapîr’s mint. Then everyone tells their own yesterday, and Hamo tells the stories of long ago: the wolf he met at nine (it gets bigger every time; Dapîr says it was a dog), the old days at the pastures, Dapîr’s own youth. A message comes down from Bişar the shepherd: a strange visitor comes to his tent every night. Hamo decides: this summer, the whole family goes up to the zozan.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -2625,7 +2633,7 @@
               "titleEn": "Yesterday at the river",
               "focus": "talk",
               "beat": "Xezal asks the questions everyone is afraid to ask. Baran admits it: he lost Bozo, then lost himself, sat down under a walnut tree to think — and fell asleep.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "raza", "en": "slept (past of razan)", "pos": "verb", "forms": ["raza", "razam", "razayî", "razan", "neraza"]},
                 {"ku": "rûnişt", "en": "sat (down) (past of rûniştin)", "pos": "verb", "forms": ["rûnişt", "rûniştim", "rûniştî", "rûniştin"]},
@@ -2683,7 +2691,7 @@
               "titleEn": "Xezal went to university",
               "focus": "build",
               "beat": "Xezal tells about her first year in Amed: she arrived, was lost for a week, passed every exam — and on the first day she started classes in the wrong building.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "dest pê kirin", "en": "to begin", "pos": "verb", "forms": ["dest", "pê", "kirin"]},
                 {"ku": "qedîn", "en": "to finish, to end (of itself)", "pos": "verb", "forms": ["qedîn", "diqede", "diqedin", "biqede", "qediya", "qediyan", "neqediya"]},
@@ -2717,7 +2725,7 @@
               "titleEn": "The true story",
               "focus": "review",
               "beat": "Bişar the shepherd sends a message down from the pastures with a boy on a mule: a wild creature comes to his tent every night, like a deer, but shy as a shadow. Hevalo’s ears shoot straight up.",
-              "voice": "hevalo",
+              "voice": "hamo",
               "new": [
                 {"ku": "peyam", "en": "message", "pos": "noun", "gender": "f", "forms": ["peyam", "peyamên", "peyaman", "peyamek", "peyama", "peyamê", "peyameke"]},
                 {"ku": "heywan", "en": "animal", "pos": "noun", "gender": "m", "forms": ["heywan", "heywanên", "heywanan", "heywanek", "heywanê", "heywanekî", "heywanî"]},
@@ -2850,7 +2858,7 @@
               "titleEn": "Bozo ran away again",
               "focus": "talk",
               "beat": "Xezal and Baran search for Bozo, calling his name up the valley; Hevalo follows his tracks. They find him at the spring with Ferhad’s donkey, very much in love.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "şop", "en": "track, trace", "pos": "noun", "gender": "f", "forms": ["şop", "şopên", "şopan", "şopek", "şopa", "şopê", "şopeke"]},
                 {"ku": "gazî kirin", "en": "to call (to someone)", "pos": "verb", "forms": ["gazî", "kirin"]},
@@ -2885,6 +2893,7 @@
       "titleKu": "Zozan",
       "titleEn": "The summer pastures",
       "story": "The familiar shepherd on the path is Bişar, and he leads the family up to the zozan, the high summer pastures, where his black tents stand by a cold spring. Life up there is milk and bread and work: milking at dawn, churning butter, baking bread on the saj, songs at night under more stars than Baran can count. The mysterious visitor is a wild doe, Zerê, who comes for salt — and for Hevalo, who gives her his apples. Following the two deer, the family finds a hidden lake and an old stone house: Dapîr’s summer home when she was a girl, where Hamo’s father once played his flute for her. The past now has objects — min nan xwar, te çi kir?, me ew dîtin — and memories run in the past continuous. On the way down, Xezal’s phone finds a signal and a job offer, far away.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -2934,7 +2943,7 @@
               "titleEn": "We saw them!",
               "focus": "talk",
               "beat": "At dusk, Xezal and you spot two deer at the edge of the meadow. The doe stops and looks straight at Hevalo; Hevalo drops his apple. Xezal whispers: “Min dît! Te jî dît?”",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "mê", "en": "female", "pos": "adj", "forms": ["mê"]},
                 {"ku": "nêr", "en": "male", "pos": "adj", "forms": ["nêr"]},
@@ -2994,7 +3003,7 @@
               "titleEn": "I saw you",
               "focus": "build",
               "beat": "Xezal catches Hevalo slipping away to the meadow with an apple in his mouth. “Min tu dîtî!” He pretends he did not see her see him.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "nivîsî", "en": "wrote (past of nivîsîn)", "pos": "verb", "forms": ["nivîsî", "nivîsîn"]},
                 {"ku": "xwend", "en": "read; studied (past of xwendin)", "pos": "verb", "forms": ["xwend", "xwendin", "nexwend"]},
@@ -3103,7 +3112,7 @@
               "titleEn": "Summer is ending",
               "focus": "review",
               "beat": "The last days on the zozan. Hevalo must say goodbye to Zerê; she nudges an apple back towards him, and then she is gone into the grass. On the way down Xezal’s phone finds a signal: dozens of messages, her exam results — and a job offer in Hewlêr.",
-              "voice": "hevalo",
+              "voice": "hamo",
               "new": [
                 {"ku": "xet", "en": "line; signal", "pos": "noun", "gender": "f", "forms": ["xet", "xetên", "xetan", "xetek", "xeta", "xetê", "xeteke"]},
                 {"ku": "pêşniyar", "en": "proposal; offer", "pos": "noun", "gender": "f", "forms": ["pêşniyar", "pêşniyarên", "pêşniyaran", "pêşniyarek", "pêşniyara", "pêşniyarê", "pêşniyareke"]},
@@ -3144,7 +3153,7 @@
               "titleEn": "I told you",
               "focus": "build",
               "beat": "Xezal phones her mother and tells her the whole summer, the lake, the stone house, the flute. Gulîstan is silent for a long moment, and then asks to see every photo.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "pirsî", "en": "asked (past of pirsîn)", "pos": "verb", "forms": ["pirsî", "pirsîn"]},
                 {"ku": "kişandin", "en": "to pull; to take (a photo)", "pos": "verb", "forms": ["kişandin", "dikişînim", "dikişînî", "dikişîne", "dikişînin", "bikişîne", "kişand"]},
@@ -3175,7 +3184,7 @@
               "titleKu": "Havîna me",
               "titleEn": "Our summer",
               "focus": "review",
-              "beat": "Hamo writes the summer down in his old notebook, slowly, so nothing is lost. Baran asks what comes next. Xezal is quiet all evening, and then she says: “Xalo, divê ez tiştekî ji te re bibêjim.”",
+              "beat": "Hamo writes the summer down in his old notebook, slowly, so nothing is lost. Xezal is quiet all evening. You find her note between the pages — she has something to tell her uncle — and you tell Hamo about the offer from Hewlêr you saw on her phone. “Ez ê biçim cem wê,” he says, with a heavy heart.",
               "voice": "hamo",
               "new": [
                 {"ku": "defter", "en": "notebook", "pos": "noun", "gender": "f", "forms": ["defter", "defterên", "defteran", "defterek", "deftera", "defterê", "deftereke"]},
@@ -3195,6 +3204,7 @@
       "titleKu": "Kar û xwendin",
       "titleEn": "Work and school",
       "story": "Xezal finally says it: a school in Hewlêr has offered her a post as a teacher, and she is afraid to leave — the village, her mother, her uncle. Hamo goes quiet, strokes his moustache, and then smiles, though his eyes are wet. Over the autumn the family talks about work (everyone in the village has a trade, and an opinion), about school (Baran has to give a talk about Sêvan in front of the whole school, and is terrified), and about plans and dreams. The present perfect says what has been done (min biryar daye) and the linking words say why (ji ber ku, loma, lê, dema ku). Xezal decides to go after the winter, and promises to come home for every Newroz. Hamo makes a plan of his own: every winter night, one of his father’s stories.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -3227,7 +3237,7 @@
               "titleEn": "I want to become a teacher",
               "focus": "build",
               "beat": "Xezal and Baran play “what will you be?”. Baran will be a pilot, a cook, a doctor and a shepherd. Xezal, quietly, says she has always wanted to be a teacher.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "nivîskar", "en": "writer", "pos": "noun", "gender": "mf", "forms": ["nivîskar", "nivîskarên", "nivîskaran", "nivîskarek", "nivîskarê", "nivîskarekî", "nivîskarî", "nivîskara", "nivîskareke"]},
                 {"ku": "rojnamevan", "en": "journalist", "pos": "noun", "gender": "mf", "forms": ["rojnamevan", "rojnamevanên", "rojnamevanan", "rojnamevanek", "rojnamevanê", "rojnamevanekî", "rojnamevanî", "rojnamevana", "rojnamevaneke"]},
@@ -3244,7 +3254,7 @@
               "titleKu": "Xezal û pêşniyar",
               "titleEn": "Xezal and the offer",
               "focus": "talk",
-              "beat": "Xezal tells Hamo: a school in Hewlêr wants her as a teacher. Hamo is silent for a long time, strokes his moustache, and then smiles: “Ev nûçeyeke mezin e!” His eyes say something else.",
+              "beat": "Xezal has told Hamo: a school in Hewlêr wants her as a teacher. He passes the news on to you, strokes his moustache, and smiles: “Ev nûçeyeke mezin e!” His eyes say something else, and you tell him so.",
               "voice": "hamo",
               "new": [
                 {"ku": "meaş", "en": "salary", "pos": "noun", "gender": "m", "forms": ["meaş", "meaşên", "meaşan", "meaşek", "meaşê", "meaşekî", "meaşî"]},
@@ -3340,7 +3350,7 @@
               "titleEn": "I’ll go, but I’ll come back",
               "focus": "review",
               "beat": "Xezal writes the school a letter: yes. Then Baran comes to her with a problem of his own: his teacher wants him to give a talk about the village in front of the whole school, and he is terrified.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "mijar", "en": "subject, topic", "pos": "noun", "gender": "f", "forms": ["mijar", "mijarên", "mijaran", "mijarek", "mijara", "mijarê", "mijareke"]},
                 {"ku": "pêşkêş kirin", "en": "to present", "pos": "verb", "forms": ["pêşkêş", "kirin"]},
@@ -3400,7 +3410,7 @@
               "titleEn": "Baran’s talk",
               "focus": "talk",
               "beat": "Hamo helps Baran write his talk about Sêvan, full of becauses and so’s. Baran practises in front of the hens, as Hamo once did — and Hevalo, the most patient audience in the world, applauds with his hooves.",
-              "voice": "hevalo",
+              "voice": "hamo",
               "new": [
                 {"ku": "guhdar", "en": "listener; audience", "pos": "noun", "gender": "mf", "forms": ["guhdar", "guhdarên", "guhdaran", "guhdarek", "guhdarê", "guhdarekî", "guhdarî", "guhdara", "guhdareke"]},
                 {"ku": "çepik", "en": "clapping, applause", "pos": "noun", "gender": "f", "forms": ["çepik", "çepikên", "çepikan", "çepikek", "çepika", "çepikê", "çepikeke"]},
@@ -3459,7 +3469,7 @@
               "titleEn": "When I go to Hewlêr",
               "focus": "build",
               "beat": "Xezal plans her new life: a small rented room near the school, a new neighbourhood, new friends, a phone call home every Friday — and her mother tongue, taught to children every day.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "kirê", "en": "rent", "pos": "noun", "gender": "f", "forms": ["kirê", "kirêyên", "kirêyan", "kirêyek", "kirêya", "kirêyê", "kirêyeke"]},
                 {"ku": "demdirêj", "en": "long-term", "pos": "adj", "forms": ["demdirêj"]},
@@ -3475,7 +3485,7 @@
               "titleKu": "Gotina Hamo",
               "titleEn": "Hamo’s word",
               "focus": "talk",
-              "beat": "By the orchard wall Hamo gives Xezal the words his father gave him when he left for the city as a young man: “Here, lê rehên xwe ji bîr meke.” Go, but don’t forget your roots.",
+              "beat": "The evening before, by the orchard wall, Hamo tells you the words his father gave him when he left for the city as a young man: “Here, lê rehên xwe ji bîr meke.” Go, but don’t forget your roots. Tomorrow he will give them to Xezal; tonight he practises “Bi xêr biçî, keça min” on you.",
               "voice": "hamo",
               "new": [
                 {"ku": "reh", "en": "root", "pos": "noun", "gender": "m", "forms": ["reh", "rehên", "rehan", "rehek", "rehê", "rehekî", "rehî"]},
@@ -3511,6 +3521,7 @@
       "titleKu": "Çîrok û stran",
       "titleEn": "Stories and songs",
       "story": "The last winter by the stove. Each night Hamo tells one of his father’s tales — Şengê and Pengê and the wolf at the door, the fox who shared a field with the bear — while Dapîr answers every tale with a proverb and the children act them out (Hevalo makes a terrible wolf: too friendly). One snowy night travellers knock: a dengbêj and his daughter, who sing for their supper and turn out to have known Hamo’s father; their song about his flute is missing its last verse, until it is found on the back of an old note. Conditions (heke tu derî vekî …) and reported speech (wî got ku …) join everything the road has taught. Spring comes, and with it the farewell govend; at the blue gate where the road began, Hamo, Hevalo and you send Xezal off to Hewlêr: “Rêya te vekirî be!” And under the apple tree, a new sapling she planted for Hevalo.",
+      "recorder": "hamo",
       "skills": [
         {
           "position": 1,
@@ -3560,7 +3571,7 @@
               "titleEn": "Don’t open the door!",
               "focus": "talk",
               "beat": "Xezal and Hêvî act the tale out for the family. Hevalo plays the wolf — badly: he is far too friendly and keeps offering apples through the door. Hêvî shouts “Tu ne dayika me yî!” and everyone claps.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "lîstik", "en": "game; play", "pos": "noun", "gender": "f", "forms": ["lîstik", "lîstikên", "lîstikan", "lîstikek", "lîstika", "lîstikê", "lîstikeke"]},
                 {"ku": "rol", "en": "role, part", "pos": "noun", "gender": "f", "forms": ["rol", "rolên", "rolan", "rolek", "rola", "rolê", "roleke"]},
@@ -3618,8 +3629,8 @@
               "titleKu": "Wî got ku …",
               "titleEn": "He said that …",
               "focus": "build",
-              "beat": "Over dinner Xezal translates between everyone who is talking at once: the old man said that…, Dapîr asked whether…, Hamo claims that… — until she gives up and laughs.",
-              "voice": "xezo",
+              "beat": "Over dinner everyone talks at once. Xezal passes things on at one end of the table and Hamo at the other — the old man said that…, Dapîr asked whether…, Baran complains that… — until Xezal gives up laughing and Hamo pushes a plate towards her.",
+              "voice": "hamo",
               "new": [
                 {"ku": "ka", "en": "whether, if (in a question)", "pos": "conj", "forms": ["ka"]},
                 {"ku": "îdîa kirin", "en": "to claim", "pos": "verb", "forms": ["îdîa", "kirin"]},
@@ -3713,8 +3724,8 @@
               "titleKu": "Pêşbirka gotinan",
               "titleEn": "The proverb duel",
               "focus": "talk",
-              "beat": "A proverb duel: Xezal against Dapîr, with Hamo as judge. Dapîr always has the last word. Then Hevalo invents one of his own: “Sêvek her roj, doktor ji derî dûr!” Nobody can say it isn’t true.",
-              "voice": "hevalo",
+              "beat": "A proverb duel: Xezal and you against Dapîr, with Hamo as judge, saying each of his mother’s answers aloud. Dapîr always has the last word. Then Hevalo walks in with an apple in his mouth, and Hamo gives him a proverb of his own: “Sêvek her roj, doktor ji derî dûr!” Nobody can say it isn’t true.",
+              "voice": "hamo",
               "new": [
                 {"ku": "bêdawî", "en": "endless", "pos": "adj", "forms": ["bêdawî"]},
                 {"ku": "zana", "en": "wise, learned", "pos": "adj", "forms": ["zana"]},
@@ -3774,7 +3785,7 @@
               "titleEn": "I’ll miss you",
               "focus": "build",
               "beat": "Xezal’s goodbye speech to the family: thank you for everything, for every tale, for every glass of tea. Then she turns to her uncle and cannot finish.",
-              "voice": "xezo",
+              "voice": "hamo",
               "new": [
                 {"ku": "Heta dîtinê!", "en": "See you! (until we meet)", "pos": "phrase", "forms": ["heta", "dîtinê"]},
                 {"ku": "Bi hêviya dîtinê!", "en": "Hoping to see you again!", "pos": "phrase", "forms": ["bi", "hêviya", "dîtinê"]},
@@ -3790,7 +3801,7 @@
               "titleKu": "Li ber deriyê şîn",
               "titleEn": "At the blue gate",
               "focus": "talk",
-              "beat": "Dawn at the blue gate, where your road began. Hamo, Hevalo and you say goodbye to Xezal. “Rêya te vekirî be,” says Hamo. “Xalo, simbêlê xwe biparêze!” says Xezal. Hevalo gets the last apple.",
+              "beat": "Dawn at the blue gate, where your road began. Hamo, Hevalo and you say goodbye to Xezal. “Rêya te vekirî be,” says Hamo, and then, outraged and proud, he tells you her parting order: he is to take care of his moustache. Hevalo gets the last apple.",
               "voice": "hamo",
               "new": [
                 {"ku": "Rêya te vekirî be!", "en": "Safe journey! (may your road be open)", "pos": "phrase", "forms": ["rêya", "te", "vekirî", "be"]},
