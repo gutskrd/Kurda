@@ -9,6 +9,7 @@ import { LetterThreadPage } from './LetterThreadPage';
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
   localStorage.clear();
 });
 
@@ -79,6 +80,9 @@ describe('letters by bird', () => {
   });
 
   it('shows how many birds are out, calls one down with its letter, and answers it with the same bird', async () => {
+    // by day: at night the learner's own bird sleeps on the sill instead of playing beside the visitor
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 5, 15, 12, 0));
     const answered: VisitorAnswer = { threadId: '11111111-2222-4333-8444-555555555555', person: baran, letter: { ...visitor.letter, id: 'l2', mine: true, body: 'Silav' } };
     const calls = signIn({ 'GET /letters': home({ birdsOut: 2, sky: [4, 6] }), 'POST /letters/call': { visitor }, 'POST /letters/visitor': answered });
     renderApp(<LettersPage />, ['/app/letters']);
