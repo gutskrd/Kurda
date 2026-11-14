@@ -303,7 +303,8 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
           <View style={styles.heroWays}>
             {featured.ways.map((way, i) =>
               i === 0 ? (
-                <HeroPlay key={way.key} label={t(way.label)} onPress={() => open(way)} testID={`game-${way.key}`} />
+                // said with the game's name, as the other way beside it is: "Play" alone tells a screen reader nothing
+                <HeroPlay key={way.key} label={`${t(featured.name)}, ${t(way.label)}`} onPress={() => open(way)} testID={`game-${way.key}`} />
               ) : (
                 <PressableScale
                   key={way.key}

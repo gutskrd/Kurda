@@ -196,7 +196,8 @@ describe('the games list', () => {
     });
     renderWithProviders(<GamesView />);
     const card = await screen.findByTestId('game-detective', {}, SLOW);
-    expect(card.getAttribute('aria-label')).toBe('Detektîf, Solo. Solve a case from Kurdish evidence, then name who did it.');
+    // the game is on the shelf, or, on a day it is the one put forward, the featured game's Play: named either way
+    expect(card.getAttribute('aria-label')).toMatch(/^Detektîf, (Play|Solo\. Solve a case from Kurdish evidence, then name who did it\.)$/);
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('Detective');
   });

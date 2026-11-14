@@ -189,11 +189,12 @@ describe('Join with a code, on the Games hub', () => {
     renderApp(<Games />, ['/app/games']);
     const card = await screen.findByRole('button', { name: /^Join with a code/ });
     expect(card).toHaveTextContent('Got a code from a friend? Type it in and you’re in their game.');
-    // ahead of the shelf of games, where somebody holding a code looks first
-    const shelf = await screen.findByRole('heading', { name: 'Pêşbaziya Nivîsandinê' });
-    expect(card.compareDocumentPosition(shelf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // the session lands before the sheet is opened, so it shows the boxes and not the gate
     await screen.findAllByRole('link', { name: 'Play' });
+    // ahead of the shelf of games, where somebody holding a code looks first (the shelf itself: which game is put forward above it changes by the day)
+    const shelf = document.querySelector('.gp-shelf');
+    expect(shelf).not.toBeNull();
+    expect(card.compareDocumentPosition(shelf!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await userEvent.click(card);
     const sheet = await screen.findByRole('dialog', { name: 'Join with a code' });
     expect(within(sheet).getByLabelText('Join with a code')).toBeInTheDocument();
