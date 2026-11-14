@@ -230,23 +230,24 @@ function sleeping(dr: Drawing): void {
 // ───────────────────────────────────────────── turned toward you, and facing you
 
 /**
- * Facing you, as the owner's turnaround draws a pigeon from in front: the
- * head a dome, a little narrower than the breast, and the shoulders widening
- * out under it from about the height of the eyes.
+ * Facing you: built as the owner's turnaround builds a pigeon from in front
+ * (the head a dome a little narrower than the breast, the eyes on its
+ * sides), and dressed as the pigeon is side on, so it is plainly the same
+ * bird turned round: the head's deep colour down its front with the same
+ * blush low on the breast, the same small eyes and brows, the teal cheeks,
+ * the pale front of the face round the beak, and the same pale wings with
+ * their two dark wavy bars at its sides.
  */
 const FRONT_BODY =
   'M0 -24.8C5.4 -24.8 9.1 -21.2 9.4 -16.4C9.6 -13.6 10.2 -11.4 11.4 -9.2C12.8 -6.8 12.9 -3.4 11 -1.4C9 0.4 4.4 0.4 0 0.4C-4.4 0.4 -9 0.4 -11 -1.4C-12.9 -3.4 -12.8 -6.8 -11.4 -9.2C-10.2 -11.4 -9.6 -13.6 -9.4 -16.4C-9.1 -21.2 -5.4 -24.8 0 -24.8Z';
 /** The crest from in front: its two feathers side by side, leaning a little apart. */
 const FRONT_CREST = 'M-1.5 -24.4C-2.6 -25.3 -2.9 -26.5 -2.3 -27.6C-1.3 -27 -0.5 -25.9 -0.2 -24.6ZM0.4 -24.7C0.6 -25.9 1.3 -26.9 2.4 -27.3C2.6 -26.2 2.2 -25.2 1.6 -24.4Z';
-/** Where the head's colour ends on the breast: a collar of small scallops, as the owner's pigeons have. */
-const FRONT_COLLAR =
-  'M-13 -26V-9.6Q-11.4 -7.8 -9.6 -9.2Q-8 -7.4 -6.2 -8.8Q-4.6 -7 -3 -8.4Q-1.5 -6.6 0 -8.2Q1.5 -6.6 3 -8.4Q4.6 -7 6.2 -8.8Q8 -7.4 9.6 -9.2Q11.4 -7.8 13 -9.6V-26Z';
 /** The right wing from in front, folded at the side behind the breast: only its outer edge shows past the body. The left is its mirror. */
-const FRONT_WING = { cx: 11.4, cy: -6.4, rx: 3.9, ry: 6.2, turn: -10 } as const;
+const FRONT_WING = { cx: 11.6, cy: -6.4, rx: 4.3, ry: 6.4, turn: -10 } as const;
 /** The beak from in front, pointing at you and a little down: small, under the pale bump at its root. */
 const FRONT_BEAK = 'M-1.25 -11.8C-0.6 -12.05 0.6 -12.05 1.25 -11.8L0.3 -9.5C0.15 -9.25 -0.15 -9.25 -0.3 -9.5Z';
 /** The eyes are on the sides of the head, as a pigeon's are: from in front each is cut by the head's own outline. */
-const FRONT_EYES = { x: 8.95, y: -13.4, rx: 1.15, ry: 1.7 } as const;
+const FRONT_EYES = { x: 8.85, y: -13.2, rx: 1, ry: 1.5 } as const;
 
 /** Its legs from in front, a little apart, each with its toes spread toward you. */
 const FRONT_FEET = 'M-3.2 -2V0.4M-3.2 0.4L-4.7 1.3M-3.2 0.4V1.6M-3.2 0.4L-1.7 1.3M3.2 -2V0.4M3.2 0.4L1.7 1.3M3.2 0.4V1.6M3.2 0.4L4.7 1.3';
@@ -288,7 +289,7 @@ function frontLetter(dr: Drawing): void {
  * breast.
  */
 function facingYou(dr: Drawing, p: Plumage, letter: boolean, waving = false): void {
-  // the wings first, folded behind the breast, so only their outer edges and the ends of their bars show at its sides
+  // the wings first, folded behind the breast: pale, with the same two dark wavy bars as side on, their ends showing at its sides
   for (const side of [1, -1]) {
     const w = FRONT_WING;
     // waving, the wing on your right is lifted out and up from its shoulder, as a hand is
@@ -298,26 +299,27 @@ function facingYou(dr: Drawing, p: Plumage, letter: boolean, waving = false): vo
     dr.add(`<g transform="rotate(${n(w.turn)} ${n(w.cx)} ${n(w.cy)})">`);
     fill(dr, shape, p.wing);
     dr.add(`<g clip-path="url(#${dr.clip(shape)})">`);
-    // seen edge on, the ends of the wing's bars make one dark line round its outer rim
-    stroke(dr, `M${n(w.cx + 1.6)} ${n(w.cy - 3.8)}Q${n(w.cx + 3.4)} ${n(w.cy + 0.2)} ${n(w.cx + 1.4)} ${n(w.cy + 4.6)}`, p.bar, 0.95);
+    stroke(dr, wave([w.cx - 1.6, w.cy - 2.4], [w.cx + 4.4, w.cy - 1.6], 3, 0.75) + wave([w.cx - 1.4, w.cy + 1.4], [w.cx + 4.2, w.cy + 2.2], 3, 0.75), p.bar, 1.3);
     dr.add('</g></g></g>');
   }
-  // the breast a little lighter than the head, the head's colour coming down to a scalloped collar
-  const breast = mix(p.head, p.rear, 0.34);
-  fill(dr, FRONT_BODY, breast);
+  // the deep colour of the head all down its front, as side on, rounding off a little lighter toward its flanks
+  const round = dr.id('r');
+  dr.def(radialAt(round, [[0, p.head, 1], [0.62, p.head, 1], [1, mix(p.head, p.rear, 0.32), 1]], 0, -11, 15));
+  fill(dr, FRONT_BODY, `url(#${round})`);
   dr.add(`<g clip-path="url(#${dr.clip(FRONT_BODY)})">`);
-  fill(dr, FRONT_COLLAR, p.head);
-  dr.add(`<ellipse cx="0" cy="-1.8" rx="7.6" ry="3.2" fill="${p.belly}" opacity="0.3"/>`);
+  dr.add(`<ellipse cx="0" cy="-1.8" rx="8.4" ry="3.4" fill="${p.belly}" opacity="0.38"/>`);
   const glow = cheekGlow(dr, p);
-  for (const side of [1, -1]) dr.add(`<circle cx="${n(6.8 * side)}" cy="-10.6" r="2.3" fill="url(#${glow})"/>`);
-  // each eye on its side of the head, as much of it showing as the head's outline lets
+  for (const side of [1, -1]) dr.add(`<circle cx="${n(7 * side)}" cy="-10.2" r="2.6" fill="url(#${glow})"/>`);
+  // each eye on its side of the head, the same small dark eye as side on, as much of it showing as the head's outline lets
   const e = FRONT_EYES;
   for (const side of [1, -1]) dr.add(`<ellipse cx="${n(e.x * side)}" cy="${n(e.y)}" rx="${n(e.rx)}" ry="${n(e.ry)}" fill="${EYE}"/>`);
   dr.add('</g>');
+  // and over each, its little brow, as side on
+  for (const side of [1, -1]) stroke(dr, `M${n(side * 7.5)} ${n(e.y - 3.1)}L${n(side * 8.4)} ${n(e.y - 2.6)}`, p.brow, 0.62);
   fill(dr, FRONT_CREST, p.head);
   if (letter) frontLetter(dr);
-  // the pale bump at the root of the beak, then the beak under it
-  for (const side of [1, -1]) dr.add(`<circle cx="${n(0.68 * side)}" cy="-12.3" r="0.78" fill="${p.face}"/>`);
+  // the pale front of the face round the root of the beak, as side on, then the beak
+  dr.add(`<ellipse cx="0" cy="-11.9" rx="1.9" ry="1.25" fill="${p.face}"/>`);
   fill(dr, FRONT_BEAK, BEAK);
 }
 
