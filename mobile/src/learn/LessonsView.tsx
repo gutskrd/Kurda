@@ -30,6 +30,7 @@ import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
 import { QuestsCard } from '../quests/QuestsCard';
 import { TreeCard } from '../tree/TreeCard';
+import { BookCard } from './BookCard';
 import { EventBanner } from '../events/EventBanner';
 import { LeagueLine } from '../leagues/LeagueLine';
 import type { CourseEntry } from '../coursemap/node';
@@ -359,6 +360,8 @@ export function LessonsView({
           <QuestsCard />
           {/* the learner's tree, under the quests: water to pour shows here */}
           <TreeCard />
+          {/* and the road on paper, once a chapter is online */}
+          <BookCard />
         </View>
 
         {courses && courses.length > 0 ? (
