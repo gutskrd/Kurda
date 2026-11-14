@@ -882,7 +882,7 @@ export interface LetterBirdOptions {
   letter?: boolean;
   /** facing left rather than right */
   facingLeft?: boolean;
-  /** framed as a picture of the pigeon itself, its head and body filling the square, rather than standing where the sill is */
+  /** framed as a picture of the pigeon itself, facing you unless a pose is given, its head and body filling the square, rather than standing where the sill is */
   portrait?: boolean;
   /** with its shadow under it (the default); the window lays the shadow on the sill itself (`letterShadowSvg`) */
   shadow?: boolean;
@@ -891,19 +891,25 @@ export interface LetterBirdOptions {
   idPrefix?: string;
 }
 
-/** How a pigeon is framed for its portrait: where its feet go on the square, and how big it is drawn. */
-const PORTRAIT = { x: 52, y: 86, scale: 2.2 } as const;
+/**
+ * How a pigeon is framed for its portrait: where its feet go on the square,
+ * and how big it is drawn. Its portrait is of it facing you, as somebody's
+ * picture is, its head and body filling the round and its feet just showing;
+ * a portrait in a pose seen side on is framed on its head and breast.
+ */
+const PORTRAIT = { x: 60, y: 103, scale: 3.25 } as const;
+const PORTRAIT_SIDE = { x: 52, y: 86, scale: 2.2 } as const;
 
 /** A member's pigeon, on its own transparent square: standing, blinking, waving, asleep, or flying with its wings up or down. */
 export function letterBirdSvg(opts: LetterBirdOptions): string {
   const size = checkSize(opts.size, 120);
   const hex = LETTER_BIRDS[opts.bird];
   if (!hex) throw new RangeError(`art: no bird ${String(opts.bird)}`);
-  const pose = opts.pose ?? 'perched';
+  const pose = opts.pose ?? (opts.portrait ? 'front' : 'perched');
   const flip = opts.facingLeft ? -1 : 1;
   const shadow = opts.shadow !== false;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'letter-bird', opts.bird, pose, opts.letter ? 'letter' : '', flip, opts.portrait ? 'portrait' : '', shadow ? '' : 'unshaded'));
-  const { x, y, scale } = opts.portrait ? PORTRAIT : LETTER_BIRD_FEET;
+  const { x, y, scale } = !opts.portrait ? LETTER_BIRD_FEET : pose === 'front' || pose === 'hello' ? PORTRAIT : PORTRAIT_SIDE;
   // a pigeon facing left stands on the same feet, mirrored about them: its square fits it either way round
   dr.add(`<g transform="translate(${n(x)} ${n(y)}) scale(${n(scale * flip)} ${n(scale)})">`);
   pigeon(dr, hex, pose, opts.letter === true, shadow);

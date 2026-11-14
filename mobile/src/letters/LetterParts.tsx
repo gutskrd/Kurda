@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { LETTER_MAX, letterBirdSvg, letterProblem, type LetterItem, type LetterProblem } from '@kurda/shared';
@@ -77,7 +77,9 @@ export function LetterPaper({
   sendLabel,
   busy,
   onSend,
+  onCancel,
   error,
+  autoFocus = false,
   testID,
 }: {
   label: string;
@@ -85,8 +87,12 @@ export function LetterPaper({
   sendLabel?: string;
   busy: boolean;
   onSend: (body: string) => void;
+  /** putting the paper away again, for a letter that was started by choice */
+  onCancel?: () => void;
   /** what the server answered, when it refused */
   error?: string | null;
+  /** opened by asking to write: the pen goes straight to the paper */
+  autoFocus?: boolean;
   testID?: string;
 }): React.JSX.Element {
   const { t } = useI18n();
@@ -95,6 +101,13 @@ export function LetterPaper({
   const paper = usePaper();
   const [body, setBody] = useState('');
   const [tried, setTried] = useState(false);
+  const input = useRef<TextInput>(null);
+  // a moment after it opens, so the keyboard rises once the paper is in its place
+  useEffect(() => {
+    if (!autoFocus) return;
+    const soon = setTimeout(() => input.current?.focus(), 250);
+    return () => clearTimeout(soon);
+  }, [autoFocus]);
   const problem = letterProblem(body);
   const shown = problem && (problem !== 'short' || tried) ? t(PROBLEM[problem]) : null;
   const length = [...body.trim()].length;
@@ -113,6 +126,7 @@ export function LetterPaper({
           ))}
         </View>
         <TextInput
+          ref={input}
           value={body}
           onChangeText={setBody}
           multiline
@@ -136,7 +150,19 @@ export function LetterPaper({
           {shown ?? error}
         </Text>
       ) : null}
-      <ClayButton label={busy ? t('letters.sending') : (sendLabel ?? t('letters.send'))} onPress={send} tone="primary" busy={busy} testID={testID ? `${testID}-send` : undefined} />
+      <View style={[styles.paperActions, { flexDirection: dir.row }]}>
+        {onCancel ? (
+          <ClayButton label={t('common.cancel')} onPress={onCancel} variant="outline" disabled={busy} testID={testID ? `${testID}-cancel` : undefined} />
+        ) : null}
+        <ClayButton
+          label={busy ? t('letters.sending') : (sendLabel ?? t('letters.send'))}
+          onPress={send}
+          tone="primary"
+          busy={busy}
+          style={styles.paperSend}
+          testID={testID ? `${testID}-send` : undefined}
+        />
+      </View>
     </View>
   );
 }
@@ -202,6 +228,8 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   paperFoot: { justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.sm },
+  paperActions: { alignItems: 'center', gap: spacing.sm },
+  paperSend: { flex: 1 },
   hint: { flex: 1, fontSize: typography.sizes.xs, lineHeight: 17 },
   count: { fontSize: typography.sizes.xs, fontVariant: ['tabular-nums'] },
   problem: { fontSize: typography.sizes.sm, lineHeight: 19 },
