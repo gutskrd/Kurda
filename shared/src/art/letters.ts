@@ -228,246 +228,347 @@ export interface LetterPlay {
   letter: ReadonlyArray<{ at: number; y: number; seen: number }>;
 }
 
-/** Moves written as changes: each key keeps whatever it does not say from the one before. */
-function moves(keys: ReadonlyArray<Partial<LetterPlayMove> & { at: number }>): LetterPlayMove[] {
+/**
+ * A play as it is timed, in milliseconds from its start: where the pigeon is
+ * (`moves`, each key keeping whatever it does not say from the one before),
+ * which picture of it is seen from when (`poses`), and the letter on the
+ * sill (`letter`). It is turned into shares of its length, the clock an app
+ * runs it on.
+ */
+function timed(play: {
+  ms: number;
+  loop?: boolean;
+  moves: ReadonlyArray<Partial<LetterPlayMove> & { at: number }>;
+  poses: ReadonlyArray<readonly [at: number, pose: PigeonPose, letter: boolean]>;
+  letterAt?: number;
+  letter?: ReadonlyArray<{ at: number; y: number; seen: number }>;
+}): LetterPlay {
+  const share = (at: number): number => Math.round((at / play.ms) * 100000) / 100000;
   let last: LetterPlayMove = { at: 0, x: 0, y: 0, tilt: 0, sx: 1, sy: 1 };
-  return keys.map((k) => (last = { ...last, ...k }));
+  const keyed = play.moves.map((k) => (last = { ...last, ...k }));
+  return {
+    ms: play.ms,
+    loop: play.loop ?? false,
+    moves: [...keyed, { ...last, at: play.ms }].map((m) => ({ ...m, at: share(m.at) })),
+    poses: play.poses.map(([at, pose, letter]) => [share(at), pose, letter] as const),
+    letterAt: play.letterAt ?? 0,
+    letter: (play.letter ?? []).map((k) => ({ ...k, at: share(k.at) })),
+  };
 }
 
 /**
- * A pigeon's plays: before it goes, after it comes, at home on the sill while
- * nothing is happening, and two for a bird at somebody's window: sent on, it
- * picks its own letter up again from where it laid it (`fetch`); answered,
- * the answer drops in front of it and it takes it home (`take`). Neither
- * steps toward the bird beside it.
+ * How a pigeon turns round, as a round bird does rather than a card: it is
+ * seen three-quarters toward you for a moment, then facing you, then
+ * three-quarters the other way, and then side on again. The side it faces
+ * changes only in the middle of its facing you, where it looks the same
+ * either way round. The time it shows each, in milliseconds.
  */
-export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' | 'take', LetterPlay>> = {
-  // your letter drops onto the sill; the pigeon looks up at it, hops for joy and chirps, hops over, picks it up, and beats its wings, ready
-  before: {
-    ms: 4000,
-    loop: false,
-    moves: moves([
+export const LETTER_TURN = { quarter: 70, front: 90 } as const;
+
+/**
+ * A pigeon's plays: before it goes, after it comes, at home on the sill while
+ * nothing is happening, two for a bird at somebody's window (sent on, it
+ * picks its own letter up again from where it laid it, `fetch`; answered,
+ * the answer drops in front of it and it takes it home, `take`), and a turn
+ * round on the spot (`turn`), for a bird that has to face the other way.
+ * Neither of the window's plays steps toward the bird beside it.
+ */
+export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' | 'take' | 'turn', LetterPlay>> = {
+  // your letter drops onto the sill; the pigeon looks up at it, hops for joy and chirps, hops over and picks it up,
+  // turns to show it to you, and beats its wings, ready
+  before: timed({
+    ms: 4900,
+    moves: [
       { at: 0 },
-      { at: 0.18, tilt: -8 },
-      { at: 0.24, tilt: 0 },
-      { at: 0.28, y: -0.06, sx: 0.96, sy: 1.05 },
-      { at: 0.33, y: 0, sx: 1.08, sy: 0.9 },
-      { at: 0.37, sx: 1, sy: 1 },
-      { at: 0.42, x: 0.035, y: -0.045 },
-      { at: 0.47, x: 0.07, y: 0, sx: 1.06, sy: 0.92 },
-      { at: 0.5, sx: 1, sy: 1 },
-      { at: 0.55, tilt: 30 },
-      { at: 0.6, tilt: 30 },
-      { at: 0.65, tilt: 0 },
-      { at: 0.69, y: -0.05 },
-      { at: 0.735, y: 0 },
-      { at: 0.78, x: 0.045, y: -0.06 },
-      { at: 0.825, y: 0 },
-      { at: 0.87, x: 0.02, y: -0.05 },
-      { at: 0.915, x: 0, y: 0 },
-      { at: 1 },
-    ]),
+      { at: 720, tilt: -8 },
+      { at: 960, tilt: 0 },
+      { at: 1120, y: -0.06, sx: 0.96, sy: 1.05 },
+      { at: 1320, y: 0, sx: 1.08, sy: 0.9 },
+      { at: 1480, sx: 1, sy: 1 },
+      { at: 1680, x: 0.035, y: -0.045 },
+      { at: 1880, x: 0.07, y: 0, sx: 1.06, sy: 0.92 },
+      { at: 2000, sx: 1, sy: 1 },
+      { at: 2200, tilt: 30 },
+      { at: 2400, tilt: 30 },
+      { at: 2600, tilt: 0 },
+      // a little hop as it turns to you with the letter, and another as it turns back
+      { at: 2620 },
+      { at: 2670, y: -0.03 },
+      { at: 2720, y: 0 },
+      { at: 3380 },
+      { at: 3430, y: -0.03 },
+      { at: 3490, y: 0 },
+      { at: 3660, y: -0.05 },
+      { at: 3840, y: 0 },
+      { at: 4020, x: 0.045, y: -0.06 },
+      { at: 4200, y: 0 },
+      { at: 4380, x: 0.02, y: -0.05 },
+      { at: 4560, x: 0, y: 0 },
+    ],
     poses: [
       [0, 'perched', false],
-      [0.1, 'blink', false],
-      [0.14, 'perched', false],
-      [0.26, 'happy', false],
-      [0.4, 'perched', false],
-      [0.6, 'perched', true],
-      [0.67, 'wings-up', true],
-      [0.712, 'wings-down', true],
-      [0.757, 'wings-up', true],
-      [0.8, 'wings-down', true],
-      [0.845, 'wings-up', true],
-      [0.89, 'wings-down', true],
-      [0.935, 'perched', true],
+      [400, 'blink', false],
+      [560, 'perched', false],
+      [1040, 'happy', false],
+      [1600, 'perched', false],
+      [2400, 'perched', true],
+      [2640, 'turn', true],
+      [2710, 'front', true],
+      [3400, 'turn', true],
+      [3470, 'perched', true],
+      [3580, 'wings-up', true],
+      [3748, 'wings-down', true],
+      [3928, 'wings-up', true],
+      [4100, 'wings-down', true],
+      [4280, 'wings-up', true],
+      [4460, 'wings-down', true],
+      [4640, 'perched', true],
     ],
     letterAt: 0.37,
     letter: [
       { at: 0, y: -0.55, seen: 0 },
-      { at: 0.04, y: -0.5, seen: 1 },
-      { at: 0.16, y: 0, seen: 1 },
-      { at: 0.19, y: -0.04, seen: 1 },
-      { at: 0.22, y: 0, seen: 1 },
-      { at: 0.599, y: 0, seen: 1 },
-      { at: 0.6, y: 0, seen: 0 },
-      { at: 1, y: 0, seen: 0 },
+      { at: 160, y: -0.5, seen: 1 },
+      { at: 640, y: 0, seen: 1 },
+      { at: 760, y: -0.04, seen: 1 },
+      { at: 880, y: 0, seen: 1 },
+      { at: 2396, y: 0, seen: 1 },
+      { at: 2400, y: 0, seen: 0 },
+      { at: 4900, y: 0, seen: 0 },
     ],
-  },
-  // landed with a letter: it shakes its feathers, lays the letter down, chirps, hops round to look behind it and back, and waves
-  after: {
-    ms: 4800,
-    loop: false,
-    moves: moves([
+  }),
+  // landed with a letter: it shakes its feathers, lays the letter down, chirps, turns round to look behind it,
+  // and turns back to face you and wave hello before it stands as it came
+  after: timed({
+    ms: 5300,
+    moves: [
       { at: 0, sx: 1.08, sy: 0.9 },
-      { at: 0.05, sx: 1, sy: 1 },
-      { at: 0.09, tilt: -7 },
-      { at: 0.12, tilt: 7 },
-      { at: 0.15, tilt: -5 },
-      { at: 0.18, tilt: 4 },
-      { at: 0.21, tilt: 0 },
-      { at: 0.27, tilt: 30 },
-      { at: 0.33, tilt: 30 },
-      { at: 0.38, tilt: 0 },
-      { at: 0.42, y: -0.06, sx: 0.96, sy: 1.05 },
-      { at: 0.47, y: 0, sx: 1.08, sy: 0.9 },
-      { at: 0.5, sx: 1, sy: 1 },
-      { at: 0.56 },
-      { at: 0.59, y: -0.045, sx: -1 },
-      { at: 0.62, y: 0 },
-      { at: 0.67 },
-      { at: 0.7, y: -0.045, sx: 1 },
-      { at: 0.73, y: 0 },
-      { at: 1 },
-    ]),
+      { at: 240, sx: 1, sy: 1 },
+      { at: 432, tilt: -7 },
+      { at: 576, tilt: 7 },
+      { at: 720, tilt: -5 },
+      { at: 864, tilt: 4 },
+      { at: 1008, tilt: 0 },
+      { at: 1296, tilt: 30 },
+      { at: 1584, tilt: 30 },
+      { at: 1824, tilt: 0 },
+      { at: 2016, y: -0.06, sx: 0.96, sy: 1.05 },
+      { at: 2256, y: 0, sx: 1.08, sy: 0.9 },
+      { at: 2400, sx: 1, sy: 1 },
+      { at: 2860 },
+      { at: 2994.5, y: -0.045 },
+      { at: 2995, sx: -1 },
+      { at: 3130, y: 0 },
+      { at: 3680 },
+      { at: 3730, y: -0.03 },
+      { at: 3790, y: 0 },
+      { at: 3859.5 },
+      { at: 3860, sx: 1 },
+      { at: 4680 },
+      { at: 4730, y: -0.03 },
+      { at: 4790, y: 0 },
+    ],
     poses: [
       [0, 'perched', true],
-      [0.33, 'perched', false],
-      [0.41, 'happy', false],
-      [0.53, 'perched', false],
-      [0.56, 'blink', false],
-      [0.58, 'perched', false],
-      [0.76, 'wave', false],
-      [0.81, 'perched', false],
-      [0.86, 'wave', false],
-      [0.91, 'perched', false],
+      [1584, 'perched', false],
+      [1968, 'happy', false],
+      [2544, 'perched', false],
+      [2688, 'blink', false],
+      [2784, 'perched', false],
+      [2880, 'turn', false],
+      [2950, 'front', false],
+      [3040, 'turn', false],
+      [3110, 'perched', false],
+      [3700, 'turn', false],
+      [3770, 'front', false],
+      [3950, 'hello', false],
+      [4170, 'front', false],
+      [4330, 'hello', false],
+      [4550, 'front', false],
+      [4700, 'turn', false],
+      [4770, 'perched', false],
     ],
     letterAt: 0.3,
     letter: [
       { at: 0, y: 0, seen: 0 },
-      { at: 0.329, y: 0, seen: 0 },
-      { at: 0.33, y: 0, seen: 1 },
-      { at: 1, y: 0, seen: 1 },
+      { at: 1579, y: 0, seen: 0 },
+      { at: 1584, y: 0, seen: 1 },
+      { at: 5300, y: 0, seen: 1 },
     ],
-  },
-  // sent on: it looks at you, then down at its letter, picks it up where it laid it, and beats its wings, ready
-  fetch: {
-    ms: 3200,
-    loop: false,
-    moves: moves([
+  }),
+  // sent on: it turns to look at you a while, then down at its letter, picks it up where it laid it, turns round
+  // the way it will fly, and beats its wings, ready
+  fetch: timed({
+    ms: 3900,
+    moves: [
       { at: 0 },
-      { at: 0.1, tilt: -8 },
-      { at: 0.2, tilt: -8 },
-      { at: 0.26, tilt: 0 },
-      { at: 0.34, tilt: 30 },
-      { at: 0.42, tilt: 30 },
-      { at: 0.5, tilt: 0 },
-      { at: 0.56, y: -0.05 },
-      { at: 0.62, y: 0 },
-      { at: 0.7, y: -0.05 },
-      { at: 0.76, y: 0 },
-      { at: 0.84, y: -0.04 },
-      { at: 0.9, y: 0 },
-      { at: 1 },
-    ]),
+      { at: 220 },
+      { at: 270, y: -0.03 },
+      { at: 330, y: 0 },
+      { at: 880 },
+      { at: 930, y: -0.03 },
+      { at: 990, y: 0 },
+      { at: 1040, tilt: 0 },
+      { at: 1300, tilt: 30 },
+      { at: 1560, tilt: 30 },
+      { at: 1820, tilt: 0 },
+      { at: 1860 },
+      { at: 1994.5, y: -0.04 },
+      { at: 1995, sx: -1 },
+      { at: 2130, y: 0 },
+      { at: 2220 },
+      { at: 2350, y: -0.05 },
+      { at: 2540, y: 0 },
+      { at: 2730, y: -0.05 },
+      { at: 2920, y: 0 },
+      { at: 3110, y: -0.04 },
+      { at: 3300, y: 0 },
+    ],
     poses: [
       [0, 'perched', false],
-      [0.14, 'blink', false],
-      [0.18, 'perched', false],
-      [0.42, 'perched', true],
-      [0.53, 'wings-up', true],
-      [0.59, 'wings-down', true],
-      [0.65, 'wings-up', true],
-      [0.71, 'wings-down', true],
-      [0.77, 'wings-up', true],
-      [0.83, 'wings-down', true],
-      [0.92, 'perched', true],
+      [240, 'turn', false],
+      [310, 'front', false],
+      [900, 'turn', false],
+      [970, 'perched', false],
+      [1560, 'perched', true],
+      [1880, 'turn', true],
+      [1950, 'front', true],
+      [2040, 'turn', true],
+      [2110, 'perched', true],
+      [2260, 'wings-up', true],
+      [2450, 'wings-down', true],
+      [2640, 'wings-up', true],
+      [2830, 'wings-down', true],
+      [3020, 'wings-up', true],
+      [3210, 'wings-down', true],
+      [3440, 'perched', true],
     ],
     letterAt: 0.3,
     letter: [
       { at: 0, y: 0, seen: 1 },
-      { at: 0.419, y: 0, seen: 1 },
-      { at: 0.42, y: 0, seen: 0 },
-      { at: 1, y: 0, seen: 0 },
+      { at: 1556, y: 0, seen: 1 },
+      { at: 1560, y: 0, seen: 0 },
+      { at: 3900, y: 0, seen: 0 },
     ],
-  },
-  // answered: it watches the answer drop in front of it, picks it up where it fell, and beats its wings, ready to take it home
-  take: {
-    ms: 3400,
-    loop: false,
-    moves: moves([
+  }),
+  // answered: it watches the answer drop in front of it, chirps, picks it up where it fell, turns round the way it
+  // will fly, and beats its wings, ready to take it home
+  take: timed({
+    ms: 3800,
+    moves: [
       { at: 0 },
-      { at: 0.06, tilt: -10 },
-      { at: 0.18, tilt: -10 },
-      { at: 0.26, tilt: 0 },
-      { at: 0.34, tilt: 30 },
-      { at: 0.42, tilt: 30 },
-      { at: 0.5, tilt: 0 },
-      { at: 0.56, y: -0.05 },
-      { at: 0.62, y: 0 },
-      { at: 0.7, y: -0.05 },
-      { at: 0.76, y: 0 },
-      { at: 0.84, y: -0.04 },
-      { at: 0.9, y: 0 },
-      { at: 1 },
-    ]),
+      { at: 204, tilt: -10 },
+      { at: 612, tilt: -10 },
+      { at: 884, tilt: 0 },
+      { at: 1156, tilt: 30 },
+      { at: 1428, tilt: 30 },
+      { at: 1700, tilt: 0 },
+      { at: 1740 },
+      { at: 1874.5, y: -0.04 },
+      { at: 1875, sx: -1 },
+      { at: 2010, y: 0 },
+      { at: 2100 },
+      { at: 2230, y: -0.05 },
+      { at: 2420, y: 0 },
+      { at: 2610, y: -0.05 },
+      { at: 2800, y: 0 },
+      { at: 2990, y: -0.04 },
+      { at: 3180, y: 0 },
+    ],
     poses: [
       [0, 'perched', false],
-      [0.24, 'happy', false],
-      [0.3, 'perched', false],
-      [0.42, 'perched', true],
-      [0.53, 'wings-up', true],
-      [0.59, 'wings-down', true],
-      [0.65, 'wings-up', true],
-      [0.71, 'wings-down', true],
-      [0.77, 'wings-up', true],
-      [0.83, 'wings-down', true],
-      [0.92, 'perched', true],
+      [816, 'happy', false],
+      [1020, 'perched', false],
+      [1428, 'perched', true],
+      [1760, 'turn', true],
+      [1830, 'front', true],
+      [1920, 'turn', true],
+      [1990, 'perched', true],
+      [2140, 'wings-up', true],
+      [2330, 'wings-down', true],
+      [2520, 'wings-up', true],
+      [2710, 'wings-down', true],
+      [2900, 'wings-up', true],
+      [3090, 'wings-down', true],
+      [3320, 'perched', true],
     ],
     letterAt: 0.3,
     letter: [
       { at: 0, y: -0.55, seen: 0 },
-      { at: 0.03, y: -0.5, seen: 1 },
-      { at: 0.15, y: 0, seen: 1 },
-      { at: 0.18, y: -0.04, seen: 1 },
-      { at: 0.21, y: 0, seen: 1 },
-      { at: 0.419, y: 0, seen: 1 },
-      { at: 0.42, y: 0, seen: 0 },
-      { at: 1, y: 0, seen: 0 },
+      { at: 102, y: -0.5, seen: 1 },
+      { at: 510, y: 0, seen: 1 },
+      { at: 612, y: -0.04, seen: 1 },
+      { at: 714, y: 0, seen: 1 },
+      { at: 1424, y: 0, seen: 1 },
+      { at: 1428, y: 0, seen: 0 },
+      { at: 3800, y: 0, seen: 0 },
     ],
-  },
-  // at home, over and over: a pigeon's bob of the head, a peck at the seeds, a look up at the sky, a chirp, and a hop round and back
-  idle: {
+  }),
+  // at home, over and over: a pigeon's bob of the head, a peck at the seeds, a look up at the sky, a chirp, a turn
+  // round to look the other way, and a turn back that stops a while to look at you
+  idle: timed({
     ms: 15000,
     loop: true,
-    moves: moves([
+    moves: [
       { at: 0 },
-      { at: 0.1 },
-      { at: 0.115, x: 0.012, y: -0.02, tilt: 4 },
-      { at: 0.13, x: 0, y: 0, tilt: 0 },
-      { at: 0.145, x: 0.012, y: -0.02, tilt: 4 },
-      { at: 0.16, x: 0, y: 0, tilt: 0 },
-      { at: 0.26 },
-      { at: 0.29, tilt: 30 },
-      { at: 0.31, tilt: 18 },
-      { at: 0.33, tilt: 30 },
-      { at: 0.36, tilt: 0 },
-      { at: 0.48 },
-      { at: 0.5, tilt: -12 },
-      { at: 0.58, tilt: -12 },
-      { at: 0.6, tilt: 0 },
-      { at: 0.72 },
-      { at: 0.75, y: -0.05, sx: -1 },
-      { at: 0.78, y: 0 },
-      { at: 0.86 },
-      { at: 0.89, y: -0.05, sx: 1 },
-      { at: 0.92, y: 0 },
-      { at: 1 },
-    ]),
+      { at: 1500 },
+      { at: 1725, x: 0.012, y: -0.02, tilt: 4 },
+      { at: 1950, x: 0, y: 0, tilt: 0 },
+      { at: 2175, x: 0.012, y: -0.02, tilt: 4 },
+      { at: 2400, x: 0, y: 0, tilt: 0 },
+      { at: 3900 },
+      { at: 4350, tilt: 30 },
+      { at: 4650, tilt: 18 },
+      { at: 4950, tilt: 30 },
+      { at: 5400, tilt: 0 },
+      { at: 7200 },
+      { at: 7500, tilt: -12 },
+      { at: 8700, tilt: -12 },
+      { at: 9000, tilt: 0 },
+      { at: 10780 },
+      { at: 10914.5, y: -0.045 },
+      { at: 10915, sx: -1 },
+      { at: 11050, y: 0 },
+      { at: 12880 },
+      { at: 12930, y: -0.03 },
+      { at: 12990, y: 0 },
+      { at: 13499.5 },
+      { at: 13500, sx: 1 },
+      { at: 14030 },
+      { at: 14080, y: -0.03 },
+      { at: 14140, y: 0 },
+    ],
     poses: [
       [0, 'perched', false],
-      [0.05, 'blink', false],
-      [0.06, 'perched', false],
-      [0.4, 'blink', false],
-      [0.41, 'perched', false],
-      [0.62, 'happy', false],
-      [0.68, 'perched', false],
-      [0.83, 'blink', false],
-      [0.84, 'perched', false],
+      [750, 'blink', false],
+      [900, 'perched', false],
+      [6000, 'blink', false],
+      [6150, 'perched', false],
+      [9300, 'happy', false],
+      [10200, 'perched', false],
+      [10800, 'turn', false],
+      [10870, 'front', false],
+      [10960, 'turn', false],
+      [11030, 'perched', false],
+      [12000, 'blink', false],
+      [12150, 'perched', false],
+      [12900, 'turn', false],
+      [12970, 'front', false],
+      [14050, 'turn', false],
+      [14120, 'perched', false],
     ],
-    letterAt: 0,
-    letter: [],
-  },
+  }),
+  // turned round on the spot, for a bird that has to face the other way: a little hop as it goes round through facing you
+  turn: timed({
+    ms: 640,
+    moves: [{ at: 0 }, { at: 40 }, { at: 174.5, y: -0.04 }, { at: 175, sx: -1 }, { at: 310, y: 0 }],
+    poses: [
+      [0, 'perched', false],
+      [60, 'turn', false],
+      [130, 'front', false],
+      [220, 'turn', false],
+      [290, 'perched', false],
+    ],
+  }),
 };
 
 /**
@@ -508,32 +609,31 @@ const lifted = (lift: number): { size: number; seen: number } => ({ size: Math.m
  * The shadows a play lays on the sill, on the play's own clock. The
  * pigeon's (`moves`) stays on the sill under it wherever it steps, turns
  * round with it, slides a little ahead as it leans down to peck, and is
- * smaller and fainter while it is up in a hop; the letter in its beak casts
- * one too while it holds it (`holding`, steps as `letterPlayShows` gives
- * them, for the shadow drawn with the letter's). A letter lying on the sill
- * has its own (`letter`), there before it lands and darker the nearer it
- * comes down.
+ * smaller and fainter while it is up in a hop. Its shape is the pigeon's
+ * as it is seen, side on, turned or facing you, with the letter's in it while
+ * it holds one (`shapes`, each with its steps as `letterPlayShows` gives
+ * them). A letter lying on the sill has its own (`letter`), there before it
+ * lands and darker the nearer it comes down.
  */
 export function letterPlayShadow(play: LetterPlay): {
   moves: LetterShadowKey[];
-  holding: Array<readonly [at: number, seen: 0 | 1]>;
+  shapes: Array<{ pose: PigeonPose; letter: boolean; steps: Array<readonly [at: number, seen: 0 | 1]> }>;
   letter: Array<{ at: number; size: number; seen: number }>;
 } {
   const moves = play.moves.map((m) => {
     const { size, seen } = lifted(-m.y);
     return { at: m.at, x: m.x + Math.sin((m.tilt * Math.PI) / 180) * 0.05, sx: m.sx * size, sy: size, seen };
   });
-  const holding: Array<readonly [number, 0 | 1]> = [];
-  play.poses.forEach(([at, pose, letter], i) => {
-    const now: 0 | 1 = pigeonHolds(pose, letter) ? 1 : 0;
-    const before = i === 0 ? null : holding[holding.length - 1]![1];
-    if (before === null) holding.push([0, now]);
-    else if (before !== now) holding.push([Math.max(0, at - 0.0005), before], [at, now]);
-  });
-  if (holding.length) holding.push([1, holding[holding.length - 1]![1]]);
+  // the shadow takes the shape of the pigeon as it is seen from above, side on, turned or facing you, with the letter's when it holds one
+  const shapes = letterPlayShows({ ...play, poses: play.poses.map(([at, pose, letter]) => [at, shadowShape(pose), pigeonHolds(pose, letter)] as const) });
   // a letter falls further than a pigeon hops, so its shadow fades more gently with the height
   const letter = play.letter.map((k) => ({ at: k.at, size: Math.max(0.4, 1 + k.y * 0.9), seen: k.seen * Math.max(0, 1 + k.y * 1.3) }));
-  return { moves, holding, letter };
+  return { moves, shapes, letter };
+}
+
+/** The shape of the shadow a pigeon casts in `pose`: side on, turned three-quarters, or facing you (waving or not, it is the same round). */
+function shadowShape(pose: PigeonPose): PigeonPose {
+  return pose === 'turn' ? 'turn' : pose === 'front' || pose === 'hello' ? 'front' : 'perched';
 }
 
 /**

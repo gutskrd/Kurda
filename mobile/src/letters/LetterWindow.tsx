@@ -364,9 +364,6 @@ function Playing({
       { scaleY: clock.interpolate({ inputRange: shadeAt, outputRange: shadow.moves.map((k) => k.sy), ...ease }) },
     ],
   };
-  // the shadow with a letter's in it is laid only for a play in which the pigeon holds one, and switched with the plain one
-  const holds = shadow.holding.some(([, seen]) => seen === 1);
-  const held = holds ? clock.interpolate({ inputRange: shadow.holding.map(([t]) => t), outputRange: shadow.holding.map(([, seen]) => seen) }) : null;
   const letterAt = play.letter.map((k) => k.at);
   const letterMoves = play.letter.length
     ? {
@@ -382,9 +379,19 @@ function Playing({
     : undefined;
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none" testID={`letter-pigeon-${play.loop ? 'home' : 'playing'}`}>
+      {/* the shadow's shape is switched with the pigeon's pictures: side on, turned or facing you, with the letter's while it holds one */}
       <Animated.View style={[StyleSheet.absoluteFill, shaded]}>
-        <Shade facingLeft={facingLeft} spot={spot} size={size} style={held ? { opacity: Animated.subtract(1, held) } : undefined} />
-        {held ? <Shade letter facingLeft={facingLeft} spot={spot} size={size} style={{ opacity: held }} /> : null}
+        {shadow.shapes.map((shape) => (
+          <Shade
+            key={`${shape.pose}${shape.letter}`}
+            pose={shape.pose}
+            letter={shape.letter}
+            facingLeft={facingLeft}
+            spot={spot}
+            size={size}
+            style={{ opacity: clock.interpolate({ inputRange: shape.steps.map(([t]) => t), outputRange: shape.steps.map(([, seen]) => seen) }) }}
+          />
+        ))}
       </Animated.View>
       {letterMoves ? <SillLetter at={play.letterAt} dir={dir} spot={spot} size={size} style={letterMoves} shadeStyle={letterShade} /> : null}
       <Animated.View style={[StyleSheet.absoluteFill, moved]}>
@@ -579,7 +586,12 @@ function FlightShade({ flight, spot, facingLeft, size }: { flight: Flight; spot:
   );
 }
 
-/** A bird on the sill, between its flights: standing (asleep at night if it may sleep), playing, or settled again with the letter it brought. */
+/**
+ * A bird on the sill, between its flights: standing (asleep at night if it
+ * may sleep), playing, or settled again with the letter it brought. It
+ * stands the way it landed; when it is to face the other way while it is on
+ * the sill, it turns round on the spot first, through facing you.
+ */
 function OnSill({
   life,
   flight,
@@ -600,7 +612,15 @@ function OnSill({
 }): React.JSX.Element | null {
   const bird = birdOf(life);
   const { phase, setPhase } = flight;
+  const [facing, setFacing] = useState(facingLeft);
+  // in the air it faces the way it flies, so it lands facing the way it is meant to
+  useEffect(() => {
+    if (phase === 'flight') setFacing(facingLeft);
+  }, [phase, facingLeft]);
   if (bird === null || phase === 'flight') return null;
+  if (facing !== facingLeft) {
+    return <Playing key="turn" bird={bird} spot={spot} play={LETTER_PLAY.turn} facingLeft={facing} size={size} onEnd={() => setFacing(facingLeft)} />;
+  }
   const dir = facingLeft ? -1 : 1;
   const plays = beside ? LETTER_PLAY_BESIDE : LETTER_PLAY;
   if (phase === 'play' && life.kind === 'leaving') {
@@ -919,7 +939,8 @@ export function LetterWindow({
   };
   const light = { opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) };
 
-  // a bird flies off to the right of the window, wherever it stood, and comes in facing the way it comes
+  // a bird flies off to the right of the window, wherever it stood, and comes in facing the way it comes; your own stays
+  // facing the letter it brought home until that is read, and then turns round
   const ownBack = own.kind === 'arriving';
   const visitorBack = visitor.kind === 'arriving';
   return (
@@ -940,7 +961,7 @@ export function LetterWindow({
       <Layer part="light" sky={sky} size={size} id={id} style={light} />
       <Animated.View style={[StyleSheet.absoluteFill, hop.style]} pointerEvents="none">
         <FlightShade flight={ownFlight} spot={ownSpot} facingLeft={ownBack} size={size} />
-        <OnSill life={own} flight={ownFlight} spot={ownSpot} facingLeft={false} asleep={sky === 'night'} beside={visitor.kind !== 'none'} size={size} />
+        <OnSill life={own} flight={ownFlight} spot={ownSpot} facingLeft={ownBack} asleep={sky === 'night'} beside={visitor.kind !== 'none'} size={size} />
       </Animated.View>
       <FlightShade flight={visitorFlight} spot="visitor" facingLeft={visitorBack} size={size} />
       <OnSill life={visitor} flight={visitorFlight} spot="visitor" facingLeft asleep={false} beside size={size} />

@@ -2015,18 +2015,51 @@ describe('the pigeon at play', () => {
     const fetch = LETTER_PLAY.fetch;
     expect(fetch.letterAt).toBe(after.letterAt);
     expect(fetch.letter[0]).toMatchObject({ y: 0, seen: 1 });
-    expect(fetch.moves[fetch.moves.length - 1]).toMatchObject(still);
+    // a bird at somebody's window faces back toward its own way in, so it turns round to fly off the way every bird goes
+    expect(fetch.moves[fetch.moves.length - 1]).toMatchObject({ ...still, sx: -1 });
     expect(fetch.poses[fetch.poses.length - 1]!.slice(1)).toEqual(['perched', true]);
     // answered, it takes the answer that dropped where its own letter lay, and ends as ready to fly
     const take = LETTER_PLAY.take;
     expect(take.letterAt).toBe(after.letterAt);
-    expect(take.moves[take.moves.length - 1]).toMatchObject(still);
+    expect(take.moves[take.moves.length - 1]).toMatchObject({ ...still, sx: -1 });
     expect(take.poses[take.poses.length - 1]!.slice(1)).toEqual(['perched', true]);
     expect(after.moves[after.moves.length - 1]).toMatchObject(still);
     // the idle play goes round and round, so it ends as it begins
     const idle = LETTER_PLAY.idle;
     expect(idle.moves[idle.moves.length - 1]).toMatchObject(still);
     expect(idle.poses[0]!.slice(1)).toEqual(['perched', false]);
+    // turned round on the spot, it ends facing the other way, as it stood
+    const turn = LETTER_PLAY.turn;
+    expect(turn.moves[0]).toMatchObject(still);
+    expect(turn.moves[turn.moves.length - 1]).toMatchObject({ ...still, sx: -1 });
+    expect(turn.poses[turn.poses.length - 1]!.slice(1)).toEqual(['perched', false]);
+  });
+
+  it('turns round as a round bird does: three-quarters, facing you, three-quarters, and only facing you does it change sides', () => {
+    const facing = new Set(['front', 'hello']);
+    for (const play of [...Object.values(LETTER_PLAY), ...Object.values(LETTER_PLAY_BESIDE)]) {
+      const poseAt = (t: number): string => {
+        let pose = play.poses[0]![1] as string;
+        for (const [at, p] of play.poses) if (at <= t) pose = p;
+        return pose;
+      };
+      // the side it faces changes in a single step, never through a squeeze, and while it faces you
+      for (let i = 1; i < play.moves.length; i++) {
+        const [a, b] = [play.moves[i - 1]!, play.moves[i]!];
+        if (Math.sign(a.sx) === Math.sign(b.sx)) continue;
+        expect(b.at - a.at).toBeLessThan(0.001);
+        expect(facing.has(poseAt(a.at))).toBe(true);
+        expect(facing.has(poseAt(b.at))).toBe(true);
+      }
+      for (const m of play.moves) expect(Math.abs(Math.abs(m.sx) - 1)).toBeLessThan(0.1);
+      // it never jumps from side on to facing you, or back, without the three-quarter turn between
+      play.poses.forEach(([, pose], i) => {
+        const next = play.poses[i + 1]?.[1];
+        if (next === undefined) return;
+        if (facing.has(pose)) expect(['turn', 'front', 'hello']).toContain(next);
+        if (facing.has(next)) expect(['turn', 'front', 'hello']).toContain(pose);
+      });
+    }
   });
 
   it('shows exactly one picture of the pigeon at every moment of every play', () => {
@@ -2062,18 +2095,26 @@ describe('the pigeon at play', () => {
         expect(k.seen).toBeGreaterThan(0);
         expect(Math.sign(k.sx)).toBe(Math.sign(m.sx));
       });
-      // it holds the letter, and casts its shadow, exactly while a picture with the letter in its beak is seen
-      const holdingAt = (t: number): number => {
-        let seen = 0;
-        for (const [at, s] of shadow.holding) if (at <= t) seen = s;
-        return seen;
+      // one shadow at a time, the shape of the pigeon as it is seen, with the letter's exactly while a picture with the letter in its beak is seen
+      const shapeAt = (t: number): string => {
+        const seen = shadow.shapes.filter((shape) => {
+          let on = 0;
+          for (const [at, s] of shape.steps) if (at <= t) on = s;
+          return on === 1;
+        });
+        expect(seen).toHaveLength(1);
+        return `${seen[0]!.pose}${seen[0]!.letter ? '+letter' : ''}`;
       };
-      const posedAt = (t: number): boolean => {
-        let held = false;
-        for (const [at, pose, letter] of play.poses) if (at <= t) held = letter && pose !== 'happy' && pose !== 'sleep';
-        return held;
+      const posedAt = (t: number): string => {
+        let shape = '';
+        for (const [at, pose, letter] of play.poses) {
+          if (at > t) break;
+          const held = letter && pose !== 'happy' && pose !== 'sleep';
+          shape = `${pose === 'turn' ? 'turn' : pose === 'front' || pose === 'hello' ? 'front' : 'perched'}${held ? '+letter' : ''}`;
+        }
+        return shape;
       };
-      for (let t = 0; t <= 1; t += 0.01) expect(holdingAt(t)).toBe(posedAt(t) ? 1 : 0);
+      for (let t = 0; t <= 1; t += 0.01) expect(shapeAt(t)).toBe(posedAt(t));
       // a letter on the sill has its shadow fullest when it lies there, less while it is coming down
       shadow.letter.forEach((k, i) => {
         const l = play.letter[i]!;
@@ -2129,10 +2170,11 @@ describe('the life round the window', () => {
     expect(gap(beak.standing, beak.standing)).toBeGreaterThan(8);
     expect(gap(beak.pecking, beak.pecking)).toBeGreaterThan(5);
     expect(gap(beak.standing, beak.letter)).toBeGreaterThan(3);
-    // and neither turns round, or steps toward the other, while the two are there
+    // and neither turns round, or steps toward the other, while the two are there: the visitor turns round only to fly off, its letter in its beak
     for (const play of [...Object.values(LETTER_PLAY_BESIDE), LETTER_PLAY.fetch, LETTER_PLAY.take]) {
+      const pickedUp = play.poses.find(([, , letter]) => letter)?.[0] ?? 1;
       for (const m of play.moves) {
-        expect(m.sx).toBeGreaterThan(0);
+        if (m.at <= pickedUp) expect(m.sx).toBeGreaterThan(0);
         expect(m.x).toBeLessThanOrEqual(0.012);
       }
     }
