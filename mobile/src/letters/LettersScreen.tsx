@@ -315,10 +315,13 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     setPicked(null);
     setScene((s) => s && { ...s, own: { kind: 'home', bird: res.ok ? res.data.bird : pick } });
   };
+  // the picker takes the place of whatever is open under the window, the paper included, so the button always does what it says
   const startChanging = (): void => {
     if (!home) return;
     setPicked(home.bird);
     setBirdError(null);
+    setError(null);
+    setMoment({ kind: 'rest' });
     setChanging(true);
   };
 

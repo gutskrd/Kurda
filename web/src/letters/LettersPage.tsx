@@ -213,10 +213,13 @@ export function LettersPage(): React.JSX.Element {
     home.reload();
   }
 
+  // the picker takes the place of whatever is open under the window, the paper included, so the button always does what it says
   function startChanging(): void {
     if (!data) return;
     setPicked(data.bird);
     setBirdError(null);
+    setError(null);
+    setMoment({ kind: 'rest' });
     setChanging(true);
   }
 

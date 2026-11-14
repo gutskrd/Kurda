@@ -163,6 +163,16 @@ describe('letters by bird', () => {
     expect(calls.some((c) => c.url.includes('/letters/bird'))).toBe(false);
   });
 
+  it('opens the bird picker from the paper too, closing the paper', async () => {
+    signIn({ 'GET /letters': home({ bird: 2, zer: 900 }) });
+    renderApp(<LettersPage />, ['/app/letters']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Write a letter' }));
+    expect(screen.getByLabelText('Your letter')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Change bird' }));
+    expect(screen.getByText('Choose a new bird')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Your letter')).toBeNull();
+  });
+
   it('pays for a new bird only once another is picked', async () => {
     const calls = signIn({ 'GET /letters': home({ bird: 2, zer: 900 }), 'POST /letters/bird': home({ bird: 3, zer: 400 }) });
     renderApp(<LettersPage />, ['/app/letters']);

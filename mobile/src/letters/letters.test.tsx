@@ -212,6 +212,16 @@ describe('the letters screen', () => {
     expect(client.calls.some((c) => c.path === '/letters/bird')).toBe(false);
   });
 
+  it('opens the bird picker from the paper too, closing the paper', async () => {
+    testAuth.client = fakeClient({ 'GET /letters': ok(home({ bird: 1, zer: 900 })) });
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('letters-write'));
+    expect(screen.getByTestId('letters-paper-input')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('letters-bird-change'));
+    expect(screen.getByText('Choose a new bird')).toBeTruthy();
+    expect(screen.queryByTestId('letters-paper-input')).toBeNull();
+  });
+
   it('pays for a new bird once another is picked, and says so when the Zêr fall short', async () => {
     let zer = 900;
     const client = fakeClient({
