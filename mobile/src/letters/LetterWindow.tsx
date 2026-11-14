@@ -156,7 +156,19 @@ function useRound(alive: boolean, ms: number): Animated.Value {
 }
 
 /** A drawing laid on the window at a place and a size of its own, in points. */
-function Art({ xml, left, top, side, style }: { xml: string; left: number; top: number; side: number; style?: Animated.WithAnimatedValue<ViewStyle> }): React.JSX.Element {
+function Art({
+  xml,
+  left,
+  top,
+  side,
+  style,
+}: {
+  xml: string;
+  left: number;
+  top: number;
+  side: number;
+  style?: Animated.WithAnimatedValue<ViewStyle>;
+}): React.JSX.Element {
   return (
     <Animated.View style={[{ position: 'absolute', left, top, width: side, height: side }, style]} pointerEvents="none">
       <SvgXml xml={xml} width={side} height={side} />
@@ -394,7 +406,12 @@ function Playing({
 /** Where one bird's story on the sill has got to: standing, playing before it goes, flying, playing after it comes, or at home again after a letter. */
 type Phase = 'rest' | 'play' | 'flight' | 'after' | 'settled';
 /** One bird's part in the scene, the same for your own and a visitor. */
-type Life = { kind: 'none' } | { kind: 'home'; bird: number } | { kind: 'here'; bird: number } | { kind: 'leaving'; bird: number; play: LetterPlay } | { kind: 'arriving'; bird: number };
+type Life =
+  | { kind: 'none' }
+  | { kind: 'home'; bird: number }
+  | { kind: 'here'; bird: number }
+  | { kind: 'leaving'; bird: number; play: LetterPlay }
+  | { kind: 'arriving'; bird: number };
 
 /** A bird's flight off the sill or onto it: the phase the bird is in, and the clocks its flight and its wings run on. */
 interface Flight {
@@ -474,7 +491,7 @@ function Flying({
   facingLeft: boolean;
   size: number;
   flight: Flight;
-  seen: Animated.AnimatedInterpolation<number> | Animated.AnimatedSubtraction<number>;
+  seen: Animated.AnimatedInterpolation<number>;
 }): React.JSX.Element {
   const keys = useMemo(() => letterFlightFrom(spot), [spot]);
   const { clock, beat } = flight;
@@ -506,14 +523,32 @@ function Flying({
  * One copy of a flying bird: the one in the room (`inside`) until it is
  * through the window, or the one outside, drawn behind the room, from then on.
  */
-function FlightCopy({ life, flight, spot, facingLeft, size, inside }: { life: Life; flight: Flight; spot: LetterSpot; facingLeft: boolean; size: number; inside: boolean }): React.JSX.Element | null {
+function FlightCopy({
+  life,
+  flight,
+  spot,
+  facingLeft,
+  size,
+  inside,
+}: {
+  life: Life;
+  flight: Flight;
+  spot: LetterSpot;
+  facingLeft: boolean;
+  size: number;
+  inside: boolean;
+}): React.JSX.Element | null {
   const bird = birdOf(life);
   if (bird === null) return null;
   const inRoom = until(flight.clock, LETTER_FLIGHT.behindAt);
   return <Flying bird={bird} spot={spot} facingLeft={facingLeft} size={size} flight={flight} seen={inside ? inRoom : Animated.subtract(1, inRoom)} />;
 }
 
-/** How the shadow of a flight from a spot lies on the sill through it, measured from the flight's own path: under the bird as it goes, smaller and fainter as it rises. */
+/**
+ * How the shadow of a flight from a spot lies on the sill through it,
+ * measured from the flight's own path: under the bird as it goes, smaller and
+ * fainter as it rises.
+ */
 function flightShadowKeys(spot: LetterSpot): Array<{ at: number; x: number; size: number; seen: number }> {
   const share = LETTER_SILL_SPOTS[spot].share;
   return letterFlightFrom(spot).map((k) => {
@@ -543,7 +578,21 @@ function FlightShade({ flight, spot, facingLeft, size }: { flight: Flight; spot:
 }
 
 /** A bird on the sill, between its flights: standing (asleep at night if it may sleep), playing, or settled again with the letter it brought. */
-function OnSill({ life, flight, spot, facingLeft, asleep, size }: { life: Life; flight: Flight; spot: LetterSpot; facingLeft: boolean; asleep: boolean; size: number }): React.JSX.Element | null {
+function OnSill({
+  life,
+  flight,
+  spot,
+  facingLeft,
+  asleep,
+  size,
+}: {
+  life: Life;
+  flight: Flight;
+  spot: LetterSpot;
+  facingLeft: boolean;
+  asleep: boolean;
+  size: number;
+}): React.JSX.Element | null {
   const bird = birdOf(life);
   const { phase, setPhase } = flight;
   if (bird === null || phase === 'flight') return null;
@@ -551,7 +600,9 @@ function OnSill({ life, flight, spot, facingLeft, asleep, size }: { life: Life; 
   if (phase === 'play' && life.kind === 'leaving') {
     return <Playing key="play" bird={bird} spot={spot} play={life.play} facingLeft={facingLeft} size={size} onEnd={() => setPhase('flight')} />;
   }
-  if (phase === 'after') return <Playing key="after" bird={bird} spot={spot} play={LETTER_PLAY.after} facingLeft={facingLeft} size={size} onEnd={() => setPhase('settled')} />;
+  if (phase === 'after') {
+    return <Playing key="after" bird={bird} spot={spot} play={LETTER_PLAY.after} facingLeft={facingLeft} size={size} onEnd={() => setPhase('settled')} />;
+  }
   if (phase === 'settled') {
     return (
       <>
@@ -560,7 +611,8 @@ function OnSill({ life, flight, spot, facingLeft, asleep, size }: { life: Life; 
       </>
     );
   }
-  return asleep ? <Asleep bird={bird} spot={spot} size={size} /> : <Playing key="idle" bird={bird} spot={spot} play={LETTER_PLAY.idle} facingLeft={facingLeft} size={size} />;
+  if (asleep) return <Asleep bird={bird} spot={spot} size={size} />;
+  return <Playing key="idle" bird={bird} spot={spot} play={LETTER_PLAY.idle} facingLeft={facingLeft} size={size} />;
 }
 
 /** How long your own bird's hop aside takes, and how it goes: off quickly, and settling. */
@@ -609,7 +661,19 @@ function useHop(spot: LetterSpot, size: number): { spot: LetterSpot; style: Anim
 }
 
 /** One layer of the window, drifting as far as its depth says. */
-function Layer({ part, sky, size, id, style }: { part: LetterWindowPart; sky: ReturnType<typeof treeSkyAt>; size: number; id: string; style?: Animated.WithAnimatedValue<ViewStyle> }): React.JSX.Element {
+function Layer({
+  part,
+  sky,
+  size,
+  id,
+  style,
+}: {
+  part: LetterWindowPart;
+  sky: ReturnType<typeof treeSkyAt>;
+  size: number;
+  id: string;
+  style?: Animated.WithAnimatedValue<ViewStyle>;
+}): React.JSX.Element {
   const xml = useMemo(() => letterWindowSvg({ sky, part, size, idPrefix: `${id}${part}` }), [sky, part, size, id]);
   return (
     <Animated.View style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
@@ -624,7 +688,21 @@ function Layer({ part, sky, size, id, style }: { part: LetterWindowPart; sky: Re
  * `delay` of the way along it so a few of a kind are never in step; or, `once`,
  * a single time from the start. A butterfly's wings beat on `flap`.
  */
-function Drift({ drift, size, once, alive, flap, id }: { drift: LetterDrift; size: number; once: boolean; alive: boolean; flap: Animated.Value; id: string }): React.JSX.Element {
+function Drift({
+  drift,
+  size,
+  once,
+  alive,
+  flap,
+  id,
+}: {
+  drift: LetterDrift;
+  size: number;
+  once: boolean;
+  alive: boolean;
+  flap: Animated.Value;
+  id: string;
+}): React.JSX.Element {
   const clock = useRef(new Animated.Value(0)).current;
   const xml = useMemo(() => letterSpriteSvg({ sprite: drift.sprite, size: 60, idPrefix: id }), [drift.sprite, id]);
   useEffect(() => {
@@ -664,7 +742,17 @@ function Drift({ drift, size, once, alive, flap, id }: { drift: LetterDrift; siz
  * Nothing drifts for a reader who asked for less motion: then they are not
  * there at all.
  */
-function Drifts({ drifts, size, once = false, style }: { drifts: readonly LetterDrift[]; size: number; once?: boolean; style?: Animated.WithAnimatedValue<ViewStyle> }): React.JSX.Element | null {
+function Drifts({
+  drifts,
+  size,
+  once = false,
+  style,
+}: {
+  drifts: readonly LetterDrift[];
+  size: number;
+  once?: boolean;
+  style?: Animated.WithAnimatedValue<ViewStyle>;
+}): React.JSX.Element | null {
   const reduce = useReducedMotion();
   const alive = useMotionAlive();
   const id = useRef(nextId()).current;
@@ -811,7 +899,9 @@ export function LetterWindow({
   const glow = useSwing(alive, 9000, 0.4);
 
   const deep = (depth: number) => ({ transform: [{ translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [-0.5 * depth * size, 0.5 * depth * size] }) }] });
-  const drifting = { transform: [...deep(LETTER_WINDOW_DEPTH.clouds).transform, { translateX: clouds.interpolate({ inputRange: [0, 1], outputRange: [-0.07 * size, 0.07 * size] }) }] };
+  const drifting = {
+    transform: [...deep(LETTER_WINDOW_DEPTH.clouds).transform, { translateX: clouds.interpolate({ inputRange: [0, 1], outputRange: [-0.07 * size, 0.07 * size] }) }],
+  };
   const casement = (left: boolean) => ({
     transformOrigin: left ? '20% 50%' : '80% 50%',
     transform: [{ scaleX: stir.interpolate({ inputRange: [0, 1], outputRange: left ? [1, 0.92] : [0.92, 1] }) }],

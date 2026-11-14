@@ -9,6 +9,7 @@ vi.mock('@react-native-community/netinfo', () => import('../reports/testing/neti
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import type { LettersHome } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -63,6 +64,35 @@ describe('Messages', () => {
     expect(screen.getByText('Dilan, baran')).toBeTruthy();
     fireEvent.click(row);
     expect(navigation.navigate).toHaveBeenCalledWith('FriendRequests');
+  });
+
+  /* a bird at your window waits on you before anything else in letters */
+  it('leads the letters row with a bird waiting at your window, and opens letters from it', async () => {
+    const baran = { id: 'u-baran', name: 'Baran', bird: 3 };
+    const home: LettersHome = {
+      refusal: null,
+      bird: 1,
+      birdChosen: true,
+      zer: 0,
+      out: null,
+      visitor: {
+        person: baran,
+        letter: { id: 'l9', mine: false, body: 'Silav!', removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
+        since: '2026-11-14T09:00:00.000Z',
+        leavesAt: '2026-11-15T09:00:00.000Z',
+      },
+      birdsOut: 0,
+      sky: [],
+      callsLeft: 5,
+      homecoming: null,
+      penPals: [{ threadId: 't1', person: { id: 'u-rojin', name: 'Rojin', bird: 2 }, lastLetterAt: '2026-11-13T10:00:00.000Z', yourTurn: true, unread: 0 }],
+      roomForMore: true,
+    };
+    open({}, { 'GET /letters': ok(home) });
+    const row = await screen.findByTestId('messages-letters');
+    expect(row.getAttribute('aria-label')).toBe('Letters, Baran’s bird is at your window');
+    fireEvent.click(row);
+    expect(navigation.navigate).toHaveBeenCalledWith('Letters');
   });
 
   it('has no requests row when none are waiting', async () => {

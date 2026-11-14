@@ -53,6 +53,23 @@ type Moment =
 const WINDOW_MAX = 300;
 
 /**
+ * The screen's first look at what the server says: your bird where it is, a
+ * bird at the window still there, and your bird home with an answer landing,
+ * said in words under it.
+ */
+function firstLook(home: LettersHome): { scene: WindowScene; moment: Moment } {
+  const back = home.homecoming !== null && home.out === null;
+  return {
+    scene: {
+      own: home.out ? { kind: 'away' } : back ? { kind: 'arriving', bird: home.bird } : { kind: 'home', bird: home.bird },
+      visitor: home.visitor ? { kind: 'here', bird: home.visitor.person.bird } : { kind: 'none' },
+      sky: home.sky,
+    },
+    moment: back && home.homecoming ? { kind: 'homecoming', person: home.homecoming.person, threadId: home.homecoming.threadId } : { kind: 'rest' },
+  };
+}
+
+/**
  * Letters by bird, on the phone: writing to somebody new in Kurdish, and the
  * pen pals you write to. The same screen as the website's /app/letters
  * (web/src/letters/LettersPage.tsx).
@@ -108,8 +125,10 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
       const res = await client.get<LettersHome>('/letters');
       if (res.ok) {
         if (afresh) {
-          setScene(null);
-          setMoment({ kind: 'rest' });
+          const look = firstLook(res.data);
+          setScene(look.scene);
+          setMoment(look.moment);
+          setVisitor(res.data.visitor);
           setAskingOn(false);
           setError(null);
         }
@@ -130,15 +149,10 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   useEffect(() => {
     if (!home) return;
     if (!scene) {
-      // the first look: your bird where it is, a bird at the window still there, and your bird home with an answer landing
-      const back = home.homecoming !== null && home.out === null;
-      setScene({
-        own: home.out ? { kind: 'away' } : back ? { kind: 'arriving', bird: home.bird } : { kind: 'home', bird: home.bird },
-        visitor: home.visitor ? { kind: 'here', bird: home.visitor.person.bird } : { kind: 'none' },
-        sky: home.sky,
-      });
+      const look = firstLook(home);
+      setScene(look.scene);
       setVisitor(home.visitor);
-      if (back && home.homecoming) setMoment({ kind: 'homecoming', person: home.homecoming.person, threadId: home.homecoming.threadId });
+      if (look.moment.kind === 'homecoming') setMoment(look.moment);
       return;
     }
     // read again: the birds out there are as the screen now says
@@ -483,11 +497,23 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
                             style={styles.askAction}
                             testID="letters-visitor-send-on-yes"
                           />
-                          <ClayButton label={t('letters.visitor.keep')} onPress={() => setAskingOn(false)} variant="outline" style={styles.askAction} testID="letters-visitor-keep" />
+                          <ClayButton
+                            label={t('letters.visitor.keep')}
+                            onPress={() => setAskingOn(false)}
+                            variant="outline"
+                            style={styles.askAction}
+                            testID="letters-visitor-keep"
+                          />
                         </View>
                       </View>
                     ) : (
-                      <ClayButton label={t('letters.visitor.sendOn')} onPress={() => setAskingOn(true)} variant="outline" disabled={busy} testID="letters-visitor-send-on" />
+                      <ClayButton
+                        label={t('letters.visitor.sendOn')}
+                        onPress={() => setAskingOn(true)}
+                        variant="outline"
+                        disabled={busy}
+                        testID="letters-visitor-send-on"
+                      />
                     )}
                   </View>
                 </Rise>
