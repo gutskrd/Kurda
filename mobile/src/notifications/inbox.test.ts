@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { IncomingInvite } from '@kurda/shared';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
-import { groupNotices, noticeActor, noticeGroup, noticeKind, noticeTime, resolveDeepLink, splitName, unreadBadge } from './inbox.js';
+import { groupNotices, noticeActor, noticeGroup, noticeKind, noticeTime, noticeWhen, resolveDeepLink, splitName, unreadBadge } from './inbox.js';
 import { NOTICE, NOTICE_ROW_HEIGHT } from './rowMetrics';
 
 describe('resolveDeepLink', () => {
@@ -138,7 +138,35 @@ describe('when a notification came, in the reader\'s words', () => {
   });
 });
 
+describe('when a notification came, after its words on the same line', () => {
+  // a Tuesday afternoon, local time
+  const now = new Date(2026, 9, 20, 15, 0).getTime();
+  const ago = (minutes: number) => new Date(now - minutes * 60_000).toISOString();
+  const say = (locale: 'en' | 'de') => (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS[locale][key], vars);
+
+  it('says just now, minutes and hours today, days this week, and the date earlier, as the website does', () => {
+    expect(noticeWhen(ago(0), 'today', say('en'), 'en', now)).toBe('just now');
+    expect(noticeWhen(ago(6), 'today', say('en'), 'en', now)).toBe('6m');
+    expect(noticeWhen(ago(20 * 60), 'today', say('en'), 'en', now)).toBe('20h');
+    expect(noticeWhen(ago(3 * 24 * 60), 'week', say('en'), 'en', now)).toBe('3d ago');
+    expect(noticeWhen(new Date(2026, 9, 1, 12, 0).toISOString(), 'earlier', say('en'), 'en', now)).toBe('Oct 1');
+  });
+
+  it('says it in the reader’s language, and something calm for a date it cannot read', () => {
+    expect(noticeWhen(ago(6), 'today', say('de'), 'de', now)).toBe('6 Min.');
+    expect(noticeWhen('not a date', 'earlier', say('en'), 'en', now)).toBe('a while ago');
+  });
+});
+
 describe('what a notification is, and who it is from', () => {
+  it('names who sent a gift or a letter when they are a friend, and nobody when they are not', () => {
+    const friends = [{ userId: 'u-berfin', username: 'berfin', displayName: 'Berfin', avatarUrl: '/b.png' }];
+    expect(noticeActor({ data: { kind: 'gift', fromUserId: 'u-berfin' } }, [], friends)).toEqual({ name: 'Berfin', id: 'u-berfin', photoUrl: '/b.png' });
+    expect(noticeActor({ data: { kind: 'letter', fromUserId: 'u-berfin' } }, [], [{ userId: 'u-berfin', username: 'berfin' }])).toEqual({ name: 'berfin', id: 'u-berfin', photoUrl: null });
+    expect(noticeActor({ data: { kind: 'gift', fromUserId: 'u-stranger' } }, [], friends)).toBeNull();
+    expect(noticeActor({ data: { kind: 'badge', fromUserId: 'u-berfin' } }, [], friends)).toBeNull();
+  });
+
   it('draws each kind the server sends with its own glyph, a reward in gold', () => {
     // an invite is a ticket, in its game's colour when the data names the game
     expect(noticeKind({ category: 'games', data: { kind: 'play_invite' } })).toEqual({ icon: 'ticket', reward: false });
@@ -181,6 +209,8 @@ describe('a notification row and its skeleton', () => {
    */
   it('has text as tall as its picture, so the grey rows are the real rows\' height', () => {
     expect(NOTICE.titleLine + NOTICE.lineGap + NOTICE.bodyLine).toBe(NOTICE.avatar);
+    // the picture at the row's end is the face's size, so neither makes the row taller
+    expect(NOTICE.picture).toBe(NOTICE.avatar);
     expect(NOTICE_ROW_HEIGHT).toBe(NOTICE.avatar + 2 * NOTICE.padV);
     // on the 4/8 rhythm, with a heading a fingertip tall
     expect(NOTICE_ROW_HEIGHT % 4).toBe(0);

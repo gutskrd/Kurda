@@ -168,6 +168,32 @@ export function noticeTime(iso: string, t: Translate, locale: string, now: numbe
 }
 
 /**
+ * When a notification came, short enough to sit after its words on the same
+ * line, as the website says it: "just now", "6m" and "20h" today, a count of
+ * days this week, and the date itself for anything earlier, where a count of
+ * days stops meaning much. The stretch is the one the list filed it under, so
+ * the time and the heading over it never disagree.
+ */
+export function noticeWhen(iso: string, group: NoticeGroup, t: Translate, locale: string, now: number = Date.now()): string {
+  const at = Date.parse(iso);
+  if (Number.isNaN(at)) return t('time.aWhileAgo');
+  if (group === 'earlier') {
+    try {
+      return new Date(at).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+    } catch {
+      // a locale the runtime does not know falls back to the device's own
+      return new Date(at).toLocaleDateString();
+    }
+  }
+  const minutes = Math.max(0, Math.floor((now - at) / 60_000));
+  if (minutes < 1) return t('time.justNow');
+  if (minutes < 60) return t('time.minutes', { count: minutes });
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return t('time.hours', { count: hours });
+  return t('time.daysAgo', { count: Math.floor(hours / 24) });
+}
+
+/**
  * What kind of thing a notification is, as the small picture beside it says:
  * the glyph, and whether it is a reward (drawn in the sun's gold, the one
  * warm colour the app has) or anything else (drawn in the text colour).
@@ -256,20 +282,33 @@ export interface NoticeActor {
   photoUrl: string | null;
 }
 
+/** A friend as the social panel's answer lists them (`GET /me/social`): enough to put a face and a name to a gift or a letter. */
+export interface NoticeFriend {
+  userId: string;
+  username: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+}
+
 /**
- * Who a notification is from, where the app can know it without asking the
- * server anything new.
+ * Who a notification is from, where the app can know it.
  *
  * An invite names its host while it can still be answered — the same list the
  * invite banner holds (`GET /play/invites`) — and a message names its sender.
- * Everything else is from Hevalo, or from somebody the stored data does not
- * name, and wears the picture of its kind instead of a guessed face.
+ * A gift or a letter names its sender only by id, and that is almost always a
+ * friend, so it is looked up among them, as the website does. Everything else
+ * is from Hevalo, or from somebody the stored data does not name, and wears
+ * Hevalo's own mark instead of a guessed face.
  */
-export function noticeActor(item: Pick<InboxItem, 'data'>, invites: readonly IncomingInvite[] = []): NoticeActor | null {
+export function noticeActor(item: Pick<InboxItem, 'data'>, invites: readonly IncomingInvite[] = [], friends: readonly NoticeFriend[] = []): NoticeActor | null {
   const { data } = item;
   if (data.kind === 'play_invite') {
     const invite = invites.find((i) => i.id === data.inviteId);
     return invite ? { name: invite.from.name, id: invite.from.name, photoUrl: invite.from.avatarUrl } : null;
+  }
+  if ((data.kind === 'gift' || data.kind === 'letter') && typeof data.fromUserId === 'string') {
+    const who = friends.find((f) => f.userId === data.fromUserId);
+    return who ? { name: who.displayName || who.username, id: who.userId, photoUrl: who.avatarUrl ?? null } : null;
   }
   if (data.screen === 'Chat' && typeof data.username === 'string' && data.username && typeof data.userId === 'string') {
     return { name: data.username, id: data.userId, photoUrl: null };
