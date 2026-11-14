@@ -75,42 +75,31 @@ describe('Games hub', () => {
   });
 
   /**
-   * Every card's first button was gold, so the page had as many "press this
-   * one" buttons as it had games. Gold is the game put forward's Play and
-   * nothing else; the shelf's ways in are the quiet buttons.
+   * Deliberately changed. The game put forward had a gold Play and the shelf
+   * grey ones, and for a while each game had a Play of its own colour. Now
+   * every Play is the same solid button, and a second way in the quiet one:
+   * the covers carry the colour.
    */
-  it('keeps gold for the one game put forward: the shelf’s buttons are all quiet', async () => {
+  it('gives every game the same Play, and a second way in as the quiet button', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
     await screen.findAllByRole('link', { name: 'Play' });
 
-    const gold = [...document.querySelectorAll('.gp-play')];
-    expect(gold).toHaveLength(1);
-    expect(gold[0]!.closest('article')).toHaveClass('gp-card--hero');
-    // on the shelf, no button outweighs another
-    for (const way of document.querySelectorAll('.gp-shelf .gp-ways .btn')) expect(way).toHaveClass('btn-secondary');
-    // and under a filter, with nothing put forward, there is no gold button at all
-    await userEvent.click(screen.getByRole('button', { name: 'On your own' }));
-    expect(document.querySelector('.gp-play')).toBeNull();
+    const plays = [...document.querySelectorAll<HTMLElement>('.gp-play')];
+    // one for every card, the one put forward among them, and all of one kind
+    expect(plays).toHaveLength(document.querySelectorAll('.gp-card').length);
+    for (const play of plays) expect(play).toHaveClass('btn-primary');
+    for (const card of document.querySelectorAll<HTMLElement>('.gp-card')) expect(card.style.getPropertyValue('--gp-face')).toBe('');
+    const peyvok = screen.getByRole('heading', { name: 'Peyvok' }).closest('article')!;
+    expect(within(peyvok).getByRole('link', { name: 'Play online' })).toHaveClass('btn-secondary');
   });
 
-  it('shows only the games played the chosen way, the featured one among them', async () => {
+  it('has no filter to work: a handful of games each say who they are played with', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
     await screen.findAllByRole('link', { name: 'Play' });
-    const filter = screen.getByRole('group', { name: 'Games' });
-    expect(within(filter).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
-
-    await userEvent.click(within(filter).getByRole('button', { name: 'With friends' }));
-    expect(within(filter).getByRole('button', { name: 'With friends' })).toHaveAttribute('aria-pressed', 'true');
-    // the race is played alone; the other two have a page for playing online
-    expect(screen.queryByRole('heading', { name: 'Pêşbaziya Nivîsandinê' })).toBeNull();
-    expect(screen.getByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Peyvên Hevserwa' })).toBeInTheDocument();
-    expect(screen.queryByText('Featured')).toBeNull();
-
-    await userEvent.click(within(filter).getByRole('button', { name: 'On your own' }));
-    expect(screen.getByRole('heading', { name: 'Pêşbaziya Nivîsandinê' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'With friends' })).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Games' })).toBeNull();
   });
 
   /**
@@ -159,8 +148,7 @@ describe('Games hub', () => {
     expect(within(rhyme).getByText('Reimwörter')).toBeInTheDocument();
     const race = screen.getByRole('heading', { name: 'Pêşbaziya Nivîsandinê' }).closest('article')!;
     expect(within(race).getByText('Schreibwettlauf')).toBeInTheDocument();
-    // the filter, and the way in a visitor is given
-    expect(screen.getByRole('button', { name: 'Mit Freunden' })).toBeInTheDocument();
+    // the way in a visitor is given
     expect(screen.getAllByText('Zum Spielen anmelden').length).toBeGreaterThan(0);
   });
 
@@ -201,11 +189,12 @@ describe('Join with a code, on the Games hub', () => {
     renderApp(<Games />, ['/app/games']);
     const card = await screen.findByRole('button', { name: /^Join with a code/ });
     expect(card).toHaveTextContent('Got a code from a friend? Type it in and you’re in their game.');
-    // ahead of the shelf of games, where somebody holding a code looks first
-    const shelf = screen.getByRole('group', { name: 'Games' });
-    expect(card.compareDocumentPosition(shelf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // the session lands before the sheet is opened, so it shows the boxes and not the gate
     await screen.findAllByRole('link', { name: 'Play' });
+    // ahead of the shelf of games, where somebody holding a code looks first (the shelf itself: which game is put forward above it changes by the day)
+    const shelf = document.querySelector('.gp-shelf');
+    expect(shelf).not.toBeNull();
+    expect(card.compareDocumentPosition(shelf!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await userEvent.click(card);
     const sheet = await screen.findByRole('dialog', { name: 'Join with a code' });
     expect(within(sheet).getByLabelText('Join with a code')).toBeInTheDocument();

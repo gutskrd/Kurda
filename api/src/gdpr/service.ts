@@ -509,6 +509,12 @@ export class GdprService {
     );
     // their Game Ranks, every change with its reason (ranks/gdpr.ts)
     const ranks = await exportRanks(this.pool, userId);
+    // the letters they wrote to pen pals, and whether each was delivered; the
+    // letters written to them are their pen pals' words, not theirs
+    const letters = await this.pool.query(
+      `SELECT body, status, created_at AS written_at, delivered_at FROM letters WHERE sender_id = $1 ORDER BY created_at`,
+      [userId],
+    );
     // what they wrote to the support address from this account's address, and
     // what they were answered; who on the team answered is not theirs
     // the devices and networks that have signed in to the account, by when,
@@ -553,6 +559,7 @@ export class GdprService {
       multiplayerGames: multiplayerGames.rows,
       appFeedback: { ...prompts.rows[0], answers: feedback.rows },
       gameRanks: ranks,
+      lettersWritten: letters.rows,
       supportEmails: support.rows,
       // XP, leagues, streaks, badges, the story shelf and the saved words (gdpr/progress-export.ts)
       progress: await exportProgress(this.pool, userId),
@@ -744,6 +751,9 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   // messages, both sides of every conversation they were in — the gifts in
   // them with the rest
   await q(`DELETE FROM dm_messages WHERE user_lo = $1 OR user_hi = $1`);
+  // and every correspondence with a pen pal, both sides of it, as with messages
+  await q(`DELETE FROM letters WHERE sender_id = $1 OR recipient_id = $1`);
+  await q(`DELETE FROM letter_threads WHERE user_lo = $1 OR user_hi = $1`);
   await q(`DELETE FROM group_messages WHERE sender_id = $1`);
   // and a gift posted in a group for them alone, a message about nobody else;
   // one to several friends stays for the others, its card no longer listing a

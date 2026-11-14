@@ -1428,6 +1428,15 @@
   color: var(--ink);
   text-decoration: none;
 }
+/* letters: a door like the requests row, quiet until a letter waits to be answered */
+.chat-letters:not(.is-waiting) {
+  border-color: var(--border);
+  background: var(--surface);
+}
+.chat-letters + .chat-convo,
+.chat-requests + .chat-letters {
+  margin-top: var(--space-2);
+}
 /* as large as the faces in the rows under it, so the list keeps one left edge */
 .chat-requests-icon {
   flex: none;
@@ -1501,29 +1510,13 @@
   inset-inline-end: 10px;
 }
 /*
- * In the row of what you can do with your profile the menu's button is drawn
- * as the two beside it are, a bordered pill of their height, and as the "more"
- * on anybody else's profile is. It is still a whole fingertip to press: the
- * target reaches a little past what is drawn.
+ * In the corner of your banner the menu's button is drawn as the "more" on
+ * anybody else's profile is (product.css `.pc-corner`): one place and one
+ * look for the menu of a profile, whoever's it is.
  */
-.profile-actions-row {
-  align-items: center;
-}
-.profile-actions-row .profile-menu-btn {
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--ink-2);
-}
-.profile-actions-row .profile-menu-btn::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-}
-.profile-actions-row .profile-menu-btn .nav-bell-dot {
-  top: 5px;
-  inset-inline-end: 5px;
+.pc-corner .profile-menu-btn .nav-bell-dot {
+  top: 9px;
+  inset-inline-end: 9px;
 }
 /* it hangs from the button, down into the page, not up under the bar */
 .profile-menu-list {
@@ -1550,11 +1543,6 @@
 }
 .profile-menu-label {
   flex: 1;
-}
-.profile-actions-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
 }
 
 /*

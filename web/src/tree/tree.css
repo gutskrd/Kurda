@@ -68,9 +68,10 @@
 }
 
 /*
- * Where the tree stands: the sky of the hour, down to the mountains. The
- * scene's picture is square and laid at the foot of the stage, so on a wide
- * page it is the top of the sky that is cut off.
+ * Where the tree stands: the scene of the season, as in the owner's
+ * reference. The scene's picture is square and laid at the foot of the stage,
+ * so on a wide page it is the top of the wall that is cut off; above it the
+ * stage is the wall's own colour, given with the season.
  */
 .tree-stage {
   position: relative;
@@ -78,19 +79,9 @@
   aspect-ratio: 1;
   max-height: 470px;
   border-radius: var(--r-xl);
-  /* the sky's own colour, until its picture is in */
-  background: #a3daf8;
+  background: #b3e2f6;
   overflow: hidden;
   isolation: isolate;
-}
-.tree-stage.is-dawn {
-  background: #f4cbbd;
-}
-.tree-stage.is-dusk {
-  background: #c75d8e;
-}
-.tree-stage.is-night {
-  background: #1a2656;
 }
 .tree-stage.is-waiting {
   display: grid;
@@ -106,35 +97,19 @@
   inset: 0;
   pointer-events: none;
 }
-.tree-scene-sky {
+.tree-scene-wall {
   position: absolute;
   inset-inline: 0;
   bottom: 0;
   aspect-ratio: 1;
 }
-.tree-scene-sky > svg,
-.tree-scene-cloud > svg {
+.tree-scene-wall > svg {
   display: block;
   width: 100%;
   height: 100%;
 }
-/* a cloud crosses the whole stage, however wide, and comes round again */
-.tree-scene-cloud {
-  position: absolute;
-  left: 0;
-  aspect-ratio: 1;
-  animation: tree-cloud linear infinite;
-}
-@keyframes tree-cloud {
-  from {
-    transform: translateX(-110%);
-  }
-  to {
-    transform: translateX(620px);
-  }
-}
 
-/* a tree in its sky as a still picture, wherever a small one is shown */
+/* a tree in its season as a still picture, wherever a small one is shown */
 .tree-picture {
   position: relative;
   display: block;
@@ -142,136 +117,114 @@
   border-radius: var(--r-md);
   overflow: hidden;
 }
-.tree-picture-sky {
+.tree-picture-wall {
   position: absolute;
   inset: 0;
 }
-.tree-picture-sky > svg {
+.tree-picture-wall > svg {
   display: block;
   width: 100%;
   height: 100%;
 }
-.tree-picture > .tree-art {
-  position: relative;
-  display: block;
+.tree-picture-tree {
+  position: absolute;
+  left: 50%;
+  aspect-ratio: 1;
+  translate: -50% 0;
 }
 
-/* what is in the air round the tree */
+/*
+ * The season in the air. Petals and leaves leave the crown and are blown
+ * away to the left, falling as they go and turning over and over, which is
+ * what the squeeze in their scale is; snow comes down over the whole scene,
+ * the wind taking it a little to the left too. The wind blows the same way
+ * whichever way the page reads: it is the picture's wind.
+ */
+/* in front of the tree, as the reference's leaves are: they leave its crown and cross before it */
+.tree-ambient {
+  z-index: 1;
+  overflow: hidden;
+}
 .tree-ambient i {
   position: absolute;
   display: block;
+  background: var(--c);
   animation: linear infinite;
 }
-/* light in the sun: it rises, and is gone */
-.tree-ambient.is-motes i {
-  bottom: 14%;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fffdf0 0 30%, rgba(255, 246, 190, 0.5) 45%, rgba(255, 246, 190, 0) 72%);
-  animation-name: tree-mote;
-  animation-timing-function: ease-in-out;
-}
-@keyframes tree-mote {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0) scale(calc(var(--scale) * 0.6));
-  }
-  18% {
-    opacity: 0.95;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--drift), -210px) scale(var(--scale));
-  }
-}
-/* petals, and an autumn tree's leaves: down, turning as they come */
 .tree-ambient.is-petals i,
 .tree-ambient.is-leaves i {
-  top: 16%;
-  width: 10px;
-  height: 7px;
-  border-radius: 80% 20% 70% 30%;
-  background: #ffd3df;
-  animation-name: tree-fall;
+  width: 15px;
+  height: 9px;
+  border-radius: 80% 15% 80% 15%;
+  animation-name: tree-blow;
+  animation-timing-function: cubic-bezier(0.35, 0.1, 0.6, 1);
 }
-.tree-ambient.is-petals i:nth-child(3n) {
-  background: #f9b2c8;
-}
-.tree-ambient.is-petals i:nth-child(3n + 1) {
-  background: #fff0f4;
-}
-.tree-ambient.is-leaves i {
+.tree-ambient.is-petals i {
   width: 12px;
-  height: 8px;
-  border-radius: 80% 10%;
-  background: #f9a424;
+  height: 9px;
+  border-radius: 70% 30% 70% 30%;
 }
-.tree-ambient.is-leaves i:nth-child(3n) {
-  background: #e2611d;
-}
-.tree-ambient.is-leaves i:nth-child(3n + 1) {
-  background: #ffcb3a;
-}
-@keyframes tree-fall {
+@keyframes tree-blow {
   0% {
     opacity: 0;
-    transform: translate(0, -12px) rotate(0deg) scale(var(--scale));
+    transform: translate(0, 0) rotate(0deg) scale(var(--scale), var(--scale));
   }
-  12% {
+  8% {
     opacity: 1;
   }
-  50% {
-    transform: translate(calc(var(--drift) * -0.6), 130px) rotate(260deg) scale(var(--scale));
+  25% {
+    transform: translate(-90px, calc(var(--drop) * 0.12 - 14px)) rotate(150deg) scale(var(--scale), calc(var(--scale) * 0.35));
   }
-  88% {
+  50% {
+    transform: translate(-200px, calc(var(--drop) * 0.4)) rotate(300deg) scale(var(--scale), var(--scale));
+  }
+  75% {
+    transform: translate(-320px, calc(var(--drop) * 0.62 - 10px)) rotate(450deg) scale(var(--scale), calc(var(--scale) * 0.4));
+  }
+  90% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translate(var(--drift), 280px) rotate(560deg) scale(var(--scale));
+    transform: translate(-460px, var(--drop)) rotate(600deg) scale(var(--scale), var(--scale));
   }
 }
-/* the night tree's fireflies: each wanders round its own place, and its light comes and goes */
-.tree-ambient.is-fireflies i {
-  width: 9px;
-  height: 9px;
+.tree-ambient.is-snow i {
+  top: -3%;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: radial-gradient(circle, #fffbd6 0 26%, rgba(255, 233, 130, 0.65) 42%, rgba(255, 233, 130, 0) 72%);
-  animation-name: tree-firefly;
-  animation-timing-function: ease-in-out;
+  animation-name: tree-snow;
 }
-@keyframes tree-firefly {
-  0%,
-  100% {
-    opacity: 0.15;
+@keyframes tree-snow {
+  0% {
+    opacity: 0;
     transform: translate(0, 0) scale(var(--scale));
   }
-  25% {
-    opacity: 1;
-    transform: translate(var(--drift), -16px) scale(var(--scale));
+  10% {
+    opacity: 0.95;
   }
   50% {
-    opacity: 0.3;
-    transform: translate(calc(var(--drift) * 0.4), -30px) scale(var(--scale));
+    transform: translate(calc(var(--drift) * 0.45 + 8px), 250px) scale(var(--scale));
   }
-  75% {
-    opacity: 1;
-    transform: translate(calc(var(--drift) * -0.5), -12px) scale(var(--scale));
+  92% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--drift), 520px) scale(var(--scale));
   }
 }
 
-/* the tree's own square of the stage, standing at its foot */
+/* the tree's own square of the stage, standing with its foot on the floor (its height and how high it stands come with it, from where the phone puts it too) */
 .tree-stage-plot {
   position: absolute;
-  bottom: 2%;
   left: 50%;
-  height: 94%;
   aspect-ratio: 1;
   translate: -50% 0;
   touch-action: manipulation;
 }
-/* on its island it rises and sinks a little, as if it breathed */
+/* it rises and sinks a little on its round, as if it breathed */
 .tree-stage-bob {
   display: block;
   width: 100%;
@@ -375,8 +328,8 @@
     transform: scale(1, 1);
   }
 }
-/* while it grows, the sky lightens over it */
-.tree-stage.is-growing .tree-scene-sky {
+/* while it grows, the scene lightens round it */
+.tree-stage.is-growing .tree-scene-wall {
   animation: tree-hush 1150ms ease-out both;
 }
 @keyframes tree-hush {
@@ -1109,7 +1062,6 @@
 /* for a reader who has asked for less motion, the scene is a still picture: nothing drifts, falls, floats or starts */
 @media (prefers-reduced-motion: reduce) {
   .tree-art-plant.is-swaying,
-  .tree-scene-cloud,
   .tree-stage-bob,
   .tree-stage-art,
   .tree-stage-art .tree-art-plant,

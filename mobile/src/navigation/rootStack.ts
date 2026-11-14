@@ -74,6 +74,10 @@ export type RootStackParamList = {
   Chat: { userId: string; username: string; openGift?: string };
   /** The friend requests waiting on you, opened from the row at the top of Messages. */
   FriendRequests: undefined;
+  /** Letters by bird: your window, writing to somebody new, and your pen pals (letters/LettersScreen), from the row at the top of Messages. */
+  Letters: undefined;
+  /** One correspondence with a pen pal (letters/LetterThreadScreen), from Letters or from a bird's arrival in the notifications. */
+  LetterThread: { threadId: string };
   /** As Chat: `openGift` to unwrap at once; `name` may be '' and is then looked up. */
   /** `addFriends`: the group was made a moment ago, and opens with the sheet for adding friends up */
   GroupThread: { groupId: string; name: string; openGift?: string; addFriends?: boolean };

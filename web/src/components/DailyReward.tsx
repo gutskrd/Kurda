@@ -89,6 +89,9 @@ export function DailyReward({ onClaimWaiting }: { onClaimWaiting?: (waiting: boo
 
   // Don't render a broken tile if the reward status can't be loaded.
   if (failed && balance === null) return null;
+  // a day already claimed when the page opened has nothing to say here: the balance is in the top bar, and
+  // the card steps aside for the wall; one claimed on this page stays to say what it brought
+  if (status?.alreadyClaimedToday && landed === 0) return null;
 
   // explicitly false only: an older server sends no learnedToday at all
   const learnFirst = status !== null && !status.alreadyClaimedToday && status.learnedToday === false;

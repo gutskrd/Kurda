@@ -100,12 +100,28 @@ describe('your profile', () => {
     expect(screen.getByText('14')).toBeTruthy();
   });
 
-  it('offers to add friends first, and keeps editing and sharing side by side', async () => {
+  it('keeps editing and sharing side by side under your words, ahead of the numbers, with the way to more friends beside them', async () => {
     open();
-    fireEvent.click(await screen.findByRole('button', { name: 'Add friends' }));
+    const edit = await screen.findByRole('button', { name: 'Edit profile' });
+    const share = screen.getByRole('button', { name: 'Share profile' });
+    const add = screen.getByRole('button', { name: 'Add friends' });
+    // one row, in this order
+    expect(edit.parentElement).toBe(share.parentElement);
+    expect(share.parentElement).toBe(add.parentElement);
+    expect(edit.compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(share.compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // what you can do comes before how you are doing
+    const friends = await screen.findByRole('button', { name: /Friends$/ });
+    expect(edit.compareDocumentPosition(friends) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    fireEvent.click(add);
     expect(navigation.navigate).toHaveBeenCalledWith('Friends');
-    fireEvent.click(screen.getByRole('button', { name: 'Edit profile' }));
+    fireEvent.click(edit);
     expect(navigation.navigate).toHaveBeenCalledWith('EditProfile');
-    expect(screen.getByRole('button', { name: 'Share profile' })).toBeTruthy();
+  });
+
+  it('draws your own horizon behind your face', async () => {
+    open();
+    expect(await screen.findByTestId('profile-horizon')).toBeTruthy();
   });
 });

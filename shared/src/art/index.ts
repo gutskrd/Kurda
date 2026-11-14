@@ -9,8 +9,44 @@
 export * from './keys.js';
 export { badgeSvg, badgeShineSvg, badgeShines, badgeColour, SMALL_BADGE, type BadgeOptions, type BadgeShineOptions, type BadgeState } from './badges.js';
 export { dayMedalSvg, streakMedalSvg, type DayMedal, type MedalOptions } from './medals.js';
-export { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg, type TreeOptions } from './trees.js';
-export { TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt, type TreeAir, type TreeSceneOptions, type TreeSky } from './tree-scene.js';
+export { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSeasonAir, treeSvg, waterDropSvg, wateringCanSvg, type TreeOptions, type TreeSeasonAir } from './trees.js';
+export {
+  TREE_SKIES,
+  TREE_STUDIO,
+  TREE_STUDIO_HORIZON,
+  TREE_STUDIO_PLACE,
+  treeAir,
+  treeCloudSvg,
+  treeSceneSvg,
+  treeSkyAt,
+  treeStudioSvg,
+  type TreeAir,
+  type TreeSceneOptions,
+  type TreeSky,
+  type TreeStudioOptions,
+} from './tree-scene.js';
+export { horizonSky, horizonSvg, type HorizonOptions } from './horizon.js';
+export {
+  LETTER_BIRD_FEET,
+  LETTER_FLIGHT,
+  LETTER_OPENING,
+  LETTER_PLAY,
+  LETTER_SILL,
+  LETTER_WINDOW_DEPTH,
+  LETTER_WINDOW_PARTS,
+  letterBirdSvg,
+  letterEnvelopeSvg,
+  letterPlayShows,
+  letterWindowSvg,
+  type LetterBirdOptions,
+  type LetterEnvelopeOptions,
+  type LetterPlay,
+  type LetterPlayMove,
+  type LetterWindowOptions,
+  type LetterWindowPart,
+} from './letters.js';
+export { PIGEON_POSES, type PigeonPose } from './pigeon.js';
+export type { SongbirdPose } from './songbird.js';
 export { rankEmblemSvg, placementEmblemSvg, PLACEMENT_GAMES, SMALL_EMBLEM, type PlacementEmblemOptions, type RankEmblemOptions } from './ranks.js';
 export { leagueEmblemSvg, SMALL_LEAGUE, type LeagueEmblemOptions } from './leagues.js';
 export { coinSvg, gemSvg, CURRENCY_CANVAS, type CurrencyOptions } from './currency.js';

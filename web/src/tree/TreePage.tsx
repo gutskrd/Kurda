@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { TREE_FULL, TREE_STAGES, TREE_TOP, TREE_WATER_LANDS, treeAir, treeColour, type TreeSky, type TreeSpecies, type TreeStage, type TreeView } from '@kurda/shared';
+import { TREE_FULL, TREE_STAGES, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSeasonAir, type TreeSeason, type TreeSpecies, type TreeStage, type TreeView } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, LinkButton } from '../components/Button';
 import { CoinIcon } from '../components/icons';
@@ -13,7 +13,8 @@ import { playLessonSound } from '../lib/sounds';
 import { Celebration } from '../ranks/Celebration';
 import { withMeaning } from '../ranks/names';
 import { TreeArt, WaterDrop, WateringCan } from './TreeArt';
-import { TreeAmbient, TreePicture, TreeSkyScene, useTreeSky } from './TreeScene';
+import { TREE_PLACE, TreePicture, TreeSeasonAmbient, TreeStudioScene, studioColour } from './TreeScene';
+import { useTreeSeason } from './season';
 import { healthName, stageName, treeAbout, treeNamed, treeTitle } from './names';
 import { useTree, type MyTree, type TreeKindOffer, type Watered } from './useTree';
 import './tree.css';
@@ -38,7 +39,7 @@ interface Moment {
  * Before one is planted, the page is the choice of a first seed: the kinds
  * that are free to start from, each as its own seed, and over them the great
  * tree the chosen one will be. After, it is the tree itself, standing in the
- * sky of the hour with the mountains under it, as big as the page allows;
+ * scene of the season with the season blowing past it, as big as the page allows;
  * then how far it is to its next stage, with that stage shown as what is
  * being grown toward; the water held, which a lesson earns, and the can to
  * pour it with; and a way to the nursery, where another kind can be bought
@@ -63,7 +64,7 @@ export function TreePage(): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const { client } = useAuth();
-  const sky = useTreeSky();
+  const season = useTreeSeason();
   const { data, loading, error, unavailable, reload, set } = useTree();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
@@ -182,7 +183,7 @@ export function TreePage(): React.JSX.Element {
       </div>
     );
 
-  if (!data.tree) return <Chooser data={data} sky={sky} busy={busy} failed={failed} onPlant={(species) => void plant(species)} />;
+  if (!data.tree) return <Chooser data={data} season={season} busy={busy} failed={failed} onPlant={(species) => void plant(species)} />;
 
   const tree = data.tree;
   const named = treeNamed(t, tree.species);
@@ -202,7 +203,7 @@ export function TreePage(): React.JSX.Element {
         </p>
       </div>
 
-      <Stage tree={tree} sky={sky} phase={phase} grown={grown} planted={planted} cheer={cheer} label={treeTitle(t, tree)} />
+      <Stage tree={tree} season={season} phase={phase} grown={grown} planted={planted} cheer={cheer} label={treeTitle(t, tree)} />
 
       {tree.health !== 'fresh' && (
         <p className={`tree-health is-${tree.health}`} role="status">
@@ -334,15 +335,15 @@ const SPARKS = [
 ] as const;
 
 /**
- * Where the tree stands, and everything that happens to it there. The sky,
- * the mountains and the clouds are behind it; whatever is in its air drifts
- * across; and the tree itself floats on its island, rising and sinking a
- * little as if it breathed. Touching it shakes it, which is of no use at all
+ * Where the tree stands, and everything that happens to it there. The
+ * season's scene is behind it; the season blows past it to the left; and the
+ * tree itself stands on its round of grass, rising a little as if it
+ * breathed. Touching it shakes it, which is of no use at all
  * and is there because a tree asks to be touched.
  */
 function Stage({
   tree,
-  sky,
+  season,
   phase,
   grown,
   planted,
@@ -350,7 +351,7 @@ function Stage({
   label,
 }: {
   tree: TreeView;
-  sky: TreeSky;
+  season: TreeSeason;
   phase: Phase;
   grown: number;
   planted: number;
@@ -371,13 +372,17 @@ function Stage({
   // where the water lands on the picture, and where a thirsty tree's thought floats: beside its top, wherever that is at its stage
   const places = { '--land': `${TREE_WATER_LANDS[tree.stage] * 100}%`, '--thought': `${Math.max(2, TREE_TOP[tree.stage] * 100 - 12)}%` } as React.CSSProperties;
   return (
-    <section className={`tree-stage is-${sky} is-${tree.health}${phase === 'pour' ? ' is-pouring' : ''}${phase === 'grow' ? ' is-growing' : ''}`} aria-label={label}>
-      <TreeSkyScene sky={sky} health={tree.health} />
-      <TreeAmbient air={treeAir(tree.species, tree.stage, tree.health)} />
-      <span className="tree-stage-plot" ref={plot} style={places} onPointerDown={shake}>
+    <section
+      className={`tree-stage is-${season} is-${tree.health}${phase === 'pour' ? ' is-pouring' : ''}${phase === 'grow' ? ' is-growing' : ''}`}
+      style={{ background: studioColour(season) }}
+      aria-label={label}
+    >
+      <TreeStudioScene season={season} health={tree.health} />
+      <TreeSeasonAmbient air={hasTreeArt(tree.species) ? treeSeasonAir(tree.species, tree.stage, tree.health, season) : null} />
+      <span className="tree-stage-plot" ref={plot} style={{ ...TREE_PLACE, ...places }} onPointerDown={shake}>
         <span className="tree-stage-bob">
           <span key={`${grown}:${planted}`} className={`tree-stage-art ${came}`}>
-            <TreeArt species={tree.species} stage={tree.stage} health={tree.health} size={420} alive fluid />
+            <TreeArt species={tree.species} stage={tree.stage} health={tree.health} season={season} size={420} alive fluid />
           </span>
         </span>
         {tree.health !== 'fresh' && phase === 'idle' && (
@@ -422,10 +427,10 @@ function Stage({
 /**
  * The choice of a first tree. Each kind that is free to start from is its
  * own seed to pick up; over them stands the great tree the one picked will
- * be, in the same sky it will grow in, so the choice is of something seen.
+ * be, in the season it will grow in, so the choice is of something seen.
  * Nothing is planted until the button is pressed.
  */
-function Chooser({ data, sky, busy, failed, onPlant }: { data: MyTree; sky: TreeSky; busy: boolean; failed: string | null; onPlant: (species: TreeSpecies) => void }): React.JSX.Element {
+function Chooser({ data, season, busy, failed, onPlant }: { data: MyTree; season: TreeSeason; busy: boolean; failed: string | null; onPlant: (species: TreeSpecies) => void }): React.JSX.Element {
   const t = useT();
   const starters = data.kinds.filter((k) => k.starter);
   const [picked, setPicked] = useState<TreeSpecies>(starters[0]?.species ?? 'beru');
@@ -437,13 +442,13 @@ function Chooser({ data, sky, busy, failed, onPlant }: { data: MyTree; sky: Tree
         <h1 className="page-title">{t('tree.choose.title')}</h1>
         <p className="page-sub">{t('tree.choose.sub')}</p>
       </div>
-      <section className={`tree-stage is-${sky} is-fresh`} aria-label={withMeaning(t, named)}>
-        <TreeSkyScene sky={sky} health="fresh" />
-        <TreeAmbient air={treeAir(picked, TREE_FULL, 'fresh')} />
-        <span className="tree-stage-plot">
+      <section className={`tree-stage is-${season} is-fresh`} style={{ background: studioColour(season) }} aria-label={withMeaning(t, named)}>
+        <TreeStudioScene season={season} health="fresh" />
+        <TreeSeasonAmbient air={treeSeasonAir(picked, TREE_FULL, 'fresh', season)} />
+        <span className="tree-stage-plot" style={TREE_PLACE}>
           <span className="tree-stage-bob">
             <span key={picked} className="tree-stage-art is-shown">
-              <TreeArt species={picked} stage={TREE_FULL} size={420} alive fluid />
+              <TreeArt species={picked} stage={TREE_FULL} season={season} size={420} alive fluid />
             </span>
           </span>
         </span>
@@ -500,7 +505,8 @@ function KindCard({
   return (
     <article className="tree-kind" style={{ '--tree': treeColour(kind.species) } as React.CSSProperties}>
       <span className="tree-kind-art">
-        <TreePicture species={kind.species} stage={TREE_FULL} size={112} />
+        {/* each kind in summer, in its own leaves: in spring every one that flowers is pink, and a choice between them has to be seen */}
+        <TreePicture species={kind.species} stage={TREE_FULL} season="summer" size={112} />
       </span>
       <span className="tree-kind-text">
         <span className="tree-kind-name">{named.name}</span>

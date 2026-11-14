@@ -90,7 +90,7 @@ describe('the alphabet', () => {
     serve();
     await show();
     await waitFor(() => expect(screen.getByRole('radio', { name: 'سۆرانی' }).getAttribute('aria-checked')).toBe('true'));
-    expect(await screen.findByRole('heading', { name: 'لە گەروووە' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'لە گەرووەوە' })).toBeTruthy();
   });
 
   it('opens a letter with its sound, a word to remember it by, and its Soranî partner — and plays it at once', async () => {

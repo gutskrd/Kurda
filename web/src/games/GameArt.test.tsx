@@ -28,8 +28,8 @@ describe('a game’s emblem', () => {
     const drawn = [...container.querySelectorAll<HTMLElement>('.gp-art-layer')];
     expect(drawn).toHaveLength(layers.length);
     expect(container.querySelectorAll('svg')).toHaveLength(layers.length);
-    // the torch's beam swings about the torch, not about the middle of the picture
-    expect(drawn[1]!.style.transformOrigin).toBe('100px 77px');
+    // the sack sags about its own foot, not about the middle of the picture
+    expect(drawn[1]!.style.transformOrigin).toBe('92px 105px');
     expect(container.querySelector('.gp-art--moving')?.getAttribute('aria-hidden')).toBe('true');
   });
 

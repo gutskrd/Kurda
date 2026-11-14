@@ -84,8 +84,25 @@ import { SHAPES } from './shapes.js';
 import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
 import { TINY_BADGE, hasBadgeGlyph } from './badges.js';
 import { dayMedalSvg, streakMedalSvg } from './medals.js';
-import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
-import { TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt } from './tree-scene.js';
+import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSeasonAir, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
+import { SKIES, TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt, treeStudioSvg } from './tree-scene.js';
+import { TREE_SEASONS, treeSeasonAt } from '../tree.js';
+import { horizonSky, horizonSvg } from './horizon.js';
+import {
+  LETTER_BIRD_FEET,
+  LETTER_FLIGHT,
+  LETTER_OPENING,
+  LETTER_PLAY,
+  LETTER_SILL,
+  LETTER_WINDOW_DEPTH,
+  LETTER_WINDOW_PARTS,
+  letterBirdSvg,
+  letterEnvelopeSvg,
+  letterPlayShows,
+  letterWindowSvg,
+} from './letters.js';
+import { PIGEON_POSES } from './pigeon.js';
+import { LETTER_BIRDS } from '../letters.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml, wholePath } from './svg.js';
 import { characterArt } from '../characters/index.js';
@@ -1025,12 +1042,12 @@ describe('the games’ emblems', () => {
   it('shows each word game as the game is: Peyvok five letters wide, and words from the first lessons', () => {
     // every letter drawn on a cover is a path of the letters' own; counting them counts what is written
     const written = (game: (typeof GAME_EMBLEMS)[number]): number => gameEmblemSvg({ game }).split('stroke-linejoin="round" transform="translate(').length - 1;
-    // dayik, silav, heval on the board, and the two letters standing beside the phone
-    expect(written('peyvok')).toBe(17);
+    // dayik, silav and heval on the board
+    expect(written('peyvok')).toBe(15);
     // dar and kar
     expect(written('rhyme')).toBe(6);
-    // şêr and roj: the r is written twice, once where the first word ends and once where the second begins
-    expect(written('last-letter')).toBe(6);
+    // şêr, roj and jin: the letter two words share is written once, at the corner where they meet
+    expect(written('last-letter')).toBe(7);
     // the question on the note, and the two answers the table gives: erê and na
     expect(written('who-am-i')).toBe(6);
   });
@@ -1115,6 +1132,11 @@ describe('the games’ emblems', () => {
     it('is the same loop every time it is asked for', () => {
       for (const game of GAME_EMBLEMS) expect(JSON.stringify(layersOf(game).map((l) => l.poses))).toBe(JSON.stringify(layersOf(game).map((l) => l.poses)));
     });
+  });
+
+  it('gives every game a colour of its own for its page', () => {
+    const tones = GAME_EMBLEMS.map((game) => gameEmblemTone(game));
+    expect(new Set(tones).size).toBe(GAME_EMBLEMS.length);
   });
 
   it('has a colour for every game’s card, and refuses a game it has never heard of', () => {
@@ -1823,5 +1845,223 @@ describe('the learner’s tree', () => {
   it('refuses a size that is not one', () => {
     expect(() => treeSvg({ species: 'beru', stage: 3, size: 0 })).toThrow(RangeError);
     expect(() => treeSvg({ species: 'beru', stage: 3, idPrefix: 'a b' })).toThrow(RangeError);
+  });
+
+  it('draws the night sky’s moon as a horn that can be drawn: its way back is a wider round than the horn is tall', () => {
+    // an arc whose radius is less than half its chord is no arc: the moon was once written that way and never appeared
+    const moon = /A([\d.]+) [\d.]+ 0 1 0 [\d.]+ [\d.]+A([\d.]+) [\d.]+ 0 0 1 /.exec(treeSceneSvg({ sky: 'night' }));
+    expect(moon).not.toBeNull();
+    expect(Number(moon?.[2])).toBeGreaterThan(Number(moon?.[1]));
+  });
+});
+
+/**
+ * The horizon over a profile: somebody's own sky and mountains, behind their
+ * face until they wear a background.
+ */
+describe('the horizon over a profile', () => {
+  const PEOPLE = ['48cc9c07-c6ce-4755-b717-9a4918cd771e', 'd2b60bd3-c41f-4cfd-aaa8-bd94c9be302e', 'dilan', 'rojîn', 'azad', 'berîvan', 'a', 'b', 'c', 'd', 'e', 'f'];
+
+  it('is drawn the same on every machine, and passes as a drawing', () => {
+    for (const seed of PEOPLE) {
+      const svg = horizonSvg({ seed, size: 360, title: 'A horizon' });
+      checkSvg(svg, 360);
+      expect(horizonSvg({ seed, size: 360, title: 'A horizon' })).toBe(svg);
+      // light enough to be behind every face on a list of them
+      expect(svg.length).toBeLessThan(8_000);
+    }
+  });
+
+  it('is each person’s own: no two of them share a horizon, and between them they have every sky', () => {
+    expect(new Set(PEOPLE.map((seed) => horizonSvg({ seed }))).size).toBe(PEOPLE.length);
+    for (const seed of PEOPLE) expect(TREE_SKIES).toContain(horizonSky(seed));
+    expect(new Set(PEOPLE.map(horizonSky)).size).toBeGreaterThanOrEqual(3);
+    // the sky can be asked for, and is then the one drawn
+    expect(horizonSvg({ seed: 'dilan', sky: 'night' })).toContain('#0b1130');
+    expect(horizonSvg({ seed: 'dilan', sky: 'day' })).toContain('#52aeee');
+  });
+
+  it('keeps the sun and the first ridge inside the middle band, which is all a short banner shows', () => {
+    for (const seed of PEOPLE) {
+      for (const sky of TREE_SKIES) {
+        const svg = horizonSvg({ seed, sky });
+        // the sun or moon: a circle, or the horn's first point, between a fifth above and a tenth below the middle line
+        // the sun is the circle in that sky's own sun colour; the moon is a horn, and its first point is its top
+        const sun = new RegExp(`<circle cx="[\\d.]+" cy="([\\d.]+)" r="([\\d.]+)" fill="${SKIES[sky].orb[3]}"`).exec(svg);
+        const moon = /<path d="M[\d.]+ ([\d.]+)A([\d.]+) /.exec(svg);
+        const orb = sky === 'night' ? moon : sun;
+        expect(orb, `${seed} ${sky}`).not.toBeNull();
+        const middle = sky === 'night' ? Number(orb?.[1]) + Number(orb?.[2]) : Number(orb?.[1]);
+        expect(middle).toBeGreaterThan(50);
+        expect(middle).toBeLessThan(64);
+      }
+    }
+  });
+
+  it('keeps its ids its own, so two on one page do not collide, and refuses a size that is not one', () => {
+    const a = checkSvg(horizonSvg({ seed: 'dilan', title: 'A horizon', idPrefix: 'a' }), 360);
+    for (const id of checkSvg(horizonSvg({ seed: 'dilan', title: 'A horizon', idPrefix: 'b' }), 360)) expect(a.has(id)).toBe(false);
+    expect(() => horizonSvg({ seed: 'dilan', size: 0 })).toThrow(RangeError);
+  });
+});
+
+describe('the letters’ pictures', () => {
+  it('draws the window at every hour, whole and layer by layer, every pigeon in every pose, and the envelope, each a valid picture', () => {
+    for (const sky of TREE_SKIES) {
+      checkSvg(letterWindowSvg({ sky, size: 120 }), 120);
+      for (const part of LETTER_WINDOW_PARTS) checkSvg(letterWindowSvg({ sky, part, size: 120 }), 120);
+    }
+    for (let bird = 0; bird < LETTER_BIRDS.length; bird++) {
+      for (const pose of PIGEON_POSES) {
+        checkSvg(letterBirdSvg({ bird, pose, size: 120 }), 120);
+        checkSvg(letterBirdSvg({ bird, pose, letter: true, facingLeft: true, size: 120 }), 120);
+      }
+      checkSvg(letterBirdSvg({ bird, portrait: true, size: 120 }), 120);
+    }
+    checkSvg(letterEnvelopeSvg({ size: 120 }), 120);
+    expect(() => letterWindowSvg({ part: 'roof' as never })).toThrow(RangeError);
+  });
+
+  it('gives every pigeon its own colour, and a letter in its beak only when it carries one and is awake', () => {
+    const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id');
+    const perched = LETTER_BIRDS.map((_, bird) => strip(letterBirdSvg({ bird })));
+    expect(new Set(perched).size).toBe(LETTER_BIRDS.length);
+    // the wax on the letter in its beak
+    expect(letterBirdSvg({ bird: 0, pose: 'wings-up', letter: true })).toContain('#d8493b');
+    expect(letterBirdSvg({ bird: 0, pose: 'wings-up' })).not.toContain('#d8493b');
+    expect(letterBirdSvg({ bird: 0, pose: 'sleep', letter: true })).not.toContain('#d8493b');
+    // each pose is its own picture, so an app can show them in turn
+    expect(new Set(PIGEON_POSES.map((pose) => strip(letterBirdSvg({ bird: 1, pose })))).size).toBe(PIGEON_POSES.length);
+    expect(() => letterBirdSvg({ bird: LETTER_BIRDS.length })).toThrow(RangeError);
+  });
+
+  it('layers the window so the country moves behind a frame that holds still, the nearer the more', () => {
+    const d = LETTER_WINDOW_DEPTH;
+    expect([d.room, d.left, d.right, d.light]).toEqual([0, 0, 0, 0]);
+    expect(d.near).toBeGreaterThan(d.far);
+    expect(d.far).toBeGreaterThan(d.clouds);
+    expect(d.clouds).toBeGreaterThan(d.sky);
+    // the room is a wall with the window cut out of it, so whatever is behind shows only there
+    expect(letterWindowSvg({ part: 'room' })).toContain('fill-rule="evenodd"');
+  });
+
+  it('stands a pigeon on the sill at a pigeon’s size, and flies it out wholly through the window before it goes behind the room', () => {
+    expect(LETTER_SILL.y).toBeGreaterThan(LETTER_OPENING.y1);
+    expect(LETTER_SILL.y).toBeLessThan(100);
+    expect(LETTER_SILL.birdShare).toBeGreaterThan(0.3);
+    expect(LETTER_SILL.birdShare).toBeLessThan(0.5);
+    const keys = LETTER_FLIGHT.keys;
+    expect(keys[0]).toMatchObject({ at: 0, x: 0, y: 0, scale: 1, seen: 1 });
+    expect(keys[keys.length - 1]).toMatchObject({ at: 1, seen: 0 });
+    for (let i = 1; i < keys.length; i++) expect(keys[i]!.at).toBeGreaterThan(keys[i - 1]!.at);
+    // how far across its own square a pigeon reaches in any pose, with a letter, either way round (measured in a browser)
+    const reach = { x0: 0.07, x1: 0.91, y0: 0.28, y1: 0.95 };
+    const share = LETTER_SILL.birdShare;
+    const [cx, cy] = [LETTER_SILL.x / 120 - (share * LETTER_BIRD_FEET.x) / 120 + share / 2, LETTER_SILL.y / 120 - (share * LETTER_BIRD_FEET.y) / 120 + share / 2];
+    const open = { x0: LETTER_OPENING.x0 / 120, x1: LETTER_OPENING.x1 / 120, y0: LETTER_OPENING.y0 / 120, y1: LETTER_OPENING.y1 / 120 };
+    for (const k of keys.filter((key) => key.at >= LETTER_FLIGHT.behindAt)) {
+      const size = share * k.scale;
+      const [left, top] = [cx + k.x - size / 2, cy + k.y - size / 2];
+      for (const [r0, r1] of [[reach.x0, reach.x1], [1 - reach.x1, 1 - reach.x0]] as const) {
+        expect(left + size * r0).toBeGreaterThan(open.x0);
+        expect(left + size * r1).toBeLessThan(open.x1);
+      }
+      expect(top + size * reach.y0).toBeGreaterThan(open.y0);
+      expect(top + size * reach.y1).toBeLessThan(open.y1);
+    }
+  });
+});
+
+describe('the pigeon at play', () => {
+  it('runs each play from its start to its end, in order, with pictures the pigeon has', () => {
+    for (const play of Object.values(LETTER_PLAY)) {
+      for (const track of [play.moves, play.poses.map(([at]) => ({ at })), play.letter]) {
+        for (let i = 1; i < track.length; i++) expect(track[i]!.at).toBeGreaterThanOrEqual(track[i - 1]!.at);
+        if (track.length) expect(track[0]!.at).toBe(0);
+      }
+      expect(play.moves[play.moves.length - 1]!.at).toBe(1);
+      for (const [, pose] of play.poses) expect(PIGEON_POSES).toContain(pose);
+    }
+  });
+
+  it('hands over to the flight and from the landing without a jump: in its place, upright, the letter in its beak', () => {
+    const still = { x: 0, y: 0, tilt: 0, sx: 1, sy: 1 };
+    const before = LETTER_PLAY.before;
+    expect(before.moves[before.moves.length - 1]).toMatchObject(still);
+    expect(before.poses[before.poses.length - 1]!.slice(1)).toEqual(['perched', true]);
+    const after = LETTER_PLAY.after;
+    expect(after.poses[0]!.slice(1)).toEqual(['perched', true]);
+    expect(after.moves[after.moves.length - 1]).toMatchObject(still);
+    // the idle play goes round and round, so it ends as it begins
+    const idle = LETTER_PLAY.idle;
+    expect(idle.moves[idle.moves.length - 1]).toMatchObject(still);
+    expect(idle.poses[0]!.slice(1)).toEqual(['perched', false]);
+  });
+
+  it('shows exactly one picture of the pigeon at every moment of every play', () => {
+    for (const play of Object.values(LETTER_PLAY)) {
+      const shows = letterPlayShows(play);
+      const seenAt = (show: (typeof shows)[number], t: number): number => {
+        let seen = 0;
+        for (const [at, s] of show.steps) if (at <= t) seen = s;
+        return seen;
+      };
+      for (let t = 0; t <= 1; t += 0.01) expect(shows.reduce((sum, show) => sum + seenAt(show, t), 0)).toBe(1);
+    }
+  });
+
+  it('brings its beak down to the letter on the sill when it picks it up or lays it down', () => {
+    // the tip of its beak, standing, about its feet, in shares of its own square
+    const beak = [(21.3 * LETTER_BIRD_FEET.scale) / 120, (-11.1 * LETTER_BIRD_FEET.scale) / 120] as const;
+    for (const play of [LETTER_PLAY.before, LETTER_PLAY.after]) {
+      const peck = play.moves.find((m) => m.tilt >= 30)!;
+      const a = (peck.tilt * Math.PI) / 180;
+      const [x, y] = [beak[0] * Math.cos(a) - beak[1] * Math.sin(a) + peck.x, beak[0] * Math.sin(a) + beak[1] * Math.cos(a) + peck.y];
+      expect(Math.abs(x - play.letterAt)).toBeLessThan(0.04);
+      expect(Math.abs(y)).toBeLessThan(0.04);
+    }
+  });
+});
+
+describe('the tree through the seasons', () => {
+  it('knows the season from the month, as the year goes in the north', () => {
+    const at = (month: number): string => treeSeasonAt(new Date(2026, month - 1, 15));
+    expect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(at)).toEqual([
+      'winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter',
+    ]);
+  });
+
+  it('draws every kind at every grown stage in every season, and its scene, each a valid picture', () => {
+    for (const season of TREE_SEASONS) {
+      checkSvg(treeStudioSvg({ season, size: 120, title: 'A season' }), 120);
+      for (const species of TREE_SPECIES) for (const stage of [0, 2, 4, 6] as const) checkSvg(treeSvg({ species, stage, season, size: 120, title: 'A tree' }), 120);
+    }
+  });
+
+  it('turns a tree that loses its leaves with the seasons, and keeps an evergreen green until the snow', () => {
+    const crown = (species: (typeof TREE_SPECIES)[number], season: (typeof TREE_SEASONS)[number]): string =>
+      treeSvg({ species, stage: 6, season, part: 'plant', idPrefix: 'x' });
+    const oak = TREE_SEASONS.map((season) => crown('beru', season));
+    expect(new Set(oak).size).toBe(4);
+    // the pine is the same tree in spring, summer and autumn, frosted only in winter
+    expect(crown('kaj', 'spring')).toBe(crown('kaj', 'summer'));
+    expect(crown('kaj', 'autumn')).toBe(crown('kaj', 'summer'));
+    expect(crown('kaj', 'winter')).not.toBe(crown('kaj', 'summer'));
+  });
+
+  it('blows the season past every tree: blossom, green, orange, and snow even on one that has wilted', () => {
+    expect(TREE_SEASONS.map((season) => treeSeasonAir('beru', 6, 'fresh', season)?.air)).toEqual(['petals', 'leaves', 'leaves', 'snow']);
+    // a grown oak loses its own leaves; a pine in autumn has the wind's
+    expect(treeSeasonAir('beru', 6, 'fresh', 'autumn')?.colours).not.toEqual(treeSeasonAir('kaj', 6, 'fresh', 'autumn')?.colours);
+    expect(treeSeasonAir('beru', 6, 'wilting', 'summer')).toBeNull();
+    expect(treeSeasonAir('beru', 6, 'withered', 'winter')?.air).toBe('snow');
+    for (const species of TREE_SPECIES) for (const season of TREE_SEASONS) for (const c of treeSeasonAir(species, 4, 'fresh', season)!.colours) expect(c).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it('stands a tree in a season on the floor, with its long shadow; without one it floats on its island as before', () => {
+    const seasoned = treeSvg({ species: 'beru', stage: 6, season: 'summer', part: 'ground' });
+    const before = treeSvg({ species: 'beru', stage: 6, part: 'ground' });
+    expect(seasoned).toContain('linearGradient');
+    expect(seasoned).not.toBe(before);
   });
 });

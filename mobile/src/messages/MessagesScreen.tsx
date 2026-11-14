@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { Animated, type FlatList, Pressable, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { groupLimits, type LimitDetails } from '@kurda/shared';
+import { groupLimits, type LettersHome, type LimitDetails } from '@kurda/shared';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
@@ -44,6 +44,7 @@ import {
   type MessageRow,
 } from './list';
 import { useUnread } from './unread';
+import { BirdBadge } from '../letters/LetterParts';
 
 interface RequestRow {
   userId: string;
@@ -95,6 +96,8 @@ export function MessagesScreen(): React.JSX.Element {
   const [groups, setGroups] = useState<GroupConversation[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [caringItems, setCaringItems] = useState<InboxItem[]>([]);
+  // letters by bird: your bird and your pen pals, for the row at the head of the list
+  const [letters, setLetters] = useState<LettersHome | null>(null);
   const [caring, setCaring] = useState<CaringMessage | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   // the conversations could not be read at all: say so and offer to try again, rather than "No messages yet"
@@ -109,13 +112,16 @@ export function MessagesScreen(): React.JSX.Element {
   const load = useCallback(async () => {
     // every one of these is refused to a guest, and the tab shows them none of it
     if (isGuest) return;
-    const [c, g, gu, r, n] = await Promise.all([
+    const [c, g, gu, r, n, l] = await Promise.all([
       client.get<{ conversations: DirectConversation[] }>('/chat/conversations'),
       client.get<{ groups: Group[] }>('/me/groups'),
       client.get<{ unread: { groupId: string; unread: number }[] }>('/me/groups/unread'),
       client.get<{ requests: RequestRow[] }>('/friends/requests'),
       client.get<{ notifications: InboxItem[] }>('/me/notifications'),
+      client.get<LettersHome>('/letters'),
     ]);
+    // a server from before letters answers with nothing to show: the row is simply not drawn
+    if (l.ok && Array.isArray(l.data?.penPals)) setLetters(l.data);
     const unreadByGroup = new Map((gu.ok ? gu.data.unread : []).map((u) => [u.groupId, u.unread]));
     const nextGroups: GroupConversation[] = g.ok
       ? g.data.groups
@@ -241,6 +247,8 @@ export function MessagesScreen(): React.JSX.Element {
           <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip ?? undefined} />
         </PressableScale>
       ) : null}
+
+      {letters && filter !== 'groups' ? <LettersRow home={letters} onPress={() => navigation.navigate('Letters')} /> : null}
 
       {offersNewGroup ? (
         <PressableScale
@@ -484,6 +492,48 @@ function ConversationsSkeleton(): React.JSX.Element {
         </View>
       ))}
     </View>
+  );
+}
+
+/**
+ * The way into letters by bird (letters/LettersScreen), at the head of the
+ * conversations, as the website has it: your bird, and in a few words what is
+ * new — a letter waiting to be answered, your bird out — or, with nothing yet,
+ * what letters are.
+ */
+function LettersRow({ home, onPress }: { home: LettersHome; onPress: () => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  const unread = home.penPals.reduce((n, p) => n + p.unread, 0);
+  const waiting = home.penPals.find((p) => p.yourTurn);
+  const line = waiting ? t('letters.row.yourTurn', { name: waiting.person.name }) : home.out ? t('letters.out.title') : t('letters.row.invite');
+  return (
+    <PressableScale
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${t('letters.title')}, ${line}`}
+      testID="messages-letters"
+      style={[styles.requests, { backgroundColor: colors.surface, flexDirection: dir.row }]}
+    >
+      <View style={styles.faces}>
+        <BirdBadge bird={home.bird} size={40} />
+      </View>
+      <View style={styles.rowMain}>
+        <Text style={[styles.rowName, unread > 0 && styles.unreadName, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+          {t('letters.title')}
+        </Text>
+        <Text style={[styles.rowPreview, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+          {line}
+        </Text>
+      </View>
+      {unread > 0 ? (
+        <View style={[styles.count, { backgroundColor: colors.goldText }]}>
+          <Text style={[styles.countText, { color: colors.textOnPrimary }]}>{unread > 99 ? '99+' : unread}</Text>
+        </View>
+      ) : null}
+      <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip ?? undefined} />
+    </PressableScale>
   );
 }
 

@@ -1,0 +1,582 @@
+/*
+ * Letters by bird (letters/LettersPage.tsx, LetterThreadPage.tsx).
+ *
+ * One narrow column, as a letter is read: the window at the top, the paper
+ * under it, the pen pals below. A letter is a sheet of warm paper with the
+ * deep ink on it in either theme — it is an object on the page, like the
+ * pictures, not a surface of the page — and a little dimmer in the dark so it
+ * does not glare. Only transform and opacity move, and a reader who asked
+ * for less motion sees the window still and each pigeon where it ends up.
+ */
+.letters-page {
+  --paper: #fbf3e4;
+  --paper-line: #e9dcc3;
+  --paper-ink: #2b2238;
+  --paper-soft: #6f6476;
+  max-width: 640px;
+  padding-bottom: var(--space-8);
+}
+:root:not([data-theme='light']) .letters-page {
+  --paper: #e9dfcd;
+  --paper-line: #d6c8ad;
+}
+.letters-head {
+  margin-bottom: var(--space-4);
+}
+.letters-lead {
+  margin: 6px 0 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+/* ---- the window ---------------------------------------------------------------------- */
+.letters-hero {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+/*
+ * The window in its layers (LetterWindow.tsx). Each layer is the same square;
+ * the country behind the frame is moved by the pointer (`--px`, `--py`, -1 to
+ * 1) and drifts a little of itself, each as far as its `--depth`, so the
+ * near meadow moves more than the far mountains and the frame holds still.
+ */
+.lw {
+  --px: 0;
+  --py: 0;
+  --flight-ms: 2600ms;
+  --beat-ms: 240ms;
+  position: relative;
+  width: min(100%, 340px);
+  aspect-ratio: 1;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  isolation: isolate;
+}
+.lw-layer,
+.lw-layer-art,
+.lw-flight,
+.lw-flight-seen {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.lw-layer {
+  translate: calc(var(--px) * var(--depth) * -100%) calc(var(--py) * var(--depth) * -60%);
+  transition: translate 700ms var(--ease-out);
+  animation: lw-drift 16s ease-in-out infinite alternate;
+}
+@keyframes lw-drift {
+  from {
+    transform: translateX(calc(var(--depth) * -50%));
+  }
+  to {
+    transform: translateX(calc(var(--depth) * 50%));
+  }
+}
+.lw-layer-art svg,
+.lw-pose svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* the clouds go slowly over, on top of the country's own drift */
+.lw-layer--clouds .lw-layer-art {
+  animation: lw-clouds 46s ease-in-out infinite alternate;
+}
+@keyframes lw-clouds {
+  from {
+    transform: translateX(-7%);
+  }
+  to {
+    transform: translateX(7%);
+  }
+}
+/* the casements stir in the breeze, each about its hinge, one a little after the other */
+.lw-layer--left .lw-layer-art,
+.lw-layer--right .lw-layer-art {
+  animation: lw-stir 7s ease-in-out infinite alternate;
+}
+.lw-layer--left .lw-layer-art {
+  transform-origin: 20% 50%;
+}
+.lw-layer--right .lw-layer-art {
+  transform-origin: 80% 50%;
+  animation-delay: -3.2s;
+}
+@keyframes lw-stir {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0.92);
+  }
+}
+.lw-layer--light .lw-layer-art {
+  animation: lw-glow 9s ease-in-out infinite alternate;
+}
+@keyframes lw-glow {
+  from {
+    opacity: 0.7;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* a pigeon: its square on the sill, and the pictures of it laid one on another */
+.lw-bird {
+  position: absolute;
+  aspect-ratio: 1;
+}
+.lw-pose {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+/*
+ * A pigeon at play (LetterWindow.tsx, from the shared LETTER_PLAY): the whole
+ * of it moved about its feet, and its pictures laid one on another, the play
+ * switching between them; a letter lying on the sill, a little flattened as
+ * something lying down is seen from above.
+ */
+.lw-play,
+.lw-play-pose {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.lw-play {
+  transform-origin: 50% 83.33%;
+}
+.lw-sill-letter {
+  position: absolute;
+  aspect-ratio: 1;
+  transform: scaleY(0.62) rotate(-4deg);
+  transform-origin: 50% 76.7%;
+}
+.lw-sill-letter-art,
+.lw-sill-letter-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* asleep at night: it breathes */
+.lw-bird--asleep {
+  transform-origin: 50% 83%;
+  animation: lw-breathe 3.4s ease-in-out infinite;
+}
+@keyframes lw-breathe {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: scale(1.025, 1.035);
+  }
+}
+/*
+ * A flight is moved as a whole about the pigeon's middle (LetterWindow.tsx,
+ * from the shared LETTER_FLIGHT); here it stands to take off and then beats
+ * its wings, up and down by turns, or beats them all the way in and stands as
+ * it lands.
+ */
+.lw-flight {
+  transform-origin: var(--middle);
+}
+.lw-pose--takeoff {
+  animation: lw-first var(--flight-ms) step-end both;
+}
+.lw-wings--takeoff {
+  animation: lw-then var(--flight-ms) step-end both;
+}
+/* landing is taking off backwards: the wings beat until the last moment, and then it stands */
+.lw-wings--landing {
+  animation: lw-then var(--flight-ms) step-end reverse both;
+}
+.lw-pose--landing {
+  animation: lw-first var(--flight-ms) step-end reverse both;
+}
+@keyframes lw-first {
+  0%,
+  11% {
+    opacity: 1;
+  }
+  12%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes lw-then {
+  0%,
+  11% {
+    opacity: 0;
+  }
+  12%,
+  100% {
+    opacity: 1;
+  }
+}
+.lw-wings {
+  position: absolute;
+  inset: 0;
+}
+.lw-pose--up {
+  animation: lw-beat var(--beat-ms) step-end infinite;
+}
+.lw-pose--down {
+  animation: lw-beat var(--beat-ms) step-end infinite reverse;
+}
+@keyframes lw-beat {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* for a reader who asked for less motion the window is a still picture, and a pigeon simply stands */
+@media (prefers-reduced-motion: reduce) {
+  .lw-layer,
+  .lw-layer-art,
+  .lw-bird--asleep,
+  .lw-pose--up,
+  .lw-pose--down {
+    animation: none;
+  }
+  .lw-layer {
+    translate: none;
+    transition: none;
+  }
+}
+
+.letters-hero-text {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  max-width: 440px;
+  text-align: center;
+}
+.letters-status {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.letters-status--strong {
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.0625rem;
+}
+.letters-write {
+  min-width: 220px;
+}
+
+/* ---- the paper ------------------------------------------------------------------------- */
+.letter-paper {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+.letter-paper-label {
+  font-weight: 700;
+}
+.letter-paper-sheet {
+  width: 100%;
+  min-height: 220px;
+  padding: 14px 18px;
+  border: 1px solid var(--paper-line);
+  border-radius: var(--r-lg);
+  /* ruled like writing paper: a line every line of text */
+  background:
+    repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--paper-line) 31px, var(--paper-line) 32px) 0 13px / 100% 32px,
+    var(--paper);
+  background-attachment: local;
+  color: var(--paper-ink);
+  font: inherit;
+  font-size: 1.0625rem;
+  line-height: 32px;
+  resize: vertical;
+}
+.letter-paper-sheet::placeholder {
+  color: var(--paper-soft);
+}
+.letter-paper-sheet:focus-visible {
+  outline: 2px solid var(--focus, #3d8bd9);
+  outline-offset: 2px;
+}
+.letter-paper-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+.letter-paper-hint {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+}
+.letter-paper-count {
+  flex: none;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+.letter-paper-count.is-over {
+  color: var(--danger, #d8493b);
+  font-weight: 700;
+}
+.letter-paper-problem {
+  min-height: 1.3em;
+  margin: 0;
+  color: var(--danger, #d8493b);
+  font-size: var(--text-secondary);
+}
+.letter-paper-send {
+  justify-self: start;
+  min-width: 200px;
+}
+
+/* ---- a letter, read ------------------------------------------------------------------- */
+.letter-sheet {
+  position: relative;
+  display: grid;
+  gap: var(--space-2);
+  padding: 16px 18px 14px;
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  color: var(--paper-ink);
+  box-shadow: 0 1px 0 var(--paper-line), 0 8px 18px -14px rgba(0, 0, 0, 0.45);
+}
+.letter-sheet.is-mine {
+  margin-inline-start: 10%;
+}
+.letter-sheet:not(.is-mine) {
+  margin-inline-end: 10%;
+}
+.letter-sheet-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--paper-soft);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.letter-sheet-from {
+  color: var(--paper-ink);
+  font-weight: 700;
+}
+.letter-sheet-body {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.letter-sheet-removed {
+  margin: 0;
+  color: var(--paper-soft);
+  font-style: italic;
+}
+.letter-sheet-report {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--paper-soft);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+.letter-sheet-report:hover {
+  color: var(--paper-ink);
+  background: color-mix(in srgb, var(--paper-line) 50%, transparent);
+}
+.letters-arrived {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  margin-bottom: var(--space-6);
+}
+.letters-arrived .letter-sheet {
+  width: 100%;
+  margin: 0;
+  animation: letters-unfold 0.5s var(--ease-out) both;
+}
+@keyframes letters-unfold {
+  from {
+    transform: translateY(8px) scale(0.98);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .letters-arrived .letter-sheet {
+    animation: none;
+  }
+}
+
+/* ---- pen pals ------------------------------------------------------------------------ */
+.letters-section-title {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.letters-empty {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.letters-pal-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.letters-pal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 64px;
+  padding: 8px 14px 8px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color var(--dur-fast) ease;
+}
+.letters-pal:hover {
+  border-color: var(--border-strong);
+}
+.letter-badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #e3f1fb;
+}
+.letter-badge svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.letters-pal-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.letters-pal-name {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.letters-pal-turn {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.letters-pal-turn.is-yours {
+  color: var(--ink);
+}
+.letters-pal-new {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+.letters-pal-go {
+  flex: none;
+  color: var(--ink-3);
+}
+
+/* ---- how it works --------------------------------------------------------------------- */
+.letters-how {
+  margin-top: var(--space-6);
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.letters-how summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--ink-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+.letters-how ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-inline-start: 1.2em;
+  line-height: 1.45;
+}
+
+/* ---- one correspondence ------------------------------------------------------------- */
+.letters-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  color: var(--ink-2);
+  font-weight: 600;
+  text-decoration: none;
+}
+/* the chevron points back the way the reader came, whichever way the language runs */
+.letters-back-icon {
+  rotate: 180deg;
+}
+.letters-thread-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 var(--space-5);
+}
+.letters-thread-name {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  overflow-wrap: anywhere;
+}
+.letters-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+.letters-note {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  line-height: 1.45;
+  text-align: center;
+}

@@ -56,18 +56,22 @@ describe('ProfileModal', () => {
     expect(screen.getByText('1,234')).toBeInTheDocument(); // XP
     // renders streak.current (not the object) — no crash, no error state
     expect(screen.getByText('7 days')).toBeInTheDocument();
-    // and beside it, the two numbers a missed day never takes away
+    // and beside it, the number a missed day never takes away
     expect(screen.getByText('12 days')).toBeInTheDocument();
     expect(screen.getByText('Longest streak')).toBeInTheDocument();
-    expect(screen.getByText('Days learned')).toBeInTheDocument();
-    expect(screen.getByText('30')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    // what is yours to do with your own card: change the profile, send it to somebody, or open the whole of it
+    expect(within(dialog).getByRole('link', { name: /edit profile/i })).toHaveAttribute('href', '/app/profile/edit');
+    expect(within(dialog).getByRole('button', { name: /share profile/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'View full profile' })).toBeInTheDocument();
+    // nothing to report or block about yourself, so no menu about you in the corner
+    expect(dialog.querySelector('.pc-corner')).toBeNull();
     // Saved is a section of the full profile, not a button on the card — this
     // is a glance at who you are, not a place to keep every link
     expect(screen.queryByRole('button', { name: 'Saved' })).not.toBeInTheDocument();
   });
 
-  it('renders equipped cosmetics, level and favorites for another user', async () => {
+  it('renders equipped cosmetics and the level for another user, and leaves their favourites to the full profile', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () =>
@@ -92,13 +96,22 @@ describe('ProfileModal', () => {
     renderApp(<OpenUser />);
     await userEvent.click(screen.getByText('open-user'));
 
-    // name appears in both the plate and the footer label — assert the plate one
-    expect((await screen.findByText('@zana')).previousSibling).toHaveTextContent('Zana K');
+    await screen.findByText('@zana');
+    expect(document.querySelector('.pc-name')).toHaveTextContent('Zana K');
+    // the level is said as a word: the bar toward the next one is on the profile itself
     expect(screen.getByText('Level 2')).toBeInTheDocument();
-    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
+    expect(screen.queryByRole('progressbar')).toBeNull();
     expect(screen.getByText('Hevalo+')).toBeInTheDocument();
+    // here now: in words beside the handle, and as a dot on the face
     expect(screen.getByText('Online')).toBeInTheDocument();
-    expect(screen.getByText('The River')).toBeInTheDocument();
+    expect(document.querySelector('.pc-face .pc-presence')).not.toBeNull();
+    // a glance, not the whole of them: what they pinned is one press away
+    expect(screen.queryByText('The River')).toBeNull();
+    // a friend: write to them first, play with them beside it, and the whole profile last
+    const acts = document.querySelector<HTMLElement>('.pc-acts')!;
+    expect(within(acts).getAllByRole('button').map((b) => b.textContent)).toEqual(['Message', 'Play']);
+    expect(within(acts).getByRole('button', { name: 'Message' })).toHaveClass('btn-primary');
+    expect(screen.getByRole('button', { name: 'View full profile' })).toBeInTheDocument();
     // the avatar uses the resolved avatarUrl (photo → default avatar server-side)
     const avatar = document.querySelector('.pcard-photo-img') as HTMLImageElement | null;
     expect(avatar?.src).toBe('https://cdn.test/profile-photo/z.webp');
@@ -200,6 +213,18 @@ describe('ProfileModal', () => {
      * "Message" and it is the only action on this card that cannot be walked
      * back from it, so it sits behind a ⋯ with Report.
      */
+    it('has its menu in the banner’s corner, beside the close button: share, then report and block apart', async () => {
+      stub();
+      renderApp(<OpenUser />);
+      await userEvent.click(screen.getByText('open-user'));
+      const more = await screen.findByRole('button', { name: /more about/i });
+      expect(document.querySelector('.pc-modal .pc-corner')).toContainElement(more);
+      await userEvent.click(more);
+      const items = screen.getAllByRole('menuitem').map((item) => item.textContent?.trim());
+      expect(items.slice(0, 1)).toEqual(['Share profile']);
+      expect(items.slice(-2)).toEqual(['Report', 'Block']);
+    });
+
     it('is not offered in the open — it lives behind the menu', async () => {
       stub();
       renderApp(<OpenUser />);

@@ -22,7 +22,8 @@
 .pc-banner {
   position: relative;
   height: 132px;
-  /* no background equipped: light from the corner, the page's own light */
+  overflow: hidden;
+  /* neither a background nor a horizon (a picture of the product, a face still loading): the page's own light */
   background:
     radial-gradient(120% 160% at 15% 0%, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.02) 62%),
     linear-gradient(180deg, #181b21, #0f1115);
@@ -35,6 +36,77 @@
   object-fit: cover;
   image-rendering: auto;
   pointer-events: none;
+}
+/*
+ * The horizon is a square picture composed about its middle line: laid across
+ * the banner's width and centred on it, the banner shows the band where the
+ * sun and the first ridge are, whatever its shape.
+ */
+.pc-horizon {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.pc-horizon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/*
+ * The far corner of the banner: the menu about this person, where such a menu
+ * is looked for. Its buttons are a fingertip across and drawn on the app's own
+ * solid surface, so they read the same over any sky and any background.
+ */
+.pc-corner {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+}
+.pc-corner .user-actions-btn,
+.pc-corner .profile-menu-btn,
+.pc-corner-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur) var(--ease-spring);
+}
+.pc-corner .user-actions-btn:hover,
+.pc-corner .profile-menu-btn:hover,
+.pc-corner-btn:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-solid);
+  color: var(--ink);
+}
+.pc-corner .user-actions-btn:active,
+.pc-corner .profile-menu-btn:active,
+.pc-corner-btn:active {
+  transform: scale(var(--press-scale));
+}
+/* a menu in the corner hangs down into the card, from the button's own end */
+.pc-corner .user-menu {
+  top: calc(100% + 8px);
+  bottom: auto;
+  inset-inline: auto 0;
+  z-index: 30;
+  text-align: start;
 }
 .pc-body {
   position: relative;
@@ -82,10 +154,23 @@
   top: -10px;
   inset-inline-end: -14px;
 }
+/* here now: a dot on the edge of the face, ringed in the card's own colour */
+.pc-presence {
+  position: absolute;
+  inset-inline-end: 2px;
+  bottom: 2px;
+  z-index: 3;
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--pc-ring);
+  border-radius: 50%;
+  background: var(--success);
+}
 .pc-names {
   display: grid;
   gap: 2px;
   min-width: 0;
+  justify-self: stretch;
 }
 .pc-name-row {
   display: flex;
@@ -106,37 +191,78 @@
   margin-inline-start: 0;
 }
 .pc-handle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
   color: var(--ink-3);
   font-size: 0.92rem;
 }
 .pc-online {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 4px;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--success);
 }
+.pc-online::before {
+  content: '';
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ink-3);
+}
+/*
+ * What can be done, in a row of its own under their words. On a narrow card
+ * the buttons share the row evenly, each a fingertip tall; beside the face on
+ * a wide one they are as wide as their words.
+ */
 .pc-aside {
+  justify-self: stretch;
+  margin-top: 16px;
+}
+.pc-acts {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 14px;
+}
+.pc-acts > .btn,
+.pc-acts > .play-btn,
+.pc-acts > .friend-ask {
+  flex: 1 1 0;
+  min-width: max-content;
+  min-height: 44px;
+  justify-content: center;
+}
+.pc-acts > .friend-ask > .btn {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+}
+.pc-acts > .msg {
+  flex: 1 0 100%;
 }
 
-/* level, the bar toward the next one, and what is left */
+/* level, what is left to the next one, and the bar between them */
 .pcard-level {
   display: grid;
-  gap: 8px;
-  margin-top: 14px;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'badge next'
+    'track track';
+  align-items: baseline;
+  gap: 8px 12px;
+  margin-top: 18px;
 }
 .pcard-level-badge {
+  grid-area: badge;
   font-size: 0.84rem;
   font-weight: 650;
   color: var(--gold-ink);
 }
 .pcard-level-track {
+  grid-area: track;
   height: 6px;
   border-radius: var(--r-pill);
   background: var(--surface-2);
@@ -148,46 +274,28 @@
   background: var(--gold);
 }
 .pcard-level-next {
+  grid-area: next;
+  justify-self: end;
   font-size: 0.78rem;
   color: var(--ink-3);
+  text-align: end;
 }
 
-/* what the popup adds under the card: a bio, the numbers, the favourites */
+/* what the popup adds under the card: a bio, the numbers, what can be done */
 .pc-bio {
-  margin-top: 14px;
+  margin: 12px 0 0;
   font-size: 0.92rem;
   line-height: 1.55;
   color: var(--ink-2);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.pc-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
-  gap: 8px;
-  margin: 16px 0 0;
-}
-.pc-stat {
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  min-width: 0;
-}
-.pc-stat dt {
-  font-size: var(--text-tab);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.pc-stat dd {
-  margin: 4px 0 0;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
+/* in the popup a long bio is cut at four lines: the whole of it is one press away, on the profile */
+.pc-modal .pc-bio {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .pc-favs {
   margin: 14px 0 0;
@@ -213,7 +321,7 @@
   white-space: nowrap;
 }
 .pc-actions {
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
 /* in the popup the card is the panel: the banner runs to the panel's edges */
@@ -225,64 +333,123 @@
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  /* the popup scrolls as a whole, so a menu hanging from the corner is never cut off by the card */
+  overflow: visible;
 }
-.pc-modal .profile-actions {
-  justify-content: flex-start;
-  margin: 0;
-  padding: 0 20px 22px;
+.pc-modal .pc-banner {
+  height: 124px;
+}
+/* the menu stands beside the popup's own close button, which keeps the very corner */
+.pc-modal .pc-corner {
+  top: 8px;
+  inset-inline-end: 58px;
 }
 .pc-modal .pc-body {
-  padding-bottom: 18px;
+  padding-bottom: 22px;
+}
+.pc-modal .mkp-facts {
+  margin-top: 16px;
+}
+/* the way to the whole profile: the last thing in the popup, and the quietest */
+.pc-full {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+.pc-full:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+[dir='rtl'] .pc-full svg {
+  transform: scaleX(-1);
 }
 
-/* the full profile: wider banner, name beside the face on a wide screen */
-.pc--wide .pc-banner {
-  height: clamp(140px, 24vw, 230px);
+/* the full profile: a taller banner, and on a wide card what can be done stands beside the face */
+.pc--wide {
+  container: pc / inline-size;
 }
-/* nobody's picture to show: enough of a banner for the face to stand over, and no more empty wall than that */
-.pc--wide:not(.pc--has-bg) .pc-banner {
-  height: clamp(76px, 13vw, 116px);
+.pc--wide .pc-banner {
+  height: clamp(124px, 27cqi, 220px);
 }
 .pc--wide .pc-body {
-  padding: 0 clamp(18px, 3vw, 32px) 24px;
+  padding: 0 clamp(18px, 4cqi, 32px) 24px;
 }
-@media (min-width: 720px) {
+.pc--wide .pc-face {
+  width: 96px;
+  height: 96px;
+  margin-top: -48px;
+}
+.pc--wide .pc-face .pc-presence {
+  inset-inline-end: 4px;
+  bottom: 4px;
+}
+.pc--wide .pc-name {
+  font-size: 1.65rem;
+}
+@container pc (min-width: 600px) {
   /*
-   * Top-aligned: the face is pulled half over the banner and the names start
-   * just under it. Bottom-aligned, a long name column pushed the face down
-   * until it no longer overlapped anything.
+   * The face over the banner's edge at the start, what can be done at the end
+   * of the same line, and the name under them with the whole width to itself:
+   * a long name never has to share its line with three buttons.
    */
   .pc--wide .pc-id {
     grid-template-columns: auto minmax(0, 1fr);
-    align-items: start;
-    column-gap: 22px;
-  }
-  /*
-   * What can be done sits under the name, not beside it. Beside it, three
-   * buttons took the name's room and a long name broke in the middle of a
-   * word; under it, the name has the whole line and the order is the phone's:
-   * who, in their own words, then what you can do.
-   */
-  .pc--wide .pc-aside {
-    grid-column: 2;
+    grid-template-areas:
+      'face aside'
+      'names names';
+    align-items: end;
+    column-gap: 20px;
   }
   .pc--wide .pc-face {
-    width: 120px;
-    height: 120px;
-    margin-top: -60px;
-    margin-bottom: 0;
+    grid-area: face;
+    width: 128px;
+    height: 128px;
+    margin-top: -64px;
+    margin-bottom: 14px;
+    border-width: 4px;
+  }
+  .pc--wide .pc-face .pc-presence {
+    inset-inline-end: 8px;
+    bottom: 8px;
+    width: 22px;
+    height: 22px;
+    border-width: 4px;
   }
   .pc--wide .pc-names {
-    padding-top: 14px;
-  }
-  .pc--wide .pc-name {
-    font-size: 1.85rem;
+    grid-area: names;
   }
   .pc--wide .pc-aside {
-    margin-top: 14px;
+    grid-area: aside;
+    justify-self: end;
+    align-self: end;
+    margin: 0 0 14px;
   }
-  .pc--wide .pcard-level {
-    max-width: 440px;
+  .pc--wide .pc-acts {
+    justify-content: flex-end;
+  }
+  .pc--wide .pc-acts > .btn,
+  .pc--wide .pc-acts > .play-btn,
+  .pc--wide .pc-acts > .friend-ask {
+    flex: 0 0 auto;
+    min-height: 40px;
+  }
+  .pc--wide .pc-acts > .friend-ask > .btn {
+    min-height: 40px;
+  }
+  .pc--wide .pc-name {
+    font-size: 1.9rem;
   }
 }
 

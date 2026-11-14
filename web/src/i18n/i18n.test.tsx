@@ -273,7 +273,7 @@ describe('choosing a language', () => {
 
     await userEvent.selectOptions(screen.getByRole('combobox'), 'de');
     expect(document.title).toBe('Hevalo');
-    expect(meta.getAttribute('content')).toContain('Kurdisch zu lernen');
+    expect(meta.getAttribute('content')).toContain('Lerne Kurdisch');
 
     meta.remove();
   });

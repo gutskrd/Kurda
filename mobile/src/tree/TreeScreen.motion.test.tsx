@@ -60,23 +60,27 @@ describe('the tree’s screen, moving', () => {
     expect(screen.getByText('Water: 1')).toBeTruthy();
   });
 
-  it('fills the air round each kind of tree with what is its own, and stills it round one left to wilt', async () => {
+  it('blows the season past the tree, and stills it round one left to wilt but for the snow', async () => {
+    const month = vi.spyOn(Date.prototype, 'getMonth').mockReturnValue(3);
     testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ species: 'behiv', waterings: 30 }))) });
-    const almond = renderWithProviders(<TreeScreen onExit={() => undefined} />);
+    const spring = renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByTestId('tree-air-petals')).toBeTruthy();
-    almond.unmount();
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ species: 'sev', waterings: 30 }))) });
-    const night = renderWithProviders(<TreeScreen onExit={() => undefined} />);
-    expect(await screen.findByTestId('tree-air-fireflies')).toBeTruthy();
-    night.unmount();
-    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 1 }))) });
-    const sprout = renderWithProviders(<TreeScreen onExit={() => undefined} />);
-    expect(await screen.findByTestId('tree-air-motes')).toBeTruthy();
-    sprout.unmount();
+    spring.unmount();
+    month.mockReturnValue(9);
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 30 }))) });
+    const autumn = renderWithProviders(<TreeScreen onExit={() => undefined} />);
+    expect(await screen.findByTestId('tree-air-leaves')).toBeTruthy();
+    autumn.unmount();
     const dry = treeView({ species: 'behiv', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 30, water: 1, harvests: 0 }, TODAY);
     testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(dry)) });
+    const wilting = renderWithProviders(<TreeScreen onExit={() => undefined} />);
+    await screen.findByTestId('tree-health');
+    expect(screen.queryByTestId('tree-air-leaves')).toBeNull();
+    wilting.unmount();
+    month.mockReturnValue(0);
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     await screen.findByTestId('tree-health');
-    expect(screen.queryByTestId('tree-air-petals')).toBeNull();
+    expect(screen.getByTestId('tree-air-snow')).toBeTruthy();
+    month.mockRestore();
   });
 });

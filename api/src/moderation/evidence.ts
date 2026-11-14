@@ -421,6 +421,54 @@ const resolveGroupMessage: Resolver = async (db, targetId, ctx) => {
   };
 };
 
+/**
+ * A letter between pen pals (letters/service.ts): reported only by somebody in
+ * its correspondence and never by its writer, kept with the letters before and
+ * after it, as a chat message is. A letter still out with its bird has no
+ * reader yet, and nobody but its writer has seen it: it is not found.
+ */
+const resolveLetter: Resolver = async (db, targetId, ctx) => {
+  if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
+  const r = await db.query<{ id: string; sender_id: string; recipient_id: string | null; thread_id: string | null; status: string; created_at: Date }>(
+    `SELECT id, sender_id, recipient_id, thread_id, status, created_at FROM letters WHERE id = $1`,
+    [targetId],
+  );
+  const l = r.rows[0];
+  if (!l || l.thread_id === null) return { refused: 'not_found' };
+  if (ctx.reporterId !== null && ctx.reporterId !== l.sender_id && ctx.reporterId !== l.recipient_id) return { refused: 'not_found' };
+  const self = selfRefusal(ctx, l.sender_id);
+  if (self) return self;
+  const rows = await db.query<MessageRow>(
+    `WITH ref AS (SELECT created_at, id FROM letters WHERE id = $2::uuid)
+     SELECT * FROM (
+       (SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.created_at
+          FROM letters m LEFT JOIN users u ON u.id = m.sender_id, ref
+         WHERE m.thread_id = $1 AND (m.created_at, m.id) <= (ref.created_at, ref.id)
+         ORDER BY m.created_at DESC, m.id DESC LIMIT ${CONTEXT_BEFORE + 1})
+       UNION ALL
+       (SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.created_at
+          FROM letters m LEFT JOIN users u ON u.id = m.sender_id, ref
+         WHERE m.thread_id = $1 AND (m.created_at, m.id) > (ref.created_at, ref.id)
+         ORDER BY m.created_at ASC, m.id ASC LIMIT ${CONTEXT_AFTER})
+     ) ctx ORDER BY created_at, id`,
+    [l.thread_id, l.id],
+  );
+  const reported = rows.rows.find((x) => x.id === l.id);
+  return {
+    targetId: l.id,
+    subjectUserId: l.sender_id,
+    evidence: {
+      ...base('letter', l.id, ctx.now),
+      author: reported?.username ? { id: l.sender_id, username: reported.username } : null,
+      text: reported?.body ?? null,
+      createdAt: iso(l.created_at),
+      status: l.status,
+      context: rows.rows.map((x) => toEvidenceMessage(x, l.id)),
+      extra: { threadId: l.thread_id },
+    },
+  };
+};
+
 // ---------------------------------------------------------------------------
 // Game players, by seat
 // ---------------------------------------------------------------------------
@@ -572,6 +620,7 @@ const RESOLVERS: Readonly<Record<ReportTargetType, Resolver>> = {
   image_post: resolveImagePost,
   image_comment: resolveImageComment,
   game_player: resolveGamePlayer,
+  letter: resolveLetter,
 };
 
 /** Snapshot a report's target, or say why it cannot be reported. */

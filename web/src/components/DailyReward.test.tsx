@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DailyReward } from './DailyReward';
 import { renderApp, routedFetch, jsonResponse } from '../test/utils';
@@ -74,7 +74,12 @@ describe('DailyReward', () => {
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/rewards/daily/claim'))).toBe(false);
   });
 
-  it('says it was claimed once today’s reward is in, whatever was learned', async () => {
+  /**
+   * Deliberately changed. A day already claimed showed the card with "Claimed
+   * today" and the balance, which the top bar shows too; it now steps aside,
+   * so the wall under it starts at the top.
+   */
+  it('steps aside on a day already claimed, whatever was learned', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(
@@ -92,8 +97,9 @@ describe('DailyReward', () => {
         }),
       ),
     );
-    renderApp(<DailyReward />);
-    expect(await screen.findByText(/claimed today/i)).toBeInTheDocument();
+    const { container } = renderApp(<DailyReward />);
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(container.querySelector('.zer-card')).toBeNull());
     expect(screen.queryByRole('link', { name: en['daily.goLearn'] })).not.toBeInTheDocument();
   });
 
@@ -149,8 +155,9 @@ describe('DailyReward', () => {
         }),
       ),
     );
-    renderApp(<DailyReward />);
-    expect(await screen.findByText(/claimed today/i)).toBeInTheDocument();
+    const { container } = renderApp(<DailyReward />);
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(container.querySelector('.zer-card')).toBeNull());
     expect(screen.queryByText(/Hevalo\+/)).not.toBeInTheDocument();
   });
 

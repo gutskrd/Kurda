@@ -30,7 +30,7 @@ describe('Friends', () => {
   /**
    * Two labels here are built from a name — "Remove {name} as a friend" — and a
    * placeholder that did not survive translation is a button reading
-   * "Retirer {name} de vos amis" with the braces still in it. Worth one test.
+   * "Retirer {name} de tes amis" with the braces still in it. Worth one test.
    */
   it('reads in the chosen language, names and all', async () => {
     localStorage.setItem('hevalo_locale', 'fr');
@@ -46,10 +46,10 @@ describe('Friends', () => {
 
     expect(await screen.findByRole('heading', { name: 'Amis', level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Trouver des gens' })).toHaveAttribute('href', '/app/search');
-    expect(screen.getByRole('heading', { name: 'Vos amis' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tes amis' })).toBeInTheDocument();
     // what ends a friendship is behind the row’s ⋯, named for the person too
     await userEvent.click(screen.getByRole('button', { name: 'En savoir plus sur zana' }));
-    expect(screen.getByTitle('Retirer zana de vos amis')).toBeInTheDocument();
+    expect(screen.getByTitle('Retirer zana de tes amis')).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Bloquer' })).toBeInTheDocument();
   });
 

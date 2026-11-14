@@ -283,18 +283,18 @@ const seasonOf = (month: number): Season => SEASON_ORDER[Math.floor(((month + 9)
  */
 export const CALENDAR_MONTHS: readonly CalendarMonth[] = (
   [
-    ['jan', 'Kanûna Paşîn', 'کانوونی دووەم', 'kanûnî duwem', 'Rêbendan', { en: 'January', de: 'Januar', nl: 'januari', fr: 'janvier', es: 'enero', tr: 'Ocak', ar: 'كانون الثاني' }],
-    ['feb', 'Sibat', 'شوبات', 'şubat', 'Reşemî', { en: 'February', de: 'Februar', nl: 'februari', fr: 'février', es: 'febrero', tr: 'Şubat', ar: 'شباط' }],
-    ['mar', 'Adar', 'ئازار', 'azar', undefined, { en: 'March', de: 'März', nl: 'maart', fr: 'mars', es: 'marzo', tr: 'Mart', ar: 'آذار' }],
-    ['apr', 'Nîsan', 'نیسان', 'nîsan', undefined, { en: 'April', de: 'April', nl: 'april', fr: 'avril', es: 'abril', tr: 'Nisan', ar: 'نيسان' }],
-    ['may', 'Gulan', 'ئایار', 'ayar', undefined, { en: 'May', de: 'Mai', nl: 'mei', fr: 'mai', es: 'mayo', tr: 'Mayıs', ar: 'أيار' }],
-    ['jun', 'Hezîran', 'حوزەیران', 'ḧuzeyran', 'Pûşper', { en: 'June', de: 'Juni', nl: 'juni', fr: 'juin', es: 'junio', tr: 'Haziran', ar: 'حزيران' }],
-    ['jul', 'Tîrmeh', 'تەممووز', 'temmûz', undefined, { en: 'July', de: 'Juli', nl: 'juli', fr: 'juillet', es: 'julio', tr: 'Temmuz', ar: 'تموز' }],
-    ['aug', 'Tebax', 'ئاب', 'ab', 'Gelawêj', { en: 'August', de: 'August', nl: 'augustus', fr: 'août', es: 'agosto', tr: 'Ağustos', ar: 'آب' }],
-    ['sep', 'Îlon', 'ئەیلوول', 'eylûl', 'Rezber', { en: 'September', de: 'September', nl: 'september', fr: 'septembre', es: 'septiembre', tr: 'Eylül', ar: 'أيلول' }],
-    ['oct', 'Cotmeh', 'تشرینی یەکەم', 'tişrînî yekem', 'Kewçêr', { en: 'October', de: 'Oktober', nl: 'oktober', fr: 'octobre', es: 'octubre', tr: 'Ekim', ar: 'تشرين الأول' }],
-    ['nov', 'Mijdar', 'تشرینی دووەم', 'tişrînî duwem', 'Sermawez', { en: 'November', de: 'November', nl: 'november', fr: 'novembre', es: 'noviembre', tr: 'Kasım', ar: 'تشرين الثاني' }],
-    ['dec', 'Kanûna Pêşîn', 'کانوونی یەکەم', 'kanûnî yekem', 'Berfanbar', { en: 'December', de: 'Dezember', nl: 'december', fr: 'décembre', es: 'diciembre', tr: 'Aralık', ar: 'كانون الأول' }],
+    ['jan', 'Kanûna Paşîn', 'کانوونی دووەم', 'kanûnî duwem', 'Rêbendan', { en: 'January', de: 'Januar', nl: 'januari', fr: 'janvier', es: 'enero', tr: 'Ocak', ar: 'كانون الثاني/يناير' }],
+    ['feb', 'Sibat', 'شوبات', 'şubat', 'Reşemî', { en: 'February', de: 'Februar', nl: 'februari', fr: 'février', es: 'febrero', tr: 'Şubat', ar: 'شباط/فبراير' }],
+    ['mar', 'Adar', 'ئازار', 'azar', undefined, { en: 'March', de: 'März', nl: 'maart', fr: 'mars', es: 'marzo', tr: 'Mart', ar: 'آذار/مارس' }],
+    ['apr', 'Nîsan', 'نیسان', 'nîsan', undefined, { en: 'April', de: 'April', nl: 'april', fr: 'avril', es: 'abril', tr: 'Nisan', ar: 'نيسان/أبريل' }],
+    ['may', 'Gulan', 'ئایار', 'ayar', undefined, { en: 'May', de: 'Mai', nl: 'mei', fr: 'mai', es: 'mayo', tr: 'Mayıs', ar: 'أيار/مايو' }],
+    ['jun', 'Hezîran', 'حوزەیران', 'ḧuzeyran', 'Pûşper', { en: 'June', de: 'Juni', nl: 'juni', fr: 'juin', es: 'junio', tr: 'Haziran', ar: 'حزيران/يونيو' }],
+    ['jul', 'Tîrmeh', 'تەممووز', 'temmûz', undefined, { en: 'July', de: 'Juli', nl: 'juli', fr: 'juillet', es: 'julio', tr: 'Temmuz', ar: 'تموز/يوليو' }],
+    ['aug', 'Tebax', 'ئاب', 'ab', 'Gelawêj', { en: 'August', de: 'August', nl: 'augustus', fr: 'août', es: 'agosto', tr: 'Ağustos', ar: 'آب/أغسطس' }],
+    ['sep', 'Îlon', 'ئەیلوول', 'eylûl', 'Rezber', { en: 'September', de: 'September', nl: 'september', fr: 'septembre', es: 'septiembre', tr: 'Eylül', ar: 'أيلول/سبتمبر' }],
+    ['oct', 'Cotmeh', 'تشرینی یەکەم', 'tişrînî yekem', 'Kewçêr', { en: 'October', de: 'Oktober', nl: 'oktober', fr: 'octobre', es: 'octubre', tr: 'Ekim', ar: 'تشرين الأول/أكتوبر' }],
+    ['nov', 'Mijdar', 'تشرینی دووەم', 'tişrînî duwem', 'Sermawez', { en: 'November', de: 'November', nl: 'november', fr: 'novembre', es: 'noviembre', tr: 'Kasım', ar: 'تشرين الثاني/نوفمبر' }],
+    ['dec', 'Kanûna Pêşîn', 'کانوونی یەکەم', 'kanûnî yekem', 'Berfanbar', { en: 'December', de: 'Dezember', nl: 'december', fr: 'décembre', es: 'diciembre', tr: 'Aralık', ar: 'كانون الأول/ديسمبر' }],
   ] as const
 ).map(([id, kmr, ckb, ckbLatin, also, meaning], i): CalendarMonth => ({
   set: 'months',

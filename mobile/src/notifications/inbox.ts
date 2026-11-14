@@ -28,6 +28,9 @@ export type DeepLink =
   | { screen: 'League' }
   /** someone asked to come back to a group you run: the requests themselves, waiting on an answer */
   | { screen: 'GroupRequests'; params: { groupId: string } }
+  /** a bird came to your window: the correspondence its letter is in, or the letters when that is not said */
+  | { screen: 'LetterThread'; params: { threadId: string } }
+  | { screen: 'Letters' }
   // gifts, report outcomes and decisions on your account (reports/deepLinks.ts)
   | SocialDeepLink;
 
@@ -78,6 +81,11 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
     const letBackOnly = data.kind === 'group_request_approved' && (data.rejoined === false || data.rejoined === 'false');
     if (data.kind === 'group_removed' || letBackOnly) return null;
     return { screen: 'GroupThread', params: { groupId, name: str(data.groupName) ?? '' } };
+  }
+  // a pen pal's letter: straight to the correspondence it came in
+  if (data.kind === 'letter') {
+    const threadId = str(data.threadId);
+    return threadId && /^[0-9a-f-]{36}$/i.test(threadId) ? { screen: 'LetterThread', params: { threadId } } : { screen: 'Letters' };
   }
   // progress (contract 4): badges and the weekly league
   if (data.kind === 'badge') return { screen: 'Badges' };
@@ -185,6 +193,8 @@ export function noticeKind(item: Pick<InboxItem, 'category' | 'data'>): NoticeKi
       return isPlayGame(item.data.game) ? { icon: 'ticket', reward: false, game: item.data.game } : { icon: 'ticket', reward: false };
     case 'gift':
       return { icon: 'gift', reward: true };
+    case 'letter':
+      return { icon: 'mail', reward: false };
     case 'badge':
       return { icon: 'medal', reward: true };
     case 'league_safe':

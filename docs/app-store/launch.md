@@ -3,19 +3,43 @@
 What has to be true, and what has to be filled in, before the iOS build is sent
 for review. The code side is checked against the review guidelines in this
 repository's tests and audits; this page is the part that lives outside the
-code: App Store Connect, the server's settings, and the content.
+code: App Store Connect, the server's settings, and the content. What goes into
+the listing itself, word for word in every language, is in
+[`listing.md`](listing.md); the App Privacy answers are in
+[`privacy.md`](privacy.md).
 
 Tick each line before pressing Submit. A line marked **owner** can only be done
 by the account holder.
 
+## 0. What Apple asks of every submission in 2026
+
+- Builds uploaded since 28 April 2026 must be made with Xcode 26 against the
+  iOS 26 SDK; from April 2027 it is the iOS 27 SDK. The build service's
+  default image for this app's SDK (Expo 57) is on Xcode 26, so nothing has to
+  be set; a build made on an older image is refused at upload.
+- The age rating questionnaire has asked about social media since July 2026,
+  and the answer is required since September 2026. Two more content
+  descriptors, Shared Location and Dating and Relationships, are asked from
+  16 November 2026 and must be answered for every app by 12 January 2027.
+  The answers for Hevalo are in section 2.
+- In Texas (since 4 June 2026), Utah (6 May 2026) and Louisiana (1 July 2026)
+  a new Apple Account's age category is given to apps through Apple's age-range
+  framework, and the law there puts duties on the app as well as on the store:
+  read the age category, and ask a parent through the store before a
+  significant change for a minor. Hevalo 1.0.0 does not read it. Until it does,
+  leave the United States out of the countries the app is offered in (section
+  2, Availability), and Brazil too, where Apple applies new age rules of its
+  own (its notice of 24 February 2026). Reading it is one native module this app's SDK already offers
+  (`expo-age-range`) and an entitlement on the App ID, for a later version.
+
 ## 1. Accounts and agreements (owner)
 
 - [ ] Apple Developer Program membership is active for the business
-      (Zagrosian, KvK 42217689).
-- [ ] App Store Connect → Business: the **Paid Apps** agreement is signed, with
-      bank and tax details. It is needed before anything can be sold, and takes
-      a few days to go through. The free agreement is enough for a first
-      release that sells nothing.
+      (Zagrosian, KvK 42217689), enrolled as an organisation so the store
+      shows the business, not a private name, as the seller.
+- [ ] App Store Connect → Business: the free apps agreement is accepted. The
+      **Paid Apps** agreement, with bank and tax details, is only needed once
+      something is sold; nothing is in 1.0.0.
 - [ ] App Store Connect → the app → App Information → **Digital Services Act**:
       trader status declared, with the address, telephone number and email
       from the trade register (they are in `shared/src/provider.ts`). Apple
@@ -24,21 +48,52 @@ by the account holder.
 
 ## 2. The app record
 
-- [ ] Name `Hevalo`, bundle id `app.hevalo.mobile`, primary category Education.
+- [ ] New app: platform iOS, name **Hevalo: Learn Kurdish**, primary language
+      English (U.S.), bundle id `app.hevalo.mobile`, SKU `hevalo-ios`.
+      If the name is taken, the store says so on this screen; the listing's
+      other languages carry their own names (`listing.md`).
+- [ ] Category: **Education**. No secondary category: a second one adds little to search, and Games would put the app under a parent's time limit for games.
 - [ ] Version `1.0.0` (matches `mobile/app.json`).
 - [ ] **Privacy Policy URL** `https://hevalo.app/privacy`, **Support URL**
       `https://hevalo.app/faq`, Marketing URL `https://hevalo.app`. All three
       must be live from the production branch before review.
 - [ ] **App Privacy** answers copied from [`privacy.md`](privacy.md), row for
       row. "Data used to track you": none.
-- [ ] **Age rating** questionnaire: user-generated content yes, messaging and
-      chat yes, unrestricted web access no, gambling no, contests no. The app
-      asks for a birth month and refuses under 13, so it is not in the Kids
-      category.
+- [ ] Every language in [`listing.md`](listing.md) added under App
+      Information and the version page: name, subtitle, promotional text,
+      description, keywords, what's new. `node scripts/check-listing.mjs`
+      first, so nothing is refused for its length.
+- [ ] Screenshots: the six in `docs/app-store/screenshots/` into the
+      **6.9-inch iPhone** slot, in their numbered order. The store makes every
+      smaller iPhone's from them. No iPad set: the app is not offered on iPad.
+- [ ] **Age rating** questionnaire, answered as below. The result is **13+**,
+      which matches the app: it asks for a birth month and refuses anybody
+      under 13, so it is not in the Kids category.
+
+  | Question | Answer | Why |
+  |---|---|---|
+  | Parental controls | No | |
+  | Age assurance | No | the birth month is declared, not checked |
+  | Unrestricted web access | No | links open the browser, nothing browses inside the app |
+  | User-generated content | Yes | posts, comments, pictures, voice notes |
+  | Social media | Yes | a feed with likes, comments and reposts |
+  | Social media disabled for users under 13 | No | there are no accounts under 13, but the store means the age-range check, which 1.0.0 does not make |
+  | Messaging and chat | Yes | direct messages and groups |
+  | Advertising | No | |
+  | Profanity, horror, alcohol, medical, wellness, sexuality, violence | None | the app's own content; what members post is moderated |
+  | Gambling, simulated gambling | No | |
+  | Contests | None | leagues pay Zêr and gems, which are not money |
+  | Loot boxes | No | a quest's chest is earned, never bought, and holds Zêr |
+  | Shared location | No | a member's country is chosen by them, never read from the phone |
+  | Dating and relationships | No | |
+
+- [ ] **Availability**: every country and region except the **United States**
+      and **Brazil** (section 0).
 - [ ] Export compliance: the build already declares
-      `ITSAppUsesNonExemptEncryption = false`.
-- [ ] Screenshots for 6.9" and 6.5" iPhone. iPad screenshots are not needed
-      (`supportsTablet` is false).
+      `ITSAppUsesNonExemptEncryption = false` (only the system's HTTPS).
+- [ ] Accessibility Nutrition Labels (optional): fill in only what was tried
+      on a phone with the TestFlight build (section 6) — VoiceOver, larger
+      text, dark interface, reduced motion — and leave the rest unanswered.
 
 ## 3. What the reviewer needs (App Review Information)
 
@@ -47,10 +102,11 @@ code. A reviewer cannot receive that code, so give them accounts that are
 already through it.
 
 - [ ] **Demo account 1**: an adult account, email confirmed, with at least one
-      friend, one group, a few posts in its feed, and some Zêr to spend in the
-      shop.
+      friend, one group, a few posts in its feed, a tree planted, and some Zêr
+      to spend in the shop.
 - [ ] **Demo account 2**: the friend, so that chat, gifts and a game against a
-      person can be tried. Put both sign-ins in the notes.
+      person can be tried. Put both sign-ins in the notes, never in this
+      repository.
 - [ ] Notes for the reviewer, in these words or close to them:
 
   > Hevalo is a Kurdish-learning app with a community. Guest mode ("Try Hevalo
@@ -59,9 +115,10 @@ already through it.
   > Community features need an account; two are provided above.
   >
   > User-generated content (Guideline 1.2):
-  > - Report: the "…" menu on any post, comment, message, group or profile →
-  >   Report.
-  > - Block: a profile's "…" menu → Block; the list is in Settings → Blocked.
+  > - Report: the "…" menu on any post, comment, message or group, and the
+  >   "…" at the top of any profile → Report.
+  > - Block: the "…" at the top of a profile → Block; the list is in
+  >   Settings → Blocked.
   > - Text is filtered for objectionable words when it is posted; reported
   >   content is reviewed by a person within 24 hours and removed, and the
   >   account that posted it is restricted or closed.
@@ -72,6 +129,7 @@ already through it.
   > also offered on the email-code screen of a new account.
   >
   > Sign in with Apple is offered wherever Google is.
+  > Nothing is sold: Zêr and gems are earned by learning and cannot be bought.
   > The app has no advertising and no third-party analytics.
 
   Do not say that pictures are scanned automatically unless a scanner has been
@@ -90,8 +148,9 @@ already through it.
 - [ ] `IAP_PURCHASES_OFF=true` for as long as nothing is sold.
 - [ ] The evidence bucket (`S3_EVIDENCE_BUCKET`) is writable, so data exports
       and report evidence are kept off the public bucket.
-- [ ] The server's plan does not sleep: a reviewer who meets a cold start of
-      half a minute on the first screen reports the app as not loading.
+- [x] The server's plan does not sleep (a paid instance, checked 13 November
+      2026): a reviewer who meets a cold start of half a minute on the first
+      screen reports the app as not loading.
 
 ## 5. Content and moderation
 
@@ -102,14 +161,17 @@ already through it.
       played, so nothing in the build says "coming soon".
 - [ ] Somebody reads the report queue in the admin every day from the day of
       launch. The promise in the review notes is 24 hours.
-- [ ] Pictures: the build posts them at once and relies on reports. Guideline
-      1.2 asks for a way to filter objectionable material. Text is filtered by
-      a word list; for pictures either connect an image-scanning service (the
-      server has the place for one, `moderation/image-scanner.ts`) or decide
-      to hold new members' first pictures for approval. Decide before launch,
-      and say only what is true in the review notes.
+- [ ] Pictures: the build posts them at once and relies on reports, behind the
+      scanning seam (`moderation/image-scanner.ts`), which until a provider is
+      connected passes every picture. Guideline 1.2 asks for a way to filter
+      objectionable material; the text filter, the reports and the 24-hour
+      promise are that today. Connecting a scanning service is one class
+      behind that seam and one key on the server; decide before launch, and
+      say only what is true in the review notes.
 
 ## 6. The build
+
+The build is made from `main`, so everything meant to ship is merged first.
 
 ```bash
 cd mobile
@@ -117,10 +179,13 @@ npx eas-cli build --platform ios --profile production
 npx eas-cli submit --platform ios --profile production
 ```
 
+The first build asks for the Apple account once and makes the certificates,
+the provisioning profile and the push notification key itself.
+
 - [ ] Installed from TestFlight on a real iPhone and walked through once:
-      sign up, the emailed code, a lesson with a speaking exercise (microphone
-      prompt, then refuse it once and see the app carry on), a profile picture
-      (photo prompt), a post, a report, a block, notifications on, sign out,
+      sign up, the emailed code, a lesson, a profile picture (photo prompt),
+      a voice note (microphone prompt, then refuse it once and see the app
+      carry on), a post, a report, a block, notifications on, sign out,
       delete account.
 - [ ] The same walk with the system text size at its largest, and once in a
       right-to-left language.
@@ -132,13 +197,16 @@ npx eas-cli submit --platform ios --profile production
       footer's store column (`web/src/i18n/*`, keys `landing.hero.note`,
       `landing.status.app`, `about.next.apps`, `faq.app.a`, `footer.iosSoon`).
 - [ ] `ios.appStoreUrl` in `mobile/app.json` is filled in, so "Rate Hevalo"
-      opens the store page.
+      appears in Settings and opens the store page; until then the row is not
+      shown.
 
 ## Selling (Hevalo+ and Gewher), when it is turned on
 
-Nothing is sold in 1.0.0, and the privacy page says so. When purchases are
-added they go through the store's own purchase sheet only (Guideline 3.1.1),
-and these are created in App Store Connect first:
+Nothing is sold in 1.0.0, and the privacy page says so. The phone shows no
+avatar, crown or line that only Hevalo+ unlocks to anybody who is not a
+member, because nothing in the app sells it. When purchases are added they go
+through the store's own purchase sheet only (Guideline 3.1.1), and these are
+created in App Store Connect first:
 
 | Product | Type | Reference id | Price |
 |---|---|---|---|

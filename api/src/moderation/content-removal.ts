@@ -27,6 +27,8 @@ export type RemovalRecord =
       previousAudio: string | null;
     }
   | { type: 'dm_message' | 'group_message'; id: string; previousBody: string | null; kind: string }
+  /** a letter between pen pals: taken down for both, its words kept for the case and for an appeal */
+  | { type: 'letter'; id: string; previousStatus: string }
   | MediaRemoval
   /**
    * The CSAM action: the reported content and every copy of its media, all at
@@ -165,6 +167,13 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
       }
       return { type: target.type, id: target.id, previousBody: row.moderated_at === null ? row.body : null, kind: row.kind };
     }
+    case 'letter': {
+      const r = await db.query<{ status: string }>(`SELECT status FROM letters WHERE id = $1::uuid FOR UPDATE`, [target.id]);
+      // a letter erased with its writer's account is already gone; the snapshot has it
+      const previousStatus = r.rows[0]?.status ?? 'removed';
+      await db.query(`UPDATE letters SET status = 'removed' WHERE id = $1::uuid AND status <> 'removed'`, [target.id]);
+      return { type: 'letter', id: target.id, previousStatus };
+    }
     case 'media':
       return removeMedia(db, target.id);
     default:
@@ -284,6 +293,9 @@ export async function restoreContent(db: Executor, rec: RemovalRecord): Promise<
       if (r.rowCount) await db.query(`UPDATE ${posts} SET comment_count = comment_count + 1 WHERE id = $1`, [rec.postId]);
       return;
     }
+    case 'letter':
+      if (rec.previousStatus !== 'removed') await db.query(`UPDATE letters SET status = $2 WHERE id = $1::uuid AND status = 'removed'`, [rec.id, rec.previousStatus]);
+      return;
     case 'dm_message':
     case 'group_message': {
       const table = rec.type === 'dm_message' ? 'dm_messages' : 'group_messages';

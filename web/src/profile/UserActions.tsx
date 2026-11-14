@@ -4,10 +4,11 @@ import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
 import { CloseButton } from '../components/CloseButton';
 import { ConfirmButton } from '../components/ConfirmButton';
-import { BlockIcon, FlagIcon, MoreIcon, RemovePersonIcon } from '../components/icons';
+import { BlockIcon, CheckIcon, FlagIcon, MoreIcon, RemovePersonIcon, ShareIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { ReportSheet } from '../reports/ReportSheet';
 import { keepInView } from '../reports/keepInView';
+import { shareProfileLink } from './share';
 
 type Panel = null | 'menu' | 'report' | 'block';
 
@@ -29,12 +30,20 @@ type Panel = null | 'menu' | 'report' | 'block';
  * taking somebody off the list (`remove`) comes first in it: the row keeps
  * the one thing done often, a game with them, and what ends a friendship is
  * a press further away, asked twice.
+ *
+ * On a profile and on its popup the ⋯ is in the far corner of the banner, and
+ * sending the profile to somebody (`share`) leads the menu: it is the one
+ * thing in it that is not about ending something. Report and Block stay two
+ * separate, plainly named items, one press from the menu, wherever a person
+ * is shown: that is what the app stores ask of anything people post to, and
+ * what a notice of illegal content has to be within reach of.
  */
 export function UserActions({
   userId,
   name,
   onBlocked,
   remove,
+  share = false,
   className = '',
 }: {
   userId: string;
@@ -44,6 +53,8 @@ export function UserActions({
   onBlocked?: () => void;
   /** a friend, who can be taken off the list from here: the item's word, what it means in full, and the doing */
   remove?: { label: string; title: string; onConfirm: () => void | Promise<void> };
+  /** on a profile: the menu also sends that profile's address to somebody */
+  share?: boolean;
   className?: string;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -51,6 +62,8 @@ export function UserActions({
   const [panel, setPanel] = useState<Panel>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // the link was copied (no share sheet on this device): said in the item itself, for a moment, and then the menu goes
+  const [copied, setCopied] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
@@ -92,6 +105,19 @@ export function UserActions({
     setPanel(next);
   }
 
+  async function send(): Promise<void> {
+    const outcome = await shareProfileLink(userId, name);
+    if (outcome !== 'copied') {
+      setPanel(null);
+      return;
+    }
+    setCopied(true);
+    window.setTimeout(() => {
+      setCopied(false);
+      setPanel((p) => (p === 'menu' ? null : p));
+    }, 1400);
+  }
+
   async function block(): Promise<void> {
     setBusy(true);
     setError(null);
@@ -122,6 +148,12 @@ export function UserActions({
 
       {panel === 'menu' && (
         <div className="user-menu" role="menu" ref={popRef}>
+          {share && (
+            <button type="button" role="menuitem" className="user-menu-item" onClick={() => void send()}>
+              {copied ? <CheckIcon size={16} /> : <ShareIcon size={16} />}
+              <span aria-live="polite">{copied ? t('share.copied') : t('profile.share')}</span>
+            </button>
+          )}
           {remove && (
             // pressed once it asks, pressed again it is done (ConfirmButton), and the menu goes with it
             <ConfirmButton

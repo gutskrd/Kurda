@@ -280,7 +280,7 @@ describe('Civak', () => {
       expect(within(panel).getByRole('radiogroup', { name: 'Ordenar por' })).toBeInTheDocument();
       expect(within(panel).getByRole('radio', { name: 'Más populares' })).toBeInTheDocument();
       expect(within(panel).getByRole('radio', { name: 'Todo' })).toBeInTheDocument();
-      expect(within(panel).getByRole('group', { name: 'Escritos' })).toBeInTheDocument();
+      expect(within(panel).getByRole('group', { name: 'Textos' })).toBeInTheDocument();
       expect(within(panel).getByRole('radio', { name: 'Todas las imágenes' })).toBeInTheDocument();
       expect(within(panel).getByRole('button', { name: 'Mostrar publicaciones' })).toBeInTheDocument();
     });
@@ -767,7 +767,8 @@ describe('Civak', () => {
     renderApp(<Civak />, ['/app/civak']);
 
     const plus = await screen.findByRole('button', { name: 'Post something' });
-    await screen.findByText('Claimed today');
+    // the day's reward is in: its card steps aside, and the + keeps its fill
+    await waitFor(() => expect(document.querySelector('.zer-card')).toBeNull());
     expect(plus).not.toHaveClass('is-secondary');
   });
 

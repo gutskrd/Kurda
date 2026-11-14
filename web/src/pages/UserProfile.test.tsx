@@ -14,7 +14,8 @@ afterEach(() => {
 
 function routed(user: unknown, calls: Array<{ url: string; body: unknown; method?: string }> = []) {
   return vi.fn(async (url: string, init?: RequestInit) => {
-    if (url.includes('/friends/requests')) {
+    // everything that changes something is written down: a request sent or taken back, a friendship ended
+    if (url.includes('/friends/requests') || (init?.method ?? 'GET') !== 'GET') {
       calls.push({ url, body: init?.body ? JSON.parse(init.body as string) : null, method: init?.method ?? 'GET' });
       return jsonResponse(200, { ok: true });
     }
@@ -91,7 +92,47 @@ describe('UserProfile (other user, full page)', () => {
   it('offers a friend a game, and only a friend', async () => {
     render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'friends', private: false });
     await userEvent.click(await screen.findByRole('button', { name: 'Play' }));
-    expect(await screen.findByRole('dialog', { name: 'Play with zana' })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'Play with Zana K' })).toBeInTheDocument();
+  });
+
+  /**
+   * The menu about somebody is in the far corner of their banner. Sending
+   * their profile on leads it; reporting them and blocking them are two
+   * separate, plainly named items, each one press from the menu; and where the
+   * two of you are friends, so is ending that.
+   */
+  it('keeps what can be done about them in the corner menu: share, and report and block apart', async () => {
+    render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'none', private: false });
+    const more = await screen.findByRole('button', { name: 'More about Zana K' });
+    expect(document.querySelector('.pc-corner')).toContainElement(more);
+    await userEvent.click(more);
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent?.trim())).toEqual(['Share profile', 'Report', 'Block']);
+    // none of it is among the buttons under their words
+    expect(within(document.querySelector<HTMLElement>('.pc-acts')!).queryByRole('button', { name: /block|report/i })).toBeNull();
+  });
+
+  it('lets you stop being friends from the menu, asked twice, and offers them again as somebody to add', async () => {
+    const calls: Array<{ url: string; body: unknown; method?: string }> = [];
+    render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'friends', private: false }, calls);
+    await userEvent.click(await screen.findByRole('button', { name: 'More about Zana K' }));
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent?.trim())).toEqual(['Share profile', 'Remove friend', 'Report', 'Block']);
+
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Remove Zana K as a friend' }));
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+    await userEvent.click(screen.getByRole('menuitem', { name: /press again to confirm/i }));
+    expect(calls.some((c) => c.method === 'DELETE' && c.url.endsWith('/friends/u2'))).toBe(true);
+    expect(await screen.findByRole('button', { name: 'Add friend' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Message' })).toBeNull();
+  });
+
+  it('copies their profile’s address where the device has no share sheet, and says so', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { ...navigator, share: undefined, clipboard: { writeText } });
+    render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'none', private: false });
+    await userEvent.click(await screen.findByRole('button', { name: 'More about Zana K' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Share profile' }));
+    expect(writeText).toHaveBeenCalledWith(expect.stringMatching(/\/app\/users\/u2$/));
+    expect(await screen.findByRole('menuitem', { name: 'Copied' })).toBeInTheDocument();
   });
 
   it('has no Play for someone who is not a friend', async () => {
@@ -114,7 +155,7 @@ describe('UserProfile (other user, full page)', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Add friend' }));
     expect(calls).toContainEqual(expect.objectContaining({ method: 'POST', body: { userId: 'u2' } }));
-    const requested = await screen.findByRole('button', { name: 'Cancel your request to zana' });
+    const requested = await screen.findByRole('button', { name: 'Cancel your request to Zana K' });
     expect(requested).toHaveTextContent('Requested');
     expect(screen.getByRole('status')).toHaveTextContent('Request sent');
     // the ticket on its way to them
@@ -137,7 +178,7 @@ describe('UserProfile (other user, full page)', () => {
     }));
     render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'none', private: false });
     await userEvent.click(await screen.findByRole('button', { name: 'Add friend' }));
-    expect(await screen.findByRole('button', { name: 'Cancel your request to zana' })).toHaveTextContent('Requested');
+    expect(await screen.findByRole('button', { name: 'Cancel your request to Zana K' })).toHaveTextContent('Requested');
     expect(document.querySelector('.friend-ask-ticket')).toBeNull();
   });
 });

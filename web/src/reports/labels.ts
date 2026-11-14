@@ -49,6 +49,7 @@ export const TARGET_LABEL: Readonly<Record<ReportTargetType, MessageKey>> = {
   image_post: 'reports.target.imagePost',
   image_comment: 'reports.target.comment',
   game_player: 'reports.target.gamePlayer',
+  letter: 'reports.target.letter',
 };
 
 /** A sanction as its person reads it: what happened, not the admin's term for it. */

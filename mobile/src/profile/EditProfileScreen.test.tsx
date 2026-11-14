@@ -114,3 +114,29 @@ describe('the country', () => {
     expect(screen.getByText('— None —')).toBeTruthy();
   });
 });
+
+/**
+ * Hevalo+ cannot be had in the app, so an avatar kept for members is not
+ * offered to anybody else: a locked tile with no way to unlock it here would
+ * be an offer of something the app does not sell.
+ */
+describe('choosing an avatar', () => {
+  const avatars = [
+    { key: 'deer', requiresPremium: false },
+    { key: 'lion', requiresPremium: true },
+  ];
+
+  it('shows somebody without Hevalo+ only the avatars they can wear', async () => {
+    testAuth.client = fakeClient({ 'GET /me': ok({ user: ME }), 'GET /cosmetics/avatars': ok({ avatars }) });
+    await openEdit();
+    expect(await screen.findByRole('button', { name: 'deer' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'lion' })).toBeNull();
+  });
+
+  it('shows a member every avatar', async () => {
+    testAuth.client = fakeClient({ 'GET /me': ok({ user: { ...ME, premium: true } }), 'GET /cosmetics/avatars': ok({ avatars }) });
+    await openEdit();
+    expect(await screen.findByRole('button', { name: 'deer' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'lion' })).toBeTruthy();
+  });
+});

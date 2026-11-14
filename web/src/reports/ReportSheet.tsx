@@ -78,6 +78,7 @@ const TITLE: Record<ReportTargetType, MessageKey> = {
   image_post: 'report.title.post',
   library_comment: 'report.title.comment',
   image_comment: 'report.title.comment',
+  letter: 'report.title.message',
 };
 
 /** Report-specific refusals said plainly; anything else as the app says errors. */

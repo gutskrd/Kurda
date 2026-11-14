@@ -90,6 +90,8 @@ import { ActivityService } from './activity/service.js';
 import { registerActivityRoutes } from './activity/routes.js';
 import { ChatService } from './chat/service.js';
 import { registerChatRoutes } from './chat/routes.js';
+import { registerLetterRoutes } from './letters/routes.js';
+import { LetterService } from './letters/service.js';
 import { GroupService } from './groups/service.js';
 import { registerGroupRoutes } from './groups/routes.js';
 import { GroupChatService } from './groups/chat-service.js';
@@ -845,6 +847,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       trust,
       aiMod,
     );
+
+    // letters by bird: pen pals in Kurdish, met by sending a bird out, within an age band (letters/service.ts)
+    registerLetterRoutes(app, new LetterService(app.db, { moderation, inbox, push: pushRecorded(pushService, app.jobs), log: app.log }));
 
     // group chat (KUR-085): per-group room fan-out over the bus + moderation
     const groupChat = new GroupChatService(

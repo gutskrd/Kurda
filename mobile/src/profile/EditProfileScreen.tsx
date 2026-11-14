@@ -280,22 +280,24 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
               >
                 <Icon name="close" size={22} color={colors.textSecondary} />
               </PressableScale>
-              {avatars.map((a) => {
-                const locked = a.requiresPremium && !me?.premium;
+              {/*
+                Only the avatars this account can wear. Hevalo+ cannot be had in
+                the app, so an avatar kept for members is not shown to anybody
+                else: a locked tile with no way to unlock it from here is a door
+                painted on a wall, and an offer of something the app does not sell.
+              */}
+              {avatars.filter((a) => !a.requiresPremium || me?.premium).map((a) => {
                 return (
                   <PressableScale
                     key={a.key}
-                    onPress={() =>
-                      locked ? setNotice({ ok: false, text: t('edit.premiumAvatar') }) : void pick(a.key)
-                    }
+                    onPress={() => void pick(a.key)}
                     disabled={busy}
                     accessibilityRole="button"
-                    accessibilityState={{ selected: selected === a.key, disabled: locked }}
+                    accessibilityState={{ selected: selected === a.key }}
                     accessibilityLabel={a.key}
                     style={[
                       styles.avatarTile,
                       { borderColor: selected === a.key ? colors.textPrimary : colors.glassBorder },
-                      locked && styles.locked,
                     ]}
                   >
                     <InitialsAvatar name={a.key} id={a.key} size={44} photoUrl={avatarAssetUrl(a.key)} />
@@ -370,6 +372,5 @@ const styles = StyleSheet.create({
   save: { marginTop: spacing.md },
   avatars: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
   avatarTile: { width: 56, height: 56, borderRadius: radii.md, borderWidth: 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  locked: { opacity: 0.4 },
   leaveActions: { gap: spacing.sm },
 });

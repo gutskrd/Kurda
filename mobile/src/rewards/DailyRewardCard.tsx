@@ -21,6 +21,10 @@ import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
  * finished today, the card says so instead of offering a claim the server would
  * refuse. It sits on the Learn screen, above the lessons it is asking for.
  *
+ * On a day already claimed it is not there at all: the balance is in the
+ * header, and a calendar with nothing to do in it is one more thing between
+ * somebody and their next lesson.
+ *
  * A Hevalo+ member's claim also brings a few gems. The card says so in one
  * quiet line: under the button while the claim is there to take, and under the
  * Zêr once it has been. Nobody else sees the line at all.
@@ -60,6 +64,9 @@ export function DailyRewardCard() {
 
   if (!status) return settled ? null : <DailyRewardSkeleton />;
   const action = dailyAction(status);
+  // a day already claimed when the screen opened has nothing to ask of anybody: the card steps aside for
+  // the lessons; one claimed here stays to say what it brought (as on the website's wall)
+  if (action === 'claimed' && justEarned == null) return null;
   // what a claim adds for a member, before it; what this one added, after it
   const plusGems = action === 'claim' ? plusGemsOf(status) : action === 'claimed' ? plusGemsOf(justEarned) : null;
 

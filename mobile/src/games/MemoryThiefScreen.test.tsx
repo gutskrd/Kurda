@@ -322,7 +322,8 @@ describe('the games list', () => {
     testAuth.client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability('kmr') });
     renderWithProviders(<GamesView />);
     const card = await screen.findByTestId('game-memory-thief');
-    expect(card.getAttribute('aria-label')).toBe('Dizê Bîrê, Solo. Study a real passage, then give back the words the thief took.');
+    // the game is on the shelf, or, on a day it is the one put forward, the featured game's Play: named either way
+    expect(card.getAttribute('aria-label')).toMatch(/^Dizê Bîrê, (Play|Solo\. Study a real passage, then give back the words the thief took\.)$/);
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('MemoryThief');
   });

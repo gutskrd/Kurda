@@ -111,6 +111,62 @@ describe('who somebody is', () => {
   });
 });
 
+/**
+ * What can be done about somebody, as against with them, is behind the ⋯ at
+ * the end of the bar at the top: send their profile on, stop being friends,
+ * report them, block them. Report and Block are two separate items, each one
+ * tap from the menu, wherever a person is shown.
+ */
+describe('the menu about somebody', () => {
+  const visitBaran = (friendStatus: string, routes: Record<string, unknown> = {}): ReturnType<typeof fakeClient> => {
+    const client = fakeClient({
+      'GET /users/u2': ok({ userId: 'u2', username: 'baran', displayName: 'Baran Şêx', friendStatus, private: false, xp: 410, streak: 3, achievements: 5 }),
+      'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
+      ...routes,
+    });
+    testAuth.client = client;
+    renderWithProviders(<PublicProfileScreen userId="u2" onExit={() => undefined} />);
+    return client;
+  };
+  /** The choices a sheet was shown with, as their words. */
+  const choices = (alert: { mock: { calls: unknown[][] } }, call = 0): string[] =>
+    ((alert.mock.calls[call]?.[2] as { text?: string }[] | undefined) ?? []).map((button) => button.text ?? '');
+
+  it('is at the top of the screen, and holds share, report and block, each plainly named', async () => {
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    visitBaran('none');
+    fireEvent.click(await screen.findByRole('button', { name: 'More about Baran Şêx' }));
+    expect(alert.mock.calls[0]?.[0]).toBe('Baran Şêx');
+    expect(choices(alert)).toEqual(['Share profile', 'Report', 'Block', 'Cancel']);
+    // none of it is on the card itself any more
+    expect(screen.queryByRole('button', { name: 'Block' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Report' })).toBeNull();
+  });
+
+  it('ends a friendship from the menu, asked first, and a friend’s card is for writing and playing', async () => {
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const client = visitBaran('friends', { 'DELETE /friends/u2': ok({ ok: true }) });
+    expect(await screen.findByRole('button', { name: 'Message' })).toBeTruthy();
+    // the card no longer carries a button that only says they are a friend
+    expect(screen.queryByRole('button', { name: /Friends/ })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'More about Baran Şêx' }));
+    expect(choices(alert)).toEqual(['Share profile', 'Report', 'Remove friend', 'Block', 'Cancel']);
+    const remove = (alert.mock.calls[0]?.[2] as { text?: string; onPress?: () => void }[]).find((button) => button.text === 'Remove friend');
+    remove?.onPress?.();
+    // asked first, by name, before anything is sent
+    expect(client.calls.some((c) => c.method === 'DELETE')).toBe(false);
+    const confirm = (alert.mock.calls[1]?.[2] as { style?: string; onPress?: () => void }[]).find((button) => button.style === 'destructive');
+    confirm?.onPress?.();
+    await waitFor(() => expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/friends/u2')).toBe(true));
+  });
+
+  it('draws their own sky behind their face', async () => {
+    visitBaran('none');
+    expect(await screen.findByTestId('profile-horizon')).toBeTruthy();
+  });
+});
+
 describe('asking to be friends', () => {
   it('hands the request over from the button, which then says Requested, and takes it back through the same routes', async () => {
     resetHaptics();

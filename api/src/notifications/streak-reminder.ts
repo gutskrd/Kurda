@@ -86,11 +86,11 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   ku: {
     primary: (n) => ({
       title: 'Çend deqîqe bi kurdî?',
-      body: `Rêzeya te ${n} roj e. Dersek an temrînek kurt ji bo îro bes e.`,
+      body: `Rêzeya te ${n} roj e. Dersek an temrîneke kurt ji bo îro bes e.`,
     }),
     lastChance: {
       title: 'Îro hê dem heye',
-      body: 'Temrînek kurt berî nîvê şevê ji bo îro tê hesibandin.',
+      body: 'Temrîneke kurt berî nîvê şevê ji bo îro tê hesibandin.',
     },
   },
   ckb: {
@@ -106,11 +106,11 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   ar: {
     primary: (n) => ({
       title: 'بضع دقائق من الكردية؟',
-      body: `أيام سلسلتك: ${n}. درس قصير أو تمرين واحد يكفي لليوم.`,
+      body: `أيام سلسلتك: ${n}. درس قصير أو تدريب واحد يكفي لليوم.`,
     }),
     lastChance: {
       title: 'ما زال هناك وقت اليوم',
-      body: 'تمرين قصير قبل منتصف الليل يُحتسب لليوم.',
+      body: 'تدريب قصير قبل منتصف الليل يُحتسب لليوم.',
     },
   },
   tr: {

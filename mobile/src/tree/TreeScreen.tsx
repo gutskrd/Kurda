@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useFocusEffect } from '@react-navigation/native';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
-import { TREE_FOOT, TREE_FULL, TREE_STAGES, TREE_TOP, TREE_WATER_LANDS, treeAir, treeColour, type TreeSky, type TreeSpecies, type TreeStage, type TreeView } from '@kurda/shared';
+import { TREE_FOOT, TREE_FULL, TREE_STAGES, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSeasonAir, type TreeSeason, type TreeSpecies, type TreeStage, type TreeView } from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { describeError } from '../api/errors';
@@ -26,7 +26,8 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { buyTreeKind, getTree, plantTree, treesMissing, waterTree, type MyTree, type TreeKindOffer, type Watered } from './api';
 import { healthName, stageName, treeAbout, treeNamed, treeTitle } from './names';
 import { TreeArt, WaterDrop, WateringCan } from './TreeArt';
-import { SKY_GROUND, TreeAmbient, TreePicture, TreeSkyScene, useTreeSky } from './TreeScene';
+import { TreePicture, TreeSeasonAmbient, TreeStudioScene, studioColour, treePlace } from './TreeScene';
+import { useTreeSeason } from './season';
 
 /** How long the can pours for before the screen shows what the water did, and how long a tree is watched growing before the app says that it grew. */
 const POUR_MS = 1500;
@@ -48,7 +49,7 @@ interface Moment {
  * Before one is planted, the screen is the choice of a first seed: the kinds
  * that are free to start from, each as its own seed, and over them the great
  * tree the chosen one will be. After, it is the tree itself, standing in the
- * sky of the hour with the mountains under it, as big as the phone allows;
+ * scene of the season with the season blowing past it, as big as the phone allows;
  * then how far it is to its next stage, with that stage shown as what is
  * being grown toward; the water held, which a lesson earns, and the button
  * to pour it with; and a way to the nursery, where another kind can be
@@ -75,7 +76,7 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const { t, locale } = useI18n();
   const dir = useDirection();
   const reduce = useReducedMotion();
-  const sky = useTreeSky();
+  const season = useTreeSeason();
   const { width } = useWindowDimensions();
   const [data, setData] = useState<MyTree | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -215,7 +216,7 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
           missing ? (
             <Text style={[styles.soon, { color: colors.textSecondary }]}>{t('tree.soon')}</Text>
           ) : !data ? null : !tree ? (
-            <Chooser data={data} sky={sky} side={side} busy={busy} failed={failed} onPlant={(species) => void plant(species)} />
+            <Chooser data={data} season={season} side={side} busy={busy} failed={failed} onPlant={(species) => void plant(species)} />
           ) : (
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
               <View style={styles.head}>
@@ -227,7 +228,7 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                 </Text>
               </View>
 
-              <Stage tree={tree} sky={sky} side={side} phase={phase} grown={grown} planted={planted} cheer={cheer} label={treeTitle(t, tree)} />
+              <Stage tree={tree} season={season} side={side} phase={phase} grown={grown} planted={planted} cheer={cheer} label={treeTitle(t, tree)} />
 
               {tree.health !== 'fresh' ? (
                 <View style={[styles.health, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]} accessible testID="tree-health">
@@ -338,15 +339,15 @@ function run(clock: Animated.Value, duration: number, easing: (t: number) => num
 }
 
 /**
- * Where the tree stands, and everything that happens to it there. The sky,
- * the mountains and the clouds are behind it; whatever is in its air drifts
- * across; and the tree itself floats on its island, rising and sinking a
- * little as if it breathed. Touching it shakes it, which is of no use at all
+ * Where the tree stands, and everything that happens to it there. The
+ * season's scene is behind it; the season blows past it to the left; and the
+ * tree itself stands on its round of grass, rising a little as if it
+ * breathed. Touching it shakes it, which is of no use at all
  * and is there because a tree asks to be touched.
  */
 function Stage({
   tree,
-  sky,
+  season,
   side,
   phase,
   grown,
@@ -355,7 +356,7 @@ function Stage({
   label,
 }: {
   tree: TreeView;
-  sky: TreeSky;
+  season: TreeSeason;
   side: number;
   phase: Phase;
   grown: number;
@@ -365,7 +366,7 @@ function Stage({
 }): React.JSX.Element {
   const reduce = useReducedMotion();
   const alive = useMotionAlive();
-  const size = Math.round(side * 0.94);
+  const { size, bottom } = treePlace(side);
   const tint = treeColour(tree.species);
   // one clock to a movement: arriving, breathing, pouring, growing, dropping in, being shaken, the sparks, the thought
   const arrive = useRef(new Animated.Value(reduce ? 1 : 0)).current;
@@ -443,12 +444,11 @@ function Stage({
   const top = Math.max(0.02, (TREE_TOP[tree.stage] ?? 0.2) - 0.12);
 
   return (
-    <View style={[styles.stage, { height: side, backgroundColor: SKY_GROUND[sky] }]} testID="tree-stage">
-      <TreeSkyScene sky={sky} health={tree.health} side={side} />
-      <TreeAmbient air={treeAir(tree.species, tree.stage, tree.health)} side={side} />
-      <Pressable accessible={false} onPress={poke} style={[styles.plot, { width: size, height: size, bottom: side * 0.02 }]} testID="tree-plot">
+    <View style={[styles.stage, { height: side, backgroundColor: studioColour(season) }]} testID="tree-stage">
+      <TreeStudioScene season={season} health={tree.health} side={side} />
+      <Pressable accessible={false} onPress={poke} style={[styles.plot, { width: size, height: size, bottom }]} testID="tree-plot">
         <Animated.View style={[{ width: size, height: size, transformOrigin: FOOT }, whole]}>
-          <TreeArt species={tree.species} stage={tree.stage} health={tree.health} size={size} label={label} alive plant={plantOf} />
+          <TreeArt species={tree.species} stage={tree.stage} health={tree.health} season={season} size={size} label={label} alive plant={plantOf} />
         </Animated.View>
 
         {tree.health !== 'fresh' && phase === 'idle' ? (
@@ -473,6 +473,7 @@ function Stage({
         {phase === 'grow' ? <Burst clock={grow} size={size} tint={tint} /> : null}
         {cheer > 0 && phase === 'idle' && !reduce ? <Sparks clock={spark} size={size} /> : null}
       </Pressable>
+      <TreeSeasonAmbient air={hasTreeArt(tree.species) ? treeSeasonAir(tree.species, tree.stage, tree.health, season) : null} side={side} />
     </View>
   );
 }
@@ -652,10 +653,10 @@ function Growth({ tree, tint }: { tree: TreeView; tint: string }): React.JSX.Ele
 /**
  * The choice of a first tree. Each kind that is free to start from is its
  * own seed to pick up; over them stands the great tree the one picked will
- * be, in the same sky it will grow in, so the choice is of something seen.
+ * be, in the season it will grow in, so the choice is of something seen.
  * Nothing is planted until the button is pressed.
  */
-function Chooser({ data, sky, side, busy, failed, onPlant }: { data: MyTree; sky: TreeSky; side: number; busy: boolean; failed: string | null; onPlant: (species: TreeSpecies) => void }): React.JSX.Element {
+function Chooser({ data, season, side, busy, failed, onPlant }: { data: MyTree; season: TreeSeason; side: number; busy: boolean; failed: string | null; onPlant: (species: TreeSpecies) => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
@@ -665,19 +666,19 @@ function Chooser({ data, sky, side, busy, failed, onPlant }: { data: MyTree; sky
     const named = treeNamed(t, species);
     return named.meaning ? `${named.name} (${named.meaning})` : named.name;
   };
-  const size = Math.round(side * 0.94);
+  const { size, bottom } = treePlace(side);
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={[styles.lead, { color: colors.textPrimary }]} accessibilityRole="header">
         {t('tree.choose.title')}
       </Text>
       <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('tree.choose.sub')}</Text>
-      <View style={[styles.stage, { height: side, backgroundColor: SKY_GROUND[sky] }]} testID="tree-stage">
-        <TreeSkyScene sky={sky} health="fresh" side={side} />
-        <TreeAmbient air={treeAir(picked, TREE_FULL, 'fresh')} side={side} />
-        <View style={[styles.plot, { width: size, height: size, bottom: side * 0.02 }]}>
-          <TreeArt key={picked} species={picked} stage={TREE_FULL} size={size} label={said(picked)} alive />
+      <View style={[styles.stage, { height: side, backgroundColor: studioColour(season) }]} testID="tree-stage">
+        <TreeStudioScene season={season} health="fresh" side={side} />
+        <View style={[styles.plot, { width: size, height: size, bottom }]}>
+          <TreeArt key={picked} species={picked} stage={TREE_FULL} season={season} size={size} label={said(picked)} alive />
         </View>
+        <TreeSeasonAmbient air={treeSeasonAir(picked, TREE_FULL, 'fresh', season)} side={side} />
       </View>
       <View style={[styles.seeds, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={t('tree.choose.title')}>
         {starters.map((k) => {
@@ -756,7 +757,8 @@ function KindRow({
   return (
     <View style={[styles.kind, { backgroundColor: colors.surface }]} testID={`tree-kind-${kind.species}`}>
       <View style={[styles.kindMain, { flexDirection: dir.row }]}>
-        <TreePicture species={kind.species} stage={TREE_FULL} size={104} />
+        {/* each kind in summer, in its own leaves: in spring every one that flowers is pink, and a choice between them has to be seen */}
+        <TreePicture species={kind.species} stage={TREE_FULL} season="summer" size={104} />
         <View style={styles.kindText}>
           <Text style={[styles.kindName, dir.text, { color: colors.textPrimary }]}>{named.name}</Text>
           {named.meaning ? <Text style={[styles.kindMeaning, dir.text, { color: colors.textSecondary }]}>{named.meaning}</Text> : null}
@@ -880,9 +882,9 @@ const styles = StyleSheet.create({
   head: { gap: 2 },
   lead: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center', letterSpacing: -0.4 },
   sub: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
-  // where the tree stands: the sky of the hour, down to the mountains
+  // where the tree stands: the scene of the season, its floor at the foot
   stage: { width: '100%', alignItems: 'center', borderRadius: radii.xl, overflow: 'hidden' },
-  // the tree's own square of the scene, standing at its foot
+  // the tree's own square of the scene, its foot on the floor
   plot: { position: 'absolute' },
   thought: { position: 'absolute', alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill, backgroundColor: '#ffffff' },
   thoughtDot: { position: 'absolute', borderRadius: radii.pill, backgroundColor: '#ffffff' },

@@ -67,6 +67,7 @@ const TARGET_LABEL: Readonly<Record<ReportTargetType, string>> = {
   image_post: 'Image post',
   image_comment: 'Image comment',
   game_player: 'Game player',
+  letter: 'Letter',
 };
 
 export function targetTypeLabel(type: ReportTargetType): string {

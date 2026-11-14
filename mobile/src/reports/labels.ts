@@ -44,6 +44,7 @@ export const TARGET_LABEL: Record<ReportTargetType, TranslationKey> = {
   image_post: 'reports.target.post',
   image_comment: 'reports.target.comment',
   game_player: 'reports.target.player',
+  letter: 'reports.target.letter',
 };
 
 export const REPORT_STATUS_LABEL: Record<ReportStatus, TranslationKey> = {

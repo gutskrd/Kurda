@@ -3,11 +3,13 @@ import type { FavoriteRef, LevelInfo, ProfileBackground, ProfileIcon } from '../
 import { flagUrl } from '../lib/countries';
 import { GiftedNote } from './cosmetic-parts';
 import { ProfileCard } from '../ui/ProfileCard';
-import { BookIcon, FeatherIcon, FlameIcon, LockIcon, MedalIcon, UsersIcon, XpIcon } from '../components/icons';
+import { BookIcon, CalendarIcon, EyeIcon, FeatherIcon, FlameIcon, LockIcon, MedalIcon, UsersIcon, XpIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 
 /** Normalized data a Hevalo profile renders (self or another user). */
 export interface FullProfileView {
+  /** whose profile it is: their horizon is drawn from it where they wear no background */
+  id?: string;
   name: string;
   username: string;
   avatarUrl?: string | null;
@@ -31,6 +33,10 @@ export interface FullProfileView {
   /** the frame worn round the avatar, and its picture when it is one from the shop */
   frameSku?: string | null;
   frameUrl?: string | null;
+  /** the year they joined, where it is theirs to know: your own profile says it */
+  joinedYear?: number | null;
+  /** your own profile only: who can open it, in the words Settings uses, and the page that changes it */
+  seenBy?: { who: string; to: string } | null;
 }
 
 /** One number about somebody, with the word for it; a link where there is a page behind the number. */
@@ -110,11 +116,11 @@ export function OnlyYou({ title, children }: { title: string; children: React.Re
  * A whole profile, yours or somebody else's, in one column that reads the
  * same on a phone and on a desk: who this is, then what they have done.
  *
- *   the card   their banner and face, their name, where they are from, what
- *              they say about themselves, what you can do (edit and share
- *              your own; befriend, message or play somebody else), how far
- *              they are into their level, and four numbers: streak, XP,
- *              friends, badges
+ *   the card   their banner and face with the menu in its corner, their
+ *              name, where they are from, what they say about themselves,
+ *              what you can do (edit and share your own; befriend, message
+ *              or play somebody else), how far they are into their level,
+ *              and four numbers: streak, XP, friends, badges
  *   showcase   the badges they chose to show, their ranks and their league
  *   favourites the poem and the story they picked
  *   people     who they know
@@ -128,6 +134,7 @@ export function OnlyYou({ title, children }: { title: string; children: React.Re
 export function FullProfile({
   view,
   own = false,
+  corner,
   headerAction,
   progress,
   people,
@@ -137,6 +144,8 @@ export function FullProfile({
   view: FullProfileView;
   /** your own profile: the numbers lead to your pages, and an empty bio offers to be written */
   own?: boolean;
+  /** the menu in the banner's far corner: your places, or what can be done about somebody else */
+  corner?: React.ReactNode;
   /** what can be done here: edit and share, or the friend actions */
   headerAction?: React.ReactNode;
   /** the showcased badges, ranks and league (profile/ProfileProgress) */
@@ -185,14 +194,35 @@ export function FullProfile({
           level={view.levelInfo}
           frameSku={view.frameSku}
           frameUrl={view.frameUrl}
+          seed={view.id}
+          corner={corner}
           aside={headerAction}
           meta={
             <>
-              {view.country && (
-                <div className="mkp-country">
-                  <img className="flag" src={flagUrl(view.country.code)} alt="" width={22} height={16} loading="lazy" />
-                  <span>{view.country.name}</span>
-                </div>
+              {(view.country || view.joinedYear || view.seenBy) && (
+                <ul className="mkp-about">
+                  {view.country && (
+                    <li className="mkp-country">
+                      <img className="flag" src={flagUrl(view.country.code)} alt="" width={22} height={16} loading="lazy" />
+                      <span>{view.country.name}</span>
+                    </li>
+                  )}
+                  {view.joinedYear && (
+                    <li>
+                      <CalendarIcon size={15} />
+                      <span>{t('profile.joined', { year: view.joinedYear })}</span>
+                    </li>
+                  )}
+                  {/* who can open this page, said on the page itself, and one press from where it is changed */}
+                  {view.seenBy && (
+                    <li>
+                      <Link to={view.seenBy.to} className="mkp-seen">
+                        <EyeIcon size={15} />
+                        <span>{t('profile.seenBy', { who: view.seenBy.who })}</span>
+                      </Link>
+                    </li>
+                  )}
+                </ul>
               )}
               <GiftedNote background={view.background} icon={view.icon} />
               {/* their own words, with their name: nobody else's profile says "no bio yet", and yours offers to be written */}

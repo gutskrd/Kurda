@@ -34,7 +34,8 @@ export interface GameArtOptions {
 
 /**
  * The colour of each game's own page: the one its cover is remembered by,
- * bright enough to tint a surface in the light theme and in the dark.
+ * bright enough to tint a surface in the light theme and in the dark. No two
+ * games share one, so two games' pages are never the same page to the eye.
  */
 const TONES: Readonly<Record<GameEmblem, string>> = {
   peyvok: '#3fa45b',
@@ -42,9 +43,9 @@ const TONES: Readonly<Record<GameEmblem, string>> = {
   race: '#f08a34',
   'memory-thief': '#f2b632',
   detective: '#74bdea',
-  'last-letter': '#7b5cd9',
+  'last-letter': '#5468d4',
   impostor: '#8a5bd6',
-  'who-am-i': '#3fa45b',
+  'who-am-i': '#2fa7a0',
 };
 
 export function isGameEmblem(v: unknown): v is GameEmblem {

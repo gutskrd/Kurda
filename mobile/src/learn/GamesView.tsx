@@ -1,6 +1,6 @@
 import { useCallback, useState, type Ref } from 'react';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { gameOfTheDay, type IncomingInvite, type MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -29,12 +29,12 @@ import { useUserEvents } from '../realtime/useUserEvents';
 import { PHONE_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
 import { GAME_CARDS, GAME_MEANING, learnGameCard, type GameCard, type GameMode, type GameWay } from '../games/gameCards';
 import { GameArt } from '../games/GameArt';
-import { Cloth, GoldButton } from '../impostor/parts';
+import { Cloth } from '../impostor/parts';
+import { haptic } from '../feedback/haptics';
 import { TABLE } from '../impostor/table';
 
 type Mode = GameMode;
 type Way = GameWay;
-type Filter = 'all' | 'solo' | 'friends';
 
 const MODE_LABEL: Record<Mode, TranslationKey> = {
   solo: 'games.mode.solo',
@@ -42,14 +42,32 @@ const MODE_LABEL: Record<Mode, TranslationKey> = {
   both: 'games.mode.both',
 };
 
-const FILTERS: ReadonlyArray<{ id: Filter; label: TranslationKey }> = [
-  { id: 'all', label: 'games.filter.all' },
-  { id: 'solo', label: 'games.mode.solo' },
-  { id: 'friends', label: 'games.mode.friends' },
-];
-
-/** Whether a game is played the way a filter asks for. */
-const playedAs = (mode: Mode, filter: Filter): boolean => filter === 'all' || mode === 'both' || mode === filter;
+/**
+ * The game put forward's Play: on the night it is shown on, in either theme,
+ * the one light thing — white, with the night's own deep ink on it — sinking
+ * a little under a finger. Every other Play is the app's solid button; the
+ * covers carry the colour, the buttons stay one calm, consistent thing.
+ */
+function HeroPlay({ label, onPress, testID }: { label: string; onPress: () => void; testID?: string }): React.JSX.Element {
+  return (
+    <Pressable
+      onPress={() => {
+        haptic('tap');
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      testID={testID}
+      style={styles.heroPlay}
+    >
+      {({ pressed }) => (
+        <View style={[styles.heroPlayFace, pressed ? styles.heroPlayDown : null]}>
+          <Text style={styles.heroPlayText}>{label}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
 
 /**
  * The game the screen puts forward today: one of those that can be played,
@@ -75,9 +93,11 @@ export function featuredCard(cards: readonly GameCard[], now: number): GameCard 
  * it, and a way in. A game with one way in opens
  * when its card is pressed; a game with a screen for playing alone and
  * another for playing a friend has a button for each, and so has Who Am I?,
- * played on this phone or with friends, so a game is one tap from here. A
- * filter shows the games played alone or with friends, and a game still
- * short of approved content is only named, under the cards.
+ * played on this phone or with friends, so a game is one tap from here. Every
+ * Play is the same solid button, and a second way in the quiet one: the
+ * covers carry the colour. There is no filter: a handful of games,
+ * each saying who it is played with, is read faster than a control that sorts
+ * them. A game still short of approved content is only named, under the cards.
  */
 export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
@@ -92,7 +112,6 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   const [invites, setInvites] = useState<IncomingInvite[]>([]);
   // the learning games (games/learnGames.ts): all of them, those without enough approved content yet as coming soon
   const learnGames = useListedLearnGames();
-  const [filter, setFilter] = useState<Filter>('all');
   // the emblems act while this screen is the one being looked at, and rest while another is
   const watching = useIsFocused();
   const cards: GameCard[] = [
@@ -103,12 +122,12 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       return phone ? [learnGameCard({ id: g.id, ...phone, mode, ready })] : [];
     }),
   ];
-  // the game put forward stands above the cards, and is not said twice among them; under a filter the cards are whole
-  const featured = filter === 'all' ? featuredCard(cards, Date.now()) : null;
+  // the game put forward stands above the cards, and is not said twice among them
+  const featured = featuredCard(cards, Date.now());
   // what the featured game's name means, unless the interface is Kurdish and the two are the same words
   const featuredMeaningKey = featured ? GAME_MEANING[featured.emblem] : undefined;
   const featuredMeaning = featured && featuredMeaningKey && t(featuredMeaningKey) !== t(featured.name) ? t(featuredMeaningKey) : null;
-  const shelf = cards.filter((c) => !c.soon && c !== featured && playedAs(c.mode, filter));
+  const shelf = cards.filter((c) => !c.soon && c !== featured);
   const upcoming = cards.filter((c) => c.soon);
 
   /**
@@ -284,7 +303,8 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
           <View style={styles.heroWays}>
             {featured.ways.map((way, i) =>
               i === 0 ? (
-                <GoldButton key={way.key} label={t(way.label)} onPress={() => open(way)} testID={`game-${way.key}`} />
+                // said with the game's name, as the other way beside it is: "Play" alone tells a screen reader nothing
+                <HeroPlay key={way.key} label={`${t(featured.name)}, ${t(way.label)}`} onPress={() => open(way)} testID={`game-${way.key}`} />
               ) : (
                 <PressableScale
                   key={way.key}
@@ -310,25 +330,6 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
         <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
           {t('nav.games')}
         </Text>
-        <View style={[styles.filters, { flexDirection: dir.row }]}>
-          {FILTERS.map((f) => {
-            const on = filter === f.id;
-            return (
-              <PressableScale
-                key={f.id}
-                onPress={() => setFilter(f.id)}
-                accessibilityRole="button"
-                accessibilityLabel={t(f.label)}
-                accessibilityState={{ selected: on }}
-                aria-pressed={on}
-                testID={`games-filter-${f.id}`}
-                style={[styles.filter, { backgroundColor: on ? colors.textPrimary : colors.surface }]}
-              >
-                <Text style={[styles.filterText, { color: on ? colors.background : colors.textPrimary }]}>{t(f.label)}</Text>
-              </PressableScale>
-            );
-          })}
-        </View>
         <View style={styles.cards}>
           {shelf.map((card, place) => {
             const name = t(card.name);
@@ -350,8 +351,8 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                   <Text style={[styles.cardLine, dir.text, { color: colors.textSecondary }]}>{t(card.line)}</Text>
                   {single ? (
                     <View style={[styles.cardFoot, { flexDirection: dir.row }]}>
-                      <View style={[styles.play, { backgroundColor: TABLE.gold }]}>
-                        <Text style={[styles.playText, { color: TABLE.goldInk }]}>{t('games.play')}</Text>
+                      <View style={[styles.play, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.playText, { color: colors.textOnPrimary }]}>{t('games.play')}</Text>
                       </View>
                       <View style={[styles.mode, { flexDirection: dir.row }]}>
                         <Icon name={card.mode === 'solo' ? 'person' : 'people'} size={13} color={colors.textSecondary} />
@@ -370,9 +371,9 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                           accessibilityLabel={`${name}, ${t(way.label)}`}
                           hitSlop={WAY_SLOP}
                           testID={`game-${way.key}`}
-                          style={[styles.play, { backgroundColor: i === 0 ? TABLE.gold : colors.controlTrack }]}
+                          style={[styles.play, { backgroundColor: i === 0 ? colors.primary : colors.controlTrack }]}
                         >
-                          <Text style={[styles.playText, { color: i === 0 ? TABLE.goldInk : colors.textPrimary }]}>{t(way.label)}</Text>
+                          <Text style={[styles.playText, { color: i === 0 ? colors.textOnPrimary : colors.textPrimary }]}>{t(way.label)}</Text>
                         </PressableScale>
                       ))}
                     </View>
@@ -439,7 +440,6 @@ const JOIN_SLOP = hitSlopFor(MIN_TOUCH_TARGET, JOIN_HEIGHT);
 /** A card's button is drawn a little shorter than a fingertip and caught as a whole one, as Join is. */
 const PLAY_HEIGHT = 36;
 const WAY_SLOP = hitSlopFor(MIN_TOUCH_TARGET, PLAY_HEIGHT);
-const FILTER_HEIGHT = MIN_TOUCH_TARGET;
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.gutter, paddingTop: spacing.md, gap: spacing.lg },
@@ -484,9 +484,11 @@ const styles = StyleSheet.create({
   },
   heroOtherText: { color: TABLE.ink, fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
 
-  filters: { gap: spacing.sm },
-  filter: { minHeight: FILTER_HEIGHT, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radii.pill },
-  filterText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  // the game put forward's Play: the face in the game's colour on its lip, which it sinks onto when pressed
+  heroPlay: { alignSelf: 'stretch', borderRadius: radii.pill },
+  heroPlayFace: { minHeight: 56, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg, borderRadius: radii.pill, backgroundColor: '#ffffff' },
+  heroPlayDown: { transform: [{ scale: 0.98 }], opacity: 0.92 },
+  heroPlayText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: TABLE.nightDeep },
 
   cards: { gap: layout.rowGap },
   // a card lies on its side, picture first, so its words have the width of the screen

@@ -137,32 +137,35 @@ describe('TreePage', () => {
     expect(container.querySelector('.tree-burst')).toBeNull();
   });
 
-  it('stands in the sky of the learner’s own hour, with what is in the air round that kind of tree', async () => {
-    const hours = vi.spyOn(Date.prototype, 'getHours').mockReturnValue(22);
+  it('stands in the scene of the learner’s own season, with the season blowing past it', async () => {
+    const month = vi.spyOn(Date.prototype, 'getMonth').mockReturnValue(3);
     server({ 'GET /me/tree': mine(view({ species: 'behiv', waterings: 30 })) });
     const { container, unmount } = renderApp(<TreePage />);
     await screen.findByRole('heading', { name: 'Behîv' });
-    expect(container.querySelector('.tree-stage')).toHaveClass('is-night');
-    // an almond in blossom lets its petals go
+    // April: spring, and an almond in blossom lets its petals go on the wind
+    expect(container.querySelector('.tree-stage')).toHaveClass('is-spring');
     expect(container.querySelector('.tree-ambient')).toHaveClass('is-petals');
-    expect(container.querySelectorAll('.tree-scene-cloud')).toHaveLength(3);
+    expect(container.querySelectorAll('.tree-ambient i').length).toBeGreaterThan(8);
     // all of it is decoration: none of it is read out
     expect(container.querySelector('.tree-scene')).toHaveAttribute('aria-hidden', 'true');
     expect(container.querySelector('.tree-ambient')).toHaveAttribute('aria-hidden', 'true');
     unmount();
-    hours.mockReturnValue(6);
+    // January: the same page under snow
+    month.mockReturnValue(0);
     server({ 'GET /me/tree': mine(view({ waterings: 1 })) });
-    const morning = renderApp(<TreePage />);
+    const winter = renderApp(<TreePage />);
     await screen.findByRole('heading', { name: 'Berû' });
-    expect(morning.container.querySelector('.tree-stage')).toHaveClass('is-dawn');
-    expect(morning.container.querySelector('.tree-ambient')).toHaveClass('is-motes');
+    expect(winter.container.querySelector('.tree-stage')).toHaveClass('is-winter');
+    expect(winter.container.querySelector('.tree-ambient')).toHaveClass('is-snow');
   });
 
   it('floats a thought of water by a tree that wants some, and stills the air round one left to wilt', async () => {
+    vi.spyOn(Date.prototype, 'getMonth').mockReturnValue(10);
     server({ 'GET /me/tree': mine(view({ waterings: 15, water: 1, lastWateredOn: '2026-11-08' })) });
     const { container, unmount } = renderApp(<TreePage />);
     expect(await screen.findByText('Wilting')).toBeInTheDocument();
     expect(container.querySelector('.tree-thought')).not.toBeNull();
+    // in November the wind brings no leaf past a tree left to wilt
     expect(container.querySelector('.tree-ambient')).toBeNull();
     unmount();
     server({ 'GET /me/tree': mine(view()) });

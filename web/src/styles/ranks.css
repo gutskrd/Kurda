@@ -442,6 +442,44 @@
   grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
   gap: 12px;
 }
+/* the games not begun: one quiet line of their names, each a way to its boards, and what places a rank */
+.ranks-untouched {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+}
+.ranks-grid + .ranks-untouched {
+  margin-top: 12px;
+}
+.ranks-untouched-names {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: var(--text-secondary);
+}
+.ranks-untouched-label {
+  color: var(--ink-2);
+  font-weight: 700;
+}
+.ranks-untouched-game {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+.ranks-untouched-game:hover {
+  text-decoration-color: currentColor;
+}
+.ranks-untouched-hint {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
 
 .rank-card {
   position: relative;
