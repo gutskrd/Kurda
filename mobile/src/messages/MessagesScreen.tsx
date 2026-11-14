@@ -498,8 +498,8 @@ function ConversationsSkeleton(): React.JSX.Element {
 /**
  * The way into letters by bird (letters/LettersScreen), at the head of the
  * conversations, as the website has it: your bird, and in a few words what is
- * new — a letter waiting to be answered, your bird out — or, with nothing yet,
- * what letters are.
+ * new — a bird at your window, a letter waiting to be answered, your bird out
+ * — or, with nothing yet, what letters are.
  */
 function LettersRow({ home, onPress }: { home: LettersHome; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -507,7 +507,17 @@ function LettersRow({ home, onPress }: { home: LettersHome; onPress: () => void 
   const dir = useDirection();
   const unread = home.penPals.reduce((n, p) => n + p.unread, 0);
   const waiting = home.penPals.find((p) => p.yourTurn);
-  const line = waiting ? t('letters.row.yourTurn', { name: waiting.person.name }) : home.out ? t('letters.out.title') : t('letters.row.invite');
+  // a bird at your window waits for you first, then a pen pal's letter, then your own bird out
+  const visitor = home.visitor ?? null;
+  const line = visitor
+    ? t('letters.visitor.title', { name: visitor.person.name })
+    : waiting
+      ? t('letters.row.yourTurn', { name: waiting.person.name })
+      : home.out
+        ? t('letters.out.title')
+        : t('letters.row.invite');
+  // drawn as an unread conversation is while a bird or a letter waits on you
+  const lit = unread > 0 || visitor !== null;
   return (
     <PressableScale
       onPress={onPress}
@@ -520,10 +530,10 @@ function LettersRow({ home, onPress }: { home: LettersHome; onPress: () => void 
         <BirdBadge bird={home.bird} size={40} />
       </View>
       <View style={styles.rowMain}>
-        <Text style={[styles.rowName, unread > 0 && styles.unreadName, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+        <Text style={[styles.rowName, lit && styles.unreadName, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
           {t('letters.title')}
         </Text>
-        <Text style={[styles.rowPreview, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.rowPreview, dir.text, { color: visitor ? colors.textPrimary : colors.textSecondary }]} numberOfLines={1}>
           {line}
         </Text>
       </View>

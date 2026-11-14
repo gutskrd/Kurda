@@ -19,6 +19,11 @@ const TEXT: Readonly<Record<string, TranslationKey>> = {
   LETTER_LONG: 'letters.problem.long',
   LETTER_LINK: 'letters.problem.link',
   LETTER_CONTACT: 'letters.problem.contact',
+  VISITOR_HERE: 'letters.error.visitorHere',
+  NO_BIRDS_OUT: 'letters.error.noBirds',
+  CALLS_TODAY: 'letters.callsDone',
+  NO_VISITOR: 'letters.visitor.gone',
+  BIRD_GONE: 'letters.visitor.gone',
 };
 
 export function letterErrorText(error: ApiError, t: Translate): string | null {
