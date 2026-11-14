@@ -2280,7 +2280,7 @@
           "position": 3,
           "titleKu": "Gotinên pêşiyan",
           "titleEn": "Proverbs",
-          "grammarMd": "Proverbs — **gotinên pêşiyan**, “the sayings of those before” — are short and often use the general present:\n\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.\n- *Gotina xweş mar ji qulê derdixe.* A kind word brings the snake out of its hole.\n- *Av dilop dilop dibe gol.* Drop by drop, water becomes a lake.\n\n**çiqas … be jî** means *however … it is*: *Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.* However high the mountain, one day a road will cross it.\n\nIn a tale, the past and the dialogue come together: *Rovî got: “Tu kîjan dixwazî?” Hirçê got: “Yên li ser erdê!”* The fox said: “Which do you want?” The bear said: “The ones above the ground!”",
+          "grammarMd": "Proverbs — **gotinên pêşiyan**, “the sayings of those before” — are short and often use the general present:\n\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.\n- *Zimanê şîrîn mar ji qulê derdixe.* A sweet tongue brings the snake out of its hole.\n- *Av dilop dilop dibe gol.* Drop by drop, water becomes a lake.\n\n**çiqas … be jî** means *however … it is*; a proverb often leaves out the *jî*: *Çiya çiqas bilind be, wê rê pê keve.* However high the mountain, a road will cross it.\n\nIn a tale, the past and the dialogue come together: *Rovî got: “Tu kîjan dixwazî?” Hirçê got: “Yên li ser erdê!”* The fox said: “Which do you want?” The bear said: “The ones above the ground!”",
           "lessons": [
             {
               "key": "u12s3l1",
@@ -2590,12 +2590,12 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Dapîr dibêje: “Gotina xweş mar ji qulê derdixe.”",
+                    "say": "Dapîr dibêje: “Zimanê şîrîn mar ji qulê derdixe.”",
                     "voice": "hamo",
-                    "prompt": "Dapîr answers the fox’s tale with a proverb. Hamo says it again for you. What does it mean? «Dapîr dibêje: “Gotina xweş mar ji qulê derdixe.”»",
+                    "prompt": "Dapîr answers the fox’s tale with a proverb. Hamo says it again for you. What does it mean? «Dapîr dibêje: “Zimanê şîrîn mar ji qulê derdixe.”»",
                     "options": [
-                      "Grandma says: “A kind word brings the snake out of its hole.”",
-                      "Grandma says: “A snake has a sweet tongue.”",
+                      "Grandma says: “A sweet tongue brings the snake out of its hole.”",
+                      "Grandma says: “Sweet food brings the snake out of its hole.”",
                       "Grandma says: “Don’t put your hand in a snake’s hole.”"
                     ],
                     "correctIndex": 0
@@ -2611,15 +2611,15 @@
                         "right": "The guest is God’s guest."
                       },
                       {
-                        "left": "Gotina xweş mar ji qulê derdixe.",
-                        "right": "A kind word brings the snake out of its hole."
+                        "left": "Zimanê şîrîn mar ji qulê derdixe.",
+                        "right": "A sweet tongue brings the snake out of its hole."
                       },
                       {
                         "left": "Av dilop dilop dibe gol.",
                         "right": "Drop by drop, water becomes a lake."
                       },
                       {
-                        "left": "Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.",
+                        "left": "Çiya çiqas bilind be, wê rê pê keve.",
                         "right": "However high the mountain, one day a road will cross it."
                       },
                       {
@@ -2683,7 +2683,7 @@
                     "options": [
                       "Mêvan mêvanê Xwedê ye.",
                       "Av dilop dilop dibe gol.",
-                      "Gotina xweş mar ji qulê derdixe."
+                      "Zimanê şîrîn mar ji qulê derdixe."
                     ],
                     "correctIndex": 1
                   }
@@ -2692,10 +2692,12 @@
                   "position": 7,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Complete Dapîr’s proverb: “Çiya çiqas bilind be jî, …”",
+                    "prompt": "Complete Dapîr’s proverb: “Çiya çiqas bilind be, …”",
                     "accepted": [
-                      "Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.",
-                      "Çiya çiqas bilind be jî, wê rojekê rê pê bikeve"
+                      "Çiya çiqas bilind be, wê rê pê keve.",
+                      "Çiya çiqas bilind be, wê rê pê keve",
+                      "Çiya çiqas bilind be, rê pê dikeve.",
+                      "Çiya çiqas bilind be, rê pê dikeve"
                     ],
                     "voice": "hamo"
                   }
@@ -2704,9 +2706,11 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "say": "Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.",
-                    "prompt": "Dapîr looks at Xezal when she says this one, and Hamo says it again, slowly, for you. What does it mean? “Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.”",
+                    "say": "Çiya çiqas bilind be, wê rê pê keve.",
+                    "prompt": "Dapîr looks at Xezal when she says this one, and Hamo says it again, slowly, for you. What does it mean? “Çiya çiqas bilind be, wê rê pê keve.”",
                     "accepted": [
+                      "However high the mountain, a road will cross it.",
+                      "However high the mountain, a road will cross it",
                       "However high the mountain, one day a road will cross it.",
                       "However high the mountain, one day a road will cross it",
                       "However high the mountain is, one day a road will cross it.",
@@ -2761,8 +2765,8 @@
                   "position": 12,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Say the snake proverb, slowly, the way Dapîr does: “A kind word brings the snake out of its hole.”",
-                    "reference": "Gotina xweş mar ji qulê derdixe.",
+                    "prompt": "Say the snake proverb, slowly, the way Dapîr does: “A sweet tongue brings the snake out of its hole.”",
+                    "reference": "Zimanê şîrîn mar ji qulê derdixe.",
                     "voice": "hamo"
                   }
                 },
@@ -2849,13 +2853,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Baş e! Dapîr bersiv dide: «Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.»",
-                        "en": "Good! Dapîr answers: “However high the mountain, one day a road will cross it.”"
+                        "text": "Baş e! Dapîr bersiv dide: «Çiya çiqas bilind be, wê rê pê keve.»",
+                        "en": "Good! Dapîr answers: “However high the mountain, a road will cross it.”"
                       },
                       {
                         "speaker": 1,
-                        "text": "Û ya duyem: «Gotina xweş mar ji qulê derdixe!»",
-                        "en": "And our second: “A kind word brings the snake out of its hole!”"
+                        "text": "Û ya duyem: «Zimanê şîrîn mar ji qulê derdixe!»",
+                        "en": "And our second: “A sweet tongue brings the snake out of its hole!”"
                       },
                       {
                         "speaker": 0,

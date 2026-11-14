@@ -3688,7 +3688,7 @@
           "titleKu": "Gotinên pêşiyan",
           "titleEn": "Proverbs",
           "grammar": "proverbs and how they are built (… çiqas … be jî, …; the general present: … dibe, … derdixe), and a retold tale in the past with dialogue",
-          "grammarMd": "Proverbs — **gotinên pêşiyan**, “the sayings of those before” — are short and often use the general present:\n\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.\n- *Gotina xweş mar ji qulê derdixe.* A kind word brings the snake out of its hole.\n- *Av dilop dilop dibe gol.* Drop by drop, water becomes a lake.\n\n**çiqas … be jî** means *however … it is*: *Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.* However high the mountain, one day a road will cross it.\n\nIn a tale, the past and the dialogue come together: *Rovî got: “Tu kîjan dixwazî?” Hirçê got: “Yên li ser erdê!”* The fox said: “Which do you want?” The bear said: “The ones above the ground!”",
+          "grammarMd": "Proverbs — **gotinên pêşiyan**, “the sayings of those before” — are short and often use the general present:\n\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.\n- *Zimanê şîrîn mar ji qulê derdixe.* A sweet tongue brings the snake out of its hole.\n- *Av dilop dilop dibe gol.* Drop by drop, water becomes a lake.\n\n**çiqas … be jî** means *however … it is*; a proverb often leaves out the *jî*: *Çiya çiqas bilind be, wê rê pê keve.* However high the mountain, a road will cross it.\n\nIn a tale, the past and the dialogue come together: *Rovî got: “Tu kîjan dixwazî?” Hirçê got: “Yên li ser erdê!”* The fox said: “Which do you want?” The bear said: “The ones above the ground!”",
           "lessons": [
             {
               "key": "u12s3l1",
@@ -3717,9 +3717,9 @@
               "voice": "hamo",
               "new": [
                 {"ku": "Mêvan mêvanê Xwedê ye.", "en": "The guest is God’s guest.", "pos": "phrase", "forms": ["mêvan", "mêvanê", "xwedê", "ye"]},
-                {"ku": "Gotina xweş mar ji qulê derdixe.", "en": "A kind word brings the snake out of its hole.", "pos": "phrase", "forms": ["gotina", "xweş", "mar", "ji", "qulê", "derdixe"]},
+                {"ku": "Zimanê şîrîn mar ji qulê derdixe.", "en": "A sweet tongue brings the snake out of its hole.", "pos": "phrase", "forms": ["zimanê", "şîrîn", "mar", "ji", "qulê", "derdixe"]},
                 {"ku": "Av dilop dilop dibe gol.", "en": "Drop by drop, water becomes a lake.", "pos": "phrase", "forms": ["av", "dilop", "dibe", "gol"]},
-                {"ku": "Çiya çiqas bilind be jî, wê rojekê rê pê bikeve.", "en": "However high the mountain, one day a road will cross it.", "pos": "phrase", "forms": ["çiya", "çiqas", "bilind", "be", "jî", "wê", "rojekê", "rê", "pê", "bikeve"]},
+                {"ku": "Çiya çiqas bilind be, wê rê pê keve.", "en": "However high the mountain, a road will cross it.", "pos": "phrase", "forms": ["çiya", "çiqas", "bilind", "be", "wê", "rê", "pê", "keve"]},
                 {"ku": "dilop", "en": "drop", "pos": "noun", "gender": "f", "forms": ["dilop", "dilopên", "dilopan", "dilopek", "dilopa", "dilopê", "dilopeke"]},
                 {"ku": "mar", "en": "snake", "pos": "noun", "gender": "m", "forms": ["mar", "marên", "maran", "marek", "marê", "marekî", "marî"]}
               ]
@@ -3849,7 +3849,7 @@
     {"ku": "zozan", "reason": "zozan: dictionaries disagree on its gender; the course mostly uses it in the plural (li zozanan) — confirm"},
     {"ku": "me-", "reason": "the negative imperative: the course keeps the me- of the written standard (meke, meçe, Xem meke); in writing today ne- (neke, Xem neke) is about ten times as common, and both are correct — confirm which the owner wants taught"},
     {"ku": "çaydank", "reason": "çaydank (teapot) is masculine in the dictionaries (çaydankê, çaydankekî), not feminine as first planned — confirm"},
-    {"ku": "Gotina xweş mar ji qulê derdixe", "reason": "the three proverbs now follow the collections: “Gotina xweş mar ji qulê derdixe”, “Av dilop dilop dibe gol”, “Çiya çiqas bilind be jî, wê rojekê rê pê bikeve” — confirm they are the forms the owner knows"},
+    {"ku": "Zimanê şîrîn mar ji qulê derdixe", "reason": "the proverbs now take forms the collections attest: “Zimanê şîrîn mar ji qulê derdixe” (the course had “Gotina xweş …”, a natural variant no collection reached has), “Av dilop dilop dibe gol”, and “Çiya çiqas bilind be, wê rê pê keve” (the course had a blend with “jî” and “wê rojekê … bikeve” that no collection has) — confirm they are the forms the owner knows"},
     {"ku": "ji ber kirin", "reason": "learn by heart is written ji ber kirin (ji ber dikim); the noun is jiberkirin — confirm"}
   ]
 }
