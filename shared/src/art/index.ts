@@ -30,6 +30,7 @@ export {
   LETTER_BIRD_FEET,
   LETTER_FLIGHT,
   LETTER_OPENING,
+  LETTER_PLANT_SWAY,
   LETTER_PLAY,
   LETTER_SILL,
   LETTER_WINDOW_DEPTH,
@@ -50,6 +51,23 @@ export {
   type LetterWindowOptions,
   type LetterWindowPart,
 } from './letters.js';
+export {
+  LETTER_FAR_OFF,
+  LETTER_HEARTS,
+  LETTER_SILL_SPOTS,
+  LETTER_SKY,
+  LETTER_SPRITES,
+  letterDrifts,
+  letterFlightFrom,
+  letterSillBox,
+  letterSillShift,
+  letterSpriteSvg,
+  type LetterDrift,
+  type LetterSkyBird,
+  type LetterSpot,
+  type LetterSprite,
+  type LetterSpriteOptions,
+} from './letter-sky.js';
 export { PIGEON_POSES, type PigeonPose } from './pigeon.js';
 export type { SongbirdPose } from './songbird.js';
 export { rankEmblemSvg, placementEmblemSvg, PLACEMENT_GAMES, SMALL_EMBLEM, type PlacementEmblemOptions, type RankEmblemOptions } from './ranks.js';

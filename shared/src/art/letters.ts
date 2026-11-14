@@ -146,8 +146,12 @@ const OPENING = { x0: 25.4, y0: 21.4, x1: 94.6, y1: 85.4 } as const;
 export const LETTER_OPENING = OPENING;
 const SILL_FRONT = { x0: 10, x1: 110, y: 96, depth: 4.8 } as const;
 
-/** The layers of the window, back to front. A pigeon on the sill stands over all of them, the light on the sill included: it lies under its feet. */
-export const LETTER_WINDOW_PARTS = ['sky', 'clouds', 'far', 'near', 'room', 'left', 'right', 'light'] as const;
+/**
+ * The layers of the window, back to front. A pigeon on the sill stands over
+ * all of them, the light on the sill included: it lies under its feet. The
+ * plant in the pot is a layer of its own, so it can sway in the air coming in.
+ */
+export const LETTER_WINDOW_PARTS = ['sky', 'clouds', 'far', 'near', 'room', 'left', 'right', 'plant', 'light'] as const;
 export type LetterWindowPart = (typeof LETTER_WINDOW_PARTS)[number];
 
 /**
@@ -156,7 +160,10 @@ export type LetterWindowPart = (typeof LETTER_WINDOW_PARTS)[number];
  * room and its casements not at all, so the frame holds still and what is
  * outside turns behind it.
  */
-export const LETTER_WINDOW_DEPTH: Readonly<Record<LetterWindowPart, number>> = { sky: 0.006, clouds: 0.012, far: 0.02, near: 0.04, room: 0, left: 0, right: 0, light: 0 };
+export const LETTER_WINDOW_DEPTH: Readonly<Record<LetterWindowPart, number>> = { sky: 0.006, clouds: 0.012, far: 0.02, near: 0.04, room: 0, left: 0, right: 0, plant: 0, light: 0 };
+
+/** Where the plant in the pot bends from (the pot's rim, on the window's square), how far it leans each way in the breeze, in degrees, and how long one sway takes. */
+export const LETTER_PLANT_SWAY = { x: 90, y: 86, turn: 3.2, ms: 5600 } as const;
 
 /**
  * Where a pigeon stands on the sill, on the window's 120-unit square: under
@@ -227,8 +234,12 @@ function moves(keys: ReadonlyArray<Partial<LetterPlayMove> & { at: number }>): L
   return keys.map((k) => (last = { ...last, ...k }));
 }
 
-/** A pigeon's three plays: before it goes, after it comes, and at home on the sill while nothing is happening. */
-export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle', LetterPlay>> = {
+/**
+ * A pigeon's plays: before it goes, after it comes, at home on the sill while
+ * nothing is happening, and — a bird sent on from somebody's window — picking
+ * its own letter up again from where it laid it, to go.
+ */
+export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch', LetterPlay>> = {
   // your letter drops onto the sill; the pigeon looks up at it, hops for joy and chirps, hops over, picks it up, and beats its wings, ready
   before: {
     ms: 4000,
@@ -325,6 +336,47 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle', LetterPla
       { at: 0.329, y: 0, seen: 0 },
       { at: 0.33, y: 0, seen: 1 },
       { at: 1, y: 0, seen: 1 },
+    ],
+  },
+  // sent on: it looks at you, then down at its letter, picks it up where it laid it, and beats its wings, ready
+  fetch: {
+    ms: 3200,
+    loop: false,
+    moves: moves([
+      { at: 0 },
+      { at: 0.1, tilt: -8 },
+      { at: 0.2, tilt: -8 },
+      { at: 0.26, tilt: 0 },
+      { at: 0.34, tilt: 30 },
+      { at: 0.42, tilt: 30 },
+      { at: 0.5, tilt: 0 },
+      { at: 0.56, y: -0.05 },
+      { at: 0.62, y: 0 },
+      { at: 0.7, y: -0.05 },
+      { at: 0.76, y: 0 },
+      { at: 0.84, y: -0.04 },
+      { at: 0.9, y: 0 },
+      { at: 1 },
+    ]),
+    poses: [
+      [0, 'perched', false],
+      [0.14, 'blink', false],
+      [0.18, 'perched', false],
+      [0.42, 'perched', true],
+      [0.53, 'wings-up', true],
+      [0.59, 'wings-down', true],
+      [0.65, 'wings-up', true],
+      [0.71, 'wings-down', true],
+      [0.77, 'wings-up', true],
+      [0.83, 'wings-down', true],
+      [0.92, 'perched', true],
+    ],
+    letterAt: 0.3,
+    letter: [
+      { at: 0, y: 0, seen: 1 },
+      { at: 0.419, y: 0, seen: 1 },
+      { at: 0.42, y: 0, seen: 0 },
+      { at: 1, y: 0, seen: 0 },
     ],
   },
   // at home, over and over: a pigeon's bob of the head, a peck at the seeds, a look up at the sky, a chirp, and a hop round and back
@@ -536,13 +588,20 @@ function nearPart(dr: Drawing, h: Hour): void {
   flower(dr, 52, 84.6, 1.3, blue, tint(blue, 0.35));
 }
 
-/** A clay pot of flowers on the sill: its body, its rim, the shade it stands in, and what grows in it. */
-function pot(dr: Drawing, h: Hour, x: number, y: number): void {
+/** A clay pot on the sill, at `x`, `y`: the shade it stands in, its body and its rim. What grows in it is drawn by itself (`plant`). */
+function pot(dr: Drawing, x: number, y: number): void {
   const clay: Tones = { light: '#eea17a', base: '#d9825b', shade: '#b8663f' };
   dr.add(`<ellipse cx="${n(x)}" cy="${n(y + 0.4)}" rx="7.4" ry="1.4" fill="#1d1838" opacity="0.16"/>`);
+  form(dr, `M${n(x - 5.6)} ${n(y - 7)}L${n(x + 5.6)} ${n(y - 7)}L${n(x + 4.2)} ${n(y)}L${n(x - 4.2)} ${n(y)}Z`, clay, 0.8, 0.6);
+  dr.add(`<path d="${rr(x - 6.6, y - 8.6, 13.2, 2.6, 1)}" fill="${clay.light}"/>`);
+}
+
+/** What grows in the pot at `x`, `y`: a stem, four leaves and two flowers, rising from under the rim. */
+function plant(dr: Drawing, h: Hour, x: number, y: number): void {
   const stem = h.night ? '#2f5a3f' : '#4f8f3e';
   const leafy = h.night ? '#3c6b4a' : '#6fb04f';
-  dr.add(`<path d="M${n(x)} ${n(y - 8)}Q${n(x - 0.6)} ${n(y - 13)} ${n(x + 0.4)} ${n(y - 17)}" fill="none" stroke="${stem}" stroke-width="0.8" stroke-linecap="round"/>`);
+  // the stem rises from the top of the rim, where the plant bends from (LETTER_PLANT_SWAY)
+  dr.add(`<path d="M${n(x)} ${n(y - 8.6)}Q${n(x - 0.6)} ${n(y - 13)} ${n(x + 0.4)} ${n(y - 17)}" fill="none" stroke="${stem}" stroke-width="0.8" stroke-linecap="round"/>`);
   const leaves: ReadonlyArray<readonly [Pt, Pt, number]> = [
     [[x, y - 9], [-0.86, -0.5], 5.2],
     [[x, y - 9.4], [0.86, -0.5], 5],
@@ -552,8 +611,6 @@ function pot(dr: Drawing, h: Hour, x: number, y: number): void {
   for (const [base, u, len] of leaves) dr.add(`<path d="${leaf(base, u, len, len * 0.42)}" fill="${leafy}"/>`);
   flower(dr, x + 0.4, y - 17.6, 1.5, h.flowers[1], h.flowers[0]);
   flower(dr, x - 3.6, y - 14.6, 1, h.flowers[0], h.heart);
-  form(dr, `M${n(x - 5.6)} ${n(y - 7)}L${n(x + 5.6)} ${n(y - 7)}L${n(x + 4.2)} ${n(y)}L${n(x - 4.2)} ${n(y)}Z`, clay, 0.8, 0.6);
-  dr.add(`<path d="${rr(x - 6.6, y - 8.6, 13.2, 2.6, 1)}" fill="${clay.light}"/>`);
 }
 
 /** The room round the window: its wall, the wall's thickness, the frame set back in it, the sill and its pot. */
@@ -583,7 +640,7 @@ function roomPart(dr: Drawing, h: Hour): void {
   for (const [x, y, turn] of [[64.6, 94.6, 20], [67.4, 95.4, -30], [69.2, 94.2, 60], [35.4, 94.8, -20], [32.8, 95.6, 35], [31, 94.4, -60]] as const) {
     dr.add(`<ellipse cx="${n(x)}" cy="${n(y)}" rx="0.95" ry="0.6" fill="${seed}" transform="rotate(${turn} ${n(x)} ${n(y)})"/>`);
   }
-  pot(dr, h, 90, 94.6);
+  pot(dr, 90, 94.6);
 }
 
 /**
@@ -662,6 +719,7 @@ export function letterWindowSvg(opts: LetterWindowOptions = {}): string {
     room: () => roomPart(dr, h),
     left: () => casementPart(dr, h, 'left'),
     right: () => casementPart(dr, h, 'right'),
+    plant: () => plant(dr, h, 90, 94.6),
     light: () => lightPart(dr, h),
   };
   if (part === 'whole') for (const p of LETTER_WINDOW_PARTS) draw[p]();

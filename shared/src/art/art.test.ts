@@ -105,6 +105,19 @@ import {
   letterWindowSvg,
 } from './letters.js';
 import { PIGEON_POSES } from './pigeon.js';
+import {
+  LETTER_FAR_OFF,
+  LETTER_HEARTS,
+  LETTER_SILL_SPOTS,
+  LETTER_SKY,
+  LETTER_SPRITES,
+  letterDrifts,
+  letterFlightFrom,
+  letterSillBox,
+  letterSillShift,
+  letterSpriteSvg,
+  type LetterSpot,
+} from './letter-sky.js';
 import { LETTER_BIRDS } from '../letters.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml, wholePath } from './svg.js';
@@ -1997,6 +2010,12 @@ describe('the pigeon at play', () => {
     expect(before.poses[before.poses.length - 1]!.slice(1)).toEqual(['perched', true]);
     const after = LETTER_PLAY.after;
     expect(after.poses[0]!.slice(1)).toEqual(['perched', true]);
+    // a bird sent on starts as it was left, its letter lying before it, and ends ready to fly with it
+    const fetch = LETTER_PLAY.fetch;
+    expect(fetch.letterAt).toBe(after.letterAt);
+    expect(fetch.letter[0]).toMatchObject({ y: 0, seen: 1 });
+    expect(fetch.moves[fetch.moves.length - 1]).toMatchObject(still);
+    expect(fetch.poses[fetch.poses.length - 1]!.slice(1)).toEqual(['perched', true]);
     expect(after.moves[after.moves.length - 1]).toMatchObject(still);
     // the idle play goes round and round, so it ends as it begins
     const idle = LETTER_PLAY.idle;
@@ -2070,12 +2089,119 @@ describe('the pigeon at play', () => {
   it('brings its beak down to the letter on the sill when it picks it up or lays it down', () => {
     // the tip of its beak, standing, about its feet, in shares of its own square
     const beak = [(21.3 * LETTER_BIRD_FEET.scale) / 120, (-11.1 * LETTER_BIRD_FEET.scale) / 120] as const;
-    for (const play of [LETTER_PLAY.before, LETTER_PLAY.after]) {
+    for (const play of [LETTER_PLAY.before, LETTER_PLAY.after, LETTER_PLAY.fetch]) {
       const peck = play.moves.find((m) => m.tilt >= 30)!;
       const a = (peck.tilt * Math.PI) / 180;
       const [x, y] = [beak[0] * Math.cos(a) - beak[1] * Math.sin(a) + peck.x, beak[0] * Math.sin(a) + beak[1] * Math.cos(a) + peck.y];
       expect(Math.abs(x - play.letterAt)).toBeLessThan(0.04);
       expect(Math.abs(y)).toBeLessThan(0.04);
+    }
+  });
+});
+
+describe('the life round the window', () => {
+  const open = { x0: LETTER_OPENING.x0 / 120, x1: LETTER_OPENING.x1 / 120, y0: LETTER_OPENING.y0 / 120, y1: LETTER_OPENING.y1 / 120 };
+
+  it('draws every small thing that moves round the window as a valid picture', () => {
+    for (const sprite of LETTER_SPRITES) checkSvg(letterSpriteSvg({ sprite, size: 120 }), 120);
+    expect(() => letterSpriteSvg({ sprite: 'dragon' as never })).toThrow(RangeError);
+  });
+
+  it('stands two birds on the sill facing each other, between the frame and the pot, and moves yours aside about its feet', () => {
+    const own = letterSillBox('own');
+    const visitor = letterSillBox('visitor');
+    // how far across its own square a pigeon reaches, as in the flight test above
+    const reach = { x0: 0.07, x1: 0.91 };
+    expect(own.left + own.size * reach.x0).toBeGreaterThan(10 / 120);
+    // facing left, the visitor's tail is on the right: it ends before the pot
+    expect(visitor.left + visitor.size * (1 - reach.x0)).toBeLessThan(84 / 120);
+    // their beaks meet in the middle, a little apart
+    expect(LETTER_SILL_SPOTS.own.x).toBeLessThan(LETTER_SILL_SPOTS.visitor.x);
+    expect(own.top + own.size * (LETTER_BIRD_FEET.y / 120)).toBeCloseTo(LETTER_SILL.y / 120, 6);
+    const shift = letterSillShift('alone', 'own');
+    const alone = letterSillBox('alone');
+    // moved and shrunk about its feet, the bird lands exactly on the other spot's feet
+    const feetX = alone.left + alone.size * (LETTER_BIRD_FEET.x / 120) + shift.x * alone.size;
+    expect(feetX).toBeCloseTo(LETTER_SILL_SPOTS.own.x / 120, 6);
+    expect(shift.scale * alone.size).toBeCloseTo(own.size, 6);
+  });
+
+  it('flies from every spot to the same place far off, wholly inside the window once it is behind the room', () => {
+    const reach = { x0: 0.07, x1: 0.91, y0: 0.28, y1: 0.95 };
+    for (const spot of Object.keys(LETTER_SILL_SPOTS) as LetterSpot[]) {
+      const keys = letterFlightFrom(spot);
+      const box = letterSillBox(spot);
+      const [cx, cy] = [box.left + box.size / 2, box.top + box.size / 2];
+      expect(keys[0]).toMatchObject({ at: 0, x: 0, y: 0, scale: 1 });
+      const end = keys[keys.length - 1]!;
+      expect(cx + end.x).toBeCloseTo(LETTER_FAR_OFF.x, 6);
+      expect(cy + end.y).toBeCloseTo(LETTER_FAR_OFF.y, 6);
+      for (const k of keys.filter((key) => key.at >= LETTER_FLIGHT.behindAt)) {
+        const size = box.size * k.scale;
+        const [left, top] = [cx + k.x - size / 2, cy + k.y - size / 2];
+        for (const [r0, r1] of [[reach.x0, reach.x1], [1 - reach.x1, 1 - reach.x0]] as const) {
+          expect(left + size * r0).toBeGreaterThan(open.x0);
+          expect(left + size * r1).toBeLessThan(open.x1);
+        }
+        expect(top + size * reach.y0).toBeGreaterThan(open.y0);
+        expect(top + size * reach.y1).toBeLessThan(open.y1);
+      }
+    }
+  });
+
+  it('keeps the birds out there circling inside the window, the first nearest where a called bird sets out', () => {
+    for (const bird of LETTER_SKY) {
+      expect(bird.keys[0]).toMatchObject({ at: 0 });
+      expect(bird.keys[bird.keys.length - 1]!.at).toBe(1);
+      // a round ends where it began, so it goes round without a jump
+      expect(bird.keys[bird.keys.length - 1]!.x).toBeCloseTo(bird.keys[0]!.x, 6);
+      for (const k of bird.keys) {
+        expect(k.x - bird.size / 2).toBeGreaterThan(open.x0);
+        expect(k.x + bird.size / 2).toBeLessThan(open.x1);
+        expect(k.y - bird.size / 2).toBeGreaterThan(open.y0);
+      }
+    }
+    const nearest = (b: (typeof LETTER_SKY)[number]): number => Math.min(...b.keys.map((k) => Math.hypot(k.x - LETTER_FAR_OFF.x, k.y - LETTER_FAR_OFF.y)));
+    for (const other of LETTER_SKY.slice(1)) expect(nearest(LETTER_SKY[0]!)).toBeLessThanOrEqual(nearest(other));
+  });
+
+  it('carries the season’s things past the window at every hour, a few at a time, coming and going softly', () => {
+    for (const season of TREE_SEASONS) {
+      for (const sky of TREE_SKIES) {
+        const drifts = letterDrifts(season, sky);
+        expect(drifts.length).toBeGreaterThan(0);
+        expect(drifts.length).toBeLessThanOrEqual(18);
+        for (const d of drifts) {
+          expect(LETTER_SPRITES).toContain(d.sprite);
+          expect(d.keys[0]!.at).toBe(0);
+          expect(d.keys[d.keys.length - 1]!.at).toBe(1);
+          for (const k of d.keys) {
+            expect(k.x).toBeGreaterThan(0);
+            expect(k.x).toBeLessThan(1);
+            expect(k.y).toBeGreaterThan(0);
+            expect(k.y).toBeLessThan(1);
+            expect(k.seen).toBeGreaterThanOrEqual(0);
+            expect(k.seen).toBeLessThanOrEqual(1);
+          }
+        }
+      }
+    }
+    const kinds = (season: (typeof TREE_SEASONS)[number], sky: (typeof TREE_SKIES)[number]): string[] => [...new Set(letterDrifts(season, sky).map((d) => d.sprite))].sort();
+    expect(kinds('spring', 'day')).toEqual(['butterfly', 'petal']);
+    expect(kinds('autumn', 'day')).toEqual(['leaf', 'leaf-red']);
+    expect(kinds('winter', 'night')).toEqual(['snow', 'star']);
+    expect(kinds('summer', 'night')).toEqual(['firefly', 'star']);
+    // the same season and hour moves the same way every time
+    expect(letterDrifts('spring', 'day')).toEqual(letterDrifts('spring', 'day'));
+  });
+
+  it('raises the hearts between the two birds, up from the sill and fading', () => {
+    for (const heart of LETTER_HEARTS) {
+      const [first, last] = [heart.keys[0]!, heart.keys[heart.keys.length - 1]!];
+      expect(first.x).toBeGreaterThan(LETTER_SILL_SPOTS.own.x / 120);
+      expect(first.x).toBeLessThan(LETTER_SILL_SPOTS.visitor.x / 120);
+      expect(last.y).toBeLessThan(first.y);
+      expect(last.seen).toBe(0);
     }
   });
 });
