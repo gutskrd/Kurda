@@ -88,7 +88,19 @@ import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSeas
 import { SKIES, TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt, treeStudioSvg } from './tree-scene.js';
 import { TREE_SEASONS, treeSeasonAt } from '../tree.js';
 import { horizonSky, horizonSvg } from './horizon.js';
-import { LETTER_BIRD_FEET, LETTER_FLIGHT, LETTER_OPENING, LETTER_SILL, LETTER_WINDOW_DEPTH, LETTER_WINDOW_PARTS, letterBirdSvg, letterEnvelopeSvg, letterWindowSvg } from './letters.js';
+import {
+  LETTER_BIRD_FEET,
+  LETTER_FLIGHT,
+  LETTER_OPENING,
+  LETTER_PLAY,
+  LETTER_SILL,
+  LETTER_WINDOW_DEPTH,
+  LETTER_WINDOW_PARTS,
+  letterBirdSvg,
+  letterEnvelopeSvg,
+  letterPlayShows,
+  letterWindowSvg,
+} from './letters.js';
 import { PIGEON_POSES } from './pigeon.js';
 import { LETTER_BIRDS } from '../letters.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
@@ -1956,6 +1968,57 @@ describe('the letters’ pictures', () => {
       }
       expect(top + size * reach.y0).toBeGreaterThan(open.y0);
       expect(top + size * reach.y1).toBeLessThan(open.y1);
+    }
+  });
+});
+
+describe('the pigeon at play', () => {
+  it('runs each play from its start to its end, in order, with pictures the pigeon has', () => {
+    for (const play of Object.values(LETTER_PLAY)) {
+      for (const track of [play.moves, play.poses.map(([at]) => ({ at })), play.letter]) {
+        for (let i = 1; i < track.length; i++) expect(track[i]!.at).toBeGreaterThanOrEqual(track[i - 1]!.at);
+        if (track.length) expect(track[0]!.at).toBe(0);
+      }
+      expect(play.moves[play.moves.length - 1]!.at).toBe(1);
+      for (const [, pose] of play.poses) expect(PIGEON_POSES).toContain(pose);
+    }
+  });
+
+  it('hands over to the flight and from the landing without a jump: in its place, upright, the letter in its beak', () => {
+    const still = { x: 0, y: 0, tilt: 0, sx: 1, sy: 1 };
+    const before = LETTER_PLAY.before;
+    expect(before.moves[before.moves.length - 1]).toMatchObject(still);
+    expect(before.poses[before.poses.length - 1]!.slice(1)).toEqual(['perched', true]);
+    const after = LETTER_PLAY.after;
+    expect(after.poses[0]!.slice(1)).toEqual(['perched', true]);
+    expect(after.moves[after.moves.length - 1]).toMatchObject(still);
+    // the idle play goes round and round, so it ends as it begins
+    const idle = LETTER_PLAY.idle;
+    expect(idle.moves[idle.moves.length - 1]).toMatchObject(still);
+    expect(idle.poses[0]!.slice(1)).toEqual(['perched', false]);
+  });
+
+  it('shows exactly one picture of the pigeon at every moment of every play', () => {
+    for (const play of Object.values(LETTER_PLAY)) {
+      const shows = letterPlayShows(play);
+      const seenAt = (show: (typeof shows)[number], t: number): number => {
+        let seen = 0;
+        for (const [at, s] of show.steps) if (at <= t) seen = s;
+        return seen;
+      };
+      for (let t = 0; t <= 1; t += 0.01) expect(shows.reduce((sum, show) => sum + seenAt(show, t), 0)).toBe(1);
+    }
+  });
+
+  it('brings its beak down to the letter on the sill when it picks it up or lays it down', () => {
+    // the tip of its beak, standing, about its feet, in shares of its own square
+    const beak = [(21.3 * LETTER_BIRD_FEET.scale) / 120, (-11.1 * LETTER_BIRD_FEET.scale) / 120] as const;
+    for (const play of [LETTER_PLAY.before, LETTER_PLAY.after]) {
+      const peck = play.moves.find((m) => m.tilt >= 30)!;
+      const a = (peck.tilt * Math.PI) / 180;
+      const [x, y] = [beak[0] * Math.cos(a) - beak[1] * Math.sin(a) + peck.x, beak[0] * Math.sin(a) + beak[1] * Math.cos(a) + peck.y];
+      expect(Math.abs(x - play.letterAt)).toBeLessThan(0.04);
+      expect(Math.abs(y)).toBeLessThan(0.04);
     }
   });
 });

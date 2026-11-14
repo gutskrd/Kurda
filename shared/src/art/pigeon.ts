@@ -14,8 +14,10 @@
  *
  * The reference is the pigeon flying with its wings up. Its other pictures
  * keep everything else as it is there: standing with the wing folded along
- * its back, blinking, waving the wing, asleep, and flying with its wings
- * down, which an app shows in turn with the wings up for a beat.
+ * its back, blinking, chirping happily with its eyes screwed up and its beak
+ * open (as the owner's playful birds do), waving the wing, asleep, and
+ * flying with its wings down, which an app shows in turn with the wings up
+ * for a beat.
  *
  * It is drawn about its feet at 0,0, facing right, a unit to five of the
  * reference's pixels: about fifty-five units from tail to beak.
@@ -24,8 +26,8 @@ import type { Drawing } from './svg.js';
 import { linearAt, mix, n, radialAt } from './svg.js';
 
 /** What the pigeon is doing. Flying is two pictures, its wings up and its wings down, which an app shows in turn. */
-export type PigeonPose = 'perched' | 'blink' | 'wave' | 'sleep' | 'wings-up' | 'wings-down';
-export const PIGEON_POSES: readonly PigeonPose[] = ['perched', 'blink', 'wave', 'sleep', 'wings-up', 'wings-down'];
+export type PigeonPose = 'perched' | 'blink' | 'happy' | 'wave' | 'sleep' | 'wings-up' | 'wings-down';
+export const PIGEON_POSES: readonly PigeonPose[] = ['perched', 'blink', 'happy', 'wave', 'sleep', 'wings-up', 'wings-down'];
 
 /** The deep the dark parts are taken toward: a night violet, never black. */
 const DUSK = '#1d1838';
@@ -168,18 +170,36 @@ function body(dr: Drawing, p: Plumage): void {
   fill(dr, CREST, p.head);
 }
 
-/** The face: the eye with its brow (or shut), the cheek in its blush, and the beak. */
-function face(dr: Drawing, p: Plumage, shut: boolean): void {
+/** The upper half of the beak, which is the whole beak when it is shut. */
+const BEAK_TOP = 'M17.8 -10.6C19.4 -10.6 20.9 -9.9 21.3 -8.9C21.5 -8.2 20.9 -7.8 20.2 -8C19.4 -8.2 18.6 -8.4 18 -8.6Z';
+
+/** The face: the eye with its brow (or shut, or screwed up with joy, the beak open to chirp), the cheek in its blush, and the beak. */
+function face(dr: Drawing, p: Plumage, eyes: 'open' | 'shut' | 'happy'): void {
   const glow = dr.id('k');
   dr.def(radialAt(glow, [[0, p.cheek, 1], [0.42, p.cheek, 0.9], [0.7, p.blush, 0.7], [1, p.blush, 0]], 12, -8.2, 3));
   dr.add(`<circle cx="12" cy="-8.2" r="3" fill="url(#${glow})"/>`);
-  if (shut) {
+  if (eyes === 'happy') {
+    stroke(dr, 'M13.4 -11Q14.6 -12.8 15.8 -11', EYE, 0.7);
+    // the beak open: its upper half tipped up a little, and the lower under it
+    fill(dr, 'M18 -8.4L20.8 -7.3C21.1 -7 20.8 -6.6 20.4 -6.7L18.2 -7.2Z', mix(BEAK, DUSK, 0.18));
+    dr.add(`<path d="${BEAK_TOP}" fill="${BEAK}" transform="rotate(-10 18 -9.6)"/>`);
+    return;
+  }
+  if (eyes === 'shut') {
     stroke(dr, 'M13.4 -11.2Q14.6 -10 15.8 -11.2', EYE, 0.6);
   } else {
     dr.add(`<ellipse cx="14.6" cy="-11.4" rx="0.72" ry="1.42" fill="${EYE}" transform="rotate(12 14.6 -11.4)"/>`);
     stroke(dr, 'M15 -14.9L15.8 -13.2', p.brow, 0.62);
   }
-  fill(dr, 'M17.8 -10.6C19.4 -10.6 20.9 -9.9 21.3 -8.9C21.5 -8.2 20.9 -7.8 20.2 -8C19.4 -8.2 18.6 -8.4 18 -8.6Z', BEAK);
+  fill(dr, BEAK_TOP, BEAK);
+}
+
+/** Two little notes off a chirping pigeon's beak, drawn as shapes. */
+function chirp(dr: Drawing): void {
+  const note = (x: number, y: number, s: number): string =>
+    `<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(1.1 * s)}" ry="${n(0.8 * s)}" fill="#9b97c9" transform="rotate(-20 ${n(x)} ${n(y)})"/>` +
+    `<path d="M${n(x + 0.95 * s)} ${n(y - 0.2 * s)}V${n(y - 4 * s)}Q${n(x + 2.2 * s)} ${n(y - 3.4 * s)} ${n(x + 2.6 * s)} ${n(y - 2.2 * s)}" fill="none" stroke="#9b97c9" stroke-width="${n(0.55 * s)}" stroke-linecap="round"/>`;
+  dr.add(note(24.4, -14.6, 1) + note(28.6, -20.4, 0.8));
 }
 
 /** The letter in its beak: a small envelope held by its corner, sealed with red wax, hanging beside the breast. */
@@ -198,7 +218,8 @@ function sleeping(dr: Drawing): void {
 
 /**
  * A pigeon about its feet at 0,0, facing right (the caller mirrors it to face
- * left). `letter` puts a letter in its beak; a sleeping pigeon holds none.
+ * left). `letter` puts a letter in its beak; a sleeping or chirping pigeon
+ * holds none.
  */
 export function pigeon(dr: Drawing, hex: string, pose: PigeonPose = 'perched', letter = false): void {
   const p = plumage(hex);
@@ -215,10 +236,13 @@ export function pigeon(dr: Drawing, hex: string, pose: PigeonPose = 'perched', l
   stroke(dr, TAIL_STRIPES, p.stripe, 0.7);
   if (flying) stroke(dr, 'M3.4 -0.8L-2.6 0.8M5.6 -0.4L0 1.4', FEET, 1.2);
   body(dr, p);
-  face(dr, p, pose === 'blink' || pose === 'sleep');
-  if (letter && pose !== 'sleep') heldLetter(dr);
-  if (letter && pose !== 'sleep') fill(dr, 'M17.8 -10.6C19.4 -10.6 20.9 -9.9 21.3 -8.9C21.5 -8.2 20.9 -7.8 20.2 -8C19.4 -8.2 18.6 -8.4 18 -8.6Z', BEAK);
+  // a chirping pigeon has nothing in its beak
+  const holding = letter && pose !== 'sleep' && pose !== 'happy';
+  face(dr, p, pose === 'happy' ? 'happy' : pose === 'blink' || pose === 'sleep' ? 'shut' : 'open');
+  if (holding) heldLetter(dr);
+  if (holding) fill(dr, BEAK_TOP, BEAK);
   wing(dr, p, pose === 'wings-up' || pose === 'wave' ? WING_UP : pose === 'wings-down' ? WING_DOWN : WING_FOLDED);
   dr.add('</g>');
   if (pose === 'sleep') sleeping(dr);
+  if (pose === 'happy') chirp(dr);
 }

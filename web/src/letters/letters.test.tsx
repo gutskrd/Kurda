@@ -69,8 +69,9 @@ describe('letters by bird', () => {
     await userEvent.type(screen.getByLabelText('Your letter'), letter);
     await userEvent.click(screen.getByRole('button', { name: 'Send your bird' }));
     expect(await screen.findByText('Silav Rojda! Ez Baran im.')).toBeInTheDocument();
-    // their pigeon has landed on your sill, and waves
-    await waitFor(() => expect(document.querySelector('.lw-bird--landed .lw-pose--wave')).not.toBeNull());
+    // their pigeon has landed on your sill and laid their letter down beside it (at once, in a page that cannot animate)
+    await waitFor(() => expect(document.querySelector('.lw-sill-letter')).not.toBeNull());
+    expect(document.querySelector('.lw-play')).not.toBeNull();
     expect(screen.getByText('Baran’s bird came to your window')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Write back to Baran' })).toHaveAttribute('href', `/app/letters/${met.threadId}`);
   });

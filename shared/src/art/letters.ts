@@ -193,6 +193,206 @@ export const LETTER_FLIGHT = {
   beatMs: 240,
 } as const;
 
+/** Where a pigeon is at one moment of its play: how far forward and down (shares of its own square), how far it leans forward, and how it is stretched; `sx` -1 is turned round. */
+export interface LetterPlayMove {
+  at: number;
+  x: number;
+  y: number;
+  tilt: number;
+  sx: number;
+  sy: number;
+}
+
+/**
+ * A pigeon's play on the sill, the same on the phone as on the website, after
+ * the owner's playful birds: how long it lasts; where the pigeon is through
+ * it (`moves`, about its feet, leaning and stepping toward where it faces);
+ * which picture of it is seen from when (`poses`); and, when a letter lies
+ * on the sill, how far in front of the pigeon's feet it lies and how it comes
+ * down and goes (`letter`, its height over the sill in shares of the
+ * pigeon's square, and how much of it is seen).
+ */
+export interface LetterPlay {
+  ms: number;
+  loop: boolean;
+  moves: readonly LetterPlayMove[];
+  poses: ReadonlyArray<readonly [at: number, pose: PigeonPose, letter: boolean]>;
+  letterAt: number;
+  letter: ReadonlyArray<{ at: number; y: number; seen: number }>;
+}
+
+/** Moves written as changes: each key keeps whatever it does not say from the one before. */
+function moves(keys: ReadonlyArray<Partial<LetterPlayMove> & { at: number }>): LetterPlayMove[] {
+  let last: LetterPlayMove = { at: 0, x: 0, y: 0, tilt: 0, sx: 1, sy: 1 };
+  return keys.map((k) => (last = { ...last, ...k }));
+}
+
+/** A pigeon's three plays: before it goes, after it comes, and at home on the sill while nothing is happening. */
+export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle', LetterPlay>> = {
+  // your letter drops onto the sill; the pigeon looks up at it, hops for joy and chirps, hops over, picks it up, and beats its wings, ready
+  before: {
+    ms: 4000,
+    loop: false,
+    moves: moves([
+      { at: 0 },
+      { at: 0.18, tilt: -8 },
+      { at: 0.24, tilt: 0 },
+      { at: 0.28, y: -0.06, sx: 0.96, sy: 1.05 },
+      { at: 0.33, y: 0, sx: 1.08, sy: 0.9 },
+      { at: 0.37, sx: 1, sy: 1 },
+      { at: 0.42, x: 0.035, y: -0.045 },
+      { at: 0.47, x: 0.07, y: 0, sx: 1.06, sy: 0.92 },
+      { at: 0.5, sx: 1, sy: 1 },
+      { at: 0.55, tilt: 30 },
+      { at: 0.6, tilt: 30 },
+      { at: 0.65, tilt: 0 },
+      { at: 0.69, y: -0.05 },
+      { at: 0.735, y: 0 },
+      { at: 0.78, x: 0.045, y: -0.06 },
+      { at: 0.825, y: 0 },
+      { at: 0.87, x: 0.02, y: -0.05 },
+      { at: 0.915, x: 0, y: 0 },
+      { at: 1 },
+    ]),
+    poses: [
+      [0, 'perched', false],
+      [0.1, 'blink', false],
+      [0.14, 'perched', false],
+      [0.26, 'happy', false],
+      [0.4, 'perched', false],
+      [0.6, 'perched', true],
+      [0.67, 'wings-up', true],
+      [0.712, 'wings-down', true],
+      [0.757, 'wings-up', true],
+      [0.8, 'wings-down', true],
+      [0.845, 'wings-up', true],
+      [0.89, 'wings-down', true],
+      [0.935, 'perched', true],
+    ],
+    letterAt: 0.37,
+    letter: [
+      { at: 0, y: -0.55, seen: 0 },
+      { at: 0.04, y: -0.5, seen: 1 },
+      { at: 0.16, y: 0, seen: 1 },
+      { at: 0.19, y: -0.04, seen: 1 },
+      { at: 0.22, y: 0, seen: 1 },
+      { at: 0.599, y: 0, seen: 1 },
+      { at: 0.6, y: 0, seen: 0 },
+      { at: 1, y: 0, seen: 0 },
+    ],
+  },
+  // landed with a letter: it shakes its feathers, lays the letter down, chirps, hops round to look behind it and back, and waves
+  after: {
+    ms: 4800,
+    loop: false,
+    moves: moves([
+      { at: 0, sx: 1.08, sy: 0.9 },
+      { at: 0.05, sx: 1, sy: 1 },
+      { at: 0.09, tilt: -7 },
+      { at: 0.12, tilt: 7 },
+      { at: 0.15, tilt: -5 },
+      { at: 0.18, tilt: 4 },
+      { at: 0.21, tilt: 0 },
+      { at: 0.27, tilt: 30 },
+      { at: 0.33, tilt: 30 },
+      { at: 0.38, tilt: 0 },
+      { at: 0.42, y: -0.06, sx: 0.96, sy: 1.05 },
+      { at: 0.47, y: 0, sx: 1.08, sy: 0.9 },
+      { at: 0.5, sx: 1, sy: 1 },
+      { at: 0.56 },
+      { at: 0.59, y: -0.045, sx: -1 },
+      { at: 0.62, y: 0 },
+      { at: 0.67 },
+      { at: 0.7, y: -0.045, sx: 1 },
+      { at: 0.73, y: 0 },
+      { at: 1 },
+    ]),
+    poses: [
+      [0, 'perched', true],
+      [0.33, 'perched', false],
+      [0.41, 'happy', false],
+      [0.53, 'perched', false],
+      [0.56, 'blink', false],
+      [0.58, 'perched', false],
+      [0.76, 'wave', false],
+      [0.81, 'perched', false],
+      [0.86, 'wave', false],
+      [0.91, 'perched', false],
+    ],
+    letterAt: 0.3,
+    letter: [
+      { at: 0, y: 0, seen: 0 },
+      { at: 0.329, y: 0, seen: 0 },
+      { at: 0.33, y: 0, seen: 1 },
+      { at: 1, y: 0, seen: 1 },
+    ],
+  },
+  // at home, over and over: a pigeon's bob of the head, a peck at the seeds, a look up at the sky, a chirp, and a hop round and back
+  idle: {
+    ms: 15000,
+    loop: true,
+    moves: moves([
+      { at: 0 },
+      { at: 0.1 },
+      { at: 0.115, x: 0.012, y: -0.02, tilt: 4 },
+      { at: 0.13, x: 0, y: 0, tilt: 0 },
+      { at: 0.145, x: 0.012, y: -0.02, tilt: 4 },
+      { at: 0.16, x: 0, y: 0, tilt: 0 },
+      { at: 0.26 },
+      { at: 0.29, tilt: 30 },
+      { at: 0.31, tilt: 18 },
+      { at: 0.33, tilt: 30 },
+      { at: 0.36, tilt: 0 },
+      { at: 0.48 },
+      { at: 0.5, tilt: -12 },
+      { at: 0.58, tilt: -12 },
+      { at: 0.6, tilt: 0 },
+      { at: 0.72 },
+      { at: 0.75, y: -0.05, sx: -1 },
+      { at: 0.78, y: 0 },
+      { at: 0.86 },
+      { at: 0.89, y: -0.05, sx: 1 },
+      { at: 0.92, y: 0 },
+      { at: 1 },
+    ]),
+    poses: [
+      [0, 'perched', false],
+      [0.05, 'blink', false],
+      [0.06, 'perched', false],
+      [0.4, 'blink', false],
+      [0.41, 'perched', false],
+      [0.62, 'happy', false],
+      [0.68, 'perched', false],
+      [0.83, 'blink', false],
+      [0.84, 'perched', false],
+    ],
+    letterAt: 0,
+    letter: [],
+  },
+};
+
+/**
+ * Each picture a play shows, with when it is seen: for every picture (named
+ * `pose` or `pose+letter`), the moments its showing changes and to what, so
+ * an app can lay all of them one on another and switch between them on the
+ * play's own clock.
+ */
+export function letterPlayShows(play: LetterPlay): Array<{ pose: PigeonPose; letter: boolean; steps: Array<readonly [at: number, seen: 0 | 1]> }> {
+  const key = (pose: PigeonPose, letter: boolean): string => `${pose}${letter ? '+letter' : ''}`;
+  const shows = new Map<string, { pose: PigeonPose; letter: boolean; steps: Array<readonly [number, 0 | 1]> }>();
+  for (const [, pose, letter] of play.poses) if (!shows.has(key(pose, letter))) shows.set(key(pose, letter), { pose, letter, steps: [] });
+  play.poses.forEach(([at, pose, letter], i) => {
+    for (const [k, show] of shows) {
+      const seen: 0 | 1 = k === key(pose, letter) ? 1 : 0;
+      const before = i === 0 ? null : show.steps[show.steps.length - 1]![1];
+      if (before === null) show.steps.push([0, seen]);
+      else if (before !== seen) show.steps.push([Math.max(0, at - 0.0005), before], [at, seen]);
+    }
+  });
+  for (const show of shows.values()) show.steps.push([1, show.steps[show.steps.length - 1]![1]]);
+  return [...shows.values()];
+}
+
 /**
  * A puffy cloud of a few round lobes on a flat foot. Each puff is its own
  * round, so where two overlap there is no seam.
@@ -320,6 +520,11 @@ function roomPart(dr: Drawing, h: Hour): void {
   dr.def(linearAt(under, [[0, '#1d1838', 0.16], [1, '#1d1838', 0]], 0, s.y + s.depth, 0, s.y + s.depth + 7));
   dr.add(`<path d="M${s.x0 + 1} ${n(s.y + s.depth)}H${s.x1 - 1}C${s.x1 - 4} ${n(s.y + s.depth + 4)} ${s.x1 - 8} ${n(s.y + s.depth + 7)} ${s.x1 - 14} ${n(s.y + s.depth + 7)}H${s.x0 + 14}C${s.x0 + 8} ${n(s.y + s.depth + 7)} ${s.x0 + 4} ${n(s.y + s.depth + 4)} ${s.x0 + 1} ${n(s.y + s.depth)}Z" fill="url(#${under})"/>`);
   dr.add(`<path d="${rr(s.x0, s.y, s.x1 - s.x0, s.depth, 1.6)}" fill="${h.sill[1]}"/>`);
+  // a few seeds on the sill either side of where the pigeon stands, for it to peck at
+  const seed = h.night ? '#b8b4c8' : '#f1dfbd';
+  for (const [x, y, turn] of [[64.6, 94.6, 20], [67.4, 95.4, -30], [69.2, 94.2, 60], [35.4, 94.8, -20], [32.8, 95.6, 35], [31, 94.4, -60]] as const) {
+    dr.add(`<ellipse cx="${n(x)}" cy="${n(y)}" rx="0.95" ry="0.6" fill="${seed}" transform="rotate(${turn} ${n(x)} ${n(y)})"/>`);
+  }
   pot(dr, h, 90, 94.6);
 }
 
