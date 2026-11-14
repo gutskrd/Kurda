@@ -129,6 +129,7 @@ export function stopLabel(stop: PathStop<SkillNode>, unit: { number: number; tit
       state: stop.earned ? 'coursemap.path.trophyEarned' : 'coursemap.path.trophyAhead',
     };
   }
+  if (stop.kind === 'story') return { words: { key: stop.open ? 'coursemap.path.storyLabel' : 'coursemap.path.storyLabelShut', params: { title: stop.title } } };
   const state = stateWord(stop);
   return stop.lessonsTotal > 0
     ? { words: { key: 'coursemap.path.label', params: { title: stop.skill.title, done: stop.lessonsDone, total: stop.lessonsTotal } }, state }
@@ -138,7 +139,8 @@ export function stopLabel(stop: PathStop<SkillNode>, unit: { number: number; tit
 /**
  * How a stop is drawn (shared `pathStopSvg`): a skill by how it stands, the
  * guide as its open book (grey until its unit is begun), review as an open
- * stop, a unit's end as its chest — open once earned — and the first skill of
+ * stop, a unit's end as its chest — open once earned — the story after it as
+ * a scroll, rolled and tied until the chapter is done, and the first skill of
  * a unit that can be jumped to as the gate the jump goes through.
  */
 export function stopLook(stop: PathStop<SkillNode>, jump = false): PathStopLook {
@@ -146,6 +148,7 @@ export function stopLook(stop: PathStop<SkillNode>, jump = false): PathStopLook 
   if (stop.kind === 'review') return 'review';
   if (stop.kind === 'guide') return stop.open ? 'guide' : 'guideLocked';
   if (stop.kind === 'trophy') return stop.earned ? 'chestOpen' : 'chest';
+  if (stop.kind === 'story') return stop.open ? 'story' : 'storyLocked';
   if (stop.state === 'done') return stop.finish === 'strong' ? 'strong' : stop.finish === 'refresh' ? 'refresh' : 'done';
   return stop.state;
 }

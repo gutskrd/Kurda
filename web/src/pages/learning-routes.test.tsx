@@ -320,14 +320,14 @@ describe('a course map', () => {
 
     // the unit's banner: its number, its name, what it covers
     const unit = screen.getByRole('region', { name: 'Basics' });
-    expect(within(unit).getByText('Unit 1')).toBeInTheDocument();
+    expect(within(unit).getByText('Chapter 1')).toBeInTheDocument();
     expect(within(unit).getByText('Greetings · Numbers')).toBeInTheDocument();
     expect(within(unit).getByText('0 of 2 done')).toBeInTheDocument();
 
     // every stop is a button with its whole state in its name
     expect(within(unit).getByRole('button', { name: 'Greetings, You are here, 1 of 2 lessons done' })).toBeInTheDocument();
     expect(within(unit).getByRole('button', { name: 'Numbers, Not open yet, 0 of 1 lessons done' })).toBeInTheDocument();
-    expect(within(unit).getByRole('button', { name: 'Unit 1 trophy, not earned yet' })).toBeInTheDocument();
+    expect(within(unit).getByRole('button', { name: 'Chapter 1 trophy, not earned yet' })).toBeInTheDocument();
     // nothing due, so no review stop
     expect(within(unit).queryByRole('button', { name: /^Review/ })).not.toBeInTheDocument();
 
@@ -337,6 +337,42 @@ describe('a course map', () => {
     // the courses, to move between them
     expect(screen.getByRole('navigation', { name: 'Your courses' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Newroz' })).toHaveAttribute('href', '/app/learn/course/c2');
+  });
+
+  it('ends a chapter with Hamo’s story, shut until the chapter is done, and names the chapter on its way', async () => {
+    const road: Map = {
+      ...basics,
+      units: [
+        { ...basics.units[0]!, story: { slug: 'road-01-mevan-cay-u-sev', title: 'Mêvan, çay û sêv' } },
+        {
+          unitId: 'u2',
+          title: 'Family',
+          skills: [skill({ skillId: 'fam', title: 'Malbat', state: 'completed', lessons: [lesson('f1', true, 'Mother')] })],
+          story: { slug: 'road-02-mevane-be-simbel', title: 'Mêvanê bê simbêl' },
+        },
+      ],
+      upcoming: { number: 3, title: 'House and village', recordedBy: 'hamo' },
+    };
+    serve({ 'GET /courses/c1/map': road, 'GET /practice/due': { due: 0, available: 3 } });
+    routes('/app/learn/course/c1');
+
+    // chapter 1 is not done: its story waits, rolled up, and says what opens it
+    const shut = await screen.findByRole('button', { name: 'Hamo’s story: Mêvan, çay û sêv, opens when the chapter is done' });
+    await userEvent.click(shut);
+    const card = screen.getByRole('group', { name: 'Hamo’s story' });
+    expect(within(card).getByText('Finish the chapter, and Hamo tells you how it ends.')).toBeInTheDocument();
+    expect(within(card).queryByRole('link')).not.toBeInTheDocument();
+
+    // chapter 2 is: its story opens in the reader
+    await userEvent.click(screen.getByRole('button', { name: 'Hamo’s story: Mêvanê bê simbêl' }));
+    const open = screen.getByRole('group', { name: 'Hamo’s story' });
+    expect(within(open).getByText('Mêvanê bê simbêl')).toHaveAttribute('lang', 'ku');
+    expect(within(open).getByRole('link', { name: 'Read the story' })).toHaveAttribute('href', '/app/learn/stories/road-02-mevane-be-simbel');
+
+    // the path stops at the last chapter online, and says the next is on its way, Hamo recording it
+    const next = screen.getByRole('region', { name: 'House and village' });
+    expect(within(next).getByText('Chapter 3')).toBeInTheDocument();
+    expect(within(next).getByText('On its way: Hamo is recording it now.')).toBeInTheDocument();
   });
 
   it('opens a card on a stop: its lessons as ways in, how far along, and one thing to do', async () => {
@@ -432,14 +468,14 @@ describe('a course map', () => {
     expect(screen.getByTestId('lp-learner')).toHaveAttribute('aria-hidden', 'true');
     // the rail beside the path: every unit by its number and name, the one the learner is in marked
     const rail = screen.getAllByRole('navigation', { name: 'Course map' })[0]!;
-    const here = within(rail).getByRole('button', { name: 'Unit 1, Basics' });
+    const here = within(rail).getByRole('button', { name: 'Chapter 1, Basics' });
     expect(here).toHaveAttribute('aria-current', 'step');
     await userEvent.click(here);
     expect(screen.getByRole('button', { name: /^Guide to Basics/ })).toHaveFocus();
     // where there is no room for the rail, a banner's flag opens it in a sheet
     await userEvent.click(screen.getByRole('button', { name: 'Course map' }));
     const sheet = await screen.findByRole('dialog', { name: 'Course map' });
-    expect(within(sheet).getByRole('button', { name: 'Unit 1, Basics' })).toBeInTheDocument();
+    expect(within(sheet).getByRole('button', { name: 'Chapter 1, Basics' })).toBeInTheDocument();
   });
 
   it('moves along the path with the arrow keys', async () => {

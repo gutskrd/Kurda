@@ -79,7 +79,7 @@ describe('what a stop says', () => {
       'Review, words ready: 4',
       'Malbat, you are here, 1 of 4 lessons done',
       'Hejmar, locked, 0 of 1 lessons done',
-      'Unit 1 trophy, not earned yet',
+      'Chapter 1 trophy, not earned yet',
     ]);
   });
 

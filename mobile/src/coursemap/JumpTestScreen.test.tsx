@@ -81,7 +81,7 @@ describe('the test that jumps ahead', { timeout: 15_000 }, () => {
     const stop = onHaptic((event) => felt.push(event));
     open({ onPath });
     await sitIt();
-    expect(await screen.findByRole('heading', { name: 'Unit 3 is open!' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Chapter 3 is open!' })).toBeTruthy();
     expect(screen.getByText('9 of 10 right. The lessons you skipped stay open to come back to.')).toBeTruthy();
     // Hevalo cheers it, his head in at the window
     expect(within(screen.getByTestId('jump-results')).getByTestId('hevalo-window')).toBeTruthy();
@@ -89,7 +89,7 @@ describe('the test that jumps ahead', { timeout: 15_000 }, () => {
     stop();
     expect(client.calls.find((c) => c.path === '/courses/c1/jump')?.body).toEqual({ unitId: 'u3' });
     expect(client.calls.some((c) => c.path === '/practice/sessions/p1/answers')).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Go to Unit 3' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Go to Chapter 3' }));
     expect(onPath).toHaveBeenCalled();
   });
 
@@ -100,7 +100,7 @@ describe('the test that jumps ahead', { timeout: 15_000 }, () => {
     open({ onPath, onAgain });
     await sitIt();
     expect(await screen.findByRole('heading', { name: 'Not yet' })).toBeTruthy();
-    expect(screen.getByText('6 of 10 right. Unit 3 opens with 8 right.')).toBeTruthy();
+    expect(screen.getByText('6 of 10 right. Chapter 3 opens with 8 right.')).toBeTruthy();
     expect(screen.getByText('Tries left today: 1')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(onAgain).toHaveBeenCalled();
@@ -121,7 +121,7 @@ describe('the test that jumps ahead', { timeout: 15_000 }, () => {
     const onPath = vi.fn();
     open({ onPath });
     expect(await screen.findByRole('heading', { name: 'No more tries today' })).toBeTruthy();
-    expect(screen.getByText('Each unit’s test can be tried 3 times a day. Keep learning, or try again tomorrow.')).toBeTruthy();
+    expect(screen.getByText('Each chapter’s test can be tried 3 times a day. Keep learning, or try again tomorrow.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Keep learning' }));
     expect(onPath).toHaveBeenCalled();
   });

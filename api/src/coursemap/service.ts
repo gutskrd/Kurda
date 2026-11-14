@@ -1,5 +1,8 @@
 import type pg from 'pg';
+import { roadStoryChapter } from '@kurda/shared';
+import { ROAD_COURSE } from '../content/road-seed.js';
 import { skillStrength } from '../placement/skill-strength.js';
+import { PUBLISHED_SQL } from '../stories/service.js';
 import { isUnlocked, skillState, type SkillState } from './node-state.js';
 
 export interface CourseSummary {
@@ -31,9 +34,32 @@ export interface SkillNode {
   lessons: LessonNode[];
 }
 
+/** The story that closes a chapter of the road, once it is out for learners to read. */
+export interface UnitStory {
+  slug: string;
+  title: string;
+}
+
+/**
+ * The chapter after the last one online: there to say what comes next while
+ * it is still being made. `recordedBy` names who is recording it, for a
+ * course whose chapters go online as their recordings are done (the road,
+ * which Hamo records); null for any other course.
+ */
+export interface UpcomingUnit {
+  number: number;
+  title: string;
+  recordedBy: 'hamo' | null;
+}
+
 export interface CourseMap {
   course: { id: string; title: string };
-  units: Array<{ unitId: string; title: string; skills: SkillNode[] }>;
+  /**
+   * The course's units up to the last one with a lesson out: a unit still
+   * being made at the end is not shown as empty stops, it is `upcoming`.
+   */
+  units: Array<{ unitId: string; title: string; skills: SkillNode[]; story: UnitStory | null }>;
+  upcoming: UpcomingUnit | null;
   /**
    * Skills up to this level are open because a test let the learner through
    * (placement, or jumping ahead); 0 for none. The apps read it to put the
@@ -48,11 +74,16 @@ interface SkillRow {
   has_grammar: boolean;
   unit_id: string;
   unit_title: string;
+  unit_position: number;
 }
 
 /** Course map with per-skill lock/complete/gold/decay state (KUR-040). */
 export class CourseMapService {
-  constructor(private readonly pool: pg.Pool) {}
+  /** `roadCourse`: the slug of the course whose chapters end with Hamo's stories (a test names its own) */
+  constructor(
+    private readonly pool: pg.Pool,
+    private readonly roadCourse: string = ROAD_COURSE,
+  ) {}
 
   /** Courses that have at least one published lesson. */
   async listCourses(): Promise<CourseSummary[]> {
@@ -68,16 +99,17 @@ export class CourseMapService {
   }
 
   async forUser(userId: string, courseId: string): Promise<CourseMap | null> {
-    const course = await this.pool.query<{ title_en: string }>(
-      `SELECT title_en FROM courses WHERE id = $1`,
+    const course = await this.pool.query<{ title_en: string; slug: string }>(
+      `SELECT title_en, slug FROM courses WHERE id = $1`,
       [courseId],
     );
     if (course.rowCount === 0) return null;
+    const road = course.rows[0]!.slug === this.roadCourse;
 
-    const [skills, lessons, completed, reviews, progress] = await Promise.all([
+    const [skills, lessons, completed, reviews, progress, stories] = await Promise.all([
       this.pool.query<SkillRow>(
         `SELECT s.id skill_id, s.title_en skill_title, (s.grammar_md IS NOT NULL) has_grammar,
-                u.id unit_id, u.title_en unit_title
+                u.id unit_id, u.title_en unit_title, u.position unit_position
          FROM skills s JOIN units u ON u.id = s.unit_id
          WHERE u.course_id = $1
          ORDER BY u.position ASC, s.position ASC`,
@@ -115,7 +147,16 @@ export class CourseMapService {
         `SELECT unlocked_through_position FROM user_course_progress WHERE user_id = $1 AND course_id = $2`,
         [userId, courseId],
       ),
+      // the road's chapters each end with a story Hamo tells (road-NN-…), shown once learners can read it
+      road
+        ? this.pool.query<{ slug: string; title: string }>(`SELECT s.slug, s.title FROM stories s WHERE s.slug LIKE 'road-%' AND ${PUBLISHED_SQL}`)
+        : Promise.resolve({ rows: [] as Array<{ slug: string; title: string }> }),
     ]);
+    const storyOf = new Map<number, UnitStory>();
+    for (const st of stories.rows) {
+      const n = roadStoryChapter(st.slug);
+      if (n !== null) storyOf.set(n, { slug: st.slug, title: st.title });
+    }
 
     const doneSlots = new Set(completed.rows.map((r) => `${r.skill_id}:${r.position}`));
     const lessonsBySkill = new Map<string, LessonNode[]>();
@@ -137,7 +178,7 @@ export class CourseMapService {
     }
     const unlockedThrough = progress.rows[0]?.unlocked_through_position ?? 0;
 
-    const units: CourseMap['units'] = [];
+    const units: Array<CourseMap['units'][number] & { position: number }> = [];
     let previousCompleted = false;
     skills.rows.forEach((s, i) => {
       const level = i + 1;
@@ -160,13 +201,24 @@ export class CourseMapService {
 
       let unit = units.find((u) => u.unitId === s.unit_id);
       if (!unit) {
-        unit = { unitId: s.unit_id, title: s.unit_title, skills: [] };
+        unit = { unitId: s.unit_id, title: s.unit_title, skills: [], story: storyOf.get(s.unit_position) ?? null, position: s.unit_position };
         units.push(unit);
       }
       unit.skills.push(node);
       previousCompleted = completedSkill;
     });
 
-    return { course: { id: courseId, title: course.rows[0]!.title_en }, units, unlockedThrough };
+    // the course ends, for the learner, at its last unit with a lesson out; the one after it is on its way
+    let shown = units.length;
+    while (shown > 0 && units[shown - 1]!.skills.every((sk) => sk.lessons.length === 0)) shown -= 1;
+    const next = units[shown];
+    const upcoming: UpcomingUnit | null = next ? { number: next.position, title: next.title, recordedBy: road ? 'hamo' : null } : null;
+
+    return {
+      course: { id: courseId, title: course.rows[0]!.title_en },
+      units: units.slice(0, shown).map(({ position: _position, ...unit }) => unit),
+      upcoming,
+      unlockedThrough,
+    };
   }
 }

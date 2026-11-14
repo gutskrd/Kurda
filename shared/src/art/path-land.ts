@@ -27,6 +27,8 @@
  * - `pathLandmarkSvg` and `pathLoopSvg`: a unit's landmark on the 120-unit
  *   canvas, and the one small thing in it that moves (`PATH_LANDMARK_LOOP`
  *   says where), which the apps lay over it and move gently.
+ * - `pathSignpostSvg`: the signpost at the end of the path while the next
+ *   unit is still being made, one plank pointing on up the road.
  *
  * Deterministic: the same inputs give the same string, ids from a hash of
  * what was asked for (svg.ts), scatter from a generator seeded with it.
@@ -504,6 +506,7 @@ export const PATH_STOP_LOOKS = [
   'guide',
   'guideLocked',
   'story',
+  'storyLocked',
   'jump',
   'chest',
   'chestOpen',
@@ -578,6 +581,7 @@ export function pathStopSvg(opts: PathStopOptions): string {
     switch (look) {
       case 'locked':
       case 'guideLocked':
+      case 'storyLocked':
         return { face: rest.face, side: rest.side, glint: rest.glint, ink: restInk };
       case 'available':
         return { face: paper.face, side: t.lip, glint: paper.glint, ink, ring: t.fill };
@@ -619,6 +623,7 @@ export function pathStopSvg(opts: PathStopOptions): string {
   }
   if (look === 'guide' || look === 'guideLocked') book(p, cx, cy - 6, look === 'guideLocked' ? { light: rest.glint, face: rest.face, shade: rest.side } : { light: mix(t.fill, '#ffffff', 0.3), face: t.fill, shade: t.lip }, dark);
   if (look === 'story') scroll(p, cx, cy - 6, dark);
+  if (look === 'storyLocked') rolled(p, cx, cy - 3, dark);
   if (look === 'jump') gate(p, cx, cy + 4, t, dark);
   if (look === 'chest' || look === 'chestOpen') p.add(chestOn(cx, cy + 2, look === 'chestOpen', prefix));
   return wrap(prefix, size, B, p.markup());
@@ -646,11 +651,49 @@ function scroll(p: Pen, x: number, y: number, dark: boolean): void {
   const paper = dark ? '#e3d6b6' : '#f7e7c2';
   const roll = dark ? '#b79d6d' : '#d9b97a';
   p.face(`M${n(x - 20)} ${n(y - 18)}L${n(x + 20)} ${n(y - 18)}L${n(x + 20)} ${n(y + 8)}L${n(x - 20)} ${n(y + 8)}Z`, paper);
-  p.line(`M${n(x - 13)} ${n(y - 10)}l26 0M${n(x - 13)} ${n(y - 4)}l22 0M${n(x - 13)} ${n(y + 2)}l18 0`, roll, 1.8);
+  p.line(`M${n(x - 13)} ${n(y - 10)}l26 0M${n(x - 13)} ${n(y - 4)}l22 0M${n(x - 13)} ${n(y + 2)}l12 0`, roll, 1.8);
+  // the road's running joke in the corner of every tale: an apple, which Hevalo will find
+  p.face(ovalPath(x + 11, y + 1.5, 3.6, 3.4), RED.face, 1.4);
+  p.line(`M${n(x + 11)} ${n(y - 1.8)}l0.6 -2.4`, dark ? '#6b4a2b' : '#7a5230', 1.3);
+  p.flat(`M${n(x + 11.8)} ${n(y - 3.4)}q3 -2.2 5 -0.4q-3 1.6 -5 0.4Z`, LEAF.face);
   for (const yy of [y - 18, y + 8]) {
     p.face(`M${n(x - 24)} ${n(yy - 4)}L${n(x + 24)} ${n(yy - 4)}A4 4 0 0 1 ${n(x + 24)} ${n(yy + 4)}L${n(x - 24)} ${n(yy + 4)}A4 4 0 0 1 ${n(x - 24)} ${n(yy - 4)}Z`, roll);
   }
   p.flat(ovalPath(x + 24, y - 18, 1.6, 2.6), RED.face);
+}
+
+/**
+ * A chapter's story still to come: the scroll rolled up and lying on its
+ * stone, tied with a red ribbon in a bow, the way a present waits.
+ */
+function rolled(p: Pen, x: number, y: number, dark: boolean): void {
+  const paper = dark ? '#cdbf9c' : '#efdcb2';
+  const shade = dark ? '#a8956a' : '#d2b47c';
+  const a = (-16 * Math.PI) / 180;
+  const ux = Math.cos(a);
+  const uy = Math.sin(a);
+  const vx = -uy;
+  const vy = ux;
+  const half = 25;
+  const r = 8.5;
+  const er = r * 0.42;
+  const deg = n((a * 180) / Math.PI);
+  const at = (u: number, v: number): string => `${n(x + ux * u + vx * v)} ${n(y + uy * u + vy * v)}`;
+  // the roll: its long body, closed at the far end by the back of its curl
+  p.face(`M${at(-half, -r)}L${at(half, -r)}A${n(er)} ${n(r)} ${deg} 0 1 ${at(half, r)}L${at(-half, r)}A${n(er)} ${n(r)} ${deg} 0 1 ${at(-half, -r)}Z`, paper);
+  // its underside in shade, a long strip along the lower edge
+  p.flat(`M${at(-half + 1, r * 0.35)}L${at(half - 1, r * 0.35)}L${at(half - 1, r - 1)}L${at(-half + 1, r - 1)}Z`, shade, 0.85);
+  // the near end: the paper's turns, seen end on
+  p.face(`M${at(half, -r)}A${n(er)} ${n(r)} ${deg} 0 1 ${at(half, r)}A${n(er)} ${n(r)} ${deg} 0 1 ${at(half, -r)}Z`, paper);
+  p.line(`M${at(half, -r * 0.45)}A${n(er * 0.5)} ${n(r * 0.45)} ${deg} 0 1 ${at(half, r * 0.45)}`, shade, 1.4);
+  // the ribbon round its middle, and its bow
+  p.face(`M${at(-3, -r - 0.6)}L${at(3, -r - 0.6)}L${at(3, r + 0.6)}L${at(-3, r + 0.6)}Z`, RED.face, 1.6);
+  const knot = at(0, r + 1);
+  const [kx, ky] = knot.split(' ').map(Number) as [number, number];
+  p.face(`M${n(kx)} ${n(ky)}c-3 -5 -11 -4 -9 1.5c1.6 3.6 6.4 1.6 9 -1.5Z`, RED.face, 1.4);
+  p.face(`M${n(kx)} ${n(ky)}c3 -5 11 -4 9 1.5c-1.6 3.6 -6.4 1.6 -9 -1.5Z`, RED.shade, 1.4);
+  p.line(`M${n(kx - 1)} ${n(ky + 1)}l-4 7M${n(kx + 1)} ${n(ky + 1)}l4 6.5`, RED.face, 2.2);
+  p.flat(ovalPath(kx, ky, 2, 1.8), RED.light);
 }
 
 /** The jump's gate: two stone pillars, an arch, and doors in the unit's colour, standing on its slab. */
@@ -1179,4 +1222,60 @@ export function pathLoopSvg(opts: PathLoopOptions): string {
   const prefix = prefixFor(opts.idPrefix, 'loop', kind, dark);
   const height = (size * view.h) / view.w;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(height)}" viewBox="0 0 ${view.w} ${view.h}" aria-hidden="true" focusable="false" id="${prefix}">${p.markup()}</svg>`;
+}
+
+// ───────────────────────────────────────────────────────────── the signpost
+
+export interface PathSignpostOptions {
+  dark?: boolean;
+  size?: number;
+  idPrefix?: string;
+}
+
+/**
+ * Where the path stops for now: a wooden signpost on the 120-unit canvas,
+ * one long plank pointing on up the road toward the chapter still being
+ * made and a short one back the way the learner came, a kilim ribbon tied
+ * round the post, and a little cairn of stones at its foot, as shepherds
+ * leave to say the way goes on. Decorative: the words beside it say where.
+ */
+export function pathSignpostSvg(opts: PathSignpostOptions = {}): string {
+  const { dark = false } = opts;
+  const size = opts.size ?? CANVAS;
+  if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  const prefix = prefixFor(opts.idPrefix, 'signpost', dark);
+  const p = new Pen(dark ? INK.dusk : INK.day, 1.4);
+  const wood = tones(WOOD, dark);
+  const stone = tones(STONE_GREY, dark);
+  const o: Pt = [56, 102];
+  shadow(p, 58, 104, 34, 8, dark);
+  // the stones at its foot, the largest first so the small ones sit on it
+  box(p, o, 8, 2, 14, 10, 6, stone);
+  box(p, o, 11, 4, 8, 6, 5, stone, 6);
+  box(p, o, -20, 4, 10, 8, 5, stone);
+  // the post
+  box(p, o, -3, -3, 6, 6, 78, wood);
+  // the long plank, pointing on: its face toward the viewer, its arrow tip, and its top in the light
+  const a = (u: number, z: number): Pt => iso(o, u, -3, z);
+  const top = (u: number, v: number): Pt => iso(o, u, v, 66);
+  p.face(poly([a(-8, 54), a(32, 54), a(40, 60), a(32, 66), a(-8, 66)]), wood.face);
+  p.face(poly([top(-8, -3), top(32, -3), top(32, -8), top(-8, -8)]), wood.light);
+  for (const [u0, u1] of [[-2, 8], [11, 18], [21, 27]] as const) {
+    const l0 = a(u0, 60);
+    const l1 = a(u1, 60);
+    p.line(`M${n(l0[0])} ${n(l0[1])}L${n(l1[0])} ${n(l1[1])}`, wood.shade, 1.8);
+  }
+  // the short plank, back the way the learner came: lower, pointing toward the lower left
+  const b = (v: number, z: number): Pt => iso(o, 3, v, z);
+  p.face(poly([b(-2, 36), b(22, 36), b(27, 40.5), b(22, 45), b(-2, 45)]), wood.shade);
+  p.face(poly([iso(o, 3, -2, 45), iso(o, 3, 22, 45), iso(o, 7, 22, 45), iso(o, 7, -2, 45)]), wood.light);
+  // a kilim ribbon tied round the post, its two ends lifting in the wind
+  const knot = iso(o, 0, 3, 72);
+  p.face(`M${n(knot[0] - 4)} ${n(knot[1] - 2)}l8 -4l0 5l-8 4z`, RED.face, 1.2);
+  p.line(`M${n(knot[0] - 4)} ${n(knot[1])}l8 -4`, GOLD, 1.2);
+  p.face(`M${n(knot[0] + 3)} ${n(knot[1] - 3)}q8 -3 13 3q-7 -1 -12 2z`, RED.face, 1.2);
+  p.face(`M${n(knot[0] + 3)} ${n(knot[1] - 1)}q6 4 8 12q-4 -6 -9 -9z`, RED.shade, 1.2);
+  // a cap on the post, against the rain
+  box(p, o, -4.5, -4.5, 9, 9, 3, wood, 78);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(size)}" viewBox="0 0 ${CANVAS} ${CANVAS}" aria-hidden="true" focusable="false" id="${prefix}">${p.markup()}</svg>`;
 }

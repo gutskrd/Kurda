@@ -67,20 +67,20 @@ describe('the lesson path', () => {
   it('draws every skill as a stop that says what it is, with review and each unit’s trophy', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={3} onFocus={() => undefined} />);
-    expect(screen.getByText('Unit 1')).toBeTruthy();
+    expect(screen.getByText('Chapter 1')).toBeTruthy();
     expect(screen.getByText('Greetings · Numbers')).toBeTruthy();
     expect(screen.getByText('2 of 2 done')).toBeTruthy();
     expect(button('Greetings, done, and strong, 2 of 2 lessons done')).toBeTruthy();
     expect(button('Numbers, done, ready for a refresh, 1 of 1 lessons done')).toBeTruthy();
-    expect(button('Unit 1 trophy, earned')).toBeTruthy();
+    expect(button('Chapter 1 trophy, earned')).toBeTruthy();
     // review sits just before the skill to do now
     expect(button('Review, words ready: 3')).toBeTruthy();
     expect(button('Family, you are here, 1 of 3 lessons done')).toBeTruthy();
     expect(button('Food, locked, 0 of 1 lessons done')).toBeTruthy();
-    expect(button('Unit 2 trophy, not earned yet')).toBeTruthy();
+    expect(button('Chapter 2 trophy, not earned yet')).toBeTruthy();
     // between the units, where in the course the next one lies; the first has the course's heading above it instead
     expect(screen.getAllByTestId('lp-unit-divider')).toHaveLength(1);
-    expect(screen.getByText('Unit 2 of 2')).toBeTruthy();
+    expect(screen.getByText('Chapter 2 of 2')).toBeTruthy();
   });
 
   /*
@@ -112,7 +112,7 @@ describe('the lesson path', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
     fireEvent.click(button('Family, you are here, 1 of 3 lessons done'));
-    expect(screen.getByText('Unit 2 · Family & Food')).toBeTruthy();
+    expect(screen.getByText('Chapter 2 · Family & Food')).toBeTruthy();
     expect(screen.getByText('1 of 3 lessons done')).toBeTruthy();
     // what the lesson it opens pays, in the server's own numbers
     expect(screen.getByText('+10–20 XP')).toBeTruthy();
@@ -123,6 +123,30 @@ describe('the lesson path', () => {
     expect(screen.queryByRole('button', { name: 'Malbat, not open yet' })).toBeNull();
     fireEvent.click(button('Continue'));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'f2', courseId: 'c1' });
+  });
+
+  it('ends each chapter with Hamo’s story, shut until the chapter is done, and names the chapter on its way', () => {
+    client();
+    const road: CourseMap = {
+      ...MAP,
+      units: [
+        { ...MAP.units[0]!, story: { slug: 'road-01-mevan-cay-u-sev', title: 'Mêvan, çay û sêv' } },
+        { ...MAP.units[1]!, story: { slug: 'road-02-mevane-be-simbel', title: 'Mêvanê bê simbêl' } },
+      ],
+      upcoming: { number: 3, title: 'House and village', recordedBy: 'hamo' },
+    };
+    renderWithProviders(<LessonPath map={road} due={0} onFocus={() => undefined} />);
+    // chapter 1 is done: its story opens in the reader
+    fireEvent.click(button('Hamo’s story: Mêvan, çay û sêv'));
+    expect(screen.getByText('The chapter ends with a tale Hamo tells, in the words you have learned. Read it and hear him tell it.')).toBeTruthy();
+    fireEvent.click(button('Read the story'));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('StoryReader', { slug: 'road-01-mevan-cay-u-sev' });
+    // chapter 2 is not: its story waits, rolled up, with nothing to open
+    fireEvent.click(button('Hamo’s story: Mêvanê bê simbêl, opens when the chapter is done'));
+    expect(screen.getByText('Finish the chapter, and Hamo tells you how it ends.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Read the story' })).toBeNull();
+    // the path stops at the last chapter online, and says the next is on its way, Hamo recording it
+    expect(screen.getByTestId('lp-upcoming').getAttribute('aria-label')).toBe('Chapter 3, House and village. On its way: Hamo is recording it now.');
   });
 
   it('promises a replay its smaller share', () => {
@@ -139,7 +163,7 @@ describe('the lesson path', () => {
     const mascot = screen.getByTestId('lp-mascot');
     expect(screen.getAllByTestId('lp-mascot')).toHaveLength(1);
     fireEvent.click(within(mascot).getByRole('img'));
-    expect(screen.getByText('Unit 2 · Family & Food')).toBeTruthy();
+    expect(screen.getByText('Chapter 2 · Family & Food')).toBeTruthy();
   });
 
   it('says kindly what opens a locked skill, and sends a rusty one to review', () => {
@@ -211,10 +235,10 @@ describe('the lesson path', () => {
       { unitId: 'u2', number: 2, title: 'Family & Food', tone: TONES.dark.saffron, done: 0, total: 2, here: true },
     ];
     renderWithProviders(<UnitRailSheet units={units} open onClose={() => undefined} onPick={pick} />);
-    const here = button('Unit 2, Family & Food');
+    const here = button('Chapter 2, Family & Food');
     expect(here.getAttribute('aria-selected')).toBe('true');
-    expect(button('Unit 1, Basics').getAttribute('aria-selected')).toBe('false');
-    fireEvent.click(button('Unit 1, Basics'));
+    expect(button('Chapter 1, Basics').getAttribute('aria-selected')).toBe('false');
+    fireEvent.click(button('Chapter 1, Basics'));
     expect(pick).toHaveBeenCalledWith('u1');
   });
 
@@ -237,12 +261,12 @@ describe('the lesson path', () => {
     expect(screen.getAllByTestId('lp-node-jump')).toHaveLength(1);
     expect(screen.getByText('Jump here?')).toBeTruthy();
     // the stop and the bubble over it both say what they offer, and both open it
-    const offers = screen.getAllByRole('button', { name: 'Jump ahead to Unit 3: a short test opens it' });
+    const offers = screen.getAllByRole('button', { name: 'Jump ahead to Chapter 3: a short test opens it' });
     expect(offers).toHaveLength(2);
     fireEvent.click(offers[1]!);
     const sheet = screen.getByTestId('lp-jump-sheet');
-    expect(within(sheet).getByRole('heading', { name: 'Jump to Unit 3?' })).toBeTruthy();
-    expect(within(sheet).getByText('Pass a short test to open Unit 3. Lessons you skip stay open to come back to.')).toBeTruthy();
+    expect(within(sheet).getByRole('heading', { name: 'Jump to Chapter 3?' })).toBeTruthy();
+    expect(within(sheet).getByText('Pass a short test to open Chapter 3. Lessons you skip stay open to come back to.')).toBeTruthy();
     expect(within(sheet).getByText('About 10 questions')).toBeTruthy();
     expect(within(sheet).getByText('Passed with 2 mistakes or fewer')).toBeTruthy();
     fireEvent.click(within(sheet).getByRole('button', { name: 'Start the test' }));
@@ -263,12 +287,12 @@ describe('the lesson path', () => {
     const turn = async () => {
       const view = renderWithProviders(<PinnedUnit unit={first} />);
       // the number over the name, said as one heading
-      expect(screen.getByRole('heading', { name: 'Unit 1, Basics' })).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Chapter 1, Basics' })).toBeTruthy();
       await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
       // the header's own arrival is not what is counted here: only what the change of unit asks for
       fades.mockClear();
       view.rerender(<PinnedUnit unit={second} />);
-      expect(screen.getByRole('heading', { name: 'Unit 2, Family & Food' })).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Chapter 2, Family & Food' })).toBeTruthy();
       expect(screen.queryByText('Basics')).toBeNull();
       cleanup();
       return fades.mock.calls.map(([, config]) => config);

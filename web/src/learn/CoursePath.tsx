@@ -32,7 +32,7 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { GrammarNote } from './GrammarNote';
 import { courseProgress, lessonStates } from './map';
-import { LearnerToken, PathHost, SideLights, StopArt, UnitLand, UnitRail, useDarkPage, useUnitsOnScreen, useWidth, type RailUnit } from './PathWorld';
+import { LearnerToken, PathHost, SideLights, StopArt, UnitLand, UnitRail, UpcomingUnit, useDarkPage, useUnitsOnScreen, useWidth, type RailUnit } from './PathWorld';
 import { preloadLesson } from './preloadLesson';
 import type { CourseMap as Map, CourseSummary, PracticeDue, SkillNode } from './types';
 import './path.css';
@@ -60,7 +60,7 @@ const lessonHref = (lessonId: string, courseId: string): string =>
  */
 function Glyph({ stop }: { stop: Stop }): React.JSX.Element | null {
   if (stop.kind === 'review') return <RepostIcon size={28} weight="bold" />;
-  if (stop.kind === 'trophy' || stop.kind === 'guide') return null;
+  if (stop.kind === 'trophy' || stop.kind === 'guide' || stop.kind === 'story') return null;
   if (stop.state === 'current') return null;
   if (stop.state === 'locked') return <LockIcon size={26} weight="bold" />;
   if (stop.state === 'done') {
@@ -85,14 +85,20 @@ function stopClass(stop: Stop): string {
   if (stop.kind === 'review') return 'is-review';
   if (stop.kind === 'guide') return `is-guide${stop.open ? '' : ' is-closed'}`;
   if (stop.kind === 'trophy') return `is-trophy${stop.earned ? ' is-earned' : ''}`;
+  if (stop.kind === 'story') return `is-story${stop.open ? '' : ' is-closed'}`;
   return `is-${stop.state}${stop.finish ? ` is-${stop.finish}` : ''}`;
 }
 
-/** How a stop is drawn (shared `pathStopSvg`): a skill by how it stands, the guide as its book, review as an open stop, a unit's end as its chest. */
+/**
+ * How a stop is drawn (shared `pathStopSvg`): a skill by how it stands, the
+ * guide as its book, review as an open stop, a unit's end as its chest, and
+ * the story after it as a scroll, rolled and tied until the chapter is done.
+ */
 function stopLook(stop: Stop): PathStopLook {
   if (stop.kind === 'review') return 'review';
   if (stop.kind === 'guide') return stop.open ? 'guide' : 'guideLocked';
   if (stop.kind === 'trophy') return stop.earned ? 'chestOpen' : 'chest';
+  if (stop.kind === 'story') return stop.open ? 'story' : 'storyLocked';
   if (stop.state === 'done') return stop.finish === 'strong' ? 'strong' : stop.finish === 'refresh' ? 'refresh' : 'done';
   return stop.state;
 }
@@ -152,6 +158,26 @@ function StopCard({
         {stop.earned && (
           <LinkButton to={reviewHref} variant="secondary" block>
             {t('review.practise')}
+          </LinkButton>
+        )}
+      </>
+    );
+  }
+
+  if (stop.kind === 'story') {
+    return (
+      <>
+        <p className="lp-pop-eyebrow">{t('coursemap.unit', { n: unit.number })}</p>
+        <h3 className="lp-pop-title" id={titleId}>
+          {t('coursemap.story.title')}
+        </h3>
+        <p className="lp-pop-tale" lang="ku" dir="ltr">
+          {stop.title}
+        </p>
+        <p className="lp-pop-line">{stop.open ? t('coursemap.story.open') : t('coursemap.story.shut')}</p>
+        {stop.open && (
+          <LinkButton to={`/app/learn/stories/${encodeURIComponent(stop.slug)}`} block>
+            {t('coursemap.story.read')}
           </LinkButton>
         )}
       </>
@@ -269,6 +295,7 @@ function useStopLabel(): (stop: Stop, unit: Unit) => string {
     if (stop.kind === 'trophy') {
       return t('coursemap.trophy.label', { n: unit.number, state: t(stop.earned ? 'coursemap.trophy.earned' : 'coursemap.trophy.ahead') });
     }
+    if (stop.kind === 'story') return t(stop.open ? 'coursemap.story.label' : 'coursemap.story.labelShut', { title: stop.title });
     const base = { title: stop.skill.title, state: t(stateKey(stop)) };
     return stop.lessonsTotal > 0
       ? t('coursemap.node.label', { ...base, done: stop.lessonsDone, total: stop.lessonsTotal })
@@ -823,6 +850,7 @@ export function CoursePath({
             </section>
           );
         })}
+        {data.upcoming && <UpcomingUnit upcoming={data.upcoming} dark={dark} />}
       </div>
       </div>
 

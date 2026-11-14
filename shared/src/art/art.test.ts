@@ -47,6 +47,7 @@ import {
   PATH_LANDMARK_LOOP,
   PATH_STOP_ART,
   PATH_STOP_LOOKS,
+  pathSignpostSvg,
   pathLandSvg,
   pathLandmarkSvg,
   pathLoopSvg,
@@ -1575,6 +1576,12 @@ describe('the lesson path’s world', () => {
       expect(loop.y + loop.h, landmark).toBeLessThanOrEqual(120);
       for (const dark of [false, true]) sound(pathLoopSvg({ kind: loop.kind, dark, size: 24 }));
     }
+  });
+
+  it('draws the signpost where the path stops for now, by day and by evening', () => {
+    for (const dark of [false, true]) sound(pathSignpostSvg({ dark, size: 96 }));
+    expect(pathSignpostSvg({ idPrefix: 'a' })).not.toBe(pathSignpostSvg({ idPrefix: 'a', dark: true }));
+    expect(() => pathSignpostSvg({ size: 0 })).toThrow(RangeError);
   });
 
   it('draws every look of a stop in every unit colour, base and face, by day and by evening', () => {

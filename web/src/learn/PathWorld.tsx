@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   PATH_LANDMARK_LOOP,
   PATH_STOP_ART,
@@ -7,6 +7,7 @@ import {
   pathLandSvg,
   pathLandmarkSvg,
   pathLoopSvg,
+  pathSignpostSvg,
   pathStonesSvg,
   pathStopSvg,
   praiseWords,
@@ -350,3 +351,49 @@ export function UnitRail({ units, onPick }: { units: RailUnit[]; onPick: (unitId
     </nav>
   );
 }
+
+/** The unit after the last one out, as the map names it (api/src/coursemap/service.ts). */
+export interface Upcoming {
+  number: number;
+  title: string;
+  recordedBy: 'hamo' | null;
+}
+
+/**
+ * Where the path stops for now: a signpost pointing on up the road, the next
+ * unit's number and name, and that it is on its way. On the road, whose
+ * chapters go online one by one as Hamo records them, Hamo stands by the
+ * sign and a small red light says he is recording it now; the stylesheet
+ * lets it breathe, and holds it still under Reduce Motion.
+ */
+export function UpcomingUnit({ upcoming, dark }: { upcoming: Upcoming; dark: boolean }): React.JSX.Element {
+  const t = useT();
+  const locale = useLocale();
+  const titleId = useId();
+  const sign = useMemo(() => ({ __html: pathSignpostSvg({ dark, size: 120, idPrefix: 'lp-next' }) }), [dark]);
+  return (
+    <section className="lp-next" aria-labelledby={titleId}>
+      <div className="lp-next-art" aria-hidden="true">
+        <span className="lp-next-sign" dangerouslySetInnerHTML={sign} />
+        {upcoming.recordedBy && (
+          <span className="lp-next-host">
+            <SpeakingCharacter speaker={upcoming.recordedBy} audio={null} crop="full" size={NEXT_HOST_SIZE} decorative />
+          </span>
+        )}
+      </div>
+      <div className="lp-next-text">
+        <p className="lp-next-eyebrow">{t('coursemap.unit', { n: new Intl.NumberFormat(locale).format(upcoming.number) })}</p>
+        <h2 className="lp-next-title" id={titleId}>
+          {upcoming.title}
+        </h2>
+        <p className="lp-next-line">
+          {upcoming.recordedBy && <span className="lp-next-rec" aria-hidden="true" />}
+          {t(upcoming.recordedBy ? 'coursemap.upcoming.recording' : 'coursemap.upcoming.soon')}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/** How tall Hamo stands by the signpost: a little smaller than beside a unit, as he is further up the road. */
+const NEXT_HOST_SIZE = 112;

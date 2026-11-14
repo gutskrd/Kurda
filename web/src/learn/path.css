@@ -147,6 +147,86 @@
   font-variant-numeric: tabular-nums;
   opacity: 0.9;
 }
+/* ---- where the path stops for now ------------------------------------------- */
+/* the next unit, still being made: a signpost on up the road, and on the road Hamo beside it, recording */
+.lp-next {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding: var(--space-5);
+  border: 2px dashed color-mix(in srgb, var(--ink) 28%, transparent);
+  border-radius: var(--r-xl);
+  background: color-mix(in srgb, var(--surface-solid) 70%, transparent);
+}
+.lp-next-art {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  line-height: 0;
+}
+.lp-next-sign {
+  width: 120px;
+  height: 120px;
+}
+:dir(rtl) .lp-next-sign {
+  /* the sign points on toward the end of the line, which a right-to-left page reads to the left */
+  transform: scaleX(-1);
+}
+.lp-next-host {
+  margin-inline-start: -28px;
+}
+.lp-next-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding-bottom: var(--space-2);
+}
+.lp-next-eyebrow {
+  margin: 0;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.lp-next-title {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.lp-next-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 4px 0 0;
+  color: var(--ink-2);
+}
+.lp-next-rec {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #d6493a;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #d6493a 22%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lp-next-rec {
+    animation: lp-rec 1.8s ease-in-out infinite;
+  }
+}
+@keyframes lp-rec {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (max-width: 480px) {
+  .lp-next {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 /* ---- the world -------------------------------------------------------------- */
 
 /*
@@ -899,6 +979,12 @@
   font-size: var(--text-caption);
   font-weight: 650;
   color: var(--u-text);
+}
+.lp-pop-tale {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-body);
+  font-weight: 700;
+  font-style: italic;
 }
 .lp-pop-title {
   font-size: var(--text-section);
