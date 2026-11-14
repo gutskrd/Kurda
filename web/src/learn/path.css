@@ -424,7 +424,8 @@
   height: var(--node);
 }
 .lp-stop.is-open {
-  z-index: 5;
+  /* over the next unit's banner too: the card of a unit's last stop, its story, opens down across it */
+  z-index: 7;
 }
 
 .lp-node {
