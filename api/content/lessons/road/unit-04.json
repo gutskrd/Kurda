@@ -334,7 +334,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Xezal dibêje: dengê min bilind e, ez gelek diaxivim!",
-                    "prompt": "Xezal rolls her eyes and whispers something to you about her uncle. Hamo hears every word and laughs. What does he say? “Xezal dibêje: dengê min bilind e, ez gelek diaxivim!”",
+                    "prompt": "Xezal rolls her eyes and whispers something to you about Hamo. Hamo hears every word and laughs. What does he say? “Xezal dibêje: dengê min bilind e, ez gelek diaxivim!”",
                     "accepted": [
                       "Xezal says my voice is loud, I talk a lot",
                       "Xezal says my voice is loud and I talk a lot",
@@ -563,43 +563,58 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Bazar mezin e! Dengê bazarê xweş e.",
-                        "en": "The market is big! The sound of the market is lovely."
+                        "text": "Wey, dengê bazarê! Ez li Mîrza digerim.",
+                        "en": "Oh, the noise of the market! I’m looking for Mîrza."
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, kî çi difiroşe?",
-                        "en": "Uncle, who sells what?"
+                        "text": "Xalo, li vir kî çi difiroşe?",
+                        "en": "Uncle, who sells what here?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ev firoşkar hêk difiroşe, ew firoşkar goşt difiroşe.",
-                        "en": "This seller sells eggs, that seller sells meat."
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Û Mîrza fêkî difiroşe! Mîrza, birayê min!",
-                        "en": "And Mîrza sells fruit! Mîrza, my brother!"
+                        "text": "Ev firoşkar hêk difiroşe, ew firoşkar goşt.",
+                        "en": "This seller sells eggs, that seller meat."
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, Hevalo li çi digere?",
-                        "en": "Uncle, what is Hevalo looking for?"
+                        "text": "Û ew mêrê bi simbêlê spî? Ew kî ye?",
+                        "en": "And that man with the white moustache? Who is he?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo? Ew tenê li sêvan dinêre!",
-                        "en": "Hevalo? He is only looking at the apples!"
+                        "text": "Ew Mîrza ye! Hevalê min ê kevn!",
+                        "en": "That’s Mîrza! My old friend!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Tenê dinêre? Baş e…",
-                        "en": "Only looking? All right…"
+                        "text": "Ew çi difiroşe?",
+                        "en": "What does he sell?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez ji Mîrza sêv dikirim. Ez pere didim!",
-                        "en": "I am buying apples from Mîrza. I am paying!"
+                        "text": "Fêkî. Û ew çay jî dide, ji bo hevalan.",
+                        "en": "Fruit. And he gives tea too, to his friends."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo… Hevalo li ber sêvên Mîrza ye.",
+                        "en": "Uncle… Hevalo is standing by Mîrza’s apples."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo? Ew baş e. Ew tenê li sêvan dinêre.",
+                        "en": "Hevalo? He’s fine. He’s only looking at the apples."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Tenê dinêre?",
+                        "en": "Only looking?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê. Niha… tenê dinêre.",
+                        "en": "Yes. For now… he’s only looking."
                       }
                     ],
                     "prompt": "What is Hevalo doing at Mîrza’s stall, according to Hamo?",
@@ -726,11 +741,11 @@
                   "position": 13,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo throws his arms round Mîrza like a long-lost brother. Type what he says.",
+                    "prompt": "Hamo throws his arms round Mîrza as if they had not met for years. Type what he says.",
                     "accepted": [
-                      "Mîrza, birayê min!",
-                      "Mîrza, birayê min",
-                      "Mîrza birayê min"
+                      "Mîrza, hevalê min ê kevn!",
+                      "Mîrza, hevalê min ê kevn",
+                      "Mîrza hevalê min ê kevn"
                     ],
                     "voice": "hamo"
                   }
@@ -842,13 +857,23 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Ez û Mîrza heval in. Ew hîn li vir dixebite!",
-                        "en": "Mîrza and I are friends. He still works here!"
+                        "text": "Çaya Mîrza… Ez ji vê çayê hez dikim.",
+                        "en": "Mîrza’s tea… I love this tea."
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, Mîrza tiştekî dibêje…",
-                        "en": "Uncle, Mîrza is saying something…"
+                        "text": "Xalo, Mîrza hîn li bazarê dixebite?",
+                        "en": "Uncle, does Mîrza still work at the market?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê, hîn jî! Ji sibehê heta êvarê.",
+                        "en": "Yes, he still does! From morning to evening."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo, Mîrza tiştekî dibêje. Ew li te dinêre…",
+                        "en": "Uncle, Mîrza is saying something. He’s looking at you…"
                       },
                       {
                         "speaker": 0,
@@ -857,8 +882,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ew dibêje: «Hamo, deynê min li ser te ye!»",
-                        "en": "He says: “Hamo, you owe me!”"
+                        "text": "Ew dibêje: «Deynê min hîn li ser te ye!»",
+                        "en": "He says: “You still owe me!”"
                       },
                       {
                         "speaker": 0,
@@ -867,13 +892,13 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ji bo zebeşekî. Zebeşekî mezin!",
-                        "en": "For a watermelon. A big watermelon!"
+                        "text": "Zebeşek. Zebeşekî bîst salî!",
+                        "en": "A watermelon. A twenty-year-old watermelon!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Zebeş?! Ew zebeş bîst salî ye!",
-                        "en": "A watermelon?! That watermelon is twenty years old!"
+                        "text": "Ew zebeş bîst salî ye! Ew zebeş niha li ku ye?",
+                        "en": "That watermelon is twenty years old! Where is that watermelon now?"
                       },
                       {
                         "speaker": 1,
@@ -882,8 +907,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Baş e, baş e. Ez pere didim!",
-                        "en": "Fine, fine. I am paying!"
+                        "text": "Baş e, baş e, ez pere didim. Lê çay li ser te ye, Mîrza!",
+                        "en": "Fine, fine, I’m paying. But the tea is on you, Mîrza!"
                       }
                     ],
                     "prompt": "What does Mîrza say Hamo owes him for?",
@@ -963,12 +988,13 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Tu hîn li Amedê yî?",
-                    "prompt": "Mîrza asks about Xezal, and Hamo passes the question on to her. What is it? “Tu hîn li Amedê yî?”",
+                    "say": "Tu hîn li Sêvanê yî?",
+                    "prompt": "Mîrza has heard that a girl from Amed is helping at the village school this year, and Hamo passes his question on to her. What is it? “Tu hîn li Sêvanê yî?”",
                     "accepted": [
-                      "Are you still in Amed",
-                      "Are you still living in Amed",
-                      "Do you still live in Amed"
+                      "Are you still in Sêvan",
+                      "Are you still living in Sêvan",
+                      "Do you still live in Sêvan",
+                      "Are you still in Sêvan?"
                     ],
                     "voice": "hamo"
                   }
@@ -990,7 +1016,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ez hîn ji zebeşan hez dikim!",
-                    "prompt": "Xezal grins at you behind her uncle’s back and pats her own tummy. Hamo pretends not to see — then owns up. What does he say? “Ez hîn ji zebeşan hez dikim!”",
+                    "prompt": "Xezal grins at you behind Hamo’s back and pats her own tummy. Hamo pretends not to see — then owns up. What does he say? “Ez hîn ji zebeşan hez dikim!”",
                     "options": [
                       "I still love watermelons!",
                       "I no longer like watermelons!",
@@ -1357,7 +1383,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hingivê vê firoşkarê baş e.",
-                    "prompt": "Xezal tastes from a jar and holds it out to her uncle. Hamo tastes too and nods. What does he say? “Hingivê vê firoşkarê baş e.”",
+                    "prompt": "Xezal tastes from a jar and holds it out to Hamo. Hamo tastes too and nods. What does he say? “Hingivê vê firoşkarê baş e.”",
                     "accepted": [
                       "This seller’s honey is good",
                       "This seller's honey is good",
@@ -1468,7 +1494,7 @@
                   "position": 13,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal spots a basket of red pomegranates and tugs at her uncle’s sleeve. He laughs. Type what he says.",
+                    "prompt": "Xezal spots a basket of red pomegranates and tugs at Hamo’s sleeve. He laughs. Type what he says.",
                     "accepted": [
                       "Baş e, Xezo! Em hinar jî dikirin.",
                       "Baş e, Xezo! Em hinar jî dikirin",
@@ -1589,43 +1615,58 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Mîrza, kîloyek penîr û hinek hingiv, ji kerema xwe.",
-                        "en": "Mîrza, a kilo of cheese and some honey, please."
+                        "text": "Mîrza, kîloyek penîr, ji kerema xwe. Û hinek zeytûn.",
+                        "en": "Mîrza, a kilo of cheese, please. And some olives."
                       },
                       {
                         "speaker": 1,
-                        "text": "Û zeytûn jî, xalo. Zeytûn teze ne!",
-                        "en": "And olives too, uncle. The olives are fresh!"
+                        "text": "Zeytûn teze ne, xalo?",
+                        "en": "Are the olives fresh, uncle?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Baş e. Nîv kîlo zeytûn jî.",
-                        "en": "All right. Half a kilo of olives too."
+                        "text": "Mîrza dibêje: «Yên îro ne!»",
+                        "en": "Mîrza says: “They’re today’s!”"
                       },
                       {
                         "speaker": 1,
-                        "text": "Xezal hinar jî dixwaze!",
-                        "en": "Xezal wants pomegranates too!"
+                        "text": "Û masî? Masî jî teze ye?",
+                        "en": "And the fish? Is the fish fresh too?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Hinar? Baş e, du kîlo hinar.",
-                        "en": "Pomegranates? All right, two kilos of pomegranates."
+                        "text": "Masî ji çem e… lê ji kîjan rojê?",
+                        "en": "The fish is from the river… but from which day?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Û Hevalo? Ew jî tiştekî dixwaze…",
-                        "en": "And Hevalo? He wants something too…"
+                        "text": "Masî? Na, spas!",
+                        "en": "Fish? No, thanks!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Em dizanin, em dizanin. Ew sêv dixwaze!",
-                        "en": "We know, we know. He wants apples!"
+                        "text": "Baş e. Nîv kîlo birinc û hinek xwê. Xezal jî hinar dixwaze.",
+                        "en": "All right. Half a kilo of rice and some salt. And Xezal wants pomegranates."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û Hevalo? Ew jî tiştekî dixwaze?",
+                        "en": "And Hevalo? Does he want something too?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Mîrza, spas. Çaya te jî xweş e!",
-                        "en": "Thank you, Mîrza. Your tea is lovely too!"
+                        "text": "Tu dizanî, ez dizanim, Mîrza jî dizane!",
+                        "en": "You know, I know, and Mîrza knows too!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Sêv!",
+                        "en": "Apples!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê. Kîloyek sêv ji bo Hevalo. Na… du kîlo!",
+                        "en": "Yes. A kilo of apples for Hevalo. No… two kilos!"
                       }
                     ],
                     "prompt": "What does Hevalo want?",
@@ -1865,33 +1906,38 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Fermo, nan û penîr. Fîncanek çay jî.",
-                        "en": "Here you are, bread and cheese. And a cup of tea."
+                        "text": "Fermo, nan û penîr. Û fîncanek çay jî.",
+                        "en": "Here you are, bread and cheese. And a cup of tea too."
                       },
                       {
                         "speaker": 1,
-                        "text": "Spas, xalo! Kevçiyek jî, ji kerema xwe.",
-                        "en": "Thanks, uncle! A spoon too, please."
+                        "text": "Spas, xalo! Kevçiyek jî heye, ji bo şekir?",
+                        "en": "Thanks, uncle! Is there a spoon too, for the sugar?"
                       },
                       {
                         "speaker": 0,
                         "text": "Fermo. Hevalo, tu jî nan dixwî?",
-                        "en": "Here you are. Hevalo, are you having some bread too?"
+                        "en": "Here you are. Hevalo, will you have some bread too?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, Hevalo têr e!",
-                        "en": "Uncle, Hevalo is full! (he turns his nose away from the bread)"
+                        "text": "Xalo, Hevalo li çiyê dinêre. Ew têr e!",
+                        "en": "Uncle, Hevalo is looking at the mountain. He’s full!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Têr? Hevalo têr e?!",
-                        "en": "Full? Hevalo is full?!"
+                        "text": "Têr? Hevalo?",
+                        "en": "Full? Hevalo?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Erê. Têr û kêfxweş.",
+                        "en": "Yes. Full and happy."
                       },
                       {
                         "speaker": 0,
-                        "text": "Ev ne baş e… Hevalo her roj birçî ye!",
-                        "en": "This is not good… Hevalo is hungry every day!"
+                        "text": "Hevalo her roj birçî ye. Û îro têr e? Ev ne baş e…",
+                        "en": "Hevalo is hungry every day. And today he’s full? This is not good…"
                       },
                       {
                         "speaker": 1,
@@ -1900,8 +1946,18 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ev Mîrza ye! Ew dibêje: «Sêvên min li ku ne?!»",
-                        "en": "It is Mîrza! He is shouting: “Where are my apples?!”"
+                        "text": "Mîrza ye! Ew dibêje: «Sêvên min li ku ne?!»",
+                        "en": "It’s Mîrza! He’s shouting: “Where are my apples?!”"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Sêvên Mîrza?",
+                        "en": "Mîrza’s apples?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo li çiyê dinêre… û ez li Hevalo dinêrim.",
+                        "en": "Hevalo is looking at the mountain… and I am looking at Hevalo."
                       }
                     ],
                     "prompt": "Why is it strange that Hevalo is full?",
@@ -2499,7 +2555,7 @@
                   "position": 13,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal leans over the baskets to see if her uncle is all right. Hamo opens one eye. Type what he says.",
+                    "prompt": "Xezal leans over the baskets to see if Hamo is all right. Hamo opens one eye. Type what he says.",
                     "accepted": [
                       "Ez baş im, lê hezar pir biha ye!",
                       "Ez baş im, lê hezar pir biha ye",
@@ -2622,48 +2678,53 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ew dibêje: «Bi sed û pêncî.»",
-                        "en": "He says: “A hundred and fifty.”"
+                        "text": "Xalo, ew dibêje: bi sed û pêncî.",
+                        "en": "Uncle, he says a hundred and fifty."
                       },
                       {
                         "speaker": 0,
-                        "text": "Sed û pêncî? Zêde ye! Bi sed.",
-                        "en": "A hundred and fifty? That is too much! A hundred."
+                        "text": "Sed û pêncî?! Zêde ye! Bi sed.",
+                        "en": "A hundred and fifty?! That’s too much! A hundred."
                       },
                       {
                         "speaker": 1,
-                        "text": "Ew dibêje: «Na, mixabin. Ev kêm e.»",
-                        "en": "He says: “No, sorry. That is too little.”"
+                        "text": "Ew dibêje: «Mixabin, sed kêm e.»",
+                        "en": "He says: “Sorry, a hundred is too little.”"
                       },
                       {
                         "speaker": 0,
-                        "text": "Sed û deh? Ji kerema xwe, Mîrza!",
-                        "en": "A hundred and ten? Please, Mîrza!"
+                        "text": "Sed û deh? Ji bo hevalekî kevn?",
+                        "en": "A hundred and ten? For an old friend?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, bes e. Xezal dikare!",
-                        "en": "Uncle, that is enough. Xezal can do this!"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Xezal dibêje: «Mîrza, ev çaydank kevn e. Bi heştê?»",
-                        "en": "Xezal says: “Mîrza, this teapot is old. Eighty?”"
+                        "text": "Xalo, bes e. Xezal tê…",
+                        "en": "Uncle, that’s enough. Here comes Xezal…"
                       },
                       {
                         "speaker": 0,
-                        "text": "Heştê?! Xezo!",
-                        "en": "Eighty?! Xezo!"
+                        "text": "Xezo? Ew çi dike?",
+                        "en": "Xezo? What is she doing?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Mîrza dibêje: «Temam, temam! Bi heştê.»",
-                        "en": "Mîrza says: “OK, OK! Eighty.”"
+                        "text": "Ew dibêje: «Mîrza, ev çaydank kevn e. Bi heştê?»",
+                        "en": "She says: “Mîrza, this teapot is old. Eighty?”"
                       },
                       {
                         "speaker": 0,
-                        "text": "Xezo… tu pir zîrek î!",
-                        "en": "Xezo… you are very clever!"
+                        "text": "Heştê?! Xezo…",
+                        "en": "Eighty?! Xezo…"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Mîrza dibêje: «Temam, temam! Ji bo Xezalê, bi heştê.»",
+                        "en": "Mîrza says: “OK, OK! For Xezal, eighty.”"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ji bo Xezalê heştê, ji bo min sed û deh? Mîrza!",
+                        "en": "Eighty for Xezal, and a hundred and ten for me? Mîrza!"
                       }
                     ],
                     "prompt": "How much does the teapot cost in the end?",
@@ -2724,7 +2785,7 @@
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal steps in front of her uncle and rolls up her sleeves. Hamo steps back, laughing. Type what he says.",
+                    "prompt": "Xezal steps in front of Hamo and rolls up her sleeves. Hamo steps back, laughing. Type what he says.",
                     "accepted": [
                       "Temam, Xezo. Tu dikarî!",
                       "Temam, Xezo. Tu dikarî",
@@ -2806,7 +2867,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Xezo, tu pir zîrek î!",
-                    "prompt": "Hamo carries the teapot away, beaming. What does he tell his niece? “Xezo, tu pir zîrek î!”",
+                    "prompt": "Hamo carries the teapot away, beaming. What does he tell Xezal? “Xezo, tu pir zîrek î!”",
                     "options": [
                       "Xezo, you are very cheeky!",
                       "Xezo, you are very tired!",
@@ -2965,8 +3026,18 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Hesab sed û not e. Fermo, Mîrza.",
-                        "en": "The bill is a hundred and ninety. Here you are, Mîrza."
+                        "text": "Mîrza, hesab çend e?",
+                        "en": "Mîrza, how much is the bill?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Sed û not, xalo.",
+                        "en": "A hundred and ninety, uncle."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Sed û not. Fermo, Mîrza.",
+                        "en": "A hundred and ninety. Here you are, Mîrza."
                       },
                       {
                         "speaker": 1,
@@ -2975,28 +3046,28 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê. Pêşî ez dinêrim, paşê ez dizanim.",
-                        "en": "Yes. First I look, then I know."
+                        "text": "Erê. Mîrza hevalê min e, lê hesab hesab e!",
+                        "en": "Yes. Mîrza is my friend, but a bill is a bill!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, hejmar rast e!",
-                        "en": "Uncle, the number is right!"
+                        "text": "Hejmar rast e?",
+                        "en": "Is the number right?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Baş e. Paşê em diçin malê.",
-                        "en": "Good. Then we go home."
+                        "text": "Rast e. Pêşî çay, paşê mal!",
+                        "en": "It’s right. First tea, then home!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo! Mîrza li sindoqa sêvan dinêre…",
-                        "en": "Uncle! Mîrza is looking at the apple crate…"
+                        "text": "Xalo… Mîrza li sindoqa sêvan dinêre.",
+                        "en": "Uncle… Mîrza is looking at the apple crate."
                       },
                       {
                         "speaker": 0,
-                        "text": "Çi heye? Sindoq…",
-                        "en": "What is it? The crate…"
+                        "text": "Çi heye, Mîrza?",
+                        "en": "What is it, Mîrza?"
                       },
                       {
                         "speaker": 1,
@@ -3387,7 +3458,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Hevalo, tu birçî yî?",
-                    "prompt": "Xezal puts on her detective face and whispers the questions to her uncle, who asks them in his big voice. What does he ask first? “Hevalo, tu birçî yî?”",
+                    "prompt": "Xezal puts on her detective face and whispers the questions to Hamo, who asks them in his big voice. What does he ask first? “Hevalo, tu birçî yî?”",
                     "options": [
                       "Hevalo, are you tired?",
                       "Hevalo, are you thirsty?",
@@ -3606,7 +3677,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Li ser devê te çi heye?",
-                    "prompt": "Xezal spots something on the suspect’s mouth and nudges her uncle. What does Hamo ask? “Li ser devê te çi heye?”",
+                    "prompt": "Xezal spots something on the suspect’s mouth and nudges Hamo. What does Hamo ask? “Li ser devê te çi heye?”",
                     "options": [
                       "What is in your belly?",
                       "Why is your mouth open?",
@@ -3684,43 +3755,58 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Xalo, pirsa min ev e: Hevalo sêv dixwe?",
-                        "en": "Uncle, my question is this: does Hevalo eat apples?"
+                        "text": "Xalo, pirsa min ev e: sêv li ku ne?",
+                        "en": "Uncle, my question is this: where are the apples?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Na! Hevalo sêv naxwe. Qet!",
-                        "en": "No! Hevalo does not eat apples. Never!"
+                        "text": "Pirs baş e. Lê bersiv… kes nizane!",
+                        "en": "Good question. But the answer… nobody knows!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Ez bawer nakim. Bersiva te derew e, xalo!",
-                        "en": "I do not believe it. Your answer is a lie, uncle!"
+                        "text": "Hevalo jî nizane?",
+                        "en": "Hevalo doesn’t know either?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo? Hevalo sêvan naxwe. Qet!",
+                        "en": "Hevalo? Hevalo doesn’t eat apples. Never!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Bi rastî? Ez bawer nakim.",
+                        "en": "Really? I don’t believe it."
                       },
                       {
                         "speaker": 0,
                         "text": "Ev henek e? Hevalo derew nake!",
-                        "en": "Is this a joke? Hevalo does not lie!"
+                        "en": "Is this a joke? Hevalo doesn’t lie!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, li ser devê wî çi heye?",
-                        "en": "Uncle, what is that on his mouth?"
+                        "text": "Xalo… li ser devê wî çi heye?",
+                        "en": "Uncle… what is that on his mouth?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Sêv! Li ser devê wî sêv heye!",
-                        "en": "Apple! There is apple on his mouth!"
+                        "text": "Li ser devê wî? Ev… ev sêv e.",
+                        "en": "On his mouth? This… this is apple."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û bersiva te, xalo?",
+                        "en": "And your answer, uncle?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez dikenim… Mîrza jî dikene!",
-                        "en": "I am laughing… and Mîrza is laughing too!"
+                        "text": "Bersiva min? Ez dikenim! Mîrza jî dikene.",
+                        "en": "My answer? I’m laughing! And Mîrza is laughing too."
                       },
                       {
                         "speaker": 0,
-                        "text": "Mîrza, ez pereyê sêvan didim!",
-                        "en": "Mîrza, I will pay for the apples!"
+                        "text": "Mîrza, pereyê sêvan li ser min e!",
+                        "en": "Mîrza, the apples are on me!"
                       }
                     ],
                     "prompt": "What gives Hevalo away?",
@@ -3907,7 +3993,7 @@
                     "options": [
                       "We are staying at the market.",
                       "We are going back home.",
-                      "We are going to Amed."
+                      "We are going to the mountain."
                     ],
                     "correctIndex": 1,
                     "voice": "hamo"
@@ -3988,11 +4074,11 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Which one is right for “Xezal is going back to Amed.”?",
+                    "prompt": "Which one is right for “Hamo is going back home.”?",
                     "options": [
-                      "Xezal vedigere Amedê.",
-                      "Xezal vedigerim Amedê.",
-                      "Xezal digere Amedê."
+                      "Hamo vedigere malê.",
+                      "Hamo vedigerim malê.",
+                      "Hamo digere malê."
                     ],
                     "correctIndex": 0
                   }
@@ -4027,58 +4113,68 @@
                     ],
                     "lines": [
                       {
-                        "speaker": 1,
-                        "text": "Xalo, telefona Xezalê! Diya wê ye.",
-                        "en": "Uncle, Xezal’s phone! It is her mother."
-                      },
-                      {
                         "speaker": 0,
-                        "text": "Gulîstan? Ew çawa ye?",
-                        "en": "Gulîstan? How is she?"
+                        "text": "Bar giran e, Bozo, lê mal nêzîk e.",
+                        "en": "The load is heavy, Bozo, but home is near."
                       },
                       {
                         "speaker": 1,
-                        "text": "Ew baş e. Lê Xezal di dawiya hefteyê de vedigere Amedê.",
-                        "en": "She is well. But Xezal is going back to Amed at the end of the week."
+                        "text": "Xalo, telefona te!",
+                        "en": "Uncle, your phone!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Zû ye! Mixabin…",
-                        "en": "That is soon! What a pity…"
+                        "text": "Lorîn e! Xwişka min, ji Kobaniyê…",
+                        "en": "It’s Lorîn! My sister, from Kobanî…"
                       },
                       {
                         "speaker": 1,
-                        "text": "Lê Gulîstan dibêje: hûn hemû jî tên!",
-                        "en": "But Gulîstan says you are all coming too!"
+                        "text": "Ew çi dibêje?",
+                        "en": "What is she saying?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Em? Hemû? Ez, Nazê, zarok, Dapîr…",
-                        "en": "Us? All of us? Me, Nazê, the children, Grandma…"
+                        "text": "Nîvê wêneyê me li cem wê ye!",
+                        "en": "The other half of our photo is with her!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Erê! Û Hevalo jî.",
-                        "en": "Yes! And Hevalo too."
+                        "text": "Li Kobaniyê? Bi rastî?",
+                        "en": "In Kobanî? Really?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo jî? Li Amedê sêv hene, Hevalo!",
-                        "en": "Hevalo too? There are apples in Amed, Hevalo! (both ears go up)"
+                        "text": "Erê! Û diya me dibêje: hûn hemû tên!",
+                        "en": "Yes! And our mother says: you are all coming!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Em hemû? Ez jî?",
+                        "en": "All of us? Me too?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Em diçin Amedê! Û nîvê wêneyê min li wir e…",
-                        "en": "We are going to Amed! And the other half of my photo is there…"
+                        "text": "Tu jî, Xezal jî… û Hevalo jî!",
+                        "en": "You too, Xezal too… and Hevalo too!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Kîjan roj?",
+                        "en": "Which day?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Di dawiya hefteyê de. Bar giran e, lê dilê min sivik e!",
+                        "en": "At the end of the week. The load is heavy, but my heart is light!"
                       }
                     ],
-                    "prompt": "What does Xezal’s mother want?",
+                    "prompt": "What does Lorîn tell Hamo on the phone?",
                     "options": [
-                      "Xezal to stay in the village",
-                      "Hamo to send her apples",
-                      "The whole family to come to Amed"
+                      "She has the other half of the photo",
+                      "She is coming to the market",
+                      "She wants some of Mîrza’s apples"
                     ],
-                    "correctIndex": 2
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -4097,12 +4193,13 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Em hemû diçin Amedê!",
-                    "prompt": "Xezal puts down her phone and whispers to her uncle. Hamo can hardly believe it. What news does he tell you? “Em hemû diçin Amedê!”",
+                    "say": "Em hemû diçin Kobaniyê!",
+                    "prompt": "Hamo puts his phone away and can hardly believe it himself. What news does he tell you? “Em hemû diçin Kobaniyê!”",
                     "accepted": [
-                      "We are all going to Amed",
-                      "We’re all going to Amed",
-                      "All of us are going to Amed"
+                      "We are all going to Kobanî",
+                      "We’re all going to Kobanî",
+                      "All of us are going to Kobanî",
+                      "We are all going to Kobani"
                     ],
                     "voice": "hamo"
                   }
@@ -4111,10 +4208,12 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask Xezal: “Are you going back to Amed?”",
+                    "prompt": "Xezal is grinning from ear to ear. Ask her: “Are you coming to Kobanî too?”",
                     "accepted": [
-                      "Tu vedigerî Amedê?",
-                      "Tu vedigerî Amedê"
+                      "Tu jî têyî Kobaniyê?",
+                      "Tu jî têyî Kobaniyê",
+                      "Tu jî tê Kobaniyê?",
+                      "Tu jî tê Kobaniyê"
                     ],
                     "voice": "hamo"
                   }
@@ -4123,10 +4222,12 @@
                   "position": 12,
                   "type": "listening",
                   "payload": {
-                    "prompt": "On the way home Hamo tells you the news, a little sadly. Type what he says.",
+                    "prompt": "Halfway up the hill Hamo says the news again, as if he has to hear it to believe it. Type what he says.",
                     "accepted": [
-                      "Xezal di dawiya hefteyê de vedigere Amedê.",
-                      "Xezal di dawiya hefteyê de vedigere Amedê"
+                      "Di dawiya hefteyê de em diçin Kobaniyê.",
+                      "Di dawiya hefteyê de em diçin Kobaniyê",
+                      "Em di dawiya hefteyê de diçin Kobaniyê.",
+                      "Em di dawiya hefteyê de diçin Kobaniyê"
                     ],
                     "voice": "hamo"
                   }
@@ -4159,9 +4260,9 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Night falls on Sêvan. A whole family is going to the city, and half a photo is waiting there. Where does the road go next?",
+                    "prompt": "Night falls on Sêvan. Half a photo is waiting in Kobanî, and so is Hamo’s mother. Where does the road go next?",
                     "options": [
-                      "Ber bi Amedê ve!",
+                      "Ber bi Kobaniyê ve!",
                       "Ber bi bazarê ve!",
                       "Ber bi çiyê ve!"
                     ],

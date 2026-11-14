@@ -133,10 +133,10 @@
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo sighs and points at Saturday. Type what you hear.",
+                    "prompt": "Hamo taps Saturday on the calendar and beams. Type what you hear.",
                     "accepted": [
-                      "Xezal roja Şemiyê diçe Amedê.",
-                      "Xezal roja Şemiyê diçe Amedê"
+                      "Em roja Şemiyê diçin Kobaniyê.",
+                      "Em roja Şemiyê diçin Kobaniyê"
                     ],
                     "voice": "hamo"
                   }
@@ -206,16 +206,16 @@
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Hevalo tilts his head at the calendar, as if to ask when Xezal leaves. Tell him: “Xezal is going on Saturday.”",
+                    "prompt": "Hevalo tilts his head at the calendar, as if to ask when you are all leaving. Tell him: “We are going on Saturday.”",
                     "accepted": [
-                      "Xezal roja Şemiyê diçe.",
-                      "Xezal Şemiyê diçe.",
-                      "Roja Şemiyê Xezal diçe.",
-                      "Şemiyê Xezal diçe.",
-                      "Xezal roja Şemiyê diçe",
-                      "Xezal Şemiyê diçe",
-                      "Roja Şemiyê Xezal diçe",
-                      "Şemiyê Xezal diçe"
+                      "Em roja Şemiyê diçin.",
+                      "Em Şemiyê diçin.",
+                      "Roja Şemiyê em diçin.",
+                      "Şemiyê em diçin.",
+                      "Em roja Şemiyê diçin",
+                      "Em Şemiyê diçin",
+                      "Roja Şemiyê em diçin",
+                      "Şemiyê em diçin"
                     ],
                     "voice": "hamo"
                   }
@@ -233,7 +233,7 @@
                   "position": 14,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Xezal leaves on Saturday. Say it aloud: “Tomorrow is Saturday.”",
+                    "prompt": "It is Friday evening at last, and the bags are by the door. Say it aloud: “Tomorrow is Saturday.”",
                     "reference": "Sibe Şemî ye.",
                     "voice": "hamo"
                   }
@@ -351,7 +351,7 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Xezal teases her uncle, and you join in. Tell Hamo: “For you, every day is a day of rest!”",
+                    "prompt": "Xezal teases Hamo, and you join in. Tell Hamo: “For you, every day is a day of rest!”",
                     "accepted": [
                       "Ji bo te her roj roja bêhnvedanê ye!",
                       "Ji bo te, her roj roja bêhnvedanê ye!",
@@ -368,7 +368,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Betlaneya Xezalê kin e.",
-                    "prompt": "Hamo’s moustache droops. What is he sad about? “Betlaneya Xezalê kin e.”",
+                    "prompt": "Xezal has only a few days off from the village school, and Hamo’s moustache droops. What is he sad about? “Betlaneya Xezalê kin e.”",
                     "accepted": [
                       "Xezal's holiday is short.",
                       "Xezal's vacation is short.",
@@ -401,7 +401,7 @@
                   "position": 11,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal rolls her eyes and tells you about her uncle’s Fridays. Hamo just laughs and owns up. Type what he says.",
+                    "prompt": "Xezal rolls her eyes and tells you about Hamo’s Fridays. Hamo just laughs and owns up. Type what he says.",
                     "accepted": [
                       "Roja Înê ez tenê çay vedixwim.",
                       "Roja Înê ez tenê çay vedixwim"
@@ -448,7 +448,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Xezal di betlaneyê de ye.",
-                    "prompt": "Why is Xezal in the village this week? “Xezal di betlaneyê de ye.”",
+                    "prompt": "Why is Xezal not at the village school this week? “Xezal di betlaneyê de ye.”",
                     "options": [
                       "She is ill.",
                       "She is on holiday.",
@@ -484,65 +484,70 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Xalo, Xezal kengî diçe Amedê?",
-                        "en": "Uncle, when is Xezal going to Amed?"
+                        "text": "Xalo, tu kengî diçî Kobaniyê?",
+                        "en": "Uncle, when are you going to Kobanî?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Roja Şemiyê. Ew zû ye!",
-                        "en": "On Saturday. That’s soon!"
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Xezo, tu nikarî heta Newrozê bimînî?",
-                        "en": "Xezo, can’t you stay until Newroz?"
+                        "text": "Roja Şemiyê. Berî Şemiyê çar roj hene.",
+                        "en": "On Saturday. There are four days before Saturday."
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, heta Newrozê du meh hene!",
-                        "en": "Uncle, there are two months until Newroz!"
+                        "text": "Baran xemgîn e. Ew dibêje: «Xalo Hamo li vir dimîne!»",
+                        "en": "Baran is sad. He says: “Xalo Hamo is staying here!”"
                       },
                       {
                         "speaker": 0,
-                        "text": "Rast e… Ew xwendekar e. Piştî betlaneyê ew li Amedê ye.",
-                        "en": "True… She’s a student. After the holiday she’s in Amed."
+                        "text": "Lo Baran, ez ji bo çend rojan diçim, ne ji bo du mehan!",
+                        "en": "Baran, my boy, I’m going for a few days, not for two months!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Lê Baran xemgîn e, û Hêvî pêlavên Xezalê nade wê!",
-                        "en": "But Baran is sad, and Hêvî won’t give Xezal her shoes!"
+                        "text": "Û pêlavên te li cem Hêviyê ne.",
+                        "en": "And your shoes are with Hêvî."
                       },
                       {
                         "speaker": 0,
-                        "text": "Hêvî dibêje: «Xezal dimîne!» Berî Şemiyê çar rojên me hene.",
-                        "en": "Hêvî says: “Xezal is staying!” We have four days before Saturday."
+                        "text": "Pêlavên min? Bê pêlav ez naçim Kobaniyê!",
+                        "en": "My shoes? I’m not going to Kobanî without shoes!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Û îsal? Xezal Newrozê tê gund?",
-                        "en": "And this year? Is Xezal coming to the village for Newroz?"
+                        "text": "Hêvî dibêje: «Baş e! Tu li vir dimînî!»",
+                        "en": "Hêvî says: “Good! Then you’re staying here!”"
                       },
                       {
                         "speaker": 0,
-                        "text": "Bêguman! Û Şemiyê? Xezo, em hemû bi te re tên!",
-                        "en": "Of course! And Saturday? Xezo, we are all coming with you!"
+                        "text": "Hêvî zîrek e… lê ez jî zîrek im! Hûn jî bi me re tên!",
+                        "en": "Hêvî is clever… but so am I! You are coming with us too!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hûn hemû? Bi rastî?",
-                        "en": "All of you? Really?"
+                        "text": "Baran û Hêvî jî? Bi rastî?",
+                        "en": "Baran and Hêvî too? Really?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê! Û Hevalo jî tê!",
-                        "en": "Yes! And Hevalo is coming too!"
+                        "text": "Diya min dibêje: her kes tê. Her kes!",
+                        "en": "My mother says: everyone comes. Everyone!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û piştî Kobaniyê? Tu vedigerî?",
+                        "en": "And after Kobanî? Are you coming back?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bêguman! Mala min li Sêvanê ye. Û îsal Newroza me li vir e!",
+                        "en": "Of course! My home is in Sêvan. And this year we have Newroz here!"
                       }
                     ],
-                    "prompt": "Kî bi Xezalê re diçe Amedê?",
+                    "prompt": "Kî bi Hamo re diçe Kobaniyê?",
                     "options": [
                       "Tenê Hevalo",
                       "Kes naçe",
-                      "Hemû malbat"
+                      "Hemû, zarok jî"
                     ],
                     "correctIndex": 2
                   }
@@ -551,13 +556,13 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Tu kengî diçî Amedê?",
+                    "say": "Em kengî diçin Kobaniyê?",
                     "voice": "hamo",
-                    "prompt": "Hamo asks Xezal a question. What does he want to know? “Tu kengî diçî Amedê?”",
+                    "prompt": "Hamo pretends he has forgotten, just to hear Baran shout the answer. What does he ask? “Em kengî diçin Kobaniyê?”",
                     "options": [
-                      "Why she is going to Amed",
-                      "When she is going to Amed",
-                      "Who is going to Amed"
+                      "Why they are going to Kobanî",
+                      "When they are going to Kobanî",
+                      "Who is going to Kobanî"
                     ],
                     "correctIndex": 1
                   }
@@ -567,7 +572,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Heta Newrozê du meh hene.",
-                    "prompt": "Hamo would love Xezal to stay until Newroz, but even he has to admit it. What does he say? “Heta Newrozê du meh hene.”",
+                    "prompt": "Baran wants to know if Hamo will be back for Newroz. Hamo laughs: there is plenty of time. What does he say? “Heta Newrozê du meh hene.”",
                     "accepted": [
                       "There are two months until Newroz.",
                       "Newroz is two months away.",
@@ -585,12 +590,12 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask Xezal: “When are you going?”",
+                    "prompt": "Nazê has her basket on her arm. Ask her: “When are you going to the market?”",
                     "accepted": [
-                      "Tu kengî diçî?",
-                      "Kengî tu diçî?",
-                      "Tu kengî diçî",
-                      "Kengî tu diçî"
+                      "Tu kengî diçî bazarê?",
+                      "Kengî tu diçî bazarê?",
+                      "Tu kengî diçî bazarê",
+                      "Kengî tu diçî bazarê"
                     ],
                     "voice": "hamo"
                   }
@@ -599,10 +604,11 @@
                   "position": 5,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal makes a promise, and Hamo repeats it for everyone, very pleased. Type what he says.",
+                    "prompt": "Xezal has never seen Newroz in a village. Hamo tells everyone, very pleased. Type what he says.",
                     "accepted": [
-                      "Îsal Xezal Newrozê tê gund.",
-                      "Îsal Xezal Newrozê tê gund"
+                      "Îsal Newroza Xezalê li gund e.",
+                      "Îsal Newroza Xezalê li gund e",
+                      "Îsal Newroza Xezalê li gund e!"
                     ],
                     "voice": "hamo"
                   }
@@ -612,10 +618,10 @@
                   "type": "writing",
                   "payload": {
                     "voice": "hamo",
-                    "prompt": "Baran stamps his foot. Complete what he says: “Xezal li vir …!” (is staying)",
+                    "prompt": "Hêvî stamps her foot: she will not be left behind. Complete what she says: “Ez li vir …!” (am not staying)",
                     "accepted": [
-                      "Xezal li vir dimîne!",
-                      "Xezal li vir dimîne"
+                      "Ez li vir namînim!",
+                      "Ez li vir namînim"
                     ]
                   }
                 },
@@ -651,7 +657,7 @@
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Xezal says Newroz is two months away. Which is right?",
+                    "prompt": "Hamo says Newroz is two months away. Which is right?",
                     "options": [
                       "du meh",
                       "du mehan",
@@ -665,8 +671,8 @@
                   "type": "speaking",
                   "payload": {
                     "voice": "hamo",
-                    "prompt": "Say Hamo’s big decision aloud: “We are all coming with you!”",
-                    "reference": "Em hemû bi te re tên!"
+                    "prompt": "Say Hamo’s big decision aloud, the way he tells Baran and Hêvî: “You are coming with us too!”",
+                    "reference": "Hûn jî bi me re tên!"
                   }
                 },
                 {
@@ -718,14 +724,14 @@
                   "position": 14,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Baran asks why Xezal can’t stay. Tell him: “After the holiday, Xezal is in Amed.”",
+                    "prompt": "Baran asks if Xezal will stay in Kobanî now. Tell him: “After the holiday, Xezal is at the school.”",
                     "accepted": [
-                      "Piştî betlaneyê Xezal li Amedê ye.",
-                      "Xezal piştî betlaneyê li Amedê ye.",
-                      "Piştî betlaneyê, Xezal li Amedê ye.",
-                      "Piştî betlaneyê Xezal li Amedê ye",
-                      "Xezal piştî betlaneyê li Amedê ye",
-                      "Piştî betlaneyê, Xezal li Amedê ye"
+                      "Piştî betlaneyê Xezal li dibistanê ye.",
+                      "Xezal piştî betlaneyê li dibistanê ye.",
+                      "Piştî betlaneyê, Xezal li dibistanê ye.",
+                      "Piştî betlaneyê Xezal li dibistanê ye",
+                      "Xezal piştî betlaneyê li dibistanê ye",
+                      "Piştî betlaneyê, Xezal li dibistanê ye"
                     ],
                     "voice": "hamo"
                   }
@@ -761,33 +767,38 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez dinivîsim: «Duşem, çay. Sêşem, çay. Çarşem, çay.»",
-                        "en": "I’m writing: “Monday, tea. Tuesday, tea. Wednesday, tea.”"
+                        "text": "Duşem: çay. Sêşem: çay. Çarşem: çay.",
+                        "en": "Monday: tea. Tuesday: tea. Wednesday: tea."
                       },
                       {
                         "speaker": 1,
-                        "text": "Û roja Înê?",
-                        "en": "And on Friday?"
+                        "text": "Û roja Şemiyê?",
+                        "en": "And on Saturday?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Roja Înê roja bêhnvedanê ye. Çay û çay!",
-                        "en": "Friday is the day of rest. Tea and tea!"
+                        "text": "Şemî: Kobanî! Û çay, bêguman.",
+                        "en": "Saturday: Kobanî! And tea, of course."
                       },
                       {
                         "speaker": 1,
-                        "text": "Xezal jî dinivîse: «Şemî, Amed.»",
-                        "en": "Xezal is writing too: “Saturday, Amed.”"
+                        "text": "Hevalo jî li salnameyê dinêre.",
+                        "en": "Hevalo is looking at the calendar too."
                       },
                       {
                         "speaker": 0,
-                        "text": "Û ji bo Hevalo ez dinivîsim: «Her roj, sêv!»",
-                        "en": "And for Hevalo I’m writing: “Every day, apples!”"
+                        "text": "Ji bo Hevalo ez dinivîsim: «Her roj, sêv.»",
+                        "en": "For Hevalo I’m writing: “Every day, apples.”"
                       },
                       {
                         "speaker": 1,
-                        "text": "Her roj sêv? Hevalo her roj birçî ye!",
-                        "en": "Apples every day? Hevalo is hungry every day!"
+                        "text": "Lê Hevalo naxwîne!",
+                        "en": "But Hevalo can’t read!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Naxwîne, lê sêvan dizane!",
+                        "en": "He can’t read, but he knows his apples!"
                       },
                       {
                         "speaker": 1,
@@ -796,13 +807,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew dinivîse: «Newroz… û tiştekî nû jî.»",
-                        "en": "She’s writing: “Newroz… and something new as well.”"
+                        "text": "«Newroz… û tiştekî nû jî.»",
+                        "en": "“Newroz… and something new as well.”"
                       },
                       {
                         "speaker": 1,
-                        "text": "Tiştekî nû? Çi ye?",
-                        "en": "Something new? What is it?"
+                        "text": "Tiştekî nû? Çi?",
+                        "en": "Something new? What?"
                       },
                       {
                         "speaker": 0,
@@ -812,9 +823,9 @@
                     ],
                     "prompt": "Dapîr li ser salnameyê çi dinivîse?",
                     "options": [
-                      "Şemî, Amed.",
+                      "Şemî: Kobanî!",
                       "Newroz… û tiştekî nû jî.",
-                      "Her roj, sêv!"
+                      "Her roj, sêv."
                     ],
                     "correctIndex": 1
                   }
@@ -949,7 +960,7 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Gulîstan has a new house. What do you say to her?",
+                    "prompt": "Ferhad has a new tractor. What do you say to him?",
                     "options": [
                       "Bi xatirê te!",
                       "Şev baş!",
@@ -962,16 +973,16 @@
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Remind Xezal: “On Saturday you are going to Amed.”",
+                    "prompt": "Xezal is packing far too early. Remind her: “On Saturday we are going to Kobanî.”",
                     "accepted": [
-                      "Roja Şemiyê tu diçî Amedê.",
-                      "Tu roja Şemiyê diçî Amedê.",
-                      "Şemiyê tu diçî Amedê.",
-                      "Tu Şemiyê diçî Amedê.",
-                      "Roja Şemiyê tu diçî Amedê",
-                      "Tu roja Şemiyê diçî Amedê",
-                      "Şemiyê tu diçî Amedê",
-                      "Tu Şemiyê diçî Amedê"
+                      "Roja Şemiyê em diçin Kobaniyê.",
+                      "Em roja Şemiyê diçin Kobaniyê.",
+                      "Şemiyê em diçin Kobaniyê.",
+                      "Em Şemiyê diçin Kobaniyê.",
+                      "Roja Şemiyê em diçin Kobaniyê",
+                      "Em roja Şemiyê diçin Kobaniyê",
+                      "Şemiyê em diçin Kobaniyê",
+                      "Em Şemiyê diçin Kobaniyê"
                     ],
                     "voice": "hamo"
                   }
@@ -1462,8 +1473,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ya min? Ez… nizanim. Nayê bîra min.",
-                        "en": "Mine? I… don’t know. I don’t remember."
+                        "text": "Ya min? Wey… nayê bîra min.",
+                        "en": "Mine? Oh… I don’t remember."
                       },
                       {
                         "speaker": 1,
@@ -1472,23 +1483,23 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Na. Lê rojbûna Nazê di Îlonê de ye. Ew tê bîra min!",
-                        "en": "No. But Nazê’s birthday is in September. That I remember!"
+                        "text": "Na. Lê ya Hêviyê tê bîra min: di Îlonê de ye. Ew her roj dibêje!",
+                        "en": "No. But I remember Hêvî’s: it’s in September. She tells me every day!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Baş e! Lê ya te? Kîjan sal? Kîjan meh?",
-                        "en": "Good! But yours? Which year? Which month?"
+                        "text": "Û ya te? Kîjan meh? Kîjan sal?",
+                        "en": "And yours? Which month? Which year?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez zarokê yekem im, Gulîstan zaroka duyem e. Dapîr dizane.",
-                        "en": "I’m the first child, Gulîstan is the second. Dapîr knows."
+                        "text": "Ez zarokê yekem im… Diya min dizane, lê ew li Kobaniyê ye.",
+                        "en": "I’m the first child… My mother knows, but she’s in Kobanî."
                       },
                       {
                         "speaker": 1,
-                        "text": "Dapîr! Rojbûna Hamo kengî ye?",
-                        "en": "Dapîr! When is Hamo’s birthday?"
+                        "text": "Dapîr! Rojbûna Xalo Hamo kengî ye?",
+                        "en": "Dapîr! When is Xalo Hamo’s birthday?"
                       },
                       {
                         "speaker": 0,
@@ -1497,13 +1508,13 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Sala berfa mezin? Ev ne dîrok e, xalo!",
-                        "en": "The year of the big snow? That’s not a date, uncle!"
+                        "text": "Sala berfa mezin? Ev ne dîrok e!",
+                        "en": "The year of the big snow? That’s not a date!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ji bo Dapîrê dîrok e!",
-                        "en": "For Dapîr it is a date!"
+                        "text": "Ji bo Dapîrê dîrok e. Û roja Şemiyê, li Kobaniyê, diya min dibêje!",
+                        "en": "For Dapîr it is a date. And on Saturday, in Kobanî, my mother will tell us!"
                       }
                     ],
                     "prompt": "Rojbûna Hamo kengî ye?",
@@ -1519,12 +1530,12 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Rojbûna Nazê di Îlonê de ye.",
-                    "prompt": "There is one birthday Hamo never forgets. Whose is it, and when? “Rojbûna Nazê di Îlonê de ye.”",
+                    "say": "Rojbûna Hêviyê di Îlonê de ye.",
+                    "prompt": "There is one birthday Hamo never forgets, because Hêvî reminds him of it every day. When is it? “Rojbûna Hêviyê di Îlonê de ye.”",
                     "options": [
-                      "Xezal’s, in May",
-                      "Dapîr’s, in March",
-                      "Nazê’s, in September"
+                      "In May",
+                      "In March",
+                      "In September"
                     ],
                     "correctIndex": 2,
                     "voice": "hamo"
@@ -1565,11 +1576,11 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Gulîstan is Dapîr’s second child. Which sentence says so?",
+                    "prompt": "Hêvî is Nazê’s second child. Which sentence says so?",
                     "options": [
-                      "Gulîstan zaroka du e.",
-                      "Gulîstan zaroka duyem e.",
-                      "Gulîstan du zarok e."
+                      "Hêvî zaroka du e.",
+                      "Hêvî zaroka duyem e.",
+                      "Hêvî du zarok e."
                     ],
                     "correctIndex": 1
                   }
@@ -1578,11 +1589,11 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo works out the family order for you. Type what he says.",
+                    "prompt": "Hamo explains the order of the children next door, with a nod towards Nazê’s house. Type what he says.",
                     "accepted": [
-                      "Ez zarokê yekem im, Gulîstan zaroka duyem e.",
-                      "Ez zarokê yekem im, Gulîstan zaroka duyem e",
-                      "Ez zarokê yekem im Gulîstan zaroka duyem e"
+                      "Baran zarokê yekem e, Hêvî zaroka duyem e.",
+                      "Baran zarokê yekem e, Hêvî zaroka duyem e",
+                      "Baran zarokê yekem e Hêvî zaroka duyem e"
                     ],
                     "voice": "hamo"
                   }
@@ -1745,43 +1756,43 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Îro Çarşem e. Pêncşem, În, Şemî… Heta Şemiyê sê roj hene.",
-                        "en": "Today is Wednesday. Thursday, Friday, Saturday… There are three days until Saturday."
+                        "text": "Îro Çarşem e. Pêncşem, În… Şemî! Heta Şemiyê sê roj hene.",
+                        "en": "Today is Wednesday. Thursday, Friday… Saturday! There are three days until Saturday."
                       },
                       {
                         "speaker": 1,
-                        "text": "Sê roj, xalo. Dema me kêm e. Û Şemiyê encamên azmûna Xezalê jî tên.",
-                        "en": "Three days, uncle. We don’t have much time. And on Saturday Xezal’s exam results come out too."
+                        "text": "Û roja Şemiyê encamên azmûna Xezalê jî tên.",
+                        "en": "And on Saturday Xezal’s exam results come out too."
                       },
                       {
                         "speaker": 0,
-                        "text": "Encamên kîjan azmûnê?",
-                        "en": "The results of which exam?"
+                        "text": "Kîjan azmûn?",
+                        "en": "Which exam?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Azmûna dîrokê.",
-                        "en": "The history exam."
+                        "text": "Azmûna dîrokê. Ew aciz e, xalo.",
+                        "en": "The history exam. She’s uneasy, uncle."
                       },
                       {
                         "speaker": 0,
-                        "text": "Dîrok? Baş e! Xezo, tu dizanî: rojbûna min kengî ye?",
-                        "en": "History? Good! Xezo, you know, then: when is my birthday?"
+                        "text": "Dîrok? Xezo, tu dizanî rojbûna min kengî ye?",
+                        "en": "History? Xezo, do you know when my birthday is, then?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo! Xezal hinek aciz e û tu henekan dikî.",
-                        "en": "Uncle! Xezal is a bit uneasy, and you’re making jokes."
+                        "text": "Xalo! Ev ne dema henekan e.",
+                        "en": "Uncle! This is not the time for jokes."
                       },
                       {
                         "speaker": 0,
-                        "text": "Xem meke, Xezo. Tu zîrek î. Encam baş in.",
-                        "en": "Don’t worry, Xezo. You’re clever. The results are good."
+                        "text": "Rast e. Xem meke, Xezo. Hêvî heye, û tu zîrek î.",
+                        "en": "True. Don’t worry, Xezo. There is hope, and you are clever."
                       },
                       {
                         "speaker": 1,
-                        "text": "Tu çawa dizanî?",
-                        "en": "How do you know?"
+                        "text": "Encam baş in? Tu çawa dizanî?",
+                        "en": "The results are good? How do you know?"
                       },
                       {
                         "speaker": 0,
@@ -1790,8 +1801,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Baş e. Lê Şemiyê tu ne dereng î, xalo?",
-                        "en": "All right. But on Saturday you’re not late, uncle?"
+                        "text": "Û roja Şemiyê? Tu ne dereng î, xalo?",
+                        "en": "And on Saturday? You won’t be late, uncle?"
                       },
                       {
                         "speaker": 0,
@@ -1890,7 +1901,7 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Hamo’s little daughter is called Hêvî. What does “hêvî” mean?",
+                    "prompt": "The little girl next door is called Hêvî. What does “hêvî” mean?",
                     "options": [
                       "snow",
                       "hope",
@@ -2483,8 +2494,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Pênc deqîqe? Xezal li telefona xwe dinêre: saet heşt e. Ev saetek e!",
-                        "en": "Five minutes? Xezal is looking at her phone: it’s eight o’clock. That’s an hour!"
+                        "text": "Pênc deqîqe? Saet heşt e, xalo. Ev saetek e!",
+                        "en": "Five minutes? It’s eight o’clock, uncle. That’s an hour!"
                       },
                       {
                         "speaker": 0,
@@ -2493,18 +2504,18 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Cilên te li ser kursiyê ne!",
-                        "en": "Your clothes are on the chair!"
+                        "text": "Li ser kursiyê ne!",
+                        "en": "They’re on the chair!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Baş e, baş e. Ez têm. Hêdî hêdî…",
-                        "en": "All right, all right. I’m coming. Slowly, slowly…"
+                        "text": "Baş e, baş e. Ez têm… hêdî hêdî.",
+                        "en": "All right, all right. I’m coming… slowly, slowly."
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, tu pir hêdî yî! Saet neh e. Taştê sar e!",
-                        "en": "Uncle, you’re so slow! It’s nine. Breakfast is cold!"
+                        "text": "Saet neh e! Taştê sar e!",
+                        "en": "It’s nine! Breakfast is cold!"
                       },
                       {
                         "speaker": 0,
@@ -2513,13 +2524,13 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, niha dema firavînê ye!",
-                        "en": "Uncle, now it’s lunchtime!"
+                        "text": "Xalo… niha dema firavînê ye.",
+                        "en": "Uncle… now it’s lunchtime."
                       },
                       {
                         "speaker": 0,
-                        "text": "Firavîn? Baş e! Ez birçî me.",
-                        "en": "Lunch? Good! I’m hungry."
+                        "text": "Firavîn? Wey, baş e! Ez birçî me.",
+                        "en": "Lunch? Oh, good! I’m hungry."
                       },
                       {
                         "speaker": 1,
@@ -2597,7 +2608,7 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Xezal says her uncle is very slow. Which is right?",
+                    "prompt": "Xezal says Hamo is very slow. Which is right?",
                     "options": [
                       "Tu pir hêdî î!",
                       "Tu pir hêdî yî!",
@@ -2676,7 +2687,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Piştî firavînê ez radizim.",
-                    "prompt": "And after the meal? Xezal sighs, but her uncle is already yawning. What does he say? “Piştî firavînê ez radizim.”",
+                    "prompt": "And after the meal? Xezal sighs, but Hamo is already yawning. What does he say? “Piştî firavînê ez radizim.”",
                     "accepted": [
                       "After lunch I sleep",
                       "I sleep after lunch",
@@ -2745,53 +2756,53 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Serê sibehê, di saet heftan de, çay.",
-                        "en": "Early in the morning, at seven, tea."
+                        "text": "Karê min? Serê sibehê, di saet heftan de… çay.",
+                        "en": "My work? Early in the morning, at seven… tea."
                       },
                       {
                         "speaker": 1,
-                        "text": "Û paşê?",
-                        "en": "And then?"
+                        "text": "Çay kar e?",
+                        "en": "Tea is work?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Di saet heştan de kar. Ez li baxçe dixebitim.",
-                        "en": "At eight, work. I work in the orchard."
+                        "text": "Bêguman! Paşê baxçe, heta nîvro.",
+                        "en": "Of course! Then the orchard, until noon."
                       },
                       {
                         "speaker": 1,
-                        "text": "Û nîvro?",
-                        "en": "And at noon?"
+                        "text": "Û piştî nîvro?",
+                        "en": "And in the afternoon?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Nîvro firavîn. Piştî nîvro xew, tenê pênc deqîqe!",
-                        "en": "At noon, lunch. In the afternoon a nap, just five minutes!"
+                        "text": "Xew. Tenê pênc deqîqe!",
+                        "en": "A nap. Just five minutes!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Pênc deqîqe? Saetek, xalo!",
-                        "en": "Five minutes? An hour, uncle!"
+                        "text": "Pênc deqîqeyên te saetek in, xalo!",
+                        "en": "Your five minutes are an hour, uncle!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Êvarî şîv û çay. Di saet nehan de jî çay.",
-                        "en": "In the evening, dinner and tea. And at nine, tea too."
+                        "text": "Êvarî şîv û çay. Û di saet nehan de jî…",
+                        "en": "In the evening, dinner and tea. And at nine, too…"
                       },
                       {
                         "speaker": 1,
-                        "text": "Û roja Şemiyê? Saet heşt, xalo!",
-                        "en": "And on Saturday? Eight o’clock, uncle!"
+                        "text": "Çay!",
+                        "en": "Tea!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Bêguman! Ez saetê amade dikim: heşt.",
-                        "en": "Of course! I’m setting the clock: eight."
+                        "text": "Tu zîrek î! Niha saeta Şemiyê: heşt.",
+                        "en": "You’re clever! Now the clock for Saturday: eight."
                       },
                       {
                         "speaker": 1,
-                        "text": "Lê kîjan heşt?",
-                        "en": "But which eight? (Hevalo tilts his head too)"
+                        "text": "Lê kîjan heşt, xalo?",
+                        "en": "But which eight, uncle?"
                       },
                       {
                         "speaker": 0,
@@ -2873,7 +2884,7 @@
                   "position": 6,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Xezal has an idea about her uncle’s job, and you agree. Tell Hamo: “Karê te yê … çay e!” (daily) Type the whole sentence.",
+                    "prompt": "Xezal has an idea about Hamo’s job, and you agree. Tell Hamo: “Karê te yê … çay e!” (daily) Type the whole sentence.",
                     "accepted": [
                       "Karê te yê rojane çay e!",
                       "Karê te yê rojane çay e"
@@ -3232,14 +3243,14 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Xezal her roj bi otobûsê diçe zanîngehê.",
-                    "prompt": "Hamo tells Baran about Xezal’s week in Amed. How does she get to the university? “Xezal her roj bi otobûsê diçe zanîngehê.”",
+                    "say": "Roja Duşemê Xezal bi otobûsê diçe zanîngehê.",
+                    "prompt": "Baran wants to know why Xezal is never at the village school on Mondays. Hamo explains. Where does she go, and how? “Roja Duşemê Xezal bi otobûsê diçe zanîngehê.”",
                     "options": [
-                      "By bus, sometimes",
-                      "By bus, every day",
-                      "With a friend, every day"
+                      "To the university, by bus",
+                      "To the market, by bus",
+                      "To the university, on foot"
                     ],
-                    "correctIndex": 1,
+                    "correctIndex": 0,
                     "voice": "hamo"
                   }
                 },
@@ -3247,7 +3258,7 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Xezal draws a bus for Baran and writes underneath it: “Otobûs di saet heftan de tê. Ew her gav tije ye!” When does her bus come, and what is it like?",
+                    "prompt": "Xezal draws her Monday bus for Baran and writes underneath it: “Otobûs di saet heftan de tê. Ew her gav tije ye!” When does her bus come, and what is it like?",
                     "options": [
                       "At seven, and it is always full",
                       "At seven, and it is always empty",
@@ -3289,7 +3300,7 @@
                   "position": 5,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal loves her lessons, and her uncle is proud of her. Type what he says.",
+                    "prompt": "Xezal loves her lessons, and Hamo is proud of her. Type what he says.",
                     "accepted": [
                       "Xezal her roj tiştekî nû fêr dibe.",
                       "Xezal her roj tiştekî nû fêr dibe"
@@ -3327,17 +3338,19 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "say": "Roja Pêncşemê Xezal bi hevalên xwe re werziş dike.",
-                    "prompt": "And on Thursdays? Hamo knows that too. What does Xezal do? “Roja Pêncşemê Xezal bi hevalên xwe re werziş dike.”",
+                    "say": "Roja Pêncşemê Xezal bi zarokên dibistanê re werziş dike.",
+                    "prompt": "And on Thursdays? Hamo knows that too: he can hear it from his orchard. What does Xezal do? “Roja Pêncşemê Xezal bi zarokên dibistanê re werziş dike.”",
                     "accepted": [
-                      "On Thursday Xezal does sport with her friends",
-                      "On Thursdays Xezal does sport with her friends",
-                      "On Thursday Xezal does sports with her friends",
-                      "On Thursdays Xezal does sports with her friends",
-                      "Xezal does sport with her friends on Thursday",
-                      "Xezal does sport with her friends on Thursdays",
-                      "On Thursday Xezal plays sport with her friends",
-                      "On Thursday Xezal exercises with her friends"
+                      "On Thursday Xezal does sport with the school children",
+                      "On Thursdays Xezal does sport with the school children",
+                      "On Thursday Xezal does sport with the schoolchildren",
+                      "On Thursdays Xezal does sport with the schoolchildren",
+                      "On Thursday Xezal does sports with the school children",
+                      "On Thursdays Xezal does sports with the children from the school",
+                      "Xezal does sport with the school children on Thursday",
+                      "Xezal does sport with the school children on Thursdays",
+                      "On Thursday Xezal plays sport with the school children",
+                      "On Thursday Xezal exercises with the school children"
                     ],
                     "voice": "hamo"
                   }
@@ -3346,7 +3359,7 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Baran about Xezal’s Fridays: “On Friday there is music.”",
+                    "prompt": "Tell Baran about Fridays at the school: “On Friday there is music.”",
                     "accepted": [
                       "Roja Înê muzîk heye.",
                       "Roja Înê muzîk heye"
@@ -3457,8 +3470,8 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Plan wiha ye: roja Şemiyê, di saet heştan de, otobûs ji meydanê diçe.",
-                        "en": "The plan is like this: on Saturday, at eight, the bus leaves from the square."
+                        "text": "Plan wiha ye: roja Şemiyê, di saet heştan de, otobûsa Kobaniyê ji meydanê diçe.",
+                        "en": "The plan is like this: on Saturday, at eight, the Kobanî bus leaves from the square."
                       },
                       {
                         "speaker": 0,
@@ -3469,6 +3482,16 @@
                         "speaker": 1,
                         "text": "Na, xalo! Di saet heft û nîvan de em derî digirin û diçin meydanê.",
                         "en": "No, uncle! At half past seven we close the door and go to the square."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Heft û nîv? Ji bo çayê dem tune?",
+                        "en": "Half past seven? There’s no time for tea?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Çay di otobûsê de!",
+                        "en": "Tea on the bus!"
                       },
                       {
                         "speaker": 0,
@@ -3487,8 +3510,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Hemû li Nazê dinêrin. Nazê, tu çi dibêjî?",
-                        "en": "Everyone looks at Nazê. Nazê, what do you say?"
+                        "text": "Hemû li Nazê dinêrin…",
+                        "en": "Everyone looks at Nazê…"
                       },
                       {
                         "speaker": 0,
@@ -3502,8 +3525,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez rast dibêjim: Şemiyê ez cara yekem bi wext im!",
-                        "en": "I mean it: on Saturday I’m on time for the first time!"
+                        "text": "Ez rast dibêjim! Vê carê ez bi wext im.",
+                        "en": "I mean it! This time I’ll be on time."
                       }
                     ],
                     "prompt": "Otobûs kengî diçe?",
@@ -3712,8 +3735,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Çi? Saeta min deng nake!",
-                        "en": "What? My clock isn’t ringing!"
+                        "text": "Çi?! Saeta min deng nake!",
+                        "en": "What?! My clock isn’t ringing!"
                       },
                       {
                         "speaker": 1,
@@ -3722,8 +3745,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo jî dibeze! Ew bi lez e!",
-                        "en": "Hevalo is running too! He’s quick!"
+                        "text": "Pêlavên min… cilên min… Hevalo, tu jî dibezî?",
+                        "en": "My shoes… my clothes… Hevalo, are you running too?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Hevalo pêşî dibeze! Ew bi lez e!",
+                        "en": "Hevalo is running ahead! He’s fast!"
                       },
                       {
                         "speaker": 0,
@@ -3737,8 +3765,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ji nişka ve… otobûs tune.",
-                        "en": "Suddenly… the bus is gone."
+                        "text": "Ez bang dikim, Hevalo dibeze… û ji nişka ve… otobûs tune.",
+                        "en": "I call out, Hevalo runs… and suddenly… the bus is gone."
                       },
                       {
                         "speaker": 1,
@@ -3747,8 +3775,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Soza min hîn heye… lê otobûs tune.",
-                        "en": "My promise is still here… but the bus isn’t."
+                        "text": "Soza min li vir e. Otobûs diçe Kobaniyê… bê me.",
+                        "en": "My promise is here. The bus is going to Kobanî… without us."
                       }
                     ],
                     "prompt": "Ew dibezin meydanê. Otobûs disekine?",
@@ -3839,7 +3867,7 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo phones his sister Gulîstan and tells her what happened, a little sheepishly. Type what he says.",
+                    "prompt": "Hamo phones Lorîn in Kobanî and tells her what happened, a little sheepishly. Type what he says.",
                     "accepted": [
                       "Ez bang dikim, lê otobûs nasekine.",
                       "Ez bang dikim, lê otobûs nasekine",
@@ -3930,18 +3958,19 @@
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "say": "Em niha çawa diçin Amedê?",
+                    "say": "Em niha çawa diçin Kobaniyê?",
                     "voice": "hamo",
-                    "prompt": "Hamo looks down the empty road and scratches his head. What is everyone asking now? “Em niha çawa diçin Amedê?”",
+                    "prompt": "Hamo looks down the empty road and scratches his head. What is everyone asking now? “Em niha çawa diçin Kobaniyê?”",
                     "accepted": [
-                      "How do we get to Amed now?",
-                      "How are we going to Amed now?",
-                      "How will we get to Amed now?",
-                      "How do we go to Amed now?",
-                      "How do we get to Amed now",
-                      "How are we going to Amed now",
-                      "How will we get to Amed now",
-                      "How do we go to Amed now"
+                      "How do we get to Kobanî now?",
+                      "How are we going to Kobanî now?",
+                      "How will we get to Kobanî now?",
+                      "How do we go to Kobanî now?",
+                      "How do we get to Kobanî now",
+                      "How are we going to Kobanî now",
+                      "How will we get to Kobanî now",
+                      "How do we go to Kobanî now",
+                      "How do we get to Kobani now?"
                     ]
                   }
                 }

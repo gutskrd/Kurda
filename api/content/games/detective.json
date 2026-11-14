@@ -6,12 +6,12 @@
       "level": 2,
       "title": { "en": "The empty honey jar" },
       "intro": {
-        "en": "The doctor has given Hamo some advice, and Xezo has written it down. The neighbours keep bringing jars of honey, and Hevalo is guarding them. In the morning one jar is empty. Read the evidence on the board, answer each question, then say who ate the honey."
+        "en": "The doctor has given Hamo some advice, and Xezal has written it down. The neighbours keep bringing jars of honey, and Hevalo is guarding them. In the morning one jar is empty. Read the evidence on the board, answer each question, then say who ate the honey."
       },
       "suspects": [
-        { "id": "hamo", "name": "Hamo", "about": { "en": "Xezo’s uncle, who is not feeling well." }, "portrait": "hamo" },
+        { "id": "hamo", "name": "Hamo", "about": { "en": "Who is ill in bed, or says he is." }, "portrait": "hamo" },
         { "id": "hevalo", "name": "Hevalo", "about": { "en": "The young deer, who was guarding the jars." }, "portrait": "hevalo" },
-        { "id": "baran", "name": "Baran", "about": { "en": "Hamo’s son." } }
+        { "id": "baran", "name": "Baran", "about": { "en": "Nazê’s son from next door, nine years old." } }
       ],
       "evidence": [
         { "id": "advice", "kind": "note", "line": { "conversation": "roadu08s2l3a", "en": "And advice number three: honey at night is forbidden!" } },
@@ -20,9 +20,9 @@
         { "id": "apples", "kind": "statement", "line": { "conversation": "roadu08s2l4a", "en": "No, Hevalo is innocent. He only likes apples." } },
         { "id": "strong", "kind": "overheard", "from": "hamo", "line": { "conversation": "roadu08s2l3a", "en": "Forbidden? But honey makes me strong!" } },
         { "id": "hide", "kind": "overheard", "from": "hamo", "line": { "conversation": "roadu08s1l4a", "en": "All right, all right… I’ll hide the honey under the bedding." } },
-        { "id": "empty", "kind": "note", "line": { "conversation": "roadu08s2l4a", "en": "In the morning… What’s this? A jar is empty! Who is the thief?" } },
-        { "id": "moustache", "kind": "statement", "line": { "conversation": "roadu08s2l4a", "en": "Uncle… why is your moustache full of honey?" } },
-        { "id": "innocent", "kind": "statement", "from": "hamo", "line": { "conversation": "roadu08s2l4a", "en": "My moustache? I… I’m innocent too!" } }
+        { "id": "empty", "kind": "note", "line": { "conversation": "roadu08s2l4a", "en": "In the morning… Look! A jar is empty! Who is the thief?" } },
+        { "id": "moustache", "kind": "statement", "line": { "conversation": "roadu08s2l4a", "en": "Xalo… why is your moustache full of honey?" } },
+        { "id": "innocent", "kind": "statement", "from": "hamo", "line": { "conversation": "roadu08s2l4a", "en": "I’m innocent too! I’m ill!" } }
       ],
       "steps": [
         {
@@ -58,7 +58,7 @@
       ],
       "culprit": "hamo",
       "solution": {
-        "en": "The doctor forbade honey at night, and Xezo wrote it down. Hevalo was guarding the jars, but he only likes apples, and Baran was not at home. Hamo said honey makes him strong and spoke of hiding honey under the bedding — and in the morning his moustache was full of honey. Hamo ate the honey."
+        "en": "The doctor forbade honey at night, and Xezal wrote it down. Hevalo was guarding the jars, but he only likes apples, and Baran was not at home. Hamo said honey makes him strong and spoke of hiding honey under the bedding — and in the morning his moustache was full of honey. Hamo ate the honey."
       },
       "hints": [
         { "en": "Read what each suspect says, and find out who was not there at all." },

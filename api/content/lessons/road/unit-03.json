@@ -437,7 +437,7 @@
                   "position": 13,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal turns the map round and round: her uncle has had it upside down all morning. Hamo clears his throat. Type what he says.",
+                    "prompt": "Xezal turns the map round and round: Hamo has had it upside down all morning. He clears his throat. Type what he says.",
                     "accepted": [
                       "Bibore! Nexşe ne rast e.",
                       "Bibore! Nexşe ne rast e",
@@ -560,12 +560,12 @@
                       {
                         "speaker": 1,
                         "text": "Xalo, ev nexşe ye. Mala te li vir e.",
-                        "en": "Uncle, this is the map. Your house is here."
+                        "en": "Xalo, this is the map. Your house is here."
                       },
                       {
                         "speaker": 0,
                         "text": "Belê, belê. Ew mala min e.",
-                        "en": "Yes, yes. That is my house."
+                        "en": "Yes, yes. That is my house. (he hardly looks)"
                       },
                       {
                         "speaker": 1,
@@ -574,13 +574,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Li derve? Belkî ew li wir e.",
-                        "en": "Outside? Maybe it is over there. (he points at the apple trees)"
+                        "text": "Li derve? Belkî li wir e, li baxçe.",
+                        "en": "Outside? Maybe it is over there, in the orchard. (he points at the apple trees)"
                       },
                       {
                         "speaker": 1,
-                        "text": "Li wir sêv hene! Hevalo, na!",
-                        "en": "There are apples over there! Hevalo, no! (the deer is already trotting off)"
+                        "text": "Li baxçe sêv hene… Hevalo, na!",
+                        "en": "There are apples in the orchard… Hevalo, no! (the deer is already trotting off)"
                       },
                       {
                         "speaker": 0,
@@ -589,27 +589,32 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, ew rê şaş e! Nîşan li vir e.",
-                        "en": "Uncle, that way is wrong! The mark is here."
+                        "text": "Xalo, ew rê şaş e! Nîşan ne li baxçe ye.",
+                        "en": "Xalo, that is the wrong way! The mark is not in the orchard."
                       },
                       {
                         "speaker": 0,
                         "text": "Na, na. Rê hêsan e. Ez ne şaş im!",
-                        "en": "No, no. The way is easy. I am not wrong!"
+                        "en": "No, no. It is easy. I am not wrong!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo… ev nexşe ya te ye?",
+                        "en": "Xalo… is this map yours?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ji kerema xwe… ev gundê min e!",
-                        "en": "Please… this is my village!"
+                        "text": "Ya min? Na, na! Ez… ez birçî me. Metbex li hundir e!",
+                        "en": "Mine? No, no! I am… I am hungry. The kitchen is inside! (and off he goes)"
                       }
                     ],
-                    "prompt": "Where is the mark on the map?",
+                    "prompt": "What does Hamo do when you ask him whether the map is his?",
                     "options": [
-                      "Inside the house",
-                      "Over by the apple trees, where Hamo points",
-                      "Outside the house"
+                      "He says he is hungry and goes to the kitchen.",
+                      "He says yes, it is his.",
+                      "He points at the window."
                     ],
-                    "correctIndex": 2
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -646,7 +651,7 @@
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal grabs her uncle’s sleeve and points the other way. Hamo does not budge. Type what he says.",
+                    "prompt": "Xezal grabs Hamo’s sleeve and points the other way. Hamo does not budge. Type what he says.",
                     "accepted": [
                       "Ew rê ne şaş e! Rê hêsan e.",
                       "Ew rê ne şaş e! Rê hêsan e",
@@ -870,10 +875,10 @@
                   "position": 8,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Hamo asks which room is dark. Write the whole answer: “Odeya Hêviyê … ye.” (Hêvî’s room is dark.)",
+                    "prompt": "Hamo asks which room is dark. Write the whole answer: “Odeya mêvanan … ye.” (The guest room is dark.)",
                     "accepted": [
-                      "Odeya Hêviyê tarî ye.",
-                      "Odeya Hêviyê tarî ye"
+                      "Odeya mêvanan tarî ye.",
+                      "Odeya mêvanan tarî ye"
                     ],
                     "voice": "hamo"
                   }
@@ -902,7 +907,7 @@
                       {
                         "speaker": 1,
                         "text": "Spas, xalo. Mal hêsan e, lê nîşan li derve ye.",
-                        "en": "Thanks, uncle. The house is easy, but the mark is outside."
+                        "en": "Thanks, Xalo. The house is easy, but the mark is outside."
                       },
                       {
                         "speaker": 0,
@@ -912,7 +917,7 @@
                       {
                         "speaker": 1,
                         "text": "Xalo! Li pencereyê nîşanek heye!",
-                        "en": "Uncle! There is a mark on the window!"
+                        "en": "Xalo! There is a mark on the window!"
                       },
                       {
                         "speaker": 0,
@@ -938,6 +943,16 @@
                         "speaker": 0,
                         "text": "Belkî ya Bozo ye!",
                         "en": "Maybe it is Bozo’s!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Bozo? Bozo ker e, xalo! Qelema wî tune!",
+                        "en": "Bozo? Bozo is a donkey, Xalo! He has no pencil!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Rast e… Îcar, ya kê ye?",
+                        "en": "True… So then, whose is it? (he looks very hard at nobody in particular)"
                       }
                     ],
                     "prompt": "What does Hevalo sniff out on the window?",
@@ -1345,10 +1360,10 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo looks at his niece fondly. Type what he says.",
+                    "prompt": "Hevalo gazes up at Hamo, hoping for an apple. Type what Hamo says.",
                     "accepted": [
-                      "Çavên Xezalê qehweyî ne.",
-                      "Çavên Xezalê qehweyî ne"
+                      "Çavên Hevalo qehweyî ne.",
+                      "Çavên Hevalo qehweyî ne"
                     ],
                     "voice": "hamo"
                   }
@@ -1569,48 +1584,53 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Sêva sor fêkiyekî baş e. Ew şîrîn e!",
-                        "en": "The red apple is a good fruit. It is sweet!"
+                        "text": "Sêva sor! Şîrîn e, xweş e: fêkiyekî baş!",
+                        "en": "The red apple! Sweet, tasty: a proper fruit!"
                       },
                       {
                         "speaker": 1,
                         "text": "Na, xalo! Sêva kesk baş e. Ew hinek tirş e.",
-                        "en": "No, uncle! The green apple is good. It is a little sour."
+                        "en": "No, Xalo! The green apple is the good one. It is a little sour."
                       },
                       {
                         "speaker": 0,
-                        "text": "Tirş? Sêva tirş ne xweş e!",
-                        "en": "Sour? A sour apple is not nice!"
+                        "text": "Tirş? Sêva tirş? Na, na!",
+                        "en": "Sour? A sour apple? No, no!"
                       },
                       {
                         "speaker": 1,
                         "text": "Tu şaş î, xalo. Tirş xweş e!",
-                        "en": "You are wrong, uncle. Sour is nice!"
+                        "en": "You are wrong, Xalo. Sour is nice!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo! Kîjan sêv baş e?",
-                        "en": "Hevalo! Which apple is good?"
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Sêveke sor… sêveke kesk… Hevalo, herdu jî?!",
-                        "en": "A red apple… a green apple… Hevalo, both?! (the deer eats one of each)"
+                        "text": "Baş e. Hevalo! Kîjan sêv baş e?",
+                        "en": "Fine. Hevalo! Which apple is better?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hevalo! Sêvên me!",
-                        "en": "Hevalo! Our apples!"
+                        "text": "Hevalo… sor? Kesk? Hevalo, na: herdu jî?!",
+                        "en": "Hevalo… red? Green? Hevalo, no: both?! (the deer eats one of each)"
                       },
                       {
                         "speaker": 0,
                         "text": "Hevalo zîrek e! Herdu jî xweş in.",
                         "en": "Hevalo is clever! Both are tasty."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û sêvên me? Sêvên me li ku ne?",
+                        "en": "And our apples? Where are our apples?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Sêvên me? Ew niha sêvên Hevalo ne!",
+                        "en": "Our apples? They are Hevalo’s apples now!"
                       }
                     ],
                     "prompt": "How does Hevalo settle the argument?",
                     "options": [
-                      "He tries one of each and likes both",
+                      "He eats one of each, and likes both",
                       "He picks the red apple",
                       "He picks the green apple"
                     ],
@@ -1922,13 +1942,13 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Xalo, ew nîşana nû li pencereyê ya kê ye?",
-                        "en": "Uncle, whose is that new mark on the window?"
+                        "text": "Xalo, nîşana nû ya li pencereyê ya kê ye?",
+                        "en": "Xalo, whose is the new mark on the window?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ne ya min e. Rast e!",
-                        "en": "It is not mine. It is true!"
+                        "text": "Ne ya min e, bi rastî!",
+                        "en": "Not mine, really!"
                       },
                       {
                         "speaker": 1,
@@ -1942,23 +1962,23 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Hêvî? Hêvî, tu pir kêfxweş î…",
-                        "en": "Hêvî? Hêvî, you look very pleased…"
+                        "text": "Û Hêvî? Porê wê… zer e!",
+                        "en": "And Hêvî? Her hair is… yellow! (there is yellow chalk in it)"
                       },
                       {
                         "speaker": 0,
-                        "text": "Hêvî? Ew biçûk e, ew zarok e!",
-                        "en": "Hêvî? She is little, she is a child!"
+                        "text": "Zer? Na, na… ew ronî ye, ronî!",
+                        "en": "Yellow? No, no… that is the light, the light!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Zarok e, lê zîrek e!",
-                        "en": "A child, yes, but a clever one!"
+                        "text": "Xalo… tu jî pir kêfxweş î!",
+                        "en": "Xalo… you look very pleased too!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Belê… ew keçeke zîrek e.",
-                        "en": "Yes… she is a clever girl."
+                        "text": "Ez? Ez kêfxweş im, erê. Hêvî zarok e… lê keçeke zîrek e!",
+                        "en": "Me? I am pleased, yes. Hêvî is a child… but a clever girl!"
                       }
                     ],
                     "prompt": "Who is your suspect at the end?",
@@ -2001,11 +2021,11 @@
                   "position": 12,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo hears Xezal whisper “pîr” and protests. Type what he says.",
+                    "prompt": "Hamo hears Xezal whisper “pîr” and protests, stroking his moustache. Type what he says.",
                     "accepted": [
-                      "Porê Hamo reş e, ne spî!",
-                      "Porê Hamo reş e, ne spî",
-                      "Porê Hamo reş e ne spî"
+                      "Porê min reş e, ne spî!",
+                      "Porê min reş e, ne spî",
+                      "Porê min reş e ne spî"
                     ],
                     "voice": "hamo"
                   }
@@ -2157,7 +2177,7 @@
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal can’t stop giggling and points at her uncle’s head. Hamo reaches up and finds them. Type what he says.",
+                    "prompt": "Xezal can’t stop giggling and points at Hamo’s head. He reaches up and finds them. Type what he says.",
                     "accepted": [
                       "Berçavka min li ser serê min e!",
                       "Berçavka min li ser serê min e"
@@ -2422,10 +2442,10 @@
                   "position": 11,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo tells a neighbour who is staying with him. Type what you hear.",
+                    "prompt": "A neighbour asks where the young teacher from Amed lodges. Type what Hamo says.",
                     "accepted": [
-                      "Xezal li cem me ye.",
-                      "Xezal li cem me ye"
+                      "Xezal li cem Dapîr Şemsê ye.",
+                      "Xezal li cem Dapîr Şemsê ye"
                     ],
                     "voice": "hamo"
                   }
@@ -2456,7 +2476,7 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Hamo swears he has never seen this map. But the clue is in a child’s hand, and Xezal is staring at him. What does the writing suggest?",
+                    "prompt": "Hamo swears he has never seen this map. But the clues are in a child’s hand, there are two hands in fact, and Xezal is staring at him. What does the writing suggest?",
                     "options": [
                       "It is Xezal’s map",
                       "It is Hamo’s map, from when he was little",
@@ -2555,7 +2575,7 @@
                       {
                         "speaker": 1,
                         "text": "Xalo, dara gûzê ev e. Kanî jî li vir e.",
-                        "en": "Uncle, this is the walnut tree. And the spring is here."
+                        "en": "Xalo, this is the walnut tree. And the spring is here."
                       },
                       {
                         "speaker": 0,
@@ -2565,7 +2585,7 @@
                       {
                         "speaker": 1,
                         "text": "Xalo! Ev nexşeya te ye!",
-                        "en": "Uncle! This is your map!"
+                        "en": "Xalo! This is your map!"
                       },
                       {
                         "speaker": 0,
@@ -2585,12 +2605,22 @@
                       {
                         "speaker": 1,
                         "text": "Çi ye? Zêr e?",
-                        "en": "What is it? Is it gold?"
+                        "en": "What is it? Gold?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Na… Sêveke kevn! Ya Hevalo ye!",
-                        "en": "No… An old apple! It is Hevalo’s!"
+                        "text": "Na… sêveke kevn! Ya Hevalo ye!",
+                        "en": "No… an old apple! It is Hevalo’s!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û li bin kevirê mezin, li kêleka kaniyê?",
+                        "en": "And under the big stone, next to the spring?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Na, na! Li wir tiştek tune…",
+                        "en": "No, no! There is nothing there… (he says it far too quickly)"
                       }
                     ],
                     "prompt": "What does Hevalo dig up?",
@@ -2813,49 +2843,59 @@
                       {
                         "speaker": 1,
                         "text": "Xalo! Xezîneyeke veşartî! Gog û wêneyekî kevn.",
-                        "en": "Uncle! A hidden treasure! Marbles and an old photo."
+                        "en": "Xalo! A hidden treasure! Marbles and an old photo."
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê… ev xezîneya min e.",
-                        "en": "Yes… this is my treasure."
+                        "text": "Erê… ev xezîneya min e. Ya min û ya Lorînê.",
+                        "en": "Yes… this is my treasure. Mine and Lorîn’s."
                       },
                       {
                         "speaker": 1,
-                        "text": "Ya te? Di vî wêneyî de kî ye?",
-                        "en": "Yours? Who is in this photo?"
+                        "text": "Lorîn kî ye?",
+                        "en": "Who is Lorîn?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ev ez im, ev jî Gulîstan e. Em zarok in.",
-                        "en": "This is me, and this is Gulîstan. We are children."
+                        "text": "Ev keça biçûk, li kêleka min. Lorîn xwişka min e.",
+                        "en": "This little girl, next to me. Lorîn is my sister."
                       },
                       {
                         "speaker": 1,
-                        "text": "Gulîstan? Diya Xezalê? Lê ev tenê nîv e!",
-                        "en": "Gulîstan? Xezal’s mother? But this is only one half!"
+                        "text": "Û ev kurê biçûk… tu yî? Bê simbêl?!",
+                        "en": "And this little boy… is you? Without a moustache?!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê. Nîvek li cem min e, nîvek li cem wê ye.",
-                        "en": "Yes. One half is with me, one half is with her."
+                        "text": "Bê simbêl, erê! Di vî wêneyî de em herdu zarok in.",
+                        "en": "Without a moustache, yes! In this photo we are both children. (their summers in Sêvan, with their aunt)"
                       },
                       {
                         "speaker": 1,
-                        "text": "Li cem Gulîstanê? Li Amedê?",
-                        "en": "With Gulîstan? In Amed?"
+                        "text": "Lê ev tenê nîv e. Û nîvek? Li ku ye?",
+                        "en": "But this is only half. And the other half? Where is it?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê, li cem wê ye. Li Amedê.",
-                        "en": "Yes, it is with her. In Amed."
+                        "text": "Nîvek li cem min e, nîvek li cem Lorînê ye.",
+                        "en": "One half is with me, one half is with Lorîn."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Lorîn li ku ye? Li Sêvanê?",
+                        "en": "Where is Lorîn? In Sêvan?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Na… Lorîn li Kobaniyê ye. Nîvê wê jî li wir e.",
+                        "en": "No… Lorîn is in Kobanî. And her half is there too."
                       }
                     ],
                     "prompt": "Where is the other half of the photo?",
                     "options": [
                       "Under the stone",
                       "In Hamo’s old box",
-                      "With Gulîstan, in Amed"
+                      "With Lorîn, in Kobanî"
                     ],
                     "correctIndex": 2
                   }
@@ -2889,11 +2929,11 @@
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo points at the two children in the photo. Type what he says.",
+                    "prompt": "Hamo points at the two children in the photo, from the summers he and his sister spent in Sêvan with their aunt. Type what he says.",
                     "accepted": [
-                      "Ev ez im, ev jî Gulîstan e.",
-                      "Ev ez im, ev jî Gulîstan e",
-                      "Ev ez im ev jî Gulîstan e"
+                      "Ev ez im, ev jî Lorîn e.",
+                      "Ev ez im, ev jî Lorîn e",
+                      "Ev ez im ev jî Lorîn e"
                     ],
                     "voice": "hamo"
                   }
@@ -2927,14 +2967,15 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Nîvê vî wêneyî li cem wê ye. Li Amedê.",
-                    "prompt": "Xezal asks about the missing half. What does Hamo answer? “Nîvê vî wêneyî li cem wê ye. Li Amedê.”",
+                    "say": "Nîvê vî wêneyî li cem Lorînê ye. Li Kobaniyê.",
+                    "prompt": "Xezal asks about the missing half. What does Hamo answer? “Nîvê vî wêneyî li cem Lorînê ye. Li Kobaniyê.”",
                     "accepted": [
-                      "Half of this photo is with her. In Amed",
-                      "The other half of this photo is with her, in Amed",
-                      "Half of the photo is with her. In Amed",
-                      "The other half is with her, in Amed",
-                      "Half of this photo is at her place. In Amed"
+                      "Half of this photo is with Lorîn. In Kobanî",
+                      "The other half of this photo is with Lorîn, in Kobanî",
+                      "Half of the photo is with Lorîn. In Kobanî",
+                      "The other half is with Lorîn, in Kobanî",
+                      "Half of this photo is at Lorîn’s. In Kobanî",
+                      "Half of this photo is with Lorin. In Kobani"
                     ],
                     "voice": "hamo"
                   }
@@ -2943,10 +2984,10 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Xezal stares at the little girl in the photo. Tell her, amazed: “Your mother is in this photo!”",
+                    "prompt": "Xezal stares at the little girl in the photo. Tell her, amazed: “Hamo’s sister is in this photo!”",
                     "accepted": [
-                      "Diya te di vî wêneyî de ye!",
-                      "Diya te di vî wêneyî de ye"
+                      "Xwişka Hamo di vî wêneyî de ye!",
+                      "Xwişka Hamo di vî wêneyî de ye"
                     ],
                     "voice": "hamo"
                   }
@@ -2967,8 +3008,8 @@
                   "position": 13,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Confess with Hamo: “This is my treasure, and Gulîstan’s.”",
-                    "reference": "Ev xezîneya min û Gulîstanê ye.",
+                    "prompt": "Confess with Hamo: “This is my treasure, and Lorîn’s.”",
+                    "reference": "Ev xezîneya min û Lorînê ye.",
                     "voice": "hamo"
                   }
                 },
@@ -2976,11 +3017,11 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Xezal holds up the half photo: “Nîvek li vir e, nîvek li Amedê.” What does she mean?",
+                    "prompt": "Xezal holds up the half photo: “Nîvek li vir e, nîvek li Kobaniyê.” What does she mean?",
                     "options": [
-                      "One half is here, one half is in Amed.",
+                      "One half is here, one half is in Kobanî.",
                       "Both halves are here.",
-                      "One half is in Amed, the other is lost."
+                      "One half is in Kobanî, the other is lost."
                     ],
                     "correctIndex": 0
                   }
@@ -3492,42 +3533,52 @@
                       {
                         "speaker": 1,
                         "text": "Xalo, hemû cîran li meydanê ne!",
-                        "en": "Uncle, all the neighbours are in the square!"
+                        "en": "Xalo, all the neighbours are in the square!"
                       },
                       {
                         "speaker": 0,
                         "text": "Erê. Li gund mêvanek heye… û ew tu yî!",
-                        "en": "Yes. There is a guest in the village… and it is you!"
+                        "en": "Of course. There is a guest in the village… and it is you!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Ez? Mêvanek ji welatekî dûr?",
-                        "en": "Me? A guest from a faraway country?"
+                        "text": "Ez? Lê ez tenê mêvan im…",
+                        "en": "Me? But I am only a guest…"
                       },
                       {
                         "speaker": 0,
-                        "text": "Belê! Ferhad jî li vir e. Ew pir kêfxweş e!",
-                        "en": "Yes! Ferhad is here too. He is very happy!"
+                        "text": "Gund biçûk e, lê mêvan mezin e!",
+                        "en": "The village is small, but a guest is a big thing!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Çi heye, xalo?",
-                        "en": "What is going on, uncle?"
+                        "text": "Û Ferhad? Ew pir kêfxweş e. Çi heye?",
+                        "en": "And Ferhad? He looks very pleased. What is going on?"
                       },
                       {
                         "speaker": 0,
                         "text": "Sibe li bajêr bazar e!",
-                        "en": "Tomorrow there is a market in the town!"
+                        "en": "Tomorrow there is a market in town!"
                       },
                       {
                         "speaker": 1,
                         "text": "Bazar? Rêya bajêr dirêj e?",
-                        "en": "The market? Is the road to the town long?"
+                        "en": "A market? Is the road to town long?"
                       },
                       {
                         "speaker": 0,
                         "text": "Dirêj e, lê bazar xweş e! Sibe hemû gund li bazarê ye.",
                         "en": "It is long, but the market is fun! Tomorrow the whole village is at the market."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û Hevalo? Li bazarê sêv hene?",
+                        "en": "And Hevalo? Are there apples at the market?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Sêv? Li bazarê gelek sêv hene… Na lo, Hevalo!",
+                        "en": "Apples? There are lots of apples at the market… No, Hevalo, come on! (the deer is already at the gate)"
                       }
                     ],
                     "prompt": "What is Ferhad’s news?",
@@ -3588,7 +3639,7 @@
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal whispers something about her uncle’s haircut. Hamo hears, and he is not offended in the least. Type what he says.",
+                    "prompt": "Xezal whispers something about Hamo’s haircut. He hears, and he is not offended in the least. Type what he says.",
                     "accepted": [
                       "Simbêlê min dirêj e, lê porê min kin e.",
                       "Simbêlê min dirêj e, lê porê min kin e"
@@ -3640,7 +3691,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Pêlavên min qirêj in… û sibe bazar e!",
-                    "prompt": "Xezal points at her uncle’s feet and giggles. Market day is tomorrow. Hamo looks down. What does he say? “Pêlavên min qirêj in… û sibe bazar e!”",
+                    "prompt": "Xezal points at Hamo’s feet and giggles. Market day is tomorrow. Hamo looks down. What does he say? “Pêlavên min qirêj in… û sibe bazar e!”",
                     "accepted": [
                       "My shoes are dirty… and tomorrow is the market",
                       "My shoes are dirty, and tomorrow is the market",
@@ -3808,12 +3859,12 @@
                       {
                         "speaker": 0,
                         "text": "Sibe roja bazarê ye! Lîste li vir e.",
-                        "en": "Tomorrow is market day! The list is here."
+                        "en": "Tomorrow is market day! Here is the list."
                       },
                       {
                         "speaker": 1,
                         "text": "Xalo, lîste gelek dirêj e!",
-                        "en": "Uncle, the list is very long!"
+                        "en": "Xalo, the list is very long!"
                       },
                       {
                         "speaker": 0,
@@ -3827,8 +3878,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Sêv baş in, sêv xweş in! Hevalo jî kêfxweş e.",
-                        "en": "Apples are good, apples are tasty! And Hevalo is happy. (the deer hops)"
+                        "text": "Deh sêv?! Hevalo, ev lîste ne ya te ye!",
+                        "en": "Ten apples?! Hevalo, this list is not yours! (the deer hops, very pleased with himself)"
                       },
                       {
                         "speaker": 1,
