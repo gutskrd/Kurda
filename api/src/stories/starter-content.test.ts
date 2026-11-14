@@ -49,6 +49,7 @@ interface StarterQuestion {
 interface StarterStory {
   slug: string;
   dialect: StoryDialect;
+  category: string;
   body: string;
   glossary: StoryGlossEntry[];
   questions: StarterQuestion[];
@@ -89,6 +90,15 @@ describe('the starter stories', () => {
   it('hold both varieties, at least the eight starters of each', () => {
     expect(stories.filter((s) => s.dialect === 'kurmanci').length).toBeGreaterThanOrEqual(8);
     expect(stories.filter((s) => s.dialect === 'sorani').length).toBeGreaterThanOrEqual(8);
+  });
+
+  it('are each filed under a category the library has', () => {
+    // A story's category must name a row of story_categories, which the library migration seeds; a starter
+    // filed under any other is refused by the database when it is seeded, and is never offered to anyone.
+    const migration = readFileSync(fileURLToPath(new URL('../../migrations/1751000211000_story-library.js', import.meta.url)), 'utf8');
+    const categories = new Set([...migration.matchAll(/^ {2}\['([a-z0-9-]+)', \{ en: /gm)].map((m) => m[1]));
+    expect(categories.size).toBeGreaterThan(0);
+    expect(stories.filter((s) => !categories.has(s.category)).map((s) => `${s.slug}: ${s.category}`)).toEqual([]);
   });
 
   describe.each(stories.map((s) => [s.slug, s] as const))('%s', (_slug, story) => {
