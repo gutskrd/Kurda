@@ -51,25 +51,62 @@ const PAPER = '#fbf3e4';
 const PAPER_EDGE = '#d9c8a6';
 const SEAL = '#d8493b';
 
-/** A pigeon's colours, all from its own colour, as the reference's greys are from its grey. */
-interface Plumage {
+/**
+ * A pigeon's colours and markings. The reference comes in three kinds of
+ * pigeon (`PIGEON_KINDS`): grey, with dark wing tips and stripes and flecks
+ * of sheen on its neck; white, with a pink beak and a fine grey line round
+ * its wing; and brown, with thin brown stripes on a pale wing.
+ */
+export interface Plumage {
   /** the head and neck, down to the collar */
   head: string;
   /** the breast and belly */
   body: string;
-  /** the wing, and the legs */
   wing: string;
-  /** the wing's tips and stripes, and the darkest flecks */
+  /** the wing's tips, behind it */
   tips: string;
   tail: string;
   beak: string;
-  /** an eye shut: the lid in its ring */
-  lid: string;
-  /** the two colours the neck's flecks shine in */
-  sheen: readonly [string, string];
+  /** the lower half of the beak */
+  jaw: string;
+  /** the bump over the root of the beak */
+  cere: string;
+  legs: string;
   /** the ring round the eye */
   ring: string;
+  /** an eye shut: the lid in its ring */
+  lid: string;
+  /** the wing's two curved stripes, and how wide they are, if it has them */
+  stripes: readonly [string, number] | null;
+  /** the flecks of sheen on its neck, two that shine and a dark one, if it has them */
+  flecks: readonly [string, string, string] | null;
+  /** a fine line round the front and foot of the wing, where the wing is the colour of the body */
+  outline: string | null;
+  /** facing you: the wings at its sides, and the dark edge along their tops if they have one */
+  sides: string;
+  band: string | null;
 }
+
+/** The darkest of the reference's darks, kept a little warm: the pupils, and the grey pigeon's wing tips. */
+const INK = '#1c1a22';
+
+/** The three kinds of pigeon in the reference, in its own colours. */
+export const PIGEON_KINDS = {
+  grey: {
+    head: '#687878', body: '#889898', wing: '#b0b8b8', tips: INK, tail: '#505858', beak: '#505858', jaw: INK, cere: '#f8f8f6', legs: '#b2bcbf',
+    ring: '#e88058', lid: '#7a8888', stripes: [INK, 0.62], flecks: ['#70b8a0', '#7838a0', INK], outline: null, sides: '#b0b8b8', band: INK,
+  },
+  white: {
+    head: '#fcfcfc', body: '#fcfcfc', wing: '#fcfcfc', tips: '#fcfcfc', tail: '#d8e0e0', beak: '#fcc0c4', jaw: '#f0a0a4', cere: '#fcd4d8', legs: '#fcfcfc',
+    ring: '#ecd0b0', lid: '#f2f0ec', stripes: null, flecks: null, outline: '#d8e0e0', sides: '#d8e0e0', band: null,
+  },
+  brown: {
+    head: '#b8988c', body: '#c8b4ac', wing: '#d4c4bc', tips: '#d4c4bc', tail: '#b8988c', beak: '#505858', jaw: INK, cere: '#fcfcfc', legs: '#c8b4ac',
+    ring: '#d46c48', lid: '#c4a69a', stripes: ['#a48880', 0.46], flecks: null, outline: null, sides: '#d4c4bc', band: null,
+  },
+} as const satisfies Record<string, Plumage>;
+
+export type PigeonKind = keyof typeof PIGEON_KINDS;
 
 /** Whether a colour is green or teal: teal flecks would not show on it, so they shine pink. */
 function greenish(hex: string): boolean {
@@ -89,19 +126,34 @@ function violet(hex: string): boolean {
   return b > g + 30 && r > g;
 }
 
-function plumage(hex: string): Plumage {
+/** A grey pigeon's markings worn in another colour, every shade of it taken from that one colour as the grey's are from its grey. */
+function dyed(hex: string): Plumage {
   const head = mix(hex, DUSK, 0.28);
+  const wing = mix(hex, '#f6f8ff', 0.36);
+  const tips = mix(hex, CHARCOAL, 0.86);
   return {
     head,
     body: hex,
-    wing: mix(hex, '#f6f8ff', 0.36),
-    tips: mix(hex, CHARCOAL, 0.86),
+    wing,
+    tips,
     tail: mix(hex, CHARCOAL, 0.54),
     beak: mix(hex, CHARCOAL, 0.58),
-    lid: mix(head, hex, 0.45),
-    sheen: [greenish(hex) ? '#f39bb8' : '#72c2a6', violet(hex) ? '#3d8fc6' : '#7b3ba5'],
+    jaw: tips,
+    cere: CERE,
+    legs: wing,
     ring: orange(hex) ? '#ffd27a' : RING,
+    lid: mix(head, hex, 0.45),
+    stripes: [tips, 0.62],
+    flecks: [greenish(hex) ? '#f39bb8' : '#72c2a6', violet(hex) ? '#3d8fc6' : '#7b3ba5', tips],
+    outline: null,
+    sides: wing,
+    band: tips,
   };
+}
+
+/** A pigeon's plumage: one of the reference's kinds by name, or a grey pigeon's markings in a colour. */
+function plumage(kind: string): Plumage {
+  return kind in PIGEON_KINDS ? PIGEON_KINDS[kind as PigeonKind] : dyed(kind);
 }
 
 const fill = (dr: Drawing, d: string, hex: string, extra = ''): void => dr.add(`<path d="${d}" fill="${hex}"${extra}/>`);
@@ -140,8 +192,9 @@ function taper(a: readonly [number, number], c: readonly [number, number], b: re
 type Fleck = readonly [number, number, 0 | 1 | 2, number];
 
 function flecks(dr: Drawing, p: Plumage, list: readonly Fleck[]): void {
+  if (!p.flecks) return;
   for (const [x, y, k, h] of list) {
-    const hex = k === 2 ? p.tips : p.sheen[k];
+    const hex = p.flecks[k];
     dr.add(`<ellipse cx="${n(x)}" cy="${n(y)}" rx="0.31" ry="${n(h / 2)}" fill="${hex}"/>`);
   }
 }
@@ -204,6 +257,8 @@ const WING_STRIPES: ReadonlyArray<readonly [readonly [number, number], readonly 
   [[-8.6, -23.8], [-12.8, -17.6], [-7.8, -11.2]],
 ];
 const WING_TIPS = 'M-4.6 -23.6C-11.6 -24.4 -17.8 -20.8 -19.4 -13.2C-16.4 -10.6 -12 -9.3 -6.6 -9.6Z';
+/** The fine line a white wing has, from the front of its top, down round its front and back along its foot. */
+const WING_OUTLINE = 'M-0.3 -24A8.4 7.8 0 0 1 -4.1 -9.2C-7.6 -9 -11 -9.4 -14.4 -10.4';
 /**
  * Where the wing turns about when it is raised, beaten down or waved: its
  * shoulder on the back, so that raised it stands up behind the head and
@@ -271,18 +326,28 @@ interface SideLook {
 /** The wing, its tips and its stripes, turned about the shoulder as it is held. */
 function sideWing(dr: Drawing, p: Plumage, turn: number, hex = p.wing): void {
   dr.add(turn ? `<g transform="rotate(${n(turn)} ${n(SHOULDER[0])} ${n(SHOULDER[1])})">` : '<g>');
-  fill(dr, WING_TIPS, p.tips);
+  fill(dr, WING_TIPS, hex === p.wing ? p.tips : hex);
   const shape = oval(WING.x, WING.y, WING.rx, WING.ry);
   fill(dr, shape, hex);
-  dr.add(`<g clip-path="url(#${dr.clip(shape)})">`);
-  for (const [a, c, b] of WING_STRIPES) fill(dr, taper(a, c, b, 0.62), p.tips);
-  dr.add('</g></g>');
+  wingMarks(dr, p, shape, WING_STRIPES, WING_OUTLINE);
+  dr.add('</g>');
+}
+
+/** A wing's stripes, kept to it, or the fine line round its front and foot. */
+function wingMarks(dr: Drawing, p: Plumage, shape: string, stripes: typeof WING_STRIPES, outline: string): void {
+  if (p.stripes) {
+    const [hex, width] = p.stripes;
+    dr.add(`<g clip-path="url(#${dr.clip(shape)})">`);
+    for (const [a, c, b] of stripes) fill(dr, taper(a, c, b, width), hex);
+    dr.add('</g>');
+  }
+  if (p.outline) stroke(dr, outline, p.outline, 0.42);
 }
 
 /** The pigeon side on, facing right. */
 function sideOn(dr: Drawing, p: Plumage, look: SideLook): void {
   if (look.legs === 'standing') {
-    for (const leg of LEGS) fill(dr, leg, p.wing);
+    for (const leg of LEGS) fill(dr, leg, p.legs);
     stroke(dr, FEET_SIDE, FEET, 0.55);
   }
   // asleep, it has sat down on its legs; pecking, it leans forward on them
@@ -314,19 +379,19 @@ function sideOn(dr: Drawing, p: Plumage, look: SideLook): void {
     // the beak open to chirp: its halves apart about their root, and the dark of the mouth between them
     const [rx, ry] = BEAK_ROOT;
     fill(dr, `M${n(rx)} ${n(ry)}L14.4 -26.9L14.5 -25.1Z`, PUPIL);
-    fill(dr, BEAK_LOWER, p.tips, ` transform="rotate(18 ${n(rx)} ${n(ry)})"`);
+    fill(dr, BEAK_LOWER, p.jaw, ` transform="rotate(18 ${n(rx)} ${n(ry)})"`);
     fill(dr, BEAK_UPPER, p.beak, ` transform="rotate(-14 ${n(rx)} ${n(ry)})"`);
   } else {
-    fill(dr, BEAK_LOWER, p.tips);
+    fill(dr, BEAK_LOWER, p.jaw);
     fill(dr, BEAK_UPPER, p.beak);
   }
-  dr.add(`<circle cx="${n(CERE_AT[0])}" cy="${n(CERE_AT[1])}" r="${n(CERE_AT[2])}" fill="${CERE}"/>`);
+  dr.add(`<circle cx="${n(CERE_AT[0])}" cy="${n(CERE_AT[1])}" r="${n(CERE_AT[2])}" fill="${p.cere}"/>`);
   dr.add('</g>');
   if (look.letter) {
     // the letter hangs from the tip of its beak before its breast, the beak's tip over the paper, holding it
     heldLetter(dr, 14.9, -26.1, 1);
     fill(dr, BEAK_UPPER, p.beak);
-    dr.add(`<circle cx="${n(CERE_AT[0])}" cy="${n(CERE_AT[1])}" r="${n(CERE_AT[2])}" fill="${CERE}"/>`);
+    dr.add(`<circle cx="${n(CERE_AT[0])}" cy="${n(CERE_AT[1])}" r="${n(CERE_AT[2])}" fill="${p.cere}"/>`);
   }
   dr.add('</g>');
 }
@@ -368,6 +433,7 @@ const TQ = {
     [[-11.2, -23.8], [-15, -17.6], [-11, -11.4]],
   ] as ReadonlyArray<readonly [readonly [number, number], readonly [number, number], readonly [number, number]]>,
   tips: 'M-8.6 -22.8C-13.4 -23.2 -18 -19.8 -19.4 -13.4C-16.8 -10.6 -13 -9.2 -9.2 -9.4Z',
+  outline: 'M-5.14 -24.13A6.3 8 0 0 1 -8 -9C-11 -8.9 -13.6 -9.4 -16 -10.4',
   tail: 'M-6.8 -12.6C-10.6 -12.8 -14.6 -12 -17.2 -10.4Q-18.8 -8.4 -15.8 -7.8Q-15.8 -5.2 -12.6 -6.2Q-11.4 -3.8 -8.4 -5.2L-5.6 -7.2Z',
   near: { ring: [0.2, -29.7, 4.3, 4.3], pupil: [0.2, -29.7, 2.85, 2.85] },
   far: { ring: [10.85, -29.5, 1.85, 4.2], pupil: [10.2, -29.65, 1.5, 2.85] },
@@ -391,7 +457,7 @@ const TQ = {
  * with it.
  */
 function turnedToYou(dr: Drawing, p: Plumage, letter: boolean): void {
-  for (const leg of TQ.legs) fill(dr, leg, p.wing);
+  for (const leg of TQ.legs) fill(dr, leg, p.legs);
   stroke(dr, TQ.feet, FEET, 0.55);
   fill(dr, TQ.tail, p.tail);
   fill(dr, TQ.trunk, p.body);
@@ -404,18 +470,16 @@ function turnedToYou(dr: Drawing, p: Plumage, letter: boolean): void {
   fill(dr, TQ.tips, p.tips);
   const shape = oval(TQ.wing.x, TQ.wing.y, TQ.wing.rx, TQ.wing.ry);
   fill(dr, shape, p.wing);
-  dr.add(`<g clip-path="url(#${dr.clip(shape)})">`);
-  for (const [a, c, b] of TQ.stripes) fill(dr, taper(a, c, b, 0.62), p.tips);
-  dr.add('</g>');
+  wingMarks(dr, p, shape, TQ.stripes, TQ.outline);
   eye(dr, p, TQ.near.ring, TQ.near.pupil, 'open');
   // the further eye, turned away round the front of the head: narrower than the nearer one, never bigger
   eye(dr, p, TQ.far.ring, TQ.far.pupil, 'open');
   fill(dr, TQ.beakUpper, p.beak);
-  fill(dr, TQ.beakLower, p.tips);
-  for (const [x, y] of TQ.ceres) dr.add(`<circle cx="${n(x)}" cy="${n(y)}" r="1.35" fill="${CERE}"/>`);
+  fill(dr, TQ.beakLower, p.jaw);
+  for (const [x, y] of TQ.ceres) dr.add(`<circle cx="${n(x)}" cy="${n(y)}" r="1.35" fill="${p.cere}"/>`);
   if (letter) {
     heldLetter(dr, 7.4, -24.6, 0.72);
-    fill(dr, TQ.beakLower, p.tips);
+    fill(dr, TQ.beakLower, p.jaw);
   }
 }
 
@@ -468,14 +532,14 @@ function frontLetter(dr: Drawing): void {
  * breast.
  */
 function facingYou(dr: Drawing, p: Plumage, letter: boolean, waving: boolean): void {
-  for (const leg of FRONT.legs) fill(dr, leg, p.wing);
+  for (const leg of FRONT.legs) fill(dr, leg, p.legs);
   stroke(dr, frontFoot(-2.75) + frontFoot(2.75), FEET, 0.55);
   for (const side of [1, -1]) {
     const w = FRONT.wing;
     const lift = waving && side === 1 ? ` rotate(-140 ${n(FRONT.shoulder[0])} ${n(FRONT.shoulder[1])})` : '';
     dr.add(`<g transform="${side === 1 ? '' : 'scale(-1 1)'}${lift}">`);
-    dr.add(`<ellipse cx="${n(w.x)}" cy="${n(w.y)}" rx="${n(w.rx)}" ry="${n(w.ry)}" fill="${p.wing}" transform="rotate(${n(w.turn)} ${n(w.x)} ${n(w.y)})"/>`);
-    fill(dr, FRONT.wingEdge, p.tips);
+    dr.add(`<ellipse cx="${n(w.x)}" cy="${n(w.y)}" rx="${n(w.rx)}" ry="${n(w.ry)}" fill="${p.sides}" transform="rotate(${n(w.turn)} ${n(w.x)} ${n(w.y)})"/>`);
+    if (p.band) fill(dr, FRONT.wingEdge, p.band);
     dr.add('</g>');
   }
   fill(dr, FRONT.trunk, p.body);
@@ -496,7 +560,7 @@ function facingYou(dr: Drawing, p: Plumage, letter: boolean, waving: boolean): v
   dr.add('</g>');
   if (letter) frontLetter(dr);
   fill(dr, FRONT.beak, p.beak);
-  for (const [x, y] of FRONT.ceres) dr.add(`<circle cx="${n(x)}" cy="${n(y)}" r="1.35" fill="${CERE}"/>`);
+  for (const [x, y] of FRONT.ceres) dr.add(`<circle cx="${n(x)}" cy="${n(y)}" r="1.35" fill="${p.cere}"/>`);
 }
 
 /** Whether a pigeon in `pose` has a letter in its beak when given one: a sleeping, chirping or pecking pigeon holds none. */
@@ -543,8 +607,8 @@ export function pigeonShadow(dr: Drawing, pose: PigeonPose = 'perched', letter =
  * pigeon holds none. Standing or asleep it casts its shadow (`pigeonShadow`)
  * unless told not to, for an app that lays the shadow on the sill by itself.
  */
-export function pigeon(dr: Drawing, hex: string, pose: PigeonPose = 'perched', letter = false, shadow = true): void {
-  const p = plumage(hex);
+export function pigeon(dr: Drawing, kind: string, pose: PigeonPose = 'perched', letter = false, shadow = true): void {
+  const p = plumage(kind);
   const flying = pose === 'wings-up' || pose === 'wings-down';
   if (!flying && shadow) pigeonShadow(dr, pose, letter);
   const holding = pigeonHolds(pose, letter);
