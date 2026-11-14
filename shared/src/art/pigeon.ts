@@ -247,7 +247,7 @@ const FRONT_WING = { cx: 11.6, cy: -6.4, rx: 4.3, ry: 6.4, turn: -10 } as const;
 /** The beak from in front, pointing at you and a little down: small, under the pale bump at its root. */
 const FRONT_BEAK = 'M-1.25 -11.8C-0.6 -12.05 0.6 -12.05 1.25 -11.8L0.3 -9.5C0.15 -9.25 -0.15 -9.25 -0.3 -9.5Z';
 /** The eyes are on the sides of the head, as a pigeon's are: from in front each is cut by the head's own outline. */
-const FRONT_EYES = { x: 8.85, y: -13.2, rx: 1, ry: 1.5 } as const;
+const FRONT_EYES = { x: 8.75, y: -13.2, rx: 0.8, ry: 1.42 } as const;
 
 /** Its legs from in front, a little apart, each with its toes spread toward you. */
 const FRONT_FEET = 'M-3.2 -2V0.4M-3.2 0.4L-4.7 1.3M-3.2 0.4V1.6M-3.2 0.4L-1.7 1.3M3.2 -2V0.4M3.2 0.4L1.7 1.3M3.2 0.4V1.6M3.2 0.4L4.7 1.3';
@@ -269,7 +269,8 @@ function cheekGlow(dr: Drawing, p: Plumage): string {
 /** An open eye at `x`, `y`, narrowed by `squeeze` as the face turns away, leaning `lean` degrees, with its brow a little over it. */
 function eye(dr: Drawing, p: Plumage, x: number, y: number, lean: number, squeeze = 1, brow = true): void {
   dr.add(`<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(0.74 * squeeze)}" ry="1.42" fill="${EYE}" transform="rotate(${n(lean)} ${n(x)} ${n(y)})"/>`);
-  if (brow) stroke(dr, `M${n(x - 0.9 * squeeze)} ${n(y - 3.3)}Q${n(x)} ${n(y - 3.9)} ${n(x + 0.9 * squeeze)} ${n(y - 3.3)}`, p.brow, 0.6);
+  // the same short slanted brow as side on, over the front of the eye
+  if (brow) stroke(dr, `M${n(x + 0.4 * squeeze)} ${n(y - 3.5)}L${n(x + 1.2 * squeeze)} ${n(y - 1.8)}`, p.brow, 0.62);
 }
 
 /** A letter in its beak seen from in front: the envelope hanging down before its breast, held by the middle of its top edge. */
@@ -343,7 +344,8 @@ function turnedToYou(dr: Drawing, p: Plumage, letter: boolean): void {
   dr.add(`<g clip-path="url(#${dr.clip(BODY)})">`);
   dr.add(`<ellipse cx="6" cy="-1.8" rx="7.6" ry="3" fill="${p.belly}" opacity="0.38"/>`);
   // the further eye is on the side of the head turned away: it sits on the head's outline, as much of it showing as that lets
-  dr.add(`<ellipse cx="19.1" cy="-13.2" rx="${n(1.15 / TURNED.body)}" ry="1.65" fill="${EYE}"/>`);
+  // turning away, it is foreshortened: narrower and a little shorter than the nearer one, never bigger
+  dr.add(`<ellipse cx="19" cy="-13" rx="${n(0.5 / TURNED.body)}" ry="1.28" fill="${EYE}"/>`);
   dr.add('</g></g>');
   dr.add(`<g transform="scale(${TURNED.crest} 1)">`);
   fill(dr, CREST, p.head);
