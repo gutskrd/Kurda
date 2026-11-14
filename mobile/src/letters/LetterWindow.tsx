@@ -4,11 +4,15 @@ import { SvgXml } from 'react-native-svg';
 import {
   LETTER_BIRD_FEET,
   LETTER_FLIGHT,
+  LETTER_PLAY,
   LETTER_SILL,
   LETTER_WINDOW_DEPTH,
   letterBirdSvg,
+  letterEnvelopeSvg,
+  letterPlayShows,
   letterWindowSvg,
   treeSkyAt,
+  type LetterPlay,
   type LetterWindowPart,
   type PigeonPose,
 } from '@kurda/shared';
@@ -26,14 +30,18 @@ import { radii } from '../theme/tokens';
  * mountains; the clouds go slowly over; the casements stir in the breeze;
  * the light on the sill brightens and dims.
  *
- * What the pigeon does is the screen's news, so it is acted rather than written:
- *   - `home`: your pigeon on the sill, blinking and bobbing its head, or
+ * What the pigeon does is the screen's news, so it is acted rather than
+ * written, in the plays of the shared LETTER_PLAY, as on the website:
+ *   - `home`: your pigeon on the sill, bobbing its head, blinking, pecking at
+ *     the seeds, looking up at the sky, chirping and hopping round; or
  *     asleep there at night;
- *   - `leaving`: it takes off with the letter in its beak and flies out
- *     through the window and away over the country, smaller and smaller;
+ *   - `leaving`: your letter drops onto the sill; the pigeon hops for joy,
+ *     picks it up and beats its wings, then flies out through the window and
+ *     away over the country, smaller and smaller;
  *   - `away`: the sill is empty, your pigeon is out;
  *   - `arriving`: a pigeon comes from far off with its letter, in through the
- *     window, lands, and waves a wing.
+ *     window and lands; it shakes its feathers, lays the letter on the sill,
+ *     chirps, hops round to look about, waves, and stays at home there.
  * Only transform and opacity move, on the native driver, and the loops stop
  * while the screen is not in front. A reader who asked for less motion sees
  * the window still and each flight as it ends, at once. The picture is
@@ -87,48 +95,121 @@ function Pose({ bird, pose, letter = false, facingLeft = false, size, style }: {
   );
 }
 
-/** A pigeon at rest on the sill: blinking and bobbing by day, asleep and breathing at night, or just landed and waving. */
-function Resting({ bird, asleep, landed = false, facingLeft = false, size }: { bird: number; asleep: boolean; landed?: boolean; facingLeft?: boolean; size: number }): React.JSX.Element {
+/** Where a pigeon's feet are on its own square, as shares of it: what it leans and turns about. */
+const FEET = { x: LETTER_BIRD_FEET.x / 120, y: LETTER_BIRD_FEET.y / 120 } as const;
+
+/** A pigeon asleep on the sill at night, breathing. */
+function Asleep({ bird, size }: { bird: number; size: number }): React.JSX.Element {
   const alive = useMotionAlive();
   const clock = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!alive) return;
     clock.setValue(0);
-    // waving runs once; the rest goes round for as long as anybody is looking
-    const run = landed
-      ? Animated.timing(clock, { toValue: 1, duration: 1900, easing: Easing.linear, ...native })
-      : Animated.loop(Animated.timing(clock, { toValue: 1, duration: asleep ? 3400 : 4600, easing: Easing.linear, ...native }));
+    const run = Animated.loop(Animated.timing(clock, { toValue: 1, duration: 3400, easing: Easing.linear, ...native }));
     run.start();
     return () => run.stop();
-  }, [alive, landed, asleep, clock]);
-  const foot = `50% ${(BOX.top + BOX.size * 0.83) * 100}%`;
-  if (asleep) {
-    const breathe = { transformOrigin: foot, transform: [{ scaleX: clock.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.025, 1] }) }, { scaleY: clock.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.035, 1] }) }] };
-    return (
-      <Animated.View style={[StyleSheet.absoluteFill, breathe]} testID="letter-pigeon-asleep">
-        <Pose bird={bird} pose="sleep" facingLeft={facingLeft} size={size} />
-      </Animated.View>
-    );
-  }
-  if (landed) {
-    // two waves of the wing: the wave picture and the standing one by turns
-    const waving = clock.interpolate({ inputRange: [0, 0.21, 0.211, 0.41, 0.411, 0.53, 0.531, 0.75, 0.751, 1], outputRange: [0, 0, 1, 1, 0, 0, 1, 1, 0, 0] });
-    const standing = Animated.subtract(1, waving);
-    return (
-      <View style={StyleSheet.absoluteFill} pointerEvents="none" testID="letter-pigeon-landed">
-        <Pose bird={bird} pose="perched" facingLeft={facingLeft} size={size} style={{ opacity: standing }} />
-        <Pose bird={bird} pose="wave" facingLeft={facingLeft} size={size} style={{ opacity: waving }} />
-      </View>
-    );
-  }
-  // a pigeon's bob of the head, twice, now and then; and a blink, at its own times
-  const bob = { transformOrigin: foot, transform: [{ translateY: clock.interpolate({ inputRange: [0, 0.62, 0.66, 0.7, 0.74, 0.78, 1], outputRange: [0, 0, -size * 0.011, 0, -size * 0.011, 0, 0] }) }] };
-  const blink = clock.interpolate({ inputRange: [0, 0.3, 0.301, 0.335, 0.336, 0.9, 0.901, 0.935, 0.936, 1], outputRange: [0, 0, 1, 1, 0, 0, 1, 1, 0, 0] });
+  }, [alive, clock]);
+  const foot = `50% ${(BOX.top + BOX.size * FEET.y) * 100}%`;
+  const breathe = { transformOrigin: foot, transform: [{ scaleX: clock.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.025, 1] }) }, { scaleY: clock.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.035, 1] }) }] };
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, bob]} pointerEvents="none" testID="letter-pigeon-home">
-      <Pose bird={bird} pose="perched" facingLeft={facingLeft} size={size} />
-      <Pose bird={bird} pose="blink" facingLeft={facingLeft} size={size} style={{ opacity: blink }} />
+    <Animated.View style={[StyleSheet.absoluteFill, breathe]} testID="letter-pigeon-asleep">
+      <Pose bird={bird} pose="sleep" size={size} />
     </Animated.View>
+  );
+}
+
+/** Where a letter lies on the sill: its own square, as a share of a pigeon's, and how far down that square the bottom of the envelope is. */
+const SILL_LETTER = { share: 0.24, foot: 92 / 120 } as const;
+
+/** A letter in its envelope lying on the sill, `at` (shares of the pigeon's square) in front of the feet of a pigeon facing the way `dir` says, in a window `size` wide. */
+function SillLetter({ at, dir, size, style }: { at: number; dir: number; size: number; style?: Animated.WithAnimatedValue<ViewStyle> }): React.JSX.Element {
+  const id = useRef(nextId()).current;
+  const xml = useMemo(() => letterEnvelopeSvg({ size: 120, idPrefix: id }), [id]);
+  const box = size * BOX.size;
+  const side = box * SILL_LETTER.share;
+  const left = size * BOX.left + box * (FEET.x + at * dir) - side / 2;
+  const top = size * BOX.top + box * FEET.y - side * SILL_LETTER.foot;
+  // lying down, it is seen a little from above
+  const lying = { transformOrigin: `50% ${SILL_LETTER.foot * 100}%`, transform: [{ scaleY: 0.62 }, { rotate: '-4deg' }] };
+  return (
+    <View style={[{ position: 'absolute', left, top, width: side, height: side }, lying]} pointerEvents="none" testID="letter-on-sill">
+      <Animated.View style={[StyleSheet.absoluteFill, style]}>
+        <SvgXml xml={xml} width={side} height={side} />
+      </Animated.View>
+    </View>
+  );
+}
+
+/**
+ * A pigeon playing on the sill (LETTER_PLAY), as the website plays it: every
+ * picture its play shows laid one on another and switched on the play's own
+ * clock, the pigeon moved about its feet, and a letter on the sill when the
+ * play has one. It plays once and says so (`onEnd`), or, an idle play, round
+ * and round while the screen is in front. A reader who asked for less motion
+ * sees how it ends.
+ */
+function Playing({ bird, play, facingLeft = false, size, onEnd }: { bird: number; play: LetterPlay; facingLeft?: boolean; size: number; onEnd?: () => void }): React.JSX.Element {
+  const reduce = useReducedMotion();
+  const alive = useMotionAlive();
+  const clock = useRef(new Animated.Value(0)).current;
+  const shows = useMemo(() => letterPlayShows(play), [play]);
+  const ended = useRef(onEnd);
+  ended.current = onEnd;
+  const dir = facingLeft ? -1 : 1;
+
+  useEffect(() => {
+    // a play that tells something runs whatever else is going on; one that only goes round waits for somebody to be looking
+    if (reduce || (play.loop && !alive)) {
+      clock.setValue(play.loop ? 0 : 1);
+      if (!play.loop) ended.current?.();
+      return;
+    }
+    clock.setValue(0);
+    const once = Animated.timing(clock, { toValue: 1, duration: play.ms, easing: Easing.linear, ...native });
+    const run = play.loop ? Animated.loop(once) : once;
+    run.start(({ finished }) => {
+      if (finished && !play.loop) ended.current?.();
+    });
+    return () => run.stop();
+  }, [play, reduce, alive, clock]);
+
+  const box = size * BOX.size;
+  const at = play.moves.map((m) => m.at);
+  const ease = { easing: Easing.inOut(Easing.quad) };
+  const moved = {
+    transformOrigin: `${(BOX.left + BOX.size * FEET.x) * 100}% ${(BOX.top + BOX.size * FEET.y) * 100}%`,
+    transform: [
+      { translateX: clock.interpolate({ inputRange: at, outputRange: play.moves.map((m) => m.x * dir * box), ...ease }) },
+      { translateY: clock.interpolate({ inputRange: at, outputRange: play.moves.map((m) => m.y * box), ...ease }) },
+      { rotate: clock.interpolate({ inputRange: at, outputRange: play.moves.map((m) => `${m.tilt * dir}deg`), ...ease }) },
+      { scaleX: clock.interpolate({ inputRange: at, outputRange: play.moves.map((m) => m.sx), ...ease }) },
+      { scaleY: clock.interpolate({ inputRange: at, outputRange: play.moves.map((m) => m.sy), ...ease }) },
+    ],
+  };
+  const letterAt = play.letter.map((k) => k.at);
+  const letterMoves = play.letter.length
+    ? {
+        opacity: clock.interpolate({ inputRange: letterAt, outputRange: play.letter.map((k) => k.seen) }),
+        transform: [{ translateY: clock.interpolate({ inputRange: letterAt, outputRange: play.letter.map((k) => k.y * box), ...ease }) }],
+      }
+    : null;
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none" testID={`letter-pigeon-${play === LETTER_PLAY.idle ? 'home' : 'playing'}`}>
+      {letterMoves ? <SillLetter at={play.letterAt} dir={dir} size={size} style={letterMoves} /> : null}
+      <Animated.View style={[StyleSheet.absoluteFill, moved]}>
+        {shows.map((show) => (
+          <Pose
+            key={`${show.pose}${show.letter}`}
+            bird={bird}
+            pose={show.pose}
+            letter={show.letter}
+            facingLeft={facingLeft}
+            size={size}
+            style={{ opacity: clock.interpolate({ inputRange: show.steps.map(([t]) => t), outputRange: show.steps.map(([, seen]) => seen) }) }}
+          />
+        ))}
+      </Animated.View>
+    </View>
   );
 }
 
@@ -173,6 +254,9 @@ function Layer({ part, sky, size, id, style }: { part: LetterWindowPart; sky: Re
   );
 }
 
+/** Where a flight or a play has got to: playing before it goes, flying, playing after it comes, or at home again after a letter. */
+type Phase = 'rest' | 'before' | 'flight' | 'after' | 'settled';
+
 export function LetterWindow({ scene, size, onDone }: { scene: WindowScene; size: number; onDone?: () => void }): React.JSX.Element {
   const reduce = useReducedMotion();
   const alive = useMotionAlive();
@@ -181,7 +265,7 @@ export function LetterWindow({ scene, size, onDone }: { scene: WindowScene; size
   // 0 on the sill, 1 gone far off over the country; a pigeon coming in runs it backwards
   const flight = useRef(new Animated.Value(scene.kind === 'arriving' ? 1 : 0)).current;
   const beat = useRef(new Animated.Value(0)).current;
-  const [landed, setLanded] = useState<'no' | 'waving' | 'settled'>('no');
+  const [phase, setPhase] = useState<Phase>('rest');
   const done = useRef(onDone);
   done.current = onDone;
 
@@ -191,15 +275,18 @@ export function LetterWindow({ scene, size, onDone }: { scene: WindowScene; size
   const stir = useSwing(alive, 7000);
   const glow = useSwing(alive, 9000, 0.4);
 
-  const flying = scene.kind === 'leaving' || scene.kind === 'arriving';
+  // a pigeon leaving plays first and then flies; one coming flies first and then plays
   useEffect(() => {
-    setLanded('no');
-    if (!flying) return;
-    const back = scene.kind === 'arriving';
+    setPhase(scene.kind === 'leaving' ? 'before' : scene.kind === 'arriving' ? 'flight' : 'rest');
+  }, [scene]);
+
+  const back = scene.kind === 'arriving';
+  useEffect(() => {
+    if (phase !== 'flight') return;
     flight.setValue(back ? 1 : 0);
     const finish = (): void => {
-      if (back) setLanded('waving');
-      done.current?.();
+      if (back) setPhase('after');
+      else done.current?.();
     };
     if (reduce) {
       flight.setValue(back ? 0 : 1);
@@ -222,13 +309,7 @@ export function LetterWindow({ scene, size, onDone }: { scene: WindowScene; size
       run.stop();
       flap.stop();
     };
-  }, [scene, flying, reduce, flight, beat]);
-
-  useEffect(() => {
-    if (landed !== 'waving') return;
-    const timer = setTimeout(() => setLanded('settled'), 2000);
-    return () => clearTimeout(timer);
-  }, [landed]);
+  }, [phase, back, reduce, flight, beat]);
 
   const deep = (part: LetterWindowPart) => ({ transform: [{ translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [-0.5 * LETTER_WINDOW_DEPTH[part] * size, 0.5 * LETTER_WINDOW_DEPTH[part] * size] }) }] });
   const drifting = { transform: [...deep('clouds').transform, { translateX: clouds.interpolate({ inputRange: [0, 1], outputRange: [-0.07 * size, 0.07 * size] }) }] };
@@ -239,10 +320,9 @@ export function LetterWindow({ scene, size, onDone }: { scene: WindowScene; size
   const light = { opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) };
 
   // which copy of a flying pigeon is seen: the one in the room until it is through the window, the one outside from then on
-  const back = scene.kind === 'arriving';
   const inRoom = until(flight, LETTER_FLIGHT.behindAt);
   const outside = Animated.subtract(1, inRoom);
-  const flier = flying ? scene.bird : null;
+  const flier = (scene.kind === 'leaving' || scene.kind === 'arriving') && phase === 'flight' ? scene.bird : null;
 
   return (
     <View {...HIDDEN} style={[styles.window, { width: size, height: size }]} testID="letter-window">
@@ -256,9 +336,16 @@ export function LetterWindow({ scene, size, onDone }: { scene: WindowScene; size
       <Layer part="right" sky={sky} size={size} id={id} style={casement(false)} />
       {/* the light lies on the sill, so a pigeon standing there is over it, never under it */}
       <Layer part="light" sky={sky} size={size} id={id} style={light} />
-      {scene.kind === 'home' ? <Resting bird={scene.bird} asleep={sky === 'night'} size={size} /> : null}
-      {flier !== null && landed === 'no' ? <Flying bird={flier} facingLeft={back} size={size} flight={flight} beat={beat} seen={inRoom} /> : null}
-      {scene.kind === 'arriving' && landed !== 'no' ? <Resting bird={scene.bird} asleep={false} landed={landed === 'waving'} facingLeft size={size} /> : null}
+      {scene.kind === 'home' ? (sky === 'night' ? <Asleep bird={scene.bird} size={size} /> : <Playing key="idle" bird={scene.bird} play={LETTER_PLAY.idle} size={size} />) : null}
+      {scene.kind === 'leaving' && phase === 'before' ? <Playing key="before" bird={scene.bird} play={LETTER_PLAY.before} size={size} onEnd={() => setPhase('flight')} /> : null}
+      {flier !== null ? <Flying bird={flier} facingLeft={back} size={size} flight={flight} beat={beat} seen={inRoom} /> : null}
+      {scene.kind === 'arriving' && phase === 'after' ? <Playing key="after" bird={scene.bird} play={LETTER_PLAY.after} facingLeft size={size} onEnd={() => setPhase('settled')} /> : null}
+      {scene.kind === 'arriving' && phase === 'settled' ? (
+        <>
+          <SillLetter at={LETTER_PLAY.after.letterAt} dir={-1} size={size} />
+          <Playing key="settled" bird={scene.bird} play={LETTER_PLAY.idle} facingLeft size={size} />
+        </>
+      ) : null}
     </View>
   );
 }
