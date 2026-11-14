@@ -321,21 +321,6 @@
           "evidenceSentence": 1
         },
         {
-          "kind": "detail",
-          "prompt": "Nîvek li cem Hamo ye. Û nîvek jî li ku ye?",
-          "promptEn": "One half is with Hamo. And where is the other half?",
-          "options": [
-            "Li Sêvanê",
-            "Li bin pencereyê",
-            "Li Amedê"
-          ],
-          "correctIndex": 2,
-          "explanation": "Hamo dibêje: “Nîvek li cem min e, nîvek li Amedê ye.”",
-          "explanationEn": "Hamo says: “One half is with me, one half is in Amed.”",
-          "evidenceParagraph": 0,
-          "evidenceSentence": 2
-        },
-        {
           "kind": "vocabulary",
           "prompt": "Gog û nîvê wêneyekî: ev xezîne ye. “Xezîne” çi ye?",
           "promptEn": "Marbles and half of a photo: this is a “xezîne”. What is a “xezîne”?",
@@ -352,17 +337,17 @@
         },
         {
           "kind": "detail",
-          "prompt": "Xezîneya Hêviyê çi ye?",
-          "promptEn": "What is Hêvî’s treasure?",
+          "prompt": "Nîvek li cem Hamo ye. Û nîvek jî li ku ye?",
+          "promptEn": "One half is with Hamo. And where is the other half?",
           "options": [
-            "Sêveke kesk",
-            "Sêveke sor",
-            "Gogeke şîn"
+            "Li Sêvanê",
+            "Li bin pencereyê",
+            "Li Amedê"
           ],
-          "correctIndex": 1,
-          "explanation": "Hamo dibêje: “Xezîneya wê sêveke sor e, ji bo Hevalo.”",
-          "explanationEn": "Hamo says: “Her treasure is a red apple, for Hevalo.”",
-          "evidenceParagraph": 2,
+          "correctIndex": 2,
+          "explanation": "Hamo dibêje: “Nîvek li cem min e, nîvek li Amedê ye.”",
+          "explanationEn": "Hamo says: “One half is with me, one half is in Amed.”",
+          "evidenceParagraph": 0,
           "evidenceSentence": 2
         },
         {
@@ -379,6 +364,21 @@
           "explanationEn": "The map is old, but the mark on the window is new: “the new mark is Hêvî’s!”",
           "evidenceParagraph": 2,
           "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Xezîneya Hêviyê çi ye?",
+          "promptEn": "What is Hêvî’s treasure?",
+          "options": [
+            "Sêveke kesk",
+            "Sêveke sor",
+            "Gogeke şîn"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Xezîneya wê sêveke sor e, ji bo Hevalo.”",
+          "explanationEn": "Hamo says: “Her treasure is a red apple, for Hevalo.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
         },
         {
           "kind": "inference",
@@ -577,6 +577,36 @@
       "glossary": [],
       "questions": [
         {
+          "kind": "inference",
+          "prompt": "Hamo dibêje: “Cara yekem, ez zû me!” Çima?",
+          "promptEn": "Hamo says: “For the first time, I am early!” Why?",
+          "options": [
+            "Ew her gav zû ye",
+            "Ew gelek caran dereng e",
+            "Ew qet şiyar nabe"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Carinan ez dereng im. Baş e, gelek caran.”",
+          "explanationEn": "Hamo says: “Sometimes I am late. All right, often.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Ez bi wext im!” Ev çi ye?",
+          "promptEn": "“Ez bi wext im!” What does it mean?",
+          "options": [
+            "Ez ne dereng im",
+            "Ez westiyayî me",
+            "Ez birçî me"
+          ],
+          "correctIndex": 0,
+          "explanation": "Bi wext: ne dereng. Hamo soz dide: “Ez bi wext im!”",
+          "explanationEn": "On time: not late. Hamo promises: “I will be on time!”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 4
+        },
+        {
           "kind": "detail",
           "prompt": "Otobûs kengî diçe?",
           "promptEn": "When does the bus leave?",
@@ -622,21 +652,6 @@
           "evidenceSentence": 1
         },
         {
-          "kind": "vocabulary",
-          "prompt": "“Ez bi wext im!” Ev çi ye?",
-          "promptEn": "“Ez bi wext im!” What does it mean?",
-          "options": [
-            "Ez ne dereng im",
-            "Ez westiyayî me",
-            "Ez birçî me"
-          ],
-          "correctIndex": 0,
-          "explanation": "Bi wext: ne dereng. Hamo soz dide: “Ez bi wext im!”",
-          "explanationEn": "On time: not late. Hamo promises: “I will be on time!”",
-          "evidenceParagraph": 0,
-          "evidenceSentence": 4
-        },
-        {
           "kind": "detail",
           "prompt": "Roja Şemiyê Hamo kengî şiyar dibe?",
           "promptEn": "When does Hamo wake up on Saturday?",
@@ -650,21 +665,6 @@
           "explanationEn": "Hamo says: “On Saturday I wake up at five.”",
           "evidenceParagraph": 2,
           "evidenceSentence": 0
-        },
-        {
-          "kind": "inference",
-          "prompt": "Hamo dibêje: “Cara yekem, ez zû me!” Çima?",
-          "promptEn": "Hamo says: “For the first time, I am early!” Why?",
-          "options": [
-            "Ew her gav zû ye",
-            "Ew gelek caran dereng e",
-            "Ew qet şiyar nabe"
-          ],
-          "correctIndex": 1,
-          "explanation": "Hamo dibêje: “Carinan ez dereng im. Baş e, gelek caran.”",
-          "explanationEn": "Hamo says: “Sometimes I am late. All right, often.”",
-          "evidenceParagraph": 0,
-          "evidenceSentence": 2
         },
         {
           "kind": "sequence",
@@ -1057,6 +1057,20 @@
           "evidenceSentence": 1
         },
         {
+          "kind": "sequence",
+          "prompt": "Sibehê, pêşî çi tê: baran an tav?",
+          "promptEn": "In the morning, what comes first: rain or sun?",
+          "options": [
+            "Tav",
+            "Baran"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Sibehê baran dibare, paşê tav derdikeve.”",
+          "explanationEn": "“In the morning it rains, then the sun comes out.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
           "kind": "vocabulary",
           "prompt": "Hamo dibêje: “Baran bereket e!” Li vir “bereket” çi ye?",
           "promptEn": "Hamo says: “Rain is a blessing!” What is a “bereket” here?",
@@ -1070,20 +1084,6 @@
           "explanationEn": "It rains, and Hamo is glad: “Rain is a blessing!”",
           "evidenceParagraph": 2,
           "evidenceSentence": 1
-        },
-        {
-          "kind": "sequence",
-          "prompt": "Sibehê, pêşî çi tê: baran an tav?",
-          "promptEn": "In the morning, what comes first: rain or sun?",
-          "options": [
-            "Tav",
-            "Baran"
-          ],
-          "correctIndex": 1,
-          "explanation": "“Sibehê baran dibare, paşê tav derdikeve.”",
-          "explanationEn": "“In the morning it rains, then the sun comes out.”",
-          "evidenceParagraph": 2,
-          "evidenceSentence": 0
         },
         {
           "kind": "inference",
@@ -1131,21 +1131,6 @@
           "evidenceSentence": 3
         },
         {
-          "kind": "detail",
-          "prompt": "Di qutiyê de çi hene?",
-          "promptEn": "What is in the tin?",
-          "options": [
-            "Sêv û gûz",
-            "Destmal û gotar",
-            "Bilûrek û nameyek"
-          ],
-          "correctIndex": 2,
-          "explanation": "“Di qutiyê de bilûrek û nameyek hene.”",
-          "explanationEn": "“In the tin there are a flute and a note.”",
-          "evidenceParagraph": 4,
-          "evidenceSentence": 3
-        },
-        {
           "kind": "inference",
           "prompt": "Name dibêje: “Stranê bidomînin.” Ev gotina kê ye?",
           "promptEn": "The note says: “Keep the song going.” Whose words are these?",
@@ -1159,6 +1144,21 @@
           "explanationEn": "The tin is under their father’s stone: these are the words of Hamo’s father.",
           "evidenceParagraph": 4,
           "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Di qutiyê de çi hene?",
+          "promptEn": "What is in the tin?",
+          "options": [
+            "Sêv û gûz",
+            "Destmal û gotar",
+            "Bilûrek û nameyek"
+          ],
+          "correctIndex": 2,
+          "explanation": "“Di qutiyê de bilûrek û nameyek hene.”",
+          "explanationEn": "“In the tin there are a flute and a note.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 3
         },
         {
           "kind": "sequence",
@@ -1753,21 +1753,6 @@
           "evidenceSentence": 0
         },
         {
-          "kind": "detail",
-          "prompt": "Dema ku Hamo got “bizinek e”, Bişar çi kir?",
-          "promptEn": "When Hamo said “it’s a goat”, what did Bişar do?",
-          "options": [
-            "Wî got ku ew ask e",
-            "Ew rabû û çû derve",
-            "Wî tiştek negot; ew tenê dikenî"
-          ],
-          "correctIndex": 2,
-          "explanation": "Hamo dibêje: “Bişar tiştek negot. Ew tenê dikenî.”",
-          "explanationEn": "Hamo says: “Bişar said nothing. He just kept laughing.”",
-          "evidenceParagraph": 2,
-          "evidenceSentence": 4
-        },
-        {
           "kind": "sequence",
           "prompt": "Pêşî çi qewimî?",
           "promptEn": "What happened first?",
@@ -1781,6 +1766,36 @@
           "explanationEn": "First Hamo said: “It’s just a goat.” Later Bişar talked about the salt.",
           "evidenceParagraph": 2,
           "evidenceSentence": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo dibêje: “Bîra min nayê.” Ew rast dibêje?",
+          "promptEn": "Hamo says: “I don’t remember.” Is he telling the truth?",
+          "options": [
+            "Erê, Xezalê got ku Zerê bizin e",
+            "Na, wî bi xwe ew got",
+            "Erê, Bişar got ku Zerê bizin e"
+          ],
+          "correctIndex": 1,
+          "explanation": "Na. Şeva yekem Hamo bi xwe got: “Ev tenê bizinek e.”",
+          "explanationEn": "No. On the first night Hamo himself said: “It’s just a goat.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Dema ku Hamo got “bizinek e”, Bişar çi kir?",
+          "promptEn": "When Hamo said “it’s a goat”, what did Bişar do?",
+          "options": [
+            "Wî got ku ew ask e",
+            "Ew rabû û çû derve",
+            "Wî tiştek negot; ew tenê dikenî"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo dibêje: “Bişar tiştek negot. Ew tenê dikenî.”",
+          "explanationEn": "Hamo says: “Bişar said nothing. He just kept laughing.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 4
         },
         {
           "kind": "detail",
@@ -1885,21 +1900,6 @@
           "explanationEn": "False. Hamo says: “Only the goat is not in the notebook.”",
           "evidenceParagraph": 5,
           "evidenceSentence": 3
-        },
-        {
-          "kind": "inference",
-          "prompt": "Hamo dibêje: “Bîra min nayê.” Ew rast dibêje?",
-          "promptEn": "Hamo says: “I don’t remember.” Is he telling the truth?",
-          "options": [
-            "Erê, Xezalê got ku Zerê bizin e",
-            "Na, wî bi xwe ew got",
-            "Erê, Bişar got ku Zerê bizin e"
-          ],
-          "correctIndex": 1,
-          "explanation": "Na. Şeva yekem Hamo bi xwe got: “Ev tenê bizinek e.”",
-          "explanationEn": "No. On the first night Hamo himself said: “It’s just a goat.”",
-          "evidenceParagraph": 2,
-          "evidenceSentence": 1
         },
         {
           "kind": "gist",
