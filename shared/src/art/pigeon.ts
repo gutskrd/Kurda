@@ -20,10 +20,12 @@
  * for a beat.
  *
  * It is drawn about its feet at 0,0, facing right, a unit to five of the
- * reference's pixels: about fifty-five units from tail to beak.
+ * reference's pixels: about fifty-five units from tail to beak. Its shadow on
+ * the sill is drawn on its own (`pigeonShadow`), so that an app can leave it
+ * lying on the sill while the pigeon hops or flies off.
  */
 import type { Drawing } from './svg.js';
-import { linearAt, mix, n, radialAt } from './svg.js';
+import { linearAt, mix, n, radialAt, radialBox } from './svg.js';
 
 /** What the pigeon is doing. Flying is two pictures, its wings up and its wings down, which an app shows in turn. */
 export type PigeonPose = 'perched' | 'blink' | 'happy' | 'wave' | 'sleep' | 'wings-up' | 'wings-down';
@@ -216,16 +218,45 @@ function sleeping(dr: Drawing): void {
   stroke(dr, z(18.6, -29, 2.6) + z(22.8, -35.6, 3.4) + z(28, -43.6, 4.2), '#9b97c9', 1.3);
 }
 
+/** Whether a pigeon in `pose` has a letter in its beak when given one: a sleeping or chirping pigeon holds none. */
+export function pigeonHolds(pose: PigeonPose, letter: boolean): boolean {
+  return letter && pose !== 'sleep' && pose !== 'happy';
+}
+
+/**
+ * The shadow a pigeon standing on the sill casts there, about its feet at
+ * 0,0, facing right. The light comes in through the window behind it, so the
+ * shadow falls a little toward the room, and it is the shape of what casts
+ * it: the round of the body the most of it, the feet the darkest where they
+ * touch the sill, the raised tail a fainter one further back, and a letter in
+ * its beak, hanging nearly to the sill, one of its own in front. Asleep, sat
+ * down on its legs, it casts a rounder one close under it. Every shape fades
+ * out to its rim, and all of them are one shade, so the shadows of the bird
+ * and its letter lie together as one.
+ */
+export function pigeonShadow(dr: Drawing, pose: PigeonPose = 'perched', letter = false): void {
+  const soft = dr.id('shadow');
+  dr.def(radialBox(soft, [[0, DUSK, 1], [0.55, DUSK, 0.72], [1, DUSK, 0]]));
+  const blot = (cx: number, cy: number, rx: number, ry: number, strength = 1): string =>
+    `<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(rx)}" ry="${n(ry)}" fill="url(#${soft})"${strength === 1 ? '' : ` opacity="${n(strength)}"`}/>`;
+  dr.add('<g opacity="0.26">');
+  if (pose === 'sleep') dr.add(blot(0.4, 1.2, 19, 3.2) + blot(-24, 1.8, 8, 1.4, 0.55));
+  else dr.add(blot(0.6, 1.5, 18.4, 3) + blot(-25, 2, 9, 1.6, 0.55) + blot(2.6, 1.1, 6.6, 1.4));
+  if (pigeonHolds(pose, letter)) dr.add(blot(25.4, 1.7, 8, 2.1));
+  dr.add('</g>');
+}
+
 /**
  * A pigeon about its feet at 0,0, facing right (the caller mirrors it to face
  * left). `letter` puts a letter in its beak; a sleeping or chirping pigeon
- * holds none.
+ * holds none. Standing or asleep it casts its shadow (`pigeonShadow`) unless
+ * told not to, for an app that lays the shadow on the sill by itself.
  */
-export function pigeon(dr: Drawing, hex: string, pose: PigeonPose = 'perched', letter = false): void {
+export function pigeon(dr: Drawing, hex: string, pose: PigeonPose = 'perched', letter = false, shadow = true): void {
   const p = plumage(hex);
   const flying = pose === 'wings-up' || pose === 'wings-down';
   const standing = !flying && pose !== 'sleep';
-  if (!flying) dr.add(`<ellipse cx="0" cy="1" rx="15" ry="2.2" fill="${DUSK}" opacity="0.12"/>`);
+  if (!flying && shadow) pigeonShadow(dr, pose, letter);
   if (standing) {
     // two short legs, each with three toes on the ground
     stroke(dr, 'M0 -2V0.4M-2.2 1H2.2M0 0.4L1.4 1.4M5.2 -2V0.4M3 1H7.4M5.2 0.4L6.6 1.4', FEET, 1.15);
@@ -237,7 +268,7 @@ export function pigeon(dr: Drawing, hex: string, pose: PigeonPose = 'perched', l
   if (flying) stroke(dr, 'M3.4 -0.8L-2.6 0.8M5.6 -0.4L0 1.4', FEET, 1.2);
   body(dr, p);
   // a chirping pigeon has nothing in its beak
-  const holding = letter && pose !== 'sleep' && pose !== 'happy';
+  const holding = pigeonHolds(pose, letter);
   face(dr, p, pose === 'happy' ? 'happy' : pose === 'blink' || pose === 'sleep' ? 'shut' : 'open');
   if (holding) heldLetter(dr);
   if (holding) fill(dr, BEAK_TOP, BEAK);

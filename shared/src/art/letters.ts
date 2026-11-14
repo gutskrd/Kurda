@@ -25,8 +25,8 @@
 import { LETTER_BIRDS } from '../letters.js';
 import { form, ring, rr, type Tones } from './cutout.js';
 import { leaf } from './paint.js';
-import { pigeon, type PigeonPose } from './pigeon.js';
-import { Drawing, checkSize, linearAt, mix, n, prefixFor, radialAt, seeded, tint, type Pt } from './svg.js';
+import { pigeon, pigeonHolds, pigeonShadow, type PigeonPose } from './pigeon.js';
+import { Drawing, checkSize, linearAt, mix, n, prefixFor, radialAt, radialBox, seeded, tint, type Pt } from './svg.js';
 import type { TreeSky } from './tree-scene.js';
 
 /** What changes with the hour: the country outside, and the room's own colours in its light. */
@@ -146,8 +146,12 @@ const OPENING = { x0: 25.4, y0: 21.4, x1: 94.6, y1: 85.4 } as const;
 export const LETTER_OPENING = OPENING;
 const SILL_FRONT = { x0: 10, x1: 110, y: 96, depth: 4.8 } as const;
 
-/** The layers of the window, back to front. A pigeon on the sill stands over all of them, the light on the sill included: it lies under its feet. */
-export const LETTER_WINDOW_PARTS = ['sky', 'clouds', 'far', 'near', 'room', 'left', 'right', 'light'] as const;
+/**
+ * The layers of the window, back to front. A pigeon on the sill stands over
+ * all of them, the light on the sill included: it lies under its feet. The
+ * plant in the pot is a layer of its own, so it can sway in the air coming in.
+ */
+export const LETTER_WINDOW_PARTS = ['sky', 'clouds', 'far', 'near', 'room', 'left', 'right', 'plant', 'light'] as const;
 export type LetterWindowPart = (typeof LETTER_WINDOW_PARTS)[number];
 
 /**
@@ -156,7 +160,10 @@ export type LetterWindowPart = (typeof LETTER_WINDOW_PARTS)[number];
  * room and its casements not at all, so the frame holds still and what is
  * outside turns behind it.
  */
-export const LETTER_WINDOW_DEPTH: Readonly<Record<LetterWindowPart, number>> = { sky: 0.006, clouds: 0.012, far: 0.02, near: 0.04, room: 0, left: 0, right: 0, light: 0 };
+export const LETTER_WINDOW_DEPTH: Readonly<Record<LetterWindowPart, number>> = { sky: 0.006, clouds: 0.012, far: 0.02, near: 0.04, room: 0, left: 0, right: 0, plant: 0, light: 0 };
+
+/** Where the plant in the pot bends from (the pot's rim, on the window's square), how far it leans each way in the breeze, in degrees, and how long one sway takes. */
+export const LETTER_PLANT_SWAY = { x: 90, y: 86, turn: 3.2, ms: 5600 } as const;
 
 /**
  * Where a pigeon stands on the sill, on the window's 120-unit square: under
@@ -227,8 +234,12 @@ function moves(keys: ReadonlyArray<Partial<LetterPlayMove> & { at: number }>): L
   return keys.map((k) => (last = { ...last, ...k }));
 }
 
-/** A pigeon's three plays: before it goes, after it comes, and at home on the sill while nothing is happening. */
-export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle', LetterPlay>> = {
+/**
+ * A pigeon's plays: before it goes, after it comes, at home on the sill while
+ * nothing is happening, and — a bird sent on from somebody's window — picking
+ * its own letter up again from where it laid it, to go.
+ */
+export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch', LetterPlay>> = {
   // your letter drops onto the sill; the pigeon looks up at it, hops for joy and chirps, hops over, picks it up, and beats its wings, ready
   before: {
     ms: 4000,
@@ -327,6 +338,47 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle', LetterPla
       { at: 1, y: 0, seen: 1 },
     ],
   },
+  // sent on: it looks at you, then down at its letter, picks it up where it laid it, and beats its wings, ready
+  fetch: {
+    ms: 3200,
+    loop: false,
+    moves: moves([
+      { at: 0 },
+      { at: 0.1, tilt: -8 },
+      { at: 0.2, tilt: -8 },
+      { at: 0.26, tilt: 0 },
+      { at: 0.34, tilt: 30 },
+      { at: 0.42, tilt: 30 },
+      { at: 0.5, tilt: 0 },
+      { at: 0.56, y: -0.05 },
+      { at: 0.62, y: 0 },
+      { at: 0.7, y: -0.05 },
+      { at: 0.76, y: 0 },
+      { at: 0.84, y: -0.04 },
+      { at: 0.9, y: 0 },
+      { at: 1 },
+    ]),
+    poses: [
+      [0, 'perched', false],
+      [0.14, 'blink', false],
+      [0.18, 'perched', false],
+      [0.42, 'perched', true],
+      [0.53, 'wings-up', true],
+      [0.59, 'wings-down', true],
+      [0.65, 'wings-up', true],
+      [0.71, 'wings-down', true],
+      [0.77, 'wings-up', true],
+      [0.83, 'wings-down', true],
+      [0.92, 'perched', true],
+    ],
+    letterAt: 0.3,
+    letter: [
+      { at: 0, y: 0, seen: 1 },
+      { at: 0.419, y: 0, seen: 1 },
+      { at: 0.42, y: 0, seen: 0 },
+      { at: 1, y: 0, seen: 0 },
+    ],
+  },
   // at home, over and over: a pigeon's bob of the head, a peck at the seeds, a look up at the sky, a chirp, and a hop round and back
   idle: {
     ms: 15000,
@@ -391,6 +443,64 @@ export function letterPlayShows(play: LetterPlay): Array<{ pose: PigeonPose; let
   });
   for (const show of shows.values()) show.steps.push([1, show.steps[show.steps.length - 1]![1]]);
   return [...shows.values()];
+}
+
+/** Where a shadow on the sill is at one moment: how far along (shares of the pigeon's square), how it is turned and stretched, and how much of it is seen. */
+export interface LetterShadowKey {
+  at: number;
+  x: number;
+  sx: number;
+  sy: number;
+  seen: number;
+}
+
+/** How a shadow is for a pigeon `lift` (shares of its square) over the sill: smaller and fainter the higher it is. */
+const lifted = (lift: number): { size: number; seen: number } => ({ size: Math.max(0.3, 1 - Math.max(0, lift) * 3), seen: Math.max(0, 1 - Math.max(0, lift) * 6) });
+
+/**
+ * The shadows a play lays on the sill, on the play's own clock. The
+ * pigeon's (`moves`) stays on the sill under it wherever it steps, turns
+ * round with it, slides a little ahead as it leans down to peck, and is
+ * smaller and fainter while it is up in a hop; the letter in its beak casts
+ * one too while it holds it (`holding`, steps as `letterPlayShows` gives
+ * them, for the shadow drawn with the letter's). A letter lying on the sill
+ * has its own (`letter`), there before it lands and darker the nearer it
+ * comes down.
+ */
+export function letterPlayShadow(play: LetterPlay): {
+  moves: LetterShadowKey[];
+  holding: Array<readonly [at: number, seen: 0 | 1]>;
+  letter: Array<{ at: number; size: number; seen: number }>;
+} {
+  const moves = play.moves.map((m) => {
+    const { size, seen } = lifted(-m.y);
+    return { at: m.at, x: m.x + Math.sin((m.tilt * Math.PI) / 180) * 0.05, sx: m.sx * size, sy: size, seen };
+  });
+  const holding: Array<readonly [number, 0 | 1]> = [];
+  play.poses.forEach(([at, pose, letter], i) => {
+    const now: 0 | 1 = pigeonHolds(pose, letter) ? 1 : 0;
+    const before = i === 0 ? null : holding[holding.length - 1]![1];
+    if (before === null) holding.push([0, now]);
+    else if (before !== now) holding.push([Math.max(0, at - 0.0005), before], [at, now]);
+  });
+  if (holding.length) holding.push([1, holding[holding.length - 1]![1]]);
+  // a letter falls further than a pigeon hops, so its shadow fades more gently with the height
+  const letter = play.letter.map((k) => ({ at: k.at, size: Math.max(0.4, 1 + k.y * 0.9), seen: k.seen * Math.max(0, 1 + k.y * 1.3) }));
+  return { moves, holding, letter };
+}
+
+/**
+ * The shadow of a pigeon flying off the sill, on the flight's clock
+ * (LETTER_FLIGHT, a pigeon coming in has it backwards): it stays on the sill,
+ * under the pigeon as it goes, and is gone as the pigeon rises from it.
+ * Measured on the pigeon's own square, as the play's shadows are.
+ */
+export function letterFlightShadow(): LetterShadowKey[] {
+  return LETTER_FLIGHT.keys.map((k) => {
+    const lift = -k.y / LETTER_SILL.birdShare;
+    const { size, seen } = lifted(lift * 0.7);
+    return { at: k.at, x: k.x / LETTER_SILL.birdShare, sx: size, sy: size, seen };
+  });
 }
 
 /**
@@ -478,13 +588,20 @@ function nearPart(dr: Drawing, h: Hour): void {
   flower(dr, 52, 84.6, 1.3, blue, tint(blue, 0.35));
 }
 
-/** A clay pot of flowers on the sill: its body, its rim, the shade it stands in, and what grows in it. */
-function pot(dr: Drawing, h: Hour, x: number, y: number): void {
+/** A clay pot on the sill, at `x`, `y`: the shade it stands in, its body and its rim. What grows in it is drawn by itself (`plant`). */
+function pot(dr: Drawing, x: number, y: number): void {
   const clay: Tones = { light: '#eea17a', base: '#d9825b', shade: '#b8663f' };
   dr.add(`<ellipse cx="${n(x)}" cy="${n(y + 0.4)}" rx="7.4" ry="1.4" fill="#1d1838" opacity="0.16"/>`);
+  form(dr, `M${n(x - 5.6)} ${n(y - 7)}L${n(x + 5.6)} ${n(y - 7)}L${n(x + 4.2)} ${n(y)}L${n(x - 4.2)} ${n(y)}Z`, clay, 0.8, 0.6);
+  dr.add(`<path d="${rr(x - 6.6, y - 8.6, 13.2, 2.6, 1)}" fill="${clay.light}"/>`);
+}
+
+/** What grows in the pot at `x`, `y`: a stem, four leaves and two flowers, rising from under the rim. */
+function plant(dr: Drawing, h: Hour, x: number, y: number): void {
   const stem = h.night ? '#2f5a3f' : '#4f8f3e';
   const leafy = h.night ? '#3c6b4a' : '#6fb04f';
-  dr.add(`<path d="M${n(x)} ${n(y - 8)}Q${n(x - 0.6)} ${n(y - 13)} ${n(x + 0.4)} ${n(y - 17)}" fill="none" stroke="${stem}" stroke-width="0.8" stroke-linecap="round"/>`);
+  // the stem rises from the top of the rim, where the plant bends from (LETTER_PLANT_SWAY)
+  dr.add(`<path d="M${n(x)} ${n(y - 8.6)}Q${n(x - 0.6)} ${n(y - 13)} ${n(x + 0.4)} ${n(y - 17)}" fill="none" stroke="${stem}" stroke-width="0.8" stroke-linecap="round"/>`);
   const leaves: ReadonlyArray<readonly [Pt, Pt, number]> = [
     [[x, y - 9], [-0.86, -0.5], 5.2],
     [[x, y - 9.4], [0.86, -0.5], 5],
@@ -494,8 +611,6 @@ function pot(dr: Drawing, h: Hour, x: number, y: number): void {
   for (const [base, u, len] of leaves) dr.add(`<path d="${leaf(base, u, len, len * 0.42)}" fill="${leafy}"/>`);
   flower(dr, x + 0.4, y - 17.6, 1.5, h.flowers[1], h.flowers[0]);
   flower(dr, x - 3.6, y - 14.6, 1, h.flowers[0], h.heart);
-  form(dr, `M${n(x - 5.6)} ${n(y - 7)}L${n(x + 5.6)} ${n(y - 7)}L${n(x + 4.2)} ${n(y)}L${n(x - 4.2)} ${n(y)}Z`, clay, 0.8, 0.6);
-  dr.add(`<path d="${rr(x - 6.6, y - 8.6, 13.2, 2.6, 1)}" fill="${clay.light}"/>`);
 }
 
 /** The room round the window: its wall, the wall's thickness, the frame set back in it, the sill and its pot. */
@@ -525,7 +640,7 @@ function roomPart(dr: Drawing, h: Hour): void {
   for (const [x, y, turn] of [[64.6, 94.6, 20], [67.4, 95.4, -30], [69.2, 94.2, 60], [35.4, 94.8, -20], [32.8, 95.6, 35], [31, 94.4, -60]] as const) {
     dr.add(`<ellipse cx="${n(x)}" cy="${n(y)}" rx="0.95" ry="0.6" fill="${seed}" transform="rotate(${turn} ${n(x)} ${n(y)})"/>`);
   }
-  pot(dr, h, 90, 94.6);
+  pot(dr, 90, 94.6);
 }
 
 /**
@@ -604,6 +719,7 @@ export function letterWindowSvg(opts: LetterWindowOptions = {}): string {
     room: () => roomPart(dr, h),
     left: () => casementPart(dr, h, 'left'),
     right: () => casementPart(dr, h, 'right'),
+    plant: () => plant(dr, h, 90, 94.6),
     light: () => lightPart(dr, h),
   };
   if (part === 'whole') for (const p of LETTER_WINDOW_PARTS) draw[p]();
@@ -621,6 +737,8 @@ export interface LetterBirdOptions {
   facingLeft?: boolean;
   /** framed as a picture of the pigeon itself, its head and body filling the square, rather than standing where the sill is */
   portrait?: boolean;
+  /** with its shadow under it (the default); the window lays the shadow on the sill itself (`letterShadowSvg`) */
+  shadow?: boolean;
   size?: number;
   title?: string;
   idPrefix?: string;
@@ -636,16 +754,48 @@ export function letterBirdSvg(opts: LetterBirdOptions): string {
   if (!hex) throw new RangeError(`art: no bird ${String(opts.bird)}`);
   const pose = opts.pose ?? 'perched';
   const flip = opts.facingLeft ? -1 : 1;
-  const dr = new Drawing(prefixFor(opts.idPrefix, 'letter-bird', opts.bird, pose, opts.letter ? 'letter' : '', flip, opts.portrait ? 'portrait' : ''));
+  const shadow = opts.shadow !== false;
+  const dr = new Drawing(prefixFor(opts.idPrefix, 'letter-bird', opts.bird, pose, opts.letter ? 'letter' : '', flip, opts.portrait ? 'portrait' : '', shadow ? '' : 'unshaded'));
   const { x, y, scale } = opts.portrait ? PORTRAIT : LETTER_BIRD_FEET;
   // a pigeon facing left stands on the same feet, mirrored about them: its square fits it either way round
   dr.add(`<g transform="translate(${n(x)} ${n(y)}) scale(${n(scale * flip)} ${n(scale)})">`);
-  pigeon(dr, hex, pose, opts.letter === true);
+  pigeon(dr, hex, pose, opts.letter === true, shadow);
   dr.add('</g>');
   return dr.svg(size, opts.title ?? 'A pigeon');
 }
 
+export interface LetterShadowOptions {
+  /** what the pigeon is doing: asleep, it casts a rounder shadow */
+  pose?: PigeonPose;
+  /** with the shadow of a letter in its beak */
+  letter?: boolean;
+  facingLeft?: boolean;
+  size?: number;
+  title?: string;
+  idPrefix?: string;
+}
+
+/**
+ * The shadow a pigeon on the sill casts, alone on the pigeon's square
+ * (`letterBirdSvg`), so that it lies on the sill where the pigeon's feet are:
+ * an app lays it under a pigeon drawn without one, and leaves it on the sill
+ * while the pigeon hops or takes off.
+ */
+export function letterShadowSvg(opts: LetterShadowOptions = {}): string {
+  const size = checkSize(opts.size, 120);
+  const pose = opts.pose ?? 'perched';
+  const flip = opts.facingLeft ? -1 : 1;
+  const dr = new Drawing(prefixFor(opts.idPrefix, 'letter-shadow', pose, opts.letter ? 'letter' : '', flip));
+  const { x, y, scale } = LETTER_BIRD_FEET;
+  dr.add(`<g transform="translate(${n(x)} ${n(y)}) scale(${n(scale * flip)} ${n(scale)})">`);
+  pigeonShadow(dr, pose, opts.letter === true);
+  dr.add('</g>');
+  return dr.svg(size, opts.title ?? 'A shadow');
+}
+
 export interface LetterEnvelopeOptions {
+  /** the shadow a letter lying flat casts, alone on the letter's square, in place of the letter */
+  shadow?: boolean;
   size?: number;
   title?: string;
   idPrefix?: string;
@@ -657,7 +807,14 @@ const SEAL = '#d8493b';
 /** A letter in its envelope, sealed with red wax: what is written, or arrives. */
 export function letterEnvelopeSvg(opts: LetterEnvelopeOptions = {}): string {
   const size = checkSize(opts.size, 120);
-  const dr = new Drawing(prefixFor(opts.idPrefix, 'letter-envelope'));
+  const dr = new Drawing(prefixFor(opts.idPrefix, 'letter-envelope', opts.shadow ? 'shadow' : ''));
+  if (opts.shadow) {
+    // lying flat on the sill, the light from the window behind it: a close shade round the paper, deeper toward the room
+    const soft = dr.id('shadow');
+    dr.def(radialBox(soft, [[0, '#1d1838', 1], [0.74, '#1d1838', 0.8], [1, '#1d1838', 0]]));
+    dr.add(`<ellipse cx="61" cy="66" rx="56" ry="38" fill="url(#${soft})" opacity="0.3"/>`);
+    return dr.svg(size, opts.title ?? 'A shadow');
+  }
   form(dr, rr(14, 30, 92, 62, 8), PAPER, 4, 2);
   // the flaps: the bottom two meeting under the top one
   dr.add(`<path d="M16 88L52 60M104 88L68 60" fill="none" stroke="${PAPER.shade}" stroke-width="1.6" stroke-linecap="round"/>`);

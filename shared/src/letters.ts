@@ -2,11 +2,14 @@
  * Letters by bird: writing to another learner in Kurdish.
  *
  * Every member has a bird of their own. To meet somebody new you write a
- * letter and your bird flies out with it; the next person who sends their bird
- * out is the one it reaches, and theirs comes to your window with their
- * letter in the same moment. From then on the two of you are pen pals and
- * write back and forth, a letter each in turn, for as long as you both like.
- * When nobody else has a bird out, yours waits out there until somebody does.
+ * letter, even a single word, and your bird flies out with it, to wait over
+ * the country until somebody calls it. Anybody can see how many birds are out
+ * there and call one to their window: it comes with its letter, and waits on
+ * the sill while it is read. Answer it, and that same bird carries the answer
+ * home, and the two of you are pen pals from then on, writing back and forth
+ * a letter each in turn for as long as you both like. Or send it on its way,
+ * and it flies back out for somebody else. While a bird is visiting, your own
+ * bird stays home: one bird on the sill waits for its answer first.
  *
  * Here are the rules the server enforces and the apps show before anything is
  * sent: who may write to whom (age bands that never mix), how long a letter
@@ -27,16 +30,22 @@
  */
 import { ageInYears, type BirthMonth } from './age.js';
 
-/** The shortest letter: a greeting and a line, not a single word. */
-export const LETTER_MIN = 12;
+/** The shortest letter: a single word is a letter too, for somebody only starting to write Kurdish. */
+export const LETTER_MIN = 1;
 /** The longest letter: a page of handwriting. */
 export const LETTER_MAX = 1500;
 /** Pen pals one person writes to at a time; to meet somebody new past this, one is said goodbye to. */
 export const PEN_PALS_MAX = 5;
 /** Letters one person sends in a day, all pen pals and new birds together. */
 export const LETTERS_PER_DAY = 12;
-/** A bird out looking for somebody comes home with its letter after this many days if nobody has sent one out. */
+/** A bird out looking for somebody comes home with its letter after this many days if nobody has called it. */
 export const BIRD_OUT_DAYS = 14;
+/** Birds one person may call to their window in a day: enough to find somebody, too few to leaf through everybody's letters. */
+export const BIRD_CALLS_PER_DAY = 5;
+/** How long a called bird waits on the sill for its answer before it flies on to somebody else. */
+export const VISIT_HOURS = 24;
+/** How many of the birds out an app is told of by colour, for drawing them over the country; the count is always the whole number. */
+export const SKY_BIRDS_SHOWN = 6;
 
 // ───────────────────────────────────────────────────────────── who writes to whom
 
@@ -91,16 +100,28 @@ export function letterProblem(text: string): LetterProblem | null {
 // ───────────────────────────────────────────────────────────── the birds
 
 /**
- * The colours a pen pal pigeon can be: each member's own, picked from their
- * id so it is the same pigeon on every screen and every phone, without
- * anything stored. The apps draw it (art/letters.ts) from its number here.
+ * The colours a pen pal pigeon can be. Each member chooses theirs once, for
+ * free, and pays for another after (`LETTER_BIRD_PRICE`); until they choose,
+ * it is picked from their id, so it is the same pigeon on every screen and
+ * every phone. The apps draw it (art/letters.ts) from its number here.
  * Soft colours, the first the lavender of the owner's reference pigeon; its
  * pale rump, wing, bars, tail and cheek are worked out from the one colour
  * of its head (art/pigeon.ts).
  */
 export const LETTER_BIRDS = ['#8784c7', '#6fa8e2', '#e88aa6', '#7dbf8f', '#f0a46c', '#55b7ae', '#e5bf55', '#b183d4'] as const;
 
-/** Somebody's bird: a number into `LETTER_BIRDS`, from their id. */
+/**
+ * What a new bird costs, in Zêr, once you have one: the first bird you choose
+ * is free, and is yours until you choose another.
+ */
+export const LETTER_BIRD_PRICE = 500;
+
+/** Whether `bird` is one of the birds there are (a number into `LETTER_BIRDS`). */
+export function isLetterBird(bird: unknown): bird is number {
+  return typeof bird === 'number' && Number.isInteger(bird) && bird >= 0 && bird < LETTER_BIRDS.length;
+}
+
+/** Somebody's bird before they choose one: a number into `LETTER_BIRDS`, from their id. */
 export function letterBirdOf(userId: string): number {
   let h = 2166136261;
   for (let i = 0; i < userId.length; i++) {
@@ -142,6 +163,17 @@ export interface PenPal {
   unread: number;
 }
 
+/**
+ * A bird called to your window: whose it is, the letter it carries (read as
+ * it comes), when it came, and when it flies on if it is not answered.
+ */
+export interface LetterVisitor {
+  person: LetterPerson;
+  letter: LetterItem;
+  since: string;
+  leavesAt: string;
+}
+
 /** Why somebody cannot write letters (yet). */
 export type LettersRefusal = 'birth_month' | 'restricted';
 
@@ -150,8 +182,21 @@ export interface LettersHome {
   /** null when this account can write; otherwise why not */
   refusal: LettersRefusal | null;
   bird: number;
-  /** your bird out with a letter, looking for somebody, and since when */
-  out: { since: string } | null;
+  /** whether the bird was chosen: until it is, the first choice is free (`LETTER_BIRD_PRICE` after) */
+  birdChosen: boolean;
+  /** the Zêr there is to pay for a new bird with */
+  zer: number;
+  /** your bird out with a letter, and since when; `visiting` while somebody has called it and is reading your letter */
+  out: { since: string; visiting: boolean } | null;
+  /** a bird called to your window, waiting for its answer */
+  visitor: LetterVisitor | null;
+  /** how many birds are out that you could call: the whole number, and the colours of the first few (`SKY_BIRDS_SHOWN`), the next to come first */
+  birdsOut: number;
+  sky: number[];
+  /** birds you may still call today */
+  callsLeft: number;
+  /** your bird home from somebody's window with their answer, not yet read: the correspondence it opened */
+  homecoming: { threadId: string; person: LetterPerson } | null;
   penPals: PenPal[];
   /** whether there is room for another pen pal */
   roomForMore: boolean;
@@ -167,9 +212,12 @@ export interface LetterThread {
   closed: boolean;
 }
 
-/**
- * What sending a bird out to somebody new comes to: it met another bird at
- * once, and theirs has brought you their letter; or nobody else has a bird
- * out, and yours is waiting out there.
- */
-export type BirdOutResult = { kind: 'met'; threadId: string; person: LetterPerson; letter: LetterItem } | { kind: 'waiting'; since: string };
+/** Your bird sent out to somebody new: it waits out there, from `since`, until somebody calls it. */
+export type BirdOutResult = { kind: 'waiting'; since: string };
+
+/** What answering a visiting bird comes to: the correspondence it opens, with whom, and your answer, which their bird carries home. */
+export interface VisitorAnswer {
+  threadId: string;
+  person: LetterPerson;
+  letter: LetterItem;
+}

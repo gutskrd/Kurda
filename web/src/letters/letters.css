@@ -47,7 +47,6 @@
 .lw {
   --px: 0;
   --py: 0;
-  --flight-ms: 2600ms;
   --beat-ms: 240ms;
   position: relative;
   width: min(100%, 340px);
@@ -115,8 +114,63 @@
     transform: scaleX(0.92);
   }
 }
+/* the plant in the pot sways in the air coming in, about the pot's rim */
+.lw-layer--plant .lw-layer-art {
+  transform-origin: var(--plant-x) var(--plant-y);
+  animation: lw-sway var(--plant-ms) ease-in-out infinite alternate;
+}
+@keyframes lw-sway {
+  from {
+    transform: rotate(calc(var(--plant-turn) * -1));
+  }
+  to {
+    transform: rotate(var(--plant-turn));
+  }
+}
 .lw-layer--light .lw-layer-art {
   animation: lw-glow 9s ease-in-out infinite alternate;
+}
+
+/*
+ * The life round the window (LetterWindow.tsx, from the shared
+ * letter-sky.ts): the birds out there and what the air carries past, each a
+ * small square moved over the window by its own path, its wings or a
+ * butterfly's beating on the spot.
+ */
+.lw-drift {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  aspect-ratio: 1;
+  will-change: transform, opacity;
+}
+.lw-drift-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.lw-drift-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.lw-drift-art--flap {
+  animation: lw-flap 260ms ease-in-out infinite alternate;
+}
+@keyframes lw-flap {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0.3);
+  }
+}
+/* your own bird's place: it hops aside for a visitor, and back when it goes */
+.lw-own {
+  position: absolute;
+  inset: 0;
+  display: block;
 }
 @keyframes lw-glow {
   from {
@@ -152,17 +206,32 @@
 .lw-play {
   transform-origin: 50% 83.33%;
 }
+/* a shadow lies on the sill under the pigeon's feet, and grows and shrinks about them */
+.lw-shadow {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform-origin: 50% 83.33%;
+}
 .lw-sill-letter {
   position: absolute;
   aspect-ratio: 1;
   transform: scaleY(0.62) rotate(-4deg);
   transform-origin: 50% 76.7%;
 }
+.lw-sill-letter-art {
+  position: absolute;
+  inset: 0;
+}
 .lw-sill-letter-art,
 .lw-sill-letter-art svg {
   display: block;
   width: 100%;
   height: 100%;
+}
+/* the shadow of a letter coming down grows about where it will lie */
+.lw-sill-letter-shade {
+  transform-origin: 50% 62%;
 }
 /* asleep at night: it breathes */
 .lw-bird--asleep {
@@ -180,45 +249,12 @@
 }
 /*
  * A flight is moved as a whole about the pigeon's middle (LetterWindow.tsx,
- * from the shared LETTER_FLIGHT); here it stands to take off and then beats
- * its wings, up and down by turns, or beats them all the way in and stands as
- * it lands.
+ * from the shared LETTER_FLIGHT), and when it stands and when it beats its
+ * wings is switched on the flight's own clock there; here its wings beat, up
+ * and down by turns.
  */
 .lw-flight {
   transform-origin: var(--middle);
-}
-.lw-pose--takeoff {
-  animation: lw-first var(--flight-ms) step-end both;
-}
-.lw-wings--takeoff {
-  animation: lw-then var(--flight-ms) step-end both;
-}
-/* landing is taking off backwards: the wings beat until the last moment, and then it stands */
-.lw-wings--landing {
-  animation: lw-then var(--flight-ms) step-end reverse both;
-}
-.lw-pose--landing {
-  animation: lw-first var(--flight-ms) step-end reverse both;
-}
-@keyframes lw-first {
-  0%,
-  11% {
-    opacity: 1;
-  }
-  12%,
-  100% {
-    opacity: 0;
-  }
-}
-@keyframes lw-then {
-  0%,
-  11% {
-    opacity: 0;
-  }
-  12%,
-  100% {
-    opacity: 1;
-  }
 }
 .lw-wings {
   position: absolute;
@@ -243,8 +279,15 @@
 
 /* for a reader who asked for less motion the window is a still picture, and a pigeon simply stands */
 @media (prefers-reduced-motion: reduce) {
+  .letters-bird {
+    transition: none;
+  }
+  .letters-bird:hover {
+    transform: none;
+  }
   .lw-layer,
   .lw-layer-art,
+  .lw-drift-art--flap,
   .lw-bird--asleep,
   .lw-pose--up,
   .lw-pose--down {
@@ -277,6 +320,99 @@
 }
 .letters-write {
   min-width: 220px;
+}
+
+/* the birds out there: how many, and the way to call one */
+.letters-sky {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.letters-call {
+  min-width: 220px;
+}
+.letters-status--quiet {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+/* sending a visiting bird on asks once, in place */
+.letters-ask {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.letters-ask-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+/* a called bird's letter unfolds once the bird has landed with it */
+.letters-arrived.is-landing .letter-sheet,
+.letters-arrived.is-landing .letter-paper {
+  animation: letters-unfold 0.5s var(--ease-out) 2.6s both;
+}
+
+/* ---- choosing your bird (BirdPicker.tsx) ----------------------------------------------- */
+.letters-picker {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+/* two even rows of four */
+.letters-birds {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  max-width: 290px;
+  margin: var(--space-2) 0;
+  padding: 0;
+  border: 0;
+}
+/* each bird a round button; the one picked ringed in the ink colour, a ring that shows in forced colours too */
+.letters-bird {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    transform 160ms var(--ease-out),
+    border-color 160ms var(--ease-out);
+}
+.letters-bird:hover {
+  transform: translateY(-2px);
+}
+.letters-bird.is-picked {
+  border-color: var(--ink);
+}
+.letters-bird:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+/* the bird that is yours now, marked with a small dot when choosing another */
+.letters-bird-mine {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--ink);
+}
+.letters-picker-actions {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+}
+.letters-picker-error {
+  margin: 0;
+  color: var(--danger, #d8493b);
+  font-size: var(--text-secondary);
 }
 
 /* ---- the paper ------------------------------------------------------------------------- */
@@ -424,7 +560,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .letters-arrived .letter-sheet {
+  .letters-arrived .letter-sheet,
+  .letters-arrived.is-landing .letter-sheet,
+  .letters-arrived.is-landing .letter-paper {
     animation: none;
   }
 }

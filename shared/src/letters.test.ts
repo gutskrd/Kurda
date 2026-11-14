@@ -23,10 +23,11 @@ describe('who may write to whom', () => {
 describe('what a letter may hold', () => {
   const letter = 'Silav! Navê min Rojda ye û ez ji Amedê me.';
 
-  it('takes a letter of a greeting and a line, up to a page', () => {
+  it('takes anything from a single word up to a page, and nothing that is only spaces', () => {
     expect(letterProblem(letter)).toBeNull();
-    expect(letterProblem('Silav!')).toBe('short');
-    expect(letterProblem(`  ${'a'.repeat(LETTER_MIN - 1)}  `)).toBe('short');
+    expect(letterProblem('Silav!')).toBeNull();
+    expect(LETTER_MIN).toBe(1);
+    expect(letterProblem('   ')).toBe('short');
     expect(letterProblem('a'.repeat(LETTER_MAX))).toBeNull();
     expect(letterProblem('a'.repeat(LETTER_MAX + 1))).toBe('long');
   });

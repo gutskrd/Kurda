@@ -69,16 +69,20 @@ const RULE = 30;
  * A sheet of lined paper to write a letter on, and the bird's send. What the
  * server would refuse is said under it as it is written — a link, a phone
  * number, too long — so nothing is refused after the bird has left; that it
- * is too short is said only once somebody tries to send it.
+ * is still empty is said only once somebody tries to send it. A single word
+ * is a letter.
  */
 export function LetterPaper({
   label,
+  sendLabel,
   busy,
   onSend,
   error,
   testID,
 }: {
   label: string;
+  /** what sending it is called, when it is not your own bird that takes it */
+  sendLabel?: string;
   busy: boolean;
   onSend: (body: string) => void;
   /** what the server answered, when it refused */
@@ -132,7 +136,7 @@ export function LetterPaper({
           {shown ?? error}
         </Text>
       ) : null}
-      <ClayButton label={busy ? t('letters.sending') : t('letters.send')} onPress={send} tone="primary" busy={busy} testID={testID ? `${testID}-send` : undefined} />
+      <ClayButton label={busy ? t('letters.sending') : (sendLabel ?? t('letters.send'))} onPress={send} tone="primary" busy={busy} testID={testID ? `${testID}-send` : undefined} />
     </View>
   );
 }

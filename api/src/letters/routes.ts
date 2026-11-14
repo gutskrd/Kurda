@@ -7,26 +7,39 @@ import { requireUnrestricted } from '../moderation/restrictions.js';
 import type { LetterService } from './service.js';
 
 const threadParam = z.object({ threadId: z.uuid() });
+const birdBody = z.object({ bird: z.number().int().min(0).max(99) });
 // a little room over the letter's own limit: the service counts it after trimming and says which rule it broke
 const letterBody = z.object({ body: z.string().min(1).max(LETTER_MAX + 200) });
 
 /**
  * Letters by bird (letters/service.ts).
  *
- *   GET    /letters                      your bird, whether it is out, your pen pals
- *   POST   /letters/out                  send a bird out to somebody new
+ *   GET    /letters                      your bird, whether it is out, a bird at your window, the birds out there, your pen pals
+ *   POST   /letters/bird                 choose your bird: free the first time, Zêr after
+ *   POST   /letters/out                  send your bird out to somebody new, to wait until somebody calls it
  *   DELETE /letters/out                  call your bird back
+ *   POST   /letters/call                 call a bird out there to your window, with its letter
+ *   POST   /letters/visitor              answer the bird at your window: it carries your letter home
+ *   DELETE /letters/visitor              send the bird at your window on its way
  *   GET    /letters/threads/:threadId    a correspondence, its letters marked read
  *   POST   /letters/threads/:threadId    write back
  *   POST   /letters/threads/:threadId/end  say goodbye
  *
  * A letter is reported through POST /reports (target type 'letter'), and its
  * writer is blocked or reported as anybody is, by the id the letters give.
- * Writing needs a birth month (the band comes from it) and no chat mute; the
- * page itself only needs an account, so it can say why somebody cannot write.
+ * Writing and calling need a birth month (the band comes from it) and no
+ * chat mute; the page itself only needs an account, so it can say why
+ * somebody cannot write. A bird at the window can always be sent on.
  */
 export function registerLetterRoutes(app: FastifyInstance, letters: LetterService): void {
   app.get('/letters', { preHandler: requireAccount }, async (req) => letters.home(req.user!.id));
+
+  // the service says which birds there are, and takes the payment for a new one
+  app.post(
+    '/letters/bird',
+    { schema: { body: birdBody }, config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } }, preHandler: requireAccount },
+    async (req) => letters.chooseBird(req.user!.id, (req.body as { bird: number }).bird),
+  );
 
   app.post(
     '/letters/out',
@@ -41,6 +54,31 @@ export function registerLetterRoutes(app: FastifyInstance, letters: LetterServic
   app.delete('/letters/out', { preHandler: requireAccount }, async (req, reply) => {
     const recalled = await letters.recall(req.user!.id);
     return reply.code(recalled ? 204 : 404).send();
+  });
+
+  // nothing is sent with a call: the server chooses the bird, the one that has waited longest
+  app.post(
+    '/letters/call',
+    {
+      config: { skipValidation: true, rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat')],
+    },
+    async (req) => ({ visitor: await letters.call(req.user!.id) }),
+  );
+
+  app.post(
+    '/letters/visitor',
+    {
+      schema: { body: letterBody },
+      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat')],
+    },
+    async (req) => letters.answer(req.user!.id, (req.body as { body: string }).body),
+  );
+
+  app.delete('/letters/visitor', { preHandler: requireAccount }, async (req, reply) => {
+    const sent = await letters.sendOn(req.user!.id);
+    return reply.code(sent ? 204 : 404).send();
   });
 
   app.get('/letters/threads/:threadId', { schema: { params: threadParam }, preHandler: requireAccount }, async (req) =>

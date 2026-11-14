@@ -424,8 +424,9 @@ const resolveGroupMessage: Resolver = async (db, targetId, ctx) => {
 /**
  * A letter between pen pals (letters/service.ts): reported only by somebody in
  * its correspondence and never by its writer, kept with the letters before and
- * after it, as a chat message is. A letter still out with its bird has no
- * reader yet, and nobody but its writer has seen it: it is not found.
+ * after it, as a chat message is. A letter still out with its bird can be
+ * reported by whoever called the bird to their window and read it, kept on
+ * its own; to anybody else it is not found.
  */
 const resolveLetter: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
@@ -434,25 +435,37 @@ const resolveLetter: Resolver = async (db, targetId, ctx) => {
     [targetId],
   );
   const l = r.rows[0];
-  if (!l || l.thread_id === null) return { refused: 'not_found' };
-  if (ctx.reporterId !== null && ctx.reporterId !== l.sender_id && ctx.reporterId !== l.recipient_id) return { refused: 'not_found' };
+  if (!l) return { refused: 'not_found' };
+  if (l.thread_id === null) {
+    // a bird out there: only somebody it visited has read its letter
+    const visited =
+      ctx.reporterId !== null &&
+      ((await db.query(`SELECT 1 FROM letter_visits WHERE letter_id = $1 AND visitor_id = $2`, [l.id, ctx.reporterId])).rowCount ?? 0) > 0;
+    if (!visited) return { refused: 'not_found' };
+  } else if (ctx.reporterId !== null && ctx.reporterId !== l.sender_id && ctx.reporterId !== l.recipient_id) return { refused: 'not_found' };
   const self = selfRefusal(ctx, l.sender_id);
   if (self) return self;
-  const rows = await db.query<MessageRow>(
-    `WITH ref AS (SELECT created_at, id FROM letters WHERE id = $2::uuid)
-     SELECT * FROM (
-       (SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.created_at
-          FROM letters m LEFT JOIN users u ON u.id = m.sender_id, ref
-         WHERE m.thread_id = $1 AND (m.created_at, m.id) <= (ref.created_at, ref.id)
-         ORDER BY m.created_at DESC, m.id DESC LIMIT ${CONTEXT_BEFORE + 1})
-       UNION ALL
-       (SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.created_at
-          FROM letters m LEFT JOIN users u ON u.id = m.sender_id, ref
-         WHERE m.thread_id = $1 AND (m.created_at, m.id) > (ref.created_at, ref.id)
-         ORDER BY m.created_at ASC, m.id ASC LIMIT ${CONTEXT_AFTER})
-     ) ctx ORDER BY created_at, id`,
-    [l.thread_id, l.id],
-  );
+  // a letter still out with its bird stands alone; one in a correspondence is kept with the letters round it
+  const rows = l.thread_id === null
+    ? await db.query<MessageRow>(
+        `SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.created_at FROM letters m LEFT JOIN users u ON u.id = m.sender_id WHERE m.id = $1`,
+        [l.id],
+      )
+    : await db.query<MessageRow>(
+        `WITH ref AS (SELECT created_at, id FROM letters WHERE id = $2::uuid)
+         SELECT * FROM (
+           (SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.created_at
+              FROM letters m LEFT JOIN users u ON u.id = m.sender_id, ref
+             WHERE m.thread_id = $1 AND (m.created_at, m.id) <= (ref.created_at, ref.id)
+             ORDER BY m.created_at DESC, m.id DESC LIMIT ${CONTEXT_BEFORE + 1})
+           UNION ALL
+           (SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.created_at
+              FROM letters m LEFT JOIN users u ON u.id = m.sender_id, ref
+             WHERE m.thread_id = $1 AND (m.created_at, m.id) > (ref.created_at, ref.id)
+             ORDER BY m.created_at ASC, m.id ASC LIMIT ${CONTEXT_AFTER})
+         ) ctx ORDER BY created_at, id`,
+        [l.thread_id, l.id],
+      );
   const reported = rows.rows.find((x) => x.id === l.id);
   return {
     targetId: l.id,

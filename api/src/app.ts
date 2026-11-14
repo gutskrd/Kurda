@@ -849,7 +849,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
 
     // letters by bird: pen pals in Kurdish, met by sending a bird out, within an age band (letters/service.ts)
-    registerLetterRoutes(app, new LetterService(app.db, { moderation, inbox, push: pushRecorded(pushService, app.jobs), log: app.log }));
+    registerLetterRoutes(app, new LetterService(app.db, { moderation, inbox, push: pushRecorded(pushService, app.jobs), log: app.log, wallet: new WalletService(app.db) }));
 
     // group chat (KUR-085): per-group room fan-out over the bus + moderation
     const groupChat = new GroupChatService(
