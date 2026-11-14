@@ -6,6 +6,7 @@ import { heldRow, heldDim } from '../theme/MotionParts';
 import {
   CHARACTER_NAMES,
   PAID_STORY_REPEATS_PER_DAY,
+  isAppLocale,
   STORY_ASSESSMENT,
   glossFor,
   storyAudioSentences,
@@ -42,12 +43,16 @@ import { narrationItems, narrationLine, narrationTrack } from './narration';
 import { TEXT_SCALES, useStoryPrefs, type TextScale } from './prefs';
 import { createErrorMessage, SetupSheet } from './SetupSheet';
 import { STORY_BODY_SIZE, StoryText, storyLineHeight } from './StoryText';
-import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
+import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
 import { useNarration } from './useNarration';
 import { COLUMN, Card, Note, Pill, SectionLabel, Sheet } from './ui';
 import { NarrationBar } from './NarrationBar';
+import { AboutStory, Reflections, StorySources } from './Afterword';
+import { chapterAt, hasIntroduction, metaFor, translatedHeading } from './legend';
+import { textIn } from '../lore/labels';
 import { CHARACTER_SIZE, SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { pressedDim } from '../theme/motion';
+import { useDirection } from '../reports/direction';
 
 /** A reading position is sent to the server at most this often; also on leaving the text. */
 export const PROGRESS_EVERY_MS = 10_000;
@@ -123,6 +128,15 @@ type Mode = 'overview' | 'reading';
  * recordings has a Listen button, and a story with recordings has the player
  * bar.
  *
+ * A legend (a story told in sections, the saga length) reads as a book of
+ * chapters: its headings are chapter titles (StoryText), the overview lists
+ * the chapters with the ones read ticked, and while reading, a line under the
+ * title says which chapter this is of how many — a tap on it opens the list,
+ * to go to another. Where the story is not in the reader's own language, its
+ * title and summary are given in theirs too, under the Kurdish ones. After
+ * the text and its check come the questions to think about (nothing scored),
+ * what is known about the story, and its sources.
+ *
  * The check is the solo game with the assessment's settings (five untimed
  * questions, the text at hand), opened in the game screen; the two ways to
  * play with other people open the setup sheet with this story.
@@ -150,6 +164,9 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   // the end of the text reached in this sitting, before the server has said so
   const [reachedEnd, setReachedEnd] = useState(false);
   const [continueFrom, setContinueFrom] = useState<number | null>(null);
+  // the paragraph being read now, for the chapter line; and whether the list of chapters is open
+  const [at, setAt] = useState(0);
+  const [chaptersOpen, setChaptersOpen] = useState(false);
   // the glossary's dictionary words already in the reader's vocabulary, and a save that did not take
   const [saved, setSaved] = useState<ReadonlySet<string>>(new Set());
   const [saveError, setSaveError] = useState<{ entryId: string; text: string } | null>(null);
@@ -315,11 +332,14 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>): void => {
     if (!story || mode !== 'reading') return;
     const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
-    noteProgress(readingPosition(contentOffset.y, layoutMeasurement.height, contentSize.height, textTop.current, paragraphTops.current, story.paragraphs.length));
+    const position = readingPosition(contentOffset.y, layoutMeasurement.height, contentSize.height, textTop.current, paragraphTops.current, story.paragraphs.length);
+    if (position.paragraph !== at) setAt(position.paragraph);
+    noteProgress(position);
   };
 
   const startReading = (from: number | null): void => {
     setMode('reading');
+    setAt(from ?? 0);
     if (from !== null && from > 0) scrollToParagraph(from);
   };
   const toOverview = (): void => {
@@ -470,6 +490,11 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   const narrated = narrationLabel(story.audioCoverage, t);
   const category = categoryLabel(story.category, categories, locale);
   const reading = narration.current;
+  const meta = metaFor(story, locale);
+  const sections = story.sections ?? [];
+  // how far the reader has got, for the chapters ticked as read: this sitting's place, else the one the server kept
+  const readTo = finished ? story.paragraphs.length : Math.max(at, me?.paragraph ?? 0);
+  const chapterNow = chapterAt(sections, at);
   // what the sentence being read says and who says it, whichever queue it came from
   const line = reading ? narrationLine(story.paragraphs, story.voices, reading) : undefined;
   // the character faces back toward the Listen it stands after
@@ -536,6 +561,11 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             <Text {...props} style={[styles.title, { color: colors.textPrimary }, dir]} accessibilityRole="header">
               {story.title}
             </Text>
+            {meta?.title ? (
+              <Text {...textIn(meta.lang).props} style={[styles.titleTranslation, { color: colors.textSecondary }, textIn(meta.lang).style]} testID="story-title-translation">
+                {meta.title}
+              </Text>
+            ) : null}
             <View style={[styles.pills, storyRowStyle(story.dialect)]}>
               <Pill label={levelName(story.level, t)} tone="gold" />
               {category ? <Pill icon="tag" label={category} /> : null}
@@ -547,6 +577,11 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             {story.summary ? (
               <Text {...props} style={[styles.summary, { color: colors.textPrimary }, dir]}>
                 {story.summary}
+              </Text>
+            ) : null}
+            {meta?.summary ? (
+              <Text {...textIn(meta.lang).props} style={[styles.summaryTranslation, { color: colors.textSecondary }, textIn(meta.lang).style]}>
+                {meta.summary}
               </Text>
             ) : null}
             <Text style={[styles.byline, { color: colors.textSecondary }]}>
@@ -585,8 +620,17 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             ) : null}
           </View>
 
+          {sections.length > 0 ? (
+            <View style={styles.section}>
+              <SectionLabel>{t('stories.reader.chapters')}</SectionLabel>
+              <ChapterList story={story} readTo={readTo} here={null} onOpen={(p) => startReading(p)} />
+            </View>
+          ) : null}
+
           {vocabulary}
           {check}
+          <AboutStory story={story} />
+          <StorySources story={story} />
 
           <View style={styles.section}>
             <SectionLabel>{t('stories.library.together')}</SectionLabel>
@@ -602,6 +646,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             ref={scroll}
             testID="story-text"
             contentContainerStyle={[styles.content, { paddingBottom: bottomInset + spacing.lg }]}
+            // the chapter line is the second child, after the title, when the story has chapters
+            stickyHeaderIndices={sections.length > 0 ? [1] : undefined}
             showsVerticalScrollIndicator={false}
             onScroll={onScroll}
             scrollEventThrottle={100}
@@ -614,6 +660,12 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
                 {finished ? t('stories.library.finished') : t('stories.overview.minutesLeft', { count: left })}
               </Text>
             </View>
+            {sections.length > 0 ? (
+              // stays at the top while the text scrolls under it, so where the reader is is always one glance away
+              <View style={[styles.chapterSticky, { backgroundColor: colors.background }]}>
+                <ChapterLine story={story} chapter={chapterNow} readTo={readTo} onOpen={() => setChaptersOpen(true)} />
+              </View>
+            ) : null}
             {continueFrom !== null ? (
               <Pressable
                 onPress={() => {
@@ -658,6 +710,9 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             <View style={styles.end}>
               <Text style={[styles.endText, { color: colors.textSecondary }]}>{t('stories.reader.finished')}</Text>
               {check}
+              <Reflections story={story} />
+              <AboutStory story={story} />
+              <StorySources story={story} />
               {vocabulary}
               <ClayButton label={t('stories.reader.overview')} variant="outline" icon="story" onPress={toOverview} />
             </View>
@@ -677,6 +732,21 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
           ) : null}
         </>
       )}
+
+      {chaptersOpen ? (
+        <Sheet title={t('stories.reader.chapters')} onClose={() => setChaptersOpen(false)}>
+          <ChapterList
+            story={story}
+            readTo={readTo}
+            here={chapterNow}
+            onOpen={(p) => {
+              setChaptersOpen(false);
+              setAt(p);
+              scrollToParagraph(p);
+            }}
+          />
+        </Sheet>
+      ) : null}
 
       {gloss ? (
         <GlossSheet
@@ -943,6 +1013,120 @@ function GlossSheet({
 }
 
 /**
+ * Where the reader is in a legend, under its title while reading: the
+ * chapter's number of how many and its title, and a stone for each chapter
+ * filled once it is read. A tap opens the list of chapters.
+ */
+function ChapterLine({
+  story,
+  chapter,
+  readTo,
+  onOpen,
+}: {
+  story: Pick<StoryDetail, 'dialect' | 'sections' | 'paragraphs'>;
+  chapter: number;
+  readTo: number;
+  onOpen: () => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const ui = useDirection();
+  const sections = story.sections;
+  const current = chapter >= 0 ? sections[chapter] : null;
+  const where = current ? t('stories.reader.chapterOf', { n: chapter + 1, total: sections.length }) : t('stories.reader.introduction');
+  return (
+    <Pressable
+      onPress={onOpen}
+      accessibilityRole="button"
+      accessibilityLabel={current ? `${where}: ${current.title}` : where}
+      accessibilityHint={t('stories.reader.chaptersOpen')}
+      style={({ pressed }) => [styles.chapterLine, { backgroundColor: colors.controlTrack }, pressed && heldDim]}
+      testID="story-chapter-line"
+    >
+      <View style={[styles.chapterLineHead, { flexDirection: ui.row }]}>
+        <Icon name="menu" size={16} color={colors.primary} />
+        <Text style={[styles.chapterLineWhere, { color: colors.primary }]}>{where}</Text>
+        {current ? (
+          <Text {...storyTextProps(story.dialect)} style={[styles.chapterLineTitle, { color: colors.textPrimary }, ui.text]} numberOfLines={1}>
+            {current.title}
+          </Text>
+        ) : null}
+      </View>
+      <View style={[styles.chapterStones, { flexDirection: ui.row }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        {sections.map((s, i) => {
+          const end = sections[i + 1]?.paragraph ?? story.paragraphs.length;
+          const read = readTo >= end - 1;
+          return <View key={s.paragraph} style={[styles.chapterStone, { backgroundColor: read || i === chapter ? colors.gold : colors.controlTrack, opacity: i === chapter && !read ? 0.55 : 1 }]} />;
+        })}
+      </View>
+    </Pressable>
+  );
+}
+
+/**
+ * A legend's chapters, to go to one: the introduction when there is one,
+ * then each chapter by number and title, its title's translation under it,
+ * a tick on the ones read and "You are here" on the one being read.
+ */
+function ChapterList({
+  story,
+  readTo,
+  here,
+  onOpen,
+}: {
+  story: Pick<StoryDetail, 'dialect' | 'sections' | 'paragraphs' | 'translations'>;
+  readTo: number;
+  /** the chapter being read, or null on the overview */
+  here: number | null;
+  onOpen: (paragraph: number) => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const dir = storyTextStyle(story.dialect);
+  const props = storyTextProps(story.dialect);
+  const translation = translationFor(story, locale);
+  const underSet = translation && isAppLocale(translation.lang) ? textIn(translation.lang) : null;
+  const rows: Array<{ key: string; paragraph: number; number: string; title: string; under: string | null; read: boolean; current: boolean }> = [];
+  if (hasIntroduction(story.sections)) {
+    rows.push({ key: 'intro', paragraph: 0, number: '·', title: t('stories.reader.introduction'), under: null, read: readTo >= story.sections[0]!.paragraph, current: here === -1 });
+  }
+  story.sections.forEach((s, i) => {
+    const end = story.sections[i + 1]?.paragraph ?? story.paragraphs.length;
+    const under = translatedHeading(translation?.paragraphs[s.paragraph]);
+    rows.push({ key: `c${s.paragraph}`, paragraph: s.paragraph, number: String(i + 1), title: s.title, under: under !== s.title ? under : null, read: readTo >= end - 1, current: here === i });
+  });
+  return (
+    <View style={styles.chapterList}>
+      {rows.map((r) => (
+        <Pressable
+          key={r.key}
+          onPress={() => onOpen(r.paragraph)}
+          accessibilityRole="button"
+          accessibilityLabel={[r.key === 'intro' ? r.title : `${t('stories.reader.chapterN', { n: r.number })}: ${r.title}`, r.read ? t('stories.reader.chapterRead') : null].filter(Boolean).join(', ')}
+          accessibilityState={{ selected: r.current }}
+          style={({ pressed }) => [styles.chapterRow, { flexDirection: storyRowDirection(story.dialect) }, r.current && { backgroundColor: colors.controlTrack }, pressed && heldRow(colors.controlTrack)]}
+          testID={`chapter-row-${r.key}`}
+        >
+          <Text style={[styles.chapterNumber, { color: colors.goldText }]}>{r.number}</Text>
+          <View style={styles.chapterMain}>
+            <Text {...(r.key === 'intro' ? {} : props)} style={[styles.chapterTitle, { color: colors.textPrimary }, r.key === 'intro' ? null : dir]}>
+              {r.title}
+            </Text>
+            {r.under && underSet ? (
+              <Text {...underSet.props} style={[styles.chapterUnder, { color: colors.textSecondary }, underSet.style]}>
+                {r.under}
+              </Text>
+            ) : null}
+            {r.current ? <Text style={[styles.chapterHere, { color: colors.primary }]}>{t('stories.reader.chapterHere')}</Text> : null}
+          </View>
+          {r.read ? <Icon name="check" size={16} color={colors.success} /> : null}
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+/**
  * The overview while it loads, in its own column: the cover's shape, the
  * title, the facts as pills, two lines of summary, and the first button —
  * so the words arrive on the lines that were waiting for them.
@@ -993,6 +1177,22 @@ const styles = StyleSheet.create({
   head: { gap: spacing.sm },
   title: { ...display(typography.sizes.xl) },
   summary: { fontSize: typography.sizes.md, lineHeight: 24 },
+  titleTranslation: { fontSize: typography.sizes.lg, lineHeight: 28, marginTop: -spacing.xs },
+  summaryTranslation: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  chapterSticky: { marginVertical: -spacing.sm, paddingVertical: spacing.sm },
+  chapterLine: { borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
+  chapterLineHead: { alignItems: 'center', gap: spacing.xs },
+  chapterLineWhere: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  chapterLineTitle: { flex: 1, fontSize: typography.sizes.sm },
+  chapterStones: { gap: 4 },
+  chapterStone: { flex: 1, height: 4, borderRadius: radii.pill },
+  chapterList: { gap: 2 },
+  chapterRow: { alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET + 8, borderRadius: radii.md, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
+  chapterNumber: { width: 20, textAlign: 'center', fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  chapterMain: { flex: 1, gap: 2 },
+  chapterTitle: { ...display(typography.sizes.md), lineHeight: Math.round(typography.sizes.md * 1.3) },
+  chapterUnder: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  chapterHere: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   byline: { fontSize: typography.sizes.sm, lineHeight: 20 },
   source: { fontSize: typography.sizes.xs, lineHeight: 18 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },

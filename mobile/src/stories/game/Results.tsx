@@ -15,9 +15,11 @@ import { createGame, getStory } from '../api';
 import { createErrorMessage } from '../SetupSheet';
 import { evidenceText } from '../segments';
 import { useStoryPrefs } from '../prefs';
-import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, quoted, storyTextProps, storyTextStyle } from '../storyText';
+import { quoted, storyTextProps, storyTextStyle } from '../storyText';
 import { Card, Note, SectionLabel, useFocusOn } from '../ui';
 import { showEnglish } from './Question';
+import { questionIn } from '../legend';
+import { translatedText } from './translated';
 import { bySeat, duoTotals, reviewOrder, standingsLayout } from './results';
 import { PlayerReportButton } from '../../reports/PlayerReportButton';
 import { RankResultPanel } from '../../ranks/RankResultPanel';
@@ -57,7 +59,7 @@ export function Results({
 }): React.JSX.Element | null {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { prefs } = useStoryPrefs();
   const headRef = useRef<Text>(null);
   const [again, setAgain] = useState(false);
@@ -236,6 +238,9 @@ export function Results({
           <SectionLabel>{t('stories.results.review')}</SectionLabel>
           {reviewOrder(results.review).map((item) => {
             const right = item.myChoice === item.correctIndex;
+            // the question and its explanation in the reader's language where the story has them, else the English
+            const tr = questionIn(item, locale);
+            const trSet = tr ? translatedText(tr.lang) : null;
             const quote = story ? evidenceText(story.paragraphs, item.evidenceParagraph, item.evidenceSentence) : null;
             return (
               <Card key={item.index} style={styles.card} padding="tight">
@@ -248,9 +253,9 @@ export function Results({
                 <Text {...props} style={[styles.reviewPrompt, { color: colors.textPrimary }, dir]}>
                   {item.prompt}
                 </Text>
-                {english && item.promptEn ? (
-                  <Text {...ENGLISH_TEXT_PROPS} style={[styles.reviewText, { color: colors.textSecondary }, ENGLISH_TEXT_STYLE]}>
-                    {item.promptEn}
+                {english && tr?.prompt && trSet ? (
+                  <Text {...trSet.props} style={[styles.reviewText, { color: colors.textSecondary }, trSet.style]}>
+                    {tr.prompt}
                   </Text>
                 ) : null}
                 <Text style={[styles.reviewLabel, { color: colors.success }]}>{t('stories.reveal.rightAnswer')}</Text>
@@ -270,9 +275,9 @@ export function Results({
                     {item.explanation}
                   </Text>
                 ) : null}
-                {english && item.explanationEn ? (
-                  <Text {...ENGLISH_TEXT_PROPS} style={[styles.reviewText, { color: colors.textSecondary }, ENGLISH_TEXT_STYLE]}>
-                    {item.explanationEn}
+                {english && tr?.explanation && trSet ? (
+                  <Text {...trSet.props} style={[styles.reviewText, { color: colors.textSecondary }, trSet.style]}>
+                    {tr.explanation}
                   </Text>
                 ) : null}
                 {quote ? (

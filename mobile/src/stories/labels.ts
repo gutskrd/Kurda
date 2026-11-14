@@ -30,6 +30,7 @@ export const LENGTH_KEY: Record<StoryLength, TranslationKey> = {
   short: 'stories.length.short',
   medium: 'stories.length.medium',
   long: 'stories.length.long',
+  saga: 'stories.length.saga',
 };
 
 export const MODE_KEY: Record<StoryGameMode, TranslationKey> = {

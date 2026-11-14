@@ -128,8 +128,8 @@ function nextOpen(states: readonly SoloItemState[]): number {
   return at < 0 ? states.length : at;
 }
 
-/** A stone per item: the one you are on raised, the ones done filled by how they went. */
-function Stones({ states, here, tone, night = false }: { states: readonly SoloItemState[]; here: number | null; tone: string; night?: boolean }): React.JSX.Element {
+/** A stone per item: the one you are on raised, the ones done filled by how they went (the proverbs' round draws them too). */
+export function Stones({ states, here, tone, night = false }: { states: readonly SoloItemState[]; here: number | null; tone: string; night?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   // on the night the stones are told apart by gold and by the cloth's own veil, whatever the theme

@@ -18,10 +18,12 @@ import { advanceGame, answerQuestion } from '../api';
 import { sendAnswer } from '../answer';
 import { useStoryPrefs } from '../prefs';
 import { STORY_BODY_SIZE, StoryText } from '../StoryText';
-import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyTextProps, storyTextStyle } from '../storyText';
+import { storyRowDirection, storyTextProps, storyTextStyle } from '../storyText';
 import { Note, Sheet, useFocusOn } from '../ui';
 import { closesSoon, isTimed, secondsLeft, useTicker } from './clock';
 import { ExtraTimeSwitch } from './ExtraTimeSwitch';
+import { questionIn } from '../legend';
+import { translatedText, translationToggle } from './translated';
 
 /** Options are numbered 1–4, the same numbers the web's keys use. */
 export const OPTION_MIN_HEIGHT = 60;
@@ -79,7 +81,7 @@ export function Question({
 }): React.JSX.Element | null {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { prefs, update } = useStoryPrefs();
   const q = view.question;
   const titleRef = useRef<Text>(null);
@@ -115,6 +117,9 @@ export function Question({
   if (!q) return null;
   const dialect = view.settings.dialect;
   const english = showEnglish(prefs.englishUnder, view.settings.level);
+  // the question in the reader's language where the story has it, else the English (shown under the Kurdish on request)
+  const tr = questionIn(q, locale);
+  const trSet = tr ? translatedText(tr.lang) : null;
   const locked = q.myChoice !== null;
   const chosen = locked ? q.myChoice : (sending?.choice ?? null);
   const total = view.settings.timerSeconds * (view.extraTime ? 2 : 1);
@@ -184,21 +189,19 @@ export function Question({
       <Text {...storyTextProps(dialect)} style={[styles.prompt, { color: colors.textPrimary }, storyTextStyle(dialect)]}>
         {q.prompt}
       </Text>
-      {q.promptEn ? (
-        english ? (
-          <Text {...ENGLISH_TEXT_PROPS} style={[styles.english, { color: colors.textSecondary }, ENGLISH_TEXT_STYLE]}>
-            {q.promptEn}
-          </Text>
-        ) : null
+      {tr?.prompt && trSet && english ? (
+        <Text {...trSet.props} style={[styles.english, { color: colors.textSecondary }, trSet.style]}>
+          {tr.prompt}
+        </Text>
       ) : null}
-      {q.promptEn ? (
+      {tr?.prompt ? (
         <Pressable
           onPress={() => update({ englishUnder: !english })}
           accessibilityRole="button"
           style={({ pressed }) => [styles.toggle, pressed && heldDim]}
           hitSlop={8}
         >
-          <Text style={[styles.toggleText, { color: colors.primary }]}>{english ? t('stories.question.hideEnglish') : t('stories.question.showEnglish')}</Text>
+          <Text style={[styles.toggleText, { color: colors.primary }]}>{translationToggle(tr.lang, english, t)}</Text>
         </Pressable>
       ) : null}
 
@@ -222,9 +225,16 @@ export function Question({
                   <View style={[styles.badge, { backgroundColor: on ? colors.primary : colors.controlTrack }]}>
                     <Text style={[styles.badgeText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>{i + 1}</Text>
                   </View>
-                  <Text {...storyTextProps(dialect)} style={[styles.optionText, { color: ink }, storyTextStyle(dialect)]}>
-                    {option}
-                  </Text>
+                  <View style={styles.optionMain}>
+                    <Text {...storyTextProps(dialect)} style={[styles.optionText, { color: ink }, storyTextStyle(dialect)]}>
+                      {option}
+                    </Text>
+                    {english && trSet && tr?.options?.[i] ? (
+                      <Text {...trSet.props} style={[styles.optionTranslation, { color: ink }, trSet.style]}>
+                        {tr.options[i]}
+                      </Text>
+                    ) : null}
+                  </View>
                 </>
               )}
             </Tile>
@@ -347,7 +357,9 @@ const styles = StyleSheet.create({
   },
   badge: { width: 30, height: 30, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  optionText: { flex: 1, fontSize: typography.sizes.md, lineHeight: 22 },
+  optionMain: { flex: 1, gap: 2 },
+  optionText: { fontSize: typography.sizes.md, lineHeight: 22 },
+  optionTranslation: { fontSize: typography.sizes.sm, lineHeight: 19, opacity: 0.8 },
   statusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
   status: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
   soon: { fontSize: typography.sizes.sm, textAlign: 'center' },

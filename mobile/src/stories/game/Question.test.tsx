@@ -21,6 +21,7 @@ const question = (over: Partial<StoryGameQuestion> = {}): StoryGameQuestion => (
   prompt: 'Nan çawa bû?',
   promptEn: 'How was the bread?',
   options: ['Sar', 'Germ', 'Şor', 'Şirîn'],
+  translations: {},
   myChoice: null,
   ...over,
 });
@@ -217,6 +218,18 @@ describe('Question', () => {
     renderQuestion(gameView({}, { level: 3 }));
     // the phone was told: hidden, whatever the level
     expect(screen.getByRole('button', { name: 'Show in English' })).toBeTruthy();
+  });
+
+  it('shows the question and its options in the reader’s own language where the story has them', async () => {
+    localStorage.setItem('kurda_locale_v1', 'de');
+    testAuth.client = fakeClient();
+    const translations = { de: { prompt: 'Wie war das Brot?', options: ['Kalt', 'Warm', 'Salzig', 'Süß'] } };
+    renderQuestion(gameView({ question: question({ translations }) }));
+    expect(await screen.findByText('Wie war das Brot?')).toBeTruthy();
+    expect(screen.getByText('Warm')).toBeTruthy();
+    expect(screen.queryByText('How was the bread?')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Übersetzung ausblenden' }));
+    await waitFor(() => expect(screen.queryByText('Wie war das Brot?')).toBeNull());
   });
 
   it('times a timed question with a bar, and says ten seconds once', async () => {

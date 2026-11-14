@@ -47,6 +47,7 @@ const story = (over: Partial<StoryListItem>): StoryListItem => ({
   readingMinutes: 2,
   fullyNarrated: false,
   language: 'ku',
+  metaTranslations: {},
   cefr: 'A1',
   audioCoverage: 'none',
   category: 'everyday',
@@ -237,7 +238,7 @@ describe('StoriesView', () => {
     // only the levels that have a story, each by a plain name with what it means
     expect(names(group('Level'))).toEqual(['Any level', 'Starter, First words and short sentences', 'Beginner, Everyday sentences and short stories']);
     expect(names(group('Kurdish'))).toEqual(['Either', 'Kurmancî, Northern Kurdish · Latin letters', 'Soranî, Central Kurdish · Arabic script']);
-    expect(names(group('Length'))).toEqual(['Any length', 'Short, 1–2 min', 'Medium, 3–5 min', 'Long, 5–8 min']);
+    expect(names(group('Length'))).toEqual(['Any length', 'Short, 1–2 min', 'Medium, 3–5 min', 'Long, 5–8 min', 'Saga, 10–27 min']);
     expect(within(sheet()).getByRole('switch', { name: 'Read aloud' })).toBeTruthy();
     expect(names(group('Category'))).toEqual(['Any category', 'Animal fables, 1', 'Village life, 1', 'Everyday life, 1']);
     expect(sheet().textContent).not.toMatch(/\b[ABC][12]\b/);

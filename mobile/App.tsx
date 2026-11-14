@@ -127,6 +127,13 @@ import { ComposeScreen } from './src/composer/ComposeScreen';
 import { StoriesScreen } from './src/stories/StoriesScreen';
 import { StoryReaderScreen } from './src/stories/StoryReaderScreen';
 import { StoryGameScreen } from './src/stories/StoryGameScreen';
+import { RiddlesScreen } from './src/lore/RiddlesScreen';
+import { RiddleScreen } from './src/lore/RiddleScreen';
+import { RiddleAnswerScreen } from './src/lore/RiddleAnswerScreen';
+import { ProverbsScreen } from './src/lore/ProverbsScreen';
+import { ProverbScreen } from './src/lore/ProverbScreen';
+import { ProverbRoundScreen } from './src/lore/ProverbRoundScreen';
+import { leaveLore } from './src/lore/navigation';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { RealtimeProvider } from './src/realtime/RealtimeProvider';
@@ -195,6 +202,12 @@ const linking: LinkingOptions<RootStackParamList> = {
       Stories: inviteRoutePath('stories'),
       // a story's address; the website's `/app/learn/stories/:slug` is rewritten to it (navigation/tabs.ts)
       StoryReader: 'app/games/stories/:slug',
+      // the riddles and the proverbs at the website's own addresses, so a riddle a friend shared opens here;
+      // a riddle's answer has none, so no link can open it
+      Riddles: 'app/learn/riddles',
+      Riddle: 'app/learn/riddles/:slug',
+      Proverbs: 'app/learn/proverbs',
+      Proverb: 'app/learn/proverbs/:slug',
       // a shared post: the address the website gives a written one and a picture
       LibraryPost: 'app/library/:postId',
       MemeDetail: 'app/dimen/:postId',
@@ -655,6 +668,26 @@ function SignedInRoot() {
             <StoryGameScreen key={route.params.id} id={route.params.id} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
+      </RootStack.Screen>
+      {/* the riddles and the proverbs are reading and thinking, which a guest may do; the proverbs' round counts a guest's day too */}
+      <RootStack.Screen name="Riddles" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <RiddlesScreen dialect={route.params?.dialect} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Riddle" options={{ presentation: 'card' }} getId={({ params }) => params.slug}>
+        {({ route, navigation }) => <RiddleScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="RiddleAnswer" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <RiddleAnswerScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Proverbs" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <ProverbsScreen dialect={route.params?.dialect} theme={route.params?.theme} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Proverb" options={{ presentation: 'card' }} getId={({ params }) => params.slug}>
+        {({ route, navigation }) => <ProverbScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Proverbs')} />}
+      </RootStack.Screen>
+      {/* a round is not left by a swipe meant to scroll its choices */}
+      <RootStack.Screen name="ProverbRound" options={{ presentation: 'card', gestureEnabled: false }}>
+        {({ route, navigation }) => <ProverbRoundScreen dialect={route.params.dialect} mode={route.params.mode} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Memes" options={{ presentation: 'card' }}>
         {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}

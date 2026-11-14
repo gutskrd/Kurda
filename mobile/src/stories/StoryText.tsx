@@ -1,15 +1,16 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import type { StoryDetail, StoryGlossEntry } from '@kurda/shared';
+import { storyHeadingTitle, type StoryDetail, type StoryGlossEntry } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { displayFont } from '../theme/fonts';
+import { display, displayFont, sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { CHARACTER_SIZE } from '../characters/voice';
 import { paragraphSegments } from './segments';
+import { translatedHeading } from './legend';
 import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyTextProps, storyTextStyle } from './storyText';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
@@ -60,6 +61,14 @@ export interface TextPoint {
  * Under a paragraph, when the story has a translation in the reader's
  * language (or in English), a small "Translation" toggle shows that
  * paragraph's translation in secondary ink.
+ *
+ * A legend is told in sections. A paragraph that starts with "## " is a
+ * chapter's heading, set as one — its number, its title in the display face,
+ * centred between the paragraphs, the title's translation under it where the
+ * story has one — and never as a sentence: it is not glossed, not read
+ * aloud, has no Listen and no Translation toggle of its own. The paragraphs
+ * before the first heading are the introduction, under a word that says so
+ * and closed by a short rule, so the first chapter visibly begins after it.
  *
  * Tapping text never plays sound; a paragraph with recordings has its own
  * Listen button, and the sentence being read sits on a gold band — tapping
@@ -119,10 +128,47 @@ export function StoryText({
   const textProps = storyTextProps(story.dialect);
   const tint = readingTint(colors.gold);
   const translationEnglish = translation?.lang === 'en' && locale !== 'en';
+  // each heading's chapter number, and where the introduction ends (the first heading), when the story has any
+  const chapterOf = new Map<number, number>();
+  story.paragraphs.forEach((p, i) => {
+    if (storyHeadingTitle(p) !== null) chapterOf.set(i, chapterOf.size + 1);
+  });
+  const firstHeading = chapterOf.size > 0 ? Math.min(...chapterOf.keys()) : -1;
 
   return (
     <View style={styles.wrap}>
       {story.paragraphs.map((paragraph, pi) => {
+        const heading = storyHeadingTitle(paragraph);
+        if (heading !== null) {
+          const n = chapterOf.get(pi) ?? 1;
+          const under = translatedHeading(translation?.paragraphs[pi]);
+          return (
+            <View
+              key={pi}
+              onLayout={onParagraphLayout ? (e) => onParagraphLayout(pi, e.nativeEvent.layout.y) : undefined}
+              style={[styles.chapter, pi > 0 && styles.chapterAfter]}
+              testID={`story-chapter-${n}`}
+            >
+              {pi === firstHeading && firstHeading > 0 ? <View style={[styles.rule, { backgroundColor: colors.gold }]} /> : null}
+              <Text style={[sectionLabel, styles.centred, { color: colors.goldText }]}>{t('stories.reader.chapterN', { n })}</Text>
+              <Text
+                {...textProps}
+                accessibilityRole="header"
+                style={[display(Math.round(fontSize * 1.3)), { lineHeight: Math.round(fontSize * 1.3 * 1.25), color: colors.textPrimary }, textStyle, styles.centred]}
+              >
+                {heading}
+              </Text>
+              {under && under !== heading ? (
+                <Text
+                  {...(translationEnglish ? ENGLISH_TEXT_PROPS : {})}
+                  style={[styles.chapterTranslation, { fontSize: Math.round(fontSize * 0.85), color: colors.textSecondary }, translationEnglish ? ENGLISH_TEXT_STYLE : null, styles.centred]}
+                >
+                  {under}
+                </Text>
+              ) : null}
+            </View>
+          );
+        }
         const segments = paragraphSegments(paragraph, onGloss ? story.glossary : []);
         const isEvidence = evidence?.paragraph === pi;
         const active = listening === pi;
@@ -134,6 +180,11 @@ export function StoryText({
             onLayout={onParagraphLayout ? (e) => onParagraphLayout(pi, e.nativeEvent.layout.y) : undefined}
             style={[styles.paragraph, isEvidence && evidence?.sentence === null ? { backgroundColor: colors.successFill } : null]}
           >
+            {pi === 0 && firstHeading > 0 ? (
+              <Text style={[sectionLabel, { color: colors.textSecondary }, textStyle]} accessibilityRole="header">
+                {t('stories.reader.introduction')}
+              </Text>
+            ) : null}
             {onListen && listenable?.has(pi) ? (
               // on the side the paragraph starts from, the character (when one says it) after the button
               <View style={[styles.listenRow, { flexDirection: storyRowDirection(story.dialect) }, voiced?.has(pi) && styles.voicedRow]}>
@@ -238,6 +289,12 @@ const styles = StyleSheet.create({
   gloss: { textDecorationLine: 'underline', textDecorationStyle: 'dotted' },
   translationRow: { gap: spacing.xs },
   translation: { fontFamily: displayFont, fontStyle: 'italic' },
+  chapter: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md },
+  // a chapter starts a little further from what came before it than a paragraph does
+  chapterAfter: { marginTop: spacing.md },
+  rule: { width: 32, height: 2, borderRadius: radii.pill, marginBottom: spacing.lg },
+  chapterTranslation: { fontFamily: displayFont },
+  centred: { textAlign: 'center' },
   translationToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 32, paddingHorizontal: spacing.xs },
   translationToggleText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
 });

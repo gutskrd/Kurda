@@ -48,6 +48,7 @@ const story: StoryListItem = {
   readingMinutes: 2,
   fullyNarrated: false,
   language: 'ku',
+  metaTranslations: {},
   cefr: 'A1',
   audioCoverage: 'none',
   category: 'everyday',
