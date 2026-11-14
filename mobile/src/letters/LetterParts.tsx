@@ -43,15 +43,13 @@ function useArtId(): string {
   return id.current;
 }
 
-/** Somebody's bird, standing in a round of its own as their picture. Decoration: their name is always beside it. */
+/** Somebody's pigeon, its portrait in a round of its own as their picture. Decoration: their name is always beside it. */
 export function BirdBadge({ bird, size = 44 }: { bird: number; size?: number }): React.JSX.Element {
   const id = useArtId();
-  const xml = useMemo(() => letterBirdSvg({ bird, size: size * 1.15, idPrefix: id }), [bird, size, id]);
+  const xml = useMemo(() => letterBirdSvg({ bird, portrait: true, size, idPrefix: id }), [bird, size, id]);
   return (
     <View {...HIDDEN} style={[styles.badge, { width: size, height: size }]}>
-      <View style={{ marginTop: -size * 0.06 }}>
-        <SvgXml xml={xml} width={size * 1.15} height={size * 1.15} />
-      </View>
+      <SvgXml xml={xml} width={size} height={size} />
     </View>
   );
 }

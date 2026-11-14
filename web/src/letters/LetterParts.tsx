@@ -10,10 +10,10 @@ import { FlagIcon } from '../components/icons';
  * read.
  */
 
-/** Somebody's bird, standing in a round of its own as their picture. Decoration: their name is always beside it. */
+/** Somebody's pigeon, its portrait in a round of its own as their picture. Decoration: their name is always beside it. */
 export function BirdBadge({ bird, size = 44 }: { bird: number; size?: number }): React.JSX.Element {
   const id = `bb${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
-  const svg = useMemo(() => ({ __html: letterBirdSvg({ bird, size: size * 1.15, idPrefix: id }) }), [bird, size, id]);
+  const svg = useMemo(() => ({ __html: letterBirdSvg({ bird, portrait: true, size, idPrefix: id }) }), [bird, size, id]);
   return <span className="letter-badge" style={{ width: size, height: size }} aria-hidden="true" dangerouslySetInnerHTML={svg} />;
 }
 

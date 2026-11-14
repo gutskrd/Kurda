@@ -94,12 +94,11 @@ export function letterProblem(text: string): LetterProblem | null {
  * The colours a pen pal pigeon can be: each member's own, picked from their
  * id so it is the same pigeon on every screen and every phone, without
  * anything stored. The apps draw it (art/letters.ts) from its number here.
- * Pigeons' own colours, softened: the slate of the owner's first reference
- * and the blue-violet of the second, lavender, dusty rose, fawn, sea grey,
- * charcoal and cream; its head, wing, bars and tail are worked out from the
- * one colour (art/pigeon.ts).
+ * Soft colours, the first the lavender of the owner's reference pigeon; its
+ * pale rump, wing, bars, tail and cheek are worked out from the one colour
+ * of its head (art/pigeon.ts).
  */
-export const LETTER_BIRDS = ['#8f9aa6', '#6a6fc4', '#a99bd6', '#c99aa4', '#c4a07c', '#6fa9a5', '#6b7180', '#e3d8c6'] as const;
+export const LETTER_BIRDS = ['#8784c7', '#6fa8e2', '#e88aa6', '#7dbf8f', '#f0a46c', '#55b7ae', '#e5bf55', '#b183d4'] as const;
 
 /** Somebody's bird: a number into `LETTER_BIRDS`, from their id. */
 export function letterBirdOf(userId: string): number {

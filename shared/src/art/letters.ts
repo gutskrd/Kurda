@@ -166,7 +166,7 @@ export const LETTER_WINDOW_DEPTH: Readonly<Record<LetterWindowPart, number>> = {
 export const LETTER_SILL = { x: 50, y: 93.4, birdShare: 0.46 } as const;
 
 /** Where a pigeon's feet are on its own square, and how much bigger than its own drawing it is drawn there. */
-export const LETTER_BIRD_FEET = { x: 60, y: 100, scale: 1.45 } as const;
+export const LETTER_BIRD_FEET = { x: 60, y: 100, scale: 1.7 } as const;
 
 /**
  * The way a pigeon flies off with a letter, out through the window and away
@@ -414,10 +414,15 @@ export interface LetterBirdOptions {
   letter?: boolean;
   /** facing left rather than right */
   facingLeft?: boolean;
+  /** framed as a picture of the pigeon itself, its head and body filling the square, rather than standing where the sill is */
+  portrait?: boolean;
   size?: number;
   title?: string;
   idPrefix?: string;
 }
+
+/** How a pigeon is framed for its portrait: where its feet go on the square, and how big it is drawn. */
+const PORTRAIT = { x: 52, y: 86, scale: 2.2 } as const;
 
 /** A member's pigeon, on its own transparent square: standing, blinking, waving, asleep, or flying with its wings up or down. */
 export function letterBirdSvg(opts: LetterBirdOptions): string {
@@ -426,8 +431,8 @@ export function letterBirdSvg(opts: LetterBirdOptions): string {
   if (!hex) throw new RangeError(`art: no bird ${String(opts.bird)}`);
   const pose = opts.pose ?? 'perched';
   const flip = opts.facingLeft ? -1 : 1;
-  const dr = new Drawing(prefixFor(opts.idPrefix, 'letter-bird', opts.bird, pose, opts.letter ? 'letter' : '', flip));
-  const { x, y, scale } = LETTER_BIRD_FEET;
+  const dr = new Drawing(prefixFor(opts.idPrefix, 'letter-bird', opts.bird, pose, opts.letter ? 'letter' : '', flip, opts.portrait ? 'portrait' : ''));
+  const { x, y, scale } = opts.portrait ? PORTRAIT : LETTER_BIRD_FEET;
   // a pigeon facing left stands on the same feet, mirrored about them: its square fits it either way round
   dr.add(`<g transform="translate(${n(x)} ${n(y)}) scale(${n(scale * flip)} ${n(scale)})">`);
   pigeon(dr, hex, pose, opts.letter === true);
