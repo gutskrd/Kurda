@@ -14,7 +14,9 @@ import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/re
 import { Alert } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
-import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
+import { TREE_KINDS, TREE_SPECIES, treeView, type LettersHome, type TreeRecord, type TreeView } from '@kurda/shared';
+import type { MyTree } from '../tree/api';
 import type { ShopItem } from './format';
 import { ShopScreen } from './ShopScreen';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
@@ -317,5 +319,214 @@ describe('the Shop, by kind', () => {
     open([]);
     expect(await screen.findByText('The shop is empty right now — check back soon.')).toBeTruthy();
     expect(screen.queryByLabelText('Search the shop')).toBeNull();
+  });
+});
+
+/**
+ * What of yours the Shop can change, over the search: your pen pal bird and
+ * your tree, a row each that opens every choice there is.
+ */
+describe('your bird and your tree, in the Shop', () => {
+  /** GET /letters: a pen pal page with this bird, chosen or not, and this much Zêr. */
+  const letters = (over: Partial<LettersHome> = {}): LettersHome => ({
+    refusal: null,
+    bird: 2,
+    birdChosen: true,
+    zer: 550,
+    out: null,
+    visitor: null,
+    birdsOut: 0,
+    sky: [],
+    callsLeft: 5,
+    homecoming: null,
+    penPals: [],
+    roomForMore: true,
+    ...over,
+  });
+  const TODAY = '2026-11-13';
+  const growing = (over: Partial<TreeRecord> = {}): TreeView =>
+    treeView({ species: 'hinar', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 9, water: 2, harvests: 0, ...over }, TODAY);
+  /** GET /me/tree: this tree (or none), every kind, these bought, this much Zêr. */
+  const mine = (tree: TreeView | null, over: { owned?: string[]; zer?: number } = {}): MyTree => ({
+    tree,
+    planted: tree ? 1 : 0,
+    kinds: TREE_SPECIES.map((species) => ({ ...TREE_KINDS[species], owned: TREE_KINDS[species].starter || (over.owned ?? []).includes(species) })),
+    zer: over.zer ?? 550,
+  });
+  const missing = fail({ kind: 'client', status: 404, code: 'NOT_FOUND', message: 'no route' });
+  /** One answer per call, the last one again after that. */
+  const inTurn = (...answers: unknown[]) => {
+    let n = 0;
+    return () => answers[Math.min(n++, answers.length - 1)] as ReturnType<typeof ok>;
+  };
+
+  /** The Shop, with these answers for the bird and the tree (a server without either, unless given). */
+  function openOwn(routes: Parameters<typeof fakeClient>[0], balances = { zer: 550, gems: 12 }) {
+    const client = fakeClient({
+      'GET /shop': ok({ items: CATALOGUE }),
+      'GET /me/wallet': ok({ balances }),
+      'GET /me/inventory': ok({ items: [], refreshedItems: [] }),
+      'GET /me/gifts': ok({ gifts: [], unseen: 0 }),
+      'GET /letters': missing,
+      'GET /me/tree': missing,
+      ...routes,
+    });
+    testAuth.client = client;
+    renderWithProviders(<ShopScreen onExit={() => undefined} onEarnMore={() => undefined} />);
+    return client;
+  }
+  const disabled = (testID: string): boolean => screen.getByTestId(testID).getAttribute('aria-disabled') === 'true';
+
+  describe('the bird', () => {
+    it('shows yours in a row, and in its sheet the eight birds as one group, yours ticked and said to be yours', async () => {
+      openOwn({ 'GET /letters': ok(letters()) });
+      fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
+      const group = await screen.findByRole('radiogroup', { name: 'Choose a new bird' });
+      expect(within(group).getAllByRole('radio')).toHaveLength(8);
+      expect(within(group).getByRole('radio', { name: 'Pink bird, your bird now' }).getAttribute('aria-checked')).toBe('true');
+      expect(within(group).getByRole('radio', { name: 'Orange bird' }).getAttribute('aria-checked')).toBe('false');
+      expect(screen.getByText('A new bird costs 500 Zêr. You have 550 Zêr.')).toBeTruthy();
+      // the bird that is yours already cannot be bought again
+      expect(disabled('shop-bird-get')).toBe(true);
+    });
+
+    it('takes the first bird for free, with no question, and posts the bird picked', async () => {
+      const client = openOwn({ 'GET /letters': ok(letters({ birdChosen: false, bird: 1 })), 'POST /letters/bird': ok(letters({ bird: 4 })) });
+      fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Choose your bird' }));
+      expect(screen.getByText('Your bird carries your letters. Your first one is free; a new one later costs 500 Zêr.')).toBeTruthy();
+      fireEvent.click(screen.getByRole('radio', { name: 'Orange bird' }));
+      fireEvent.click(screen.getByRole('button', { name: 'This is my bird' }));
+      await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
+      // free, so nothing was asked
+      expect(Alert.alert).not.toHaveBeenCalled();
+      expect(await screen.findByText('Orange bird, your bird now')).toBeTruthy();
+      fireEvent.click(screen.getByTestId('shop-bird-done'));
+      expect(await screen.findByRole('button', { name: 'Your pen pal bird, Orange bird' })).toBeTruthy();
+    });
+
+    it('asks first before a new bird, as the Shop asks before a purchase, with its price and the balance', async () => {
+      const client = openOwn({ 'GET /letters': ok(letters()), 'POST /letters/bird': ok(letters({ bird: 4, zer: 50 })) });
+      fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
+      fireEvent.click(screen.getByRole('radio', { name: 'Orange bird' }));
+      expect(disabled('shop-bird-get')).toBe(false);
+      fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Confirm purchase',
+        'Spend 500 Zêr on Orange bird?\nYou have 550 Zêr.\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
+        expect.any(Array),
+      );
+      expect(client.calls.some((c) => c.path === '/letters/bird')).toBe(false);
+      // yes: it is bought, and the purse at the top is what is left
+      const buttons = vi.mocked(Alert.alert).mock.calls[0]![2] as Array<{ text: string; onPress?: () => void }>;
+      expect(buttons.map((b) => b.text)).toEqual(['Cancel', 'Buy']);
+      buttons[1]!.onPress!();
+      await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path === '/letters/bird')?.body).toEqual({ bird: 4 }));
+      expect(await screen.findByText('Orange bird, your bird now')).toBeTruthy();
+      expect(screen.getAllByText('50').length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('says how many Zêr are missing when the balance is short, and does not offer the buy', async () => {
+      const client = openOwn({ 'GET /letters': ok(letters({ zer: 300 })) }, { zer: 300, gems: 0 });
+      fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
+      fireEvent.click(screen.getByRole('radio', { name: 'Orange bird' }));
+      expect(screen.getByText('You need 200 more Zêr.')).toBeTruthy();
+      expect(disabled('shop-bird-get')).toBe(true);
+      fireEvent.click(screen.getByTestId('shop-bird-get'));
+      expect(Alert.alert).not.toHaveBeenCalled();
+      expect(client.calls.some((c) => c.path === '/letters/bird')).toBe(false);
+    });
+
+    it('reads the balance again when the Zêr were spent meanwhile, and says what is now missing', async () => {
+      // spent on something else, in another place, between the Shop opening and the bird being bought
+      let spent = false;
+      openOwn({
+        'GET /letters': () => ok(letters(spent ? { zer: 100 } : {})),
+        'POST /letters/bird': () => {
+          spent = true;
+          return fail({ kind: 'client', status: 402, code: 'INSUFFICIENT_FUNDS', message: 'not enough' });
+        },
+      });
+      fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
+      fireEvent.click(screen.getByRole('radio', { name: 'Orange bird' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Get this bird · 500 Zêr' }));
+      (vi.mocked(Alert.alert).mock.calls[0]![2] as Array<{ onPress?: () => void }>)[1]!.onPress!();
+      expect(await screen.findByText('You need 400 more Zêr.')).toBeTruthy();
+      expect(disabled('shop-bird-get')).toBe(true);
+    });
+  });
+
+  describe('the tree', () => {
+    /** A kind's row in the nursery. */
+    const kind = (species: string): HTMLElement => screen.getByTestId(`shop-tree-${species}`);
+
+    it('shows the tree that stands in a row, and in the nursery every kind: growing, free, bought, and the price of the rest', async () => {
+      openOwn({ 'GET /me/tree': ok(mine(growing(), { owned: ['tu'] })) });
+      fireEvent.click(await screen.findByRole('button', { name: 'Your tree, Hinar · Growing now' }));
+      expect(await screen.findByText('The nursery')).toBeTruthy();
+      expect(screen.getByText('Planting another tree replaces the one you have. It starts again from a seed.')).toBeTruthy();
+      for (const species of TREE_SPECIES) expect(kind(species)).toBeTruthy();
+      // the one that stands cannot be planted over itself
+      expect(within(kind('hinar')).getByText('Growing now')).toBeTruthy();
+      expect(within(kind('hinar')).queryByRole('button')).toBeNull();
+      expect(within(kind('beru')).getByText('Free')).toBeTruthy();
+      expect(within(kind('beru')).getByRole('button', { name: 'Plant: Berû (Oak)' })).toBeTruthy();
+      expect(within(kind('tu')).getByText('Yours')).toBeTruthy();
+      expect(within(kind('kaj')).getByText('1,000')).toBeTruthy();
+      expect(within(kind('kaj')).getByRole('button', { name: 'Buy: Kaj (Pine)' })).toBeTruthy();
+      expect(within(kind('sev')).getByText('You need 1,650 more Zêr.')).toBeTruthy();
+    });
+
+    it('buys a kind once it has said what it costs, which plants nothing', async () => {
+      const client = openOwn(
+        { 'GET /me/tree': ok(mine(growing(), { zer: 2000 })), 'POST /me/tree/kinds/kaj/buy': ok(mine(growing(), { owned: ['kaj'], zer: 1000 })) },
+        { zer: 2000, gems: 0 },
+      );
+      fireEvent.click(await screen.findByRole('button', { name: 'Your tree, Hinar · Growing now' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Buy: Kaj (Pine)' }));
+      expect(await screen.findByText('Buy Kaj?')).toBeTruthy();
+      expect(screen.getByText('It costs 1,000 Zêr, once. After that you can plant it whenever you like.')).toBeTruthy();
+      expect(screen.getByText('You have 2,000 Zêr.')).toBeTruthy();
+      expect(client.calls.some((c) => c.path === '/me/tree/kinds/kaj/buy')).toBe(false);
+      fireEvent.click(screen.getByTestId('shop-tree-confirm'));
+      await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/me/tree/kinds/kaj/buy')).toBe(true));
+      // back at the kinds, where it is theirs to plant; nothing was planted
+      expect(await within(await screen.findByTestId('shop-tree-kaj')).findByRole('button', { name: 'Plant: Kaj (Pine)' })).toBeTruthy();
+      expect(within(kind('kaj')).getByText('Yours')).toBeTruthy();
+      expect(client.calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
+    });
+
+    it('asks before planting another kind, saying the tree that stands will be gone, and keeps it when told to', async () => {
+      const client = openOwn({
+        'GET /me/tree': ok(mine(growing())),
+        'POST /me/tree/plant': ok(mine(growing({ species: 'beru', waterings: 0, plantedOn: TODAY }))),
+      });
+      fireEvent.click(await screen.findByRole('button', { name: 'Your tree, Hinar · Growing now' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Plant: Berû (Oak)' }));
+      expect(await screen.findByText('Plant Berû?')).toBeTruthy();
+      expect(screen.getByText('Your Hinar will be gone, with everything it has grown. The water you hold stays with you.')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Keep my tree' }));
+      expect(await screen.findByText('The nursery')).toBeTruthy();
+      expect(client.calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Plant: Berû (Oak)' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Plant it' }));
+      await waitFor(() => expect(client.calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'beru' }));
+      // the sheet closes on the Shop, whose row shows the new tree
+      expect(await screen.findByRole('button', { name: 'Your tree, Berû · Growing now' })).toBeTruthy();
+    });
+  });
+
+  it('shows neither row on a server that has no letters or trees', async () => {
+    openOwn({});
+    await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
+    expect(screen.queryByRole('button', { name: /^Your pen pal bird/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Your tree/ })).toBeNull();
+  });
+
+  it('offers to read the bird again, calmly, when it could not be read', async () => {
+    const client = openOwn({ 'GET /letters': inTurn(fail({ kind: 'server', status: 500, message: 'down' }), ok(letters())) });
+    fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Try again' }));
+    expect(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' })).toBeTruthy();
+    expect(client.calls.filter((c) => c.path === '/letters')).toHaveLength(2);
   });
 });

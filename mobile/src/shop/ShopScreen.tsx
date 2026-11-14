@@ -54,6 +54,8 @@ import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftSentNote } from '../gifts/GiftSentNote';
 import { FrameArt } from './FrameArt';
 import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SEARCH_MAX, SortChip, ToggleChip } from './ItemFilters';
+import { YourBird, useLettersHome } from './YourBird';
+import { YourTree, useShopTree } from './YourTree';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
 function attemptKey(sku: string): string {
@@ -76,6 +78,11 @@ const GUTTER = spacing.lg;
  *
  * Every purchase is final, and the item's sheet says so beside Buy; the dear
  * ones, and anything bought with gems, ask once more, saying it again.
+ *
+ * Over the search, what of yours the Shop can change: your pen pal bird and
+ * your tree (YourBird, YourTree), a row each that opens every choice there
+ * is. They are read with the catalogue, and the purse at the top follows
+ * whatever is spent on either.
  */
 export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnMore: () => void }) {
   const { client } = useAuth();
@@ -83,6 +90,10 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const { t, locale } = useI18n();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
+  // whether the purse has been read: until it has, the bird and the tree go by the Zêr their own reads say
+  const [purseRead, setPurseRead] = useState(false);
+  const letters = useLettersHome();
+  const tree = useShopTree();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
   const [selected, setSelected] = useState<ShopItem | null>(null);
@@ -107,13 +118,21 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
     return Promise.all([
       client.get<{ items: ShopItem[] }>('/shop'),
       client.get<{ balances: Balances }>('/me/wallet'),
+      letters.reload(),
+      tree.reload(),
     ]).then(([cat, wallet]) => {
       if (cat.ok) setItems(cat.data.items);
-      if (wallet.ok) setBalances(wallet.data.balances);
+      if (wallet.ok) {
+        setBalances(wallet.data.balances);
+        setPurseRead(true);
+      }
       setError(cat.ok ? null : cat.error); // the catalog is the screen's core data
       setLoading(false);
     });
-  }, [client]);
+  }, [client, letters.reload, tree.reload]);
+  /** The Zêr a new bird or a tree kind left, which the purse at the top and every price then go by. */
+  const learnZer = useCallback((zer: number) => setBalances((b) => ({ ...b, zer })), []);
+  const purse = purseRead ? balances.zer : null;
 
   useFocusEffect(
     useCallback(() => {
@@ -270,6 +289,10 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           >
             <View style={[styles.inbox, styles.column]} onLayout={(e) => setInboxHeight(e.nativeEvent.layout.height)}>
               <ReceivedGifts />
+              <View style={styles.ownRows}>
+                <YourBird home={letters} zer={purse} onZer={learnZer} />
+                <YourTree tree={tree} zer={purse} onZer={learnZer} />
+              </View>
             </View>
 
             <View
@@ -665,6 +688,8 @@ const styles = StyleSheet.create({
   column: { width: '100%', maxWidth: 680, alignSelf: 'center' },
   gutter: { marginHorizontal: GUTTER },
   inbox: { paddingHorizontal: GUTTER },
+  // your bird and your tree, under what arrived for you and over the search
+  ownRows: { gap: spacing.sm, paddingTop: spacing.sm, paddingBottom: spacing.xs },
   toolbar: { paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'transparent' },
   toolbarInner: { gap: spacing.sm },
   catalogue: { paddingTop: spacing.xs },

@@ -1714,6 +1714,8 @@ export type TranslationKey =
   | 'shop.confirmPurchase'
   | 'shop.spendOn'
   | 'shop.finalNote'
+  | 'shop.bird.title'
+  | 'shop.balance'
   | 'shop.notEnough'
   | 'shop.earnMoreZer'
   | 'shop.earnMoreGems'
@@ -4713,6 +4715,8 @@ const en: Catalog = {
   'shop.confirmPurchase': 'Confirm purchase',
   'shop.spendOn': 'Spend {price} {currency} on {name}?',
   'shop.finalNote': 'Every purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
+  'shop.bird.title': 'Your pen pal bird',
+  'shop.balance': 'You have {zer} Zêr.',
   'shop.notEnough': 'Not enough {currency}.',
   'shop.earnMoreZer': 'Zêr comes from the daily reward, daily quests and events.',
   'shop.earnMoreGems': 'Gems come from moving up a league, season rewards and events.',
@@ -8271,6 +8275,8 @@ const ku: Catalog = {
   'shop.confirmPurchase': 'Kirînê piştrast bike',
   'shop.spendOn': '{price} {currency} li ser {name} xerc bikî?',
   'shop.finalNote': 'Her kirîn dawî ye: gava bû ya te, ya te dimîne û nayê vegerandin. Heke tu ne bawer î, wexta xwe bigire.',
+  'shop.bird.title': 'Teyrê te yê nameyan',
+  'shop.balance': '{zer} Zêrên te hene.',
   'shop.notEnough': '{currency} têrê nake.',
   'shop.earnMoreZer': 'Zêr ji xelata rojane, erkên rojane û çalakiyan tê.',
   'shop.earnMoreGems': 'Gewher ji bilindbûna di lîgê de, xelatên demsalê û çalakiyan tên.',
@@ -11828,6 +11834,8 @@ const de: Catalog = {
   'shop.confirmPurchase': 'Kauf bestätigen',
   'shop.spendOn': '{price} {currency} für {name} ausgeben?',
   'shop.finalNote': 'Jeder Kauf ist endgültig: Was dir gehört, bleibt deins und kann nicht zurückgegeben werden. Lass dir ruhig Zeit, wenn du unsicher bist.',
+  'shop.bird.title': 'Dein Briefvogel',
+  'shop.balance': 'Du hast {zer} Zêr.',
   'shop.notEnough': 'Nicht genug {currency}.',
   'shop.earnMoreZer': 'Zêr gibt es als Tagesbelohnung, für Tagesaufgaben und bei Events.',
   'shop.earnMoreGems': 'Edelsteine gibt es für den Aufstieg in der Liga, als Saisonbelohnung und bei Events.',
@@ -15385,6 +15393,8 @@ const es: Catalog = {
   'shop.confirmPurchase': 'Confirmar la compra',
   'shop.spendOn': '¿Gastar {price} {currency} en {name}?',
   'shop.finalNote': 'Todas las compras son definitivas: lo que es tuyo sigue siendo tuyo y no se puede devolver. Tómate tu tiempo si no lo tienes claro.',
+  'shop.bird.title': 'Tu pájaro mensajero',
+  'shop.balance': 'Tienes {zer} Zêr.',
   'shop.notEnough': 'No tienes suficiente {currency}.',
   'shop.earnMoreZer': 'El Zêr se consigue con la recompensa diaria, las misiones diarias y los eventos.',
   'shop.earnMoreGems': 'Las gemas se consiguen al subir de liga, con los premios de temporada y en los eventos.',
@@ -18942,6 +18952,8 @@ const tr: Catalog = {
   'shop.confirmPurchase': 'Satın almayı onayla',
   'shop.spendOn': '{name} için {price} {currency} harcansın mı?',
   'shop.finalNote': 'Her satın alma kesindir: senin olan senin kalır ve iade edilemez. Emin değilsen acele etme.',
+  'shop.bird.title': 'Mektup kuşun',
+  'shop.balance': '{zer} Zêr’in var.',
   'shop.notEnough': 'Yeterli {currency} yok.',
   'shop.earnMoreZer': 'Zêr günlük ödülden, günlük görevlerden ve etkinliklerden gelir.',
   'shop.earnMoreGems': 'Mücevherler ligde yükselmekten, sezon ödüllerinden ve etkinliklerden gelir.',
@@ -22499,6 +22511,8 @@ const ar: Catalog = {
   'shop.confirmPurchase': 'تأكيد الشراء',
   'shop.spendOn': 'إنفاق {price} {currency} على {name}؟',
   'shop.finalNote': 'كل عملية شراء نهائية: ما يصبح لك يبقى لك ولا يمكن إرجاعه. خذ وقتك إن لم تكن متأكدًا.',
+  'shop.bird.title': 'طائر رسائلك',
+  'shop.balance': 'لديك {zer} Zêr.',
   'shop.notEnough': 'لا يوجد ما يكفي من {currency}.',
   'shop.earnMoreZer': 'تأتي Zêr من المكافأة اليومية والمهام اليومية والفعاليات.',
   'shop.earnMoreGems': 'تأتي الجواهر من الصعود في الدوري ومكافآت الموسم والفعاليات.',
@@ -26056,6 +26070,8 @@ const fr: Catalog = {
   'shop.confirmPurchase': 'Confirmer l’achat',
   'shop.spendOn': 'Dépenser {price} {currency} pour {name} ?',
   'shop.finalNote': 'Chaque achat est définitif : ce qui est à toi le reste, et ne peut pas être rendu. Prends ton temps si tu hésites.',
+  'shop.bird.title': 'Ton oiseau messager',
+  'shop.balance': 'Tu as {zer} Zêr.',
   'shop.notEnough': 'Pas assez de {currency}.',
   'shop.earnMoreZer': 'Le Zêr s’obtient avec la récompense quotidienne, les quêtes du jour et les événements.',
   'shop.earnMoreGems': 'Les gemmes s’obtiennent avec la montée en ligue, les récompenses de saison et les événements.',
@@ -29613,6 +29629,8 @@ const nl: Catalog = {
   'shop.confirmPurchase': 'Aankoop bevestigen',
   'shop.spendOn': '{price} {currency} uitgeven aan {name}?',
   'shop.finalNote': 'Elke aankoop is definitief: wat van jou is, blijft van jou en kan niet worden teruggegeven. Neem gerust de tijd als je twijfelt.',
+  'shop.bird.title': 'Jouw briefvogel',
+  'shop.balance': 'Je hebt {zer} Zêr.',
   'shop.notEnough': 'Niet genoeg {currency}.',
   'shop.earnMoreZer': 'Zêr krijg je als dagbeloning, voor dagelijkse opdrachten en bij evenementen.',
   'shop.earnMoreGems': 'Edelstenen krijg je voor promotie in je competitie, als seizoensbeloning en bij evenementen.',
@@ -33171,6 +33189,8 @@ const ckb: Catalog = {
   'shop.confirmPurchase': 'کڕینەکە پشتڕاست بکەرەوە',
   'shop.spendOn': '{price} {currency} بۆ {name} خەرج بکرێت؟',
   'shop.finalNote': 'هەموو کڕینێک کۆتاییە: کە بوو بە هی تۆ، هی تۆ دەمێنێتەوە و ناگەڕێنرێتەوە. ئەگەر دڵنیا نیت، کاتی خۆت بگرە.',
+  'shop.bird.title': 'باڵندەی نامەکانت',
+  'shop.balance': '{zer} Zêrت هەیە.',
   'shop.notEnough': '{currency} بەس نییە.',
   'shop.earnMoreZer': 'Zêr لە خەڵاتی ڕۆژانە، ئەرکە ڕۆژانەکان و بۆنەکانەوە دێت.',
   'shop.earnMoreGems': 'گەوهەر لە بەرزبوونەوە لە لیگدا، خەڵاتەکانی وەرز و بۆنەکانەوە دێت.',

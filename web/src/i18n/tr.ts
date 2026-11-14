@@ -1886,6 +1886,8 @@ export const tr: Catalogue = {
   'shop.confirmTitle': '{name} satın alınsın mı?',
   'shop.finalNote': 'Her satın alma kesindir: senin olan senin kalır ve iade edilemez. Emin değilsen acele etme.',
   'shop.giftFinal': 'Hediyeler de kesindir: gönderildiği anda artık onundur.',
+  'shop.bird.title': 'Mektup kuşun',
+  'shop.balance': '{zer} Zêr’in var.',
   'items.kinds': 'Ürün türleri',
   'items.kind.all': 'Tümü',
   'items.kind.background': 'Arka planlar',

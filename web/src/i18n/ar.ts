@@ -1885,6 +1885,8 @@ export const ar: Catalogue = {
   'shop.confirmTitle': 'هل تريد شراء {name}؟',
   'shop.finalNote': 'كل عملية شراء نهائية: ما يصبح لك يبقى لك ولا يمكن إرجاعه. خذ وقتك إن لم تكن متأكدًا.',
   'shop.giftFinal': 'الهدايا نهائية أيضًا: بمجرد إرسالها تصبح له.',
+  'shop.bird.title': 'طائر رسائلك',
+  'shop.balance': 'لديك {zer} Zêr.',
   'items.kinds': 'أنواع العناصر',
   'items.kind.all': 'الكل',
   'items.kind.background': 'الخلفيات',

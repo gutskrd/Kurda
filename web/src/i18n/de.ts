@@ -1891,6 +1891,8 @@ export const de: Catalogue = {
   'shop.confirmTitle': '{name} kaufen?',
   'shop.finalNote': 'Jeder Kauf ist endgültig: Was dir gehört, bleibt deins und kann nicht zurückgegeben werden. Lass dir ruhig Zeit, wenn du unsicher bist.',
   'shop.giftFinal': 'Auch Geschenke sind endgültig: Einmal verschickt, gehört es der anderen Person.',
+  'shop.bird.title': 'Dein Briefvogel',
+  'shop.balance': 'Du hast {zer} Zêr.',
   'items.kinds': 'Arten von Gegenständen',
   'items.kind.all': 'Alle',
   'items.kind.background': 'Hintergründe',

@@ -1,0 +1,350 @@
+/*
+ * Your bird and your tree, in the Shop (shop/YourBird.tsx, shop/YourTree.tsx).
+ *
+ * They sit over the catalogue in the catalogue's own clothes: the small
+ * capitals of a kind's heading, the tile's grey ground and hairline edge, the
+ * gold of a price. What is new is only what these two need — a row of birds
+ * to pick from, and a shelf of trees that becomes a swipe on a phone.
+ */
+.yours {
+  margin-bottom: 30px;
+}
+.yours-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.yours-head .item-section-title {
+  margin: 0;
+}
+/* the way to the bird's or the tree's own page: quiet, at the end of the heading */
+.yours-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 32px;
+  color: var(--ink-3);
+  font-size: 0.86rem;
+  font-weight: 550;
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.yours-link:hover {
+  color: var(--ink);
+}
+/* the chevron points on, which is to the left on a right-to-left page */
+[dir='rtl'] .yours-link-chevron {
+  transform: scaleX(-1);
+}
+
+.yours-card {
+  padding: 18px 20px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.yours-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 650;
+}
+.yours-lead {
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.yours-lead--alone {
+  margin: -4px 0 14px;
+}
+.yours-error {
+  margin: 12px 0 0;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+/* a section that could not be read: what went wrong, in a sentence, and the way to try again */
+.yours-failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+.yours-failed p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+}
+
+/* ---- the birds ------------------------------------------------------------ */
+.yours-birds {
+  display: grid;
+  grid-template-columns: repeat(8, max-content);
+  gap: 10px;
+  margin: 16px 0 14px;
+}
+/* two even rows of four where eight do not fit */
+@media (max-width: 600px) {
+  .yours-birds {
+    grid-template-columns: repeat(4, max-content);
+    justify-content: space-between;
+  }
+}
+.yours-birds--waiting {
+  margin-bottom: 4px;
+}
+/* each bird a round button, at least a finger wide; the one picked ringed in the ink colour, a ring that shows in forced colours too */
+.yours-bird {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.yours-bird:hover {
+  transform: translateY(-2px);
+}
+.yours-bird.is-picked {
+  border-color: var(--ink);
+}
+.yours-bird:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.yours-bird:has(input:disabled) {
+  cursor: default;
+}
+/* the bird that is yours, ticked, whichever is picked */
+.yours-bird-mine {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--surface-2);
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--surface-solid);
+}
+/* the bird made yours a moment ago takes the bow a bought tile takes (pages.css `shop-pop`) */
+.yours-bird.is-won,
+.yours-tree.is-won {
+  animation: shop-pop 0.5s cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+/*
+ * A bird's round portrait, here and in the dialog that asks about it: the
+ * letters page draws it the same way, but its stylesheet is not loaded until
+ * that page is opened.
+ */
+.yours-bird .letter-badge,
+.buy-confirm-art .letter-badge {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #e3f1fb;
+}
+.yours-bird .letter-badge svg,
+.buy-confirm-art .letter-badge svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* the bird picked, and what can be done about it, on a line of its own under the row */
+.yours-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  min-height: 52px;
+  padding-top: 12px;
+  border-top: 1px solid var(--separator);
+}
+.yours-picked {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.93rem;
+  font-weight: 550;
+}
+.yours-picked-tick {
+  color: var(--success);
+}
+/* how far there is to go, in the pill a short price on a tile wears */
+.yours-short {
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--ink-3);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.yours-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+
+/* ---- the trees ------------------------------------------------------------ */
+.yours-trees {
+  display: grid;
+  /* five to a row beside the social panel, so the ten kinds are two even rows */
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.yours-trees > li {
+  display: flex;
+  min-width: 0;
+}
+.yours-tree {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+/* the tree that stands: its edge in its own colour, the way the tree page washes everything in it */
+.yours-tree.is-standing {
+  border-color: color-mix(in srgb, var(--tree) 60%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tree) 28%, transparent);
+}
+.yours-tree-art {
+  display: block;
+  aspect-ratio: 1;
+  margin-bottom: 8px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+/*
+ * The picture is drawn at a fixed size and says so in its own style; here it
+ * fills the tile instead, whatever width the row gives it. It is drawn in
+ * vectors, so it is as sharp at one size as at another.
+ */
+.yours-tree-art > .tree-picture {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0;
+}
+.yours-tree-name {
+  overflow: hidden;
+  padding-inline: 2px;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 650;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.yours-tree-meaning {
+  overflow: hidden;
+  padding-inline: 2px;
+  color: var(--ink-3);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.yours-tree-state {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  margin: 6px 0 8px;
+  padding-inline: 2px;
+}
+.yours-tree-note {
+  color: var(--ink-2);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+/* the one growing: a small pill in its own colour, with a leaf's dot */
+.yours-tree-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 7px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--tree) 16%, var(--surface));
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.yours-tree-now::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tree);
+}
+/* the button on the tile's floor, level along the row whether a tile has a meaning under its name or not */
+.yours-tree-act {
+  width: 100%;
+  margin-top: auto;
+}
+.yours-tree.is-standing .yours-tree-state {
+  margin-bottom: auto;
+}
+
+/*
+ * On a phone the kinds are one row to swipe through, from the screen's edge
+ * to its edge, rather than five rows of two: the row stops on a tile, and the
+ * one cut off at the end says there are more.
+ */
+@media (max-width: 640px) {
+  .yours-trees {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 136px;
+    gap: 10px;
+    margin-inline: -16px;
+    padding: 2px 16px 6px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 16px;
+    scrollbar-width: none;
+  }
+  .yours-trees::-webkit-scrollbar {
+    display: none;
+  }
+  .yours-trees > li {
+    scroll-snap-align: start;
+  }
+  .yours-card {
+    padding: 16px 14px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yours-bird,
+  .yours-link {
+    transition: none;
+  }
+  .yours-bird:hover {
+    transform: none;
+  }
+  .yours-bird.is-won,
+  .yours-tree.is-won {
+    animation: none;
+  }
+}

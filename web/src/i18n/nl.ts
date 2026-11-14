@@ -1891,6 +1891,8 @@ export const nl: Catalogue = {
   'shop.confirmTitle': '{name} kopen?',
   'shop.finalNote': 'Elke aankoop is definitief: wat van jou is, blijft van jou en kan niet worden teruggegeven. Neem gerust de tijd als je twijfelt.',
   'shop.giftFinal': 'Cadeaus zijn ook definitief: eenmaal verstuurd, is het van hen.',
+  'shop.bird.title': 'Jouw briefvogel',
+  'shop.balance': 'Je hebt {zer} Zêr.',
   'items.kinds': 'Soorten items',
   'items.kind.all': 'Alles',
   'items.kind.background': 'Achtergronden',

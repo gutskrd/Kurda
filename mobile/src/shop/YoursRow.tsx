@@ -1,0 +1,86 @@
+import type { ReactNode } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { useDirection } from '../reports/direction';
+import { sectionLabel } from '../theme/fonts';
+import { Icon } from '../theme/Icon';
+import { PressableScale } from '../theme/MotionParts';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
+import { useTheme } from '../theme/ThemeProvider';
+import { radii, spacing, typography } from '../theme/tokens';
+
+/**
+ * One of yours at the top of the Shop: your bird, or your tree.
+ *
+ * Drawn as a row of the catalogue is (ShopScreen `ShopRow`), on the same
+ * glass, its picture in the same column, so the two read as part of the Shop
+ * rather than as a banner over it: what it is in small capitals, which one is
+ * yours now under it, and the chevron that says a tap opens more. The tap
+ * opens a sheet with every choice there is, as an item's row opens its sheet.
+ */
+export function YoursRow({
+  art,
+  label,
+  value,
+  onPress,
+  testID,
+}: {
+  art: ReactNode;
+  /** what this is: "Your pen pal bird", "Your tree" */
+  label: string;
+  /** which one is yours now, or what there is to do */
+  value: string;
+  onPress: () => void;
+  testID?: string;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const dir = useDirection();
+  return (
+    <PressableScale
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}, ${value}`}
+      testID={testID}
+      style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}
+    >
+      <View style={styles.art}>{art}</View>
+      <View style={styles.main}>
+        <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+          {label}
+        </Text>
+        <Text style={[styles.value, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+          {value}
+        </Text>
+      </View>
+      <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip ?? undefined} />
+    </PressableScale>
+  );
+}
+
+/** The row while what it shows is on its way, the same size, so nothing under it moves when it lands. */
+export function YoursRowSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const dir = useDirection();
+  const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
+  return (
+    <View style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}>
+      <View style={styles.art}>
+        <Skeleton width={ART} height={ART} radius={radii.pill} />
+      </View>
+      <View style={[styles.main, start]}>
+        <SkeletonText size={typography.sizes.xs} width={96} />
+        <SkeletonText size={typography.sizes.md} width="46%" />
+      </View>
+    </View>
+  );
+}
+
+/** The picture's side: the width of an icon's thumbnail in the catalogue's rows. */
+export const ART = 48;
+
+const styles = StyleSheet.create({
+  row: { alignItems: 'center', gap: spacing.md, borderRadius: radii.md, padding: spacing.sm, paddingEnd: spacing.md, minHeight: 64 },
+  art: { width: 72, alignItems: 'center', justifyContent: 'center' },
+  main: { flex: 1, gap: 2 },
+  label: { ...sectionLabel },
+  value: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+});

@@ -1897,6 +1897,8 @@ export const ckb: Catalogue = {
   'shop.confirmTitle': '{name} دەکڕیت؟',
   'shop.finalNote': 'هەموو کڕینێک کۆتاییە: کە بوو بە هی تۆ، هی تۆ دەمێنێتەوە و ناگەڕێنرێتەوە. ئەگەر دڵنیا نیت، کاتی خۆت بگرە.',
   'shop.giftFinal': 'دیارییەکانیش کۆتایین: کە نێردرا، ئیتر هی ئەوانە.',
+  'shop.bird.title': 'باڵندەی نامەکانت',
+  'shop.balance': '{zer} Zêrت هەیە.',
   'items.kinds': 'جۆرەکانی شتەکان',
   'items.kind.all': 'هەموو',
   'items.kind.background': 'پاشبنەماکان',

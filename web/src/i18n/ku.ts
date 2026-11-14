@@ -1893,6 +1893,8 @@ export const ku: Catalogue = {
   'shop.confirmTitle': '{name} bikirî?',
   'shop.finalNote': 'Her kirîn dawî ye: gava bû ya te, ya te dimîne û nayê vegerandin. Heke tu ne bawer î, wexta xwe bigire.',
   'shop.giftFinal': 'Diyarî jî dawî ne: gava hat şandin, êdî ya wan e.',
+  'shop.bird.title': 'Teyrê te yê nameyan',
+  'shop.balance': '{zer} Zêrên te hene.',
   'items.kinds': 'Cureyên tiştan',
   'items.kind.all': 'Hemû',
   'items.kind.background': 'Paşxane',

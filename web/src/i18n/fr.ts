@@ -1890,6 +1890,8 @@ export const fr: Catalogue = {
   'shop.confirmTitle': 'Acheter {name} ?',
   'shop.finalNote': 'Chaque achat est définitif : ce qui est à toi le reste, et ne peut pas être rendu. Prends ton temps si tu hésites.',
   'shop.giftFinal': 'Les cadeaux sont définitifs eux aussi : une fois envoyé, il est à l’autre personne.',
+  'shop.bird.title': 'Ton oiseau messager',
+  'shop.balance': 'Tu as {zer} Zêr.',
   'items.kinds': 'Types d’objet',
   'items.kind.all': 'Tout',
   'items.kind.background': 'Arrière-plans',

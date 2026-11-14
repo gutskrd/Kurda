@@ -1889,6 +1889,8 @@ export const es: Catalogue = {
   'shop.confirmTitle': '¿Comprar {name}?',
   'shop.finalNote': 'Todas las compras son definitivas: lo que es tuyo sigue siendo tuyo y no se puede devolver. Tómate tu tiempo si no lo tienes claro.',
   'shop.giftFinal': 'Los regalos también son definitivos: una vez enviado, es suyo para siempre.',
+  'shop.bird.title': 'Tu pájaro mensajero',
+  'shop.balance': 'Tienes {zer} Zêr.',
   'items.kinds': 'Tipos de artículo',
   'items.kind.all': 'Todo',
   'items.kind.background': 'Fondos',
