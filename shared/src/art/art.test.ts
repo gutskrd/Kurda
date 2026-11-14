@@ -2035,6 +2035,24 @@ describe('the pigeon at play', () => {
     expect(turn.poses[turn.poses.length - 1]!.slice(1)).toEqual(['perched', false]);
   });
 
+  it('never leans with a letter in its beak, so the letter never swings below the sill', () => {
+    for (const play of [...Object.values(LETTER_PLAY), ...Object.values(LETTER_PLAY_BESIDE)]) {
+      const heldAt = (t: number): boolean => {
+        let held = false;
+        for (const [at, pose, letter] of play.poses) if (at <= t) held = letter && pose !== 'happy' && pose !== 'sleep';
+        return held;
+      };
+      // read straight between the keys, which leans more near a key than the eased motion does
+      const tiltAt = (t: number): number => {
+        const i = play.moves.findIndex((m) => m.at >= t);
+        if (i <= 0) return play.moves[Math.max(0, i)]!.tilt;
+        const [a, b] = [play.moves[i - 1]!, play.moves[i]!];
+        return a.tilt + (b.tilt - a.tilt) * ((t - a.at) / (b.at - a.at || 1));
+      };
+      for (let t = 0; t <= 1; t += 0.002) if (heldAt(t)) expect(Math.abs(tiltAt(t))).toBeLessThan(2);
+    }
+  });
+
   it('turns round as a round bird does: three-quarters, facing you, three-quarters, and only facing you does it change sides', () => {
     const facing = new Set(['front', 'hello']);
     for (const play of [...Object.values(LETTER_PLAY), ...Object.values(LETTER_PLAY_BESIDE)]) {
