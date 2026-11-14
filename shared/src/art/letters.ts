@@ -236,10 +236,12 @@ function moves(keys: ReadonlyArray<Partial<LetterPlayMove> & { at: number }>): L
 
 /**
  * A pigeon's plays: before it goes, after it comes, at home on the sill while
- * nothing is happening, and — a bird sent on from somebody's window — picking
- * its own letter up again from where it laid it, to go.
+ * nothing is happening, and two for a bird at somebody's window: sent on, it
+ * picks its own letter up again from where it laid it (`fetch`); answered,
+ * the answer drops in front of it and it takes it home (`take`). Neither
+ * steps toward the bird beside it.
  */
-export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch', LetterPlay>> = {
+export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' | 'take', LetterPlay>> = {
   // your letter drops onto the sill; the pigeon looks up at it, hops for joy and chirps, hops over, picks it up, and beats its wings, ready
   before: {
     ms: 4000,
@@ -374,6 +376,51 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch',
     letterAt: 0.3,
     letter: [
       { at: 0, y: 0, seen: 1 },
+      { at: 0.419, y: 0, seen: 1 },
+      { at: 0.42, y: 0, seen: 0 },
+      { at: 1, y: 0, seen: 0 },
+    ],
+  },
+  // answered: it watches the answer drop in front of it, picks it up where it fell, and beats its wings, ready to take it home
+  take: {
+    ms: 3400,
+    loop: false,
+    moves: moves([
+      { at: 0 },
+      { at: 0.06, tilt: -10 },
+      { at: 0.18, tilt: -10 },
+      { at: 0.26, tilt: 0 },
+      { at: 0.34, tilt: 30 },
+      { at: 0.42, tilt: 30 },
+      { at: 0.5, tilt: 0 },
+      { at: 0.56, y: -0.05 },
+      { at: 0.62, y: 0 },
+      { at: 0.7, y: -0.05 },
+      { at: 0.76, y: 0 },
+      { at: 0.84, y: -0.04 },
+      { at: 0.9, y: 0 },
+      { at: 1 },
+    ]),
+    poses: [
+      [0, 'perched', false],
+      [0.24, 'happy', false],
+      [0.3, 'perched', false],
+      [0.42, 'perched', true],
+      [0.53, 'wings-up', true],
+      [0.59, 'wings-down', true],
+      [0.65, 'wings-up', true],
+      [0.71, 'wings-down', true],
+      [0.77, 'wings-up', true],
+      [0.83, 'wings-down', true],
+      [0.92, 'perched', true],
+    ],
+    letterAt: 0.3,
+    letter: [
+      { at: 0, y: -0.55, seen: 0 },
+      { at: 0.03, y: -0.5, seen: 1 },
+      { at: 0.15, y: 0, seen: 1 },
+      { at: 0.18, y: -0.04, seen: 1 },
+      { at: 0.21, y: 0, seen: 1 },
       { at: 0.419, y: 0, seen: 1 },
       { at: 0.42, y: 0, seen: 0 },
       { at: 1, y: 0, seen: 0 },

@@ -4,9 +4,10 @@ import { SvgXml } from 'react-native-svg';
 import {
   LETTER_BIRD_FEET,
   LETTER_FLIGHT,
-  LETTER_HEARTS,
+  LETTER_NOTES,
   LETTER_PLANT_SWAY,
   LETTER_PLAY,
+  LETTER_PLAY_BESIDE,
   LETTER_SILL,
   LETTER_SILL_SPOTS,
   LETTER_SKY,
@@ -61,7 +62,8 @@ import { radii } from '../theme/tokens';
  *     lands, lays its letter before it and stays, facing your bird, which has
  *     hopped aside to make room; answered, your letter drops onto the sill and
  *     it takes it home; sent on, it picks its own letter up again and goes;
- *   - when two people become pen pals, hearts rise between the two birds.
+ *   - when two people become pen pals, the two birds chirp to each other and
+ *     a few notes of birdsong rise between them.
  * The pigeons' shadows, and their letters', are laid on the sill by
  * themselves: they stay there under a pigeon when it hops, fade as it rises
  * and come back as it lands.
@@ -77,8 +79,8 @@ export interface WindowScene {
   visitor: { kind: 'none' } | { kind: 'arriving'; bird: number } | { kind: 'here'; bird: number } | { kind: 'leaving'; bird: number; how: 'answered' | 'sent-on' };
   /** the birds out there, by colour, the next to come first */
   sky: readonly number[];
-  /** raised once each time this changes: two people have just become pen pals */
-  hearts?: number;
+  /** sung once each time this changes: two people have just become pen pals */
+  song?: number;
 }
 
 const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
@@ -379,7 +381,7 @@ function Playing({
       }
     : undefined;
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none" testID={`letter-pigeon-${play === LETTER_PLAY.idle ? 'home' : 'playing'}`}>
+    <View style={StyleSheet.absoluteFill} pointerEvents="none" testID={`letter-pigeon-${play.loop ? 'home' : 'playing'}`}>
       <Animated.View style={[StyleSheet.absoluteFill, shaded]}>
         <Shade facingLeft={facingLeft} spot={spot} size={size} style={held ? { opacity: Animated.subtract(1, held) } : undefined} />
         {held ? <Shade letter facingLeft={facingLeft} spot={spot} size={size} style={{ opacity: held }} /> : null}
@@ -584,6 +586,7 @@ function OnSill({
   spot,
   facingLeft,
   asleep,
+  beside,
   size,
 }: {
   life: Life;
@@ -591,28 +594,31 @@ function OnSill({
   spot: LetterSpot;
   facingLeft: boolean;
   asleep: boolean;
+  /** another bird is on the sill: it plays without turning round toward it */
+  beside: boolean;
   size: number;
 }): React.JSX.Element | null {
   const bird = birdOf(life);
   const { phase, setPhase } = flight;
   if (bird === null || phase === 'flight') return null;
   const dir = facingLeft ? -1 : 1;
+  const plays = beside ? LETTER_PLAY_BESIDE : LETTER_PLAY;
   if (phase === 'play' && life.kind === 'leaving') {
     return <Playing key="play" bird={bird} spot={spot} play={life.play} facingLeft={facingLeft} size={size} onEnd={() => setPhase('flight')} />;
   }
   if (phase === 'after') {
-    return <Playing key="after" bird={bird} spot={spot} play={LETTER_PLAY.after} facingLeft={facingLeft} size={size} onEnd={() => setPhase('settled')} />;
+    return <Playing key="after" bird={bird} spot={spot} play={plays.after} facingLeft={facingLeft} size={size} onEnd={() => setPhase('settled')} />;
   }
   if (phase === 'settled') {
     return (
       <>
         <SillLetter at={LETTER_PLAY.after.letterAt} dir={dir} spot={spot} size={size} />
-        <Playing key="settled" bird={bird} spot={spot} play={LETTER_PLAY.idle} facingLeft={facingLeft} size={size} />
+        <Playing key="settled" bird={bird} spot={spot} play={plays.idle} facingLeft={facingLeft} size={size} />
       </>
     );
   }
   if (asleep) return <Asleep bird={bird} spot={spot} size={size} />;
-  return <Playing key="idle" bird={bird} spot={spot} play={LETTER_PLAY.idle} facingLeft={facingLeft} size={size} />;
+  return <Playing key="idle" bird={bird} spot={spot} play={plays.idle} facingLeft={facingLeft} size={size} />;
 }
 
 /** How long your own bird's hop aside takes, and how it goes: off quickly, and settling. */
@@ -840,12 +846,12 @@ function ownLife(own: WindowScene['own']): Life {
 /** A visitor's part in the scene, as a life on the sill: answered, your letter drops before it and it takes it; sent on, it picks its own up again. */
 function visitorLife(visitor: WindowScene['visitor']): Life {
   if (visitor.kind === 'none') return visitor;
-  if (visitor.kind === 'leaving') return { kind: 'leaving', bird: visitor.bird, play: visitor.how === 'answered' ? LETTER_PLAY.before : LETTER_PLAY.fetch };
+  if (visitor.kind === 'leaving') return { kind: 'leaving', bird: visitor.bird, play: visitor.how === 'answered' ? LETTER_PLAY.take : LETTER_PLAY.fetch };
   return visitor;
 }
 
-/** How long the hearts are on the window once they have risen. */
-const HEARTS_MS = 2800;
+/** How long the notes of birdsong are on the window once they have risen. */
+const SONG_MS = 2800;
 
 export function LetterWindow({
   scene,
@@ -880,16 +886,16 @@ export function LetterWindow({
     if (visitor.kind === 'arriving' && visitorFlight.phase === 'settled') landed.current?.();
   }, [visitor.kind, visitorFlight.phase]);
   const drifts = useMemo(() => letterDrifts(treeSeasonAt(new Date()), sky), [sky]);
-  // hearts rise once each time two people become pen pals, and are gone again after
-  const [hearts, setHearts] = useState<number | null>(null);
-  const seenHearts = useRef(scene.hearts);
+  // the notes rise once each time two people become pen pals, and are gone again after
+  const [song, setSong] = useState<number | null>(null);
+  const seenSong = useRef(scene.song);
   useEffect(() => {
-    if (scene.hearts === seenHearts.current) return;
-    seenHearts.current = scene.hearts;
-    setHearts(scene.hearts ?? null);
-    const done = setTimeout(() => setHearts(null), HEARTS_MS);
+    if (scene.song === seenSong.current) return;
+    seenSong.current = scene.song;
+    setSong(scene.song ?? null);
+    const done = setTimeout(() => setSong(null), SONG_MS);
     return () => clearTimeout(done);
-  }, [scene.hearts]);
+  }, [scene.song]);
 
   // the country's drift, the clouds going over, the casements stirring, the plant swaying and the light breathing
   const drift = useSwing(alive, 16000, 0.5);
@@ -934,13 +940,13 @@ export function LetterWindow({
       <Layer part="light" sky={sky} size={size} id={id} style={light} />
       <Animated.View style={[StyleSheet.absoluteFill, hop.style]} pointerEvents="none">
         <FlightShade flight={ownFlight} spot={ownSpot} facingLeft={ownBack} size={size} />
-        <OnSill life={own} flight={ownFlight} spot={ownSpot} facingLeft={false} asleep={sky === 'night'} size={size} />
+        <OnSill life={own} flight={ownFlight} spot={ownSpot} facingLeft={false} asleep={sky === 'night'} beside={visitor.kind !== 'none'} size={size} />
       </Animated.View>
       <FlightShade flight={visitorFlight} spot="visitor" facingLeft={visitorBack} size={size} />
-      <OnSill life={visitor} flight={visitorFlight} spot="visitor" facingLeft asleep={false} size={size} />
+      <OnSill life={visitor} flight={visitorFlight} spot="visitor" facingLeft asleep={false} beside size={size} />
       {ownFlight.phase === 'flight' ? <FlightCopy life={own} flight={ownFlight} spot={ownSpot} facingLeft={ownBack} size={size} inside /> : null}
       {visitorFlight.phase === 'flight' ? <FlightCopy life={visitor} flight={visitorFlight} spot="visitor" facingLeft={visitorBack} size={size} inside /> : null}
-      {hearts !== null && !reduce ? <Drifts key={hearts} drifts={LETTER_HEARTS} size={size} once /> : null}
+      {song !== null && !reduce ? <Drifts key={song} drifts={LETTER_NOTES} size={size} once /> : null}
     </View>
   );
 }

@@ -11,8 +11,9 @@
  *     (`letterDrifts`): petals in spring, butterflies and seeds in summer,
  *     leaves in autumn, snow in winter, and at night the stars coming and
  *     going and fireflies over the meadow.
- *   - The hearts that rise from the sill when two people become pen pals
- *     (`LETTER_HEARTS`).
+ *   - The few notes of birdsong that rise from the sill when two people
+ *     become pen pals (`LETTER_NOTES`): a friendly chirp, as pen pals are
+ *     friends.
  *
  * Each is a still drawing (`letterSpriteSvg`) with its motion written out
  * here, as places on the window over the time it takes, so it moves the same
@@ -20,7 +21,7 @@
  * thing is, how it is turned and how much of it is seen change.
  */
 import type { TreeSeason } from '../tree.js';
-import { LETTER_BIRD_FEET, LETTER_FLIGHT, LETTER_SILL } from './letters.js';
+import { LETTER_BIRD_FEET, LETTER_FLIGHT, LETTER_PLAY, LETTER_SILL, type LetterPlay } from './letters.js';
 import { Drawing, checkSize, prefixFor, radialBox, seeded } from './svg.js';
 import type { TreeSky } from './tree-scene.js';
 
@@ -33,12 +34,28 @@ export type LetterSpot = 'alone' | 'own' | 'visitor';
  * how wide its square is drawn (`share` of the window's width): your own
  * alone in the middle; with a bird visiting, yours to the left facing it and
  * the visitor to the right facing back, both a little smaller, so the two fit
- * between the frame and the pot with their beaks nearly touching.
+ * between the frame and the pot with a clear space between their beaks. They
+ * are two friends meeting, and keep a friendly distance.
  */
 export const LETTER_SILL_SPOTS: Readonly<Record<LetterSpot, { x: number; share: number }>> = {
   alone: { x: LETTER_SILL.x, share: LETTER_SILL.birdShare },
-  own: { x: 38, share: 0.4 },
-  visitor: { x: 63, share: 0.4 },
+  own: { x: 31, share: 0.36 },
+  visitor: { x: 63.5, share: 0.36 },
+};
+
+/** A play kept in place: where it turned round to look behind it, it hops on the spot instead, so it never swings its tail toward a bird beside it. */
+function inPlace(play: LetterPlay): LetterPlay {
+  return { ...play, moves: play.moves.map((m) => ({ ...m, sx: Math.abs(m.sx) })) };
+}
+
+/**
+ * The plays of a bird with another beside it on the sill: the same as on its
+ * own, but never turning round, so the two keep their distance while one
+ * lands, lays its letter down and waits, and the other plays at home.
+ */
+export const LETTER_PLAY_BESIDE: Readonly<Record<'after' | 'idle', LetterPlay>> = {
+  after: inPlace(LETTER_PLAY.after),
+  idle: inPlace(LETTER_PLAY.idle),
 };
 
 /** A spot's square on the window, as shares of the window's width: its left, its top and its size. */
@@ -119,7 +136,7 @@ export const LETTER_SKY: readonly LetterSkyBird[] = [
 // ───────────────────────────────────────────────────────────── what the air carries past
 
 /** The small drawings that move round the window. */
-export const LETTER_SPRITES = ['petal', 'leaf', 'leaf-red', 'snow', 'seed', 'butterfly', 'firefly', 'star', 'heart'] as const;
+export const LETTER_SPRITES = ['petal', 'leaf', 'leaf-red', 'snow', 'seed', 'butterfly', 'firefly', 'star', 'note'] as const;
 export type LetterSprite = (typeof LETTER_SPRITES)[number];
 
 /**
@@ -224,20 +241,20 @@ export function letterDrifts(season: TreeSeason, sky: TreeSky): LetterDrift[] {
 }
 
 /**
- * The hearts that rise from the sill between the two birds when two people
- * become pen pals: once, each from a little apart, swaying up and fading.
- * Inside the room, in front of the birds.
+ * The notes of birdsong that rise from the sill when two people become pen
+ * pals: the two birds chirp to each other, once, each note from a little
+ * apart, swaying up and fading. Inside the room, in front of the birds, from
+ * the space between their beaks.
  */
-export const LETTER_HEARTS: readonly LetterDrift[] = (() => {
-  const rand = seeded('letter-hearts');
-  // where the two beaks nearly meet, over the sill between the birds
-  return [0.41, 0.46, 0.43, 0.48, 0.39].map((x0, i) => {
+export const LETTER_NOTES: readonly LetterDrift[] = (() => {
+  const rand = seeded('letter-notes');
+  return [0.38, 0.41, 0.36, 0.43, 0.39].map((x0, i) => {
     const keys: LetterDrift['keys'] = [];
     for (let j = 0; j <= 6; j++) {
       const at = j / 6;
-      keys.push({ at, x: x0 + 0.025 * Math.sin(5 * at + i), y: 0.72 - 0.26 * at, turn: 14 * Math.sin(4 * at + i), seen: at === 0 ? 0 : at === 1 ? 0 : 1 - at * 0.4 });
+      keys.push({ at, x: x0 + 0.025 * Math.sin(5 * at + i), y: 0.7 - 0.26 * at, turn: 16 * Math.sin(4 * at + i), seen: at === 0 ? 0 : at === 1 ? 0 : 1 - at * 0.4 });
     }
-    return { sprite: 'heart' as const, size: 0.04 + rand() * 0.02, ms: 1900 + i * 160, delay: 0, flap: false, keys };
+    return { sprite: 'note' as const, size: 0.036 + rand() * 0.016, ms: 1900 + i * 160, delay: 0, flap: false, keys };
   });
 })();
 
@@ -301,9 +318,10 @@ export function letterSpriteSvg(opts: LetterSpriteOptions): string {
       dr.add(`<path d="M60 8L66 54L112 60L66 66L60 112L54 66L8 60L54 54Z" fill="#ffffff"/>`);
       dr.add(`<path d="M60 36L64 56L84 60L64 64L60 84L56 64L36 60L56 56Z" fill="#fff8d6" transform="rotate(45 60 60)"/>`);
       break;
-    case 'heart':
-      dr.add(`<path d="M60 102C36 84 14 66 14 42C14 26 26 16 40 16C50 16 56 22 60 30C64 22 70 16 80 16C94 16 106 26 106 42C106 66 84 84 60 102Z" fill="${soft('#ff9db5', '#e9547b')}"/>`);
-      dr.add(`<path d="M34 34C38 28 44 26 48 28" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.7"/>`);
+    case 'note':
+      // a note of birdsong, as the pigeon's own chirp draws it: a round head, its stem and a flag
+      dr.add(`<ellipse cx="44" cy="88" rx="22" ry="16" fill="#8f8ac6" transform="rotate(-20 44 88)"/>`);
+      dr.add(`<path d="M63 84V18Q84 26 92 44Q96 54 90 64" fill="none" stroke="#8f8ac6" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>`);
       break;
   }
   return dr.svg(size, opts.title ?? 'A small thing');
