@@ -1284,8 +1284,8 @@
                   "payload": {
                     "prompt": "Dapîr frowns at the flower bed; Bozo chews happily. Which sentence is true?",
                     "options": [
-                      "Bozo kêfxweş e, dapîr aciz e.",
-                      "Bozo aciz e, dapîr kêfxweş e.",
+                      "Bozo kêfxweş e, dapîr bêzar e.",
+                      "Bozo bêzar e, dapîr kêfxweş e.",
                       "Bozo û dapîr kêfxweş in."
                     ],
                     "correctIndex": 0
@@ -1340,7 +1340,7 @@
                         "right": "clever"
                       },
                       {
-                        "left": "qelem",
+                        "left": "pênûs",
                         "right": "pencil"
                       }
                     ],
@@ -1448,8 +1448,8 @@
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ev qelema Baran e.",
-                    "prompt": "Baran shows you a pencil chewed at one end (not by Hevalo, for once): “Ev qelema Baran e,” says Hamo. What is it?",
+                    "say": "Ev pênûsa Baran e.",
+                    "prompt": "Baran shows you a pencil chewed at one end (not by Hevalo, for once): “Ev pênûsa Baran e,” says Hamo. What is it?",
                     "options": [
                       "Baran’s pencil",
                       "Baran’s photo",
@@ -1465,8 +1465,8 @@
                   "payload": {
                     "prompt": "Hamo ruffles Baran’s hair. Type what he says.",
                     "accepted": [
-                      "Qelema wî biçûk e, lê ew pir zîrek e.",
-                      "Qelema wî biçûk e, lê ew pir zîrek e"
+                      "Pênûsa wî biçûk e, lê ew pir zîrek e.",
+                      "Pênûsa wî biçûk e, lê ew pir zîrek e"
                     ],
                     "voice": "hamo"
                   }

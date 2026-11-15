@@ -1608,7 +1608,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo… bêhneke ecêb tê.",
+                        "text": "Xalo… bêhneke seyr tê.",
                         "en": "Uncle… there’s a strange smell."
                       },
                       {
@@ -2160,7 +2160,7 @@
                         "right": "I was eating"
                       },
                       {
-                        "left": "adet",
+                        "left": "nerît",
                         "right": "custom, habit"
                       },
                       {
@@ -2258,8 +2258,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo speaks of the old ways. Complete: “Ev … kevn e.” (This is an old custom.)",
                     "accepted": [
-                      "Ev adeteke kevn e.",
-                      "Ev adeteke kevn e"
+                      "Ev nerîteke kevn e.",
+                      "Ev nerîteke kevn e"
                     ]
                   }
                 },
@@ -2267,9 +2267,9 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "say": "Wê demê adeta me ev bû: her malbatê pez xwedî dikir.",
+                    "say": "Wê demê nerîta me ev bû: her malbatê pez xwedî dikir.",
                     "voice": "hamo",
-                    "prompt": "Why were there so many flocks back then? “Wê demê adeta me ev bû: her malbatê pez xwedî dikir.”",
+                    "prompt": "Why were there so many flocks back then? “Wê demê nerîta me ev bû: her malbatê pez xwedî dikir.”",
                     "accepted": [
                       "At that time this was our custom: every family kept sheep.",
                       "At that time this was our custom: every family kept sheep",
@@ -3169,7 +3169,7 @@
                         "right": "adventure"
                       },
                       {
-                        "left": "behs kirin",
+                        "left": "li ser … axaftin",
                         "right": "to talk about"
                       },
                       {
@@ -3290,10 +3290,8 @@
                     "voice": "hamo",
                     "prompt": "Ferhad asks what all the noise is about. Say: “We are talking about Zerê.”",
                     "accepted": [
-                      "Em behsa Zerê dikin.",
-                      "Em behsa Zerê dikin",
-                      "Em ji Zerê behs dikin.",
-                      "Em ji Zerê behs dikin"
+                      "Em li ser Zerê diaxivin.",
+                      "Em li ser Zerê diaxivin"
                     ]
                   }
                 },
@@ -3322,9 +3320,9 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hûn behsa çi dikin?",
+                    "say": "Hûn li ser çi diaxivin?",
                     "voice": "hamo",
-                    "prompt": "Hamo comes back with more tea. What does he ask? “Hûn behsa çi dikin?”",
+                    "prompt": "Hamo comes back with more tea. What does he ask? “Hûn li ser çi diaxivin?”",
                     "options": [
                       "What are you talking about?",
                       "What did you eat?",
@@ -3389,8 +3387,8 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Gulîstan ecêbmayî ma.",
-                    "prompt": "How did Gulîstan, Xezal’s mother, take the news about Hevalo and Zerê? Hamo grins. “Gulîstan ecêbmayî ma.”",
+                    "say": "Gulîstan şaşmayî ma.",
+                    "prompt": "How did Gulîstan, Xezal’s mother, take the news about Hevalo and Zerê? Hamo grins. “Gulîstan şaşmayî ma.”",
                     "options": [
                       "Gulîstan was astonished.",
                       "Gulîstan was angry.",
@@ -3501,8 +3499,8 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Gulîstan ecêbmayî ma û tiştek negot; paşê wê pirsî: «Zerê kî ye?»",
-                    "prompt": "Hamo does an impression of Xezal’s mother on the phone. What happened? “Gulîstan ecêbmayî ma û tiştek negot; paşê wê pirsî: «Zerê kî ye?»”",
+                    "say": "Gulîstan şaşmayî ma û tiştek negot; paşê wê pirsî: «Zerê kî ye?»",
+                    "prompt": "Hamo does an impression of Xezal’s mother on the phone. What happened? “Gulîstan şaşmayî ma û tiştek negot; paşê wê pirsî: «Zerê kî ye?»”",
                     "accepted": [
                       "Gulîstan was astonished and said nothing; then she asked: “Who is Zerê?”",
                       "Gulîstan was amazed and didn’t say anything; then she asked: “Who is Zerê?”",
@@ -3542,9 +3540,9 @@
                     "voice": "hamo",
                     "prompt": "Hamo asks Xezal: “Te çi ji diya xwe re got?” Which answer fits?",
                     "options": [
-                      "Min behsa golê, xanî û bilûrê kir.",
-                      "Ez behsa golê, xanî û bilûrê kir.",
-                      "Min behsa golê, xanî û bilûrê dikim."
+                      "Min çîroka golê, xanî û bilûrê got.",
+                      "Ez çîroka golê, xanî û bilûrê got.",
+                      "Min çîroka golê, xanî û bilûrê dibêjim."
                     ],
                     "correctIndex": 0
                   }
@@ -3581,8 +3579,8 @@
                     "voice": "hamo",
                     "prompt": "Xezal hangs up, smiling. Type what Hamo says about her mother.",
                     "accepted": [
-                      "Gulîstan ecêbmayî bû, lê kêfxweş jî bû.",
-                      "Gulîstan ecêbmayî bû, lê kêfxweş jî bû"
+                      "Gulîstan şaşmayî bû, lê kêfxweş jî bû.",
+                      "Gulîstan şaşmayî bû, lê kêfxweş jî bû"
                     ]
                   }
                 }

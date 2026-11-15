@@ -557,7 +557,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Dûr e, lê meaş baş e, û peyman ji bo du salan e.",
+                        "text": "Dûr e, lê mûçe baş e, û peyman ji bo du salan e.",
                         "en": "It’s far, but the salary is good, and the contract is for two years."
                       },
                       {
@@ -572,7 +572,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Û tu? Tu çi difikirî?",
+                        "text": "Û tu? Tu çi dihizirî?",
                         "en": "And you? What do you think?"
                       },
                       {
@@ -614,9 +614,9 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Meaş baş e, peyman jî ji bo du salan e.",
+                    "say": "Mûçe baş e, peyman jî ji bo du salan e.",
                     "voice": "hamo",
-                    "prompt": "You ask about the job, and Hamo tells you what Xezal told him. What does he say? “Meaş baş e, peyman jî ji bo du salan e.”",
+                    "prompt": "You ask about the job, and Hamo tells you what Xezal told him. What does he say? “Mûçe baş e, peyman jî ji bo du salan e.”",
                     "options": [
                       "The salary is good, and the contract is for two years.",
                       "The salary is small, and the contract is for two months.",
@@ -631,7 +631,7 @@
                   "payload": {
                     "pairs": [
                       {
-                        "left": "meaş",
+                        "left": "mûçe",
                         "right": "salary"
                       },
                       {
@@ -720,8 +720,8 @@
                   "payload": {
                     "prompt": "Complete what Hamo tells you about the job: “… baş e.” (The salary is good.)",
                     "accepted": [
-                      "Meaş baş e.",
-                      "Meaş baş e"
+                      "Mûçe baş e.",
+                      "Mûçe baş e"
                     ],
                     "voice": "hamo"
                   }
@@ -1187,7 +1187,7 @@
           "position": 2,
           "titleKu": "Ez hatime",
           "titleEn": "I have come",
-          "grammarMd": "For what **has happened** (and still matters), add the copula-like endings to the past stem:\n\n- after a consonant: *ez hatime, tu hatiyî, ew hatiye, em hatine* (I have come …)\n- after a vowel: *ez çûme, tu çûyî, ew çûye, em çûne* (I have gone …)\n- verbs in -în: *ez fikirîme, ew fikiriye* (I have thought …)\n\nTransitive verbs keep the ergative: *Min biryar daye.* I have decided. · *Te qet Hewlêr dîtiye?* Have you ever seen Hewlêr? · *Me sêv xwarine.* We have eaten (the) apples.\n\nUseful with it: **tu car** never · **qet** ever / never · **heta niha** until now · **hê** / **hîn** still, yet: *Ez hê neçûme.* I have not gone yet.\n\nNot: *ne-* before the stem: *Min nedîtiye.* I haven’t seen it.",
+          "grammarMd": "For what **has happened** (and still matters), add the copula-like endings to the past stem:\n\n- after a consonant: *ez hatime, tu hatiyî, ew hatiye, em hatine* (I have come …)\n- after a vowel: *ez çûme, tu çûyî, ew çûye, em çûne* (I have gone …)\n- verbs in -în: *ez hizirîme, ew hiziriye* (I have thought …)\n\nTransitive verbs keep the ergative: *Min biryar daye.* I have decided. · *Te qet Hewlêr dîtiye?* Have you ever seen Hewlêr? · *Me sêv xwarine.* We have eaten (the) apples.\n\nUseful with it: **tu car** never · **qet** ever / never · **heta niha** until now · **hê** / **hîn** still, yet: *Ez hê neçûme.* I have not gone yet.\n\nNot: *ne-* before the stem: *Min nedîtiye.* I haven’t seen it.",
           "lessons": [
             {
               "key": "u11s2l1",
@@ -1214,9 +1214,9 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez fikirîme, ez du caran razame, û min biryar daye.",
+                    "say": "Ez hizirîme, ez du caran razame, û min biryar daye.",
                     "voice": "hamo",
-                    "prompt": "Hamo explains how he got there. What does he say? “Ez fikirîme, ez du caran razame, û min biryar daye.”",
+                    "prompt": "Hamo explains how he got there. What does he say? “Ez hizirîme, ez du caran razame, û min biryar daye.”",
                     "options": [
                       "I have thought, I have slept on it twice, and I have decided.",
                       "I will think, I will sleep twice, and then I will decide.",
@@ -1239,7 +1239,7 @@
                         "right": "never"
                       },
                       {
-                        "left": "tecrûbe",
+                        "left": "ezmûn",
                         "right": "experience"
                       },
                       {
@@ -1247,8 +1247,8 @@
                         "right": "progress"
                       },
                       {
-                        "left": "teqez",
-                        "right": "definitely"
+                        "left": "bêguman",
+                        "right": "definitely, surely"
                       },
                       {
                         "left": "guhertin",
@@ -1262,8 +1262,8 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "say": "Divê Xezal vî karî qebûl bike.",
-                    "prompt": "Hamo says it plainly, and the room goes quiet. What does he say? “Divê Xezal vî karî qebûl bike.”",
+                    "say": "Divê Xezal vî karî bipejirîne.",
+                    "prompt": "Hamo says it plainly, and the room goes quiet. What does he say? “Divê Xezal vî karî bipejirîne.”",
                     "accepted": [
                       "Xezal must accept this job.",
                       "Xezal must accept this job",
@@ -1316,8 +1316,8 @@
                   "payload": {
                     "prompt": "Hamo tells the council about Xezal’s year at the village school. Type what you hear.",
                     "accepted": [
-                      "Tecrûbeya wê heye: wê hemû salê li dibistana me alîkariya mamosteyan kiriye.",
-                      "Tecrûbeya wê heye: wê hemû salê li dibistana me alîkariya mamosteyan kiriye"
+                      "Ezmûna wê heye: wê hemû salê li dibistana me alîkariya mamosteyan kiriye.",
+                      "Ezmûna wê heye: wê hemû salê li dibistana me alîkariya mamosteyan kiriye"
                     ],
                     "voice": "hamo"
                   }
@@ -1362,8 +1362,8 @@
                   "payload": {
                     "prompt": "Hamo is sure. Complete his sentence: “Ev … biryareke baş e.” (This is definitely a good decision.)",
                     "accepted": [
-                      "Ev teqez biryareke baş e.",
-                      "Ev teqez biryareke baş e"
+                      "Ev bêguman biryareke baş e.",
+                      "Ev bêguman biryareke baş e"
                     ],
                     "voice": "hamo"
                   }
@@ -1401,10 +1401,10 @@
                   "payload": {
                     "prompt": "Say it in Kurdish: “She has experience, and she is definitely ready.”",
                     "accepted": [
-                      "Tecrûbeya wê heye, û ew teqez amade ye.",
-                      "Tecrûbeya wê heye, û ew teqez amade ye",
-                      "Tecrûbeya wê heye û ew teqez amade ye.",
-                      "Tecrûbeya wê heye û ew teqez amade ye"
+                      "Ezmûna wê heye, û ew bêguman amade ye.",
+                      "Ezmûna wê heye, û ew bêguman amade ye",
+                      "Ezmûna wê heye û ew bêguman amade ye.",
+                      "Ezmûna wê heye û ew bêguman amade ye"
                     ],
                     "voice": "hamo"
                   }
@@ -1561,9 +1561,9 @@
                   "payload": {
                     "prompt": "Which sentence means “Tourists have come from all over the world”?",
                     "options": [
-                      "Geştyar ji hemû dinyayê hatiye.",
-                      "Geştyar ji hemû dinyayê hatine.",
-                      "Geştyar ji hemû dinyayê hatime."
+                      "Geştyar ji hemû cîhanê hatiye.",
+                      "Geştyar ji hemû cîhanê hatine.",
+                      "Geştyar ji hemû cîhanê hatime."
                     ],
                     "correctIndex": 1
                   }
@@ -2057,8 +2057,8 @@
                   "position": 2,
                   "type": "translate",
                   "payload": {
-                    "say": "Min biryar daye: ez pêşniyara we qebûl dikim.",
-                    "prompt": "Xezal lets Hamo read the first line of her letter aloud. Translate it. “Min biryar daye: ez pêşniyara we qebûl dikim.”",
+                    "say": "Min biryar daye: ez pêşniyara we dipejirînim.",
+                    "prompt": "Xezal lets Hamo read the first line of her letter aloud. Translate it. “Min biryar daye: ez pêşniyara we dipejirînim.”",
                     "accepted": [
                       "I have decided: I accept your offer.",
                       "I have decided: I accept your offer",
@@ -2274,7 +2274,7 @@
           "position": 3,
           "titleKu": "Ji ber ku …",
           "titleEn": "Because …",
-          "grammarMd": "Join two thoughts with these:\n\n- **ji ber ku / çimkî** because: *Ez diçim, ji ber ku ev derfeteke mezin e.* I am going because this is a big chance.\n- **loma / ji ber vê yekê** so, that is why: *Baran ditirse, loma Hamo alîkariya wî dike.* Baran is afraid, so Hamo helps him.\n- **lê / lêbelê** but, however: *Hewlêr dûr e, lê ez ê her Newrozê bêm.* Hewlêr is far, but I will come every Newroz.\n- **hem … hem** both … and: *Ew hem mamoste ye hem jî nivîskar.* She is both a teacher and a writer.\n- **bêyî ku** + subjunctive, without: *bêyî ku bifikire* without thinking\n- **her çend** although: *Her çend ez ditirsim jî, ez ê biçim.* Although I am afraid, I will go.",
+          "grammarMd": "Join two thoughts with these:\n\n- **ji ber ku / çimkî** because: *Ez diçim, ji ber ku ev derfeteke mezin e.* I am going because this is a big chance.\n- **loma / ji ber vê yekê** so, that is why: *Baran ditirse, loma Hamo alîkariya wî dike.* Baran is afraid, so Hamo helps him.\n- **lê / lêbelê** but, however: *Hewlêr dûr e, lê ez ê her Newrozê bêm.* Hewlêr is far, but I will come every Newroz.\n- **hem … hem** both … and: *Ew hem mamoste ye hem jî nivîskar.* She is both a teacher and a writer.\n- **bêyî ku** + subjunctive, without: *bêyî ku bihizire* without thinking\n- **her çend** although: *Her çend ez ditirsim jî, ez ê biçim.* Although I am afraid, I will go.",
           "lessons": [
             {
               "key": "u11s3l1",
@@ -2436,8 +2436,8 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Herwiha, meaşê wê baş e.",
-                    "prompt": "Hamo has one more, more practical reason. What is it? “Herwiha, meaşê wê baş e.”",
+                    "say": "Herwiha, mûçeya wê baş e.",
+                    "prompt": "Hamo has one more, more practical reason. What is it? “Herwiha, mûçeya wê baş e.”",
                     "accepted": [
                       "Also, her salary is good.",
                       "Also, her salary is good",
@@ -2693,9 +2693,9 @@
                   "payload": {
                     "prompt": "Which sentence means “Baran is both scared and excited”?",
                     "options": [
-                      "Baran ne ditirse, ne jî bi heyecan e.",
-                      "Baran hem ditirse, hem jî bi heyecan e.",
-                      "Baran hem ditirse, lê bi heyecan e."
+                      "Baran ne ditirse, ne jî bi kelecan e.",
+                      "Baran hem ditirse, hem jî bi kelecan e.",
+                      "Baran hem ditirse, lê bi kelecan e."
                     ],
                     "correctIndex": 1
                   }
@@ -2801,7 +2801,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, hêdî bixwîne! Mirîşk fêm nakin.",
+                        "text": "Xalo, hêdî bixwîne! Mirîşk tê nagihîjin.",
                         "en": "Uncle, read slowly! The hens don’t understand."
                       },
                       {
@@ -3240,7 +3240,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Dinya biçûk e!",
+                        "text": "Ev cîhan çiqas biçûk e!",
                         "en": "It’s a small world!"
                       },
                       {
@@ -3515,8 +3515,8 @@
                   "payload": {
                     "prompt": "Nazê’s goal makes everyone laugh, and Hamo has to repeat it. Say it in Kurdish: “I hope that Hamo will be on time, once.”",
                     "accepted": [
-                      "Hêvî dikim ku Hamo carekê bi wext be.",
-                      "Hêvî dikim ku Hamo carekê bi wext be"
+                      "Hêvî dikim ku Hamo carekê di dema xwe de bê.",
+                      "Hêvî dikim ku Hamo carekê di dema xwe de bê"
                     ],
                     "voice": "hamo"
                   }
@@ -3604,8 +3604,8 @@
                   "payload": {
                     "prompt": "Then Xezal tells her goal, and Hamo says it again for you, very proud. Type what you hear.",
                     "accepted": [
-                      "Armanca Xezalê ev e ku ew bi zimanê dayikê ders bide zarokan.",
-                      "Armanca Xezalê ev e ku ew bi zimanê dayikê ders bide zarokan"
+                      "Armanca Xezalê ev e ku ew bi zimanê dayikê wane bide zarokan.",
+                      "Armanca Xezalê ev e ku ew bi zimanê dayikê wane bide zarokan"
                     ],
                     "voice": "hamo"
                   }
@@ -3681,8 +3681,8 @@
                         "right": "to settle in"
                       },
                       {
-                        "left": "xerîb",
-                        "right": "homesick; a stranger"
+                        "left": "bêriya malê kirin",
+                        "right": "to be homesick (to miss home)"
                       },
                       {
                         "left": "zimanê dayikê",
@@ -3764,8 +3764,8 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "say": "Belkî di hefteya yekem de tu yê hinekî xerîb bibî.",
-                    "prompt": "Hamo reads over her shoulder and nods. What does he say to her? “Belkî di hefteya yekem de tu yê hinekî xerîb bibî.”",
+                    "say": "Belkî di hefteya yekem de tu yê hinekî bêriya malê bikî.",
+                    "prompt": "Hamo reads over her shoulder and nods. What does he say to her? “Belkî di hefteya yekem de tu yê hinekî bêriya malê bikî.”",
                     "accepted": [
                       "Maybe in the first week you will be a little homesick.",
                       "Maybe in the first week you will be a little homesick",
@@ -3783,9 +3783,9 @@
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Her kesê ku ji gund diçe, hinekî xerîb dibe.",
+                    "say": "Her kesê ku ji gund diçe, hinekî bêriya gund dike.",
                     "voice": "hamo",
-                    "prompt": "Then he adds, more quietly. What does he say? “Her kesê ku ji gund diçe, hinekî xerîb dibe.”",
+                    "prompt": "Then he adds, more quietly. What does he say? “Her kesê ku ji gund diçe, hinekî bêriya gund dike.”",
                     "options": [
                       "Everyone who leaves the village feels a little homesick.",
                       "Nobody who leaves the village is ever homesick.",
@@ -3814,8 +3814,8 @@
                   "payload": {
                     "prompt": "And the most important part of her plan. Hamo says it for everyone, slowly and proudly. Type what you hear.",
                     "accepted": [
-                      "Ew ê her roj bi zimanê dayikê ders bide zarokan.",
-                      "Ew ê her roj bi zimanê dayikê ders bide zarokan"
+                      "Ew ê her roj bi zimanê dayikê wane bide zarokan.",
+                      "Ew ê her roj bi zimanê dayikê wane bide zarokan"
                     ],
                     "voice": "hamo"
                   }
@@ -3990,8 +3990,8 @@
                         "right": "strength"
                       },
                       {
-                        "left": "rehet",
-                        "right": "comfortable, at ease"
+                        "left": "aram",
+                        "right": "calm, at ease"
                       },
                       {
                         "left": "dilgermî",
@@ -4061,8 +4061,8 @@
                   "payload": {
                     "prompt": "Hamo asks the question that keeps Xezal awake at night — and him too. Type what you hear.",
                     "accepted": [
-                      "Lê ew ê li Hewlêrê rehet bibe?",
-                      "Lê ew ê li Hewlêrê rehet bibe"
+                      "Lê ew ê li Hewlêrê aram bibe?",
+                      "Lê ew ê li Hewlêrê aram bibe"
                     ],
                     "voice": "hamo"
                   }
@@ -4073,9 +4073,9 @@
                   "payload": {
                     "prompt": "Which sentence means “With your warmth you will be at ease everywhere”?",
                     "options": [
-                      "Bi dilgermiya xwe tu yê li her derê rehet bûyî.",
-                      "Bi dilgermiya xwe tu yê li her derê rehet bibî.",
-                      "Bi dilgermiya te ez ê li her derê rehet bibî."
+                      "Bi dilgermiya xwe tu yê li her derê aram bûyî.",
+                      "Bi dilgermiya xwe tu yê li her derê aram bibî.",
+                      "Bi dilgermiya te ez ê li her derê aram bibî."
                     ],
                     "correctIndex": 1
                   }
@@ -4223,8 +4223,8 @@
                   "payload": {
                     "prompt": "Say it in Kurdish: “I am at ease here.”",
                     "accepted": [
-                      "Ez li vir rehet im.",
-                      "Ez li vir rehet im"
+                      "Ez li vir aram im.",
+                      "Ez li vir aram im"
                     ],
                     "voice": "hamo"
                   }
@@ -4360,7 +4360,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Şevbêrk! Wekî zemanê berê.",
+                        "text": "Şevbêrk! Wekî rojên berê.",
                         "en": "A winter night of tales! Like in the old days."
                       },
                       {

@@ -271,7 +271,7 @@
                   "payload": {
                     "pairs": [
                       {
-                        "left": "metbex",
+                        "left": "aşxane",
                         "right": "kitchen"
                       },
                       {
@@ -302,11 +302,11 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "“In this kitchen” — which one is right? (metbex is feminine)",
+                    "prompt": "“In this kitchen” — which one is right? (aşxane is feminine)",
                     "options": [
-                      "li vê metbexê",
-                      "li vî metbexî",
-                      "li ev metbex"
+                      "li vê aşxaneyê",
+                      "li vî aşxaneyî",
+                      "li ev aşxane"
                     ],
                     "correctIndex": 0
                   }
@@ -367,10 +367,10 @@
                   "position": 8,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Hamo is chasing the hen. Write the whole sentence with the missing word: “Mirîşk li … metbexê ye.” (The hen is in this kitchen.)",
+                    "prompt": "Hamo is chasing the hen. Write the whole sentence with the missing word: “Mirîşk li … aşxaneyê ye.” (The hen is in this kitchen.)",
                     "accepted": [
-                      "Mirîşk li vê metbexê ye.",
-                      "Mirîşk li vê metbexê ye"
+                      "Mirîşk li vê aşxaneyê ye.",
+                      "Mirîşk li vê aşxaneyê ye"
                     ],
                     "voice": "hamo"
                   }
@@ -466,7 +466,7 @@
                   "type": "speaking",
                   "payload": {
                     "prompt": "Call out to the whole house: “There is a hen in this kitchen!”",
-                    "reference": "Li vê metbexê mirîşkek heye!",
+                    "reference": "Li vê aşxaneyê mirîşkek heye!",
                     "voice": "hamo"
                   }
                 }
@@ -604,7 +604,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ya min? Na, na! Ez… ez birçî me. Metbex li hundir e!",
+                        "text": "Ya min? Na, na! Ez… ez birçî me. Aşxane li hundir e!",
                         "en": "Mine? No, no! I am… I am hungry. The kitchen is inside! (and off he goes)"
                       }
                     ],
@@ -864,9 +864,9 @@
                   "payload": {
                     "prompt": "Hamo checks every lamp in the house. Type what you hear.",
                     "accepted": [
-                      "Ronî li metbexê heye, lê serşok tarî ye.",
-                      "Ronî li metbexê heye, lê serşok tarî ye",
-                      "Ronî li metbexê heye lê serşok tarî ye"
+                      "Ronî li aşxaneyê heye, lê serşok tarî ye.",
+                      "Ronî li aşxaneyê heye, lê serşok tarî ye",
+                      "Ronî li aşxaneyê heye lê serşok tarî ye"
                     ],
                     "voice": "hamo"
                   }
@@ -901,7 +901,7 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Metbex, serşok, odeya mêvanan… Hemû li nexşeyê ne.",
+                        "text": "Aşxane, serşok, odeya mêvanan… Hemû li nexşeyê ne.",
                         "en": "Kitchen, bathroom, guest room… They are all on the map."
                       },
                       {
@@ -946,7 +946,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Bozo? Bozo ker e, xalo! Qelema wî tune!",
+                        "text": "Bozo? Bozo ker e, xalo! Pênûsa wî tune!",
                         "en": "Bozo? Bozo is a donkey, Xalo! He has no pencil!"
                       },
                       {
@@ -1543,7 +1543,7 @@
                         "right": "leaf"
                       },
                       {
-                        "left": "fêkî",
+                        "left": "mêwe",
                         "right": "fruit"
                       },
                       {
@@ -1584,7 +1584,7 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Sêva sor! Şîrîn e, xweş e: fêkiyekî baş!",
+                        "text": "Sêva sor! Şîrîn e, xweş e: mêweyeke baş!",
                         "en": "The red apple! Sweet, tasty: a proper fruit!"
                       },
                       {
@@ -1675,8 +1675,8 @@
                   "payload": {
                     "prompt": "Hamo has more to say on the matter. Type what you hear.",
                     "accepted": [
-                      "Gûz û tirî jî fêkî ne.",
-                      "Gûz û tirî jî fêkî ne"
+                      "Gûz û tirî jî mêwe ne.",
+                      "Gûz û tirî jî mêwe ne"
                     ],
                     "voice": "hamo"
                   }
@@ -2060,7 +2060,7 @@
           "position": 3,
           "titleKu": "Li ku ye?",
           "titleEn": "Where is it?",
-          "grammarMd": "**li** (at, in) combines with a word for the place:\n\n- **li ser** on · **li bin** under · **li ber** in front of · **li pişt** behind · **li kêleka** next to · **li cem** at someone’s place\n\n*Berçavk li ser serê te ye!* The glasses are on your head!\n\n**di … de** wraps around the noun for *inside*: *di sindoqê de* in the box · *di metbexê de* in the kitchen. **di nav … de** is *among, in the middle of*: *di nav daran de* among the trees.\n\nThe noun after them takes the oblique: feminine **-ê** (*li bin darê* under the tree), plural **-an** (*li ser keviran*); a masculine noun usually stays as it is (*li ser kevir*, *li ber derî*).",
+          "grammarMd": "**li** (at, in) combines with a word for the place:\n\n- **li ser** on · **li bin** under · **li ber** in front of · **li pişt** behind · **li kêleka** next to · **li cem** at someone’s place\n\n*Berçavk li ser serê te ye!* The glasses are on your head!\n\n**di … de** wraps around the noun for *inside*: *di sindoqê de* in the box · *di aşxaneyê de* in the kitchen. **di nav … de** is *among, in the middle of*: *di nav daran de* among the trees.\n\nThe noun after them takes the oblique: feminine **-ê** (*li bin darê* under the tree), plural **-an** (*li ser keviran*); a masculine noun usually stays as it is (*li ser kevir*, *li ber derî*).",
           "lessons": [
             {
               "key": "u03s3l1",
@@ -2350,9 +2350,9 @@
                   "payload": {
                     "prompt": "Which one means “in the kitchen”?",
                     "options": [
-                      "di metbexê de",
-                      "di metbexê",
-                      "li metbexê de"
+                      "di aşxaneyê de",
+                      "di aşxaneyê",
+                      "li aşxaneyê de"
                     ],
                     "correctIndex": 0
                   }
@@ -2762,7 +2762,7 @@
             {
               "key": "u03s3l4",
               "position": 4,
-              "titleKu": "Xezîne!",
+              "titleKu": "Gencîne!",
               "titleEn": "Treasure!",
               "exercises": [
                 {
@@ -2786,7 +2786,7 @@
                   "payload": {
                     "pairs": [
                       {
-                        "left": "xezîne",
+                        "left": "gencîne",
                         "right": "treasure"
                       },
                       {
@@ -2829,7 +2829,7 @@
                   "type": "conversation",
                   "payload": {
                     "id": "roadu03s3l4a",
-                    "title": "Xezîne!",
+                    "title": "Gencîne!",
                     "speakers": [
                       {
                         "name": "Hamo",
@@ -2842,12 +2842,12 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Xalo! Xezîneyeke veşartî! Gog û wêneyekî kevn.",
+                        "text": "Xalo! Gencîneyeke veşartî! Gog û wêneyekî kevn.",
                         "en": "Xalo! A hidden treasure! Marbles and an old photo."
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê… ev xezîneya min e. Ya min û ya Lorînê.",
+                        "text": "Erê… ev gencîneya min e. Ya min û ya Lorînê.",
                         "en": "Yes… this is my treasure. Mine and Lorîn’s."
                       },
                       {
@@ -2904,8 +2904,8 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "say": "Xezîne li vir veşartî ye.",
-                    "prompt": "Hamo admits it at last. What does he say? “Xezîne li vir veşartî ye.”",
+                    "say": "Gencîne li vir veşartî ye.",
+                    "prompt": "Hamo admits it at last. What does he say? “Gencîne li vir veşartî ye.”",
                     "accepted": [
                       "The treasure is hidden here",
                       "The treasure is hidden in this place"
@@ -3009,7 +3009,7 @@
                   "type": "speaking",
                   "payload": {
                     "prompt": "Confess with Hamo: “This is my treasure, and Lorîn’s.”",
-                    "reference": "Ev xezîneya min û Lorînê ye.",
+                    "reference": "Ev gencîneya min û Lorînê ye.",
                     "voice": "hamo"
                   }
                 },
@@ -3888,7 +3888,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Bozo li hewşê ye. Ew bê kumê xwe aciz e!",
+                        "text": "Bozo li hewşê ye. Ew bê kumê xwe bêzar e!",
                         "en": "Bozo is in the yard. He is cross without his hat!"
                       },
                       {
@@ -3965,8 +3965,8 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "say": "Bozo bê kumê xwe aciz e.",
-                    "prompt": "Bozo won’t move a hoof. What does Hamo explain? “Bozo bê kumê xwe aciz e.”",
+                    "say": "Bozo bê kumê xwe bêzar e.",
+                    "prompt": "Bozo won’t move a hoof. What does Hamo explain? “Bozo bê kumê xwe bêzar e.”",
                     "accepted": [
                       "Bozo is annoyed without his hat",
                       "Without his hat Bozo is annoyed",

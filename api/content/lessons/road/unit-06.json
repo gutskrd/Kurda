@@ -281,8 +281,8 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez li cadeyê ber bi çepê ve diçim!",
-                    "prompt": "And which way does Hamo turn? He marches off happily: “Ez li cadeyê ber bi çepê ve diçim!”",
+                    "say": "Ez li kolanê ber bi çepê ve diçim!",
+                    "prompt": "And which way does Hamo turn? He marches off happily: “Ez li kolanê ber bi çepê ve diçim!”",
                     "options": [
                       "Left, of course",
                       "Right",
@@ -394,8 +394,8 @@
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ev cade? An ew cade?",
-                    "prompt": "Kobanî has grown since Hamo was a boy, and every new street looks like the last one. What is Hamo asking himself? “Ev cade? An ew cade?”",
+                    "say": "Ev kolan? An ew kolan?",
+                    "prompt": "Kobanî has grown since Hamo was a boy, and every new street looks like the last one. What is Hamo asking himself? “Ev kolan? An ew kolan?”",
                     "options": [
                       "This street? Or that street?",
                       "This shop? Or that shop?",
@@ -435,8 +435,8 @@
                   "payload": {
                     "prompt": "Tell Xezal: “The big building is on the avenue.”",
                     "accepted": [
-                      "Avahiya mezin li cadeyê ye.",
-                      "Avahiya mezin li cadeyê ye"
+                      "Avahiya mezin li kolanê ye.",
+                      "Avahiya mezin li kolanê ye"
                     ],
                     "voice": "hamo"
                   }
@@ -526,7 +526,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Bajarekî bê sûr? Ecêb e!",
+                        "text": "Bajarekî bê sûr? Seyr e!",
                         "en": "A town without walls? How strange!"
                       },
                       {
@@ -633,8 +633,8 @@
                   "payload": {
                     "prompt": "Hamo looks at the new shops where the old ones used to be. Type what he says.",
                     "accepted": [
-                      "Ji bo min her tişt ecêb e.",
-                      "Ji bo min her tişt ecêb e"
+                      "Ji bo min her tişt seyr e.",
+                      "Ji bo min her tişt seyr e"
                     ],
                     "voice": "hamo"
                   }
@@ -716,9 +716,9 @@
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "say": "Ev cade gelek qelebalix e.",
+                    "say": "Ev kolan gelek qelebalix e.",
                     "voice": "hamo",
-                    "prompt": "Xezal holds Hamo’s arm tight on the pavement. Hamo looks around and understands why. What does he say? “Ev cade gelek qelebalix e.”",
+                    "prompt": "Xezal holds Hamo’s arm tight on the pavement. Hamo looks around and understands why. What does he say? “Ev kolan gelek qelebalix e.”",
                     "accepted": [
                       "This avenue is very crowded.",
                       "This street is very crowded.",
@@ -735,8 +735,8 @@
                   "payload": {
                     "prompt": "Say it like Hamo, wide-eyed: “How strange!”",
                     "accepted": [
-                      "Çi ecêb e!",
-                      "Çi ecêb e"
+                      "Çi seyr e!",
+                      "Çi seyr e"
                     ],
                     "voice": "hamo"
                   }
@@ -825,7 +825,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Xezîne, Lorîn?",
+                        "text": "Gencîne, Lorîn?",
                         "en": "The treasure, Lorîn?"
                       },
                       {
@@ -835,11 +835,11 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xezîne li cem Lorînê ye!",
+                        "text": "Gencîne li cem Lorînê ye!",
                         "en": "The treasure is with Lorîn!"
                       }
                     ],
-                    "prompt": "Xezîne li ku ye?",
+                    "prompt": "Gencîne li ku ye?",
                     "options": [
                       "Li cem Hamo ye.",
                       "Li Sêvanê ye.",
@@ -964,7 +964,7 @@
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Lorîn smiles at her big brother and, because the children are listening, slips him a note: “Xezîne li cem min e.” What does it say?",
+                    "prompt": "Lorîn smiles at her big brother and, because the children are listening, slips him a note: “Gencîne li cem min e.” What does it say?",
                     "options": [
                       "The treasure is with me.",
                       "The treasure is in Sêvan.",
@@ -1030,9 +1030,9 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Xezîne li cem Lorînê ye.",
+                    "say": "Gencîne li cem Lorînê ye.",
                     "voice": "hamo",
-                    "prompt": "Hamo can hardly believe it. What has he just learned? “Xezîne li cem Lorînê ye.”",
+                    "prompt": "Hamo can hardly believe it. What has he just learned? “Gencîne li cem Lorînê ye.”",
                     "options": [
                       "Lorîn has the treasure.",
                       "Lorîn is looking for the treasure.",
@@ -1579,7 +1579,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Temam, temam. Ez derdikevim û li bajêr digerim.",
+                        "text": "Baş e, baş e. Ez derdikevim û li bajêr digerim.",
                         "en": "All right, all right. I’ll go out and walk around the town."
                       },
                       {
@@ -2169,7 +2169,7 @@
                         "right": "must, should"
                       },
                       {
-                        "left": "lazim",
+                        "left": "pêwîst",
                         "right": "necessary"
                       },
                       {
@@ -2230,9 +2230,9 @@
                   "payload": {
                     "prompt": "Tell Hamo: “We must go, it is necessary.”",
                     "accepted": [
-                      "Divê em biçin, lazim e.",
-                      "Divê em biçin, lazim e",
-                      "Divê em biçin lazim e"
+                      "Divê em biçin, pêwîst e.",
+                      "Divê em biçin, pêwîst e",
+                      "Divê em biçin pêwîst e"
                     ],
                     "voice": "hamo"
                   }
@@ -2312,9 +2312,9 @@
                   "payload": {
                     "prompt": "Hevalo asks for an apple for the road. Tell him: “An apple isn’t necessary, Hevalo!”",
                     "accepted": [
-                      "Sêv ne lazim e, Hevalo!",
-                      "Sêv ne lazim e, Hevalo",
-                      "Sêv ne lazim e Hevalo"
+                      "Sêv ne pêwîst e, Hevalo!",
+                      "Sêv ne pêwîst e, Hevalo",
+                      "Sêv ne pêwîst e Hevalo"
                     ],
                     "voice": "hamo"
                   }
@@ -2492,8 +2492,8 @@
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Erê, mimkun e.",
-                    "prompt": "Xezal asks if she may take Hamo out instead of the kitchen work. Edûl nods, and Hamo jumps up from the sofa to tell you: “Erê, mimkun e.” What did she say?",
+                    "say": "Erê, pêkan e.",
+                    "prompt": "Xezal asks if she may take Hamo out instead of the kitchen work. Edûl nods, and Hamo jumps up from the sofa to tell you: “Erê, pêkan e.” What did she say?",
                     "options": [
                       "No, it’s not possible.",
                       "Yes, it’s possible.",
@@ -2564,8 +2564,8 @@
                   "payload": {
                     "prompt": "Ask Edûl: “Is it possible? Do we have permission?”",
                     "accepted": [
-                      "Mimkun e? Destûr heye?",
-                      "Mimkun e? Destûr heye"
+                      "Pêkan e? Destûr heye?",
+                      "Pêkan e? Destûr heye"
                     ],
                     "voice": "hamo"
                   }
@@ -2601,8 +2601,8 @@
                     "say": "Tu dikarî sibe bêyî?",
                     "prompt": "Hamo wants you to come to the bookshop with them tomorrow too: “Tu dikarî sibe bêyî?” What would you answer?",
                     "options": [
-                      "Erê, mimkun e.",
-                      "Erê, ez mimkun im.",
+                      "Erê, pêkan e.",
+                      "Erê, ez pêkan im.",
                       "Erê, tu dikarî."
                     ],
                     "correctIndex": 0,
@@ -2935,7 +2935,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez niha li cadeyeke mezin im.",
+                        "text": "Ez niha li kolaneke mezin im.",
                         "en": "I’m on a big avenue now."
                       },
                       {
@@ -2950,7 +2950,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, saetek e! Nan li ku ye?",
+                        "text": "Xalo, demjimêrek e! Nan li ku ye?",
                         "en": "Uncle, it’s been an hour! Where’s the bread?"
                       },
                       {
@@ -3250,7 +3250,7 @@
                         "right": "airport"
                       },
                       {
-                        "left": "behr",
+                        "left": "derya",
                         "right": "sea"
                       }
                     ],
@@ -3318,8 +3318,8 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "say": "Behr gelek dûr e, Hêvî.",
-                    "prompt": "Hêvî wants to see the sea from the plane. What does Hamo tell her? “Behr gelek dûr e, Hêvî.”",
+                    "say": "Derya gelek dûr e, Hêvî.",
+                    "prompt": "Hêvî wants to see the sea from the plane. What does Hamo tell her? “Derya gelek dûr e, Hêvî.”",
                     "accepted": [
                       "The sea is very far, Hêvî.",
                       "The sea is very far away, Hêvî.",
@@ -3410,8 +3410,8 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hêvî dibêje: «Ez dixwazim behrê bibînim!»",
-                    "prompt": "Why does Hêvî want to go by plane? “Hêvî dibêje: «Ez dixwazim behrê bibînim!»”",
+                    "say": "Hêvî dibêje: «Ez dixwazim deryayê bibînim!»",
+                    "prompt": "Why does Hêvî want to go by plane? “Hêvî dibêje: «Ez dixwazim deryayê bibînim!»”",
                     "options": [
                       "She wants to see Amed.",
                       "She wants to see the sea.",
@@ -3470,10 +3470,10 @@
                   "payload": {
                     "prompt": "Ask the man at the window: “Do you accept cards?”",
                     "accepted": [
-                      "Hûn kartê qebûl dikin?",
-                      "Hûn kartan qebûl dikin?",
-                      "Hûn kartê qebûl dikin",
-                      "Hûn kartan qebûl dikin"
+                      "Hûn kartê dipejirînin?",
+                      "Hûn kartan dipejirînin?",
+                      "Hûn kartê dipejirînin",
+                      "Hûn kartan dipejirînin"
                     ],
                     "voice": "hamo"
                   }
@@ -3507,11 +3507,11 @@
                   "position": 6,
                   "type": "writing",
                   "payload": {
-                    "prompt": "The man says: “Navê xwe binivîse.” Hamo answers politely: “Temam, ez navê … dinivîsim.” (my own) Type the whole sentence.",
+                    "prompt": "The man says: “Navê xwe binivîse.” Hamo answers politely: “Baş e, ez navê … dinivîsim.” (my own) Type the whole sentence.",
                     "accepted": [
-                      "Temam, ez navê xwe dinivîsim.",
-                      "Temam, ez navê xwe dinivîsim",
-                      "Temam ez navê xwe dinivîsim"
+                      "Baş e, ez navê xwe dinivîsim.",
+                      "Baş e, ez navê xwe dinivîsim",
+                      "Baş e ez navê xwe dinivîsim"
                     ],
                     "voice": "hamo"
                   }
@@ -3549,8 +3549,8 @@
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hûn kartê qebûl dikin?",
-                    "prompt": "Hamo takes out the card Xezal gave him. What does he ask? “Hûn kartê qebûl dikin?”",
+                    "say": "Hûn kartê dipejirînin?",
+                    "prompt": "Hamo takes out the card Xezal gave him. What does he ask? “Hûn kartê dipejirînin?”",
                     "options": [
                       "Is this my card?",
                       "Do you accept cards?",
@@ -3621,9 +3621,9 @@
                   "payload": {
                     "prompt": "Hamo wants to know if they take cards. Which question is right?",
                     "options": [
-                      "Hûn kartê qebûl dike?",
-                      "Hûn kartê qebûl dikin?",
-                      "Hûn kart qebûl in?"
+                      "Hûn kartê dipejirîne?",
+                      "Hûn kartê dipejirînin?",
+                      "Hûn kartê dipejirînim?"
                     ],
                     "correctIndex": 1
                   }
@@ -3697,27 +3697,27 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew ji herêma me ye, ji gundê li kêleka Sêvanê!",
+                        "text": "Ew ji devera me ye, ji gundê li kêleka Sêvanê!",
                         "en": "He’s from our area, from the village next to Sêvan!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Li vir, li Kobaniyê? Çi tesadûf e!",
+                        "text": "Li vir, li Kobaniyê? Çi rasthatin e!",
                         "en": "Here, in Kobanî? What a coincidence!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Dinya biçûk e! Ew dibêje: «Werin, em çay vexwin.»",
+                        "text": "Ev cîhan çiqas biçûk e! Ew dibêje: «Werin, em çay vexwin.»",
                         "en": "It’s a small world! He says: “Come, let’s have some tea.”"
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, otobûs… Saet pênc e. Ev çaya sêyem e!",
+                        "text": "Xalo, otobûs… Demjimêr pênc e. Ev çaya sêyem e!",
                         "en": "Uncle, the bus… It’s five o’clock. This is the third tea!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Îcar… li cem çayê wext tune!",
+                        "text": "Îcar… li cem çayê dem tune!",
                         "en": "Well then… where there is tea, there is no time!"
                       }
                     ],
@@ -3769,8 +3769,8 @@
                     "voice": "hamo",
                     "prompt": "Say it with Hamo, who can’t get over it: “What a coincidence!”",
                     "accepted": [
-                      "Çi tesadûf e!",
-                      "Çi tesadûf e"
+                      "Çi rasthatin e!",
+                      "Çi rasthatin e"
                     ]
                   }
                 },
@@ -3793,8 +3793,8 @@
                   "payload": {
                     "prompt": "Hamo turns to Xezal, delighted. Type what he says.",
                     "accepted": [
-                      "Ew ji herêma Sêvanê ye.",
-                      "Ew ji herêma Sêvanê ye"
+                      "Ew ji devera Sêvanê ye.",
+                      "Ew ji devera Sêvanê ye"
                     ],
                     "voice": "hamo"
                   }
@@ -3803,10 +3803,10 @@
                   "position": 7,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Hamo laughs: “… biçûk e!” (The world) Type the whole sentence.",
+                    "prompt": "Hamo laughs: “Ev … çiqas biçûk e!” (How small this world is!) Type the whole sentence.",
                     "accepted": [
-                      "Dinya biçûk e!",
-                      "Dinya biçûk e"
+                      "Ev cîhan çiqas biçûk e!",
+                      "Ev cîhan çiqas biçûk e"
                     ],
                     "voice": "hamo"
                   }
@@ -3815,8 +3815,8 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "say": "Li cem çayê wext tune!",
-                    "prompt": "Xezal points at her watch. Hamo answers with a proverb of his own. What is it? “Li cem çayê wext tune!”",
+                    "say": "Li cem çayê dem tune!",
+                    "prompt": "Xezal points at her watch. Hamo answers with a proverb of his own. What is it? “Li cem çayê dem tune!”",
                     "accepted": [
                       "Where there's tea, there's no time!",
                       "With tea, there is no time!",
@@ -3860,8 +3860,8 @@
                   "payload": {
                     "prompt": "Ask the man: “Which area are you from?”",
                     "accepted": [
-                      "Tu ji kîjan herêmê yî?",
-                      "Tu ji kîjan herêmê yî"
+                      "Tu ji kîjan deverê yî?",
+                      "Tu ji kîjan deverê yî"
                     ],
                     "voice": "hamo"
                   }
@@ -3870,9 +3870,9 @@
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "say": "Saet pênc e, ev çaya sêyem e!",
+                    "say": "Demjimêr pênc e, ev çaya sêyem e!",
                     "voice": "hamo",
-                    "prompt": "Hamo counts the glasses on the table, rather proud of them. What does he say? “Saet pênc e, ev çaya sêyem e!”",
+                    "prompt": "Hamo counts the glasses on the table, rather proud of them. What does he say? “Demjimêr pênc e, ev çaya sêyem e!”",
                     "accepted": [
                       "It's five o'clock, this is the third tea!",
                       "It's five, this is the third tea!",
@@ -3892,8 +3892,8 @@
                   "payload": {
                     "prompt": "Which word means “the world”?",
                     "options": [
-                      "herêm",
-                      "dinya",
+                      "dever",
+                      "cîhan",
                       "dîrok"
                     ],
                     "correctIndex": 1
@@ -3907,7 +3907,7 @@
                     "options": [
                       "Çi biha ye!",
                       "Çi dereng e!",
-                      "Çi tesadûf e!"
+                      "Çi rasthatin e!"
                     ],
                     "correctIndex": 2
                   }
@@ -3963,7 +3963,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Sêv, sêv û sêv! Hevalo, ji bo geştê nan jî lazim e!",
+                        "text": "Sêv, sêv û sêv! Hevalo, ji bo geştê nan jî pêwîst e!",
                         "en": "Apples, apples and apples! Hevalo, for the journey you need bread too!"
                       },
                       {

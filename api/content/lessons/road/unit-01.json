@@ -3334,8 +3334,8 @@
                         "right": "sad"
                       },
                       {
-                        "left": "aciz",
-                        "right": "bored, annoyed"
+                        "left": "bêzar",
+                        "right": "bored, fed up"
                       },
                       {
                         "left": "ji kerema xwe",
@@ -3450,8 +3450,8 @@
                   "payload": {
                     "prompt": "Xezal is sighing over her books. Hamo asks her something. Type what you hear.",
                     "accepted": [
-                      "Xezo, tu aciz î?",
-                      "Xezo, tu aciz î"
+                      "Xezo, tu bêzar î?",
+                      "Xezo, tu bêzar î"
                     ],
                     "voice": "hamo"
                   }
@@ -3460,8 +3460,8 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "say": "Naxêr, Xezo, ez ne aciz im. Ez tenê westiyayî me.",
-                    "prompt": "Xezal asks if he is bored. Hamo answers. What does he say, in English? “Naxêr, Xezo, ez ne aciz im. Ez tenê westiyayî me.”",
+                    "say": "Naxêr, Xezo, ez ne bêzar im. Ez tenê westiyayî me.",
+                    "prompt": "Xezal asks if he is bored. Hamo answers. What does he say, in English? “Naxêr, Xezo, ez ne bêzar im. Ez tenê westiyayî me.”",
                     "accepted": [
                       "No, Xezo, I am not bored. I am just tired.",
                       "No, Xezo, I am not bored. I am only tired.",

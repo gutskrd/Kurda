@@ -534,8 +534,8 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Mîrza fêkî difiroşe.",
-                    "prompt": "Hamo spots an old friend behind a mountain of fruit. Listen: what does Mîrza sell? “Mîrza fêkî difiroşe.”",
+                    "say": "Mîrza mêwe difiroşe.",
+                    "prompt": "Hamo spots an old friend behind a mountain of fruit. Listen: what does Mîrza sell? “Mîrza mêwe difiroşe.”",
                     "options": [
                       "Cheese",
                       "Bread",
@@ -593,7 +593,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Fêkî. Û ew çay jî dide, ji bo hevalan.",
+                        "text": "Mêwe. Û ew çay jî dide, ji bo hevalan.",
                         "en": "Fruit. And he gives tea too, to his friends."
                       },
                       {
@@ -662,8 +662,8 @@
                   "payload": {
                     "prompt": "In Kurdish: “Mîrza sells fruit.”",
                     "accepted": [
-                      "Mîrza fêkî difiroşe.",
-                      "Mîrza fêkî difiroşe"
+                      "Mîrza mêwe difiroşe.",
+                      "Mîrza mêwe difiroşe"
                     ],
                     "voice": "hamo"
                   }
@@ -2640,7 +2640,7 @@
                         "right": "enough"
                       },
                       {
-                        "left": "temam",
+                        "left": "baş e",
                         "right": "OK"
                       },
                       {
@@ -2718,7 +2718,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Mîrza dibêje: «Temam, temam! Ji bo Xezalê, bi heştê.»",
+                        "text": "Mîrza dibêje: «Baş e, baş e! Ji bo Xezalê, bi heştê.»",
                         "en": "Mîrza says: “OK, OK! For Xezal, eighty.”"
                       },
                       {
@@ -2774,9 +2774,9 @@
                   "payload": {
                     "prompt": "Agree with Mîrza: “OK, for eighty!”",
                     "accepted": [
-                      "Temam, bi heştê!",
-                      "Temam, bi heştê",
-                      "Temam bi heştê"
+                      "Baş e, bi heştê!",
+                      "Baş e, bi heştê",
+                      "Baş e bi heştê"
                     ],
                     "voice": "hamo"
                   }
@@ -2787,10 +2787,10 @@
                   "payload": {
                     "prompt": "Xezal steps in front of Hamo and rolls up her sleeves. Hamo steps back, laughing. Type what he says.",
                     "accepted": [
-                      "Temam, Xezo. Tu dikarî!",
-                      "Temam, Xezo. Tu dikarî",
-                      "Temam Xezo. Tu dikarî",
-                      "Temam, Xezo, tu dikarî!"
+                      "Baş e, Xezo. Tu dikarî!",
+                      "Baş e, Xezo. Tu dikarî",
+                      "Baş e Xezo. Tu dikarî",
+                      "Baş e, Xezo, tu dikarî!"
                     ],
                     "voice": "hamo"
                   }
@@ -2803,7 +2803,7 @@
                     "options": [
                       "Ev zêde ye!",
                       "Ev kêm e!",
-                      "Ev temam e!"
+                      "Ev baş e!"
                     ],
                     "correctIndex": 0
                   }
@@ -2855,9 +2855,9 @@
                   "payload": {
                     "prompt": "Mîrza throws up his hands and laughs. Hamo repeats his words, amazed. Type them.",
                     "accepted": [
-                      "Temam, temam! Bi heştê.",
-                      "Temam, temam! Bi heştê",
-                      "Temam temam! Bi heştê"
+                      "Baş e, baş e! Bi heştê.",
+                      "Baş e, baş e! Bi heştê",
+                      "Baş e baş e! Bi heştê"
                     ],
                     "voice": "hamo"
                   }

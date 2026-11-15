@@ -335,7 +335,7 @@
                 {"ku": "herdu", "en": "both", "pos": "pron", "forms": ["herdu"]},
                 {"ku": "tenê", "en": "only; alone", "pos": "adv", "forms": ["tenê"]},
                 {"ku": "xemgîn", "en": "sad", "pos": "adj", "forms": ["xemgîn"]},
-                {"ku": "aciz", "en": "bored; annoyed", "pos": "adj", "forms": ["aciz"]},
+                {"ku": "bêzar", "en": "bored, fed up", "pos": "adj", "forms": ["bêzar"]},
                 {"ku": "ji kerema xwe", "en": "please", "pos": "phrase", "forms": ["ji", "kerema", "xwe"]},
                 {"ku": "hal", "en": "state, how things are (halê te: how you are)", "pos": "noun", "gender": "m", "forms": ["hal", "halên", "halan", "halek", "halê", "halekî", "halî"]}
               ]
@@ -502,7 +502,7 @@
                 {"ku": "nevî", "en": "grandchild", "pos": "noun", "gender": "mf", "forms": ["nevî", "neviyên", "neviyan", "neviyek", "neviyê", "neviyekî", "neviyî", "neviya", "neviyeke"]},
                 {"ku": "delal", "en": "dear, lovely", "pos": "adj", "forms": ["delal"]},
                 {"ku": "zîrek", "en": "clever, hard-working", "pos": "adj", "forms": ["zîrek"]},
-                {"ku": "qelem", "en": "pen, pencil", "pos": "noun", "gender": "f", "forms": ["qelem", "qelemên", "qeleman", "qelemek", "qelema", "qelemê", "qelemeke"]}
+                {"ku": "pênûs", "en": "pen, pencil", "pos": "noun", "gender": "f", "forms": ["pênûs", "pênûsên", "pênûsan", "pênûsek", "pênûsa", "pênûsê", "pênûseke"]}
               ]
             },
             {
@@ -741,7 +741,7 @@
               "new": [
                 {"ku": "vî / vê / van", "en": "this, these (after a preposition: li vê malê)", "pos": "det", "forms": ["vî", "vê", "van"]},
                 {"ku": "wî / wê / wan (ew)", "en": "that, those (after a preposition: li wê malê)", "pos": "det", "forms": ["wî", "wê", "wan", "ew"]},
-                {"ku": "metbex", "en": "kitchen", "pos": "noun", "gender": "f", "forms": ["metbex", "metbexên", "metbexan", "metbexek", "metbexa", "metbexê", "metbexeke"]},
+                {"ku": "aşxane", "en": "kitchen", "pos": "noun", "gender": "f", "forms": ["aşxane", "aşxaneyên", "aşxaneyan", "aşxaneyek", "aşxaneya", "aşxaneyê", "aşxaneyeke"]},
                 {"ku": "serşok", "en": "bathroom", "pos": "noun", "gender": "f", "forms": ["serşok", "serşokên", "serşokan", "serşokek", "serşoka", "serşokê", "serşokeke"]},
                 {"ku": "mase", "en": "table", "pos": "noun", "gender": "f", "forms": ["mase", "maseyên", "maseyan", "maseyek", "maseya", "maseyê", "maseyeke"]},
                 {"ku": "kursî", "en": "chair", "pos": "noun", "gender": "f", "forms": ["kursî", "kursiyên", "kursiyan", "kursiyek", "kursiya", "kursiyê", "kursiyeke"]}
@@ -835,7 +835,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "pel", "en": "leaf", "pos": "noun", "gender": "m", "forms": ["pel", "pelên", "pelan", "pelek", "pelê", "pelekî", "pelî"]},
-                {"ku": "fêkî", "en": "fruit", "pos": "noun", "gender": "m", "forms": ["fêkî", "fêkiyên", "fêkiyan", "fêkiyek", "fêkiyê", "fêkiyekî", "fêkiyî"]},
+                {"ku": "mêwe", "en": "fruit", "pos": "noun", "gender": "f", "forms": ["mêwe", "mêweyên", "mêweyan", "mêweyek", "mêweya", "mêweyê", "mêweyeke"]},
                 {"ku": "tirî", "en": "grapes", "pos": "noun", "gender": "m", "forms": ["tirî", "tiriyên", "tiriyan", "tiriyek", "tiriyê", "tiriyekî", "tiriyî"]},
                 {"ku": "gûz", "en": "walnut", "pos": "noun", "gender": "f", "forms": ["gûz", "gûzên", "gûzan", "gûzek", "gûza", "gûzê", "gûzeke"]},
                 {"ku": "tirş", "en": "sour", "pos": "adj", "forms": ["tirş"]},
@@ -866,7 +866,7 @@
           "titleKu": "Li ku ye?",
           "titleEn": "Where is it?",
           "grammar": "where things are: li ser, li bin, li ber, li pişt, li kêleka, li cem, di … de, di nav … de",
-          "grammarMd": "**li** (at, in) combines with a word for the place:\n\n- **li ser** on · **li bin** under · **li ber** in front of · **li pişt** behind · **li kêleka** next to · **li cem** at someone’s place\n\n*Berçavk li ser serê te ye!* The glasses are on your head!\n\n**di … de** wraps around the noun for *inside*: *di sindoqê de* in the box · *di metbexê de* in the kitchen. **di nav … de** is *among, in the middle of*: *di nav daran de* among the trees.\n\nThe noun after them takes the oblique: feminine **-ê** (*li bin darê* under the tree), plural **-an** (*li ser keviran*); a masculine noun usually stays as it is (*li ser kevir*, *li ber derî*).",
+          "grammarMd": "**li** (at, in) combines with a word for the place:\n\n- **li ser** on · **li bin** under · **li ber** in front of · **li pişt** behind · **li kêleka** next to · **li cem** at someone’s place\n\n*Berçavk li ser serê te ye!* The glasses are on your head!\n\n**di … de** wraps around the noun for *inside*: *di sindoqê de* in the box · *di aşxaneyê de* in the kitchen. **di nav … de** is *among, in the middle of*: *di nav daran de* among the trees.\n\nThe noun after them takes the oblique: feminine **-ê** (*li bin darê* under the tree), plural **-an** (*li ser keviran*); a masculine noun usually stays as it is (*li ser kevir*, *li ber derî*).",
           "lessons": [
             {
               "key": "u03s3l1",
@@ -922,13 +922,13 @@
             {
               "key": "u03s3l4",
               "position": 4,
-              "titleKu": "Xezîne!",
+              "titleKu": "Gencîne!",
               "titleEn": "Treasure!",
               "focus": "review",
               "beat": "Under the flat stone: a tin with marbles and half of an old photo — little Hamo, without a moustache, and his sister Lorîn, from the summers they spent in Sêvan with their aunt. The other half? “Li cem Lorînê ye. Li Kobaniyê.”",
               "voice": "hamo",
               "new": [
-                {"ku": "xezîne", "en": "treasure", "pos": "noun", "gender": "f", "forms": ["xezîne", "xezîneyên", "xezîneyan", "xezîneyek", "xezîneya", "xezîneyê", "xezîneyeke"]},
+                {"ku": "gencîne", "en": "treasure", "pos": "noun", "gender": "f", "forms": ["gencîne", "gencîneyên", "gencîneyan", "gencîneyek", "gencîneya", "gencîneyê", "gencîneyeke"]},
                 {"ku": "qutî", "en": "tin, small box", "pos": "noun", "gender": "f", "forms": ["qutî", "qutiyên", "qutiyan", "qutiyek", "qutiya", "qutiyê", "qutiyeke"]},
                 {"ku": "gog", "en": "ball; marble", "pos": "noun", "gender": "f", "forms": ["gog", "gogên", "gogan", "gogek", "goga", "gogê", "gogeke"]},
                 {"ku": "nîv", "en": "half", "pos": "noun", "gender": "m", "forms": ["nîv", "nîvên", "nîvan", "nîvek", "nîvê", "nîvekî", "nîvî"]},
@@ -1226,7 +1226,7 @@
                 {"ku": "çaydank", "en": "teapot", "pos": "noun", "gender": "m", "forms": ["çaydank", "çaydankên", "çaydankan", "çaydankek", "çaydankê", "çaydankekî", "çaydankî"]},
                 {"ku": "kêm", "en": "less; few", "pos": "adj", "forms": ["kêm"]},
                 {"ku": "bes", "en": "enough", "pos": "adv", "forms": ["bes"]},
-                {"ku": "temam", "en": "OK; complete", "pos": "adj", "forms": ["temam"]},
+                {"ku": "baş e", "en": "OK, all right (agreeing)", "pos": "phrase", "forms": ["baş", "e"]},
                 {"ku": "mixabin", "en": "unfortunately", "pos": "adv", "forms": ["mixabin"]},
                 {"ku": "zêde", "en": "too much; more; extra", "pos": "adj", "forms": ["zêde"]}
               ]
@@ -1489,27 +1489,27 @@
         },
         {
           "position": 3,
-          "titleKu": "Saet çend e?",
+          "titleKu": "Demjimêr çend e?",
           "titleEn": "What time is it?",
-          "grammar": "telling the time: saet çend e?, saet sê û nîv e, çar kêm çaryek; di saet heftan de (at seven); sibeh, nîvro, êvar, şev",
-          "grammarMd": "**Saet çend e?** What time is it?\n\n- *Saet heft e.* It is seven.\n- *Saet heft û nîv e.* It is half past seven.\n- *Saet heft û çaryek e.* It is a quarter past seven.\n- *Saet heşt kêm çaryek e.* It is a quarter to eight (eight minus a quarter).\n- *Saet heft û deh deqîqe ye.* It is ten past seven.\n\n“At seven” is **di saet heftan de** — the number takes the plural oblique -an: *di saet çaran de* at four · *di saet yekê de* at one.\n\nParts of the day: *sibeh* morning · *nîvro* noon · *piştî nîvro* afternoon · *êvar* evening · *şev* night.",
+          "grammar": "telling the time: demjimêr çend e?, demjimêr sê û nîv e, çar kêm çaryek; di demjimêr heftan de (at seven); sibeh, nîvro, êvar, şev",
+          "grammarMd": "**Demjimêr çend e?** What time is it?\n\n- *Demjimêr heft e.* It is seven.\n- *Demjimêr heft û nîv e.* It is half past seven.\n- *Demjimêr heft û çaryek e.* It is a quarter past seven.\n- *Demjimêr heşt kêm çaryek e.* It is a quarter to eight (eight minus a quarter).\n- *Demjimêr heft û deh xulek e.* It is ten past seven.\n\n“At seven” is **di demjimêr heftan de** — the number takes the plural oblique -an: *di demjimêr çaran de* at four · *di demjimêr yekê de* at one.\n\nParts of the day: *sibeh* morning · *nîvro* noon · *piştî nîvro* afternoon · *êvar* evening · *şev* night.",
           "lessons": [
             {
               "key": "u05s3l1",
               "position": 1,
-              "titleKu": "Saet çend e?",
+              "titleKu": "Demjimêr çend e?",
               "titleEn": "What time is it?",
               "focus": "meet",
               "beat": "Hamo owns three clocks, and each of them says a different time. He trusts the one that says it is time for tea.",
               "voice": "hamo",
               "new": [
-                {"ku": "saet", "en": "hour; clock, watch", "pos": "noun", "gender": "f", "forms": ["saet", "saetên", "saetan", "saetek", "saeta", "saetê", "saeteke"]},
-                {"ku": "deqîqe", "en": "minute", "pos": "noun", "gender": "f", "forms": ["deqîqe", "deqîqeyên", "deqîqeyan", "deqîqeyek", "deqîqeya", "deqîqeyê", "deqîqeyeke"]},
+                {"ku": "demjimêr", "en": "hour; clock, watch", "pos": "noun", "gender": "f", "forms": ["demjimêr", "demjimêrên", "demjimêran", "demjimêrek", "demjimêra", "demjimêrê", "demjimêreke"]},
+                {"ku": "xulek", "en": "minute", "pos": "noun", "gender": "f", "forms": ["xulek", "xulekên", "xulekan", "xulekek", "xuleka", "xulekê", "xulekeke"]},
                 {"ku": "nîvro", "en": "noon", "pos": "noun", "forms": ["nîvro", "nîvroyê"]},
                 {"ku": "şev", "en": "night", "pos": "noun", "gender": "f", "forms": ["şev", "şevên", "şevan", "şevek", "şeva", "şevê", "şeveke"]},
                 {"ku": "çaryek", "en": "a quarter", "pos": "noun", "gender": "f", "forms": ["çaryek", "çaryekên", "çaryekan", "çaryekek", "çaryeka", "çaryekê", "çaryekeke"]},
                 {"ku": "piştî nîvro", "en": "afternoon", "pos": "phrase", "forms": ["piştî", "nîvro"]},
-                {"ku": "di saet … de", "en": "at … o’clock", "pos": "prep", "forms": ["di", "saet", "de", "yekê", "duduyan", "sisiyan", "çaran", "pêncan", "şeşan", "heftan", "heştan", "nehan", "dehan", "yazdehan", "diwanzdehan"]}
+                {"ku": "di demjimêr … de", "en": "at … o’clock", "pos": "prep", "forms": ["di", "demjimêr", "de", "yekê", "duduyan", "sisiyan", "çaran", "pêncan", "şeşan", "heftan", "heştan", "nehan", "dehan", "yazdehan", "diwanzdehan"]}
               ]
             },
             {
@@ -1616,7 +1616,7 @@
               "new": [
                 {"ku": "plan", "en": "plan", "pos": "noun", "gender": "f", "forms": ["plan", "planên", "planan", "planek", "plana", "planê", "planeke"]},
                 {"ku": "soz", "en": "promise", "pos": "noun", "gender": "f", "forms": ["soz", "sozên", "sozan", "sozek", "soza", "sozê", "sozeke"]},
-                {"ku": "bi wext", "en": "on time", "pos": "phrase", "forms": ["bi", "wext"]},
+                {"ku": "di dema xwe de", "en": "on time", "pos": "phrase", "forms": ["di", "dema", "xwe", "de"]},
                 {"ku": "wisa", "en": "so, like that", "pos": "adv", "forms": ["wisa"]},
                 {"ku": "wiha", "en": "like this, this way", "pos": "adv", "forms": ["wiha"]},
                 {"ku": "girtin", "en": "to take, to hold; to close", "pos": "verb", "forms": ["girtin", "digirim", "digirî", "digire", "digirin", "nagirim", "nagire", "bigirî", "bigirin"]},
@@ -1689,7 +1689,7 @@
                 {"ku": "li çepê", "en": "on the left", "pos": "phrase", "forms": ["li", "çepê"]},
                 {"ku": "rasterast", "en": "straight on", "pos": "adv", "forms": ["rasterast"]},
                 {"ku": "quncik", "en": "corner", "pos": "noun", "gender": "m", "forms": ["quncik", "quncikên", "quncikan", "quncikek", "quncikê", "quncikekî", "quncikî"]},
-                {"ku": "cade", "en": "avenue, main street", "pos": "noun", "gender": "f", "forms": ["cade", "cadeyên", "cadeyan", "cadeyek", "cadeya", "cadeyê", "cadeyeke"]},
+                {"ku": "kolan", "en": "street", "pos": "noun", "gender": "f", "forms": ["kolan", "kolanên", "kolanan", "kolanek", "kolana", "kolanê", "kolaneke"]},
                 {"ku": "avahî", "en": "building", "pos": "noun", "gender": "f", "forms": ["avahî", "avahiyên", "avahiyan", "avahiyek", "avahiya", "avahiyê", "avahiyeke"]}
               ]
             },
@@ -1706,7 +1706,7 @@
                 {"ku": "sûr", "en": "city wall(s)", "pos": "noun", "forms": ["sûr", "sûra", "sûrê", "sûrên"]},
                 {"ku": "kevnar", "en": "ancient", "pos": "adj", "forms": ["kevnar"]},
                 {"ku": "balkêş", "en": "interesting", "pos": "adj", "forms": ["balkêş"]},
-                {"ku": "ecêb", "en": "strange; wonderful", "pos": "adj", "forms": ["ecêb"]},
+                {"ku": "seyr", "en": "strange; wonderful", "pos": "adj", "forms": ["seyr"]},
                 {"ku": "bajarî", "en": "city person", "pos": "noun", "gender": "mf", "forms": ["bajarî", "bajariyên", "bajariyan", "bajariyek", "bajariyê", "bajariyekî", "bajariyî", "bajariya", "bajariyeke"]}
               ]
             },
@@ -1716,7 +1716,7 @@
               "titleKu": "Mala bavê min",
               "titleEn": "My father’s house",
               "focus": "review",
-              "beat": "The family house at the corner, with the old fig tree still in the yard. Lorîn lives on the top floor, and Hamo stops on every landing to “admire Miştenûr”. Lorîn opens her door, and brother and sister look at each other: “Xezîne?” She smiles: “Li cem min e.”",
+              "beat": "The family house at the corner, with the old fig tree still in the yard. Lorîn lives on the top floor, and Hamo stops on every landing to “admire Miştenûr”. Lorîn opens her door, and brother and sister look at each other: “Gencîne?” She smiles: “Li cem min e.”",
               "voice": "hamo",
               "new": [
                 {"ku": "qat", "en": "floor, storey", "pos": "noun", "gender": "m", "forms": ["qat", "qatên", "qatan", "qatek", "qatê", "qatekî", "qatî"]},
@@ -1821,7 +1821,7 @@
               "new": [
                 {"ku": "divê", "en": "must, should", "pos": "verb", "forms": ["divê"]},
                 {"ku": "bi-", "en": "the subjunctive (biçim: that I go)", "pos": "particle", "forms": ["biçim", "biçî", "biçe", "biçin", "bêm", "bêyî", "bê", "bên", "bikim", "bikî", "bike", "bikin", "bibînim", "bibînî", "bibîne", "bibînin", "bibêjim", "bibêjî", "bibêje", "bibêjin", "bizanim", "bizanî", "bizane", "bizanin", "binêrim", "binêrî", "binêre", "binêrin", "biaxivim", "biaxivî", "biaxive", "biaxivin", "bikirim", "bikirî", "bikire", "bikirin", "bifiroşim", "bifiroşe", "bidim", "bidî", "bide", "bidin", "bigerim", "bigere", "bixebitim", "bixebite", "bixwazim", "bixwaze", "bixwim", "bixwî", "bixwe", "bixwin", "vexwim", "vexwî", "vexwe", "vexwin", "vegerim", "vegerî", "vegere", "vegerin", "bikenim", "bikene", "bimînim", "bimînî", "bimîne", "bimînin", "binivîsim", "binivîse", "bixwînim", "bixwîne", "bibim", "bibî", "bibe", "bibin", "rabim", "rabî", "rabe", "rabin", "razim", "raze", "bişom", "bişo", "bilîzim", "bilîze", "bigirim", "bigire", "vekim", "veke", "bibezim", "bibeze", "bisekinim", "bisekine", "derkevim", "derkeve", "rûnim", "rûnî", "rûne", "rûnin", "neçim", "neçe", "neyêm", "neyê", "nekim", "neke"]},
-                {"ku": "lazim", "en": "necessary", "pos": "adj", "forms": ["lazim"]},
+                {"ku": "pêwîst", "en": "necessary", "pos": "adj", "forms": ["pêwîst"]},
                 {"ku": "bila", "en": "let (bila ew bê: let him come)", "pos": "particle", "forms": ["bila"]},
                 {"ku": "nexwe", "en": "so, in that case", "pos": "conj", "forms": ["nexwe"]},
                 {"ku": "wek", "en": "like, as", "pos": "prep", "forms": ["wek"]}
@@ -1838,7 +1838,7 @@
               "new": [
                 {"ku": "alîkarî", "en": "help", "pos": "noun", "gender": "f", "forms": ["alîkarî", "alîkariyên", "alîkariyan", "alîkariyek", "alîkariya", "alîkariyê", "alîkariyeke"]},
                 {"ku": "destûr", "en": "permission", "pos": "noun", "gender": "f", "forms": ["destûr", "destûrên", "destûran", "destûrek", "destûra", "destûrê", "destûreke"]},
-                {"ku": "mimkun", "en": "possible", "pos": "adj", "forms": ["mimkun"]},
+                {"ku": "pêkan", "en": "possible", "pos": "adj", "forms": ["pêkan"]},
                 {"ku": "dibe ku", "en": "maybe, it may be that", "pos": "phrase", "forms": ["dibe", "ku"]},
                 {"ku": "pirsîn", "en": "to ask", "pos": "verb", "forms": ["pirsîn", "dipirsim", "dipirsî", "dipirse", "dipirsin", "bipirsim", "bipirse"]}
               ]
@@ -1899,7 +1899,7 @@
                 {"ku": "bisîklet", "en": "bicycle", "pos": "noun", "gender": "f", "forms": ["bisîklet", "bisîkletên", "bisîkletan", "bisîkletek", "bisîkleta", "bisîkletê", "bisîkleteke"]},
                 {"ku": "bi peyatî", "en": "on foot", "pos": "phrase", "forms": ["bi", "peyatî"]},
                 {"ku": "balafirgeh", "en": "airport", "pos": "noun", "gender": "f", "forms": ["balafirgeh", "balafirgehên", "balafirgehan", "balafirgehek", "balafirgeha", "balafirgehê", "balafirgeheke"]},
-                {"ku": "behr", "en": "sea", "pos": "noun", "gender": "f", "forms": ["behr", "behrên", "behran", "behrek", "behra", "behrê", "behreke"]}
+                {"ku": "derya", "en": "sea", "pos": "noun", "gender": "f", "forms": ["derya", "deryayên", "deryayan", "deryayek", "deryaya", "deryayê", "deryayeke"]}
               ]
             },
             {
@@ -1914,7 +1914,7 @@
                 {"ku": "xwe", "en": "oneself; one’s own (navê xwe)", "pos": "pron", "forms": ["xwe"]},
                 {"ku": "rêz", "en": "queue, line, row", "pos": "noun", "gender": "f", "forms": ["rêz", "rêzên", "rêzan", "rêzek", "rêza", "rêzê", "rêzeke"]},
                 {"ku": "kart", "en": "card", "pos": "noun", "gender": "f", "forms": ["kart", "kartên", "kartan", "kartek", "karta", "kartê", "karteke"]},
-                {"ku": "qebûl kirin", "en": "to accept", "pos": "verb", "forms": ["qebûl", "kirin"]},
+                {"ku": "pejirandin", "en": "to accept", "pos": "verb", "forms": ["pejirandin", "dipejirînim", "dipejirînî", "dipejirîne", "dipejirînin", "bipejirînim", "bipejirîne", "pejirand"]},
                 {"ku": "çiqas", "en": "how much, how far", "pos": "question", "forms": ["çiqas"]},
                 {"ku": "spasdar", "en": "thankful", "pos": "adj", "forms": ["spasdar"]}
               ]
@@ -1930,9 +1930,9 @@
               "new": [
                 {"ku": "biyanî", "en": "foreign; a foreigner", "pos": "adj", "forms": ["biyanî"]},
                 {"ku": "nas kirin", "en": "to know (a person), to recognise", "pos": "verb", "forms": ["nas", "kirin"]},
-                {"ku": "herêm", "en": "region, area", "pos": "noun", "gender": "f", "forms": ["herêm", "herêmên", "herêman", "herêmek", "herêma", "herêmê", "herêmeke"]},
-                {"ku": "tesadûf", "en": "coincidence", "pos": "noun", "gender": "f", "forms": ["tesadûf", "tesadûfên", "tesadûfan", "tesadûfek", "tesadûfa", "tesadûfê", "tesadûfeke"]},
-                {"ku": "dinya", "en": "the world", "pos": "noun", "gender": "f", "forms": ["dinya", "dinyayên", "dinyayan", "dinyayek", "dinyaya", "dinyayê", "dinyayeke"]}
+                {"ku": "dever", "en": "area, place, region", "pos": "noun", "gender": "f", "forms": ["dever", "deverên", "deveran", "deverek", "devera", "deverê", "devereke"]},
+                {"ku": "rasthatin", "en": "coincidence", "pos": "noun", "gender": "f", "forms": ["rasthatin", "rasthatinên", "rasthatinan", "rasthatinek", "rasthatina", "rasthatinê", "rasthatineke"]},
+                {"ku": "cîhan", "en": "the world", "pos": "noun", "gender": "f", "forms": ["cîhan", "cîhanên", "cîhanan", "cîhanek", "cîhana", "cîhanê", "cîhaneke"]}
               ]
             },
             {
@@ -2076,8 +2076,7 @@
                 {"ku": "wê demê", "en": "then, at that time", "pos": "phrase", "forms": ["wê", "demê"]},
                 {"ku": "sala bê", "en": "next year", "pos": "phrase", "forms": ["sala", "bê"]},
                 {"ku": "piştre", "en": "afterwards, later", "pos": "adv", "forms": ["piştre"]},
-                {"ku": "xeyal", "en": "dream, imagination", "pos": "noun", "gender": "f", "forms": ["xeyal", "xeyalên", "xeyalan", "xeyalek", "xeyala", "xeyalê", "xeyaleke"]},
-                {"ku": "xewn", "en": "dream (in sleep)", "pos": "noun", "gender": "f", "forms": ["xewn", "xewnên", "xewnan", "xewnek", "xewna", "xewnê", "xewneke"]}
+                {"ku": "xewn", "en": "dream (asleep, or for the future)", "pos": "noun", "gender": "f", "forms": ["xewn", "xewnên", "xewnan", "xewnek", "xewna", "xewnê", "xewneke"]}
               ]
             },
             {
@@ -2132,11 +2131,11 @@
               "voice": "hamo",
               "new": [
                 {"ku": "govend", "en": "govend, the circle dance", "pos": "noun", "gender": "f", "forms": ["govend", "govendên", "govendan", "govendek", "govenda", "govendê", "govendeke"]},
-                {"ku": "reqisîn", "en": "to dance", "pos": "verb", "forms": ["reqisîn", "direqisim", "direqisî", "direqise", "direqisin", "bireqisim", "bireqise", "bireqisî", "bireqisin"]},
                 {"ku": "stran", "en": "song", "pos": "noun", "gender": "f", "forms": ["stran", "stranên", "stranan", "stranek", "strana", "stranê", "straneke"]},
                 {"ku": "def", "en": "frame drum", "pos": "noun", "gender": "f", "forms": ["def", "defên", "defan", "defek", "defa", "defê", "defeke"]},
                 {"ku": "zirne", "en": "shawm (the zurna)", "pos": "noun", "gender": "f", "forms": ["zirne", "zirneyên", "zirneyan", "zirneyek", "zirneya", "zirneyê", "zirneyeke"]},
-                {"ku": "lêxistin", "en": "to play (an instrument); to hit", "pos": "verb", "forms": ["lêxistin", "lêdixim", "lêdixî", "lêdixe", "lêdixin", "lêxim", "lêxe"]}
+                {"ku": "lêxistin", "en": "to play (an instrument); to hit", "pos": "verb", "forms": ["lêxistin", "lêdixim", "lêdixî", "lêdixe", "lêdixin", "lêxim", "lêxe"]},
+                {"ku": "govend girtin", "en": "to dance (word for word: to hold the govend)", "pos": "verb", "forms": ["govend", "govendê", "girtin", "digirin", "bigirin"]}
               ]
             },
             {
@@ -2211,8 +2210,7 @@
                 {"ku": "baz dan", "en": "to jump", "pos": "verb", "forms": ["baz", "dan"]},
                 {"ku": "dûman", "en": "smoke", "pos": "noun", "gender": "f", "forms": ["dûman", "dûmanên", "dûmanan", "dûmanek", "dûmana", "dûmanê", "dûmaneke"]},
                 {"ku": "seyran", "en": "outing, picnic in the open", "pos": "noun", "gender": "f", "forms": ["seyran", "seyranên", "seyranan", "seyranek", "seyrana", "seyranê", "seyraneke"]},
-                {"ku": "pîrozbahî", "en": "celebration", "pos": "noun", "gender": "f", "forms": ["pîrozbahî", "pîrozbahiyên", "pîrozbahiyan", "pîrozbahiyek", "pîrozbahiya", "pîrozbahiyê", "pîrozbahiyeke"]},
-                {"ku": "xelk", "en": "people", "pos": "noun", "gender": "m", "forms": ["xelk", "xelkên", "xelkan", "xelkek", "xelkê", "xelkekî", "xelkî"]}
+                {"ku": "pîrozbahî", "en": "celebration", "pos": "noun", "gender": "f", "forms": ["pîrozbahî", "pîrozbahiyên", "pîrozbahiyan", "pîrozbahiyek", "pîrozbahiya", "pîrozbahiyê", "pîrozbahiyeke"]}
               ]
             },
             {
@@ -2227,7 +2225,6 @@
                 {"ku": "Newroza we pîroz be!", "en": "Happy Newroz! (to you all)", "pos": "phrase", "forms": ["newroza", "we", "pîroz", "be"]},
                 {"ku": "serkeftin", "en": "success", "pos": "noun", "gender": "f", "forms": ["serkeftin", "serkeftinên", "serkeftinan", "serkeftinek", "serkeftina", "serkeftinê", "serkeftineke"]},
                 {"ku": "tenduristî", "en": "health", "pos": "noun", "gender": "f", "forms": ["tenduristî", "tenduristiyên", "tenduristiyan", "tenduristiyek", "tenduristiya", "tenduristiyê", "tenduristiyeke"]},
-                {"ku": "xelat", "en": "gift; prize", "pos": "noun", "gender": "f", "forms": ["xelat", "xelatên", "xelatan", "xelatek", "xelata", "xelatê", "xelateke"]},
                 {"ku": "jiyan", "en": "life", "pos": "noun", "gender": "f", "forms": ["jiyan", "jiyanên", "jiyanan", "jiyanek", "jiyana", "jiyanê", "jiyaneke"]},
                 {"ku": "Destê te sax be!", "en": "Bless your hands! (thanks for food or work)", "pos": "phrase", "forms": ["destê", "te", "sax", "be", "dest"]}
               ]
@@ -2262,7 +2259,7 @@
                 {"ku": "êş", "en": "pain", "pos": "noun", "gender": "f", "forms": ["êş", "êşên", "êşan", "êşek", "êşa", "êşê", "êşeke"]},
                 {"ku": "êşîn", "en": "to hurt", "pos": "verb", "forms": ["êşîn", "diêşe", "diêşin", "naêşe"]},
                 {"ku": "nebaş", "en": "bad, not good", "pos": "adj", "forms": ["nebaş"]},
-                {"ku": "xirab", "en": "bad; broken", "pos": "adj", "forms": ["xirab"]}
+                {"ku": "pîs", "en": "nasty, awful; dirty", "pos": "adj", "forms": ["pîs"]}
               ]
             }
           ]
@@ -2366,15 +2363,14 @@
               "titleKu": "Doktor min dibîne",
               "titleEn": "The doctor sees me",
               "focus": "meet",
-              "beat": "Doctor Şîrîn examines Hamo: heart, breath, back. She listens, she presses, she frowns. Then she laughs: “Nexweşiya te ne ciddî ye — tu tenê pîr dibî!”",
+              "beat": "Doctor Şîrîn examines Hamo: heart, breath, back. She listens, she presses, she frowns. Then she laughs: “Nexweşiya te ne giran e — tu tenê pîr dibî!”",
               "voice": "hamo",
               "new": [
                 {"ku": "kontrol kirin", "en": "to check, to examine", "pos": "verb", "forms": ["kontrol", "kirin"]},
                 {"ku": "lêdan", "en": "to beat (of the heart); to hit", "pos": "verb", "forms": ["lêdan", "lêdide", "lêdidin"]},
                 {"ku": "derzî", "en": "needle; injection", "pos": "noun", "gender": "f", "forms": ["derzî", "derziyên", "derziyan", "derziyek", "derziya", "derziyê", "derziyeke"]},
                 {"ku": "heb", "en": "pill", "pos": "noun", "gender": "f", "forms": ["heb", "hebên", "heban", "hebek", "heba", "hebê", "hebeke"]},
-                {"ku": "çêtir", "en": "better", "pos": "adj", "forms": ["çêtir"]},
-                {"ku": "ciddî", "en": "serious", "pos": "adj", "forms": ["ciddî"]}
+                {"ku": "çêtir", "en": "better", "pos": "adj", "forms": ["çêtir"]}
               ]
             },
             {
@@ -2406,7 +2402,6 @@
               "new": [
                 {"ku": "meşîn", "en": "to walk", "pos": "verb", "forms": ["meşîn", "dimeşim", "dimeşî", "dimeşe", "dimeşin", "bimeşim", "bimeşe"]},
                 {"ku": "qedexe", "en": "forbidden", "pos": "adj", "forms": ["qedexe"]},
-                {"ku": "pêwîst", "en": "necessary", "pos": "adj", "forms": ["pêwîst"]},
                 {"ku": "şîret", "en": "advice", "pos": "noun", "gender": "f", "forms": ["şîret", "şîretên", "şîretan", "şîretek", "şîreta", "şîretê", "şîreteke"]},
                 {"ku": "bihêz", "en": "strong", "pos": "adj", "forms": ["bihêz"]},
                 {"ku": "lawaz", "en": "weak, thin", "pos": "adj", "forms": ["lawaz"]}
@@ -2446,7 +2441,7 @@
               "beat": "Back on his feet, Hamo compares everyone in the house and the lane: who is taller, older, stronger, cleverer. He is, according to him, the best at everything except getting up.",
               "voice": "hamo",
               "new": [
-                {"ku": "-tir", "en": "more, -er (the comparative: mezintir)", "pos": "particle", "forms": ["mezintir", "biçûktir", "baştir", "xweştir", "germtir", "sartir", "dirêjtir", "kintir", "zûtir", "pirtir", "kêmtir", "bilindtir", "nizmtir", "nêzîktir", "dûrtir", "erzantir", "bihatir", "girantir", "siviktir", "xweşiktir", "ciwantir", "pîrtir", "kevntir", "nûtir", "zîrektir", "bihêztir", "lawaztir", "hêsantir", "kûrtir", "şîrîntir", "paqijtir", "xirabtir", "jîrtir", "zelaltir"]},
+                {"ku": "-tir", "en": "more, -er (the comparative: mezintir)", "pos": "particle", "forms": ["mezintir", "biçûktir", "baştir", "xweştir", "germtir", "sartir", "dirêjtir", "kintir", "zûtir", "pirtir", "kêmtir", "bilindtir", "nizmtir", "nêzîktir", "dûrtir", "erzantir", "bihatir", "girantir", "siviktir", "xweşiktir", "ciwantir", "pîrtir", "kevntir", "nûtir", "zîrektir", "bihêztir", "lawaztir", "hêsantir", "kûrtir", "şîrîntir", "paqijtir", "pîstir", "jîrtir", "zelaltir"]},
                 {"ku": "herî", "en": "most (herî mezin: the biggest)", "pos": "adv", "forms": ["herî"]},
                 {"ku": "jîr", "en": "clever, wise", "pos": "adj", "forms": ["jîr"]},
                 {"ku": "bejn", "en": "height, build (of a person)", "pos": "noun", "gender": "f", "forms": ["bejn", "bejnên", "bejnan", "bejnek", "bejna", "bejnê", "bejneke"]},
@@ -2511,7 +2506,7 @@
           "titleKu": "Hest û hal",
           "titleEn": "Feelings and moods",
           "grammar": "feelings with the present and with pronoun objects: ez ditirsim, ez li te dinêrim, guhdariya min bike; xwe for the subject itself (ew bi xwe dikene)",
-          "grammarMd": "Many feelings are said with an adjective and the copula, or with **bûn** (become) in the present:\n\n- *Ez ditirsim.* I’m afraid. · *Ez ji gur ditirsim.* I’m afraid of the wolf.\n- *Ez aciz dibim.* I’m getting bored. · *Ew dilxweş dibe.* She is cheering up.\n\nFeelings towards someone use the pronoun objects and the prepositions:\n\n- *Ez li te dinêrim.* I’m looking at you.\n- *Guhdariya min bike!* Listen to me!\n- *Ez te fêm dikim.* I understand you.\n\n**xwe** is the subject’s own: *Ew bi xwe dikene.* He laughs at himself. · *Baran li xwe dinêre.* Baran looks at himself.",
+          "grammarMd": "Many feelings are said with an adjective and the copula, or with **bûn** (become) in the present:\n\n- *Ez ditirsim.* I’m afraid. · *Ez ji gur ditirsim.* I’m afraid of the wolf.\n- *Ez bêzar dibim.* I’m getting bored. · *Ew dilxweş dibe.* She is cheering up.\n\nFeelings towards someone use the pronoun objects and the prepositions:\n\n- *Ez li te dinêrim.* I’m looking at you.\n- *Guhdariya min bike!* Listen to me!\n- *Ez li te tê digihîjim.* I understand you.\n\n**xwe** is the subject’s own: *Ew bi xwe dikene.* He laughs at himself. · *Baran li xwe dinêre.* Baran looks at himself.",
           "lessons": [
             {
               "key": "u08s4l1",
@@ -2522,12 +2517,11 @@
               "beat": "Baran sits alone on the roof. Hamo climbs up, slowly, his back complaining at every step, and sits beside him without a word, the way his own father used to.",
               "voice": "hamo",
               "new": [
-                {"ku": "fikirîn", "en": "to think", "pos": "verb", "forms": ["fikirîn", "difikirim", "difikirî", "difikire", "difikirin", "bifikirim", "bifikire"]},
+                {"ku": "hizirîn", "en": "to think", "pos": "verb", "forms": ["hizirîn", "dihizirim", "dihizirî", "dihizire", "dihizirin", "bihizirim", "bihizire"]},
                 {"ku": "dilşikestî", "en": "heartbroken", "pos": "adj", "forms": ["dilşikestî"]},
                 {"ku": "matmayî", "en": "amazed", "pos": "adj", "forms": ["matmayî"]},
                 {"ku": "dilxweş", "en": "glad, in good spirits", "pos": "adj", "forms": ["dilxweş"]},
-                {"ku": "bi heyecan", "en": "excited", "pos": "phrase", "forms": ["bi", "heyecan"]},
-                {"ku": "bêzar", "en": "fed up", "pos": "adj", "forms": ["bêzar"]}
+                {"ku": "bi kelecan", "en": "excited", "pos": "phrase", "forms": ["bi", "kelecan"]}
               ]
             },
             {
@@ -2541,8 +2535,8 @@
               "new": [
                 {"ku": "guhdarî kirin", "en": "to listen (guhdariya … kirin: to listen to)", "pos": "verb", "forms": ["guhdarî", "kirin", "guhdariya"]},
                 {"ku": "bawerî", "en": "trust; belief", "pos": "noun", "gender": "f", "forms": ["bawerî", "baweriyên", "baweriyan", "baweriyek", "baweriya", "baweriyê", "baweriyeke"]},
-                {"ku": "sebir", "en": "patience", "pos": "noun", "gender": "f", "forms": ["sebir", "sebirên", "sebiran", "sebirek", "sebira", "sebirê", "sebireke"]},
-                {"ku": "fêm kirin", "en": "to understand", "pos": "verb", "forms": ["fêm", "kirin"]},
+                {"ku": "bêhna xwe fireh kirin", "en": "to be patient (bêhna min fireh e: I am patient)", "pos": "verb", "forms": ["bêhna", "xwe", "fireh", "kirin", "bike"]},
+                {"ku": "tê gihîştin", "en": "to understand (li … tê gihîştin: to understand someone)", "pos": "verb", "forms": ["tê", "gihîştin", "digihîjim", "digihîjî", "digihîje", "digihîjin", "nagihîjin", "gihîşt", "gihîştim"]},
                 {"ku": "parve kirin", "en": "to share", "pos": "verb", "forms": ["parve", "kirin"]},
                 {"ku": "dilsoz", "en": "loyal, devoted", "pos": "adj", "forms": ["dilsoz"]}
               ]
@@ -2686,7 +2680,7 @@
                 {"ku": "borî", "en": "last, past (hefteya borî: last week)", "pos": "adj", "forms": ["borî"]},
                 {"ku": "dema ku", "en": "when (… happened)", "pos": "conj", "forms": ["dema", "ku"]},
                 {"ku": "jiyîn", "en": "to live", "pos": "verb", "forms": ["jiyîn", "dijîm", "dijî", "dijîn", "bijîm", "bijî", "jiyam", "jiya", "jiyan"]},
-                {"ku": "zemanê berê", "en": "the old days", "pos": "phrase", "forms": ["zemanê", "berê", "zeman"]},
+                {"ku": "rojên berê", "en": "the old days", "pos": "phrase", "forms": ["rojên", "berê"]},
                 {"ku": "mamoste", "en": "teacher", "pos": "noun", "gender": "mf", "forms": ["mamoste", "mamosteyên", "mamosteyan", "mamosteyek", "mamosteyê", "mamosteyekî", "mamosteyî", "mamosteya", "mamosteyeke"]}
               ]
             },
@@ -2701,7 +2695,7 @@
               "new": [
                 {"ku": "dest pê kirin", "en": "to begin", "pos": "verb", "forms": ["dest", "pê", "kirin"]},
                 {"ku": "qedîn", "en": "to finish, to end (of itself)", "pos": "verb", "forms": ["qedîn", "diqede", "diqedin", "biqede", "qediya", "qediyan", "neqediya"]},
-                {"ku": "ders", "en": "lesson, class", "pos": "noun", "gender": "f", "forms": ["ders", "dersên", "dersan", "dersek", "dersa", "dersê", "derseke"]},
+                {"ku": "wane", "en": "lesson, class", "pos": "noun", "gender": "f", "forms": ["wane", "waneyên", "waneyan", "waneyek", "waneya", "waneyê", "waneyeke"]},
                 {"ku": "pol", "en": "class (the group, the room)", "pos": "noun", "gender": "f", "forms": ["pol", "polên", "polan", "polek", "pola", "polê", "poleke"]},
                 {"ku": "derbas bûn", "en": "to pass", "pos": "verb", "forms": ["derbas", "bûn"]},
                 {"ku": "serkeftî", "en": "successful", "pos": "adj", "forms": ["serkeftî"]}
@@ -2734,7 +2728,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "peyam", "en": "message", "pos": "noun", "gender": "f", "forms": ["peyam", "peyamên", "peyaman", "peyamek", "peyama", "peyamê", "peyameke"]},
-                {"ku": "heywan", "en": "animal", "pos": "noun", "gender": "m", "forms": ["heywan", "heywanên", "heywanan", "heywanek", "heywanê", "heywanekî", "heywanî"]},
+                {"ku": "ajal", "en": "animal", "pos": "noun", "gender": "m", "forms": ["ajal", "ajalên", "ajalan", "ajalek", "ajalê", "ajalekî", "ajalî"]},
                 {"ku": "kûvî", "en": "wild", "pos": "adj", "forms": ["kûvî"]},
                 {"ku": "xezal", "en": "gazelle", "pos": "noun", "gender": "f", "forms": ["xezal", "xezalên", "xezalan", "xezalek", "xezala", "xezalê", "xezaleke"]},
                 {"ku": "ask", "en": "deer", "pos": "noun", "forms": ["ask", "askên", "askan", "askek", "askê", "aska", "askekî", "askeke"]}
@@ -2795,7 +2789,7 @@
                 {"ku": "têjik", "en": "kitten, cub; young animal", "pos": "noun", "gender": "m", "forms": ["têjik", "têjikên", "têjikan", "têjikek", "têjikê", "têjikekî", "têjikî"]},
                 {"ku": "çêbûn", "en": "to be born, to come about", "pos": "verb", "forms": ["çêbûn", "çêbû"]},
                 {"ku": "bêhnfireh", "en": "patient, easy-going", "pos": "adj", "forms": ["bêhnfireh"]},
-                {"ku": "bêtaqet", "en": "exhausted; impatient", "pos": "adj", "forms": ["bêtaqet"]},
+                {"ku": "bêhnteng", "en": "impatient", "pos": "adj", "forms": ["bêhnteng"]},
                 {"ku": "hûrgilî", "en": "detail", "pos": "noun", "gender": "f", "forms": ["hûrgilî", "hûrgiliyên", "hûrgiliyan", "hûrgiliyek", "hûrgiliya", "hûrgiliyê", "hûrgiliyeke"]}
               ]
             },
@@ -2851,7 +2845,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "hişyar", "en": "alert, careful", "pos": "adj", "forms": ["hişyar"]},
-                {"ku": "xeletî", "en": "mistake", "pos": "noun", "gender": "f", "forms": ["xeletî", "xeletiyên", "xeletiyan", "xeletiyek", "xeletiya", "xeletiyê", "xeletiyeke"]},
+                {"ku": "çewtî", "en": "mistake", "pos": "noun", "gender": "f", "forms": ["çewtî", "çewtiyên", "çewtiyan", "çewtiyek", "çewtiya", "çewtiyê", "çewtiyeke"]},
                 {"ku": "tevî", "en": "with, including", "pos": "prep", "forms": ["tevî"]},
                 {"ku": "bi tevahî", "en": "completely", "pos": "phrase", "forms": ["bi", "tevahî"]},
                 {"ku": "bi şaşî", "en": "by mistake", "pos": "phrase", "forms": ["bi", "şaşî"]}
@@ -3070,8 +3064,8 @@
               "beat": "Hamo tells you how it used to be in the summers he spent in Sêvan as a boy, with Lorîn at their aunt’s: the whole village came up here, the women milked, the men made cheese, and the children played in the river all day.",
               "voice": "hamo",
               "new": [
-                {"ku": "di-", "en": "was …-ing, used to (the past continuous: diçûm, min dixwar)", "pos": "particle", "forms": ["dixwar", "dixwarin", "vedixwar", "dikir", "digot", "digotin", "didît", "dida", "dianî", "dixwest", "dixwend", "dinivîsî", "dikirî", "dipijand", "diçûm", "diçûyî", "diçû", "diçûn", "dihatim", "dihat", "dihatin", "dibûm", "dibû", "dibûn", "rûdinişt", "radibû", "radiza", "diket", "dima", "digihîşt", "dimeşiya", "dikenî", "digirî", "disekinî", "dijiya", "dixebitî", "dizanî", "dizanibû", "dilîst", "dipirsî", "difikirî", "dibihîst", "digirt", "ditirsiya", "dilîstin", "nedizanî", "nediçûm", "nediçûn", "didot", "didotin", "çêdikir"]},
-                {"ku": "adet", "en": "custom; habit", "pos": "noun", "gender": "f", "forms": ["adet", "adetên", "adetan", "adetek", "adeta", "adetê", "adeteke"]},
+                {"ku": "di-", "en": "was …-ing, used to (the past continuous: diçûm, min dixwar)", "pos": "particle", "forms": ["dixwar", "dixwarin", "vedixwar", "dikir", "digot", "digotin", "didît", "dida", "dianî", "dixwest", "dixwend", "dinivîsî", "dikirî", "dipijand", "diçûm", "diçûyî", "diçû", "diçûn", "dihatim", "dihat", "dihatin", "dibûm", "dibû", "dibûn", "rûdinişt", "radibû", "radiza", "diket", "dima", "digihîşt", "dimeşiya", "dikenî", "digirî", "disekinî", "dijiya", "dixebitî", "dizanî", "dizanibû", "dilîst", "dipirsî", "dihizirî", "dibihîst", "digirt", "ditirsiya", "dilîstin", "nedizanî", "nediçûm", "nediçûn", "didot", "didotin", "çêdikir"]},
+                {"ku": "nerît", "en": "custom, tradition", "pos": "noun", "gender": "f", "forms": ["nerît", "nerîtên", "nerîtan", "nerîtek", "nerîta", "nerîtê", "nerîteke"]},
                 {"ku": "berdewam", "en": "continuously; all the time", "pos": "adv", "forms": ["berdewam"]},
                 {"ku": "kevirî", "en": "made of stone", "pos": "adj", "forms": ["kevirî"]},
                 {"ku": "xwedî kirin", "en": "to raise, to keep (animals); to look after", "pos": "verb", "forms": ["xwedî", "kirin"]}
@@ -3148,8 +3142,8 @@
                 {"ku": "qewimîn", "en": "to happen", "pos": "verb", "forms": ["qewimîn", "diqewime", "qewimî"]},
                 {"ku": "bûyer", "en": "event", "pos": "noun", "gender": "f", "forms": ["bûyer", "bûyerên", "bûyeran", "bûyerek", "bûyera", "bûyerê", "bûyereke"]},
                 {"ku": "serpêhatî", "en": "adventure; what happened to someone", "pos": "noun", "gender": "f", "forms": ["serpêhatî", "serpêhatiyên", "serpêhatiyan", "serpêhatiyek", "serpêhatiya", "serpêhatiyê", "serpêhatiyeke"]},
-                {"ku": "behs kirin", "en": "to talk about", "pos": "verb", "forms": ["behs", "kirin", "behsa"]},
-                {"ku": "vegotin", "en": "to tell (a story), to narrate", "pos": "verb", "forms": ["vegotin", "vedibêjim", "vedibêjî", "vedibêje", "vedibêjin", "vebêjim", "vebêje", "vegot"]}
+                {"ku": "vegotin", "en": "to tell (a story), to narrate", "pos": "verb", "forms": ["vegotin", "vedibêjim", "vedibêjî", "vedibêje", "vedibêjin", "vebêjim", "vebêje", "vegot"]},
+                {"ku": "li ser … axaftin", "en": "to talk about", "pos": "verb", "forms": ["li", "ser", "axaftin", "diaxivin"]}
               ]
             },
             {
@@ -3164,7 +3158,7 @@
                 {"ku": "pirsî", "en": "asked (past of pirsîn)", "pos": "verb", "forms": ["pirsî", "pirsîn"]},
                 {"ku": "kişandin", "en": "to pull; to take (a photo)", "pos": "verb", "forms": ["kişandin", "dikişînim", "dikişînî", "dikişîne", "dikişînin", "bikişîne", "kişand"]},
                 {"ku": "nîşan dan", "en": "to show (nîşanî … dan)", "pos": "verb", "forms": ["nîşan", "dan", "nîşanî"]},
-                {"ku": "ecêbmayî", "en": "astonished", "pos": "adj", "forms": ["ecêbmayî"]},
+                {"ku": "şaşmayî", "en": "astonished", "pos": "adj", "forms": ["şaşmayî"]},
                 {"ku": "qîr kirin", "en": "to shout, to scream", "pos": "verb", "forms": ["qîr", "kirin"]}
               ]
             },
@@ -3263,7 +3257,7 @@
               "beat": "Xezal has told Hamo: a school in Hewlêr wants her as a teacher — and she is afraid to leave the village, the children she teaches, and him. He passes the news on to you, strokes his moustache, and smiles: “Ev derfeteke mezin e!” His eyes say something else, and you tell him so.",
               "voice": "hamo",
               "new": [
-                {"ku": "meaş", "en": "salary", "pos": "noun", "gender": "m", "forms": ["meaş", "meaşên", "meaşan", "meaşek", "meaşê", "meaşekî", "meaşî"]},
+                {"ku": "mûçe", "en": "salary", "pos": "noun", "gender": "f", "forms": ["mûçe", "mûçeyên", "mûçeyan", "mûçeyek", "mûçeya", "mûçeyê", "mûçeyeke"]},
                 {"ku": "peyman", "en": "contract; agreement", "pos": "noun", "gender": "f", "forms": ["peyman", "peymanên", "peymanan", "peymanek", "peymana", "peymanê", "peymaneke"]},
                 {"ku": "derfet", "en": "opportunity, chance", "pos": "noun", "gender": "f", "forms": ["derfet", "derfetên", "derfetan", "derfetek", "derfeta", "derfetê", "derfeteke"]},
                 {"ku": "dûrî", "en": "distance, being far away", "pos": "noun", "gender": "f", "forms": ["dûrî", "dûriyên", "dûriyan", "dûriyek", "dûriya", "dûriyê", "dûriyeke"]},
@@ -3296,7 +3290,7 @@
           "titleKu": "Ez hatime",
           "titleEn": "I have come",
           "grammar": "the present perfect: past stem + -ime, -iyî, -iye, -ine after a consonant (ez hatime, ew hatiye), -me, -yî, -ye, -ne after a vowel (ez çûme, ew çûye); with transitive verbs min … kiriye, me … dîtiye",
-          "grammarMd": "For what **has happened** (and still matters), add the copula-like endings to the past stem:\n\n- after a consonant: *ez hatime, tu hatiyî, ew hatiye, em hatine* (I have come …)\n- after a vowel: *ez çûme, tu çûyî, ew çûye, em çûne* (I have gone …)\n- verbs in -în: *ez fikirîme, ew fikiriye* (I have thought …)\n\nTransitive verbs keep the ergative: *Min biryar daye.* I have decided. · *Te qet Hewlêr dîtiye?* Have you ever seen Hewlêr? · *Me sêv xwarine.* We have eaten (the) apples.\n\nUseful with it: **tu car** never · **qet** ever / never · **heta niha** until now · **hê** / **hîn** still, yet: *Ez hê neçûme.* I have not gone yet.\n\nNot: *ne-* before the stem: *Min nedîtiye.* I haven’t seen it.",
+          "grammarMd": "For what **has happened** (and still matters), add the copula-like endings to the past stem:\n\n- after a consonant: *ez hatime, tu hatiyî, ew hatiye, em hatine* (I have come …)\n- after a vowel: *ez çûme, tu çûyî, ew çûye, em çûne* (I have gone …)\n- verbs in -în: *ez hizirîme, ew hiziriye* (I have thought …)\n\nTransitive verbs keep the ergative: *Min biryar daye.* I have decided. · *Te qet Hewlêr dîtiye?* Have you ever seen Hewlêr? · *Me sêv xwarine.* We have eaten (the) apples.\n\nUseful with it: **tu car** never · **qet** ever / never · **heta niha** until now · **hê** / **hîn** still, yet: *Ez hê neçûme.* I have not gone yet.\n\nNot: *ne-* before the stem: *Min nedîtiye.* I haven’t seen it.",
           "lessons": [
             {
               "key": "u11s2l1",
@@ -3307,11 +3301,10 @@
               "beat": "At the family council Hamo speaks first: he has thought, he has slept on it (twice), and he has decided — Xezal must take the job. Then he asks everyone else what they have decided.",
               "voice": "hamo",
               "new": [
-                {"ku": "-iye / -ye", "en": "has …ed (the present perfect: hatiye, min kiriye)", "pos": "particle", "forms": ["hatime", "hatiyî", "hatiye", "hatine", "çûme", "çûyî", "çûye", "çûne", "bûme", "bûyî", "bûye", "bûne", "mame", "mayî", "maye", "mane", "gihîştime", "gihîştiye", "gihîştine", "rabûme", "rabûye", "rûniştime", "rûniştiye", "vegeriyame", "vegeriyaye", "vegeriyane", "ketime", "ketiye", "derketiye", "razame", "razaye", "xebitîme", "xebitiye", "kiriye", "kirine", "xwariye", "xwarine", "dîtiye", "dîtine", "gotiye", "daye", "dane", "xwendiye", "nivîsiye", "aniye", "biriye", "girtiye", "xwestiye", "bihîstiye", "vexwariye", "şandiye", "nedîtiye", "nekiriye", "neçûme", "negotiye", "fikirîme", "fikiriye", "çandiye"]},
+                {"ku": "-iye / -ye", "en": "has …ed (the present perfect: hatiye, min kiriye)", "pos": "particle", "forms": ["hatime", "hatiyî", "hatiye", "hatine", "çûme", "çûyî", "çûye", "çûne", "bûme", "bûyî", "bûye", "bûne", "mame", "mayî", "maye", "mane", "gihîştime", "gihîştiye", "gihîştine", "rabûme", "rabûye", "rûniştime", "rûniştiye", "vegeriyame", "vegeriyaye", "vegeriyane", "ketime", "ketiye", "derketiye", "razame", "razaye", "xebitîme", "xebitiye", "kiriye", "kirine", "xwariye", "xwarine", "dîtiye", "dîtine", "gotiye", "daye", "dane", "xwendiye", "nivîsiye", "aniye", "biriye", "girtiye", "xwestiye", "bihîstiye", "vexwariye", "şandiye", "nedîtiye", "nekiriye", "neçûme", "negotiye", "hizirîme", "hiziriye", "çandiye"]},
                 {"ku": "tu car", "en": "never (ever)", "pos": "phrase", "forms": ["tu", "car"]},
-                {"ku": "tecrûbe", "en": "experience", "pos": "noun", "gender": "f", "forms": ["tecrûbe", "tecrûbeyên", "tecrûbeyan", "tecrûbeyek", "tecrûbeya", "tecrûbeyê", "tecrûbeyeke"]},
+                {"ku": "ezmûn", "en": "experience", "pos": "noun", "gender": "f", "forms": ["ezmûn", "ezmûnên", "ezmûnan", "ezmûnek", "ezmûna", "ezmûnê", "ezmûneke"]},
                 {"ku": "pêşkeftin", "en": "progress", "pos": "noun", "gender": "f", "forms": ["pêşkeftin", "pêşkeftinên", "pêşkeftinan", "pêşkeftinek", "pêşkeftina", "pêşkeftinê", "pêşkeftineke"]},
-                {"ku": "teqez", "en": "definitely", "pos": "adv", "forms": ["teqez"]},
                 {"ku": "guhertin", "en": "to change", "pos": "verb", "forms": ["guhertin", "diguherînim", "diguherînî", "diguherîne", "diguherînin", "biguherîne", "guhert", "naguherîne"]}
               ]
             },
@@ -3372,7 +3365,7 @@
           "titleKu": "Ji ber ku …",
           "titleEn": "Because …",
           "grammar": "linking ideas: ji ber ku and çimkî (because), loma and ji ber vê yekê (so), lê and lêbelê (but), hem … hem (both … and), bêyî ku (without), her çend (although)",
-          "grammarMd": "Join two thoughts with these:\n\n- **ji ber ku / çimkî** because: *Ez diçim, ji ber ku ev derfeteke mezin e.* I am going because this is a big chance.\n- **loma / ji ber vê yekê** so, that is why: *Baran ditirse, loma Hamo alîkariya wî dike.* Baran is afraid, so Hamo helps him.\n- **lê / lêbelê** but, however: *Hewlêr dûr e, lê ez ê her Newrozê bêm.* Hewlêr is far, but I will come every Newroz.\n- **hem … hem** both … and: *Ew hem mamoste ye hem jî nivîskar.* She is both a teacher and a writer.\n- **bêyî ku** + subjunctive, without: *bêyî ku bifikire* without thinking\n- **her çend** although: *Her çend ez ditirsim jî, ez ê biçim.* Although I am afraid, I will go.",
+          "grammarMd": "Join two thoughts with these:\n\n- **ji ber ku / çimkî** because: *Ez diçim, ji ber ku ev derfeteke mezin e.* I am going because this is a big chance.\n- **loma / ji ber vê yekê** so, that is why: *Baran ditirse, loma Hamo alîkariya wî dike.* Baran is afraid, so Hamo helps him.\n- **lê / lêbelê** but, however: *Hewlêr dûr e, lê ez ê her Newrozê bêm.* Hewlêr is far, but I will come every Newroz.\n- **hem … hem** both … and: *Ew hem mamoste ye hem jî nivîskar.* She is both a teacher and a writer.\n- **bêyî ku** + subjunctive, without: *bêyî ku bihizire* without thinking\n- **her çend** although: *Her çend ez ditirsim jî, ez ê biçim.* Although I am afraid, I will go.",
           "lessons": [
             {
               "key": "u11s3l1",
@@ -3481,8 +3474,8 @@
                 {"ku": "demdirêj", "en": "long-term", "pos": "adj", "forms": ["demdirêj"]},
                 {"ku": "cih", "en": "place, spot", "pos": "noun", "gender": "m", "forms": ["cih", "cihên", "cihan", "cihek", "cihê", "cihekî", "cihî"]},
                 {"ku": "xwe bi cih kirin", "en": "to settle in", "pos": "phrase", "forms": ["xwe", "bi", "cih", "kirin"]},
-                {"ku": "xerîb", "en": "a stranger; far from home, homesick", "pos": "adj", "forms": ["xerîb"]},
-                {"ku": "zimanê dayikê", "en": "mother tongue", "pos": "phrase", "forms": ["zimanê", "dayikê"]}
+                {"ku": "zimanê dayikê", "en": "mother tongue", "pos": "phrase", "forms": ["zimanê", "dayikê"]},
+                {"ku": "bêriya malê kirin", "en": "to be homesick (word for word: to miss home)", "pos": "verb", "forms": ["bêriya", "malê", "kirin", "bikî", "dike"]}
               ]
             },
             {
@@ -3496,7 +3489,6 @@
               "new": [
                 {"ku": "reh", "en": "root", "pos": "noun", "gender": "m", "forms": ["reh", "rehên", "rehan", "rehek", "rehê", "rehekî", "rehî"]},
                 {"ku": "hêz", "en": "strength", "pos": "noun", "gender": "f", "forms": ["hêz", "hêzên", "hêzan", "hêzek", "hêza", "hêzê", "hêzeke"]},
-                {"ku": "rehet", "en": "comfortable, at ease", "pos": "adj", "forms": ["rehet"]},
                 {"ku": "dilgermî", "en": "warmth, enthusiasm", "pos": "noun", "gender": "f", "forms": ["dilgermî", "dilgermiyên", "dilgermiyan", "dilgermiyek", "dilgermiya", "dilgermiyê", "dilgermiyeke"]},
                 {"ku": "Bi xêr biçî!", "en": "Go well! (to someone leaving)", "pos": "phrase", "forms": ["bi", "xêr", "biçî"]}
               ]
@@ -3566,8 +3558,8 @@
                 {"ku": "dek", "en": "trick", "pos": "noun", "gender": "f", "forms": ["dek", "dekên", "dekan", "dekek", "deka", "dekê", "dekeke"]},
                 {"ku": "zîrekî", "en": "cleverness", "pos": "noun", "gender": "f", "forms": ["zîrekî", "zîrekiyên", "zîrekiyan", "zîrekiyek", "zîrekiya", "zîrekiyê", "zîrekiyeke"]},
                 {"ku": "pê hesîn", "en": "to notice, to find out", "pos": "verb", "forms": ["pê", "hesîn", "dihese", "hesiya"]},
-                {"ku": "bêaqil", "en": "foolish", "pos": "adj", "forms": ["bêaqil"]},
-                {"ku": "aqil", "en": "mind, good sense", "pos": "noun", "gender": "m", "forms": ["aqil", "aqilên", "aqilan", "aqilek", "aqilê", "aqilekî", "aqilî"]}
+                {"ku": "bêhiş", "en": "foolish, thoughtless", "pos": "adj", "forms": ["bêhiş"]},
+                {"ku": "hiş", "en": "mind, good sense", "pos": "noun", "gender": "m", "forms": ["hiş", "hişên", "hişan", "hişek", "hişê", "hişekî", "hişî"]}
               ]
             },
             {
@@ -3582,7 +3574,6 @@
                 {"ku": "lîstik", "en": "game; play", "pos": "noun", "gender": "f", "forms": ["lîstik", "lîstikên", "lîstikan", "lîstikek", "lîstika", "lîstikê", "lîstikeke"]},
                 {"ku": "rol", "en": "role, part", "pos": "noun", "gender": "f", "forms": ["rol", "rolên", "rolan", "rolek", "rola", "rolê", "roleke"]},
                 {"ku": "şano", "en": "theatre", "pos": "noun", "gender": "f", "forms": ["şano", "şanoyên", "şanoyan", "şanoyek", "şanoya", "şanoyê", "şanoyeke"]},
-                {"ku": "temaşe kirin", "en": "to watch", "pos": "verb", "forms": ["temaşe", "kirin"]},
                 {"ku": "lîstikvan", "en": "actor; player", "pos": "noun", "gender": "mf", "forms": ["lîstikvan", "lîstikvanên", "lîstikvanan", "lîstikvanek", "lîstikvanê", "lîstikvanekî", "lîstikvanî", "lîstikvana", "lîstikvaneke"]},
                 {"ku": "lep", "en": "paw", "pos": "noun", "gender": "m", "forms": ["lep", "lepên", "lepan", "lepek", "lepê", "lepekî", "lepî"]}
               ]
@@ -3599,7 +3590,7 @@
                 {"ku": "wate", "en": "meaning", "pos": "noun", "gender": "f", "forms": ["wate", "wateyên", "wateyan", "wateyek", "wateya", "wateyê", "wateyeke"]},
                 {"ku": "li derî xistin", "en": "to knock at the door", "pos": "phrase", "forms": ["li", "derî", "xistin", "dixe", "dixin"]},
                 {"ku": "bandor", "en": "influence, effect", "pos": "noun", "gender": "f", "forms": ["bandor", "bandorên", "bandoran", "bandorek", "bandora", "bandorê", "bandoreke"]},
-                {"ku": "aqilmend", "en": "wise", "pos": "adj", "forms": ["aqilmend"]},
+                {"ku": "hişmend", "en": "wise, sensible", "pos": "adj", "forms": ["hişmend"]},
                 {"ku": "pîrek", "en": "old woman (in tales)", "pos": "noun", "gender": "f", "forms": ["pîrek", "pîrekên", "pîrekan", "pîrekek", "pîreka", "pîrekê", "pîrekeke"]},
                 {"ku": "padîşah", "en": "king", "pos": "noun", "gender": "m", "forms": ["padîşah", "padîşahên", "padîşahan", "padîşahek", "padîşahê", "padîşahekî", "padîşahî"]}
               ]
@@ -3639,10 +3630,9 @@
               "voice": "hamo",
               "new": [
                 {"ku": "ka", "en": "whether, if (in a question)", "pos": "conj", "forms": ["ka"]},
-                {"ku": "îdîa kirin", "en": "to claim", "pos": "verb", "forms": ["îdîa", "kirin"]},
+                {"ku": "angaşt kirin", "en": "to claim", "pos": "verb", "forms": ["angaşt", "kirin"]},
                 {"ku": "agahdar kirin", "en": "to inform", "pos": "verb", "forms": ["agahdar", "kirin"]},
                 {"ku": "gilî kirin", "en": "to complain", "pos": "verb", "forms": ["gilî", "kirin"]},
-                {"ku": "xeber", "en": "word; news", "pos": "noun", "gender": "f", "forms": ["xeber", "xeberên", "xeberan", "xeberek", "xebera", "xeberê", "xebereke"]},
                 {"ku": "gotegot", "en": "rumour", "pos": "noun", "gender": "f", "forms": ["gotegot", "gotegotên", "gotegotan", "gotegotek", "gotegota", "gotegotê", "gotegoteke"]},
                 {"ku": "gelo", "en": "I wonder (in a question)", "pos": "adv", "forms": ["gelo"]}
               ]
@@ -3735,7 +3725,6 @@
               "new": [
                 {"ku": "bêdawî", "en": "endless", "pos": "adj", "forms": ["bêdawî"]},
                 {"ku": "zana", "en": "wise, learned", "pos": "adj", "forms": ["zana"]},
-                {"ku": "tê gihîştin", "en": "to understand", "pos": "verb", "forms": ["tê", "gihîştin", "digihîjim", "digihîjî", "digihîje", "gihîşt"]},
                 {"ku": "pirsgirêk", "en": "problem", "pos": "noun", "gender": "f", "forms": ["pirsgirêk", "pirsgirêkên", "pirsgirêkan", "pirsgirêkek", "pirsgirêka", "pirsgirêkê", "pirsgirêkeke"]},
                 {"ku": "çareserî", "en": "solution", "pos": "noun", "gender": "f", "forms": ["çareserî", "çareseriyên", "çareseriyan", "çareseriyek", "çareseriya", "çareseriyê", "çareseriyeke"]},
                 {"ku": "henekbaz", "en": "funny, a joker", "pos": "adj", "forms": ["henekbaz"]}
@@ -3796,7 +3785,6 @@
                 {"ku": "Heta dîtinê!", "en": "See you! (until we meet)", "pos": "phrase", "forms": ["heta", "dîtinê"]},
                 {"ku": "Bi hêviya dîtinê!", "en": "Hoping to see you again!", "pos": "phrase", "forms": ["bi", "hêviya", "dîtinê"]},
                 {"ku": "hezkirin", "en": "love", "pos": "noun", "gender": "f", "forms": ["hezkirin", "hezkirinên", "hezkirinan", "hezkirinek", "hezkirina", "hezkirinê", "hezkirineke"]},
-                {"ku": "minetdar", "en": "grateful", "pos": "adj", "forms": ["minetdar"]},
                 {"ku": "her û her", "en": "for ever", "pos": "phrase", "forms": ["her", "û"]},
                 {"ku": "hevaltî", "en": "friendship", "pos": "noun", "gender": "f", "forms": ["hevaltî", "hevaltiyên", "hevaltiyan", "hevaltiyek", "hevaltiya", "hevaltiyê", "hevaltiyeke"]}
               ]
@@ -3850,6 +3838,12 @@
     {"ku": "me-", "reason": "the negative imperative: the course keeps the me- of the written standard (meke, meçe, Xem meke); in writing today ne- (neke, Xem neke) is about ten times as common, and both are correct — confirm which the owner wants taught"},
     {"ku": "çaydank", "reason": "çaydank (teapot) is masculine in the dictionaries (çaydankê, çaydankekî), not feminine as first planned — confirm"},
     {"ku": "Zimanê şîrîn mar ji qulê derdixe", "reason": "the proverbs now take forms the collections attest: “Zimanê şîrîn mar ji qulê derdixe” (the course had “Gotina xweş …”, a natural variant no collection reached has), “Av dilop dilop dibe gol”, and “Çiya çiqas bilind be, wê rê pê keve” (the course had a blend with “jî” and “wê rojekê … bikeve” that no collection has) — confirm they are the forms the owner knows"},
-    {"ku": "ji ber kirin", "reason": "learn by heart is written ji ber kirin (ji ber dikim); the noun is jiberkirin — confirm"}
+    {"ku": "ji ber kirin", "reason": "learn by heart is written ji ber kirin (ji ber dikim); the noun is jiberkirin — confirm"},
+    {"ku": "demjimêr", "reason": "demjimêr (hour, clock) and xulek (minute) replace the Arabic loans saet and deqîqe, as Kurdish schools and broadcasters write them; saet is still what many people say — confirm"},
+    {"ku": "mêwe", "reason": "mêwe (fruit, feminine) replaces fêkî, from Arabic; fêkî is the commoner word in speech in the north — confirm"},
+    {"ku": "wane", "reason": "wane (lesson, class; feminine: waneya) replaces ders, from Arabic, as the schools in Rojava say it — confirm"},
+    {"ku": "bêhiş", "reason": "bêhiş (foolish) and hiş (mind) replace bêaqil and aqil; bêhiş can also mean unconscious, and nezan would be the other choice — confirm"},
+    {"ku": "seyr", "reason": "seyr (strange) replaces ecêb as asked, but seyr may itself come from Arabic; sosret is a Kurdish alternative — confirm which the owner wants"},
+    {"ku": "govend girtin", "reason": "to dance is now govend girtin (in the past ketin govendê), replacing reqisîn, from Arabic — confirm"}
   ]
 }

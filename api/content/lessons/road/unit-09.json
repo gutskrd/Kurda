@@ -541,12 +541,12 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Li bin dara gûzê. Ji bo ku bifikire, dibêje.",
+                        "text": "Li bin dara gûzê. Ji bo ku bihizire, dibêje.",
                         "en": "Under the walnut tree. To think, he says."
                       },
                       {
                         "speaker": 1,
-                        "text": "Bifikire? Ez difikirim ku ew li wir raza!",
+                        "text": "Bihizire? Ez dihizirim ku ew li wir raza!",
                         "en": "To think? I think he fell asleep there!"
                       },
                       {
@@ -1057,7 +1057,7 @@
                         "right": "(he, she) lived"
                       },
                       {
-                        "left": "zemanê berê",
+                        "left": "rojên berê",
                         "right": "the old days"
                       },
                       {
@@ -1086,9 +1086,9 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "say": "Di zemanê berê de jiyan hêsan nebû.",
+                    "say": "Di rojên berê de jiyan hêsan nebû.",
                     "voice": "hamo",
-                    "prompt": "For a moment Hamo grows serious. What does he say? “Di zemanê berê de jiyan hêsan nebû.”",
+                    "prompt": "For a moment Hamo grows serious. What does he say? “Di rojên berê de jiyan hêsan nebû.”",
                     "accepted": [
                       "In the old days life wasn’t easy.",
                       "In the old days life wasn’t easy",
@@ -1249,10 +1249,10 @@
                     "voice": "hamo",
                     "prompt": "One more thing about the old days. Say: “In the old days, the school was far.”",
                     "accepted": [
-                      "Di zemanê berê de dibistan dûr bû.",
-                      "Di zemanê berê de dibistan dûr bû",
-                      "Di zemanê berê de, dibistan dûr bû.",
-                      "Di zemanê berê de, dibistan dûr bû",
+                      "Di rojên berê de dibistan dûr bû.",
+                      "Di rojên berê de dibistan dûr bû",
+                      "Di rojên berê de, dibistan dûr bû.",
+                      "Di rojên berê de, dibistan dûr bû",
                       "Berê dibistan dûr bû.",
                       "Berê dibistan dûr bû",
                       "Dibistan berê dûr bû.",
@@ -1302,9 +1302,9 @@
                   "position": 3,
                   "type": "translate",
                   "payload": {
-                    "say": "Dersa Xezalê di saet nehan de dest pê dike.",
+                    "say": "Waneya Xezalê di demjimêr nehan de dest pê dike.",
                     "voice": "hamo",
-                    "prompt": "Hamo tells you about Xezal’s mornings in the city. What does he say? “Dersa Xezalê di saet nehan de dest pê dike.”",
+                    "prompt": "Hamo tells you about Xezal’s mornings in the city. What does he say? “Waneya Xezalê di demjimêr nehan de dest pê dike.”",
                     "accepted": [
                       "Xezal’s class starts at nine o’clock.",
                       "Xezal’s class starts at nine.",
@@ -1323,8 +1323,8 @@
                     "voice": "hamo",
                     "prompt": "The bell rings. Say: “The lesson ended.”",
                     "accepted": [
-                      "Ders qediya.",
-                      "Ders qediya"
+                      "Wane qediya.",
+                      "Wane qediya"
                     ]
                   }
                 },
@@ -1387,8 +1387,8 @@
                     "voice": "hamo",
                     "prompt": "Baran wants to know about the city school, and so do you. Ask Xezal: “When does the lesson start?”",
                     "accepted": [
-                      "Ders kengî dest pê dike?",
-                      "Ders kengî dest pê dike"
+                      "Wane kengî dest pê dike?",
+                      "Wane kengî dest pê dike"
                     ]
                   }
                 },
@@ -1417,7 +1417,7 @@
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Xezal shows you her old diary from Amed. The last line of the first page says: “Ders qediya û em derketin.” What happened at the end of her first day?",
+                    "prompt": "Xezal shows you her old diary from Amed. The last line of the first page says: “Wane qediya û em derketin.” What happened at the end of her first day?",
                     "options": [
                       "The lesson ended and we went out.",
                       "The lesson started and we went in.",
@@ -1462,9 +1462,9 @@
                   "payload": {
                     "prompt": "Your class starts at ten. Which sentence says it?",
                     "options": [
-                      "Dersa min di saet dehan de dest pê dike.",
-                      "Dersa min di saet dehan de diqede.",
-                      "Dersa min di saet dehan de dest pê dikim."
+                      "Waneya min di demjimêr dehan de dest pê dike.",
+                      "Waneya min di demjimêr dehan de diqede.",
+                      "Waneya min di demjimêr dehan de dest pê dikim."
                     ],
                     "correctIndex": 0
                   }
@@ -1807,7 +1807,7 @@
                         "right": "message"
                       },
                       {
-                        "left": "heywan",
+                        "left": "ajal",
                         "right": "animal"
                       },
                       {
@@ -1829,9 +1829,9 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "say": "Heywanekî kûvî her şev tê ber konê Bişar.",
+                    "say": "Ajalekî kûvî her şev tê ber konê Bişar.",
                     "voice": "hamo",
-                    "prompt": "Hamo reads the message out. What does Bişar write? “Heywanekî kûvî her şev tê ber konê Bişar.”",
+                    "prompt": "Hamo reads the message out. What does Bişar write? “Ajalekî kûvî her şev tê ber konê Bişar.”",
                     "accepted": [
                       "A wild animal comes to Bişar’s tent every night.",
                       "A wild animal comes to Bişar’s tent every night",
@@ -1920,9 +1920,9 @@
                   "payload": {
                     "prompt": "Which sentence says “Wild animals live on the mountain”?",
                     "options": [
-                      "Heywanên kûvî li çiyê dijîn.",
-                      "Heywanên kûvî li çiyê dijî.",
-                      "Heywanekî kûvî li çiyê dijîn."
+                      "Ajalên kûvî li çiyê dijîn.",
+                      "Ajalên kûvî li çiyê dijî.",
+                      "Ajalekî kûvî li çiyê dijîn."
                     ],
                     "correctIndex": 0
                   }
@@ -1945,7 +1945,7 @@
                   "payload": {
                     "voice": "hamo",
                     "prompt": "Run and tell Nazê the news: “A wild animal comes to Bişar’s tent.”",
-                    "reference": "Heywanekî kûvî tê ber konê Bişar."
+                    "reference": "Ajalekî kûvî tê ber konê Bişar."
                   }
                 },
                 {
@@ -1971,9 +1971,9 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hevalo dixwaze wî heywanî bibîne!",
+                    "say": "Hevalo dixwaze wî ajalî bibîne!",
                     "voice": "hamo",
-                    "prompt": "Hevalo can’t keep still. Hamo puts it into words for him. What does he say? “Hevalo dixwaze wî heywanî bibîne!”",
+                    "prompt": "Hevalo can’t keep still. Hamo puts it into words for him. What does he say? “Hevalo dixwaze wî ajalî bibîne!”",
                     "options": [
                       "Hevalo wants to see that animal!",
                       "Hevalo doesn’t want to see that animal!",
@@ -1998,9 +1998,9 @@
                   "position": 16,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Kî dizane? Belkî ew heywan li benda Hevalo ye…",
+                    "say": "Kî dizane? Belkî ew ajal li benda Hevalo ye…",
                     "voice": "hamo",
-                    "prompt": "Hamo winks at you. What does he say? “Kî dizane? Belkî ew heywan li benda Hevalo ye…”",
+                    "prompt": "Hamo winks at you. What does he say? “Kî dizane? Belkî ew ajal li benda Hevalo ye…”",
                     "options": [
                       "Who knows? Maybe that animal is waiting for Hevalo…",
                       "Who knows? Maybe that animal is afraid of Hevalo…",
@@ -2198,9 +2198,9 @@
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "say": "Rêwîtiya ji bazarê heta malê sê saet bû.",
+                    "say": "Rêwîtiya ji bazarê heta malê sê demjimêr bû.",
                     "voice": "hamo",
-                    "prompt": "How long was the walk home with the new donkey? “Rêwîtiya ji bazarê heta malê sê saet bû.”",
+                    "prompt": "How long was the walk home with the new donkey? “Rêwîtiya ji bazarê heta malê sê demjimêr bû.”",
                     "accepted": [
                       "The journey from the market to the house was three hours.",
                       "The journey from the market to the house was three hours",
@@ -2534,12 +2534,12 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Otobûsa Xezalê du saet dereng ma. Ew gelek bêtaqet bû!",
+                        "text": "Otobûsa Xezalê du demjimêr dereng ma. Ew gelek bêhnteng bû!",
                         "en": "Xezal’s bus was two hours late. She was so impatient!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Du saet? Ez qet bêtaqet nabim. Ez her gav bêhnfireh im.",
+                        "text": "Du demjimêr? Ez qet bêhnteng nabim. Ez her gav bêhnfireh im.",
                         "en": "Two hours? I never get impatient. I am always patient."
                       },
                       {
@@ -2596,9 +2596,9 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "say": "Otobûsa Xezalê du saet dereng ma.",
+                    "say": "Otobûsa Xezalê du demjimêr dereng ma.",
                     "voice": "hamo",
-                    "prompt": "Why was Xezal grumpy when she arrived? “Otobûsa Xezalê du saet dereng ma.”",
+                    "prompt": "Why was Xezal grumpy when she arrived? “Otobûsa Xezalê du demjimêr dereng ma.”",
                     "accepted": [
                       "Xezal’s bus was two hours late.",
                       "Xezal’s bus was two hours late",
@@ -2616,10 +2616,10 @@
                     "voice": "hamo",
                     "prompt": "Xezal remembers the bus stop. Say it for her: “I was very impatient.”",
                     "accepted": [
-                      "Ez gelek bêtaqet bûm.",
-                      "Ez gelek bêtaqet bûm",
-                      "Ez pir bêtaqet bûm.",
-                      "Ez pir bêtaqet bûm"
+                      "Ez gelek bêhnteng bûm.",
+                      "Ez gelek bêhnteng bûm",
+                      "Ez pir bêhnteng bûm.",
+                      "Ez pir bêhnteng bûm"
                     ]
                   }
                 },
@@ -2730,9 +2730,9 @@
                   "position": 14,
                   "type": "translate",
                   "payload": {
-                    "say": "Rojeke dirêj bû, û ez bêtaqet nebûm!",
+                    "say": "Rojeke dirêj bû, û ez bêhnteng nebûm!",
                     "voice": "hamo",
-                    "prompt": "Hamo stretches and yawns, very pleased with himself. What does he say? “Rojeke dirêj bû, û ez bêtaqet nebûm!”",
+                    "prompt": "Hamo stretches and yawns, very pleased with himself. What does he say? “Rojeke dirêj bû, û ez bêhnteng nebûm!”",
                     "accepted": [
                       "It was a long day, and I wasn’t impatient!",
                       "It was a long day, and I wasn’t impatient",
@@ -2836,7 +2836,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Hevalo bi heyecan e! Lê Bişar rê baştir dizane…",
+                        "text": "Hevalo bi kelecan e! Lê Bişar rê baştir dizane…",
                         "en": "Hevalo is excited! But Bişar knows the way better…"
                       },
                       {
@@ -2975,8 +2975,8 @@
                       "Berê bavê Dapîrê koçer bû",
                       "Bavê Dapîrê berê koçer bû.",
                       "Bavê Dapîrê berê koçer bû",
-                      "Di zemanê berê de bavê Dapîrê koçer bû.",
-                      "Di zemanê berê de bavê Dapîrê koçer bû"
+                      "Di rojên berê de bavê Dapîrê koçer bû.",
+                      "Di rojên berê de bavê Dapîrê koçer bû"
                     ]
                   }
                 },
@@ -3295,9 +3295,9 @@
                   "position": 3,
                   "type": "translate",
                   "payload": {
-                    "say": "Ev ne xeletiya min bû!",
+                    "say": "Ev ne çewtiya min bû!",
                     "voice": "hamo",
-                    "prompt": "Nazê raises an eyebrow. Hamo protests. “Ev ne xeletiya min bû!”",
+                    "prompt": "Nazê raises an eyebrow. Hamo protests. “Ev ne çewtiya min bû!”",
                     "accepted": [
                       "It wasn’t my mistake!",
                       "It wasn’t my mistake",
@@ -3387,10 +3387,10 @@
                     "voice": "hamo",
                     "prompt": "Nazê has heard this story before. Say: “It was a big mistake.”",
                     "accepted": [
-                      "Xeletiyeke mezin bû.",
-                      "Xeletiyeke mezin bû",
-                      "Ew xeletiyeke mezin bû.",
-                      "Ew xeletiyeke mezin bû"
+                      "Çewtiyeke mezin bû.",
+                      "Çewtiyeke mezin bû",
+                      "Ew çewtiyeke mezin bû.",
+                      "Ew çewtiyeke mezin bû"
                     ]
                   }
                 },
@@ -3416,7 +3416,7 @@
                   "payload": {
                     "voice": "hamo",
                     "prompt": "Defend yourself like Hamo: “It wasn’t my mistake, I am completely innocent!”",
-                    "reference": "Ev ne xeletiya min bû, ez bi tevahî bêguneh im!"
+                    "reference": "Ev ne çewtiya min bû, ez bi tevahî bêguneh im!"
                   }
                 },
                 {
@@ -3453,10 +3453,10 @@
                     "voice": "hamo",
                     "prompt": "Xezal sums up last year’s trip. Say it for her: “Because of the mistake, we got completely lost.”",
                     "accepted": [
-                      "Ji ber xeletiyê em bi tevahî winda bûn.",
-                      "Ji ber xeletiyê em bi tevahî winda bûn",
-                      "Em ji ber xeletiyê bi tevahî winda bûn.",
-                      "Em ji ber xeletiyê bi tevahî winda bûn"
+                      "Ji ber çewtiyê em bi tevahî winda bûn.",
+                      "Ji ber çewtiyê em bi tevahî winda bûn",
+                      "Em ji ber çewtiyê bi tevahî winda bûn.",
+                      "Em ji ber çewtiyê bi tevahî winda bûn"
                     ]
                   }
                 }
@@ -3884,9 +3884,9 @@
                   "payload": {
                     "prompt": "Which sentence says “The young men and the girls danced”?",
                     "options": [
-                      "Xort û keçik reqisîn.",
-                      "Xort û keçik reqisîm.",
-                      "Xort û keçik direqisin."
+                      "Xort û keçik ketin govendê.",
+                      "Xort û keçik ketim govendê.",
+                      "Xort û keçik dikevin govendê."
                     ],
                     "correctIndex": 0
                   }
@@ -3926,7 +3926,7 @@
                   "payload": {
                     "voice": "hamo",
                     "prompt": "Say what Dapîr remembers best: “At the wedding the groom was handsome, and everyone danced.”",
-                    "reference": "Di dawetê de zava ciwan bû, û hemû kes reqisîn."
+                    "reference": "Di dawetê de zava ciwan bû, û hemû kes ketin govendê."
                   }
                 },
                 {

@@ -1062,8 +1062,8 @@
                         "right": "better"
                       },
                       {
-                        "left": "ciddî",
-                        "right": "serious"
+                        "left": "giran",
+                        "right": "heavy; serious"
                       }
                     ]
                   }
@@ -1166,10 +1166,10 @@
                     "voice": "hamo",
                     "prompt": "Hamo asks in a tiny voice: “Is it serious?”",
                     "accepted": [
-                      "Ciddî ye?",
-                      "Ciddî ye",
-                      "Ev ciddî ye?",
-                      "Ev ciddî ye"
+                      "Giran e?",
+                      "Giran e",
+                      "Ev giran e?",
+                      "Ev giran e"
                     ]
                   }
                 },
@@ -1177,9 +1177,9 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "say": "Nexweşiya te ne ciddî ye: tu tenê pîr dibî!",
+                    "say": "Nexweşiya te ne giran e: tu tenê pîr dibî!",
                     "voice": "hamo",
-                    "prompt": "Şîrîn frowns, then bursts out laughing. Hamo repeats her words, offended. What are they? “Nexweşiya te ne ciddî ye: tu tenê pîr dibî!”",
+                    "prompt": "Şîrîn frowns, then bursts out laughing. Hamo repeats her words, offended. What are they? “Nexweşiya te ne giran e: tu tenê pîr dibî!”",
                     "accepted": [
                       "Your illness isn’t serious: you’re just getting old!",
                       "Your illness is not serious: you are just getting old!",
@@ -2390,11 +2390,11 @@
                   "payload": {
                     "prompt": "Which words say “the sweetest fruit”?",
                     "options": [
-                      "fêkiya herî şîrîn",
-                      "fêkiyê herî şîrîn",
-                      "fêkiyê şîrîn herî"
+                      "mêweya herî şîrîn",
+                      "mêweyê herî şîrîn",
+                      "mêweya şîrîn herî"
                     ],
-                    "correctIndex": 1
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2451,8 +2451,8 @@
                     "voice": "hamo",
                     "prompt": "Hevalo nudges the fruit bowl with his nose: the same choice, once more. Hamo puts it into words for him. Type what you hear.",
                     "accepted": [
-                      "Hevalo ji hemû fêkiyan bêtir ji sêvan hez dike.",
-                      "Hevalo ji hemû fêkiyan bêtir ji sêvan hez dike"
+                      "Hevalo ji hemû mêweyan bêtir ji sêvan hez dike.",
+                      "Hevalo ji hemû mêweyan bêtir ji sêvan hez dike"
                     ]
                   }
                 },
@@ -2504,15 +2504,15 @@
                   "position": 16,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Fêkiyê te yê bijare çi ye?",
+                    "say": "Mêweya te ya bijare çi ye?",
                     "voice": "hamo",
-                    "prompt": "Now Hamo asks you: “Fêkiyê te yê bijare çi ye?” Your favourite fruit is the pomegranate. What do you answer?",
+                    "prompt": "Now Hamo asks you: “Mêweya te ya bijare çi ye?” Your favourite fruit is the pomegranate. What do you answer?",
                     "options": [
-                      "Fêkiya min a bijare hinar e.",
-                      "Fêkiyê min ê bijare hinar e.",
-                      "Fêkiyê min ê bijare hinar in."
+                      "Mêweya min a bijare hinar e.",
+                      "Mêweyê min ê bijare hinar e.",
+                      "Mêweya min a bijare hinar in."
                     ],
-                    "correctIndex": 1
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -3072,7 +3072,7 @@
           "position": 4,
           "titleKu": "Hest û hal",
           "titleEn": "Feelings and moods",
-          "grammarMd": "Many feelings are said with an adjective and the copula, or with **bûn** (become) in the present:\n\n- *Ez ditirsim.* I’m afraid. · *Ez ji gur ditirsim.* I’m afraid of the wolf.\n- *Ez aciz dibim.* I’m getting bored. · *Ew dilxweş dibe.* She is cheering up.\n\nFeelings towards someone use the pronoun objects and the prepositions:\n\n- *Ez li te dinêrim.* I’m looking at you.\n- *Guhdariya min bike!* Listen to me!\n- *Ez te fêm dikim.* I understand you.\n\n**xwe** is the subject’s own: *Ew bi xwe dikene.* He laughs at himself. · *Baran li xwe dinêre.* Baran looks at himself.",
+          "grammarMd": "Many feelings are said with an adjective and the copula, or with **bûn** (become) in the present:\n\n- *Ez ditirsim.* I’m afraid. · *Ez ji gur ditirsim.* I’m afraid of the wolf.\n- *Ez bêzar dibim.* I’m getting bored. · *Ew dilxweş dibe.* She is cheering up.\n\nFeelings towards someone use the pronoun objects and the prepositions:\n\n- *Ez li te dinêrim.* I’m looking at you.\n- *Guhdariya min bike!* Listen to me!\n- *Ez li te tê digihîjim.* I understand you.\n\n**xwe** is the subject’s own: *Ew bi xwe dikene.* He laughs at himself. · *Baran li xwe dinêre.* Baran looks at himself.",
           "lessons": [
             {
               "key": "u08s4l1",
@@ -3102,7 +3102,7 @@
                     "voice": "hamo",
                     "pairs": [
                       {
-                        "left": "fikirîn",
+                        "left": "hizirîn",
                         "right": "to think"
                       },
                       {
@@ -3118,7 +3118,7 @@
                         "right": "glad, in good spirits"
                       },
                       {
-                        "left": "bi heyecan",
+                        "left": "bi kelecan",
                         "right": "excited"
                       },
                       {
@@ -3132,9 +3132,9 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Baran difikire.",
+                    "say": "Baran dihizire.",
                     "voice": "hamo",
-                    "prompt": "Baran doesn’t move. What is he doing? “Baran difikire.”",
+                    "prompt": "Baran doesn’t move. What is he doing? “Baran dihizire.”",
                     "options": [
                       "Baran is thinking.",
                       "Baran is sleeping.",
@@ -3178,8 +3178,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo sits down beside Baran. Type what he asks.",
                     "accepted": [
-                      "Tu li ser çi difikirî, Baran?",
-                      "Tu li ser çi difikirî, Baran"
+                      "Tu li ser çi dihizirî, Baran?",
+                      "Tu li ser çi dihizirî, Baran"
                     ]
                   }
                 },
@@ -3209,9 +3209,9 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "say": "Hêvî bi heyecan e: sibe seyran e!",
+                    "say": "Hêvî bi kelecan e: sibe seyran e!",
                     "voice": "hamo",
-                    "prompt": "Downstairs Hêvî can’t sit still. What does Hamo say about her? “Hêvî bi heyecan e: sibe seyran e!”",
+                    "prompt": "Downstairs Hêvî can’t sit still. What does Hamo say about her? “Hêvî bi kelecan e: sibe seyran e!”",
                     "accepted": [
                       "Hêvî is excited: tomorrow there’s an outing!",
                       "Hêvî is excited: there is an outing tomorrow!",
@@ -3266,8 +3266,8 @@
                     "voice": "hamo",
                     "prompt": "Complete Hamo’s thought: “Ez li ser Baran …” (I am thinking about Baran.) Type the whole sentence.",
                     "accepted": [
-                      "Ez li ser Baran difikirim.",
-                      "Ez li ser Baran difikirim"
+                      "Ez li ser Baran dihizirim.",
+                      "Ez li ser Baran dihizirim"
                     ]
                   }
                 },
@@ -3275,9 +3275,9 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hêvî bi heyecan e, lê Baran ne dilxweş e.",
+                    "say": "Hêvî bi kelecan e, lê Baran ne dilxweş e.",
                     "voice": "hamo",
-                    "prompt": "Nazê asks Hamo how the children are. What does he say? “Hêvî bi heyecan e, lê Baran ne dilxweş e.”",
+                    "prompt": "Nazê asks Hamo how the children are. What does he say? “Hêvî bi kelecan e, lê Baran ne dilxweş e.”",
                     "options": [
                       "Hêvî is excited, but Baran isn’t happy.",
                       "Baran is excited, but Hêvî isn’t happy.",
@@ -3339,11 +3339,11 @@
                         "right": "trust; belief"
                       },
                       {
-                        "left": "sebir",
-                        "right": "patience"
+                        "left": "bêhna xwe fireh kirin",
+                        "right": "to be patient"
                       },
                       {
-                        "left": "fêm kirin",
+                        "left": "tê gihîştin",
                         "right": "to understand"
                       },
                       {
@@ -3361,9 +3361,9 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ne pêwîst e tu biaxivî. Sebira min heye.",
+                    "say": "Ne pêwîst e tu biaxivî. Bêhna min fireh e.",
                     "voice": "hamo",
-                    "prompt": "Hamo leans back against the chimney. What does he say? “Ne pêwîst e tu biaxivî. Sebira min heye.”",
+                    "prompt": "Hamo leans back against the chimney. What does he say? “Ne pêwîst e tu biaxivî. Bêhna min fireh e.”",
                     "options": [
                       "You don’t have to talk. I’m patient.",
                       "You have to talk now. I’m not patient.",
@@ -3379,8 +3379,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo: “I understand you.”",
                     "accepted": [
-                      "Ez te fêm dikim.",
-                      "Ez te fêm dikim"
+                      "Ez li te tê digihîjim.",
+                      "Ez li te tê digihîjim"
                     ]
                   }
                 },
@@ -3448,9 +3448,9 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Sebir bike, Baran.",
+                    "say": "Bêhna xwe fireh bike, Baran.",
                     "voice": "hamo",
-                    "prompt": "Baran opens his mouth and closes it again. What does Hamo say? “Sebir bike, Baran.”",
+                    "prompt": "Baran opens his mouth and closes it again. What does Hamo say? “Bêhna xwe fireh bike, Baran.”",
                     "accepted": [
                       "Be patient, Baran.",
                       "Take your time, Baran.",
@@ -3487,9 +3487,9 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Tu min fêm dikî?",
+                    "say": "Tu li min tê digihîjî?",
                     "voice": "hamo",
-                    "prompt": "Hamo looks at Baran. What does he ask? “Tu min fêm dikî?”",
+                    "prompt": "Hamo looks at Baran. What does he ask? “Tu li min tê digihîjî?”",
                     "options": [
                       "Do you see me?",
                       "Do you know me?",

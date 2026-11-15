@@ -1128,9 +1128,9 @@
                   "position": 6,
                   "type": "translate",
                   "payload": {
-                    "say": "Ji bo agir êzing lazim e.",
+                    "say": "Ji bo agir êzing pêwîst e.",
                     "voice": "hamo",
-                    "prompt": "Hamo explains why the job matters. What does he say? “Ji bo agir êzing lazim e.”",
+                    "prompt": "Hamo explains why the job matters. What does he say? “Ji bo agir êzing pêwîst e.”",
                     "accepted": [
                       "Firewood is needed for the fire.",
                       "For the fire, firewood is needed.",
@@ -1285,12 +1285,12 @@
                         "right": "afterwards, later"
                       },
                       {
-                        "left": "xeyal",
-                        "right": "dream, wish"
+                        "left": "hêvî",
+                        "right": "hope"
                       },
                       {
                         "left": "xewn",
-                        "right": "dream (in sleep)"
+                        "right": "dream"
                       }
                     ]
                   }
@@ -1353,9 +1353,9 @@
                   "payload": {
                     "prompt": "Xezal says her dream out loud for the first time. That night Hamo tells it to you, very softly. Type what he says.",
                     "accepted": [
-                      "Xeyala Xezalê ev e: di paşerojê de ew ê li dibistanê bixebite.",
-                      "Xeyala Xezalê ev e: di paşerojê de ew ê li dibistanê bixebite",
-                      "Xeyala Xezalê ev e, di paşerojê de ew ê li dibistanê bixebite."
+                      "Xewna Xezalê ev e: di paşerojê de ew ê li dibistanê bixebite.",
+                      "Xewna Xezalê ev e: di paşerojê de ew ê li dibistanê bixebite",
+                      "Xewna Xezalê ev e, di paşerojê de ew ê li dibistanê bixebite."
                     ],
                     "voice": "hamo"
                   }
@@ -1430,9 +1430,9 @@
                   "payload": {
                     "prompt": "Hamo has been quiet for a long time, which never happens. When at last he speaks, it is only to you. Type what he says.",
                     "accepted": [
-                      "Xezal mezin dibe, û xeyalên wê jî mezin in.",
-                      "Xezal mezin dibe, û xeyalên wê jî mezin in",
-                      "Xezal mezin dibe û xeyalên wê jî mezin in"
+                      "Xezal mezin dibe, û xewnên wê jî mezin in.",
+                      "Xezal mezin dibe, û xewnên wê jî mezin in",
+                      "Xezal mezin dibe û xewnên wê jî mezin in"
                     ],
                     "voice": "hamo"
                   }
@@ -1441,9 +1441,9 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Xeyaleke xweş e, Xezo.",
+                    "say": "Xewneke xweş e, Xezo.",
                     "voice": "hamo",
-                    "prompt": "At last Hamo speaks, softly. What does he say? “Xeyaleke xweş e, Xezo.”",
+                    "prompt": "At last Hamo speaks, softly. What does he say? “Xewneke xweş e, Xezo.”",
                     "options": [
                       "It’s a lovely dream, Xezo.",
                       "It’s a bad dream, Xezo.",
@@ -1600,12 +1600,12 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Hemû efsaneyan! Efsaneyên min yek saet in…",
+                        "text": "Hemû efsaneyan! Efsaneyên min yek demjimêr in…",
                         "en": "All the legends! My legends are one hour long…"
                       },
                       {
                         "speaker": 1,
-                        "text": "Yên wî du saet in!",
+                        "text": "Yên wî du demjimêr in!",
                         "en": "His are two!"
                       }
                     ],
@@ -2047,8 +2047,8 @@
                         "right": "the govend, the circle dance"
                       },
                       {
-                        "left": "reqisîn",
-                        "right": "to dance"
+                        "left": "govend girtin",
+                        "right": "to dance (the govend)"
                       },
                       {
                         "left": "stran",
@@ -2088,9 +2088,9 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Mirîşk jî direqisin!",
+                    "say": "Mirîşk jî govendê digirin!",
                     "voice": "hamo",
-                    "prompt": "Xezal points at the corner of the yard and giggles with her shoulders. Hamo looks, and laughs too. What does he say? “Mirîşk jî direqisin!”",
+                    "prompt": "Xezal points at the corner of the yard and giggles with her shoulders. Hamo looks, and laughs too. What does he say? “Mirîşk jî govendê digirin!”",
                     "options": [
                       "The hens are dancing too!",
                       "The hens are singing too!",
@@ -2106,8 +2106,8 @@
                     "voice": "hamo",
                     "prompt": "Xezal is teaching the steps. Cheer for her best pupil: “Hêvî is dancing!”",
                     "accepted": [
-                      "Hêvî direqise!",
-                      "Hêvî direqise"
+                      "Hêvî govendê digire!",
+                      "Hêvî govendê digire"
                     ]
                   }
                 },
@@ -2143,9 +2143,9 @@
                   "payload": {
                     "prompt": "Baran and Hêvî shout together. Which sentence says “We are dancing”?",
                     "options": [
-                      "Em direqise.",
-                      "Em direqisim.",
-                      "Em direqisin."
+                      "Em govendê digire.",
+                      "Em govendê digirim.",
+                      "Em govendê digirin."
                     ],
                     "correctIndex": 2
                   }
@@ -2204,13 +2204,13 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Tu dixwazî bireqisî?",
+                    "say": "Tu dixwazî govendê bigirî?",
                     "voice": "hamo",
-                    "prompt": "Xezal is busy with the children, so Hamo holds out his hand to you instead: “Tu dixwazî bireqisî?” What do you answer?",
+                    "prompt": "Xezal is busy with the children, so Hamo holds out his hand to you instead: “Tu dixwazî govendê bigirî?” What do you answer?",
                     "options": [
-                      "Erê, ez dixwazim direqisim!",
-                      "Erê, ez dixwazim bireqisim!",
-                      "Erê, tu dixwazî bireqisî!"
+                      "Erê, ez dixwazim govendê digirim!",
+                      "Erê, ez dixwazim govendê bigirim!",
+                      "Erê, tu dixwazî govendê bigirî!"
                     ],
                     "correctIndex": 1
                   }
@@ -3084,8 +3084,8 @@
                         "right": "celebration"
                       },
                       {
-                        "left": "xelk",
-                        "right": "people"
+                        "left": "mirov",
+                        "right": "person; people"
                       }
                     ]
                   }
@@ -3121,9 +3121,9 @@
                   "position": 6,
                   "type": "translate",
                   "payload": {
-                    "say": "Xelk li ser gir e û dûman spî ye.",
+                    "say": "Gelek mirov li ser gir in û dûman spî ye.",
                     "voice": "hamo",
-                    "prompt": "Hamo looks around the hill, delighted. What does he say? “Xelk li ser gir e û dûman spî ye.”",
+                    "prompt": "Hamo looks around the hill, delighted. What does he say? “Gelek mirov li ser gir in û dûman spî ye.”",
                     "accepted": [
                       "The people are on the hill and the smoke is white.",
                       "Everyone is on the hill and the smoke is white.",
@@ -3211,9 +3211,9 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Xelk ji hemû gundan tê seyranê.",
+                    "say": "Mirov ji hemû gundan tên seyranê.",
                     "voice": "hamo",
-                    "prompt": "Who comes to the hill? “Xelk ji hemû gundan tê seyranê.”",
+                    "prompt": "Who comes to the hill? “Mirov ji hemû gundan tên seyranê.”",
                     "options": [
                       "Only the people of Sêvan.",
                       "People come to the outing from all the villages.",
@@ -3280,8 +3280,8 @@
                         "right": "health"
                       },
                       {
-                        "left": "xelat",
-                        "right": "gift; prize"
+                        "left": "diyarî",
+                        "right": "present, gift"
                       },
                       {
                         "left": "jiyan",
@@ -3383,9 +3383,9 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Xelatek ji bo te jî heye, Hevalo: sêvek!",
+                    "say": "Diyariyek ji bo te jî heye, Hevalo: sêvek!",
                     "voice": "hamo",
-                    "prompt": "Hamo has a present for everyone — even for Hevalo. What does he say? “Xelatek ji bo te jî heye, Hevalo: sêvek!”",
+                    "prompt": "Hamo has a present for everyone — even for Hevalo. What does he say? “Diyariyek ji bo te jî heye, Hevalo: sêvek!”",
                     "accepted": [
                       "There’s a present for you too, Hevalo: an apple!",
                       "There is a gift for you too, Hevalo: an apple!",
@@ -3471,10 +3471,10 @@
                     "voice": "hamo",
                     "prompt": "Hamo hands Nazê a small box: “Nazê, this gift is for you.”",
                     "accepted": [
-                      "Nazê, ev xelat ji bo te ye.",
-                      "Nazê, ev xelat ji bo te ye",
-                      "Ev xelat ji bo te ye, Nazê.",
-                      "Ev xelat ji bo te ye, Nazê"
+                      "Nazê, ev diyarî ji bo te ye.",
+                      "Nazê, ev diyarî ji bo te ye",
+                      "Ev diyarî ji bo te ye, Nazê.",
+                      "Ev diyarî ji bo te ye, Nazê"
                     ]
                   }
                 }
@@ -3775,9 +3775,9 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ev deng xirab e!",
+                    "say": "Ev deng pîs e!",
                     "voice": "hamo",
-                    "prompt": "Hamo blows into the flute. Xezal covers her ears, and even Hamo has to admit it. What does he say? “Ev deng xirab e!”",
+                    "prompt": "Hamo blows into the flute. Xezal covers her ears, and even Hamo has to admit it. What does he say? “Ev deng pîs e!”",
                     "options": [
                       "This sound is lovely!",
                       "This sound is bad!",
@@ -3809,8 +3809,8 @@
                         "right": "bad, not good"
                       },
                       {
-                        "left": "xirab",
-                        "right": "bad; broken"
+                        "left": "pîs",
+                        "right": "nasty, awful; dirty"
                       }
                     ]
                   }
@@ -3907,8 +3907,8 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "say": "Bilûr ne xirab e, lê ez nizanim wê lêxim.",
-                    "prompt": "Hamo explains the squeak to Hevalo, honestly for once. What does he say? “Bilûr ne xirab e, lê ez nizanim wê lêxim.”",
+                    "say": "Bilûr ne pîs e, lê ez nizanim wê lêxim.",
+                    "prompt": "Hamo explains the squeak to Hevalo, honestly for once. What does he say? “Bilûr ne pîs e, lê ez nizanim wê lêxim.”",
                     "accepted": [
                       "The flute isn’t bad, but I don’t know how to play it.",
                       "The flute isn't bad, but I don't know how to play it.",
@@ -4010,12 +4010,12 @@
                     "accepted": [
                       "Îro hewa nebaş e.",
                       "Îro hewa nebaş e",
-                      "Îro hewa xirab e.",
-                      "Îro hewa xirab e",
+                      "Îro hewa pîs e.",
+                      "Îro hewa pîs e",
                       "Hewa îro nebaş e.",
                       "Hewa îro nebaş e",
-                      "Hewa îro xirab e.",
-                      "Hewa îro xirab e"
+                      "Hewa îro pîs e.",
+                      "Hewa îro pîs e"
                     ]
                   }
                 },

@@ -802,7 +802,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Dapîr jî bi qelema sor dinivîse. Ew çi dinivîse?",
+                        "text": "Dapîr jî bi pênûsa sor dinivîse. Ew çi dinivîse?",
                         "en": "Dapîr is writing too, with the red pen. What is she writing?"
                       },
                       {
@@ -1771,8 +1771,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Azmûna dîrokê. Ew aciz e, xalo.",
-                        "en": "The history exam. She’s uneasy, uncle."
+                        "text": "Azmûna dîrokê. Ew bêzar e, xalo.",
+                        "en": "The history exam. She’s fed up, uncle."
                       },
                       {
                         "speaker": 0,
@@ -2004,23 +2004,23 @@
         },
         {
           "position": 3,
-          "titleKu": "Saet çend e?",
+          "titleKu": "Demjimêr çend e?",
           "titleEn": "What time is it?",
-          "grammarMd": "**Saet çend e?** What time is it?\n\n- *Saet heft e.* It is seven.\n- *Saet heft û nîv e.* It is half past seven.\n- *Saet heft û çaryek e.* It is a quarter past seven.\n- *Saet heşt kêm çaryek e.* It is a quarter to eight (eight minus a quarter).\n- *Saet heft û deh deqîqe ye.* It is ten past seven.\n\n“At seven” is **di saet heftan de** — the number takes the plural oblique -an: *di saet çaran de* at four · *di saet yekê de* at one.\n\nParts of the day: *sibeh* morning · *nîvro* noon · *piştî nîvro* afternoon · *êvar* evening · *şev* night.",
+          "grammarMd": "**Demjimêr çend e?** What time is it?\n\n- *Demjimêr heft e.* It is seven.\n- *Demjimêr heft û nîv e.* It is half past seven.\n- *Demjimêr heft û çaryek e.* It is a quarter past seven.\n- *Demjimêr heşt kêm çaryek e.* It is a quarter to eight (eight minus a quarter).\n- *Demjimêr heft û deh xulek e.* It is ten past seven.\n\n“At seven” is **di demjimêr heftan de** — the number takes the plural oblique -an: *di demjimêr çaran de* at four · *di demjimêr yekê de* at one.\n\nParts of the day: *sibeh* morning · *nîvro* noon · *piştî nîvro* afternoon · *êvar* evening · *şev* night.",
           "lessons": [
             {
               "key": "u05s3l1",
               "position": 1,
-              "titleKu": "Saet çend e?",
+              "titleKu": "Demjimêr çend e?",
               "titleEn": "What time is it?",
               "exercises": [
                 {
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Saet çend e?",
+                    "say": "Demjimêr çend e?",
                     "voice": "hamo",
-                    "prompt": "Hamo looks from one of his three clocks to the next and frowns. What is he asking? “Saet çend e?”",
+                    "prompt": "Hamo looks from one of his three clocks to the next and frowns. What is he asking? “Demjimêr çend e?”",
                     "options": [
                       "Whose clock is it?",
                       "What time is it?",
@@ -2033,8 +2033,8 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Saet heft û nîv e.",
-                    "prompt": "The first clock says… “Saet heft û nîv e.”",
+                    "say": "Demjimêr heft û nîv e.",
+                    "prompt": "The first clock says… “Demjimêr heft û nîv e.”",
                     "options": [
                       "It’s half past seven.",
                       "It’s seven o’clock.",
@@ -2050,11 +2050,11 @@
                   "payload": {
                     "pairs": [
                       {
-                        "left": "saet",
+                        "left": "demjimêr",
                         "right": "hour; clock"
                       },
                       {
-                        "left": "deqîqe",
+                        "left": "xulek",
                         "right": "minute"
                       },
                       {
@@ -2081,8 +2081,8 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Saet heşt kêm çaryek e.",
-                    "prompt": "The second clock says something else. What time is it? “Saet heşt kêm çaryek e.”",
+                    "say": "Demjimêr heşt kêm çaryek e.",
+                    "prompt": "The second clock says something else. What time is it? “Demjimêr heşt kêm çaryek e.”",
                     "options": [
                       "A quarter past eight",
                       "Half past eight",
@@ -2096,8 +2096,8 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "say": "Saet çar e. Dema çayê ye!",
-                    "prompt": "And the third clock? Hamo trusts this one. What does he say? “Saet çar e. Dema çayê ye!”",
+                    "say": "Demjimêr çar e. Dema çayê ye!",
+                    "prompt": "And the third clock? Hamo trusts this one. What does he say? “Demjimêr çar e. Dema çayê ye!”",
                     "accepted": [
                       "It's four o'clock. It's tea time!",
                       "It's four. It's time for tea!",
@@ -2117,10 +2117,10 @@
                   "payload": {
                     "prompt": "Tell Hamo: “It is ten past seven.”",
                     "accepted": [
-                      "Saet heft û deh deqîqe ye.",
-                      "Saet heft û deh e.",
-                      "Saet heft û deh deqîqe ye",
-                      "Saet heft û deh e"
+                      "Demjimêr heft û deh xulek e.",
+                      "Demjimêr heft û deh e.",
+                      "Demjimêr heft û deh xulek e",
+                      "Demjimêr heft û deh e"
                     ],
                     "voice": "hamo"
                   }
@@ -2131,8 +2131,8 @@
                   "payload": {
                     "prompt": "Hamo explains the house rules. Type what you hear.",
                     "accepted": [
-                      "Em di saet heftan de çay vedixwin.",
-                      "Em di saet heftan de çay vedixwin"
+                      "Em di demjimêr heftan de çay vedixwin.",
+                      "Em di demjimêr heftan de çay vedixwin"
                     ],
                     "voice": "hamo"
                   }
@@ -2143,9 +2143,9 @@
                   "payload": {
                     "prompt": "“At eight o’clock”: which is right?",
                     "options": [
-                      "li saet heştan",
-                      "di saet heştan de",
-                      "di heştan saet de"
+                      "li demjimêr heştan",
+                      "di demjimêr heştan de",
+                      "di heştan demjimêr de"
                     ],
                     "correctIndex": 1
                   }
@@ -2154,10 +2154,10 @@
                   "position": 9,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Hamo asks “Saet çend e?” It’s a quarter past nine. Answer: “Saet neh û … e.”",
+                    "prompt": "Hamo asks “Demjimêr çend e?” It’s a quarter past nine. Answer: “Demjimêr neh û … e.”",
                     "accepted": [
-                      "Saet neh û çaryek e.",
-                      "Saet neh û çaryek e"
+                      "Demjimêr neh û çaryek e.",
+                      "Demjimêr neh û çaryek e"
                     ],
                     "voice": "hamo"
                   }
@@ -2184,7 +2184,7 @@
                   "type": "speaking",
                   "payload": {
                     "prompt": "Say it: “It’s two o’clock, in the afternoon.”",
-                    "reference": "Saet du ye, piştî nîvro.",
+                    "reference": "Demjimêr du ye, piştî nîvro.",
                     "voice": "hamo"
                   }
                 },
@@ -2192,8 +2192,8 @@
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Nîvro saet diwanzdeh e.",
-                    "prompt": "Baran asks when noon is. What does Hamo say? “Nîvro saet diwanzdeh e.”",
+                    "say": "Nîvro demjimêr diwanzdeh e.",
+                    "prompt": "Baran asks when noon is. What does Hamo say? “Nîvro demjimêr diwanzdeh e.”",
                     "options": [
                       "Noon is two o’clock.",
                       "Noon is at night.",
@@ -2225,8 +2225,8 @@
                   "payload": {
                     "prompt": "Every night at the same hour Hamo says the same thing. Type what you hear.",
                     "accepted": [
-                      "Di saet yazdehan de Hamo dibêje: «Şev baş!»",
-                      "Di saet yazdehan de Hamo dibêje «Şev baş!»"
+                      "Di demjimêr yazdehan de Hamo dibêje: «Şev baş!»",
+                      "Di demjimêr yazdehan de Hamo dibêje «Şev baş!»"
                     ],
                     "voice": "hamo"
                   }
@@ -2235,8 +2235,8 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Pênc deqîqe, tenê pênc deqîqe!",
-                    "prompt": "Xezal asks when he will be ready. Hamo says… “Pênc deqîqe, tenê pênc deqîqe!”",
+                    "say": "Pênc xulek, tenê pênc xulek!",
+                    "prompt": "Xezal asks when he will be ready. Hamo says… “Pênc xulek, tenê pênc xulek!”",
                     "options": [
                       "Five hours",
                       "Fifteen minutes",
@@ -2258,8 +2258,8 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez di saet pêncan de şiyar dibim.",
-                    "prompt": "Hamo starts the story of his day with great pride. When does he wake up? “Ez di saet pêncan de şiyar dibim.”",
+                    "say": "Ez di demjimêr pêncan de şiyar dibim.",
+                    "prompt": "Hamo starts the story of his day with great pride. When does he wake up? “Ez di demjimêr pêncan de şiyar dibim.”",
                     "options": [
                       "At five",
                       "At nine",
@@ -2308,10 +2308,10 @@
                   "payload": {
                     "prompt": "Tell Hamo: “I get up at seven.”",
                     "accepted": [
-                      "Ez di saet heftan de radibim.",
-                      "Di saet heftan de ez radibim.",
-                      "Ez di saet heftan de radibim",
-                      "Di saet heftan de ez radibim"
+                      "Ez di demjimêr heftan de radibim.",
+                      "Di demjimêr heftan de ez radibim.",
+                      "Ez di demjimêr heftan de radibim",
+                      "Di demjimêr heftan de ez radibim"
                     ],
                     "voice": "hamo"
                   }
@@ -2333,8 +2333,8 @@
                   "position": 6,
                   "type": "translate",
                   "payload": {
-                    "say": "Piştî nîvro ez radizim, tenê pênc deqîqe!",
-                    "prompt": "After lunch Hamo has a rule. What is it? “Piştî nîvro ez radizim, tenê pênc deqîqe!”",
+                    "say": "Piştî nîvro ez radizim, tenê pênc xulek!",
+                    "prompt": "After lunch Hamo has a rule. What is it? “Piştî nîvro ez radizim, tenê pênc xulek!”",
                     "accepted": [
                       "In the afternoon I sleep, just five minutes!",
                       "In the afternoon I sleep, only five minutes!",
@@ -2355,12 +2355,12 @@
                   "position": 7,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Hamo asks: “Tu kengî radizî?” Say that you go to bed at eleven: “Ez di saet … de radizim.”",
+                    "prompt": "Hamo asks: “Tu kengî radizî?” Say that you go to bed at eleven: “Ez di demjimêr … de radizim.”",
                     "accepted": [
-                      "Ez di saet yazdehan de radizim.",
-                      "Di saet yazdehan de ez radizim.",
-                      "Ez di saet yazdehan de radizim",
-                      "Di saet yazdehan de ez radizim"
+                      "Ez di demjimêr yazdehan de radizim.",
+                      "Di demjimêr yazdehan de ez radizim.",
+                      "Ez di demjimêr yazdehan de radizim",
+                      "Di demjimêr yazdehan de ez radizim"
                     ],
                     "voice": "hamo"
                   }
@@ -2489,12 +2489,12 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez têm! Tenê pênc deqîqe!",
+                        "text": "Ez têm! Tenê pênc xulek!",
                         "en": "I’m coming! Just five minutes!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Pênc deqîqe? Saet heşt e, xalo. Ev saetek e!",
+                        "text": "Pênc xulek? Demjimêr heşt e, xalo. Ev demjimêrek e!",
                         "en": "Five minutes? It’s eight o’clock, uncle. That’s an hour!"
                       },
                       {
@@ -2514,7 +2514,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Saet neh e! Taştê sar e!",
+                        "text": "Demjimêr neh e! Taştê sar e!",
                         "en": "It’s nine! Breakfast is cold!"
                       },
                       {
@@ -2545,9 +2545,9 @@
                     ],
                     "prompt": "Hamo kengî tê?",
                     "options": [
-                      "Di saet heftan de",
+                      "Di demjimêr heftan de",
                       "Dema firavînê",
-                      "Piştî pênc deqîqeyan"
+                      "Piştî pênc xulekan"
                     ],
                     "correctIndex": 1
                   }
@@ -2659,8 +2659,8 @@
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Saet heşt e. Ev saetek e!",
-                    "prompt": "At last Hamo looks at a clock himself, and laughs. How long were his “five minutes”? “Saet heşt e. Ev saetek e!”",
+                    "say": "Demjimêr heşt e. Ev demjimêrek e!",
+                    "prompt": "At last Hamo looks at a clock himself, and laughs. How long were his “five minutes”? “Demjimêr heşt e. Ev demjimêrek e!”",
                     "options": [
                       "Five minutes",
                       "An hour",
@@ -2756,7 +2756,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Karê min? Serê sibehê, di saet heftan de… çay.",
+                        "text": "Karê min? Serê sibehê, di demjimêr heftan de… çay.",
                         "en": "My work? Early in the morning, at seven… tea."
                       },
                       {
@@ -2776,17 +2776,17 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Xew. Tenê pênc deqîqe!",
+                        "text": "Xew. Tenê pênc xulek!",
                         "en": "A nap. Just five minutes!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Pênc deqîqeyên te saetek in, xalo!",
+                        "text": "Pênc xulekên te demjimêrek in, xalo!",
                         "en": "Your five minutes are an hour, uncle!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Êvarî şîv û çay. Û di saet nehan de jî…",
+                        "text": "Êvarî şîv û çay. Û di demjimêr nehan de jî…",
                         "en": "In the evening, dinner and tea. And at nine, too…"
                       },
                       {
@@ -2796,7 +2796,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Tu zîrek î! Niha saeta Şemiyê: heşt.",
+                        "text": "Tu zîrek î! Niha demjimêra Şemiyê: heşt.",
                         "en": "You’re clever! Now the clock for Saturday: eight."
                       },
                       {
@@ -2909,8 +2909,8 @@
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Êvarî, di saet nehan de, Hamo hîn çay vedixwe.",
-                    "prompt": "What is Hamo doing at nine in the evening? “Êvarî, di saet nehan de, Hamo hîn çay vedixwe.”",
+                    "say": "Êvarî, di demjimêr nehan de, Hamo hîn çay vedixwe.",
+                    "prompt": "What is Hamo doing at nine in the evening? “Êvarî, di demjimêr nehan de, Hamo hîn çay vedixwe.”",
                     "options": [
                       "Sleeping",
                       "Working in the orchard",
@@ -2958,8 +2958,8 @@
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "say": "Ez saetê ji bo Şemiyê amade dikim.",
-                    "prompt": "Hamo winds up a clock with great care. What is he doing? “Ez saetê ji bo Şemiyê amade dikim.”",
+                    "say": "Ez demjimêrê ji bo Şemiyê amade dikim.",
+                    "prompt": "Hamo winds up a clock with great care. What is he doing? “Ez demjimêrê ji bo Şemiyê amade dikim.”",
                     "accepted": [
                       "I'm setting the clock for Saturday.",
                       "I am setting the clock for Saturday.",
@@ -3258,7 +3258,7 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Xezal draws her Monday bus for Baran and writes underneath it: “Otobûs di saet heftan de tê. Ew her gav tije ye!” When does her bus come, and what is it like?",
+                    "prompt": "Xezal draws her Monday bus for Baran and writes underneath it: “Otobûs di demjimêr heftan de tê. Ew her gav tije ye!” When does her bus come, and what is it like?",
                     "options": [
                       "At seven, and it is always full",
                       "At seven, and it is always empty",
@@ -3470,17 +3470,17 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Plan wiha ye: roja Şemiyê, di saet heştan de, otobûsa Kobaniyê ji meydanê diçe.",
+                        "text": "Plan wiha ye: roja Şemiyê, di demjimêr heştan de, otobûsa Kobaniyê ji meydanê diçe.",
                         "en": "The plan is like this: on Saturday, at eight, the Kobanî bus leaves from the square."
                       },
                       {
                         "speaker": 0,
-                        "text": "Saet heşt? Baş e. Em çay vedixwin, paşê diçin.",
+                        "text": "Demjimêr heşt? Baş e. Em çay vedixwin, paşê diçin.",
                         "en": "Eight o’clock? Fine. We drink tea, then we go."
                       },
                       {
                         "speaker": 1,
-                        "text": "Na, xalo! Di saet heft û nîvan de em derî digirin û diçin meydanê.",
+                        "text": "Na, xalo! Di demjimêr heft û nîvan de em derî digirin û diçin meydanê.",
                         "en": "No, uncle! At half past seven we close the door and go to the square."
                       },
                       {
@@ -3495,7 +3495,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Temam, wisa be. Ez soz didim: ez bi wext im!",
+                        "text": "Baş e, wisa be. Ez soz didim: ez di dema xwe de têm!",
                         "en": "All right, so be it. I promise: I’ll be on time!"
                       },
                       {
@@ -3525,15 +3525,15 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez rast dibêjim! Vê carê ez bi wext im.",
+                        "text": "Ez rast dibêjim! Vê carê ez di dema xwe de têm.",
                         "en": "I mean it! This time I’ll be on time."
                       }
                     ],
                     "prompt": "Otobûs kengî diçe?",
                     "options": [
-                      "Yekşemê, saet heşt",
-                      "Şemiyê, saet heşt",
-                      "Şemiyê, saet neh"
+                      "Yekşemê, demjimêr heşt",
+                      "Şemiyê, demjimêr heşt",
+                      "Şemiyê, demjimêr neh"
                     ],
                     "correctIndex": 1
                   }
@@ -3542,8 +3542,8 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez soz didim: ez bi wext im!",
-                    "prompt": "Hamo puts his hand on his heart. What does he promise? “Ez soz didim: ez bi wext im!”",
+                    "say": "Ez soz didim: ez di dema xwe de têm!",
+                    "prompt": "Hamo puts his hand on his heart. What does he promise? “Ez soz didim: ez di dema xwe de têm!”",
                     "options": [
                       "To make the tea",
                       "To be early",
@@ -3640,7 +3640,7 @@
                   "type": "speaking",
                   "payload": {
                     "prompt": "Say Hamo’s promise with his solemn face: “I will be on time!”",
-                    "reference": "Ez bi wext im!",
+                    "reference": "Ez di dema xwe de têm!",
                     "voice": "hamo"
                   }
                 },
@@ -3730,17 +3730,17 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Xalo! Tu şiyar î? Saet heşt û çaryek e!",
+                        "text": "Xalo! Tu şiyar î? Demjimêr heşt û çaryek e!",
                         "en": "Uncle! Are you awake? It’s a quarter past eight!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Çi?! Saeta min deng nake!",
+                        "text": "Çi?! Demjimêra min deng nake!",
                         "en": "What?! My clock isn’t ringing!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Otobûs di saet heştan de diçe! Em dibezin!",
+                        "text": "Otobûs di demjimêr heştan de diçe! Em dibezin!",
                         "en": "The bus leaves at eight! We’re running!"
                       },
                       {
@@ -3836,9 +3836,9 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "say": "Ji nişka ve dengê saetê tê.",
+                    "say": "Ji nişka ve dengê demjimêrê tê.",
                     "voice": "hamo",
-                    "prompt": "Saturday evening, eight o’clock. Everyone sits at home, sad. Then… “Ji nişka ve dengê saetê tê.”",
+                    "prompt": "Saturday evening, eight o’clock. Everyone sits at home, sad. Then… “Ji nişka ve dengê demjimêrê tê.”",
                     "accepted": [
                       "Suddenly the clock rings.",
                       "Suddenly the alarm rings.",
@@ -3943,9 +3943,9 @@
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Saet heşt e, lê ya êvarê!",
+                    "say": "Demjimêr heşt e, lê ya êvarê!",
                     "voice": "hamo",
-                    "prompt": "At last Hamo’s alarm rings. What’s wrong with it? “Saet heşt e, lê ya êvarê!”",
+                    "prompt": "At last Hamo’s alarm rings. What’s wrong with it? “Demjimêr heşt e, lê ya êvarê!”",
                     "options": [
                       "It’s eight, but in the morning!",
                       "It’s eight, but in the evening!",
