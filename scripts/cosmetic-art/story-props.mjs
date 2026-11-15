@@ -1,7 +1,7 @@
 /**
  * The things the Stories library's covers are told with (story-covers.mjs),
  * since a cover has no people in it: a blacksmith's anvil and hammer, the
- * leather apron raised as a banner, the forge's hearth; a stone throne and
+ * leather apron raised on a spear, the forge's hearth; a stone throne and
  * the serpent's coils round it; the castle of Cizîr over the Tigris, a rose
  * bush, two graves and the thorn between them; the face of a crag; a fortress
  * on its crag and the tents of the army round it.
@@ -144,103 +144,163 @@ export function forge(rnd, { x, y, w, h, stone, stoneDark, mortar, tongs }) {
 }
 
 /**
- * A banner flying from a staff: the staff from `foot` up to `top` with an iron
- * point, and the smith's leather apron hoisted on it by its neck strap, its
- * bib along the staff and the rest of it flying out on the wind at `angle`
- * (radians below level, toward `dir`: 1 right, -1 left), heavy, so it sags as
- * it goes — narrow at the bib, wide where the skirt begins, its hem worn
- * ragged, its waist ties streaming. `size` is the apron's length.
+ * The smith's leather apron raised on a spear, as the legend has it: the spear
+ * from `foot` up to `top` with its iron point, and the apron hung from it by
+ * its neck strap just under the point, hanging as an apron hangs from a peg —
+ * the bib at the top, cut away under the arms, the wider skirt below with its
+ * corners rounded, and the two waist ties hanging from its sides. `size` is
+ * the apron's length from the top of the bib to the hem.
  *
- * It waves, and is painted the way a painter paints a flag: in flat bands
- * across it, each the tone of the way that stretch of it faces — toward the
- * light (`leatherLit`), away from it (`leatherDark`) or neither (`leather`) —
- * and narrower where it turns away. Returns the staff and the apron apart.
+ * Heavy leather does not fly as cloth does: the wind from the left (`wind`, 0
+ * for still air) only swings it a little off the plumb (`sway`, radians),
+ * trails the skirt off downwind, lifts its far corner and sets the hem
+ * rippling, while the lighter ties swing further. The skirt is painted in flat
+ * planes, each from a point under the waist, where the leather hangs flat,
+ * widening to the hem: a narrow one down its left side in `leatherLit`, where
+ * it turns toward the forge, a wider one down its right in `leatherDark`, where
+ * the wind turns it away, and the leather's own tone between. The forge has
+ * scorched it here and there (`scorch`), and the stitching round its edge
+ * shows as a line of its own tone (`stitch`). Returns the spear and the apron
+ * apart.
  */
-export function apronBanner(rnd, { foot, top, size, angle = 0.3, dir = 1, waves = 1.6, amp = 0.05, wood, iron, leather, leatherLit, leatherDark, cord }) {
+export function apronOnSpear(rnd, { foot, top, size, sway = 0.06, wind = 1, wood, iron, leather, leatherLit, leatherDark, scorch, stitch, cord }) {
   const len = Math.hypot(top[0] - foot[0], top[1] - foot[1]);
   const ux = (top[0] - foot[0]) / len;
   const uy = (top[1] - foot[1]) / len;
-  const along = (d) => [top[0] - ux * d, top[1] - uy * d];
-  const sw = size * 0.022;
+  const sw = size * 0.02;
   const staff = [];
   staff.push(`<path d="M${pt([foot[0] - sw * 1.2, foot[1]])} L${pt([top[0] - sw * 0.8, top[1]])} L${pt([top[0] + sw * 0.8, top[1]])} L${pt([foot[0] + sw * 1.2, foot[1]])} Z" fill="${wood}"/>`);
-  // the point: a leaf of iron on its socket
+  // the point: a leaf of iron on its socket, which the strap hangs under
   const tip = [top[0] + ux * size * 0.17, top[1] + uy * size * 0.17];
   const side = [-uy, ux];
   const at = (t, k) => [top[0] + ux * size * t + side[0] * size * k, top[1] + uy * size * t + side[1] * size * k];
-  staff.push(`<path d="M${pt(at(0, -0.02))} L${pt(at(0.05, -0.016))} Q${pt(at(0.08, -0.05))} ${pt(tip)} Q${pt(at(0.08, 0.05))} ${pt(at(0.05, 0.016))} L${pt(at(0, 0.02))} Z" fill="${iron}"/>`);
+  staff.push(`<path d="M${pt(at(-0.05, -0.014))} L${pt(at(0, -0.02))} L${pt(at(0.05, -0.016))} Q${pt(at(0.08, -0.05))} ${pt(tip)} Q${pt(at(0.08, 0.05))} ${pt(at(0.05, 0.016))} L${pt(at(0, 0.02))} L${pt(at(-0.05, 0.014))} Z" fill="${iron}"/>`);
 
-  // the apron: its middle line from the staff out, each point of it carried by the wind and the weight
-  const bib = size * 0.24;
-  const a = along(size * 0.04);
-  const b = along(size * 0.04 + bib);
-  const root = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-  const steps = 40;
-  const phase = between(rnd, 0, Math.PI * 2);
-  // narrow at the bib, widening smoothly through the waist into the skirt
-  const half = (u) => {
-    const t = Math.min(1, Math.max(0, (u - 0.12) / 0.45));
-    return bib * 0.5 + size * 0.14 * t * t * (3 - 2 * t) + size * 0.03 * u;
+  // The apron in its own units, fractions of `size`: x across from its middle line, y down from where the strap
+  // hangs on the spear. The bib's top is DROP below that, and v is measured down from the bib's top.
+  const DROP = 0.16;
+  const BIB = 0.14; // half the bib's width
+  const CHEST = 0.08; // how far the bib's sides run straight down before they are cut away under the arms
+  const WAIST = 0.34; // where the cut ends and the ties are sewn on
+  const HIP = 0.32; // half the apron's width there
+  const HEM = 0.345; // and at the hem
+  const ROUND = 0.05; // the hem's corners
+  const clamp = (x, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, x));
+  const half = (v) => {
+    if (v <= CHEST) return BIB;
+    if (v <= WAIST) return BIB + (HIP - BIB) * (1 - Math.sqrt(Math.max(0, 1 - ((v - CHEST) / (WAIST - CHEST)) ** 2)));
+    return HIP + ((HEM - HIP) * (v - WAIST)) / (1 - WAIST);
   };
-  const rows = [];
-  for (let i = 0; i <= steps; i++) {
-    const u = i / steps;
-    const sag = u * u * size * 0.22;
-    const cx = root[0] + dir * Math.cos(angle) * size * u;
-    const cy = root[1] + Math.sin(angle) * size * u + sag;
-    const turn = Math.cos(u * Math.PI * 2 * waves + phase);
-    const lift = Math.sin(u * Math.PI * 2 * waves + phase) * size * amp * u;
-    const hw = half(u) * (0.8 + 0.2 * Math.abs(turn));
-    // across the apron: square to its run, which bends down as it sags
-    const dx = dir * Math.cos(angle);
-    const dy = Math.sin(angle) + 2 * u * 0.22;
-    const dl = Math.hypot(dx, dy);
-    const px = -dy / dl;
-    const py = dx / dl;
-    rows.push({ u, turn, up: [cx + px * (lift - hw) * dir, cy + py * (lift - hw) * dir], down: [cx + px * (lift + hw) * dir, cy + py * (lift + hw) * dir] });
+  // the wind's work on it: the skirt trailed off to the right, its far corner lifted, and the hem rippling, dipped in
+  // the middle and lifted at the corners
+  const bend = ([x, y]) => {
+    const v = y - DROP;
+    const k = clamp((v - WAIST) / (1 - WAIST));
+    const sk = clamp(x / half(Math.max(0, v)), -1, 1);
+    return [x + wind * 0.09 * k * k, y - wind * 0.05 * k ** 3 * Math.max(0, sk) ** 2 + wind * 0.016 * k ** 3 * Math.cos(sk * 2.6)];
+  };
+  // then the whole swung a little off the plumb about the strap, and carried onto the canvas
+  const hang = [top[0] - ux * size * 0.065, top[1] - uy * size * 0.065];
+  const cs = Math.cos(sway * wind);
+  const sn = Math.sin(sway * wind);
+  const place = (p) => {
+    const [bx, by] = bend(p);
+    return [hang[0] + size * (bx * cs + by * sn), hang[1] + size * (by * cs - bx * sn)];
+  };
+  const path = (points) => `M${points.map((p) => pt(place(p))).join(' L')} Z`;
+  const smooth = (points) => {
+    const c = points.map(place);
+    const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+    let d = `M${pt(mid(c[c.length - 1], c[0]))}`;
+    for (let i = 0; i < c.length; i++) d += ` Q${pt(c[i])} ${pt(mid(c[i], c[(i + 1) % c.length]))}`;
+    return `${d} Z`;
+  };
+
+  // its outline: down the right side from the bib's corner, round the armhole, down the skirt, round the corner
+  // and along the hem to the middle; the left side is the same turned over
+  const right = [[BIB, DROP], [BIB, DROP + CHEST]];
+  for (let i = 1; i <= 14; i++) {
+    const a = (i / 14) * (Math.PI / 2);
+    right.push([BIB + (HIP - BIB) * (1 - Math.cos(a)), DROP + CHEST + (WAIST - CHEST) * Math.sin(a)]);
   }
-  // (at the staff the bib is tied along it)
-  rows[0].up = a;
-  rows[0].down = b;
-  const apron = [];
-  const edge = [...rows.map((r) => r.up)];
-  // the hem: worn and nicked, a little ragged
-  const end = rows[steps];
-  for (let i = 1; i < 6; i++) {
-    const t = i / 6;
-    const hx = end.up[0] + (end.down[0] - end.up[0]) * t + dir * Math.sin(t * Math.PI) * size * 0.03 + between(rnd, -1, 1) * size * 0.01;
-    const hy = end.up[1] + (end.down[1] - end.up[1]) * t;
-    edge.push([hx, hy]);
-  }
-  edge.push(...rows.map((r) => r.down).reverse());
-  apron.push(`<path d="M${edge.map(pt).join(' L')} Z" fill="${leather}"/>`);
-  // the bands, each the tone of the way it faces; a band that faces neither way is left in the leather's own
-  const lit = [];
-  const dark = [];
-  for (let i = 0; i < steps; i++) {
-    const r0 = rows[i];
-    const r1 = rows[i + 1];
-    const face = (r0.turn + r1.turn) / 2;
-    const quad = `M${pt(r0.up)} L${pt(r1.up)} L${pt(r1.down)} L${pt(r0.down)} Z`;
-    if (face > 0.3) lit.push(quad);
-    else if (face < -0.35) dark.push(quad);
-  }
-  apron.push(`<path d="${dark.join(' ')}" fill="${leatherDark}"/>`);
-  apron.push(`<path d="${lit.join(' ')}" fill="${leatherLit}"/>`);
-  // the neck strap round the staff above the bib, and the waist ties, streaming out past the hem on the wind
-  const strap = `M${pt(a)} L${pt(along(size * 0.005))} L${pt(along(size * 0.05))}`;
-  const waist = rows[Math.round(steps * 0.36)];
-  const tie = (from, k) => {
-    let d = `M${pt(from)}`;
-    const reach = size * between(rnd, 0.22, 0.3);
-    for (let i = 1; i <= 8; i++) {
-      const t = i / 8;
-      d += ` L${pt([from[0] + dir * reach * t * 0.9, from[1] + k * reach * t * 0.55 + Math.sin(t * 6 + k) * size * 0.02 * t])}`;
+  for (let v = WAIST + 0.03; v < 1 - ROUND; v += 0.03) right.push([half(v), DROP + v]);
+  const corner = [half(1 - ROUND) - ROUND, DROP + 1 - ROUND];
+  for (let i = 0; i <= 6; i++) right.push([corner[0] + ROUND * Math.cos((i / 6) * (Math.PI / 2)), corner[1] + ROUND * Math.sin((i / 6) * (Math.PI / 2))]);
+  for (let x = corner[0] - 0.02; x > 0.005; x -= 0.02) right.push([x, DROP + 1]);
+  const outline = [...right, [0, DROP + 1], ...right.map(([x, y]) => [-x, y]).reverse()];
+  // the line of the stitching, a little inside the edge all round (each point moved in along the bisector of its
+  // corner, far enough to stay as far from both of its sides)
+  const inset = outline.map((p, i) => {
+    const prev = outline[(i + outline.length - 1) % outline.length];
+    const next = outline[(i + 1) % outline.length];
+    const normal = (a, b) => {
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+    };
+    const n0 = normal(prev, p);
+    const n1 = normal(p, next);
+    const m = [n0[0] + n1[0], n0[1] + n1[1]];
+    const ml = Math.hypot(m[0], m[1]) || 1;
+    const reach = 0.022 / Math.max(0.6, (m[0] * n0[0] + m[1] * n0[1]) / ml);
+    return [p[0] + (m[0] / ml) * reach, p[1] + (m[1] / ml) * reach];
+  });
+
+  // a plane of the skirt: from a point under the waist, widening as it runs down to the hem (and past it, to be cut
+  // by the outline); `tip` and `hem` say where across the skirt (-1 its left edge, 1 its right) it starts and ends,
+  // `from` how far down it starts, `wide` half its width at the hem
+  const wedge = ({ tip, from, hem, wide }) => {
+    const left = [];
+    const right = [];
+    for (let v = from + 0.02; v <= 1.08; v += 0.02) {
+      const t = (v - from) / (1 - from);
+      const mid = tip + (hem - tip) * t;
+      left.push([(mid - wide * t ** 1.1) * half(v), DROP + v]);
+      right.push([(mid + wide * t ** 1.1) * half(v), DROP + v]);
     }
-    return d;
+    return [[tip * half(from), DROP + from], ...left, ...right.reverse()];
   };
-  apron.push(`<path d="${strap}" fill="none" stroke="${cord}" stroke-width="${n(size * 0.014)}" stroke-linecap="round" stroke-linejoin="round"/>`);
-  apron.push(`<path d="${tie(waist.down, 1)} ${tie([waist.down[0] - size * 0.01, waist.down[1] - size * 0.006], 1.5)}" fill="none" stroke="${cord}" stroke-width="${n(size * 0.012)}" stroke-linecap="round" stroke-linejoin="round"/>`);
+
+  // a scorch: a ragged patch of burnt leather, off-centre in a fainter one of singeing
+  const singe = (cx, cy, r) => {
+    const ragged = (x0, y0, s) => {
+      const a0 = rnd() * Math.PI * 2;
+      return Array.from({ length: 11 }, (_, i) => {
+        const k = between(rnd, 0.55, 1.25);
+        return [x0 + Math.cos(a0 + (i / 11) * Math.PI * 2) * r * s * k, y0 + Math.sin(a0 + (i / 11) * Math.PI * 2) * r * s * k * 1.2];
+      });
+    };
+    return `<path d="${smooth(ragged(cx, cy, 1.6))}" fill="${scorch}" fill-opacity="0.3"/><path d="${smooth(ragged(cx + r * 0.2, cy + r * 0.25, 0.9))}" fill="${scorch}" fill-opacity="0.6"/>`;
+  };
+
+  // the ties: a thong from each side of the waist, falling out from it a little, then hanging, swung downwind
+  const tie = (dir, reach, swing) => {
+    const line = [];
+    for (let i = 0; i <= 12; i++) {
+      const t = i / 12;
+      line.push(place([dir * (HIP - 0.01) + dir * 0.055 * Math.sin(Math.min(1, t * 2.5) * (Math.PI / 2)) + wind * swing * t * t + 0.012 * Math.sin(t * 5 + dir) * t, DROP + WAIST + 0.01 + reach * t * (1 - 0.3 * wind * swing * t)]));
+    }
+    const edge = (s) => line.map((p, i) => {
+      const a = line[Math.max(0, i - 1)];
+      const b = line[Math.min(line.length - 1, i + 1)];
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const w = size * (0.009 - 0.0035 * (i / (line.length - 1)));
+      return [p[0] - ((b[1] - a[1]) / l) * w * s, p[1] + ((b[0] - a[0]) / l) * w * s];
+    });
+    return `M${[...edge(1), ...edge(-1).reverse()].map(pt).join(' L')} Z`;
+  };
+
+  const apron = [];
+  apron.push(`<path d="${tie(-1, 0.36, 0.03)} ${tie(1, 0.34, 0.16)}" fill="${cord}"/>`);
+  apron.push(`<clipPath id="apron-cut"><path d="${path(outline)}"/></clipPath>`);
+  apron.push(`<path d="${path(outline)}" fill="${leather}"/>`);
+  apron.push('<g clip-path="url(#apron-cut)">');
+  apron.push(`<path d="${path(wedge({ tip: -0.45, from: 0.36, hem: -0.55, wide: 0.18 }))}" fill="${leatherLit}"/><path d="${path(wedge({ tip: 0.55, from: 0.38, hem: 0.62, wide: 0.38 }))}" fill="${leatherDark}"/>`);
+  apron.push(singe(-0.03, DROP + 0.74, 0.042), singe(0.07, DROP + 0.13, 0.02));
+  apron.push(`<path d="${path(inset)}" fill="none" stroke="${stitch}" stroke-width="${n(size * 0.006)}" stroke-dasharray="${n(size * 0.012)} ${n(size * 0.008)}" stroke-opacity="0.4"/>`);
+  apron.push('</g>');
+  // the neck strap, from the bib's corners up and over the spear under its collar
+  const strap = `M${pt(place([-(BIB - 0.025), DROP + 0.01]))} Q${pt(place([-0.035, 0.01]))} ${pt(place([0, -0.006]))} Q${pt(place([0.035, 0.01]))} ${pt(place([BIB - 0.025, DROP + 0.01]))}`;
+  apron.push(`<path d="${strap}" fill="none" stroke="${cord}" stroke-width="${n(size * 0.016)}" stroke-linecap="round" stroke-linejoin="round"/>`);
   return { staff: staff.join(''), apron: apron.join('') };
 }
 

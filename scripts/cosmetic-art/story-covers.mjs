@@ -14,7 +14,7 @@
  *
  * There are no people in them, as there are none in the backgrounds: each
  * legend is told by its place, its light and the things left in it — the
- * smith's apron raised on a staff, the empty throne in the serpent's coils,
+ * smith's apron raised on a spear, the empty throne in the serpent's coils,
  * two lamps in the castle, the stag at the cliff's edge, the smoke of the
  * camp below the walls.
  *
@@ -37,7 +37,7 @@ import { birds, heightAt } from './landscape.mjs';
 import { deer } from './figures.mjs';
 import { beams, blob, clouds, embers, fire, glow, grass, motes, noise, orb, silhouette, sky, starfield, tree } from './nature.mjs';
 import { renderScene } from './render.mjs';
-import { anvil, apronBanner, campTents, cizir, crown, forge, fortress, hammer, rockFace, roseBush, roots, serpent, spline, throne, twoGraves } from './story-props.mjs';
+import { anvil, apronOnSpear, campTents, cizir, crown, forge, fortress, hammer, rockFace, roseBush, roots, serpent, spline, throne, twoGraves } from './story-props.mjs';
 
 /** The highest point of a skyline within `reach` of x: where a summit's fire is lit. */
 function summit(line, x, reach = 50) {
@@ -79,7 +79,7 @@ export const SCENES = {
     en: 'Kawa the blacksmith',
     // the night the tyrant fell, high in the mountains: the fires of Newroz lit on the peaks one after another as far
     // as the eye goes, and close in front of us the smith's ground — the coals of his forge still bright, the anvil
-    // and the hammer by it, and his leather apron tied to a staff and flying like a banner against the cold night
+    // and the hammer by it, and his leather apron hung from a spear by its neck strap, stirring in the cold wind
     scene(rnd) {
       const s = new Scene(rnd);
       s.layer({}, (cv) => {
@@ -161,11 +161,11 @@ export const SCENES = {
         cv.add(a.markup);
         cv.add(hammer({ x: 696, y: footY - 6, to: [636, a.face[0][1] + 104], size: 64, iron: '#16161e', wood: '#24160e' }));
       });
-      // the staff, and the apron flying from it
-      const banner = apronBanner(rnd, { foot: [826, ground(826) + 46], top: [810, 116], size: 330, angle: 0.22, dir: 1, waves: 1.4, amp: 0.06, wood: '#140d0a', iron: '#181822', leather: '#2c110b', leatherLit: '#43180e', leatherDark: '#130504', cord: '#1a0c08' });
-      s.layer({ blur: 0.4, rim: { ...warm, width: 2.4, strength: 0.8, reach: 1100 } }, (cv) => {
-        cv.add(banner.staff);
-        cv.add(banner.apron);
+      // the spear, and the apron hung from it
+      const raised = apronOnSpear(rnd, { foot: [826, ground(826) + 46], top: [818, 140], size: 270, sway: 0.06, wind: 1, wood: '#140d0a', iron: '#181822', leather: '#402a1a', leatherLit: '#5c3e26', leatherDark: '#26180e', scorch: '#120a06', stitch: '#76563a', cord: '#382214' });
+      s.layer({ blur: 0.4, rim: { ...warm, width: 2.4, strength: 1, reach: 1300 } }, (cv) => {
+        cv.add(raised.staff);
+        cv.add(raised.apron);
       });
       // sparks from the forge going up on the wind, and a few close enough to be out of focus
       s.layer({ blur: 0.5, blend: 'screen' }, (cv) => {
