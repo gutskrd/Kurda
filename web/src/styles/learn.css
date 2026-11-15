@@ -777,12 +777,12 @@ html:has(.lesson-bar) {
     background: radial-gradient(circle, var(--vale-on-chip) 0 4px, var(--vale-red) 4.5px);
   }
 }
+/* beside its chip, whichever way the page and the option's own words run: the words' box sits at the row's start */
 .lesson-option-text {
   grid-column: 2;
   grid-row: 1;
+  justify-self: start;
   min-width: 0;
-  /* beside its chip whichever way the option's own words run */
-  text-align: match-parent;
 }
 .lesson-option-mark {
   grid-column: 1;
