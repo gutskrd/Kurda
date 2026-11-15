@@ -155,3 +155,19 @@ describe('the way on', () => {
     expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
   });
 });
+
+describe('the mistakes', () => {
+  // the server names a picture by its catalogue id; the learner saw a picture of a sheep, not "ewe"
+  it('name a missed picture by what it shows', async () => {
+    show({
+      results: { ...results, mistakes: [{ exerciseId: 'p1', verdict: 'wrong', prompt: 'mih', correction: 'ewe' }, { exerciseId: 'm1', verdict: 'wrong', prompt: 'Silav!', correction: 'Hello!' }] },
+      exercises: [
+        { id: 'p1', type: 'multiple_choice', ask: 'picture', prompt: 'mih', options: ['ewe', 'goat'] },
+        { id: 'm1', type: 'multiple_choice', ask: 'meaning', prompt: 'Silav!', options: ['Hello!', 'No!'] },
+      ],
+    });
+    expect(await screen.findByText('sheep')).toBeTruthy();
+    expect(screen.queryByText('ewe')).toBeNull();
+    expect(screen.getByText('Hello!')).toBeTruthy();
+  });
+});

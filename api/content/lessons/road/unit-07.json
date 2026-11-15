@@ -3673,7 +3673,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ew ne çira ne… ew erebe ye! Erebeyek ji Kobaniyê tê!",
+                        "text": "Ew ne çira ne… ew trimbêl e! Trimbêlek ji Kobaniyê tê!",
                         "en": "Those aren’t lamps… it’s a car! A car is coming from Kobanî!"
                       },
                       {
@@ -3684,7 +3684,7 @@
                     ],
                     "prompt": "Li ser gir çi tê?",
                     "options": [
-                      "Erebeyek.",
+                      "Trimbêlek.",
                       "Stêrkek.",
                       "Agirek."
                     ],
@@ -3696,14 +3696,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "erebe",
+                    "say": "baran",
                     "voice": "hamo",
-                    "prompt": "erebe",
+                    "prompt": "baran",
                     "options": [
-                      "car",
-                      "bus",
-                      "horse",
-                      "donkey"
+                      "rain",
+                      "snow",
+                      "cloud",
+                      "sun"
                     ],
                     "correctIndex": 0
                   }
@@ -3746,7 +3746,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Di vê bêdengiyê de erebeyek tê!"
+                      "Di vê bêdengiyê de trimbêlek tê!"
                     ]
                   }
                 },
