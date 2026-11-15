@@ -1,0 +1,589 @@
+/*
+ * A letter's own paper (PaperSheet.tsx, LetterComposer.tsx, PaperTools.tsx).
+ *
+ * The sheet is laid out in the page's own units. Its frame is a size
+ * container and `--u` is a thousandth of the sheet's width; the measures
+ * themselves come from the shared page (sheetStyle sets `--rule-u`,
+ * `--top-u` and the rest), so the ruled lines drawn by the shared art and
+ * the words typed on them are the same distance apart at any size. The type
+ * has a floor of 16px: a phone never zooms into a letter being written, and a
+ * letter reads the same on the phone it was written on.
+ *
+ * The paper is an object on the page, in its own colours whatever the theme
+ * — a hairline round it where it meets the screen, a soft shadow under it,
+ * and no glow. The tools under it are the app's own: a segmented choice, and
+ * swatches drawn in the paper they would give. Only colour, border and the
+ * transform of a press change, and nothing moves for a reader who asked for
+ * less motion.
+ */
+.paper-frame {
+  container-type: inline-size;
+  min-width: 0;
+}
+.paper-sheet {
+  --u: calc(100cqw / 1000);
+  --rule: calc(var(--u) * var(--rule-u));
+  --type: max(16px, calc(var(--u) * var(--type-u)));
+  /* where a line's baseline sits in it, until the sheet measures its own type (useBaseline) */
+  --baseline: calc(var(--rule) / 2 + var(--type) * 0.36);
+  position: relative;
+  min-height: calc(var(--u) * var(--length-u));
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 3px;
+  background: var(--sheet);
+  color: var(--sheet-ink);
+  box-shadow:
+    0 0 0 1px var(--sheet-edge),
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 16px 30px -24px rgba(0, 0, 0, 0.6);
+}
+/* a letter running on to a second sheet: where the first one ends, a fold */
+.paper-sheet.is-two::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: calc(var(--u) * var(--page-u));
+  z-index: 1;
+  border-top: 1px dashed var(--sheet-edge);
+  pointer-events: none;
+}
+.paper-art {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 0;
+  pointer-events: none;
+}
+.paper-art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* the words, on the lines: the first line's baseline a hair above the first rule, the writing inset as the page says */
+.paper-body {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: calc(var(--u) * var(--top-u) - var(--baseline)) calc(var(--u) * var(--side-u)) calc(var(--u) * var(--side-u)) calc(var(--u) * var(--start-u));
+  border: 0;
+  background: transparent;
+  color: var(--sheet-ink);
+  font-family: var(--font-display);
+  font-size: var(--type);
+  line-height: var(--rule);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.paper-probe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  font-family: var(--font-display);
+  font-size: var(--type);
+  line-height: var(--rule);
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* no height of its own, so it sits on the baseline, and its top is where the baseline is */
+.paper-probe-mark {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: baseline;
+}
+/* the words as they would lie, unseen, to measure how far down the sheet they reach */
+.paper-mirror {
+  position: absolute;
+  inset: 0 0 auto;
+  visibility: hidden;
+  pointer-events: none;
+}
+.paper-input {
+  height: calc(var(--u) * var(--length-u));
+  resize: none;
+  overflow: hidden;
+  caret-color: var(--sheet-ink);
+}
+.paper-input::placeholder {
+  color: var(--sheet-muted);
+  opacity: 1;
+}
+.paper-input:focus {
+  outline: none;
+}
+.paper-sheet:has(.paper-input:focus-visible) {
+  outline: 2px solid var(--focus, #3d8bd9);
+  outline-offset: 3px;
+}
+/* while drawing, placing notes or choosing the paper, the words lie still under it */
+.paper-sheet:not(.is-write) .paper-input {
+  pointer-events: none;
+}
+.paper-sheet.is-draw,
+.paper-sheet.is-text {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.paper-live {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+  width: 100%;
+  height: calc(var(--u) * var(--length-u));
+  overflow: visible;
+  pointer-events: none;
+}
+/* the whole sheet takes a drawing hand: no scrolling, no zooming, no menu */
+.paper-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+.paper-surface.is-draw {
+  z-index: 4;
+  cursor: crosshair;
+  touch-action: none;
+}
+.paper-surface.is-draw:focus {
+  outline: none;
+}
+
+/* ---- notes ---------------------------------------------------------------------------- */
+.paper-notes {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+.paper-note {
+  position: absolute;
+  left: calc(var(--u) * var(--x));
+  top: calc(var(--u) * var(--y));
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(var(--u) * 640);
+  margin: 0;
+  padding: calc(var(--u) * 6) calc(var(--u) * 12);
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-family: var(--font-display);
+  font-size: max(12px, calc(var(--u) * var(--note-u)));
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  transform: translate(-50%, -50%) rotate(var(--turn));
+}
+/* placing them: each one a thing to pick up, marked when it is the one chosen */
+.paper-note.is-placed {
+  outline: 1px dashed transparent;
+  outline-offset: 0;
+  cursor: grab;
+  touch-action: none;
+  pointer-events: auto;
+}
+.paper-note.is-placed:hover,
+.paper-note.is-placed.is-chosen {
+  outline-color: currentColor;
+}
+.paper-note.is-placed:active {
+  cursor: grabbing;
+}
+.paper-note.is-placed:focus-visible {
+  outline: 2px solid var(--sheet-ink);
+  outline-offset: 2px;
+}
+
+/* ---- the tools under the sheet -------------------------------------------------------- */
+.paper-dock {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface-solid);
+}
+/*
+ * While drawing, placing notes or choosing paper on a sheet taller than the
+ * screen, the tools stay at the foot of the screen and the sheet passes over
+ * them; they settle back under it once its end is reached. Not on a phone,
+ * where the whole sheet and its tools fit on the screen together, and the
+ * tools would only hide the paper.
+ */
+@media (min-width: 600px) and (min-height: 600px) {
+  .paper-dock.is-floating {
+    position: sticky;
+    bottom: 12px;
+    z-index: 5;
+    box-shadow: var(--shadow);
+  }
+}
+.paper-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+}
+.paper-tool,
+.paper-pen {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  font-weight: 650;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
+}
+/* the radio is the real control, under its label, so the arrow keys and a screen reader find it */
+.paper-tool input,
+.paper-pen input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.paper-tool:hover,
+.paper-pen:hover {
+  color: var(--ink);
+}
+.paper-tool:active,
+.paper-pen:active {
+  transform: scale(var(--press-scale));
+}
+.paper-tool:has(input:focus-visible),
+.paper-pen:has(input:focus-visible),
+.paper-paint:has(input:focus-visible),
+.paper-sheet-pick:has(input:focus-visible) {
+  outline: 2px solid var(--focus, #3d8bd9);
+  outline-offset: 2px;
+}
+.paper-tool.is-active {
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+.paper-pen.is-active {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+/* drawing, closed on a first letter: still there, quieter, with its lock */
+.paper-tool.is-closed {
+  color: var(--ink-4);
+}
+.paper-tool.is-closed.is-active {
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.paper-tool-icon {
+  display: inline-flex;
+  flex: none;
+}
+.paper-tool-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* on a phone each tool's name goes under its glyph, so four of them fit in every language */
+@media (max-width: 460px) {
+  .paper-tools {
+    border-radius: var(--r-lg);
+  }
+  .paper-tool {
+    flex-direction: column;
+    gap: 2px;
+    min-height: 50px;
+    padding: 4px 2px;
+    border-radius: var(--r-md);
+    font-size: var(--text-caption);
+  }
+}
+.paper-panel {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: 4px 4px 2px;
+}
+.paper-panel-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+}
+.paper-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.paper-legend {
+  display: block;
+  margin: 0 0 6px;
+  padding: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+.paper-panel-row > .paper-legend {
+  margin: 0;
+}
+.paper-swatches,
+.paper-pens {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.paper-pens {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+}
+.paper-pen {
+  min-height: 36px;
+  padding: 0 12px;
+}
+.paper-field {
+  display: grid;
+  gap: 6px;
+}
+.paper-field > .paper-legend {
+  margin: 0;
+}
+.paper-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+/* a colour: its dot on a ring of the paper it would be drawn on, ringed again in the page's ink once chosen */
+.paper-paint {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease;
+}
+.paper-paint-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.14),
+    0 0 0 3px var(--swatch-sheet, transparent),
+    0 0 0 4px var(--border);
+}
+.paper-paint.is-picked {
+  border-color: var(--ink);
+}
+.paper-paint:hover:not(.is-picked) {
+  border-color: var(--border-strong);
+}
+/* a paper: a small sheet drawn as it would be, its name under it */
+.paper-sheet-pick {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  width: 64px;
+  padding: 5px 2px 4px;
+  border: 2px solid transparent;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease;
+}
+.paper-sheet-pick.is-tone {
+  width: auto;
+  padding: 4px;
+}
+.paper-sheet-pick.is-tone .paper-mini {
+  width: 28px;
+  height: auto;
+}
+.paper-sheet-pick.is-picked {
+  border-color: var(--ink);
+}
+.paper-sheet-pick:hover:not(.is-picked) {
+  border-color: var(--border-strong);
+}
+.paper-mini {
+  display: block;
+}
+.paper-pick-name {
+  color: var(--ink-3);
+  font-size: var(--text-tab);
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.paper-sheet-pick.is-picked .paper-pick-name {
+  color: var(--ink);
+}
+.paper-history {
+  display: inline-flex;
+  gap: 4px;
+  margin-inline-start: auto;
+}
+.paper-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease;
+}
+.paper-icon-btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+.paper-icon-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+.paper-icon-btn:focus-visible {
+  outline: 2px solid var(--focus, #3d8bd9);
+  outline-offset: 2px;
+}
+.paper-size {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+/* a note's turn: its name over its slider, as its size is beside it */
+.paper-turn {
+  flex: 1 1 180px;
+  align-self: stretch;
+  align-content: start;
+  min-width: 0;
+}
+.paper-turn input {
+  min-height: 36px;
+}
+.paper-size .paper-legend,
+.paper-turn .paper-legend {
+  margin: 0;
+}
+.paper-size input,
+.paper-turn input {
+  width: 100%;
+  min-width: 0;
+  accent-color: var(--ink);
+}
+/* the line's own width, at the sheet's size, in its colour, on a round of the paper itself */
+.paper-size-dot {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--border);
+}
+.paper-size-dot > span {
+  display: block;
+  border-radius: 50%;
+}
+.paper-note-add {
+  display: flex;
+  gap: var(--space-2);
+}
+.paper-note-add .input {
+  flex: 1;
+  min-width: 0;
+}
+.paper-note-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.paper-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.paper-reason {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 2px;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  line-height: 1.4;
+}
+.paper-reason svg {
+  flex: none;
+  color: var(--ink-3);
+}
+.paper-notice {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+}
+.paper-notice.is-problem {
+  color: var(--danger, #d8493b);
+  font-size: var(--text-secondary);
+}
+.paper-hint {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paper-tool,
+  .paper-pen,
+  .paper-paint,
+  .paper-sheet-pick,
+  .paper-icon-btn {
+    transition: none;
+  }
+  .paper-tool:active,
+  .paper-pen:active {
+    transform: none;
+  }
+}

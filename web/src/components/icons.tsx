@@ -135,6 +135,11 @@ import { Question } from '@phosphor-icons/react/dist/icons/Question';
 import { Key } from '@phosphor-icons/react/dist/icons/Key';
 import { Ticket } from '@phosphor-icons/react/dist/icons/Ticket';
 import { UserCircle } from '@phosphor-icons/react/dist/icons/UserCircle';
+import { PaintBrush } from '@phosphor-icons/react/dist/icons/PaintBrush';
+import { PaintBrushBroad } from '@phosphor-icons/react/dist/icons/PaintBrushBroad';
+import { Pen } from '@phosphor-icons/react/dist/icons/Pen';
+import { Highlighter } from '@phosphor-icons/react/dist/icons/Highlighter';
+import { Swatches } from '@phosphor-icons/react/dist/icons/Swatches';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 import { useMemo } from 'react';
 import { coinSvg, gemSvg, type CurrencyOptions } from '@kurda/shared';
@@ -370,6 +375,15 @@ export const ProfileIcon = named(UserCircle, 22);
 export const AtIcon = named(At, 22);
 /** The account's standing: the same shield as a tier's, drawn in outline at a row's size. */
 export const StandingIcon = named(ShieldCheck, 22);
+
+/* A letter's own paper (letters/LetterComposer): drawing on it, the three
+   things to draw with — a fine pen, a broad brush, a see-through marker — and
+   choosing the paper itself, its lines, its colour and its ink */
+export const PaintIcon = named(PaintBrush, 18);
+export const PenIcon = named(Pen, 18);
+export const BrushIcon = named(PaintBrushBroad, 18);
+export const MarkerIcon = named(Highlighter, 18);
+export const PaperIcon = named(Swatches, 18);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

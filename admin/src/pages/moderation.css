@@ -261,3 +261,19 @@
 .fb-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 560px) { .fb-actions > * { flex: 1 1 auto; min-height: var(--target); } }
 .star-filter { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+
+/* a reported letter on its paper: the sheet drawn by the shared art, its notes set over it where they were placed */
+.letter-sheet { margin: 0; display: grid; gap: 8px; max-width: 360px; }
+.letter-sheet-page {
+  position: relative; overflow: hidden; container-type: inline-size;
+  border-radius: var(--radius-xs); border: 1px solid var(--hairline); box-shadow: var(--shadow-sm);
+}
+.letter-sheet-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; user-select: none; -webkit-user-drag: none; }
+.letter-sheet-note {
+  position: absolute; max-width: 60%; line-height: 1.25; text-align: center; font-weight: 600;
+  overflow-wrap: anywhere; white-space: normal; pointer-events: none;
+}
+.letter-sheet-reveal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.letter-sheet figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12.5px; color: var(--text-2); }
+.letter-notes ol { display: grid; gap: 4px; overflow-wrap: anywhere; }
+.chat-line-notes { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--text); overflow-wrap: anywhere; }

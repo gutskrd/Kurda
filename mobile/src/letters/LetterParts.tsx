@@ -1,35 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { useMemo, useRef } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { LETTER_MAX, letterBirdSvg, letterProblem, type LetterItem, type LetterProblem } from '@kurda/shared';
+import { letterBirdSvg, type LetterItem } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
-import type { TranslationKey } from '../i18n/translations';
 import { useTheme } from '../theme/ThemeProvider';
 import { useDirection } from '../reports/direction';
 import { PressableScale } from '../theme/MotionParts';
-import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { LetterOnPaper } from './PaperSheet';
 
 /**
  * The small pieces the letters screens share, as the website has them
- * (web/src/letters/LetterParts.tsx): a pen pal's bird as their picture, the
- * sheet of lined paper a letter is written on, and a letter as it is read.
- *
- * A letter is warm paper with the deep ink on it in either theme — an object
- * on the screen, like the pictures, not a surface of it — a little dimmer in
- * the dark so it does not glare.
+ * (web/src/letters/LetterParts.tsx): a pen pal's bird as their picture, and a
+ * letter as it is read — on its own paper (PaperSheet.tsx), with the way to
+ * report one written to you, and to keep it on your home-screen widget.
+ * Writing one is LetterComposer.tsx.
  */
 
 const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
 
-/** The paper's own colours, light and dark. */
-export function usePaper(): { paper: string; line: string; ink: string; soft: string } {
+/** The plain warm paper a letter taken down is shown on, light and dark, as it always was. */
+function useRemovedPaper(): { paper: string; line: string; soft: string } {
   const { scheme } = useTheme();
-  return scheme === 'dark'
-    ? { paper: '#e9dfcd', line: '#d6c8ad', ink: '#2b2238', soft: '#6f6476' }
-    : { paper: '#fbf3e4', line: '#e9dcc3', ink: '#2b2238', soft: '#6f6476' };
+  return scheme === 'dark' ? { paper: '#e9dfcd', line: '#d6c8ad', soft: '#6f6476' } : { paper: '#fbf3e4', line: '#e9dcc3', soft: '#6f6476' };
 }
 
 let drawings = 0;
@@ -54,158 +49,86 @@ export function BirdBadge({ bird, size = 44 }: { bird: number; size?: number }):
   );
 }
 
-/** What to tell the writer about a letter that cannot go as it is. */
-const PROBLEM: Record<LetterProblem, TranslationKey> = {
-  short: 'letters.problem.short',
-  long: 'letters.problem.long',
-  link: 'letters.problem.link',
-  contact: 'letters.problem.contact',
-};
-
-/** How far apart the paper's rules are: one a line of writing. */
-const RULE = 30;
-
-/**
- * A sheet of lined paper to write a letter on, and the bird's send. What the
- * server would refuse is said under it as it is written — a link, a phone
- * number, too long — so nothing is refused after the bird has left; that it
- * is still empty is said only once somebody tries to send it. A single word
- * is a letter.
- */
-export function LetterPaper({
-  label,
-  sendLabel,
-  busy,
-  onSend,
-  onCancel,
-  error,
-  autoFocus = false,
-  testID,
-}: {
-  label: string;
-  /** what sending it is called, when it is not your own bird that takes it */
-  sendLabel?: string;
+/** What the widget action under a letter you were sent needs to know and do. */
+export interface WidgetAction {
+  pinned: boolean;
   busy: boolean;
-  onSend: (body: string) => void;
-  /** putting the paper away again, for a letter that was started by choice */
-  onCancel?: () => void;
-  /** what the server answered, when it refused */
-  error?: string | null;
-  /** opened by asking to write: the pen goes straight to the paper */
-  autoFocus?: boolean;
-  testID?: string;
-}): React.JSX.Element {
-  const { t } = useI18n();
-  const { colors } = useTheme();
-  const dir = useDirection();
-  const paper = usePaper();
-  const [body, setBody] = useState('');
-  const [tried, setTried] = useState(false);
-  const input = useRef<TextInput>(null);
-  // a moment after it opens, so the keyboard rises once the paper is in its place
-  useEffect(() => {
-    if (!autoFocus) return;
-    const soon = setTimeout(() => input.current?.focus(), 250);
-    return () => clearTimeout(soon);
-  }, [autoFocus]);
-  const problem = letterProblem(body);
-  const shown = problem && (problem !== 'short' || tried) ? t(PROBLEM[problem]) : null;
-  const length = [...body.trim()].length;
-  const send = (): void => {
-    setTried(true);
-    if (!problem && !busy) onSend(body);
-  };
-  return (
-    <View style={styles.paperBlock}>
-      <Text style={[styles.paperLabel, dir.text, { color: colors.textPrimary }]}>{label}</Text>
-      <View style={[styles.sheet, { backgroundColor: paper.paper, borderColor: paper.line }]}>
-        {/* the rules of the paper, behind the writing */}
-        <View {...HIDDEN} pointerEvents="none" style={StyleSheet.absoluteFill}>
-          {Array.from({ length: 8 }, (_, i) => (
-            <View key={i} style={[styles.rule, { top: 12 + (i + 1) * RULE, backgroundColor: paper.line }]} />
-          ))}
-        </View>
-        <TextInput
-          ref={input}
-          value={body}
-          onChangeText={setBody}
-          multiline
-          maxLength={LETTER_MAX + 200}
-          placeholder={t('letters.placeholder')}
-          placeholderTextColor={paper.soft}
-          accessibilityLabel={label}
-          accessibilityHint={t('letters.hint')}
-          testID={testID ? `${testID}-input` : undefined}
-          style={[styles.input, { color: paper.ink, textAlign: dir.row === 'row-reverse' ? 'right' : 'left' }]}
-        />
-      </View>
-      <View style={[styles.paperFoot, { flexDirection: dir.row }]}>
-        <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('letters.hint')}</Text>
-        <Text {...HIDDEN} style={[styles.count, { color: length > LETTER_MAX ? colors.danger : colors.textSecondary }]}>
-          {length} / {LETTER_MAX}
-        </Text>
-      </View>
-      {shown || error ? (
-        <Text accessibilityLiveRegion="polite" testID={testID ? `${testID}-problem` : undefined} style={[styles.problem, dir.text, { color: colors.danger }]}>
-          {shown ?? error}
-        </Text>
-      ) : null}
-      <View style={[styles.paperActions, { flexDirection: dir.row }]}>
-        {onCancel ? (
-          <ClayButton label={t('common.cancel')} onPress={onCancel} variant="outline" disabled={busy} testID={testID ? `${testID}-cancel` : undefined} />
-        ) : null}
-        <ClayButton
-          label={busy ? t('letters.sending') : (sendLabel ?? t('letters.send'))}
-          onPress={send}
-          tone="primary"
-          busy={busy}
-          style={styles.paperSend}
-          testID={testID ? `${testID}-send` : undefined}
-        />
-      </View>
-    </View>
-  );
+  onToggle: () => void;
 }
 
-/** A letter as it is read: on its paper, who wrote it and when, and for one written to you, the way to report it. */
-export function LetterSheet({ letter, from, onReport }: { letter: LetterItem; from: string; onReport?: () => void }): React.JSX.Element {
+/**
+ * A letter as it is read: on its own paper, with who wrote it and when at the
+ * top of the sheet, and under it, for one written to you, the ways to keep it
+ * on your widget and to report it. A letter taken down by moderation is a
+ * plain card saying so, its paper, drawing and notes gone with it.
+ */
+export function LetterSheet({
+  letter,
+  from,
+  onReport,
+  widget,
+}: {
+  letter: LetterItem;
+  from: string;
+  onReport?: () => void;
+  widget?: WidgetAction;
+}): React.JSX.Element {
   const { t, locale } = useI18n();
+  const { colors } = useTheme();
   const dir = useDirection();
-  const paper = usePaper();
+  const plain = useRemovedPaper();
   let when = '';
   try {
     when = new Date(letter.sentAt).toLocaleString(locale, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
   } catch {
     when = new Date(letter.sentAt).toLocaleString();
   }
-  // mine stand toward the end of the line, theirs toward its start, as letters laid on a table
-  const side = letter.mine ? (dir.row === 'row-reverse' ? styles.toLeft : styles.toRight) : dir.row === 'row-reverse' ? styles.toRight : styles.toLeft;
-  return (
-    <View accessible={false} style={[styles.letter, side, { backgroundColor: paper.paper, borderColor: paper.line }]}>
-      <View style={[styles.letterHead, { flexDirection: dir.row }]}>
-        <Text style={[styles.from, { color: paper.ink }]} numberOfLines={1}>
-          {from}
-        </Text>
-        <Text style={[styles.when, { color: paper.soft }]}>{when}</Text>
+  if (letter.removed) {
+    return (
+      <View style={[styles.removedCard, { backgroundColor: plain.paper, borderColor: plain.line }]} testID={`letter-${letter.id}`}>
+        <View style={[styles.removedHead, { flexDirection: dir.row }]}>
+          <Text style={[styles.from, { color: '#2b2238' }]} numberOfLines={1}>
+            {from}
+          </Text>
+          <Text style={[styles.when, { color: plain.soft }]}>{when}</Text>
+        </View>
+        <Text style={[styles.removed, dir.text, { color: plain.soft }]}>{t('letters.removed')}</Text>
       </View>
-      {letter.removed ? (
-        <Text style={[styles.removed, dir.text, { color: paper.soft }]}>{t('letters.removed')}</Text>
-      ) : (
-        <Text style={[styles.body, dir.free, { color: paper.ink }]} selectable>
-          {letter.body}
-        </Text>
-      )}
-      {onReport && !letter.removed ? (
-        <PressableScale
-          onPress={onReport}
-          accessibilityRole="button"
-          accessibilityLabel={`${t('letters.reportLetter')}, ${t('letters.fromWhom', { name: from })}`}
-          testID={`letter-report-${letter.id}`}
-          style={[styles.report, { flexDirection: dir.row, alignSelf: dir.row === 'row-reverse' ? 'flex-start' : 'flex-end' }]}
-        >
-          <Icon name="flag" size={14} color={paper.soft} />
-          <Text style={[styles.reportText, { color: paper.soft }]}>{t('letters.reportLetter')}</Text>
-        </PressableScale>
+    );
+  }
+  const actions = onReport || widget;
+  return (
+    <View style={styles.letter}>
+      <LetterOnPaper body={letter.body} decor={letter.decor ?? null} from={from} when={when} pinned={widget?.pinned ?? false} testID={`letter-${letter.id}`} />
+      {actions ? (
+        <View style={[styles.actions, { flexDirection: dir.row }]}>
+          {widget ? (
+            <PressableScale
+              onPress={widget.onToggle}
+              disabled={widget.busy}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: widget.busy, busy: widget.busy }}
+              accessibilityLabel={`${widget.pinned ? t('letters.pin.remove') : t('letters.pin.show')}, ${t('letters.fromWhom', { name: from })}`}
+              testID={`letter-widget-${letter.id}`}
+              style={[styles.action, { flexDirection: dir.row }, widget.busy ? styles.busy : null]}
+            >
+              <Icon name="pin" size={14} color={colors.textSecondary} />
+              <Text style={[styles.actionText, { color: colors.textSecondary }]}>{widget.pinned ? t('letters.pin.remove') : t('letters.pin.show')}</Text>
+            </PressableScale>
+          ) : null}
+          {onReport ? (
+            <PressableScale
+              onPress={onReport}
+              accessibilityRole="button"
+              accessibilityLabel={`${t('letters.reportLetter')}, ${t('letters.fromWhom', { name: from })}`}
+              testID={`letter-report-${letter.id}`}
+              style={[styles.action, { flexDirection: dir.row }]}
+            >
+              <Icon name="flag" size={14} color={colors.textSecondary} />
+              <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('letters.reportLetter')}</Text>
+            </PressableScale>
+          ) : null}
+        </View>
       ) : null}
     </View>
   );
@@ -214,34 +137,16 @@ export function LetterSheet({ letter, from, onReport }: { letter: LetterItem; fr
 const styles = StyleSheet.create({
   badge: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: radii.pill, backgroundColor: '#e3f1fb' },
 
-  paperBlock: { gap: spacing.sm },
-  paperLabel: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  sheet: { borderRadius: radii.lg, borderWidth: 1, overflow: 'hidden' },
-  rule: { position: 'absolute', left: 0, right: 0, height: StyleSheet.hairlineWidth * 2 },
-  input: {
-    minHeight: RULE * 7,
-    paddingHorizontal: spacing.md,
-    paddingTop: 14,
-    paddingBottom: spacing.sm,
-    fontSize: typography.sizes.md,
-    lineHeight: RULE,
-    textAlignVertical: 'top',
-  },
-  paperFoot: { justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.sm },
-  paperActions: { alignItems: 'center', gap: spacing.sm },
-  paperSend: { flex: 1 },
-  hint: { flex: 1, fontSize: typography.sizes.xs, lineHeight: 17 },
-  count: { fontSize: typography.sizes.xs, fontVariant: ['tabular-nums'] },
-  problem: { fontSize: typography.sizes.sm, lineHeight: 19 },
+  letter: { gap: 2 },
+  // the quiet things to do with a letter, under it toward the end of the line
+  actions: { justifyContent: 'flex-end', flexWrap: 'wrap', columnGap: spacing.md },
+  action: { alignItems: 'center', gap: 5, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.xs },
+  actionText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  busy: { opacity: 0.5 },
 
-  letter: { gap: spacing.sm, borderRadius: radii.lg, borderWidth: 1, paddingHorizontal: spacing.md, paddingTop: spacing.md - 2, paddingBottom: spacing.sm + 2 },
-  toRight: { marginLeft: '10%' },
-  toLeft: { marginRight: '10%' },
-  letterHead: { justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.sm },
+  removedCard: { gap: spacing.sm, borderRadius: radii.lg, borderWidth: 1, paddingHorizontal: spacing.md, paddingTop: spacing.md - 2, paddingBottom: spacing.sm + 2 },
+  removedHead: { justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.sm },
   from: { flexShrink: 1, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   when: { fontSize: typography.sizes.xs },
-  body: { fontSize: typography.sizes.md, lineHeight: 25 },
   removed: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
-  report: { alignItems: 'center', gap: 5, minHeight: MIN_TOUCH_TARGET - 12, paddingHorizontal: spacing.xs },
-  reportText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
 });

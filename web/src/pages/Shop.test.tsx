@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { Shop } from './Shop';
 import { renderApp, jsonResponse } from '../test/utils';
 import type { ShopItem } from '../lib/types';
-import { TREE_KINDS, TREE_SPECIES, treeView, type LettersHome, type TreeRecord } from '@kurda/shared';
+import { DEFAULT_PAPER, TREE_KINDS, TREE_SPECIES, treeView, type LettersHome, type TreeRecord } from '@kurda/shared';
 import type { MyTree } from '../tree/useTree';
 
 afterEach(() => {
@@ -509,6 +509,7 @@ describe('Shop: your bird and your tree', () => {
     arrival: null,
     penPals: [],
     roomForMore: true,
+    paper: DEFAULT_PAPER,
     ...over,
   });
   const TODAY = '2026-11-13';

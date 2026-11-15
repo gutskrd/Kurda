@@ -1,4 +1,4 @@
-import { MULTI_GAMES, isMultiGame, type EvidenceMessage, type EvidenceSnapshot, type ReportTargetType, type ReportableGame } from '@kurda/shared';
+import { MULTI_GAMES, isMultiGame, type EvidenceMessage, type EvidenceSnapshot, type LetterDecor, type ReportTargetType, type ReportableGame } from '@kurda/shared';
 import { writtenForSql } from '../users/age.js';
 import type { Executor } from './tx.js';
 
@@ -421,12 +421,21 @@ const resolveGroupMessage: Resolver = async (db, targetId, ctx) => {
   };
 };
 
+/** A letter round a reported one, as the case lists it: its words, and the notes on its paper and whether it was drawn on. */
+function toLetterMessage(m: MessageRow & { decor: LetterDecor | null }, reportedId: string): EvidenceMessage {
+  const message = toEvidenceMessage(m, reportedId);
+  if (!m.decor) return message;
+  return { ...message, notes: m.decor.notes.map((n) => n.text), drawn: m.decor.strokes.length > 0 };
+}
+
 /**
  * A letter between pen pals (letters/service.ts): reported only by somebody in
  * its correspondence and never by its writer, kept with the letters before and
  * after it, as a chat message is. A letter still out with its bird can be
  * reported by whoever called the bird to their window and read it, kept on
- * its own; to anybody else it is not found.
+ * its own; to anybody else it is not found. The whole letter is kept: its
+ * paper, what was drawn on it and its notes (`decor`), as the reader saw them;
+ * the letters round it keep their notes, which are words like any other.
  */
 const resolveLetter: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
@@ -447,19 +456,19 @@ const resolveLetter: Resolver = async (db, targetId, ctx) => {
   if (self) return self;
   // a letter still out with its bird stands alone; one in a correspondence is kept with the letters round it
   const rows = l.thread_id === null
-    ? await db.query<MessageRow>(
-        `SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.created_at FROM letters m LEFT JOIN users u ON u.id = m.sender_id WHERE m.id = $1`,
+    ? await db.query<MessageRow & { decor: LetterDecor | null }>(
+        `SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.decor, m.created_at FROM letters m LEFT JOIN users u ON u.id = m.sender_id WHERE m.id = $1`,
         [l.id],
       )
-    : await db.query<MessageRow>(
+    : await db.query<MessageRow & { decor: LetterDecor | null }>(
         `WITH ref AS (SELECT created_at, id FROM letters WHERE id = $2::uuid)
          SELECT * FROM (
-           (SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.created_at
+           (SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.decor, m.created_at
               FROM letters m LEFT JOIN users u ON u.id = m.sender_id, ref
              WHERE m.thread_id = $1 AND (m.created_at, m.id) <= (ref.created_at, ref.id)
              ORDER BY m.created_at DESC, m.id DESC LIMIT ${CONTEXT_BEFORE + 1})
            UNION ALL
-           (SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.created_at
+           (SELECT m.id, m.sender_id, u.username, 'letter' AS kind, m.body, m.decor, m.created_at
               FROM letters m LEFT JOIN users u ON u.id = m.sender_id, ref
              WHERE m.thread_id = $1 AND (m.created_at, m.id) > (ref.created_at, ref.id)
              ORDER BY m.created_at ASC, m.id ASC LIMIT ${CONTEXT_AFTER})
@@ -476,7 +485,8 @@ const resolveLetter: Resolver = async (db, targetId, ctx) => {
       text: reported?.body ?? null,
       createdAt: iso(l.created_at),
       status: l.status,
-      context: rows.rows.map((x) => toEvidenceMessage(x, l.id)),
+      decor: reported?.decor ?? null,
+      context: rows.rows.map((x) => toLetterMessage(x, l.id)),
       extra: { threadId: l.thread_id },
     },
   };

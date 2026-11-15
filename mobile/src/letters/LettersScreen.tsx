@@ -29,9 +29,12 @@ import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { haptic } from '../feedback/haptics';
 import { LetterWindow, type WindowScene } from './LetterWindow';
-import { BirdBadge, LetterPaper, LetterSheet } from './LetterParts';
+import { BirdBadge, LetterSheet } from './LetterParts';
+import { LetterComposer, rememberPaper, rememberedPaper, type ComposedLetter } from './LetterComposer';
+import { usePaperScroll } from './usePaperScroll';
 import { letterErrorText } from './errors';
 import { BirdPicker } from './BirdPicker';
+import { LetterWidgetButton } from '../widget/LetterWidgetButton';
 
 /**
  * What the screen is showing under the window: the letters as they stand,
@@ -98,6 +101,11 @@ function firstLook(home: LettersHome): { scene: WindowScene; moment: Moment } {
  * pal writes after that comes to the window by their own bird, which lands
  * beside yours and lays the letter on the sill until it is read.
  *
+ * Every letter is written on paper of your own (LetterComposer.tsx), which
+ * opens on the paper you last wrote on: its lines, colour and ink, and notes
+ * stuck to it. A first letter to somebody new carries no drawing — drawings
+ * travel only between pen pals — but the answer to a bird at your window may.
+ *
  * Under it your pen pals, the one most recently written to first, each with
  * whose turn it is, and one short list of how it works. Reporting and
  * blocking are on each correspondence, and on a visiting bird's letter.
@@ -129,6 +137,8 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   const [birdError, setBirdError] = useState<string | null>(null);
   // left for a correspondence: coming back, the screen starts afresh from what the server then says, as the website's page does
   const away = useRef(false);
+  // the page the paper lies on: held still while drawing, and kept with the writing above the keyboard
+  const page = usePaperScroll();
 
   const load = useCallback(
     async (afresh = false): Promise<void> => {
@@ -143,6 +153,8 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           setError(null);
         }
         setHome(res.data);
+        // the paper you last wrote on, for this sheet and for a correspondence opened from here
+        rememberPaper(res.data.paper);
         setLoadError(null);
       } else setLoadError(res.error);
     },
@@ -189,11 +201,11 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     navigation.navigate('LetterThread', { threadId });
   };
 
-  const send = async (body: string): Promise<void> => {
+  const send = async (letter: ComposedLetter): Promise<void> => {
     if (!home) return;
     setBusy(true);
     setError(null);
-    const res = await client.post<BirdOutResult>('/letters/out', { body });
+    const res = await client.post<BirdOutResult>('/letters/out', letter);
     setBusy(false);
     if (!res.ok) {
       haptic('error');
@@ -239,11 +251,11 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     setScene((s) => (s && s.visitor.kind === 'arriving' ? { ...s, visitor: { kind: 'here', bird: s.visitor.bird } } : s));
   };
 
-  const answer = async (body: string): Promise<void> => {
+  const answer = async (letter: ComposedLetter): Promise<void> => {
     if (!visitor) return;
     setBusy(true);
     setError(null);
-    const res = await client.post<VisitorAnswer>('/letters/visitor', { body });
+    const res = await client.post<VisitorAnswer>('/letters/visitor', letter);
     setBusy(false);
     if (!res.ok) {
       haptic('error');
@@ -465,9 +477,9 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('letters.title')} onBack={onExit} hairline />
+      <ScreenHeader title={t('letters.title')} onBack={onExit} hairline right={<LetterWidgetButton />} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView {...page.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {!home || !scene ? (
             loadError ? (
               <ErrorRetry message={describeError(loadError, t)} onRetry={() => void load()} />
@@ -503,17 +515,21 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
                 ) : null}
               </View>
 
+              {/* a first letter, to whoever calls your bird: its paper and notes travel, a drawing waits until you are pen pals */}
               {moment.kind === 'writing' && canWrite ? (
-                <LetterPaper
+                <LetterComposer
                   label={t('letters.yourLetter')}
                   busy={busy}
-                  onSend={(body) => void send(body)}
+                  onSend={(letter) => void send(letter)}
                   onCancel={() => {
                     setError(null);
                     setMoment({ kind: 'rest' });
                   }}
                   error={error}
                   autoFocus
+                  canDraw={false}
+                  paper={home.paper ?? rememberedPaper()}
+                  host={page.host}
                   testID="letters-paper"
                 />
               ) : null}
@@ -522,12 +538,16 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
                 <Rise key={visitor.letter.id} delay={unfold}>
                   <View style={styles.visitor} testID="letters-visitor">
                     <LetterSheet letter={visitor.letter} from={visitorName} onReport={() => setReporting(true)} />
-                    <LetterPaper
+                    {/* answering the bird at your window makes you pen pals, so this letter may carry a drawing */}
+                    <LetterComposer
                       label={t('letters.visitor.answerLabel', { name: visitorName })}
                       sendLabel={t('letters.visitor.send', { name: visitorName })}
                       busy={busy}
-                      onSend={(body) => void answer(body)}
+                      onSend={(letter) => void answer(letter)}
                       error={error}
+                      canDraw
+                      paper={home.paper ?? rememberedPaper()}
+                      host={page.host}
                       testID="letters-visitor-answer"
                     />
                     <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('letters.visitor.ownWaits', { name: visitorName })}</Text>

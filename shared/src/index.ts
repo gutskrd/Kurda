@@ -7,6 +7,8 @@ export {
   foldLetter,
   answerKey,
 } from './kurdish-text.js';
+/** Usernames: the one rule the server, the browser and the phone all check with, and how a name is read out of text. */
+export * from './username.js';
 export { matchedParts, type TextPart } from './search-highlight.js';
 export { plan, toLexicon, type Chunk, type ConvertedEntry, type SourceEntry } from './ferheng.js';
 export { FERHENG_LANGS, publishedFerheng, type FerhengSource, type Manifest } from './ferheng-source.js';
@@ -494,6 +496,7 @@ export {
   letterAgeBand,
   letterBirdOf,
   letterProblem,
+  letterText,
   type BirdOutResult,
   type LetterAgeBand,
   type LetterItem,
@@ -506,6 +509,8 @@ export {
   type PenPal,
   type VisitorAnswer,
 } from './letters.js';
+/** A letter's own paper, the drawing and notes on it, the colours it is drawn in, and the letter widget's shapes. */
+export * from './letter-paper.js';
 
 /**
  * Stories and their quizzes (they replaced the ranked quiz): the presets, the
@@ -822,6 +827,8 @@ export {
   type LetterSpriteOptions,
   type LetterWindowOptions,
   type LetterWindowPart,
+  letterPaperSvg,
+  type LetterPaperOptions,
   PIGEON_POSES,
   type PigeonPose,
   type SongbirdPose,

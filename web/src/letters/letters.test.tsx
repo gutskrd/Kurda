@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
-import type { BirdOutResult, LetterThread, LetterVisitor, LettersHome, VisitorAnswer } from '@kurda/shared';
+import { DEFAULT_PAPER, type BirdOutResult, type LetterThread, type LetterVisitor, type LettersHome, type VisitorAnswer } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
 import { LettersPage } from './LettersPage';
 import { LetterThreadPage } from './LetterThreadPage';
@@ -27,16 +27,19 @@ const home = (over: Partial<LettersHome> = {}): LettersHome => ({
   arrival: null,
   penPals: [],
   roomForMore: true,
+  paper: DEFAULT_PAPER,
   ...over,
 });
 const baran = { id: 'baran', name: 'Baran', bird: 4 };
 const visitor: LetterVisitor = {
   person: baran,
-  letter: { id: 'l1', mine: false, body: 'Silav! Ez Baran im.', removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
+  letter: { id: 'l1', mine: false, body: 'Silav! Ez Baran im.', decor: null, removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
   since: '2026-11-14T09:00:00.000Z',
   leavesAt: '2026-11-15T09:00:00.000Z',
 };
 const letter = 'Silav! Navê min Rojda ye. Tu çawa yî?';
+/** A letter sent as it was written: on the paper the composer opened on, nothing drawn, no notes. */
+const plain = { paper: DEFAULT_PAPER, strokes: [], notes: [] };
 
 /** Signed in, with the letters API answering from `answers` (method and path to body), and every request kept. */
 function signIn(answers: Record<string, unknown>): Array<{ method: string; url: string; body: unknown }> {
@@ -73,7 +76,7 @@ describe('letters by bird', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Write a letter' }));
     await userEvent.type(screen.getByLabelText('Your letter'), letter);
     await userEvent.click(screen.getByRole('button', { name: 'Send your bird' }));
-    expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/out'))?.body).toEqual({ body: letter });
+    expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/out'))?.body).toEqual({ body: letter, decor: plain });
     // the flight ends at once in a page that cannot animate, and the sill is empty
     expect(await screen.findByText('Your bird is out')).toBeInTheDocument();
     expect(document.querySelector('.lw-bird')).toBeNull();
@@ -97,7 +100,7 @@ describe('letters by bird', () => {
     // a single word is a letter
     await userEvent.type(screen.getByLabelText('Your answer to Baran'), 'Silav');
     await userEvent.click(screen.getByRole('button', { name: 'Send it home with Baran’s bird' }));
-    expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/visitor'))?.body).toEqual({ body: 'Silav' });
+    expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/visitor'))?.body).toEqual({ body: 'Silav', decor: plain });
     expect(await screen.findByText('You and Baran are pen pals now')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open your letters with Baran' })).toHaveAttribute('href', `/app/letters/${answered.threadId}`);
   });
@@ -219,8 +222,8 @@ describe('letters by bird', () => {
       threadId: 't1',
       person: { id: 'baran', name: 'Baran', bird: 4 },
       letters: [
-        { id: 'l1', mine: true, body: letter, removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
-        { id: 'l2', mine: false, body: 'Silav Rojda! Ez Baran im.', removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
+        { id: 'l1', mine: true, body: letter, decor: null, removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
+        { id: 'l2', mine: false, body: 'Silav Rojda! Ez Baran im.', decor: null, removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
       ],
       yourTurn: true,
       closed: false,

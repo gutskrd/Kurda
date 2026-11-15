@@ -177,6 +177,14 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
     expect((await write(b)).statusCode).toBe(200);
   });
 
+  it('keeps a letter’s own lines and the empty line between its paragraphs', async () => {
+    const [a, b] = [await adult('linesa'), await adult('linesb')];
+    const met = await meet(a, b);
+    const res = await call('POST', `/letters/threads/${met.threadId}`, a.token, { body: 'Hevalê delal,\r\n\r\n\r\nTu   çawa yî?\nEz baş im.' });
+    expect(res.statusCode).toBe(200);
+    expect((res.json() as { letter: { body: string } }).letter.body).toBe('Hevalê delal,\n\nTu çawa yî?\nEz baş im.');
+  });
+
   it('sends a bird on its way, back out for somebody else, and never to the same window twice', async () => {
     const [a, b, c] = [await adult('ona'), await adult('onb'), await adult('onc')];
     await out(a);

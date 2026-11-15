@@ -509,16 +509,23 @@ export class GdprService {
     );
     // their Game Ranks, every change with its reason (ranks/gdpr.ts)
     const ranks = await exportRanks(this.pool, userId);
-    // the letters they wrote to pen pals, and whether each was delivered; the
-    // letters written to them are their pen pals' words, not theirs
+    // the letters they wrote to pen pals, each with its paper, drawing and notes,
+    // and whether each was delivered; the letters written to them are their pen
+    // pals' words, not theirs
     const letters = await this.pool.query(
-      `SELECT body, status, created_at AS written_at, delivered_at FROM letters WHERE sender_id = $1 ORDER BY created_at`,
+      `SELECT body, decor, status, created_at AS written_at, delivered_at FROM letters WHERE sender_id = $1 ORDER BY created_at`,
       [userId],
     );
     // the bird they chose to carry them, and how often they changed it
     const letterBird = await this.pool.query(`SELECT bird, changes, chosen_at, updated_at FROM letter_birds WHERE user_id = $1`, [userId]);
     // the birds they called to their window, and how each visit ended; the letters those birds carried are their writers' words
     const birdsCalled = await this.pool.query(`SELECT called_at, ended_at, outcome FROM letter_visits WHERE visitor_id = $1 ORDER BY called_at`, [userId]);
+    // the paper they last wrote on, what they chose for the letter widget, and
+    // when each phone's widget was made and last read (the tokens themselves
+    // are kept only as hashes, which would mean nothing to them)
+    const letterPaper = await this.pool.query(`SELECT paper, updated_at FROM letter_prefs WHERE user_id = $1`, [userId]);
+    const widgetPrefs = await this.pool.query(`SELECT pinned_letter_id, show_words, updated_at FROM letter_widget_prefs WHERE user_id = $1`, [userId]);
+    const widgets = await this.pool.query(`SELECT created_at, last_used_at FROM letter_widget_tokens WHERE user_id = $1 ORDER BY created_at`, [userId]);
     // what they wrote to the support address from this account's address, and
     // what they were answered; who on the team answered is not theirs
     // the devices and networks that have signed in to the account, by when,
@@ -566,6 +573,8 @@ export class GdprService {
       lettersWritten: letters.rows,
       letterBird: letterBird.rows[0] ?? null,
       birdsCalled: birdsCalled.rows,
+      letterPaper: letterPaper.rows[0] ?? null,
+      letterWidget: { prefs: widgetPrefs.rows[0] ?? null, phones: widgets.rows },
       supportEmails: support.rows,
       // XP, leagues, streaks, badges, the story shelf and the saved words (gdpr/progress-export.ts)
       progress: await exportProgress(this.pool, userId),
@@ -765,6 +774,12 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   // and the bird they chose to carry them, and the birds they called to their window
   await q(`DELETE FROM letter_birds WHERE user_id = $1`);
   await q(`DELETE FROM letter_visits WHERE visitor_id = $1`);
+  // the paper they last wrote on, and their letter widgets: every phone's token
+  // and what they pinned (a pin of somebody else's on one of their letters let
+  // go when the letter went)
+  await q(`DELETE FROM letter_prefs WHERE user_id = $1`);
+  await q(`DELETE FROM letter_widget_tokens WHERE user_id = $1`);
+  await q(`DELETE FROM letter_widget_prefs WHERE user_id = $1`);
   await q(`DELETE FROM group_messages WHERE sender_id = $1`);
   // and a gift posted in a group for them alone, a message about nobody else;
   // one to several friends stays for the others, its card no longer listing a

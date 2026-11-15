@@ -121,6 +121,8 @@ import {
   type LetterSpot,
 } from './letter-sky.js';
 import { LETTER_BIRDS } from '../letters.js';
+import { letterPaperSvg } from './letter-paper.js';
+import { DRAW_TOOLS, PAINTS, PAPER_H, PAPER_STYLES, PAPER_TONES, PAPER_W, paperColors, type PaperStroke } from '../letter-paper.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml, wholePath } from './svg.js';
 import { characterArt } from '../characters/index.js';
@@ -2358,5 +2360,94 @@ describe('the tree through the seasons', () => {
     const before = treeSvg({ species: 'beru', stage: 6, part: 'ground' });
     expect(seasoned).toContain('linearGradient');
     expect(seasoned).not.toBe(before);
+  });
+});
+
+/**
+ * A sheet of letter paper (art/letter-paper.ts) is its own size, in page
+ * units rather than on the 120 canvas, but keeps every other rule: what both
+ * renderers draw alike, a label, nothing outside the drawing, and no text,
+ * which the apps set over it in their own type.
+ */
+describe('a letter’s paper', () => {
+  const strokes: PaperStroke[] = DRAW_TOOLS.flatMap((tool, i) =>
+    PAINTS.map((color, j) => ({ tool, color, width: tool === 'pen' ? 4 : tool === 'brush' ? 30 : 16, points: [40 + j * 60, 300 + i * 200, 80 + j * 60, 360 + i * 200, 60 + j * 60, 420 + i * 200] })),
+  );
+
+  function paperChecks(svg: string, viewBox: string): El {
+    const root = parse(svg);
+    expect(root.name).toBe('svg');
+    expect(root.attrs.xmlns).toBe('http://www.w3.org/2000/svg');
+    expect(root.attrs.viewBox).toBe(viewBox);
+    expect(root.attrs.role).toBe('img');
+    const title = root.children[0];
+    expect(title?.name).toBe('title');
+    expect(root.attrs['aria-labelledby']).toBe(title?.attrs.id);
+    const ids = new Set<string>();
+    walk(root, (e) => {
+      expect(ALLOWED.has(e.name), e.name).toBe(true);
+      for (const [k, v] of Object.entries(e.attrs)) {
+        expect(k.startsWith('on') || /href$/i.test(k), k).toBe(false);
+        if (k !== 'xmlns') expect(v, `${k} on <${e.name}>`).not.toMatch(/NaN|Infinity|undefined|null/);
+      }
+      if (e.attrs.id) {
+        expect(ids.has(e.attrs.id)).toBe(false);
+        ids.add(e.attrs.id);
+      }
+    });
+    expect(svg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|\/\/|<image|<script|<style|<text|<use|<foreignObject|data:|javascript:/i);
+    return root;
+  }
+
+  it('draws every style on every tone, with every tool and paint, as a sound picture with no text', () => {
+    for (const style of PAPER_STYLES) {
+      for (const tone of PAPER_TONES) {
+        paperChecks(letterPaperSvg({ paper: { style, tone, ink: 'navy' }, strokes }), `0 0 ${PAPER_W} ${PAPER_H}`);
+      }
+    }
+    // twice as long for a letter running onto a second page, and as small as a widget
+    paperChecks(letterPaperSvg({ paper: { style: 'dotted', tone: 'night', ink: 'gold' }, length: PAPER_H * 2, strokes }), `0 0 ${PAPER_W} ${PAPER_H * 2}`);
+    const small = paperChecks(letterPaperSvg({ paper: { style: 'lined', tone: 'kraft', ink: 'sepia' }, width: 338, height: 158 }), `0 0 ${PAPER_W} ${PAPER_H}`);
+    expect([small.attrs.width, small.attrs.height]).toEqual(['338', '158']);
+    // filling a shape other than its own, it keeps its top, where the writing starts
+    expect(small.attrs.preserveAspectRatio).toBe('xMidYMin slice');
+    const tall = parse(letterPaperSvg({ paper: { style: 'plain', tone: 'white', ink: 'navy' }, width: 500 }));
+    expect([tall.attrs.width, tall.attrs.height, tall.attrs.preserveAspectRatio]).toEqual(['500', '707', undefined]);
+  });
+
+  it('is each paper’s own, in its own colours, and the same string every time', () => {
+    const all = PAPER_STYLES.flatMap((style) => PAPER_TONES.map((tone) => letterPaperSvg({ paper: { style, tone, ink: 'navy' } })));
+    expect(new Set(all).size).toBe(all.length);
+    for (const tone of PAPER_TONES) {
+      const c = paperColors({ style: 'margin', tone, ink: 'navy' });
+      const svg = letterPaperSvg({ paper: { style: 'margin', tone, ink: 'navy' } });
+      expect(svg).toContain(`fill="${c.sheet}"`);
+      expect(svg).toContain(`stroke="${c.rule}"`);
+      expect(svg).toContain(`stroke="${c.margin}"`);
+    }
+    const one = { paper: { style: 'grid', tone: 'sage', ink: 'forest' }, strokes } as const;
+    expect(letterPaperSvg(one)).toBe(letterPaperSvg(one));
+    expect(letterPaperSvg({ ...one, texture: false })).not.toBe(letterPaperSvg(one));
+  });
+
+  it('draws the lines on the writing’s lines, the margin where the writing starts, and nothing ruled on plain paper', () => {
+    const lined = letterPaperSvg({ paper: { style: 'lined', tone: 'cream', ink: 'navy' }, texture: false });
+    expect(lined).toContain('M0 150H1000M0 206H1000');
+    expect(letterPaperSvg({ paper: { style: 'margin', tone: 'cream', ink: 'navy' } })).toContain('M140 0V1414');
+    const plain = parse(letterPaperSvg({ paper: { style: 'plain', tone: 'cream', ink: 'navy' }, texture: false }));
+    expect(plain.children.map((e) => e.name)).toEqual(['title', 'rect']);
+  });
+
+  it('lays the brush’s soft edge under it, and the marker translucent', () => {
+    const svg = (tool: PaperStroke['tool']): string => letterPaperSvg({ paper: { style: 'plain', tone: 'cream', ink: 'navy' }, texture: false, strokes: [{ tool, color: 'sea', width: 20, points: [10, 10, 90, 90] }] });
+    expect((svg('pen').match(/<path /g) ?? []).length).toBe(1);
+    expect((svg('brush').match(/<path /g) ?? []).length).toBe(2);
+    expect(svg('marker')).toContain('stroke-opacity="0.45"');
+  });
+
+  it('refuses a sheet of no length or a size that is not one', () => {
+    expect(() => letterPaperSvg({ paper: { style: 'plain', tone: 'cream', ink: 'navy' }, length: PAPER_H * 3 })).toThrow(RangeError);
+    expect(() => letterPaperSvg({ paper: { style: 'plain', tone: 'cream', ink: 'navy' }, length: 0 })).toThrow(RangeError);
+    expect(() => letterPaperSvg({ paper: { style: 'plain', tone: 'cream', ink: 'navy' }, width: -1 })).toThrow(RangeError);
   });
 });

@@ -9,8 +9,9 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+vi.mock('../widget/reload', () => ({ reloadLetterWidget: vi.fn() }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import type { LetterThread, LetterVisitor, LettersHome, VisitorAnswer } from '@kurda/shared';
+import { DEFAULT_PAPER, type LetterThread, type LetterVisitor, type LettersHome, type VisitorAnswer } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -39,11 +40,14 @@ const home = (over: Partial<LettersHome> = {}): LettersHome => ({
   arrival: null,
   penPals: [],
   roomForMore: true,
+  paper: DEFAULT_PAPER,
   ...over,
 });
+/** The decor a letter written on the paper it opened on, with nothing drawn or stuck to it, is sent with. */
+const plain = { paper: DEFAULT_PAPER, strokes: [], notes: [] };
 const visitor: LetterVisitor = {
   person: baran,
-  letter: { id: 'l9', mine: false, body: 'Silav! Ez Baran im.', removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
+  letter: { id: 'l9', mine: false, body: 'Silav! Ez Baran im.', removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null, decor: null },
   since: '2026-11-14T09:00:00.000Z',
   leavesAt: '2026-11-15T09:00:00.000Z',
 };
@@ -51,8 +55,8 @@ const thread = (over: Partial<LetterThread> = {}): LetterThread => ({
   threadId: THREAD,
   person: baran,
   letters: [
-    { id: 'l1', mine: true, body: LETTER, removed: false, sentAt: '2026-11-13T10:00:00.000Z', readAt: null },
-    { id: 'l2', mine: false, body: 'Silav Rojda! Ez Baran im, ji Hewlêrê.', removed: false, sentAt: '2026-11-13T10:00:00.000Z', readAt: null },
+    { id: 'l1', mine: true, body: LETTER, removed: false, sentAt: '2026-11-13T10:00:00.000Z', readAt: null, decor: null },
+    { id: 'l2', mine: false, body: 'Silav Rojda! Ez Baran im, ji Hewlêrê.', removed: false, sentAt: '2026-11-13T10:00:00.000Z', readAt: null, decor: null },
   ],
   yourTurn: true,
   closed: false,
@@ -107,7 +111,7 @@ describe('the letters screen', () => {
     expect(screen.getByText(/waiting out there with your letter until someone calls it/)).toBeTruthy();
     expect(screen.getByText('No birds are out right now. Send yours, and someone may call it to their window.')).toBeTruthy();
     expect(screen.getByTestId('letters-recall')).toBeTruthy();
-    expect(client.calls.find((c) => c.path === '/letters/out')?.body).toEqual({ body: LETTER });
+    expect(client.calls.find((c) => c.path === '/letters/out')?.body).toEqual({ body: LETTER, decor: plain });
   });
 
   it('shows how many birds are out, calls one down with its letter, and answers it with the same bird', async () => {
@@ -130,7 +134,7 @@ describe('the letters screen', () => {
     // a single word is a letter, and the visiting bird carries it
     fireEvent.change(screen.getByTestId('letters-visitor-answer-input'), { target: { value: 'Silav' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send it home with Baran’s bird' }));
-    await waitFor(() => expect(client.calls.find((c) => c.path === '/letters/visitor')?.body).toEqual({ body: 'Silav' }));
+    await waitFor(() => expect(client.calls.find((c) => c.path === '/letters/visitor')?.body).toEqual({ body: 'Silav', decor: plain }));
     expect(await screen.findByText('You and Baran are pen pals now')).toBeTruthy();
     expect(screen.queryByTestId('letters-visitor')).toBeNull();
     fireEvent.click(screen.getByTestId('letters-pals-open'));
@@ -259,6 +263,28 @@ describe('the letters screen', () => {
     expect(await screen.findByText('You need 380 more Zêr.')).toBeTruthy();
   });
 
+  it('opens a first letter on the paper you last wrote on, sends it on that paper, and keeps drawing for pen pals', async () => {
+    const sage = { style: 'grid', tone: 'sage', ink: 'forest' } as const;
+    const client = fakeClient({ 'GET /letters': ok(home({ paper: sage })), 'POST /letters/out': ok({ kind: 'waiting', since: '2026-11-13T10:00:00.000Z' }) });
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    await write(LETTER);
+    fireEvent.click(screen.getByRole('tab', { name: 'Draw' }));
+    expect(screen.getByText('Drawings only travel between pen pals: you can draw once someone writes back.')).toBeTruthy();
+    expect(screen.queryByTestId('letters-paper-canvas')).toBeNull();
+    fireEvent.click(screen.getByTestId('letters-paper-send'));
+    await waitFor(() => expect(client.calls.find((c) => c.path === '/letters/out')?.body).toEqual({ body: LETTER, decor: { paper: sage, strokes: [], notes: [] } }));
+  });
+
+  it('lets an answer to a bird at your window be drawn on: the two of you are pen pals once it goes', async () => {
+    testAuth.client = fakeClient({ 'GET /letters': ok(home({ visitor })) });
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    await screen.findByTestId('letters-visitor');
+    fireEvent.click(screen.getByRole('tab', { name: 'Draw' }));
+    expect(screen.getByTestId('letters-visitor-answer-canvas')).toBeTruthy();
+    expect(screen.queryByTestId('letters-visitor-answer-draw-locked')).toBeNull();
+  });
+
   it('refuses a letter with a link before the bird leaves, and sends nothing', async () => {
     const client = fakeClient({ 'GET /letters': ok(home()) });
     testAuth.client = client;
@@ -275,7 +301,7 @@ describe('a correspondence', () => {
   it('gives the paper to write back on when it is your turn, and sends the letter', async () => {
     const client = fakeClient({
       [`GET /letters/threads/${THREAD}`]: ok(thread()),
-      [`POST /letters/threads/${THREAD}`]: ok({ letter: { id: 'l3', mine: true, body: 'Spas Baran! Çi xweş e.', removed: false, sentAt: '2026-11-13T11:00:00.000Z', readAt: null } }),
+      [`POST /letters/threads/${THREAD}`]: ok({ letter: { id: 'l3', mine: true, body: 'Spas Baran! Çi xweş e.', removed: false, sentAt: '2026-11-13T11:00:00.000Z', readAt: null, decor: null } }),
     });
     testAuth.client = client;
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);

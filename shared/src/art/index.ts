@@ -85,6 +85,7 @@ export {
   type LetterSprite,
   type LetterSpriteOptions,
 } from './letter-sky.js';
+export { letterPaperSvg, type LetterPaperOptions } from './letter-paper.js';
 export { PIGEON_POSES, type PigeonPose } from './pigeon.js';
 export type { SongbirdPose } from './songbird.js';
 export { rankEmblemSvg, placementEmblemSvg, PLACEMENT_GAMES, SMALL_EMBLEM, type PlacementEmblemOptions, type RankEmblemOptions } from './ranks.js';
