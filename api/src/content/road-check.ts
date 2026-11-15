@@ -382,6 +382,34 @@ export const GRAMMAR_MD_MAX = 1200;
  * 4 to 8 items a lesson, none introduced twice, every form a lower-case word
  * in Hawar letters.
  */
+/**
+ * How many new items a lesson brings in: few at the start and more as the road goes on, so the first chapters are
+ * easy and the later ones carry more. A meet or build lesson brings its chapter's number, give or take one; a talk
+ * lesson three to five; a review lesson none, since it is there to bring back what came before.
+ */
+export const ROAD_BUDGET: Record<number, { meet: number; build: number; cap: number }> = {
+  1: { meet: 4, build: 4, cap: 45 },
+  2: { meet: 5, build: 5, cap: 54 },
+  3: { meet: 5, build: 5, cap: 56 },
+  4: { meet: 6, build: 6, cap: 64 },
+  5: { meet: 6, build: 6, cap: 64 },
+  6: { meet: 6, build: 6, cap: 64 },
+  7: { meet: 7, build: 7, cap: 72 },
+  8: { meet: 7, build: 7, cap: 72 },
+  9: { meet: 7, build: 7, cap: 72 },
+  10: { meet: 8, build: 7, cap: 76 },
+  11: { meet: 8, build: 7, cap: 76 },
+  12: { meet: 6, build: 6, cap: 64 },
+};
+
+function newItemsAllowed(unit: number, focus: RoadFocus): [number, number] {
+  const b = ROAD_BUDGET[unit];
+  if (focus === 'review') return [0, 0];
+  if (focus === 'talk' || !b) return [3, 5];
+  const n = b[focus];
+  return [n - 1, n + 1];
+}
+
 export function checkRoadPlan(plan: RoadPlan): RoadProblem[] {
   const problems: RoadProblem[] = [];
   const add = (message: string, at: Partial<RoadProblem> = {}): void => {
@@ -398,6 +426,11 @@ export function checkRoadPlan(plan: RoadPlan): RoadProblem[] {
   if (!Array.isArray(plan.doubts)) add('doubts should be a list (empty when there are none)');
   for (const t of textsIn({ characters: plan.characters, units: plan.units })) for (const m of familyProblems(t.text)) add(`${t.path}: ${m}`);
   if (plan.units?.length !== 12) add(`there should be 12 units, not ${plan.units?.length ?? 0}`);
+  for (const unit of plan.units ?? []) {
+    const count = (unit.skills ?? []).reduce((s, sk) => s + (sk.lessons ?? []).reduce((t, l) => t + (l.new?.length ?? 0), 0), 0);
+    const cap = ROAD_BUDGET[unit.number]?.cap;
+    if (cap !== undefined && count > cap) add(`brings in ${count} items (at most ${cap} in unit ${unit.number})`, { unit: unit.number });
+  }
   const seen = new Map<string, string>();
   (plan.units ?? []).forEach((unit, ui) => {
     const at = { unit: unit.number };
@@ -425,7 +458,8 @@ export function checkRoadPlan(plan: RoadPlan): RoadProblem[] {
         if (!lesson.titleKu || !lesson.titleEn || !lesson.beat) add('titles and beat are required', lat);
         for (const p of orthographyProblems(lesson.titleKu ?? '', false)) add(`titleKu: ${p}`, lat);
         const items = lesson.new ?? [];
-        if (items.length < 4 || items.length > 8) add(`introduces ${items.length} items (4–8)`, lat);
+        const [least, most] = newItemsAllowed(unit.number, lesson.focus);
+        if (items.length < least || items.length > most) add(`introduces ${items.length} items (${least === most ? least : `${least}–${most}`} in a ${lesson.focus} lesson of unit ${unit.number})`, lat);
         for (const item of items) {
           const id = `${item.ku?.toLowerCase()}|${item.pos}`;
           if (!item.ku || !item.en || !item.pos) add(`item “${item.ku}” needs ku, en and pos`, lat);
@@ -654,6 +688,9 @@ export const ROAD_RETURNS: ReadonlyArray<{ from: number; to: number; say: string
   { from: 17, to: 48, say: 'in a later chapter (17 to 48 lessons after it)' },
 ];
 
+/** A review lesson within this many lessons of a word's own brings it back. */
+const REVIEW_WITHIN = 8;
+
 // 10: every new word comes back at growing gaps
 function returnProblems(lex: Lexicon, units: readonly number[], metIn: Map<number, Set<number>>): RoadProblem[] {
   const problems: RoadProblem[] = [];
@@ -670,6 +707,11 @@ function returnProblems(lex: Lexicon, units: readonly number[], metIn: Map<numbe
       if (!window.every((i) => checked.has(i)) || window.some((i) => met.has(i))) continue;
       const span = from === to ? lex.lessons[from - 1]!.lesson.key : `${lex.lessons[from - 1]!.lesson.key}–${lex.lessons[to - 1]!.lesson.key}`;
       problems.push({ unit: lex.byKey.get(ie.lesson)!.unit.number, lesson: ie.lesson, message: `“${ie.item.ku}” does not come back ${w.say}: bring it into ${span}` });
+    }
+    // and one of its returns is in a review lesson, the lessons that are there to bring words back
+    const reviews = lex.lessons.filter((l) => l.lesson.focus === 'review' && l.index > ie.index && l.index <= ie.index + REVIEW_WITHIN);
+    if (reviews.length > 0 && reviews.every((l) => checked.has(l.index)) && !reviews.some((l) => met.has(l.index))) {
+      problems.push({ unit: lex.byKey.get(ie.lesson)!.unit.number, lesson: ie.lesson, message: `“${ie.item.ku}” is not brought back in a review lesson: bring it into ${reviews.map((l) => l.lesson.key).join(', ')}` });
     }
   });
   return problems;
@@ -975,7 +1017,7 @@ function checkUnit(
         else metIn.set(id, new Set([entry.index]));
       }
       lex.items.forEach((ie, id) => {
-        if (ie.lesson === key && (met.get(id) ?? 0) < 3) add(`new item “${ie.item.ku}” is met in ${met.get(id) ?? 0} exercises (at least 3)`, at);
+        if (ie.lesson === key && (met.get(id) ?? 0) < 4) add(`new item “${ie.item.ku}” is met in ${met.get(id) ?? 0} exercises (at least 4)`, at);
         // the learner sees each new word marked new where it first comes
         if (ie.lesson === key && !ie.item.forms.some((f) => marked.has(f))) add(`new item “${ie.item.ku}” is never marked new`, at);
       });

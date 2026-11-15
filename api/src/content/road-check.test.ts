@@ -38,10 +38,12 @@ describe('the road’s plan', () => {
     expect(lessons.map((l) => l.key)).toEqual(keys);
   });
 
-  it('teaches 1,100 to 1,400 items, 4 to 8 a lesson, none twice', () => {
-    expect(items.length).toBeGreaterThanOrEqual(1100);
-    expect(items.length).toBeLessThanOrEqual(1400);
-    for (const l of lessons) expect(l.new.length, l.key).toBeGreaterThanOrEqual(4);
+  it('teaches 700 to 850 items, few at first and more later, none in a review lesson and none twice', () => {
+    expect(items.length).toBeGreaterThanOrEqual(700);
+    expect(items.length).toBeLessThanOrEqual(850);
+    for (const l of lessons) if (l.focus === 'review') expect(l.new, l.key).toEqual([]);
+    const perUnit = plan.units.map((u) => u.skills.reduce((s, sk) => s + sk.lessons.reduce((t, l) => t + l.new.length, 0), 0));
+    expect(perUnit[0]!).toBeLessThan(perUnit[10]!);
     const ids = items.map((i) => `${i.ku.toLowerCase()}|${i.pos}`);
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -231,7 +233,7 @@ function exampleUnit(): { course: typeof ROAD_COURSE; units: unknown[] } {
     mc('meaning', 'Û tu?', ['And you?', 'And me?', 'Hello!'], 0, 'hamo', [['tu', 'you']]),
     write('I am from Amed.', ['Ez ji Amedê me.', 'Ez ji Amedê me'], 'hamo'),
     toEnglish('Silav, Hamo!', ['Hello, Hamo!', 'Hello Hamo', 'Hi Hamo'], 'xezo'),
-    listen(['Silav, ez Hamo me.', 'Silav ez Hamo me'], 'hamo'),
+    listen(['Silav! Û tu?', 'Silav! Û tu', 'Silav û tu'], 'hamo'),
     mc('choose-kurdish', 'I am well.', ['Ez baş im.', 'Ez baş me.', 'Tu baş im.'], 0),
     pairs([['silav', 'hello'], ['ez', 'I'], ['tu', 'you'], ['baş', 'good']], 'hamo'),
   ]);
@@ -472,7 +474,7 @@ describe('the road’s check, on an example unit', () => {
     });
     expect(deaf.text).toContain('u01s1l2: has no listening (a listening, or a multiple choice with say)');
     const unmet = check(undefined, (p) => p.units[0]!.skills[0]!.lessons[0]!.new.push(item('sêv', 'apple', 'noun', ['sêv'])));
-    expect(unmet.text).toContain('u01s1l1: new item “sêv” is met in 0 exercises (at least 3)');
+    expect(unmet.text).toContain('u01s1l1: new item “sêv” is met in 0 exercises (at least 4)');
   });
 
   it('matches the plan’s keys and titles, with positions in order and payloads that pass', () => {
