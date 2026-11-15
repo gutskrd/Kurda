@@ -4141,14 +4141,15 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ya te jî pîroz be!",
+                    "ask": "picture",
+                    "say": "dest",
                     "voice": "hamo",
-                    "prompt": "Ya te jî pîroz be!",
+                    "prompt": "dest",
                     "options": [
-                      "And a happy Newroz to you too!",
-                      "Bless your hands!",
-                      "See you next year!"
+                      "hand",
+                      "heart",
+                      "eye",
+                      "apple"
                     ],
                     "correctIndex": 0
                   }

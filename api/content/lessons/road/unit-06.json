@@ -53,14 +53,15 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Em bi traktorê diçin rêya mezin.",
+                    "ask": "picture",
+                    "say": "traktor",
                     "voice": "hamo",
-                    "prompt": "Em bi traktorê diçin rêya mezin.",
+                    "prompt": "traktor",
                     "options": [
-                      "We are going to the main road by tractor.",
-                      "We are going to the main road by bus.",
-                      "We are going home by donkey."
+                      "tractor",
+                      "car",
+                      "bus",
+                      "apple"
                     ],
                     "correctIndex": 0
                   }

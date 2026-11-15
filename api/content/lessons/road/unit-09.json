@@ -1236,14 +1236,15 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Li wir hîç kes tune.",
+                    "ask": "picture",
+                    "say": "kon",
                     "voice": "hamo",
-                    "prompt": "Li wir hîç kes tune.",
+                    "prompt": "kon",
                     "options": [
-                      "Nobody at all is there.",
-                      "Everyone is there.",
-                      "Someone is always there."
+                      "tent",
+                      "house",
+                      "door",
+                      "window"
                     ],
                     "correctIndex": 0
                   }
@@ -1921,14 +1922,15 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Gur wek hespekî mezin bû.",
+                    "ask": "picture",
+                    "say": "gur",
                     "voice": "hamo",
-                    "prompt": "Gur wek hespekî mezin bû.",
+                    "prompt": "gur",
                     "options": [
-                      "The wolf was as big as a horse.",
-                      "The horse was as big as a wolf.",
-                      "The wolf was as small as a cat."
+                      "wolf",
+                      "hen",
+                      "dog",
+                      "cat"
                     ],
                     "correctIndex": 0
                   }
@@ -2356,14 +2358,15 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ask? Hevalo jî ask e!",
+                    "ask": "picture",
+                    "say": "ask",
                     "voice": "hamo",
-                    "prompt": "Ask? Hevalo jî ask e!",
+                    "prompt": "ask",
                     "options": [
-                      "A deer? Hevalo is a deer too!",
-                      "A deer? Hevalo is afraid of deer!",
-                      "A wolf? Hevalo isn’t a wolf!"
+                      "deer",
+                      "hen",
+                      "dog",
+                      "cat"
                     ],
                     "correctIndex": 0
                   }
@@ -2436,14 +2439,15 @@
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Xezal? Na, na, Xezal ne kûvî ye!",
+                    "ask": "picture",
+                    "say": "xezal",
                     "voice": "hamo",
-                    "prompt": "Xezal? Na, na, Xezal ne kûvî ye!",
+                    "prompt": "xezal",
                     "options": [
-                      "A gazelle? No, no, Xezal isn’t wild!",
-                      "A gazelle? No, no, Xezal is wild!",
-                      "Xezal? No, no, Xezal isn’t here!"
+                      "gazelle",
+                      "hen",
+                      "dog",
+                      "cat"
                     ],
                     "correctIndex": 0
                   }

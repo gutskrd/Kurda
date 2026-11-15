@@ -4352,14 +4352,15 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Dibêjin ku Bozo jî govendê digire!",
+                    "ask": "picture",
+                    "say": "dahol",
                     "voice": "hamo",
-                    "prompt": "Dibêjin ku Bozo jî govendê digire!",
+                    "prompt": "dahol",
                     "options": [
-                      "They say Bozo is dancing too!",
-                      "They say Bozo has run away again!",
-                      "They say Bozo is eating the cake!"
+                      "drum",
+                      "book",
+                      "gift",
+                      "basket"
                     ],
                     "correctIndex": 0
                   }
