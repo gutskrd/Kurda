@@ -72,9 +72,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Çente",
+                    "say": "çente",
                     "voice": "hamo",
-                    "prompt": "Çente",
+                    "prompt": "çente",
                     "options": [
                       "bag",
                       "book",
@@ -336,9 +336,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Nan",
+                    "say": "nan",
                     "voice": "hamo",
-                    "prompt": "Nan",
+                    "prompt": "nan",
                     "options": [
                       "bread",
                       "cheese",
@@ -660,9 +660,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Pêlav",
+                    "say": "pêlav",
                     "voice": "hamo",
-                    "prompt": "Pêlav",
+                    "prompt": "pêlav",
                     "options": [
                       "shoe",
                       "sock",
@@ -1003,9 +1003,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Pênûs",
+                    "say": "pênûs",
                     "voice": "hamo",
-                    "prompt": "Pênûs",
+                    "prompt": "pênûs",
                     "options": [
                       "pen",
                       "book",
@@ -1358,9 +1358,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Dar",
+                    "say": "dar",
                     "voice": "hamo",
-                    "prompt": "Dar",
+                    "prompt": "dar",
                     "options": [
                       "tree",
                       "flower",
@@ -1661,9 +1661,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Tirî",
+                    "say": "tirî",
                     "voice": "hamo",
-                    "prompt": "Tirî",
+                    "prompt": "tirî",
                     "options": [
                       "grapes",
                       "apple",
@@ -1947,7 +1947,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Berf",
+                    "say": "berf",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1955,7 +1955,7 @@
                         "en": "snow"
                       }
                     ],
-                    "prompt": "Berf",
+                    "prompt": "berf",
                     "options": [
                       "snow",
                       "cloud",
@@ -2317,9 +2317,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Name",
+                    "say": "name",
                     "voice": "hamo",
-                    "prompt": "Name",
+                    "prompt": "name",
                     "options": [
                       "letter",
                       "book",
@@ -2615,7 +2615,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Demjimêr",
+                    "say": "demjimêr",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2623,7 +2623,7 @@
                         "en": "hour; clock, watch"
                       }
                     ],
-                    "prompt": "Demjimêr",
+                    "prompt": "demjimêr",
                     "options": [
                       "clock",
                       "phone",
@@ -2975,9 +2975,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Kanî",
+                    "say": "kanî",
                     "voice": "hamo",
-                    "prompt": "Kanî",
+                    "prompt": "kanî",
                     "options": [
                       "spring",
                       "river",
@@ -3234,9 +3234,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Hêk",
+                    "say": "hêk",
                     "voice": "hamo",
-                    "prompt": "Hêk",
+                    "prompt": "hêk",
                     "options": [
                       "egg",
                       "bread",
@@ -3586,9 +3586,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Çaydank",
+                    "say": "çaydank",
                     "voice": "hamo",
-                    "prompt": "Çaydank",
+                    "prompt": "çaydank",
                     "options": [
                       "teapot",
                       "cup",
@@ -3960,9 +3960,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Demjimêr",
+                    "say": "demjimêr",
                     "voice": "hamo",
-                    "prompt": "Demjimêr",
+                    "prompt": "demjimêr",
                     "options": [
                       "clock",
                       "phone",
@@ -4218,7 +4218,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Otobûs",
+                    "say": "otobûs",
                     "voice": "hamo",
                     "new": [
                       {
@@ -4226,7 +4226,7 @@
                         "en": "bus"
                       }
                     ],
-                    "prompt": "Otobûs",
+                    "prompt": "otobûs",
                     "options": [
                       "bus",
                       "car",
@@ -4285,9 +4285,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Dibistan",
+                    "say": "dibistan",
                     "voice": "hamo",
-                    "prompt": "Dibistan",
+                    "prompt": "dibistan",
                     "options": [
                       "school",
                       "mill",
@@ -4570,9 +4570,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Derî",
+                    "say": "derî",
                     "voice": "hamo",
-                    "prompt": "Derî",
+                    "prompt": "derî",
                     "options": [
                       "door",
                       "window",
@@ -4900,9 +4900,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Otobûs",
+                    "say": "otobûs",
                     "voice": "hamo",
-                    "prompt": "Otobûs",
+                    "prompt": "otobûs",
                     "options": [
                       "bus",
                       "car",

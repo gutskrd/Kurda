@@ -348,9 +348,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Kulîlk",
+                    "say": "kulîlk",
                     "voice": "hamo",
-                    "prompt": "Kulîlk",
+                    "prompt": "kulîlk",
                     "options": [
                       "flower",
                       "tree",
@@ -654,9 +654,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Penîr",
+                    "say": "penîr",
                     "voice": "hamo",
-                    "prompt": "Penîr",
+                    "prompt": "penîr",
                     "options": [
                       "cheese",
                       "bread",
@@ -974,7 +974,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Zebeş",
+                    "say": "zebeş",
                     "voice": "hamo",
                     "new": [
                       {
@@ -982,7 +982,7 @@
                         "en": "watermelon"
                       }
                     ],
-                    "prompt": "Zebeş",
+                    "prompt": "zebeş",
                     "options": [
                       "watermelon",
                       "apple",
@@ -1321,7 +1321,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Bacansor",
+                    "say": "bacansor",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1329,7 +1329,7 @@
                         "en": "tomato"
                       }
                     ],
-                    "prompt": "Bacansor",
+                    "prompt": "bacansor",
                     "options": [
                       "tomato",
                       "apple",
@@ -1366,7 +1366,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Kartol",
+                    "say": "kartol",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1374,7 +1374,7 @@
                         "en": "potato"
                       }
                     ],
-                    "prompt": "Kartol",
+                    "prompt": "kartol",
                     "options": [
                       "potato",
                       "tomato",
@@ -1389,7 +1389,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Pîvaz",
+                    "say": "pîvaz",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1397,7 +1397,7 @@
                         "en": "onion"
                       }
                     ],
-                    "prompt": "Pîvaz",
+                    "prompt": "pîvaz",
                     "options": [
                       "onion",
                       "potato",
@@ -1647,7 +1647,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Hinar",
+                    "say": "hinar",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1655,7 +1655,7 @@
                         "en": "pomegranate"
                       }
                     ],
-                    "prompt": "Hinar",
+                    "prompt": "hinar",
                     "options": [
                       "pomegranate",
                       "apple",
@@ -1670,7 +1670,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Hingiv",
+                    "say": "hingiv",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1678,7 +1678,7 @@
                         "en": "honey"
                       }
                     ],
-                    "prompt": "Hingiv",
+                    "prompt": "hingiv",
                     "options": [
                       "honey",
                       "cheese",
@@ -1709,7 +1709,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Şîr",
+                    "say": "şîr",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1717,7 +1717,7 @@
                         "en": "milk"
                       }
                     ],
-                    "prompt": "Şîr",
+                    "prompt": "şîr",
                     "options": [
                       "milk",
                       "water",
@@ -1754,7 +1754,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Xiyar",
+                    "say": "xiyar",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1762,7 +1762,7 @@
                         "en": "cucumber"
                       }
                     ],
-                    "prompt": "Xiyar",
+                    "prompt": "xiyar",
                     "options": [
                       "cucumber",
                       "tomato",
@@ -1952,7 +1952,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Zeytûn",
+                    "say": "zeytûn",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1960,7 +1960,7 @@
                         "en": "olive"
                       }
                     ],
-                    "prompt": "Zeytûn",
+                    "prompt": "zeytûn",
                     "options": [
                       "olive",
                       "grapes",
@@ -1997,7 +1997,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Masî",
+                    "say": "masî",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2005,7 +2005,7 @@
                         "en": "fish"
                       }
                     ],
-                    "prompt": "Masî",
+                    "prompt": "masî",
                     "options": [
                       "fish",
                       "meat",
@@ -2261,7 +2261,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Fîncan",
+                    "say": "fîncan",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2269,7 +2269,7 @@
                         "en": "cup"
                       }
                     ],
-                    "prompt": "Fîncan",
+                    "prompt": "fîncan",
                     "options": [
                       "cup",
                       "bag",
@@ -2284,7 +2284,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Qedeh",
+                    "say": "qedeh",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2292,7 +2292,7 @@
                         "en": "glass (for drinking)"
                       }
                     ],
-                    "prompt": "Qedeh",
+                    "prompt": "qedeh",
                     "options": [
                       "glass",
                       "cup",
@@ -2307,7 +2307,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Kevçî",
+                    "say": "kevçî",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2315,7 +2315,7 @@
                         "en": "spoon"
                       }
                     ],
-                    "prompt": "Kevçî",
+                    "prompt": "kevçî",
                     "options": [
                       "spoon",
                       "cup",
@@ -2658,9 +2658,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Hingiv",
+                    "say": "hingiv",
                     "voice": "hamo",
-                    "prompt": "Hingiv",
+                    "prompt": "hingiv",
                     "options": [
                       "honey",
                       "milk",
@@ -3192,7 +3192,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Çaydank",
+                    "say": "çaydank",
                     "voice": "hamo",
                     "new": [
                       {
@@ -3200,7 +3200,7 @@
                         "en": "teapot"
                       }
                     ],
-                    "prompt": "Çaydank",
+                    "prompt": "çaydank",
                     "options": [
                       "teapot",
                       "cup",
@@ -3597,9 +3597,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Sindoq",
+                    "say": "sindoq",
                     "voice": "hamo",
-                    "prompt": "Sindoq",
+                    "prompt": "sindoq",
                     "options": [
                       "chest",
                       "basket",
@@ -3957,9 +3957,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Ker",
+                    "say": "ker",
                     "voice": "hamo",
-                    "prompt": "Ker",
+                    "prompt": "ker",
                     "options": [
                       "donkey",
                       "horse",
@@ -4261,9 +4261,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Sindoq",
+                    "say": "sindoq",
                     "voice": "hamo",
-                    "prompt": "Sindoq",
+                    "prompt": "sindoq",
                     "options": [
                       "chest",
                       "basket",
@@ -4581,9 +4581,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Sêv",
+                    "say": "sêv",
                     "voice": "hamo",
-                    "prompt": "Sêv",
+                    "prompt": "sêv",
                     "options": [
                       "apple",
                       "pomegranate",
@@ -4907,9 +4907,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Telefon",
+                    "say": "telefon",
                     "voice": "hamo",
-                    "prompt": "Telefon",
+                    "prompt": "telefon",
                     "options": [
                       "phone",
                       "key",

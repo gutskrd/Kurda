@@ -1956,10 +1956,10 @@
                   "type": "writing",
                   "payload": {
                     "ask": "missing",
-                    "say": "Nazê me agahdar dike ku şîv amade e.",
+                    "say": "Nazê me agahdar dike ku şîv amade ye.",
                     "voice": "hamo",
                     "cue": "Nazê tells us that dinner is ready.",
-                    "prompt": "Nazê me agahdar dike ku şîv ___ e.",
+                    "prompt": "Nazê me agahdar dike ku şîv ___ ye.",
                     "accepted": [
                       "amade"
                     ]

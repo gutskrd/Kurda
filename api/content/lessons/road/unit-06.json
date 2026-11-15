@@ -70,9 +70,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Kum",
+                    "say": "kum",
                     "voice": "hamo",
-                    "prompt": "Kum",
+                    "prompt": "kum",
                     "options": [
                       "cap",
                       "shoe",
@@ -375,9 +375,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Derî",
+                    "say": "derî",
                     "voice": "hamo",
-                    "prompt": "Derî",
+                    "prompt": "derî",
                     "options": [
                       "door",
                       "window",
@@ -677,9 +677,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Çiya",
+                    "say": "çiya",
                     "voice": "hamo",
-                    "prompt": "Çiya",
+                    "prompt": "çiya",
                     "options": [
                       "mountain",
                       "tree",
@@ -1048,9 +1048,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Dar",
+                    "say": "dar",
                     "voice": "hamo",
-                    "prompt": "Dar",
+                    "prompt": "dar",
                     "options": [
                       "tree",
                       "flower",
@@ -1393,9 +1393,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Pêlav",
+                    "say": "pêlav",
                     "voice": "hamo",
-                    "prompt": "Pêlav",
+                    "prompt": "pêlav",
                     "options": [
                       "shoe",
                       "sock",
@@ -1681,9 +1681,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Nan",
+                    "say": "nan",
                     "voice": "hamo",
-                    "prompt": "Nan",
+                    "prompt": "nan",
                     "options": [
                       "bread",
                       "cheese",
@@ -1985,9 +1985,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Şekir",
+                    "say": "şekir",
                     "voice": "hamo",
-                    "prompt": "Şekir",
+                    "prompt": "şekir",
                     "options": [
                       "sugar",
                       "honey",
@@ -2348,9 +2348,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Name",
+                    "say": "name",
                     "voice": "hamo",
-                    "prompt": "Name",
+                    "prompt": "name",
                     "options": [
                       "letter",
                       "map",
@@ -2716,9 +2716,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Pirtûk",
+                    "say": "pirtûk",
                     "voice": "hamo",
-                    "prompt": "Pirtûk",
+                    "prompt": "pirtûk",
                     "options": [
                       "book",
                       "pen",
@@ -3014,9 +3014,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Çaydank",
+                    "say": "çaydank",
                     "voice": "hamo",
-                    "prompt": "Çaydank",
+                    "prompt": "çaydank",
                     "options": [
                       "teapot",
                       "cup",
@@ -3312,9 +3312,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Pirtûk",
+                    "say": "pirtûk",
                     "voice": "hamo",
-                    "prompt": "Pirtûk",
+                    "prompt": "pirtûk",
                     "options": [
                       "book",
                       "letter",
@@ -3668,9 +3668,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Nan",
+                    "say": "nan",
                     "voice": "hamo",
-                    "prompt": "Nan",
+                    "prompt": "nan",
                     "options": [
                       "bread",
                       "cheese",
@@ -4037,9 +4037,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Otobûs",
+                    "say": "otobûs",
                     "voice": "hamo",
-                    "prompt": "Otobûs",
+                    "prompt": "otobûs",
                     "options": [
                       "bus",
                       "car",
@@ -4348,9 +4348,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Pere",
+                    "say": "pere",
                     "voice": "hamo",
-                    "prompt": "Pere",
+                    "prompt": "pere",
                     "options": [
                       "money",
                       "letter",
@@ -4648,9 +4648,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Çay",
+                    "say": "çay",
                     "voice": "hamo",
-                    "prompt": "Çay",
+                    "prompt": "çay",
                     "options": [
                       "tea",
                       "water",
@@ -5003,9 +5003,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Berf",
+                    "say": "berf",
                     "voice": "hamo",
-                    "prompt": "Berf",
+                    "prompt": "berf",
                     "options": [
                       "snow",
                       "cloud",

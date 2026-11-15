@@ -743,9 +743,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Aska mê gelek spehî e.",
+                    "say": "Aska mê gelek spehî ye.",
                     "voice": "hamo",
-                    "prompt": "Aska mê gelek ___ e.",
+                    "prompt": "Aska mê gelek ___ ye.",
                     "options": [
                       "spehî",
                       "nêr",
