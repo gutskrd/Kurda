@@ -12,7 +12,7 @@ vi.mock('../../auth/AuthContext', () => import('../../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'));
 import type { ComponentProps } from 'react';
 import { cleanup, fireEvent, screen } from '@testing-library/react';
-import type { QuestDay } from '@kurda/shared';
+import { WORD_PICTURES, type QuestDay } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../../reports/testing/auth';
@@ -157,17 +157,18 @@ describe('the way on', () => {
 });
 
 describe('the mistakes', () => {
-  // the server names a picture by its catalogue id; the learner saw a picture of a sheep, not "ewe"
+  // the server names a picture by its catalogue id, which is not always what the picture shows ("ewe" is a sheep)
   it('name a missed picture by what it shows', async () => {
+    const [id, picture] = Object.entries(WORD_PICTURES).find(([key, p]) => key !== p.en)!;
     show({
-      results: { ...results, mistakes: [{ exerciseId: 'p1', verdict: 'wrong', prompt: 'mih', correction: 'ewe' }, { exerciseId: 'm1', verdict: 'wrong', prompt: 'Silav!', correction: 'Hello!' }] },
+      results: { ...results, mistakes: [{ exerciseId: 'p1', verdict: 'wrong', prompt: picture.ku, correction: id }, { exerciseId: 'm1', verdict: 'wrong', prompt: 'Silav!', correction: 'Hello!' }] },
       exercises: [
-        { id: 'p1', type: 'multiple_choice', ask: 'picture', prompt: 'mih', options: ['ewe', 'goat'] },
+        { id: 'p1', type: 'multiple_choice', ask: 'picture', prompt: picture.ku, options: [id, 'apple'] },
         { id: 'm1', type: 'multiple_choice', ask: 'meaning', prompt: 'Silav!', options: ['Hello!', 'No!'] },
       ],
     });
-    expect(await screen.findByText('sheep')).toBeTruthy();
-    expect(screen.queryByText('ewe')).toBeNull();
+    expect(await screen.findByText(picture.en)).toBeTruthy();
+    expect(screen.queryByText(id)).toBeNull();
     expect(screen.getByText('Hello!')).toBeTruthy();
   });
 });

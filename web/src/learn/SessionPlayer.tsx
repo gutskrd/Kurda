@@ -17,6 +17,7 @@ import {
   reduce,
   runMilestone,
   type DeliveredExercise,
+  type ExerciseAsk,
   type ExerciseType,
   type Feedback,
   type LeagueView,
@@ -168,7 +169,7 @@ function verdictShown(exercise: DeliveredExercise, feedback: Feedback): Feedback
 }
 
 /** Items whose right answer is Kurdish whatever their type, for the verdict to mark it so. */
-const KURDISH_ASKS: ReadonlySet<string | undefined> = new Set(['reply', 'missing', 'choose-kurdish', 'to-kurdish']);
+const KURDISH_ASKS: ReadonlySet<ExerciseAsk | undefined> = new Set<ExerciseAsk | undefined>(['reply', 'missing', 'choose-kurdish', 'to-kurdish']);
 
 /**
  * The lesson's bar: it slides to each new value on the out-curve, a light
