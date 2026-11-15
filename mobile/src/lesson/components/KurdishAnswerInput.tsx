@@ -11,9 +11,12 @@ import {
 import { isSoraniDialect, typingKeys } from '@kurda/shared';
 import { KeyBar } from '../../keyboard/KeyBar';
 import { insertAtSelection, type Selection } from '../kurdishKeys';
-import { spacing } from '../../theme/tokens';
+import { spacing, typography } from '../../theme/tokens';
+import { displayFont } from '../../theme/fonts';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AnswerMotion } from '../../theme/MotionParts';
+import { useValley } from '../ValleyScope';
+import { CARD } from '../valley';
 
 /**
  * A lesson's answer box with the Kurdish key bar above it — on Translate,
@@ -29,9 +32,12 @@ import { AnswerMotion } from '../../theme/MotionParts';
  * React Native cursor jump about as you type, so it is let go again as soon as
  * the field reports it has moved there.
  *
- * Once the answer is graded the field answers back: tinted and popping a
- * little when it was accepted, tinted and shaking once when it was not (still
- * under Reduce Motion, where the tint says it alone).
+ * The field is one of the lesson's cream cards, on its hairline edge, and
+ * what is typed in it is set in the display face, as the Kurdish everywhere
+ * else in the lesson is. Once the answer is graded the field answers back:
+ * green and popping a little when it was accepted, in the red of a miss and
+ * shaking once when it was not (still under Reduce Motion, where the colour
+ * says it alone).
  */
 export function KurdishAnswerInput({
   text,
@@ -59,6 +65,7 @@ export function KurdishAnswerInput({
   style?: StyleProp<TextStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const valley = useValley();
   const sorani = isSoraniDialect(dialect);
   const selection = useRef<Selection>({ start: text.length, end: text.length });
   const [place, setPlace] = useState<Selection | undefined>(undefined);
@@ -100,9 +107,14 @@ export function KurdishAnswerInput({
           spellCheck={false}
           accessibilityLabel={accessibilityLabel}
           style={[
+            styles.field,
+            { color: colors.textPrimary, backgroundColor: valley.card, borderColor: valley.line },
             style,
             sorani && styles.rtl,
-            verdict && { opacity: 1, backgroundColor: verdict === 'right' ? colors.successFill : colors.dangerFill },
+            verdict &&
+              (verdict === 'right'
+                ? { opacity: 1, backgroundColor: valley.greenWash, borderColor: valley.green }
+                : { opacity: 1, backgroundColor: valley.wrongWash, borderColor: valley.wrong }),
           ]}
         />
       </AnswerMotion>
@@ -115,4 +127,5 @@ const styles = StyleSheet.create({
   // the lesson's own column starts at the left edge; the keys sit with it
   bar: { justifyContent: 'flex-start' },
   rtl: { writingDirection: 'rtl', textAlign: 'right' },
+  field: { borderWidth: CARD.edge, borderRadius: CARD.radius, fontFamily: displayFont, fontSize: typography.sizes.lg - 2 },
 });

@@ -39,6 +39,7 @@ import type { Locale, TranslationKey } from '../../i18n/translations';
 import type { Exercise, SessionResults } from '../types';
 import { WaterDrop } from '../../tree/TreeArt';
 import { StreakMoment } from './StreakMoment';
+import { CARD } from '../valley';
 
 interface Props {
   results: SessionResults;
@@ -302,7 +303,7 @@ export function LessonResults({
       </ScrollView>
 
       {/* where Check was: the main way on at the foot, under the other */}
-      <View style={[styles.bar, { paddingBottom: bottom }]}>
+      <View style={[styles.bar, { paddingBottom: bottom, backgroundColor: colors.barFill, borderTopColor: colors.separator }]}>
         {actions.backLink && onPath ? (
           <Pressable onPress={go(onPath)} accessibilityRole="button" hitSlop={4} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
             <Text style={[styles.backText, { color: colors.textSecondary }]}>{t('lesson.results.backToPath')}</Text>
@@ -524,7 +525,8 @@ const styles = StyleSheet.create({
   mistakeAnswer: { fontSize: typography.sizes.md },
   mistakeAnswerValue: { fontWeight: typography.weights.bold },
   pressed: { opacity: pressedDim },
-  bar: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
+  // the lesson's bar at the foot, under its hairline, where Check was
+  bar: { paddingHorizontal: spacing.md, paddingTop: spacing.md - 2, gap: spacing.sm, borderTopWidth: CARD.edge },
   back: { alignSelf: 'center', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md },
   backText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textDecorationLine: 'underline' },
 });

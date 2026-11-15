@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -22,6 +22,22 @@ import { LIP, TILE_EDGE, tileButtonTone, tileTone, type TileButtonTone, type Til
 import { radii, spacing, typography } from './tokens';
 
 export { LIP, type TileState } from './tileTones';
+
+/**
+ * The colours a place with a look of its own paints its tiles in (a lesson's
+ * painted valley), by state; the palette's own (`tileTone`) where none is given.
+ */
+export interface TileLook {
+  tile: (state: TileState) => TileTone;
+  button: (tone: TileButtonTone, enabled: boolean) => TileTone;
+}
+
+const TileLookContext = createContext<TileLook | null>(null);
+
+/** Every tile and lesson button inside is drawn in `look`. */
+export function TileLookScope({ look, children }: { look: TileLook; children: ReactNode }): React.JSX.Element {
+  return <TileLookContext.Provider value={look}>{children}</TileLookContext.Provider>;
+}
 
 /** How long the light takes to cross a tile that has just been answered right. */
 const SWEEP_MS = 480;
@@ -69,9 +85,11 @@ function Chunk({
   onFaceLayout?: (e: LayoutChangeEvent) => void;
   children: ReactNode;
 }): React.JSX.Element {
+  // the lip follows the face's corners, where a caller rounds them its own way
+  const corner = StyleSheet.flatten(faceStyle)?.borderRadius;
   return (
     <>
-      {tone.lip ? <View style={[styles.lip, { backgroundColor: tone.lip }]} /> : null}
+      {tone.lip ? <View style={[styles.lip, { backgroundColor: tone.lip }, corner !== undefined && { borderRadius: corner }]} /> : null}
       <Animated.View
         onLayout={onFaceLayout}
         style={[styles.face, { backgroundColor: tone.face, borderColor: tone.edge, transform: [{ translateY }] }, faceStyle]}
@@ -139,8 +157,9 @@ export function Tile({
   onLayout,
 }: TileProps): React.JSX.Element {
   const { colors } = useTheme();
+  const look = useContext(TileLookContext);
   const reduce = useReducedMotion();
-  const tone = tileTone(colors, state);
+  const tone = look ? look.tile(state) : tileTone(colors, state);
   const pressable = !disabled && state !== 'spent' && state !== 'disabled' && !!onPress;
   const sink = useSink(pressable);
 
@@ -237,8 +256,9 @@ export function TileButton({
   testID?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const look = useContext(TileLookContext);
   const off = busy || disabled;
-  const tint = tileButtonTone(colors, tone, !disabled);
+  const tint = look ? look.button(tone, !disabled) : tileButtonTone(colors, tone, !disabled);
   const sink = useSink(!off);
   return (
     <Pressable

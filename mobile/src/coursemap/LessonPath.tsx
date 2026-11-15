@@ -757,8 +757,8 @@ const styles = StyleSheet.create({
   dividerText: { ...sectionLabel },
   // edge to edge: the land runs under the page's gutters to the screen's sides, and a little under the banner above it
   path: { position: 'relative', marginHorizontal: -layout.gutter, marginTop: -spacing.md },
-  bannerLip: { borderRadius: 18, paddingBottom: BANNER_LIP, zIndex: 2 },
-  banner: { borderRadius: 18, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, gap: 2 },
+  bannerLip: { borderRadius: radii.lg, paddingBottom: BANNER_LIP, zIndex: 2 },
+  banner: { borderRadius: radii.lg, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, gap: 2 },
   bannerHead: { alignItems: 'flex-start', gap: spacing.sm },
   bannerWords: { flex: 1 },
   countLine: { marginTop: spacing.xs },

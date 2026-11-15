@@ -1,31 +1,50 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type TextStyle } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
 import type { RecordingVoice } from '@kurda/shared';
 import { CharacterStage } from '../../characters/CharacterStage';
 import { HevaloWindow } from '../../characters/HevaloWindow';
 import type { CharacterReaction } from '../../characters/SpeakingCharacter';
 import { useDirection } from '../../reports/direction';
-import { useTheme } from '../../theme/ThemeProvider';
-import { TILE_EDGE, tileTone } from '../../theme/tileTones';
-import { radii, spacing } from '../../theme/tokens';
+import { display, displayFont } from '../../theme/fonts';
+import { radii, spacing, typography } from '../../theme/tokens';
 import type { AudioControls } from '../useAudio';
+import { useValley } from '../ValleyScope';
+import { CARD } from '../valley';
 
 /** The stage the character beside a bubble stands on, head to waist; Hevalo's window, standing in, as wide. */
 const FIGURE = 150;
 const FIGURE_WIDTH = 118;
 const WINDOW = 134;
 
-/** The tail's square, before it is turned to a point. */
-const TAIL = 14;
-
-/** A bubble of one line: the tail points out of the middle of it. */
-const BUBBLE = 56;
+/** Longer than this, what a bubble says is a scene told in sentences rather than a line said. */
+const A_LINE = 48;
 
 /**
- * A speech bubble, drawn as a tile is — the same quiet edge and face — with a
- * tail on the side its speaker stands. Tapped, it does `onPress` (says it
- * again); `accessibilityLabel` is what it is for a screen reader then.
+ * How the words in a bubble are set: in the display face, as the lesson's
+ * Kurdish and its questions are. A line said — "Silav! Bi xêr hatî!" — is set
+ * large and heavy; a scene told in a few sentences around what is said is set
+ * a size smaller in the face's regular weight, so a paragraph of it reads as
+ * a paragraph rather than as a headline.
+ */
+export function saidStyle(words: string | undefined): TextStyle {
+  return (words?.length ?? 0) <= A_LINE ? LINE : SCENE;
+}
+
+const LINE: TextStyle = display(21);
+const SCENE: TextStyle = { fontFamily: displayFont, fontSize: typography.sizes.md + 1, lineHeight: 25, fontWeight: typography.weights.regular };
+
+/** A bubble of one line. */
+const BUBBLE = 56;
+
+/** The one corner drawn tight, at the foot on the speaker's side: the bubble comes out of them there, with no tail. */
+const TIGHT = 6;
+
+/**
+ * A speech bubble, a cream card on a sandy edge like the lesson's answers,
+ * its corner at the foot on the side its speaker stands drawn tight, which is
+ * where it comes out of them. Tapped, it does `onPress` (says it again);
+ * `accessibilityLabel` is what it is for a screen reader then.
  */
 function SpeechBubble({
   tail,
@@ -38,35 +57,25 @@ function SpeechBubble({
   accessibilityLabel?: string;
   children: ReactNode;
 }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { face, edge } = tileTone(colors, 'idle');
-  const look = [styles.bubble, { backgroundColor: face, borderColor: edge }];
-  return (
-    <View>
-      {onPress ? (
-        <Pressable
-          onPress={onPress}
-          accessibilityRole="button"
-          accessibilityLabel={accessibilityLabel}
-          style={({ pressed }) => [look, pressed && { backgroundColor: tileTone(colors, 'picked').face }]}
-        >
-          {children}
-        </Pressable>
-      ) : (
-        <View style={look}>{children}</View>
-      )}
-      {/* over the bubble's edge, so its point grows out of it with no line across */}
-      <View
-        pointerEvents="none"
-        style={[styles.tail, tail === 'left' ? styles.tailLeft : styles.tailRight, { backgroundColor: face, borderColor: edge }]}
-      />
-    </View>
+  const valley = useValley();
+  const look = [styles.bubble, tail === 'left' ? styles.tightLeft : styles.tightRight, { backgroundColor: valley.card, borderColor: valley.line }];
+  return onPress ? (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      style={({ pressed }) => [look, pressed && { backgroundColor: valley.redWash }]}
+    >
+      {children}
+    </Pressable>
+  ) : (
+    <View style={look}>{children}</View>
   );
 }
 
 /**
  * Who asks, and what they say: a character head to waist with a speech bubble
- * beside it, the tail pointing at them — on the right, facing left, in a
+ * beside it, its tight corner toward them — on the right, facing left, in a
  * right-to-left language.
  *
  * The character is whoever says the item's recording, following the sound
@@ -132,25 +141,19 @@ export function PromptScene({
 }
 
 const styles = StyleSheet.create({
-  scene: { alignItems: 'center', gap: spacing.md },
+  // the bubble's foot level with the speaker's, where its tight corner meets them
+  scene: { alignItems: 'flex-end', gap: spacing.sm + 2 },
   figure: { width: FIGURE_WIDTH },
   side: { flex: 1, gap: spacing.xs },
   bubble: {
     minHeight: BUBBLE,
-    borderWidth: TILE_EDGE,
+    borderWidth: CARD.edge,
     borderRadius: radii.lg,
     paddingVertical: spacing.sm + 4,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.md - 2,
     justifyContent: 'center',
   },
-  tail: {
-    position: 'absolute',
-    top: (BUBBLE - TAIL) / 2,
-    width: TAIL,
-    height: TAIL,
-    transform: [{ rotate: '45deg' }],
-  },
-  tailLeft: { left: -TAIL / 2 + 0.5, borderLeftWidth: TILE_EDGE, borderBottomWidth: TILE_EDGE },
-  tailRight: { right: -TAIL / 2 + 0.5, borderRightWidth: TILE_EDGE, borderTopWidth: TILE_EDGE },
+  tightLeft: { borderBottomLeftRadius: TIGHT },
+  tightRight: { borderBottomRightRadius: TIGHT },
   below: { paddingHorizontal: spacing.xs },
 });

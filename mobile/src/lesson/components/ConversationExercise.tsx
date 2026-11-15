@@ -14,6 +14,7 @@ import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
+import { display } from '../../theme/fonts';
 import type { Feedback } from '../player';
 import type { Exercise } from '../types';
 import { canPlayAudio, useAudio } from '../useAudio';
@@ -292,7 +293,7 @@ function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
+  title: { ...display(typography.sizes.lg - 2) },
   controls: { flexWrap: 'wrap', gap: spacing.sm },
   lines: { gap: spacing.sm },
   row: { alignItems: 'flex-end', gap: spacing.sm, maxWidth: '92%' },
@@ -311,7 +312,8 @@ const styles = StyleSheet.create({
   },
   said: { flexShrink: 1, gap: 2 },
   name: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  text: { fontSize: typography.sizes.md },
+  // what is said, in the display face the lesson's Kurdish is set in
+  text: { ...display(typography.sizes.md + 1) },
   meaning: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   play: { width: PLAY, height: PLAY, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
   ltr: { writingDirection: 'ltr' },

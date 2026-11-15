@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { tileAnswer } from '@kurda/shared';
-import { radii, spacing, typography } from '../../theme/tokens';
+import { spacing } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
@@ -10,7 +10,7 @@ import { useDirection } from '../../reports/direction';
 import { useAnswerMode } from '../answerModePref';
 import { ExerciseHeadline } from './ExerciseHeadline';
 import { KurdishAnswerInput } from './KurdishAnswerInput';
-import { PromptScene } from './SpeechBubble';
+import { PromptScene, saidStyle } from './SpeechBubble';
 import { PromptWords } from './PromptWords';
 import { AnswerModeSwitch, WordBank } from './WordBank';
 
@@ -57,7 +57,7 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled, dial
       <ExerciseHeadline>{t('lesson.translate.prompt')}</ExerciseHeadline>
       {exercise.prompt ? (
         <PromptScene voice={null} audio={null} reaction={verdict === 'right' ? 'cheer' : verdict === 'wrong' ? 'hmm' : null}>
-          <PromptWords prompt={exercise.prompt} tokens={exercise.promptTokens} style={[styles.prompt, { color: colors.textPrimary }]} />
+          <PromptWords prompt={exercise.prompt} tokens={exercise.promptTokens} style={[saidStyle(exercise.prompt), { color: colors.textPrimary }]} />
         </PromptScene>
       ) : null}
       {tiles && bank ? (
@@ -78,7 +78,7 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled, dial
           verdict={verdict}
           placeholder={t('lesson.translate.placeholder')}
           placeholderTextColor={colors.textSecondary}
-          style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
+          style={[styles.input, disabled && styles.dim]}
           accessibilityLabel={t('lesson.translate.answerLabel')}
         />
       )}
@@ -89,13 +89,7 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled, dial
 
 const styles = StyleSheet.create({
   container: { gap: spacing.lg },
-  prompt: { fontSize: typography.sizes.lg, fontWeight: typography.weights.medium },
-  input: {
-    minHeight: MIN_TOUCH_TARGET,
-    borderRadius: radii.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    fontSize: typography.sizes.lg,
-  },
+  // the field's card, edge and face are the answer box's own (KurdishAnswerInput)
+  input: { minHeight: MIN_TOUCH_TARGET, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
   dim: { opacity: 0.6 },
 });

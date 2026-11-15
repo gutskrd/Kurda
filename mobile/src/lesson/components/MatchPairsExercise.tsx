@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 import { pairKey, tapLive, type MatchPair, type PickedCard } from '@kurda/shared';
 import { spacing, typography } from '../../theme/tokens';
+import { display } from '../../theme/fonts';
 import { isLeftMatched, isRightMatched, tapLeft, tapRight, type MatchState } from '../match';
 import type { Exercise } from '../types';
 import { useI18n } from '../../i18n/I18nContext';
@@ -10,6 +11,7 @@ import { haptic } from '../../feedback/haptics';
 import { AnswerMotion } from '../../theme/MotionParts';
 import { Tile, type TileState } from '../../theme/Tile';
 import { useAudio } from '../useAudio';
+import { CARD } from '../valley';
 import { ExerciseHeadline } from './ExerciseHeadline';
 
 interface Props {
@@ -32,7 +34,8 @@ interface Flash extends MatchPair {
 }
 
 /**
- * Tap a Kurdish card and its meaning — or the meaning first. A Kurdish card
+ * Tap a Kurdish card and its meaning — or the meaning first: two columns of
+ * the lesson's cream cards, the Kurdish in the display face. A Kurdish card
  * with a recording says it as it is tapped, hearing the word while deciding
  * what it means, as the website's cards do.
  *
@@ -125,7 +128,7 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled, verdic
           sweep={!!key}
           onPress={() => tap(side, text)}
           faceStyle={styles.card}
-          textStyle={styles.cardText}
+          textStyle={side === 'left' ? styles.kurdish : styles.meaning}
         />
       </AnswerMotion>
     );
@@ -164,6 +167,9 @@ const styles = StyleSheet.create({
   container: { gap: spacing.xl },
   columns: { gap: spacing.md },
   column: { flex: 1, gap: spacing.sm + 2 },
-  card: { minHeight: 60 },
-  cardText: { fontSize: typography.sizes.md + 1 },
+  // the lesson's cards: 16 round, on a hairline edge
+  card: { minHeight: 60, borderRadius: CARD.radius, borderWidth: CARD.edge },
+  // the Kurdish in the display face the headings are in, its meaning in the reader's own
+  kurdish: { ...display(typography.sizes.md + 2) },
+  meaning: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
 });

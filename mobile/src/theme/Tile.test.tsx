@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
-import { Tile, TileButton } from './Tile';
+import { Tile, TileButton, TileLookScope, type TileLook } from './Tile';
 import type { TileState } from './tileTones';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -93,5 +93,29 @@ describe('a lesson button', () => {
     expect(screen.queryByText('Check')).toBeNull();
     fireEvent.click(check);
     expect(onPress).not.toHaveBeenCalled();
+  });
+});
+
+describe('a place with a look of its own', () => {
+  const look: TileLook = {
+    tile: (state) => ({ face: state === 'picked' ? '#fdf1ec' : '#fffdf8', edge: '#e7dcc6', lip: '#dccdb0', ink: '#3d2a1f' }),
+    button: () => ({ face: '#3d2a1f', edge: '#3d2a1f', lip: '#24170f', ink: '#fff8ef' }),
+  };
+  const rgb = (hex: string) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
+
+  // a lesson's cream cards on their sandy edge, and its Check in dark ink, while every other tile keeps the palette's
+  it('paints its tiles and its lesson button in its own colours, and the lip follows a face rounded its own way', () => {
+    renderWithProviders(
+      <TileLookScope look={look}>
+        <Tile label="sêv" state="picked" onPress={() => undefined} faceStyle={{ borderRadius: 16 }} />
+        <TileButton label="Check" onPress={() => undefined} />
+      </TileLookScope>,
+    );
+    const tile = screen.getByRole('button', { name: 'sêv' });
+    expect(face(tile).style.backgroundColor).toBe(rgb('#fdf1ec'));
+    const lip = tile.firstElementChild as HTMLElement;
+    expect(lip.style.backgroundColor).toBe(rgb('#dccdb0'));
+    expect(getComputedStyle(lip).borderTopLeftRadius).toBe('16px');
+    expect(face(screen.getByRole('button', { name: 'Check' })).style.backgroundColor).toBe(rgb('#3d2a1f'));
   });
 });
