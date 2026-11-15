@@ -74,6 +74,8 @@ import { MessagesScreen } from './src/messages/MessagesScreen';
 import { FriendRequestsScreen } from './src/messages/FriendRequestsScreen';
 import { LettersScreen } from './src/letters/LettersScreen';
 import { LetterThreadScreen } from './src/letters/LetterThreadScreen';
+import { LetterWidgetScreen } from './src/widget/LetterWidgetScreen';
+import { LetterWidgetSync } from './src/widget/LetterWidgetSync';
 import { UnreadProvider, useUnread } from './src/messages/unread';
 import { unreadBadge } from './src/notifications/inbox';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
@@ -176,6 +178,8 @@ const linking: LinkingOptions<RootStackParamList> = {
    */
   getStateFromPath: (path, options) => getStateFromPath(legacyTabPath(path), options),
   config: {
+    // a link that starts the app (a tap on the home-screen letter widget) opens its screen over the tabs, so back has somewhere to go
+    initialRouteName: 'Tabs',
     screens: {
       // `?view=games` on Learn arrives as the tab's own param
       Tabs: { screens: linkingScreens() },
@@ -211,6 +215,9 @@ const linking: LinkingOptions<RootStackParamList> = {
       // a shared post: the address the website gives a written one and a picture
       LibraryPost: 'app/library/:postId',
       MemeDetail: 'app/dimen/:postId',
+      // the letters and one correspondence at the website's own addresses; the home-screen letter widget opens these
+      Letters: 'app/letters',
+      LetterThread: 'app/letters/:threadId',
     },
   },
 };
@@ -562,6 +569,13 @@ function SignedInRoot() {
         {({ route, navigation }) => (
           <GuestWall reason="message" onBack={() => navigation.goBack()}>
             <LetterThreadScreen threadId={route.params.threadId} onExit={() => navigation.goBack()} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="LetterWidget" options={{ presentation: 'card' }}>
+        {({ navigation }) => (
+          <GuestWall reason="message" onBack={() => navigation.goBack()}>
+            <LetterWidgetScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
@@ -999,6 +1013,8 @@ export default function App() {
             <AuthProvider>
               {/* the pictures an admin put in place of the app's own art, from the first screen on */}
               <ArtOverridesLoader />
+              {/* the home-screen letter widget's token, made at sign-in and taken away at any sign-out, outside the screens so none is missed */}
+              <LetterWidgetSync />
               <EventThemeProvider>
                 <ThemedNavigation />
               </EventThemeProvider>

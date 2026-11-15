@@ -1,0 +1,9 @@
+/* The letter widget’s own words. Written in mobile/src/widget/widget-strings.json; widget.test.ts holds this file to it. */
+"name" = "Mektup";
+"description" = "Bir mektup arkadaşından gelen en yeni mektup ya da burada tutmayı seçtiğin mektup.";
+"sealed" = "{name} sana yazdı";
+"empty" = "Henüz mektup yok";
+"emptyMore" = "Bir mektup arkadaşın yazdığında mektubu burada görünecek.";
+"signedOut" = "Mektuplarını görmek için Hevalo’yu aç";
+"waiting" = "Mektupların burada görünecek";
+"pinned" = "Widget’ına sabitlendi";

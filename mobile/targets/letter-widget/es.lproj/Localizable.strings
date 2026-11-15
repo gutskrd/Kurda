@@ -1,0 +1,9 @@
+/* The letter widget’s own words. Written in mobile/src/widget/widget-strings.json; widget.test.ts holds this file to it. */
+"name" = "Carta";
+"description" = "La carta más reciente de un amigo por carta, o la que guardas aquí.";
+"sealed" = "Una carta de {name}";
+"empty" = "Aún no hay cartas";
+"emptyMore" = "Cuando un amigo por carta te escriba, su carta aparecerá aquí.";
+"signedOut" = "Abre Hevalo para ver tus cartas";
+"waiting" = "Tus cartas aparecerán aquí";
+"pinned" = "Fijada en tu widget";

@@ -27,6 +27,11 @@
       "bundleIdentifier": "app.hevalo.mobile",
       "appStoreUrl": "",
       "usesAppleSignIn": true,
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.app.hevalo.mobile"
+        ]
+      },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "LSApplicationCategoryType": "public.app-category.education"
@@ -161,7 +166,8 @@
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
             "NSPrivacyAccessedAPITypeReasons": [
-              "CA92.1"
+              "CA92.1",
+              "1C8F.1"
             ]
           },
           {
@@ -251,7 +257,29 @@
             "backgroundColor": "#0E1014"
           }
         }
-      ]
+      ],
+      "@bacons/apple-targets",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "LetterWidget",
+              "label": "@string/letter_widget_name",
+              "description": "@string/letter_widget_description",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "widgetCategory": "home_screen",
+              "previewImage": "./assets/widget/letter-preview.png"
+            }
+          ]
+        }
+      ],
+      "./plugins/withLetterWidgetStrings.cjs"
     ],
     "locales": {
       "ku": "./locales/ku.json",

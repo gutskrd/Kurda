@@ -78,6 +78,8 @@ export type RootStackParamList = {
   Letters: undefined;
   /** One correspondence with a pen pal (letters/LetterThreadScreen), from Letters or from a bird's arrival in the notifications. */
   LetterThread: { threadId: string };
+  /** The home-screen letter widget's page (widget/LetterWidgetScreen), from the letters screen's header. */
+  LetterWidget: undefined;
   /** As Chat: `openGift` to unwrap at once; `name` may be '' and is then looked up. */
   /** `addFriends`: the group was made a moment ago, and opens with the sheet for adding friends up */
   GroupThread: { groupId: string; name: string; openGift?: string; addFriends?: boolean };

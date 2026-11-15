@@ -1,0 +1,9 @@
+/* The letter widget’s own words. Written in mobile/src/widget/widget-strings.json; widget.test.ts holds this file to it. */
+"name" = "رسالة";
+"description" = "أحدث رسالة من صديق مراسلة، أو الرسالة التي تختار إبقاءها هنا.";
+"sealed" = "رسالة من {name}";
+"empty" = "لا رسائل بعد";
+"emptyMore" = "حين يكتب لك صديق مراسلة، تظهر رسالته هنا.";
+"signedOut" = "افتح Hevalo لترى رسائلك";
+"waiting" = "ستظهر رسائلك هنا";
+"pinned" = "مثبّتة على أداتك";
