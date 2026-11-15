@@ -1598,8 +1598,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Te? Na, xalo. Dapîrê ard anî, Nazê hevîr çêkir. Te tenê got!",
-                        "en": "You? No, uncle. Dapîr brought the flour, Nazê made the dough. You just talked!"
+                        "text": "Te? Na, xalo. Dapîrê ard anî, Nazê hevîr çêkir. Te tenê got û got!",
+                        "en": "You? No, uncle. Dapîr brought the flour, Nazê made the dough. You just talked and talked!"
                       },
                       {
                         "speaker": 0,
@@ -2267,18 +2267,18 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "say": "Wê demê nerîta me ev bû: her malbatê pez xwedî dikir.",
+                    "say": "Wê demê nerîta me ev bû ku her malbatê pez xwedî dikir.",
                     "voice": "hamo",
-                    "prompt": "Why were there so many flocks back then? “Wê demê nerîta me ev bû: her malbatê pez xwedî dikir.”",
+                    "prompt": "Why were there so many flocks back then? “Wê demê nerîta me ev bû ku her malbatê pez xwedî dikir.”",
                     "accepted": [
+                      "At that time our custom was that every family kept sheep.",
+                      "At that time our custom was that every family kept sheep",
+                      "In those days our custom was that every family raised sheep.",
+                      "In those days our custom was that every family raised sheep",
+                      "Back then it was our custom that every family kept sheep.",
+                      "Back then it was our custom that every family kept sheep",
                       "At that time this was our custom: every family kept sheep.",
-                      "At that time this was our custom: every family kept sheep",
-                      "In those days this was our custom: every family raised sheep.",
-                      "In those days this was our custom: every family raised sheep",
-                      "Back then our custom was this: every family kept sheep.",
-                      "Back then our custom was this: every family kept sheep",
-                      "At that time our custom was that every family raised sheep.",
-                      "At that time our custom was that every family raised sheep"
+                      "At that time this was our custom: every family kept sheep"
                     ]
                   }
                 },
@@ -2638,8 +2638,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Dapîr dibêje: dema ku jinan pez didot, keçikan stran digotin.",
-                        "en": "Dapîr says: while the women were milking, the girls used to sing."
+                        "text": "Dapîr dibêje ku dema jinan pez didot, keçikan stran digotin.",
+                        "en": "Dapîr says that while the women were milking, the girls used to sing."
                       },
                       {
                         "speaker": 1,
@@ -2678,8 +2678,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Dapîr dibêje: «Hemû keçikan dixwest ku ew were xwazgîniya wan.»",
-                        "en": "Dapîr says: “All the girls wanted him to come and ask for their hand.”"
+                        "text": "Dapîr dibêje ku hemû keçikan dixwest ew were xwazgîniya wan.",
+                        "en": "Dapîr says all the girls wanted him to come and ask for their hand."
                       },
                       {
                         "speaker": 1,
@@ -3187,9 +3187,9 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Kê gol pêşî dît?",
+                    "say": "Kê pêşî gol dît?",
                     "voice": "hamo",
-                    "prompt": "Everyone talks at once. Which question does Baran shout? “Kê gol pêşî dît?”",
+                    "prompt": "Everyone talks at once. Which question does Baran shout? “Kê pêşî gol dît?”",
                     "options": [
                       "Who saw the lake first?",
                       "Who burned the bread first?",
@@ -3640,8 +3640,8 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Binêre, xalo: ev wêneyê nanê te yê reş e!",
-                        "en": "Look, uncle: here’s the photo of your black bread!"
+                        "text": "Binêre xalo, ev wêneyê nanê te yê reş e!",
+                        "en": "Look, uncle, here’s the photo of your black bread!"
                       },
                       {
                         "speaker": 0,
@@ -3775,16 +3775,18 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "say": "Hêvî mîna Xezalê ye: jîr û bextewar.",
+                    "say": "Hêvî mîna Xezalê jîr û bextewar e.",
                     "voice": "hamo",
-                    "prompt": "Hamo stops at a photo of Hêvî laughing in Xezal’s arms. What does he say? “Hêvî mîna Xezalê ye: jîr û bextewar.”",
+                    "prompt": "Hamo stops at a photo of Hêvî laughing in Xezal’s arms. What does he say? “Hêvî mîna Xezalê jîr û bextewar e.”",
                     "accepted": [
-                      "Hêvî is like Xezal: clever and happy.",
-                      "Hêvî is like Xezal: clever and happy",
+                      "Hêvî is clever and happy, just like Xezal.",
+                      "Hêvî is clever and happy, just like Xezal",
+                      "Hêvî is clever and happy like Xezal.",
+                      "Hêvî is clever and happy like Xezal",
+                      "Like Xezal, Hêvî is clever and happy.",
+                      "Like Xezal, Hêvî is clever and happy",
                       "Hêvî is just like Xezal: clever and happy.",
-                      "Hêvî is just like Xezal: clever and happy",
-                      "Hêvî is like Xezal, clever and happy.",
-                      "Hêvî is like Xezal, clever and happy"
+                      "Hêvî is just like Xezal: clever and happy"
                     ]
                   }
                 },
@@ -3920,8 +3922,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, binêre: di defterê de nameyek heye.",
-                        "en": "Uncle, look: there’s a note in the notebook."
+                        "text": "Xalo, binêre! Di defterê de nameyek heye.",
+                        "en": "Uncle, look! There’s a note in the notebook."
                       },
                       {
                         "speaker": 0,
@@ -3940,8 +3942,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Min li ser telefona wê peyamek dît: pêşniyareke kar ji Hewlêrê.",
-                        "en": "I saw a message on her phone: a job offer from Hewlêr."
+                        "text": "Min li ser telefona wê peyamek dît. Pêşniyareke kar ji Hewlêrê hat.",
+                        "en": "I saw a message on her phone. A job offer has come from Hewlêr."
                       },
                       {
                         "speaker": 0,

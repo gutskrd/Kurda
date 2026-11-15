@@ -531,8 +531,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê. Binêre, ew şerm dike. Ew dibêje: «Erê, ez winda bûm.»",
-                        "en": "Yes. Look, he’s embarrassed. He says: “Yes, I got lost.”"
+                        "text": "Erê. Binêre, ew şerm dike. Dibêje ku erê, ew winda bû.",
+                        "en": "Yes. Look, he’s embarrassed. He says yes, he got lost."
                       },
                       {
                         "speaker": 1,
@@ -561,7 +561,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê, ew di tarîtiyê de rabû. Lê ew dibêje ku ew hîç netirsiya.",
+                        "text": "Erê, di tarîtiyê de rabû. Lê dibêje ku hîç netirsiya.",
                         "en": "Yes, he got up in the dark. But he says he wasn’t afraid at all."
                       },
                       {
@@ -673,7 +673,7 @@
                   "payload": {
                     "voice": "hamo",
                     "prompt": "Be Baran and own up: “I sat down under the tree and I fell asleep.”",
-                    "reference": "Ez li bin darê rûniştim û ez razam."
+                    "reference": "Ez li bin darê rûniştim û razam."
                   }
                 },
                 {
@@ -808,8 +808,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew dibêje: niha bêhna pûngê ji Bozo tê!",
-                        "en": "She says: now Bozo smells of mint!"
+                        "text": "Dibêje ku niha bêhna pûngê ji Bozo tê!",
+                        "en": "She says Bozo smells of mint now!"
                       },
                       {
                         "speaker": 1,
@@ -1110,14 +1110,14 @@
                   "type": "translate",
                   "payload": {
                     "voice": "hamo",
-                    "prompt": "Hamo points at an old photo on the wall: a boy and a little girl under the apple trees. Say it for him: “Lorîn and I lived here every summer.”",
+                    "prompt": "Hamo points at an old photo on the wall: a boy and a little girl under the apple trees. Say it for him: “Lorîn and I were here every summer.”",
                     "accepted": [
-                      "Ez û Lorîn her havîn li vir jiyan.",
-                      "Ez û Lorîn her havîn li vir jiyan",
-                      "Her havîn ez û Lorîn li vir jiyan.",
-                      "Her havîn ez û Lorîn li vir jiyan",
-                      "Em her havîn li vir jiyan.",
-                      "Em her havîn li vir jiyan"
+                      "Ez û Lorîn her havîn li vir bûn.",
+                      "Ez û Lorîn her havîn li vir bûn",
+                      "Her havîn ez û Lorîn li vir bûn.",
+                      "Her havîn ez û Lorîn li vir bûn",
+                      "Em her havîn li vir bûn.",
+                      "Em her havîn li vir bûn"
                     ]
                   }
                 },
@@ -1590,8 +1590,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew dikene. Ew dibêje: «Ew kûçikê cîranan bû!»",
-                        "en": "She’s laughing. She says: “It was the neighbours’ dog!”"
+                        "text": "Dikene, û dibêje ku ew kûçikê cîranan bû!",
+                        "en": "She’s laughing, and she says it was the neighbours’ dog!"
                       },
                       {
                         "speaker": 0,
@@ -1694,13 +1694,13 @@
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Xezal dibêje: belkî ew rovî bû!",
+                    "say": "Xezal dibêje ku belkî ew rovî bû!",
                     "voice": "hamo",
-                    "prompt": "Xezal winks at you. Hamo tells Nazê what Xezal dares to suggest. What is it? “Xezal dibêje: belkî ew rovî bû!”",
+                    "prompt": "Xezal winks at you. Hamo tells Nazê what Xezal dares to suggest. What is it? “Xezal dibêje ku belkî ew rovî bû!”",
                     "options": [
-                      "Xezal says: maybe it was a fox!",
-                      "Xezal says: maybe it was a bear!",
-                      "Xezal says: it was a wolf!"
+                      "Xezal says maybe it was a fox!",
+                      "Xezal says maybe it was a bear!",
+                      "Xezal says it was a wolf!"
                     ],
                     "correctIndex": 0
                   }
@@ -2190,8 +2190,8 @@
                   "type": "speaking",
                   "payload": {
                     "voice": "hamo",
-                    "prompt": "Now Baran tries. Tell his day in order: “First I got up, then I went to the market, in the end I came back.”",
-                    "reference": "Pêşî ez rabûm, paşê ez çûm bazarê, di dawiyê de ez vegeriyam."
+                    "prompt": "Now Baran tries. Tell his day in order: “First I got up, then I went to the market, and in the end I came back.”",
+                    "reference": "Pêşî ez rabûm, paşê çûm bazarê, û di dawiyê de vegeriyam."
                   }
                 },
                 {
@@ -2757,9 +2757,9 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Biryara min ev e: em ê biçin zozanan!",
+                    "say": "Biryara min ev e, em ê biçin zozanan!",
                     "voice": "hamo",
-                    "prompt": "After dinner Hamo stands up and clears his throat. What has he decided? “Biryara min ev e: em ê biçin zozanan!”",
+                    "prompt": "After dinner Hamo stands up and clears his throat. What has he decided? “Biryara min ev e, em ê biçin zozanan!”",
                     "options": [
                       "My decision is this: we will go to the summer pastures!",
                       "My decision is this: we will stay in the village!",
@@ -2940,11 +2940,11 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "say": "Bişar rêberekî baş e; ew hemû rêyan dizane.",
+                    "say": "Bişar rêberekî baş e, hemû rêyan dizane.",
                     "voice": "hamo",
-                    "prompt": "Hamo has another guide in mind for the high pastures. What does he say? “Bişar rêberekî baş e; ew hemû rêyan dizane.”",
+                    "prompt": "Hamo has another guide in mind for the high pastures. What does he say? “Bişar rêberekî baş e, hemû rêyan dizane.”",
                     "accepted": [
-                      "Bişar is a good guide; he knows all the roads.",
+                      "Bişar is a good guide, he knows all the roads.",
                       "Bişar is a good guide; he knows all the roads",
                       "Bişar is a good guide, he knows all the ways.",
                       "Bişar is a good guide, he knows all the ways",
@@ -2961,7 +2961,7 @@
                   "payload": {
                     "voice": "hamo",
                     "prompt": "Say Hamo’s big news yourself: “My decision is this: this summer we will go to the summer pastures!”",
-                    "reference": "Biryara min ev e: vê havînê em ê biçin zozanan!"
+                    "reference": "Biryara min ev e, vê havînê em ê biçin zozanan!"
                   }
                 },
                 {

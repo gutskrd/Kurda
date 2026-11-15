@@ -1,15 +1,23 @@
 /**
  * The starter riddles and proverbs (api/content/games/riddles.json and
- * proverbs.json), seeded once each as drafts for a native speaker to read.
+ * proverbs.json): the Stories' own collections, which the owner wants
+ * learners to have, so each is seeded once and published.
  *
  * Each entry in a file is one row in its variety, written the way the
  * collections are (shared/src/lore.ts): the Kurdish fields, its sources, a
  * note for its reviewers, and its translations into the other app languages.
- * Seeding makes it a `starter` draft, unreviewed, with every translation
- * unreviewed beside it; nothing reaches a learner until a reviewer approves
- * it and an editor publishes it. The note for the reviewers is kept in the
- * row (`notes`), which the learner routes never send. A riddle's level is its
- * difficulty's; a proverb's is the file's `level`, else the middle one.
+ * Seeding makes it a `starter` row, published and approved, with every
+ * translation unreviewed beside it: publishing is not a claim that a native
+ * speaker has checked the text, and the reviewers track that per language in
+ * the admin. The note for the reviewers is kept in the row (`notes`), which
+ * the learner routes never send. A riddle's level is its difficulty's; a
+ * proverb's is the file's `level`, else the middle one.
+ *
+ * Until a person changes a starter in the admin (every admin action sets
+ * `updated_by`), its file is where it is written: a later start brings the
+ * row, and each translation no reviewer has touched, up to the file, so a
+ * correction reaches the app with the next deploy. Once someone has changed
+ * it, the admin is where it lives.
  *
  * An entry is checked whole before anything of it is written — the row by
  * `checkGameContent`, each translation by `checkLoreTranslation` — and one
@@ -108,8 +116,10 @@ export async function seedStarterLore(
   pool: pg.Pool,
   log: Pick<FastifyBaseLogger, 'info' | 'warn'>,
   files: Readonly<Record<LoreKind, URL>> = STARTER_LORE_FILES,
-): Promise<{ seeded: string[] }> {
+): Promise<{ seeded: string[]; refreshed: string[]; published: string[] }> {
   const seeded: string[] = [];
+  const refreshed: string[] = [];
+  const published: string[] = [];
   for (const kind of Object.keys(files) as LoreKind[]) {
     try {
       let read: ReturnType<typeof starterLore>;
@@ -160,10 +170,109 @@ export async function seedStarterLore(
           client.release();
         }
       }
+      // every starter no person has changed: brought up to its file, and published
+      for (const e of read.entries) {
+        if (!e.ok) continue;
+        const outcome = await keepCurrent(pool, kind, e);
+        if (outcome === 'failed') {
+          log.warn({ kind, slug: e.slug }, 'starter riddle or proverb could not be brought up to its file');
+          continue;
+        }
+        if (outcome.refreshed) refreshed.push(`${kind}:${e.slug}`);
+        if (outcome.published) published.push(`${kind}:${e.slug}`);
+      }
     } catch (err) {
       log.warn({ err, kind }, 'starter riddles or proverbs could not be seeded');
     }
   }
-  if (seeded.length > 0) log.info({ seeded }, 'starter riddles and proverbs seeded as drafts');
-  return { seeded };
+  if (seeded.length > 0) log.info({ seeded }, 'starter riddles and proverbs seeded');
+  if (refreshed.length > 0) log.info({ refreshed }, 'starter riddles and proverbs brought up to their files');
+  if (published.length > 0) log.info({ published }, 'starter riddles and proverbs published');
+  return { seeded, refreshed, published };
+}
+
+/** A value as text with its keys in order, so a row read back from jsonb compares equal to the file it came from. */
+function stable(value: unknown): string {
+  const sorted = (v: unknown): unknown =>
+    Array.isArray(v)
+      ? v.map(sorted)
+      : v !== null && typeof v === 'object'
+        ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)).map(([k, x]) => [k, sorted(x)]))
+        : v;
+  return JSON.stringify(sorted(value));
+}
+
+/**
+ * One starter brought up to its file and published, under a row lock, when no
+ * person has changed it: the row's text and level, and each translation no
+ * reviewer has touched (a translation the file adds is added; one a reviewer
+ * marked or edited stays theirs).
+ */
+async function keepCurrent(
+  pool: pg.Pool,
+  kind: LoreKind,
+  e: Extract<StarterLore, { ok: true }>,
+): Promise<{ refreshed: boolean; published: boolean } | 'failed'> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const found = await client.query<{ id: string; status: string; level: number; payload: unknown }>(
+      `SELECT id, status, level, payload FROM game_content
+        WHERE kind = $1 AND dialect = $2 AND origin = $3 AND source = 'starter' AND updated_by IS NULL AND status IN ('draft', 'published')
+        FOR UPDATE`,
+      [kind, e.dialect, `starter:${e.slug}`],
+    );
+    const row = found.rows[0];
+    let refreshed = false;
+    let published = false;
+    if (row) {
+      if (row.level !== e.level || stable(row.payload) !== stable(e.payload)) {
+        // the version moves, so an editor with the row open reloads before saving over it
+        await client.query(`UPDATE game_content SET payload = $2::jsonb, level = $3, lock_version = lock_version + 1 WHERE id = $1`, [
+          row.id,
+          JSON.stringify(e.payload),
+          e.level,
+        ]);
+        refreshed = true;
+      }
+      const stored = await client.query<{ locale: string; payload: unknown; untouched: boolean }>(
+        `SELECT locale, payload, (updated_by IS NULL AND review_status = 'unreviewed') AS untouched
+           FROM game_content_translations WHERE content_id = $1`,
+        [row.id],
+      );
+      const byLocale = new Map(stored.rows.map((t) => [t.locale, t]));
+      for (const t of e.translations) {
+        const have = byLocale.get(t.locale);
+        if (!have) {
+          await client.query(`INSERT INTO game_content_translations (content_id, locale, payload) VALUES ($1, $2, $3::jsonb)`, [
+            row.id,
+            t.locale,
+            JSON.stringify(t.payload),
+          ]);
+          refreshed = true;
+        } else if (have.untouched && stable(have.payload) !== stable(t.payload)) {
+          await client.query(`UPDATE game_content_translations SET payload = $3::jsonb, updated_at = now() WHERE content_id = $1 AND locale = $2`, [
+            row.id,
+            t.locale,
+            JSON.stringify(t.payload),
+          ]);
+          refreshed = true;
+        }
+      }
+      if (row.status === 'draft') {
+        await client.query(
+          `UPDATE game_content SET status = 'published', review_status = 'approved', reviewed_at = now(), published_at = now() WHERE id = $1`,
+          [row.id],
+        );
+        published = true;
+      }
+    }
+    await client.query('COMMIT');
+    return { refreshed, published };
+  } catch {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return 'failed';
+  } finally {
+    client.release();
+  }
 }

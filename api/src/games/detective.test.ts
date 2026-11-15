@@ -26,7 +26,7 @@ const CASE = {
     { id: 'baran', name: 'Baran', about: en('A son.') },
   ],
   evidence: [
-    { id: 'advice', kind: 'note', ku: 'Û şîreta sêyem: bi şev hingiv qedexe ye!', meanings: en('Honey at night is forbidden!'), speaker: 'xezo', recording: 'roadu08s2l3a|0|x' },
+    { id: 'advice', kind: 'note', ku: 'Û şîreta sêyem ev e, bi şev hingiv qedexe ye!', meanings: en('Honey at night is forbidden!'), speaker: 'xezo', recording: 'roadu08s2l3a|0|x' },
     { id: 'apples', kind: 'statement', ku: 'Ez bêguneh im! Ez tenê ji sêvan hez dikim.', meanings: en('I only like apples.'), from: 'hevalo', speaker: 'hevalo' },
     { id: 'away', kind: 'statement', ku: 'Na, Baran îro ne li malê ye.', meanings: en('Baran is not at home today.'), from: 'hamo' },
   ],

@@ -266,8 +266,8 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Nîşan dibêje: li rastê.",
-                    "prompt": "Hamo reads the street sign aloud. Which way does it point? “Nîşan dibêje: li rastê.”",
+                    "say": "Nîşan ber bi rastê ve ye.",
+                    "prompt": "Hamo stops under a street sign and looks up. Which way does it point? “Nîşan ber bi rastê ve ye.”",
                     "options": [
                       "Left",
                       "Right",
@@ -281,8 +281,8 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez li kolanê ber bi çepê ve diçim!",
-                    "prompt": "And which way does Hamo turn? He marches off happily: “Ez li kolanê ber bi çepê ve diçim!”",
+                    "say": "Ez diçim kolana çepê!",
+                    "prompt": "And which way does Hamo turn? He marches off happily: “Ez diçim kolana çepê!”",
                     "options": [
                       "Left, of course",
                       "Right",
@@ -516,8 +516,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xezal dibêje: «Amed kevnar e, sûrên wê hene. Sûrên Kobaniyê li ku ne?»",
-                        "en": "Xezal says: “Amed is ancient, it has walls. Where are Kobanî’s walls?”"
+                        "text": "Xezal dibêje ku Amed kevnar e û sûrên wê hene. Lê sûrên Kobaniyê li ku ne?",
+                        "en": "Xezal says Amed is ancient and has walls. So where are Kobanî’s walls?"
                       },
                       {
                         "speaker": 0,
@@ -830,8 +830,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew dikene: «Li cem min e.»",
-                        "en": "She smiles: “It’s with me.”"
+                        "text": "Ew dikene û dibêje ku li cem wê ye.",
+                        "en": "She smiles and says it’s with her."
                       },
                       {
                         "speaker": 1,
@@ -1323,8 +1323,8 @@
                   "position": 2,
                   "type": "translate",
                   "payload": {
-                    "say": "Çayê vexwe, ew hîn germ e.",
-                    "prompt": "Hamo pushes a glass towards you. What does he say? “Çayê vexwe, ew hîn germ e.”",
+                    "say": "Çayê vexwe, hîn germ e.",
+                    "prompt": "Hamo pushes a glass towards you. What does he say? “Çayê vexwe, hîn germ e.”",
                     "accepted": [
                       "Drink the tea, it's still hot.",
                       "Drink your tea, it is still hot.",
@@ -1559,8 +1559,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Çar şekir di çaya min de, ji kerema xwe.",
-                        "en": "Four sugars in my tea, please."
+                        "text": "Çar şekir bike çaya min, ji kerema xwe.",
+                        "en": "Put four sugars in my tea, please."
                       },
                       {
                         "speaker": 1,
@@ -1594,13 +1594,13 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Nîşan dibêje «li rastê», û tu li çepê diçî!",
-                        "en": "The sign says “right”, and you go left!"
+                        "text": "Nîşan ber bi rastê ve ye, lê tu diçî çepê!",
+                        "en": "The sign points right, and you go left!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Baş e… ez rûdinim û dixwim.",
-                        "en": "Fine… I’ll sit down and eat."
+                        "text": "Baş e… ez rûdinim û tiştekî dixwim.",
+                        "en": "Fine… I’ll sit down and eat something."
                       },
                       {
                         "speaker": 1,
@@ -1860,8 +1860,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Nameyek, ji min û Lorînê: «Li Newrozê, li ser girê…»",
-                        "en": "A note, from Lorîn and me: “At Newroz, on the hill…”"
+                        "text": "Nameyek ji min û Lorînê… Li Newrozê, li ser girê…",
+                        "en": "A note from Lorîn and me… “At Newroz, on the hill…”"
                       },
                       {
                         "speaker": 1,
@@ -1870,8 +1870,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Paşê tiştek tune. Lê tê bîra min: ev soza bavê me ye.",
-                        "en": "After that, nothing. But I remember: it is our father’s promise."
+                        "text": "Paşê tiştek tune. Lê tê bîra min ku ev soza bavê me ye.",
+                        "en": "After that, nothing. But I remember that it is our father’s promise."
                       },
                       {
                         "speaker": 1,
@@ -1987,10 +1987,10 @@
                   "position": 7,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Hamo shakes his head and laughs: all those years of looking, and Lorîn had it. Complete: “Em nîvê din … dikin!” (find) Type the whole sentence.",
+                    "prompt": "Lorîn hides the apples for the guests on top of the cupboard. Hamo only laughs. Complete: “Hevalo hemû sêvan … dike!” (finds) Type the whole sentence.",
                     "accepted": [
-                      "Em nîvê din peyda dikin!",
-                      "Em nîvê din peyda dikin"
+                      "Hevalo hemû sêvan peyda dike!",
+                      "Hevalo hemû sêvan peyda dike"
                     ],
                     "voice": "hamo"
                   }
@@ -2640,8 +2640,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Pirtûkfiroş dipirse: «Bavê te kî ye?»",
-                        "en": "The bookseller asks: “Who is your father?”"
+                        "text": "Pirtûkfiroş dipirse bavê te kî ye.",
+                        "en": "The bookseller is asking who your father is."
                       },
                       {
                         "speaker": 0,
@@ -2655,8 +2655,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew dibêje: «Ibrahîm? Ew hemû gotinên pêşiyan dizane!»",
-                        "en": "He says: “Ibrahîm? He knows every proverb there is!”"
+                        "text": "Ew dibêje ku Ibrahîm hemû gotinên pêşiyan dizane!",
+                        "en": "He says Ibrahîm knows every proverb there is!"
                       },
                       {
                         "speaker": 1,
@@ -2717,10 +2717,13 @@
                   "position": 3,
                   "type": "translate",
                   "payload": {
-                    "say": "Li vir her tişt heye: pirtûk, kovar, helbest, çîrok.",
+                    "say": "Li vir pirtûk, kovar, helbest, çîrok, her tişt heye!",
                     "voice": "hamo",
-                    "prompt": "Hamo shows you round the shelves, delighted. What does he say? “Li vir her tişt heye: pirtûk, kovar, helbest, çîrok.”",
+                    "prompt": "Hamo shows you round the shelves, delighted. What does he say? “Li vir pirtûk, kovar, helbest, çîrok, her tişt heye!”",
                     "accepted": [
+                      "Books, magazines, poems, stories, there is everything here!",
+                      "Books, magazines, poems, stories: there is everything here",
+                      "Here there are books, magazines, poems, stories, everything!",
                       "There is everything here: books, magazines, poems, stories.",
                       "Everything is here: books, magazines, poems, stories.",
                       "There's everything here: books, magazines, poetry, stories.",
@@ -2774,7 +2777,7 @@
                   "position": 7,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Hamo is proud of his shopping: “Ez sê … dikirim.” (books) Type the whole sentence.",
+                    "prompt": "Hamo piles his books on the counter, proud of his shopping: “Ez sê … dikirim.” (books) Type the whole sentence.",
                     "accepted": [
                       "Ez sê pirtûkan dikirim.",
                       "Ez sê pirtûkan dikirim"
@@ -2839,8 +2842,8 @@
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Tu çi dixwînî: helbestan an çîrokan?",
-                    "prompt": "Hamo asks you on the way out: “Tu çi dixwînî: helbestan an çîrokan?” What would you answer?",
+                    "say": "Tu helbestan dixwînî an çîrokan?",
+                    "prompt": "Hamo asks you on the way out: “Tu helbestan dixwînî an çîrokan?” What would you answer?",
                     "options": [
                       "Ez çîrokan dixwînin.",
                       "Ez çîrokan dixwîne.",
@@ -2920,8 +2923,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Lorîn dibêje: here rasterast, paşê li çepê.",
-                        "en": "Lorîn says: go straight on, then left."
+                        "text": "Lorîn dibêje ku tu rasterast biçî, paşê li çepê.",
+                        "en": "Lorîn says you should go straight on, then left."
                       },
                       {
                         "speaker": 0,
@@ -2940,8 +2943,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Lorîn dibêje: rasterast here. Mala we li quncikê ye.",
-                        "en": "Lorîn says: go straight on. Your house is at the corner."
+                        "text": "Lorîn dibêje ku mala we li quncikê ye. Rasterast, xalo!",
+                        "en": "Lorîn says your house is at the corner. Straight on, uncle!"
                       },
                       {
                         "speaker": 0,
@@ -2950,7 +2953,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, demjimêrek e! Nan li ku ye?",
+                        "text": "Xalo, ev demjimêrek e! Nan li ku ye?",
                         "en": "Uncle, it’s been an hour! Where’s the bread?"
                       },
                       {
@@ -2960,8 +2963,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew dibêje: «Tu Hamo yî? Kurê Ibrahîm?»",
-                        "en": "He keeps saying: “You’re Hamo? Ibrahîm’s boy?”"
+                        "text": "Ew dibêje ku ez kurê Ibrahîm im!",
+                        "en": "He says I’m Ibrahîm’s boy!"
                       }
                     ],
                     "prompt": "Kî li dû Hamo tê?",
@@ -3410,8 +3413,8 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hêvî dibêje: «Ez dixwazim deryayê bibînim!»",
-                    "prompt": "Why does Hêvî want to go by plane? “Hêvî dibêje: «Ez dixwazim deryayê bibînim!»”",
+                    "say": "Hêvî dibêje ku ew dixwaze deryayê bibîne!",
+                    "prompt": "Why does Hêvî want to go by plane? “Hêvî dibêje ku ew dixwaze deryayê bibîne!”",
                     "options": [
                       "She wants to see Amed.",
                       "She wants to see the sea.",
@@ -3707,8 +3710,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ev cîhan çiqas biçûk e! Ew dibêje: «Werin, em çay vexwin.»",
-                        "en": "It’s a small world! He says: “Come, let’s have some tea.”"
+                        "text": "Ev cîhan çiqas biçûk e! Ew dibêje ku em bi hev re çay vexwin.",
+                        "en": "What a small world! He says we should have tea together."
                       },
                       {
                         "speaker": 1,
@@ -3938,13 +3941,13 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Bavê min dibêje: «Li Newrozê ez têm Sêvanê. Soza min soz e!»",
-                        "en": "My father says: “At Newroz I’m coming to Sêvan. My promise is a promise!”"
+                        "text": "Bavê min li Newrozê tê Sêvanê! Ew dibêje ku soza wî soz e.",
+                        "en": "My father is coming to Sêvan at Newroz! He says his promise is a promise."
                       },
                       {
                         "speaker": 0,
-                        "text": "«Soza min soz e»? Wek te, xalo!",
-                        "en": "“My promise is a promise”? Just like you, uncle!"
+                        "text": "Soza wî soz e? Wek te, xalo!",
+                        "en": "His promise is a promise? Just like you, uncle!"
                       },
                       {
                         "speaker": 1,

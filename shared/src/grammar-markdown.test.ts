@@ -7,6 +7,17 @@ describe('parseInline', () => {
     expect(parseInline('a ** b')).toEqual([{ text: 'a ** b' }]);
   });
 
+  it('reads a single asterisk pair as italic, as the course’s notes set their Kurdish examples', () => {
+    expect(parseInline('*Ez baş im.* I am well. · *Ez Hamo me.*')).toEqual([
+      { text: 'Ez baş im.', italic: true },
+      { text: ' I am well. · ' },
+      { text: 'Ez Hamo me.', italic: true },
+    ]);
+    // bold beside an italic, and asterisks that are not emphasis
+    expect(parseInline('**ez … im** (*Ez baş im.*)')).toEqual([{ text: 'ez … im', bold: true }, { text: ' (' }, { text: 'Ez baş im.', italic: true }, { text: ')' }]);
+    expect(parseInline('2 * 3 = 6, and a lone * here')).toEqual([{ text: '2 * 3 = 6, and a lone * here' }]);
+  });
+
   it('keeps Kurdish letters intact', () => {
     expect(parseInline('**sêv** û **av**')).toEqual([{ text: 'sêv', bold: true }, { text: ' û ' }, { text: 'av', bold: true }]);
   });

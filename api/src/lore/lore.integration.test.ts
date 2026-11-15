@@ -378,32 +378,60 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('riddles and proverbs (integration)
   });
 
   describe('the starters', () => {
-    it('are seeded once each, as drafts with every translation unreviewed, and one deleted stays gone', async () => {
+    it('are seeded once each, published with every translation unreviewed, kept as their files say until someone changes them, and one deleted stays gone', async () => {
       const dir = await mkdtemp(path.join(tmpdir(), 'lore-starters-'));
       try {
         const riddles = path.join(dir, 'riddles.json');
         const proverbs = path.join(dir, 'proverbs.json');
         const { notes, ...kurdish } = riddle(`kmr-${tag}-starter`, { tradition: 'new', region: null, sources: [] });
-        await writeFile(riddles, JSON.stringify({ riddles: [{ ...kurdish, dialect: 'kmr', notes, translations: { en: riddleEn, de: { ...riddleEn, answer: 'Antwort' } } }] }));
+        const write = (en: typeof riddleEn) =>
+          writeFile(riddles, JSON.stringify({ riddles: [{ ...kurdish, dialect: 'kmr', notes, translations: { en, de: { ...riddleEn, answer: 'Antwort' } } }] }));
+        await write(riddleEn);
         await writeFile(proverbs, JSON.stringify({ proverbs: [{ slug: `kmr-${tag}-broken`, dialect: 'kmr', text: 'Gotin.', themes: ['wisdom'], tradition: 'traditional', exampleKu: 'Got.', translations: {} }] }));
         const files = { riddle: pathToFileURL(riddles), proverb: pathToFileURL(proverbs) };
         const log = { info: () => undefined, warn: () => undefined };
         // the proverb names no source for a traditional saying: it waits until its file is fixed
-        expect((await seedStarterLore(pool, log, files)).seeded).toEqual([`riddle:kmr-${tag}-starter`]);
-        expect((await seedStarterLore(pool, log, files)).seeded).toEqual([]);
-        const row = await pool.query<{ id: string; status: string; review_status: string; source: string; level: number; payload: { notes?: string } }>(
-          `SELECT id, status, review_status, source, level, payload FROM game_content WHERE kind = 'riddle' AND payload->>'slug' = $1`,
-          [`kmr-${tag}-starter`],
-        );
-        expect(row.rows).toHaveLength(1);
-        expect(row.rows[0]).toMatchObject({ status: 'draft', review_status: 'unreviewed', source: 'starter', level: 5, payload: { notes } });
-        const tr = await pool.query(`SELECT locale, review_status FROM game_content_translations WHERE content_id = $1 ORDER BY locale`, [row.rows[0]!.id]);
-        expect(tr.rows).toEqual([
-          { locale: 'de', review_status: 'unreviewed' },
-          { locale: 'en', review_status: 'unreviewed' },
+        expect(await seedStarterLore(pool, log, files)).toEqual({
+          seeded: [`riddle:kmr-${tag}-starter`],
+          refreshed: [],
+          published: [`riddle:kmr-${tag}-starter`],
+        });
+        expect(await seedStarterLore(pool, log, files)).toEqual({ seeded: [], refreshed: [], published: [] });
+        const read = async () =>
+          (
+            await pool.query<{ id: string; status: string; review_status: string; source: string; level: number; payload: { notes?: string } }>(
+              `SELECT id, status, review_status, source, level, payload FROM game_content WHERE kind = 'riddle' AND payload->>'slug' = $1`,
+              [`kmr-${tag}-starter`],
+            )
+          ).rows;
+        const rows = await read();
+        expect(rows).toHaveLength(1);
+        expect(rows[0]).toMatchObject({ status: 'published', review_status: 'approved', source: 'starter', level: 5, payload: { notes } });
+        const id = rows[0]!.id;
+        const translations = async () =>
+          (await pool.query(`SELECT locale, review_status, payload->>'answer' AS answer FROM game_content_translations WHERE content_id = $1 ORDER BY locale`, [id])).rows;
+        // publishing is not a claim that anyone checked the text: every translation stays unreviewed
+        expect(await translations()).toEqual([
+          { locale: 'de', review_status: 'unreviewed', answer: 'Antwort' },
+          { locale: 'en', review_status: 'unreviewed', answer: riddleEn.answer },
         ]);
-        expect((await call('GET', `/riddles/kmr-${tag}-starter`, '')).statusCode).toBe(404);
-        await pool.query(`DELETE FROM game_content WHERE id = $1`, [row.rows[0]!.id]);
+        // learners have it, without the reviewers' note
+        const shown = await call('GET', `/riddles/kmr-${tag}-starter`, '');
+        expect(shown.statusCode).toBe(200);
+        expect(shown.body).not.toContain(String(notes));
+
+        // the next release corrects the English: it follows, and the version moves for an editor with it open
+        await write({ ...riddleEn, answer: 'A corrected answer' });
+        expect((await seedStarterLore(pool, log, files)).refreshed).toEqual([`riddle:kmr-${tag}-starter`]);
+        expect((await translations()).find((t) => t.locale === 'en')).toMatchObject({ answer: 'A corrected answer' });
+
+        // once someone changes it in the admin, the file no longer speaks for it
+        await pool.query(`UPDATE game_content SET updated_by = (SELECT id FROM users ORDER BY created_at DESC LIMIT 1) WHERE id = $1`, [id]);
+        await write({ ...riddleEn, answer: 'Another answer' });
+        expect((await seedStarterLore(pool, log, files)).refreshed).toEqual([]);
+        expect((await translations()).find((t) => t.locale === 'en')).toMatchObject({ answer: 'A corrected answer' });
+
+        await pool.query(`DELETE FROM game_content WHERE id = $1`, [id]);
         expect((await seedStarterLore(pool, log, files)).seeded).toEqual([]);
       } finally {
         await rm(dir, { recursive: true, force: true });

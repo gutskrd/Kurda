@@ -8,7 +8,7 @@ function Inline({ spans }: { spans: Span[] }) {
   return (
     <Text>
       {spans.map((s, i) => (
-        <Text key={i} style={[s.bold && styles.bold, s.code && [styles.code, { backgroundColor: colors.glassFill, color: colors.textPrimary }]]}>
+        <Text key={i} style={[s.bold && styles.bold, s.italic && styles.italic, s.code && [styles.code, { backgroundColor: colors.glassFill, color: colors.textPrimary }]]}>
           {s.text}
         </Text>
       ))}
@@ -70,6 +70,7 @@ const styles = StyleSheet.create({
   heading: { fontFamily: typography.fontFamily, fontWeight: typography.weights.bold },
   paragraph: { fontFamily: typography.fontFamily, fontSize: typography.sizes.md, lineHeight: 24 },
   bold: { fontWeight: typography.weights.bold },
+  italic: { fontStyle: 'italic' },
   code: { fontFamily: typography.fontFamily },
   bullets: { gap: spacing.xs },
   bulletRow: { flexDirection: 'row', gap: spacing.sm },
