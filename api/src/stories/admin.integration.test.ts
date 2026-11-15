@@ -268,7 +268,7 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
         status: 'in_review',
         reviewStatus: 'approved',
         reviewNote: 'Read twice.',
-        reviewedBy: { id: editorId, username: `stEditor_${s}`.slice(0, 30) },
+        reviewedBy: { id: editorId, username: `steditor_${s}`.slice(0, 30) },
         reviewedAt: expect.any(String),
         lockVersion: inReview.json().lockVersion + 1,
       });

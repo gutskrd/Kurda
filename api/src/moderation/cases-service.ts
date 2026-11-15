@@ -7,6 +7,7 @@ import {
   SECOND_APPROVAL_HOURS,
   isSanctionKind,
   reportCategoryFrom,
+  sameUsername,
   type AgeBadge,
   type ApplySanctionResult,
   type CaseAuditEntry,
@@ -497,8 +498,9 @@ export class CasesService {
         const usernameRequired = mode === 'single';
         permanentBans.push({ target: action.target, userId, username: u.rows[0].username, mode, usernameRequired });
         // each ban is confirmed by its own person's name; one decision may ban two (the subject and a reporter)
-        const typed = new Set([req.confirmUsername, ...(req.confirmUsernames ?? [])].map((n) => n?.trim().toLowerCase()).filter(Boolean));
-        if (usernameRequired && !ctx.preview && !typed.has(u.rows[0].username.toLowerCase())) {
+        // "@Hamo" typed for hamo is the same name (shared/src/username.ts `sameUsername`)
+        const typed = [req.confirmUsername, ...(req.confirmUsernames ?? [])];
+        if (usernameRequired && !ctx.preview && !typed.some((n) => sameUsername(n, u.rows[0]!.username))) {
           throw new AppError('CONFIRM_USERNAME_REQUIRED', 409, 'you are the only moderator: type their username to confirm a permanent ban');
         }
       }
@@ -911,7 +913,7 @@ export class CasesService {
       }
       const moderators = await this.sanctions.moderatorCount();
       const mode = permanentBanMode(moderators, isZeroTolerance(input.policy));
-      if (mode === 'single' && input.confirmUsername?.trim().toLowerCase() !== u.rows[0].username.toLowerCase()) {
+      if (mode === 'single' && !sameUsername(input.confirmUsername, u.rows[0].username)) {
         throw new AppError('CONFIRM_USERNAME_REQUIRED', 409, 'you are the only moderator: type their username to confirm a permanent ban');
       }
       if (mode === 'second_approval') {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import type { CompanionStatus } from '@kurda/shared';
+import { checkUsername, type CompanionStatus } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { AuthCard } from '../auth/AuthCard';
 import { arrivalPause, holdArrival } from '../auth/arrival';
@@ -12,6 +12,8 @@ import { LanguagePicker } from '../i18n/LanguagePicker';
 import { BirthMonthFields, EMPTY_BIRTH_MONTH, birthMonthOf } from '../auth/BirthMonthFields';
 import { AgeStop, ageStopRemembered, rememberAgeStop, type AgeStopKind } from '../auth/AgeStop';
 import { rememberAfterSignup } from '../auth/afterSignup';
+import { UsernameField } from '../auth/UsernameField';
+import { usernameRefusalText } from '../lib/usernameText';
 
 /** The fields this form can mark: the three the server refuses over, and the month and year it will not send without. */
 type Field = AuthField | 'birth';
@@ -24,8 +26,11 @@ type Field = AuthField | 'birth';
  * taken under the username, a password rule under the password, the month and
  * year not chosen under those. What a username may be made of is under its
  * field from the start, as the password's rule is, so it is read before the
- * form is refused for it and not only after. An address that may already have
- * an account is not about a field and keeps its place above the form.
+ * form is refused for it and not only after; the field itself writes the name
+ * in lowercase as it is typed and names a character that cannot be in it
+ * (auth/UsernameField.tsx), and a name the rule refuses is said there before
+ * anything is sent. An address that may already have an account is not about
+ * a field and keeps its place above the form.
  */
 export function Register(): React.JSX.Element {
   const { register } = useAuth();
@@ -54,6 +59,12 @@ export function Register(): React.JSX.Element {
     setError(null);
     setErrorCode(null);
     problems.clear();
+    // the rule the server would refuse it by, said under the field without asking (shared/src/username.ts)
+    const name = checkUsername(username);
+    if (!name.ok) {
+      problems.show('username', usernameRefusalText(name.reason, name.reason === 'invalid-chars' ? name.chars : undefined, t));
+      return;
+    }
     const chosen = birthMonthOf(birth);
     if (!chosen) {
       problems.show('birth', t('age.required'));
@@ -65,7 +76,7 @@ export function Register(): React.JSX.Element {
     held.current = release;
     // the language they chose here is the account's from the first moment,
     // so the confirmation email and the next sign-in already speak it
-    const err = await register({ email, username, password, locale, ...chosen });
+    const err = await register({ email, username: name.value, password, locale, ...chosen });
     if (err) release?.();
     setBusy(false);
     if (err?.code === 'UNDER_MINIMUM_AGE') {
@@ -94,10 +105,6 @@ export function Register(): React.JSX.Element {
   const emailProblem = problems.of('email');
   const usernameProblem = problems.of('username');
   const passwordProblem = problems.of('password');
-  const usernameRule = t('error.code.usernameChars');
-  // the rule the name broke is the hint already under the field: said once, in red, rather than twice
-  const ruleIsTheProblem = usernameProblem === usernameRule;
-  const usernameSaidBy = [ruleIsTheProblem ? '' : 'username-hint', usernameProblem ? 'username-error' : ''].filter(Boolean).join(' ');
 
   return (
     <div className="auth-wrap">
@@ -161,40 +168,19 @@ export function Register(): React.JSX.Element {
             )}
           </div>
 
-          <div className={problems.fieldClass('username')}>
-            <label className="field-label" htmlFor="username">
-              {t('auth.username')}
-            </label>
-            <input
-              id="username"
-              className="input"
-              type="text"
-              value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-                problems.clear('username');
-              }}
-              autoComplete="username"
-              // a name is typed as it is meant: no capital put on it, nothing corrected, no red wave under a Kurdish word
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              placeholder={t('auth.register.usernameHelp')}
-              required
-              aria-invalid={usernameProblem ? true : undefined}
-              aria-describedby={usernameSaidBy}
-            />
-            {!ruleIsTheProblem && (
-              <span className="field-hint" id="username-hint">
-                {usernameRule}
-              </span>
-            )}
-            {usernameProblem && (
-              <span className="field-problem" id="username-error" role="alert">
-                {usernameProblem}
-              </span>
-            )}
-          </div>
+          <UsernameField
+            id="username"
+            label={t('auth.username')}
+            value={username}
+            onChange={(next) => {
+              setUsername(next);
+              problems.clear('username');
+            }}
+            problem={usernameProblem}
+            urgent
+            placeholder={t('auth.register.usernameHelp')}
+            className={problems.fieldClass('username')}
+          />
 
           <div className={problems.fieldClass('password')}>
             <label className="field-label" htmlFor="password">

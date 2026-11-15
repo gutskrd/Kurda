@@ -13,7 +13,8 @@ import { MonthChips } from '../../auth/guide/MonthChips';
 import { PasswordStrengthMeter } from '../../auth/guide/PasswordStrength';
 import { AnswerSummary } from '../../auth/guide/AnswerSummary';
 import { birthYearFrom } from '../../auth/guide/age';
-import { USERNAME_RULE_VARS, checkUsername, cleanUsername } from '../../username/validate';
+import { checkUsername } from '../../username/validate';
+import { UsernameStepField } from '../../username/UsernameStepField';
 import { LinkText } from './AuthForm';
 import { AppleButton, GoogleButton, useSocialSignIn } from './SocialSignIn';
 import { useI18n } from '../../i18n/I18nContext';
@@ -83,7 +84,9 @@ export function ClaimAccountScreen({
     onExit();
   }, [claimed, onExit]);
 
-  const chosenName = cleanUsername(username.normalize('NFC'));
+  // the name as the rule writes it (lowercase, trimmed): the step went on only once it passed
+  const named = checkUsername(username);
+  const chosenName = named.ok ? named.value : username.trim();
 
   const method: FlowStep = {
     key: 'method',
@@ -108,15 +111,14 @@ export function ClaimAccountScreen({
       says: t('guide.claim.name.says', { name: user?.username ?? '' }),
       check: () => {
         const checked = checkUsername(username);
-        return checked.ok ? null : t(checked.message, USERNAME_RULE_VARS);
+        return checked.ok ? null : t(checked.message, checked.vars);
       },
       render: (tools) => (
-        <GuideField
+        <UsernameStepField
           tools={tools}
           value={username}
-          onChangeText={setUsername}
+          onChange={setUsername}
           label={t('auth.username')}
-          complete="username"
           placeholder={t('auth.register.usernameHelp')}
           testID="username"
         />

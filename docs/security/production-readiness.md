@@ -110,8 +110,8 @@ is read past its edge from Cloudflare's own headers
 The API returns JSON only. User-generated content (usernames, posts, comments,
 chat) is stored raw and escaped at render time by the clients; any server-side
 HTML handling uses a sanitizer allowlist. Usernames additionally reject control
-characters and Unicode confusables (`api/src/users/username.ts`,
-`reserved-usernames.ts`), and the format is DB-enforced (see §11).
+characters and Unicode confusables (`shared/src/username.ts`, the rule and its
+reserved names), and the format is DB-enforced (see §11).
 
 ## 10. Transport, CORS & security headers
 
@@ -129,8 +129,9 @@ characters and Unicode confusables (`api/src/users/username.ts`,
 
 - `citext` columns for **case-insensitive** email/username uniqueness; **partial
   unique indexes** (`WHERE deleted_at IS NULL`) make uniqueness race-safe across
-  concurrent claims. Usernames also carry a `CHECK` format constraint (incl.
-  Kurdish letters) and a 30-day change cooldown.
+  concurrent claims. Usernames are stored lowercase and also carry a `CHECK`
+  format constraint (lowercase letters incl. Kurdish ones, digits, `_` and `.`)
+  and a 30-day change cooldown.
 - Foreign keys, unique constraints, and idempotency keys enforce invariants at the
   database — not only in the app.
 

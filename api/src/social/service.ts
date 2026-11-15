@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { foldDiacritics, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { foldDiacritics, handleName, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
@@ -147,7 +147,8 @@ export class SocialService {
    * query: the friendship is read in the same pass.
    */
   async search(viewerId: string, query: string, publicUrl: PublicUrl = () => null, limit = 20): Promise<SearchHit[]> {
-    const folded = foldForm(query).trim();
+    // "@hamo." copied out of a sentence is a search for hamo: the @ and the full stop are not the name (shared/src/username.ts)
+    const folded = foldForm(query.trim().startsWith('@') ? handleName(query) : query).trim();
     if (folded.length < MIN_QUERY) return [];
     // the query taken literally inside a pattern: usernames hold underscores,
     // and `_` or `%` left as wildcards would list names that do not hold it

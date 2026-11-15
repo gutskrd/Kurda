@@ -106,6 +106,13 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect(detail.balances.zer).toBe(0);
   });
 
+  it('finds a username however it is typed: with its @, or in capitals, and an email address as one', async () => {
+    for (const q of [`@${username}`, username.toUpperCase(), `@${username.slice(0, 8).toUpperCase()}`]) {
+      expect((await svc.search(q)).users.some((r) => r.id === targetId), q).toBe(true);
+    }
+    expect((await svc.search(`${username}_${suffix}@it.kurda.app`)).users.some((r) => r.id === targetId)).toBe(true);
+  });
+
   it('adjusts the wallet through the ledger with admin_adjustment', async () => {
     const credit = await svc.adjustWallet(adminId, targetId, 'zer', 500, 'goodwill for a support ticket');
     expect(credit.ok).toBe(true);
@@ -159,7 +166,8 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     // the only moderator types the username to confirm a permanent ban, on this page too
     await expect(svc.permBan(adminId, targetId, 'repeat offender')).rejects.toMatchObject({ code: 'CONFIRM_USERNAME_REQUIRED' });
     expect((await svc.detail(targetId))!.ban).toBe('temp_banned');
-    expect(await svc.permBan(adminId, targetId, 'repeat offender', username)).toEqual({ ok: true });
+    // typed as the handle is written, "@" and all, it is the same name
+    expect(await svc.permBan(adminId, targetId, 'repeat offender', `@${username.toUpperCase()}`)).toEqual({ ok: true });
     expect((await svc.detail(targetId))!.ban).toBe('perm_banned');
 
     expect(await svc.unban(adminId, targetId, 'appeal granted')).toEqual({ ok: true });

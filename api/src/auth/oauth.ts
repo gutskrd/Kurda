@@ -1,9 +1,8 @@
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from 'jose';
 import type pg from 'pg';
-import { normalizeKurdish, stripControlChars } from '@kurda/shared';
+import { checkUsername, normalizeKurdish, numberedUsername, stripControlChars, suggestUsername } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../plugins/errors.js';
-import { canonicalUsername } from '../users/username.js';
 import { issueTokenPair, type IssuedTokens } from './tokens.js';
 import { toPublicUser, type PublicUser } from './service.js';
 import type { UserRow } from '../users/repository.js';
@@ -108,11 +107,18 @@ export async function verifyProviderToken(
   }
 }
 
+/**
+ * A username for an account a sign-in through another service makes: one made
+ * from the name it shares, or the start of the email address
+ * (shared/src/username.ts `suggestUsername`: lowercase first, as every
+ * username is), or the name numbered when that is taken. Every candidate is
+ * one a person could have chosen, so a number never makes a reserved name or
+ * two marks side by side.
+ */
 async function uniqueUsername(pool: pg.Pool, base: string): Promise<string> {
-  const cleaned =
-    canonicalUsername(normalizeKurdish(base).replace(/[^A-Za-z0-9_êîûçşÊÎÛÇŞ]/g, '_')) ??
-    `learner_${Date.now().toString(36)}`;
-  const candidates = Array.from({ length: 20 }, (_, i) => (i === 0 ? cleaned : `${cleaned.slice(0, 25)}_${i}`));
+  const fallback = () => `learner_${Date.now().toString(36)}`;
+  const made = suggestUsername(base) ?? fallback();
+  const candidates = Array.from({ length: 20 }, (_, i) => (i === 0 ? made : numberedUsername(made, i + 1))).filter((c) => checkUsername(c).ok);
   // the first of them nobody has, asked in one query rather than one per try
   const free = await pool.query<{ candidate: string }>(
     `SELECT c.candidate FROM unnest($1::text[]) WITH ORDINALITY AS c(candidate, n)
@@ -124,7 +130,7 @@ async function uniqueUsername(pool: pg.Pool, base: string): Promise<string> {
       ORDER BY c.n LIMIT 1`,
     [candidates],
   );
-  return free.rows[0]?.candidate ?? `learner_${Date.now().toString(36)}`;
+  return free.rows[0]?.candidate ?? fallback();
 }
 
 export class OAuthService {

@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { normalizeKurdish } from '@kurda/shared';
+import { normalizeKurdish, normalizeUsername } from '@kurda/shared';
 import { SoftDeleteRepository } from '../db/base-repository.js';
 import { canonicalUsername } from './username.js';
 
@@ -46,7 +46,7 @@ export class UsernameTakenError extends Error {
 }
 export class InvalidUsernameError extends Error {
   constructor() {
-    super('username must be 3-30 letters, digits or _ (Kurdish letters allowed)');
+    super('username must be 3-30 lowercase letters, digits, dots or underscores (Kurdish letters allowed)');
   }
 }
 
@@ -116,7 +116,7 @@ export class UsersRepository extends SoftDeleteRepository {
   async findByUsername(username: string): Promise<UserRow | null> {
     const result = await this.pool.query<UserRow>(
       `SELECT * FROM users WHERE username = $1 AND ${this.activeWhere()}`,
-      [normalizeKurdish(username)],
+      [normalizeUsername(username)],
     );
     return result.rows[0] ?? null;
   }

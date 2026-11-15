@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { checkUsername, usernameProblemWhileTyping } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
+import { UsernameField } from '../auth/UsernameField';
 import { describeError } from '../lib/api';
+import { usernameRefusalText } from '../lib/usernameText';
 import { Button } from '../components/Button';
 import { PasswordInput } from '../components/PasswordInput';
 import { ErrorState, Loading } from '../components/states';
@@ -20,9 +23,9 @@ interface UsernameStatus {
   held: Array<{ username: string; heldUntil: string }>;
 }
 
-type Availability = { available: true; username: string } | { available: false; reason: string };
+type Availability = { available: true; username: string } | { available: false; reason: string; chars?: string[] };
 
-/** How a name being typed stands: not asked about, being asked, free, or why not. */
+/** How a name being typed stands with the server: not asked about, being asked, free, or why not. */
 type Check = { kind: 'idle' } | { kind: 'checking' } | { kind: 'free' } | { kind: 'problem'; text: string };
 
 const NAME_ID = 'username-new';
@@ -31,24 +34,6 @@ const PASSWORD_ID = 'username-password';
 /** Long enough that a name is asked about when the typing stops, not at every letter. */
 const CHECK_AFTER_MS = 450;
 
-const LETTERS = 'A-Za-zêîûçşÊÎÛÇŞ';
-
-/**
- * The rules of a username's shape (api/src/users/username.ts), checked here
- * first: the server allows thirty questions a minute and five changes in
- * fifteen, and a name it would refuse for its shape should not spend one. The
- * server still decides, and knows the names nobody may have.
- */
-function shapeReason(name: string): string | null {
-  if (name.length < 3) return 'too-short';
-  if (name.length > 30) return 'too-long';
-  if (!new RegExp(`^[${LETTERS}0-9_]+$`).test(name)) return 'invalid-chars';
-  if (name.startsWith('_') || name.endsWith('_')) return 'edge-underscore';
-  if (name.includes('__')) return 'consecutive-underscore';
-  if (/^[0-9]+$/.test(name)) return 'numbers-only';
-  if (!new RegExp(`[${LETTERS}]`).test(name)) return 'no-letter';
-  return null;
-}
 
 /**
  * Change the username: the new name, and the password to show it is you.
@@ -58,6 +43,12 @@ function shapeReason(name: string): string | null {
  * can pass themselves off as them the day after. While the wait runs there is
  * no form, only the day it ends. A name is asked about as it is typed, and a
  * refusal is said under the field it is about.
+ *
+ * The rules of a username (shared/src/username.ts) are checked here first, by
+ * the field as it is typed (auth/UsernameField.tsx) and again when the change
+ * is asked for: the server allows thirty questions a minute and five changes
+ * in fifteen, and a name it would refuse by its rule should not spend one.
+ * The server still decides, and knows which names are taken.
  */
 export function ChangeUsername({ onChanged }: { onChanged?: (username: string) => void }): React.JSX.Element {
   const { client, refreshUser } = useAuth();
@@ -89,9 +80,10 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
   }, [load]);
 
   const day = (iso: string): string => new Date(iso).toLocaleDateString(locale, { dateStyle: 'long' });
-  const shapeProblem = (reason: string): string => describeError({ kind: 'client', code: 'INVALID_USERNAME', message: '', details: { reason } }, t);
 
-  const typed = name.trim();
+  // the name the server would write: lowercase and trimmed, or null while the rule refuses it
+  const checked = checkUsername(name);
+  const typed = checked.ok ? checked.value : name.trim();
   const current = status?.username ?? '';
 
   // ask about the name once the typing has stopped, and only about one the server would look at
@@ -105,9 +97,9 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
       setCheck({ kind: 'problem', text: t('settings.username.same') });
       return;
     }
-    const reason = shapeReason(typed.normalize('NFC'));
-    if (reason) {
-      setCheck({ kind: 'problem', text: shapeProblem(reason) });
+    // a name the rule refuses is the field's to explain (it waits on what more typing may mend); the server is not asked
+    if (!checked.ok) {
+      setCheck({ kind: 'idle' });
       return;
     }
     setCheck({ kind: 'checking' });
@@ -119,12 +111,12 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
         else if (res.data.available) setCheck({ kind: 'free' });
         else if (res.data.reason === 'taken') setCheck({ kind: 'problem', text: t('error.code.usernameTaken') });
         else if (res.data.reason === 'same') setCheck({ kind: 'problem', text: t('settings.username.same') });
-        else setCheck({ kind: 'problem', text: shapeProblem(res.data.reason) });
+        else setCheck({ kind: 'problem', text: usernameRefusalText(res.data.reason, res.data.chars, t) });
       });
     }, CHECK_AFTER_MS);
     return () => window.clearTimeout(timer);
-    // `shapeProblem` and `t` change with the language only, and the wording is redrawn with the next letter
-  }, [client, current, open, typed]);
+    // `t` changes with the language only, and the wording is redrawn with the next letter
+  }, [client, current, open, typed, checked.ok]);
 
   function close(): void {
     setOpen(false);
@@ -141,9 +133,8 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
     setError(null);
     setNameProblem(null);
     setPasswordProblem(null);
-    const reason = shapeReason(typed.normalize('NFC'));
-    if (reason) {
-      setNameProblem(shapeProblem(reason));
+    if (!checked.ok) {
+      setNameProblem(usernameRefusalText(checked.reason, checked.reason === 'invalid-chars' ? checked.chars : undefined, t));
       document.getElementById(NAME_ID)?.focus();
       return;
     }
@@ -190,7 +181,8 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
   }
 
   const problem = nameProblem ?? (check.kind === 'problem' ? check.text : null);
-  const nameDescribedBy = [`${NAME_ID}-hint`, problem ? `${NAME_ID}-error` : '', check.kind === 'free' && !problem ? `${NAME_ID}-ok` : ''].filter(Boolean).join(' ');
+  // nothing from the server is shown over what the field itself says about the name as typed
+  const typingProblem = usernameProblemWhileTyping(name) !== null;
 
   return (
     <section className="card" style={{ marginTop: 20 }}>
@@ -240,42 +232,19 @@ export function ChangeUsername({ onChanged }: { onChanged?: (username: string) =
               {error}
             </div>
           )}
-          <div className={`field${problem ? ' has-problem' : ''}`}>
-            <label className="field-label" htmlFor={NAME_ID}>
-              {t('settings.username.new')}
-            </label>
-            <input
-              id={NAME_ID}
-              className="input"
-              dir="ltr"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                // the moment it is touched, the old complaint no longer applies
-                setNameProblem(null);
-              }}
-              maxLength={30}
-              autoComplete="username"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              aria-invalid={problem ? true : undefined}
-              aria-describedby={nameDescribedBy}
-              autoFocus
-            />
-            <span className="field-hint" id={`${NAME_ID}-hint`}>
-              {t('error.code.usernameChars')}
-            </span>
-            {problem ? (
-              <span className="field-problem" id={`${NAME_ID}-error`} role="status">
-                {problem}
-              </span>
-            ) : check.kind === 'free' ? (
-              <span className="field-ok" id={`${NAME_ID}-ok`} role="status">
-                {t('settings.username.available')}
-              </span>
-            ) : null}
-          </div>
+          <UsernameField
+            id={NAME_ID}
+            label={t('settings.username.new')}
+            value={name}
+            onChange={(next) => {
+              setName(next);
+              // the moment it is touched, the old complaint no longer applies
+              setNameProblem(null);
+            }}
+            problem={typingProblem ? null : problem}
+            ok={check.kind === 'free' ? t('settings.username.available') : null}
+            autoFocus
+          />
           {status.needsPassword && (
             <div className={`field${passwordProblem ? ' has-problem' : ''}`}>
               <label className="field-label" htmlFor={PASSWORD_ID}>

@@ -2,8 +2,8 @@
 import { describe, expect, it } from 'vitest';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { generateGuestUsername, guestDeviceHash } from './guest.js';
+import { isReservedUsername } from '@kurda/shared';
 import { validateUsername } from '../users/username.js';
-import { isReservedUsername } from '../users/reserved-usernames.js';
 import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 

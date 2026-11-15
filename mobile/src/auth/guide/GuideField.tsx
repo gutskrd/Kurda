@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View, type NativeSyntheticEvent, type TextInputSelectionChangeEventData } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useI18n } from '../../i18n/I18nContext';
@@ -32,7 +32,10 @@ const TEXT_CONTENT_TYPE = {
  * A secure field gets the eye, because a password you cannot read is a
  * password you mistype on a phone keyboard. `complete` tells the keychain and
  * the password manager what they may offer. In Soranî and Arabic the typing
- * and the eye start on the right.
+ * and the eye start on the right. Nothing typed is capitalised, corrected or
+ * underlined as misspelt. A field that puts text in at the caret (the
+ * username's Kurdish keys) passes the caret it wants once (`selection`) and
+ * hears where it is (`onSelectionChange`).
  */
 export function GuideField({
   tools,
@@ -44,6 +47,8 @@ export function GuideField({
   complete,
   placeholder,
   last = false,
+  selection,
+  onSelectionChange,
   testID,
 }: {
   tools: StepTools;
@@ -56,6 +61,9 @@ export function GuideField({
   placeholder?: string;
   /** the last field of the flow: the return key says Done rather than Next */
   last?: boolean;
+  /** where the caret goes, once, after the screen put text in at it */
+  selection?: { start: number; end: number };
+  onSelectionChange?: (e: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => void;
   testID?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -83,6 +91,9 @@ export function GuideField({
         secureTextEntry={secure && !reveal}
         autoCapitalize="none"
         autoCorrect={false}
+        spellCheck={false}
+        selection={selection}
+        onSelectionChange={onSelectionChange}
         keyboardType={keyboardType}
         autoComplete={complete}
         textContentType={TEXT_CONTENT_TYPE[complete ?? 'none']}

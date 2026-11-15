@@ -1,13 +1,12 @@
 /**
  * Client-side mirrors of the server validation rules (api KUR-014).
  * Server remains the source of truth; these exist for instant inline
- * feedback before a request is made.
+ * feedback before a request is made. A username's rule is not here: it is
+ * the server's own (shared/src/username.ts), worded by username/validate.ts.
  */
 
 import type { TranslationKey } from '../i18n/translations';
-import { cleanUsername } from '../username/validate';
 
-export const USERNAME_PATTERN = /^[A-Za-z0-9_êîûçşÊÎÛÇŞ]{3,30}$/; // 3–30, per USERNAME_MIN/MAX below
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export const PASSWORD_MIN = 8;
@@ -22,8 +21,7 @@ export type FieldError =
   | 'password_too_short'
   | 'password_too_long'
   | 'password_needs_letter'
-  | 'password_needs_number'
-  | 'invalid_username';
+  | 'password_needs_number';
 
 /**
  * An address as it was meant, from what was typed: without the spaces round
@@ -51,12 +49,6 @@ export function validatePassword(value: string): FieldError | null {
   return null;
 }
 
-export function validateUsername(value: string): FieldError | null {
-  const v = cleanUsername(value.normalize('NFC'));
-  if (!v) return 'required';
-  return USERNAME_PATTERN.test(v) ? null : 'invalid_username';
-}
-
 /**
  * Why a field was refused, as catalogue keys.
  *
@@ -72,22 +64,16 @@ export const FIELD_ERROR_COPY: Record<FieldError, TranslationKey> = {
   password_too_long: 'field.passwordTooLong',
   password_needs_letter: 'field.passwordNeedsLetter',
   password_needs_number: 'field.passwordNeedsNumber',
-  invalid_username: 'field.invalidUsername',
 };
-
-export const USERNAME_MIN = 3;
-export const USERNAME_MAX = 30;
 
 /**
  * Everything the field messages interpolate, so no caller invents a limit.
- *
- * The username bounds have their own names on purpose. Sharing {min}/{max}
- * with the password put "8–128 characters" under the username field, which
- * typechecks, reads fluently, and is wrong.
+ * The username's limits are its own (username/validate.ts
+ * `USERNAME_RULE_VARS`): sharing {min}/{max} with the password once put
+ * "8–128 characters" under the username field, which typechecks, reads
+ * fluently, and is wrong.
  */
 export const FIELD_ERROR_VARS = {
   min: PASSWORD_MIN,
   max: PASSWORD_MAX,
-  usernameMin: USERNAME_MIN,
-  usernameMax: USERNAME_MAX,
 } as const;

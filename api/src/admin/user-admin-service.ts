@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { InsufficientFundsError, WalletService, type Currency } from '../wallet/service.js';
-import type { AdminUserModeration, AgeBadge, ReportCategory, ReportStatus, ReportTargetType } from '@kurda/shared';
+import { handleName, normalizeUsername, type AdminUserModeration, type AgeBadge, type ReportCategory, type ReportStatus, type ReportTargetType } from '@kurda/shared';
 import { banState, type BanState } from './moderation.js';
 import { PRIVILEGED_ROLES, VOICE_ACTOR_ROLE } from './roles.js';
 
@@ -157,12 +157,14 @@ export class UserAdminService {
       if (UUID_RE.test(q)) {
         params.push(q);
         where += ` AND id = $${params.length}`;
-      } else if (q.includes('@')) {
+      } else if (q.includes('@') && !q.startsWith('@')) {
         params.push(`${escapeLike(q)}%`);
         where += ` AND lower(email) LIKE lower($${params.length})`;
       } else {
-        params.push(`${escapeLike(q)}%`);
-        where += ` AND username ILIKE $${params.length}`;
+        // a username, typed as it is written ("@Hamo") or as it is stored (hamo):
+        // the @ is the handle's sign, and usernames are lowercase (shared/src/username.ts)
+        params.push(`${escapeLike(normalizeUsername(handleName(q)))}%`);
+        where += ` AND username::text LIKE $${params.length}`;
       }
     }
 

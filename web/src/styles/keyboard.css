@@ -353,6 +353,24 @@
   opacity: 0.45;
   cursor: default;
 }
+/*
+ * Under a username field the same keys sit smaller and quieter: the field is
+ * one of several on a form, not the thing the page is for, and the five
+ * letters are there for a keyboard without them rather than to be pressed.
+ */
+.username-keys .key-bar {
+  gap: 6px;
+  margin: 0;
+}
+.username-keys .key-bar-key {
+  min-width: 44px;
+  height: 36px;
+  padding: 0 10px;
+  border-color: var(--border);
+  font-size: 1.05rem;
+  font-weight: 550;
+  color: var(--ink-2);
+}
 
 /* ---- keyboard and accents: the settings ---------------------------------- */
 .kb-settings {

@@ -77,12 +77,38 @@ describe('changing the username in Settings', () => {
     renderApp(<ChangeUsername />);
     const user = await openForm();
     await user.type(screen.getByLabelText(en['settings.username.new']), 'a b');
-    expect(await screen.findByText(en['error.code.usernameChars'], { selector: '.field-problem' })).toBeInTheDocument();
+    expect(await screen.findByText(en['error.code.usernameSpaces'], { selector: '.field-problem' })).toBeInTheDocument();
     await user.clear(screen.getByLabelText(en['settings.username.new']));
     await user.type(screen.getByLabelText(en['settings.username.new']), '_ada');
-    expect(await screen.findByText(en['error.code.usernameUnderscore'])).toBeInTheDocument();
+    expect(await screen.findByText(en['error.code.usernameEdge'])).toBeInTheDocument();
+    await user.clear(screen.getByLabelText(en['settings.username.new']));
+    await user.type(screen.getByLabelText(en['settings.username.new']), 'ad.min');
+    expect(await screen.findByText(en['error.code.usernameUnavailable'])).toBeInTheDocument();
     await new Promise((r) => setTimeout(r, 600));
     expect(calls(fetchMock, '/me/username/available')).toHaveLength(0);
+  });
+
+  it('writes the name in lowercase as it is typed, and sends it so', async () => {
+    const fetchMock = stubApi({ change: () => jsonResponse(200, { user: { username: 'şêrîn.k' }, changed: true, status: { ...STATUS, username: 'şêrîn.k' } }) });
+    renderApp(<ChangeUsername />);
+    const user = await openForm();
+    const field = screen.getByLabelText(en['settings.username.new']);
+    await user.type(field, 'ŞÊRÎN.K');
+    expect(field).toHaveValue('şêrîn.k');
+    // one's own name in capitals is one's own name
+    await user.clear(field);
+    await user.type(field, 'ADA');
+    expect(field).toHaveValue('ada');
+    expect(await screen.findByText(en['settings.username.same'])).toBeInTheDocument();
+    await user.clear(field);
+    await user.type(field, 'Şêrîn.K');
+    await user.type(screen.getByLabelText(en['settings.username.password']), 'a-strong-password1');
+    await user.click(screen.getByRole('button', { name: en['settings.username.change'] }));
+    await screen.findByText(en['settings.username.changed'].replace('{name}', 'şêrîn.k'));
+    const asked = calls(fetchMock, '/me/username/available').map(([u]) => new URL(u, 'http://x').searchParams.get('username'));
+    expect(asked.every((n) => n === n!.toLowerCase())).toBe(true);
+    const [, init] = calls(fetchMock, '/me/username', 'POST')[0]!;
+    expect(JSON.parse(String(init!.body))).toEqual({ username: 'şêrîn.k', currentPassword: 'a-strong-password1' });
   });
 
   it('sends the new name with the password, then shows the new name and the name kept for its owner', async () => {

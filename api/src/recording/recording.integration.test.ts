@@ -227,7 +227,7 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
   it('shows a take made in the studio as done, wherever it was made', async () => {
     expect((await record(editor, conversation.lines[0]!.text, `&line=${id}:0&speaker=hamo`)).statusCode).toBe(201);
     const done = await allLines(editor, 'hamo', '&status=done');
-    expect(done.find((l) => l.key === hamoLine)?.take).toMatchObject({ speaker: 'hamo', by: `rpEditor_${s}`.slice(0, 30) });
+    expect(done.find((l) => l.key === hamoLine)?.take).toMatchObject({ speaker: 'hamo', by: `rpeditor_${s}`.slice(0, 30) });
     const todo = await allLines(editor, 'hamo', '&status=todo');
     expect(todo.some((l) => l.key === hamoLine)).toBe(false);
   });

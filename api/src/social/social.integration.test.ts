@@ -95,6 +95,13 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
     expect(found(await social.search(id.blocked!, `viewer${suffix}`), id.viewer!)).toBe(false);
   });
 
+  it('reads a handle copied out of a sentence as the name it is: no @, no full stop, no capitals', async () => {
+    const top = async (query: string) => (await social.search(id.viewer!, query))[0]?.userId;
+    expect(await top(`@zarok${suffix}.`)).toBe(id.exact);
+    expect(await top(`@ZAROK${suffix},`)).toBe(id.exact);
+    expect(await top(`@ŞEVDAR${suffix}`)).toBe(id.diacritic);
+  });
+
   it('search finds a name from any part of it', async () => {
     expect(found(await social.search(id.viewer!, `serker${suffix}`), id.berserker!)).toBe(true);
     expect(found(await social.search(id.viewer!, 'rserk'), id.berserker!)).toBe(true);

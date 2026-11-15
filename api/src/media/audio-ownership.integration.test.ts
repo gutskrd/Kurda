@@ -36,8 +36,8 @@ describe.skipIf(!DATABASE_URL)('a member’s recordings (integration)', () => {
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     deps = { pool, storage: storage.asStorage, usage: new MediaUsageService(pool, null), limits: audioLimits(config), log: { warn: () => {}, error: () => {} } };
-    author = await user('recA');
-    busy = await user('recB');
+    author = await user('reca');
+    busy = await user('recb');
   });
 
   afterAll(async () => {

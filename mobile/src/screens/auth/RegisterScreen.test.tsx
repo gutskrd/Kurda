@@ -97,19 +97,58 @@ describe('signing up', () => {
   });
 
   /*
-   * "@rojda_k" is how a handle is written everywhere else, and a keyboard
-   * ends a word with a full stop: both are taken as they were meant, shown
-   * back that way on the last look, and sent that way.
+   * A username is lowercase, so capitals are written as lowercase letters as
+   * they are typed, and the name is sent so. A keyboard that ends a word with
+   * a full stop still leaves the address as it was meant.
    */
-  it('takes a handle typed with an "@" and an address ending in a full stop as they were meant', async () => {
+  it('writes the name in lowercase as it is typed, and sends it so', async () => {
     auth.register.mockResolvedValue(null);
     renderRegister();
-    await signUp('rojda@example.com.', { send: false, name: '@rojda_k' });
-    expect(screen.getByText('rojda_k')).toBeTruthy();
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'Rojda.K' } });
+    expect((screen.getByTestId('username') as HTMLInputElement).value).toBe('rojda.k');
+    await signUp('rojda@example.com.', { send: false, name: 'ROJDA.K' });
+    expect(screen.getByText('rojda.k')).toBeTruthy();
     expect(screen.getByText('rojda@example.com')).toBeTruthy();
     await press(en['auth.register.submit']);
     await waitFor(() => expect(auth.register).toHaveBeenCalledTimes(1));
-    expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ email: 'rojda@example.com', username: 'rojda_k' }));
+    expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ email: 'rojda@example.com', username: 'rojda.k' }));
+  });
+
+  /*
+   * Nothing typed is dropped without a word: an "@" before the name is named
+   * under the field as it is typed, and the step does not go on with it.
+   */
+  it('names a character a username cannot have as it is typed, and keeps it in the field', async () => {
+    renderRegister();
+    expect(screen.getByTestId('username-line').textContent).toBe('3–30 characters: lowercase letters, ç ê î ş û, numbers, dots and underscores.');
+    fireEvent.change(screen.getByTestId('username'), { target: { value: '@rojda' } });
+    expect((screen.getByTestId('username') as HTMLInputElement).value).toBe('@rojda');
+    expect(screen.getByTestId('username-line').textContent).toBe('“@” can’t be in a username.');
+    await press(en['common.continue']);
+    expect(screen.getByTestId('step-error').textContent).toBe('“@” can’t be in a username.');
+    expect(screen.getByText(en['guide.register.name.question'])).toBeTruthy();
+    expect(auth.register).not.toHaveBeenCalled();
+  });
+
+  it('waits for Continue to say what more typing may still mend', async () => {
+    renderRegister();
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'rojda.' } });
+    // on its way to rojda.k, perhaps: the rule is still what is under the field
+    expect(screen.getByTestId('username-line').textContent).toBe(en['username.hint'].replace('{min}', '3').replace('{max}', '30'));
+    await press(en['common.continue']);
+    expect(screen.getByTestId('step-error').textContent).toBe(en['username.rule.edge']);
+  });
+
+  it('types a Kurdish letter from the keys under the field where the caret is', async () => {
+    renderRegister();
+    const field = screen.getByTestId('username') as HTMLInputElement;
+    fireEvent.change(field, { target: { value: 'sr' } });
+    field.setSelectionRange(1, 1);
+    fireEvent.select(field);
+    fireEvent.click(screen.getByRole('button', { name: en['keyboard.bar.type'].replace('{letter}', 'ê') }));
+    expect(field.value).toBe('sêr');
+    // the five letters a username may have beside a–z, lowercase, and no shift
+    expect(screen.queryByRole('button', { name: en['keyboard.bar.shift'] })).toBeNull();
   });
 
   it('does not go on from a name that breaks the rules, and says why under the field', async () => {
