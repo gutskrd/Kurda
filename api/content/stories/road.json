@@ -1060,8 +1060,8 @@
       "cover": null,
       "readingMinutes": null,
       "title": "Stranê bidomîne",
-      "summary": "Li Newrozê erebeyek ji Kobaniyê tê, û li ber agir bavê Hamo bilûra xwe dide kurê xwe.",
-      "body": "Şeva berî Newrozê ye. Her tişt amade ye: êzing, kinc, def û zirne. Tenê bavê min hîn ne li vir e. Ez li ber pencereyê me, û çaya min sar dibe.\n\nNîvê şevê Hevalo li gir dinêre. Li ser rê du çira hene, û ew hêdî hêdî tên. Ev erebe ye, ji Kobaniyê! Bavê min û diya min li ber deriyê şîn in, û diya min pêşî dipirse: «Tu birçî yî?»\n\nSibehê baran dibare, paşê tav derdikeve. Baran bereket e! Ez serçopî me, û destmala kesk di destê min de ye. Çokên min pîr in, lê simbêlê min ne pîr e. Bavê min li min dinêre, û ez serbilind im.\n\nÊvarê agir hêdî hêdî diçe, û hemû gund bêdeng e. Bavê min bilûra xwe ya kevn digire. Ew straneke kevn lêdixe: strana min û Lorînê. Ev soza wî ye. Lorîn li Kobaniyê ye, lê ew jî li ser telefona min e.\n\nPaşê ew bilûrê dide min û dibêje: «Stranê bidomîne, kurê min.» Diya min bi dizî hêsirên xwe paqij dike û dibêje: «Dûman e.» Ez? Ez jî. Dûman di çavên min de ye.\n\nEz bilûrê lêdixim. Deng gelek pîs e, û Hevalo ditirse. Bavê min dikene. Lê Dapîr bi dizî strana bavê min dibêje, û sor dibe. Dapîr vê stranê ji ku dizane?\n\nSibehê erebe vedigere Kobaniyê, û ez nikarim rabim, pişta min diêşe! Diya min ji ber derî dibêje: «Pêncî salî ye, û hîn jî sibehan ranabe!» Baş e, bavo. Ez ê stranê bidomînim. Sibe.",
+      "summary": "Li Newrozê trimbêlek ji Kobaniyê tê, û li ber agir bavê Hamo bilûra xwe dide kurê xwe.",
+      "body": "Şeva berî Newrozê ye. Her tişt amade ye: êzing, kinc, def û zirne. Tenê bavê min hîn ne li vir e. Ez li ber pencereyê me, û çaya min sar dibe.\n\nNîvê şevê Hevalo li gir dinêre. Li ser rê du çira hene, û ew hêdî hêdî tên. Ev trimbêl e, ji Kobaniyê! Bavê min û diya min li ber deriyê şîn in, û diya min pêşî dipirse: «Tu birçî yî?»\n\nSibehê baran dibare, paşê tav derdikeve. Baran bereket e! Ez serçopî me, û destmala kesk di destê min de ye. Çokên min pîr in, lê simbêlê min ne pîr e. Bavê min li min dinêre, û ez serbilind im.\n\nÊvarê agir hêdî hêdî diçe, û hemû gund bêdeng e. Bavê min bilûra xwe ya kevn digire. Ew straneke kevn lêdixe: strana min û Lorînê. Ev soza wî ye. Lorîn li Kobaniyê ye, lê ew jî li ser telefona min e.\n\nPaşê ew bilûrê dide min û dibêje: «Stranê bidomîne, kurê min.» Diya min bi dizî hêsirên xwe paqij dike û dibêje: «Dûman e.» Ez? Ez jî. Dûman di çavên min de ye.\n\nEz bilûrê lêdixim. Deng gelek pîs e, û Hevalo ditirse. Bavê min dikene. Lê Dapîr bi dizî strana bavê min dibêje, û sor dibe. Dapîr vê stranê ji ku dizane?\n\nSibehê trimbêl vedigere Kobaniyê, û ez nikarim rabim, pişta min diêşe! Diya min ji ber derî dibêje: «Pêncî salî ye, û hîn jî sibehan ranabe!» Baş e, bavo. Ez ê stranê bidomînim. Sibe.",
       "translations": {
         "en": "It’s the night before Newroz. Everything is ready: firewood, clothes, drum and zurna. Only my father isn’t here yet. I’m at the window, and my tea is getting cold.\n\nAt midnight Hevalo looks at the hill. There are two lights on the road, and they’re coming slowly. It’s a car, from Kobanî! My father and my mother are at the blue gate, and the first thing my mother asks is: “Are you hungry?”\n\nIn the morning it rains, then the sun comes out. Rain is a blessing! I lead the govend, and the green handkerchief is in my hand. My knees are old, but my moustache isn’t. My father watches me, and I am proud.\n\nIn the evening the fire slowly dies down, and the whole village is silent. My father takes his old flute. He plays an old song: Lorîn’s song and mine. It’s his promise. Lorîn is in Kobanî, but she’s on my phone too.\n\nThen he gives me the flute and says: “Keep the song going, my son.” My mother quietly wipes her tears and says: “It’s the smoke.” Me? Me too. There’s smoke in my eyes.\n\nI play the flute. The sound is terrible, and Hevalo is frightened. My father laughs. But Dapîr is quietly singing my father’s song, and she is blushing. How does Dapîr know this song?\n\nIn the morning the car goes back to Kobanî, and I can’t get up: my back hurts! From the doorway my mother says: “Fifty years old, and he still can’t get up in the morning!” All right, Father. I’ll keep the song going. Tomorrow."
       },
@@ -1117,12 +1117,12 @@
           "prompt": "Ew du çira çi ne?",
           "promptEn": "What are the two lights?",
           "options": [
-            "Erebeyek ji Kobaniyê",
+            "Trimbêlek ji Kobaniyê",
             "Stêrkên li asman",
             "Agirê Newrozê"
           ],
           "correctIndex": 0,
-          "explanation": "“Li ser rê du çira hene… Ev erebe ye, ji Kobaniyê!”",
+          "explanation": "“Li ser rê du çira hene… Ev trimbêl e, ji Kobaniyê!”",
           "explanationEn": "“There are two lights on the road… It’s a car, from Kobanî!”",
           "evidenceParagraph": 1,
           "evidenceSentence": 2
@@ -1207,7 +1207,7 @@
           "promptEn": "Lorîn is in Kobanî. How is she part of this evening?",
           "options": [
             "Ew li ser telefona Hamo ye",
-            "Ew bi erebeyê tê",
+            "Ew bi trimbêlê tê",
             "Ew bi Xezalê re tê"
           ],
           "correctIndex": 0,

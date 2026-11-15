@@ -656,7 +656,7 @@
                 {"ku": "berx", "en": "lamb", "pos": "noun", "gender": "m", "forms": ["berx", "berxên", "berxan", "berxek", "berxê", "berxekî", "berxî"]},
                 {"ku": "mih", "en": "ewe", "pos": "noun", "gender": "f", "forms": ["mih", "mihên", "mihan", "mihek", "miha", "mihê", "miheke"]},
                 {"ku": "telefon", "en": "phone", "pos": "noun", "gender": "f", "forms": ["telefon", "telefonên", "telefonan", "telefonek", "telefona", "telefonê", "telefoneke"]},
-                {"ku": "erebe", "en": "car", "pos": "noun", "gender": "f", "forms": ["erebe", "erebeyên", "erebeyan", "erebeyek", "erebeya", "erebeyê", "erebeyeke"]},
+                {"ku": "trimbêl", "en": "car", "pos": "noun", "gender": "f", "forms": ["trimbêl", "trimbêlên", "trimbêlan", "trimbêlek", "trimbêla", "trimbêlê", "trimbêleke"]},
                 {"ku": "pere", "en": "money", "pos": "noun", "gender": "m", "forms": ["pere", "pereyên", "pereyan", "pereyek", "pereyê", "pereyekî", "pereyî"]}
               ]
             },

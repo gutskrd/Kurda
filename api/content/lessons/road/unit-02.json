@@ -4391,15 +4391,15 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Erebeyeke Hamo tune, lê kerekî wî heye!",
+                    "say": "Trimbêleke Hamo tune, lê kerekî wî heye!",
                     "voice": "hamo",
                     "new": [
                       {
-                        "ku": "erebe",
+                        "ku": "trimbêl",
                         "en": "car"
                       }
                     ],
-                    "prompt": "Erebeyeke Hamo tune, lê kerekî wî heye!",
+                    "prompt": "Trimbêleke Hamo tune, lê kerekî wî heye!",
                     "options": [
                       "Hamo has no car, but he has a donkey!",
                       "Hamo has a car, but no donkey!",
@@ -4482,9 +4482,9 @@
                     "voice": "hamo",
                     "prompt": "She doesn’t have a car.",
                     "accepted": [
-                      "Erebeyeke wê tune.",
-                      "Erebeyeke wê tune",
-                      "Erebeya wê tune."
+                      "Trimbêleke wê tune.",
+                      "Trimbêleke wê tune",
+                      "Trimbêla wê tune."
                     ]
                   }
                 },
@@ -4520,7 +4520,7 @@
                         "right": "phone"
                       },
                       {
-                        "left": "erebe",
+                        "left": "trimbêl",
                         "right": "car"
                       },
                       {
