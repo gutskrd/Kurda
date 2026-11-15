@@ -1282,7 +1282,7 @@
                         "right": "shame, shyness"
                       },
                       {
-                        "left": "kêf",
+                        "left": "dilxweşî",
                         "right": "joy, good mood"
                       },
                       {
@@ -1385,8 +1385,8 @@
                   "type": "speaking",
                   "payload": {
                     "voice": "hamo",
-                    "prompt": "Be Hamo, touched and annoyed at once: “What is this feeling? I’m hurt… no, I’m happy!”",
-                    "reference": "Ev hest çi ye? Ez dilgiran im… na, ez kêfxweş im!"
+                    "prompt": "Be Hamo, touched and annoyed at once: “What is this feeling? I’m hurt… no, it’s joy!”",
+                    "reference": "Ev hest çi ye? Ez dilgiran im… na, ev dilxweşî ye!"
                   }
                 },
                 {
@@ -1422,8 +1422,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo turns his face to the wall, smiling. Type what he mutters.",
                     "accepted": [
-                      "Kêfa min tê, lê ez nabêjim!",
-                      "Kêfa min tê, lê ez nabêjim"
+                      "Dilê min xweş dibe, lê ez nabêjim!",
+                      "Dilê min xweş dibe, lê ez nabêjim"
                     ]
                   }
                 },
@@ -1463,7 +1463,7 @@
                   "payload": {
                     "prompt": "Hamo pretends not to be moved. Which sentence says “Shame on you, Xalo!”?",
                     "options": [
-                      "Kêf e, xalo!",
+                      "Dilxweşî ye, xalo!",
                       "Şerm e, xalo!",
                       "Dilgiran e, xalo!"
                     ],
@@ -2909,7 +2909,7 @@
                     ],
                     "prompt": "Baran çawa tê?",
                     "options": [
-                      "Bi kêf û bi stran.",
+                      "Bi dilxweşî û bi stran.",
                       "Bi Şîrînê re.",
                       "Tije herî û bêdeng."
                     ],
@@ -3114,8 +3114,8 @@
                         "right": "amazed"
                       },
                       {
-                        "left": "dilxweş",
-                        "right": "glad, in good spirits"
+                        "left": "dilxweş bûn",
+                        "right": "to cheer up"
                       },
                       {
                         "left": "bi kelecan",
@@ -3254,8 +3254,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo can’t believe it either: Baran, the chatterbox of the lane, silent. Type what he says.",
                     "accepted": [
-                      "Ez matmayî me: Baran qet ne bêdeng e!",
-                      "Ez matmayî me: Baran qet ne bêdeng e"
+                      "Ez matmayî me: Baran hîç ne bêdeng e!",
+                      "Ez matmayî me: Baran hîç ne bêdeng e"
                     ]
                   }
                 },
@@ -3275,12 +3275,12 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hêvî bi kelecan e, lê Baran ne dilxweş e.",
+                    "say": "Hêvî bi kelecan e, lê Baran dilxweş nabe.",
                     "voice": "hamo",
-                    "prompt": "Nazê asks Hamo how the children are. What does he say? “Hêvî bi kelecan e, lê Baran ne dilxweş e.”",
+                    "prompt": "Nazê asks Hamo how the children are. What does he say? “Hêvî bi kelecan e, lê Baran dilxweş nabe.”",
                     "options": [
-                      "Hêvî is excited, but Baran isn’t happy.",
-                      "Baran is excited, but Hêvî isn’t happy.",
+                      "Hêvî is excited, but Baran won’t cheer up.",
+                      "Baran is excited, but Hêvî won’t cheer up.",
                       "Both children are happy."
                     ],
                     "correctIndex": 0

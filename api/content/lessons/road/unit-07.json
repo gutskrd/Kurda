@@ -1366,9 +1366,9 @@
                   "payload": {
                     "prompt": "Which sentence says “Then I will be happy”?",
                     "options": [
-                      "Wê demê ez ê kêfxweş dibim.",
-                      "Wê demê ez ê kêfxweş bibim.",
-                      "Wê demê ez kêfxweş bibim."
+                      "Wê demê ez ê dilxweş dibim.",
+                      "Wê demê ez ê dilxweş bibim.",
+                      "Wê demê ez dilxweş bibim."
                     ],
                     "correctIndex": 1
                   }
@@ -2480,7 +2480,7 @@
                         "right": "handkerchief"
                       },
                       {
-                        "left": "bi kêf",
+                        "left": "bi dilxweşî",
                         "right": "gladly, with joy"
                       },
                       {
@@ -2562,7 +2562,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Wey… baş e. Bi kêf! Ez ê bibim serçopî.",
+                        "text": "Wey… baş e. Bi dilxweşî! Ez ê bibim serçopî.",
                         "en": "Oh… all right. Gladly! I’ll lead the govend."
                       },
                       {
@@ -2648,7 +2648,7 @@
                   "payload": {
                     "voice": "hamo",
                     "prompt": "Be Hamo, giving in with a grin: “Gladly! I’ll lead the govend.”",
-                    "reference": "Bi kêf! Ez ê bibim serçopî."
+                    "reference": "Bi dilxweşî! Ez ê bibim serçopî."
                   }
                 },
                 {
@@ -2720,7 +2720,7 @@
                     "prompt": "Hamo turns to you with the green handkerchief: “Tu jî tevlî govendê dibî?” What would you answer?",
                     "options": [
                       "Erê, tu tevlî dibî.",
-                      "Erê, bi kêf!",
+                      "Erê, bi dilxweşî!",
                       "Na, ez serbilind im."
                     ],
                     "correctIndex": 1

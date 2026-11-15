@@ -12910,7 +12910,7 @@
           "prompt": "Ev çîrok bi giranî li ser çi ye?",
           "promptEn": "What is this story mainly about?",
           "options": [
-            "Nêçîrvanekî ku şerekî mezin qezenc dike",
+            "Nêçîrvanekî ku di şerekî mezin de bi ser dikeve",
             "Evîneke ku malbat napejirînin û li ser Sîpanê bi mirinê diqede",
             "Keçeke ku vedigere mala bavê xwe"
           ],
@@ -14767,7 +14767,7 @@
             "ku": {
               "prompt": "Ev çîrok bi giranî li ser çi ye?",
               "options": [
-                "Nêçîrvanekî ku şerekî mezin qezenc dike",
+                "Nêçîrvanekî ku di şerekî mezin de bi ser dikeve",
                 "Evîneke ku malbat napejirînin û li ser Sîpanê bi mirinê diqede",
                 "Keçeke ku vedigere mala bavê xwe"
               ],

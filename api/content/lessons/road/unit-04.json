@@ -1931,7 +1931,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Erê. Têr û kêfxweş.",
+                        "text": "Erê. Têr û dilxweş.",
                         "en": "Yes. Full and happy."
                       },
                       {
@@ -3200,7 +3200,7 @@
           "position": 4,
           "titleKu": "Na, naxwazim",
           "titleEn": "No, I don’t want to",
-          "grammarMd": "To say *not*, put **na-** where **di-** was:\n\n- *Ez diçim → Ez naçim.* I am not going.\n- *Ew dixwe → Ew naxwe.* He isn’t eating.\n- *Tu têyî → Tu nayî.* You aren’t coming. (hatin: *nayêm, nayî, nayê, nayên*)\n- *vedixwim → venaxwim* — ve- stays in front.\n\nTwo verbs take **ni-**: *nizanim* I don’t know · *nikarim* I can’t.\n\nWith the copula use **ne**: *Ez ne birçî me.* I am not hungry.\n\n**qet** is *(not) at all, never*: *Ez qet nizanim!* I have no idea!",
+          "grammarMd": "To say *not*, put **na-** where **di-** was:\n\n- *Ez diçim → Ez naçim.* I am not going.\n- *Ew dixwe → Ew naxwe.* He isn’t eating.\n- *Tu têyî → Tu nayî.* You aren’t coming. (hatin: *nayêm, nayî, nayê, nayên*)\n- *vedixwim → venaxwim* — ve- stays in front.\n\nTwo verbs take **ni-**: *nizanim* I don’t know · *nikarim* I can’t.\n\nWith the copula use **ne**: *Ez ne birçî me.* I am not hungry.\n\n**hîç** is *(not) at all*: *Ez hîç nizanim!* I have no idea!",
           "lessons": [
             {
               "key": "u04s4l1",
@@ -3212,8 +3212,8 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hevalo nizane! Ew qet nizane!",
-                    "prompt": "Mîrza asks Hevalo about the apples. The deer shakes his head very, very fast, and Hamo puts it into words for him. What does he say? “Hevalo nizane! Ew qet nizane!”",
+                    "say": "Hevalo nizane! Ew hîç nizane!",
+                    "prompt": "Mîrza asks Hevalo about the apples. The deer shakes his head very, very fast, and Hamo puts it into words for him. What does he say? “Hevalo nizane! Ew hîç nizane!”",
                     "options": [
                       "He knows! He knows everything!",
                       "He doesn’t know! He has no idea at all!",
@@ -3237,8 +3237,8 @@
                         "right": "I am not eating"
                       },
                       {
-                        "left": "qet",
-                        "right": "not at all, never"
+                        "left": "hîç",
+                        "right": "not at all"
                       },
                       {
                         "left": "rastî",
@@ -3374,9 +3374,9 @@
                   "payload": {
                     "prompt": "Mîrza asks you too. Write your whole answer: “Na, ez … nizanim!” (No, I don’t know at all!)",
                     "accepted": [
-                      "Na, ez qet nizanim!",
-                      "Na, ez qet nizanim",
-                      "Na ez qet nizanim"
+                      "Na, ez hîç nizanim!",
+                      "Na, ez hîç nizanim",
+                      "Na ez hîç nizanim"
                     ],
                     "voice": "hamo"
                   }
@@ -3413,7 +3413,7 @@
                   "type": "speaking",
                   "payload": {
                     "prompt": "Now you are a witness too. Say it the way Hevalo would, if deer could talk — very, very fast: “I don’t know! I have no idea at all!”",
-                    "reference": "Ez nizanim! Ez qet nizanim!",
+                    "reference": "Ez nizanim! Ez hîç nizanim!",
                     "voice": "hamo"
                   }
                 },
@@ -3770,8 +3770,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo? Hevalo sêvan naxwe. Qet!",
-                        "en": "Hevalo? Hevalo doesn’t eat apples. Never!"
+                        "text": "Hevalo? Hevalo sêvan naxwe. Hîç!",
+                        "en": "Hevalo? Hevalo doesn’t eat apples. Not at all!"
                       },
                       {
                         "speaker": 1,

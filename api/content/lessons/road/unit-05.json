@@ -1806,8 +1806,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez? Dereng? Qet!",
-                        "en": "Me? Late? Never!"
+                        "text": "Ez? Dereng? Hîç!",
+                        "en": "Me? Late? Not at all!"
                       }
                     ],
                     "prompt": "Roja Şemiyê çi tê?",
@@ -1987,10 +1987,10 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez? Dereng? Qet!",
-                    "prompt": "Xezal asks if he will be late on Saturday. Everyone holds their breath. What does Hamo say? “Ez? Dereng? Qet!”",
+                    "say": "Ez? Dereng? Hîç!",
+                    "prompt": "Xezal asks if he will be late on Saturday. Everyone holds their breath. What does Hamo say? “Ez? Dereng? Hîç!”",
                     "options": [
-                      "Me? Late? Never!",
+                      "Me? Late? Not at all!",
                       "Me? Late? Always!",
                       "Me? Late? Sometimes."
                     ],
@@ -2997,7 +2997,7 @@
           "position": 4,
           "titleKu": "Her roj",
           "titleEn": "Every day",
-          "grammarMd": "How often you do something goes before the verb:\n\n- *Ez her roj çay vedixwim.* I drink tea every day.\n- *Hamo her gav dereng e.* Hamo is always late.\n- *Em gelek caran diçin bazarê.* We often go to the market.\n- *Carinan baran tê.* Sometimes it rains (rain comes).\n- *Ez kêm caran zû radizim.* I rarely go to bed early.\n- *Ew qet naxwe.* He never eats (it).\n\n**ji … heta …** is *from … until …*: *ji sibehê heta êvarê* from morning till evening · *ji Duşemê heta Înê* from Monday to Friday.",
+          "grammarMd": "How often you do something goes before the verb:\n\n- *Ez her roj çay vedixwim.* I drink tea every day.\n- *Hamo her gav dereng e.* Hamo is always late.\n- *Em gelek caran diçin bazarê.* We often go to the market.\n- *Carinan baran tê.* Sometimes it rains (rain comes).\n- *Ez kêm caran zû radizim.* I rarely go to bed early.\n- *Ew tu caran naxwe.* He never eats (it).\n\n**ji … heta …** is *from … until …*: *ji sibehê heta êvarê* from morning till evening · *ji Duşemê heta Înê* from Monday to Friday.",
           "lessons": [
             {
               "key": "u05s4l1",
@@ -3470,7 +3470,7 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Plan wiha ye: roja Şemiyê, di demjimêr heştan de, otobûsa Kobaniyê ji meydanê diçe.",
+                        "text": "Plan wiha ye: roja Şemiyê, di demjimêr heştan de, otobûsa Kobaniyê ji qadê diçe.",
                         "en": "The plan is like this: on Saturday, at eight, the Kobanî bus leaves from the square."
                       },
                       {
@@ -3480,7 +3480,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Na, xalo! Di demjimêr heft û nîvan de em derî digirin û diçin meydanê.",
+                        "text": "Na, xalo! Di demjimêr heft û nîvan de em derî digirin û diçin qadê.",
                         "en": "No, uncle! At half past seven we close the door and go to the square."
                       },
                       {
@@ -3604,8 +3604,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo goes through the plan once more, to show he knows it by heart. Type what he says.",
                     "accepted": [
-                      "Em derî digirin û diçin meydanê.",
-                      "Em derî digirin û diçin meydanê"
+                      "Em derî digirin û diçin qadê.",
+                      "Em derî digirin û diçin qadê"
                     ]
                   }
                 },
@@ -3779,7 +3779,7 @@
                         "en": "My promise is here. The bus is going to Kobanî… without us."
                       }
                     ],
-                    "prompt": "Ew dibezin meydanê. Otobûs disekine?",
+                    "prompt": "Ew dibezin qadê. Otobûs disekine?",
                     "options": [
                       "Erê, otobûs disekine.",
                       "Otobûs li bendê ye.",

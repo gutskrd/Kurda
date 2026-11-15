@@ -933,7 +933,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Darên sêvan? Hevalo dê kêfxweş be!",
+                        "text": "Darên sêvan? Hevalo dê dilxweş be!",
                         "en": "Apple trees? Hevalo will be happy!"
                       },
                       {
@@ -948,7 +948,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Mîrza got: «Bê dikandaran kes sêvên te nakire!» Û Bişar: «Şivan qet ne bêkar e.»",
+                        "text": "Mîrza got: «Bê dikandaran kes sêvên te nakire!» Û Bişar: «Şivan tu caran ne bêkar e.»",
                         "en": "Mîrza said: “Without shopkeepers nobody buys your apples!” And Bişar: “A shepherd is never idle.”"
                       },
                       {
@@ -1187,7 +1187,7 @@
           "position": 2,
           "titleKu": "Ez hatime",
           "titleEn": "I have come",
-          "grammarMd": "For what **has happened** (and still matters), add the copula-like endings to the past stem:\n\n- after a consonant: *ez hatime, tu hatiyî, ew hatiye, em hatine* (I have come …)\n- after a vowel: *ez çûme, tu çûyî, ew çûye, em çûne* (I have gone …)\n- verbs in -în: *ez hizirîme, ew hiziriye* (I have thought …)\n\nTransitive verbs keep the ergative: *Min biryar daye.* I have decided. · *Te qet Hewlêr dîtiye?* Have you ever seen Hewlêr? · *Me sêv xwarine.* We have eaten (the) apples.\n\nUseful with it: **tu car** never · **qet** ever / never · **heta niha** until now · **hê** / **hîn** still, yet: *Ez hê neçûme.* I have not gone yet.\n\nNot: *ne-* before the stem: *Min nedîtiye.* I haven’t seen it.",
+          "grammarMd": "For what **has happened** (and still matters), add the copula-like endings to the past stem:\n\n- after a consonant: *ez hatime, tu hatiyî, ew hatiye, em hatine* (I have come …)\n- after a vowel: *ez çûme, tu çûyî, ew çûye, em çûne* (I have gone …)\n- verbs in -în: *ez hizirîme, ew hiziriye* (I have thought …)\n\nTransitive verbs keep the ergative: *Min biryar daye.* I have decided. · *Te hîç Hewlêr dîtiye?* Have you ever seen Hewlêr? · *Me sêv xwarine.* We have eaten (the) apples.\n\nUseful with it: **tu car**, **tu caran** never · **hîç** ever (in a question), at all · **heta niha** until now · **hê** / **hîn** still, yet: *Ez hê neçûme.* I have not gone yet.\n\nNot: *ne-* before the stem: *Min nedîtiye.* I haven’t seen it.",
           "lessons": [
             {
               "key": "u11s2l1",
@@ -1302,10 +1302,14 @@
                       "Min tu car Hewlêr nedîtiye",
                       "Min Hewlêr tu car nedîtiye.",
                       "Min Hewlêr tu car nedîtiye",
-                      "Min qet Hewlêr nedîtiye.",
-                      "Min qet Hewlêr nedîtiye",
-                      "Min Hewlêr qet nedîtiye.",
-                      "Min Hewlêr qet nedîtiye"
+                      "Min tu caran Hewlêr nedîtiye.",
+                      "Min tu caran Hewlêr nedîtiye",
+                      "Min Hewlêr tu caran nedîtiye.",
+                      "Min Hewlêr tu caran nedîtiye",
+                      "Min hîç Hewlêr nedîtiye.",
+                      "Min hîç Hewlêr nedîtiye",
+                      "Min Hewlêr hîç nedîtiye.",
+                      "Min Hewlêr hîç nedîtiye"
                     ],
                     "voice": "hamo"
                   }
@@ -1450,7 +1454,7 @@
             {
               "key": "u11s2l2",
               "position": 2,
-              "titleKu": "Te qet Hewlêr dîtiye?",
+              "titleKu": "Te hîç Hewlêr dîtiye?",
               "titleEn": "Have you ever seen Hewlêr?",
               "exercises": [
                 {
@@ -1459,8 +1463,8 @@
                   "payload": {
                     "prompt": "Over breakfast Xezal nudges you: ask Hamo if he has ever seen Hewlêr. Which question do you ask him?",
                     "options": [
-                      "Xalo, te qet Hewlêr dîtiye?",
-                      "Xalo, tu yê qet Hewlêr bibînî?",
+                      "Xalo, te hîç Hewlêr dîtiye?",
+                      "Xalo, tu yê hîç Hewlêr bibînî?",
                       "Xalo, tu ji Hewlêrê hez dikî?"
                     ],
                     "correctIndex": 0
@@ -1549,8 +1553,8 @@
                   "payload": {
                     "prompt": "Hamo remembers the square, and it grows as he talks. Type what you hear.",
                     "accepted": [
-                      "Meydana sereke ji ya Amedê jî mezintir e.",
-                      "Meydana sereke ji ya Amedê jî mezintir e"
+                      "Qada sereke ji ya Amedê jî mezintir e.",
+                      "Qada sereke ji ya Amedê jî mezintir e"
                     ],
                     "voice": "hamo"
                   }
@@ -1641,7 +1645,7 @@
                   "type": "speaking",
                   "payload": {
                     "prompt": "Say it as Hamo does, proudly: “I have seen the citadel, the bazaar and the main square.”",
-                    "reference": "Min qelat, bazar û meydana sereke dîtine.",
+                    "reference": "Min qelat, bazar û qada sereke dîtine.",
                     "voice": "hamo"
                   }
                 },
@@ -2397,9 +2401,9 @@
                   "payload": {
                     "prompt": "Which sentence means “I am happy because she will become a teacher”?",
                     "options": [
-                      "Ez kêfxweş im, loma ew ê bibe mamoste.",
-                      "Ez kêfxweş im, çimkî ew ê bibe mamoste.",
-                      "Ez kêfxweş im, her çend ew ê bibe mamoste."
+                      "Ez dilxweş im, loma ew ê bibe mamoste.",
+                      "Ez dilxweş im, çimkî ew ê bibe mamoste.",
+                      "Ez dilxweş im, her çend ew ê bibe mamoste."
                     ],
                     "correctIndex": 1
                   }
@@ -2410,10 +2414,10 @@
                   "payload": {
                     "prompt": "Hamo feels two things at once. Say it in Kurdish: “Although I am sad, I am happy.”",
                     "accepted": [
-                      "Her çend ez xemgîn im jî, ez kêfxweş im.",
-                      "Her çend ez xemgîn im jî, ez kêfxweş im",
-                      "Her çend ez xemgîn im, ez kêfxweş im.",
-                      "Her çend ez xemgîn im, ez kêfxweş im"
+                      "Her çend ez xemgîn im jî, ez dilxweş im.",
+                      "Her çend ez xemgîn im jî, ez dilxweş im",
+                      "Her çend ez xemgîn im, ez dilxweş im.",
+                      "Her çend ez xemgîn im, ez dilxweş im"
                     ],
                     "voice": "hamo"
                   }
@@ -2922,8 +2926,8 @@
                   "payload": {
                     "prompt": "Xezal points at the hens in the yard, and Hamo laughs. Type what he says.",
                     "accepted": [
-                      "Mirîşk guhdarên baş in, ew qet naxivin.",
-                      "Mirîşk guhdarên baş in, ew qet naxivin"
+                      "Mirîşk guhdarên baş in, ew tu caran naxivin.",
+                      "Mirîşk guhdarên baş in, ew tu caran naxivin"
                     ],
                     "voice": "hamo"
                   }

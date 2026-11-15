@@ -88,13 +88,13 @@ describe('the stories at the chapters’ ends', () => {
       'road-01-test body: “spehî” is not met by the end of chapter 1: gloss it, or say it with words the chapter taught',
       'road-01-test body: 1 of its 7 words are new by chapter 1 (at most 2 %)',
     ]);
-    const glossed = { ...tale, body: 'Ez Hamo me. Sêv pir xweşik e, û Hevalo birçî ye. Ez kêfxweş im, tu jî kêfxweş î. Çay germ e. Ev sêv spehî ye.', glossary: [{ term: 'spehî', meanings: { en: 'beautiful' } }] };
+    const glossed = { ...tale, body: 'Ez Hamo me. Sêv pir xweşik e, û Hevalo birçî ye. Ez dilxweş im, tu jî dilxweş î. Çay germ e. Ev sêv spehî ye.', glossary: [{ term: 'spehî', meanings: { en: 'beautiful' } }] };
     expect(checkRoadStories(plan, [glossed]).map(formatProblem).filter((t) => t.includes('spehî'))).toEqual([]);
     expect(checkRoadStories(plan, [{ ...tale, slug: 'chapter-one' }, { ...tale, level: 2 }]).map(formatProblem)).toContain('chapter-one slug: slug should be road-NN-… with NN the chapter it ends (01–12)');
   });
 
   it('ask their questions in words the chapter taught too', () => {
-    const tale = { slug: 'road-01-test', dialect: 'kurmanci', level: 1, title: 'Sêv', body: 'Ez Hamo me. Sêv pir xweşik e, û Hevalo birçî ye. Ez kêfxweş im, tu jî kêfxweş î.' };
+    const tale = { slug: 'road-01-test', dialect: 'kurmanci', level: 1, title: 'Sêv', body: 'Ez Hamo me. Sêv pir xweşik e, û Hevalo birçî ye. Ez dilxweş im, tu jî dilxweş î.' };
     const asked = (prompt: string, options: string[]) => checkRoadStories(plan, [{ ...tale, questions: [{ prompt, options, correctIndex: 0 }] }]).map(formatProblem);
     expect(asked('Kî birçî ye?', ['Hevalo', 'Hamo'])).toEqual([]);
     expect(asked('Çima Hevalo birçî ye?', ['Wî sêv nexwar.', 'Ew nexweş e.'])).toEqual([

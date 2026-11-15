@@ -234,7 +234,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
     ku: {
       subject: 'Têketineke nû li hesabê te yê Hevalo',
-      text: 'Silav {username},\n\nNiha ji amûreke ku berê qet bi hesabê te yê Hevalo re nehatibû bikaranîn têketin hate kirin ({time}).\n\nHeke ev tu bûyî, tiştek ji bo kirinê nîne.\n\nHeke ne tu bûyî, niha şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfreya xwe ji bîr kir?” hilbijêre): bi vî awayî hemû amûr ji hesabê derdikevin.\n\n— Tîma Hevalo',
+      text: 'Silav {username},\n\nNiha ji amûreke ku berê tu caran bi hesabê te yê Hevalo re nehatibû bikaranîn têketin hate kirin ({time}).\n\nHeke ev tu bûyî, tiştek ji bo kirinê nîne.\n\nHeke ne tu bûyî, niha şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfreya xwe ji bîr kir?” hilbijêre): bi vî awayî hemû amûr ji hesabê derdikevin.\n\n— Tîma Hevalo',
     },
   },
   'sign-in-attempts': {

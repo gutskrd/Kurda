@@ -107,7 +107,7 @@
                 {"ku": "î / yî", "en": "are (with tu: î after a consonant, yî after a vowel)", "pos": "cop", "forms": ["î", "yî"]},
                 {"ku": "mêvan", "en": "guest", "pos": "noun", "gender": "mf", "forms": ["mêvan", "mêvanên", "mêvanan", "mêvanek", "mêvanê", "mêvanekî", "mêvanî", "mêvana", "mêvaneke"]},
                 {"ku": "heval", "en": "friend", "pos": "noun", "gender": "mf", "forms": ["heval", "hevalên", "hevalan", "hevalek", "hevalê", "hevalekî", "hevalî", "hevala", "hevaleke", "hevalo"]},
-                {"ku": "kêfxweş", "en": "glad, pleased, happy", "pos": "adj", "forms": ["kêfxweş"]},
+                {"ku": "dilxweş", "en": "glad, pleased, happy (people also say kêfxweş)", "pos": "adj", "forms": ["dilxweş"]},
                 {"ku": "spas", "en": "thanks", "pos": "interj", "forms": ["spas"]},
                 {"ku": "gelek", "en": "very, a lot, many", "pos": "adv", "forms": ["gelek"]}
               ]
@@ -956,7 +956,7 @@
                 {"ku": "dibistan", "en": "school", "pos": "noun", "gender": "f", "forms": ["dibistan", "dibistanên", "dibistanan", "dibistanek", "dibistana", "dibistanê", "dibistaneke"]},
                 {"ku": "dikan", "en": "shop", "pos": "noun", "gender": "f", "forms": ["dikan", "dikanên", "dikanan", "dikanek", "dikana", "dikanê", "dikaneke"]},
                 {"ku": "zevî", "en": "field", "pos": "noun", "gender": "f", "forms": ["zevî", "zeviyên", "zeviyan", "zeviyek", "zeviya", "zeviyê", "zeviyeke"]},
-                {"ku": "meydan", "en": "square", "pos": "noun", "gender": "f", "forms": ["meydan", "meydanên", "meydanan", "meydanek", "meydana", "meydanê", "meydaneke"]},
+                {"ku": "qad", "en": "square", "pos": "noun", "gender": "f", "forms": ["qad", "qadên", "qadan", "qadek", "qada", "qadê", "qadeke"]},
                 {"ku": "aş", "en": "mill", "pos": "noun", "gender": "m", "forms": ["aş", "aşên", "aşan", "aşek", "aşê", "aşekî", "aşî"]},
                 {"ku": "rez", "en": "vineyard", "pos": "noun", "gender": "m", "forms": ["rez", "rezên", "rezan", "rezek", "rezê", "rezekî", "rezî"]}
               ]
@@ -980,7 +980,7 @@
             {
               "key": "u03s4l3",
               "position": 3,
-              "titleKu": "Li meydana gund",
+              "titleKu": "Li qada gund",
               "titleEn": "In the village square",
               "focus": "talk",
               "beat": "Xezal and you in the square: the neighbours want to know who you are. Ferhad has news — tomorrow is market day in the town, and everyone is going.",
@@ -1254,7 +1254,7 @@
           "titleKu": "Na, naxwazim",
           "titleEn": "No, I don’t want to",
           "grammar": "negation in the present: na- replaces di- (naçim, nakim, nayêm), ni- for zanîn and karîn (nizanim, nikarim), ne before the copula",
-          "grammarMd": "To say *not*, put **na-** where **di-** was:\n\n- *Ez diçim → Ez naçim.* I am not going.\n- *Ew dixwe → Ew naxwe.* He isn’t eating.\n- *Tu têyî → Tu nayî.* You aren’t coming. (hatin: *nayêm, nayî, nayê, nayên*)\n- *vedixwim → venaxwim* — ve- stays in front.\n\nTwo verbs take **ni-**: *nizanim* I don’t know · *nikarim* I can’t.\n\nWith the copula use **ne**: *Ez ne birçî me.* I am not hungry.\n\n**qet** is *(not) at all, never*: *Ez qet nizanim!* I have no idea!",
+          "grammarMd": "To say *not*, put **na-** where **di-** was:\n\n- *Ez diçim → Ez naçim.* I am not going.\n- *Ew dixwe → Ew naxwe.* He isn’t eating.\n- *Tu têyî → Tu nayî.* You aren’t coming. (hatin: *nayêm, nayî, nayê, nayên*)\n- *vedixwim → venaxwim* — ve- stays in front.\n\nTwo verbs take **ni-**: *nizanim* I don’t know · *nikarim* I can’t.\n\nWith the copula use **ne**: *Ez ne birçî me.* I am not hungry.\n\n**hîç** is *(not) at all*: *Ez hîç nizanim!* I have no idea!",
           "lessons": [
             {
               "key": "u04s4l1",
@@ -1262,12 +1262,12 @@
               "titleKu": "Ez nizanim",
               "titleEn": "I don’t know",
               "focus": "meet",
-              "beat": "The great apple mystery. Mîrza asks everyone. Bozo looks away. Hevalo shakes his head very, very fast, and Hamo puts it into words for him: “Ez nizanim! Ez qet nizanim!”",
+              "beat": "The great apple mystery. Mîrza asks everyone. Bozo looks away. Hevalo shakes his head very, very fast, and Hamo puts it into words for him: “Ez nizanim! Ez hîç nizanim!”",
               "voice": "hamo",
               "new": [
                 {"ku": "na-", "en": "not (the negative present: naçim, nakim)", "pos": "particle", "forms": ["naçim", "naçî", "naçe", "naçin", "nayêm", "nayî", "nayê", "nayên", "nakim", "nakî", "nake", "nakin", "nabînim", "nabînî", "nabîne", "nabînin", "nabêjim", "nabêjî", "nabêje", "nabêjin", "nanêrim", "nanêrî", "nanêre", "nanêrin", "naxivim", "naxivî", "naxive", "naxivin", "nakirim", "nakirî", "nakire", "nakirin", "nafiroşim", "nafiroşî", "nafiroşe", "nafiroşin", "nadim", "nadî", "nade", "nadin", "nagerim", "nagerî", "nagere", "nagerin", "naxebitim", "naxebitî", "naxebite", "naxebitin", "naxwazim", "naxwazî", "naxwaze", "naxwazin", "naxwim", "naxwî", "naxwe", "naxwin", "venaxwim", "venaxwî", "venaxwe", "venaxwin"]},
                 {"ku": "ni-", "en": "not (with zanîn and karîn: nizanim, nikarim)", "pos": "particle", "forms": ["nizanim", "nizanî", "nizane", "nizanin", "nikarim", "nikarî", "nikare", "nikarin"]},
-                {"ku": "qet", "en": "(not) at all; never", "pos": "adv", "forms": ["qet"]},
+                {"ku": "hîç", "en": "(not) at all; (in a question) ever", "pos": "adv", "forms": ["hîç"]},
                 {"ku": "rastî", "en": "truth", "pos": "noun", "gender": "f", "forms": ["rastî", "rastiyên", "rastiyan", "rastiyek", "rastiya", "rastiyê", "rastiyeke"]},
                 {"ku": "derew", "en": "lie", "pos": "noun", "gender": "f", "forms": ["derew", "derewên", "derewan", "derewek", "derewa", "derewê", "dereweke"]},
                 {"ku": "sûc", "en": "fault, blame", "pos": "noun", "gender": "m", "forms": ["sûc", "sûcên", "sûcan", "sûcek", "sûcê", "sûcekî", "sûcî"]}
@@ -1568,8 +1568,8 @@
           "position": 4,
           "titleKu": "Her roj",
           "titleEn": "Every day",
-          "grammar": "how often: her roj, her gav, gelek caran, carinan, kêm caran, qet; ji … heta …",
-          "grammarMd": "How often you do something goes before the verb:\n\n- *Ez her roj çay vedixwim.* I drink tea every day.\n- *Hamo her gav dereng e.* Hamo is always late.\n- *Em gelek caran diçin bazarê.* We often go to the market.\n- *Carinan baran tê.* Sometimes it rains (rain comes).\n- *Ez kêm caran zû radizim.* I rarely go to bed early.\n- *Ew qet naxwe.* He never eats (it).\n\n**ji … heta …** is *from … until …*: *ji sibehê heta êvarê* from morning till evening · *ji Duşemê heta Înê* from Monday to Friday.",
+          "grammar": "how often: her roj, her gav, gelek caran, carinan, kêm caran, tu caran; ji … heta …",
+          "grammarMd": "How often you do something goes before the verb:\n\n- *Ez her roj çay vedixwim.* I drink tea every day.\n- *Hamo her gav dereng e.* Hamo is always late.\n- *Em gelek caran diçin bazarê.* We often go to the market.\n- *Carinan baran tê.* Sometimes it rains (rain comes).\n- *Ez kêm caran zû radizim.* I rarely go to bed early.\n- *Ew tu caran naxwe.* He never eats (it).\n\n**ji … heta …** is *from … until …*: *ji sibehê heta êvarê* from morning till evening · *ji Duşemê heta Înê* from Monday to Friday.",
           "lessons": [
             {
               "key": "u05s4l1",
@@ -2167,7 +2167,7 @@
                 {"ku": "çok", "en": "knee", "pos": "noun", "gender": "f", "forms": ["çok", "çokên", "çokan", "çokek", "çoka", "çokê", "çokeke"]},
                 {"ku": "serçopî", "en": "leader of the govend (at the head of the line)", "pos": "noun", "gender": "mf", "forms": ["serçopî", "serçopiyên", "serçopiyan", "serçopiyek", "serçopiyê", "serçopiyekî", "serçopiyî", "serçopiya", "serçopiyeke"]},
                 {"ku": "destmal", "en": "handkerchief", "pos": "noun", "gender": "f", "forms": ["destmal", "destmalên", "destmalan", "destmalek", "destmala", "destmalê", "destmaleke"]},
-                {"ku": "bi kêf", "en": "gladly, with joy", "pos": "phrase", "forms": ["bi", "kêf"]},
+                {"ku": "bi dilxweşî", "en": "gladly, with joy", "pos": "phrase", "forms": ["bi", "dilxweşî"]},
                 {"ku": "serbilind", "en": "proud", "pos": "adj", "forms": ["serbilind"]},
                 {"ku": "tevlî bûn", "en": "to join", "pos": "verb", "forms": ["tevlî", "bûn"]}
               ]
@@ -2385,7 +2385,7 @@
                 {"ku": "hêrs", "en": "anger", "pos": "noun", "gender": "f", "forms": ["hêrs", "hêrsên", "hêrsan", "hêrsek", "hêrsa", "hêrsê", "hêrseke"]},
                 {"ku": "tirs", "en": "fear", "pos": "noun", "gender": "f", "forms": ["tirs", "tirsên", "tirsan", "tirsek", "tirsa", "tirsê", "tirseke"]},
                 {"ku": "şerm", "en": "shame, shyness", "pos": "noun", "gender": "f", "forms": ["şerm", "şermên", "şerman", "şermek", "şerma", "şermê", "şermeke"]},
-                {"ku": "kêf", "en": "joy, fun, good mood", "pos": "noun", "gender": "f", "forms": ["kêf", "kêfên", "kêfan", "kêfek", "kêfa", "kêfê", "kêfeke"]},
+                {"ku": "dilxweşî", "en": "joy, gladness, good mood", "pos": "noun", "gender": "f", "forms": ["dilxweşî", "dilxweşiyên", "dilxweşiyan", "dilxweşiyek", "dilxweşiya", "dilxweşiyê", "dilxweşiyeke"]},
                 {"ku": "hest", "en": "feeling", "pos": "noun", "gender": "m", "forms": ["hest", "hestên", "hestan", "hestek", "hestê", "hestekî", "hestî"]},
                 {"ku": "dilgiran", "en": "upset, hurt (in feelings)", "pos": "adj", "forms": ["dilgiran"]},
                 {"ku": "jê", "en": "from him, from her, from it (ji + wî/wê)", "pos": "pron", "forms": ["jê"]}
@@ -2520,7 +2520,7 @@
                 {"ku": "hizirîn", "en": "to think", "pos": "verb", "forms": ["hizirîn", "dihizirim", "dihizirî", "dihizire", "dihizirin", "bihizirim", "bihizire"]},
                 {"ku": "dilşikestî", "en": "heartbroken", "pos": "adj", "forms": ["dilşikestî"]},
                 {"ku": "matmayî", "en": "amazed", "pos": "adj", "forms": ["matmayî"]},
-                {"ku": "dilxweş", "en": "glad, in good spirits", "pos": "adj", "forms": ["dilxweş"]},
+                {"ku": "dilxweş bûn", "en": "to cheer up, to become glad", "pos": "verb", "forms": ["dilxweş", "bûn"]},
                 {"ku": "bi kelecan", "en": "excited", "pos": "phrase", "forms": ["bi", "kelecan"]}
               ]
             },
@@ -3290,7 +3290,7 @@
           "titleKu": "Ez hatime",
           "titleEn": "I have come",
           "grammar": "the present perfect: past stem + -ime, -iyî, -iye, -ine after a consonant (ez hatime, ew hatiye), -me, -yî, -ye, -ne after a vowel (ez çûme, ew çûye); with transitive verbs min … kiriye, me … dîtiye",
-          "grammarMd": "For what **has happened** (and still matters), add the copula-like endings to the past stem:\n\n- after a consonant: *ez hatime, tu hatiyî, ew hatiye, em hatine* (I have come …)\n- after a vowel: *ez çûme, tu çûyî, ew çûye, em çûne* (I have gone …)\n- verbs in -în: *ez hizirîme, ew hiziriye* (I have thought …)\n\nTransitive verbs keep the ergative: *Min biryar daye.* I have decided. · *Te qet Hewlêr dîtiye?* Have you ever seen Hewlêr? · *Me sêv xwarine.* We have eaten (the) apples.\n\nUseful with it: **tu car** never · **qet** ever / never · **heta niha** until now · **hê** / **hîn** still, yet: *Ez hê neçûme.* I have not gone yet.\n\nNot: *ne-* before the stem: *Min nedîtiye.* I haven’t seen it.",
+          "grammarMd": "For what **has happened** (and still matters), add the copula-like endings to the past stem:\n\n- after a consonant: *ez hatime, tu hatiyî, ew hatiye, em hatine* (I have come …)\n- after a vowel: *ez çûme, tu çûyî, ew çûye, em çûne* (I have gone …)\n- verbs in -în: *ez hizirîme, ew hiziriye* (I have thought …)\n\nTransitive verbs keep the ergative: *Min biryar daye.* I have decided. · *Te hîç Hewlêr dîtiye?* Have you ever seen Hewlêr? · *Me sêv xwarine.* We have eaten (the) apples.\n\nUseful with it: **tu car**, **tu caran** never · **hîç** ever (in a question), at all · **heta niha** until now · **hê** / **hîn** still, yet: *Ez hê neçûme.* I have not gone yet.\n\nNot: *ne-* before the stem: *Min nedîtiye.* I haven’t seen it.",
           "lessons": [
             {
               "key": "u11s2l1",
@@ -3311,7 +3311,7 @@
             {
               "key": "u11s2l2",
               "position": 2,
-              "titleKu": "Te qet Hewlêr dîtiye?",
+              "titleKu": "Te hîç Hewlêr dîtiye?",
               "titleEn": "Have you ever seen Hewlêr?",
               "focus": "build",
               "beat": "Xezal asks Hamo if he has ever been to Hewlêr. Once, he says, thirty years ago: he has seen the citadel, the old bazaar and the main square — and has told the story at every wedding since.",
@@ -3770,7 +3770,7 @@
                 {"ku": "tilîlî", "en": "ululation (the women’s joyful cry)", "pos": "noun", "gender": "f", "forms": ["tilîlî", "tilîliyên", "tilîliyan", "tilîliyek", "tilîliya", "tilîliyê", "tilîliyeke"]},
                 {"ku": "li pey hev", "en": "one after another", "pos": "phrase", "forms": ["li", "pey", "hev"]},
                 {"ku": "xemlandî", "en": "decorated, dressed up", "pos": "adj", "forms": ["xemlandî"]},
-                {"ku": "kêfxweşî", "en": "happiness", "pos": "noun", "gender": "f", "forms": ["kêfxweşî", "kêfxweşiyên", "kêfxweşiyan", "kêfxweşiyek", "kêfxweşiya", "kêfxweşiyê", "kêfxweşiyeke"]}
+                {"ku": "bextewarî", "en": "happiness", "pos": "noun", "gender": "f", "forms": ["bextewarî", "bextewariyên", "bextewariyan", "bextewariyek", "bextewariya", "bextewariyê", "bextewariyeke"]}
               ]
             },
             {

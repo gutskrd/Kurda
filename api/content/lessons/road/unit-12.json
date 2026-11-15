@@ -3211,7 +3211,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Na. Ev mîrasa me ye. Çav jî, carinan, ji kêfê digirîn.",
+                        "text": "Na. Ev mîrasa me ye. Çav jî, carinan, ji dilxweşiyê digirîn.",
                         "en": "No. This is our heritage. Eyes cry for joy too, sometimes."
                       }
                     ],
@@ -3455,9 +3455,9 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Bihar hat, û li meydanê şahiyeke mezin heye.",
+                    "say": "Bihar hat, û li qadê şahiyeke mezin heye.",
                     "voice": "hamo",
-                    "prompt": "Spring again in Sêvan. What is happening in the square? “Bihar hat, û li meydanê şahiyeke mezin heye.”",
+                    "prompt": "Spring again in Sêvan. What is happening in the square? “Bihar hat, û li qadê şahiyeke mezin heye.”",
                     "options": [
                       "Spring has come, and there is a big celebration in the square.",
                       "Spring has come, and there is a market in the square.",
@@ -3507,7 +3507,7 @@
                         "right": "decorated, dressed up"
                       },
                       {
-                        "left": "kêfxweşî",
+                        "left": "bextewarî",
                         "right": "happiness"
                       }
                     ],
@@ -3537,8 +3537,8 @@
                   "payload": {
                     "prompt": "Say it in Kurdish: “The women ululate with joy.”",
                     "accepted": [
-                      "Jin bi kêf tilîlî dikin.",
-                      "Jin bi kêf tilîlî dikin"
+                      "Jin bi dilxweşî tilîlî dikin.",
+                      "Jin bi dilxweşî tilîlî dikin"
                     ],
                     "voice": "hamo"
                   }
@@ -3593,8 +3593,8 @@
                   "payload": {
                     "prompt": "Complete: “… di çavên her kesî de ye.” (Happiness is in everyone’s eyes.)",
                     "accepted": [
-                      "Kêfxweşî di çavên her kesî de ye.",
-                      "Kêfxweşî di çavên her kesî de ye"
+                      "Bextewarî di çavên her kesî de ye.",
+                      "Bextewarî di çavên her kesî de ye"
                     ],
                     "voice": "hamo"
                   }
@@ -3654,7 +3654,7 @@
                     "prompt": "Someone holds out a hand to you from the line of the govend. What do you say?",
                     "options": [
                       "Bi xatirê te!",
-                      "Bi kêf!",
+                      "Bi dilxweşî!",
                       "Xêr e?"
                     ],
                     "correctIndex": 1
@@ -3679,9 +3679,9 @@
                   "position": 16,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Kêfxweşî di dilê min de ye… lê sibe Xezal diçe.",
+                    "say": "Bextewarî di dilê min de ye… lê sibe Xezal diçe.",
                     "voice": "hamo",
-                    "prompt": "Late at night Hamo sits down beside you, quiet for once. What does he say? “Kêfxweşî di dilê min de ye… lê sibe Xezal diçe.”",
+                    "prompt": "Late at night Hamo sits down beside you, quiet for once. What does he say? “Bextewarî di dilê min de ye… lê sibe Xezal diçe.”",
                     "options": [
                       "Happiness is in my heart… but tomorrow Xezal is leaving.",
                       "Happiness is in my heart… and tomorrow Xezal is staying.",
@@ -3953,7 +3953,7 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Berbang e. Otobûs li meydanê li benda Xezalê ye.",
+                        "text": "Berbang e. Otobûs li qadê li benda Xezalê ye.",
                         "en": "It’s dawn. The bus is waiting for Xezal in the square."
                       },
                       {

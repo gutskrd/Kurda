@@ -561,12 +561,12 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê, ew di tarîtiyê de rabû. Lê ew dibêje ku ew qet netirsiya.",
+                        "text": "Erê, ew di tarîtiyê de rabû. Lê ew dibêje ku ew hîç netirsiya.",
                         "en": "Yes, he got up in the dark. But he says he wasn’t afraid at all."
                       },
                       {
                         "speaker": 1,
-                        "text": "Qet? Lê çavên wî hîn mezin in!",
+                        "text": "Hîç? Lê çavên wî hîn mezin in!",
                         "en": "At all? But his eyes are still huge!"
                       },
                       {
@@ -818,7 +818,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Konek? Li wir kes tune… qet kes.",
+                        "text": "Konek? Li wir kes tune… hîç kes.",
                         "en": "A tent? Nobody lives there… nobody at all."
                       }
                     ],
@@ -936,9 +936,9 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Li wir qet kes tune.",
+                    "say": "Li wir hîç kes tune.",
                     "voice": "hamo",
-                    "prompt": "Hamo frowns out of the window. What does he say about that place? “Li wir qet kes tune.”",
+                    "prompt": "Hamo frowns out of the window. What does he say about that place? “Li wir hîç kes tune.”",
                     "options": [
                       "Nobody is ever there.",
                       "Everyone is there.",
@@ -1753,8 +1753,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo insists, talking about himself like a hero in a tale. Type what he says.",
                     "accepted": [
-                      "Wê şevê Hamo qet netirsiya.",
-                      "Wê şevê Hamo qet netirsiya"
+                      "Wê şevê Hamo hîç netirsiya.",
+                      "Wê şevê Hamo hîç netirsiya"
                     ]
                   }
                 }
@@ -2539,7 +2539,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Du demjimêr? Ez qet bêhnteng nabim. Ez her gav bêhnfireh im.",
+                        "text": "Du demjimêr? Ez tu caran bêhnteng nabim. Ez her gav bêhnfireh im.",
                         "en": "Two hours? I never get impatient. I am always patient."
                       },
                       {
@@ -3164,10 +3164,10 @@
                   "type": "writing",
                   "payload": {
                     "voice": "hamo",
-                    "prompt": "Dapîr says she never got lost, not once. Complete her words: “Ez qet winda …”",
+                    "prompt": "Dapîr says she never got lost, not once. Complete her words: “Ez tu caran winda …”",
                     "accepted": [
-                      "Ez qet winda nebûm.",
-                      "Ez qet winda nebûm"
+                      "Ez tu caran winda nebûm.",
+                      "Ez tu caran winda nebûm"
                     ]
                   }
                 },
@@ -3521,7 +3521,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew qet bersivê nade. Hevalo, tu şopan dibînî?",
+                        "text": "Ew tu caran bersivê nade. Hevalo, tu şopan dibînî?",
                         "en": "He never answers. Hevalo, can you see any tracks?"
                       },
                       {

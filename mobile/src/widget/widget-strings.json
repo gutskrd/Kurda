@@ -17,7 +17,7 @@
     "emptyMore": "Gava hevalekî nameyan binivîse, name dê li vir xuya bibe.",
     "signedOut": "Hevalo veke da ku nameyên xwe bibînî",
     "waiting": "Nameyên te dê li vir xuya bibin",
-    "pinned": "Li ser amûroka te hatiye hiştin"
+    "pinned": "Li ser ekrana te ya sereke hatiye hiştin"
   },
   "ckb": {
     "name": "نامە",
@@ -27,7 +27,7 @@
     "emptyMore": "کاتێک هاوڕێیەکی نامە دەنووسێت، نامەکەی لێرە دەردەکەوێت.",
     "signedOut": "Hevalo بکەرەوە بۆ بینینی نامەکانت",
     "waiting": "نامەکانت لێرە دەردەکەون",
-    "pinned": "لەسەر ئامرازۆکەکەت هێڵراوەتەوە"
+    "pinned": "لەسەر شاشەی سەرەکیت هێڵراوەتەوە"
   },
   "ar": {
     "name": "رسالة",

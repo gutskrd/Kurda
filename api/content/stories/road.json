@@ -15,7 +15,7 @@
       "readingMinutes": null,
       "title": "Mêvan, çay û sêv",
       "summary": "Mêvanek li mala Hamo ye, li Sêvanê. Çay germ e, lê sêv li ku ne?",
-      "body": "Silav, heval! Ez Hamo me. Ez ji Kobaniyê me, lê niha mala min li vir e, li Sêvanê.\n\nÎro mêvanek li mala min e, ji welatekî dûr. Ez kêfxweş im: “Bi xêr hatî!” Mêvan jî kêfxweş e: “Ser çavan!”\n\nXezal jî li vir e, ji Amedê. Ew ne xwarziya min e, lê ji min re ew Xezo ye!\n\nÊvar e. Em hemû li baxçe ne. Çay germ e û pir xweş e. Li Sêvanê, mêvan îro mêvan e, sibe malbat e.\n\nLê sêv li ku ne? Sêv ne li wir in! Hevalo li baxçe ye, û ew pir kêfxweş e. Mala min mala te ye, heval. Lê sêv, sêvên Hevalo ne!",
+      "body": "Silav, heval! Ez Hamo me. Ez ji Kobaniyê me, lê niha mala min li vir e, li Sêvanê.\n\nÎro mêvanek li mala min e, ji welatekî dûr. Ez dilxweş im: “Bi xêr hatî!” Mêvan jî dilxweş e: “Ser çavan!”\n\nXezal jî li vir e, ji Amedê. Ew ne xwarziya min e, lê ji min re ew Xezo ye!\n\nÊvar e. Em hemû li baxçe ne. Çay germ e û pir xweş e. Li Sêvanê, mêvan îro mêvan e, sibe malbat e.\n\nLê sêv li ku ne? Sêv ne li wir in! Hevalo li baxçe ye, û ew pir dilxweş e. Mala min mala te ye, heval. Lê sêv, sêvên Hevalo ne!",
       "translations": {
         "en": "Hello, friend! I am Hamo. I am from Kobanî, but now my home is here, in Sêvan.\n\nToday there is a guest at my home, from a faraway country. I am glad: “Welcome!” The guest is glad too: “Thank you!”\n\nXezal is here too, from Amed. She is not my niece, but to me she is Xezo!\n\nIt is evening. We are all in the orchard. The tea is hot and very good. In Sêvan, a guest is a guest today and family tomorrow.\n\nBut where are the apples? The apples are not there! Hevalo is in the orchard, and he is very happy. My home is your home, friend… but the apples are Hevalo’s!"
       },
@@ -112,7 +112,7 @@
         },
         {
           "kind": "inference",
-          "prompt": "Sêv ne li wir in. Kî pir kêfxweş e?",
+          "prompt": "Sêv ne li wir in. Kî pir dilxweş e?",
           "promptEn": "The apples are gone. Who is very happy?",
           "options": [
             "Hamo",
@@ -120,7 +120,7 @@
             "Xezal"
           ],
           "correctIndex": 1,
-          "explanation": "Sêv ne li wir in, û Hevalo pir kêfxweş e. Belê: sêv, sêvên Hevalo ne!",
+          "explanation": "Sêv ne li wir in, û Hevalo pir dilxweş e. Belê: sêv, sêvên Hevalo ne!",
           "explanationEn": "The apples are gone, and Hevalo is very happy. Yes: the apples are Hevalo’s!",
           "evidenceParagraph": 4,
           "evidenceSentence": 2
@@ -157,7 +157,7 @@
       "readingMinutes": null,
       "title": "Mêvanê bê simbêl",
       "summary": "Cîran li mala Hamo ne, û wêneyên malbata wî li vir in. Lê wêneyekî kevn jî heye: mêvanekî ciwan û bê simbêl. Ew kî ye?",
-      "body": "Silav, heval! Îro cîran li mala min in: Nazê, Baran, Hêvî û Dapîr Şemsê.\n\nWêneyên malbata min li vir in. Malbata min li Kobaniyê ye. Ev bavê min e, bi bilûra xwe. Simbêlê wî pir mezin e. Yê min jî!\n\nÛ Dapîr? Dapîr bêzar e: “Wêne hene, simbêl heye. Lê jina te li ku ye?” Jina min? Ew li vir e: simbêlê min!\n\nÛ ev wêneyê biçûk? Wêneyekî kevn e: mêrekî ciwan, bê simbêl. Ew mêvanek e… Lê Xezal û Dapîr pir kêfxweş in: “Ev mêvan Hamo ye!” Erê, ew ez im.\n\nJi kerema xwe, heval: ev wêne tenê ji me re ye. Lê wêne li ku ye? Hevalo li baxçe ye, û ew pir kêfxweş e. Spas, Hevalo!",
+      "body": "Silav, heval! Îro cîran li mala min in: Nazê, Baran, Hêvî û Dapîr Şemsê.\n\nWêneyên malbata min li vir in. Malbata min li Kobaniyê ye. Ev bavê min e, bi bilûra xwe. Simbêlê wî pir mezin e. Yê min jî!\n\nÛ Dapîr? Dapîr bêzar e: “Wêne hene, simbêl heye. Lê jina te li ku ye?” Jina min? Ew li vir e: simbêlê min!\n\nÛ ev wêneyê biçûk? Wêneyekî kevn e: mêrekî ciwan, bê simbêl. Ew mêvanek e… Lê Xezal û Dapîr pir dilxweş in: “Ev mêvan Hamo ye!” Erê, ew ez im.\n\nJi kerema xwe, heval: ev wêne tenê ji me re ye. Lê wêne li ku ye? Hevalo li baxçe ye, û ew pir dilxweş e. Spas, Hevalo!",
       "translations": {
         "en": "Hello, friend! Today the neighbours are at my house: Nazê, Baran, Hêvî and Dapîr Şemsê.\n\nThe photos of my family are here. My family is in Kobanî. This is my father, with his flute. His moustache is very big. So is mine!\n\nAnd Dapîr? Dapîr is not pleased: “There are photos, there is a moustache… but where is your wife?” My wife? She is right here: my moustache!\n\nAnd this little photo? It is an old photo: a young man without a moustache. He is a guest… But Xezal and Dapîr are delighted: “This guest is Hamo!” Yes, it is me.\n\nPlease, friend: this photo is just between us. But where is the photo? Hevalo is in the orchard, and he is very happy. Thank you, Hevalo!"
       },
@@ -261,7 +261,7 @@
         },
         {
           "kind": "inference",
-          "prompt": "“Spas, Hevalo!” Hamo ji bo çi kêfxweş e?",
+          "prompt": "“Spas, Hevalo!” Hamo ji bo çi dilxweş e?",
           "promptEn": "“Thank you, Hevalo!” Why is Hamo pleased?",
           "options": [
             "Hevalo birçî ye",
@@ -269,7 +269,7 @@
             "Dapîr bîst salî ye"
           ],
           "correctIndex": 1,
-          "explanation": "Wêne ne li wir e, û Hevalo li baxçe pir kêfxweş e: niha wêneyê bê simbêl tune!",
+          "explanation": "Wêne ne li wir e, û Hevalo li baxçe pir dilxweş e: niha wêneyê bê simbêl tune!",
           "explanationEn": "The photo is gone, and Hevalo is very happy in the orchard: now there is no photo without a moustache!",
           "evidenceParagraph": 4,
           "evidenceSentence": 3
@@ -306,7 +306,7 @@
       "readingMinutes": null,
       "title": "Du gencîne",
       "summary": "Li bin dara gûzê gencîneya Hamo û xwişka wî heye. Lê nîşana nû ya li pencereyê ya kê ye?",
-      "body": "Belê, heval: nexşeya kevn ya min û Lorînê ye, xwişka min. Gencîneya me li bin dara gûzê ye, li kêleka kaniyê: gog û nîvê wêneyekî.\n\nDi wêneyî de em herdu zarok in: Lorîn biçûk e, ez bê simbêl im! Nîvek li cem min e, nîvek li Kobaniyê, li cem Lorînê. Wêne du nîv e, lê dilê me yek e.\n\nLê li pencereyê nîşaneke nû heye. Ew ne ya min e, ne ya Xezalê ye. Ez bêdeng im, lê li bin simbêlê min, ez kêfxweş im.\n\nTenê ji te re: nîşana nû ya Hêviyê ye! Gencîneya wê sêveke sor e, ji bo Hevalo.\n\nNiha li wir sêv tune, û Hevalo pir kêfxweş e. Ji bo Hevalo, her gencîne sêv e!",
+      "body": "Belê, heval: nexşeya kevn ya min û Lorînê ye, xwişka min. Gencîneya me li bin dara gûzê ye, li kêleka kaniyê: gog û nîvê wêneyekî.\n\nDi wêneyî de em herdu zarok in: Lorîn biçûk e, ez bê simbêl im! Nîvek li cem min e, nîvek li Kobaniyê, li cem Lorînê. Wêne du nîv e, lê dilê me yek e.\n\nLê li pencereyê nîşaneke nû heye. Ew ne ya min e, ne ya Xezalê ye. Ez bêdeng im, lê li bin simbêlê min, ez dilxweş im.\n\nTenê ji te re: nîşana nû ya Hêviyê ye! Gencîneya wê sêveke sor e, ji bo Hevalo.\n\nNiha li wir sêv tune, û Hevalo pir dilxweş e. Ji bo Hevalo, her gencîne sêv e!",
       "translations": {
         "en": "Yes, friend: the old map is mine and Lorîn’s, my sister’s. Our treasure is under the walnut tree, next to the spring: marbles and half of a photo.\n\nIn the photo we are both children: Lorîn is little, and I have no moustache! One half is with me, one half in Kobanî, with Lorîn. The photo is in two halves, but our heart is one.\n\nBut there is a new mark on the window. It is not mine, and it is not Xezal’s. I say nothing, but under my moustache I am pleased.\n\nJust between us: the new mark is Hêvî’s! Her treasure is a red apple, for Hevalo.\n\nNow there is no apple there, and Hevalo is very happy. For Hevalo, every treasure is an apple!"
       },
@@ -592,7 +592,7 @@
       "readingMinutes": null,
       "title": "Pênc xulek",
       "summary": "Hamo soz dide ku roja Şemiyê, ji bo otobûsa Kobaniyê, ew di dema xwe de tê. Lê pênc xulekên Hamo dirêj in!",
-      "body": "Tu dizanî, heval? Carinan ez dereng im. Baş e, gelek caran. Lê roja Şemiyê em hemû diçin Kobaniyê, û diya min li benda me ye. Ez soz didim: ez di dema xwe de têm! Soza Hamo soz e.\n\nOtobûs di demjimêr heştan de ji meydanê diçe. Sê demjimêrên min hene, lê ez tenê ji demjimêra çayê bawer dikim. Êvara Înê ez wê amade dikim: heşt. Hevalo li demjimêrê dinêre. Çi heye, Hevalo? Heşt heşt e!\n\nRoja Şemiyê ez di demjimêr pêncan de şiyar dibim. Cara yekem, ez zû me! Ez li kaniyê rûyê xwe dişom. Çay amade ye, cilên min jî. Pêlavên min jî li vir in, ne li cem Hêviyê.\n\nDemjimêr pênc û nîv e. Heta otobûsê du demjimêr û nîv hene. Ez dibêjim: “Tenê pênc xulek.” Û ez radizim.\n\nJi nişka ve dengê Xezalê tê: demjimêr heşt û çaryek e! Demjimêra min deng nake. Em hemû dibezin, Baran û Hêvî jî. Hevalo pêşî dibeze, lê otobûs nasekine. Ez bang dikim, lê êdî otobûs tune. Ew diçe Kobaniyê, bê me.\n\nEz ji Lorînê re dibêjim. Ew li ser telefonê dikene: “Pêncî salî, û hîn wisa!”\n\nÊvar e. Em hemû li malê ne, û kes naxive. Demjimêr heşt e, ya êvarê. Ji nişka ve dengê demjimêra min tê! Hemû li min dinêrin. Ez radibim û dibêjim: “Baş e. Kî çay dixwaze?”",
+      "body": "Tu dizanî, heval? Carinan ez dereng im. Baş e, gelek caran. Lê roja Şemiyê em hemû diçin Kobaniyê, û diya min li benda me ye. Ez soz didim: ez di dema xwe de têm! Soza Hamo soz e.\n\nOtobûs di demjimêr heştan de ji qadê diçe. Sê demjimêrên min hene, lê ez tenê ji demjimêra çayê bawer dikim. Êvara Înê ez wê amade dikim: heşt. Hevalo li demjimêrê dinêre. Çi heye, Hevalo? Heşt heşt e!\n\nRoja Şemiyê ez di demjimêr pêncan de şiyar dibim. Cara yekem, ez zû me! Ez li kaniyê rûyê xwe dişom. Çay amade ye, cilên min jî. Pêlavên min jî li vir in, ne li cem Hêviyê.\n\nDemjimêr pênc û nîv e. Heta otobûsê du demjimêr û nîv hene. Ez dibêjim: “Tenê pênc xulek.” Û ez radizim.\n\nJi nişka ve dengê Xezalê tê: demjimêr heşt û çaryek e! Demjimêra min deng nake. Em hemû dibezin, Baran û Hêvî jî. Hevalo pêşî dibeze, lê otobûs nasekine. Ez bang dikim, lê êdî otobûs tune. Ew diçe Kobaniyê, bê me.\n\nEz ji Lorînê re dibêjim. Ew li ser telefonê dikene: “Pêncî salî, û hîn wisa!”\n\nÊvar e. Em hemû li malê ne, û kes naxive. Demjimêr heşt e, ya êvarê. Ji nişka ve dengê demjimêra min tê! Hemû li min dinêrin. Ez radibim û dibêjim: “Baş e. Kî çay dixwaze?”",
       "translations": {
         "en": "You know, friend? Sometimes I am late. All right, often. But on Saturday we are all going to Kobanî, and my mother is waiting for us. I give my word: I will be on time! Hamo’s promise is a promise.\n\nThe bus leaves the square at eight. I have three clocks, but I only trust the tea clock. On Friday evening I set it: eight. Hevalo looks at the clock. What is it, Hevalo? Eight is eight!\n\nOn Saturday I wake up at five. For the first time, I am early! I wash my face at the spring. The tea is ready, and so are my clothes. My shoes are here too, not with Hêvî.\n\nIt is half past five. There are two and a half hours until the bus. I say: “Just five minutes.” And I go to sleep.\n\nSuddenly I hear Xezal’s voice: it is a quarter past eight! My clock is not ringing. We all run, Baran and Hêvî too. Hevalo runs ahead, but the bus does not stop. I call out, but the bus is gone. It is going to Kobanî, without us.\n\nI tell Lorîn. She laughs down the phone: “Fifty years old, and still the same!”\n\nIt is evening. We are all at home, and nobody says a word. It is eight o’clock, in the evening. Suddenly my clock rings! Everyone looks at me. I get up and say: “Right. Who wants tea?”"
       },
@@ -605,7 +605,7 @@
           "options": [
             "Ew her gav zû ye",
             "Ew gelek caran dereng e",
-            "Ew qet şiyar nabe"
+            "Ew tu caran şiyar nabe"
           ],
           "correctIndex": 1,
           "explanation": "Hamo dibêje: “Carinan ez dereng im. Baş e, gelek caran.”",
@@ -638,7 +638,7 @@
             "Di demjimêr nehan de"
           ],
           "correctIndex": 1,
-          "explanation": "“Otobûs di demjimêr heştan de ji meydanê diçe.”",
+          "explanation": "“Otobûs di demjimêr heştan de ji qadê diçe.”",
           "explanationEn": "“The bus leaves the square at eight.”",
           "evidenceParagraph": 1,
           "evidenceSentence": 0
@@ -648,12 +648,12 @@
           "prompt": "Otobûs ji ku derê diçe?",
           "promptEn": "Where does the bus leave from?",
           "options": [
-            "Ji meydanê",
+            "Ji qadê",
             "Ji bazarê",
             "Ji dibistanê"
           ],
           "correctIndex": 0,
-          "explanation": "“Otobûs di demjimêr heştan de ji meydanê diçe.”",
+          "explanation": "“Otobûs di demjimêr heştan de ji qadê diçe.”",
           "explanationEn": "“The bus leaves the square at eight.”",
           "evidenceParagraph": 1,
           "evidenceSentence": 0
@@ -693,7 +693,7 @@
           "prompt": "Demjimêr pênc û nîv e. Paşê Hamo çi dike?",
           "promptEn": "It is half past five. What does Hamo do next?",
           "options": [
-            "Ew diçe meydanê",
+            "Ew diçe qadê",
             "Ew dibeze",
             "Ew radize"
           ],
@@ -753,7 +753,7 @@
           "promptEn": "“Nobody says a word.” What are they like?",
           "options": [
             "Bêdeng in",
-            "Kêfxweş in",
+            "Dilxweş in",
             "Birçî ne"
           ],
           "correctIndex": 0,
@@ -769,7 +769,7 @@
           "options": [
             "Di demjimêr heştan de, sibehê",
             "Di demjimêr heştan de, êvarî",
-            "Qet deng nake"
+            "Tu caran deng nake"
           ],
           "correctIndex": 1,
           "explanation": "“Demjimêr heşt e, ya êvarê. Ji nişka ve dengê demjimêra min tê!”",
@@ -782,7 +782,7 @@
           "prompt": "Di dawiyê de, hemû li Hamo dinêrin. Hamo çi dike?",
           "promptEn": "At the end, everyone looks at Hamo. What does Hamo do?",
           "options": [
-            "Ew dibeze meydanê",
+            "Ew dibeze qadê",
             "Ew çayê amade dike",
             "Ew dîsa radize"
           ],
@@ -1152,7 +1152,7 @@
             "Tiştekî baş"
           ],
           "correctIndex": 2,
-          "explanation": "Baran dibare, û Hamo kêfxweş e.",
+          "explanation": "Baran dibare, û Hamo dilxweş e.",
           "explanationEn": "It rains, and Hamo is glad.",
           "evidenceParagraph": 2,
           "evidenceSentence": 1
@@ -1484,7 +1484,7 @@
           "promptEn": "How does Baran come home in the evening?",
           "options": [
             "Dereng, tije herî û bêdeng",
-            "Zû, bi kêf û bi stran",
+            "Zû, bi dilxweşî û bi stran",
             "Bi Şîrînê re"
           ],
           "correctIndex": 0,
@@ -1655,7 +1655,7 @@
           "prompt": "«Ez gelek tirsiyam.» Hamo çi dibêje?",
           "promptEn": "“Ez gelek tirsiyam.” What is Hamo saying?",
           "options": [
-            "Ez kêfxweş bûm",
+            "Ez dilxweş bûm",
             "Ez westiyayî bûm",
             "Tirsa min hebû"
           ],

@@ -920,7 +920,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo… tu kêfxweş î?",
+                        "text": "Xalo… tu dilxweş î?",
                         "en": "Xalo… are you pleased?"
                       },
                       {
@@ -1234,8 +1234,8 @@
                   "payload": {
                     "prompt": "Hamo shakes his head at the donkey. Type what he says.",
                     "accepted": [
-                      "Bozo kêfxweş e, lê dapîr ne kêfxweş e!",
-                      "Bozo kêfxweş e, lê dapîr ne kêfxweş e"
+                      "Bozo dilxweş e, lê dapîr ne dilxweş e!",
+                      "Bozo dilxweş e, lê dapîr ne dilxweş e"
                     ],
                     "voice": "hamo"
                   }
@@ -1284,9 +1284,9 @@
                   "payload": {
                     "prompt": "Dapîr frowns at the flower bed; Bozo chews happily. Which sentence is true?",
                     "options": [
-                      "Bozo kêfxweş e, dapîr bêzar e.",
-                      "Bozo bêzar e, dapîr kêfxweş e.",
-                      "Bozo û dapîr kêfxweş in."
+                      "Bozo dilxweş e, dapîr bêzar e.",
+                      "Bozo bêzar e, dapîr dilxweş e.",
+                      "Bozo û dapîr dilxweş in."
                     ],
                     "correctIndex": 0
                   }
@@ -2983,7 +2983,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Hevalo pir kêfxweş e! Û ji bo te, xalo?",
+                        "text": "Hevalo pir dilxweş e! Û ji bo te, xalo?",
                         "en": "Hevalo is so happy! (the deer hops on the spot) And for you, Xalo?"
                       },
                       {
@@ -3761,7 +3761,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Şeş sêv, û xwarin jî! Hevalo niha pir kêfxweş e.",
+                        "text": "Şeş sêv, û xwarin jî! Hevalo niha pir dilxweş e.",
                         "en": "Six apples, and dinner too! Hevalo is very happy now."
                       },
                       {

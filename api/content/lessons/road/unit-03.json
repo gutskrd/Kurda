@@ -1522,8 +1522,8 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Sêva kesk tirş e, lê Xezal kêfxweş e!",
-                    "prompt": "Xezal crunches a green one, makes a face, and takes another bite. Hamo shakes his head. What does he say? “Sêva kesk tirş e, lê Xezal kêfxweş e!”",
+                    "say": "Sêva kesk tirş e, lê Xezal dilxweş e!",
+                    "prompt": "Xezal crunches a green one, makes a face, and takes another bite. Hamo shakes his head. What does he say? “Sêva kesk tirş e, lê Xezal dilxweş e!”",
                     "options": [
                       "The green apple is sour, but Xezal is happy!",
                       "The green apple is sweet, and Xezal is happy!",
@@ -1972,12 +1972,12 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo… tu jî pir kêfxweş î!",
+                        "text": "Xalo… tu jî pir dilxweş î!",
                         "en": "Xalo… you look very pleased too!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez? Ez kêfxweş im, erê. Hêvî zarok e… lê keçeke zîrek e!",
+                        "text": "Ez? Ez dilxweş im, erê. Hêvî zarok e… lê keçeke zîrek e!",
                         "en": "Me? I am pleased, yes. Hêvî is a child… but a clever girl!"
                       }
                     ],
@@ -3090,7 +3090,7 @@
                         "right": "field"
                       },
                       {
-                        "left": "meydan",
+                        "left": "qad",
                         "right": "square"
                       },
                       {
@@ -3126,8 +3126,8 @@
                   "payload": {
                     "prompt": "In Kurdish: “The square is in front of the school.”",
                     "accepted": [
-                      "Meydan li ber dibistanê ye.",
-                      "Meydan li ber dibistanê ye"
+                      "Qad li ber dibistanê ye.",
+                      "Qad li ber dibistanê ye"
                     ],
                     "voice": "hamo"
                   }
@@ -3175,8 +3175,8 @@
                   "payload": {
                     "prompt": "Write the whole sentence: “Dibistan li kêleka … ye.” (The school is next to the square.)",
                     "accepted": [
-                      "Dibistan li kêleka meydanê ye.",
-                      "Dibistan li kêleka meydanê ye"
+                      "Dibistan li kêleka qadê ye.",
+                      "Dibistan li kêleka qadê ye"
                     ],
                     "voice": "hamo"
                   }
@@ -3219,8 +3219,8 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Meydana gund li ku ye?",
-                    "prompt": "A visitor is lost in the lane. Hamo repeats her question, to be sure he has it right. What is she asking? “Meydana gund li ku ye?”",
+                    "say": "Qada gund li ku ye?",
+                    "prompt": "A visitor is lost in the lane. Hamo repeats her question, to be sure he has it right. What is she asking? “Qada gund li ku ye?”",
                     "options": [
                       "Where is the village square?",
                       "Where is the village school?",
@@ -3237,7 +3237,7 @@
                     "prompt": "Hamo asks you “Dikana Ferhad li ku ye?”. What do you answer?",
                     "options": [
                       "Ew Ferhad e.",
-                      "Li kêleka meydanê ye.",
+                      "Li kêleka qadê ye.",
                       "Dikan biçûk e."
                     ],
                     "correctIndex": 1
@@ -3463,15 +3463,15 @@
             {
               "key": "u03s4l3",
               "position": 3,
-              "titleKu": "Li meydana gund",
+              "titleKu": "Li qada gund",
               "titleEn": "In the village square",
               "exercises": [
                 {
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Meydan paqij û bêdeng e.",
-                    "prompt": "Early afternoon in the square. Hamo looks round, very pleased. Listen: what is it like? “Meydan paqij û bêdeng e.”",
+                    "say": "Qad paqij û bêdeng e.",
+                    "prompt": "Early afternoon in the square. Hamo looks round, very pleased. Listen: what is it like? “Qad paqij û bêdeng e.”",
                     "options": [
                       "The square is dirty and loud.",
                       "The square is clean and full.",
@@ -3519,7 +3519,7 @@
                   "type": "conversation",
                   "payload": {
                     "id": "roadu03s4l3a",
-                    "title": "Li meydana gund",
+                    "title": "Li qada gund",
                     "speakers": [
                       {
                         "name": "Hamo",
@@ -3532,7 +3532,7 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Xalo, hemû cîran li meydanê ne!",
+                        "text": "Xalo, hemû cîran li qadê ne!",
                         "en": "Xalo, all the neighbours are in the square!"
                       },
                       {
@@ -3552,7 +3552,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Û Ferhad? Ew pir kêfxweş e. Çi heye?",
+                        "text": "Û Ferhad? Ew pir dilxweş e. Çi heye?",
                         "en": "And Ferhad? He looks very pleased. What is going on?"
                       },
                       {
@@ -3666,10 +3666,10 @@
                   "position": 9,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Write the whole sentence: “Meydan … e.” (The square is clean.)",
+                    "prompt": "Write the whole sentence: “Qad … e.” (The square is clean.)",
                     "accepted": [
-                      "Meydan paqij e.",
-                      "Meydan paqij e"
+                      "Qad paqij e.",
+                      "Qad paqij e"
                     ],
                     "voice": "hamo"
                   }

@@ -287,7 +287,7 @@
                         "right": "friend"
                       },
                       {
-                        "left": "kêfxweş",
+                        "left": "dilxweş",
                         "right": "glad, pleased"
                       },
                       {
@@ -373,8 +373,8 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "say": "Ez gelek kêfxweş im.",
-                    "prompt": "Hamo shakes your hand with both of his: “Ez gelek kêfxweş im.” What does he mean?",
+                    "say": "Ez gelek dilxweş im.",
+                    "prompt": "Hamo shakes your hand with both of his: “Ez gelek dilxweş im.” What does he mean?",
                     "accepted": [
                       "I am very glad.",
                       "I am very happy.",
@@ -408,8 +408,8 @@
                   "payload": {
                     "prompt": "You tell Hamo you are glad. Hamo answers you. Type what you hear.",
                     "accepted": [
-                      "Spas, hevalo! Ez jî kêfxweş im.",
-                      "Spas, hevalo! Ez jî kêfxweş im"
+                      "Spas, hevalo! Ez jî dilxweş im.",
+                      "Spas, hevalo! Ez jî dilxweş im"
                     ],
                     "voice": "hamo"
                   }
@@ -443,8 +443,8 @@
                   "position": 13,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Tell Hamo how glad you are: “Spas! Ez gelek kêfxweş im.” (Thanks! I am very glad.)",
-                    "reference": "Spas! Ez gelek kêfxweş im.",
+                    "prompt": "Tell Hamo how glad you are: “Spas! Ez gelek dilxweş im.” (Thanks! I am very glad.)",
+                    "reference": "Spas! Ez gelek dilxweş im.",
                     "voice": "hamo"
                   }
                 },
@@ -467,8 +467,8 @@
                   "position": 15,
                   "type": "translate",
                   "payload": {
-                    "say": "Tu kêfxweş î?",
-                    "prompt": "Hamo peers at you over his moustache: “Tu kêfxweş î?” What is he asking?",
+                    "say": "Tu dilxweş î?",
+                    "prompt": "Hamo peers at you over his moustache: “Tu dilxweş î?” What is he asking?",
                     "accepted": [
                       "Are you glad?",
                       "Are you happy?",
@@ -962,8 +962,8 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Mêvan kêfxweş e, çay germ e… û Hevalo? Birçî ye!",
-                    "prompt": "Hamo sums up the afternoon, counting on his fingers: “Mêvan kêfxweş e, çay germ e… û Hevalo? Birçî ye!” Who is hungry?",
+                    "say": "Mêvan dilxweş e, çay germ e… û Hevalo? Birçî ye!",
+                    "prompt": "Hamo sums up the afternoon, counting on his fingers: “Mêvan dilxweş e, çay germ e… û Hevalo? Birçî ye!” Who is hungry?",
                     "options": [
                       "Hevalo",
                       "Hamo",
@@ -3394,8 +3394,8 @@
                   "payload": {
                     "prompt": "Hamo yawns and grins at you. Type what he says.",
                     "accepted": [
-                      "Em herdu westiyayî ne, lê em kêfxweş in.",
-                      "Em herdu westiyayî ne, lê em kêfxweş in"
+                      "Em herdu westiyayî ne, lê em dilxweş in.",
+                      "Em herdu westiyayî ne, lê em dilxweş in"
                     ],
                     "voice": "hamo"
                   }

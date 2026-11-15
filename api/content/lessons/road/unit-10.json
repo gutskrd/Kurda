@@ -1882,7 +1882,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Golek? Li vir? Sî sal e ez têm zozanan, lê min qet ev gol nedît!",
+                        "text": "Golek? Li vir? Sî sal e ez têm zozanan, lê min tu caran ev gol nedît!",
                         "en": "A lake? Here? I’ve been coming up to the pastures for thirty years, and I never saw this lake!"
                       },
                       {
@@ -2710,9 +2710,9 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "say": "Dapîr dibêje: “Ew qet nehat xwazgîniya min!”",
+                    "say": "Dapîr dibêje: “Ew tu caran nehat xwazgîniya min!”",
                     "voice": "hamo",
-                    "prompt": "Dapîr blushes like a girl, then laughs, and Hamo tells you what she says. What is it? «Dapîr dibêje: “Ew qet nehat xwazgîniya min!”»",
+                    "prompt": "Dapîr blushes like a girl, then laughs, and Hamo tells you what she says. What is it? «Dapîr dibêje: “Ew tu caran nehat xwazgîniya min!”»",
                     "accepted": [
                       "Dapîr says: “He never came to ask for my hand!”",
                       "Dapîr says: “He never came to ask for my hand”",
@@ -2823,8 +2823,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo finally finds his voice, and stands up for his parents, very quietly. Type what he says.",
                     "accepted": [
-                      "Bavê min hevjînekî baş e, û diya min yekcar kêfxweş e.",
-                      "Bavê min hevjînekî baş e, û diya min yekcar kêfxweş e"
+                      "Bavê min hevjînekî baş e, û diya min yekcar dilxweş e.",
+                      "Bavê min hevjînekî baş e, û diya min yekcar dilxweş e"
                     ]
                   }
                 },
@@ -3579,8 +3579,8 @@
                     "voice": "hamo",
                     "prompt": "Xezal hangs up, smiling. Type what Hamo says about her mother.",
                     "accepted": [
-                      "Gulîstan şaşmayî bû, lê kêfxweş jî bû.",
-                      "Gulîstan şaşmayî bû, lê kêfxweş jî bû"
+                      "Gulîstan şaşmayî bû, lê dilxweş jî bû.",
+                      "Gulîstan şaşmayî bû, lê dilxweş jî bû"
                     ]
                   }
                 }
@@ -3645,7 +3645,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew nan bêhempa bû! Tu qet nanekî mîna wî nabînî.",
+                        "text": "Ew nan bêhempa bû! Tu nanekî mîna wî tu caran nabînî.",
                         "en": "That bread was one of a kind! You’ll never see a loaf like it."
                       },
                       {
