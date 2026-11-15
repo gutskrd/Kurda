@@ -138,7 +138,8 @@ export const conversationPayloadSchema = z
         z
           .object({
             name: z.string().max(CONV.nameMax).optional(),
-            character: z.enum(SPEAKERS, { error: 'needs a character: Hevalo, Hamo or Xezo' }).optional(),
+            // null as well as absent: a stored payload is the parsed one, whose learner part carries `character: null`, and it is parsed again when sent
+            character: z.enum(SPEAKERS, { error: 'needs a character: Hevalo, Hamo or Xezo' }).nullish(),
             learner: z.literal(true).optional(),
           })
           .superRefine((s, ctx) => {
