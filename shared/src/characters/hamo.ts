@@ -15,7 +15,8 @@
  * showing where the two meet. His moustache is the overlay: it lies over the
  * mouth, so every mouth shape tucks its top under it, as a real mouth does.
  *
- * Who he is. Hamo is the warm uncle: steady, patient and easily pleased,
+ * Who he is. Hamo, from Kobanî and at home in Sêvan, is the village's warm
+ * heart, the one the children call Xalo Hamo: steady, patient and easily pleased,
  * the one who laughs at his own stories. He chuckles with his whole face,
  * brows up and eyes shut, shoulders going; proud of his moustache, he gives
  * the near end of it a small lift when he is pleased with you. Puzzled, he

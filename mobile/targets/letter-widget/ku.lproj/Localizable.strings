@@ -1,0 +1,9 @@
+/* The letter widget’s own words. Written in mobile/src/widget/widget-strings.json; widget.test.ts holds this file to it. */
+"name" = "Name";
+"description" = "Nameya herî nû ji hevalekî nameyan, an ya ku tu li vir dihêlî.";
+"sealed" = "Nameyek ji {name}";
+"empty" = "Hê name tune";
+"emptyMore" = "Gava hevalekî nameyan binivîse, name dê li vir xuya bibe.";
+"signedOut" = "Hevalo veke da ku nameyên xwe bibînî";
+"waiting" = "Nameyên te dê li vir xuya bibin";
+"pinned" = "Li ser ekrana te ya sereke hatiye hiştin";

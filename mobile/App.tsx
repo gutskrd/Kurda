@@ -74,6 +74,8 @@ import { MessagesScreen } from './src/messages/MessagesScreen';
 import { FriendRequestsScreen } from './src/messages/FriendRequestsScreen';
 import { LettersScreen } from './src/letters/LettersScreen';
 import { LetterThreadScreen } from './src/letters/LetterThreadScreen';
+import { LetterWidgetScreen } from './src/widget/LetterWidgetScreen';
+import { LetterWidgetSync } from './src/widget/LetterWidgetSync';
 import { UnreadProvider, useUnread } from './src/messages/unread';
 import { unreadBadge } from './src/notifications/inbox';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
@@ -127,6 +129,13 @@ import { ComposeScreen } from './src/composer/ComposeScreen';
 import { StoriesScreen } from './src/stories/StoriesScreen';
 import { StoryReaderScreen } from './src/stories/StoryReaderScreen';
 import { StoryGameScreen } from './src/stories/StoryGameScreen';
+import { RiddlesScreen } from './src/lore/RiddlesScreen';
+import { RiddleScreen } from './src/lore/RiddleScreen';
+import { RiddleAnswerScreen } from './src/lore/RiddleAnswerScreen';
+import { ProverbsScreen } from './src/lore/ProverbsScreen';
+import { ProverbScreen } from './src/lore/ProverbScreen';
+import { ProverbRoundScreen } from './src/lore/ProverbRoundScreen';
+import { leaveLore } from './src/lore/navigation';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { RealtimeProvider } from './src/realtime/RealtimeProvider';
@@ -169,6 +178,8 @@ const linking: LinkingOptions<RootStackParamList> = {
    */
   getStateFromPath: (path, options) => getStateFromPath(legacyTabPath(path), options),
   config: {
+    // a link that starts the app (a tap on the home-screen letter widget) opens its screen over the tabs, so back has somewhere to go
+    initialRouteName: 'Tabs',
     screens: {
       // `?view=games` on Learn arrives as the tab's own param
       Tabs: { screens: linkingScreens() },
@@ -195,9 +206,18 @@ const linking: LinkingOptions<RootStackParamList> = {
       Stories: inviteRoutePath('stories'),
       // a story's address; the website's `/app/learn/stories/:slug` is rewritten to it (navigation/tabs.ts)
       StoryReader: 'app/games/stories/:slug',
+      // the riddles and the proverbs at the website's own addresses, so a riddle a friend shared opens here;
+      // a riddle's answer has none, so no link can open it
+      Riddles: 'app/learn/riddles',
+      Riddle: 'app/learn/riddles/:slug',
+      Proverbs: 'app/learn/proverbs',
+      Proverb: 'app/learn/proverbs/:slug',
       // a shared post: the address the website gives a written one and a picture
       LibraryPost: 'app/library/:postId',
       MemeDetail: 'app/dimen/:postId',
+      // the letters and one correspondence at the website's own addresses; the home-screen letter widget opens these
+      Letters: 'app/letters',
+      LetterThread: 'app/letters/:threadId',
     },
   },
 };
@@ -552,6 +572,13 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
+      <RootStack.Screen name="LetterWidget" options={{ presentation: 'card' }}>
+        {({ navigation }) => (
+          <GuestWall reason="message" onBack={() => navigation.goBack()}>
+            <LetterWidgetScreen onExit={() => navigation.goBack()} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
       <RootStack.Screen name="EventQuests" options={{ presentation: 'card' }}>
         {({ navigation }) => <EventQuestsScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
@@ -655,6 +682,26 @@ function SignedInRoot() {
             <StoryGameScreen key={route.params.id} id={route.params.id} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
+      </RootStack.Screen>
+      {/* the riddles and the proverbs are reading and thinking, which a guest may do; the proverbs' round counts a guest's day too */}
+      <RootStack.Screen name="Riddles" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <RiddlesScreen dialect={route.params?.dialect} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Riddle" options={{ presentation: 'card' }} getId={({ params }) => params.slug}>
+        {({ route, navigation }) => <RiddleScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="RiddleAnswer" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <RiddleAnswerScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Proverbs" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <ProverbsScreen dialect={route.params?.dialect} theme={route.params?.theme} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Proverb" options={{ presentation: 'card' }} getId={({ params }) => params.slug}>
+        {({ route, navigation }) => <ProverbScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Proverbs')} />}
+      </RootStack.Screen>
+      {/* a round is not left by a swipe meant to scroll its choices */}
+      <RootStack.Screen name="ProverbRound" options={{ presentation: 'card', gestureEnabled: false }}>
+        {({ route, navigation }) => <ProverbRoundScreen dialect={route.params.dialect} mode={route.params.mode} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Memes" options={{ presentation: 'card' }}>
         {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}
@@ -966,6 +1013,8 @@ export default function App() {
             <AuthProvider>
               {/* the pictures an admin put in place of the app's own art, from the first screen on */}
               <ArtOverridesLoader />
+              {/* the home-screen letter widget's token, made at sign-in and taken away at any sign-out, outside the screens so none is missed */}
+              <LetterWidgetSync />
               <EventThemeProvider>
                 <ThemedNavigation />
               </EventThemeProvider>

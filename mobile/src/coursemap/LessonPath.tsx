@@ -36,7 +36,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { JumpSheet } from './JumpSheet';
 import { REST, TONES, stopLabel, type ToneColors } from './path';
 import { MASCOT_MIN_WIDTH, PathMascot } from './PathMascot';
-import { LearnerToken, PathHostView, UnitLand } from './PathWorld';
+import { LearnerToken, PathHostView, UnitLand, UpcomingSign } from './PathWorld';
 import { SkillNodeView, type StopChange } from './SkillNodeView';
 import { StopSheet } from './StopSheet';
 import { UnitGuide } from './UnitGuide';
@@ -444,6 +444,7 @@ export const LessonPath = memo(function LessonPath({
           </View>
         );
       })}
+      {map.upcoming ? <UpcomingSign upcoming={map.upcoming} live={live} /> : null}
       <StopSheet
         open={open}
         tone={open ? TONES[scheme][open.unit.tone] : null}
@@ -453,6 +454,10 @@ export const LessonPath = memo(function LessonPath({
         onTips={(skill) => {
           setOpen(null);
           setGuide({ title: t('coursemap.path.tipsFor', { skill: skill.title }), skills: [skill] });
+        }}
+        onStory={(slug) => {
+          setOpen(null);
+          navigation.navigate('StoryReader', { slug });
         }}
       />
       <UnitGuide guide={guide} onClose={() => setGuide(null)} />

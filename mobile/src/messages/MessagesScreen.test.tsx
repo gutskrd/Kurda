@@ -9,7 +9,7 @@ vi.mock('@react-native-community/netinfo', () => import('../reports/testing/neti
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import type { LettersHome } from '@kurda/shared';
+import { DEFAULT_PAPER, type LettersHome } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -77,7 +77,7 @@ describe('Messages', () => {
       out: null,
       visitor: {
         person: baran,
-        letter: { id: 'l9', mine: false, body: 'Silav!', removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
+        letter: { id: 'l9', mine: false, body: 'Silav!', removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null, decor: null },
         since: '2026-11-14T09:00:00.000Z',
         leavesAt: '2026-11-15T09:00:00.000Z',
       },
@@ -85,8 +85,10 @@ describe('Messages', () => {
       sky: [],
       callsLeft: 5,
       homecoming: null,
+      arrival: null,
       penPals: [{ threadId: 't1', person: { id: 'u-rojin', name: 'Rojin', bird: 2 }, lastLetterAt: '2026-11-13T10:00:00.000Z', yourTurn: true, unread: 0 }],
       roomForMore: true,
+      paper: DEFAULT_PAPER,
     };
     open({}, { 'GET /letters': ok(home) });
     const row = await screen.findByTestId('messages-letters');

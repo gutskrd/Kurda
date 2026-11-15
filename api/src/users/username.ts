@@ -1,79 +1,62 @@
-import { normalizeKurdish } from '@kurda/shared';
-import { isReservedUsername } from './reserved-usernames.js';
+import { USERNAME_MAX, USERNAME_MIN, checkUsername, refusedChars, type UsernameCheck, type UsernameReason, type UsernameRefusal } from '@kurda/shared';
+import { AppError } from '../plugins/errors.js';
 
 /**
- * Length policy (KUR-004). Kept at the existing 3–30 to match the DB
- * `users_username_format` CHECK exactly and to avoid breaking existing accounts
- * (and the many test fixtures) that use longer names. The product may tighten this
- * to a shorter cap later — change `USERNAME_MAX` and adjust the DB CHECK together in
- * a migration; the structural + reserved rules below are the security-relevant ones.
+ * The server's side of the username rule (KUR-004).
+ *
+ * The rule itself is shared/src/username.ts, so the browser and the phone refuse
+ * exactly the names the server does, as they are typed. What is here is the
+ * server's way of saying no: an INVALID_USERNAME answer whose details carry the
+ * reason, and for a character that is not allowed the characters, for the apps
+ * to put in the reader's own words; and an English sentence for anything that
+ * reads the answer without them.
+ *
+ * The database keeps what of the rule a CHECK can (`users_username_format`,
+ * migration 1751000540000_lowercase-usernames): the character set, the length,
+ * and the dots. The citext unique index on users.username stays the authority
+ * on whether a name is taken.
  */
-export const USERNAME_MIN = 3;
-export const USERNAME_MAX = 30;
+export { USERNAME_MAX, USERNAME_MIN };
 
-/**
- * The character set: ASCII letters + digits + underscore, plus Kurdish Latin
- * letters (ê î û ç ş). Anything else — spaces, punctuation, control characters,
- * emoji, other Unicode scripts — is rejected. Mirrors (and is stricter than) the
- * DB `users_username_format` CHECK.
- */
-const CHARSET = /^[A-Za-z0-9_êîûçşÊÎÛÇŞ]+$/;
-const HAS_LETTER = /[A-Za-zêîûçşÊÎÛÇŞ]/;
-const ONLY_DIGITS = /^[0-9]+$/;
+export type UsernameError = UsernameReason;
+export type UsernameResult = UsernameCheck;
 
-export type UsernameError =
-  | 'too-short'
-  | 'too-long'
-  | 'invalid-chars'
-  | 'edge-underscore'
-  | 'consecutive-underscore'
-  | 'numbers-only'
-  | 'no-letter'
-  | 'reserved';
+/** The full rule, and the canonical name: NFC, trimmed, lowercase. */
+export const validateUsername = checkUsername;
 
-export type UsernameResult = { ok: true; value: string } | { ok: false; reason: UsernameError };
-
-/** Human-facing message per rejection reason (localizable at the edge). */
-export const USERNAME_ERROR_MESSAGE: Record<UsernameError, string> = {
-  'too-short': `Username must be at least ${USERNAME_MIN} characters.`,
-  'too-long': `Username must be at most ${USERNAME_MAX} characters.`,
-  'invalid-chars': 'Use only letters, numbers and underscores (Kurdish letters are allowed).',
-  'edge-underscore': 'Username can’t start or end with an underscore.',
-  'consecutive-underscore': 'Username can’t contain two underscores in a row.',
-  'numbers-only': 'Username can’t be only numbers.',
-  'no-letter': 'Username must contain at least one letter.',
-  reserved: 'That username isn’t available.',
-};
-
-/**
- * Validate + normalise a username against the full rule set (KUR-004 hardening).
- * Order is fixed so the rejection reason is deterministic. NFC-normalises first so
- * a decomposed "e + ◌̂" and a composed "ê" are treated as the same name (and hit the
- * same case-insensitive DB uniqueness). Returns the canonical value or a reason.
- */
-export function validateUsername(raw: unknown): UsernameResult {
-  const normalized = normalizeKurdish(String(raw ?? '')).trim();
-
-  if (normalized.length < USERNAME_MIN) return { ok: false, reason: 'too-short' };
-  if (normalized.length > USERNAME_MAX) return { ok: false, reason: 'too-long' };
-  if (!CHARSET.test(normalized)) return { ok: false, reason: 'invalid-chars' };
-  if (normalized.startsWith('_') || normalized.endsWith('_')) return { ok: false, reason: 'edge-underscore' };
-  if (normalized.includes('__')) return { ok: false, reason: 'consecutive-underscore' };
-  if (ONLY_DIGITS.test(normalized)) return { ok: false, reason: 'numbers-only' };
-  if (!HAS_LETTER.test(normalized)) return { ok: false, reason: 'no-letter' };
-  if (isReservedUsername(normalized)) return { ok: false, reason: 'reserved' };
-
-  return { ok: true, value: normalized };
+/** The sentence for a refused name, in English, for whatever reads the answer without the apps' words. */
+export function usernameRefusalMessage(refusal: UsernameRefusal): string {
+  switch (refusal.reason) {
+    case 'invalid-chars': {
+      const { visible, unseen } = refusedChars(refusal.chars);
+      if (visible.length > 0) return `${visible.map((ch) => `“${ch}”`).join(' ')} can’t be in a username.`;
+      return unseen ? 'A username can’t have spaces.' : 'Use only lowercase letters, numbers, dots and underscores.';
+    }
+    case 'too-long':
+      return `Username must be at most ${USERNAME_MAX} characters.`;
+    case 'too-short':
+      return `Username must be at least ${USERNAME_MIN} characters.`;
+    case 'edge-punctuation':
+      return 'Username can’t start or end with a dot or an underscore.';
+    case 'double-punctuation':
+      return 'Username can’t have two dots or underscores side by side.';
+    case 'numbers-only':
+      return 'Username can’t be only numbers.';
+    case 'no-letter':
+      return 'Username must contain at least one letter.';
+    case 'reserved':
+      return 'That username isn’t available.';
+  }
 }
 
-/**
- * Legacy pattern kept for reference/back-compat. Prefer {@link validateUsername}
- * which enforces the structural rules the bare charset regex can't.
- */
-export const USERNAME_PATTERN = /^[A-Za-z0-9_êîûçşÊÎÛÇŞ]{3,30}$/;
+/** The answer to a refused name: the reason, and the characters when it is about characters. */
+export function invalidUsername(refusal: UsernameRefusal): AppError {
+  const details = refusal.reason === 'invalid-chars' ? { reason: refusal.reason, chars: refusal.chars } : { reason: refusal.reason };
+  return new AppError('INVALID_USERNAME', 400, usernameRefusalMessage(refusal), details);
+}
 
-/** Back-compat helper: the canonical username, or null if it breaks any rule. */
+/** The canonical username, or null if it breaks any rule. */
 export function canonicalUsername(raw: string): string | null {
-  const res = validateUsername(raw);
+  const res = checkUsername(raw);
   return res.ok ? res.value : null;
 }

@@ -30,8 +30,8 @@ describe('agoInWords', () => {
 
   /** CLDR has no words for this in Kurdish: it would say "-2 h", or English. */
   it('takes Kurmancî and Soranî from the catalogue', () => {
-    expect(agoInWords(before(120), translator(ku), 'ku', NOW)).toBe('2 saet berê');
-    expect(agoInWords(before(15), translator(ku), 'ku', NOW)).toBe('15 deqîqe berê');
+    expect(agoInWords(before(120), translator(ku), 'ku', NOW)).toBe('2 demjimêr berê');
+    expect(agoInWords(before(15), translator(ku), 'ku', NOW)).toBe('15 xulek berê');
     expect(agoInWords(before(60 * 24 * 3), translator(ckb), 'ckb', NOW)).toBe('3 ڕۆژ لەمەوپێش');
   });
 });
@@ -46,7 +46,7 @@ describe('durationInWords', () => {
   });
 
   it('says it in Kurdish from the catalogue', () => {
-    expect(durationInWords(900, translator(ku), 'ku')).toBe('15 deqîqe');
+    expect(durationInWords(900, translator(ku), 'ku')).toBe('15 xulek');
     expect(durationInWords(2 * 3600, translator(ckb), 'ckb')).toBe('2 کاتژمێر');
   });
 });

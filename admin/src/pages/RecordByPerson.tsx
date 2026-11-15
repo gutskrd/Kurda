@@ -6,6 +6,7 @@ import { scriptOf } from '../lessonAudio';
 import { href, mayOpenPage } from '../navigation';
 import {
   DEFAULT_FILTERS,
+  chapterState,
   counts,
   dialectName,
   isDone,
@@ -30,6 +31,7 @@ import {
   type LinesPage,
   type PeopleListing,
   type Person,
+  type RoadChapter,
   type ScriptDialect,
   type SourceFilter,
   type StatusFilter,
@@ -211,6 +213,7 @@ function People(): React.JSX.Element {
           {!data.ownVoicesOnly && (
             <p className="rp-total subtle">{left === 0 ? 'Every line of every voice is recorded.' : `${left} lines still to record across every voice.`}</p>
           )}
+          {data.chapters && data.chapters.length > 0 && <Chapters chapters={data.chapters} />}
           {mine.length > 0 && (
             <PeopleGrid title={data.ownVoicesOnly ? undefined : mine.length === 1 ? 'Your voice' : 'Your voices'} people={mine} mineToo />
           )}
@@ -218,6 +221,50 @@ function People(): React.JSX.Element {
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * The road's chapters, each with how much of it is recorded: a chapter goes
+ * online by itself, all its lessons at once, the moment its last line is in.
+ */
+function Chapters({ chapters }: { chapters: readonly RoadChapter[] }): React.JSX.Element {
+  return (
+    <section className="rp-group" aria-label="Chapters">
+      <h2 className="rp-group-title">Chapters</h2>
+      <p className="subtle rp-chapters-note">Each chapter goes online by itself, all its lessons at once, the moment its last line is recorded.</p>
+      <ol className="card rp-chapters">
+        {chapters.map((c) => {
+          const state = chapterState(c);
+          return (
+            <li key={c.position} className="rp-chapter">
+              <div className="rp-chapter-head">
+                <span className="rp-chapter-name">
+                  <strong>
+                    {c.position}. {c.titleKu}
+                  </strong>{' '}
+                  <span className="subtle">{c.titleEn}</span>
+                </span>
+                <Badge tone={state.tone}>{state.text}</Badge>
+              </div>
+              <div
+                className="progress"
+                role="progressbar"
+                aria-label={`Chapter ${c.position} recorded`}
+                aria-valuemin={0}
+                aria-valuemax={Math.max(c.lines, 1)}
+                aria-valuenow={c.recorded}
+              >
+                <div className="progress-bar" style={{ width: `${c.lines === 0 ? 0 : (c.recorded / c.lines) * 100}%` }} />
+              </div>
+              <span className="subtle rp-chapter-count">
+                {c.recorded} of {c.lines} recorded{c.story ? ` · with Hamo’s story ‘${c.story.title}’` : ''}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }
 

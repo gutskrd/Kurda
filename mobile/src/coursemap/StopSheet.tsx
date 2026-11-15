@@ -36,6 +36,7 @@ export function StopSheet({
   onLesson,
   onReview,
   onTips,
+  onStory,
 }: {
   open: { stop: Stop; unit: Unit } | null;
   tone: ToneColors | null;
@@ -43,13 +44,14 @@ export function StopSheet({
   onLesson: (lessonId: string) => void;
   onReview: () => void;
   onTips: (skill: SkillNode) => void;
+  onStory: (slug: string) => void;
 }): React.JSX.Element {
   return (
     // no title in the header: the stop's own name heads the card, under what it belongs to
     <BottomSheet visible={open !== null} onClose={onClose} contentStyle={styles.scroller}>
       {open && tone ? (
         <SheetScrollView contentContainerStyle={styles.body}>
-          <Card stop={open.stop} unit={open.unit} tone={tone} onLesson={onLesson} onReview={onReview} onTips={onTips} />
+          <Card stop={open.stop} unit={open.unit} tone={tone} onLesson={onLesson} onReview={onReview} onTips={onTips} onStory={onStory} />
         </SheetScrollView>
       ) : null}
     </BottomSheet>
@@ -63,6 +65,7 @@ function Card({
   onLesson,
   onReview,
   onTips,
+  onStory,
 }: {
   stop: Stop;
   unit: Unit;
@@ -70,6 +73,7 @@ function Card({
   onLesson: (lessonId: string) => void;
   onReview: () => void;
   onTips: (skill: SkillNode) => void;
+  onStory: (slug: string) => void;
 }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -101,6 +105,18 @@ function Card({
         {title(stop.earned ? t('coursemap.path.trophyDone') : t('coursemap.path.trophyTitle'))}
         {line(stop.earned ? t('coursemap.path.trophyDoneWhy', { unit: unit.title }) : t('coursemap.path.trophyHow', { unit: unit.title }))}
         {stop.earned ? <ClayButton label={t('coursemap.path.practise')} variant="outline" size="large" onPress={onReview} style={styles.action} /> : null}
+      </>
+    );
+  }
+
+  if (stop.kind === 'story') {
+    return (
+      <>
+        {eyebrow(t('coursemap.path.unit', { n: unit.number }))}
+        {title(t('coursemap.path.storyTitle'))}
+        <Text style={[styles.tale, dir.text, { color: colors.textPrimary }]}>{stop.title}</Text>
+        {line(stop.open ? t('coursemap.path.storyOpen') : t('coursemap.path.storyShut'))}
+        {stop.open ? <ClayButton label={t('coursemap.path.storyRead')} tone="primary" size="large" onPress={() => onStory(stop.slug)} style={styles.action} /> : null}
       </>
     );
   }
@@ -218,6 +234,8 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   title: { ...display(typography.sizes.lg) },
   line: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  // the tale's own name, in Kurdish, under "Hamo's story"
+  tale: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontStyle: 'italic' },
   small: { fontSize: typography.sizes.xs },
   lessons: { gap: 2 },
   lessonRow: { alignItems: 'center', gap: spacing.sm + 4, minHeight: MIN_TOUCH_TARGET },

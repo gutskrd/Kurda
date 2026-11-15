@@ -1,4 +1,4 @@
-import type { QuestionKind, StoryGlossEntry } from '@kurda/shared';
+import type { QuestionKind, StoryGlossEntry, StoryQuestionTranslation } from '@kurda/shared';
 import { optionOrder } from '../content/exercises.js';
 
 /** A question from a story's bank, as the plan builder reads it. */
@@ -15,6 +15,8 @@ export interface BankQuestion {
   explanationEn: string | null;
   evidenceParagraph: number | null;
   evidenceSentence: number | null;
+  /** by interface language, the options in the order of `options` */
+  translations?: Record<string, StoryQuestionTranslation>;
 }
 
 /** A question as this game asks it: options in the game's order, the answer remapped. */
@@ -29,6 +31,13 @@ export interface PlannedQuestion {
   explanationEn: string | null;
   evidenceParagraph: number | null;
   evidenceSentence: number | null;
+  /**
+   * By interface language, the options in this game's order like `options`.
+   * Copied with the rest of the question, so a translation corrected during a
+   * game does not change the question being asked; absent from a plan made
+   * before translations existed.
+   */
+  translations?: Record<string, StoryQuestionTranslation>;
 }
 
 /** The text a game was played on, frozen when its questions were built. */
@@ -126,9 +135,20 @@ export function buildPlan(gameId: string, bank: readonly BankQuestion[], count: 
   return ordered.map((q) => planQuestion(gameId, q));
 }
 
-/** One question with its options in this game's order: `shown[i] = options[order[i]]`. */
+/**
+ * One question with its options in this game's order: `shown[i] = options[order[i]]`,
+ * and each translation's options in that same order, so the right answer is
+ * the same index in every language. A translation that does not have as many
+ * options as the question (none is saved that way) is left out rather than
+ * shuffled wrong.
+ */
 export function planQuestion(gameId: string, q: BankQuestion): PlannedQuestion {
   const order = optionOrder(q.options.length, `${gameId}:${q.id}`);
+  const translations: Record<string, StoryQuestionTranslation> = {};
+  for (const [locale, t] of Object.entries(q.translations ?? {})) {
+    if (!t || !Array.isArray(t.options) || t.options.length !== q.options.length) continue;
+    translations[locale] = { prompt: t.prompt, options: order.map((i) => t.options[i]!), ...(t.explanation ? { explanation: t.explanation } : {}) };
+  }
   return {
     questionId: q.id,
     kind: q.kind,
@@ -140,5 +160,6 @@ export function planQuestion(gameId: string, q: BankQuestion): PlannedQuestion {
     explanationEn: q.explanationEn,
     evidenceParagraph: q.evidenceParagraph,
     evidenceSentence: q.evidenceSentence,
+    translations,
   };
 }

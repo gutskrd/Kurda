@@ -2,15 +2,17 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { LetterItem, LetterThread } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import { useApiGet } from '../lib/useApi';
+import { useApiGet, useMemoryOwner } from '../lib/useApi';
 import { describeError } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
 import { ErrorState } from '../components/states';
 import { ChevronIcon } from '../components/icons';
 import { UserActions } from '../profile/UserActions';
 import { ReportSheet } from '../reports/ReportSheet';
-import { BirdBadge, LetterPaper, LetterSheet } from './LetterParts';
+import { BirdBadge, LetterSheet } from './LetterParts';
+import { LetterComposer, type LetterToSend } from './LetterComposer';
 import { letterErrorText } from './errors';
+import { rememberedPaper } from './paper';
 import './letters.css';
 
 /**
@@ -28,6 +30,7 @@ export function LetterThreadPage(): React.JSX.Element {
   const navigate = useNavigate();
   const { threadId = '' } = useParams();
   const thread = useApiGet<LetterThread>(`/letters/threads/${encodeURIComponent(threadId)}`, { fresh: true });
+  const who = useMemoryOwner();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<LetterItem | null>(null);
@@ -42,11 +45,13 @@ export function LetterThreadPage(): React.JSX.Element {
   const letters = sent && !data.letters.some((l) => l.id === sent.id) ? [...data.letters, sent] : data.letters;
   const yourTurn = data.yourTurn && !sent;
   const name = data.person.name;
+  // you write back on the paper you last wrote to them on, or else the one you last wrote on anywhere
+  const lastOwn = [...letters].reverse().find((l) => l.mine && !l.removed && l.decor);
 
-  async function reply(body: string): Promise<void> {
+  async function reply(letter: LetterToSend): Promise<void> {
     setBusy(true);
     setError(null);
-    const res = await client.post<{ letter: LetterItem }>(`/letters/threads/${encodeURIComponent(threadId)}`, { body });
+    const res = await client.post<{ letter: LetterItem }>(`/letters/threads/${encodeURIComponent(threadId)}`, letter);
     setBusy(false);
     if (!res.ok) {
       setError(letterErrorText(res.error, t) ?? describeError(res.error, t));
@@ -90,7 +95,15 @@ export function LetterThreadPage(): React.JSX.Element {
       {data.closed ? (
         <p className="letters-note">{t('letters.thread.closed')}</p>
       ) : yourTurn ? (
-        <LetterPaper key={paperKey} label={t('letters.writeBack', { name })} busy={busy} onSend={(body) => void reply(body)} error={error} />
+        <LetterComposer
+          key={paperKey}
+          label={t('letters.writeBack', { name })}
+          paper={lastOwn?.decor?.paper ?? rememberedPaper(who)}
+          canDraw
+          busy={busy}
+          onSend={(letter) => void reply(letter)}
+          error={error}
+        />
       ) : (
         <p className="letters-note" role="status">
           {t('letters.thread.waiting', { name })}

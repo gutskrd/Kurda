@@ -141,9 +141,9 @@ export class RecordingPeopleService {
            JOIN exercises e ON e.lesson_id = l.id
           ORDER BY c.slug, u.position, s.position, l.position, l.version DESC, e.position`,
       ),
-      this.pool.query<{ id: string; dialect: string; title: string; status: string; body: string }>(
-        `SELECT id, dialect, title, status, body FROM stories WHERE status <> 'archived'
-          ORDER BY dialect, level, array_position(ARRAY['short','medium','long'], length), title, id`,
+      this.pool.query<{ id: string; slug: string; dialect: string; title: string; status: string; body: string }>(
+        `SELECT id, slug, dialect, title, status, body FROM stories WHERE status <> 'archived'
+          ORDER BY dialect, level, array_position(ARRAY['short','medium','long','saga'], length), title, id`,
       ),
       this.pool.query<{ id: string; kind: string; dialect: string; status: string; payload: unknown }>(
         `SELECT id, kind, dialect, status, payload FROM game_content

@@ -1,0 +1,92 @@
+{
+  "en": {
+    "name": "Letter",
+    "description": "The newest letter from a pen pal, or the one you keep here.",
+    "sealed": "A letter from {name}",
+    "empty": "No letter yet",
+    "emptyMore": "When a pen pal writes, their letter will show here.",
+    "signedOut": "Open Hevalo to see your letters",
+    "waiting": "Your letters will show here",
+    "pinned": "Kept on your widget"
+  },
+  "ku": {
+    "name": "Name",
+    "description": "Nameya herî nû ji hevalekî nameyan, an ya ku tu li vir dihêlî.",
+    "sealed": "Nameyek ji {name}",
+    "empty": "Hê name tune",
+    "emptyMore": "Gava hevalekî nameyan binivîse, name dê li vir xuya bibe.",
+    "signedOut": "Hevalo veke da ku nameyên xwe bibînî",
+    "waiting": "Nameyên te dê li vir xuya bibin",
+    "pinned": "Li ser ekrana te ya sereke hatiye hiştin"
+  },
+  "ckb": {
+    "name": "نامە",
+    "description": "نوێترین نامە لە هاوڕێیەکی نامەوە، یان ئەو نامەیەی لێرە دەیهێڵیتەوە.",
+    "sealed": "نامەیەک لە {name}ەوە",
+    "empty": "هێشتا نامە نییە",
+    "emptyMore": "کاتێک هاوڕێیەکی نامە دەنووسێت، نامەکەی لێرە دەردەکەوێت.",
+    "signedOut": "Hevalo بکەرەوە بۆ بینینی نامەکانت",
+    "waiting": "نامەکانت لێرە دەردەکەون",
+    "pinned": "لەسەر شاشەی سەرەکیت هێڵراوەتەوە"
+  },
+  "ar": {
+    "name": "رسالة",
+    "description": "أحدث رسالة من صديق مراسلة، أو الرسالة التي تختار إبقاءها هنا.",
+    "sealed": "رسالة من {name}",
+    "empty": "لا رسائل بعد",
+    "emptyMore": "حين يكتب لك صديق مراسلة، تظهر رسالته هنا.",
+    "signedOut": "افتح Hevalo لترى رسائلك",
+    "waiting": "ستظهر رسائلك هنا",
+    "pinned": "مثبّتة على أداتك"
+  },
+  "tr": {
+    "name": "Mektup",
+    "description": "Bir mektup arkadaşından gelen en yeni mektup ya da burada tutmayı seçtiğin mektup.",
+    "sealed": "{name} sana yazdı",
+    "empty": "Henüz mektup yok",
+    "emptyMore": "Bir mektup arkadaşın yazdığında mektubu burada görünecek.",
+    "signedOut": "Mektuplarını görmek için Hevalo’yu aç",
+    "waiting": "Mektupların burada görünecek",
+    "pinned": "Widget’ına sabitlendi"
+  },
+  "de": {
+    "name": "Brief",
+    "description": "Der neueste Brief von einem Brieffreund – oder der, den du hier behalten möchtest.",
+    "sealed": "Ein Brief von {name}",
+    "empty": "Noch kein Brief",
+    "emptyMore": "Wenn dir ein Brieffreund schreibt, erscheint der Brief hier.",
+    "signedOut": "Öffne Hevalo, um deine Briefe zu sehen",
+    "waiting": "Hier erscheinen deine Briefe",
+    "pinned": "Auf deinem Widget angeheftet"
+  },
+  "fr": {
+    "name": "Lettre",
+    "description": "La lettre la plus récente d’un correspondant, ou celle que tu gardes ici.",
+    "sealed": "Une lettre de {name}",
+    "empty": "Pas encore de lettre",
+    "emptyMore": "Quand un correspondant t’écrira, sa lettre apparaîtra ici.",
+    "signedOut": "Ouvre Hevalo pour voir tes lettres",
+    "waiting": "Tes lettres s’afficheront ici",
+    "pinned": "Épinglée sur ton widget"
+  },
+  "nl": {
+    "name": "Brief",
+    "description": "De nieuwste brief van een penvriend, of de brief die je hier bewaart.",
+    "sealed": "Een brief van {name}",
+    "empty": "Nog geen brief",
+    "emptyMore": "Als een penvriend je schrijft, verschijnt de brief hier.",
+    "signedOut": "Open Hevalo om je brieven te zien",
+    "waiting": "Je brieven verschijnen hier",
+    "pinned": "Vastgezet op je widget"
+  },
+  "es": {
+    "name": "Carta",
+    "description": "La carta más reciente de un amigo por carta, o la que guardas aquí.",
+    "sealed": "Una carta de {name}",
+    "empty": "Aún no hay cartas",
+    "emptyMore": "Cuando un amigo por carta te escriba, su carta aparecerá aquí.",
+    "signedOut": "Abre Hevalo para ver tus cartas",
+    "waiting": "Tus cartas aparecerán aquí",
+    "pinned": "Fijada en tu widget"
+  }
+}

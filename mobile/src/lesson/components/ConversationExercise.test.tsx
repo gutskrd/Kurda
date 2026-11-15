@@ -117,6 +117,31 @@ describe('a conversation in a lesson', () => {
     expect(screen.queryByRole('button', { name: 'Play line 2, said by Hamo' })).toBeNull();
   });
 
+  it('shows the learner’s own lines as theirs, named in their language, with nothing to play, and keeps them off the stage', async () => {
+    show(
+      conversation({
+        speakers: [
+          { name: 'Hamo', character: 'hamo' },
+          { name: 'Tu', character: null, learner: true },
+        ],
+        lines: [
+          { speaker: 0, text: 'Bi xêr hatî!' },
+          { speaker: 1, text: 'Bi xêr bimînî!' },
+        ],
+        lineAudio: [SILAV, null],
+        lineVoices: [null, null],
+      }),
+    );
+    await settle();
+    expect(screen.getByText('You')).toBeTruthy();
+    expect(screen.getByText('Bi xêr bimînî!')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Play line 1, said by Hamo' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Play line 2/ })).toBeNull();
+    // Hamo alone stands on the stage: the learner is the one he faces
+    const bodies = markups().filter((xml) => xml === characterLayers('hamo', 'full').body);
+    expect(bodies).toHaveLength(1);
+  });
+
   it('shows the English meaning on asking, and hides it again', async () => {
     show(conversation());
     await settle();

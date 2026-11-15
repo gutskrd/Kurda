@@ -83,4 +83,9 @@ export const NANE_GERM: StoryDetail = {
   attributionNote: null,
   versions: [],
   narration: null,
+  metaTranslations: {},
+  sections: [],
+  reflections: [],
+  notes: [],
+  sources: [],
 };

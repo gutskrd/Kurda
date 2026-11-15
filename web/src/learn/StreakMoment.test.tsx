@@ -79,10 +79,10 @@ describe('the week', () => {
     inLanguage(<StreakWeek streak={week} />);
     expect(days()).toEqual([
       'Şemî: fêr bûyî',
-      'Yekşem: ders tune bû',
+      'Yekşem: wane tune bû',
       'Duşem: fêr bûyî',
       'Sêşem: bi cemidandinê hat parastin',
-      'Çarşem: ders tune bû',
+      'Çarşem: wane tune bû',
       'Pêncşem: îro fêr bûyî',
       'În: hê nehatiye',
     ]);

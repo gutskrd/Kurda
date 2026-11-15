@@ -534,7 +534,7 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       expect(page.total).toBe(4);
       expect(page.items.map((i) => i.id)).toEqual([...ids].reverse());
       expect(page.items[0]).toMatchObject({
-        user: { id: player.id, username: `fbPlayer_${suffix}`.slice(0, 30) },
+        user: { id: player.id, username: `fbplayer_${suffix}`.slice(0, 30) },
         stars: null,
         categories: ['stories'],
         source: 'settings',

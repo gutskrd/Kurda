@@ -8,9 +8,9 @@ import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { BookIcon, CheckIcon, CloseIcon, TimerIcon } from '../components/icons';
 import { useMediaQuery } from '../lib/useMediaQuery';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import { storyError } from './api';
-import { EnglishToggle, Evidence, ExtraTimeToggle, FromMemoryNote, QuestionCounter, optionNumber, typingElsewhere, useTick, type Act, type Announce } from './GameParts';
+import { EnglishToggle, Evidence, ExtraTimeToggle, FromMemoryNote, QuestionCounter, helpDir, optionNumber, questionHelp, typingElsewhere, useTick, type Act, type Announce } from './GameParts';
 import { rememberTextSize, rememberedEnglish, rememberedTextSize, showEnglishFor } from './prefs';
 import { StoryPlayerBar, StorySpeaker, TextSizeControl } from './ReaderControls';
 import { StoryText } from './StoryText';
@@ -193,9 +193,12 @@ export function GameQuestion({
   announce: Announce;
 }): React.JSX.Element | null {
   const t = useT();
+  const locale = useLocale();
   const q = view.question;
   const heading = useRef<HTMLHeadingElement>(null);
   const [english, setEnglish] = useState(() => showEnglishFor(view.settings.level, rememberedEnglish()));
+  // the question in the reader's language where it is translated into it, else in English
+  const help = q ? questionHelp(q, locale, view.settings.dialect) : null;
   const [sending, setSending] = useState<number | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [storyOpen, setStoryOpen] = useState(false);
@@ -287,12 +290,12 @@ export function GameQuestion({
         <p className="sg-prompt" lang={lang} dir={dir}>
           {q.prompt}
         </p>
-        {q.promptEn && english && (
-          <p className="sg-prompt-en" lang="en" dir="ltr">
-            {q.promptEn}
+        {help?.prompt && english && (
+          <p className="sg-prompt-en" lang={help.lang} dir={helpDir(help.lang)}>
+            {help.prompt}
           </p>
         )}
-        {q.promptEn && <EnglishToggle on={english} onChange={setEnglish} />}
+        {help?.prompt && <EnglishToggle on={english} onChange={setEnglish} english={help.lang === 'en'} />}
 
         <div className="sg-options" role="group" aria-labelledby="sg-q-title">
           {q.options.map((option, i) => (
@@ -310,6 +313,11 @@ export function GameQuestion({
               <span className="sg-option-text" lang={lang} dir={dir}>
                 {option}
               </span>
+              {english && help?.options?.[i] && (
+                <span className="sg-option-tr" lang={help.lang} dir={helpDir(help.lang)}>
+                  {help.options[i]}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -377,9 +385,12 @@ export function GameReveal({
   announce: Announce;
 }): React.JSX.Element | null {
   const t = useT();
+  const locale = useLocale();
   const q = view.question;
   const r = view.reveal;
   const [english, setEnglish] = useState(() => showEnglishFor(view.settings.level, rememberedEnglish()));
+  // the reveal carries the question's translations with its explanation
+  const help = q && r ? questionHelp({ promptEn: q.promptEn, explanationEn: r.explanationEn, translations: r.translations ?? q.translations }, locale, view.settings.dialect) : null;
   const [busy, setBusy] = useState(false);
   const next = useRef<HTMLButtonElement>(null);
   const { lang, dir } = storyTextDirection(view.settings.dialect);
@@ -416,9 +427,9 @@ export function GameReveal({
       <p className="sg-prompt" lang={lang} dir={dir}>
         {q.prompt}
       </p>
-      {q.promptEn && english && (
-        <p className="sg-prompt-en" lang="en" dir="ltr">
-          {q.promptEn}
+      {help?.prompt && english && (
+        <p className="sg-prompt-en" lang={help.lang} dir={helpDir(help.lang)}>
+          {help.prompt}
         </p>
       )}
       <ul className="sg-options is-revealed">
@@ -433,6 +444,11 @@ export function GameReveal({
               <span className="sg-option-text" lang={lang} dir={dir}>
                 {option}
               </span>
+              {english && help?.options?.[i] && (
+                <span className="sg-option-tr" lang={help.lang} dir={helpDir(help.lang)}>
+                  {help.options[i]}
+                </span>
+              )}
               {(right || mine) && (
                 <span className="sg-option-tag">
                   {right && mine ? t('stories.game.yourRight') : right ? t('stories.game.rightAnswer') : t('stories.game.yourAnswer')}
@@ -448,13 +464,13 @@ export function GameReveal({
           {r.explanation}
         </p>
       )}
-      {r.explanationEn && english && (
-        <p className="sg-explain-en" lang="en" dir="ltr">
-          {r.explanationEn}
+      {help?.explanation && english && (
+        <p className="sg-explain-en" lang={help.lang} dir={helpDir(help.lang)}>
+          {help.explanation}
         </p>
       )}
-      {/* the question's own choice, so English can be asked for here too */}
-      {(q.promptEn || r.explanationEn) && <EnglishToggle on={english} onChange={setEnglish} />}
+      {/* the question's own choice, so the translation can be asked for here too */}
+      {help && (help.prompt || help.explanation) && <EnglishToggle on={english} onChange={setEnglish} english={help.lang === 'en'} />}
       <Evidence story={story} paragraph={r.evidenceParagraph} sentence={r.evidenceSentence} />
 
       {!solo && (

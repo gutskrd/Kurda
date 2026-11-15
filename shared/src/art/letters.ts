@@ -25,7 +25,7 @@
 import { LETTER_BIRDS } from '../letters.js';
 import { form, ring, rr, type Tones } from './cutout.js';
 import { leaf } from './paint.js';
-import { pigeon, pigeonHolds, pigeonShadow, type PigeonPose } from './pigeon.js';
+import { PIGEON_PECK, pigeon, pigeonHolds, pigeonShadow, type PigeonPose } from './pigeon.js';
 import { Drawing, checkSize, linearAt, mix, n, prefixFor, radialAt, radialBox, seeded, tint, type Pt } from './svg.js';
 import type { TreeSky } from './tree-scene.js';
 
@@ -175,6 +175,9 @@ export const LETTER_SILL = { x: 50, y: 93.4, birdShare: 0.46 } as const;
 /** Where a pigeon's feet are on its own square, and how much bigger than its own drawing it is drawn there. */
 export const LETTER_BIRD_FEET = { x: 60, y: 100, scale: 1.5 } as const;
 
+/** How far ahead of its feet a letter lies on the sill for a pigeon to peck it up or lay it down there: under its beak as it pecks, as shares of its square. */
+const PECK_LETTER = Math.round(((PIGEON_PECK.letter * LETTER_BIRD_FEET.scale) / 120) * 1000) / 1000;
+
 /**
  * The way a pigeon flies off with a letter, out through the window and away
  * over the country: at each moment of the flight (`at`, 0 to 1), how far its
@@ -288,14 +291,17 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 1680, x: 0.035, y: -0.045 },
       { at: 1880, x: 0.07, y: 0, sx: 1.06, sy: 0.92 },
       { at: 2000, sx: 1, sy: 1 },
-      // it leans in, and bows on its legs to peck the letter up
-      { at: 2139, tilt: 14 },
-      { at: 2140, tilt: 0 },
-      { at: 2600 },
+      // it draws itself up a little as it looks down at the letter, then its head goes down quickly, its body after,
+      // and it gives as its beak meets the sill
+      { at: 2100, sx: 0.98, sy: 1.03 },
+      { at: 2200, sx: 1, sy: 1 },
+      { at: 2290 },
+      { at: 2330, sx: 1.03, sy: 0.96 },
+      { at: 2440, sx: 1, sy: 1 },
       // a little hop as it turns to you with the letter, and another as it turns back
-      { at: 2620 },
-      { at: 2670, y: -0.03 },
-      { at: 2720, y: 0 },
+      { at: 2640 },
+      { at: 2690, y: -0.03 },
+      { at: 2740, y: 0 },
       { at: 3380 },
       { at: 3430, y: -0.03 },
       { at: 3490, y: 0 },
@@ -312,11 +318,15 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [560, 'perched', false],
       [1040, 'happy', false],
       [1600, 'perched', false],
-      [2140, 'peck', false],
-      // it takes the letter into its beak as its head comes back up, so the letter never swings below the sill
-      [2590, 'perched', true],
-      [2640, 'turn', true],
-      [2710, 'front', true],
+      [2200, 'peck-1', false],
+      [2245, 'peck-2', false],
+      [2290, 'peck', false],
+      // it takes the letter in its beak and lifts it off the sill as its head comes up, hanging under the beak the whole way
+      [2500, 'peck-2', true],
+      [2560, 'peck-1', true],
+      [2620, 'perched', true],
+      [2660, 'turn', true],
+      [2730, 'front', true],
       [3400, 'turn', true],
       [3470, 'perched', true],
       [3580, 'wings-up', true],
@@ -327,15 +337,15 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [4460, 'wings-down', true],
       [4640, 'perched', true],
     ],
-    letterAt: 0.32,
+    letterAt: 0.07 + PECK_LETTER,
     letter: [
       { at: 0, y: -0.55, seen: 0 },
       { at: 160, y: -0.5, seen: 1 },
       { at: 640, y: 0, seen: 1 },
       { at: 760, y: -0.04, seen: 1 },
       { at: 880, y: 0, seen: 1 },
-      { at: 2586, y: 0, seen: 1 },
-      { at: 2590, y: 0, seen: 0 },
+      { at: 2496, y: 0, seen: 1 },
+      { at: 2500, y: 0, seen: 0 },
       { at: 4900, y: 0, seen: 0 },
     ],
   }),
@@ -347,8 +357,9 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 0, sx: 1.08, sy: 0.9 },
       { at: 240, sx: 1, sy: 1 },
       { at: 300 },
-      { at: 499, tilt: 14 },
-      { at: 500, tilt: 0 },
+      { at: 390 },
+      { at: 430, sx: 1.03, sy: 0.96 },
+      { at: 540, sx: 1, sy: 1 },
       { at: 1040 },
       { at: 1180, tilt: -7 },
       { at: 1320, tilt: 7 },
@@ -373,10 +384,13 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
     ],
     poses: [
       [0, 'perched', true],
-      // it lets the letter go before its head goes down, so the letter never swings below the sill
-      [300, 'perched', false],
-      [500, 'peck', false],
-      [840, 'perched', false],
+      // it brings the letter down in its beak, hanging under it, and lets it go as its beak reaches the sill
+      [300, 'peck-1', true],
+      [345, 'peck-2', true],
+      [390, 'peck', false],
+      [640, 'peck-2', false],
+      [700, 'peck-1', false],
+      [760, 'perched', false],
       [1968, 'happy', false],
       [2544, 'perched', false],
       [2688, 'blink', false],
@@ -394,11 +408,11 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [4700, 'turn', false],
       [4770, 'perched', false],
     ],
-    letterAt: 0.25,
+    letterAt: PECK_LETTER,
     letter: [
       { at: 0, y: 0, seen: 0 },
-      { at: 296, y: 0, seen: 0 },
-      { at: 300, y: 0, seen: 1 },
+      { at: 386, y: 0, seen: 0 },
+      { at: 390, y: 0, seen: 1 },
       { at: 5300, y: 0, seen: 1 },
     ],
   }),
@@ -414,9 +428,11 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 880 },
       { at: 930, y: -0.03 },
       { at: 990, y: 0 },
-      { at: 1040 },
-      { at: 1399, tilt: 14 },
-      { at: 1400, tilt: 0 },
+      { at: 1300, sx: 0.98, sy: 1.03 },
+      { at: 1400, sx: 1, sy: 1 },
+      { at: 1490 },
+      { at: 1530, sx: 1.03, sy: 0.96 },
+      { at: 1640, sx: 1, sy: 1 },
       { at: 1820 },
       { at: 1860 },
       { at: 1994.5, y: -0.04 },
@@ -436,7 +452,11 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [310, 'front', false],
       [900, 'turn', false],
       [970, 'perched', false],
-      [1400, 'peck', false],
+      [1400, 'peck-1', false],
+      [1445, 'peck-2', false],
+      [1490, 'peck', false],
+      [1690, 'peck-2', true],
+      [1750, 'peck-1', true],
       [1810, 'perched', true],
       [1880, 'turn', true],
       [1950, 'front', true],
@@ -450,11 +470,11 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [3210, 'wings-down', true],
       [3440, 'perched', true],
     ],
-    letterAt: 0.25,
+    letterAt: PECK_LETTER,
     letter: [
       { at: 0, y: 0, seen: 1 },
-      { at: 1806, y: 0, seen: 1 },
-      { at: 1810, y: 0, seen: 0 },
+      { at: 1686, y: 0, seen: 1 },
+      { at: 1690, y: 0, seen: 0 },
       { at: 3900, y: 0, seen: 0 },
     ],
   }),
@@ -467,8 +487,11 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 204, tilt: -10 },
       { at: 612, tilt: -10 },
       { at: 884, tilt: 0 },
-      { at: 1279, tilt: 14 },
-      { at: 1280, tilt: 0 },
+      { at: 1180, sx: 0.98, sy: 1.03 },
+      { at: 1280, sx: 1, sy: 1 },
+      { at: 1370 },
+      { at: 1410, sx: 1.03, sy: 0.96 },
+      { at: 1520, sx: 1, sy: 1 },
       { at: 1700 },
       { at: 1740 },
       { at: 1874.5, y: -0.04 },
@@ -486,7 +509,11 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [0, 'perched', false],
       [816, 'happy', false],
       [1020, 'perched', false],
-      [1280, 'peck', false],
+      [1280, 'peck-1', false],
+      [1325, 'peck-2', false],
+      [1370, 'peck', false],
+      [1570, 'peck-2', true],
+      [1630, 'peck-1', true],
       [1690, 'perched', true],
       [1760, 'turn', true],
       [1830, 'front', true],
@@ -500,15 +527,15 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [3090, 'wings-down', true],
       [3320, 'perched', true],
     ],
-    letterAt: 0.25,
+    letterAt: PECK_LETTER,
     letter: [
       { at: 0, y: -0.55, seen: 0 },
       { at: 102, y: -0.5, seen: 1 },
       { at: 510, y: 0, seen: 1 },
       { at: 612, y: -0.04, seen: 1 },
       { at: 714, y: 0, seen: 1 },
-      { at: 1686, y: 0, seen: 1 },
-      { at: 1690, y: 0, seen: 0 },
+      { at: 1566, y: 0, seen: 1 },
+      { at: 1570, y: 0, seen: 0 },
       { at: 3800, y: 0, seen: 0 },
     ],
   }),
@@ -520,16 +547,20 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
     moves: [
       { at: 0 },
       { at: 1500 },
-      { at: 1725, x: 0.012, y: -0.02, tilt: 4 },
-      { at: 1950, x: 0, y: 0, tilt: 0 },
-      { at: 2175, x: 0.012, y: -0.02, tilt: 4 },
-      { at: 2400, x: 0, y: 0, tilt: 0 },
-      { at: 3900 },
-      { at: 4299, tilt: 14 },
-      { at: 4300, tilt: 0 },
-      { at: 4600 },
-      { at: 4799, tilt: 14 },
-      { at: 4800, tilt: 0 },
+      // a step on the spot with each bob of the head, its body catching up with its head
+      { at: 1620, x: 0.006 },
+      { at: 1900, x: 0.012 },
+      { at: 2180, x: 0.006 },
+      { at: 2460, x: 0 },
+      // two pecks at the seeds, the second without coming all the way up between
+      { at: 4100, sx: 0.98, sy: 1.03 },
+      { at: 4200, sx: 1, sy: 1 },
+      { at: 4290 },
+      { at: 4330, sx: 1.03, sy: 0.96 },
+      { at: 4440, sx: 1, sy: 1 },
+      { at: 4620 },
+      { at: 4660, sx: 1.03, sy: 0.96 },
+      { at: 4770, sx: 1, sy: 1 },
       { at: 5400 },
       { at: 7200 },
       { at: 7500, tilt: -12 },
@@ -552,10 +583,24 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [0, 'perched', false],
       [750, 'blink', false],
       [900, 'perched', false],
-      [4300, 'peck', false],
-      [4600, 'perched', false],
-      [4800, 'peck', false],
-      [5150, 'perched', false],
+      [1500, 'bob', false],
+      [1620, 'perched', false],
+      [1780, 'bob', false],
+      [1900, 'perched', false],
+      [2060, 'bob', false],
+      [2180, 'perched', false],
+      [2340, 'bob', false],
+      [2460, 'perched', false],
+      [4200, 'peck-1', false],
+      [4245, 'peck-2', false],
+      [4290, 'peck', false],
+      [4470, 'peck-2', false],
+      [4530, 'peck-1', false],
+      [4575, 'peck-2', false],
+      [4620, 'peck', false],
+      [4840, 'peck-2', false],
+      [4900, 'peck-1', false],
+      [4960, 'perched', false],
       [6000, 'blink', false],
       [6150, 'perched', false],
       [9300, 'happy', false],
@@ -586,6 +631,9 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
   }),
 };
 
+/** How long a play takes to change from one picture of the pigeon to the next, as a share of it: the finest step its clock has. */
+const SWITCH = 0.00001;
+
 /**
  * Each picture a play shows, with when it is seen: for every picture (named
  * `pose` or `pose+letter`), the moments its showing changes and to what, so
@@ -601,7 +649,8 @@ export function letterPlayShows(play: LetterPlay): Array<{ pose: PigeonPose; let
       const seen: 0 | 1 = k === key(pose, letter) ? 1 : 0;
       const before = i === 0 ? null : show.steps[show.steps.length - 1]![1];
       if (before === null) show.steps.push([0, seen]);
-      else if (before !== seen) show.steps.push([Math.max(0, at - 0.0005), before], [at, seen]);
+      // the change is all but instant, a hundred-thousandth of the play: a picture fading into the next shows the two at once
+      else if (before !== seen) show.steps.push([Math.max(0, at - SWITCH), before], [at, seen]);
     }
   });
   for (const show of shows.values()) show.steps.push([1, show.steps[show.steps.length - 1]![1]]);
@@ -646,9 +695,9 @@ export function letterPlayShadow(play: LetterPlay): {
   return { moves, shapes, letter };
 }
 
-/** The shape of the shadow a pigeon casts in `pose`: side on, bowed to peck, turned three-quarters, or facing you (waving or not, it is the same round). */
+/** The shape of the shadow a pigeon casts in `pose`: side on, bowed far down to peck, turned three-quarters, or facing you (waving or not, it is the same round). */
 function shadowShape(pose: PigeonPose): PigeonPose {
-  return pose === 'turn' || pose === 'peck' ? pose : pose === 'front' || pose === 'hello' ? 'front' : 'perched';
+  return pose === 'turn' || pose === 'peck' || pose === 'peck-2' ? pose : pose === 'front' || pose === 'hello' ? 'front' : 'perched';
 }
 
 /**

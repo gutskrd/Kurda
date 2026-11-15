@@ -33,6 +33,7 @@ import { defaultVariety, rememberedExtraTime } from './prefs';
 import { MODE_KEY, SetupSheet } from './SetupSheet';
 import { StoryCard } from './StoryCard';
 import { JoinCodeForm } from '../play/JoinCode';
+import { ShelfSwitch } from '../lore/LoreParts';
 
 /** How many stories a filtered page brings, and how many more each "More" adds. */
 export const PAGE = 24;
@@ -59,6 +60,7 @@ export function StoriesLibrary(): React.JSX.Element {
   return (
     <div className="container learn-page story-library">
       <LearnHeader view="stories" />
+      <ShelfSwitch here="stories" />
       <Library />
     </div>
   );

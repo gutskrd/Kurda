@@ -169,7 +169,7 @@ const YEAR_COUNTS = [1, 2, 3, 5] as const;
 
 export const BADGES: readonly BadgeDef[] = [
   // A. Learning (circle)
-  badge('ders', 'learning', 'Ders', 'Lessons', [10, 75, 250, 750], 'lessons_completed', 'lessons'), // [review]
+  badge('ders', 'learning', 'Wane', 'Lessons', [10, 75, 250, 750], 'lessons_completed', 'lessons'), // [review]
   // "words learned": an item in your review deck — a word, or a phrase from a
   // lesson — that you have remembered at least twice, days apart (SM-2's
   // second interval). Review items are exercises as often as words, so this is

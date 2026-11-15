@@ -5,7 +5,9 @@
  *   GET /admin/recording/people           one entry per voice — the voice plan's characters, any
  *                                         conversation part no character plays, a narrator for each
  *                                         variety — with what is recorded and what is left, by variety;
- *                                         and the voices linked to the account asking (`mine`)
+ *                                         and the voices linked to the account asking (`mine`); and
+ *                                         the road's chapters, how far each is recorded and whether it
+ *                                         is online yet (content/road-chapters.ts)
  *   GET /admin/recording/people/:voice    that voice's lines, a page at a time (`?cursor=` from the
  *                                         page before), narrowed by `?dialect=kmr|ckb` and
  *                                         `?status=todo|done|all`; each with the key its take is filed
@@ -22,6 +24,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
+import { roadChapters } from '../content/road-chapters.js';
 import { RECORDING_ROLES, recordingPeople, recordsOwnVoicesOnly } from './access.js';
 import { voiceLinks } from './links.js';
 import { VOICE_ID, linesFor, pageAfter, sectionsOf, tally, type ScriptLine } from './script.js';
@@ -45,12 +48,14 @@ export function registerRecordingRoutes(app: FastifyInstance, options: Recording
 
   app.get('/admin/recording/people', { config: { skipValidation: true }, preHandler: canRecord }, async (req) => {
     const own = recordsOwnVoicesOnly(req.user!.roles);
-    const [built, recorded, mine, links] = await Promise.all([
+    const [built, recorded, mine, links, chapters] = await Promise.all([
       service.script(),
       service.recordedKeys(),
       service.voicesOf(req.user!.id),
       // who records what is the team's to know, not each voice actor's
       own ? Promise.resolve(new Map()) : voiceLinks(app.db),
+      // the road's chapters, each going online by itself once its last line is recorded
+      roadChapters(app.db),
     ]);
     const done = (l: ScriptLine): boolean => recorded[l.store].has(l.key);
     const byVoice = new Map<string, ScriptLine[]>();
@@ -66,6 +71,7 @@ export function registerRecordingRoutes(app: FastifyInstance, options: Recording
       mine,
       /** the account records only its own voices: the page says so, rather than show a list of one */
       ownVoicesOnly: own,
+      chapters,
     };
   });
 

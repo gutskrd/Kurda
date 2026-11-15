@@ -2,23 +2,25 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BIRD_OUT_DAYS, PEN_PALS_MAX, type BirdOutResult, type LetterPerson, type LetterVisitor, type LettersHome, type VisitorAnswer } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import { useApiGet } from '../lib/useApi';
+import { useApiGet, useMemoryOwner } from '../lib/useApi';
 import { describeError } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
 import { ErrorState } from '../components/states';
 import { ChevronIcon, HelpIcon, PaletteIcon } from '../components/icons';
 import { ReportSheet } from '../reports/ReportSheet';
 import { LetterWindow, type WindowScene } from './LetterWindow';
-import { BirdBadge, LetterPaper, LetterSheet } from './LetterParts';
+import { BirdBadge, LetterSheet } from './LetterParts';
+import { LetterComposer, type LetterToSend } from './LetterComposer';
 import { BirdPicker } from './BirdPicker';
 import { letterErrorText } from './errors';
+import { rememberPaper } from './paper';
 import './letters.css';
 
 /**
  * What the page is showing under the window: the letters page as it stands,
  * writing your own letter, your bird on its way out, your answer on its way
- * home with somebody's bird, that bird sent on, or your own bird home with an
- * answer.
+ * home with somebody's bird, that bird sent on, your own bird home with an
+ * answer, or a pen pal's bird come with their next letter.
  */
 type Moment =
   | { kind: 'rest' }
@@ -28,7 +30,8 @@ type Moment =
   | { kind: 'waiting' }
   | { kind: 'answered'; person: LetterPerson; threadId: string }
   | { kind: 'sentOn'; name: string }
-  | { kind: 'homecoming'; person: LetterPerson; threadId: string };
+  | { kind: 'homecoming'; person: LetterPerson; threadId: string }
+  | { kind: 'arrival'; person: LetterPerson; threadId: string };
 
 /**
  * Letters by bird (/app/letters): writing to somebody new in Kurdish, and
@@ -44,7 +47,9 @@ type Moment =
  * letter home and the two of you are pen pals; or send it on its way, for
  * somebody else. While it is there your own bird stays home. When your own
  * bird comes home from somebody's window with their answer, the page shows
- * it landing, and the way to read it.
+ * it landing, and the way to read it; and every letter a pen pal writes
+ * after that comes to the window by their own bird, which lands beside yours
+ * and lays the letter on the sill until it is read.
  *
  * Under it, your pen pals, the one most recently written to first, each with
  * whose turn it is, and how it all works in a few lines at the foot.
@@ -68,18 +73,24 @@ export function LettersPage(): React.JSX.Element {
   const [birdError, setBirdError] = useState<string | null>(null);
 
   const data = home.data;
+  const who = useMemoryOwner();
+  // the paper last written on, for a correspondence opened from here to start on it too
+  useEffect(() => rememberPaper(who, data?.paper), [who, data?.paper]);
   useEffect(() => {
     if (!data) return;
     if (!scene) {
-      // the first look: your bird where it is, a bird at the window still there, and your bird home with an answer landing
+      // the first look: your bird where it is, a bird at the window still there, your bird home with an answer landing,
+      // or else a pen pal's bird coming in with their letter
       const back = data.homecoming && !data.out;
+      const pal = !data.visitor && !back ? data.arrival : null;
       setScene({
         own: data.out ? { kind: 'away' } : back ? { kind: 'arriving', bird: data.bird } : { kind: 'home', bird: data.bird },
-        visitor: data.visitor ? { kind: 'here', bird: data.visitor.person.bird } : { kind: 'none' },
+        visitor: data.visitor ? { kind: 'here', bird: data.visitor.person.bird } : pal ? { kind: 'arriving', bird: pal.person.bird } : { kind: 'none' },
         sky: data.sky,
       });
       setVisitor(data.visitor);
       if (back && data.homecoming) setMoment({ kind: 'homecoming', person: data.homecoming.person, threadId: data.homecoming.threadId });
+      else if (pal) setMoment({ kind: 'arrival', person: pal.person, threadId: pal.threadId });
       return;
     }
     // read again: the birds out there are as the page now says
@@ -99,11 +110,11 @@ export function LettersPage(): React.JSX.Element {
   if (home.error && !data) return <ErrorState message={home.error} onRetry={home.reload} />;
   if (!data || !scene) return <div className="container letters-page" aria-busy="true" />;
 
-  async function send(body: string): Promise<void> {
+  async function send(letter: LetterToSend): Promise<void> {
     if (!data) return;
     setBusy(true);
     setError(null);
-    const res = await client.post<BirdOutResult>('/letters/out', { body });
+    const res = await client.post<BirdOutResult>('/letters/out', letter);
     setBusy(false);
     if (!res.ok) {
       setError(letterErrorText(res.error, t) ?? describeError(res.error, t));
@@ -138,11 +149,11 @@ export function LettersPage(): React.JSX.Element {
     setMoment({ kind: 'rest' });
   }
 
-  async function answer(body: string): Promise<void> {
+  async function answer(letter: LetterToSend): Promise<void> {
     if (!visitor) return;
     setBusy(true);
     setError(null);
-    const res = await client.post<VisitorAnswer>('/letters/visitor', { body });
+    const res = await client.post<VisitorAnswer>('/letters/visitor', letter);
     setBusy(false);
     if (!res.ok) {
       const gone = res.error.code === 'NO_VISITOR' || res.error.code === 'BIRD_GONE';
@@ -295,10 +306,12 @@ export function LettersPage(): React.JSX.Element {
           <p className="letters-status">{t('letters.visitor.body')}</p>
         </>
       );
-  else if (moment.kind === 'homecoming')
+  else if (moment.kind === 'homecoming' || moment.kind === 'arrival')
     status = (
       <>
-        <p className="letters-status letters-status--strong">{t('letters.home.title', { name: moment.person.name })}</p>
+        <p className="letters-status letters-status--strong">
+          {moment.kind === 'homecoming' ? t('letters.home.title', { name: moment.person.name }) : t('letters.arrival.title', { name: moment.person.name })}
+        </p>
         <Link to={`/app/letters/${moment.threadId}`} className="btn btn-primary">
           {t('letters.home.read')}
         </Link>
@@ -384,10 +397,13 @@ export function LettersPage(): React.JSX.Element {
       </section>
 
       {moment.kind === 'writing' && canWrite && (
-        <LetterPaper
+        <LetterComposer
           label={t('letters.yourLetter')}
+          paper={data.paper}
+          // a first letter goes to somebody not yet met: what is drawn only travels between pen pals
+          canDraw={false}
           busy={busy}
-          onSend={(body) => void send(body)}
+          onSend={(letter) => void send(letter)}
           onCancel={() => {
             setError(null);
             setMoment({ kind: 'rest' });
@@ -400,11 +416,14 @@ export function LettersPage(): React.JSX.Element {
       {here && visitor && (
         <section className={`letters-arrived${scene.visitor.kind === 'arriving' ? ' is-landing' : ''}`} aria-label={t('letters.visitor.title', { name: visitorName })}>
           <LetterSheet letter={visitor.letter} from={visitorName} onReport={() => setReporting(true)} />
-          <LetterPaper
+          <LetterComposer
             label={t('letters.visitor.answerLabel', { name: visitorName })}
             sendLabel={t('letters.visitor.send', { name: visitorName })}
+            paper={data.paper}
+            // answering makes the two of you pen pals, so the answer may carry a drawing
+            canDraw
             busy={busy}
-            onSend={(body) => void answer(body)}
+            onSend={(letter) => void answer(letter)}
             error={error}
           />
           <p className="letters-status letters-status--quiet">{t('letters.visitor.ownWaits', { name: visitorName })}</p>

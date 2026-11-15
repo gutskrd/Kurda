@@ -1,0 +1,12 @@
+{
+  "type": "widget",
+  "name": "LetterWidget",
+  "displayName": "Hevalo",
+  "bundleIdentifier": ".widget",
+  "deploymentTarget": "17.0",
+  "entitlements": {
+    "com.apple.security.application-groups": [
+      "group.app.hevalo.mobile"
+    ]
+  }
+}

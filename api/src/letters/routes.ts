@@ -5,11 +5,16 @@ import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
 import type { LetterService } from './service.js';
+import { registerLetterWidgetRoutes } from './widget-routes.js';
+import { LetterWidgetService } from './widget.js';
 
 const threadParam = z.object({ threadId: z.uuid() });
 const birdBody = z.object({ bird: z.number().int().min(0).max(99) });
-// a little room over the letter's own limit: the service counts it after trimming and says which rule it broke
-const letterBody = z.object({ body: z.string().min(1).max(LETTER_MAX + 200) });
+// a little room over the letter's own limit: the service counts it after trimming and says which rule it broke;
+// its paper, drawing and notes are checked by the service as the apps check them (shared checkLetterDecor), which
+// says exactly what is wrong, so here they only have to be there or not
+const letterBody = z.object({ body: z.string().min(1).max(LETTER_MAX + 200), decor: z.unknown().optional() });
+type LetterBody = { body: string; decor?: unknown };
 
 /**
  * Letters by bird (letters/service.ts).
@@ -24,6 +29,11 @@ const letterBody = z.object({ body: z.string().min(1).max(LETTER_MAX + 200) });
  *   GET    /letters/threads/:threadId    a correspondence, its letters marked read
  *   POST   /letters/threads/:threadId    write back
  *   POST   /letters/threads/:threadId/end  say goodbye
+ *
+ * Each of the three that send a letter takes `{ body, decor? }`: the letter,
+ * and its paper, drawing and notes (shared/src/letter-paper.ts). A first
+ * letter to a stranger carries no drawing. The widget's routes, under
+ * /letters/widget, are in widget-routes.ts.
  *
  * A letter is reported through POST /reports (target type 'letter'), and its
  * writer is blocked or reported as anybody is, by the id the letters give.
@@ -48,7 +58,7 @@ export function registerLetterRoutes(app: FastifyInstance, letters: LetterServic
       config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat')],
     },
-    async (req) => letters.sendOut(req.user!.id, (req.body as { body: string }).body),
+    async (req) => letters.sendOut(req.user!.id, (req.body as LetterBody).body, (req.body as LetterBody).decor),
   );
 
   app.delete('/letters/out', { preHandler: requireAccount }, async (req, reply) => {
@@ -73,7 +83,7 @@ export function registerLetterRoutes(app: FastifyInstance, letters: LetterServic
       config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat')],
     },
-    async (req) => letters.answer(req.user!.id, (req.body as { body: string }).body),
+    async (req) => letters.answer(req.user!.id, (req.body as LetterBody).body, (req.body as LetterBody).decor),
   );
 
   app.delete('/letters/visitor', { preHandler: requireAccount }, async (req, reply) => {
@@ -92,7 +102,10 @@ export function registerLetterRoutes(app: FastifyInstance, letters: LetterServic
       config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat')],
     },
-    async (req) => ({ letter: await letters.reply(req.user!.id, (req.params as { threadId: string }).threadId, (req.body as { body: string }).body) }),
+    async (req) => {
+      const { body, decor } = req.body as LetterBody;
+      return { letter: await letters.reply(req.user!.id, (req.params as { threadId: string }).threadId, body, decor) };
+    },
   );
 
   // nothing is sent with a goodbye
@@ -100,4 +113,6 @@ export function registerLetterRoutes(app: FastifyInstance, letters: LetterServic
     await letters.end(req.user!.id, (req.params as { threadId: string }).threadId);
     return reply.code(204).send();
   });
+
+  registerLetterWidgetRoutes(app, new LetterWidgetService(app.db));
 }

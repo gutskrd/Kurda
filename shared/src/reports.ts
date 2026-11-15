@@ -21,6 +21,7 @@
 import { stripControlChars } from './sanitize.js';
 import type { CopyrightCaseInfo } from './copyright.js';
 import type { PlayGame } from './play.js';
+import type { LetterDecor } from './letter-paper.js';
 
 // ---------------------------------------------------------------------------
 // Categories and priority
@@ -579,6 +580,10 @@ export interface EvidenceMessage {
   createdAt: string;
   /** the message that was reported */
   reported: boolean;
+  /** a letter's notes, stuck on its paper, as they were sent (letter-paper.ts) */
+  notes?: string[];
+  /** a letter with something drawn on it */
+  drawn?: boolean;
 }
 
 /**
@@ -624,6 +629,12 @@ export interface EvidenceSnapshot {
     seat: number;
     players: Array<{ seat: number; userId: string; username: string | null }>;
   } | null;
+  /**
+   * A reported letter's paper, the drawing on it and its notes, as it was
+   * sent (letter-paper.ts), so the case shows the whole letter; null for one
+   * on the default paper with nothing on it.
+   */
+  decor?: LetterDecor | null;
   /** anything else a resolver knew (post type, language, a comment's post id) */
   extra?: Record<string, unknown>;
 }

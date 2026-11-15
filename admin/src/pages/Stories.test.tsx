@@ -2,6 +2,7 @@
 import { isValidElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { STORY_COVERS } from '@kurda/shared';
 import type { AdminStory, AdminStorySummary } from '../stories';
 import { failure, fakeApi, json, on, type Call, type Route } from '../test/fetch';
 import { button, choose, click, render, settle, text, type } from '../test/dom';
@@ -177,8 +178,8 @@ describe('the list', () => {
     // what learners can play: one short Kurmancî story is published, nothing else
     const coverage = [...c.querySelectorAll('.st-coverage-row')].map((r) => [...r.children].map((el) => text(el)));
     expect(coverage).toEqual([
-      ['Kurmancî', 'Short: 1', 'Medium: 0', 'Long: 0'],
-      ['Soranî', 'Short: 0', 'Medium: 0', 'Long: 0'],
+      ['Kurmancî', 'Short: 1', 'Medium: 0', 'Long: 0', 'Saga: 0'],
+      ['Soranî', 'Short: 0', 'Medium: 0', 'Long: 0', 'Saga: 0'],
     ]);
     // a length nobody can play is marked
     expect(c.querySelector('.st-coverage-row .badge.danger')).not.toBeNull();
@@ -491,7 +492,8 @@ describe('the editor', () => {
     api.use(on('PUT', AT, (call) => json(storyFixture({ ...(call.body as object), lockVersion: 5 }))));
     const c = await open(`#/stories/${STORY_ID}`);
     const covers = c.querySelector('.st-covers')!;
-    expect(covers.querySelectorAll('[role="radio"]')).toHaveLength(28);
+    // every shared cover, and None
+    expect(covers.querySelectorAll('[role="radio"]')).toHaveLength(STORY_COVERS.length + 1);
     expect(button(covers, 'None')!.getAttribute('aria-checked')).toBe('true');
     expect(c.querySelector('.st-pv-cover')!.classList.contains('is-kilim')).toBe(true);
     await click(button(covers, 'Blue lake'));
@@ -531,10 +533,18 @@ describe('the editor', () => {
     expect(text(section.querySelector('.st-h2'))).toBe('Translations (1 of 9)');
     // the preview shows it under each paragraph
     expect([...c.querySelectorAll('.st-pv-translation')].map((el) => text(el))).toEqual(['Rojîn is ten.', 'The road is long.', 'Their teacher is Şîlan.']);
+    // only a translation changed: “Save draft” saves that language on its own, which keeps an approval
+    api.use(
+      on('PUT', `${AT}/translations/en`, (call) =>
+        json(storyFixture({ translations: { en: (call.body as { body: string }).body }, translationReview: { en: { status: 'unreviewed' } }, lockVersion: 5 })),
+      ),
+    );
     await click(saveButton(c));
-    expect((api.calls.find((call) => call.method === 'PUT')!.body as { translations: Record<string, string> }).translations).toEqual({
-      en: 'Rojîn is ten.\n\nThe road is long.\n\nTheir teacher is Şîlan.',
-    });
+    const put = api.calls.find((call) => call.method === 'PUT')!;
+    expect(put.path).toBe(`${AT}/translations/en`);
+    expect(put.body).toMatchObject({ body: 'Rojîn is ten.\n\nThe road is long.\n\nTheir teacher is Şîlan.', lockVersion: 4 });
+    expect(text(c)).toContain('Only translations changed, so each language was saved on its own and the approval stays.');
+    expect(text(section.querySelector('summary'))).toBe('English paragraphs: 3 of 3 Needs review');
   });
 
   it('marks the glossary words the dictionary knows', async () => {
@@ -1006,6 +1016,120 @@ describe('the editor', () => {
     await click(button(c, /^Translation \(German\)/));
     await new Promise((r) => requestAnimationFrame(r));
     expect(details.open).toBe(true);
+  });
+});
+
+describe('one language of a story', () => {
+  const PUBLISHED_AT = `/admin/stories/${published.id}`;
+  const panel = (c: HTMLElement, locale: string) => c.querySelector<HTMLDetailsElement>(`#story-locale-${locale}`)!;
+
+  it('corrects a published story’s translation on its own: the story stays online and approved, and the language needs review', async () => {
+    const api = listApi();
+    api.use(
+      on('PUT', `${PUBLISHED_AT}/translations/de`, (call) => {
+        const b = call.body as { body: string; title: string | null; questions: Array<{ prompt: string; options: string[] } | null> };
+        return json({
+          ...published,
+          lockVersion: 5,
+          translations: { de: b.body },
+          metaTranslations: { de: { title: b.title! } },
+          questions: published.questions.map((q, i) => ({ ...q, translations: b.questions[i] ? { de: b.questions[i]! } : {} })),
+          translationReview: { de: { status: 'unreviewed' } },
+        });
+      }),
+      on('POST', `${PUBLISHED_AT}/translations/de/review`, (call) =>
+        json({ ...published, lockVersion: 6, translations: { de: 'Eins.\n\nZwei.\n\nDrei.' }, translationReview: { de: { status: 'reviewed', by: 'u-1', at: '2026-11-01T10:00:00.000Z', ...(call.body as object) } } }),
+      ),
+    );
+    const c = await open(`#/stories/${published.id}`);
+    // the Kurdish cannot be edited while it is published, the translations can
+    expect((c.querySelector('#story-title') as HTMLInputElement).readOnly).toBe(true);
+    const text$ = c.querySelector<HTMLTextAreaElement>('#story-translations-de')!;
+    expect(text$.readOnly).toBe(false);
+    const save = () => button(panel(c, 'de'), 'Save this language') as HTMLButtonElement;
+    expect(save().disabled).toBe(true);
+
+    await type(text$, 'Eins.\n\nZwei.\n\nDrei.');
+    await type(c.querySelector('#story-metaTranslations-de-title'), 'Der Schulweg');
+    // a question in German: its options in the order of the Kurdish ones, beside them
+    await type(c.querySelector('#story-questions-0-translations-de-prompt'), 'Wie alt ist Rojîn?');
+    expect(text(panel(c, 'de').querySelector('.st-tr-option .st-tr-original'))).toBe('✓ Deh salî');
+    await type(c.querySelector('#story-questions-0-translations-de-options-1'), 'Neun');
+    expect(text(c.querySelector('#story-questions-0-translations-de-options-0-problems'))).toContain('an option is empty');
+    expect(save().disabled).toBe(true);
+    await type(c.querySelector('#story-questions-0-translations-de-options-0'), 'Zehn');
+    await type(c.querySelector('#story-questions-0-translations-de-options-2'), 'Acht');
+    expect(save().disabled).toBe(false);
+    expect(text(panel(c, 'de'))).toContain('Saving keeps the story online and approved.');
+
+    await click(save());
+    const put = api.calls.find((call) => call.method === 'PUT')!;
+    expect(put.path).toBe(`${PUBLISHED_AT}/translations/de`);
+    expect(put.body).toMatchObject({
+      lockVersion: published.lockVersion,
+      body: 'Eins.\n\nZwei.\n\nDrei.',
+      title: 'Der Schulweg',
+      summary: null,
+      questions: [{ prompt: 'Wie alt ist Rojîn?', options: ['Zehn', 'Neun', 'Acht'] }, null, null, null, null, null],
+      reflections: [],
+      notes: [],
+    });
+    expect(text(c)).toContain('Saved the German translation: learners reading in it have it now.');
+    expect(text(panel(c, 'de').querySelector('summary'))).toContain('Needs review');
+    expect(save().disabled).toBe(true);
+
+    // a native speaker of German has read it
+    await click(button(panel(c, 'de'), 'Mark reviewed'));
+    expect(prompt).toHaveBeenCalledWith(expect.stringContaining('Mark the German translation reviewed?'));
+    const review = api.calls.find((call) => call.method === 'POST' && call.path.endsWith('/review'))!;
+    expect(review.body).toEqual({ status: 'reviewed', note: null, lockVersion: 5 });
+    expect(text(panel(c, 'de').querySelector('summary'))).toContain('Reviewed');
+    expect(button(panel(c, 'de'), 'Needs review')).not.toBeNull();
+  });
+
+  it('waits for the rest of the story to be saved before a language is saved alone', async () => {
+    listApi();
+    const c = await open(`#/stories/${STORY_ID}`);
+    await type(c.querySelector('#story-translations-en'), 'One.\n\nTwo.\n\nThree.');
+    expect((button(panel(c, 'en'), 'Save this language') as HTMLButtonElement).disabled).toBe(false);
+    await type(c.querySelector('#story-summary'), 'Kurteyeke nû.');
+    expect((button(panel(c, 'en'), 'Save this language') as HTMLButtonElement).disabled).toBe(true);
+    expect(text(panel(c, 'en'))).toContain('The story has other unsaved changes: save them first');
+  });
+});
+
+describe('a legend’s sections, sources and what comes after reading', () => {
+  it('shows the sections of the text, and edits the sources, the questions to think about and the notes', async () => {
+    const api = listApi([storyFixture({ body: `${storyFixture().body}\n\n## Dawî\n\nÊvarê Rojîn radizê.` })]);
+    api.use(on('PUT', AT, (call) => json(storyFixture({ ...(call.body as object), lockVersion: 5 }))));
+    const c = await open(`#/stories/${STORY_ID}`);
+    expect(text(c.querySelector('.st-facts'))).toContain('1 section');
+    expect(text(c.querySelector('.st-sections'))).toBe('Dawî (paragraph 4)');
+    expect(text(c.querySelector('#story-body-paragraphs-3'))).toContain('section heading, not read aloud');
+
+    await click(button(c, 'Add a source'));
+    await type(c.querySelector('#story-sources-0-title'), 'Dengbêjên Botanê');
+    await choose(c.querySelector('#story-sources-0-type'), 'oral');
+    await type(c.querySelector('#story-sources-0-url'), 'http://example.org');
+    expect(text(c.querySelector('#story-sources-0-url-problems'))).toContain('the address must start with https://');
+    await type(c.querySelector('#story-sources-0-url'), 'https://example.org/dengbej');
+
+    await click(button(c, 'Add a question to think about'));
+    await type(c.querySelector('#story-reflections-0-text'), 'Tu çi difikirî?');
+    await click(button(c, 'Add a note'));
+    await choose(c.querySelector('#story-notes-0-kind'), 'history');
+    await type(c.querySelector('#story-notes-0-title'), 'Dîrok');
+    await type(c.querySelector('#story-notes-0-body'), 'Ev çîrok ne dîrok e.');
+    // a question to think about can be translated with the rest of a language
+    expect(c.querySelector('#story-reflections-0-translations-de')).not.toBeNull();
+
+    await click(button(c, /^Save draft/));
+    const put = api.calls.find((call) => call.method === 'PUT' && call.path === AT)!;
+    expect(put.body).toMatchObject({
+      sources: [{ title: 'Dengbêjên Botanê', type: 'oral', url: 'https://example.org/dengbej' }],
+      reflections: [{ text: 'Tu çi difikirî?', translations: {} }],
+      notes: [{ kind: 'history', title: 'Dîrok', body: 'Ev çîrok ne dîrok e.', translations: {} }],
+    });
   });
 });
 

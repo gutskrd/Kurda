@@ -645,6 +645,32 @@ describe('a conversation', () => {
     expect([...document.querySelectorAll('.conversation-stage .speaking-character')].map((f) => f.getAttribute('data-speaker'))).toEqual(['xezo', 'hamo']);
   });
 
+  it('shows the learner’s own lines as theirs, under “You” and with nothing to hear, while Hamo alone stands on the stage', async () => {
+    serve({});
+    const withYou: DeliveredExercise = {
+      ...talk,
+      speakers: [
+        { name: 'Hamo', character: 'hamo' },
+        { name: 'Tu', character: null, learner: true },
+      ],
+      lines: [
+        { speaker: 0, text: 'Bi xêr hatî!' },
+        { speaker: 1, text: 'Bi xêr bimînî!' },
+      ],
+      lineAudio: [clip(0), null],
+      lineVoices: [{ speaker: 'hamo' }, null],
+    };
+    play({ sessionId: 's1', exercises: [withYou], answered: {} });
+    const items = await lines();
+    expect(items.map((li) => li.textContent)).toEqual(['Hamo: Bi xêr hatî!', 'You: Bi xêr bimînî!']);
+    expect(items[1]).toHaveClass('is-you', 'is-end');
+    // the learner's name is in their own language, their line in Kurdish
+    expect(within(items[1]!).getByText('You')).not.toHaveAttribute('lang');
+    expect(within(items[1]!).getByText('Bi xêr bimînî!')).toHaveAttribute('lang', 'ku');
+    expect(within(items[1]!).queryByRole('button')).not.toBeInTheDocument();
+    expect([...document.querySelectorAll('.conversation-stage .speaking-character')].map((f) => f.getAttribute('data-speaker'))).toEqual(['hamo']);
+  });
+
   it('answers as multiple choice does: the option’s place as shown, chosen by tap or by key, checked, marked once graded', async () => {
     serve({ 'POST /sessions/s1/answers': { verdict: 'wrong', accepted: false, correction: 'Tea', duplicate: false } });
     play({ sessionId: 's1', exercises: [talk], answered: {} });

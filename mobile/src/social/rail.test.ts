@@ -120,7 +120,7 @@ describe('lastSeen', () => {
 
   /*
    * Every shape in every language. These are abbreviations — `m` in English,
-   * `d` for deqe in Kurmancî, `dk` in Turkish — so a dropped `{count}` is easy
+   * `xl` for xulek in Kurmancî, `dk` in Turkish — so a dropped `{count}` is easy
    * to miss and reads as a unit with no number in front of it.
    */
   it('leaves no placeholder unfilled, in any language', () => {

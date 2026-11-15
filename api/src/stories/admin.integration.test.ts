@@ -186,7 +186,7 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
       const got = (await call('GET', `/admin/stories/${id}`)).json();
       expect(got).toMatchObject({ status: 'draft', length: 'short', wordCount: 82, readingMinutes: 2, lockVersion });
       expect(got.questions).toHaveLength(2);
-      expect(got.questions[0]).toEqual({ id: expect.any(String), ...testBank(2)[0] });
+      expect(got.questions[0]).toEqual({ id: expect.any(String), ...testBank(2)[0], translations: {} });
       // too few questions: not an error until it is submitted
       expect(got.problems.errors.map((e: { code: string }) => e.code)).toEqual(['BANK_TOO_SMALL']);
 
@@ -268,7 +268,7 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
         status: 'in_review',
         reviewStatus: 'approved',
         reviewNote: 'Read twice.',
-        reviewedBy: { id: editorId, username: `stEditor_${s}`.slice(0, 30) },
+        reviewedBy: { id: editorId, username: `steditor_${s}`.slice(0, 30) },
         reviewedAt: expect.any(String),
         lockVersion: inReview.json().lockVersion + 1,
       });

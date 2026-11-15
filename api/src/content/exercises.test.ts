@@ -744,6 +744,22 @@ describe('conversation', () => {
     expect(issues({ ...conversation, correctIndex: 3 })).toEqual(['correctIndex: correctIndex must point at an option']);
   });
 
+  it('lets a character talk with the learner, whose part is theirs alone, never a character’s and never on its own', () => {
+    const withYou = { ...conversation, speakers: [{ character: 'hamo' }, { learner: true }] };
+    expect(issues(withYou)).toEqual([]);
+    expect(sanitizeExercise('conversation', withYou, SEED).speakers).toEqual([
+      { name: 'Hamo', character: 'hamo' },
+      { name: 'Tu', character: null, learner: true },
+    ]);
+    expect(issues({ ...conversation, speakers: [{ learner: true }, { learner: true }] })).toEqual([
+      'speakers.1.learner: the learner already has a part',
+      'speakers: needs a character for the learner to talk with',
+    ]);
+    expect(issues({ ...conversation, speakers: [{ character: 'hamo', learner: true }, { learner: true }] })).toEqual([
+      'speakers.0.character: the learner’s own part has no character',
+    ]);
+  });
+
   it('is sent with every line and its meaning, and the answers shuffled, never which is right', () => {
     const sent = sanitizeExercise('conversation', conversation, SEED);
     expect(sent).not.toHaveProperty('correctIndex');

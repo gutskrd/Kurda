@@ -2,9 +2,12 @@ import { forwardRef, useEffect, useState } from 'react';
 import {
   storySentences,
   storyTextDirection,
+  type AppLocale,
   type StoryDetail,
+  type StoryDialect,
   type StoryGamePlayer,
   type StoryGameView,
+  type StoryQuestionTranslation,
 } from '@kurda/shared';
 import type { ApiResult } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
@@ -155,12 +158,44 @@ export function optionNumber(e: Pick<KeyboardEvent, 'key' | 'code'>): number | n
   return null;
 }
 
+/** A question's words in a language the reader reads: its prompt, its options in the game's order, and the explanation once revealed. */
+export interface QuestionHelp {
+  lang: AppLocale;
+  prompt: string | null;
+  options: readonly string[] | null;
+  explanation: string | null;
+}
+
 /**
- * "Show in English" / "Hide English": the words say what a press does, so the
- * state is plain without a pressed style (and a screen reader hears the same
- * words). One remembered choice for the questions and their answers.
+ * A question in the reader's own language, where it has been translated into
+ * it and the story is not already in that language; else in English, from the
+ * question's English translation or the English it always had beside it;
+ * else nothing. The options of a translation are in the game's order, so an
+ * option's translation stands beside the option it translates.
  */
-export function EnglishToggle({ on, onChange }: { on: boolean; onChange: (on: boolean) => void }): React.JSX.Element {
+export function questionHelp(
+  q: { promptEn: string | null; explanationEn?: string | null; translations?: Partial<Record<AppLocale, StoryQuestionTranslation>> },
+  locale: AppLocale,
+  dialect: StoryDialect,
+): QuestionHelp | null {
+  const own = locale === (dialect === 'sorani' ? 'ckb' : 'ku');
+  const theirs = own ? undefined : q.translations?.[locale];
+  const tr = theirs ?? q.translations?.en;
+  if (tr) {
+    return { lang: theirs ? locale : 'en', prompt: tr.prompt, options: tr.options.length > 0 ? tr.options : null, explanation: tr.explanation ?? (theirs ? null : (q.explanationEn ?? null)) };
+  }
+  if (q.promptEn || q.explanationEn) return { lang: 'en', prompt: q.promptEn, options: null, explanation: q.explanationEn ?? null };
+  return null;
+}
+
+/**
+ * "Show in English" / "Hide English", or "Show the translation" / "Hide the
+ * translation" when the help is in the reader's own language: the words say
+ * what a press does, so the state is plain without a pressed style (and a
+ * screen reader hears the same words). One remembered choice for the
+ * questions and their answers.
+ */
+export function EnglishToggle({ on, onChange, english = true }: { on: boolean; onChange: (on: boolean) => void; english?: boolean }): React.JSX.Element {
   const t = useT();
   return (
     <button
@@ -171,9 +206,14 @@ export function EnglishToggle({ on, onChange }: { on: boolean; onChange: (on: bo
         rememberEnglish(!on);
       }}
     >
-      {on ? t('stories.game.hideEnglish') : t('stories.game.showEnglish')}
+      {english ? (on ? t('stories.game.hideEnglish') : t('stories.game.showEnglish')) : on ? t('stories.game.hideTranslation') : t('stories.game.showTranslation')}
     </button>
   );
+}
+
+/** The direction a help text in an interface language is set in. */
+export function helpDir(lang: string): 'rtl' | 'ltr' {
+  return lang === 'ar' || lang === 'ckb' ? 'rtl' : 'ltr';
 }
 
 /** Re-render on a schedule only while something is waiting to change. */

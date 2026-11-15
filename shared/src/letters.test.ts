@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LETTER_BIRDS, LETTER_MAX, LETTER_MIN, letterAgeBand, letterBirdOf, letterProblem } from './letters.js';
+import { LETTER_BIRDS, LETTER_MAX, LETTER_MIN, letterAgeBand, letterBirdOf, letterProblem, letterText } from './letters.js';
 
 const NOW = new Date(Date.UTC(2026, 10, 13));
 
@@ -61,3 +61,14 @@ describe('the birds', () => {
     expect(birds.size).toBe(LETTER_BIRDS.length);
   });
 });
+
+describe('letterText', () => {
+  it('keeps a letter’s lines and one empty line between paragraphs, and tidies the spaces within each line', () => {
+    expect(letterText('  Hevalê delal,\r\n\r\n\r\n\rTu   çawa yî?\t \nEz baş im.  ')).toBe('Hevalê delal,\n\nTu çawa yî?\nEz baş im.');
+  });
+
+  it('composes a letter written as a letter and a mark', () => {
+    expect(letterText('Ez be\u0302hna xwe vedidim.')).toBe('Ez bêhna xwe vedidim.');
+  });
+});
+

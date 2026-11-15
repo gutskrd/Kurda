@@ -27,6 +27,7 @@ export function listItem(over: Partial<StoryListItem> = {}): StoryListItem {
     featured: false,
     cover: null,
     publishedAt: null,
+    metaTranslations: {},
     ...over,
   };
 }
@@ -43,6 +44,10 @@ export function detail(over: Partial<StoryDetail> = {}): StoryDetail {
     attributionNote: null,
     versions: [],
     narration: null,
+    sections: [],
+    reflections: [],
+    notes: [],
+    sources: [],
     ...over,
   };
 }

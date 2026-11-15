@@ -174,7 +174,7 @@ export const COLOURS: readonly Colour[] = [
     set: 'colours', id: 'pink', kmr: 'pembe', ckb: 'پەمەیی', ckbLatin: 'pemeyî', hex: '#F28DB2',
     meaning: { en: 'pink', de: 'rosa', nl: 'roze', fr: 'rose', es: 'rosa', tr: 'pembe', ar: 'وردي' },
     example: {
-      kmr: 'pirtûka pembe', ckb: 'کتێبی پەمەیی', ckbLatin: 'kitêbî pemeyî',
+      kmr: 'pirtûka pembe', ckb: 'پەرتووکی پەمەیی', ckbLatin: 'pertûkî pemeyî',
       meaning: { en: 'a pink book', de: 'ein rosa Buch', nl: 'een roze boek', fr: 'un livre rose', es: 'un libro rosa', tr: 'pembe bir kitap', ar: 'كتاب وردي' },
     },
   },

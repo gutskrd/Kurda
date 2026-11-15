@@ -62,7 +62,7 @@ describe('BadgesPage', () => {
     expect(within(learning).getByText('4 / 10 lessons')).toBeInTheDocument();
     expect(screen.getByText('3 of 8 learning days')).toBeInTheDocument();
     // a medal not earned yet is said to be so, never hidden
-    expect(within(learning).getByRole('img', { name: 'Ders (Lessons), not earned yet' })).toBeInTheDocument();
+    expect(within(learning).getByRole('img', { name: 'Wane (Lessons), not earned yet' })).toBeInTheDocument();
     expect(within(habit).getByRole('img', { name: 'Agir (Fire), Sifir' })).toBeInTheDocument();
   });
 
@@ -101,7 +101,7 @@ describe('BadgesPage', () => {
       .getAllByRole('button')
       .map((b) => b.querySelector('.badge-tile-name')?.textContent);
     // nine of ten lessons first, then most of the way to Roj's silver, then Agir; nothing untouched
-    expect(names).toEqual(['Ders', 'Roj', 'Agir']);
+    expect(names).toEqual(['Wane', 'Roj', 'Agir']);
     expect(within(nearest).getByText('1 lesson to go')).toBeInTheDocument();
     expect(within(nearest).getByText('20 days to go')).toBeInTheDocument();
     expect(within(nearest).getByText('12 / 30 days')).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe('BadgesPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: en['badges.showcase.choose'] }));
 
     const dialog = await screen.findByRole('dialog', { name: en['badges.showcase.title'] });
-    await userEvent.click(within(dialog).getByRole('button', { name: /Ders/ }));
+    await userEvent.click(within(dialog).getByRole('button', { name: /Wane/ }));
     await userEvent.click(within(dialog).getByRole('button', { name: /Agir/ }));
     await userEvent.click(within(dialog).getByRole('button', { name: /Heval/ }));
     expect(within(dialog).getByText(en['badges.showcase.full'])).toBeInTheDocument();

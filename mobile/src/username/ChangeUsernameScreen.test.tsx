@@ -153,4 +153,56 @@ describe('changing the username', () => {
     await tryName({ 'POST /me/username': refusal({ code: 'BAD_REQUEST', message: 'body/username must be string' }) });
     expect(screen.getByText('Couldn’t update your username. Please try again.')).toBeTruthy();
   });
+
+  it('writes the new name in lowercase as it is typed, and asks about it so', async () => {
+    const client = fakeClient({ 'GET /me/username': ok(STATUS), [FREE]: ok({ available: true, username: NAME }) });
+    testAuth.client = client;
+    renderWithProviders(<ChangeUsernameScreen onExit={() => undefined} />);
+    expect(await screen.findByText('rojda')).toBeTruthy();
+    const field = screen.getByLabelText('New username') as HTMLInputElement;
+    fireEvent.change(field, { target: { value: 'ROJDA_Amed' } });
+    expect(field.value).toBe(NAME);
+    expect(await screen.findByText('This username is free.')).toBeTruthy();
+    // one's own name in capitals is one's own name
+    fireEvent.change(field, { target: { value: 'ROJDA' } });
+    expect(screen.getByText('That’s already your username.')).toBeTruthy();
+  });
+
+  it('keeps what cannot be in a username in the field and names it, and has no length of its own to cut a name short', async () => {
+    testAuth.client = fakeClient({ 'GET /me/username': ok(STATUS) });
+    renderWithProviders(<ChangeUsernameScreen onExit={() => undefined} />);
+    expect(await screen.findByText('rojda')).toBeTruthy();
+    const field = screen.getByLabelText('New username') as HTMLInputElement;
+    expect(field.getAttribute('maxlength')).toBeNull();
+    fireEvent.change(field, { target: { value: 'rojda!' } });
+    expect(field.value).toBe('rojda!');
+    expect(screen.getByText('“!” can’t be in a username.')).toBeTruthy();
+    fireEvent.change(field, { target: { value: 'r'.repeat(31) } });
+    expect(screen.getByText('At most 30 characters.')).toBeTruthy();
+  });
+
+  it('says what more typing may mend once the field is left, not under every key', async () => {
+    testAuth.client = fakeClient({ 'GET /me/username': ok(STATUS) });
+    renderWithProviders(<ChangeUsernameScreen onExit={() => undefined} />);
+    expect(await screen.findByText('rojda')).toBeTruthy();
+    const field = screen.getByLabelText('New username') as HTMLInputElement;
+    fireEvent.change(field, { target: { value: 'rojda.' } });
+    expect(screen.queryByText('Can’t start or end with a dot or an underscore.')).toBeNull();
+    fireEvent.blur(field);
+    expect(screen.getByText('Can’t start or end with a dot or an underscore.')).toBeTruthy();
+    fireEvent.change(field, { target: { value: 'rojda.a' } });
+    expect(screen.queryByText('Can’t start or end with a dot or an underscore.')).toBeNull();
+  });
+
+  it('types a Kurdish letter from the keys under the field', async () => {
+    testAuth.client = fakeClient({ 'GET /me/username': ok(STATUS) });
+    renderWithProviders(<ChangeUsernameScreen onExit={() => undefined} />);
+    expect(await screen.findByText('rojda')).toBeTruthy();
+    const field = screen.getByLabelText('New username') as HTMLInputElement;
+    fireEvent.change(field, { target: { value: 'srn' } });
+    field.setSelectionRange(1, 1);
+    fireEvent.select(field);
+    fireEvent.click(screen.getByRole('button', { name: 'Type ê' }));
+    expect(field.value).toBe('sêrn');
+  });
 });

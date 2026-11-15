@@ -318,6 +318,34 @@ describe('mascotSpot', () => {
   });
 });
 
+describe('a chapter’s story on the path', () => {
+  const told = (n: number) => ({ slug: `road-0${n}-tale`, title: `Tale ${n}` });
+  const course = (first: PathSkill[], second: PathSkill[]) => ({
+    units: [
+      { unitId: 'u1', title: 'Unit 1', skills: first, story: told(1) },
+      { unitId: 'u2', title: 'Unit 2', skills: second, story: told(2) },
+      { unitId: 'u3', title: 'Unit 3', skills: [skill('e', 'locked')], story: null },
+    ],
+  });
+
+  it('closes a chapter after its trophy, shut until the chapter is done, and only where there is a story', () => {
+    const path = lessonPath(course([skill('a', 'completed', 2, 2), skill('b', 'completed', 2, 2)], [skill('c', 'unlocked'), skill('d', 'locked')]));
+    expect(path.units.map((u) => u.stops.slice(-2).map((p) => p.stop.key))).toEqual([['t:u1', 'b:u1'], ['t:u2', 'b:u2'], ['s:e', 't:u3']]);
+    expect(path.units[0]!.stops.at(-1)!.stop).toEqual({ kind: 'story', key: 'b:u1', slug: 'road-01-tale', title: 'Tale 1', open: true, unitNumber: 1 });
+    expect(path.units[1]!.stops.at(-1)!.stop).toMatchObject({ kind: 'story', open: false, unitNumber: 2 });
+    // the line to an open story is walked; to a shut one it is still ahead
+    expect(path.units[0]!.stops.at(-1)!.trail).toBe('walked');
+    expect(path.units[1]!.stops.at(-1)!.trail).toBe('ahead');
+  });
+
+  it('is where a finished course opens: the last story', () => {
+    const done = () => [skill('a', 'completed', 2, 2)];
+    const path = lessonPath({ units: [{ unitId: 'u1', title: 'Unit 1', skills: done(), story: told(1) }] });
+    expect(path.current).toBeNull();
+    expect(path.focus).toBe('b:u1');
+  });
+});
+
 describe('a unit’s guide on the path', () => {
   const grammar = { hasGrammar: true };
   const course = () =>

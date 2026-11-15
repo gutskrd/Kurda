@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanEmail, validateEmail, validatePassword, validateUsername } from './validators';
+import { cleanEmail, validateEmail, validatePassword } from './validators';
 
 describe('validateEmail', () => {
   it('accepts normal emails and trims whitespace', () => {
@@ -48,19 +48,5 @@ describe('validatePassword', () => {
     expect(validatePassword('abc123')).toBe('password_too_short');
     expect(validatePassword('12345678')).toBe('password_needs_letter');
     expect(validatePassword('abcdefgh')).toBe('password_needs_number');
-  });
-});
-
-describe('validateUsername', () => {
-  it('accepts Kurdish letters and NFC-normalizes first', () => {
-    expect(validateUsername('şêrîn_99')).toBeNull();
-    const decomposed = 's' + String.fromCharCode(0x327) + 'ev'; // ş via combining cedilla
-    expect(validateUsername(decomposed)).toBeNull();
-  });
-  it('rejects spaces, emoji and short names', () => {
-    expect(validateUsername('@dilan.')).toBeNull();
-    expect(validateUsername('ab')).toBe('invalid_username');
-    expect(validateUsername('has space')).toBe('invalid_username');
-    expect(validateUsername('emoji😀')).toBe('invalid_username');
   });
 });

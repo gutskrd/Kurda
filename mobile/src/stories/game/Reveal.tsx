@@ -18,9 +18,11 @@ import type { Translate } from '../../api/errors';
 import { continueAfter } from '../api';
 import { useStoryPrefs } from '../prefs';
 import { evidenceText } from '../segments';
-import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyTextProps, storyTextStyle } from '../storyText';
+import { storyRowDirection, storyTextProps, storyTextStyle } from '../storyText';
 import { Note } from '../ui';
 import { OPTION_MIN_HEIGHT, QuestionSteps, showEnglish } from './Question';
+import { questionIn } from '../legend';
+import { translatedText, translationToggle } from './translated';
 
 /** The one thing said aloud on a reveal: the verdict, and the right answer. */
 export function revealAnnouncement(myCorrect: boolean | null, right: string, t: Translate): string {
@@ -49,7 +51,7 @@ export function Reveal({
 }): React.JSX.Element | null {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { prefs, update } = useStoryPrefs();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +81,9 @@ export function Reveal({
   const dir = storyTextStyle(dialect);
   const props = storyTextProps(dialect);
   const english = showEnglish(prefs.englishUnder, view.settings.level);
+  // the explanation in the reader's language where the story has it, else the English
+  const tr = questionIn(item ?? r, locale);
+  const trSet = tr ? translatedText(tr.lang) : null;
   const quote = story ? evidenceText(story.paragraphs, r.evidenceParagraph, r.evidenceSentence) : null;
   const last = r.index === (q?.total ?? view.settings.questionCount) - 1;
   const solo = view.mode === 'solo';
@@ -159,19 +164,19 @@ export function Reveal({
           <Text {...props} style={[styles.explanation, { color: colors.textPrimary }, dir]}>
             {r.explanation}
           </Text>
-          {r.explanationEn && english ? (
-            <Text {...ENGLISH_TEXT_PROPS} style={[styles.english, { color: colors.textSecondary }, ENGLISH_TEXT_STYLE]}>
-              {r.explanationEn}
+          {tr?.explanation && trSet && english ? (
+            <Text {...trSet.props} style={[styles.english, { color: colors.textSecondary }, trSet.style]}>
+              {tr.explanation}
             </Text>
           ) : null}
-          {r.explanationEn ? (
+          {tr?.explanation ? (
             <Pressable
               onPress={() => update({ englishUnder: !english })}
               accessibilityRole="button"
               style={({ pressed }) => [styles.toggle, pressed && heldDim]}
               hitSlop={8}
             >
-              <Text style={[styles.toggleText, { color: colors.primary }]}>{english ? t('stories.question.hideEnglish') : t('stories.question.showEnglish')}</Text>
+              <Text style={[styles.toggleText, { color: colors.primary }]}>{translationToggle(tr.lang, english, t)}</Text>
             </Pressable>
           ) : null}
         </View>

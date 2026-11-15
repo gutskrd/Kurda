@@ -41,10 +41,17 @@
  *   GET    /admin/game-content/lines?dialect=&q=         published lines to copy into a case
  *   GET    /admin/game-content/words?dialect&q&from      approved words to make a card of (word-cards.ts)
  *   POST   /admin/game-content/from-word                { kind, dialect, ref, level, … }: an identity as a draft, its Kurdish copied
+ *   PUT    /admin/game-content/:id/translations/:locale         { payload }: a riddle's or a proverb's text in one language (content-translations.ts)
+ *   POST   /admin/game-content/:id/translations/:locale/review  { status, note? }: that language read, or to be read again   (content.publish)
+ *
+ * The Stories' riddles and proverbs are game content too, for the workflow
+ * above, and their learner routes are registered here (lore/routes.ts): the
+ * proverbs' round is a solo round, made and paid by the same kit.
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import {
+  APP_LOCALE_CODES,
   GAME_CONTENT_KINDS,
   GAME_CONTENT_REVIEW,
   GAME_CONTENT_REVIEW_NOTE_MAX,
@@ -55,6 +62,7 @@ import {
   LEARN_GAME_IDS,
   SOLO_MAX_ATTEMPTS,
   SOLO_ROUND_ITEMS,
+  TRANSLATION_REVIEW,
   lastLetterAvailability,
 } from '@kurda/shared';
 import { requireAuth } from '../plugins/auth.js';
@@ -76,6 +84,9 @@ import { GameAvailabilityService } from './availability.js';
 import { lastLetterCounts } from '../mp/games/last-letter.js';
 import { SoloService } from './solo.js';
 import { GameContentAdminService } from './content-admin.js';
+import { GameContentTranslations } from './content-translations.js';
+import { ProverbRound } from '../lore/proverb-round.js';
+import { registerLoreRoutes } from '../lore/routes.js';
 import { registerWhoAmICouchRoutes } from './who-am-i.js';
 import { registerGameWordRoutes } from './word-cards.js';
 import { registerCouchRoutes } from './couch.js';
@@ -132,6 +143,9 @@ const beginBody = z.object({ index: z.number().int().min(0).max(SOLO_ROUND_ITEMS
  */
 const ROUNDS_PER_MINUTE = 20;
 const linesQuery = z.object({ dialect: z.enum(GAME_DIALECTS), q: z.preprocess(absentIfEmpty, z.string().max(80).optional()) });
+const translationParams = z.object({ id: z.uuid(), locale: z.enum(APP_LOCALE_CODES) });
+const translationBody = z.object({ payload: z.unknown() });
+const translationReviewBody = z.object({ status: z.enum(TRANSLATION_REVIEW), note: z.string().max(GAME_CONTENT_REVIEW_NOTE_MAX).nullish() });
 
 function context(req: FastifyRequest): { adminId: string; requestId: string } {
   return { adminId: req.user!.id, requestId: req.id };
@@ -176,13 +190,19 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
   solo.register(memory);
   solo.register(hearing);
   solo.register(new DetectiveGame(sources));
-  const content = new GameContentAdminService(app.db, sources, availability, cache);
-  return { sources, sentences, memory, hearing, availability, solo, content };
+  // the Stories' proverbs, a round of each way to play them
+  solo.register(new ProverbRound('meaning'));
+  solo.register(new ProverbRound('situation'));
+  const translations = new GameContentTranslations(app.db);
+  const content = new GameContentAdminService(app.db, sources, availability, cache, translations);
+  return { sources, sentences, memory, hearing, availability, solo, content, translations };
 }
 
 export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDeps): ReturnType<typeof learnGameServices> {
   const services = learnGameServices(app, deps);
-  const { sentences, availability, solo, content } = services;
+  const { sentences, availability, solo, content, translations } = services;
+  // the Stories' riddles and proverbs, read and played by learners
+  registerLoreRoutes(app, { xp: deps.xp, solo });
   // the admin's cards made from approved words
   registerGameWordRoutes(app, services.sources, content);
   // Who Am I? on one phone passed round a room: where it is offered, and a card for everyone
@@ -307,6 +327,27 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
     const b = req.body as z.infer<typeof reviewBody>;
     return content.review((req.params as z.infer<typeof idParam>).id, { approved: b.approved, note: b.note ?? null }, { ...context(req), lockVersion: b.lockVersion });
   });
+
+  app.put('/admin/game-content/:id/translations/:locale', { schema: { params: translationParams, body: translationBody }, preHandler: canEdit }, async (req, reply) => {
+    const { id, locale } = req.params as z.infer<typeof translationParams>;
+    await translations.save(id, locale, (req.body as z.infer<typeof translationBody>).payload, context(req));
+    const row = await content.get(id);
+    if (!row) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such content' });
+    return row;
+  });
+
+  app.post(
+    '/admin/game-content/:id/translations/:locale/review',
+    { schema: { params: translationParams, body: translationReviewBody }, preHandler: canPublish },
+    async (req, reply) => {
+      const { id, locale } = req.params as z.infer<typeof translationParams>;
+      const b = req.body as z.infer<typeof translationReviewBody>;
+      await translations.review(id, locale, { status: b.status, note: b.note ?? null }, context(req));
+      const row = await content.get(id);
+      if (!row) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such content' });
+      return row;
+    },
+  );
 
   app.delete('/admin/game-content/:id', { schema: { params: idParam, querystring: deleteQuery }, preHandler: canEdit }, async (req) => {
     const { id } = req.params as z.infer<typeof idParam>;

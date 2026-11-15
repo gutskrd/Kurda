@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CaseDetail, CaseMediaItem, CopyrightCaseInfo, CopyrightNoticeView, EvidenceMessage, EvidenceSnapshot } from '@kurda/shared';
 import { isSnapshot, mediaKind, noticeFields, noticeStatusName, noticeStatusTone, noticeTargetText, notifierRoleName, targetName } from '../moderation';
 import { Badge, Banner, Icon, Section, Time, UserLink, useDialogs } from '../ui';
+import { LetterPaperEvidence } from './CaseLetter';
 
 /**
  * What was reported, as the server froze it when the report came in: the post
@@ -128,6 +129,8 @@ export function Snapshot({ snapshot: s, media, sensitive }: { snapshot: Evidence
           {s.text}
         </blockquote>
       )}
+      {/* a letter is its words and the paper they are on: its drawing and its notes are part of what was reported */}
+      {s.targetType === 'letter' && 'decor' in s && <LetterPaperEvidence raw={s.decor} sensitive={sensitive} />}
       {s.caption && (
         <p className="snapshot-caption" dir="auto">
           <span className="subtle">Caption: </span>
@@ -189,6 +192,22 @@ function ChatContext({ messages }: { messages: EvidenceMessage[] }): React.JSX.E
             <div className="chat-line-body" dir="auto">
               {m.body ?? <span className="subtle">{m.kind === 'text' ? 'No text' : `A ${m.kind.replace(/_/g, ' ')}`}</span>}
             </div>
+            {/* a letter's notes are words like its body; its drawing is shown only on the letter reported */}
+            {(m.drawn || (m.notes && m.notes.length > 0)) && (
+              <ul className="chat-line-notes">
+                {m.drawn && (
+                  <li>
+                    <Badge>Drawn on</Badge>
+                  </li>
+                )}
+                {(m.notes ?? []).map((note, i) => (
+                  <li key={i} dir="auto">
+                    <span className="subtle">Note: </span>
+                    {note}
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ol>

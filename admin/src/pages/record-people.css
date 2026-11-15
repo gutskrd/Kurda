@@ -2,6 +2,11 @@
 .rp-total { margin: -6px 0 16px; }
 .rp-group { margin-bottom: 24px; }
 .rp-group-title { font-size: 15px; font-weight: 600; margin: 0 0 10px; color: var(--text-2); }
+.rp-chapters-note { margin: -4px 0 10px; font-size: 13px; }
+.rp-chapters { display: grid; gap: 14px; margin: 0; list-style: none; }
+.rp-chapter { display: grid; gap: 6px; }
+.rp-chapter-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; font-size: 14px; }
+.rp-chapter-count { font-size: 12.5px; }
 .rp-people { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
 .rp-person { display: grid; gap: 10px; align-content: start; }
 .rp-person.is-mine { border-color: var(--hairline); box-shadow: 0 0 0 1px var(--hairline) inset, var(--shadow-sm); }

@@ -179,6 +179,32 @@ describe('the recording script', () => {
     expect(lines.find((l) => l.text === 'Sêv sor e.')!.before).toEqual({ name: null, text: 'Ez birçî me!', meaning: null });
   });
 
+  it('gives a chapter’s story to Hamo and lists it right after the chapter’s lessons, under the chapter', () => {
+    const tale: StoryInput = { id: 'st-road', slug: 'road-01-mevan-cay-u-sev', dialect: 'kurmanci', title: 'Mêvan, çay û sêv', status: 'draft', body: 'Ez Hamo me. Sêv li wir in.' };
+    const lines = buildScript({
+      exercises: [
+        exercise({ type: 'listening', payload: { prompt: 'Type what you hear.', accepted: ['Silav!'], voice: 'hamo' } }),
+        exercise({ unitPosition: 2, unitTitle: 'Family', lessonId: 'l-2', type: 'listening', payload: { prompt: 'Type what you hear.', accepted: ['Malbat.'], voice: 'hamo' } }),
+      ],
+      stories: [story, tale],
+      games: [],
+      plan: PLAN,
+      letters: [],
+      words: [],
+    });
+    expect(lines.map((l) => [l.text, l.voice, l.section.id])).toEqual([
+      ['Silav!', 'hamo', 'kurmanji-road:1'],
+      ['Ez Hamo me.', 'hamo', 'kurmanji-road:1'],
+      ['Sêv li wir in.', 'hamo', 'kurmanji-road:1'],
+      ['Malbat.', 'hamo', 'kurmanji-road:2'],
+      // any other story is the narrator's, under its own heading, after the lessons
+      ['Dayik şorbe çêdike.', 'narrator-kmr', 'story:st-1'],
+      ['Ez birçî me!', 'narrator-kmr', 'story:st-1'],
+      ['Sêv sor e.', 'narrator-kmr', 'story:st-1'],
+    ]);
+    expect(lines[1]!.places[0]!.label).toBe('Hamo’s story ‘Mêvan, çay û sêv’ · paragraph 1, sentence 1');
+  });
+
   it('says what each line means where the course says it, and never offers Kurdish as the meaning', () => {
     const lines = buildScript({
       exercises: [
@@ -318,7 +344,8 @@ describe('the recording script', () => {
 describe('the Kurmanji Road in the script', () => {
   it('has every line the studio would ask for from all of the Road’s units, each person’s from the plan', async () => {
     const files = await readRoadFiles(ROAD_DIR);
-    const plan = planFrom(JSON.parse(await readFile(new URL('plan.json', ROAD_DIR), 'utf8')));
+    const raw = JSON.parse(await readFile(new URL('plan.json', ROAD_DIR), 'utf8')) as { units: Array<{ recorder?: string }> };
+    const plan = planFrom(raw);
     expect(new Set(files.lessons.map((l) => l.unit.position))).toEqual(new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]));
     const exercises: ExerciseInput[] = files.lessons.flatMap((l) =>
       l.exercises.map((e) =>
@@ -342,10 +369,10 @@ describe('the Kurmanji Road in the script', () => {
     }
     expect(lines.every((l) => !l.live && l.places.every((p) => p.status === 'draft'))).toBe(true);
     expect(peopleOf(lines, plan).map((p) => p.id)).toEqual(['hamo', 'xezo', 'hevalo', 'narrator-kmr', 'narrator-ckb']);
-    // Hamo is the road's main voice
+    // every chapter of the road is written for Hamo alone, so each goes online once he has recorded it
     const counts = new Map(peopleOf(lines, plan).map((p) => [p.id, lines.filter((l) => l.voice === p.id).length]));
-    expect(counts.get('hamo')!).toBeGreaterThan(counts.get('xezo')!);
-    expect(counts.get('hevalo')!).toBeGreaterThan(0);
+    expect(counts.get('hamo')!).toBe(lines.length);
+    expect(raw.units.every((u) => u.recorder === 'hamo')).toBe(true);
   });
 });
 

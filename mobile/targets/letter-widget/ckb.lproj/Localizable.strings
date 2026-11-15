@@ -1,0 +1,9 @@
+/* The letter widget’s own words. Written in mobile/src/widget/widget-strings.json; widget.test.ts holds this file to it. */
+"name" = "نامە";
+"description" = "نوێترین نامە لە هاوڕێیەکی نامەوە، یان ئەو نامەیەی لێرە دەیهێڵیتەوە.";
+"sealed" = "نامەیەک لە {name}ەوە";
+"empty" = "هێشتا نامە نییە";
+"emptyMore" = "کاتێک هاوڕێیەکی نامە دەنووسێت، نامەکەی لێرە دەردەکەوێت.";
+"signedOut" = "Hevalo بکەرەوە بۆ بینینی نامەکانت";
+"waiting" = "نامەکانت لێرە دەردەکەون";
+"pinned" = "لەسەر شاشەی سەرەکیت هێڵراوەتەوە";

@@ -5,9 +5,11 @@ import {
   GAME_DIALECTS,
   GAME_LEVELS,
   LEARN_GAMES,
+  RIDDLE_LEVELS,
   checkGameContent,
   dialectDirection,
   gameOfKind,
+  isLoreKind,
   type AdminGameContent,
   type GameContentKind,
   type GameDialect,
@@ -15,6 +17,7 @@ import {
 } from '@kurda/shared';
 import { go, useRoute } from '../nav';
 import {
+  COLLECTION_NAME,
   DEFAULT_GAME_FILTER,
   GAME_DIALECT_NAME,
   GAME_NAME,
@@ -62,6 +65,7 @@ import {
   type Tone,
 } from '../ui';
 import { IdentityFields, QuestionTemplateFields, WordPicker } from './GameWordCards';
+import { ProverbFields, RiddleFields, TranslationsPanel } from './LoreFields';
 
 /**
  * Game content: the learning games' own rows — sentences, passages, case
@@ -72,7 +76,7 @@ import { IdentityFields, QuestionTemplateFields, WordPicker } from './GameWordCa
  *   #/game-content/readiness    what each game can be played with, per variety and level
  *   #/game-content/words        Who Am I? identities made by picking approved words
  *   #/game-content/new?kind=…   a new draft of a kind
- *   #/game-content/<id>         one row: its content, its review, its status
+ *   #/game-content/<id>         one row: its content, its review, its status (and a riddle's or a proverb's translations)
  *
  * Learners only ever meet a row that is published, and only an approved row
  * can be published. The importers copy approved Kurdish (published lessons'
@@ -81,6 +85,10 @@ import { IdentityFields, QuestionTemplateFields, WordPicker } from './GameWordCa
  * again; the word and forbidden-word cards are made by picking their words
  * from published vocabulary (GameCardFields.tsx). Each draft still goes
  * through review before a game may show it.
+ *
+ * The Stories' riddles and proverbs are written here too (LoreFields.tsx),
+ * through the same review, though they belong to no game; their translations
+ * are saved and reviewed one language at a time beside the row.
  */
 export function GameContent(): React.JSX.Element {
   const route = useRoute();
@@ -131,11 +139,14 @@ function GameContentHome({ tab }: { tab: 'rows' | 'readiness' | 'words' }): Reac
         actions={
           <>
             <select aria-label="Kind of content to add" value={newKind} onChange={(e) => setNewKind(e.target.value as GameContentKind)}>
-              {GAME_CONTENT_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {KIND_NAME[k]} — {GAME_NAME[gameOfKind(k)!.id]}
-                </option>
-              ))}
+              {GAME_CONTENT_KINDS.map((k) => {
+                const game = gameOfKind(k);
+                return (
+                  <option key={k} value={k}>
+                    {KIND_NAME[k]} — {game ? GAME_NAME[game.id] : COLLECTION_NAME}
+                  </option>
+                );
+              })}
             </select>
             <Button variant="primary" icon="plus" onClick={() => go(`game-content/new?kind=${newKind}`)}>
               New
@@ -215,7 +226,7 @@ function Rows(): React.JSX.Element {
     },
     // a row of a kind this console no longer knows (written for a game that is gone) is named by what it is stored as
     { key: 'kind', header: 'Kind', cell: (r) => KIND_NAME[r.kind] ?? r.kind },
-    { key: 'game', header: 'Game', cell: (r) => (r.game ? (GAME_NAME[r.game as LearnGameId] ?? r.game) : '—') },
+    { key: 'game', header: 'Game', cell: (r) => (r.game ? (GAME_NAME[r.game as LearnGameId] ?? r.game) : isLoreKind(r.kind) ? COLLECTION_NAME : '—') },
     { key: 'dialect', header: 'Variety', cell: (r) => GAME_DIALECT_NAME[r.dialect] },
     { key: 'level', header: 'Level', cell: (r) => r.level, sort: (a, b) => a.level - b.level },
     {
@@ -630,7 +641,10 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
   }, [loaded.data, retired]);
 
   const checked = useMemo(() => checkGameContent(kind, dialect, payload), [kind, dialect, payload]);
-  const pending = !!row && (level !== row.level || JSON.stringify(payload) !== JSON.stringify(row.payload));
+  // a riddle's level is its difficulty's, never chosen on its own
+  const riddleLevel = kind === 'riddle' ? RIDDLE_LEVELS[payload.difficulty as keyof typeof RIDDLE_LEVELS] : undefined;
+  const effectiveLevel = riddleLevel ?? level;
+  const pending = !!row && (effectiveLevel !== row.level || JSON.stringify(payload) !== JSON.stringify(row.payload));
   const editable = !row || row.status === 'draft' || row.status === 'in_review';
   const game = gameOfKind(kind);
 
@@ -653,11 +667,11 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
       'the save',
       async () => {
         if (!row) {
-          const created = await createGameContent({ kind, dialect, level, payload });
+          const created = await createGameContent({ kind, dialect, level: effectiveLevel, payload });
           location.replace(`#/game-content/${created.id}`);
           return created;
         }
-        return saveGameContent(row.id, { level, payload, lockVersion: row.lockVersion });
+        return saveGameContent(row.id, { level: effectiveLevel, payload, lockVersion: row.lockVersion });
       },
       'Saved.',
     );
@@ -684,7 +698,7 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
     <div>
       <PageHeader
         title={row ? row.headline || KIND_NAME[row.kind] : `New ${KIND_NAME[kind].toLowerCase()}`}
-        subtitle={game ? `${KIND_NAME[kind]} for ${GAME_NAME[game.id]}` : KIND_NAME[kind]}
+        subtitle={game ? `${KIND_NAME[kind]} for ${GAME_NAME[game.id]}` : isLoreKind(kind) ? `${KIND_NAME[kind]} for the ${COLLECTION_NAME}` : KIND_NAME[kind]}
         back={{ href: '#/game-content', label: 'Game content' }}
         meta={
           row ? (
@@ -698,7 +712,15 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
       />
       {row?.origin && <Note>Imported from {row.origin.split(':')[0]} {row.origin.split(':').slice(1).join(':')} — the Kurdish was copied from approved content, not typed.</Note>}
       {row?.source === 'starter' && <Banner tone="warn">A starter draft written for the app: it waits for a native speaker before anything else.</Banner>}
-      {!editable && <Banner tone="info">{row?.status === 'published' ? 'Published: unpublish it to edit it.' : 'Archived: it cannot be edited.'}</Banner>}
+      {!editable && (
+        <Banner tone="info">
+          {row?.status !== 'published'
+            ? 'Archived: it cannot be edited.'
+            : isLoreKind(kind)
+              ? 'Published: unpublish it to edit its Kurdish. Its translations can be corrected below while it stays published.'
+              : 'Published: unpublish it to edit it.'}
+        </Banner>
+      )}
 
       <Section title="Where it goes">
         <div className="row">
@@ -724,8 +746,8 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
               ))}
             </select>
           </Field>
-          <Field label="Level" hint="1 is the first. Beginner plays levels 1–2, intermediate 3, advanced 4–5.">
-            <select value={level} disabled={!editable} onChange={(e) => setLevel(Number(e.target.value))}>
+          <Field label="Level" hint={riddleLevel ? 'A riddle’s level follows from its difficulty.' : '1 is the first. Beginner plays levels 1–2, intermediate 3, advanced 4–5.'}>
+            <select value={effectiveLevel} disabled={!editable || riddleLevel !== undefined} onChange={(e) => setLevel(Number(e.target.value))}>
               {GAME_LEVELS.map((l) => (
                 <option key={l} value={l}>
                   Level {l}
@@ -752,6 +774,10 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
           <CaseFileFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
         ) : kind === 'word_card' ? (
           <WordCardFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} Meanings={MeaningsFields} />
+        ) : kind === 'riddle' ? (
+          <RiddleFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
+        ) : kind === 'proverb' ? (
+          <ProverbFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
         ) : (
           <JsonFields key={`${kind}:${row?.lockVersion ?? 'new'}`} payload={payload} onChange={setPayload} readOnly={!editable} />
         )}
@@ -802,6 +828,11 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
           )}
         </FormActions>
       </Section>
+
+      {row && isLoreKind(row.kind) && (
+        // a translation saved changes the row's translations only: the Kurdish being edited above stays as it is
+        <TranslationsPanel row={row} onSaved={(r) => setRow((cur) => (cur ? { ...cur, translations: r.translations } : r))} />
+      )}
 
       <ReviewPanel
         key={row?.lockVersion ?? 'new'}

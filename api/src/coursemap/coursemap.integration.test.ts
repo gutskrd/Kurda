@@ -7,6 +7,7 @@ import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
 import { importCourse } from '../content/import.js';
 import { activate } from '../test/activate.js';
+import { CourseMapService } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -133,5 +134,44 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
     expect(skillA.lessons).toEqual([{ lessonId: corrected, position: 1, title: 'A1', completed: true }]);
     expect(['completed', 'gold', 'decayed']).toContain(skillA.state);
     expect(skillB.state).toBe('unlocked');
+  });
+
+  it('says what comes next, and has no upcoming unit while every unit has a lesson out', async () => {
+    expect((await authed('GET', `/courses/${courseId}/map`)).json()).toMatchObject({ upcoming: null, units: [{ title: 'Unit 1', story: null }] });
+  });
+
+  /**
+   * The road’s chapters go online one by one as Hamo records them. The map
+   * ends at the last one online and names the next as on its way, and each
+   * chapter carries the story that closes it once learners can read it.
+   */
+  it('ends a road at its last chapter online, with its story, and names the next one on its way', async () => {
+    const road = `map-road-${suffix}`;
+    const story = `road-11-map-${suffix}`;
+    // chapters 11 and 12 of a road of its own: 11 online, 12 still a draft being recorded
+    await importCourse(repo, { course: { slug: road, dialect: 'kurmanji', titleKu: 'R', titleEn: 'Road' }, units: [{ ...content.units[0]!, position: 11, titleEn: 'Work and school' }] }, { publish: true });
+    const roadId = (await repo.findCourseBySlug(road))!;
+    const twelve = await repo.createSkill(await repo.createUnit(roadId, 12, 'Çîrok', 'Stories and songs'), 1, 'Çîrok', 'Stories');
+    await repo.addExercise(await repo.createLesson(twelve, 1, 'Çîrok', 'Stories'), 1, 'translate', { prompt: 'tale', accepted: ['çîrok'] });
+    await pool.query(
+      `INSERT INTO stories (slug, dialect, level, title, body, word_count, length, status, review_status, published_at, source)
+       VALUES ($1, 'kurmanci', 3, 'Xezal diçe', 'Xezal diçe Hewlêrê.', 70, 'short', 'published', 'approved', now(), 'starter')`,
+      [story],
+    );
+    try {
+      const maps = new CourseMapService(pool, road);
+      const map = (await maps.forUser(userId, roadId))!;
+      expect(map.units.map((u) => [u.title, u.story])).toEqual([['Work and school', { slug: story, title: 'Xezal diçe' }]]);
+      expect(map.upcoming).toEqual({ number: 12, title: 'Stories and songs', recordedBy: 'hamo' });
+      // a story taken back to a draft is not offered
+      await pool.query(`UPDATE stories SET status = 'draft' WHERE slug = $1`, [story]);
+      expect((await maps.forUser(userId, roadId))!.units[0]!.story).toBeNull();
+      // any other course has no stories and names no one recording
+      expect((await new CourseMapService(pool).forUser(userId, roadId))!.upcoming).toMatchObject({ recordedBy: null });
+    } finally {
+      await pool.query(`DELETE FROM stories WHERE slug = $1`, [story]);
+      await pool.query(`UPDATE lessons SET status = 'archived' WHERE status = 'published' AND skill_id IN (SELECT s.id FROM skills s JOIN units u ON u.id = s.unit_id WHERE u.course_id = $1)`, [roadId]);
+      await pool.query(`DELETE FROM courses WHERE id = $1`, [roadId]);
+    }
   });
 });

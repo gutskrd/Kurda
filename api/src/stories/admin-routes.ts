@@ -13,6 +13,13 @@
  *   POST   /admin/stories/:id/archive        → archived                   (audited)
  *   POST   /admin/stories/:id/review         { approved, note?, lockVersion }: approve, or withdraw approval (audited)
  *   POST   /admin/stories/:id/feature        { featured, lockVersion }: the library's Featured row (audited)
+ *   PUT    /admin/stories/:id/translations/:locale
+ *                                            { lockVersion, body?, title?, summary?, questions?, reflections?, notes? }: correct one
+ *                                            language, in any status but archived, published included; the approval stays and the
+ *                                            language is marked unreviewed (audited)
+ *   POST   /admin/stories/:id/translations/:locale/review
+ *                                            { status: 'reviewed' | 'unreviewed', note?, lockVersion }: a native speaker's verdict on
+ *                                            that language's translation (audited)
  *   DELETE /admin/stories/:id                only a story no game has used (audited; else 409 IN_USE)
  *
  *   GET    /admin/story-categories           every category
@@ -31,14 +38,29 @@
  * `details: { errors, warnings }`, each with a path to the field. Every story
  * returned carries `problems`: what would stop it being published and what
  * is worth a second look.
+ *
+ * The whole-story PUT still takes the translations with everything else, and
+ * a changed translation still counts as changed content there (the approval
+ * goes, as it always did). The per-language PUT is how a translation alone is
+ * corrected, on a published story too, without the Kurdish approval going.
+ * Neither ever takes `translationReview` from the editor: it follows from what
+ * changed, and from the review route.
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import { STORY_DIALECTS, STORY_LEVELS, STORY_REVIEW_NOTE_MAX } from '@kurda/shared';
+import { APP_LOCALE_CODES, STORY_DIALECTS, STORY_LEVELS, STORY_REVIEW_NOTE_MAX, STORY_TRANSLATION_REVIEW_STATUSES, type AppLocale } from '@kurda/shared';
 import { pageQuery } from '../http/query.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
-import { categoryNameSchema, categorySlugSchema, storyContentSchema, storyInputFrom, storySlugSchema } from './schema.js';
+import {
+  categoryNameSchema,
+  categorySlugSchema,
+  noteTranslationSchema,
+  questionTranslationSchema,
+  storyContentSchema,
+  storyInputFrom,
+  storySlugSchema,
+} from './schema.js';
 import { STORY_EDITOR_ROLES, type StoryAdminService } from './admin-service.js';
 
 export { STORY_EDITOR_ROLES };
@@ -47,6 +69,7 @@ const STATUSES = ['draft', 'in_review', 'published', 'archived'] as const;
 const absentIfEmpty = (v: unknown): unknown => (v === '' ? undefined : v);
 
 const idParam = z.object({ id: z.uuid() });
+const localeParams = z.object({ id: z.uuid(), locale: z.enum(APP_LOCALE_CODES) });
 const slugParam = z.object({ slug: categorySlugSchema });
 const listQuery = z.object({
   q: z.preprocess(absentIfEmpty, z.string().max(80).optional()),
@@ -59,20 +82,40 @@ const listQuery = z.object({
   ...pageQuery,
 });
 const sameStoryAs = z.string().uuid().nullish();
-const createBody = storyContentSchema.extend({ slug: storySlugSchema.nullish(), sameStoryAs });
-// the whole draft, every field: a client that leaves the questions out must not have deleted them
-const updateBody = storyContentSchema.extend({
+// who reviewed which translation is recorded by the server, never sent with a save
+const editorContent = storyContentSchema.omit({ translationReview: true });
+const createBody = editorContent.extend({ slug: storySlugSchema.nullish(), sameStoryAs });
+// the whole draft, every field: a client that leaves the questions out must not have deleted them. What a legend
+// carries besides its text arrived later: an editor that does not send it (one opened before it existed) keeps it as stored
+const updateBody = editorContent.extend({
   slug: storySlugSchema,
   summary: storyContentSchema.shape.summary.unwrap(),
   body: storyContentSchema.shape.body.unwrap(),
   glossary: storyContentSchema.shape.glossary.unwrap(),
   questions: storyContentSchema.shape.questions.unwrap(),
+  metaTranslations: storyContentSchema.shape.metaTranslations.unwrap().optional(),
+  reflections: storyContentSchema.shape.reflections.unwrap().optional(),
+  notes: storyContentSchema.shape.notes.unwrap().optional(),
+  sources: storyContentSchema.shape.sources.unwrap().optional(),
   lockVersion: z.number().int().min(0),
   sameStoryAs,
 });
 const lockBody = z.object({ lockVersion: z.number().int().min(0) });
 const reviewBody = lockBody.extend({ approved: z.boolean(), note: z.string().max(STORY_REVIEW_NOTE_MAX).nullish() });
 const featureBody = lockBody.extend({ featured: z.boolean() });
+// each part optional (left out: unchanged), null to remove it; a list has one entry per question, reflection or note
+const translationBody = lockBody.extend({
+  body: z.string().max(60_000).nullish(),
+  title: z.string().max(1200).nullish(),
+  summary: z.string().max(3000).nullish(),
+  questions: z.array(questionTranslationSchema.nullable()).max(100).optional(),
+  reflections: z.array(z.string().max(4000).nullable()).max(20).optional(),
+  notes: z.array(noteTranslationSchema.nullable()).max(20).optional(),
+});
+const translationReviewBody = lockBody.extend({
+  status: z.enum(STORY_TRANSLATION_REVIEW_STATUSES),
+  note: z.string().max(STORY_REVIEW_NOTE_MAX).nullish(),
+});
 const deleteQuery = z.object({ lockVersion: z.coerce.number().int().min(0) });
 const categoryBody = z.object({ name: categoryNameSchema, position: z.number().int().min(0).max(10_000).nullish() });
 const createCategoryBody = categoryBody.extend({ slug: categorySlugSchema });
@@ -141,6 +184,28 @@ export function registerStoryAdminRoutes(app: FastifyInstance, stories: StoryAdm
     const { id } = req.params as z.infer<typeof idParam>;
     const b = req.body as z.infer<typeof featureBody>;
     return stories.feature(id, b.featured, { ...context(req), lockVersion: b.lockVersion });
+  });
+
+  app.put('/admin/stories/:id/translations/:locale', { schema: { params: localeParams, body: translationBody }, preHandler }, async (req) => {
+    const { id, locale } = req.params as z.infer<typeof localeParams>;
+    const { lockVersion, questions, ...rest } = req.body as z.infer<typeof translationBody>;
+    return stories.saveTranslation(
+      id,
+      locale as AppLocale,
+      {
+        ...rest,
+        ...(questions
+          ? { questions: questions.map((q) => (q ? { prompt: q.prompt, options: q.options, ...(q.explanation ? { explanation: q.explanation } : {}) } : null)) }
+          : {}),
+      },
+      { ...context(req), lockVersion },
+    );
+  });
+
+  app.post('/admin/stories/:id/translations/:locale/review', { schema: { params: localeParams, body: translationReviewBody }, preHandler }, async (req) => {
+    const { id, locale } = req.params as z.infer<typeof localeParams>;
+    const b = req.body as z.infer<typeof translationReviewBody>;
+    return stories.reviewTranslation(id, locale as AppLocale, { status: b.status, note: b.note ?? null }, { ...context(req), lockVersion: b.lockVersion });
   });
 
   app.delete('/admin/stories/:id', { schema: { params: idParam, querystring: deleteQuery }, preHandler }, async (req) => {

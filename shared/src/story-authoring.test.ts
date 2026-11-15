@@ -94,8 +94,12 @@ describe('validateStory', () => {
     const message = (body: string): string | undefined =>
       validateStory(story({ body }), 'draft').warnings.find((w) => w.code === 'WORD_COUNT_OUTSIDE_BANDS')?.message;
     expect(message('Rojîn deh salî ye.')).toBe('4 words is too few: the shortest length is short (60–120 words)');
+    // past the longest length that is not a saga, the nearest is still named
     expect(message(Array.from({ length: 6 }, () => BODY).join('\n\n'))).toBe(
-      '492 words is too many: the longest length is long (300–450 words)',
+      '492 words is between the lengths: the nearest is long (300–450 words)',
+    );
+    expect(message(Array.from({ length: 20 }, () => BODY).join('\n\n'))).toBe(
+      '1640 words is too many: the longest length is saga (600–1600 words)',
     );
 
     // too few questions for a short story
@@ -117,7 +121,7 @@ describe('validateStory', () => {
     expect(codes(validateStory(story({ title: 'x'.repeat(121) })).errors)).toEqual(['TITLE_TOO_LONG']);
     expect(codes(validateStory(story({ summary: 'x'.repeat(301) })).errors)).toEqual(['SUMMARY_TOO_LONG']);
     expect(codes(validateStory(story({ summary: null })).errors)).toEqual([]);
-    expect(codes(validateStory(story({ body: `${BODY} ${'a'.repeat(6000)}` })).errors)).toContain('BODY_TOO_LONG');
+    expect(codes(validateStory(story({ body: `${BODY} ${'a'.repeat(16_000)}` })).errors)).toContain('BODY_TOO_LONG');
     expect(codes(validateStory(story({ level: 6 })).errors)).toEqual(['LEVEL']);
     expect(codes(validateStory(story({ level: 5 })).errors)).toEqual([]);
     expect(codes(validateStory(story({ dialect: 'zazaki' as never })).errors)).toEqual(['DIALECT']);
@@ -330,9 +334,146 @@ describe('the library fields', () => {
     expect(codes(validateStory(story({ translations: { en: [...en, 'And then.'].join('\n\n') } })).errors)).toEqual(['TRANSLATION_PARAGRAPHS']);
     expect(codes(validateStory(story({ translations: { en: en.join(' ') } })).errors)).toEqual(['TRANSLATION_PARAGRAPHS']);
     expect(codes(validateStory(story({ translations: { klingon: en.join('\n\n') } })).errors)).toEqual(['TRANSLATION_LOCALE']);
-    expect(codes(validateStory(story({ translations: { en: 'x'.repeat(9001) } })).errors)).toContain('TRANSLATION_TOO_LONG');
+    expect(codes(validateStory(story({ translations: { en: 'x'.repeat(24_001) } })).errors)).toContain('TRANSLATION_TOO_LONG');
     // the same rule in a draft: a misaligned translation is wrong at any stage
     expect(codes(validateStory(story({ translations: { en: en[0]! } }), 'draft').errors)).toEqual(['TRANSLATION_PARAGRAPHS']);
+  });
+});
+
+describe('sagas and their sections', () => {
+  const paragraphs = BODY.split('\n\n');
+  // an introduction, then two sections of the same short text, 656 words in all
+  const SAGA = [
+    ...paragraphs,
+    '## Beşa yekem',
+    ...paragraphs,
+    ...paragraphs,
+    ...paragraphs,
+    '## Beşa duyem',
+    ...paragraphs,
+    ...paragraphs,
+    ...paragraphs,
+    ...paragraphs,
+  ].join('\n\n');
+  const bank = story().questions;
+  const saga = (over: Partial<StoryInput> = {}): StoryInput =>
+    story({ body: SAGA, questions: [...bank, ...bank, ...bank.slice(0, 3)], ...over });
+
+  it('takes a legend of six hundred words and more, told in at least two sections', () => {
+    expect(storyLengthFor('kurmanci', countStoryWords(SAGA))).toBe('saga');
+    expect(validateStory(saga())).toEqual({ errors: [], warnings: [] });
+    // fifteen questions at least, as for a long story
+    expect(codes(validateStory(saga({ questions: bank })).errors)).toEqual(['BANK_TOO_SMALL']);
+  });
+
+  it('lets a draft saga wait for its sections, and publishes none without two', () => {
+    const one = saga({ body: SAGA.replace('## Beşa duyem\n\n', '') });
+    expect(storyLengthFor('kurmanci', countStoryWords(one.body))).toBe('saga');
+    expect(codes(validateStory(one, 'draft').errors)).toEqual([]);
+    expect(codes(validateStory(one, 'draft').warnings)).toEqual(['SAGA_SECTIONS']);
+    expect(validateStory(one, 'publish').errors).toEqual([
+      {
+        code: 'SAGA_SECTIONS',
+        path: 'body',
+        message: 'a saga is told in sections: give it at least 2 headings, each a paragraph of its own starting with “## ” (it has 1)',
+      },
+    ]);
+    // a shorter story may have sections, and need not
+    expect(validateStory(story({ body: `${BODY}\n\n## Dawî\n\n${paragraphs[0]}` })).errors).toEqual([]);
+  });
+
+  it('keeps a heading to one short line, and notes a section with no text', () => {
+    const head = (heading: string): StoryInput => story({ body: `${BODY}\n\n${heading}\n\n${paragraphs[0]}` });
+    expect(validateStory(head(`## ${'Dirêj '.repeat(15)}`)).errors.map((e) => [e.code, e.path])).toEqual([['HEADING_TOO_LONG', 'body.paragraphs[3]']]);
+    // a heading typed on the line above the text, without the empty line between them
+    expect(codes(validateStory(head('## Destpêk\nRojîn hat. Ew çû.')).errors)).toContain('HEADING_SENTENCES');
+    expect(codes(validateStory(story({ body: `${BODY}\n\n## Dawî` })).warnings)).toEqual(['HEADING_EMPTY_SECTION']);
+    expect(codes(validateStory(story({ body: `${BODY}\n\n## Yek\n\n## Du\n\n${paragraphs[0]}` })).warnings)).toEqual(['HEADING_EMPTY_SECTION']);
+  });
+
+  it('never points a question’s evidence at a heading', () => {
+    const headed = story({ body: `## Destpêk\n\n${BODY}`, questions: bank.map((q) => (q.evidenceParagraph === null ? q : { ...q, evidenceParagraph: q.evidenceParagraph + 1 })) });
+    expect(validateStory(headed).errors).toEqual([]);
+    const atHeading = { ...headed, questions: [...headed.questions.slice(1), question({ evidenceParagraph: 0, evidenceSentence: null })] };
+    expect(validateStory(atHeading).errors.map((e) => [e.code, e.path])).toEqual([['EVIDENCE_HEADING', 'questions[5].evidenceParagraph']]);
+  });
+
+  it('wants every translation to keep the headings where the text has them', () => {
+    const body = `${BODY}\n\n## Dawî\n\n${paragraphs[0]}`;
+    const en = ['Rojîn is ten.', 'One day they go to the mountain.', 'They see red flowers.'];
+    expect(validateStory(story({ body, translations: { en: [...en, '## The end', en[0]].join('\n\n') } })).errors).toEqual([]);
+    expect(validateStory(story({ body, translations: { en: [...en, 'The end', en[0]].join('\n\n') } })).errors).toEqual([
+      { code: 'TRANSLATION_HEADINGS', path: 'translations.en', message: 'paragraph 4 is a heading in the text: start the translated one with “## ” too' },
+    ]);
+    expect(codes(validateStory(story({ translations: { en: ['## Rojîn is ten.', ...en.slice(1)].join('\n\n') } })).errors)).toEqual(['TRANSLATION_HEADINGS']);
+  });
+});
+
+describe('what a legend carries besides its text', () => {
+  const withQuestionTranslations = (translations: StoryQuestionInput['translations']): StoryInput =>
+    story({ questions: [question({ translations }), ...story().questions.slice(1)] });
+
+  it('takes each question in interface languages, with as many options in the same order', () => {
+    const de = { prompt: 'Wie alt ist Rojîn?', options: ['Acht', 'Zehn', 'Zwölf'], explanation: 'Die Geschichte sagt es.' };
+    expect(validateStory(withQuestionTranslations({ de, en: { prompt: 'How old?', options: ['Eight', 'Ten', 'Twelve'] } })).errors).toEqual([]);
+    expect(codes(validateStory(withQuestionTranslations({ xx: de })).errors)).toEqual(['QUESTION_TRANSLATION_LOCALE']);
+    expect(validateStory(withQuestionTranslations({ de: { ...de, options: ['Acht', 'Zehn'] } })).errors).toEqual([
+      {
+        code: 'QUESTION_TRANSLATION_OPTIONS',
+        path: 'questions[0].translations.de.options',
+        message: 'the question has 3 options and this translation 2: translate each, in the same order',
+      },
+    ]);
+    expect(codes(validateStory(withQuestionTranslations({ de: { ...de, options: ['Acht', ' ', 'Zwölf'] } })).errors)).toEqual(['QUESTION_TRANSLATION_OPTION_EMPTY']);
+    expect(codes(validateStory(withQuestionTranslations({ de: { ...de, prompt: '' } })).errors)).toEqual(['QUESTION_TRANSLATION_PROMPT_EMPTY']);
+    expect(codes(validateStory(withQuestionTranslations({ de: { ...de, explanation: 'x'.repeat(161) } })).errors)).toEqual([
+      'QUESTION_TRANSLATION_EXPLANATION_TOO_LONG',
+    ]);
+  });
+
+  it('takes the title and summary per language, within the limits of the Kurdish ones', () => {
+    expect(validateStory(story({ metaTranslations: { en: { title: 'Red flowers' }, de: { title: 'Rote Blumen', summary: 'Ein Ausflug.' } } })).errors).toEqual([]);
+    expect(codes(validateStory(story({ metaTranslations: { en: {} } })).errors)).toEqual(['META_TRANSLATION_EMPTY']);
+    expect(codes(validateStory(story({ metaTranslations: { en: { title: 'x'.repeat(121) } } })).errors)).toEqual(['META_TITLE_TOO_LONG']);
+    expect(codes(validateStory(story({ metaTranslations: { en: { summary: 'x'.repeat(301) } } })).errors)).toEqual(['META_SUMMARY_TOO_LONG']);
+    expect(codes(validateStory(story({ metaTranslations: { klingon: { title: 'x' } } })).errors)).toEqual(['META_TRANSLATION_LOCALE']);
+  });
+
+  it('keeps the questions to think about to a handful, each written', () => {
+    const reflection = { text: 'Tu çi difikirî?', translations: { en: 'What do you think?' } };
+    expect(validateStory(story({ reflections: [reflection] })).errors).toEqual([]);
+    expect(codes(validateStory(story({ reflections: Array.from({ length: 7 }, () => reflection) })).errors)).toEqual(['REFLECTIONS_TOO_MANY']);
+    expect(codes(validateStory(story({ reflections: [{ text: ' ' }] })).errors)).toEqual(['REFLECTION_EMPTY']);
+    expect(codes(validateStory(story({ reflections: [{ ...reflection, translations: { en: '' } }] })).errors)).toEqual(['REFLECTION_TRANSLATION_EMPTY']);
+    expect(codes(validateStory(story({ reflections: [{ ...reflection, translations: { xx: 'x' } }] })).errors)).toEqual(['REFLECTION_TRANSLATION_LOCALE']);
+  });
+
+  it('files each note under what it is about, with a title and a text in every language it has', () => {
+    const note = { kind: 'history', title: 'Dîrok', body: 'Kela Dimdimê li nêzî Ûrmiyê ye.', translations: { en: { title: 'History', body: 'The fortress is near Urmia.' } } };
+    expect(validateStory(story({ notes: [note] })).errors).toEqual([]);
+    expect(codes(validateStory(story({ notes: [{ ...note, kind: 'gossip' }] })).errors)).toEqual(['NOTE_KIND']);
+    expect(codes(validateStory(story({ notes: [{ ...note, title: '', body: '' }] })).errors)).toEqual(['NOTE_TITLE_EMPTY', 'NOTE_BODY_EMPTY']);
+    expect(codes(validateStory(story({ notes: [{ ...note, translations: { en: { title: 'History', body: '' } } }] })).errors)).toEqual(['NOTE_TRANSLATION_EMPTY']);
+    expect(codes(validateStory(story({ notes: Array.from({ length: 5 }, () => note) })).errors)).toEqual(['NOTES_TOO_MANY']);
+  });
+
+  it('lists sources of a known kind, on https, and counts them as naming where a story comes from', () => {
+    const source = { title: 'Mem û Zîn', author: 'Ehmedê Xanî', type: 'literary', url: 'https://example.org/mem-u-zin' };
+    expect(validateStory(story({ tradition: 'traditional', sources: [source] }))).toEqual({ errors: [], warnings: [] });
+    expect(codes(validateStory(story({ sources: [{ ...source, url: 'http://example.org' }] })).errors)).toEqual(['SOURCE_ENTRY_URL']);
+    expect(codes(validateStory(story({ sources: [{ ...source, url: null, note: null, author: null }] })).errors)).toEqual([]);
+    expect(codes(validateStory(story({ sources: [{ ...source, type: 'rumour' }] })).errors)).toEqual(['SOURCE_TYPE']);
+    expect(codes(validateStory(story({ sources: [{ ...source, title: ' ' }] })).errors)).toEqual(['SOURCE_TITLE_EMPTY']);
+    expect(codes(validateStory(story({ sources: Array.from({ length: 9 }, () => source) })).errors)).toEqual(['SOURCES_TOO_MANY']);
+  });
+
+  it('records each language’s review as reviewed or unreviewed, by an account, at a time', () => {
+    const by = '2f1c2b3a-1d4e-4f5a-8b6c-7d8e9f0a1b2c';
+    expect(validateStory(story({ translationReview: { en: { status: 'reviewed', by, at: '2026-11-01T10:00:00.000Z', note: 'Read.' }, de: { status: 'unreviewed' } } })).errors).toEqual([]);
+    expect(codes(validateStory(story({ translationReview: { en: { status: 'approved' as never } } })).errors)).toEqual(['TRANSLATION_REVIEW_STATUS']);
+    expect(codes(validateStory(story({ translationReview: { en: { status: 'reviewed', by: 'someone' } } })).errors)).toEqual(['TRANSLATION_REVIEW_BY']);
+    expect(codes(validateStory(story({ translationReview: { en: { status: 'reviewed', at: 'yesterday' } } })).errors)).toEqual(['TRANSLATION_REVIEW_AT']);
+    expect(codes(validateStory(story({ translationReview: { xx: { status: 'reviewed' } } })).errors)).toEqual(['TRANSLATION_REVIEW_LOCALE']);
   });
 });
 

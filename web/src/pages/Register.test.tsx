@@ -6,6 +6,9 @@ import { Register } from './Register';
 import { renderApp, jsonResponse, MOVES_ON } from '../test/utils';
 import { en } from '../i18n/en';
 
+/** What a username may be made of, as the field says it under itself. */
+const USERNAME_RULE = en['auth.usernameRule'].replace('{min}', '3').replace('{max}', '30');
+
 afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
@@ -93,7 +96,7 @@ describe('Register', () => {
     renderRegister();
     const username = screen.getByLabelText('Username');
     // the rule is a hint that stays, and the field is typed as it is meant
-    expect(username).toHaveAccessibleDescription(en['error.code.usernameChars']);
+    expect(username).toHaveAccessibleDescription(USERNAME_RULE);
     expect(username).toHaveAttribute('autocapitalize', 'none');
     expect(username).toHaveAttribute('spellcheck', 'false');
 
@@ -108,13 +111,48 @@ describe('Register', () => {
     expect(username).toHaveAttribute('aria-invalid', 'true');
     await waitFor(() => expect(username).toHaveFocus());
     // the rule is still there beside it, and nothing is said above the form
-    expect(within(field as HTMLElement).getByText(en['error.code.usernameChars'])).toHaveClass('field-hint');
+    expect(within(field as HTMLElement).getByText(USERNAME_RULE)).toHaveClass('field-hint');
     expect(document.querySelector('.msg')).toBeNull();
     // the other fields are not marked for it
     expect(screen.getByLabelText('Password').closest('.field')).not.toHaveClass('has-problem');
 
     await userEvent.type(username, '2');
     expect(field).not.toHaveClass('has-problem');
+  });
+
+  it('writes the username in lowercase as it is typed, and sends it so', async () => {
+    const fetchMock = vi.fn(async () =>
+      jsonResponse(201, {
+        user: { id: '1', email: 'a@b.com', username: 'şêrîn.k', displayName: null, emailVerified: false, birthDateRequired: false },
+        tokens: { accessToken: 'x', refreshToken: 'y' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    renderRegister();
+    const username = screen.getByLabelText('Username');
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
+    await userEvent.type(username, 'ŞÊRÎN.K');
+    expect(username).toHaveValue('şêrîn.k');
+    await userEvent.type(screen.getByLabelText('Password'), 'a-strong-password1');
+    await chooseBirth('3', '1990');
+    await userEvent.click(screen.getByRole('button', { name: en['auth.register.submit'] }));
+    await waitFor(() => expect(bodyOf(fetchMock, '/auth/register')).toMatchObject({ username: 'şêrîn.k' }));
+  });
+
+  it('says a name the rule refuses under the field, without sending the form', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(201, {}));
+    vi.stubGlobal('fetch', fetchMock);
+    renderRegister();
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
+    await userEvent.type(screen.getByLabelText('Username'), 'hamo.');
+    await userEvent.type(screen.getByLabelText('Password'), 'a-strong-password1');
+    await chooseBirth('3', '1990');
+    await userEvent.click(screen.getByRole('button', { name: en['auth.register.submit'] }));
+
+    const said = await screen.findByRole('alert');
+    expect(said).toHaveTextContent(en['error.code.usernameEdge']);
+    expect(screen.getByLabelText('Username').closest('.field')).toContainElement(said);
+    expect(bodyOf(fetchMock, '/auth/register')).toBeUndefined();
   });
 
   it('says a broken username rule once, in the rule’s own place', async () => {

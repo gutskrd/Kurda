@@ -1,80 +1,91 @@
 import type { TranslationKey } from '../i18n/translations';
-import { normalizeKurdish } from '@kurda/shared';
+import {
+  USERNAME_MAX,
+  USERNAME_MIN,
+  checkUsername as checkRule,
+  refusedChars,
+  usernameProblemWhileTyping,
+  type UsernameReason,
+  type UsernameRefusal,
+} from '@kurda/shared';
 
 /**
- * Client-side username validation for instant feedback (KUR-004). Mirrors the
- * backend's *structural* rules so the user sees problems as they type — but the
- * server re-validates and is the authority for reserved names, availability, and
- * the change cooldown (those come back as API errors, not checked here).
- */
-export const USERNAME_MIN = 3;
-export const USERNAME_MAX = 30;
-
-export type UsernameIssue =
-  | 'too-short'
-  | 'too-long'
-  | 'invalid-chars'
-  | 'edge-underscore'
-  | 'consecutive-underscore'
-  | 'numbers-only'
-  | 'no-letter';
-
-export type UsernameCheck =
-  | { ok: true; value: string }
-  /** `message` is a catalogue key; interpolate it with USERNAME_RULE_VARS. */
-  | { ok: false; issue: UsernameIssue; message: TranslationKey };
-
-const CHARSET = /^[A-Za-z0-9_êîûçşÊÎÛÇŞ]+$/;
-const HAS_LETTER = /[A-Za-zêîûçşÊÎÛÇŞ]/;
-const ONLY_DIGITS = /^[0-9]+$/;
-
-/**
- * Why a username was refused, as catalogue keys.
+ * The username rule on the phone, in the reader's words.
  *
- * The two length rules carry the limits as `{min}`/`{max}` rather than being
- * built with a template: a sentence assembled around a number reads in English
- * and in nothing else, and the limits are this module's to supply.
+ * The rule itself is shared/src/username.ts, the one the server checks with:
+ * lowercase letters with ç ê î ş û, digits, dots and underscores, 3 to 30 of
+ * them, and so on. What is here is what the phone says about a name, one
+ * sentence per rule, whether its own check found the problem as the name was
+ * typed or the server did (`INVALID_USERNAME`, api/errors.ts). The server is
+ * still the one that knows which names are taken, and the wait between
+ * changes.
  */
-const MESSAGE: Record<UsernameIssue, TranslationKey> = {
-  'too-short': 'username.rule.tooShort',
-  'too-long': 'username.rule.tooLong',
-  'invalid-chars': 'username.rule.invalidChars',
-  'edge-underscore': 'username.rule.edgeUnderscore',
-  'consecutive-underscore': 'username.rule.consecutiveUnderscore',
-  'numbers-only': 'username.rule.numbersOnly',
-  'no-letter': 'username.rule.noLetter',
-};
+export { USERNAME_MAX, USERNAME_MIN };
 
-/** The values the length rules interpolate, so a caller never invents them. */
+/** The values the length rules and the hint interpolate, so a caller never invents them. */
 export const USERNAME_RULE_VARS = { min: USERNAME_MIN, max: USERNAME_MAX } as const;
 
-const fail = (issue: UsernameIssue): UsernameCheck => ({ ok: false, issue, message: MESSAGE[issue] });
-
-/**
- * A handle as it was meant, from what was typed: without the "@" people put
- * in front of one because that is how a handle is written everywhere else,
- * and without the full stop or comma a keyboard leaves after a word. None of
- * the three can be part of a username, so nothing somebody chose is lost —
- * and "@dilan" was being told it had invalid characters. What is checked and
- * what is sent are both this.
- */
-export function cleanUsername(raw: string): string {
-  return String(raw ?? '')
-    .trim()
-    .replace(/^@+/, '')
-    .replace(/[.,]+$/, '')
-    .trim();
+/** Why a name was refused, as a catalogue key and what it interpolates. */
+export interface UsernameMessage {
+  message: TranslationKey;
+  vars: Record<string, string | number>;
 }
 
-/** Structural check + NFC-normalised value (same order as the server), of the handle as it was meant (`cleanUsername`). */
+export type UsernameCheck = { ok: true; value: string } | ({ ok: false; issue: UsernameReason } & UsernameMessage);
+
+/**
+ * The sentence for a rule a name broke, from its reason and, for a character
+ * that is not allowed, which ones. The characters are named ("“!” can’t be in
+ * a username") and spaces said as spaces; a reason the phone does not know (a
+ * newer server) gets the rule as a whole.
+ */
+export function usernameMessage(reason: string, chars?: unknown): UsernameMessage {
+  const vars = { ...USERNAME_RULE_VARS };
+  switch (reason) {
+    case 'invalid-chars': {
+      const list = Array.isArray(chars) ? chars.filter((c): c is string => typeof c === 'string') : [];
+      const { visible, unseen } = refusedChars(list);
+      if (visible.length > 0) return { message: 'username.rule.charNotAllowed', vars: { ...vars, chars: visible.join(' ') } };
+      return { message: unseen ? 'username.rule.spaces' : 'username.rule.invalidChars', vars };
+    }
+    case 'too-short':
+      return { message: 'username.rule.tooShort', vars };
+    case 'too-long':
+      return { message: 'username.rule.tooLong', vars };
+    case 'edge-punctuation':
+      return { message: 'username.rule.edge', vars };
+    case 'double-punctuation':
+      return { message: 'username.rule.sideBySide', vars };
+    case 'numbers-only':
+      return { message: 'username.rule.numbersOnly', vars };
+    case 'no-letter':
+      return { message: 'username.rule.noLetter', vars };
+    case 'reserved':
+      return { message: 'error.code.usernameUnavailable', vars };
+    default:
+      return { message: 'username.rule.invalidChars', vars };
+  }
+}
+
+const refused = (refusal: UsernameRefusal): UsernameCheck => ({
+  ok: false,
+  issue: refusal.reason,
+  ...usernameMessage(refusal.reason, refusal.reason === 'invalid-chars' ? refusal.chars : undefined),
+});
+
+/** The whole rule, and the name as it is sent: NFC, trimmed, lowercase. */
 export function checkUsername(raw: string): UsernameCheck {
-  const v = cleanUsername(normalizeKurdish(String(raw ?? '')));
-  if (v.length < USERNAME_MIN) return fail('too-short');
-  if (v.length > USERNAME_MAX) return fail('too-long');
-  if (!CHARSET.test(v)) return fail('invalid-chars');
-  if (v.startsWith('_') || v.endsWith('_')) return fail('edge-underscore');
-  if (v.includes('__')) return fail('consecutive-underscore');
-  if (ONLY_DIGITS.test(v)) return fail('numbers-only');
-  if (!HAS_LETTER.test(v)) return fail('no-letter');
-  return { ok: true, value: v };
+  const check = checkRule(raw);
+  return check.ok ? check : refused(check);
+}
+
+/**
+ * What is said about a name while it is still being typed: only what more
+ * typing cannot mend (a character not allowed, a mark at the start or two
+ * side by side, a name too long). "ha" and "hamo." are said once the person
+ * is done, on Continue or Save.
+ */
+export function usernameIssueWhileTyping(raw: string): UsernameCheck | null {
+  const problem = usernameProblemWhileTyping(raw);
+  return problem ? refused(problem) : null;
 }

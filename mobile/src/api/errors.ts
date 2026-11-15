@@ -19,6 +19,7 @@ import { isMissingRoute, MAINTENANCE_CODE } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { ApiError } from './types';
 import { FIELD_ERROR_VARS, PASSWORD_RULES_KEY } from '../auth/validators';
+import { usernameMessage } from '../username/validate';
 import { limitErrorText } from '../limits/limitCopy';
 
 export type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
@@ -98,8 +99,10 @@ export const CODE_COPY: Record<string, TranslationKey> = {
  * Codes whose code alone is not enough: which rule a password or a username
  * broke (`details.reason`, api/src/auth/password-policy.ts and
  * api/src/users/username.ts), and which field of a form the server could not
- * accept. The password's reasons get the words the phone's own field check
- * already says; the browser says the same things for the same reasons.
+ * accept. The password's and the username's reasons get the words the
+ * phone's own field checks already say (a username's refused characters
+ * named, username/validate.ts); the browser says the same things for the same
+ * reasons.
  */
 const PASSWORD_REASON: Record<string, TranslationKey> = {
   'too-short': 'field.passwordTooShort',
@@ -107,22 +110,15 @@ const PASSWORD_REASON: Record<string, TranslationKey> = {
   'needs-letter': 'field.passwordNeedsLetter',
   'needs-number': 'field.passwordNeedsNumber',
 };
-const USERNAME_REASON: Record<string, TranslationKey> = {
-  'too-short': 'field.invalidUsername',
-  'too-long': 'field.invalidUsername',
-  'invalid-chars': 'error.code.usernameChars',
-  'edge-underscore': 'error.code.usernameUnderscore',
-  'consecutive-underscore': 'error.code.usernameUnderscore',
-  'numbers-only': 'error.code.usernameLetter',
-  'no-letter': 'error.code.usernameLetter',
-  reserved: 'error.code.usernameUnavailable',
-};
 
 function byReason(error: ApiError, t: Translate): string | null {
   const reason = (error.details as { reason?: unknown } | undefined)?.reason;
   const key = typeof reason === 'string' ? reason : '';
   if (error.code === 'WEAK_PASSWORD') return t(PASSWORD_REASON[key] ?? PASSWORD_RULES_KEY, FIELD_ERROR_VARS);
-  if (error.code === 'INVALID_USERNAME') return t(USERNAME_REASON[key] ?? 'error.code.usernameChars', FIELD_ERROR_VARS);
+  if (error.code === 'INVALID_USERNAME') {
+    const said = usernameMessage(key, (error.details as { chars?: unknown } | undefined)?.chars);
+    return t(said.message, said.vars);
+  }
   if (error.code === 'VALIDATION_ERROR') {
     // the issues name the field; an email address is the one people most often mistype
     const issues = Array.isArray(error.details) ? (error.details as Array<{ path?: unknown }>) : [];

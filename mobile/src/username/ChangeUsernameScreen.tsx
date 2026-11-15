@@ -8,7 +8,8 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { checkUsername, USERNAME_MAX, USERNAME_RULE_VARS } from './validate';
+import { checkUsername, usernameIssueWhileTyping, USERNAME_MAX } from './validate';
+import { UsernameKeys, useUsernameTyping } from './typing';
 import { useI18n } from '../i18n/I18nContext';
 import type { ApiError } from '../api/types';
 import { describeError, describeErrorOr, type Translate } from '../api/errors';
@@ -49,6 +50,13 @@ const CHECK_AFTER_MS = 450;
  * is about: a name taken or not allowed, a password that is not right, the
  * wait with the day it ends, and anything else as a plain "couldn't update"
  * rather than the server's English.
+ *
+ * The new name is written in lowercase as it is typed, with the Kurdish
+ * letters as keys under the field (./typing.tsx). What is said under it while
+ * typing is only what more typing cannot mend, a character that is not allowed
+ * named as such; "too short" and a dot at the end wait until the field is left
+ * or Save is pressed. The field has no length limit of its own, so a name too
+ * long is said rather than cut short at the next key.
  */
 export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client, refreshUser } = useAuth();
@@ -61,10 +69,17 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
   // the account's name did not load: without it nothing can be compared, so the screen says so and asks again
   const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [input, setInput] = useState('');
+  // the field was left (or Save pressed) since it was last typed in: every rule the name breaks is said, not only what typing cannot mend
+  const [settled, setSettled] = useState(false);
   const [password, setPassword] = useState('');
   const [verdict, setVerdict] = useState<Verdict>(null);
   const [saving, setSaving] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const typing = useUsernameTyping(input, (next) => {
+    setInput(next);
+    setSettled(false);
+    setServerError(null);
+  });
   const [passwordError, setPasswordError] = useState<string | null>(null);
   // a limit on the account (a new name is shown to others) — said with a way to Account standing
   const [limit, setLimit] = useState<ApiError | null>(null);
@@ -110,6 +125,8 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
   const canSubmit = candidate !== null && !saving && !done && said?.free !== false && (status?.needsPassword !== true || password.length > 0);
 
   const submit = useCallback(async () => {
+    // a name the rule refuses is said in full under the field, rather than Save doing nothing
+    if (!check.ok) setSettled(true);
     if (candidate === null || !canSubmit || !status) return;
     setSaving(true);
     setServerError(null);
@@ -138,22 +155,25 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
       return;
     }
     setServerError(refusalText(res.error, t, locale));
-  }, [candidate, canSubmit, status, client, password, refreshUser, onExit, t, locale]);
+  }, [check.ok, candidate, canSubmit, status, client, password, refreshUser, onExit, t, locale]);
 
   // inline hint under the field: a client rule, a server error, or an all-clear
+  const ruled = settled ? check : usernameIssueWhileTyping(input);
   const hint: { text: string; tone: 'error' | 'ok' } | null = serverError
     ? { text: serverError, tone: 'error' }
     : !touched
       ? null
-      : !check.ok
-        ? { text: t(check.message, USERNAME_RULE_VARS), tone: 'error' }
-        : !changed
-          ? { text: t('username.alreadyYours'), tone: 'error' }
-          : said?.free === false
-            ? { text: said.text, tone: 'error' }
-            : said?.free === true
-              ? { text: t('username.change.available'), tone: 'ok' }
-              : { text: t('username.looksGood'), tone: 'ok' };
+      : ruled && !ruled.ok
+        ? { text: t(ruled.message, ruled.vars), tone: 'error' }
+        : !check.ok
+          ? null
+          : !changed
+            ? { text: t('username.alreadyYours'), tone: 'error' }
+            : said?.free === false
+              ? { text: said.text, tone: 'error' }
+              : said?.free === true
+                ? { text: t('username.change.available'), tone: 'ok' }
+                : { text: t('username.looksGood'), tone: 'ok' };
 
   return (
     <GradientBackground>
@@ -189,19 +209,22 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
                       <TextInput
                         style={[styles.input, { color: colors.textPrimary }]}
                         value={input}
-                        onChangeText={(next) => {
-                          setInput(next);
-                          setServerError(null);
-                        }}
+                        onChangeText={typing.onChangeText}
+                        selection={typing.selection}
+                        onSelectionChange={typing.onSelectionChange}
+                        onBlur={() => setSettled(true)}
                         autoCapitalize="none"
                         autoCorrect={false}
-                        maxLength={USERNAME_MAX}
+                        spellCheck={false}
+                        autoComplete="username"
+                        textContentType="username"
                         // no example in the field: one was written in English, and the line under the field already says what a name may be made of
                         accessibilityLabel={t('username.new')}
                         editable={!saving && !done}
                       />
                       {said?.free === true && !serverError ? <Icon name="check" size={18} color={colors.success} /> : null}
                     </View>
+                    <UsernameKeys onKey={typing.typeKey} disabled={saving || done} />
 
                     {hint ? (
                       <Text style={[styles.hint, { color: hint.tone === 'error' ? colors.danger : colors.success }]} accessibilityLiveRegion="polite">

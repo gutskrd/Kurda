@@ -1,16 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { GAME_CONTENT_KINDS, checkGameContent, contentHeadline, gameContentSchema, isGameContentKind, kurdishTexts, meaningIn, sameWords } from './content.js';
 import { LEARN_GAMES, gameOfKind } from './registry.js';
+import { LORE_KINDS, isLoreKind } from '../lore.js';
 
 const en = (text: string) => ({ en: text });
 
 describe('the content kinds', () => {
-  it('each belongs to exactly one game', () => {
+  it('each belongs to exactly one game, but the Stories’ collections, which belong to none', () => {
     for (const kind of GAME_CONTENT_KINDS) {
+      expect(gameContentSchema(kind)).toBeDefined();
+      if (isLoreKind(kind)) {
+        expect(LEARN_GAMES.filter((g) => g.contentKinds.includes(kind)), kind).toHaveLength(0);
+        expect(gameOfKind(kind)).toBeNull();
+        continue;
+      }
       expect(LEARN_GAMES.filter((g) => g.contentKinds.includes(kind)), kind).toHaveLength(1);
       expect(gameOfKind(kind)).not.toBeNull();
-      expect(gameContentSchema(kind)).toBeDefined();
     }
+    expect(LORE_KINDS.every((k) => isGameContentKind(k))).toBe(true);
   });
 });
 

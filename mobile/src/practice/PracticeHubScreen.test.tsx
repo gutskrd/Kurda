@@ -88,7 +88,7 @@ describe('the practice hub', () => {
   it('offers the unit finished last when nothing is due', async () => {
     open({ ...learned, due: 0 });
     const hero = await screen.findByTestId('practice-hero');
-    expect(within(hero).getByText('Unit 2 review')).toBeTruthy();
+    expect(within(hero).getByText('Chapter 2 review')).toBeTruthy();
     fireEvent.click(within(hero).getByRole('button', { name: 'Start, Food, +5–10 XP' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Practice', { mode: 'unit', unitId: 'u2' });
   });
@@ -108,8 +108,8 @@ describe('the practice hub', () => {
 
   it('picks a unit to review from a sheet of the units finished', async () => {
     open(learned);
-    fireEvent.click(await screen.findByRole('button', { name: 'Review a unit, 2 units finished' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Unit 1, Greetings' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Review a chapter, 2 chapters finished' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Chapter 1, Greetings' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Practice', { mode: 'unit', unitId: 'u1' });
   });
 
@@ -122,7 +122,7 @@ describe('the practice hub', () => {
       'Words, Finish a lesson to practise its words',
       'Listen, Finish a lesson with listening first',
       'Speak, Finish a lesson with speaking first',
-      'Review a unit, Finish a unit to review it here',
+      'Review a chapter, Finish a chapter to review it here',
     ]) {
       const button = screen.getByRole('button', { name });
       expect(button.getAttribute('aria-disabled')).toBe('true');

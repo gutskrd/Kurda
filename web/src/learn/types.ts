@@ -41,7 +41,10 @@ export interface SkillNode {
 /** GET /courses/:id/map */
 export interface CourseMap {
   course: { id: string; title: string };
-  units: Array<{ unitId: string; title: string; skills: SkillNode[] }>;
+  /** up to the last unit with a lesson out; each chapter of the road with the story that closes it, once learners can read it */
+  units: Array<{ unitId: string; title: string; skills: SkillNode[]; story?: { slug: string; title: string } | null }>;
+  /** the unit after the last one out, while it is being made; `recordedBy` names who records it (the road's are Hamo's) */
+  upcoming?: { number: number; title: string; recordedBy: 'hamo' | null } | null;
 }
 
 /** GET /lessons/:id/session — a lesson's session, new or resumed */

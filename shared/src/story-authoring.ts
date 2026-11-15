@@ -9,10 +9,11 @@
  * shows a problem the server does not have (or misses one it does).
  *
  * A draft is allowed to be unfinished: a text still between lengths, too few
- * questions, even no text yet. Those are warnings while it is a draft and
- * errors when it is submitted or published. Everything else — a broken
- * question, a gloss for a word the text does not have, a sentence too long to
- * record — is wrong at any stage, and is an error from the first save.
+ * questions, a saga not yet cut into sections, even no text yet. Those are
+ * warnings while it is a draft and errors when it is submitted or published.
+ * Everything else — a broken question, a gloss for a word the text does not
+ * have, a sentence too long to record, a translation in a language the app is
+ * not offered in — is wrong at any stage, and is an error from the first save.
  */
 import { LESSON_AUDIO_TEXT_MAX } from './lesson-audio.js';
 import { normalizeKurdish } from './kurdish-text.js';
@@ -34,11 +35,20 @@ import {
   STORY_BODY_MAX,
   STORY_CATEGORY_SLUG_PATTERN,
   STORY_COVER_MAX,
+  STORY_HEADING_MAX,
   STORY_LENGTHS,
   STORY_LEVELS,
+  STORY_NOTES_MAX,
+  STORY_NOTE_BODY_MAX,
+  STORY_NOTE_TITLE_MAX,
   STORY_READING_MINUTES_MAX,
+  STORY_REFLECTIONS_MAX,
+  STORY_REFLECTION_MAX,
+  STORY_REVIEW_NOTE_MAX,
   STORY_SENTENCE_SOFT_MAX,
+  STORY_SOURCES_MAX,
   STORY_SOURCE_MAX,
+  STORY_SOURCE_NOTE_MAX,
   STORY_SOURCE_URL_MAX,
   STORY_SUMMARY_MAX,
   STORY_TITLE_MAX,
@@ -48,21 +58,43 @@ import {
   glossSpans,
   isQuestionKind,
   isStoryDialect,
+  isStoryHeading,
   isStoryLanguage,
   isStoryLevel,
+  isStoryNoteKind,
+  isStorySourceType,
   isStoryTradition,
+  isStoryTranslationReviewStatus,
+  storyHeadingTitle,
   storyLengthFor,
   storyParagraphs,
+  storySections,
   storySentences,
   type StoryDialect,
   type StoryGlossEntry,
   type StoryLanguage,
   type StoryLength,
+  type StoryMetaTranslation,
+  type StoryNoteTranslation,
+  type StoryQuestionTranslation,
   type StoryTradition,
+  type StoryTranslationReviewEntry,
 } from './stories.js';
 
 /** A slug: lower-case Latin letters, digits and dashes, as the stories table checks it. */
 export const STORY_SLUG_PATTERN = /^[a-z0-9-]{3,80}$/;
+
+/**
+ * The chapter of the Kurmanji Road a story ends, when it is one: the story
+ * Hamo tells at a chapter's end has a slug that starts with the chapter's
+ * number (`road-01-li-ber-deriye-sor`). It is recorded in Hamo's voice and
+ * goes online with its chapter. Null for any other story.
+ */
+export function roadStoryChapter(slug: string): number | null {
+  const m = /^road-(\d{2})-[a-z0-9-]+$/.exec(slug);
+  const n = m ? Number(m[1]) : 0;
+  return n >= 1 && n <= 12 ? n : null;
+}
 
 export function isStorySlug(v: unknown): v is string {
   return typeof v === 'string' && STORY_SLUG_PATTERN.test(v);
@@ -118,6 +150,35 @@ export interface StoryQuestionInput {
   evidenceParagraph: number | null;
   /** index into storySentences(paragraph), within the evidence paragraph */
   evidenceSentence: number | null;
+  /**
+   * The question in interface languages, by locale: the options in the same
+   * order as `options`, so the same index is right in each. Left out, none.
+   */
+  translations?: Record<string, StoryQuestionTranslation>;
+}
+
+/** An open question to think about after reading, as an editor writes it (`StoryReflection`). */
+export interface StoryReflectionInput {
+  text: string;
+  translations?: Record<string, string>;
+}
+
+/** A note beside the story, as an editor writes it (`StoryNote`); the kind is checked, since stored or imported data may carry anything. */
+export interface StoryNoteInput {
+  kind: string;
+  title: string;
+  body: string;
+  translations?: Record<string, StoryNoteTranslation>;
+}
+
+/** A source, as an editor writes it (`StorySourceEntry`); an empty optional field may be null. */
+export interface StorySourceInput {
+  title: string;
+  author?: string | null;
+  url?: string | null;
+  /** a StorySourceType; checked */
+  type: string;
+  note?: string | null;
 }
 
 /**
@@ -145,6 +206,21 @@ export interface StoryLibraryInput {
   cover: string | null;
   /** the editor's reading time, standing in for the estimate */
   readingMinutes: number | null;
+  /**
+   * What a legend carries besides its text, all optional so a story written
+   * before them reads as having none: the title and summary per interface
+   * language, open questions to think about, notes, and its sources.
+   */
+  metaTranslations?: Record<string, StoryMetaTranslation>;
+  reflections?: StoryReflectionInput[];
+  notes?: StoryNoteInput[];
+  sources?: StorySourceInput[];
+  /**
+   * Which translations a native speaker has read, per interface language. A
+   * file may set it; the admin routes never take it from an editor's save
+   * (the per-language review route records it, with who and when).
+   */
+  translationReview?: Record<string, StoryTranslationReviewEntry>;
 }
 
 export function emptyStoryLibraryInput(): StoryLibraryInput {
@@ -159,6 +235,10 @@ export function emptyStoryLibraryInput(): StoryLibraryInput {
     translations: {},
     cover: null,
     readingMinutes: null,
+    metaTranslations: {},
+    reflections: [],
+    notes: [],
+    sources: [],
   };
 }
 
@@ -171,6 +251,81 @@ export interface StoryInput extends StoryLibraryInput {
   body: string;
   glossary: StoryGlossEntry[];
   questions: StoryQuestionInput[];
+}
+
+// ── tidying what a legend carries ─────────────────────────────────────────
+// One copy for the API's save and the admin editor's draft, so what the editor
+// checks as it is typed is what the API stores: each part trimmed, a line
+// ending of one kind, a part left wholly empty dropped. A part only half
+// written stays, for `validateStory` to point at.
+
+function trimmed(v: unknown): string {
+  return typeof v === 'string' ? v.replace(/\r\n?/g, '\n').trim() : '';
+}
+
+/** Each entry of a map tidied, those that tidy to nothing dropped. */
+function tidyEach<T, U>(map: Record<string, T> | null | undefined, tidy: (v: T) => U | null): Record<string, U> {
+  const out: Record<string, U> = {};
+  if (!map || typeof map !== 'object') return out;
+  for (const [locale, value] of Object.entries(map)) {
+    const t = tidy(value);
+    if (t !== null) out[locale] = t;
+  }
+  return out;
+}
+
+/** One language's title and summary; null when neither is written. */
+export function tidyMetaTranslation(m: StoryMetaTranslation | null | undefined): StoryMetaTranslation | null {
+  const title = trimmed(m?.title);
+  const summary = trimmed(m?.summary);
+  return title || summary ? { ...(title ? { title } : {}), ...(summary ? { summary } : {}) } : null;
+}
+
+/** One language's question; null when nothing of it is written. */
+export function tidyQuestionTranslation(t: StoryQuestionTranslation | null | undefined): StoryQuestionTranslation | null {
+  if (!t || typeof t !== 'object') return null;
+  const prompt = trimmed(t.prompt);
+  const options = (Array.isArray(t.options) ? t.options : []).map(trimmed);
+  const explanation = trimmed(t.explanation);
+  if (!prompt && !explanation && options.every((o) => !o)) return null;
+  return { prompt, options, ...(explanation ? { explanation } : {}) };
+}
+
+/** One language's note; null when neither its title nor its text is written. */
+export function tidyNoteTranslation(t: StoryNoteTranslation | null | undefined): StoryNoteTranslation | null {
+  const title = trimmed(t?.title);
+  const body = trimmed(t?.body);
+  return title || body ? { title, body } : null;
+}
+
+/** A question's translations, tidied. */
+export function tidyQuestionTranslations(map: Record<string, StoryQuestionTranslation> | null | undefined): Record<string, StoryQuestionTranslation> {
+  return tidyEach(map, tidyQuestionTranslation);
+}
+
+/** The title and summary per language, the reflections, the notes and the sources, tidied. */
+export function tidyStoryCompanions(
+  story: Pick<StoryLibraryInput, 'metaTranslations' | 'reflections' | 'notes' | 'sources'>,
+): Required<Pick<StoryLibraryInput, 'metaTranslations' | 'reflections' | 'notes' | 'sources'>> {
+  return {
+    metaTranslations: tidyEach(story.metaTranslations, tidyMetaTranslation),
+    reflections: (story.reflections ?? []).map((r) => ({
+      text: trimmed(r?.text),
+      translations: tidyEach(r?.translations, (t) => trimmed(t) || null),
+    })),
+    notes: (story.notes ?? []).map((n) => ({
+      kind: trimmed(n?.kind),
+      title: trimmed(n?.title),
+      body: trimmed(n?.body),
+      translations: tidyEach(n?.translations, tidyNoteTranslation),
+    })),
+    sources: (story.sources ?? []).map((src) => {
+      const author = trimmed(src?.author);
+      const url = trimmed(src?.url);
+      const note = trimmed(src?.note);
+      return { title: trimmed(src?.title), type: trimmed(src?.type), ...(author ? { author } : {}), ...(url ? { url } : {}), ...(note ? { note } : {}) };
+    }),
+  };
 }
 
 /** The language a story is in, read from its input: 'ku' unless it says otherwise. */
@@ -206,7 +361,10 @@ export interface StoryValidation {
 export type StoryValidationStage = 'draft' | 'publish';
 
 /** Problems a draft may have and a submitted or published story may not. */
-const UNFINISHED_IN_DRAFT = new Set(['BODY_EMPTY', 'WORD_COUNT_OUTSIDE_BANDS', 'BANK_TOO_SMALL', 'CATEGORY_MISSING']);
+const UNFINISHED_IN_DRAFT = new Set(['BODY_EMPTY', 'WORD_COUNT_OUTSIDE_BANDS', 'BANK_TOO_SMALL', 'CATEGORY_MISSING', 'SAGA_SECTIONS']);
+
+/** A saga is told in sections: fewer headings than this and it is one long text, which the reader cannot navigate. */
+export const SAGA_MIN_SECTIONS = 2;
 
 /**
  * Abbreviations that end in a full stop. The reader and the audio studio cut a
@@ -222,7 +380,9 @@ const KIND_SHARE_MAX = 0.6;
 /** Below this many questions, shares and patterns say nothing yet. */
 const PATTERN_MIN_QUESTIONS = 3;
 
-const LENGTH_NAME: Record<StoryLength, string> = { short: 'short', medium: 'medium', long: 'long' };
+const LENGTH_NAME: Record<StoryLength, string> = { short: 'short', medium: 'medium', long: 'long', saga: 'saga' };
+const SHORTEST: StoryLength = STORY_LENGTHS[0];
+const LONGEST: StoryLength = STORY_LENGTHS[STORY_LENGTHS.length - 1]!;
 
 function nearestLength(dialect: StoryDialect, words: number): { length: StoryLength; min: number; max: number } {
   let best: { length: StoryLength; min: number; max: number; gap: number } | null = null;
@@ -235,8 +395,20 @@ function nearestLength(dialect: StoryDialect, words: number): { length: StoryLen
 }
 
 function blank(v: string | null | undefined): boolean {
-  return v === null || v === undefined || v.trim() === '';
+  return v === null || v === undefined || typeof v !== 'string' || v.trim() === '';
 }
+
+/** The length of a string as stored (trimmed), or 0 for anything that is not one. */
+function size(v: unknown): number {
+  return typeof v === 'string' ? v.trim().length : 0;
+}
+
+/** The entries of what should be a map, or none when it is not one (stored or imported data may carry anything). */
+function entriesOf<T>(v: Record<string, T> | null | undefined): Array<[string, T]> {
+  return v !== null && typeof v === 'object' && !Array.isArray(v) ? Object.entries(v) : [];
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** A web address a browser would open over https: parsed, not pattern-matched, so "https://" alone is refused too. */
 function isHttpsUrl(v: string): boolean {
@@ -264,7 +436,13 @@ function sameOption(v: string): string {
  *
  * Errors only from 'publish' (warnings in a draft): no text yet, a word count
  * between the length bands, fewer questions than MIN_QUESTION_BANK, no
- * category to file it under.
+ * category to file it under, a saga with fewer than SAGA_MIN_SECTIONS headings.
+ *
+ * Sections: a heading (`## Title`, a paragraph of its own) is one short line,
+ * never the evidence of a question, and sits at the same place in every
+ * translation. A question's translations are in interface languages, with as
+ * many options as the question; the reflections, notes, sources and the
+ * per-language review are checked for their shape and limits.
  *
  * The library fields: a language, a tradition and a category slug of the
  * known shapes, the attribution within its limits, a source address that is
@@ -327,7 +505,7 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
   if (!blank(story.sourceUrl) && !isHttpsUrl(story.sourceUrl!.trim())) {
     error('SOURCE_URL', 'sourceUrl', 'the source address must start with https://');
   }
-  if (traditionOk && story.tradition !== 'original' && blank(story.source)) {
+  if (traditionOk && story.tradition !== 'original' && blank(story.source) && (story.sources ?? []).length === 0) {
     warn('SOURCE_MISSING', 'source', 'a traditional or adapted story should name where it comes from');
   }
   const minutes = story.readingMinutes;
@@ -352,14 +530,38 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
       error(
         'WORD_COUNT_OUTSIDE_BANDS',
         'body',
-        words < near.min && near.length === 'short'
+        words < near.min && near.length === SHORTEST
           ? `${words} words is too few: the shortest length is ${band}`
-          : words > near.max && near.length === 'long'
+          : words > near.max && near.length === LONGEST
             ? `${words} words is too many: the longest length is ${band}`
             : `${words} words is between the lengths: the nearest is ${band}`,
       );
     }
   }
+
+  // ── the sections ──────────────────────────────────────────────────────────
+  const sections = storySections(paragraphs);
+  if (length === 'saga' && sections.length < SAGA_MIN_SECTIONS) {
+    error(
+      'SAGA_SECTIONS',
+      'body',
+      `a saga is told in sections: give it at least ${SAGA_MIN_SECTIONS} headings, each a paragraph of its own starting with “## ” (it has ${sections.length})`,
+    );
+  }
+  paragraphs.forEach((paragraph, p) => {
+    const title = storyHeadingTitle(paragraph);
+    if (title === null) return;
+    const path = `body.paragraphs[${p}]`;
+    if (title.length > STORY_HEADING_MAX) {
+      error('HEADING_TOO_LONG', path, `keep a heading to ${STORY_HEADING_MAX} characters, and leave an empty line between it and the text under it`);
+    } else if (storySentences(title).length > 1) {
+      error('HEADING_SENTENCES', path, 'a heading is one line, not sentences of the story: leave an empty line between it and the text under it');
+    }
+    const next = paragraphs[p + 1];
+    if (next === undefined || isStoryHeading(next)) {
+      warn('HEADING_EMPTY_SECTION', path, `the section “${title}” has no text under it`);
+    }
+  });
 
   // ── the translations ──────────────────────────────────────────────────────
   for (const [locale, text] of Object.entries(story.translations ?? {})) {
@@ -373,17 +575,32 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
       continue;
     }
     if (text.length > STORY_TRANSLATION_MAX) error('TRANSLATION_TOO_LONG', path, `keep a translation to ${STORY_TRANSLATION_MAX} characters`);
-    const n = storyParagraphs(text).length;
+    const translated = storyParagraphs(text);
+    const n = translated.length;
     if (n !== paragraphs.length) {
       error(
         'TRANSLATION_PARAGRAPHS',
         path,
         `the translation has ${n} paragraph${n === 1 ? '' : 's'} and the text ${paragraphs.length}: they are shown side by side, so separate them the same way`,
       );
+    } else {
+      // a heading sits beside a heading: the reader shows a section's title over the section in either language
+      const off = paragraphs.findIndex((para, i) => isStoryHeading(para) !== isStoryHeading(translated[i]!));
+      if (off >= 0) {
+        error(
+          'TRANSLATION_HEADINGS',
+          path,
+          isStoryHeading(paragraphs[off]!)
+            ? `paragraph ${off + 1} is a heading in the text: start the translated one with “## ” too`
+            : `paragraph ${off + 1} of the translation starts with “## ”, but in the text it is not a heading`,
+        );
+      }
     }
   }
 
   paragraphs.forEach((paragraph, p) => {
+    // a heading is checked as a heading (above), not as sentences of the story
+    if (isStoryHeading(paragraph)) return;
     const path = `body.paragraphs[${p}]`;
     let listed = /^\(?\p{Nd}{1,3}[.)]\s/u.test(paragraph);
     for (const sentence of storySentences(paragraph)) {
@@ -510,6 +727,8 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
     const ep = q.evidenceParagraph;
     if (ep !== null && (!Number.isInteger(ep) || ep < 0 || ep >= paragraphs.length)) {
       error('EVIDENCE_PARAGRAPH', `${path}.evidenceParagraph`, `the text has ${paragraphs.length} paragraphs`);
+    } else if (ep !== null && isStoryHeading(paragraphs[ep]!)) {
+      error('EVIDENCE_HEADING', `${path}.evidenceParagraph`, 'that paragraph is a section heading: point at the text that holds the answer');
     } else if (q.evidenceSentence !== null) {
       const sentences = ep === null ? null : storySentences(paragraphs[ep]!);
       const es = q.evidenceSentence;
@@ -521,6 +740,39 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
     }
     if (ep === null && q.kind !== 'gist') {
       warn('EVIDENCE_MISSING', `${path}.evidenceParagraph`, 'say which paragraph holds the answer, so the reveal can show it');
+    }
+
+    for (const [locale, t] of entriesOf(q.translations)) {
+      const at = `${path}.translations.${locale}`;
+      if (!isAppLocale(locale)) {
+        error('QUESTION_TRANSLATION_LOCALE', at, `“${locale}” is not a language the app is offered in`);
+        continue;
+      }
+      if (t === null || typeof t !== 'object') {
+        error('QUESTION_TRANSLATION_PROMPT_EMPTY', `${at}.prompt`, 'a translated question has its prompt and every option');
+        continue;
+      }
+      if (blank(t.prompt)) error('QUESTION_TRANSLATION_PROMPT_EMPTY', `${at}.prompt`, 'translate the question too, or leave this language out');
+      else if (size(t.prompt) > QUESTION_PROMPT_MAX) {
+        error('QUESTION_TRANSLATION_PROMPT_TOO_LONG', `${at}.prompt`, `keep a question to ${QUESTION_PROMPT_MAX} characters`);
+      }
+      const options = Array.isArray(t.options) ? t.options : [];
+      if (options.length !== q.options.length) {
+        error(
+          'QUESTION_TRANSLATION_OPTIONS',
+          `${at}.options`,
+          `the question has ${q.options.length} options and this translation ${options.length}: translate each, in the same order`,
+        );
+      }
+      options.forEach((option, o) => {
+        if (blank(option)) error('QUESTION_TRANSLATION_OPTION_EMPTY', `${at}.options[${o}]`, 'an option is empty');
+        else if (size(option) > QUESTION_OPTION_MAX) {
+          error('QUESTION_TRANSLATION_OPTION_TOO_LONG', `${at}.options[${o}]`, `keep an option to ${QUESTION_OPTION_MAX} characters`);
+        }
+      });
+      if (size(t.explanation) > QUESTION_EXPLANATION_MAX) {
+        error('QUESTION_TRANSLATION_EXPLANATION_TOO_LONG', `${at}.explanation`, `keep an explanation to ${QUESTION_EXPLANATION_MAX} characters`);
+      }
     }
   });
 
@@ -541,5 +793,103 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
     }
   }
 
+  validateCompanions(story, error);
   return { errors, warnings };
+}
+
+type Report = (code: string, path: string, message: string) => void;
+
+/** A translation map's entries, each in an interface language: anything else is reported and left out. */
+function translatedEntries<T>(map: Record<string, T> | null | undefined, path: string, code: string, error: Report): Array<[string, T]> {
+  return entriesOf(map).filter(([locale]) => {
+    if (isAppLocale(locale)) return true;
+    error(code, `${path}.${locale}`, `“${locale}” is not a language the app is offered in`);
+    return false;
+  });
+}
+
+/**
+ * What a story carries besides its text and questions: the title and summary
+ * per language, the reflections, the notes, the sources and the record of
+ * which translations were reviewed. Each within its limits and in an
+ * interface language; a source's address on https, like the story's own.
+ */
+function validateCompanions(story: StoryInput, error: Report): void {
+  for (const [locale, meta] of translatedEntries(story.metaTranslations, 'metaTranslations', 'META_TRANSLATION_LOCALE', error)) {
+    const path = `metaTranslations.${locale}`;
+    if (meta === null || typeof meta !== 'object' || (blank(meta.title) && blank(meta.summary))) {
+      error('META_TRANSLATION_EMPTY', path, 'give the title or the summary in this language, or leave the language out');
+      continue;
+    }
+    if (size(meta.title) > STORY_TITLE_MAX) error('META_TITLE_TOO_LONG', `${path}.title`, `keep the title to ${STORY_TITLE_MAX} characters`);
+    if (size(meta.summary) > STORY_SUMMARY_MAX) error('META_SUMMARY_TOO_LONG', `${path}.summary`, `keep the summary to ${STORY_SUMMARY_MAX} characters`);
+  }
+
+  const reflections = story.reflections ?? [];
+  if (reflections.length > STORY_REFLECTIONS_MAX) {
+    error('REFLECTIONS_TOO_MANY', 'reflections', `keep it to ${STORY_REFLECTIONS_MAX} questions to think about`);
+  }
+  reflections.forEach((r, i) => {
+    const path = `reflections[${i}]`;
+    if (blank(r?.text)) error('REFLECTION_EMPTY', `${path}.text`, 'write the question, or remove it');
+    else if (size(r.text) > STORY_REFLECTION_MAX) error('REFLECTION_TOO_LONG', `${path}.text`, `keep it to ${STORY_REFLECTION_MAX} characters`);
+    for (const [locale, text] of translatedEntries(r?.translations, `${path}.translations`, 'REFLECTION_TRANSLATION_LOCALE', error)) {
+      if (blank(text)) error('REFLECTION_TRANSLATION_EMPTY', `${path}.translations.${locale}`, 'a translation left empty: write it, or leave the language out');
+      else if (size(text) > STORY_REFLECTION_MAX) {
+        error('REFLECTION_TRANSLATION_TOO_LONG', `${path}.translations.${locale}`, `keep it to ${STORY_REFLECTION_MAX} characters`);
+      }
+    }
+  });
+
+  const notes = story.notes ?? [];
+  if (notes.length > STORY_NOTES_MAX) error('NOTES_TOO_MANY', 'notes', `keep it to ${STORY_NOTES_MAX} notes`);
+  notes.forEach((n, i) => {
+    const path = `notes[${i}]`;
+    if (!isStoryNoteKind(n?.kind)) error('NOTE_KIND', `${path}.kind`, 'say whether the note is about history, the legend, the versions or the culture');
+    if (blank(n?.title)) error('NOTE_TITLE_EMPTY', `${path}.title`, 'give the note a title');
+    else if (size(n.title) > STORY_NOTE_TITLE_MAX) error('NOTE_TITLE_TOO_LONG', `${path}.title`, `keep a title to ${STORY_NOTE_TITLE_MAX} characters`);
+    if (blank(n?.body)) error('NOTE_BODY_EMPTY', `${path}.body`, 'write the note');
+    else if (size(n.body) > STORY_NOTE_BODY_MAX) error('NOTE_BODY_TOO_LONG', `${path}.body`, `keep a note to ${STORY_NOTE_BODY_MAX} characters`);
+    for (const [locale, t] of translatedEntries(n?.translations, `${path}.translations`, 'NOTE_TRANSLATION_LOCALE', error)) {
+      const at = `${path}.translations.${locale}`;
+      if (t === null || typeof t !== 'object' || blank(t.title) || blank(t.body)) {
+        error('NOTE_TRANSLATION_EMPTY', at, 'a translated note has its title and its text');
+        continue;
+      }
+      if (size(t.title) > STORY_NOTE_TITLE_MAX) error('NOTE_TRANSLATION_TOO_LONG', `${at}.title`, `keep a title to ${STORY_NOTE_TITLE_MAX} characters`);
+      if (size(t.body) > STORY_NOTE_BODY_MAX) error('NOTE_TRANSLATION_TOO_LONG', `${at}.body`, `keep a note to ${STORY_NOTE_BODY_MAX} characters`);
+    }
+  });
+
+  const sources = story.sources ?? [];
+  if (sources.length > STORY_SOURCES_MAX) error('SOURCES_TOO_MANY', 'sources', `keep it to ${STORY_SOURCES_MAX} sources`);
+  sources.forEach((src, i) => {
+    const path = `sources[${i}]`;
+    if (blank(src?.title)) error('SOURCE_TITLE_EMPTY', `${path}.title`, 'name the source');
+    else if (size(src.title) > STORY_SOURCE_MAX) error('SOURCE_TITLE_TOO_LONG', `${path}.title`, `keep it to ${STORY_SOURCE_MAX} characters`);
+    if (size(src?.author) > STORY_AUTHOR_MAX) error('SOURCE_AUTHOR_TOO_LONG', `${path}.author`, `keep it to ${STORY_AUTHOR_MAX} characters`);
+    if (!blank(src?.url)) {
+      if (size(src.url) > STORY_SOURCE_URL_MAX) error('SOURCE_ENTRY_URL_TOO_LONG', `${path}.url`, `keep it to ${STORY_SOURCE_URL_MAX} characters`);
+      if (!isHttpsUrl(src.url!.trim())) error('SOURCE_ENTRY_URL', `${path}.url`, 'the address must start with https://');
+    }
+    if (!isStorySourceType(src?.type)) {
+      error('SOURCE_TYPE', `${path}.type`, 'say whether it is historical, a legend as collected, an oral telling, a literary work or an adaptation');
+    }
+    if (size(src?.note) > STORY_SOURCE_NOTE_MAX) error('SOURCE_NOTE_TOO_LONG', `${path}.note`, `keep it to ${STORY_SOURCE_NOTE_MAX} characters`);
+  });
+
+  for (const [locale, entry] of translatedEntries(story.translationReview, 'translationReview', 'TRANSLATION_REVIEW_LOCALE', error)) {
+    const path = `translationReview.${locale}`;
+    if (entry === null || typeof entry !== 'object' || !isStoryTranslationReviewStatus(entry.status)) {
+      error('TRANSLATION_REVIEW_STATUS', `${path}.status`, 'a translation is reviewed or unreviewed');
+      continue;
+    }
+    if (entry.by !== undefined && (typeof entry.by !== 'string' || !UUID.test(entry.by))) {
+      error('TRANSLATION_REVIEW_BY', `${path}.by`, 'the reviewer is named by their account id');
+    }
+    if (entry.at !== undefined && (typeof entry.at !== 'string' || Number.isNaN(Date.parse(entry.at)))) {
+      error('TRANSLATION_REVIEW_AT', `${path}.at`, 'when it was reviewed, as a date and time');
+    }
+    if (size(entry.note) > STORY_REVIEW_NOTE_MAX) error('TRANSLATION_REVIEW_NOTE_TOO_LONG', `${path}.note`, `keep a note to ${STORY_REVIEW_NOTE_MAX} characters`);
+  }
 }

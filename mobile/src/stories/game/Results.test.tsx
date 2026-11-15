@@ -16,8 +16,8 @@ vi.mock('../../auth/AuthContext', () => import('../../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'));
 
 const review: StoryGameResults['review'] = [
-  { index: 0, kind: 'gist', prompt: 'Çîrok li ser çi ye?', promptEn: null, options: ['Nan', 'Av'], correctIndex: 0, myChoice: 0, explanation: null, explanationEn: null, evidenceParagraph: null, evidenceSentence: null },
-  { index: 1, kind: 'detail', prompt: 'Nan çawa bû?', promptEn: null, options: ['Sar', 'Germ'], correctIndex: 1, myChoice: 0, explanation: null, explanationEn: null, evidenceParagraph: 0, evidenceSentence: 1 },
+  { index: 0, kind: 'gist', prompt: 'Çîrok li ser çi ye?', promptEn: null, options: ['Nan', 'Av'], correctIndex: 0, myChoice: 0, explanation: null, explanationEn: null, evidenceParagraph: null, evidenceSentence: null, translations: {} },
+  { index: 1, kind: 'detail', prompt: 'Nan çawa bû?', promptEn: null, options: ['Sar', 'Germ'], correctIndex: 1, myChoice: 0, explanation: null, explanationEn: null, evidenceParagraph: 0, evidenceSentence: 1, translations: {} },
 ];
 
 function finished(results: Partial<StoryGameResults>, over: Partial<StoryGameView> = {}): StoryGameView {

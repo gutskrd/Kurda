@@ -14,7 +14,7 @@ import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
 import { befriend } from '../test/social.js';
-import { countQueries } from '../test/query-count.js';
+import { countQueries, poolQuiet } from '../test/query-count.js';
 import { bustAvailability } from '../games/availability.js';
 import { bustGamePools } from '../games/sources.js';
 
@@ -311,6 +311,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Ez kî me? with friends (integrati
     it('reads a table in a fixed number of statements', async () => {
       const { host, id } = await started('who-am-i', { minutes: 5, difficulty: 'beginner' }, 'budget', 2);
       await call(host, 'GET', `/mp/who-am-i/${id}`);
+      // what starting the game set going without waiting for it (notifications, badges) is done before the count starts
+      await poolQuiet(app.db);
       const log = countQueries(app.db);
       try {
         await call(host, 'GET', `/mp/who-am-i/${id}`);

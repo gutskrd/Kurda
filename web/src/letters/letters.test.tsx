@@ -2,13 +2,14 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
-import type { BirdOutResult, LetterThread, LetterVisitor, LettersHome, VisitorAnswer } from '@kurda/shared';
+import { DEFAULT_PAPER, type BirdOutResult, type LetterThread, type LetterVisitor, type LettersHome, type VisitorAnswer } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
 import { LettersPage } from './LettersPage';
 import { LetterThreadPage } from './LetterThreadPage';
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
   localStorage.clear();
 });
 
@@ -23,18 +24,22 @@ const home = (over: Partial<LettersHome> = {}): LettersHome => ({
   sky: [],
   callsLeft: 5,
   homecoming: null,
+  arrival: null,
   penPals: [],
   roomForMore: true,
+  paper: DEFAULT_PAPER,
   ...over,
 });
 const baran = { id: 'baran', name: 'Baran', bird: 4 };
 const visitor: LetterVisitor = {
   person: baran,
-  letter: { id: 'l1', mine: false, body: 'Silav! Ez Baran im.', removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
+  letter: { id: 'l1', mine: false, body: 'Silav! Ez Baran im.', decor: null, removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
   since: '2026-11-14T09:00:00.000Z',
   leavesAt: '2026-11-15T09:00:00.000Z',
 };
 const letter = 'Silav! Navê min Rojda ye. Tu çawa yî?';
+/** A letter sent as it was written: on the paper the composer opened on, nothing drawn, no notes. */
+const plain = { paper: DEFAULT_PAPER, strokes: [], notes: [] };
 
 /** Signed in, with the letters API answering from `answers` (method and path to body), and every request kept. */
 function signIn(answers: Record<string, unknown>): Array<{ method: string; url: string; body: unknown }> {
@@ -71,13 +76,16 @@ describe('letters by bird', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Write a letter' }));
     await userEvent.type(screen.getByLabelText('Your letter'), letter);
     await userEvent.click(screen.getByRole('button', { name: 'Send your bird' }));
-    expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/out'))?.body).toEqual({ body: letter });
+    expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/out'))?.body).toEqual({ body: letter, decor: plain });
     // the flight ends at once in a page that cannot animate, and the sill is empty
     expect(await screen.findByText('Your bird is out')).toBeInTheDocument();
     expect(document.querySelector('.lw-bird')).toBeNull();
   });
 
   it('shows how many birds are out, calls one down with its letter, and answers it with the same bird', async () => {
+    // by day: at night the learner's own bird sleeps on the sill instead of playing beside the visitor
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 5, 15, 12, 0));
     const answered: VisitorAnswer = { threadId: '11111111-2222-4333-8444-555555555555', person: baran, letter: { ...visitor.letter, id: 'l2', mine: true, body: 'Silav' } };
     const calls = signIn({ 'GET /letters': home({ birdsOut: 2, sky: [4, 6] }), 'POST /letters/call': { visitor }, 'POST /letters/visitor': answered });
     renderApp(<LettersPage />, ['/app/letters']);
@@ -92,7 +100,7 @@ describe('letters by bird', () => {
     // a single word is a letter
     await userEvent.type(screen.getByLabelText('Your answer to Baran'), 'Silav');
     await userEvent.click(screen.getByRole('button', { name: 'Send it home with Baran’s bird' }));
-    expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/visitor'))?.body).toEqual({ body: 'Silav' });
+    expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/visitor'))?.body).toEqual({ body: 'Silav', decor: plain });
     expect(await screen.findByText('You and Baran are pen pals now')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open your letters with Baran' })).toHaveAttribute('href', `/app/letters/${answered.threadId}`);
   });
@@ -123,6 +131,24 @@ describe('letters by bird', () => {
     expect(screen.getByRole('link', { name: 'Read it' })).toHaveAttribute('href', '/app/letters/t9');
     // it has landed and laid the letter on the sill (at once, in a page that cannot animate)
     await waitFor(() => expect(document.querySelector('.lw-sill-letter')).not.toBeNull());
+  });
+
+  it('brings a pen pal’s next letter to the window by their own bird, and the way to read it', async () => {
+    signIn({ 'GET /letters': home({ arrival: { threadId: 't9', person: baran } }) });
+    renderApp(<LettersPage />, ['/app/letters']);
+    expect(await screen.findByText('Baran’s bird brought you a letter')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Read it' })).toHaveAttribute('href', '/app/letters/t9');
+    // their bird has landed beside yours and laid the letter on the sill
+    await waitFor(() => expect(document.querySelector('.lw-sill-letter')).not.toBeNull());
+    expect(screen.queryByText('Your bird came home with a letter from Baran')).toBeNull();
+  });
+
+  it('lets your own bird home with an answer come before a pen pal’s bird', async () => {
+    const rojin = { id: 'rojin', name: 'Rojîn', bird: 5 };
+    signIn({ 'GET /letters': home({ homecoming: { threadId: 't9', person: baran }, arrival: { threadId: 't8', person: rojin } }) });
+    renderApp(<LettersPage />, ['/app/letters']);
+    expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeInTheDocument();
+    expect(screen.queryByText('Rojîn’s bird brought you a letter')).toBeNull();
   });
 
   it('refuses a letter with a link before the bird leaves, and says what to take out', async () => {
@@ -196,8 +222,8 @@ describe('letters by bird', () => {
       threadId: 't1',
       person: { id: 'baran', name: 'Baran', bird: 4 },
       letters: [
-        { id: 'l1', mine: true, body: letter, removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
-        { id: 'l2', mine: false, body: 'Silav Rojda! Ez Baran im.', removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
+        { id: 'l1', mine: true, body: letter, decor: null, removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
+        { id: 'l2', mine: false, body: 'Silav Rojda! Ez Baran im.', decor: null, removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null },
       ],
       yourTurn: true,
       closed: false,

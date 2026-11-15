@@ -272,7 +272,7 @@ export class LessonAudioService {
       ),
       this.pool.query<StoryRow>(
         `SELECT id, dialect, title, status, body FROM stories WHERE status <> 'archived'
-         ORDER BY dialect, level, array_position(ARRAY['short','medium','long'], length), title, id`,
+         ORDER BY dialect, level, array_position(ARRAY['short','medium','long','saga'], length), title, id`,
       ),
       this.pool.query<RecordingRow>(
         `SELECT key, text, url, duration_ms, updated_at, speaker, lipsync IS NOT NULL AS has_lipsync,

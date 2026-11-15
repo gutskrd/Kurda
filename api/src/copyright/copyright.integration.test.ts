@@ -350,10 +350,12 @@ describe.skipIf(!DATABASE_URL)('copyright notices (integration)', () => {
     expect(bad.statusCode).toBe(422);
     expect((bad.json() as { code: string }).code).toBe('INVALID_COUNTER_NOTICE');
 
+    // ten business days are at least twelve calendar days (exactly twelve from a Sunday), counted from when it arrived
+    const sent = Date.now();
     const res = await call('POST', url, author.token, counter);
     expect(res.statusCode).toBe(201);
     const receipt = res.json() as CounterNoticeReceipt;
-    expect(new Date(receipt.restoreNotBefore).getTime()).toBeGreaterThan(Date.now() + 12 * 86_400_000);
+    expect(new Date(receipt.restoreNotBefore).getTime()).toBeGreaterThanOrEqual(sent + 12 * 86_400_000);
     expect((await call('POST', url, author.token, counter)).statusCode).toBe(409);
 
     // a copy to the notifier, with what the uploader said and when the post may come back

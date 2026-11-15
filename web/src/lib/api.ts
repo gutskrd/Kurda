@@ -7,6 +7,7 @@ import { restrictionOf, restrictionText, suspensionOf } from '../reports/restric
 import { limitErrorText } from './limits';
 import { deviceId } from './deviceId';
 import { durationInWords } from './timeWords';
+import { usernameRefusalText } from './usernameText';
 
 /** Just enough of the i18n contract to write a sentence; no React in here. */
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
@@ -413,18 +414,6 @@ const PASSWORD_REASON: Record<string, [MessageKey, Record<string, number>?]> = {
   'needs-number': ['error.code.passwordNeedsNumber'],
 };
 
-/** What a username the server turned down needs (`INVALID_USERNAME`, api/src/users/username.ts). */
-const USERNAME_REASON: Record<string, [MessageKey, Record<string, number>?]> = {
-  'too-short': ['error.code.usernameTooShort', { count: 3 }],
-  'too-long': ['error.code.usernameTooLong', { count: 30 }],
-  'invalid-chars': ['error.code.usernameChars'],
-  'edge-underscore': ['error.code.usernameUnderscore'],
-  'consecutive-underscore': ['error.code.usernameUnderscore'],
-  'numbers-only': ['error.code.usernameLetter'],
-  'no-letter': ['error.code.usernameLetter'],
-  reserved: ['error.code.usernameUnavailable'],
-};
-
 function reasonOf(details: unknown): string | null {
   return details && typeof details === 'object' && typeof (details as { reason?: unknown }).reason === 'string'
     ? (details as { reason: string }).reason
@@ -437,12 +426,12 @@ function reasonOf(details: unknown): string | null {
  * server's check. Null when the code is not one of these.
  */
 function detailedCopy(error: ApiError, t: Translate): string | null {
-  if (error.code === 'WEAK_PASSWORD' || error.code === 'INVALID_USERNAME') {
-    const table = error.code === 'WEAK_PASSWORD' ? PASSWORD_REASON : USERNAME_REASON;
-    const found = table[reasonOf(error.details) ?? ''];
-    if (found) return t(found[0], found[1]);
-    return t(error.code === 'WEAK_PASSWORD' ? 'auth.passwordHint' : 'error.code.usernameChars');
+  if (error.code === 'WEAK_PASSWORD') {
+    const found = PASSWORD_REASON[reasonOf(error.details) ?? ''];
+    return found ? t(found[0], found[1]) : t('auth.passwordHint');
   }
+  // the username's rule in the same words the field's own check uses (lib/usernameText.ts)
+  if (error.code === 'INVALID_USERNAME') return usernameRefusalText(reasonOf(error.details) ?? '', (error.details as { chars?: unknown } | null)?.chars, t);
   if (error.code === 'VALIDATION_ERROR') {
     // the issues name the field; an email address is the one people most often mistype
     const issues = Array.isArray(error.details) ? (error.details as Array<{ path?: unknown }>) : [];

@@ -8,11 +8,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   ROAD_COURSE,
+  addressesHamo,
   checkRoad,
   checkRoadPlan,
+  checkRoadStories,
   formatProblem,
   kurdishWords,
   loadRoadPlan,
+  loadRoadStories,
   recordedTexts,
   roadUnitNumbers,
   type RoadPlan,
@@ -72,6 +75,34 @@ describe('the road’s unit files', () => {
       expect(checkRoad({ plan, units: [n] }).problems.map(formatProblem)).toEqual([]);
     });
   }
+});
+
+describe('the stories at the chapters’ ends', () => {
+  it('pass their check: each its chapter’s, at its level, in words the chapter taught', () => {
+    expect(checkRoadStories(plan, loadRoadStories()).map(formatProblem)).toEqual([]);
+  });
+
+  it('name a word the chapter has not taught, unless the story glosses it, and a story that is not one chapter’s', () => {
+    const tale = { slug: 'road-01-test', dialect: 'kurmanci', level: 1, title: 'Sêv', body: 'Ez Hamo me. Sêv pir spehî ye.', glossary: [], questions: [] };
+    expect(checkRoadStories(plan, [tale]).map(formatProblem)).toEqual([
+      'road-01-test body: “spehî” is not met by the end of chapter 1: gloss it, or say it with words the chapter taught',
+      'road-01-test body: 1 of its 7 words are new by chapter 1 (at most 2 %)',
+    ]);
+    const glossed = { ...tale, body: 'Ez Hamo me. Sêv pir xweşik e, û Hevalo birçî ye. Ez dilxweş im, tu jî dilxweş î. Çay germ e. Ev sêv spehî ye.', glossary: [{ term: 'spehî', meanings: { en: 'beautiful' } }] };
+    expect(checkRoadStories(plan, [glossed]).map(formatProblem).filter((t) => t.includes('spehî'))).toEqual([]);
+    expect(checkRoadStories(plan, [{ ...tale, slug: 'chapter-one' }, { ...tale, level: 2 }]).map(formatProblem)).toContain('chapter-one slug: slug should be road-NN-… with NN the chapter it ends (01–12)');
+  });
+
+  it('ask their questions in words the chapter taught too', () => {
+    const tale = { slug: 'road-01-test', dialect: 'kurmanci', level: 1, title: 'Sêv', body: 'Ez Hamo me. Sêv pir xweşik e, û Hevalo birçî ye. Ez dilxweş im, tu jî dilxweş î.' };
+    const asked = (prompt: string, options: string[]) => checkRoadStories(plan, [{ ...tale, questions: [{ prompt, options, correctIndex: 0 }] }]).map(formatProblem);
+    expect(asked('Kî birçî ye?', ['Hevalo', 'Hamo'])).toEqual([]);
+    expect(asked('Çima Hevalo birçî ye?', ['Wî sêv nexwar.', 'Ew nexweş e.'])).toEqual([
+      'road-01-test questions[0]: “çima” is not met by the end of chapter 1: ask with words the chapter taught',
+      'road-01-test questions[0]: “wî” is not met by the end of chapter 1: ask with words the chapter taught',
+      'road-01-test questions[0]: “nexwar” is not met by the end of chapter 1: ask with words the chapter taught',
+    ]);
+  });
 });
 
 // ---------- the example ----------
@@ -287,6 +318,38 @@ describe('the road’s check, on an example unit', () => {
       for (const li of [0, 1]) for (const ex of lessonOf(doc, li).exercises) if (ex.payload.voice) ex.payload.voice = 'xezo';
     });
     expect(allXezal.text).toContain('unit 1: Hamo records 0 % of the unit’s sentences (at least 65 %)');
+  });
+
+  it('never has Hamo record a line said to him, by his name or as uncle', () => {
+    const { text } = check((doc) => {
+      lessonOf(doc, 1).exercises[6]!.payload.voice = 'hamo';
+      lessonOf(doc, 0).exercises[9]!.payload.accepted = ['Silav, xalo!', 'Silav xalo'];
+    });
+    expect(text).toContain('u01s1l2 #7: Hamo would say “Spas, Hamo!” to himself: model it without his name (the learner says it to him)');
+    expect(text).toContain('u01s1l1 #10: Hamo would say “Silav, xalo!” to himself: model it without his name (the learner says it to him)');
+    // his own name in a sentence about himself is no greeting to himself
+    expect(addressesHamo('Ez Hamo me.')).toBe(false);
+    expect(addressesHamo('Navê min Hamo ye.')).toBe(false);
+    expect(addressesHamo('Xalo! Xalo!')).toBe(true);
+  });
+
+  it('holds a chapter written for Hamo alone to his voice: every recording his, and every conversation him and the learner', () => {
+    const { text } = check(undefined, (p) => {
+      p.units[0]!.recorder = 'hamo';
+    });
+    expect(text).toContain('u01s1l1 #6 payload.voice: is recorded by xezo: Hamo records every line of the road, so tell it through him, or show it written');
+    expect(text).toContain('u01s1l2 #1 payload.speakers[1]: part 2 is xezo: a conversation is Hamo talking with the learner (a part with learner: true)');
+    // the same conversation with the learner in Xezal's part passes, whatever the learner says to him
+    const withYou = check(
+      (doc) => {
+        for (const li of [0, 1]) for (const ex of lessonOf(doc, li).exercises) if (ex.payload.voice === 'xezo') ex.payload.voice = 'hamo';
+        (lessonOf(doc, 1).exercises[0]!.payload.speakers as unknown[])[1] = { learner: true };
+      },
+      (p) => {
+        p.units[0]!.recorder = 'hamo';
+      },
+    );
+    expect(withYou.text.filter((t) => /recorded by|part 2|lines\[/.test(t))).toEqual([]);
   });
 
   it('asks for the Kurdish an item is about to be in its prompt, where the learner can read it and hear it', () => {

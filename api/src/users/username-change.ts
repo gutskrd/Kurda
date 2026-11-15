@@ -5,7 +5,7 @@ import { emailLocaleFor } from '../email/templates.js';
 import { sendEmailJob } from '../jobs/email.js';
 import type { JobQueue } from '../jobs/queue.js';
 import type { SecurityRecorder } from '../security/log.js';
-import { USERNAME_ERROR_MESSAGE, validateUsername, type UsernameError } from './username.js';
+import { invalidUsername, validateUsername, type UsernameError } from './username.js';
 
 /**
  * Changing a username (POST /me/username), and what a person is told before
@@ -19,8 +19,10 @@ import { USERNAME_ERROR_MESSAGE, validateUsername, type UsernameError } from './
  *   else to that person's friends. An account that signs in through another
  *   service has no password to ask for; its session is all it has, and the
  *   other limits here are what stand in for it;
- * - one change every USERNAME_CHANGE_COOLDOWN_DAYS. A change of capitals alone
- *   (azad → Azad) is the same name to everyone and spends nothing;
+ * - one change every USERNAME_CHANGE_COOLDOWN_DAYS. A username is written in
+ *   lowercase (shared/src/username.ts), so asking for one's own name in
+ *   capitals (Azad for azad) is asking for the name one has: no change, and
+ *   nothing spent;
  * - the name given up is held for its last owner for USERNAME_HOLD_DAYS, twice
  *   the wait, so there are thirty days in which they can have it back and
  *   nobody else can. The database keeps that rule for every way a username is
@@ -49,8 +51,10 @@ export interface UsernameStatus {
   held: Array<{ username: string; heldUntil: string }>;
 }
 
-/** Whether a name could be taken now, and if not, why in terms a form can say. */
-export type UsernameAvailability = { available: true; username: string } | { available: false; reason: UsernameError | 'taken' | 'same' };
+/** Whether a name could be taken now, and if not, why in terms a form can say: for a character not allowed, which ones. */
+export type UsernameAvailability =
+  | { available: true; username: string }
+  | { available: false; reason: UsernameError | 'taken' | 'same'; chars?: string[] };
 
 interface Deps {
   jobs?: JobQueue | null;
@@ -110,7 +114,7 @@ export class UsernameChangeService {
   /** Whether `raw` could be this account's username now: well formed, not in use, and not held for somebody else. */
   async available(userId: string, raw: string): Promise<UsernameAvailability> {
     const checked = validateUsername(raw);
-    if (!checked.ok) return { available: false, reason: checked.reason };
+    if (!checked.ok) return { available: false, reason: checked.reason, ...(checked.reason === 'invalid-chars' ? { chars: checked.chars } : {}) };
     const mine = await this.pool.query<{ username: string }>(`SELECT username FROM users WHERE id = $1 AND deleted_at IS NULL`, [userId]);
     if (mine.rows[0]?.username === checked.value) return { available: false, reason: 'same' };
     const taken = await this.pool.query(
@@ -132,7 +136,7 @@ export class UsernameChangeService {
    */
   async change(userId: string, raw: string, currentPassword: string | undefined): Promise<{ username: string; changed: boolean }> {
     const checked = validateUsername(raw);
-    if (!checked.ok) throw new AppError('INVALID_USERNAME', 400, USERNAME_ERROR_MESSAGE[checked.reason], { reason: checked.reason });
+    if (!checked.ok) throw invalidUsername(checked);
     const next = checked.value;
 
     const found = await this.pool.query<AccountRow>(
@@ -163,12 +167,6 @@ export class UsernameChangeService {
       if (previous === next) {
         await client.query('ROLLBACK');
         return { username: previous, changed: false };
-      }
-      // the same name in other capitals is the same name to everybody else: written as asked, and nothing is spent
-      if (previous.toLowerCase() === next.toLowerCase()) {
-        await client.query(`UPDATE users SET username = $2 WHERE id = $1`, [userId, next]);
-        await client.query('COMMIT');
-        return { username: next, changed: true };
       }
       const availableAt = this.availableAt(row.username_changed_at);
       if (availableAt) {

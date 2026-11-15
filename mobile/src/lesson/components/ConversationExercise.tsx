@@ -140,11 +140,14 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
 
       <View style={styles.lines}>
         {lines.map((line, i) => {
-          const name = speakers[line.speaker]?.name ?? '';
+          const yours = speakers[line.speaker]?.learner === true;
+          // the learner's own part is named in their language, a character in Kurdish
+          const name = yours ? t('lesson.conversation.you') : (speakers[line.speaker]?.name ?? '');
           // four parts at most, each in its own colour; anything out of range reads as the first, as in the browser
           const part = line.speaker > 0 && line.speaker < PART_COLOURS.length ? line.speaker : 0;
-          const first = part === 0;
-          const tint = PART_COLOURS[part] ?? PART_COLOURS[0];
+          // the learner's lines are theirs: across from the first part, in the colour of a message they sent
+          const first = part === 0 && !yours;
+          const tint = yours ? colors.bubbleMine : (PART_COLOURS[part] ?? PART_COLOURS[0]);
           const url = listenable ? lineAudio[i] : null;
           const heard = audio.turn?.line === i;
           const sounding = heard && audio.playing;
@@ -165,7 +168,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
               >
                 {/* who says it, what they say and what it means, read out as one */}
                 <View accessible style={styles.said}>
-                  <Text style={[styles.name, kurdish, { color: colors.textSecondary }]}>{name}</Text>
+                  <Text style={[styles.name, yours ? null : kurdish, { color: colors.textSecondary }]}>{name}</Text>
                   <Text style={[styles.text, kurdish, { color: colors.textPrimary }]}>{line.text}</Text>
                   {translated && line.en ? <Text style={[styles.meaning, styles.ltr, { color: colors.textSecondary }]}>{line.en}</Text> : null}
                 </View>

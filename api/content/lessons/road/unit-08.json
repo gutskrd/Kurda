@@ -29,7 +29,7 @@
                   "payload": {
                     "say": "Serê min diêşe.",
                     "voice": "hamo",
-                    "prompt": "Hamo lies in bed with a cloth on his forehead. Where does he start? “Serê min diêşe.”",
+                    "prompt": "His parents have gone back to Kobanî — Hamo swore to his mother that he was fine — and now he lies in bed with a cloth on his forehead. Where does he start? “Serê min diêşe.”",
                     "options": [
                       "My back hurts.",
                       "My head hurts.",
@@ -166,8 +166,8 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal touches her uncle’s hands: “Your hands are cold.”",
+                    "voice": "hamo",
+                    "prompt": "Xezal touches Hamo’s hands and frowns. You feel them too. Tell Hamo: “Your hands are cold.”",
                     "accepted": [
                       "Destên te sar in.",
                       "Destên te sar in"
@@ -178,13 +178,11 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "say": "Xalo, simbêlê te jî diêşe?",
-                    "voice": "xezo",
-                    "prompt": "Xezal can’t help teasing. What does she ask? “Xalo, simbêlê te jî diêşe?”",
+                    "voice": "hamo",
+                    "prompt": "Xezal can’t help teasing Hamo, and she nudges you to do it for her. Ask him: “Does your moustache hurt too?”",
                     "accepted": [
-                      "Uncle, does your moustache hurt too?",
-                      "Uncle, is your moustache hurting too?",
-                      "Does your moustache hurt too, uncle?"
+                      "Simbêlê te jî diêşe?",
+                      "Simbêlê te jî diêşe"
                     ]
                   }
                 },
@@ -217,8 +215,8 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Çi diêşe?",
-                    "voice": "xezo",
-                    "prompt": "Xezal asks you, as a test: “Çi diêşe?” Your ear hurts. What do you answer?",
+                    "voice": "hamo",
+                    "prompt": "Then Hamo turns the question on you, with a wink: “Çi diêşe?” Your ear hurts. What do you answer?",
                     "options": [
                       "Guhên min diêşe.",
                       "Guh min diêşe.",
@@ -372,17 +370,15 @@
                 },
                 {
                   "position": 10,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "say": "Ne nexweşî ye, xalo. Tu westiyayî yî.",
-                    "voice": "xezo",
-                    "prompt": "Xezal comes in with tea and hears the list. What does she say? “Ne nexweşî ye, xalo. Tu westiyayî yî.”",
-                    "accepted": [
-                      "It isn’t an illness, uncle. You’re tired.",
-                      "It’s not an illness, uncle. You are tired.",
-                      "That isn’t an illness, uncle. You’re just tired.",
-                      "It’s not an illness, uncle. You're tired."
-                    ]
+                    "prompt": "Xezal comes in with tea and hears the whole list. She writes something on the back of the medicine box, so that Hamo has to read it: “Ne nexweşî ye, xalo. Tu westiyayî yî.” What does she think?",
+                    "options": [
+                      "It isn’t an illness: he is tired.",
+                      "It is a serious illness.",
+                      "He needs a doctor at once."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -416,11 +412,11 @@
                   "position": 13,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal sits by the bed and asks the big question. Type what you hear.",
+                    "voice": "hamo",
+                    "prompt": "Xezal sits by the bed and asks the big question: what is his illness, exactly? Hamo repeats it, thinking hard. Type what he says.",
                     "accepted": [
-                      "Xalo, nexweşiya te çi ye?",
-                      "Xalo, nexweşiya te çi ye"
+                      "Nexweşiya min çi ye?",
+                      "Nexweşiya min çi ye"
                     ]
                   }
                 },
@@ -463,7 +459,7 @@
                   "position": 1,
                   "type": "match_pairs",
                   "payload": {
-                    "voice": "xezo",
+                    "voice": "hamo",
                     "pairs": [
                       {
                         "left": "derman",
@@ -496,13 +492,13 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Taya te heye.",
-                    "voice": "xezo",
-                    "prompt": "Xezal puts her hand on her uncle’s forehead. What does she say? “Taya te heye.”",
+                    "say": "Taya min heye.",
+                    "voice": "hamo",
+                    "prompt": "Xezal puts her hand on Hamo’s forehead and nods. Hamo says it before she can, almost proudly. What does he say? “Taya min heye.”",
                     "options": [
-                      "You have a fever.",
-                      "You have a cough.",
-                      "You are hungry."
+                      "I have a fever.",
+                      "I have a cough.",
+                      "I am hungry."
                     ],
                     "correctIndex": 0
                   }
@@ -515,64 +511,63 @@
                     "title": "Derman an çay?",
                     "speakers": [
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
-                      },
-                      {
                         "name": "Hamo",
                         "character": "hamo"
+                      },
+                      {
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Xalo, ev dermanê te ye. Vexwe!",
-                        "en": "Uncle, this is your medicine. Drink it!"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Derman? Na… ez çay dixwazim.",
-                        "en": "Medicine? No… I want tea."
+                        "en": "Xalo, this is your medicine. Drink it!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Pêşî derman, piştre çay.",
-                        "en": "First the medicine, then tea."
+                        "text": "Derman? Na… ez çay dixwazim. Çayeke germ.",
+                        "en": "Medicine? No… I want tea. A hot tea."
                       },
                       {
                         "speaker": 1,
+                        "text": "Xezal dibêje: pêşî derman, piştre çay.",
+                        "en": "Xezal says: first the medicine, then tea."
+                      },
+                      {
+                        "speaker": 0,
                         "text": "Û hingiv? Hingiv jî derman e!",
                         "en": "And honey? Honey is medicine too!"
                       },
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Taya te heye, xalo. Bêhna xwe vede!",
-                        "en": "You have a fever, uncle. Rest!"
+                        "en": "You have a fever, Xalo. Rest!"
                       },
                       {
-                        "speaker": 1,
+                        "speaker": 0,
                         "text": "Ez gelek bêhêz im… ez nikarim biaxivim…",
                         "en": "I’m very weak… I can’t talk…"
                       },
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Lê dengê te heta gundê din diçe!",
                         "en": "But your voice carries all the way to the next village!"
                       },
                       {
+                        "speaker": 0,
+                        "text": "Ev ne dengê min e, ev kuxika min e!",
+                        "en": "That isn’t my voice, that’s my cough!"
+                      },
+                      {
                         "speaker": 1,
-                        "text": "Kuxika min jî heye, Xezo.",
-                        "en": "I have a cough too, Xezo."
+                        "text": "Xem meke. Tu yê zû sax bibî.",
+                        "en": "Don’t worry. You’ll be well soon."
                       },
                       {
                         "speaker": 0,
-                        "text": "Xem meke, xalo. Tu yê zû sax bibî.",
-                        "en": "Don’t worry, uncle. You’ll be well soon."
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Spas, Xezo. Niha… çay û hingiv?",
-                        "en": "Thanks, Xezo. Now… tea and honey?"
+                        "text": "Spas. Îcar… çay û hingiv?",
+                        "en": "Thanks. So then… tea and honey?"
                       }
                     ],
                     "prompt": "Hamo çi dixwaze?",
@@ -588,9 +583,11 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal plumps up the pillow: “Rest, uncle!”",
+                    "voice": "hamo",
+                    "prompt": "Xezal plumps up the pillow and nods at you. Tell Hamo: “Rest!”",
                     "accepted": [
+                      "Bêhna xwe vede!",
+                      "Bêhna xwe vede",
                       "Bêhna xwe vede, xalo!",
                       "Bêhna xwe vede, xalo",
                       "Xalo, bêhna xwe vede!",
@@ -616,8 +613,8 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal holds the spoon out. Type what she says.",
+                    "voice": "hamo",
+                    "prompt": "Xezal holds out the spoon and won’t move it. Hamo sighs and repeats her rule. Type what he says.",
                     "accepted": [
                       "Pêşî derman, piştre çay.",
                       "Pêşî derman, piştre çay"
@@ -650,17 +647,17 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "say": "Tu yê zû sax bibî.",
-                    "voice": "xezo",
-                    "prompt": "Xezal smiles at her uncle. What does she promise? “Tu yê zû sax bibî.”",
+                    "say": "Xezal dibêje ku ez ê zû sax bibim.",
+                    "voice": "hamo",
+                    "prompt": "Hamo tells Nazê what Xezal has promised him, and cheers up a little. What does he say? “Xezal dibêje ku ez ê zû sax bibim.”",
                     "accepted": [
-                      "You will be well soon.",
-                      "You will get well soon.",
-                      "You’ll soon be well.",
-                      "You will soon be healthy.",
-                      "You'll be well soon.",
-                      "You'll get well soon.",
-                      "You'll soon be healthy."
+                      "Xezal says I will be well soon.",
+                      "Xezal says that I will be well soon.",
+                      "Xezal says I’ll be well soon.",
+                      "Xezal says I will get well soon.",
+                      "Xezal says I’ll get well soon.",
+                      "Xezal says I will soon be well.",
+                      "Xezal says I’ll soon be well."
                     ]
                   }
                 },
@@ -668,11 +665,11 @@
                   "position": 10,
                   "type": "writing",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Complete Xezal’s line: “Xalo, ev … te ye.” (Uncle, this is your medicine.) Type the whole sentence.",
+                    "voice": "hamo",
+                    "prompt": "Hold out the spoon to Hamo. Complete: “Ev … te ye.” (This is your medicine.) Type the whole sentence.",
                     "accepted": [
-                      "Xalo, ev dermanê te ye.",
-                      "Xalo, ev dermanê te ye"
+                      "Ev dermanê te ye.",
+                      "Ev dermanê te ye"
                     ]
                   }
                 },
@@ -707,9 +704,7 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Lê dengê te heta gundê din diçe!",
-                    "voice": "xezo",
-                    "prompt": "Xezal laughs with her shoulders. What does she say? “Lê dengê te heta gundê din diçe!”",
+                    "prompt": "Xezal laughs with her shoulders and writes on the pad by the bed, so that Hamo has to read it: “Lê dengê te heta gundê din diçe!” What does she write?",
                     "options": [
                       "But your voice carries all the way to the next village!",
                       "But your voice is very weak!",
@@ -746,8 +741,8 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Doktor tê.",
-                    "voice": "xezo",
-                    "prompt": "Xezal puts down the phone. What does she tell Hamo? “Doktor tê.”",
+                    "voice": "hamo",
+                    "prompt": "Xezal puts down the phone and nods. Hamo pulls the blanket up to his moustache. What has he understood? “Doktor tê.”",
                     "options": [
                       "The doctor is coming.",
                       "The doctor isn’t coming.",
@@ -793,42 +788,41 @@
                     "title": "Doktor tê",
                     "speakers": [
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
-                      },
-                      {
                         "name": "Hamo",
                         "character": "hamo"
+                      },
+                      {
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
-                        "speaker": 0,
-                        "text": "Xalo, ez telefonî doktor dikim.",
-                        "en": "Uncle, I’m phoning the doctor."
+                        "speaker": 1,
+                        "text": "Xalo, Xezal telefonî doktor dike.",
+                        "en": "Xalo, Xezal is phoning the doctor."
                       },
                       {
-                        "speaker": 1,
+                        "speaker": 0,
                         "text": "Doktor? Ez ne nexweş im!",
                         "en": "A doctor? I’m not ill!"
                       },
                       {
-                        "speaker": 0,
-                        "text": "Tu ne nexweş î? Lê pişta te diêşe!",
-                        "en": "You’re not ill? But your back hurts!"
+                        "speaker": 1,
+                        "text": "Tu ne nexweş î? Lê tu nikarî rabî!",
+                        "en": "You’re not ill? But you can’t get up!"
                       },
                       {
-                        "speaker": 1,
+                        "speaker": 0,
                         "text": "Birîn tune, xwîn tune. Ez naçim nexweşxaneyê!",
                         "en": "There’s no wound, no blood. I’m not going to the hospital!"
                       },
                       {
-                        "speaker": 0,
-                        "text": "Baş e. Doktor ji bajêr tê vir, û ez ji dermanxaneyê derman dikirim.",
-                        "en": "All right. The doctor is coming here from town, and I’ll buy medicine at the pharmacy."
+                        "speaker": 1,
+                        "text": "Baş e. Doktor ji bajêr tê vir, û Xezal ji dermanxaneyê derman dikire.",
+                        "en": "All right. The doctor is coming here from town, and Xezal is buying medicine at the pharmacy."
                       },
                       {
-                        "speaker": 1,
+                        "speaker": 0,
                         "text": "Baş e, baş e… Ez hingiv li bin nivînê vedişêrim.",
                         "en": "All right, all right… I’ll hide the honey under the bedding."
                       },
@@ -838,26 +832,31 @@
                         "en": "Who is at the door?"
                       },
                       {
+                        "speaker": 1,
+                        "text": "Doktor e. Navê wê Şîrîn e.",
+                        "en": "It’s the doctor. Her name is Şîrîn."
+                      },
+                      {
                         "speaker": 0,
-                        "text": "Xalo, doktor li vir e. Navê wê Şîrîn e.",
-                        "en": "Uncle, the doctor is here. Her name is Şîrîn."
+                        "text": "Şîrîn? Ji Kobaniyê? Hevala min a dibistanê?",
+                        "en": "Şîrîn? From Kobanî? My friend from school?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Şîrîn? Hevala min a dibistanê?",
-                        "en": "Şîrîn? My friend from school?"
+                        "text": "Hevala te ya dibistanê? Bi rastî?",
+                        "en": "Your friend from school? Really?"
                       },
                       {
-                        "speaker": 1,
-                        "text": "Ew her gav bi lez dibeze, û ez her gav li dû wê me!",
-                        "en": "She’s always the fast one, and I’m always behind her!"
+                        "speaker": 0,
+                        "text": "Erê! Ew her gav bi lez dibeze, û ez her gav li dû wê me!",
+                        "en": "Yes! She’s always the fast one, and I’m always behind her!"
                       }
                     ],
                     "prompt": "Doktor kî ye?",
                     "options": [
-                      "Nazê, jina Hamo.",
+                      "Nazê, cîrana Hamo.",
                       "Şîrîn, hevala Hamo ya dibistanê.",
-                      "Xezal, xwarziya Hamo."
+                      "Hêvî, keça Nazê."
                     ],
                     "correctIndex": 1
                   }
@@ -866,8 +865,8 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal: “I’m phoning the doctor.”",
+                    "voice": "hamo",
+                    "prompt": "Hamo won’t listen to Xezal, so you take out your phone. Tell him: “I’m phoning the doctor.”",
                     "accepted": [
                       "Ez telefonî doktor dikim.",
                       "Ez telefonî doktor dikim"
@@ -893,11 +892,11 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal sees everything from the doorway. Type what she whispers to Hevalo.",
+                    "voice": "hamo",
+                    "prompt": "Xezal has gone to the pharmacy. Hamo pulls a jar out from under the blanket and winks at you. Type what he whispers.",
                     "accepted": [
-                      "Hamo hingiv li bin nivînê vedişêre.",
-                      "Hamo hingiv li bin nivînê vedişêre"
+                      "Ez hingiv li bin nivînê vedişêrim.",
+                      "Ez hingiv li bin nivînê vedişêrim"
                     ]
                   }
                 },
@@ -918,8 +917,8 @@
                   "position": 8,
                   "type": "writing",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Complete Xezal’s note to herself: “Ji … derman bikire.” (Buy medicine from the pharmacy.) Type the whole sentence.",
+                    "voice": "hamo",
+                    "prompt": "Xezal writes herself a note for the town, and Hamo reads it out over her shoulder with a sigh. Complete it: “Ji … derman bikire.” (Buy medicine from the pharmacy.) Type the whole sentence.",
                     "accepted": [
                       "Ji dermanxaneyê derman bikire.",
                       "Ji dermanxaneyê derman bikire"
@@ -940,8 +939,8 @@
                   "type": "translate",
                   "payload": {
                     "say": "Doktor ji bajêr tê vir.",
-                    "voice": "xezo",
-                    "prompt": "Hamo asks if he has to go anywhere. What does Xezal tell him? “Doktor ji bajêr tê vir.”",
+                    "voice": "hamo",
+                    "prompt": "Hamo asks if he has to go anywhere. Xezal shakes her head, and he tells you the news, very relieved. What does he say? “Doktor ji bajêr tê vir.”",
                     "accepted": [
                       "The doctor is coming here from the town.",
                       "The doctor is coming here from town.",
@@ -982,8 +981,8 @@
                   "position": 13,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "A knock at the door. Type what Xezal calls out.",
+                    "voice": "hamo",
+                    "prompt": "A knock at the door. Type what Hamo calls out from his bed.",
                     "accepted": [
                       "Kî li ber derî ye?",
                       "Kî li ber derî ye"
@@ -1000,7 +999,7 @@
                     "options": [
                       "Şîrîn? My friend from school?",
                       "Şîrîn? The doctor from the hospital?",
-                      "Şîrîn? My sister from Amed?"
+                      "Şîrîn? My new neighbour?"
                     ],
                     "correctIndex": 0
                   }
@@ -1063,8 +1062,8 @@
                         "right": "better"
                       },
                       {
-                        "left": "ciddî",
-                        "right": "serious"
+                        "left": "giran",
+                        "right": "heavy; serious"
                       }
                     ]
                   }
@@ -1103,8 +1102,8 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal tells Nazê in the kitchen: “The doctor is examining him.”",
+                    "voice": "hamo",
+                    "prompt": "Nazê calls from the kitchen to ask what is going on. Tell her: “The doctor is examining him.”",
                     "accepted": [
                       "Doktor wî kontrol dike.",
                       "Doktor wî kontrol dike"
@@ -1130,11 +1129,11 @@
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal leans over the bed. Type what she asks.",
+                    "voice": "hamo",
+                    "prompt": "Hamo looks up at Şîrîn, very hopeful. Type what he asks.",
                     "accepted": [
-                      "Îro tu çêtir î?",
-                      "Îro tu çêtir î"
+                      "Îro ez çêtir im?",
+                      "Îro ez çêtir im"
                     ]
                   }
                 },
@@ -1167,10 +1166,10 @@
                     "voice": "hamo",
                     "prompt": "Hamo asks in a tiny voice: “Is it serious?”",
                     "accepted": [
-                      "Ciddî ye?",
-                      "Ciddî ye",
-                      "Ev ciddî ye?",
-                      "Ev ciddî ye"
+                      "Giran e?",
+                      "Giran e",
+                      "Ev giran e?",
+                      "Ev giran e"
                     ]
                   }
                 },
@@ -1178,9 +1177,9 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "say": "Nexweşiya te ne ciddî ye: tu tenê pîr dibî!",
+                    "say": "Nexweşiya te ne giran e: tu tenê pîr dibî!",
                     "voice": "hamo",
-                    "prompt": "Şîrîn frowns, then bursts out laughing. Hamo repeats her words, offended. What are they? “Nexweşiya te ne ciddî ye: tu tenê pîr dibî!”",
+                    "prompt": "Şîrîn frowns, then bursts out laughing. Hamo repeats her words, offended. What are they? “Nexweşiya te ne giran e: tu tenê pîr dibî!”",
                     "accepted": [
                       "Your illness isn’t serious: you’re just getting old!",
                       "Your illness is not serious: you are just getting old!",
@@ -1204,8 +1203,8 @@
                   "position": 13,
                   "type": "writing",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Complete Şîrîn’s words: “Ez … kontrol dikim.” (I am examining you.) Type the whole sentence.",
+                    "voice": "hamo",
+                    "prompt": "After the visit Hamo plays doctor with Hêvî, a spoon held to her chest. Complete his line: “Ez … kontrol dikim.” (I am examining you.) Type the whole sentence.",
                     "accepted": [
                       "Ez te kontrol dikim.",
                       "Ez te kontrol dikim"
@@ -1217,8 +1216,8 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Tu çêtir î?",
-                    "voice": "xezo",
-                    "prompt": "Xezal asks you how you feel today: “Tu çêtir î?” Which answer is right?",
+                    "voice": "hamo",
+                    "prompt": "You had a headache this morning. Hamo calls to you from his bed: “Tu çêtir î?” Which answer is right?",
                     "options": [
                       "Erê, ez çêtir e.",
                       "Erê, tu çêtir î.",
@@ -1253,22 +1252,22 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Em hemû ji te hez dikin, xalo.",
-                    "voice": "xezo",
-                    "prompt": "Xezal sits on the bed and takes her uncle’s hand. What does she say? “Em hemû ji te hez dikin, xalo.”",
+                    "say": "Hûn hemû ji min hez dikin?",
+                    "voice": "hamo",
+                    "prompt": "Xezal sits on the bed and takes Hamo’s hand. Hamo looks round at all of you, his eyes wet. What does he ask? “Hûn hemû ji min hez dikin?”",
                     "options": [
-                      "We all know you, uncle.",
-                      "We all love you, uncle.",
-                      "We are all looking at you, uncle."
+                      "Do you all love me?",
+                      "Do you all know me?",
+                      "Are you all looking at me?"
                     ],
-                    "correctIndex": 1
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 2,
                   "type": "match_pairs",
                   "payload": {
-                    "voice": "xezo",
+                    "voice": "hamo",
                     "pairs": [
                       {
                         "left": "hêrs",
@@ -1283,7 +1282,7 @@
                         "right": "shame, shyness"
                       },
                       {
-                        "left": "kêf",
+                        "left": "dilxweşî",
                         "right": "joy, good mood"
                       },
                       {
@@ -1306,11 +1305,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ez jê hez dikim.",
-                    "voice": "xezo",
-                    "prompt": "Hêvî asks Xezal about her uncle. Xezal smiles. What does she say? “Ez jê hez dikim.”",
+                    "voice": "hamo",
+                    "prompt": "Hêvî asks Hamo about Hevalo, who is snoring by the bed. Hamo smiles. What does he say? “Ez jê hez dikim.”",
                     "options": [
                       "I’m afraid of him.",
-                      "I like him.",
+                      "I love him.",
                       "I see him."
                     ],
                     "correctIndex": 1
@@ -1332,13 +1331,15 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "say": "Hevalo jî ji te hez dike, û ji sêvan jî!",
-                    "voice": "xezo",
-                    "prompt": "Xezal goes through the whole family. What does she say about Hevalo? “Hevalo jî ji te hez dike, û ji sêvan jî!”",
+                    "say": "Hevalo jî ji min hez dike… û ji sêvan jî!",
+                    "voice": "hamo",
+                    "prompt": "Xezal goes round everyone in the room, and Hamo finishes the list himself. What does he say about Hevalo? “Hevalo jî ji min hez dike… û ji sêvan jî!”",
                     "accepted": [
-                      "Hevalo loves you too, and apples too!",
-                      "Hevalo loves you too, and he loves apples too!",
-                      "Hevalo likes you too, and apples too!"
+                      "Hevalo loves me too… and apples too!",
+                      "Hevalo loves me too, and apples too!",
+                      "Hevalo loves me too, and he loves apples too!",
+                      "Hevalo likes me too, and apples too!",
+                      "Hevalo loves me too, and apples as well!"
                     ]
                   }
                 },
@@ -1346,11 +1347,11 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal knows her uncle well. Type what she says.",
+                    "voice": "hamo",
+                    "prompt": "Xezal knows Hamo well: he grumbles, then he forgets. Hamo admits it himself. Type what he says.",
                     "accepted": [
-                      "Hêrsa te zû diçe, xalo.",
-                      "Hêrsa te zû diçe, xalo"
+                      "Hêrsa min zû diçe.",
+                      "Hêrsa min zû diçe"
                     ]
                   }
                 },
@@ -1371,8 +1372,8 @@
                   "position": 8,
                   "type": "writing",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Complete Xezal’s sentence the short way: “Ez … hez dikim.” (I love him.) Type the whole sentence.",
+                    "voice": "hamo",
+                    "prompt": "Hêvî wants to know if Xalo Hamo loves Xezal too, even when she won’t give him any honey. Complete Hamo’s answer the short way: “Ez … hez dikim.” (I love her.) Type the whole sentence.",
                     "accepted": [
                       "Ez jê hez dikim.",
                       "Ez jê hez dikim"
@@ -1384,21 +1385,21 @@
                   "type": "speaking",
                   "payload": {
                     "voice": "hamo",
-                    "prompt": "Be Hamo, touched and annoyed at once: “What is this feeling? I’m hurt… no, I’m happy!”",
-                    "reference": "Ev hest çi ye? Ez dilgiran im… na, ez kêfxweş im!"
+                    "prompt": "Be Hamo, touched and annoyed at once: “What is this feeling? I’m hurt… no, it’s joy!”",
+                    "reference": "Ev hest çi ye? Ez dilgiran im… na, ev dilxweşî ye!"
                   }
                 },
                 {
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Şerm e, xalo! Em ji te hez dikin.",
-                    "voice": "xezo",
-                    "prompt": "Hamo says nobody cares about him. Xezal wags her finger. What does she say? “Şerm e, xalo! Em ji te hez dikin.”",
+                    "voice": "hamo",
+                    "prompt": "Hamo says nobody cares about him. Wag your finger at him, the way Xezal does: “Shame on you! We love you.”",
                     "accepted": [
-                      "Shame on you, uncle! We love you.",
-                      "For shame, uncle! We love you.",
-                      "Shame on you, uncle! We do love you."
+                      "Şerm e! Em ji te hez dikin.",
+                      "Şerm e! Em ji te hez dikin",
+                      "Şerm e, xalo! Em ji te hez dikin.",
+                      "Şerm e, xalo! Em ji te hez dikin"
                     ]
                   }
                 },
@@ -1421,8 +1422,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo turns his face to the wall, smiling. Type what he mutters.",
                     "accepted": [
-                      "Kêfa min tê, lê ez nabêjim!",
-                      "Kêfa min tê, lê ez nabêjim"
+                      "Dilê min xweş dibe, lê ez nabêjim!",
+                      "Dilê min xweş dibe, lê ez nabêjim"
                     ]
                   }
                 },
@@ -1430,13 +1431,13 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Tirs û hêrs ne baş in, xalo.",
-                    "voice": "xezo",
-                    "prompt": "Xezal gives her uncle a piece of advice. What is it? “Tirs û hêrs ne baş in, xalo.”",
+                    "say": "Tirs û hêrs ne baş in.",
+                    "voice": "hamo",
+                    "prompt": "Hamo gives Hêvî a piece of advice, very wise all of a sudden. What is it? “Tirs û hêrs ne baş in.”",
                     "options": [
-                      "Fear and anger aren’t good, uncle.",
-                      "Fear and anger are good, uncle.",
-                      "Honey and tea aren’t good, uncle."
+                      "Fear and anger aren’t good.",
+                      "Fear and anger are good.",
+                      "Honey and tea aren’t good."
                     ],
                     "correctIndex": 0
                   }
@@ -1460,9 +1461,9 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Hamo pretends not to be moved. Which sentence says “Shame on you, uncle!”?",
+                    "prompt": "Hamo pretends not to be moved. Which sentence says “Shame on you, Xalo!”?",
                     "options": [
-                      "Kêf e, xalo!",
+                      "Dilxweşî ye, xalo!",
                       "Şerm e, xalo!",
                       "Dilgiran e, xalo!"
                     ],
@@ -1473,9 +1474,9 @@
                   "position": 16,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Tu ji Hamo hez dikî?",
-                    "voice": "xezo",
-                    "prompt": "Xezal asks you: “Tu ji Hamo hez dikî?” What do you answer?",
+                    "say": "Tu ji Hevalo hez dikî?",
+                    "voice": "hamo",
+                    "prompt": "Hamo nods at the deer asleep by the bed and asks you: “Tu ji Hevalo hez dikî?” What do you answer?",
                     "options": [
                       "Erê, ez ji wê hez dikim.",
                       "Erê, ez jê hez dike.",
@@ -1529,9 +1530,7 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Bi şev hingiv qedexe ye!",
-                    "voice": "xezo",
-                    "prompt": "Xezal reads the doctor’s last line twice, with great pleasure. What does it say? “Bi şev hingiv qedexe ye!”",
+                    "prompt": "Xezal reads the doctor’s last line twice, with great pleasure, then holds the paper up for you to see: “Bi şev hingiv qedexe ye!” What does it say?",
                     "options": [
                       "Honey at night is forbidden!",
                       "Honey at night is necessary!",
@@ -1548,64 +1547,68 @@
                     "title": "Şîretên doktorê",
                     "speakers": [
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
-                      },
-                      {
                         "name": "Hamo",
                         "character": "hamo"
+                      },
+                      {
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
-                        "speaker": 0,
-                        "text": "Xalo, ez şîretên Şîrînê dinivîsim.",
-                        "en": "Uncle, I’m writing down Şîrîn’s advice."
-                      },
-                      {
                         "speaker": 1,
-                        "text": "Şîrîn hîn jî henekên xwe bi min dike!",
-                        "en": "Şîrîn still makes fun of me!"
+                        "text": "Binêre, Xezal şîretên Şîrînê dinivîse.",
+                        "en": "Look, Xezal is writing down Şîrîn’s advice."
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew dibêje ku tu hîn jî hêdî dibezî!",
-                        "en": "She says you still run slowly!"
+                        "text": "Û Şîrîn? Ew hîn jî henekên xwe bi min dike!",
+                        "en": "And Şîrîn? She still makes fun of me!"
                       },
                       {
                         "speaker": 1,
+                        "text": "Ew dibêje ku tu hîn jî hêdî dibezî, wek li dibistanê.",
+                        "en": "She says you still run slowly, like at school."
+                      },
+                      {
+                        "speaker": 0,
                         "text": "Ez ne hêdî me! Ez tenê mezin im.",
                         "en": "I’m not slow! I’m just big."
                       },
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Şîreta yekem: bêhna xwe vede. Şîreta duyem: her roj bimeşe.",
                         "en": "Advice number one: rest. Advice number two: walk every day."
                       },
                       {
-                        "speaker": 1,
-                        "text": "Bi Hevalo re? Baş e, meşîn pêwîst e.",
-                        "en": "With Hevalo? All right, walking is necessary."
+                        "speaker": 0,
+                        "text": "Bimeşim? Baş e… bi Hevalo re. Meşîn pêwîst e.",
+                        "en": "Walk? All right… with Hevalo. Walking is necessary."
                       },
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Û şîreta sêyem: bi şev hingiv qedexe ye!",
                         "en": "And advice number three: honey at night is forbidden!"
                       },
                       {
-                        "speaker": 1,
+                        "speaker": 0,
                         "text": "Qedexe? Lê hingiv min bihêz dike!",
                         "en": "Forbidden? But honey makes me strong!"
                       },
                       {
+                        "speaker": 1,
+                        "text": "Şîrîn dibêje: tu bê hingiv jî bihêz î.",
+                        "en": "Şîrîn says: you’re strong even without honey."
+                      },
+                      {
                         "speaker": 0,
-                        "text": "Na, xalo. Tu bê hingiv jî bihêz î.",
-                        "en": "No, uncle. You’re strong even without honey."
+                        "text": "Ez? Ez lawaz im, gelek lawaz… Xezo, çayek bi hingiv?",
+                        "en": "Me? I’m weak, very weak… Xezo, a tea with honey?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Ez lawaz im, Xezo, gelek lawaz…",
-                        "en": "I’m weak, Xezo, very weak…"
+                        "text": "Na! Çay erê, hingiv na!",
+                        "en": "No! Tea yes, honey no!"
                       }
                     ],
                     "prompt": "Bi şev çi qedexe ye?",
@@ -1621,8 +1624,8 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal reads out advice number two: “Walk every day.”",
+                    "voice": "hamo",
+                    "prompt": "Read Hamo advice number two from Xezal’s notebook: “Walk every day.”",
                     "accepted": [
                       "Her roj bimeşe.",
                       "Her roj bimeşe"
@@ -1646,8 +1649,8 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal reads from her notebook. Type what you hear.",
+                    "voice": "hamo",
+                    "prompt": "Hamo reads advice number one over Xezal’s shoulder, grumbling. Type what you hear.",
                     "accepted": [
                       "Şîreta yekem: bêhna xwe vede.",
                       "Şîreta yekem: bêhna xwe vede"
@@ -1706,13 +1709,13 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Tu bê hingiv jî bihêz î.",
-                    "voice": "xezo",
-                    "prompt": "Xezal won’t give in. What does she tell her uncle? “Tu bê hingiv jî bihêz î.”",
+                    "say": "Ez bê hingiv jî bihêz im?",
+                    "voice": "hamo",
+                    "prompt": "Xezal won’t give in: he is strong even without honey, she says. Hamo isn’t so sure. What does he ask? “Ez bê hingiv jî bihêz im?”",
                     "options": [
-                      "You’re strong even without honey.",
-                      "You’re weak without honey.",
-                      "You can have honey if you’re strong."
+                      "Am I strong even without honey?",
+                      "Am I weak without honey?",
+                      "Can I have honey if I’m strong?"
                     ],
                     "correctIndex": 0
                   }
@@ -1816,73 +1819,73 @@
                     "title": "Diz kî ye?",
                     "speakers": [
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
-                      },
-                      {
                         "name": "Hamo",
                         "character": "hamo"
                       },
                       {
-                        "name": "Hevalo",
-                        "character": "hevalo"
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
+                        "speaker": 1,
+                        "text": "Ev serdana sêyem e û şûşeya sêyem e!",
+                        "en": "This is the third visit and the third jar!"
+                      },
+                      {
                         "speaker": 0,
-                        "text": "Xalo, ev serdana sêyem e û şûşeya sêyem e!",
-                        "en": "Uncle, this is the third visit and the third jar!"
+                        "text": "Cîranên me dilovan in. Ez gelek spasdar im.",
+                        "en": "Our neighbours are kind. I’m very thankful."
                       },
                       {
                         "speaker": 1,
-                        "text": "Cîranên me dilovan in, Xezo. Ez gelek spasdar im.",
-                        "en": "Our neighbours are kind, Xezo. I’m very thankful."
+                        "text": "Lê hingiv qedexe ye. Xezal şûşeyan digire, û Hevalo wan diparêze.",
+                        "en": "But honey is forbidden. Xezal is taking the jars, and Hevalo is guarding them."
                       },
                       {
                         "speaker": 0,
-                        "text": "Lê hingiv qedexe ye. Ez şûşeyan digirim, û Hevalo wan diparêze.",
-                        "en": "But honey is forbidden. I’m taking the jars, and Hevalo is guarding them."
-                      },
-                      {
-                        "speaker": 2,
-                        "text": "Ez wan diparêzim!",
-                        "en": "I’ll guard them!"
+                        "text": "Hevalo? Ew hevalê min e… ne wisa, Hevalo?",
+                        "en": "Hevalo? He’s my friend… isn’t he, Hevalo?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hevalo, tu hevalê min î, ne wisa?",
-                        "en": "Hevalo, you’re my friend, aren’t you?"
+                        "text": "Sibehê… Binêre! Şûşeyek vala ye! Diz kî ye?",
+                        "en": "In the morning… Look! A jar is empty! Who is the thief?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Sibehê… Ev çi ye? Şûşeyek vala ye! Diz kî ye?",
-                        "en": "In the morning… What’s this? A jar is empty! Who is the thief?"
+                        "text": "Diz? Belkî Hevalo ye!",
+                        "en": "A thief? Maybe it’s Hevalo!"
                       },
                       {
-                        "speaker": 2,
-                        "text": "Ez bêguneh im! Ez tenê ji sêvan hez dikim.",
-                        "en": "I’m innocent! I only like apples."
+                        "speaker": 1,
+                        "text": "Na, Hevalo bêguneh e. Ew tenê ji sêvan hez dike.",
+                        "en": "No, Hevalo is innocent. He only likes apples."
                       },
                       {
                         "speaker": 0,
+                        "text": "Ez jî bêguneh im! Ez nexweş im!",
+                        "en": "I’m innocent too! I’m ill!"
+                      },
+                      {
+                        "speaker": 1,
                         "text": "Xalo… simbêlê te çima tije hingiv e?",
-                        "en": "Uncle… why is your moustache full of honey?"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Simbêlê min? Ez… ez jî bêguneh im!",
-                        "en": "My moustache? I… I’m innocent too!"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Belkî hingiv bi xwe tê ser simbêlê min!",
-                        "en": "Maybe the honey comes onto my moustache all by itself!"
+                        "en": "Xalo… why is your moustache full of honey?"
                       },
                       {
                         "speaker": 0,
+                        "text": "Simbêlê min? Belkî hingiv bi xwe tê ser simbêlê min!",
+                        "en": "My moustache? Maybe the honey comes onto my moustache all by itself!"
+                      },
+                      {
+                        "speaker": 1,
                         "text": "Diz di nav malê de ye, û simbêlê wî heye!",
                         "en": "The thief is in the house, and he has a moustache!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Baş e, baş e… lê tenê tiliyek!",
+                        "en": "All right, all right… but only one finger!"
                       }
                     ],
                     "prompt": "Diz kî ye?",
@@ -1898,8 +1901,8 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal hands Hevalo the jars: “Hevalo, guard the jars!”",
+                    "voice": "hamo",
+                    "prompt": "Xezal hands you the jars to take to the cupboard, where the deer is waiting. Tell him: “Hevalo, guard the jars!”",
                     "accepted": [
                       "Hevalo, şûşeyan biparêze!",
                       "Hevalo, şûşeyan biparêze",
@@ -1912,15 +1915,15 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "say": "Ez wan diparêzim!",
-                    "voice": "hevalo",
-                    "prompt": "Hevalo stands up very straight in front of the cupboard. What does he say? “Ez wan diparêzim!”",
+                    "say": "Hevalo wan diparêze!",
+                    "voice": "hamo",
+                    "prompt": "Hevalo stands up very straight in front of the cupboard. Hamo sighs: there goes his last hope. What does he say? “Hevalo wan diparêze!”",
                     "accepted": [
-                      "I’m guarding them!",
-                      "I will guard them!",
-                      "I protect them!",
-                      "I’ll protect them!",
-                      "I'll guard them!"
+                      "Hevalo is guarding them!",
+                      "Hevalo guards them!",
+                      "Hevalo is protecting them!",
+                      "Hevalo protects them!",
+                      "Hevalo’s guarding them!"
                     ]
                   }
                 },
@@ -1928,11 +1931,11 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Morning. Xezal counts the jars. Type what she says.",
+                    "voice": "hamo",
+                    "prompt": "Morning. Xezal holds up an empty jar in front of Hamo. Type what he says, very fast.",
                     "accepted": [
-                      "Sibehê şûşeyek vala ye.",
-                      "Sibehê şûşeyek vala ye"
+                      "Ev şûşe vala ye? Ez bêguneh im!",
+                      "Ev şûşe vala ye? Ez bêguneh im"
                     ]
                   }
                 },
@@ -1940,7 +1943,7 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Hevalo wants to reassure Xezal. Which sentence says “I’m guarding you”?",
+                    "prompt": "Hevalo looks at you, worried about the honey thief. Reassure him. Which sentence says “I’m guarding you”?",
                     "options": [
                       "Ez tu diparêzim.",
                       "Ez te diparêzim.",
@@ -1953,8 +1956,8 @@
                   "position": 8,
                   "type": "writing",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Complete Xezal’s question: “Diz … ye?” (Who is the thief?) Type the whole sentence.",
+                    "voice": "hamo",
+                    "prompt": "Hamo looks round the kitchen, very innocent. Complete his question: “Diz … ye?” (Who is the thief?) Type the whole sentence.",
                     "accepted": [
                       "Diz kî ye?",
                       "Diz kî ye"
@@ -1974,13 +1977,13 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Xalo, simbêlê te çima tije hingiv e?",
-                    "voice": "xezo",
-                    "prompt": "Xezal looks very closely at her uncle’s face. What does she ask? “Xalo, simbêlê te çima tije hingiv e?”",
+                    "voice": "hamo",
+                    "prompt": "Look very closely at Hamo’s face, the way Xezal does, and ask him: “Why is your moustache full of honey?”",
                     "accepted": [
-                      "Uncle, why is your moustache full of honey?",
-                      "Why is your moustache full of honey, uncle?",
-                      "Uncle, why is there honey all over your moustache?"
+                      "Simbêlê te çima tije hingiv e?",
+                      "Simbêlê te çima tije hingiv e",
+                      "Çima simbêlê te tije hingiv e?",
+                      "Çima simbêlê te tije hingiv e"
                     ]
                   }
                 },
@@ -2015,11 +2018,11 @@
                   "position": 13,
                   "type": "listening",
                   "payload": {
-                    "voice": "hevalo",
-                    "prompt": "Hevalo defends himself. Type what you hear.",
+                    "voice": "hamo",
+                    "prompt": "Hevalo stamps a hoof: not him! Hamo puts it into words for him. Type what he says.",
                     "accepted": [
-                      "Ez tenê ji sêvan hez dikim.",
-                      "Ez tenê ji sêvan hez dikim"
+                      "Hevalo tenê ji sêvan hez dike.",
+                      "Hevalo tenê ji sêvan hez dike"
                     ]
                   }
                 },
@@ -2027,9 +2030,7 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Diz di nav malê de ye, û simbêlê wî heye!",
-                    "voice": "xezo",
-                    "prompt": "Xezal solves the case. What does she announce? “Diz di nav malê de ye, û simbêlê wî heye!”",
+                    "prompt": "Xezal solves the case and writes it on the kitchen board for everyone to see: “Diz di nav malê de ye, û simbêlê wî heye!” What has she written?",
                     "options": [
                       "The thief is in the house, and he has a moustache!",
                       "The thief is in the village, and he has a hat!",
@@ -2135,7 +2136,7 @@
                   "payload": {
                     "say": "Ez yê herî bihêz im!",
                     "voice": "hamo",
-                    "prompt": "And who is the strongest in the family? Hamo has no doubt. “Ez yê herî bihêz im!”",
+                    "prompt": "And who is the strongest in the house? Hamo has no doubt. “Ez yê herî bihêz im!”",
                     "accepted": [
                       "I’m the strongest!",
                       "I am the strongest one!",
@@ -2207,7 +2208,7 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Hêvî looks up at her father and asks something. Which question asks “How heavy are you?”",
+                    "prompt": "Hêvî looks up at Hamo and asks something. Which question asks “How heavy are you?”",
                     "options": [
                       "Bejna te çiqas e?",
                       "Giraniya te çiqas e?",
@@ -2332,13 +2333,13 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Bersiva min sêv e!",
-                    "voice": "hevalo",
-                    "prompt": "Hevalo answers before anyone else can. What does he say? “Bersiva min sêv e!”",
+                    "say": "Bersiva Hevalo sêv e!",
+                    "voice": "hamo",
+                    "prompt": "Hevalo stamps a hoof before anyone else can answer, and Hamo laughs. What does he say? “Bersiva Hevalo sêv e!”",
                     "options": [
-                      "My answer is apples!",
-                      "My answer is spring!",
-                      "I don’t have an answer!"
+                      "Hevalo’s answer is apples!",
+                      "Hevalo’s answer is spring!",
+                      "Hevalo has no answer!"
                     ],
                     "correctIndex": 0
                   }
@@ -2375,11 +2376,11 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal doesn’t agree with her uncle about spring. Type what she says.",
+                    "voice": "hamo",
+                    "prompt": "Xezal doesn’t agree with Hamo about spring, and he tells everyone, shaking his head. Type what he says.",
                     "accepted": [
-                      "Ez bêtir ji payîzê hez dikim.",
-                      "Ez bêtir ji payîzê hez dikim"
+                      "Xezal bêtir ji payîzê hez dike.",
+                      "Xezal bêtir ji payîzê hez dike"
                     ]
                   }
                 },
@@ -2389,11 +2390,11 @@
                   "payload": {
                     "prompt": "Which words say “the sweetest fruit”?",
                     "options": [
-                      "fêkiya herî şîrîn",
-                      "fêkiyê herî şîrîn",
-                      "fêkiyê şîrîn herî"
+                      "mêweya herî şîrîn",
+                      "mêweyê herî şîrîn",
+                      "mêweya şîrîn herî"
                     ],
-                    "correctIndex": 1
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2422,8 +2423,8 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ji bo min, ev roj taybet e.",
-                    "voice": "xezo",
-                    "prompt": "Xezal looks round the noisy table and smiles. What does she say? “Ji bo min, ev roj taybet e.”",
+                    "voice": "hamo",
+                    "prompt": "Hamo looks round the noisy table and smiles. What does he say? “Ji bo min, ev roj taybet e.”",
                     "accepted": [
                       "For me, this day is special.",
                       "This day is special for me.",
@@ -2447,11 +2448,11 @@
                   "position": 12,
                   "type": "listening",
                   "payload": {
-                    "voice": "hevalo",
-                    "prompt": "Hevalo explains his choice once more. Type what you hear.",
+                    "voice": "hamo",
+                    "prompt": "Hevalo nudges the fruit bowl with his nose: the same choice, once more. Hamo puts it into words for him. Type what you hear.",
                     "accepted": [
-                      "Ez ji hemû fêkiyan bêtir ji sêvan hez dikim.",
-                      "Ez ji hemû fêkiyan bêtir ji sêvan hez dikim"
+                      "Hevalo ji hemû mêweyan bêtir ji sêvan hez dike.",
+                      "Hevalo ji hemû mêweyan bêtir ji sêvan hez dike"
                     ]
                   }
                 },
@@ -2489,8 +2490,8 @@
                   "position": 15,
                   "type": "translate",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal: “For Hevalo, apples are special.”",
+                    "voice": "hamo",
+                    "prompt": "Hamo strokes the deer’s neck. Say what everyone at the table knows: “For Hevalo, apples are special.”",
                     "accepted": [
                       "Ji bo Hevalo sêv taybet in.",
                       "Ji bo Hevalo sêv taybet in",
@@ -2503,15 +2504,15 @@
                   "position": 16,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Fêkiyê te yê bijare çi ye?",
+                    "say": "Mêweya te ya bijare çi ye?",
                     "voice": "hamo",
-                    "prompt": "Now Hamo asks you: “Fêkiyê te yê bijare çi ye?” Your favourite fruit is the pomegranate. What do you answer?",
+                    "prompt": "Now Hamo asks you: “Mêweya te ya bijare çi ye?” Your favourite fruit is the pomegranate. What do you answer?",
                     "options": [
-                      "Fêkiya min a bijare hinar e.",
-                      "Fêkiyê min ê bijare hinar e.",
-                      "Fêkiyê min ê bijare hinar in."
+                      "Mêweya min a bijare hinar e.",
+                      "Mêweyê min ê bijare hinar e.",
+                      "Mêweya min a bijare hinar in."
                     ],
-                    "correctIndex": 1
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -2578,64 +2579,63 @@
                     "title": "Pêşbirka simbêlan",
                     "speakers": [
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
-                      },
-                      {
                         "name": "Hamo",
                         "character": "hamo"
+                      },
+                      {
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Xalo, îro pêşbirka simbêlan li qehwexaneyê ye!",
-                        "en": "Uncle, the moustache contest is at the tea house today!"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Bêguman ez ê bi ser bikevim.",
-                        "en": "Of course I’ll win."
+                        "en": "Xalo, the moustache contest is at the tea house today!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Dadwer Şîrîn e. Ew ji te natirse!",
-                        "en": "The judge is Şîrîn. She isn’t afraid of you!"
+                        "text": "Ez dizanim. Bêguman ez ê bi ser bikevim.",
+                        "en": "I know. Of course I’ll win."
                       },
                       {
                         "speaker": 1,
-                        "text": "Dora min e? Na, dora Ferhad e.",
-                        "en": "Is it my turn? No, it’s Ferhad’s turn."
+                        "text": "Lê dadwer Şîrîn e. Ew ji te natirse!",
+                        "en": "But the judge is Şîrîn. She isn’t afraid of you!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Xalo, simbêlê Ferhad ji yê te dirêjtir e.",
-                        "en": "Uncle, Ferhad’s moustache is longer than yours."
+                        "text": "Dora kê ye? Dora min e?",
+                        "en": "Whose turn is it? Is it mine?"
                       },
                       {
                         "speaker": 1,
+                        "text": "Na, dora Ferhad e. Binêre… simbêlê wî ji yê te dirêjtir e!",
+                        "en": "No, it’s Ferhad’s turn. Look… his moustache is longer than yours!"
+                      },
+                      {
+                        "speaker": 0,
                         "text": "Dirêjtir, belkî. Lê yê min yê herî xweşik e!",
                         "en": "Longer, maybe. But mine is the most beautiful!"
                       },
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Hemû qehwexane dikene!",
                         "en": "The whole tea house is laughing!"
                       },
                       {
-                        "speaker": 1,
+                        "speaker": 0,
                         "text": "Dibînî? Ew hemû dibêjin ku ez rast im.",
                         "en": "You see? They all say I’m right."
                       },
                       {
-                        "speaker": 0,
-                        "text": "Şîrîn dibêje: «Hamo bi ser dikeve: simbêlê herî xweşik!»",
-                        "en": "Şîrîn says: “Hamo wins: the most beautiful moustache!”"
+                        "speaker": 1,
+                        "text": "Şîrîn radibe… Ew dibêje: «Simbêlê herî xweşik yê Hamo ye!»",
+                        "en": "Şîrîn stands up… She says: “The most beautiful moustache is Hamo’s!”"
                       },
                       {
-                        "speaker": 1,
-                        "text": "Ez dizanim, ez dizanim!",
-                        "en": "I know, I know!"
+                        "speaker": 0,
+                        "text": "Ez dizanim, ez dizanim! Ferhad, xem meke: sala bê dora te ye.",
+                        "en": "I know, I know! Ferhad, don’t worry: next year it’s your turn."
                       }
                     ],
                     "prompt": "Simbêlê kê dirêjtir e?",
@@ -2668,8 +2668,8 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal looks at the line of men: “Whose turn is it?”",
+                    "voice": "hamo",
+                    "prompt": "Look at the line of men with their combed moustaches, and ask Hamo: “Whose turn is it?”",
                     "accepted": [
                       "Dora kê ye?",
                       "Dora kê ye"
@@ -2680,11 +2680,11 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal whispers the bad news. Type what you hear.",
+                    "voice": "hamo",
+                    "prompt": "Ferhad stands up, and the whole room can see it. Hamo whispers the bad news to you. Type what he says.",
                     "accepted": [
-                      "Simbêlê Ferhad ji yê te dirêjtir e.",
-                      "Simbêlê Ferhad ji yê te dirêjtir e"
+                      "Simbêlê Ferhad ji yê min dirêjtir e.",
+                      "Simbêlê Ferhad ji yê min dirêjtir e"
                     ]
                   }
                 },
@@ -2715,8 +2715,8 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hemû qehwexane dikene!",
-                    "voice": "xezo",
-                    "prompt": "Xezal looks around the room. What does she say? “Hemû qehwexane dikene!”",
+                    "voice": "hamo",
+                    "prompt": "Hamo looks round the room, delighted. What does he say? “Hemû qehwexane dikene!”",
                     "accepted": [
                       "The whole tea house is laughing!",
                       "Everyone in the tea house is laughing!",
@@ -2728,8 +2728,8 @@
                   "position": 10,
                   "type": "writing",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Complete Xezal’s line: “Şîrîn … e.” (Şîrîn is the judge.) Type the whole sentence.",
+                    "voice": "hamo",
+                    "prompt": "Hamo tells you who the judge is, with a small sigh. Complete his line: “Şîrîn … e.” (Şîrîn is the judge.) Type the whole sentence.",
                     "accepted": [
                       "Şîrîn dadwer e.",
                       "Şîrîn dadwer e"
@@ -2822,7 +2822,7 @@
                         "right": "summer pastures"
                       },
                       {
-                        "left": "çamûr",
+                        "left": "herî",
                         "right": "mud"
                       },
                       {
@@ -2848,71 +2848,70 @@
                     "title": "Meşa êvarê",
                     "speakers": [
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
-                      },
-                      {
                         "name": "Hamo",
                         "character": "hamo"
+                      },
+                      {
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Xalo, rewşa te çawa ye?",
-                        "en": "Uncle, how are you doing?"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Çêtir e, Xezo. Her roj ez bi we re dimeşim.",
-                        "en": "Better, Xezo. I walk with you every day."
+                        "en": "Xalo, how are you doing?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Û hingiv?",
-                        "en": "And the honey?"
+                        "text": "Çêtir e! Her roj ez bi Xezalê û Hevalo re dimeşim.",
+                        "en": "Better! Every day I walk with Xezal and Hevalo."
                       },
                       {
                         "speaker": 1,
-                        "text": "Hingiv… ne pêwîst e. Dermanê herî baş hewaya zozanan e.",
-                        "en": "Honey… isn’t necessary. The best medicine is the air of the summer pastures."
+                        "text": "Û hingiv? Hîn qedexe ye?",
+                        "en": "And the honey? Still forbidden?"
                       },
                       {
                         "speaker": 0,
+                        "text": "Hingiv… êdî ne pêwîst e. Dermanê herî baş hewaya zozanan e.",
+                        "en": "Honey… isn’t necessary any more. The best medicine is the air of the summer pastures."
+                      },
+                      {
+                        "speaker": 1,
                         "text": "Zozan? Havînê em ê biçin zozanan?",
                         "en": "The pastures? Will we go to the pastures in summer?"
                       },
                       {
+                        "speaker": 0,
+                        "text": "Belkî. Li zozanan her tişt aram e.",
+                        "en": "Maybe. On the pastures everything is calm."
+                      },
+                      {
                         "speaker": 1,
-                        "text": "Belkî, Xezo. Li zozanan her tişt aram e.",
-                        "en": "Maybe, Xezo. On the pastures everything is calm."
+                        "text": "Xalo, binêre! Baran tê… tije herî ye!",
+                        "en": "Xalo, look! Baran is coming… he’s covered in mud!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Xalo, binêre! Baran tê… tije çamûr e!",
-                        "en": "Uncle, look! Baran is coming… he’s covered in mud!"
+                        "text": "Lo Baran! Çi heye? Tu baş î?",
+                        "en": "Hey, Baran! What’s wrong? Are you all right?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Baran? Çi heye, kurê min?",
-                        "en": "Baran? What’s wrong, my son?"
+                        "text": "Ew tiştekî nabêje. Ew tenê li erdê dinêre.",
+                        "en": "He isn’t saying anything. He’s just looking at the ground."
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew tiştekî nabêje. Rewş nediyar e.",
-                        "en": "He isn’t saying anything. We don’t know what happened."
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Aram be, Baran. Were malê.",
-                        "en": "Calm down, Baran. Come home."
+                        "text": "Rewş nediyar e… Aram be, Baran. Were, li vir rûne.",
+                        "en": "We don’t know what happened… Calm down, Baran. Come, sit here."
                       }
                     ],
-                    "prompt": "Baran çawa tê malê?",
+                    "prompt": "Baran çawa tê?",
                     "options": [
-                      "Bi kêf û bi stran.",
+                      "Bi dilxweşî û bi stran.",
                       "Bi Şîrînê re.",
-                      "Tije çamûr û bêdeng."
+                      "Tije herî û bêdeng."
                     ],
                     "correctIndex": 2
                   }
@@ -2967,9 +2966,9 @@
                   "payload": {
                     "prompt": "Which sentence says “Baran is covered in mud”?",
                     "options": [
-                      "Baran vala çamûr e.",
-                      "Baran tije çamûr in.",
-                      "Baran tije çamûr e."
+                      "Baran vala herî ye.",
+                      "Baran tije herî ne.",
+                      "Baran tije herî ye."
                     ],
                     "correctIndex": 2
                   }
@@ -2978,11 +2977,11 @@
                   "position": 8,
                   "type": "writing",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Complete Xezal’s question: “… te çawa ye, xalo?” (How are you doing, uncle? — your condition) Type the whole sentence.",
+                    "voice": "hamo",
+                    "prompt": "Ask Hamo how he is doing on the walk. Complete: “… te çawa ye?” (How are you doing? — your condition) Type the whole sentence.",
                     "accepted": [
-                      "Rewşa te çawa ye, xalo?",
-                      "Rewşa te çawa ye, xalo"
+                      "Rewşa te çawa ye?",
+                      "Rewşa te çawa ye"
                     ]
                   }
                 },
@@ -3000,8 +2999,8 @@
                   "type": "translate",
                   "payload": {
                     "say": "Baran dereng tê malê û tiştekî nabêje.",
-                    "voice": "xezo",
-                    "prompt": "Xezal tells Nazê what has just happened. What does she say? “Baran dereng tê malê û tiştekî nabêje.”",
+                    "voice": "hamo",
+                    "prompt": "Hamo tells Nazê what has just happened. What does he say? “Baran dereng tê malê û tiştekî nabêje.”",
                     "accepted": [
                       "Baran comes home late and doesn’t say anything.",
                       "Baran is coming home late and isn’t saying anything.",
@@ -3013,13 +3012,13 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Aram be, kurê min.",
+                    "say": "Aram be, Baran.",
                     "voice": "hamo",
-                    "prompt": "Hamo puts a hand on Baran’s muddy shoulder. What does he say? “Aram be, kurê min.”",
+                    "prompt": "Hamo puts a hand on Baran’s muddy shoulder. What does he say? “Aram be, Baran.”",
                     "options": [
-                      "Calm down, my son.",
-                      "Come here, my son.",
-                      "Go away, my son."
+                      "Calm down, Baran.",
+                      "Come here, Baran.",
+                      "Go away, Baran."
                     ],
                     "correctIndex": 0
                   }
@@ -3042,11 +3041,11 @@
                   "position": 13,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal looks at the closed door of Baran’s room. Type what she says.",
+                    "voice": "hamo",
+                    "prompt": "Later Hamo looks across the wall at Nazê’s house, at the dark window of Baran’s room, and shakes his head. Type what he says.",
                     "accepted": [
-                      "Rewş nediyar e, xalo.",
-                      "Rewş nediyar e, xalo"
+                      "Rewş nediyar e.",
+                      "Rewş nediyar e"
                     ]
                   }
                 },
@@ -3056,7 +3055,7 @@
                   "payload": {
                     "say": "Baran, çi heye? Tu çima bêdeng î?",
                     "voice": "hamo",
-                    "prompt": "Hamo knocks gently on Baran’s door. What does he ask? “Baran, çi heye? Tu çima bêdeng î?”",
+                    "prompt": "Hamo goes next door and knocks gently on Baran’s door. What does he ask? “Baran, çi heye? Tu çima bêdeng î?”",
                     "options": [
                       "Baran, what’s wrong? Why are you silent?",
                       "Baran, are you hungry? Why are you late?",
@@ -3073,7 +3072,7 @@
           "position": 4,
           "titleKu": "Hest û hal",
           "titleEn": "Feelings and moods",
-          "grammarMd": "Many feelings are said with an adjective and the copula, or with **bûn** (become) in the present:\n\n- *Ez ditirsim.* I’m afraid. · *Ez ji gur ditirsim.* I’m afraid of the wolf.\n- *Ez aciz dibim.* I’m getting bored. · *Ew dilxweş dibe.* She is cheering up.\n\nFeelings towards someone use the pronoun objects and the prepositions:\n\n- *Ez li te dinêrim.* I’m looking at you.\n- *Guhdariya min bike!* Listen to me!\n- *Ez te fêm dikim.* I understand you.\n\n**xwe** is the subject’s own: *Ew bi xwe dikene.* He laughs at himself. · *Baran li xwe dinêre.* Baran looks at himself.",
+          "grammarMd": "Many feelings are said with an adjective and the copula, or with **bûn** (become) in the present:\n\n- *Ez ditirsim.* I’m afraid. · *Ez ji gur ditirsim.* I’m afraid of the wolf.\n- *Ez bêzar dibim.* I’m getting bored. · *Ew dilxweş dibe.* She is cheering up.\n\nFeelings towards someone use the pronoun objects and the prepositions:\n\n- *Ez li te dinêrim.* I’m looking at you.\n- *Guhdariya min bike!* Listen to me!\n- *Ez li te tê digihîjim.* I understand you.\n\n**xwe** is the subject’s own: *Ew bi xwe dikene.* He laughs at himself. · *Baran li xwe dinêre.* Baran looks at himself.",
           "lessons": [
             {
               "key": "u08s4l1",
@@ -3103,7 +3102,7 @@
                     "voice": "hamo",
                     "pairs": [
                       {
-                        "left": "fikirîn",
+                        "left": "hizirîn",
                         "right": "to think"
                       },
                       {
@@ -3115,11 +3114,11 @@
                         "right": "amazed"
                       },
                       {
-                        "left": "dilxweş",
-                        "right": "glad, in good spirits"
+                        "left": "dilxweş bûn",
+                        "right": "to cheer up"
                       },
                       {
-                        "left": "bi heyecan",
+                        "left": "bi kelecan",
                         "right": "excited"
                       },
                       {
@@ -3133,9 +3132,9 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Baran difikire.",
+                    "say": "Baran dihizire.",
                     "voice": "hamo",
-                    "prompt": "Baran doesn’t move. What is he doing? “Baran difikire.”",
+                    "prompt": "Baran doesn’t move. What is he doing? “Baran dihizire.”",
                     "options": [
                       "Baran is thinking.",
                       "Baran is sleeping.",
@@ -3177,10 +3176,10 @@
                   "type": "listening",
                   "payload": {
                     "voice": "hamo",
-                    "prompt": "Hamo sits down beside his son. Type what he asks.",
+                    "prompt": "Hamo sits down beside Baran. Type what he asks.",
                     "accepted": [
-                      "Tu li ser çi difikirî, Baran?",
-                      "Tu li ser çi difikirî, Baran"
+                      "Tu li ser çi dihizirî, Baran?",
+                      "Tu li ser çi dihizirî, Baran"
                     ]
                   }
                 },
@@ -3202,7 +3201,7 @@
                   "type": "speaking",
                   "payload": {
                     "voice": "hamo",
-                    "prompt": "Say Hamo’s quiet words: “I do as my father did: I just sit beside you.”",
+                    "prompt": "Say Hamo’s quiet words: “I do what my father does: I just sit beside you.”",
                     "reference": "Ez wek bavê xwe dikim: ez tenê li kêleka te rûdinim."
                   }
                 },
@@ -3210,9 +3209,9 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "say": "Hêvî bi heyecan e: sibe seyran e!",
+                    "say": "Hêvî bi kelecan e: sibe seyran e!",
                     "voice": "hamo",
-                    "prompt": "Downstairs Hêvî can’t sit still. What does Hamo say about her? “Hêvî bi heyecan e: sibe seyran e!”",
+                    "prompt": "Downstairs Hêvî can’t sit still. What does Hamo say about her? “Hêvî bi kelecan e: sibe seyran e!”",
                     "accepted": [
                       "Hêvî is excited: tomorrow there’s an outing!",
                       "Hêvî is excited: there is an outing tomorrow!",
@@ -3252,11 +3251,11 @@
                   "position": 12,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal can’t believe it. Type what she says.",
+                    "voice": "hamo",
+                    "prompt": "Hamo can’t believe it either: Baran, the chatterbox of the lane, silent. Type what he says.",
                     "accepted": [
-                      "Ez matmayî me: Baran qet ne bêdeng e!",
-                      "Ez matmayî me: Baran qet ne bêdeng e"
+                      "Ez matmayî me: Baran hîç ne bêdeng e!",
+                      "Ez matmayî me: Baran hîç ne bêdeng e"
                     ]
                   }
                 },
@@ -3267,8 +3266,8 @@
                     "voice": "hamo",
                     "prompt": "Complete Hamo’s thought: “Ez li ser Baran …” (I am thinking about Baran.) Type the whole sentence.",
                     "accepted": [
-                      "Ez li ser Baran difikirim.",
-                      "Ez li ser Baran difikirim"
+                      "Ez li ser Baran dihizirim.",
+                      "Ez li ser Baran dihizirim"
                     ]
                   }
                 },
@@ -3276,12 +3275,12 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hêvî bi heyecan e, lê Baran ne dilxweş e.",
+                    "say": "Hêvî bi kelecan e, lê Baran dilxweş nabe.",
                     "voice": "hamo",
-                    "prompt": "Nazê asks Hamo how the children are. What does he say? “Hêvî bi heyecan e, lê Baran ne dilxweş e.”",
+                    "prompt": "Nazê asks Hamo how the children are. What does he say? “Hêvî bi kelecan e, lê Baran dilxweş nabe.”",
                     "options": [
-                      "Hêvî is excited, but Baran isn’t happy.",
-                      "Baran is excited, but Hêvî isn’t happy.",
+                      "Hêvî is excited, but Baran won’t cheer up.",
+                      "Baran is excited, but Hêvî won’t cheer up.",
                       "Both children are happy."
                     ],
                     "correctIndex": 0
@@ -3340,11 +3339,11 @@
                         "right": "trust; belief"
                       },
                       {
-                        "left": "sebir",
-                        "right": "patience"
+                        "left": "bêhna xwe fireh kirin",
+                        "right": "to be patient"
                       },
                       {
-                        "left": "fêm kirin",
+                        "left": "tê gihîştin",
                         "right": "to understand"
                       },
                       {
@@ -3362,9 +3361,9 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ne pêwîst e tu biaxivî. Sebira min heye.",
+                    "say": "Ne pêwîst e tu biaxivî. Bêhna min fireh e.",
                     "voice": "hamo",
-                    "prompt": "Hamo leans back against the chimney. What does he say? “Ne pêwîst e tu biaxivî. Sebira min heye.”",
+                    "prompt": "Hamo leans back against the chimney. What does he say? “Ne pêwîst e tu biaxivî. Bêhna min fireh e.”",
                     "options": [
                       "You don’t have to talk. I’m patient.",
                       "You have to talk now. I’m not patient.",
@@ -3380,8 +3379,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo: “I understand you.”",
                     "accepted": [
-                      "Ez te fêm dikim.",
-                      "Ez te fêm dikim"
+                      "Ez li te tê digihîjim.",
+                      "Ez li te tê digihîjim"
                     ]
                   }
                 },
@@ -3391,7 +3390,7 @@
                   "payload": {
                     "say": "Baweriya min bi te heye, Baran.",
                     "voice": "hamo",
-                    "prompt": "Hamo puts an arm round his son. What does he say? “Baweriya min bi te heye, Baran.”",
+                    "prompt": "Hamo puts an arm round Baran. What does he say? “Baweriya min bi te heye, Baran.”",
                     "accepted": [
                       "I trust you, Baran.",
                       "I believe in you, Baran.",
@@ -3441,21 +3440,22 @@
                   "type": "speaking",
                   "payload": {
                     "voice": "hamo",
-                    "prompt": "Say Hamo’s words slowly: “Telling your father the truth isn’t easy.”",
-                    "reference": "Gotina rastiyê ji bavê xwe re ne hêsan e."
+                    "prompt": "Say Hamo’s words slowly, the way he remembers learning them: “Telling the truth isn’t easy.”",
+                    "reference": "Gotina rastiyê ne hêsan e."
                   }
                 },
                 {
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Sebir bike, kurê min.",
+                    "say": "Bêhna xwe fireh bike, Baran.",
                     "voice": "hamo",
-                    "prompt": "Baran opens his mouth and closes it again. What does Hamo say? “Sebir bike, kurê min.”",
+                    "prompt": "Baran opens his mouth and closes it again. What does Hamo say? “Bêhna xwe fireh bike, Baran.”",
                     "accepted": [
-                      "Be patient, my son.",
-                      "Take your time, my son.",
-                      "Patience, my son."
+                      "Be patient, Baran.",
+                      "Take your time, Baran.",
+                      "Patience, Baran.",
+                      "Be patient, Baran"
                     ]
                   }
                 },
@@ -3487,9 +3487,9 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Tu min fêm dikî?",
+                    "say": "Tu li min tê digihîjî?",
                     "voice": "hamo",
-                    "prompt": "Hamo looks at Baran. What does he ask? “Tu min fêm dikî?”",
+                    "prompt": "Hamo looks at Baran. What does he ask? “Tu li min tê digihîjî?”",
                     "options": [
                       "Do you see me?",
                       "Do you know me?",
@@ -3552,7 +3552,7 @@
                   "position": 1,
                   "type": "match_pairs",
                   "payload": {
-                    "voice": "xezo",
+                    "voice": "hamo",
                     "pairs": [
                       {
                         "left": "nehênî",
@@ -3582,8 +3582,8 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Sibe ez ê bibêjim.",
-                    "voice": "xezo",
-                    "prompt": "Xezal comes down from Baran’s room and repeats the only thing he said. What is it? “Sibe ez ê bibêjim.”",
+                    "voice": "hamo",
+                    "prompt": "Xezal comes down from Baran’s room and whispers to Hamo. Hamo repeats it for you, puzzled. What did Baran say? “Sibe ez ê bibêjim.”",
                     "options": [
                       "Tomorrow I’ll go.",
                       "Tomorrow I’ll tell.",
@@ -3600,71 +3600,61 @@
                     "title": "Sêva dawî",
                     "speakers": [
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
-                      },
-                      {
                         "name": "Hamo",
                         "character": "hamo"
                       },
                       {
-                        "name": "Hevalo",
-                        "character": "hevalo"
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
-                        "speaker": 0,
-                        "text": "Xalo, ez diçim cem Baran.",
-                        "en": "Uncle, I’m going to Baran."
-                      },
-                      {
                         "speaker": 1,
-                        "text": "Hêdî be, Xezo. Ew hîn xemgîn e.",
-                        "en": "Be gentle, Xezo. He’s still sad."
+                        "text": "Ez û Xezal diçin cem Baran.",
+                        "en": "Xezal and I are going up to Baran."
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez jê dipirsim, lê ew tenê dibêje: «Sibe ez ê bibêjim.»",
-                        "en": "I ask him, but he only says: “Tomorrow I’ll tell.”"
+                        "text": "Hêdî bin. Ew hîn xemgîn e.",
+                        "en": "Be gentle. He’s still sad."
                       },
                       {
                         "speaker": 1,
-                        "text": "Nehêniyek wî heye.",
-                        "en": "He has a secret."
+                        "text": "Xezal jê dipirse, lê ew tenê dibêje: «Sibe ez ê bibêjim.»",
+                        "en": "Xezal asks him, but he only says: “Tomorrow I’ll tell.”"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez gazinan nakim. Ez wî fêm dikim.",
-                        "en": "I’m not complaining. I understand him."
-                      },
-                      {
-                        "speaker": 2,
-                        "text": "Ez dikarim li kêleka wî rûnim?",
-                        "en": "Can I sit next to him?"
+                        "text": "Nehêniyeke wî heye. Em gazinan nakin; em li bendê ne.",
+                        "en": "He has a secret. We don’t complain; we wait."
                       },
                       {
                         "speaker": 1,
-                        "text": "Here, Hevalo.",
-                        "en": "Go on, Hevalo."
+                        "text": "Binêre! Hevalo tê, hêdî hêdî…",
+                        "en": "Look! Hevalo is coming, slowly, slowly…"
                       },
                       {
                         "speaker": 0,
-                        "text": "Binêre! Hevalo sêva xwe ya dawî dide Baran!",
-                        "en": "Look! Hevalo is giving Baran his last apple!"
+                        "text": "Hevalo li kêleka wî rûdine. Ew çi dike?",
+                        "en": "Hevalo is sitting down next to him. What is he doing?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Sêva xwe ya dawî? Ev biratî ye!",
-                        "en": "His last apple? That is real friendship!"
+                        "text": "Hevalo sêva xwe ya dawî dide Baran!",
+                        "en": "Hevalo is giving Baran his last apple!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Û Baran Hevalo hembêz dike.",
-                        "en": "And Baran hugs Hevalo."
+                        "text": "Sêva xwe ya dawî? Wey… ev biratî ye!",
+                        "en": "His last apple? Oh… that is real friendship!"
                       },
                       {
                         "speaker": 1,
+                        "text": "Û Baran Hevalo hembêz dike. Ew dikene!",
+                        "en": "And Baran hugs Hevalo. He’s smiling!"
+                      },
+                      {
+                        "speaker": 0,
                         "text": "Baran rastgo ye. Sibe ew ê bibêje.",
                         "en": "Baran is honest. Tomorrow he’ll tell."
                       }
@@ -3682,9 +3672,9 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "say": "Nehêniyek wî heye.",
+                    "say": "Nehêniyeke wî heye.",
                     "voice": "hamo",
-                    "prompt": "Hamo strokes his moustache, thinking. What does he say? “Nehêniyek wî heye.”",
+                    "prompt": "Hamo strokes his moustache, thinking. What does he say? “Nehêniyeke wî heye.”",
                     "accepted": [
                       "He has a secret.",
                       "He’s got a secret.",
@@ -3696,8 +3686,8 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal, with a lump in her throat: “Baran hugs Hevalo.”",
+                    "voice": "hamo",
+                    "prompt": "Tell Hamo what you can see from the doorway: “Baran hugs Hevalo.”",
                     "accepted": [
                       "Baran Hevalo hembêz dike.",
                       "Baran Hevalo hembêz dike"
@@ -3708,11 +3698,11 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal tells her uncle about Baran. Type what you hear.",
+                    "voice": "hamo",
+                    "prompt": "Hamo tells Nazê about Baran, worried. Type what you hear.",
                     "accepted": [
-                      "Ez jê dipirsim, lê ew tiştekî nabêje.",
-                      "Ez jê dipirsim, lê ew tiştekî nabêje"
+                      "Xezal jê dipirse, lê ew tiştekî nabêje.",
+                      "Xezal jê dipirse, lê ew tiştekî nabêje"
                     ]
                   }
                 },
@@ -3744,7 +3734,7 @@
                   "payload": {
                     "say": "Baran rastgo ye. Sibe ew ê bibêje.",
                     "voice": "hamo",
-                    "prompt": "Hamo is sure about his son. What does he say? “Baran rastgo ye. Sibe ew ê bibêje.”",
+                    "prompt": "Hamo is sure about Baran. What does he say? “Baran rastgo ye. Sibe ew ê bibêje.”",
                     "accepted": [
                       "Baran is honest. Tomorrow he will tell.",
                       "Baran is honest. He will tell tomorrow.",
@@ -3758,8 +3748,8 @@
                   "position": 10,
                   "type": "writing",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Complete Xezal’s line: “Ez … nakim.” (I’m not complaining.) Type the whole sentence.",
+                    "voice": "hamo",
+                    "prompt": "Hamo won’t scold Baran. Complete his line: “Ez … nakim.” (I’m not complaining.) Type the whole sentence.",
                     "accepted": [
                       "Ez gazinan nakim.",
                       "Ez gazinan nakim",
@@ -3772,13 +3762,13 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Fermo, Baran. Sêva min a dawî.",
-                    "voice": "hevalo",
-                    "prompt": "Hevalo puts something red on Baran’s knee. What does he say? “Fermo, Baran. Sêva min a dawî.”",
+                    "say": "Ev sêva wî ya dawî ye.",
+                    "voice": "hamo",
+                    "prompt": "Hevalo puts something red on Baran’s knee and steps back. Hamo’s voice shakes a little. What does he say? “Ev sêva wî ya dawî ye.”",
                     "options": [
-                      "Here you are, Baran. My last apple.",
-                      "Look, Baran. My first apple.",
-                      "Give me your apple, Baran."
+                      "That’s his last apple.",
+                      "That’s his first apple.",
+                      "That’s Baran’s apple."
                     ],
                     "correctIndex": 0
                   }
@@ -3787,11 +3777,11 @@
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal, very gently: “Do you have a secret?”",
+                    "voice": "hamo",
+                    "prompt": "Sit down next to Baran and ask him, very gently: “Do you have a secret?”",
                     "accepted": [
-                      "Nehêniyek te heye?",
-                      "Nehêniyek te heye"
+                      "Nehêniyeke te heye?",
+                      "Nehêniyeke te heye"
                     ]
                   }
                 },
@@ -3815,8 +3805,8 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Tu rastgo yî?",
-                    "voice": "xezo",
-                    "prompt": "Xezal tilts her head at you: “Tu rastgo yî?” Which answer is right?",
+                    "voice": "hamo",
+                    "prompt": "Hamo tilts his head at you, the way Xezal does: “Tu rastgo yî?” Which answer is right?",
                     "options": [
                       "Erê, ez rastgo im.",
                       "Erê, ez rastgo me.",
@@ -3885,62 +3875,71 @@
                     "title": "Çîroka beranê",
                     "speakers": [
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
-                      },
-                      {
                         "name": "Hamo",
                         "character": "hamo"
+                      },
+                      {
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Xalo, çîroka zarokatiya xwe ji min re bibêje.",
-                        "en": "Uncle, tell me a story from your childhood."
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Ez neh salî me, li zozanan. Beranê bavê min ê herî baş winda dibe.",
-                        "en": "I’m nine, on the pastures. My father’s best ram gets lost."
+                        "en": "Xalo, tell me a story from your childhood."
                       },
                       {
                         "speaker": 0,
-                        "text": "Û tu çi dikî?",
-                        "en": "And what do you do?"
+                        "text": "Baş e. Ez heşt salî me, li Kobaniyê. Pezê bavê min heye, û ez wî dibim Miştenûrê.",
+                        "en": "All right. I’m eight, in Kobanî. My father has a few sheep, and I take them up Miştenûr."
                       },
                       {
                         "speaker": 1,
+                        "text": "Miştenûr? Ew gir li ser bajêr?",
+                        "en": "Miştenûr? That hill above the town?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê. Û li wir beranê herî baş winda dibe!",
+                        "en": "Yes. And up there the best ram gets lost!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Na! Û tu çi dikî?",
+                        "en": "No! And what do you do?"
+                      },
+                      {
+                        "speaker": 0,
                         "text": "Ez ditirsim. Ez hemû rojê xwe li pişt kevirekî vedişêrim.",
                         "en": "I’m scared. I hide behind a rock all day."
                       },
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Tu tirsonek î, xalo?",
-                        "en": "You’re a coward, uncle?"
+                        "en": "You, a coward, Xalo?"
                       },
                       {
-                        "speaker": 1,
+                        "speaker": 0,
                         "text": "Wê demê, erê. Lê êvarê ez diçim cem bavê xwe û rastiyê dibêjim.",
                         "en": "Back then, yes. But in the evening I go to my father and tell the truth."
                       },
                       {
+                        "speaker": 1,
+                        "text": "Û bavê te? Ew çi dibêje?",
+                        "en": "And your father? What does he say?"
+                      },
+                      {
                         "speaker": 0,
-                        "text": "Ew çi dibêje?",
-                        "en": "What does he say?"
+                        "text": "Ew dibêje: «Tu kurekî wêrek î.» Û beran? Beran bi xwe tê malê!",
+                        "en": "He says: “You’re a brave boy.” And the ram? The ram comes home by itself!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Ew dibêje: «Tu kurekî wêrek î.» Mirovên mêrxas rastiyê dibêjin.",
-                        "en": "He says: “You’re a brave boy.” Brave people tell the truth."
-                      },
-                      {
-                        "speaker": 0,
                         "text": "Û Baran? Ew ê sibe bibêje?",
                         "en": "And Baran? Will he tell tomorrow?"
                       },
                       {
-                        "speaker": 1,
+                        "speaker": 0,
                         "text": "Erê. Baran jî wêrek e.",
                         "en": "Yes. Baran is brave too."
                       }
@@ -3987,11 +3986,11 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal can’t believe her ears. Type what she asks.",
+                    "voice": "hamo",
+                    "prompt": "Xezal can’t believe her ears: Hamo, a coward? Hamo laughs and answers before she can ask. Type what he says.",
                     "accepted": [
-                      "Tu tirsonek î, xalo?",
-                      "Tu tirsonek î, xalo"
+                      "Ez tirsonek im? Wê demê, erê!",
+                      "Ez tirsonek im? Wê demê, erê"
                     ]
                   }
                 },
@@ -4035,13 +4034,13 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Xalo, çîroka zarokatiya xwe ji min re bibêje.",
-                    "voice": "xezo",
-                    "prompt": "Xezal curls up by the fire. What does she ask? “Xalo, çîroka zarokatiya xwe ji min re bibêje.”",
+                    "voice": "hamo",
+                    "prompt": "Curl up by the fire like Xezal and ask Hamo: “Tell me the story of your childhood.”",
                     "accepted": [
-                      "Uncle, tell me a story from your childhood.",
-                      "Uncle, tell me the story of your childhood.",
-                      "Uncle, tell me about your childhood."
+                      "Çîroka zarokatiya xwe ji min re bibêje.",
+                      "Çîroka zarokatiya xwe ji min re bibêje",
+                      "Xalo, çîroka zarokatiya xwe ji min re bibêje.",
+                      "Xalo, çîroka zarokatiya xwe ji min re bibêje"
                     ]
                   }
                 },
@@ -4064,8 +4063,8 @@
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "voice": "xezo",
-                    "prompt": "Xezal: “Will Baran tell tomorrow?”",
+                    "voice": "hamo",
+                    "prompt": "Ask Hamo what everyone is wondering: “Will Baran tell tomorrow?”",
                     "accepted": [
                       "Baran dê sibe bibêje?",
                       "Baran dê sibe bibêje",
@@ -4091,8 +4090,8 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Sibehê Baran dibêje: «Duh…»",
-                    "voice": "xezo",
-                    "prompt": "Morning. Baran sits down at breakfast, takes a breath and begins. What does Xezal tell you? “Sibehê Baran dibêje: «Duh…»”",
+                    "voice": "hamo",
+                    "prompt": "The next morning Baran sits down at breakfast and takes a deep breath. Later Hamo tells you about it, still amazed. What does he say? “Sibehê Baran dibêje: «Duh…»”",
                     "options": [
                       "In the morning Baran says: “Yesterday…”",
                       "In the morning Baran says: “Tomorrow…”",

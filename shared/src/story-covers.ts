@@ -1,22 +1,26 @@
 /**
- * The pictures a story can wear as its cover: the backgrounds the shop
- * already draws (scripts/cosmetic-art/backgrounds.mjs), each a Kurdish place
- * or moment painted as a scene, or one of the seven kilims. A story's `cover`
- * stores one of these keys; the admin offers the list, and the apps draw the
- * picture the key names as the cover band over the story's title. One list,
- * so the admin never offers a picture the apps cannot draw, and the apps never
- * meet a key they do not know.
+ * The pictures a story can wear as its cover: the five painted for the
+ * library's legends alone (scripts/cosmetic-art/story-covers.mjs), and the
+ * backgrounds the shop already draws (scripts/cosmetic-art/backgrounds.mjs),
+ * each a Kurdish place or moment painted as a scene, or one of the seven
+ * kilims. A story's `cover` stores one of these keys; the admin offers the
+ * list, and the apps draw the picture the key names as the cover band over
+ * the story's title. One list, so the admin never offers a picture the apps
+ * cannot draw, and the apps never meet a key they do not know.
  *
- * The files are numbered in the shop's order (`made-06-gola-sin.webp`), which
- * is why the number is kept here beside the key rather than worked out.
+ * The shop's files are numbered in its order (`made-06-gola-sin.webp`), which
+ * is why the number is kept here beside the key rather than worked out. The
+ * legends' own covers are not for sale and have no place in that order, so
+ * their files are named for them instead (`story-kawa.webp`), in the same
+ * folder.
  */
 
 export interface StoryCover {
   /** what `stories.cover` stores */
   key: string;
-  /** the file under /cosmetics/backgrounds/, numbered in the shop's order */
+  /** the file under /cosmetics/backgrounds/: numbered in the shop's order, or named for the legend it was painted for */
   file: string;
-  /** its name in Kurmancî, as the shop lists it */
+  /** its name in Kurmancî, as the shop (or, for a legend's own cover, the admin) lists it */
   ku: string;
   /** its name in English */
   en: string;
@@ -32,8 +36,16 @@ const cover = (n: number, key: string, ku: string, en: string, kind: StoryCover[
   kind,
 });
 
-/** Every cover, in the shop's order: the scenes first, then the kilims. */
+/** A cover painted for one legend alone, not sold in the shop: its file is named for it, not numbered. */
+const legend = (key: string, ku: string, en: string): StoryCover => ({ key, file: `story-${key}.webp`, ku, en, kind: 'scene' });
+
+/** Every cover: the legends' own first, then the shop's in its order — the scenes, then the kilims. */
 export const STORY_COVERS: readonly StoryCover[] = [
+  legend('kawa', 'Kawayê Hesinkar', 'Kawa the blacksmith'),
+  legend('sahmaran', 'Şahmaran', 'The serpent queen'),
+  legend('mem-u-zin', 'Mem û Zîn', 'Mem and Zîn'),
+  legend('siyabend', 'Siyabend û Xecê', 'Siyabend and Xecê'),
+  legend('dimdim', 'Kela Dimdimê', 'The fortress of Dimdim'),
   cover(1, 'hevalo', 'Hevalo', 'Hevalo violet'),
   cover(2, 'seva-zozanan', 'Şeva Zozanan', 'Night on the high pastures'),
   cover(3, 'ezmane-sterkan', 'Ezmanê Stêrkan', 'Sky full of stars'),

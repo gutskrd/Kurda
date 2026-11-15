@@ -1,0 +1,3051 @@
+{
+  "riddles": [
+    {
+      "slug": "kmr-hek",
+      "dialect": "kmr",
+      "difficulty": "easy",
+      "category": "children",
+      "tradition": "traditional",
+      "region": null,
+      "question": "Qesra spî, bê pencere û bê derî, tê de rûniştiye bûkeke zerî. Ew çi ye?",
+      "hints": [
+        "Vê qesrê ne hoste, lê mirîşk çêdike.",
+        "Ji bo ku tu bûka zer bibînî, divê tu dîwarê qesrê bişkînî."
+      ],
+      "answer": "Hêk",
+      "accepted": [
+        "hêk",
+        "hêka mirîşkê"
+      ],
+      "explanation": "Qalikê hêkê qesreke spî ye ku tu derî û pencere tê de tune; zerika wê ‘bûka zer’ e ku di hundir de rûniştiye. Di mamikê de ‘derî’ û ‘zerî’ serwayên hev in.",
+      "translations": {
+        "ckb": {
+          "question": "کۆشکێکی سپی، نە پەنجەرەی هەیە نە دەرگا، بووکێکی زەردی تێدا دانیشتووە. ئەوە چییە؟",
+          "hints": [
+            "ئەم کۆشکە وەستا دروستی ناکات، مریشک دروستی دەکات.",
+            "بۆ ئەوەی بووکە زەردەکە ببینیت، دەبێت دیواری کۆشکەکە بشکێنیت."
+          ],
+          "answer": "هێلکە",
+          "explanation": "تووێکڵی هێلکە کۆشکێکی سپییە کە هیچ دەرگا و پەنجەرەیەکی نییە؛ زەردێنەکەی «بووکە زەردەکە»یە کە لە ناوەوە دانیشتووە. لە کورمانجیدا «دەری» (دەرگا) و «زەری» (زێڕین) سەروایان هەیە."
+        },
+        "en": {
+          "question": "A white palace with no windows and no door, and inside it sits a yellow bride. What is it?",
+          "hints": [
+            "No stonemason builds this palace — a hen does.",
+            "To meet the yellow bride, you have to break the palace wall."
+          ],
+          "answer": "An egg",
+          "explanation": "The shell is the white palace with no way in; the yolk is the yellow bride sitting inside. In Kurdish the lines rhyme: derî (door) and zerî (golden)."
+        },
+        "nl": {
+          "question": "Een wit paleis zonder ramen en zonder deur, en binnen zit een gele bruid. Wat is het?",
+          "hints": [
+            "Geen metselaar bouwt dit paleis, maar een kip.",
+            "Wil je de gele bruid zien, dan moet je de paleismuur breken."
+          ],
+          "answer": "Een ei",
+          "explanation": "De schaal is het witte paleis zonder ingang; de dooier is de gele bruid die erin zit. In het Koerdisch rijmen derî (deur) en zerî (goudgeel)."
+        },
+        "de": {
+          "question": "Ein weißer Palast ohne Fenster und ohne Tür, und drinnen sitzt eine gelbe Braut. Was ist das?",
+          "hints": [
+            "Kein Steinmetz baut diesen Palast, sondern ein Huhn.",
+            "Wer die gelbe Braut sehen will, muss die Palastmauer zerbrechen."
+          ],
+          "answer": "Ein Ei",
+          "explanation": "Die Schale ist der weiße Palast ohne Eingang, das Eigelb die gelbe Braut darin. Auf Kurdisch reimen sich derî (Tür) und zerî (goldgelb)."
+        },
+        "es": {
+          "question": "Un palacio blanco sin ventanas ni puerta, y dentro está sentada una novia amarilla. ¿Qué es?",
+          "hints": [
+            "Este palacio no lo construye un cantero, sino una gallina.",
+            "Para ver a la novia amarilla, tienes que romper la pared del palacio."
+          ],
+          "answer": "Un huevo",
+          "explanation": "La cáscara es el palacio blanco sin entrada; la yema es la novia amarilla sentada dentro. En kurdo riman derî (puerta) y zerî (dorada)."
+        },
+        "fr": {
+          "question": "Un palais blanc sans fenêtre ni porte, et dedans est assise une mariée jaune. Qu’est-ce que c’est ?",
+          "hints": [
+            "Ce palais, ce n’est pas un maçon qui le bâtit, c’est une poule.",
+            "Pour voir la mariée jaune, il faut briser le mur du palais."
+          ],
+          "answer": "Un œuf",
+          "explanation": "La coquille est le palais blanc sans entrée ; le jaune est la mariée assise à l’intérieur. En kurde, derî (porte) rime avec zerî (dorée)."
+        },
+        "tr": {
+          "question": "Kapısı da penceresi de olmayan beyaz bir saray; içinde sarı bir gelin oturuyor. Nedir?",
+          "hints": [
+            "Bu sarayı taş ustası değil, tavuk yapar.",
+            "Sarı gelini görmek için sarayın duvarını kırman gerekir."
+          ],
+          "answer": "Yumurta",
+          "explanation": "Kabuk, girişi olmayan beyaz saraydır; sarısı da içinde oturan sarı gelindir. Kürtçede derî (kapı) ile zerî (altın sarısı) kafiyelidir."
+        },
+        "ar": {
+          "question": "قصرٌ أبيض بلا نوافذ ولا باب، تجلس في داخله عروسٌ صفراء. ما هو؟",
+          "hints": [
+            "لا يبني هذا القصرَ بنّاءٌ، بل دجاجة.",
+            "لكي ترى العروس الصفراء، عليك أن تكسر جدار القصر."
+          ],
+          "answer": "البيضة",
+          "explanation": "القشرة هي القصر الأبيض الذي لا مدخل له، والصفار هو العروس الصفراء الجالسة في داخله. وفي الكردية تتقفّى كلمتا derî (باب) وzerî (ذهبية)."
+        }
+      },
+      "sources": [
+        {
+          "title": "Têderxistinok û tiştanok û mamik",
+          "author": "Kelhaamed (news site)",
+          "url": "https://www.kelhaamed.com/news/2940/tderxistinok-tistanok-mamik",
+          "note": "Eleven traditional riddles with answers in brackets; no. 10 reads ‘Qesra sipî, bê pencere û bê derî, tê de rûniştîye bûkeke zerî (hêk)’."
+        },
+        {
+          "title": "Qesra spî, bê pencere û bê derî",
+          "author": "Kurdipedia, Çand – Mamik",
+          "url": "https://www.kurdipedia.org/default.aspx/default.aspx?q=20230303112310471516&lng=13",
+          "note": "A Kurmancî riddle entry under this title (the egg riddle)."
+        },
+        {
+          "title": "Pêvek:Mamik",
+          "author": "Wîkîferheng (Kurdish Wiktionary); riddles collected in Gundikê Melî (Şirnex) by Mirad Gundikî, Kurdîgeh.com, 2010",
+          "url": "https://ku.wiktionary.org/wiki/P%C3%AAvek:Mamik",
+          "note": "Riddles opening ‘Mamkê min ê mamanî’, answers listed apart; gives the short form ‘Qesra spî bê derî’ (hêk)."
+        },
+        {
+          "title": "Mamikên Kurdî – Kürtçe bilmeceler",
+          "author": "occo mahabad (blog)",
+          "url": "https://occomahabad.wordpress.com/2012/08/20/mamiken-kurdi-kurtce-bilmeceler/",
+          "note": "Kurmancî riddle list; egg variant ‘Xaniyekî gilover û spî bê pencere…, têde rûniştiye bûkeke zerî’; answers include sîya mirov."
+        }
+      ],
+      "notes": "Traditional; wording as Kelhaamed gives it (‘Qesra sipî, bê pencere û bê derî, tê de rûniştîye bûkeke zerî’), normalised to Hawar spelling: sipî → spî (the Kurdipedia entry title already writes ‘Qesra spî, bê pencere û bê derî’), rûniştîye → rûniştiye. ‘Ew çi ye?’ added as the app’s question tag. ‘zerî’ kept for the rhyme with ‘derî’. Other forms: Wiktionary (Gundikê Melî, Şirnex) ‘Qesra spî bê derî’; occomahabad ‘Xaniyekî gilover û spî bê pencere…’; RiaTaza ‘Qesirek sipî / Bê derî’. Hints and explanation are new."
+    },
+    {
+      "slug": "kmr-hiv",
+      "dialect": "kmr",
+      "difficulty": "medium",
+      "category": "nature",
+      "tradition": "traditional",
+      "region": null,
+      "question": "Mamikê mino, teştek mast, li dereke rast. Ew çi ye?",
+      "hints": [
+        "Bi şev derdikeve; kes nikare jê bixwe, kes jî nagihêjê.",
+        "Carinan tijî û girover e, carinan wek kevanekê zirav dibe."
+      ],
+      "answer": "Hîv",
+      "accepted": [
+        "hîv",
+        "heyv",
+        "hîva tijî",
+        "heyva tijî"
+      ],
+      "explanation": "Hîva tijî wek teştekê mast spî û girover e, û li ezmanê vekirî, ‘li dereke rast’, bê ku birije radiweste. ‘Mast’ û ‘rast’ serwayên hev in.",
+      "translations": {
+        "ckb": {
+          "question": "مەتەڵێکم هەیە: تەشتێک ماست، لە شوێنێکی ڕاست. ئەوە چییە؟",
+          "hints": [
+            "شەوان دەردەکەوێت؛ کەس ناتوانێت لێی بخوات و کەسیش پێی ناگات.",
+            "جاری وایە پڕ و خڕە، جاری واش وەک کەوانێکی باریک دەبێت."
+          ],
+          "answer": "مانگ",
+          "explanation": "مانگی چواردە سپی و خڕە وەک تەشتێک ماست، و لە ئاسمانی کراوەدا، «لە شوێنێکی ڕاست»، بێ ئەوەی بڕژێت دەوەستێت. لە کورمانجیدا «ماست» و «ڕاست» سەروایان هەیە."
+        },
+        "en": {
+          "question": "Here’s my riddle: a basin of yoghurt, set down on level ground. What is it?",
+          "hints": [
+            "It comes out at night; no one can eat from it, and no one can reach it.",
+            "Sometimes it is full and round, sometimes as thin as a bow."
+          ],
+          "answer": "The moon",
+          "explanation": "A full moon is white and round like a basin of yoghurt, sitting perfectly still in the open sky without ever spilling. In Kurdish the two halves rhyme: mast (yoghurt) and rast (level)."
+        },
+        "nl": {
+          "question": "Raad eens: een kom yoghurt, neergezet op een vlakke plek. Wat is het?",
+          "hints": [
+            "Hij komt ’s nachts tevoorschijn; niemand kan ervan eten en niemand kan erbij.",
+            "Soms is hij vol en rond, soms zo dun als een boog."
+          ],
+          "answer": "De maan",
+          "explanation": "Een volle maan is wit en rond als een kom yoghurt en staat stil aan de open hemel zonder ooit te morsen. In het Koerdisch rijmen mast (yoghurt) en rast (vlak)."
+        },
+        "de": {
+          "question": "Rate mal: eine Schüssel Joghurt, abgestellt auf ebenem Grund. Was ist das?",
+          "hints": [
+            "Er kommt nachts heraus; niemand kann daraus essen, niemand reicht hinauf.",
+            "Mal ist er voll und rund, mal so schmal wie ein Bogen."
+          ],
+          "answer": "Der Mond",
+          "explanation": "Der Vollmond ist weiß und rund wie eine Schüssel Joghurt und steht ganz ruhig am offenen Himmel, ohne je überzuschwappen. Auf Kurdisch reimen sich mast (Joghurt) und rast (eben)."
+        },
+        "es": {
+          "question": "Adivina, adivinanza: un cuenco de yogur, puesto en terreno llano. ¿Qué es?",
+          "hints": [
+            "Sale de noche; nadie puede comer de él ni alcanzarlo.",
+            "A veces está lleno y redondo, a veces tan fino como un arco."
+          ],
+          "answer": "La luna",
+          "explanation": "La luna llena es blanca y redonda como un cuenco de yogur, y está quieta en el cielo abierto sin derramarse nunca. En kurdo riman mast (yogur) y rast (llano)."
+        },
+        "fr": {
+          "question": "Devine : une bassine de yaourt posée sur un terrain plat. Qu’est-ce que c’est ?",
+          "hints": [
+            "Elle sort la nuit ; personne ne peut en manger ni l’atteindre.",
+            "Parfois pleine et ronde, parfois fine comme un arc."
+          ],
+          "answer": "La lune",
+          "explanation": "La pleine lune est blanche et ronde comme une bassine de yaourt, immobile dans le ciel ouvert sans jamais déborder. En kurde, mast (yaourt) rime avec rast (plat)."
+        },
+        "tr": {
+          "question": "Bil bakalım: düz bir yere konmuş bir leğen yoğurt. Nedir?",
+          "hints": [
+            "Geceleri çıkar; kimse ondan yiyemez, kimse ona uzanamaz.",
+            "Bazen dolgun ve yuvarlaktır, bazen bir yay kadar incelir."
+          ],
+          "answer": "Ay",
+          "explanation": "Dolunay, bir leğen yoğurt gibi beyaz ve yuvarlaktır; açık gökte hiç dökülmeden durur. Kürtçede mast (yoğurt) ile rast (düz) kafiyelidir."
+        },
+        "ar": {
+          "question": "حزّورة: طستٌ من اللبن الرائب، موضوعٌ على أرضٍ مستوية. ما هو؟",
+          "hints": [
+            "يظهر في الليل؛ لا أحد يأكل منه، ولا أحد يبلغه.",
+            "أحيانًا يكون ممتلئًا مستديرًا، وأحيانًا يرقّ حتى يصير كالقوس."
+          ],
+          "answer": "القمر",
+          "explanation": "البدر أبيض مستدير كطستٍ من اللبن الرائب، يقف ساكنًا في السماء المفتوحة دون أن ينسكب. وفي الكردية تتقفّى mast (لبن) وrast (مستوٍ)."
+        }
+      },
+      "sources": [
+        {
+          "title": "[M]amikê mino, teştek mast, li dereke rast",
+          "author": "Kurdipedia, Çand – Mamik",
+          "url": "https://kurdipedia.org/default.aspx?lng=8&q=20240418235911566187",
+          "note": "The entry’s title gives the riddle line, its first letter missing."
+        },
+        {
+          "title": "Master’s thesis on Kurdish mamik (title page not seen)",
+          "author": "Mardin Artuklu University, Institute of Living Languages",
+          "url": "https://gcris.artuklu.edu.tr/server/api/core/bitstreams/15350dfa-48a1-41e1-921c-ed6ca58c1d0c/content",
+          "note": "Treats mamik, metelok and tiştanok as names of one genre (‘in the south mamik are called metelok’); lists riddles by answer, e.g. ‘Tifeng’ (ez çûm ser zinarekî…), ‘Hîv’ (a bowl of yoghurt), ‘Stêrk’, ‘Ziman’."
+        }
+      ],
+      "notes": "Traditional image (the moon as a basin of yoghurt). Wording is the Kurdipedia entry’s title, ‘[M]amikê mino, teştek mast, li dereke rast’ (the title drops the M); I could not see that entry’s answer. The Mardin Artuklu thesis lists a variant under the heading ‘Hîv’ (the extract I saw was garbled: ‘elba mast, li guhera rast’), which is what ties the image to the moon. Reviewer: confirm the answer, and what ‘li dereke rast’ means where this is said (a level place? the right-hand side?); the translations read it as ‘on level ground’. ‘Ew çi ye?’ added."
+    },
+    {
+      "slug": "kmr-tifing",
+      "dialect": "kmr",
+      "difficulty": "hard",
+      "category": "everyday",
+      "tradition": "traditional",
+      "region": null,
+      "question": "Ez çûm ser zinarekî, tiliya min ket qulekî, dengê min çû hezarekî. Ew çi ye?",
+      "hints": [
+        "Nêçîrvanê çiyayî ew li ser milê xwe hildigirt.",
+        "Dema tilî dikeve qula wê, dengek jê derdikeve ku li hemû geliyan belav dibe."
+      ],
+      "answer": "Tifing",
+      "accepted": [
+        "tifing",
+        "tifeng",
+        "tiving",
+        "tifinga nêçîrê",
+        "çek"
+      ],
+      "explanation": "Nêçîrvan li ser zinêr radiweste, tiliya xwe dixe qula tetikê û dengê teqînê digihêje hezar kesî. Mamik mirov dixapîne: mirov dihizire ku gotin li ser stranbêjekî ye, lê ‘deng’ teqîna tifingê ye.",
+      "translations": {
+        "ckb": {
+          "question": "چوومە سەر بەردێک، پەنجەم چووە کونێک، دەنگم گەیشتە هەزار کەس. ئەوە چییە؟",
+          "hints": [
+            "ڕاوچیی شاخ لەسەر شانی هەڵیدەگرت.",
+            "کاتێک پەنجە دەچێتە کونەکەی، دەنگێکی لێوە دەردەچێت کە بە هەموو دۆڵەکاندا بڵاو دەبێتەوە."
+          ],
+          "answer": "تفەنگ",
+          "explanation": "ڕاوچی لەسەر بەردێک دەوەستێت، پەنجە دەخاتە کونی پەلەپیتکەکە و دەنگی تەقەکە دەگاتە هەزار کەس. مەتەڵەکە هەڵتدەخەڵەتێنێت: وا دەزانیت باسی گۆرانیبێژێک دەکات، بەڵام «دەنگ»ەکە تەقەی تفەنگە."
+        },
+        "en": {
+          "question": "I climbed onto a rock, my finger went into a hole, and my voice reached a thousand people. What is it?",
+          "hints": [
+            "The mountain hunter used to carry it on his shoulder.",
+            "When a finger goes into its hole, a sound comes out that fills every valley."
+          ],
+          "answer": "A rifle",
+          "explanation": "The hunter stands on a rock, slips his finger through the trigger guard, and the bang carries to a thousand ears. The riddle tricks you into picturing a singer, but the ‘voice’ is the gunshot."
+        },
+        "nl": {
+          "question": "Ik klom op een rots, mijn vinger ging in een gat en mijn stem bereikte duizend mensen. Wat is het?",
+          "hints": [
+            "De jager in de bergen droeg het op zijn schouder.",
+            "Als er een vinger in het gat gaat, klinkt er een geluid dat door alle dalen galmt."
+          ],
+          "answer": "Een geweer",
+          "explanation": "De jager staat op een rots, steekt zijn vinger bij de trekker en de knal is voor duizend oren te horen. Het raadsel laat je aan een zanger denken, maar de ‘stem’ is het schot."
+        },
+        "de": {
+          "question": "Ich stieg auf einen Felsen, mein Finger fuhr in ein Loch, und meine Stimme erreichte tausend Menschen. Was ist das?",
+          "hints": [
+            "Der Jäger in den Bergen trug es auf der Schulter.",
+            "Steckt ein Finger in seinem Loch, ertönt ein Laut, der durch alle Täler hallt."
+          ],
+          "answer": "Ein Gewehr",
+          "explanation": "Der Jäger steht auf dem Felsen, legt den Finger an den Abzug, und der Knall dringt an tausend Ohren. Das Rätsel lässt an einen Sänger denken, doch die ‚Stimme‘ ist der Schuss."
+        },
+        "es": {
+          "question": "Subí a una roca, mi dedo entró en un agujero y mi voz llegó a mil personas. ¿Qué es?",
+          "hints": [
+            "El cazador de la montaña lo llevaba al hombro.",
+            "Cuando un dedo entra en su agujero, suena algo que retumba en todos los valles."
+          ],
+          "answer": "Un fusil de caza",
+          "explanation": "El cazador se sube a una roca, mete el dedo en el gatillo y el disparo se oye a mil oídos de distancia. La adivinanza te hace pensar en un cantante, pero la «voz» es el disparo."
+        },
+        "fr": {
+          "question": "Je suis monté sur un rocher, mon doigt est entré dans un trou, et ma voix est allée jusqu’à mille personnes. Qu’est-ce que c’est ?",
+          "hints": [
+            "Le chasseur des montagnes le portait sur l’épaule.",
+            "Quand un doigt entre dans son trou, il en sort un bruit qui résonne dans toutes les vallées."
+          ],
+          "answer": "Un fusil",
+          "explanation": "Le chasseur monte sur un rocher, glisse le doigt sur la détente, et la détonation porte jusqu’à mille oreilles. La devinette fait penser à un chanteur, mais la « voix », c’est le coup de feu."
+        },
+        "tr": {
+          "question": "Bir kayanın üstüne çıktım, parmağım bir deliğe girdi, sesim bin kişiye ulaştı. Nedir?",
+          "hints": [
+            "Dağdaki avcı onu omzunda taşırdı.",
+            "Deliğine parmak girince bütün vadilerde yankılanan bir ses çıkar."
+          ],
+          "answer": "Tüfek",
+          "explanation": "Avcı kayaya çıkar, parmağını tetiğe koyar ve patlamanın sesi bin kulağa ulaşır. Bilmece seni bir şarkıcı düşündürür ama ‘ses’ silahın patlamasıdır."
+        },
+        "ar": {
+          "question": "صعدتُ على صخرة، فدخل إصبعي في ثقب، فبلغ صوتي ألفَ إنسان. ما هو؟",
+          "hints": [
+            "كان صيّاد الجبال يحمله على كتفه.",
+            "حين يدخل الإصبع في ثقبه، يخرج منه صوتٌ يتردّد في كل الوديان."
+          ],
+          "answer": "البندقية",
+          "explanation": "يقف الصيّاد على صخرة، ويضع إصبعه على الزناد، فيبلغ دويُّ الطلقة ألفَ أذن. توهمك الحزّورة بأنها عن مغنٍّ، لكنّ «الصوت» هو الطلقة."
+        }
+      },
+      "sources": [
+        {
+          "title": "Mamik",
+          "author": "Wikisource (Kurdish section)",
+          "url": "https://wikisource.org/wiki/Mamik",
+          "note": "Gives ‘Ez çûm ser zinarekî, Tiliya min ket qulekî, Dengê min çû hezarekî’, answer ‘Tiving’."
+        },
+        {
+          "title": "Master’s thesis on Kurdish mamik (title page not seen)",
+          "author": "Mardin Artuklu University, Institute of Living Languages",
+          "url": "https://gcris.artuklu.edu.tr/server/api/core/bitstreams/15350dfa-48a1-41e1-921c-ed6ca58c1d0c/content",
+          "note": "Treats mamik, metelok and tiştanok as names of one genre (‘in the south mamik are called metelok’); lists riddles by answer, e.g. ‘Tifeng’ (ez çûm ser zinarekî…), ‘Hîv’ (a bowl of yoghurt), ‘Stêrk’, ‘Ziman’."
+        },
+        {
+          "title": "Mamikên Kurdî",
+          "author": "Bernamegeh",
+          "url": "https://www.bernamegeh.org/mamiken-kurdi-kurtce-bilmeceler/",
+          "note": "Numbered Kurmancî riddles (section MAMIK (TIŞTANOK), opener ‘Tiştanok, miştanok li bin kevirê xiştanok’); answers include Sîya mirov, Kûsî, Jûjî, Agir, Dîk, Tifing; has ‘Wekî pirpel e, nivîs lê bel e, bi bend û bal e, ji te re heval e’ (Pirtûk)."
+        }
+      ],
+      "notes": "Traditional; wording as Kurdish Wikisource ‘Mamik’ gives it (‘Ez çûm ser zinarekî, Tiliya min ket qulekî, Dengê min çû hezarekî’, answer written ‘Tiving’), also in the Mardin Artuklu thesis (answer ‘Tifeng’); bernamegeh lists ‘Tifing’ among its answers. Hawar spelling ‘tifing’; the others accepted. ‘Ew çi ye?’ added. CONTENT FLAG for the owner: the answer is a (hunting) rifle — authentic and clever, but drop it if a weapon does not suit a family collection."
+    },
+    {
+      "slug": "kmr-dik",
+      "dialect": "kmr",
+      "difficulty": "easy",
+      "category": "funny",
+      "tradition": "traditional",
+      "region": null,
+      "question": "Şaşik li serê wî ye, berbangê bang dide, lê ne mele ye. Ew çi ye?",
+      "hints": [
+        "Berî ku roj derkeve, ew tevahiya gund şiyar dike.",
+        "‘Şaşika’ wî sor e û li hewşê di nav mirîşkan de digere."
+      ],
+      "answer": "Dîk",
+      "accepted": [
+        "dîk",
+        "dîkil",
+        "dîkel",
+        "dîkê mirîşkan"
+      ],
+      "explanation": "Kumê sor ê serê dîk wek şaşika melayan e, û ‘bang dan’ hem ji bo melayê ku gazî nimêjê dike tê gotin, hem ji bo dîkê ku berbangê dixwîne. Loma ew bang dide, lê ne mele ye.",
+      "translations": {
+        "ckb": {
+          "question": "مێزەری لەسەرە، بەرەبەیان بانگ دەدات، بەڵام مەلا نییە. ئەوە چییە؟",
+          "hints": [
+            "پێش ئەوەی خۆر هەڵبێت، هەموو گوند بەئاگا دەهێنێت.",
+            "«مێزەر»ەکەی سوورە و لە حەوشەدا لەناو مریشکەکاندا دەگەڕێت."
+          ],
+          "answer": "کەڵەشێر",
+          "explanation": "پۆپەی سووری سەری کەڵەشێر وەک مێزەری مەلایە، و «بانگدان» هەم بۆ مەلا دەوترێت کە بانگ دەدات و هەم بۆ کەڵەشێر کە بەرەبەیان دەخوێنێت. بۆیە بانگ دەدات، بەڵام مەلا نییە."
+        },
+        "en": {
+          "question": "It wears a turban, it gives the call at dawn, but it’s no mullah. What is it?",
+          "hints": [
+            "Before the sun is up, it wakes the whole village.",
+            "Its ‘turban’ is red, and it struts about the yard among the hens."
+          ],
+          "answer": "A rooster",
+          "explanation": "The rooster’s red comb looks like a mullah’s turban, and in Kurdish bang dan, ‘to give the call’, is said both of the mullah calling to prayer and of the rooster crowing at dawn. So it gives the call, but it is no mullah."
+        },
+        "nl": {
+          "question": "Hij draagt een tulband en roept bij het ochtendgloren, maar hij is geen mullah. Wat is het?",
+          "hints": [
+            "Voordat de zon op is, maakt hij het hele dorp wakker.",
+            "Zijn ‘tulband’ is rood en hij loopt tussen de kippen over het erf."
+          ],
+          "answer": "Een haan",
+          "explanation": "De rode kam van de haan lijkt op de tulband van een mullah, en in het Koerdisch zeg je bang dan, ‘oproepen’, zowel van de mullah die tot het gebed roept als van de haan die bij dageraad kraait. Hij roept dus, maar is geen mullah."
+        },
+        "de": {
+          "question": "Er trägt einen Turban, ruft im Morgengrauen, ist aber kein Mullah. Was ist das?",
+          "hints": [
+            "Noch bevor die Sonne aufgeht, weckt er das ganze Dorf.",
+            "Sein ‚Turban‘ ist rot, und er stolziert zwischen den Hühnern über den Hof."
+          ],
+          "answer": "Ein Hahn",
+          "explanation": "Der rote Kamm des Hahns sieht aus wie der Turban eines Mullahs, und auf Kurdisch sagt man bang dan, ‚rufen‘, vom Mullah, der zum Gebet ruft, wie vom Hahn, der im Morgengrauen kräht. Er ruft also – ist aber kein Mullah."
+        },
+        "es": {
+          "question": "Lleva turbante en la cabeza y llama al alba, pero no es mulá. ¿Qué es?",
+          "hints": [
+            "Antes de que salga el sol, despierta a todo el pueblo.",
+            "Su «turbante» es rojo y se pasea por el corral entre las gallinas."
+          ],
+          "answer": "Un gallo",
+          "explanation": "La cresta roja del gallo parece el turbante de un mulá, y en kurdo bang dan, «llamar», se dice tanto del mulá que llama a la oración como del gallo que canta al amanecer. Por eso llama, pero no es mulá."
+        },
+        "fr": {
+          "question": "Il porte un turban, il lance l’appel à l’aube, mais ce n’est pas un mollah. Qu’est-ce que c’est ?",
+          "hints": [
+            "Avant que le soleil se lève, il réveille tout le village.",
+            "Son « turban » est rouge, et il se promène dans la cour au milieu des poules."
+          ],
+          "answer": "Un coq",
+          "explanation": "La crête rouge du coq ressemble au turban d’un mollah, et en kurde bang dan, « lancer l’appel », se dit aussi bien du mollah qui appelle à la prière que du coq qui chante à l’aube. Il lance donc l’appel, sans être mollah."
+        },
+        "tr": {
+          "question": "Başında sarığı var, şafakta ezan okur ama hoca değil. Nedir?",
+          "hints": [
+            "Güneş doğmadan bütün köyü uyandırır.",
+            "‘Sarığı’ kırmızıdır, avluda tavukların arasında dolaşır."
+          ],
+          "answer": "Horoz",
+          "explanation": "Horozun kırmızı ibiği hocanın sarığına benzer; Kürtçede bang dan (‘seslenmek, ezan okumak’) hem ezan okuyan hoca hem de şafakta öten horoz için söylenir. Yani ezan okur ama hoca değildir."
+        },
+        "ar": {
+          "question": "على رأسه عمامة، ويؤذّن عند الفجر، لكنه ليس ملّا. ما هو؟",
+          "hints": [
+            "قبل أن تشرق الشمس يوقظ القرية كلها.",
+            "«عمامته» حمراء، ويتبختر في الفناء بين الدجاجات."
+          ],
+          "answer": "الديك",
+          "explanation": "عُرف الديك الأحمر يشبه عمامة الملّا، وفي الكردية يقال bang dan، أي «النداء»، للملّا حين يؤذّن وللديك حين يصيح في الفجر. فهو يؤذّن لكنه ليس ملّا."
+        }
+      },
+      "sources": [
+        {
+          "title": "Kürtçe Bilmeceler – Mamikên Kurdî",
+          "author": "kundir.net",
+          "url": "https://kundir.net/kurtce-bilmeceler-mamiken-kurdi/",
+          "note": "Kurmancî riddles with Turkish glosses; answer key Hêk, Dîk, Jûjî, Kund."
+        },
+        {
+          "title": "Kürtçe Bilmeceler ve Cevapları (Mamikên Kurdî)",
+          "author": "Bizde Kalmasın",
+          "url": "https://www.bizdekalmasin.com/rehber/kurtce-bilmeceler-ve-cevaplari-mamiken-kurdi/",
+          "note": "Same set with Turkish glosses: the egg as a white palace with a yellow bride, the rooster with a turban who calls the adhan but is no hoca, the hedgehog."
+        },
+        {
+          "title": "Kürtçe Bilmeceler – Mamikên Kurdî",
+          "author": "Kurdipedia",
+          "url": "https://www.kurdipedia.org/default.aspx?q=20220716195907423355&lng=16",
+          "note": "Numbered riddles with answers (egg, rooster, hedgehog, owl) and a Kurmancî list."
+        }
+      ],
+      "notes": "Traditional image, MY WORDING. Kurdish riddle lists on kundir.net, bizdekalmasin.com and mardinlife.com (and Kurdipedia’s ‘Kürtçe Bilmeceler’ page) give a riddle of a creature with a turban on its head that calls the adhan but is no hoca, answer Dîk; I could read only the Turkish gloss, not their Kurdish line, so this Kurmancî line is my rendering — please replace it with the source’s own words once the pages can be opened. The joke rests on ‘bang dan’ (to give the call to prayer / to crow). Check ‘şaşik’ (turban) and ‘kum’ (comb)."
+    },
+    {
+      "slug": "kmr-juji",
+      "dialect": "kmr",
+      "difficulty": "easy",
+      "category": "nature",
+      "tradition": "traditional",
+      "region": null,
+      "question": "Apê min ji deştê tê, barek li pişta wî ye; kî dest bide barê wî, dibêje ‘ax!’ Ew çi ye?",
+      "hints": [
+        "Ew biçûk e û bi şev di nav baxçe û zeviyan de digere.",
+        "Barê wî ji hezar derziyan e; dema ditirse, xwe dike gogek."
+      ],
+      "answer": "Jûjî",
+      "accepted": [
+        "jûjî",
+        "jîjo",
+        "jûjîk"
+      ],
+      "explanation": "Jûjî derziyên xwe her dem li ser pişta xwe dibe: ev ‘barê’ wî ye, û kî dest bide wan, ‘ax’ dike. Mamik jê re dibêje ‘apê min’, da ku mirov mirovekî bîne ber çavên xwe.",
+      "translations": {
+        "ckb": {
+          "question": "مامم لە دەشتەوە دێت، بارێکی لە پشتە؛ هەر کەس دەست لە بارەکەی بدات، دەڵێت «ئاخ!». ئەوە چییە؟",
+          "hints": [
+            "بچووکە و شەوان لەناو باخ و کێڵگەکاندا دەگەڕێت.",
+            "بارەکەی لە هەزار دەرزی دروست بووە؛ کە دەترسێت، خۆی دەکاتە تۆپەڵێک."
+          ],
+          "answer": "ژیژک",
+          "explanation": "ژیژک دڕکەکانی هەمیشە لەسەر پشتی خۆی هەڵدەگرێت: ئەمە «بار»ەکەیەتی، و هەر کەس دەستی لێ بدات، «ئاخ» دەکات. مەتەڵەکە پێی دەڵێت «مامم»، تا بیر لە مرۆڤێک بکەیتەوە."
+        },
+        "en": {
+          "question": "My uncle comes in from the plain with a load on his back; whoever touches his load cries ‘ouch!’ What is it?",
+          "hints": [
+            "It is small and roams the gardens and fields at night.",
+            "Its load is made of a thousand needles; when it is scared, it rolls into a ball."
+          ],
+          "answer": "A hedgehog",
+          "explanation": "The hedgehog carries its spines on its back wherever it goes: that is its ‘load’, and anyone who touches it says ‘ouch’. The riddle calls it ‘my uncle’ so that you picture a person."
+        },
+        "nl": {
+          "question": "Mijn oom komt van de vlakte met een vracht op zijn rug; wie zijn vracht aanraakt, roept ‘au!’ Wat is het?",
+          "hints": [
+            "Hij is klein en zwerft ’s nachts door tuinen en velden.",
+            "Zijn vracht bestaat uit duizend naalden; als hij schrikt, rolt hij zich op tot een bal."
+          ],
+          "answer": "Een egel",
+          "explanation": "De egel draagt zijn stekels overal mee op zijn rug: dat is zijn ‘vracht’, en wie hem aanraakt, roept ‘au’. Het raadsel noemt hem ‘mijn oom’, zodat je aan een mens denkt."
+        },
+        "de": {
+          "question": "Mein Onkel kommt aus der Ebene, eine Last auf dem Rücken; wer seine Last berührt, ruft ‚Au!‘ Was ist das?",
+          "hints": [
+            "Er ist klein und streift nachts durch Gärten und Felder.",
+            "Seine Last besteht aus tausend Nadeln; wenn er sich erschreckt, rollt er sich zu einer Kugel."
+          ],
+          "answer": "Ein Igel",
+          "explanation": "Der Igel trägt seine Stacheln immer auf dem Rücken – das ist seine ‚Last‘, und wer sie anfasst, ruft ‚Au‘. Das Rätsel nennt ihn ‚mein Onkel‘, damit man an einen Menschen denkt."
+        },
+        "es": {
+          "question": "Mi tío viene del llano con una carga a la espalda; quien toca su carga grita «¡ay!». ¿Qué es?",
+          "hints": [
+            "Es pequeño y de noche recorre huertos y campos.",
+            "Su carga está hecha de mil agujas; cuando se asusta, se hace una bola."
+          ],
+          "answer": "Un erizo",
+          "explanation": "El erizo lleva siempre sus púas a la espalda: esa es su «carga», y quien la toca grita «¡ay!». La adivinanza lo llama «mi tío» para que pienses en una persona."
+        },
+        "fr": {
+          "question": "Mon oncle arrive de la plaine, un fardeau sur le dos ; qui touche son fardeau crie « aïe ! ». Qu’est-ce que c’est ?",
+          "hints": [
+            "Il est petit et, la nuit, il parcourt les jardins et les champs.",
+            "Son fardeau est fait de mille aiguilles ; quand il a peur, il se roule en boule."
+          ],
+          "answer": "Un hérisson",
+          "explanation": "Le hérisson porte toujours ses piquants sur le dos : c’est son « fardeau », et qui le touche crie « aïe ». La devinette l’appelle « mon oncle » pour qu’on imagine une personne."
+        },
+        "tr": {
+          "question": "Amcam ovadan gelir, sırtında bir yük var; yüküne dokunan ‘ah!’ der. Nedir?",
+          "hints": [
+            "Küçüktür, geceleri bahçelerde ve tarlalarda dolaşır.",
+            "Yükü bin iğneden yapılmıştır; korkunca top gibi kıvrılır."
+          ],
+          "answer": "Kirpi",
+          "explanation": "Kirpi dikenlerini hep sırtında taşır: ‘yükü’ budur, ona dokunan ‘ah’ der. Bilmece onu ‘amcam’ diye anar ki bir insan düşünesin."
+        },
+        "ar": {
+          "question": "عمّي يأتي من السهل وعلى ظهره حِمل؛ من يلمس حِمله يصيح «آخ!». ما هو؟",
+          "hints": [
+            "صغير، يتجوّل ليلًا في البساتين والحقول.",
+            "حِمله مصنوع من ألف إبرة؛ وإذا خاف التفّ على نفسه كالكرة."
+          ],
+          "answer": "القنفذ",
+          "explanation": "يحمل القنفذ أشواكه على ظهره أينما ذهب: هذا «حِمله»، ومن يلمسه يصيح «آخ». وتسمّيه الحزّورة «عمّي» لكي تتخيّل إنسانًا."
+        }
+      },
+      "sources": [
+        {
+          "title": "Kürtçe Bilmeceler – Mamikên Kurdî",
+          "author": "kundir.net",
+          "url": "https://kundir.net/kurtce-bilmeceler-mamiken-kurdi/",
+          "note": "Kurmancî riddles with Turkish glosses; answer key Hêk, Dîk, Jûjî, Kund."
+        },
+        {
+          "title": "Kürtçe Bilmeceler ve Cevapları (Mamikên Kurdî)",
+          "author": "Bizde Kalmasın",
+          "url": "https://www.bizdekalmasin.com/rehber/kurtce-bilmeceler-ve-cevaplari-mamiken-kurdi/",
+          "note": "Same set with Turkish glosses: the egg as a white palace with a yellow bride, the rooster with a turban who calls the adhan but is no hoca, the hedgehog."
+        },
+        {
+          "title": "Kürtçe Bilmeceler – Mamikên Kurdî",
+          "author": "Kurdipedia",
+          "url": "https://www.kurdipedia.org/default.aspx?q=20220716195907423355&lng=16",
+          "note": "Numbered riddles with answers (egg, rooster, hedgehog, owl) and a Kurmancî list."
+        },
+        {
+          "title": "Mamikên Kurdî",
+          "author": "Bernamegeh",
+          "url": "https://www.bernamegeh.org/mamiken-kurdi-kurtce-bilmeceler/",
+          "note": "Numbered Kurmancî riddles (section MAMIK (TIŞTANOK), opener ‘Tiştanok, miştanok li bin kevirê xiştanok’); answers include Sîya mirov, Kûsî, Jûjî, Agir, Dîk, Tifing; has ‘Wekî pirpel e, nivîs lê bel e, bi bend û bal e, ji te re heval e’ (Pirtûk)."
+        }
+      ],
+      "notes": "Traditional image, MY WORDING. The same lists as the rooster riddle (kundir.net, bizdekalmasin.com, Kurdipedia, bernamegeh) give a hedgehog riddle (Jûjî) whose Turkish gloss reads roughly ‘his uncle comes from the plain, carrying a load on his back’; the Kurdish line was not visible to me. ‘Apê min ji deştê tê, barek li pişta wî ye’ follows that gloss; the ‘ax!’ clause is mine, so that it can be solved. Accepted ‘jîjo’ and ‘jûjîk’ as regional names — please confirm or remove. Replace with the source line when it can be read."
+    },
+    {
+      "slug": "kmr-nivis",
+      "dialect": "kmr",
+      "difficulty": "hard",
+      "category": "everyday",
+      "tradition": "traditional",
+      "region": null,
+      "question": "Erda min spî ye, tovê min reş e; bi destan tê reşandin, bi çavan tê berhevkirin. Ew çi ye?",
+      "hints": [
+        "Mamoste û şagirt her roj vî tovî diçînin.",
+        "Pênûs cotkarê vê erdê ye."
+      ],
+      "answer": "Nivîs",
+      "accepted": [
+        "nivîs",
+        "nivîsar",
+        "nivîsîn",
+        "kaxez",
+        "kaxez û nivîs",
+        "kaxez û nivîsar",
+        "name"
+      ],
+      "explanation": "Kaxez erda spî ye, tîpên reş tov in: bi destan tên nivîsîn û bi çavan tên ‘berhevkirin’, ango tên xwendin.",
+      "translations": {
+        "ckb": {
+          "question": "زەوییەکەم سپییە، تۆوەکەم ڕەشە؛ بە دەست دەچێنرێت و بە چاو دەدورێتەوە. ئەوە چییە؟",
+          "hints": [
+            "مامۆستا و قوتابی هەموو ڕۆژێک ئەم تۆوە دەچێنن.",
+            "پێنووس جووتیاری ئەم زەوییەیە."
+          ],
+          "answer": "نووسین",
+          "explanation": "کاغەز زەوییە سپییەکەیە و پیتە ڕەشەکان تۆوەکەن: بە دەست دەنووسرێن و بە چاو «دەدورێنەوە»، واتە دەخوێنرێنەوە."
+        },
+        "en": {
+          "question": "My field is white and my seed is black; it is sown by hand and harvested by eye. What is it?",
+          "hints": [
+            "Teachers and pupils sow this seed every day.",
+            "The pen is the ploughman of this field."
+          ],
+          "answer": "Writing",
+          "explanation": "The paper is the white field and the black letters of ink are the seeds: they are sown by the hand that writes and ‘harvested’ by the eyes that read."
+        },
+        "nl": {
+          "question": "Mijn akker is wit en mijn zaad is zwart; het wordt met de hand gezaaid en met de ogen geoogst. Wat is het?",
+          "hints": [
+            "Leraren en leerlingen zaaien dit zaad elke dag.",
+            "De pen is de ploeger van deze akker."
+          ],
+          "answer": "Schrift",
+          "explanation": "Het papier is de witte akker en de zwarte inktletters zijn het zaad: ze worden gezaaid door de hand die schrijft en ‘geoogst’ door de ogen die lezen."
+        },
+        "de": {
+          "question": "Mein Feld ist weiß, meine Saat ist schwarz; sie wird mit der Hand gesät und mit den Augen geerntet. Was ist das?",
+          "hints": [
+            "Lehrer und Schüler säen diese Saat jeden Tag.",
+            "Der Stift ist der Pflüger dieses Feldes."
+          ],
+          "answer": "Die Schrift",
+          "explanation": "Das Papier ist das weiße Feld, die schwarzen Tintenbuchstaben sind die Saat: Die Hand, die schreibt, sät sie, und die Augen, die lesen, ‚ernten‘ sie."
+        },
+        "es": {
+          "question": "Mi campo es blanco y mi semilla es negra; se siembra con la mano y se cosecha con los ojos. ¿Qué es?",
+          "hints": [
+            "Maestros y alumnos siembran esta semilla todos los días.",
+            "La pluma es el labrador de este campo."
+          ],
+          "answer": "La escritura",
+          "explanation": "El papel es el campo blanco y las letras negras de tinta son las semillas: las siembra la mano que escribe y las «cosechan» los ojos que leen."
+        },
+        "fr": {
+          "question": "Mon champ est blanc, ma graine est noire ; on la sème à la main et on la récolte avec les yeux. Qu’est-ce que c’est ?",
+          "hints": [
+            "Maîtres et élèves sèment cette graine tous les jours.",
+            "Le stylo est le laboureur de ce champ."
+          ],
+          "answer": "L’écriture",
+          "explanation": "Le papier est le champ blanc, les lettres d’encre noire sont les graines : la main qui écrit les sème, les yeux qui lisent les « récoltent »."
+        },
+        "tr": {
+          "question": "Tarlam beyaz, tohumum kara; elle ekilir, gözle biçilir. Nedir?",
+          "hints": [
+            "Öğretmenler ve öğrenciler bu tohumu her gün eker.",
+            "Kalem bu tarlanın çiftçisidir."
+          ],
+          "answer": "Yazı",
+          "explanation": "Kâğıt beyaz tarladır, mürekkepten kara harfler de tohum: onları yazan el eker, okuyan göz ‘biçer’."
+        },
+        "ar": {
+          "question": "حقلي أبيض وبذوري سوداء؛ تُزرع باليد وتُحصد بالعين. ما هي؟",
+          "hints": [
+            "يزرع المعلّمون والتلاميذ هذه البذور كل يوم.",
+            "القلم هو حرّاث هذا الحقل."
+          ],
+          "answer": "الكتابة",
+          "explanation": "الورقة هي الحقل الأبيض، والحروف السوداء من الحبر هي البذور: تزرعها اليد التي تكتب، و«تحصدها» العين التي تقرأ."
+        }
+      },
+      "sources": [
+        {
+          "title": "Têderxistinok (Mamik)",
+          "author": "RiaTaza, from Folklora kurmancîyê (Hecîyê Cindî, Yerevan 1957), transliterated from Cyrillic by Mîdîya and Dîdara Têmûr",
+          "url": "https://krd.riataza.com/2019/04/21/tederxistinok-mamik/",
+          "note": "Caucasus Kurmancî riddles with answers in brackets: hêk, kaxez/nivîsar (black seed thrown by hand), dû, ziman, xew and others; ends with ‘Qesirek sipî / Bê derî’."
+        }
+      ],
+      "notes": "Traditional image, MY WORDING. RiaTaza’s transcription of Folklora kurmancîyê (Hecîyê Cindî, Yerevan 1957) has a riddle about black seed scattered by hand, answer ‘Kaxez, nivîsar’; I could not read its words. ‘Erda min spî ye, tovê min reş e; bi destan tê reşandin’ is my rendering of that image (the white-field, black-seed riddle is widespread in the region); ‘bi çavan tê berhevkirin’ (gathered by the eyes, i.e. read) is my addition. Please replace with the 1957 wording once it can be checked. Accepts ‘kaxez’ and ‘name’ since the source’s answer names the paper."
+    },
+    {
+      "slug": "kmr-si",
+      "dialect": "kmr",
+      "difficulty": "easy",
+      "category": "nature",
+      "tradition": "traditional",
+      "region": null,
+      "question": "Ew çi ye ku dikeve nav avê, lê şil nabe?",
+      "hints": [
+        "Dema roj li pişt te be, ew li ber te ye.",
+        "Navê wê wek hejmara 30 tê gotin."
+      ],
+      "answer": "Sî",
+      "accepted": [
+        "sî",
+        "sîber",
+        "sîh",
+        "siya mirov"
+      ],
+      "explanation": "Sî ne tiştekî bi laş e: ew tenê cihê ku ronahî nagihêjê ye. Loma dikeve ser avê, lê av nikare wê şil bike. Peyva ‘sî’ hem ji bo siyê tê gotin, hem jî ji bo hejmara 30.",
+      "translations": {
+        "ckb": {
+          "question": "ئەوە چییە کە دەکەوێتە ناو ئاوەوە، بەڵام تەڕ نابێت؟",
+          "hints": [
+            "کاتێک خۆر لە پشتتەوەیە، ئەو لە پێشتەوەیە.",
+            "ناوەکەی بە ژمارەیەک دەست پێدەکات."
+          ],
+          "answer": "سێبەر",
+          "explanation": "سێبەر شتێکی لاشەدار نییە: تەنیا ئەو شوێنەیە کە ڕووناکی پێی ناگات. بۆیە دەکەوێتە سەر ئاو، بەڵام ئاو ناتوانێت تەڕی بکات. لە سۆرانیدا «سێبەر» بە «سێ» دەست پێدەکات، و لە کورمانجیدا ناوەکەی، «سی»، هەمان ژمارەی سییە."
+        },
+        "en": {
+          "question": "What falls into the water but never gets wet?",
+          "hints": [
+            "When the sun is behind you, it is in front of you.",
+            "In Kurmanji its name sounds just like the number thirty."
+          ],
+          "answer": "A shadow",
+          "explanation": "A shadow has no body: it is only the place the light cannot reach. So it falls on the water, but the water cannot wet it. In Kurmanji sî means both ‘shadow’ and ‘thirty’."
+        },
+        "nl": {
+          "question": "Wat valt in het water maar wordt nooit nat?",
+          "hints": [
+            "Als de zon achter je staat, ligt hij vóór je.",
+            "In het Kurmanci klinkt zijn naam precies als het getal dertig."
+          ],
+          "answer": "Een schaduw",
+          "explanation": "Een schaduw heeft geen lichaam: het is alleen de plek waar het licht niet komt. Hij valt dus op het water, maar het water kan hem niet nat maken. In het Kurmanci betekent sî zowel ‘schaduw’ als ‘dertig’."
+        },
+        "de": {
+          "question": "Was fällt ins Wasser und wird doch nie nass?",
+          "hints": [
+            "Steht die Sonne hinter dir, liegt er vor dir.",
+            "Auf Kurmandschi klingt sein Name genau wie die Zahl dreißig."
+          ],
+          "answer": "Ein Schatten",
+          "explanation": "Ein Schatten hat keinen Körper; er ist nur die Stelle, an die kein Licht kommt. Deshalb fällt er aufs Wasser, doch das Wasser kann ihn nicht nass machen. Auf Kurmandschi heißt sî ‚Schatten‘ und zugleich ‚dreißig‘."
+        },
+        "es": {
+          "question": "¿Qué cae al agua y nunca se moja?",
+          "hints": [
+            "Cuando el sol está detrás de ti, ella está delante.",
+            "En kurmanji su nombre suena igual que el número treinta."
+          ],
+          "answer": "La sombra",
+          "explanation": "La sombra no tiene cuerpo: es solo el lugar al que no llega la luz. Por eso cae sobre el agua, pero el agua no puede mojarla. En kurmanji sî significa a la vez «sombra» y «treinta»."
+        },
+        "fr": {
+          "question": "Qu’est-ce qui tombe dans l’eau sans jamais être mouillé ?",
+          "hints": [
+            "Quand le soleil est derrière toi, elle est devant toi.",
+            "En kurmandji, son nom se dit exactement comme le nombre trente."
+          ],
+          "answer": "L’ombre",
+          "explanation": "L’ombre n’a pas de corps : c’est seulement l’endroit où la lumière n’arrive pas. Elle tombe donc sur l’eau, mais l’eau ne peut pas la mouiller. En kurmandji, sî veut dire à la fois « ombre » et « trente »."
+        },
+        "tr": {
+          "question": "Suya düşer ama hiç ıslanmaz; nedir?",
+          "hints": [
+            "Güneş arkandayken o önündedir.",
+            "Kurmancîde adı tıpkı otuz sayısı gibi söylenir."
+          ],
+          "answer": "Gölge",
+          "explanation": "Gölgenin bedeni yoktur; ışığın ulaşmadığı yerden ibarettir. Bu yüzden suya düşer ama su onu ıslatamaz. Kurmancîde sî hem ‘gölge’ hem ‘otuz’ demektir."
+        },
+        "ar": {
+          "question": "ما الذي يقع في الماء ولا يبتلّ أبدًا؟",
+          "hints": [
+            "حين تكون الشمس خلفك، يكون أمامك.",
+            "اسمه في الكرمانجية يُلفظ تمامًا كالعدد ثلاثين."
+          ],
+          "answer": "الظلّ",
+          "explanation": "ليس للظلّ جسد؛ إنما هو المكان الذي لا يصل إليه الضوء. لذلك يقع على الماء ولا يستطيع الماء أن يبلّله. وفي الكرمانجية تعني كلمة sî «الظلّ» و«الثلاثين» معًا."
+        }
+      },
+      "sources": [
+        {
+          "title": "Kurdish Folklore",
+          "author": "The Kurdish Project",
+          "url": "https://thekurdishproject.org/history-and-culture/kurdish-culture/kurdish-folklore/",
+          "note": "Gives, in English, a Kurdish riddle: what falls in the water without getting wet? — a shadow."
+        },
+        {
+          "title": "Mamikên Kurdî",
+          "author": "Bernamegeh",
+          "url": "https://www.bernamegeh.org/mamiken-kurdi-kurtce-bilmeceler/",
+          "note": "Numbered Kurmancî riddles (section MAMIK (TIŞTANOK), opener ‘Tiştanok, miştanok li bin kevirê xiştanok’); answers include Sîya mirov, Kûsî, Jûjî, Agir, Dîk, Tifing; has ‘Wekî pirpel e, nivîs lê bel e, bi bend û bal e, ji te re heval e’ (Pirtûk)."
+        },
+        {
+          "title": "Mamikên Kurdî – Kürtçe bilmeceler",
+          "author": "occo mahabad (blog)",
+          "url": "https://occomahabad.wordpress.com/2012/08/20/mamiken-kurdi-kurtce-bilmeceler/",
+          "note": "Kurmancî riddle list; egg variant ‘Xaniyekî gilover û spî bê pencere…, têde rûniştiye bûkeke zerî’; answers include sîya mirov."
+        }
+      ],
+      "notes": "Owner’s idea 1, checked. The same riddle is given in English on The Kurdish Project’s folklore page (‘what falls in the water without getting wet?’ — a shadow), which is why it is marked traditional; Kurmancî lists (bernamegeh.org, occomahabad) have ‘Sîya mirov’ among their answers, but I could not see which riddle it answers, so the Kurdish wording is the owner’s, corrected — if the owner prefers, mark it ‘new’. Fix: ‘Çi ye ew tiştê ku…’ → ‘Ew çi ye ku…’ (the usual riddle frame; the owner’s line was not wrong, only heavy). Word: ‘sî’ is the everyday word for a shadow and the answer; ‘sîber’ is shade (a cool shaded place), ‘siya’ the ezafe form (siya mirov, siya darê; the matcher already reads it as sî), ‘sîh’ a regional form — all accepted. Hint 2 uses sî = 30; the Soranî rendering swaps it for سێبەر beginning with سێ (three)."
+    },
+    {
+      "slug": "kmr-pirtuk",
+      "dialect": "kmr",
+      "difficulty": "easy",
+      "category": "everyday",
+      "tradition": "new",
+      "region": null,
+      "question": "Devê min tune, lê ez bi sedan çîrokan dibêjim. Tu min vedikî, ez dipeyivim; tu min digirî, ez bêdeng dibim. Ez çi me?",
+      "hints": [
+        "Pelên min hene, lê ez ne dar im.",
+        "Li ser refikê radizêm û li benda çavên te me."
+      ],
+      "answer": "Pirtûk",
+      "accepted": [
+        "pirtûk",
+        "kitêb",
+        "kitab"
+      ],
+      "explanation": "Pirtûk bê dev ‘dipeyive’: dema tu wê vedikî û dixwînî, çîrokên wê digihêjin te; dema tu wê digirî, bêdeng dimîne. Pelên wê jî hene, wek pelên darê.",
+      "translations": {
+        "ckb": {
+          "question": "دەمم نییە، بەڵام سەدان چیرۆک دەگێڕمەوە. دەمکەیتەوە، قسە دەکەم؛ دامدەخەیت، بێدەنگ دەبم. من چیم؟",
+          "hints": [
+            "پەڕەم هەیە، بەڵام باڵندە نیم.",
+            "لەسەر ڕەفەکە دەخەوم و چاوەڕێی چاوەکانی تۆم."
+          ],
+          "answer": "پەرتووک",
+          "explanation": "پەرتووک بێ دەم «قسە دەکات»: کە دەیکەیتەوە و دەیخوێنیتەوە، چیرۆکەکانی پێت دەگەن؛ کە دایدەخەیت، بێدەنگ دەبێت. پەڕەکانیشی وەک پەڕی باڵندەن، بەڵام بۆ نووسینن."
+        },
+        "en": {
+          "question": "I have no mouth, yet I tell hundreds of stories. Open me and I speak; close me and I fall silent. What am I?",
+          "hints": [
+            "I have leaves, but I am not a tree.",
+            "I sleep on a shelf, waiting for your eyes."
+          ],
+          "answer": "A book",
+          "explanation": "A book ‘speaks’ without a mouth: open it and read, and its stories reach you; close it and it falls silent. And its pages are leaves, as in Kurdish, where pel means both."
+        },
+        "nl": {
+          "question": "Ik heb geen mond, toch vertel ik honderden verhalen. Sla me open en ik praat; sla me dicht en ik zwijg. Wat ben ik?",
+          "hints": [
+            "Ik heb bladen, maar ik ben geen boom.",
+            "Ik slaap op een plank en wacht op jouw ogen."
+          ],
+          "answer": "Een boek",
+          "explanation": "Een boek ‘praat’ zonder mond: sla het open en lees, dan bereiken de verhalen je; sla het dicht en het zwijgt. En het heeft bladen, net als een boom – in het Koerdisch betekent pel zowel ‘blad’ als ‘pagina’."
+        },
+        "de": {
+          "question": "Ich habe keinen Mund und erzähle doch Hunderte Geschichten. Schlägst du mich auf, spreche ich; klappst du mich zu, verstumme ich. Was bin ich?",
+          "hints": [
+            "Ich habe Blätter, bin aber kein Baum.",
+            "Ich schlafe im Regal und warte auf deine Augen."
+          ],
+          "answer": "Ein Buch",
+          "explanation": "Ein Buch ‚spricht‘ ohne Mund: Schlägst du es auf und liest, erreichen dich seine Geschichten; klappst du es zu, schweigt es. Und Blätter hat es auch – im Kurdischen heißt pel sowohl ‚Blatt‘ als auch ‚Seite‘."
+        },
+        "es": {
+          "question": "No tengo boca, pero cuento cientos de historias. Si me abres, hablo; si me cierras, me callo. ¿Qué soy?",
+          "hints": [
+            "Tengo hojas, pero no soy un árbol.",
+            "Duermo en una estantería, esperando tus ojos."
+          ],
+          "answer": "Un libro",
+          "explanation": "Un libro «habla» sin boca: si lo abres y lo lees, sus historias te llegan; si lo cierras, se calla. Y tiene hojas, como en kurdo, donde pel significa «hoja» y «página»."
+        },
+        "fr": {
+          "question": "Je n’ai pas de bouche, et pourtant je raconte des centaines d’histoires. Ouvre-moi, je parle ; ferme-moi, je me tais. Que suis-je ?",
+          "hints": [
+            "J’ai des feuilles, mais je ne suis pas un arbre.",
+            "Je dors sur une étagère en attendant tes yeux."
+          ],
+          "answer": "Un livre",
+          "explanation": "Un livre « parle » sans bouche : ouvre-le et lis, ses histoires te parviennent ; ferme-le, il se tait. Et il a des feuilles, comme en kurde, où pel veut dire « feuille » et « page »."
+        },
+        "tr": {
+          "question": "Ağzım yok ama yüzlerce hikâye anlatırım. Açarsan konuşurum, kapatırsan susarım. Ben neyim?",
+          "hints": [
+            "Yapraklarım var ama ağaç değilim.",
+            "Rafta uyurum, gözlerini beklerim."
+          ],
+          "answer": "Kitap",
+          "explanation": "Kitap ağzı olmadan ‘konuşur’: açıp okuyunca hikâyeleri sana ulaşır, kapatınca susar. Yaprakları da vardır; Kürtçede pel hem ‘yaprak’ hem ‘sayfa’ demektir."
+        },
+        "ar": {
+          "question": "ليس لي فم، ومع ذلك أروي مئات الحكايات. افتحني أتكلّم، وأغلقني أصمت. فما أنا؟",
+          "hints": [
+            "لي أوراق، لكنني لستُ شجرة.",
+            "أنام على الرفّ منتظرًا عينيك."
+          ],
+          "answer": "الكتاب",
+          "explanation": "الكتاب «يتكلّم» بلا فم: تفتحه وتقرؤه فتصلك حكاياته، وتغلقه فيصمت. وله أوراق كالشجرة، كما في الكردية حيث تعني pel «الورقة» و«الصفحة»."
+        }
+      },
+      "sources": [],
+      "notes": "Owner’s idea 2, newly written. Fixes: ‘Ez devê min tune’ → ‘Devê min tune’ (the subject is ‘devê min’, so the extra ‘ez’ was wrong); ‘dikarim gelek çîrok bibêjim’ → ‘bi sedan çîrokan dibêjim’ (present-tense object in the oblique plural; ‘dikarim’ added nothing). Added the open/close turn so it is a riddle and not a definition. A traditional rhymed book riddle exists — ‘Wekî pirpel e, nivîs lê bel e, bi bend û bal e, ji te re heval e’ (bernamegeh.org, occomahabad, candname.com) — I left it out so two rows do not share an answer; the owner may prefer to use it instead. The Soranî hint 1 plays on پەڕ (feather) and پەڕە (page) — check that it reads naturally."
+    },
+    {
+      "slug": "kmr-cal",
+      "dialect": "kmr",
+      "difficulty": "medium",
+      "category": "logic",
+      "tradition": "new",
+      "region": null,
+      "question": "Tu çiqas ji min bistînî, ez ewqas mezintir dibim. Ez çi me?",
+      "hints": [
+        "Bêr û qazme hevalên min in.",
+        "Ez di nav axê de me; tu çiqas axê ji min derxînî, ez ewqas kûrtir dibim."
+      ],
+      "answer": "Çal",
+      "accepted": [
+        "çal",
+        "qul",
+        "kun",
+        "qulik"
+      ],
+      "explanation": "Çal ji valahiyê pêk tê: her bêreke axê ku tu jê derdixî, wê mezintir dike. Tiştên din kêm dibin dema tu ji wan distînî; tenê çal berevajî ye.",
+      "translations": {
+        "ckb": {
+          "question": "تا زیاتر لێم هەڵبگریت، گەورەتر دەبم. من چیم؟",
+          "hints": [
+            "خاکەناز و قازمە هاوڕێی منن.",
+            "لە ناو زەویدام؛ تا زیاتر خۆڵم لێ دەربهێنیت، قووڵتر دەبم."
+          ],
+          "answer": "چاڵ",
+          "explanation": "چاڵ لە بۆشایی پێک دێت: هەر خاکەنازێک خۆڵ کە لێی دەردەهێنیت، گەورەتری دەکات. شتەکانی تر کە لێیان هەڵدەگریت کەم دەبن؛ تەنیا چاڵ پێچەوانەیە."
+        },
+        "en": {
+          "question": "The more you take from me, the bigger I get. What am I?",
+          "hints": [
+            "Spades and pickaxes are my friends.",
+            "I am in the ground; the more earth you dig out of me, the deeper I get."
+          ],
+          "answer": "A hole",
+          "explanation": "A hole is made of emptiness: every spadeful of earth you take out makes it bigger. Everything else shrinks when you take from it; a hole is the exception."
+        },
+        "nl": {
+          "question": "Hoe meer je van me afneemt, hoe groter ik word. Wat ben ik?",
+          "hints": [
+            "Schoppen en houwelen zijn mijn vrienden.",
+            "Ik zit in de grond; hoe meer aarde je uit me haalt, hoe dieper ik word."
+          ],
+          "answer": "Een gat",
+          "explanation": "Een gat bestaat uit leegte: elke schep aarde die je eruit haalt, maakt het groter. Al het andere wordt kleiner als je ervan afneemt; een gat is de uitzondering."
+        },
+        "de": {
+          "question": "Je mehr du mir wegnimmst, desto größer werde ich. Was bin ich?",
+          "hints": [
+            "Spaten und Spitzhacke sind meine Freunde.",
+            "Ich bin in der Erde; je mehr Erde du aus mir holst, desto tiefer werde ich."
+          ],
+          "answer": "Ein Loch",
+          "explanation": "Ein Loch besteht aus Leere: Jede Schaufel Erde, die du heraushebst, macht es größer. Alles andere wird kleiner, wenn man etwas wegnimmt – nur das Loch nicht."
+        },
+        "es": {
+          "question": "Cuanto más me quitas, más grande me hago. ¿Qué soy?",
+          "hints": [
+            "La pala y el pico son mis amigos.",
+            "Estoy en la tierra; cuanta más tierra me sacas, más hondo me hago."
+          ],
+          "answer": "Un hoyo",
+          "explanation": "Un hoyo está hecho de vacío: cada palada de tierra que sacas lo agranda. Todo lo demás se achica cuando le quitas algo; el hoyo es la excepción."
+        },
+        "fr": {
+          "question": "Plus tu m’enlèves, plus je grandis. Que suis-je ?",
+          "hints": [
+            "La pelle et la pioche sont mes amies.",
+            "Je suis dans la terre ; plus tu en retires, plus je deviens profond."
+          ],
+          "answer": "Un trou",
+          "explanation": "Un trou est fait de vide : chaque pelletée de terre que tu retires l’agrandit. Tout le reste diminue quand on en enlève ; le trou, lui, fait l’inverse."
+        },
+        "tr": {
+          "question": "Benden aldıkça büyürüm. Ben neyim?",
+          "hints": [
+            "Kürek ve kazma dostlarımdır.",
+            "Toprağın içindeyim; benden toprak çıkardıkça derinleşirim."
+          ],
+          "answer": "Çukur",
+          "explanation": "Çukur boşluktan oluşur: çıkardığın her kürek toprak onu büyütür. Başka her şey ondan aldıkça küçülür; çukur ise tam tersidir."
+        },
+        "ar": {
+          "question": "كلّما أخذتَ منّي أكثر، كبرتُ أكثر. فما أنا؟",
+          "hints": [
+            "المجرفة والمعول صديقاي.",
+            "أنا في الأرض؛ كلّما أخرجتَ منّي ترابًا أكثر، ازددتُ عمقًا."
+          ],
+          "answer": "الحفرة",
+          "explanation": "الحفرة مصنوعة من الفراغ: كل مجرفة تراب تُخرجها تكبّرها. كل شيء آخر ينقص إذا أخذتَ منه، إلا الحفرة."
+        }
+      },
+      "sources": [],
+      "notes": "Owner’s idea 3, newly written. It is an international riddle (well known in English too), kept because the owner asked for it. Fix: ‘Her çiqas tu ji min bistînî, ez mezintir dibim’ reads as ‘however much / although you take…’; Kurmancî says ‘the more … the more’ with ‘Tu çiqas …, ez ewqas …’. Word: ‘çal’ (a dug pit) is the natural word for a hole that grows as you dig, so it is the answer; ‘qul’ (any hole) and ‘kun’ (Behdînî- and Soranî-leaning) are accepted, as is the owner’s ‘qulik’, though a qulik is a small hole and suits the riddle least."
+    },
+    {
+      "slug": "kmr-dem",
+      "dialect": "kmr",
+      "difficulty": "hard",
+      "category": "logic",
+      "tradition": "new",
+      "region": null,
+      "question": "Ez her dem dimeşim, bê ling; tu nikarî min bigirî, nikarî min vegerînî jî. Ez çi me?",
+      "hints": [
+        "Tiştê li ser dîwêr ku tik-tak dike, tenê dengê gavên min dihejmêre.",
+        "Li pirsê dîsa binêre: bersiv di nav de veşartî ye."
+      ],
+      "answer": "Dem",
+      "accepted": [
+        "dem",
+        "wext",
+        "waxt",
+        "zeman"
+      ],
+      "explanation": "Dem bê ling ‘dimeşe’: her çirke diçe û venagere, û kes nikare wê bigire. Û bersiv ji destpêkê ve di pirsê de bû: ‘her dem’.",
+      "translations": {
+        "ckb": {
+          "question": "هەموو کاتێک دەڕۆم، بێ پێ؛ ناتوانیت بمگریت، ناشتوانیت بمگەڕێنیتەوە. من چیم؟",
+          "hints": [
+            "ئەو شتەی لەسەر دیوار تیک-تاک دەکات، تەنیا دەنگی هەنگاوەکانم دەژمێرێت.",
+            "جارێکی تر سەیری پرسیارەکە بکەرەوە: وەڵامەکە لە ناویدا شاردراوەتەوە."
+          ],
+          "answer": "کات",
+          "explanation": "کات بێ پێ «دەڕوات»: هەموو چرکەیەک دەڕوات و ناگەڕێتەوە، و کەس ناتوانێت بیگرێت. وەڵامەکەش لە سەرەتاوە لە پرسیارەکەدا بوو: «هەموو کاتێک»."
+        },
+        "en": {
+          "question": "I walk all the time, without legs; you can’t catch me, and you can’t bring me back. What am I?",
+          "hints": [
+            "A clock does nothing but count my footsteps.",
+            "Read the question again: the answer is hiding in it."
+          ],
+          "answer": "Time",
+          "explanation": "Time ‘walks’ without legs: every second goes and never comes back, and no one can catch it. And the answer was in the question all along — ‘all the time’ — just as the Kurdish hides dem in her dem."
+        },
+        "nl": {
+          "question": "Ik loop de hele tijd, zonder benen; je kunt me niet vangen en me niet terughalen. Wat ben ik?",
+          "hints": [
+            "Een klok doet niets anders dan mijn voetstappen tellen.",
+            "Lees de vraag nog eens: het antwoord zit erin verstopt."
+          ],
+          "answer": "De tijd",
+          "explanation": "De tijd ‘loopt’ zonder benen: elke seconde gaat voorbij en komt nooit terug, en niemand kan hem vangen. En het antwoord stond al in de vraag: ‘de hele tijd’ – net zoals het Koerdisch dem verstopt in her dem."
+        },
+        "de": {
+          "question": "Ich bin die ganze Zeit unterwegs, ohne Beine; du kannst mich nicht fangen und nicht zurückholen. Was bin ich?",
+          "hints": [
+            "Eine Uhr tut nichts anderes, als meine Schritte zu zählen.",
+            "Lies die Frage noch einmal: Die Antwort steckt darin."
+          ],
+          "answer": "Die Zeit",
+          "explanation": "Die Zeit ‚geht‘ ohne Beine: Jede Sekunde vergeht und kommt nie zurück, und niemand kann sie festhalten. Und die Antwort stand schon in der Frage: ‚die ganze Zeit‘ – so wie das Kurdische dem in her dem versteckt."
+        },
+        "es": {
+          "question": "Camino todo el tiempo, sin piernas; no puedes atraparme ni hacerme volver. ¿Qué soy?",
+          "hints": [
+            "Un reloj no hace más que contar mis pasos.",
+            "Vuelve a leer la pregunta: la respuesta está escondida en ella."
+          ],
+          "answer": "El tiempo",
+          "explanation": "El tiempo «camina» sin piernas: cada segundo se va y no vuelve, y nadie puede atraparlo. Y la respuesta estaba en la pregunta desde el principio, «todo el tiempo», igual que el kurdo esconde dem en her dem."
+        },
+        "fr": {
+          "question": "Je marche tout le temps, sans jambes ; tu ne peux ni m’attraper ni me faire revenir. Que suis-je ?",
+          "hints": [
+            "Une horloge ne fait que compter mes pas.",
+            "Relis la question : la réponse s’y cache."
+          ],
+          "answer": "Le temps",
+          "explanation": "Le temps « marche » sans jambes : chaque seconde s’en va et ne revient jamais, et personne ne peut l’attraper. Et la réponse était dans la question depuis le début, « tout le temps », comme le kurde cache dem dans her dem."
+        },
+        "tr": {
+          "question": "Her zaman yürürüm, bacaksız; beni ne yakalayabilirsin ne de geri getirebilirsin. Ben neyim?",
+          "hints": [
+            "Saat yalnızca adımlarımı sayar.",
+            "Soruyu bir daha oku: cevap içinde saklı."
+          ],
+          "answer": "Zaman",
+          "explanation": "Zaman bacaksız ‘yürür’: her saniye gider ve geri gelmez, kimse onu yakalayamaz. Cevap da baştan beri sorunun içindeydi: ‘her zaman’ – tıpkı Kürtçenin her dem içinde dem’i saklaması gibi."
+        },
+        "ar": {
+          "question": "أمشي طوال الوقت بلا ساقين؛ لا تستطيع أن تمسكني ولا أن تعيدني. فما أنا؟",
+          "hints": [
+            "الساعة لا تفعل شيئًا سوى عدّ خطواتي.",
+            "اقرأ السؤال مرة أخرى: الجواب مختبئ فيه."
+          ],
+          "answer": "الوقت",
+          "explanation": "يمشي الوقت بلا ساقين: كل ثانية تمضي ولا تعود، ولا أحد يستطيع أن يمسكه. والجواب كان في السؤال منذ البداية: «طوال الوقت»، كما تخبّئ الكردية dem في her dem."
+        }
+      },
+      "sources": [],
+      "notes": "Owner’s idea 4, newly written. Kept ‘Ez her dem dimeşim’ on purpose: ‘her dem’ (always) hides the answer ‘dem’, and hint 2 and the explanation now point at it, which turns a plain riddle into a hard one with a twist. Added ‘bê ling’ and ‘nikarî min vegerînî jî’. ‘Dem’ is the standard word; ‘wext’, ‘waxt’ and ‘zeman’ are accepted. The hidden word survives in every translation (all the time, de hele tijd, die ganze Zeit, todo el tiempo, tout le temps, her zaman, طوال الوقت, هەموو کاتێک). Check that ‘dimeşim’ sounds natural for time (alternatives: ‘diçim’, ‘dibihurim’). The Soranî hint avoids کاتژمێر (clock), which would give the answer away."
+    },
+    {
+      "slug": "kmr-ziman",
+      "dialect": "kmr",
+      "difficulty": "medium",
+      "category": "wordplay",
+      "tradition": "new",
+      "region": null,
+      "question": "Ez di devê te de radizêm, lê tu min ji pirtûkan jî hîn dibî. Ez çi me?",
+      "hints": [
+        "Ez sor û nerm im, û tama xwarinê ez pêşî dinasim.",
+        "Tu niha bi vê sepanê min hîn dibî."
+      ],
+      "answer": "Ziman",
+      "accepted": [
+        "ziman",
+        "zimanê kurdî"
+      ],
+      "explanation": "Bi kurmancî ‘ziman’ hem endamê di dev de ye, hem jî zimanê ku em pê dipeyivin, wek ‘zimanê kurdî’. Loma ziman hem di devê te de ye, hem jî tu wî ji pirtûkan hîn dibî.",
+      "translations": {
+        "ckb": {
+          "question": "لە دەمی تۆدا دەخەوم، بەڵام لە پەرتووکەکانیشەوە فێرم دەبیت. من چیم؟",
+          "hints": [
+            "سوور و نەرمم، و تامی خواردن یەکەم جار من دەیناسم.",
+            "ئێستا بەم ئەپە فێرم دەبیت."
+          ],
+          "answer": "زمان",
+          "explanation": "لە کوردیدا «زمان» هەم ئەندامەکەی ناو دەمە و هەم ئەو زمانەیە کە پێی قسە دەکەین، وەک «زمانی کوردی». بۆیە زمان هەم لە دەمتدایە و هەم لە پەرتووکەکانەوە فێری دەبیت."
+        },
+        "en": {
+          "question": "I sleep in your mouth, and yet you learn me from books. What am I?",
+          "hints": [
+            "I am red and soft, and I am the first to taste your food.",
+            "You are learning me right now, with this app."
+          ],
+          "answer": "A tongue — a language",
+          "explanation": "In Kurdish ziman means both the tongue in your mouth and a language, as in zimanê kurdî, ‘the Kurdish language’. English keeps a trace of the same idea in ‘mother tongue’."
+        },
+        "nl": {
+          "question": "Ik slaap in je mond, en toch leer je me uit boeken. Wat ben ik?",
+          "hints": [
+            "Ik ben rood en zacht, en ik proef je eten als eerste.",
+            "Je leert me op dit moment, met deze app."
+          ],
+          "answer": "Een tong – een taal",
+          "explanation": "In het Koerdisch betekent ziman zowel de tong in je mond als een taal, zoals in zimanê kurdî, ‘de Koerdische taal’. In het Nederlands zijn dat twee woorden; in het Frans en het Spaans werkt het raadsel wel (langue, lengua)."
+        },
+        "de": {
+          "question": "Ich schlafe in deinem Mund, und doch lernst du mich aus Büchern. Was bin ich?",
+          "hints": [
+            "Ich bin rot und weich und schmecke dein Essen als Erste.",
+            "Du lernst mich gerade jetzt, mit dieser App."
+          ],
+          "answer": "Die Zunge – die Sprache",
+          "explanation": "Auf Kurdisch heißt ziman sowohl die Zunge im Mund als auch eine Sprache, wie in zimanê kurdî, ‚die kurdische Sprache‘. Das Deutsche kennt das nur noch gehoben: ‚in fremden Zungen reden‘."
+        },
+        "es": {
+          "question": "Duermo en tu boca y, sin embargo, me aprendes en los libros. ¿Qué soy?",
+          "hints": [
+            "Soy roja y blanda, y soy la primera en probar tu comida.",
+            "Me estás aprendiendo ahora mismo, con esta aplicación."
+          ],
+          "answer": "La lengua",
+          "explanation": "En kurdo, ziman es a la vez la lengua de la boca y un idioma, como en zimanê kurdî, «la lengua kurda». En español pasa lo mismo: lengua sirve para las dos cosas."
+        },
+        "fr": {
+          "question": "Je dors dans ta bouche, et pourtant tu m’apprends dans les livres. Que suis-je ?",
+          "hints": [
+            "Je suis rouge et souple, et je goûte ta nourriture la première.",
+            "Tu es en train de m’apprendre, avec cette application."
+          ],
+          "answer": "La langue",
+          "explanation": "En kurde, ziman désigne à la fois la langue dans la bouche et une langue qu’on parle, comme dans zimanê kurdî, « la langue kurde ». Le français fait exactement le même jeu avec « langue »."
+        },
+        "tr": {
+          "question": "Ağzında uyurum, yine de beni kitaplardan öğrenirsin. Ben neyim?",
+          "hints": [
+            "Kırmızı ve yumuşağım; yemeğinin tadına ilk ben bakarım.",
+            "Şu anda beni bu uygulamayla öğreniyorsun."
+          ],
+          "answer": "Dil",
+          "explanation": "Kürtçede ziman hem ağızdaki dil hem de konuşulan dildir, zimanê kurdî, ‘Kürt dili’ gibi. Türkçede de dil kelimesi iki anlamı birden taşır."
+        },
+        "ar": {
+          "question": "أنام في فمك، ومع ذلك تتعلّمني من الكتب. فما أنا؟",
+          "hints": [
+            "أنا أحمر ولَيِّن، وأنا أوّل من يذوق طعامك.",
+            "أنت تتعلّمني الآن، بهذا التطبيق."
+          ],
+          "answer": "اللسان",
+          "explanation": "في الكردية تعني ziman اللسانَ الذي في الفم واللغةَ معًا، كما في zimanê kurdî أي «اللغة الكردية». والعربية تعرف المعنيين في كلمة «لسان» أيضًا، كما في «لسان العرب»."
+        }
+      },
+      "sources": [],
+      "notes": "New. Wordplay: ziman = tongue and language. The play survives in fr (langue), es (lengua), tr (dil), ar (لسان) and ckb (زمان); en, nl and de explain it."
+    },
+    {
+      "slug": "kmr-keskesor",
+      "dialect": "kmr",
+      "difficulty": "hard",
+      "category": "wordplay",
+      "tradition": "new",
+      "region": null,
+      "question": "Navê min tenê du rengan dibêje, lê heft rengên min hene. Ez çi me?",
+      "hints": [
+        "Piştî baranê, dema roj derdikeve, ez li ezmên xuya dibim.",
+        "Navê min ji ‘kesk’ û ‘sor’ pêk tê."
+      ],
+      "answer": "Keskesor",
+      "accepted": [
+        "keskesor",
+        "kesk û sor",
+        "keskûsor",
+        "keske sor"
+      ],
+      "explanation": "‘Keskesor’ ji ‘kesk’ û ‘sor’ pêk tê, tenê du reng; lê keskesor heft rengan nîşan dide: sor, porteqalî, zer, kesk, şîn, nîlî û mor.",
+      "translations": {
+        "ckb": {
+          "question": "ناوم تەنیا دوو ڕەنگ دەڵێت، بەڵام حەوت ڕەنگم هەیە. من چیم؟",
+          "hints": [
+            "دوای باران، کاتێک خۆر دەردەکەوێت، لە ئاسماندا دەردەکەوم.",
+            "ناوم لە «کەسک» و «سوور» پێک هاتووە."
+          ],
+          "answer": "کەسکوسوور",
+          "explanation": "«کەسکوسوور» لە «کەسک» و «سوور» پێک هاتووە، تەنیا دوو ڕەنگ؛ بەڵام حەوت ڕەنگ پیشان دەدات. لە سۆرانیدا پێی دەڵێن «پەلکەزێڕینە»ش."
+        },
+        "en": {
+          "question": "My name mentions only two colours, yet I have seven. What am I?",
+          "hints": [
+            "After the rain, when the sun comes out, I appear in the sky.",
+            "In Kurdish my name is made of kesk (green) and sor (red)."
+          ],
+          "answer": "A rainbow (keskesor)",
+          "explanation": "The Kurdish word keskesor is built from kesk, ‘green’, and sor, ‘red’ — just two colours — yet a rainbow shows seven: red, orange, yellow, green, blue, indigo and violet."
+        },
+        "nl": {
+          "question": "Mijn naam noemt maar twee kleuren, toch heb ik er zeven. Wat ben ik?",
+          "hints": [
+            "Na de regen, als de zon doorbreekt, verschijn ik aan de hemel.",
+            "In het Koerdisch bestaat mijn naam uit kesk (groen) en sor (rood)."
+          ],
+          "answer": "Een regenboog (keskesor)",
+          "explanation": "Het Koerdische woord keskesor is gemaakt van kesk, ‘groen’, en sor, ‘rood’ – maar twee kleuren – terwijl een regenboog er zeven laat zien."
+        },
+        "de": {
+          "question": "Mein Name nennt nur zwei Farben, und doch habe ich sieben. Was bin ich?",
+          "hints": [
+            "Nach dem Regen, wenn die Sonne herauskommt, erscheine ich am Himmel.",
+            "Auf Kurdisch setzt sich mein Name aus kesk (grün) und sor (rot) zusammen."
+          ],
+          "answer": "Ein Regenbogen (keskesor)",
+          "explanation": "Das kurdische Wort keskesor besteht aus kesk, ‚grün‘, und sor, ‚rot‘ – nur zwei Farben –, dabei zeigt ein Regenbogen sieben."
+        },
+        "es": {
+          "question": "Mi nombre solo menciona dos colores, pero tengo siete. ¿Qué soy?",
+          "hints": [
+            "Después de la lluvia, cuando sale el sol, aparezco en el cielo.",
+            "En kurdo mi nombre se forma con kesk (verde) y sor (rojo)."
+          ],
+          "answer": "El arcoíris (keskesor)",
+          "explanation": "La palabra kurda keskesor se forma con kesk, «verde», y sor, «rojo»: solo dos colores, aunque el arcoíris muestra siete."
+        },
+        "fr": {
+          "question": "Mon nom ne cite que deux couleurs, pourtant j’en ai sept. Que suis-je ?",
+          "hints": [
+            "Après la pluie, quand le soleil revient, j’apparais dans le ciel.",
+            "En kurde, mon nom est fait de kesk (vert) et de sor (rouge)."
+          ],
+          "answer": "L’arc-en-ciel (keskesor)",
+          "explanation": "Le mot kurde keskesor est formé de kesk, « vert », et de sor, « rouge » : deux couleurs seulement, alors que l’arc-en-ciel en montre sept."
+        },
+        "tr": {
+          "question": "Adım yalnızca iki renk söyler, ama yedi rengim var. Ben neyim?",
+          "hints": [
+            "Yağmurdan sonra güneş açınca gökyüzünde belirim.",
+            "Kürtçe adım kesk (yeşil) ve sor (kırmızı) kelimelerinden oluşur."
+          ],
+          "answer": "Gökkuşağı (keskesor)",
+          "explanation": "Kürtçe keskesor kelimesi kesk (yeşil) ve sor (kırmızı) sözcüklerinden yapılmıştır; yalnızca iki renk, oysa gökkuşağı yedi renk gösterir."
+        },
+        "ar": {
+          "question": "اسمي لا يذكر إلا لونين، ومع ذلك لي سبعة ألوان. فما أنا؟",
+          "hints": [
+            "بعد المطر، حين تطلع الشمس، أظهر في السماء.",
+            "اسمي في الكردية مركّب من kesk (أخضر) وsor (أحمر)."
+          ],
+          "answer": "قوس قزح (keskesor)",
+          "explanation": "الكلمة الكردية keskesor مركّبة من kesk «أخضر» وsor «أحمر»، أي لونين فقط، مع أن قوس قزح يُظهر سبعة ألوان."
+        }
+      },
+      "sources": [],
+      "notes": "New. Wordplay on keskesor (kesk + sor). Check the seven colour names in the explanation (porteqalî, nîlî, mor) and whether ‘kesk û sor’ / ‘keskûsor’ are really said for the rainbow (accepted as spellings). In Soranî کەسکوسوور works the same way."
+    },
+    {
+      "slug": "kmr-ker",
+      "dialect": "kmr",
+      "difficulty": "medium",
+      "category": "funny",
+      "tradition": "new",
+      "region": null,
+      "question": "Guhên min ji yên te dirêjtir in, lê navê min dibêje ku ez nabihîzim. Ez çi me?",
+      "hints": [
+        "Dema ez dizirim, tevahiya gund min dibihîze.",
+        "Bi kurmancî mirovê ku nabihîze jî bi heman navî tê binavkirin."
+      ],
+      "answer": "Ker",
+      "accepted": [
+        "ker",
+        "kerr"
+      ],
+      "explanation": "Bi kurmancî ‘ker’ hem ajalê guhdirêj e, hem jî mirovê ku nabihîze (carinan ‘kerr’ tê nivîsîn). Loma ker, bi wan guhên xwe yên dirêj, bi navê xwe ‘nabihîze’. Henek ev e.",
+      "translations": {
+        "ckb": {
+          "question": "گوێکانم لە هی تۆ درێژترن، بەڵام ناوم دەڵێت ناتوانم ببیستم. من چیم؟",
+          "hints": [
+            "کاتێک دەزەڕێم، هەموو گوند گوێی لێم دەبێت.",
+            "لە کورمانجیدا هەمان وشە بۆ کەسێکیش دەوترێت کە نابیستێت."
+          ],
+          "answer": "کەر",
+          "explanation": "لە کورمانجیدا «کەر» هەم ئەو ئاژەڵە گوێدرێژەیە و هەم بە کەسێک دەوترێت کە نابیستێت؛ لە سۆرانیدا ئەمیان «کەڕ»ە، تەنیا بە «ڕ»ێکی قورس. بۆیە کەر، بەو گوێ درێژانەوە، بە ناوی خۆی «نابیستێت». گاڵتەکە ئەمەیە."
+        },
+        "en": {
+          "question": "My ears are longer than yours, yet my name says I can’t hear. What am I?",
+          "hints": [
+            "When I bray, the whole village hears me.",
+            "In Kurmanji the same word is used for a person who cannot hear."
+          ],
+          "answer": "A donkey (ker)",
+          "explanation": "In Kurmanji ker is both the long-eared donkey and the word for ‘deaf’ (sometimes spelt kerr). So the donkey, for all its big ears, is ‘deaf’ by name — that is the joke."
+        },
+        "nl": {
+          "question": "Mijn oren zijn langer dan de jouwe, toch zegt mijn naam dat ik niet kan horen. Wat ben ik?",
+          "hints": [
+            "Als ik balk, hoort het hele dorp me.",
+            "In het Kurmanci heet iemand die niet kan horen precies hetzelfde."
+          ],
+          "answer": "Een ezel (ker)",
+          "explanation": "In het Kurmanci is ker zowel de ezel met zijn lange oren als het woord voor ‘doof’ (soms kerr geschreven). De ezel is dus, met al zijn grote oren, ‘doof’ bij naam – daar zit de grap."
+        },
+        "de": {
+          "question": "Meine Ohren sind länger als deine, und doch sagt mein Name, dass ich nicht höre. Was bin ich?",
+          "hints": [
+            "Wenn ich schreie, hört mich das ganze Dorf.",
+            "Auf Kurmandschi heißt ein Mensch, der nicht hört, genauso."
+          ],
+          "answer": "Ein Esel (ker)",
+          "explanation": "Auf Kurmandschi ist ker sowohl der langohrige Esel als auch das Wort für ‚taub‘ (manchmal kerr geschrieben). Der Esel ist also trotz seiner großen Ohren dem Namen nach ‚taub‘ – das ist der Witz."
+        },
+        "es": {
+          "question": "Mis orejas son más largas que las tuyas y, sin embargo, mi nombre dice que no oigo. ¿Qué soy?",
+          "hints": [
+            "Cuando rebuzno, me oye todo el pueblo.",
+            "En kurmanji, a una persona que no oye se la llama con la misma palabra."
+          ],
+          "answer": "Un burro (ker)",
+          "explanation": "En kurmanji, ker es a la vez el burro de orejas largas y la palabra para «sordo» (a veces escrita kerr). Así que el burro, con lo grandes que tiene las orejas, es «sordo» de nombre: ahí está la gracia."
+        },
+        "fr": {
+          "question": "Mes oreilles sont plus longues que les tiennes, et pourtant mon nom dit que je n’entends pas. Que suis-je ?",
+          "hints": [
+            "Quand je brais, tout le village m’entend.",
+            "En kurmandji, on appelle du même mot quelqu’un qui n’entend pas."
+          ],
+          "answer": "Un âne (ker)",
+          "explanation": "En kurmandji, ker désigne à la fois l’âne aux longues oreilles et une personne sourde (on écrit parfois kerr). L’âne, avec ses grandes oreilles, est donc « sourd » de nom : c’est toute la blague."
+        },
+        "tr": {
+          "question": "Kulaklarım seninkinden uzun, ama adım duymadığımı söyler. Ben neyim?",
+          "hints": [
+            "Anırınca bütün köy beni duyar.",
+            "Kurmancîde duymayan biri için de aynı kelime kullanılır."
+          ],
+          "answer": "Eşek (ker)",
+          "explanation": "Kurmancîde ker hem uzun kulaklı eşektir hem de ‘sağır’ demektir (bazen kerr yazılır). Yani eşek, o koca kulaklarıyla, adı gereği ‘sağır’dır; şaka da budur."
+        },
+        "ar": {
+          "question": "أذناي أطول من أذنيك، ومع ذلك يقول اسمي إنني لا أسمع. فما أنا؟",
+          "hints": [
+            "حين أنهق تسمعني القرية كلها.",
+            "في الكرمانجية تُطلق الكلمة نفسها على من لا يسمع."
+          ],
+          "answer": "الحمار (ker)",
+          "explanation": "في الكرمانجية تعني ker الحمارَ طويل الأذنين، وتعني أيضًا «الأصمّ» (وتُكتب أحيانًا kerr). فالحمار، على كِبَر أذنيه، «أصمّ» باسمه، وهنا الطرفة."
+        }
+      },
+      "sources": [],
+      "notes": "New. Pun ker (donkey) / ker, kerr (deaf). It laughs at the donkey’s name, not at deaf people, but please check it reads that way; drop it if in doubt. In Soranî the two words differ (کەر / کەڕ), so the ckb rendering explains it. Check the verb ‘dizirim’ (I bray)."
+    },
+    {
+      "slug": "kmr-yeksem",
+      "dialect": "kmr",
+      "difficulty": "hard",
+      "category": "logic",
+      "tradition": "new",
+      "region": null,
+      "question": "Di navê min de ‘yek’ heye, lê ez ne roja yekem a hefteyê me. Ez kîjan roj im?",
+      "hints": [
+        "Hefte bi Şemiyê dest pê dike.",
+        "Navên rojan wek jimartinê ne: piştî Şemiyê yek, du, sê, çar, pênc…"
+      ],
+      "answer": "Yekşem",
+      "accepted": [
+        "yekşem",
+        "yekşemî",
+        "yek şem"
+      ],
+      "explanation": "Navên rojan ji Şemiyê ve tên jimartin: Yekşem (yek roj piştî Şemiyê), Duşem, Sêşem, Çarşem, Pêncşem, û paşê În. Loma Yekşem roja duyem e, lê navê wê ‘yek’ dibêje.",
+      "translations": {
+        "ckb": {
+          "question": "لە ناوەکەمدا «یەک» هەیە، بەڵام ڕۆژی یەکەمی هەفتە نیم. من کام ڕۆژم؟",
+          "hints": [
+            "هەفتە بە شەممە دەست پێدەکات.",
+            "ناوی ڕۆژەکان وەک ژماردنە: لە دوای شەممە یەک، دوو، سێ، چوار، پێنج…"
+          ],
+          "answer": "یەکشەممە",
+          "explanation": "ناوی ڕۆژەکان لە شەممەوە دەژمێردرێن: یەکشەممە (یەک ڕۆژ دوای شەممە)، دووشەممە، سێشەممە، چوارشەممە، پێنجشەممە، پاشان هەینی. بۆیە یەکشەممە ڕۆژی دووەمە، بەڵام ناوەکەی دەڵێت «یەک»."
+        },
+        "en": {
+          "question": "There is a ‘one’ in my name, yet I am not the first day of the week. Which day am I?",
+          "hints": [
+            "The week begins on Saturday, Şemî.",
+            "The day names count like numbers: after Şemî come one, two, three, four, five…"
+          ],
+          "answer": "Sunday (Yekşem)",
+          "explanation": "Kurdish weekdays are counted from Saturday, Şemî: Yekşem, ‘one after Şemî’, is Sunday, then Duşem, Sêşem, Çarşem, Pêncşem, and finally În, Friday. So Yekşem is the second day, though its name says ‘one’."
+        },
+        "nl": {
+          "question": "Er zit een ‘één’ in mijn naam, toch ben ik niet de eerste dag van de week. Welke dag ben ik?",
+          "hints": [
+            "De week begint op zaterdag, Şemî.",
+            "De namen van de dagen tellen als getallen: na Şemî komen één, twee, drie, vier, vijf…"
+          ],
+          "answer": "Zondag (Yekşem)",
+          "explanation": "De Koerdische weekdagen worden geteld vanaf zaterdag, Şemî: Yekşem, ‘één na Şemî’, is zondag, dan Duşem, Sêşem, Çarşem, Pêncşem en ten slotte În, vrijdag. Yekşem is dus de tweede dag, al zegt de naam ‘één’."
+        },
+        "de": {
+          "question": "In meinem Namen steckt eine ‚Eins‘, und doch bin ich nicht der erste Tag der Woche. Welcher Tag bin ich?",
+          "hints": [
+            "Die Woche beginnt am Samstag, Şemî.",
+            "Die Tagesnamen zählen wie Zahlen: Nach Şemî kommen eins, zwei, drei, vier, fünf …"
+          ],
+          "answer": "Sonntag (Yekşem)",
+          "explanation": "Die kurdischen Wochentage werden vom Samstag, Şemî, aus gezählt: Yekşem, ‚eins nach Şemî‘, ist der Sonntag, dann Duşem, Sêşem, Çarşem, Pêncşem und zuletzt În, der Freitag. Yekşem ist also der zweite Tag, obwohl sein Name ‚eins‘ sagt."
+        },
+        "es": {
+          "question": "En mi nombre hay un «uno», pero no soy el primer día de la semana. ¿Qué día soy?",
+          "hints": [
+            "La semana empieza el sábado, Şemî.",
+            "Los nombres de los días cuentan como números: después de Şemî vienen uno, dos, tres, cuatro, cinco…"
+          ],
+          "answer": "El domingo (Yekşem)",
+          "explanation": "Los días de la semana en kurdo se cuentan desde el sábado, Şemî: Yekşem, «uno después de Şemî», es el domingo; luego Duşem, Sêşem, Çarşem, Pêncşem y, por último, În, el viernes. Así que Yekşem es el segundo día, aunque su nombre diga «uno»."
+        },
+        "fr": {
+          "question": "Il y a un « un » dans mon nom, et pourtant je ne suis pas le premier jour de la semaine. Quel jour suis-je ?",
+          "hints": [
+            "La semaine commence le samedi, Şemî.",
+            "Les noms des jours comptent comme des nombres : après Şemî viennent un, deux, trois, quatre, cinq…"
+          ],
+          "answer": "Le dimanche (Yekşem)",
+          "explanation": "Les jours de la semaine kurde se comptent à partir du samedi, Şemî : Yekşem, « un après Şemî », c’est le dimanche, puis Duşem, Sêşem, Çarşem, Pêncşem et enfin În, le vendredi. Yekşem est donc le deuxième jour, même si son nom dit « un »."
+        },
+        "tr": {
+          "question": "Adımda bir ‘bir’ var, ama haftanın ilk günü değilim. Hangi günüm?",
+          "hints": [
+            "Hafta cumartesiyle, Şemî ile başlar.",
+            "Gün adları sayı gibi sayılır: Şemî’den sonra bir, iki, üç, dört, beş…"
+          ],
+          "answer": "Pazar (Yekşem)",
+          "explanation": "Kürtçe gün adları cumartesiden, Şemî’den sayılır: Yekşem ‘Şemî’den bir sonraki’, yani pazardır; ardından Duşem, Sêşem, Çarşem, Pêncşem ve en son În, cuma gelir. Yani Yekşem ikinci gündür, adı ‘bir’ dese de."
+        },
+        "ar": {
+          "question": "في اسمي «واحد»، ومع ذلك لستُ أوّل أيام الأسبوع. أيّ يومٍ أنا؟",
+          "hints": [
+            "يبدأ الأسبوع يوم السبت، Şemî.",
+            "أسماء الأيام تُعدّ كالأرقام: بعد Şemî يأتي واحد، اثنان، ثلاثة، أربعة، خمسة…"
+          ],
+          "answer": "الأحد (Yekşem)",
+          "explanation": "تُعدّ أيام الأسبوع الكردية ابتداءً من السبت (Şemî): فـYekşem أي «الأول بعد السبت» هو الأحد، ثم Duşem وSêşem وÇarşem وPêncşem، وأخيرًا În أي الجمعة. فـYekşem هو اليوم الثاني وإن كان اسمه يقول «واحد»، تمامًا كالأحد في العربية المشتق من «الواحد»."
+        }
+      },
+      "sources": [],
+      "notes": "New. Kurdish weekday names counted from Şemî. Check ‘hefte’ (vs ‘heftî’) and ‘În’ (vs ‘Înî’) as the forms the owner wants. The riddle relies on knowing that the names count from Şemî, which hint 1 gives."
+    },
+    {
+      "slug": "kmr-kani",
+      "dialect": "kmr",
+      "difficulty": "hard",
+      "category": "wordplay",
+      "tradition": "new",
+      "region": null,
+      "question": "Çavekî min heye, lê ez nabînim; ez avê didim her kesî, lê ez tu carî tî nabim. Ez çi me?",
+      "hints": [
+        "Keçên gund bi cêran diçin ba min.",
+        "Gava tu dipirsî ‘çavkaniya vê nûçeyê çi ye?’, tu navê min jî dibêjî."
+      ],
+      "answer": "Kanî",
+      "accepted": [
+        "kanî",
+        "kaniya avê",
+        "çavkanî",
+        "çavê kaniyê",
+        "kanîk"
+      ],
+      "explanation": "Cihê ku av ji bin axê derdikeve ‘çavê kaniyê’ ye: loma kaniyê çavek heye, lê nabîne. Ji vê jî peyva ‘çavkanî’ çêbûye, ku îro ji bo ‘jêder’ jî tê bikaranîn.",
+      "translations": {
+        "ckb": {
+          "question": "چاوێکم هەیە، بەڵام نابینم؛ ئاو دەدەم بە هەموو کەس، بەڵام هەرگیز تینوو نابم. من چیم؟",
+          "hints": [
+            "کچانی گوند بە گۆزەوە دێنە لام.",
+            "کاتێک دەپرسیت «سەرچاوەی ئەم هەواڵە چییە؟»، وشەیەک دەڵێیت کە چاوی تێدایە."
+          ],
+          "answer": "کانی",
+          "explanation": "ئەو شوێنەی کە ئاو لە زەوی دەردەچێت «چاوی کانی»یە: بۆیە کانی چاوی هەیە، بەڵام نابینێت. لە کورمانجیدا لێرەوە «چاڤکانی» دروست بووە، و لە سۆرانیدا «سەرچاوە»؛ هەردووکیان بۆ سەرچاوەی هەواڵ و زانیاریش بەکاردێن."
+        },
+        "en": {
+          "question": "I have an eye, but I cannot see; I give water to everyone, but I am never thirsty. What am I?",
+          "hints": [
+            "The village girls come to me with their jugs.",
+            "When you ask for the source of a piece of news, Kurdish says my name too."
+          ],
+          "answer": "A spring",
+          "explanation": "Kurdish calls the spot where water wells up out of the ground çavê kaniyê, ‘the eye of the spring’: so the spring has an eye but cannot see. From it comes çavkanî, ‘spring-eye’, which today also means a source of information."
+        },
+        "nl": {
+          "question": "Ik heb een oog, maar ik kan niet zien; ik geef iedereen water, maar ik heb nooit dorst. Wat ben ik?",
+          "hints": [
+            "De meisjes uit het dorp komen met hun kruiken naar me toe.",
+            "Vraag je naar de bron van een nieuwtje, dan noemt het Koerdisch ook mijn naam."
+          ],
+          "answer": "Een bron",
+          "explanation": "Het Koerdisch noemt de plek waar het water uit de grond opwelt çavê kaniyê, ‘het oog van de bron’: de bron heeft dus een oog, maar ziet niets. Daarvan komt çavkanî, ‘bronoog’, dat nu ook ‘informatiebron’ betekent – net als het Nederlandse bron."
+        },
+        "de": {
+          "question": "Ich habe ein Auge und sehe doch nicht; ich gebe allen Wasser und habe doch nie Durst. Was bin ich?",
+          "hints": [
+            "Die Mädchen aus dem Dorf kommen mit ihren Krügen zu mir.",
+            "Fragst du nach der Quelle einer Nachricht, sagt das Kurdische auch meinen Namen."
+          ],
+          "answer": "Eine Quelle",
+          "explanation": "Das Kurdische nennt die Stelle, an der das Wasser aus dem Boden quillt, çavê kaniyê, ‚das Auge der Quelle‘: Die Quelle hat also ein Auge, sieht aber nicht. Daraus wurde çavkanî, ‚Quellauge‘, das heute auch ‚Informationsquelle‘ heißt – wie das deutsche Quelle."
+        },
+        "es": {
+          "question": "Tengo un ojo, pero no veo; doy agua a todos, pero nunca tengo sed. ¿Qué soy?",
+          "hints": [
+            "Las muchachas del pueblo vienen a mí con sus cántaros.",
+            "Cuando preguntas por la fuente de una noticia, en kurdo también dices mi nombre."
+          ],
+          "answer": "Un manantial (un ojo de agua)",
+          "explanation": "El kurdo llama çavê kaniyê, «el ojo del manantial», al punto donde el agua brota de la tierra, igual que el español dice «ojo de agua». De ahí viene çavkanî, que hoy también significa «fuente» de información."
+        },
+        "fr": {
+          "question": "J’ai un œil, mais je ne vois pas ; je donne de l’eau à tout le monde, mais je n’ai jamais soif. Que suis-je ?",
+          "hints": [
+            "Les filles du village viennent me voir avec leurs cruches.",
+            "Quand tu demandes la source d’une nouvelle, le kurde prononce aussi mon nom."
+          ],
+          "answer": "Une source",
+          "explanation": "En kurde, l’endroit où l’eau jaillit du sol s’appelle çavê kaniyê, « l’œil de la source » : la source a donc un œil, mais ne voit pas. De là vient çavkanî, qui désigne aussi aujourd’hui une source d’information, comme en français."
+        },
+        "tr": {
+          "question": "Bir gözüm var ama görmem; herkese su veririm ama hiç susamam. Ben neyim?",
+          "hints": [
+            "Köyün kızları testileriyle bana gelir.",
+            "Bir haberin kaynağını sorduğunda Kürtçede benim adımı da söylersin."
+          ],
+          "answer": "Pınar (kaynak)",
+          "explanation": "Kürtçe, suyun topraktan çıktığı yere çavê kaniyê, ‘pınarın gözü’ der; Türkçedeki ‘göze’ gibi. Yani pınarın gözü vardır ama görmez. Buradan gelen çavkanî bugün ‘bilgi kaynağı’ anlamında da kullanılır."
+        },
+        "ar": {
+          "question": "لي عينٌ لكنني لا أرى؛ أسقي الجميع لكنني لا أعطش أبدًا. فما أنا؟",
+          "hints": [
+            "تأتيني بنات القرية بجرارهنّ.",
+            "حين تسأل عن مصدر خبرٍ ما، تذكر الكردية اسمي أيضًا."
+          ],
+          "answer": "عين الماء (النبع)",
+          "explanation": "تسمّي الكردية موضع خروج الماء من الأرض çavê kaniyê أي «عين النبع»، كما تقول العربية «عين ماء»: فللنبع عينٌ لكنه لا يرى. ومنها جاءت çavkanî التي تعني اليوم «المصدر» أيضًا."
+        }
+      },
+      "sources": [],
+      "notes": "New. Plays on çavê kaniyê (the spring’s eye) and çavkanî (source). The eye survives in ar (عين), es (ojo de agua) and tr (göz, göze); de, nl and fr keep the ‘source’ of hint 2. Check that ‘cêr’ is natural for the girls’ jugs (alternatives ‘cêrik’, ‘şerbik’) and ‘kanîk’ as an accepted diminutive."
+    },
+    {
+      "slug": "kmr-istikan",
+      "dialect": "kmr",
+      "difficulty": "easy",
+      "category": "everyday",
+      "tradition": "new",
+      "region": null,
+      "question": "Ez navzirav im, dilê min germ e; ez sor dibim, lê ne ji şerman. Ez çi me?",
+      "hints": [
+        "Li ser sêniyê, li tenişta şekirê rûdinêm.",
+        "Çaydan min tijî dike, mêvan min vala dike."
+      ],
+      "answer": "Îstîkana çayê",
+      "accepted": [
+        "îstîkan",
+        "îstekan",
+        "stekan",
+        "îstîkana çayê",
+        "piyale",
+        "qedeh"
+      ],
+      "explanation": "Îstîkana çayê ya kurdan navzirav e, wek gula lalê; dema çaya tarî û germ tê de ye, ew sor dibe — sor dibe, lê ne ji şerman. Çaydan wê tijî dike, mêvan wê vala dike.",
+      "translations": {
+        "ckb": {
+          "question": "کەمەرم باریکە، دڵم گەرمە؛ سوور دەبمەوە، بەڵام نەک لە شەرمان. من چیم؟",
+          "hints": [
+            "لەسەر سینییەکە، لە تەنیشت شەکرەکە دادەنیشم.",
+            "قۆری پڕم دەکات، میوان بەتاڵم دەکات."
+          ],
+          "answer": "ئیستیکانی چا",
+          "explanation": "ئیستیکانی چای کوردی کەمەرباریکە، وەک لاڵە؛ کە چای تۆخ و گەرمی تێدەکەن، سوور دەبێتەوە — سوور دەبێتەوە، بەڵام نەک لە شەرمان. قۆری پڕی دەکات، میوان بەتاڵی دەکات."
+        },
+        "en": {
+          "question": "I have a slender waist and a warm heart; I turn red, but not from shame. What am I?",
+          "hints": [
+            "I sit on the tray, next to the sugar.",
+            "The teapot fills me, and the guest empties me."
+          ],
+          "answer": "A tea glass",
+          "explanation": "The Kurdish tea glass, the îstîkan, is slim in the middle like a tulip; filled with strong, hot tea it glows red — red, but not from shame. The teapot fills it and the guest empties it, again and again."
+        },
+        "nl": {
+          "question": "Ik heb een slanke taille en een warm hart; ik word rood, maar niet van schaamte. Wat ben ik?",
+          "hints": [
+            "Ik sta op het dienblad, naast de suiker.",
+            "De theepot vult me, de gast drinkt me leeg."
+          ],
+          "answer": "Een theeglas",
+          "explanation": "Het Koerdische theeglaasje, de îstîkan, is in het midden smal als een tulp; gevuld met sterke, hete thee kleurt het rood – rood, maar niet van schaamte. De pot vult het, de gast drinkt het leeg, steeds opnieuw."
+        },
+        "de": {
+          "question": "Ich habe eine schmale Taille und ein warmes Herz; ich werde rot, aber nicht vor Scham. Was bin ich?",
+          "hints": [
+            "Ich stehe auf dem Tablett, neben dem Zucker.",
+            "Die Teekanne füllt mich, der Gast leert mich."
+          ],
+          "answer": "Ein Teeglas",
+          "explanation": "Das kurdische Teeglas, die îstîkan, ist in der Mitte schmal wie eine Tulpe; mit starkem, heißem Tee gefüllt, leuchtet es rot – rot, aber nicht vor Scham. Die Kanne füllt es, der Gast leert es, immer wieder."
+        },
+        "es": {
+          "question": "Tengo la cintura fina y el corazón caliente; me pongo rojo, pero no de vergüenza. ¿Qué soy?",
+          "hints": [
+            "Me siento en la bandeja, junto al azúcar.",
+            "La tetera me llena y el invitado me vacía."
+          ],
+          "answer": "Un vaso de té",
+          "explanation": "El vasito de té kurdo, el îstîkan, es estrecho en el centro como un tulipán; lleno de té fuerte y caliente, se pone rojo… rojo, pero no de vergüenza. La tetera lo llena y el invitado lo vacía, una y otra vez."
+        },
+        "fr": {
+          "question": "J’ai la taille fine et le cœur chaud ; je rougis, mais pas de honte. Que suis-je ?",
+          "hints": [
+            "Je suis posé sur le plateau, à côté du sucre.",
+            "La théière me remplit, l’invité me vide."
+          ],
+          "answer": "Un verre à thé",
+          "explanation": "Le petit verre à thé kurde, l’îstîkan, est étroit au milieu comme une tulipe ; rempli de thé fort et brûlant, il devient rouge — rouge, mais pas de honte. La théière le remplit, l’invité le vide, encore et encore."
+        },
+        "tr": {
+          "question": "Belim ince, yüreğim sıcak; kızarırım ama utançtan değil. Ben neyim?",
+          "hints": [
+            "Tepside, şekerin yanında dururum.",
+            "Demlik beni doldurur, misafir boşaltır."
+          ],
+          "answer": "Çay bardağı",
+          "explanation": "Kürtlerin ince belli çay bardağı, îstîkan, lale gibidir; demli ve sıcak çayla dolunca kızarır — kızarır ama utançtan değil. Demlik onu doldurur, misafir boşaltır, yeniden ve yeniden."
+        },
+        "ar": {
+          "question": "خصري نحيل وقلبي دافئ؛ أحمرّ، لكن ليس خجلًا. فما أنا؟",
+          "hints": [
+            "أجلس على الصينية بجانب السكّر.",
+            "يملؤني الإبريق ويفرغني الضيف."
+          ],
+          "answer": "كأس الشاي (الإستكان)",
+          "explanation": "كأس الشاي الكردي، الإستكان، نحيل الخصر كزهرة التوليب؛ وحين يُملأ بالشاي الثقيل الساخن يحمرّ، يحمرّ لكن ليس خجلًا. يملؤه الإبريق ويفرغه الضيف، مرة بعد مرة."
+        }
+      },
+      "sources": [],
+      "notes": "New. ‘navzirav’ (slim-waisted) for the tulip-shaped glass — check the word. Accepted names: îstîkan, îstekan, stekan, piyale, qedeh; add the local word if it is missing."
+    },
+    {
+      "slug": "kmr-sel",
+      "dialect": "kmr",
+      "difficulty": "medium",
+      "category": "culture",
+      "tradition": "new",
+      "region": null,
+      "question": "Pişta min wek ya kûsiyê ye û agir di bin min de ye; nan li ser pişta min dipije, lê ez parîyekê jî naxwim. Ez çi me?",
+      "hints": [
+        "Diya te li ser min nanê tenik û mezin çêdike.",
+        "Ez ji hesin im; hevîrê tenik li ser min di kêliyekê de dipije."
+      ],
+      "answer": "Sêl",
+      "accepted": [
+        "sêl",
+        "sêla nan",
+        "sêla hesin",
+        "saj",
+        "sac"
+      ],
+      "explanation": "Sêl ji hesin e û wek pişta kûsiyê girover e; agir di bin wê de ye û nanê tenik, nanê sêlê, li ser pişta wê dipije. Sêl her roj nan çêdike, lê tu carî naxwe.",
+      "translations": {
+        "ckb": {
+          "question": "پشتم وەک پشتی کیسەڵە و ئاگر لە ژێرمە؛ نان لەسەر پشتم دەبرژێت، بەڵام من پارووێکیش ناخۆم. من چیم؟",
+          "hints": [
+            "دایکت نانی تەنک و گەورە لەسەر من دروست دەکات.",
+            "لە ئاسن دروست کراوم؛ هەویری تەنک لەسەرم لە چرکەیەکدا دەبرژێت."
+          ],
+          "answer": "ساج",
+          "explanation": "ساج تەختەیەکی ئاسنی خڕە، وەک پشتی کیسەڵ؛ ئاگر لە ژێریدایە و نانی تەنک، نانی ساج، لەسەر پشتی دەبرژێت. ساج هەموو ڕۆژێک نان دروست دەکات، بەڵام هەرگیز ناخوات."
+        },
+        "en": {
+          "question": "My back is shaped like a tortoise’s, with a fire underneath me; bread bakes on my back, yet I never eat a crumb. What am I?",
+          "hints": [
+            "Your mother makes big, thin bread on me.",
+            "I am made of iron; thin dough cooks on me in a moment."
+          ],
+          "answer": "A saj (sêl), the bread griddle",
+          "explanation": "The sêl, or saj, is a domed iron griddle shaped like a tortoise shell. A fire burns beneath it, and thin flatbread — nanê sêlê, saj bread — bakes on its back. It makes bread every day but never eats any."
+        },
+        "nl": {
+          "question": "Mijn rug is gebogen als die van een schildpad en onder me brandt een vuur; op mijn rug bakt brood, maar ik eet nooit een kruimel. Wat ben ik?",
+          "hints": [
+            "Je moeder bakt groot, dun brood op mij.",
+            "Ik ben van ijzer; dun deeg is op mij in een oogwenk gaar."
+          ],
+          "answer": "Een saj (sêl), de broodplaat",
+          "explanation": "De sêl of saj is een bolle ijzeren bakplaat, gewelfd als een schildpadschild. Eronder brandt een vuur en op de rug bakt dun platbrood: nanê sêlê, sajbrood. Hij bakt elke dag brood, maar eet er nooit van."
+        },
+        "de": {
+          "question": "Mein Rücken ist gewölbt wie der einer Schildkröte, und unter mir brennt ein Feuer; auf meinem Rücken backt Brot, doch ich esse keinen Krümel. Was bin ich?",
+          "hints": [
+            "Deine Mutter backt auf mir großes, dünnes Brot.",
+            "Ich bin aus Eisen; dünner Teig ist auf mir im Nu gar."
+          ],
+          "answer": "Ein Saj (sêl), das Brotblech",
+          "explanation": "Die sêl oder der Saj ist ein gewölbtes Eisenblech, geformt wie ein Schildkrötenpanzer. Darunter brennt ein Feuer, und auf dem Rücken backt dünnes Fladenbrot – nanê sêlê, Saj-Brot. Er backt jeden Tag Brot und isst doch nie davon."
+        },
+        "es": {
+          "question": "Tengo el lomo como el de una tortuga y un fuego debajo; en mi lomo se cuece el pan, pero yo no pruebo ni una miga. ¿Qué soy?",
+          "hints": [
+            "Tu madre hace sobre mí un pan grande y fino.",
+            "Soy de hierro; la masa fina se cuece sobre mí en un momento."
+          ],
+          "answer": "El saj (sêl), la plancha del pan",
+          "explanation": "La sêl, o saj, es una plancha de hierro abombada como el caparazón de una tortuga. Debajo arde el fuego y encima se cuece el pan fino, nanê sêlê, el pan de saj. Hace pan todos los días, pero nunca se come ni un trozo."
+        },
+        "fr": {
+          "question": "J’ai le dos bombé comme celui d’une tortue et un feu sous moi ; le pain cuit sur mon dos, mais je n’en mange jamais une miette. Que suis-je ?",
+          "hints": [
+            "Ta mère fait sur moi un pain grand et fin.",
+            "Je suis en fer ; la pâte fine cuit sur moi en un instant."
+          ],
+          "answer": "Le saj (sêl), la plaque à pain",
+          "explanation": "La sêl, ou saj, est une plaque de fer bombée comme une carapace de tortue. Le feu brûle dessous, et le pain fin, nanê sêlê, le pain saj, cuit sur son dos. Elle fait du pain tous les jours sans jamais en manger."
+        },
+        "tr": {
+          "question": "Sırtım kaplumbağanınki gibi, altımda ateş var; sırtımda ekmek pişer ama ben bir lokma bile yemem. Ben neyim?",
+          "hints": [
+            "Annen benim üstümde ince, büyük ekmek yapar.",
+            "Demirden yapılmışım; ince hamur üstümde bir anda pişer."
+          ],
+          "answer": "Sac (sêl)",
+          "explanation": "Sêl, yani sac, kaplumbağa kabuğu gibi kubbeli bir demir levhadır. Altında ateş yanar, sırtında ince ekmek, nanê sêlê, sac ekmeği pişer. Her gün ekmek yapar ama hiç yemez."
+        },
+        "ar": {
+          "question": "ظهري كظهر السلحفاة، وتحتي نار؛ يُخبز الخبز على ظهري، لكنني لا آكل منه لقمة. فما أنا؟",
+          "hints": [
+            "تصنع أمّك عليّ خبزًا رقيقًا كبيرًا.",
+            "أنا من حديد؛ والعجين الرقيق ينضج عليّ في لحظة."
+          ],
+          "answer": "الصاج (sêl)",
+          "explanation": "الصاج (sêl بالكردية) صفيحة حديد محدّبة كترس السلحفاة، تحتها نار، ويُخبز على ظهرها الخبز الرقيق، خبز الصاج. يخبز كل يوم ولا يأكل منه شيئًا."
+        }
+      },
+      "sources": [],
+      "notes": "New. Check ‘qubeyî’ (domed) in the explanation and ‘parîyekê jî naxwim’. Accepts ‘saj’ and ‘sac’ because learners from the Arab world or Turkey may type them. The Soranî rendering uses ساج."
+    },
+    {
+      "slug": "kmr-newroz",
+      "dialect": "kmr",
+      "difficulty": "medium",
+      "category": "culture",
+      "tradition": "new",
+      "region": null,
+      "question": "Ez her sal têm, lê tu carî pîr nabim, çimkî navê min dibêje ‘nû’. Dema ez têm, agir li serê çiyan vêdikevin. Ez çi me?",
+      "hints": [
+        "Ez bi biharê re têm.",
+        "Kawayê Hesinkar çîroka min dizane."
+      ],
+      "answer": "Newroz",
+      "accepted": [
+        "newroz",
+        "newruz",
+        "nevroz",
+        "nowruz",
+        "nûroj"
+      ],
+      "explanation": "Newroz ‘roja nû’ ye: ji ‘new’ (nû) û ‘roz’ (roj) pêk tê. Ew her sal di 21ê Adarê de tê, lê her car nû ye; agirên Newrozê çîroka Kawayê Hesinkar bi bîr tînin.",
+      "translations": {
+        "ckb": {
+          "question": "هەموو ساڵێک دێم، بەڵام هەرگیز پیر نابم، چونکە ناوم دەڵێت «نوێ». کاتێک دێم، ئاگر لەسەر لووتکەی چیاکان دەکرێتەوە. من چیم؟",
+          "hints": [
+            "لەگەڵ بەهاردا دێم.",
+            "کاوەی ئاسنگەر چیرۆکەکەم دەزانێت."
+          ],
+          "answer": "نەورۆز",
+          "explanation": "نەورۆز واتە «ڕۆژی نوێ»: لە «نەو» (نوێ) و «ڕۆز» (ڕۆژ) پێک هاتووە. هەموو ساڵێک لە ٢١ی ئاداردا دێت، بەڵام هەموو جارێک نوێیە؛ ئاگرەکانی نەورۆز چیرۆکی کاوەی ئاسنگەر دەهێننەوە یاد."
+        },
+        "en": {
+          "question": "I come every year but never grow old, because my name says ‘new’. When I arrive, fires are lit on the mountaintops. What am I?",
+          "hints": [
+            "I arrive with the spring.",
+            "Kawa the Blacksmith knows my story."
+          ],
+          "answer": "Newroz",
+          "explanation": "Newroz means ‘new day’, from new (new) and roz (day). It comes every year on 21 March, yet is new every time; its bonfires recall the tale of Kawa the Blacksmith."
+        },
+        "nl": {
+          "question": "Ik kom elk jaar, maar word nooit oud, want mijn naam zegt ‘nieuw’. Als ik kom, worden er vuren ontstoken op de bergtoppen. Wat ben ik?",
+          "hints": [
+            "Ik kom samen met de lente.",
+            "Kawa de Smid kent mijn verhaal."
+          ],
+          "answer": "Newroz",
+          "explanation": "Newroz betekent ‘nieuwe dag’, van new (nieuw) en roz (dag). Het komt elk jaar op 21 maart en is toch elke keer nieuw; de vuren van Newroz herinneren aan het verhaal van Kawa de Smid."
+        },
+        "de": {
+          "question": "Ich komme jedes Jahr und werde doch nie alt, denn mein Name sagt ‚neu‘. Wenn ich komme, brennen Feuer auf den Berggipfeln. Was bin ich?",
+          "hints": [
+            "Ich komme mit dem Frühling.",
+            "Kawa der Schmied kennt meine Geschichte."
+          ],
+          "answer": "Newroz",
+          "explanation": "Newroz heißt ‚neuer Tag‘, aus new (neu) und roz (Tag). Es kommt jedes Jahr am 21. März und ist doch jedes Mal neu; seine Feuer erinnern an die Geschichte von Kawa dem Schmied."
+        },
+        "es": {
+          "question": "Vengo cada año, pero nunca envejezco, porque mi nombre dice «nuevo». Cuando llego, se encienden hogueras en las cumbres. ¿Qué soy?",
+          "hints": [
+            "Llego con la primavera.",
+            "Kawa el Herrero conoce mi historia."
+          ],
+          "answer": "Newroz",
+          "explanation": "Newroz significa «día nuevo», de new (nuevo) y roz (día). Llega cada año el 21 de marzo y, aun así, siempre es nuevo; sus hogueras recuerdan la historia de Kawa el Herrero."
+        },
+        "fr": {
+          "question": "Je reviens chaque année sans jamais vieillir, car mon nom dit « nouveau ». Quand j’arrive, on allume des feux sur les sommets. Que suis-je ?",
+          "hints": [
+            "J’arrive avec le printemps.",
+            "Kawa le Forgeron connaît mon histoire."
+          ],
+          "answer": "Newroz",
+          "explanation": "Newroz signifie « jour nouveau », de new (nouveau) et roz (jour). Il revient chaque année le 21 mars et pourtant il est neuf à chaque fois ; ses feux rappellent l’histoire de Kawa le Forgeron."
+        },
+        "tr": {
+          "question": "Her yıl gelirim ama hiç yaşlanmam, çünkü adım ‘yeni’ der. Geldiğimde dağların doruklarında ateşler yakılır. Ben neyim?",
+          "hints": [
+            "Baharla birlikte gelirim.",
+            "Demirci Kawa benim hikâyemi bilir."
+          ],
+          "answer": "Newroz",
+          "explanation": "Newroz ‘yeni gün’ demektir: new (yeni) ve roz (gün) kelimelerinden oluşur. Her yıl 21 Mart’ta gelir, yine de her seferinde yenidir; Newroz ateşleri Demirci Kawa’nın hikâyesini hatırlatır."
+        },
+        "ar": {
+          "question": "آتي كل عام ولا أشيخ أبدًا، لأن اسمي يقول «جديد». وحين أصل، تُشعل النيران على قمم الجبال. فما أنا؟",
+          "hints": [
+            "آتي مع الربيع.",
+            "كاوا الحدّاد يعرف حكايتي."
+          ],
+          "answer": "نوروز",
+          "explanation": "نوروز يعني «اليوم الجديد»، من new (جديد) وroz (يوم). يأتي كل عام في الحادي والعشرين من آذار، ومع ذلك هو جديد في كل مرة؛ وتُذكّر نيرانه بحكاية كاوا الحدّاد."
+        }
+      },
+      "sources": [],
+      "notes": "New. The explanation derives Newroz from new + roz (the older form of roj); 21 Adar. Check ‘agir … vêdikevin’ and ‘bi bîr tînin’."
+    },
+    {
+      "slug": "kmr-govend",
+      "dialect": "kmr",
+      "difficulty": "hard",
+      "category": "culture",
+      "tradition": "new",
+      "region": null,
+      "question": "Xelekek im, ne ji zêr im, ne ji zîv; ji destên mirovan çêdibim û li şahiyan dizivirim. Ez çi me?",
+      "hints": [
+        "Dehol û zirne min dimeşînin.",
+        "Kesê li serê min destmalekê dihejîne; jê re ‘serçopî’ dibêjin."
+      ],
+      "answer": "Govend",
+      "accepted": [
+        "govend",
+        "dîlan",
+        "halay",
+        "govenda kurdî"
+      ],
+      "explanation": "Govend xelekeke mirovan e: dest bi dest an mil bi mil, li şahî û cejnan bi dengê dehol û zirneyê dizivire; serçopî bi destmala xwe wê dide meşandin.",
+      "translations": {
+        "ckb": {
+          "question": "ئەڵقەیەکم، نە لە زێڕم نە لە زیو؛ لە دەستی مرۆڤەکان دروست دەبم و لە زەماوەندەکاندا دەسووڕێمەوە. من چیم؟",
+          "hints": [
+            "دەهۆڵ و زوڕنا دەمجووڵێنن.",
+            "ئەو کەسەی لە سەرەوەمە دەستەسڕێک ڕادەوەشێنێت؛ پێی دەڵێن «سەرچۆپی»."
+          ],
+          "answer": "هەڵپەڕکێ",
+          "explanation": "هەڵپەڕکێ، یان گۆڤەند، ئەڵقەیەکی مرۆڤە: دەست لە دەست یان شان لە شان، لە زەماوەند و ئاهەنگەکاندا بە دەنگی دەهۆڵ و زوڕنا دەسووڕێتەوە؛ سەرچۆپیکێش بە دەستەسڕەکەی ڕێبەرایەتی دەکات."
+        },
+        "en": {
+          "question": "I am a ring, but not of gold or silver; I am made of people’s hands, and I turn round and round at weddings. What am I?",
+          "hints": [
+            "The drum and the zurna set me moving.",
+            "The person at my head waves a handkerchief and is called the serçopî."
+          ],
+          "answer": "The govend (the Kurdish circle dance)",
+          "explanation": "The govend is a ring of people, hand in hand or shoulder to shoulder, turning to the drum and zurna at weddings and celebrations; the serçopî at its head leads it with a twirling handkerchief."
+        },
+        "nl": {
+          "question": "Ik ben een ring, maar niet van goud of zilver; ik ben gemaakt van mensenhanden en draai rond op bruiloften. Wat ben ik?",
+          "hints": [
+            "De trom en de zurna zetten me in beweging.",
+            "Wie aan mijn kop staat, zwaait met een zakdoek en heet de serçopî."
+          ],
+          "answer": "De govend (de Koerdische kringdans)",
+          "explanation": "De govend is een kring van mensen, hand in hand of schouder aan schouder, die op bruiloften en feesten ronddraait op de trom en de zurna; de serçopî voorop leidt hem met een zwaaiende zakdoek."
+        },
+        "de": {
+          "question": "Ich bin ein Ring, doch nicht aus Gold noch Silber; ich bin aus Menschenhänden gemacht und drehe mich auf Hochzeiten im Kreis. Was bin ich?",
+          "hints": [
+            "Trommel und Zurna bringen mich in Bewegung.",
+            "Wer an meiner Spitze steht, schwenkt ein Tuch und heißt serçopî."
+          ],
+          "answer": "Der Govend (der kurdische Reigentanz)",
+          "explanation": "Der Govend ist ein Ring aus Menschen, Hand in Hand oder Schulter an Schulter, der sich auf Hochzeiten und Festen zu Trommel und Zurna dreht; der serçopî an der Spitze führt ihn mit seinem geschwenkten Tuch."
+        },
+        "es": {
+          "question": "Soy un anillo, pero no de oro ni de plata; estoy hecho de manos de personas y doy vueltas en las bodas. ¿Qué soy?",
+          "hints": [
+            "El tambor y la zurna me ponen en marcha.",
+            "Quien va a mi cabeza agita un pañuelo y se llama serçopî."
+          ],
+          "answer": "El govend (la danza kurda en corro)",
+          "explanation": "El govend es un corro de gente, de la mano u hombro con hombro, que gira al son del tambor y la zurna en bodas y fiestas; el serçopî, al frente, lo guía agitando un pañuelo."
+        },
+        "fr": {
+          "question": "Je suis un anneau, mais ni d’or ni d’argent ; je suis fait de mains humaines et je tourne dans les mariages. Que suis-je ?",
+          "hints": [
+            "Le tambour et la zurna me mettent en mouvement.",
+            "Celui qui est à ma tête agite un mouchoir : on l’appelle le serçopî."
+          ],
+          "answer": "Le govend (la ronde kurde)",
+          "explanation": "Le govend est un anneau de danseurs, main dans la main ou épaule contre épaule, qui tourne au son du tambour et de la zurna lors des mariages et des fêtes ; le serçopî, en tête, le mène en faisant tournoyer son mouchoir."
+        },
+        "tr": {
+          "question": "Bir halkayım ama ne altından ne gümüşten; insanların ellerinden oluşurum ve düğünlerde dönerim. Ben neyim?",
+          "hints": [
+            "Davul ve zurna beni yürütür.",
+            "Başımdaki kişi bir mendil sallar; ona serçopî denir."
+          ],
+          "answer": "Govend (halay)",
+          "explanation": "Govend, el ele ya da omuz omuza tutuşan insanlardan oluşan bir halkadır; düğünlerde ve bayramlarda davul zurnayla döner. Başındaki serçopî, yani halaybaşı, mendiliyle onu yönetir."
+        },
+        "ar": {
+          "question": "أنا حلقة، لكن لا من ذهب ولا من فضة؛ أُصنع من أيدي الناس، وأدور في الأعراس. فما أنا؟",
+          "hints": [
+            "الطبل والزُّرنا يحرّكانني.",
+            "من يقف في رأسي يلوّح بمنديل، ويُسمّى serçopî."
+          ],
+          "answer": "الغوفند (الدبكة الكردية)",
+          "explanation": "الغوفند حلقة من الناس، يدًا بيد أو كتفًا إلى كتف، تدور على إيقاع الطبل والزُّرنا في الأعراس والأفراح؛ ويقودها الـserçopî في رأسها بمنديله."
+        }
+      },
+      "sources": [],
+      "notes": "New. Check ‘serçopî’ and ‘destmal’, and ‘dide meşandin’ in the explanation. Accepts ‘dîlan’ and ‘halay’, other names learners may type."
+    },
+    {
+      "slug": "kmr-sir",
+      "dialect": "kmr",
+      "difficulty": "easy",
+      "category": "children",
+      "tradition": "new",
+      "region": null,
+      "question": "Ez spî me û zarok min vedixwin. Tenê yek tîpê biguherîne, ez dibim padîşahê daristanê. Ez çi me?",
+      "hints": [
+        "Ez ji çêlek, mî û bizinan têm.",
+        "Padîşahê daristanê ‘şêr’ e; ez tenê bi tîpekê ji wî cuda me."
+      ],
+      "answer": "Şîr",
+      "accepted": [
+        "şîr",
+        "şîrê çêlekê"
+      ],
+      "explanation": "‘Şîr’ spî ye û zarok wî vedixwin. Tîpa ‘î’ bike ‘ê’, ew dibe ‘şêr’, padîşahê daristanê.",
+      "translations": {
+        "ckb": {
+          "question": "سپیم و منداڵان دەمخۆنەوە. تەنیا پیتێکم بگۆڕە، دەبمە پاشای دارستان. من چیم؟",
+          "hints": [
+            "لە مانگا و مەڕ و بزنەوە دێم.",
+            "پاشای دارستان «شێر»ە؛ من تەنیا بە پیتێک لەو جیاوازم."
+          ],
+          "answer": "شیر",
+          "explanation": "«شیر» سپییە و منداڵان دەیخۆنەوە. «ی»ـیەکەی بکە بە «ێ»، دەبێتە «شێر»، پاشای دارستان. لە کورمانجیشدا هەمان یاری هەیە."
+        },
+        "en": {
+          "question": "I am white and children drink me. Change just one letter and I become the king of the jungle. What am I?",
+          "hints": [
+            "I come from cows, sheep and goats.",
+            "The king of the jungle is şêr; I am only one letter away from it."
+          ],
+          "answer": "Milk (şîr)",
+          "explanation": "Şîr, ‘milk’, is white and children drink it. Change its î to ê and it becomes şêr, ‘lion’, the king of the jungle."
+        },
+        "nl": {
+          "question": "Ik ben wit en kinderen drinken me. Verander maar één letter en ik word de koning van het woud. Wat ben ik?",
+          "hints": [
+            "Ik kom van koeien, schapen en geiten.",
+            "De koning van het woud heet şêr; ik scheel er maar één letter van."
+          ],
+          "answer": "Melk (şîr)",
+          "explanation": "Şîr, ‘melk’, is wit en kinderen drinken het. Maak van de î een ê en je krijgt şêr, ‘leeuw’, de koning van het woud."
+        },
+        "de": {
+          "question": "Ich bin weiß, und Kinder trinken mich. Ändere nur einen Buchstaben, und ich werde zum König der Tiere. Was bin ich?",
+          "hints": [
+            "Ich komme von Kühen, Schafen und Ziegen.",
+            "Der König der Tiere heißt şêr; ich unterscheide mich von ihm nur um einen Buchstaben."
+          ],
+          "answer": "Milch (şîr)",
+          "explanation": "Şîr, ‚Milch‘, ist weiß, und Kinder trinken sie. Macht man aus dem î ein ê, wird daraus şêr, ‚Löwe‘, der König der Tiere."
+        },
+        "es": {
+          "question": "Soy blanca y los niños me beben. Cambia una sola letra y me convierto en el rey de la selva. ¿Qué soy?",
+          "hints": [
+            "Vengo de las vacas, las ovejas y las cabras.",
+            "El rey de la selva es şêr; solo me separa de él una letra."
+          ],
+          "answer": "La leche (şîr)",
+          "explanation": "Şîr, «leche», es blanca y los niños la beben. Cambia su î por una ê y se convierte en şêr, «león», el rey de la selva."
+        },
+        "fr": {
+          "question": "Je suis blanc et les enfants me boivent. Change une seule lettre et je deviens le roi des animaux. Que suis-je ?",
+          "hints": [
+            "Je viens des vaches, des brebis et des chèvres.",
+            "Le roi des animaux, c’est şêr ; une seule lettre me sépare de lui."
+          ],
+          "answer": "Le lait (şîr)",
+          "explanation": "Şîr, « lait », est blanc et les enfants le boivent. Remplace son î par un ê et il devient şêr, « lion », le roi des animaux."
+        },
+        "tr": {
+          "question": "Beyazım ve çocuklar beni içer. Tek bir harfimi değiştir, ormanların kralı olurum. Ben neyim?",
+          "hints": [
+            "İnekten, koyundan ve keçiden gelirim.",
+            "Ormanların kralı şêr’dir; ondan yalnızca bir harf farklıyım."
+          ],
+          "answer": "Süt (şîr)",
+          "explanation": "Şîr, yani ‘süt’, beyazdır ve çocuklar onu içer. Î harfini ê yaparsan şêr, yani ‘aslan’ olur: ormanların kralı."
+        },
+        "ar": {
+          "question": "أنا أبيض ويشربني الأطفال. غيّر حرفًا واحدًا فقط فأصير ملك الغابة. فما أنا؟",
+          "hints": [
+            "آتي من الأبقار والنعاج والماعز.",
+            "ملك الغابة هو şêr، ولا يفصلني عنه إلا حرف واحد."
+          ],
+          "answer": "الحليب (şîr)",
+          "explanation": "Şîr تعني «الحليب»، وهو أبيض يشربه الأطفال. غيّر حرف î إلى ê فتصير şêr أي «الأسد»، ملك الغابة."
+        }
+      },
+      "sources": [],
+      "notes": "New. Letter change şîr → şêr. Kept in Kurmancî on purpose: the app’s lenient matching folds Soranî ێ into ی, so a Soranî شیر / شێر row would also accept ‘lion’ as right; in Kurmancî î and ê fold to different letters (checked against riddleGuessMatches)."
+    },
+    {
+      "slug": "kmr-berf",
+      "dialect": "kmr",
+      "difficulty": "easy",
+      "category": "children",
+      "tradition": "new",
+      "region": null,
+      "question": "Ez spî me û ji ezmanan têm; zarok ji min mirovan çêdikin, lê gava roj derdikeve, ez digirîm û diçim. Ez çi me?",
+      "hints": [
+        "Ez zivistanê têm û çiyan bi kirasekî spî dipêçim.",
+        "Zarok bi min re şerê gogan dikin."
+      ],
+      "answer": "Berf",
+      "accepted": [
+        "berf",
+        "befr"
+      ],
+      "explanation": "Berf spî ye û ji ewran dibare; zarok jê mirovê berfê çêdikin. Gava roj germ dibe, berf dihele û dilop bi dilop dibe av, wek ku bigirî.",
+      "translations": {
+        "ckb": {
+          "question": "سپیم و لە ئاسمانەوە دێم؛ منداڵان لە من پیاو دروست دەکەن، بەڵام کە خۆر هەڵدێت، دەگریم و دەڕۆم. من چیم؟",
+          "hints": [
+            "زستان دێم و چیاکان بە کراسێکی سپی دادەپۆشم.",
+            "منداڵان بە من شەڕە تۆپەڵ دەکەن."
+          ],
+          "answer": "بەفر",
+          "explanation": "بەفر سپییە و لە هەورەوە دەبارێت؛ منداڵان پیاوی بەفری لێ دروست دەکەن. کە خۆر گەرم دەبێت، بەفر دەتوێتەوە و دڵۆپ دڵۆپ دەبێتە ئاو، وەک ئەوەی بگری."
+        },
+        "en": {
+          "question": "I am white and I come down from the sky; children make people out of me, but when the sun comes out, I cry and go away. What am I?",
+          "hints": [
+            "I come in winter and dress the mountains in a white shirt.",
+            "Children have ball fights with me."
+          ],
+          "answer": "Snow",
+          "explanation": "Snow is white and falls from the clouds, and children build snowmen from it. When the sun warms up, it melts drop by drop, as if it were crying."
+        },
+        "nl": {
+          "question": "Ik ben wit en kom uit de lucht; kinderen maken mensen van me, maar als de zon komt, huil ik en ga ik weg. Wat ben ik?",
+          "hints": [
+            "Ik kom in de winter en kleed de bergen in een wit hemd.",
+            "Kinderen houden balgevechten met me."
+          ],
+          "answer": "Sneeuw",
+          "explanation": "Sneeuw is wit en valt uit de wolken, en kinderen bouwen er sneeuwpoppen van. Als de zon warm wordt, smelt hij druppel voor druppel, alsof hij huilt."
+        },
+        "de": {
+          "question": "Ich bin weiß und komme vom Himmel; Kinder bauen Menschen aus mir, doch wenn die Sonne herauskommt, weine ich und gehe. Was bin ich?",
+          "hints": [
+            "Ich komme im Winter und kleide die Berge in ein weißes Hemd.",
+            "Kinder machen mit mir Ballschlachten."
+          ],
+          "answer": "Schnee",
+          "explanation": "Schnee ist weiß und fällt aus den Wolken, und Kinder bauen Schneemänner daraus. Wird die Sonne warm, schmilzt er Tropfen für Tropfen, als würde er weinen."
+        },
+        "es": {
+          "question": "Soy blanca y bajo del cielo; los niños hacen personas conmigo, pero cuando sale el sol, lloro y me voy. ¿Qué soy?",
+          "hints": [
+            "Llego en invierno y visto las montañas con una camisa blanca.",
+            "Los niños hacen guerras de bolas conmigo."
+          ],
+          "answer": "La nieve",
+          "explanation": "La nieve es blanca y cae de las nubes, y los niños hacen muñecos con ella. Cuando el sol calienta, se derrite gota a gota, como si llorara."
+        },
+        "fr": {
+          "question": "Je suis blanche et je tombe du ciel ; les enfants font des bonshommes avec moi, mais quand le soleil sort, je pleure et je m’en vais. Que suis-je ?",
+          "hints": [
+            "J’arrive en hiver et j’habille les montagnes d’une chemise blanche.",
+            "Les enfants font des batailles de boules avec moi."
+          ],
+          "answer": "La neige",
+          "explanation": "La neige est blanche et tombe des nuages, et les enfants en font des bonshommes. Quand le soleil chauffe, elle fond goutte à goutte, comme si elle pleurait."
+        },
+        "tr": {
+          "question": "Beyazım ve gökten gelirim; çocuklar benden adam yapar, ama güneş çıkınca ağlar ve giderim. Ben neyim?",
+          "hints": [
+            "Kışın gelirim ve dağlara beyaz bir gömlek giydiririm.",
+            "Çocuklar benimle top savaşı yapar."
+          ],
+          "answer": "Kar",
+          "explanation": "Kar beyazdır ve bulutlardan yağar, çocuklar ondan kardan adam yapar. Güneş ısınınca damla damla erir, sanki ağlıyormuş gibi."
+        },
+        "ar": {
+          "question": "أنا أبيض وأنزل من السماء؛ يصنع الأطفال منّي رجالًا، لكن حين تطلع الشمس أبكي وأرحل. فما أنا؟",
+          "hints": [
+            "آتي في الشتاء وأُلبس الجبال قميصًا أبيض.",
+            "يتراشق الأطفال بي كُراتٍ."
+          ],
+          "answer": "الثلج",
+          "explanation": "الثلج أبيض يتساقط من الغيوم، ويصنع منه الأطفال رجالًا من ثلج. وحين تدفأ الشمس يذوب قطرةً قطرة، كأنه يبكي."
+        }
+      },
+      "sources": [],
+      "notes": "New, for children. Check ‘şerê gogan’ (snowball fight) — the Soranî rendering avoids a word containing بەفر so the hint does not give the answer away."
+    },
+    {
+      "slug": "kmr-ciya",
+      "dialect": "kmr",
+      "difficulty": "medium",
+      "category": "nature",
+      "tradition": "new",
+      "region": null,
+      "question": "Zivistanê kumekî spî li serê min e, biharê kirasekî kesk li ber min e; ez tu carî ji cihê xwe naçim, lê ewr tên û li ser milên min rûdinên. Ez çi me?",
+      "hints": [
+        "Kanî ji dilê min derdikevin û şivan pezê xwe dibin ser min.",
+        "Gotineke pêşiyan dibêje: ji bilî min, dostên kurdan tune ne."
+      ],
+      "answer": "Çiya",
+      "accepted": [
+        "çiya",
+        "çiyê",
+        "çiyayê bilind"
+      ],
+      "explanation": "Zivistanê berf wek kumekî spî li serê çiyê ye, biharê giya wek kirasekî kesk e; ewr li ser lûtkeyan dimînin. Û gotina pêşiyan a navdar dibêje: ‘Ji bilî çiyan, dostên kurdan tune ne.’",
+      "translations": {
+        "ckb": {
+          "question": "لە زستاندا کڵاوێکی سپیم لەسەرە، لە بەهاردا کراسێکی سەوزم لەبەرە؛ هەرگیز لە شوێنی خۆم ناجووڵێم، بەڵام هەورەکان دێن و لەسەر شانەکانم دادەنیشن. من چیم؟",
+          "hints": [
+            "کانییەکان لە دڵمەوە هەڵدەقوڵێن و شوان مەڕەکانی دەباتە سەرم.",
+            "پەندێکی پێشینان دەڵێت: کورد جگە لە من هیچ دۆستێکی نییە."
+          ],
+          "answer": "چیا",
+          "explanation": "لە زستاندا بەفر وەک کڵاوێکی سپی لەسەر لووتکەی چیایە، لە بەهاریشدا گیا وەک کراسێکی سەوز؛ هەورەکان لەسەر لووتکەکان دەمێننەوە. پەندە بەناوبانگەکەش دەڵێت: «کورد جگە لە چیا هیچ دۆستێکی نییە»."
+        },
+        "en": {
+          "question": "In winter I wear a white cap, in spring a green shirt; I never leave my place, yet the clouds come and sit on my shoulders. What am I?",
+          "hints": [
+            "Springs well up from my heart, and the shepherd takes his flock up onto me.",
+            "A Kurdish saying goes: the Kurds have no friends but me."
+          ],
+          "answer": "A mountain",
+          "explanation": "In winter the snow sits on the peak like a white cap, in spring the grass is its green shirt, and the clouds rest on its summits. And the famous saying goes: ‘The Kurds have no friends but the mountains.’"
+        },
+        "nl": {
+          "question": "In de winter draag ik een witte muts, in de lente een groen hemd; ik kom nooit van mijn plek, toch komen de wolken op mijn schouders zitten. Wat ben ik?",
+          "hints": [
+            "Bronnen wellen op uit mijn hart en de herder drijft zijn kudde op mij.",
+            "Een Koerdisch gezegde luidt: de Koerden hebben geen vrienden behalve mij."
+          ],
+          "answer": "Een berg",
+          "explanation": "In de winter ligt de sneeuw als een witte muts op de top, in de lente is het gras zijn groene hemd, en de wolken rusten op zijn toppen. En het bekende gezegde luidt: ‘De Koerden hebben geen vrienden behalve de bergen.’"
+        },
+        "de": {
+          "question": "Im Winter trage ich eine weiße Mütze, im Frühling ein grünes Hemd; ich rühre mich nie vom Fleck, und doch kommen die Wolken und setzen sich auf meine Schultern. Was bin ich?",
+          "hints": [
+            "Quellen sprudeln aus meinem Herzen, und der Hirte treibt seine Herde zu mir hinauf.",
+            "Ein kurdisches Sprichwort sagt: Die Kurden haben keine Freunde außer mir."
+          ],
+          "answer": "Ein Berg",
+          "explanation": "Im Winter sitzt der Schnee wie eine weiße Mütze auf dem Gipfel, im Frühling ist das Gras sein grünes Hemd, und die Wolken ruhen auf seinen Gipfeln. Und das bekannte Sprichwort sagt: ‚Die Kurden haben keine Freunde außer den Bergen.‘"
+        },
+        "es": {
+          "question": "En invierno llevo un gorro blanco y en primavera una camisa verde; nunca me muevo de mi sitio, pero las nubes vienen a sentarse en mis hombros. ¿Qué soy?",
+          "hints": [
+            "De mi corazón brotan manantiales y el pastor sube su rebaño hasta mí.",
+            "Un dicho kurdo dice: los kurdos no tienen más amigos que yo."
+          ],
+          "answer": "Una montaña",
+          "explanation": "En invierno la nieve cubre la cima como un gorro blanco, en primavera la hierba es su camisa verde, y las nubes descansan en sus cumbres. Y el famoso dicho reza: «Los kurdos no tienen más amigos que las montañas»."
+        },
+        "fr": {
+          "question": "L’hiver je porte un bonnet blanc, au printemps une chemise verte ; je ne bouge jamais de ma place, et pourtant les nuages viennent s’asseoir sur mes épaules. Que suis-je ?",
+          "hints": [
+            "Des sources jaillissent de mon cœur et le berger y mène son troupeau.",
+            "Un dicton kurde dit : les Kurdes n’ont pas d’autres amis que moi."
+          ],
+          "answer": "Une montagne",
+          "explanation": "L’hiver, la neige coiffe le sommet comme un bonnet blanc ; au printemps, l’herbe est sa chemise verte, et les nuages se posent sur ses cimes. Et le célèbre dicton le dit : « Les Kurdes n’ont pas d’autres amis que les montagnes. »"
+        },
+        "tr": {
+          "question": "Kışın başımda beyaz bir külah, baharda üstümde yeşil bir gömlek var; yerimden hiç kıpırdamam ama bulutlar gelip omuzlarıma oturur. Ben neyim?",
+          "hints": [
+            "Kalbimden pınarlar fışkırır, çoban sürüsünü üstüme çıkarır.",
+            "Bir Kürt sözü der ki: Kürtlerin benden başka dostu yoktur."
+          ],
+          "answer": "Dağ",
+          "explanation": "Kışın kar zirvede beyaz bir külah gibi durur, baharda çimen onun yeşil gömleğidir, bulutlar da doruklarında dinlenir. Ünlü söz de bunu söyler: ‘Kürtlerin dağlardan başka dostu yoktur.’"
+        },
+        "ar": {
+          "question": "في الشتاء أعتمر قبّعة بيضاء، وفي الربيع ألبس قميصًا أخضر؛ لا أبرح مكاني أبدًا، ومع ذلك تأتي الغيوم وتجلس على كتفيّ. فما أنا؟",
+          "hints": [
+            "تنبع العيون من قلبي، ويصعد الراعي بقطيعه إليّ.",
+            "يقول مثلٌ كردي: لا أصدقاء للكرد إلا أنا."
+          ],
+          "answer": "الجبل",
+          "explanation": "في الشتاء يستقرّ الثلج على القمة كقبّعة بيضاء، وفي الربيع يصير العشب قميصه الأخضر، وتستريح الغيوم على ذُراه. ويقول المثل الشهير: «لا أصدقاء للكرد إلا الجبال»."
+        }
+      },
+      "sources": [],
+      "notes": "New. Hint 2 and the explanation quote the saying ‘Ji bilî çiyan, dostên kurdan tune ne’ (‘The Kurds have no friends but the mountains’); I did not check its exact traditional wording in a source this session — please give the form you know (and its Soranî form in the ckb rendering)."
+    },
+    {
+      "slug": "ckb-derzi",
+      "dialect": "ckb",
+      "difficulty": "easy",
+      "category": "everyday",
+      "tradition": "traditional",
+      "region": null,
+      "question": "یەک پێی هەیە و یەک چاو. ئەوە چییە؟",
+      "hints": [
+        "دایە کە جلێکی دڕاو دەدوورێتەوە، بەکاری دەهێنێت.",
+        "دەزوو بە چاوەکەیدا تێدەپەڕێنن."
+      ],
+      "answer": "دەرزی",
+      "accepted": [
+        "دەرزی"
+      ],
+      "explanation": "دەرزی یەک لاقی تیژی هەیە کە دەچێتە ناو پەڕۆکەوە، و «چاو»ێکی هەیە کە دەزووی پێدا دەکرێت.",
+      "translations": {
+        "ku": {
+          "question": "Lingekî wê heye û çavekî wê. Ew çi ye?",
+          "hints": [
+            "Dayik dema cilekî qetiyayî didirû, wê bi kar tîne.",
+            "Ben di çavê wê re derbas dikin."
+          ],
+          "answer": "Derzî",
+          "explanation": "Derziyê lingekî tûj heye ku dikeve nav cawî, û ‘çavek’ heye ku ben tê de derbas dibe."
+        },
+        "en": {
+          "question": "It has one foot and one eye. What is it?",
+          "hints": [
+            "Mum uses it when she mends torn clothes.",
+            "Thread is passed through its eye."
+          ],
+          "answer": "A needle",
+          "explanation": "A needle has one sharp ‘foot’ that goes into the cloth and one ‘eye’ that the thread goes through."
+        },
+        "nl": {
+          "question": "Het heeft één voet en één oog. Wat is het?",
+          "hints": [
+            "Mama gebruikt het als ze gescheurde kleren herstelt.",
+            "Door het oog wordt de draad gehaald."
+          ],
+          "answer": "Een naald",
+          "explanation": "Een naald heeft één scherpe ‘voet’ die in de stof gaat en één ‘oog’ waar de draad door gaat."
+        },
+        "de": {
+          "question": "Es hat einen Fuß und ein Auge. Was ist das?",
+          "hints": [
+            "Mama braucht es, wenn sie zerrissene Kleider flickt.",
+            "Durch sein Auge wird der Faden gezogen."
+          ],
+          "answer": "Eine Nadel",
+          "explanation": "Eine Nadel hat einen spitzen ‚Fuß‘, der in den Stoff sticht, und ein ‚Auge‘, durch das der Faden geht."
+        },
+        "es": {
+          "question": "Tiene un pie y un ojo. ¿Qué es?",
+          "hints": [
+            "Mamá la usa cuando cose la ropa rota.",
+            "Por su ojo se pasa el hilo."
+          ],
+          "answer": "Una aguja",
+          "explanation": "La aguja tiene un «pie» afilado que entra en la tela y un «ojo» por donde pasa el hilo."
+        },
+        "fr": {
+          "question": "Elle a un pied et un œil. Qu’est-ce que c’est ?",
+          "hints": [
+            "Maman s’en sert pour raccommoder les vêtements déchirés.",
+            "On passe le fil dans son œil."
+          ],
+          "answer": "Une aiguille",
+          "explanation": "L’aiguille a un « pied » pointu qui entre dans le tissu et un « œil » où passe le fil."
+        },
+        "tr": {
+          "question": "Bir ayağı, bir gözü var. Nedir?",
+          "hints": [
+            "Annem yırtık giysileri dikerken onu kullanır.",
+            "İpliği gözünden geçirirler."
+          ],
+          "answer": "İğne",
+          "explanation": "İğnenin kumaşa giren sivri bir ‘ayağı’, ipliğin geçtiği bir de ‘gözü’ vardır."
+        },
+        "ar": {
+          "question": "لها قدمٌ واحدة وعينٌ واحدة. ما هي؟",
+          "hints": [
+            "تستعملها أمّي حين ترقّع الثياب الممزّقة.",
+            "يُدخَل الخيط في عينها."
+          ],
+          "answer": "الإبرة",
+          "explanation": "للإبرة «قدم» حادّة تدخل في القماش، و«عين» يمرّ منها الخيط."
+        }
+      },
+      "sources": [
+        {
+          "title": "Partridge song – riddles (‘Some Kurdish Riddles’)",
+          "author": "Partridge song (private folklore site)",
+          "url": "https://sites.google.com/site/partridgesong/folklore/riddles",
+          "note": "Soranî-script riddles with transliteration and English: ‘یەک پێ و یەک چاو (دەرزیکە)’ (Yak pay hasu yak ĉāw); the ox that enters the mill but not its tail (spoon); no belly, no feet, yet up to the roof (smoke / lamp wick). Pairings partly muddled."
+        }
+      ],
+      "notes": "Traditional. The ‘Some Kurdish Riddles’ page of the Partridge song site gives it as ‘یەک پێ و یەک چاڤ (دەرزیکە)’, transliterated ‘Yak pay hasu yak ĉāw’ — i.e. ‘یەک پێی هەس و یەک چاو’ with dialectal هەس (= هەیە, Mukriyan/Erdelan). Standardised here to ‘یەک پێی هەیە و یەک چاو’, ‘ئەوە چییە؟’ added. If the owner prefers the local form, use هەس and mark it regional (Mukriyan). Hints and explanation are new."
+    },
+    {
+      "slug": "ckb-kewcik",
+      "dialect": "ckb",
+      "difficulty": "medium",
+      "category": "funny",
+      "tradition": "traditional",
+      "region": null,
+      "question": "گایەک دەچێتە ناو ئاشەوە، بەڵام کلکی لە دەرەوە دەمێنێتەوە. ئەوە چییە؟",
+      "hints": [
+        "ئاشەکە ددانی هەیە و ڕۆژی سێ جار کار دەکات.",
+        "بە دەستەوەی دەگریت و شۆربا و برنجی پێ دەخۆیت."
+      ],
+      "answer": "کەوچک",
+      "accepted": [
+        "کەوچک",
+        "قاشوق",
+        "کەوچکی نانخواردن"
+      ],
+      "explanation": "ئاشەکە دەمە کە بە ددانەکانی دەهاڕێت، گاکەش کەوچکەکەیە کە دەچێتە ژوورەوە؛ بەڵام دەسکەکەی، واتە «کلکەکەی»، هەمیشە لە دەرەوە دەمێنێتەوە.",
+      "translations": {
+        "ku": {
+          "question": "Gayek dikeve hundirê aş, lê dûvê wî li derve dimîne. Ew çi ye?",
+          "hints": [
+            "Diranên aş hene û rojê sê caran dixebite.",
+            "Tu wî bi destê xwe digirî û şorbe û birincê pê dixwî."
+          ],
+          "answer": "Kevçî",
+          "explanation": "Aş dev e ku bi diranên xwe dihêre; ga kevçî ye ku dikeve hundir, lê destika wî, ango ‘dûvê’ wî, her dem li derve dimîne."
+        },
+        "en": {
+          "question": "An ox goes into the mill, but its tail stays outside. What is it?",
+          "hints": [
+            "The mill has teeth and runs three times a day.",
+            "You hold it in your hand and eat soup and rice with it."
+          ],
+          "answer": "A spoon",
+          "explanation": "The mill is your mouth, grinding with its teeth; the ox is the spoon that goes in, while its handle — the ‘tail’ — always stays outside."
+        },
+        "nl": {
+          "question": "Een os gaat de molen in, maar zijn staart blijft buiten. Wat is het?",
+          "hints": [
+            "De molen heeft tanden en draait drie keer per dag.",
+            "Je houdt het in je hand en eet er soep en rijst mee."
+          ],
+          "answer": "Een lepel",
+          "explanation": "De molen is je mond, die met zijn tanden maalt; de os is de lepel die naar binnen gaat, terwijl de steel – de ‘staart’ – altijd buiten blijft."
+        },
+        "de": {
+          "question": "Ein Ochse geht in die Mühle, aber sein Schwanz bleibt draußen. Was ist das?",
+          "hints": [
+            "Die Mühle hat Zähne und läuft dreimal am Tag.",
+            "Du hältst ihn in der Hand und isst Suppe und Reis damit."
+          ],
+          "answer": "Ein Löffel",
+          "explanation": "Die Mühle ist dein Mund, der mit den Zähnen mahlt; der Ochse ist der Löffel, der hineingeht, während der Stiel – der ‚Schwanz‘ – immer draußen bleibt."
+        },
+        "es": {
+          "question": "Un buey entra en el molino, pero la cola se le queda fuera. ¿Qué es?",
+          "hints": [
+            "El molino tiene dientes y trabaja tres veces al día.",
+            "La coges con la mano y comes con ella sopa y arroz."
+          ],
+          "answer": "Una cuchara",
+          "explanation": "El molino es la boca, que muele con los dientes; el buey es la cuchara que entra, mientras su mango, la «cola», siempre se queda fuera."
+        },
+        "fr": {
+          "question": "Un bœuf entre dans le moulin, mais sa queue reste dehors. Qu’est-ce que c’est ?",
+          "hints": [
+            "Le moulin a des dents et tourne trois fois par jour.",
+            "Tu la tiens à la main pour manger la soupe et le riz."
+          ],
+          "answer": "Une cuillère",
+          "explanation": "Le moulin, c’est la bouche qui moud avec ses dents ; le bœuf, c’est la cuillère qui entre, tandis que son manche, la « queue », reste toujours dehors."
+        },
+        "tr": {
+          "question": "Bir öküz değirmene girer ama kuyruğu dışarıda kalır. Nedir?",
+          "hints": [
+            "Değirmenin dişleri vardır ve günde üç kez çalışır.",
+            "Onu elinle tutar, çorbayı ve pilavı onunla yersin."
+          ],
+          "answer": "Kaşık",
+          "explanation": "Değirmen dişleriyle öğüten ağızdır; öküz içeri giren kaşıktır, sapı ise, yani ‘kuyruğu’, hep dışarıda kalır."
+        },
+        "ar": {
+          "question": "يدخل ثورٌ إلى الطاحون، لكن ذيله يبقى في الخارج. ما هو؟",
+          "hints": [
+            "للطاحون أسنان، ويعمل ثلاث مرات في اليوم.",
+            "تمسكها بيدك وتأكل بها الحساء والأرز."
+          ],
+          "answer": "الملعقة",
+          "explanation": "الطاحون هو الفم الذي يطحن بأسنانه، والثور هو الملعقة التي تدخل، أما مقبضها، أي «ذيلها»، فيبقى دائمًا في الخارج."
+        }
+      },
+      "sources": [
+        {
+          "title": "Partridge song – riddles (‘Some Kurdish Riddles’)",
+          "author": "Partridge song (private folklore site)",
+          "url": "https://sites.google.com/site/partridgesong/folklore/riddles",
+          "note": "Soranî-script riddles with transliteration and English: ‘یەک پێ و یەک چاو (دەرزیکە)’ (Yak pay hasu yak ĉāw); the ox that enters the mill but not its tail (spoon); no belly, no feet, yet up to the roof (smoke / lamp wick). Pairings partly muddled."
+        }
+      ],
+      "notes": "Traditional image, MY WORDING. The Partridge song page gives, in English, ‘The ox enters into the mill, but his tail does not’ with the answer ‘spoon’ (its answers are partly muddled — a lamp wick appears beside it), so this Soranî line is my rendering. Reviewer: please supply the traditional Soranî line if you know it, and confirm the answer."
+    },
+    {
+      "slug": "ckb-dukel",
+      "dialect": "ckb",
+      "difficulty": "easy",
+      "category": "children",
+      "tradition": "traditional",
+      "region": null,
+      "question": "نە سکی هەیە، نە پێ؛ کەچی تا سەربان سەردەکەوێت. ئەوە چییە؟",
+      "hints": [
+        "لە ئاگرەوە لەدایک دەبێت.",
+        "لە ڕۆچنەی سەربانەوە دەردەچێت و چاو دەسووتێنێت."
+      ],
+      "answer": "دووکەڵ",
+      "accepted": [
+        "دووکەڵ",
+        "دوکەڵ"
+      ],
+      "explanation": "دووکەڵ نە لاشەی هەیە نە پێ، بەڵام لە ئاگرەوە بەرز دەبێتەوە و لە ڕۆچنەی سەربانەوە دەردەچێت.",
+      "translations": {
+        "ku": {
+          "question": "Ne zikê wî heye, ne lingên wî; dîsa jî heta serê banî hildikişe. Ew çi ye?",
+          "hints": [
+            "Ji agir çêdibe.",
+            "Ji kulekê banî derdikeve û çavan dişewitîne."
+          ],
+          "answer": "Dû",
+          "explanation": "Dû ne laşê wî heye ne lingên wî, lê ji agir bilind dibe û ji kulekê banî derdikeve."
+        },
+        "en": {
+          "question": "It has no belly and no feet, yet it climbs all the way up to the roof. What is it?",
+          "hints": [
+            "It is born from fire.",
+            "It slips out through the smoke hole in the roof and stings your eyes."
+          ],
+          "answer": "Smoke",
+          "explanation": "Smoke has no body and no feet, yet it rises from the fire and escapes through the smoke hole in the flat roof of a village house."
+        },
+        "nl": {
+          "question": "Het heeft geen buik en geen voeten, en toch klimt het helemaal tot het dak. Wat is het?",
+          "hints": [
+            "Het wordt geboren uit vuur.",
+            "Het glipt naar buiten door het rookgat in het dak en prikt in je ogen."
+          ],
+          "answer": "Rook",
+          "explanation": "Rook heeft geen lichaam en geen voeten, maar stijgt op uit het vuur en ontsnapt door het rookgat in het platte dak van een dorpshuis."
+        },
+        "de": {
+          "question": "Er hat keinen Bauch und keine Füße und klettert doch bis aufs Dach. Was ist das?",
+          "hints": [
+            "Er wird aus dem Feuer geboren.",
+            "Er schlüpft durchs Rauchloch im Dach hinaus und brennt in den Augen."
+          ],
+          "answer": "Rauch",
+          "explanation": "Rauch hat keinen Körper und keine Füße, und doch steigt er aus dem Feuer auf und entweicht durch das Rauchloch im Flachdach eines Dorfhauses."
+        },
+        "es": {
+          "question": "No tiene barriga ni pies, y aun así sube hasta el tejado. ¿Qué es?",
+          "hints": [
+            "Nace del fuego.",
+            "Se escapa por el agujero del tejado y te pica en los ojos."
+          ],
+          "answer": "El humo",
+          "explanation": "El humo no tiene cuerpo ni pies, pero sube desde el fuego y sale por el agujero del tejado plano de una casa de pueblo."
+        },
+        "fr": {
+          "question": "Elle n’a ni ventre ni pieds, et pourtant elle grimpe jusqu’au toit. Qu’est-ce que c’est ?",
+          "hints": [
+            "Elle naît du feu.",
+            "Elle s’échappe par le trou du toit et te pique les yeux."
+          ],
+          "answer": "La fumée",
+          "explanation": "La fumée n’a ni corps ni pieds, mais elle monte du feu et s’échappe par le trou du toit plat d’une maison de village."
+        },
+        "tr": {
+          "question": "Ne karnı var ne ayağı; yine de ta dama kadar çıkar. Nedir?",
+          "hints": [
+            "Ateşten doğar.",
+            "Damdaki delikten çıkar, gözlerini yakar."
+          ],
+          "answer": "Duman",
+          "explanation": "Dumanın ne bedeni ne ayağı vardır, ama ateşten yükselir ve köy evinin düz damındaki delikten çıkar."
+        },
+        "ar": {
+          "question": "ليس له بطن ولا قدمان، ومع ذلك يصعد حتى السطح. ما هو؟",
+          "hints": [
+            "يولد من النار.",
+            "يخرج من فتحة السطح ويحرق العيون."
+          ],
+          "answer": "الدخان",
+          "explanation": "ليس للدخان جسد ولا قدمان، لكنه يرتفع من النار ويخرج من فتحة السطح في بيت القرية."
+        }
+      },
+      "sources": [
+        {
+          "title": "Partridge song – riddles (‘Some Kurdish Riddles’)",
+          "author": "Partridge song (private folklore site)",
+          "url": "https://sites.google.com/site/partridgesong/folklore/riddles",
+          "note": "Soranî-script riddles with transliteration and English: ‘یەک پێ و یەک چاو (دەرزیکە)’ (Yak pay hasu yak ĉāw); the ox that enters the mill but not its tail (spoon); no belly, no feet, yet up to the roof (smoke / lamp wick). Pairings partly muddled."
+        },
+        {
+          "title": "Têderxistinok (Mamik)",
+          "author": "RiaTaza, from Folklora kurmancîyê (Hecîyê Cindî, Yerevan 1957), transliterated from Cyrillic by Mîdîya and Dîdara Têmûr",
+          "url": "https://krd.riataza.com/2019/04/21/tederxistinok-mamik/",
+          "note": "Caucasus Kurmancî riddles with answers in brackets: hêk, kaxez/nivîsar (black seed thrown by hand), dû, ziman, xew and others; ends with ‘Qesirek sipî / Bê derî’."
+        }
+      ],
+      "notes": "Traditional image, MY WORDING. The Partridge song page has a thing with no belly and no feet that still goes up to the roof; it gives ‘smoke’ but pairs similar lines with ‘the wick of a lamp’ elsewhere, so I chose smoke, which Folklora kurmancîyê (via RiaTaza) also lists as an answer (‘Dû’). Soranî wording mine; ڕۆچنە for the roof’s smoke hole — check (alternatives کولەکە, کونی سەربان)."
+    },
+    {
+      "slug": "ckb-roj",
+      "dialect": "ckb",
+      "difficulty": "medium",
+      "category": "wordplay",
+      "tradition": "new",
+      "region": null,
+      "question": "هەفتە حەوتی لێیە، بەڵام ئاسمان تەنیا یەکێکی هەیە. ئەوە چییە؟",
+      "hints": [
+        "ئەوانی تر ناویان هەیە: شەممە، یەکشەممە، دووشەممە…",
+        "یەکێکیان گەرم و ڕووناکە و هەموو بەیانییەک هەڵدێت."
+      ],
+      "answer": "ڕۆژ",
+      "accepted": [
+        "ڕۆژ"
+      ],
+      "explanation": "لە کوردیدا «ڕۆژ» هەم ناوی خۆرە و هەم ناوی ڕۆژێکی هەفتە: هەفتە حەوت ڕۆژی هەیە، بەڵام ئاسمان تەنیا یەک ڕۆژی هەیە کە دەدرەوشێتەوە.",
+      "translations": {
+        "ku": {
+          "question": "Di hefteyê de heft ji wan hene, lê ezman tenê yek ji wan heye. Ew çi ye?",
+          "hints": [
+            "Navên yên din hene: Şemî, Yekşem, Duşem…",
+            "Yek ji wan germ û ronak e û her sibe hiltê."
+          ],
+          "answer": "Roj",
+          "explanation": "Bi kurdî ‘roj’ hem navê tavê ye, hem jî navê rojeke hefteyê: hefte heft roj e, lê ezman tenê yek roj heye ku dibiriqe."
+        },
+        "en": {
+          "question": "A week has seven of them, but the sky has only one. What is it?",
+          "hints": [
+            "The others have names: Saturday, Sunday, Monday…",
+            "One of them is warm and bright and rises every morning."
+          ],
+          "answer": "Roj — day, and sun",
+          "explanation": "In Kurdish roj (Soranî ڕۆژ) means both ‘day’ and ‘sun’: a week has seven days, but the sky has only one sun."
+        },
+        "nl": {
+          "question": "Een week heeft er zeven, maar de hemel maar één. Wat is het?",
+          "hints": [
+            "De andere hebben namen: zaterdag, zondag, maandag…",
+            "Eén ervan is warm en helder en komt elke ochtend op."
+          ],
+          "answer": "Roj – dag én zon",
+          "explanation": "In het Koerdisch betekent roj (in het Sorani ڕۆژ) zowel ‘dag’ als ‘zon’: een week heeft zeven dagen, maar de hemel maar één zon."
+        },
+        "de": {
+          "question": "Eine Woche hat sieben davon, der Himmel nur eins. Was ist das?",
+          "hints": [
+            "Die anderen haben Namen: Samstag, Sonntag, Montag …",
+            "Eins davon ist warm und hell und geht jeden Morgen auf."
+          ],
+          "answer": "Roj – Tag und Sonne",
+          "explanation": "Im Kurdischen heißt roj (auf Sorani ڕۆژ) sowohl ‚Tag‘ als auch ‚Sonne‘: Eine Woche hat sieben Tage, der Himmel aber nur eine Sonne."
+        },
+        "es": {
+          "question": "Una semana tiene siete, pero el cielo solo uno. ¿Qué es?",
+          "hints": [
+            "Los demás tienen nombre: sábado, domingo, lunes…",
+            "Uno de ellos es cálido y brillante y sale cada mañana."
+          ],
+          "answer": "Roj: día y sol",
+          "explanation": "En kurdo, roj (en sorani ڕۆژ) significa a la vez «día» y «sol»: la semana tiene siete días, pero el cielo solo tiene un sol."
+        },
+        "fr": {
+          "question": "Une semaine en a sept, mais le ciel n’en a qu’un. Qu’est-ce que c’est ?",
+          "hints": [
+            "Les autres ont des noms : samedi, dimanche, lundi…",
+            "L’un d’eux est chaud et brillant et se lève chaque matin."
+          ],
+          "answer": "Roj : le jour et le soleil",
+          "explanation": "En kurde, roj (ڕۆژ en sorani) veut dire à la fois « jour » et « soleil » : une semaine a sept jours, mais le ciel n’a qu’un soleil."
+        },
+        "tr": {
+          "question": "Haftada yedi tane var, ama gökyüzünde yalnızca bir tane. Nedir?",
+          "hints": [
+            "Ötekilerin adları var: cumartesi, pazar, pazartesi…",
+            "Biri sıcak ve parlaktır, her sabah doğar."
+          ],
+          "answer": "Gün (roj)",
+          "explanation": "Kürtçede roj (Soranîde ڕۆژ) hem ‘gün’ hem ‘güneş’ demektir: haftanın yedi günü vardır ama gökyüzünün tek bir güneşi. Türkçede de ‘gün’ güneş anlamını korur; ‘gün doğdu’ deriz."
+        },
+        "ar": {
+          "question": "في الأسبوع سبعةٌ منه، وفي السماء واحدٌ فقط. ما هو؟",
+          "hints": [
+            "للبقية أسماء: السبت، الأحد، الاثنين…",
+            "واحدٌ منها دافئ ساطع، يطلع كل صباح."
+          ],
+          "answer": "روژ (roj): اليوم والشمس",
+          "explanation": "في الكردية تعني كلمة ڕۆژ (roj) «اليوم» و«الشمس» معًا: في الأسبوع سبعة أيام، لكن في السماء شمسًا واحدة."
+        }
+      },
+      "sources": [],
+      "notes": "New. Wordplay ڕۆژ = day and sun (also Kurmancî roj, and partly Turkish gün). Check that ڕۆژ for ‘sun’ is natural enough in Soranî beside خۆر. Hint 1 avoids ڕۆژژمێر (calendar), which would give the word away."
+    },
+    {
+      "slug": "ckb-xal",
+      "dialect": "ckb",
+      "difficulty": "easy",
+      "category": "logic",
+      "tradition": "new",
+      "region": null,
+      "question": "ئەو برای دایکتە، بەڵام پێی ناڵێیت «مامە». کێیە؟",
+      "hints": [
+        "برای باوکت «مام»ە؛ ئەم لە لای دایکتەوەیە.",
+        "ناوەکەی بە پیتی «خ» دەست پێدەکات."
+      ],
+      "answer": "خاڵ",
+      "accepted": [
+        "خاڵ",
+        "خاڵە",
+        "خاڵۆ",
+        "خاڵم"
+      ],
+      "explanation": "کوردی بۆ برای باوک «مام» و بۆ برای دایک «خاڵ» بەکاردەهێنێت. چونکە ئەو برای دایکتە، خاڵتە، نەک مامت.",
+      "translations": {
+        "ku": {
+          "question": "Ew birayê diya te ye, lê tu jê re nabêjî ‘apo’. Ew kî ye?",
+          "hints": [
+            "Birayê bavê te ‘ap’ e; lê ev ji aliyê diya te ye.",
+            "Navê wî bi tîpa ‘x’ dest pê dike."
+          ],
+          "answer": "Xal",
+          "explanation": "Kurdî ji bo birayê bav ‘ap’ û ji bo birayê dê ‘xal’ bi kar tîne. Ji ber ku ew birayê diya te ye, ew xalê te ye, ne apê te."
+        },
+        "en": {
+          "question": "He is your mother’s brother, yet in Kurdish you never call him mame. Who is he?",
+          "hints": [
+            "Your father’s brother is your mam; this one is on your mother’s side.",
+            "In Kurdish his name begins with x, the sound kh."
+          ],
+          "answer": "Your maternal uncle (xal)",
+          "explanation": "Kurdish has two words where English has only ‘uncle’: mam for your father’s brother and xal for your mother’s. He is your mother’s brother, so he is your xal, not your mam."
+        },
+        "nl": {
+          "question": "Hij is de broer van je moeder, maar in het Koerdisch noem je hem nooit mame. Wie is hij?",
+          "hints": [
+            "De broer van je vader is je mam; deze is van je moeders kant.",
+            "In het Koerdisch begint zijn naam met x, de klank ch."
+          ],
+          "answer": "Je oom van moederskant (xal)",
+          "explanation": "Het Koerdisch heeft twee woorden waar het Nederlands alleen ‘oom’ heeft: mam voor de broer van je vader en xal voor die van je moeder. Hij is de broer van je moeder, dus hij is je xal, niet je mam."
+        },
+        "de": {
+          "question": "Er ist der Bruder deiner Mutter, und doch nennst du ihn auf Kurdisch nie mame. Wer ist er?",
+          "hints": [
+            "Der Bruder deines Vaters ist dein mam; dieser gehört zur Seite deiner Mutter.",
+            "Auf Kurdisch beginnt sein Name mit x, dem Laut ch."
+          ],
+          "answer": "Dein Onkel mütterlicherseits (xal)",
+          "explanation": "Das Kurdische hat zwei Wörter, wo das Deutsche nur ‚Onkel‘ kennt: mam für den Bruder des Vaters und xal für den der Mutter. Er ist der Bruder deiner Mutter, also dein xal, nicht dein mam."
+        },
+        "es": {
+          "question": "Es el hermano de tu madre, pero en kurdo nunca lo llamas mame. ¿Quién es?",
+          "hints": [
+            "El hermano de tu padre es tu mam; este es de la familia de tu madre.",
+            "En kurdo su nombre empieza por x, que suena como la j."
+          ],
+          "answer": "Tu tío materno (xal)",
+          "explanation": "El kurdo tiene dos palabras donde el español solo tiene «tío»: mam para el hermano del padre y xal para el de la madre. Como es el hermano de tu madre, es tu xal, no tu mam."
+        },
+        "fr": {
+          "question": "C’est le frère de ta mère, mais en kurde tu ne l’appelles jamais mame. Qui est-ce ?",
+          "hints": [
+            "Le frère de ton père, c’est ton mam ; celui-ci est du côté de ta mère.",
+            "En kurde, son nom commence par x, qui se prononce comme la jota espagnole."
+          ],
+          "answer": "Ton oncle maternel (xal)",
+          "explanation": "Le kurde a deux mots là où le français n’a qu’« oncle » : mam pour le frère du père et xal pour celui de la mère. C’est le frère de ta mère, donc ton xal, pas ton mam."
+        },
+        "tr": {
+          "question": "O, annenin kardeşi ama ona ‘amca’ demezsin. Kimdir?",
+          "hints": [
+            "Babanın kardeşi amcandır; bu ise annenin tarafından.",
+            "Kürtçede adı x harfiyle başlar."
+          ],
+          "answer": "Dayın (xal)",
+          "explanation": "Kürtçe de Türkçe gibi iki ayrı kelime kullanır: babanın kardeşine mam (amca), annenin kardeşine xal (dayı) denir. Annenin kardeşi olduğu için o senin xal’ın, yani dayındır."
+        },
+        "ar": {
+          "question": "هو أخو أمّك، لكنك لا تناديه «عمّي». من هو؟",
+          "hints": [
+            "أخو أبيك هو عمّك، أما هذا فمن جهة أمّك.",
+            "اسمه في الكردية يبدأ بحرف الخاء."
+          ],
+          "answer": "خالك",
+          "explanation": "تفرّق الكردية، كالعربية، بين أخي الأب «مام» (العمّ) وأخي الأم «خاڵ» (الخال). فهو أخو أمّك، إذن هو خالك لا عمّك."
+        }
+      },
+      "sources": [],
+      "notes": "New. Kinship words مام / خاڵ (Kurmancî ap / xal). Works as it stands in tr (amca/dayı) and ar (عم/خال); en, nl, de, es and fr explain. Check that ‘مامە’ is the vocative children use in your region."
+    },
+    {
+      "slug": "ckb-henar",
+      "dialect": "ckb",
+      "difficulty": "easy",
+      "category": "nature",
+      "tradition": "new",
+      "region": null,
+      "question": "قوتوویەکی سوورە، پڕە لە یاقووتی سوور؛ کە دەیکەیتەوە، دەستەکانت سوور دەبن. ئەوە چییە؟",
+      "hints": [
+        "لە پاییزدا لەسەر دار پێدەگات.",
+        "باخەکانی هەڵەبجە بەم میوەیە ناسراون."
+      ],
+      "answer": "هەنار",
+      "accepted": [
+        "هەنار",
+        "هنار"
+      ],
+      "explanation": "پێستی هەنار قوتوویەکی سوورە و دەنکەکانی وەک یاقووت دەدرەوشێنەوە؛ ئاوەکەشی دەست سوور دەکات. هەناری هەڵەبجە بە تامەکەی بەناوبانگە.",
+      "translations": {
+        "ku": {
+          "question": "Qutiyeke sor e, tijî yaqûtên sor e; dema tu wê vedikî, destên te sor dibin. Ew çi ye?",
+          "hints": [
+            "Di payîzê de li ser darê digihêje.",
+            "Baxçeyên Helebceyê bi vê fêkiyê navdar in."
+          ],
+          "answer": "Hinar",
+          "explanation": "Qalikê hinarê qutiyeke sor e û libên wê wek yaqûtan dibiriqin; ava wê jî destan sor dike. Hinarê Helebceyê bi tama xwe navdar e."
+        },
+        "en": {
+          "question": "A red box full of red rubies; open it and your hands turn red. What is it?",
+          "hints": [
+            "It ripens on the tree in autumn.",
+            "The orchards of Halabja are famous for this fruit."
+          ],
+          "answer": "A pomegranate",
+          "explanation": "The pomegranate’s skin is a red box and its seeds shine like rubies; its juice stains your hands red. The pomegranates of Halabja are famous for their taste."
+        },
+        "nl": {
+          "question": "Een rood kistje vol rode robijnen; maak je het open, dan worden je handen rood. Wat is het?",
+          "hints": [
+            "Hij rijpt in de herfst aan de boom.",
+            "De boomgaarden van Halabja zijn beroemd om deze vrucht."
+          ],
+          "answer": "Een granaatappel",
+          "explanation": "De schil van de granaatappel is een rood kistje en de pitjes glanzen als robijnen; het sap kleurt je handen rood. De granaatappels van Halabja zijn beroemd om hun smaak."
+        },
+        "de": {
+          "question": "Ein rotes Kästchen voller roter Rubine; öffnest du es, werden deine Hände rot. Was ist das?",
+          "hints": [
+            "Er reift im Herbst am Baum.",
+            "Die Gärten von Halabja sind für diese Frucht berühmt."
+          ],
+          "answer": "Ein Granatapfel",
+          "explanation": "Die Schale des Granatapfels ist ein rotes Kästchen, und seine Kerne funkeln wie Rubine; sein Saft färbt die Hände rot. Die Granatäpfel aus Halabja sind für ihren Geschmack berühmt."
+        },
+        "es": {
+          "question": "Una cajita roja llena de rubíes rojos; si la abres, se te ponen rojas las manos. ¿Qué es?",
+          "hints": [
+            "Madura en el árbol en otoño.",
+            "Los huertos de Halabja son famosos por esta fruta."
+          ],
+          "answer": "Una granada",
+          "explanation": "La piel de la granada es una cajita roja y sus granos brillan como rubíes; su zumo tiñe las manos de rojo. Las granadas de Halabja son famosas por su sabor."
+        },
+        "fr": {
+          "question": "Une boîte rouge pleine de rubis rouges ; ouvre-la, et tes mains deviennent rouges. Qu’est-ce que c’est ?",
+          "hints": [
+            "Elle mûrit sur l’arbre en automne.",
+            "Les vergers de Halabja sont célèbres pour ce fruit."
+          ],
+          "answer": "Une grenade",
+          "explanation": "La peau de la grenade est une boîte rouge et ses grains brillent comme des rubis ; son jus tache les mains de rouge. Les grenades de Halabja sont réputées pour leur goût."
+        },
+        "tr": {
+          "question": "Kırmızı bir sandık, içi kırmızı yakut dolu; açınca ellerin kızarır. Nedir?",
+          "hints": [
+            "Sonbaharda ağaçta olgunlaşır.",
+            "Halepçe’nin bahçeleri bu meyveyle ünlüdür."
+          ],
+          "answer": "Nar",
+          "explanation": "Narın kabuğu kırmızı bir sandıktır, taneleri yakut gibi parlar; suyu elleri kırmızıya boyar. Halepçe narları tadıyla ünlüdür."
+        },
+        "ar": {
+          "question": "صندوقٌ أحمر مملوء بالياقوت الأحمر؛ إذا فتحته احمرّت يداك. ما هو؟",
+          "hints": [
+            "ينضج على الشجرة في الخريف.",
+            "بساتين حلبجة مشهورة بهذه الفاكهة."
+          ],
+          "answer": "الرمّان",
+          "explanation": "قشرة الرمّان صندوق أحمر، وحبّاته تلمع كالياقوت، وعصيره يصبغ اليدين بالأحمر. ورمّان حلبجة مشهور بطعمه."
+        }
+      },
+      "sources": [],
+      "notes": "New. Halabja’s pomegranates are well known; I did not research them this session, so check the claim in hint 2 and the explanation (and the Kurmancî ‘Helebce’ spelling)."
+    },
+    {
+      "slug": "ckb-dehol",
+      "dialect": "ckb",
+      "difficulty": "medium",
+      "category": "funny",
+      "tradition": "new",
+      "region": null,
+      "question": "هەموو کەس لێم دەدات، کەچی من ناگریم، گۆرانی دەڵێم؛ بێ من هیچ زەماوەندێک ناگیرێت. من چیم؟",
+      "hints": [
+        "زگم بەتاڵە، بەڵام دەنگم تا ئەو سەری گوند دەڕوات.",
+        "لە هەڵپەڕکێدا لەگەڵ زوڕنا دەژەنرێم."
+      ],
+      "answer": "دەهۆڵ",
+      "accepted": [
+        "دەهۆڵ",
+        "دهۆڵ",
+        "تەپڵ"
+      ],
+      "explanation": "لە دەهۆڵ دەدرێت، بەڵام لە جیاتی گریان دەنگێکی خۆش دەدات؛ لە زەماوەندی کوردیدا دەهۆڵ و زوڕنا هەڵپەڕکێ دەگێڕن.",
+      "translations": {
+        "ku": {
+          "question": "Her kes li min dixe, lê ez nagirîm, ez stranan dibêjim; bê min tu şahî nabe. Ez çi me?",
+          "hints": [
+            "Zikê min vala ye, lê dengê min heta serê din ê gund diçe.",
+            "Di govendê de ez û zirne bi hev re tên lêxistin."
+          ],
+          "answer": "Dehol",
+          "explanation": "Li deholê tê xistin, lê li şûna girînê dengekî xweş derdixe; di şahiyên kurdan de dehol û zirne govendê dimeşînin."
+        },
+        "en": {
+          "question": "Everyone beats me, yet I don’t cry — I sing; and there is no wedding without me. What am I?",
+          "hints": [
+            "My belly is empty, but my voice carries to the far end of the village.",
+            "At the dance I am played together with the zurna."
+          ],
+          "answer": "A drum (dahol)",
+          "explanation": "The dahol is beaten, yet instead of crying it gives a joyful sound; at Kurdish weddings the dahol and the zurna lead the dancing."
+        },
+        "nl": {
+          "question": "Iedereen slaat me, maar ik huil niet: ik zing; en zonder mij is er geen bruiloft. Wat ben ik?",
+          "hints": [
+            "Mijn buik is leeg, maar mijn stem draagt tot aan het andere eind van het dorp.",
+            "Bij de dans word ik samen met de zurna bespeeld."
+          ],
+          "answer": "Een trom (dahol)",
+          "explanation": "Op de dahol wordt geslagen, maar in plaats van te huilen geeft hij een vrolijk geluid; op Koerdische bruiloften leiden de dahol en de zurna de dans."
+        },
+        "de": {
+          "question": "Alle schlagen mich, doch ich weine nicht – ich singe; und ohne mich gibt es keine Hochzeit. Was bin ich?",
+          "hints": [
+            "Mein Bauch ist leer, aber meine Stimme reicht bis ans andere Ende des Dorfes.",
+            "Beim Tanz spielt man mich zusammen mit der Zurna."
+          ],
+          "answer": "Eine Trommel (Dahol)",
+          "explanation": "Die Dahol wird geschlagen, doch statt zu weinen gibt sie einen fröhlichen Klang; auf kurdischen Hochzeiten führen Dahol und Zurna den Tanz an."
+        },
+        "es": {
+          "question": "Todos me golpean, pero no lloro: canto; y sin mí no hay boda. ¿Qué soy?",
+          "hints": [
+            "Tengo la barriga vacía, pero mi voz llega hasta el otro extremo del pueblo.",
+            "En el baile me tocan junto a la zurna."
+          ],
+          "answer": "Un tambor (dahol)",
+          "explanation": "Al dahol lo golpean, pero en vez de llorar suena alegre; en las bodas kurdas, el dahol y la zurna llevan el baile."
+        },
+        "fr": {
+          "question": "Tout le monde me frappe, mais je ne pleure pas : je chante ; et sans moi, pas de mariage. Que suis-je ?",
+          "hints": [
+            "J’ai le ventre vide, mais ma voix porte jusqu’au bout du village.",
+            "Pour la danse, on me joue avec la zurna."
+          ],
+          "answer": "Un tambour (dahol)",
+          "explanation": "On frappe le dahol, mais au lieu de pleurer il donne un son joyeux ; dans les mariages kurdes, le dahol et la zurna mènent la danse."
+        },
+        "tr": {
+          "question": "Herkes bana vurur ama ağlamam, şarkı söylerim; bensiz düğün olmaz. Ben neyim?",
+          "hints": [
+            "Karnım boştur ama sesim köyün öbür ucuna kadar gider.",
+            "Halayda zurnayla birlikte çalınırım."
+          ],
+          "answer": "Davul",
+          "explanation": "Davula vurulur ama o ağlamak yerine neşeli bir ses verir; Kürt düğünlerinde davul ve zurna halayı yürütür."
+        },
+        "ar": {
+          "question": "الكلّ يضربني، لكنني لا أبكي بل أغنّي؛ ولا عرس بدوني. فما أنا؟",
+          "hints": [
+            "بطني فارغ، لكن صوتي يصل إلى طرف القرية الآخر.",
+            "في الدبكة أُعزَف مع الزُّرنا."
+          ],
+          "answer": "الطبل (الدهول)",
+          "explanation": "يُضرب الطبل، لكنه بدل البكاء يطلق صوتًا مفرحًا؛ وفي الأعراس الكردية يقود الطبل والزُّرنا حلقة الدبكة."
+        }
+      },
+      "sources": [],
+      "notes": "New. Check ‘لێم دەدات’ (they beat me), ‘زەماوەند ناگیرێت’ and ‘هەڵپەڕکێ دەگێڕن’. Accepts تەپڵ as another word for a drum."
+    },
+    {
+      "slug": "ckb-zayele",
+      "dialect": "ckb",
+      "difficulty": "hard",
+      "category": "nature",
+      "tradition": "new",
+      "region": null,
+      "question": "لە شاخدا هەموو قسەیەکت دووبارە دەکاتەوە، بەڵام هەرگیز یەکەم قسە ناکات. ئەوە چییە؟",
+      "hints": [
+        "لە دۆڵێکی قووڵدا بانگ بکە و گوێ بگرە.",
+        "دەنگی خۆتە کە لە بەردەکانەوە دەگەڕێتەوە."
+      ],
+      "answer": "دەنگدانەوە",
+      "accepted": [
+        "دەنگدانەوە",
+        "زایەڵە",
+        "زایەڵ",
+        "دەنگ دانەوە"
+      ],
+      "explanation": "دەنگدانەوە، یان زایەڵە، دەنگی خۆتە کە لە شاخ و بەردەوە دەگەڕێتەوە: هەرچی بڵێیت دووبارەی دەکاتەوە، بەڵام تا تۆ قسە نەکەیت، ئەو بێدەنگە.",
+      "translations": {
+        "ku": {
+          "question": "Li çiyê her gotina te dubare dike, lê tu carî gotina pêşî nabêje. Ew çi ye?",
+          "hints": [
+            "Li geliyekî kûr bang bike û guhdarî bike.",
+            "Ew dengê te bi xwe ye ku ji zinaran vedigere."
+          ],
+          "answer": "Dengvedan",
+          "explanation": "Dengvedan dengê te bi xwe ye ku ji çiya û zinaran vedigere: çi bibêjî, dubare dike, lê heta tu nepeyivî, ew bêdeng e."
+        },
+        "en": {
+          "question": "In the mountains it repeats every word you say, but it never speaks first. What is it?",
+          "hints": [
+            "Shout into a deep valley and listen.",
+            "It is your own voice, bouncing back off the rocks."
+          ],
+          "answer": "An echo",
+          "explanation": "An echo is your own voice coming back off the mountains and rocks: it repeats whatever you say, but until you speak, it stays silent."
+        },
+        "nl": {
+          "question": "In de bergen herhaalt het elk woord dat je zegt, maar het spreekt nooit als eerste. Wat is het?",
+          "hints": [
+            "Roep in een diep dal en luister.",
+            "Het is je eigen stem, die terugkaatst op de rotsen."
+          ],
+          "answer": "Een echo",
+          "explanation": "Een echo is je eigen stem die terugkomt van de bergen en de rotsen: hij herhaalt alles wat je zegt, maar zolang jij zwijgt, zwijgt hij ook."
+        },
+        "de": {
+          "question": "In den Bergen wiederholt es jedes Wort, das du sagst, aber es spricht nie als Erstes. Was ist das?",
+          "hints": [
+            "Ruf in ein tiefes Tal und horch.",
+            "Es ist deine eigene Stimme, die von den Felsen zurückkommt."
+          ],
+          "answer": "Das Echo",
+          "explanation": "Das Echo ist deine eigene Stimme, die von Bergen und Felsen zurückgeworfen wird: Es wiederholt alles, was du sagst, doch solange du schweigst, schweigt es auch."
+        },
+        "es": {
+          "question": "En la montaña repite cada palabra que dices, pero nunca habla primero. ¿Qué es?",
+          "hints": [
+            "Grita en un valle profundo y escucha.",
+            "Es tu propia voz, que rebota en las rocas."
+          ],
+          "answer": "El eco",
+          "explanation": "El eco es tu propia voz que vuelve desde las montañas y las rocas: repite todo lo que dices, pero mientras tú no hablas, se queda callado."
+        },
+        "fr": {
+          "question": "Dans la montagne, il répète chaque mot que tu dis, mais il ne parle jamais le premier. Qu’est-ce que c’est ?",
+          "hints": [
+            "Crie dans une vallée profonde et écoute.",
+            "C’est ta propre voix, renvoyée par les rochers."
+          ],
+          "answer": "L’écho",
+          "explanation": "L’écho, c’est ta propre voix renvoyée par les montagnes et les rochers : il répète tout ce que tu dis, mais tant que tu te tais, il se tait aussi."
+        },
+        "tr": {
+          "question": "Dağda söylediğin her sözü tekrarlar ama asla ilk sözü söylemez. Nedir?",
+          "hints": [
+            "Derin bir vadiye seslen ve dinle.",
+            "Kayalardan geri dönen kendi sesindir."
+          ],
+          "answer": "Yankı",
+          "explanation": "Yankı, dağlardan ve kayalardan geri dönen kendi sesindir: ne dersen tekrarlar, ama sen konuşmadıkça o da susar."
+        },
+        "ar": {
+          "question": "في الجبل يكرّر كل كلمة تقولها، لكنه لا يبدأ الكلام أبدًا. ما هو؟",
+          "hints": [
+            "نادِ في وادٍ عميق وأصغِ.",
+            "إنه صوتك أنت، يرتدّ عن الصخور."
+          ],
+          "answer": "الصدى",
+          "explanation": "الصدى هو صوتك أنت يعود إليك من الجبال والصخور: يكرّر كل ما تقول، لكنه يبقى صامتًا ما دمتَ صامتًا."
+        }
+      },
+      "sources": [],
+      "notes": "New. Echo: دەنگدانەوە and the older زایەڵە (both accepted). The Kurmancî rendering uses ‘dengvedan’ — please check, and give the common Kurmancî word if another is more natural."
+    }
+  ]
+}

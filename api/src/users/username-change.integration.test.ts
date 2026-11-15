@@ -154,7 +154,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('changing a username (integration)'
     expect(mails[0]).toMatchObject({ username: name('oknew'), previous: who.username, holdDays: String(USERNAME_HOLD_DAYS), cooldownDays: String(USERNAME_CHANGE_COOLDOWN_DAYS) });
   });
 
-  it('allows one change in thirty days, and a change of capitals alone at any time', async () => {
+  it('allows one change in thirty days, and reads one’s own name in capitals as no change at all', async () => {
     const who = await register('wait');
     expect((await change(who, name('waitb'))).status).toBe(200);
     const again = await change(who, name('waitc'));
@@ -164,15 +164,13 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('changing a username (integration)'
     expect(again.body.details.retryAfterSec).toBeGreaterThan(29 * 86_400);
     expect(await usernameOf(who)).toBe(name('waitb'));
 
-    // the same name in other capitals is the same name to everyone: written as asked, nothing spent, nothing held
+    // a username is lowercase, so the same name in capitals is the name they have: no change, nothing spent, nothing held
     const capitals = await change(who, name('waitb').toUpperCase());
     expect(capitals.status, JSON.stringify(capitals.body)).toBe(200);
-    expect(await usernameOf(who)).toBe(name('waitb').toUpperCase());
+    expect(capitals.body.changed).toBe(false);
+    expect(capitals.body.user.username).toBe(name('waitb'));
+    expect(await usernameOf(who)).toBe(name('waitb'));
     expect((await pool.query(`SELECT 1 FROM username_history WHERE user_id = $1`, [who.id])).rowCount).toBe(1);
-    // the very name they have is no change at all
-    const same = await change(who, name('waitb').toUpperCase());
-    expect(same.status).toBe(200);
-    expect(same.body.changed).toBe(false);
   });
 
   it('counts the thirty days from the change, to the day', async () => {
@@ -252,8 +250,19 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('changing a username (integration)'
   it('refuses a name that breaks the rules, with the rule it breaks, and a name somebody has', async () => {
     const who = await register('rules');
     const taken = await register('rulestaken');
-    for (const [username, reason] of [['admin', 'reserved'], ['bad name!', 'invalid-chars'], ['ab', 'too-short'], ['12345', 'numbers-only'], ['_azad', 'edge-underscore']] as const) {
-      expect((await call(who, 'GET', `/me/username/available?username=${encodeURIComponent(username)}`)).body, username).toEqual({ available: false, reason });
+    for (const [username, reason] of [
+      ['admin', 'reserved'],
+      ['ad.min', 'reserved'],
+      ['bad name!', 'invalid-chars'],
+      ['ab', 'too-short'],
+      ['12345', 'numbers-only'],
+      ['_azad', 'edge-punctuation'],
+      ['azad.', 'edge-punctuation'],
+      ['a..zad', 'double-punctuation'],
+      ['a._zad', 'double-punctuation'],
+    ] as const) {
+      const answer = (await call(who, 'GET', `/me/username/available?username=${encodeURIComponent(username)}`)).body;
+      expect(answer, username).toEqual(reason === 'invalid-chars' ? { available: false, reason, chars: [' ', '!'] } : { available: false, reason });
     }
     // the change itself says the same, whatever the form checked first
     for (const [username, reason] of [['admin', 'reserved'], ['bad name!', 'invalid-chars']] as const) {
@@ -261,6 +270,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('changing a username (integration)'
       expect(res.status, username).toBe(400);
       expect(res.body.code).toBe('INVALID_USERNAME');
       expect(res.body.details.reason).toBe(reason);
+      // the characters that are not allowed are named, for the form to say which
+      if (reason === 'invalid-chars') expect(res.body.details.chars).toEqual([' ', '!']);
     }
     expect((await change(who, taken.username)).status).toBe(409);
     expect((await change(who, taken.username.toUpperCase())).body.code).toBe('USERNAME_TAKEN');

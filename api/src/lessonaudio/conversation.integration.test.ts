@@ -220,8 +220,8 @@ describe.skipIf(!DATABASE_URL)('conversations (integration)', () => {
       [0, false],
       [1, false],
     ]);
-    expect(body.lines[0].recording).toMatchObject({ speaker: 'hevalo', recordedBy: { username: `cvXezo_${s}` } });
-    expect(body.lines[1].recording.recordedBy.username).toBe(`cvHamo_${s}`);
+    expect(body.lines[0].recording).toMatchObject({ speaker: 'hevalo', recordedBy: { username: `cvxezo_${s}` } });
+    expect(body.lines[1].recording.recordedBy.username).toBe(`cvhamo_${s}`);
   });
 
   it('opens the newest version of the lesson from a link made before it', async () => {

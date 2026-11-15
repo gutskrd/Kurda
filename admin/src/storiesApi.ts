@@ -10,6 +10,8 @@
  *   POST   /admin/stories/:id/{submit|publish|unpublish|archive}   { lockVersion }
  *   POST   /admin/stories/:id/review         { approved, note?, lockVersion }: approve, or withdraw approval
  *   POST   /admin/stories/:id/feature        { featured, lockVersion }: the library's Featured row
+ *   PUT    /admin/stories/:id/translations/:locale          one language, in any status but archived: the approval stays
+ *   POST   /admin/stories/:id/translations/:locale/review   { status, note?, lockVersion }: that language reviewed, or not
  *   DELETE /admin/stories/:id?lockVersion=   only a story no game has used (else 409 IN_USE)
  *
  *   GET    /admin/story-categories           every category, in position order
@@ -24,6 +26,7 @@
  */
 import type { StoryCategory, StoryDialect, StoryProblem, StoryValidation } from '@kurda/shared';
 import { api, ApiError } from './api';
+import type { StoryTranslationReviewStatus } from '@kurda/shared';
 import {
   STATUS_TABS,
   draftFromForm,
@@ -31,6 +34,7 @@ import {
   type AdminStory,
   type AdminStorySummary,
   type ListFilter,
+  type LocaleTranslationPayload,
   type StoryAction,
   type StoryForm,
   type StoryStatus,
@@ -88,6 +92,35 @@ export function getStory(id: string): Promise<AdminStory> {
 /** Approve a story, or withdraw its approval, with an optional note for the record. */
 export function reviewStory(story: Pick<AdminStory, 'id' | 'lockVersion'>, approved: boolean, note: string | null): Promise<AdminStory> {
   return api<AdminStory>(`${at(story.id)}/review`, { method: 'POST', body: { approved, note, lockVersion: story.lockVersion } });
+}
+
+/**
+ * Save one language of a story — its text, title and summary, questions,
+ * reflections and notes in that language — on a published story too: it stays
+ * online and approved, and the language is marked as needing review.
+ */
+export function saveStoryTranslation(
+  story: Pick<AdminStory, 'id' | 'lockVersion'>,
+  locale: string,
+  payload: LocaleTranslationPayload,
+): Promise<AdminStory> {
+  return api<AdminStory>(`${at(story.id)}/translations/${encodeURIComponent(locale)}`, {
+    method: 'PUT',
+    body: { ...payload, lockVersion: story.lockVersion },
+  });
+}
+
+/** Record that a native speaker has read one language's translation, or that it needs reading again. */
+export function reviewStoryTranslation(
+  story: Pick<AdminStory, 'id' | 'lockVersion'>,
+  locale: string,
+  status: StoryTranslationReviewStatus,
+  note: string | null,
+): Promise<AdminStory> {
+  return api<AdminStory>(`${at(story.id)}/translations/${encodeURIComponent(locale)}/review`, {
+    method: 'POST',
+    body: { status, note, lockVersion: story.lockVersion },
+  });
 }
 
 /** Put a story in the library's Featured row, or take it out. */

@@ -2,11 +2,13 @@
  * Letters by bird (letters/LettersPage.tsx, LetterThreadPage.tsx).
  *
  * One narrow column, as a letter is read: the window at the top, the paper
- * under it, the pen pals below. A letter is a sheet of warm paper with the
- * deep ink on it in either theme — it is an object on the page, like the
- * pictures, not a surface of the page — and a little dimmer in the dark so it
- * does not glare. Only transform and opacity move, and a reader who asked
- * for less motion sees the window still and each pigeon where it ends up.
+ * under it, the pen pals below. A letter is a sheet of paper in its own
+ * colours in either theme — it is an object on the page, like the pictures,
+ * not a surface of the page; each letter's own paper, and the tools for
+ * making it, are paper.css. The warm sheet here is the plain one a letter
+ * taken down is left on, a little dimmer in the dark so it does not glare.
+ * Only transform and opacity move, and a reader who asked for less motion
+ * sees the window still and each pigeon where it ends up.
  */
 .letters-page {
   --paper: #fbf3e4;
@@ -536,38 +538,17 @@
   font-size: var(--text-secondary);
 }
 
-/* ---- the paper ------------------------------------------------------------------------- */
+/* ---- the paper (the sheet itself and its tools are paper.css) --------------------------- */
 .letter-paper {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  min-width: 0;
   margin-bottom: var(--space-6);
+  /* brought into view by asking to write: its top, clear of the bar */
+  scroll-margin-top: calc(var(--nav-bottom) + var(--space-3));
 }
 .letter-paper-label {
   font-weight: 700;
-}
-.letter-paper-sheet {
-  width: 100%;
-  min-height: 220px;
-  padding: 14px 18px;
-  border: 1px solid var(--paper-line);
-  border-radius: var(--r-lg);
-  /* ruled like writing paper: a line every line of text */
-  background:
-    repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--paper-line) 31px, var(--paper-line) 32px) 0 13px / 100% 32px,
-    var(--paper);
-  background-attachment: local;
-  color: var(--paper-ink);
-  font: inherit;
-  font-size: 1.0625rem;
-  line-height: 32px;
-  resize: vertical;
-}
-.letter-paper-sheet::placeholder {
-  color: var(--paper-soft);
-}
-.letter-paper-sheet:focus-visible {
-  outline: 2px solid var(--focus, #3d8bd9);
-  outline-offset: 2px;
 }
 .letter-paper-foot {
   display: flex;
@@ -615,9 +596,35 @@
 }
 
 /* ---- a letter, read ------------------------------------------------------------------- */
+/* who wrote it and when, over the letter on its own paper (paper.css); yours a little to the end side, theirs to the start */
 .letter-sheet {
   position: relative;
   display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.letter-sheet.is-mine {
+  margin-inline-start: 8%;
+}
+.letter-sheet:not(.is-mine) {
+  margin-inline-end: 8%;
+}
+.letter-sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: 0 2px;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.letter-sheet-from {
+  color: var(--ink);
+  font-weight: 700;
+}
+/* a letter taken down: a plain sheet that says so, as it always has, and nothing of what was on it */
+.letter-sheet.is-removed {
   gap: var(--space-2);
   padding: 16px 18px 14px;
   border-radius: var(--r-lg);
@@ -625,30 +632,12 @@
   color: var(--paper-ink);
   box-shadow: 0 1px 0 var(--paper-line), 0 8px 18px -14px rgba(0, 0, 0, 0.45);
 }
-.letter-sheet.is-mine {
-  margin-inline-start: 10%;
-}
-.letter-sheet:not(.is-mine) {
-  margin-inline-end: 10%;
-}
-.letter-sheet-head {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
+.letter-sheet.is-removed .letter-sheet-head {
+  padding: 0;
   color: var(--paper-soft);
-  font-size: var(--text-caption);
-  font-weight: 600;
 }
-.letter-sheet-from {
+.letter-sheet.is-removed .letter-sheet-from {
   color: var(--paper-ink);
-  font-weight: 700;
-}
-.letter-sheet-body {
-  margin: 0;
-  font-size: 1.0625rem;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 .letter-sheet-removed {
   margin: 0;
@@ -660,20 +649,24 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  min-height: 32px;
-  padding: 0 8px;
+  min-height: 36px;
+  padding: 0 10px;
   border: 0;
   border-radius: var(--r-md);
   background: transparent;
-  color: var(--paper-soft);
+  color: var(--ink-3);
   font: inherit;
   font-size: var(--text-caption);
   font-weight: 600;
   cursor: pointer;
 }
 .letter-sheet-report:hover {
-  color: var(--paper-ink);
-  background: color-mix(in srgb, var(--paper-line) 50%, transparent);
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.letter-sheet-report:focus-visible {
+  outline: 2px solid var(--focus, #3d8bd9);
+  outline-offset: 2px;
 }
 .letters-arrived {
   display: grid;
@@ -685,6 +678,9 @@
   width: 100%;
   margin: 0;
   animation: letters-unfold 0.5s var(--ease-out) both;
+}
+.letters-arrived .letter-paper {
+  justify-self: stretch;
 }
 @keyframes letters-unfold {
   from {
@@ -854,6 +850,11 @@
   align-items: center;
   gap: var(--space-3);
   margin: var(--space-2) 0 var(--space-5);
+}
+/* the pen pal's ⋯ is at the top of the page: its menu opens downward, clear of the bar above */
+.letters-thread-menu .user-menu {
+  top: calc(100% + 8px);
+  bottom: auto;
 }
 .letters-thread-name {
   flex: 1;

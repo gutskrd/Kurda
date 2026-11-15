@@ -16,6 +16,8 @@ import {
   blankQuestion,
   categoryLabel,
   cefrLabel,
+  changedBesidesTranslations,
+  changedLocales,
   contentChanged,
   describePath,
   draftFromForm,
@@ -28,9 +30,13 @@ import {
   isDirty,
   isEditable,
   isFiltered,
+  kurdishChanged,
   levelOptions,
   listParams,
   liveChecks,
+  localeCoverage,
+  localeProblems,
+  localeTranslationPayload,
   looksRandomSlug,
   needsNativeReview,
   problemLabel,
@@ -40,6 +46,7 @@ import {
   textFacts,
   traditionLine,
   translationChecks,
+  withLocaleFrom,
   type EditorAction,
   type StoryForm,
 } from './stories';
@@ -90,7 +97,8 @@ describe('the form and the request', () => {
   it('reads a stored story back into the same draft it came from', () => {
     const story = storyFixture();
     const draft = draftFromForm(formFromStory(story));
-    expect(draft.questions).toEqual(story.questions.map(({ id: _id, ...q }) => q));
+    // the API answers every question with its translations, none in the fixture
+    expect(draft.questions).toEqual(story.questions.map(({ id: _id, ...q }) => ({ ...q, translations: {} })));
     expect(draft.glossary).toEqual(story.glossary);
   });
 
@@ -634,8 +642,8 @@ describe('the list', () => {
 
   it('counts what learners can play, per variety and length', () => {
     expect(publishedCoverage(list)).toEqual({
-      kurmanci: { short: 1, medium: 0, long: 1 },
-      sorani: { short: 0, medium: 0, long: 0 },
+      kurmanci: { short: 1, medium: 0, long: 1, saga: 0 },
+      sorani: { short: 0, medium: 0, long: 0, saga: 0 },
     });
   });
 
@@ -650,5 +658,88 @@ describe('the list', () => {
     expect(bankLabel(list[1]!)).toEqual({ text: '8 / 12', short: true });
     expect(bankLabel(list[0]!)).toEqual({ text: '6', short: false });
     expect(bankLabel(list[3]!)).toEqual({ text: '6', short: false });
+  });
+});
+
+describe('one language at a time', () => {
+  const loaded = formFromStory(storyFixture());
+
+  it('writes a question’s translation with as many options as the question, in its order', () => {
+    const form = edit(loaded, { type: 'tr/question', locale: 'de', index: 0, field: 'prompt', value: ' Wie alt ist Rojîn? ' }, { type: 'tr/option', locale: 'de', index: 0, option: 1, value: 'Neun' });
+    expect(form.questions[0]!.translations.de).toEqual({ prompt: ' Wie alt ist Rojîn? ', options: ['', 'Neun', ''] });
+    // half written: sent for the check to point at, the empty options included
+    expect(draftFromForm(form).questions[0]!.translations).toEqual({ de: { prompt: 'Wie alt ist Rojîn?', options: ['', 'Neun', ''] } });
+    expect(codes(liveChecks(form).blocking)).toEqual(['QUESTION_TRANSLATION_OPTION_EMPTY@questions[0].translations.de.options[0]', 'QUESTION_TRANSLATION_OPTION_EMPTY@questions[0].translations.de.options[2]']);
+    expect(localeProblems(liveChecks(form).blocking, 'de')).toHaveLength(2);
+    expect(localeProblems(liveChecks(form).blocking, 'en')).toEqual([]);
+    // written in full, it is a question in German
+    const whole = edit(form, { type: 'tr/option', locale: 'de', index: 0, option: 0, value: 'Zehn' }, { type: 'tr/option', locale: 'de', index: 0, option: 2, value: 'Acht' });
+    expect(liveChecks(whole).blocking).toEqual([]);
+    expect(localeCoverage(whole, 'de')).toMatchObject({ text: 'empty', title: false, questions: { done: 1, total: 6 }, any: true });
+  });
+
+  it('tells which languages changed, and whether anything else did', () => {
+    const german = edit(loaded, { type: 'tr/meta', locale: 'de', field: 'title', value: 'Der Schulweg' }, { type: 'translation', locale: 'en', value: 'One.\n\nTwo.\n\nThree.' });
+    expect(changedLocales(german, loaded)).toEqual(['en', 'de']);
+    expect(changedBesidesTranslations(german, loaded)).toBe(false);
+    // translations are content for the whole-story save, but not the Kurdish a reviewer approved
+    expect(contentChanged(german, loaded)).toBe(true);
+    expect(kurdishChanged(german, loaded)).toBe(false);
+    const both = edit(german, { type: 'text', field: 'summary', value: 'Nû.' });
+    expect(changedBesidesTranslations(both, loaded)).toBe(true);
+    expect(kurdishChanged(both, loaded)).toBe(true);
+    // a whitespace-only edit is no change
+    expect(changedLocales(edit(loaded, { type: 'tr/meta', locale: 'fr', field: 'title', value: '  ' }), loaded)).toEqual([]);
+  });
+
+  it('sends one language whole, a part left empty as null, and takes the saved language back without touching the rest', () => {
+    const form = edit(loaded, { type: 'translation', locale: 'de', value: 'Eins.\n\nZwei.\n\nDrei.' }, { type: 'tr/meta', locale: 'de', field: 'summary', value: 'Ein Schulweg.' });
+    expect(localeTranslationPayload(form, 'de')).toEqual({
+      body: 'Eins.\n\nZwei.\n\nDrei.',
+      title: null,
+      summary: 'Ein Schulweg.',
+      questions: [null, null, null, null, null, null],
+      reflections: [],
+      notes: [],
+    });
+    // the server saved German; the editor meanwhile started on French
+    const saved = formFromStory(storyFixture({ translations: { de: 'Eins.\n\nZwei.\n\nDrei.' }, metaTranslations: { de: { summary: 'Ein Schulweg.' } } }));
+    const typing = edit(form, { type: 'tr/meta', locale: 'fr', field: 'title', value: 'Le chemin' });
+    const merged = withLocaleFrom(typing, saved, 'de');
+    expect(merged.library.metaTranslations).toEqual({ de: { summary: 'Ein Schulweg.' }, fr: { title: 'Le chemin' } });
+    expect(changedLocales(merged, withLocaleFrom(loaded, saved, 'de'))).toEqual(['fr']);
+  });
+
+  it('edits the questions to think about, the notes and the sources, each within its limit', () => {
+    let form = edit(loaded, { type: 'reflection/add' }, { type: 'reflection/set', index: 0, value: ' Çima? ' }, { type: 'tr/reflection', locale: 'en', index: 0, value: 'Why?' });
+    form = edit(form, { type: 'note/add' }, { type: 'note/set', index: 0, field: 'title', value: 'Efsane' }, { type: 'note/set', index: 0, field: 'body', value: 'Ne dîrok e.' });
+    form = edit(form, { type: 'tr/note', locale: 'en', index: 0, field: 'title', value: 'Legend' });
+    form = edit(form, { type: 'source/add' }, { type: 'source/set', index: 0, field: 'title', value: 'Mem û Zîn' }, { type: 'source/set', index: 0, field: 'type', value: 'literary' });
+    const draft = draftFromForm(form);
+    expect(draft.reflections).toEqual([{ text: 'Çima?', translations: { en: 'Why?' } }]);
+    expect(draft.notes).toEqual([{ kind: 'legend', title: 'Efsane', body: 'Ne dîrok e.', translations: { en: { title: 'Legend', body: '' } } }]);
+    expect(draft.sources).toEqual([{ title: 'Mem û Zîn', type: 'literary' }]);
+    // a note translated only half is refused for that language
+    expect(codes(liveChecks(form).blocking)).toEqual(['NOTE_TRANSLATION_EMPTY@notes[0].translations.en']);
+    expect(describePath('notes[0].translations.en')).toBe('Note 1 · Translation (English)');
+    expect(describePath('questions[2].translations.de.options[1]')).toBe('Question 3 · Translation (German) · option 2');
+    expect(describePath('metaTranslations.fr.title')).toBe('Title and summary (French) · Title');
+    expect(describePath('sources[1].url')).toBe('Source 2 · address');
+    expect(describePath('reflections[0].text')).toBe('To think about 1 · text');
+    // six questions to think about, four notes and eight sources at most
+    let full = loaded;
+    for (let i = 0; i < 10; i++) full = edit(full, { type: 'reflection/add' }, { type: 'note/add' }, { type: 'source/add' });
+    expect([full.library.reflections!.length, full.library.notes!.length, full.library.sources!.length]).toEqual([6, 4, 8]);
+    const removed = edit(form, { type: 'source/remove', index: 0 }, { type: 'reflection/remove', index: 0 }, { type: 'note/remove', index: 0 });
+    expect([removed.library.sources, removed.library.reflections, removed.library.notes]).toEqual([[], [], []]);
+  });
+
+  it('cuts the text into sections at its headings, which are not read aloud', () => {
+    const facts = textFacts('kurmanci', `${BODY}\n\n## Dawî\n\nÊvarê Rojîn radizê.`);
+    expect(facts.sections).toEqual([{ title: 'Dawî', paragraph: 3 }]);
+    expect(facts.paragraphs[3]).toMatchObject({ heading: 'Dawî', words: 0 });
+    expect(facts.paragraphs[3]!.sentences.every((sentence) => !sentence.recordable)).toBe(true);
+    expect(facts.paragraphs[0]!.heading).toBeNull();
+    expect(facts.words).toBe(countStoryWords(BODY) + 3);
   });
 });

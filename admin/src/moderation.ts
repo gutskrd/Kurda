@@ -11,11 +11,17 @@
  * checked, by the same code that will apply it.
  */
 import {
+  NOTE_TEXT,
   OPEN_CASE_STATUSES,
+  PAPER_H,
+  PAPER_PAGES,
+  PAPER_RULE,
+  PAPER_W,
   PRIORITY_SLA_HOURS,
   REPORT_CATEGORIES,
   SANCTION_DURATION_PRESETS,
   SANCTION_SCOPE,
+  checkLetterDecor,
   isSanctionKind,
   sanctionHasDuration,
   type CaseMediaItem,
@@ -30,6 +36,9 @@ import {
   type DecisionActionKind,
   type DecisionTarget,
   type EvidenceSnapshot,
+  type LetterDecor,
+  type LetterPaper,
+  type PaperNote,
   type PermanentBanMode,
   type ReportCategory,
   type ReportPriority,
@@ -734,4 +743,53 @@ export function historyLine(action: string): string {
     return words[step] ?? humanize(step);
   }
   return isSanctionKind(action) ? sanctionName(action) : humanize(action.replace(/^(GET|POST|PUT|PATCH|DELETE) /, ''));
+}
+
+// ---------------------------------------------------------------------------
+// A reported letter's paper (shared letter-paper.ts)
+// ---------------------------------------------------------------------------
+
+/**
+ * A reported letter's decor as the case can draw it. The snapshot was checked
+ * when the letter was sent, but it is read back from storage here, so it is
+ * checked again by the same rules before anything is drawn from it: what
+ * comes out is only known papers, tools, colours and whole numbers. One that
+ * no longer passes (written under other limits, say) is said to be unreadable
+ * rather than drawn half-way.
+ */
+export function letterDecorOf(raw: unknown): { decor: LetterDecor | null; unreadable: boolean } {
+  if (raw === null || raw === undefined) return { decor: null, unreadable: false };
+  const checked = checkLetterDecor(raw, { strokes: true });
+  return checked.ok ? { decor: checked.value, unreadable: false } : { decor: null, unreadable: true };
+}
+
+const STYLE_NAME: Readonly<Record<LetterPaper['style'], string>> = { plain: 'Plain', lined: 'Lined', margin: 'Lined with a margin', grid: 'Squared', dotted: 'Dotted' };
+
+/** A paper in words: "Lined · cream · navy ink". */
+export function paperName(paper: LetterPaper): string {
+  return `${STYLE_NAME[paper.style]} · ${paper.tone} · ${paper.ink} ink`;
+}
+
+/** How long a sheet the case draws: one page, or as far as the drawing and notes reach on a second, a line clear below them. */
+export function decorLength(decor: LetterDecor): number {
+  let lowest = 0;
+  for (const s of decor.strokes) for (let i = 1; i < s.points.length; i += 2) lowest = Math.max(lowest, (s.points[i] as number) + s.width / 2);
+  for (const n of decor.notes) lowest = Math.max(lowest, n.y + NOTE_TEXT[n.size]);
+  return Math.min(PAPER_H * PAPER_PAGES, Math.max(PAPER_H, Math.ceil(lowest + PAPER_RULE)));
+}
+
+/**
+ * Where a note sits on the drawn sheet, as CSS: its centre as a share of the
+ * sheet, its type as a share of the sheet's width (container units), turned
+ * as it was placed. The page's own units make it land where its writer put it
+ * whatever size the case shows the sheet at.
+ */
+export function notePlacement(note: PaperNote, length: number): { left: string; top: string; fontSize: string; transform: string } {
+  const pct = (v: number): string => `${Math.round(v * 10000) / 100}%`;
+  return {
+    left: pct(note.x / PAPER_W),
+    top: pct(note.y / length),
+    fontSize: `${Math.round((NOTE_TEXT[note.size] / PAPER_W) * 10000) / 100}cqw`,
+    transform: `translate(-50%, -50%) rotate(${note.turn}deg)`,
+  };
 }

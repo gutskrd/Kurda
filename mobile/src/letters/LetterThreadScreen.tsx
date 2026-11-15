@@ -17,7 +17,10 @@ import type { ApiError } from '../api/types';
 import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
 import { blockUser } from '../social/blocks';
 import { haptic } from '../feedback/haptics';
-import { BirdBadge, LetterPaper, LetterSheet } from './LetterParts';
+import { BirdBadge, LetterSheet } from './LetterParts';
+import { LetterComposer, rememberedPaper, type ComposedLetter } from './LetterComposer';
+import { usePaperScroll } from './usePaperScroll';
+import { useWidgetPin } from './widgetPin';
 import { letterErrorText } from './errors';
 
 /**
@@ -25,6 +28,12 @@ import { letterErrorText } from './errors';
  * web/src/letters/LetterThreadPage.tsx): every letter, oldest first, each on
  * its own sheet, and at the foot either the paper to write back on — when it
  * is your turn — or a line saying your bird is with them.
+ *
+ * Each letter is on the paper it was written on, with its drawing and its
+ * notes, and the answer is written on paper of your own, drawn on if you
+ * like: two pen pals may send each other drawings. A letter written to you
+ * can be kept on your home-screen widget for good — "Show on my widget" —
+ * until it is taken off again, when the widget goes back to the newest.
  *
  * The pen pal's ⋯ holds what ends things, plainly named: report them, block
  * them, and say goodbye, asked first, which closes the letters for both. A
@@ -43,6 +52,9 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
   const [reporting, setReporting] = useState<ReportTarget | null>(null);
   // a letter sent is shown at once; a fresh sheet of paper only with their answer
   const [paperKey, setPaperKey] = useState(0);
+  // the page the paper lies on: held still while drawing, and kept with the writing above the keyboard
+  const page = usePaperScroll();
+  const widget = useWidgetPin(client);
 
   const load = useCallback(async (): Promise<void> => {
     const res = await client.get<LetterThread>(`/letters/threads/${encodeURIComponent(threadId)}`);
@@ -60,10 +72,10 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
 
   const name = thread?.person.name ?? '';
 
-  const reply = async (body: string): Promise<void> => {
+  const reply = async (letter: ComposedLetter): Promise<void> => {
     setBusy(true);
     setSendError(null);
-    const res = await client.post<{ letter: LetterItem }>(`/letters/threads/${encodeURIComponent(threadId)}`, { body });
+    const res = await client.post<{ letter: LetterItem }>(`/letters/threads/${encodeURIComponent(threadId)}`, letter);
     setBusy(false);
     if (!res.ok) {
       haptic('error');
@@ -124,6 +136,8 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
 
   const letters = thread ? (sent && !thread.letters.some((l) => l.id === sent.id) ? [...thread.letters, sent] : thread.letters) : [];
   const yourTurn = thread !== null && thread.yourTurn && !sent;
+  // the paper you last wrote on anywhere, or else the one you last wrote on to them
+  const ownPaper = rememberedPaper() ?? [...letters].reverse().find((l) => l.mine && l.decor)?.decor?.paper ?? null;
 
   return (
     <GradientBackground>
@@ -134,7 +148,7 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
         right={thread ? <HeaderButton icon="more" label={t('moderation.moreAbout', { name })} onPress={more} edge="end" testID="letters-more" /> : undefined}
       />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView {...page.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {!thread ? (
             error ? (
               <ErrorRetry message={describeError(error, t)} onRetry={() => void load()} />
@@ -154,15 +168,40 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
                     letter={l}
                     from={l.mine ? t('letters.you') : name}
                     onReport={l.mine ? undefined : () => setReporting({ type: 'letter', letterId: l.id })}
+                    widget={
+                      !l.mine && widget.pinned !== undefined
+                        ? {
+                            pinned: widget.pinned === l.id,
+                            busy: widget.busy === l.id,
+                            // a letter taken down meanwhile cannot be pinned: the letters are read again, and it shows as taken down
+                            onToggle: () => void widget.toggle(l.id).then((code) => (code === 'LETTER_REMOVED' ? load() : undefined)),
+                          }
+                        : undefined
+                    }
                   />
                 ))}
+                {widget.error ? (
+                  <Text style={[styles.widgetError, dir.text, { color: colors.danger }]} accessibilityLiveRegion="polite" testID="letters-widget-error">
+                    {widget.error.code === 'LETTER_REMOVED' ? t('letters.removed') : describeError(widget.error, t)}
+                  </Text>
+                ) : null}
               </View>
               {thread.closed ? (
                 <Text style={[styles.note, { color: colors.textSecondary, backgroundColor: colors.surface }]} testID="letters-closed">
                   {t('letters.thread.closed')}
                 </Text>
               ) : yourTurn ? (
-                <LetterPaper key={paperKey} label={t('letters.writeBack', { name })} busy={busy} onSend={(body) => void reply(body)} error={sendError} testID="letters-reply" />
+                <LetterComposer
+                  key={paperKey}
+                  label={t('letters.writeBack', { name })}
+                  busy={busy}
+                  onSend={(letter) => void reply(letter)}
+                  error={sendError}
+                  canDraw
+                  paper={ownPaper}
+                  host={page.host}
+                  testID="letters-reply"
+                />
               ) : (
                 <Text style={[styles.note, { color: colors.textSecondary, backgroundColor: colors.surface }]} testID="letters-waiting">
                   {t('letters.thread.waiting', { name })}
@@ -194,6 +233,7 @@ const styles = StyleSheet.create({
   content: { padding: layout.gutter, paddingBottom: spacing.xxl, gap: spacing.lg },
   who: { alignItems: 'center', gap: spacing.md - 4 },
   name: { flex: 1, ...display(typography.sizes.xl) },
-  list: { gap: spacing.md - 4 },
+  list: { gap: spacing.md },
+  widgetError: { fontSize: typography.sizes.sm, lineHeight: 19 },
   note: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', padding: spacing.md - 2, borderRadius: radii.lg, overflow: 'hidden' },
 });

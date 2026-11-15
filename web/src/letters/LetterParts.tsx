@@ -1,13 +1,13 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { LETTER_MAX, letterBirdSvg, letterProblem, type LetterItem, type LetterProblem } from '@kurda/shared';
+import { useId, useMemo } from 'react';
+import { letterBirdSvg, type LetterItem } from '@kurda/shared';
 import { useLocale, useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
 import { FlagIcon } from '../components/icons';
+import { LetterOnPaper } from './PaperSheet';
 
 /**
  * The small pieces the letters pages share: a pen pal's bird as their
- * picture, the sheet of paper a letter is written on, and a letter as it is
- * read.
+ * picture, and a letter as it is read. The paper a letter is written on is
+ * the composer's own (LetterComposer.tsx).
  */
 
 /** Somebody's pigeon, its portrait in a round of its own as their picture. Decoration: their name is always beside it. */
@@ -17,113 +17,18 @@ export function BirdBadge({ bird, size = 44 }: { bird: number; size?: number }):
   return <span className="letter-badge" style={{ width: size, height: size }} aria-hidden="true" dangerouslySetInnerHTML={svg} />;
 }
 
-/** What to tell the writer about a letter that cannot go as it is, in the order they should mend it. */
-const PROBLEM: Record<LetterProblem, MessageKey> = {
-  short: 'letters.problem.short',
-  long: 'letters.problem.long',
-  link: 'letters.problem.link',
-  contact: 'letters.problem.contact',
-};
-
 /**
- * A sheet of lined paper to write a letter on, and the bird's send. What the
- * server would refuse is said under it as it is written — a link, a phone
- * number, too long — so nothing is refused after the bird has left; that it is
- * still empty is said only once somebody tries to send it. A single word is a
- * letter.
+ * A letter as it is read: who wrote it and when, over the letter on its own
+ * paper with its drawing and notes, and for one written to you, the way to
+ * report it. A letter Hevalo took down says so on a plain sheet, and shows
+ * nothing of what was on it.
  */
-export function LetterPaper({
-  label,
-  sendLabel,
-  busy,
-  onSend,
-  onCancel,
-  error,
-  autoFocus = false,
-}: {
-  label: string;
-  /** what sending it is called, when it is not your own bird that takes it */
-  sendLabel?: string;
-  busy: boolean;
-  onSend: (body: string) => void;
-  /** putting the paper away again, for a letter that was started by choice */
-  onCancel?: () => void;
-  /** what the server answered, when it refused */
-  error?: string | null;
-  /** opened by asking to write: the pen goes to the paper, and the paper is brought into view */
-  autoFocus?: boolean;
-}): React.JSX.Element {
-  const t = useT();
-  const id = useId();
-  const sheet = useRef<HTMLTextAreaElement>(null);
-  const [body, setBody] = useState('');
-  useEffect(() => {
-    if (!autoFocus) return;
-    sheet.current?.focus({ preventScroll: true });
-    sheet.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
-  }, [autoFocus]);
-  const [tried, setTried] = useState(false);
-  const problem = letterProblem(body);
-  // a letter still being started is not yet too short
-  const shown = problem && (problem !== 'short' || tried) ? t(PROBLEM[problem]) : null;
-  const length = [...body.trim()].length;
-  return (
-    <form
-      className="letter-paper"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setTried(true);
-        if (!problem && !busy) onSend(body);
-      }}
-    >
-      <label htmlFor={`${id}-body`} className="letter-paper-label">
-        {label}
-      </label>
-      <textarea
-        ref={sheet}
-        id={`${id}-body`}
-        className="letter-paper-sheet"
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        placeholder={t('letters.placeholder')}
-        rows={7}
-        maxLength={LETTER_MAX + 200}
-        aria-describedby={`${id}-hint ${id}-problem`}
-        aria-invalid={shown ? true : undefined}
-        dir="auto"
-      />
-      <div className="letter-paper-foot">
-        <p id={`${id}-hint`} className="letter-paper-hint">
-          {t('letters.hint')}
-        </p>
-        <span className={`letter-paper-count${length > LETTER_MAX ? ' is-over' : ''}`} aria-hidden="true">
-          {length} / {LETTER_MAX}
-        </span>
-      </div>
-      <p id={`${id}-problem`} className="letter-paper-problem" role="alert">
-        {shown ?? error ?? ''}
-      </p>
-      <div className="letter-paper-actions">
-        {onCancel && (
-          <button type="button" className="btn btn-ghost letter-paper-cancel" onClick={onCancel} disabled={busy}>
-            {t('common.cancel')}
-          </button>
-        )}
-        <button type="submit" className="btn btn-primary letter-paper-send" disabled={busy}>
-          {busy ? t('letters.sending') : (sendLabel ?? t('letters.send'))}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-/** A letter as it is read: on its paper, who wrote it and when, and for one written to you, the way to report it. */
 export function LetterSheet({ letter, from, onReport }: { letter: LetterItem; from: string; onReport?: () => void }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const when = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(letter.sentAt));
   return (
-    <article className={`letter-sheet${letter.mine ? ' is-mine' : ''}`} aria-label={t('letters.fromWhom', { name: from })}>
+    <article className={`letter-sheet${letter.mine ? ' is-mine' : ''}${letter.removed ? ' is-removed' : ''}`} aria-label={t('letters.fromWhom', { name: from })}>
       <header className="letter-sheet-head">
         <span className="letter-sheet-from">{from}</span>
         <time dateTime={letter.sentAt}>{when}</time>
@@ -131,9 +36,7 @@ export function LetterSheet({ letter, from, onReport }: { letter: LetterItem; fr
       {letter.removed ? (
         <p className="letter-sheet-removed">{t('letters.removed')}</p>
       ) : (
-        <p className="letter-sheet-body" dir="auto">
-          {letter.body}
-        </p>
+        <LetterOnPaper body={letter.body} decor={letter.decor ?? null} drawnLabel={t('letters.read.drawn')} notesLabel={t('letters.read.notes')} />
       )}
       {onReport && !letter.removed && (
         <button type="button" className="letter-sheet-report" onClick={onReport}>

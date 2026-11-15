@@ -10,6 +10,12 @@
  * trims it — so it never shows a problem the server does not have, or misses
  * one it does. The API stays the judge: what it refuses comes back with its own
  * list of problems, and the editor shows that list too.
+ *
+ * Translations are kept per language: everything of a story in one language
+ * (its text, title and summary, questions, reflections and notes) can be
+ * compared, sent and saved on its own (PUT /admin/stories/:id/translations/:locale),
+ * which is how a published story's translation is corrected without taking
+ * it offline.
  */
 import {
   APP_LOCALES,
@@ -23,7 +29,10 @@ import {
   STORY_DIALECTS,
   STORY_LENGTHS,
   STORY_LEVELS,
+  STORY_NOTES_MAX,
+  STORY_REFLECTIONS_MAX,
   STORY_SENTENCE_SOFT_MAX,
+  STORY_SOURCES_MAX,
   STORY_WORD_BANDS,
   cefrOf,
   countStoryWords,
@@ -38,7 +47,11 @@ import {
   storyLengthFor,
   storyParagraphs,
   storySentences,
+  storyHeadingTitle,
+  storySections,
   storySlugFor,
+  tidyQuestionTranslations,
+  tidyStoryCompanions,
   validateStory,
   type QuestionKind,
   type SpeakerId,
@@ -51,9 +64,20 @@ import {
   type StoryLength,
   type StoryLevel,
   type StoryLibraryInput,
+  type StoryMetaTranslation,
+  type StoryNoteInput,
+  type StoryNoteKind,
+  type StoryNoteTranslation,
   type StoryProblem,
   type StoryQuestionInput,
+  type StoryQuestionTranslation,
+  type StoryReflectionInput,
+  type StorySection,
+  type StorySourceInput,
+  type StorySourceType,
   type StoryTradition,
+  type StoryTranslationReviewEntry,
+  type StoryTranslationReviewStatus,
   type StoryValidation,
 } from '@kurda/shared';
 
@@ -115,6 +139,14 @@ export interface AdminStory {
   sourceUrl: string | null;
   attributionNote: string | null;
   translations: Record<string, string>;
+  /** by interface language, the title and summary */
+  metaTranslations: Record<string, StoryMetaTranslation>;
+  /** open questions to think about after reading, each with its translations */
+  reflections: StoryReflectionInput[];
+  notes: StoryNoteInput[];
+  sources: StorySourceInput[];
+  /** by interface language, whether a native speaker has read its translation; a language with none is unreviewed */
+  translationReview: Record<string, StoryTranslationReviewEntry>;
   cover: string | null;
   /** the editor's reading time, null for the estimate (`readingMinutes` is whichever applies) */
   readingMinutesOverride: number | null;
@@ -181,7 +213,7 @@ export interface StoryDraft extends StoryInput {
 }
 
 export const DIALECT_NAME: Record<StoryDialect, string> = { kurmanci: 'Kurmancî', sorani: 'Soranî' };
-export const LENGTH_NAME: Record<StoryLength, string> = { short: 'Short', medium: 'Medium', long: 'Long' };
+export const LENGTH_NAME: Record<StoryLength, string> = { short: 'Short', medium: 'Medium', long: 'Long', saga: 'Saga' };
 export const STATUS_NAME: Record<StoryStatus, string> = {
   draft: 'Draft',
   in_review: 'In review',
@@ -244,6 +276,25 @@ export function categoryLabel(categories: readonly StoryCategory[] | undefined, 
 /** The interface languages a translation can be in, English first since it is the fallback the reader gets. */
 export const TRANSLATION_LOCALES: readonly string[] = ['en', ...APP_LOCALES.map((l) => l.code).filter((c) => c !== 'en')];
 
+/** What each kind of note is about, for the select in the editor. */
+export const NOTE_KIND_NAME: Record<StoryNoteKind, string> = {
+  history: 'History: what is known to have happened',
+  legend: 'Legend: what is told, not recorded',
+  versions: 'Versions: how the tellings differ',
+  culture: 'Culture: a custom, a place or an object in it',
+};
+
+/** What each kind of source is, for the select in the editor. */
+export const SOURCE_TYPE_NAME: Record<StorySourceType, string> = {
+  historical: 'Historical record',
+  legendary: 'Legend as collected',
+  oral: 'Oral telling',
+  literary: 'Literary work',
+  adapted: 'Adaptation',
+};
+
+export const TRANSLATION_REVIEW_NAME: Record<StoryTranslationReviewStatus, string> = { unreviewed: 'Needs review', reviewed: 'Reviewed' };
+
 /** What each kind of question asks, for the select in the editor. */
 export const KIND_HINT: Record<QuestionKind, string> = {
   gist: 'what the story is about as a whole (a game asks it last)',
@@ -296,6 +347,8 @@ export interface QuestionForm {
    * editor knows to ask for a look.
    */
   evidenceQuote: string | null;
+  /** the question in interface languages, as typed: options in the order of `options` (the Translations section edits them) */
+  translations: Record<string, StoryQuestionTranslation>;
 }
 
 export interface StoryForm {
@@ -380,6 +433,7 @@ export function blankQuestion(): QuestionForm {
     evidenceParagraph: null,
     evidenceSentence: null,
     evidenceQuote: null,
+    translations: {},
   };
 }
 
@@ -448,6 +502,7 @@ export function formFromStory(
       evidenceParagraph: q.evidenceParagraph,
       evidenceSentence: q.evidenceSentence,
       evidenceQuote: evidenceText(paragraphs, q.evidenceParagraph, q.evidenceSentence),
+      translations: structuredClone(q.translations ?? {}),
     })),
     library: {
       language: story.language,
@@ -460,6 +515,10 @@ export function formFromStory(
       translations: { ...story.translations },
       cover: story.cover,
       readingMinutes: story.readingMinutesOverride,
+      metaTranslations: structuredClone(story.metaTranslations ?? {}),
+      reflections: structuredClone(story.reflections ?? []),
+      notes: structuredClone(story.notes ?? []),
+      sources: structuredClone(story.sources ?? []),
     },
   };
 }
@@ -518,6 +577,7 @@ export function draftFromForm(form: StoryForm): StoryDraft {
     translations,
     cover: lib.cover === null ? null : trimmedOrNull(lib.cover),
     readingMinutes: lib.readingMinutes,
+    ...tidyStoryCompanions(lib),
     ...(form.sameStoryAs !== undefined ? { sameStoryAs: form.sameStoryAs } : {}),
     slug: form.slug.trim(),
     dialect: form.dialect,
@@ -536,6 +596,7 @@ export function draftFromForm(form: StoryForm): StoryDraft {
       explanationEn: trimmedOrNull(q.explanationEn),
       evidenceParagraph: q.evidenceParagraph,
       evidenceSentence: q.evidenceSentence,
+      translations: tidyQuestionTranslations(q.translations),
     })),
   };
 }
@@ -552,7 +613,7 @@ export function isDirty(form: StoryForm, loaded: StoryForm): boolean {
  * the API's own comparison, so the editor can say ahead of a save that the
  * story will need approving again.
  */
-function contentOf(draft: StoryDraft): string {
+function contentOf(draft: StoryDraft, withTranslations = true): string {
   return JSON.stringify([
     draft.dialect,
     draft.level,
@@ -561,13 +622,178 @@ function contentOf(draft: StoryDraft): string {
     draft.body,
     draft.glossary.map((g) => [g.term, Object.entries(g.meanings).sort(([a], [b]) => a.localeCompare(b))]),
     draft.questions.map((q) => [q.kind, q.prompt, q.promptEn, q.options, q.correctIndex, q.explanation, q.explanationEn, q.evidenceParagraph, q.evidenceSentence]),
-    Object.entries(draft.translations).sort(([a], [b]) => a.localeCompare(b)),
+    (draft.reflections ?? []).map((r) => r.text),
+    (draft.notes ?? []).map((n) => [n.kind, n.title, n.body]),
+    withTranslations ? translatedLocales(draft).map((locale) => [locale, localeOf(draft, locale)]) : null,
   ]);
 }
 
-/** Whether the unsaved edits touch what a reviewer read (text, glossary, questions, translations), not only the filing. */
+/** Whether the unsaved edits touch what a reviewer read (text, glossary, questions, reflections, notes, translations), not only the filing. */
 export function contentChanged(form: StoryForm, loaded: StoryForm): boolean {
   return contentOf(draftFromForm(form)) !== contentOf(draftFromForm(loaded));
+}
+
+/**
+ * Whether the unsaved edits touch what a reviewer read in Kurdish. A change to
+ * translations alone is saved language by language, which keeps the approval,
+ * so only this says a story will need approving again.
+ */
+export function kurdishChanged(form: StoryForm, loaded: StoryForm): boolean {
+  return contentOf(draftFromForm(form), false) !== contentOf(draftFromForm(loaded), false);
+}
+
+// ---------------------------------------------------------------------------
+// One language
+// ---------------------------------------------------------------------------
+
+/** Everything of a story in one interface language, as the API compares it (`canonicalLocale`). */
+function localeOf(draft: StoryInput, locale: string): string {
+  const meta = draft.metaTranslations?.[locale];
+  return JSON.stringify([
+    draft.translations?.[locale] ?? null,
+    meta?.title ?? null,
+    meta?.summary ?? null,
+    draft.questions.map((q) => {
+      const t = q.translations?.[locale];
+      return t ? [t.prompt, t.options, t.explanation ?? null] : null;
+    }),
+    (draft.reflections ?? []).map((r) => r.translations?.[locale] ?? null),
+    (draft.notes ?? []).map((n) => {
+      const t = n.translations?.[locale];
+      return t ? [t.title, t.body] : null;
+    }),
+  ]);
+}
+
+/** Every interface language some part of a story is translated into. */
+export function translatedLocales(draft: StoryInput): string[] {
+  const out = new Set<string>([...Object.keys(draft.translations ?? {}), ...Object.keys(draft.metaTranslations ?? {})]);
+  for (const q of draft.questions) for (const l of Object.keys(q.translations ?? {})) out.add(l);
+  for (const r of draft.reflections ?? []) for (const l of Object.keys(r.translations ?? {})) out.add(l);
+  for (const n of draft.notes ?? []) for (const l of Object.keys(n.translations ?? {})) out.add(l);
+  return [...out].sort();
+}
+
+/** The languages whose translation the unsaved edits change, in the order the editor lists them. */
+export function changedLocales(form: StoryForm, loaded: StoryForm): string[] {
+  const now = draftFromForm(form);
+  const was = draftFromForm(loaded);
+  return TRANSLATION_LOCALES.filter((locale) => localeOf(now, locale) !== localeOf(was, locale));
+}
+
+/**
+ * Whether anything but translations changed: the story itself has to be saved
+ * (as a whole) before one language of it can be saved alone, since that
+ * language is checked against the story as it is stored.
+ */
+export function changedBesidesTranslations(form: StoryForm, loaded: StoryForm): boolean {
+  const strip = (draft: StoryDraft): string =>
+    JSON.stringify({
+      ...draft,
+      translations: null,
+      metaTranslations: null,
+      questions: draft.questions.map((q) => ({ ...q, translations: null })),
+      reflections: (draft.reflections ?? []).map((r) => r.text),
+      notes: (draft.notes ?? []).map((n) => ({ ...n, translations: null })),
+    });
+  return strip(draftFromForm(form)) !== strip(draftFromForm(loaded));
+}
+
+/**
+ * What PUT /admin/stories/:id/translations/:locale takes for one language as
+ * the form has it: every part, tidied, a part left empty as null (which
+ * removes it), and the lists one entry per question, reflection and note.
+ */
+export interface LocaleTranslationPayload {
+  body: string | null;
+  title: string | null;
+  summary: string | null;
+  questions: Array<StoryQuestionTranslation | null>;
+  reflections: Array<string | null>;
+  notes: Array<StoryNoteTranslation | null>;
+}
+
+export function localeTranslationPayload(form: StoryForm, locale: string): LocaleTranslationPayload {
+  const draft = draftFromForm(form);
+  const meta = draft.metaTranslations?.[locale];
+  return {
+    body: draft.translations[locale] ?? null,
+    title: meta?.title ?? null,
+    summary: meta?.summary ?? null,
+    questions: draft.questions.map((q) => q.translations?.[locale] ?? null),
+    reflections: (draft.reflections ?? []).map((r) => r.translations?.[locale] ?? null),
+    notes: (draft.notes ?? []).map((n) => n.translations?.[locale] ?? null),
+  };
+}
+
+/**
+ * `form` with one language taken from `from` (the story as the server saved
+ * it): the rest of the form, unsaved edits and all, stays as it is.
+ */
+export function withLocaleFrom(form: StoryForm, from: StoryForm, locale: string): StoryForm {
+  const put = <T>(map: Record<string, T> | undefined, source: Record<string, T> | undefined): Record<string, T> => {
+    const next = { ...(map ?? {}) };
+    const value = source?.[locale];
+    if (value === undefined) delete next[locale];
+    else next[locale] = structuredClone(value);
+    return next;
+  };
+  const lib = form.library;
+  return {
+    ...form,
+    questions: form.questions.map((q, i) => ({ ...q, translations: put(q.translations, from.questions[i]?.translations) })),
+    library: {
+      ...lib,
+      translations: put(lib.translations, from.library.translations),
+      metaTranslations: put(lib.metaTranslations, from.library.metaTranslations),
+      reflections: (lib.reflections ?? []).map((r, i) => ({ ...r, translations: put(r.translations, from.library.reflections?.[i]?.translations) })),
+      notes: (lib.notes ?? []).map((n, i) => ({ ...n, translations: put(n.translations, from.library.notes?.[i]?.translations) })),
+    },
+  };
+}
+
+/** How much of the story one language covers, as the Translations section summarises it. */
+export interface LocaleCoverage {
+  locale: string;
+  /** the text: none yet, lined up with the Kurdish paragraph for paragraph, or not */
+  text: 'empty' | 'ok' | 'mismatch';
+  title: boolean;
+  questions: { done: number; total: number };
+  reflections: { done: number; total: number };
+  notes: { done: number; total: number };
+  /** whether any of it is written */
+  any: boolean;
+}
+
+export function localeCoverage(form: StoryForm, locale: string): LocaleCoverage {
+  const draft = draftFromForm(form);
+  const expected = storyParagraphs(draft.body).length;
+  const body = draft.translations[locale];
+  const n = body ? storyParagraphs(body).length : 0;
+  const count = <T>(list: readonly T[], has: (item: T) => boolean) => ({ done: list.filter(has).length, total: list.length });
+  return {
+    locale,
+    text: n === 0 ? 'empty' : n === expected ? 'ok' : 'mismatch',
+    title: Boolean(draft.metaTranslations?.[locale]?.title),
+    questions: count(draft.questions, (q) => q.translations?.[locale] !== undefined),
+    reflections: count(draft.reflections ?? [], (r) => r.translations?.[locale] !== undefined),
+    notes: count(draft.notes ?? [], (nt) => nt.translations?.[locale] !== undefined),
+    any: translatedLocales(draft).includes(locale),
+  };
+}
+
+/**
+ * The problems that are about one language's translation and nothing else
+ * (the API's own rule for what refuses a save of that language alone).
+ */
+export function localeProblems(problems: readonly StoryProblem[], locale: string): StoryProblem[] {
+  const own = new RegExp(`^(?:(?:translations|metaTranslations)\\.${locale}|(?:questions|reflections|notes)\\[\\d+\\]\\.translations\\.${locale})(?:$|[.[])`);
+  return problems.filter((p) => own.test(p.path));
+}
+
+/** A language's review as stored: unreviewed unless someone said otherwise. */
+export function localeReview(story: Pick<AdminStory, 'translationReview'> | null, locale: string): StoryTranslationReviewEntry {
+  return story?.translationReview?.[locale] ?? { status: 'unreviewed' };
 }
 
 export interface TranslationCheck {
@@ -611,6 +837,23 @@ export type EditorAction =
   | { type: 'lib/cover'; value: string | null }
   | { type: 'lib/minutes'; value: number | null }
   | { type: 'translation'; locale: string; value: string }
+  /** one language of the title or summary, a question, a reflection or a note (the Translations section) */
+  | { type: 'tr/meta'; locale: string; field: 'title' | 'summary'; value: string }
+  | { type: 'tr/question'; locale: string; index: number; field: 'prompt' | 'explanation'; value: string }
+  | { type: 'tr/option'; locale: string; index: number; option: number; value: string }
+  | { type: 'tr/reflection'; locale: string; index: number; value: string }
+  | { type: 'tr/note'; locale: string; index: number; field: 'title' | 'body'; value: string }
+  /** one language as the server saved it, the rest of the form left as it is */
+  | { type: 'tr/merge'; locale: string; from: StoryForm }
+  | { type: 'reflection/add' }
+  | { type: 'reflection/set'; index: number; value: string }
+  | { type: 'reflection/remove'; index: number }
+  | { type: 'note/add' }
+  | { type: 'note/set'; index: number; field: 'kind' | 'title' | 'body'; value: string }
+  | { type: 'note/remove'; index: number }
+  | { type: 'source/add' }
+  | { type: 'source/set'; index: number; field: 'title' | 'author' | 'url' | 'type' | 'note'; value: string }
+  | { type: 'source/remove'; index: number }
   /** join another story's group (its id), leave the group (null), or take the change back (undefined) */
   | { type: 'link'; sameStoryAs: string | null | undefined }
   | { type: 'gloss/add'; row?: GlossRow }
@@ -637,6 +880,17 @@ function withQuestion(form: StoryForm, index: number, fn: (q: QuestionForm) => Q
 
 function withGloss(form: StoryForm, index: number, fn: (g: GlossRow) => GlossRow): StoryForm {
   return { ...form, glossary: form.glossary.map((g, i) => (i === index ? fn(g) : g)) };
+}
+
+function withLibrary(form: StoryForm, patch: Partial<StoryLibraryInput>): StoryForm {
+  return { ...form, library: { ...form.library, ...patch } };
+}
+
+/** A question's translation into `locale` with one change; a new one starts with as many options as the question. */
+function withQuestionTranslation(q: QuestionForm, locale: string, fn: (t: StoryQuestionTranslation) => StoryQuestionTranslation): QuestionForm {
+  const was = q.translations[locale] ?? { prompt: '', options: q.options.map(() => '') };
+  const options = q.options.map((_, i) => was.options[i] ?? '');
+  return { ...q, translations: { ...q.translations, [locale]: fn({ ...was, options }) } };
 }
 
 /** A title or variety change carries the slug along while the editor has not chosen one. */
@@ -676,6 +930,56 @@ export function editorReducer(form: StoryForm, action: EditorAction): StoryForm 
       return { ...form, library: { ...form.library, readingMinutes: action.value } };
     case 'translation':
       return { ...form, library: { ...form.library, translations: { ...form.library.translations, [action.locale]: action.value } } };
+    case 'tr/meta': {
+      const meta = form.library.metaTranslations ?? {};
+      return withLibrary(form, { metaTranslations: { ...meta, [action.locale]: { ...meta[action.locale], [action.field]: action.value } } });
+    }
+    case 'tr/question':
+      return withQuestion(form, action.index, (q) => withQuestionTranslation(q, action.locale, (t) => ({ ...t, [action.field]: action.value })));
+    case 'tr/option':
+      return withQuestion(form, action.index, (q) =>
+        withQuestionTranslation(q, action.locale, (t) => ({ ...t, options: t.options.map((o, i) => (i === action.option ? action.value : o)) })),
+      );
+    case 'tr/reflection':
+      return withLibrary(form, {
+        reflections: (form.library.reflections ?? []).map((r, i) =>
+          i === action.index ? { ...r, translations: { ...r.translations, [action.locale]: action.value } } : r,
+        ),
+      });
+    case 'tr/note':
+      return withLibrary(form, {
+        notes: (form.library.notes ?? []).map((n, i) => {
+          if (i !== action.index) return n;
+          const was = n.translations?.[action.locale] ?? { title: '', body: '' };
+          return { ...n, translations: { ...n.translations, [action.locale]: { ...was, [action.field]: action.value } } };
+        }),
+      });
+    case 'tr/merge':
+      return withLocaleFrom(form, action.from, action.locale);
+    case 'reflection/add':
+      return (form.library.reflections ?? []).length >= STORY_REFLECTIONS_MAX
+        ? form
+        : withLibrary(form, { reflections: [...(form.library.reflections ?? []), { text: '', translations: {} }] });
+    case 'reflection/set':
+      return withLibrary(form, { reflections: (form.library.reflections ?? []).map((r, i) => (i === action.index ? { ...r, text: action.value } : r)) });
+    case 'reflection/remove':
+      return withLibrary(form, { reflections: (form.library.reflections ?? []).filter((_, i) => i !== action.index) });
+    case 'note/add':
+      return (form.library.notes ?? []).length >= STORY_NOTES_MAX
+        ? form
+        : withLibrary(form, { notes: [...(form.library.notes ?? []), { kind: 'legend', title: '', body: '', translations: {} }] });
+    case 'note/set':
+      return withLibrary(form, { notes: (form.library.notes ?? []).map((n, i) => (i === action.index ? { ...n, [action.field]: action.value } : n)) });
+    case 'note/remove':
+      return withLibrary(form, { notes: (form.library.notes ?? []).filter((_, i) => i !== action.index) });
+    case 'source/add':
+      return (form.library.sources ?? []).length >= STORY_SOURCES_MAX
+        ? form
+        : withLibrary(form, { sources: [...(form.library.sources ?? []), { title: '', type: 'oral' }] });
+    case 'source/set':
+      return withLibrary(form, { sources: (form.library.sources ?? []).map((src, i) => (i === action.index ? { ...src, [action.field]: action.value } : src)) });
+    case 'source/remove':
+      return withLibrary(form, { sources: (form.library.sources ?? []).filter((_, i) => i !== action.index) });
     case 'link': {
       const rest = { ...form };
       delete rest.sameStoryAs;
@@ -840,6 +1144,8 @@ export interface ParagraphFacts {
   text: string;
   words: number;
   sentences: SentenceFacts[];
+  /** the title, when the paragraph is a section heading ("## …"); null for text */
+  heading: string | null;
 }
 
 export interface TextFacts {
@@ -849,6 +1155,8 @@ export interface TextFacts {
   /** estimated, as learners are shown it ("~2 min") */
   minutes: number;
   paragraphs: ParagraphFacts[];
+  /** one per heading; the paragraphs before the first are the introduction */
+  sections: StorySection[];
 }
 
 /** Words, length, minutes and every paragraph's sentences, as the reader will cut them. */
@@ -859,6 +1167,7 @@ export function textFacts(dialect: StoryDialect, body: string): TextFacts {
     return {
       text,
       words: countStoryWords(text),
+      heading: storyHeadingTitle(text),
       sentences: storySentences(text).map((s) => {
         const chars = normalizeKurdish(s).length;
         return {
@@ -876,6 +1185,7 @@ export function textFacts(dialect: StoryDialect, body: string): TextFacts {
     length: paragraphs.length > 0 ? storyLengthFor(dialect, words) : null,
     minutes: readingMinutes(dialect, words),
     paragraphs,
+    sections: storySections(paragraphs.map((p) => p.text)),
   };
 }
 
@@ -1026,6 +1336,12 @@ const FIELD_NAME: Record<string, string> = {
   cover: 'Cover',
   readingMinutes: 'Reading time',
   translations: 'Translation',
+  metaTranslations: 'Title and summary',
+  translationReview: 'Review',
+  text: 'text',
+  url: 'address',
+  type: 'kind',
+  note: 'note',
   glossary: 'Glossary',
   questions: 'Questions',
   meanings: 'meaning',
@@ -1039,6 +1355,9 @@ const FIELD_NAME: Record<string, string> = {
   evidenceSentence: 'evidence sentence',
   kind: 'kind',
 };
+
+/** The names a language follows ("Translation (German)"). */
+const BY_LANGUAGE = new Set(['meaning', 'Translation', 'Title and summary', 'Review']);
 
 /** Where a problem is, for a person: 'questions[2].options[0]' → "Question 3 · option 1". */
 export function describePath(path: string): string {
@@ -1056,13 +1375,19 @@ export function describePath(path: string): string {
               ? `Paragraph ${n}`
               : m[1] === 'options'
                 ? `option ${n}`
-                : `${m[1]} ${n}`,
+                : m[1] === 'reflections'
+                  ? `To think about ${n}`
+                  : m[1] === 'notes'
+                    ? `Note ${n}`
+                    : m[1] === 'sources'
+                      ? `Source ${n}`
+                      : `${m[1]} ${n}`,
       );
-    } else if (parts.length > 0 && parts[parts.length - 1] === 'meaning') {
-      parts[parts.length - 1] = `meaning (${localeName(segment)})`;
-    } else if (parts.length > 0 && parts[parts.length - 1] === 'Translation') {
-      // 'translations.de' reads as "Translation (German)"
-      parts[parts.length - 1] = `Translation (${localeName(segment)})`;
+    } else if (parts.length > 0 && BY_LANGUAGE.has(parts[parts.length - 1]!)) {
+      // 'translations.de' reads as "Translation (German)", 'glossary[0].meanings.de' as "meaning (German)"
+      parts[parts.length - 1] = `${parts[parts.length - 1]} (${localeName(segment)})`;
+    } else if (segment === 'body' && /^notes\[\d+\](\.translations\.[a-z]+)?\.body$/.test(path)) {
+      parts.push('text');
     } else if ((segment === 'body' && path !== 'body') || segment === 'term') {
       // 'body.paragraphs[1]' reads as "Paragraph 2", 'glossary[0].term' as "Glossary word 1"
       continue;

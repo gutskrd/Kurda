@@ -35,6 +35,9 @@ import { storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
 import { COLUMN, Note, Pill } from './ui';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { pressedDim } from '../theme/motion';
+import { LoreEntry } from '../lore/LoreEntry';
+import { textIn } from '../lore/labels';
+import { metaFor } from './legend';
 
 /**
  * Which variety a game is set up in: Soranî when the interface is Soranî,
@@ -73,6 +76,10 @@ const SEARCH_DEBOUNCE_MS = 300;
  * aloud, a bookmark toggle that answers at once and asks the server after,
  * and a hairline of how far it has been read. Tapping a card opens the story's
  * overview (StoryReaderScreen).
+ *
+ * Above the search, the library's two companions: the riddles (Metelok) and
+ * the proverbs (Gotinên pêşiyan), each a screen of its own (lore/), so the
+ * three collections share one home without a new place in the tab bar.
  *
  * At the foot, the two ways into a game with other people on a story — set
  * one up, or join one with the code a friend gave you (the same boxes as on
@@ -352,6 +359,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
         showsVerticalScrollIndicator={false}
         refreshControl={pull}
       >
+        <LoreEntry />
         <View style={[styles.searchRow, { flexDirection: dir.row }]}>
           {/* the app's one search field, in place of a copy of it built here */}
           <SearchField value={q} onChangeText={setQ} label={t('stories.library.search')} style={styles.search} />
@@ -553,6 +561,8 @@ export function StoryCard({
     .filter((f): f is string => !!f)
     .join(', ');
   const bookmarked = story.me?.bookmarked ?? false;
+  // the title in the reader's language, under the Kurdish one, where the story is not in theirs
+  const meta = metaFor(story, locale);
   return (
     <View style={[styles.card, { backgroundColor: colors.surface }]}>
       <PressableScale
@@ -574,6 +584,11 @@ export function StoryCard({
         <Text {...storyTextProps(story.dialect)} style={[styles.title, { color: colors.textPrimary }, storyTextStyle(story.dialect)]} numberOfLines={2}>
           {story.title}
         </Text>
+        {meta?.title ? (
+          <Text {...textIn(meta.lang).props} style={[styles.titleTranslation, { color: colors.textSecondary }, textIn(meta.lang).style]} numberOfLines={1}>
+            {meta.title}
+          </Text>
+        ) : null}
         {story.summary ? (
           <Text {...storyTextProps(story.dialect)} style={[styles.summary, { color: colors.textSecondary }, storyTextStyle(story.dialect)]} numberOfLines={2}>
             {story.summary}
@@ -685,6 +700,7 @@ const styles = StyleSheet.create({
   hairlineFill: { height: 4 },
   title: { ...display(typography.sizes.md), lineHeight: Math.round(typography.sizes.md * 1.2), marginTop: 2 },
   summary: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  titleTranslation: { fontSize: typography.sizes.xs, lineHeight: 18, fontWeight: typography.weights.semibold, marginTop: -2 },
   facts: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
   factText: { flexShrink: 1, fontSize: typography.sizes.xs },
   bookmark: {

@@ -13,6 +13,8 @@
  *   POST   /admin/game-content/import         { from: 'lessons' | 'stories' | 'vocabulary', dialect }: drafts from approved content
  *   GET    /admin/game-content/vocabulary?dialect&q&limit   published vocabulary, for a card's words to be picked from
  *   GET    /admin/game-content/lines?dialect=&q=   published lines to copy into a case, never typed again
+ *   PUT    /admin/game-content/:id/translations/:locale          { payload }: a riddle's or a proverb's text in one language
+ *   POST   /admin/game-content/:id/translations/:locale/review   { status, note? }: that language read, or to be read again
  *
  * The rules are the stories': every change names the version it was made on
  * (409 STALE when someone else changed it first), publishing needs a
@@ -20,11 +22,24 @@
  * takes the approval away. What may be saved is `checkGameContent` in
  * @kurda/shared, which this page runs as the editor types, so the issues the
  * server would refuse a save for are shown before it is tried.
+ *
+ * The Stories' riddles and proverbs are rows here too, though they belong to
+ * no game. Their translations are saved and reviewed one language at a time
+ * (`checkLoreTranslation`), on a row in any state but archived: correcting a
+ * language never unpublishes the row nor takes its approval away.
  */
 import {
+  APP_LOCALES,
   GAME_NAMES,
   GAME_CONTENT_KINDS,
   type AdminGameContent,
+  type AppLocale,
+  type LoreKind,
+  type LoreTradition,
+  type ProverbTheme,
+  type RiddleCategory,
+  type RiddleDifficulty,
+  type TranslationReview,
   type GameContentKind,
   type GameContentReadiness,
   type GameContentReview,
@@ -75,7 +90,44 @@ export const KIND_NAME: Record<GameContentKind, string> = {
   word_card: 'Word card',
   identity: 'Identity',
   question_template: 'Question template',
+  riddle: 'Riddle',
+  proverb: 'Proverb',
 };
+
+/** Where a kind that belongs to no game is shown to learners: the riddles and proverbs are the Stories'. */
+export const COLLECTION_NAME = 'Stories';
+
+export const RIDDLE_DIFFICULTY_LABEL: Record<RiddleDifficulty, string> = { easy: 'Easy (level 1)', medium: 'Medium (level 3)', hard: 'Hard (level 5)' };
+export const RIDDLE_CATEGORY_LABEL: Record<RiddleCategory, string> = {
+  nature: 'Nature',
+  everyday: 'Everyday things',
+  wordplay: 'Wordplay',
+  logic: 'Logic',
+  funny: 'Funny',
+  culture: 'Culture',
+  children: 'For children',
+};
+export const TRADITION_LABEL: Record<LoreTradition, string> = { traditional: 'Traditional', regional: 'Regional form', new: 'Newly written' };
+export const THEME_LABEL: Record<ProverbTheme, string> = {
+  wisdom: 'Wisdom',
+  patience: 'Patience',
+  friendship: 'Friendship',
+  family: 'Family',
+  respect: 'Respect',
+  courage: 'Courage',
+  knowledge: 'Knowledge',
+  'life-experience': 'Life experience',
+  trust: 'Trust',
+  'hard-work': 'Hard work',
+  'human-nature': 'Human nature',
+  mistakes: 'Mistakes and learning',
+};
+export const TRANSLATION_REVIEW_LABEL: Record<TranslationReview, string> = { unreviewed: 'Needs review', reviewed: 'Reviewed' };
+
+/** A language by its English name, as the panel's own language names it. */
+export function localeName(code: AppLocale): string {
+  return APP_LOCALES.find((l) => l.code === code)?.englishName ?? code;
+}
 
 export const GAME_DIALECT_NAME: Record<GameDialect, string> = { kmr: 'Kurmancî', ckb: 'Soranî' };
 
@@ -116,7 +168,18 @@ export function blankPayload(kind: GameContentKind): Record<string, unknown> {
       return { word: '', meanings, category: '', facts: {} };
     case 'question_template':
       return { ku: '', meanings, fact: '' };
+    case 'riddle':
+      return { slug: '', difficulty: 'easy', category: 'nature', tradition: 'new', question: '', hints: [''], answer: '', accepted: [''], explanation: '', sources: [] };
+    case 'proverb':
+      return { slug: '', text: '', themes: [], tradition: 'traditional', variants: [], exampleKu: '', sources: [] };
   }
+}
+
+/** A blank translation of a kind: a riddle's with one empty line per hint of its Kurdish. */
+export function blankTranslation(kind: LoreKind, hints = 1): Record<string, unknown> {
+  return kind === 'riddle'
+    ? { question: '', hints: Array.from({ length: hints }, () => ''), answer: '', explanation: '' }
+    : { translation: '', meaning: '', explanation: '', example: '' };
 }
 
 export function isKind(v: string): v is GameContentKind {
@@ -161,6 +224,12 @@ export const reviewGameContent = (id: string, approved: boolean, note: string | 
 
 export const deleteGameContent = (id: string, lockVersion: number): Promise<{ id: string; deleted: true }> =>
   api(`${at(id)}?lockVersion=${lockVersion}`, { method: 'DELETE' });
+
+export const saveTranslation = (id: string, locale: AppLocale, payload: unknown): Promise<AdminGameContent> =>
+  api(`${at(id)}/translations/${locale}`, { method: 'PUT', body: { payload } });
+
+export const reviewTranslation = (id: string, locale: AppLocale, status: TranslationReview, note: string | null): Promise<AdminGameContent> =>
+  api(`${at(id)}/translations/${locale}/review`, { method: 'POST', body: { status, note } });
 
 /** Where an import takes its drafts from: lessons' sentences, stories' paragraphs, or published vocabulary's starter word cards. */
 export type GameContentImport = 'lessons' | 'stories' | 'vocabulary';

@@ -37,12 +37,38 @@ export interface Person extends Tally {
   linked: Array<{ id: string; username: string }>;
 }
 
+/** A chapter of the Kurmanji Road, which goes online by itself once its last line is recorded. */
+export interface RoadChapter {
+  position: number;
+  titleKu: string;
+  titleEn: string;
+  lessons: number;
+  published: number;
+  /** the story Hamo tells at the chapter's end, which goes online with it; absent from an older server */
+  story?: { slug: string; title: string; online: boolean } | null;
+  /** the recordings its lessons and story play, and how many are made */
+  lines: number;
+  recorded: number;
+  online: boolean;
+}
+
 export interface PeopleListing {
   people: Person[];
   /** the voices linked to the account asking */
   mine: VoiceId[];
   /** the account records only its own voices */
   ownVoicesOnly: boolean;
+  /** the road's chapters in order; absent from a server that does not say */
+  chapters?: RoadChapter[];
+}
+
+/** What a chapter's row says about it: online, ready to go, or how much is left. */
+export function chapterState(c: Pick<RoadChapter, 'online' | 'lines' | 'recorded'>): { tone: 'ok' | 'info' | 'neutral'; text: string } {
+  if (c.online) return { tone: 'ok', text: 'Online' };
+  if (c.lines === 0) return { tone: 'neutral', text: 'Nothing to record' };
+  const left = c.lines - c.recorded;
+  if (left === 0) return { tone: 'info', text: 'Going online' };
+  return { tone: 'neutral', text: `${left} ${left === 1 ? 'line' : 'lines'} to go` };
 }
 
 export type SourceStatus = 'draft' | 'in_review' | 'published';

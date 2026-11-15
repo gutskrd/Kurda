@@ -211,13 +211,17 @@ describe('CODE_COPY', () => {
     expect(describeError(err({ kind: 'client', code: 'WEAK_PASSWORD', details: { reason: 'needs-letter' } }), t)).toBe(
       TRANSLATIONS.en['field.passwordNeedsLetter'],
     );
+    // the username's in the words the phone's own check says them in (username/validate.ts)
     expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'numbers-only' } }), t)).toBe(
-      TRANSLATIONS.en['error.code.usernameLetter'],
+      TRANSLATIONS.en['username.rule.numbersOnly'],
     );
     expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'reserved' } }), t)).toBe(
       'That username isn’t available. Try another one.',
     );
-    expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'too-long' } }), t)).toBe('Username must be 3–30 characters (letters, digits or _)');
+    expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'too-long' } }), t)).toBe('At most 30 characters.');
+    expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'edge-punctuation' } }), t)).toBe(TRANSLATIONS.en['username.rule.edge']);
+    // the characters the server would not take are named
+    expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'invalid-chars', chars: ['#', ' '] } }), t)).toBe('“#” can’t be in a username.');
   });
 
   it('names the email when that is the field the server could not accept, and asks for another look otherwise', () => {

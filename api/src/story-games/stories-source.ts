@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import type { QuestionKind, StoryDialect, StoryGlossEntry, StoryLength, StoryLevel } from '@kurda/shared';
+import type { QuestionKind, StoryDialect, StoryGlossEntry, StoryLength, StoryLevel, StoryQuestionTranslation } from '@kurda/shared';
 import type { BankQuestion } from './plan.js';
 
 type Executor = Pick<pg.Pool, 'query'>;
@@ -88,6 +88,7 @@ interface QuestionRow {
   explanation_en: string | null;
   evidence_paragraph: number | null;
   evidence_sentence: number | null;
+  translations: Record<string, StoryQuestionTranslation> | null;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -109,7 +110,7 @@ export class LocalStoryCatalog implements StoryCatalog {
     if (!row) return null;
     const questions = await executor.query<QuestionRow>(
       `SELECT id, position, kind, prompt, prompt_en, options, correct_index, explanation, explanation_en,
-              evidence_paragraph, evidence_sentence
+              evidence_paragraph, evidence_sentence, translations
          FROM story_questions WHERE story_id = $1 ORDER BY position`,
       [storyId],
     );
@@ -136,6 +137,7 @@ export class LocalStoryCatalog implements StoryCatalog {
         explanationEn: q.explanation_en,
         evidenceParagraph: q.evidence_paragraph,
         evidenceSentence: q.evidence_sentence,
+        translations: q.translations ?? {},
       })),
     };
   }

@@ -37,6 +37,7 @@ import {
   lessonAudioKey,
   lessonAudioTargets,
   normalizeKurdish,
+  roadStoryChapter,
   storyAudioSentences,
   storyParagraphs,
   toDialect,
@@ -122,6 +123,8 @@ export interface ExerciseInput {
 
 export interface StoryInput {
   id: string;
+  /** a story whose slug names a chapter of the road (`road-01-…`) is Hamo's, told at that chapter's end */
+  slug?: string;
   /** 'kurmanci' or 'sorani' */
   dialect: string;
   title: string;
@@ -480,8 +483,14 @@ function courseOrder(a: ExerciseInput, b: ExerciseInput): number {
   );
 }
 
-function addLessons(builder: Builder, exercises: readonly ExerciseInput[]): void {
+function addLessons(builder: Builder, exercises: readonly ExerciseInput[], afterRoadChapter: (unit: number, section: { id: string; label: string }) => void = () => undefined): void {
   const sorted = [...exercises].sort(courseOrder);
+  // a road chapter's story is listed right after the chapter's lessons, under the chapter
+  let roadUnit: { n: number; section: { id: string; label: string } } | null = null;
+  const closeRoadUnit = (): void => {
+    if (roadUnit) afterRoadChapter(roadUnit.n, roadUnit.section);
+    roadUnit = null;
+  };
   // a lesson's number in its unit, counted across the unit's skills in course order
   const slots = new Map<string, string[]>();
   const ordinal = (ex: ExerciseInput): number => {
@@ -498,6 +507,9 @@ function addLessons(builder: Builder, exercises: readonly ExerciseInput[]): void
     const prefix = ex.courseSlug === ROAD_COURSE ? '' : `${ex.courseTitle} · `;
     const lesson = `${prefix}Unit ${ex.unitPosition} · Lesson ${ordinal(ex)}`;
     const section = { id: `${ex.courseSlug}:${ex.unitPosition}`, label: `${prefix}Unit ${ex.unitPosition}${ex.unitTitle ? ` · ${ex.unitTitle}` : ''}` };
+    const onRoad = ex.courseSlug === ROAD_COURSE;
+    if (roadUnit && (!onRoad || roadUnit.n !== ex.unitPosition)) closeRoadUnit();
+    if (onRoad && !roadUnit) roadUnit = { n: ex.unitPosition, section };
     const status = sourceStatus(ex.status);
     const ref = ex.lessonId ? { page: 'lessons' as const, id: ex.lessonId } : null;
     const p = isRecord(ex.payload) ? ex.payload : {};
@@ -509,6 +521,8 @@ function addLessons(builder: Builder, exercises: readonly ExerciseInput[]): void
       const nameOf = (part: unknown): string | null => {
         const who = typeof part === 'number' ? speakers[part] : undefined;
         if (!isRecord(who)) return null;
+        // the learner's own line, which they say back: the one acted to
+        if (who.learner === true) return 'You (the learner)';
         return isSpeakerId(who.character) ? characterName(who.character) : str(who.name);
       };
       for (const c of conversationClips(ex.payload)) {
@@ -565,12 +579,15 @@ function addLessons(builder: Builder, exercises: readonly ExerciseInput[]): void
       });
     }
   }
+  closeRoadUnit();
 }
 
-function addStories(builder: Builder, stories: readonly StoryInput[]): void {
+function addStories(builder: Builder, stories: readonly StoryInput[], chapterSection: { id: string; label: string } | null = null): void {
   for (const story of stories) {
     const dialect = dialectOf(story.dialect);
-    const section = { id: `story:${story.id}`, label: `Story · ${story.title}` };
+    // a road chapter's story is Hamo's, and listed with its chapter
+    const hamo = story.slug !== undefined && roadStoryChapter(story.slug) !== null;
+    const section = chapterSection ?? { id: `story:${story.id}`, label: `Story · ${story.title}` };
     const status = sourceStatus(story.status);
     let before: string | null = null;
     storyParagraphs(story.body).forEach((paragraph, p) => {
@@ -584,12 +601,12 @@ function addStories(builder: Builder, stories: readonly StoryInput[]): void {
           key: lessonAudioKey(text),
           text,
           dialect,
-          planned: null,
+          planned: hamo ? 'hamo' : null,
           place: {
             kind: 'story',
-            label: `Story ‘${story.title}’ · paragraph ${p + 1}, sentence ${n}`,
+            label: `${hamo ? 'Hamo’s story' : 'Story'} ‘${story.title}’ · paragraph ${p + 1}, sentence ${n}`,
             status,
-            voice: NARRATOR[dialect],
+            voice: hamo ? 'hamo' : NARRATOR[dialect],
             ref: { page: 'stories', id: story.id },
           },
           section,
@@ -685,8 +702,18 @@ function addGames(builder: Builder, games: readonly GameInput[]): void {
  */
 export function buildScript(input: ScriptInput): ScriptLine[] {
   const builder = new Builder();
-  addLessons(builder, input.exercises);
-  addStories(builder, input.stories);
+  const chapterOf = (s: StoryInput): number | null => (s.slug !== undefined ? roadStoryChapter(s.slug) : null);
+  const told = new Set<string>();
+  addLessons(builder, input.exercises, (unit, section) => {
+    const theirs = input.stories.filter((s) => chapterOf(s) === unit);
+    for (const s of theirs) told.add(s.id);
+    addStories(builder, theirs, section);
+  });
+  // the rest, and a chapter's story whose chapter has no lessons here
+  addStories(
+    builder,
+    input.stories.filter((s) => !told.has(s.id)),
+  );
   addClips(builder, input.words ?? WORD_SET_CLIPS, 'words');
   addClips(builder, input.letters ?? LETTER_CLIPS, 'alphabet');
   addGames(builder, input.games);

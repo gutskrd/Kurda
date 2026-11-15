@@ -107,7 +107,11 @@ function textFrom(query: unknown): { text: string; key: string; line: { conversa
   return { text, key: conversationLineKey(line.conversation, line.part, text), line };
 }
 
-export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfig): void {
+/**
+ * `onTake` runs after every take is saved, without holding up the answer: the
+ * road's chapters go online once their last line is recorded (content/road-chapters.ts).
+ */
+export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfig, onTake: () => void = () => undefined): void {
   const base = audioLimits(config);
   // a WAV of a sentence is far under the voice-note cap; the duration check below is the real bound
   const limits = { ...base, allowedTypes: new Set(['audio/wav']) };
@@ -231,8 +235,9 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
       } finally {
         client.release();
       }
-      // a story's "fully narrated" badge may have just changed
+      // a story's "fully narrated" badge may have just changed, and a chapter may have just been finished
       await bustStoryLists(app.cache);
+      onTake();
       return reply.code(201).send({
         key: saved.key,
         text: saved.text,

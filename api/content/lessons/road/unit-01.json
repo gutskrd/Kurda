@@ -193,23 +193,23 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Na, na! Ez Hevalo me.",
-                    "prompt": "You point at the deer and ask “Hamo?”. He shakes his ears: “Na, na! Ez Hevalo me.” What does he say?",
+                    "say": "Na, na! Ez Hamo me.",
+                    "prompt": "You point at the man with the moustache and try your luck: “Hevalo?” He laughs and taps his chest: “Na, na! Ez Hamo me.” What does he say?",
                     "options": [
-                      "No, no! I am Hevalo.",
-                      "Yes! I am Hamo.",
+                      "No, no! I am Hamo.",
+                      "Yes! I am Hevalo.",
                       "Hello! I am well."
                     ],
                     "correctIndex": 0,
-                    "voice": "hevalo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 12,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Your turn at the gate. Say “Silav, Hamo! Ez baş im.” (Hello, Hamo! I am well.)",
-                    "reference": "Silav, Hamo! Ez baş im.",
+                    "prompt": "Your turn at the gate. Hamo says it first; say it back to him: “Silav! Ez baş im.” (Hello! I am well.)",
+                    "reference": "Silav! Ez baş im.",
                     "voice": "hamo"
                   }
                 },
@@ -287,7 +287,7 @@
                         "right": "friend"
                       },
                       {
-                        "left": "kêfxweş",
+                        "left": "dilxweş",
                         "right": "glad, pleased"
                       },
                       {
@@ -334,12 +334,12 @@
                   "position": 5,
                   "type": "listening",
                   "payload": {
-                    "prompt": "The deer stands up very straight to answer. Type what you hear.",
+                    "prompt": "Hamo pats the deer’s neck and answers his own question. Type what you hear.",
                     "accepted": [
-                      "Erê, ez Hevalo me.",
-                      "Erê, ez Hevalo me"
+                      "Erê, tu Hevalo yî!",
+                      "Erê, tu Hevalo yî"
                     ],
-                    "voice": "hevalo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -373,8 +373,8 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "say": "Ez gelek kêfxweş im.",
-                    "prompt": "Hamo shakes your hand with both of his: “Ez gelek kêfxweş im.” What does he mean?",
+                    "say": "Ez gelek dilxweş im.",
+                    "prompt": "Hamo shakes your hand with both of his: “Ez gelek dilxweş im.” What does he mean?",
                     "accepted": [
                       "I am very glad.",
                       "I am very happy.",
@@ -408,8 +408,8 @@
                   "payload": {
                     "prompt": "You tell Hamo you are glad. Hamo answers you. Type what you hear.",
                     "accepted": [
-                      "Spas, hevalo! Ez jî kêfxweş im.",
-                      "Spas, hevalo! Ez jî kêfxweş im"
+                      "Spas, hevalo! Ez jî dilxweş im.",
+                      "Spas, hevalo! Ez jî dilxweş im"
                     ],
                     "voice": "hamo"
                   }
@@ -443,8 +443,8 @@
                   "position": 13,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Tell Hamo how glad you are: “Spas! Ez gelek kêfxweş im.” (Thanks! I am very glad.)",
-                    "reference": "Spas! Ez gelek kêfxweş im.",
+                    "prompt": "Tell Hamo how glad you are: “Spas! Ez gelek dilxweş im.” (Thanks! I am very glad.)",
+                    "reference": "Spas! Ez gelek dilxweş im.",
                     "voice": "hamo"
                   }
                 },
@@ -467,8 +467,8 @@
                   "position": 15,
                   "type": "translate",
                   "payload": {
-                    "say": "Tu kêfxweş î?",
-                    "prompt": "Hamo peers at you over his moustache: “Tu kêfxweş î?” What is he asking?",
+                    "say": "Tu dilxweş î?",
+                    "prompt": "Hamo peers at you over his moustache: “Tu dilxweş î?” What is he asking?",
                     "accepted": [
                       "Are you glad?",
                       "Are you happy?",
@@ -504,10 +504,10 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Bi xêr bimînî!",
-                    "prompt": "A guest always answers a welcome with “Bi xêr bimînî!” What does it mean?",
+                    "say": "Ser çavan!",
+                    "prompt": "A guest answers a welcome with “Ser çavan!” — word for word, “on my eyes”. What does it mean?",
                     "options": [
-                      "Thank you! (may you stay well)",
+                      "Thank you! (glad to be here)",
                       "Welcome!",
                       "Hello!"
                     ],
@@ -525,7 +525,7 @@
                         "right": "Welcome!"
                       },
                       {
-                        "left": "Bi xêr bimînî!",
+                        "left": "Ser çavan!",
                         "right": "Thank you! (to a welcome)"
                       },
                       {
@@ -556,8 +556,7 @@
                         "character": "hamo"
                       },
                       {
-                        "name": "Hevalo",
-                        "character": "hevalo"
+                        "learner": true
                       }
                     ],
                     "lines": [
@@ -567,46 +566,61 @@
                         "en": "Hello! Welcome!"
                       },
                       {
+                        "speaker": 1,
+                        "text": "Silav! Ser çavan!",
+                        "en": "Hello! Thank you! (glad to be here)"
+                      },
+                      {
                         "speaker": 0,
-                        "text": "Hevalo, tu jî bi xêr hatî!",
-                        "en": "Hevalo, you are welcome too!"
+                        "text": "Bi xêr hatî, bi xêr hatî! Tu baş î? Tu birçî yî?",
+                        "en": "Welcome, welcome! Are you well? Are you hungry?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Sêv…",
-                        "en": "Apples…"
+                        "text": "Ez baş im, spas. Û erê… ez birçî me!",
+                        "en": "I am well, thanks. And yes… I am hungry!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo? Bi xêr hatî!",
-                        "en": "Hevalo? Welcome!"
+                        "text": "Fermo, hevalo: sêv!",
+                        "en": "Here you are, my friend: an apple! (and the deer hears his name)"
                       },
                       {
                         "speaker": 1,
-                        "text": "Sêv! Ez birçî me!",
-                        "en": "Apples! I am hungry!"
+                        "text": "Spas! … Hevalo?!",
+                        "en": "Thanks! … Hevalo?! (the deer has taken it)"
                       },
                       {
                         "speaker": 0,
-                        "text": "Tu birçî yî? Fermo, sêvek!",
-                        "en": "You are hungry? Here you are, an apple!"
+                        "text": "Hevalo! Sêv ji mêvan re ye!",
+                        "en": "Hevalo! The apple is for the guest!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Spas! Bi xêr bimînî, Hamo!",
-                        "en": "Thanks! And thank you for the welcome, Hamo!"
+                        "text": "Hevalo jî mêvan e!",
+                        "en": "Hevalo is a guest too!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez kêfxweş im. Tu jî birçî yî? Fermo!",
-                        "en": "I am glad. Are you hungry too? Help yourself!"
+                        "text": "Erê, erê… mêvanekî gelek birçî!",
+                        "en": "True, true… a very hungry guest!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û ez? Ez jî birçî me!",
+                        "en": "And me? I am hungry too!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Fermo, fermo! … Na lo, Hevalo, na!",
+                        "en": "Here, here! … No, Hevalo, no!"
                       }
                     ],
-                    "prompt": "Why does Hevalo not answer Hamo’s welcome at first?",
+                    "prompt": "Why does the deer take the apple Hamo holds out to you?",
                     "options": [
-                      "He has seen the apples.",
-                      "He is not well.",
-                      "He is not a guest."
+                      "Hamo calls you “hevalo”, my friend, and that is the deer’s name.",
+                      "Hamo gives it to him.",
+                      "You do not want it."
                     ],
                     "correctIndex": 0
                   }
@@ -667,10 +681,10 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Now answer him the way every good guest does: “Thank you!” (may you stay well)",
+                    "prompt": "Now answer him the way every good guest does: “Thank you!” (the answer to a welcome)",
                     "accepted": [
-                      "Bi xêr bimînî!",
-                      "Bi xêr bimînî"
+                      "Ser çavan!",
+                      "Ser çavan"
                     ],
                     "voice": "hamo"
                   }
@@ -710,8 +724,8 @@
                   "position": 12,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Answer Hamo’s welcome: “Bi xêr bimînî, Hamo!” (Thank you, Hamo! — what a guest says)",
-                    "reference": "Bi xêr bimînî, Hamo!",
+                    "prompt": "Answer Hamo’s welcome the way every guest does: “Ser çavan!” (Thank you! — word for word, “on my eyes”)",
+                    "reference": "Ser çavan!",
                     "voice": "hamo"
                   }
                 },
@@ -733,7 +747,7 @@
                   "payload": {
                     "prompt": "Hamo says to you: “Bi xêr hatî!” What do you answer?",
                     "options": [
-                      "Bi xêr bimînî!",
+                      "Ser çavan!",
                       "Bi xêr hatî!",
                       "Fermo!"
                     ],
@@ -926,29 +940,30 @@
                   "position": 11,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "A polite guest calls an older man “xalo” (uncle). Thank Hamo for the tea: “Spas, xalo! Çay gelek xweş e.” (Thanks, uncle! The tea is very nice.)",
-                    "reference": "Spas, xalo! Çay gelek xweş e.",
+                    "prompt": "Thank Hamo for the tea: “Spas! Çay gelek xweş e.” (Thanks! The tea is very nice.)",
+                    "reference": "Spas! Çay gelek xweş e.",
                     "voice": "hamo"
                   }
                 },
                 {
                   "position": 12,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Hamo fills your glass again. Thank him the polite Kurdish way: “Thanks, uncle!”",
-                    "accepted": [
+                    "prompt": "Hamo fills your glass again. A polite guest calls an older man “xalo” (uncle). How do you thank him?",
+                    "options": [
                       "Spas, xalo!",
-                      "Spas, xalo"
+                      "Silav, xalo!",
+                      "Fermo, xalo!"
                     ],
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez Hamo me, tu mêvan î, Hevalo birçî ye.",
-                    "prompt": "Hamo sums up the afternoon, counting on his fingers: “Ez Hamo me, tu mêvan î, Hevalo birçî ye.” Who is hungry?",
+                    "say": "Mêvan dilxweş e, çay germ e… û Hevalo? Birçî ye!",
+                    "prompt": "Hamo sums up the afternoon, counting on his fingers: “Mêvan dilxweş e, çay germ e… û Hevalo? Birçî ye!” Who is hungry?",
                     "options": [
                       "Hevalo",
                       "Hamo",
@@ -974,15 +989,13 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Xalo! Xalo!",
-                    "prompt": "Hamo is still blowing on his tea when a girl’s voice shouts from the bottom of the lane: “Xalo! Xalo!” What is she shouting?",
+                    "prompt": "Hamo is still blowing on his tea when a young woman runs up the lane, waving both arms and calling him what the whole village calls him: “Xalo! Xalo!” What is she shouting?",
                     "options": [
                       "Uncle! Uncle!",
                       "Hello! Hello!",
                       "Tea! Tea!"
                     ],
-                    "correctIndex": 0,
-                    "voice": "xezo"
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -1005,15 +1018,13 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Silav! Navê min Xezal e!",
-                    "prompt": "A young woman with a huge bag runs up the lane, out of breath: “Silav! Navê min Xezal e!” What does she tell you?",
+                    "prompt": "A young woman runs up the lane with a bag so full of schoolbooks it will not close. The label on it says: “Silav! Navê min Xezal e.” What does it tell you?",
                     "options": [
-                      "Hello! My name is Xezal!",
-                      "Hello! Your name is Xezal!",
-                      "Hello! I am well!"
+                      "Hello! My name is Xezal.",
+                      "Hello! Your name is Xezal.",
+                      "Hello! I am well."
                     ],
-                    "correctIndex": 0,
-                    "voice": "xezo"
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1046,7 +1057,7 @@
                         "right": "niece, nephew"
                       }
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -1054,7 +1065,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ew Xezo ye!",
-                    "prompt": "Hamo hugs her so hard her feet leave the ground: “Ew Xezo ye!” What does he say?",
+                    "prompt": "Hamo waves both arms at her like an old friend: “Ew Xezo ye!” What does he say?",
                     "options": [
                       "She is Xezo!",
                       "I am Xezo!",
@@ -1068,15 +1079,13 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Xezal, xalo! Navê min Xezal e.",
-                    "prompt": "She wriggles free and frowns at him: “Xezal, xalo! Navê min Xezal e.” What does she want?",
+                    "prompt": "She wriggles free and, frowning, writes in the dust on the gate with her finger: “Xezal, xalo! Navê min Xezal e.” What does she want?",
                     "options": [
                       "To be called Xezal, not Xezo.",
                       "A glass of tea.",
                       "To know his name."
                     ],
-                    "correctIndex": 0,
-                    "voice": "xezo"
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1084,14 +1093,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Navê te çi ye?",
-                    "prompt": "Then she turns to you with a big smile: “Navê te çi ye?” What is she asking?",
+                    "prompt": "Then Hamo turns to you with a big smile: “Navê te çi ye?” What is he asking?",
                     "options": [
                       "What is your name?",
                       "What is my name?",
                       "Are you a guest?"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -1123,23 +1132,28 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "prompt": "How does Xezal say “My name is Xezal”?",
+                    "prompt": "The deer looks up at you, ears high. Tell him: “Your name is Hevalo.”",
                     "accepted": [
-                      "Navê min Xezal e.",
-                      "Navê min Xezal e"
+                      "Navê te Hevalo ye.",
+                      "Navê te Hevalo ye"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "say": "Ew keç xwarziya min e.",
-                    "prompt": "Hevalo looks puzzled at the girl with the huge bag. Hamo explains, beaming. What does he say, in English? “Ew keç xwarziya min e.”",
+                    "say": "Keça min? Na! Xwarziya min? Na! Ew Xezo ye.",
+                    "prompt": "She called him “Xalo!”, uncle, so you whisper: is she his daughter? His niece? Hamo laughs. What does he say, in English? “Keça min? Na! Xwarziya min? Na! Ew Xezo ye.”",
                     "accepted": [
-                      "That girl is my niece.",
-                      "The girl is my niece."
+                      "My daughter? No! My niece? No! She is Xezo.",
+                      "My daughter? No! My niece? No! That is Xezo.",
+                      "My daughter? No! My niece? No! She’s Xezo.",
+                      "My daughter? No! My niece? No! That’s Xezo.",
+                      "My daughter? No. My niece? No. She is Xezo.",
+                      "My daughter? No! My niece? No! It is Xezo.",
+                      "My daughter? No! My niece? No! It’s Xezo."
                     ],
                     "voice": "hamo"
                   }
@@ -1148,26 +1162,27 @@
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez xwarziya Hamo me.",
-                    "prompt": "Xezal explains: “Ez xwarziya Hamo me.” Who is she?",
+                    "say": "Xezal hevala min e.",
+                    "prompt": "So who is she? Hamo lifts the end of his moustache: “Xezal hevala min e.” Who is Xezal to Hamo?",
                     "options": [
-                      "Hamo’s niece",
-                      "Hamo’s guest",
-                      "Hamo’s friend"
+                      "his friend",
+                      "his niece",
+                      "his daughter"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 11,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Xezal is Hamo’s niece. Write what he tells everyone: “She is my niece.”",
+                    "prompt": "The village children call Hamo xalo, so every newcomer asks the same thing. Write the question: “Is she your niece?”",
                     "accepted": [
-                      "Ew xwarziya min e.",
-                      "Ew xwarziya min e",
-                      "Xezal xwarziya min e."
+                      "Ew xwarziya te ye?",
+                      "Ew xwarziya te ye",
+                      "Xezal xwarziya te ye?",
+                      "Xezal xwarziya te ye"
                     ],
                     "voice": "hamo"
                   }
@@ -1176,10 +1191,10 @@
                   "position": 12,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo holds her at arm’s length to look at her. Type what he asks.",
+                    "prompt": "Hamo looks at her, red-faced from running up the hill. Type what he asks.",
                     "accepted": [
-                      "Keça min, tu baş î?",
-                      "Keça min, tu baş î"
+                      "Xezo, tu baş î?",
+                      "Xezo, tu baş î"
                     ],
                     "voice": "hamo"
                   }
@@ -1189,7 +1204,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Tu mêvan î? Navê te çi ye?",
-                    "prompt": "Xezal shakes your hand. What does she ask, in English? “Tu mêvan î? Navê te çi ye?”",
+                    "prompt": "Hamo shakes your hand again, as if you had only just arrived. What does he ask, in English? “Tu mêvan î? Navê te çi ye?”",
                     "accepted": [
                       "Are you a guest? What is your name?",
                       "You are a guest? What is your name?",
@@ -1198,15 +1213,15 @@
                       "You’re a guest? What’s your name?",
                       "Are you the guest? What’s your name?"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 14,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Hevalo tilts his head: who is she? Tell him: “Ew xwarziya Hamo ye.” (She is Hamo’s niece.)",
-                    "reference": "Ew xwarziya Hamo ye.",
+                    "prompt": "Hevalo tilts his head at the young woman: who is she? Tell him: “Ew keç Xezal e.” (That girl is Xezal.)",
+                    "reference": "Ew keç Xezal e.",
                     "voice": "hamo"
                   }
                 },
@@ -1236,14 +1251,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Û tu? Tu kî yî?",
-                    "prompt": "Xezal crouches in front of the deer: “Û tu? Tu kî yî?” What is she asking him?",
+                    "prompt": "Hamo crouches in front of the deer: “Û tu? Tu kî yî?” What is he asking him?",
                     "options": [
                       "And you? Who are you?",
                       "And you? Are you a guest?",
                       "And you? Are you hungry?"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -1276,7 +1291,7 @@
                         "right": "child"
                       }
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -1284,29 +1299,29 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Hevalo? Navê te Hevalo ye?",
-                    "prompt": "The deer gives his name, and Xezal starts to giggle: “Hevalo? Navê te Hevalo ye?” What is so funny?",
+                    "prompt": "Xezal hears the deer’s name and starts to giggle, so Hamo asks him again, just to hear her laugh: “Hevalo? Navê te Hevalo ye?” What is so funny?",
                     "options": [
                       "A deer whose name means “friend”",
                       "A deer who is hungry",
                       "A deer who is a student"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez xwendekar im.",
-                    "prompt": "Xezal wipes her eyes and taps her huge bag full of books: “Ez xwendekar im.” What is she?",
+                    "say": "Xezal xwendekar e.",
+                    "prompt": "Hamo taps her bag full of books. She is studying to be a teacher, and helps at the village school this year: “Xezal xwendekar e.” What is she?",
                     "options": [
                       "a student",
                       "a guest",
                       "a child"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -1326,80 +1341,79 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal pats his head as if he were little. The deer stamps a hoof. Type what he says.",
+                    "prompt": "Xezal pats the deer’s head as if he were little. The deer stamps a hoof, and Hamo laughs. Type what he says.",
                     "accepted": [
-                      "Ez ne zarok im!",
-                      "Ez ne zarok im"
+                      "Hevalo ne zarok e!",
+                      "Hevalo ne zarok e"
                     ],
-                    "voice": "hevalo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 7,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Xezal points at you. How does she ask “Who are you?”",
+                    "prompt": "Hamo points at the deer. How does he ask “Who are you?”",
                     "accepted": [
                       "Tu kî yî?",
                       "Tu kî yî"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "say": "Ez ne Xezo me, ez Xezal im!",
-                    "prompt": "Hamo calls “Xezo!” from the door, and she shouts back. What does she say, in English? “Ez ne Xezo me, ez Xezal im!”",
+                    "say": "Ew ne Xezo ye, ew Xezal e!",
+                    "prompt": "Xezal glares at Hamo until he says it properly. What does he say, in English? “Ew ne Xezo ye, ew Xezal e!”",
                     "accepted": [
-                      "I am not Xezo, I am Xezal!",
-                      "I am not Xezo. I am Xezal!",
-                      "I am not Xezo — I am Xezal!",
-                      "I’m not Xezo, I’m Xezal!",
-                      "I’m not Xezo. I’m Xezal!",
-                      "I’m not Xezo — I’m Xezal!"
+                      "She is not Xezo, she is Xezal!",
+                      "She is not Xezo. She is Xezal!",
+                      "She’s not Xezo, she’s Xezal!",
+                      "She isn’t Xezo, she’s Xezal!",
+                      "She is not Xezo — she is Xezal!"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 9,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Xezal studies in Amed. Write what she says: “I am a student.”",
+                    "prompt": "You are learning Kurdish, so you are a student too. Write: “I am a student.”",
                     "accepted": [
                       "Ez xwendekar im.",
                       "Ez xwendekar im"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 10,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal counts on her fingers, giggling. Type what you hear.",
+                    "prompt": "Hamo counts on his fingers for Xezal, laughing. Type what you hear.",
                     "accepted": [
                       "Hevalo ne mêr e, ne jin e, ne zarok e.",
                       "Hevalo ne mêr e, ne jin e, ne zarok e"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hamo mêr e, Xezal jin e, Hevalo heval e!",
-                    "prompt": "She sits down on her bag, laughing, and sums it up: “Hamo mêr e, Xezal jin e, Hevalo heval e!” What is Hevalo, according to her?",
+                    "say": "Mêr? Jin? Zarok? Na… Hevalo heval e!",
+                    "prompt": "Xezal asks what a deer called “Friend” really is. Hamo thinks hard, very pleased with himself: “Mêr? Jin? Zarok? Na… Hevalo heval e!” What is Hevalo, according to him?",
                     "options": [
                       "a friend",
                       "a man",
                       "a woman"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -1418,19 +1432,16 @@
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "say": "Tu xwendekar î? Ez jî xwendekar im!",
-                    "prompt": "Xezal claps her hands. What does she say, in English? “Tu xwendekar î? Ez jî xwendekar im!”",
+                    "say": "Tu xwendekar î? Xezal jî xwendekar e!",
+                    "prompt": "Hamo hears that you are learning Kurdish and claps his hands. What does he say, in English? “Tu xwendekar î? Xezal jî xwendekar e!”",
                     "accepted": [
-                      "Are you a student? I am a student too!",
-                      "Are you a student? Me too!",
-                      "Are you a student? So am I!",
-                      "You are a student? I am a student too!",
-                      "Are you a student? I am also a student!",
-                      "Are you a student? I’m a student too!",
-                      "You’re a student? I’m a student too!",
-                      "Are you a student? I’m also a student!"
+                      "Are you a student? Xezal is a student too!",
+                      "You are a student? Xezal is a student too!",
+                      "Are you a student? Xezal is also a student!",
+                      "You’re a student? Xezal is a student too!",
+                      "Are you a student? So is Xezal!"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -1523,57 +1534,71 @@
                         "character": "hamo"
                       },
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Xezo, fermo çay!",
-                        "en": "Xezo, here is your tea!"
+                        "text": "Xezo, fermo: çay!",
+                        "en": "Xezo, here: tea! (Xezal glares at him)"
                       },
                       {
                         "speaker": 1,
-                        "text": "Spas, xalo. Lê ez ne Xezo me, ez Xezal im!",
-                        "en": "Thanks, uncle. But I am not Xezo, I am Xezal!"
+                        "text": "Xezo? Ew ne Xezal e?",
+                        "en": "Xezo? Isn’t she Xezal?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Belê, belê. Bibore, Xezo.",
-                        "en": "Yes, yes. Sorry, Xezo."
+                        "text": "Belê, belê. Lê ji min re ew Xezo ye!",
+                        "en": "Yes, yes. But to me she is Xezo!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo! Tu şaş î!",
-                        "en": "Uncle! You are wrong!"
+                        "text": "Baş e… Xezo, çay germ e?",
+                        "en": "All right… Xezo, is the tea hot? (you try it out on her)"
                       },
                       {
                         "speaker": 0,
-                        "text": "Rast e, rast e. Bibore… Xezo!",
-                        "en": "True, true. Sorry… Xezo!"
+                        "text": "Naxêr! Tu şaş î! Ew Xezal e, ne Xezo!",
+                        "en": "No! You’ve got it wrong! She is Xezal, not Xezo!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Naxêr! Navê min Xezal e!",
-                        "en": "No! My name is Xezal!"
+                        "text": "Lê tu…?!",
+                        "en": "But you…?!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Xezal, Xezo… Xezo xweş e!",
-                        "en": "Xezal, Xezo… Xezo is nice!"
+                        "text": "Ez? Ez ne mêvan im! Ji mêvan re, ew Xezal e.",
+                        "en": "Me? I am not a guest! To a guest, she is Xezal."
                       },
                       {
                         "speaker": 1,
-                        "text": "Baş e, baş e… Xezo!",
-                        "en": "All right, all right… Xezo!"
+                        "text": "Naxêr, xalo, ew ne rast e!",
+                        "en": "No, Xalo, that isn’t fair!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Rast e, rast e. Bibore, Xezal… bibore.",
+                        "en": "True, true. Sorry, Xezal… sorry."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Spas!",
+                        "en": "Thank you!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Baş e… Xezo, çay?",
+                        "en": "All right… Xezo, tea? (he laughs before she can answer)"
                       }
                     ],
-                    "prompt": "Why does Xezal keep saying “Naxêr!”?",
+                    "prompt": "Why may Hamo call her Xezo, in his own opinion?",
                     "options": [
-                      "She wants to be called Xezal, not Xezo.",
-                      "She does not want any tea.",
-                      "Her tea is not hot."
+                      "Because he is not a guest.",
+                      "Because she likes it.",
+                      "Because he has forgotten her name."
                     ],
                     "correctIndex": 0
                   }
@@ -1582,15 +1607,15 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Xalo! Tu şaş î!",
-                    "prompt": "Xezal wags a finger at her uncle: “Xalo! Tu şaş î!” What is she telling him?",
+                    "say": "Ez şaş im!",
+                    "prompt": "Xezal wags a finger at Hamo until he throws up his hands: “Ez şaş im!” What does he admit?",
                     "options": [
-                      "You are wrong!",
-                      "You are right!",
-                      "You are welcome!"
+                      "I am wrong!",
+                      "I am right!",
+                      "I am welcome!"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -1637,12 +1662,12 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Hamo has called his niece Xezo again. Help her out: “I am not Xezo!”",
+                    "prompt": "Help Xezal out. Tell Hamo: “She is not Xezo!”",
                     "accepted": [
-                      "Ez ne Xezo me!",
-                      "Ez ne Xezo me"
+                      "Ew ne Xezo ye!",
+                      "Ew ne Xezo ye"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -1650,40 +1675,40 @@
                   "type": "translate",
                   "payload": {
                     "say": "Naxêr, spas. Lê Hevalo birçî ye!",
-                    "prompt": "Hamo offers Xezal an apple. What does she answer, in English? “Naxêr, spas. Lê Hevalo birçî ye!”",
+                    "prompt": "Hamo offers you another apple, but you are full. He laughs and answers for you. What does he say, in English? “Naxêr, spas. Lê Hevalo birçî ye!”",
                     "accepted": [
                       "No, thanks. But Hevalo is hungry!",
                       "No, thank you. But Hevalo is hungry!",
                       "No thanks, but Hevalo is hungry!",
                       "No, thank you, but Hevalo is hungry!"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 10,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Hamo asks Xezal “Tu xwendekar î?”. Write her polite answer: “Yes, I am a student.”",
+                    "prompt": "Hamo asks you “Tu xwendekar î?”. Write a polite answer: “Yes, I am a student.”",
                     "accepted": [
                       "Belê, ez xwendekar im.",
                       "Erê, ez xwendekar im.",
                       "Belê, ez xwendekar im",
                       "Erê, ez xwendekar im"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 11,
                   "type": "listening",
                   "payload": {
-                    "prompt": "In the end Xezal laughs too, and hugs her uncle. Type what she says.",
+                    "prompt": "In the end Xezal laughs too and pats Hamo’s arm, but he still has the last word. Type what he says.",
                     "accepted": [
-                      "Xalo, tu şaş î, lê tu xweş î!",
-                      "Xalo, tu şaş î, lê tu xweş î"
+                      "Ez şaş im, lê Xezo xweş e!",
+                      "Ez şaş im, lê Xezo xweş e"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -1799,8 +1824,7 @@
                         "character": "hamo"
                       },
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
+                        "learner": true
                       }
                     ],
                     "lines": [
@@ -1812,37 +1836,37 @@
                       {
                         "speaker": 1,
                         "text": "Silav, Şêro! Û ew? Ew pisîk e?",
-                        "en": "Hello, Şêro! And that? Is that a cat?"
+                        "en": "Hello, Şêro! And that one? Is it a cat?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Naxêr, ew ne pisîk e. Ew mirîşk e!",
-                        "en": "No, it is not a cat. It is a hen!"
+                        "text": "Pisîk? Naxêr, ew mirîşk e!",
+                        "en": "A cat? No, that is a hen!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Bibore, xalo! Ez ji Amedê me.",
-                        "en": "Sorry, uncle! I am from Amed."
+                        "text": "Bibore! Û ew Bozo ye? Bozo kur e?",
+                        "en": "Sorry! And that is Bozo? Is Bozo a boy? (you mean a donkey)"
                       },
                       {
                         "speaker": 0,
-                        "text": "Û ew Bozo ye. Ew ker e.",
-                        "en": "And that is Bozo. He is a donkey."
+                        "text": "Kur? Na, na! Bozo ker e!",
+                        "en": "A boy? No, no! Bozo is a donkey!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Û ew kur kî ye?",
-                        "en": "And who is that boy?"
+                        "text": "Ker… kur… Û ew kur kî ye?",
+                        "en": "Donkey… boy… And who is that boy? (a boy is waving from the wall)"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew kurê Ferhad e.",
-                        "en": "That is Ferhad’s son."
+                        "text": "Ew Baran e, kurê Nazê. Baran kur e, Bozo ker e!",
+                        "en": "That is Baran, Nazê’s son. Baran is a boy, Bozo is a donkey!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Û Hevalo? Ew li ku ye?",
-                        "en": "And Hevalo? Where is he?"
+                        "text": "Baş e! Şêro, mirîşk, Bozo, Baran… Û Hevalo?",
+                        "en": "Good! Şêro, the hens, Bozo, Baran… And Hevalo?"
                       },
                       {
                         "speaker": 0,
@@ -1850,11 +1874,11 @@
                         "en": "Hevalo? Where is Hevalo?!"
                       }
                     ],
-                    "prompt": "Why does Xezal say “Bibore! Ez ji Amedê me”?",
+                    "prompt": "Why does Hamo laugh at “Bozo kur e?”",
                     "options": [
-                      "She took a hen for a cat — she is from the city.",
-                      "She is late for tea.",
-                      "She does not like dogs."
+                      "Ker is a donkey and kur is a boy: you called Bozo a boy.",
+                      "Bozo is a dog.",
+                      "Bozo is Baran’s donkey."
                     ],
                     "correctIndex": 0
                   }
@@ -1935,12 +1959,12 @@
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ew kurê Ferhad e.",
-                    "prompt": "A small boy waves from the wall. Hamo: “Ew kurê Ferhad e.” Who is the boy?",
+                    "say": "Ew Baran e, kurê Nazê.",
+                    "prompt": "A boy of about nine waves from the wall next door. Hamo: “Ew Baran e, kurê Nazê.” Who is Baran?",
                     "options": [
-                      "Ferhad’s son",
-                      "Ferhad’s dog",
-                      "Hamo’s friend"
+                      "Nazê’s son",
+                      "Nazê’s donkey",
+                      "a guest"
                     ],
                     "correctIndex": 0,
                     "voice": "hamo"
@@ -1999,12 +2023,12 @@
                   "position": 15,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Help Xezal ask about the boy on the wall: “Who is that boy?”",
+                    "prompt": "Ask Hamo about the boy on the wall: “Who is that boy?”",
                     "accepted": [
                       "Ew kur kî ye?",
                       "Ew kur kî ye"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2083,22 +2107,22 @@
                         "right": "there"
                       }
                     ],
-                    "voice": "hevalo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez li vir im!",
-                    "prompt": "A small voice answers from under the oldest apple tree: “Ez li vir im!” What does it say?",
+                    "say": "Hevalo li vir e!",
+                    "prompt": "Everyone hunts for the deer. Then Hamo calls from under the oldest apple tree: “Hevalo li vir e!” What does he say?",
                     "options": [
-                      "I am here!",
-                      "I am there!",
-                      "I am hungry!"
+                      "Hevalo is here!",
+                      "Hevalo is there!",
+                      "Hevalo is hungry!"
                     ],
                     "correctIndex": 0,
-                    "voice": "hevalo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2106,14 +2130,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ew li wir e, li baxçe!",
-                    "prompt": "Xezal spots a pair of ears between the trees: “Ew li wir e, li baxçe!” Where is the deer?",
+                    "prompt": "Hamo spots a pair of ears between the trees and points: “Ew li wir e, li baxçe!” Where is the deer?",
                     "options": [
                       "Over there, in the orchard",
                       "Right here, in the yard",
                       "Over there, in the city"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2133,12 +2157,12 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hevalo answers with his cheeks suspiciously round. Type what you hear.",
+                    "prompt": "Hamo, out of breath, sits down under the tree beside the deer. Type what he says.",
                     "accepted": [
                       "Ez li baxçe me.",
                       "Ez li baxçe me"
                     ],
-                    "voice": "hevalo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2158,7 +2182,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Sêvan gund e, Amed bajar e.",
-                    "prompt": "Hevalo, very full now, explains where you are. What does he say, in English? “Sêvan gund e, Amed bajar e.”",
+                    "prompt": "Hamo explains where you are. What does he say, in English? “Sêvan gund e, Amed bajar e.”",
                     "accepted": [
                       "Sêvan is a village, Amed is a city.",
                       "Sêvan is a village and Amed is a city.",
@@ -2166,7 +2190,7 @@
                       "Sêvan is a village, Amed is a town.",
                       "Sêvan is a village and Amed is a town."
                     ],
-                    "voice": "hevalo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2200,14 +2224,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Gund xweş e, bajar jî xweş e.",
-                    "prompt": "Xezal, who loves her city, looks round the orchard and smiles: “Gund xweş e, bajar jî xweş e.” What does she think?",
+                    "prompt": "Hamo looks round the orchard, then at Xezal, who loves her city, and is very diplomatic: “Gund xweş e, bajar jî xweş e.” What does he think?",
                     "options": [
                       "The village is nice, and the city is nice too.",
                       "The village is nice, but the city is not.",
                       "The city is near the village."
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2256,12 +2280,12 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez ji Sêvanê me.",
-                    "prompt": "Hamo puts a hand on his heart: “Ez ji Sêvanê me.” What does he tell you?",
+                    "say": "Ez ji Kobaniyê me.",
+                    "prompt": "Hamo puts a hand on his heart: “Ez ji Kobaniyê me.” (Kobanî ends in a vowel, so after ji it becomes Kobaniyê.) What does he tell you?",
                     "options": [
-                      "I am from Sêvan.",
-                      "I am in Sêvan.",
-                      "You are from Sêvan."
+                      "I am from Kobanî.",
+                      "I am in Kobanî.",
+                      "You are from Kobanî."
                     ],
                     "correctIndex": 0,
                     "voice": "hamo"
@@ -2318,14 +2342,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Û tu? Tu ji ku derê yî?",
-                    "prompt": "Xezal turns to you: “Û tu? Tu ji ku derê yî?” What is she asking?",
+                    "prompt": "Hamo turns to you: “Û tu? Tu ji ku derê yî?” What is he asking?",
                     "options": [
                       "Where are you from?",
                       "Where are you?",
                       "Who are you?"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2374,7 +2398,7 @@
                   "position": 8,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Hamo is a Kurd from Sêvan. And Xezal? Write: “She is a Kurd too, from Amed.”",
+                    "prompt": "Hamo is a Kurd from Kobanî. And Xezal? Write: “She is a Kurd too, from Amed.”",
                     "accepted": [
                       "Ew jî kurd e, ji Amedê.",
                       "Ew jî kurd e, ji Amedê",
@@ -2429,12 +2453,12 @@
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez kurd im û ez ji Sêvanê me.",
-                    "prompt": "Hamo, proudly: “Ez kurd im û ez ji Sêvanê me.” What does he tell you about himself?",
+                    "say": "Ez ji Kobaniyê me, lê niha ez ji Sêvanê me!",
+                    "prompt": "He came to Sêvan as a young man and stayed: thirty years now. Hamo grins: “Ez ji Kobaniyê me, lê niha ez ji Sêvanê me!” What does he mean?",
                     "options": [
-                      "He is a Kurd from Sêvan.",
-                      "He is a guest from Amed.",
-                      "He is a Kurd from the city."
+                      "Kobanî is where he comes from, but Sêvan is home now.",
+                      "He is from Sêvan, not from Kobanî.",
+                      "He is going back to Kobanî now."
                     ],
                     "correctIndex": 0,
                     "voice": "hamo"
@@ -2490,14 +2514,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Amed pir xweşik e!",
-                    "prompt": "Xezal’s eyes shine: “Amed pir xweşik e!” What does she say about her city?",
+                    "prompt": "Xezal shows Hamo a photo of her city, and even he has to admit it: “Amed pir xweşik e!” What does he say about Amed?",
                     "options": [
                       "Amed is very beautiful!",
                       "Amed is very far!",
                       "Amed is a little hot!"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2526,7 +2550,7 @@
                         "right": "language"
                       }
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2537,75 +2561,75 @@
                     "title": "Ji Amedê",
                     "speakers": [
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
-                      },
-                      {
                         "name": "Hamo",
                         "character": "hamo"
                       },
                       {
-                        "name": "Hevalo",
-                        "character": "hevalo"
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Xalo, Amed pir xweşik e!",
-                        "en": "Uncle, Amed is very beautiful!"
+                        "text": "Amed xweşik e, bêguman. Lê Sêvan pir xweşik e!",
+                        "en": "Amed is beautiful, of course. But Sêvan is very beautiful!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Amed xweşik e, lê Sêvan pir xweşik e!",
-                        "en": "Amed is beautiful, but Sêvan is very beautiful!"
+                        "text": "Xezal ji Amedê ye. Ji Xezalê re, Amed pir xweşik e!",
+                        "en": "Xezal is from Amed. To Xezal, Amed is the most beautiful!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Sêvan? Sêvan gund e, xalo!",
-                        "en": "Sêvan? Sêvan is a village, uncle!"
+                        "text": "Amed bajar e. Sêvan gund e: gundekî pir xweşik!",
+                        "en": "Amed is a city. Sêvan is a village: a very beautiful village!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Bêguman! Gund pir xweşik e.",
-                        "en": "Of course! The village is very beautiful."
+                        "text": "Û tu, xalo? Tu ji Sêvanê yî?",
+                        "en": "And you, Xalo? Are you from Sêvan?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Amed dûr e, lê ew bajarê min e.",
-                        "en": "Amed is far, but it is my city."
+                        "text": "Ez? Na… ez ji Kobaniyê me.",
+                        "en": "Me? No… I am from Kobanî."
                       },
                       {
                         "speaker": 1,
-                        "text": "Û ziman? Li Sêvanê kurdî pir xweş e!",
-                        "en": "And the language? In Sêvan the Kurdish is very nice!"
+                        "text": "Kobanî? Kobanî xweşik e?",
+                        "en": "Kobanî? Is Kobanî beautiful?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Bêguman, xalo. Lê li Amedê jî kurdî xweş e!",
-                        "en": "Of course, uncle. But in Amed the Kurdish is nice too!"
+                        "text": "Kobanî? Wey, Kobanî jî pir xweşik e!",
+                        "en": "Kobanî? Oh, Kobanî is very beautiful too!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hevalo? Sêvan an Amed?",
-                        "en": "Hevalo? Sêvan or Amed?"
-                      },
-                      {
-                        "speaker": 2,
-                        "text": "Sêv! Sêv pir xweş e!",
-                        "en": "Apples! The apples are very tasty!"
+                        "text": "Amed, Sêvan an Kobanî, xalo?",
+                        "en": "Amed, Sêvan or Kobanî, Xalo?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo, tu hinek birçî yî!",
-                        "en": "Hevalo, you are a little hungry!"
+                        "text": "Ez…? Hevalo! Û ji te re?",
+                        "en": "Me…? Hevalo! And what about you? (he would rather ask the deer)"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Hevalo? Sêv!",
+                        "en": "Hevalo? Apples! (his mouth is full)"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bêguman! Sêvên Sêvanê!",
+                        "en": "Of course! The apples of Sêvan!"
                       }
                     ],
-                    "prompt": "What does Hevalo think is best?",
+                    "prompt": "Where is Hamo from?",
                     "options": [
-                      "The apples",
-                      "Amed",
-                      "Sêvan"
+                      "Kobanî",
+                      "Sêvan",
+                      "Amed"
                     ],
                     "correctIndex": 0
                   }
@@ -2642,12 +2666,12 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal hugs her bag. Type what she says.",
+                    "prompt": "Hamo has the last word, as always. Type what you hear.",
                     "accepted": [
-                      "Amed dûr e, lê ew bajarê min e.",
-                      "Amed dûr e, lê ew bajarê min e"
+                      "Amed dûr e, lê Sêvan nêzîk e.",
+                      "Amed dûr e, lê Sêvan nêzîk e"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2669,13 +2693,13 @@
                   "type": "translate",
                   "payload": {
                     "say": "Zimanê min kurdî ye.",
-                    "prompt": "Xezal says it with pride. What does she say, in English? “Zimanê min kurdî ye.”",
+                    "prompt": "Hamo says it with pride. What does he say, in English? “Zimanê min kurdî ye.”",
                     "accepted": [
                       "My language is Kurdish.",
                       "Kurdish is my language.",
                       "My mother tongue is Kurdish."
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2689,7 +2713,7 @@
                       "Belê, hinek çay, spas",
                       "Erê, hinek çay, spas"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2709,7 +2733,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Sêv pir xweş e!",
-                    "prompt": "Hevalo answers with his mouth full. What does he say, in English? “Sêv pir xweş e!”",
+                    "prompt": "Hevalo cannot answer with his mouth full of apple, so Hamo answers for him. What does he say, in English? “Sêv pir xweş e!”",
                     "accepted": [
                       "The apples are very tasty!",
                       "Apples are very tasty!",
@@ -2718,16 +2742,16 @@
                       "The apples are really tasty!",
                       "The apples are delicious!"
                     ],
-                    "voice": "hevalo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 12,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Make peace between uncle and niece: “Amed xweşik e, lê Sêvan jî pir xweşik e.” (Amed is beautiful, but Sêvan is very beautiful too.)",
+                    "prompt": "Make peace between Hamo and Xezal: “Amed xweşik e, lê Sêvan jî pir xweşik e.” (Amed is beautiful, but Sêvan is very beautiful too.)",
                     "reference": "Amed xweşik e, lê Sêvan jî pir xweşik e.",
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -2747,14 +2771,14 @@
                   "position": 14,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Xezal: “Kurdish is a beautiful language.”",
+                    "prompt": "Tell Hamo and Xezal: “Kurdish is a beautiful language.”",
                     "accepted": [
                       "Kurdî zimanekî xweşik e.",
                       "Zimanê kurdî xweşik e.",
                       "Kurdî zimanekî xweşik e",
                       "Zimanê kurdî xweşik e"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 }
               ]
@@ -2774,7 +2798,7 @@
                     "options": [
                       "the neighbour",
                       "a guest",
-                      "Hamo’s son"
+                      "a shepherd"
                     ],
                     "correctIndex": 0,
                     "voice": "hamo"
@@ -2832,71 +2856,70 @@
                     "title": "Mêvan û cîran",
                     "speakers": [
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
-                      },
-                      {
                         "name": "Hamo",
                         "character": "hamo"
+                      },
+                      {
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
+                        "speaker": 1,
+                        "text": "Xezal ji Amedê ye, tu ji Kobaniyê yî… û ez?",
+                        "en": "Xezal is from Amed, you are from Kobanî… and me?"
+                      },
+                      {
                         "speaker": 0,
-                        "text": "Xalo, ez ji Amedê me, tu ji Sêvanê yî.",
-                        "en": "Uncle, I am from Amed, you are from Sêvan."
+                        "text": "Tu? Tu ji welatekî dûr î!",
+                        "en": "You? You are from a faraway country!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Erê. Û mêvan ji welatekî dûr e.",
-                        "en": "Yes. And our guest is from a far country."
+                        "text": "Erê. Ez ji welatekî dûr im, lê îro ez li Sêvanê me!",
+                        "en": "Yes. I am from a faraway country, but today I am in Sêvan!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Welatekî dûr… lê niha ew li vir e!",
-                        "en": "A far country… but now our guest is here!"
+                        "text": "Gelek baş! Îro mala min mala te ye.",
+                        "en": "Very good! Today my home is your home."
                       },
                       {
                         "speaker": 1,
-                        "text": "Bêguman! Îro mala min mala te ye.",
-                        "en": "Of course! Today my home is your home."
+                        "text": "Spas, xalo! Û… çay li ku ye? Dereng e!",
+                        "en": "Thanks, Xalo! And… where is the tea? It is getting late!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Xalo, dereng e. Çay li ku ye?",
-                        "en": "Uncle, it is late. Where is the tea?"
+                        "text": "Dereng? Na, na, zû ye! Çay li vir e, germ e.",
+                        "en": "Late? No, no, it is early! The tea is right here, and hot."
                       },
                       {
                         "speaker": 1,
-                        "text": "Bibore, Xezo! Çay li vir e, germ e.",
-                        "en": "Sorry, Xezo! The tea is here, it is hot."
-                      },
-                      {
-                        "speaker": 0,
                         "text": "Xalo… ew kî ye, li wir?",
-                        "en": "Uncle… who is that, over there?"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Ew Ferhad e, cîranê min.",
-                        "en": "That is Ferhad, my neighbour."
+                        "en": "Xalo… who is that, over there?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Û ew çi ye? Ew sêv e?",
-                        "en": "And what is that? Is it apples?"
+                        "text": "Ew Ferhad e, cîranê min. Û ew çi ye?",
+                        "en": "That is Ferhad, my neighbour. And what has he got there?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Ferhad, bi xêr hatî! Fermo, çay.",
-                        "en": "Ferhad, welcome! Here, have some tea."
+                        "text": "Sêv e?",
+                        "en": "Is it apples? (the basket is covered with a cloth)"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Sêv? Na… Ferhad, bi xêr hatî! Fermo, çay!",
+                        "en": "Apples? No… Ferhad, welcome! Come, have some tea!"
                       }
                     ],
                     "prompt": "Who comes to the gate at the end of the scene?",
                     "options": [
                       "Ferhad, the neighbour",
-                      "Hamo’s son",
-                      "A guest from Amed"
+                      "A guest from Amed",
+                      "Baran, with Bozo"
                     ],
                     "correctIndex": 0
                   }
@@ -2905,7 +2928,7 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "The sun is going down and the tea is not even poured. What does Xezal tease her uncle with?",
+                    "prompt": "The sun is going down and the tea is not even poured. What does Xezal tease Hamo with?",
                     "options": [
                       "Dereng e!",
                       "Zû ye!",
@@ -2958,31 +2981,31 @@
                   "position": 9,
                   "type": "writing",
                   "payload": {
-                    "prompt": "The glasses are still empty. Write what Xezal says to tease her uncle: “Uncle, it is late!”",
+                    "prompt": "The glasses are still empty. Tease Hamo: “The tea is late!”",
                     "accepted": [
-                      "Xalo, dereng e!",
-                      "Xalo, dereng e"
+                      "Çay dereng e!",
+                      "Çay dereng e"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Îro ez li Sêvanê me, lê mala min li Amedê ye.",
-                    "prompt": "Xezal tells you about herself. What does she say, in English? “Îro ez li Sêvanê me, lê mala min li Amedê ye.”",
+                    "say": "Îro tu li Sêvanê yî, lê mala te dûr e.",
+                    "prompt": "Hamo smiles at you over his glass. What does he say, in English? “Îro tu li Sêvanê yî, lê mala te dûr e.”",
                     "accepted": [
-                      "Today I am in Sêvan, but my home is in Amed.",
-                      "I am in Sêvan today, but my home is in Amed.",
-                      "Today I am in Sêvan, but my house is in Amed.",
-                      "I am in Sêvan today, but my house is in Amed.",
-                      "Today I’m in Sêvan, but my home is in Amed.",
-                      "I’m in Sêvan today, but my home is in Amed.",
-                      "Today I’m in Sêvan, but my house is in Amed.",
-                      "I’m in Sêvan today, but my house is in Amed."
+                      "Today you are in Sêvan, but your home is far.",
+                      "Today you are in Sêvan, but your home is far away.",
+                      "You are in Sêvan today, but your home is far.",
+                      "You are in Sêvan today, but your home is far away.",
+                      "Today you’re in Sêvan, but your home is far away.",
+                      "Today you’re in Sêvan, but your home is far.",
+                      "Today you are in Sêvan, but your house is far.",
+                      "Today you are in Sêvan, but your house is far away."
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3114,14 +3137,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Em baş in, spas!",
-                    "prompt": "Xezal answers for both of you: “Em baş in, spas!” What does she say?",
+                    "prompt": "Ferhad asks over the wall how everyone is. Hamo answers for the whole house: “Em baş in, spas!” What does he say?",
                     "options": [
                       "We are well, thanks!",
                       "I am well, thanks!",
                       "They are well, thanks!"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3141,12 +3164,12 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo asks the deer how he is. The answer is the same as always. Type what you hear.",
+                    "prompt": "Hamo asks the deer how he is, then answers for him. The answer is the same as always. Type what you hear.",
                     "accepted": [
-                      "Ez birçî me.",
-                      "Ez birçî me"
+                      "Hevalo birçî ye.",
+                      "Hevalo birçî ye"
                     ],
-                    "voice": "hevalo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3193,14 +3216,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ez ne nexweş im, ez westiyayî me.",
-                    "prompt": "Hamo touches Xezal’s forehead, worried. She laughs: “Ez ne nexweş im, ez westiyayî me.” What does she say?",
+                    "prompt": "Hamo yawns so wide his moustache shakes. Xezal touches his forehead, worried. He laughs: “Ez ne nexweş im, ez westiyayî me.” What does he say?",
                     "options": [
-                      "She is not ill, only tired.",
-                      "She is ill and tired.",
-                      "She is not tired, only ill."
+                      "He is not ill, only tired.",
+                      "He is ill and tired.",
+                      "He is not tired, only ill."
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3279,14 +3302,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Em hemû baş in!",
-                    "prompt": "Xezal answers for the whole house before anyone else can: “Em hemû baş in!” What does she say?",
+                    "prompt": "Hamo answers for the whole house before anyone else can: “Em hemû baş in!” What does he say?",
                     "options": [
                       "We are all well!",
                       "We are both well!",
                       "They are all well!"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3311,8 +3334,8 @@
                         "right": "sad"
                       },
                       {
-                        "left": "aciz",
-                        "right": "bored, annoyed"
+                        "left": "bêzar",
+                        "right": "bored, fed up"
                       },
                       {
                         "left": "ji kerema xwe",
@@ -3326,15 +3349,15 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez ne baş im! Ez xemgîn im… ez birçî me!",
-                    "prompt": "Hevalo stamps a hoof in protest: “Ez ne baş im! Ez xemgîn im… ez birçî me!” What is wrong with him?",
+                    "say": "Hevalo ne baş e! Ew xemgîn e… ew birçî ye!",
+                    "prompt": "Hevalo stamps a hoof in protest, and Hamo puts it into words for him: “Hevalo ne baş e! Ew xemgîn e… ew birçî ye!” What is wrong with the deer?",
                     "options": [
                       "He is not well: he is sad, and hungry!",
                       "He is well, but tired.",
                       "He is ill and cold."
                     ],
                     "correctIndex": 0,
-                    "voice": "hevalo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3369,12 +3392,12 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal yawns and grins at you. Type what she says.",
+                    "prompt": "Hamo yawns and grins at you. Type what he says.",
                     "accepted": [
-                      "Em herdu westiyayî ne, lê em kêfxweş in.",
-                      "Em herdu westiyayî ne, lê em kêfxweş in"
+                      "Em herdu westiyayî ne, lê em dilxweş in.",
+                      "Em herdu westiyayî ne, lê em dilxweş in"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3396,7 +3419,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Xezo, çay, ji kerema xwe!",
-                    "prompt": "Hamo holds out his empty glass to his niece. What does he say, in English? “Xezo, çay, ji kerema xwe!”",
+                    "prompt": "Hamo holds out his empty glass to Xezal. What does he say, in English? “Xezo, çay, ji kerema xwe!”",
                     "accepted": [
                       "Xezo, tea please!",
                       "Xezo, tea, please!",
@@ -3427,8 +3450,8 @@
                   "payload": {
                     "prompt": "Xezal is sighing over her books. Hamo asks her something. Type what you hear.",
                     "accepted": [
-                      "Xezo, tu aciz î?",
-                      "Xezo, tu aciz î"
+                      "Xezo, tu bêzar î?",
+                      "Xezo, tu bêzar î"
                     ],
                     "voice": "hamo"
                   }
@@ -3437,19 +3460,19 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "say": "Naxêr, xalo, ez ne aciz im. Ez tenê westiyayî me.",
-                    "prompt": "Xezal answers her uncle. What does she say, in English? “Naxêr, xalo, ez ne aciz im. Ez tenê westiyayî me.”",
+                    "say": "Naxêr, Xezo, ez ne bêzar im. Ez tenê westiyayî me.",
+                    "prompt": "Xezal asks if he is bored. Hamo answers. What does he say, in English? “Naxêr, Xezo, ez ne bêzar im. Ez tenê westiyayî me.”",
                     "accepted": [
-                      "No, uncle, I am not bored. I am just tired.",
-                      "No, uncle, I am not bored. I am only tired.",
-                      "No, uncle, I am not annoyed. I am just tired.",
-                      "No, uncle, I am not bored, I am just tired.",
-                      "No, uncle, I’m not bored. I’m just tired.",
-                      "No, uncle, I’m not bored. I’m only tired.",
-                      "No, uncle, I’m not annoyed. I’m just tired.",
-                      "No, uncle, I’m not bored, I’m just tired."
+                      "No, Xezo, I am not bored. I am just tired.",
+                      "No, Xezo, I am not bored. I am only tired.",
+                      "No, Xezo, I am not annoyed. I am just tired.",
+                      "No, Xezo, I am not bored, I am just tired.",
+                      "No, Xezo, I’m not bored. I’m just tired.",
+                      "No, Xezo, I’m not bored. I’m only tired.",
+                      "No, Xezo, I’m not annoyed. I’m just tired.",
+                      "No, Xezo, I’m not bored, I’m just tired."
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3562,14 +3585,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Şekir li ku ye?",
-                    "prompt": "Xezal looks all over the tray: “Şekir li ku ye?” What is she looking for?",
+                    "prompt": "Hamo looks all over the tray: “Şekir li ku ye?” What is he looking for?",
                     "options": [
                       "the sugar",
                       "the water",
                       "the tea"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3580,79 +3603,69 @@
                     "title": "Çay li baxçe",
                     "speakers": [
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
-                      },
-                      {
                         "name": "Hamo",
                         "character": "hamo"
                       },
                       {
-                        "name": "Hevalo",
-                        "character": "hevalo"
+                        "learner": true
                       }
                     ],
                     "lines": [
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Êvar baş, xalo!",
-                        "en": "Good evening, uncle!"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Êvar baş, Xezo! Fermo, çay û şekir.",
-                        "en": "Good evening, Xezo! Here you are, tea and sugar."
-                      },
-                      {
-                        "speaker": 2,
-                        "text": "Û sêv?",
-                        "en": "And apples?"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Sêv li wir in, Hevalo!",
-                        "en": "The apples are over there, Hevalo!"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Xezo… şev e, gund pir sar e…",
-                        "en": "Xezo… it is night, the village is very cold…"
+                        "en": "Good evening, Xalo!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Xalo, na! Ez westiyayî me!",
-                        "en": "Uncle, no! I am tired!"
+                        "text": "Êvar baş! Fermo: çay û şekir.",
+                        "en": "Good evening! Here you are: tea and sugar."
                       },
                       {
                         "speaker": 1,
-                        "text": "Ez li baxçe me, tenê. Av sar e, çay sar e…",
-                        "en": "I am in the orchard, alone. The water is cold, the tea is cold…"
+                        "text": "Spas! Çay germ e, lê baxçe hinek sar e.",
+                        "en": "Thanks! The tea is hot, but the orchard is a little cold."
                       },
                       {
                         "speaker": 0,
-                        "text": "Û ew jî sar e!",
-                        "en": "And that is cold too! (she points at his moustache)"
+                        "text": "Hinek sar? Na! Şev e, gund pir sar e, ez li baxçe me, tenê…",
+                        "en": "A little cold? No! Picture it: it is night, the village is freezing, and I am in the orchard, alone…"
                       },
                       {
                         "speaker": 1,
-                        "text": "Erê, erê! Ew jî sar e!",
-                        "en": "Yes, yes! That is cold too!"
+                        "text": "Tenê? Bi şev?",
+                        "en": "Alone? At night?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Xalo, ew ne rast e!",
-                        "en": "Uncle, that is not true!"
+                        "text": "Tenê! Av sar e, çay sar e, şekir jî sar e…",
+                        "en": "Alone! The water is cold, the tea is cold, even the sugar is cold…"
                       },
                       {
                         "speaker": 1,
-                        "text": "Bêguman rast e! Şev baş, Xezo!",
-                        "en": "Of course it is true! Good night, Xezo!"
+                        "text": "Şekir sar e?!",
+                        "en": "The sugar is cold?!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê! Û… û ew jî…",
+                        "en": "Yes! And… and this too… (he is already laughing, and points at his moustache)"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew jî sar e? Xalo, ew ne rast e!",
+                        "en": "That was cold too? Xalo, that isn’t true!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bêguman rast e! … Şev baş!",
+                        "en": "Of course it is true! … Good night!"
                       }
                     ],
-                    "prompt": "In Hamo’s old winter story, what else is cold at the end?",
+                    "prompt": "What is Hamo pointing at, laughing too hard to finish his story?",
                     "options": [
                       "His moustache",
-                      "The sugar",
+                      "The sugar bowl",
                       "Hevalo"
                     ],
                     "correctIndex": 0
@@ -3663,14 +3676,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Av sar e!",
-                    "prompt": "Xezal dips a finger in the jug from the spring: “Av sar e!” What does she say?",
+                    "prompt": "Hamo dips a finger in the jug from the spring: “Av sar e!” What does he say?",
                     "options": [
                       "The water is cold!",
                       "The water is hot!",
                       "The tea is cold!"
                     ],
                     "correctIndex": 0,
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3702,10 +3715,10 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "prompt": "It is evening. Greet Hamo: “Good evening, uncle!”",
+                    "prompt": "It is evening. Greet Hamo: “Good evening!”",
                     "accepted": [
-                      "Êvar baş, xalo!",
-                      "Êvar baş, xalo"
+                      "Êvar baş!",
+                      "Êvar baş"
                     ],
                     "voice": "hamo"
                   }
@@ -3743,12 +3756,12 @@
                   "position": 11,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal giggles into her tea. Type what she says.",
+                    "prompt": "Xezal giggles into her tea, but Hamo insists. Type what he says.",
                     "accepted": [
-                      "Xalo, ew ne rast e!",
-                      "Xalo, ew ne rast e"
+                      "Xezo, ew rast e!",
+                      "Xezo, ew rast e"
                     ],
-                    "voice": "xezo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3837,6 +3850,10 @@
                       {
                         "left": "malbat",
                         "right": "family"
+                      },
+                      {
+                        "left": "Bi xêr bimînî!",
+                        "right": "Stay well! (from the one who leaves)"
                       }
                     ],
                     "voice": "hamo"
@@ -3882,8 +3899,7 @@
                         "character": "hamo"
                       },
                       {
-                        "name": "Xezo",
-                        "character": "xezo"
+                        "learner": true
                       }
                     ],
                     "lines": [
@@ -3895,49 +3911,49 @@
                       {
                         "speaker": 1,
                         "text": "Şev baş, xalo. Ez pir westiyayî me.",
-                        "en": "Good night, uncle. I am very tired."
+                        "en": "Good night, Xalo. I am very tired."
                       },
                       {
                         "speaker": 0,
-                        "text": "Xezo, sibe…",
-                        "en": "Xezo, tomorrow…"
+                        "text": "Şev baş! Sibe…",
+                        "en": "Good night! Tomorrow…"
                       },
                       {
                         "speaker": 1,
                         "text": "Sibe çi, xalo?",
-                        "en": "Tomorrow what, uncle?"
+                        "en": "Tomorrow what, Xalo?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Sibe malbat li vir e. Hemû malbat!",
-                        "en": "Tomorrow the family will be here. The whole family!"
+                        "text": "Sibe cîran li vir in: Nazê, Baran, Hêvî… hemû!",
+                        "en": "Tomorrow the neighbours will be here: Nazê, Baran, Hêvî… all of them!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hemû malbat? Li vir?",
-                        "en": "The whole family? Here?"
+                        "text": "Hemû cîran? Li mala te?",
+                        "en": "All the neighbours? At your house?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Belê. Û… mêvanek jî.",
-                        "en": "Yes. And… a guest too."
+                        "text": "Belê. Li Sêvanê cîran malbat in! Û… Şemsê jî.",
+                        "en": "Yes. In Sêvan, neighbours are family! And… Şemsê too."
                       },
                       {
                         "speaker": 1,
-                        "text": "Mêvanek? Kî? Xalo, ew kî ye?",
-                        "en": "A guest? Who? Uncle, who is it?"
+                        "text": "Şemsê? Ew kî ye?",
+                        "en": "Şemsê? Who is that?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Sibe, Xezo, sibe! Şev baş!",
-                        "en": "Tomorrow, Xezo, tomorrow! Good night!"
+                        "text": "Şemsê…? Wey. Sibe, sibe! Şev baş!",
+                        "en": "Şemsê…? Oh dear. Tomorrow, tomorrow! Good night!"
                       }
                     ],
-                    "prompt": "What does Hamo tell Xezal at the gate?",
+                    "prompt": "What does Hamo tell you at the gate?",
                     "options": [
-                      "The whole family is coming tomorrow — and a guest.",
+                      "The neighbours are coming tomorrow, and Şemsê too.",
                       "Ferhad is coming back tomorrow.",
-                      "Xezal must go home to Amed tomorrow."
+                      "You must go home tomorrow."
                     ],
                     "correctIndex": 0
                   }
@@ -3947,14 +3963,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Bi xatirê we!",
-                    "prompt": "Hevalo nods to everyone and trots off towards the orchard in the dark: “Bi xatirê we!” What does he say?",
+                    "prompt": "Hamo picks up a lantern to look for the deer in the dark orchard, and waves to you all as he goes: “Bi xatirê we!” What does he say?",
                     "options": [
                       "Goodbye, all of you!",
                       "Welcome, all of you!",
                       "Safe journey!"
                     ],
                     "correctIndex": 0,
-                    "voice": "hevalo"
+                    "voice": "hamo"
                   }
                 },
                 {
@@ -3963,8 +3979,8 @@
                   "payload": {
                     "prompt": "Hamo winks at you. Type what he says.",
                     "accepted": [
-                      "Sibe hemû malbat li vir e!",
-                      "Sibe hemû malbat li vir e"
+                      "Sibe cîran li vir in!",
+                      "Sibe cîran li vir in"
                     ],
                     "voice": "hamo"
                   }
@@ -3973,10 +3989,10 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "prompt": "One day you will leave Sêvan. Practise saying goodbye to Hamo: “Goodbye, uncle!”",
+                    "prompt": "One day you will leave Sêvan. Practise saying goodbye to Hamo: “Goodbye!”",
                     "accepted": [
-                      "Bi xatirê te, xalo!",
-                      "Bi xatirê te, xalo"
+                      "Bi xatirê te!",
+                      "Bi xatirê te"
                     ],
                     "voice": "hamo"
                   }
@@ -3985,15 +4001,16 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "say": "Sibe malbat li vir e.",
-                    "prompt": "Hamo strokes his moustache, very pleased with himself. What does he say, in English? “Sibe malbat li vir e.”",
+                    "say": "Li Sêvanê cîran malbat in.",
+                    "prompt": "Hamo strokes his moustache, very pleased with himself. What does he say, in English? “Li Sêvanê cîran malbat in.”",
                     "accepted": [
-                      "Tomorrow the family will be here.",
-                      "The family will be here tomorrow.",
-                      "Tomorrow the family is here.",
-                      "The family is here tomorrow.",
-                      "The family is coming tomorrow.",
-                      "Tomorrow the family is coming."
+                      "In Sêvan neighbours are family.",
+                      "In Sêvan, neighbours are family.",
+                      "In Sêvan the neighbours are family.",
+                      "In Sêvan, the neighbours are family.",
+                      "Neighbours are family in Sêvan.",
+                      "In Sevan neighbours are family.",
+                      "In Sevan, neighbours are family."
                     ],
                     "voice": "hamo"
                   }
@@ -4027,8 +4044,8 @@
                   "position": 12,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Practise for the day you leave: thank Hamo and say goodbye: “Spas, xalo! Bi xatirê te.” (Thanks, uncle! Goodbye.)",
-                    "reference": "Spas, xalo! Bi xatirê te.",
+                    "prompt": "Practise for the day you leave: thank Hamo and say goodbye the warm way: “Spas! Bi xêr bimînî.” (Thanks! Stay well.)",
+                    "reference": "Spas! Bi xêr bimînî.",
                     "voice": "hamo"
                   }
                 },
@@ -4052,12 +4069,27 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Sibe, Xezo, sibe!",
-                    "prompt": "Xezal begs to know who the mystery guest is. Hamo only winks and lifts his moustache: “Sibe, Xezo, sibe!” When will she find out?",
+                    "say": "Sibe, hevalo, sibe!",
+                    "prompt": "You ask who Şemsê is. Xezal giggles: she rents the room upstairs at Dapîr Şemsê’s, so she knows. Hamo only winks and lifts his moustache: “Sibe, hevalo, sibe!” When will you find out?",
                     "options": [
                       "Tomorrow",
                       "Today",
                       "Now"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bi xêr bimînî!",
+                    "prompt": "Hamo teaches you one more goodbye, the one he says himself when he leaves a house: “Bi xêr bimînî!” (stay well). Who says it?",
+                    "options": [
+                      "The one who leaves",
+                      "The one who stays",
+                      "The one who arrives"
                     ],
                     "correctIndex": 0,
                     "voice": "hamo"

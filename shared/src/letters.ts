@@ -29,6 +29,7 @@
  * place in the app filters are filtered here too, on the server.
  */
 import { ageInYears, type BirthMonth } from './age.js';
+import type { LetterDecor, LetterPaper } from './letter-paper.js';
 
 /** The shortest letter: a single word is a letter too, for somebody only starting to write Kurdish. */
 export const LETTER_MIN = 1;
@@ -79,6 +80,25 @@ const EMAIL = /[^\s@]+@[^\s@]+\.[a-z]{2,}/i;
 const HANDLE = /(?:^|[\s(])@[\p{L}\p{N}_.]{2,}/u;
 /** A phone number: nine digits or more, however they are spaced (Eastern Arabic and Persian digits too); two years side by side are eight. */
 const PHONE = new RegExp(`(?:${DIGIT}[\\s\\-().+]*){9,}`);
+
+/**
+ * A letter as it is kept: written on lined paper, so its lines are its own.
+ * Spaces and tabs within a line become one space and each line is trimmed, as
+ * everywhere text is tidied, but a new line stays a new line and an empty line
+ * between paragraphs stays (never more than one in a row), so "Hevalê delal,"
+ * on a line of its own and the paragraphs after it read the way they were
+ * written. Carriage returns from other keyboards become plain new lines.
+ */
+export function letterText(raw: string): string {
+  return raw
+    .normalize('NFC')
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((line) => line.replace(/[^\S\n]+/g, ' ').trim())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 /**
  * What is wrong with a letter as written, or null when it can be sent. The
@@ -155,6 +175,8 @@ export interface LetterItem {
   mine: boolean;
   /** empty when moderation has taken it down (`removed`) */
   body: string;
+  /** its paper, drawing and notes (letter-paper.ts); null for the default paper with nothing on it, and when it was taken down */
+  decor: LetterDecor | null;
   removed: boolean;
   sentAt: string;
   readAt: string | null;
@@ -205,9 +227,17 @@ export interface LettersHome {
   callsLeft: number;
   /** your bird home from somebody's window with their answer, not yet read: the correspondence it opened */
   homecoming: { threadId: string; person: LetterPerson } | null;
+  /**
+   * A pen pal's bird come to your window with their next letter, not yet
+   * read: every letter after the first answer is carried by the writer's
+   * own bird. The newest of them when there are several.
+   */
+  arrival: { threadId: string; person: LetterPerson } | null;
   penPals: PenPal[];
   /** whether there is room for another pen pal */
   roomForMore: boolean;
+  /** the paper you last wrote on, which the composer opens on */
+  paper: LetterPaper;
 }
 
 /** One correspondence, oldest letter first. */

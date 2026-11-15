@@ -39,6 +39,8 @@ export interface PathUnitInput<S extends PathSkill> {
   unitId: string;
   title: string;
   skills: readonly S[];
+  /** the story that closes the unit, once learners can read it (a chapter of the road ends with Hamo's) */
+  story?: { slug: string; title: string } | null;
 }
 
 export interface PathMapInput<S extends PathSkill> {
@@ -144,7 +146,22 @@ export interface TrophyStop {
   unitNumber: number;
 }
 
-export type PathStop<S extends PathSkill> = SkillStop<S> | ReviewStop | GuideStop<S> | TrophyStop;
+/**
+ * The story that closes a unit, after its trophy: the chapter's last scene,
+ * told by Hamo. It opens with the trophy, so it is the reward for the
+ * chapter rather than a way round it.
+ */
+export interface StoryStop {
+  kind: 'story';
+  key: string;
+  slug: string;
+  title: string;
+  open: boolean;
+  /** the unit it closes, from 1 */
+  unitNumber: number;
+}
+
+export type PathStop<S extends PathSkill> = SkillStop<S> | ReviewStop | GuideStop<S> | TrophyStop | StoryStop;
 
 /** A stop and where it sits. */
 export interface PlacedStop<S extends PathSkill> {
@@ -325,6 +342,9 @@ export function lessonPath<S extends PathSkill>(
     total += unit.skills.length;
     if (unit.skills.length > 0) {
       stops.push({ kind: 'trophy', key: `t:${unit.unitId}`, earned: unitDone === unit.skills.length, unitNumber: u + 1 });
+      if (unit.story) {
+        stops.push({ kind: 'story', key: `b:${unit.unitId}`, slug: unit.story.slug, title: unit.story.title, open: unitDone === unit.skills.length, unitNumber: u + 1 });
+      }
     }
     const jump = offerJumps && u > here && opensOnJump(unit.skills[0]);
     const jumpKey = jump ? `s:${unit.skills[0]!.skillId}` : null;
@@ -412,11 +432,12 @@ export function jumpPlan<S extends PathSkill>(map: PathMapInput<S>, unitId: stri
   return { position: map.units.flatMap((u) => u.skills).indexOf(first) + 1, skipped };
 }
 
-/** Reached: a stop the learner has got to — done, current, the review beside them, a begun unit's guide, a trophy earned. */
+/** Reached: a stop the learner has got to — done, current, the review beside them, a begun unit's guide, a trophy earned, its story open. */
 function reached<S extends PathSkill>(stop: PathStop<S>): boolean {
   if (stop.kind === 'review') return true;
   if (stop.kind === 'guide') return stop.open;
   if (stop.kind === 'trophy') return stop.earned;
+  if (stop.kind === 'story') return stop.open;
   return stop.state === 'done' || stop.state === 'current';
 }
 

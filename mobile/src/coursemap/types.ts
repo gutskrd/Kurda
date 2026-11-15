@@ -30,6 +30,15 @@ export interface CourseUnit {
   unitId: string;
   title: string;
   skills: SkillNode[];
+  /** the story that closes a chapter of the road, once learners can read it; absent on older responses */
+  story?: { slug: string; title: string } | null;
+}
+
+/** The unit after the last one out, while it is being made; `recordedBy` names who records it (the road's are Hamo's). */
+export interface UpcomingUnit {
+  number: number;
+  title: string;
+  recordedBy: 'hamo' | null;
 }
 
 export interface CourseMap {
@@ -37,6 +46,8 @@ export interface CourseMap {
   units: CourseUnit[];
   /** skills up to this place in the course are open because a test let the learner through; absent on older responses */
   unlockedThrough?: number;
+  /** the unit the course goes on to once it is made; absent on older responses */
+  upcoming?: UpcomingUnit | null;
 }
 
 export interface CourseSummary {

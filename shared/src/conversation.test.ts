@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { CONVERSATION_LIMITS, conversationClips, conversationLineKey, conversationLineVoice, conversationSpeaker, isConversationLineKey } from './conversation.js';
+import {
+  CONVERSATION_LIMITS,
+  conversationClips,
+  conversationLineKey,
+  conversationLineVoice,
+  conversationSpeaker,
+  isConversationLineKey,
+  isLearnerPart,
+  learnerPart,
+  stageCast,
+  stageLines,
+} from './conversation.js';
 import { lessonAudioKey } from './lesson-audio.js';
 
 const conversation = {
@@ -82,5 +93,33 @@ describe('who says a conversation', () => {
     expect(conversationLineVoice(conversation.speakers, { speaker: 0 }, null)).toEqual({ speaker: 'xezo' });
     expect(conversationLineVoice([{ character: null }], { speaker: 0 }, { speaker: 'hamo' })).toBeNull();
     expect(conversationLineVoice(conversation.speakers, { speaker: 7 }, { speaker: 'hamo' })).toBeNull();
+  });
+});
+
+describe('a conversation with the learner', () => {
+  const speakers = [conversationSpeaker('hamo'), learnerPart()];
+  const lines = [
+    { speaker: 0, text: 'Bi xêr hatî!' },
+    { speaker: 1, text: 'Bi xêr bimînî!' },
+    { speaker: 0, text: 'Fermo, çay!' },
+  ];
+
+  it('records only the character’s lines: the learner says their own', () => {
+    expect(conversationClips({ id: 'roadtest1', speakers, lines }).map((c) => [c.index, c.name])).toEqual([
+      [0, 'Hamo'],
+      [2, 'Hamo'],
+    ]);
+    expect(isLearnerPart(speakers[1])).toBe(true);
+    expect(isLearnerPart(speakers[0])).toBe(false);
+  });
+
+  it('puts only the characters on the stage, and has them look out at the learner while the learner speaks', () => {
+    expect(stageCast(speakers)).toEqual(['hamo']);
+    expect(stageCast([learnerPart()])).toBeNull();
+    expect(stageLines(speakers, lines).map((l) => l.speaker)).toEqual([0, 1, 0]);
+    // with two characters and the learner between them, each line by its place on the stage
+    expect(stageLines([conversationSpeaker('hamo'), learnerPart(), conversationSpeaker('xezo')], [{ speaker: 2 }, { speaker: 1 }, { speaker: 0 }]).map((l) => l.speaker)).toEqual([
+      1, 2, 0,
+    ]);
   });
 });

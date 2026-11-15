@@ -113,7 +113,7 @@ export class Scene {
 }
 
 /** Adds `markup` to a layer with its edges roughened into leaf and twig (render.mjs `roughen`). */
-function rough(cv, markup, { scale = 7, freq = 0.09, seed = 3 } = {}) {
+export function rough(cv, markup, { scale = 7, freq = 0.09, seed = 3 } = {}) {
   cv.partAt.set(cv.body.length, { rough: { scale, freq, seed } });
   cv.add(markup);
 }
@@ -122,7 +122,7 @@ function rough(cv, markup, { scale = 7, freq = 0.09, seed = 3 } = {}) {
  * Adds crowns to a layer, to be repainted leaf by leaf (marks.mjs `leafy`, with `opts`), their edges roughened
  * first if `roughen` is given.
  */
-function leaves(cv, markup, opts, roughen = null) {
+export function leaves(cv, markup, opts, roughen = null) {
   cv.partAt.set(cv.body.length, { leafy: opts, ...(roughen ? { rough: { scale: 7, freq: 0.09, seed: 3, ...roughen } } : {}) });
   cv.add(markup);
 }
@@ -131,7 +131,7 @@ function leaves(cv, markup, opts, roughen = null) {
  * Scrub along a line `y(x)`: low bushes packed shoulder to shoulder, `h0` to `h1` high, as one path in `colour`
  * (to be painted leaf by leaf), so a field's far edge runs into it rather than meeting the sky.
  */
-function hedge(rnd, { y, x0 = -40, x1 = 1320, count, h0, h1, colour }) {
+export function hedge(rnd, { y, x0 = -40, x1 = 1320, count, h0, h1, colour }) {
   const shapes = [];
   for (let i = 0; i < count; i++) {
     const x = between(rnd, x0, x1);
@@ -146,7 +146,7 @@ function hedge(rnd, { y, x0 = -40, x1 = 1320, count, h0, h1, colour }) {
  * of the picture, `w` wide at the foot and narrowing, bending a little as it goes (`lean`), with a few boughs
  * and broken stubs off it. Markup for one path's `d`.
  */
-function trunk(rnd, { x, y, w, lean = 0, boughs = 3 }) {
+export function trunk(rnd, { x, y, w, lean = 0, boughs = 3 }) {
   const top = -40;
   const pts = [];
   const steps = 8;

@@ -6,8 +6,9 @@
  * the same `validateStory` — a file the command accepts is one the admin
  * panel could have produced, and the reverse.
  *
- * Starter stories (api/content/stories/kurmanci.json and sorani.json) were
- * written by Claude. The owner's rule is that a native speaker reads and
+ * Starter stories (api/content/stories: kurmanci.json, sorani.json, the
+ * road's chapter stories and the legends) were written for the app, not by a
+ * native speaker. The owner's rule is that a native speaker reads and
  * publishes each one, so they arrive as drafts marked `source = 'starter'`,
  * once: each is remembered in `content_seeds`, so a starter an editor
  * archived or deleted stays gone after the next restart, and a starter added
@@ -16,9 +17,21 @@
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
 import type { FastifyBaseLogger } from 'fastify';
-import { validateStory, type StoryGlossEntry, type StoryInput, type StoryLanguage, type StoryTradition, type StoryValidationStage } from '@kurda/shared';
+import {
+  validateStory,
+  type StoryGlossEntry,
+  type StoryInput,
+  type StoryLanguage,
+  type StoryMetaTranslation,
+  type StoryNoteInput,
+  type StoryReflectionInput,
+  type StorySourceInput,
+  type StoryTradition,
+  type StoryTranslationReviewEntry,
+  type StoryValidationStage,
+} from '@kurda/shared';
 import type { Cache } from '../cache/cache.js';
-import { StoryAdminService, canonicalContent, saveStory, tidyStory, type StoryDraft } from './admin-service.js';
+import { StoryAdminService, canonicalContent, reviewAfterChange, saveStory, tidyStory, type StoryDraft } from './admin-service.js';
 import { storyFileSchema, storyInputFrom } from './schema.js';
 import { bustStoryLists, type QuestionRow } from './service.js';
 
@@ -99,6 +112,11 @@ interface StoredRow {
   translations: Record<string, string>;
   cover: string | null;
   reading_minutes: number | null;
+  meta_translations: Record<string, StoryMetaTranslation> | null;
+  reflections: StoryReflectionInput[] | null;
+  notes: StoryNoteInput[] | null;
+  sources: StorySourceInput[] | null;
+  translation_review: Record<string, StoryTranslationReviewEntry> | null;
 }
 
 /**
@@ -106,7 +124,7 @@ interface StoredRow {
  * file says with what is there — every field the file can set, the library
  * fields included: a file that only adds a category to a story is a change.
  */
-async function storedContent(db: pg.PoolClient, row: StoredRow): Promise<string> {
+async function storedInput(db: pg.PoolClient, row: StoredRow): Promise<StoryInput> {
   const questions = await db.query<QuestionRow>(`SELECT * FROM story_questions WHERE story_id = $1 ORDER BY position`, [row.id]);
   const content = {
     dialect: row.dialect,
@@ -126,6 +144,7 @@ async function storedContent(db: pg.PoolClient, row: StoredRow): Promise<string>
       explanationEn: q.explanation_en,
       evidenceParagraph: q.evidence_paragraph,
       evidenceSentence: q.evidence_sentence,
+      translations: q.translations ?? {},
     })),
     category: row.category,
     tradition: row.tradition,
@@ -136,12 +155,25 @@ async function storedContent(db: pg.PoolClient, row: StoredRow): Promise<string>
     translations: row.translations ?? {},
     cover: row.cover,
     readingMinutes: row.reading_minutes,
+    metaTranslations: row.meta_translations ?? {},
+    reflections: row.reflections ?? [],
+    notes: row.notes ?? [],
+    sources: row.sources ?? [],
+    translationReview: row.translation_review ?? {},
   };
-  return canonicalFile(content);
+  return content;
 }
 
-/** `canonicalContent` plus the library fields, which the importer owns as much as the text. */
-function canonicalFile(story: StoryInput): string {
+/**
+ * `canonicalContent` plus the library fields, which the importer owns as much
+ * as the text — the sources among them. The per-language review counts only
+ * when the file says something about it; a file that does not leaves the
+ * stored review to follow from what changed.
+ */
+function canonicalFile(story: StoryInput, withReview = true): string {
+  const review = Object.entries(story.translationReview ?? {})
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([locale, r]) => [locale, r.status, r.by ?? null, r.at ?? null, r.note ?? null]);
   return JSON.stringify([
     canonicalContent(story),
     story.language ?? 'ku',
@@ -153,6 +185,8 @@ function canonicalFile(story: StoryInput): string {
     story.attributionNote,
     story.cover,
     story.readingMinutes,
+    (story.sources ?? []).map((src) => [src.title, src.author ?? null, src.url ?? null, src.type, src.note ?? null]),
+    withReview ? review : null,
   ]);
 }
 
@@ -210,20 +244,24 @@ export async function importStories(pool: pg.Pool, raw: unknown, options: StoryI
     for (const draft of drafts) {
       const found = await client.query<StoredRow>(
         `SELECT id, status, updated_by, review_status, dialect, language, level, title, summary, body, glossary, category, tradition, author,
-                story_source, source_url, attribution_note, translations, cover, reading_minutes
+                story_source, source_url, attribution_note, translations, cover, reading_minutes,
+                meta_translations, reflections, notes, sources, translation_review
            FROM stories WHERE slug = $1 FOR UPDATE`,
         [draft.slug],
       );
       const row = found.rows[0];
       let id: string;
       let outcome: StoryImportOutcome;
+      const stored = row && row.status === 'draft' ? await storedInput(client, row) : null;
+      // a file that says nothing of who reviewed which translation leaves that to follow from what it changed
+      const fileReview = draft.translationReview !== undefined;
       if (!row) {
         id = (await saveStory(client, draft, { insert: { source: options.source ?? 'admin', createdBy: null } }))!;
         outcome = 'created';
       } else if (row.status !== 'draft') {
         result.stories.push({ slug: draft.slug, outcome: 'kept', note: `${row.status.replace('_', ' ')}: not overwritten`, published: false });
         continue;
-      } else if ((await storedContent(client, row)) === canonicalFile(draft)) {
+      } else if (canonicalFile(stored!, fileReview) === canonicalFile(draft, fileReview)) {
         id = row.id;
         outcome = 'unchanged';
       } else if (row.updated_by !== null && options.force !== true) {
@@ -238,7 +276,8 @@ export async function importStories(pool: pg.Pool, raw: unknown, options: StoryI
         id = row.id;
         // the content changed, so an approval of the old content goes with it (StoryAdminService.update does the same)
         const resetReview = row.review_status === 'approved';
-        await saveStory(client, draft, {
+        const review = fileReview ? draft.translationReview : reviewAfterChange(stored!, draft, row.translation_review);
+        await saveStory(client, { ...draft, translationReview: review }, {
           id,
           set:
             'lock_version = lock_version + 1, updated_by = NULL' +
@@ -276,8 +315,14 @@ export async function importStories(pool: pg.Pool, raw: unknown, options: StoryI
   return result;
 }
 
-/** Where the starter stories are, beside the other content the API ships with. */
-export const STARTER_STORY_FILES = ['kurmanci.json', 'sorani.json'].map(
+/**
+ * Where the starter stories are, beside the other content the API ships with:
+ * the starter stories, the stories Hamo tells at the end of each chapter of
+ * the road (road.json), which go online with their chapter (content/road-chapters.ts),
+ * and the legends (legends.json): long tellings in sections, with their notes,
+ * sources and translations.
+ */
+export const STARTER_STORY_FILES = ['kurmanci.json', 'sorani.json', 'road.json', 'legends.json'].map(
   (name) => new URL(`../../content/stories/${name}`, import.meta.url),
 );
 
@@ -306,7 +351,8 @@ export async function seedStarterStories(
       try {
         const parsed = parseStoryFile(JSON.parse(await readFile(file, 'utf8')), 'draft');
         const broken = new Set(parsed.issues.map((i) => /^stories\[(\d+)\]/.exec(i.path)?.[1]).filter((n) => n !== undefined));
-        if (parsed.drafts.length === 0) {
+        // a file still waiting for its stories is fine; one that cannot be read is worth a word in the log
+        if (parsed.drafts.length === 0 && parsed.issues.length > 0) {
           log.warn({ file: file.pathname, issues: parsed.issues.slice(0, 10) }, 'starter stories file is not readable; skipped');
         }
         parsed.drafts.forEach((draft, i) => {

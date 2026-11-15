@@ -15,7 +15,7 @@
  * Days here are UTC days, the same clock as the league week, so a day never
  * straddles two weeks.
  */
-import { ACCURACY_BONUS_XP, BASE_LESSON_XP, LEARN_GAME_XP_SOURCES, REPEAT_XP_FACTOR } from '@kurda/shared';
+import { ACCURACY_BONUS_XP, BASE_LESSON_XP, LEARN_GAME_XP_SOURCES, REPEAT_XP_FACTOR, RIDDLE_XP_SOURCE } from '@kurda/shared';
 
 /** Learning: these join the week's league and build streaks (see `isLearningSource`). */
 export const LEARNING_XP_SOURCES = ['lesson_complete', 'practice_complete', 'story'] as const;
@@ -35,8 +35,13 @@ export const LEARNING_XP_SOURCES = ['lesson_complete', 'practice_complete', 'sto
  * lessons' own exercises (Build a Sentence, Hear It, Find It) still
  * pay from game sources, and a solo round still counts for the streak and the
  * daily goal when at least half of it was right (games/rewards.ts).
+ *
+ * A riddle of the Stories solved by a guess, before its answer was shown,
+ * pays a little once per riddle (`riddle`, lore/riddles.ts): it is thinking
+ * in Kurdish, not a round tapped through, and it counts as game XP under the
+ * same cap, so a day of riddles cannot climb the league either.
  */
-export const GAME_XP_SOURCES: readonly string[] = ['wordle', 'wordle_battle', 'rhyme', 'rhyme_match', 'race', ...LEARN_GAME_XP_SOURCES];
+export const GAME_XP_SOURCES: readonly string[] = ['wordle', 'wordle_battle', 'rhyme', 'rhyme_match', 'race', RIDDLE_XP_SOURCE, ...LEARN_GAME_XP_SOURCES];
 
 /**
  * What a lesson pays — the base, the accuracy bonus on top of it, and the

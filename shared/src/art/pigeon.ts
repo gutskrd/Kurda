@@ -34,16 +34,35 @@ import { mix, n, radialBox } from './svg.js';
  * three-quarters toward you (`turn`, facing right like the others, mirrored
  * for the other way) and facing you (`front`, the same either way round);
  * facing you, it can wave a wing at you with its eyes screwed up for joy
- * (`hello`), which an app shows in turn with `front`. Pecking (`peck`), it is
- * bowed on its legs with its beak down at the sill (`PIGEON_PECK`).
+ * (`hello`), which an app shows in turn with `front`. Pecking, it goes down
+ * through two pictures on the way (`peck-1`, `peck-2`) to its beak at the
+ * sill (`peck`, `PIGEON_PECK`), so an app shows its head going down and up
+ * again smoothly, as the owner's moving pigeons do; and a head bob (`bob`),
+ * its head thrust forward a moment, is a pigeon's way of standing about.
  */
-export type PigeonPose = 'perched' | 'blink' | 'happy' | 'wave' | 'sleep' | 'peck' | 'wings-up' | 'wings-down' | 'turn' | 'front' | 'hello';
-export const PIGEON_POSES: readonly PigeonPose[] = ['perched', 'blink', 'happy', 'wave', 'sleep', 'peck', 'wings-up', 'wings-down', 'turn', 'front', 'hello'];
+export type PigeonPose =
+  | 'perched'
+  | 'blink'
+  | 'happy'
+  | 'wave'
+  | 'sleep'
+  | 'bob'
+  | 'peck-1'
+  | 'peck-2'
+  | 'peck'
+  | 'wings-up'
+  | 'wings-down'
+  | 'turn'
+  | 'front'
+  | 'hello';
+export const PIGEON_POSES: readonly PigeonPose[] = ['perched', 'blink', 'happy', 'wave', 'sleep', 'bob', 'peck-1', 'peck-2', 'peck', 'wings-up', 'wings-down', 'turn', 'front', 'hello'];
 
 /** The deep the dark parts are taken toward: a night violet, never black; the wing's tips and the tail toward a quieter one, near the reference's charcoal. */
 const DUSK = '#1d1838';
 const CHARCOAL = '#221e2c';
 const PUPIL = '#1d1238';
+/** The inside of an open beak: a soft pink, never a dark hole. */
+const MOUTH = '#e8868e';
 const RING = '#ee8a5f';
 const CERE = '#fbf8f2';
 const FEET = '#f4a6a6';
@@ -241,8 +260,8 @@ const CERE_AT = [10.6, -28.1, 1.4] as const;
 /** The beak: its upper half, and the darker lower half under it. */
 const BEAK_UPPER = 'M9.6 -27.9L12 -27.5C13.1 -27.2 14.2 -26.7 14.95 -26.1C13.6 -25.8 12.3 -25.6 11 -25.4Z';
 const BEAK_LOWER = 'M11 -25.4C12.3 -25.6 13.6 -25.8 14.95 -26.1C13.7 -25.1 12.2 -24.4 10.7 -24.2Z';
-/** Where the beak opens about, chirping. */
-const BEAK_ROOT = [10.6, -25.8] as const;
+/** Where the beak opens about, chirping: the hinge at the root of its halves. */
+const BEAK_ROOT = [10.8, -25.5] as const;
 /** The flecks on the side of the neck, from the reference: those on the head bow with it. */
 const SIDE_FLECKS: readonly Fleck[] = [
   [-6.2, -29.2, 0, 1.9], [7.5, -24.5, 0, 1.8], [8.1, -18.3, 0, 1.5], [-2, -26.9, 0, 1.4], [3.9, -22, 0, 1.2],
@@ -277,27 +296,37 @@ const FEET_SIDE = 'M-2.5 -3.4L-1.9 0.6M-4.5 -1.4L0.7 -1.4M-2 -1.1L1.3 0.6M0.8 -4
 const FEET_TUCKED = 'M-1.6 -5.6L-5.6 -4.2M-0.6 -5.2L-4.4 -3.4';
 
 /**
- * Pecking, it bows on its legs: its body leans forward about the top of its
- * legs, which stay standing on the sill, and its head bows further about its
- * neck, so the tip of its beak comes down to the sill a little ahead of its
- * feet while its breast stays just over the sill. Asleep, its head droops a
- * little.
+ * Pecking, its head leads and its body follows, as a pigeon's does: its head
+ * bows about its neck and reaches forward and down, and its body leans
+ * forward about the top of its legs, which stay standing on the sill, so the
+ * tip of its beak comes down to the sill a little ahead of its feet while its
+ * breast stays over it. On the way down it is seen at two moments between
+ * (`peck-1`, `peck-2`), the head ahead of the body at each. Its head bob
+ * thrusts the head forward a moment; asleep, its head droops a little.
  */
 const HIP = [-0.6, -6.2] as const;
 const NECK = [3, -21] as const;
-const PECK = { lean: 50, bow: 30 } as const;
-const DROOP = 12;
+/** The beak's tip, side on, where a letter in it is held. */
+const BEAK_TIP = [14.95, -26.1] as const;
 
-/**
- * Where the tip of its beak is, about its feet, as it pecks (`peck`): on the
- * sill ahead of its feet, where an app lays what it picks up; and how far
- * ahead of its feet its bowed head then reaches, so that two pigeons on the
- * sill keep apart even pecking.
- */
-export const PIGEON_PECK = { beak: pecked([14.95, -26.1]), reach: Math.round((pecked([HEAD.x, HEAD.y])[0] + HEAD.r) * 10) / 10 } as const;
+/** How its head and body are carried: the body's lean about the hip, the head's bow about the neck, and how far the head reaches. */
+interface Carriage {
+  lean: number;
+  bow: number;
+  reach: readonly [number, number];
+}
 
-/** How far ahead of its feet a pigeon standing side on reaches: the tip of its beak, and the far edge of a letter in it. */
-export const PIGEON_REACH = { beak: 14.95, letter: 25.6 } as const;
+const UPRIGHT: Carriage = { lean: 0, bow: 0, reach: [0, 0] };
+const PECKED: Carriage = { lean: 35, bow: 45, reach: [3, 3.5] };
+/** How far down each picture of pecking is, as shares of the whole way. */
+const PECK_DEPTH = { 'peck-1': 0.3, 'peck-2': 0.58, peck: 1 } as const;
+const CARRIAGE: Partial<Record<PigeonPose, Carriage>> = {
+  ...Object.fromEntries(
+    Object.entries(PECK_DEPTH).map(([pose, f]) => [pose, { lean: PECKED.lean * f, bow: PECKED.bow * f, reach: [PECKED.reach[0] * f, PECKED.reach[1] * f] }]),
+  ),
+  bob: { lean: 0, bow: 4, reach: [2.2, 0.6] },
+  sleep: { lean: 0, bow: 12, reach: [0, 0] },
+};
 
 function turned(p: readonly [number, number], about: readonly [number, number], deg: number): [number, number] {
   const a = (deg * Math.PI) / 180;
@@ -305,9 +334,37 @@ function turned(p: readonly [number, number], about: readonly [number, number], 
   return [about[0] + x * Math.cos(a) - y * Math.sin(a), about[1] + x * Math.sin(a) + y * Math.cos(a)];
 }
 
-function pecked(p: readonly [number, number]): readonly [number, number] {
-  const [x, y] = turned(turned(p, NECK, PECK.bow), HIP, PECK.lean);
-  return [Math.round(x * 100) / 100, Math.round(y * 100) / 100];
+/** Where a point of the head is, the head and body carried as `c`. */
+function carried(p: readonly [number, number], c: Carriage): [number, number] {
+  const [x, y] = turned(p, NECK, c.bow);
+  return turned([x + c.reach[0], y + c.reach[1]], HIP, c.lean);
+}
+
+const round2 = (v: number): number => Math.round(v * 100) / 100;
+const pecked = carried(BEAK_TIP, CARRIAGE.peck!);
+
+/** Where a letter in its beak hangs from: a third of the way along its top edge, so the beak holds it a little left of its middle. */
+const LETTER_HOLD = 2.4;
+
+/**
+ * Pecking, about its feet: where the tip of its beak comes down to (on the
+ * sill, a little ahead of its feet), where the middle of a letter it picks up
+ * there or lays down lies, and how far ahead of its feet its bowed head
+ * reaches, so that two pigeons on the sill keep apart even pecking.
+ */
+export const PIGEON_PECK = {
+  beak: [round2(pecked[0]), round2(pecked[1])],
+  letter: round2(pecked[0] + LETTER_HOLD),
+  reach: Math.round((carried([HEAD.x, HEAD.y], CARRIAGE.peck!)[0] + HEAD.r) * 10) / 10,
+} as const;
+
+/** How far ahead of its feet a pigeon standing side on reaches: the tip of its beak, and the far edge of a letter in it; and how far below the beak a letter in it hangs. */
+export const PIGEON_REACH = { beak: BEAK_TIP[0], letter: round2(BEAK_TIP[0] + 9.7), hang: 10.7 } as const;
+
+/** Where the tip of its beak is, about its feet, in a pose seen side on: where a letter in its beak hangs from. */
+export function pigeonBeakTip(pose: PigeonPose): readonly [number, number] {
+  const [x, y] = carried(BEAK_TIP, CARRIAGE[pose] ?? UPRIGHT);
+  return [round2(x), round2(y)];
 }
 
 /** How the pigeon is seen side on. */
@@ -316,9 +373,8 @@ interface SideLook {
   wing: keyof typeof WING_TURN;
   legs: 'standing' | 'tucked' | 'sitting';
   letter: boolean;
-  /** how far it leans forward on its legs, and how far its head bows, in degrees */
-  lean: number;
-  bow: number;
+  /** how its head and body are carried: upright, bowing to peck, bobbing, or drooping asleep */
+  carriage: Carriage;
   /** its beak open, chirping */
   open: boolean;
 }
@@ -346,14 +402,16 @@ function wingMarks(dr: Drawing, p: Plumage, shape: string, stripes: typeof WING_
 
 /** The pigeon side on, facing right. */
 function sideOn(dr: Drawing, p: Plumage, look: SideLook): void {
+  const c = look.carriage;
   if (look.legs === 'standing') {
     for (const leg of LEGS) fill(dr, leg, p.legs);
     stroke(dr, FEET_SIDE, FEET, 0.55);
   }
   // asleep, it has sat down on its legs; pecking, it leans forward on them
   const sat = look.legs === 'sitting' ? 'translate(0 5.4)' : '';
-  const lean = look.lean ? `rotate(${n(look.lean)} ${n(HIP[0])} ${n(HIP[1])})` : '';
-  dr.add(sat || lean ? `<g transform="${`${sat} ${lean}`.trim()}">` : '<g>');
+  const lean = c.lean ? `rotate(${n(c.lean)} ${n(HIP[0])} ${n(HIP[1])})` : '';
+  const body = sat || lean ? `<g transform="${`${sat} ${lean}`.trim()}">` : '<g>';
+  dr.add(body);
   if (look.legs === 'tucked') stroke(dr, FEET_TUCKED, FEET, 0.6);
   // flying with its wings up, the further wing shows behind it, a shade deeper and a little ahead
   if (look.wing === 'up') {
@@ -367,42 +425,67 @@ function sideOn(dr: Drawing, p: Plumage, look: SideLook): void {
   fill(dr, COLLAR, p.head);
   flecks(dr, p, SIDE_FLECKS.filter(([, y]) => y > -25));
   dr.add('</g>');
-  const bow = look.bow ? `<g transform="rotate(${n(look.bow)} ${n(NECK[0])} ${n(NECK[1])})">` : '<g>';
-  dr.add(bow);
+  const moved = c.bow || c.reach[0] || c.reach[1];
+  const head = moved ? `<g transform="translate(${n(c.reach[0])} ${n(c.reach[1])}) rotate(${n(c.bow)} ${n(NECK[0])} ${n(NECK[1])})">` : '<g>';
+  dr.add(head);
   dr.add(`<circle cx="${n(HEAD.x)}" cy="${n(HEAD.y)}" r="${n(HEAD.r)}" fill="${p.head}"/>`);
   flecks(dr, p, SIDE_FLECKS.filter(([, y]) => y <= -25));
   dr.add('</g>');
   sideWing(dr, p, WING_TURN[look.wing]);
-  dr.add(bow);
+  dr.add(head);
   eye(dr, p, EYE_RING, EYE_PUPIL, look.eyes);
-  if (look.open) {
-    // the beak open to chirp: its halves apart about their root, and the dark of the mouth between them
-    const [rx, ry] = BEAK_ROOT;
-    fill(dr, `M${n(rx)} ${n(ry)}L14.4 -26.9L14.5 -25.1Z`, PUPIL);
-    fill(dr, BEAK_LOWER, p.jaw, ` transform="rotate(18 ${n(rx)} ${n(ry)})"`);
-    fill(dr, BEAK_UPPER, p.beak, ` transform="rotate(-14 ${n(rx)} ${n(ry)})"`);
-  } else {
-    fill(dr, BEAK_LOWER, p.jaw);
-    fill(dr, BEAK_UPPER, p.beak);
-  }
-  dr.add(`<circle cx="${n(CERE_AT[0])}" cy="${n(CERE_AT[1])}" r="${n(CERE_AT[2])}" fill="${p.cere}"/>`);
-  dr.add('</g>');
+  if (look.open) openBeak(dr, p);
+  else beak(dr, p);
+  dr.add('</g></g>');
   if (look.letter) {
-    // the letter hangs from the tip of its beak before its breast, the beak's tip over the paper, holding it
-    heldLetter(dr, 14.9, -26.1, 1);
+    // the letter hangs straight down from the tip of its beak wherever its head is, and the beak's tip is over the paper, holding it
+    const [x, y] = carried(BEAK_TIP, c);
+    heldLetter(dr, x, y, 1);
+    dr.add(body + head);
     fill(dr, BEAK_UPPER, p.beak);
     dr.add(`<circle cx="${n(CERE_AT[0])}" cy="${n(CERE_AT[1])}" r="${n(CERE_AT[2])}" fill="${p.cere}"/>`);
+    dr.add('</g></g>');
   }
-  dr.add('</g>');
 }
 
-/** The letter in its beak: a small envelope held by its corner at `x`, `y`, sealed with red wax, hanging before it; `squeeze` narrows it as the bird turns. */
+/** The beak shut, and the cere over it. */
+function beak(dr: Drawing, p: Plumage): void {
+  fill(dr, BEAK_LOWER, p.jaw);
+  fill(dr, BEAK_UPPER, p.beak);
+  dr.add(`<circle cx="${n(CERE_AT[0])}" cy="${n(CERE_AT[1])}" r="${n(CERE_AT[2])}" fill="${p.cere}"/>`);
+}
+
+/**
+ * The beak open to chirp: its halves apart about the hinge at their root, and
+ * between them the soft pink of the inside of the mouth, drawn a little
+ * inside both halves so that nothing but beak and mouth shows between them.
+ */
+function openBeak(dr: Drawing, p: Plumage): void {
+  const hinge = BEAK_ROOT;
+  const deep: [number, number] = [11 + 0.78 * (BEAK_TIP[0] - 11), -25.4 + 0.78 * (BEAK_TIP[1] + 25.4)];
+  const [up, down] = [turned(deep, hinge, -9), turned(deep, hinge, 13)];
+  const round = turned([deep[0] + 0.9, deep[1]], hinge, 2);
+  fill(
+    dr,
+    `M${n(hinge[0])} ${n(hinge[1])}L${n(up[0])} ${n(up[1])}Q${n(round[0])} ${n(round[1])} ${n(down[0])} ${n(down[1])}Z`,
+    MOUTH,
+  );
+  fill(dr, BEAK_LOWER, mix(p.beak, p.jaw, 0.5), ` transform="rotate(16 ${n(hinge[0])} ${n(hinge[1])})"`);
+  fill(dr, BEAK_UPPER, p.beak, ` transform="rotate(-12 ${n(hinge[0])} ${n(hinge[1])})"`);
+  dr.add(`<circle cx="${n(CERE_AT[0])}" cy="${n(CERE_AT[1])}" r="${n(CERE_AT[2])}" fill="${p.cere}"/>`);
+}
+
+/**
+ * The letter in its beak: a small envelope sealed with red wax, hanging from
+ * the beak at `x`, `y`, which holds it a third of the way along its top edge;
+ * `squeeze` narrows it as the bird turns.
+ */
 function heldLetter(dr: Drawing, x: number, y: number, squeeze: number): void {
   dr.add(`<g transform="translate(${n(x)} ${n(y)}) scale(${n(squeeze)} 1)">`);
-  fill(dr, 'M-1.9 -0.5L10.7 1.1L9.5 10.5L-3.1 8.9Z', PAPER_EDGE);
-  fill(dr, 'M-1.9 -1.3L10.7 0.3L9.7 9.7L-2.9 8.1Z', PAPER);
-  stroke(dr, 'M-1.9 -1.3L4.1 4.7L10.7 0.3', PAPER_EDGE, 0.8);
-  dr.add(`<circle cx="4.1" cy="4.5" r="1.7" fill="${SEAL}"/>`);
+  fill(dr, 'M-4.6 1.1L9.4 0.5L9.7 10.1L-4.3 10.7Z', PAPER_EDGE);
+  fill(dr, 'M-4.6 0.3L9.4 -0.3L9.7 9.3L-4.3 9.9Z', PAPER);
+  stroke(dr, 'M-4.6 0.3L2.5 5.2L9.4 -0.3', PAPER_EDGE, 0.8);
+  dr.add(`<circle cx="2.5" cy="5" r="1.7" fill="${SEAL}"/>`);
   dr.add('</g>');
 }
 
@@ -478,7 +561,7 @@ function turnedToYou(dr: Drawing, p: Plumage, letter: boolean): void {
   fill(dr, TQ.beakLower, p.jaw);
   for (const [x, y] of TQ.ceres) dr.add(`<circle cx="${n(x)}" cy="${n(y)}" r="1.35" fill="${p.cere}"/>`);
   if (letter) {
-    heldLetter(dr, 7.4, -24.6, 0.72);
+    heldLetter(dr, 7.2, -24.2, 0.72);
     fill(dr, TQ.beakLower, p.jaw);
   }
 }
@@ -588,7 +671,10 @@ export function pigeonShadow(dr: Drawing, pose: PigeonPose = 'perched', letter =
   const holds = pigeonHolds(pose, letter);
   if (pose === 'sleep') dr.add(blot(0, 1.2, 14.6, 3) + blot(-15.6, 1.6, 5.4, 1.2, 0.55));
   // pecking, the round of it has leant forward over its feet and its head is down by the sill; its raised tail casts little
-  else if (pose === 'peck') dr.add(blot(9.4, 1.5, 15.4, 3) + blot(-0.6, 1.1, 5, 1.3) + blot(-9.6, 1.8, 4, 1, 0.4));
+  else if (pose === 'peck' || pose === 'peck-2') {
+    dr.add(blot(7.4, 1.5, 15, 3) + blot(-0.6, 1.1, 5, 1.3) + blot(-9.6, 1.8, 4, 1, 0.4));
+    if (holds) dr.add(blot(23, 1.7, 7, 2));
+  }
   else if (pose === 'front' || pose === 'hello') {
     // facing you it is round and as wide as it is deep, its feet side by side
     dr.add(blot(0, 1.4, 13.4, 3) + blot(-2.75, 1.1, 3, 1.1) + blot(2.75, 1.1, 3, 1.1));
@@ -597,7 +683,7 @@ export function pigeonShadow(dr: Drawing, pose: PigeonPose = 'perched', letter =
     dr.add(blot(-0.6, 1.5, 13.6, 3) + blot(-14.6, 1.8, 4.6, 1.2, 0.55) + blot(-0.4, 1.1, 4.8, 1.3));
     if (holds) dr.add(blot(10.6, 1.7, 5.2, 1.8));
   } else dr.add(blot(-0.4, 1.5, 14, 3) + blot(-16.4, 1.8, 5.6, 1.3, 0.55) + blot(-0.6, 1.1, 5, 1.3));
-  if (holds && pose !== 'front' && pose !== 'hello' && pose !== 'turn') dr.add(blot(18.6, 1.7, 7, 2));
+  if (holds && pose !== 'front' && pose !== 'hello' && pose !== 'turn' && pose !== 'peck-2') dr.add(blot(17.4, 1.7, 7, 2));
   dr.add('</g>');
 }
 
@@ -619,8 +705,7 @@ export function pigeon(dr: Drawing, kind: string, pose: PigeonPose = 'perched', 
     wing: pose === 'wings-up' ? 'up' : pose === 'wings-down' ? 'down' : pose === 'wave' ? 'wave' : 'folded',
     legs: flying ? 'tucked' : pose === 'sleep' ? 'sitting' : 'standing',
     letter: holding,
-    lean: pose === 'peck' ? PECK.lean : 0,
-    bow: pose === 'peck' ? PECK.bow : pose === 'sleep' ? DROOP : 0,
+    carriage: CARRIAGE[pose] ?? UPRIGHT,
     open: pose === 'happy',
   });
   if (pose === 'sleep') sleeping(dr);

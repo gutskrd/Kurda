@@ -190,6 +190,9 @@ const MAP = {
   // --- answering a lesson ---
   'speaker-high': { glyph: 'SpeakerHigh', weight: 'fill', note: 'the clip in a listening bubble: tap to hear it again' },
   tiles: { glyph: 'SquaresFour', note: 'answer with word tiles rather than the keyboard' },
+
+  // --- the letter widget ---
+  widget: { glyph: 'SquaresFour', note: 'the letter widget on the home screen: the squares a phone shows for its widgets' },
 };
 
 /** Every shape in one weight of one glyph, in the order Phosphor draws them. */

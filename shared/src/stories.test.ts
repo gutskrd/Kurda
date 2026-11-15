@@ -23,6 +23,10 @@ import {
   normalizeJoinCode,
   formatJoinCode,
   glossSpans,
+  isStoryHeading,
+  isStoryLength,
+  storyHeadingTitle,
+  storySections,
   lengthMinutes,
   readingHardCapSeconds,
   readingMinutes,
@@ -57,6 +61,20 @@ describe('story presets', () => {
     expect(storyLengthFor('kurmanci', 451)).toBeNull();
     expect(storyLengthFor('sorani', 50)).toBe('short');
     expect(storyLengthFor('sorani', 49)).toBeNull();
+  });
+
+  it('knows a saga, long enough for a legend in sections, in each variety', () => {
+    expect(isStoryLength('saga')).toBe(true);
+    expect(isStoryLength('epic')).toBe(false);
+    expect(storyLengthFor('kurmanci', 599)).toBeNull();
+    expect(storyLengthFor('kurmanci', 600)).toBe('saga');
+    expect(storyLengthFor('kurmanci', 1600)).toBe('saga');
+    expect(storyLengthFor('kurmanci', 1601)).toBeNull();
+    expect(storyLengthFor('sorani', 500)).toBe('saga');
+    expect(storyLengthFor('sorani', 1400)).toBe('saga');
+    expect(storyLengthFor('sorani', 1401)).toBeNull();
+    expect(QUESTION_COUNTS_BY_LENGTH.saga).toEqual([5, 10]);
+    expect(MIN_QUESTION_BANK.saga).toBe(15);
   });
 
   it('only offers counts from the preset list, and a bank larger than the largest', () => {
@@ -102,6 +120,9 @@ describe('reading time', () => {
     expect(readingSoftCapSeconds('kurmanci', 400)).toBe(600);
     expect(readingHardCapSeconds('kurmanci', 400)).toBe(1260);
     expect(readingHardCapSeconds('kurmanci', 100_000)).toBe(1800);
+    // a saga read by the slowest reader: the host may cut in no later than the questions would start anyway
+    expect(readingSoftCapSeconds('kurmanci', 1600)).toBe(1800);
+    expect(readingHardCapSeconds('kurmanci', 1600)).toBe(1800);
   });
 });
 
@@ -140,6 +161,46 @@ describe('cutting a story up', () => {
   it('counts words with letters in them, not dashes or numbers', () => {
     expect(countStoryWords('Rojek ji rojan — 3 kurik hebûn.')).toBe(5);
     expect(countStoryWords('  ')).toBe(0);
+  });
+});
+
+describe('sections', () => {
+  const body = [
+    'Ev çîroka Kela Dimdimê ye.',
+    '## Mîr û kelha wî',
+    'Mîrê Destzêrîn kelha xwe ava kir. Ew li ser çiyê bû.',
+    '##Ne sernav e',
+    '## Dawî',
+    'Kelha hîn li wir e.',
+  ].join('\n\n');
+
+  it('reads a paragraph that starts with “## ” as a heading, and nothing else', () => {
+    expect(isStoryHeading('## Mîr û kelha wî')).toBe(true);
+    expect(storyHeadingTitle('## Mîr û kelha wî ')).toBe('Mîr û kelha wî');
+    for (const not of ['##Ne sernav e', '### Sê', '## ', 'Mîr ## û kelha', '# Yek']) {
+      expect(isStoryHeading(not)).toBe(false);
+      expect(storyHeadingTitle(not)).toBeNull();
+    }
+  });
+
+  it('lists the sections by their heading paragraph, the paragraphs before the first being the introduction', () => {
+    expect(storySections(body)).toEqual([
+      { title: 'Mîr û kelha wî', paragraph: 1 },
+      { title: 'Dawî', paragraph: 4 },
+    ]);
+    // the same from the paragraphs the reader is sent
+    expect(storySections(storyParagraphs(body))).toEqual(storySections(body));
+    expect(storySections('Yek.\n\nDu.')).toEqual([]);
+  });
+
+  it('records, glosses and counts no heading', () => {
+    expect(storyAudioSentences('## Mîr û kelha wî')).toEqual([]);
+    expect(storyAudioSentences('Mîr hat.')).toEqual(['Mîr hat.']);
+    expect(glossSpans('## Mîr û kelha wî', [{ term: 'kelha', meanings: { en: 'castle' } }])).toEqual([]);
+    expect(countStoryWords('## Mîr û kelha wî\n\nMîr hat.')).toBe(2);
+    expect(countStoryWords('## Mîr û kelha wî')).toBe(0);
+    // a text without headings counts as it always did
+    expect(countStoryWords('Rojek ji rojan.\n\nKurikek hebû.')).toBe(5);
   });
 });
 

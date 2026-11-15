@@ -1,7 +1,7 @@
 import type { CompositeNavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { AlphabetScript, PracticeMode, RankedGame } from '@kurda/shared';
+import type { AlphabetScript, GameDialect, PracticeMode, ProverbRoundMode, RankedGame } from '@kurda/shared';
 import type { LearnView } from './tabs';
 import type { SettingsPageKey } from '../settings/SettingsPageScreen';
 
@@ -78,6 +78,8 @@ export type RootStackParamList = {
   Letters: undefined;
   /** One correspondence with a pen pal (letters/LetterThreadScreen), from Letters or from a bird's arrival in the notifications. */
   LetterThread: { threadId: string };
+  /** The home-screen letter widget's page (widget/LetterWidgetScreen), from the letters screen's header. */
+  LetterWidget: undefined;
   /** As Chat: `openGift` to unwrap at once; `name` may be '' and is then looked up. */
   /** `addFriends`: the group was made a moment ago, and opens with the sheet for adding friends up */
   GroupThread: { groupId: string; name: string; openGift?: string; addFriends?: boolean };
@@ -127,6 +129,17 @@ export type RootStackParamList = {
   StoryReader: { slug: string };
   /** A story game; opening one you are not in joins it when you may. */
   StoryGame: { id: string };
+  /** The riddles (lore/RiddlesScreen), from the library's top or their address; `dialect` to open on one variety. */
+  Riddles: { dialect?: GameDialect } | undefined;
+  /** One riddle, by its slug (which starts with its variety); a link to it never carries the answer. */
+  Riddle: { slug: string };
+  /** A riddle's answer, once it is solved or asked for (lore/RiddleAnswerScreen): no address of its own, so no link opens it. */
+  RiddleAnswer: { slug: string };
+  /** The proverbs (lore/ProverbsScreen); `theme` to open on one of the shared themes. */
+  Proverbs: { dialect?: GameDialect; theme?: string } | undefined;
+  Proverb: { slug: string };
+  /** A short round on the proverbs (lore/ProverbRoundScreen), in a variety, on one of its two kinds. */
+  ProverbRound: { dialect: GameDialect; mode?: ProverbRoundMode };
   Memes: undefined;
   MemeDetail: { postId: string };
   Tags: undefined;

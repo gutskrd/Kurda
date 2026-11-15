@@ -15,7 +15,7 @@ import { Alert } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
-import { TREE_KINDS, TREE_SPECIES, treeView, type LettersHome, type TreeRecord, type TreeView } from '@kurda/shared';
+import { DEFAULT_PAPER, TREE_KINDS, TREE_SPECIES, treeView, type LettersHome, type TreeRecord, type TreeView } from '@kurda/shared';
 import type { MyTree } from '../tree/api';
 import type { ShopItem } from './format';
 import { ShopScreen } from './ShopScreen';
@@ -339,8 +339,10 @@ describe('your bird and your tree, in the Shop', () => {
     sky: [],
     callsLeft: 5,
     homecoming: null,
+    arrival: null,
     penPals: [],
     roomForMore: true,
+    paper: DEFAULT_PAPER,
     ...over,
   });
   const TODAY = '2026-11-13';

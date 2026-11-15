@@ -85,7 +85,7 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   },
   ku: {
     primary: (n) => ({
-      title: 'Çend deqîqe bi kurdî?',
+      title: 'Çend xulek bi kurdî?',
       body: `Rêzeya te ${n} roj e. Dersek an temrîneke kurt ji bo îro bes e.`,
     }),
     lastChance: {

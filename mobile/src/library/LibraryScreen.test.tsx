@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
@@ -17,6 +17,9 @@ import { LibraryScreen } from './LibraryScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(cleanup);
+// The list hands its cell updates to an idle-time queue; let that queue empty while the page still exists, so an
+// update the last test queued never runs after the test environment is gone (it then fails on a missing window).
+afterAll(() => new Promise<void>((resolve) => setTimeout(resolve, 500)));
 
 const story = (n: number, over: Record<string, unknown> = {}) => ({
   id: `s${n}`,

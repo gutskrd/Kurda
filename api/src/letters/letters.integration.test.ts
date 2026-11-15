@@ -138,6 +138,34 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
     expect((await home(rojda)).homecoming).toBeNull();
   });
 
+  it('brings each later letter to the window by its writer’s bird until it is read', async () => {
+    const [a, b] = [await adult('arra'), await adult('arrb')];
+    const met = await meet(a, b);
+    const write = (p: Person, body: string) => call('POST', `/letters/threads/${met.threadId}`, p.token, { body });
+    const open = (p: Person) => call('GET', `/letters/threads/${met.threadId}`, p.token);
+    // his answer came home with her own bird: that is her homecoming, not a pen pal's bird
+    expect(await home(a)).toMatchObject({ homecoming: { threadId: met.threadId }, arrival: null });
+    await open(a);
+    expect(await home(a)).toMatchObject({ homecoming: null, arrival: null });
+
+    // her next letter comes to his window by her bird, and waits there until he reads it
+    expect((await write(a, 'Silav dîsa! Tu çawa yî?')).statusCode).toBe(200);
+    expect(await home(b)).toMatchObject({ homecoming: null, arrival: { threadId: met.threadId, person: { id: a.id, bird: letterBirdOf(a.id) } } });
+    await open(b);
+    expect((await home(b)).arrival).toBeNull();
+
+    // and his comes to hers by his bird, every letter after, never as her own bird coming home
+    expect((await write(b, 'Baş im, spas!')).statusCode).toBe(200);
+    expect(await home(a)).toMatchObject({ homecoming: null, arrival: { threadId: met.threadId, person: { id: b.id } } });
+    await open(a);
+    expect((await write(a, 'Pir xweş e.')).statusCode).toBe(200);
+    expect((await home(b)).arrival).toMatchObject({ threadId: met.threadId, person: { id: a.id } });
+
+    // once they have said goodbye, no bird comes with what was left unread
+    expect((await call('POST', `/letters/threads/${met.threadId}/end`, a.token)).statusCode).toBeLessThan(300);
+    expect((await home(b)).arrival).toBeNull();
+  });
+
   it('writes one letter each in turn once a correspondence is open', async () => {
     const [a, b] = [await adult('turna'), await adult('turnb')];
     const met = await meet(a, b);
@@ -147,6 +175,14 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
     expect((await write(a)).statusCode).toBe(200);
     expect((await write(a)).json()).toMatchObject({ code: 'NOT_YOUR_TURN' });
     expect((await write(b)).statusCode).toBe(200);
+  });
+
+  it('keeps a letter’s own lines and the empty line between its paragraphs', async () => {
+    const [a, b] = [await adult('linesa'), await adult('linesb')];
+    const met = await meet(a, b);
+    const res = await call('POST', `/letters/threads/${met.threadId}`, a.token, { body: 'Hevalê delal,\r\n\r\n\r\nTu   çawa yî?\nEz baş im.' });
+    expect(res.statusCode).toBe(200);
+    expect((res.json() as { letter: { body: string } }).letter.body).toBe('Hevalê delal,\n\nTu çawa yî?\nEz baş im.');
   });
 
   it('sends a bird on its way, back out for somebody else, and never to the same window twice', async () => {

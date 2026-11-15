@@ -13,6 +13,7 @@ import {
   pathLandSvg,
   pathLandmarkSvg,
   pathLoopSvg,
+  pathSignpostSvg,
   pathStonesSvg,
   pathStopSvg,
   praiseWords,
@@ -38,6 +39,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { ToneColors } from './path';
+import type { UpcomingUnit } from './types';
 import type { SkillNode } from './types';
 
 /**
@@ -332,6 +334,68 @@ export function PathHostView({
   );
 }
 
+/**
+ * Where the path stops for now: a signpost pointing on up the road, the next
+ * unit's number and name, and that it is on its way. On the road, whose
+ * chapters go online one by one as Hamo records them, Hamo stands by the
+ * sign and a small red light breathes beside "recording it now" — still, under
+ * Reduce Motion. A picture with its words: read as one by a screen reader.
+ */
+export function UpcomingSign({ upcoming, live }: { upcoming: UpcomingUnit; live: boolean }): React.JSX.Element {
+  const { colors, scheme } = useTheme();
+  const { t, locale } = useI18n();
+  const dir = useDirection();
+  const dark = scheme === 'dark';
+  const sign = useMemo(() => pathSignpostSvg({ dark, size: SIGN, idPrefix: 'lp-next' }), [dark]);
+  const pulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!live || !upcoming.recordedBy) {
+      pulse.setValue(1);
+      return;
+    }
+    const run = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.35, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
+        Animated.timing(pulse, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
+      ]),
+    );
+    run.start();
+    return () => run.stop();
+  }, [live, upcoming.recordedBy, pulse]);
+  const number = t('coursemap.path.unit', { n: formatNumber(upcoming.number, locale) });
+  const line = t(upcoming.recordedBy ? 'coursemap.path.upcomingRecording' : 'coursemap.path.upcomingSoon');
+  return (
+    <View
+      style={[styles.next, { flexDirection: dir.row, borderColor: colors.clayBorder, backgroundColor: colors.surface }]}
+      accessible
+      accessibilityLabel={`${number}, ${upcoming.title}. ${line}`}
+      testID="lp-upcoming"
+    >
+      <View style={[styles.nextArt, { flexDirection: dir.row }]}>
+        {/* the sign points on toward the end of the line, which a right-to-left screen reads to the left */}
+        <SvgXml xml={sign} width={SIGN} height={SIGN} style={dir.rtl ? styles.mirrored : undefined} />
+        {upcoming.recordedBy ? (
+          <View style={styles.nextHost}>
+            <SpeakingCharacter speaker={upcoming.recordedBy} player={null} playing={false} crop="full" height={NEXT_HOST} />
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.nextText}>
+        <Text style={[styles.nextEyebrow, dir.text, { color: colors.textSecondary }]}>{number}</Text>
+        <Text style={[styles.nextTitle, dir.text, { color: colors.textPrimary }]}>{upcoming.title}</Text>
+        <View style={[styles.nextLine, { flexDirection: dir.row }]}>
+          {upcoming.recordedBy ? <Animated.View style={[styles.rec, { opacity: pulse }]} /> : null}
+          <Text style={[styles.nextLineText, dir.text, { color: colors.textSecondary }]}>{line}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** The signpost's size, and how tall Hamo stands by it: a little smaller than beside a unit, as he is further up the road. */
+const SIGN = 96;
+const NEXT_HOST = 104;
+
 /** The room over a person for their bubble (shared `PATH_SCENERY.bubble`). */
 const BUBBLE_ROOM = 44;
 
@@ -401,6 +465,25 @@ export function UnitRailSheet({ units, open, onClose, onPick }: { units: RailUni
 }
 
 const styles = StyleSheet.create({
+  next: {
+    alignItems: 'flex-end',
+    gap: spacing.md,
+    marginTop: spacing.xl,
+    marginHorizontal: spacing.md,
+    padding: spacing.md,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderRadius: radii.xl,
+  },
+  nextArt: { alignItems: 'flex-end' },
+  nextHost: { marginStart: -24 },
+  mirrored: { transform: [{ scaleX: -1 }] },
+  nextText: { flex: 1, gap: 2, paddingBottom: spacing.xs },
+  nextEyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, letterSpacing: 0.8, textTransform: 'uppercase' },
+  nextTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  nextLine: { alignItems: 'center', gap: spacing.xs, marginTop: 4 },
+  nextLineText: { flexShrink: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
+  rec: { width: 10, height: 10, borderRadius: radii.pill, backgroundColor: '#d6493a' },
   flat: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   landmark: { position: 'absolute' },
   loop: { position: 'absolute' },

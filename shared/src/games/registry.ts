@@ -332,7 +332,13 @@ export function gameOfTheDay(count: number, now: number): number | null {
   return count > 0 ? Math.floor(now / DAY_MS) % count : null;
 }
 
-/** The game a kind of content belongs to (each kind belongs to exactly one). */
+/**
+ * The game a kind of content belongs to. Each kind belongs to exactly one
+ * game, with one exception: riddles and proverbs (`LORE_KINDS`) are the
+ * Stories section's collections, kept as game content only for its review
+ * workflow, and belong to none — so they are never counted for a game,
+ * listed among the games or played as one.
+ */
 export function gameOfKind(kind: GameContentKind): LearnGame | null {
   return LEARN_GAMES.find((g) => g.contentKinds.includes(kind)) ?? null;
 }

@@ -18,7 +18,13 @@
  *
  * A place that already has a lesson keeps it: whatever an editor put there
  * is theirs, and the road's lesson is marked seeded and left out, with a line
- * in the log saying so. A lesson whose exercises do not pass their schemas is
+ * in the log saying so. A lesson the road seeded and nobody has touched since
+ * — still its first version, still a draft, never saved by an editor — keeps
+ * following its file: when the file is rewritten, the draft takes the new
+ * titles and exercises on the next start (`refreshRoadDrafts`), and so do its
+ * skill's and unit's titles and grammar note while every lesson under them is
+ * untouched in the same way. Anything an editor has saved, sent for review or
+ * published is never changed. A lesson whose exercises do not pass their schemas is
  * left out until its file is fixed, and tried again on the next start; the
  * rest of its unit goes in. Nothing here throws: a broken file must not stop
  * the API from starting.
@@ -208,6 +214,8 @@ export interface RoadSeedSummary {
   failed: string[];
   /** lessons seeded on an earlier start, or deleted by an editor since */
   already: number;
+  /** untouched drafts that took their rewritten file's titles and exercises on this start, by key */
+  refreshed: string[];
 }
 
 /** The id `find` gives, else the one `create` makes — or, when another instance made it first, the one it made. */
@@ -237,7 +245,7 @@ export async function seedRoadLessons(
   options: { dir?: URL; course?: string } = {},
 ): Promise<RoadSeedSummary> {
   const course = options.course ?? ROAD_COURSE;
-  const summary: RoadSeedSummary = { files: 0, seeded: [], occupied: [], invalid: [], failed: [], already: 0 };
+  const summary: RoadSeedSummary = { files: 0, seeded: [], occupied: [], invalid: [], failed: [], already: 0, refreshed: [] };
   try {
     const found = await readRoadFiles(options.dir ?? ROAD_DIR, course);
     summary.files = found.files.length;
@@ -304,9 +312,20 @@ export async function seedRoadLessons(
         log.warn({ err, key: lesson.key }, 'road lesson could not be seeded; tried again on the next start');
       }
     }
+    const seededBefore = found.lessons.filter((l) => marked.has(roadSeedName(l.key, course)));
+    summary.refreshed = await refreshRoadDrafts(pool, seededBefore, course, log);
     log.info(
-      { files: summary.files, seeded: summary.seeded.length, already: summary.already, occupied: summary.occupied, invalid: summary.invalid, failed: summary.failed },
-      `road lessons: ${summary.seeded.length} seeded as drafts, ${summary.already} seeded before, ${summary.occupied.length} left to the lesson in their place, ${summary.invalid.length} waiting for fixes`,
+      {
+        files: summary.files,
+        seeded: summary.seeded.length,
+        already: summary.already,
+        refreshed: summary.refreshed.length,
+        occupied: summary.occupied,
+        invalid: summary.invalid,
+        failed: summary.failed,
+      },
+      `road lessons: ${summary.seeded.length} seeded as drafts, ${summary.already} seeded before (${summary.refreshed.length} of them refreshed from their files), ` +
+        `${summary.occupied.length} left to the lesson in their place, ${summary.invalid.length} waiting for fixes`,
     );
   } catch (err) {
     log.warn({ err }, 'seeding the road lessons failed');
@@ -352,6 +371,129 @@ async function seedOne(
     );
     await client.query('COMMIT');
     return 'seeded';
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** One lesson the road seeded, as it is in the course now: the only lesson at its place. */
+interface PlacedLesson {
+  id: string;
+  unit_id: string;
+  skill_id: string;
+  unit: number;
+  skill: number;
+  position: number;
+  /** a draft at version 1 that no editor has saved */
+  untouched: boolean;
+}
+
+/**
+ * Bring the road's untouched drafts up to their files: each lesson seeded on
+ * an earlier start whose place still holds only that lesson, at version 1,
+ * as a draft, with `lock_version` 0 (an editor's every save raises it). Its
+ * titles and exercises are replaced when the file's differ, in the lesson's
+ * own transaction with its row locked, so an editor who opens it in the
+ * meantime either sees it before or after, never half. A skill whose lessons
+ * are all untouched takes its file's titles and grammar note, and a unit
+ * whose lessons are all untouched its titles. The keys refreshed come back.
+ */
+export async function refreshRoadDrafts(
+  pool: pg.Pool,
+  lessons: readonly RoadLesson[],
+  course: string,
+  log: Pick<FastifyBaseLogger, 'info' | 'warn'>,
+): Promise<string[]> {
+  const refreshed: string[] = [];
+  if (lessons.length === 0) return refreshed;
+  const { rows } = await pool.query<PlacedLesson & { versions: number }>(
+    `SELECT l.id, u.id unit_id, s.id skill_id, u.position unit, s.position skill, l.position,
+            (l.version = 1 AND l.status = 'draft' AND l.lock_version = 0) untouched,
+            count(*) OVER (PARTITION BY s.id, l.position)::int versions
+       FROM lessons l JOIN skills s ON s.id = l.skill_id JOIN units u ON u.id = s.unit_id JOIN courses c ON c.id = u.course_id
+      WHERE c.slug = $1`,
+    [course],
+  );
+  const at = new Map<string, PlacedLesson>();
+  for (const r of rows) if (r.versions === 1) at.set(`${r.unit}:${r.skill}:${r.position}`, r);
+  // a skill or unit is the files' while every lesson in it is untouched
+  const skillOpen = new Map<string, boolean>();
+  const unitOpen = new Map<string, boolean>();
+  for (const r of rows) {
+    const mine = r.versions === 1 && r.untouched;
+    skillOpen.set(r.skill_id, (skillOpen.get(r.skill_id) ?? true) && mine);
+    unitOpen.set(r.unit_id, (unitOpen.get(r.unit_id) ?? true) && mine);
+  }
+
+  const skillsDone = new Set<string>();
+  const unitsDone = new Set<string>();
+  for (const lesson of lessons) {
+    const placed = at.get(`${lesson.unit.position}:${lesson.skill.position}:${lesson.position}`);
+    if (!placed || !placed.untouched) continue;
+    const check = validateRoadLesson(lesson);
+    if (!check.ok) continue;
+    try {
+      if (await refreshOne(pool, placed.id, lesson, check.exercises)) refreshed.push(lesson.key);
+      if (skillOpen.get(placed.skill_id) && !skillsDone.has(placed.skill_id)) {
+        skillsDone.add(placed.skill_id);
+        const { titleKu, titleEn, grammarMd } = lesson.skill;
+        await pool.query(
+          `UPDATE skills SET title_ku = $2, title_en = $3, grammar_md = $4
+            WHERE id = $1 AND (title_ku, title_en, grammar_md) IS DISTINCT FROM ($2, $3, $4)`,
+          [placed.skill_id, titleKu, titleEn, grammarMd ?? null],
+        );
+      }
+      if (unitOpen.get(placed.unit_id) && !unitsDone.has(placed.unit_id)) {
+        unitsDone.add(placed.unit_id);
+        await pool.query(`UPDATE units SET title_ku = $2, title_en = $3 WHERE id = $1 AND (title_ku, title_en) IS DISTINCT FROM ($2, $3)`, [
+          placed.unit_id,
+          lesson.unit.titleKu,
+          lesson.unit.titleEn,
+        ]);
+      }
+    } catch (err) {
+      log.warn({ err, key: lesson.key }, 'road draft could not be refreshed from its file; tried again on the next start');
+    }
+  }
+  return refreshed;
+}
+
+/** One untouched draft takes its file's titles and exercises, when they differ; whether it changed. */
+async function refreshOne(
+  pool: pg.Pool,
+  lessonId: string,
+  lesson: RoadLesson,
+  exercises: Array<{ position: number; type: ExerciseType; payload: unknown }>,
+): Promise<boolean> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const cur = await client.query<{ same: boolean }>(
+      `SELECT l.title_ku = $2 AND l.title_en = $3 AND
+              COALESCE((SELECT jsonb_agg(jsonb_build_object('position', e.position, 'type', e.type, 'payload', e.payload) ORDER BY e.position)
+                          FROM exercises e WHERE e.lesson_id = l.id), '[]'::jsonb) = $4::jsonb AS same
+         FROM lessons l
+        WHERE l.id = $1 AND l.version = 1 AND l.status = 'draft' AND l.lock_version = 0
+          FOR UPDATE OF l`,
+      [lessonId, lesson.titleKu, lesson.titleEn, JSON.stringify(exercises)],
+    );
+    // gone, or an editor got to it first: theirs now
+    if (cur.rowCount === 0 || cur.rows[0]!.same) {
+      await client.query('ROLLBACK');
+      return false;
+    }
+    await client.query(`UPDATE lessons SET title_ku = $2, title_en = $3 WHERE id = $1`, [lessonId, lesson.titleKu, lesson.titleEn]);
+    await client.query(`DELETE FROM exercises WHERE lesson_id = $1`, [lessonId]);
+    await client.query(
+      `INSERT INTO exercises (lesson_id, position, type, payload)
+       SELECT $1, (e->>'position')::int, e->>'type', e->'payload' FROM jsonb_array_elements($2::jsonb) AS e`,
+      [lessonId, JSON.stringify(exercises)],
+    );
+    await client.query('COMMIT');
+    return true;
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;

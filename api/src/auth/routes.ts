@@ -12,7 +12,7 @@ import { isBannedEmail } from '../moderation/ban-registry.js';
 import { AuthService, notAGuest } from './service.js';
 import { GuestService } from './guest.js';
 import { RiskService } from '../risk/service.js';
-import { validateUsername, USERNAME_ERROR_MESSAGE } from '../users/username.js';
+import { invalidUsername, validateUsername } from '../users/username.js';
 import { validatePassword, PASSWORD_ERROR_MESSAGE, PASSWORD_MIN, PASSWORD_MAX } from './password-policy.js';
 import { requireAuth } from '../plugins/auth.js';
 import { sessionName } from './session-name.js';
@@ -47,7 +47,8 @@ const timezoneField = z
 
 export const registerBodySchema = z.object({
   email: emailAddress,
-  username: z.string().min(3).max(30),
+  /** as typed: the rule (users/username.ts) says which part of it a name breaks, which a length here could not */
+  username: z.string().min(1).max(60),
   password: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
   displayName: z.string().min(1).max(60).optional(),
   /* every language the interface is offered in — one list, so the picker
@@ -89,7 +90,7 @@ export const guestBodySchema = z.object({
 export const claimBodySchema = z.object({
   email: emailAddress,
   password: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
-  username: z.string().min(3).max(30).optional(),
+  username: z.string().min(1).max(60).optional(),
   locale: z.enum(APP_LOCALE_CODES).optional(),
   captchaToken: z.string().max(3_000).optional(),
   acceptTerms: z.literal(true),
@@ -187,7 +188,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       // full username policy (reserved names, structure, length) with a specific
       // reason; the DB citext unique index remains the case-insensitive authority.
       const uname = validateUsername(body.username);
-      if (!uname.ok) throw new AppError('INVALID_USERNAME', 400, USERNAME_ERROR_MESSAGE[uname.reason], { reason: uname.reason });
+      if (!uname.ok) throw invalidUsername(uname);
       assertPasswordPolicy(body.password);
       if (isDisposableEmail(body.email)) throw await rejected('throwaway email address');
       if (!(await verifyCaptcha(config, body.captchaToken, req.ip))) throw await rejected('challenge not passed');
@@ -208,6 +209,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
 
       const result = await service.register({
         ...body,
+        // the name as the rule wrote it (lowercase, trimmed), not as it was typed
+        username: uname.value,
         deviceName: sessionName(body.deviceName, req.headers['user-agent']),
         deviceId: deviceIdOf(req.headers),
         ip: req.ip,
@@ -277,7 +280,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       let username: string | undefined;
       if (body.username !== undefined) {
         const uname = validateUsername(body.username);
-        if (!uname.ok) throw new AppError('INVALID_USERNAME', 400, USERNAME_ERROR_MESSAGE[uname.reason], { reason: uname.reason });
+        if (!uname.ok) throw invalidUsername(uname);
         username = uname.value;
       }
       assertPasswordPolicy(body.password);

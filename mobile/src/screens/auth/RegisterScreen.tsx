@@ -13,7 +13,8 @@ import { MonthChips } from '../../auth/guide/MonthChips';
 import { PasswordStrengthMeter } from '../../auth/guide/PasswordStrength';
 import { AnswerSummary } from '../../auth/guide/AnswerSummary';
 import { birthYearFrom } from '../../auth/guide/age';
-import { USERNAME_RULE_VARS, checkUsername, cleanUsername } from '../../username/validate';
+import { checkUsername } from '../../username/validate';
+import { UsernameStepField } from '../../username/UsernameStepField';
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { LinkText } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
@@ -32,6 +33,11 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
  * password, a taken name to the name — rather than landing under a form.
  * Nothing is answered for them: the age and the month both start unchosen,
  * and Continue waits until each is picked.
+ *
+ * The name is written in lowercase as it is typed, with the Kurdish letters as
+ * keys under it, and a character that cannot be in a username is named there
+ * as it is typed (username/UsernameStepField.tsx); what is sent is the name as
+ * the rule writes it (shared/src/username.ts).
  *
  * What is sent is exactly what the form sent: the name, the address, the
  * password, the language chosen in the intro, and the birth month and year
@@ -52,6 +58,9 @@ export function RegisterScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   // the address may already have an account: said without saying so, with the two ways on
   const [mayHaveAccount, setMayHaveAccount] = useState(false);
+  // the name as the rule writes it, for the last look and for the server: the step went on only once it passed
+  const named = checkUsername(username);
+  const chosenName = named.ok ? named.value : username.trim();
 
   const steps: FlowStep[] = [
     {
@@ -60,15 +69,14 @@ export function RegisterScreen({ navigation }: Props) {
       says: t('guide.register.name.says'),
       check: () => {
         const checked = checkUsername(username);
-        return checked.ok ? null : t(checked.message, USERNAME_RULE_VARS);
+        return checked.ok ? null : t(checked.message, checked.vars);
       },
       render: (tools) => (
-        <GuideField
+        <UsernameStepField
           tools={tools}
           value={username}
-          onChangeText={setUsername}
+          onChange={setUsername}
           label={t('auth.username')}
-          complete="username"
           placeholder={t('auth.register.usernameHelp')}
           testID="username"
         />
@@ -144,13 +152,13 @@ export function RegisterScreen({ navigation }: Props) {
     },
     {
       key: 'terms',
-      question: t('guide.register.terms.question', { name: cleanUsername(username.normalize('NFC')) }),
+      question: t('guide.register.terms.question', { name: chosenName }),
       says: t('guide.register.terms.says'),
       action: t('auth.register.submit'),
       render: () => (
         <AnswerSummary
           rows={[
-            { label: t('auth.username'), value: cleanUsername(username.normalize('NFC')) },
+            { label: t('auth.username'), value: chosenName },
             { label: t('auth.email'), value: cleanEmail(email) },
           ]}
         />
@@ -164,7 +172,7 @@ export function RegisterScreen({ navigation }: Props) {
         setMayHaveAccount(false);
         const error = await register({
           email: cleanEmail(email),
-          username: cleanUsername(username.normalize('NFC')),
+          username: chosenName,
           password,
           // the language chosen in the intro is the account's from the first
           // moment, so the confirmation email and a later sign-in on the web

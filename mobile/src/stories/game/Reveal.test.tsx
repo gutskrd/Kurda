@@ -21,6 +21,7 @@ const reveal = (over: Partial<StoryGameReveal> = {}): StoryGameReveal => ({
   explanationEn: 'The bread is warm.',
   evidenceParagraph: 0,
   evidenceSentence: 1,
+  translations: {},
   answeredCount: 4,
   correctCount: 3,
   myChoice: 0,
@@ -33,7 +34,7 @@ function revealView(over: Partial<StoryGameView> = {}): StoryGameView {
     status: 'reveal',
     mode: 'group',
     activeCount: 4,
-    question: { index: 1, total: 5, kind: 'detail', prompt: 'Nan çawa bû?', promptEn: 'How was the bread?', options: ['Sar', 'Germ', 'Şor', 'Şirîn'], myChoice: 0 },
+    question: { index: 1, total: 5, kind: 'detail', prompt: 'Nan çawa bû?', promptEn: 'How was the bread?', options: ['Sar', 'Germ', 'Şor', 'Şirîn'], translations: {}, myChoice: 0 },
     reveal: reveal(),
     ...over,
   });
@@ -101,7 +102,7 @@ describe('Reveal', () => {
     expect(screen.queryByText(/got it/)).toBeNull();
     const last = revealView({
       mode: 'solo',
-      question: { index: 4, total: 5, kind: 'detail', prompt: 'Kî?', promptEn: null, options: ['A', 'B'], myChoice: 1 },
+      question: { index: 4, total: 5, kind: 'detail', prompt: 'Kî?', promptEn: null, options: ['A', 'B'], translations: {}, myChoice: 1 },
       reveal: reveal({ index: 4, myChoice: 1, myCorrect: true }),
     });
     view.rerender(<Reveal view={last} story={NANE_GERM} apply={() => null} announce={() => undefined} />);

@@ -66,6 +66,7 @@ import {
   fitsDialect,
   foldForDialect,
   gameWords,
+  isStoryHeading,
   lessonAudioKey,
   lessonAudioTargets,
   storyAudioSentences,
@@ -674,7 +675,8 @@ export class TrustedSources {
       const out: StoryPassage[] = [];
       for (const story of res.rows) {
         storyParagraphs(story.body).forEach((text, paragraph) => {
-          if (!fitsDialect(text, dialect)) return;
+          // a section heading is a title, not a passage to play with
+          if (isStoryHeading(text) || !fitsDialect(text, dialect)) return;
           const words = ` ${gameWords(text).map((w) => foldForDialect(w, dialect)).join(' ')} `;
           const glossary = (story.glossary ?? [])
             .filter((g) => typeof g.term === 'string' && fitsDialect(g.term, dialect))

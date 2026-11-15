@@ -2,6 +2,7 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 're
 import {
   glossFor,
   glossSpans,
+  storyHeadingTitle,
   storySentences,
   storyTextDirection,
   type StoryDialect,
@@ -132,6 +133,7 @@ export function StoryText({
   className?: string;
 }): React.JSX.Element {
   const t = useT();
+  const locale = useLocale();
   const { lang, dir } = storyTextDirection(dialect);
   const cut = useMemo(() => paragraphs.map((p) => paragraphSentences(p, glossary)), [paragraphs, glossary]);
   const [open, setOpen] = useState<{ key: string; entry: StoryGlossEntry; anchor: HTMLElement } | null>(null);
@@ -164,6 +166,16 @@ export function StoryText({
     if (evidence && marked.current) marked.current.scrollIntoView?.({ block: 'center', behavior: calm ? 'auto' : 'smooth' });
   }, [evidence?.paragraph, evidence?.sentence, calm]);
 
+  // a legend's chapters: each heading's place and number, and where the introduction before the first one ends
+  const chapters = useMemo(() => {
+    const at = new Map<number, number>();
+    paragraphs.forEach((paragraph, i) => {
+      if (storyHeadingTitle(paragraph) !== null) at.set(i, at.size + 1);
+    });
+    const first = at.size > 0 ? Math.min(...at.keys()) : 0;
+    return { at, introEnd: first };
+  }, [paragraphs]);
+
   const toggleTranslation = (p: number): void =>
     setShownTranslations((s) => {
       const next = new Set(s);
@@ -178,6 +190,26 @@ export function StoryText({
       style={{ '--story-size': `${TEXT_SIZES[textSize] ?? 1}` } as React.CSSProperties}
     >
       {cut.map((sentences, p) => {
+        const heading = storyHeadingTitle(paragraphs[p] ?? '');
+        if (heading !== null) {
+          // a chapter title: never a sentence to tap, gloss or hear, and its translation beside it as headings line up —
+          // where the reader's language is not the story's own (a Soranî reader of a Soranî legend reads it as it is)
+          const translated = locale === lang ? null : storyHeadingTitle(translations?.paragraphs[p] ?? '');
+          return (
+            <div className="story-para story-chapter" key={p} dir={dir} ref={observe?.(p)} data-paragraph={p} data-chapter={chapters.at.get(p)}>
+              <p className="story-chapter-n">{t('stories.chapters.n', { n: chapters.at.get(p) ?? 1 })}</p>
+              <h2 className="story-chapter-title" lang={lang}>
+                {heading}
+              </h2>
+              {translated && translations && (
+                <p className="story-chapter-tr" lang={translations.lang} dir={translations.lang === 'ar' || translations.lang === 'ckb' ? 'rtl' : 'ltr'}>
+                  {translated}
+                </p>
+              )}
+            </div>
+          );
+        }
+        const intro = p < chapters.introEnd;
         const hasAudio = audio?.paragraphsWithAudio.has(p) ?? false;
         const thisPlaying = audio?.playing && audio.scope?.kind === 'paragraph' && audio.scope.paragraph === p;
         const wholeParagraph = evidence?.paragraph === p && evidence.sentence === null;
@@ -185,7 +217,8 @@ export function StoryText({
         const translated = translation !== undefined && translation.trim() !== '';
         const showTranslation = translated && shownTranslations.has(p);
         return (
-          <div className="story-para" key={p} dir={dir} ref={observe?.(p)} data-paragraph={p}>
+          <div className={`story-para${intro ? ' is-intro' : ''}`} key={p} dir={dir} ref={observe?.(p)} data-paragraph={p}>
+            {intro && p === 0 && <p className="story-intro-label">{t('stories.chapters.intro')}</p>}
             <p
               lang={lang}
               className={wholeParagraph ? 'is-evidence' : undefined}

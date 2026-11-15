@@ -1,0 +1,9 @@
+/* The letter widget’s own words. Written in mobile/src/widget/widget-strings.json; widget.test.ts holds this file to it. */
+"name" = "Letter";
+"description" = "The newest letter from a pen pal, or the one you keep here.";
+"sealed" = "A letter from {name}";
+"empty" = "No letter yet";
+"emptyMore" = "When a pen pal writes, their letter will show here.";
+"signedOut" = "Open Hevalo to see your letters";
+"waiting" = "Your letters will show here";
+"pinned" = "Kept on your widget";

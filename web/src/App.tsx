@@ -47,6 +47,13 @@ const WhoAmI = lazy(() => import('./whoami/WhoAmI').then((m) => ({ default: m.Wh
 const StoriesLibrary = lazy(() => import('./stories/StoriesLibrary').then((m) => ({ default: m.StoriesLibrary })));
 const StoryReader = lazy(() => import('./stories/StoryReader').then((m) => ({ default: m.StoryReader })));
 const StoryGame = lazy(() => import('./stories/StoryGame').then((m) => ({ default: m.StoryGame })));
+// the Stories section's two other shelves: the riddles and the proverbs (lore/)
+const RiddlesList = lazy(() => import('./lore/RiddlesList').then((m) => ({ default: m.RiddlesList })));
+const RiddlePage = lazy(() => import('./lore/RiddlePage').then((m) => ({ default: m.RiddlePage })));
+const RiddleAnswerPage = lazy(() => import('./lore/RiddleAnswer').then((m) => ({ default: m.RiddleAnswerPage })));
+const ProverbsList = lazy(() => import('./lore/ProverbsList').then((m) => ({ default: m.ProverbsList })));
+const ProverbPage = lazy(() => import('./lore/ProverbPage').then((m) => ({ default: m.ProverbPage })));
+const ProverbRound = lazy(() => import('./lore/ProverbRound').then((m) => ({ default: m.ProverbRound })));
 const WordleBattle = lazy(() => import('./pages/WordleBattle').then((m) => ({ default: m.WordleBattle })));
 const RhymeMatch = lazy(() => import('./pages/RhymeMatch').then((m) => ({ default: m.RhymeMatch })));
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
@@ -279,6 +286,15 @@ export function AppRoutes(): React.JSX.Element {
             account themselves */}
         <Route path="learn/stories" element={<StoriesLibrary />} />
         <Route path="learn/stories/:slug" element={<StoryReader />} />
+        {/* the section's riddles and proverbs, open to everyone like the stories:
+            a riddle, its answer on a page of its own, a proverb. The round on
+            the proverbs is a game played alone, so it needs an account */}
+        <Route path="learn/riddles" element={<RiddlesList />} />
+        <Route path="learn/riddles/:slug" element={<RiddlePage />} />
+        <Route path="learn/riddles/:slug/answer" element={<RiddleAnswerPage />} />
+        <Route path="learn/proverbs" element={<ProverbsList />} />
+        <Route path="learn/proverbs/play" element={<RequireAccount what="gate.what.play"><ProverbRound /></RequireAccount>} />
+        <Route path="learn/proverbs/:slug" element={<ProverbPage />} />
         {/* the learning loop: a course's map; the lesson itself, a review and
             the way to a new account's first lesson are above, on a screen of
             their own */}

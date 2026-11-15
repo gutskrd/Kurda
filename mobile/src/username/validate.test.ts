@@ -1,68 +1,102 @@
 import { describe, expect, it } from 'vitest';
-import { checkUsername, cleanUsername, type UsernameIssue, USERNAME_MIN, USERNAME_MAX, USERNAME_RULE_VARS } from './validate';
+import type { UsernameReason } from '@kurda/shared';
+import { checkUsername, usernameIssueWhileTyping, usernameMessage, USERNAME_MIN, USERNAME_MAX, USERNAME_RULE_VARS } from './validate';
 import { TRANSLATIONS, LOCALES } from '../i18n/translations';
+import { interpolate } from '../i18n/format';
 
-const issue = (raw: string): UsernameIssue | 'ok' => {
+/*
+ * The phone's words for the username rule. The rule itself is the server's
+ * own (shared/src/username.test.ts tests it); these check that every refusal
+ * has a sentence, in every language, and that the sentence is the right one.
+ */
+
+const issue = (raw: string): UsernameReason | 'ok' => {
   const r = checkUsername(raw);
   return r.ok ? 'ok' : r.issue;
 };
+const said = (raw: string): string | null => {
+  const r = checkUsername(raw);
+  return r.ok ? null : interpolate(TRANSLATIONS.en[r.message], r.vars);
+};
 
-describe('checkUsername (client)', () => {
-  it('accepts valid names incl. Kurdish letters, trimming + normalising', () => {
+describe('checkUsername (phone)', () => {
+  it('gives the name as it is sent: trimmed, joined up and lowercase', () => {
     expect(checkUsername('rojda_kurdi')).toEqual({ ok: true, value: 'rojda_kurdi' });
-    expect(checkUsername('  şêrîn  ')).toEqual({ ok: true, value: 'şêrîn' });
+    expect(checkUsername('  ŞÊRÎN.K  ')).toEqual({ ok: true, value: 'şêrîn.k' });
+    expect(checkUsername('s' + String.fromCharCode(0x327) + 'ev')).toEqual({ ok: true, value: 'şev' });
   });
 
   /*
-   * A handle is written "@dilan" everywhere else, and a keyboard leaves a full
-   * stop or a comma after a word: neither is somebody choosing a bad name.
+   * A leading "@" and a trailing full stop used to be dropped without a word.
+   * Nothing typed is dropped now: what cannot be in a username is named.
    */
-  it('takes a handle as it was meant: without an "@" in front or a full stop or comma after', () => {
-    expect(checkUsername('@dilan')).toEqual({ ok: true, value: 'dilan' });
-    expect(checkUsername('dilan.')).toEqual({ ok: true, value: 'dilan' });
-    expect(checkUsername(' @şêrîn_99, ')).toEqual({ ok: true, value: 'şêrîn_99' });
-    expect(cleanUsername('@@rojda..')).toBe('rojda');
-    // only at the ends: an "@" or a dot inside a name is still not a name
-    expect(issue('di@lan')).toBe('invalid-chars');
-    expect(issue('di.lan')).toBe('invalid-chars');
-    // and what is left is still held to the rules
-    expect(issue('@ab.')).toBe('too-short');
-    expect(issue('@')).toBe('too-short');
+  it('names a character it will not take, rather than dropping it', () => {
+    expect(said('@dilan')).toBe('“@” can’t be in a username.');
+    expect(said('dilan!?')).toBe('“! ?” can’t be in a username.');
+    expect(said('di lan')).toBe(TRANSLATIONS.en['username.rule.spaces']);
+    expect(said('dilan.')).toBe(TRANSLATIONS.en['username.rule.edge']);
   });
 
-  it('flags each structural rule with a reason', () => {
+  it('flags each rule with its reason', () => {
     expect(issue('ab')).toBe('too-short');
     expect(issue('a'.repeat(31))).toBe('too-long');
     expect(issue('bad name')).toBe('invalid-chars');
-    expect(issue('nope!')).toBe('invalid-chars');
     expect(issue('emoji😀')).toBe('invalid-chars');
-    expect(issue('_lead')).toBe('edge-underscore');
-    expect(issue('trail_')).toBe('edge-underscore');
-    expect(issue('a__b')).toBe('consecutive-underscore');
+    expect(issue('_lead')).toBe('edge-punctuation');
+    expect(issue('trail.')).toBe('edge-punctuation');
+    expect(issue('a__b')).toBe('double-punctuation');
+    expect(issue('a._b')).toBe('double-punctuation');
     expect(issue('12345')).toBe('numbers-only');
     expect(issue('12_34')).toBe('no-letter');
+    expect(issue('ad.min')).toBe('reserved');
+    expect(issue('di.lan')).toBe('ok');
   });
 
   /**
-   * The reason is a key now, and a key with nothing behind it renders as the
-   * key — which typechecks, because TranslationKey is a union of strings. So
-   * the assertion is that every language actually has the sentence.
+   * The reason is a key, and a key with nothing behind it renders as the key —
+   * which typechecks, because TranslationKey is a union of strings. So the
+   * assertion is that every language actually has the sentence, with the same
+   * holes in it.
    */
   it('names a rule every language has a sentence for', () => {
-    const inputs = ['ab', 'a'.repeat(USERNAME_MAX + 1), 'bad!', '_ab', 'a__b', '12345', '12_34'];
+    const inputs = ['ab', 'a'.repeat(USERNAME_MAX + 1), 'bad!', 'bad name', '_ab', 'a__b', '12345', '12_34', 'admin'];
+    const holes = (s: string): string[] => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]!).sort();
     for (const input of inputs) {
       const r = checkUsername(input);
       expect(r.ok, input).toBe(false);
       if (r.ok) continue;
       for (const loc of LOCALES) {
         expect(TRANSLATIONS[loc][r.message], `${loc} ${r.message}`).toBeTruthy();
+        expect(holes(TRANSLATIONS[loc][r.message]), `${loc} ${r.message}`).toEqual(holes(TRANSLATIONS.en[r.message]));
       }
     }
+    for (const loc of LOCALES) expect(holes(TRANSLATIONS[loc]['username.hint']), loc).toEqual(['max', 'min']);
   });
 
   it('carries the limits as variables, not baked into the sentence', () => {
     expect(USERNAME_RULE_VARS).toEqual({ min: USERNAME_MIN, max: USERNAME_MAX });
     expect(TRANSLATIONS.en['username.rule.tooShort']).toContain('{min}');
     expect(TRANSLATIONS.ku['username.rule.tooLong']).toContain('{max}');
+  });
+});
+
+describe('usernameIssueWhileTyping', () => {
+  it('says only what more typing cannot mend', () => {
+    expect(usernameIssueWhileTyping('ha')).toBeNull();
+    expect(usernameIssueWhileTyping('hamo.')).toBeNull();
+    expect(usernameIssueWhileTyping('123')).toBeNull();
+    expect(usernameIssueWhileTyping('ha!')).toMatchObject({ ok: false, issue: 'invalid-chars', message: 'username.rule.charNotAllowed' });
+    expect(usernameIssueWhileTyping('.ha')).toMatchObject({ ok: false, issue: 'edge-punctuation' });
+  });
+});
+
+describe('usernameMessage', () => {
+  it('words a server’s reason as the phone’s own check does', () => {
+    expect(usernameMessage('invalid-chars', ['#'])).toEqual({ message: 'username.rule.charNotAllowed', vars: { ...USERNAME_RULE_VARS, chars: '#' } });
+    expect(usernameMessage('invalid-chars', [' '])).toMatchObject({ message: 'username.rule.spaces' });
+    expect(usernameMessage('reserved')).toMatchObject({ message: 'error.code.usernameUnavailable' });
+    // a reason the phone does not know yet gets the rule as a whole
+    expect(usernameMessage('something-newer')).toMatchObject({ message: 'username.rule.invalidChars' });
+    expect(usernameMessage('invalid-chars')).toMatchObject({ message: 'username.rule.invalidChars' });
   });
 });

@@ -20,12 +20,26 @@
  * for each game: what one round's item carries, without its answer. A game's
  * own track fills in the behaviour; the shapes are fixed here so the browser
  * and the phone cannot drift apart.
+ *
+ * Two kinds belong to no game: `riddle` and `proverb` are the Stories
+ * section's collections (lore.ts), kept here so they share the one review
+ * workflow every row goes through. What a learner is sent of them, and their
+ * translations, are in lore.ts.
  */
 import { z } from 'zod';
 import { APP_LOCALE_CODES, type AppLocale } from '../locales.js';
 import { SPEAKERS, type RecordingVoice, type SpeakerId } from '../lipsync/speakers.js';
-import { fitsDialect, foldForDialect, gameWords, type GameDialect } from './dialect.js';
+import { GAME_DIALECTS, fitsDialect, foldForDialect, gameWords, type GameDialect } from './dialect.js';
 import type { GamesAvailability } from './solo.js';
+import {
+  LORE_COUNTS,
+  LORE_LIMITS,
+  LORE_TRADITIONS,
+  PROVERB_THEMES,
+  RIDDLE_CATEGORIES,
+  RIDDLE_DIFFICULTIES,
+  type AdminContentTranslation,
+} from '../lore.js';
 
 // ---------- the kinds, and the workflow every row goes through ----------
 
@@ -38,6 +52,8 @@ import type { GamesAvailability } from './solo.js';
  *   word_card         — Impostor: a word, its category and the impostor's hint
  *   identity          — Who Am I?: an identity and its yes/no facts
  *   question_template — Who Am I?: a yes/no question and the fact that answers it
+ *   riddle            — the Stories' riddles: a question, its hints, its answer and the forms it accepts
+ *   proverb           — the Stories' proverbs: a saying, its themes, its variants and a scene it is said in
  *
  * The database knows four kinds more (`taboo_card`, `bluff_card`,
  * `building_name`, `scenario`), written for games that are no longer part of
@@ -52,6 +68,8 @@ export const GAME_CONTENT_KINDS = [
   'word_card',
   'identity',
   'question_template',
+  'riddle',
+  'proverb',
 ] as const;
 export type GameContentKind = (typeof GAME_CONTENT_KINDS)[number];
 
@@ -111,6 +129,16 @@ export interface ContentOrigin {
 export const SENTENCE_WORDS = { min: 3, max: 10 } as const;
 /** Words that vanish from a memory passage. */
 export const PASSAGE_HIDDEN = { min: 2, max: 6 } as const;
+
+/** A web address a browser would open over https: parsed, as a story's source is, so "https://" alone is refused too. */
+function isHttpsUrl(v: string): boolean {
+  try {
+    const url = new URL(v);
+    return url.protocol === 'https:' && url.hostname !== '';
+  } catch {
+    return false;
+  }
+}
 
 function build() {
   const kurdish = (max: number) => z.string().trim().min(1, 'write the Kurdish here').max(max, `keep it to ${max} characters`);
@@ -220,6 +248,54 @@ function build() {
   });
   const questionTemplate = z.strictObject({ ku: kurdish(160), meanings, fact: slug });
 
+  // the collections' rows (lore.ts): where each was found, and what a reviewer should know
+  const source = z.strictObject({
+    title: plain(LORE_LIMITS.sourceTitle),
+    author: plain(LORE_LIMITS.sourceAuthor).optional(),
+    url: plain(LORE_LIMITS.sourceUrl).refine(isHttpsUrl, { message: 'use an https:// address' }).optional(),
+    note: plain(LORE_LIMITS.note).optional(),
+  });
+  const sources = z.array(source).max(LORE_COUNTS.sources.max).default([]);
+  /** for the people who review the row: never sent to a learner */
+  const notes = plain(LORE_LIMITS.notes).optional();
+  const region = plain(LORE_LIMITS.region).optional();
+  const riddle = z.strictObject({
+    slug,
+    difficulty: z.enum(RIDDLE_DIFFICULTIES),
+    category: z.enum(RIDDLE_CATEGORIES),
+    tradition: z.enum(LORE_TRADITIONS),
+    region,
+    question: kurdish(LORE_LIMITS.question),
+    /** one or two, the second nearer the answer than the first */
+    hints: z.array(kurdish(LORE_LIMITS.hint)).min(LORE_COUNTS.hints.min).max(LORE_COUNTS.hints.max),
+    answer: kurdish(LORE_LIMITS.answer),
+    /** what else a learner may type and be right: with and without an ending, synonyms, both spellings */
+    accepted: z.array(kurdish(LORE_LIMITS.answer)).min(LORE_COUNTS.accepted.min).max(LORE_COUNTS.accepted.max),
+    explanation: kurdish(LORE_LIMITS.explanation),
+    sources,
+    notes,
+  });
+  const proverb = z.strictObject({
+    slug,
+    text: kurdish(LORE_LIMITS.proverb),
+    themes: z
+      .array(z.enum(PROVERB_THEMES))
+      .min(LORE_COUNTS.themes.min)
+      .max(LORE_COUNTS.themes.max)
+      .refine((t) => new Set(t).size === t.length, { message: 'name each theme once' }),
+    tradition: z.enum(LORE_TRADITIONS),
+    region,
+    /** other wordings: another region's, or the other variety's counterpart, each in its own variety's script */
+    variants: z
+      .array(z.strictObject({ text: plain(LORE_LIMITS.proverb), dialect: z.enum(GAME_DIALECTS), region, note: plain(LORE_LIMITS.note).optional() }))
+      .max(LORE_COUNTS.variants.max)
+      .default([]),
+    /** a little scene in the row's variety with the proverb said in it */
+    exampleKu: kurdish(LORE_LIMITS.example),
+    sources,
+    notes,
+  });
+
   return {
     sentence,
     passage,
@@ -228,6 +304,8 @@ function build() {
     word_card: wordCard,
     identity,
     question_template: questionTemplate,
+    riddle,
+    proverb,
   } satisfies Record<GameContentKind, z.ZodType>;
 }
 
@@ -247,6 +325,8 @@ export type WordCategoryContent = z.infer<Schemas['word_category']>;
 export type WordCardContent = z.infer<Schemas['word_card']>;
 export type IdentityContent = z.infer<Schemas['identity']>;
 export type QuestionTemplateContent = z.infer<Schemas['question_template']>;
+export type RiddleContent = z.infer<Schemas['riddle']>;
+export type ProverbContent = z.infer<Schemas['proverb']>;
 
 /** A payload of a kind, by its kind. */
 export interface GameContentByKind {
@@ -257,6 +337,8 @@ export interface GameContentByKind {
   word_card: WordCardContent;
   identity: IdentityContent;
   question_template: QuestionTemplateContent;
+  riddle: RiddleContent;
+  proverb: ProverbContent;
 }
 export type GameContentPayload = GameContentByKind[GameContentKind];
 
@@ -268,11 +350,15 @@ export interface GameContentIssue {
   message: string;
 }
 
-/** Every Kurdish text a payload holds, with its path: what has to be in the row's script. */
-export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload): Array<{ path: string; text: string }> {
-  const out: Array<{ path: string; text: string }> = [];
-  const add = (path: string, text: string | undefined): void => {
-    if (typeof text === 'string') out.push({ path, text });
+/**
+ * Every Kurdish text a payload holds, with its path: what has to be in the
+ * row's script — or, for a proverb's variant in the other variety, in that
+ * variety's script (`dialect`).
+ */
+export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload): Array<{ path: string; text: string; dialect?: GameDialect }> {
+  const out: Array<{ path: string; text: string; dialect?: GameDialect }> = [];
+  const add = (path: string, text: string | undefined, dialect?: GameDialect): void => {
+    if (typeof text === 'string') out.push(dialect ? { path, text, dialect } : { path, text });
   };
   switch (kind) {
     case 'sentence': {
@@ -308,6 +394,22 @@ export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload)
     case 'question_template':
       add('ku', (payload as QuestionTemplateContent).ku);
       break;
+    case 'riddle': {
+      const p = payload as RiddleContent;
+      add('question', p.question);
+      p.hints.forEach((h, i) => add(`hints.${i}`, h));
+      add('answer', p.answer);
+      p.accepted.forEach((a, i) => add(`accepted.${i}`, a));
+      add('explanation', p.explanation);
+      break;
+    }
+    case 'proverb': {
+      const p = payload as ProverbContent;
+      add('text', p.text);
+      (p.variants ?? []).forEach((v, i) => add(`variants.${i}.text`, v.text, v.dialect));
+      add('exampleKu', p.exampleKu);
+      break;
+    }
   }
   return out;
 }
@@ -340,10 +442,19 @@ export function checkGameContent<K extends GameContentKind>(
   }
   const data = parsed.data as GameContentByKind[K];
   const issues: GameContentIssue[] = [];
-  for (const { path, text } of kurdishTexts(kind, data)) {
-    if (!fitsDialect(text, dialect)) {
-      issues.push({ path, message: dialect === 'ckb' ? 'write this in Soranî’s Arabic script only' : 'write this in Kurmancî’s Latin letters only' });
+  for (const { path, text, dialect: own } of kurdishTexts(kind, data)) {
+    const script = own ?? dialect;
+    if (!fitsDialect(text, script)) {
+      issues.push({ path, message: script === 'ckb' ? 'write this in Soranî’s Arabic script only' : 'write this in Kurmancî’s Latin letters only' });
     }
+  }
+  if (kind === 'riddle' || kind === 'proverb') {
+    const p = data as RiddleContent | ProverbContent;
+    // the slug names it in the learner routes, beside words of their own (/riddles/daily, /proverbs/rounds): the variety first keeps them apart
+    if (!p.slug.startsWith(`${dialect}-`)) issues.push({ path: 'slug', message: `start the slug with its variety: ${dialect}-…` });
+    // nothing is presented as old without saying where it was found, and a local form says where it is said
+    if (p.tradition !== 'new' && p.sources.length === 0) issues.push({ path: 'sources', message: 'a traditional or regional one names at least one source' });
+    if (p.tradition === 'regional' && !p.region) issues.push({ path: 'region', message: 'a regional form names its region' });
   }
   if (kind === 'sentence') {
     const s = data as SentenceContent;
@@ -386,6 +497,10 @@ export function contentHeadline(kind: GameContentKind, payload: GameContentPaylo
       return (payload as IdentityContent).word;
     case 'question_template':
       return (payload as QuestionTemplateContent).ku;
+    case 'riddle':
+      return (payload as RiddleContent).question;
+    case 'proverb':
+      return (payload as ProverbContent).text;
   }
 }
 
@@ -535,6 +650,11 @@ export interface AdminGameContent {
   updatedAt: string;
   /** what would stop it being stored as it is now (a row saved before a rule tightened) */
   issues: GameContentIssue[];
+  /**
+   * A riddle's or a proverb's translations, one per language, each with its
+   * own review (lore.ts); sent when one row is opened, not in a list.
+   */
+  translations?: Partial<Record<AppLocale, AdminContentTranslation>>;
 }
 
 /** The readiness view: what each game can be played with per variety, and every row's state. */

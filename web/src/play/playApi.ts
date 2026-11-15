@@ -123,6 +123,8 @@ const LENGTH_KEY: Record<StoryLength, MessageKey> = {
   short: 'stories.length.short',
   medium: 'stories.length.medium',
   long: 'stories.length.long',
+  // a legend told in chapters
+  saga: 'stories.length.saga',
 };
 
 /** "Hard", "Kurmancî", or "Qelema Şîn · 5 questions": what an invite is for, beyond the game. */

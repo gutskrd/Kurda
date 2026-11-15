@@ -7,15 +7,21 @@ import {
   PEN_PALS_MAX,
   SKY_BIRDS_SHOWN,
   VISIT_HOURS,
+  DEFAULT_PAPER,
+  checkLetterDecor,
+  decorErrorCode,
   isLetterBird,
+  isPlainDecor,
   letterAgeBand,
   letterBirdOf,
   letterProblem,
-  normalizeKurdish,
+  letterText,
   stripControlChars,
   type BirdOutResult,
   type LetterAgeBand,
+  type LetterDecor,
   type LetterItem,
+  type LetterPaper,
   type LetterPerson,
   type LetterThread,
   type LetterVisitor,
@@ -39,7 +45,9 @@ import type { WalletService } from '../wallet/service.js';
  * calls it to their window (`call`). It waits there while its letter is read;
  * answered (`answer`), it carries the answer home and the two are pen pals;
  * sent on (`sendOn`), or left unanswered a day, it flies back out for
- * somebody else, and never comes to that window again.
+ * somebody else, and never comes to that window again. After that each
+ * letter is carried by its writer's own bird, which waits at the other's
+ * window until the letter is read (`home().arrival`).
  *
  * Safety is the shape of the thing rather than a layer over it:
  *   - nobody chooses whom they write to; a call brings the bird that has
@@ -52,6 +60,8 @@ import type { WalletService } from '../wallet/service.js';
  *     sent a stream of letters, and saying goodbye ends it for both;
  *   - a letter holds no link, email address, phone number or handle
  *     (`letterProblem`), and the words the rest of the app filters are masked;
+ *     the notes stuck on its paper are held to the same rules, and the first
+ *     letter to a stranger carries no drawing (shared/src/letter-paper.ts);
  *   - a person muted from chat by moderation cannot write letters either, and
  *     a letter can be reported like a message, with the letters around it kept.
  *
@@ -104,26 +114,39 @@ interface LetterRow {
   id: string;
   sender_id: string;
   body: string;
+  decor: LetterDecor | null;
   status: string;
   created_at: Date;
   read_at: Date | null;
 }
 
+/** The columns a `LetterRow` is read from, for a letter `l` (or the table itself when `alias` is empty). */
+const LETTER_COLUMNS = (alias = ''): string => ['id', 'sender_id', 'body', 'decor', 'status', 'created_at', 'read_at'].map((c) => (alias ? `${alias}.${c}` : c)).join(', ');
+
 const toItem = (row: LetterRow, me: string): LetterItem => ({
   id: row.id,
   mine: row.sender_id === me,
-  // a letter moderation took down says so in its place, in the app's own words
+  // a letter moderation took down says so in its place, in the app's own words, its drawing and notes gone with its words
   body: row.status === 'removed' ? '' : row.body,
+  decor: row.status === 'removed' ? null : row.decor,
   removed: row.status === 'removed',
   sentAt: row.created_at.toISOString(),
   readAt: row.read_at ? row.read_at.toISOString() : null,
 });
 
+/** A letter as it will be sent: its words, and its paper, drawing and notes (null for the default paper with nothing on it). */
+interface Written {
+  text: string;
+  decor: LetterDecor | null;
+  /** the paper chosen, to open the composer on next time; null when the app sent none */
+  paper: LetterPaper | null;
+}
+
 /** Somebody as the letters show them: the bird they chose, or the one their id gives them until they choose. */
-const personOf = (id: string, name: string, bird: number | null): LetterPerson => ({ id, name, bird: isLetterBird(bird) ? bird : letterBirdOf(id) });
+export const personOf = (id: string, name: string, bird: number | null): LetterPerson => ({ id, name, bird: isLetterBird(bird) ? bird : letterBirdOf(id) });
 
 /** SQL: the bird the user behind `alias` chose, or NULL before they choose one. `alias` is a literal from this file. */
-const BIRD_SQL = (alias: string): string => `(SELECT lb.bird FROM letter_birds lb WHERE lb.user_id = ${alias}.id)`;
+export const BIRD_SQL = (alias: string): string => `(SELECT lb.bird FROM letter_birds lb WHERE lb.user_id = ${alias}.id)`;
 
 /**
  * SQL: the birds out there that the person `$1`, in the band `$2`, could call
@@ -164,7 +187,7 @@ const YOUR_TURN_SQL = (thread: string, me: string): string => `(
        AND mine.delivered_at > (SELECT max(theirs.delivered_at) FROM letters theirs WHERE theirs.thread_id = ${thread} AND theirs.sender_id <> ${me} AND theirs.status IN ('delivered','removed'))))`;
 
 /** The name a pen pal is shown by: their display name, or their username. */
-const NAME_SQL = (alias: string): string => `COALESCE(NULLIF(btrim(${alias}.display_name), ''), ${alias}.username)`;
+export const NAME_SQL = (alias: string): string => `COALESCE(NULLIF(btrim(${alias}.display_name), ''), ${alias}.username)`;
 
 export class LetterService {
   constructor(
@@ -193,18 +216,58 @@ export class LetterService {
   /**
    * A letter as it will be sent: control characters out, Kurdish letters in
    * their one spelling, refused for a link or a way to be reached, and with
-   * the filtered words masked. A muted writer is refused here too.
+   * the filtered words masked. Its decor is checked as the apps check it
+   * (`checkLetterDecor`; `strokes: false` for a first letter to a stranger,
+   * which carries no drawing), its notes held to the same rules as the words
+   * and masked by the same filter, and the words and notes read together, so
+   * a number cut between them is still found. A muted writer is refused here too.
    */
-  private async cleaned(me: string, raw: string): Promise<string> {
-    const text = normalizeKurdish(stripControlChars(raw)).trim();
+  private async cleaned(me: string, raw: string, rawDecor: unknown, opts: { strokes: boolean }): Promise<Written> {
+    const text = letterText(stripControlChars(raw));
     const problem = letterProblem(text);
     if (problem) throw new AppError(`LETTER_${problem.toUpperCase()}`, 422, `the letter cannot be sent: ${problem}`);
+    let decor: LetterDecor | null = null;
+    if (rawDecor !== undefined && rawDecor !== null) {
+      const checked = checkLetterDecor(rawDecor, opts);
+      if (!checked.ok) throw new AppError(decorErrorCode(checked.problem), 422, `the letter's paper cannot be sent: ${checked.problem}`);
+      decor = checked.value;
+      const together = letterProblem(`${text} ${decor.notes.map((n) => n.text).join(' ')}`);
+      if (together === 'contact' || together === 'link') throw new AppError(`LETTER_${together.toUpperCase()}`, 422, `the letter cannot be sent: ${together}`);
+    }
+    const paper = decor ? decor.paper : null;
     const moderation = this.deps.moderation;
-    if (!moderation) return text;
-    if (await moderation.isChatMuted(me)) throw new AppError('CHAT_MUTED', 403, 'you are muted from writing to people');
-    const filtered = moderation.filter(text);
-    if (filtered.flagged) void moderation.recordOffense(me).catch(() => undefined);
-    return filtered.masked;
+    if (moderation) {
+      if (await moderation.isChatMuted(me)) throw new AppError('CHAT_MUTED', 403, 'you are muted from writing to people');
+      const filtered = moderation.filter(text);
+      let flagged = filtered.flagged;
+      const notes = (decor?.notes ?? []).map((n) => {
+        const f = moderation.filter(n.text);
+        flagged ||= f.flagged;
+        return { ...n, text: f.masked };
+      });
+      if (flagged) void moderation.recordOffense(me).catch(() => undefined);
+      if (decor) decor = { ...decor, notes };
+      return { text: filtered.masked, decor: decor && !isPlainDecor(decor) ? decor : null, paper };
+    }
+    return { text, decor: decor && !isPlainDecor(decor) ? decor : null, paper };
+  }
+
+  /** Remembers the paper somebody wrote on, so the composer opens on it next time. */
+  private async rememberPaper(db: Pick<pg.Pool, 'query'>, me: string, paper: LetterPaper | null): Promise<void> {
+    if (!paper) return;
+    await db.query(
+      `INSERT INTO letter_prefs (user_id, paper) VALUES ($1, $2::jsonb)
+       ON CONFLICT (user_id) DO UPDATE SET paper = EXCLUDED.paper, updated_at = now()`,
+      [me, JSON.stringify({ style: paper.style, tone: paper.tone, ink: paper.ink })],
+    );
+  }
+
+  /** The paper somebody last wrote on, or the default. */
+  private async paperOf(me: string): Promise<LetterPaper> {
+    const r = await this.pool.query<{ paper: LetterPaper }>(`SELECT paper FROM letter_prefs WHERE user_id = $1`, [me]);
+    const p = r.rows[0]?.paper;
+    const known = p && checkLetterDecor({ paper: p }, { strokes: false }).ok;
+    return known ? { style: p.style, tone: p.tone, ink: p.ink } : DEFAULT_PAPER;
   }
 
   /** Letters sent in the last day, refused past the day's number. */
@@ -279,7 +342,7 @@ export class LetterService {
   /** The bird visiting this person's window, with its letter and whose it is, or null. */
   private async visitorOf(db: Pick<pg.Pool, 'query'>, me: string): Promise<LetterVisitor | null> {
     const r = await db.query<LetterRow & { called_at: Date; name: string; bird: number | null }>(
-      `SELECT l.id, l.sender_id, l.body, l.status, l.created_at, l.read_at, v.called_at, ${NAME_SQL('u')} AS name, ${BIRD_SQL('u')} AS bird
+      `SELECT ${LETTER_COLUMNS('l')}, v.called_at, ${NAME_SQL('u')} AS name, ${BIRD_SQL('u')} AS bird
          FROM letter_visits v JOIN letters l ON l.id = v.letter_id JOIN users u ON u.id = l.sender_id
         WHERE v.visitor_id = $1 AND v.ended_at IS NULL AND l.status = 'flying'`,
       [me],
@@ -330,7 +393,7 @@ export class LetterService {
           [userId, band],
         )
       : null;
-    // your bird home from a window with an answer you have not opened yet
+    // your bird home from a window with an answer you have not opened yet: their first letter, the answer it carried home
     const home = await this.pool.query<{ thread_id: string; other: string; name: string; bird: number | null }>(
       `SELECT v.thread_id, o.id AS other, ${NAME_SQL('o')} AS name, ${BIRD_SQL('o')} AS bird
          FROM letter_visits v
@@ -339,11 +402,27 @@ export class LetterService {
          JOIN users o ON o.id = v.visitor_id AND o.deleted_at IS NULL
         WHERE v.outcome = 'answered'
           AND EXISTS (SELECT 1 FROM letters a WHERE a.thread_id = v.thread_id AND a.recipient_id = $1 AND a.status = 'delivered' AND a.read_at IS NULL)
+          AND (SELECT count(*) FROM letters b WHERE b.thread_id = v.thread_id AND b.sender_id = v.visitor_id AND b.status IN ('delivered','removed')) = 1
         ORDER BY v.ended_at DESC
         LIMIT 1`,
       [userId],
     );
     const back = home.rows[0];
+    // a pen pal's bird at your window with a letter after that first one: each later letter comes by its writer's own bird
+    const came = await this.pool.query<{ thread_id: string; other: string; name: string; bird: number | null }>(
+      `SELECT l.thread_id, o.id AS other, ${NAME_SQL('o')} AS name, ${BIRD_SQL('o')} AS bird
+         FROM letters l
+         JOIN letter_threads t ON t.id = l.thread_id AND t.ended_at IS NULL
+         JOIN users o ON o.id = l.sender_id AND o.deleted_at IS NULL
+        WHERE l.recipient_id = $1 AND l.status = 'delivered' AND l.read_at IS NULL
+          AND EXISTS (
+            SELECT 1 FROM letters e
+             WHERE e.thread_id = l.thread_id AND e.sender_id = l.sender_id AND e.status IN ('delivered','removed') AND e.delivered_at < l.delivered_at)
+        ORDER BY l.delivered_at DESC, l.id
+        LIMIT 1`,
+      [userId],
+    );
+    const pal = came.rows[0];
     return {
       refusal: !band ? 'birth_month' : restricted ? 'restricted' : null,
       bird: personOf(userId, me.name, chosen.rows[0]?.bird ?? null).bird,
@@ -355,8 +434,10 @@ export class LetterService {
       sky: (sky?.rows ?? []).map((r) => personOf(r.sender_id, '', r.bird).bird),
       callsLeft: Math.max(0, BIRD_CALLS_PER_DAY - (await this.callsToday(this.pool, userId))),
       homecoming: back ? { threadId: back.thread_id, person: personOf(back.other, back.name, back.bird) } : null,
+      arrival: pal ? { threadId: pal.thread_id, person: personOf(pal.other, pal.name, pal.bird) } : null,
       penPals,
       roomForMore: open < PEN_PALS_MAX,
+      paper: await this.paperOf(userId),
     };
   }
 
@@ -410,8 +491,9 @@ export class LetterService {
    * out, and while another's is at your window: that one is answered or sent
    * on first.
    */
-  async sendOut(userId: string, raw: string): Promise<BirdOutResult> {
-    const text = await this.cleaned(userId, raw);
+  async sendOut(userId: string, raw: string, rawDecor?: unknown): Promise<BirdOutResult> {
+    // a first letter to a stranger may choose its paper and carry notes, but nothing drawn: drawings travel between pen pals
+    const { text, decor, paper } = await this.cleaned(userId, raw, rawDecor, { strokes: false });
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -427,7 +509,11 @@ export class LetterService {
       if (flying.rowCount) throw new AppError('BIRD_OUT', 409, 'your bird is already out');
       if (await this.visitorOf(client, userId)) throw new AppError('VISITOR_HERE', 409, 'a bird is at your window: answer it or send it on first');
       if ((await this.openThreads(client, userId)) >= PEN_PALS_MAX) throw new AppError('PEN_PALS_FULL', 409, 'you have as many pen pals as there is room for');
-      const out = await client.query<{ created_at: Date }>(`INSERT INTO letters (sender_id, body, age_band) VALUES ($1, $2, $3) RETURNING created_at`, [userId, text, band]);
+      const out = await client.query<{ created_at: Date }>(
+        `INSERT INTO letters (sender_id, body, decor, age_band) VALUES ($1, $2, $3::jsonb, $4) RETURNING created_at`,
+        [userId, text, decor ? JSON.stringify(decor) : null, band],
+      );
+      await this.rememberPaper(client, userId, paper);
       await client.query('COMMIT');
       return { kind: 'waiting', since: out.rows[0]!.created_at.toISOString() };
     } catch (err) {
@@ -459,7 +545,7 @@ export class LetterService {
       if ((await this.callsToday(client, userId)) >= BIRD_CALLS_PER_DAY) throw new AppError('CALLS_TODAY', 429, 'that is enough birds for today');
       if ((await this.openThreads(client, userId)) >= PEN_PALS_MAX) throw new AppError('PEN_PALS_FULL', 409, 'you have as many pen pals as there is room for');
       const found = await client.query<LetterRow & { name: string; bird: number | null }>(
-        `SELECT l.id, l.sender_id, l.body, l.status, l.created_at, l.read_at, ${NAME_SQL('u')} AS name, ${BIRD_SQL('u')} AS bird
+        `SELECT ${LETTER_COLUMNS('l')}, ${NAME_SQL('u')} AS name, ${BIRD_SQL('u')} AS bird
            ${CALLABLE_SQL}
           ORDER BY l.created_at, l.id
           LIMIT 1
@@ -486,8 +572,8 @@ export class LetterService {
    * flown on, or been called home); 409 BIRD_GONE when it can no longer take
    * an answer (their pen pals have filled up meanwhile), and then it flies on.
    */
-  async answer(userId: string, raw: string): Promise<VisitorAnswer> {
-    const text = await this.cleaned(userId, raw);
+  async answer(userId: string, raw: string, rawDecor?: unknown): Promise<VisitorAnswer> {
+    const { text, decor, paper } = await this.cleaned(userId, raw, rawDecor, { strokes: true });
     const client = await this.pool.connect();
     let gone = false;
     let result: { answer: VisitorAnswer; other: string; writerName: string } | null = null;
@@ -526,11 +612,12 @@ export class LetterService {
           [visit.letter_id, userId, threadId, visit.called_at],
         );
         const ins = await client.query<LetterRow>(
-          `INSERT INTO letters (sender_id, recipient_id, thread_id, body, age_band, status, delivered_at)
-           VALUES ($1, $2, $3, $4, $5, 'delivered', now())
-           RETURNING id, sender_id, body, status, created_at, read_at`,
-          [userId, visit.sender_id, threadId, text, band],
+          `INSERT INTO letters (sender_id, recipient_id, thread_id, body, decor, age_band, status, delivered_at)
+           VALUES ($1, $2, $3, $4, $5::jsonb, $6, 'delivered', now())
+           RETURNING ${LETTER_COLUMNS()}`,
+          [userId, visit.sender_id, threadId, text, decor ? JSON.stringify(decor) : null, band],
         );
+        await this.rememberPaper(client, userId, paper);
         await client.query(`UPDATE letter_visits SET ended_at = now(), outcome = 'answered', thread_id = $2 WHERE id = $1`, [visit.id, threadId]);
         await client.query(`UPDATE letter_threads SET last_letter_at = now() WHERE id = $1`, [threadId]);
         result = {
@@ -576,7 +663,7 @@ export class LetterService {
       [threadId, userId],
     );
     const rows = await this.pool.query<LetterRow>(
-      `SELECT id, sender_id, body, status, created_at, read_at FROM letters
+      `SELECT ${LETTER_COLUMNS()} FROM letters
         WHERE thread_id = $1 AND status IN ('delivered','removed') ORDER BY created_at, id`,
       [threadId],
     );
@@ -619,8 +706,8 @@ export class LetterService {
   }
 
   /** Write back to a pen pal: refused when it is not your turn, after a goodbye, or once your bands have parted. */
-  async reply(userId: string, threadId: string, raw: string): Promise<LetterItem> {
-    const text = await this.cleaned(userId, raw);
+  async reply(userId: string, threadId: string, raw: string, rawDecor?: unknown): Promise<LetterItem> {
+    const { text, decor, paper } = await this.cleaned(userId, raw, rawDecor, { strokes: true });
     const client = await this.pool.connect();
     let sent: LetterItem;
     let other: string;
@@ -635,11 +722,12 @@ export class LetterService {
       if (!(await this.yourTurn(client, threadId, userId))) throw new AppError('NOT_YOUR_TURN', 409, 'wait for their letter before you write again');
       await this.withinDay(client, userId);
       const ins = await client.query<LetterRow>(
-        `INSERT INTO letters (sender_id, recipient_id, thread_id, body, age_band, status, delivered_at)
-         VALUES ($1, $2, $3, $4, $5, 'delivered', now())
-         RETURNING id, sender_id, body, status, created_at, read_at`,
-        [userId, t.other, threadId, text, band],
+        `INSERT INTO letters (sender_id, recipient_id, thread_id, body, decor, age_band, status, delivered_at)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6, 'delivered', now())
+         RETURNING ${LETTER_COLUMNS()}`,
+        [userId, t.other, threadId, text, decor ? JSON.stringify(decor) : null, band],
       );
+      await this.rememberPaper(client, userId, paper);
       await client.query(`UPDATE letter_threads SET last_letter_at = now() WHERE id = $1`, [threadId]);
       await client.query('COMMIT');
       sent = toItem(ins.rows[0]!, userId);

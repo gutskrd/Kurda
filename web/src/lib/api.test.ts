@@ -345,9 +345,21 @@ describe('the sign-up, sign-in and confirmation refusals', () => {
   it('says which username rule was missed', () => {
     const bad = (reason: string) => ({ kind: 'client' as const, code: 'INVALID_USERNAME', message: 'x', details: { reason } });
     expect(describeError(bad('too-short'), t)).toBe('Use at least 3 characters for your username.');
-    expect(describeError(bad('consecutive-underscore'), t)).toBe(en['error.code.usernameUnderscore']);
+    expect(describeError(bad('edge-punctuation'), t)).toBe(en['error.code.usernameEdge']);
+    expect(describeError(bad('double-punctuation'), t)).toBe(en['error.code.usernameSideBySide']);
     expect(describeError(bad('numbers-only'), t)).toBe(en['error.code.usernameLetter']);
     expect(describeError(bad('reserved'), t)).toBe(en['error.code.usernameUnavailable']);
+    // a reason this page does not know gets the rule as a whole
+    expect(describeError(bad('something-newer'), t)).toBe(en['error.code.usernameChars']);
+  });
+
+  it('names the characters a username cannot have, and says spaces as spaces', () => {
+    const chars = (list: unknown) => ({ kind: 'client' as const, code: 'INVALID_USERNAME', message: 'x', details: { reason: 'invalid-chars', chars: list } });
+    expect(describeError(chars(['!', '?']), t)).toBe('“! ?” can’t be in a username.');
+    expect(describeError(chars([' ', '@']), t)).toBe('“@” can’t be in a username.');
+    expect(describeError(chars([' ']), t)).toBe(en['error.code.usernameSpaces']);
+    // an older answer without the characters still says what may be used
+    expect(describeError(chars(undefined), t)).toBe(en['error.code.usernameChars']);
   });
 
   it('points at the email address when that is the field the server could not read', () => {
@@ -426,7 +438,7 @@ describe('the sign-in protection refusals', () => {
 
   it('says the wait in the reader’s language, Kurdish from the catalogue', () => {
     expect(describeError(locked(900), translator(de), 'de')).toContain('etwa 15 Minuten');
-    expect(describeError(locked(900), translator(ku), 'ku')).toContain('nêzîkî 15 deqîqe');
+    expect(describeError(locked(900), translator(ku), 'ku')).toContain('nêzîkî 15 xulek');
     expect(describeError(locked(3 * 3600), translator(ckb), 'ckb')).toContain('نزیکەی 3 کاتژمێر');
   });
 

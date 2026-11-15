@@ -680,3 +680,10 @@ button.cv-line-main {
 /* ---- a person's voices (UserPage VoiceRole): the people they record, ticked ---- */
 .voice-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 2px 14px; border: 0; margin: 0 0 8px; padding: 0; min-width: 0; }
 .voice-links legend { font-size: 13px; font-weight: 600; color: var(--text-2); padding: 0; margin-bottom: 6px; }
+
+/* ---- the Stories' riddles and proverbs (LoreFields.tsx): their fields, the answer kept apart, and a translation per language ---- */
+.gc-fieldset { display: grid; gap: 10px; margin: 0 0 14px; padding: 12px; border: 1px solid var(--separator); border-radius: 10px; min-width: 0; }
+.gc-fieldset > legend { padding: 0 4px; font-weight: 600; }
+.gc-answer { border-style: dashed; border-color: var(--text-dim); }
+.gc-translation { display: grid; gap: 10px; margin-top: 10px; }
+.gc-original { margin: 0; padding: 6px 10px; border-inline-start: 3px solid var(--separator); color: var(--text-2); font-size: 14px; }

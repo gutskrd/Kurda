@@ -35,7 +35,7 @@ describe('when a device was last used', () => {
   });
 
   it('says it in the reader’s own language', () => {
-    expect(lastActive(ago(2 * HOUR), translator('ku'), 'ku', NOW)).toBe('Cara dawî 2 saet berê çalak bû');
+    expect(lastActive(ago(2 * HOUR), translator('ku'), 'ku', NOW)).toBe('Cara dawî 2 demjimêr berê çalak bû');
     expect(lastActive(ago(2 * HOUR), translator('ckb'), 'ckb', NOW)).toBe('دوایین جار 2 کاتژمێر لەمەوپێش چالاک بوو');
   });
 

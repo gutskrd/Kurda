@@ -15,6 +15,7 @@ import {
   readingSoftCapSeconds,
   storyAudioSentences,
   storyParagraphs,
+  storySections,
   cefrOf,
   type GameAccess,
   type InviteSummary,
@@ -31,13 +32,25 @@ import {
   type StoryLanguage,
   type StoryLength,
   type StoryLevel,
+  type StoryMetaTranslation,
+  type StoryNote,
   type StoryProgress,
+  type StoryReflection,
+  type StorySourceEntry,
   type StoryTradition,
   type TextDuring,
   type TimerSeconds,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { PUBLISHED_SQL, audioCoverage, glossaryForReader, narrationOf, sentenceRecordings } from '../stories/service.js';
+import {
+  PUBLISHED_SQL,
+  audioCoverage,
+  byAppLocale,
+  companionsForReader,
+  glossaryForReader,
+  narrationOf,
+  sentenceRecordings,
+} from '../stories/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import { areFriendsSql } from '../users/age.js';
 import { XpService } from '../xp/service.js';
@@ -629,7 +642,9 @@ export class StoryGamesService {
    * a translation or a source nobody has reviewed yet, and those must not
    * reach a game's members any more than the story's own list would show
    * them: the frozen text is served without its translations, and with no
-   * author or source, until the story is published again.
+   * author or source, until the story is published again. The same goes for
+   * the title and summary in other languages, the reflections, the notes and
+   * the sources. The sections are the frozen text's own headings.
    *
    * `frozen` says which it was: only the game's own copy stays the same at
    * this address. In the lobby the host can still pick another story, and the
@@ -655,11 +670,16 @@ export class StoryGamesService {
       featured: boolean;
       reading_minutes: number | null;
       published_at: Date | null;
+      meta_translations: Record<string, StoryMetaTranslation> | null;
+      reflections: StoryReflection[] | null;
+      notes: StoryNote[] | null;
+      sources: StorySourceEntry[] | null;
       live: boolean;
     }>(
       `SELECT g.story_id, g.story_snapshot, g.dialect, g.level, g.length,
               s.language, s.category, s.tradition, s.author, s.story_source, s.source_url, s.attribution_note, s.translations,
-              s.cover, s.featured, s.reading_minutes, s.published_at, (${PUBLISHED_SQL}) AS live
+              s.cover, s.featured, s.reading_minutes, s.published_at, s.meta_translations, s.reflections, s.notes, s.sources,
+              (${PUBLISHED_SQL}) AS live
          FROM story_games g JOIN story_game_players p ON p.game_id = g.id AND p.user_id = $2 AND NOT p.removed
          JOIN stories s ON s.id = g.story_id
         WHERE g.id = $1`,
@@ -719,6 +739,9 @@ export class StoryGamesService {
         attributionNote: row.live ? row.attribution_note : null,
         versions: [],
         narration: narrationOf(text.paragraphs, audio, durations),
+        sections: storySections(text.paragraphs),
+        metaTranslations: row.live ? byAppLocale(row.meta_translations) : {},
+        ...(row.live ? companionsForReader(row) : { reflections: [], notes: [], sources: [] }),
       },
       frozen: row.story_snapshot !== null,
     };

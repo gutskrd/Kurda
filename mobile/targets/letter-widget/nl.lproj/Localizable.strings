@@ -1,0 +1,9 @@
+/* The letter widget’s own words. Written in mobile/src/widget/widget-strings.json; widget.test.ts holds this file to it. */
+"name" = "Brief";
+"description" = "De nieuwste brief van een penvriend, of de brief die je hier bewaart.";
+"sealed" = "Een brief van {name}";
+"empty" = "Nog geen brief";
+"emptyMore" = "Als een penvriend je schrijft, verschijnt de brief hier.";
+"signedOut" = "Open Hevalo om je brieven te zien";
+"waiting" = "Je brieven verschijnen hier";
+"pinned" = "Vastgezet op je widget";

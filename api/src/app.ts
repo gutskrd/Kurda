@@ -151,6 +151,7 @@ import type { RecordingFileOptions } from './speakers/recording-file.js';
 import { StoriesService } from './stories/service.js';
 import { StoryAdminService } from './stories/admin-service.js';
 import { registerStoryRoutes } from './stories/routes.js';
+import { registerBookRoutes } from './books/routes.js';
 import { registerStoryAdminRoutes } from './stories/admin-routes.js';
 import { seedStarterStories } from './stories/import.js';
 import type { FerhengSource } from '@kurda/shared';
@@ -171,8 +172,10 @@ import { makePushSendJob, pushRecorded } from './jobs/push-jobs.js';
 import { ContentAdminService } from './content/admin-service.js';
 import { seedStarterLessons } from './content/starter-lessons.js';
 import { seedRoadLessons } from './content/road-seed.js';
+import { RoadChapterWatch } from './content/road-chapters.js';
 import { seedStarterGameContent } from './games/starters.js';
 import { seedStarterLibrary } from './games/starter-library.js';
+import { seedStarterLore } from './lore/starters.js';
 import { registerContentAdminRoutes } from './content/admin-routes.js';
 import { UserAdminService } from './admin/user-admin-service.js';
 import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
@@ -704,8 +707,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDictionaryImportRoutes(app, options.ferheng);
     // recordings for the alphabet page, made in the admin panel
     registerAlphabetAudioRoutes(app, config);
-    // and of the Kurdish the lessons use, which lessons deliver with their exercises
-    registerLessonAudioRoutes(app, config);
+    // and of the Kurdish the lessons use, which lessons deliver with their exercises; each take may finish a chapter
+    // of the Kurmanji Road, which then goes online by itself (content/road-chapters.ts) — not under test, where no road is seeded
+    const roadChapters = new RoadChapterWatch(app.db, app.log);
+    registerLessonAudioRoutes(app, config, config.NODE_ENV === 'test' ? undefined : () => void roadChapters.nudge());
     // and who says each of those recordings, chosen or changed after it was made
     registerRecordingVoiceRoutes(app, config, options.recordingFiles);
     // and everything each voice has to say, person by person, for the "Record by person" page; the Road's
@@ -716,6 +721,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // native speaker to publish. Not under test, where they would be stories no
     // test asked for (the seeding has its own tests).
     registerStoryRoutes(app, new StoriesService(app.db, app.cache));
+    // and the Hevalo book: the road's chapters that are online, as a PDF to keep
+    registerBookRoutes(app);
     registerStoryAdminRoutes(app, new StoryAdminService(app.db, app.cache));
     if (config.NODE_ENV !== 'test') {
       app.addHook('onReady', async () => {
@@ -730,10 +737,14 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       app.addHook('onReady', async () => {
         await seedStarterLessons(app.db, app.log);
         await seedRoadLessons(app.db, app.log);
+        // a chapter whose every line was recorded before its lessons arrived goes online now
+        await roadChapters.nudge();
         // and the learning games' starters: the first case, made of the Road's own lines once those are there (games/starters.ts),
         // then each game's first set of rows, made once from the course and published (games/starter-library.ts)
         await seedStarterGameContent(app.db, app.log);
         await seedStarterLibrary(app.db, app.log, app.cache);
+        // and the Stories' starter riddles and proverbs, each once as a draft for a native speaker (lore/starters.ts)
+        await seedStarterLore(app.db, app.log);
       });
     }
     // the push and notification services set up with the leagues, above

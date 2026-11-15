@@ -78,6 +78,18 @@ describe('the five places', () => {
     expect(localStorage.getItem('hevalo_learn_view')).toBe('stories');
   });
 
+  it('opens the riddles and the proverbs as shelves of the Stories group, to visitors too, and asks for an account for the round', async () => {
+    serve();
+    visit('/app/learn/riddles');
+    expect(await screen.findByRole('link', { name: 'Stories' })).toHaveAttribute('aria-current', 'page');
+    const shelves = screen.getByRole('navigation', { name: 'Stories, riddles or proverbs' });
+    expect(within(shelves).getByRole('link', { name: /Riddles/ })).toHaveAttribute('aria-current', 'page');
+    visit('/app/learn/proverbs');
+    expect(await screen.findAllByRole('link', { name: /Proverbs/ })).not.toHaveLength(0);
+    visit('/app/learn/proverbs/play');
+    expect(await screen.findByRole('heading', { name: 'You need an account for this' })).toBeInTheDocument();
+  });
+
   it('sends the stories’ old game addresses to Learn, keeping an invite and a slug', async () => {
     signIn();
     serve();

@@ -3,10 +3,11 @@
  * needs an account; reading does not).
  *
  *   GET /stories/library                  the library's front page: featured, recent, categories, and the caller's own rows
- *   GET /stories?q&category&level&dialect&language&audio&sort&limit&offset
- *                                         published stories, filtered and paged
+ *   GET /stories?q&category&level&dialect&length&language&audio&sort&limit&offset
+ *                                         published stories, filtered and paged (length: short, medium, long or saga)
  *   GET /stories/categories               every category
- *   GET /stories/:idOrSlug                one published story to read, with its recordings and translations
+ *   GET /stories/:idOrSlug                one published story to read, with its recordings and translations, its
+ *                                         sections, title and summary per language, reflections, notes and sources
  *   PUT /stories/:id/bookmark · DELETE    the caller's shelf (signed in; guests too, as for saved words)
  *   PUT /stories/:id/progress             where the caller is in the story (signed in)
  *   GET /me/stories                       the caller's shelves: continue, bookmarks, finished (signed in)
