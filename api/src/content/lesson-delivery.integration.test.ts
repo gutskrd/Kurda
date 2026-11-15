@@ -245,8 +245,24 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
 
     const grammar = await authed('GET', `/skills/${skillId}/grammar`);
     expect(grammar.statusCode).toBe(200);
-    expect(grammar.json()).toMatchObject({ skillId });
+    expect(grammar.json()).toMatchObject({ skillId, words: [] });
     expect(grammar.json().grammarMd).toContain('oblique');
+  });
+
+  it('lists the words a skill brings in beside its tips, once each, in the order they are met', async () => {
+    const skillId = (await pool.query<{ skill_id: string }>(`SELECT skill_id FROM lessons WHERE id = $1`, [lessonId])).rows[0]!.skill_id;
+    // a second lesson of the skill whose items mark their words new; a draft's words are not listed until it is published
+    const second = await repo.createLesson(skillId, 2, 'Nan', 'Bread');
+    const meaning = (prompt: string, en: string, words: Array<{ ku: string; en: string }>) => ({ ask: 'meaning', say: prompt, new: words, prompt, options: [en, 'water'], correctIndex: 0 });
+    await repo.addExercise(second, 1, 'multiple_choice', meaning('Sêv', 'apple', [{ ku: 'sêv', en: 'apple' }]));
+    await repo.addExercise(second, 2, 'multiple_choice', meaning('Sêv û nan', 'apple and bread', [{ ku: 'Sêv', en: 'apple' }, { ku: 'nan', en: 'bread' }]));
+    expect((await authed('GET', `/skills/${skillId}/grammar`)).json().words).toEqual([]);
+    await repo.publishLesson(second);
+    const grammar = await authed('GET', `/skills/${skillId}/grammar`);
+    expect(grammar.json().words).toEqual([
+      { ku: 'sêv', en: 'apple' },
+      { ku: 'nan', en: 'bread' },
+    ]);
   });
 
   it('rejects an unpublished lesson', async () => {
