@@ -1739,7 +1739,7 @@ export const ku: Catalogue = {
   'lesson.ask.toEnglish': 'Vê hevokê wergerîne',
   'lesson.ask.toKurmanji': 'Vê bi kurmancî binivîse',
   'lesson.ask.repeat': 'Li pey {name} dubare bike',
-  'lesson.ask.gap': 'valahî',
+  'lesson.ask.gap': 'peyva kêm',
   'lesson.newWord': 'Peyva nû',
   'lesson.newWords': 'Peyvên nû',
   'lesson.mc.ask': 'Bersivê hilbijêre',

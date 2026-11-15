@@ -1742,7 +1742,7 @@ export const ckb: Catalogue = {
   'lesson.ask.toEnglish': 'ئەم ڕستەیە وەربگێڕە',
   'lesson.ask.toKurmanji': 'ئەمە بە کورمانجی بنووسە',
   'lesson.ask.repeat': 'دوای {name} دووبارەی بکەرەوە',
-  'lesson.ask.gap': 'بۆشایی',
+  'lesson.ask.gap': 'وشەی ونبوو',
   'lesson.newWord': 'وشەی نوێ',
   'lesson.newWords': 'وشە نوێیەکان',
   'lesson.mc.ask': 'وەڵامەکە هەڵبژێرە',
