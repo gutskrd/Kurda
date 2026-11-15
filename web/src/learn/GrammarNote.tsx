@@ -3,7 +3,9 @@ import { parseMarkdown, type Span } from '@kurda/shared';
 function Inline({ spans }: { spans: Span[] }): React.JSX.Element {
   return (
     <>
-      {spans.map((s, i) => (s.bold ? <strong key={i}>{s.text}</strong> : s.code ? <code key={i}>{s.text}</code> : <span key={i}>{s.text}</span>))}
+      {spans.map((s, i) =>
+        s.bold ? <strong key={i}>{s.text}</strong> : s.italic ? <em key={i}>{s.text}</em> : s.code ? <code key={i}>{s.text}</code> : <span key={i}>{s.text}</span>,
+      )}
     </>
   );
 }

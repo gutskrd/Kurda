@@ -1,7 +1,9 @@
 /**
  * Tiny, dependency-free markdown parser for grammar notes (KUR-038).
  * Supports headings (#..###), paragraphs, bullet lists (- / *), fenced code
- * blocks (```), and inline **bold** / `code`. Pure, so it's unit-testable.
+ * blocks (```), and inline **bold**, *italic* and `code`. Pure, so it's
+ * unit-testable. The course's notes set every Kurdish example in italics, so
+ * an italic the parser did not know would reach the learner as asterisks.
  *
  * It lived in the phone app; the browser shows the same notes (a skill's
  * "Tips"), and two parsers would read the same note two ways. It returns
@@ -12,6 +14,7 @@
 export interface Span {
   text: string;
   bold?: boolean;
+  italic?: boolean;
   code?: boolean;
 }
 
@@ -21,7 +24,7 @@ export type Block =
   | { type: 'bullets'; items: Span[][] }
   | { type: 'code'; text: string };
 
-/** Parse inline **bold** and `code` into styled spans. */
+/** Parse inline **bold**, *italic* and `code` into styled spans. */
 export function parseInline(text: string): Span[] {
   const spans: Span[] = [];
   let i = 0;
@@ -37,6 +40,18 @@ export function parseInline(text: string): Span[] {
         flush();
         spans.push({ text: text.slice(i + 2, end), bold: true });
         i = end + 2;
+        continue;
+      }
+    }
+    // a single asterisk opens an italic when a word follows it and one closes it, as markdown reads it:
+    // "2 * 3" or a lone "*" stays as it is
+    if (text[i] === '*' && text[i + 1] !== undefined && text[i + 1] !== '*' && !/\s/.test(text[i + 1]!)) {
+      let end = text.indexOf('*', i + 1);
+      while (end !== -1 && (text[end + 1] === '*' || /\s/.test(text[end - 1]!))) end = text.indexOf('*', end + 2);
+      if (end !== -1) {
+        flush();
+        spans.push({ text: text.slice(i + 1, end), italic: true });
+        i = end + 1;
         continue;
       }
     }
