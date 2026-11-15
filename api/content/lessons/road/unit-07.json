@@ -1864,7 +1864,7 @@
                     "prompt": "Sala bê tu yê çi bikî?",
                     "options": [
                       "Ez ê li zanîngehê bixwînim.",
-                      "Tu yê li zanîngehê bixwînî.",
+                      "Sala bê sêv şîrîn in.",
                       "Ez ji paşerojê ditirsim."
                     ],
                     "correctIndex": 0
@@ -4795,13 +4795,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Ez nikarim rabim! Pişta min diêşe!",
+                    "say": "Ez nikarim rabim, pişta min diêşe!",
                     "voice": "hamo",
-                    "prompt": "Ez nikarim rabim! ___ min diêşe!",
+                    "prompt": "Ez nikarim rabim, ___ min diêşe!",
                     "options": [
-                      "Pişta",
-                      "Pişt",
-                      "Piştê"
+                      "pişta",
+                      "pişt",
+                      "piştê"
                     ],
                     "correctIndex": 0
                   }

@@ -636,6 +636,8 @@ function SessionPlayerBody({
   const fb = state.feedback;
   // the words this question brings in, said over it in the lesson name's place: in a lesson, and the first time it is asked
   const fresh: NewWord[] | null = kind === 'lesson' && !reask && ex?.newWords && ex.newWords.length > 0 ? ex.newWords : null;
+  // a lesson that brings in new words keeps the kicker's line as tall as their badge, so nothing moves as it comes and goes
+  const badged = kind === 'lesson' && state.exercises.some((e) => (e.newWords?.length ?? 0) > 0);
   const standIn: CharacterReaction | null =
     !fb || staged || fb.exerciseType === 'speaking'
       ? null
@@ -705,12 +707,12 @@ function SessionPlayerBody({
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {fresh ? (
           // a new word in this question: said where the lesson's name is, in a line as tall, so nothing under it moves
-          <View style={styles.kickerRow}>
+          <View style={[styles.kickerRow, styles.badged]}>
             <NewWordBadge words={fresh} />
           </View>
         ) : title !== undefined ? (
           // the lesson's name over its questions, which stays where it is as they turn; its line is kept while it is on its way
-          <View style={styles.kickerRow}>
+          <View style={[styles.kickerRow, badged && styles.badged]}>
             <Text style={[styles.kicker, dir.free, { color: valley.redText }]} numberOfLines={1} testID="lesson-title">
               {title ?? ' '}
             </Text>
@@ -941,8 +943,9 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: layout.gutter, paddingTop: spacing.md + 6, paddingBottom: spacing.lg, flexGrow: 1 },
   // the lesson's name: small, tracked capitals in the pomegranate's red, just over the question
   kicker: { fontSize: 11, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.4, textTransform: 'uppercase' },
+  kickerRow: { justifyContent: 'center', marginBottom: spacing.xs },
   // the kicker's line, as tall as the new word's badge that takes its place on some questions
-  kickerRow: { minHeight: BADGE, justifyContent: 'center', marginBottom: spacing.xs },
+  badged: { minHeight: BADGE },
   tallying: { fontSize: typography.sizes.md },
   leaveBody: { fontSize: typography.sizes.md, lineHeight: 22 },
   leaveActions: { gap: spacing.sm, marginTop: spacing.sm },

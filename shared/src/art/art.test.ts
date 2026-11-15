@@ -112,6 +112,9 @@ import {
 } from './letter-sky.js';
 import { LETTER_BIRDS } from '../letters.js';
 import { letterPaperSvg } from './letter-paper.js';
+import { WORD_PICTURES, WORD_PICTURE_IDS, wordPictureSvg, type WordPictureId } from './word-pictures.js';
+import { VALLEY, warm } from './valley.js';
+import { WORD_PICTURES as SHARED_WORD_PICTURES, wordPictureSvg as sharedWordPictureSvg } from '../index.js';
 import { DRAW_TOOLS, PAINTS, PAPER_H, PAPER_STYLES, PAPER_TONES, PAPER_W, paperColors, type PaperStroke } from '../letter-paper.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml, wholePath } from './svg.js';
@@ -2441,5 +2444,119 @@ describe('a letter’s paper', () => {
     expect(() => letterPaperSvg({ paper: { style: 'plain', tone: 'cream', ink: 'navy' }, length: PAPER_H * 3 })).toThrow(RangeError);
     expect(() => letterPaperSvg({ paper: { style: 'plain', tone: 'cream', ink: 'navy' }, length: 0 })).toThrow(RangeError);
     expect(() => letterPaperSvg({ paper: { style: 'plain', tone: 'cream', ink: 'navy' }, width: -1 })).toThrow(RangeError);
+  });
+});
+
+/**
+ * The word pictures (art/word-pictures.ts): one small painted thing for each
+ * word the "pick the picture" exercise can ask for, read at a glance on a
+ * card 72–96 px wide, by day and by evening.
+ */
+describe('the word pictures', () => {
+  /** What hangs in the sky, and the eye, float on the card; everything else stands on its patch of shade. */
+  const ALOFT: readonly WordPictureId[] = ['sun', 'moon', 'star', 'cloud', 'rain', 'snow', 'eye'];
+  const both = WORD_PICTURE_IDS.flatMap((id) => [false, true].map((dark) => ({ id, dark })));
+
+  it('draws every word, by day and by evening, labelled when named and hidden when not', () => {
+    for (const { id, dark } of both) {
+      checkSvg(wordPictureSvg({ id, dark, size: 96, title: WORD_PICTURES[id].en }), 96);
+      const still = parse(wordPictureSvg({ id, dark }));
+      expect(still.attrs.viewBox).toBe('0 0 120 120');
+      expect(still.attrs['aria-hidden'], id).toBe('true');
+      expect(still.attrs.focusable).toBe('false');
+      expect(still.attrs.role).toBeUndefined();
+      expect(still.children.some((e) => e.name === 'title')).toBe(false);
+      walk(still, (e) => expect(ALLOWED.has(e.name), `${id}: <${e.name}>`).toBe(true));
+    }
+  });
+
+  it('is the same picture every time, every word its own, and its own again by evening', () => {
+    const first = WORD_PICTURE_IDS.map((id) => wordPictureSvg({ id }));
+    wordPictureSvg({ id: 'cow', dark: true, size: 72 });
+    expect(WORD_PICTURE_IDS.map((id) => wordPictureSvg({ id }))).toEqual(first);
+    expect(new Set(first).size).toBe(WORD_PICTURE_IDS.length);
+    for (const id of WORD_PICTURE_IDS) expect(wordPictureSvg({ id, dark: true }), id).not.toBe(wordPictureSvg({ id }));
+  });
+
+  it('keeps every picture light enough to put four on a card row: under 3.5 KB and 70 elements', () => {
+    for (const { id, dark } of both) {
+      const svg = wordPictureSvg({ id, dark, size: 96, title: WORD_PICTURES[id].en });
+      expect(svg.length, id).toBeLessThan(3.5 * 1024);
+      expect(elements(svg), id).toBeLessThan(70);
+    }
+  });
+
+  it('paints flat in the valley’s hand: no gradient, blur, mask or clip, every colour a plain one, and no outline of another colour', () => {
+    for (const { id, dark } of both) {
+      const svg = wordPictureSvg({ id, dark });
+      expect(svg, id).not.toMatch(/Gradient|filter|mask|clip-path|clipPath|url\(/);
+      walk(parse(svg), (e) => {
+        for (const k of ['fill', 'stroke'] as const) {
+          const v = e.attrs[k];
+          if (v !== undefined) expect(v, `${id} ${k}`).toMatch(/^(#[0-9a-f]{6}|none)$/);
+        }
+        // a line is a thing that is a line; a filled shape only ever wears a line of its own colour, to soften its corners
+        if (e.attrs.stroke && e.attrs.fill && e.attrs.fill !== 'none') expect(e.attrs.stroke, id).toBe(e.attrs.fill);
+      });
+    }
+  });
+
+  it('stands each thing on a soft patch of shade on a clear ground, and floats what hangs in the sky', () => {
+    for (const { id, dark } of both) {
+      const first = parse(wordPictureSvg({ id, dark })).children[0]!;
+      const grounded = first.attrs['fill-opacity'] !== undefined && /^M[\d.]+ (9\d|10\d)(\.\d)?a/.test(first.attrs.d ?? '');
+      expect(grounded, `${id} ${dark ? 'by evening' : 'by day'}`).toBe(!ALOFT.includes(id));
+    }
+    // nothing paints the card: no shape starts in the canvas’s corner
+    for (const id of WORD_PICTURE_IDS) expect(wordPictureSvg({ id }), id).not.toMatch(/d="M0 0/);
+  });
+
+  it('keeps fire warm by evening, and lifts what is dark so it still shows on a dark card', () => {
+    const luma = (hex: string): number => {
+      const v = parseInt(hex.slice(1), 16);
+      return (0.299 * ((v >> 16) & 255) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) / 255;
+    };
+    for (const id of ['goat', 'phone', 'ewe'] as const) {
+      const fills = [...wordPictureSvg({ id, dark: true }).matchAll(/fill="(#[0-9a-f]{6})"/g)].map((m) => m[1]!);
+      expect(Math.min(...fills.map(luma)), id).toBeGreaterThan(0.25);
+    }
+    for (const flame of [VALLEY.fire, VALLEY.fireCore]) expect(wordPictureSvg({ id: 'fire', dark: true })).toContain(`fill="${warm(flame, true)}"`);
+  });
+
+  it('labels itself when named, escapes the name, and uses a caller’s prefix', () => {
+    const named = wordPictureSvg({ id: 'apple', title: 'sêv & <sêv>' });
+    expect(named).toContain('role="img"');
+    expect(named).toContain('<title id="');
+    expect(named).toContain('sêv &amp; &lt;sêv&gt;');
+    expect(wordPictureSvg({ id: 'apple', title: 'sêv', idPrefix: 'card3' })).toContain('aria-labelledby="card3t"');
+    const ids = new Set(WORD_PICTURE_IDS.map((id) => /id="([^"]+)"/.exec(wordPictureSvg({ id, title: id }))![1]));
+    expect(ids.size).toBe(WORD_PICTURE_IDS.length);
+    expect(wordPictureSvg({ id: 'cat', size: 72 })).toContain('width="72" height="72"');
+  });
+
+  it('refuses a word it has no picture for, a size that is not one, or a prefix that is not an identifier', () => {
+    expect(() => wordPictureSvg({ id: 'banana' as WordPictureId })).toThrow(RangeError);
+    expect(() => wordPictureSvg({ id: 'toString' as WordPictureId })).toThrow(RangeError);
+    for (const size of [0, -4, Number.NaN, Number.POSITIVE_INFINITY]) expect(() => wordPictureSvg({ id: 'apple', size })).toThrow(RangeError);
+    expect(() => wordPictureSvg({ id: 'apple', idPrefix: '1 bad' })).toThrow(RangeError);
+  });
+
+  it('names its eighty words in Hawar Kurmancî, lowercase and each once, with the English beside each', () => {
+    expect(WORD_PICTURE_IDS).toEqual(Object.keys(WORD_PICTURES));
+    expect(WORD_PICTURE_IDS.length).toBe(80);
+    const hawar = /^[abcçdeêfghiîjklmnopqrsştuûvwxyz]+$/u;
+    for (const id of WORD_PICTURE_IDS) {
+      const { ku, en } = WORD_PICTURES[id];
+      expect(id).toMatch(/^[a-z]+$/);
+      expect(ku, id).toMatch(hawar);
+      expect(ku.normalize('NFC'), id).toBe(ku);
+      expect(en, id).toMatch(/^[a-z]+( [a-z]+)*$/);
+    }
+    expect(new Set(WORD_PICTURE_IDS.map((id) => WORD_PICTURES[id].ku)).size).toBe(80);
+    expect(WORD_PICTURES.ewe).toEqual({ ku: 'mih', en: 'sheep' });
+    expect(WORD_PICTURES.tenur.ku).toBe('tenûr');
+    // the apps and the server read the catalogue from the package itself
+    expect(SHARED_WORD_PICTURES).toBe(WORD_PICTURES);
+    expect(sharedWordPictureSvg).toBe(wordPictureSvg);
   });
 });

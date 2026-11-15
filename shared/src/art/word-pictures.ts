@@ -206,6 +206,9 @@ function poly(...xy: number[]): string {
   return `${d}Z`;
 }
 
+/** A picture drawn `k` times its size about its foot (cx, cy), so a small thing fills its card as a large one does. */
+const grow = (k: number, cx = 60, cy = 104): string => `matrix(${n2(k)} 0 0 ${n2(k)} ${f(cx * (1 - k))} ${f(cy * (1 - k))})`;
+
 /** A diamond about a point: the lozenge of a kilim or a knitted band. */
 const diamond = (cx: number, cy: number, rx: number, ry: number): string => poly(cx, cy - ry, cx + rx, cy, cx, cy + ry, cx - rx, cy);
 
@@ -285,6 +288,12 @@ class Brush {
     this.out += `<path d="${d}" fill="${this.dark ? warm(evening, true) : day}"/>`;
   }
 
+  /** A filled shape with its corners softened by a line of its own colour round it: a sun's rays. */
+  round(d: string, hex: string, width: number): void {
+    const c = this.c(hex);
+    this.out += `<path d="${d}" fill="${c}" stroke="${c}" stroke-width="${f(width)}" stroke-linejoin="round"/>`;
+  }
+
   /** A line for a thing that is a line: a stalk, a seam, a strap, a whisker, steam. */
   line(d: string, hex: string, width: number, more = ''): void {
     this.out += `<path d="${d}" fill="none" stroke="${this.c(hex)}" stroke-width="${f(width)}" stroke-linecap="round" stroke-linejoin="round"${more}/>`;
@@ -360,9 +369,10 @@ function fruitTree(b: Brush, random: Rand, x: number, y: number, rx: number, ry:
 
 /** A cloud of round puffs, in its shade and its face. */
 function cloud(b: Brush, cx: number, cy: number, s: number, t: Tone): void {
-  const d = O(cx - 22 * s, cy + 4 * s, 16 * s) + O(cx, cy - 7 * s, 22 * s) + O(cx + 23 * s, cy + 3 * s, 17 * s) + E(cx, cy + 10 * s, 38 * s, 12 * s);
-  b.form(d, t, cx - 30 * s, cy - 20 * s, 0.92);
-  b.fill(oval(cx - 8 * s, cy - 16 * s, 9 * s, 5 * s, -18), t[2]);
+  const d =
+    O(cx - 28 * s, cy + 6 * s, 12 * s) + O(cx - 12 * s, cy - 5 * s, 17 * s) + O(cx + 10 * s, cy - 10 * s, 20 * s) + O(cx + 29 * s, cy + 3 * s, 14 * s) + E(cx, cy + 10 * s, 38 * s, 10 * s);
+  b.form(d, t, cx - 26 * s, cy - 22 * s, 0.92);
+  b.fill(oval(cx + 2 * s, cy - 21 * s, 8 * s, 4.4 * s, -15), t[2]);
 }
 
 /** A poplar of the valley's river banks: lit down its left side. */
@@ -373,11 +383,33 @@ function poplar(b: Brush, x: number, y: number, s: number): void {
   b.form(shape, [VALLEY.poplarLight, VALLEY.poplarShade, VALLEY.poplarLight], x - 6 * s, top + 10 * s, 0.82);
 }
 
+/**
+ * A lamb, told from the ewe at a glance: a white face with pink in its ears
+ * where the ewe's is dark, a smaller woolly body on longer legs, and a bell
+ * on a red string at its neck. Drawn small, as a lamb is, and set larger on
+ * its card by its picture.
+ */
+function lambBody(b: Brush): void {
+  const t: Tone = ['#fdf7ea', '#e3d5bb', '#ffffff'];
+  b.line('M52 74L49 101M60 76V101M76 76V101M84 74L88 99', t[1], 5);
+  b.line('M47 102H52M58 102H63M74 102H79M87 100H92', HOOF, 3);
+  b.fill(puffs(68, 62, 19, 12, 10, 8.4, 0.3), t[1]);
+  b.fill(puffs(66.5, 60.5, 18, 11, 10, 7.8, 0.3), t[0]);
+  b.fill(oval(19, 44, 8, 3.6, 25) + oval(50, 40, 8, 3.6, -30), t[1]);
+  b.fill(oval(19, 44, 5, 1.8, 25), PINK);
+  b.form(oval(34, 48, 13, 12, -10), t, 26, 40, 0.92);
+  b.fill(puffs(36, 36, 5, 2.5, 5, 3.6), t[0]);
+  b.fill(O(30, 47, 2.1), INK);
+  b.fill(poly(22, 53, 26, 53, 24, 56), TONGUE);
+  b.line('M38 58C42 63 50 63 53 58', VALLEY.red, 2.6);
+  b.form(O(46, 65, 4.2), GOLD, 44, 63, 0.8);
+}
+
 // ───────────────────────────────────────────────────────────── the pictures
 
 const APPLE = 'M60 41C49 31 22 35 22 63C22 86 39 104 51 104C55 104 57 102 60 102C63 102 65 104 69 104C81 104 98 86 98 63C98 35 71 31 60 41Z';
 
-const PICTURES: Partial<Record<WordPictureId, Draw>> = {
+const PICTURES: Record<WordPictureId, Draw> = {
   apple: (b) => {
     b.ground(32);
     b.line('M60 41C59 32 62 25 67 20', BARK[0], 4.5);
@@ -387,6 +419,7 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
     b.fill(oval(39, 58, 5, 9, 20), RED[2]);
   },
 
+  // tea is the tulip glass on its saucer, red and steaming; a cup has a handle and a drinking glass is straight and clear
   tea: (b) => {
     b.ground(38, 60, 101);
     b.fill(E(60, 99, 37, 7.5), WHITE[1]);
@@ -401,8 +434,10 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
     b.line('M53 24C49 19 57 15 53 9M67 24C63 19 71 15 67 9', '#d8d2c8', 3);
   },
 
+  // water is a drop falling into its own puddle, not a glass of it, so it never reads as qedeh (a drinking glass)
   water: (b) => {
-    b.fill(E(60, 103, 38, 6.5), WATER[2]);
+    b.ground(40, 60, 104);
+    b.fill(E(60, 103, 36, 6), WATER[2]);
     b.line(E(60, 103, 24, 3.6), WATER[0], 1.6);
     b.form('M60 12C66 24 92 48 92 71C92 89 78 101 60 101C42 101 28 89 28 71C28 48 54 24 60 12Z', WATER, 40, 46);
     b.fill('M41 74C41 63 46 54 52 46C50 56 48 63 48 72C48 78 50 83 53 87C46 85 41 80 41 74Z', WATER[2]);
@@ -410,12 +445,17 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
   },
 
   sugar: (b) => {
-    b.ground(42, 62);
-    const t: Tone = ['#eee9df', '#cdc4b2', '#fbf9f4'];
-    cube(b, 82, 97, 22, t);
-    cube(b, 46, 104, 25, t);
-    cube(b, 46, 79, 25, t);
-    b.fill(O(36, 88, 1) + O(52, 92, 1) + O(40, 62, 1) + O(56, 50, 1) + O(88, 76, 1) + O(70, 82, 1), t[1]);
+    b.ground(44);
+    const t: Tone = ['#ebe5d8', '#c2b8a3', '#fdfbf6'];
+    const s = 24;
+    // a pile seen from above and to the left: four on the ground, one on them, back to front
+    const at = (i: number, j: number, k: number): [number, number] => [60 + (i - j) * s * 0.87, 103 - (2 - i - j) * s * 0.5 - k * s];
+    for (const [i, j, k] of [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 1]] as const) {
+      // each a little smaller than its place in the pile, so a hairline of the card shows between them
+      const [x, y] = at(i, j, k);
+      cube(b, x, y - 0.08 * s, 0.92 * s, t);
+    }
+    b.fill(O(56, 26, 1.2) + O(63, 30, 1.2) + O(38, 50, 1.2) + O(82, 50, 1.2) + O(60, 60, 1.2) + O(32, 76, 1.2) + O(88, 80, 1.2), t[1]);
   },
 
   house: (b) => {
@@ -504,6 +544,7 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
   },
 
   orchard: (b, random) => {
+    b.ground(54, 62, 103);
     b.fill(E(60, 97, 52, 12), GRASS[1]);
     b.fill(E(59, 94, 51, 10.5), GRASS[0]);
     fruitTree(b, random, 84, 92, 21, 19, VALLEY.fruit);
@@ -513,18 +554,16 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
 
   bread: (b) => {
     b.ground(44);
-    const flat: Tone = ['#efc987', '#cf9f58', '#f8e2b2'];
-    b.form(oval(76, 50, 27, 31, 16), flat, 58, 30, 0.9);
-    let dots = '';
-    for (let i = 0; i < 9; i++) {
-      const a = (i / 9) * Math.PI * 2;
-      dots += O(75 + Math.cos(a) * 15, 50 + Math.sin(a) * 18, 2);
-    }
-    b.fill(dots + O(75, 50, 2.4), flat[1]);
+    const flat: Tone = ['#f0cd8c', '#cf9f58', '#f8e2b2'];
+    b.fill(E(60, 96, 50, 9), flat[1]);
+    b.fill(E(60, 93, 50, 8.5), flat[0]);
+    b.fill(E(60, 88, 48, 8.5), flat[1]);
+    b.fill(E(60, 85, 48, 8), flat[2]);
+    b.fill(O(20, 94, 1.6) + O(34, 99, 1.6) + O(54, 101, 1.6) + O(76, 100, 1.6) + O(96, 95, 1.6), flat[1]);
     const crust: Tone = ['#e2a95c', '#b07a34', '#f6cf94'];
-    b.form('M14 84C14 64 32 52 56 52C80 52 98 64 98 84C98 92 91 96 83 96H29C21 96 14 92 14 84Z', crust, 24, 58, 0.9);
-    b.fill(oval(36, 72, 3.6, 11, 28) + oval(56, 70, 3.6, 12, 28) + oval(76, 72, 3.6, 11, 28), '#f7dcae');
-    b.fill(oval(30, 62, 7, 2.6, -22), crust[2]);
+    b.form('M16 74C16 50 36 34 62 34C88 34 106 50 106 74C106 82 99 87 91 87H31C23 87 16 82 16 74Z', crust, 26, 40, 0.9);
+    b.fill(oval(40, 60, 4, 13, 28) + oval(62, 57, 4, 14, 28) + oval(84, 60, 4, 13, 28), '#f7dcae');
+    b.fill(oval(32, 50, 8, 3, -28), crust[2]);
   },
 
   flower: (b) => {
@@ -580,14 +619,16 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
 
   bag: (b) => {
     b.ground(40, 60, 104);
-    b.line('M30 52C26 16 94 16 90 52', '#8a5a36', 6);
-    b.form(box(20, 46, 80, 52, 10), [VALLEY.red, VALLEY.redDark, '#dc6b5c'], 22, 48, 0.94);
-    b.fill(box(20, 78, 80, 11), CREAM);
-    b.fill(diamond(32, 83.5, 4, 4) + diamond(46, 83.5, 4, 4) + diamond(60, 83.5, 4, 4) + diamond(74, 83.5, 4, 4) + diamond(88, 83.5, 4, 4), VALLEY.indigo);
-    b.fill('M20 56C20 50 25 46 31 46H89C95 46 100 50 100 56V66L60 74L20 66Z', VALLEY.redDark);
-    b.fill(diamond(60, 61, 9, 7), GOLD[0]);
-    b.fill(diamond(60, 61, 3.5, 3), VALLEY.indigo);
-    b.line('M26 98V106M94 98V106', CREAM, 4);
+    b.group(grow(1.06), () => {
+      b.line('M30 52C26 16 94 16 90 52', '#8a5a36', 6);
+      b.form(box(20, 46, 80, 52, 10), [VALLEY.red, VALLEY.redDark, '#dc6b5c'], 22, 48, 0.94);
+      b.fill(box(20, 78, 80, 11), CREAM);
+      b.fill(diamond(32, 83.5, 4, 4) + diamond(46, 83.5, 4, 4) + diamond(60, 83.5, 4, 4) + diamond(74, 83.5, 4, 4) + diamond(88, 83.5, 4, 4), VALLEY.indigo);
+      b.fill('M20 56C20 50 25 46 31 46H89C95 46 100 50 100 56V66L60 74L20 66Z', VALLEY.redDark);
+      b.fill(diamond(60, 61, 9, 7), GOLD[0]);
+      b.fill(diamond(60, 61, 3.5, 3), VALLEY.indigo);
+      b.line('M26 98V106M94 98V106', CREAM, 4);
+    });
   },
 
   book: (b) => {
@@ -618,26 +659,30 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
 
   gift: (b) => {
     const t: Tone = ['#3fa08e', '#2b7a6b', '#7cc8b8'];
-    b.ground(40);
-    b.form(box(28, 56, 64, 46, 3), t, 30, 58, 0.93);
-    b.fill(box(28, 57, 64, 3), t[1]);
-    b.fill(box(54, 56, 12, 46), GOLD[0]);
-    b.form(box(23, 44, 74, 14, 3), t, 25, 46, 0.95);
-    b.fill(box(54, 44, 12, 14), GOLD[0]);
-    b.fill('M60 45C52 28 34 30 38 40C40 46 50 47 60 45Z' + 'M60 45C68 28 86 30 82 40C80 46 70 47 60 45Z', GOLD[0]);
-    b.fill('M58 44C52 36 44 36 44 40C46 43 52 44 58 44Z' + 'M62 44C68 36 76 36 76 40C74 43 68 44 62 44Z', GOLD[1]);
-    b.fill(O(60, 44, 5), GOLD[1]);
+    b.ground(44);
+    b.group(grow(1.15), () => {
+      b.form(box(28, 56, 64, 46, 3), t, 30, 58, 0.93);
+      b.fill(box(28, 57, 64, 3), t[1]);
+      b.fill(box(54, 56, 12, 46), GOLD[0]);
+      b.form(box(23, 44, 74, 14, 3), t, 25, 46, 0.95);
+      b.fill(box(54, 44, 12, 14), GOLD[0]);
+      b.fill('M60 45C52 28 34 30 38 40C40 46 50 47 60 45Z' + 'M60 45C68 28 86 30 82 40C80 46 70 47 60 45Z', GOLD[0]);
+      b.fill('M58 44C52 36 44 36 44 40C46 43 52 44 58 44Z' + 'M62 44C68 36 76 36 76 40C74 43 68 44 62 44Z', GOLD[1]);
+      b.fill(O(60, 44, 5), GOLD[1]);
+    });
   },
 
   basket: (b) => {
     b.ground(42);
-    b.line('M24 58C24 14 96 14 96 58', STRAW[1], 6);
-    b.fill(E(60, 58, 40, 8), '#8a6428');
-    b.form('M20 60H100L92 97C91 101 87 104 82 104H38C33 104 29 101 28 97Z', STRAW, 22, 62, 0.94);
-    b.dash('M23 72H97', STRAW[1], 3.5, 6, 5);
-    b.dash('M25 82H95', STRAW[1], 3.5, 6, 5, 5.5);
-    b.dash('M27 92H93', STRAW[1], 3.5, 6, 5);
-    b.line(E(60, 58, 41, 8.5), STRAW[2], 4.5);
+    b.group(grow(1.05), () => {
+      b.line('M24 58C24 14 96 14 96 58', STRAW[1], 6);
+      b.fill(E(60, 58, 40, 8), '#8a6428');
+      b.form('M20 60H100L92 97C91 101 87 104 82 104H38C33 104 29 101 28 97Z', STRAW, 22, 62, 0.94);
+      b.dash('M23 72H97', STRAW[1], 3.5, 6, 5);
+      b.dash('M25 82H95', STRAW[1], 3.5, 6, 5, 5.5);
+      b.dash('M27 92H93', STRAW[1], 3.5, 6, 5);
+      b.line(E(60, 58, 41, 8.5), STRAW[2], 4.5);
+    });
   },
 
   sock: (b) => {
@@ -719,20 +764,8 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
   },
 
   lamb: (b) => {
-    b.ground(36, 62);
-    const t: Tone = ['#fdf7ea', '#e3d5bb', '#ffffff'];
-    b.line('M52 74L49 101M60 76V101M76 76V101M84 74L88 99', t[1], 5);
-    b.line('M47 102H52M58 102H63M74 102H79M87 100H92', HOOF, 3);
-    b.fill(puffs(68, 62, 19, 12, 10, 8.4, 0.3), t[1]);
-    b.fill(puffs(66.5, 60.5, 18, 11, 10, 7.8, 0.3), t[0]);
-    b.fill(oval(19, 44, 8, 3.6, 25) + oval(50, 40, 8, 3.6, -30), t[1]);
-    b.fill(oval(19, 44, 5, 1.8, 25), PINK);
-    b.form(oval(34, 48, 13, 12, -10), t, 26, 40, 0.92);
-    b.fill(puffs(36, 36, 5, 2.5, 5, 3.6), t[0]);
-    b.fill(O(30, 47, 2.1), INK);
-    b.fill(poly(22, 53, 26, 53, 24, 56), TONGUE);
-    b.line('M38 58C42 63 50 63 53 58', VALLEY.red, 2.6);
-    b.form(O(46, 65, 4.2), GOLD, 44, 63, 0.8);
+    b.ground(40, 62);
+    b.group(grow(1.14, 62), () => lambBody(b));
   },
 
   phone: (b) => {
@@ -770,7 +803,6 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
       b.fill(O(57, 54, 4.5), note[1]);
     };
     b.group('rotate(14 57 54)', bill);
-    b.fill(box(22, 34, 70, 40, 4), note[1], ' transform="rotate(-6 57 54)" fill-opacity="0.001"');
     b.group('translate(-4 8) rotate(-8 57 54)', bill);
     for (const y of [98, 91, 84]) {
       b.fill(E(88, y + 3, 17, 6.5), GOLD[1]);
@@ -792,11 +824,11 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
 
   egg: (b) => {
     const egg = 'M0 -27C12 -27 21 -8 21 6C21 19 12 27 0 27C-12 27 -21 19 -21 6C-21 -8 -12 -27 0 -27Z';
-    b.ground(40, 62);
-    b.group('translate(74 72) rotate(14)', () => {
+    b.ground(44, 62);
+    b.group('translate(76 68) rotate(14) scale(1.25)', () => {
       b.form(egg, ['#e9c49a', '#c99c6c', '#f6dfc2'], -12, -16, 0.9);
     });
-    b.group('translate(48 77) rotate(-10)', () => {
+    b.group('translate(46 74) rotate(-10) scale(1.25)', () => {
       b.form(egg, ['#fbf6ec', '#ddd1bc', '#ffffff'], -12, -16, 0.9);
       b.fill(oval(-9, -8, 4, 7, 15), '#ffffff');
     });
@@ -818,8 +850,9 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
     b.ground(46);
     b.fill(E(60, 101, 18, 4), CLAY[1]);
     b.form('M16 64C16 88 36 102 60 102C84 102 104 88 104 64Z', CLAY, 28, 68, 0.94);
+    // the painted zig-zag of village pottery round the bowl
     let zig = 'M24 78';
-    for (let i = 1; i <= 12; i++) zig += `L${f(24 + i * 6)} ${f(78 + (i % 2 ? 4 : 0) + Math.abs(i - 6) * -0.0)}`;
+    for (let i = 1; i <= 12; i++) zig += `L${24 + i * 6} ${i % 2 ? 82 : 78}`;
     b.line(zig, CREAM, 2.4);
     b.fill(E(60, 64, 44, 11), CLAY[2]);
     b.fill(E(60, 64, 39, 8.5), '#fbf8f1');
@@ -830,8 +863,9 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
     b.ground(48, 62, 103);
     b.fill(poly(88, 101, 88, 58, 104, 50, 104, 93), WOOD[1]);
     b.fill(box(16, 58, 72, 43), WOOD[0]);
-    b.fill('M16 58C16 44 30 38 52 38C74 38 88 44 88 58Z', WOOD[2]);
-    b.fill('M88 58C88 44 74 38 52 38L68 30C90 30 104 36 104 50Z', WOOD[1]);
+    b.fill('M16 58C16 44 30 38 52 38C74 38 88 44 88 58L104 50C104 36 90 30 68 30C46 30 32 36 32 50Z', WOOD[2]);
+    b.fill('M88 58L104 50C104 44 102 40 98 37C92 40 88 46 88 58Z', WOOD[1]);
+    b.fill('M16 58C16 44 30 38 52 38C74 38 88 44 88 58Z', WOOD[0]);
     b.fill(box(16, 56, 72, 5) + box(28, 58, 6, 43) + box(70, 58, 6, 43), GOLD[0]);
     b.fill(poly(88, 58, 104, 50, 104, 54, 88, 62), GOLD[1]);
     b.form(box(45, 60, 14, 17, 2), GOLD, 46, 61, 0.86);
@@ -925,9 +959,10 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
     b.fill('M44 104V92C44 83 51 78 60 78C69 78 76 83 76 92V104Z', '#4a2a1e');
     b.glow('M48 104C46 96 50 92 53 87C55 91 57 91 58 85C62 89 64 93 63 97C66 95 68 93 68 89C72 95 73 100 71 104Z', VALLEY.fire);
     b.glow('M54 104C53 100 55 98 57 95C59 98 61 98 62 96C64 99 65 102 64 104Z', VALLEY.fireCore);
-    b.fill(O(63, 19, 5) + O(57, 11, 4) + O(64, 5, 3), VALLEY.smoke, ' fill-opacity="0.9"');
+    b.fill(O(63, 21, 4.6) + O(57, 13, 3.6), VALLEY.smoke, ' fill-opacity="0.9"');
   },
 
+  // the eye floats as the sky's things do: a shadow under it would make it an object on a table
   eye: (b) => {
     b.line('M28 30C44 20 76 20 92 30', '#6b4a32', 5);
     b.form('M14 64C28 46 44 40 60 40C76 40 92 46 106 64C92 82 76 88 60 88C44 88 28 82 14 64Z', WHITE, 30, 52, 0.95);
@@ -951,7 +986,8 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
     const t: Tone = ['#7a55a0', '#553a78', '#a98bc8'];
     b.ground(28, 60);
     b.line('M60 32C60 24 62 20 67 15', BARK[0], 3.5);
-    b.form('M62 30C64 18 78 12 90 18C88 22 92 28 86 30C84 34 74 36 62 30Z', LEAF, 66, 20, 0.86);
+    b.form('M64 30C62 22 66 14 74 12C76 6 86 6 88 12C96 12 100 20 96 26C94 32 86 34 80 32C74 36 66 34 64 30Z', LEAF, 70, 12, 0.88);
+    b.line('M64 30L80 20M74 25L74 16M78 23L90 20', LEAF[2], 1.4);
     const rows: Pt[][] = [
       [[44, 40], [56, 38], [68, 38], [80, 42]],
       [[38, 52], [50, 50], [62, 50], [74, 52]],
@@ -1000,20 +1036,24 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
     b.line('M14 102L10 92M18 102V90M22 102L26 93', LEAF[0], 2.4);
   },
 
+  // a spring is water running out of a cleft in the rocks into its pool
   spring: (b) => {
-    b.ground(48);
-    b.form('M14 80C8 62 18 40 38 34C52 31 62 42 62 56V82Z', STONE, 22, 40, 0.92);
-    b.form('M56 72C56 50 70 34 88 36C104 38 110 58 106 80Z', STONE, 64, 40, 0.92);
-    b.fill('M54 52C56 47 62 47 64 52C64 64 66 74 70 86H56C56 74 54 64 54 52Z', WATER[0]);
-    b.line('M58 56C58 66 59 74 61 82', WATER[2], 2);
-    b.fill(E(62, 92, 42, 11), WATER[1]);
-    b.fill(E(62, 91, 38, 9), WATER[0]);
-    b.line(E(63, 89, 14, 3.4), WATER[2], 1.8);
-    b.fill(E(24, 94, 7, 4) + E(98, 96, 8, 4.5) + E(82, 102, 6, 3.5), STONE[0]);
-    b.line('M18 100L14 90M22 100V88M100 102l3 -9M104 102v-10', LEAF[0], 2.4);
+    b.ground(50);
+    b.form('M10 86C6 66 14 46 30 40C40 36 50 40 54 50L56 86Z', STONE, 18, 44, 0.92);
+    b.form('M62 86L64 50C68 40 80 36 92 40C106 46 112 66 108 86Z', STONE, 70, 42, 0.92);
+    b.form('M30 44C30 28 44 18 60 18C76 18 90 28 90 44C82 50 70 52 60 52C50 52 38 50 30 44Z', STONE, 40, 22, 0.92);
+    b.fill('M50 58C50 50 54 46 60 46C66 46 70 50 70 58Z', '#4b4a52');
+    b.fill('M53 56C55 51 65 51 67 56C66 68 68 78 72 88H52C54 78 54 68 53 56Z', WATER[0]);
+    b.line('M58 58C58 68 59 76 60 84', WATER[2], 2.2);
+    b.fill(E(60, 94, 46, 11), WATER[1]);
+    b.fill(E(60, 93, 42, 9), WATER[0]);
+    b.line(E(62, 91, 16, 3.6), WATER[2], 1.8);
+    b.fill(E(18, 96, 8, 4.5) + E(100, 98, 9, 4.5) + E(84, 104, 6, 3.5) + E(32, 104, 6, 3.5), STONE[0]);
+    b.line('M12 102L8 92M16 102V90M104 104l3 -9M108 104v-10M40 24l-3 -7M44 22v-8M48 21l3 -7', LEAF[0], 2.4);
   },
 
   river: (b) => {
+    b.ground(54, 62, 100);
     b.fill(E(60, 76, 52, 28), GRASS[1]);
     b.fill(E(60, 72, 52, 25), GRASS[0]);
     b.fill('M68 47C58 56 82 64 64 76C52 84 34 86 30 96C38 97 48 97 58 96C60 92 76 86 84 78C102 64 80 56 84 47C78 46 72 46 68 47Z', WATER[0]);
@@ -1036,13 +1076,14 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
 
   ball: (b) => {
     b.ground(34, 62);
-    b.fill(O(60, 64, 38), '#f7c63c');
-    b.fill('M60 26C34 38 34 90 60 102C46 88 46 40 60 26Z', VALLEY.red);
-    b.fill('M60 26C74 40 74 88 60 102C86 90 86 38 60 26Z', BLUE[0]);
-    b.fill('M60 26C40 32 28 48 22 64C34 62 46 52 60 26Z' + 'M60 102C80 96 92 80 98 64C86 66 74 76 60 102Z', '#ffffff', ' fill-opacity="0.001"');
-    b.fill(O(60, 64, 6), '#fffaf0');
-    b.shade(lune(60, 64, 38, 52, 56, 37));
-    b.fill(oval(40, 46, 8, 4.5, -45), '#ffffff', ' fill-opacity="0.7"');
+    b.group(grow(1.1, 60, 102), () => {
+      b.fill(O(60, 64, 38), '#f7c63c');
+      b.fill('M60 26C34 38 34 90 60 102C46 88 46 40 60 26Z', VALLEY.red);
+      b.fill('M60 26C74 40 74 88 60 102C86 90 86 38 60 26Z', BLUE[0]);
+      b.fill(O(60, 64, 6), '#fffaf0');
+      b.shade(lune(60, 64, 38, 52, 56, 37));
+      b.fill(oval(40, 46, 8, 4.5, -45), '#ffffff', ' fill-opacity="0.7"');
+    });
   },
 
   school: (b) => {
@@ -1148,6 +1189,254 @@ const PICTURES: Partial<Record<WordPictureId, Draw>> = {
     b.fill(oval(90, 94, 16, 9, -8), t[1]);
     b.fill(oval(90, 93, 13.5, 7.2, -8), '#d8ecb0');
     b.fill(oval(86, 92, 1.6, 1, -8) + oval(94, 91, 1.6, 1, -8) + oval(90, 96, 1.6, 1, -8) + oval(86, 96, 1.4, 0.9, -8) + oval(94, 95, 1.4, 0.9, -8), '#a6c97a');
+  },
+  honey: (b) => {
+    b.ground(38);
+    b.group(grow(1.05), () => {
+      b.fill(box(30, 40, 60, 64, 10), GLASS[1]);
+      b.form(box(33, 50, 54, 51, 8), GOLD, 36, 52, 0.94);
+      b.fill(box(36, 32, 48, 10, 2), GLASS[1]);
+      b.fill('M28 36C28 26 40 22 60 22C80 22 92 26 92 36L95 46L85 41L75 46L66 41L56 46L46 41L36 46L25 41Z', VALLEY.red);
+      b.line('M32 42C44 46 76 46 88 42', '#8a5a36', 2.4);
+      b.fill('M40 46V58C40 61 45 61 45 58V48Z', GOLD[0]);
+      b.fill(box(42, 64, 36, 24, 4), CREAM);
+      const hex = (cx: number, cy: number): string => poly(cx - 4, cy, cx - 2, cy - 3.5, cx + 2, cy - 3.5, cx + 4, cy, cx + 2, cy + 3.5, cx - 2, cy + 3.5);
+      b.fill(hex(54, 72) + hex(66, 72) + hex(60, 79.5), GOLD[1]);
+      b.fill(box(35, 52, 5, 34, 2.5), GOLD[2]);
+    });
+  },
+
+  milk: (b) => {
+    b.ground(42, 64);
+    b.form('M46 16H66V26C66 32 80 38 80 52V96C80 101 76 104 71 104H41C36 104 32 101 32 96V52C32 38 46 32 46 26Z', GLASS, 36, 30, 0.96);
+    b.form('M35 50C35 44 38 40 44 38H68C74 40 77 44 77 50V95C77 99 74 101 70 101H42C38 101 35 99 35 95Z', WHITE, 38, 42, 0.94);
+    b.fill(box(44, 10, 24, 9, 3), BLUE[0]);
+    b.fill(box(35, 62, 42, 16), BLUE[0]);
+    b.fill('M56 64C58 68 61 71 61 73C61 76 59 77 56 77C53 77 51 76 51 73C51 71 54 68 56 64Z', '#ffffff');
+    b.fill(box(38, 46, 4, 50, 2), '#ffffff');
+    b.form('M84 74H106L103 102C103 104 101 105 99 105H91C89 105 87 104 87 102Z', GLASS, 85, 76, 0.94);
+    b.fill('M86 80H104L102 101C102 102 101 103 99 103H91C89 103 88 102 88 101Z', WHITE[0]);
+  },
+
+  olive: (b) => {
+    const olive: Tone = ['#4f3d5c', '#35283f', '#806b91'];
+    const leaf: Tone = ['#7f9f58', '#5d7d3e', '#b2c98c'];
+    b.ground(38);
+    b.line('M16 92C36 76 58 60 104 30', BARK[0], 3.5);
+    b.form(oval(36, 62, 16, 4.6, -60), leaf, 30, 52, 0.86);
+    b.form(oval(80, 30, 17, 4.6, -20), leaf, 66, 28, 0.86);
+    b.form(oval(90, 56, 16, 4.6, 30), leaf, 78, 50, 0.86);
+    b.form(oval(58, 40, 15, 4.4, -75), leaf, 54, 28, 0.86);
+    b.form(oval(40, 88, 9, 12, -20), olive, 34, 80, 0.86);
+    b.form(oval(62, 76, 9, 12, -15), olive, 56, 68, 0.86);
+    b.form(oval(80, 62, 8.5, 11, -10), ['#9db24c', '#76893a', '#c9d98a'], 74, 54, 0.86);
+    b.fill(oval(37, 84, 2, 3.6, -20) + oval(59, 72, 2, 3.6, -15), olive[2]);
+  },
+
+  fish: (b) => {
+    const t: Tone = ['#4aa3c8', '#2f7fa6', '#9ad6ee'];
+    b.ground(40, 62);
+    b.fill('M50 40C56 28 70 26 78 40Z' + 'M56 80C60 90 70 92 74 80Z', t[1]);
+    b.form('M12 60C22 42 44 34 66 38C78 40 86 48 92 56L108 40C112 48 112 72 108 80L92 64C86 72 78 80 66 82C44 86 22 78 12 60Z', t, 30, 44, 0.92);
+    b.line('M38 46C42 54 42 66 38 74', t[1], 2);
+    b.line('M54 52q4 4 0 8M64 50q4 4 0 8M64 62q4 4 0 8M74 56q4 4 0 8', t[2], 1.8);
+    b.fill(O(28, 56, 4.4), '#ffffff');
+    b.fill(O(27, 56, 2.4), INK);
+    b.fill(oval(50, 46, 10, 3, -10), t[2]);
+  },
+
+  glass: (b) => {
+    b.ground(30);
+    b.group(grow(1.05), () => {
+      b.fill('M34 26H86L79 98C79 101 76 104 72 104H48C44 104 41 101 41 98Z', GLASS[0]);
+      b.fill('M38 56H82L77 97C77 99 75 101 72 101H48C45 101 43 99 43 97Z', '#a9d8ee');
+      b.fill('M70 56H82L77 97C77 99 75 101 72 101H68C72 90 72 70 70 56Z', '#8cc6e2');
+      b.fill(E(60, 56, 22, 3.8), '#d3edf8');
+      b.line(E(60, 26, 26, 4), GLASS[1], 2.4);
+      b.fill('M41 32H47L50 94H45Z', '#ffffff', ' fill-opacity="0.85"');
+      b.fill(box(42, 96, 36, 6, 3), GLASS[1]);
+    });
+  },
+
+  cup: (b) => {
+    const t: Tone = ['#4a8dcc', '#2f6aa3', '#8bbde8'];
+    b.ground(46, 60);
+    b.group(grow(1.25, 58, 102), () => {
+      b.line('M82 58C98 56 100 80 82 82', t[1], 7);
+      b.form('M28 48H86V74C86 90 74 102 57 102C40 102 28 90 28 74Z', t, 30, 50, 0.93);
+      b.fill(box(28, 60, 58, 10), '#f6eedd');
+      b.fill(diamond(36, 65, 3.4, 3.4) + diamond(48, 65, 3.4, 3.4) + diamond(60, 65, 3.4, 3.4) + diamond(72, 65, 3.4, 3.4) + diamond(84, 65, 2, 3.4), VALLEY.red);
+      b.fill(E(57, 48, 29, 6.5), t[2]);
+      b.fill(E(57, 48, 25, 4.6), '#6b3f24');
+    });
+  },
+
+  spoon: (b) => {
+    b.ground(30);
+    b.group('rotate(35 60 58)', () => {
+      b.form('M60 8C71 8 77 19 77 31C77 43 70 50 64 53L63.5 84C67 90 67 100 60 104C53 100 53 90 56.5 84L56 53C50 50 43 43 43 31C43 19 49 8 60 8Z', STEEL, 46, 12, 0.92);
+      b.fill(oval(60, 30, 11, 17, 0), STEEL[1]);
+      b.fill(oval(55, 24, 3, 8, 10), STEEL[2]);
+    });
+  },
+
+  // the double teapot of a Kurdish house: the brew in the small pot, kept hot on the big kettle's steam
+  teapot: (b) => {
+    b.ground(44);
+    b.line('M30 82C18 80 14 72 10 64', COPPER[1], 6);
+    b.line('M88 72C102 72 104 92 90 94', COPPER[1], 5);
+    b.form('M24 100C18 88 22 70 36 64H84C98 70 102 88 96 100Z', COPPER, 30, 66, 0.94);
+    b.fill(box(34, 60, 52, 6, 3), COPPER[1]);
+    b.fill('M44 54C36 52 30 46 27 36L31 35C34 42 40 46 46 47Z', '#d6cdbd');
+    b.line('M76 42C88 41 90 56 78 58', '#d6cdbd', 4.4);
+    b.form('M42 60C38 48 46 38 60 38C74 38 82 48 78 60Z', ['#f4efe6', '#d6cdbd', '#ffffff'], 46, 40, 0.92);
+    b.fill(O(54, 50, 2.6) + O(66, 50, 2.6) + O(60, 46, 2.6), VALLEY.red);
+    b.fill(E(60, 38, 10, 3), '#d6cdbd');
+    b.fill(O(60, 33, 3.6), VALLEY.red);
+    b.fill(oval(40, 78, 4, 9, 20), COPPER[2]);
+    b.line('M24 30C20 24 28 20 24 14', '#d8d2c8', 3);
+  },
+
+  sun: (b) => {
+    let rays = '';
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      const [c, s] = [Math.cos(a), Math.sin(a)];
+      const [px, py] = [-s, c];
+      const r1 = 33;
+      const r2 = i % 2 ? 44 : 50;
+      rays += poly(60 + c * r1 + px * 6, 60 + s * r1 + py * 6, 60 + c * r2, 60 + s * r2, 60 + c * r1 - px * 6, 60 + s * r1 - py * 6);
+    }
+    b.round(rays, '#f2a33a', 3);
+    b.form(O(60, 60, 31), SUN, 42, 42, 0.9);
+    b.fill(oval(48, 46, 9, 5, -40), SUN[2]);
+  },
+
+  // a full round crescent with craters, and stars beside it, so it is night's moon and never a slice of fruit
+  moon: (b) => {
+    const t: Tone = ['#f5df8f', '#ddb95a', '#fbefc4'];
+    b.fill(lune(54, 62, 40, 74, 48, 34), t[0]);
+    b.fill(O(30, 68, 5) + O(44, 90, 3.6) + O(26, 50, 2.6), t[1]);
+    const sparkle = (x: number, y: number, r: number): string => {
+      const k = r * 0.22;
+      return `M${f(x)} ${f(y - r)}Q${f(x + k)} ${f(y - k)} ${f(x + r)} ${f(y)}Q${f(x + k)} ${f(y + k)} ${f(x)} ${f(y + r)}Q${f(x - k)} ${f(y + k)} ${f(x - r)} ${f(y)}Q${f(x - k)} ${f(y - k)} ${f(x)} ${f(y - r)}Z`;
+    };
+    b.fill(sparkle(90, 72, 9) + sparkle(98, 38, 6), GOLD[0]);
+  },
+
+  star: (b) => {
+    const t: Tone = ['#f7c63c', '#e29a24', '#fde49a'];
+    const pts = starPoints(60, 62, 48, 0.46);
+    b.fill(poly(...pts.flat()), t[0]);
+    let shade = '';
+    for (let i = 0; i < 10; i += 2) {
+      const tip = pts[i]!;
+      const inner = pts[(i + 1) % 10]!;
+      shade += poly(60, 62, tip[0], tip[1], inner[0], inner[1]);
+    }
+    b.fill(shade, t[1]);
+  },
+
+  snow: (b) => {
+    const t: Tone = ['#8cc2e4', '#5b97c4', '#d7ecf8'];
+    let arms = '';
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
+      const [c, s] = [Math.cos(a), Math.sin(a)];
+      const at = (r: number, side: number, out: number): string => `${f(60 + c * r + -s * side * out)} ${f(60 + s * r + c * side * out)}`;
+      arms += `M60 60L${at(44, 0, 0)}`;
+      arms += `M${at(22, -1, 10)}L${at(30, 0, 0)}L${at(22, 1, 10)}`;
+      arms += `M${at(34, -1, 7)}L${at(40, 0, 0)}L${at(34, 1, 7)}`;
+    }
+    b.line(arms, t[1], 6.4, ' transform="translate(1.6 1.6)"');
+    b.line(arms, t[0], 5.4);
+    b.fill(O(60, 60, 7), t[2]);
+  },
+
+  rain: (b) => {
+    cloud(b, 60, 36, 1.05, ['#c7d3e1', '#9aabc0', '#e9eff6']);
+    const drop = (x: number, y: number): string => `M${f(x)} ${f(y)}C${f(x + 2)} ${f(y + 5)} ${f(x + 5)} ${f(y + 8)} ${f(x + 5)} ${f(y + 11)}C${f(x + 5)} ${f(y + 14)} ${f(x + 2.6)} ${f(y + 16)} ${f(x)} ${f(y + 16)}C${f(x - 2.6)} ${f(y + 16)} ${f(x - 5)} ${f(y + 14)} ${f(x - 5)} ${f(y + 11)}C${f(x - 5)} ${f(y + 8)} ${f(x - 2)} ${f(y + 5)} ${f(x)} ${f(y)}Z`;
+    b.fill(drop(36, 66) + drop(60, 70) + drop(84, 66) + drop(48, 88) + drop(72, 90), WATER[0]);
+  },
+
+  fire: (b) => {
+    b.ground(44);
+    b.glow('M60 12C70 28 88 42 86 66C85 84 74 94 60 94C46 94 35 84 34 66C33 50 44 42 48 30C52 40 56 40 56 30C56 22 58 18 60 12Z', '#e8553a');
+    b.glow('M60 34C68 46 78 56 76 72C75 84 68 90 60 90C52 90 45 84 44 72C44 62 50 56 54 48C56 54 58 54 59 48C60 42 60 38 60 34Z', VALLEY.fire);
+    b.glow('M60 58C65 66 69 72 68 80C67 86 64 89 60 89C56 89 53 86 52 80C52 74 56 70 58 64C59 68 60 66 60 58Z', VALLEY.fireCore);
+    b.line('M24 100L92 84', WOOD[1], 10);
+    b.line('M28 84L96 100', WOOD[0], 10);
+    b.fill(O(96, 100, 5) + O(24, 100, 5), WOOD[2]);
+    b.fill(E(16, 102, 7, 4.5) + E(104, 102, 7, 4.5), STONE[0]);
+  },
+
+  bird: (b) => {
+    const t: Tone = ['#a8703f', '#7c4f2a', '#cf9a64'];
+    b.ground(34, 60);
+    b.line('M12 92C40 88 70 84 108 74', BARK[0], 4.5);
+    b.form(oval(98, 70, 9, 4, -30), LEAF, 92, 66, 0.86);
+    b.line('M54 78L52 88M64 78L66 87', '#c08a5a', 2.4);
+    b.fill('M74 52L104 44C106 50 102 56 96 58L80 64Z', t[1]);
+    b.form('M28 50C28 36 40 28 52 30C64 32 72 42 80 50C84 66 74 80 56 80C38 80 28 66 28 50Z', t, 36, 36, 0.92);
+    b.fill('M30 56C34 70 44 78 56 79C66 79 72 74 74 68C64 72 50 70 40 62C36 58 32 56 30 56Z', '#efdcc0');
+    b.fill('M52 46C60 44 72 46 80 52C76 62 66 66 56 64C60 58 58 52 52 46Z', t[1]);
+    b.line('M60 54L70 52M60 59L72 57', '#efdcc0', 1.8);
+    b.fill('M30 40C32 32 40 28 48 30C44 34 40 38 38 44Z', '#8a8a92');
+    b.fill(E(34, 54, 4.5, 4), INK);
+    b.fill(poly(29, 44, 19, 47, 29, 50), INK);
+    b.fill(O(36, 43, 2.2), INK);
+    b.fill(O(35.3, 42.3, 0.7), '#ffffff');
+  },
+
+  rose: (b) => {
+    const t: Tone = ['#d23a4a', '#a32535', '#ec6f7c'];
+    b.ground(26);
+    b.group(grow(1.05), () => {
+      b.line('M60 104C60 92 58 80 60 62', LEAF[1], 4.5);
+      b.fill(poly(58, 92, 53, 90, 58, 87) + poly(61, 78, 66, 76, 61, 73), LEAF[1]);
+      b.form('M59 92C48 78 32 80 26 86C34 96 48 98 59 92Z', LEAF, 30, 84, 0.86);
+      b.form('M61 80C70 68 86 68 92 74C86 84 72 86 61 80Z', LEAF, 66, 74, 0.86);
+      b.fill('M34 36C34 26 46 20 60 22C74 20 86 26 86 36C86 54 76 66 60 66C44 66 34 54 34 36Z', t[1]);
+      b.fill('M36 34C40 26 50 24 60 26C70 24 80 26 84 34C80 42 70 44 60 42C50 44 40 42 36 34Z', t[0]);
+      b.fill('M34 40C38 56 48 64 60 64C72 64 82 56 86 40C80 50 70 54 60 54C50 54 40 50 34 40Z', t[0]);
+      b.line('M50 34C52 28 66 28 68 34C70 40 58 42 56 36C55 33 59 31 62 33', t[1], 2.6);
+      b.fill(oval(42, 46, 3.4, 7, 25), t[2]);
+    });
+  },
+
+  clock: (b) => {
+    const red: Tone = [VALLEY.red, VALLEY.redDark, '#dc6b5c'];
+    b.ground(34, 60, 104);
+    b.line('M42 92L34 104M78 92L86 104', red[1], 5);
+    b.form(oval(30, 26, 13, 9, -40), GOLD, 22, 20, 0.85);
+    b.form(oval(90, 26, 13, 9, 40), GOLD, 82, 18, 0.85);
+    b.line('M60 22V28', GOLD[1], 4);
+    b.form(O(60, 64, 37), red, 36, 40, 0.92);
+    b.fill(O(60, 64, 29), '#fbf5e8');
+    let ticks = '';
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const len = i % 3 ? 3 : 5.5;
+      ticks += `M${f(60 + Math.sin(a) * 25)} ${f(64 - Math.cos(a) * 25)}L${f(60 + Math.sin(a) * (25 - len))} ${f(64 - Math.cos(a) * (25 - len))}`;
+    }
+    b.line(ticks, INK, 2.2);
+    b.line('M60 64V46M60 64L73 71', INK, 3.6);
+    b.fill(O(60, 64, 3.4), red[0]);
+  },
+
+  bus: (b) => {
+    const t: Tone = ['#f2b632', '#c98f1f', '#f8d57a'];
+    b.ground(54, 60, 99);
+    b.form(box(6, 34, 108, 60, 10), t, 8, 36, 0.97);
+    b.fill(box(6, 74, 108, 6), VALLEY.red);
+    b.fill(box(26, 42, 14, 18, 2) + box(44, 42, 14, 18, 2) + box(62, 42, 14, 18, 2) + box(80, 42, 14, 18, 2), SKY_PANE);
+    b.fill('M98 42H106C108 42 110 44 110 46V60H98Z', SKY_PANE);
+    b.fill(box(10, 42, 12, 42, 2), '#8fbcd4');
+    b.line('M16 44V82', t[1], 1.6);
+    b.fill(O(32, 94, 10) + O(90, 94, 10), '#3d3a46');
+    b.fill(O(32, 94, 4) + O(90, 94, 4), STEEL[0]);
+    b.fill(oval(110, 70, 2.6, 4, 0), '#fff3c4');
+    b.fill(box(20, 36, 82, 3, 1.5), t[2]);
   },
 };
 

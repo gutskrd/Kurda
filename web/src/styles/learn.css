@@ -860,9 +860,11 @@ html:has(.lesson-bar) {
  * graded (as an option's chip). Three or four in a row while they keep a
  * picture large enough to read at a glance; four go two by two on a phone.
  */
+/* never wider than a picture needs: on a wide screen a row of them stands in the middle, as the word tiles do */
 .lesson-pictures {
   display: grid;
-  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 176px));
+  justify-content: center;
   gap: 10px;
 }
 .lesson-pictures.is-2 {
@@ -1233,7 +1235,7 @@ html:has(.lesson-bar) {
   min-width: 3.2em;
   margin: 0 0.12em;
   padding: 0 0.2em;
-  border-bottom: 2.5px solid var(--vale-edge);
+  border-bottom: 2.5px solid var(--vale-field-edge);
   color: var(--vale-red-ink);
   line-height: 1.1;
   text-align: center;
@@ -1253,7 +1255,6 @@ html:has(.lesson-bar) {
 .lesson-gap.is-wrong {
   border-bottom-color: var(--vale-red-ink);
   color: var(--vale-wrong-ink);
-  text-decoration: line-through 2px;
 }
 
 /* a few words of context under the line: a quiet pill, not part of what is said */
