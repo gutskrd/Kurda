@@ -28,7 +28,7 @@ import {
 import { useAuth } from '../auth/AuthProvider';
 import type { CharacterReaction } from '../characters/SpeakingCharacter';
 import { Button } from '../components/Button';
-import { CloseIcon } from '../components/icons';
+import { CloseIcon, SparkleIcon } from '../components/icons';
 import { Modal } from '../components/Modal';
 import { ErrorState, Loading } from '../components/states';
 import { describeError } from '../lib/api';
@@ -45,6 +45,7 @@ import { MatchPairs, MultipleChoice, Listening, TypedExercise, type ExerciseProp
 import { FeedbackPanel, announce, type RunMark } from './FeedbackPanel';
 import { GrammarNote } from './GrammarNote';
 import { kurdishText } from './map';
+import { pictureName } from './Pictures';
 import { Results, type NextLesson } from './Results';
 import { RunLabel, RunMoment } from './Run';
 import { Speaking } from './Speaking';
@@ -141,6 +142,33 @@ function ExerciseView(props: ExerciseProps): React.JSX.Element | null {
       return <Conversation {...props} />;
   }
 }
+
+/**
+ * Over an item that brings in words for the first time, in the kicker's
+ * place: a small pill with a sparkle, saying the words in the bubble are new
+ * (they are underlined a little more strongly there, their meaning a tap
+ * away). Read out, unlike the kicker: it says something the page does not.
+ */
+function NewWordBadge({ count }: { count: number }): React.JSX.Element {
+  const t = useT();
+  return (
+    <p className="lesson-new">
+      <SparkleIcon size={14} />
+      {count > 1 ? t('lesson.newWords') : t('lesson.newWord')}
+    </p>
+  );
+}
+
+/**
+ * The verdict as the sheet says it: a picture item's answer is a picture's id,
+ * which is named by what the picture shows.
+ */
+function verdictShown(exercise: DeliveredExercise, feedback: Feedback): Feedback {
+  return exercise.ask === 'picture' && feedback.correction ? { ...feedback, correction: pictureName(feedback.correction) } : feedback;
+}
+
+/** Items whose right answer is Kurdish whatever their type, for the verdict to mark it so. */
+const KURDISH_ASKS: ReadonlySet<string | undefined> = new Set(['reply', 'missing', 'choose-kurdish', 'to-kurdish']);
 
 /**
  * The lesson's bar: it slides to each new value on the out-curve, a light
@@ -475,7 +503,9 @@ export function SessionPlayer({
   useEffect(() => {
     if (state.status !== 'feedback') return;
     const frame = requestAnimationFrame(() => {
-      const answered = document.querySelector<HTMLElement>('.lesson-option.is-chosen, .lesson-input, .lesson-answer-line, .lesson-match, .lesson-rate');
+      const answered = document.querySelector<HTMLElement>(
+        '.lesson-option.is-chosen, .lesson-picture.is-chosen, .lesson-chip.is-chosen, .lesson-input, .lesson-answer-line, .lesson-match, .lesson-rate',
+      );
       answered?.scrollIntoView?.({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     });
     return () => cancelAnimationFrame(frame);
@@ -515,6 +545,7 @@ export function SessionPlayer({
   }, [state.status, state.skipped.length, results, client, paths, sessionId, t, completeTry, kind, courseId, lessonId, startedAt]);
 
   const feedback: Feedback | null = state.status === 'feedback' ? state.feedback : null;
+  const shownFeedback = feedback && ex ? verdictShown(ex, feedback) : feedback;
   const heading = title ?? (kind === 'lesson' ? t('lesson.title') : t('review.title'));
   const tone = feedback ? (!feedback.accepted ? 'notyet' : feedback.verdict === 'correct' ? 'right' : 'almost') : null;
   const putOffKind: PutAwayType | null = ex?.type === 'speaking' ? 'speaking' : ex?.type === 'listening' && ex.audioUrl ? 'listening' : null;
@@ -568,7 +599,7 @@ export function SessionPlayer({
 
         {/* said once per answer; the region is always here so the change is heard */}
         <p className="sr-only" aria-live="polite">
-          {feedback ? announce(feedback, t) : ''}
+          {shownFeedback ? announce(shownFeedback, t) : ''}
           {feedback && extras.praise && <span lang={lang}> {extras.praise}</span>}
         </p>
 
@@ -583,10 +614,15 @@ export function SessionPlayer({
         ) : state.status !== 'finished' && ex ? (
           <div className="lesson-stage">
             {reask && <p className="lesson-badge">{t('lesson.secondTry')}</p>}
-            {/* the lesson's name over every question, as a line of small capitals; the page's h1 already says it to a screen reader */}
-            <p className="lesson-kicker" aria-hidden="true">
-              {heading}
-            </p>
+            {/* the lesson's name over every question, as a line of small capitals; the page's h1 already says it to a screen reader —
+                or, over an item that brings in new words, the first time it is asked, a badge saying so */}
+            {ex.newWords?.length && !reask ? (
+              <NewWordBadge count={ex.newWords.length} />
+            ) : (
+              <p className="lesson-kicker" aria-hidden="true">
+                {heading}
+              </p>
+            )}
             <ExerciseView
               // each turn starts afresh — a second try too
               key={`exercise-${state.index}`}
@@ -619,13 +655,14 @@ export function SessionPlayer({
         )}
       </div>
 
-      {feedback && ex && !closed ? (
+      {shownFeedback && ex && !closed ? (
         <ActionBar tone={tone}>
           <FeedbackPanel
             key={`feedback-${state.index}`}
-            feedback={feedback}
+            feedback={shownFeedback}
+            kurdishAnswer={KURDISH_ASKS.has(ex.ask)}
             dialect={exDialect}
-            speaker={feedbackClip(ex, feedback)}
+            speaker={feedbackClip(ex, shownFeedback)}
             hevalo={extras.hevalo}
             praise={extras.praise}
             run={extras.run}

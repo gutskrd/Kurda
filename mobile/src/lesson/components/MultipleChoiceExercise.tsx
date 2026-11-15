@@ -1,23 +1,26 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
 import { hitSlopFor } from '../../a11y/a11y';
-import { fontScaleCap, radii, spacing, typography } from '../../theme/tokens';
+import { spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
-import { Icon } from '../../theme/Icon';
-import { AnswerMotion, DrawnCheck } from '../../theme/MotionParts';
+import { AnswerMotion } from '../../theme/MotionParts';
 import { Tile, type TileState } from '../../theme/Tile';
+import { display } from '../../theme/fonts';
 import { haptic } from '../../feedback/haptics';
 import { useI18n } from '../../i18n/I18nContext';
 import { formatNumber } from '../../i18n/format';
 import { useDirection } from '../../reports/direction';
 import { knownVoice } from '../../characters/SpeakingCharacter';
+import { askHeadline, optionsAreKurdish } from '../asks';
 import type { Feedback } from '../player';
 import type { Exercise } from '../types';
 import { useAudio } from '../useAudio';
-import { useValley } from '../ValleyScope';
 import { CARD } from '../valley';
+import { AskScene, type GapState } from './AskParts';
+import { PictureChoices, WordChoices } from './AskChoices';
 import { ExerciseHeadline } from './ExerciseHeadline';
 import { PlayDisc } from './ModelButton';
+import { OptionChip } from './OptionChip';
 import { PromptScene, saidStyle } from './SpeechBubble';
 import { PromptWords } from './PromptWords';
 import { pressedDim } from '../../theme/motion';
@@ -49,6 +52,14 @@ interface Props {
  * When the question's Kurdish has a native recording that gives nothing away
  * (the server sends it only then), the bubble carries a round play mark at
  * its start and says it when tapped, as its character does.
+ *
+ * An item that says what it asks (`ask`) has the headline for it and the line
+ * alone in the bubble (`AskScene`), with "Slow" under it. Its answers are
+ * pictures for 'picture' (`PictureChoices`); for 'missing', short Kurdish
+ * words, the one chosen standing in the line's gap (`WordChoices`); and option
+ * cards otherwise, their words in the display face where they are Kurdish
+ * ('reply', 'choose-kurdish'). A conversation's question has no ask of its
+ * own, and keeps the look it had.
  */
 export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled, feedback = null, standalone = true }: Props) {
   const { colors } = useTheme();
@@ -64,16 +75,24 @@ export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled, f
     if (i !== choice) haptic('select');
     onSelect(i);
   };
+  const ask = standalone ? exercise.ask : undefined;
+  const headline = standalone ? askHeadline(exercise) : null;
+  const reaction = feedback ? (feedback.accepted ? 'cheer' : 'hmm') : null;
+  const gap: GapState = feedback ? (choice !== null && isRight(choice) ? 'right' : 'wrong') : choice !== null ? 'filled' : 'empty';
+  const kurdish = optionsAreKurdish(ask);
+  const choices = { options, choice, onSelect, disabled, isRight, graded: !!feedback };
   return (
     <View style={styles.container}>
-      {standalone ? <ExerciseHeadline>{t('lesson.choose.prompt')}</ExerciseHeadline> : null}
-      {standalone && exercise.prompt ? (
-        <PromptScene
-          voice={voice}
-          audio={model}
-          reaction={feedback ? (feedback.accepted ? 'cheer' : 'hmm') : null}
-          onReplay={say}
-        >
+      {standalone ? <ExerciseHeadline>{headline ? t(headline.key, headline.params) : t('lesson.choose.prompt')}</ExerciseHeadline> : null}
+      {ask && exercise.prompt ? (
+        <AskScene
+          exercise={exercise}
+          model={model}
+          reaction={reaction}
+          gap={ask === 'missing' ? { word: choice !== null ? (options[choice] ?? null) : null, state: gap } : undefined}
+        />
+      ) : standalone && exercise.prompt ? (
+        <PromptScene voice={voice} audio={model} reaction={reaction} onReplay={say}>
           <View style={[styles.said, { flexDirection: dir.row }]}>
             {say ? (
               <Pressable
@@ -94,65 +113,40 @@ export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled, f
       ) : exercise.prompt ? (
         <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text>
       ) : null}
-      <View style={styles.options}>
-        {options.map((option, i) => {
-          const selected = choice === i;
-          const right = isRight(i);
-          const wrong = !!feedback && selected && !right;
-          const verdict = !feedback || !selected ? null : right ? 'right' : 'wrong';
-          const state: TileState = right ? 'right' : wrong ? 'wrong' : feedback ? 'disabled' : selected ? 'picked' : 'idle';
-          return (
-            <AnswerMotion key={i} verdict={verdict}>
-              <Tile
-                state={state}
-                disabled={disabled}
-                onPress={() => choose(i)}
-                accessibilityRole="radio"
-                accessibilityLabel={right ? `${option}, ${t('lesson.correct')}` : option}
-                selected={selected}
-                faceStyle={[styles.option, { flexDirection: dir.row }]}
-              >
-                {(ink) => (
-                  <>
-                    <Chip state={state} selected={selected} n={formatNumber(i + 1, locale)} />
-                    <Text style={[styles.optionText, dir.free, { color: ink }]}>{option}</Text>
-                  </>
-                )}
-              </Tile>
-            </AnswerMotion>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-/**
- * An option's round chip, at its start: its number while it waits, in the
- * pomegranate's red once chosen, and the verdict's mark once graded — a check
- * that draws in on the one chosen right (and stands on the right one beside a
- * miss), a cross on the one chosen wrong. Its number is a place in the list
- * and nothing more on a phone, so it is not read out: the option's own label
- * is, with its verdict.
- */
-function Chip({ state, selected, n }: { state: TileState; selected: boolean; n: string }): React.JSX.Element {
-  const valley = useValley();
-  const fill = state === 'right' ? valley.green : state === 'wrong' ? valley.wrong : state === 'picked' ? valley.red : valley.chip;
-  const ink = state === 'right' ? valley.onGreen : state === 'wrong' ? valley.onWrong : state === 'picked' ? valley.onRed : valley.chipInk;
-  return (
-    <View style={[styles.chip, { backgroundColor: fill }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
-      {state === 'right' ? (
-        selected ? (
-          <DrawnCheck size={CHIP_MARK} color={ink} />
-        ) : (
-          <Icon name="check" size={CHIP_MARK} color={ink} />
-        )
-      ) : state === 'wrong' ? (
-        <Icon name="close" size={CHIP_MARK} color={ink} />
+      {ask === 'picture' ? (
+        <PictureChoices {...choices} />
+      ) : ask === 'missing' ? (
+        <WordChoices {...choices} />
       ) : (
-        <Text style={[styles.chipText, { color: ink }]} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
-          {n}
-        </Text>
+        <View style={styles.options}>
+          {options.map((option, i) => {
+            const selected = choice === i;
+            const right = isRight(i);
+            const wrong = !!feedback && selected && !right;
+            const verdict = !feedback || !selected ? null : right ? 'right' : 'wrong';
+            const state: TileState = right ? 'right' : wrong ? 'wrong' : feedback ? 'disabled' : selected ? 'picked' : 'idle';
+            return (
+              <AnswerMotion key={i} verdict={verdict}>
+                <Tile
+                  state={state}
+                  disabled={disabled}
+                  onPress={() => choose(i)}
+                  accessibilityRole="radio"
+                  accessibilityLabel={right ? `${option}, ${t('lesson.correct')}` : option}
+                  selected={selected}
+                  faceStyle={[styles.option, { flexDirection: dir.row }]}
+                >
+                  {(ink) => (
+                    <>
+                      <OptionChip state={state} selected={selected} n={formatNumber(i + 1, locale)} />
+                      <Text style={[styles.optionText, kurdish && styles.kurdishText, dir.free, { color: ink }]}>{option}</Text>
+                    </>
+                  )}
+                </Tile>
+              </AnswerMotion>
+            );
+          })}
+        </View>
       )}
     </View>
   );
@@ -160,10 +154,6 @@ function Chip({ state, selected, n }: { state: TileState; selected: boolean; n: 
 
 /** The play mark in the bubble, drawn smaller than a fingertip and reaching one. */
 const SPEAKER = 32;
-
-/** An option's chip, and the mark drawn in it. */
-const CHIP = 26;
-const CHIP_MARK = 15;
 
 const styles = StyleSheet.create({
   container: { gap: spacing.lg },
@@ -184,6 +174,6 @@ const styles = StyleSheet.create({
     borderWidth: CARD.edge,
   },
   optionText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  chip: { width: CHIP, height: CHIP, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  chipText: { fontSize: 12, fontWeight: typography.weights.bold },
+  // Kurdish answers, in the face the lesson's Kurdish is in everywhere else
+  kurdishText: { ...display(typography.sizes.md + 2) },
 });

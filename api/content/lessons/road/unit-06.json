@@ -27,30 +27,32 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Ferhad traktorê diajo.",
-                    "prompt": "The bus is gone, but the neighbour comes to the rescue. What is happening? “Ferhad traktorê diajo.”",
+                    "voice": "hamo",
+                    "prompt": "Ferhad traktorê diajo.",
                     "options": [
                       "Ferhad is selling his tractor.",
                       "Ferhad is driving the tractor.",
                       "Ferhad is looking for the bus."
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Em bi traktorê diçin rêya mezin.",
-                    "prompt": "How is everyone getting to the main road? “Em bi traktorê diçin rêya mezin.”",
+                    "voice": "hamo",
+                    "prompt": "Em bi traktorê diçin rêya mezin.",
                     "options": [
                       "By donkey",
                       "On the bus",
                       "By tractor"
                     ],
-                    "correctIndex": 2,
-                    "voice": "hamo"
+                    "correctIndex": 2
                   }
                 },
                 {
@@ -90,9 +92,10 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Kumê Bozo li ser serê Hevalo ye.",
                     "voice": "hamo",
-                    "prompt": "Xezal can’t stop giggling at the back of the tractor. Hamo turns round to see why, and laughs too. What does he say? “Kumê Bozo li ser serê Hevalo ye.”",
+                    "prompt": "Kumê Bozo li ser serê Hevalo ye.",
                     "accepted": [
                       "Bozo's hat is on Hevalo's head.",
                       "Bozo’s hat is on Hevalo’s head.",
@@ -120,34 +123,37 @@
                   "position": 6,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask a man at the roadside: “Where is the stop?”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Where is the stop?",
                     "accepted": [
                       "Rawestgeh li ku ye?",
                       "Rawestgeha minîbûsê li ku ye?",
                       "Rawestgeh li ku ye",
                       "Rawestgeha minîbûsê li ku ye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo points down the road. Type what he says.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Li rêya mezin rawestgeha minîbûsê heye.",
                       "Li rêya mezin rawestgeha minîbûsê heye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Di minîbûsê de deh rêwî hene.",
-                    "prompt": "The minibus pulls up. Hamo counts the faces inside. What does he say? “Di minîbûsê de deh rêwî hene.”",
+                    "voice": "hamo",
+                    "prompt": "Di minîbûsê de deh rêwî hene.",
                     "accepted": [
                       "There are ten passengers in the minibus.",
                       "There are ten passengers on the minibus.",
@@ -155,42 +161,44 @@
                       "There are ten passengers in the minibus",
                       "There are ten passengers on the minibus",
                       "Ten passengers are in the minibus"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 9,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Hamo asks the driver the price: “Bilêtek bi … e?” (how much) Type the whole question.",
                     "accepted": [
                       "Bilêtek bi çend e?",
                       "Bilêtek bi çend e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Ajovan minîbûsê bi lez diajo.",
-                    "prompt": "Hamo holds on to his cap. Why? “Ajovan minîbûsê bi lez diajo.”",
+                    "voice": "hamo",
+                    "prompt": "Ajovan minîbûsê bi lez diajo.",
                     "options": [
                       "The driver drives the minibus slowly.",
                       "The driver is asleep.",
                       "The driver drives the minibus fast."
                     ],
-                    "correctIndex": 2,
-                    "voice": "hamo"
+                    "correctIndex": 2
                   }
                 },
                 {
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Xezal: “Hamo is buying tickets for everyone.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Hamo is buying tickets for everyone.",
                     "accepted": [
                       "Hamo ji bo hemû kesan bilêtan dikire.",
                       "Hamo bilêtan ji bo hemû kesan dikire.",
@@ -198,38 +206,40 @@
                       "Hamo ji bo hemû kesan bilêtan dikire",
                       "Hamo bilêtan ji bo hemû kesan dikire",
                       "Hamo ji bo her kesî bilêtan dikire"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 12,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Say what you see at the minibus door: “The driver sells the tickets.”",
-                    "reference": "Ajovan bilêtan difiroşe.",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ajovan bilêtan difiroşe.",
+                    "reference": "Ajovan bilêtan difiroşe."
                   }
                 },
                 {
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Ferhad gelek hêdî diajo.",
-                    "prompt": "Xezal rolls her eyes at the tractor, and even Hamo has to admit it. What does he say? “Ferhad gelek hêdî diajo.”",
+                    "voice": "hamo",
+                    "prompt": "Ferhad gelek hêdî diajo.",
                     "options": [
                       "Ferhad drives very slowly.",
                       "Ferhad drives very fast.",
                       "Ferhad doesn’t drive."
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 14,
                   "type": "translate",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "The driver asks where you are all going. Say it for Hamo: “We are passengers, we are going to Kobanî.”",
                     "accepted": [
                       "Em rêwî ne, em diçin Kobaniyê.",
@@ -237,8 +247,7 @@
                       "Em rêwî ne, em diçin Kobaniyê",
                       "Em rêwî ne. Em diçin Kobaniyê",
                       "Em rêwî ne em diçin Kobaniyê"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -266,57 +275,61 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Nîşan ber bi rastê ve ye.",
-                    "prompt": "Hamo stops under a street sign and looks up. Which way does it point? “Nîşan ber bi rastê ve ye.”",
+                    "voice": "hamo",
+                    "prompt": "Nîşan ber bi rastê ve ye.",
                     "options": [
                       "Left",
                       "Right",
                       "Straight on"
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Ez diçim kolana çepê!",
-                    "prompt": "And which way does Hamo turn? He marches off happily: “Ez diçim kolana çepê!”",
+                    "voice": "hamo",
+                    "prompt": "Ez diçim kolana çepê!",
                     "options": [
                       "Left, of course",
                       "Right",
                       "Straight on"
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 3,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Dikan li rastê ye.",
-                    "prompt": "Hamo spots the shop Xezal is looking for and points, very pleased with himself. Where is it? “Dikan li rastê ye.”",
+                    "voice": "hamo",
+                    "prompt": "Dikan li rastê ye.",
                     "accepted": [
                       "The shop is on the right.",
                       "The shop's on the right.",
                       "The shop is on the right",
                       "The shop's on the right"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Hamo: “The stop is at the corner.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The stop is at the corner.",
                     "accepted": [
                       "Rawestgeh li quncikê ye.",
                       "Rawestgeh li quncikê ye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -336,8 +349,8 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "A boy on a bicycle shows you the way, and Hamo repeats his directions out loud so that he won’t forget them. Type what he says.",
                     "accepted": [
                       "Em rasterast diçin, li quncikê li çepê.",
                       "Em rasterast diçin, li quncikê li çepê",
@@ -349,20 +362,22 @@
                   "position": 7,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Xezal asks: “Dikan li rastê ye an li çepê?” It is on the left. Answer: “Dikan li … ye.”",
                     "accepted": [
                       "Dikan li çepê ye.",
                       "Dikan li çepê ye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Ev avahî gelek bilind e!",
-                    "prompt": "Hamo stops in the middle of the pavement and looks up. What does he say? “Ev avahî gelek bilind e!”",
+                    "voice": "hamo",
+                    "prompt": "Ev avahî gelek bilind e!",
                     "accepted": [
                       "This building is very tall!",
                       "This building is very high!",
@@ -370,15 +385,16 @@
                       "This building is very tall",
                       "This building is very high",
                       "This building is so tall"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Say it for Hamo: “In the city the buildings are tall, in the village the trees are.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "In the city the buildings are tall, in the village the trees are.",
                     "accepted": [
                       "Li bajêr avahî bilind in, li gund dar bilind in.",
                       "Li bajêr avahî bilind in, li gund dar.",
@@ -386,67 +402,72 @@
                       "Li bajêr avahî bilind in, li gund dar",
                       "Li bajêr avahî bilind in li gund dar bilind in",
                       "Li bajêr avahî bilind in li gund dar"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Ev kolan? An ew kolan?",
-                    "prompt": "Kobanî has grown since Hamo was a boy, and every new street looks like the last one. What is Hamo asking himself? “Ev kolan? An ew kolan?”",
+                    "voice": "hamo",
+                    "prompt": "Ev kolan? An ew kolan?",
                     "options": [
                       "This street? Or that street?",
                       "This shop? Or that shop?",
                       "Right? Or left?"
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 11,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Practise the three directions: right, left, straight on.",
-                    "reference": "Li rastê, li çepê, rasterast.",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Li rastê, li çepê, rasterast.",
+                    "reference": "Li rastê, li çepê, rasterast."
                   }
                 },
                 {
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
                     "say": "Dikan li ku ye?",
-                    "prompt": "A woman asks Hamo the way. Hamo, lost himself, passes the question on to you: “Dikan li ku ye?” The shop is on your right. What do you answer?",
+                    "voice": "hamo",
+                    "prompt": "Dikan li ku ye?",
                     "options": [
                       "Li rastê me.",
                       "Li rastê ye.",
                       "Rast e."
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Xezal: “The big building is on the avenue.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The big building is on the avenue.",
                     "accepted": [
                       "Avahiya mezin li kolanê ye.",
                       "Avahiya mezin li kolanê ye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 14,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Mala bavê min li quncikê ye.",
-                    "prompt": "At last Hamo sees a door he knows, and his voice shakes a little. What does he say? “Mala bavê min li quncikê ye.”",
+                    "voice": "hamo",
+                    "prompt": "Mala bavê min li quncikê ye.",
                     "accepted": [
                       "My father’s house is at the corner.",
                       "My father's house is at the corner.",
@@ -459,20 +480,20 @@
                       "My father’s house is on the corner",
                       "My father's house is on the corner",
                       "My parents’ house is on the corner"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 15,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Hamo turns left again. Call after him: “Straight on!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Straight on!",
                     "accepted": [
                       "Rasterast!",
                       "Rasterast"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 }
               ]
@@ -568,9 +589,10 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Amed bajarekî kevnar e.",
                     "voice": "hamo",
-                    "prompt": "Xezal looks around for the old city walls she knows from home. Hamo laughs and tells you about her city. What does he say? “Amed bajarekî kevnar e.”",
+                    "prompt": "Amed bajarekî kevnar e.",
                     "options": [
                       "Amed is a new city.",
                       "Amed is a small city.",
@@ -583,8 +605,10 @@
                   "position": 3,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Li Kobaniyê sûr tune.",
-                    "prompt": "Xezal is still looking for city walls. Hamo shakes his head, smiling. What does he tell her? “Li Kobaniyê sûr tune.”",
+                    "voice": "hamo",
+                    "prompt": "Li Kobaniyê sûr tune.",
                     "accepted": [
                       "There are no walls in Kobanî.",
                       "Kobanî has no walls.",
@@ -596,22 +620,22 @@
                       "Kobanî has no walls",
                       "There are no city walls in Kobanî",
                       "Kobanî has no city walls"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Xezal: “The city is very crowded!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The city is very crowded!",
                     "accepted": [
                       "Bajar gelek qelebalix e!",
                       "Bajar pir qelebalix e!",
                       "Bajar gelek qelebalix e",
                       "Bajar pir qelebalix e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -631,32 +655,34 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo looks at the new shops where the old ones used to be. Type what he says.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Ji bo min her tişt seyr e.",
                       "Ji bo min her tişt seyr e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 7,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "You look up at Miştenûr above the roofs: “Ev pir … e!” (interesting) Type the whole sentence.",
                     "accepted": [
                       "Ev pir balkêş e!",
                       "Ev pir balkêş e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Tu bajarî yî, ez gundî me.",
-                    "prompt": "Back in Sêvan, Hamo would say it the other way round. Here he says it to Xezal with a smile. What does he say? “Tu bajarî yî, ez gundî me.”",
+                    "voice": "hamo",
+                    "prompt": "Tu bajarî yî, ez gundî me.",
                     "accepted": [
                       "You're a city person, I'm a villager.",
                       "You are from the city, I am from the village.",
@@ -670,26 +696,27 @@
                       "You are from the city I am from the village",
                       "You're from the city I'm from the village",
                       "You are a city person I am a villager"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 9,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Say what you think of Kobanî: “Kobanî is a crowded and interesting town.”",
-                    "reference": "Kobanî bajarekî qelebalix û balkêş e.",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Kobanî bajarekî qelebalix û balkêş e.",
+                    "reference": "Kobanî bajarekî qelebalix û balkêş e."
                   }
                 },
                 {
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
                     "say": "Kobanî çawa ye?",
                     "voice": "hamo",
-                    "prompt": "Hamo can’t wait to hear what you think: “Kobanî çawa ye?” What would you answer?",
+                    "prompt": "Kobanî çawa ye?",
                     "options": [
                       "Ez baş im, spas.",
                       "Li çepê ye.",
@@ -702,23 +729,25 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Xezal: “The walls of Amed are very old.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The walls of Amed are very old.",
                     "accepted": [
                       "Sûrên Amedê gelek kevnar in.",
                       "Sûrên Amedê pir kevnar in.",
                       "Sûrên Amedê gelek kevnar in",
                       "Sûrên Amedê pir kevnar in"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 12,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Ev kolan gelek qelebalix e.",
                     "voice": "hamo",
-                    "prompt": "Xezal holds Hamo’s arm tight on the pavement. Hamo looks around and understands why. What does he say? “Ev kolan gelek qelebalix e.”",
+                    "prompt": "Ev kolan gelek qelebalix e.",
                     "accepted": [
                       "This avenue is very crowded.",
                       "This street is very crowded.",
@@ -733,12 +762,13 @@
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Say it like Hamo, wide-eyed: “How strange!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "How strange!",
                     "accepted": [
                       "Çi seyr e!",
                       "Çi seyr e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -852,15 +882,16 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Mala Lorînê li jor e, li qatê dawî.",
-                    "prompt": "Hamo looks up the stairwell and sighs. Where does Lorîn live? “Mala Lorînê li jor e, li qatê dawî.”",
+                    "voice": "hamo",
+                    "prompt": "Mala Lorînê li jor e, li qatê dawî.",
                     "options": [
                       "Upstairs, on the top floor",
                       "Downstairs, on the first floor",
                       "At the corner, on the left"
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -896,8 +927,10 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Ez li her qatî disekinim.",
-                    "prompt": "Why does the climb take so long? Hamo admits it himself, with a grin: “Ez li her qatî disekinim.”",
+                    "voice": "hamo",
+                    "prompt": "Ez li her qatî disekinim.",
                     "accepted": [
                       "I stop on every floor.",
                       "I stop at every floor.",
@@ -907,28 +940,28 @@
                       "I stop at every floor",
                       "On every floor I stop",
                       "I stop on each floor"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Xezal looks down the stairwell. Tell her: “Hevalo is downstairs.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Hevalo is downstairs.",
                     "accepted": [
                       "Hevalo li jêr e.",
                       "Hevalo li jêr e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 6,
                   "type": "listening",
                   "payload": {
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Hamo stops on a landing, out of breath. Type his excuse.",
                     "accepted": [
                       "Ji vir Miştenûr gelek xweşik e!",
                       "Ji vir Miştenûr gelek xweşik e"
@@ -952,12 +985,12 @@
                   "position": 8,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Lorîn and Hamo meet at her door. Complete: “Ew li … dinêrin.” (each other) Type the whole sentence.",
                     "accepted": [
                       "Ew li hevdu dinêrin.",
                       "Ew li hevdu dinêrin"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -977,62 +1010,67 @@
                   "position": 10,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Say it as you climb: “We are going up, floor by floor.”",
-                    "reference": "Em diçin jor, qat bi qat.",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Em diçin jor, qat bi qat.",
+                    "reference": "Em diçin jor, qat bi qat."
                   }
                 },
                 {
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask Lorîn: “Which floor is your home on?”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Which floor is your home on?",
                     "accepted": [
                       "Mala te li kîjan qatî ye?",
                       "Mala we li kîjan qatî ye?",
                       "Mala te li kîjan qatî ye",
                       "Mala we li kîjan qatî ye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Ev tenê qatê yekem e!",
-                    "prompt": "Hamo says the view is wonderful. Xezal laughs, and Hamo has to admit why: “Ev tenê qatê yekem e!”",
+                    "voice": "hamo",
+                    "prompt": "Ev tenê qatê yekem e!",
                     "options": [
                       "It’s the top floor!",
                       "There is no view!",
                       "It’s only the first floor!"
                     ],
-                    "correctIndex": 2,
-                    "voice": "hamo"
+                    "correctIndex": 2
                   }
                 },
                 {
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Hamo, halfway up: “The stairs are long!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The stairs are long!",
                     "accepted": [
                       "Pêlekan dirêj in!",
                       "Pêlekan dirêj in",
                       "Pêlekan dirêj in, xalo!",
                       "Pêlekan dirêj in, xalo",
                       "Pêlekan dirêj in xalo"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
                     "say": "Gencîne li cem Lorînê ye.",
                     "voice": "hamo",
-                    "prompt": "Hamo can hardly believe it. What has he just learned? “Gencîne li cem Lorînê ye.”",
+                    "prompt": "Gencîne li cem Lorînê ye.",
                     "options": [
                       "Lorîn has the treasure.",
                       "Lorîn is looking for the treasure.",
@@ -1061,30 +1099,32 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Werin, werin! Rûnin!",
-                    "prompt": "Edûl comes across the yard with her arms open, and her welcome fills the whole street. Hamo, already at home, waves you in too: “Werin, werin! Rûnin!” What does he say?",
+                    "voice": "hamo",
+                    "prompt": "Werin, werin! Rûnin!",
                     "options": [
                       "Go, go! Get up!",
                       "Come in, come in! Sit down!",
                       "Wait, wait! Don’t sit!"
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Lo Baran, were vir!",
-                    "prompt": "Hamo wants Baran to come and say hello to his mother. What does he call? “Lo Baran, were vir!”",
+                    "voice": "hamo",
+                    "prompt": "Lo Baran, were vir!",
                     "options": [
                       "Baran, go there!",
                       "Baran, sit down!",
                       "Baran, come here!"
                     ],
-                    "correctIndex": 2,
-                    "voice": "hamo"
+                    "correctIndex": 2
                   }
                 },
                 {
@@ -1137,8 +1177,10 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Kerem bike, çay!",
-                    "prompt": "Hamo passes you a glass from his mother’s tray. What does he say? “Kerem bike, çay!”",
+                    "voice": "hamo",
+                    "prompt": "Kerem bike, çay!",
                     "accepted": [
                       "Please, have some tea!",
                       "Please, tea!",
@@ -1152,43 +1194,45 @@
                       "Please tea",
                       "Here you are some tea",
                       "Go ahead have some tea"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 6,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Hevalo: “Go outside!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Go outside!",
                     "accepted": [
                       "Here derve!",
                       "Hevalo, here derve!",
                       "Here derve",
                       "Hevalo, here derve",
                       "Hevalo here derve"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo imitates his mother, who has ordered him about since he was a boy — and still does. Type what you hear.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Rabe! Rûne! Here wir!",
                       "Rabe! Rûne! Here wir"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Hamo li ser kursiyê rûdine.",
-                    "prompt": "At last Hamo is allowed to stay put. What does he do? “Hamo li ser kursiyê rûdine.”",
+                    "voice": "hamo",
+                    "prompt": "Hamo li ser kursiyê rûdine.",
                     "accepted": [
                       "Hamo sits on the chair.",
                       "Hamo sits down on the chair.",
@@ -1196,60 +1240,62 @@
                       "Hamo sits on the chair",
                       "Hamo sits down on the chair",
                       "Hamo is sitting on the chair"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 9,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Ask everyone to sit down, politely: “Kerem bikin, …!” (sit down) Type the whole sentence.",
                     "accepted": [
                       "Kerem bikin, rûnin!",
                       "Kerem bikin, rûnin",
                       "Kerem bikin rûnin"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Hevalo derdikeve derve.",
-                    "prompt": "Hevalo smells the bakery down in the street. What does he do? “Hevalo derdikeve derve.”",
+                    "voice": "hamo",
+                    "prompt": "Hevalo derdikeve derve.",
                     "options": [
                       "He goes out.",
                       "He sits down.",
                       "He comes in."
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 11,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Invite Hevalo over: “Come here, sit down!”",
-                    "reference": "Were vir, rûne!",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Were vir, rûne!",
+                    "reference": "Were vir, rûne!"
                   }
                 },
                 {
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Baran and Hêvî: “Get up! Come!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Get up! Come!",
                     "accepted": [
                       "Rabin! Werin!",
                       "Rabin, werin!",
                       "Rabin! Werin",
                       "Rabin, werin",
                       "Rabin werin"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -1269,7 +1315,9 @@
                   "position": 14,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Edûl is cooking, and her son keeps tasting from every pot. She winks at you. Tell him: “Get up and go out!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Get up and go out!",
                     "accepted": [
                       "Rabe û derkeve!",
                       "Rabe, derkeve!",
@@ -1279,8 +1327,7 @@
                       "Xalo, rabe û derkeve!",
                       "Xalo, rabe û derkeve",
                       "Xalo rabe û derkeve"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -1308,23 +1355,26 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Bixwe, bixwe!",
-                    "prompt": "Edûl fills Hamo’s plate for the third time, so Hamo fills yours. What does he say? “Bixwe, bixwe!”",
+                    "voice": "hamo",
+                    "prompt": "Bixwe, bixwe!",
                     "options": [
                       "Drink, drink!",
                       "Eat, eat!",
                       "Give, give!"
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 2,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Çayê vexwe, hîn germ e.",
-                    "prompt": "Hamo pushes a glass towards you. What does he say? “Çayê vexwe, hîn germ e.”",
+                    "voice": "hamo",
+                    "prompt": "Çayê vexwe, hîn germ e.",
                     "accepted": [
                       "Drink the tea, it's still hot.",
                       "Drink your tea, it is still hot.",
@@ -1334,15 +1384,16 @@
                       "Drink the tea while it's hot",
                       "Drink the tea it's still hot",
                       "Drink your tea it is still hot"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 3,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask Xezal politely: “Please give me the salt.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Please give me the salt.",
                     "accepted": [
                       "Ji kerema xwe, xwê bide min.",
                       "Xwê bide min, ji kerema xwe.",
@@ -1350,8 +1401,7 @@
                       "Xwê bide min, ji kerema xwe",
                       "Ji kerema xwe xwê bide min",
                       "Xwê bide min ji kerema xwe"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -1371,34 +1421,36 @@
                   "position": 5,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Edûl lifts a cloth from the basket, and Hamo nudges you. Type what he says.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Binêre, ev nanê teze ye!",
                       "Binêre, ev nanê teze ye",
                       "Binêre ev nanê teze ye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 6,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Tell Hevalo to look at the table: “…, Hevalo!” (Look!) Type the whole sentence.",
                     "accepted": [
                       "Binêre, Hevalo!",
                       "Binêre, Hevalo",
                       "Binêre Hevalo"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 7,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Bibêje, Xezo, encam çawa ne?",
-                    "prompt": "Hamo suddenly remembers Xezal’s exam. What does he ask? “Bibêje, Xezo, encam çawa ne?”",
+                    "voice": "hamo",
+                    "prompt": "Bibêje, Xezo, encam çawa ne?",
                     "accepted": [
                       "Tell me, Xezo, how are the results?",
                       "Tell us, Xezo, how are the results?",
@@ -1409,115 +1461,120 @@
                       "Tell me Xezo how are the results",
                       "Tell us Xezo how are the results",
                       "Tell me Xezo what are the results like"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Encam gelek baş in!",
-                    "prompt": "Xezal only winks, so Hamo tells the whole table for her, beaming: “Encam gelek baş in!” What does he say?",
+                    "voice": "hamo",
+                    "prompt": "Encam gelek baş in!",
                     "options": [
                       "The results aren’t here yet.",
                       "The results are very good!",
                       "The results are bad."
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Edûl pours the tea, and Hevalo’s nose is already in the glass. Tell him: “Wait! The tea is still hot.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Wait! The tea is still hot.",
                     "accepted": [
                       "Bisekine! Çay hîn germ e.",
                       "Bisekine, çay hîn germ e.",
                       "Bisekine! Çay hîn germ e",
                       "Bisekine, çay hîn germ e",
                       "Bisekine çay hîn germ e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 10,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Be the host at Edûl’s table: “Come, eat, drink!”",
-                    "reference": "Werin, bixwin, vexwin!",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Werin, bixwin, vexwin!",
+                    "reference": "Werin, bixwin, vexwin!"
                   }
                 },
                 {
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Baran and Hêvî: “Wait, the tea is hot!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Wait, the tea is hot!",
                     "accepted": [
                       "Bisekinin, çay germ e!",
                       "Bisekinin, çay germ e",
                       "Bisekinin çay germ e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 12,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Everyone wants to hear Xezal’s news. Complete: “Xezo, …!” (tell us!) Type the whole sentence.",
                     "accepted": [
                       "Xezo, bibêje!",
                       "Xezo, bibêje",
                       "Xezo bibêje"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Baran: “Look at this!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Look at this!",
                     "accepted": [
                       "Li vê binêre!",
                       "Li vî binêre!",
                       "Li vê binêre",
                       "Li vî binêre"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 14,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hevalo stares at the apples on the table, and Hamo speaks up for him. Type what he says.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Bide wî jî, ew jî dixwaze!",
                       "Bide wî jî, ew jî dixwaze",
                       "Bide wî jî ew jî dixwaze"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Werin, çayê vexwin!",
-                    "prompt": "Edûl brings in the tea, and Hamo, already sitting, calls everyone to the table. What does he say? “Werin, çayê vexwin!”",
+                    "voice": "hamo",
+                    "prompt": "Werin, çayê vexwin!",
                     "options": [
                       "Come and drink the tea!",
                       "Come and make the tea!",
                       "Don’t drink the tea!"
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1644,8 +1701,10 @@
                   "position": 3,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Xezal ji pereyê telefonê ditirse!",
-                    "prompt": "Why doesn’t Xezal want Hamo to phone the village? Hamo tells you, laughing: “Xezal ji pereyê telefonê ditirse!”",
+                    "voice": "hamo",
+                    "prompt": "Xezal ji pereyê telefonê ditirse!",
                     "accepted": [
                       "Xezal is afraid of the phone bill!",
                       "Xezal’s afraid of the phone bill!",
@@ -1655,23 +1714,23 @@
                       "Xezal’s afraid of the phone bill",
                       "Xezal's afraid of the phone bill",
                       "Xezal is scared of the phone bill"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Hevalo hides behind the sofa when a car honks. Tell him: “Don’t be afraid!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Don’t be afraid!",
                     "accepted": [
                       "Metirse!",
                       "Hevalo, metirse!",
                       "Metirse",
                       "Hevalo, metirse",
                       "Hevalo metirse"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -1691,19 +1750,20 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Xezal takes the sugar bowl away, and Hamo repeats her rule with a sigh. Type what he says.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Hinekî şekir, ne çar!",
                       "Hinekî şekir, ne çar",
                       "Hinekî şekir ne çar"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 7,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Hamo is reaching for the dinner pot. Stop him: “…, ew şîva me ye!” (Don’t eat! That’s our dinner!) Type the whole sentence.",
                     "accepted": [
                       "Mexwe, ew şîva me ye!",
@@ -1711,17 +1771,17 @@
                       "Mexwe ew şîva me ye",
                       "Mexwe! Ew şîva me ye!",
                       "Mexwe! Ew şîva me ye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Hamo hinekî radize.",
                     "voice": "hamo",
-                    "prompt": "In the end Edûl lets her son rest on the sofa, just as when he was a boy. What happens? “Hamo hinekî radize.”",
+                    "prompt": "Hamo hinekî radize.",
                     "accepted": [
                       "Hamo sleeps a little.",
                       "Hamo has a little sleep.",
@@ -1738,18 +1798,20 @@
                   "position": 9,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Hamo imitates Xezal’s three famous words. Say them after him: “Don’t! Don’t! Don’t!”",
-                    "reference": "Meke! Meke! Meke!",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Meke! Meke! Meke!",
+                    "reference": "Meke! Meke! Meke!"
                   }
                 },
                 {
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
                     "say": "Tu ji çi ditirsî?",
                     "voice": "hamo",
-                    "prompt": "Hamo turns to you with the same question: “Tu ji çi ditirsî?” What would you answer?",
+                    "prompt": "Tu ji çi ditirsî?",
                     "options": [
                       "Ez ji kûçikan ditirse.",
                       "Ez ji kûçikan ditirsim.",
@@ -1762,15 +1824,16 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Hamo is heading for the door again. Tell him: “Don’t go, you don’t know the way!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Don’t go, you don’t know the way!",
                     "accepted": [
                       "Meçe, tu rê nizanî!",
                       "Meçe! Tu rê nizanî!",
                       "Meçe, tu rê nizanî",
                       "Meçe! Tu rê nizanî",
                       "Meçe tu rê nizanî"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -1790,13 +1853,14 @@
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Baran and Hêvî: “Don’t eat the apples, they are Hevalo’s!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Don’t eat the apples, they are Hevalo’s!",
                     "accepted": [
                       "Sêvan mexwin, ew yên Hevalo ne!",
                       "Sêvan mexwin, ew yên Hevalo ne",
                       "Sêvan mexwin ew yên Hevalo ne"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 }
               ]
@@ -1897,9 +1961,10 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Ev nîvê din ê wêneyê ye!",
                     "voice": "hamo",
-                    "prompt": "Lorîn holds up something from her old tin, and Hamo’s eyes go wide. What is it? “Ev nîvê din ê wêneyê ye!”",
+                    "prompt": "Ev nîvê din ê wêneyê ye!",
                     "options": [
                       "The other half of the map!",
                       "A new photo!",
@@ -1941,8 +2006,10 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Li Newrozê, li ser girê…",
-                    "prompt": "Two children wrote a note on the back of the photo, long ago. Hamo reads it slowly. What does it say? “Li Newrozê, li ser girê…”",
+                    "voice": "hamo",
+                    "prompt": "Li Newrozê, li ser girê…",
                     "accepted": [
                       "At Newroz, on the hill of…",
                       "At Newroz, on the hill…",
@@ -1953,46 +2020,46 @@
                       "At Newroz on the hill of",
                       "At Newroz on the hill",
                       "On Newroz on the hill of"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Lorîn: “This photo is a lovely keepsake.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "This photo is a lovely keepsake.",
                     "accepted": [
                       "Ev wêne bîranîneke xweş e.",
                       "Ev wêne bîranîneke delal e.",
                       "Ev wêne bîranîneke xweş e",
                       "Ev wêne bîranîneke delal e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Where has Lorîn kept her tin all these years? Type what Hamo says.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Lorîn qutiyê li bin nivînê vedişêre.",
                       "Lorîn qutiyê li bin nivînê vedişêre"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 7,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Lorîn hides the apples for the guests on top of the cupboard. Hamo only laughs. Complete: “Hevalo hemû sêvan … dike!” (finds) Type the whole sentence.",
                     "accepted": [
                       "Hevalo hemû sêvan peyda dike!",
                       "Hevalo hemû sêvan peyda dike"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -2012,8 +2079,10 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Gir li kêleka bajêr e.",
-                    "prompt": "Hamo points past the roofs. Where is the hill? “Gir li kêleka bajêr e.”",
+                    "voice": "hamo",
+                    "prompt": "Gir li kêleka bajêr e.",
                     "accepted": [
                       "The hill is next to the town.",
                       "The hill is beside the town.",
@@ -2025,51 +2094,55 @@
                       "The hill's next to the town",
                       "The hill is next to the city.",
                       "The hill is next to the city"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 10,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Say it with joy: “The other half is with us!”",
-                    "reference": "Nîvê din li cem me ye!",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Nîvê din li cem me ye!",
+                    "reference": "Nîvê din li cem me ye!"
                   }
                 },
                 {
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Li ser nîvê din bavê me ye, li ser gir.",
-                    "prompt": "Hamo holds the two halves side by side, and for once he is quiet. Who is on the other half? “Li ser nîvê din bavê me ye, li ser gir.”",
+                    "voice": "hamo",
+                    "prompt": "Li ser nîvê din bavê me ye, li ser gir.",
                     "options": [
                       "Their father, on the hill",
                       "Lorîn and Hamo, in Sêvan",
                       "Baran and Hêvî, in the yard"
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask Xezal: “Where is the other half?”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Where is the other half?",
                     "accepted": [
                       "Nîvê din li ku ye?",
                       "Nîvê din li ku ye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Hevalo is sniffing at the photo. Tell Xezal: “Hide the photo, Xezo!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Hide the photo, Xezo!",
                     "accepted": [
                       "Wêneyê veşêre, Xezo!",
                       "Xezo, wêneyê veşêre!",
@@ -2077,15 +2150,16 @@
                       "Xezo, wêneyê veşêre",
                       "Wêneyê veşêre Xezo",
                       "Xezo wêneyê veşêre"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 14,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Hamo pats every pocket: where is his own half, the one from Sêvan? Tell him: “Don’t worry, we’ll find it!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Don’t worry, we’ll find it!",
                     "accepted": [
                       "Xem meke, em peyda dikin!",
                       "Xem meke! Em peyda dikin!",
@@ -2094,17 +2168,17 @@
                       "Xem meke! Em peyda dikin",
                       "Xem meke, em wî peyda dikin",
                       "Xem meke em peyda dikin"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
                     "say": "Sî sal in Lorîn vê qutiyê vedişêre.",
                     "voice": "hamo",
-                    "prompt": "Lorîn laughs: all those years, and she never once told him. Hamo shakes his head. What does he say? “Sî sal in Lorîn vê qutiyê vedişêre.”",
+                    "prompt": "Sî sal in Lorîn vê qutiyê vedişêre.",
                     "options": [
                       "Lorîn has kept this tin hidden for thirty years.",
                       "Lorîn has looked for this tin for thirty years.",
@@ -2133,30 +2207,32 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Divê ez biçim ser girê Miştenûrê.",
-                    "prompt": "Hamo writes a list of everything he must do in Kobanî. What is first? “Divê ez biçim ser girê Miştenûrê.”",
+                    "voice": "hamo",
+                    "prompt": "Divê ez biçim ser girê Miştenûrê.",
                     "options": [
                       "Climb Miştenûr hill",
                       "Buy a ticket",
                       "Drink tea"
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Divê ez pirtûkeke nû bikirim.",
-                    "prompt": "Number two on the list? “Divê ez pirtûkeke nû bikirim.”",
+                    "voice": "hamo",
+                    "prompt": "Divê ez pirtûkeke nû bikirim.",
                     "options": [
                       "Read an old book",
                       "Buy a new book",
                       "Sell a book"
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
@@ -2209,8 +2285,10 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Divê ez nanê bajêr bixwim.",
-                    "prompt": "Number three is Hamo’s favourite. What is it? “Divê ez nanê bajêr bixwim.”",
+                    "voice": "hamo",
+                    "prompt": "Divê ez nanê bajêr bixwim.",
                     "accepted": [
                       "I must eat the city's bread.",
                       "I must eat the bread of the city.",
@@ -2220,41 +2298,43 @@
                       "I must eat the bread of the city",
                       "I have to eat the city's bread",
                       "I have to eat the bread of the city"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 6,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Hamo: “We must go, it is necessary.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "We must go, it is necessary.",
                     "accepted": [
                       "Divê em biçin, pêwîst e.",
                       "Divê em biçin, pêwîst e",
                       "Divê em biçin pêwîst e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hevalo looks at Hamo with big eyes. Type what Hamo says.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Bila Hevalo jî bê.",
                       "Bila Hevalo jî bê"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Nanê Kobaniyê wek nanê Sêvanê ye?",
-                    "prompt": "Xezal asks Hamo something, and he repeats it, smiling: he knows the answer. What is her question? “Nanê Kobaniyê wek nanê Sêvanê ye?”",
+                    "voice": "hamo",
+                    "prompt": "Nanê Kobaniyê wek nanê Sêvanê ye?",
                     "accepted": [
                       "Is Kobanî’s bread like Sêvan’s bread?",
                       "Is Kobanî's bread like Sêvan's bread?",
@@ -2266,57 +2346,59 @@
                       "Is the bread of Kobanî like the bread of Sêvan",
                       "Is the bread in Kobanî like the bread in Sêvan",
                       "Is Kobanî’s bread like the bread in Sêvan?"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 9,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "The last thing on the list: “Divê ez hevalên xwe yên kevn … bikim.” (find) Type the whole sentence.",
                     "accepted": [
                       "Divê ez hevalên xwe yên kevn peyda bikim.",
                       "Divê ez hevalên xwe yên kevn peyda bikim"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Nexwe em biçin!",
-                    "prompt": "The list is ready. What does Hamo say? “Nexwe em biçin!”",
+                    "voice": "hamo",
+                    "prompt": "Nexwe em biçin!",
                     "options": [
                       "So let’s go!",
                       "So let’s eat!",
                       "So let’s wait!"
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 11,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Edûl keeps pushing the bread towards her son. Push it towards Hevalo too, and say it: “You must eat.”",
-                    "reference": "Divê tu bixwî.",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Divê tu bixwî.",
+                    "reference": "Divê tu bixwî."
                   }
                 },
                 {
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Hevalo asks for an apple for the road. Tell him: “An apple isn’t necessary, Hevalo!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "An apple isn’t necessary, Hevalo!",
                     "accepted": [
                       "Sêv ne pêwîst e, Hevalo!",
                       "Sêv ne pêwîst e, Hevalo",
                       "Sêv ne pêwîst e Hevalo"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -2336,8 +2418,10 @@
                   "position": 14,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Xezal dibêje ku ez wek bapîrê wê me.",
-                    "prompt": "Xezal reads Hamo’s list and laughs. Hamo tells you why, secretly pleased. What does he say? “Xezal dibêje ku ez wek bapîrê wê me.”",
+                    "voice": "hamo",
+                    "prompt": "Xezal dibêje ku ez wek bapîrê wê me.",
                     "accepted": [
                       "Xezal says I’m like her grandpa.",
                       "Xezal says I'm like her grandpa.",
@@ -2351,35 +2435,36 @@
                       "Xezal says that I am like her grandfather",
                       "Xezal says I am like her grandfather",
                       "Xezal says I am like her grandpa"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 15,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Say it for Hamo: “Let the children come too.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Let the children come too.",
                     "accepted": [
                       "Bila zarok jî bên.",
                       "Bila zarok jî bên"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 16,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Tu westiyayî yî? Nexwe rûne!",
-                    "prompt": "Hamo sees you yawning. What does he say? “Tu westiyayî yî? Nexwe rûne!”",
+                    "voice": "hamo",
+                    "prompt": "Tu westiyayî yî? Nexwe rûne!",
                     "options": [
                       "You’re hungry? Then eat!",
                       "You’re tired? Then sit down!",
                       "You’re late? Then run!"
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 }
               ]
@@ -2394,30 +2479,32 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Kî dikare alîkariya diya min bike?",
-                    "prompt": "Edûl calls from the kitchen, and Hamo, from the sofa, passes her question on. What is he asking? “Kî dikare alîkariya diya min bike?”",
+                    "voice": "hamo",
+                    "prompt": "Kî dikare alîkariya diya min bike?",
                     "options": [
                       "Who wants to eat?",
                       "Who can come tomorrow?",
                       "Who can help my mother?"
                     ],
-                    "correctIndex": 2,
-                    "voice": "hamo"
+                    "correctIndex": 2
                   }
                 },
                 {
                   "position": 2,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Baran dikare alîkariya te bike.",
-                    "prompt": "Baran jumps up first, and Hamo calls to the kitchen for him. What does he say? “Baran dikare alîkariya te bike.”",
+                    "voice": "hamo",
+                    "prompt": "Baran dikare alîkariya te bike.",
                     "accepted": [
                       "Baran can help you.",
                       "Baran can give you a hand.",
                       "Baran can help you",
                       "Baran can give you a hand"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -2437,32 +2524,35 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask Edûl: “Can I help you?”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Can I help you?",
                     "accepted": [
                       "Ez dikarim alîkariya te bikim?",
                       "Ez dikarim alîkariya te bikim"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 5,
                   "type": "listening",
                   "payload": {
-                    "prompt": "And Hamo? He suddenly feels very, very tired. Type what he says.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Divê ez hinekî razim!",
                       "Divê ez hinekî razim"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 6,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Dibe ku Hevalo jî westiyayî be.",
-                    "prompt": "Xezal raises an eyebrow at Hamo. Hamo yawns and points at the deer. What does he say? “Dibe ku Hevalo jî westiyayî be.”",
+                    "voice": "hamo",
+                    "prompt": "Dibe ku Hevalo jî westiyayî be.",
                     "accepted": [
                       "Maybe Hevalo is tired too.",
                       "Perhaps Hevalo is tired too.",
@@ -2472,60 +2562,60 @@
                       "Perhaps Hevalo is tired too",
                       "Maybe Hevalo is also tired",
                       "Hevalo may be tired too"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 7,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Hamo would much rather go to the bookshop than help in the kitchen. Ask his mother for him: “… heye?” (permission) Type the whole question.",
                     "accepted": [
                       "Destûr heye?",
                       "Destûr heye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Erê, pêkan e.",
-                    "prompt": "Xezal asks if she may take Hamo out instead of the kitchen work. Edûl nods, and Hamo jumps up from the sofa to tell you: “Erê, pêkan e.” What did she say?",
+                    "voice": "hamo",
+                    "prompt": "Erê, pêkan e.",
                     "options": [
                       "No, it’s not possible.",
                       "Yes, it’s possible.",
                       "Maybe tomorrow."
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 9,
                   "type": "translate",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Hamo isn’t sure where to go. Tell him: “Ask Xezal!”",
                     "accepted": [
                       "Ji Xezalê bipirse!",
                       "Ji Xezalê bipirse"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 10,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo has another excuse ready. Type what he says.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Ez nikarim bêm, divê ez rûnim.",
                       "Ez nikarim bêm, divê ez rûnim",
                       "Ez nikarim bêm divê ez rûnim"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -2545,8 +2635,10 @@
                   "position": 12,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Baran pir pirsan dipirse.",
-                    "prompt": "Meanwhile, in the kitchen, what does Baran do? “Baran pir pirsan dipirse.”",
+                    "voice": "hamo",
+                    "prompt": "Baran pir pirsan dipirse.",
                     "accepted": [
                       "Baran asks a lot of questions.",
                       "Baran asks many questions.",
@@ -2554,59 +2646,62 @@
                       "Baran asks a lot of questions",
                       "Baran asks many questions",
                       "Baran is asking lots of questions"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask Edûl: “Is it possible? Do we have permission?”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Is it possible? Do we have permission?",
                     "accepted": [
                       "Pêkan e? Destûr heye?",
                       "Pêkan e? Destûr heye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Destûra me heye?",
-                    "prompt": "Xezal and Hamo stand at the door with their coats on. Hamo asks his mother very sweetly, just as he did when he was nine: “Destûra me heye?” What is he asking?",
+                    "voice": "hamo",
+                    "prompt": "Destûra me heye?",
                     "options": [
                       "Do we have money?",
                       "Do we have time?",
                       "Do we have permission?"
                     ],
-                    "correctIndex": 2,
-                    "voice": "hamo"
+                    "correctIndex": 2
                   }
                 },
                 {
                   "position": 15,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Offer to ask for Hamo: “I’ll ask Edûl. Maybe she will give permission.”",
-                    "reference": "Ez ji Edûlê dipirsim. Dibe ku ew destûrê bide.",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ez ji Edûlê dipirsim. Dibe ku ew destûrê bide.",
+                    "reference": "Ez ji Edûlê dipirsim. Dibe ku ew destûrê bide."
                   }
                 },
                 {
                   "position": 16,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
                     "say": "Tu dikarî sibe bêyî?",
-                    "prompt": "Hamo wants you to come to the bookshop with them tomorrow too: “Tu dikarî sibe bêyî?” What would you answer?",
+                    "voice": "hamo",
+                    "prompt": "Tu dikarî sibe bêyî?",
                     "options": [
                       "Erê, pêkan e.",
                       "Erê, ez pêkan im.",
                       "Erê, tu dikarî."
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -2702,24 +2797,26 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Ez li pirtûkeke gotinên pêşiyan digerim.",
-                    "prompt": "Hamo walks up to the bookseller. What is he looking for? “Ez li pirtûkeke gotinên pêşiyan digerim.”",
+                    "voice": "hamo",
+                    "prompt": "Ez li pirtûkeke gotinên pêşiyan digerim.",
                     "options": [
                       "A book of proverbs",
                       "A book of poems",
                       "A magazine"
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 3,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Li vir pirtûk, kovar, helbest, çîrok, her tişt heye!",
                     "voice": "hamo",
-                    "prompt": "Hamo shows you round the shelves, delighted. What does he say? “Li vir pirtûk, kovar, helbest, çîrok, her tişt heye!”",
+                    "prompt": "Li vir pirtûk, kovar, helbest, çîrok, her tişt heye!",
                     "accepted": [
                       "Books, magazines, poems, stories, there is everything here!",
                       "Books, magazines, poems, stories: there is everything here",
@@ -2740,12 +2837,13 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask the bookseller: “Is there a book of poems?”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Is there a book of poems?",
                     "accepted": [
                       "Pirtûkeke helbestan heye?",
                       "Pirtûkeke helbestan heye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -2765,8 +2863,8 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Hamo wraps up the last book with great care. Type what he says.",
                     "accepted": [
                       "Çîroka sêva sor ji bo Hevalo ye.",
                       "Çîroka sêva sor ji bo Hevalo ye"
@@ -2777,20 +2875,22 @@
                   "position": 7,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Hamo piles his books on the counter, proud of his shopping: “Ez sê … dikirim.” (books) Type the whole sentence.",
                     "accepted": [
                       "Ez sê pirtûkan dikirim.",
                       "Ez sê pirtûkan dikirim"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Îro roja pirtûkan e!",
-                    "prompt": "Hamo leaves the shop with his arms full. What does he say? “Îro roja pirtûkan e!”",
+                    "voice": "hamo",
+                    "prompt": "Îro roja pirtûkan e!",
                     "accepted": [
                       "Today is a day of books!",
                       "Today is the day of books!",
@@ -2798,68 +2898,72 @@
                       "Today is a day of books",
                       "Today is the day of books",
                       "Today is book day"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 9,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Tell the bookseller: “I like poems.”",
-                    "reference": "Ez ji helbestan hez dikim.",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ez ji helbestan hez dikim.",
+                    "reference": "Ez ji helbestan hez dikim."
                   }
                 },
                 {
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Kovarek ji bo Xezalê jî heye?",
-                    "prompt": "Xezal smiles sweetly at Hamo, and Hamo knows that smile. What does he ask the bookseller? “Kovarek ji bo Xezalê jî heye?”",
+                    "voice": "hamo",
+                    "prompt": "Kovarek ji bo Xezalê jî heye?",
                     "options": [
                       "Is there a story for Xezal too?",
                       "Is there a magazine for Xezal too?",
                       "Is there a poem for Xezal too?"
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Hevalo: “This story is about apples.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "This story is about apples.",
                     "accepted": [
                       "Ev çîrok li ser sêvan e.",
                       "Ev çîrok li ser sêvan e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
                     "say": "Tu helbestan dixwînî an çîrokan?",
-                    "prompt": "Hamo asks you on the way out: “Tu helbestan dixwînî an çîrokan?” What would you answer?",
+                    "voice": "hamo",
+                    "prompt": "Tu helbestan dixwînî an çîrokan?",
                     "options": [
                       "Ez çîrokan dixwînin.",
                       "Ez çîrokan dixwîne.",
                       "Ez çîrokan dixwînim."
                     ],
-                    "correctIndex": 2,
-                    "voice": "hamo"
+                    "correctIndex": 2
                   }
                 },
                 {
                   "position": 13,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Ev pirtûkfiroş gelek kevnar e.",
                     "voice": "hamo",
-                    "prompt": "Hamo looks round the dusty shelves with respect. What does he say? “Ev pirtûkfiroş gelek kevnar e.”",
+                    "prompt": "Ev pirtûkfiroş gelek kevnar e.",
                     "accepted": [
                       "This bookshop is very old.",
                       "This bookshop is very ancient.",
@@ -2874,12 +2978,13 @@
                   "position": 14,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask Xezal: “Where is the bookshop?”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Where is the bookshop?",
                     "accepted": [
                       "Pirtûkfiroş li ku ye?",
                       "Pirtûkfiroş li ku ye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 }
               ]
@@ -2980,9 +3085,10 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Lorîn! Ez winda me!",
                     "voice": "hamo",
-                    "prompt": "Lorîn’s phone rings. It’s Hamo, who went out for bread to the bakery of his boyhood. What’s wrong? “Lorîn! Ez winda me!”",
+                    "prompt": "Lorîn! Ez winda me!",
                     "options": [
                       "He is hungry!",
                       "He is lost!",
@@ -3024,8 +3130,10 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Here rasterast, paşê li çepê.",
-                    "prompt": "Lorîn guides him street by street, and Hamo repeats every word out loud as he walks. What does he say? “Here rasterast, paşê li çepê.”",
+                    "voice": "hamo",
+                    "prompt": "Here rasterast, paşê li çepê.",
                     "accepted": [
                       "Go straight on, then left.",
                       "Go straight ahead, then turn left.",
@@ -3036,16 +3144,16 @@
                       "Go straight on then left",
                       "Go straight ahead then turn left",
                       "Go straight then to the left"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 5,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Tell Lorîn on the phone: “I am at the bakery.”",
+                    "prompt": "I am at the bakery.",
                     "accepted": [
                       "Ez li firneyê me.",
                       "Ez li firneyê me"
@@ -3056,15 +3164,15 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Before Hamo goes out, Xezal makes sure of one thing. Hamo pats his pocket. Type what he tells her.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Baş e, Xezo, telefona min li cem min e.",
                       "Baş e, Xezo, telefona min li cem min e",
                       "Baş e Xezo telefona min li cem min e",
                       "Baş e, Xezo! Telefona min li cem min e.",
                       "Baş e, Xezo! Telefona min li cem min e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -3096,9 +3204,10 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Nanê firneyê germ û teze ye.",
                     "voice": "hamo",
-                    "prompt": "Hamo bites into a loaf on the stairs. What does he say? “Nanê firneyê germ û teze ye.”",
+                    "prompt": "Nanê firneyê germ û teze ye.",
                     "accepted": [
                       "The bakery's bread is warm and fresh.",
                       "The bread from the bakery is warm and fresh.",
@@ -3113,8 +3222,9 @@
                   "position": 10,
                   "type": "speaking",
                   "payload": {
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "You are lost too. Say it: “I am lost, I am phoning Xezal.”",
+                    "prompt": "Ez winda me, ez telefonî Xezalê dikim.",
                     "reference": "Ez winda me, ez telefonî Xezalê dikim."
                   }
                 },
@@ -3122,37 +3232,40 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Hamo, at the door of the bakery: “Come after me!”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Come after me!",
                     "accepted": [
                       "Li dû min were!",
                       "Were li dû min!",
                       "Li dû min were",
                       "Were li dû min"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Li quncikê, li çepê. Paşê rasterast.",
-                    "prompt": "Lorîn keeps guiding, and Hamo repeats it into the phone as he walks. What does he say now? “Li quncikê, li çepê. Paşê rasterast.”",
+                    "voice": "hamo",
+                    "prompt": "Li quncikê, li çepê. Paşê rasterast.",
                     "options": [
                       "At the corner, right. Then left.",
                       "At the corner, left. Then straight on.",
                       "At the bakery, left. Then wait."
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 13,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Say it for Hamo: “I am coming with the bread and with new friends!”",
+                    "prompt": "I am coming with the bread and with new friends!",
                     "accepted": [
                       "Ez bi nan û hevalên nû re têm!",
                       "Ez bi nan û hevalên nû re têm"
@@ -3163,9 +3276,10 @@
                   "position": 14,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Kobanî bajarê min e, lê Sêvan mala min e.",
                     "voice": "hamo",
-                    "prompt": "Late at night Hamo sits under the fig tree and looks at the lights of the town. He loves both places. What does he say? “Kobanî bajarê min e, lê Sêvan mala min e.”",
+                    "prompt": "Kobanî bajarê min e, lê Sêvan mala min e.",
                     "accepted": [
                       "Kobanî is my town, but Sêvan is my home.",
                       "Kobanî is my city, but Sêvan is my home.",
@@ -3197,30 +3311,32 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Em bi trênê diçin malê!",
-                    "prompt": "Baran has a plan for going home, and Hamo repeats it for everyone, one eyebrow raised. What is it? “Em bi trênê diçin malê!”",
+                    "voice": "hamo",
+                    "prompt": "Em bi trênê diçin malê!",
                     "options": [
                       "By train!",
                       "By plane!",
                       "On foot!"
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Na, bi balafirê!",
-                    "prompt": "Hêvî shakes her head and whispers her own plan in Hamo’s ear. He passes it on, laughing. What does she want? “Na, bi balafirê!”",
+                    "voice": "hamo",
+                    "prompt": "Na, bi balafirê!",
                     "options": [
                       "By taxi!",
                       "By plane!",
                       "By bike!"
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
@@ -3277,8 +3393,10 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Li Sêvanê balafirgeh tune!",
-                    "prompt": "Hamo laughs at Hêvî’s plan. What does he say? “Li Sêvanê balafirgeh tune!”",
+                    "voice": "hamo",
+                    "prompt": "Li Sêvanê balafirgeh tune!",
                     "accepted": [
                       "There is no airport in Sêvan!",
                       "There's no airport in Sêvan!",
@@ -3286,43 +3404,45 @@
                       "There is no airport in Sêvan",
                       "There's no airport in Sêvan",
                       "Sêvan has no airport"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 6,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Hamo: “The taxi is very expensive.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The taxi is very expensive.",
                     "accepted": [
                       "Taksî gelek biha ye.",
                       "Taksî pir biha ye.",
                       "Taksî gelek biha ye",
                       "Taksî pir biha ye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "prompt": "And Hevalo’s plan? Type what Hamo says.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Hevalo bi peyatî diçe, di nav baxçeyan re.",
                       "Hevalo bi peyatî diçe, di nav baxçeyan re",
                       "Hevalo bi peyatî diçe di nav baxçeyan re"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Derya gelek dûr e, Hêvî.",
-                    "prompt": "Hêvî wants to see the sea from the plane. What does Hamo tell her? “Derya gelek dûr e, Hêvî.”",
+                    "voice": "hamo",
+                    "prompt": "Derya gelek dûr e, Hêvî.",
                     "accepted": [
                       "The sea is very far, Hêvî.",
                       "The sea is very far away, Hêvî.",
@@ -3330,98 +3450,103 @@
                       "The sea is very far away, Hêvî",
                       "The sea is very far Hêvî",
                       "The sea is very far away Hêvî"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 9,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Baran rides to school every day. Complete: “Baran bi … diçe dibistanê.” (bicycle) Type the whole sentence.",
                     "accepted": [
                       "Baran bi bisîkletê diçe dibistanê.",
                       "Baran bi bisîkletê diçe dibistanê"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Em bi minîbûsê û bi traktorê vedigerin.",
-                    "prompt": "Hamo has the last word. How are they going home? “Em bi minîbûsê û bi traktorê vedigerin.”",
+                    "voice": "hamo",
+                    "prompt": "Em bi minîbûsê û bi traktorê vedigerin.",
                     "options": [
                       "By train and taxi",
                       "By minibus and tractor",
                       "By plane"
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 11,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Say how you like to travel: “I go by train.”",
-                    "reference": "Ez bi trênê diçim.",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ez bi trênê diçim.",
+                    "reference": "Ez bi trênê diçim."
                   }
                 },
                 {
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Hêvî: “The airport is far.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The airport is far.",
                     "accepted": [
                       "Balafirgeh dûr e.",
                       "Balafirgeh dûr e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Balafir li asman e!",
-                    "prompt": "Hêvî points up, very excited, and Hamo looks up too. What do they see? “Balafir li asman e!”",
+                    "voice": "hamo",
+                    "prompt": "Balafir li asman e!",
                     "options": [
                       "A plane at the airport",
                       "A plane in the sky",
                       "A train in the sky"
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 14,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask Xezal: “Can we go by taxi?”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Can we go by taxi?",
                     "accepted": [
                       "Em dikarin bi taksiyê biçin?",
                       "Em dikarin bi taksiyê biçin"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Hêvî dibêje ku ew dixwaze deryayê bibîne!",
-                    "prompt": "Why does Hêvî want to go by plane? “Hêvî dibêje ku ew dixwaze deryayê bibîne!”",
+                    "voice": "hamo",
+                    "prompt": "Hêvî dibêje ku ew dixwaze deryayê bibîne!",
                     "options": [
                       "She wants to see Amed.",
                       "She wants to see the sea.",
                       "She wants to sleep."
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 }
               ]
@@ -3436,23 +3561,26 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Rêz gelek dirêj e.",
-                    "prompt": "At the bus station Hamo finds the ticket window. What is the problem? “Rêz gelek dirêj e.”",
+                    "voice": "hamo",
+                    "prompt": "Rêz gelek dirêj e.",
                     "options": [
                       "The window is closed.",
                       "The tickets are expensive.",
                       "The queue is very long."
                     ],
-                    "correctIndex": 2,
-                    "voice": "hamo"
+                    "correctIndex": 2
                   }
                 },
                 {
                   "position": 2,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Ji kerema xwe, şeş bilêt ji bo Sêvanê.",
-                    "prompt": "At last it is Hamo’s turn. What does he say? “Ji kerema xwe, şeş bilêt ji bo Sêvanê.”",
+                    "voice": "hamo",
+                    "prompt": "Ji kerema xwe, şeş bilêt ji bo Sêvanê.",
                     "accepted": [
                       "Six tickets to Sêvan, please.",
                       "Six tickets for Sêvan, please.",
@@ -3463,22 +3591,22 @@
                       "Six tickets to Sêvan please",
                       "Six tickets for Sêvan please",
                       "Please six tickets to Sêvan"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 3,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask the man at the window: “Do you accept cards?”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Do you accept cards?",
                     "accepted": [
                       "Hûn kartê dipejirînin?",
                       "Hûn kartan dipejirînin?",
                       "Hûn kartê dipejirînin",
                       "Hûn kartan dipejirînin"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -3498,115 +3626,123 @@
                   "position": 5,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo practises his line in the queue. Type what you hear.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Ez di rêzê de me. Ez dixwazim bilêtekê bikirim.",
                       "Ez di rêzê de me. Ez dixwazim bilêtekê bikirim"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 6,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "The man says: “Navê xwe binivîse.” Hamo answers politely: “Baş e, ez navê … dinivîsim.” (my own) Type the whole sentence.",
                     "accepted": [
                       "Baş e, ez navê xwe dinivîsim.",
                       "Baş e, ez navê xwe dinivîsim",
                       "Baş e ez navê xwe dinivîsim"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 7,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Sêvan çiqas dûr e?",
-                    "prompt": "Baran is already tired of the queue, so Hamo asks the man at the window for him. What does he ask? “Sêvan çiqas dûr e?”",
+                    "voice": "hamo",
+                    "prompt": "Sêvan çiqas dûr e?",
                     "accepted": [
                       "How far is Sêvan?",
                       "How far away is Sêvan?",
                       "How far is Sêvan",
                       "How far away is Sêvan"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell the man: “I am very thankful.”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I am very thankful.",
                     "accepted": [
                       "Ez gelek spasdar im.",
                       "Ez pir spasdar im.",
                       "Ez gelek spasdar im",
                       "Ez pir spasdar im"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Hûn kartê dipejirînin?",
-                    "prompt": "Hamo takes out the card Xezal gave him. What does he ask? “Hûn kartê dipejirînin?”",
+                    "voice": "hamo",
+                    "prompt": "Hûn kartê dipejirînin?",
                     "options": [
                       "Is this my card?",
                       "Do you accept cards?",
                       "Do you have a card?"
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 10,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Practise the politest question at the station: “Please, can you help me?”",
-                    "reference": "Ji kerema xwe, tu dikarî alîkariya min bikî?",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ji kerema xwe, tu dikarî alîkariya min bikî?",
+                    "reference": "Ji kerema xwe, tu dikarî alîkariya min bikî?"
                   }
                 },
                 {
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask Xezal: “How much money do we have?”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "How much money do we have?",
                     "accepted": [
                       "Çiqas pereyê me heye?",
                       "Çiqas pereyên me hene?",
                       "Çiqas pereyê me heye",
                       "Çiqas pereyên me hene"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Firoşkar kursiyên rêza pêşîn dide Hamo.",
-                    "prompt": "The man behind the window is charmed by Hamo’s good manners. What happens? “Firoşkar kursiyên rêza pêşîn dide Hamo.”",
+                    "voice": "hamo",
+                    "prompt": "Firoşkar kursiyên rêza pêşîn dide Hamo.",
                     "options": [
                       "He gives Hamo the seats in the front row.",
                       "He gives Hamo a free glass of tea.",
                       "He sends Hamo to the back of the queue."
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 13,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Çiqas xweş e! Ez gelek spasdar im.",
-                    "prompt": "Hamo looks at his front-row tickets. What does he say? “Çiqas xweş e! Ez gelek spasdar im.”",
+                    "voice": "hamo",
+                    "prompt": "Çiqas xweş e! Ez gelek spasdar im.",
                     "accepted": [
                       "How nice! I am very grateful.",
                       "How nice! I am very thankful.",
@@ -3614,8 +3750,7 @@
                       "How nice! I am very thankful",
                       "How lovely! I'm very grateful",
                       "How nice! I am very grateful"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
@@ -3737,23 +3872,26 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Bibore, rawestgeha otobûsan li ku ye?",
-                    "prompt": "Hamo stops a man in the street. What does he ask? “Bibore, rawestgeha otobûsan li ku ye?”",
+                    "voice": "hamo",
+                    "prompt": "Bibore, rawestgeha otobûsan li ku ye?",
                     "options": [
                       "Excuse me, where is the bakery?",
                       "Excuse me, what time is it?",
                       "Excuse me, where is the bus station?"
                     ],
-                    "correctIndex": 2,
-                    "voice": "hamo"
+                    "correctIndex": 2
                   }
                 },
                 {
                   "position": 3,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Ez wî nas dikim!",
-                    "prompt": "Hamo looks closely at the man’s face. What does he say? “Ez wî nas dikim!”",
+                    "voice": "hamo",
+                    "prompt": "Ez wî nas dikim!",
                     "accepted": [
                       "I know him!",
                       "I recognise him!",
@@ -3761,16 +3899,16 @@
                       "I know him",
                       "I recognise him",
                       "I recognize him"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 4,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Say it with Hamo, who can’t get over it: “What a coincidence!”",
+                    "prompt": "What a coincidence!",
                     "accepted": [
                       "Çi rasthatin e!",
                       "Çi rasthatin e"
@@ -3794,32 +3932,34 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo turns to Xezal, delighted. Type what he says.",
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
                       "Ew ji devera Sêvanê ye.",
                       "Ew ji devera Sêvanê ye"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 7,
                   "type": "writing",
                   "payload": {
+                    "voice": "hamo",
                     "prompt": "Hamo laughs: “Ev … çiqas biçûk e!” (How small this world is!) Type the whole sentence.",
                     "accepted": [
                       "Ev cîhan çiqas biçûk e!",
                       "Ev cîhan çiqas biçûk e"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Li cem çayê dem tune!",
-                    "prompt": "Xezal points at her watch. Hamo answers with a proverb of his own. What is it? “Li cem çayê dem tune!”",
+                    "voice": "hamo",
+                    "prompt": "Li cem çayê dem tune!",
                     "accepted": [
                       "Where there's tea, there's no time!",
                       "With tea, there is no time!",
@@ -3829,53 +3969,56 @@
                       "There is no time where there is tea",
                       "Where there's tea there's no time",
                       "With tea there is no time"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 9,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "You are lost in Kobanî too. Ask politely: “Excuse me, I’m a stranger here. Which way is it?”",
-                    "reference": "Bibore, ez biyanî me. Rê li ku ye?",
-                    "voice": "hamo"
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Bibore, ez biyanî me. Rê li ku ye?",
+                    "reference": "Bibore, ez biyanî me. Rê li ku ye?"
                   }
                 },
                 {
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
                     "say": "Tu min nas dikî?",
-                    "prompt": "Hamo is so happy that he jokes with you too: “Tu min nas dikî?” What would you answer?",
+                    "voice": "hamo",
+                    "prompt": "Tu min nas dikî?",
                     "options": [
                       "Erê, tu min nas dikî!",
                       "Erê, ez te nas dikim!",
                       "Erê, ez min nas dikim!"
                     ],
-                    "correctIndex": 1,
-                    "voice": "hamo"
+                    "correctIndex": 1
                   }
                 },
                 {
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Ask the man: “Which area are you from?”",
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Which area are you from?",
                     "accepted": [
                       "Tu ji kîjan deverê yî?",
                       "Tu ji kîjan deverê yî"
-                    ],
-                    "voice": "hamo"
+                    ]
                   }
                 },
                 {
                   "position": 12,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Demjimêr pênc e, ev çaya sêyem e!",
                     "voice": "hamo",
-                    "prompt": "Hamo counts the glasses on the table, rather proud of them. What does he say? “Demjimêr pênc e, ev çaya sêyem e!”",
+                    "prompt": "Demjimêr pênc e, ev çaya sêyem e!",
                     "accepted": [
                       "It's five o'clock, this is the third tea!",
                       "It's five, this is the third tea!",
@@ -4013,15 +4156,16 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Bavê min Newrozê tê Sêvanê!",
-                    "prompt": "Hamo has news from his father, and he tells everyone at once. What is it? “Bavê min Newrozê tê Sêvanê!”",
+                    "voice": "hamo",
+                    "prompt": "Bavê min Newrozê tê Sêvanê!",
                     "options": [
                       "His father is coming to Sêvan for Newroz.",
                       "His father is moving to Hewlêr.",
                       "His father is going to the sea."
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -4057,9 +4201,10 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Di çenteyê Hevalo de tenê sêv hene.",
                     "voice": "hamo",
-                    "prompt": "Xezal peeks into Hevalo’s bag and shows Hamo. What does he find? “Di çenteyê Hevalo de tenê sêv hene.”",
+                    "prompt": "Di çenteyê Hevalo de tenê sêv hene.",
                     "accepted": [
                       "There are only apples in Hevalo's bag.",
                       "Hevalo's bag has only apples in it.",
@@ -4074,8 +4219,9 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Tell Edûl at the door: “I miss you already.”",
+                    "prompt": "I miss you already.",
                     "accepted": [
                       "Ez niha jî bêriya te dikim.",
                       "Ez jixwe bêriya te dikim.",
@@ -4088,8 +4234,8 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "The news comes on. Hamo goes quiet. Type what you hear.",
                     "accepted": [
                       "Dibe ku rêya çiyê girtî be.",
                       "Dibe ku rêya çiyê girtî be"
@@ -4138,8 +4284,9 @@
                   "position": 10,
                   "type": "speaking",
                   "payload": {
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Say goodbye to the town from the minibus window: “Goodbye, Kobanî!”",
+                    "prompt": "Bi xatirê te, Kobanî!",
                     "reference": "Bi xatirê te, Kobanî!"
                   }
                 },
@@ -4147,23 +4294,25 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
                     "say": "Hevalo bêriya sêvên gund dike.",
-                    "prompt": "Hevalo hops by the door, and Hamo knows exactly why. What does he say? “Hevalo bêriya sêvên gund dike.”",
+                    "voice": "hamo",
+                    "prompt": "Hevalo bêriya sêvên gund dike.",
                     "options": [
                       "He misses the village apples.",
                       "He misses the bus.",
                       "He misses the bookshop."
                     ],
-                    "correctIndex": 0,
-                    "voice": "hamo"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 12,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Tell Hamo: “There is news!”",
+                    "prompt": "There is news!",
                     "accepted": [
                       "Nûçeyek heye!",
                       "Nûçe hene!",
@@ -4176,9 +4325,10 @@
                   "position": 13,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Sibe serê sibehê em diçin.",
                     "voice": "hamo",
-                    "prompt": "Hamo sets the clock again. What does he say? “Sibe serê sibehê em diçin.”",
+                    "prompt": "Sibe serê sibehê em diçin.",
                     "accepted": [
                       "We leave early tomorrow morning.",
                       "Tomorrow early in the morning we leave.",
@@ -4193,8 +4343,9 @@
                   "position": 14,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Ask Hamo: “When are we leaving?”",
+                    "prompt": "When are we leaving?",
                     "accepted": [
                       "Em kengî diçin?",
                       "Em kengî diçin"
@@ -4205,9 +4356,10 @@
                   "position": 15,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
                     "say": "Rê vekirî ye an girtî?",
                     "voice": "hamo",
-                    "prompt": "That night nobody sleeps well. Hamo looks out at the dark sky. What is everyone wondering? “Rê vekirî ye an girtî?”",
+                    "prompt": "Rê vekirî ye an girtî?",
                     "accepted": [
                       "Is the road open or closed?",
                       "Is the road open, or is it closed?",

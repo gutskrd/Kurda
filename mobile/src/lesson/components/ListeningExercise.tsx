@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Pressable } from '../../theme/Pressable';
 import { tileAnswer } from '@kurda/shared';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
@@ -16,8 +15,8 @@ import { ExerciseHeadline } from './ExerciseHeadline';
 import { KurdishAnswerInput } from './KurdishAnswerInput';
 import { PlayDisc } from './ModelButton';
 import { PromptScene } from './SpeechBubble';
+import { SlowButton } from './AskParts';
 import { AnswerModeSwitch, WordBank } from './WordBank';
-import { pressedDim } from '../../theme/motion';
 
 interface Props {
   exercise: Exercise;
@@ -35,8 +34,9 @@ interface Props {
 /**
  * Listen, and give back what you heard (KUR-035). Whoever says the clip
  * stands beside a speech bubble holding the lesson's round play mark and a
- * waveform that lights up along the clip as it plays; a tap on the bubble plays it again, and
- * "Slow" under it plays it at 0.75×, as often as wanted. The clip is the
+ * waveform that lights up along the clip as it plays; a tap on the bubble
+ * plays it again, and "Slow" under it (`SlowButton`, the chip a question's
+ * line has too) plays it at 0.75×, as often as wanted. The clip is the
  * question, so it plays by itself a beat after the exercise appears (once it
  * has loaded), as it does on the website. "Can't listen now" sits in the
  * footer, beside Check.
@@ -56,6 +56,8 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
   const [mode, setMode] = useAnswerMode();
   const tiles = !!bank && mode === 'tiles';
   const [placed, setPlaced] = useState<number[]>([]);
+  // playing slowly, for "Slow" to be lit while it does
+  const [slow, setSlow] = useState(false);
 
   // played once by itself: AUTOPLAY_MS after the exercise appears, or as soon after as the clip has loaded.
   // A clip the learner has already set playing counts as that once, so the timer never restarts it
@@ -66,6 +68,7 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
   const { play, playing } = audio;
   useEffect(() => {
     if (playing) autoplayed.current = true;
+    else setSlow(false);
   }, [playing]);
   useEffect(() => {
     if (!loaded || disabled || autoplayed.current) return;
@@ -97,6 +100,10 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
   };
 
   const playable = !disabled && !cannotPlay;
+  const atSpeed = (): void => {
+    setSlow(false);
+    audio.play(1);
+  };
   return (
     <View style={styles.container}>
       <ExerciseHeadline>{t(tiles ? 'lesson.listen.tapPrompt' : 'lesson.listen.prompt')}</ExerciseHeadline>
@@ -105,24 +112,22 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
         voice={voice}
         audio={audio}
         reaction={verdict === 'right' ? 'cheer' : verdict === 'wrong' ? 'hmm' : null}
-        onReplay={playable ? () => audio.play(1) : undefined}
-        bubble={playable ? { onPress: () => audio.play(1), label: t('lesson.listen.play') } : null}
+        onReplay={playable ? atSpeed : undefined}
+        bubble={playable ? { onPress: atSpeed, label: t('lesson.listen.play') } : null}
         below={
-          <Pressable
-            onPress={() => audio.play(0.75)}
+          <SlowButton
+            onPress={() => {
+              setSlow(true);
+              audio.play(0.75);
+            }}
             disabled={!playable}
-            accessibilityRole="button"
-            accessibilityLabel={t('lesson.listen.playSlow')}
-            accessibilityState={{ disabled: !playable }}
-            style={({ pressed }) => [styles.slow, (pressed || !playable) && styles.pressed]}
-          >
-            <Text style={[styles.slowText, { color: colors.textPrimary }]}>{t('lesson.listen.slow')}</Text>
-          </Pressable>
+            lit={slow && audio.playing}
+          />
         }
       >
         <View style={[styles.clip, { flexDirection: dir.row }]}>
           {/* the round play mark at the bubble's start, the clip's waveform running on from it */}
-          <PlayDisc size={36} playing={audio.playing} />
+          <PlayDisc size={36} playing={audio.playing && !slow} />
           <Waveform clock={audio.clock} playing={audio.playing} />
         </View>
       </PromptScene>
@@ -203,9 +208,6 @@ const styles = StyleSheet.create({
   clip: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   wave: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: WAVE },
   bar: { width: 3, borderRadius: radii.pill },
-  slow: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.sm },
-  slowText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.4 },
-  pressed: { opacity: pressedDim },
   prompt: { fontSize: typography.sizes.md },
   // the field's card, edge and face are the answer box's own (KurdishAnswerInput)
   input: { minHeight: MIN_TOUCH_TARGET, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
