@@ -135,14 +135,21 @@ function dialogueOf(exercises: ReadonlyArray<{ type: string; payload: Record<str
   return lines.length > 0 ? { title: str(p.title), lines } : null;
 }
 
-/** A part's Kurdish sentences with what they mean: the items that ask for the English of something Hamo says. */
+/**
+ * A part's Kurdish sentences with what they mean: the items that ask for the
+ * English of something Hamo says — a translation into English, or a choice of
+ * what his line means, whose right option is its English.
+ */
 function sentencesOf(exercises: ReadonlyArray<{ type: string; payload: Record<string, unknown> }>): Array<{ ku: string; en: string }> {
   const out: Array<{ ku: string; en: string }> = [];
   const seen = new Set<string>();
   for (const e of exercises) {
-    if (e.type !== 'translate') continue;
+    const meaning = e.type === 'multiple_choice' && e.payload.ask === 'meaning';
+    if (e.type !== 'translate' && !meaning) continue;
     const ku = str(e.payload.say);
-    const en = Array.isArray(e.payload.accepted) ? str(e.payload.accepted[0]) : null;
+    const answers = meaning ? e.payload.options : e.payload.accepted;
+    const at = meaning && typeof e.payload.correctIndex === 'number' ? e.payload.correctIndex : 0;
+    const en = Array.isArray(answers) ? str(answers[at]) : null;
     if (!ku || !en || seen.has(ku)) continue;
     seen.add(ku);
     out.push({ ku, en });
