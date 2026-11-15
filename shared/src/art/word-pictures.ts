@@ -775,9 +775,18 @@ const PICTURES: Record<WordPictureId, Draw> = {
       b.form(box(34, 10, 52, 92, 10), t, 36, 12, 0.96);
       b.fill(box(39, 20, 42, 72, 4), '#cfe7f3');
       b.fill(poly(39, 62, 81, 30, 81, 42, 39, 74), '#e3f2f8');
-      b.fill(O(60, 56, 12), '#3fa45b');
-      b.line('M55 51C54 58 58 62.5 65 63', '#ffffff', 3.4);
-      b.fill(O(55.2, 50.5, 2.6) + O(65.5, 63, 2.6), '#ffffff');
+      // a home screen of soft rounded tiles in the valley's own colours: a phone, and no one's in particular
+      const tile = (col: number, row: number): string => box(43 + col * 13, 27 + row * 13, 9.5, 9.5, 2.6);
+      const tiles: readonly [string, readonly (readonly [number, number])[]][] = [
+        [VALLEY.red, [[0, 0], [2, 2], [1, 4]]],
+        [VALLEY.gold, [[1, 0], [0, 3]]],
+        [VALLEY.leaf, [[2, 0], [1, 2], [0, 4]]],
+        [VALLEY.gate, [[0, 1], [2, 3], [2, 4]]],
+        [CLAY[0], [[1, 1], [0, 2]]],
+        [VALLEY.indigo, [[2, 1], [1, 3]]],
+      ];
+      b.fill(box(40, 78, 40, 13, 3), '#e3f2f8');
+      for (const [colour, at] of tiles) b.fill(at.map(([col, row]) => tile(col, row + (row === 4 ? 0.15 : 0))).join(''), colour);
       b.fill(box(53, 14, 14, 2.6, 1.3) + box(52, 96, 16, 2.4, 1.2), t[2]);
     });
   },
