@@ -34,7 +34,8 @@ describe('the headline', () => {
 
   it('names who to repeat after from the voice of the model, and says “Say it aloud” with nobody', () => {
     const how = { tiles: false, dialect: 'kurmanji' };
-    expect(askHeadline(item({ type: 'speaking', ask: 'repeat', modelAudioUrl: 'm.mp3', modelAudioVoice: { speaker: 'xezo' } }), t, how)).toBe('Repeat after Xezo');
+    const repeat = item({ type: 'speaking', ask: 'repeat', modelAudioUrl: 'm.mp3', modelAudioVoice: { speaker: 'xezo' } });
+    expect(askHeadline(repeat, t, how)).toBe('Repeat after Xezo');
     expect(askHeadline(item({ type: 'speaking', ask: 'repeat', modelAudioUrl: 'm.mp3' }), t, how)).toBe('Say it aloud');
   });
 

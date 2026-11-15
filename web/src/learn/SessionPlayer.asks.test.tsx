@@ -53,7 +53,16 @@ afterEach(() => {
 function lesson(exercises: DeliveredExercise[], dialect = 'kurmanji'): void {
   const session: PlayableSession = { sessionId: 's1', exercises, answered: {} };
   renderApp(
-    <SessionPlayer session={session} kind="lesson" paths={LESSON_PATHS} title="First steps" dialect={dialect} exitTo="/app/learn" exitLabel="Back to Learn" onPractise={vi.fn()} />,
+    <SessionPlayer
+      session={session}
+      kind="lesson"
+      paths={LESSON_PATHS}
+      title="First steps"
+      dialect={dialect}
+      exitTo="/app/learn"
+      exitLabel="Back to Learn"
+      onPractise={vi.fn()}
+    />,
     ['/app/learn/lesson/l1'],
   );
 }
@@ -107,7 +116,8 @@ describe('what does this mean', () => {
     const word = inBubble.getByRole('button', { name: 'What “Silav” means' });
     expect(word).toHaveClass('is-new');
     await userEvent.click(word);
-    expect(within(screen.getByRole('list', { name: 'What “Silav” means' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['hello', 'greeting']);
+    const meanings = within(screen.getByRole('list', { name: 'What “Silav” means' })).getAllByRole('listitem');
+    expect(meanings.map((li) => li.textContent)).toEqual(['hello', 'greeting']);
     await userEvent.keyboard('{Escape}');
 
     // the options are cards of words, as before

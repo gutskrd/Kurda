@@ -100,7 +100,9 @@ function splitAtGap(token: LineToken): LineToken[] {
  */
 export function lineTokens(line: string, tokens: readonly PromptToken[] | undefined, newWords: readonly NewWord[] | undefined): LineToken[] {
   const trusted = !!tokens && tokens.map((token) => token.text).join('') === line;
-  const base: LineToken[] = trusted ? tokens.map((token) => (token.meanings?.length ? { text: token.text, meanings: token.meanings } : { text: token.text })) : wordsOf(line);
+  const base: LineToken[] = trusted
+    ? tokens.map((token) => (token.meanings?.length ? { text: token.text, meanings: token.meanings } : { text: token.text }))
+    : wordsOf(line);
   const fresh = new Map((newWords ?? []).map((word) => [wordKey(word.ku), word.en.trim()]));
   return base
     .map((token): LineToken => {

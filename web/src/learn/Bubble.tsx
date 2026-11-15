@@ -83,7 +83,11 @@ export function LineWords({
   const base = useId();
   const toggle = useCallback((i: number, on: boolean) => setOpen((now) => (on ? i : now === i ? null : now)), []);
   return (
-    <div className={`lesson-prompt lesson-line-text${english ? ' is-english' : ''}${big ? ' is-big' : ''}`} lang={english ? undefined : lang} dir={english ? 'auto' : dir}>
+    <div
+      className={`lesson-prompt lesson-line-text${english ? ' is-english' : ''}${big ? ' is-big' : ''}`}
+      lang={english ? undefined : lang}
+      dir={english ? 'auto' : dir}
+    >
       {tokens.map((token, i) =>
         token.gap ? (
           <span key={i} className={`lesson-gap${gap?.text ? ' is-filled' : ''}${gap?.verdict ? ` is-${gap.verdict}` : ''}`}>
@@ -111,7 +115,13 @@ export function LinePlay({ src }: { src: string }): React.JSX.Element {
   const label = t('lesson.listen.slow');
   return (
     <span className="lesson-line-play">
-      <button type="button" className={`lesson-play lesson-play-round${rate === 1 ? ' is-on' : ''}`} aria-label={t('lesson.hear')} title={t('lesson.hear')} onClick={() => play(src)}>
+      <button
+        type="button"
+        className={`lesson-play lesson-play-round${rate === 1 ? ' is-on' : ''}`}
+        aria-label={t('lesson.hear')}
+        title={t('lesson.hear')}
+        onClick={() => play(src)}
+      >
         <SpeakerIcon size={22} />
       </button>
       <button type="button" className={`lesson-slow-chip${rate === 0.75 ? ' is-on' : ''}`} aria-label={label} title={label} onClick={() => play(src, 0.75)}>

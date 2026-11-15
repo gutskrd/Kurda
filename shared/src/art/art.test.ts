@@ -2453,8 +2453,8 @@ describe('a letter’s paper', () => {
  * card 72–96 px wide, by day and by evening.
  */
 describe('the word pictures', () => {
-  /** What hangs in the sky, and the eye, float on the card; everything else stands on its patch of shade. */
-  const ALOFT: readonly WordPictureId[] = ['sun', 'moon', 'star', 'cloud', 'rain', 'snow', 'eye'];
+  /** What hangs in the sky, and the parts of the body, float on the card; everything else stands on its patch of shade. */
+  const ALOFT: readonly WordPictureId[] = ['sun', 'moon', 'star', 'cloud', 'rain', 'snow', 'plane', 'eye', 'hand', 'ear', 'nose', 'tooth', 'foot'];
   const both = WORD_PICTURE_IDS.flatMap((id) => [false, true].map((dark) => ({ id, dark })));
 
   it('draws every word, by day and by evening, labelled when named and hidden when not', () => {
@@ -2541,9 +2541,9 @@ describe('the word pictures', () => {
     expect(() => wordPictureSvg({ id: 'apple', idPrefix: '1 bad' })).toThrow(RangeError);
   });
 
-  it('names its eighty words in Hawar Kurmancî, lowercase and each once, with the English beside each', () => {
+  it('names its words in Hawar Kurmancî, lowercase and each once, with the English beside each', () => {
     expect(WORD_PICTURE_IDS).toEqual(Object.keys(WORD_PICTURES));
-    expect(WORD_PICTURE_IDS.length).toBe(80);
+    expect(WORD_PICTURE_IDS.length).toBe(103);
     const hawar = /^[abcçdeêfghiîjklmnopqrsştuûvwxyz]+$/u;
     for (const id of WORD_PICTURE_IDS) {
       const { ku, en } = WORD_PICTURES[id];
@@ -2552,7 +2552,15 @@ describe('the word pictures', () => {
       expect(ku.normalize('NFC'), id).toBe(ku);
       expect(en, id).toMatch(/^[a-z]+( [a-z]+)*$/);
     }
-    expect(new Set(WORD_PICTURE_IDS.map((id) => WORD_PICTURES[id].ku)).size).toBe(80);
+    expect(new Set(WORD_PICTURE_IDS.map((id) => WORD_PICTURES[id].ku)).size).toBe(WORD_PICTURE_IDS.length);
+    expect(new Set(WORD_PICTURE_IDS.map((id) => WORD_PICTURES[id].en)).size).toBe(WORD_PICTURE_IDS.length);
+    // a car is the Kurmancî trimbêl, not the borrowed erebe
+    expect(WORD_PICTURES.car.ku).toBe('trimbêl');
+    // the second set, for the later chapters, follows the first eighty in order
+    expect(WORD_PICTURE_IDS.slice(80)).toEqual([
+      'tractor', 'train', 'plane', 'taxi', 'bicycle', 'ticket', 'wolf', 'bear', 'fox', 'deer', 'gazelle', 'snake', 'kid', 'tent', 'hand', 'ear', 'nose', 'tooth', 'foot',
+      'medicine', 'drum', 'wheat', 'corn',
+    ]);
     expect(WORD_PICTURES.ewe).toEqual({ ku: 'mih', en: 'sheep' });
     expect(WORD_PICTURES.tenur.ku).toBe('tenûr');
     // the apps and the server read the catalogue from the package itself

@@ -15,9 +15,12 @@
  * Each thing stands alone in the middle of the 120-unit canvas on a soft
  * patch of shade, on a transparent ground, so the apps can lay it on any
  * card; what hangs in the sky (the sun, the moon, a star, a cloud, rain,
- * snow) floats without one. Where a thing has a Kurdish shape it is drawn in
- * it: tea in a tulip glass on its saucer, flat bread from the tenûr, a kilim
- * bag, a knitted wool sock, the double teapot, a blue village door.
+ * snow, an aeroplane) floats without one, and so do the parts of the body,
+ * drawn gently and on their own, which a shadow would turn into things lying
+ * on a table. Where a thing has a Kurdish shape it is drawn in it: tea in a
+ * tulip glass on its saucer, flat bread from the tenûr, a kilim bag, a
+ * knitted wool sock, the double teapot, a blue village door, the black tent
+ * of the summer pastures, the wedding drum.
  *
  * By evening (a dark card) every colour is taken a little toward the dusk's
  * violet, and the darkest ones are lifted instead, so a black goat or a
@@ -56,7 +59,7 @@ export const WORD_PICTURES = {
   goat: { ku: 'bizin', en: 'goat' },
   lamb: { ku: 'berx', en: 'lamb' },
   phone: { ku: 'telefon', en: 'phone' },
-  car: { ku: 'erebe', en: 'car' },
+  car: { ku: 'trimbêl', en: 'car' },
   money: { ku: 'pere', en: 'money' },
   cheese: { ku: 'penîr', en: 'cheese' },
   egg: { ku: 'hêk', en: 'egg' },
@@ -108,6 +111,29 @@ export const WORD_PICTURES = {
   rose: { ku: 'gul', en: 'rose' },
   clock: { ku: 'demjimêr', en: 'clock' },
   bus: { ku: 'otobûs', en: 'bus' },
+  tractor: { ku: 'traktor', en: 'tractor' },
+  train: { ku: 'trên', en: 'train' },
+  plane: { ku: 'balafir', en: 'aeroplane' },
+  taxi: { ku: 'taksî', en: 'taxi' },
+  bicycle: { ku: 'bisîklet', en: 'bicycle' },
+  ticket: { ku: 'bilêt', en: 'ticket' },
+  wolf: { ku: 'gur', en: 'wolf' },
+  bear: { ku: 'hirç', en: 'bear' },
+  fox: { ku: 'rovî', en: 'fox' },
+  deer: { ku: 'ask', en: 'deer' },
+  gazelle: { ku: 'xezal', en: 'gazelle' },
+  snake: { ku: 'mar', en: 'snake' },
+  kid: { ku: 'karik', en: 'kid' },
+  tent: { ku: 'kon', en: 'tent' },
+  hand: { ku: 'dest', en: 'hand' },
+  ear: { ku: 'guh', en: 'ear' },
+  nose: { ku: 'poz', en: 'nose' },
+  tooth: { ku: 'diran', en: 'tooth' },
+  foot: { ku: 'ling', en: 'foot' },
+  medicine: { ku: 'derman', en: 'medicine' },
+  drum: { ku: 'dahol', en: 'drum' },
+  wheat: { ku: 'simbil', en: 'ear of wheat' },
+  corn: { ku: 'garis', en: 'corn' },
 } as const satisfies Readonly<Record<string, { readonly ku: string; readonly en: string }>>;
 
 /** A word that has a picture. */
@@ -168,7 +194,7 @@ function luma(hex: string): number {
 function night(hex: string): string {
   const m = dusk(hex, true, 0.18);
   const y = luma(m);
-  return y < 0.34 ? mix(m, '#d9d3f2', Math.min(0.5, (0.34 - y) * 1.3)) : m;
+  return y < 0.38 ? mix(m, '#d9d3f2', Math.min(0.55, (0.38 - y) * 1.4)) : m;
 }
 
 // ───────────────────────────────────────────────────────────── shapes
@@ -1446,6 +1472,331 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.fill(O(32, 94, 4) + O(90, 94, 4), STEEL[0]);
     b.fill(oval(110, 70, 2.6, 4, 0), '#fff3c4');
     b.fill(box(20, 36, 82, 3, 1.5), t[2]);
+  },
+  tractor: (b) => {
+    const t: Tone = ['#4f9a48', '#357235', '#7fbf6a'];
+    b.ground(50);
+    b.line('M38 60V36', '#4a4752', 4);
+    b.fill(box(35, 32, 6, 4, 1), '#4a4752');
+    b.line('M64 58V30M96 58V30', t[1], 4);
+    b.fill(box(66, 32, 28, 26), SKY_PANE);
+    b.fill(box(58, 24, 42, 7, 2), t[1]);
+    b.form('M14 82V66C14 62 17 60 21 60H70V82Z', t, 16, 61, 0.95);
+    b.line('M17 64V78', t[1], 2);
+    b.fill(O(84, 80, 23) + O(30, 91, 13), '#3d3a46');
+    b.fill(O(84, 80, 11) + O(30, 91, 6), '#f2b632');
+    b.fill(O(84, 80, 4) + O(30, 91, 2.2), '#3d3a46');
+    b.fill('M58 74C60 58 72 50 86 50C100 50 110 60 112 74H104C102 64 94 58 86 58C76 58 68 64 66 74Z', t[0]);
+    b.fill(oval(15, 70, 2, 3, 0), GOLD[2]);
+  },
+
+  train: (b) => {
+    b.ground(54, 60, 103);
+    b.line('M4 104H116', STEEL[1], 3);
+    b.fill(O(28, 14, 5) + O(20, 8, 4) + O(36, 10, 3.6), VALLEY.smoke, ' fill-opacity="0.9"');
+    b.fill(box(22, 22, 16, 6, 2) + box(25, 26, 10, 22), '#3d3a46');
+    b.form('M16 52C16 48 19 46 23 46H76V82H23C19 82 16 79 16 76Z', BLUE, 18, 48, 0.95);
+    b.fill('M48 46C48 38 60 38 60 46Z', GOLD[0]);
+    b.line('M34 47V81M62 47V81', GOLD[0], 2.4);
+    b.form(box(74, 30, 32, 52, 3), RED, 76, 32, 0.95);
+    b.fill(box(80, 38, 20, 16, 2), SKY_PANE);
+    b.fill(box(70, 25, 40, 7, 2) + box(12, 82, 96, 6, 2), '#3d3a46');
+    b.fill(poly(4, 94, 12, 82, 16, 82, 16, 94), VALLEY.red);
+    b.fill(O(88, 94, 11) + O(56, 95, 9) + O(32, 95, 9), '#3d3a46');
+    b.fill(O(88, 94, 4.4) + O(56, 95, 3.6) + O(32, 95, 3.6), STEEL[0]);
+    b.line('M32 95H88', STEEL[0], 2.4);
+    b.fill(O(14, 62, 3.6), GOLD[2]);
+  },
+
+  plane: (b) => {
+    b.group('rotate(-14 60 60)', () => {
+      b.fill(poly(54, 56, 66, 56, 58, 30, 50, 30), STEEL[1]);
+      b.fill(poly(18, 58, 10, 30, 20, 30, 34, 54), VALLEY.red);
+      b.form('M12 60C12 54 18 51 28 51H92C104 51 114 56 114 61C114 66 104 70 92 70H28C18 70 12 66 12 60Z', WHITE, 16, 52, 0.96);
+      b.fill('M100 54C106 55 110 57 112 60H100Z', BLUE[1]);
+      b.fill(O(38, 59, 2.6) + O(48, 59, 2.6) + O(58, 59, 2.6) + O(68, 59, 2.6) + O(78, 59, 2.6) + O(88, 59, 2.6), SKY_PANE);
+      b.line('M16 65H108', BLUE[0], 2.6);
+      b.fill(poly(48, 64, 70, 64, 54, 96, 42, 96), STEEL[0]);
+      b.fill(box(52, 74, 14, 7, 3.5), STEEL[1]);
+      b.fill(poly(12, 62, 4, 72, 14, 72, 22, 64), STEEL[0]);
+    });
+  },
+
+  taxi: (b) => {
+    const t: Tone = ['#f5c330', '#c99a1c', '#fbe08a'];
+    b.ground(50, 60, 101);
+    b.form(box(52, 36, 18, 8, 2), ['#fbf3dc', '#d8c9a6', '#ffffff'], 53, 37, 0.9);
+    b.form('M12 82C12 74 17 70 25 69L38 51C40 47 44 45 49 45H75C80 45 84 47 87 51L98 67C106 69 110 74 110 81V87C110 90 108 92 105 92H15C13 92 12 90 12 88Z', t, 24, 52, 0.94);
+    b.fill('M41 54C42 51 44 50 47 50H58V67H33Z' + 'M62 50H74C77 50 79 51 81 54L90 67H62Z', SKY_PANE);
+    b.dash('M14 75H108', INK, 3.4, 3.4, 3.4);
+    b.dash('M14 78.4H108', INK, 3.4, 3.4, 3.4, 3.4);
+    b.line('M60 50V73M60 81V88', t[1], 1.8);
+    b.fill(O(34, 92, 12) + O(88, 92, 12), '#3d3a46');
+    b.fill(O(34, 92, 5) + O(88, 92, 5), STEEL[0]);
+    b.fill(oval(106, 70, 3, 3.6, 0), '#fff3c4');
+  },
+
+  bicycle: (b) => {
+    b.ground(48);
+    b.line('M32 64V100M14 82H50M19 69L45 95M45 69L19 95M90 64V100M72 82H108M77 69L103 95M103 69L77 95', '#c9ced6', 1.2);
+    b.line(O(32, 82, 18) + O(90, 82, 18), '#3d3a46', 4.4);
+    b.line('M32 82L52 82L76 56L48 56L32 82M48 56L52 82M76 56L90 82', VALLEY.red, 4.4);
+    b.line('M48 56L45 46M76 56L72 38', '#3d3a46', 3.6);
+    b.fill(oval(44, 45, 8, 3, -6), '#3d3a46');
+    b.line('M66 38H78', '#3d3a46', 4);
+    b.fill(O(52, 82, 4.2), GOLD[0]);
+    b.line('M48 88L56 76', '#3d3a46', 2.4);
+  },
+
+  ticket: (b) => {
+    b.ground(44, 60, 100);
+    b.group('rotate(-10 60 60)', () => {
+      const shape = 'M14 36H106V52A8 8 0 0 0 106 68V84H14V68A8 8 0 0 0 14 52Z';
+      b.form(shape, ['#f6dfa6', '#d9b56a', '#fbefcf'], 16, 38, 0.97);
+      b.fill('M82 36H106V52A8 8 0 0 0 106 68V84H82Z', VALLEY.red);
+      b.dash('M82 39V82', '#fbefcf', 2.4, 3, 3);
+      const p = starPoints(94, 60, 8, 0.45);
+      b.fill(poly(...p.flat()), GOLD[2]);
+      b.fill(box(26, 46, 44, 6, 3) + box(26, 58, 32, 5, 2.5) + box(26, 69, 38, 5, 2.5), '#d9b56a');
+    });
+  },
+
+  wolf: (b) => {
+    const t: Tone = ['#8e939c', '#686d77', '#b5b9c0'];
+    const pale = '#e6e3dc';
+    b.ground(46, 60);
+    b.fill('M92 56C103 60 107 72 103 88C99 81 94 73 88 67Z', t[1]);
+    b.line('M52 76L50 102M84 76L86 101', t[1], 6);
+    b.form('M38 62C38 52 46 48 58 48H80C90 48 94 54 94 62C94 72 88 78 78 78H52C44 78 38 72 38 62Z', t, 42, 50, 0.94);
+    b.fill('M44 72C56 79 72 79 90 72C88 76 84 78 78 78H52C48 78 46 76 44 72Z', pale);
+    b.line('M46 74L44 103M78 76L79 103', t[0], 6.5);
+    b.fill('M30 62C28 52 30 42 36 38L48 40C52 48 52 58 48 66Z', t[0]);
+    b.fill('M30 62C28 54 30 46 33 42C37 50 40 58 40 66Z', pale);
+    b.fill(poly(31, 33, 33, 18, 41, 30) + poly(38, 31, 42, 17, 47, 33), t[1]);
+    b.fill('M8 46C8 43 10 42 13 42L26 36C30 30 38 28 44 32C48 36 48 44 44 48C38 52 30 52 24 50L13 50C10 50 8 48 8 46Z', t[0]);
+    b.fill('M8 46C8 48 10 50 13 50L24 50C28 52 34 52 38 50C34 56 26 56 18 54C12 53 8 50 8 46Z', pale);
+    b.fill(O(8.5, 44.5, 2.6), INK);
+    b.fill(O(30, 39, 2.3), '#e9b84a');
+    b.fill(O(30.4, 39, 1.1), INK);
+  },
+
+  bear: (b) => {
+    const t: Tone = ['#8a5a3a', '#65402a', '#a9784f'];
+    b.ground(46, 60);
+    b.line('M56 84V100M90 84V100', t[1], 11);
+    b.form('M30 64C30 50 42 42 58 42C66 36 78 38 86 46C98 50 104 62 102 76C100 86 92 90 82 90H44C34 90 30 80 30 64Z', t, 40, 44, 0.94);
+    b.line('M42 84V101M78 86V101', t[0], 12);
+    b.fill(O(34, 50, 5.5), t[0]);
+    b.fill(O(34, 50, 2.6), t[1]);
+    b.fill('M12 66C12 56 20 50 30 50C40 50 46 58 46 66C46 74 40 80 30 80C24 80 20 78 16 74C13 72 12 69 12 66Z', t[0]);
+    b.fill(E(18, 70, 8, 6), '#c49a6c');
+    b.fill(O(11.5, 67, 3) + O(28, 61, 2.2), INK);
+    b.fill(oval(62, 48, 14, 3.4, -12), t[2]);
+  },
+
+  fox: (b) => {
+    const t: Tone = ['#e2742f', '#b5531c', '#f2a065'];
+    const white = '#fbf3e6';
+    const sock = '#4a2e22';
+    b.ground(46, 62);
+    b.fill('M84 66C98 58 112 64 113 78C113 88 105 94 95 92C100 86 98 76 90 74Z', t[0]);
+    b.fill('M113 78C113 88 105 94 95 92C101 90 105 86 107 80Z', white);
+    b.line('M46 76V102M56 78V101M74 78V101M82 76V102', sock, 5);
+    b.form('M38 64C38 55 46 52 56 52H78C86 52 90 58 90 64C90 72 84 78 76 78H50C42 78 38 72 38 64Z', t, 42, 54, 0.94);
+    b.fill('M38 64C38 70 42 76 48 77C50 70 48 62 44 56C40 57 38 60 38 64Z', white);
+    b.fill(poly(33, 42, 35, 24, 44, 38) + poly(40, 41, 46, 26, 50, 42), sock);
+    b.fill('M12 54L32 42C36 39 43 39 47 43C51 47 51 54 47 58C41 62 31 61 25 59Z', t[0]);
+    b.fill('M12 54C20 58 31 61 41 61C39 64 33 66 27 64C21 62 15 58 12 54Z', white);
+    b.fill(O(12.5, 54, 2.5) + O(31, 47, 2), INK);
+  },
+
+  deer: (b) => {
+    const t: Tone = ['#b8693a', '#8a4a24', '#d6905c'];
+    b.ground(40, 64);
+    b.line('M52 74L51 101M80 74L82 101', t[1], 4.5);
+    b.form('M42 60C42 52 48 48 58 48H80C88 48 92 54 92 60C92 68 88 74 80 74H54C46 74 42 68 42 60Z', t, 46, 50, 0.94);
+    b.fill(E(91, 59, 5, 7.5), '#f6eee2');
+    b.line('M48 72L46 102M84 72L86 102', t[0], 5);
+    b.line('M44 102H48M84 102H88M49 101H53M80 101H84', HOOF, 2.6);
+    b.fill('M44 58C42 48 38 38 34 30L44 26C48 36 52 46 54 52Z', t[0]);
+    b.line('M38 20L36 8M36.5 13L32 9M41 19L43 7', '#e2cfa8', 2.6);
+    b.fill('M18 38C14 36 14 32 18 30L30 22C34 20 40 20 44 24C46 28 44 32 40 34L28 40C24 41 21 40 18 38Z', t[0]);
+    b.fill(oval(46, 18, 8, 3.8, -40), t[0]);
+    b.fill(oval(46, 18, 5, 1.8, -40), '#e7b9a0');
+    b.fill(O(15.5, 34, 2.2) + O(33, 27, 2), INK);
+    b.fill(oval(66, 54, 11, 3, 0), t[2]);
+  },
+
+  gazelle: (b) => {
+    const t: Tone = ['#d9a866', '#b07f40', '#ecc88f'];
+    const stripe = '#6b4a2e';
+    b.ground(40, 64);
+    b.line('M54 72L53 101M82 72L84 101', t[1], 3.8);
+    b.form('M42 60C42 52 48 49 58 49H80C88 49 93 54 93 60C93 67 88 72 80 72H54C46 72 42 67 42 60Z', t, 46, 51, 0.94);
+    b.fill('M46 66C56 72 76 72 90 66C88 70 85 72 80 72H54C50 72 47 70 46 66Z', '#fbf6ee');
+    b.line('M48 64C58 68 76 68 88 64', stripe, 2.8);
+    b.line('M48 70L46 102M86 70L88 102', t[0], 4.2);
+    b.line('M93 56L97 63', stripe, 2.6);
+    b.fill('M44 58C42 48 39 38 36 30L45 27C48 36 52 46 54 52Z', t[0]);
+    b.line('M36 26C33 16 36 9 43 5M41 26C40 17 44 11 50 8', '#3d2f26', 3.2);
+    b.fill('M22 38C18 37 17 33 20 31L32 24C36 22 41 23 44 27C45 31 43 34 39 35L28 40Z', t[0]);
+    b.line('M22 34L36 27', '#fbf6ee', 1.6);
+    b.fill(oval(44, 23, 6.5, 2.6, -25), t[1]);
+    b.fill(O(19.5, 34, 1.8) + O(34, 27, 1.9), INK);
+  },
+
+  snake: (b) => {
+    const t: Tone = ['#6fb04a', '#4f8a34', '#a6d77a'];
+    b.ground(46);
+    const body = 'M106 96C96 102 76 102 60 100C40 98 24 94 26 86C28 78 50 77 70 79C86 80 92 72 84 64C76 57 62 60 58 48C56 42 58 36 62 32';
+    b.line(body, t[1], 14, ' transform="translate(1.6 1.6)"');
+    b.line(body, t[0], 13);
+    b.line(body, '#d9e88a', 4, ' stroke-dasharray="0.1 9"');
+    b.form(oval(68, 28, 13, 9, -14), t, 58, 22, 0.9);
+    b.fill(O(66, 24, 2.6) + O(74, 22, 2.6), '#ffffff');
+    b.fill(O(66.6, 24, 1.4) + O(74.6, 22, 1.4), INK);
+    b.line('M81 30L88 32M88 32L92 29M88 32L91 36', TONGUE, 1.8);
+  },
+
+  // the kid is cream and patched, smooth-coated and hornless but for buds: never the dark bearded goat, the woolly lamb or the striped gazelle
+  kid: (b) => {
+    const t: Tone = ['#f3e4cc', '#d3bc98', '#fbf3e4'];
+    const patch = '#a8703f';
+    b.ground(38, 62);
+    b.line('M60 72L59 101M82 72L84 101', t[1], 4.6);
+    b.line('M88 56L94 46', t[0], 4.6);
+    b.form('M48 62C48 55 54 51 62 51H80C87 51 91 56 91 62C91 69 87 74 80 74H60C52 74 48 69 48 62Z', t, 52, 53, 0.94);
+    b.fill('M66 51H79C83 56 82 64 76 67C70 69 65 63 66 51Z', patch);
+    b.line('M54 72L52 102M86 72L88 102', t[0], 4.8);
+    b.line('M50 102H55M57 101H62M82 101H87M86 102H91', HOOF, 2.6);
+    b.fill('M50 60C47 52 43 45 39 40L49 35C53 43 57 50 59 54Z', t[0]);
+    b.fill('M19 47C15 45 15 40 19 38L30 30C35 27 42 28 46 33C48 38 46 43 41 45L29 50C25 51 22 50 19 47Z', t[0]);
+    b.fill('M34 28C40 27 45 30 46 35C47 40 44 44 41 45C40 38 38 32 34 28Z', patch);
+    b.fill(oval(48, 42, 9, 3.6, 40) + oval(26, 36, 7, 3, -150), patch);
+    b.fill(oval(35, 27, 2, 3.2, -20) + oval(40, 27.5, 2, 3.2, -5), '#d9c39b');
+    b.fill(O(32, 37, 2.1), INK);
+    b.fill(O(17, 43, 1.7), TONGUE);
+  },
+
+  // the black tent of the summer pastures, woven of goat hair, long and low on its poles and ropes
+  tent: (b) => {
+    const t: Tone = ['#4a3e38', '#2e2622', '#76675c'];
+    b.ground(52, 60, 100);
+    b.line('M16 66L4 98M104 62L116 96M38 58L28 96M82 56L94 96', '#8a6a4a', 1.4);
+    b.line('M60 54V40', WOOD[0], 3);
+    b.form('M12 98L16 64C30 56 44 58 60 52C76 58 90 56 104 60L108 98Z', t, 16, 60, 0.97);
+    b.line('M17 74C40 68 80 68 105 72M15 86C40 82 80 82 107 86', t[2], 2);
+    b.line('M17 64C30 57 44 59 60 53C76 59 90 57 103 61', '#8f7f72', 2.4);
+    // the open front, dark inside by day and lit by the lamp within by evening
+    b.lit('M42 98L47 72H75L80 98Z', '#2a221f', LAMP);
+    b.fill(box(46, 90, 30, 8), VALLEY.red);
+    b.fill(diamond(61, 94, 5, 3), GOLD[0]);
+    b.fill(box(52, 82, 10, 8, 3), CREAM);
+  },
+
+  hand: (b) => {
+    const skin: Tone = ['#e8b48a', '#c98d63', '#f5d0b0'];
+    const d = box(38, 26, 10, 34, 5) + box(50, 16, 10.5, 42, 5.25) + box(62, 20, 10, 38, 5) + box(74, 30, 9, 30, 4.5) + 'M44 46C40 46 36 48 36 52V80C36 94 46 104 60 104C74 104 84 94 84 78V54C84 48 80 46 76 46Z' + oval(30, 72, 15, 6.5, -50);
+    b.form(d, skin, 42, 20, 0.95);
+    b.line('M46 70C54 74 66 74 74 68M46 84C54 88 62 88 70 84', skin[1], 2);
+    b.fill(oval(55, 22, 2.6, 4, 0), skin[2]);
+  },
+
+  ear: (b) => {
+    const skin: Tone = ['#e8b48a', '#c98d63', '#f5d0b0'];
+    b.form('M34 46C34 24 50 10 70 10C90 10 104 26 102 48C100 66 88 70 84 82C80 96 74 108 58 108C44 108 38 98 40 88C42 80 50 78 50 70C50 62 34 62 34 46Z', skin, 44, 18, 0.93);
+    b.fill('M50 46C50 32 60 24 70 24C82 24 88 34 88 44C88 56 78 60 74 70C72 76 66 78 62 74C60 70 64 66 66 62C70 56 76 52 76 44C76 38 72 34 68 34C62 34 58 40 58 46Z', skin[1]);
+    b.fill(oval(62, 60, 6, 9, 20), '#b47a52');
+    b.fill(oval(56, 20, 8, 3.4, -25), skin[2]);
+  },
+
+  nose: (b) => {
+    const skin: Tone = ['#e8b48a', '#c98d63', '#f5d0b0'];
+    b.form('M52 14C56 9 64 9 67 15L76 62C88 66 96 74 94 84C92 94 82 98 74 96C70 100 64 102 58 100C52 102 46 100 42 96C34 98 24 92 24 82C24 72 34 66 44 64Z', skin, 48, 20, 0.95);
+    b.fill('M60 14C63 30 66 46 70 62C74 70 72 80 64 84C70 76 70 68 64 62C60 46 58 30 60 14Z', skin[1]);
+    b.fill(oval(47, 88, 6, 3.4, 12) + oval(71, 88, 6, 3.4, -12), '#8e5a3a');
+    b.fill(oval(54, 76, 5, 3, -20), skin[2]);
+  },
+
+  tooth: (b) => {
+    b.form('M30 34C30 20 40 14 50 16C54 17 57 19 60 19C63 19 66 17 70 16C80 14 90 20 90 34C90 48 86 56 84 70C82 84 80 100 72 102C66 104 64 92 62 82C61 78 59 78 58 82C56 92 54 104 48 102C40 100 38 84 36 70C34 56 30 48 30 34Z', WHITE, 36, 20, 0.93);
+    b.fill(oval(42, 32, 4, 9, 20), '#ffffff');
+    const p = starPoints(96, 22, 9, 0.38);
+    b.fill(poly(...p.flat()), GOLD[2]);
+  },
+
+  foot: (b) => {
+    const skin: Tone = ['#e8b48a', '#c98d63', '#f5d0b0'];
+    const d = 'M50 48C58 42 74 44 80 54C86 66 82 78 80 90C78 102 70 110 60 110C50 110 44 102 44 92C44 82 48 76 46 66C45 58 44 52 50 48Z' + O(48, 34, 8.5) + O(62, 29, 6.5) + O(73, 31, 5.6) + O(82, 36, 5) + O(89, 43, 4.4);
+    b.group('rotate(-8 64 70)', () => {
+      b.form(d, skin, 44, 28, 0.94);
+      b.fill(oval(46, 32, 3, 3.6, 0), skin[2]);
+    });
+  },
+
+  medicine: (b) => {
+    const amber: Tone = ['#c9822e', '#9a5a1c', '#e8b066'];
+    b.ground(46, 62);
+    b.form(box(32, 44, 42, 58, 8), amber, 34, 46, 0.95);
+    b.fill(box(41, 34, 24, 12, 2), amber[1]);
+    b.form(box(37, 18, 32, 17, 4), WHITE, 38, 19, 0.92);
+    b.fill(box(37, 60, 32, 28, 3), CREAM);
+    b.fill('M53 66C56 71 59 74 59 77C59 80 56 82 53 82C50 82 47 80 47 77C47 74 50 71 53 66Z', '#e86f8a');
+    b.fill(box(36, 50, 4, 46, 2), amber[2]);
+    b.group('rotate(-22 92 92)', () => {
+      b.fill(box(64, 89, 22, 5, 2.5), STEEL[0]);
+      b.fill(E(96, 91.5, 12, 7), STEEL[1]);
+      b.fill(E(96, 91, 9, 4.6), '#e86f8a');
+    });
+    b.group('rotate(-25 22 96)', () => {
+      b.fill(box(10, 91, 12, 10, 5) + box(16, 91, 6, 10), VALLEY.red);
+      b.fill(box(22, 91, 12, 10, 5) + box(22, 91, 6, 10), '#fbf6ee');
+    });
+  },
+
+  drum: (b) => {
+    const red: Tone = [VALLEY.red, VALLEY.redDark, '#dc6b5c'];
+    b.ground(42);
+    b.form('M24 46V88C24 98 40 104 60 104C80 104 96 98 96 88V46Z', red, 28, 50, 0.97);
+    b.line('M26 52L38 88L50 52L62 92L74 52L86 88L94 54', GOLD[0], 2.4);
+    b.fill('M24 84C24 94 40 100 60 100C80 100 96 94 96 84V90C96 100 80 106 60 106C40 106 24 100 24 90Z', WOOD[1]);
+    b.fill(E(60, 46, 36, 10), WOOD[1]);
+    b.fill(E(60, 45, 33, 8.4), '#f6ead0');
+    b.line('M68 40C78 24 92 18 106 18', WOOD[0], 5);
+    b.fill(O(106, 18, 4), WOOD[1]);
+    b.line('M46 40L22 12', WOOD[2], 2.6);
+  },
+
+  wheat: (b) => {
+    const t: Tone = ['#e7b752', '#bf8a2c', '#f6d88a'];
+    b.ground(30);
+    // one ear, as the word is one: its grains in pairs up the stalk, each with its whisker
+    b.line('M60 104C60 92 59 80 60 70', t[1], 3);
+    let grains = '';
+    let awns = '';
+    for (let i = 0; i < 6; i++) {
+      const y = 68 - i * 7.5;
+      grains += oval(55.5, y, 4.4, 7, -22) + oval(64.5, y - 4, 4.4, 7, 22);
+      awns += `M52 ${y - 6}L46 ${y - 18}M68 ${y - 10}L74 ${y - 22}`;
+    }
+    grains += oval(60, 24, 3.4, 6.6, 0);
+    b.line(awns, t[2], 1.2);
+    b.fill(grains, t[1]);
+    b.fill(grains, t[0], ' transform="translate(-0.8 -0.8)"');
+    b.form('M60 100C48 90 44 78 46 64C53 75 58 86 61 96Z', LEAF, 48, 68, 0.9);
+  },
+
+  corn: (b) => {
+    const t: Tone = ['#f5c63c', '#d49c1f', '#fbe08a'];
+    b.ground(36);
+    b.group('rotate(-20 60 60)', () => {
+      b.form(box(46, 12, 28, 84, 14), t, 48, 16, 0.95);
+      b.line('M52 20V88M60 17V91M68 20V88', t[2], 5, ' stroke-dasharray="0.1 7.2"');
+      b.line('M71.5 24V84', t[1], 4.4, ' stroke-dasharray="0.1 7.2"');
+      b.form('M48 96C34 84 28 64 30 44C40 62 46 74 58 86Z', LEAF, 34, 50, 0.9);
+      b.form('M72 96C86 84 92 64 90 44C80 62 74 74 62 86Z', LEAF, 82, 54, 0.9);
+      b.fill('M44 108C46 94 52 86 60 80C68 86 74 94 76 108Z', LEAF[0]);
+    });
   },
 };
 
