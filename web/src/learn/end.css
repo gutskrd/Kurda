@@ -5,6 +5,9 @@
  * goal, the league, the mistakes — are in styles/learn.css, and the results'
  * arrival in styles/motion.css.
  *
+ * It is on the lesson's paper (styles/learn.css, the painted valley), in its
+ * colours: the valley's gold, green and the blue of Hamo's gate.
+ *
  * Phone first: everything here is drawn for a 375–430 point wide screen and
  * simply centred in the lesson's column on a wider one. Only transform and
  * opacity move, and base.css lands each movement at its end at once under
@@ -31,12 +34,9 @@
 }
 .lesson-results-title {
   margin: 4px 0 0;
-  color: var(--gold);
+  color: var(--vale-green-ink);
   font-weight: 700;
   line-height: 1.1;
-}
-:root[data-theme='light'] .lesson-results-title {
-  color: var(--gold-ink);
 }
 .lesson-results-sub {
   max-width: 32ch;
@@ -47,11 +47,13 @@
 }
 
 /*
- * Three cards side by side, each framed in its colour: a band holding the
- * label, over a bordered body with the icon and the number. Gold for the XP,
- * green for right first time, blue for the time. The band's words are dark
- * on the light colours of the dark scheme and white on the deep ones of the
- * light scheme; the number takes the colour itself, at a size that reads.
+ * Three cards side by side, each framed in its colour and standing on a
+ * deeper edge of it, as the lesson's cards do: a band holding the label, over
+ * a cream body with the icon and the number. Gold for the XP, the valley's
+ * green for right first time, the gate's blue for the time. The band's words
+ * are dark on gold and on the light colours of dusk, cream on the deep ones
+ * of the light scheme; the number takes the colour itself, at a size that
+ * reads.
  */
 .end-stats {
   display: grid;
@@ -66,26 +68,24 @@
   display: grid;
   grid-template-rows: auto 1fr;
   min-width: 0;
-  padding: 0 3px 3px;
+  margin-bottom: 3.5px;
+  padding: 0 2px 2px;
   border-radius: 16px;
   background: var(--stat);
+  box-shadow: 0 3.5px 0 color-mix(in srgb, var(--stat) 70%, var(--vale-ink));
 }
 .end-stat.is-accuracy {
-  --stat: var(--success);
-  --on-stat: #062312;
-  --stat-ink: var(--success);
+  --stat: var(--vale-green-fill);
+  --on-stat: var(--vale-on-fill);
+  --stat-ink: var(--vale-green-ink);
 }
 .end-stat.is-time {
-  --stat: var(--gems);
-  --on-stat: #03213b;
-  --stat-ink: var(--gems);
+  --stat: var(--vale-blue-fill);
+  --on-stat: var(--vale-on-fill);
+  --stat-ink: var(--vale-blue-ink);
 }
 :root[data-theme='light'] .end-stat.is-xp {
   --stat-ink: var(--gold-ink);
-}
-:root[data-theme='light'] .end-stat.is-accuracy,
-:root[data-theme='light'] .end-stat.is-time {
-  --on-stat: #ffffff;
 }
 .end-stat-label {
   display: grid;
@@ -115,8 +115,8 @@
   min-height: 58px;
   margin: 0;
   padding: 10px 6px;
-  border-radius: 13px;
-  background: var(--panel-bg);
+  border-radius: 14px;
+  background: var(--vale-card);
   color: var(--stat-ink);
   font-size: clamp(1.15rem, 5.4vw, 1.6rem);
   font-weight: 800;
@@ -671,16 +671,24 @@
 }
 .end-quests-title {
   margin: 0;
-  color: var(--gold);
+  color: var(--vale-green-ink);
   font-size: clamp(1.7rem, 7vw, 2.2rem);
   font-weight: 700;
   text-align: center;
 }
-:root[data-theme='light'] .end-quests-title {
-  color: var(--gold-ink);
-}
 .end-quests-title:focus {
   outline: none;
+}
+
+/* today's goal, the league, a new level: rows of cream card on the paper, the goal met in the green */
+.lesson .lesson-moment {
+  border: 1.5px solid var(--vale-line);
+  border-radius: var(--r-lg);
+  background: var(--vale-card);
+}
+.lesson .lesson-moment.is-goal {
+  border-color: var(--vale-green-line);
+  background: var(--vale-green-soft);
 }
 
 /* "Not now", beside Open chest: a whole fingertip, though it reads as a link */

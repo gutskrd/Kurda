@@ -7,11 +7,6 @@
  * letters that differ, the second try.
  */
 
-/* Soranî in a face made for Arabic script, so the joined forms are the real ones */
-.lesson [lang='ckb'] {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
-}
-
 /* ---- Learn: review, then the courses ------------------------------------------ */
 .learn-review {
   display: flex;
@@ -138,19 +133,208 @@
 
 /* ---- the lesson player -------------------------------------------------------- */
 /*
+ * The painted valley: a lesson sits on warm paper with a low line of pale
+ * hills behind its top, the country the road runs through seen from the gate.
+ * What can be pressed is a cream card standing on a darker edge; what is
+ * chosen is the pomegranate red, what is right the valley's green, and a miss
+ * a warm red rather than a grey. The dark scheme is the same valley at dusk.
+ *
+ * The colours are written on the root, though only a lesson uses them, so
+ * that the page under a phone's overscroll and the Tips dialog (drawn at the
+ * end of the page, outside the lesson) are on the same paper. Every text
+ * colour was checked against each ground it sits on: 4.5:1 or more, the
+ * closest noted beside it. Fills behind words name the words' colour too.
+ */
+:root {
+  --vale-paper: #1f1a16;
+  /* the action bar, a shade off the paper */
+  --vale-bar: #241e19;
+  --vale-card: #2a231d;
+  --vale-hover: #312921;
+  --vale-line: #3d342b;
+  --vale-edge: #4b4035;
+  /* a field's edge: 3:1 against a card, as a control's must be */
+  --vale-field-edge: #8a7b67;
+  /* 12.7:1 on a card */
+  --vale-ink: #f1e8d8;
+  --vale-ink-2: #ddd1bd;
+  /* 5.2:1 on a speaker's tinted line and on a number's chip, its closest */
+  --vale-muted: #b8a892;
+  --vale-chip: #3d342b;
+  /* the bar's empty track, and the shade along its top */
+  --vale-track: #342c25;
+  --vale-track-rim: #2a231d;
+  /* the pomegranate: a fill, and a step lighter as words (5.1:1 on the hills behind the top, its closest) */
+  --vale-red: #e0675a;
+  --vale-red-ink: #e8776a;
+  --vale-red-soft: #3a2520;
+  /* an answer that was not right, and its words (7:1) */
+  --vale-wrong-soft: #3f2420;
+  --vale-wrong-ink: #f0a397;
+  --vale-green: #7fb069;
+  /* 6.4:1 on the green sheet */
+  --vale-green-ink: #8fbd79;
+  --vale-green-soft: #26301f;
+  --vale-green-line: #3b4a30;
+  /* the words on a right answer (8:1), and on a pair already made (5.5:1) */
+  --vale-right-ink: #a8d192;
+  --vale-done-ink: #94ab84;
+  /* words and marks on the red and the green: the paper itself (5.1:1 on the red) */
+  --vale-on-fill: #1f1a16;
+  --vale-on-chip: #1f1a16;
+  --vale-red-fill: #e0675a;
+  --vale-red-lip: #a5463b;
+  --vale-green-fill: #7fb069;
+  --vale-green-lip: #57804a;
+  /* the blue of Hamo's gate, on the end of a lesson: a fill under the paper's dark (6.8:1), and as a number on a card (6.1:1) */
+  --vale-blue-fill: #7ea7cf;
+  --vale-blue-ink: #7ea7cf;
+  /* the main button: the ink as a fill at dusk, the paper's dark as its words (13.4:1) */
+  --vale-go: #f1e8d8;
+  --vale-go-hover: #e6dac6;
+  --vale-go-ink: #2a1d15;
+  --vale-go-lip: #a8977f;
+  --vale-go-off: #332b24;
+  --vale-go-off-ink: #8a7b67;
+  --vale-go-off-lip: #2b241e;
+  /* the verdict sheets: right, almost and not yet */
+  --vale-sheet-right: #232c1d;
+  --vale-sheet-almost: #312a19;
+  --vale-sheet-almost-line: #4d4126;
+  --vale-sheet-wrong: #33211c;
+  --vale-sheet-wrong-line: #4d2c26;
+  /* 5.8:1 on its sheet */
+  --vale-sheet-wrong-ink: #e98276;
+  /* a character's own corner of the lesson: a round portrait, and the low sun behind whoever speaks */
+  --vale-portrait: #352c24;
+  --vale-portrait-rim: #2a231d;
+  --vale-stage: #241e19;
+  --vale-sun: #33291f;
+  --vale-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23232319'/%3E%3Cstop offset='1' stop-color='%231f1a16'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23292730'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%23262a20'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
+}
+:root[data-theme='light'] {
+  --vale-paper: #fbf6ec;
+  --vale-bar: #fffaf1;
+  --vale-card: #fffdf8;
+  --vale-hover: #f8f1e4;
+  --vale-line: #e7dcc6;
+  --vale-edge: #dccdb0;
+  /* 3.3:1 against a card */
+  --vale-field-edge: #9c8a6c;
+  /* 12.6:1 on the paper */
+  --vale-ink: #3d2a1f;
+  --vale-ink-2: #5a4536;
+  /* 4.7:1 on the bar's empty track, its closest (4.9:1 on a number's chip and a speaker's blue line); 5.4:1 on the paper */
+  --vale-muted: #74624f;
+  --vale-chip: #f3ead8;
+  --vale-track: #efe5d2;
+  --vale-track-rim: #e3d6bd;
+  --vale-red: #c8483a;
+  /* the red as words is a step deeper: 5.2:1 on the paper, 4.6:1 on the hills behind the top */
+  --vale-red-ink: #b63f31;
+  --vale-red-soft: #fdf1ec;
+  --vale-wrong-soft: #fbe7e0;
+  /* 6.8:1 */
+  --vale-wrong-ink: #8f2f22;
+  --vale-green: #4f8a3c;
+  /* 4.6:1 on the green sheet, 4.8:1 on the paper */
+  --vale-green-ink: #3f7a32;
+  --vale-green-soft: #eef4e3;
+  --vale-green-line: #d4e4bf;
+  /* 6.7:1, and 4.9:1 */
+  --vale-right-ink: #2f5f24;
+  --vale-done-ink: #56704a;
+  /* cream on the deeper red and green of the buttons (5.3:1 and 4.6:1); white on the red of a chosen card's number (4.7:1) */
+  --vale-on-fill: #fff8ef;
+  --vale-on-chip: #ffffff;
+  --vale-red-fill: #b63f31;
+  --vale-red-lip: #86291e;
+  --vale-green-fill: #467f35;
+  --vale-green-lip: #2f5a23;
+  /* under cream (5.2:1), and on a card (5.4:1) */
+  --vale-blue-fill: #3d6c9a;
+  --vale-blue-ink: #3d6c9a;
+  --vale-go: #3d2a1f;
+  --vale-go-hover: #4b3527;
+  /* 12.9:1 */
+  --vale-go-ink: #fff8ef;
+  --vale-go-lip: #24170f;
+  --vale-go-off: #efe5d2;
+  --vale-go-off-ink: #b5a68c;
+  --vale-go-off-lip: #e2d4ba;
+  --vale-sheet-right: #eef4e3;
+  --vale-sheet-almost: #fbf1d8;
+  --vale-sheet-almost-line: #ecdba9;
+  --vale-sheet-wrong: #fbebe5;
+  --vale-sheet-wrong-line: #f0cfc4;
+  /* 5.6:1 */
+  --vale-sheet-wrong-ink: #a63a2d;
+  --vale-portrait: #fffaf0;
+  --vale-portrait-rim: #ffffff;
+  --vale-stage: #f7efe1;
+  --vale-sun: #f3e4c4;
+  --vale-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 120' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='n' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23edf2e0'/%3E%3Cstop offset='1' stop-color='%23fbf6ec'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 70 L40 52 L78 64 L120 40 L168 60 L210 38 L262 58 L300 44 L350 60 L390 50 V120 H0Z' fill='%23e6e8ee'/%3E%3Cpath d='M0 88 C60 74 110 92 170 80 C230 68 290 90 390 76 V120 H0Z' fill='%23e3ecd2'/%3E%3Cpath d='M0 104 C80 96 150 108 230 100 C300 94 350 104 390 98 V120 H0Z' fill='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/*
+ * Inside a lesson, and its Tips, the app's own names mean the valley's
+ * colours, so every part drawn from them — a button, a field, a note, a
+ * placeholder — is on the paper without a rule of its own.
+ */
+.lesson,
+.modal-panel:has(> .lesson-tips) {
+  --app-bg: var(--vale-paper);
+  --ink: var(--vale-ink);
+  --ink-2: var(--vale-ink-2);
+  --ink-3: var(--vale-muted);
+  --ink-4: var(--vale-muted);
+  --bg: var(--vale-card);
+  --surface: var(--vale-card);
+  --surface-solid: var(--vale-card);
+  --surface-2: color-mix(in srgb, var(--vale-ink) 7%, transparent);
+  --surface-3: color-mix(in srgb, var(--vale-ink) 12%, transparent);
+  --panel-bg: var(--vale-card);
+  --separator: var(--vale-line);
+  --border: var(--vale-line);
+  --border-strong: var(--vale-edge);
+  --input-bg: var(--vale-card);
+  --input-border: var(--vale-field-edge);
+  --primary: var(--vale-go);
+  --primary-hover: var(--vale-go-hover);
+  --primary-ink: var(--vale-go-ink);
+  --success: var(--vale-green-ink);
+  --success-soft: var(--vale-green-soft);
+  --danger: var(--vale-red-ink);
+  --danger-soft: var(--vale-wrong-soft);
+  --focus: color-mix(in srgb, var(--vale-ink) 65%, transparent);
+  /* the edge of what is pressed or said in a lesson: a tile, a speech bubble, a word's meanings */
+  --lesson-edge: var(--vale-edge);
+  color: var(--ink);
+}
+/* past the lesson's own edges too: the page a phone shows when it is pulled beyond its end */
+body:has(.lesson) {
+  background: var(--vale-paper);
+}
+
+/*
  * Alone on the screen (layouts/FocusLayout.tsx), so its top clears only a
  * phone's notch. A column the height of the screen: the lesson, then the
  * action bar at its foot (ActionBar.tsx) — at the bottom of the screen
- * however short the exercise, and stuck there while a long one scrolls.
+ * however short the exercise, and stuck there while a long one scrolls. The
+ * hills are only a picture on the paper, so nothing reads them out.
  */
 .lesson {
-  /* the edge of what is pressed or said in a lesson: a tile, a speech bubble, a word's meanings */
-  --lesson-edge: color-mix(in srgb, var(--ink) 26%, var(--app-bg));
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
   padding-top: calc(16px + env(safe-area-inset-top));
+  background: var(--vale-hills) center top / 100% calc(120px + env(safe-area-inset-top)) no-repeat, var(--vale-paper);
+}
+@media (min-width: 720px) {
+  .lesson {
+    background-size: 100% 150px, auto;
+  }
 }
 .lesson-body {
   flex: 1;
@@ -166,8 +350,8 @@ html:has(.lesson-bar) {
 .lesson-top {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 26px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 /* the bar takes the row, with the run named over it (Run.tsx) */
 .lesson-progress-wrap {
@@ -192,13 +376,15 @@ html:has(.lesson-bar) {
 [dir='rtl'] .lesson-run-label {
   transform-origin: 100% 100%;
 }
-/* the lesson's own bar is thicker than a course's, with a sheen along its top, and warms to gold through a run */
+/* the lesson's own bar is thicker than a course's, in the pomegranate red with a soft light along its top, and warms to gold through a run */
 .lesson-progress {
   height: 12px;
+  background: var(--vale-track);
+  box-shadow: inset 0 1.5px 0 var(--vale-track-rim);
 }
 .lesson-progress > span {
   overflow: hidden;
-  background: var(--success);
+  background: var(--vale-red);
   transition: background var(--dur) ease;
 }
 /* a light run along the fill each time it moves on (styles/motion.css) */
@@ -212,30 +398,68 @@ html:has(.lesson-bar) {
 .lesson-progress > span::after {
   content: '';
   position: absolute;
-  inset: 2px 8px auto;
+  inset: 2px 6px auto;
   height: 3px;
   border-radius: inherit;
-  background: color-mix(in srgb, #fff 35%, transparent);
+  background: color-mix(in srgb, #fff 30%, transparent);
 }
 .lesson-progress.is-run > span {
   background: var(--gold);
 }
+/* the way out and the Tips: cream on the paper, a round one and a pill */
 .lesson-leave {
+  position: relative;
   flex: none;
   display: inline-grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid var(--vale-line);
   border-radius: 50%;
-  color: var(--ink-2);
+  background: var(--vale-card);
+  color: var(--vale-muted);
+}
+/* a fingertip's reach, a little past the drawn circle */
+.lesson-leave::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
 }
 .lesson-leave:hover {
-  background: var(--surface-2);
+  border-color: var(--vale-edge);
   color: var(--ink);
+}
+.lesson-top .lesson-tips-btn {
+  flex: none;
+  border: 1.5px solid var(--vale-line);
+  background: var(--vale-card);
+  color: var(--ink);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+.lesson-top .lesson-tips-btn:hover:not(:disabled) {
+  border-color: var(--vale-edge);
+  background: var(--vale-card);
 }
 .lesson-stage {
   display: grid;
   gap: 20px;
+}
+/* the lesson's name over the question, small capitals in the red: close above the question, not a gap away */
+.lesson-kicker {
+  margin: 0 0 -16px;
+  color: var(--vale-red-ink);
+  font-size: var(--text-tab);
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+/* spaced letters would come apart in a script that joins them */
+[dir='rtl'] .lesson-kicker {
+  letter-spacing: normal;
 }
 .lesson-badge {
   justify-self: start;
@@ -254,20 +478,20 @@ html:has(.lesson-bar) {
 /* a short screen keeps the answer in view: a little less air between the parts */
 @media (max-height: 700px) {
   .lesson-top {
-    margin-bottom: 18px;
+    margin-bottom: 16px;
   }
   .lesson-exercise {
     gap: 14px;
   }
 }
-/* what to do, in big bold type: the first thing read on every exercise */
+/* what to do, in the display face: the first thing read on every exercise */
 .lesson-ask {
   margin: 0;
-  font-family: var(--font-sans);
-  font-size: clamp(1.45rem, 5.6vw, 1.85rem);
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 6.6vw, 1.875rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
   color: var(--ink);
 }
 /* the question takes the focus as it opens, for a screen reader: it is not a control, so it draws no ring */
@@ -432,8 +656,63 @@ html:has(.lesson-bar) {
 .tile.is-flying {
   z-index: 2;
 }
+/*
+ * In a lesson, a tile is a cream card: a fine edge, and under it a deeper
+ * edge of the same paper, 3.5px in all, that it is pressed onto. Chosen is
+ * the red, right the green, a miss a warm red; spent and dimmed stay quiet.
+ * (A game's tiles keep the app's own look.)
+ */
+.lesson .tile {
+  --lip: 2px;
+  --tile-edge: var(--vale-line);
+  --tile-lip: var(--vale-edge);
+  --tile-fill: var(--vale-card);
+  --tile-ink: var(--ink);
+  border-width: 1.5px;
+  border-bottom-color: var(--tile-lip);
+  border-radius: var(--r-lg);
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+@media (hover: hover) {
+  .lesson .tile.is-idle:hover:not(:disabled) {
+    --tile-fill: var(--vale-hover);
+    --tile-edge: var(--vale-edge);
+  }
+}
+.lesson .tile:focus-visible {
+  border-radius: var(--r-lg);
+}
+.lesson .tile.is-picked {
+  --tile-edge: var(--vale-red);
+  --tile-lip: var(--vale-red);
+  --tile-fill: var(--vale-red-soft);
+  --tile-ink: var(--ink);
+}
+.lesson .tile.is-right {
+  --tile-edge: var(--vale-green);
+  --tile-lip: var(--vale-green);
+  --tile-fill: var(--vale-green-soft);
+  --tile-ink: var(--vale-right-ink);
+}
+.lesson .tile.is-wrong {
+  --tile-edge: var(--vale-red-ink);
+  --tile-lip: var(--vale-red-ink);
+  --tile-fill: var(--vale-wrong-soft);
+  --tile-ink: var(--vale-wrong-ink);
+}
+/* a pair made: settled on its edge in a quiet green, done with */
+.lesson .tile.is-spent {
+  --tile-edge: var(--vale-green-line);
+  --tile-lip: var(--vale-green-line);
+  --tile-fill: var(--vale-green-soft);
+  --tile-ink: var(--vale-done-ink);
+}
+.lesson .tile.is-dim {
+  opacity: 0.55;
+}
 
-/* multiple choice: full-width tiles, the text centred between its key and its mark */
+/* multiple choice: full-width cards, the words after the number's round chip */
 .lesson-choices {
   display: grid;
   gap: 10px;
@@ -450,44 +729,76 @@ html:has(.lesson-bar) {
 .lesson-option {
   flex: 1;
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) 28px;
-  min-height: 60px;
-  padding: 10px 12px;
+  grid-template-columns: 26px minmax(0, 1fr);
+  justify-content: stretch;
+  gap: 12px;
+  min-height: 58px;
+  padding: 12px 14px;
+  text-align: start;
 }
+/*
+ * The chip at the start: the key that chooses the option, and once it is
+ * graded the tick or the cross in its place (the mark lies over the chip,
+ * which then shows only its colour). Chosen, it fills with the red.
+ */
 .lesson-option-key {
+  grid-column: 1;
+  grid-row: 1;
   display: inline-grid;
   place-items: center;
   width: 26px;
   height: 26px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-xs);
-  font-size: 0.78rem;
-  font-weight: 650;
-  color: var(--ink-3);
+  border-radius: 50%;
+  background: var(--vale-chip);
+  color: var(--vale-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-/* the keys are for a keyboard: a touch screen shows the words alone */
+.tile.is-picked .lesson-option-key {
+  background: var(--vale-red);
+  color: var(--vale-on-chip);
+}
+.tile.is-right .lesson-option-key {
+  background: var(--vale-green);
+  color: transparent;
+}
+.tile.is-wrong .lesson-option-key {
+  background: var(--vale-red);
+  color: transparent;
+}
+/* the keys are for a keyboard: on a touch screen the chip is an empty round, the red one a ring round a dot */
 @media (hover: none), (pointer: coarse) {
   .lesson-option-key {
-    visibility: hidden;
+    color: transparent;
   }
-}
-.tile.is-picked .lesson-option-key {
-  border-color: currentColor;
-  color: inherit;
+  .tile.is-picked .lesson-option-key {
+    background: radial-gradient(circle, var(--vale-on-chip) 0 4px, var(--vale-red) 4.5px);
+  }
 }
 .lesson-option-text {
   grid-column: 2;
+  grid-row: 1;
   min-width: 0;
+  /* beside its chip whichever way the option's own words run */
+  text-align: match-parent;
 }
 .lesson-option-mark {
-  grid-column: 3;
-  justify-self: end;
+  grid-column: 1;
+  grid-row: 1;
+  place-self: center;
   display: inline-flex;
+  color: var(--vale-on-chip);
+}
+.lesson-option-mark svg {
+  width: 16px;
+  height: 16px;
 }
 .lesson-hint {
   margin: 0;
   font-size: 0.86rem;
+  line-height: 1.45;
   color: var(--ink-3);
 }
 .lesson-hint--keys {
@@ -510,9 +821,16 @@ html:has(.lesson-bar) {
   display: grid;
   gap: 10px;
 }
+/* the field a card too, its Kurdish in the display face, big enough to see every mark on a letter */
 .lesson-input {
-  height: 56px;
-  font-size: 1.25rem;
+  height: 58px;
+  padding: 0 16px;
+  border-width: 1.5px;
+  border-radius: var(--r-lg);
+  background: var(--vale-card);
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
 }
 .lesson-input:read-only {
   border-color: var(--border);
@@ -523,20 +841,23 @@ html:has(.lesson-bar) {
   flex-wrap: wrap;
   gap: 6px;
 }
+/* a letter to add: a small card on its edge, as the answers are */
 .lesson-key {
   min-width: 44px;
   height: 44px;
   padding: 0 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-sm);
-  background: var(--bg);
+  border: 1.5px solid var(--vale-line);
+  border-bottom: 3.5px solid var(--vale-edge);
+  border-radius: var(--r-md);
+  background: var(--vale-card);
   color: var(--ink);
   font: inherit;
   font-size: 1.15rem;
+  font-weight: 600;
   cursor: pointer;
 }
 .lesson-key:hover:not(:disabled) {
-  background: var(--surface-2);
+  background: var(--vale-hover);
 }
 .lesson-key:disabled {
   opacity: 0.45;
@@ -559,8 +880,14 @@ html:has(.lesson-bar) {
 }
 .lesson-card {
   width: 100%;
-  min-height: 60px;
+  min-height: 58px;
   padding: 10px 30px;
+}
+/* the Kurdish cards in the display face, a little larger than their meanings */
+.lesson-match-col:first-child .lesson-card {
+  font-family: var(--font-display);
+  font-size: 1.1875rem;
+  font-weight: 700;
 }
 /* made but not yet checked (pairs made freely): edged in dashes, the pair's number on both cards */
 .lesson-card.is-paired {
@@ -588,7 +915,8 @@ html:has(.lesson-bar) {
   .lesson-match {
     gap: 8px;
   }
-  .lesson-card {
+  .lesson-card,
+  .lesson-match-col:first-child .lesson-card {
     padding-inline: 24px;
     font-size: 1rem;
   }
@@ -598,61 +926,107 @@ html:has(.lesson-bar) {
 }
 
 /*
- * A speech bubble (Bubble.tsx): what the character beside it says, its tail
- * on the side they stand on. Opaque, so it reads over a stage's backdrop.
+ * A speech bubble (Bubble.tsx): what the character beside it says, a cream
+ * card whose one sharp corner, at the foot of the start side, is the side
+ * they stand on. Opaque, so it reads over a stage.
  */
 .lesson-bubble {
   position: relative;
   justify-self: start;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   max-width: 100%;
   min-width: 0;
-  margin-inline-start: 10px;
-  padding: 12px 18px;
-  border: 2px solid var(--lesson-edge);
-  border-radius: var(--r-lg);
-  background: var(--app-bg);
-}
-.lesson-bubble::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  inset-inline-start: -9px;
-  width: 14px;
-  height: 14px;
-  border-inline-start: 2px solid var(--lesson-edge);
-  border-bottom: 2px solid var(--lesson-edge);
-  background: inherit;
-  transform: translateY(-50%) rotate(45deg);
-}
-[dir='rtl'] .lesson-bubble::before {
-  transform: translateY(-50%) rotate(-45deg);
+  padding: 12px 16px 13px;
+  border: 1.5px solid var(--vale-line);
+  border-radius: 18px;
+  border-end-start-radius: 6px;
+  background: var(--vale-card);
 }
 .lesson-bubble .lesson-prompt {
   min-width: 0;
-  font-size: clamp(1.15rem, 4.4vw, 1.6rem);
+  font-size: clamp(1rem, 2.6vw + 0.4rem, 1.45rem);
+  line-height: 1.32;
 }
-/* the speaker at the start of what is said: smaller than a lone button, its reach still a fingertip's */
+/* the speaker at the start of what is said: a round red button, its reach still a fingertip's */
 .lesson-bubble .lesson-play-round {
   position: relative;
-  width: 36px;
-  height: 36px;
-  margin-inline-start: -6px;
+  width: 34px;
+  height: 34px;
+  margin-inline-start: -4px;
   border-width: 0;
-  background: none;
+  background: var(--vale-red);
+  color: var(--vale-on-chip);
+}
+.lesson-bubble .lesson-play-round:hover:not(:disabled) {
+  background: var(--vale-red-ink);
+}
+.lesson-bubble .lesson-play-round.is-on {
+  background: var(--vale-red-ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--vale-red) 28%, transparent);
+}
+.lesson-bubble .lesson-play-round svg {
+  width: 18px;
+  height: 18px;
 }
 .lesson-bubble .lesson-play-round::after {
   content: '';
   position: absolute;
-  inset: -6px;
+  inset: -5px;
+}
+/* listening's bubble: the speaker and its waveform, in the red, level in the middle */
+.lesson-bubble.is-sound {
+  align-items: center;
 }
 @media (max-width: 480px) {
   .lesson-bubble {
-    gap: 8px;
-    padding: 10px 14px;
+    gap: 10px;
+    padding: 10px 14px 11px 12px;
   }
+}
+/*
+ * Whoever says it stands on warm paper beside the bubble, a pale sun behind
+ * their head (CharacterStage draws them; only its ground changes here): the
+ * stage grows with what is said beside them rather than letting a long
+ * prompt run out over the answers.
+ */
+.lesson .character-stage {
+  --sun-x: calc(var(--stage-spot, 45%) / 2);
+  height: auto;
+  min-height: var(--stage-h, 320px);
+  border: 1.5px solid var(--vale-line);
+  background:
+    radial-gradient(circle calc(var(--stage-h, 320px) * 0.34) at var(--sun-x) 42%, var(--vale-sun) 99%, transparent),
+    var(--vale-stage);
+}
+[dir='rtl'] .lesson .character-stage {
+  --sun-x: calc(100% - var(--stage-spot, 45%) / 2);
+}
+:root .lesson :is(.character-stage, .conversation-stage) > .character-stage-backdrop:is(.is-light, .is-dark) {
+  display: none;
+}
+/* a conversation's people stand together on the same paper, one wide low sun behind them */
+.lesson .conversation-stage {
+  border: 1.5px solid var(--vale-line);
+  background:
+    radial-gradient(ellipse 62% 58% at 50% 46%, var(--vale-sun) 98%, transparent),
+    var(--vale-stage);
+}
+/* what a speaking exercise asks, beside whoever says it first: in a bubble, as every other exercise's is */
+.lesson .character-stage-side > .lesson-prompt {
+  padding: 12px 16px 13px;
+  border: 1.5px solid var(--vale-line);
+  border-radius: 18px;
+  border-end-start-radius: 6px;
+  background: var(--vale-card);
+  font-size: clamp(1rem, 2.6vw + 0.4rem, 1.45rem);
+  line-height: 1.32;
+}
+.lesson .character-stage-side .lesson-listen .lesson-play-round {
+  border-width: 0;
+  background: var(--vale-red);
+  color: var(--vale-on-chip);
 }
 /* beside a character, a word's meanings opened from the bubble lie over the answer below, not under it */
 .lesson-exercise > .character-stage {
@@ -744,7 +1118,7 @@ html:has(.lesson-bar) {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--ink);
+  color: var(--vale-red-ink);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -757,7 +1131,7 @@ html:has(.lesson-bar) {
   transform: scaleX(-1);
 }
 .lesson-sound-play.is-on {
-  color: var(--gold-ink);
+  color: var(--ink);
 }
 .lesson-sound-play:focus-visible {
   border-radius: 8px;
@@ -825,6 +1199,11 @@ html:has(.lesson-bar) {
   min-height: calc(var(--row) * 2);
   background: linear-gradient(to bottom, transparent calc(var(--row) - 2px), var(--border-strong) calc(var(--row) - 2px)) 0 0 / 100% var(--row);
 }
+/* a lesson's tiles stand on a 2px lip, not 4px: the ruled lines come up to meet them */
+.lesson .lesson-answer-line {
+  --row: 58px;
+  background-image: linear-gradient(to bottom, transparent calc(var(--row) - 1.5px), var(--vale-edge) calc(var(--row) - 1.5px));
+}
 .lesson-bank {
   display: flex;
   flex-wrap: wrap;
@@ -847,6 +1226,19 @@ html:has(.lesson-bar) {
   font-size: 1.1rem;
   line-height: 1.25;
   user-select: none;
+}
+/* the words to lay are Kurdish: the display face, and a ghost the same size as the card that left it */
+.lesson .lesson-word-tile,
+.lesson .tile-ghost {
+  border-radius: 14px;
+  font-family: var(--font-display);
+  font-size: 1.1875rem;
+  font-weight: 700;
+}
+.lesson .tile-ghost {
+  margin-bottom: var(--lip, 2px);
+  border-width: 1.5px;
+  background: var(--vale-track);
 }
 .lesson-mode {
   justify-self: center;
@@ -923,8 +1315,8 @@ html:has(.lesson-bar) {
   list-style: none;
 }
 .lesson-line {
-  --line-tint: var(--surface-2);
-  --line-edge: var(--border);
+  --line-tint: var(--vale-card);
+  --line-edge: var(--vale-line);
   display: flex;
   align-items: flex-end;
   gap: 8px;
@@ -936,39 +1328,40 @@ html:has(.lesson-bar) {
   flex-direction: row-reverse;
   margin-inline-start: auto;
 }
+/* the others in tints of the valley mixed into the card: the blue gate, the pomegranate, the gold */
 .lesson-line.is-part-1 {
-  --line-tint: color-mix(in srgb, var(--gems) 16%, transparent);
-  --line-edge: color-mix(in srgb, var(--gems) 45%, transparent);
+  --line-tint: color-mix(in srgb, var(--gems) 12%, var(--vale-card));
+  --line-edge: color-mix(in srgb, var(--gems) 38%, var(--vale-card));
 }
 .lesson-line.is-part-2 {
-  --line-tint: color-mix(in srgb, var(--like) 14%, transparent);
-  --line-edge: color-mix(in srgb, var(--like) 45%, transparent);
+  --line-tint: color-mix(in srgb, var(--vale-red) 9%, var(--vale-card));
+  --line-edge: color-mix(in srgb, var(--vale-red) 38%, var(--vale-card));
 }
 .lesson-line.is-part-3 {
-  --line-tint: var(--gold-soft);
-  --line-edge: color-mix(in srgb, var(--gold) 45%, transparent);
+  --line-tint: color-mix(in srgb, var(--gold) 14%, var(--vale-card));
+  --line-edge: color-mix(in srgb, var(--gold) 45%, var(--vale-card));
 }
 /* the learner's own lines: their colour, the way a message they sent would be */
 .lesson-line.is-you {
-  --line-tint: color-mix(in srgb, var(--bubble-mine) 18%, transparent);
-  --line-edge: color-mix(in srgb, var(--bubble-mine) 50%, transparent);
+  --line-tint: color-mix(in srgb, var(--bubble-mine) 18%, var(--vale-card));
+  --line-edge: color-mix(in srgb, var(--bubble-mine) 50%, var(--vale-card));
 }
 .lesson-line-bubble {
   display: grid;
   gap: 2px;
   min-width: 0;
   padding: 8px 14px 10px;
-  border: 1px solid var(--line-edge);
-  border-radius: var(--r-lg);
-  border-end-start-radius: var(--r-xs);
+  border: 1.5px solid var(--line-edge);
+  border-radius: 18px;
+  border-end-start-radius: 6px;
   background: var(--line-tint);
   transition:
     border-color var(--dur) ease,
     box-shadow var(--dur) ease;
 }
 .lesson-line.is-end .lesson-line-bubble {
-  border-end-start-radius: var(--r-lg);
-  border-end-end-radius: var(--r-xs);
+  border-end-start-radius: 18px;
+  border-end-end-radius: 6px;
 }
 .lesson-line.is-heard .lesson-line-bubble {
   border-color: var(--ink);
@@ -980,7 +1373,9 @@ html:has(.lesson-bar) {
   color: var(--ink-3);
 }
 .lesson-line-text {
-  font-size: 1.1rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -1041,10 +1436,25 @@ html:has(.lesson-bar) {
   flex-wrap: wrap;
   gap: 8px;
 }
-/* the rating chosen, waiting for Check: ringed in ink, as a chosen option is */
-.lesson-rate .btn.is-selected {
-  border-color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--ink);
+/* how it went, three cards on their edge as the answers are; the one chosen in the red, waiting for Check */
+.lesson-rate .btn {
+  height: auto;
+  min-height: 46px;
+  padding: 8px 16px;
+  border: 1.5px solid var(--vale-line);
+  border-bottom: 3.5px solid var(--vale-edge);
+  border-radius: 14px;
+  background: var(--vale-card);
+  color: var(--ink);
+}
+.lesson-rate .btn:hover:not(:disabled) {
+  border-color: var(--vale-edge);
+  background: var(--vale-hover);
+}
+.lesson-rate .btn.is-selected,
+.lesson-rate .btn.is-selected:hover:not(:disabled) {
+  border-color: var(--vale-red);
+  background: var(--vale-red-soft);
 }
 
 /*
@@ -1054,12 +1464,16 @@ html:has(.lesson-bar) {
  * over the lesson), with Continue exactly where Check was.
  */
 .lesson-bar {
+  /* the one button's colours (`.lesson-bar-go`), which a verdict sheet changes for its own */
+  --go-fill: var(--vale-go);
+  --go-ink: var(--vale-go-ink);
+  --go-lip: var(--vale-go-lip);
   position: sticky;
   bottom: 0;
   z-index: 20;
-  border-top: 1px solid var(--separator);
-  background: var(--app-bg);
-  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1.5px solid var(--vale-line);
+  background: var(--vale-bar);
+  padding: 14px 16px calc(18px + env(safe-area-inset-bottom));
 }
 .lesson-bar-inner {
   display: grid;
@@ -1086,32 +1500,51 @@ html:has(.lesson-bar) {
 }
 /*
  * Check, Continue, the results' next step: one size, one place, and pressed
- * as a tile is — standing on a lip it sinks onto (`.tile`).
+ * as a tile is — standing on a deeper edge it sinks onto (`.tile`). Dark ink
+ * with cream words on the paper; the verdict's own colour once it is graded.
  */
 .lesson-bar-go {
-  --go-lip: color-mix(in srgb, var(--primary) 55%, var(--app-bg));
-  min-width: 160px;
+  min-width: 180px;
+  height: 54px;
   margin-inline-start: auto;
-  margin-bottom: 4px;
-  border-radius: var(--r-md);
-  box-shadow: 0 4px 0 var(--go-lip);
+  margin-bottom: 3.5px;
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--go-fill);
+  box-shadow: 0 3.5px 0 var(--go-lip);
+  color: var(--go-ink);
+  font-size: var(--text-body);
   font-weight: 800;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+}
+.lesson-bar-go:hover:not(:disabled) {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--go-fill) 90%, var(--vale-paper));
 }
 .lesson-bar-go:active:not(:disabled) {
-  transform: translateY(4px);
+  transform: translateY(3.5px);
   box-shadow: 0 0 0 var(--go-lip);
 }
 .lesson-bar-go:focus-visible {
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
 }
-/* nothing to check yet: flat and grey, not a faded white */
+/* nothing to check yet: the paper's own shade, not a faded ink */
 .lesson-bar-go:disabled {
   border-color: transparent;
-  background: var(--surface-2);
-  box-shadow: 0 4px 0 transparent;
-  color: var(--ink-4);
+  background: var(--vale-go-off);
+  box-shadow: 0 3.5px 0 var(--vale-go-off-lip);
+  color: var(--vale-go-off-ink);
   opacity: 1;
+}
+/* what else the bar holds: cream cards on the paper, or on the verdict's colour */
+.lesson-bar .btn-secondary {
+  border: 1.5px solid var(--vale-line);
+  background: var(--vale-card);
+  color: var(--ink);
+}
+.lesson-bar .btn-secondary:hover:not(:disabled) {
+  border-color: var(--vale-edge);
+  background: var(--vale-card);
 }
 .lesson-bar-note {
   display: flex;
@@ -1135,9 +1568,6 @@ html:has(.lesson-bar) {
     margin-inline-start: 0;
   }
 }
-.lesson-bar.is-sheet {
-  border-top-width: 2px;
-}
 /*
  * A lesson before it is here (learn/LessonPlaceholder.tsx): the frame above is
  * the lesson's own, so only what stands in for the answers and for the bar's
@@ -1148,10 +1578,11 @@ html:has(.lesson-bar) {
   gap: 12px;
 }
 .skeleton.lesson-placeholder-go {
-  width: 160px;
+  width: 180px;
+  height: 54px;
   margin-inline-start: auto;
-  margin-bottom: 4px;
-  border-radius: var(--r-md);
+  margin-bottom: 3.5px;
+  border-radius: var(--r-lg);
 }
 @media (max-width: 480px) {
   .skeleton.lesson-placeholder-go {
@@ -1159,38 +1590,44 @@ html:has(.lesson-bar) {
   }
 }
 /*
- * The verdict's colour, and what is written on it: the page's own ground on
- * green and red (dark on the dark page's light shades, light on the light
- * page's deep ones), and a dark brown on gold, which is light in both.
+ * The verdict's colour, and what is written on it: the sheet a pale wash of
+ * the valley's green, of gold or of a warm red, the verdict's words in its
+ * deep shade, and Continue filled with it on a darker edge — cream words on
+ * the light page's deep fills, the paper's dark on dusk's light ones, and a
+ * dark brown on gold, which is light in both.
  */
 .lesson-bar.is-right {
-  --verdict: var(--success);
-  --verdict-ink: var(--success);
-  --on-verdict: var(--app-bg);
-  border-top-color: color-mix(in srgb, var(--success) 55%, transparent);
-  background: linear-gradient(var(--success-soft), var(--success-soft)), var(--panel-bg);
+  --verdict: var(--vale-green);
+  --verdict-ink: var(--vale-green-ink);
+  --on-verdict: var(--vale-on-chip);
+  --go-fill: var(--vale-green-fill);
+  --go-ink: var(--vale-on-fill);
+  --go-lip: var(--vale-green-lip);
+  --portrait-ring: var(--vale-green-line);
+  border-top-color: var(--vale-green-line);
+  background: var(--vale-sheet-right);
 }
 .lesson-bar.is-almost {
   --verdict: var(--gold);
   --verdict-ink: var(--gold-ink);
   --on-verdict: #2a1f00;
-  border-top-color: color-mix(in srgb, var(--gold) 55%, transparent);
-  background: linear-gradient(var(--gold-soft), var(--gold-soft)), var(--panel-bg);
+  --go-fill: var(--gold);
+  --go-ink: #2a1f00;
+  --go-lip: color-mix(in srgb, var(--gold) 62%, #3d2a1f);
+  --portrait-ring: var(--vale-sheet-almost-line);
+  border-top-color: var(--vale-sheet-almost-line);
+  background: var(--vale-sheet-almost);
 }
 .lesson-bar.is-notyet {
-  --verdict: var(--danger);
-  --verdict-ink: var(--danger);
-  --on-verdict: var(--app-bg);
-  border-top-color: color-mix(in srgb, var(--danger) 55%, transparent);
-  background: linear-gradient(var(--danger-soft), var(--danger-soft)), var(--panel-bg);
-}
-/* Continue takes the verdict's colour, on a lip of its own darker shade */
-.lesson-bar.is-sheet .lesson-bar-go,
-.lesson-bar.is-sheet .lesson-bar-go:hover:not(:disabled) {
-  --go-lip: color-mix(in srgb, var(--verdict) 62%, #000);
-  border-color: var(--verdict);
-  background: var(--verdict);
-  color: var(--on-verdict);
+  --verdict: var(--vale-red);
+  --verdict-ink: var(--vale-sheet-wrong-ink);
+  --on-verdict: var(--vale-on-chip);
+  --go-fill: var(--vale-red-fill);
+  --go-ink: var(--vale-on-fill);
+  --go-lip: var(--vale-red-lip);
+  --portrait-ring: var(--vale-sheet-wrong-line);
+  border-top-color: var(--vale-sheet-wrong-line);
+  background: var(--vale-sheet-wrong);
 }
 
 /* after an answer: the sheet's words, with the character standing on its floor at the start */
@@ -1223,6 +1660,8 @@ html:has(.lesson-bar) {
  * On a phone the character stands beside the verdict alone, and what follows
  * it — the two answers set against each other, the notes — takes the sheet's
  * whole width, rather than a column beside him too narrow for a sentence.
+ * Hevalo's round portrait (below) sits beside the verdict that way on every
+ * screen, level with its words.
  */
 @media (max-width: 480px) {
   .lesson-sheet.has-face {
@@ -1244,7 +1683,57 @@ html:has(.lesson-bar) {
     grid-column: 1 / -1;
   }
 }
-/* the verdict: a round badge and big bold words in its colour, the run at the end */
+.lesson-sheet:has(> .lesson-feedback-face > .hevalo-window) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px 14px;
+}
+.lesson-sheet:has(> .lesson-feedback-face > .hevalo-window) .lesson-sheet-text {
+  display: contents;
+}
+.lesson-sheet:has(> .lesson-feedback-face > .hevalo-window) .lesson-feedback-face {
+  grid-row: 1;
+}
+.lesson-sheet:has(> .lesson-feedback-face > .hevalo-window) .lesson-verdict {
+  align-self: center;
+  min-height: 0;
+  margin-bottom: 0;
+}
+.lesson-sheet:has(> .lesson-feedback-face > .hevalo-window) .lesson-sheet-text > :not(.lesson-verdict) {
+  grid-column: 1 / -1;
+}
+/*
+ * Hevalo, when he stands in beside the verdict, looks in at a small round
+ * window: the frame's paper and its rim, he alone in it, rising into it from
+ * below as he rises over his sill (HevaloWindow.tsx), the room around him
+ * left out.
+ */
+.lesson-feedback-face:has(> .hevalo-window) {
+  position: relative;
+  align-self: center;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  border: 2.5px solid var(--vale-portrait-rim);
+  border-radius: 50%;
+  background: var(--vale-portrait);
+  box-shadow: 0 0 0 1.5px var(--portrait-ring, var(--vale-edge));
+  isolation: isolate;
+}
+.lesson-feedback-face > .hevalo-window {
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  translate: -50% 0;
+}
+.lesson-feedback-face .hevalo-window-art {
+  visibility: hidden;
+}
+/* beside his portrait the verdict is his face and its words: the round badge would be a third thing saying it */
+.lesson-sheet:has(> .lesson-feedback-face > .hevalo-window) .lesson-verdict-mark {
+  display: none;
+}
+/* the verdict: a round badge and words in the display face in its colour, the run at the end */
 .lesson-verdict {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -1252,9 +1741,10 @@ html:has(.lesson-bar) {
   gap: 8px 12px;
   margin: 0;
   color: var(--verdict-ink);
-  font-size: clamp(1.3rem, 5vw, 1.55rem);
-  font-weight: 800;
-  line-height: 1.2;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 6vw, 1.6rem);
+  font-weight: 700;
+  line-height: 1.15;
 }
 .lesson-verdict-words {
   display: inline-flex;
@@ -1265,6 +1755,7 @@ html:has(.lesson-bar) {
 }
 /* what the Kurdish praise means, small, beside it */
 .lesson-praise-gloss {
+  font-family: var(--font-sans);
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--ink-3);
@@ -1276,7 +1767,8 @@ html:has(.lesson-bar) {
   gap: 4px;
   padding: 3px 10px;
   border-radius: var(--r-pill);
-  background: var(--surface-2);
+  background: var(--vale-card);
+  font-family: var(--font-sans);
   color: var(--gold-ink);
   font-size: 0.75rem;
   font-weight: 700;
@@ -1382,10 +1874,11 @@ html:has(.lesson-bar) {
 .lesson-goal-bar {
   flex: 1 1 100%;
   height: 8px;
+  background: var(--vale-track);
 }
 .lesson-goal-bar > span {
   width: 100%;
-  background: var(--success);
+  background: var(--vale-green);
   transform: scaleX(var(--to, 0));
   transform-origin: left;
 }
@@ -1439,7 +1932,8 @@ html:has(.lesson-bar) {
 }
 .lesson-mistakes-title {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 .lesson-results-back {
   font-size: 0.92rem;
@@ -1456,8 +1950,9 @@ html:has(.lesson-bar) {
   display: grid;
   gap: 4px;
   padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border: 1.5px solid var(--vale-line);
+  border-radius: var(--r-lg);
+  background: var(--vale-card);
 }
 .lesson-mistake-prompt {
   font-size: 0.9rem;
@@ -1468,4 +1963,32 @@ html:has(.lesson-bar) {
 }
 .lesson-mistake-answer strong {
   color: var(--ink);
+}
+
+/* the Tips, over the lesson: on its paper, the note a card on it */
+.modal-panel:has(> .lesson-tips) {
+  border: 1.5px solid var(--vale-line);
+  background: var(--vale-paper);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.lesson-tips .grammar-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.lesson-tips .grammar-note {
+  border: 1.5px solid var(--vale-line);
+  border-radius: var(--r-lg);
+  background: var(--vale-card);
+}
+
+/*
+ * Soranî in a face made for Arabic script, so the joined forms are the real
+ * ones — last of the lesson's rules, so it wins over the display face set on
+ * a card, a field or a line above, and reaches the word tiles laid under a
+ * line marked as Soranî.
+ */
+.lesson [lang='ckb'],
+.lesson [lang='ckb'] :is(.tile, .tile-ghost) {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
 }

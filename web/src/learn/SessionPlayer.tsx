@@ -145,8 +145,8 @@ function ExerciseView(props: ExerciseProps): React.JSX.Element | null {
 /**
  * The lesson's bar: it slides to each new value on the out-curve, a light
  * running along it as it does (styles/motion.css), and warms to gold while a
- * run is shown, going back to green on a miss. The run itself is named over
- * it (`RunLabel`).
+ * run is shown, going back to the lesson's red on a miss. The run itself is
+ * named over it (`RunLabel`).
  */
 function ProgressBar({ value, label, run }: { value: number; label: string; run: number }): React.JSX.Element {
   const pct = Math.round(value * 100);
@@ -560,7 +560,7 @@ export function SessionPlayer({
           </Link>
           <ProgressBar value={progress(state)} label={t('lesson.progress')} run={run} />
           {grammarMd && (
-            <Button variant="ghost" size="sm" onClick={() => setTips(true)}>
+            <Button variant="ghost" size="sm" className="lesson-tips-btn" onClick={() => setTips(true)}>
               {t('lesson.tips')}
             </Button>
           )}
@@ -583,6 +583,10 @@ export function SessionPlayer({
         ) : state.status !== 'finished' && ex ? (
           <div className="lesson-stage">
             {reask && <p className="lesson-badge">{t('lesson.secondTry')}</p>}
+            {/* the lesson's name over every question, as a line of small capitals; the page's h1 already says it to a screen reader */}
+            <p className="lesson-kicker" aria-hidden="true">
+              {heading}
+            </p>
             <ExerciseView
               // each turn starts afresh — a second try too
               key={`exercise-${state.index}`}
@@ -668,8 +672,11 @@ export function SessionPlayer({
 
       {grammarMd && (
         <Modal open={tips} onClose={() => setTips(false)} label={t('lesson.tips')}>
-          <h2 className="grammar-title">{t('lesson.tips')}</h2>
-          <GrammarNote source={grammarMd} />
+          {/* the dialog is drawn at the end of the page, outside the lesson: this is how it knows to be on the lesson's paper */}
+          <div className="lesson-tips">
+            <h2 className="grammar-title">{t('lesson.tips')}</h2>
+            <GrammarNote source={grammarMd} />
+          </div>
         </Modal>
       )}
     </div>
