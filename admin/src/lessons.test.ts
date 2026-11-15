@@ -185,7 +185,7 @@ describe('a conversation in the editor', () => {
 });
 
 describe('an item that says what it asks', () => {
-  const mc = (payload: Record<string, unknown>): Exercise => ({ type: 'multiple_choice', payload: { prompt: 'Silav!', options: ['Hello!', 'Goodbye!'], correctIndex: 0, ...payload } });
+  const mc = (payload: Record<string, unknown>): Exercise => ({ position: 1, type: 'multiple_choice', payload: { prompt: 'Silav!', options: ['Hello!', 'Goodbye!'], correctIndex: 0, ...payload } });
 
   it('takes only an ask its kind can make, a short cue and new words written as word and meaning', () => {
     expect(exerciseIssues(mc({ ask: 'meaning', cue: 'at the gate', new: [{ ku: 'silav', en: 'hello' }] }))).toEqual([]);
