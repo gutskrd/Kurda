@@ -10,10 +10,8 @@ import {
   pathSignpostSvg,
   pathStonesSvg,
   pathStopSvg,
-  praiseWords,
   trailStones,
   type PathBox,
-  type PathHost,
   type PathLand,
   type PathStopLook,
   type PathUnit,
@@ -27,12 +25,12 @@ import type { SkillNode } from './types';
 
 /**
  * The world the website's lesson path walks through, drawn from @kurda/shared
- * (path-world.ts for where things stand, art/path-land.ts for the drawings),
- * as the phone draws it: each unit's land under its stops, the stepping
- * stones between them, the unit's landmark and its one small moving part,
- * the person of the course who waits by the unit, and the learner's own
- * picture standing on the stop to do now. The rail of units beside the path
- * is here too.
+ * (path-world.ts for where things stand, art/path-land.ts and
+ * art/path-landmark.ts for the painted valley), as the phone draws it: each
+ * unit's land under its stops with its road, the stretches walked so far in
+ * warm dirt, the unit's landmark and its one small moving part, and the
+ * learner's own picture standing on the stop to do now. The rail of units
+ * beside the path is here too.
  *
  * A unit far from the screen (`near` false) is only its ground's colour, so a
  * course of twelve units draws two or three lands at a time; the stylesheet
@@ -245,67 +243,6 @@ export function LearnerToken({ x, y, hop }: { x: number; y: number; hop: { dx: n
     </li>
   );
 }
-
-/**
- * Hamo or Xezal beside the unit's last stop, whole, as Hevalo stands by the
- * current one. While their unit is in view and the learner has been through
- * some of it, now and then they say a word of praise from the course's own
- * list (shared `praiseWords`), in the course's Kurdish, in a bubble over them.
- * A picture, left out of the reading order: the stops say everything.
- */
-export function PathHost({
-  host,
-  box,
-  flip,
-  speak,
-  dialect,
-}: {
-  host: PathHost;
-  box: PathBox;
-  flip: boolean;
-  /** in view, with something to praise */
-  speak: boolean;
-  dialect: string | null | undefined;
-}): React.JSX.Element {
-  const words = praiseWords(dialect);
-  const [said, setSaid] = useState<string | null>(null);
-  const turn = useRef(0);
-  useEffect(() => {
-    if (!speak || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
-      setSaid(null);
-      return;
-    }
-    let hide: number | undefined;
-    const say = (): void => {
-      setSaid(words[turn.current % words.length]!);
-      turn.current += 1;
-      hide = window.setTimeout(() => setSaid(null), 3200);
-    };
-    const first = window.setTimeout(say, 1600);
-    const every = window.setInterval(say, 9000);
-    return () => {
-      window.clearTimeout(first);
-      window.clearTimeout(hide);
-      window.clearInterval(every);
-    };
-  }, [speak, words]);
-  const lang = dialect && /sor|ckb/i.test(dialect) ? 'ckb' : 'ku';
-  return (
-    <li className="lp-host" aria-hidden="true" data-host={host} style={{ top: box.y, '--hx': `${box.x}px`, width: box.w, height: box.h } as React.CSSProperties}>
-      {said && (
-        <span className="lp-host-say" lang={lang}>
-          {said}
-        </span>
-      )}
-      <span className="lp-host-figure">
-        <SpeakingCharacter speaker={host} audio={null} crop="full" size={HOST_SIZE} decorative mirrored={flip} />
-      </span>
-    </li>
-  );
-}
-
-/** How tall the people beside the path are drawn, whole, as Hevalo stands. */
-const HOST_SIZE = 132;
 
 /** A unit as the rail lists it. */
 export interface RailUnit {

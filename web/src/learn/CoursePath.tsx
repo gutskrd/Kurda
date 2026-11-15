@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   PATH_GEOMETRY,
   PATH_RETURN,
-  hostBox,
   lessonPath,
   lessonXpRange,
   localeDir,
@@ -32,7 +31,7 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { GrammarNote } from './GrammarNote';
 import { courseProgress, lessonStates } from './map';
-import { LearnerToken, PathHost, SideLights, StopArt, UnitLand, UnitRail, UpcomingUnit, useDarkPage, useUnitsOnScreen, useWidth, type RailUnit } from './PathWorld';
+import { LearnerToken, SideLights, StopArt, UnitLand, UnitRail, UpcomingUnit, useDarkPage, useUnitsOnScreen, useWidth, type RailUnit } from './PathWorld';
 import { preloadLesson } from './preloadLesson';
 import type { CourseMap as Map, CourseSummary, PracticeDue, SkillNode } from './types';
 import './path.css';
@@ -428,8 +427,8 @@ function PathMascot({ x, y, flip, cheer, onPress }: { x: number; y: number; flip
   );
 }
 
-/** Hevalo drawn whole beside the path, as tall as the course's people stand (PathWorld). */
-const MASCOT_SIZE = 132;
+/** Hevalo drawn whole beside the path, at the scale of the valley's trees and houses rather than towering over them. */
+const MASCOT_SIZE = 104;
 
 /** The units whose stops have risen into place already, by course, while the tab is open: each rises once. */
 const RISEN = new Set<string>();
@@ -438,13 +437,13 @@ const RISEN = new Set<string>();
  * A course's lesson path: on the course's own page (pages/CourseMap.tsx, with
  * its header) and as the home of Learn (pages/Learn.tsx, without).
  *
- * Each unit opens with a banner in its own colour — its name, what it covers,
- * how far through it you are, and its guide when it has grammar notes — and
- * its skills follow as round stops down one gently winding line: done ones
- * filled with a check (a star once strong, arrows round once a refresh would
- * help), the one to do now raised with a ring for its lessons, a "Start" over
- * it and Hevalo beside it, open ones outlined, and the rest grey with a
- * padlock. Review sits beside the current skill when words are due, and a
+ * Each unit opens with a cream card — its name in its own colour, what it
+ * covers, how far through it you are, and its guide when it has grammar notes
+ * — and its skills follow as round tokens down the road through its land:
+ * done ones gold with a check (a star once strong, arrows round once a
+ * refresh would help), the one to do now raised in the unit's colour with
+ * lights for its lessons, a "Start" over it and Hevalo beside it, open ones
+ * cream, and the rest field stone with a padlock. Review sits beside the current skill when words are due, and a
  * trophy closes every unit. Tapping a stop opens a small card under it: its
  * lessons, how far along it is, one thing to do, and what it pays.
  *
@@ -730,8 +729,6 @@ export function CoursePath({
           const mascotAt = playing && step! < 4 && was ? was : current;
           const here = unit.stops.find((p) => p.stop.key === mascotAt);
           const spot = here ? mascotSpot(here) : null;
-          const last = unit.stops[unit.stops.length - 1];
-          const host = near && width > 0 ? hostBox(unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y })), width, here ? { key: here.stop.key, x: here.x, y: here.y } : null) : null;
           return (
             <section
               key={unit.unitId}
@@ -759,15 +756,6 @@ export function CoursePath({
               {unit.stops.length > 0 && (
                 <ol className="lp-path" style={{ height: unit.height }}>
                   <UnitLand unit={unit} land={land} width={width} rtl={rtl} dark={dark} near={near} fresh={fresh} />
-                  {host && last && (
-                    <PathHost
-                      host={land.host}
-                      box={host.box}
-                      flip={sign * host.box.x > sign * last.x}
-                      speak={seen && (unit.done > 0 || unit.unitId === unitOfCurrent)}
-                      dialect={dialect}
-                    />
-                  )}
                   {spot && here && (
                     <PathMascot x={spot.x} y={spot.y} flip={sign * spot.x > sign * here.x} cheer={cheer} onPress={() => current && setOpenKey(current)} />
                   )}

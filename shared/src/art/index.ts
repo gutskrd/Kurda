@@ -161,24 +161,18 @@ export {
   type SeasonFrameShineOptions,
 } from './frames.js';
 export {
-  PATH_LANDMARK_LOOP,
   PATH_STOP_ART,
   PATH_STOP_LOOKS,
   PATH_STOP_TONES,
   pathGroundColour,
   pathLandSvg,
-  pathLandmarkSvg,
-  pathLoopSvg,
   pathSignpostSvg,
   pathStonesSvg,
   pathStopSvg,
   type PathSignpostOptions,
   type PathLandOptions,
-  type PathLandmarkOptions,
-  type PathLoop,
-  type PathLoopKind,
-  type PathLoopOptions,
   type PathStonesOptions,
   type PathStopLook,
   type PathStopOptions,
 } from './path-land.js';
+export { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg, type PathLandmarkOptions, type PathLoop, type PathLoopKind, type PathLoopOptions } from './path-landmark.js';
