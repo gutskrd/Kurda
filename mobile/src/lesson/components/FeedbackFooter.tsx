@@ -3,7 +3,7 @@ import { Animated, StyleSheet, Text, View, type TextStyle, type ViewStyle } from
 import { Pressable } from '../../theme/Pressable';
 import { isSoraniDialect, letterDiff, type DiffSegment, type ExerciseType, type RecordingVoice } from '@kurda/shared';
 import { radii, spacing, typography } from '../../theme/tokens';
-import { useTheme } from '../../theme/ThemeProvider';
+import { PaletteScope, useTheme } from '../../theme/ThemeProvider';
 import { ClayButton } from '../../theme/glass';
 import { TileButton } from '../../theme/Tile';
 import { display } from '../../theme/fonts';
@@ -21,9 +21,18 @@ import { useDirection } from '../../reports/direction';
 import { autoplayOn } from '../../feedback/autoplayPref';
 import { CHARACTER_SIZE, SpeakingCharacter, knownVoice, type CharacterReaction } from '../../characters/SpeakingCharacter';
 import { HevaloWindow } from '../../characters/HevaloWindow';
+import { useValley } from '../ValleyScope';
+import { CARD, PORTRAIT_PALETTES } from '../valley';
 
 /** How tall Hevalo's window is in the sheet when he comes in to react: a little smaller than a voice's character. */
 const STAND_IN = 96;
+
+/** Hevalo's round portrait beside the verdict, and the verdict's mark pinned to its foot. */
+const PORTRAIT = 58;
+const MARK = 24;
+
+/** The hairline along the top of the bar, between the lesson and its foot. */
+const EDGE = CARD.edge;
 
 /** Answers that are Kurdish typed by the learner, set letter by letter against the right one (as the website does). */
 const TYPED: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening']);
@@ -56,26 +65,28 @@ interface Props {
 }
 
 /**
- * The lesson's action bar. While answering it holds Check, and the way to put
- * off what cannot be done here and now; once graded it becomes the verdict
- * sheet, sliding up on a spring in the verdict's tint with Continue exactly
- * where Check was — so the thumb never moves and the rhythm is tap, tap. An
- * exercise that answers itself (pairs answered as they are made) has no Check.
+ * The lesson's action bar: cream, along the foot of the paper under a
+ * hairline. While answering it holds Check, and the way to put off what
+ * cannot be done here and now; once graded it becomes the verdict bar,
+ * sliding up on a spring in the verdict's green or warm red with Continue
+ * exactly where Check was — so the thumb never moves and the rhythm is tap,
+ * tap. An exercise that answers itself (pairs answered as they are made) has
+ * no Check.
  *
- * The sheet says the verdict in words and a mark — a round badge with a check
- * that pops in and draws itself for a right answer, or a quiet cross — never
- * colour alone, and a screen reader hears it as one sentence. A typed answer
- * is set above the right one with the letters that differ marked, and what
- * kind of slip it was in a line under them; a miss says it will come back, and
- * offers the skill's tips. The native recording is there to hear, and says
- * itself a moment after the verdict unless that is turned off (Settings →
- * Sounds).
+ * The verdict is said beside Hevalo in a small round portrait, in the display
+ * face, in words and a mark — a round badge at the portrait's foot with a
+ * check that pops in and draws itself for a right answer, or a quiet cross —
+ * never colour alone, and a screen reader hears it as one sentence. A typed
+ * answer is set above the right one with the letters that differ marked, and
+ * what kind of slip it was in a line under them; a miss says it will come
+ * back, and offers the skill's tips. The native recording is there to hear,
+ * and says itself a moment after the verdict unless that is turned off
+ * (Settings → Sounds).
  *
  * Hevalo comes in to react only where nobody else is on screen to, popping
- * up in his window: on the first answer, on a miss (curious, never sad) and
- * at a run's milestone.
- * Under Reduce Motion the sheet fades in where it is, and the badge does not
- * pop.
+ * up in his window in place of his portrait: on the first answer, on a miss
+ * (curious, never sad) and at a run's milestone. Under Reduce Motion the bar
+ * fades in where it is, and the badge does not pop.
  *
  * Both sit clear of the home indicator: the lesson is full screen, and the
  * bottom edge of a phone without a home button belongs to the system's swipe.
@@ -97,6 +108,7 @@ export function FeedbackFooter({
   putAway = null,
 }: Props) {
   const { colors } = useTheme();
+  const valley = useValley();
   const { t } = useI18n();
   const reduce = useReducedMotion();
   const slide = useRef(new Animated.Value(0)).current;
@@ -135,8 +147,10 @@ export function FeedbackFooter({
   }, [feedback, loaded, play]);
 
   if (!feedback) {
+    // nothing in it (pairs that answer themselves): no bar, only the room at the foot
+    const bare = answersItself && !putAway && !putOff;
     return (
-      <View style={[styles.footer, { paddingBottom: bottom }]}>
+      <View style={[styles.footer, { paddingBottom: bottom }, !bare && { backgroundColor: valley.bar, borderTopColor: valley.line, borderTopWidth: EDGE }]}>
         {putAway ? (
           // said where the learner is looking, for long enough to change their mind
           <View style={[styles.aside, { flexDirection: dir.row }]} accessibilityLiveRegion="polite">
@@ -176,10 +190,18 @@ export function FeedbackFooter({
   const diff = typed ? letterDiff(feedback.given!, feedback.correction!) : null;
   const voice = staged ? null : knownVoice(feedback.modelAudioVoice);
 
+  // Hevalo in his window, when he comes in to react; otherwise in his round portrait, quiet, with the verdict's mark
+  const inWindow = !!standIn && !voice;
   const verdictBlock = (
     <View style={styles.verdict}>
       <View style={[styles.titleRow, { flexDirection: dir.row }]}>
-        <Badge good={good} colour={tint} />
+        {inWindow ? (
+          <Badge good={good} />
+        ) : (
+          <Portrait good={good} end={dir.rtl}>
+            <Badge good={good} size={MARK} rim={valley.card} />
+          </Portrait>
+        )}
         <View style={styles.titles}>
           <Text accessibilityLiveRegion="polite" accessibilityLabel={spoken} style={[styles.bannerTitle, praise ? kurdish : dir.text, { color: tint }]}>
             {headline}
@@ -212,12 +234,16 @@ export function FeedbackFooter({
       onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
       style={[
         styles.banner,
-        { paddingBottom: bottom, backgroundColor: good ? colors.successFill : colors.dangerFill },
+        {
+          paddingBottom: bottom,
+          backgroundColor: good ? valley.greenWash : valley.wrongWash,
+          borderTopColor: good ? valley.greenLine : valley.wrongLine,
+        },
         { opacity: reduce ? slide : 1, transform: [{ translateY }] },
       ]}
       testID="lesson-verdict"
     >
-      {standIn && !voice ? (
+      {inWindow ? (
         <View style={[styles.withFace, { flexDirection: dir.row }]}>
           {/* he reacts beside the verdict, which says it in words: nothing for a screen reader to hear twice */}
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="lesson-stand-in">
@@ -255,9 +281,32 @@ export function FeedbackFooter({
   );
 }
 
-/** The badge beside the verdict: a check that pops in and draws itself, or a cross that simply fades in. */
-function Badge({ good, colour }: { good: boolean; colour: string }): React.JSX.Element {
-  const { colors } = useTheme();
+/**
+ * Hevalo, head and shoulders in a small round portrait on a cream rim, ringed
+ * in the verdict's colour, with the verdict's mark pinned to its foot on the
+ * side the words are. Quiet: the words beside him say the verdict, so a screen
+ * reader passes him by, and he reacts only when he comes in at his window
+ * instead.
+ */
+function Portrait({ good, end, children }: { good: boolean; end: boolean; children: React.ReactNode }): React.JSX.Element {
+  const valley = useValley();
+  return (
+    <View style={styles.portraitWrap} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="lesson-portrait">
+      <View style={[styles.portrait, { backgroundColor: valley.card, borderColor: good ? valley.greenLine : valley.wrongLine }]}>
+        <View style={[styles.portraitFace, { backgroundColor: valley.portrait }]}>
+          <PaletteScope palettes={PORTRAIT_PALETTES}>
+            <SpeakingCharacter speaker="hevalo" crop="bust" size={PORTRAIT - 8} player={null} playing={false} quiet />
+          </PaletteScope>
+        </View>
+      </View>
+      <View style={[styles.portraitMark, end ? styles.markStart : styles.markEnd]}>{children}</View>
+    </View>
+  );
+}
+
+/** The verdict's mark: a check that pops in and draws itself, or a cross that simply fades in; on a `rim` where it sits on a picture. */
+function Badge({ good, size = 32, rim }: { good: boolean; size?: number; rim?: string }): React.JSX.Element {
+  const valley = useValley();
   const reduce = useReducedMotion();
   const p = useRef(new Animated.Value(reduce ? 1 : 0)).current;
   useEffect(() => {
@@ -271,13 +320,19 @@ function Badge({ good, colour }: { good: boolean; colour: string }): React.JSX.E
   }, [good, reduce, p]);
   const scale = good && !reduce ? p.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) : 1;
   const opacity = p.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
+  const mark = Math.round(size * 0.56);
+  const ink = good ? valley.onGreen : valley.onWrong;
   return (
     <Animated.View
-      style={[styles.badge, { backgroundColor: colour, opacity, transform: [{ scale }] }]}
+      style={[
+        styles.badge,
+        { width: size, height: size, backgroundColor: good ? valley.green : valley.wrong, opacity, transform: [{ scale }] },
+        rim !== undefined && { borderWidth: 2, borderColor: rim },
+      ]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      {good ? <DrawnCheck size={18} color={colors.textOnPrimary} delayMs={VERDICT_TIMING.actAtMs + 80} /> : <Icon name="close" size={18} color={colors.textOnPrimary} />}
+      {good ? <DrawnCheck size={mark} color={ink} delayMs={VERDICT_TIMING.actAtMs + 80} /> : <Icon name="close" size={mark} color={ink} />}
     </Animated.View>
   );
 }
@@ -347,7 +402,7 @@ function HearIt({
 }
 
 const styles = StyleSheet.create({
-  footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.sm },
+  footer: { paddingHorizontal: spacing.md, paddingTop: spacing.md - 2, gap: spacing.sm },
   aside: { alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET },
   centred: { justifyContent: 'center' },
   asideText: { flexShrink: 1, fontSize: typography.sizes.sm },
@@ -356,18 +411,24 @@ const styles = StyleSheet.create({
   undo: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textDecorationLine: 'underline' },
   pressed: { opacity: pressedDim },
   banner: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    gap: spacing.md,
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    gap: spacing.md - 4,
+    borderTopWidth: EDGE,
   },
   withFace: { alignItems: 'flex-end', gap: spacing.md },
   verdict: { flex: 1, gap: spacing.sm },
   titleRow: { alignItems: 'center', gap: spacing.sm + 4 },
-  badge: { width: 32, height: 32, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  badge: { borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  portraitWrap: { width: PORTRAIT, height: PORTRAIT },
+  // a cream rim, ringed outside in the verdict's colour
+  portrait: { flex: 1, borderRadius: radii.pill, borderWidth: EDGE, padding: 2.5 },
+  portraitFace: { flex: 1, borderRadius: radii.pill, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' },
+  portraitMark: { position: 'absolute', bottom: -4 },
+  markEnd: { right: -6 },
+  markStart: { left: -6 },
   titles: { flexShrink: 1 },
-  bannerTitle: { ...display(typography.sizes.xl) },
+  bannerTitle: { ...display(typography.sizes.xl - 4) },
   gloss: { fontSize: typography.sizes.xs },
   answer: { gap: 2 },
   answerLabel: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

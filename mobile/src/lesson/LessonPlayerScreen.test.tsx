@@ -130,6 +130,51 @@ describe('a lesson that cannot reach the server', () => {
   });
 });
 
+describe('the lesson’s name', () => {
+  const map = {
+    course: { id: 'c1', title: 'Kurmancî' },
+    units: [
+      {
+        unitId: 'u1',
+        title: 'At the gate',
+        skills: [
+          {
+            skillId: 's1',
+            level: 1,
+            title: 'Silav',
+            state: 'unlocked',
+            strength: 0,
+            hasGrammar: false,
+            firstLessonId: 'l1',
+            lessons: [{ lessonId: 'l1', position: 1, title: 'Hamo at the blue gate', completed: false }],
+          },
+        ],
+      },
+    ],
+  };
+
+  // read from the course's map beside the session, and written over the question, which keeps its place as the heading
+  it('is written over each question, from the course the lesson was opened from', async () => {
+    testAuth.client = fakeClient({ ...standing, 'GET /lessons/l1/session': ok(view), 'GET /courses/c1/map': ok(map) });
+    renderWithProviders(<LessonPlayerScreen lessonId="l1" courseId="c1" onExit={() => undefined} />);
+    expect(await screen.findByText('Hamo at the blue gate')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Choose the right answer' })).toBeTruthy();
+    expect(screen.getByTestId('lesson-hills')).toBeTruthy();
+  });
+
+  it('is left out where there is no course to name it from, or the course cannot be read', async () => {
+    testAuth.client = fakeClient({ ...standing, 'GET /lessons/l1/session': ok(view), 'GET /courses/c1/map': serverDown });
+    const shown = renderWithProviders(<LessonPlayerScreen lessonId="l1" courseId="c1" onExit={() => undefined} />);
+    expect(await screen.findByRole('radio', { name: 'av' })).toBeTruthy();
+    await waitFor(() => expect(screen.queryByTestId('lesson-title')).toBeNull());
+    shown.unmount();
+
+    renderWithProviders(<SessionPlayer view={view} paths={paths} onExit={() => undefined} kind="practice" />);
+    expect(await screen.findByRole('radio', { name: 'av' })).toBeTruthy();
+    expect(screen.queryByTestId('lesson-title')).toBeNull();
+  });
+});
+
 describe('a run of right answers', () => {
   // the chime climbs with each one, and from the third the banner says how many
   it('is heard climbing and, from the third, named in the banner', async () => {

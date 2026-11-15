@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { SvgXml } from 'react-native-svg';
@@ -16,10 +16,9 @@ import {
   pathSignpostSvg,
   pathStonesSvg,
   pathStopSvg,
-  praiseWords,
   trailStones,
   type PathBox,
-  type PathHost,
+  type PathGround,
   type PathLand,
   type PathLandmark,
   type PathStopLook,
@@ -31,10 +30,9 @@ import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useDirection } from '../reports/direction';
-import { timing, useEnter } from '../theme/animate';
+import { useEnter } from '../theme/animate';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Icon } from '../theme/Icon';
-import { duration } from '../theme/motion';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -114,7 +112,7 @@ export const UnitLand = memo(function UnitLand({
       {trail?.ahead ? <SvgXml xml={trail.ahead} width={width} height={unit.height} style={StyleSheet.absoluteFill} /> : null}
       {trail?.walked ? <SvgXml xml={trail.walked} width={width} height={unit.height} style={StyleSheet.absoluteFill} /> : null}
       {trail?.fresh ? <FreshStones xml={trail.fresh} width={width} height={unit.height} /> : null}
-      {near && width > 0 ? <Landmark landmark={land.landmark} box={box} left={width / 2 + sign * box.x - box.w / 2} dark={dark} live={live} /> : null}
+      {near && width > 0 ? <Landmark landmark={land.landmark} ground={land.ground} box={box} left={width / 2 + sign * box.x - box.w / 2} dark={dark} live={live} /> : null}
     </View>
   );
 });
@@ -130,8 +128,22 @@ function FreshStones({ xml, width, height }: { xml: string; width: number; heigh
 }
 
 /** A unit's landmark, and over it its loop: a kilim or a flag stirring, steam or smoke rising, water rippling, the fire, a bee, a sign. */
-function Landmark({ landmark, box, left, dark, live }: { landmark: PathLandmark; box: PathBox; left: number; dark: boolean; live: boolean }): React.JSX.Element {
-  const xml = useMemo(() => pathLandmarkSvg({ landmark, dark, size: box.w }), [landmark, dark, box.w]);
+function Landmark({
+  landmark,
+  ground,
+  box,
+  left,
+  dark,
+  live,
+}: {
+  landmark: PathLandmark;
+  ground: PathGround;
+  box: PathBox;
+  left: number;
+  dark: boolean;
+  live: boolean;
+}): React.JSX.Element {
+  const xml = useMemo(() => pathLandmarkSvg({ landmark, ground, dark, size: box.w }), [landmark, ground, dark, box.w]);
   const loop = PATH_LANDMARK_LOOP[landmark];
   const s = box.w / 120;
   const sprite = useMemo(() => pathLoopSvg({ kind: loop.kind, dark, size: loop.w * s }), [loop, dark, s]);
@@ -258,83 +270,6 @@ export function LearnerToken({
 }
 
 /**
- * Hamo or Xezal beside the unit's last stop, whole, as Hevalo stands by the
- * current one. While their unit is in view and the learner has been through
- * some of it, now and then they say a word of praise from the course's own
- * list (shared `praiseWords`), in the course's Kurdish, in a bubble over them.
- * They are a picture: the stops say everything, so a screen reader passes
- * them by.
- */
-export function PathHostView({
-  host,
-  box,
-  left,
-  flip,
-  live,
-  praise,
-  dialect,
-}: {
-  host: PathHost;
-  box: PathBox;
-  left: number;
-  flip: boolean;
-  live: boolean;
-  /** what they may say: they have something to praise */
-  praise: boolean;
-  dialect: string | null | undefined;
-}): React.JSX.Element {
-  const { colors, scheme } = useTheme();
-  const words = praiseWords(dialect);
-  const [said, setSaid] = useState<string | null>(null);
-  const shown = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (!live || !praise) {
-      setSaid(null);
-      return;
-    }
-    let turn = 0;
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const say = (): void => {
-      setSaid(words[turn % words.length]!);
-      turn += 1;
-      timing(shown, 1, duration.base).start();
-      timers.push(
-        setTimeout(() => {
-          timing(shown, 0, duration.base).start(() => setSaid(null));
-        }, PATH_MOTION.sayForMs),
-      );
-    };
-    const first = setTimeout(say, 1600);
-    const every = setInterval(say, PATH_MOTION.sayEveryMs);
-    return () => {
-      clearTimeout(first);
-      clearInterval(every);
-      timers.forEach(clearTimeout);
-    };
-  }, [live, praise, words, shown]);
-  const tall = box.h - BUBBLE_ROOM;
-  return (
-    <View
-      style={[styles.host, { left, top: box.y, width: box.w, height: box.h }]}
-      pointerEvents="box-none"
-      aria-hidden
-      testID={`lp-host-${host}`}
-    >
-      {said ? (
-        <Animated.View style={[styles.bubble, { opacity: shown, backgroundColor: colors.surfaceRaised, borderColor: scheme === 'dark' ? '#000000' : '#4a2a1a' }]}>
-          <Text style={[styles.bubbleText, { color: colors.textPrimary }]} numberOfLines={1}>
-            {said}
-          </Text>
-        </Animated.View>
-      ) : null}
-      <View style={[styles.hostFigure, { top: BUBBLE_ROOM }]}>
-        <SpeakingCharacter speaker={host} player={null} playing={false} crop="full" height={tall} flip={flip} />
-      </View>
-    </View>
-  );
-}
-
-/**
  * Where the path stops for now: a signpost pointing on up the road, the next
  * unit's number and name, and that it is on its way. On the road, whose
  * chapters go online one by one as Hamo records them, Hamo stands by the
@@ -395,9 +330,6 @@ export function UpcomingSign({ upcoming, live }: { upcoming: UpcomingUnit; live:
 /** The signpost's size, and how tall Hamo stands by it: a little smaller than beside a unit, as he is further up the road. */
 const SIGN = 96;
 const NEXT_HOST = 104;
-
-/** The room over a person for their bubble (shared `PATH_SCENERY.bubble`). */
-const BUBBLE_ROOM = 44;
 
 /** A unit as the rail lists it. */
 export interface RailUnit {
@@ -491,18 +423,6 @@ const styles = StyleSheet.create({
   token: { position: 'absolute', alignItems: 'center' },
   tokenRing: { borderRadius: radii.pill, borderWidth: TOKEN.ring, padding: 1, overflow: 'hidden' },
   stem: { width: 4, height: TOKEN.stem, borderBottomLeftRadius: 2, borderBottomRightRadius: 2 },
-  host: { position: 'absolute', alignItems: 'center' },
-  hostFigure: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  bubble: {
-    position: 'absolute',
-    top: 0,
-    minHeight: 32,
-    paddingHorizontal: spacing.sm + 2,
-    borderRadius: radii.md,
-    borderWidth: 2,
-    justifyContent: 'center',
-  },
-  bubbleText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   rail: { paddingBottom: spacing.lg },
   railRow: { alignItems: 'center', gap: spacing.sm + 4, minHeight: MIN_TOUCH_TARGET + 12, paddingHorizontal: spacing.xs },
   railMark: { width: 28, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },

@@ -95,20 +95,20 @@
 .lp-banner {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3) var(--space-4);
-  padding: var(--space-5) var(--space-5) var(--space-5) var(--space-6);
-  border-radius: var(--r-xl);
-  background: var(--u-fill);
-  color: var(--u-ink);
-  /* outlined in the world's one ink, on its darker lip, as the stops are */
-  border: 2px solid #3a2016;
-  box-shadow: 0 5px 0 var(--u-lip), 0 5px 0 2px #3a2016;
+  padding: var(--space-4) var(--space-5);
+  border-radius: 18px;
+  /* the valley's paper by evening: a warm night card, its words light */
+  background: #2a231d;
+  color: #f1e8d8;
+  box-shadow: 0 4px 0 #1a1512;
 }
 :root[data-theme='light'] .lp-banner {
-  border-color: #4a2a1a;
-  box-shadow: 0 5px 0 var(--u-lip), 0 5px 0 2px #4a2a1a;
+  background: #fffaf0;
+  color: #3d2a1f;
+  box-shadow: 0 4px 0 #e6d6b4;
 }
 .lp-banner-text {
   display: grid;
@@ -119,21 +119,26 @@
 .lp-banner-eyebrow {
   margin: 0;
   font-size: var(--text-caption);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  /* no fainter than 0.9: white at 0.86 on the light meadow fell to 4.3:1 */
-  opacity: 0.9;
+  /* the chapter's own colour, deep on the cream card by day and light on the night card */
+  color: var(--u-text);
 }
 .lp-banner-title {
   margin: 0;
-  font-size: var(--text-section);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.15;
   color: inherit;
 }
 .lp-banner-topics {
   margin: 2px 0 0;
   font-size: var(--text-secondary);
-  opacity: 0.9;
+  color: #b8a892;
+}
+:root[data-theme='light'] .lp-banner-topics {
+  color: #7b6a58;
 }
 .lp-banner-side {
   display: flex;
@@ -143,9 +148,9 @@
 }
 .lp-banner-count {
   font-size: var(--text-caption);
-  font-weight: 650;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  opacity: 0.9;
+  color: inherit;
 }
 /* ---- where the path stops for now ------------------------------------------- */
 /* the next unit, still being made: a signpost on up the road, and on the road Hamo beside it, recording */
@@ -366,10 +371,10 @@
  * Stops are placed by @kurda/shared's `lessonPath`: `top` from it, and `--x`,
  * how far a stop leans from the middle toward the end of the line. Placing
  * them from the logical start makes a right-to-left page lean the other way.
- * Under them each unit's land (learn/PathWorld.tsx): its ground, its stepping
- * stones and its landmark, drawn by @kurda/shared's art/path-land.ts in the
- * outlined, cel-shaded look the village has, and tucked a little under the
- * unit's banner.
+ * Under them each unit's land (learn/PathWorld.tsx): its ground, the road
+ * walked so far and its landmark, drawn by @kurda/shared's art/path-land.ts
+ * and art/path-landmark.ts as the painted valley the owner chose, and tucked
+ * a little under the unit's banner.
  */
 .lp-path {
   position: relative;
@@ -473,15 +478,18 @@
 }
 /* a unit far from the screen: its stops are plain rounds until it comes near */
 .lp-node:not(.is-drawn) .lp-node-face {
-  inset: 4px 0 16px;
+  inset: 4px 0 12px;
   border-radius: 50%;
   background: var(--lp-rest);
-  box-shadow: 0 8px 0 var(--lp-rest-lip);
+  box-shadow: 0 6px 0 var(--lp-rest-lip);
 }
-.lp-node.is-done:not(.is-drawn) .lp-node-face,
+.lp-node.is-done:not(.is-drawn) .lp-node-face {
+  background: #e9a93b;
+  box-shadow: 0 6px 0 #b8781f;
+}
 .lp-node.is-current:not(.is-drawn) .lp-node-face {
   background: var(--u-fill);
-  box-shadow: 0 8px 0 var(--u-lip);
+  box-shadow: 0 6px 0 var(--u-lip);
 }
 .lp-node-glyph {
   position: absolute;
@@ -510,15 +518,17 @@
   line-height: 1;
 }
 
-/* the glyph on the face, in the colour the face needs */
-.lp-node.is-done .lp-node-glyph,
+/* the glyph on the face, in the colour the face needs: cream on a finished stop's gold, the chapter's ink on its own colour */
+.lp-node.is-done .lp-node-glyph {
+  color: #fffaf0;
+}
 .lp-node.is-current .lp-node-glyph {
   color: var(--u-ink);
 }
-/* on an open stop's parchment: deep by day; by evening the parchment stays light, so the unit's own ink */
+/* on an open stop's cream: deep by day; by evening the cream stays light, so the valley's ink */
 .lp-node.is-available .lp-node-glyph,
 .lp-node.is-review .lp-node-glyph {
-  color: var(--u-ink);
+  color: #3d2a1f;
 }
 :root[data-theme='light'] .lp-node.is-available .lp-node-glyph,
 :root[data-theme='light'] .lp-node.is-review .lp-node-glyph {
@@ -526,10 +536,10 @@
 }
 /* on a closed stop's field stone */
 .lp-node.is-locked .lp-node-glyph {
-  color: #e2e3e8;
+  color: #d6d2dc;
 }
 :root[data-theme='light'] .lp-node.is-locked .lp-node-glyph {
-  color: #6a6252;
+  color: #857861;
 }
 .lp-node-badge {
   position: absolute;
@@ -547,6 +557,8 @@
 
 /* the stop to do now: in a soft pool of its unit's light, its lessons as lights along its side */
 .lp-glow {
+  /* the stop's own base draws its ring of light on the road now */
+  display: none;
   position: absolute;
   inset-inline-start: -30px;
   top: 14px;
@@ -569,12 +581,10 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 0 1.5px #3a2016;
+  background: rgba(0, 0, 0, 0.35);
 }
 :root[data-theme='light'] .lp-light {
-  background: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 0 0 1.5px #4a2a1a;
+  background: rgba(58, 42, 18, 0.28);
 }
 .lp-light.is-lit {
   background: var(--gold);
@@ -627,20 +637,22 @@
   align-items: center;
   min-height: 40px;
   padding: 0 var(--space-4);
-  border: 2px solid #3a2016;
-  border-radius: var(--r-md);
-  background: var(--u-fill);
-  color: var(--u-ink);
+  border: 0;
+  border-radius: var(--r-pill);
+  /* by evening a cream pill with the valley's ink; by day the ink pill with cream words */
+  background: #fffaf0;
+  color: #3d2a1f;
   font-size: var(--text-secondary);
-  font-weight: 750;
-  letter-spacing: 0.04em;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
-  box-shadow: 0 4px 0 var(--u-lip), 0 4px 0 2px #3a2016;
+  box-shadow: 0 3px 0 #d6c7a6;
 }
 :root[data-theme='light'] .lp-callout {
-  border-color: #4a2a1a;
-  box-shadow: 0 4px 0 var(--u-lip), 0 4px 0 2px #4a2a1a;
+  background: #3d2a1f;
+  color: #fffaf0;
+  box-shadow: 0 3px 0 #24170f;
 }
 [dir='rtl'] .lp-callout {
   translate: 50% 0;
@@ -653,17 +665,16 @@
   width: 12px;
   height: 12px;
   margin-left: -6px;
-  background: var(--u-lip);
+  background: inherit;
   rotate: 45deg;
-  border-right: 2px solid #3a2016;
-  border-bottom: 2px solid #3a2016;
-}
-:root[data-theme='light'] .lp-callout::after {
-  border-color: #4a2a1a;
+  margin-top: -7px;
 }
 .lp-callout:hover {
-  color: var(--u-ink);
+  color: #3d2a1f;
   text-decoration: none;
+}
+:root[data-theme='light'] .lp-callout:hover {
+  color: #fffaf0;
 }
 .lp-callout:focus-visible {
   outline: 3px solid var(--focus);
@@ -671,57 +682,27 @@
 }
 
 /*
- * Hevalo and the course's people, whole, standing beside the path (shared
- * `mascotSpot`, `hostBox`): placed as the stops are, from the logical start,
- * so a right-to-left page has them on its own other side. Not on the
- * narrowest screens, where they would crowd the path.
+ * Hevalo, whole, standing beside the stop to do now (shared `mascotSpot`):
+ * placed as the stops are, from the logical start, so a right-to-left page
+ * has him on its own other side; at the valley's scale, as tall as its trees
+ * are. Not on the narrowest screens, where he would crowd the path.
  */
 .lp-mascot {
   position: absolute;
   z-index: 2;
-  inset-inline-start: calc(50% + var(--mx, 0px) - 44px);
-  width: 88px;
-  height: 140px;
+  inset-inline-start: calc(50% + var(--mx, 0px) - 36px);
+  width: 72px;
+  height: 112px;
   /* his feet on the ground beside the stop's foot: `top` is where a head-high figure's top would be */
-  margin-top: -48px;
+  margin-top: -20px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   line-height: 0;
   list-style: none;
 }
-.lp-host {
-  position: absolute;
-  z-index: 2;
-  inset-inline-start: calc(50% + var(--hx, 0px) - 44px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  line-height: 0;
-  list-style: none;
-  pointer-events: none;
-}
-.lp-host-say {
-  position: absolute;
-  top: 0;
-  padding: 6px 10px;
-  border: 2px solid #3a2016;
-  border-radius: var(--r-md);
-  background: var(--surface-solid);
-  color: var(--ink);
-  font-size: var(--text-secondary);
-  font-weight: 700;
-  line-height: 1.2;
-  white-space: nowrap;
-  animation: lp-arrive var(--dur) var(--ease-out) both;
-}
-:root[data-theme='light'] .lp-host-say {
-  border-color: #4a2a1a;
-}
 @media (max-width: 339px) {
-  .lp-mascot,
-  .lp-host {
+  .lp-mascot {
     display: none;
   }
 }
@@ -917,7 +898,6 @@
   .lp-node.is-finishing .lp-node-face,
   .lp-node.is-opening .lp-node-face,
   .lp-callout.is-arriving,
-  .lp-host-say,
   .lp-land-stones.is-fresh {
     animation: none;
   }

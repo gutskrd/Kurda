@@ -760,6 +760,20 @@ describe('conversation', () => {
     ]);
   });
 
+  it('sends and grades a talk with the learner as it was stored, whose part then reads `character: null`', () => {
+    const stored = validateExercisePayload('conversation', { ...conversation, speakers: [{ character: 'hamo' }, { learner: true }] });
+    expect(validateExercisePayload('conversation', stored)).toEqual(stored);
+    const sent = sanitizeExercise('conversation', stored, SEED);
+    expect(sent.speakers).toEqual([
+      { name: 'Hamo', character: 'hamo' },
+      { name: 'Tu', character: null, learner: true },
+    ]);
+    const right = (sent.options as string[]).indexOf(conversation.options[conversation.correctIndex]!);
+    expect(checkAnswer('conversation', stored, { choice: right }, SEED).verdict).toBe('correct');
+    // a part that is no character and not the learner’s is still refused, null or not
+    expect(issues({ ...conversation, speakers: [{ character: null }, { character: 'hamo' }] })).toEqual(['speakers.0.character: needs a character: Hevalo, Hamo or Xezo']);
+  });
+
   it('is sent with every line and its meaning, and the answers shuffled, never which is right', () => {
     const sent = sanitizeExercise('conversation', conversation, SEED);
     expect(sent).not.toHaveProperty('correctIndex');

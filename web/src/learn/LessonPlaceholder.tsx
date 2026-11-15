@@ -15,8 +15,8 @@ import { useT } from '../i18n/I18nProvider';
  * parts and their own class names (styles/learn.css), so nothing moves when
  * the real thing takes its place: the ✕ where the ✕ is — and it works, the way
  * out is never something to wait for — the progress track empty beside it, the
- * shape of a question and its answers, and the bar at the foot with the place
- * of its one button.
+ * line of the lesson's name over the shape of a question and its answers, and
+ * the bar at the foot with the place of its one button.
  *
  * It is what the lesson's shell shows while a lesson's or a review's code is
  * on its way (layouts/FocusLayout.tsx), and what the pages themselves show
@@ -37,6 +37,9 @@ export function LessonPlaceholder({ label, exitTo = '/app/learn' }: { label: str
         </header>
         {/* said once, as loading; the boxes inside are not read out */}
         <SkeletonRegion label={label} className="lesson-stage">
+          <p className="lesson-kicker">
+            <Skeleton line w="24%" />
+          </p>
           <p className="lesson-ask">
             <Skeleton line w="58%" />
           </p>

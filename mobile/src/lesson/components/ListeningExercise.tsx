@@ -5,7 +5,6 @@ import { tileAnswer } from '@kurda/shared';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useTheme } from '../../theme/ThemeProvider';
-import { Icon } from '../../theme/Icon';
 import type { Exercise } from '../types';
 import type { PlaybackClock } from '../../characters/voice';
 import { useAudio } from '../useAudio';
@@ -15,6 +14,7 @@ import { knownVoice } from '../../characters/SpeakingCharacter';
 import { useAnswerMode } from '../answerModePref';
 import { ExerciseHeadline } from './ExerciseHeadline';
 import { KurdishAnswerInput } from './KurdishAnswerInput';
+import { PlayDisc } from './ModelButton';
 import { PromptScene } from './SpeechBubble';
 import { AnswerModeSwitch, WordBank } from './WordBank';
 import { pressedDim } from '../../theme/motion';
@@ -34,8 +34,8 @@ interface Props {
 
 /**
  * Listen, and give back what you heard (KUR-035). Whoever says the clip
- * stands beside a speech bubble holding a speaker and a waveform that lights
- * up along the clip as it plays; a tap on the bubble plays it again, and
+ * stands beside a speech bubble holding the lesson's round play mark and a
+ * waveform that lights up along the clip as it plays; a tap on the bubble plays it again, and
  * "Slow" under it plays it at 0.75×, as often as wanted. The clip is the
  * question, so it plays by itself a beat after the exercise appears (once it
  * has loaded), as it does on the website. "Can't listen now" sits in the
@@ -121,8 +121,8 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
         }
       >
         <View style={[styles.clip, { flexDirection: dir.row }]}>
-          {/* sounding into the waveform, whichever side of it it stands */}
-          <Icon name="speaker-high" size={28} color={audio.playing ? colors.goldText : colors.primary} style={dir.flip} />
+          {/* the round play mark at the bubble's start, the clip's waveform running on from it */}
+          <PlayDisc size={36} playing={audio.playing} />
           <Waveform clock={audio.clock} playing={audio.playing} />
         </View>
       </PromptScene>
@@ -140,7 +140,7 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
           verdict={verdict}
           placeholder={t('lesson.listen.placeholder')}
           placeholderTextColor={colors.textSecondary}
-          style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
+          style={[styles.input, disabled && styles.dim]}
           accessibilityLabel={t('lesson.listen.answerLabel')}
         />
       )}
@@ -207,12 +207,7 @@ const styles = StyleSheet.create({
   slowText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.4 },
   pressed: { opacity: pressedDim },
   prompt: { fontSize: typography.sizes.md },
-  input: {
-    minHeight: MIN_TOUCH_TARGET,
-    borderRadius: radii.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    fontSize: typography.sizes.lg,
-  },
+  // the field's card, edge and face are the answer box's own (KurdishAnswerInput)
+  input: { minHeight: MIN_TOUCH_TARGET, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
   dim: { opacity: 0.4 },
 });

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { radii, spacing, typography } from '../../theme/tokens';
+import { spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
 import { useI18n } from '../../i18n/I18nContext';
@@ -36,7 +36,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled, dialec
         multiline
         placeholder={t('lesson.write.placeholder')}
         placeholderTextColor={colors.textSecondary}
-        style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
+        style={[styles.input, disabled && styles.dim]}
         accessibilityLabel={t('lesson.write.answerLabel')}
       />
     </View>
@@ -47,13 +47,7 @@ const styles = StyleSheet.create({
   container: { gap: spacing.lg },
   // the question, under the headline that says what to do with it
   prompt: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
-  input: {
-    minHeight: 96,
-    borderRadius: radii.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    fontSize: typography.sizes.lg,
-    textAlignVertical: 'top',
-  },
+  // the field's card, edge and face are the answer box's own (KurdishAnswerInput)
+  input: { minHeight: 96, paddingVertical: spacing.md, paddingHorizontal: spacing.md, textAlignVertical: 'top' },
   dim: { opacity: 0.6 },
 });

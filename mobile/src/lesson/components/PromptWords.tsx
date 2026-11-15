@@ -6,8 +6,12 @@ import { scriptDialect, type PromptToken } from '@kurda/shared';
 import { useI18n } from '../../i18n/I18nContext';
 import { MenuIn, heldDim } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
-import { TILE_EDGE, tileTone } from '../../theme/tileTones';
 import { layout, radii, spacing, typography } from '../../theme/tokens';
+import { useValley } from '../ValleyScope';
+import { CARD } from '../valley';
+
+/** The popover's edge, and the rule between two meanings in it: the lesson's hairline. */
+const EDGE = CARD.edge;
 
 /** The dotted line under a word that can be asked about. */
 const DOTS = 3;
@@ -45,7 +49,9 @@ export function PromptWords({ prompt, tokens, style }: { prompt: string; tokens?
   // a prompt in Arabic script (Soranî) reads from the right
   const rtl = scriptDialect(prompt) === 'sorani';
   const direction: TextStyle = rtl ? styles.rtl : styles.ltr;
-  const { face, edge } = tileTone(colors, 'idle');
+  const valley = useValley();
+  const face = valley.card;
+  const edge = valley.line;
 
   if (!tokens || !tokens.some((token) => token.meanings && token.meanings.length > 0)) {
     return <Text style={[style, direction]}>{prompt}</Text>;
@@ -110,7 +116,7 @@ export function PromptWords({ prompt, tokens, style }: { prompt: string; tokens?
                 {meanings.map((meaning, i) => (
                   <Text
                     key={meaning}
-                    style={[styles.meaning, i > 0 && { borderTopWidth: TILE_EDGE, borderTopColor: edge }, { color: colors.textPrimary }]}
+                    style={[styles.meaning, i > 0 && { borderTopWidth: EDGE, borderTopColor: edge }, { color: colors.textPrimary }]}
                   >
                     {meaning}
                   </Text>
@@ -135,12 +141,12 @@ const styles = StyleSheet.create({
     top: -ARROW / 2,
     width: ARROW,
     height: ARROW,
-    borderLeftWidth: TILE_EDGE,
-    borderTopWidth: TILE_EDGE,
+    borderLeftWidth: EDGE,
+    borderTopWidth: EDGE,
     transform: [{ rotate: '45deg' }],
     zIndex: 1,
   },
-  list: { borderWidth: TILE_EDGE, borderRadius: radii.md, overflow: 'hidden' },
+  list: { borderWidth: EDGE, borderRadius: radii.md, overflow: 'hidden' },
   meaning: {
     fontSize: typography.sizes.md,
     textAlign: 'center',

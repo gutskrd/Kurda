@@ -409,7 +409,6 @@ export function LessonsView({
                   near={nearUnits}
                   seen={seenUnits}
                   inView={inView}
-                  dialect={dialect}
                   onOpenRail={openRail}
                 />
               </View>

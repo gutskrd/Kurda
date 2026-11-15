@@ -43,18 +43,8 @@ import { GAME_EMBLEMS, GAME_EMBLEM_SAMPLES, gameEmblemLayers, gameEmblemLoopMs, 
 import { LETTERS, letter } from './ink.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
-import {
-  PATH_LANDMARK_LOOP,
-  PATH_STOP_ART,
-  PATH_STOP_LOOKS,
-  pathSignpostSvg,
-  pathLandSvg,
-  pathLandmarkSvg,
-  pathLoopSvg,
-  pathStonesSvg,
-  pathStopSvg,
-  type PathStopLook,
-} from './path-land.js';
+import { PATH_STOP_ART, PATH_STOP_LOOKS, pathSignpostSvg, pathLandSvg, pathStonesSvg, pathStopSvg, type PathStopLook } from './path-land.js';
+import { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg } from './path-landmark.js';
 import { PATH_CAIRN_GROUNDS, PATH_LANDMARKS, PATH_LANDS, cairnBox, trailStones } from '../path-world.js';
 import { lessonPath } from '../lesson-path.js';
 import { WORD_SET_IDS } from '../word-sets/words.js';
@@ -1522,12 +1512,11 @@ describe('the join ticket', () => {
 });
 
 /**
- * The lesson path's world (art/path-land.ts) is drawn with depth — isometric,
- * outlined in one ink, cel shaded — the one exception, with the village, to
- * the flat cut-outs: the owner asked for the path and the village to read as
- * one board-game world. Every other rule holds: only what both renderers draw
- * alike, nothing outside the drawing, every reference resolved, and a budget
- * on how much a unit's land may weigh, since a path draws two or three at once.
+ * The lesson path's world (art/path-land.ts, art/path-landmark.ts) is the
+ * painted valley the owner chose: flat planes, no outlines, one step of shade.
+ * Every rule of the art holds: only what both renderers draw alike, nothing
+ * outside the drawing, every reference resolved, and a budget on how much a
+ * unit's land may weigh, since a path draws two or three at once.
  */
 describe('the lesson path’s world', () => {
   const TONES = ['clay', 'saffron', 'meadow', 'rose', 'pine'] as const;
@@ -1594,10 +1583,13 @@ describe('the lesson path’s world', () => {
         }
       }
     }
-    // every look its own: the stop to do now is a finished one's face on a taller base
+    // every look its own: the stop to do now in its chapter's colour, a finished one in gold
     const looks = PATH_STOP_LOOKS.map((look) => (['base', 'face'] as const).map((part) => pathStopSvg({ look, tone: 'clay', part, idPrefix: 's' })).join(''));
     expect(new Set(looks).size).toBe(PATH_STOP_LOOKS.length);
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain('#a9532f');
+    expect(pathStopSvg({ look: 'current', tone: 'river', part: 'face' })).toContain('#2a6a93');
+    // gold is gold in every chapter: what was earned looks the same wherever it was earned
+    expect(pathStopSvg({ look: 'done', tone: 'river', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
     expect(() => pathStopSvg({ look: 'gold' as PathStopLook, tone: 'clay', part: 'face' })).toThrow(RangeError);
   });
 
@@ -1614,12 +1606,10 @@ describe('the lesson path’s world', () => {
         expect(day.includes('#e2a334'), `${land.ground} ${width}`).toBe(has);
         expect(dusk.includes('#c98f3c'), `${land.ground} ${width} dusk`).toBe(has);
         if (!has) continue;
-        // fitted to its box, which lies inside the land, out of the river where one runs across it
+        // its box lies inside the land, out of the river where one runs across it
         const streams = land.ground === 'valley' || land.ground === 'alpine';
         const stream = (stops[1]!.y + stops[2]!.y) / 2 + 6;
         const box = cairnBox(stops, width, streams ? [{ x: 0, y: stream - 26, w: 2 * width, h: 52 }] : [])!;
-        const scale = Number(/scale\(([\d.]+)\)/.exec(day)![1]);
-        expect(scale * 57).toBeCloseTo(box.h, 0);
         expect(box.y).toBeGreaterThanOrEqual(0);
         expect(box.y + box.h).toBeLessThanOrEqual(unit.height);
         if (streams) expect(box.y >= stream + 26 || box.y + box.h <= stream - 26, land.ground).toBe(true);
@@ -1651,8 +1641,10 @@ describe('the lesson path’s world', () => {
     }
     expect(drawings.size).toBe(PATH_LANDS.length * 4);
     const walked = pathStonesSvg({ width: 390, height: unit.height, stones, walked: true });
-    // three elements however many stones: shade, face and light
+    // three elements however many stretches: the road's edge, its face and its ruts
     expect(sound(walked)).toBe(4);
+    // and nothing laid over the road still ahead, which the land itself draws
+    expect(sound(pathStonesSvg({ width: 390, height: unit.height, stones, walked: false }))).toBe(1);
     expect(() => pathLandSvg({ ground: 'moon' as never, width: 390, height: 600, stops, stones })).toThrow(RangeError);
     expect(() => pathLandSvg({ ground: 'snow', width: 0, height: 600, stops, stones })).toThrow(RangeError);
   });

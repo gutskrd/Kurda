@@ -11,10 +11,12 @@ import { Icon } from '../../theme/Icon';
 import { AnswerMotion } from '../../theme/MotionParts';
 import { LIP, Tile } from '../../theme/Tile';
 import { useTheme } from '../../theme/ThemeProvider';
-import { tileTone } from '../../theme/tileTones';
-import { radii, spacing } from '../../theme/tokens';
+import { display } from '../../theme/fonts';
+import { radii, spacing, typography } from '../../theme/tokens';
 import type { AnswerMode } from '../answerModePref';
 import { pressedDim } from '../../theme/motion';
+import { useValley } from '../ValleyScope';
+import { CARD } from '../valley';
 
 /** A tile's height before one has been measured: a fingertip and its lip. */
 const TILE_HEIGHT = MIN_TOUCH_TARGET + LIP;
@@ -51,7 +53,7 @@ interface Props {
 
 /**
  * An answer built from word tiles: two ruled lines, and the bank of tiles
- * under them.
+ * under them, each a small cream card with its Kurdish in the display face.
  *
  * A tile tapped in the bank flies from its place there to the end of the line
  * — both measured, and a copy of it carried between them on a spring — and
@@ -64,7 +66,7 @@ interface Props {
  * What the line says is sent as a typed answer is (shared `tileAnswer`).
  */
 export function WordBank({ bank, placed, onChange, disabled, verdict = null, lineLabel }: Props): React.JSX.Element {
-  const { colors } = useTheme();
+  const valley = useValley();
   const { t } = useI18n();
   const reduce = useReducedMotion();
   const root = useRef<View>(null);
@@ -145,7 +147,8 @@ export function WordBank({ bank, placed, onChange, disabled, verdict = null, lin
   const flying = (index: number): boolean => flights.some((f) => f.index === index);
   const rows = Math.max(2, Math.round((lineHeight + GAP) / (tileHeight + GAP)));
   const lineState = verdict ?? 'idle';
-  const rule = tileTone(colors, 'idle').edge;
+  const rule = valley.line;
+  const words = rtl ? [styles.word, styles.rtl] : styles.word;
 
   return (
     <View ref={root} style={styles.wrap}>
@@ -166,7 +169,8 @@ export function WordBank({ bank, placed, onChange, disabled, verdict = null, lin
                 disabled={disabled || flying(index)}
                 onPress={() => lift(index)}
                 accessibilityHint={t('lesson.tiles.removeHint')}
-                textStyle={rtl ? styles.rtl : null}
+                faceStyle={styles.face}
+                textStyle={words}
                 style={flying(index) ? styles.hidden : null}
               />
             ))}
@@ -185,7 +189,7 @@ export function WordBank({ bank, placed, onChange, disabled, verdict = null, lin
               }}
               onLayout={index === 0 ? (e) => setTileHeight(e.nativeEvent.layout.height) : undefined}
             >
-              {gone ? <View style={[styles.ghost, { backgroundColor: colors.controlTrack }]} /> : null}
+              {gone ? <View style={[styles.ghost, { backgroundColor: valley.track }]} /> : null}
               <View aria-hidden={gone} style={gone ? styles.hidden : null}>
                 <Tile
                   label={word}
@@ -193,7 +197,8 @@ export function WordBank({ bank, placed, onChange, disabled, verdict = null, lin
                   disabled={gone}
                   onPress={() => place(index)}
                   accessibilityHint={t('lesson.tiles.addHint')}
-                  textStyle={rtl ? styles.rtl : null}
+                  faceStyle={styles.face}
+                  textStyle={words}
                 />
               </View>
             </View>
@@ -223,7 +228,7 @@ function FlyingTile({ word, from, to, rtl, onLand }: { word: string; from: Rect;
   }, [x, y, to.x, to.y]);
   return (
     <Animated.View pointerEvents="none" aria-hidden style={[styles.flying, { width: from.w, transform: [{ translateX: x }, { translateY: y }] }]}>
-      <Tile label={word} textStyle={rtl ? styles.rtl : null} />
+      <Tile label={word} faceStyle={styles.face} textStyle={rtl ? [styles.word, styles.rtl] : styles.word} />
     </Animated.View>
   );
 }
@@ -231,6 +236,7 @@ function FlyingTile({ word, from, to, rtl, onLand }: { word: string; from: Rect;
 /** "Use keyboard" / "Use word tiles": a small round button that swaps the one for the other. */
 export function AnswerModeSwitch({ mode, onChange, end }: { mode: AnswerMode; onChange: (mode: AnswerMode) => void; end: 'left' | 'right' }): React.JSX.Element {
   const { colors } = useTheme();
+  const valley = useValley();
   const { t } = useI18n();
   const tiles = mode === 'tiles';
   return (
@@ -238,7 +244,11 @@ export function AnswerModeSwitch({ mode, onChange, end }: { mode: AnswerMode; on
       onPress={() => onChange(tiles ? 'keyboard' : 'tiles')}
       accessibilityRole="button"
       accessibilityLabel={t(tiles ? 'lesson.tiles.useKeyboard' : 'lesson.tiles.useTiles')}
-      style={({ pressed }) => [styles.switch, { alignSelf: end === 'right' ? 'flex-end' : 'flex-start', backgroundColor: colors.controlTrack }, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.switch,
+        { alignSelf: end === 'right' ? 'flex-end' : 'flex-start', backgroundColor: valley.card, borderColor: valley.line },
+        pressed && styles.pressed,
+      ]}
     >
       <Icon name={tiles ? 'keyboard' : 'tiles'} size={22} color={colors.textSecondary} />
     </Pressable>
@@ -247,13 +257,24 @@ export function AnswerModeSwitch({ mode, onChange, end }: { mode: AnswerMode; on
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.xl },
-  rule: { position: 'absolute', left: 0, right: 0, height: 2, borderRadius: radii.pill },
+  rule: { position: 'absolute', left: 0, right: 0, height: CARD.edge, borderRadius: radii.pill },
   flow: { flexWrap: 'wrap', gap: GAP },
   bank: { justifyContent: 'center' },
-  ghost: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.lg },
+  // a word tile: a smaller card than an answer, on the same hairline edge
+  face: { borderRadius: radii.md + 2, borderWidth: CARD.edge },
+  // the Kurdish words in the display face the headings are in
+  word: { ...display(typography.sizes.md + 1) },
+  ghost: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.md + 2 },
   hidden: { opacity: 0 },
   rtl: { writingDirection: 'rtl' },
   flying: { position: 'absolute', left: 0, top: 0, zIndex: 2 },
-  switch: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  switch: {
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: radii.pill,
+    borderWidth: CARD.edge,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pressed: { opacity: pressedDim },
 });

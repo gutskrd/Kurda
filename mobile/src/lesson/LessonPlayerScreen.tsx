@@ -5,7 +5,7 @@ import { feedbackKind, nextLaunch, pairKey, praiseFor, practisableMistakes, type
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { GrammarTips } from '../grammar/GrammarTips';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -40,6 +40,10 @@ import { useDirection } from '../reports/direction';
 import { Loading } from '../theme/Loading';
 import { pressedDim } from '../theme/motion';
 import { PressableScale } from '../theme/MotionParts';
+import { ValleyScope, useValley } from './ValleyScope';
+import { Hills } from './components/Hills';
+import { lessonTitle } from './lessonTitle';
+import { CARD } from './valley';
 
 /** Endpoint paths for a playable session — lessons and practice differ only here. */
 export interface SessionPaths {
@@ -111,6 +115,23 @@ export function LessonPlayerScreen({
   const [loaded, setLoaded] = useState<{ view: SessionView; memory: ResumeMemory } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  // the lesson's own name, from its course's map, read beside the session: null while it is on its way, gone if it cannot be had
+  const [title, setTitle] = useState<string | null | undefined>(courseId ? null : undefined);
+
+  useEffect(() => {
+    if (!courseId) {
+      setTitle(undefined);
+      return;
+    }
+    let active = true;
+    setTitle(null);
+    void client.get<CourseMap>(`/courses/${courseId}/map`).then((res) => {
+      if (active) setTitle((res.ok ? lessonTitle(res.data, lessonId) : null) ?? undefined);
+    });
+    return () => {
+      active = false;
+    };
+  }, [client, courseId, lessonId]);
 
   useEffect(() => {
     let active = true;
@@ -131,37 +152,42 @@ export function LessonPlayerScreen({
 
   if (loadError) {
     return (
-      <GradientBackground>
-        <Stuck title={t('lesson.loadFailed')} detail={loadError} onRetry={() => setAttempt((n) => n + 1)} onExit={onExit} />
-      </GradientBackground>
+      <ValleyScope>
+        <GradientBackground>
+          <Stuck title={t('lesson.loadFailed')} detail={loadError} onRetry={() => setAttempt((n) => n + 1)} onExit={onExit} />
+        </GradientBackground>
+      </ValleyScope>
     );
   }
   if (!loaded) return <SessionLoading onExit={onExit} />;
-  return <SessionPlayer view={loaded.view} memory={loaded.memory} paths={LESSON_PATHS} onExit={onExit} offerReminders courseId={courseId} {...waysOn} />;
+  return (
+    <SessionPlayer view={loaded.view} memory={loaded.memory} paths={LESSON_PATHS} onExit={onExit} offerReminders courseId={courseId} title={title} {...waysOn} />
+  );
 }
 
 /**
- * A lesson or a practice session on its way: the exercise's shape in grey,
- * and the ✕ where the player will have it. Both open as full-screen modals
- * with no header of their own, so without it the only way out of a slow load
- * was to wait for the request to give up.
+ * A lesson or a practice session on its way: the exercise's shape in grey on
+ * the lesson's paper under its hills, and the ✕ where the player will have
+ * it. Both open as full-screen modals with no header of their own, so without
+ * it the only way out of a slow load was to wait for the request to give up.
  */
 export function SessionLoading({ onExit }: { onExit: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
+  return (
+    <ValleyScope>
+      <SessionLoadingBody onExit={onExit} />
+    </ValleyScope>
+  );
+}
+
+function SessionLoadingBody({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const topInset = useScreenTopInset();
   const dir = useDirection();
   return (
     <GradientBackground>
+      <Hills top={topInset - HILLS_ABOVE} />
       <View style={[styles.header, { flexDirection: dir.row, paddingTop: topInset }]}>
-        <Pressable
-          onPress={onExit}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
-        >
-          <Icon name="close" size={26} color={colors.textSecondary} />
-        </Pressable>
+        <CloseButton label={t('common.close')} onPress={onExit} />
       </View>
       <View style={styles.loading}>
         <Skeleton width="55%" height={22} />
@@ -171,6 +197,30 @@ export function SessionLoading({ onExit }: { onExit: () => void }): React.JSX.El
     </GradientBackground>
   );
 }
+
+/**
+ * The way out of a lesson, at the start of its bar: a round cream button on
+ * the lesson's hairline, a fingertip's reach round a smaller circle.
+ */
+function CloseButton({ label, onPress }: { label: string; onPress: () => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const valley = useValley();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
+    >
+      <View style={[styles.round, { backgroundColor: valley.card, borderColor: valley.line }]}>
+        <Icon name="close" size={16} color={colors.textSecondary} />
+      </View>
+    </Pressable>
+  );
+}
+
+/** How far above the lesson's bar its hills start: the bar sits on the far ridge, as the painted valley has it. */
+const HILLS_ABOVE = 18;
 
 /** How long "No more listening in this lesson" stays, with its Undo. */
 const UNDO_MS = 5000;
@@ -184,19 +234,15 @@ const UNDO_MS = 5000;
  * lesson is the one thing on the screen, and the invite shows the moment the
  * learner leaves it.
  */
-export function SessionPlayer({
-  view,
-  paths,
-  onExit,
-  offerReminders = false,
-  kind = 'lesson',
-  memory,
-  courseId,
-  onNext,
-  onPractise,
-  onPath,
-  renderResults,
-}: {
+export function SessionPlayer(props: SessionPlayerProps): React.JSX.Element {
+  return (
+    <ValleyScope>
+      <SessionPlayerBody {...props} />
+    </ValleyScope>
+  );
+}
+
+type SessionPlayerProps = {
   view: SessionView;
   paths: SessionPaths;
   onExit: () => void;
@@ -208,11 +254,34 @@ export function SessionPlayer({
   memory?: ResumeMemory;
   /** the course a lesson was opened from, for its next lesson */
   courseId?: string;
+  /**
+   * The lesson's own name, written small in the pomegranate's red over each
+   * question. Null while it is still being looked up: its line is kept, so
+   * nothing moves when it arrives. Absent where there is none (practice).
+   */
+  title?: string | null;
   /** what a finished session shows in place of a lesson's results (a test to jump ahead says whether it passed) */
   renderResults?: (results: SessionResults) => React.ReactNode;
-} & LessonWaysOn) {
+} & LessonWaysOn;
+
+/** The player itself, inside the lesson's valley (`SessionPlayer`). */
+function SessionPlayerBody({
+  view,
+  paths,
+  onExit,
+  offerReminders = false,
+  kind = 'lesson',
+  memory,
+  courseId,
+  title,
+  onNext,
+  onPractise,
+  onPath,
+  renderResults,
+}: SessionPlayerProps) {
   const { client, isGuest } = useAuth();
   const { colors } = useTheme();
+  const valley = useValley();
   const { t } = useI18n();
   const topInset = useScreenTopInset();
   const bottomInset = useScreenBottomInset(spacing.lg);
@@ -585,15 +654,10 @@ export function SessionPlayer({
     <GradientBackground>
       {/* the Check button rides above the keyboard while an answer is typed, rather than under it */}
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        {/* the valley's hills behind the bar and the lesson's name, drawn first so everything sits over them */}
+        <Hills top={topInset - HILLS_ABOVE} />
         <View style={[styles.header, { flexDirection: dir.row, paddingTop: topInset }]}>
-          <Pressable
-            onPress={quit}
-            accessibilityRole="button"
-            accessibilityLabel={t('lesson.quit')}
-            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
-          >
-            <Icon name="close" size={26} color={colors.textSecondary} />
-          </Pressable>
+          <CloseButton label={t('lesson.quit')} onPress={quit} />
           <View style={styles.progressWrap}>
             {/* a run of right answers, named from the third over the bar it warms: the chime has been climbing, and this says why */}
             {running ? <RunLabel count={inARow} end={dir.row === 'row-reverse'} /> : null}
@@ -606,7 +670,10 @@ export function SessionPlayer({
               accessibilityLabel={t('lesson.grammarTips')}
               style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
             >
-              <Icon name="lightbulb" size={22} color={colors.goldText} />
+              {/* a cream pill on the hairline, as the way out is */}
+              <View style={[styles.pill, { backgroundColor: valley.card, borderColor: valley.line }]}>
+                <Icon name="lightbulb" size={18} color={colors.goldText} />
+              </View>
             </Pressable>
           ) : null}
         </View>
@@ -629,6 +696,12 @@ export function SessionPlayer({
       ) : null}
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        {title !== undefined ? (
+          // the lesson's name over its questions, which stays where it is as they turn; its line is kept while it is on its way
+          <Text style={[styles.kicker, dir.free, { color: valley.redText }]} numberOfLines={1} testID="lesson-title">
+            {title ?? ' '}
+          </Text>
+        ) : null}
         {/*
           One question leaves and the next arrives, the way the intro's slides
           and the steps of signing in turn, where an exercise used to be
@@ -839,17 +912,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     // over a run's milestone, which covers the rest of the lesson
     zIndex: 2,
-    gap: spacing.md,
-    paddingHorizontal: spacing.lg,
+    gap: spacing.sm + 4,
+    paddingHorizontal: layout.gutter,
     paddingTop: spacing.xl,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.sm,
   },
-  // a fingertip's worth around a 24pt mark; the row's own gap does the spacing
-  headerButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginHorizontal: -spacing.sm },
+  // a fingertip's reach round the 36-point circle or pill drawn in it; the row's own gap does the spacing
+  headerButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginHorizontal: -spacing.xs },
+  round: { width: 36, height: 36, borderRadius: radii.pill, borderWidth: CARD.edge, alignItems: 'center', justifyContent: 'center' },
+  pill: { height: 36, paddingHorizontal: spacing.sm + 4, borderRadius: radii.pill, borderWidth: CARD.edge, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: pressedDim },
-  reask: { fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg },
+  reask: { fontSize: typography.sizes.sm, paddingHorizontal: layout.gutter },
   progressWrap: { flex: 1 },
-  body: { padding: spacing.lg, gap: spacing.lg, flexGrow: 1 },
+  body: { paddingHorizontal: layout.gutter, paddingTop: spacing.md + 6, paddingBottom: spacing.lg, flexGrow: 1 },
+  // the lesson's name: small, tracked capitals in the pomegranate's red, just over the question
+  kicker: { fontSize: 11, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: spacing.xs },
   tallying: { fontSize: typography.sizes.md },
   leaveBody: { fontSize: typography.sizes.md, lineHeight: 22 },
   leaveActions: { gap: spacing.sm, marginTop: spacing.sm },

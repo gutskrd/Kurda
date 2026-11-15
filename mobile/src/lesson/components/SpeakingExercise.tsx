@@ -17,6 +17,7 @@ import { knownVoice } from '../../characters/SpeakingCharacter';
 import { CharacterStage } from '../../characters/CharacterStage';
 import { ExerciseHeadline } from './ExerciseHeadline';
 import { ModelButton } from './ModelButton';
+import { saidStyle } from './SpeechBubble';
 import { heldDim } from '../../theme/MotionParts';
 
 interface Props {
@@ -123,7 +124,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
   return (
     <View style={styles.container}>
       <ExerciseHeadline>{t('lesson.speak.prompt')}</ExerciseHeadline>
-      {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
+      {exercise.prompt ? <Text style={[saidStyle(exercise.prompt), { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       {model.supported && voice ? (
         // head to waist on its stage, saying the sentence; a tap on it says it again too
@@ -217,7 +218,6 @@ const STOP_SLOP = { top: 4, bottom: 4 };
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   detail: { fontSize: typography.sizes.sm, textAlign: 'center' },
   recordingBox: { alignItems: 'center', gap: spacing.sm },
   row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },

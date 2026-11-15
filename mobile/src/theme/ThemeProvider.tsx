@@ -60,6 +60,18 @@ export function DarkScheme({ children }: { children: ReactNode }): React.JSX.Ele
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+/**
+ * Draws its children in a palette of their own, by day or at dusk as the
+ * reader has the app: a place with a look of its own (a lesson's warm paper)
+ * over the same light or dark as everywhere else, so whatever the app draws
+ * inside it, from a sheet to a button, is drawn in that place's colours.
+ */
+export function PaletteScope({ palettes, children }: { palettes: Record<ColorScheme, Palette>; children: ReactNode }): React.JSX.Element {
+  const outer = useTheme();
+  const value = useMemo<ThemeValue>(() => ({ ...outer, colors: palettes[outer.scheme] }), [outer, palettes]);
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
 export function useTheme(): ThemeValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
