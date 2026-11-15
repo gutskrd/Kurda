@@ -7,12 +7,21 @@
  * panel could have produced, and the reverse.
  *
  * Starter stories (api/content/stories: kurmanci.json, sorani.json, the
- * road's chapter stories and the legends) were written for the app, not by a
- * native speaker. The owner's rule is that a native speaker reads and
- * publishes each one, so they arrive as drafts marked `source = 'starter'`,
- * once: each is remembered in `content_seeds`, so a starter an editor
- * archived or deleted stays gone after the next restart, and a starter added
- * to the files later still arrives.
+ * road's chapter stories and the legends) are the app's own library, and the
+ * owner wants learners to have them, so each arrives published and approved,
+ * marked `source = 'starter'`. A story a file says too little for to publish
+ * waits as a draft until its file is fixed. Each is seeded once and
+ * remembered in `content_seeds`, so a starter an editor archived or deleted
+ * stays gone after the next restart, and a starter added to the files later
+ * still arrives.
+ *
+ * Until a person changes a starter in the admin panel (every admin action
+ * sets `updated_by`), its file is where it is written: a later start brings
+ * the stored story up to the file, so a correction to the Kurdish reaches the
+ * app with the next deploy. Once a native speaker has touched it, the panel
+ * is where it lives and the file no longer speaks for it. The review of each
+ * translation stays as the reviewers left it, or unreviewed: publishing is
+ * not a claim that a native speaker has checked the text.
  */
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
@@ -118,6 +127,11 @@ interface StoredRow {
   sources: StorySourceInput[] | null;
   translation_review: Record<string, StoryTranslationReviewEntry> | null;
 }
+
+/** Every column `storedInput` reads, besides the questions. */
+const STORED_COLUMNS = `id, status, updated_by, review_status, dialect, language, level, title, summary, body, glossary, category, tradition, author,
+  story_source, source_url, attribution_note, translations, cover, reading_minutes,
+  meta_translations, reflections, notes, sources, translation_review`;
 
 /**
  * The stored story in the file's own shape, so "unchanged" compares what the
@@ -242,13 +256,7 @@ export async function importStories(pool: pg.Pool, raw: unknown, options: StoryI
   try {
     await client.query('BEGIN');
     for (const draft of drafts) {
-      const found = await client.query<StoredRow>(
-        `SELECT id, status, updated_by, review_status, dialect, language, level, title, summary, body, glossary, category, tradition, author,
-                story_source, source_url, attribution_note, translations, cover, reading_minutes,
-                meta_translations, reflections, notes, sources, translation_review
-           FROM stories WHERE slug = $1 FOR UPDATE`,
-        [draft.slug],
-      );
+      const found = await client.query<StoredRow>(`SELECT ${STORED_COLUMNS} FROM stories WHERE slug = $1 FOR UPDATE`, [draft.slug]);
       const row = found.rows[0];
       let id: string;
       let outcome: StoryImportOutcome;
@@ -329,27 +337,39 @@ export const STARTER_STORY_FILES = ['kurmanci.json', 'sorani.json', 'road.json',
 const seedName = (slug: string): string => `stories:starter:${slug}`;
 
 /**
- * Seed the starter stories as drafts, each once (see the top of the file).
- * Runs at every start and costs one query once everything is seeded. A story
- * that fails the draft check is skipped and logged — it is seeded on a later
- * start, once its file is fixed — and nothing here ever throws: a broken
- * content file must not stop the API from starting.
+ * Seed the starter stories, each once, and keep the ones nobody has changed
+ * in the panel as their files say (see the top of the file). Runs at every
+ * start and costs a few queries once everything is seeded and current. A
+ * story that fails the draft check is skipped and logged — it is seeded on a
+ * later start, once its file is fixed — and nothing here ever throws: a
+ * broken content file must not stop the API from starting.
+ *
+ * A starter is published, and approved, only once its file passes the check
+ * a publish in the panel makes; a published one is brought up to its file
+ * only by a file that still passes it, so learners never meet half a story.
  *
  * Two instances starting together (a deploy's overlap) both try the same
- * slugs; the insert skips a slug that exists, and the marker insert skips a
- * marker that exists, so neither fails and nothing is doubled.
+ * slugs; the insert skips a slug that exists, the marker insert skips a
+ * marker that exists, and each story is brought up to its file under a row
+ * lock, so neither fails and nothing is doubled.
  */
 export async function seedStarterStories(
   pool: pg.Pool,
   log: Pick<FastifyBaseLogger, 'info' | 'warn'>,
   files: readonly URL[] = STARTER_STORY_FILES,
-): Promise<{ seeded: string[] }> {
+  cache: Cache | null = null,
+): Promise<{ seeded: string[]; refreshed: string[]; published: string[] }> {
   const seeded: string[] = [];
+  const refreshed: string[] = [];
+  const published: string[] = [];
   try {
     const drafts: StoryDraft[] = [];
+    // the stories whose file says everything a published story needs
+    const ready = new Set<string>();
     for (const file of files) {
       try {
-        const parsed = parseStoryFile(JSON.parse(await readFile(file, 'utf8')), 'draft');
+        const raw: unknown = JSON.parse(await readFile(file, 'utf8'));
+        const parsed = parseStoryFile(raw, 'draft');
         const broken = new Set(parsed.issues.map((i) => /^stories\[(\d+)\]/.exec(i.path)?.[1]).filter((n) => n !== undefined));
         // a file still waiting for its stories is fine; one that cannot be read is worth a word in the log
         if (parsed.drafts.length === 0 && parsed.issues.length > 0) {
@@ -363,11 +383,18 @@ export async function seedStarterStories(
             drafts.push(draft);
           }
         });
+        const full = parseStoryFile(raw, 'publish');
+        const unready = new Set(full.issues.map((i) => /^stories\[(\d+)\]/.exec(i.path)?.[1]).filter((n) => n !== undefined));
+        full.drafts.forEach((draft, i) => {
+          if (!unready.has(String(i))) ready.add(draft.slug);
+        });
+        const waiting = full.drafts.filter((d, i) => unready.has(String(i)) && !broken.has(String(i))).map((d) => d.slug);
+        if (waiting.length > 0) log.warn({ stories: waiting }, 'starter stories not ready to publish; they wait as drafts until their file is fixed');
       } catch (err) {
         log.warn({ err, file: file.pathname }, 'starter stories file could not be read; skipped');
       }
     }
-    if (drafts.length === 0) return { seeded };
+    if (drafts.length === 0) return { seeded, refreshed, published };
 
     const done = await pool.query<{ name: string }>(`SELECT name FROM content_seeds WHERE name = ANY($1::text[])`, [
       drafts.map((d) => seedName(d.slug)),
@@ -389,9 +416,53 @@ export async function seedStarterStories(
         client.release();
       }
     }
-    if (seeded.length > 0) log.info({ stories: seeded }, `seeded ${seeded.length} starter stories as drafts`);
+    if (seeded.length > 0) log.info({ stories: seeded }, `seeded ${seeded.length} starter stories`);
+
+    // every starter no person has changed: brought up to its file, and published once its file is ready
+    for (const draft of drafts) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const found = await client.query<StoredRow>(
+          `SELECT ${STORED_COLUMNS} FROM stories
+            WHERE slug = $1 AND source = 'starter' AND updated_by IS NULL AND status IN ('draft', 'published') FOR UPDATE`,
+          [draft.slug],
+        );
+        const row = found.rows[0];
+        const isReady = ready.has(draft.slug);
+        if (row && (row.status === 'draft' || isReady)) {
+          const stored = await storedInput(client, row);
+          const fileReview = draft.translationReview !== undefined;
+          if (canonicalFile(stored, fileReview) !== canonicalFile(draft, fileReview)) {
+            // a translation whose text changed is unreviewed again, as an edit in the panel leaves it
+            const review = fileReview ? draft.translationReview : reviewAfterChange(stored, draft, row.translation_review);
+            // the version moves, so an editor with the story open reloads before saving over it
+            await saveStory(client, { ...draft, translationReview: review }, { id: row.id, set: 'lock_version = lock_version + 1, updated_at = now()' });
+            refreshed.push(draft.slug);
+          }
+          if (row.status === 'draft' && isReady) {
+            await client.query(
+              `UPDATE stories SET status = 'published', published_at = now(), review_status = 'approved', reviewed_at = now(), updated_at = now()
+                WHERE id = $1`,
+              [row.id],
+            );
+            published.push(draft.slug);
+          }
+        }
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => undefined);
+        log.warn({ err, slug: draft.slug }, 'starter story could not be brought up to its file');
+      } finally {
+        client.release();
+      }
+    }
+    if (refreshed.length > 0) log.info({ stories: refreshed }, `brought ${refreshed.length} starter stories up to their files`);
+    if (published.length > 0) log.info({ stories: published }, `published ${published.length} starter stories`);
+    // the library's cached lists were made before these were out or changed
+    if (refreshed.length + published.length > 0) await bustStoryLists(cache);
   } catch (err) {
     log.warn({ err }, 'seeding the starter stories failed');
   }
-  return { seeded };
+  return { seeded, refreshed, published };
 }

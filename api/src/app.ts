@@ -717,16 +717,17 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // lessons still only in its files are listed too, except under test, where nothing is seeded either
     registerRecordingRoutes(app, { withRoadFiles: config.NODE_ENV !== 'test' });
     // Stories, which replaced the ranked quiz: reading for everyone, writing in
-    // the admin panel, and the starter stories seeded once each as drafts for a
-    // native speaker to publish. Not under test, where they would be stories no
-    // test asked for (the seeding has its own tests).
+    // the admin panel, and the starter stories seeded once each, published, and
+    // kept as their files say until someone changes them in the panel. Not
+    // under test, where they would be stories no test asked for (the seeding
+    // has its own tests).
     registerStoryRoutes(app, new StoriesService(app.db, app.cache));
     // and the Hevalo book: the road's chapters that are online, as a PDF to keep
     registerBookRoutes(app);
     registerStoryAdminRoutes(app, new StoryAdminService(app.db, app.cache));
     if (config.NODE_ENV !== 'test') {
       app.addHook('onReady', async () => {
-        await seedStarterStories(app.db, app.log);
+        await seedStarterStories(app.db, app.log, undefined, app.cache);
       });
     }
     // admin content management: draft→review→publish + optimistic locking (KUR-100)
@@ -743,7 +744,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
         // then each game's first set of rows, made once from the course and published (games/starter-library.ts)
         await seedStarterGameContent(app.db, app.log);
         await seedStarterLibrary(app.db, app.log, app.cache);
-        // and the Stories' starter riddles and proverbs, each once as a draft for a native speaker (lore/starters.ts)
+        // and the Stories' starter riddles and proverbs, published and kept as their files say until someone changes them (lore/starters.ts)
         await seedStarterLore(app.db, app.log);
       });
     }

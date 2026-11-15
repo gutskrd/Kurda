@@ -1,8 +1,9 @@
 /**
  * Stories from files, against real Postgres: the import command's rules (all
  * or nothing, by slug, never over a story people are looking at), and the
- * starter stories the API seeds by itself — once each, as drafts, without
- * ever stopping the API from starting.
+ * starter stories the API seeds by itself — once each, published, kept as
+ * their files say until an editor changes them, without ever stopping the
+ * API from starting.
  */
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -352,15 +353,19 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
       return pathToFileURL(path);
     };
 
-    it('seeds each starter once, as a draft from Claude, and never again once it is gone', async () => {
+    it('seeds each starter once, published, and never again once it is gone', async () => {
       const files = [
         await file('one.json', { stories: [testStory(slug('seed-a')), testStory(slug('seed-b'))] }),
         await file('two.json', { stories: [testStory(slug('seed-c'), { dialect: 'sorani' })] }),
       ];
       const first = await seedStarterStories(pool, log, files);
       expect(first.seeded).toEqual([slug('seed-a'), slug('seed-b'), slug('seed-c')]);
-      expect(await row(slug('seed-a'))).toMatchObject({ status: 'draft', source: 'starter' });
-      expect(await row(slug('seed-c'))).toMatchObject({ status: 'draft', source: 'starter', length: 'short' });
+      expect(first.published).toEqual([slug('seed-a'), slug('seed-b'), slug('seed-c')]);
+      expect(await row(slug('seed-a'))).toMatchObject({ status: 'published', source: 'starter' });
+      expect(await row(slug('seed-c'))).toMatchObject({ status: 'published', source: 'starter', length: 'short' });
+      // learners are shown only approved stories; the translations' own review is left as it was
+      const live = await pool.query(`SELECT review_status, published_at, translation_review FROM stories WHERE slug = $1`, [slug('seed-a')]);
+      expect(live.rows[0]).toMatchObject({ review_status: 'approved', published_at: expect.any(Date), translation_review: {} });
       const questions = await pool.query(`SELECT count(*)::int n FROM story_questions WHERE story_id = $1`, [(await row(slug('seed-a'))).id]);
       expect(questions.rows[0].n).toBe(6);
       const markers = await pool.query(`SELECT name FROM content_seeds WHERE name LIKE $1 ORDER BY name`, [`%seed-%-${s}`]);
@@ -369,7 +374,7 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
       );
 
       // the next start: nothing to do
-      expect((await seedStarterStories(pool, log, files)).seeded).toEqual([]);
+      expect(await seedStarterStories(pool, log, files)).toEqual({ seeded: [], refreshed: [], published: [] });
 
       // an editor deletes one and archives another: they stay that way
       await pool.query(`DELETE FROM stories WHERE slug = $1`, [slug('seed-a')]);
@@ -411,7 +416,7 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
       // unreadable files and a database that refuses are logged, not thrown
       logs.length = 0;
       const garbage = [await file('garbage.json', '{ not json'), await file('wrong.json', { stories: 'no' }), pathToFileURL(join(dir, 'missing.json'))];
-      await expect(seedStarterStories(pool, log, garbage)).resolves.toEqual({ seeded: [] });
+      await expect(seedStarterStories(pool, log, garbage)).resolves.toEqual({ seeded: [], refreshed: [], published: [] });
       expect(logs.filter((l) => l.level === 'warn')).toHaveLength(3);
 
       const closed = new pg.Pool({ connectionString: DATABASE_URL });
@@ -419,8 +424,43 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
       logs.length = 0;
       await expect(seedStarterStories(closed, log, [await file('late.json', { stories: [testStory(slug('seed-late'))] })])).resolves.toEqual({
         seeded: [],
+        refreshed: [],
+        published: [],
       });
       expect(logs.some((l) => l.level === 'warn')).toBe(true);
+    });
+
+    it('brings a starter nobody changed up to its file, and leaves one an editor changed as they left it', async () => {
+      const files = [await file('kept.json', { stories: [testStory(slug('seed-f')), testStory(slug('seed-g'))] })];
+      await seedStarterStories(pool, log, files);
+      // an editor corrects one in the panel
+      await pool.query(`UPDATE stories SET title = 'Sernavê edîtor', updated_by = $2, lock_version = lock_version + 1 WHERE slug = $1`, [
+        slug('seed-g'),
+        editorId,
+      ]);
+      // the next release corrects both in the file
+      const corrected = [
+        await file('kept.json', {
+          stories: [testStory(slug('seed-f'), { title: 'Sernavê nû' }), testStory(slug('seed-g'), { title: 'Sernavê pelê' })],
+        }),
+      ];
+      const next = await seedStarterStories(pool, log, corrected);
+      expect(next).toEqual({ seeded: [], refreshed: [slug('seed-f')], published: [] });
+      // still out, with the file's text, and a new version so an editor with it open reloads
+      expect(await row(slug('seed-f'))).toMatchObject({ title: 'Sernavê nû', status: 'published', lock_version: 1 });
+      expect(await row(slug('seed-g'))).toMatchObject({ title: 'Sernavê edîtor', lock_version: 1 });
+      // and once it is current, the start after does nothing
+      expect((await seedStarterStories(pool, log, corrected)).refreshed).toEqual([]);
+    });
+
+    it('keeps a starter its file is not ready to publish as a draft, publishing it once the file is', async () => {
+      const unfiled = testStory(slug('seed-h'), { category: null });
+      const first = await seedStarterStories(pool, log, [await file('unfiled.json', { stories: [unfiled] })]);
+      expect(first).toMatchObject({ seeded: [slug('seed-h')], published: [] });
+      expect(await row(slug('seed-h'))).toMatchObject({ status: 'draft' });
+      const filed = await seedStarterStories(pool, log, [await file('unfiled.json', { stories: [testStory(slug('seed-h'))] })]);
+      expect(filed).toEqual({ seeded: [], refreshed: [slug('seed-h')], published: [slug('seed-h')] });
+      expect(await row(slug('seed-h'))).toMatchObject({ status: 'published' });
     });
 
     it('lets two instances starting together seed each story once', async () => {
