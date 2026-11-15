@@ -1133,10 +1133,8 @@ html:has(.lesson-bar) {
 .lesson-bubble.is-line {
   align-items: center;
   gap: 14px;
-  padding: 14px 20px 15px 14px;
-}
-[dir='rtl'] .lesson-bubble.is-line {
-  padding: 14px 14px 15px 20px;
+  padding-block: 14px 15px;
+  padding-inline: 14px 20px;
 }
 .lesson-bubble .lesson-line-text {
   font-size: clamp(1.3rem, 2.4vw + 0.75rem, 1.75rem);
@@ -1219,10 +1217,8 @@ html:has(.lesson-bar) {
 @media (max-width: 480px) {
   .lesson-bubble.is-line {
     gap: 12px;
-    padding: 12px 16px 13px 12px;
-  }
-  [dir='rtl'] .lesson-bubble.is-line {
-    padding: 12px 12px 13px 16px;
+    padding-block: 12px 13px;
+    padding-inline: 12px 16px;
   }
   .lesson-bubble.is-line:not(:has(.lesson-line-play)) {
     padding-inline-start: 16px;

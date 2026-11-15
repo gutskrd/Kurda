@@ -2652,7 +2652,7 @@
                     "prompt": "Amed ji Sêvanê ___ e.",
                     "options": [
                       "mezintir",
-                      "mezin",
+                      "biçûktir",
                       "herî mezin"
                     ],
                     "correctIndex": 0
@@ -2750,7 +2750,7 @@
                     "prompt": "Hêvî is smaller than Baran.",
                     "options": [
                       "Hêvî ji Baran biçûktir e.",
-                      "Hêvî ji Baran biçûk e.",
+                      "Hêvî ji Baran mezintir e.",
                       "Hêvî Baran biçûktir e."
                     ],
                     "correctIndex": 0
@@ -2974,7 +2974,7 @@
                     "options": [
                       "bijare",
                       "herî",
-                      "mezin"
+                      "kîjan"
                     ],
                     "correctIndex": 0
                   }
@@ -3326,11 +3326,11 @@
                     "ask": "missing",
                     "say": "Simbêlê Ferhad ji yê min dirêjtir e.",
                     "voice": "hamo",
-                    "prompt": "Simbêlê Ferhad ji yê min ___ e.",
+                    "prompt": "Simbêlê Ferhad ji yê min dirêjtir ___.",
                     "options": [
-                      "dirêjtir",
-                      "dirêj",
-                      "herî dirêj"
+                      "e",
+                      "ye",
+                      "in"
                     ],
                     "correctIndex": 0
                   }

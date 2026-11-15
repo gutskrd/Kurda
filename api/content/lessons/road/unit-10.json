@@ -4935,13 +4935,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Xezal çima nîgeran e?",
+                    "say": "Ev defter çi ye?",
                     "voice": "hamo",
-                    "prompt": "Xezal çima nîgeran e?",
+                    "prompt": "Ev defter çi ye?",
                     "options": [
-                      "Pêşniyarek ji Hewlêrê hat.",
-                      "Ew li Amedê ye.",
-                      "Erê, ew nîgeran e."
+                      "Deftera havîna me ye!",
+                      "Ew nîgeran e.",
+                      "Min nan xwar."
                     ],
                     "correctIndex": 0
                   }

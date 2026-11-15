@@ -1713,6 +1713,7 @@
                     "ask": "to-english",
                     "say": "Piştre ew ê vegere gund.",
                     "voice": "hamo",
+                    "cue": "about Xezal",
                     "prompt": "Piştre ew ê vegere gund.",
                     "accepted": [
                       "Afterwards she will come back to the village.",
@@ -2615,13 +2616,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Mirîşk jî govendê digirin!",
+                    "say": "Em jî govendê digirin!",
                     "voice": "hamo",
-                    "prompt": "Mirîşk jî govendê ___!",
+                    "prompt": "Em jî govendê ___!",
                     "options": [
                       "digirin",
                       "digire",
-                      "bigirin"
+                      "digirim"
                     ],
                     "correctIndex": 0
                   }
@@ -2712,11 +2713,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "We are dancing.",
+                    "prompt": "The hens are dancing too!",
                     "options": [
-                      "Em govendê digirin.",
-                      "Em govendê digire.",
-                      "Em govendê digirim."
+                      "Mirîşk jî govendê digirin!",
+                      "Mirîşk jî govendê digirim!",
+                      "Mirîşk jî govendê bigirin!"
                     ],
                     "correctIndex": 0
                   }
@@ -4238,7 +4239,7 @@
                     "voice": "hamo",
                     "prompt": "Sibe azmûna min heye!",
                     "options": [
-                      "Serkeftin ji bo te!",
+                      "Ez ji te re serkeftinê dixwazim!",
                       "Destê te sax be!",
                       "Ya te jî pîroz be!"
                     ],

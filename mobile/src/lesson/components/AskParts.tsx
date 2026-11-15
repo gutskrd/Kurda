@@ -189,7 +189,7 @@ export function GapSlot({ word, state, style }: { word: string | null; state: Ga
   const ink = state === 'right' ? valley.greenText : state === 'wrong' ? valley.wrongText : valley.ink;
   return (
     <AnswerMotion verdict={state === 'right' ? 'right' : state === 'wrong' ? 'wrong' : null}>
-      <View style={styles.gap} accessibilityLabel={filled ? word : t('lesson.gap.empty')} testID="ask-gap">
+      <View style={styles.gap} accessible accessibilityLabel={filled ? word : t('lesson.gap.empty')} testID="ask-gap">
         <Text style={[style, styles.gapWord, { color: filled ? ink : 'transparent' }]}>{filled ? word : ' '}</Text>
         <View style={[styles.rule, { backgroundColor: rule }]} />
       </View>
@@ -251,8 +251,8 @@ const styles = StyleSheet.create({
   slowText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.3 },
   cue: { flexShrink: 1, paddingVertical: spacing.xs, paddingHorizontal: spacing.sm + 4, borderRadius: radii.pill },
   cueText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium },
-  gap: { minWidth: GAP_WIDTH, alignItems: 'center', marginHorizontal: 2 },
-  gapWord: { paddingHorizontal: spacing.xs },
+  gap: { minWidth: GAP_WIDTH, alignItems: 'center' },
+  gapWord: { paddingHorizontal: 2 },
   rule: { alignSelf: 'stretch', height: 2.5, borderRadius: radii.pill, marginTop: -1 },
   badge: { height: BADGE, alignItems: 'center', gap: spacing.xs + 1, paddingHorizontal: spacing.sm + 2, borderRadius: radii.pill },
   badgeText: { fontSize: 11, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },

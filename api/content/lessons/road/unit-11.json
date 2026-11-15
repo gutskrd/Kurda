@@ -4652,7 +4652,7 @@
                     "options": [
                       "Bêguman! Her roj!",
                       "Na, kirê biha ye.",
-                      "Ode li kêleka dibistanê ye."
+                      "Ev planeke demdirêj e."
                     ],
                     "correctIndex": 0
                   }
@@ -4664,8 +4664,8 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Planeke min a demdirêj heye.",
-                      "Planeke min a demdirêj heye"
+                      "Ez ê her roja Înê telefonî we bikim.",
+                      "Ez ê her roja Înê telefonî we bikim"
                     ]
                   }
                 },

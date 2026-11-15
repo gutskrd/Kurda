@@ -551,7 +551,7 @@
                     "prompt": "Gelek ___!",
                     "options": [
                       "spas",
-                      "silav",
+                      "erê",
                       "na"
                     ],
                     "correctIndex": 0
@@ -4378,14 +4378,14 @@
                   "position": 16,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Em hemû baş in… lê Hevalo birçî ye!",
+                    "ask": "reply",
+                    "say": "Hûn hemû baş in?",
                     "voice": "hamo",
-                    "prompt": "Em hemû baş in… lê Hevalo birçî ye!",
+                    "prompt": "Hûn hemû baş in?",
                     "options": [
-                      "We are all well… but Hevalo is hungry!",
-                      "We are all hungry… but Hevalo is well!",
-                      "We are both well… and Hevalo is too!"
+                      "Em hemû baş in… lê Hevalo birçî ye!",
+                      "Ez hemû baş im.",
+                      "Hûn baş in, spas."
                     ],
                     "correctIndex": 0
                   }
@@ -4919,7 +4919,10 @@
                     "accepted": [
                       "In Sêvan, neighbours are family.",
                       "In Sêvan, the neighbours are family.",
-                      "Neighbours are family in Sêvan."
+                      "Neighbours are family in Sêvan.",
+                      "In Sêvan, neighbors are family.",
+                      "In Sêvan, the neighbors are family.",
+                      "Neighbors are family in Sêvan."
                     ]
                   }
                 },
