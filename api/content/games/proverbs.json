@@ -17,7 +17,7 @@
           "translation": "ئاو دڵۆپ دڵۆپ دەبێتە گۆم.",
           "meaning": "هەوڵی بچووک و بەردەوام، کە کۆ دەبێتەوە، دەبێتە شتێکی گەورە.",
           "explanation": "وێنەکە گۆمێکە کە دڵۆپ دڵۆپ پڕ دەبێت: هیچ دڵۆپێک بە تەنیا بەرچاو ناکەوێت، بەڵام هیچیشیان بەفیڕۆ ناچێت. کورمانجەکان بەم پەندە دڵی ئەو کەسە دەدەنەوە کە پێی وایە ماندووبوونی ڕۆژانەی بێسوودە، هەروەها بۆ پاشەکەوتکردنی کەم کەمیش دەیڵێن.",
-          "example": "ڕێزان هەموو ئێوارەیەک پێنج وشەی نوێ فێر دەبێت و گلەیی دەکات کە ئەمە زۆر کەمە. داپیری پێدەکەنێت: «کوڕم، ئاو دڵۆپ دڵۆپ دەبێتە گۆم. ساڵی داهاتوو کتێبێکی کوردی دەخوێنیتەوە.»"
+          "example": "ڕێزان هەموو ئێوارەیەک پێنج وشەی نوێ فێر دەبێت و گلەیی دەکات کە ئەمە زۆر کەمە. داپیری پێدەکەنێت: «کوڕم، ئاو دڵۆپ دڵۆپ دەبێتە گۆم. ساڵی داهاتوو پەرتووکێکی کوردی دەخوێنیتەوە.»"
         },
         "en": {
           "translation": "Drop by drop, water becomes a lake.",
@@ -138,12 +138,12 @@
           "note": "Soranî form recorded by Alaaddin Sajadi, who explains that with a sweet tongue a person can get past every obstacle."
         }
       ],
-      "exampleKu": "Baran ji ber dengê bilind ê muzîkê bi hêrs li deriyê cîran xist, lê kesî derî venekir. Diya wî got: “Bi aramî silav bide û rica bike. Zimanê şîrîn mar ji qulê derdixe.” Baran careke din bi nermî li derî xist, û cîran bi rûkenî deng nizm kir.",
+      "exampleKu": "Baran ji ber dengê bilind ê muzîkê bi hêrs li deriyê cîran xist, lê kesî derî venekir. Diya wî got: “Bi aramî silav bide û lava bike. Zimanê şîrîn mar ji qulê derdixe.” Baran careke din bi nermî li derî xist, û cîran bi rûkenî deng nizm kir.",
       "translations": {
         "ckb": {
           "translation": "زمانی شیرین مار لە کون دەردەهێنێت.",
           "meaning": "قسەی نەرم و بە ڕێز ئەوە بەدەست دەهێنێت کە زۆر و توڕەیی ناتوانن.",
-          "explanation": "مارێک کە لە کونەکەیدا خۆی شاردووەتەوە بە هاوار و لێدان دەرناچێت، بەڵام پەندەکە دەڵێت قسەی خۆش ئەویش دەردەهێنێت. کاتێک کەسێک خەریکە دەمەقاڵێ دەکات یان بە زۆر داوای شتێک دەکات، بەم پەندە بیری دەخەنەوە کە نەرمی دەرگا دەکاتەوە.",
+          "explanation": "مارێک کە لە کونەکەیدا خۆی شاردووەتەوە بە هاوار و لێدان دەرناچێت، بەڵام پەندەکە دەڵێت قسەی خۆش ئەویش دەردەهێنێت. کاتێک کەسێک خەریکە مشتومڕ دەکات یان بە زۆر داوای شتێک دەکات، بەم پەندە بیری دەخەنەوە کە نەرمی دەرگا دەکاتەوە.",
           "example": "باران لەبەر دەنگی بەرزی مۆسیقا بە توڕەییەوە لە دەرگای دراوسێکەی دەدات، بەڵام کەس دەرگا ناکاتەوە. دایکی دەڵێت: «بە هێمنی سڵاوی لێ بکە و داوای لێ بکە. زمانی شیرین مار لە کون دەردەهێنێت.» باران دیسان بە نەرمی لە دەرگا دەدات و دراوسێکە بە ڕووخۆشییەوە دەنگەکە دادەگرێت.",
           "equivalent": "بە قسەی خۆش مار لە کون دێتە دەر."
         },
@@ -265,7 +265,7 @@
         "ckb": {
           "translation": "چیا هەرچەندە بەرز بێت، ڕێگای پێدا دەکەوێت.",
           "meaning": "هیچ کۆسپێک ئەوەندە گەورە نییە کە ڕێگایەکی بەسەردا نەدۆزرێتەوە.",
-          "explanation": "چیا گەورەترین بەربەستی کوردستانە، بەڵام ڕێگا بە بەرزترین گەردەنەکانیشدا تێدەپەڕێت. پەندەکە دڵی ئەو کەسە دەداتەوە کە کارێکی لە پێشە و بە مەحاڵی دەزانێت؛ جاری واش هەیە مانای ئەوەیە کە کەس ئەوەندە بەرز نییە دەستی پێ نەگات.",
+          "explanation": "چیا گەورەترین بەربەستی کوردستانە، بەڵام ڕێگا بە بەرزترین گەردەنەکانیشدا تێدەپەڕێت. پەندەکە دڵی ئەو کەسە دەداتەوە کە کارێکی لە پێشە و پێی وایە ناکرێت؛ جاری واش هەیە واتای ئەوەیە کە کەس ئەوەندە بەرز نییە دەستی پێ نەگات.",
           "example": "خەزاڵ دوو جار لە تاقیکردنەوەی شۆفێری دەرنەچووە و دەیەوێت وازی لێ بهێنێت. باوکی دەڵێت: «کچم، چیا هەرچەندە بەرز بێت، ڕێگای پێدا دەکەوێت. هەفتەی داهاتوو دیسان هەوڵ بدەرەوە.»"
         },
         "en": {
@@ -376,12 +376,12 @@
           "note": "A related saying: when guests come, they bring their own share with them, so no host need fear the cost."
         }
       ],
-      "exampleKu": "Nîvê şevê rêwiyekî ku erebeya wî li rê xera bûbû li derî xist. Dapîrê berê xwe da bûka xwe: “Ka xwarinê germ bike, mêvan mêvanê Xwedê ye.”",
+      "exampleKu": "Nîvê şevê rêwiyekî ku erebeya wî li rê têk çûbû li derî xist. Dapîrê berê xwe da bûka xwe: “Ka xwarinê germ bike, mêvan mêvanê Xwedê ye.”",
       "translations": {
         "ckb": {
           "translation": "میوان میوانی خوایە.",
           "meaning": "هەر کەسێک لە دەرگات بدات، دەبێت بە ڕێزەوە پێشوازی لێ بکرێت.",
-          "explanation": "میوان، تەنانەت ئەگەر نەناسراویش بێت، وەک ئەوە سەیر دەکرێت کە خوا ناردبێتی، بۆیە گەڕاندنەوەی یان خراپ خزمەتکردنی شەرمە. کاتێک میوانێکی چاوەڕواننەکراو دێت دەیڵێن، و بۆ بیرخستنەوەی ماڵەکە کە باشترین خواردن و باشترین جێگا هی میوانە.",
+          "explanation": "میوان، تەنانەت ئەگەر نەناسراویش بێت، وەک ئەوە سەیر دەکرێت کە خوا ناردبێتی، بۆیە گەڕاندنەوەی یان خراپ پێشوازیکردنی شەرمە. کاتێک میوانێکی چاوەڕواننەکراو دێت دەیڵێن، و بۆ بیرخستنەوەی ماڵەکە کە باشترین خواردن و باشترین جێگا هی میوانە.",
           "example": "نیوەشەو ڕێبوارێک کە ئۆتۆمبێلەکەی لە ڕێگا تێکچووە لە دەرگا دەدات. داپیرە ڕوو دەکاتە بووکەکەی: «خواردنەکە گەرم بکەرەوە، میوان میوانی خوایە.»"
         },
         "en": {
@@ -573,7 +573,7 @@
           "note": "Amed Tîgrîs records this as the form said in some areas (the water is muddied from the top); the areas are not named."
         }
       ],
-      "exampleKu": "Ji karmendan re tê gotin ku dereng nemînin, lê rêvebir bi xwe her roj saet deh tê. Hevkarekî kevin bi pistepist dibêje: “Av di serkaniyê de şêlû dibe.”",
+      "exampleKu": "Ji karmendan re tê gotin ku dereng nemînin, lê rêvebir bi xwe her roj di demjimêr dehan de tê. Hevkarekî kevin bi pistepist dibêje: “Av di serkaniyê de şêlû dibe.”",
       "translations": {
         "ckb": {
           "translation": "ئاو لە سەرچاوەوە لێڵ دەبێت.",
@@ -686,13 +686,13 @@
           "note": "Another ending: “the tree would not fall”."
         }
       ],
-      "exampleKu": "Dikandar nedizanî çima pere ji kasê winda dibin, heta ku dît ku şagirtê wî yê herî bawerpêkirî ye. Jina wî got: “Kurmê darê ne ji darê be, dar narize.”",
+      "exampleKu": "Firoşkar nedizanî çima pere ji kasê winda dibin, heta ku dît ku şagirtê wî yê herî bawerpêkirî ye. Jina wî got: “Kurmê darê ne ji darê be, dar narize.”",
       "translations": {
         "ckb": {
           "translation": "ئەگەر کرمی دار لە خودی دارەکە نەبێت، دار ناڕزێت.",
           "meaning": "خراپترین زیان لە ناوەوە دێت، لە یەکێک لە خۆت.",
           "explanation": "دار زیاتر بە کرمێک دەڕووخێت کە لە ناو داری خۆیدا پەیدا دەبێت، نەک بە با. بۆ ناپاکیی خزمێک، هاوکارێک یان ئەندامێکی کۆمەڵ دەگوترێت، و زۆر جاریش بۆ ناکۆکییەکانی ناو خودی کوردان.",
-          "example": "دوکاندارەکە تێناگات بۆچی پارە لە سندووقەکە ون دەبێت، تا دەزانێت کە شاگردە هەرە متمانەپێکراوەکەی خۆیەتی. ژنەکەی دەڵێت: «ئەگەر کرمی دار لە خودی دارەکە نەبێت، دار ناڕزێت.»",
+          "example": "فرۆشیارەکە تێناگات بۆچی پارە لە قاسەکە ون دەبێت، تا دەزانێت کە شاگردە هەرە متمانەپێکراوەکەی خۆیەتی. ژنەکەی دەڵێت: «ئەگەر کرمی دار لە خودی دارەکە نەبێت، دار ناڕزێت.»",
           "context": "نووسەران زۆر جار کاتی باسکردنی ململانێی ناوخۆیی دەیهێننەوە؛ ستوونێکی ڕۆژنامەیەک تەنها ناوی «کرمی دار»ـە."
         },
         "en": {
@@ -801,8 +801,8 @@
         "ckb": {
           "translation": "برینی قسە لە برینی شمشێر خراپترە.",
           "meaning": "قسەی ناشیرین لە لێدان قووڵتر و درێژتر ئازار دەدات.",
-          "explanation": "برینی شمشێر بە کات سارێژ دەبێت، بەڵام جوێن لە دڵ و لە بیری بنەماڵەدا دەمێنێتەوە. بە کەسێک دەگوترێت کە قسەی ڕەقی کردووە، یان بۆ ئاگادارکردنەوە پێش ئەوەی دەمەقاڵێیەک لە دەست دەربچێت. لێرەدا «خەبەر» بە مانای قسەی ڕەق و جوێنە.",
-          "example": "لە کاتی دەمەقاڵێدا دیلان قسەیەکی دڵشکێن بە براکەی دەڵێت. باوکیان دەڵێت: «برینی قسە لە برینی شمشێر خراپترە. بڕۆ داوای لێبوردنی لێ بکە.»"
+          "explanation": "برینی شمشێر بە کات سارێژ دەبێت، بەڵام جوێن لە دڵ و لە بیری بنەماڵەدا دەمێنێتەوە. بە کەسێک دەگوترێت کە قسەی ڕەقی کردووە، یان بۆ ئاگادارکردنەوە پێش ئەوەی مشتومڕێک لە دەست دەربچێت. لێرەدا «خەبەر» بە واتای قسەی ڕەق و جوێنە.",
+          "example": "لە کاتی مشتومڕدا دیلان قسەیەکی دڵشکێن بە براکەی دەڵێت. باوکیان دەڵێت: «برینی قسە لە برینی شمشێر خراپترە. بڕۆ داوای لێبوردنی لێ بکە.»"
         },
         "en": {
           "translation": "The wound of words is worse than the wound of the sword.",
@@ -981,7 +981,7 @@
           "note": "Wîkîferheng’s proverb appendix: good friendship shows itself on a black day (royê is a regional pronunciation of rojê)."
         }
       ],
-      "exampleKu": "Dema ku lehiyê zeviyên wan xera kirin, gelek kesan tenê telefon kir, lê Şêro bi traktora xwe hat û sê rojan alîkarî kir. Bavê Rêzan got: “Dost di roja teng de belû dibe.”",
+      "exampleKu": "Dema ku lehiyê zeviyên wan wêran kirin, gelek kesan tenê telefon kir, lê Şêro bi traktora xwe hat û sê rojan alîkarî kir. Bavê Rêzan got: “Dost di roja teng de belû dibe.”",
       "translations": {
         "ckb": {
           "translation": "دۆست لە ڕۆژی تەنگانەدا دەردەکەوێت.",
@@ -1083,7 +1083,7 @@
           "translation": "باوک بەرەو منداڵ دەچێت، منداڵ بەرەو چیا دەچێت.",
           "meaning": "خۆشەویستیی دایک و باوک بەرەو منداڵ دەڕوات، بەڵام دڵی منداڵ بەرەو جیهانی فراوان دەڕوات.",
           "explanation": "باوک هەر بەرەو منداڵەکەی دەڕوات، بەڵام منداڵ ڕووی لە چیایە، لە ژیانێکی سەربەخۆ. پەندەکە زیاتر بە زەردەخەنەوە دەگوترێت نەک بە گلەیی: خۆشەویستی وەک ئاو بەرەو خوار دەڕوات، لە دایک و باوکەوە بۆ منداڵ، زیاتر لەوەی بگەڕێتەوە.",
-          "example": "داپیرە هەموو هەفتەیەک خواردن ئامادە دەکات و بۆ نەوەکەی لە زانکۆ دەینێرێت، بەڵام ئەو بە زەحمەت هەفتەی جارێک تەلەفۆن دەکات. داپیرە پێدەکەنێت و دەڵێت: «باوک بەرەو منداڵ دەچێت، منداڵ بەرەو چیا دەچێت.»"
+          "example": "داپیرە هەموو هەفتەیەک خواردن ئامادە دەکات و بۆ نەوەکەی لە زانکۆ دەینێرێت، بەڵام ئەو بە ئاستەم هەفتەی جارێک تەلەفۆن دەکات. داپیرە پێدەکەنێت و دەڵێت: «باوک بەرەو منداڵ دەچێت، منداڵ بەرەو چیا دەچێت.»"
         },
         "en": {
           "translation": "The father goes toward the child; the child goes toward the mountain.",
@@ -1148,13 +1148,13 @@
       "tradition": "traditional",
       "region": null,
       "variants": [],
-      "exampleKu": "Dema ku Hejar dikana xwe ya yekem vekir, bavê wî her sibe pê re diçû dikanê û pere jî deyn dabûyê. Hejar ji hevalên xwe re got: “Bavê mirov pişta mirov e.”",
+      "exampleKu": "Dema ku Hejar firoşgeha xwe ya yekem vekir, bavê wî her sibe pê re diçû firoşgehê û pere jî deyn dabûyê. Hejar ji hevalên xwe re got: “Bavê mirov pişta mirov e.”",
       "translations": {
         "ckb": {
           "translation": "باوکی مرۆڤ پشتی مرۆڤە.",
           "meaning": "باوک ئەو پاڵپشتەیە کە پشتی پێ دەبەستیت و ئەو پارێزەرەیە کە لە پشتتەوە دەوەستێت.",
-          "explanation": "لە کوردیدا «پشت» ئەو کەسەیە کە لە پشتتەوە دەوەستێت: پاڵپشتت دەکات و خەڵک حسابی بۆ دەکەن. پەندەکە دەڵێت ئەو کەسە پێش هەموو کەسێک باوکتە، و بە سوپاسەوە دەگوترێت، یان بە خەمەوە کاتێک باوک نەماوە.",
-          "example": "کاتێک هەژار یەکەم دوکانی دەکاتەوە، باوکی هەموو بەیانییەک لەگەڵی دەچێتە دوکان و قەرزیشی داوەتێ. هەژار بە هاوڕێکانی دەڵێت: «باوکی مرۆڤ پشتی مرۆڤە.»"
+          "explanation": "لە کوردیدا «پشت» ئەو کەسەیە کە لە پشتتەوە دەوەستێت: پاڵپشتت دەکات و خەڵک ڕێزی لێ دەگرن. پەندەکە دەڵێت ئەو کەسە پێش هەموو کەسێک باوکتە، و بە سوپاسەوە دەگوترێت، یان بە خەمەوە کاتێک باوک نەماوە.",
+          "example": "کاتێک هەژار یەکەم فرۆشگای دەکاتەوە، باوکی هەموو بەیانییەک لەگەڵی دەچێتە فرۆشگاکە و پارەشی بۆ دابین کردووە. هەژار بە هاوڕێکانی دەڵێت: «باوکی مرۆڤ پشتی مرۆڤە.»"
         },
         "en": {
           "translation": "A person’s father is their back.",
@@ -1221,13 +1221,13 @@
       "tradition": "traditional",
       "region": null,
       "variants": [],
-      "exampleKu": "Cîranê wan bi xapandinê zû dewlemend bû, lê di nav du salan de her tiştê xwe winda kir. Kalo got: “Keda helal dibe mû naqete, keda heram bibe werîs jî diqete.”",
+      "exampleKu": "Cîranê wan bi xapandinê zû zengîn bû, lê di nav du salan de her tiştê xwe winda kir. Kalo got: “Keda helal dibe mû naqete, keda heram bibe werîs jî diqete.”",
       "translations": {
         "ckb": {
-          "translation": "ڕەنجی حەڵاڵ ببێتە موو ناپچڕێت، ڕەنجی حەرام ببێتە گوریسیش دەپچڕێت.",
+          "translation": "ڕەنجی ڕەوا ببێتە موو ناپچڕێت، ڕەنجی ناڕەوا ببێتە گوریسیش دەپچڕێت.",
           "meaning": "ئەوەی بە دروستی پەیدا دەکرێت دەمێنێت هەرچەندە کەم بێت؛ ئەوەی بە فێڵ پەیدا دەکرێت هەڵدەوەشێتەوە هەرچەندە زۆر بێت.",
-          "explanation": "«ڕەنج» ئەو ماندووبوونەیە کە دەیدەیت و ئەو بژێوییەیە کە پێی دەگەیت. بژێوییەکی حەڵاڵ لەوانەیە وەک موو باریک بێت و هەر بمێنێت؛ بژێوییەکی حەرام لەوانەیە وەک گوریس بەهێز دیار بێت و هەر بپچڕێت. کاتێک کەسێک بە فێڵ دەوڵەمەند دەبێت دەیڵێن، یان بۆ دڵدانەوەی کەسێک کە کەم بەڵام بە دروستی پەیدا دەکات.",
-          "example": "دراوسێکەیان بە فێڵ زوو دەوڵەمەند بوو، بەڵام لە ماوەی دوو ساڵدا هەموو شتێکی لەدەست دا. کاڵۆ دەڵێت: «ڕەنجی حەڵاڵ ببێتە موو ناپچڕێت، ڕەنجی حەرام ببێتە گوریسیش دەپچڕێت.»"
+          "explanation": "«ڕەنج» ئەو ماندووبوونەیە کە دەیدەیت و ئەو بژێوییەیە کە پێی دەگەیت. بژێوییەکی ڕەوا لەوانەیە وەک موو باریک بێت و هەر بمێنێت؛ بژێوییەکی ناڕەوا لەوانەیە وەک گوریس بەهێز دیار بێت و هەر بپچڕێت. کاتێک کەسێک بە فێڵ دارا دەبێت دەیڵێن، یان بۆ دڵدانەوەی کەسێک کە کەم بەڵام بە دروستی پەیدا دەکات.",
+          "example": "دراوسێکەیان بە فێڵ زوو دارا بوو، بەڵام لە ماوەی دوو ساڵدا هەموو شتێکی لەدەست دا. کاڵۆ دەڵێت: «ڕەنجی ڕەوا ببێتە موو ناپچڕێت، ڕەنجی ناڕەوا ببێتە گوریسیش دەپچڕێت.»"
         },
         "en": {
           "translation": "Honest earnings, thin as a hair, do not snap; dishonest earnings, thick as a rope, still break.",
@@ -1400,10 +1400,10 @@
       "exampleKu": "Mîrza sê salan li benda destûra xebatê ma û her car dosya wî vegeriya. Roja ku nameya erênî hat, apê wî yê ji Konyayê got: “Min ji te re negotibû? Xudanê sebrê bîye mîrê Misirê.”",
       "translations": {
         "ckb": {
-          "translation": "خاوەن سەبر بوو بە میری میسر.",
-          "meaning": "سەبر، هەرچەندە درێژ بێت، لە کۆتاییدا پاداشت دەدرێتەوە، جاری وا هەیە لە هەموو هیوایەک زیاتر.",
-          "explanation": "پەندەکە بە ئەگەری زۆر ئاماژەیە بۆ چیرۆکی یووسف: فڕێدرایە ناو بیر، فرۆشرا و زیندانی کرا، سەبری گرت و بوو بە گەورەی میسر. کوردانی ئەنادۆڵی ناوەڕاست بە کەسێکی دەڵێن کە لە چاوەڕوانیی درێژ ماندوو بووە، تا دڵنیای بکەنەوە کە خۆڕاگری بەری دەبێت.",
-          "example": "میرزا سێ ساڵ چاوەڕێی مۆڵەتی کار بوو و هەموو جارێک دۆسیەکەی گەڕێنرایەوە. ئەو ڕۆژەی نامەی ڕەزامەندی دێت، مامی کە خەڵکی قونیەیە دەڵێت: «پێم نەگوتی؟ خاوەن سەبر بوو بە میری میسر.»",
+          "translation": "ئارامگر بوو بە میری میسر.",
+          "meaning": "ئارامگرتن، هەرچەندە درێژ بێت، لە کۆتاییدا پاداشت دەدرێتەوە، جاری وا هەیە لە هەموو هیوایەک زیاتر.",
+          "explanation": "پەندەکە بە ئەگەری زۆر ئاماژەیە بۆ چیرۆکی یووسف: فڕێدرایە ناو بیر، فرۆشرا و زیندانی کرا، ئارامی گرت و بوو بە گەورەی میسر. کوردانی ئەنادۆڵی ناوەڕاست بە کەسێکی دەڵێن کە لە چاوەڕوانیی درێژ ماندوو بووە، تا دڵنیای بکەنەوە کە خۆڕاگری بەری دەبێت.",
+          "example": "میرزا سێ ساڵ چاوەڕێی ڕێگەپێدانی کار بوو و هەموو جارێک دۆسیەکەی گەڕێنرایەوە. ئەو ڕۆژەی نامەی ڕێگەپێدانەکە دێت، مامی کە خەڵکی قونیەیە دەڵێت: «پێم نەگوتی؟ ئارامگر بوو بە میری میسر.»",
           "context": "فەرهەنگی ویکیی کوردی ئەم پەندە دەداتە پاڵ کوردانی ئەنادۆڵی ناوەڕاست (دەوروبەری قونیە و ئەنقەرە)؛ «بییە» و «میسرێ» شێوەی زاراوەی ئەوانن."
         },
         "en": {
@@ -1595,7 +1595,7 @@
         "ckb": {
           "translation": "پیاوی چاک لە ڕۆژی تەنگانەدا دەناسرێتەوە.",
           "meaning": "نرخ و ئازایەتیی ڕاستەقینە لە کاتی تەنگانەدا دەردەکەوێت، نەک لە کاتی ئاسوودەییدا.",
-          "explanation": "کاتێک هیچ مەترسییەک نییە هەموو کەس دەتوانێت ئازا دیار بێت؛ ڕۆژی تەنگ، ڕۆژی مەترسی و پێویستی، دەری دەخات کێ دەچەسپێت. «مێر» بە مانای پیاو و بە پێی بەکارهێنانی کۆن کەسی ئازایە؛ ئەمڕۆ بۆ هەر کەسێک دەگوترێت کە سەری خۆی لەدەست نادات و کار دەکات کاتێک ئەوانی تر هەڵدێن.",
+          "explanation": "کاتێک هیچ مەترسییەک نییە هەموو کەس دەتوانێت ئازا دیار بێت؛ ڕۆژی تەنگ، ڕۆژی مەترسی و پێویستی، دەری دەخات کێ دەچەسپێت. «مێر» بە واتای پیاو و بە پێی بەکارهێنانی کۆن کەسی ئازایە؛ ئەمڕۆ بۆ هەر کەسێک دەگوترێت کە سەری خۆی لەدەست نادات و کار دەکات کاتێک ئەوانی تر هەڵدێن.",
           "example": "کاتێک زریان لە گوند هەڵدەکات، هەموو کەس ڕادەکەنە ماڵەوە، بەڵام جەمیل دەمێنێتەوە و مەڕەکان یەک یەک دەخاتە ناو تەویلەکە. پیرێژنێک دەڵێت: «پیاوی چاک لە ڕۆژی تەنگانەدا دەناسرێتەوە.»"
         },
         "en": {
@@ -1676,10 +1676,10 @@
       "exampleKu": "Rênas dixwest gîtara xwe ya kevin bifiroşe, lê dît ku kurê cîranan dixwaze fêrî lêxistinê bibe. Wî gîtar diyarî wî kir û got: “Dinya gulek e, bêhn bike û bide hevalê xwe.”",
       "translations": {
         "ckb": {
-          "translation": "دنیا گوڵێکە، بۆنی بکە و بیدە بە هاوڕێکەت.",
+          "translation": "جیهان گوڵێکە، بۆنی بکە و بیدە بە هاوڕێکەت.",
           "meaning": "ژیان کورتە و بۆ بەشکردنە؛ چێژ لەوەی هەتە ببینە و با ئەوانی تریش چێژی لێ ببینن.",
           "explanation": "گوڵ بۆ ماوەیەکی کورت جوانە و ئەگەر بیگوشیت سیس دەبێت؛ باشترین کار ئەوەیە بۆنی بکەیت و بیدەیتە دەستی کەسێکی تر. کاتی بەخشینی شتێک، بەشکردنی خۆشییەک، یان بیرخستنەوەی کەسێک کە بە شتەکانەوە نەنووسێت، دەگوترێت.",
-          "example": "ڕێناس دەیویست گیتارە کۆنەکەی بفرۆشێت، بەڵام بینی کوڕی دراوسێکەیان زۆر حەز دەکات فێری لێدان ببێت. گیتارەکەی پێ بەخشی و گوتی: «دنیا گوڵێکە، بۆنی بکە و بیدە بە هاوڕێکەت.»"
+          "example": "ڕێناس دەیویست گیتارە کۆنەکەی بفرۆشێت، بەڵام بینی کوڕی دراوسێکەیان زۆر حەز دەکات فێری لێدان ببێت. گیتارەکەی پێ بەخشی و گوتی: «جیهان گوڵێکە، بۆنی بکە و بیدە بە هاوڕێکەت.»"
         },
         "en": {
           "translation": "The world is a flower: smell it and pass it to your friend.",
@@ -1744,14 +1744,14 @@
       "tradition": "regional",
       "region": "Behdînan",
       "variants": [],
-      "exampleKu": "Apê Fewzî xwediyê sê dikanan e û dîsa jî dixwaze ya çaran veke. Jina wî serê xwe dihejîne: “Mirov bes bi axê têr dibe.”",
+      "exampleKu": "Apê Fewzî xwediyê sê firoşgehan e û dîsa jî dixwaze ya çaran veke. Jina wî serê xwe dihejîne: “Mirov bes bi axê têr dibe.”",
       "translations": {
         "ckb": {
           "translation": "مرۆڤ تەنها بە خۆڵ تێر دەبێت.",
           "meaning": "چاوچنۆکیی مرۆڤ لە ژیاندا هەرگیز تێر نابێت؛ تەنها گۆڕ کۆتایی بە زیاتر ویستن دەهێنێت.",
           "explanation": "«ئاخ» لێرەدا خۆڵە، خۆڵی گۆڕ. پەندەکە دەڵێت مرۆڤ هەرچەند کۆ بکاتەوە، ئارەزووی زیاتر تا کاتی ناشتنی لەگەڵی دەمێنێت. بە نیوە گاڵتە و نیوە خەمەوە بۆ کەسێک دەگوترێت کە زۆری هەیە و هێشتا زیاتری دەوێت.",
-          "example": "مام فەوزی خاوەنی سێ دوکانە و هێشتا دەیەوێت چوارەمیش بکاتەوە. ژنەکەی سەری ڕادەوەشێنێت: «مرۆڤ تەنها بە خۆڵ تێر دەبێت.»",
-          "context": "لە شیعری فارسیدا هەمان وێنە هەیە: سەعدی دەڵێت چاوی چاوچنۆک یان بە قەناعەت پڕ دەبێت یان بە خۆڵی گۆڕ."
+          "example": "مام فەوزی خاوەنی سێ فرۆشگایە و هێشتا دەیەوێت چوارەمیش بکاتەوە. ژنەکەی سەری ڕادەوەشێنێت: «مرۆڤ تەنها بە خۆڵ تێر دەبێت.»",
+          "context": "لە هەڵبەستی فارسیدا هەمان وێنە هەیە: سەعدی دەڵێت چاوی چاوچنۆک یان بە تێرچاوی پڕ دەبێت یان بە خۆڵی گۆڕ."
         },
         "en": {
           "translation": "Only earth fills a person.",
@@ -1907,12 +1907,12 @@
       "tradition": "regional",
       "region": "Behdînan",
       "variants": [],
-      "exampleKu": "Bawer di dawetê de hemû sirên malbatê ji mêvanan re gotin, û niha bi xizmên xwe re li hev nayê. Xaltîka wî dibêje: “Min ji te re negot? Ezmanê dirêj darkukê serê xwedanî ye.”",
+      "exampleKu": "Bawer di dîlanê de hemû razên malbatê ji mêvanan re gotin, û niha bi xizmên xwe re li hev nayê. Xaltîka wî dibêje: “Min ji te re negot? Ezmanê dirêj darkukê serê xwedanî ye.”",
       "translations": {
         "ckb": {
           "translation": "زمانی درێژ دارکوتکەی سەری خاوەنەکەیەتی.",
           "meaning": "زۆر قسەکردن هەمیشە تووشی گرفتت دەکات.",
-          "explanation": "دارکوتکە بێ وەستان لە دار دەدات؛ زمانی درێژ و بێ لغاویش هەمان کار بە خاوەنەکەی دەکات و دەمەقاڵێ، شەرمەزاری و لۆمەی بۆ دەهێنێت. کاتێک کەسێک نهێنییەک یان قسەیەکی ناشیرینی دەرپەڕاندووە و ئێستا باجەکەی دەدات، دەگوترێت. «ئەزمان» وشەی بادینییە بۆ زمان.",
+          "explanation": "دارکوتکە بێ وەستان لە دار دەدات؛ زمانی درێژ و بێ لغاویش هەمان کار بە خاوەنەکەی دەکات و مشتومڕ، شەرمەزاری و سەرزەنشتی بۆ دەهێنێت. کاتێک کەسێک نهێنییەک یان قسەیەکی ناشیرینی دەرپەڕاندووە و ئێستا باجەکەی دەدات، دەگوترێت. «ئەزمان» وشەی بادینییە بۆ زمان.",
           "example": "باوەر لە زەماوەندەکەدا هەموو نهێنییەکانی خێزانی بۆ میوانەکان گێڕایەوە، و ئێستا لەگەڵ خزمەکانی ناکۆکە. پوورەکەی دەڵێت: «پێم نەگوتی؟ زمانی درێژ دارکوتکەی سەری خاوەنەکەیەتی.»"
         },
         "en": {
@@ -1992,7 +1992,7 @@
         "ckb": {
           "translation": "شام شەکرە، بەڵام نیشتمان شیرینترە.",
           "meaning": "شوێنی بێگانە هەرچەند خۆش بێت، نیشتمانی خۆت خۆشەویستترە.",
-          "explanation": "شام، دیمەشق، نیشانەی شاری دەوڵەمەند و شیرینی باشوور بوو، ئەو شوێنەی خەڵک بۆ بازرگانی و بژێوی دەچوونە ئەوێ. پەندەکە دان بەوەدا دەنێت کە شەکرە، بەڵام هێشتا ماڵی خۆی پێ باشترە؛ ئەوانەی لە دوورن دەیڵێن، و بەوانیش دەگوترێت.",
+          "explanation": "شام، دیمەشق، نیشانەی شاری پڕ سامان و شیرینی باشوور بوو، ئەو شوێنەی خەڵک بۆ بازرگانی و بژێوی دەچوونە ئەوێ. پەندەکە دان بەوەدا دەنێت کە شەکرە، بەڵام هێشتا ماڵی خۆی پێ باشترە؛ ئەوانەی لە دوورن دەیڵێن، و بەوانیش دەگوترێت.",
           "example": "ڕۆژان بیست ساڵە لە ئەڵمانیا دەژی، بەڵام هەموو هاوینێک دەگەڕێتەوە گوندەکەی لە نزیک زاخۆ. کاتێک هاوڕێکانی دەپرسن بۆچی، پێدەکەنێت: «شام شەکرە، بەڵام نیشتمان شیرینترە.»"
         },
         "en": {
@@ -2088,7 +2088,7 @@
       "translations": {
         "ku": {
           "translation": "Kevir li cihê xwe giran e.",
-          "meaning": "Mirov li cihê xwe, di nav kesên xwe de, xwedî qedr û giranî ye.",
+          "meaning": "Mirov li cihê xwe, di nav kesên xwe de, xwedî rûmet û giranî ye.",
           "explanation": "Kevirek li cihê xwe bi giranî rûdine û bi hêsanî nayê lebitandin; gava ji wir tê rakirin, ew giranî namîne. Mirov jî wisa ye: di gund, malbat û karê xwe de gotina wî tê guhdarîkirin. Gava kesek li cihê xwe tê naskirin, yan gava kesek dixwaze cihê xwe yê bi rûmet berde, tê gotin.",
           "example": "Li bajarê mezin kesî Aras nas nedikir, lê li gundê wî her kes ji bo şîretan tê ba wî. Bapîrê wî dibişire û dibêje: “Kevir li cihê xwe giran e.”",
           "equivalent": "Her berek li cihê xo bi qedr e."
@@ -2188,7 +2188,7 @@
           "translation": "Berê rojê bi bêjingê nayê girtin.",
           "literal": "The face of the sun is not held back with a sieve.",
           "meaning": "Rastiyeke eşkere nayê veşartin, çawa ku kes nikare rojê bi bêjingê bigire.",
-          "explanation": "Bêjing pir qul e: tu çiqas wê bilind bikî jî, ronahiya rojê di qulan re derbas dibe. Pend ji bo kesê ku dixwaze tiştekî eşkere veşêre yan înkar bike tê gotin, û dibêje ku rastî dê derkeve holê.",
+          "explanation": "Bêjing pir qul e: tu çiqas wê bilind bikî jî, ronahiya rojê di qulan re derbas dibe. Pend ji bo kesê ku dixwaze tiştekî eşkere veşêre yan red bike tê gotin, û dibêje ku rastî dê derkeve holê.",
           "example": "Dara dibêje ku bayê pencere şikand, lê topa wî di nav odeyê de ye. Diya wî li topê dinêre: “Kurê min, berê rojê bi bêjingê nayê girtin.” Dara serê xwe dixe ber xwe û rastiyê dibêje.",
           "equivalent": "Roj bi bêjingê nayê veşartin."
         },

@@ -13,9 +13,9 @@
       "attributionNote": null,
       "cover": null,
       "readingMinutes": null,
-      "title": "Qelema Şîn",
-      "summary": "Roja Rojînê ya yekem li dibistana nû, û qelemeke şîn.",
-      "body": "Îro Rojîn cara yekem diçe dibistana nû. Ew deh salî ye. Rojîn li wir kesî nas nake û hinekî şerm dike.\n\nMamoste dibêje: “Zarokno, defterên xwe vekin û navê xwe binivîsin.” Rojîn li qelema xwe digere. Lê qelema wê li malê maye! Rûyê Rojînê sor dibe.\n\nKeçikek li kêleka wê rûniştiye. Navê wê Şîlan e. Şîlan qelemeke şîn dide Rojînê û dibêje: “Fermo, du qelemên min hene.” Rojîn dibişire: “Gelek spas!”\n\nDi bêhnvedanê de Rojîn û Şîlan bi hev re dilîzin. Êvarê Rojîn ji diya xwe re dibêje: “Dayê, min îro hevaleke nû dît!” Sibe ew ê qelema şîn û sêveke sor bide Şîlanê.",
+      "title": "Pênûsa Şîn",
+      "summary": "Roja Rojînê ya yekem li dibistana nû, û pênûseke şîn.",
+      "body": "Îro Rojîn cara yekem diçe dibistana nû. Ew deh salî ye. Rojîn li wir kesî nas nake û hinekî şerm dike.\n\nMamoste dibêje: “Zarokno, defterên xwe vekin û navê xwe binivîsin.” Rojîn li pênûsa xwe digere. Lê pênûsa wê li malê maye! Rûyê Rojînê sor dibe.\n\nKeçikek li kêleka wê rûniştiye. Navê wê Şîlan e. Şîlan pênûseke şîn dide Rojînê û dibêje: “Fermo, du pênûsên min hene.” Rojîn dibişire: “Gelek spas!”\n\nDi bêhnvedanê de Rojîn û Şîlan bi hev re dilîzin. Êvarê Rojîn ji diya xwe re dibêje: “Dayê, min îro hevaleke nû dît!” Sibe ew ê pênûsa şîn û sêveke sor bide Şîlanê.",
       "translations": {},
       "glossary": [
         {
@@ -105,12 +105,12 @@
           "prompt": "Çima rûyê Rojînê sor dibe?",
           "promptEn": "Why does Rojîn’s face turn red?",
           "options": [
-            "Ji ber ku qelema wê li malê maye",
+            "Ji ber ku pênûsa wê li malê maye",
             "Ji ber ku Şîlan pê dikene",
             "Ji ber ku mamoste navê wê dipirse"
           ],
           "correctIndex": 0,
-          "explanation": "Qelema wê li malê maye û ew nikare binivîse, loma şerm dike.",
+          "explanation": "Pênûsa wê li malê maye û ew nikare binivîse, loma şerm dike.",
           "explanationEn": "Her pen is at home and she can’t write, so she feels embarrassed.",
           "evidenceParagraph": 1,
           "evidenceSentence": 2
@@ -120,12 +120,12 @@
           "prompt": "Şîlan çi dide Rojînê?",
           "promptEn": "What does Şîlan give Rojîn?",
           "options": [
-            "Qelemeke şîn",
+            "Pênûseke şîn",
             "Sêveke sor",
             "Deftereke nû"
           ],
           "correctIndex": 0,
-          "explanation": "Şîlan qelemeke şîn dide Rojînê, ji ber ku du qelemên wê hene.",
+          "explanation": "Şîlan pênûseke şîn dide Rojînê, ji ber ku du pênûsên wê hene.",
           "explanationEn": "Şîlan gives Rojîn a blue pen, because she has two pens.",
           "evidenceParagraph": 2,
           "evidenceSentence": 2
@@ -135,12 +135,12 @@
           "prompt": "Kîjan herî dawî diqewime?",
           "promptEn": "Which happens last?",
           "options": [
-            "Şîlan qelemekê dide Rojînê.",
-            "Rojîn li qelema xwe digere.",
+            "Şîlan pênûsekê dide Rojînê.",
+            "Rojîn li pênûsa xwe digere.",
             "Rojîn û Şîlan bi hev re dilîzin."
           ],
           "correctIndex": 2,
-          "explanation": "Pêşî Rojîn li qelema xwe digere. Paşê Şîlan qelemekê dide wê. Di dawiyê de ew bi hev re dilîzin.",
+          "explanation": "Pêşî Rojîn li pênûsa xwe digere. Paşê Şîlan pênûsekê dide wê. Di dawiyê de ew bi hev re dilîzin.",
           "explanationEn": "First Rojîn looks for her pen. Then Şîlan gives her a pen. At the end they play together.",
           "evidenceParagraph": 3,
           "evidenceSentence": 0
@@ -150,12 +150,12 @@
           "prompt": "“Di bêhnvedanê de Rojîn û Şîlan bi hev re dilîzin.” “Bêhnvedan” çi ye?",
           "promptEn": "“Di bêhnvedanê de Rojîn û Şîlan bi hev re dilîzin.” What is “bêhnvedan”?",
           "options": [
-            "Dema ku mamoste dersê dide",
-            "Navbera dersan, dema lîstikê",
+            "Dema ku mamoste waneyê dide",
+            "Navbera waneyan, dema lîstikê",
             "Dema ku zarok diçin malê"
           ],
           "correctIndex": 1,
-          "explanation": "Bêhnvedan navbera dersan e. Zarok wê demê dilîzin.",
+          "explanation": "Bêhnvedan navbera waneyan e. Zarok wê demê dilîzin.",
           "explanationEn": "“Bêhnvedan” is the break between lessons. Children play then.",
           "evidenceParagraph": 3,
           "evidenceSentence": 0
@@ -165,12 +165,12 @@
           "prompt": "Sibe Rojîn dê çi bide Şîlanê?",
           "promptEn": "What will Rojîn give Şîlan tomorrow?",
           "options": [
-            "Qelema şîn û sêveke sor",
-            "Du qelemên nû û sêvek",
+            "Pênûsa şîn û sêveke sor",
+            "Du pênûsên nû û sêvek",
             "Deftera xwe ya nû"
           ],
           "correctIndex": 0,
-          "explanation": "Çîrok dibêje: “Sibe ew ê qelema şîn û sêveke sor bide Şîlanê.”",
+          "explanation": "Çîrok dibêje: “Sibe ew ê pênûsa şîn û sêveke sor bide Şîlanê.”",
           "explanationEn": "The story says: “Tomorrow she will give Şîlan the blue pen and a red apple.”",
           "evidenceParagraph": 3,
           "evidenceSentence": 2
@@ -181,7 +181,7 @@
           "promptEn": "What is this story mainly about?",
           "options": [
             "Keçikek di roja xwe ya yekem de hevaleke nû dibîne.",
-            "Keçikek qelema xwe winda dike û mamoste lê dixeyide.",
+            "Keçikek pênûsa xwe winda dike û mamoste lê hêrs dibe.",
             "Du xwişk bi hev re diçin dibistanê."
           ],
           "correctIndex": 0,
@@ -207,7 +207,7 @@
       "readingMinutes": null,
       "title": "Bacansor, Penîr, Nan",
       "summary": "Azad diçe bazarê da ku sê tiştan bikire. Gelo ew ê her sêyan bîne bîra xwe?",
-      "body": "Diya Azad dibêje: “Azad, here bazarê. Du kîlo bacansor, nîv kîlo penîr û nan bikire.” Ew pereyan dide wî.\n\nDi rê de Azad dibêje: “Bacansor, penîr, nan. Bacansor, penîr, nan.” Li bazarê gelek deng heye. Firoşkar bang dikin: “Sêv! Tirî! Hinar!”\n\nAzad du kîlo bacansor û nîv kîlo penîr dikire. Firoşkarê penîr sêveke sor jî dide wî û dibêje: “Ev ji bo te ye.” Azad bi kêfxweşî vedigere malê.\n\nDiya wî dipirse: “Nan li ku ye?” Azad li destên xwe dinêre. Nan tune ye! Ew dikene, sêva sor dide diya xwe û dîsa dibeze bazarê. Vê carê ew di rê de tenê dibêje: “Nan, nan, nan!”",
+      "body": "Diya Azad dibêje: “Azad, here bazarê. Du kîlo bacansor, nîv kîlo penîr û nan bikire.” Ew pereyan dide wî.\n\nDi rê de Azad dibêje: “Bacansor, penîr, nan. Bacansor, penîr, nan.” Li bazarê gelek deng heye. Firoşkar bang dikin: “Sêv! Tirî! Hinar!”\n\nAzad du kîlo bacansor û nîv kîlo penîr dikire. Firoşkarê penîr sêveke sor jî dide wî û dibêje: “Ev ji bo te ye.” Azad bi dilxweşî vedigere malê.\n\nDiya wî dipirse: “Nan li ku ye?” Azad li destên xwe dinêre. Nan tune ye! Ew dikene, sêva sor dide diya xwe û dîsa dibeze bazarê. Vê carê ew di rê de tenê dibêje: “Nan, nan, nan!”",
       "translations": {},
       "glossary": [
         {
@@ -235,7 +235,7 @@
           }
         },
         {
-          "term": "bi kêfxweşî",
+          "term": "bi dilxweşî",
           "meanings": {
             "en": "happily"
           }
@@ -343,7 +343,7 @@
           "promptEn": "Why does Azad only say “Nan, nan, nan” this time?",
           "options": [
             "Ji ber ku ew pir birçî ye",
-            "Ji ber ku diya wî li wî xeyidiye",
+            "Ji ber ku diya wî li wî hêrs bûye",
             "Ji ber ku niha divê tenê nan bikire"
           ],
           "correctIndex": 2,
@@ -463,7 +463,7 @@
         },
         {
           "kind": "sequence",
-          "prompt": "Kîjan pêşî qewimî?",
+          "prompt": "Kîjan pêşî rû da?",
           "promptEn": "Which happened first?",
           "options": [
             "Hêlînê telefonî Dapîrê kir.",
@@ -496,12 +496,12 @@
           "prompt": "“Ez gelek xemgîn bûm.” “Xemgîn” tê çi wateyê?",
           "promptEn": "“Ez gelek xemgîn bûm.” What does “xemgîn” mean?",
           "options": [
-            "Pir kêfxweş",
-            "Ne kêfxweş",
+            "Pir dilxweş",
+            "Ne dilxweş",
             "Pir birçî"
           ],
           "correctIndex": 1,
-          "explanation": "Xemgîn yanî ne kêfxweş. Dapîr xemgîn bû, ji ber ku nikaribû Hêlînê baş bibihîze.",
+          "explanation": "Xemgîn ango ne dilxweş. Dapîr xemgîn bû, ji ber ku nikaribû Hêlînê baş bibihîze.",
           "explanationEn": "“Xemgîn” means unhappy, sad. Grandma was sad because she couldn’t hear Hêlîn well.",
           "evidenceParagraph": 1,
           "evidenceSentence": 2
@@ -546,7 +546,7 @@
             "Ji ber ku dikare bi vîdeoyê biaxive"
           ],
           "correctIndex": 2,
-          "explanation": "Niha Dapîr dikare bi vîdeoyê bi Hêlînê re biaxive, loma êdî name ne hewce ne.",
+          "explanation": "Niha Dapîr dikare bi vîdeoyê bi Hêlînê re biaxive, loma êdî name ne pêwîst in.",
           "explanationEn": "Now Grandma can talk with Hêlîn by video, so letters are no longer needed.",
           "evidenceParagraph": 3,
           "evidenceSentence": 0
@@ -573,7 +573,7 @@
           "options": [
             "Da ku ji Hêlînê telefoneke nû bixwaze",
             "Da ku Hêlîn bi vîdeoyê telefonî wê bike",
-            "Da ku behsa Newroza gund bike"
+            "Da ku li ser Newroza gund biaxive"
           ],
           "correctIndex": 1,
           "explanation": "Dapîr dixwaze bibêje ku êdî dikare bi vîdeoyê biaxive, û dixwaze ku Hêlîn roja înê telefonî wê bike.",
@@ -598,7 +598,7 @@
       "readingMinutes": null,
       "title": "Şorbeya Nîskê",
       "summary": "Zana bi dapîra xwe re şorbeya nîskê çêdike, lê xwê pir dibe.",
-      "body": "Êvareke zivistanê ye. Li derve berf dibare. Zana diwanzdeh salî ye û bi dapîra xwe re li malê ye. Dapîr dibêje: “Zana, îro tu yê şorbeya nîskê çêkî. Ez ê alîkariya te bikim.”\n\nPêşî Zana nîskê di avê de dişo. Paşê ew pîvazekê hûr dike. Çavên wî tije hêsir dibin. Dapîr dikene: “Pîvaz her kesî digirîne.”\n\nDapîr dibêje: “Niha rûn têxe beroşê û pîvazê sor bike.” Zana pîvazê di rûn de sor dike. Bîneke xweş li malê belav dibe. Paşê ew nîskê û avê dixe beroşê. Piştî demekê şorbe dikele.\n\nDapîr dibêje: “Niha kevçiyek xwê bike nav şorbeyê.” Lê Zana sê kevçî xwê dike nav! Ew tama şorbeyê dike û rûyê xwe tirş dike: “Dapîrê, şorbe pir şor e!”\n\nDapîr aram e. Ew dibêje: “Xem neke. Em ê avê û nîskê zêde bikin.” Ew du qedeh av û kulmek nîsk dixe beroşê. Piştî nîv saetê şorbe xweş dibe. Lê niha şorbe pir zêde ye!\n\nDapîr dibêje: “Here, gazî cîranan bike!” Wê êvarê Xaltîka Gulê û zarokên wê jî tên. Hemû bi hev re şorbeyê dixwin. Xaltîka Gulê dibêje: “Zana, tu aşpêjekî baş î!” Zana li Dapîrê dinêre û dikene. Herdu jî behsa xwêyê nakin.",
+      "body": "Êvareke zivistanê ye. Li derve berf dibare. Zana diwanzdeh salî ye û bi dapîra xwe re li malê ye. Dapîr dibêje: “Zana, îro tu yê şorbeya nîskê çêkî. Ez ê alîkariya te bikim.”\n\nPêşî Zana nîskê di avê de dişo. Paşê ew pîvazekê hûr dike. Çavên wî tije hêsir dibin. Dapîr dikene: “Pîvaz her kesî digirîne.”\n\nDapîr dibêje: “Niha rûn têxe beroşê û pîvazê sor bike.” Zana pîvazê di rûn de sor dike. Bîneke xweş li malê belav dibe. Paşê ew nîskê û avê dixe beroşê. Piştî demekê şorbe dikele.\n\nDapîr dibêje: “Niha kevçiyek xwê bike nav şorbeyê.” Lê Zana sê kevçî xwê dike nav! Ew tama şorbeyê dike û rûyê xwe tirş dike: “Dapîrê, şorbe pir şor e!”\n\nDapîr aram e. Ew dibêje: “Xem neke. Em ê avê û nîskê zêde bikin.” Ew du kas av û kulmek nîsk dixe beroşê. Piştî nîv demjimêrê şorbe xweş dibe. Lê niha şorbe pir zêde ye!\n\nDapîr dibêje: “Here, gazî cîranan bike!” Wê êvarê Xaltîka Gulê û zarokên wê jî tên. Hemû bi hev re şorbeyê dixwin. Xaltîka Gulê dibêje: “Zana, tu aşpêjekî baş î!” Zana li Dapîrê dinêre û dikene. Herdu jî tiştekî li ser xwêyê nabêjin.",
       "translations": {},
       "glossary": [
         {
@@ -781,7 +781,7 @@
             "Pîvaz û xwê"
           ],
           "correctIndex": 1,
-          "explanation": "Çîrok dibêje: “Ew du qedeh av û kulmek nîsk dixe beroşê.”",
+          "explanation": "Çîrok dibêje: “Ew du kas av û kulmek nîsk dixe beroşê.”",
           "explanationEn": "The story says: “She puts two glasses of water and a handful of lentils into the pot.”",
           "evidenceParagraph": 4,
           "evidenceSentence": 3
@@ -863,7 +863,7 @@
       "readingMinutes": null,
       "title": "Top û Apê Mehmûd",
       "summary": "Top dikeve baxçeyê cîranê herî hişk ê taxê. Kî dê biçe pey wê?",
-      "body": "Taxa me biçûk e, lê kolana wê dirêj e. Her êvar em zarokên taxê li wê kolanê futbol dilîzin. Navê min Zîlan e. Ez yazdeh salî me û ez dergevan im.\n\nDo Azad bi hêz li topê xist. Top di ser dîwar re firiya û ket baxçeyê Apê Mehmûd. Hemû zarok bêdeng man. Apê Mehmûd mirovekî pîr û hişk e. Kesî qet kenê wî nedîtiye, û zarok jê ditirsin.\n\nKesî nexwest biçe wir. Hingê min got: “Ez ê biçim.” Ez jî hinekî ditirsiyam, lê ez çûm û min li derî xist.\n\nApê Mehmûd derî vekir. Top di destê wî de bû. Min bi dengekî nizm got: “Bibore, Apo. Em ê careke din baldar bin.” Ew li min nexeyidî. Wî li topê nêrî û got: “Di ciwaniya xwe de ez jî dergevan bûm. Ez dergevanê herî baş ê gund bûm!”\n\nPaşê Apê Mehmûd bi min re hat kolanê. Wî nîşanî me da ka dergevan çawa disekine û çawa topê digire. Zarok ecêbmayî man. Wê êvarê Apê Mehmûd bû dadwer.\n\nDi dawiya lîstikê de Azad dîsa bi hêz li topê xist, lê vê carê min top girt! Apê Mehmûd ji dil kenî û li çepikan xist. Me cara yekem kenê wî dît. Niha her êvar ew li ber deriyê xwe rûdine û li me temaşe dike.",
+      "body": "Taxa me biçûk e, lê kolana wê dirêj e. Her êvar em zarokên taxê li wê kolanê futbol dilîzin. Navê min Zîlan e. Ez yazdeh salî me û ez dergevan im.\n\nDo Azad bi hêz li topê xist. Top di ser dîwar re firiya û ket baxçeyê Apê Mehmûd. Hemû zarok bêdeng man. Apê Mehmûd mirovekî pîr û hişk e. Kesî tu carî kenê wî nedîtiye, û zarok jê ditirsin.\n\nKesî nexwest biçe wir. Hingê min got: “Ez ê biçim.” Ez jî hinekî ditirsiyam, lê ez çûm û min li derî xist.\n\nApê Mehmûd derî vekir. Top di destê wî de bû. Min bi dengekî nizm got: “Bibore, Apo. Em ê careke din baldar bin.” Ew li min hêrs nebû. Wî li topê nêrî û got: “Di ciwaniya xwe de ez jî dergevan bûm. Ez dergevanê herî baş ê gund bûm!”\n\nPaşê Apê Mehmûd bi min re hat kolanê. Wî nîşanî me da ka dergevan çawa disekine û çawa topê digire. Zarok matmayî man. Wê êvarê Apê Mehmûd bû dadwer.\n\nDi dawiya lîstikê de Azad dîsa bi hêz li topê xist, lê vê carê min top girt! Apê Mehmûd ji dil kenî û li çepikan xist. Me cara yekem kenê wî dît. Niha her êvar ew li ber deriyê xwe rûdine û li me dinêre.",
       "translations": {},
       "glossary": [
         {
@@ -938,7 +938,7 @@
           "options": [
             "Dadwer",
             "Dergevan",
-            "Temaşevan"
+            "Binêr"
           ],
           "correctIndex": 1,
           "explanation": "Zîlan dibêje: “Ez dergevan im.”",
@@ -1011,12 +1011,12 @@
           "prompt": "Apê Mehmûd çawa bersiv da Zîlanê?",
           "promptEn": "How did Uncle Mehmûd respond to Zîlan?",
           "options": [
-            "Xeyidî û derî li ser wê girt",
+            "Hêrs bû û derî li ser wê girt",
             "Bêdeng ma û top neda wê",
-            "Nexeyidî û behsa ciwaniya xwe kir"
+            "Hêrs nebû û çîroka ciwaniya xwe got"
           ],
           "correctIndex": 2,
-          "explanation": "Zîlan dibêje: “Ew li min nexeyidî.” Wî li topê nêrî û behsa ciwaniya xwe kir.",
+          "explanation": "Zîlan dibêje: “Ew li min hêrs nebû.” Wî li topê nêrî û çîroka ciwaniya xwe got.",
           "explanationEn": "Zîlan says: “He didn’t get angry with me.” He looked at the ball and talked about his youth.",
           "evidenceParagraph": 3,
           "evidenceSentence": 4
@@ -1053,15 +1053,15 @@
         },
         {
           "kind": "vocabulary",
-          "prompt": "“Zarok ecêbmayî man.” Ev tê çi wateyê?",
+          "prompt": "“Zarok matmayî man.” Ev tê çi wateyê?",
           "promptEn": "“Zarok ecêbmayî man.” What does this mean?",
           "options": [
             "Zarok gelek şaş man",
-            "Zarok gelek xeyidîn",
+            "Zarok gelek hêrs bûn",
             "Zarok gelek westiyan"
           ],
           "correctIndex": 0,
-          "explanation": "Ecêbmayî yanî gelek şaş mayî. Zarokan bawer nedikir ku Apê Mehmûd wisa ye.",
+          "explanation": "Matmayî ango gelek şaş mayî. Zarokan bawer nedikir ku Apê Mehmûd wisa ye.",
           "explanationEn": "“Ecêbmayî” means very surprised. The children couldn’t believe Uncle Mehmûd was like that.",
           "evidenceParagraph": 4,
           "evidenceSentence": 2
@@ -1072,7 +1072,7 @@
           "promptEn": "What did Uncle Mehmûd become that evening?",
           "options": [
             "Dergevan",
-            "Temaşevan",
+            "Binêr",
             "Dadwer"
           ],
           "correctIndex": 2,
@@ -1102,7 +1102,7 @@
           "promptEn": "“Me cara yekem kenê wî dît.” What does this show?",
           "options": [
             "Apê Mehmûd her roj dikenî",
-            "Berê Apê Mehmûd qet nedikenî",
+            "Berê Apê Mehmûd tu carî nedikenî",
             "Zarok berê nediçûn kolanê"
           ],
           "correctIndex": 1,
@@ -1143,7 +1143,7 @@
       "readingMinutes": null,
       "title": "Barana Newrozê",
       "summary": "Sibeha Newrozê baran dibare û Berfîn xemgîn e. Lê Bapîrê wê tiştekî dizane.",
-      "body": "Sibeha Newrozê Berfîn zû şiyar bû. Wê kirasê xwe yê nû û kesk li xwe kir. Diya wê di metbexê de dolme çêdikir. Malbatê dixwest wê rojê biçe seyranê, li Girê Kulîlkan, nêzî bajêr.\n\nLê gava Berfînê ji pencereyê li derve nêrî, dilê wê şikest. Baran dibariya û ewr reş bûn. Berfînê dest bi girî kir û got: “Êdî em naçin seyranê!”\n\nBapîrê wê hat û li kêleka wê rûnişt. Wî got: “Keça min, baran bereket e. Bihar bi baranê tê. Heta nîvro bisekine.”\n\nBapîr rast derket. Nêzî nîvro baran sekinî û roj derket. Wan bi lez çay û xwarin hilgirtin. Paşê ew hemû bi hev re çûn Girê Kulîlkan.\n\nLi Girê Kulîlkan her der kesk bû. Kulîlkên zer û sor vebûbûn. Bi sedan mirov hatibûn. Hinekan def û zirne lêdixistin, hinekan jî govend digirt. Berfînê destê Bapîrê xwe girt û herdu ketin nav govendê.\n\nÊvarê agirê Newrozê hat vêxistin. Ciwanan yek bi yek xwe di ser agir re avêt. Berfîn û Bapîr li ber agir rûniştin. Berfînê got: “Bapîro, te rast got. Baran bereket e!” Bapîr kenî û got: “Newroza te pîroz be, keça min.”",
+      "body": "Sibeha Newrozê Berfîn zû şiyar bû. Wê kirasê xwe yê nû û kesk li xwe kir. Diya wê di aşxaneyê de dolme çêdikir. Malbatê dixwest wê rojê biçe seyranê, li Girê Kulîlkan, nêzî bajêr.\n\nLê gava Berfînê ji pencereyê li derve nêrî, dilê wê şikest. Baran dibariya û ewr reş bûn. Berfînê dest bi girî kir û got: “Êdî em naçin seyranê!”\n\nBapîrê wê hat û li kêleka wê rûnişt. Wî got: “Keça min, baran bereket e. Bihar bi baranê tê. Heta nîvro bisekine.”\n\nBapîr rast derket. Nêzî nîvro baran sekinî û roj derket. Wan bi lez çay û xwarin hilgirtin. Paşê ew hemû bi hev re çûn Girê Kulîlkan.\n\nLi Girê Kulîlkan her der kesk bû. Kulîlkên zer û sor vebûbûn. Bi sedan mirov hatibûn. Hinekan def û zirne lêdixistin, hinekan jî govend digirt. Berfînê destê Bapîrê xwe girt û herdu ketin nav govendê.\n\nÊvarê agirê Newrozê hat vêxistin. Ciwanan yek bi yek xwe di ser agir re avêt. Berfîn û Bapîr li ber agir rûniştin. Berfînê got: “Bapîro, te rast got. Baran bereket e!” Bapîr kenî û got: “Newroza te pîroz be, keça min.”",
       "translations": {},
       "glossary": [
         {
@@ -1153,7 +1153,7 @@
           }
         },
         {
-          "term": "metbexê",
+          "term": "aşxaneyê",
           "meanings": {
             "en": "the kitchen"
           }
@@ -1236,7 +1236,7 @@
             "Cejneke dibistanê ya biharê"
           ],
           "correctIndex": 1,
-          "explanation": "Seyran yanî derketina derve, li xwezayê. Malbatê dixwest biçe Girê Kulîlkan, nêzî bajêr.",
+          "explanation": "Seyran ango derketina derve, li xwezayê. Malbatê dixwest biçe Girê Kulîlkan, nêzî bajêr.",
           "explanationEn": "A “seyran” is an outing into nature. The family wanted to go to Flower Hill, near the town.",
           "evidenceParagraph": 0,
           "evidenceSentence": 3
@@ -1262,8 +1262,8 @@
           "promptEn": "Why did Berfîn start to cry?",
           "options": [
             "Ji ber ku kirasê wê yê nû şil bû",
-            "Ji ber ku Bapîrê wê li wê xeyidî",
-            "Ji ber ku difikirî ku ew ê neçin seyranê"
+            "Ji ber ku Bapîrê wê li wê hêrs bû",
+            "Ji ber ku dihizirî ku ew ê neçin seyranê"
           ],
           "correctIndex": 2,
           "explanation": "Baran dibariya, û wê got: “Êdî em naçin seyranê!”",
@@ -1382,7 +1382,7 @@
           "promptEn": "In the end, what does Berfîn say about the rain?",
           "options": [
             "Ku baran bereket e",
-            "Ku baranê roja wê xera kir",
+            "Ku baranê roja wê têk bir",
             "Ku baran dê dîsa bibare"
           ],
           "correctIndex": 0,
@@ -1422,8 +1422,8 @@
       "cover": null,
       "readingMinutes": null,
       "title": "Rêya Gund",
-      "summary": "Otobûsa gund li ser rê xera dibe. Dilan û Rênas dê çawa bigihîjin mala dapîra xwe?",
-      "body": "Havîn bû û dibistan girtî bû. Dilan sêzdeh salî bû, birayê wê Rênas jî heft salî. Wê rojê ew bi diya xwe re ji bajêr çûn gundê Kaniyaspî, mala dapîra xwe. Rênas pir kêfxweş bû, ji ber ku dapîra wan her havîn nanê tenûrê ji wan re çêdikir.\n\nEw siwarî otobûsa gund bûn. Rê dirêj û germ bû. Li ser rê wan gund, çem û çiyayên bilind dîtin. Rênas ji pencereyê li derve dinêrî û her pênc deqîqeyan carekê dipirsî: “Em gihîştin?” Diya wî dikenî û digot: “Hê na, kurê min.”\n\nNêzî nîvro, li ser rêyeke teng di navbera çiyayan de, otobûs ji nişka ve sekinî. Dûmanek spî ji motorê derket. Ajovan daket, li motorê nêrî û serê xwe hejand. Wî got: “Motor xera bûye. Divê em li benda alîkariyê bimînin. Belkî heta êvarê.” Rêwiyên din jî daketin û li ber siya darekê rûniştin.\n\nRênas dest bi girî kir: “Ez naxwazim li vir bimînim! Ez birçî me!” Dilan jî xemgîn bû, lê wê destê birayê xwe girt û got: “Netirse, em ê rêyekê bibînin.”\n\nPiştî çend saetan, şivanekî pîr bi kerê xwe re hat ba wan. Navê wî Apê Xelîl bû. Wî pirsî: “Hûn diçin ku derê?” Diya Dilanê got: “Em diçin Kaniyaspî, mala Zelîxayê.” Şivan kenî: “Ez Zelîxayê baş nas dikim! Gund ne dûr e, bi peyatî saetek e. Werin, ez ê rê nîşanî we bidim.”\n\nApê Xelîl çenteyên wan li ser pişta kerê xwe danîn. Rênas jî siwarî kerê Apê Xelîl bû û êdî negirî. Ew di nav zeviyên genim re meşiyan. Apê Xelîl navên kulîlk û çivîkan ji zarokan re digotin. Carinan wî bi bilûra xwe stranek jî lêdixist. Dilanê ji bîr kir ku ew westiyayî ye.\n\nDema roj diçû ava, ew gihîştin gund. Dapîra wan li ber derî li benda wan bû. Wê ew yek bi yek hembêz kirin û got: “Ez ji nîvro ve li benda we me!”\n\nBîna nanê tenûrê li hewşê belav bûbû. Rênas got: “Dapîrê, otobûs xera bû, lê kerê Apê Xelîl xera nebû!” Hemû kenîn. Wê şevê wan nanê germ bi penîr û hingiv xwar, û Apê Xelîl jî bû mêvanê wan.",
+      "summary": "Otobûsa gund li ser rê têk diçe. Dilan û Rênas dê çawa bigihîjin mala dapîra xwe?",
+      "body": "Havîn bû û dibistan girtî bû. Dilan sêzdeh salî bû, birayê wê Rênas jî heft salî. Wê rojê ew bi diya xwe re ji bajêr çûn gundê Kaniyaspî, mala dapîra xwe. Rênas pir dilxweş bû, ji ber ku dapîra wan her havîn nanê tenûrê ji wan re çêdikir.\n\nEw siwarî otobûsa gund bûn. Rê dirêj û germ bû. Li ser rê wan gund, çem û çiyayên bilind dîtin. Rênas ji pencereyê li derve dinêrî û her pênc xulekan carekê dipirsî: “Em gihîştin?” Diya wî dikenî û digot: “Hê na, kurê min.”\n\nNêzî nîvro, li ser rêyeke teng di navbera çiyayan de, otobûs ji nişka ve sekinî. Dûmanek spî ji motorê derket. Ajovan daket, li motorê nêrî û serê xwe hejand. Wî got: “Motor têk çûye. Divê em li benda alîkariyê bimînin. Belkî heta êvarê.” Rêwiyên din jî daketin û li ber siya darekê rûniştin.\n\nRênas dest bi girî kir: “Ez naxwazim li vir bimînim! Ez birçî me!” Dilan jî xemgîn bû, lê wê destê birayê xwe girt û got: “Netirse, em ê rêyekê bibînin.”\n\nPiştî çend demjimêran, şivanekî pîr bi kerê xwe re hat ba wan. Navê wî Apê Xelîl bû. Wî pirsî: “Hûn diçin ku derê?” Diya Dilanê got: “Em diçin Kaniyaspî, mala Zelîxayê.” Şivan kenî: “Ez Zelîxayê baş nas dikim! Gund ne dûr e, bi peyatî demjimêrek e. Werin, ez ê rê nîşanî we bidim.”\n\nApê Xelîl çenteyên wan li ser pişta kerê xwe danîn. Rênas jî siwarî kerê Apê Xelîl bû û êdî negirî. Ew di nav zeviyên genim re meşiyan. Apê Xelîl navên kulîlk û çivîkan ji zarokan re digotin. Carinan wî bi bilûra xwe stranek jî lêdixist. Dilanê ji bîr kir ku ew westiyayî ye.\n\nDema roj diçû ava, ew gihîştin gund. Dapîra wan li ber derî li benda wan bû. Wê ew yek bi yek hembêz kirin û got: “Ez ji nîvro ve li benda we me!”\n\nBîna nanê tenûrê li hewşê belav bûbû. Rênas got: “Dapîrê, otobûs têk çû, lê kerê Apê Xelîl têk neçû!” Hemû kenîn. Wê şevê wan nanê germ bi penîr û hingiv xwar, û Apê Xelîl jî bû mêvanê wan.",
       "translations": {},
       "glossary": [
         {
@@ -1493,7 +1493,7 @@
         },
         {
           "kind": "detail",
-          "prompt": "Çima Rênas pir kêfxweş bû?",
+          "prompt": "Çima Rênas pir dilxweş bû?",
           "promptEn": "Why was Rênas very happy?",
           "options": [
             "Ji ber nanê tenûrê yê dapîrê",
@@ -1508,7 +1508,7 @@
         },
         {
           "kind": "inference",
-          "prompt": "Çima Rênas her pênc deqîqeyan carekê dipirsî: “Em gihîştin?”",
+          "prompt": "Çima Rênas her pênc xulekan carekê dipirsî: “Em gihîştin?”",
           "promptEn": "Why did Rênas ask “Are we there?” every five minutes?",
           "options": [
             "Ji ber ku ditirsiya",
@@ -1541,12 +1541,12 @@
           "prompt": "Çima otobûs sekinî?",
           "promptEn": "Why did the bus stop?",
           "options": [
-            "Ji ber ku motor xera bû",
+            "Ji ber ku motor têk çû",
             "Ji ber ku rê girtî bû",
             "Ji ber ku Rênas birçî bû"
           ],
           "correctIndex": 0,
-          "explanation": "Wî got: “Motor xera bûye.”",
+          "explanation": "Wî got: “Motor têk çûye.”",
           "explanationEn": "He said: “The engine has broken down.”",
           "evidenceParagraph": 2,
           "evidenceSentence": 3
@@ -1557,7 +1557,7 @@
           "promptEn": "When Rênas cried, what did Dilan do?",
           "options": [
             "Ew jî bi dengekî bilind girî",
-            "Destê wî girt û dilê wî rehet kir",
+            "Destê wî girt û dilê wî aram kir",
             "Bi tenê çû ku alîkariyê bibîne"
           ],
           "correctIndex": 1,
@@ -1586,12 +1586,12 @@
           "prompt": "Li gorî Apê Xelîl, gund çiqas dûr bû?",
           "promptEn": "According to Uncle Xelîl, how far was the village?",
           "options": [
-            "Bi peyatî saetek",
-            "Bi otobûsê du saet",
-            "Bi peyatî nîv saet"
+            "Bi peyatî demjimêrek",
+            "Bi otobûsê du demjimêr",
+            "Bi peyatî nîv demjimêr"
           ],
           "correctIndex": 0,
-          "explanation": "Wî got: “Gund ne dûr e, bi peyatî saetek e.”",
+          "explanation": "Wî got: “Gund ne dûr e, bi peyatî demjimêrek e.”",
           "explanationEn": "He said: “The village isn’t far, it’s an hour on foot.”",
           "evidenceParagraph": 4,
           "evidenceSentence": 5
@@ -1618,10 +1618,10 @@
           "options": [
             "Bêhêz piştî meşeke dirêj",
             "Birçî û tî piştî rêwîtiyê",
-            "Pir kêfxweş û bi ken"
+            "Pir dilxweş û bi ken"
           ],
           "correctIndex": 0,
-          "explanation": "Westiyayî yanî kesê ku piştî karekî dirêj hêza wî kêm bûye. Ew gelek meşiyabûn.",
+          "explanation": "Westiyayî ango kesê ku piştî karekî dirêj hêza wî kêm bûye. Ew gelek meşiyabûn.",
           "explanationEn": "“Westiyayî” means someone whose strength is low after a long effort: tired. They had walked a lot.",
           "evidenceParagraph": 5,
           "evidenceSentence": 5
@@ -1643,7 +1643,7 @@
         },
         {
           "kind": "sequence",
-          "prompt": "Kîjan herî dawî qewimî?",
+          "prompt": "Kîjan herî dawî rû da?",
           "promptEn": "Which happened last?",
           "options": [
             "Rênas siwarî kerê Apê Xelîl bû.",
@@ -1666,7 +1666,7 @@
             "Ji ber gotina Rênas a li ser ker û otobûsê"
           ],
           "correctIndex": 2,
-          "explanation": "Rênas got: “Otobûs xera bû, lê kerê Apê Xelîl xera nebû!” Ev henekekî xweş bû.",
+          "explanation": "Rênas got: “Otobûs têk çû, lê kerê Apê Xelîl têk neçû!” Ev henekekî xweş bû.",
           "explanationEn": "Rênas said: “The bus broke down, but Uncle Xelîl’s donkey didn’t!” It was a funny joke.",
           "evidenceParagraph": 7,
           "evidenceSentence": 1
@@ -1696,7 +1696,7 @@
             "Ajovanek ku bi tenê motora otobûsê çêdike."
           ],
           "correctIndex": 0,
-          "explanation": "Otobûs xera dibe, lê Apê Xelîl alîkariya wan dike û ew bi şahî digihîjin mala dapîrê.",
+          "explanation": "Otobûs têk diçe, lê Apê Xelîl alîkariya wan dike û ew bi şahî digihîjin mala dapîrê.",
           "explanationEn": "The bus breaks down, but Uncle Xelîl helps them and they reach Grandma’s house happily.",
           "evidenceParagraph": null,
           "evidenceSentence": null
@@ -1718,7 +1718,7 @@
       "readingMinutes": null,
       "title": "Rovî û Hirç",
       "summary": "Çîrokeke gelêrî: roviyekî jîr û hirçeke bi hêz bi hev re zeviyekê diçînin.",
-      "body": "Di zemanekî kevn de, li quntara çiyayekî bilind, roviyek û hirçek cîranên hev bûn. Hirç mezin û bi hêz bû, lê ne pir jîr bû. Rovî biçûk û lawaz bû, lê ji her kesî jîrtir bû.\n\nBiharekê rovî çû cem hirçê û got: “Cîrana delal, were em bi hev re zeviyekê biçînin. Tu bi hêz î, tu yê erdê bikolî. Ez jî jîr im, ez ê berhemê bi dadî parve bikim.” Hirçê bêyî ku bifikire qebûl kir.\n\nWê salê wan kartol çandin. Payîzê rovî got: “Niha tu hilbijêre: tu yên li ser erdê dixwazî, an yên di bin erdê de?” Hirçê li zeviyê nêrî. Pelên kartolan mezin û kesk bûn. Wê got: “Ez yên li ser erdê dixwazim!”\n\nHirçê hemû pel birin mala xwe, lê pel tal bûn û nedihatin xwarin. Rovî jî kartolên mezin ji bin erdê derxistin û tevahiya zivistanê bi kêf xwarin.\n\nBihara din hirç dîsa hat. Wê got: “Îsal ez yên di bin erdê de dixwazim!” Rovî got: “Bi ser çavan.” Wê salê wan genim çand. Havînê hirçê kokên genim birin, lê kok hişk û bêtam bûn. Rovî jî simbilên zer birin û ji wan ar û nan çêkirin.\n\nHirç xeyidî. Wê got: “Te ez du caran xapandim! Sala bê ez hem yên jor hem yên jêr dixwazim!” Rovî bişirî: “Baş e, cîrana delal. Wê demê navîn ji min re be.”\n\nSala sêyem wan garis çand. Garis bilind bû, ji hirçê jî bilindtir. Payîzê hirçê pelên jor û kokên jêr birin. Lê simbilên mezin û şîrîn di navînê de bûn, û ew hemû para rovî bûn.\n\nVê carê hirç nexeyidî. Ew rûnişt û kenî. Wê got: “Roviyo, tu ji min jîrtir î. Lê bêyî min, zeviya te tune.” Rovî serê xwe xwar kir û got: “Tu rast dibêjî. Ji îro pê ve em ê her tiştî nîv bi nîv parve bikin.”\n\nJi wê rojê û pê ve, hirçê erd dikola û rovî tov diçand. Her payîz wan berhem nîv bi nîv parve dikir. Herdu cîran bûn hevalên baş, û çîroka me jî li vir qediya.",
+      "body": "Di demeke kevn de, li quntara çiyayekî bilind, roviyek û hirçek cîranên hev bûn. Hirç mezin û bi hêz bû, lê ne pir jîr bû. Rovî biçûk û lawaz bû, lê ji her kesî jîrtir bû.\n\nBiharekê rovî çû cem hirçê û got: “Cîrana delal, were em bi hev re zeviyekê biçînin. Tu bi hêz î, tu yê axê bikolî. Ez jî jîr im, ez ê berhemê bi dadî parve bikim.” Hirçê bêyî ku bihizire pejirand.\n\nWê salê wan kartol çandin. Payîzê rovî got: “Niha tu hilbijêre: tu yên li ser axê dixwazî, an yên di bin axê de?” Hirçê li zeviyê nêrî. Pelên kartolan mezin û kesk bûn. Wê got: “Ez yên li ser axê dixwazim!”\n\nHirçê hemû pel birin mala xwe, lê pel tal bûn û nedihatin xwarin. Rovî jî kartolên mezin ji bin axê derxistin û tevahiya zivistanê bi dilxweşî xwarin.\n\nBihara din hirç dîsa hat. Wê got: “Îsal ez yên di bin axê de dixwazim!” Rovî got: “Bi ser çavan.” Wê salê wan genim çand. Havînê hirçê kokên genim birin, lê kok hişk û bêtam bûn. Rovî jî simbilên zer birin û ji wan ar û nan çêkirin.\n\nHirç hêrs bû. Wê got: “Te ez du caran xapandim! Sala bê ez hem yên jor hem yên jêr dixwazim!” Rovî bişirî: “Baş e, cîrana delal. Wê demê navîn ji min re be.”\n\nSala sêyem wan garis çand. Garis bilind bû, ji hirçê jî bilindtir. Payîzê hirçê pelên jor û kokên jêr birin. Lê simbilên mezin û şîrîn di navînê de bûn, û ew hemû para rovî bûn.\n\nVê carê hirç hêrs nebû. Ew rûnişt û kenî. Wê got: “Roviyo, tu ji min jîrtir î. Lê bêyî min, zeviya te tune.” Rovî serê xwe xwar kir û got: “Tu rast dibêjî. Ji îro pê ve em ê her tiştî nîv bi nîv parve bikin.”\n\nJi wê rojê û pê ve, hirçê ax dikola û rovî tov diçand. Her payîz wan berhem nîv bi nîv parve dikir. Herdu cîran bûn hevalên baş, û çîroka me jî li vir qediya.",
       "translations": {},
       "glossary": [
         {
@@ -1791,12 +1791,12 @@
           "prompt": "“Rovî biçûk û lawaz bû, lê ji her kesî jîrtir bû.” “Jîr” tê çi wateyê?",
           "promptEn": "“Rovî biçûk û lawaz bû, lê ji her kesî jîrtir bû.” What does “jîr” mean?",
           "options": [
-            "Bi aqil, zû fêm dike",
+            "Bi hiş, zû tê digihîje",
             "Bi hêz, giran hildigire",
             "Bi lez, zû direve"
           ],
           "correctIndex": 0,
-          "explanation": "Jîr yanî bi aqil. Rovî ne bi hêz bû, lê bi aqilê xwe hirç xapand.",
+          "explanation": "Jîr ango bi hiş. Rovî ne bi hêz bû, lê bi hişê xwe hirç xapand.",
           "explanationEn": "“Jîr” means clever. The fox was not strong, but he tricked the bear with his wits.",
           "evidenceParagraph": 0,
           "evidenceSentence": 2
@@ -1833,7 +1833,7 @@
         },
         {
           "kind": "inference",
-          "prompt": "Çima hirçê yên li ser erdê hilbijartin?",
+          "prompt": "Çima hirçê yên li ser axê hilbijartin?",
           "promptEn": "Why did the bear choose what grew above the ground?",
           "options": [
             "Ji ber ku pelên kartolan mezin û kesk bûn",
@@ -1866,12 +1866,12 @@
           "prompt": "“Rovî got: Bi ser çavan.” Ev tê çi wateyê?",
           "promptEn": "“Rovî got: Bi ser çavan.” What does this mean?",
           "options": [
-            "Na, qet nabe",
-            "Bi kêfxweşî, erê",
+            "Na, tu carî nabe",
+            "Bi dilxweşî, erê",
             "Ez hê nizanim"
           ],
           "correctIndex": 1,
-          "explanation": "“Bi ser çavan” yanî “bi kêfxweşî, erê”. Rovî bi dilxweşî qebûl kir.",
+          "explanation": "“Bi ser çavan” ango “bi dilxweşî, erê”. Rovî bi dilxweşî pejirand.",
           "explanationEn": "“Bi ser çavan” means “gladly, yes”. The fox happily agreed.",
           "evidenceParagraph": 4,
           "evidenceSentence": 2
@@ -1911,7 +1911,7 @@
           "prompt": "Hirçê ji bo sala bê çi xwest?",
           "promptEn": "What did the bear want for the next year?",
           "options": [
-            "Tenê yên di bin erdê de",
+            "Tenê yên di bin axê de",
             "Tenê navîn",
             "Hem yên jor hem yên jêr"
           ],
@@ -1957,11 +1957,11 @@
           "promptEn": "What did the bear do this time?",
           "options": [
             "Rûnişt û kenî",
-            "Xeyidî û çû mala xwe",
+            "Hêrs bû û çû mala xwe",
             "Girî û reviya"
           ],
           "correctIndex": 0,
-          "explanation": "Çîrok dibêje: “Vê carê hirç nexeyidî. Ew rûnişt û kenî.”",
+          "explanation": "Çîrok dibêje: “Vê carê hirç hêrs nebû. Ew rûnişt û kenî.”",
           "explanationEn": "The story says: “This time the bear didn’t get angry. She sat down and laughed.”",
           "evidenceParagraph": 7,
           "evidenceSentence": 1
@@ -1976,7 +1976,7 @@
             "Ji ber ku hirç ji wî jîrtir bû"
           ],
           "correctIndex": 1,
-          "explanation": "Hirçê got: “Bêyî min, zeviya te tune.” Rovî fêm kir ku ew hewceyî hev in.",
+          "explanation": "Hirçê got: “Bêyî min, zeviya te tune.” Rovî tê gihîşt ku pêdiviya wan bi hev heye.",
           "explanationEn": "The bear said: “Without me, you have no field.” The fox understood that they need each other.",
           "evidenceParagraph": 7,
           "evidenceSentence": 3
@@ -2006,7 +2006,7 @@
             "Divê mirov ji cîranên xwe dûr bimîne."
           ],
           "correctIndex": 0,
-          "explanation": "Rovî çend caran hirç xapand, lê di dawiyê de herduyan fêm kir ku kar bi hev re û bi dadî baştir e.",
+          "explanation": "Rovî çend caran hirç xapand, lê di dawiyê de herdu tê gihîştin ku kar bi hev re û bi dadî baştir e.",
           "explanationEn": "The fox tricked the bear several times, but in the end both understood that working together fairly is better.",
           "evidenceParagraph": null,
           "evidenceSentence": null
@@ -2028,7 +2028,7 @@
       "readingMinutes": 4,
       "title": "Şengê û Pengê",
       "summary": "Dema ku dêya wan li zozanan e, gur tê ber derî û dixwaze Şengê û Pengê bixapîne. Gelo karik derî vedikin?",
-      "body": "Carekê, di gundekî de bizinek bi du karikên xwe, Şengê û Pengê, re dijiyan. Ew di xaniyekî biçûk de li ber çiyayan dijiyan.\n\nHer sibeh, dêya wan diçû zozanan da ku giya bixwe. Berî ku ji malê derkeve, ew her du karikên xwe gazî dikir û digot:\n\n«Zarokên min, ez ê biçim zozanan. Hûn li malê bimînin û derî ji kesî re venekin.»\n\nŞengê û Pengê digotin:\n\n«Baş e, dayê. Em ê derî ji kesî re venekin.»\n\nDêya wan got:\n\n«Dema ku ez vegerim, ez ê straneke taybet bibêjim. Hûn ê ji dengê min nas bikin.»\n\nPiştî ku dêya wan çû, gurêkî birçî ji nêzîkî xanî derbas bû. Wî gotinên dêya wan bihîstibû. Ew dizanibû ku du karik tenê li malê mane.\n\nGur nêzîkî derî bû û bi dengekî nerm got:\n\n«Şengê û Pengê, derî vekin! Dayika we hatiye.»\n\nLê Şengê got:\n\n«Na! Tu dêya me nînî. Dengê te cuda ye.»\n\nGur hinekî dûr çû û li ser gotina xwe fikirî. Piştre vegeriya û bi dengekî nermtir straneke mîna ya dêya wan got.\n\nPengê got:\n\n«Dibe ku dayika me be!»\n\nLê Şengê bersiv da:\n\n«Na, divê em pêşî baş guhdarî bikin. Dayika me gotiye ku em derî ji kesî re venekin.»\n\nGur dîsa hewl da, lê karik derî venekirin.\n\nDi vê navberê de, dêya wan ji zozanan vegeriya. Wê stranê xwe ya taybet got. Şengê û Pengê dengê wê nas kirin û bi kêfxweşî derî vekirin.\n\nDêya wan wan di nav xwe de girt û pirsî:\n\n«Çima hûn derî ji min re venekirin?»\n\nŞengê got:\n\n«Gur hatibû, dayê. Ew dixwest me bixapîne.»\n\nDêya wan got:\n\n«We baş kir. Divê hûn her gav hişyar bin û gotinên min bi bîr bînin.»\n\nJi wê rojê pê ve, Şengê û Pengê fêr bûn ku divê mirov ji kesên ku nas nake re derî veneke û her gotinekê bê fikirîn bawer neke.\n\nDawî.",
+      "body": "Carekê, di gundekî de bizinek bi du karikên xwe, Şengê û Pengê, re dijiyan. Ew di xaniyekî biçûk de li ber çiyayan dijiyan.\n\nHer sibeh, dêya wan diçû zozanan da ku giya bixwe. Berî ku ji malê derkeve, ew her du karikên xwe gazî dikir û digot:\n\n«Zarokên min, ez ê biçim zozanan. Hûn li malê bimînin û derî ji kesî re venekin.»\n\nŞengê û Pengê digotin:\n\n«Baş e, dayê. Em ê derî ji kesî re venekin.»\n\nDêya wan got:\n\n«Dema ku ez vegerim, ez ê straneke taybet bibêjim. Hûn ê ji dengê min nas bikin.»\n\nPiştî ku dêya wan çû, gurêkî birçî ji nêzîkî xanî derbas bû. Wî gotinên dêya wan bihîstibû. Ew dizanibû ku du karik tenê li malê mane.\n\nGur nêzîkî derî bû û bi dengekî nerm got:\n\n«Şengê û Pengê, derî vekin! Dayika we hatiye.»\n\nLê Şengê got:\n\n«Na! Tu dêya me nînî. Dengê te cuda ye.»\n\nGur hinekî dûr çû û li ser gotina xwe hizirî. Piştre vegeriya û bi dengekî nermtir straneke mîna ya dêya wan got.\n\nPengê got:\n\n«Dibe ku dayika me be!»\n\nLê Şengê bersiv da:\n\n«Na, divê em pêşî baş guhdarî bikin. Dayika me gotiye ku em derî ji kesî re venekin.»\n\nGur dîsa hewl da, lê karik derî venekirin.\n\nDi vê navberê de, dêya wan ji zozanan vegeriya. Wê stranê xwe ya taybet got. Şengê û Pengê dengê wê nas kirin û bi dilxweşî derî vekirin.\n\nDêya wan wan di nav xwe de girt û pirsî:\n\n«Çima hûn derî ji min re venekirin?»\n\nŞengê got:\n\n«Gur hatibû, dayê. Ew dixwest me bixapîne.»\n\nDêya wan got:\n\n«We baş kir. Divê hûn her gav hişyar bin û gotinên min bi bîr bînin.»\n\nJi wê rojê pê ve, Şengê û Pengê fêr bûn ku divê mirov ji kesên ku nas nake re derî veneke û her gotinekê bê hizirîn bawer neke.\n\nDawî.",
       "translations": {
         "en": "Once upon a time, a mother goat lived in a village with her two little kids, Şengê and Pengê. They lived in a small house near the mountains.\n\nEvery morning, their mother went to the summer pastures to eat grass. Before leaving, she called her two children and said:\n\n“My children, I am going to the pastures. Stay at home and do not open the door to anyone.”\n\nŞengê and Pengê replied:\n\n“Okay, mother. We will not open the door to anyone.”\n\nTheir mother said:\n\n“When I return, I will sing a special song. You will recognize me by my voice.”\n\nAfter their mother left, a hungry wolf passed near the house. He had heard what their mother said. He knew that the two little goats were home alone.\n\nThe wolf approached the door and said softly:\n\n“Şengê and Pengê, open the door! Your mother has arrived.”\n\nBut Şengê said:\n\n“No! You are not our mother. Your voice is different.”\n\nThe wolf went a little farther away and thought about what to do. Then he returned and sang a song similar to their mother’s, using a softer voice.\n\nPengê said:\n\n“Maybe it is our mother!”\n\nBut Şengê replied:\n\n“No, we must listen carefully first. Our mother told us not to open the door to anyone.”\n\nThe wolf tried again, but the little goats did not open the door.\n\nMeanwhile, their mother returned from the pastures. She sang her special song. Şengê and Pengê recognized her voice and happily opened the door.\n\nTheir mother hugged them and asked:\n\n“Why didn’t you open the door for me?”\n\nŞengê said:\n\n“The wolf came, mother. He wanted to trick us.”\n\nTheir mother said:\n\n“You did well. You must always be careful and remember what I tell you.”\n\nFrom that day on, Şengê and Pengê learned that they should not open the door to strangers and should not believe everything without thinking.\n\nThe End."
       },
@@ -2195,7 +2195,7 @@
             "Dixwaze bilîze"
           ],
           "correctIndex": 0,
-          "explanation": "Birçî yanî yê ku dixwaze bixwe. Gur birçî bû, loma hat ber deriyê karikan.",
+          "explanation": "Birçî ango yê ku dixwaze bixwe. Gur birçî bû, loma hat ber deriyê karikan.",
           "explanationEn": "“Birçî” means hungry, wanting to eat. The wolf was hungry, so he came to the kids’ door.",
           "evidenceParagraph": 7,
           "evidenceSentence": 0
@@ -2250,7 +2250,7 @@
           "prompt": "Piştî ku Şengê got «Dengê te cuda ye», gur çi kir?",
           "promptEn": "After Şengê said “Your voice is different”, what did the wolf do?",
           "options": [
-            "Hinekî dûr çû, fikirî û bi dengekî nermtir stranek got",
+            "Hinekî dûr çû, hizirî û bi dengekî nermtir stranek got",
             "Yekser reviya û careke din nehat",
             "Bi hêz li derî xist û ket hundir"
           ],
@@ -2262,7 +2262,7 @@
         },
         {
           "kind": "detail",
-          "prompt": "Dema gur stran got, Pengê çi fikirî?",
+          "prompt": "Dema gur stran got, Pengê çi hizirî?",
           "promptEn": "When the wolf sang, what did Pengê think?",
           "options": [
             "Ku ew bê guman gur e",
@@ -2315,7 +2315,7 @@
             "Ji ber ku wan derî ji gur re venekir"
           ],
           "correctIndex": 2,
-          "explanation": "Karikan gotina dê bi bîr anî û derî ji gur re venekir; loma dê kêfxweş bû.",
+          "explanation": "Karikan gotina dê bi bîr anî û derî ji gur re venekir; loma dê dilxweş bû.",
           "explanationEn": "The kids remembered their mother’s words and did not open the door to the wolf, so she was pleased.",
           "evidenceParagraph": 24,
           "evidenceSentence": 0
@@ -2326,11 +2326,11 @@
           "promptEn": "“Divê hûn her gav hişyar bin.” What does “hişyar” mean?",
           "options": [
             "Baldar û haydar",
-            "Kêfxweş û bi ken",
+            "Dilxweş û bi ken",
             "Birçî û westiyayî"
           ],
           "correctIndex": 0,
-          "explanation": "Hişyar yanî baldar: mirov baş guhdarî dike û zû bawer nake.",
+          "explanation": "Hişyar ango baldar: mirov baş guhdarî dike û zû bawer nake.",
           "explanationEn": "“Hişyar” means careful, alert: you listen well and do not believe too quickly.",
           "evidenceParagraph": 24,
           "evidenceSentence": 1
@@ -2345,7 +2345,7 @@
             "Ku divê mirov her gav li malê bimîne"
           ],
           "correctIndex": 1,
-          "explanation": "Çîrok dibêje: divê mirov ji kesên ku nas nake re derî veneke û her gotinekê bê fikirîn bawer neke.",
+          "explanation": "Çîrok dibêje: divê mirov ji kesên ku nas nake re derî veneke û her gotinekê bê hizirîn bawer neke.",
           "explanationEn": "The story says one should not open the door to strangers and should not believe everything without thinking.",
           "evidenceParagraph": null,
           "evidenceSentence": null

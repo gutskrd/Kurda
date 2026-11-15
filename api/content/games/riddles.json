@@ -17,7 +17,7 @@
         "hêk",
         "hêka mirîşkê"
       ],
-      "explanation": "Qalikê hêkê qesreke spî ye ku tu derî û pencere tê de tune; zerika wê ‘bûka zer’ e ku di hundir de rûniştiye. Di mamikê de ‘derî’ û ‘zerî’ bi hev re qafiye ne.",
+      "explanation": "Qalikê hêkê qesreke spî ye ku tu derî û pencere tê de tune; zerika wê ‘bûka zer’ e ku di hundir de rûniştiye. Di mamikê de ‘derî’ û ‘zerî’ serwayên hev in.",
       "translations": {
         "ckb": {
           "question": "کۆشکێکی سپی، نە پەنجەرەی هەیە نە دەرگا، بووکێکی زەردی تێدا دانیشتووە. ئەوە چییە؟",
@@ -26,7 +26,7 @@
             "بۆ ئەوەی بووکە زەردەکە ببینیت، دەبێت دیواری کۆشکەکە بشکێنیت."
           ],
           "answer": "هێلکە",
-          "explanation": "تووێکڵی هێلکە کۆشکێکی سپییە کە هیچ دەرگا و پەنجەرەیەکی نییە؛ زەردێنەکەی «بووکە زەردەکە»یە کە لە ناوەوە دانیشتووە. لە کورمانجیدا «دەری» (دەرگا) و «زەری» (زێڕین) قافیەیان هەیە."
+          "explanation": "تووێکڵی هێلکە کۆشکێکی سپییە کە هیچ دەرگا و پەنجەرەیەکی نییە؛ زەردێنەکەی «بووکە زەردەکە»یە کە لە ناوەوە دانیشتووە. لە کورمانجیدا «دەری» (دەرگا) و «زەری» (زێڕین) سەروایان هەیە."
         },
         "en": {
           "question": "A white palace with no windows and no door, and inside it sits a yellow bride. What is it?",
@@ -139,7 +139,7 @@
         "hîva tijî",
         "heyva tijî"
       ],
-      "explanation": "Hîva tijî wek teştekê mast spî û girover e, û li ezmanê vekirî, ‘li dereke rast’, bê ku birije radiweste. ‘Mast’ û ‘rast’ bi hev re qafiye ne.",
+      "explanation": "Hîva tijî wek teştekê mast spî û girover e, û li ezmanê vekirî, ‘li dereke rast’, bê ku birije radiweste. ‘Mast’ û ‘rast’ serwayên hev in.",
       "translations": {
         "ckb": {
           "question": "مەتەڵێکم هەیە: تەشتێک ماست، لە شوێنێکی ڕاست. ئەوە چییە؟",
@@ -148,7 +148,7 @@
             "جاری وایە پڕ و خڕە، جاری واش وەک کەوانێکی باریک دەبێت."
           ],
           "answer": "مانگ",
-          "explanation": "مانگی چواردە سپی و خڕە وەک تەشتێک ماست، و لە ئاسمانی کراوەدا، «لە شوێنێکی ڕاست»، بێ ئەوەی بڕژێت دەوەستێت. لە کورمانجیدا «ماست» و «ڕاست» قافیەیان هەیە."
+          "explanation": "مانگی چواردە سپی و خڕە وەک تەشتێک ماست، و لە ئاسمانی کراوەدا، «لە شوێنێکی ڕاست»، بێ ئەوەی بڕژێت دەوەستێت. لە کورمانجیدا «ماست» و «ڕاست» سەروایان هەیە."
         },
         "en": {
           "question": "Here’s my riddle: a basin of yoghurt, set down on level ground. What is it?",
@@ -250,7 +250,7 @@
         "tifinga nêçîrê",
         "çek"
       ],
-      "explanation": "Nêçîrvan li ser zinêr radiweste, tiliya xwe dixe qula tetikê û dengê teqînê digihêje hezar kesî. Mamik mirov dixapîne: mirov difikire ku behsa stranbêjekî ye, lê ‘deng’ teqîna tifingê ye.",
+      "explanation": "Nêçîrvan li ser zinêr radiweste, tiliya xwe dixe qula tetikê û dengê teqînê digihêje hezar kesî. Mamik mirov dixapîne: mirov dihizire ku gotin li ser stranbêjekî ye, lê ‘deng’ teqîna tifingê ye.",
       "translations": {
         "ckb": {
           "question": "چوومە سەر بەردێک، پەنجەم چووە کونێک، دەنگم گەیشتە هەزار کەس. ئەوە چییە؟",
@@ -366,7 +366,7 @@
         "dîkel",
         "dîkê mirîşkan"
       ],
-      "explanation": "Kumê sor ê serê dîk wek şaşika melayan e, û ‘bang dan’ hem ji bo melayê ku ezanê dixwîne tê gotin, hem ji bo dîkê ku berbangê dixwîne. Loma ew bang dide, lê ne mele ye.",
+      "explanation": "Kumê sor ê serê dîk wek şaşika melayan e, û ‘bang dan’ hem ji bo melayê ku gazî nimêjê dike tê gotin, hem ji bo dîkê ku berbangê dixwîne. Loma ew bang dide, lê ne mele ye.",
       "translations": {
         "ckb": {
           "question": "مێزەری لەسەرە، بەرەبەیان بانگ دەدات، بەڵام مەلا نییە. ئەوە چییە؟",
@@ -481,7 +481,7 @@
         "jîjo",
         "jûjîk"
       ],
-      "explanation": "Jûjî derziyên xwe her dem li ser pişta xwe dibe: ev ‘barê’ wî ye, û kî dest bide wan, ‘ax’ dike. Mamik jê re dibêje ‘apê min’, da ku mirov li mirovekî bifikire.",
+      "explanation": "Jûjî derziyên xwe her dem li ser pişta xwe dibe: ev ‘barê’ wî ye, û kî dest bide wan, ‘ax’ dike. Mamik jê re dibêje ‘apê min’, da ku mirov mirovekî bîne ber çavên xwe.",
       "translations": {
         "ckb": {
           "question": "مامم لە دەشتەوە دێت، بارێکی لە پشتە؛ هەر کەس دەست لە بارەکەی بدات، دەڵێت «ئاخ!». ئەوە چییە؟",
@@ -606,16 +606,16 @@
         "kaxez û nivîsar",
         "name"
       ],
-      "explanation": "Kaxez erda spî ye, tîpên bi mûrekeba reş tov in: bi destan tên nivîsîn û bi çavan tên ‘berhevkirin’, ango tên xwendin.",
+      "explanation": "Kaxez erda spî ye, tîpên reş tov in: bi destan tên nivîsîn û bi çavan tên ‘berhevkirin’, ango tên xwendin.",
       "translations": {
         "ckb": {
           "question": "زەوییەکەم سپییە، تۆوەکەم ڕەشە؛ بە دەست دەچێنرێت و بە چاو دەدورێتەوە. ئەوە چییە؟",
           "hints": [
             "مامۆستا و قوتابی هەموو ڕۆژێک ئەم تۆوە دەچێنن.",
-            "قەڵەم جووتیاری ئەم زەوییەیە."
+            "پێنووس جووتیاری ئەم زەوییەیە."
           ],
           "answer": "نووسین",
-          "explanation": "کاغەز زەوییە سپییەکەیە و پیتە ڕەشەکانی مەرەکەب تۆوەکەن: بە دەست دەنووسرێن و بە چاو «دەدورێنەوە»، واتە دەخوێنرێنەوە."
+          "explanation": "کاغەز زەوییە سپییەکەیە و پیتە ڕەشەکان تۆوەکەن: بە دەست دەنووسرێن و بە چاو «دەدورێنەوە»، واتە دەخوێنرێنەوە."
         },
         "en": {
           "question": "My field is white and my seed is black; it is sown by hand and harvested by eye. What is it?",
@@ -833,8 +833,8 @@
             "پەڕەم هەیە، بەڵام باڵندە نیم.",
             "لەسەر ڕەفەکە دەخەوم و چاوەڕێی چاوەکانی تۆم."
           ],
-          "answer": "کتێب",
-          "explanation": "کتێب بێ دەم «قسە دەکات»: کە دەیکەیتەوە و دەیخوێنیتەوە، چیرۆکەکانی پێت دەگەن؛ کە دایدەخەیت، بێدەنگ دەبێت. پەڕەکانیشی وەک پەڕی باڵندەن، بەڵام بۆ نووسینن."
+          "answer": "پەرتووک",
+          "explanation": "پەرتووک بێ دەم «قسە دەکات»: کە دەیکەیتەوە و دەیخوێنیتەوە، چیرۆکەکانی پێت دەگەن؛ کە دایدەخەیت، بێدەنگ دەبێت. پەڕەکانیشی وەک پەڕی باڵندەن، بەڵام بۆ نووسینن."
         },
         "en": {
           "question": "I have no mouth, yet I tell hundreds of stories. Open me and I speak; close me and I fall silent. What am I?",
@@ -913,7 +913,7 @@
       "question": "Tu çiqas ji min bistînî, ez ewqas mezintir dibim. Ez çi me?",
       "hints": [
         "Bêr û qazme hevalên min in.",
-        "Ez di erdê de me; tu çiqas axê ji min derxînî, ez ewqas kûrtir dibim."
+        "Ez di nav axê de me; tu çiqas axê ji min derxînî, ez ewqas kûrtir dibim."
       ],
       "answer": "Çal",
       "accepted": [
@@ -925,10 +925,10 @@
       "explanation": "Çal ji valahiyê pêk tê: her bêreke axê ku tu jê derdixî, wê mezintir dike. Tiştên din kêm dibin dema tu ji wan distînî; tenê çal berevajî ye.",
       "translations": {
         "ckb": {
-          "question": "هەتا زیاتر لێم هەڵبگریت، گەورەتر دەبم. من چیم؟",
+          "question": "تا زیاتر لێم هەڵبگریت، گەورەتر دەبم. من چیم؟",
           "hints": [
             "خاکەناز و قازمە هاوڕێی منن.",
-            "لە ناو زەویدام؛ هەتا زیاتر خۆڵم لێ دەربهێنیت، قووڵتر دەبم."
+            "لە ناو زەویدام؛ تا زیاتر خۆڵم لێ دەربهێنیت، قووڵتر دەبم."
           ],
           "answer": "چاڵ",
           "explanation": "چاڵ لە بۆشایی پێک دێت: هەر خاکەنازێک خۆڵ کە لێی دەردەهێنیت، گەورەتری دەکات. شتەکانی تر کە لێیان هەڵدەگریت کەم دەبن؛ تەنیا چاڵ پێچەوانەیە."
@@ -1009,7 +1009,7 @@
       "region": null,
       "question": "Ez her dem dimeşim, bê ling; tu nikarî min bigirî, nikarî min vegerînî jî. Ez çi me?",
       "hints": [
-        "Saet tenê dengê gavên min dihejmêre.",
+        "Tiştê li ser dîwêr ku tik-tak dike, tenê dengê gavên min dihejmêre.",
         "Li pirsê dîsa binêre: bersiv di nav de veşartî ye."
       ],
       "answer": "Dem",
@@ -1024,7 +1024,7 @@
         "ckb": {
           "question": "هەموو کاتێک دەڕۆم، بێ پێ؛ ناتوانیت بمگریت، ناشتوانیت بمگەڕێنیتەوە. من چیم؟",
           "hints": [
-            "سەعات تەنیا دەنگی هەنگاوەکانم دەژمێرێت.",
+            "ئەو شتەی لەسەر دیوار تیک-تاک دەکات، تەنیا دەنگی هەنگاوەکانم دەژمێرێت.",
             "جارێکی تر سەیری پرسیارەکە بکەرەوە: وەڵامەکە لە ناویدا شاردراوەتەوە."
           ],
           "answer": "کات",
@@ -1117,13 +1117,13 @@
       "explanation": "Bi kurmancî ‘ziman’ hem endamê di dev de ye, hem jî zimanê ku em pê dipeyivin, wek ‘zimanê kurdî’. Loma ziman hem di devê te de ye, hem jî tu wî ji pirtûkan hîn dibî.",
       "translations": {
         "ckb": {
-          "question": "لە دەمی تۆدا دەخەوم، بەڵام لە کتێبەکانیشەوە فێرم دەبیت. من چیم؟",
+          "question": "لە دەمی تۆدا دەخەوم، بەڵام لە پەرتووکەکانیشەوە فێرم دەبیت. من چیم؟",
           "hints": [
             "سوور و نەرمم، و تامی خواردن یەکەم جار من دەیناسم.",
             "ئێستا بەم ئەپە فێرم دەبیت."
           ],
           "answer": "زمان",
-          "explanation": "لە کوردیدا «زمان» هەم ئەندامەکەی ناو دەمە و هەم ئەو زمانەیە کە پێی قسە دەکەین، وەک «زمانی کوردی». بۆیە زمان هەم لە دەمتدایە و هەم لە کتێبەکانەوە فێری دەبیت."
+          "explanation": "لە کوردیدا «زمان» هەم ئەندامەکەی ناو دەمە و هەم ئەو زمانەیە کە پێی قسە دەکەین، وەک «زمانی کوردی». بۆیە زمان هەم لە دەمتدایە و هەم لە پەرتووکەکانەوە فێری دەبیت."
         },
         "en": {
           "question": "I sleep in your mouth, and yet you learn me from books. What am I?",
@@ -1306,7 +1306,7 @@
         "ker",
         "kerr"
       ],
-      "explanation": "Bi kurmancî ‘ker’ hem heywanê guhdirêj e, hem jî mirovê ku nabihîze (carinan ‘kerr’ tê nivîsîn). Loma ker, bi wan guhên xwe yên dirêj, bi navê xwe ‘nabihîze’. Henek ev e.",
+      "explanation": "Bi kurmancî ‘ker’ hem ajalê guhdirêj e, hem jî mirovê ku nabihîze (carinan ‘kerr’ tê nivîsîn). Loma ker, bi wan guhên xwe yên dirêj, bi navê xwe ‘nabihîze’. Henek ev e.",
       "translations": {
         "ckb": {
           "question": "گوێکانم لە هی تۆ درێژترن، بەڵام ناوم دەڵێت ناتوانم ببیستم. من چیم؟",
@@ -1500,7 +1500,7 @@
         "çavê kaniyê",
         "kanîk"
       ],
-      "explanation": "Cihê ku av ji erdê derdikeve ‘çavê kaniyê’ ye: loma kaniyê çavek heye, lê nabîne. Ji vê jî peyva ‘çavkanî’ çêbûye, ku îro ji bo ‘jêder’ jî tê bikaranîn.",
+      "explanation": "Cihê ku av ji bin axê derdikeve ‘çavê kaniyê’ ye: loma kaniyê çavek heye, lê nabîne. Ji vê jî peyva ‘çavkanî’ çêbûye, ku îro ji bo ‘jêder’ jî tê bikaranîn.",
       "translations": {
         "ckb": {
           "question": "چاوێکم هەیە، بەڵام نابینم؛ ئاو دەدەم بە هەموو کەس، بەڵام هەرگیز تینوو نابم. من چیم؟",
@@ -1697,7 +1697,7 @@
         "saj",
         "sac"
       ],
-      "explanation": "Sêl ji hesin e û wek pişta kûsiyê qubeyî ye; agir di bin wê de ye û nanê tenik, nanê sêlê, li ser pişta wê dipije. Sêl her roj nan çêdike, lê qet naxwe.",
+      "explanation": "Sêl ji hesin e û wek pişta kûsiyê girover e; agir di bin wê de ye û nanê tenik, nanê sêlê, li ser pişta wê dipije. Sêl her roj nan çêdike, lê tu carî naxwe.",
       "translations": {
         "ckb": {
           "question": "پشتم وەک پشتی کیسەڵە و ئاگر لە ژێرمە؛ نان لەسەر پشتم دەبرژێت، بەڵام من پارووێکیش ناخۆم. من چیم؟",
@@ -1706,7 +1706,7 @@
             "لە ئاسن دروست کراوم؛ هەویری تەنک لەسەرم لە چرکەیەکدا دەبرژێت."
           ],
           "answer": "ساج",
-          "explanation": "ساج تەختەیەکی ئاسنی قوبەییە، وەک پشتی کیسەڵ؛ ئاگر لە ژێریدایە و نانی تەنک، نانی ساج، لەسەر پشتی دەبرژێت. ساج هەموو ڕۆژێک نان دروست دەکات، بەڵام هەرگیز ناخوات."
+          "explanation": "ساج تەختەیەکی ئاسنی خڕە، وەک پشتی کیسەڵ؛ ئاگر لە ژێریدایە و نانی تەنک، نانی ساج، لەسەر پشتی دەبرژێت. ساج هەموو ڕۆژێک نان دروست دەکات، بەڵام هەرگیز ناخوات."
         },
         "en": {
           "question": "My back is shaped like a tortoise’s, with a fire underneath me; bread bakes on my back, yet I never eat a crumb. What am I?",
@@ -1782,7 +1782,7 @@
       "category": "culture",
       "tradition": "new",
       "region": null,
-      "question": "Ez her sal têm, lê qet pîr nabim, çimkî navê min dibêje ‘nû’. Dema ez têm, agir li serê çiyan vêdikevin. Ez çi me?",
+      "question": "Ez her sal têm, lê tu carî pîr nabim, çimkî navê min dibêje ‘nû’. Dema ez têm, agir li serê çiyan vêdikevin. Ez çi me?",
       "hints": [
         "Ez bi biharê re têm.",
         "Kawayê Hesinkar çîroka min dizane."
@@ -1880,7 +1880,7 @@
       "category": "culture",
       "tradition": "new",
       "region": null,
-      "question": "Xelekek im, ne ji zêr im, ne ji zîv; ji destên mirovan çêdibim û li dawetan dizivirim. Ez çi me?",
+      "question": "Xelekek im, ne ji zêr im, ne ji zîv; ji destên mirovan çêdibim û li şahiyan dizivirim. Ez çi me?",
       "hints": [
         "Dehol û zirne min dimeşînin.",
         "Kesê li serê min destmalekê dihejîne; jê re ‘serçopî’ dibêjin."
@@ -1892,7 +1892,7 @@
         "halay",
         "govenda kurdî"
       ],
-      "explanation": "Govend xelekeke mirovan e: dest bi dest an mil bi mil, li dawet û şahiyan bi dengê dehol û zirneyê dizivire; serçopî bi destmala xwe wê dide meşandin.",
+      "explanation": "Govend xelekeke mirovan e: dest bi dest an mil bi mil, li şahî û cejnan bi dengê dehol û zirneyê dizivire; serçopî bi destmala xwe wê dide meşandin.",
       "translations": {
         "ckb": {
           "question": "ئەڵقەیەکم، نە لە زێڕم نە لە زیو؛ لە دەستی مرۆڤەکان دروست دەبم و لە زەماوەندەکاندا دەسووڕێمەوە. من چیم؟",
@@ -2167,7 +2167,7 @@
       "category": "nature",
       "tradition": "new",
       "region": null,
-      "question": "Zivistanê kumekî spî li serê min e, biharê kirasekî kesk li ber min e; ez qet ji cihê xwe naçim, lê ewr tên û li ser milên min rûdinên. Ez çi me?",
+      "question": "Zivistanê kumekî spî li serê min e, biharê kirasekî kesk li ber min e; ez tu carî ji cihê xwe naçim, lê ewr tên û li ser milên min rûdinên. Ez çi me?",
       "hints": [
         "Kanî ji dilê min derdikevin û şivan pezê xwe dibin ser min.",
         "Gotineke pêşiyan dibêje: ji bilî min, dostên kurdan tune ne."
@@ -2281,7 +2281,7 @@
             "Ben di çavê wê re derbas dikin."
           ],
           "answer": "Derzî",
-          "explanation": "Derziyê lingekî tûj heye ku dikeve nav qumaşê, û ‘çavek’ heye ku ben tê de derbas dibe."
+          "explanation": "Derziyê lingekî tûj heye ku dikeve nav cawî, û ‘çavek’ heye ku ben tê de derbas dibe."
         },
         "en": {
           "question": "It has one foot and one eye. What is it?",
@@ -2766,7 +2766,7 @@
       "category": "nature",
       "tradition": "new",
       "region": null,
-      "question": "سندووقێکی سوورە، پڕە لە یاقووتی سوور؛ کە دەیکەیتەوە، دەستەکانت سوور دەبن. ئەوە چییە؟",
+      "question": "قوتوویەکی سوورە، پڕە لە یاقووتی سوور؛ کە دەیکەیتەوە، دەستەکانت سوور دەبن. ئەوە چییە؟",
       "hints": [
         "لە پاییزدا لەسەر دار پێدەگات.",
         "باخەکانی هەڵەبجە بەم میوەیە ناسراون."
@@ -2776,16 +2776,16 @@
         "هەنار",
         "هنار"
       ],
-      "explanation": "پێستی هەنار سندووقێکی سوورە و دەنکەکانی وەک یاقووت دەدرەوشێنەوە؛ ئاوەکەشی دەست سوور دەکات. هەناری هەڵەبجە بە تامەکەی بەناوبانگە.",
+      "explanation": "پێستی هەنار قوتوویەکی سوورە و دەنکەکانی وەک یاقووت دەدرەوشێنەوە؛ ئاوەکەشی دەست سوور دەکات. هەناری هەڵەبجە بە تامەکەی بەناوبانگە.",
       "translations": {
         "ku": {
-          "question": "Sindoqeke sor e, tijî yaqûtên sor e; dema tu wê vedikî, destên te sor dibin. Ew çi ye?",
+          "question": "Qutiyeke sor e, tijî yaqûtên sor e; dema tu wê vedikî, destên te sor dibin. Ew çi ye?",
           "hints": [
             "Di payîzê de li ser darê digihêje.",
             "Baxçeyên Helebceyê bi vê fêkiyê navdar in."
           ],
           "answer": "Hinar",
-          "explanation": "Qalikê hinarê sindoqeke sor e û libên wê wek yaqûtan dibiriqin; ava wê jî destan sor dike. Hinarê Helebceyê bi tama xwe navdar e."
+          "explanation": "Qalikê hinarê qutiyeke sor e û libên wê wek yaqûtan dibiriqin; ava wê jî destan sor dike. Hinarê Helebceyê bi tama xwe navdar e."
         },
         "en": {
           "question": "A red box full of red rubies; open it and your hands turn red. What is it?",
@@ -2875,13 +2875,13 @@
       "explanation": "لە دەهۆڵ دەدرێت، بەڵام لە جیاتی گریان دەنگێکی خۆش دەدات؛ لە زەماوەندی کوردیدا دەهۆڵ و زوڕنا هەڵپەڕکێ دەگێڕن.",
       "translations": {
         "ku": {
-          "question": "Her kes li min dixe, lê ez nagirîm, ez stranan dibêjim; bê min tu dawet nabe. Ez çi me?",
+          "question": "Her kes li min dixe, lê ez nagirîm, ez stranan dibêjim; bê min tu şahî nabe. Ez çi me?",
           "hints": [
             "Zikê min vala ye, lê dengê min heta serê din ê gund diçe.",
             "Di govendê de ez û zirne bi hev re tên lêxistin."
           ],
           "answer": "Dehol",
-          "explanation": "Li deholê tê xistin, lê li şûna girînê dengekî xweş derdixe; di dawetên kurdan de dehol û zirne govendê dimeşînin."
+          "explanation": "Li deholê tê xistin, lê li şûna girînê dengekî xweş derdixe; di şahiyên kurdan de dehol û zirne govendê dimeşînin."
         },
         "en": {
           "question": "Everyone beats me, yet I don’t cry — I sing; and there is no wedding without me. What am I?",
