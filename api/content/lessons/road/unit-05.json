@@ -115,7 +115,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Roja Sêşemê Hamo diçe baxçe.",
+                    "say": "Roja Sêşemê Hamo diçe bazarê.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -123,11 +123,11 @@
                         "en": "Tuesday"
                       }
                     ],
-                    "prompt": "Roja Sêşemê Hamo diçe baxçe.",
+                    "prompt": "Roja Sêşemê Hamo diçe bazarê.",
                     "options": [
-                      "On Tuesday Hamo goes to the orchard.",
-                      "On Sunday Hamo goes to the orchard.",
-                      "On Tuesday Hamo goes to the market."
+                      "On Tuesday Hamo goes to the market.",
+                      "On Sunday Hamo goes to the market.",
+                      "On Tuesday Hamo goes to the orchard."
                     ],
                     "correctIndex": 0
                   }
@@ -2056,7 +2056,7 @@
                     "prompt": "the third day",
                     "options": [
                       "roja sêyem",
-                      "roja sê",
+                      "sê roj",
                       "sêyem roja"
                     ],
                     "correctIndex": 0
@@ -2756,8 +2756,8 @@
                     "prompt": "Di demjimêr ___ de em şîv dixwin.",
                     "options": [
                       "heştan",
-                      "heşt",
-                      "heştê"
+                      "heştê",
+                      "nan"
                     ],
                     "correctIndex": 0
                   }

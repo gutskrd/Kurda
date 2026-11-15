@@ -1129,8 +1129,8 @@
                     "prompt": "Ez li her ___ disekinim.",
                     "options": [
                       "qatî",
-                      "qatê",
-                      "jor"
+                      "diçe",
+                      "mezin"
                     ],
                     "correctIndex": 0
                   }
@@ -2391,8 +2391,8 @@
                     "prompt": "Look, Uncle!",
                     "options": [
                       "Binêre, xalo!",
-                      "Binêrin, xalo!",
-                      "Dinêre, xalo!"
+                      "Dinêre, xalo!",
+                      "Bixwe, xalo!"
                     ],
                     "correctIndex": 0
                   }
@@ -3152,6 +3152,7 @@
                     "ask": "missing",
                     "say": "Ji Xezalê bipirse!",
                     "voice": "hamo",
+                    "cue": "Tell Hamo to ask Xezal.",
                     "prompt": "Ji Xezalê ___!",
                     "options": [
                       "bipirse",

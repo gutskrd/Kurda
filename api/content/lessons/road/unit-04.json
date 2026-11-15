@@ -72,9 +72,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "Kum",
+                    "say": "kum",
                     "voice": "hamo",
-                    "prompt": "Kum",
+                    "prompt": "kum",
                     "options": [
                       "cap",
                       "bag",
@@ -561,7 +561,8 @@
                     "accepted": [
                       "Xezal says my voice is loud!",
                       "Xezal says that my voice is loud!",
-                      "Xezal says my voice is high!"
+                      "Xezal says I have a loud voice!",
+                      "Xezal says I’ve a loud voice!"
                     ]
                   }
                 },
@@ -2779,7 +2780,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hêk bi çil e.",
+                    "say": "Penîr bi çil e.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2787,11 +2788,11 @@
                         "en": "forty"
                       }
                     ],
-                    "prompt": "Hêk bi çil e.",
+                    "prompt": "Penîr bi çil e.",
                     "options": [
-                      "The eggs are forty.",
-                      "The eggs are fourteen.",
-                      "The eggs are four."
+                      "The cheese is forty.",
+                      "The cheese is fourteen.",
+                      "The cheese is four."
                     ],
                     "correctIndex": 0
                   }
@@ -4972,8 +4973,8 @@
                     "prompt": "Bozo bi lez ___, barê wî giran e.",
                     "options": [
                       "naçe",
-                      "diçe",
-                      "naçim"
+                      "naçim",
+                      "naçin"
                     ],
                     "correctIndex": 0
                   }
