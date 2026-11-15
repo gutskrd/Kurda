@@ -83,6 +83,12 @@ describe('lessonAudioTargets', () => {
     expect(lessonAudioTargets('listening', { accepted: ['sêv'] })).toEqual(['sêv']);
   });
 
+  it('takes only the whole line of a missing word typed into its gap, never the gap’s word alone', () => {
+    expect(lessonAudioTargets('writing', { ask: 'missing', say: 'Ez baş im.', prompt: 'Ez ___ im.', accepted: ['baş'] })).toEqual(['Ez baş im.']);
+    // without its line said, the answer is still what is heard
+    expect(lessonAudioTargets('writing', { ask: 'missing', prompt: 'Ez ___ im.', accepted: ['baş'] })).toEqual(['baş']);
+  });
+
   it('takes the reference of a speaking item', () => {
     expect(lessonAudioTargets('speaking', { prompt: 'Say: hello', reference: 'Silav' })).toEqual(['Silav']);
   });

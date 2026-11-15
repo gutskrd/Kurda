@@ -1,15 +1,20 @@
 import { z } from 'zod';
 import {
+  ASKS_BY_TYPE,
   CONVERSATION_ID,
   CONVERSATION_LIMITS as CONV,
+  GAP,
   SPEAKERS,
+  WORD_PICTURES,
   answerKey,
   conversationSpeaker,
   learnerPart,
   foldDiacritics,
   lessonAudioKey,
   normalizeKurdish,
+  splitGap,
   type ConversationPayload,
+  type ExerciseAsk,
 } from '@kurda/shared';
 import type { ExerciseType } from './repository.js';
 import { SELF_RATINGS, defaultScorer } from './speaking-scorer.js';
@@ -42,17 +47,59 @@ const say = z.string().min(1).max(300).optional();
  */
 const voice = z.enum(SPEAKERS, { error: 'must be hevalo, hamo or xezo' }).optional();
 
+/**
+ * What the item asks (`ExerciseAsk`), which names its headline in the apps.
+ * An item that says it keeps its `prompt` to the line alone, the Kurdish (or,
+ * to put into Kurdish, the English) the bubble holds; one without it is asked
+ * the way its type always was, its prompt the whole question.
+ */
+const askOf = (type: keyof typeof ASKS_BY_TYPE) => z.enum(ASKS_BY_TYPE[type] as [ExerciseAsk, ...ExerciseAsk[]]).optional();
+
+/** A few words of context beside the line, where the line alone could be read two ways ("to two people"). */
+const cue = z.string().min(1).max(60).optional();
+
+/** The words the item brings in for the first time, each with its meaning: the apps mark them new. */
+const newWords = z
+  .array(z.object({ ku: z.string().min(1).max(60), en: z.string().min(1).max(80) }))
+  .min(1)
+  .max(6)
+  .optional();
+
+/** A `missing` line holds one gap, and the line it was cut from, when it is said, is the line with its answer in the gap. */
+function checkGap(line: string, answers: readonly string[], whole: string | undefined, ctx: z.RefinementCtx): void {
+  const gap = splitGap(line);
+  if (!gap) {
+    ctx.addIssue({ code: 'custom', path: ['prompt'], message: `a missing-word line holds exactly one ${GAP}` });
+    return;
+  }
+  if (whole !== undefined && !answers.some((a) => lessonAudioKey(`${gap.before}${a}${gap.after}`) === lessonAudioKey(whole))) {
+    ctx.addIssue({ code: 'custom', path: ['say'], message: 'is the line with its answer in the gap' });
+  }
+}
+
 export const multipleChoicePayloadSchema = z
   .object({
     say,
     voice,
+    ask: askOf('multiple_choice'),
+    cue,
+    new: newWords,
     prompt: z.string().min(1).max(500),
     options: z.array(z.string().min(1).max(200)).min(2).max(6),
     correctIndex: z.number().int().min(0),
   })
-  .refine((p) => p.correctIndex < p.options.length, {
-    message: 'correctIndex must point at an option',
-    path: ['correctIndex'],
+  .superRefine((p, ctx) => {
+    if (p.correctIndex >= p.options.length) {
+      ctx.addIssue({ code: 'custom', message: 'correctIndex must point at an option', path: ['correctIndex'] });
+      return;
+    }
+    // a picture item's options are pictures the apps can draw
+    if (p.ask === 'picture') {
+      p.options.forEach((o, i) => {
+        if (!Object.hasOwn(WORD_PICTURES, o)) ctx.addIssue({ code: 'custom', path: ['options', i], message: `is not a word picture: ${o}` });
+      });
+    }
+    if (p.ask === 'missing') checkGap(p.prompt, [p.options[p.correctIndex]!], p.say, ctx);
   });
 
 /**
@@ -66,6 +113,9 @@ const strictSchema = z.boolean().optional();
 export const translatePayloadSchema = z.object({
   say,
   voice,
+  ask: askOf('translate'),
+  cue,
+  new: newWords,
   prompt: z.string().min(1).max(500),
   /** All accepted answers; the first is the canonical/shown correction. */
   accepted: z.array(z.string().min(1).max(300)).min(1).max(12),
@@ -84,6 +134,9 @@ export const matchPairsPayloadSchema = z.object({
 export const listeningPayloadSchema = z.object({
   say,
   voice,
+  ask: askOf('listening'),
+  cue,
+  new: newWords,
   /**
    * CDN URL of the audio clip to play (KUR-013). Optional: a studio recording
    * of the first accepted transcription is played in its place when there is one.
@@ -99,20 +152,30 @@ export const listeningPayloadSchema = z.object({
 export const speakingPayloadSchema = z.object({
   say,
   voice,
+  ask: askOf('speaking'),
+  cue,
+  new: newWords,
   /** what the learner is asked to say aloud */
   prompt: z.string().min(1).max(500),
   /** the target phrase, passed to the pronunciation scorer (KUR-120) */
   reference: z.string().min(1).max(300),
 });
 
-export const writingPayloadSchema = z.object({
-  say,
-  voice,
-  prompt: z.string().min(1).max(500),
-  /** accepted full-text answers; punctuation/case-insensitive, diacritic-tolerant */
-  accepted: z.array(z.string().min(1).max(500)).min(1).max(12),
-  strict: strictSchema,
-});
+export const writingPayloadSchema = z
+  .object({
+    say,
+    voice,
+    ask: askOf('writing'),
+    cue,
+    new: newWords,
+    prompt: z.string().min(1).max(500),
+    /** accepted full-text answers (a `missing` item's: the word for its gap); punctuation/case-insensitive, diacritic-tolerant */
+    accepted: z.array(z.string().min(1).max(500)).min(1).max(12),
+    strict: strictSchema,
+  })
+  .superRefine((p, ctx) => {
+    if (p.ask === 'missing') checkGap(p.prompt, p.accepted, p.say, ctx);
+  });
 
 /**
  * A conversation (@kurda/shared conversation.ts): who takes part, what each of
@@ -337,6 +400,15 @@ export function exerciseSeed(sessionId: string, exerciseId: string): string {
   return `${sessionId}:${exerciseId}`;
 }
 
+/** What an item asks, its cue and the words it brings in, as the apps are sent them: only what it says. */
+function asked(p: { ask?: ExerciseAsk; cue?: string; new?: Array<{ ku: string; en: string }> }): Record<string, unknown> {
+  return {
+    ...(p.ask ? { ask: p.ask } : {}),
+    ...(p.cue ? { cue: p.cue } : {}),
+    ...(p.new ? { newWords: p.new.map((w) => ({ ku: w.ku, en: w.en })) } : {}),
+  };
+}
+
 /**
  * Strips the correct answer from a stored exercise before it goes to the
  * client (KUR-028). The client never receives correctIndex / accepted, nor
@@ -361,25 +433,25 @@ export function sanitizeExercise(
       // the answer comes back as an index into THIS order; grading maps it
       // back with the same seed
       const p = parsed.data as MultipleChoicePayload;
-      return { prompt: p.prompt, options: optionOrder(p.options.length, seed).map((i) => p.options[i]!) };
+      return { prompt: p.prompt, ...asked(p), options: optionOrder(p.options.length, seed).map((i) => p.options[i]!) };
     }
     case 'translate': {
       const p = parsed.data as TranslatePayload;
-      return { prompt: p.prompt };
+      return { prompt: p.prompt, ...asked(p) };
     }
     case 'listening': {
       // send the audio + hint, never the transcription
       const p = parsed.data as ListeningPayload;
-      return { audioUrl: p.audioUrl, prompt: p.prompt };
+      return { audioUrl: p.audioUrl, prompt: p.prompt, ...asked(p) };
     }
     case 'speaking': {
       // send only the phrase to say; the reference stays server-side
       const p = parsed.data as SpeakingPayload;
-      return { prompt: p.prompt };
+      return { prompt: p.prompt, ...asked(p) };
     }
     case 'writing': {
       const p = parsed.data as WritingPayload;
-      return { prompt: p.prompt };
+      return { prompt: p.prompt, ...asked(p) };
     }
     case 'conversation': {
       // the whole conversation is the reading; the answer is only in correctIndex

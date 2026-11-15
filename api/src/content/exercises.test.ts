@@ -797,3 +797,65 @@ describe('conversation', () => {
     expect(revealExercise('conversation', conversation)).toEqual({ prompt: 'Hamo ji ku derê ye?', correction: 'Ji Amedê' });
   });
 });
+
+describe('what an item asks', () => {
+  const issues = (type: ExerciseType, payload: unknown): string[] => {
+    try {
+      validateExercisePayload(type, payload);
+      return [];
+    } catch (err) {
+      return (err as InvalidExercisePayloadError).issues.map((i) => `${i.path}: ${i.message}`);
+    }
+  };
+
+  it('sends its ask, its cue and the words it brings in, and never its answer', () => {
+    const payload = {
+      ask: 'meaning',
+      say: 'Silav!',
+      voice: 'hamo',
+      new: [{ ku: 'silav', en: 'hello' }],
+      cue: 'at the gate',
+      prompt: 'Silav!',
+      options: ['Hello!', 'Goodbye!'],
+      correctIndex: 0,
+    };
+    expect(issues('multiple_choice', payload)).toEqual([]);
+    const sent = sanitizeExercise('multiple_choice', payload, SEED);
+    expect(sent).toMatchObject({ prompt: 'Silav!', ask: 'meaning', cue: 'at the gate', newWords: [{ ku: 'silav', en: 'hello' }] });
+    expect(sent).not.toHaveProperty('correctIndex');
+    expect(sent).not.toHaveProperty('new');
+    // an item written before there were asks is sent as it always was
+    expect(sanitizeExercise('translate', { prompt: 'Write: I am well.', accepted: ['Ez baş im.'] }, SEED)).toEqual({ prompt: 'Write: I am well.' });
+  });
+
+  it('takes only the asks its type can make', () => {
+    expect(issues('translate', { ask: 'picture', prompt: 'Silav!', accepted: ['Hello!'] })[0]).toMatch(/^ask: /);
+    expect(issues('speaking', { ask: 'repeat', prompt: 'Silav!', reference: 'Silav!' })).toEqual([]);
+    expect(issues('listening', { ask: 'hear', accepted: ['Silav!'] })).toEqual([]);
+  });
+
+  it('offers a picture item only pictures the apps can draw', () => {
+    const picture = { ask: 'picture', say: 'sêv', prompt: 'sêv', options: ['apple', 'bread', 'tea'], correctIndex: 0 };
+    expect(issues('multiple_choice', picture)).toEqual([]);
+    expect(issues('multiple_choice', { ...picture, options: ['apple', 'unicorn'] })).toEqual(['options.1: is not a word picture: unicorn']);
+  });
+
+  it('holds a missing word’s line to one gap, and its whole line to its answer in the gap', () => {
+    const missing = { ask: 'missing', say: 'Ez baş im.', prompt: 'Ez ___ im.', options: ['baş', 'tu', 'na'], correctIndex: 0 };
+    expect(issues('multiple_choice', missing)).toEqual([]);
+    expect(issues('multiple_choice', { ...missing, prompt: 'Ez baş im.' })).toEqual(['prompt: a missing-word line holds exactly one ___']);
+    expect(issues('multiple_choice', { ...missing, prompt: 'Ez ___ ___.' })).toEqual(['prompt: a missing-word line holds exactly one ___']);
+    expect(issues('multiple_choice', { ...missing, correctIndex: 1 })).toEqual(['say: is the line with its answer in the gap']);
+    const typed = { ask: 'missing', say: 'Ez baş im.', cue: 'I am well.', prompt: 'Ez ___ im.', accepted: ['baş'] };
+    expect(issues('writing', typed)).toEqual([]);
+    expect(issues('writing', { ...typed, accepted: ['xweş'] })).toEqual(['say: is the line with its answer in the gap']);
+    // the gap's word is graded on its own
+    expect(checkAnswer('writing', typed, { text: 'baş' }, SEED).verdict).toBe('correct');
+  });
+
+  it('keeps a cue to a few words and new words to a handful', () => {
+    const base = { ask: 'to-english', say: 'Silav!', prompt: 'Silav!', accepted: ['Hello!'] };
+    expect(issues('translate', { ...base, cue: 'x'.repeat(61) })[0]).toMatch(/^cue: /);
+    expect(issues('translate', { ...base, new: Array.from({ length: 7 }, () => ({ ku: 'silav', en: 'hello' })) })[0]).toMatch(/^new: /);
+  });
+});

@@ -1,9 +1,9 @@
 import { useId } from 'react';
-import { CHARACTER_NAMES, CONVERSATION_LIMITS as CONV, SPEAKERS, conversationSpeaker, isSpeakerId, learnerPart, type SpeakerId } from '@kurda/shared';
+import { ASKS_BY_TYPE, CHARACTER_NAMES, CONVERSATION_LIMITS as CONV, SPEAKERS, conversationSpeaker, isSpeakerId, learnerPart, type SpeakerId } from '@kurda/shared';
 
 /** The value the part picker gives the learner's own part. */
 const LEARNER = 'learner';
-import { EXERCISE_TYPES, TYPE_HINT, TYPE_NAME, blankPayload, type Exercise, type ExerciseType, type Issue, type Payload } from '../lessons';
+import { ASK_NAME, EXERCISE_TYPES, TYPE_HINT, TYPE_NAME, blankPayload, type Exercise, type ExerciseType, type Issue, type Payload } from '../lessons';
 import { toPreview } from '../preview';
 import { Checkbox, Field, Icon } from '../ui';
 import { VOICE_ORDER, voiceName } from '../voicePlan';
@@ -48,6 +48,8 @@ export function ExerciseCard({
   const id = useId();
   const p = exercise.payload;
   const set = (patch: Payload): void => onChange({ ...exercise, payload: { ...p, ...patch } });
+  // the asks its kind can make; a pairs game or a conversation asks the one way it always does
+  const asks = ASKS_BY_TYPE[exercise.type];
   const at = (path: string): string => `ex-${index}-${path.replace(/\./g, '-')}`;
   const field = (name: string, label: string, opts: { hint?: string; multiline?: boolean; required?: boolean; max?: number; placeholder?: string } = {}) => (
     <Field label={label} hint={opts.hint} error={problem(issues, name)} required={opts.required}>
@@ -120,9 +122,26 @@ export function ExerciseCard({
           </Field>
         )}
 
+        {asks && (
+          <Field
+            label="What it asks"
+            hint="Names the instruction the apps show above the line. With an ask set, the question box holds only the line — the Kurdish, or the English to put into Kurdish — never a scene."
+            error={problem(issues, 'ask')}
+          >
+            <select id={at('ask')} value={typeof p.ask === 'string' ? p.ask : ''} disabled={readOnly} onChange={(e) => set({ ask: e.target.value || undefined })}>
+              <option value="">As its kind always asks</option>
+              {asks.map((a) => (
+                <option key={a} value={a}>
+                  {ASK_NAME[a]}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+
         {exercise.type === 'multiple_choice' && (
           <>
-            {field('prompt', 'Question', { multiline: true, required: true, max: 500 })}
+            {field('prompt', typeof p.ask === 'string' ? 'Line' : 'Question', { multiline: true, required: true, max: 500 })}
             <Answers p={p} set={set} issues={issues} readOnly={readOnly} at={at} />
           </>
         )}
@@ -217,6 +236,23 @@ export function ExerciseCard({
               </button>
             )}
           </fieldset>
+        )}
+
+        {asks && typeof p.ask === 'string' && field('cue', 'Cue (optional)', { max: 60, hint: 'A few words of context beside the line, only when the line alone could be read two ways: “to two people”.' })}
+
+        {asks && (
+          <TextList
+            label="New words"
+            addLabel="Add a new word"
+            hint="The words this item brings in for the first time, one per row as “word = meaning”. The apps mark them new."
+            values={(Array.isArray(p.new) ? (p.new as Array<Record<string, unknown>>) : []).map((w) => `${str(w?.ku)} = ${str(w?.en)}`)}
+            max={6}
+            maxLength={150}
+            readOnly={readOnly}
+            idFor={(i) => at(`new.${i}`)}
+            issueFor={(i) => problem(issues, `new.${i}`)}
+            onChange={(rows) => set({ new: rows.length > 0 ? rows.map(newWord) : undefined })}
+          />
         )}
 
         {exercise.type !== 'conversation' &&
@@ -573,6 +609,7 @@ function ConversationFields({
 function TextList({
   label,
   hint,
+  addLabel = 'Add another',
   values,
   max,
   maxLength,
@@ -583,6 +620,8 @@ function TextList({
 }: {
   label: string;
   hint: string;
+  /** the add button's words, where two lists sit side by side */
+  addLabel?: string;
   values: string[];
   max: number;
   maxLength: number;
@@ -626,7 +665,7 @@ function TextList({
       {!readOnly && values.length < max && (
         <button type="button" className="ghost ex-add" onClick={() => onChange([...values, ''])}>
           <Icon name="plus" />
-          Add another
+          {addLabel}
         </button>
       )}
     </fieldset>
@@ -703,4 +742,10 @@ function Preview({ exercise }: { exercise: Exercise }): React.JSX.Element {
       </div>
     </details>
   );
+}
+
+/** A row of the new-words list, “word = meaning”, as the payload keeps it. */
+function newWord(row: string): { ku: string; en: string } {
+  const at = row.indexOf('=');
+  return at < 0 ? { ku: row.trim(), en: '' } : { ku: row.slice(0, at).trim(), en: row.slice(at + 1).trim() };
 }

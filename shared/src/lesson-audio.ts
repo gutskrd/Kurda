@@ -112,7 +112,8 @@ function firstOf(v: unknown): unknown {
  *
  *   any type                     `say`, when the author set one — always first
  *   translate                    the first accepted answer, only when there is no `say`
- *   writing                      the first accepted answer
+ *   writing                      the first accepted answer, but for a missing word's
+ *                                item with `say`, whose answer is only the gap's word
  *   listening                    the first accepted transcription: the clip itself
  *   speaking                     the reference, the model to imitate
  *   match_pairs                  every left-hand card
@@ -144,6 +145,9 @@ export function lessonAudioTargets(type: string, payload: unknown): string[] {
       if (!sayable(p.say)) add(firstOf(p.accepted));
       break;
     case 'writing':
+      // a missing-word item's answer is the word for its gap: the whole line, its `say`, is what is heard
+      if (!(p.ask === 'missing' && sayable(p.say))) add(firstOf(p.accepted));
+      break;
     case 'listening':
       add(firstOf(p.accepted));
       break;

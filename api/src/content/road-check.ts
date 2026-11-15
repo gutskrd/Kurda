@@ -1,5 +1,17 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { CONVERSATION_ID, conversationClips, lessonAudioKey, lessonAudioTargets, roadStoryChapter, shownInPrompt, storyParagraphs } from '@kurda/shared';
+import {
+  ASKS_BY_TYPE,
+  CONVERSATION_ID,
+  GAP,
+  WORD_PICTURES,
+  conversationClips,
+  lessonAudioKey,
+  lessonAudioTargets,
+  roadStoryChapter,
+  shownInPrompt,
+  storyParagraphs,
+  type ExerciseAsk,
+} from '@kurda/shared';
 import { InvalidExercisePayloadError, validateExercisePayload } from './exercises.js';
 import { courseContentSchema } from './import.js';
 import type { ExerciseType } from './repository.js';
@@ -459,10 +471,55 @@ function kurdishFields(ex: RawExercise, unit: number): KurdishField[] {
       soft('payload.prompt', p.prompt);
       strings(p.options).forEach((o, i) => soft(`payload.options[${i}]`, o));
     }
+  } else if (typeof p.ask === 'string') {
+    // an item that says what it asks holds its line alone: the Kurdish one is held to every rule (its gap left
+    // out), and is not counted twice where it is also `say`; a reply's or a missing word's options are Kurdish
+    if (KURDISH_LINE_ASKS.has(p.ask as ExerciseAsk) && typeof p.prompt === 'string') strict('payload.prompt', p.prompt.replace(GAP, ' ').replace(/\s+/g, ' '), !hasSay);
+    if (ex.type === 'multiple_choice' && (p.ask === 'reply' || p.ask === 'missing' || p.ask === 'choose-kurdish')) strings(p.options).forEach((o, i) => strict(`payload.options[${i}]`, o));
   } else {
     if (ex.type === 'multiple_choice') strings(p.options).forEach((o, i) => soft(`payload.options[${i}]`, o));
     if (typeof p.prompt === 'string') for (const m of p.prompt.matchAll(QUOTED)) soft('payload.prompt', m[1]);
   }
+  return out;
+}
+
+/** The asks whose line, the item's prompt, is Kurdish; `to-kurdish` and `choose-kurdish` hold English, and `hear` has no line. */
+const KURDISH_LINE_ASKS: ReadonlySet<ExerciseAsk> = new Set(['meaning', 'picture', 'reply', 'missing', 'to-english', 'repeat']);
+
+/** The longest an English line to put into Kurdish, and a cue, may be: a line and a few words, never a scene. */
+const ENGLISH_LINE_MAX = 120;
+const CUE_MAX = 40;
+
+/**
+ * 8: an item that says what it asks keeps to it. Its line is the sentence alone — no scene, no quotes around
+ * it — since the apps name the task in the headline; a picture's word is the word its right picture shows; a
+ * sentence to repeat is the one shown; and a cue is a few words.
+ */
+function askProblems(ex: RawExercise): Array<{ message: string; field: string }> {
+  const p = ex.payload;
+  const out: Array<{ message: string; field: string }> = [];
+  if (ex.type === 'match_pairs' || ex.type === 'conversation') return out;
+  const ask = p.ask;
+  if (typeof ask !== 'string') {
+    out.push({ message: `says nothing of what it asks: give it an ask (${(ASKS_BY_TYPE[ex.type as ExerciseType] ?? []).join(', ')}) and keep its prompt to the line`, field: 'payload.ask' });
+    return out;
+  }
+  const prompt = typeof p.prompt === 'string' ? p.prompt : '';
+  if (ask === 'hear') {
+    if (prompt.trim() !== '') out.push({ message: 'a listening item has no prompt: the headline asks, the recording says', field: 'payload.prompt' });
+  } else if (/[“”«»"]/.test(prompt)) {
+    out.push({ message: 'the line stands alone, without quotes or a scene around it: the headline says what to do', field: 'payload.prompt' });
+  }
+  if ((ask === 'to-kurdish' || ask === 'choose-kurdish') && prompt.length > ENGLISH_LINE_MAX) out.push({ message: `an English line of ${prompt.length} characters (at most ${ENGLISH_LINE_MAX})`, field: 'payload.prompt' });
+  if (ask === 'picture') {
+    const right = strings(p.options)[typeof p.correctIndex === 'number' ? p.correctIndex : -1];
+    const word = right && Object.hasOwn(WORD_PICTURES, right) ? WORD_PICTURES[right as keyof typeof WORD_PICTURES].ku : undefined;
+    if (word !== undefined && lessonAudioKey(word) !== lessonAudioKey(prompt)) out.push({ message: `the right picture is “${word}”, not “${prompt}”`, field: 'payload.prompt' });
+  }
+  if (ask === 'repeat' && typeof p.reference === 'string' && lessonAudioKey(p.reference) !== lessonAudioKey(prompt)) {
+    out.push({ message: 'the line to repeat is the one shown: prompt and reference are the same sentence', field: 'payload.prompt' });
+  }
+  if (typeof p.cue === 'string' && p.cue.length > CUE_MAX) out.push({ message: `a cue of ${p.cue.length} characters (at most ${CUE_MAX})`, field: 'payload.cue' });
   return out;
 }
 
@@ -718,6 +775,9 @@ function checkUnit(
       stats.exercises += exercises.length;
 
       const met = new Map<number, number>();
+      // where each word is first met in the lesson, and the new words its items mark
+      const firstMet = new Map<string, number>();
+      const marked = new Set<string>();
       exercises.forEach((ex, ei) => {
         const eat = { ...at, exercise: ei + 1 };
         if (ex.position !== ei + 1) add(`position should be ${ei + 1}`, { ...eat, field: 'position' });
@@ -752,9 +812,32 @@ function checkUnit(
         // 7: what the item asks about is on screen. Its Kurdish in `say` is never sent as text, and its recording
         // is played before the answer only when the prompt shows that Kurdish (lessonaudio/delivery.ts), so an
         // item whose prompt does not would ask about a sentence the learner can neither read nor hear.
-        if (QUOTES_SAY.has(ex.type) && typeof ex.payload.say === 'string' && ex.payload.say.trim() !== '' && !shownInPrompt(ex.payload.prompt, ex.payload.say)) {
-          add('its Kurdish (say) is not in the prompt, so the learner can neither read nor hear it before answering: quote it there', { ...eat, field: 'payload.prompt' });
+        // A missing word's line holds its sentence with a gap, so that one is read with the gap filled instead.
+        if (
+          QUOTES_SAY.has(ex.type) &&
+          ex.payload.ask !== 'missing' &&
+          typeof ex.payload.say === 'string' &&
+          ex.payload.say.trim() !== '' &&
+          !shownInPrompt(ex.payload.prompt, ex.payload.say)
+        ) {
+          add('its Kurdish (say) is not in the prompt, so the learner can neither read nor hear it before answering: show it there', { ...eat, field: 'payload.prompt' });
         }
+
+        // 8: what it asks, and its line alone
+        for (const pr of askProblems(ex)) add(pr.message, { ...eat, field: pr.field });
+
+        // 9: a word marked new is one this lesson brings in, met here for the first time in the lesson
+        for (const w of Array.isArray(ex.payload.new) ? ex.payload.new : []) {
+          const ku = isRecord(w) && typeof w.ku === 'string' ? w.ku : '';
+          const words = kurdishWords(ku);
+          const mine = lex.items.some((ie) => ie.lesson === key && ie.item.forms.some((f) => words.includes(f)));
+          if (!mine) add(`“${ku}” is marked new but is not one of ${key}’s new words`, { ...eat, field: 'payload.new' });
+          else if (words.length > 0 && words.every((x) => (firstMet.get(x) ?? Infinity) < ei)) {
+            add(`“${ku}” is marked new after it was already met in exercise ${Math.max(...words.map((x) => firstMet.get(x)!)) + 1}`, { ...eat, field: 'payload.new' });
+          }
+          for (const x of words) marked.add(x);
+        }
+        for (const f of kurdishFields(ex, n)) for (const w of kurdishWords(f.text)) if (!firstMet.has(w)) firstMet.set(w, ei);
 
         // 5: who records it — Hamo, every line, and never one said to him
         const texts = recordedTexts(ex.type, ex.payload);
@@ -806,7 +889,11 @@ function checkUnit(
       if (planLesson.focus === 'talk' && !types.has('conversation')) add('a talk lesson has a conversation', at);
       lex.items.forEach((ie, id) => {
         if (ie.lesson === key && (met.get(id) ?? 0) < 3) add(`new item “${ie.item.ku}” is met in ${met.get(id) ?? 0} exercises (at least 3)`, at);
+        // the learner sees each new word marked new where it first comes
+        if (ie.lesson === key && !ie.item.forms.some((f) => marked.has(f))) add(`new item “${ie.item.ku}” is never marked new`, at);
       });
+      const asks = new Set(exercises.map((e) => e.payload.ask).filter((a): a is string => typeof a === 'string'));
+      if (asks.size < 4) add(`asks ${asks.size} kinds of question (at least 4)`, at);
       if (entry.index >= 4) {
         const earlier = [...met.keys()].filter((id) => lex.items[id]!.index < entry.index).length;
         if (earlier < 6) add(`reuses ${earlier} items from earlier lessons (at least 6)`, at);

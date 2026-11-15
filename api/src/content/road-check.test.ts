@@ -173,14 +173,26 @@ const PLAN: RoadPlan = {
 };
 
 type Ex = { position: number; type: string; payload: Record<string, unknown> };
-const mc = (say: string | undefined, prompt: string, options: string[], correctIndex: number, voice?: string): Omit<Ex, 'position'> => ({
+type NewWords = Array<[string, string]>;
+const marks = (words?: NewWords): Record<string, unknown> => (words ? { new: words.map(([ku, en]) => ({ ku, en })) } : {});
+/** A multiple-choice item that says what it asks; a Kurdish line's `say` is the line itself. */
+const mc = (ask: string, prompt: string, options: string[], correctIndex: number, voice?: string, words?: NewWords): Omit<Ex, 'position'> => ({
   type: 'multiple_choice',
-  payload: { ...(say ? { say } : {}), prompt, options, correctIndex, ...(voice ? { voice } : {}) },
+  payload: {
+    ask,
+    ...(['meaning', 'reply', 'picture'].includes(ask) ? { say: prompt } : {}),
+    ...(voice ? { voice } : {}),
+    ...marks(words),
+    prompt,
+    options,
+    correctIndex,
+  },
 });
-const tr = (prompt: string, accepted: string[], voice: string, say?: string): Omit<Ex, 'position'> => ({ type: 'translate', payload: { ...(say ? { say } : {}), prompt, accepted, voice } });
-const listen = (accepted: string[], voice: string): Omit<Ex, 'position'> => ({ type: 'listening', payload: { prompt: 'Type what you hear.', accepted, voice } });
-const speak = (prompt: string, reference: string, voice: string): Omit<Ex, 'position'> => ({ type: 'speaking', payload: { prompt, reference, voice } });
-const write = (prompt: string, accepted: string[], voice: string): Omit<Ex, 'position'> => ({ type: 'writing', payload: { prompt, accepted, voice } });
+const toKurdish = (prompt: string, accepted: string[], voice: string): Omit<Ex, 'position'> => ({ type: 'translate', payload: { ask: 'to-kurdish', voice, prompt, accepted } });
+const toEnglish = (say: string, accepted: string[], voice: string): Omit<Ex, 'position'> => ({ type: 'translate', payload: { ask: 'to-english', say, voice, prompt: say, accepted } });
+const listen = (accepted: string[], voice: string): Omit<Ex, 'position'> => ({ type: 'listening', payload: { ask: 'hear', voice, accepted } });
+const speak = (reference: string, voice: string): Omit<Ex, 'position'> => ({ type: 'speaking', payload: { ask: 'repeat', voice, prompt: reference, reference } });
+const write = (prompt: string, accepted: string[], voice: string): Omit<Ex, 'position'> => ({ type: 'writing', payload: { ask: 'to-kurdish', voice, prompt, accepted } });
 const pairs = (list: Array<[string, string]>, voice: string): Omit<Ex, 'position'> => ({ type: 'match_pairs', payload: { pairs: list.map(([left, right]) => ({ left, right })), voice } });
 const numbered = (list: Array<Omit<Ex, 'position'>>): Ex[] => list.map((e, i) => ({ position: i + 1, ...e }));
 
@@ -209,32 +221,32 @@ const CONVERSATION = {
 
 function exampleUnit(): { course: typeof ROAD_COURSE; units: unknown[] } {
   const meet = numbered([
-    mc('Silav!', 'Hamo opens the gate. What does “Silav!” mean?', ['Hello!', 'Thanks!', 'Goodbye!'], 0, 'hamo'),
-    pairs([['silav', 'hello'], ['ez', 'I'], ['tu', 'you'], ['baş', 'good']], 'hamo'),
-    mc('Ez Hamo me.', 'What does Hamo say? “Ez Hamo me.”', ['You are Hamo.', 'I am Hamo.', 'Hello, Hamo.'], 1, 'hamo'),
+    mc('meaning', 'Silav!', ['Hello!', 'Thanks!', 'Goodbye!'], 0, 'hamo', [['silav', 'hello']]),
+    mc('meaning', 'Ez Hamo me.', ['You are Hamo.', 'I am Hamo.', 'Hello, Hamo.'], 1, 'hamo', [['ez', 'I'], ['me', 'am']]),
+    mc('meaning', 'Ez baş im.', ['I am from Amed.', 'I am well.', 'I am Hamo.'], 1, 'hamo', [['baş', 'good'], ['im', 'am']]),
     listen(['Ez baş im.', 'Ez baş im'], 'hamo'),
-    tr('I am well.', ['Ez baş im.', 'Ez baş im'], 'hamo'),
-    speak('Say it aloud: “Silav, ez Xezal im.” (Hello, I am Xezal.)', 'Silav, ez Xezal im.', 'xezo'),
-    mc(undefined, 'Which word means “you”?', ['ez', 'baş', 'tu'], 2),
-    write('Write: I am from Amed.', ['Ez ji Amedê me.', 'Ez ji Amedê me'], 'hamo'),
-    tr('“Silav, Hamo!” in English', ['Hello, Hamo!', 'Hello Hamo', 'Hi Hamo'], 'xezo', 'Silav, Hamo!'),
+    toKurdish('I am well.', ['Ez baş im.', 'Ez baş im'], 'hamo'),
+    speak('Silav, ez Xezal im.', 'xezo'),
+    mc('meaning', 'Û tu?', ['And you?', 'And me?', 'Hello!'], 0, 'hamo', [['tu', 'you']]),
+    write('I am from Amed.', ['Ez ji Amedê me.', 'Ez ji Amedê me'], 'hamo'),
+    toEnglish('Silav, Hamo!', ['Hello, Hamo!', 'Hello Hamo', 'Hi Hamo'], 'xezo'),
     listen(['Silav, ez Hamo me.', 'Silav ez Hamo me'], 'hamo'),
-    mc('Ez baş im.', 'Hamo is asked how he is. What does he answer? “Ez baş im.”', ['I am from Amed.', 'I am well.', 'I am Hamo.'], 1, 'hamo'),
-    mc('Tu!', 'Xezal points at you: “Tu!” What does it mean?', ['you', 'I', 'hello'], 0, 'xezo'),
+    mc('choose-kurdish', 'I am well.', ['Ez baş im.', 'Ez baş me.', 'Tu baş im.'], 0),
+    pairs([['silav', 'hello'], ['ez', 'I'], ['tu', 'you'], ['baş', 'good']], 'hamo'),
   ]);
   const talk = numbered([
-    CONVERSATION,
-    mc('Tu çawa yî?', 'Xezal asks Hamo something. What? “Tu çawa yî?”', ['Who are you?', 'How are you?', 'Where are you from?'], 1, 'xezo'),
-    pairs([['çawa', 'how'], ['spas', 'thanks'], ['erê', 'yes'], ['silav', 'hello']], 'hamo'),
+    mc('meaning', 'Tu çawa yî?', ['Who are you?', 'How are you?', 'Where are you from?'], 1, 'xezo', [['çawa', 'how'], ['yî', 'are']]),
+    mc('meaning', 'Spas!', ['Thanks!', 'Hello!', 'Yes!'], 0, 'hamo', [['spas', 'thanks']]),
+    mc('meaning', 'Erê, ez baş im.', ['Yes, I am well.', 'No, I am well.', 'Thanks, I am well.'], 0, 'hamo', [['erê', 'yes']]),
     listen(['Ez baş im, spas.', 'Ez baş im spas', 'Ez baş im, spas'], 'hamo'),
-    tr('How are you?', ['Tu çawa yî?', 'Tu çawa yî'], 'hamo'),
-    tr('“Erê, ez baş im.” in English', ['Yes, I am fine.', 'Yes, I’m fine', 'Yes, I am well'], 'hamo', 'Erê, ez baş im.'),
-    speak('Say it aloud: “Spas, Hamo!” (Thanks, Hamo!)', 'Spas, Hamo!', 'xezo'),
-    write('Write: Yes, you are Hamo.', ['Erê, tu Hamo yî.', 'Erê, tu Hamo yî', 'Erê tu Hamo yî'], 'xezo'),
-    mc(undefined, 'Which is right for “you are well”?', ['Tu baş î.', 'Tu baş yî.', 'Tu baş im.'], 0),
-    mc('Tu ji Amedê yî?', 'What does Hamo ask? “Tu ji Amedê yî?”', ['Are you going to Amed?', 'Are you in Amed?', 'Are you from Amed?'], 2, 'hamo'),
+    CONVERSATION,
+    pairs([['çawa', 'how'], ['spas', 'thanks'], ['erê', 'yes'], ['silav', 'hello']], 'hamo'),
+    speak('Spas, Hamo!', 'xezo'),
+    write('Yes, you are Hamo.', ['Erê, tu Hamo yî.', 'Erê, tu Hamo yî', 'Erê tu Hamo yî'], 'xezo'),
+    mc('choose-kurdish', 'You are well.', ['Tu baş î.', 'Tu baş yî.', 'Tu baş im.'], 0),
+    mc('meaning', 'Tu ji Amedê yî?', ['Are you going to Amed?', 'Are you in Amed?', 'Are you from Amed?'], 2, 'hamo'),
     listen(['Tu çawa yî, Hamo?', 'Tu çawa yî Hamo'], 'xezo'),
-    tr('Thanks!', ['Spas!', 'Spas'], 'hamo'),
+    toKurdish('Thanks!', ['Spas!', 'Spas'], 'hamo'),
   ]);
   return {
     course: { ...ROAD_COURSE },
@@ -282,7 +294,7 @@ describe('the road’s check, on an example unit', () => {
     const { stats } = checkRoad({ plan: PLAN, docs: new Map([[1, exampleUnit()]]) });
     expect(stats).toMatchObject({ units: [1], lessons: 2, exercises: 24, minutes: 6, newItems: 9 });
     expect(stats.conversationLines).toEqual({ hamo: 3, xezo: 3, hevalo: 0 });
-    expect(stats.recordings.hamo).toBe(14);
+    expect(stats.recordings.hamo).toBe(15);
     expect(stats.recordings.xezo).toBe(6);
     expect(stats.recordings.unvoiced).toBe(0);
   });
@@ -338,12 +350,12 @@ describe('the road’s check, on an example unit', () => {
       p.units[0]!.recorder = 'hamo';
     });
     expect(text).toContain('u01s1l1 #6 payload.voice: is recorded by xezo: Hamo records every line of the road, so tell it through him, or show it written');
-    expect(text).toContain('u01s1l2 #1 payload.speakers[1]: part 2 is xezo: a conversation is Hamo talking with the learner (a part with learner: true)');
+    expect(text).toContain('u01s1l2 #5 payload.speakers[1]: part 2 is xezo: a conversation is Hamo talking with the learner (a part with learner: true)');
     // the same conversation with the learner in Xezal's part passes, whatever the learner says to him
     const withYou = check(
       (doc) => {
         for (const li of [0, 1]) for (const ex of lessonOf(doc, li).exercises) if (ex.payload.voice === 'xezo') ex.payload.voice = 'hamo';
-        (lessonOf(doc, 1).exercises[0]!.payload.speakers as unknown[])[1] = { learner: true };
+        (lessonOf(doc, 1).exercises[4]!.payload.speakers as unknown[])[1] = { learner: true };
       },
       (p) => {
         p.units[0]!.recorder = 'hamo';
@@ -356,7 +368,57 @@ describe('the road’s check, on an example unit', () => {
     const { text } = check((doc) => {
       lessonOf(doc, 0).exercises[2]!.payload.prompt = 'What does Hamo say?';
     });
-    expect(text).toEqual(['u01s1l1 #3 payload.prompt: its Kurdish (say) is not in the prompt, so the learner can neither read nor hear it before answering: quote it there']);
+    expect(text).toContain('u01s1l1 #3 payload.prompt: its Kurdish (say) is not in the prompt, so the learner can neither read nor hear it before answering: show it there');
+  });
+
+  it('holds an item to what it asks: the line alone, nothing to read under a recording, the same line to repeat, a short cue', () => {
+    const { text } = check((doc) => {
+      const l = lessonOf(doc, 0);
+      l.exercises[3]!.payload.prompt = 'Type what you hear.';
+      l.exercises[4]!.payload.prompt = 'Hamo smiles and says: “I am well.”';
+      l.exercises[5]!.payload.prompt = 'Silav!';
+      delete l.exercises[6]!.payload.ask;
+      l.exercises[7]!.payload.cue = 'x'.repeat(41);
+    });
+    expect(text).toContain('u01s1l1 #4 payload.prompt: a listening item has no prompt: the headline asks, the recording says');
+    expect(text).toContain('u01s1l1 #5 payload.prompt: the line stands alone, without quotes or a scene around it: the headline says what to do');
+    expect(text).toContain('u01s1l1 #6 payload.prompt: the line to repeat is the one shown: prompt and reference are the same sentence');
+    expect(text).toContain(
+      'u01s1l1 #7 payload.ask: says nothing of what it asks: give it an ask (meaning, choose-kurdish, picture, reply, missing) and keep its prompt to the line',
+    );
+    expect(text).toContain('u01s1l1 #8 payload.cue: a cue of 41 characters (at most 40)');
+  });
+
+  it('marks each new word where its lesson first meets it, and only the lesson’s own words', () => {
+    const late = check((doc) => {
+      const l = lessonOf(doc, 0);
+      delete l.exercises[0]!.payload.new;
+      l.exercises[2]!.payload.new = [
+        { ku: 'silav', en: 'hello' },
+        { ku: 'baş', en: 'good' },
+        { ku: 'im', en: 'am' },
+      ];
+    });
+    expect(late.text).toContain('u01s1l1 #3 payload.new: “silav” is marked new after it was already met in exercise 1');
+    const never = check((doc) => {
+      delete lessonOf(doc, 0).exercises[6]!.payload.new;
+    });
+    expect(never.text).toContain('u01s1l1: new item “tu” is never marked new');
+    const foreign = check((doc) => {
+      lessonOf(doc, 1).exercises[9]!.payload.new = [{ ku: 'ji', en: 'from' }];
+    });
+    expect(foreign.text).toContain('u01s1l2 #10 payload.new: “ji” is marked new but is not one of u01s1l2’s new words');
+  });
+
+  it('shows a picture item the picture of its own word', () => {
+    const { text } = check((doc) => {
+      lessonOf(doc, 0).exercises[10] = { position: 11, ...mc('picture', 'silav', ['apple', 'bread', 'tea'], 0, 'hamo') };
+    });
+    expect(text).toContain('u01s1l1 #11 payload.prompt: the right picture is “sêv”, not “silav”');
+    const unknown = check((doc) => {
+      lessonOf(doc, 0).exercises[10] = { position: 11, ...mc('picture', 'silav', ['apple', 'unicorn'], 0, 'hamo') };
+    });
+    expect(unknown.text).toContain('u01s1l1 #11 payload.options.1: is not a word picture: unicorn');
   });
 
   it('keeps conversation ids unique and their length in bounds', () => {
@@ -365,7 +427,7 @@ describe('the road’s check, on an example unit', () => {
       twin.payload.lines = (twin.payload.lines as unknown[]).slice(0, 4);
       lessonOf(doc, 1).exercises[8] = { position: 9, ...twin };
     });
-    expect(text).toContain('u01s1l2 #9 payload.id: conversation id roadu01s1l2a is already used in u01s1l2 #1');
+    expect(text).toContain('u01s1l2 #9 payload.id: conversation id roadu01s1l2a is already used in u01s1l2 #5');
     expect(text).toContain('u01s1l2 #9 payload.lines: a conversation has 6–12 lines, not 4');
   });
 
@@ -376,7 +438,7 @@ describe('the road’s check, on an example unit', () => {
     });
     expect(short.text).toContain('u01s1l1: has 11 exercises (12–16)');
     const noTalk = check((doc) => {
-      lessonOf(doc, 1).exercises[0] = { position: 1, ...mc('Spas!', 'What does “Spas!” mean?', ['Thanks!', 'Hello!', 'Yes!'], 0, 'hamo') };
+      lessonOf(doc, 1).exercises[4] = { position: 5, ...mc('meaning', 'Spas!', ['Thanks!', 'Hello!', 'Yes!'], 0, 'hamo') };
     });
     expect(noTalk.text).toContain('u01s1l2: a talk lesson has a conversation');
     const deaf = check((doc) => {
