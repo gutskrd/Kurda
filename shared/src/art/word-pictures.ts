@@ -27,7 +27,7 @@
  * phone still stands out from the card. Fire stays warm.
  */
 import { CANVAS, escapeXml, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
-import { VALLEY, blobPath, dusk, ellipsePath, smoothPath, warm } from './valley.js';
+import { VALLEY, blobPath, dusk, ellipsePath, warm } from './valley.js';
 
 /** Every word that has a picture: its Kurmancî word and its English meaning. */
 export const WORD_PICTURES = {
@@ -169,7 +169,6 @@ const STEEL: Tone = ['#c5ccd5', '#949dab', '#eef1f5'];
 const WOOL: Tone = [VALLEY.wool, VALLEY.woolShade, '#ffffff'];
 /** The near-black of an animal's face and hooves, a phone, a pupil: never pure black. */
 const INK = VALLEY.ink;
-const HOOF = VALLEY.hoof;
 const PINK = '#f2b0a2';
 const TONGUE = '#e8798a';
 const CREAM = '#f6e3b0';
@@ -341,6 +340,17 @@ class Brush {
     this.fill(d, t[0], `${more} transform="matrix(${n2(k)} 0 0 ${n2(k)} ${f(ax * (1 - k))} ${f(ay * (1 - k))})"`);
   }
 
+  /**
+   * A form whose parts stand close together (fingers, toes): its shade is the
+   * same shape set a little down and to the right, under its face, so every
+   * part keeps a crisp shadow edge on its far side and the gaps between them
+   * stay open.
+   */
+  cut(d: string, t: Tone, dx = 1.8, dy = 1.4): void {
+    this.fill(d, t[1], ` transform="translate(${f(dx)} ${f(dy)})"`);
+    this.fill(d, t[0]);
+  }
+
   /** A see-through darkening laid over a form of many colours (a ball, a folded map), its one step of shade. */
   shade(d: string, opacity = 0.16): void {
     this.out += `<path d="${d}" fill="${this.dark ? '#120e26' : '#3d2a1f'}" fill-opacity="${n2(opacity)}"/>`;
@@ -409,26 +419,161 @@ function poplar(b: Brush, x: number, y: number, s: number): void {
   b.form(shape, [VALLEY.poplarLight, VALLEY.poplarShade, VALLEY.poplarLight], x - 6 * s, top + 10 * s, 0.82);
 }
 
+// ───────────────────────────────────────────────────────────── animals
+
+/** A joint of a limb: where it is, and how thick the limb is there. */
+type Joint = readonly [x: number, y: number, w: number];
+
+/** The outline round a limb's joints, thick where they are thick, as one smooth closed shape. */
+function limb(joints: readonly Joint[]): string {
+  const left: Pt[] = [];
+  const right: Pt[] = [];
+  joints.forEach(([x, y, w], i) => {
+    const [px, py] = joints[Math.max(0, i - 1)]!;
+    const [qx, qy] = joints[Math.min(joints.length - 1, i + 1)]!;
+    const len = Math.hypot(qx - px, qy - py) || 1;
+    const [nx, ny] = [-(qy - py) / len, (qx - px) / len];
+    left.push([x + (nx * w) / 2, y + (ny * w) / 2]);
+    right.push([x - (nx * w) / 2, y - (ny * w) / 2]);
+  });
+  return shape([...left, ...right.reverse()], 1);
+}
+
+/** Where every animal stands: its feet on this line, its patch of shade just under them. */
+const FEET = 102;
+
+/** A foreleg from the body at (x, top) to the ground: straight down past the knee, thinning to the foot, the pastern a little forward. */
+function foreLeg(x: number, top: number, w: number): Joint[] {
+  return [[x + 1, top, w], [x, top + (FEET - top) * 0.52, w * 0.58], [x + 0.6, FEET - 6, w * 0.44], [x - 1, FEET - 1.2, w * 0.46]];
+}
+
+/** A hind leg: the thigh deep in the body at (x, top), back to the hock, then down and a little forward to the foot. */
+function hindLeg(x: number, top: number, w: number): Joint[] {
+  return [[x, top, w], [x + w * 0.42, top + (FEET - top) * 0.5, w * 0.46], [x + w * 0.12, FEET - 6, w * 0.38], [x - 1, FEET - 1.2, w * 0.42]];
+}
+
+/** A hoof under a leg's last joint: small, its front sloping, in a dark tone of the leg. */
+const hoof = ([x, , w]: Joint): string => poly(x - w * 0.7, FEET - 3.6, x + w * 0.5, FEET - 3.6, x + w * 0.62, FEET, x - w * 0.9, FEET);
+
+/** A paw under a leg's last joint: round and a little forward. */
+const paw = ([x, , w]: Joint): string => E(x - w * 0.3, FEET - 2.2, w * 0.72, 2.6);
+
 /**
- * A lamb, told from the ewe at a glance: a white face with pink in its ears
- * where the ewe's is dark, a smaller woolly body on longer legs, and a bell
- * on a red string at its neck. Drawn small, as a lamb is, and set larger on
- * its card by its picture.
+ * A form lit from above and to the left: the whole shape in its shade, and
+ * its face over it drawn a little shorter toward its top and a little
+ * narrower toward its left, so the one shadow plane lies along its underside
+ * and its far end, following the form, as a belly and a jaw are shaded.
  */
-function lambBody(b: Brush): void {
-  const t: Tone = ['#fdf7ea', '#e3d5bb', '#ffffff'];
-  b.line('M52 74L49 101M60 76V101M76 76V101M84 74L88 99', t[1], 5);
-  b.line('M47 102H52M58 102H63M74 102H79M87 100H92', HOOF, 3);
-  b.fill(puffs(68, 62, 19, 12, 10, 8.4, 0.3), t[1]);
-  b.fill(puffs(66.5, 60.5, 18, 11, 10, 7.8, 0.3), t[0]);
-  b.fill(oval(19, 44, 8, 3.6, 25) + oval(50, 40, 8, 3.6, -30), t[1]);
-  b.fill(oval(19, 44, 5, 1.8, 25), PINK);
-  b.form(oval(34, 48, 13, 12, -10), t, 26, 40, 0.92);
-  b.fill(puffs(36, 36, 5, 2.5, 5, 3.6), t[0]);
-  b.fill(O(30, 47, 2.1), INK);
-  b.fill(poly(22, 53, 26, 53, 24, 56), TONGUE);
-  b.line('M38 58C42 63 50 63 53 58', VALLEY.red, 2.6);
-  b.form(O(46, 65, 4.2), GOLD, 44, 63, 0.8);
+function underside(b: Brush, pts: readonly Pt[], t: Tone, k: number): void {
+  const ax = Math.min(...pts.map((p) => p[0]));
+  const ay = Math.min(...pts.map((p) => p[1]));
+  const kx = 1 - (1 - k) * 0.4;
+  const d = shape(pts);
+  b.fill(d, t[1]);
+  b.fill(d, t[0], ` transform="matrix(${n2(kx)} 0 0 ${n2(k)} ${f(ax * (1 - kx))} ${f(ay * (1 - k))})"`);
+}
+
+/** Numbers for a path, a tenth at most, each set apart only where SVG needs it (a minus sign is its own separator). */
+function nums(vs: readonly number[]): string {
+  let out = '';
+  for (const v of vs) {
+    const s = n(v);
+    out += out && !s.startsWith('-') ? ` ${s}` : s;
+  }
+  return out;
+}
+
+/**
+ * A smooth closed outline through the points (Catmull-Rom, as cubic
+ * Béziers), the same curve `smoothPath` draws but written in short relative
+ * steps, each measured from where the rounded path has actually got to so
+ * the rounding never adds up: an animal is a dozen of these, and this keeps
+ * it light. A leg, thin and smooth, can be written in whole units (`step` 1).
+ */
+function shape(pts: readonly Pt[], step = 0.1): string {
+  const m = pts.length;
+  const at = (i: number): Pt => pts[((i % m) + m) % m]!;
+  const r = (v: number): number => Math.round(v / step) * step;
+  let [cx, cy] = [r(at(0)[0]), r(at(0)[1])];
+  const steps: number[] = [];
+  for (let i = 0; i < m; i++) {
+    const [x0, y0] = at(i - 1);
+    const [x1, y1] = at(i);
+    const [x2, y2] = at(i + 1);
+    const [x3, y3] = at(i + 2);
+    const seg = [x1 + (x2 - x0) / 6 - cx, y1 + (y2 - y0) / 6 - cy, x2 - (x3 - x1) / 6 - cx, y2 - (y3 - y1) / 6 - cy, x2 - cx, y2 - cy].map(r);
+    steps.push(...seg);
+    cx = r(cx + seg[4]!);
+    cy = r(cy + seg[5]!);
+  }
+  return `M${n(at(0)[0])} ${n(at(0)[1])}c${nums(steps)}Z`;
+}
+
+/**
+ * An animal standing side on, facing left, built the same way for every
+ * one of them so they read as one family: the far legs a step darker and a
+ * little apart from the near ones, the body and neck as one outline with its
+ * underside in shade, the head, the near legs in the coat's own colour,
+ * thick at the top, bent at the knee and the hock, thinning to a small dark
+ * hoof or a round paw.
+ */
+interface Beast {
+  /** the coat: its face, its one step of shade (the far legs and the underside) and its light */
+  t: Tone;
+  /** the torso and the neck as one outline; a woolly body is given as its puffs instead */
+  body?: readonly Pt[];
+  wool?: readonly [cx: number, cy: number, rx: number, ry: number, count: number, r: number];
+  head: readonly Pt[];
+  /** the head's own tones when they are not the coat's: a sheep's dark face */
+  face?: Tone;
+  /** where each near leg meets the body, and how thick it is there: x, top, width */
+  fore: readonly [number, number, number];
+  hind: readonly [number, number, number];
+  /** how far the far legs stand from the near ones */
+  far?: readonly [number, number];
+  foot: 'hoof' | 'paw';
+  /** legs of their own colour (a fox's dark stockings, a sheep's dark legs): near, far */
+  legs?: readonly [string, string];
+  /** how much of the body's height is left lit above its underside's shade */
+  under?: number;
+  /** drawn before the body: a tail behind it, a far ear or horn */
+  behind?: () => void;
+  /** drawn between the body and the head: what the head overlaps */
+  between?: () => void;
+  /** drawn last: ears, horns, eyes, a muzzle, markings */
+  front?: () => void;
+}
+
+function beast(b: Brush, a: Beast): void {
+  const [nearColour, farColour] = a.legs ?? [a.t[0], a.t[1]];
+  const [dfx, dhx] = a.far ?? [7, -6];
+  const [fx, ft, fw] = a.fore;
+  const [hx, ht, hw] = a.hind;
+  const legs = (dx: number, dh: number, colour: string): void => {
+    const fore = foreLeg(fx + dx, ft, fw);
+    const hind = hindLeg(hx + dh, ht, hw);
+    b.fill(limb(fore) + limb(hind), colour);
+    const feet = [fore[fore.length - 1]!, hind[hind.length - 1]!];
+    if (a.foot === 'hoof') b.fill(feet.map(hoof).join(''), mix(colour, INK, 0.5));
+    else b.fill(feet.map(paw).join(''), colour);
+  };
+  legs(dfx, dhx, farColour);
+  a.behind?.();
+  if (a.wool) {
+    const [cx, cy, rx, ry, count, r] = a.wool;
+    b.fill(puffs(cx + 1.5, cy + 2, rx, ry, count, r, 0.2), a.t[1]);
+    b.fill(puffs(cx, cy, rx, ry, count, r * 0.92, 0.2), a.t[0]);
+  } else if (a.body) underside(b, a.body, a.t, a.under ?? 0.92);
+  a.between?.();
+  underside(b, a.head, a.face ?? a.t, 0.93);
+  legs(0, 0, nearColour);
+  a.front?.();
+}
+
+/** An eye: small and dark, the same on every animal; on a dark face it is a pale ring round the dark. */
+function eye(b: Brush, x: number, y: number, r = 2, ring?: string): void {
+  if (ring) b.fill(O(x, y, r + 0.9), ring);
+  b.fill(O(x, y, r), INK);
 }
 
 // ───────────────────────────────────────────────────────────── the pictures
@@ -467,7 +612,6 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.line(E(60, 103, 24, 3.6), WATER[0], 1.6);
     b.form('M60 12C66 24 92 48 92 71C92 89 78 101 60 101C42 101 28 89 28 71C28 48 54 24 60 12Z', WATER, 40, 46);
     b.fill('M41 74C41 63 46 54 52 46C50 56 48 63 48 72C48 78 50 83 53 87C46 85 41 80 41 74Z', WATER[2]);
-    b.fill(O(22, 92, 3.6) + O(98, 90, 3) + O(30, 82, 2.2), WATER[0]);
   },
 
   sugar: (b) => {
@@ -481,7 +625,6 @@ const PICTURES: Record<WordPictureId, Draw> = {
       const [x, y] = at(i, j, k);
       cube(b, x, y - 0.08 * s, 0.92 * s, t);
     }
-    b.fill(O(56, 26, 1.2) + O(63, 30, 1.2) + O(38, 50, 1.2) + O(82, 50, 1.2) + O(60, 60, 1.2) + O(32, 76, 1.2) + O(88, 80, 1.2), t[1]);
   },
 
   house: (b) => {
@@ -497,76 +640,91 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.lit(O(49, 55, 4.5) + poly(82, 80, 82, 70, 92, 67, 92, 77), VALLEY.window, LAMP);
   },
   hen: (b) => {
-    b.ground(36, 64);
-    b.line('M56 92L55 104M50 105H60M70 91L71 104M66 105H76', GOLD[0], 3);
-    b.fill(smoothPath([[80, 62], [83, 44], [90, 30], [99, 29], [105, 44], [104, 62], [97, 74]], true), '#7c4426');
-    b.form(smoothPath([[31, 38], [36, 31], [45, 31], [50, 38], [52, 48], [58, 57], [70, 59], [84, 56], [96, 59], [99, 70], [92, 83], [78, 92], [58, 94], [44, 89], [35, 77], [33, 64], [33, 54], [29, 47]], true), ['#d27a3c', '#a5552a', '#e9a066'], 40, 40);
-    b.fill(smoothPath([[52, 68], [64, 62], [80, 64], [88, 71], [80, 80], [66, 84], [58, 80]], true), '#a5552a');
-    b.line('M58 70C66 67 74 67 82 70', '#e9a066', 2);
-    b.fill('M33 33C31 26 36 23 38 28C39 21 45 21 44 28C47 23 52 26 48 33Z', VALLEY.red);
-    b.fill('M29 46C26 52 29 57 33 55C35 53 34 49 32 46Z', VALLEY.red);
+    const t: Tone = ['#d27a3c', '#a5552a', '#e9a066'];
+    b.ground(34, 64);
+    b.line('M57 90L56 102M51 103.5H61M71 89L72 102M67 103.5H77', GOLD[1], 3);
+    b.fill(shape([[78, 62], [82, 44], [90, 30], [99, 29], [105, 44], [104, 62], [96, 74]]), '#7c4426');
+    underside(b, [[31, 38], [36, 31], [45, 31], [50, 38], [52, 48], [58, 57], [70, 59], [84, 56], [96, 59], [99, 70], [92, 83], [78, 92], [58, 94], [44, 89], [35, 77], [33, 64], [33, 54], [29, 47]], t, 0.92);
+    b.fill(shape([[50, 66], [62, 61], [76, 61], [88, 67], [84, 77], [70, 83], [57, 80]]), t[1]);
+    b.fill('M33 33C31 26 36 23 38 28C39 21 45 21 44 28C47 23 52 26 48 33Z' + 'M29 46C26 52 29 57 33 55C35 53 34 49 32 46Z', VALLEY.red);
     b.fill(poly(31, 39, 21, 43, 31, 47), GOLD[0]);
-    b.fill(O(37, 39, 2.2), INK);
+    eye(b, 37, 39, 2);
   },
 
   dog: (b) => {
     const t: Tone = ['#d6a061', '#a8733d', '#ecc28a'];
-    b.ground(42, 58);
-    b.line('M92 60C101 54 104 44 99 35', t[0], 7);
-    b.line('M52 74V102M84 74L86 102', t[1], 8);
-    b.fill('M36 62C36 51 46 47 58 47H82C92 47 96 54 96 63C96 73 89 79 79 79H50C41 79 36 72 36 62Z', t[0]);
-    b.fill('M44 72C56 79 72 79 92 72C89 77 85 79 79 79H50C47 79 45 76 44 72Z', t[1]);
-    b.line('M44 74V103M76 75L77 103', t[0], 9);
-    b.fill('M34 66C30 58 28 48 32 40L50 40C52 48 50 56 46 62Z', t[0]);
-    b.fill('M24 45C17 46 12 44 12 39C12 34 17 32 23 32C25 26 31 23 38 24C46 25 51 31 51 39C51 47 45 52 37 52C31 52 27 49 24 45Z', t[0]);
-    b.fill(oval(19, 40, 8, 6, 0), t[2]);
-    b.fill('M20 45C20 52 27 52 26 46Z', TONGUE);
-    b.fill('M37 25C45 22 51 28 50 38C49 45 44 46 42 42C40 37 38 31 37 25Z', '#8a5a36');
-    b.fill(O(13, 37, 2.8) + O(30, 34, 2.2), INK);
-    b.line('M36 51L48 57', VALLEY.red, 5);
-    b.fill(oval(64, 53, 12, 3, 0), t[2]);
+    b.ground(42, 60);
+    beast(b, {
+      t,
+      body: [[31, 48], [34, 37], [42, 31], [49, 34], [55, 43], [66, 47], [80, 47], [89, 47], [95, 52], [95, 60], [90, 67], [82, 70], [72, 70], [62, 72], [52, 76], [44, 76], [38, 71], [33, 62]],
+      head: [[28, 25], [37, 22], [45, 26], [48, 34], [45, 42], [37, 47], [28, 46], [19, 45], [11, 43], [9, 38], [13, 34], [21, 32], [25, 28]],
+      fore: [45, 66, 9.5],
+      hind: [84, 58, 14],
+      foot: 'paw',
+      behind: () => b.fill(shape([[90, 52], [98, 46], [103, 36], [102, 28], [98, 33], [95, 42], [88, 48]]), t[0]),
+      between: () => {
+        // the collar round the neck, just under the head, its tag hanging at the throat
+        b.line('M55 44C50 51 42 55 33 56', VALLEY.red, 4.2);
+        b.fill(O(34, 60.5, 2.8), GOLD[0]);
+      },
+      front: () => {
+        b.fill(shape([[35, 24], [43, 25], [47, 32], [45, 42], [40, 45], [37, 39], [35, 31]]), '#8a5a36');
+        b.fill(shape([[17, 45], [22, 45], [22, 50], [19.5, 52], [17, 49]]), TONGUE);
+        b.fill(oval(10.5, 38, 2.6, 2.1, 0), INK);
+        eye(b, 27, 32, 1.9);
+      },
+    });
   },
 
   cat: (b) => {
     const t: Tone = ['#ea9748', '#bd6c2a', '#f8c48a'];
     b.ground(34, 62);
-    b.line('M84 101C98 103 106 93 102 81C100 75 96 73 92 75', t[1], 8);
-    b.form('M38 104C32 104 30 98 32 88C34 76 40 64 50 58C56 55 66 55 72 58C82 64 88 76 90 90C91 99 88 104 82 104Z', t, 40, 60, 0.9);
-    b.fill('M50 62C56 66 64 66 70 62C72 74 68 88 60 92C52 88 48 74 50 62Z', t[2]);
-    b.fill(E(52, 102, 7, 4) + E(68, 102, 7, 4), t[2]);
-    b.line('M80 74C84 76 86 80 87 85M76 66C80 68 83 72 84 77', t[1], 2.5);
-    b.fill('M42 37L40 13L58 26Z' + 'M78 37L80 13L62 26Z', t[0]);
-    b.form('M40 44C40 32 48 24 60 24C72 24 80 32 80 44C80 54 72 60 60 60C48 60 40 54 40 44Z', t, 46, 28, 0.92);
-    b.fill('M44 32L44 19L53 26Z' + 'M76 32L76 19L67 26Z', PINK);
-    b.line('M56 28L57 34M64 28L63 34M60 27V33', t[1], 2);
-    b.fill(E(52, 43, 3.6, 4.4) + E(68, 43, 3.6, 4.4), '#9cc95a');
-    b.line('M52 40.5V45.5M68 40.5V45.5', INK, 1.8);
-    b.fill(poly(57, 50, 63, 50, 60, 53.5), TONGUE);
-    b.line('M45 52L31 50M45 55L32 58M75 52L89 50M75 55L88 58', '#fff3e2', 1.3);
+    b.fill(shape([[82, 99], [96, 100], [104, 92], [104, 82], [99, 76], [96, 79], [99, 85], [98, 92], [90, 95], [80, 95]]), t[1]);
+    underside(b, [[50, 57], [62, 55], [74, 60], [84, 72], [89, 86], [88, 98], [82, 103], [64, 103], [42, 103], [34, 99], [33, 88], [37, 74], [43, 63]], t, 0.93);
+    b.fill(shape([[52, 62], [60, 64], [68, 62], [67, 72], [60, 78], [53, 72]]), t[2]);
+    b.fill(limb([[53, 74, 8.5], [52, 92, 7], [52, 100, 7.4]]) + limb([[67, 74, 8.5], [68, 92, 7], [68, 100, 7.4]]), t[0]);
+    b.fill(E(51, 101, 6, 3) + E(69, 101, 6, 3), t[2]);
+    b.line('M79 70C83 73 85 77 86 82M75 63C79 66 82 70 83 74', t[1], 2.4);
+    b.fill('M43 37L41 14L57 27Z' + 'M77 37L79 14L63 27Z', t[0]);
+    underside(b, [[40, 42], [44, 31], [52, 25], [60, 24], [68, 25], [76, 31], [80, 42], [77, 52], [69, 58], [60, 60], [51, 58], [43, 52]], t, 0.93);
+    b.fill('M45 31L45 20L53 27Z' + 'M75 31L75 20L67 27Z', PINK);
+    b.line('M56 28L57 33M64 28L63 33M60 27V32', t[1], 2);
+    b.fill(poly(57, 48, 63, 48, 60, 51.5), TONGUE);
+    eye(b, 52, 42, 2.2);
+    eye(b, 68, 42, 2.2);
+    b.line('M46 50L32 48M46 53L33 56M74 50L88 48M74 53L87 56', '#fff3e2', 1.2);
   },
 
   donkey: (b) => {
-    const t: Tone = ['#a59c98', '#7c7471', '#c6bfbb'];
-    const pale = '#ebe5df';
-    b.ground(42, 62);
-    b.line('M96 56C101 62 102 72 101 82', HOOF, 3);
-    b.fill(oval(101, 85, 3.2, 6, 0), HOOF);
-    b.line('M54 76L53 101M85 76L87 101', t[1], 7);
-    b.fill('M40 58C40 49 48 45 58 45H82C92 45 97 52 97 61C97 71 91 78 81 78H53C45 78 40 69 40 58Z', t[0]);
-    b.fill('M48 72C58 78 74 78 92 73C89 77 85 78 81 78H53C51 78 49 75 48 72Z', pale);
-    b.line('M46 74L45 102M78 75L79 102', t[0], 7.5);
-    b.line('M42 102H49M75 102H82M50 101H56M84 101H90', HOOF, 3.5);
-    b.fill('M38 30C35 20 36 10 40 7C44 11 45 20 43 30Z', t[1]);
-    b.fill('M38 66C34 56 31 46 29 38L45 33C49 41 53 49 56 56Z', t[0]);
-    b.fill('M16 54C11 53 10 47 13 44L26 30C30 26 37 26 41 30C45 34 46 40 42 46L32 56C28 58 21 56 16 54Z', t[0]);
-    b.fill('M16 54C11 53 10 47 13 44L18 39C22 41 25 46 25 52C23 55 19 55 16 54Z', pale);
-    b.fill('M32 29C28 19 29 9 33 6C37 10 38 19 37 29Z', t[0]);
-    b.fill('M33 26C32 19 32 13 34 11C35 14 36 19 35 26Z', PINK);
-    b.line('M41 30C45 38 50 47 55 55', HOOF, 4);
-    b.fill(O(29, 38, 2) + O(14, 49, 1.3), INK);
-    b.fill(box(58, 44, 24, 23, 2), VALLEY.red);
-    b.fill(box(58, 50, 24, 3), CREAM);
-    b.fill(diamond(70, 59, 4, 5), VALLEY.indigo);
+    const t: Tone = ['#a59c98', '#7b7370', '#c4bdb9'];
+    const dark = '#4a3f3c';
+    b.ground(44, 62);
+    beast(b, {
+      t,
+      body: [[30, 30], [37, 33], [43, 41], [53, 46], [67, 46], [81, 45], [91, 46], [98, 52], [100, 62], [96, 72], [88, 78], [74, 79], [56, 79], [46, 78], [39, 73], [34, 64], [30, 54], [25, 44], [24, 36]],
+      head: [[25, 24], [35, 27], [39, 36], [33, 46], [22, 55], [13, 59], [8, 56], [8, 49], [15, 38], [20, 28]],
+      fore: [45, 72, 9.5],
+      hind: [87, 68, 13],
+      foot: 'hoof',
+      behind: () => {
+        b.fill(shape([[31, 27], [32, 15], [36, 4], [39, 7], [38, 18], [35, 28]]), t[1]);
+        b.line('M98 55C102 63 104 72 103 82', t[1], 3);
+        b.fill(oval(103, 85, 3.2, 6, 0), dark);
+      },
+      between: () => {
+        b.fill(shape([[30, 27], [38, 31], [46, 41], [53, 46], [49, 48], [41, 41], [33, 34]]), dark);
+        // a kilim over its back, hanging the way the back curves
+        b.fill('M56 46C64 45 74 45 82 44L83 62C76 63 64 63 56 63Z', VALLEY.red);
+        b.fill('M56 51C64 50 74 50 82 49.5V53C74 53 64 53.4 56 54Z', CREAM);
+        b.fill(diamond(69.5, 58.5, 4, 3.6), VALLEY.indigo);
+      },
+      front: () => {
+        b.fill(shape([[24, 25], [22, 14], [24, 3], [28, 4], [30, 15], [30, 26]]), t[0]);
+        b.fill(shape([[8, 49], [14, 45], [21, 49], [22, 55], [13, 59], [8, 56]]), '#e9e3dc');
+        b.fill(oval(10.5, 52, 1.5, 1, -30), INK);
+        eye(b, 24, 36, 2);
+      },
+    });
   },
 
   orchard: (b, random) => {
@@ -724,74 +882,126 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.line('M56 84L86 91', GOLD[0], 2.4, ' stroke-dasharray="3 4"');
   },
   horse: (b) => {
-    const t: Tone = ['#b06c38', '#82491f', '#cf9058'];
+    const t: Tone = ['#b06c38', '#84491f', '#c98a54'];
     const mane = '#4a2e1e';
-    b.ground(44, 64);
-    b.fill('M98 52C108 56 111 72 106 90C103 80 99 70 95 64Z', mane);
-    b.line('M54 76L52 101M86 74L90 100', t[1], 7);
-    b.fill('M40 60C40 50 50 46 62 46H86C96 46 101 52 101 62C101 72 95 78 85 78H54C46 78 40 70 40 60Z', t[0]);
-    b.line('M46 74L44 102M80 76L82 102', t[0], 7.5);
-    b.line('M41 102H48M79 102H86M49 101H55M87 100H93', mane, 3.5);
-    b.fill('M58 50C52 40 46 28 40 20C37 16 33 14 29 15L26 11L24 17C19 21 13 29 11 35C9 40 11 44 16 44C20 44 24 40 28 38C32 46 34 56 40 66Z', t[0]);
-    b.fill('M29 15C39 16 49 28 58 48L52 51C46 39 40 29 32 22Z', mane);
-    b.fill('M22 22C19 26 15 31 13 35L17 36C19 31 22 27 25 24Z', '#f1e3cf');
-    b.fill(O(24, 25, 1.9) + O(13, 40, 1.2), INK);
-    b.fill(oval(66, 53, 13, 3.2, 0), t[2]);
+    b.ground(46, 62);
+    beast(b, {
+      t,
+      body: [[30, 17], [37, 23], [43, 33], [50, 42], [62, 46], [76, 46], [88, 42], [97, 47], [101, 57], [98, 68], [91, 75], [78, 77], [62, 77], [49, 76], [41, 72], [35, 63], [31, 52], [25, 40], [23, 30]],
+      head: [[28, 13], [35, 18], [34, 28], [27, 35], [17, 42], [10, 44], [5, 41], [6, 35], [14, 25], [21, 15]],
+      fore: [44, 70, 10.5],
+      hind: [87, 64, 15],
+      foot: 'hoof',
+      behind: () => b.fill(shape([[96, 48], [104, 53], [109, 67], [107, 86], [102, 92], [103, 78], [100, 64], [94, 56]]), mane),
+      between: () => b.fill(shape([[28, 14], [36, 17], [43, 27], [50, 40], [45, 42], [38, 32], [32, 24], [26, 19]]), mane),
+      front: () => {
+        b.fill(poly(25, 16, 27, 5, 32, 15), t[0]);
+        b.fill(shape([[22, 17], [25, 20], [16, 33], [11, 38], [9.5, 35], [17, 24]]), '#efe2cc');
+        b.fill(oval(8.5, 38.5, 1.6, 1.1, -30), INK);
+        eye(b, 21, 23, 2.1);
+      },
+    });
   },
 
   cow: (b) => {
     const t: Tone = ['#f7f0e3', '#d9ccb6', '#ffffff'];
     const patch = '#5e4031';
-    b.ground(46, 62);
-    b.line('M102 52C106 60 107 70 106 80', t[1], 3);
-    b.fill(oval(106, 83, 3.4, 6, 0), patch);
-    b.line('M52 80V100M80 80V100', t[1], 8);
-    b.fill('M34 52C34 46 40 42 48 42H92C98 42 102 46 102 54V70C102 78 96 82 88 82H46C38 82 34 76 34 70Z', t[0]);
-    b.fill('M56 42C58 52 72 56 78 46C80 44 80 43 79 42Z' + 'M84 62C90 56 100 58 102 62V70C102 76 98 80 92 80C86 76 80 70 84 62Z' + 'M44 66C48 62 56 64 56 70C56 76 50 80 44 78Z', patch);
-    b.fill('M40 74C52 82 76 82 100 74C98 79 94 82 88 82H46C43 82 41 78 40 74Z', t[1]);
-    b.fill(E(78, 85, 7, 4), PINK);
-    b.line('M42 78V102M90 78V102', t[0], 8);
-    b.line('M38 102H46M86 102H94M48 100H56M76 100H84', patch, 3.5);
-    b.fill('M18 34C14 30 13 25 15 21C19 25 23 29 25 34Z' + 'M40 34C44 30 45 25 43 21C39 25 35 29 33 34Z', '#efe2c4');
-    b.fill(oval(12, 43, 7, 3.4, 20) + oval(46, 43, 7, 3.4, -20), t[1]);
-    b.fill('M16 48C16 40 21 34 29 34C37 34 42 40 42 48V60C42 66 38 70 32 70H26C20 70 16 66 16 60Z', t[0]);
-    b.fill('M30 34C37 34 42 40 42 48V54C36 54 32 48 30 40Z', patch);
-    b.fill(E(29, 65, 12, 7.5), PINK);
-    b.fill(O(24, 65, 1.6) + O(34, 65, 1.6) + O(22, 48, 2) + O(36, 48, 2), INK);
-    b.line('M30 72L36 80', VALLEY.red, 2.4);
-    b.form('M33 80L39 76L44 84L38 87Z', GOLD, 36, 78, 0.8);
+    b.ground(48, 62);
+    beast(b, {
+      t,
+      body: [[30, 44], [40, 40], [54, 40], [72, 40], [88, 38], [98, 42], [103, 52], [102, 66], [97, 76], [88, 82], [70, 83], [52, 83], [42, 82], [36, 76], [32, 66], [29, 55]],
+      head: [[20, 35], [33, 35], [39, 42], [40, 55], [38, 66], [33, 75], [24, 77], [16, 75], [11, 68], [11, 55], [14, 43]],
+      fore: [42, 76, 13.5],
+      hind: [89, 70, 17],
+      foot: 'hoof',
+      behind: () => {
+        b.line('M102 48C106 58 107 70 106 80', t[1], 3);
+        b.fill(oval(106, 84, 3.4, 6, 0), patch);
+        b.fill(shape([[72, 81], [84, 81], [85, 87], [78, 90], [71, 87]]), PINK);
+      },
+      between: () => {
+        b.fill(shape([[50, 41], [64, 41], [66, 49], [59, 55], [51, 51]]) + shape([[87, 40], [97, 43], [101, 52], [99, 60], [91, 58], [86, 49]]) + shape([[60, 62], [72, 60], [76, 68], [69, 74], [61, 71]]), patch);
+        b.fill(oval(7, 45, 8, 3.6, 20) + oval(44, 44, 8, 3.6, -20), t[1]);
+        b.fill('M17 37C13 33 12 28 14 24C17 28 20 32 23 36Z' + 'M36 36C40 32 41 27 39 23C36 27 33 31 30 35Z', '#efe2c4');
+      },
+      front: () => {
+        b.fill(shape([[30, 37], [36, 38], [39, 45], [38, 52], [32, 51], [29, 44]]), patch);
+        b.fill(shape([[12, 63], [22, 60], [32, 62], [37, 68], [33, 76], [24, 78], [15, 76], [11, 70]]), PINK);
+        b.fill(oval(19, 69, 2, 1.4, 0) + oval(29, 69, 2, 1.4, 0), '#b5786a');
+        eye(b, 19, 49, 2.1);
+        eye(b, 33, 49, 2.1);
+      },
+    });
   },
 
   ewe: (b) => {
+    const dark: Tone = ['#4a3a30', '#382b24', '#6a5648'];
     b.ground(44, 62);
-    b.line('M46 78V102M56 80V101M74 80V101M84 78V102', HOOF, 5.5);
-    b.fill(puffs(66, 62, 28, 17, 12, 10, 0.2), WOOL[1]);
-    b.fill(puffs(64, 60, 26, 15, 12, 9.2, 0.2), WOOL[0]);
-    b.fill(oval(36, 47, 8, 3.4, -15) + oval(13, 50, 7, 3.2, 25), HOOF);
-    b.fill(oval(24, 56, 10, 14, -32), HOOF);
-    b.fill(puffs(30, 44, 6, 4, 5, 4.4), WOOL[0]);
-    b.fill(O(21, 54, 1.7), '#efe6d6');
-    b.fill(oval(56, 50, 10, 4, -8), WOOL[2]);
+    beast(b, {
+      t: WOOL,
+      wool: [66, 60, 27, 16, 12, 10],
+      head: [[33, 44], [38, 50], [35, 60], [27, 68], [19, 71], [14, 67], [15, 59], [22, 49], [28, 44]],
+      face: dark,
+      fore: [47, 70, 6.5],
+      hind: [84, 68, 8.5],
+      legs: [dark[0], dark[1]],
+      foot: 'hoof',
+      between: () => b.fill(shape([[34, 45], [43, 44], [46, 47], [40, 50], [34, 49]]), dark[1]),
+      front: () => {
+        b.fill(shape([[22, 49], [14, 46], [10, 48], [15, 51], [22, 53]]), dark[0]);
+        b.fill(puffs(31, 45, 5, 3, 5, 4.2), WOOL[0]);
+        eye(b, 22, 55, 1.6, '#e9dcc8');
+      },
+    });
   },
 
   goat: (b) => {
     const t: Tone = ['#5e4c43', '#3f322c', '#7f6c62'];
-    b.ground(42, 60);
-    b.line('M93 50L101 40', t[0], 4.5);
-    b.line('M54 72L54 101M78 72L76 101', t[1], 5.5);
-    b.fill('M40 56C40 48 48 44 58 44H82C90 44 96 50 96 58C96 68 90 74 82 74H54C46 74 40 66 40 56Z', t[0]);
-    b.line('M46 70L45 103M84 70L86 103', t[0], 6);
-    b.fill('M46 54C40 46 36 38 32 32C28 28 24 29 20 33L13 44C11 48 13 52 17 52C22 52 26 48 28 46C32 52 38 60 44 64Z', t[0]);
-    b.fill('M17 51L14 64L23 53Z', t[1]);
-    b.fill('M29 31C30 19 39 11 52 13C46 16 40 21 35 32Z', '#d9c39b');
-    b.fill('M31 35C38 36 43 41 43 46C37 46 32 42 30 37Z', t[1]);
-    b.fill(O(25, 38, 2.2), GOLD[0]);
-    b.fill(oval(66, 51, 12, 3, 0), t[2]);
+    const horn = '#d9c39b';
+    b.ground(42, 62);
+    beast(b, {
+      t,
+      body: [[32, 30], [38, 35], [44, 44], [56, 47], [72, 47], [86, 45], [94, 46], [99, 52], [98, 62], [92, 72], [80, 76], [62, 76], [50, 75], [42, 70], [37, 62], [33, 52], [28, 42], [27, 34]],
+      head: [[29, 24], [37, 28], [37, 37], [31, 43], [22, 49], [15, 51], [11, 48], [12, 42], [19, 32], [24, 26]],
+      fore: [45, 70, 8],
+      hind: [88, 66, 11.5],
+      foot: 'hoof',
+      behind: () => {
+        b.fill(shape([[93, 48], [99, 40], [103, 37], [102, 43], [98, 50]]), t[0]);
+        b.fill(shape([[31, 26], [35, 17], [43, 11], [51, 11], [45, 15], [39, 21], [35, 28]]), '#b9a47e');
+      },
+      front: () => {
+        b.fill(shape([[27, 26], [30, 16], [38, 9], [47, 8], [41, 12], [35, 19], [32, 28]]), horn);
+        b.fill(shape([[33, 30], [42, 32], [47, 37], [41, 38], [33, 35]]), t[1]);
+        b.fill(shape([[12, 49], [18, 49], [18, 56], [15, 63], [12, 56]]), t[1]);
+        eye(b, 25, 35, 1.6, '#e9b84a');
+      },
+    });
   },
 
   lamb: (b) => {
-    b.ground(40, 62);
-    b.group(grow(1.14, 62), () => lambBody(b));
+    const t: Tone = ['#fdf7ea', '#e3d5bb', '#ffffff'];
+    b.ground(42, 64);
+    b.group(grow(1.12, 64, 102), () => beast(b, {
+      t,
+      wool: [70, 64, 20, 13, 10, 9],
+      head: [[31, 37], [41, 39], [45, 47], [42, 56], [33, 61], [25, 61], [20, 57], [20, 48], [25, 40]],
+      fore: [54, 74, 6],
+      hind: [84, 72, 8.5],
+      legs: ['#efe4cf', '#d8c8ab'],
+      foot: 'hoof',
+      between: () => b.fill(shape([[42, 40], [50, 36], [54, 38], [48, 43], [43, 45]]), t[1]),
+      front: () => {
+        b.fill(shape([[22, 45], [12, 41], [9, 44], [14, 48], [22, 50]]), t[0]);
+        b.fill(shape([[20, 45.5], [13, 43], [12, 44.5], [15, 46.5], [20, 48]]), PINK);
+        b.fill(puffs(33, 38, 5, 2.4, 5, 3.8), t[0]);
+        b.fill(oval(22, 56, 2.2, 1.6, 0), '#e8a7a0');
+        eye(b, 31, 48, 1.9);
+        // a bell on a red band round its neck, hanging at the throat
+        b.line('M47 51C46 57 43 61 38 63', VALLEY.red, 2.8);
+        b.form(shape([[36, 63], [40, 63], [41.5, 68], [34.5, 68]]), GOLD, 36, 63, 0.8);
+      },
+    }));
   },
 
   phone: (b) => {
@@ -870,15 +1080,18 @@ const PICTURES: Record<WordPictureId, Draw> = {
   },
 
   meat: (b) => {
-    const t: Tone = ['#d65a4c', '#a63b32', '#ec8d7f'];
-    const bone = '#f3ead8';
-    b.ground(42);
-    b.line('M64 58L90 32', bone, 11);
-    b.fill(O(88, 24, 7.5) + O(97, 33, 7.5), bone);
-    b.fill(O(86, 22, 3), '#ffffff');
-    b.fill(oval(50, 72, 39, 29, -28), '#f2c6b4');
-    b.form(oval(50, 72, 35, 25, -28), t, 28, 60, 0.9);
-    b.line('M32 70C40 64 50 66 58 60M42 84C50 78 62 80 70 72', '#ec8d7f', 2.4);
+    const meat: Tone = ['#cf4f45', '#9a332d', '#e47a6c'];
+    b.ground(46);
+    // a cut of meat as it lies on the board: its cut face in its rim of fat, the cut bone in it, its thickness showing below
+    b.group('rotate(-10 60 62)', () => {
+      const cut = shape([[12, 58], [18, 42], [36, 32], [60, 31], [84, 35], [102, 47], [106, 62], [98, 76], [78, 84], [52, 86], [28, 82], [14, 72]]);
+      b.fill(cut, meat[1], ' transform="translate(0 7)"');
+      b.fill(cut, '#f6dccb');
+      b.fill(cut, meat[0], ' transform="matrix(0.86 0 0 0.82 1.96 15.12)"');
+      b.fill(O(80, 48, 9.5), '#f3ead8');
+      b.fill(O(80, 48, 4.4), '#e3c3a0');
+      b.fill(oval(34, 52, 9, 4, -20), meat[2]);
+    });
   },
 
   yoghurt: (b) => {
@@ -1073,18 +1286,21 @@ const PICTURES: Record<WordPictureId, Draw> = {
 
   // a spring is water running out of a cleft in the rocks into its pool
   spring: (b) => {
-    b.ground(50);
-    b.form('M10 86C6 66 14 46 30 40C40 36 50 40 54 50L56 86Z', STONE, 18, 44, 0.92);
-    b.form('M62 86L64 50C68 40 80 36 92 40C106 46 112 66 108 86Z', STONE, 70, 42, 0.92);
-    b.form('M30 44C30 28 44 18 60 18C76 18 90 28 90 44C82 50 70 52 60 52C50 52 38 50 30 44Z', STONE, 40, 22, 0.92);
-    b.fill('M50 58C50 50 54 46 60 46C66 46 70 50 70 58Z', '#4b4a52');
-    b.fill('M53 56C55 51 65 51 67 56C66 68 68 78 72 88H52C54 78 54 68 53 56Z', WATER[0]);
-    b.line('M58 58C58 68 59 76 60 84', WATER[2], 2.2);
-    b.fill(E(60, 94, 46, 11), WATER[1]);
-    b.fill(E(60, 93, 42, 9), WATER[0]);
-    b.line(E(62, 91, 16, 3.6), WATER[2], 1.8);
-    b.fill(E(18, 96, 8, 4.5) + E(100, 98, 9, 4.5) + E(84, 104, 6, 3.5) + E(32, 104, 6, 3.5), STONE[0]);
-    b.line('M12 102L8 92M16 102V90M104 104l3 -9M108 104v-10M40 24l-3 -7M44 22v-8M48 21l3 -7', LEAF[0], 2.4);
+    const wall: Tone = ['#ddd3bf', '#b9ab90', '#efe8da'];
+    b.ground(52);
+    // the village spring: a stone front with an arched niche, the water falling from its spout into the trough below
+    b.form('M12 84V34C12 28 16 24 22 24H98C104 24 108 28 108 34V84Z', wall, 14, 26, 0.97);
+    b.line('M12 40H34M86 40H108M12 58H34M86 58H108M22 24V40M98 24V40M24 58V84M96 58V84', wall[1], 1.4);
+    b.fill('M36 84V48C36 34 46 26 60 26C74 26 84 34 84 48V84Z', wall[1]);
+    b.fill('M41 84V49C41 38 49 32 60 32C71 32 79 38 79 49V84Z', '#8f8270');
+    b.form(box(54, 44, 12, 9, 2), STONE, 55, 45, 0.85);
+    b.fill('M56 52H64L65 81H55Z', WATER[0]);
+    b.line('M58.5 54V79', WATER[2], 1.6);
+    b.form(box(18, 80, 84, 22, 3), STONE, 20, 81, 0.95);
+    b.fill(box(16, 76, 88, 7, 3), STONE[2]);
+    b.fill(box(21, 77, 78, 4, 2), WATER[0]);
+    b.line(E(60, 79, 9, 1.6), WATER[2], 1.2);
+    b.line('M10 104L6 94M14 104V92M106 104l3 -9M110 104v-10', LEAF[0], 2.4);
   },
 
   river: (b) => {
@@ -1210,7 +1426,6 @@ const PICTURES: Record<WordPictureId, Draw> = {
     let seeds = '';
     for (const [x, y] of [[72, 82], [80, 80], [88, 80], [96, 82], [68, 89], [76, 88], [84, 87], [92, 88], [100, 89], [76, 95], [84, 95], [92, 95]] as const) seeds += O(x, y, 3.2);
     b.fill(seeds, '#c42a48');
-    b.fill(O(79, 79, 1) + O(87, 79, 1) + O(75, 87, 1) + O(83, 86, 1) + O(91, 87, 1) + O(83, 94, 1), '#f7a3b0');
   },
 
   cucumber: (b) => {
@@ -1271,13 +1486,13 @@ const PICTURES: Record<WordPictureId, Draw> = {
   fish: (b) => {
     const t: Tone = ['#4aa3c8', '#2f7fa6', '#9ad6ee'];
     b.ground(40, 62);
-    b.fill('M50 40C56 28 70 26 78 40Z' + 'M56 80C60 90 70 92 74 80Z', t[1]);
-    b.form('M12 60C22 42 44 34 66 38C78 40 86 48 92 56L108 40C112 48 112 72 108 80L92 64C86 72 78 80 66 82C44 86 22 78 12 60Z', t, 30, 44, 0.92);
+    b.fill(shape([[50, 40], [58, 30], [70, 28], [78, 40]]) + shape([[56, 79], [62, 89], [70, 90], [74, 80]]), t[1]);
+    b.fill(shape([[90, 58], [106, 40], [111, 46], [110, 60], [111, 74], [106, 80], [90, 62]]), t[1]);
+    underside(b, [[12, 60], [20, 48], [34, 40], [52, 37], [70, 39], [86, 47], [94, 60], [86, 73], [70, 81], [52, 83], [34, 80], [20, 72]], t, 0.9);
     b.line('M38 46C42 54 42 66 38 74', t[1], 2);
-    b.line('M54 52q4 4 0 8M64 50q4 4 0 8M64 62q4 4 0 8M74 56q4 4 0 8', t[2], 1.8);
-    b.fill(O(28, 56, 4.4), '#ffffff');
-    b.fill(O(27, 56, 2.4), INK);
-    b.fill(oval(50, 46, 10, 3, -10), t[2]);
+    b.fill(shape([[44, 64], [54, 62], [58, 68], [52, 72], [45, 69]]), t[1]);
+    b.fill(O(27, 56, 4.2), '#ffffff');
+    b.fill(O(26.4, 56, 2.3), INK);
   },
 
   glass: (b) => {
@@ -1347,16 +1562,12 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.fill(oval(48, 46, 9, 5, -40), SUN[2]);
   },
 
-  // a full round crescent with craters, and stars beside it, so it is night's moon and never a slice of fruit
+  // a round crescent with its craters, the rest of the moon faintly there behind it, so it is the moon and never a slice of fruit
   moon: (b) => {
     const t: Tone = ['#f5df8f', '#ddb95a', '#fbefc4'];
-    b.fill(lune(54, 62, 40, 74, 48, 34), t[0]);
-    b.fill(O(30, 68, 5) + O(44, 90, 3.6) + O(26, 50, 2.6), t[1]);
-    const sparkle = (x: number, y: number, r: number): string => {
-      const k = r * 0.22;
-      return `M${f(x)} ${f(y - r)}Q${f(x + k)} ${f(y - k)} ${f(x + r)} ${f(y)}Q${f(x + k)} ${f(y + k)} ${f(x)} ${f(y + r)}Q${f(x - k)} ${f(y + k)} ${f(x - r)} ${f(y)}Q${f(x - k)} ${f(y - k)} ${f(x)} ${f(y - r)}Z`;
-    };
-    b.fill(sparkle(90, 72, 9) + sparkle(98, 38, 6), GOLD[0]);
+    b.fill(O(56, 60, 40), '#ebe5d4');
+    b.fill(lune(56, 60, 40, 76, 46, 34), t[0]);
+    b.fill(O(32, 66, 5) + O(46, 88, 3.6) + O(28, 48, 2.6), t[1]);
   },
 
   star: (b) => {
@@ -1410,17 +1621,15 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.ground(34, 60);
     b.line('M12 92C40 88 70 84 108 74', BARK[0], 4.5);
     b.form(oval(98, 70, 9, 4, -30), LEAF, 92, 66, 0.86);
-    b.line('M54 78L52 88M64 78L66 87', '#c08a5a', 2.4);
-    b.fill('M74 52L104 44C106 50 102 56 96 58L80 64Z', t[1]);
-    b.form('M28 50C28 36 40 28 52 30C64 32 72 42 80 50C84 66 74 80 56 80C38 80 28 66 28 50Z', t, 36, 36, 0.92);
-    b.fill('M30 56C34 70 44 78 56 79C66 79 72 74 74 68C64 72 50 70 40 62C36 58 32 56 30 56Z', '#efdcc0');
-    b.fill('M52 46C60 44 72 46 80 52C76 62 66 66 56 64C60 58 58 52 52 46Z', t[1]);
-    b.line('M60 54L70 52M60 59L72 57', '#efdcc0', 1.8);
-    b.fill('M30 40C32 32 40 28 48 30C44 34 40 38 38 44Z', '#8a8a92');
-    b.fill(E(34, 54, 4.5, 4), INK);
+    b.line('M54 79L52 88M64 79L66 87', '#c08a5a', 2.4);
+    b.fill(shape([[72, 52], [88, 47], [104, 44], [102, 52], [92, 57], [80, 62]]), t[1]);
+    underside(b, [[28, 50], [30, 40], [38, 32], [50, 30], [62, 33], [72, 42], [80, 52], [78, 66], [68, 77], [56, 80], [42, 78], [32, 68]], t, 0.92);
+    b.fill(shape([[30, 56], [36, 68], [46, 76], [58, 79], [70, 74], [73, 68], [62, 72], [48, 70], [38, 62]]), '#efdcc0');
+    b.fill(shape([[50, 46], [62, 44], [74, 47], [80, 54], [74, 63], [62, 66], [56, 62], [56, 54]]), t[1]);
+    b.line('M60 56L72 54', '#efdcc0', 1.8);
+    b.fill(shape([[30, 41], [36, 33], [46, 30], [44, 35], [38, 40]]), '#8a8a92');
     b.fill(poly(29, 44, 19, 47, 29, 50), INK);
-    b.fill(O(36, 43, 2.2), INK);
-    b.fill(O(35.3, 42.3, 0.7), '#ffffff');
+    eye(b, 36, 43, 2.1);
   },
 
   rose: (b) => {
@@ -1555,8 +1764,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
       b.form(shape, ['#f6dfa6', '#d9b56a', '#fbefcf'], 16, 38, 0.97);
       b.fill('M82 36H106V52A8 8 0 0 0 106 68V84H82Z', VALLEY.red);
       b.dash('M82 39V82', '#fbefcf', 2.4, 3, 3);
-      const p = starPoints(94, 60, 8, 0.45);
-      b.fill(poly(...p.flat()), GOLD[2]);
+      b.fill(diamond(94, 60, 5, 7), GOLD[2]);
       b.fill(box(26, 46, 44, 6, 3) + box(26, 58, 32, 5, 2.5) + box(26, 69, 38, 5, 2.5), '#d9b56a');
     });
   },
@@ -1565,33 +1773,46 @@ const PICTURES: Record<WordPictureId, Draw> = {
     const t: Tone = ['#8e939c', '#686d77', '#b5b9c0'];
     const pale = '#e6e3dc';
     b.ground(46, 60);
-    b.fill('M92 56C103 60 107 72 103 88C99 81 94 73 88 67Z', t[1]);
-    b.line('M52 76L50 102M84 76L86 101', t[1], 6);
-    b.form('M38 62C38 52 46 48 58 48H80C90 48 94 54 94 62C94 72 88 78 78 78H52C44 78 38 72 38 62Z', t, 42, 50, 0.94);
-    b.fill('M44 72C56 79 72 79 90 72C88 76 84 78 78 78H52C48 78 46 76 44 72Z', pale);
-    b.line('M46 74L44 103M78 76L79 103', t[0], 6.5);
-    b.fill('M30 62C28 52 30 42 36 38L48 40C52 48 52 58 48 66Z', t[0]);
-    b.fill('M30 62C28 54 30 46 33 42C37 50 40 58 40 66Z', pale);
-    b.fill(poly(31, 33, 33, 18, 41, 30) + poly(38, 31, 42, 17, 47, 33), t[1]);
-    b.fill('M8 46C8 43 10 42 13 42L26 36C30 30 38 28 44 32C48 36 48 44 44 48C38 52 30 52 24 50L13 50C10 50 8 48 8 46Z', t[0]);
-    b.fill('M8 46C8 48 10 50 13 50L24 50C28 52 34 52 38 50C34 56 26 56 18 54C12 53 8 50 8 46Z', pale);
-    b.fill(O(8.5, 44.5, 2.6), INK);
-    b.fill(O(30, 39, 2.3), '#e9b84a');
-    b.fill(O(30.4, 39, 1.1), INK);
+    beast(b, {
+      t,
+      body: [[30, 50], [33, 38], [41, 31], [49, 33], [55, 42], [68, 46], [82, 46], [92, 48], [97, 56], [94, 66], [86, 70], [74, 70], [62, 72], [52, 76], [44, 76], [38, 71], [33, 62]],
+      head: [[29, 29], [38, 27], [46, 31], [47, 39], [42, 45], [34, 47], [26, 47], [16, 46], [9, 44], [8, 40], [12, 37], [22, 35], [26, 32]],
+      fore: [46, 66, 9],
+      hind: [85, 60, 13],
+      foot: 'paw',
+      behind: () => {
+        b.fill(shape([[93, 52], [101, 60], [105, 74], [103, 87], [99, 82], [97, 70], [91, 60]]), t[0]);
+        b.fill(shape([[38, 30], [42, 17], [44, 16], [47, 32]]), t[1]);
+      },
+      between: () => b.fill(shape([[30, 50], [33, 62], [38, 71], [44, 75], [40, 77], [33, 70], [29, 60]]), pale),
+      front: () => {
+        b.fill(shape([[32, 31], [34, 18], [36, 17], [41, 29]]), t[0]);
+        b.fill(shape([[9, 44], [16, 46], [26, 47], [34, 47], [37, 50], [31, 53], [21, 51], [12, 48]]), pale);
+        b.fill(oval(9, 40, 2.6, 2.1, 0), INK);
+        eye(b, 28, 37, 1.5, '#e9b84a');
+      },
+    });
   },
 
   bear: (b) => {
     const t: Tone = ['#8a5a3a', '#65402a', '#a9784f'];
-    b.ground(46, 60);
-    b.line('M56 84V100M90 84V100', t[1], 11);
-    b.form('M30 64C30 50 42 42 58 42C66 36 78 38 86 46C98 50 104 62 102 76C100 86 92 90 82 90H44C34 90 30 80 30 64Z', t, 40, 44, 0.94);
-    b.line('M42 84V101M78 86V101', t[0], 12);
-    b.fill(O(34, 50, 5.5), t[0]);
-    b.fill(O(34, 50, 2.6), t[1]);
-    b.fill('M12 66C12 56 20 50 30 50C40 50 46 58 46 66C46 74 40 80 30 80C24 80 20 78 16 74C13 72 12 69 12 66Z', t[0]);
-    b.fill(E(18, 70, 8, 6), '#c49a6c');
-    b.fill(O(11.5, 67, 3) + O(28, 61, 2.2), INK);
-    b.fill(oval(62, 48, 14, 3.4, -12), t[2]);
+    b.ground(48, 60);
+    beast(b, {
+      t,
+      body: [[30, 52], [36, 42], [46, 34], [58, 32], [68, 36], [80, 38], [92, 42], [100, 52], [102, 64], [98, 76], [90, 84], [76, 86], [60, 86], [46, 86], [38, 82], [32, 72], [28, 62]],
+      head: [[14, 55], [19, 47], [27, 44], [37, 46], [42, 53], [42, 62], [38, 70], [30, 74], [22, 74], [15, 72], [9, 70], [6, 66], [8, 61]],
+      fore: [44, 80, 15],
+      hind: [88, 76, 17],
+      far: [8, -8],
+      foot: 'paw',
+      front: () => {
+        b.fill(O(32, 46, 5.5), t[0]);
+        b.fill(O(32, 46, 2.6), t[1]);
+        b.fill(shape([[6, 66], [8, 61], [14, 59], [20, 61], [22, 67], [18, 72], [10, 70]]), '#c49a6c');
+        b.fill(oval(7.5, 63, 2.6, 2.1, 0), INK);
+        eye(b, 24, 56, 1.9);
+      },
+    });
   },
 
   fox: (b) => {
@@ -1599,83 +1820,114 @@ const PICTURES: Record<WordPictureId, Draw> = {
     const white = '#fbf3e6';
     const sock = '#4a2e22';
     b.ground(46, 62);
-    b.fill('M84 66C98 58 112 64 113 78C113 88 105 94 95 92C100 86 98 76 90 74Z', t[0]);
-    b.fill('M113 78C113 88 105 94 95 92C101 90 105 86 107 80Z', white);
-    b.line('M46 76V102M56 78V101M74 78V101M82 76V102', sock, 5);
-    b.form('M38 64C38 55 46 52 56 52H78C86 52 90 58 90 64C90 72 84 78 76 78H50C42 78 38 72 38 64Z', t, 42, 54, 0.94);
-    b.fill('M38 64C38 70 42 76 48 77C50 70 48 62 44 56C40 57 38 60 38 64Z', white);
-    b.fill(poly(33, 42, 35, 24, 44, 38) + poly(40, 41, 46, 26, 50, 42), sock);
-    b.fill('M12 54L32 42C36 39 43 39 47 43C51 47 51 54 47 58C41 62 31 61 25 59Z', t[0]);
-    b.fill('M12 54C20 58 31 61 41 61C39 64 33 66 27 64C21 62 15 58 12 54Z', white);
-    b.fill(O(12.5, 54, 2.5) + O(31, 47, 2), INK);
+    beast(b, {
+      t,
+      body: [[34, 54], [38, 47], [46, 49], [58, 52], [72, 52], [84, 51], [90, 54], [92, 60], [88, 68], [78, 72], [62, 72], [52, 74], [45, 72], [39, 66]],
+      head: [[31, 41], [40, 40], [46, 44], [46, 52], [40, 56], [30, 58], [20, 57], [11, 55], [10, 52], [16, 49], [26, 45]],
+      fore: [47, 68, 7],
+      hind: [84, 63, 10.5],
+      foot: 'paw',
+      legs: [sock, '#36211a'],
+      behind: () => {
+        b.fill(shape([[88, 56], [98, 51], [108, 54], [113, 64], [111, 77], [103, 83], [104, 74], [100, 66], [92, 62]]), t[0]);
+        b.fill(shape([[111, 77], [103, 83], [104, 76], [108, 71], [112, 70]]), white);
+        b.fill(shape([[40, 41], [44, 28], [46, 27], [47, 43]]), sock);
+      },
+      between: () => b.fill(shape([[36, 56], [42, 64], [47, 72], [42, 73], [36, 66], [34, 60]]), white),
+      front: () => {
+        b.fill(shape([[33, 42], [35, 28], [37, 27], [42, 40]]), sock);
+        b.fill(shape([[11, 55], [20, 57], [30, 58], [40, 56], [42, 60], [34, 63], [22, 62], [14, 59]]), white);
+        b.fill(oval(10.5, 52.5, 2.3, 1.9, 0), INK);
+        eye(b, 30, 48, 1.8);
+      },
+    });
   },
 
   deer: (b) => {
     const t: Tone = ['#b8693a', '#8a4a24', '#d6905c'];
-    b.ground(40, 64);
-    b.line('M52 74L51 101M80 74L82 101', t[1], 4.5);
-    b.form('M42 60C42 52 48 48 58 48H80C88 48 92 54 92 60C92 68 88 74 80 74H54C46 74 42 68 42 60Z', t, 46, 50, 0.94);
-    b.fill(E(91, 59, 5, 7.5), '#f6eee2');
-    b.line('M48 72L46 102M84 72L86 102', t[0], 5);
-    b.line('M44 102H48M84 102H88M49 101H53M80 101H84', HOOF, 2.6);
-    b.fill('M44 58C42 48 38 38 34 30L44 26C48 36 52 46 54 52Z', t[0]);
-    b.line('M38 20L36 8M36.5 13L32 9M41 19L43 7', '#e2cfa8', 2.6);
-    b.fill('M18 38C14 36 14 32 18 30L30 22C34 20 40 20 44 24C46 28 44 32 40 34L28 40C24 41 21 40 18 38Z', t[0]);
-    b.fill(oval(46, 18, 8, 3.8, -40), t[0]);
-    b.fill(oval(46, 18, 5, 1.8, -40), '#e7b9a0');
-    b.fill(O(15.5, 34, 2.2) + O(33, 27, 2), INK);
-    b.fill(oval(66, 54, 11, 3, 0), t[2]);
+    b.ground(42, 64);
+    beast(b, {
+      t,
+      body: [[33, 26], [39, 33], [44, 44], [56, 50], [72, 50], [86, 48], [94, 50], [97, 56], [95, 64], [88, 70], [76, 72], [60, 72], [50, 71], [44, 66], [39, 56], [34, 44], [30, 34]],
+      head: [[30, 20], [38, 22], [40, 28], [34, 32], [24, 36], [16, 38], [12, 36], [13, 32], [20, 26], [26, 21]],
+      fore: [47, 66, 6.5],
+      hind: [88, 62, 10],
+      foot: 'hoof',
+      behind: () => b.fill(shape([[40, 23], [47, 15], [52, 14], [50, 20], [43, 26]]), t[1]),
+      between: () => b.fill(shape([[93, 51], [97, 56], [96, 63], [92, 62], [91, 56]]), '#f6eee2'),
+      front: () => {
+        b.line('M31 20L29 9M29.6 14L26 11M34.5 20L36.5 9', '#e2cfa8', 2.4);
+        b.fill(shape([[35, 22], [41, 14], [46, 13], [45, 18], [39, 25]]), t[0]);
+        b.fill(shape([[37, 21], [41, 16], [43.5, 15.5], [42.5, 18], [39, 22]]), '#e7b9a0');
+        b.fill(oval(12.5, 34.5, 2, 1.7, 0), INK);
+        eye(b, 28, 27, 1.9);
+      },
+    });
   },
 
   gazelle: (b) => {
     const t: Tone = ['#d9a866', '#b07f40', '#ecc88f'];
     const stripe = '#6b4a2e';
-    b.ground(40, 64);
-    b.line('M54 72L53 101M82 72L84 101', t[1], 3.8);
-    b.form('M42 60C42 52 48 49 58 49H80C88 49 93 54 93 60C93 67 88 72 80 72H54C46 72 42 67 42 60Z', t, 46, 51, 0.94);
-    b.fill('M46 66C56 72 76 72 90 66C88 70 85 72 80 72H54C50 72 47 70 46 66Z', '#fbf6ee');
-    b.line('M48 64C58 68 76 68 88 64', stripe, 2.8);
-    b.line('M48 70L46 102M86 70L88 102', t[0], 4.2);
-    b.line('M93 56L97 63', stripe, 2.6);
-    b.fill('M44 58C42 48 39 38 36 30L45 27C48 36 52 46 54 52Z', t[0]);
-    b.line('M36 26C33 16 36 9 43 5M41 26C40 17 44 11 50 8', '#3d2f26', 3.2);
-    b.fill('M22 38C18 37 17 33 20 31L32 24C36 22 41 23 44 27C45 31 43 34 39 35L28 40Z', t[0]);
-    b.line('M22 34L36 27', '#fbf6ee', 1.6);
-    b.fill(oval(44, 23, 6.5, 2.6, -25), t[1]);
-    b.fill(O(19.5, 34, 1.8) + O(34, 27, 1.9), INK);
+    b.ground(42, 64);
+    beast(b, {
+      t,
+      body: [[33, 26], [39, 33], [44, 44], [56, 50], [72, 50], [86, 49], [94, 51], [96, 57], [94, 64], [88, 69], [76, 71], [60, 71], [50, 70], [44, 66], [39, 56], [34, 44], [30, 34]],
+      head: [[30, 20], [37, 22], [39, 28], [33, 32], [24, 35], [17, 37], [13, 35], [14, 31], [21, 26], [26, 21]],
+      fore: [47, 66, 5.5],
+      hind: [88, 62, 9],
+      foot: 'hoof',
+      under: 0.95,
+      behind: () => {
+        b.line('M33.5 21C33 14 37 9 42 7', '#2c221c', 3);
+        b.line('M95 54L99 61', stripe, 2.6);
+      },
+      between: () => {
+        b.fill(shape([[46, 63], [60, 66], [76, 66], [91, 62], [89, 68], [76, 71], [60, 71], [50, 70]]), '#fbf6ee');
+        b.line('M46 62C58 65.5 76 65.5 90 61.5', stripe, 2.6);
+      },
+      front: () => {
+        b.line('M29.5 21C27 13 30 7 36 4', '#3d2f26', 3);
+        b.fill(shape([[35, 22], [42, 17], [46, 17], [42, 22], [38, 25]]), t[0]);
+        b.line('M15.5 33.5L28.5 25.5', '#fbf6ee', 1.6);
+        b.fill(oval(13.5, 33.8, 1.8, 1.5, 0), INK);
+        eye(b, 28, 27, 1.8);
+      },
+    });
   },
 
   snake: (b) => {
     const t: Tone = ['#6fb04a', '#4f8a34', '#a6d77a'];
     b.ground(46);
     const body = 'M106 96C96 102 76 102 60 100C40 98 24 94 26 86C28 78 50 77 70 79C86 80 92 72 84 64C76 57 62 60 58 48C56 42 58 36 62 32';
-    b.line(body, t[1], 14, ' transform="translate(1.6 1.6)"');
-    b.line(body, t[0], 13);
-    b.line(body, '#d9e88a', 4, ' stroke-dasharray="0.1 9"');
-    b.form(oval(68, 28, 13, 9, -14), t, 58, 22, 0.9);
-    b.fill(O(66, 24, 2.6) + O(74, 22, 2.6), '#ffffff');
-    b.fill(O(66.6, 24, 1.4) + O(74.6, 22, 1.4), INK);
-    b.line('M81 30L88 32M88 32L92 29M88 32L91 36', TONGUE, 1.8);
+    b.line(body, t[1], 14);
+    b.line(body, t[0], 10.5, ' transform="translate(-1 -1.4)"');
+    b.form(shape([[56, 28], [62, 22], [72, 20], [80, 24], [81, 31], [74, 36], [63, 36], [57, 33]]), t, 58, 21, 0.9);
+    b.line('M81 29L87 30M87 30L90.5 27.5M87 30L90 33.5', TONGUE, 1.6);
+    eye(b, 70, 26, 2);
   },
 
   // the kid is cream and patched, smooth-coated and hornless but for buds: never the dark bearded goat, the woolly lamb or the striped gazelle
   kid: (b) => {
     const t: Tone = ['#f3e4cc', '#d3bc98', '#fbf3e4'];
     const patch = '#a8703f';
-    b.ground(38, 62);
-    b.line('M60 72L59 101M82 72L84 101', t[1], 4.6);
-    b.line('M88 56L94 46', t[0], 4.6);
-    b.form('M48 62C48 55 54 51 62 51H80C87 51 91 56 91 62C91 69 87 74 80 74H60C52 74 48 69 48 62Z', t, 52, 53, 0.94);
-    b.fill('M66 51H79C83 56 82 64 76 67C70 69 65 63 66 51Z', patch);
-    b.line('M54 72L52 102M86 72L88 102', t[0], 4.8);
-    b.line('M50 102H55M57 101H62M82 101H87M86 102H91', HOOF, 2.6);
-    b.fill('M50 60C47 52 43 45 39 40L49 35C53 43 57 50 59 54Z', t[0]);
-    b.fill('M19 47C15 45 15 40 19 38L30 30C35 27 42 28 46 33C48 38 46 43 41 45L29 50C25 51 22 50 19 47Z', t[0]);
-    b.fill('M34 28C40 27 45 30 46 35C47 40 44 44 41 45C40 38 38 32 34 28Z', patch);
-    b.fill(oval(48, 42, 9, 3.6, 40) + oval(26, 36, 7, 3, -150), patch);
-    b.fill(oval(35, 27, 2, 3.2, -20) + oval(40, 27.5, 2, 3.2, -5), '#d9c39b');
-    b.fill(O(32, 37, 2.1), INK);
-    b.fill(O(17, 43, 1.7), TONGUE);
+    b.ground(38, 64);
+    beast(b, {
+      t,
+      body: [[37, 38], [42, 44], [48, 51], [60, 54], [74, 54], [84, 53], [90, 56], [91, 62], [87, 69], [78, 72], [64, 72], [54, 72], [48, 68], [44, 60], [40, 52], [35, 45]],
+      head: [[34, 29], [42, 31], [44, 37], [39, 42], [30, 46], [22, 48], [18, 45], [19, 40], [26, 33], [30, 30]],
+      fore: [51, 68, 6.5],
+      hind: [84, 64, 9.5],
+      foot: 'hoof',
+      behind: () => b.fill(shape([[88, 57], [93, 50], [96, 48], [95, 53], [91, 60]]), t[0]),
+      between: () => b.fill(shape([[64, 54], [76, 54], [79, 62], [71, 67], [64, 62]]), patch),
+      front: () => {
+        b.fill(shape([[34, 30], [42, 31], [44, 37], [40, 41], [37, 35]]), patch);
+        b.fill(shape([[40, 33], [48, 36], [51, 41], [45, 41], [40, 38]]), patch);
+        b.fill(oval(35.5, 28.5, 1.7, 2.8, -15) + oval(39.5, 29, 1.7, 2.8, 0), '#d9c39b');
+        b.fill(O(18.5, 43, 1.4), '#8a6a5a');
+        eye(b, 29, 37, 1.8);
+      },
+    });
   },
 
   // the black tent of the summer pastures, woven of goat hair, long and low on its poles and ropes
@@ -1696,10 +1948,11 @@ const PICTURES: Record<WordPictureId, Draw> = {
 
   hand: (b) => {
     const skin: Tone = ['#e8b48a', '#c98d63', '#f5d0b0'];
-    const d = box(38, 26, 10, 34, 5) + box(50, 16, 10.5, 42, 5.25) + box(62, 20, 10, 38, 5) + box(74, 30, 9, 30, 4.5) + 'M44 46C40 46 36 48 36 52V80C36 94 46 104 60 104C74 104 84 94 84 78V54C84 48 80 46 76 46Z' + oval(30, 72, 15, 6.5, -50);
-    b.form(d, skin, 42, 20, 0.95);
-    b.line('M46 70C54 74 66 74 74 68M46 84C54 88 62 88 70 84', skin[1], 2);
-    b.fill(oval(55, 22, 2.6, 4, 0), skin[2]);
+    // a left hand held up, palm to us: four fingers apart, the middle one longest, the thumb out from the lower palm, a sleeve at the wrist
+    const fingers = box(26, 40, 10, 30, 5) + box(40, 24, 11, 42, 5.5) + box(55, 15, 11.5, 48, 5.75) + box(70.5, 22, 11, 42, 5.5);
+    const palm = shape([[27, 60], [27, 76], [32, 90], [41, 99], [54, 102], [68, 100], [78, 92], [83, 80], [82, 64], [77, 57], [56, 55]]);
+    b.cut(fingers + palm + oval(90, 75, 17, 8, -46) + box(40, 96, 34, 13), skin, 2, 1.4);
+    b.form(box(36, 106, 42, 12, 3), BLUE, 37, 107, 0.92);
   },
 
   ear: (b) => {
@@ -1707,31 +1960,28 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.form('M34 46C34 24 50 10 70 10C90 10 104 26 102 48C100 66 88 70 84 82C80 96 74 108 58 108C44 108 38 98 40 88C42 80 50 78 50 70C50 62 34 62 34 46Z', skin, 44, 18, 0.93);
     b.fill('M50 46C50 32 60 24 70 24C82 24 88 34 88 44C88 56 78 60 74 70C72 76 66 78 62 74C60 70 64 66 66 62C70 56 76 52 76 44C76 38 72 34 68 34C62 34 58 40 58 46Z', skin[1]);
     b.fill(oval(62, 60, 6, 9, 20), '#b47a52');
-    b.fill(oval(56, 20, 8, 3.4, -25), skin[2]);
   },
 
   nose: (b) => {
     const skin: Tone = ['#e8b48a', '#c98d63', '#f5d0b0'];
-    b.form('M52 14C56 9 64 9 67 15L76 62C88 66 96 74 94 84C92 94 82 98 74 96C70 100 64 102 58 100C52 102 46 100 42 96C34 98 24 92 24 82C24 72 34 66 44 64Z', skin, 48, 20, 0.95);
-    b.fill('M60 14C63 30 66 46 70 62C74 70 72 80 64 84C70 76 70 68 64 62C60 46 58 30 60 14Z', skin[1]);
-    b.fill(oval(47, 88, 6, 3.4, 12) + oval(71, 88, 6, 3.4, -12), '#8e5a3a');
-    b.fill(oval(54, 76, 5, 3, -20), skin[2]);
+    // a nose seen three-quarters on: the bridge down to the round tip, the wing of one nostril behind it
+    b.fill(shape([[54, 10], [64, 10], [68, 30], [73, 52], [78, 64], [86, 70], [88, 82], [80, 91], [68, 92], [58, 90], [46, 92], [34, 90], [28, 80], [32, 70], [42, 58], [50, 34]]), skin[0]);
+    b.fill(shape([[64, 10], [68, 30], [73, 52], [78, 64], [86, 70], [88, 82], [80, 91], [70, 91], [76, 82], [72, 72], [64, 66], [60, 50], [60, 28]]), skin[1]);
+    b.fill(shape([[42, 88], [48, 84], [55, 85], [57, 89], [50, 91]]), '#a86e4c');
+    b.fill(oval(40, 74, 5, 3.2, -30), skin[2]);
   },
 
   tooth: (b) => {
     b.form('M30 34C30 20 40 14 50 16C54 17 57 19 60 19C63 19 66 17 70 16C80 14 90 20 90 34C90 48 86 56 84 70C82 84 80 100 72 102C66 104 64 92 62 82C61 78 59 78 58 82C56 92 54 104 48 102C40 100 38 84 36 70C34 56 30 48 30 34Z', WHITE, 36, 20, 0.93);
     b.fill(oval(42, 32, 4, 9, 20), '#ffffff');
-    const p = starPoints(96, 22, 9, 0.38);
-    b.fill(poly(...p.flat()), GOLD[2]);
   },
 
   foot: (b) => {
     const skin: Tone = ['#e8b48a', '#c98d63', '#f5d0b0'];
-    const d = 'M50 48C58 42 74 44 80 54C86 66 82 78 80 90C78 102 70 110 60 110C50 110 44 102 44 92C44 82 48 76 46 66C45 58 44 52 50 48Z' + O(48, 34, 8.5) + O(62, 29, 6.5) + O(73, 31, 5.6) + O(82, 36, 5) + O(89, 43, 4.4);
-    b.group('rotate(-8 64 70)', () => {
-      b.form(d, skin, 44, 28, 0.94);
-      b.fill(oval(46, 32, 3, 3.6, 0), skin[2]);
-    });
+    // the sole of a bare foot: the toes joined on in an arc, the big toe largest, the arch drawn in on the inner side
+    const sole = shape([[40, 46], [40, 58], [45, 68], [47, 80], [44, 92], [45, 102], [52, 110], [62, 112], [72, 107], [78, 96], [82, 80], [88, 64], [93, 52], [86, 44], [72, 40], [56, 40]]);
+    const toes = E(49, 33, 9.5, 12) + E(64, 34.5, 6.8, 8.6) + E(75, 37, 6.2, 7.6) + E(84.5, 42, 5.6, 6.6) + E(91, 49, 5, 5.8);
+    b.group('rotate(-8 64 70)', () => b.cut(sole + toes, skin, 1.8, 1.4));
   },
 
   medicine: (b) => {

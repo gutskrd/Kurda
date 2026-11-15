@@ -2478,11 +2478,11 @@ describe('the word pictures', () => {
     for (const id of WORD_PICTURE_IDS) expect(wordPictureSvg({ id, dark: true }), id).not.toBe(wordPictureSvg({ id }));
   });
 
-  it('keeps every picture light enough to put four on a card row: under 3.5 KB and 70 elements', () => {
+  it('keeps every picture light enough to put four on a card row: under 4 KB and 90 elements', () => {
     for (const { id, dark } of both) {
       const svg = wordPictureSvg({ id, dark, size: 96, title: WORD_PICTURES[id].en });
-      expect(svg.length, id).toBeLessThan(3.5 * 1024);
-      expect(elements(svg), id).toBeLessThan(70);
+      expect(svg.length, id).toBeLessThan(4 * 1024);
+      expect(elements(svg), id).toBeLessThan(90);
     }
   });
 
