@@ -426,7 +426,7 @@ describe('the sign-in protection refusals', () => {
 
   it('says the wait in the reader’s language, Kurdish from the catalogue', () => {
     expect(describeError(locked(900), translator(de), 'de')).toContain('etwa 15 Minuten');
-    expect(describeError(locked(900), translator(ku), 'ku')).toContain('nêzîkî 15 deqîqe');
+    expect(describeError(locked(900), translator(ku), 'ku')).toContain('nêzîkî 15 xulek');
     expect(describeError(locked(3 * 3600), translator(ckb), 'ckb')).toContain('نزیکەی 3 کاتژمێر');
   });
 

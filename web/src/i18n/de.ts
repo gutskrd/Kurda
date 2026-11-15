@@ -3816,7 +3816,7 @@ export const de: Catalogue = {
   'badges.unlockedSecret': 'Du hast ein geheimes Abzeichen gefunden',
   'badges.seeAll': 'Alle deine Abzeichen ansehen',
   'badges.next': 'Weiter',
-  'badges.ders.name': 'Ders',
+  'badges.ders.name': 'Wane',
   'badges.ders.meaning': 'Lektionen',
   'badges.ders.desc': 'Schließ Lektionen ab.',
   'badges.peyven-min.name': 'Peyvên min',

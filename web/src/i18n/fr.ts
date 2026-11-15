@@ -3815,7 +3815,7 @@ export const fr: Catalogue = {
   'badges.unlockedSecret': 'Tu as trouvé un badge secret',
   'badges.seeAll': 'Voir tous tes badges',
   'badges.next': 'Suivant',
-  'badges.ders.name': 'Ders',
+  'badges.ders.name': 'Wane',
   'badges.ders.meaning': 'Leçons',
   'badges.ders.desc': 'Termine des leçons.',
   'badges.peyven-min.name': 'Peyvên min',

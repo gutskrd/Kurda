@@ -9,7 +9,7 @@ import type { MessageKey } from '../i18n/en';
  * for a number of hours — so it says them wherever it has the language. It
  * does not have Kurdish: Chromium answers in English, and full ICU data gives
  * "-2 h". Kurmancî and Soranî never change the noun after a number, so the
- * catalogue's "{count} saet berê" is right for every count, and it is what any
+ * catalogue's "{count} demjimêr berê" is right for every count, and it is what any
  * language the browser lacks falls back to.
  */
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;

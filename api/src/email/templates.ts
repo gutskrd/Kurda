@@ -77,16 +77,16 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
     ku: {
       subject: 'E-nameya xwe piştrast bike',
-      text: 'Bi xêr hatî Hevalo!\n\nJi bo destpêkê e-nameya xwe piştrast bike: {link}\n\nEv girêdan ji bo 24 saetan derbasdar e. Eger te tomar nekiriye, vê peyamê paşguh bike.\n\n— Tîma Hevalo',
+      text: 'Bi xêr hatî Hevalo!\n\nJi bo destpêkê e-nameya xwe piştrast bike: {link}\n\nEv girêdan ji bo 24 demjimêran derbasdar e. Eger te tomar nekiriye, vê peyamê paşguh bike.\n\n— Tîma Hevalo',
     },
   },
   'verify-email-code': {
     en: { subject: "Your Hevalo verification code", text: "Welcome to Hevalo!\n\nTo finish setting up your account, please use this code:\n\n{code}\n\nThis code is valid for 15 minutes.\n\nIf you didn't ask for this, you can ignore this message. Your account is safe.\n\nThank you for choosing Hevalo.\n\n— The Hevalo team" },
-    ku: { subject: "Koda piştrastkirinê ya Hevalo", text: "Bi xêr hatî Hevalo!\n\nJi bo temamkirina tomarkirina xwe, ji kerema xwe vê kodê bi kar bîne:\n\n{code}\n\nEv kod ji bo 15 xulekan derbasdar e.\n\nHeke te ev daxwaz nekiriye, tu dikarî vê peyamê paşguh bikî. Hesabê te ewle ye.\n\nSpas ji bo ku te Hevalo hilbijart.\n\n— Tîma Hevalo" },
+    ku: { subject: "Koda piştrastkirinê ya Hevalo", text: "Bi xêr hatî Hevalo!\n\nJi bo qedandina tomarkirina xwe, ji kerema xwe vê kodê bi kar bîne:\n\n{code}\n\nEv kod ji bo 15 xulekan derbasdar e.\n\nHeke te ev daxwaz nekiriye, tu dikarî vê peyamê paşguh bikî. Hesabê te ewle ye.\n\nSpas ji bo ku te Hevalo hilbijart.\n\n— Tîma Hevalo" },
   },
   'password-reset': {
     en: { subject: "Reset your password", text: "Hello {username},\n\nWe received a request to update the password on your Hevalo account.\n\nTo update your password, use this link:\n\n{link}\n\nThis link is valid for one hour.\nFor the security of your account, it can only be used once.\n\nIf you didn't ask to reset your password, you can ignore this message.\nYour password will not change unless you use this link.\n\nIf several password-reset requests were sent without your knowledge,\nplease contact us about the security of your account.\n\n— The Hevalo team" },
-    ku: { subject: "Şîfreya xwe ji nû ve saz bike", text: "Silav {username},\n\nMe daxwazek ji bo nûvekirina şîfreya hesabê te yê Hevalo wergirt.\n\nJi bo nûvekirina şîfreya xwe, vê girêdanê bi kar bîne:\n\n{link}\n\nEv girêdan ji bo saetekê derbasdar e.\nJi bo ewlehiya hesabê te, ew tenê carekê dikare were bikaranîn.\n\nHeke te daxwaza nûvekirina şîfreyê nekiriye, tu dikarî vê peyamê paşguh bikî.\nŞîfreya te wê neyê guhertin heta ku tu vê girêdanê bi kar neynî.\n\nHeke bêyî destûra te çend daxwazên nûvekirina şîfreyê hatibin şandin, ji kerema xwe ji bo\newlehiya hesabê xwe bi me re têkilî deyne.\n\n— Tîma Hevalo" },
+    ku: { subject: "Şîfreya xwe ji nû ve saz bike", text: "Silav {username},\n\nMe daxwazek ji bo nûvekirina şîfreya hesabê te yê Hevalo wergirt.\n\nJi bo nûvekirina şîfreya xwe, vê girêdanê bi kar bîne:\n\n{link}\n\nEv girêdan ji bo demjimêrekê derbasdar e.\nJi bo ewlehiya hesabê te, ew tenê carekê dikare were bikaranîn.\n\nHeke te daxwaza nûvekirina şîfreyê nekiriye, tu dikarî vê peyamê paşguh bikî.\nŞîfreya te wê neyê guhertin heta ku tu vê girêdanê bi kar neynî.\n\nHeke bêyî destûra te çend daxwazên nûvekirina şîfreyê hatibin şandin, ji kerema xwe ji bo\newlehiya hesabê xwe bi me re têkilî deyne.\n\n— Tîma Hevalo" },
   },
   'password-changed': {
     en: {
@@ -115,7 +115,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
     ku: {
       subject: 'Ji bo hesabê xwe şîfreyekê saz bike',
-      text: 'Silav {username},\n\nKesekî xwest şîfreya hesabê te yê Hevalo ji nû ve saz bike. Hesabê te hê bê şîfre ye, ji ber ku tu bi xizmeteke din têdikevî.\n\nHeke tu dixwazî bi navnîşana e-nameya xwe û şîfreyekê jî têkevî, li vir yekê saz bike: {link}\n\nEv girêdan ji bo saetekê derbasdar e. Heke te ev daxwaz nekiriye, tu dikarî vê e-nameyê paşguh bikî: tiştek nayê guhertin.\n\n— Tîma Hevalo',
+      text: 'Silav {username},\n\nKesekî xwest şîfreya hesabê te yê Hevalo ji nû ve saz bike. Hesabê te hê bê şîfre ye, ji ber ku tu bi xizmeteke din têdikevî.\n\nHeke tu dixwazî bi navnîşana e-nameya xwe û şîfreyekê jî têkevî, li vir yekê saz bike: {link}\n\nEv girêdan ji bo demjimêrekê derbasdar e. Heke te ev daxwaz nekiriye, tu dikarî vê e-nameyê paşguh bikî: tiştek nayê guhertin.\n\n— Tîma Hevalo',
     },
   },
   /**
@@ -219,7 +219,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     ku: {
       subject: 'Bersiveke dijber ji agahdariya te ya mafê nivîskariyê re ({reference})',
       text:
-        'Kesê ku naveroka di {reference} de şandibû bersiveke dijber şand. Ew dibêje ku ew bi şaşî hat rakirin an jî şaş hat naskirin. Bersiva wî/wê, wek ku hatiye şandin:\n\nNav: {name}\nNavnîşan: {address}\nTelefon: {phone}\nE-name: {email}\n\nDaxuyanî:\n{statement}\n\nEw di bin cezaya derewê de dibêje ku bi baweriya baş naverok bi şaşî hat rakirin, ku ew dadgehên ku 17 U.S.C. §512(g)(3)(D) bi nav dike qebûl dike, û ku ew ê belgeyên dadgehê ji te qebûl bike. Îmze: {signature}\n\nHeke tu berî {restoreDate} li {contact} ji me re nebêjî ku te dozek vekiriye, dibe ku em naverokê vegerînin.\n\n— Hevalo',
+        'Kesê ku naveroka di {reference} de şandibû bersiveke dijber şand. Ew dibêje ku ew bi şaşî hat rakirin an jî şaş hat naskirin. Bersiva wî/wê, wek ku hatiye şandin:\n\nNav: {name}\nNavnîşan: {address}\nTelefon: {phone}\nE-name: {email}\n\nDaxuyanî:\n{statement}\n\nEw di bin cezaya derewê de dibêje ku bi baweriya baş naverok bi şaşî hat rakirin, ku ew dadgehên ku 17 U.S.C. §512(g)(3)(D) bi nav dike dipejirîne, û ku ew ê belgeyên dadgehê ji te bipejirîne. Îmze: {signature}\n\nHeke tu berî {restoreDate} li {contact} ji me re nebêjî ku te dozek vekiriye, dibe ku em naverokê vegerînin.\n\n— Hevalo',
     },
   },
   /*
@@ -254,7 +254,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
     ku: {
       subject: 'Hesabê te dê were jêbirin',
-      text: 'Silav {username},\n\nTe xwest ku em hesabê te yê Hevalo jê bibin. Ew ê piştî {graceDays} rojan, bi hemû tiştên tê de, bi temamî were jêbirin.\n\nHeke tu poşman bibî, berî wê dîsa têkeve: jêbirin tê betalkirin, û hesab û pêşketina te wek xwe dimînin.\n\nHeke te ev daxwaz nekiriye, niha têkeve û şîfreya xwe biguherîne.\n\n— Tîma Hevalo',
+      text: 'Silav {username},\n\nTe xwest ku em hesabê te yê Hevalo jê bibin. Ew ê piştî {graceDays} rojan, bi hemû tiştên tê de, bi tevahî were jêbirin.\n\nHeke tu poşman bibî, berî wê dîsa têkeve: jêbirin tê betalkirin, û hesab û pêşketina te wek xwe dimînin.\n\nHeke te ev daxwaz nekiriye, niha têkeve û şîfreya xwe biguherîne.\n\n— Tîma Hevalo',
     },
   },
 };

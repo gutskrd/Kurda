@@ -3811,7 +3811,7 @@ export const tr: Catalogue = {
   'badges.unlockedSecret': 'Gizli bir rozet buldun',
   'badges.seeAll': 'Tüm rozetlerini gör',
   'badges.next': 'Sonraki',
-  'badges.ders.name': 'Ders',
+  'badges.ders.name': 'Wane',
   'badges.ders.meaning': 'Dersler',
   'badges.ders.desc': 'Dersleri bitir.',
   'badges.peyven-min.name': 'Peyvên min',

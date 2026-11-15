@@ -3816,7 +3816,7 @@ export const nl: Catalogue = {
   'badges.unlockedSecret': 'Je hebt een geheime badge gevonden',
   'badges.seeAll': 'Al je badges bekijken',
   'badges.next': 'Volgende',
-  'badges.ders.name': 'Ders',
+  'badges.ders.name': 'Wane',
   'badges.ders.meaning': 'Lessen',
   'badges.ders.desc': 'Rond lessen af.',
   'badges.peyven-min.name': 'Peyvên min',

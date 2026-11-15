@@ -3809,7 +3809,7 @@ export const ar: Catalogue = {
   'badges.unlockedSecret': 'وجدت شارة سرّية',
   'badges.seeAll': 'اعرض كل شاراتك',
   'badges.next': 'التالي',
-  'badges.ders.name': 'Ders',
+  'badges.ders.name': 'Wane',
   'badges.ders.meaning': 'الدروس',
   'badges.ders.desc': 'أنهِ الدروس.',
   'badges.peyven-min.name': 'Peyvên min',

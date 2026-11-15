@@ -3912,7 +3912,7 @@ export const en = {
   'badges.unlockedSecret': 'You found a secret badge',
   'badges.seeAll': 'See all your badges',
   'badges.next': 'Next',
-  'badges.ders.name': 'Ders',
+  'badges.ders.name': 'Wane',
   'badges.ders.meaning': 'Lessons',
   'badges.ders.desc': 'Finish lessons.',
   'badges.peyven-min.name': 'Peyvên min',
