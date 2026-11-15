@@ -12,6 +12,7 @@ import {
   checkRoad,
   checkRoadPlan,
   checkRoadStories,
+  familyProblems,
   formatProblem,
   kurdishWords,
   loadRoadPlan,
@@ -421,6 +422,28 @@ describe('the road’s check, on an example unit', () => {
     expect(unknown.text).toContain('u01s1l1 #11 payload.options.1: is not a word picture: unicorn');
   });
 
+  it('brings each new word back in the lessons after it', () => {
+    const dropSilav = (doc: Unit): void => {
+      const talk = lessonOf(doc, 1).exercises;
+      for (const ex of talk) {
+        if (ex.type === 'match_pairs') ex.payload.pairs = [['çawa', 'how'], ['spas', 'thanks'], ['erê', 'yes'], ['tu', 'you']].map(([left, right]) => ({ left, right }));
+        if (ex.type === 'conversation') {
+          const lines = (ex.payload.lines as Array<{ text: string; en: string }>).map((l) => ({ ...l, text: l.text.replace('Silav', 'Spas'), en: l.en.replace('Hello', 'Thanks') }));
+          ex.payload = { ...ex.payload, lines };
+        }
+      }
+    };
+    expect(check(dropSilav).text).toEqual(['u01s1l1: “silav” does not come back in the three lessons after it: bring it into u01s1l2']);
+  });
+
+  it('keeps out what the road never says, in any string of an item', () => {
+    const text = check((doc) => {
+      const first = lessonOf(doc, 0).exercises[0]!;
+      first.payload.options = ['Hello!', 'Xezal is my friend.', 'Goodbye!'];
+    }).text;
+    expect(text).toEqual(['u01s1l1 #1 payload.options[1]: ties Xezal to Hamo as friend, family or more: they are neighbours in the village, nothing else']);
+  });
+
   it('keeps conversation ids unique and their length in bounds', () => {
     const { text } = check((doc) => {
       const twin = structuredClone(CONVERSATION) as Omit<Ex, 'position'>;
@@ -462,6 +485,24 @@ describe('the road’s check, on an example unit', () => {
     expect(text).toContain('u01s1l1 key: key should be u01s1l1');
     expect(text).toContain('u01s1l1 #3 position: position should be 3');
     expect(text).toContain('u01s1l1 #1 payload.correctIndex: correctIndex must point at an option');
+  });
+});
+
+describe('what the road never says', () => {
+  it('finds talk of what a character is not as a man or a woman, in Kurdish and in English', () => {
+    expect(familyProblems('Hevalo ne mêr e, ne jin e, ne zarok e.')).toHaveLength(1);
+    expect(familyProblems('Hevalo is neither a man nor a woman.')).toHaveLength(1);
+    expect(familyProblems('Hevalo ne zarok e, ew xezal e!')).toEqual([]);
+    expect(familyProblems('Mêr û jin li dawetê ne.')).toEqual([]);
+  });
+
+  it('finds Xezal tied to Hamo as friend, family or more, and leaves a friend with no name alone', () => {
+    for (const line of ['Xezal hevala min e.', 'Ew keça min e, Xezo?', 'Hevala min Xezal ji Amedê ye.', 'Xezo is my friend.', 'My niece, Xezal!']) {
+      expect(familyProblems(line), line).toHaveLength(1);
+    }
+    for (const line of ['Ew hevalê min e.', 'Ew hevala min e.', 'Xezal mamoste ye.', 'Keça min? Na! Ew cîrana me ye.', 'That is my friend.']) {
+      expect(familyProblems(line), line).toEqual([]);
+    }
   });
 });
 

@@ -155,6 +155,46 @@ export function formatProblem(p: RoadProblem): string {
   return `${where}: ${p.message}`;
 }
 
+// ---------- what the road never says ----------
+
+/*
+ * The road is written for whole families across the Kurdish and wider Middle Eastern world, and a line that one
+ * family hears as warm another can hear as something else. Two things are held out of every line, in Kurdish and in
+ * English alike: talk of what a character is not as a man or a woman, and any tie between Hamo and Xezal beyond
+ * neighbours in one village. He never calls her his friend, his daughter or niece, his wife or his love, and the
+ * course never has him say it about her. Each pattern looks within one sentence.
+ */
+const NEITHER_MAN_NOR_WOMAN: readonly RegExp[] = [
+  /\bne\s+mêr\b[^.!?]*\bne\s+jin\b/i,
+  /\bne\s+jin\b[^.!?]*\bne\s+mêr\b/i,
+  /\bneither\s+(a\s+)?(man|woman|boy|girl)\b[^.!?]*\bnor\b/i,
+];
+const XEZAL = String.raw`\bxez(o|al|alê)\b`;
+const TIES_KU = String.raw`\b(hevala|hevalê|keça|xwarziya|jina|dergistiya|evîndara|yara)\s+(min|te|wî)\b`;
+const TIES_EN = String.raw`\b(my|his)\s+(friend|best\s+friend|girlfriend|daughter|niece|wife|fiancée|love|sweetheart)\b`;
+const TIED_TO_XEZAL: readonly RegExp[] = [
+  new RegExp(`${XEZAL}[^.!?]*${TIES_KU}`, 'i'),
+  new RegExp(`${TIES_KU}[^.!?]*${XEZAL}`, 'i'),
+  new RegExp(`${XEZAL}[^.!?]*${TIES_EN}`, 'i'),
+  new RegExp(`${TIES_EN}[^.!?]*${XEZAL}`, 'i'),
+];
+
+/** Every string in a document, however deep, with where it sits. */
+function textsIn(v: unknown, path = ''): Array<{ path: string; text: string }> {
+  if (typeof v === 'string') return [{ path, text: v }];
+  if (Array.isArray(v)) return v.flatMap((x, i) => textsIn(x, `${path}[${i}]`));
+  if (isRecord(v)) return Object.entries(v).flatMap(([k, x]) => textsIn(x, path ? `${path}.${k}` : k));
+  return [];
+}
+
+/** What a text says that the road never says, one message for each kind found. */
+export function familyProblems(text: string): string[] {
+  const out: string[] = [];
+  if (NEITHER_MAN_NOR_WOMAN.some((re) => re.test(text))) out.push('says what a character is not as a man or a woman: the road never talks about that');
+  if (TIED_TO_XEZAL.some((re) => re.test(text))) out.push('ties Xezal to Hamo as friend, family or more: they are neighbours in the village, nothing else');
+  return out;
+}
+
 // ---------- Kurdish text ----------
 
 /** What a Kurdish field may contain: the Hawar letters, digits, spaces and the punctuation the course writes. */
@@ -356,6 +396,7 @@ export function checkRoadPlan(plan: RoadPlan): RoadProblem[] {
     for (const f of n.forms ?? []) if (!/^[A-ZÇÊÎŞÛ][a-zçêîşû]+$/.test(f)) add(`name form “${f}” is not a capitalised Hawar word`);
   }
   if (!Array.isArray(plan.doubts)) add('doubts should be a list (empty when there are none)');
+  for (const t of textsIn({ characters: plan.characters, units: plan.units })) for (const m of familyProblems(t.text)) add(`${t.path}: ${m}`);
   if (plan.units?.length !== 12) add(`there should be 12 units, not ${plan.units?.length ?? 0}`);
   const seen = new Map<string, string>();
   (plan.units ?? []).forEach((unit, ui) => {
@@ -571,6 +612,8 @@ export function checkRoad(options: RoadCheckOptions = {}): RoadCheck {
   };
   const courseRecordings = new Map<string, RoadVoice | 'unvoiced'>();
   const idsHere = new Map<string, string>();
+  // the lessons each item is met in, for rule 10
+  const metIn = new Map<number, Set<number>>();
 
   for (const n of wanted) {
     const planUnit = plan.units.find((u) => u.number === n);
@@ -591,11 +634,45 @@ export function checkRoad(options: RoadCheckOptions = {}): RoadCheck {
     }
     stats.units.push(n);
     stats.newItems += planUnit.skills.reduce((s, sk) => s + sk.lessons.reduce((t, l) => t + l.new.length, 0), 0);
-    checkUnit(n, planUnit, raw, plan, lex, problems, stats, courseRecordings, idsHere, idsElsewhere);
+    checkUnit(n, planUnit, raw, plan, lex, problems, stats, courseRecordings, idsHere, idsElsewhere, metIn);
   }
+  problems.push(...returnProblems(lex, stats.units, metIn));
   for (const voice of courseRecordings.values()) stats.recordings[voice] += 1;
   stats.minutes = Math.round((stats.exercises * 15) / 60);
   return { problems, stats };
+}
+
+/**
+ * Where a word must come back after the lesson that brings it in: soon, while it is fresh; again a little later in
+ * the chapter or the next; and again in a later chapter. Gaps that grow are what keep a word, and a word that is met
+ * once and never again is forgotten. A window is held only when every lesson in it was checked, and is cut short
+ * where the course ends.
+ */
+export const ROAD_RETURNS: ReadonlyArray<{ from: number; to: number; say: string }> = [
+  { from: 1, to: 3, say: 'in the three lessons after it' },
+  { from: 4, to: 16, say: '4 to 16 lessons after it' },
+  { from: 17, to: 48, say: 'in a later chapter (17 to 48 lessons after it)' },
+];
+
+// 10: every new word comes back at growing gaps
+function returnProblems(lex: Lexicon, units: readonly number[], metIn: Map<number, Set<number>>): RoadProblem[] {
+  const problems: RoadProblem[] = [];
+  const checked = new Set(lex.lessons.filter((l) => units.includes(l.unit.number)).map((l) => l.index));
+  const last = lex.lessons.length;
+  lex.items.forEach((ie, id) => {
+    if (!checked.has(ie.index)) return;
+    const met = metIn.get(id) ?? new Set<number>();
+    for (const w of ROAD_RETURNS) {
+      const from = ie.index + w.from;
+      const to = Math.min(ie.index + w.to, last);
+      if (from > last) continue;
+      const window = Array.from({ length: to - from + 1 }, (_, i) => from + i);
+      if (!window.every((i) => checked.has(i)) || window.some((i) => met.has(i))) continue;
+      const span = from === to ? lex.lessons[from - 1]!.lesson.key : `${lex.lessons[from - 1]!.lesson.key}–${lex.lessons[to - 1]!.lesson.key}`;
+      problems.push({ unit: lex.byKey.get(ie.lesson)!.unit.number, lesson: ie.lesson, message: `“${ie.item.ku}” does not come back ${w.say}: bring it into ${span}` });
+    }
+  });
+  return problems;
 }
 
 // ---------- the chapters' stories ----------
@@ -649,6 +726,7 @@ export function checkRoadStories(plan: RoadPlan, stories: readonly RoadStoryInpu
       continue;
     }
     for (const p of orthographyProblems(story.title ?? '', false)) at(p, 'title');
+    for (const t of textsIn(story)) for (const m of familyProblems(t.text)) at(m, t.path);
     storyParagraphs(body).forEach((paragraph, pi) => {
       for (const p of orthographyProblems(paragraph.replace(/[“”«»]/g, ''), true)) at(p, `body ¶${pi + 1}`);
     });
@@ -713,6 +791,7 @@ function checkUnit(
   courseRecordings: Map<string, RoadVoice | 'unvoiced'>,
   idsHere: Map<string, string>,
   idsElsewhere: Map<string, number>,
+  metIn: Map<number, Set<number>>,
 ): void {
   const add = (message: string, at: Partial<RoadProblem> = {}): void => {
     problems.push({ unit: n, ...at, message });
@@ -826,6 +905,9 @@ function checkUnit(
         // 8: what it asks, and its line alone
         for (const pr of askProblems(ex)) add(pr.message, { ...eat, field: pr.field });
 
+        // 11: nothing the road never says, in any of its strings
+        for (const t of textsIn(ex.payload)) for (const m of familyProblems(t.text)) add(m, { ...eat, field: `payload.${t.path}` });
+
         // 9: a word marked new is one this lesson brings in, met here for the first time in the lesson
         for (const w of Array.isArray(ex.payload.new) ? ex.payload.new : []) {
           const ku = isRecord(w) && typeof w.ku === 'string' ? w.ku : '';
@@ -887,6 +969,11 @@ function checkUnit(
       if (entry.index > 1 && !exercises.some(PRODUCTION)) add('has no production (translate into Kurdish, writing or speaking)', at);
       if (planLesson.focus === 'meet' && !types.has('match_pairs')) add('a meet lesson has a match_pairs', at);
       if (planLesson.focus === 'talk' && !types.has('conversation')) add('a talk lesson has a conversation', at);
+      for (const id of met.keys()) {
+        const lessons = metIn.get(id);
+        if (lessons) lessons.add(entry.index);
+        else metIn.set(id, new Set([entry.index]));
+      }
       lex.items.forEach((ie, id) => {
         if (ie.lesson === key && (met.get(id) ?? 0) < 3) add(`new item “${ie.item.ku}” is met in ${met.get(id) ?? 0} exercises (at least 3)`, at);
         // the learner sees each new word marked new where it first comes
