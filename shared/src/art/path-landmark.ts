@@ -13,7 +13,8 @@
  * Newroz flame, a bee, the bus stop's sign), and hold it still under Reduce
  * Motion.
  */
-import type { PathLandmark } from '../path-world.js';
+import type { PathGround, PathLandmark } from '../path-world.js';
+import { pathGroundShade } from './path-land.js';
 import { CANVAS, escapeXml, n2, prefixFor, seeded } from './svg.js';
 import { VALLEY, dusk, ellipsePath, fill, stroke, warm, type ValleyLandmark, type ValleyLoopKind } from './valley.js';
 import { VALLEY_LANDMARKS_1 } from './valley-landmarks-1.js';
@@ -43,6 +44,8 @@ export interface PathLandmarkOptions {
   size?: number;
   /** its name for a screen reader; without one the drawing is decorative and hidden */
   title?: string;
+  /** the land it stands on, whose own shade it casts; the meadow's by default */
+  ground?: PathGround;
   idPrefix?: string;
 }
 
@@ -54,7 +57,10 @@ export function pathLandmarkSvg(opts: PathLandmarkOptions): string {
   const size = opts.size ?? CANVAS;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   const prefix = prefixFor(opts.idPrefix, 'landmark', landmark, dark);
-  const body = art.draw(dark, seeded(`valley-landmark|${landmark}`));
+  // drawn standing in the meadow's shade, then given the shade of the land it stands on, so a market's shadow is not grass
+  const meadow = dusk(VALLEY.meadowShade, dark);
+  const shade = opts.ground ? pathGroundShade(opts.ground, dark) : meadow;
+  const body = art.draw(dark, seeded(`valley-landmark|${landmark}`)).split(`fill="${meadow}"`).join(`fill="${shade}"`);
   const label = opts.title
     ? ` role="img" aria-labelledby="${prefix}t"><title id="${prefix}t">${escapeXml(opts.title)}</title>`
     : ' aria-hidden="true" focusable="false">';

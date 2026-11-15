@@ -637,7 +637,6 @@ export function CoursePath({
   const progress = courseProgress(data);
   const list = courses.data?.courses ?? [];
   const current = path.current;
-  const dialect = list.find((c) => c.id === courseId)?.dialect ?? null;
   // the learner stands on the skill to do now — on the one before it until the return has moved on — and hops across
   const was = playing ? ret.from : null;
   const tokenAt = current ? (playing && step! < 4 && was ? was : current) : null;

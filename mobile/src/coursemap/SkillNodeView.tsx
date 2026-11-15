@@ -169,8 +169,8 @@ export function SkillNodeView({
   return (
     <Animated.View style={[styles.stop, { left, top }, lifted]} pointerEvents="box-none">
       <Animated.View style={[StyleSheet.absoluteFill, bob ? { transform: [{ translateY: bob }] } : null]} pointerEvents="box-none">
-        {callout && onStart ? <Callout text={callout.text} label={callout.label} tone={tone} arriving={!!change?.arriving} bobbing={bobbing} onPress={onStart} /> : null}
-        {jump ? <Callout text={jump.text} label={label} tone={tone} arriving={false} bobbing={false} onPress={onPress} /> : null}
+        {callout && onStart ? <Callout text={callout.text} label={callout.label} arriving={!!change?.arriving} bobbing={bobbing} onPress={onStart} /> : null}
+        {jump ? <Callout text={jump.text} label={label} arriving={false} bobbing={false} onPress={onPress} /> : null}
         {raised && stop.kind === 'skill' ? <Progress done={stop.lessonsDone} total={stop.lessonsTotal} from={change?.ringFrom} fill={tone.fill} lights={false} /> : null}
         <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: pop }, { rotate: tilt }] }]} pointerEvents="none">
           {near ? <StopArt look={look} tone={unitTone} part="base" near={near} /> : <View style={[styles.plainLip, { backgroundColor: plainColour(look, tone, rest).lip }]} />}
@@ -260,8 +260,9 @@ function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_I
   if (stop.kind === 'review') return { icon: 'review', colour: ink.paper(tone) };
   if (stop.kind !== 'skill' || look === 'jump') return null;
   switch (stop.state) {
+    // cream on a finished stop's gold, whatever the chapter: what was earned looks the same everywhere
     case 'done':
-      return { icon: stop.finish === 'strong' ? 'star-fill' : 'check', colour: tone.ink };
+      return { icon: stop.finish === 'strong' ? 'star-fill' : 'check', colour: DONE_INK };
     // the learner stands on the current skill: their picture is its glyph
     case 'current':
       return null;
@@ -274,9 +275,14 @@ function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_I
 
 /** A stop far from the screen, drawn as a plain round in the colour its drawing has. */
 function plainColour(look: string, tone: ToneColors, rest: (typeof REST)['dark']): { face: string; lip: string } {
-  if (look === 'done' || look === 'strong' || look === 'current' || look === 'refresh') return { face: tone.fill, lip: tone.lip };
+  if (look === 'done' || look === 'strong' || look === 'refresh') return { face: GOLD_TOKEN.face, lip: GOLD_TOKEN.lip };
+  if (look === 'current') return { face: tone.fill, lip: tone.lip };
   return { face: rest.fill, lip: rest.lip };
 }
+
+/** A finished stop's gold token and its glyph (shared art/path-land.ts), for a stop drawn plain while far from the screen. */
+const GOLD_TOKEN = { face: '#e9a93b', lip: '#b8781f' } as const;
+const DONE_INK = '#fffaf0';
 
 /** A stable name per kind of stop, for tests and for the screenshots that check the path. */
 function testName(stop: Stop): string {
@@ -397,14 +403,12 @@ function Progress({
 function Callout({
   text,
   label,
-  tone,
   arriving,
   bobbing,
   onPress,
 }: {
   text: string;
   label: string;
-  tone: ToneColors;
   /** it has just moved here from the stop before: it fades in once the rest of the path has moved */
   arriving: boolean;
   bobbing: boolean;
@@ -422,15 +426,16 @@ function Callout({
     run.start();
     return () => run.stop();
   }, [reduce, arriving, shown]);
-  const outline = scheme === 'dark' ? '#3a2016' : '#4a2a1a';
+  // by day the valley's ink with cream words; by evening a cream pill with the ink
+  const pill = scheme === 'dark' ? { face: '#fffaf0', edge: '#d6c7a6', words: '#3d2a1f' } : { face: '#3d2a1f', edge: '#24170f', words: '#fffaf0' };
   return (
     <Animated.View style={[styles.calloutWrap, { opacity: shown }]} pointerEvents="box-none" testID={bobbing ? 'lp-callout-bobbing' : undefined}>
-      <View style={[styles.calloutLip, { backgroundColor: tone.lip, borderColor: outline }]}>
-        <PressableScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={6} style={[styles.callout, { backgroundColor: tone.fill, borderColor: outline }]}>
-          <Text style={[styles.calloutText, { color: tone.ink }]}>{text}</Text>
+      <View style={[styles.calloutLip, { backgroundColor: pill.edge }]}>
+        <PressableScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={6} style={[styles.callout, { backgroundColor: pill.face }]}>
+          <Text style={[styles.calloutText, { color: pill.words }]}>{text}</Text>
         </PressableScale>
       </View>
-      <View style={[styles.calloutTip, { backgroundColor: tone.lip, borderColor: outline }]} />
+      <View style={[styles.calloutTip, { backgroundColor: pill.face }]} />
     </Animated.View>
   );
 }
@@ -491,27 +496,24 @@ const styles = StyleSheet.create({
     width: CALLOUT_WIDTH,
     alignItems: 'center',
   },
-  calloutLip: { borderRadius: radii.md, borderWidth: 2, paddingBottom: 4 },
+  calloutLip: { borderRadius: radii.pill, paddingBottom: 3 },
   callout: {
     minHeight: 38,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.md - 2,
-    borderBottomWidth: 2,
+    paddingHorizontal: spacing.md + 2,
+    borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   calloutText: {
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.bold,
-    letterSpacing: 0.4,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
   calloutTip: {
     width: 12,
     height: 12,
-    marginTop: -8,
-    borderRightWidth: 2,
-    borderBottomWidth: 2,
+    marginTop: -9,
     transform: [{ rotate: '45deg' }],
   },
 });

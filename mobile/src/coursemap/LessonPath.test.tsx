@@ -193,24 +193,23 @@ describe('the lesson path', () => {
   });
 
   /*
-   * Each unit's stops stand on its own land: the first unit's has Sêvan's
-   * gate beside its route and Hamo by its chest, and the learner stands on
-   * the stop to do now — once, whatever the path holds. They are pictures: a
-   * screen reader hears the stops, not them.
+   * Each unit's stops stand on its own land in the painted valley: the first
+   * unit's has Sêvan's gate beside its road, and the learner stands on the
+   * stop to do now — once, whatever the path holds. No figure of the course's
+   * people stands on the map: they are in the lessons. The pictures are
+   * decorative: a screen reader hears the stops, not them.
    */
-  it('stands each unit on its own land, with its landmark, its person and the learner on today’s stop', () => {
+  it('stands each unit on its own land, with its landmark and the learner on today’s stop, and no figures pasted on the map', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
     expect(screen.getAllByTestId('lp-land')).toHaveLength(2);
     expect(screen.getByTestId('lp-landmark-gate')).toBeTruthy();
     expect(screen.getByTestId('lp-landmark-teahouse')).toBeTruthy();
     expect(screen.getAllByTestId('lp-learner')).toHaveLength(1);
-    // Hamo keeps both of the first two units: by each one's chest
-    expect(screen.getAllByTestId('lp-host-hamo')).toHaveLength(2);
+    expect(screen.queryByTestId('lp-host-hamo')).toBeNull();
     // the stop to do now carries its lessons as lights on its side, one each
     expect(screen.getByTestId('lp-lights').children).toHaveLength(3);
     for (const id of ['lp-learner', 'lp-landmark-gate']) expect(screen.getByTestId(id).closest('[aria-hidden="true"]')).toBeTruthy();
-    expect(screen.getAllByTestId('lp-host-hamo')[0]!.closest('[aria-hidden="true"]')).toBeTruthy();
   });
 
   it('draws only the units it is told are near in full, and the rest as their ground alone', () => {

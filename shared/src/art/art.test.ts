@@ -1586,7 +1586,7 @@ describe('the lesson path’s world', () => {
     // every look its own: the stop to do now in its chapter's colour, a finished one in gold
     const looks = PATH_STOP_LOOKS.map((look) => (['base', 'face'] as const).map((part) => pathStopSvg({ look, tone: 'clay', part, idPrefix: 's' })).join(''));
     expect(new Set(looks).size).toBe(PATH_STOP_LOOKS.length);
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain('#b84a37');
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain('#a9532f');
     expect(pathStopSvg({ look: 'current', tone: 'river', part: 'face' })).toContain('#2a6a93');
     // gold is gold in every chapter: what was earned looks the same wherever it was earned
     expect(pathStopSvg({ look: 'done', tone: 'river', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));

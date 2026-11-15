@@ -117,6 +117,13 @@ export function pathGroundColour(ground: PathGround, dark = false): string {
   return dusk(land.base, dark);
 }
 
+/** The shade things cast on a land's ground, by day or by evening: a landmark stands in it as the trees do. */
+export function pathGroundShade(ground: PathGround, dark = false): string {
+  const land = LANDS[ground];
+  if (!land) throw new RangeError(`art: no ground ${String(ground)}`);
+  return dusk(land.shade, dark);
+}
+
 /** The road's widths: its edge, the track, and the two worn ruts in it. */
 const ROAD = { edge: 46, face: 38, ruts: 20 } as const;
 
@@ -507,7 +514,7 @@ export const PATH_STOP_TONES: Record<'light' | 'dark', Record<UnitTone, { fill: 
   light: {
     meadow: { fill: '#2e7a52', lip: '#1f5739' },
     river: { fill: '#2a6a93', lip: '#1c4c6b' },
-    clay: { fill: '#b84a37', lip: '#8a3427' },
+    clay: { fill: '#a9532f', lip: '#7d3c21' },
     dusk: { fill: '#6551a6', lip: '#493a7d' },
     pine: { fill: '#56692b', lip: '#3e4c1e' },
     rose: { fill: '#a3446b', lip: '#78304e' },

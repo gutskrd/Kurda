@@ -61,12 +61,12 @@ export const REST: Record<ColorScheme, { fill: string; lip: string; ink: string;
 
 /**
  * The glyph on a stop's drawn face where the face is not the unit's colour:
- * on an open stop's parchment (deep by day, the unit's ink by evening, when
- * the parchment stays light) and on a closed one's field stone.
+ * on an open stop's cream (the unit's deep colour by day; by evening the
+ * cream stays light, so the valley's ink) and on a closed one's field stone.
  */
 export const FACE_INK: Record<ColorScheme, { paper: (tone: ToneColors) => string; stone: string }> = {
-  light: { paper: (tone) => tone.text, stone: '#6a6252' },
-  dark: { paper: (tone) => tone.ink, stone: '#e2e3e8' },
+  light: { paper: (tone) => tone.text, stone: '#857861' },
+  dark: { paper: () => '#3d2a1f', stone: '#d6d2dc' },
 };
 
 /** The sun's gold under an earned trophy. */

@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import {
   PATH_LANDMARK_LOOP,
   PATH_STOP_ART,
@@ -162,7 +162,7 @@ export function UnitLand({
 
 /** A unit's landmark, and over it its loop, which the stylesheet moves while the unit is in view. */
 function Landmark({ land, box, dark }: { land: PathLand; box: PathBox; dark: boolean }): React.JSX.Element {
-  const picture = useMemo(() => ({ __html: pathLandmarkSvg({ landmark: land.landmark, dark, size: box.w }) }), [land.landmark, dark, box.w]);
+  const picture = useMemo(() => ({ __html: pathLandmarkSvg({ landmark: land.landmark, ground: land.ground, dark, size: box.w }) }), [land.landmark, land.ground, dark, box.w]);
   const loop = PATH_LANDMARK_LOOP[land.landmark];
   const s = box.w / 120;
   const sprite = useMemo(() => ({ __html: pathLoopSvg({ kind: loop.kind, dark, size: loop.w * s }) }), [loop, dark, s]);

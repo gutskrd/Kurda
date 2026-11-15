@@ -6,7 +6,6 @@ import {
   PATH_GEOMETRY,
   PATH_MOTION,
   PATH_RETURN,
-  hostBox,
   lean,
   lessonPath,
   mascotSpot,
@@ -36,7 +35,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { JumpSheet } from './JumpSheet';
 import { REST, TONES, stopLabel, type ToneColors } from './path';
 import { MASCOT_MIN_WIDTH, PathMascot } from './PathMascot';
-import { LearnerToken, PathHostView, UnitLand, UpcomingSign } from './PathWorld';
+import { LearnerToken, UnitLand, UpcomingSign } from './PathWorld';
 import { SkillNodeView, type StopChange } from './SkillNodeView';
 import { StopSheet } from './StopSheet';
 import { UnitGuide } from './UnitGuide';
@@ -142,7 +141,6 @@ export const LessonPath = memo(function LessonPath({
   near,
   seen,
   inView,
-  dialect = null,
   onOpenRail,
 }: {
   map: CourseMap;
@@ -156,8 +154,6 @@ export const LessonPath = memo(function LessonPath({
   seen?: ReadonlySet<string> | null;
   /** the unit in the middle of the screen: the one that moves */
   inView?: string | null;
-  /** the course's Kurdish, for the words its people say */
-  dialect?: string | null;
   /** open the rail of every unit, from a unit banner's map button */
   onOpenRail?: () => void;
 }): React.JSX.Element {
@@ -339,11 +335,8 @@ export const LessonPath = memo(function LessonPath({
         const full = drawn.has(unit.unitId);
         const rise = riseOf(unit);
         const riseTotal = PATH_MOTION.riseMs + PATH_MOTION.riseEach * unit.stops.length;
-        const mascotHere = unit.stops.find((p) => p.stop.key === mascotAt);
-        const host = full && width > 0 ? hostBox(unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y })), width, mascotHere ? { key: mascotHere.stop.key, x: mascotHere.x, y: mascotHere.y } : null) : null;
         const tokenHere = unit.stops.find((p) => p.stop.key === tokenAt) ?? null;
         const fromHere = hopFrom ? (unit.stops.find((p) => p.stop.key === hopFrom) ?? null) : null;
-        const last = unit.stops[unit.stops.length - 1];
         const cx = (x: number): number => width / 2 + sign * x;
         return (
           <View
@@ -372,17 +365,6 @@ export const LessonPath = memo(function LessonPath({
                 {width > 0 ? (
                   <>
                     <UnitLand unit={unit} land={land} width={width} sign={sign} near={full} live={moving(unit.unitId)} fresh={freshTrail} />
-                    {host && last ? (
-                      <PathHostView
-                        host={land.host}
-                        box={host.box}
-                        left={cx(host.box.x) - host.box.w / 2}
-                        flip={cx(host.box.x) > cx(last.x)}
-                        live={moving(unit.unitId)}
-                        praise={unit.done > 0 || unit.unitId === unitOfCurrent}
-                        dialect={dialect}
-                      />
-                    ) : null}
                     {unit.stops.map((placed, k) => {
                       const jumpHere = unit.jumpKey === placed.stop.key;
                       const from = (k * PATH_MOTION.riseEach) / riseTotal;
@@ -584,12 +566,12 @@ function Banner({ unit, tone, onRail }: { unit: Unit; tone: ToneColors; onRail?:
   const dir = useDirection();
   const { scheme } = useTheme();
   return (
-    <View style={[styles.bannerLip, { backgroundColor: tone.lip, borderColor: OUTLINE[scheme] }]}>
-      <View style={[styles.banner, { backgroundColor: tone.fill }]}>
+    <View style={[styles.bannerLip, { backgroundColor: CARD[scheme].edge }]}>
+      <View style={[styles.banner, { backgroundColor: CARD[scheme].paper }]}>
         <View style={[styles.bannerHead, { flexDirection: dir.row }]}>
           <View style={styles.bannerWords} accessible accessibilityRole="header" accessibilityLabel={unitHeading(t('coursemap.path.unit', { n: unit.number }), unit.title)}>
-            <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{t('coursemap.path.unit', { n: unit.number })}</Text>
-            <Text style={[styles.bannerTitle, dir.text, { color: tone.ink }]}>{unit.title}</Text>
+            <Text style={[styles.eyebrow, dir.text, { color: tone.text }]}>{t('coursemap.path.unit', { n: unit.number })}</Text>
+            <Text style={[styles.bannerTitle, dir.text, { color: CARD[scheme].ink }]}>{unit.title}</Text>
           </View>
           {onRail ? (
             <Pressable
@@ -597,21 +579,28 @@ function Banner({ unit, tone, onRail }: { unit: Unit; tone: ToneColors; onRail?:
               accessibilityRole="button"
               accessibilityLabel={t('learn.map.title')}
               testID="lp-unit-rail"
-              style={({ pressed }) => [styles.railButton, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? pressedDim : 1 }]}
+              style={({ pressed }) => [styles.railButton, { backgroundColor: `${tone.text}1F`, opacity: pressed ? pressedDim : 1 }]}
             >
-              <Icon name="flag" size={20} color={tone.ink} />
+              <Icon name="flag" size={20} color={tone.text} />
             </Pressable>
           ) : null}
         </View>
-        {unit.topics.length > 0 ? <Text style={[styles.topics, dir.text, { color: tone.ink }]}>{unit.topics.join(' · ')}</Text> : null}
-        <Text style={[styles.count, styles.countLine, dir.text, { color: tone.ink }]}>{t('coursemap.path.unitDone', { done: unit.done, total: unit.total })}</Text>
+        {unit.topics.length > 0 ? <Text style={[styles.topics, dir.text, { color: CARD[scheme].muted }]}>{unit.topics.join(' · ')}</Text> : null}
+        <Text style={[styles.count, styles.countLine, dir.text, { color: CARD[scheme].ink }]}>{t('coursemap.path.unitDone', { done: unit.done, total: unit.total })}</Text>
       </View>
     </View>
   );
 }
 
-/** The one ink the banners are outlined in, as the stops and the land are (shared art/path-land.ts). */
-const OUTLINE = { light: '#4a2a1a', dark: '#3a2016' } as const;
+/**
+ * A chapter's card in the painted valley's paper (shared art/valley.ts): cream
+ * by day, a warm night card by evening, its edge a step darker under it, its
+ * words in the valley's ink and its eyebrow in the chapter's own colour.
+ */
+const CARD = {
+  light: { paper: '#fffaf0', edge: '#e6d6b4', ink: '#3d2a1f', muted: '#7b6a58' },
+  dark: { paper: '#2a231d', edge: '#1a1512', ink: '#f1e8d8', muted: '#b8a892' },
+} as const;
 
 /** "Unit 2, Family & Food": a unit's number and name, said as one heading. */
 function unitHeading(number: string, title: string): string {
@@ -768,15 +757,15 @@ const styles = StyleSheet.create({
   dividerText: { ...sectionLabel },
   // edge to edge: the land runs under the page's gutters to the screen's sides, and a little under the banner above it
   path: { position: 'relative', marginHorizontal: -layout.gutter, marginTop: -spacing.md },
-  bannerLip: { borderRadius: radii.xl, paddingBottom: BANNER_LIP, borderWidth: 2, zIndex: 2 },
-  banner: { borderRadius: radii.xl - 2, paddingVertical: spacing.md + 2, paddingHorizontal: spacing.lg, gap: 2 },
+  bannerLip: { borderRadius: 18, paddingBottom: BANNER_LIP, zIndex: 2 },
+  banner: { borderRadius: 18, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, gap: 2 },
   bannerHead: { alignItems: 'flex-start', gap: spacing.sm },
   bannerWords: { flex: 1 },
   countLine: { marginTop: spacing.xs },
   railButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', marginEnd: -spacing.sm },
-  eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.86 },
+  eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1.6, textTransform: 'uppercase' },
   bannerTitle: { ...display(typography.sizes.lg) },
-  topics: { fontSize: typography.sizes.sm, opacity: 0.9, marginTop: 2 },
+  topics: { fontSize: typography.sizes.sm, marginTop: 2 },
   bannerFoot: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.sm },
   count: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   guide: { alignItems: 'center', gap: 6, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, borderRadius: radii.pill },
