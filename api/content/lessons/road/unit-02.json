@@ -469,10 +469,10 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Jina min? Ew li vir e: simbêlê min!",
-                    "prompt": "Hamo lifts the end of his moustache and answers Dapîr with great dignity: “Jina min? Ew li vir e: simbêlê min!” What does he say?",
+                    "say": "Jina min? Ew li vir e, simbêlê min!",
+                    "prompt": "Hamo lifts the end of his moustache and answers Dapîr with great dignity: “Jina min? Ew li vir e, simbêlê min!” What does he say?",
                     "options": [
-                      "My wife? She is right here: my moustache!",
+                      "My wife? She is right here, my moustache!",
                       "My wife? She is at the market.",
                       "My wife? She is asleep."
                     ],
@@ -623,8 +623,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ciwan û xweşik! Û ji kerema xwe: bê wêne!",
-                        "en": "Young and handsome! And please: no more photos! (he slips the old one into his pocket)"
+                        "text": "Ciwan û xweşik! Û ji kerema xwe, bê wêne!",
+                        "en": "Young and handsome! And please, no more photos! (he slips the old one into his pocket)"
                       }
                     ],
                     "prompt": "Who is the young man without a moustache in the old photo?",
@@ -890,7 +890,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ji me re? Ji Nazê, ji Dapîrê, ji Baran…?",
+                        "text": "Ji me re? Ji Nazê re, ji Dapîrê re, ji Baran re…?",
                         "en": "Between us? Nazê, Dapîr, Baran…?"
                       },
                       {
@@ -930,8 +930,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo! Baran li vir e: Bozo ne li malê ye!",
-                        "en": "Xalo! Baran is here: Bozo is not in the stable!"
+                        "text": "Xalo! Baran li vir e. Bozo ne li malê ye!",
+                        "en": "Xalo! Baran is here. Bozo is not at home!"
                       },
                       {
                         "speaker": 0,
@@ -1924,8 +1924,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Xezal? Na. Xezal li mala Dapîrê ye: ew ne mêvan e, ew malbat e!",
-                        "en": "Xezal? No. Xezal lives at Dapîr’s: she isn’t a guest, she is family!"
+                        "text": "Xezal? Na. Mala wê mala Dapîrê ye. Ew ne mêvan e, malbat e!",
+                        "en": "Xezal? No. Her home is Dapîr’s home. She isn’t a guest, she is family!"
                       },
                       {
                         "speaker": 1,
@@ -2252,11 +2252,11 @@
                   "payload": {
                     "prompt": "The hens finally stand still. Answer Hamo’s question “Mirîşk çend in?”: “They are five.”",
                     "accepted": [
-                      "Ew pênc in.",
                       "Pênc in.",
+                      "Ew pênc in.",
                       "Pênc mirîşk in.",
-                      "Ew pênc in",
                       "Pênc in",
+                      "Ew pênc in",
                       "Pênc mirîşk in"
                     ],
                     "voice": "hamo"
@@ -2705,8 +2705,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ji kerema xwe! Dapîr li vir e… Dapîr bîst salî ye!",
-                        "en": "Please! Dapîr is right here… Dapîr is twenty! (Dapîr is listening, and nodding)"
+                        "text": "Wey! Dapîr li vir e… Dapîr bîst salî ye!",
+                        "en": "Careful! Dapîr is right here… Dapîr is twenty! (Dapîr is listening, and nodding)"
                       },
                       {
                         "speaker": 1,
@@ -3147,8 +3147,8 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ev çi ye? Ew ya kê ye?",
-                    "prompt": "At the very bottom of the chest Xezal finds something small, iron and very old, and hands it to Hamo. He turns it over, puzzled: “Ev çi ye? Ew ya kê ye?” What does he ask?",
+                    "say": "Ev çi ye? Ya kê ye?",
+                    "prompt": "At the very bottom of the chest Xezal finds something small, iron and very old, and hands it to Hamo. He turns it over, puzzled: “Ev çi ye? Ya kê ye?” What does he ask?",
                     "options": [
                       "What is this? Whose is it?",
                       "What is this? Is it new?",
@@ -3226,12 +3226,12 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Birayekî min heye: Evdila.",
-                    "prompt": "Baran asks Hamo the same. Hamo nods towards the mountains, and Kobanî far beyond them: “Birayekî min heye: Evdila.” What does he say?",
+                    "say": "Birayekî min heye, navê wî Evdila ye.",
+                    "prompt": "Baran asks Hamo the same. Hamo nods towards the mountains, and Kobanî far beyond them: “Birayekî min heye, navê wî Evdila ye.” What does he say?",
                     "options": [
-                      "I have a brother: Evdila.",
+                      "I have a brother called Evdila.",
                       "I don’t have a brother.",
-                      "My brother is here: Evdila."
+                      "My brother Evdila is here."
                     ],
                     "correctIndex": 0,
                     "voice": "hamo"
@@ -3459,11 +3459,11 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Kerekî me heye: Bozo!",
-                    "prompt": "Baran tops it at once: Xalo Hamo has a donkey! Hamo laughs and says it for you: “Kerekî me heye: Bozo!” What is there at Hamo’s?",
+                    "say": "Kerekî me jî heye, navê wî Bozo ye!",
+                    "prompt": "Baran tops it at once: Xalo Hamo has a donkey! Hamo laughs and says it for you: “Kerekî me jî heye, navê wî Bozo ye!” What is there at Hamo’s?",
                     "options": [
-                      "A donkey: Bozo!",
-                      "A dog: Bozo!",
+                      "A donkey called Bozo",
+                      "A dog called Bozo",
                       "No donkey"
                     ],
                     "correctIndex": 0,

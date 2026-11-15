@@ -315,8 +315,8 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Pêlava Hamo li serşokê ye.",
-                    "prompt": "Hevalo trots out of the bathroom with something in his mouth. Listen: what was in there? “Pêlava Hamo li serşokê ye.”",
+                    "say": "Pêlava min li serşokê ye?!",
+                    "prompt": "Hamo looks into the bathroom and cannot believe his eyes. Listen: what is in there? “Pêlava min li serşokê ye?!”",
                     "options": [
                       "Hamo’s hat is in the bathroom.",
                       "Hamo’s shoe is in the bathroom.",
@@ -906,8 +906,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Spas, xalo. Mal hêsan e, lê nîşan li derve ye.",
-                        "en": "Thanks, Xalo. The house is easy, but the mark is outside."
+                        "text": "Spas, xalo. Lê nîşan li derve ye, ne li hundir.",
+                        "en": "Thanks, Xalo. But the mark is outside, not inside."
                       },
                       {
                         "speaker": 0,
@@ -1584,8 +1584,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Sêva sor! Şîrîn e, xweş e: mêweyeke baş!",
-                        "en": "The red apple! Sweet, tasty: a proper fruit!"
+                        "text": "Sêva sor! Şîrîn e, xweş e, mêweyeke baş e!",
+                        "en": "The red apple! Sweet, tasty, a proper fruit!"
                       },
                       {
                         "speaker": 1,
@@ -1599,8 +1599,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Tu şaş î, xalo. Tirş xweş e!",
-                        "en": "You are wrong, Xalo. Sour is nice!"
+                        "text": "Tu şaş î, xalo. Sêva tirş xweş e!",
+                        "en": "You are wrong, Xalo. A sour apple is nice!"
                       },
                       {
                         "speaker": 0,
@@ -1609,8 +1609,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Hevalo… sor? Kesk? Hevalo, na: herdu jî?!",
-                        "en": "Hevalo… red? Green? Hevalo, no: both?! (the deer eats one of each)"
+                        "text": "Hevalo… sor? Kesk? Hevalo, na! Herdu jî?!",
+                        "en": "Hevalo… red? Green? Hevalo, no! Both?! (the deer eats one of each)"
                       },
                       {
                         "speaker": 0,
@@ -2286,7 +2286,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Nexşe di sindoqê de ye.",
-                    "prompt": "Xezal asks where the map was kept all these years. What does Hamo say? “Nexşe di sindoqê de ye.”",
+                    "prompt": "Xezal cannot find the map anywhere. Hamo lifts the lid of the old box. What does he say? “Nexşe di sindoqê de ye.”",
                     "options": [
                       "The map is in the box.",
                       "The map is on the box.",

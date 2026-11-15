@@ -582,8 +582,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Fermo, hevalo: sêv!",
-                        "en": "Here you are, my friend: an apple! (and the deer hears his name)"
+                        "text": "Fermo, hevalo, sêvek!",
+                        "en": "Here you are, my friend, an apple! (and the deer hears his name)"
                       },
                       {
                         "speaker": 1,
@@ -894,11 +894,11 @@
                   "payload": {
                     "prompt": "Hamo asks “Çay xweş e?”. Answer him: “Yes, it is nice.”",
                     "accepted": [
-                      "Erê, ew xweş e.",
                       "Erê, xweş e.",
+                      "Erê, ew xweş e.",
                       "Erê, çay xweş e.",
-                      "Erê, ew xweş e",
                       "Erê, xweş e",
+                      "Erê, ew xweş e",
                       "Erê, çay xweş e"
                     ],
                     "voice": "hamo"
@@ -1540,8 +1540,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Xezo, fermo: çay!",
-                        "en": "Xezo, here: tea! (Xezal glares at him)"
+                        "text": "Xezo, fermo, çay!",
+                        "en": "Xezo, here you are, tea! (Xezal glares at him)"
                       },
                       {
                         "speaker": 1,
@@ -1757,8 +1757,8 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ew Şêro ye. Ew kûçik e.",
-                    "prompt": "Hamo points at a big shaggy dog by the gate: “Ew Şêro ye. Ew kûçik e.” What is Şêro?",
+                    "say": "Ew Şêro ye, kûçikê min e.",
+                    "prompt": "Hamo points at a big shaggy dog by the gate: “Ew Şêro ye, kûçikê min e.” What is Şêro?",
                     "options": [
                       "a dog",
                       "a cat",
@@ -1801,8 +1801,8 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ew Bozo ye, ew ker e.",
-                    "prompt": "A grey head looks over the stable door. Hamo: “Ew Bozo ye, ew ker e.” What is Bozo?",
+                    "say": "Ew Bozo ye, kerê min e.",
+                    "prompt": "A grey head looks over the stable door. Hamo: “Ew Bozo ye, kerê min e.” What is Bozo?",
                     "options": [
                       "a donkey",
                       "a dog",
@@ -1830,8 +1830,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Ew Şêro ye. Ew kûçik e.",
-                        "en": "That is Şêro. He is a dog."
+                        "text": "Ew Şêro ye, kûçikê min e.",
+                        "en": "That is Şêro, my dog."
                       },
                       {
                         "speaker": 1,
@@ -2581,8 +2581,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Amed bajar e. Sêvan gund e: gundekî pir xweşik!",
-                        "en": "Amed is a city. Sêvan is a village: a very beautiful village!"
+                        "text": "Amed bajar e. Sêvan gundek e, gundekî pir xweşik!",
+                        "en": "Amed is a city. Sêvan is a village, a very beautiful village!"
                       },
                       {
                         "speaker": 1,
@@ -2793,8 +2793,8 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ew Ferhad e. Ew cîran e.",
-                    "prompt": "A man waves from the next roof. Hamo waves back: “Ew Ferhad e. Ew cîran e.” Who is Ferhad?",
+                    "say": "Ew Ferhad e, cîranê min e.",
+                    "prompt": "A man waves from the next roof. Hamo waves back: “Ew Ferhad e, cîranê min e.” Who is Ferhad?",
                     "options": [
                       "the neighbour",
                       "a guest",
@@ -3349,8 +3349,8 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hevalo ne baş e! Ew xemgîn e… ew birçî ye!",
-                    "prompt": "Hevalo stamps a hoof in protest, and Hamo puts it into words for him: “Hevalo ne baş e! Ew xemgîn e… ew birçî ye!” What is wrong with the deer?",
+                    "say": "Hevalo ne baş e! Xemgîn e… birçî ye!",
+                    "prompt": "Hevalo stamps a hoof in protest, and Hamo puts it into words for him: “Hevalo ne baş e! Xemgîn e… birçî ye!” What is wrong with the deer?",
                     "options": [
                       "He is not well: he is sad, and hungry!",
                       "He is well, but tired.",
@@ -3618,8 +3618,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Êvar baş! Fermo: çay û şekir.",
-                        "en": "Good evening! Here you are: tea and sugar."
+                        "text": "Êvar baş! Fermo, çay û şekir.",
+                        "en": "Good evening! Here you are, tea and sugar."
                       },
                       {
                         "speaker": 1,
@@ -3628,8 +3628,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Hinek sar? Na! Şev e, gund pir sar e, ez li baxçe me, tenê…",
-                        "en": "A little cold? No! Picture it: it is night, the village is freezing, and I am in the orchard, alone…"
+                        "text": "Hinek sar? Na! Bi şev gund pir sar e, ez li baxçe me, tenê…",
+                        "en": "A little cold? No! At night the village is freezing, and here I am in the orchard, alone…"
                       },
                       {
                         "speaker": 1,
@@ -3654,7 +3654,7 @@
                       {
                         "speaker": 1,
                         "text": "Ew jî sar e? Xalo, ew ne rast e!",
-                        "en": "That was cold too? Xalo, that isn’t true!"
+                        "en": "That gets cold too? Xalo, that isn’t true!"
                       },
                       {
                         "speaker": 0,
@@ -3925,8 +3925,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Sibe cîran li vir in: Nazê, Baran, Hêvî… hemû!",
-                        "en": "Tomorrow the neighbours will be here: Nazê, Baran, Hêvî… all of them!"
+                        "text": "Sibe cîran li vir in. Nazê, Baran, Hêvî… hemû!",
+                        "en": "Tomorrow the neighbours will be here. Nazê, Baran, Hêvî… all of them!"
                       },
                       {
                         "speaker": 1,

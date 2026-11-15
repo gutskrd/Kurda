@@ -333,8 +333,8 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "say": "Xezal dibêje: dengê min bilind e, ez gelek diaxivim!",
-                    "prompt": "Xezal rolls her eyes and whispers something to you about Hamo. Hamo hears every word and laughs. What does he say? “Xezal dibêje: dengê min bilind e, ez gelek diaxivim!”",
+                    "say": "Xezal dibêje ku dengê min bilind e û ez gelek diaxivim!",
+                    "prompt": "Xezal rolls her eyes and whispers something to you about Hamo. Hamo hears every word and laughs. What does he say? “Xezal dibêje ku dengê min bilind e û ez gelek diaxivim!”",
                     "accepted": [
                       "Xezal says my voice is loud, I talk a lot",
                       "Xezal says my voice is loud and I talk a lot",
@@ -387,8 +387,8 @@
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Hevalo, ez dibêjim: ev çem kûr e!",
-                    "prompt": "Hevalo leans over the bank to sniff the water, and Hamo pulls him back by the ear. What does he say about the river? “Hevalo, ez dibêjim: ev çem kûr e!”",
+                    "say": "Hevalo, ez ji te re dibêjim, ev çem kûr e!",
+                    "prompt": "Hevalo leans over the bank to sniff the water, and Hamo pulls him back by the ear. What does he say about the river? “Hevalo, ez ji te re dibêjim, ev çem kûr e!”",
                     "options": [
                       "The river is long.",
                       "The river is deep.",
@@ -469,7 +469,7 @@
                     "options": [
                       "Bozo gelek diaxive.",
                       "Bozo li kulîlkê dinêre û bêdeng e.",
-                      "Bozo dibêje: «Erê!»"
+                      "Bozo dibêje erê."
                     ],
                     "correctIndex": 1
                   }
@@ -593,8 +593,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Mêwe. Û ew çay jî dide, ji bo hevalan.",
-                        "en": "Fruit. And he gives tea too, to his friends."
+                        "text": "Mêwe. Çay jî dide hevalan.",
+                        "en": "Fruit. And he gives his friends tea, too."
                       },
                       {
                         "speaker": 1,
@@ -603,8 +603,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo? Ew baş e. Ew tenê li sêvan dinêre.",
-                        "en": "Hevalo? He’s fine. He’s only looking at the apples."
+                        "text": "Hevalo? Ew tenê li sêvan dinêre.",
+                        "en": "Hevalo? He’s only looking at the apples."
                       },
                       {
                         "speaker": 1,
@@ -882,8 +882,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ew dibêje: «Deynê min hîn li ser te ye!»",
-                        "en": "He says: “You still owe me!”"
+                        "text": "Ew dibêje ku deynê wî hîn li ser te ye!",
+                        "en": "He says you still owe him!"
                       },
                       {
                         "speaker": 0,
@@ -950,11 +950,12 @@
                   "position": 7,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hamo does his best grumpy Mîrza voice for you, then bursts out laughing. Type what he says.",
+                    "prompt": "Hamo tells you what Mîrza keeps grumbling about, then bursts out laughing. Type what he says.",
                     "accepted": [
-                      "Mîrza dibêje: deynê min li ser te ye!",
-                      "Mîrza dibêje: deynê min li ser te ye",
-                      "Mîrza dibêje deynê min li ser te ye"
+                      "Mîrza dibêje ku deynê wî li ser min e!",
+                      "Mîrza dibêje ku deynê wî li ser min e",
+                      "Mîrza dibêje deynê wî li ser min e!",
+                      "Mîrza dibêje deynê wî li ser min e"
                     ],
                     "voice": "hamo"
                   }
@@ -1306,8 +1307,8 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Xezal dibêje: ez dikarim!",
-                    "prompt": "Hamo looks at the pile of bags. Xezal rolls up her sleeves, and Hamo turns to you, amused. What does he say? “Xezal dibêje: ez dikarim!”",
+                    "say": "Xezal dibêje ku ew dikare!",
+                    "prompt": "Hamo looks at the pile of bags. Xezal rolls up her sleeves, and Hamo turns to you, amused. What does he say? “Xezal dibêje ku ew dikare!”",
                     "options": [
                       "Xezal says she can do it!",
                       "Xezal says she can’t!",
@@ -1625,8 +1626,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Mîrza dibêje: «Yên îro ne!»",
-                        "en": "Mîrza says: “They’re today’s!”"
+                        "text": "Mîrza dibêje ku yên îro ne!",
+                        "en": "Mîrza says they’re today’s!"
                       },
                       {
                         "speaker": 1,
@@ -1946,8 +1947,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Mîrza ye! Ew dibêje: «Sêvên min li ku ne?!»",
-                        "en": "It’s Mîrza! He’s shouting: “Where are my apples?!”"
+                        "text": "Mîrza ye! Ew li sêvên xwe digere!",
+                        "en": "It’s Mîrza! He’s looking for his apples!"
                       },
                       {
                         "speaker": 1,
@@ -2273,9 +2274,9 @@
                   "payload": {
                     "prompt": "Hamo reads three price boards in a row. Type what he says.",
                     "accepted": [
-                      "Çil, pêncî, şêst… Ev bazar e an zêr e?!",
-                      "Çil, pêncî, şêst… Ev bazar e an zêr e",
-                      "Çil pêncî şêst… Ev bazar e an zêr e"
+                      "Çil, pêncî, şêst… Ev bazar e an dikana zêr e?!",
+                      "Çil, pêncî, şêst… Ev bazar e an dikana zêr e",
+                      "Çil pêncî şêst… Ev bazar e an dikana zêr e"
                     ],
                     "voice": "hamo"
                   }
@@ -2678,8 +2679,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xalo, ew dibêje: bi sed û pêncî.",
-                        "en": "Uncle, he says a hundred and fifty."
+                        "text": "Xalo, ew dibêje bi sed û pêncî ye.",
+                        "en": "Uncle, he says it’s a hundred and fifty."
                       },
                       {
                         "speaker": 0,
@@ -2688,8 +2689,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ew dibêje: «Mixabin, sed kêm e.»",
-                        "en": "He says: “Sorry, a hundred is too little.”"
+                        "text": "Ew dibêje ku sed kêm e.",
+                        "en": "He says a hundred is too little."
                       },
                       {
                         "speaker": 0,
@@ -2708,8 +2709,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ew dibêje: «Mîrza, ev çaydank kevn e. Bi heştê?»",
-                        "en": "She says: “Mîrza, this teapot is old. Eighty?”"
+                        "text": "Ew dibêje ku çaydank kevn e. Bi heştê dixwaze!",
+                        "en": "She says the teapot is old. She wants it for eighty!"
                       },
                       {
                         "speaker": 0,
@@ -2718,8 +2719,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Mîrza dibêje: «Baş e, baş e! Ji bo Xezalê, bi heştê.»",
-                        "en": "Mîrza says: “OK, OK! For Xezal, eighty.”"
+                        "text": "Mîrza dibêje baş e! Ji bo Xezalê, bi heştê.",
+                        "en": "Mîrza says OK! For Xezal, eighty."
                       },
                       {
                         "speaker": 0,
@@ -3051,8 +3052,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Hejmar rast e?",
-                        "en": "Is the number right?"
+                        "text": "Hejmara pereyan rast e?",
+                        "en": "Is the count of the money right?"
                       },
                       {
                         "speaker": 0,
@@ -3699,7 +3700,7 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "The whole market gathers round. Xezal, the lawyer, holds up a piece of cardboard for everyone to read: “Pirsa min ev e: sêv li ku ne?” What does it say?",
+                    "prompt": "The whole market gathers round. Xezal, the lawyer, holds up a piece of cardboard for everyone to read: “Pirsa min ev e, sêv li ku ne?” What does it say?",
                     "options": [
                       "My question is this: where are the apples?",
                       "My answer is this: the apples are here.",
@@ -3755,13 +3756,13 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Xalo, pirsa min ev e: sêv li ku ne?",
+                        "text": "Xalo, pirsa min ev e, sêv li ku ne?",
                         "en": "Uncle, my question is this: where are the apples?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Pirs baş e. Lê bersiv… kes nizane!",
-                        "en": "Good question. But the answer… nobody knows!"
+                        "text": "Pirseke baş e. Lê bersiv… kes nizane!",
+                        "en": "It’s a good question. But the answer… nobody knows!"
                       },
                       {
                         "speaker": 1,
@@ -4047,11 +4048,13 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "say": "Barê Hevalo sivik e: tenê sêvek!",
-                    "prompt": "Hevalo trots along, carrying almost nothing. What does Hamo say? “Barê Hevalo sivik e: tenê sêvek!”",
+                    "say": "Barê Hevalo sivik e, tenê sêvek e!",
+                    "prompt": "Hevalo trots along, carrying almost nothing. What does Hamo say? “Barê Hevalo sivik e, tenê sêvek e!”",
                     "accepted": [
-                      "Hevalo’s load is light: just one apple",
-                      "Hevalo's load is light: only one apple",
+                      "Hevalo’s load is light, it’s just one apple",
+                      "Hevalo's load is light, it's just one apple",
+                      "Hevalo's load is light, just one apple",
+                      "Hevalo's load is light, only one apple",
                       "Hevalo's load is light, just an apple",
                       "Hevalo's load is light: only an apple"
                     ],
@@ -4144,8 +4147,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê! Û diya me dibêje: hûn hemû tên!",
-                        "en": "Yes! And our mother says: you are all coming!"
+                        "text": "Erê! Û diya me dibêje ku hûn hemû tên!",
+                        "en": "Yes! And our mother says you are all coming!"
                       },
                       {
                         "speaker": 1,
@@ -4236,8 +4239,8 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Bozo bi lez naçe; barê wî giran e.",
-                    "prompt": "Hevalo keeps looking back at Bozo, puzzled: why is he so slow? Hamo explains. What does he say? “Bozo bi lez naçe; barê wî giran e.”",
+                    "say": "Bozo bi lez naçe, barê wî giran e.",
+                    "prompt": "Hevalo keeps looking back at Bozo, puzzled: why is he so slow? Hamo explains. What does he say? “Bozo bi lez naçe, barê wî giran e.”",
                     "options": [
                       "Bozo is going fast; his load is light.",
                       "Bozo isn’t going fast; his load is heavy.",

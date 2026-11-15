@@ -346,7 +346,7 @@
               "titleKu": "Çay li baxçe",
               "titleEn": "Tea in the garden",
               "focus": "talk",
-              "beat": "Tea under the apple tree as the sun goes down. Hamo tells the story of how his moustache froze one winter, and laughs at it long before the end.",
+              "beat": "Tea under the apple tree as the sun goes down. Hamo tells how cold the village gets on a winter night, so cold a moustache could freeze, and laughs at it long before the end.",
               "voice": "hamo",
               "new": [
                 {"ku": "şekir", "en": "sugar", "pos": "noun", "gender": "m", "forms": ["şekir", "şekirên", "şekiran", "şekirek", "şekirê", "şekirekî", "şekirî"]},
@@ -736,7 +736,7 @@
               "titleKu": "Li vê odeyê",
               "titleEn": "In this room",
               "focus": "build",
-              "beat": "In every room something is out of place — a hen in the kitchen, a shoe on the table — and the map, it turns out, has been upside down all morning.",
+              "beat": "In every room something is out of place — a hen in the kitchen, a shoe in the bathroom — and the map, it turns out, has been upside down all morning.",
               "voice": "hamo",
               "new": [
                 {"ku": "vî / vê / van", "en": "this, these (after a preposition: li vê malê)", "pos": "det", "forms": ["vî", "vê", "van"]},
@@ -2363,7 +2363,7 @@
               "titleKu": "Doktor min dibîne",
               "titleEn": "The doctor sees me",
               "focus": "meet",
-              "beat": "Doctor Şîrîn examines Hamo: heart, breath, back. She listens, she presses, she frowns. Then she laughs: “Nexweşiya te ne giran e — tu tenê pîr dibî!”",
+              "beat": "Doctor Şîrîn examines Hamo: heart, breath, back. She listens, she presses, she frowns. Then she laughs: “Nexweşiya te ne giran e, tu tenê pîr dibî!”",
               "voice": "hamo",
               "new": [
                 {"ku": "kontrol kirin", "en": "to check, to examine", "pos": "verb", "forms": ["kontrol", "kirin"]},
@@ -2563,7 +2563,7 @@
               "titleKu": "Sibe ez ê bibêjim",
               "titleEn": "Tomorrow I’ll tell",
               "focus": "review",
-              "beat": "By the stove Hamo tells how, at eight, he took his father’s sheep up Miştenûr above Kobanî, lost the best ram and hid behind a rock all day. In the evening he told his father, who called him brave — and the ram came home by itself. Brave people, Hamo says, are the ones who tell. In the morning Baran begins: “Duh…”",
+              "beat": "By the stove Hamo acts it out: this chair is Miştenûr above Kobanî, and he is eight, taking his father’s sheep up the hill, losing the best ram and hiding behind a rock all day. In the evening he tells his father, who calls him brave — and the ram comes home by itself. Brave people, Hamo says, are the ones who tell. At breakfast Baran is ready to tell his own.",
               "voice": "hamo",
               "new": [
                 {"ku": "zarokatî", "en": "childhood", "pos": "noun", "gender": "f", "forms": ["zarokatî", "zarokatiyên", "zarokatiyan", "zarokatiyek", "zarokatiya", "zarokatiyê", "zarokatiyeke"]},
