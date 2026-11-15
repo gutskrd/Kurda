@@ -852,8 +852,18 @@ describe('Civak', () => {
       renderApp(<Civak />, ['/app/civak']);
       await screen.findByText('Post 0');
       expect(screen.getByRole('button', { name: 'Show more' })).toBeInTheDocument();
-      seen([{ isIntersecting: true }]);
-      expect(await screen.findByText('Post 39')).toBeInTheDocument();
+      // the wall may set up a fresh watcher as it settles, so the end comes into view for whichever is watching now
+      let told: typeof seen | null = null;
+      await waitFor(
+        () => {
+          if (told !== seen) {
+            told = seen;
+            seen([{ isIntersecting: true }]);
+          }
+          expect(screen.getByText('Post 39')).toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
       // as jsdom had it, for whatever runs after this
       vi.stubGlobal('IntersectionObserver', undefined);
     });
