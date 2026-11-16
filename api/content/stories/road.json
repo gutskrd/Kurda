@@ -13,130 +13,131 @@
       "attributionNote": null,
       "cover": null,
       "readingMinutes": null,
-      "title": "Mêvan, çay û sêv",
-      "summary": "Mêvanek li mala Hamo ye, li Sêvanê. Çay germ e, lê sêv li ku ne?",
-      "body": "Silav, heval! Ez Hamo me. Ez ji Kobaniyê me, lê niha mala min li vir e, li Sêvanê.\n\nÎro mêvanek li mala min e, ji welatekî dûr. Ez dilxweş im: “Bi xêr hatî!” Mêvan jî dilxweş e: “Ser çavan!”\n\nXezal jî li vir e, ji Amedê. Ew ne xwarziya min e, lê ji min re ew Xezo ye!\n\nÊvar e. Em hemû li baxçe ne. Çay germ e û pir xweş e. Li Sêvanê, mêvan îro mêvan e, sibe malbat e.\n\nLê sêv li ku ne? Sêv ne li wir in! Hevalo li baxçe ye, û ew pir dilxweş e. Mala min mala te ye, heval. Lê sêv, sêvên Hevalo ne!",
+      "title": "Sêv tune!",
+      "summary": "Silav û bi xêr hatî! Çay heye, nan heye, av heye. Sêv heye? Na, sêv tune! Hevalo?",
+      "body": "Silav! Navê min Hamo ye. Ez ji Kobaniyê me, û ev mala min e, li Sêvanê. Bi xêr hatî!\n\nEv Hevalo ye. Hevalo birçî ye. Ew çi dixwaze? Sêv, sêv û sêv! Sêv gelek xweş e.\n\nFermo, çay! Çay germ e, av sar e, nan jî germ e. Bixwe, vexwe! Mala min mala te ye.\n\nEv çi ye? Bi kurdî çi ye? Ev derî ye, ev nan e. Û ew? Ez nizanim! Bibore.\n\nŞev e. Ez sêv dixwazim. Sêv heye? Na, sêv tune! Hevalo, were! Hevalo, tu birçî yî? Na?\n\nHevalo baş e. Hevalo gelek, gelek baş e! Şev baş, Hevalo. Şev baş, Sêvan!",
       "translations": {
-        "en": "Hello, friend! I am Hamo. I am from Kobanî, but now my home is here, in Sêvan.\n\nToday there is a guest at my home, from a faraway country. I am glad: “Welcome!” The guest is glad too: “Thank you!”\n\nXezal is here too, from Amed. She is not my niece, but to me she is Xezo!\n\nIt is evening. We are all in the orchard. The tea is hot and very good. In Sêvan, a guest is a guest today and family tomorrow.\n\nBut where are the apples? The apples are not there! Hevalo is in the orchard, and he is very happy. My home is your home, friend… but the apples are Hevalo’s!"
+        "en": "Hello! My name is Hamo. I am from Kobanî, and this is my home, here in Sêvan. Welcome!\n\nThis is Hevalo. Hevalo is hungry. What does he want? Apples, apples and apples! Apples are very tasty.\n\nHere you are, tea! The tea is hot, the water is cold, and the bread is warm too. Eat, drink! My home is your home.\n\nWhat is this? What is it in Kurdish? This is a door, this is bread. And that? I don’t know! Sorry.\n\nIt is night. I want an apple. Are there any apples? No, there are no apples! Hevalo, come here! Hevalo, are you hungry? No?\n\nHevalo is fine. Hevalo is very, very fine! Good night, Hevalo. Good night, Sêvan!"
       },
       "glossary": [],
       "questions": [
         {
           "kind": "detail",
-          "prompt": "Hamo ji ku derê ye?",
+          "prompt": "Hamo ji Kobaniyê ye, an ji Sêvanê?",
           "promptEn": "Where is Hamo from?",
           "options": [
-            "Ji Sêvanê",
             "Ji Kobaniyê",
+            "Ji Sêvanê",
             "Ji Amedê"
           ],
-          "correctIndex": 1,
-          "explanation": "Hamo dibêje: “Ez ji Kobaniyê me.”",
+          "correctIndex": 0,
+          "explanation": "Hamo: “Ez ji Kobaniyê me.”",
           "explanationEn": "Hamo says: “I am from Kobanî.”",
           "evidenceParagraph": 0,
           "evidenceSentence": 2
         },
         {
-          "kind": "detail",
-          "prompt": "Niha mala Hamo li ku ye?",
-          "promptEn": "Where is Hamo’s home now?",
+          "kind": "inference",
+          "prompt": "Mala Hamo li Kobaniyê ye, an li Sêvanê?",
+          "promptEn": "Where is Hamo’s home?",
           "options": [
             "Li Kobaniyê",
-            "Li Amedê",
-            "Li Sêvanê"
+            "Li Sêvanê",
+            "Li Amedê"
           ],
-          "correctIndex": 2,
-          "explanation": "Hamo dibêje: “Niha mala min li vir e, li Sêvanê.”",
-          "explanationEn": "Hamo says: “Now my home is here, in Sêvan.”",
+          "correctIndex": 1,
+          "explanation": "Hamo: “Ev mala min e, li Sêvanê.”",
+          "explanationEn": "Hamo says: “This is my home, here in Sêvan.”",
           "evidenceParagraph": 0,
           "evidenceSentence": 2
         },
         {
           "kind": "detail",
-          "prompt": "Mêvan ji ku derê ye?",
-          "promptEn": "Where is the guest from?",
+          "prompt": "Hevalo çi dixwaze?",
+          "promptEn": "What does Hevalo want?",
           "options": [
-            "Ji welatekî dûr",
-            "Ji Sêvanê",
-            "Ji Amedê"
-          ],
-          "correctIndex": 0,
-          "explanation": "Hamo dibêje: “Îro mêvanek li mala min e, ji welatekî dûr.”",
-          "explanationEn": "Hamo says: “Today there is a guest at my home, from a faraway country.”",
-          "evidenceParagraph": 1,
-          "evidenceSentence": 0
-        },
-        {
-          "kind": "detail",
-          "prompt": "Rast an şaş? Xezal xwarziya Hamo ye.",
-          "promptEn": "True or false? Xezal is Hamo’s niece.",
-          "options": [
-            "Rast",
-            "Şaş"
+            "Çay",
+            "Sêv",
+            "Nan"
           ],
           "correctIndex": 1,
-          "explanation": "Şaş e. Hamo dibêje: “Ew ne xwarziya min e.”",
-          "explanationEn": "False. Hamo says: “She is not my niece.”",
+          "explanation": "Hevalo birçî ye: sêv, sêv û sêv!",
+          "explanationEn": "Hevalo is hungry: apples, apples and apples!",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "Çay germ e. Û av?",
+          "promptEn": "The tea is hot. And the water?",
+          "options": [
+            "Av sar e.",
+            "Av germ e.",
+            "Av tune."
+          ],
+          "correctIndex": 0,
+          "explanation": "Çay germ e, av sar e.",
+          "explanationEn": "The tea is hot, the water is cold.",
           "evidenceParagraph": 2,
           "evidenceSentence": 1
         },
         {
-          "kind": "vocabulary",
-          "prompt": "Çay germ e. “Germ” çi ye?",
-          "promptEn": "The tea is “germ”. What does “germ” mean?",
+          "kind": "detail",
+          "prompt": "Û ew? Bi kurdî çi ye?",
+          "promptEn": "“And that? What is it in Kurdish?” What does Hamo answer?",
           "options": [
-            "Pir sar e",
-            "Ne sar e",
-            "Ne xweş e"
+            "Ev derî ye.",
+            "Ez nizanim!",
+            "Ev nan e."
           ],
           "correctIndex": 1,
-          "explanation": "Çay germ e û pir xweş e: ew ne sar e.",
-          "explanationEn": "The tea is hot and very good: it is not cold.",
+          "explanation": "Hamo: “Ez nizanim! Bibore.”",
+          "explanationEn": "Hamo says: “I don’t know! Sorry.”",
           "evidenceParagraph": 3,
-          "evidenceSentence": 2
+          "evidenceSentence": 4
         },
         {
-          "kind": "inference",
-          "prompt": "Li Sêvanê, mêvan îro mêvan e. Û sibe?",
-          "promptEn": "In Sêvan, a guest is a guest today. And tomorrow?",
+          "kind": "detail",
+          "prompt": "Şev e. Sêv heye?",
+          "promptEn": "It is night. Are there any apples?",
           "options": [
-            "Ew malbat e",
-            "Ew dûr e",
-            "Ew birçî ye"
+            "Erê, sêv heye.",
+            "Erê, gelek sêv.",
+            "Na, sêv tune."
           ],
-          "correctIndex": 0,
-          "explanation": "“Mêvan îro mêvan e, sibe malbat e.”",
-          "explanationEn": "“A guest is a guest today and family tomorrow.”",
-          "evidenceParagraph": 3,
+          "correctIndex": 2,
+          "explanation": "Hamo: “Na, sêv tune!”",
+          "explanationEn": "Hamo says: “No, there are no apples!”",
+          "evidenceParagraph": 4,
           "evidenceSentence": 3
         },
         {
           "kind": "inference",
-          "prompt": "Sêv ne li wir in. Kî pir dilxweş e?",
-          "promptEn": "The apples are gone. Who is very happy?",
+          "prompt": "Sêv tune. Hevalo birçî ye?",
+          "promptEn": "There are no apples. Is Hevalo hungry?",
           "options": [
-            "Hamo",
-            "Hevalo",
-            "Xezal"
+            "Erê, gelek birçî ye.",
+            "Na! Ew gelek baş e.",
+            "Ez nizanim."
           ],
           "correctIndex": 1,
-          "explanation": "Sêv ne li wir in, û Hevalo pir dilxweş e. Belê: sêv, sêvên Hevalo ne!",
-          "explanationEn": "The apples are gone, and Hevalo is very happy. Yes: the apples are Hevalo’s!",
-          "evidenceParagraph": 4,
-          "evidenceSentence": 2
+          "explanation": "Sêv tune, û Hevalo gelek, gelek baş e!",
+          "explanationEn": "The apples are gone, and Hevalo is very, very fine!",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
         },
         {
           "kind": "gist",
-          "prompt": "Îro kî li mala Hamo ye?",
-          "promptEn": "Who is at Hamo’s home today?",
+          "prompt": "Hevalo û sêv: çi ye?",
+          "promptEn": "Hevalo and the apples: what happens?",
           "options": [
-            "Tenê Hamo",
-            "Mêvanek, Xezal û Hevalo",
-            "Malbata Hamo, ji Kobaniyê"
+            "Hevalo sêv dixwaze, û sêv tune!",
+            "Hevalo çay dixwaze.",
+            "Hamo sêv dixwaze, Hevalo nan dixwaze."
           ],
-          "correctIndex": 1,
-          "explanation": "Mêvanek li mala Hamo ye, Xezal jî li vir e, û Hevalo li baxçe ye.",
-          "explanationEn": "A guest is at Hamo’s home, Xezal is here too, and Hevalo is in the orchard.",
+          "correctIndex": 0,
+          "explanation": "Hevalo sêv dixwaze. Şev e, û sêv tune!",
+          "explanationEn": "Hevalo wants apples. At night, the apples are gone!",
           "evidenceParagraph": null,
           "evidenceSentence": null
         }
@@ -155,11 +156,11 @@
       "attributionNote": null,
       "cover": null,
       "readingMinutes": null,
-      "title": "Mêvanê bê simbêl",
-      "summary": "Cîran li mala Hamo ne, û wêneyên malbata wî li vir in. Lê wêneyekî kevn jî heye: mêvanekî ciwan û bê simbêl. Ew kî ye?",
-      "body": "Silav, heval! Îro cîran li mala min in: Nazê, Baran, Hêvî û Dapîr Şemsê.\n\nWêneyên malbata min li vir in. Malbata min li Kobaniyê ye. Ev bavê min e, bi bilûra xwe. Simbêlê wî pir mezin e. Yê min jî!\n\nÛ Dapîr? Dapîr bêzar e: “Wêne hene, simbêl heye. Lê jina te li ku ye?” Jina min? Ew li vir e, simbêlê min!\n\nÛ ev wêneyê biçûk? Wêneyekî kevn e: mêrekî ciwan, bê simbêl. Ew mêvanek e… Lê Xezal û Dapîr pir dilxweş in: “Ev mêvan Hamo ye!” Erê, ew ez im.\n\nJi kerema xwe heval, ev wêne tenê ji me re ye. Lê wêne li ku ye? Hevalo li baxçe ye, û ew pir dilxweş e. Spas, Hevalo!",
+      "title": "Wêneyê biçûk",
+      "summary": "Cîran li mala Hamo ne. Wêneyên malbata wî hene, û wêneyekî biçûk jî: kurekî deh salî. Ev kî ye?",
+      "body": "Silav! Cîranên min li mala min in: Nazê, Baran, Hêvî û Dapîr Şemsê. Hûn bi xêr hatin!\n\nEv wêneyên malbata min in. Ev bavê min e, Ibrahîm, û bilûra wî. Ev diya min e, Edûl. Ev birayê min e, Evdila, û ev xwişkên min in, Lorîn û Cîhan. Ew li Kobaniyê ne. Em malbat in.\n\nEv wêneyekî biçûk e. Ev kî ye? Kurekî biçûk e, deh salî. Simbêlê wî tune!\n\nHêvî: “Ev kî ye?” Dapîr: “Ev Hamo ye!” Erê, erê, ev ez im.\n\nWêne? Wêne tune! Fermo, çay û şekir. Noşî can be!\n\nÛ Hevalo? Sêvên Hevalo tune. Nazê, Baran, Hêvî, Dapîr, tu û ez: “Fermo, Hevalo, sêvek!” Şeş sêvên Hevalo hene! Û sêvên min? Tune!",
       "translations": {
-        "en": "Hello, friend! Today the neighbours are at my house: Nazê, Baran, Hêvî and Dapîr Şemsê.\n\nThe photos of my family are here. My family is in Kobanî. This is my father, with his flute. His moustache is very big. So is mine!\n\nAnd Dapîr? Dapîr is not pleased: “There are photos, there is a moustache… but where is your wife?” My wife? She is right here: my moustache!\n\nAnd this little photo? It is an old photo: a young man without a moustache. He is a guest… But Xezal and Dapîr are delighted: “This guest is Hamo!” Yes, it is me.\n\nPlease, friend: this photo is just between us. But where is the photo? Hevalo is in the orchard, and he is very happy. Thank you, Hevalo!"
+        "en": "Hello! My neighbours are at my house: Nazê, Baran, Hêvî and Grandma Şemsê. Welcome, all of you!\n\nThese are the photos of my family. This is my father, Ibrahîm, and his shepherd’s flute. This is my mother, Edûl. This is my brother, Evdila, and these are my sisters, Lorîn and Cîhan. They are in Kobanî. We are a family.\n\nThis is a little photo. Who is this? It is a little boy, ten years old. He has no moustache!\n\nHêvî: “Who is this?” Grandma: “This is Hamo!” Yes, yes, it’s me.\n\nPhoto? There is no photo! Here you are, tea and sugar. Enjoy!\n\nAnd Hevalo? Hevalo has no apples. Nazê, Baran, Hêvî, Grandma, you and I: “Here you are, Hevalo, an apple!” Now Hevalo has six apples! And my apples? None!"
       },
       "glossary": [
         {
@@ -167,125 +168,132 @@
           "meanings": {
             "en": "flute (a shepherd’s flute)"
           }
+        },
+        {
+          "term": "Simbêlê",
+          "meanings": {
+            "en": "moustache (simbêlê wî: his moustache)"
+          }
         }
       ],
       "questions": [
         {
           "kind": "detail",
+          "prompt": "Bavê Hamo kî ye?",
+          "promptEn": "Who is Hamo’s father?",
+          "options": [
+            "Ibrahîm",
+            "Evdila",
+            "Baran"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo: “Ev bavê min e, Ibrahîm.”",
+          "explanationEn": "Hamo says: “This is my father, Ibrahîm.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
           "prompt": "Malbata Hamo li ku ye?",
           "promptEn": "Where is Hamo’s family?",
           "options": [
-            "Li Kobaniyê",
             "Li Sêvanê",
+            "Li Kobaniyê",
             "Li Amedê"
           ],
-          "correctIndex": 0,
-          "explanation": "Hamo dibêje: “Malbata min li Kobaniyê ye.”",
-          "explanationEn": "Hamo says: “My family is in Kobanî.”",
-          "evidenceParagraph": 1,
-          "evidenceSentence": 1
-        },
-        {
-          "kind": "detail",
-          "prompt": "Simbêlê bavê Hamo çawa ye?",
-          "promptEn": "What is Hamo’s father’s moustache like?",
-          "options": [
-            "Biçûk e",
-            "Pir mezin e",
-            "Nû ye"
-          ],
           "correctIndex": 1,
-          "explanation": "Hamo dibêje: “Simbêlê wî pir mezin e.”",
-          "explanationEn": "Hamo says: “His moustache is very big.”",
+          "explanation": "Hamo: “Ew li Kobaniyê ne.”",
+          "explanationEn": "Hamo says: “They are in Kobanî.”",
           "evidenceParagraph": 1,
-          "evidenceSentence": 3
-        },
-        {
-          "kind": "inference",
-          "prompt": "Rast an şaş? Jina Hamo heye.",
-          "promptEn": "True or false? Hamo has a wife.",
-          "options": [
-            "Rast",
-            "Şaş"
-          ],
-          "correctIndex": 1,
-          "explanation": "Şaş e. Dapîr dibêje: “Lê jina te li ku ye?”",
-          "explanationEn": "False. Dapîr asks: “But where is your wife?”",
-          "evidenceParagraph": 2,
-          "evidenceSentence": 1
-        },
-        {
-          "kind": "detail",
-          "prompt": "“Jina min? Ew li vir e…” Ji Hamo re, jina wî çi ye?",
-          "promptEn": "“My wife? She is right here…” To Hamo, what is his wife?",
-          "options": [
-            "Simbêlê wî",
-            "Dapîr",
-            "Bilûra bavê wî"
-          ],
-          "correctIndex": 0,
-          "explanation": "Hamo dibêje: “Jina min? Ew li vir e, simbêlê min!”",
-          "explanationEn": "Hamo says: “My wife? She is right here: my moustache!”",
-          "evidenceParagraph": 2,
           "evidenceSentence": 4
         },
         {
           "kind": "vocabulary",
-          "prompt": "“Wêneyekî kevn e.” “Kevn” çi ye?",
-          "promptEn": "“It is an old photo.” What does “kevn” mean?",
+          "prompt": "Kurekî biçûk. Biçûk çi ye?",
+          "promptEn": "A little boy. What does “biçûk” mean?",
           "options": [
-            "Ne mezin e",
-            "Ne xweş e",
-            "Ne nû ye"
-          ],
-          "correctIndex": 2,
-          "explanation": "Wêne kevn e: ew ne nû ye.",
-          "explanationEn": "The photo is old: it is not new.",
-          "evidenceParagraph": 3,
-          "evidenceSentence": 1
-        },
-        {
-          "kind": "vocabulary",
-          "prompt": "“Mêrekî ciwan.” “Ciwan” çi ye?",
-          "promptEn": "“A young man.” What does “ciwan” mean?",
-          "options": [
-            "Ne pîr e",
-            "Ne baş e",
-            "Ne kurd e"
+            "Ne mezin",
+            "Ne tî",
+            "Ne birçî"
           ],
           "correctIndex": 0,
-          "explanation": "Mêrê di wêneyê kevn de ciwan e: ew ne pîr e.",
-          "explanationEn": "The man in the old photo is young: he is not old.",
+          "explanation": "Ew kurekî biçûk e: ew ne mezin e.",
+          "explanationEn": "The boy in the photo is little: he is not big.",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Kurê biçûk çend salî ye?",
+          "promptEn": "How old is the little boy?",
+          "options": [
+            "Şeş salî",
+            "Neh salî",
+            "Deh salî"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo: “Kurekî biçûk e, deh salî.”",
+          "explanationEn": "Hamo says: “It is a little boy, ten years old.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "Simbêlê wî tune. Ev kurê biçûk kî ye?",
+          "promptEn": "He has no moustache. Who is the little boy?",
+          "options": [
+            "Hamo",
+            "Evdila",
+            "Baran"
+          ],
+          "correctIndex": 0,
+          "explanation": "Dapîr: “Ev Hamo ye!” Û Hamo: “Erê, ev ez im.”",
+          "explanationEn": "Grandma says: “This is Hamo!” And Hamo: “Yes, it’s me.”",
           "evidenceParagraph": 3,
           "evidenceSentence": 1
         },
         {
           "kind": "inference",
-          "prompt": "“Spas, Hevalo!” Hamo ji bo çi dilxweş e?",
-          "promptEn": "“Thank you, Hevalo!” Why is Hamo pleased?",
+          "prompt": "Sêvên Hamo hene?",
+          "promptEn": "Does Hamo have any apples left?",
           "options": [
-            "Hevalo birçî ye",
-            "Wêneyê bê simbêl tune",
-            "Dapîr bîst salî ye"
+            "Erê, şeş sêv",
+            "Na, tune",
+            "Erê, deh sêv"
           ],
           "correctIndex": 1,
-          "explanation": "Wêne ne li wir e, û Hevalo li baxçe pir dilxweş e: niha wêneyê bê simbêl tune!",
-          "explanationEn": "The photo is gone, and Hevalo is very happy in the orchard: now there is no photo without a moustache!",
-          "evidenceParagraph": 4,
+          "explanation": "Hamo: “Û sêvên min? Tune!”",
+          "explanationEn": "Hamo says: “And my apples? None!”",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 5
+        },
+        {
+          "kind": "detail",
+          "prompt": "Çend sêvên Hevalo hene?",
+          "promptEn": "How many apples does Hevalo have now?",
+          "options": [
+            "Deh",
+            "Şeş",
+            "Yek"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo: “Şeş sêvên Hevalo hene!”",
+          "explanationEn": "Hamo says: “Now Hevalo has six apples!”",
+          "evidenceParagraph": 5,
           "evidenceSentence": 3
         },
         {
           "kind": "gist",
-          "prompt": "Wêneyê kevn wêneyê kê ye?",
-          "promptEn": "Whose photo is the old photo?",
+          "prompt": "Li mala Hamo çi heye?",
+          "promptEn": "What happens at Hamo’s house?",
           "options": [
-            "Wêneyê mêvanekî ye",
-            "Wêneyê Hamo ye, bê simbêl",
-            "Wêneyê bavê Hamo ye"
+            "Cîran, wêneyên malbatê û sêvên Hevalo",
+            "Mirîşk û ker, cîran tune",
+            "Malbata Hamo ji Kobaniyê"
           ],
-          "correctIndex": 1,
-          "explanation": "Hamo dibêje “ew mêvanek e”, lê: “Erê, ew ez im.”",
-          "explanationEn": "Hamo says “he is a guest”, but: “Yes, it is me.”",
+          "correctIndex": 0,
+          "explanation": "Cîran li mala Hamo ne, wêneyên malbata wî hene, û Hevalo şeş sêv dixwaze!",
+          "explanationEn": "The neighbours are at Hamo’s, his family photos are on the wall, and Hevalo collects six apples!",
           "evidenceParagraph": null,
           "evidenceSentence": null
         }
