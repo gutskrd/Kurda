@@ -562,16 +562,18 @@ function UnitDivider({ number, total }: { number: number; total: number }): Reac
  * Family & Food"), as the pinned header reads it once the banner has gone up.
  */
 function Banner({ unit, tone, onRail }: { unit: Unit; tone: ToneColors; onRail?: () => void }): React.JSX.Element {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   const { scheme } = useTheme();
+  const number = t('coursemap.path.unit', { n: formatNumber(unit.number, locale) });
   return (
     <View style={[styles.bannerLip, { backgroundColor: CARD[scheme].edge }]}>
       <View style={[styles.banner, { backgroundColor: CARD[scheme].paper }]}>
         <View style={[styles.bannerHead, { flexDirection: dir.row }]}>
-          <View style={styles.bannerWords} accessible accessibilityRole="header" accessibilityLabel={unitHeading(t('coursemap.path.unit', { n: unit.number }), unit.title)}>
-            <Text style={[styles.eyebrow, dir.text, { color: tone.text }]}>{t('coursemap.path.unit', { n: unit.number })}</Text>
-            <Text style={[styles.bannerTitle, dir.text, { color: CARD[scheme].ink }]}>{unit.title}</Text>
+          <View style={styles.bannerWords} accessible accessibilityRole="header" accessibilityLabel={unitHeading(number, unit.title)}>
+            <Text style={[styles.eyebrow, dir.text, { color: tone.text }]}>{number}</Text>
+            {/* the course's own words: on a right-to-left page they line up with it and still read their own way, "Hello!" not "!Hello" */}
+            <Text style={[styles.bannerTitle, dir.free, { color: CARD[scheme].ink }]}>{unit.title}</Text>
           </View>
           {onRail ? (
             <Pressable
@@ -585,8 +587,10 @@ function Banner({ unit, tone, onRail }: { unit: Unit; tone: ToneColors; onRail?:
             </Pressable>
           ) : null}
         </View>
-        {unit.topics.length > 0 ? <Text style={[styles.topics, dir.text, { color: CARD[scheme].muted }]}>{unit.topics.join(' · ')}</Text> : null}
-        <Text style={[styles.count, styles.countLine, dir.text, { color: CARD[scheme].ink }]}>{t('coursemap.path.unitDone', { done: unit.done, total: unit.total })}</Text>
+        {unit.topics.length > 0 ? <Text style={[styles.topics, dir.free, { color: CARD[scheme].muted }]}>{unit.topics.join(' · ')}</Text> : null}
+        <Text style={[styles.count, styles.countLine, dir.text, { color: CARD[scheme].ink }]}>
+          {t('coursemap.path.unitDone', { done: formatNumber(unit.done, locale), total: formatNumber(unit.total, locale) })}
+        </Text>
       </View>
     </View>
   );
@@ -663,10 +667,10 @@ export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => v
 const PIN_DROP = 6;
 
 function PinFace({ unit, onRail }: { unit: UnitPlace; onRail?: () => void }): React.JSX.Element {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   const { tone } = unit;
-  const number = t('coursemap.path.unit', { n: unit.number });
+  const number = t('coursemap.path.unit', { n: formatNumber(unit.number, locale) });
   return (
     <View style={[styles.pinLip, { backgroundColor: tone.lip }]}>
       <View style={[styles.pin, { flexDirection: dir.row, backgroundColor: tone.fill }]}>
@@ -674,7 +678,7 @@ function PinFace({ unit, onRail }: { unit: UnitPlace; onRail?: () => void }): Re
           <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]} numberOfLines={1}>
             {number}
           </Text>
-          <Text style={[styles.pinTitle, dir.text, { color: tone.ink }]} numberOfLines={1}>
+          <Text style={[styles.pinTitle, dir.free, { color: tone.ink }]} numberOfLines={1}>
             {unit.title}
           </Text>
         </View>

@@ -102,13 +102,13 @@ export function QuestsCard(): React.JSX.Element | null {
         {ready ? <View style={[styles.dot, dir.rtl ? styles.dotRtl : null, { backgroundColor: colors.gold, borderColor: colors.surface }]} testID="quests-card-dot" /> : null}
       </View>
       <View style={styles.main}>
+        {/*
+          Side by side where both fit; where they do not (a narrow phone, "Tagesaufgaben" beside "Truhe bereit zum
+          Öffnen") the second goes under the first whole, where each was cut to "Daily q…" and "Chest ready t…".
+        */}
         <View style={[styles.head, { flexDirection: dir.row }]}>
-          <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
-            {t('quests.title')}
-          </Text>
-          <Text style={[styles.detail, { color: ready ? colors.goldText : colors.textSecondary }]} numberOfLines={1}>
-            {ready ? t('quests.ready') : summary}
-          </Text>
+          <Text style={[styles.title, dir.text, { color: colors.textPrimary }]}>{t('quests.title')}</Text>
+          <Text style={[styles.detail, dir.text, { color: ready ? colors.goldText : colors.textSecondary }]}>{ready ? t('quests.ready') : summary}</Text>
         </View>
         <View style={[styles.bars, { flexDirection: dir.row }]}>
           {day.quests.map((q) => (
@@ -128,9 +128,9 @@ const styles = StyleSheet.create({
   failed: { gap: spacing.sm },
   failedText: { flex: 1, fontSize: typography.sizes.sm },
   main: { flex: 1, gap: spacing.sm },
-  head: { alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.sm },
-  title: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  detail: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  head: { alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', columnGap: spacing.sm, rowGap: 2 },
+  title: { maxWidth: '100%', fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  detail: { maxWidth: '100%', fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   bars: { gap: spacing.xs + 2 },
   track: { flex: 1, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { height: 6, borderRadius: radii.pill },

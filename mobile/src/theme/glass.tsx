@@ -94,21 +94,24 @@ export function GlassRow({
   destructive?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  // the row starts on the side the language is read from: its icon there, its chevron on the far side and pointing on
+  const dir = useDirection();
   const titleColor = destructive ? colors.danger : colors.textPrimary;
   const body = (pressed: boolean) => (
     <>
-      <View style={[styles.row, pressed && heldRow(colors.controlTrack)]}>
+      <View style={[styles.row, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}>
         {icon ? (
           <View style={styles.rowIcon}>
             <Icon name={icon} size={20} color={iconColor ?? (destructive ? colors.danger : colors.primary)} />
           </View>
         ) : null}
         <View style={styles.rowMain}>
-          <Text style={[styles.rowTitle, { color: titleColor }]} numberOfLines={1}>{title}</Text>
-          {subtitle ? <Text style={[styles.rowSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>{subtitle}</Text> : null}
+          {/* a name too long for one line takes a second: cut short, "Notification settings for…" names nothing */}
+          <Text style={[styles.rowTitle, dir.text, { color: titleColor }]} numberOfLines={2}>{title}</Text>
+          {subtitle ? <Text style={[styles.rowSubtitle, dir.text, { color: colors.textSecondary }]} numberOfLines={2}>{subtitle}</Text> : null}
         </View>
         {value ? <Text style={[styles.rowValue, { color: colors.textSecondary }]} numberOfLines={1}>{value}</Text> : null}
-        {trailing ?? (onPress ? <Icon name="chevron-right" size={16} color={colors.textSecondary} /> : null)}
+        {trailing ?? (onPress ? <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip} /> : null)}
       </View>
     </>
   );

@@ -56,12 +56,11 @@ export function BookCard(): React.JSX.Element | null {
         <SvgXml xml={face} width={ART} height={ART} />
       </View>
       <View style={styles.main}>
-        <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+        <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
           {t('book.card.title')}
         </Text>
-        <Text style={[styles.sub, dir.text, { color: colors.textSecondary }]} numberOfLines={3}>
-          {sub}
-        </Text>
+        {/* what the book holds, said whole: three lines cut it at "the words and t…" on a narrow phone and in German */}
+        <Text style={[styles.sub, dir.text, { color: colors.textSecondary }]}>{sub}</Text>
       </View>
       <Icon name="book" size={18} color={colors.textSecondary} />
     </PressableScale>

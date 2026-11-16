@@ -275,6 +275,14 @@ export function LearnerToken({
  * chapters go online one by one as Hamo records them, Hamo stands by the
  * sign and a small red light breathes beside "recording it now" — still, under
  * Reduce Motion. A picture with its words: read as one by a screen reader.
+ *
+ * The number and the name stand beside the picture, and the line about it
+ * runs under both, the card's whole width: beside the picture it had a
+ * third of a narrow phone to itself and broke into five lines of a word or
+ * two. The outline is dashed in the grey of what is not reached yet, which
+ * shows on the card in both themes (the white it was drawn in did not, by
+ * day). On a right-to-left page Hamo still stands against the sign, on its
+ * other side, rather than over the words.
  */
 export function UpcomingSign({ upcoming, live }: { upcoming: UpcomingUnit; live: boolean }): React.JSX.Element {
   const { colors, scheme } = useTheme();
@@ -301,27 +309,31 @@ export function UpcomingSign({ upcoming, live }: { upcoming: UpcomingUnit; live:
   const line = t(upcoming.recordedBy ? 'coursemap.path.upcomingRecording' : 'coursemap.path.upcomingSoon');
   return (
     <View
-      style={[styles.next, { flexDirection: dir.row, borderColor: colors.clayBorder, backgroundColor: colors.surface }]}
+      style={[styles.next, { borderColor: colors.lockedMark, backgroundColor: colors.surface }]}
       accessible
       accessibilityLabel={`${number}, ${upcoming.title}. ${line}`}
       testID="lp-upcoming"
     >
-      <View style={[styles.nextArt, { flexDirection: dir.row }]}>
-        {/* the sign points on toward the end of the line, which a right-to-left screen reads to the left */}
-        <SvgXml xml={sign} width={SIGN} height={SIGN} style={dir.rtl ? styles.mirrored : undefined} />
-        {upcoming.recordedBy ? (
-          <View style={styles.nextHost}>
-            <SpeakingCharacter speaker={upcoming.recordedBy} player={null} playing={false} crop="full" height={NEXT_HOST} />
-          </View>
-        ) : null}
-      </View>
-      <View style={styles.nextText}>
-        <Text style={[styles.nextEyebrow, dir.text, { color: colors.textSecondary }]}>{number}</Text>
-        <Text style={[styles.nextTitle, dir.text, { color: colors.textPrimary }]}>{upcoming.title}</Text>
-        <View style={[styles.nextLine, { flexDirection: dir.row }]}>
-          {upcoming.recordedBy ? <Animated.View style={[styles.rec, { opacity: pulse }]} /> : null}
-          <Text style={[styles.nextLineText, dir.text, { color: colors.textSecondary }]}>{line}</Text>
+      <View style={[styles.nextTop, { flexDirection: dir.row }]}>
+        <View style={[styles.nextArt, { flexDirection: dir.row }]}>
+          {/* the sign points on toward the end of the line, which a right-to-left screen reads to the left */}
+          <SvgXml xml={sign} width={SIGN} height={SIGN} style={dir.rtl ? styles.mirrored : undefined} />
+          {upcoming.recordedBy ? (
+            // against the sign, whichever side of him it is on
+            <View style={dir.row === 'row-reverse' ? styles.nextHostMirrored : styles.nextHost}>
+              <SpeakingCharacter speaker={upcoming.recordedBy} player={null} playing={false} crop="full" height={NEXT_HOST} />
+            </View>
+          ) : null}
         </View>
+        <View style={styles.nextText}>
+          <Text style={[styles.nextEyebrow, dir.text, { color: colors.textSecondary }]}>{number}</Text>
+          {/* the course's own words, read in their own direction */}
+          <Text style={[styles.nextTitle, dir.free, { color: colors.textPrimary }]}>{upcoming.title}</Text>
+        </View>
+      </View>
+      <View style={[styles.nextLine, { flexDirection: dir.row }]}>
+        {upcoming.recordedBy ? <Animated.View style={[styles.rec, { opacity: pulse }]} /> : null}
+        <Text style={[styles.nextLineText, dir.text, { color: colors.textSecondary }]}>{line}</Text>
       </View>
     </View>
   );
@@ -330,6 +342,9 @@ export function UpcomingSign({ upcoming, live }: { upcoming: UpcomingUnit; live:
 /** The signpost's size, and how tall Hamo stands by it: a little smaller than beside a unit, as he is further up the road. */
 const SIGN = 96;
 const NEXT_HOST = 104;
+/** The recording light, and the line of words it stands beside. */
+const REC = 10;
+const REC_LINE = 20;
 
 /** A unit as the rail lists it. */
 export interface RailUnit {
@@ -383,11 +398,13 @@ export function UnitRailSheet({ units, open, onClose, onPick }: { units: RailUni
               </View>
               <View style={styles.railWords}>
                 <Text style={[styles.railNumber, dir.text, { color: u.here ? u.tone.text : colors.textSecondary }]}>{number}</Text>
-                <Text style={[styles.railTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
+                <Text style={[styles.railTitle, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
                   {u.title}
                 </Text>
               </View>
-              <Text style={[styles.railCount, { color: colors.textSecondary }]}>{t('coursemap.path.unitDone', { done: u.done, total: u.total })}</Text>
+              <Text style={[styles.railCount, { color: colors.textSecondary }]}>
+                {t('coursemap.path.unitDone', { done: formatNumber(u.done, locale), total: formatNumber(u.total, locale) })}
+              </Text>
             </Pressable>
           );
         })}
@@ -398,24 +415,26 @@ export function UnitRailSheet({ units, open, onClose, onPick }: { units: RailUni
 
 const styles = StyleSheet.create({
   next: {
-    alignItems: 'flex-end',
-    gap: spacing.md,
+    gap: spacing.sm + 4,
     marginTop: spacing.xl,
-    marginHorizontal: spacing.md,
     padding: spacing.md,
     borderWidth: 2,
     borderStyle: 'dashed',
     borderRadius: radii.xl,
   },
+  nextTop: { alignItems: 'flex-end', gap: spacing.md },
   nextArt: { alignItems: 'flex-end' },
+  // he overlaps the sign a little, from the side he stands on
   nextHost: { marginStart: -24 },
+  nextHostMirrored: { marginEnd: -24 },
   mirrored: { transform: [{ scaleX: -1 }] },
   nextText: { flex: 1, gap: 2, paddingBottom: spacing.xs },
   nextEyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, letterSpacing: 0.8, textTransform: 'uppercase' },
   nextTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  nextLine: { alignItems: 'center', gap: spacing.xs, marginTop: 4 },
-  nextLineText: { flexShrink: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
-  rec: { width: 10, height: 10, borderRadius: radii.pill, backgroundColor: '#d6493a' },
+  nextLine: { alignItems: 'flex-start', gap: spacing.sm },
+  nextLineText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: REC_LINE },
+  // the recording light, level with the first line of the words beside it however many lines they take
+  rec: { width: REC, height: REC, borderRadius: radii.pill, backgroundColor: '#d6493a', marginTop: (REC_LINE - REC) / 2 },
   flat: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   landmark: { position: 'absolute' },
   loop: { position: 'absolute' },

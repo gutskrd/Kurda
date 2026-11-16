@@ -27,6 +27,19 @@ describe('the next step on Learn', () => {
     expect(step).toMatchObject({ kind: 'start', lessonId: 'l-1', unitTitle: 'Unit 1', done: 0, total: 2 });
   });
 
+  /* a skill is several lessons long: with one of them done, "Start your first lesson" would not be true */
+  it('continues once one lesson of the first skill is finished, at the next lesson of that skill', () => {
+    const begun: SkillNode = {
+      ...skill('1', 'unlocked'),
+      lessons: [
+        { lessonId: 'l-1', position: 1, title: 'Silav', completed: true },
+        { lessonId: 'l-1b', position: 2, title: 'Ez Hamo me', completed: false },
+      ],
+    };
+    const step = nextStep([course('a', [[begun, skill('2', 'locked')]])]);
+    expect(step).toMatchObject({ kind: 'continue', lessonId: 'l-1b', done: 0, total: 2 });
+  });
+
   it('continues at the first open skill that is not finished, unit by unit', () => {
     const step = nextStep([
       course('a', [
