@@ -14,7 +14,7 @@
 import { BOOK_APPLE_BITES, BOOK_BACKDROP, WORD_PICTURES, bookBackdropSvg, bookSpotSvg, parseMarkdown, type BookSetting, type HueSteps, type Span as MarkSpan } from '@kurda/shared';
 import { keepList, paginate } from './flow.js';
 import { T, appleArt, castArt, display, displayItalic, drawPicture, drawStamp, footOf, heavy, hueOf, label, runSheets, squareArt, STAMP, type Block, type Filler, type Places, type Sheet } from './page.js';
-import { chapterEmblem, chapterHue, pictureForWord, sceneFor, tellBeat, type BookPicture } from './pictures.js';
+import { BACKDROP_SCALE, PANEL, chapterEmblem, chapterHue, pictureForWord, sceneFor, sceneLayout, tellBeat, type BookPicture } from './pictures.js';
 import { chapterWords, type BookChapter, type BookDialogue, type BookLesson, type BookPair, type BookPart, type BookWord } from './road-book.js';
 import { INK, MARGIN, PAGE, Press, TEXT, blend, type Line, type Span, type Type } from './sheet.js';
 
@@ -39,6 +39,16 @@ function openerSheet(press: Press, c: BookChapter, places: Places): Sheet {
       // the land the chapter is set in fills what the words leave of the page
       const band = Math.max(150, Math.min(262, PAGE.h - MARGIN.bottom - below + 4));
       doc.save().rect(0, 0, PAGE.w, band).fill(tone.band).restore();
+      // far mountains in the chapter's colour, a step from its sky, then the hill everyone stands on
+      const ridge = (x: number, y: number): [number, number] => [PAGE.w * x, band - y];
+      const far: Array<[number, number]> = [[0, 104], [0.1, 118], [0.22, 132], [0.3, 124], [0.42, 140], [0.54, 120], [0.64, 110], [0.76, 128], [0.86, 116], [1, 100]];
+      const range = doc.save().moveTo(...ridge(0, 0)).lineTo(...ridge(0, 104));
+      for (let i = 1; i < far.length; i++) {
+        const [x0, y0] = far[i - 1]!;
+        const [x1, y1] = far[i]!;
+        range.quadraticCurveTo(...ridge((x0 + x1) / 2 + 0.01, (y0 + y1) / 2 + 6), ...ridge(x1, y1));
+      }
+      range.lineTo(...ridge(1, 0)).fill(blend(tone.band, hue.base, 0.14)).restore();
       doc
         .save()
         .moveTo(0, band - 34)
@@ -47,14 +57,21 @@ function openerSheet(press: Press, c: BookChapter, places: Places): Sheet {
         .lineTo(0, band)
         .fill(tone.hill)
         .restore();
+      // the landmark stands on the hill and casts the hill's own shade, not the path's green
       const size = Math.min(196, band - 28);
-      drawPicture(press, chapterEmblem(c.number), PAGE.w / 2 - size / 2 + 30, band - size - 4, size, hue);
+      const shade = blend(tone.hill, hue.deep, 0.16);
+      drawPicture(press, chapterEmblem(c.number), PAGE.w / 2 - size / 2 + 30, band - size - 4, size, hue, shade);
       const host = castArt(press, c.land.host, c.land.host === 'hamo' ? 'proud' : 'smiling', 'full');
       const hh = Math.min(124, band - 50);
-      press.place(host, 64, band - hh - 3, (hh * host.w) / host.h);
+      const hw = (hh * host.w) / host.h;
       const deer = castArt(press, 'hevalo', c.number % 2 === 1 ? 'caught' : 'innocent', 'full');
       const dh = hh * 0.74;
-      press.place(deer, PAGE.w - 74, band - dh - 1, (dh * deer.w) / deer.h);
+      const dw = (dh * deer.w) / deer.h;
+      // each of them stands on their own shadow, falling to the lower right as every shadow in the book does
+      doc.save().ellipse(64 + hw * 0.56, band - 4, hw * 0.42, 3.4).fill(shade).restore();
+      doc.save().ellipse(PAGE.w - 74 + dw * 0.56, band - 2.4, dw * 0.44, 2.8).fill(shade).restore();
+      press.place(host, 64, band - hh - 3, hw);
+      press.place(deer, PAGE.w - 74, band - dh - 1, dw);
       press.line(String(c.number), TEXT.x, 22, heavy(48, hue.deep));
       const level = label(hue.deep, 7);
       const lw = press.measure(c.cefr, level.font, level.size, level.tracking) + 16;
@@ -182,44 +199,46 @@ function grammarNote(press: Press, c: BookChapter, p: BookPart): Block[] {
 
 // ───────────────────────────────────────────────────────────── a lesson: its scene
 
-/** The panel a lesson's scene is drawn in. */
-const PANEL = { w: 124, h: 64, r: 10 } as const;
+/**
+ * The colours a scene is painted in, from its chapter's hue: by day its wash
+ * and a hill of it; at dusk a warmer sky over land gone dark; by night the
+ * hue's deep shade; in the snow white land under the wash, with mountains a
+ * little darker than the sky so they still show.
+ */
+function sceneColours(hue: HueSteps, setting: BookSetting): { sky: string; ground: string; light: string; far?: string } {
+  switch (setting) {
+    case 'day':
+      return { sky: hue.wash, ground: tones(hue).hill, light: INK.card };
+    case 'dusk':
+      return { sky: blend(DUSK_GLOW, hue.wash, 0.38), ground: blend(hue.deep, DUSK_LAND, 0.3), light: '#fff4d6', far: blend(hue.base, hue.deep, 0.4) };
+    case 'night':
+      return { sky: hue.deep, ground: blend(hue.deep, '#000000', 0.35), light: hue.wash };
+    case 'snow':
+      return { sky: hue.wash, ground: '#ffffff', light: '#ffffff', far: blend(hue.wash, hue.base, 0.32) };
+  }
+}
 
-/** Things that hang in the sky of a scene rather than stand on its ground. */
-const ALOFT = new Set(['sun', 'moon', 'star', 'cloud', 'rain', 'snow', 'plane', 'bird']);
-const aloft = (p: BookPicture): boolean => p.kind === 'word' && ALOFT.has(p.id);
+/** The warm of a sky at sunset, which a dusk sky takes most of whatever the chapter's hue, and the dark the land goes as the sun sets. */
+const DUSK_GLOW = '#f6b26b';
+const DUSK_LAND = '#2b1f2e';
 
-/** A lesson's scene, drawn: the sky and the hill in the chapter's colours, who is in it, and the things the beat names. */
-function drawScene(press: Press, c: BookChapter, lesson: BookLesson, x: number, y: number): void {
+/** A lesson's scene, drawn: the sky and the land in the chapter's colours, who is in it, and the things the beat names, each where `sceneLayout` puts it. */
+function drawScene(press: Press, c: BookChapter, lesson: BookLesson, x: number, y: number, side: 'left' | 'right'): void {
   const hue = hueOf(c);
   const scene = sceneFor(lesson.beat, lesson.words);
-  const colours: Record<BookSetting, { sky: string; ground: string; light: string }> = {
-    day: { sky: hue.wash, ground: tones(hue).hill, light: INK.card },
-    night: { sky: hue.deep, ground: blend(hue.deep, '#000000', 0.35), light: hue.wash },
-    snow: { sky: hue.wash, ground: '#ffffff', light: '#ffffff' },
-  };
-  const { sky, ground, light } = colours[scene.setting];
-  const backdrop = press.art(`backdrop|${scene.setting}|${chapterHue(c.number)}`, BOOK_BACKDROP.w, BOOK_BACKDROP.h, () => bookBackdropSvg({ setting: scene.setting, sky, ground, light }));
+  const layout = sceneLayout(scene, side);
+  const colours = sceneColours(hue, scene.setting);
+  // the sun or the moon, and what the sky keeps clear of, on the backdrop's own canvas
+  const k = BACKDROP_SCALE;
+  const orb = layout.orb ? { x: layout.orb.x / k, y: layout.orb.y / k, r: layout.orb.r / k, full: layout.orb.full } : null;
+  const clear = layout.clear.map((b) => ({ x: b.x / k, y: b.y / k, w: b.w / k, h: b.h / k }));
+  // each scene's sky is its own: its stars, its clouds and its poplars are placed from the lesson's own key
+  const key = `backdrop|${chapterHue(c.number)}|${lesson.key}|${scene.setting}|${JSON.stringify(orb)}|${JSON.stringify(clear)}`;
+  const backdrop = press.art(key, BOOK_BACKDROP.w, BOOK_BACKDROP.h, () => bookBackdropSvg({ setting: scene.setting, ...colours, orb, clear, seed: lesson.key }));
   press.within(x, y, PANEL.w, PANEL.h, PANEL.r, () => {
     press.place(backdrop, x, y, PANEL.w + 1);
-    const s = 52;
-    // two stand one on each side, in the order the scene has them; one alone stands where he always does: Hamo on the left, the deer or Xezal on the right
-    const [first, second] = scene.cast;
-    const left = second || first?.who === 'hamo' ? first : undefined;
-    const right = second ?? (first?.who === 'hamo' ? undefined : first);
-    // two of them stand a little further apart, half out of the picture, to leave the middle for what the scene is about
-    const out = left && right ? 11 : 4;
-    // the things of the scene stand where the people leave room: on the ground, or up in the sky
-    const from = left ? x + s - out - 6 : x + 8;
-    const to = right ? x + PANEL.w - s + out + 6 : x + PANEL.w - 8;
-    const standing = scene.props.filter((p) => !aloft(p)).slice(0, left && right ? 1 : 2);
-    const hanging = scene.props.filter(aloft).slice(0, standing.length > 1 ? 1 : 2);
-    const slot = (to - from) / Math.max(1, standing.length);
-    const size = Math.min(30, slot - 1);
-    standing.forEach((p, i) => drawPicture(press, p, from + slot * i + (slot - size) / 2, y + PANEL.h - size - 4 - (i % 2) * 2, size, hue));
-    hanging.forEach((p, i) => drawPicture(press, p, (standing.length > 0 ? from : (from + to) / 2 - 12) + 2 + i * 24, y + 3 + (i % 2) * 4, standing.length > 0 ? 19 : 26, hue));
-    if (left) press.place(castArt(press, left.who, left.pose), x - out, y + PANEL.h - s + 4, s);
-    if (right) press.place(castArt(press, right.who, right.pose), x + PANEL.w - s + out, y + PANEL.h - s + 4, s);
+    for (const p of layout.props) drawPicture(press, p.picture, x + p.box.x, y + p.box.y, p.box.w, hue);
+    for (const who of layout.cast) press.place(castArt(press, who.who, who.pose), x + who.box.x, y + who.box.y, who.box.w);
   });
 }
 
@@ -257,12 +276,12 @@ function lessonStrip(press: Press, c: BookChapter, lesson: BookLesson, follows: 
     draw: (y) => {
       const px = side === 'left' ? TEXT.x : TEXT.x + TEXT.w - PANEL.w;
       const tx = side === 'left' ? TEXT.x + PANEL.w + 11 : TEXT.x;
-      drawScene(press, c, lesson, px, y + (height - PANEL.h) / 2);
-      // the lesson's number on the corner of its scene
-      const nx = side === 'left' ? px + 10 : px + PANEL.w - 10;
-      const ny = y + (height - PANEL.h) / 2 + 10;
-      press.disc(nx, ny, 7, INK.card);
-      press.line(String(lesson.position), nx - 7, ny - 4.7, { font: 'bold', size: 7.2, color: hue.deep, lead: 9.4 }, 'center', 14);
+      const py = y + (height - PANEL.h) / 2;
+      drawScene(press, c, lesson, px, py, side);
+      // the lesson's number on the corner of its scene, where the scene's layout keeps it clear
+      const badge = sceneLayout(sceneFor(lesson.beat, lesson.words), side).badge;
+      press.disc(px + badge.x, py + badge.y, badge.r, INK.card);
+      press.line(String(lesson.position), px + badge.x - 7, py + badge.y - 4.7, { font: 'bold', size: 7.2, color: hue.deep, lead: 9.4 }, 'center', 14);
       const top = y + Math.max(0, (height - textH) / 2);
       press.line(lesson.titleKu, tx, top - 1.5, title);
       if (beside) press.line(lesson.titleEn, tx + kuW + 7, top + 2, { ...T.english, size: 8.2 });

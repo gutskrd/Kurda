@@ -48,6 +48,7 @@ export const VALLEY = {
   poplarLight: '#7db35f',
   poplarShade: '#3f7136',
   trunk: '#8a5a36',
+  trunkShade: '#664026',
   fruit: '#f0a346',
   apple: '#e0503f',
   blossom: '#f6c4d4',
@@ -80,7 +81,25 @@ export const VALLEY = {
   snowShade: '#dde5ee',
   fire: '#f08a3c',
   fireCore: '#ffd36b',
+  /** the outer edge of a flame, a step deeper than the fire */
+  flame: '#e0623a',
   smoke: '#e7e3dc',
+} as const;
+
+/**
+ * A bonfire's flames on their own 26 × 40 canvas, foot at the bottom: three
+ * tongues of different heights leaning a little with the wind, the outer
+ * fire a step deeper than its face, and the hot core low down where the wood
+ * is. The Newroz fire draws them at rest and the apps lay the same shape over
+ * it to flicker (`pathLoopSvg`), so the two always agree.
+ */
+export const FLAME = {
+  w: 26,
+  h: 40,
+  outer:
+    'M13 39.8C7.6 39.8 2.8 37 1.8 31.6C1.1 27.4 2.6 23.6 3.4 20.6C3.9 18.6 3.6 16.6 2.8 14.6C6.2 16.4 7.8 18.8 8.2 21.2C8.3 15.2 9.6 10 11.6 5.4C12.6 9 13.2 12.4 13.2 15.6C14.2 10 15.8 5 17.6 0.4C18.8 5.6 20.2 9.8 20.6 14.8C21.8 13.4 22.8 12 23.4 10.2C25.6 15.4 26 21.6 25 27.4C24.2 33.6 20.4 39.8 13 39.8Z',
+  face: 'M13 39.4C8.6 39.4 4.6 37 4.4 32.2C4.2 28.4 6.4 25.6 6.8 22.6C8.6 24.4 9.6 26.4 9.8 28.4C10.2 22.4 11.6 17.6 13.8 13.6C14.6 16.6 15.4 19.2 15.6 21.4C16.4 17.4 17.6 13.8 18.6 10.6C20.6 15.6 21.4 18.8 21 22.6C22 21.8 22.4 20.6 22.6 19.4C24 24.6 23.6 30.4 22 33.8C20.4 37.4 17.2 39.4 13 39.4Z',
+  core: 'M13.2 39C10 39 7.8 37.2 7.8 34.6C7.8 32 9.8 30.4 10.6 27.6C12 29.6 12.6 31 12.8 32.4C13.2 29 14.6 26.2 16.4 24C17.6 27.6 18.4 30.6 18.2 33.4C18 36.8 16.2 39 13.2 39Z',
 } as const;
 
 /** The evening's violet, as the village's dusk (art/kingdom/pen.ts). */
@@ -192,6 +211,178 @@ export function bush(x: number, y: number, s: number, leaf: Foliage, ground: str
   out += fill(blobPath(x, y - 6 * s, 10 * s, 7 * s, 8, 0.25, random), leaf.shade);
   out += fill(blobPath(x - 1.5 * s, y - 7.5 * s, 7.5 * s, 5 * s, 7, 0.25, random), leaf.face);
   return out;
+}
+
+// ─────────────────────────────────────────────────────────── trees that grow
+
+/** One lobe of a tree's crown: its middle, and how far it reaches across and up. */
+export interface CrownLobe {
+  x: number;
+  y: number;
+  rx: number;
+  ry: number;
+}
+
+/** A limb: where it leaves the trunk, a point it bends through, where it ends in the crown, and how thick it is where it leaves. */
+export interface TreeLimb {
+  from: Pt;
+  bend: Pt;
+  to: Pt;
+  width: number;
+}
+
+/**
+ * A tree as it grows: a trunk from its foot to where it forks, limbs from
+ * there up into the crown, and the crown as a few lobes of different sizes.
+ * The lobes are drawn over the limbs, so every limb has to end well inside
+ * one of them, or it would stop short of the leaves it carries.
+ */
+export interface TreeShape {
+  foot: Pt;
+  /** how thick the trunk is where it stands */
+  base: number;
+  /** where the trunk divides into its limbs */
+  fork: Pt;
+  limbs: readonly TreeLimb[];
+  lobes: readonly CrownLobe[];
+  /** how far the crown's edge strays from a smooth round, as a share of its size (a blossoming crown is ragged, a walnut's fuller) */
+  rough?: number;
+  /** how big what hangs in the crown is: fruit, or the flowers of a tree in blossom */
+  dot?: number;
+  /** whether it casts its own shadow; a tree whose picture lays one broad shade under everything does not */
+  shadow?: boolean;
+}
+
+/** The lit face of a crown lobe: a little smaller than its shade and drawn toward the light at the upper left. */
+const faceOf = (l: CrownLobe): CrownLobe => ({ x: l.x - l.rx * 0.06, y: l.y - l.ry * 0.08, rx: l.rx * 0.9, ry: l.ry * 0.88 });
+
+/** Whether a point lies inside a lobe's face, kept `margin` of the way in from its edge so a hand-cut edge never uncovers it. */
+function withinFace(p: Pt, lobe: CrownLobe, margin: number): boolean {
+  const f = faceOf(lobe);
+  const k = 1 - margin;
+  return ((p[0] - f.x) / (f.rx * k)) ** 2 + ((p[1] - f.y) / (f.ry * k)) ** 2 <= 1;
+}
+
+/**
+ * Whether a tree is joined up: every limb ends inside the face of a lobe (a
+ * quarter of the way in, where the crown's edge cannot uncover it), and a
+ * trunk with no limbs forks inside the crown itself.
+ */
+export function limbsReachCrown(t: TreeShape): boolean {
+  const inCrown = (p: Pt): boolean => t.lobes.some((l) => withinFace(p, l, 0.25));
+  if (t.lobes.length === 0) return false;
+  if (t.limbs.length === 0) return inCrown(t.fork);
+  return t.limbs.every((limb) => inCrown(limb.to));
+}
+
+/** A closed polygon through the points. */
+const polygon = (pts: readonly Pt[]): string => `M${pts.map(([x, y]) => `${f(x)} ${f(y)}`).join('L')}Z`;
+
+/** A limb as a filled shape that thins from `width` where it leaves to a third of that at its end, along a curve through its bend. */
+function limbPath(limb: TreeLimb): string {
+  const at = (t: number): Pt => {
+    const u = 1 - t;
+    return [u * u * limb.from[0] + 2 * u * t * limb.bend[0] + t * t * limb.to[0], u * u * limb.from[1] + 2 * u * t * limb.bend[1] + t * t * limb.to[1]];
+  };
+  const left: Pt[] = [];
+  const right: Pt[] = [];
+  const steps = 6;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const [x, y] = at(t);
+    const [ax, ay] = at(Math.max(0, t - 0.05));
+    const [bx, by] = at(Math.min(1, t + 0.05));
+    const len = Math.hypot(bx - ax, by - ay) || 1;
+    const half = (limb.width * (1 - t * 0.66)) / 2;
+    left.push([x - ((by - ay) / len) * half, y + ((bx - ax) / len) * half]);
+    right.push([x + ((by - ay) / len) * half, y - ((bx - ax) / len) * half]);
+  }
+  return polygon([...left, ...right.reverse()]);
+}
+
+/**
+ * A tree drawn from its shape: its shadow on the ground to the lower right,
+ * the trunk with its right side a step darker, the crown's shade, the limbs
+ * running up into it, the crown's lit face over their ends, one patch of
+ * light at its upper left, and what hangs in it (fruit or blossom, dotted
+ * by hand rather than in a pattern). A tree whose limbs stop short of its
+ * crown is refused, so no drawing can show a branch hanging in the air.
+ */
+export function grownTree(t: TreeShape, leaf: Foliage, bark: { face: string; shade: string }, ground: string, random: () => number): string {
+  if (!limbsReachCrown(t)) throw new RangeError('art: a tree whose limbs stop short of its crown');
+  const [fx, fy] = t.foot;
+  const [kx, ky] = t.fork;
+  const left = Math.min(...t.lobes.map((l) => l.x - l.rx));
+  const right = Math.max(...t.lobes.map((l) => l.x + l.rx));
+  const spread = right - left;
+  let out = t.shadow === false ? '' : fill(ellipsePath(fx + spread * 0.16, fy + 0.8, spread * 0.4, Math.max(1.8, spread * 0.08)), ground);
+  // the trunk flares a little at its foot and narrows to the fork; its right side is in shade
+  const b = t.base / 2;
+  const k = (t.base * 0.62) / 2;
+  out += fill(polygon([[fx - b * 1.25, fy], [fx - b * 0.8, fy - b], [kx - k, ky], [kx + k, ky], [fx + b * 0.8, fy - b], [fx + b * 1.2, fy]]), bark.face);
+  out += fill(polygon([[fx + b * 0.15, fy], [kx + k * 0.25, ky], [kx + k, ky], [fx + b * 0.8, fy - b], [fx + b * 1.2, fy]]), bark.shade);
+  const rough = t.rough ?? 0.14;
+  out += fill(t.lobes.map((l) => blobPath(l.x + 1.1, l.y + 1.5, l.rx, l.ry, 9, rough, random)).join(''), leaf.shade);
+  out += fill(t.limbs.map(limbPath).join(''), bark.face);
+  out += fill(t.lobes.map((l) => {
+    const face = faceOf(l);
+    return blobPath(face.x, face.y, face.rx, face.ry, 9, rough, random);
+  }).join(''), leaf.face);
+  // the one patch of light sits on the lobe that reaches highest toward the upper left
+  const lit = [...t.lobes].sort((a, c) => a.x - a.rx * 0.5 + (a.y - a.ry) - (c.x - c.rx * 0.5 + (c.y - c.ry)))[0]!;
+  out += fill(blobPath(lit.x - lit.rx * 0.32, lit.y - lit.ry * 0.38, lit.rx * 0.46, lit.ry * 0.34, 7, 0.2, random), leaf.light);
+  if (leaf.dots) {
+    // fruit or flowers dotted by hand: each where it falls, but never on top of another
+    let dots = '';
+    const placed: Array<[number, number, number]> = [];
+    const size = t.dot ?? Math.max(0.9, spread / 26);
+    const count = Math.round(Math.min(18, 3 + (spread / 5) * Math.min(2, 1.3 / size)));
+    for (let tries = 0; placed.length < count && tries < count * 10; tries++) {
+      const lobe = t.lobes[Math.floor(random() * t.lobes.length)]!;
+      const p: Pt = [lobe.x + (random() * 2 - 1) * lobe.rx, lobe.y + (random() * 2 - 1) * lobe.ry];
+      const r = (0.75 + random() * 0.6) * size;
+      if (!withinFace(p, lobe, 0.18) || placed.some(([x, y, q]) => Math.hypot(x - p[0], y - p[1]) < (r + q) * 1.5)) continue;
+      placed.push([p[0], p[1], r]);
+      dots += ellipsePath(p[0], p[1], r, r * (0.85 + random() * 0.2));
+    }
+    out += fill(dots, leaf.dots);
+  }
+  return out;
+}
+
+/**
+ * A small orchard tree standing at (x, y), `s` times the size of a road-side
+ * apricot: a short trunk that forks into three limbs, each ending in a lobe
+ * of the crown, and a fourth lobe filling in under them. `lean` sets the
+ * crown over a little to one side, and the lobes are sized by hand from
+ * `random`, so no two trees of an orchard are the same tree.
+ */
+export function orchardTree(x: number, y: number, s: number, lean: number, random: () => number): TreeShape {
+  const v = (): number => 0.9 + random() * 0.2;
+  const fork: Pt = [x + lean * 0.5 * s, y - 10 * s];
+  const at = (dx: number, dy: number): Pt => [x + (dx + lean) * s, y - dy * s];
+  const ends = [at(-7, 21), at(1.4, 25.6), at(8.2, 20.4)] as const;
+  return {
+    foot: [x, y],
+    base: 2.8 * s,
+    fork,
+    limbs: [
+      { from: fork, bend: at(-3.6, 15), to: ends[0], width: 1.6 * s },
+      { from: fork, bend: at(0.6, 17), to: ends[1], width: 1.8 * s },
+      { from: fork, bend: at(4.6, 15.4), to: ends[2], width: 1.4 * s },
+    ],
+    lobes: [
+      { x: ends[0][0], y: ends[0][1], rx: 8 * s * v(), ry: 6.6 * s * v() },
+      { x: ends[1][0], y: ends[1][1], rx: 9 * s * v(), ry: 7.4 * s * v() },
+      { x: ends[2][0], y: ends[2][1], rx: 7 * s * v(), ry: 6 * s * v() },
+      { x: x + (1 + lean) * s, y: y - 18.4 * s, rx: 7.4 * s, ry: 4.8 * s },
+    ],
+  };
+}
+
+/** The bark of the valley's fruit trees by day or by evening: its face and its side in shade. */
+export function bark(dark: boolean): { face: string; shade: string } {
+  return { face: dusk(VALLEY.trunk, dark), shade: dusk(VALLEY.trunkShade, dark) };
 }
 
 /** A sheep grazing, facing right (`flip` -1 faces left). */

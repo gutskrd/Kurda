@@ -39,7 +39,7 @@ import {
   type EyeState,
   type MouthShape,
 } from '../characters/index.js';
-import { CANVAS, escapeXml, n, n2, prefixFor, seeded, type Pt } from './svg.js';
+import { CANVAS, escapeXml, hashOf, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
 import { VALLEY, blobPath, earthHouse, ellipsePath, foliage, roundTree } from './valley.js';
 
 // ───────────────────────────────────────────────────────────── colours
@@ -76,8 +76,11 @@ const GROUND = VALLEY.earthShade;
 
 const f = n;
 const E = ellipsePath;
-/** A circle as a path, so many can share one element. */
-const O = (cx: number, cy: number, r: number): string => ellipsePath(cx, cy, r, r);
+/** A circle as a path, so many can share one element; its radius is rounded first, so the two arcs that draw it meet as one round. */
+const O = (cx: number, cy: number, r: number): string => {
+  const q = Math.round(r * 10) / 10;
+  return ellipsePath(cx, cy, q, q);
+};
 
 /** An ellipse turned `deg` degrees about its centre, as a path. */
 function oval(cx: number, cy: number, rx: number, ry: number, deg: number): string {
@@ -419,17 +422,22 @@ const SPOTS = {
     });
   },
 
-  // the lake above the tents: still water in its green bank, the mountains behind it
-  lake: (b) => {
-    b.fill(poly(22, 72, 44, 36, 58, 58, 74, 30, 100, 72), '#9aa9c4');
-    b.fill(poly(74, 30, 100, 72, 80, 72, 70, 46), '#7d8dac');
-    b.fill(poly(44, 36, 49, 44, 45, 47, 41, 43, 38, 46) + poly(74, 30, 80, 40, 75, 43, 71, 39, 67, 42), VALLEY.snow);
-    b.fill(E(60, 86, 52, 20), GRASS[1]);
-    b.fill(E(59, 84, 50, 18), GRASS[0]);
-    b.fill(E(60, 85, 39, 11.5), WATER[1]);
-    b.fill(E(59, 84, 38, 10.5), WATER[0]);
-    b.line('M36 82H52M58 88H80M70 80H82', WATER[2], 2);
-    b.line('M16 86V72M20 88V76M102 84V72M98 87V78', LEAF[1], 2);
+  // the lake above the tents: still water in its green bank under the mountains, which it shows again upside down
+  lake: (b, random) => {
+    b.fill(poly(14, 74, 27, 54, 39, 46.6, 52, 30.4, 58.6, 37, 65, 34.8, 82, 41, 93.6, 55, 106, 74), '#9aa9c4');
+    // each peak's side away from the light, and the snow still lying near the tops
+    b.fill(poly(52, 30.4, 58.6, 37, 56, 44, 61, 52, 54, 74, 50, 52, 54, 42) + poly(82, 41, 93.6, 55, 106, 74, 90, 74, 92, 60, 86, 50), '#7d8dac');
+    b.fill(poly(47.6, 36.4, 52, 30.4, 56.4, 35.2, 53.4, 36, 51.6, 39.4, 49.4, 36.8) + poly(77.6, 43.4, 82, 41, 86.4, 45.4, 83.4, 45, 81.4, 47.2, 79.6, 44.8), VALLEY.snow);
+    b.fill(blobPath(60, 84, 54, 19, 11, 0.12, random), GRASS[1]);
+    b.fill(blobPath(59, 82.6, 52, 17.4, 11, 0.12, random), GRASS[0]);
+    // the water, its far edge holding the mountains' reflection, and two streaks of light on it
+    b.fill('M26 82.6C28 77.8 40 75.4 58 75.6C76 75.8 90 77.2 94 81.4C96 85.6 86 89.4 66 90C46 90.6 27 88.4 26 82.6Z', WATER[0]);
+    b.fill('M34 77.6C42 76.2 50 75.6 58 75.6C66 75.6 76 76 84 77.2L76 79.6L66 78.2L58 82.4L50 78.4L42 80.2Z', '#6f8fb8');
+    b.line('M38 85.4H50M62 87H76', WATER[2], 1.6);
+    // reeds at the near bank, of different heights, and stones on the far side
+    b.line('M15.6 89V75.4M18.6 90V79.6M21 88.6V77', LEAF[1], 1.4);
+    b.fill(oval(15.6, 74.6, 1.1, 2.6, 0) + oval(21, 76.2, 1, 2.2, 0), BARK[1]);
+    b.fill(ellipsePath(99.4, 88.4, 3.2, 2) + ellipsePath(104.4, 86, 2.2, 1.4), IRON[2]);
   },
 
   // the iron stove of the winter evenings, its door glowing and the kettle on
@@ -520,30 +528,38 @@ const SPOTS = {
     b.line('M53 48C51 58 50 66 51 76', GLASS[2], 2);
   },
 
-  // the tracks Hevalo leaves: two prints of a small cloven hoof, one ahead of the other
+  // the tracks Hevalo leaves: a small cloven hoof pressed into the earth three times, each step a little further on and turned its own way
   hoofprints: (b) => {
-    const toe = 'M-2.4 -21C-14.5 -18 -17.5 3 -11 18C-8 22.5 -2.4 21 -2.4 14.5Z';
-    const print = (x: number, y: number, turn: number): void =>
-      b.group(`translate(${x} ${y}) rotate(${turn})`, () => {
-        b.fill(toe, VALLEY.wallSide);
-        b.fill(toe, VALLEY.wallSide, ' transform="scale(-1 1)"');
+    // one half of a print: pointed at the front, round at the heel, its inner edge nearly straight
+    const half = 'M-1 -12.4C-6.4 -10.6 -8.4 -1.6 -7 6.4C-6.2 10.4 -3.2 11.8 -1 10.4C-0.4 4.6 -0.2 -3.6 -1 -12.4Z';
+    const heel = 'M-2 8.6C-4.2 9.6 -5.8 8.4 -6.4 6.2C-4.8 7 -3.4 7.2 -2 6.8Z';
+    const print = (x: number, y: number, turn: number, k: number, spread: number): void =>
+      b.group(`translate(${x} ${y}) rotate(${turn}) scale(${k})`, () => {
+        b.fill(half, VALLEY.wallSide, ` transform="rotate(${-spread})"`);
+        b.fill(half, VALLEY.wallSide, ` transform="scale(-1 1) rotate(${-spread})"`);
+        b.fill(heel, VALLEY.earthShade, ` transform="rotate(${-spread})"`);
+        b.fill(heel, VALLEY.earthShade, ` transform="scale(-1 1) rotate(${-spread})"`);
       });
-    print(38, 84, 12);
-    print(82, 38, 20);
+    print(32, 92, 16, 1.7, 4);
+    print(58, 62, 6, 1.55, 7);
+    print(84, 30, 22, 1.4, 3);
   },
 
   // Kobanî under Miştenûr: the flat roofs of Hamo's town, the fig tree in his father's yard, and the hill above them all
   town: (b, random) => {
     b.fill(E(60, 104, 54, 9), GROUND, ' fill-opacity="0.45"');
-    b.fill('M6 84C22 52 44 30 64 30C84 30 102 52 114 84Z', '#c9c6a2');
-    b.fill('M64 30C84 30 102 52 114 84H88C84 60 76 42 64 30Z', '#b5b08a');
-    b.fill('M52 34C58 30 70 30 76 35C70 34 60 34 52 34Z', '#dedbb8');
+    // Miştenûr: a long hill with a flat top, its right flank in shade, a path worn up its face
+    b.fill('M4 86C12 70 22 52 34 41C40 36.4 50 35 60 34.6C72 34.2 82 35.4 88 40C98 48 108 66 116 86Z', '#c9c6a2');
+    b.fill('M88 40C98 48 108 66 116 86H96C94 70 90 54 82 37.4C84.6 38 86.6 38.8 88 40Z', '#b5b08a');
+    b.fill('M40 38.2C46 36.2 54 35.4 62 35.2C68 35 74 35.6 78 36.6C70 37.4 56 37.6 40 38.2Z', '#dedbb8');
+    b.line('M30 70C38 66 46 64 52 60C46 56 50 50 58 46C62 44 64 41 66 37', '#dedbb8', 1.4);
     const lane = VALLEY.earthShade;
     b.add(earthHouse(16, 80, 22, 16, 9, { dark: false, ground: lane }));
     b.add(earthHouse(70, 76, 24, 18, 10, { dark: false, ground: lane }));
     b.add(earthHouse(40, 88, 26, 20, 11, { dark: false, ground: lane, door: VALLEY.gate }));
     b.add(earthHouse(8, 102, 28, 20, 12, { dark: false, ground: lane, door: VALLEY.gateDark, roofLine: VALLEY.fruit }));
     b.add(earthHouse(70, 103, 30, 22, 12, { dark: false, ground: lane, door: VALLEY.gate }));
+    // the fig is small enough here that a round tree, its trunk well up inside its crown, says it with fewer curves
     b.add(roundTree(60, 104, 0.62, foliage(false), lane, random));
   },
 } as const satisfies Readonly<Record<string, Draw>>;
@@ -585,11 +601,13 @@ export function bookPaintSvg(opts: BookArtOptions & { colour: BookPaint }): stri
   const tone = Object.prototype.hasOwnProperty.call(PAINTS, opts.colour) ? PAINTS[opts.colour] : undefined;
   if (!tone) throw new RangeError(`art: no paint called ${String(opts.colour)}`);
   const brush = new Brush();
-  // every colour is the same dab, so a row of them reads as one paintbox
-  const dab = blobPath(58, 58, 38, 30, 9, 0.26, seeded('book-paint'), 0.4);
+  // every colour is a dab of the same size, each laid on by hand with its own edge, and the drop it let fall where it fell
+  const random = seeded(`book-paint|${opts.colour}`);
+  const dab = blobPath(58, 58, 38, 30, 9, 0.26, random, 0.4);
   brush.form(dab, tone, 26, 32, 0.92);
-  brush.fill(O(94, 92, 6.5), tone[1]);
-  brush.fill(O(93.4, 91.2, 5.4), tone[0]);
+  const [dx, dy] = [90 + random() * 8, 88 + random() * 8];
+  brush.fill(O(dx, dy, 6.5), tone[1]);
+  brush.fill(O(dx - 0.6, dy - 0.8, 5.4), tone[0]);
   brush.fill(oval(42, 44, 9, 4.6, -24), tone[2]);
   return picture(String(brush), prefixFor(opts.idPrefix, 'book-paint', opts.colour), opts.size, opts.title);
 }
@@ -615,43 +633,249 @@ export function bookPostmarkSvg(opts: BookArtOptions & { ink: string }): string 
 
 // ───────────────────────────────────────────────────────────── a scene's ground
 
-/** Where a scene is set: by day, by night under the stars, or in the snow. */
-export const BOOK_SETTINGS = ['day', 'night', 'snow'] as const;
+/** Where a scene is set: by day, at dusk with the sun going down, by night under the moon and the stars, or in the snow. */
+export const BOOK_SETTINGS = ['day', 'dusk', 'night', 'snow'] as const;
 export type BookSetting = (typeof BOOK_SETTINGS)[number];
 
 /** The backdrop's own canvas: wider than it is tall, as a panel of a comic is. */
 export const BOOK_BACKDROP = { w: 180, h: 100, horizon: 74 } as const;
 
-/**
- * What a scene of the book stands on: a sky and a hill in the two colours
- * it is given (a chapter's tint and its wash), with a sun or clouds by day,
- * a moon and stars by night, and falling flakes in the snow. The people and
- * the props are laid over it; the hill's top runs near `BOOK_BACKDROP.horizon`.
- */
-export function bookBackdropSvg(opts: BookArtOptions & { setting: BookSetting; sky: string; ground: string; light: string }): string {
-  if (!BOOK_SETTINGS.includes(opts.setting)) throw new RangeError(`art: no book setting ${String(opts.setting)}`);
-  for (const c of [opts.sky, opts.ground, opts.light]) if (!/^#[0-9a-f]{6}$/.test(c)) throw new RangeError(`art: a backdrop's colours are six-digit colours, not ${String(c)}`);
-  const { w, h, horizon } = BOOK_BACKDROP;
-  const brush = new Brush();
-  const random = seeded(`book-backdrop|${opts.setting}`);
-  brush.fill(`M0 0H${w}V${h}H0Z`, opts.sky);
-  if (opts.setting === 'day') {
-    brush.fill(O(150, 22, 9), opts.light);
-    brush.fill(O(34, 20, 6) + O(43, 17, 8) + O(53, 21, 6) + E(43, 23, 15, 4), opts.light);
-  } else if (opts.setting === 'night') {
-    // the moon is the part of one round that another does not cover
-    brush.fill('M152 12A13 13 0 1 0 163 34A10.5 10.5 0 0 1 152 12Z', opts.light);
-    let stars = '';
-    for (let i = 0; i < 16; i++) stars += O(8 + random() * 130, 6 + random() * 48, 0.9 + random() * 1.1);
-    brush.fill(stars, opts.light);
-  } else {
-    let flakes = '';
-    for (let i = 0; i < 22; i++) flakes += O(6 + random() * 168, 5 + random() * 62, 1.2 + random() * 1.4);
-    brush.fill(flakes, opts.light);
-  }
-  brush.fill(`M0 ${horizon + 6}C34 ${horizon - 6} 70 ${horizon - 4} 104 ${horizon + 2}C134 ${horizon + 7} 158 ${horizon + 2} ${w} ${horizon - 3}V${h}H0Z`, opts.ground);
-  return picture(String(brush), prefixFor(opts.idPrefix, 'book-backdrop', opts.setting, opts.sky.slice(1), opts.ground.slice(1)), opts.size, opts.title, `0 0 ${w} ${h}`, h / w);
+/** A box on the backdrop's canvas that its sky keeps clear of: where the scene stands someone or hangs something. */
+export interface BookSkyBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
+
+/** The sun by day or at dusk, or the moon by night, on the backdrop's canvas: its middle, its radius, and whether a moon is full. */
+export interface BookOrb {
+  x: number;
+  y: number;
+  r: number;
+  full?: boolean;
+}
+
+/** A thing painted in a backdrop's sky (a star, a flake of snow, a cloud), as the box it takes. */
+export interface BookSkyMark extends BookSkyBox {
+  kind: 'star' | 'twinkle' | 'flake' | 'cloud';
+}
+
+/** Where the sun or the moon hangs when the scene does not say: the sun going down over the hills at dusk, and the moon high on the right at night. */
+const ORB: Readonly<Record<BookSetting, BookOrb | null>> = { day: null, dusk: { x: 118, y: 46, r: 11 }, night: { x: 150, y: 19, r: 9.5 }, snow: null };
+
+/** How far the sky's marks keep from the moon, from one another, and from what the scene puts in front of the sky. */
+const CLEAR = { orb: 3.2, mark: 2.6, box: 1.6 } as const;
+
+/** The far mountains, the near hill, and the floor of the scene, on the backdrop's canvas: the same land in every scene, so a chapter's lessons share a valley. */
+const FAR: readonly Pt[] = [[0, 58], [14, 51], [30, 45.4], [44, 50.6], [58, 47], [78, 39.6], [96, 47.6], [110, 52.4], [128, 48.6], [144, 52], [160, 44.4], [172, 47.2], [180, 50.4]];
+/** The shaded side of each far peak, from its top down to the next fold. */
+const FAR_SHADE: readonly (readonly Pt[])[] = [
+  [[30, 45.4], [44, 50.6], [40, 60], [33, 54]],
+  [[78, 39.6], [96, 47.6], [92, 60], [84, 52]],
+  [[128, 48.6], [144, 52], [140, 60], [133, 55]],
+  [[160, 44.4], [172, 47.2], [180, 50.4], [180, 60], [166, 53]],
+];
+const MID: readonly Pt[] = [[0, 66.4], [22, 61.6], [50, 64.2], [80, 59.2], [108, 62.6], [136, 60.4], [160, 63.6], [180, 61.6]];
+const NEAR: readonly Pt[] = [[0, 77], [28, 72.2], [62, 74.2], [100, 70.8], [136, 74.6], [180, 70.4]];
+/** Where a stand of poplars may grow on the near hill, as they grow along its water: the first of these the scene leaves open. */
+const POPLAR_SPOTS = [100, 62, 132, 40, 152, 84] as const;
+
+/** Whether two boxes overlap, the first grown by `margin` all round. */
+const overlaps = (a: BookSkyBox, b: BookSkyBox, margin: number): boolean =>
+  a.x - margin < b.x + b.w && b.x < a.x + a.w + margin && a.y - margin < b.y + b.h && b.y < a.y + a.h + margin;
+
+/** Whether a box comes within `margin` of a round. */
+function nearOrb(box: BookSkyBox, orb: BookOrb, margin: number): boolean {
+  const dx = Math.max(box.x - orb.x, 0, orb.x - (box.x + box.w));
+  const dy = Math.max(box.y - orb.y, 0, orb.y - (box.y + box.h));
+  return Math.hypot(dx, dy) < orb.r + margin;
+}
+
+/** How high the far mountains stand at x on the backdrop's canvas: the sky ends there, and a setting sun goes down behind them. */
+export function bookRidgeAt(x: number): number {
+  return farTop(x);
+}
+
+/** How high a line of the land stands at x, along its points. */
+function heightOf(line: readonly Pt[], x: number): number {
+  for (let i = 1; i < line.length; i++) {
+    const [ax, ay] = line[i - 1]!;
+    const [bx, by] = line[i]!;
+    if (x <= bx) return ay + ((by - ay) * (x - ax)) / Math.max(1e-6, bx - ax);
+  }
+  return line.at(-1)![1];
+}
+
+/** The far mountains' height at x: the sky ends there. */
+const farTop = (x: number): number => heightOf(FAR, x);
+
+/**
+ * What a backdrop paints in its sky, placed by hand from a seeded generator
+ * and checked one by one: the stars of a night, two or three of them bright
+ * enough to twinkle; the flakes of the snow; the clouds of a day. None comes
+ * near the sun or the moon, near another mark, or into any box the scene
+ * keeps clear, and stars keep above the mountains. By day and at dusk the
+ * sky keeps clouds only where nothing hangs.
+ */
+export function bookSkyMarks(opts: { setting: BookSetting; orb?: BookOrb | null; clear?: readonly BookSkyBox[]; seed?: string }): { orb: BookOrb | null; marks: BookSkyMark[] } {
+  const orb = opts.orb === undefined ? ORB[opts.setting] : opts.orb;
+  const clear = opts.clear ?? [];
+  const random = seeded(`book-sky|${opts.setting}|${opts.seed ?? ''}`);
+  const marks: BookSkyMark[] = [];
+  const free = (box: BookSkyBox, gap: number = CLEAR.mark): boolean =>
+    !(orb && nearOrb(box, orb, CLEAR.orb)) && !clear.some((c) => overlaps(box, c, CLEAR.box)) && !marks.some((m) => overlaps(box, m, gap));
+  const { w } = BOOK_BACKDROP;
+  if (opts.setting === 'night') {
+    // more stars high up than down by the mountains, most of them faint, and a few bright enough to twinkle
+    for (let tries = 0; marks.length < 26 && tries < 400; tries++) {
+      const x = 4 + random() * (w - 8);
+      const y = 3 + random() ** 1.5 * 46;
+      const twinkle = marks.filter((m) => m.kind === 'twinkle').length < 3 && random() < 0.16;
+      const r = twinkle ? 2 + random() * 0.6 : random() < 0.75 ? 0.45 + random() * 0.45 : 0.95 + random() * 0.4;
+      const box = { x: x - r, y: y - r, w: 2 * r, h: 2 * r };
+      if (y + r > farTop(x) - 3 || !free(box, twinkle ? 6 : CLEAR.mark + random() * 4)) continue;
+      marks.push({ ...box, kind: twinkle ? 'twinkle' : 'star' });
+    }
+  } else if (opts.setting === 'snow') {
+    for (let tries = 0; marks.length < 30 && tries < 400; tries++) {
+      const x = 3 + random() * (w - 6);
+      const y = 3 + random() * 64;
+      const r = random() < 0.6 ? 0.8 + random() * 0.5 : 1.4 + random() * 0.8;
+      const box = { x: x - r, y: y - r, w: 2 * r, h: 2 * r };
+      if (free(box, CLEAR.mark + random() * 5)) marks.push({ ...box, kind: 'flake' });
+    }
+  } else {
+    // a day's clouds, two of different sizes where they fit; at dusk one, low and long
+    const most = opts.setting === 'dusk' ? 1 : 2;
+    for (let tries = 0; marks.length < most && tries < 40; tries++) {
+      const cw = (marks.length === 0 ? 26 : 18) + random() * 10;
+      const cx = 14 + random() * (w - 28);
+      const cy = opts.setting === 'dusk' ? 26 + random() * 8 : 8 + random() * 18;
+      const box = { x: cx - cw / 2, y: cy - cw * 0.22, w: cw, h: cw * 0.36 };
+      if (free(box, 10)) marks.push({ ...box, kind: 'cloud' });
+    }
+  }
+  return { orb, marks };
+}
+
+/** A flat cloud in the box it takes: a level foot and three rounds of different sizes along its top. */
+function cloudPath(m: BookSkyBox): string {
+  const foot = m.y + m.h;
+  const r = (k: number): number => m.w * k;
+  return (
+    `M${f(m.x + r(0.08))} ${f(foot)}H${f(m.x + m.w - r(0.06))}A${f(r(0.06))} ${f(r(0.06))} 0 0 0 ${f(m.x + m.w - r(0.06))} ${f(foot - r(0.12))}H${f(m.x + r(0.08))}A${f(r(0.06))} ${f(r(0.06))} 0 0 0 ${f(m.x + r(0.08))} ${f(foot)}Z` +
+    O(m.x + r(0.26), foot - r(0.12), r(0.16)) +
+    O(m.x + r(0.5), foot - r(0.17), r(0.22)) +
+    O(m.x + r(0.76), foot - r(0.11), r(0.14))
+  );
+}
+
+/** A star bright enough to twinkle: four points drawn in toward its middle. */
+function twinklePath(m: BookSkyBox): string {
+  const [x, y, r] = [m.x + m.w / 2, m.y + m.h / 2, m.w / 2];
+  return `M${f(x)} ${f(y - r)}Q${f(x)} ${f(y)} ${f(x + r)} ${f(y)}Q${f(x)} ${f(y)} ${f(x)} ${f(y + r)}Q${f(x)} ${f(y)} ${f(x - r)} ${f(y)}Q${f(x)} ${f(y)} ${f(x)} ${f(y - r)}Z`;
+}
+
+/**
+ * What a scene of the book stands on, in the colours it is given (a
+ * chapter's tint and its wash): a sky, the far mountains with each peak's
+ * shaded side, a near hill with a stand of poplars, and the floor the people
+ * and the props stand on. By day a cloud or two; at dusk the sky warms in
+ * bands toward the hills and the sun sits low over them; by night the moon
+ * and the stars; in the snow the flakes falling. Everything in it is a mix
+ * of the colours given, so a scene is all of one chapter.
+ *
+ * The scene says where the sun or the moon hangs (`orb`; none by day unless
+ * it is asked for) and what the sky is to keep clear of (`clear`): the
+ * people and the things it lays over the sky, so that no star sits on a
+ * head and nothing in the sky is ever drawn over the moon.
+ */
+export function bookBackdropSvg(
+  opts: BookArtOptions & { setting: BookSetting; sky: string; ground: string; light: string; far?: string; orb?: BookOrb | null; clear?: readonly BookSkyBox[]; seed?: string },
+): string {
+  if (!BOOK_SETTINGS.includes(opts.setting)) throw new RangeError(`art: no book setting ${String(opts.setting)}`);
+  for (const c of [opts.sky, opts.ground, opts.light, opts.far ?? '#000000']) if (!/^#[0-9a-f]{6}$/.test(c)) throw new RangeError(`art: a backdrop's colours are six-digit colours, not ${String(c)}`);
+  const orbGiven = opts.orb;
+  if (orbGiven && !([orbGiven.x, orbGiven.y, orbGiven.r].every(Number.isFinite) && orbGiven.r > 0)) throw new RangeError('art: a sun or a moon needs a place and a size');
+  const { w, h } = BOOK_BACKDROP;
+  const { setting, sky, ground, light } = opts;
+  const far = opts.far ?? mix(sky, ground, setting === 'dusk' ? 0.55 : 0.36);
+  const mid = mix(far, ground, 0.5);
+  const brush = new Brush();
+  const { orb, marks } = bookSkyMarks({ setting, orb: opts.orb, clear: opts.clear, seed: opts.seed });
+  brush.fill(`M0 0H${w}V${h}H0Z`, sky);
+  if (setting === 'dusk') {
+    // the sky warms toward the hills in three bands, each edge cut by hand
+    [0.24, 0.46, 0.7].forEach((k, i) => {
+      const top = 30 + i * 11;
+      brush.fill(`${smoothLine([[0, top + 2], [44, top - 1.4], [96, top + 1.6], [140, top - 0.6], [180, top + 1.2]])}V${h}H0Z`, mix(sky, light, k));
+    });
+  }
+  if (orb && setting !== 'night') brush.fill(O(orb.x, orb.y, orb.r), light);
+  if (orb && setting === 'night') {
+    if (orb.full) {
+      brush.fill(O(orb.x, orb.y, orb.r), light);
+      // the moon's seas, a step darker than its face
+      brush.fill(oval(orb.x - orb.r * 0.3, orb.y - orb.r * 0.18, orb.r * 0.32, orb.r * 0.22, -20) + oval(orb.x + orb.r * 0.28, orb.y + orb.r * 0.3, orb.r * 0.24, orb.r * 0.16, 15), mix(light, sky, 0.16));
+    } else {
+      // a crescent: the part of one round that another, a little up and to the right, does not cover
+      const [x0, y0] = [orb.x + orb.r * 0.42, orb.y - orb.r * 0.9];
+      const [x1, y1] = [orb.x + orb.r * 0.9, orb.y + orb.r * 0.42];
+      brush.fill(`M${f(x0)} ${f(y0)}A${f(orb.r)} ${f(orb.r)} 0 1 0 ${f(x1)} ${f(y1)}A${f(orb.r * 0.8)} ${f(orb.r * 0.8)} 0 0 1 ${f(x0)} ${f(y0)}Z`, light);
+    }
+  }
+  const stars = marks.filter((m) => m.kind === 'star').map((m) => O(m.x + m.w / 2, m.y + m.h / 2, m.w / 2)).join('');
+  if (stars) brush.fill(stars, light);
+  const twinkles = marks.filter((m) => m.kind === 'twinkle').map(twinklePath).join('');
+  if (twinkles) brush.fill(twinkles, light);
+  const clouds = marks.filter((m) => m.kind === 'cloud').map(cloudPath).join('');
+  if (clouds) brush.fill(clouds, mix(sky, light, setting === 'dusk' ? 0.6 : 0.55));
+  // the far mountains, each peak with its shaded side
+  brush.fill(`${smoothLine(FAR)}V${h}H0Z`, far);
+  brush.fill(FAR_SHADE.map((pts) => polygon(pts)).join(''), mix(far, ground, 0.22));
+  // the near hill, with a stand of poplars on it in the darkest of the land's colours, where the scene leaves them room to be seen
+  brush.fill(`${smoothLine(MID)}V${h}H0Z`, mid);
+  const tree = luminance(ground) < luminance(far) ? ground : far;
+  const pick = seeded(`book-poplars|${opts.seed ?? setting}`);
+  const spot = POPLAR_SPOTS.find((x) => !(opts.clear ?? []).some((c) => overlaps({ x: x - 4, y: heightOf(MID, x) - 16, w: 16, h: 18 }, c, 1)));
+  if (spot !== undefined) {
+    const stand = Array.from({ length: 2 + Math.floor(pick() * 2) }, (_, i) => {
+      const x = spot + i * (3.8 + pick() * 1.6);
+      return [x, heightOf(MID, x) + 0.6, 7.6 + pick() * 6] as const;
+    });
+    brush.fill(stand.map(([x, foot, tall]) => `M${f(x)} ${f(foot - tall)}C${f(x + 2.3)} ${f(foot - tall * 0.62)} ${f(x + 2)} ${f(foot - tall * 0.16)} ${f(x + 0.3)} ${f(foot)}H${f(x - 0.4)}C${f(x - 2)} ${f(foot - tall * 0.2)} ${f(x - 2.1)} ${f(foot - tall * 0.64)} ${f(x)} ${f(foot - tall)}Z`).join(''), tree);
+  }
+  const flakes = marks.filter((m) => m.kind === 'flake').map((m) => O(m.x + m.w / 2, m.y + m.h / 2, m.w / 2)).join('');
+  if (flakes) brush.fill(flakes, light);
+  // the floor of the scene, last, so whatever stands in it stands on it
+  brush.fill(`${smoothLine(NEAR)}V${h}H0Z`, ground);
+  const key = [setting, sky, ground, light, opts.far ?? '', opts.seed ?? '', orb ? `${f(orb.x)}-${f(orb.y)}-${f(orb.r)}${orb.full ? 'f' : ''}` : 'no', ...(opts.clear ?? []).map((c) => `${f(c.x)}-${f(c.y)}-${f(c.w)}-${f(c.h)}`)].join('|');
+  return picture(String(brush), prefixFor(opts.idPrefix, 'book-backdrop', setting, hashOf(key)), opts.size, opts.title, `0 0 ${w} ${h}`, h / w);
+}
+
+/** A colour's brightness, for picking the darker of two. */
+function luminance(hex: string): number {
+  const v = parseInt(hex.slice(1), 16);
+  return 0.2126 * ((v >> 16) & 255) + 0.7152 * ((v >> 8) & 255) + 0.0722 * (v & 255);
+}
+
+/** A smooth open line through the points, from the first to the last (Catmull-Rom, as cubic Béziers). */
+function smoothLine(pts: readonly Pt[]): string {
+  const at = (i: number): Pt => pts[Math.max(0, Math.min(pts.length - 1, i))]!;
+  let d = `M${f(at(0)[0])} ${f(at(0)[1])}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x0, y0] = at(i - 1);
+    const [x1, y1] = at(i);
+    const [x2, y2] = at(i + 1);
+    const [x3, y3] = at(i + 2);
+    d += `C${f(x1 + (x2 - x0) / 6)} ${f(y1 + (y2 - y0) / 6)} ${f(x2 - (x3 - x1) / 6)} ${f(y2 - (y3 - y1) / 6)} ${f(x2)} ${f(y2)}`;
+  }
+  return d;
+}
+
+/** A closed polygon through points. */
+const polygon = (pts: readonly Pt[]): string => poly(...pts.flat());
 
 // ───────────────────────────────────────────────────────────── the three friends, posed
 

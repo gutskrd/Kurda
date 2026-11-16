@@ -16,7 +16,7 @@
  * generator the caller passes in, so a drawing is the same string every time.
  */
 import { n, type Pt } from './svg.js';
-import { VALLEY, blobPath, bush, dusk, earthHouse, ellipsePath, fill, foliage, roundTree, smoothPath, stroke, warm, type ValleyLandmark } from './valley.js';
+import { VALLEY, bark, blobPath, bush, dusk, earthHouse, ellipsePath, fill, foliage, grownTree, orchardTree, smoothPath, stroke, warm, type TreeShape, type ValleyLandmark } from './valley.js';
 
 // ───────────────────────────────────────────────────────────── colours
 
@@ -40,6 +40,8 @@ const HAY = { top: '#f4dc90', face: '#e3c06a', side: '#c69e4c' } as const;
 const COPPER = { face: '#c97a3d', side: '#9a5326' } as const;
 /** The dark of an opening in a basalt wall: the gate's passage and the arrow slits. */
 const BASALT_DARK = '#34333b';
+/** A walnut's bark, silvery grey and paler than the valley's other trunks, and its side in shade. */
+const WALNUT_BARK = { face: '#b0a696', shade: '#8a8073' } as const;
 /** A window lit by evening, the same warm the valley's own houses use (`earthHouse`). */
 const LAMPLIGHT = '#f2c35c';
 
@@ -163,10 +165,8 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       // The far house goes down first so the near one overlaps it; the wall hides both their feet.
       out += earthHouse(66, 86, 30, 30, 12, { dark, ground, roofLine: VALLEY.fruit });
       out += earthHouse(20, 90, 30, 22, 12, { dark, ground });
-      // The apricots are placed by hand rather than scattered, so no two run together at phone size.
-      const apricots = [[-8, -26], [-1.5, -21], [5, -27.5], [8.5, -19], [-6.5, -17.5]] as const;
-      out += roundTree(97, 88, 0.9, foliage(dark), ground, random);
-      out += fill(apricots.map(([dx, dy]) => ellipsePath(97 + dx * 0.9, 88 + dy * 0.9, 1.6, 1.6)).join(''), c(VALLEY.fruit));
+      // The apricot over the wall forks into its limbs under the crown, and its fruit never runs together at phone size.
+      out += grownTree({ ...orchardTree(97, 88, 0.9, -0.6, random), dot: 1.3 }, foliage(dark, VALLEY.fruit), bark(dark), ground, random);
       // The wall's shadow goes down before the wall, whose lit top reads as the walk along it.
       out += castShadow(6, 110, 94, 8, 9, ground);
       out += block(6, 110, 94, 20, 8, earth);
@@ -259,8 +259,9 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
 
   /**
    * The village spring under the walnut: a stone wall with an arched niche
-   * and a brass spout, water falling into a long stone trough, and the great
-   * walnut spreading over it all, its shade a cool patch round the trough.
+   * and a brass spout, water falling into a long stone trough and running
+   * off from its far end, and the great walnut behind it all on its short
+   * pale trunk, its limbs spreading into a crown that shades the spring.
    */
   spring: {
     loop: { kind: 'water', x: 41, y: 91, w: 30, h: 12 },
@@ -268,18 +269,35 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
       const stone = tones(STONE_TOP, VALLEY.stone, VALLEY.stoneSide, dark);
-      const leaf = foliage(dark);
       let out = '';
       // The walnut's shade is one broad patch under the whole scene, since the spring stands in it.
-      out += fill(blobPath(70, 104, 44, 10, 10, 0.12, random), ground);
-      out += fill('M86 96l2 -26c-4 -6 -10 -8 -14 -10l2 -2c5 2 9 4 13 8c2 -6 6 -10 10 -12l2 2c-4 3 -7 7 -8 12l1 28Z', c(VALLEY.trunk));
-      // The crown is two lobes, as an old walnut spreads, each with its shade, its face and the light on its upper left.
-      out += fill(blobPath(44, 40, 34, 22, 10, 0.16, random) + blobPath(84, 36, 28, 22, 10, 0.16, random), leaf.shade);
-      out += fill(blobPath(41, 37, 31, 19, 10, 0.16, random) + blobPath(80, 32, 25, 18, 10, 0.16, random), leaf.face);
-      out += fill(blobPath(32, 28, 16, 8, 8, 0.22, random) + blobPath(72, 22, 12, 6, 7, 0.25, random), leaf.light);
-      // The spring's wall has a slab along its top, an arched niche, and the brass spout in the niche.
+      out += fill(blobPath(66, 105.6, 50, 8.6, 10, 0.12, random), ground);
+      // The walnut: a short thick trunk that divides low into great limbs, each of them running up into the crown.
+      const walnut: TreeShape = {
+        foot: [93, 96],
+        base: 13,
+        fork: [91, 72],
+        limbs: [
+          { from: [91, 72], bend: [80, 62], to: [66, 50], width: 6.6 },
+          { from: [91, 72], bend: [90, 56], to: [86, 40], width: 6.2 },
+          { from: [91, 72], bend: [101, 62], to: [107, 50], width: 5.4 },
+          { from: [84, 66], bend: [68, 60], to: [48, 56], width: 3.6 },
+        ],
+        lobes: [
+          { x: 56, y: 48, rx: 23, ry: 14.4 },
+          { x: 40, y: 55, rx: 15.6, ry: 10.4 },
+          { x: 82, y: 33, rx: 22, ry: 16 },
+          { x: 103.4, y: 46, rx: 12.6, ry: 11.6 },
+          { x: 64, y: 30, rx: 14, ry: 10 },
+        ],
+        rough: 0.12,
+        shadow: false,
+      };
+      out += grownTree(walnut, foliage(dark), { face: c(WALNUT_BARK.face), shade: c(WALNUT_BARK.shade) }, ground, random);
+      // The spring's wall has a slab along its top, an arched niche, faint courses of stone, and the brass spout in the niche.
       out += block(36, 94, 40, 26, 8, stone);
       out += block(34, 69, 44, 3, 8, stone);
+      out += stroke('M36 81.4H46M66 80.6H76M36 87.6H46.4M65.6 88.4H76', c(VALLEY.stoneSide), 0.7);
       out += fill('M47 94V78a9 9 0 0 1 18 0V94Z', c(VALLEY.stoneSide));
       out += stroke('M56 78v4', c(VALLEY.goldDark), 2.2);
       // The trough's rim is lit and its water holds one patch of sky; the water falls into it where the ripple sprite sits.
@@ -289,9 +307,12 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += stroke('M56 83C56 88 56 92 56 96.6', c(VALLEY.water), 2.4);
       out += stroke('M55.5 84v10', c(VALLEY.waterLight), 0.9);
       out += stroke(ellipsePath(56, 97, 8, 2.4), c(VALLEY.waterLight), 1.2);
+      // What the trough cannot hold runs off from its far end in a little channel, darkening the ground it crosses.
+      out += fill(blobPath(108.6, 112.2, 8.6, 2.2, 8, 0.2, random), c(VALLEY.greenShade));
+      out += stroke('M101.4 107.6C104 110.2 107.6 111 113.4 112.4', c(VALLEY.water), 1.4);
       // A wet stone lies at the trough's foot.
-      out += fill(ellipsePath(100, 110, 3.4, 2), c(VALLEY.stoneSide));
-      out += fill(ellipsePath(99.4, 109.2, 2.6, 1.4), c(VALLEY.stone));
+      out += fill(ellipsePath(96.4, 111, 3.4, 2), c(VALLEY.stoneSide));
+      out += fill(ellipsePath(95.8, 110.2, 2.6, 1.4), c(VALLEY.stone));
       // A copper jug waits by the trough to be filled, which also gives the scene its scale.
       out += fill(ellipsePath(18, 111, 6, 2), ground);
       out += stroke('M18.4 99.6c3.6 -.4 4.6 3.6 1.8 6', c(COPPER.side), 1.1);
@@ -315,20 +336,24 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       const ground = c(GROUND);
       const wood = tones(WOOD.top, WOOD.face, WOOD.side, dark);
       let out = '';
-      /** A pile of round fruit on a counter or in a crate: the fruit, the shade on each, and one glint. */
+      /**
+       * A pile of round fruit on a counter or in a crate, heaped higher in the
+       * middle: each fruit a little bigger or smaller than the next and not
+       * quite in line, the shade on each, and a glint on some.
+       */
       const heap = (x: number, y: number, w: number, colour: string, shade: string): string => {
         let face = '';
         let shaded = '';
         let glint = '';
-        const rows = [[0, 0], [1, -2.6]] as const;
-        for (const [row, dy] of rows) {
-          const count = Math.floor((w - row * 3) / 3.4);
+        for (const [row, dy] of [[0, 0], [1, -2.5], [2, -4.8]] as const) {
+          const count = Math.floor((w - row * 4.6) / 3.4);
           for (let k = 0; k < count; k++) {
-            const fx = x + 1.8 + row * 1.7 + k * 3.4 + (random() - 0.5) * 0.4;
-            const fy = y + dy;
-            face += ellipsePath(fx, fy, 1.8, 1.8);
-            shaded += `M${f(fx + 1.8)} ${f(fy)}a1.8 1.8 0 0 1 -1.8 1.8a2.4 2.4 0 0 0 1.8 -1.8Z`;
-            if (row === 1 || k % 2 === 0) glint += ellipsePath(fx - 0.6, fy - 0.7, 0.5, 0.5);
+            const r = 1.55 + random() * 0.45;
+            const fx = x + 1.8 + row * 2.3 + k * 3.4 + (random() - 0.5) * 0.6;
+            const fy = y + dy + (random() - 0.5) * 0.5;
+            face += ellipsePath(fx, fy, r, r);
+            shaded += `M${f(fx + r)} ${f(fy)}a${f(r)} ${f(r)} 0 0 1 ${f(-r)} ${f(r)}a${f(r * 1.3)} ${f(r * 1.3)} 0 0 0 ${f(r)} ${f(-r)}Z`;
+            if (random() < 0.5) glint += ellipsePath(fx - r * 0.34, fy - r * 0.4, 0.5, 0.5);
           }
         }
         return fill(face, c(colour)) + fill(shaded, c(shade)) + fill(glint, c(VALLEY.cream));
@@ -408,7 +433,8 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
         rows += smoothPath([[x0, y], [(x0 + x1) / 2, y + 0.7], [x1, y]]);
       }
       out += stroke(rows, c(VALLEY.furrowWheat), 1.2);
-      out += block(60, 63, 9, 5, 5, straw) + block(88, 62, 9, 5, 5, straw) + block(30, 73, 9, 5, 5, straw);
+      // the bales lie where the baler dropped them, no two quite the same
+      out += block(60, 63, 10, 5.4, 5, straw) + block(89, 61.4, 8, 4.6, 4.4, straw) + block(29, 73.4, 9.4, 5, 5.4, straw);
       // The shelter's shadow falls on its concrete apron, so it is the concrete's own darker edge colour.
       out += fill(poly([[34, 108], [94, 108], [108, 101], [48, 101]]), c(VALLEY.path));
       out += fill(box(34, 108, 60, 2), c(VALLEY.pathEdge));

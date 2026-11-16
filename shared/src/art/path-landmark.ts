@@ -16,7 +16,7 @@
 import type { PathGround, PathLandmark } from '../path-world.js';
 import { pathGroundShade } from './path-land.js';
 import { CANVAS, escapeXml, n2, prefixFor, seeded } from './svg.js';
-import { VALLEY, dusk, ellipsePath, fill, stroke, warm, type ValleyLandmark, type ValleyLoopKind } from './valley.js';
+import { FLAME, VALLEY, dusk, ellipsePath, fill, stroke, warm, type ValleyLandmark, type ValleyLoopKind } from './valley.js';
 import { VALLEY_LANDMARKS_1 } from './valley-landmarks-1.js';
 import { VALLEY_LANDMARKS_2 } from './valley-landmarks-2.js';
 
@@ -46,6 +46,8 @@ export interface PathLandmarkOptions {
   title?: string;
   /** the land it stands on, whose own shade it casts; the meadow's by default */
   ground?: PathGround;
+  /** the colour of the shade it casts where it stands on a page of its own colour rather than on the path's land (a book's chapter opener, a stamp) */
+  shade?: string;
   idPrefix?: string;
 }
 
@@ -56,10 +58,11 @@ export function pathLandmarkSvg(opts: PathLandmarkOptions): string {
   if (!art) throw new RangeError(`art: no landmark ${String(landmark)}`);
   const size = opts.size ?? CANVAS;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  if (opts.shade !== undefined && !/^#[0-9a-f]{6}$/.test(opts.shade)) throw new RangeError(`art: a landmark's shade is a six-digit colour, not ${String(opts.shade)}`);
   const prefix = prefixFor(opts.idPrefix, 'landmark', landmark, dark);
   // drawn standing in the meadow's shade, then given the shade of the land it stands on, so a market's shadow is not grass
   const meadow = dusk(VALLEY.meadowShade, dark);
-  const shade = opts.ground ? pathGroundShade(opts.ground, dark) : meadow;
+  const shade = opts.shade ?? (opts.ground ? pathGroundShade(opts.ground, dark) : meadow);
   const body = art.draw(dark, seeded(`valley-landmark|${landmark}`)).split(`fill="${meadow}"`).join(`fill="${shade}"`);
   const label = opts.title
     ? ` role="img" aria-labelledby="${prefix}t"><title id="${prefix}t">${escapeXml(opts.title)}</title>`
@@ -81,7 +84,7 @@ const LOOP_VIEW: Record<PathLoopKind, { w: number; h: number }> = {
   steam: { w: 16, h: 24 },
   water: { w: 30, h: 12 },
   flag: { w: 20, h: 16 },
-  flame: { w: 26, h: 40 },
+  flame: { w: FLAME.w, h: FLAME.h },
   smoke: { w: 16, h: 30 },
   bee: { w: 34, h: 34 },
   sign: { w: 18, h: 26 },
@@ -122,8 +125,8 @@ export function pathLoopSvg(opts: PathLoopOptions): string {
       body += stroke(ellipsePath(15, 6, 5, 1.8), dark ? '#9fd2e6' : '#ffffff', 1.2);
       break;
     case 'flame':
-      body += fill('M13 2C19 12 24 20 21 30C19 37 7 37 5 30C2 22 9 16 9 9C11 13 12 12 13 2Z', warm(VALLEY.fire, dark));
-      body += fill('M13 16C16 21 18 25 16 30C14 34 10 34 9 30C8 26 11 22 13 16Z', warm(VALLEY.fireCore, dark));
+      // the Newroz fire's own flames, so the moving ones lie exactly over the ones drawn at rest
+      body += fill(FLAME.outer, warm(VALLEY.flame, dark)) + fill(FLAME.face, warm(VALLEY.fire, dark)) + fill(FLAME.core, warm(VALLEY.fireCore, dark));
       break;
     case 'bee':
       // on the rim of its circle; the apps turn the circle

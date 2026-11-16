@@ -12,14 +12,21 @@
  * thing gets none: a picture dictionary that guesses teaches the wrong word.
  *
  * A scene is composed from the lesson's own beat: who of the three friends is
- * in it and how they feel about it, by day, by night or in the snow, and the
- * two or three things it names that there is a drawing of. So when the plan
- * retells a lesson, its scene follows.
+ * in it and how they feel about it, by day, at dusk, by night or in the snow,
+ * and the two or three things it names that there is a drawing of. So when
+ * the plan retells a lesson, its scene follows. Its sky keeps to one light:
+ * the sun or the moon, never both, and nothing hung in it or standing in
+ * front of it ever covers them (`sceneLayout` places every part of a scene
+ * and says what the sky must keep clear of).
  */
 import {
+  BOOK_BACKDROP,
   HUE_NAMES,
   PATH_LANDMARKS,
   WORD_PICTURES,
+  bookRidgeAt,
+  characterArt,
+  cropBox,
   type BookPaint,
   type BookPose,
   type BookSetting,
@@ -314,6 +321,8 @@ export function tellBeat(beat: string, max: number): string {
 
 export interface BookScene {
   setting: BookSetting;
+  /** what lights its sky and is in the picture: the sun, the moon (full when the beat says so), or nothing */
+  orb: 'sun' | 'moon' | 'full moon' | null;
   /** who of the three friends is in it, in the order they stand, and how each holds themselves */
   cast: Array<{ who: CharacterId; pose: string }>;
   /** the things of the beat there is a drawing of, in the order it names them */
@@ -467,7 +476,13 @@ const PROPS_MAX = { alone: 3, together: 1 } as const;
  */
 export function sceneFor(beat: string, words: ReadonlyArray<Pick<BookWord, 'ku' | 'en' | 'pos' | 'picture'>> = []): BookScene {
   const sentences = sentencesOf(beat);
-  const setting: BookSetting = named('snow|snowflakes|winter|frost|snowed in').test(beat) ? 'snow' : named('night|stars|moon|midnight|dusk|dark').test(beat) ? 'night' : 'day';
+  const setting: BookSetting = named('snow|snowflakes|winter|frost|snowed in').test(beat)
+    ? 'snow'
+    : named('dusk|sunset|sun goes down').test(beat)
+      ? 'dusk'
+      : named('night|stars|moon|midnight|dark').test(beat)
+        ? 'night'
+        : 'day';
 
   const who: Array<{ who: CharacterId; at: number; pose: string }> = [];
   const mood = <P extends string>(moods: ReadonlyArray<readonly [RegExp, P]>, text: string, fallback: P): P => moods.find(([test]) => test.test(text))?.[1] ?? fallback;
@@ -498,6 +513,127 @@ export function sceneFor(beat: string, words: ReadonlyArray<Pick<BookWord, 'ku' 
   }
   // an apple in a scene the deer was caught in is the one in his mouth, and when he looks at the sky its core lies beside him
   const eaten = castOf.some((c) => c.who === 'hevalo' && (c.pose === 'caught' || c.pose === 'innocent'));
-  const shown = props.filter((p) => !(eaten && same(p, word('apple'))));
-  return { setting, cast: castOf, props: shown.slice(0, castOf.length > 1 ? PROPS_MAX.together : PROPS_MAX.alone) };
+  // the sky keeps to one light: the moon by night, the sun going down at dusk, and by day or in the snow the sun only when the beat names it
+  const sunny = props.some((p) => same(p, word('sun')));
+  const orb: BookScene['orb'] =
+    setting === 'night' ? (/full moon/i.test(beat) ? 'full moon' : 'moon') : setting === 'dusk' || sunny ? 'sun' : null;
+  // so the sky's own things are not drawn again as pictures, nor a weather the sky is not having
+  const skyborne = new Set(['sun', 'moon', 'star', ...(orb || setting === 'snow' ? ['rain'] : []), ...(setting === 'snow' ? ['snow'] : [])]);
+  const shown = props.filter((p) => !(eaten && same(p, word('apple'))) && !(p.kind === 'word' && skyborne.has(p.id)));
+  return { setting, orb, cast: castOf, props: shown.slice(0, castOf.length > 1 ? PROPS_MAX.together : PROPS_MAX.alone) };
+}
+
+// ───────────────────────────────────────────────────────────── a scene laid out
+
+/** The panel a lesson's scene is drawn in, in points. */
+export const PANEL = { w: 124, h: 64, r: 10 } as const;
+
+/** How many points of the panel one unit of the backdrop's canvas is: the backdrop is laid across the panel's whole width. */
+export const BACKDROP_SCALE = (PANEL.w + 1) / BOOK_BACKDROP.w;
+
+/** Things that hang in the sky of a scene rather than stand on its ground. */
+const ALOFT = new Set(['sun', 'moon', 'star', 'cloud', 'rain', 'snow', 'plane', 'bird']);
+export const aloft = (p: BookPicture): boolean => p.kind === 'word' && ALOFT.has(p.id);
+
+/** A box on the panel, in points from its top left. */
+export interface PanelBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** Where everything of a scene goes in its panel, in points from the panel's top left. */
+export interface SceneLayout {
+  /** each of the friends in it, as the box their picture fills (it runs off the panel's foot and its sides) */
+  cast: Array<{ who: CharacterId; pose: string; box: PanelBox }>;
+  /** each thing, standing on the ground or hanging in the sky, as the square it is drawn in */
+  props: Array<{ picture: BookPicture; box: PanelBox; aloft: boolean }>;
+  /** the round the lesson's number is set on, in the corner on the page's outer side */
+  badge: { x: number; y: number; r: number };
+  /** the sun or the moon, if the sky has room for it */
+  orb: { x: number; y: number; r: number; full: boolean } | null;
+  /** what the sky keeps its stars, flakes and clouds clear of: everything above */
+  clear: PanelBox[];
+}
+
+/** How wide the friends are drawn in a scene, from the chest up. */
+const CAST_WIDTH = 52;
+
+/** How far apart the sun or the moon keeps from everything else in a scene, in points. */
+export const ORB_ROOM = 2.4;
+
+/** How big the sun and the moon are drawn, in points, and where they may hang, in the order they are tried. */
+const ORBS = {
+  // the sun by day stands high on the left, where the light of every drawing comes from
+  sun: { r: 5.8, at: [[26, 10], [40, 9], [54, 11], [68, 9.4], [84, 10.4], [98, 9.2]] },
+  // the moon high on the right, else wherever the sky is open
+  moon: { r: 6.2, at: [[100, 10], [86, 9], [72, 10.6], [58, 9], [44, 10.2], [30, 10.8], [62, 19]] },
+  // the setting sun sits on the far mountains wherever they show between the people and the things, else as low in the open sky as it can
+  dusk: { r: 7.4, at: [[86], [64], [44], [104], [24], [100, 21], [24, 21], [62, 18], [84, 12], [40, 12]] },
+} as const;
+
+/** Whether a round comes within `margin` of a box. */
+function roundMeetsBox(cx: number, cy: number, r: number, b: PanelBox, margin: number): boolean {
+  const dx = Math.max(b.x - cx, 0, cx - (b.x + b.w));
+  const dy = Math.max(b.y - cy, 0, cy - (b.y + b.h));
+  return Math.hypot(dx, dy) < r + margin;
+}
+
+/**
+ * Where everything of a scene goes in its panel, for a panel on the `side`
+ * of the page it stands on (the lesson's number goes in its outer corner).
+ * The friends stand at the sides, half out of the picture when there are
+ * two, the things on the ground between them and the things of the sky
+ * above; and then the sun or the moon is hung in the first of its places
+ * that nothing else comes near. Where none is free, the sky does without
+ * it rather than have something drawn over it.
+ */
+export function sceneLayout(scene: BookScene, side: 'left' | 'right'): SceneLayout {
+  const { w, h } = PANEL;
+  const s = CAST_WIDTH;
+  const [first, second] = scene.cast;
+  const left = second || first?.who === 'hamo' ? first : undefined;
+  const right = second ?? (first?.who === 'hamo' ? undefined : first);
+  // two of them stand a little further apart, half out of the picture, to leave the middle for what the scene is about
+  const out = left && right ? 11 : 4;
+  const castBox = (who: CharacterId, x: number): PanelBox => {
+    const frame = cropBox(characterArt(who), 'bust');
+    return { x, y: h - s + 4, w: s, h: (s * frame.h) / frame.w };
+  };
+  const cast: SceneLayout['cast'] = [];
+  if (left) cast.push({ ...left, box: castBox(left.who, -out) });
+  if (right) cast.push({ ...right, box: castBox(right.who, w - s + out) });
+  // the things of the scene stand where the people leave room: on the ground, or up in the sky
+  const from = left ? s - out - 6 : 8;
+  const to = right ? w - s + out + 6 : w - 8;
+  const standing = scene.props.filter((p) => !aloft(p)).slice(0, left && right ? 1 : 2);
+  const hanging = scene.props.filter(aloft).slice(0, standing.length > 1 ? 1 : 2);
+  const slot = (to - from) / Math.max(1, standing.length);
+  const size = Math.min(30, slot - 1);
+  const props: SceneLayout['props'] = [
+    ...standing.map((picture, i) => ({ picture, aloft: false, box: { x: from + slot * i + (slot - size) / 2, y: h - size - 4 - (i % 2) * 2, w: size, h: size } })),
+    ...hanging.map((picture, i) => {
+      const k = standing.length > 0 ? 19 : 26;
+      return { picture, aloft: true, box: { x: (standing.length > 0 ? from : (from + to) / 2 - 12) + 2 + i * 24, y: 3 + (i % 2) * 4, w: k, h: k } };
+    }),
+  ];
+  const badge = { x: side === 'left' ? 10 : w - 10, y: 10, r: 7 };
+  const badgeBox = { x: badge.x - badge.r, y: badge.y - badge.r, w: 2 * badge.r, h: 2 * badge.r };
+  const taken = [...cast.map((c) => c.box), ...props.map((p) => p.box), badgeBox];
+  let orb: SceneLayout['orb'] = null;
+  if (scene.orb) {
+    const kind = scene.setting === 'dusk' ? ORBS.dusk : scene.orb === 'sun' ? ORBS.sun : ORBS.moon;
+    for (const at of kind.at) {
+      // a setting sun sits just over the far mountains where it is, its lower part behind them
+      const x = at[0]!;
+      const y = at.length > 1 ? at[1]! : bookRidgeAt(x / BACKDROP_SCALE) * BACKDROP_SCALE - kind.r * 0.3;
+      const inside = x - kind.r >= ORB_ROOM && x + kind.r <= w - ORB_ROOM && y - kind.r >= ORB_ROOM;
+      if (inside && !taken.some((b) => roundMeetsBox(x, y, kind.r, b, ORB_ROOM))) {
+        orb = { x, y, r: kind.r, full: scene.orb === 'full moon' };
+        break;
+      }
+    }
+  }
+  return { cast, props, badge, orb, clear: taken };
 }

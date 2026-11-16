@@ -892,12 +892,17 @@ export {
   bookCastSvg,
   bookPaintSvg,
   bookPostmarkSvg,
+  bookRidgeAt,
+  bookSkyMarks,
   bookSpotSvg,
   type BookArtOptions,
   type BookCastOptions,
+  type BookOrb,
   type BookPaint,
   type BookPose,
   type BookSetting,
+  type BookSkyBox,
+  type BookSkyMark,
   type BookSpot,
 } from './art/index.js';
 /**

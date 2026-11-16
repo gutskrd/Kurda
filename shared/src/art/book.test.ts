@@ -19,7 +19,10 @@ import {
   bookCastSvg,
   bookPaintSvg,
   bookPostmarkSvg,
+  bookRidgeAt,
+  bookSkyMarks,
   bookSpotSvg,
+  type BookOrb,
   type BookPaint,
   type BookPose,
   type BookSetting,
@@ -231,7 +234,9 @@ describe('the drawings of Hevalo’s book', () => {
     expect(svg).not.toBe(bookPostmarkSvg({ ink: '#1f4f8f' }));
   });
 
-  it('sets a scene on a sky and a hill in the colours it is given, by day, by night and in the snow', () => {
+  it('sets a scene on a sky and a land in the colours it is given, by day, at dusk, by night and in the snow', () => {
+    expect(BOOK_SETTINGS).toEqual(['day', 'dusk', 'night', 'snow']);
+    const channels = (hex: string): number[] => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
     for (const setting of BOOK_SETTINGS) {
       const svg = bookBackdropSvg({ setting, ...SKY, size: 360 });
       const root = parse(svg);
@@ -239,18 +244,67 @@ describe('the drawings of Hevalo’s book', () => {
       expect(root.attrs.width).toBe('360');
       expect(root.attrs.height).toBe('200');
       const painted = root.children.filter((e) => e.name === 'path');
-      // the sky fills the panel, the hill is drawn last and reaches its foot, and what lights the sky comes between
+      // the sky fills the panel first; the floor the scene stands on is drawn last and reaches its foot
       expect(painted[0]!.attrs).toMatchObject({ d: `M0 0H${BOOK_BACKDROP.w}V${BOOK_BACKDROP.h}H0Z`, fill: SKY.sky });
       expect(painted.at(-1)!.attrs.fill).toBe(SKY.ground);
       expect(painted.at(-1)!.attrs.d).toMatch(new RegExp(`V${BOOK_BACKDROP.h}H0Z$`));
-      expect(painted.slice(1, -1).length).toBeGreaterThan(0);
-      for (const e of painted.slice(1, -1)) expect(e.attrs.fill).toBe(SKY.light);
-      expect(new Set(painted.map((e) => e.attrs.fill))).toEqual(new Set(Object.values(SKY)));
+      // and everything between is painted in mixes of the colours given, so a scene is all of its chapter
+      const given = Object.values(SKY).map(channels);
+      for (const e of painted) {
+        channels(e.attrs.fill!).forEach((v, i) => {
+          expect(v, `${setting} ${e.attrs.fill}`).toBeGreaterThanOrEqual(Math.min(...given.map((g) => g[i]!)));
+          expect(v, `${setting} ${e.attrs.fill}`).toBeLessThanOrEqual(Math.max(...given.map((g) => g[i]!)));
+        });
+      }
+      expect(painted.length, setting).toBeGreaterThan(5);
     }
-    // a night has a moon and its stars, and the snow more flakes than the night has stars
-    const marks = (setting: BookSetting): number => bookBackdropSvg({ setting, ...SKY }).split('a').length;
-    expect(marks('snow')).toBeGreaterThan(marks('night'));
-    expect(marks('night')).toBeGreaterThan(marks('day'));
+    // the night has its stars, a few of them bright enough to twinkle, the snow more flakes than that, a day two clouds at most and dusk one
+    const marks = (setting: BookSetting): string[] => bookSkyMarks({ setting }).marks.map((m) => m.kind);
+    expect(marks('night').filter((k) => k === 'star').length).toBeGreaterThan(14);
+    expect(marks('night')).toContain('twinkle');
+    expect(marks('snow').length).toBeGreaterThan(marks('night').length);
+    expect(marks('day').every((k) => k === 'cloud') && marks('day').length <= 2).toBe(true);
+    expect(marks('dusk').length).toBeLessThanOrEqual(1);
+    // the moon is up at night and the sun goes down at dusk by themselves; by day and in the snow the sun is there only when a scene asks for it
+    expect(bookSkyMarks({ setting: 'night' }).orb).not.toBeNull();
+    expect(bookSkyMarks({ setting: 'dusk' }).orb).not.toBeNull();
+    expect(bookSkyMarks({ setting: 'day' }).orb).toBeNull();
+    expect(bookSkyMarks({ setting: 'snow' }).orb).toBeNull();
+    // a scene's own sky: another lesson, other stars and other clouds
+    expect(bookBackdropSvg({ setting: 'night', ...SKY, seed: 'a' })).not.toBe(bookBackdropSvg({ setting: 'night', ...SKY, seed: 'b' }));
+    expect(bookBackdropSvg({ setting: 'day', ...SKY, seed: 'a' })).toBe(bookBackdropSvg({ setting: 'day', ...SKY, seed: 'a' }));
+  });
+
+  it('never paints a star, a flake or a cloud on the moon or the sun, nor on anything a scene keeps clear, in any sky', () => {
+    const problems: string[] = [];
+    const k = 10;
+    const boxes = [[], [{ x: 0, y: 23, w: 75, h: 80 }], [{ x: 105, y: 23, w: 75, h: 80 }, { x: 60, y: 4, w: 27, h: 27 }], [{ x: 2, y: 2, w: 20, h: 20 }, { x: 0, y: 23, w: 75, h: 80 }, { x: 105, y: 23, w: 75, h: 80 }]];
+    for (const setting of BOOK_SETTINGS) {
+      for (let x = 12; x <= 168; x += 26) {
+        for (const y of [12, 22, 34]) {
+          for (const [i, clear] of boxes.entries()) {
+            const orb: BookOrb = { x, y, r: 9, full: (x + y) % 2 === 0 };
+            const seed = `${x}-${y}-${i}`;
+            const sky = bookSkyMarks({ setting, orb, clear, seed });
+            const svg = bookBackdropSvg({ setting, ...SKY, orb, clear, seed });
+            for (const m of sky.marks) {
+              const where = `${setting} ${m.kind} at ${m.x.toFixed(1)},${m.y.toFixed(1)} with the orb at ${x},${y}`;
+              const dx = Math.max(m.x - x, 0, x - (m.x + m.w));
+              const dy = Math.max(m.y - y, 0, y - (m.y + m.h));
+              if (Math.hypot(dx, dy) < orb.r + 2) problems.push(`${where}: on the orb`);
+              for (const c of clear) if (m.x < c.x + c.w && c.x < m.x + m.w && m.y < c.y + c.h && c.y < m.y + m.h) problems.push(`${where}: on a box kept clear`);
+              if ((m.kind === 'star' || m.kind === 'twinkle') && m.y + m.h > bookRidgeAt(m.x + m.w / 2)) problems.push(`${where}: below the mountains`);
+              // and every mark is drawn where it says it is
+              if (m.kind === 'star' || m.kind === 'flake') {
+                const r = Math.round((m.w / 2) * k) / k;
+                if (!svg.includes(`M${n(m.x + m.w / 2 - r)} ${n(m.y + m.h / 2)}a${n(r)} ${n(r)}`)) problems.push(`${where}: not drawn`);
+              }
+            }
+          }
+        }
+      }
+    }
+    expect(problems).toEqual([]);
   });
 
   it('poses the three friends without redrawing them: the rig’s own layers, put together another way', () => {
@@ -310,7 +364,10 @@ describe('the drawings of Hevalo’s book', () => {
     for (const spot of ['banana', 'toString', 'constructor', '']) expect(() => bookSpotSvg({ spot: spot as BookSpot }), spot).toThrow(RangeError);
     for (const colour of ['purple', 'toString', '']) expect(() => bookPaintSvg({ colour: colour as BookPaint }), colour).toThrow(RangeError);
     for (const ink of ['red', '#FFF', '#12345', '#GGGGGG', 'url(#a)']) expect(() => bookPostmarkSvg({ ink }), ink).toThrow(RangeError);
-    expect(() => bookBackdropSvg({ setting: 'dusk' as BookSetting, ...SKY })).toThrow(RangeError);
+    expect(() => bookBackdropSvg({ setting: 'dawn' as BookSetting, ...SKY })).toThrow(RangeError);
+    expect(() => bookBackdropSvg({ setting: 'night', ...SKY, orb: { x: Number.NaN, y: 4, r: 3 } })).toThrow(RangeError);
+    expect(() => bookBackdropSvg({ setting: 'night', ...SKY, orb: { x: 4, y: 4, r: 0 } })).toThrow(RangeError);
+    expect(() => bookBackdropSvg({ setting: 'snow', ...SKY, far: 'grey' })).toThrow(RangeError);
     expect(() => bookBackdropSvg({ setting: 'day', ...SKY, sky: 'blue' })).toThrow(RangeError);
     expect(() => bookBackdropSvg({ setting: 'day', ...SKY, light: '"/><script>' })).toThrow(RangeError);
     for (const size of [0, -4, Number.NaN, Number.POSITIVE_INFINITY]) {
@@ -330,6 +387,8 @@ describe('the drawings of Hevalo’s book', () => {
     expect(shared.bookPaintSvg).toBe(bookPaintSvg);
     expect(shared.bookPostmarkSvg).toBe(bookPostmarkSvg);
     expect(shared.bookBackdropSvg).toBe(bookBackdropSvg);
+    expect(shared.bookSkyMarks).toBe(bookSkyMarks);
+    expect(shared.bookRidgeAt).toBe(bookRidgeAt);
     expect(shared.bookCastSvg).toBe(bookCastSvg);
     expect(shared.BOOK_SPOTS).toBe(BOOK_SPOTS);
     expect(shared.BOOK_POSES).toBe(BOOK_POSES);
