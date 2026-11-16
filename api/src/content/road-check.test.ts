@@ -86,21 +86,21 @@ describe('the stories at the chapters’ ends', () => {
   });
 
   it('name a word the chapter has not taught, unless the story glosses it, and a story that is not one chapter’s', () => {
-    const tale = { slug: 'road-01-test', dialect: 'kurmanci', level: 1, title: 'Sêv', body: 'Ez Hamo me. Sêv pir spehî ye.', glossary: [], questions: [] };
+    const tale = { slug: 'road-01-test', dialect: 'kurmanci', level: 1, title: 'Sêv', body: 'Ez Hamo me. Sêv gelek spehî ye.', glossary: [], questions: [] };
     expect(checkRoadStories(plan, [tale]).map(formatProblem)).toEqual([
       'road-01-test body: “spehî” is not met by the end of chapter 1: gloss it, or say it with words the chapter taught',
       'road-01-test body: 1 of its 7 words are new by chapter 1 (at most 2 %)',
     ]);
-    const glossed = { ...tale, body: 'Ez Hamo me. Sêv pir xweşik e, û Hevalo birçî ye. Ez dilxweş im, tu jî dilxweş î. Çay germ e. Ev sêv spehî ye.', glossary: [{ term: 'spehî', meanings: { en: 'beautiful' } }] };
+    const glossed = { ...tale, body: 'Ez Hamo me. Sêv gelek xweş e, û Hevalo birçî ye. Ez baş im, tu jî baş î. Çay germ e. Ev sêv spehî ye.', glossary: [{ term: 'spehî', meanings: { en: 'beautiful' } }] };
     expect(checkRoadStories(plan, [glossed]).map(formatProblem).filter((t) => t.includes('spehî'))).toEqual([]);
     expect(checkRoadStories(plan, [{ ...tale, slug: 'chapter-one' }, { ...tale, level: 2 }]).map(formatProblem)).toContain('chapter-one slug: slug should be road-NN-… with NN the chapter it ends (01–12)');
   });
 
   it('ask their questions in words the chapter taught too', () => {
-    const tale = { slug: 'road-01-test', dialect: 'kurmanci', level: 1, title: 'Sêv', body: 'Ez Hamo me. Sêv pir xweşik e, û Hevalo birçî ye. Ez dilxweş im, tu jî dilxweş î.' };
+    const tale = { slug: 'road-01-test', dialect: 'kurmanci', level: 1, title: 'Sêv', body: 'Ez Hamo me. Sêv gelek xweş e, û Hevalo birçî ye. Ez baş im, tu jî baş î.' };
     const asked = (prompt: string, options: string[]) => checkRoadStories(plan, [{ ...tale, questions: [{ prompt, options, correctIndex: 0 }] }]).map(formatProblem);
     expect(asked('Kî birçî ye?', ['Hevalo', 'Hamo'])).toEqual([]);
-    expect(asked('Çima Hevalo birçî ye?', ['Wî sêv nexwar.', 'Ew nexweş e.'])).toEqual([
+    expect(asked('Çima Hevalo birçî ye?', ['Wî sêv nexwar.', 'Ew sar e.'])).toEqual([
       'road-01-test questions[0]: “çima” is not met by the end of chapter 1: ask with words the chapter taught',
       'road-01-test questions[0]: “wî” is not met by the end of chapter 1: ask with words the chapter taught',
       'road-01-test questions[0]: “nexwar” is not met by the end of chapter 1: ask with words the chapter taught',

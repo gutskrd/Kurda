@@ -4606,14 +4606,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Xezal dibêje ku ez simbêlê xwe biparêzim, mîna zavayekî!",
+                    "say": "Xezal dibêje ku ez simbêlê xwe biparêzim!",
                     "voice": "hamo",
-                    "prompt": "Xezal dibêje ku ez simbêlê xwe biparêzim, mîna zavayekî!",
+                    "prompt": "Xezal dibêje ku ez simbêlê xwe biparêzim!",
                     "accepted": [
-                      "Xezal says I should take care of my moustache, like a bridegroom!",
-                      "Xezal says that I should look after my moustache, like a groom!",
-                      "Xezal tells me to take care of my moustache, like a bridegroom!",
-                      "Xezal says I must look after my moustache, like a bridegroom!"
+                      "Xezal says I should take care of my moustache!",
+                      "Xezal says that I should look after my moustache!",
+                      "Xezal tells me to take care of my moustache!",
+                      "Xezal says I must look after my moustache!"
                     ]
                   }
                 },
@@ -4690,8 +4690,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Berbang e, û otobûs li ber deriyê şîn e.",
-                        "en": "It’s dawn, and the bus is at the blue gate."
+                        "text": "Berbang e, û otobûs li ber deriyê şîn e. Bûk û zava jî hatin.",
+                        "en": "It’s dawn, and the bus is at the blue gate. The bride and groom have come too."
                       },
                       {
                         "speaker": 1,

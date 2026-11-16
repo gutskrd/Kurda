@@ -3533,9 +3533,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Baran hilkişiya ser sindoqê, û bêyî ku tiştekî bibêje defterê xwe hilgirt.",
+                    "say": "Baran hilkişiya ser sindoqê, û bêyî ku tiştekî bibêje deftera xwe hilgirt.",
                     "voice": "hamo",
-                    "prompt": "Baran hilkişiya ser sindoqê, û bêyî ku tiştekî bibêje defterê xwe hilgirt.",
+                    "prompt": "Baran hilkişiya ser sindoqê, û bêyî ku tiştekî bibêje deftera xwe hilgirt.",
                     "accepted": [
                       "Baran climbed onto the crate and, without saying anything, picked up his notebook.",
                       "Baran climbed onto the crate and picked up his notebook without saying anything.",
@@ -3776,10 +3776,10 @@
                   "type": "writing",
                   "payload": {
                     "ask": "missing",
-                    "say": "Ji ber vê yekê, Sêvan bêhempa e!",
+                    "say": "Ji ber vê yekê, Sêvan bêhempa ye!",
                     "voice": "hamo",
                     "cue": "So Sêvan is like no other!",
-                    "prompt": "Ji ber vê yekê, Sêvan ___ e!",
+                    "prompt": "Ji ber vê yekê, Sêvan ___ ye!",
                     "accepted": [
                       "bêhempa"
                     ]
