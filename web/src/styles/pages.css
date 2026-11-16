@@ -733,7 +733,7 @@
   transition: border-color var(--dur-fast) var(--ease-out);
 }
 .nav-avatar-btn:hover .friend-avatar {
-  border-color: var(--gold);
+  border-color: var(--primary);
 }
 .friend-avatar {
   flex: none;
@@ -835,8 +835,8 @@ button.feature {
   opacity: 0.7;
 }
 .avatar-tile.is-selected {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 2px var(--gold-soft);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-soft);
 }
 .avatar-tile-none {
   display: grid;
@@ -882,8 +882,8 @@ button.feature {
   background: var(--surface-2);
 }
 .cosmetic-tile.is-equipped {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 1px var(--gold-soft);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-soft);
 }
 .cosmetic-thumb {
   position: relative;
@@ -963,8 +963,8 @@ button.feature {
   text-overflow: ellipsis;
 }
 .cosmetic-state.is-equipped {
-  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
-  color: var(--gold-ink);
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  color: var(--primary);
 }
 .cosmetic-caption {
   display: flex;
@@ -2125,7 +2125,7 @@ button.chat-run-avatar:hover {
   align-items: center;
   min-height: 44px;
   margin-top: 4px;
-  color: var(--gold-ink);
+  color: var(--primary);
   font-size: 0.92rem;
   font-weight: 600;
   text-decoration: none;
@@ -2709,8 +2709,9 @@ a.mkp-activity-row:hover {
   width: 88px;
   height: 88px;
 }
+/* a link in running words: the app's violet, as everything that can be pressed is */
 .link {
-  color: var(--gold-ink);
+  color: var(--primary);
 }
 
 

@@ -7,32 +7,34 @@
  * from it — the banner, the lessons done, the line walked so far. The gold of
  * the sun is kept for what was earned: a strong lesson's rim, a unit's trophy.
  *
- * Every tone has two sets of values. On the dark page the colours are light
- * and the words on them dark; on the light page the colours are deep and the
- * words on them white. Both pairs were checked: the words on a banner read at
- * 4.5:1 or better, and every filled stop stands 3:1 or better against the page.
+ * Every tone has two sets of values, cut from the app's hues. On the dark page
+ * the colours are light and the words on them dark; on the light page they are
+ * vivid and deep enough for white words, except saffron, which stays a gold and
+ * is written on in a dark brown. Both pairs were checked: the words on a banner
+ * read at 4.5:1 or better, and every filled stop stands 3:1 or better against
+ * the page.
  */
 
-.lp-tone-meadow { --u-fill: #7fcf9f; --u-lip: #4d9a6c; --u-ink: #0d1f15; --u-text: #8fdcad; }
-.lp-tone-river { --u-fill: #86bfe8; --u-lip: #4f88b3; --u-ink: #0b1a26; --u-text: #96c9ee; }
-.lp-tone-clay { --u-fill: #eda585; --u-lip: #b46e50; --u-ink: #2a120a; --u-text: #f2b59a; }
-.lp-tone-dusk { --u-fill: #b9aaf0; --u-lip: #8273bd; --u-ink: #18122e; --u-text: #c4b7f4; }
-.lp-tone-saffron { --u-fill: #f0c060; --u-lip: #b88a2a; --u-ink: #2a1d05; --u-text: #f3ca74; }
-.lp-tone-pine { --u-fill: #bcd283; --u-lip: #849a4f; --u-ink: #1a220a; --u-text: #c6da94; }
-.lp-tone-rose { --u-fill: #eda0bf; --u-lip: #b56a8a; --u-ink: #2b0f1b; --u-text: #f1b1ca; }
+.lp-tone-meadow { --u-fill: #78d694; --u-lip: #459b61; --u-ink: #011c0a; --u-text: #92dfa7; }
+.lp-tone-river { --u-fill: #91c1ff; --u-lip: #5188cd; --u-ink: #05162c; --u-text: #a8ceff; }
+.lp-tone-clay { --u-fill: #ffa47a; --u-lip: #c16d45; --u-ink: #280d02; --u-text: #ffb798; }
+.lp-tone-dusk { --u-fill: #aeb8fe; --u-lip: #767ecd; --u-ink: #11132c; --u-text: #bec6ff; }
+.lp-tone-saffron { --u-fill: #eeb154; --u-lip: #b07a20; --u-ink: #221200; --u-text: #f5c076; }
+.lp-tone-pine { --u-fill: #57d4d4; --u-lip: #009a9a; --u-ink: #001b1b; --u-text: #65e1e1; }
+.lp-tone-rose { --u-fill: #fd9ac6; --u-lip: #bc668e; --u-ink: #260b18; --u-text: #ffafd1; }
 
-:root[data-theme='light'] .lp-tone-meadow { --u-fill: #2e7a52; --u-lip: #1f5739; --u-ink: #ffffff; --u-text: #256843; }
-:root[data-theme='light'] .lp-tone-river { --u-fill: #2a6a93; --u-lip: #1c4c6b; --u-ink: #ffffff; --u-text: #235a7e; }
-:root[data-theme='light'] .lp-tone-clay { --u-fill: #a9532f; --u-lip: #7d3c21; --u-ink: #ffffff; --u-text: #934627; }
-:root[data-theme='light'] .lp-tone-dusk { --u-fill: #6551a6; --u-lip: #493a7d; --u-ink: #ffffff; --u-text: #57459a; }
-:root[data-theme='light'] .lp-tone-saffron { --u-fill: #9a6508; --u-lip: #6f4806; --u-ink: #ffffff; --u-text: #8a5a07; }
-:root[data-theme='light'] .lp-tone-pine { --u-fill: #56692b; --u-lip: #3e4c1e; --u-ink: #ffffff; --u-text: #4b5c25; }
-:root[data-theme='light'] .lp-tone-rose { --u-fill: #a3446b; --u-lip: #78304e; --u-ink: #ffffff; --u-text: #8f3b5d; }
+:root[data-theme='light'] .lp-tone-meadow { --u-fill: #058644; --u-lip: #006531; --u-ink: #ffffff; --u-text: #00783b; }
+:root[data-theme='light'] .lp-tone-river { --u-fill: #0073df; --u-lip: #0157ac; --u-ink: #ffffff; --u-text: #0161bd; }
+:root[data-theme='light'] .lp-tone-clay { --u-fill: #c45001; --u-lip: #973c00; --u-ink: #ffffff; --u-text: #a24102; }
+:root[data-theme='light'] .lp-tone-dusk { --u-fill: #6363eb; --u-lip: #4a47c0; --u-ink: #ffffff; --u-text: #504bd1; }
+:root[data-theme='light'] .lp-tone-saffron { --u-fill: #c37902; --u-lip: #8f5d04; --u-ink: #241600; --u-text: #885703; }
+:root[data-theme='light'] .lp-tone-pine { --u-fill: #008282; --u-lip: #006262; --u-ink: #ffffff; --u-text: #067272; }
+:root[data-theme='light'] .lp-tone-rose { --u-fill: #cd3688; --u-lip: #a51a6a; --u-ink: #ffffff; --u-text: #af0f6f; }
 
 .lp {
   /* the grey of what is not open yet, and of the line still ahead */
-  --lp-rest: #262a31;
-  --lp-rest-lip: #1a1d22;
+  --lp-rest: #2b283c;
+  --lp-rest-lip: #1a1828;
   --lp-rest-ink: rgba(255, 255, 255, 0.5);
   --lp-line: rgba(255, 255, 255, 0.2);
   /* the gold rim and the trophy: the sun, as everywhere else it marks something earned */
@@ -41,10 +43,10 @@
   --node: 72px;
 }
 :root[data-theme='light'] .lp {
-  --lp-rest: #e4e4e1;
-  --lp-rest-lip: #c9c9c5;
-  --lp-rest-ink: #74767c;
-  --lp-line: rgba(17, 17, 17, 0.18);
+  --lp-rest: #e3e1ec;
+  --lp-rest-lip: #cac8d7;
+  --lp-rest-ink: #716e85;
+  --lp-line: rgba(20, 17, 46, 0.18);
   --lp-gold-lip: #b07f00;
 }
 

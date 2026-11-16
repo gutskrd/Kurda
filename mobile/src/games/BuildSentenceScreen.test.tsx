@@ -212,7 +212,8 @@ describe('Build a Sentence, as an exercise of the lessons', () => {
     });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
-    expect(await screen.findByTestId('game-wordle')).toBeTruthy();
+    // the game put forward is drawn with the list, whichever game it is today
+    expect(await screen.findByTestId('game-featured')).toBeTruthy();
     await waitFor(() => expect(client.calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByTestId('game-build-sentence')).toBeNull();

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PracticeHub } from '@kurda/shared';
 import { exercisesOf } from './exercises';
-import { ROW_TONES, heroOf, heroTone, hubRows, practiceXpRange } from './hub';
+import { ROW_HUES, heroOf, hubRows, practiceXpRange } from './hub';
 
 const empty: PracticeHub = { due: 0, available: 0, mistakes: 0, listen: false, speak: false, words: false, skipSpeaking: false, units: [] };
 const unit = (n: number) => ({ unitId: `u${n}`, title: `Unit title ${n}`, number: n, tone: 'meadow' as const });
@@ -29,17 +29,11 @@ describe('the card at the top of the practice hub', () => {
     expect(practiceXpRange()).toEqual({ min: 5, max: 10 });
   });
 
-  it('is painted in the unit’s own colour, else by what it offers', () => {
-    expect(heroTone({ kind: 'unit', unit: { ...unit(2), tone: 'rose' } })).toBe('rose');
-    expect(heroTone({ kind: 'due', count: 3 })).toBe('meadow');
-    expect(heroTone({ kind: 'weak' })).toBe('saffron');
-    expect(heroTone({ kind: 'none' })).toBe('pine');
-  });
-
-  it('gives every row a colour of its own', () => {
-    const tones = Object.values(ROW_TONES);
-    expect(new Set(tones).size).toBe(tones.length);
-    expect(Object.keys(ROW_TONES).sort()).toEqual(['hear', 'listen', 'mistakes', 'sentence', 'speak', 'unit', 'words']);
+  it('gives every row a hue of its own, and leaves the app’s violet to the card', () => {
+    const hues = Object.values(ROW_HUES);
+    expect(new Set(hues).size).toBe(hues.length);
+    expect(hues).not.toContain('violet');
+    expect(Object.keys(ROW_HUES).sort()).toEqual(['hear', 'listen', 'mistakes', 'sentence', 'speak', 'unit', 'words']);
   });
 });
 

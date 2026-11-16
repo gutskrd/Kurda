@@ -611,8 +611,8 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
                         </Text>
                       </View>
                       {p.unread > 0 ? (
-                        <View style={[styles.newBadge, { backgroundColor: colors.gold }]}>
-                          <Text style={[styles.newText, { color: colors.textOnGold }]}>{t('letters.new')}</Text>
+                        <View style={[styles.newBadge, { backgroundColor: colors.primary }]}>
+                          <Text style={[styles.newText, { color: colors.textOnPrimary }]}>{t('letters.new')}</Text>
                         </View>
                       ) : null}
                       <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip ?? undefined} />

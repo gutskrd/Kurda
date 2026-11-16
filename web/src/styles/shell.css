@@ -201,7 +201,7 @@
   background: var(--surface-2);
   color: var(--ink);
 }
-/* something new: a dot in the sun's gold, with a ring of the bar's own colour so it reads on the glyph */
+/* something new: a dot in the app's violet, with a ring of the bar's own colour so it reads on the glyph */
 .nav-bell-dot {
   position: absolute;
   top: 9px;
@@ -209,7 +209,7 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--gold);
+  background: var(--primary);
   box-shadow: 0 0 0 2px var(--nav-bg);
 }
 .nav-bell:focus-visible {
@@ -459,15 +459,15 @@
 .note-slide.is-dragging {
   transition: none;
 }
-/* the wash is the gold of the bell's own dot, faintly: what is new is the one warm thing in the list */
+/* the wash is the violet of the bell's own dot, faintly: what is new is the one tinted thing in the list */
 .note-row.is-unread .note-slide {
-  background: linear-gradient(color-mix(in srgb, var(--gold) 10%, transparent), color-mix(in srgb, var(--gold) 10%, transparent)), var(--note-ground);
+  background: linear-gradient(color-mix(in srgb, var(--primary) 10%, transparent), color-mix(in srgb, var(--primary) 10%, transparent)), var(--note-ground);
 }
 .note-row.is-linked .note-slide:hover {
   background: linear-gradient(color-mix(in srgb, var(--ink) 4%, transparent), color-mix(in srgb, var(--ink) 4%, transparent)), var(--note-ground);
 }
 .note-row.is-unread.is-linked .note-slide:hover {
-  background: linear-gradient(color-mix(in srgb, var(--gold) 15%, transparent), color-mix(in srgb, var(--gold) 15%, transparent)), var(--note-ground);
+  background: linear-gradient(color-mix(in srgb, var(--primary) 15%, transparent), color-mix(in srgb, var(--primary) 15%, transparent)), var(--note-ground);
 }
 /* the whole row is the link; its ring goes round the row */
 .note-row:has(.note-link:focus-visible) .note-slide {
@@ -483,7 +483,7 @@
   height: 7px;
   margin-top: -3.5px;
   border-radius: 50%;
-  background: var(--gold);
+  background: var(--primary);
   animation: note-dot 300ms var(--ease-out) both;
 }
 
@@ -844,7 +844,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--gold);
+  background: var(--primary);
   box-shadow: 0 0 0 2px var(--nav-bg);
 }
 /*
@@ -1296,6 +1296,18 @@
   .switch-btn {
     height: 40px;
   }
+  /* Learn's three share a phone's width: none may ask for more than its third, or the last pokes out of the pill */
+  .learn-head .switch-btn {
+    min-width: 0;
+    padding: 0 8px;
+  }
+}
+/* the narrowest phones: a long word ("Geschichten") still has to fit its third */
+@media (max-width: 360px) {
+  .learn-head .switch-btn {
+    padding: 0 4px;
+    font-size: var(--text-caption);
+  }
 }
 
 /* today, in one row above the path: the streak, the goal's ring, what review has waiting */
@@ -1430,7 +1442,7 @@
   font-size: 1.5rem;
   line-height: 1;
   letter-spacing: 0.04em;
-  color: var(--gold-ink);
+  color: var(--primary);
   direction: ltr;
 }
 .learn-tool.learn-review {
@@ -1691,7 +1703,7 @@
   color: var(--ink-2);
 }
 .chat-convo.is-unread .chat-convo-when {
-  color: var(--gold-ink);
+  color: var(--primary);
   font-weight: 600;
 }
 /* nothing open yet: what this half of the screen is for, and the way to start */
@@ -1992,7 +2004,8 @@
   inset-inline-start: 0;
   width: calc(100% / var(--places));
   border-radius: var(--r-pill);
-  background: var(--surface-2);
+  /* a faint wash of the violet the chosen place is written in, so capsule, glyph and word are one thing */
+  background: var(--primary-soft);
   transform: translateX(calc(var(--at) * 100%));
   transition: transform var(--dur) var(--ease-out);
 }
@@ -2020,9 +2033,9 @@
 .places-link:hover {
   color: var(--ink);
 }
-/* the one you are on: the page's ink, a step heavier. Its share of the bar is fixed, so the wider word moves nothing */
+/* the one you are on: the app's violet, a step heavier. Its share of the bar is fixed, so the wider word moves nothing */
 .places-link.active {
-  color: var(--ink);
+  color: var(--primary);
   font-weight: 600;
 }
 .places-link:focus-visible {
@@ -2163,7 +2176,7 @@
   border-color: var(--surface-solid);
 }
 :root[data-theme='light'] .rail-dot.is-offline {
-  background: rgba(17, 17, 17, 0.28);
+  background: rgba(20, 17, 46, 0.28);
 }
 @media (min-width: 1180px) {
   :root[data-theme='light'] .app-main:has(.mkp-has-bg) ~ .social-rail {

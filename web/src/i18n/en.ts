@@ -911,7 +911,7 @@ export const en = {
   'reports.target.gamePlayer': 'A player in a game',
   'reports.target.letter': 'A letter',
   'letters.title': 'Letters',
-  'letters.lead': 'Write to someone new in Kurdish, even a single word. Send your bird out with a letter, or call a bird that’s out there to your window.',
+  'letters.lead': 'Write to someone new, even a single word. Send your bird out, or call one to your window.',
   'letters.refusal.birthMonth': 'Add your birth month to write letters: they only go between people of a similar age.',
   'letters.refusal.birthMonthAction': 'Add your birth month',
   'letters.refusal.restricted': 'You can’t write letters at the moment.',
@@ -1002,7 +1002,7 @@ export const en = {
   'letters.notify.title': 'A bird came to your window',
   'letters.notify.body': 'There’s a letter for you.',
   'letters.row.yourTurn': '{name} wrote to you',
-  'letters.row.invite': 'Write to someone new in Kurdish',
+  'letters.row.invite': 'Make a new friend',
   // a letter's own paper (letters/LetterComposer, PaperTools): writing, drawing and notes on it, its lines, colour and ink
   'letters.paper.tools': 'Tools for your letter',
   'letters.paper.tool.write': 'Write',

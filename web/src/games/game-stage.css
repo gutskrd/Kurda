@@ -3,10 +3,9 @@
  * with pages of their own): how a game's start, its round and its result
  * look, in one place, so that all of them are plainly the same house.
  *
- *   the start   — the game's emblem, playing, on the night the Games page
- *                 puts its featured game on; its name and a line under it;
- *                 the choices as cards that stand off the page; one gold
- *                 button that begins
+ *   the start   — the game's emblem, playing, on a night of the stage's
+ *                 own; its name and a line under it; the choices as cards
+ *                 that stand off the page; one gold button that begins
  *   the round   — a bar that says where you are, a stone for every item;
  *                 the verdict on each answer as a card of its own colour
  *   the result  — the score large, the round's stones under it, what was
@@ -23,7 +22,7 @@
   --gs-night: #2a2150;
   --gs-night-deep: #171231;
   --gs-night-ink: #f4efff;
-  /* the stage's own gold, kept once in tokens.css: the Games page's Play is the same button */
+  /* the stage's own gold, kept once in tokens.css */
   --gs-gold: var(--stage-gold);
   --gs-gold-lip: var(--stage-gold-lip);
   --gs-gold-ink: var(--stage-gold-ink);

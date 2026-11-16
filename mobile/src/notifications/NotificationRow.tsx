@@ -66,8 +66,8 @@ const WASH_FADE_MS = 420;
  * a picture of what it is about where there is one: the badge, the league, the
  * game, the letter, the gift, the streak's fire.
  *
- * New is said three ways and never by colour alone: a small gold dot at its
- * start, a warm wash across the row (the sun's gold, faintly — the one warm
+ * New is said three ways and never by colour alone: a small violet dot at
+ * its start, a faint wash of the same violet across the row (the one tinted
  * thing in the list), and "Unread" in what a screen reader hears. Once read,
  * the wash and the dot fade rather than vanish.
  *
@@ -116,9 +116,9 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
     return () => run.stop();
   }, [unread, reduce, fresh]);
 
-  // gold at a tenth, as the website mixes it; the face's ring is the same colour made solid, so the badge sits on the row
-  const wash = `${colors.gold}1A`;
-  const ring = unread ? blend(colors.gold, colors.background, 0.1) : colors.background;
+  // the app's violet at a tenth, as the website mixes it; the face's ring is the same colour made solid, so the badge sits on the row
+  const wash = `${colors.primary}1A`;
+  const ring = unread ? blend(colors.primary, colors.background, 0.1) : colors.background;
   const deleteWhat = t('notifications.deleteWhat', { what: title });
 
   return (
@@ -133,7 +133,7 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
             <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: wash, opacity: fresh }]} />
             <Animated.View
               pointerEvents="none"
-              style={[styles.dot, mirrored ? styles.dotRight : styles.dotLeft, { backgroundColor: colors.gold, opacity: fresh, transform: [{ scale: fresh }] }]}
+              style={[styles.dot, mirrored ? styles.dotRight : styles.dotLeft, { backgroundColor: colors.primary, opacity: fresh, transform: [{ scale: fresh }] }]}
             />
             <Pressable
               onPress={() => {

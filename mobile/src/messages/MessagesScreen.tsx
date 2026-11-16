@@ -440,7 +440,7 @@ function ConversationRow({
             {line}
           </Text>
           {unread ? (
-            <View style={[styles.count, { backgroundColor: colors.goldText }]}>
+            <View style={[styles.count, { backgroundColor: colors.primary }]}>
               <Text style={[styles.countText, { color: colors.textOnPrimary }]}>{row.unread > 99 ? '99+' : row.unread}</Text>
             </View>
           ) : null}
@@ -522,7 +522,7 @@ function LettersRow({ home, onPress }: { home: LettersHome; onPress: () => void 
         </Text>
       </View>
       {unread > 0 ? (
-        <View style={[styles.count, { backgroundColor: colors.goldText }]}>
+        <View style={[styles.count, { backgroundColor: colors.primary }]}>
           <Text style={[styles.countText, { color: colors.textOnPrimary }]}>{unread > 99 ? '99+' : unread}</Text>
         </View>
       ) : null}

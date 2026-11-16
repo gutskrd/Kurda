@@ -220,7 +220,7 @@ button.nav-link {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--gold);
+  background: var(--primary);
   box-shadow: 0 0 0 2px var(--nav-bg);
 }
 .nav-scrim {

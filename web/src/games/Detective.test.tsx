@@ -225,10 +225,13 @@ describe('Detektîf', () => {
 });
 
 describe('Detektîf in Learn’s games', () => {
-  it('has its card once a case can be played', async () => {
+  // a game is a stamp, and a game with one way in is that stamp, pressed: there is no Play on it to look for
+  it('has its stamp once a case can be played, and the stamp opens it', async () => {
     server({});
     renderApp(<Games />, ['/app/games']);
-    const card = (await screen.findByRole('heading', { name: 'Detektîf' })).closest('article')!;
-    expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/detective');
+    const stamp = (await screen.findByRole('heading', { name: 'Detektîf' })).closest('article')!;
+    // said whole to a screen reader, which sees no cover: the game, who it is played with, and what you do in it
+    const way = await within(stamp).findByRole('link', { name: 'Detektîf, On your own. Solve a case from Kurdish evidence, then name who did it.' });
+    expect(way).toHaveAttribute('href', '/app/games/detective');
   });
 });

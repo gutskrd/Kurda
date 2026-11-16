@@ -11,16 +11,16 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F9F9F8"
+      "backgroundColor": "#FAF9FE"
     },
     "ios": {
       "splash": {
         "image": "./assets/splash-icon.png",
         "resizeMode": "contain",
-        "backgroundColor": "#F9F9F8",
+        "backgroundColor": "#FAF9FE",
         "dark": {
           "image": "./assets/splash-icon.png",
-          "backgroundColor": "#0E1014"
+          "backgroundColor": "#141121"
         }
       },
       "supportsTablet": false,
@@ -195,10 +195,10 @@
       "splash": {
         "image": "./assets/splash-icon.png",
         "resizeMode": "contain",
-        "backgroundColor": "#F9F9F8",
+        "backgroundColor": "#FAF9FE",
         "dark": {
           "image": "./assets/splash-icon.png",
-          "backgroundColor": "#0E1014"
+          "backgroundColor": "#141121"
         }
       },
       "package": "app.hevalo.mobile",
@@ -251,10 +251,10 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 280,
           "resizeMode": "contain",
-          "backgroundColor": "#F9F9F8",
+          "backgroundColor": "#FAF9FE",
           "dark": {
             "image": "./assets/splash-icon.png",
-            "backgroundColor": "#0E1014"
+            "backgroundColor": "#141121"
           }
         }
       ],

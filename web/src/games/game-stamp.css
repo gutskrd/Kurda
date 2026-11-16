@@ -1,0 +1,131 @@
+/*
+ * A game's stamp (games/GameStamp.tsx): the paper with its light, drawn by
+ * the shared art, and what is printed on it — the cover, the game's name, and
+ * what the name means.
+ *
+ * Its colours are the hue it wears (`.hue-*`, styles/tokens.css) and nothing
+ * else. Which step of the hue is the paper, and how much of the light is
+ * left, depend on the scheme and are said here, in two variables the drawing
+ * is filled and stroked with: a change of scheme repaints a stamp without
+ * drawing it again. Its sizes are the component's, worked out from its width
+ * as the phone app works them out, and handed over as four lengths: how wide
+ * it is, how tall, the margin inside its perforations, and how far its light
+ * reaches past its edge.
+ *
+ * Nothing in a stamp moves by itself but the cover (games/GameArt.tsx).
+ */
+.game-stamp {
+  /*
+   * By night the hue's palest step is nearly the page's own dark, and the
+   * perforations would be lost in it: the paper is a step lighter there. The
+   * light is three quarters of the day's, because a saturated glow on a dark
+   * page glares.
+   */
+  --game-stamp-paper: var(--hue-wash);
+  --game-stamp-glow: color-mix(in srgb, var(--hue-base) 75%, transparent);
+  position: relative;
+  flex: none;
+  width: var(--game-stamp-width);
+  height: var(--game-stamp-height);
+}
+:root[data-theme='light'] .game-stamp {
+  --game-stamp-paper: var(--hue-tint);
+  --game-stamp-glow: var(--hue-base);
+}
+/* the paper is larger than the stamp by the reach of its light on every side, and is laid outside it: it takes no room and no press */
+.game-stamp-paper {
+  position: absolute;
+  inset: calc(var(--game-stamp-reach) * -1);
+  display: block;
+  line-height: 0;
+  pointer-events: none;
+}
+.game-stamp-paper svg {
+  display: block;
+}
+/* the cover stands in from the perforations by the stamp's margin, which the component works out from its width */
+.game-stamp-face {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: var(--game-stamp-pad) var(--game-stamp-pad) 0;
+}
+/*
+ * The words are centred in what the cover leaves, so a short name does not
+ * sit against the picture. They may run wider than the cover, to half its
+ * margin from the edge: what a name means is a phrase in some languages.
+ * The room they have is the stamp's, whatever they say: a name of two lines
+ * over a meaning of two lines is the most it holds, and exactly fills it.
+ */
+.game-stamp-words {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  min-height: 0;
+  margin-inline: calc(max(var(--space-2), var(--game-stamp-pad) / 2) - var(--game-stamp-pad));
+  text-align: center;
+}
+/* the words sit a little above the middle of their room, which looks like the middle; the room is given up when they need it */
+.game-stamp-words::after {
+  content: '';
+  flex: 0 1 6px;
+}
+/*
+ * The name: the display face, chunky, in the hue's deep shade (7:1 or better
+ * on the paper in both schemes). Two lines at most, so a long name never
+ * makes its stamp taller than its neighbours. The stamp is a fixed size, so
+ * its words follow the reader's own text size only a little way, as words in
+ * a box that cannot grow do on the phone; and on a stamp narrower than a
+ * phone's usual, the name is a little smaller with it, or two long words
+ * would fill the stamp from edge to edge.
+ */
+.game-stamp-name {
+  display: -webkit-box;
+  flex: none;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: var(--hue-deep);
+  font-family: var(--font-display);
+  font-size: min(var(--text-body), 20px, max(15px, var(--game-stamp-width) * 0.105));
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+/*
+ * What the name means: the same ink a little quieter (still 4.8:1 or better).
+ * It is what tells a newcomer what the game is, so on a narrow stamp it takes
+ * a second line before it is cut short.
+ */
+.game-stamp-meaning {
+  display: -webkit-box;
+  flex: none;
+  max-width: 100%;
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--hue-deep) 78%, transparent);
+  font-size: min(var(--text-caption), 15.5px);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+/* the stamp put forward: larger words, on a stamp wide enough that what the name means has its one line */
+.game-stamp--large .game-stamp-name {
+  font-size: min(var(--text-title), 33.5px);
+}
+.game-stamp--large .game-stamp-meaning {
+  font-size: min(var(--text-secondary), 18px);
+  -webkit-line-clamp: 1;
+}

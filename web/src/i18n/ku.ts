@@ -853,8 +853,7 @@ export const ku: Catalogue = {
   'reports.target.gamePlayer': 'Lîstikvanek di lîstikê de',
   'reports.target.letter': 'Nameyek',
   'letters.title': 'Name',
-  'letters.lead':
-    'Bi kurdî ji kesekî nû re binivîse, bila tenê peyvek be jî. Balindeyê xwe bi nameyekê bişîne, an gazî balindeyekî derve bike ber pencereya xwe.',
+  'letters.lead': 'Ji kesekî nû re binivîse, bila tenê peyvek be jî. Balindeyê xwe bişîne, an gazî balindeyekî bike ber pencereya xwe.',
   'letters.refusal.birthMonth': 'Ji bo nivîsandina nameyan meha xwe ya jidayikbûnê lê zêde bike: name tenê di navbera kesên ku temenê wan nêzî hev e de diçin.',
   'letters.refusal.birthMonthAction': 'Meha jidayikbûnê lê zêde bike',
   'letters.refusal.restricted': 'Tu niha nikarî nameyan binivîsî.',
@@ -945,7 +944,7 @@ export const ku: Catalogue = {
   'letters.notify.title': 'Balindeyek hat ber pencereya te',
   'letters.notify.body': 'Nameyek ji te re heye.',
   'letters.row.yourTurn': '{name} ji te re nivîsî',
-  'letters.row.invite': 'Bi kurdî ji kesekî nû re binivîse',
+  'letters.row.invite': 'Hevalekî nû peyda bike',
   'letters.paper.tools': 'Amûrên nameya te',
   'letters.paper.tool.write': 'Binivîse',
   'letters.paper.tool.draw': 'Xêz bike',

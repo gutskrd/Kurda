@@ -1,16 +1,22 @@
 /**
  * Themed palettes (KUR-268), light and dark.
  *
- * A calm, mostly monochrome interface — near-black on near-white, near-white
- * on near-black — so that what people write and the art carry the colour,
- * with one warm accent: the gold of the Kurdish sun, for rewards, the streak,
- * Zêr and highlights. Green and red mean right and wrong (or safe and
- * destructive) and are used sparingly, never as the only signal.
+ * Hevalo's own colour is the violet of its icon. The page is a white with a
+ * breath of that violet in it, the words are written in a deep indigo ink
+ * rather than black, and the violet itself is kept for what can be pressed or
+ * is chosen: a button, a link, the tab you are on. So a screen is mostly
+ * quiet page and white cards, and the eye goes to the one violet thing.
  *
- * The cards keep a light glass treatment; the page and the tab bar are
- * flat. Components read the active `Palette` from
- * ThemeProvider so both schemes stay in sync, and `palette.contrast.test.ts`
- * holds every text-on-surface pair to WCAG AA.
+ * Gold, the Kurdish sun, is for what is earned: XP, Zêr, the streak, a medal.
+ * Green and red mean right and wrong (or safe and destructive) and are never
+ * the only signal. Anything else that needs a colour of its own — a game, a
+ * way to practise — takes one of the shared hues (shared `hues.ts`), which
+ * are cut to sit beside this violet.
+ *
+ * By night the page is the same indigo taken almost to black, never a
+ * neutral grey, and the violet is lifted so it does not glare. Components
+ * read the active `Palette` from ThemeProvider so both schemes stay in sync,
+ * and `palette.contrast.test.ts` holds every text-on-surface pair to WCAG AA.
  */
 import type { ColorScheme } from './appearance';
 
@@ -18,14 +24,13 @@ export interface Palette {
   scheme: ColorScheme;
 
   /*
-   * The brand: one ink.
+   * The brand: one violet, and one ink beside it.
    *
-   * There were three near-identical blacks here: this one, a slightly blacker
-   * "strong" one and a slightly greyer `accent`, with no rule for which a
-   * screen should reach for, so two buttons side by side could be two blacks.
-   * `primary` is the one that fills a button or tints a glyph, and
-   * `textPrimary` the one that writes. `accent` stays only until the daily
-   * reward card, the last thing that reads it, lets go of it.
+   * `primary` is the violet: what fills a button, tints a glyph that can be
+   * pressed, writes a link and marks what is chosen. `textPrimary` is the ink
+   * that everything else is written in. There is one of each, so two buttons
+   * side by side are never two colours. `accent` is the violet a step deeper
+   * (paler by night), for the few places that need a second tone of it.
    */
   primary: string;
   accent: string;
@@ -103,13 +108,12 @@ export interface Palette {
   /**
    * A switch, on and off: its track and its knob.
    *
-   * In the app's ink, not green. Green in this app means a right answer, and
-   * a switch that is on is not right, only on; a screen of settings in green
-   * reads as a screen of things that went well, and pulls the eye to every
-   * switch at once. Ink is what every other control here is drawn in, so the
-   * switches are calm and look like they belong. Colour is kept for what
-   * needs noticing: gold for something to act on, red for what cannot be
-   * undone.
+   * In the app's violet, not green. Green in this app means a right answer,
+   * and a switch that is on is not right, only on; a screen of settings in
+   * green reads as a screen of things that went well. Violet is what
+   * everything chosen here is drawn in, so a switch that is on looks like the
+   * tab you are on and the option you picked. Gold stays for what is earned,
+   * red for what cannot be undone.
    *
    * Each track clears 3:1 against every surface it sits on, and each knob
    * 3:1 against its track (WCAG 1.4.11); the knob's side is the second sign
@@ -150,10 +154,10 @@ export interface Palette {
   /**
    * A conversation's two voices, the same as the website's `--bubble-*`.
    *
-   * Your own words are in the sun's gold, written in the deep brown that is
-   * read on it; the other side's are a quiet neutral in the page's own ink.
-   * The app's ink used to fill your bubbles, which on a near-white page is a
-   * column of black boxes, and in the evening a column of white ones.
+   * Your own words are on the app's violet, in white; the other side's are a
+   * quiet neutral in the page's own ink. They were on the sun's gold, which
+   * put a second colour beside the violet of the button that sends them, and
+   * gold is for what is earned.
    *
    * Solid, all four: a bubble's tail is a second shape drawn in the same
    * colour beside it, and two translucent shapes show where they overlap.
@@ -188,28 +192,26 @@ export interface Palette {
 
 export const LIGHT: Palette = {
   scheme: 'light',
-  // Monochrome brand: near-black on a near-white app. The one warm accent is
-  // the gold of the sun (rewards, streak, Zêr); danger and success stay
-  // coloured for meaning and are never the only signal.
-  primary: '#1A1A1A',
-  accent: '#333333',
+  // The icon's violet, deepened until white reads on it: 6.1:1 under a button's label, 5.6:1 as a link on the page.
+  primary: '#862BE2',
+  accent: '#611BA7',
   gold: '#EBA905',
   danger: '#C0392B',
   success: '#2E7D32',
-  successFill: '#E6F4EA',
-  dangerFill: '#FBE9E7',
+  successFill: '#DCF7E1',
+  dangerFill: '#FEE9E6',
 
-  textPrimary: '#111111',
-  // 5.8:1 on the page; the old #6B6B6B was 4.9 on #F3F3F3 and under 4.5 on a
-  // pressed row
-  textSecondary: '#5E6066',
+  // a deep indigo, not black: 16.8:1 on the page, and it sits with the violet where black sat beside it
+  textPrimary: '#14112E',
+  // 6.3:1 on the page, 6.9:1 on a card and 5.5:1 on the other side's chat bubble
+  textSecondary: '#595870',
   textOnPrimary: '#FFFFFF',
   // 6.8:1 on the gold
   textOnGold: '#3A2A00',
 
-  // a near-white with the faintest warmth, so white cards lift off it
-  background: '#F6F6F5',
-  gradient: ['#F9F9F8', '#F6F6F5', '#F1F1EF'],
+  // white with a breath of the violet in it, so white cards lift off it without an edge
+  background: '#F6F4FD',
+  gradient: ['#FAF9FE', '#F6F4FD', '#F1EEFA'],
 
   // no blur behind it, so this is the whole surface. At 0.34 white over a
   // near-white page a card was all but invisible and only its shadow said
@@ -217,61 +219,62 @@ export const LIGHT: Palette = {
   glassFill: 'rgba(255,255,255,0.88)',
   glassBorder: 'rgba(255,255,255,0.45)',
 
-  scrim: 'rgba(0,0,0,0.45)',
+  scrim: 'rgba(16,12,36,0.45)',
   textOnScrim: '#FFFFFF',
-  separator: 'rgba(20,20,20,0.07)',
+  separator: 'rgba(20,17,46,0.07)',
 
 
   clayBorder: 'rgba(255,255,255,0.8)',
-  softShadow: '#3A3A3A',
+  // a shadow leans toward the ink rather than toward grey, so a raised thing stays clean
+  softShadow: '#2E284A',
 
-  controlTrack: 'rgba(0,0,0,0.05)',
-  switchOn: '#1A1A1A',
+  controlTrack: 'rgba(20,17,46,0.05)',
+  // on is the violet, as everything chosen is; the knob's side says it too
+  switchOn: '#862BE2',
   switchOnThumb: '#FFFFFF',
-  switchOff: '#86898F',
+  switchOff: '#7F7E91',
   switchOffThumb: '#FFFFFF',
   selectedFill: '#FFFFFF',
-  locked: '#E2E4E8',
-  lockedMark: '#A5A9B0',
+  locked: '#DFDEEA',
+  lockedMark: '#A4A2B2',
 
   surface: '#FFFFFF',
   surfaceRaised: '#FFFFFF',
-  // 9.6:1 for the brown on the gold; the neutral is a step under the page, and 15:1 under its ink
-  bubbleMine: '#F5BE3D',
-  bubbleMineInk: '#2A1D05',
-  bubbleTheirs: '#E8E8E5',
-  bubbleTheirsInk: '#111111',
+  // white on the violet is 6.1:1; the neutral is a step under the page, and 14.6:1 under its ink
+  bubbleMine: '#862BE2',
+  bubbleMineInk: '#FFFFFF',
+  bubbleTheirs: '#E7E4F1',
+  bubbleTheirsInk: '#14112E',
   barFill: '#FFFFFF',
   goldText: '#8A6400',
 };
 
 export const DARK: Palette = {
   scheme: 'dark',
-  // Monochrome brand: near-white on a near-black app, with the sun's gold as
-  // the one warm accent. Danger and success stay coloured for meaning.
-  primary: '#FFFFFF',
-  accent: '#CFCFCF',
+  // The violet lifted for the night: 8.5:1 on the page, and the day's ink is written on it (8.1:1).
+  primary: '#BF9BFE',
+  accent: '#D3BDFE',
   gold: '#F0C24A',
   danger: '#FF9C90',
   success: '#86E2A4',
   successFill: 'rgba(87,185,107,0.18)',
   dangerFill: 'rgba(255,120,105,0.16)',
 
-  textPrimary: '#FFFFFF',
-  // 8:1 on the page and 6.9:1 on the raised surface
-  textSecondary: '#A3A6AD',
-  textOnPrimary: '#141414',
+  textPrimary: '#F3F1FB',
+  // 8.5:1 on the page and 6.7:1 on the raised surface
+  textSecondary: '#ADABC0',
+  textOnPrimary: '#14112E',
   // 8.3:1 on the evening's paler gold
   textOnGold: '#3A2A00',
 
-  background: '#0B0D10',
-  // neutral near-black spatial gradient (no colour tint)
-  gradient: ['#0E1014', '#0B0D10', '#101318'],
+  // the ink itself, taken almost to black: a night with a colour, where a neutral grey reads as a screen switched off
+  background: '#100E1D',
+  gradient: ['#141121', '#100E1D', '#161325'],
 
   glassFill: 'rgba(255,255,255,0.07)',
   glassBorder: 'rgba(255,255,255,0.14)',
 
-  scrim: 'rgba(0,0,0,0.6)',
+  scrim: 'rgba(4,2,12,0.62)',
   textOnScrim: '#FFFFFF',
   separator: 'rgba(255,255,255,0.08)',
 
@@ -280,22 +283,22 @@ export const DARK: Palette = {
   softShadow: '#000000',
 
   controlTrack: 'rgba(255,255,255,0.11)',
-  switchOn: '#F2F3F5',
-  switchOnThumb: '#0B0D10',
-  switchOff: '#686C73',
+  switchOn: '#BF9BFE',
+  switchOnThumb: '#14112E',
+  switchOff: '#716E85',
   switchOffThumb: '#FFFFFF',
   selectedFill: 'rgba(255,255,255,0.16)',
-  locked: '#262B33',
-  lockedMark: '#4D545E',
+  locked: '#2D2B3E',
+  lockedMark: '#55526A',
 
-  surface: '#14171C',
-  surfaceRaised: '#1B1F26',
-  // 9:1 for the brown on the evening's gold; the neutral is a step over the raised surface, 14:1 under white
-  bubbleMine: '#F2B632',
-  bubbleMineInk: '#2A1D05',
-  bubbleTheirs: '#262B34',
-  bubbleTheirsInk: '#FFFFFF',
-  barFill: '#1B1F26',
+  surface: '#1B192B',
+  surfaceRaised: '#27243A',
+  // by night your words are on the day's violet, a step deeper so white reads on it (6.7:1); the neutral is a step over the raised surface, 11.9:1 under its ink
+  bubbleMine: '#7935C6',
+  bubbleMineInk: '#FFFFFF',
+  bubbleTheirs: '#302C46',
+  bubbleTheirsInk: '#F3F1FB',
+  barFill: '#27243A',
   goldText: '#F0C24A',
 };
 

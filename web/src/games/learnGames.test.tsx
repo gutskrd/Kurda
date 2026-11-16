@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, screen, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import { LAST_LETTER_LEARN_ENTRY } from '@kurda/shared';
 import { Games } from '../pages/Games';
 import { forgetLastLetterAvailability } from '../lastletter/availability';
@@ -30,12 +30,14 @@ function server(games: Record<string, boolean>, chain = false): void {
 }
 
 describe('Learn’s games list', () => {
-  it('adds a learning game in the same kind of box once it can be played', async () => {
+  it('adds a learning game as a stamp like the others once it can be played, one press to open', async () => {
     server({ 'memory-thief': true });
     renderApp(<Games />, ['/app/games']);
-    const card = (await screen.findByRole('heading', { name: 'Dizê Bîrê' })).closest('article')!;
-    expect(card).toHaveClass('gp-card');
-    expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/memory-thief');
+    const stamp = (await screen.findByRole('heading', { name: 'Dizê Bîrê' })).closest('article')!;
+    expect(stamp).toHaveClass('gp-stamp');
+    // one way in, so the stamp is the way: it says the game, who it is played with and what you do in it, and opens it
+    const way = await within(stamp).findByRole('link', { name: 'Dizê Bîrê, On your own. Study a real passage, then give back the words the thief took.' });
+    expect(way).toHaveAttribute('href', '/app/games/memory-thief');
     // the games that were there are all still there
     expect(screen.getByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
   });
@@ -49,16 +51,18 @@ describe('Learn’s games list', () => {
     const card = within(soon).getByRole('heading', { name: 'Dizê Bîrê' }).closest('article')!;
     expect(card).toHaveClass('is-soon');
     expect(within(soon).queryByRole('link')).toBeNull();
-    // and it is not a card on the shelf
-    expect(card).not.toHaveClass('gp-card');
+    // and it is not a stamp on the shelf
+    expect(card).not.toHaveClass('gp-stamp');
   });
 
   it('lists Tîpa Dawî where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
     forgetLastLetterAvailability();
     server({ 'memory-thief': true }, true);
     renderApp(<Games />, ['/app/games']);
-    const card = (await screen.findByRole('heading', { name: 'Tîpa Dawî' })).closest('article')!;
-    expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', LAST_LETTER_LEARN_ENTRY.path);
+    const stamp = (await screen.findByRole('heading', { name: 'Tîpa Dawî' })).closest('article')!;
+    // against Hevalo or with friends, on the one page: one way in, so the stamp is it
+    const way = (): HTMLElement => within(stamp).getByRole('link', { name: /^Tîpa Dawî, On your own, With friends\./ });
+    await waitFor(() => expect(way()).toHaveAttribute('href', LAST_LETTER_LEARN_ENTRY.path));
     cleanup();
     forgetLastLetterAvailability();
     server({ 'memory-thief': true }, false);
@@ -85,8 +89,10 @@ describe('Learn’s games list', () => {
 
   /*
    * Ez kî me? is never played alone: on one phone passed round a room, or
-   * with friends online. Its own page asks which, so its card has the one way
-   * in, as Xapînok's has, and it is a game for friends.
+   * with friends online. Its own page asks which, so its stamp is its one way
+   * in, as Xapînok's is, and it is a game for friends. A stamp has no room to
+   * say who a game is played with, so it is said with the stamp to a screen
+   * reader, which cannot tell from the cover.
    */
   it('lists Ez kî me? as a game for friends with one way in, as Xapînok is', async () => {
     server({ 'memory-thief': true, impostor: true, 'who-am-i': true });
@@ -95,19 +101,19 @@ describe('Learn’s games list', () => {
       ['Ez kî me?', '/app/games/who-am-i'],
       ['Xapînok', '/app/games/impostor'],
     ] as const) {
-      const card = (await screen.findByRole('heading', { name })).closest('article')!;
-      expect((await within(card).findAllByRole('link')).map((a) => a.getAttribute('href'))).toEqual([href]);
-      expect(within(card).getByRole('link', { name: 'Play' })).toBeInTheDocument();
-      expect(within(card).getByText('With friends')).toBeInTheDocument();
-      expect(within(card).queryByText('On your own')).toBeNull();
+      const stamp = (await screen.findByRole('heading', { name })).closest('article')!;
+      await waitFor(() => expect(within(stamp).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual([href]));
+      const way = within(stamp).getByRole('link');
+      expect(way).toHaveAccessibleName(expect.stringContaining(`${name}, With friends. `));
+      expect(way).not.toHaveAccessibleName(expect.stringContaining('On your own'));
     }
-    // and a game played alone says so on its card instead
+    // and a game played alone says so instead
     const alone = screen.getByRole('heading', { name: 'Dizê Bîrê' }).closest('article')!;
-    expect(within(alone).getByText('On your own')).toBeInTheDocument();
+    expect(within(alone).getByRole('link', { name: /^Dizê Bîrê, On your own\. / })).toBeInTheDocument();
   });
 
   // an old answer, or a server a version behind, may still name the games that are gone
-  it('draws no card for a game that is no longer part of Hevalo, whatever the server says', async () => {
+  it('draws no stamp for a game that is no longer part of Hevalo, whatever the server says', async () => {
     server({ 'memory-thief': true, 'dont-say': true, bluff: true, kingdom: true, 'what-would-you-say': true });
     renderApp(<Games />, ['/app/games']);
     expect(await screen.findByRole('heading', { name: 'Dizê Bîrê' })).toBeInTheDocument();

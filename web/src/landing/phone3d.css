@@ -402,13 +402,13 @@
 
 /* ---- the app's screens ------------------------------------------------------- */
 .ps {
-  --u-fill: #f0c060;
-  --u-lip: #b88a2a;
-  --u-ink: #2a1d05;
-  --u-text: #f3ca74;
-  --ps-rest: #262a31;
-  --ps-rest-lip: #1a1d22;
-  --ps-rest-ink: #9a9ca1;
+  --u-fill: #eeb154;
+  --u-lip: #b07a20;
+  --u-ink: #221200;
+  --u-text: #f5c076;
+  --ps-rest: #2b283c;
+  --ps-rest-lip: #1a1828;
+  --ps-rest-ink: #9e9cb0;
   --ps-line: rgba(255, 255, 255, 0.2);
   position: relative;
   display: flex;
@@ -424,14 +424,14 @@
   text-align: start;
 }
 :root[data-theme='light'] .ps {
-  --u-fill: #9a6508;
-  --u-lip: #6f4806;
-  --u-ink: #ffffff;
-  --u-text: #8a5a07;
-  --ps-rest: #e4e4e1;
-  --ps-rest-lip: #c9c9c5;
-  --ps-rest-ink: #74767c;
-  --ps-line: rgba(17, 17, 17, 0.18);
+  --u-fill: #c37902;
+  --u-lip: #8f5d04;
+  --u-ink: #241600;
+  --u-text: #885703;
+  --ps-rest: #e3e1ec;
+  --ps-rest-lip: #cac8d7;
+  --ps-rest-ink: #716e85;
+  --ps-line: rgba(20, 17, 46, 0.18);
 }
 
 .ps-head {
@@ -785,7 +785,7 @@
   height: 22px;
   border-radius: 50%;
   background: #ffffff;
-  color: #111111;
+  color: #14112e;
 }
 .ps-read {
   position: absolute;

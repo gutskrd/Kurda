@@ -56,7 +56,7 @@ export function applyTheme(preference: ThemePreference = readThemePreference()):
   root.dataset.theme = scheme;
   root.style.colorScheme = scheme;
   const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-  if (meta) meta.content = scheme === 'light' ? '#f6f6f5' : '#0b0d10';
+  if (meta) meta.content = scheme === 'light' ? '#f6f4fd' : '#100e1d';
   return scheme;
 }
 

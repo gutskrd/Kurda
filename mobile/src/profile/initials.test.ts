@@ -73,8 +73,11 @@ describe('the avatar colours', () => {
   it('are the course’s own, as the lesson path paints them by day', () => {
     const course = Object.values(TONES.light).flatMap((t) => [t.fill, t.lip]);
     for (const bg of AVATAR_COLORS) expect(course, bg).toContain(bg);
-    // every tone of the path is somebody's colour
-    for (const t of Object.values(TONES.light)) expect(AVATAR_COLORS, t.fill).toContain(t.fill);
+    // every tone of the path is somebody's colour: its fill, or for saffron, whose fill is a gold white cannot be read on, its deeper edge
+    for (const [name, t] of Object.entries(TONES.light)) {
+      const mine = name === 'saffron' ? t.lip : t.fill;
+      expect(AVATAR_COLORS, mine).toContain(mine);
+    }
   });
 
   it('never dress a person in the colour of an error', () => {

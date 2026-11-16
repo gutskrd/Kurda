@@ -621,7 +621,7 @@ function ToolTile({
   /** how many lines the title may take: an exercise's name is a phrase, which half a row cannot hold on one */
   titleLines?: number;
   detail: string;
-  /** something is waiting in it (words due), said in gold as well as in words */
+  /** something is waiting in it (words due), said in the app's violet as well as in words */
   highlight?: boolean;
   onPress: () => void;
 }): React.JSX.Element {
@@ -641,7 +641,7 @@ function ToolTile({
     >
       {letters ? (
         <Text
-          style={[styles.tileLetters, { color: colors.goldText, writingDirection: letters.rtl ? 'rtl' : 'ltr' }]}
+          style={[styles.tileLetters, { color: colors.primary, writingDirection: letters.rtl ? 'rtl' : 'ltr' }]}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           maxFontSizeMultiplier={1.2}
@@ -655,7 +655,7 @@ function ToolTile({
         {title}
       </Text>
       {detail ? (
-        <Text style={[styles.tileDetail, dir.text, { color: highlight ? colors.goldText : colors.textSecondary }]} numberOfLines={2}>
+        <Text style={[styles.tileDetail, dir.text, { color: highlight ? colors.primary : colors.textSecondary }]} numberOfLines={2}>
           {detail}
         </Text>
       ) : null}

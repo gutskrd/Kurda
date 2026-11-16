@@ -1102,9 +1102,10 @@
   width: 100%;
   margin-bottom: var(--space-6);
   padding: var(--space-4) var(--space-5);
-  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--border));
+  /* a card like the one beside it: the ticket is the gold thing on it, and gold round the whole card said "a reward" where there is none */
+  border: 1px solid var(--border);
   border-radius: var(--r-xl);
-  background: color-mix(in srgb, var(--gold) 8%, var(--surface-solid));
+  background: var(--surface);
   color: var(--ink);
   font: inherit;
   text-align: start;
@@ -1116,8 +1117,8 @@
     transform var(--dur) var(--ease-spring);
 }
 .join-code-card:hover {
-  border-color: var(--gold);
-  background: color-mix(in srgb, var(--gold) 12%, var(--surface-solid));
+  border-color: var(--border-strong);
+  background: var(--surface-2);
 }
 .join-code-card:focus-visible {
   outline: 2px solid var(--focus);

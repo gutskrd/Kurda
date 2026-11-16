@@ -77,7 +77,7 @@ export function Chips<T extends string>({
               {label}
             </Text>
             {count ? (
-              <View style={[styles.count, { backgroundColor: active ? colors.textOnPrimary : colors.goldText }]}>
+              <View style={[styles.count, { backgroundColor: active ? colors.textOnPrimary : colors.primary }]}>
                 <Text style={[styles.countText, { color: active ? colors.primary : colors.textOnPrimary }]}>{count > 9 ? '9+' : count}</Text>
               </View>
             ) : null}

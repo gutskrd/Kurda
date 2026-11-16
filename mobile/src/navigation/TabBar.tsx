@@ -44,8 +44,9 @@ const PAD = 6;
  * at once, in the reader's own language.
  *
  * The tab you are on is told three ways, none of them colour alone: its
- * glyph is drawn solid where the others are in outline, its word is in the
- * page's ink and a step heavier, and a soft capsule sits behind it. The
+ * glyph is drawn solid where the others are in outline, its word is a step
+ * heavier, and a soft capsule sits behind it; all three are in the app's
+ * violet, the colour of whatever is chosen. The
  * capsule slides along the bar to the tab chosen, so the change of tab is
  * seen moving, not only found. That is all that moves: the bar is the most
  * used control there is, and what is used all day arrives and stops. A tab
@@ -138,7 +139,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
             <Animated.View
               pointerEvents="none"
               testID="tab-pill"
-              style={[styles.capsule, { width: slot, backgroundColor: colors.controlTrack, transform: [{ translateX: capsuleX }] }]}
+              // a faint wash of the violet the chosen tab is written in, so the place you are on is one thing: its capsule, glyph and word
+              style={[styles.capsule, { width: slot, backgroundColor: `${colors.primary}1F`, transform: [{ translateX: capsuleX }] }]}
             />
           ) : null}
           {state.routes.map((route, i) => {
@@ -146,7 +148,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
             const name = (tab?.name ?? route.name) as TabName;
             const full = tab ? t(tab.labelKey) : route.name;
             const focused = state.index === i;
-            const ink = focused ? colors.textPrimary : colors.textSecondary;
+            const ink = focused ? colors.primary : colors.textSecondary;
             const badge = name === 'Messages' ? unreadBadge(messages) : null;
             const dot = name === 'Profile' && counts.gifts > 0;
             // a screen reader gets the name, and what is waiting
@@ -180,7 +182,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
                     session that is already loaded, so it costs no request;
                     without one it is your coloured initials.
                   */
-                  <View style={[styles.ring, { borderColor: focused ? colors.textPrimary : 'transparent' }]}>
+                  <View style={[styles.ring, { borderColor: focused ? colors.primary : 'transparent' }]}>
                     <InitialsAvatar
                       name={user.username}
                       id={user.id}
@@ -194,7 +196,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
                 )}
                 {badge ? (
                   <View
-                    style={[styles.badge, mirrored ? styles.badgeMirrored : null, { backgroundColor: colors.goldText, borderColor: colors.barFill }]}
+                    style={[styles.badge, mirrored ? styles.badgeMirrored : null, { backgroundColor: colors.primary, borderColor: colors.barFill }]}
                     pointerEvents="none"
                   >
                     <Text style={[styles.badgeText, { color: colors.textOnPrimary }]} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
@@ -203,7 +205,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
                   </View>
                 ) : dot ? (
                   <View
-                    style={[styles.dot, mirrored ? styles.dotMirrored : null, { backgroundColor: colors.goldText, borderColor: colors.barFill }]}
+                    style={[styles.dot, mirrored ? styles.dotMirrored : null, { backgroundColor: colors.primary, borderColor: colors.barFill }]}
                     pointerEvents="none"
                     testID="tab-Profile-dot"
                   />

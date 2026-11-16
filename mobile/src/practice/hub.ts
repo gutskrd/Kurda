@@ -7,7 +7,7 @@
  * (practice/exercises.ts), when they can be done now. Pure, so the choices
  * are tested apart from the screen.
  */
-import { ACCURACY_BONUS_XP, BASE_LESSON_XP, type PracticeHub, type PracticeHubUnit, type PracticeMode, type UnitTone } from '@kurda/shared';
+import { ACCURACY_BONUS_XP, BASE_LESSON_XP, type HueName, type PracticeHub, type PracticeHubUnit, type PracticeMode } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { IconName } from '../theme/Icon';
 import type { ExerciseRoute, PhoneExercise } from './exercises';
@@ -48,7 +48,7 @@ export interface HubRow {
   icon: IconName;
   title: TranslationKey;
   detail: Line;
-  /** something is waiting in it (mistakes to put right), said in gold as well as in words */
+  /** something is waiting in it (mistakes to put right), said in the app’s violet as well as in words */
   waiting: boolean;
   action: RowAction;
 }
@@ -131,11 +131,10 @@ export function practiceXpRange(): { min: number; max: number } {
   };
 }
 
-/** The colour each kind's badge wears (coursemap/path.ts `TONES`): one each, so the rows are told apart at a glance. */
-export const ROW_TONES: Record<HubRow['key'], UnitTone> = { mistakes: 'rose', words: 'saffron', sentence: 'river', listen: 'meadow', hear: 'dusk', speak: 'clay', unit: 'pine' };
-
-/** The colour the card at the top is painted in: a unit's own, else by what it offers. */
-export function heroTone(hero: Hero): UnitTone {
-  if (hero.kind === 'unit') return hero.unit.tone;
-  return hero.kind === 'due' ? 'meadow' : hero.kind === 'weak' ? 'saffron' : 'pine';
-}
+/**
+ * The hue each kind's badge wears (shared `hues.ts`): one each, so the rows
+ * are told apart at a glance, and all of one family, so a list of them reads
+ * as one list. Violet is left out: it is the app's own, and on this screen it
+ * belongs to the card at the top and its button.
+ */
+export const ROW_HUES: Record<HubRow['key'], HueName> = { mistakes: 'pink', words: 'gold', sentence: 'blue', listen: 'green', hear: 'indigo', speak: 'orange', unit: 'teal' };

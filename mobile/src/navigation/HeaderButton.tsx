@@ -71,14 +71,14 @@ export function HeaderButton({
         <Icon name={icon} size={GLYPH} color={colors.textPrimary} />
       </Animated.View>
       {badge ? (
-        <View style={[styles.badge, { backgroundColor: colors.goldText, borderColor: colors.barFill }]} pointerEvents="none">
+        <View style={[styles.badge, { backgroundColor: colors.primary, borderColor: colors.barFill }]} pointerEvents="none">
           <Text style={[styles.badgeText, { color: colors.textOnPrimary }]} numberOfLines={1} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
             {badge}
           </Text>
         </View>
       ) : dot ? (
         <View
-          style={[styles.dot, { backgroundColor: colors.goldText, borderColor: colors.barFill }]}
+          style={[styles.dot, { backgroundColor: colors.primary, borderColor: colors.barFill }]}
           pointerEvents="none"
           testID={testID ? `${testID}-dot` : undefined}
         />

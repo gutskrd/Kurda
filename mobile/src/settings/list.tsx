@@ -79,9 +79,10 @@ interface RowLook {
   destructive?: boolean;
   /**
    * Wants something done (notifications blocked on the phone, an account
-   * that is limited): its icon, value and what is under it in gold, the colour
-   * this app keeps for "notice this". Only then; a row that is merely set to
-   * something stays in ink, so the one that is gold is seen.
+   * that is limited): its icon, value and what is under it in the app's
+   * violet, the colour this app keeps for what is to be acted on. Only then;
+   * a row that is merely set to something stays in ink, so the violet one is
+   * seen.
    */
   attention?: boolean;
 }
@@ -91,10 +92,10 @@ function RowBody({ icon, title, subtitle, value, destructive, attention, end }: 
   const { colors } = useTheme();
   const dir = useDirection();
   const ink = destructive ? colors.danger : colors.textPrimary;
-  const note = attention ? colors.goldText : colors.textSecondary;
+  const note = attention ? colors.primary : colors.textSecondary;
   return (
     <View style={[styles.row, { flexDirection: dir.row }]}>
-      {icon ? <Icon name={icon} size={24} color={attention ? colors.goldText : ink} /> : null}
+      {icon ? <Icon name={icon} size={24} color={attention ? colors.primary : ink} /> : null}
       <View style={styles.words}>
         <Text style={[styles.title, dir.text, { color: ink }]}>{title}</Text>
         {subtitle ? <Text style={[styles.subtitle, dir.text, { color: note }]}>{subtitle}</Text> : null}
@@ -112,8 +113,8 @@ function RowBody({ icon, title, subtitle, value, destructive, attention, end }: 
 /**
  * One row. With `onPress` it is a button, with a chevron when it opens a page
  * (`opens`, the default) and none when it does something there and then. A
- * `badge` counts what waits behind it (requests to answer), in the gold of
- * "notice this", and is read out in words.
+ * `badge` counts what waits behind it (requests to answer), in the app's
+ * violet, the colour of what is to be acted on, and is read out in words.
  */
 export function SettingsRow({
   onPress,
@@ -137,7 +138,7 @@ export function SettingsRow({
   const dir = useDirection();
   const chevron = onPress && opens ? <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip ?? undefined} /> : null;
   const count = badge ? (
-    <View style={[styles.badge, { backgroundColor: colors.goldText }]}>
+    <View style={[styles.badge, { backgroundColor: colors.primary }]}>
       <Text style={[styles.badgeText, { color: colors.textOnPrimary }]}>{badge.count > 99 ? '99+' : badge.count}</Text>
     </View>
   ) : null;
