@@ -35,10 +35,10 @@ import { TABLE } from '../impostor/table';
 import { useHardwareBack } from '../navigation/hardwareBack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useDirection } from '../reports/direction';
-import { Note } from '../stories/ui';
+import { ChoiceChips, Note } from '../stories/ui';
 import { BURST } from '../theme/celebration';
 import { ConfettiBurst, GlowRing, useCelebration } from '../theme/CelebrationParts';
-import { ClayButton, GlassCard, Segmented } from '../theme/glass';
+import { ClayButton, GlassCard } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -381,8 +381,9 @@ function Setup({
           <View style={styles.names}>
             {names.map((name, i) => (
               <View key={i} style={[styles.nameRow, { flexDirection: dir.row }]}>
-                <View style={styles.nameN}>
-                  <Text style={styles.nameNText}>{name.trim() === '' ? i + 1 : name.trim().slice(0, 1).toUpperCase()}</Text>
+                {/* the player's initial on a quiet disc: it was gold on a gold wash, 1.8:1 and gold off the table */}
+                <View style={[styles.nameN, { backgroundColor: colors.controlTrack }]}>
+                  <Text style={[styles.nameNText, { color: colors.textPrimary }]}>{name.trim() === '' ? i + 1 : name.trim().slice(0, 1).toUpperCase()}</Text>
                 </View>
                 <TextInput
                   value={name}
@@ -422,13 +423,13 @@ function Setup({
             <Text accessibilityRole="header" style={[styles.formTitle, dir.text, { color: colors.textPrimary }]}>
               {t('games.solo.difficulty')}
             </Text>
-            <Segmented<GameDifficulty>
-              groupLabel={t('games.solo.difficulty')}
+            {/* chips as wide as their words: in three equal segments "Intermediate" broke in the middle of the word */}
+            <ChoiceChips<GameDifficulty>
+              label={t('games.solo.difficulty')}
               options={levels}
               value={level}
               onChange={onDifficulty}
               labelOf={(d) => t(DIFFICULTY_KEY[d])}
-              wrap
             />
           </Card>
         ) : null}
@@ -954,8 +955,8 @@ const styles = StyleSheet.create({
   form: { gap: spacing.md },
   names: { gap: spacing.sm },
   nameRow: { alignItems: 'center', gap: spacing.sm },
-  nameN: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: `${TABLE.gold}29` },
-  nameNText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: TABLE.gold },
+  nameN: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  nameNText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   // a text field is as wide as its text wants unless told it may be narrower: without that the row runs off the card
   nameInput: { flex: 1, minWidth: 0, minHeight: 48, fontSize: typography.sizes.md, borderRadius: radii.md, paddingHorizontal: 12 },
   nameRemove: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },

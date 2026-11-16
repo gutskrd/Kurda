@@ -294,12 +294,13 @@ export function Foreheads({ dialect, seats, label }: { dialect: GameDialect; sea
               : s.answer === 'waiting'
                 ? t('games.whoAmI.seat.answering')
                 : done;
+        // whose turn it is in the violet of the place you are in; green and red only for a guess that was right or a player out of guesses
         const tagColour = s.left
           ? colors.textSecondary
           : s.onTurn
-            ? colors.goldText
+            ? colors.primary
             : s.answer === 'answered'
-              ? colors.success
+              ? colors.textSecondary
               : s.answer === 'waiting'
                 ? colors.textSecondary
                 : s.solved
@@ -325,7 +326,7 @@ export function Foreheads({ dialect, seats, label }: { dialect: GameDialect; sea
             accessibilityState={{ selected: s.onTurn }}
             style={[
               wide ? styles.seatWide : styles.seat,
-              { borderColor: s.onTurn ? colors.gold : 'transparent', backgroundColor: s.onTurn ? `${TABLE.gold}26` : 'transparent', opacity: s.left ? 0.5 : 1 },
+              { borderColor: s.onTurn ? colors.primary : 'transparent', backgroundColor: s.onTurn ? `${colors.primary}1F` : 'transparent', opacity: s.left ? 0.5 : 1 },
             ]}
           >
             <View style={styles.mini}>
