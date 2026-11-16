@@ -1206,11 +1206,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ev meh Adar e: meha agir û govendê… û meha nivînê! Amadekarî tune.",
+                    "say": "Meha Adarê ye: meha agir û govendê… û meha nivînê! Amadekarî tune.",
                     "voice": "hamo",
-                    "prompt": "Ev meh Adar e: meha agir û govendê… û meha nivînê! Amadekarî tune.",
+                    "prompt": "Meha Adarê ye: meha agir û govendê… û meha nivînê! Amadekarî tune.",
                     "options": [
-                      "This month is March: the month of fire and the govend… and of bed! No preparations.",
+                      "It’s the month of March: the month of fire and the govend… and of bed! No preparations.",
                       "This month is June: the month of apples… and of the sea!",
                       "This month is March: the month of snow and wind."
                     ],
@@ -1590,7 +1590,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Divê tu her roj hinek bimeşî: ev sersala te ya nû ye!",
+                    "say": "Divê tu her roj hinek bimeşî: ev sersala te ye!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1598,7 +1598,7 @@
                         "en": "(that you) walk (meşîn: to walk)"
                       }
                     ],
-                    "prompt": "Divê tu her roj hinek bimeşî: ev sersala te ya nû ye!",
+                    "prompt": "Divê tu her roj hinek bimeşî: ev sersala te ye!",
                     "options": [
                       "You must walk a little every day: this is your new year!",
                       "You must sleep a lot every day: this is your holiday!",
@@ -2258,13 +2258,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Şîreta doktor: bi şev hingiv qedexe e.",
+                    "say": "Şîreta doktor: bi şev hingiv qedexe ye.",
                     "voice": "hamo",
-                    "prompt": "Şîreta doktor: bi şev hingiv ___ e.",
+                    "prompt": "Şîreta doktor: bi şev hingiv ___ ye.",
                     "options": [
                       "qedexe",
-                      "bihêz",
-                      "bêguneh"
+                      "amade",
+                      "vala"
                     ],
                     "correctIndex": 0
                   }
@@ -3575,11 +3575,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ev gir e: li Newrozê, li vir seyran û pîrozbahî ye, û dûman diçe asman.",
+                    "say": "Ev gir e: li vir seyran û pîrozbahî ye, ez agir vêdixim, û dûman diçe asman.",
                     "voice": "hamo",
-                    "prompt": "Ev gir e: li Newrozê, li vir seyran û pîrozbahî ye, û dûman diçe asman.",
+                    "prompt": "Ev gir e: li vir seyran û pîrozbahî ye, ez agir vêdixim, û dûman diçe asman.",
                     "options": [
-                      "This is the hill: at Newroz, here are the picnic and the celebration, and the smoke goes up to the sky.",
+                      "This is the hill: here are the picnic and the celebration, I light the fire, and the smoke goes up to the sky.",
                       "This is the river: in winter, the fish are here.",
                       "This is the market: at Newroz, everything is cheap."
                     ],
@@ -3649,8 +3649,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ji bo amadekariyên Newroza bê, ez ê her roj bimeşim û agir vêxim!",
-                    "reference": "Ji bo amadekariyên Newroza bê, ez ê her roj bimeşim û agir vêxim!"
+                    "prompt": "Ji bo amadekariyên Newroza bê, ez ê her roj bimeşim: ez ê dîsa bibim serçopî!",
+                    "reference": "Ji bo amadekariyên Newroza bê, ez ê her roj bimeşim: ez ê dîsa bibim serçopî!"
                   }
                 }
               ]
@@ -4169,12 +4169,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Bavê min bilûra xwe dide min, û dibêje: Serkeftin ne her tişt e; jiyanê bidomîne.",
+                    "say": "Bavê min bilûra xwe dide min, û dibêje: Serkeftin ne her tişt e; stranê bidomîne.",
                     "voice": "hamo",
-                    "prompt": "Bavê min bilûra xwe dide min, û dibêje: Serkeftin ne her tişt e; jiyanê bidomîne.",
+                    "prompt": "Bavê min bilûra xwe dide min, û dibêje: Serkeftin ne her tişt e; stranê bidomîne.",
                     "accepted": [
-                      "My father gives me his flute and says: Success isn’t everything; keep life going.",
-                      "My father gives me his flute, and says: Success is not everything; carry on with life."
+                      "My father gives me his flute and says: Success isn’t everything; keep the song going.",
+                      "My father gives me his flute, and says: Success is not everything; keep the song going.",
+                      "My father gives me his flute and says: Success isn’t everything; carry on with the song."
                     ]
                   }
                 },
@@ -4800,11 +4801,6 @@
                         "en": "He’s fine. Tomorrow he’ll tell the truth."
                       },
                       {
-                        "speaker": 0,
-                        "text": "Ev çîroka beranê min e, ji zarokatiya min!",
-                        "en": "This is the story of my ram, from my childhood!"
-                      },
-                      {
                         "speaker": 1,
                         "text": "Tu çawa dizanî?",
                         "en": "How do you know?"
@@ -4813,6 +4809,11 @@
                         "speaker": 0,
                         "text": "Ez dizanim: Baran rastgo ye. Derew ne karê wî ye.",
                         "en": "I know: Baran is honest. Lies aren’t his thing."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ev çîroka beranê min e, ji zarokatiya min!",
+                        "en": "It’s the story of my ram, from my childhood!"
                       },
                       {
                         "speaker": 1,

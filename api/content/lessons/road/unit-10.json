@@ -50,131 +50,6 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Keriyê Bişar hat, û em li ser zinaran rûniştin.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "kerî",
-                        "en": "flock"
-                      }
-                    ],
-                    "prompt": "Keriyê Bişar hat, û em li ser zinaran rûniştin.",
-                    "options": [
-                      "Bişar’s flock came, and we sat on the rocks.",
-                      "Bişar’s donkey came, and we ran to the rocks.",
-                      "Bişar’s flock went, and we stayed at home."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "We drank tea on the rocks.",
-                    "options": [
-                      "Me li ser zinaran çay vexwar.",
-                      "Em li ser zinaran çay vexwarin.",
-                      "Me li ser zinaran çay vedixwe."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Bişar hevalê min ê kevn e. Min her tişt du caran got!",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "got",
-                        "en": "said (the past of gotin: min got, I said)"
-                      }
-                    ],
-                    "prompt": "Bişar hevalê min ê kevn e. Min her tişt du caran got!",
-                    "options": [
-                      "Bişar is my old friend. I said everything twice!",
-                      "Bişar is my new neighbour. I said nothing at all!",
-                      "Bişar is my old friend. He said everything twice!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Tu kengî rabûyî?",
-                    "voice": "hamo",
-                    "prompt": "Tu kengî rabûyî?",
-                    "options": [
-                      "Ez berbangê rabûm, hişyar!",
-                      "Te berbangê rabû.",
-                      "Min berbangê rabûm."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Wî selik li ber konê xwe danî.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "danî",
-                        "en": "put down (danîn: to put, to put down)"
-                      }
-                    ],
-                    "prompt": "Wî selik li ber konê xwe danî.",
-                    "options": [
-                      "He put the basket down in front of his tent.",
-                      "He took the basket into the river.",
-                      "He gave the basket to Bozo."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Me çay vexwar, û min her tişt du caran got.",
-                      "Me çay vexwar û min her tişt du caran got."
-                    ]
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Bişar selik li ber kon danî.",
-                    "voice": "hamo",
-                    "prompt": "Bişar selik li ber kon ___.",
-                    "options": [
-                      "danî",
-                      "danîn",
-                      "datîne"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
                     "say": "Te li ser rê çi dît?",
                     "voice": "hamo",
                     "new": [
@@ -193,45 +68,122 @@
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "multiple_choice",
+                  "position": 3,
+                  "type": "listening",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Te li ser rê çi dît?",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Te li ser rê çi dît?",
-                    "options": [
-                      "Min keriyê Bişar dît.",
-                      "Ez keriyê Bişar dîtim.",
-                      "Min keriyê Bişar dibînim."
-                    ],
-                    "correctIndex": 0
+                    "accepted": [
+                      "Baran tune bû. Ez çîroka xwe didomînim: me çay vexwar…",
+                      "Baran tune bû. Ez çîroka xwe didomînim, me çay vexwar…",
+                      "Baran tune bû. Ez çîroka xwe didomînim: me çay vexwar."
+                    ]
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bişar got: «Û Bozo? Bozo çi kir?»",
+                    "say": "Bişar selika Dapîrê hilgirt û li ber konê xwe danî.",
                     "voice": "hamo",
                     "new": [
                       {
-                        "ku": "kir",
-                        "en": "did, made (the past of kirin)"
+                        "ku": "hilgirt",
+                        "en": "picked up, carried (hilgirtin: to carry; to pick up)"
+                      },
+                      {
+                        "ku": "danî",
+                        "en": "put down (danîn: to put, to put down)"
                       }
                     ],
-                    "prompt": "Bişar got: «Û Bozo? Bozo çi kir?»",
+                    "prompt": "Bişar selika Dapîrê hilgirt û li ber konê xwe danî.",
                     "options": [
-                      "Bişar said: “And Bozo? What did Bozo do?”",
-                      "Bişar said: “And Bozo? Where did Bozo go?”",
-                      "Bişar said: “And Bozo? What did Bozo eat?”"
+                      "Bişar picked up Dapîr’s basket and put it down in front of his tent.",
+                      "Bişar dropped Dapîr’s basket in the river.",
+                      "Dapîr picked up Bişar’s basket and took it home."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Keriyê Bişar hat, bi hivdeh beranan, û me ew dît.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "kerî",
+                        "en": "flock"
+                      }
+                    ],
+                    "prompt": "Keriyê Bişar hat, bi hivdeh beranan, û me ew dît.",
+                    "options": [
+                      "Bişar’s flock came, with seventeen rams, and we saw it.",
+                      "Bişar’s donkey came, with seven rams, and we ran.",
+                      "Bişar’s flock went, and we didn’t see it."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Bişar selik hilgirt û li ber kon danî.",
+                    "voice": "hamo",
+                    "prompt": "Bişar selik hilgirt û li ber kon ___.",
+                    "options": [
+                      "danî",
+                      "danîn",
+                      "datîne"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Bişar hevalê min ê berê ye. Min her tişt du caran got!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "got",
+                        "en": "said (the past of gotin: min got, I said)"
+                      }
+                    ],
+                    "prompt": "Bişar hevalê min ê berê ye. Min her tişt du caran got!",
+                    "options": [
+                      "Bişar is my old friend. I said everything twice!",
+                      "Bişar is my new neighbour. I said nothing at all!",
+                      "Bişar is my old friend. He said everything twice!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Bişar selik li ku danî?",
+                    "voice": "hamo",
+                    "prompt": "Bişar selik li ku danî?",
+                    "options": [
+                      "Li ber konê xwe.",
+                      "Li ser keriyê xwe.",
+                      "Ez selik im."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -253,54 +205,92 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "meaning",
+                    "say": "Bişar got: Bozo çi kir?",
                     "voice": "hamo",
-                    "prompt": "I didn’t make a mistake: I got up at dawn!",
+                    "new": [
+                      {
+                        "ku": "kir",
+                        "en": "did, made (the past of kirin)"
+                      }
+                    ],
+                    "prompt": "Bişar got: Bozo çi kir?",
                     "options": [
-                      "Min çewtiyek nekir: ez berbangê rabûm!",
-                      "Ez çewtiyek nekirim: ez berbangê rabûm!",
-                      "Min çewtiyek nekir: min berbangê rabû!"
+                      "Bişar said: what did Bozo do?",
+                      "Bişar said: where did Bozo go?",
+                      "Bişar said: what did Bozo eat?"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Bişar selika Dapîrê hilgirt.",
+                    "ask": "reply",
+                    "say": "Te li ser rê çi dît û çi xwar?",
                     "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "hilgirt",
-                        "en": "picked up, carried (hilgirtin: to carry; to pick up)"
-                      }
-                    ],
-                    "prompt": "Bişar selika Dapîrê hilgirt.",
+                    "prompt": "Te li ser rê çi dît û çi xwar?",
                     "options": [
-                      "Bişar picked up Dapîr’s basket.",
-                      "Bişar dropped Dapîr’s basket.",
-                      "Dapîr picked up Bişar’s basket."
+                      "Min keriyê Bişar dît, û me çay vexwar.",
+                      "Ez keriyê Bişar dîtim, û em çay vexwar.",
+                      "Min keriyê Bişar dibînim."
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I didn’t make a mistake: I got up at dawn, wide awake!",
+                    "options": [
+                      "Min çewtiyek nekir: ez berbangê hişyar rabûm!",
+                      "Ez çewtiyek nekir: ez berbangê hişyar rabûm!",
+                      "Min çewtiyek nekir: min berbangê hişyar rabû!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "It was sunny; Bişar worked, and I told my story again.",
+                    "accepted": [
+                      "Tav hebû; Bişar xebitî, û min çîroka xwe dîsa got.",
+                      "Tav hebû, Bişar xebitî, û min çîroka xwe dîsa got.",
+                      "Tav hebû; Bişar xebitî û min dîsa çîroka xwe got."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Te çi dît, te çi xwar, û Bozo çi kir?",
+                    "reference": "Te çi dît, te çi xwar, û Bozo çi kir?"
                   }
                 },
                 {
                   "position": 15,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Di keriyê Bişar de hivdeh beran hene; Bişar hemû rojê xebitî.",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Di keriyê Bişar de hivdeh beran hene; Bişar hemû rojê xebitî.",
+                    "prompt": "Bişar picked up the basket and put it down by his flock.",
                     "accepted": [
-                      "In Bişar’s flock there are seventeen rams; Bişar worked all day.",
-                      "There are seventeen rams in Bişar’s flock; Bişar worked all day long.",
-                      "Bişar’s flock has seventeen rams; Bişar worked all day."
+                      "Bişar selik hilgirt û li ber keriyê xwe danî.",
+                      "Bişar selik hilgirt, û li ber keriyê xwe danî."
                     ]
                   }
                 },
@@ -335,42 +325,6 @@
                         "right": "to pick up, to carry"
                       }
                     ]
-                  }
-                },
-                {
-                  "position": 17,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Bişar’s flock came.",
-                    "accepted": [
-                      "Keriyê Bişar hat.",
-                      "Keriyê Bişar hat"
-                    ]
-                  }
-                },
-                {
-                  "position": 18,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Bişar picked up the basket and put it down.",
-                    "accepted": [
-                      "Bişar selik hilgirt û danî.",
-                      "Bişar selik hilgirt, û danî."
-                    ]
-                  }
-                },
-                {
-                  "position": 19,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Te çi dît, te çi xwar, û Bozo çi kir?",
-                    "reference": "Te çi dît, te çi xwar, û Bozo çi kir?"
                   }
                 }
               ]
@@ -408,7 +362,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hêviyê li mêrgê sed kulîlk dîtin.",
+                    "say": "Hêviyê li mêrgê sed kulîlk û şopên Bozo dîtin.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -416,10 +370,10 @@
                         "en": "meadow"
                       }
                     ],
-                    "prompt": "Hêviyê li mêrgê sed kulîlk dîtin.",
+                    "prompt": "Hêviyê li mêrgê sed kulîlk û şopên Bozo dîtin.",
                     "options": [
-                      "Hêvî saw a hundred flowers in the meadow.",
-                      "Hêvî saw a hundred sheep on the mountain.",
+                      "Hêvî saw a hundred flowers and Bozo’s tracks in the meadow.",
+                      "Hêvî saw a hundred sheep and Bozo on the mountain.",
                       "Hêvî picked one flower in the meadow."
                     ],
                     "correctIndex": 0
@@ -465,24 +419,17 @@
                 },
                 {
                   "position": 5,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Li mêrgê giya kesk û dirêj e.",
+                    "ask": "to-english",
+                    "say": "Em li zozanan man: zivistan li vir dirêj e, bihar kin e, lê niha mêrg kesk e.",
                     "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "giya",
-                        "en": "grass"
-                      }
-                    ],
-                    "prompt": "Li mêrgê giya kesk û dirêj e.",
-                    "options": [
-                      "In the meadow the grass is green and long.",
-                      "In the meadow the grass is yellow and short.",
-                      "In the garden the trees are tall."
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Em li zozanan man: zivistan li vir dirêj e, bihar kin e, lê niha mêrg kesk e.",
+                    "accepted": [
+                      "We stayed on the pastures: winter here is long, spring is short, but now the meadow is green.",
+                      "We stayed on the summer pastures: the winter is long here and spring is short, but now the meadow is green.",
+                      "We stayed on the pastures; here winter is long and spring short, but now the meadow is green."
+                    ]
                   }
                 },
                 {
@@ -490,13 +437,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Te li ser rê çi dît?",
+                    "say": "Kê nan anî, û kê kevçî birin?",
                     "voice": "hamo",
-                    "prompt": "Te li ser rê çi dît?",
+                    "prompt": "Kê nan anî, û kê kevçî birin?",
                     "options": [
-                      "Min çivîkeke mezin dît!",
-                      "Ez çivîkeke mezin dîtim!",
-                      "Min çivîkeke mezin dibînim!"
+                      "Bişar nan anî, û Baran kevçî birin.",
+                      "Bişar nan anîn, û Baran kevçî bir.",
+                      "Ez nan im."
                     ],
                     "correctIndex": 0
                   }
@@ -509,6 +456,10 @@
                     "say": "Bozo evîna xwe ji bîr kir: wî tenê giya xwest!",
                     "voice": "hamo",
                     "new": [
+                      {
+                        "ku": "giya",
+                        "en": "grass"
+                      },
                       {
                         "ku": "xwest",
                         "en": "wanted (the past of xwestin)"
@@ -528,28 +479,37 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Hamo çi dît?",
+                    "say": "Baran çivîkek dît. Hamo çi dît?",
                     "voice": "hamo",
-                    "prompt": "Hamo çi dît?",
+                    "prompt": "Baran çivîkek dît. Hamo çi dît?",
                     "options": [
                       "Tiştek nedît: wî hemû rê got û got!",
-                      "Wî sed kulîlk dîtin.",
-                      "Ew mêrg e."
+                      "Ew tirsiya û sekinî.",
+                      "Ew nagirî."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 9,
-                  "type": "writing",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Dapîrê sêvek da Hevalo.",
                     "voice": "hamo",
-                    "prompt": "Bozo wanted grass, and Bişar brought it.",
-                    "accepted": [
-                      "Bozo giya xwest, û Bişar anî.",
-                      "Bozo giya xwest û Bişar anî."
-                    ]
+                    "new": [
+                      {
+                        "ku": "da",
+                        "en": "gave (the past of dan)"
+                      }
+                    ],
+                    "prompt": "Dapîrê sêvek da Hevalo.",
+                    "options": [
+                      "Dapîr gave Hevalo an apple.",
+                      "Hevalo gave Dapîr an apple.",
+                      "Dapîr took an apple from Hevalo."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -576,93 +536,6 @@
                 },
                 {
                   "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Min gazî Bozo kir, lê ew reviya mêrgê: şopên wî li wir in!",
-                    "voice": "hamo",
-                    "prompt": "Min gazî Bozo kir, lê ew reviya mêrgê: şopên wî li wir in!",
-                    "accepted": [
-                      "I called Bozo, but he ran off to the meadow: his tracks are there!",
-                      "I called to Bozo, but he ran away to the meadow: his tracks are there!",
-                      "I called Bozo, but he ran to the meadow; his tracks are there!"
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Who heard it?",
-                    "options": [
-                      "Kê bihîst?",
-                      "Kî bihîst?",
-                      "Kê bihîstin?"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Dapîrê sêvek da Hevalo.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "da",
-                        "en": "gave (the past of dan)"
-                      }
-                    ],
-                    "prompt": "Dapîrê sêvek da Hevalo.",
-                    "options": [
-                      "Dapîr gave Hevalo an apple.",
-                      "Hevalo gave Dapîr an apple.",
-                      "Dapîr took an apple from Hevalo."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Hêvî li mêrgê ma û sekinî; ew netirsiya, û ew nagirî.",
-                      "Hêvî li mêrgê ma û sekinî, ew netirsiya û ew nagirî."
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Dapîr gave Hevalo an apple.",
-                    "accepted": [
-                      "Dapîrê sêvek da Hevalo.",
-                      "Dapîrê sêvek da Hevalo"
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Li zozanan zivistan dirêj e, bihar kin e, û kesî gotina Hamo nebihîst!",
-                    "reference": "Li zozanan zivistan dirêj e, bihar kin e, û kesî gotina Hamo nebihîst!"
-                  }
-                },
-                {
-                  "position": 17,
                   "type": "match_pairs",
                   "payload": {
                     "voice": "hamo",
@@ -692,6 +565,71 @@
                         "right": "grass"
                       }
                     ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Who heard it?",
+                    "options": [
+                      "Kê bihîst?",
+                      "Kî bihîst?",
+                      "Kê bihîstin?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Bozo reviya mêrgê, û Hêviyê kulîlkek da Dapîrê.",
+                      "Bozo reviya mêrgê û Hêviyê kulîlkek da Dapîrê."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Min gazî Bozo kir, lê wî nebihîst: wî tenê giya xwest!",
+                    "voice": "hamo",
+                    "prompt": "Min gazî Bozo kir, lê wî nebihîst: wî tenê giya xwest!",
+                    "accepted": [
+                      "I called Bozo, but he didn’t hear: he only wanted grass!",
+                      "I called to Bozo, but he didn’t hear; he only wanted grass!",
+                      "I called Bozo, but he did not hear: he just wanted grass!"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Dapîr gave Hevalo an apple, and Hevalo took it away.",
+                    "accepted": [
+                      "Dapîrê sêvek da Hevalo, û Hevalo ew bir.",
+                      "Dapîrê sêvek da Hevalo û Hevalo ew bir."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Bişar nan anî, Bozo giya xwest, û kesî gotina Hamo nebihîst!",
+                    "reference": "Bişar nan anî, Bozo giya xwest, û kesî gotina Hamo nebihîst!"
                   }
                 }
               ]
@@ -766,14 +704,14 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Bişar her şev li wir xwê datîne.",
+                    "ask": "reply",
+                    "say": "Te çaya xwe vexwar? Niha bêdeng be!",
                     "voice": "hamo",
-                    "prompt": "Bişar her şev li wir ___ datîne.",
+                    "prompt": "Te çaya xwe vexwar? Niha bêdeng be!",
                     "options": [
-                      "xwê",
-                      "giya",
-                      "kevir"
+                      "Baş e, ez ê bêdeng bibim.",
+                      "Erê, tu bêdeng î.",
+                      "Na, ez xwê me."
                     ],
                     "correctIndex": 0
                   }
@@ -795,25 +733,13 @@
                     "options": [
                       "Bişar wanted to catch her, but he only caught his own sash!",
                       "Bişar wanted to catch her, and he caught her at once!",
-                      "Bişar caught the fish, but not his sash!"
+                      "Bişar caught a fish, but not his sash!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 6,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Bêdeng be: ask li ber mêrgê ye.",
-                      "Bêdeng be, ask li ber mêrgê ye."
-                    ]
-                  }
-                },
-                {
-                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -835,7 +761,50 @@
                   }
                 },
                 {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Bêdeng be: çivîkek firiya, lê ask netirsiya.",
+                      "Bêdeng be, çivîkek firiya, lê ask netirsiya."
+                    ]
+                  }
+                },
+                {
                   "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Bişar her şev li wir xwê datîne.",
+                    "voice": "hamo",
+                    "prompt": "Bişar her şev li wir ___ datîne.",
+                    "options": [
+                      "xwê",
+                      "giya",
+                      "tûr"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "He only caught his own sash.",
+                    "options": [
+                      "Wî tenê piştênê xwe girt.",
+                      "Ew tenê piştênê xwe girt.",
+                      "Wî tenê piştênê xwe girtin."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -850,7 +819,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 11,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu10s1l3a",
@@ -866,8 +835,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Bêdeng! Binêre, li ber mêrgê…",
-                        "en": "Quiet! Look, at the edge of the meadow…"
+                        "text": "Bêdeng! Min tiştek bihîst… Binêre, li ber mêrgê!",
+                        "en": "Quiet! I heard something… Look, at the edge of the meadow!"
                       },
                       {
                         "speaker": 1,
@@ -916,8 +885,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Min tûrek sêv li ber kon danî. Niha bêdeng be…",
-                        "en": "I’ve put a sack of apples by the tent. Now be quiet…"
+                        "text": "Min tûrek sêv li ber kon danî. Şîreta min: niha bêdeng be…",
+                        "en": "I’ve put a sack of apples by the tent. My advice: now keep quiet…"
                       }
                     ],
                     "prompt": "Ask li ber mêrgê çi dixwe?",
@@ -930,49 +899,18 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Êvareke havînê bû. Me li dora kon çay vexwar, û kerî raza.",
+                    "say": "Êvareke havînê bû. Em li dora agir rûniştin, û kerî raza.",
                     "voice": "hamo",
-                    "prompt": "Êvareke havînê bû. Me li dora kon çay vexwar, û kerî raza.",
+                    "prompt": "Êvareke havînê bû. Em li dora agir rûniştin, û kerî raza.",
                     "accepted": [
-                      "It was a summer evening. We drank tea around the tent, and the flock slept.",
-                      "It was a summer evening; we drank tea around the tent and the flock went to sleep.",
-                      "It was a summer evening. We had tea around the tent, and the flock slept."
+                      "It was a summer evening. We sat around the fire, and the flock slept.",
+                      "It was a summer evening; we sat around the fire and the flock went to sleep.",
+                      "It was a summer evening. We sat round the fire, and the flock fell asleep."
                     ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Tu dikarî bêdeng bibî?",
-                    "voice": "hamo",
-                    "prompt": "Tu dikarî bêdeng bibî?",
-                    "options": [
-                      "Erê, ez ê bêdeng bibim.",
-                      "Erê, tu ê bêdeng bibî.",
-                      "Na, ez xwê me."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "He only caught his own sash.",
-                    "options": [
-                      "Wî tenê piştênê xwe girt.",
-                      "Ew tenê piştênê xwe girt.",
-                      "Wî tenê piştênê xwe girtin."
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
@@ -981,10 +919,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Be quiet: I heard something!",
+                    "prompt": "Be quiet: Bişar is making a fire!",
                     "accepted": [
-                      "Bêdeng be: min tiştek bihîst!",
-                      "Bêdeng be, min tiştek bihîst!"
+                      "Bêdeng be: Bişar agir çêdike!",
+                      "Bêdeng be, Bişar agir çêdike!"
                     ]
                   }
                 },
@@ -1038,45 +976,44 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Bişar hişyar e: ew dibêje, ask her şev tê, ji bo xwê.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Bişar hişyar e: ew dibêje, ask her şev tê, ji bo xwê.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Bişar is watchful: he says the deer comes every night, for the salt.",
+                      "Bişar is tired: he says the deer never comes.",
+                      "Bişar is watchful: he says the wolf comes every night."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 2,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "to-english",
+                    "say": "Min navê wê kir Zerê, ji ber ku rengê wê zer e.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Min navê wê kir Zerê, ji ber ku rengê wê zer e.",
+                    "accepted": [
+                      "I named her Zerê, because her colour is golden.",
+                      "I called her Zerê, because she is golden in colour.",
+                      "I named her Zerê, because she is yellow."
+                    ]
                   }
                 },
                 {
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "reply",
+                    "say": "Te îro çi kir?",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Te îro çi kir?",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Min êzing kom kir.",
+                      "Ez êzing kom kir.",
+                      "Min êzing kom dikim."
                     ],
                     "correctIndex": 0
                   }
@@ -1086,13 +1023,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Ez dibêjim: min îro gelek kar kir! Bişar dibêje: min tiştek nedît!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Ez dibêjim: min îro gelek kar kir! Bişar dibêje: min tiştek nedît!",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "I say: I did a lot of work today! Bişar says: I didn’t see anything!",
+                      "I say: I did nothing today! Bişar says: I saw it all!",
+                      "Bişar says: I worked a lot today! I say: I saw nothing!"
                     ],
                     "correctIndex": 0
                   }
@@ -1102,13 +1039,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Bişar dibêje: dema ku min cara yekem bar kir zozanan, ez xortekî ciwan bûm.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Bişar dibêje: dema ku min cara yekem bar kir zozanan, ez xortekî ciwan bûm.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Bişar says: when I first moved up to the pastures, I was a young man.",
+                      "Bişar says: when I first came down to the village, I was an old man.",
+                      "Bişar says: I have never moved up to the pastures."
                     ],
                     "correctIndex": 0
                   }
@@ -1117,78 +1054,71 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "missing",
+                    "say": "Hefteya borî, Zerê her şev vegeriya.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Hefteya borî, Zerê her şev ___.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "vegeriya",
+                      "vegeriyam",
+                      "vedigerim"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 7,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "to-english",
+                    "say": "Pêr wê hemû xwê xwar, û Bişar dîsa xwê danî.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Pêr wê hemû xwê xwar, û Bişar dîsa xwê danî.",
+                    "accepted": [
+                      "The day before yesterday she ate all the salt, and Bişar put salt out again.",
+                      "Two days ago she ate all the salt, and Bişar put out salt again.",
+                      "The day before yesterday she ate all the salt and Bişar put more salt out."
+                    ]
                   }
                 },
                 {
                   "position": 8,
-                  "type": "multiple_choice",
+                  "type": "listening",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "accepted": [
+                      "Ev şev ji bo me cejn e, û xweşiyeke mezin e.",
+                      "Ev şev ji bo me cejn e û xweşiyeke mezin e."
+                    ]
                   }
                 },
                 {
                   "position": 9,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Be patient: Zerê will come again.",
+                    "accepted": [
+                      "Bêhnfireh be: Zerê dê dîsa bê.",
+                      "Bêhnfireh be: Zerê yê dîsa bê.",
+                      "Bêhnfireh be, Zerê dê dîsa bê."
+                    ]
                   }
                 },
                 {
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "reply",
+                    "say": "Bozo çima tirsonek e?",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Bozo çima tirsonek e?",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Ew ji ask jî ditirse!",
+                      "Ew heb e.",
+                      "Ez tirsonek im."
                     ],
                     "correctIndex": 0
                   }
@@ -1197,14 +1127,13 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Bişar gathered sixteen rams.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Bişar şanzdeh beran kom kirin.",
+                      "Bişar şanzdeh beran kom kir.",
+                      "Bişar şanzdeh beran kom dikin."
                     ],
                     "correctIndex": 0
                   }
@@ -1214,15 +1143,86 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Panzdeh beran ji mêrgê daketin, û wan giya xwar.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Panzdeh beran ji mêrgê daketin, û wan giya xwar.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Fifteen rams came down from the meadow, and they ate the grass.",
+                      "Fifty rams went up to the meadow, and they slept.",
+                      "Fifteen goats came down from the roof, and they ate the bread."
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Sibehê Hevalo tune ye, û tûrê sêvan jî tune ye!",
+                    "reference": "Sibehê Hevalo tune ye, û tûrê sêvan jî tune ye!"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Hevalo tûr bi şaşî bir? Na: ev ne çewtî ye, ev evîn e!",
+                    "voice": "hamo",
+                    "prompt": "Hevalo tûr bi şaşî bir? Na: ev ne çewtî ye, ev evîn e!",
+                    "accepted": [
+                      "Did Hevalo take the sack by mistake? No: this is no mistake, this is love!",
+                      "Hevalo took the sack by mistake? No: it’s not a mistake, it’s love!",
+                      "Did Hevalo take the sack by mistake? No, this is not a mistake: this is love!"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Who took the sack?",
+                    "accepted": [
+                      "Kê tûr bir?",
+                      "Kê tûr bir"
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "match_pairs",
+                  "payload": {
+                    "voice": "hamo",
+                    "pairs": [
+                      {
+                        "left": "xwar",
+                        "right": "ate"
+                      },
+                      {
+                        "left": "kir",
+                        "right": "did, made"
+                      },
+                      {
+                        "left": "got",
+                        "right": "said"
+                      },
+                      {
+                        "left": "hilgirtin",
+                        "right": "to pick up"
+                      },
+                      {
+                        "left": "danîn",
+                        "right": "to put down"
+                      },
+                      {
+                        "left": "bir",
+                        "right": "took away"
+                      }
+                    ]
                   }
                 }
               ]

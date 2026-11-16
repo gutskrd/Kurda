@@ -521,7 +521,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hevalo li pencereyê dinêre: ew germahiyê dixwaze.",
+                    "say": "Hevalo ji pencereyê dinêre: ew germahiyê dixwaze.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -529,7 +529,7 @@
                         "en": "warmth"
                       }
                     ],
-                    "prompt": "Hevalo li pencereyê dinêre: ew germahiyê dixwaze.",
+                    "prompt": "Hevalo ji pencereyê dinêre: ew germahiyê dixwaze.",
                     "options": [
                       "Hevalo is looking out of the window: he wants warmth.",
                       "Hevalo is looking at the snow: he wants to sleep.",
