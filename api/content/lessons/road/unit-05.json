@@ -1739,13 +1739,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Dapîr dibêje Pêncşem, Hamo dibêje Çarşem, û em çayê vedixwin.",
+                    "say": "Rojbûna Hamo? Dapîr dibêje Pêncşem, Hamo dibêje Çarşem, û em çayê vedixwin.",
                     "voice": "hamo",
-                    "prompt": "Dapîr dibêje Pêncşem, Hamo dibêje Çarşem, û em çayê vedixwin.",
+                    "prompt": "Rojbûna Hamo? Dapîr dibêje Pêncşem, Hamo dibêje Çarşem, û em çayê vedixwin.",
                     "options": [
-                      "Dapîr says Thursday, Hamo says Wednesday, and we drink tea.",
-                      "Dapîr says Wednesday, Hamo says Thursday, and we drink tea.",
-                      "Dapîr says Thursday, Hamo says Wednesday, and we go home."
+                      "Hamo’s birthday? Dapîr says Thursday, Hamo says Wednesday, and we drink tea.",
+                      "Hamo’s birthday? Dapîr says Wednesday, Hamo says Thursday, and we drink tea.",
+                      "Hamo’s birthday? Dapîr says Thursday, Hamo says Wednesday, and we go home."
                     ],
                     "correctIndex": 0
                   }
@@ -2972,13 +2972,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bîra min nayê: ez şiyar im, an ez radizim?",
+                    "say": "Tê bîra min: piştî çayê, xew!",
                     "voice": "hamo",
-                    "prompt": "Bîra min nayê: ez şiyar im, an ez radizim?",
+                    "prompt": "Tê bîra min: piştî çayê, xew!",
                     "options": [
-                      "I don’t remember: am I awake, or am I asleep?",
-                      "I don’t know: am I hungry, or am I thirsty?",
-                      "I remember: I’m awake, not asleep!"
+                      "I remember: after tea, sleep!",
+                      "I remember: after tea, work!",
+                      "I don’t remember: before tea, what?"
                     ],
                     "correctIndex": 0
                   }
@@ -3834,7 +3834,7 @@
                     "prompt": "Ez her roj dixebitim!",
                     "options": [
                       "Aferîn!",
-                      "Ez her roj im.",
+                      "Ez kar im.",
                       "Biçûk e."
                     ],
                     "correctIndex": 0

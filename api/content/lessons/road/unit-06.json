@@ -870,9 +870,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ajovan dibêje: Roja Çarşemê û Pêncşemê bazar qelebalix e.",
+                    "say": "Ajovan dibêje: Roja Çarşemê û roja Pêncşemê bazar qelebalix e.",
                     "voice": "hamo",
-                    "prompt": "Ajovan dibêje: Roja Çarşemê û Pêncşemê bazar qelebalix e.",
+                    "prompt": "Ajovan dibêje: Roja Çarşemê û roja Pêncşemê bazar qelebalix e.",
                     "options": [
                       "The driver says: On Wednesday and Thursday the market is crowded.",
                       "The driver says: On Wednesday and Thursday the market is empty.",
@@ -1153,9 +1153,8 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Du meh hene: di Adarê de, li Newrozê, Miştenûr qelebalix e!",
-                      "Du meh hene: di Adarê de, li Newrozê, Miştenûr qelebalix e",
-                      "Du meh hene di Adarê de li Newrozê Miştenûr qelebalix e"
+                      "Berî Newrozê du meh hene. Di Adarê de Miştenûr qelebalix e!",
+                      "Berî Newrozê du meh hene. Di Adarê de Miştenûr qelebalix e"
                     ]
                   }
                 },
@@ -1763,7 +1762,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "cue": "to one person, about more",
+                    "cue": "say it to one person",
                     "prompt": "Give them bread!",
                     "options": [
                       "Nan bide wan!",
@@ -2088,13 +2087,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Pîroz be! Hevalo ji kûçikê reş natirse!",
+                    "say": "Hevalo ji kûçikê reş natirse, lê ji pisîka spî ditirse!",
                     "voice": "hamo",
-                    "prompt": "Pîroz be! Hevalo ji kûçikê reş natirse!",
+                    "prompt": "Hevalo ji kûçikê reş natirse, lê ji pisîka spî ditirse!",
                     "options": [
-                      "Well done! Hevalo isn’t afraid of the black dog!",
-                      "Well done! Hevalo is afraid of the black dog!",
-                      "Happy birthday! Hevalo isn’t afraid of the white dog!"
+                      "Hevalo isn’t afraid of the black dog, but he’s afraid of the white cat!",
+                      "Hevalo is afraid of the black dog, but not of the white cat!",
+                      "Hevalo isn’t afraid of the white dog, but he’s afraid of the black cat!"
                     ],
                     "correctIndex": 0
                   }
@@ -2732,13 +2731,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Meta min jî disekine û dibêje: Divê tu bêyî!",
+                    "say": "Meta min li ber derî disekine û dibêje: Divê tu bêyî!",
                     "voice": "hamo",
-                    "prompt": "Meta min jî disekine û dibêje: Divê tu bêyî!",
+                    "prompt": "Meta min li ber derî disekine û dibêje: Divê tu bêyî!",
                     "options": [
-                      "My aunt stops too and says: You must come!",
-                      "My aunt stops too and says: You can come!",
-                      "My mother stops too and says: You must go!"
+                      "My aunt stops at the door and says: You must come!",
+                      "My aunt stops at the door and says: You can come!",
+                      "My mother stops at the door and says: You must go!"
                     ],
                     "correctIndex": 0
                   }
@@ -3367,12 +3366,14 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Maybe he’s closing the door.",
+                    "prompt": "Maybe he’ll close the door.",
                     "accepted": [
+                      "Dibe ku ew derî bigire.",
+                      "Dibe ku ew derî bigire",
+                      "Dibe ku derî bigire.",
+                      "Dibe ku derî bigire",
                       "Dibe ku ew derî digire.",
-                      "Dibe ku ew derî digire",
-                      "Dibe ku derî digire.",
-                      "Dibe ku derî digire"
+                      "Dibe ku ew derî digire"
                     ]
                   }
                 },
@@ -3927,13 +3928,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Nanpêj mêrekî kevn e, û kurê wî alîkariyê dike.",
+                    "say": "Nanpêj mêrekî baş e, û kurê wî alîkariyê dike.",
                     "voice": "hamo",
-                    "prompt": "Nanpêj mêrekî kevn e, û kurê wî alîkariyê dike.",
+                    "prompt": "Nanpêj mêrekî baş e, û kurê wî alîkariyê dike.",
                     "accepted": [
-                      "The baker is an old man, and his son helps.",
-                      "The baker is an old man and his son helps him.",
-                      "The baker is an old man, and his son is helping."
+                      "The baker is a good man, and his son helps.",
+                      "The baker is a good man and his son helps him.",
+                      "The baker is a good man, and his son is helping."
                     ]
                   }
                 },
@@ -4259,9 +4260,9 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ez pirtûka gotinên pêşiyan vedikim: ya kê ye?",
-                      "Ez pirtûka gotinên pêşiyan vedikim: ya kê ye",
-                      "Ez pirtûka gotinên pêşiyan vedikim ya kê ye"
+                      "Mêrek min nas dike. Ew pirtûka gotinên pêşiyan vedike: ya kê ye?",
+                      "Mêrek min nas dike. Ew pirtûka gotinên pêşiyan vedike: ya kê ye",
+                      "Mêrek min nas dike. Ew pirtûka gotinên pêşiyan vedike ya kê ye"
                     ]
                   }
                 },
@@ -4689,9 +4690,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Bazar girtî ye, lê firne vekirî e!",
+                    "say": "Bazar girtî ye, lê firne vekirî ye!",
                     "voice": "hamo",
-                    "prompt": "Bazar girtî ye, lê firne ___ e!",
+                    "prompt": "Bazar girtî ye, lê firne ___ ye!",
                     "options": [
                       "vekirî",
                       "girtî",
@@ -4736,9 +4737,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Jin û zarok ji pencereyê dibêjin: Bi xêr biçî!",
+                    "say": "Jin û zarok ji pencereyê dibêjin: Bi xêr biçin!",
                     "voice": "hamo",
-                    "prompt": "Jin û zarok ji pencereyê dibêjin: Bi xêr biçî!",
+                    "prompt": "Jin û zarok ji pencereyê dibêjin: Bi xêr biçin!",
                     "options": [
                       "The women and children say from the window: Go well!",
                       "The women and children say from the window: Welcome!",
