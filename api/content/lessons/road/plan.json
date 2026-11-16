@@ -3366,7 +3366,7 @@
               "titleKu": "Pêşbirka gotinan",
               "titleEn": "The proverb duel",
               "focus": "talk",
-              "beat": "A proverb duel: you and the children against Dapîr, with Hamo as judge, saying each of Dapîr’s answers aloud. Every problem has its proverb and its solution, and Dapîr, the wisest person in the valley, always has the last word. Then Hevalo walks in with an apple in his mouth, and Hamo, the joker, makes up a proverb of his own about an apple a day. Nobody can say it isn’t true.",
+              "beat": "A proverb duel: you and the children against Dapîr, with Hamo as judge, saying each of Dapîr’s answers aloud. Every problem has its proverb and its solution, and Dapîr, the wisest person in the valley, always has the last word. Then Hevalo walks in with an apple in his mouth, and Hamo, the joker, says that Hevalo’s answer to every problem is an apple.",
               "voice": "hamo",
               "new": [
                 {"ku": "zana", "en": "wise, learned", "pos": "adj", "forms": ["zana"]},

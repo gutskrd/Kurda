@@ -2118,8 +2118,8 @@
           "promptEn": "What did Hamo’s father say?",
           "options": [
             "Here, lê rehên xwe ji bîr meke",
-            "Li gund bimîne",
-            "Sêvê bixwe"
+            "Li Kobaniyê bimîne, û sêvê bixwe",
+            "Here, û zû vegere malê"
           ],
           "correctIndex": 0,
           "explanation": "Bavê wî got: “Here, lê rehên xwe ji bîr meke.”",
@@ -2233,9 +2233,9 @@
       "readingMinutes": null,
       "title": "Şitila Hevalo",
       "summary": "Piştî ku otobûs çû, Hamo li bin dara sêvê ya kevn şitilek ji bo te çand, û Hevalo li benda sêvan e.",
-      "body": "Rêya me dirêj bû, ne? Hemû zivistanê min çîrokên bavê xwe vegotin: gur û karik, rovî û hirç. Îro dora çîroka min e. Ew ne dirêj e, ji ber ku çaya min germ e.\n\nTê bîra te, dema ku telefon ji Kobaniyê hat? Bavê min malika paşîn got: “Stranê bidomînin, û dareke nû biçînin.” Dapîrê jî bi wî re got, û hemû gund bêdeng bû.\n\nPiştî ku otobûs çû, ez çûm baxçe, li bin dara sêvê ya kevn. Tu dizanî, ew dar ji sêva bavê min e. Min li wir şitilek çand, ji bo te. Hevalo bi guhên bilind li min dinêrî. Min tiştek negot. Simbêlê min jî tiştek negot.\n\nNiha Hevalo her roj li ber şitila te rûdine û sêvan dixwaze. Ez jê re dibêjim ku sêv dê piştî çend salan bên. Ew bawer nake. Ew dixeyide, û sêveke kevn ji selikê dixwe.\n\nDuh peyamek ji Hewlêrê hat. Xezal dinivîse ku zarokên wê bi zimanê dayikê dixwînin, û ew dipirse ka Hevalo ji sêvan dûr dimîne. Na, Xezal. Na.\n\nHeke tu rojekê dîsa bêyî Sêvanê, li deriyê şîn bixe. Ez ê derî vekim, çimkî tu ne gur î. Çay dê germ be, û şitila te dê mezintir be. Binêre, Hevalo jî dixwaze bi te re bê. Na, Hevalo. Tu li cem şitilê dimînî. Rêya te vekirî be!",
+      "body": "Rêya me dirêj bû, ne? Hemû zivistanê min çîrokên bavê xwe vegotin: gur û karik, rovî û hirç. Îro dora çîroka min e. Ew ne dirêj e, ji ber ku çaya min germ e.\n\nTê bîra te, dema ku telefon ji Kobaniyê hat? Bavê min malika paşîn got: “Stranê bidomînin, û dareke nû biçînin.” Dapîrê jî bi wî re got, û hemû gund bêdeng bû.\n\nPiştî ku otobûs çû, ez çûm baxçe, li bin dara sêvê ya kevn. Tu dizanî, ew dar ji sêva bavê min e. Min li wir şitilek çand, ji bo te. Hevalo bi guhên bilind li min dinêrî. Min tiştek negot. Simbêlê min jî tiştek negot.\n\nNiha Hevalo her roj li ber şitila te rûdine û sêvan dixwaze. Ez jê re dibêjim ku sêv dê piştî çend salan bên. Ew bawer nake. Ew dixeyide, û sêveke kevn ji selikê dixwe.\n\nDuh peyamek ji Hewlêrê hat. Xezal dinivîse ku zarokên wê bi zimanê dayikê dixwînin, û ew dipirse ka Hevalo ji sêvan dûr dimîne. Ez ê binivîsim: na, Xezal, ew dûr namîne!\n\nHeke tu rojekê dîsa bêyî Sêvanê, li dergehê şîn bixe. Ez ê derî vekim, çimkî tu ne gur î. Çay dê germ be, û şitila te dê mezintir be. Binêre, Hevalo jî dixwaze bi te re bê. Na, Hevalo. Tu li cem şitilê dimînî. Rêya te vekirî be!",
       "translations": {
-        "en": "Our road was a long one, wasn’t it? All winter I told my father’s tales: the wolf and the kids, the fox and the bear. Today it’s my own story’s turn. It isn’t long, because my tea is hot.\n\nDo you remember when the call came from Kobanî? My father sang the last verse: “Keep the song going, and plant a new tree.” Dapîr sang along with him, and the whole village went quiet.\n\nAfter the bus left, I went to the orchard, under the old apple tree. You know, that tree comes from my father’s apple. There I planted a sapling, for you. Hevalo watched me with his ears pricked up. I said nothing. Even my moustache said nothing.\n\nNow Hevalo sits by your sapling every day and wants apples. I tell him that the apples will come in a few years. He doesn’t believe me. He sulks, and eats an old apple from the basket.\n\nYesterday a message came from Hewlêr. Xezal writes that her pupils are learning in their mother tongue, and she asks whether Hevalo is staying away from the apples. No, Xezal. No.\n\nIf you come back to Sêvan one day, knock at the blue gate. I’ll open the door, because you are not the wolf. The tea will be hot, and your sapling will be bigger. Look, Hevalo wants to come with you too. No, Hevalo. You stay with the sapling. May your road be open!"
+        "en": "Our road was a long one, wasn’t it? All winter I told my father’s tales: the wolf and the kids, the fox and the bear. Today it’s my own story’s turn. It isn’t long, because my tea is hot.\n\nDo you remember when the call came from Kobanî? My father sang the last verse: “Keep the song going, and plant a new tree.” Dapîr sang along with him, and the whole village went quiet.\n\nAfter the bus left, I went to the orchard, under the old apple tree. You know, that tree comes from my father’s apple. There I planted a sapling, for you. Hevalo watched me with his ears pricked up. I said nothing. Even my moustache said nothing.\n\nNow Hevalo sits by your sapling every day and wants apples. I tell him that the apples will come in a few years. He doesn’t believe me. He sulks, and eats an old apple from the basket.\n\nYesterday a message came from Hewlêr. Xezal writes that her pupils are learning in their mother tongue, and she asks whether Hevalo is staying away from the apples. I’ll write back: no, Xezal, he isn’t!\n\nIf you come back to Sêvan one day, knock at the blue gate. I’ll open the door, because you are not the wolf. The tea will be hot, and your sapling will be bigger. Look, Hevalo wants to come with you too. No, Hevalo. You stay with the sapling. May your road be open!"
       },
       "glossary": [],
       "questions": [
@@ -2300,21 +2300,6 @@
           "evidenceSentence": 1
         },
         {
-          "kind": "inference",
-          "prompt": "Çima Hamo şitilek çand?",
-          "promptEn": "Why did Hamo plant a sapling?",
-          "options": [
-            "Ji ber ku Hevalo birçî bû",
-            "Wekî ku malika paşîn dibêje",
-            "Ji ber ku Xezal got"
-          ],
-          "correctIndex": 1,
-          "explanation": "Malika paşîn dibêje: “Dareke nû biçînin.”",
-          "explanationEn": "The last verse says: “Plant a new tree.”",
-          "evidenceParagraph": 1,
-          "evidenceSentence": 1
-        },
-        {
           "kind": "sequence",
           "prompt": "Piştî ku otobûs çû, Hamo çi kir?",
           "promptEn": "After the bus left, what did Hamo do?",
@@ -2358,6 +2343,21 @@
           "explanationEn": "Hamo says: “There I planted a sapling, for you.”",
           "evidenceParagraph": 2,
           "evidenceSentence": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Hamo şitilek çand?",
+          "promptEn": "Why did Hamo plant a sapling?",
+          "options": [
+            "Ji ber ku Hevalo birçî bû",
+            "Wekî ku malika paşîn dibêje",
+            "Ji ber ku Xezal got"
+          ],
+          "correctIndex": 1,
+          "explanation": "Malika paşîn dibêje: “Dareke nû biçînin.”",
+          "explanationEn": "The last verse says: “Plant a new tree.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",

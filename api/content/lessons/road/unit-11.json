@@ -532,7 +532,7 @@
                     "options": [
                       "Ez ê wan biçînim!",
                       "Ez ê bibim hemşîre.",
-                      "Şitil kesk in."
+                      "Bozo şitil bir."
                     ],
                     "correctIndex": 0
                   }
@@ -982,7 +982,7 @@
                     "options": [
                       "Ez li baxçe xebitîm.",
                       "Ez hunermend im.",
-                      "Ez ê sibe biçim."
+                      "Min çîrok vegot."
                     ],
                     "correctIndex": 0
                   }
@@ -1511,23 +1511,23 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Zarok bi kelecan in, sindoq tije dibin, û barê Bozo mezin dibe.",
+                    "say": "Îro em sêvan berhev dikin, û ez li ser nêrdewanê me!",
                     "voice": "hamo",
                     "new": [
                       {
-                        "ku": "sindoq",
-                        "en": "box, chest"
+                        "ku": "berhev kirin",
+                        "en": "to gather, to pick (fruit, the harvest)"
                       },
                       {
-                        "ku": "bar",
-                        "en": "load"
+                        "ku": "nêrdewan",
+                        "en": "ladder"
                       }
                     ],
-                    "prompt": "Zarok bi kelecan in, sindoq tije dibin, û barê Bozo mezin dibe.",
+                    "prompt": "Îro em sêvan berhev dikin, û ez li ser nêrdewanê me!",
                     "options": [
-                      "The children are excited, the crates are filling up, and Bozo’s load is getting big.",
-                      "The children are tired, the crates are empty, and Bozo is asleep.",
-                      "The children are excited, the baskets are empty, and Bozo is happy."
+                      "Today we’re picking the apples, and I’m up on the ladder!",
+                      "Today we’re selling the apples, and I’m at the market!",
+                      "Today we’re eating the apples, and I’m under the tree!"
                     ],
                     "correctIndex": 0
                   }
@@ -1552,6 +1552,65 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
+                    "say": "Tu jî sêvan berhev dikî?",
+                    "voice": "hamo",
+                    "prompt": "Tu jî sêvan berhev dikî?",
+                    "options": [
+                      "Erê, lê nêrdewan gelek bilind e!",
+                      "Na, ez li Hewlêrê dijîm.",
+                      "Sêv li zozanan in."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Zarok bi kelecan in, sindoq tije dibin, û barê Bozo mezin dibe.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "sindoq",
+                        "en": "box, chest"
+                      },
+                      {
+                        "ku": "bar",
+                        "en": "load"
+                      }
+                    ],
+                    "prompt": "Zarok bi kelecan in, sindoq tije dibin, û barê Bozo mezin dibe.",
+                    "options": [
+                      "The children are excited, the crates are filling up, and Bozo’s load is getting big.",
+                      "The children are tired, the crates are empty, and Bozo is asleep.",
+                      "The children are excited, the baskets are empty, and Bozo is happy."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ez li ser nêrdewanê me, û tav serê min dişewitîne.",
+                    "voice": "hamo",
+                    "cue": "…the sun is burning my head.",
+                    "prompt": "Ez li ser nêrdewanê me, û tav serê min ___.",
+                    "options": [
+                      "dişewitîne",
+                      "dixwe",
+                      "dibêje"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
                     "say": "Sindoq li ku ne?",
                     "voice": "hamo",
                     "prompt": "Sindoq li ku ne?",
@@ -1564,7 +1623,7 @@
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1590,20 +1649,18 @@
                   }
                 },
                 {
-                  "position": 5,
-                  "type": "writing",
+                  "position": 8,
+                  "type": "listening",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Baran wrote on the crate: for the school.",
                     "accepted": [
-                      "Baran li ser sindoqê nivîsî: ji bo dibistanê.",
-                      "Baran li ser sindoqê nivîsî, ji bo dibistanê."
+                      "Em sêvan berhev dikin, û Hevalo li bin darê ye, bi hêviya sêveke sor."
                     ]
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
@@ -1619,33 +1676,29 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Îro em sêvan berhev dikin, û ez li ser nêrdewanê me!",
+                    "say": "Ewrek li ser çiya ye, û dê bibare. Bi lez!",
                     "voice": "hamo",
                     "new": [
                       {
-                        "ku": "berhev kirin",
-                        "en": "to gather, to pick (fruit, the harvest)"
-                      },
-                      {
-                        "ku": "nêrdewan",
-                        "en": "ladder"
+                        "ku": "bi lez",
+                        "en": "quickly, in a hurry"
                       }
                     ],
-                    "prompt": "Îro em sêvan berhev dikin, û ez li ser nêrdewanê me!",
+                    "prompt": "Ewrek li ser çiya ye, û dê bibare. Bi lez!",
                     "options": [
-                      "Today we’re picking the apples, and I’m up on the ladder!",
-                      "Today we’re selling the apples, and I’m at the market!",
-                      "Today we’re eating the apples, and I’m under the tree!"
+                      "There’s a cloud over the mountain, and it’s going to rain. Quickly!",
+                      "There’s a cloud over the mountain, but it won’t rain. Slowly!",
+                      "The sun is over the mountain, and it’s hot. Quickly!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -1657,61 +1710,6 @@
                       "The baskets are light; it’s Bozo who is heavy-hearted.",
                       "The baskets are light, but Bozo is heavy-hearted."
                     ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Tu jî sêvan berhev dikî?",
-                    "voice": "hamo",
-                    "prompt": "Tu jî sêvan berhev dikî?",
-                    "options": [
-                      "Erê, lê nêrdewan gelek bilind e!",
-                      "Na, ez li Hewlêrê dijîm.",
-                      "Sêv li zozanan in."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ewrek li ser çiya ye, û baran dê jê bibare. Bi lez!",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "bi lez",
-                        "en": "quickly, in a hurry"
-                      }
-                    ],
-                    "prompt": "Ewrek li ser çiya ye, û baran dê jê bibare. Bi lez!",
-                    "options": [
-                      "There’s a cloud over the mountain, and rain will fall from it. Quickly!",
-                      "There’s a cloud over the mountain, but it won’t rain. Slowly!",
-                      "The sun is over the mountain, and it’s hot. Quickly!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Ez li ser nêrdewanê me, û tav serê min dişewitîne.",
-                    "voice": "hamo",
-                    "cue": "…the sun is burning my head.",
-                    "prompt": "Ez li ser nêrdewanê me, û tav serê min ___.",
-                    "options": [
-                      "dişewitîne",
-                      "dixwe",
-                      "dibêje"
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
@@ -1729,38 +1727,19 @@
                 },
                 {
                   "position": 13,
-                  "type": "listening",
+                  "type": "writing",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
+                    "prompt": "Baran wrote on the crate: for the school.",
                     "accepted": [
-                      "Em sêvan berhev dikin, û Hevalo li bin darê ye, bi hêviya sêveke sor."
+                      "Baran li ser sindoqê nivîsî: ji bo dibistanê.",
+                      "Baran li ser sindoqê nivîsî, ji bo dibistanê."
                     ]
                   }
                 },
                 {
                   "position": 14,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Bi lez! Ewr tê, û barê Bozo giran e.",
-                    "reference": "Bi lez! Ewr tê, û barê Bozo giran e."
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Sindoqên li bin nêrdewanê tije ne, lê selik sivik in."
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -1790,6 +1769,27 @@
                       }
                     ],
                     "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Sindoqên li bin nêrdewanê tije ne, lê selik sivik in."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Bi lez! Ewr tê, û barê Bozo giran e.",
+                    "reference": "Bi lez! Ewr tê, û barê Bozo giran e."
                   }
                 }
               ]
@@ -4037,13 +4037,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hingê bavê min li ser hespê xwe got: here, lê zimanê dayikê û rehên xwe ji bîr meke.",
+                    "say": "Hingê bavê min li ber derî got: here, lê zimanê dayikê û rehên xwe ji bîr meke.",
                     "voice": "hamo",
-                    "prompt": "Hingê bavê min li ser hespê xwe got: here, lê zimanê dayikê û rehên xwe ji bîr meke.",
+                    "prompt": "Hingê bavê min li ber derî got: here, lê zimanê dayikê û rehên xwe ji bîr meke.",
                     "accepted": [
-                      "Then my father, on his horse, said: go, but don’t forget your mother tongue and your roots.",
-                      "Then my father said from his horse: go, but don’t forget your mother tongue or your roots.",
-                      "At that moment my father, on his horse, said: go, but do not forget your mother tongue and your roots."
+                      "Then my father said at the door: go, but don’t forget your mother tongue and your roots.",
+                      "Then my father, at the door, said: go, but don’t forget your mother tongue or your roots.",
+                      "At that moment my father said at the door: go, but do not forget your mother tongue and your roots."
                     ]
                   }
                 },
