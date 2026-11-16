@@ -60,7 +60,7 @@ describe('renderSignature', () => {
 describe('signPicture', () => {
   it('marks the bottom-right and leaves the rest of the picture alone', async () => {
     const base = await picture(900, 700);
-    const res = await signPicture(base, 'hamude');
+    const res = await signPicture(base, 'rojhat');
     expect(res.ok).toBe(true);
     if (!res.ok) return;
 

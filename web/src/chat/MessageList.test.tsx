@@ -65,7 +65,7 @@ describe('MessageList', () => {
   });
 
   it('says a run is yours to a screen reader, and prints no label over it, in a group either', () => {
-    show(<MessageList messages={[msg('1', 'me', 'mine', at(10, 0), { username: 'hamude' })]} myId="me" named />);
+    show(<MessageList messages={[msg('1', 'me', 'mine', at(10, 0), { username: 'rojhat' })]} myId="me" named />);
     expect(screen.getByText('You').className).toContain('sr-only');
   });
 
@@ -75,7 +75,7 @@ describe('MessageList', () => {
         messages={[
           msg('1', 'u2', 'a', at(10, 0), { username: 'zana', avatarUrl: 'https://img/z.png' }),
           msg('2', 'u2', 'b', at(10, 1), { username: 'zana', avatarUrl: 'https://img/z.png' }),
-          msg('3', 'me', 'mine', at(10, 30), { username: 'hamude' }),
+          msg('3', 'me', 'mine', at(10, 30), { username: 'rojhat' }),
         ]}
         myId="me"
       />,

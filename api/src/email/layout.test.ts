@@ -102,7 +102,7 @@ describe('an answer from the support inbox, designed', () => {
   const quoted = { caption: 'On Wed, 11 Nov 2026, Rojda <rojda@example.org> wrote:', text: 'My streak is gone.\n<b>Help</b>' };
 
   it('keeps the paragraphs and line breaks of what was written, and quotes the mail it answers', () => {
-    const html = answerHtml({ brand: 'hevalo', subject: 'Re: My streak', body: 'Hello Rojda,\n\nIt is back.\nNothing else changed.\n\nHamude', quoted });
+    const html = answerHtml({ brand: 'hevalo', subject: 'Re: My streak', body: 'Hello Rojda,\n\nIt is back.\nNothing else changed.\n\nRojhat', quoted });
     expect(html.match(/<p class="ink2"/g)).toHaveLength(3);
     expect(html).toContain('It is back.<br>Nothing else changed.');
     expect(html).toContain('On Wed, 11 Nov 2026, Rojda &lt;rojda@example.org&gt; wrote:');

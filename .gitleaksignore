@@ -1,0 +1,6 @@
+# Findings the secret scan may skip, one fingerprint per line.
+#
+# A security test once held a made-up refresh token, replaced since. Refresh
+# tokens are random and the server keeps only their hash, so the old sample
+# opens nothing, but the commit stays in history and the scan reads history.
+41793c88206a08b05d0d912792e6ba146feca480:api/src/security/injection.integration.test.ts:generic-api-key:50
