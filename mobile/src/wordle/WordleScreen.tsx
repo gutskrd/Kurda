@@ -351,73 +351,77 @@ function ResultPanel({
   const won = game.status === 'won';
   return (
     <View style={styles.result}>
-      <GlassCard style={styles.resultCard}>
-        {/* the line used to open with a party popper; the spark is the app's own, in the colour of a right answer */}
-        {won ? (
-          celebrateAfterMs !== null ? (
-            <WinMoment delayMs={celebrateAfterMs} seed={game.guesses.length} />
+      <GlassCard>
+        <View style={styles.resultCard}>
+          {/* the line used to open with a party popper; the spark is the app's own, in the colour of a right answer */}
+          {won ? (
+            celebrateAfterMs !== null ? (
+              <WinMoment delayMs={celebrateAfterMs} seed={game.guesses.length} />
+            ) : (
+              <Icon name="sparkle" size={28} color={colors.success} style={styles.resultMark} />
+            )
+          ) : null}
+          <Text style={[styles.resultTitle, { color: won ? colors.success : colors.danger }]}>
+            {won ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
+          </Text>
+          {won ? (
+            <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
+              {t('games.wordle.solvedIn', { count: game.guesses.length, max: MAX_ATTEMPTS })}
+            </Text>
           ) : (
-            <Icon name="sparkle" size={28} color={colors.success} style={styles.resultMark} />
-          )
-        ) : null}
-        <Text style={[styles.resultTitle, { color: won ? colors.success : colors.danger }]}>
-          {won ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
-        </Text>
-        {won ? (
-          <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
-            {t('games.wordle.solvedIn', { count: game.guesses.length, max: MAX_ATTEMPTS })}
-          </Text>
-        ) : (
-          <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
-            {t('games.wordle.theWordWas')} <Text style={{ color: colors.textPrimary, fontWeight: typography.weights.bold }}>{(game.target ?? '').toUpperCase()}</Text>
-          </Text>
-        )}
-        <Text style={[styles.resultNote, { color: colors.textSecondary }]}>{t('games.noXpAlone')}</Text>
+            <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
+              {t('games.wordle.theWordWas')} <Text style={{ color: colors.textPrimary, fontWeight: typography.weights.bold }}>{(game.target ?? '').toUpperCase()}</Text>
+            </Text>
+          )}
+          <Text style={[styles.resultNote, { color: colors.textSecondary }]}>{t('games.noXpAlone')}</Text>
 
-        {edu ? (
-          <View style={[styles.edu, { backgroundColor: colors.controlTrack }]}>
-            <View style={[styles.eduHead, { flexDirection: dir.row }]}>
-              <Icon name="text" size={18} color={colors.primary} />
-              <Text style={[styles.eduWord, { color: colors.textPrimary }]}>{edu.headword}</Text>
-              {edu.pos ? <Text style={[styles.eduPos, { color: colors.textSecondary }]}>{edu.pos}</Text> : null}
+          {edu ? (
+            <View style={[styles.edu, { backgroundColor: colors.controlTrack }]}>
+              <View style={[styles.eduHead, { flexDirection: dir.row }]}>
+                <Icon name="text" size={18} color={colors.primary} />
+                <Text style={[styles.eduWord, { color: colors.textPrimary }]}>{edu.headword}</Text>
+                {edu.pos ? <Text style={[styles.eduPos, { color: colors.textSecondary }]}>{edu.pos}</Text> : null}
+              </View>
+              {edu.definition ? <Text style={[styles.eduDef, dir.free, { color: colors.textSecondary }]}>{edu.definition}</Text> : null}
+              <Pressable
+                onPress={onSave}
+                accessibilityRole="button"
+                // one 20-point line, caught at a fingertip's 44
+                hitSlop={SAVE_SLOP}
+                style={({ pressed }) => [styles.saveRow, { flexDirection: dir.row, alignSelf: dir.rtl ? 'flex-end' : 'flex-start' }, pressed && heldDim]}
+                disabled={savedWord}
+              >
+                <Icon name={savedWord ? 'check' : 'star'} size={16} color={colors.primary} />
+                <Text style={[styles.saveText, { color: colors.primary }]}>
+                  {savedWord ? t('dictionary.savedWord') : t('dictionary.saveWord')}
+                </Text>
+              </Pressable>
             </View>
-            {edu.definition ? <Text style={[styles.eduDef, dir.free, { color: colors.textSecondary }]}>{edu.definition}</Text> : null}
-            <Pressable
-              onPress={onSave}
-              accessibilityRole="button"
-              // one 20-point line, caught at a fingertip's 44
-              hitSlop={SAVE_SLOP}
-              style={({ pressed }) => [styles.saveRow, { flexDirection: dir.row, alignSelf: dir.rtl ? 'flex-end' : 'flex-start' }, pressed && heldDim]}
-              disabled={savedWord}
-            >
-              <Icon name={savedWord ? 'check' : 'star'} size={16} color={colors.primary} />
-              <Text style={[styles.saveText, { color: colors.primary }]}>
-                {savedWord ? t('dictionary.savedWord') : t('dictionary.saveWord')}
-              </Text>
-            </Pressable>
-          </View>
-        ) : null}
+          ) : null}
 
-        {/*
-          Another word is the one thing to press, and has the table's gold; the day's word and the share are the two quieter
-          ways on, side by side at one height. Share stood beside the gold button a third shorter than it.
-        */}
-        <GoldButton label={t('games.wordle.practice')} icon="bolt" onPress={onPractice} style={styles.again} />
-        <View style={[styles.resultActions, { flexDirection: dir.row }]}>
-          <ClayButton label={t('games.wordle.daily')} icon="star" tone="neutral" onPress={onDaily} style={styles.half} />
-          <ClayButton label={t('share.title')} icon="share" tone="neutral" onPress={onShare} style={styles.half} />
+          {/*
+            Another word is the one thing to press, and has the table's gold; the day's word and the share are the two quieter
+            ways on, side by side at one height. Share stood beside the gold button a third shorter than it.
+          */}
+          <GoldButton label={t('games.wordle.practice')} icon="bolt" onPress={onPractice} style={styles.again} />
+          <View style={[styles.resultActions, { flexDirection: dir.row }]}>
+            <ClayButton label={t('games.wordle.daily')} icon="star" tone="neutral" onPress={onDaily} style={styles.half} />
+            <ClayButton label={t('share.title')} icon="share" tone="neutral" onPress={onShare} style={styles.half} />
+          </View>
         </View>
       </GlassCard>
 
       {stats ? (
-        <GlassCard style={styles.statsCard}>
-          <Text style={[styles.statsTitle, { color: colors.textSecondary }]}>{t('games.wordle.statistics')}</Text>
-          <View style={[styles.statsGrid, { flexDirection: dir.row }]}>
-            <Stat label={t('games.wordle.stat.played')} value={String(stats.played)} />
-            <Stat label={t('games.wordle.stat.winPct')} value={String(stats.winPercentage)} />
-            <Stat label={t('games.wordle.stat.streak')} value={String(stats.currentStreak)} />
-            <Stat label={t('games.wordle.stat.best')} value={String(stats.longestStreak)} />
-            <Stat label={t('games.wordle.stat.average')} value={stats.averageGuesses ? stats.averageGuesses.toFixed(1) : '—'} />
+        <GlassCard>
+          <View style={styles.statsCard}>
+            <Text style={[styles.statsTitle, { color: colors.textSecondary }]}>{t('games.wordle.statistics')}</Text>
+            <View style={[styles.statsGrid, { flexDirection: dir.row }]}>
+              <Stat label={t('games.wordle.stat.played')} value={String(stats.played)} />
+              <Stat label={t('games.wordle.stat.winPct')} value={String(stats.winPercentage)} />
+              <Stat label={t('games.wordle.stat.streak')} value={String(stats.currentStreak)} />
+              <Stat label={t('games.wordle.stat.best')} value={String(stats.longestStreak)} />
+              <Stat label={t('games.wordle.stat.average')} value={stats.averageGuesses ? stats.averageGuesses.toFixed(1) : '—'} />
+            </View>
           </View>
         </GlassCard>
       ) : null}
@@ -484,6 +488,7 @@ const styles = StyleSheet.create({
   startStats: { fontSize: typography.sizes.sm, textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   result: { gap: spacing.md, marginTop: spacing.md },
+  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
   resultCard: { gap: spacing.sm },
   resultMark: { alignSelf: 'center' },
   // the spark's own stage while it celebrates; the flecks may fly past its edges

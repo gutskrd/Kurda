@@ -6,7 +6,6 @@ import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
-import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
@@ -42,6 +41,8 @@ import {
   type RhymeReject,
 } from './matchApi';
 import { Loading } from '../theme/Loading';
+import { GameArt } from '../games/GameArt';
+import { useDirection } from '../reports/direction';
 
 const DIALECTS: readonly Dialect[] = ['kurmanci', 'sorani'];
 
@@ -108,6 +109,7 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const [dialect, setDialect] = useState<Dialect>('kurmanci');
   const [rated, setRated] = useRatedChoice('rhyme-match');
   const [busy, setBusy] = useState(false);
@@ -124,33 +126,36 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
 
   return (
     <>
-      <GlassCard style={styles.card}>
-        <Icon name="chat" size={44} tone="primary" />
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.rhymeMatch.intro')}</Text>
-        <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.dialect')}</Text>
-        <View style={styles.stretch}>
-          <Segmented<Dialect>
-            options={DIALECTS}
-            value={dialect}
-            onChange={setDialect}
-            labelOf={(d) => DIALECT_NAME[d]}
+      <GlassCard>
+        <View style={styles.card}>
+          {/* the game's own cover, as its stamp and the round alone show it: a chat bubble in the brand's violet said nothing of rhymes */}
+          <GameArt game="rhyme" size={72} />
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.rhymeMatch.intro')}</Text>
+          <Text style={[styles.label, dir.text, { color: colors.textSecondary }]}>{t('games.dialect')}</Text>
+          <View style={styles.stretch}>
+            <Segmented<Dialect>
+              options={DIALECTS}
+              value={dialect}
+              onChange={setDialect}
+              labelOf={(d) => DIALECT_NAME[d]}
+            />
+          </View>
+          {/* Rated or Friendly, before the room exists: the host can still change it in the lobby */}
+          <View style={styles.stretch}>
+            <RatedChoice value={rated} onChange={setRated} />
+          </View>
+          <ClayButton
+            label={t('games.rhymeMatch.create')}
+            // working on it: the button turns and takes no second press, and a screen reader is told what it is doing
+            accessibilityLabel={busy ? t('games.creating') : undefined}
+            busy={busy}
+            icon="play"
+            tone="primary"
+            onPress={() => void create()}
+            style={styles.stretch}
           />
+          {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
         </View>
-        {/* Rated or Friendly, before the room exists: the host can still change it in the lobby */}
-        <View style={styles.stretch}>
-          <RatedChoice value={rated} onChange={setRated} />
-        </View>
-        <ClayButton
-          label={t('games.rhymeMatch.create')}
-          // working on it: the button turns and takes no second press, and a screen reader is told what it is doing
-          accessibilityLabel={busy ? t('games.creating') : undefined}
-          busy={busy}
-          icon="play"
-          tone="primary"
-          onPress={() => void create()}
-          style={styles.stretch}
-        />
-        {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
       </GlassCard>
 
       {/* a match somebody else made: its code opens it, whichever game it turns out to be */}
@@ -291,19 +296,23 @@ function MatchRoom({
   // called off by its host, or not here for this viewer any more: said plainly, with a match of their own one tap away
   if (gone || match?.status === 'cancelled') {
     return (
-      <GlassCard style={styles.card}>
-        <Text style={[styles.blurb, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
-          {gone ? t('stories.game.unavailable') : t('stories.game.cancelled')}
-        </Text>
-        <ClayButton label={t('games.rhymeMatch.new')} tone="primary" onPress={onLeave} style={styles.stretch} />
+      <GlassCard>
+        <View style={styles.card}>
+          <Text style={[styles.blurb, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+            {gone ? t('stories.game.unavailable') : t('stories.game.cancelled')}
+          </Text>
+          <ClayButton label={t('games.rhymeMatch.new')} tone="primary" onPress={onLeave} style={styles.stretch} />
+        </View>
       </GlassCard>
     );
   }
   if (error && !match) {
     return (
-      <GlassCard style={styles.card}>
-        <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>
-        <ClayButton label={t('common.retry')} tone="primary" onPress={() => void load()} style={styles.stretch} />
+      <GlassCard>
+        <View style={styles.card}>
+          <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>
+          <ClayButton label={t('common.retry')} tone="primary" onPress={() => void load()} style={styles.stretch} />
+        </View>
       </GlassCard>
     );
   }
@@ -326,70 +335,72 @@ function MatchRoom({
             mode={match.maxPlayers === 2 ? 'duo' : 'group'}
           />
         ) : null}
-        <GlassCard style={styles.card}>
-          <Text style={[styles.blurb, { color: colors.textSecondary }]}>
-            {t('games.lobbyWaiting', { count: playerCount })}
-          </Text>
-          {match.me != null ? (
-            <LobbyPeople
-              game="rhyme-match"
-              lobbyId={id}
-              players={match.players ?? []}
-              isHost={isHost}
-              onRemove={isHost ? (seat) => void act(() => removeFromMatch(client, id, seat)) : undefined}
-            />
-          ) : null}
-          {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
-          {match.me != null ? (
-            <LobbyRated
-              game="rhyme-match"
-              lobbyId={id}
-              rated={match.rated}
-              isHost={isHost}
-              players={playerCount}
-              seatName={seatNamer(match.players ?? [], t)}
-              onChanged={() => void load()}
-            />
-          ) : match.rated ? (
-            <RatedPill rated={match.rated.rated} />
-          ) : null}
-          {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
-          {match.me == null ? (
-            <ClayButton
-              label={t('games.rhymeMatch.join')}
-              accessibilityLabel={busy ? t('games.joining') : undefined}
-              busy={busy}
-              tone="primary"
-              onPress={() => void act(() => joinMatch(client, id))}
-              style={styles.stretch}
-            />
-          ) : isHost && playerCount >= 2 ? (
-            <ClayButton
-              label={t('games.rhymeMatch.start')}
-              accessibilityLabel={busy ? t('games.starting') : undefined}
-              busy={busy}
-              tone="primary"
-              onPress={() => {
-                haptic('tap');
-                void act(() => startMatch(client, id));
-              }}
-              style={styles.stretch}
-            />
-          ) : (
-            <Text style={[styles.waiting, { color: colors.textSecondary }]}>
-              {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
+        <GlassCard>
+          <View style={styles.card}>
+            <Text style={[styles.blurb, { color: colors.textSecondary }]}>
+              {t('games.lobbyWaiting', { count: playerCount })}
             </Text>
-          )}
-          {/* the lobby's own way out is the screen's back, which asks and then leaves (play/backOut) */}
-          {match.me != null ? (
-            <ClayButton
-              label={isHost ? t('stories.lobby.cancelGame') : t('stories.lobby.leave')}
-              tone="danger"
-              variant="outline"
-              onPress={onExit}
-              style={styles.stretch}
-            />
-          ) : null}
+            {match.me != null ? (
+              <LobbyPeople
+                game="rhyme-match"
+                lobbyId={id}
+                players={match.players ?? []}
+                isHost={isHost}
+                onRemove={isHost ? (seat) => void act(() => removeFromMatch(client, id, seat)) : undefined}
+              />
+            ) : null}
+            {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
+            {match.me != null ? (
+              <LobbyRated
+                game="rhyme-match"
+                lobbyId={id}
+                rated={match.rated}
+                isHost={isHost}
+                players={playerCount}
+                seatName={seatNamer(match.players ?? [], t)}
+                onChanged={() => void load()}
+              />
+            ) : match.rated ? (
+              <RatedPill rated={match.rated.rated} />
+            ) : null}
+            {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
+            {match.me == null ? (
+              <ClayButton
+                label={t('games.rhymeMatch.join')}
+                accessibilityLabel={busy ? t('games.joining') : undefined}
+                busy={busy}
+                tone="primary"
+                onPress={() => void act(() => joinMatch(client, id))}
+                style={styles.stretch}
+              />
+            ) : isHost && playerCount >= 2 ? (
+              <ClayButton
+                label={t('games.rhymeMatch.start')}
+                accessibilityLabel={busy ? t('games.starting') : undefined}
+                busy={busy}
+                tone="primary"
+                onPress={() => {
+                  haptic('tap');
+                  void act(() => startMatch(client, id));
+                }}
+                style={styles.stretch}
+              />
+            ) : (
+              <Text style={[styles.waiting, { color: colors.textSecondary }]}>
+                {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
+              </Text>
+            )}
+            {/* the lobby's own way out is the screen's back, which asks and then leaves (play/backOut) */}
+            {match.me != null ? (
+              <ClayButton
+                label={isHost ? t('stories.lobby.cancelGame') : t('stories.lobby.leave')}
+                tone="danger"
+                variant="outline"
+                onPress={onExit}
+                style={styles.stretch}
+              />
+            ) : null}
+          </View>
         </GlassCard>
       </>
     );
@@ -399,50 +410,52 @@ function MatchRoom({
   if (match.status === 'finished') {
     const mine = results?.ranking.find((r) => r.userId === user?.id);
     return (
-      <GlassCard style={styles.card}>
-        <Verdict won={mine?.rank === 1}>{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</Verdict>
-        {/* what this game did to your rank, with its one plain reason — before the table */}
-        {match.rated?.rated ? <RankResultPanel game="rhyme-match" gameRef={id} /> : null}
-        {results ? (
-          <>
-            <Text style={[styles.blurb, { color: colors.textSecondary }]}>
-              {t('games.rhymeMatch.promptWas', { word: results.prompt })}
-            </Text>
-            <View style={styles.stretch}>
-              {results.ranking.map((r) => (
-                <View key={r.userId} style={styles.scoreLine}>
-                  <Text style={[styles.rank, { color: colors.textSecondary }]}>{r.rank}</Text>
-                  <Text style={[styles.scoreName, { color: colors.textPrimary }]}>
-                    {r.isMe ?? r.userId === user?.id ? t('games.you') : (r.name ?? t('games.opponent'))}
-                  </Text>
-                  <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>
-                    {t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}
-                  </Text>
-                  {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
-                  {/* anyone else in the game can be reported, by seat */}
-                  {r.userId !== user?.id && r.seat !== undefined ? (
-                    <PlayerReportButton game="rhyme-match" gameId={results.id} seat={r.seat} name={r.name ?? null} />
-                  ) : null}
-                </View>
-              ))}
-            </View>
-          </>
-        ) : (
-          <Loading />
-        )}
-        {/* play again with the same people: a rematch for two, the host's next round for more */}
-        <View style={styles.stretch}>
-          <RematchPanel
-            game="rhyme-match"
-            lobbyId={id}
-            isHost={isHost}
-            other={results?.ranking.find((r) => !(r.isMe ?? r.userId === user?.id))?.name ?? t('games.opponent')}
-            onOpen={onOpen}
-            onInviteOthers={() => setInviting(true)}
-          />
+      <GlassCard>
+        <View style={styles.card}>
+          <Verdict won={mine?.rank === 1}>{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</Verdict>
+          {/* what this game did to your rank, with its one plain reason — before the table */}
+          {match.rated?.rated ? <RankResultPanel game="rhyme-match" gameRef={id} /> : null}
+          {results ? (
+            <>
+              <Text style={[styles.blurb, { color: colors.textSecondary }]}>
+                {t('games.rhymeMatch.promptWas', { word: results.prompt })}
+              </Text>
+              <View style={styles.stretch}>
+                {results.ranking.map((r) => (
+                  <View key={r.userId} style={styles.scoreLine}>
+                    <Text style={[styles.rank, { color: colors.textSecondary }]}>{r.rank}</Text>
+                    <Text style={[styles.scoreName, { color: colors.textPrimary }]}>
+                      {r.isMe ?? r.userId === user?.id ? t('games.you') : (r.name ?? t('games.opponent'))}
+                    </Text>
+                    <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>
+                      {t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}
+                    </Text>
+                    {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
+                    {/* anyone else in the game can be reported, by seat */}
+                    {r.userId !== user?.id && r.seat !== undefined ? (
+                      <PlayerReportButton game="rhyme-match" gameId={results.id} seat={r.seat} name={r.name ?? null} />
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            </>
+          ) : (
+            <Loading />
+          )}
+          {/* play again with the same people: a rematch for two, the host's next round for more */}
+          <View style={styles.stretch}>
+            <RematchPanel
+              game="rhyme-match"
+              lobbyId={id}
+              isHost={isHost}
+              other={results?.ranking.find((r) => !(r.isMe ?? r.userId === user?.id))?.name ?? t('games.opponent')}
+              onOpen={onOpen}
+              onInviteOthers={() => setInviting(true)}
+            />
+          </View>
+          <ClayButton label={t('games.rhymeMatch.new')} tone="neutral" onPress={onLeave} style={styles.stretch} />
+          {inviting ? <InviteSheet target={{ kind: 'new', game: 'rhyme-match' }} onClose={() => setInviting(false)} /> : null}
         </View>
-        <ClayButton label={t('games.rhymeMatch.new')} tone="neutral" onPress={onLeave} style={styles.stretch} />
-        {inviting ? <InviteSheet target={{ kind: 'new', game: 'rhyme-match' }} onClose={() => setInviting(false)} /> : null}
       </GlassCard>
     );
   }
@@ -554,10 +567,12 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   // flex + centre so a long translated name shares the row with the back
   // button instead of wrapping over it
+  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
-  label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
+  // a field's name stands at the start of the line, over the control it names, not in the middle of the card
+  label: { alignSelf: 'stretch', fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.sm },
   input: {
     minHeight: MIN_TOUCH_TARGET,
     alignSelf: 'stretch',

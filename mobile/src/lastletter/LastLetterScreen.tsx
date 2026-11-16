@@ -18,12 +18,12 @@ import { InviteSheet } from '../play/InviteSheet';
 import { JoinCodeCard } from '../play/JoinByCode';
 import { useGameView } from '../play/useGameView';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
-import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 import { LastLetterBoardView } from './LastLetterBoard';
 import { offeredDialects, useLastLetterAvailability } from './availability';
 import { Loading } from '../theme/Loading';
+import { GameArt } from '../games/GameArt';
 
 /** A dialect is called by its own name in every language, the way a language is. */
 const DIALECT_NAME: Record<LetterDialect, string> = { kmr: 'Kurmancî', ckb: 'Soranî' };
@@ -72,9 +72,11 @@ function Start({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Elemen
   if (answer === null) return <Loading style={styles.loading} />;
   if (group.length === 0) {
     return (
-      <GlassCard style={styles.card}>
-        <Icon name="link" size={40} tone="primary" />
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.notOffered')}</Text>
+      <GlassCard>
+        <View style={styles.card}>
+          <GameArt game="last-letter" size={72} />
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.notOffered')}</Text>
+        </View>
       </GlassCard>
     );
   }
@@ -92,40 +94,47 @@ function Start({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Elemen
 
   return (
     <>
-      <GlassCard style={styles.card}>
-        <Icon name="link" size={40} tone="primary" />
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.intro')}</Text>
+      <GlassCard>
+        <View style={styles.card}>
+          {/* the game's own cover, as its stamp shows it: a link in the brand's violet was a picture of nothing in the game */}
+          <GameArt game="last-letter" size={72} />
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.intro')}</Text>
+        </View>
       </GlassCard>
-      <GlassCard style={styles.card}>
-        <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
-          {t('games.lastLetter.withFriends')}
-        </Text>
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.withFriendsBlurb')}</Text>
-        <ClayButton label={t('games.lastLetter.withFriends')} icon="people" tone="primary" onPress={() => setInviting(true)} style={styles.stretch} />
+      <GlassCard>
+        <View style={styles.card}>
+          <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
+            {t('games.lastLetter.withFriends')}
+          </Text>
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.withFriendsBlurb')}</Text>
+          <ClayButton label={t('games.lastLetter.withFriends')} icon="people" tone="primary" onPress={() => setInviting(true)} style={styles.stretch} />
+        </View>
       </GlassCard>
       {soloDialect ? (
-        <GlassCard style={styles.card}>
-          <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
-            {t('games.lastLetter.againstHevalo')}
-          </Text>
-          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.againstHevaloBlurb')}</Text>
-          {solo.length > 1 ? (
+        <GlassCard>
+          <View style={styles.card}>
+            <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
+              {t('games.lastLetter.againstHevalo')}
+            </Text>
+            <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.againstHevaloBlurb')}</Text>
+            {solo.length > 1 ? (
+              <View style={styles.stretch}>
+                <Segmented<LetterDialect> groupLabel={t('games.lastLetter.kurdish')} options={solo} value={soloDialect} onChange={setDialect} labelOf={(d) => DIALECT_NAME[d]} />
+              </View>
+            ) : null}
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.lastLetter.turnTime')}</Text>
             <View style={styles.stretch}>
-              <Segmented<LetterDialect> groupLabel={t('games.lastLetter.kurdish')} options={solo} value={soloDialect} onChange={setDialect} labelOf={(d) => DIALECT_NAME[d]} />
+              <Segmented<string>
+                groupLabel={t('games.lastLetter.turnTime')}
+                options={LAST_LETTER_TURN_SECONDS.map(String)}
+                value={turn}
+                onChange={setTurn}
+                labelOf={(s) => t('games.lastLetter.seconds', { count: Number(s) })}
+              />
             </View>
-          ) : null}
-          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.lastLetter.turnTime')}</Text>
-          <View style={styles.stretch}>
-            <Segmented<string>
-              groupLabel={t('games.lastLetter.turnTime')}
-              options={LAST_LETTER_TURN_SECONDS.map(String)}
-              value={turn}
-              onChange={setTurn}
-              labelOf={(s) => t('games.lastLetter.seconds', { count: Number(s) })}
-            />
+            {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+            <ClayButton label={busy ? t('games.starting') : t('games.play')} icon="play" tone="primary" busy={busy} onPress={() => void againstHevalo()} style={styles.stretch} />
           </View>
-          {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-          <ClayButton label={busy ? t('games.starting') : t('games.play')} icon="play" tone="primary" busy={busy} onPress={() => void againstHevalo()} style={styles.stretch} />
         </GlassCard>
       ) : null}
       {/* a game somebody else made: its code opens it, whichever game it turns out to be */}
@@ -178,6 +187,7 @@ function Room({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpen: (i
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
+  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   loading: { marginTop: spacing.xl },

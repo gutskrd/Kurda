@@ -117,19 +117,23 @@ export function GameRoom<Board>({
     // not found, not allowed, removed: one answer, as the server gives one
     const key = load.state === 'gone' && load.why === 'started' ? 'stories.join.started' : view?.status === 'cancelled' ? 'stories.game.cancelled' : 'play.card.unavailable';
     return (
-      <GlassCard style={styles.card}>
-        <Text accessibilityRole="header" style={[styles.verdict, { color: colors.textPrimary }]}>
-          {t(key)}
-        </Text>
-        <ClayButton label={newLabel} tone="primary" onPress={onNew} style={styles.stretch} />
+      <GlassCard>
+        <View style={styles.card}>
+          <Text accessibilityRole="header" style={[styles.verdict, { color: colors.textPrimary }]}>
+            {t(key)}
+          </Text>
+          <ClayButton label={newLabel} tone="primary" onPress={onNew} style={styles.stretch} />
+        </View>
       </GlassCard>
     );
   }
   if (load.state === 'error') {
     return (
-      <GlassCard style={styles.card}>
-        <Text style={[styles.error, { color: colors.danger }]}>{t('play.card.unavailable')}</Text>
-        <ClayButton label={t('common.retry')} tone="primary" onPress={room.refresh} style={styles.stretch} />
+      <GlassCard>
+        <View style={styles.card}>
+          <Text style={[styles.error, { color: colors.danger }]}>{t('play.card.unavailable')}</Text>
+          <ClayButton label={t('common.retry')} tone="primary" onPress={room.refresh} style={styles.stretch} />
+        </View>
       </GlassCard>
     );
   }
@@ -155,49 +159,51 @@ export function GameRoom<Board>({
             mode={view.maxPlayers === 2 ? 'duo' : 'group'}
           />
         ) : null}
-        <GlassCard style={styles.card}>
-          {lobbyNote?.(view)}
-          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lobbyWaiting', { count: present.length })}</Text>
-          {view.me !== null && view.teams > 0 ? (
-            <TeamPicker
-              players={view.players}
-              teams={view.teams}
-              isHost={view.isHost}
-              game={game}
-              lobbyId={id}
-              note={teamNote?.(view)}
-              onTeam={(seat, team) => control('team', { seat, team })}
-            />
-          ) : view.me !== null ? (
-            <LobbyPeople game={game} lobbyId={id} players={view.players.map((p) => ({ ...p, name: p.isMe ? p.name : p.bot ? t('play.room.hevalo') : p.name }))} isHost={view.isHost} />
-          ) : null}
-          {view.me !== null ? (
-            <LobbyRated game={game} lobbyId={id} rated={view.rated} isHost={view.isHost} players={present.length} seatName={name} onChanged={room.refresh} />
-          ) : (
-            <RatedPill rated={view.rated.rated} />
-          )}
-          {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
-          {view.me === null ? (
-            <ClayButton label={busy ? t('games.joining') : t('play.room.join')} tone="primary" busy={busy} onPress={() => void control('join')} style={styles.stretch} />
-          ) : view.isHost && enough ? (
-            <>
-              {problem ? <Text style={[styles.waiting, { color: colors.textSecondary }]}>{problem}</Text> : null}
-              <ClayButton
-                label={busy ? t('games.starting') : t('play.room.start')}
-                tone="primary"
-                busy={busy}
-                disabled={problem !== null}
-                onPress={() => {
-                  haptic('tap');
-                  void control('start');
-                }}
-                style={styles.stretch}
+        <GlassCard>
+          <View style={styles.card}>
+            {lobbyNote?.(view)}
+            <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lobbyWaiting', { count: present.length })}</Text>
+            {view.me !== null && view.teams > 0 ? (
+              <TeamPicker
+                players={view.players}
+                teams={view.teams}
+                isHost={view.isHost}
+                game={game}
+                lobbyId={id}
+                note={teamNote?.(view)}
+                onTeam={(seat, team) => control('team', { seat, team })}
               />
-            </>
-          ) : (
-            <Text style={[styles.waiting, { color: colors.textSecondary }]}>{view.isHost ? t('play.room.waiting') : t('play.room.waitingHost')}</Text>
-          )}
-          {view.me !== null ? <ClayButton label={t('stories.lobby.leave')} tone="neutral" variant="outline" onPress={() => void leave()} style={styles.stretch} /> : null}
+            ) : view.me !== null ? (
+              <LobbyPeople game={game} lobbyId={id} players={view.players.map((p) => ({ ...p, name: p.isMe ? p.name : p.bot ? t('play.room.hevalo') : p.name }))} isHost={view.isHost} />
+            ) : null}
+            {view.me !== null ? (
+              <LobbyRated game={game} lobbyId={id} rated={view.rated} isHost={view.isHost} players={present.length} seatName={name} onChanged={room.refresh} />
+            ) : (
+              <RatedPill rated={view.rated.rated} />
+            )}
+            {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
+            {view.me === null ? (
+              <ClayButton label={busy ? t('games.joining') : t('play.room.join')} tone="primary" busy={busy} onPress={() => void control('join')} style={styles.stretch} />
+            ) : view.isHost && enough ? (
+              <>
+                {problem ? <Text style={[styles.waiting, { color: colors.textSecondary }]}>{problem}</Text> : null}
+                <ClayButton
+                  label={busy ? t('games.starting') : t('play.room.start')}
+                  tone="primary"
+                  busy={busy}
+                  disabled={problem !== null}
+                  onPress={() => {
+                    haptic('tap');
+                    void control('start');
+                  }}
+                  style={styles.stretch}
+                />
+              </>
+            ) : (
+              <Text style={[styles.waiting, { color: colors.textSecondary }]}>{view.isHost ? t('play.room.waiting') : t('play.room.waitingHost')}</Text>
+            )}
+            {view.me !== null ? <ClayButton label={t('stories.lobby.leave')} tone="neutral" variant="outline" onPress={() => void leave()} style={styles.stretch} /> : null}
+          </View>
         </GlassCard>
       </>
     );
@@ -228,46 +234,49 @@ export function GameRoom<Board>({
   const mine = view.results?.find((r) => r.seat === view.me?.seat);
   const other = view.players.find((p) => !p.isMe && !p.bot);
   return (
-    <GlassCard style={styles.card}>
-      <Verdict won={mine?.place === 1}>{mine?.place === 1 ? t('games.youWon') : t('play.room.over')}</Verdict>
-      {view.mode === 'group' && view.rated.rated ? <RankResultPanel game={game} gameRef={id} /> : null}
-      {ending?.(view)}
-      <View style={styles.stretch} accessibilityLabel={t('play.room.results')}>
-        {(view.results ?? []).map((r) => {
-          const p = view.players.find((x) => x.seat === r.seat);
-          return (
-            <View key={r.seat} style={styles.scoreLine}>
-              <Text style={[styles.rank, { color: colors.textSecondary }]}>{r.place}</Text>
-              <Text style={[styles.scoreName, { color: p?.isMe ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
-                {name(r.seat)}
-              </Text>
-              <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>{scoreOf(r, view)}</Text>
-              {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
-              {p && !p.isMe && !p.bot ? <PlayerReportButton game={game} gameId={id} seat={r.seat} name={p.name} /> : null}
-            </View>
-          );
-        })}
-      </View>
-      {view.mode === 'solo' ? <Text style={[styles.note, { color: colors.textSecondary }]}>{t('games.noXpAlone')}</Text> : null}
-      {view.me !== null && view.mode === 'group' ? (
-        <View style={styles.stretch}>
-          <RematchPanel
-            game={game}
-            lobbyId={id}
-            isHost={view.canControl}
-            other={other ? name(other.seat) : t('games.opponent')}
-            onOpen={onOpen}
-            onInviteOthers={() => setInviting(true)}
-          />
+    <GlassCard>
+      <View style={styles.card}>
+        <Verdict won={mine?.place === 1}>{mine?.place === 1 ? t('games.youWon') : t('play.room.over')}</Verdict>
+        {view.mode === 'group' && view.rated.rated ? <RankResultPanel game={game} gameRef={id} /> : null}
+        {ending?.(view)}
+        <View style={styles.stretch} accessibilityLabel={t('play.room.results')}>
+          {(view.results ?? []).map((r) => {
+            const p = view.players.find((x) => x.seat === r.seat);
+            return (
+              <View key={r.seat} style={styles.scoreLine}>
+                <Text style={[styles.rank, { color: colors.textSecondary }]}>{r.place}</Text>
+                <Text style={[styles.scoreName, { color: p?.isMe ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
+                  {name(r.seat)}
+                </Text>
+                <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>{scoreOf(r, view)}</Text>
+                {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
+                {p && !p.isMe && !p.bot ? <PlayerReportButton game={game} gameId={id} seat={r.seat} name={p.name} /> : null}
+              </View>
+            );
+          })}
         </View>
-      ) : null}
-      <ClayButton label={newLabel} tone="neutral" onPress={onNew} style={styles.stretch} />
-      {inviting ? <InviteSheet target={{ kind: 'new', game }} onClose={() => setInviting(false)} /> : null}
+        {view.mode === 'solo' ? <Text style={[styles.note, { color: colors.textSecondary }]}>{t('games.noXpAlone')}</Text> : null}
+        {view.me !== null && view.mode === 'group' ? (
+          <View style={styles.stretch}>
+            <RematchPanel
+              game={game}
+              lobbyId={id}
+              isHost={view.canControl}
+              other={other ? name(other.seat) : t('games.opponent')}
+              onOpen={onOpen}
+              onInviteOthers={() => setInviting(true)}
+            />
+          </View>
+        ) : null}
+        <ClayButton label={newLabel} tone="neutral" onPress={onNew} style={styles.stretch} />
+        {inviting ? <InviteSheet target={{ kind: 'new', game }} onClose={() => setInviting(false)} /> : null}
+      </View>
     </GlassCard>
   );
 }
 
 const styles = StyleSheet.create({
+  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
   card: { alignItems: 'center', gap: spacing.sm },
   verdict: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
