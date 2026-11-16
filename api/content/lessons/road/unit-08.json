@@ -877,12 +877,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Doktor Azad Çarşemê û Pêncşemê tê gund, lê îro ew hinek dereng e.",
+                    "say": "Doktor Azad Çarşemê û Pêncşemê tê gund, lê îro ew deh xulek dereng e.",
                     "voice": "hamo",
-                    "prompt": "Doktor Azad Çarşemê û Pêncşemê tê gund, lê îro ew hinek dereng e.",
+                    "prompt": "Doktor Azad Çarşemê û Pêncşemê tê gund, lê îro ew deh xulek dereng e.",
                     "options": [
-                      "Doctor Azad comes to the village on Wednesdays and Thursdays, but today he’s a little late.",
-                      "Doctor Azad comes on Mondays, and today he’s early.",
+                      "Doctor Azad comes to the village on Wednesdays and Thursdays, but today he’s ten minutes late.",
+                      "Doctor Azad comes on Mondays, and today he’s ten minutes early.",
                       "Doctor Azad never comes to the village."
                     ],
                     "correctIndex": 0
@@ -2425,8 +2425,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Sibehê, demjimêr heft û çaryek: ez ne lawaz im, ez çêtir im, û ez bêguneh im!",
-                    "reference": "Sibehê, demjimêr heft û çaryek: ez ne lawaz im, ez çêtir im, û ez bêguneh im!"
+                    "prompt": "Sibehê, demjimêr heft û deh xulek: ez ne lawaz im, ez çêtir im, û ez bêguneh im!",
+                    "reference": "Sibehê, demjimêr heft û deh xulek: ez ne lawaz im, ez çêtir im, û ez bêguneh im!"
                   }
                 }
               ]

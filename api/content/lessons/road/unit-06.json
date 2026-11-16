@@ -2390,13 +2390,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Demjimêr diwanzdeh û çaryek e, lê kes ranaze.",
+                    "say": "Demjimêr diwanzdeh û deh xulek e, lê kes ranaze.",
                     "voice": "hamo",
-                    "prompt": "Demjimêr diwanzdeh û çaryek e, lê kes ranaze.",
+                    "prompt": "Demjimêr diwanzdeh û deh xulek e, lê kes ranaze.",
                     "options": [
-                      "It’s a quarter past twelve, but nobody goes to bed.",
+                      "It’s ten past twelve, but nobody goes to bed.",
                       "It’s half past twelve, but nobody goes to bed.",
-                      "It’s a quarter past twelve, and everybody is asleep."
+                      "It’s ten past twelve, and everybody is asleep."
                     ],
                     "correctIndex": 0
                   }
@@ -3249,8 +3249,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Dereng? Na! Ji kerema xwe, derî veke!",
-                        "en": "Late? No! Please, open the door!"
+                        "text": "Dereng? Na! Pênc xulek, ji kerema xwe, derî veke!",
+                        "en": "Late? No! Five minutes, please, open the door!"
                       },
                       {
                         "speaker": 1,
@@ -4643,13 +4643,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Cara yekem, ez ne dereng im!",
+                    "say": "Cara yekem, ez ne dereng im: ne pênc xulek jî!",
                     "voice": "hamo",
-                    "prompt": "Cara yekem, ez ne dereng im!",
+                    "prompt": "Cara yekem, ez ne dereng im: ne pênc xulek jî!",
                     "options": [
-                      "For the first time, I’m not late!",
-                      "For the first time, I’m late!",
-                      "Every time, I’m not late!"
+                      "For the first time, I’m not late: not even five minutes!",
+                      "For the first time, I’m late: five minutes!",
+                      "Every time, I’m not late: not even five minutes!"
                     ],
                     "correctIndex": 0
                   }

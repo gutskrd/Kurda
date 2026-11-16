@@ -109,6 +109,22 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
+                    "say": "Bêhna xwe vede, Baran. Baweriya min bi te heye.",
+                    "voice": "hamo",
+                    "prompt": "Bêhna xwe vede, Baran. Baweriya min bi te heye.",
+                    "options": [
+                      "Spas. Duh ez çûm çem…",
+                      "Spas. Duh tu çûyî çem…",
+                      "Spas. Ez ê sibe biçim çem."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Par, roja sersalê, Hamo ket vî çemî!",
                     "voice": "hamo",
@@ -132,37 +148,7 @@
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Bêhna xwe vede, Baran. Baweriya min bi te heye.",
-                    "voice": "hamo",
-                    "prompt": "Bêhna xwe vede, Baran. Baweriya min bi te heye.",
-                    "options": [
-                      "Spas. Duh ez çûm çem…",
-                      "Spas. Duh tu çûyî çem…",
-                      "Spas. Ez ê sibe biçim çem."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 7,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Bozo ji nişka ve ket avê. Wî bigire!",
-                    "voice": "hamo",
-                    "cue": "Suddenly Bozo fell in. Catch him!",
-                    "prompt": "Bozo ___ ket avê. Wî bigire!",
-                    "accepted": [
-                      "ji nişka ve"
-                    ]
-                  }
-                },
-                {
-                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -184,7 +170,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -200,7 +186,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -219,6 +205,20 @@
                       "Bozo never came here with me."
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Bozo ji nişka ve ket avê. Wî bigire!",
+                    "voice": "hamo",
+                    "cue": "Suddenly Bozo fell in. Catch him!",
+                    "prompt": "Bozo ___ ket avê. Wî bigire!",
+                    "accepted": [
+                      "ji nişka ve"
+                    ]
                   }
                 },
                 {
@@ -512,6 +512,22 @@
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
+                    "say": "Piştre çi bû? Baran li ku ma?",
+                    "voice": "hamo",
+                    "prompt": "Piştre çi bû? Baran li ku ma?",
+                    "options": [
+                      "Ew di nav keviran de ma.",
+                      "Ew çû govendê.",
+                      "Ew gihîşt malê."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Gelî dirêj bû, û Bozo bihêz bû.",
                     "voice": "hamo",
@@ -531,33 +547,7 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Piştre çi bû? Baran li ku ma?",
-                    "voice": "hamo",
-                    "prompt": "Piştre çi bû? Baran li ku ma?",
-                    "options": [
-                      "Ew di nav keviran de ma.",
-                      "Ew çû govendê.",
-                      "Ew gihîşt malê."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Gelî dirêj bû, û zinar bilind bûn.",
-                    "reference": "Gelî dirêj bû, û zinar bilind bûn."
-                  }
-                },
-                {
-                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -566,6 +556,16 @@
                       "Bozo reviya, û ez di nav keviran de tenê mam.",
                       "Bozo reviya û ez di nav keviran de tenê mam."
                     ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Gelî dirêj bû, û zinar bilind bûn.",
+                    "reference": "Gelî dirêj bû, û zinar bilind bûn."
                   }
                 },
                 {
@@ -584,6 +584,21 @@
                 },
                 {
                   "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Baran di gelî de tenê ma, lê ew wêrek bû, ne tirsonek.",
+                    "voice": "hamo",
+                    "prompt": "Baran di gelî de tenê ma, lê ew wêrek bû, ne tirsonek.",
+                    "accepted": [
+                      "Baran was left alone in the valley, but he was brave, not a coward.",
+                      "Baran stayed alone in the valley, but he was brave, not a coward.",
+                      "Baran was left alone in the valley, but he was brave and not a coward."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
                   "type": "match_pairs",
                   "payload": {
                     "voice": "hamo",
@@ -612,21 +627,6 @@
                         "left": "tilî",
                         "right": "finger"
                       }
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Baran di gelî de tenê ma, lê ew wêrek bû, ne tirsonek.",
-                    "voice": "hamo",
-                    "prompt": "Baran di gelî de tenê ma, lê ew wêrek bû, ne tirsonek.",
-                    "accepted": [
-                      "Baran was left alone in the valley, but he was brave, not a coward.",
-                      "Baran stayed alone in the valley, but he was brave, not a coward.",
-                      "Baran was left alone in the valley, but he was brave and not a coward."
                     ]
                   }
                 }
@@ -1300,28 +1300,6 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hefteya borî Dapîr nexweş bû; niha ew çêtir e.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "borî",
-                        "en": "last, past (hefteya borî: last week)"
-                      }
-                    ],
-                    "prompt": "Hefteya borî Dapîr nexweş bû; niha ew çêtir e.",
-                    "options": [
-                      "Last week Dapîr was ill; now she is better.",
-                      "Next week Dapîr will be ill; now she is fine.",
-                      "Last week Dapîr was well; now she is ill."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
                     "say": "Dema ku ez xort bûm, ez vegeriyam Sêvanê û li vir mam.",
                     "voice": "hamo",
                     "new": [
@@ -1340,19 +1318,39 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Kîjan havîn çêtir bû: ya îsal an ya borî?",
+                    "ask": "meaning",
+                    "say": "Sibehê zû em derketin baxçe.",
                     "voice": "hamo",
-                    "prompt": "Kîjan havîn çêtir bû: ya îsal an ya borî?",
+                    "new": [
+                      {
+                        "ku": "derketin",
+                        "en": "went out (derket: went out, came out)"
+                      }
+                    ],
+                    "prompt": "Sibehê zû em derketin baxçe.",
                     "options": [
-                      "Ya borî! Dapîr rastgo ye: berê havîn dirêjtir bûn.",
-                      "Ya sibe!",
-                      "Ez havîn im."
+                      "Early in the morning we went out to the orchard.",
+                      "Late in the evening we came back from the orchard.",
+                      "Early in the morning we slept in the orchard."
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I came back to Sêvan, and now I live here.",
+                    "accepted": [
+                      "Ez vegeriyam Sêvanê, û niha ez li vir dijîm.",
+                      "Ez vegeriyam Sêvanê û niha ez li vir dijîm.",
+                      "Ez vegeriyam Sêvanê, niha ez li vir dijîm."
+                    ]
                   }
                 },
                 {
@@ -1379,28 +1377,6 @@
                 },
                 {
                   "position": 8,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Sibehê zû em derketin baxçe.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "derketin",
-                        "en": "went out (derket: went out, came out)"
-                      }
-                    ],
-                    "prompt": "Sibehê zû em derketin baxçe.",
-                    "options": [
-                      "Early in the morning we went out to the orchard.",
-                      "Late in the evening we came back from the orchard.",
-                      "Early in the morning we slept in the orchard."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 9,
                   "type": "writing",
                   "payload": {
                     "ask": "missing",
@@ -1411,6 +1387,28 @@
                     "accepted": [
                       "kintir"
                     ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Hefteya borî Dapîr nexweş bû; niha ew çêtir e.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "borî",
+                        "en": "last, past (hefteya borî: last week)"
+                      }
+                    ],
+                    "prompt": "Hefteya borî Dapîr nexweş bû; niha ew çêtir e.",
+                    "options": [
+                      "Last week Dapîr was ill; now she is better.",
+                      "Next week Dapîr will be ill; now she is fine.",
+                      "Last week Dapîr was well; now she is ill."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1439,6 +1437,22 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
+                    "say": "Kîjan havîn çêtir bû: ya îsal an ya borî?",
+                    "voice": "hamo",
+                    "prompt": "Kîjan havîn çêtir bû: ya îsal an ya borî?",
+                    "options": [
+                      "Ya borî! Dapîr rastgo ye: berê havîn dirêjtir bûn.",
+                      "Ya sibe!",
+                      "Ez havîn im."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "missing",
                     "say": "Pêr sibehê zû em derketin baxçe.",
                     "voice": "hamo",
@@ -1452,7 +1466,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -1467,7 +1481,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -1479,27 +1493,13 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
                     "prompt": "Hefteya borî em derketin û çûn serdana xalê xwe.",
                     "reference": "Hefteya borî em derketin û çûn serdana xalê xwe."
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "I came back to Sêvan, and now I live here.",
-                    "accepted": [
-                      "Ez vegeriyam Sêvanê, û niha ez li vir dijîm.",
-                      "Ez vegeriyam Sêvanê û niha ez li vir dijîm.",
-                      "Ez vegeriyam Sêvanê, niha ez li vir dijîm."
-                    ]
                   }
                 },
                 {
@@ -2503,19 +2503,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran dixwaze çîrok kin be, û yekser bizane: Bozo hat an na?",
+                    "say": "Bêhnfireh be, Baran: çîrok dirêj e!",
                     "voice": "hamo",
                     "new": [
                       {
-                        "ku": "yekser",
-                        "en": "at once, straight away"
+                        "ku": "bêhnfireh",
+                        "en": "patient, easy-going"
                       }
                     ],
-                    "prompt": "Baran dixwaze çîrok kin be, û yekser bizane: Bozo hat an na?",
+                    "prompt": "Bêhnfireh be, Baran: çîrok dirêj e!",
                     "options": [
-                      "Baran wants the story to be short, and to know straight away: did Bozo come or not?",
-                      "Baran wants the story to be long, and to know at the end: did Bozo come?",
-                      "Baran wants to go home straight away, without the story."
+                      "Be patient, Baran: the story is long!",
+                      "Be quick, Baran: the story is short!",
+                      "Be quiet, Baran: the story is over!"
                     ],
                     "correctIndex": 0
                   }
@@ -2544,41 +2544,22 @@
                 },
                 {
                   "position": 6,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Hevalo came straight away, but Bozo didn’t come.",
-                    "accepted": [
-                      "Hevalo yekser hat, lê Bozo nehat.",
-                      "Hevalo yekser hat, Bozo nehat."
-                    ]
-                  }
-                },
-                {
-                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Bêhnfireh be, Baran: çîrok dirêj e!",
+                    "ask": "reply",
+                    "say": "Baran dibêje: çîroka gur, an ya hirçê!",
                     "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "bêhnfireh",
-                        "en": "patient, easy-going"
-                      }
-                    ],
-                    "prompt": "Bêhnfireh be, Baran: çîrok dirêj e!",
+                    "prompt": "Baran dibêje: çîroka gur, an ya hirçê!",
                     "options": [
-                      "Be patient, Baran: the story is long!",
-                      "Be quick, Baran: the story is short!",
-                      "Be quiet, Baran: the story is over!"
+                      "Na, bêhnfireh be: îro çîroka Bozo ye!",
+                      "Erê: ez gur im!",
+                      "Na: ez hirç im!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2600,23 +2581,22 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "multiple_choice",
+                  "position": 8,
+                  "type": "translate",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Baran dibêje: çîroka gur, an ya hirçê!",
+                    "ask": "to-english",
+                    "say": "Bêhnfireh be: ji bo çîroka baş dem pêwîst e, ji bo çayê jî.",
                     "voice": "hamo",
-                    "prompt": "Baran dibêje: çîroka gur, an ya hirçê!",
-                    "options": [
-                      "Na, bêhnfireh be: îro çîroka Bozo ye!",
-                      "Erê: ez gur im!",
-                      "Na: ez hirç im!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Bêhnfireh be: ji bo çîroka baş dem pêwîst e, ji bo çayê jî.",
+                    "accepted": [
+                      "Be patient: a good story needs time, and so does tea.",
+                      "Be patient: time is necessary for a good story, and for tea too.",
+                      "Be patient: a good story needs time, tea too."
+                    ]
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2638,22 +2618,56 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "translate",
+                  "position": 10,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Bêhnfireh be: ji bo çîroka baş dem pêwîst e, ji bo çayê jî.",
+                    "ask": "meaning",
+                    "say": "Baran dixwaze çîrok kin be, û yekser bizane: Bozo hat an na?",
                     "voice": "hamo",
-                    "prompt": "Bêhnfireh be: ji bo çîroka baş dem pêwîst e, ji bo çayê jî.",
-                    "accepted": [
-                      "Be patient: a good story needs time, and so does tea.",
-                      "Be patient: time is necessary for a good story, and for tea too.",
-                      "Be patient: a good story needs time, tea too."
-                    ]
+                    "new": [
+                      {
+                        "ku": "yekser",
+                        "en": "at once, straight away"
+                      }
+                    ],
+                    "prompt": "Baran dixwaze çîrok kin be, û yekser bizane: Bozo hat an na?",
+                    "options": [
+                      "Baran wants the story to be short, and to know straight away: did Bozo come or not?",
+                      "Baran wants the story to be long, and to know at the end: did Bozo come?",
+                      "Baran wants to go home straight away, without the story."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "In the end I went to Bozo.",
+                    "options": [
+                      "Di dawiyê de ez çûm cem Bozo.",
+                      "Di dawiyê de ez çû cem Bozo.",
+                      "Di dawiyê de ez diçim cem Bozo."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Em li dora agir rûniştin, di bin heyvê de.",
+                      "Em li dora agir rûniştin di bin heyvê de."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "match_pairs",
                   "payload": {
                     "voice": "hamo",
@@ -2686,30 +2700,16 @@
                   }
                 },
                 {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Em li dora agir rûniştin, di bin heyvê de.",
-                      "Em li dora agir rûniştin di bin heyvê de."
-                    ]
-                  }
-                },
-                {
                   "position": 14,
-                  "type": "multiple_choice",
+                  "type": "writing",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "In the end I went to Bozo.",
-                    "options": [
-                      "Di dawiyê de ez çûm cem Bozo.",
-                      "Di dawiyê de ez çû cem Bozo.",
-                      "Di dawiyê de ez diçim cem Bozo."
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Hevalo came straight away, but Bozo didn’t come.",
+                    "accepted": [
+                      "Hevalo yekser hat, lê Bozo nehat.",
+                      "Hevalo yekser hat, Bozo nehat."
+                    ]
                   }
                 },
                 {
@@ -2808,28 +2808,6 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Şivan tune bû, çira tune bû: Baran bi tena serê xwe meşiya.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "bi tena serê xwe",
-                        "en": "all on (his) own"
-                      }
-                    ],
-                    "prompt": "Şivan tune bû, çira tune bû: Baran bi tena serê xwe meşiya.",
-                    "options": [
-                      "There was no shepherd, no lamp: Baran walked all on his own.",
-                      "There was a shepherd with a lamp: Baran walked with him.",
-                      "There was no shepherd, no lamp: Baran stayed at home."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
                     "say": "Ew di nav daran de geriya.",
                     "voice": "hamo",
                     "new": [
@@ -2848,23 +2826,7 @@
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Çîroka kê ji hemûyan xweştir e?",
-                    "voice": "hamo",
-                    "prompt": "Çîroka kê ji hemûyan xweştir e?",
-                    "options": [
-                      "Ya Baran, bi tena serê xwe: çîroka me ya bijare!",
-                      "Ya kevir.",
-                      "Ez çîrok im."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2881,6 +2843,44 @@
                       "Dapîr worked all day, and she says: it was a little bird!",
                       "Dapîr slept all day, and she says: it was a big eagle!",
                       "Dapîr worked all day, and she says: it was a wolf!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Dapîr xebitî, û Baran di nav daran de geriya.",
+                    "voice": "hamo",
+                    "prompt": "Dapîr xebitî, û Baran di nav daran de ___.",
+                    "options": [
+                      "geriya",
+                      "geriyam",
+                      "digere"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Şivan tune bû, çira tune bû: Baran bi tena serê xwe meşiya.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "bi tena serê xwe",
+                        "en": "all on (his) own"
+                      }
+                    ],
+                    "prompt": "Şivan tune bû, çira tune bû: Baran bi tena serê xwe meşiya.",
+                    "options": [
+                      "There was no shepherd, no lamp: Baran walked all on his own.",
+                      "There was a shepherd with a lamp: Baran walked with him.",
+                      "There was no shepherd, no lamp: Baran stayed at home."
                     ],
                     "correctIndex": 0
                   }
@@ -2911,14 +2911,14 @@
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Dapîr xebitî, û Baran di nav daran de geriya.",
+                    "ask": "reply",
+                    "say": "Çîroka kê ji hemûyan xweştir e?",
                     "voice": "hamo",
-                    "prompt": "Dapîr xebitî, û Baran di nav daran de ___.",
+                    "prompt": "Çîroka kê ji hemûyan xweştir e?",
                     "options": [
-                      "geriya",
-                      "geriyam",
-                      "digere"
+                      "Ya Baran, bi tena serê xwe: çîroka me ya bijare!",
+                      "Ya kevir.",
+                      "Ez çîrok im."
                     ],
                     "correctIndex": 0
                   }
@@ -4138,35 +4138,20 @@
                 },
                 {
                   "position": 10,
-                  "type": "multiple_choice",
+                  "type": "writing",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Bozo çima şermok e?",
+                    "ask": "missing",
+                    "say": "Bozo vê hefteyê şermok e.",
                     "voice": "hamo",
-                    "prompt": "Bozo çima şermok e?",
-                    "options": [
-                      "Em tê nagihîjin… dibe ku ev nehênî be!",
-                      "Ew werîs e.",
-                      "Ez şermok im."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "It was completely by mistake!",
+                    "cue": "Bozo is shy this week.",
+                    "prompt": "Bozo vê hefteyê ___ e.",
                     "accepted": [
-                      "Ew bi tevahî bi şaşî bû!",
-                      "Bi tevahî bi şaşî bû!"
+                      "şermok"
                     ]
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 11,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -4178,7 +4163,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 12,
                   "type": "match_pairs",
                   "payload": {
                     "voice": "hamo",
@@ -4211,17 +4196,32 @@
                   }
                 },
                 {
-                  "position": 14,
-                  "type": "writing",
+                  "position": 13,
+                  "type": "translate",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Bozo vê hefteyê şermok e.",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "cue": "Bozo is shy this week.",
-                    "prompt": "Bozo vê hefteyê ___ e.",
+                    "prompt": "It was completely by mistake!",
                     "accepted": [
-                      "şermok"
+                      "Ew bi tevahî bi şaşî bû!",
+                      "Bi tevahî bi şaşî bû!"
                     ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Bozo çima şermok e?",
+                    "voice": "hamo",
+                    "prompt": "Bozo çima şermok e?",
+                    "options": [
+                      "Em tê nagihîjin… dibe ku ev nehênî be!",
+                      "Ew werîs e.",
+                      "Ez şermok im."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {

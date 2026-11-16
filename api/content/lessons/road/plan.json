@@ -1312,7 +1312,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "demjimêr", "en": "hour; clock, watch", "pos": "noun", "gender": "f", "forms": ["demjimêr", "demjimêrên", "demjimêran", "demjimêrek", "demjimêra", "demjimêrê", "demjimêreke"]},
-                {"ku": "çaryek", "en": "a quarter", "pos": "noun", "gender": "f", "forms": ["çaryek", "çaryekên", "çaryekan", "çaryekek", "çaryeka", "çaryekê", "çaryekeke"]},
+                {"ku": "xulek", "en": "minute", "pos": "noun", "gender": "f", "forms": ["xulek", "xulekên", "xulekan", "xulekek", "xuleka", "xulekê", "xulekeke"]},
                 {"ku": "yazdeh", "en": "eleven", "pos": "num", "forms": ["yazdeh", "yazdehan"]},
                 {"ku": "diwanzdeh", "en": "twelve", "pos": "num", "forms": ["diwanzdeh", "diwanzdehan"]},
                 {"ku": "sibeh", "en": "morning", "pos": "noun", "gender": "f", "forms": ["sibeh", "sibehên", "sibehan", "sibehek", "sibeha", "sibehê", "sibeheke"]},

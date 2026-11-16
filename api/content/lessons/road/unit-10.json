@@ -1246,13 +1246,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Berbang bû, roj derket, û min şîr dot!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "dot",
+                        "en": "milked (dotin: to milk)"
+                      }
+                    ],
+                    "prompt": "Berbang bû, roj derket, û min şîr dot!",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "It was dawn, the sun came up, and I milked!",
+                      "It was night, the moon came up, and I slept!",
+                      "It was dawn, the sun came up, and I drank milk!"
                     ],
                     "correctIndex": 0
                   }
@@ -1262,13 +1268,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Pez bêdeng in; nîvişk ji şîrê wan tê.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "nîvişk",
+                        "en": "butter"
+                      }
+                    ],
+                    "prompt": "Pez bêdeng in; nîvişk ji şîrê wan tê.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "The sheep are quiet; butter comes from their milk.",
+                      "The sheep are noisy; cheese comes from their milk.",
+                      "The sheep are quiet; bread comes from their milk."
                     ],
                     "correctIndex": 0
                   }
@@ -1277,14 +1289,14 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "reply",
+                    "say": "Te çi dot?",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Te çi dot?",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Min şîr dot, û niha êşa pişta min heye!",
+                      "Ez şîr dot!",
+                      "Min şîr didoşim!"
                     ],
                     "correctIndex": 0
                   }
@@ -1294,13 +1306,23 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Dayika Dapîrê li vir jiya, û di meşkê de nîvişk çêkir.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "meşk",
+                        "en": "goatskin churn"
+                      },
+                      {
+                        "ku": "çêkir",
+                        "en": "made (the past of çêkirin)"
+                      }
+                    ],
+                    "prompt": "Dayika Dapîrê li vir jiya, û di meşkê de nîvişk çêkir.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Dapîr’s mother lived here, and made butter in a goatskin churn.",
+                      "Dapîr’s mother lived in the town, and bought butter at the market.",
+                      "Dapîr’s mother lived here, and made bread on the saj."
                     ],
                     "correctIndex": 0
                   }
@@ -1310,13 +1332,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Di dawiyê de tenê dew ma, û Hevalo jî dew xwest!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "dew",
+                        "en": "ayran (salted yoghurt drink)"
+                      }
+                    ],
+                    "prompt": "Di dawiyê de tenê dew ma, û Hevalo jî dew xwest!",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "In the end only the ayran was left, and Hevalo wanted ayran too!",
+                      "In the end only the butter was left, and Hevalo ate it!",
+                      "At first there was no ayran, and Hevalo cried!"
                     ],
                     "correctIndex": 0
                   }
@@ -1325,14 +1353,14 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "missing",
+                    "say": "Dapîrê di meşkê de nîvişk çêkir.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Dapîrê di meşkê de nîvişk ___.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "çêkir",
+                      "çêkirin",
+                      "çêdike"
                     ],
                     "correctIndex": 0
                   }
@@ -1342,31 +1370,36 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Nazê ard anî, û Dapîr meşkeke kevn didirû.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "ard",
+                        "en": "flour"
+                      }
+                    ],
+                    "prompt": "Nazê ard anî, û Dapîr meşkeke kevn didirû.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Nazê brought flour, and Dapîr is sewing an old churn.",
+                      "Nazê brought milk, and Dapîr is selling an old churn.",
+                      "Nazê ate the flour, and Dapîr is sleeping."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 8,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "to-english",
+                    "say": "Min şîr dot, lê nîvê şîr ket ser pêlavên min!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Min şîr dot, lê nîvê şîr ket ser pêlavên min!",
+                    "accepted": [
+                      "I milked, but half the milk went on my shoes!",
+                      "I did the milking, but half of the milk fell on my shoes!",
+                      "I milked, but half the milk landed on my shoes!"
+                    ]
                   }
                 },
                 {
@@ -1374,13 +1407,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Dapîrê bi ard û avê hevîr çêkir.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "hevîr",
+                        "en": "dough"
+                      }
+                    ],
+                    "prompt": "Dapîrê bi ard û avê hevîr çêkir.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Dapîr made dough with flour and water.",
+                      "Dapîr made butter with milk and salt.",
+                      "Dapîr made tea with water and sugar."
                     ],
                     "correctIndex": 0
                   }
@@ -1390,13 +1429,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Sêl li ser agir e.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "sêl",
+                        "en": "saj (the domed griddle for bread)"
+                      }
+                    ],
+                    "prompt": "Sêl li ser agir e.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "The saj is on the fire.",
+                      "The churn is on the fire.",
+                      "The bread is in the river."
                     ],
                     "correctIndex": 0
                   }
@@ -1405,32 +1450,100 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "reply",
+                    "say": "Biryara te çi ye?",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Biryara te çi ye?",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Ez ê nanê ji hemûyan xweştir li ser sêlê çêkim!",
+                      "Min dew vexwar.",
+                      "Te hevîr çêkir."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Bişar dew da me, û dibêje: hirç jî ji nîvişkê hez dike!",
+                      "Bişar dew da me û dibêje: hirç jî ji nîvişkê hez dike!"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "We made dough from flour, and the saj is on the fire.",
+                    "accepted": [
+                      "Me ji ardê hevîr çêkir, û sêl li ser agir e.",
+                      "Me bi ardê hevîr çêkir, û sêl li ser agir e.",
+                      "Me ji ardê hevîr çêkir û sêl li ser agir e."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Min şîr dot, û di meşkê de tenê dew ma.",
+                    "reference": "Min şîr dot, û di meşkê de tenê dew ma."
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Dapîr made dough.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Dapîrê hevîr çêkir.",
+                      "Dapîr hevîr çêkir.",
+                      "Dapîrê hevîr çêkirin."
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "match_pairs",
+                  "payload": {
+                    "voice": "hamo",
+                    "pairs": [
+                      {
+                        "left": "ard",
+                        "right": "flour"
+                      },
+                      {
+                        "left": "nîvişk",
+                        "right": "butter"
+                      },
+                      {
+                        "left": "dew",
+                        "right": "ayran"
+                      },
+                      {
+                        "left": "meşk",
+                        "right": "goatskin churn"
+                      },
+                      {
+                        "left": "sêl",
+                        "right": "saj"
+                      },
+                      {
+                        "left": "hevîr",
+                        "right": "dough"
+                      }
+                    ]
                   }
                 }
               ]
@@ -1446,13 +1559,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Dapîr û Nazê nan li ser sêlê dipêjin.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "dipêjin",
+                        "en": "they cook (pijandin: to cook, to bake)"
+                      }
+                    ],
+                    "prompt": "Dapîr û Nazê nan li ser sêlê dipêjin.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Dapîr and Nazê are cooking bread on the saj.",
+                      "Dapîr and Nazê are buying bread at the market.",
+                      "Dapîr and Nazê are eating bread by the lake."
                     ],
                     "correctIndex": 0
                   }
@@ -1462,31 +1581,36 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Nan gelek tenik e! Nazê nan ji ser sêlê girt.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "tenik",
+                        "en": "thin"
+                      }
+                    ],
+                    "prompt": "Nan gelek tenik e! Nazê nan ji ser sêlê girt.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "The bread is very thin! Nazê took the bread off the saj.",
+                      "The bread is very thick! Nazê dropped the bread.",
+                      "The bread is very hot! Nazê ate the bread."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 3,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "to-english",
+                    "say": "Bişar ji her kesî bêtir bi min kenî: ev nanê tenik ji bo gur û rovî ye!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Bişar ji her kesî bêtir bi min kenî: ev nanê tenik ji bo gur û rovî ye!",
+                    "accepted": [
+                      "Bişar laughed at me more than anyone: this thin bread is for the wolf and the fox!",
+                      "Bişar laughed at me most of all: this thin bread is for wolves and foxes!",
+                      "Bişar laughed at me more than everyone: this thin bread is for the wolf and the fox!"
+                    ]
                   }
                 },
                 {
@@ -1494,13 +1618,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Hêviyê pirtûka xwe xwend.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "xwend",
+                        "en": "read; studied (the past of xwendin)"
+                      }
+                    ],
+                    "prompt": "Hêviyê pirtûka xwe xwend.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Hêvî read her book.",
+                      "Hêvî wrote her book.",
+                      "Hêvî lost her book."
                     ],
                     "correctIndex": 0
                   }
@@ -1510,13 +1640,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Dapîrê hejdeh nan pijandin, û min yek şewitand!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "şewitand",
+                        "en": "burned (şewitandin: to burn something)"
+                      }
+                    ],
+                    "prompt": "Dapîrê hejdeh nan pijandin, û min yek şewitand!",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Dapîr baked eighteen loaves, and I burned one!",
+                      "Dapîr burned eighteen loaves, and I baked one!",
+                      "Dapîr baked eight loaves, and I ate one!"
                     ],
                     "correctIndex": 0
                   }
@@ -1525,14 +1661,14 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "reply",
+                    "say": "Hevalo, min tu dîtî!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Hevalo, min tu dîtî!",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Na, te ez nedîtim!",
+                      "Na, min ez nedîtim!",
+                      "Erê, min sêv xwend."
                     ],
                     "correctIndex": 0
                   }
@@ -1542,13 +1678,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Baran, kurekî ciwan, şûşe li kaniyê şûştin.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "şûştin",
+                        "en": "washed (şûşt: washed, the past of şûştin)"
+                      }
+                    ],
+                    "prompt": "Baran, kurekî ciwan, şûşe li kaniyê şûştin.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Baran, a young boy, washed the glasses at the spring.",
+                      "Baran, a young boy, broke the glasses at the spring.",
+                      "Baran, an old man, filled the glasses at the river."
                     ],
                     "correctIndex": 0
                   }
@@ -1558,13 +1700,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Min ev sêl li bazarê kirî.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "kirî",
+                        "en": "bought (the past of kirîn)"
+                      }
+                    ],
+                    "prompt": "Min ev sêl li bazarê kirî.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "I bought this saj at the market.",
+                      "I sold this saj at the market.",
+                      "I found this saj by the lake."
                     ],
                     "correctIndex": 0
                   }
@@ -1573,14 +1721,15 @@
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "reply",
+                    "say": "Kê nan şewitand?",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Kê nan şewitand?",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Min şewitand… lê tenê yek!",
+                      "Ez nan şewitand!",
+                      "Min ev sêl li bazarê kirî.",
+                      "Baran şûşe şûştin."
                     ],
                     "correctIndex": 0
                   }
@@ -1590,47 +1739,119 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Min di pirtûka xwe de nivîsî: îro min nan çêkir!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "nivîsî",
+                        "en": "wrote (the past of nivîsîn)"
+                      }
+                    ],
+                    "prompt": "Min di pirtûka xwe de nivîsî: îro min nan çêkir!",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "I wrote in my book: today I made bread!",
+                      "I read in my book: today I ate bread!",
+                      "I drew in my book: today I burned bread!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 11,
-                  "type": "multiple_choice",
+                  "type": "listening",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "accepted": [
+                      "Piştre, dema ku Dapîrê nanê tenik pijand, Hevalo bi sêvê çû mêrgê.",
+                      "Piştre, dema Dapîrê nanê tenik pijand, Hevalo bi sêvê çû mêrgê."
+                    ]
                   }
                 },
                 {
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "missing",
+                    "say": "Dapîrê xwê kir nav hevîr.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Dapîrê ___ kir nav hevîr.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "xwê",
+                      "tûr",
+                      "nivîsî",
+                      "xewn"
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Hêvî read her book, and Baran washed the glasses.",
+                    "accepted": [
+                      "Hêviyê pirtûka xwe xwend, û Baran şûşe şûştin.",
+                      "Hêviyê pirtûka xwe xwend û Baran şûşe şûştin."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Min ev sêl li bazarê kirî, lê min nanekî tenik şewitand!",
+                    "reference": "Min ev sêl li bazarê kirî, lê min nanekî tenik şewitand!"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I wrote in my book: today I made bread, and my hand hurts.",
+                    "accepted": [
+                      "Min di pirtûka xwe de nivîsî: îro min nan çêkir, û destê min diêşe.",
+                      "Min di pirtûka xwe de nivîsî: îro min nan çêkir û destê min diêşe."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "match_pairs",
+                  "payload": {
+                    "voice": "hamo",
+                    "pairs": [
+                      {
+                        "left": "nivîsî",
+                        "right": "wrote"
+                      },
+                      {
+                        "left": "xwend",
+                        "right": "read"
+                      },
+                      {
+                        "left": "kirî",
+                        "right": "bought"
+                      },
+                      {
+                        "left": "pijandin",
+                        "right": "to cook"
+                      },
+                      {
+                        "left": "şûşt",
+                        "right": "washed"
+                      },
+                      {
+                        "left": "şewitandin",
+                        "right": "to burn"
+                      }
+                    ]
                   }
                 }
               ]
@@ -1646,13 +1867,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Li vir golek heye!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "gol",
+                        "en": "lake"
+                      }
+                    ],
+                    "prompt": "Li vir golek heye!",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "There is a lake here!",
+                      "There is a lamb here!",
+                      "There is no water here!"
                     ],
                     "correctIndex": 0
                   }
@@ -1662,13 +1889,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Li ber golê maleke kevn û wêran heye.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "wêran",
+                        "en": "ruined"
+                      }
+                    ],
+                    "prompt": "Li ber golê maleke kevn û wêran heye.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "By the lake there is an old, ruined house.",
+                      "By the lake there is a new, beautiful house.",
+                      "In the lake there is an old boat."
                     ],
                     "correctIndex": 0
                   }
@@ -1677,14 +1910,14 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "missing",
+                    "say": "Mal kevn û wêran e.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Mal kevn û ___ e.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "wêran",
+                      "tenik",
+                      "kûvî"
                     ],
                     "correctIndex": 0
                   }
@@ -1694,13 +1927,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Kê ev mal çêkir? Xwediyê wê kî bû?",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "xwedî",
+                        "en": "owner"
+                      }
+                    ],
+                    "prompt": "Kê ev mal çêkir? Xwediyê wê kî bû?",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Who built this house? Who was its owner?",
+                      "Who burned this house? Where did it go?",
+                      "Who bought this lake? Who sold it?"
                     ],
                     "correctIndex": 0
                   }
@@ -1710,13 +1949,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Min telefona xwe derxist.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "new": [
+                      {
+                        "ku": "derxist",
+                        "en": "took out (derxistin: to take out, to bring out)"
+                      }
+                    ],
+                    "prompt": "Min telefona xwe derxist.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "I took out my phone.",
+                      "I lost my phone.",
+                      "I put away my phone."
                     ],
                     "correctIndex": 0
                   }
@@ -1725,112 +1970,214 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "reply",
+                    "say": "Xwediyê malê kî bû?",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Xwediyê malê kî bû?",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Ez nizanim… dibe ku şivanekî berê!",
+                      "Xwediyê malê Bozo bû!",
+                      "Ez mal im."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 7,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "to-english",
+                    "say": "Pêncî sal, kesî ev gol nedît; îro me li ber wê dew vexwar.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Pêncî sal, kesî ev gol nedît; îro me li ber wê dew vexwar.",
+                    "accepted": [
+                      "For fifty years nobody saw this lake; today we drank ayran beside it.",
+                      "Nobody saw this lake for fifty years; today we drank ayran by it.",
+                      "For fifty years no one saw this lake; today we drank ayran next to it."
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Who was the owner of the house?",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Xwediyê malê kî bû?",
+                      "Xwediyê malê kê bû?",
+                      "Malê xwediyê kî bû?"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 9,
-                  "type": "multiple_choice",
+                  "type": "listening",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "accepted": [
+                      "Hevalo û Zerê li ber golê sêvan parve dikin.",
+                      "Hevalo û Zerê li ber golê sêvan parve dikin"
+                    ]
                   }
                 },
                 {
                   "position": 10,
-                  "type": "multiple_choice",
+                  "type": "writing",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Who was its owner?",
+                    "accepted": [
+                      "Xwediyê wê kî bû?",
+                      "Xwediyê wê kî bû"
+                    ]
                   }
                 },
                 {
                   "position": 11,
-                  "type": "multiple_choice",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Li ber golê maleke wêran heye.",
+                    "reference": "Li ber golê maleke wêran heye."
                   }
                 },
                 {
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "reply",
+                    "say": "Te çi derxist?",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Te çi derxist?",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Min telefona xwe derxist.",
+                      "Ez telefona xwe derxist.",
+                      "Min ard derxist."
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Baran dibêje: ev mala hesinkarê efsaneyê ye!",
+                    "voice": "hamo",
+                    "prompt": "Baran dibêje: ev mala hesinkarê efsaneyê ye!",
+                    "accepted": [
+                      "Baran says: this is the house of the blacksmith in the legend!",
+                      "Baran says: this is the legendary blacksmith’s house!",
+                      "Baran says, this is the house of the blacksmith of the legend!"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu10s2l3a",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "learner": true
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 1,
+                        "text": "Xalo, binêre: şopên du askan, li ser mêrgê!",
+                        "en": "Xalo, look: the tracks of two deer, on the meadow!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê. Peyama Bişar rast bû: askeke kûvî! Em ê bi şopan re biçin.",
+                        "en": "Yes. Bişar’s message was true: a wild doe! We’ll follow the tracks."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Wey! Li vir golek heye!",
+                        "en": "Wow! There’s a lake here!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Pêncî sal, kesî ev gol nedît. Û binêre: Hevalo û Zerê!",
+                        "en": "For fifty years nobody saw this lake. And look: Hevalo and Zerê!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew sêvan parve dikin!",
+                        "en": "They’re sharing apples!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo sêva xwe da Zerê. Ev ne çewtî ye: ev evîn e!",
+                        "en": "Hevalo gave his apple to Zerê. This is no mistake: this is love!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û ew mal? Ew wêran e.",
+                        "en": "And that house? It’s in ruins."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê, maleke kevn û wêran. Xwediyê wê kî bû?",
+                        "en": "Yes, an old ruined house. Who was its owner?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Dibe ku şivanekî berê?",
+                        "en": "Maybe a shepherd from long ago?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Dibe ku. Min telefona xwe derxist, ji bo wêneyekî.",
+                        "en": "Maybe. I’ve taken out my phone, for a photo."
+                      }
+                    ],
+                    "prompt": "Li ber golê çi heye?",
+                    "options": [
+                      "Maleke kevn û wêran",
+                      "Bazareke mezin",
+                      "Dibistaneke nû"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Mal lawaz û nebaş e: neçe hundir!",
+                    "voice": "hamo",
+                    "cue": "Don’t go inside!",
+                    "prompt": "Mal lawaz û nebaş e: ___ hundir!",
+                    "accepted": [
+                      "neçe"
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I took out my phone.",
+                    "accepted": [
+                      "Min telefona xwe derxist.",
+                      "Min telefona xwe derxist"
+                    ]
                   }
                 }
               ]
@@ -1846,13 +2193,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Me du ask dîtin: Hevalo û Zerê! Hevalo sêvek da Zerê.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Me du ask dîtin: Hevalo û Zerê! Hevalo sêvek da Zerê.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "We saw two deer: Hevalo and Zerê! Hevalo gave Zerê an apple.",
+                      "We saw two wolves: big and grey! They ate our apples.",
+                      "We saw one deer: Zerê! She gave Hevalo an apple."
                     ],
                     "correctIndex": 0
                   }
@@ -1862,13 +2209,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Me masî di golê de dîtin, û Bişar masiyek girt!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Me masî di golê de dîtin, û Bişar masiyek girt!",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "We saw fish in the lake, and Bişar caught a fish!",
+                      "We saw no fish in the lake, and Bişar fell in!",
+                      "We saw fish in the river, and Bişar bought one!"
                     ],
                     "correctIndex": 0
                   }
@@ -1877,32 +2224,31 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "reply",
+                    "say": "Kê pêşî gol dît?",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Kê pêşî gol dît?",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Min! Ez pêşî gihîştim.",
+                      "Min pêşî gihîştim.",
+                      "Kesî nebihîst."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 4,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "to-english",
+                    "say": "Bişar dibêje: min Hamo di dawiyê de dît; ew bi şaşî herî dereng hat!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Bişar dibêje: min Hamo di dawiyê de dît; ew bi şaşî herî dereng hat!",
+                    "accepted": [
+                      "Bişar says: I saw Hamo last; he came latest of all, by mistake!",
+                      "Bişar says: I saw Hamo at the end; by mistake he came last of all!",
+                      "Bişar says, I saw Hamo in the end; he arrived last of all, by mistake!"
+                    ]
                   }
                 },
                 {
@@ -1910,13 +2256,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Ez dibêjim: min pêşî dît! Bişar kenî: ev derew e!",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Ez dibêjim: min pêşî dît! Bişar kenî: ev derew e!",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "I say: I saw it first! Bişar laughed: that’s a lie!",
+                      "I say: I saw it last! Bişar laughed: that’s true!",
+                      "Bişar says: I saw it first! I laugh: that’s a lie!"
                     ],
                     "correctIndex": 0
                   }
@@ -1925,64 +2271,59 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "We saw them!",
+                    "cue": "them: the two deer",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Me ew dîtin!",
+                      "Me ew dît!",
+                      "Em ew dîtin!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 7,
-                  "type": "multiple_choice",
+                  "type": "listening",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "accepted": [
+                      "Hefteya borî me gol nedît; îro em westiyayî ne, lê me ew dît!",
+                      "Hefteya borî me gol nedît, îro em westiyayî ne, lê me ew dît!"
+                    ]
                   }
                 },
                 {
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "missing",
+                    "say": "Pêşî me şîr dot, paşê Dapîrê nîvişk çêkir.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Pêşî me şîr dot, paşê Dapîrê nîvişk ___.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "çêkir",
+                      "çêkirin",
+                      "çêdikim"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 9,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "to-english",
+                    "say": "Di Tîrmehê de em û kerî hatin, û niha Tebax e; me li ber golê dew vexwar.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Di Tîrmehê de em û kerî hatin, û niha Tebax e; me li ber golê dew vexwar.",
+                    "accepted": [
+                      "In July we and the flock came, and now it’s August; we drank ayran by the lake.",
+                      "We came with the flock in July, and now it is August; we drank ayran by the lake.",
+                      "In July the flock and we came up, and now it’s August; we drank ayran by the lake."
+                    ]
                   }
                 },
                 {
@@ -1990,13 +2331,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav!",
+                    "say": "Dapîrê meşk û sêl ji kon derxistin, û Nazê nan anî.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Dapîrê meşk û sêl ji kon derxistin, û Nazê nan anî.",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Dapîr brought the churn and the saj out of the tent, and Nazê brought bread.",
+                      "Dapîr took the churn and the saj into the tent, and Nazê ate bread.",
+                      "Dapîr sold the churn and the saj, and Nazê bought bread."
                     ],
                     "correctIndex": 0
                   }
@@ -2005,32 +2346,100 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "reply",
+                    "say": "Kê hevîr çêkir?",
                     "voice": "hamo",
-                    "prompt": "Silav!",
+                    "prompt": "Kê hevîr çêkir?",
                     "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
+                      "Nazê. Paşê Dapîrê nan pijand.",
+                      "Hevîr. Paşê nan.",
+                      "Dapîr bi derziyê didirû."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 12,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Silav!",
+                    "ask": "to-english",
+                    "say": "Baran şûşe şûştin û li ser kevirekî danîn; Bozo tenê giya xwest.",
                     "voice": "hamo",
-                    "prompt": "Silav!",
-                    "options": [
-                      "Hello!",
-                      "Bye!",
-                      "Yes!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Baran şûşe şûştin û li ser kevirekî danîn; Bozo tenê giya xwest.",
+                    "accepted": [
+                      "Baran washed the glasses and put them on a stone; Bozo only wanted grass.",
+                      "Baran washed the glasses and set them down on a stone; Bozo just wanted grass.",
+                      "Baran washed the glasses and put them on a rock; Bozo only wanted grass."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Zirne tune bû, lê me stran gotin, û em ketin govendê.",
+                    "reference": "Zirne tune bû, lê me stran gotin, û em ketin govendê."
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "This is Hevalo’s favourite day.",
+                    "accepted": [
+                      "Ev roja bijare ya Hevalo ye.",
+                      "Ev roja Hevalo ya bijare ye."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Hevalo slept quietly: he saw Zerê in his dream.",
+                    "accepted": [
+                      "Hevalo bêdeng raza: wî Zerê di xewna xwe de dît.",
+                      "Hevalo bêdeng raza, wî Zerê di xewna xwe de dît."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "match_pairs",
+                  "payload": {
+                    "voice": "hamo",
+                    "pairs": [
+                      {
+                        "left": "dotin",
+                        "right": "to milk"
+                      },
+                      {
+                        "left": "nîvişk",
+                        "right": "butter"
+                      },
+                      {
+                        "left": "meşk",
+                        "right": "goatskin churn"
+                      },
+                      {
+                        "left": "sêl",
+                        "right": "saj"
+                      },
+                      {
+                        "left": "hevîr",
+                        "right": "dough"
+                      },
+                      {
+                        "left": "pijandin",
+                        "right": "to cook"
+                      }
+                    ]
                   }
                 }
               ]

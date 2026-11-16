@@ -2527,19 +2527,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Demjimêr yek û çaryek e.",
+                    "say": "Demjimêr yek û pênc xulek e.",
                     "voice": "hamo",
                     "new": [
                       {
-                        "ku": "çaryek",
-                        "en": "a quarter"
+                        "ku": "xulek",
+                        "en": "minute"
                       }
                     ],
-                    "prompt": "Demjimêr yek û çaryek e.",
+                    "prompt": "Demjimêr yek û pênc xulek e.",
                     "options": [
-                      "It’s a quarter past one.",
+                      "It’s five past one.",
                       "It’s half past one.",
-                      "It’s one o’clock."
+                      "It’s five o’clock."
                     ],
                     "correctIndex": 0
                   }
@@ -2550,11 +2550,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "It’s a quarter past eleven.",
+                    "prompt": "It’s ten past eleven.",
                     "options": [
-                      "Demjimêr yazdeh û çaryek e.",
-                      "Demjimêr yazdeh çaryek e.",
-                      "Demjimêr yazdeh û çaryek in."
+                      "Demjimêr yazdeh û deh xulek e.",
+                      "Demjimêr yazdeh deh xulek e.",
+                      "Demjimêr yazdeh û deh xulekan e."
                     ],
                     "correctIndex": 0
                   }
@@ -2596,7 +2596,7 @@
                     "options": [
                       "Çayek, ji kerema xwe!",
                       "Demjimêr şaş e.",
-                      "Ez sibeh im."
+                      "Pênc xulek."
                     ],
                     "correctIndex": 0
                   }
@@ -2611,8 +2611,8 @@
                         "right": "clock"
                       },
                       {
-                        "left": "çaryek",
-                        "right": "a quarter"
+                        "left": "xulek",
+                        "right": "minute"
                       },
                       {
                         "left": "yazdeh",
@@ -2673,8 +2673,8 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Demjimêr diwanzdeh û çaryek e.",
-                      "Demjimêr diwanzdeh û çaryek e"
+                      "Demjimêr diwanzdeh û deh xulek e.",
+                      "Demjimêr diwanzdeh û deh xulek e"
                     ]
                   }
                 },
@@ -3002,8 +3002,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ez radizim: xew baş e!",
-                    "reference": "Ez radizim: xew baş e!"
+                    "prompt": "Pênc xulek, ez radizim: xew baş e!",
+                    "reference": "Pênc xulek, ez radizim: xew baş e!"
                   }
                 },
                 {
@@ -3185,8 +3185,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê! Xewa min xweş e… Ez têm!",
-                        "en": "Yes! My sleep is lovely… I’m coming!"
+                        "text": "Erê! Xewa min xweş e… Pênc xulek!",
+                        "en": "Yes! My sleep is lovely… Five minutes!"
                       },
                       {
                         "speaker": 1,
@@ -3197,6 +3197,16 @@
                         "speaker": 0,
                         "text": "Ez têm, ez têm! Ez simbêlê xwe dişom.",
                         "en": "I’m coming, I’m coming! I’m washing my moustache."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Pênc xulekên te demjimêrek in!",
+                        "en": "Your five minutes are an hour!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Na, na! Pênc xulek pênc xulek e!",
+                        "en": "No, no! Five minutes is five minutes!"
                       },
                       {
                         "speaker": 1,
@@ -3365,13 +3375,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Demjimêr heft û çaryek e: ez destên xwe dişom.",
+                    "say": "Demjimêr heft û deh xulek e: ez destên xwe dişom.",
                     "voice": "hamo",
-                    "prompt": "Demjimêr heft û çaryek e: ez destên xwe dişom.",
+                    "prompt": "Demjimêr heft û deh xulek e: ez destên xwe dişom.",
                     "options": [
-                      "It’s a quarter past seven: I wash my hands.",
+                      "It’s ten past seven: I wash my hands.",
                       "It’s half past seven: I wash my hands.",
-                      "It’s a quarter past seven: I go to sleep."
+                      "It’s ten past seven: I go to sleep."
                     ],
                     "correctIndex": 0
                   }
@@ -3387,7 +3397,7 @@
                     "options": [
                       "Baş e, ez destên xwe dişom.",
                       "Ez pisîk im.",
-                      "Çaryek e."
+                      "Deh xulek e."
                     ],
                     "correctIndex": 0
                   }
@@ -3551,8 +3561,8 @@
                         "right": "clock"
                       },
                       {
-                        "left": "çaryek",
-                        "right": "a quarter"
+                        "left": "xulek",
+                        "right": "minute"
                       },
                       {
                         "left": "diwanzdeh",
@@ -4519,9 +4529,9 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Dusibe Şemî ye, û dem tune!",
-                      "Dusibe Şemî ye, û dem tune",
-                      "Dusibe Şemî ye û dem tune"
+                      "Dusibe Şemî ye, û dem tune: ne pênc xulek jî!",
+                      "Dusibe Şemî ye, û dem tune: ne pênc xulek jî",
+                      "Dusibe Şemî ye û dem tune ne pênc xulek jî"
                     ]
                   }
                 },
@@ -4577,13 +4587,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Roja Şemiyê ye. Demjimêr heşt û nîv e!",
+                    "say": "Roja Şemiyê ye. Ez dibêjim: pênc xulek… û demjimêr heşt û nîv e!",
                     "voice": "hamo",
-                    "prompt": "Roja Şemiyê ye. Demjimêr heşt û nîv e!",
+                    "prompt": "Roja Şemiyê ye. Ez dibêjim: pênc xulek… û demjimêr heşt û nîv e!",
                     "options": [
-                      "It’s Saturday. It’s half past eight!",
-                      "It’s Sunday. It’s half past eight!",
-                      "It’s Saturday. It’s a quarter past eight!"
+                      "It’s Saturday. I say: five minutes… and it’s half past eight!",
+                      "It’s Sunday. I say: five minutes… and it’s half past eight!",
+                      "It’s Saturday. I say: five minutes… and it’s half past five!"
                     ],
                     "correctIndex": 0
                   }
