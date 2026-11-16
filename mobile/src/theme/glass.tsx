@@ -42,10 +42,18 @@ export function GradientBackground({ children, style }: { children?: ReactNode; 
 export function GlassCard({
   children,
   style,
+  contentStyle,
   padding = 'regular',
 }: {
   children: ReactNode;
+  /**
+   * The card as a whole: its place among its neighbours (margins, width,
+   * flex). It is the outer shadow's style, so alignment and gaps set here
+   * never reach what is inside: those go in `contentStyle`.
+   */
   style?: StyleProp<ViewStyle>;
+  /** How the card lays out its contents: alignment, gaps, a row. */
+  contentStyle?: StyleProp<ViewStyle>;
   /** 'tight' trims the vertical padding for dense row-lists (Settings). */
   padding?: 'regular' | 'tight';
 }): React.JSX.Element {
@@ -53,7 +61,7 @@ export function GlassCard({
   return (
     <View style={[styles.shadow, { shadowColor: colors.softShadow }, style]}>
       <View style={styles.clip}>
-        <View style={[styles.glassFace, padding === 'tight' && styles.glassFaceTight, { backgroundColor: colors.glassFill }]}>
+        <View style={[styles.glassFace, padding === 'tight' && styles.glassFaceTight, { backgroundColor: colors.glassFill }, contentStyle]}>
           {children}
         </View>
       </View>

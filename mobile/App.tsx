@@ -61,6 +61,7 @@ import { leaveExercise } from './src/practice/exercises';
 import { JumpTestScreen } from './src/coursemap/JumpTestScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
 import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
+import { ActionSheetHost } from './src/theme/ActionSheetHost';
 import { RefreshedNotice } from './src/shop/RefreshedItems';
 import { LeagueScreen } from './src/leagues/LeagueScreen';
 import { RanksScreen } from './src/ranks/RanksScreen';
@@ -1014,6 +1015,8 @@ function ThemedNavigation() {
         {/* over every screen, the crash screen included: Hevalo is offline for a while */}
         <MaintenanceScreen />
         <OfflineBanner />
+        {/* what every "⋯" opens on Android and the web, listing all its actions (theme/actionSheet.ts) */}
+        <ActionSheetHost />
       </View>
     </NavigationContainer>
   );
