@@ -258,6 +258,15 @@ export class Drawing {
   }
 
   /**
+   * What has been drawn so far, for a picture that is not the square canvas
+   * (a card, a banner): the definitions and the drawing, for whoever asks to
+   * put their own frame round.
+   */
+  parts(): { defs: string; body: string } {
+    return { defs: this.defs.length > 0 ? `<defs>${this.defs.join('')}</defs>` : '', body: this.body.join('') };
+  }
+
+  /**
    * The finished SVG. `title` is the drawing's text label: screen readers read
    * it on the web, and it is the accessible name the apps also pass alongside.
    */

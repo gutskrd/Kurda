@@ -1,28 +1,31 @@
 /**
- * A win, as it is shared: the picture a share carries, drawn in text, and
- * which wins are offered for sharing at all.
+ * A win, as it is shared: what its message is made of, and which wins are
+ * offered for sharing at all.
  *
  * Somebody who solves the day's word, finishes a lesson or keeps a streak is
  * offered a quiet Share. What goes out is one modest line in their own
- * language, a small picture made of squares, and the site's address. The
- * line is each app's own, from its catalogue; the picture and the rules are
- * here, so the website and the phone send the same thing:
+ * language with a small mark of Hevalo's at its end (an apple for a lesson,
+ * the fire for a streak), and under it the win's own address (win-link.ts),
+ * which whatever it is pasted into draws as a postcard from the village:
+ * the picture is the link's.
  *
- *   - the word game's grid, a row of squares per guess: how the game went,
- *     and nothing of the word;
- *   - a finished lesson's strip, a square per exercise in the lesson's order,
- *     right the first time or not, in rows of ten;
- *   - a streak's row, a week of seven squares, with the count beside it once
- *     the streak has outgrown the week.
+ * A share was once a row of coloured squares under its line: a square for
+ * every exercise, seven for a week. It said how many and nothing else, and
+ * looked like every other app's. The word game keeps a grid, because a grid
+ * is how that game is told without giving its word away, but it is laid out
+ * in fruit from Hevalo's orchard: a green apple for a letter in its place, a
+ * lemon for a letter that is in the word, an empty plate for one that is
+ * not.
  *
- * Only squares that every phone and browser draws, and figures. No words: a
- * share is read in the language its sender reads, and those words are the
- * apps'. Nothing here is told who the sender is, so nothing here can say.
+ * Only marks every phone and browser draws, and figures. No words: a share
+ * is read in the language its sender reads, and those words are the apps'.
+ * Nothing here is told who the sender is, so nothing here can say.
  */
 
 import { FIRE_STAGE_DAYS, fireGrewToday } from './fire-stages.js';
 import type { LeagueTier, LeagueWeekResult } from './leagues.js';
 import { isLeagueTier } from './leagues.js';
+import type { WinKind } from './win-link.js';
 
 const whole = (n: number): number => (Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0);
 
@@ -31,17 +34,18 @@ const whole = (n: number): number => (Number.isFinite(n) ? Math.max(0, Math.floo
 /** How the server scored one letter of a guess: in its place, in the word, or not in it. */
 export type LetterFeedback = 'green' | 'yellow' | 'gray';
 
-export const GRID_SQUARES: Record<LetterFeedback, string> = { green: '🟩', yellow: '🟨', gray: '⬜' };
-/** For a player who cannot tell green from yellow: orange and blue instead. */
-export const GRID_SQUARES_HIGH_CONTRAST: Record<LetterFeedback, string> = { green: '🟧', yellow: '🟦', gray: '⬜' };
+/** A guess's letters as Hevalo's fruit: a green apple in its place, a lemon in the word, an empty plate for neither. */
+export const GRID_MARKS: Record<LetterFeedback, string> = { green: '🍏', yellow: '🍋', gray: '⚪' };
+/** For a player who cannot tell green from yellow: an orange and a bunch of grapes, which differ in shape as well as colour. */
+export const GRID_MARKS_HIGH_CONTRAST: Record<LetterFeedback, string> = { green: '🍊', yellow: '🍇', gray: '⚪' };
 
-export function gridSquare(feedback: LetterFeedback, highContrast = false): string {
-  return (highContrast ? GRID_SQUARES_HIGH_CONTRAST : GRID_SQUARES)[feedback];
+export function gridMark(feedback: LetterFeedback, highContrast = false): string {
+  return (highContrast ? GRID_MARKS_HIGH_CONTRAST : GRID_MARKS)[feedback];
 }
 
-/** One guess as its row of squares. */
+/** One guess as its row of fruit. */
 export function gridRow(row: readonly LetterFeedback[], highContrast = false): string {
-  return row.map((f) => gridSquare(f, highContrast)).join('');
+  return row.map((f) => gridMark(f, highContrast)).join('');
 }
 
 /** Every guess, a row under a row. */
@@ -80,86 +84,30 @@ export function wordGameHeader(input: WordGameShare): string {
 
 /**
  * The header, an empty line, and the grid; and set apart under them the
- * address, when the app hands one over. Only squares and counts: no letter
+ * address, when the app hands one over. Only fruit and counts: no letter
  * of a guess or of the word is in it.
  */
 export function wordGameShareText(input: WordGameShare, link?: string | null): string {
   return shareMessage({ line: wordGameHeader(input), picture: wordGrid(input.rows, input.highContrast ?? false), link });
 }
 
-// ---- a finished lesson's strip -------------------------------------------------------
-
-/** An exercise as the strip shows it: answered right the first time, or only later. */
-export type LessonMark = 'first' | 'later';
-
-export const LESSON_SQUARES: Record<LessonMark, string> = { first: '🟩', later: '🟨' };
-
-/** How many squares a row of the strip holds. */
-export const STRIP_ROW = 10;
+// ---- the mark at the end of a line -----------------------------------------------------
 
 /**
- * A lesson's exercises as the strip's marks, from what a results screen is
- * told: the exercises in the order the lesson asked them, which of them the
- * first answer missed, which were put off and never answered, and the score.
- *
- * An exercise put off is left out, as the score leaves it out. When the list
- * does not account for the score (an older server, a list that did not
- * arrive), the marks are a tally of the score instead, the right ones first:
- * still how many, though no longer where.
+ * What a win's line ends on: an apple for a lesson, the fire for a streak, a
+ * medal for a badge, a cup for a league week. The word game has none: its
+ * line is its score, and its grid follows.
  */
-export function lessonMarks({
-  exerciseIds,
-  missedIds,
-  putOffIds = [],
-  correct,
-  total,
-}: {
-  exerciseIds: readonly string[];
-  missedIds: readonly string[];
-  putOffIds?: readonly string[];
-  /** answered right the first time, and how many were answered at all: the score as the screen shows it */
-  correct: number;
-  total: number;
-}): LessonMark[] {
-  const missed = new Set(missedIds);
-  const putOff = new Set(putOffIds);
-  const marks = exerciseIds.filter((id) => !putOff.has(id)).map((id): LessonMark => (missed.has(id) ? 'later' : 'first'));
-  const all = whole(total);
-  const right = Math.min(all, whole(correct));
-  if (marks.length === all && marks.filter((m) => m === 'first').length === right) return marks;
-  return [...Array<LessonMark>(right).fill('first'), ...Array<LessonMark>(all - right).fill('later')];
+export const WIN_MARKS: Readonly<Record<WinKind, string>> = { lesson: '🍎', streak: '🔥', badge: '🏅', league: '🏆', peyvok: '' };
+
+/** A win's line with its mark after it. A line that is empty stays empty: a mark alone says nothing. */
+export function winLine(line: string, kind: WinKind): string {
+  const said = line.trim();
+  const mark = WIN_MARKS[kind];
+  return said && mark ? `${said} ${mark}` : said;
 }
 
-/** The strip: a square per mark, in rows of at most `STRIP_ROW`. Nothing for a lesson with no marks. */
-export function lessonStrip(marks: readonly LessonMark[]): string {
-  const rows: string[] = [];
-  for (let at = 0; at < marks.length; at += STRIP_ROW) {
-    rows.push(marks.slice(at, at + STRIP_ROW).map((m) => LESSON_SQUARES[m]).join(''));
-  }
-  return rows.join('\n');
-}
-
-// ---- a streak's row ------------------------------------------------------------------
-
-export const STREAK_SQUARES = { kept: '🟧', ahead: '⬜' } as const;
-
-/** A week: how many squares the row is, whatever the streak. */
-export const STREAK_ROW = 7;
-
-/**
- * A streak as a row: a week of seven squares, as many lit as days were kept.
- * Past a week all seven are lit and the count stands beside them, however
- * long the streak: never a wall of squares. `count` is the number as the
- * reader's language writes it, where that is not plain figures. Nothing for
- * no streak.
- */
-export function streakRow(days: number, count: string = String(whole(days))): string {
-  const kept = whole(days);
-  if (kept === 0) return '';
-  const lit = Math.min(kept, STREAK_ROW);
-  const row = STREAK_SQUARES.kept.repeat(lit) + STREAK_SQUARES.ahead.repeat(STREAK_ROW - lit);
-  return kept > STREAK_ROW ? `${row} ${count}` : row;
-}
+// ---- a streak worth telling ----------------------------------------------------------
 
 /**
  * Whether today's streak is one to offer for sharing. Not every day: a whole

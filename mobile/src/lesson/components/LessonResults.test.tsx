@@ -305,25 +305,25 @@ describe('the mistakes', () => {
 
 /*
  * The quiet Share over the ways on of a lesson's results: the lesson by its
- * name, a square for each exercise as it went, and the site's address, with
- * nothing of who is sharing. A review has none.
+ * name, an apple at the end of the line, and the lesson's own address on the
+ * site, with nothing of who is sharing. A review has none.
  */
 describe('sharing the lesson', () => {
   const asked = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].map((id) => ({ id, type: 'multiple_choice' as const }));
   // six asked, the third missed the first time
   const went: SessionResults = { ...results, correct: 5, total: 6, accuracy: 5 / 6, mistakes: [{ exerciseId: 'e3', verdict: 'wrong' }] };
-  const lesson = { title: 'Hello!', putOff: [] };
+  const lesson = { title: 'Hello!' };
   const sheet = () => vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
   const said = (share: ReturnType<typeof sheet>): string => (share.mock.calls[0]?.[0] as { message: string } | undefined)?.message ?? '';
 
   afterEach(() => vi.restoreAllMocks());
 
-  it('shares the lesson by its name, a square for each exercise in order, and the site’s address', async () => {
+  it('shares the lesson by its name, with the lesson’s own address under it', async () => {
     const share = sheet();
     show({ results: went, exercises: asked, lesson });
     fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
-    expect(share.mock.calls[0]?.[0]).toEqual({ message: 'I finished “Hello!” in Kurdish on Hevalo.\n\n🟩🟩🟨🟩🟩🟩\n\nhttps://hevalo.app' });
+    expect(share.mock.calls[0]?.[0]).toEqual({ message: 'I finished “Hello!” in Kurdish on Hevalo. 🍎\nhttps://hevalo.app/win/lesson' });
   });
 
   it('stands over the ways on, once, and leaves the main one the foot of the screen', async () => {
@@ -347,15 +347,15 @@ describe('sharing the lesson', () => {
     expect(text.length).toBeGreaterThan(0);
     const who = testAuth.user;
     for (const theirs of [who.username, who.email, '/users/', '/profile', '@']) expect(text, theirs).not.toContain(theirs);
-    // one address, and it is the site's front door
-    expect(text.match(/https?:\/\/\S+/g)).toEqual(['https://hevalo.app']);
+    // one address, and it is the page of a lesson finished, which is about nobody
+    expect(text.match(/https?:\/\/\S+/g)).toEqual(['https://hevalo.app/win/lesson']);
   });
 
-  it('leaves an exercise that was put off out of the squares, and says a Kurdish lesson when it has no name to give', async () => {
+  it('says a Kurdish lesson when it has no name to give, and nothing of how the lesson went', async () => {
     const share = sheet();
-    show({ results: { ...went, correct: 4, total: 5, accuracy: 0.8 }, exercises: asked, skipped: 1, lesson: { title: null, putOff: ['e6'] } });
+    show({ results: { ...went, correct: 4, total: 5, accuracy: 0.8 }, exercises: asked, skipped: 1, lesson: { title: null } });
     fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
-    expect(said(share)).toBe('I finished a Kurdish lesson on Hevalo.\n\n🟩🟩🟨🟩🟩\n\nhttps://hevalo.app');
+    expect(said(share)).toBe('I finished a Kurdish lesson on Hevalo. 🍎\nhttps://hevalo.app/win/lesson');
   });
 
   it('is no way on: sharing opens neither the streak’s moment nor anything after it', async () => {

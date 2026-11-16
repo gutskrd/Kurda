@@ -2104,6 +2104,15 @@ export const de: Catalogue = {
   'share.win.badge': 'Ich habe auf Hevalo das Abzeichen „{badge}“ verdient.',
   'share.win.leagueUp': 'Ich bin auf Hevalo in die {tier}-Liga aufgestiegen.',
   'share.win.leaguePlace': 'Ich habe auf Hevalo Platz {rank} in der {tier}-Liga belegt.',
+  'win.kicker': 'Eine Postkarte von Hevalo',
+  'win.lesson': 'Wieder eine Lektion geschafft',
+  'win.streak': '{count} Tage in Folge',
+  'win.streakPlain': 'Die Serie hält',
+  'win.badge': 'Ein neues Abzeichen',
+  'win.league': 'Eine gute Woche in der {league}',
+  'win.leaguePlain': 'Eine gute Woche in der Liga',
+  'win.body': 'Jemand, den du kennst, lernt hier Kurdisch, jeden Tag ein paar Minuten. Lern doch mit.',
+  'win.picture': 'Eine Postkarte: Hamo und Hevalo auf einem Hügel, und ein Vogel fliegt mit einem Brief davon.',
 
   /* putting somebody else's post on your own profile */
   'repost.do': 'Reposten',

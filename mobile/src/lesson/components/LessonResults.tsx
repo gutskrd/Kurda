@@ -52,11 +52,10 @@ interface Props {
   skipped?: number;
   /**
    * The lesson these results are of, for the quiet Share beside the ways on:
-   * its own name, where the player was told it, and which exercises were put
-   * off, which the shared strip leaves out as the score does. Absent for a
-   * review, which is practice and not a lesson finished, and has no Share.
+   * its own name, where the player was told it. Absent for a review, which
+   * is practice and not a lesson finished, and has no Share.
    */
-  lesson?: { title: string | null; putOff: readonly string[] } | null;
+  lesson?: { title: string | null } | null;
   /** what else the lesson did: today's goal, the streak, a new level, the league */
   moments?: LessonMoments;
   /** a lesson (not practice) may be followed, last of all, by the screen that comes before the phone's question about notifications (push/ReminderOffer.tsx) */
@@ -345,7 +344,7 @@ export function LessonResults({
                 <Text style={[styles.backText, { color: colors.textSecondary }]}>{t('lesson.results.backToPath')}</Text>
               </Pressable>
             ) : null}
-            {lesson ? <ShareWin text={lessonShare(t, { title: lesson.title, exercises, results, putOff: lesson.putOff })} testID="lesson-share" /> : null}
+            {lesson ? <ShareWin text={lessonShare(t, lesson.title)} testID="lesson-share" /> : null}
           </View>
         ) : null}
         {actions.secondary ? <ClayButton label={t(ACTION_WORDS[actions.secondary])} tone="primary" variant="outline" size="large" onPress={run(actions.secondary)} /> : null}

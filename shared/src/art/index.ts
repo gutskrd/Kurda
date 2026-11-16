@@ -138,6 +138,7 @@ export {
   type StampOptions,
   type StampShape,
 } from './stamp.js';
+export { SHARE_CARD, SHARE_CARD_KINDS, isShareCardKind, shareCardSvg, type ShareCardKind, type ShareCardOptions } from './share-card.js';
 export {
   CHEST_BOX,
   CHEST_FOOT,

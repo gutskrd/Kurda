@@ -523,17 +523,17 @@ describe('sharing the streak', () => {
 
     fireEvent.click(button);
     expect(share).toHaveBeenCalledTimes(1);
-    expect(share.mock.calls[0]?.[0]).toEqual({ message: '7 days of Kurdish in a row.\n\n🟧🟧🟧🟧🟧🟧🟧\n\nhttps://hevalo.app' });
+    expect(share.mock.calls[0]?.[0]).toEqual({ message: '7 days of Kurdish in a row. 🔥\nhttps://hevalo.app/win/streak/7' });
     // sharing is not the way on
     expect(onContinue).not.toHaveBeenCalled();
   });
 
-  it('writes the count beside the week for a streak that has outgrown it', async () => {
+  it('shares a longer streak by the address of the card that has its days on it', async () => {
     listen();
     const share = sheet();
     show({ current: 30, longest: 30 });
     fireEvent.click(within(await card()).getByRole('button', { name: 'Share' }));
-    expect(share.mock.calls[0]?.[0]).toEqual({ message: '30 days of Kurdish in a row.\n\n🟧🟧🟧🟧🟧🟧🟧 30\n\nhttps://hevalo.app' });
+    expect(share.mock.calls[0]?.[0]).toEqual({ message: '30 days of Kurdish in a row. 🔥\nhttps://hevalo.app/win/streak/30' });
   });
 
   it('offers no Share on an ordinary day, nor on the first days, though the fire grows on them', async () => {

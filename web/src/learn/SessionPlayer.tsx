@@ -565,7 +565,6 @@ export function SessionPlayer({
           results={results}
           exercises={state.exercises}
           skipped={state.skipped.length}
-          putOff={state.skipped}
           kind={kind}
           dialect={dialect}
           moments={moments}

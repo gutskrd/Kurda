@@ -2203,6 +2203,16 @@ export const en = {
   'share.win.badge': 'I earned the “{badge}” badge on Hevalo.',
   'share.win.leagueUp': 'I moved up to the {tier} League on Hevalo.',
   'share.win.leaguePlace': 'I finished #{rank} in the {tier} League on Hevalo.',
+  // the page a shared win's link opens (share/WinPage.tsx): what was done, said to whoever it was sent to
+  'win.kicker': 'A postcard from Hevalo',
+  'win.lesson': 'One more lesson done',
+  'win.streak': '{count} days in a row',
+  'win.streakPlain': 'A streak kept alive',
+  'win.badge': 'A new badge earned',
+  'win.league': 'A good week in the {league}',
+  'win.leaguePlain': 'A good week in the league',
+  'win.body': 'Somebody you know is learning Kurdish here, a few minutes at a time. Come and learn along.',
+  'win.picture': 'A postcard: Hamo and Hevalo on a hillside, and a bird flying off with a letter.',
 
   /* putting somebody else's post on your own profile */
   'repost.do': 'Repost',

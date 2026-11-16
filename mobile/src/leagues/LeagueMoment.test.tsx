@@ -190,7 +190,7 @@ describe('sharing a league week', () => {
 
     fireEvent.click(button);
     expect(share).toHaveBeenCalledTimes(1);
-    expect(share.mock.calls[0]?.[0]).toEqual({ message: 'I moved up to the Çem League on Hevalo.\nhttps://hevalo.app' });
+    expect(share.mock.calls[0]?.[0]).toEqual({ message: 'I moved up to the Çem League on Hevalo. 🏆\nhttps://hevalo.app/win/league/cem' });
     // not the size of the group, not the XP, not the account ("rojda")
     for (const theirs of ['18', '410', 'rojda', '/users/', '@']) expect(said(share)).not.toContain(theirs);
     // sharing is not the way on: the first beat is still there, and the week not yet put away
@@ -209,7 +209,7 @@ describe('sharing a league week', () => {
     renderWithProviders(<LeagueMoment league={view(closed({ tier: 'cem', tierAfter: 'cem', outcome: 'stayed', rank: 2, gems: 0 }))} store={memoryStore()} />);
     await screen.findByRole('heading', { name: 'You finished #2 last week and stay in Çem.' });
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(said(share)).toBe('I finished #2 in the Çem League on Hevalo.\nhttps://hevalo.app');
+    expect(said(share)).toBe('I finished #2 in the Çem League on Hevalo. 🏆\nhttps://hevalo.app/win/league/cem');
     cleanup();
     share.mockClear();
 
@@ -217,7 +217,7 @@ describe('sharing a league week', () => {
     renderWithProviders(<LeagueMoment league={top} store={memoryStore()} />);
     await screen.findByRole('heading', { name: 'You finished #3 last week: top three in Okyanûs, a Pêla week.' });
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(said(share)).toBe('I finished #3 in the Okyanûs League on Hevalo.\nhttps://hevalo.app');
+    expect(said(share)).toBe('I finished #3 in the Okyanûs League on Hevalo. 🏆\nhttps://hevalo.app/win/league/okyanus');
   });
 
   it('offers no Share on bad news: a week that moved down, whatever its place, or one that simply stayed', async () => {

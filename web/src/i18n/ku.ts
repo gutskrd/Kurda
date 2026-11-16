@@ -2106,6 +2106,15 @@ export const ku: Catalogue = {
   'share.win.badge': 'Min li ser Hevalo nîşana “{badge}” bi dest xist.',
   'share.win.leagueUp': 'Ez li ser Hevalo derbasî Lîga {tier} bûm.',
   'share.win.leaguePlace': 'Ez li ser Hevalo di Lîga {tier} de bûm #{rank}.',
+  'win.kicker': 'Kartpostalek ji Hevalo',
+  'win.lesson': 'Waneyeke din qediya',
+  'win.streak': '{count} roj li pey hev',
+  'win.streakPlain': 'Rêze nehat birîn',
+  'win.badge': 'Nîşaneke nû',
+  'win.league': 'Hefteyeke xweş di {league} de',
+  'win.leaguePlain': 'Hefteyeke xweş di lîgê de',
+  'win.body': 'Yekî ku tu nas dikî li vir hînî kurdî dibe, rojê çend deqeyan. Tu jî were.',
+  'win.picture': 'Kartpostalek: Hamo û Hevalo li ser girekî, û çûkek bi nameyekê difire.',
 
   /* putting somebody else's post on your own profile */
   'repost.do': 'Ji nû ve biweşîne',

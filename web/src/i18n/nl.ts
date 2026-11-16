@@ -2104,6 +2104,15 @@ export const nl: Catalogue = {
   'share.win.badge': 'Ik heb op Hevalo de badge ‘{badge}’ verdiend.',
   'share.win.leagueUp': 'Ik ben op Hevalo gestegen naar Competitie {tier}.',
   'share.win.leaguePlace': 'Ik werd op Hevalo #{rank} in Competitie {tier}.',
+  'win.kicker': 'Een ansichtkaart van Hevalo',
+  'win.lesson': 'Weer een les af',
+  'win.streak': '{count} dagen op rij',
+  'win.streakPlain': 'De reeks houdt stand',
+  'win.badge': 'Een nieuwe badge',
+  'win.league': 'Een goede week in de {league}',
+  'win.leaguePlain': 'Een goede week in de competitie',
+  'win.body': 'Iemand die je kent leert hier Koerdisch, elke dag een paar minuten. Doe ook mee.',
+  'win.picture': 'Een ansichtkaart: Hamo en Hevalo op een heuvel, en een vogel die wegvliegt met een brief.',
 
   /* putting somebody else's post on your own profile */
   'repost.do': 'Opnieuw plaatsen',

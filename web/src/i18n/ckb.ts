@@ -2110,6 +2110,15 @@ export const ckb: Catalogue = {
   'share.win.badge': 'لە Hevalo نیشانەیەکم بەدەستهێنا: «{badge}».',
   'share.win.leagueUp': 'لە Hevalo سەرکەوتم بۆ لیگی {tier}.',
   'share.win.leaguePlace': 'لە Hevalo لە لیگی {tier} #{rank} بووم.',
+  'win.kicker': 'پۆستکارتێک لە Hevalo',
+  'win.lesson': 'وانەیەکی تر تەواو بوو',
+  'win.streak': '{count} ڕۆژ لەسەریەک',
+  'win.streakPlain': 'زنجیرەکە نەپچڕا',
+  'win.badge': 'نیشانەیەکی نوێ',
+  'win.league': 'هەفتەیەکی خۆش لە {league}',
+  'win.leaguePlain': 'هەفتەیەکی خۆش لە لیگ',
+  'win.body': 'کەسێک کە دەیناسیت لێرە فێری کوردی دەبێت، ڕۆژانە چەند خولەکێک. تۆش وەرە.',
+  'win.picture': 'پۆستکارتێک: حەمۆ و Hevalo لەسەر گردێک، و باڵندەیەک بە نامەیەکەوە دەفڕێت.',
 
   /* putting somebody else's post on your own profile */
   'repost.do': 'دووبارە بڵاوکردنەوە',

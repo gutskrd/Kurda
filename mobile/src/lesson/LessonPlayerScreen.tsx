@@ -585,7 +585,7 @@ function SessionPlayerBody({
           exercises={state.exercises}
           skipped={state.skipped.length}
           // a lesson finished can be shared, by its name where the map gave it; a review is practice and is not
-          lesson={kind === 'lesson' ? { title: title ?? null, putOff: state.skipped } : null}
+          lesson={kind === 'lesson' ? { title: title ?? null } : null}
           moments={moments}
           offerReminders={offerReminders}
           next={next}

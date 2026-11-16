@@ -287,8 +287,7 @@ describe('sharing', () => {
       moments = NO_LESSON_MOMENTS,
       kind = 'lesson',
       lessonName = 'Hello!',
-      putOff = [],
-    }: { moments?: LessonMoments; kind?: 'lesson' | 'practice'; lessonName?: string | null; putOff?: string[] } = {},
+    }: { moments?: LessonMoments; kind?: 'lesson' | 'practice'; lessonName?: string | null } = {},
   ): void {
     renderApp(
       <Results
@@ -296,8 +295,6 @@ describe('sharing', () => {
         lessonName={lessonName}
         results={{ ...base, ...lesson, ...over }}
         exercises={exercises}
-        skipped={putOff.length}
-        putOff={putOff}
         kind={kind}
         dialect="kurmanji"
         moments={moments}
@@ -338,12 +335,12 @@ describe('sharing', () => {
     expect(screen.getAllByRole('button', { name: 'Share' })).toHaveLength(1);
   });
 
-  it('shares the lesson by its name, a square for each exercise in order, and the site’s address', async () => {
+  it('shares the lesson by its name, with the lesson’s own address under it', async () => {
     const { share, said } = sheet();
     open();
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
-    expect(said()).toBe(`I finished “Hello!” in Kurdish on Hevalo.\n\n🟩🟩🟨🟩🟩🟩\n\n${SITE}`);
+    expect(said()).toBe(`I finished “Hello!” in Kurdish on Hevalo. 🍎\n${SITE}/win/lesson`);
   });
 
   it('shares nothing that says whose lesson it was', async () => {
@@ -354,22 +351,23 @@ describe('sharing', () => {
     const text = said();
     expect(text.length).toBeGreaterThan(0);
     for (const theirs of [WHO.id, WHO.username, WHO.displayName, WHO.country, '/users/', '/profile', '@']) expect(text, theirs).not.toContain(theirs);
-    // one address, and it is the site’s front door
-    expect(text.match(/https?:\/\/\S+/g)).toEqual([SITE]);
+    // one address, and it is the page of a lesson finished, which is about nobody
+    expect(text.match(/https?:\/\/\S+/g)).toEqual([`${SITE}/win/lesson`]);
   });
 
-  it('leaves an exercise that was put off out of the squares, as the score does', async () => {
+  it('says nothing of how the lesson went: no score, and no row of squares', async () => {
     const { said } = sheet();
-    open({ correct: 4, total: 5, accuracy: 0.8 }, { putOff: ['e6'] });
+    open({ correct: 4, total: 5, accuracy: 0.8 });
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(said().split('\n\n')[1]).toBe('🟩🟩🟨🟩🟩');
+    expect(said().split('\n')).toHaveLength(2);
+    expect(said()).not.toMatch(/[🟩🟨🟧⬜]|\d+\s*\/\s*\d+|%/u);
   });
 
   it('says a Kurdish lesson was finished when the page was not told its name', async () => {
     const { said } = sheet();
     open({}, { lessonName: null });
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(said().split('\n')[0]).toBe('I finished a Kurdish lesson on Hevalo.');
+    expect(said().split('\n')[0]).toBe('I finished a Kurdish lesson on Hevalo. 🍎');
   });
 
   it('copies the message where the device has no sheet, and says so', async () => {
@@ -377,7 +375,7 @@ describe('sharing', () => {
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
     open();
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(writeText).toHaveBeenCalledWith(`I finished “Hello!” in Kurdish on Hevalo.\n\n🟩🟩🟨🟩🟩🟩\n\n${SITE}`);
+    expect(writeText).toHaveBeenCalledWith(`I finished “Hello!” in Kurdish on Hevalo. 🍎\n${SITE}/win/lesson`);
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
   });
 
@@ -396,7 +394,7 @@ describe('sharing', () => {
     expect(share).not.toHaveBeenCalled();
   });
 
-  it('offers the streak on the day it reaches a week: its days, the week of squares, the address', async () => {
+  it('offers the streak on the day it reaches a week: its days, the fire, and the address of that day’s card', async () => {
     const { share, said } = sheet();
     open({ streak: { ...base.streak, current: 7 } }, { moments: kept });
     await screen.findByRole('heading', { name: 'Great work!' });
@@ -410,7 +408,7 @@ describe('sharing', () => {
     const bar = document.querySelector('.lesson-bar') as HTMLElement;
     await userEvent.click(within(bar).getByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
-    expect(said()).toBe(`7 days of Kurdish in a row.\n\n🟧🟧🟧🟧🟧🟧🟧\n\n${SITE}`);
+    expect(said()).toBe(`7 days of Kurdish in a row. 🔥\n${SITE}/win/streak/7`);
     for (const theirs of [WHO.id, WHO.username, WHO.displayName, '/users/']) expect(said()).not.toContain(theirs);
     // the way on is still the bar’s one button
     expect(bar.querySelector('.lesson-bar-row')!.lastElementChild).toHaveClass('lesson-bar-go');

@@ -29,6 +29,8 @@ import { SOURCES, SOURCE_ORDER, type Source } from './teaching/sources';
 import { isScannerProbe } from '@kurda/shared/src/scanner-paths';
 import { parseJoinLink, type JoinLink, type JoinLinkGame } from '@kurda/shared/src/join-link';
 import { GAME_NAMES } from '@kurda/shared/src/games/names';
+import { LEAGUE_TIER_META } from '@kurda/shared/src/leagues';
+import { parseWinLink, winCardPath, winLinkPath, type WinLink } from '@kurda/shared/src/win-link';
 
 /*
  * The two pieces of the Workers runtime this file uses, declared here rather
@@ -269,6 +271,66 @@ function inviteHead(invite: JoinLink, url: string): Array<string | ''> {
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
     `<meta property="og:image:alt" content="${attr(`${INVITE_GAME[invite.game]} on Hevalo`)}" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${attr(title)}" />`,
+    `<meta name="twitter:description" content="${attr(description)}" />`,
+    `<meta name="twitter:image" content="${attr(image)}" />`,
+  ];
+}
+
+/**
+ * What the card of a shared win says under its picture: what was done, in a
+ * few words, and where. English, as the rest of this file's words are; the
+ * line the link arrives under is in the sender's language and the page it
+ * opens is in the reader's (share/WinPage.tsx).
+ *
+ * The word game's card says the game and not how it went: the same link is
+ * under a game that was lost.
+ */
+function winWords(win: WinLink): { title: string; description: string } {
+  const hevalo = 'A postcard from Hevalo, where Kurdish is learned a few minutes at a time.';
+  switch (win.kind) {
+    case 'lesson':
+      return { title: 'One more Kurdish lesson done', description: hevalo };
+    case 'streak':
+      // one day is not yet a row of them
+      return { title: win.days !== null && win.days > 1 ? `${win.days} days of Kurdish in a row` : 'A Kurdish streak, kept alive', description: hevalo };
+    case 'badge':
+      return { title: 'A new badge on Hevalo', description: hevalo };
+    case 'league':
+      return { title: win.tier ? `A good week in the ${LEAGUE_TIER_META[win.tier].nameKu} League` : 'A good week in the league', description: hevalo };
+    case 'peyvok':
+      return { title: `${GAME_NAMES.peyvok}: the day’s Kurdish word`, description: 'Six tries to find it. Play today’s on Hevalo.' };
+  }
+}
+
+/**
+ * A shared win, as a head: what was done, and the postcard drawn for it
+ * (shared: art/share-card.ts, as a picture by api/scripts/generate-share-art.ts).
+ *
+ * Nothing is looked up, and there is nothing to look up: the link says what
+ * kind of win it is and at most one detail of a fixed shape, both read by a
+ * pattern that takes nothing else (shared/src/win-link.ts), and it never says
+ * whose. So this is a table lookup like an invitation's. It cannot fail,
+ * costs no request, and puts nothing from an address into markup but a count
+ * of days and a league's own name.
+ */
+function winHead(win: WinLink, url: string): Array<string | ''> {
+  const { title, description } = winWords(win);
+  const image = new URL(winCardPath(win), url).toString();
+  return [
+    `<title>${attr(title)}</title>`,
+    `<meta name="description" content="${attr(description)}" />`,
+    `<link rel="canonical" href="${attr(url)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="Hevalo" />`,
+    `<meta property="og:url" content="${attr(url)}" />`,
+    `<meta property="og:title" content="${attr(title)}" />`,
+    `<meta property="og:description" content="${attr(description)}" />`,
+    `<meta property="og:image" content="${attr(image)}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="${attr('A postcard from Hevalo: Hamo and the deer Hevalo on a hillside, and a bird flying off with a letter.')}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${attr(title)}" />`,
     `<meta name="twitter:description" content="${attr(description)}" />`,
@@ -693,6 +755,19 @@ export default {
       return invited;
     }
 
+    /*
+     * A win somebody shared: the postcard of its kind, from the link alone.
+     * The page is about nobody and says what any other of its kind says, so
+     * it is kept out of search results; its canonical is the win as it was
+     * read, without whatever was mistyped after it.
+     */
+    const win = parseWinLink(url.pathname);
+    if (win) {
+      const shared = withHead(assets, winHead(win, new URL(winLinkPath(win), url.origin).toString()));
+      shared.headers.set('x-robots-tag', 'noindex');
+      return shared;
+    }
+
     const route = routeFor(url.pathname);
     if (!route) return assets;
 
@@ -720,6 +795,7 @@ export const __test = {
   staticHead,
   previewHead,
   inviteHead,
+  winHead,
   jsonLd,
   teachingArticle,
   STATIC_PAGES,

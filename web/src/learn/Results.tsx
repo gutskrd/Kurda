@@ -120,7 +120,6 @@ export function Results({
   results,
   exercises,
   skipped = 0,
-  putOff = [],
   kind,
   dialect,
   moments = NO_LESSON_MOMENTS,
@@ -139,8 +138,6 @@ export function Results({
   exercises: DeliveredExercise[];
   /** exercises put off and never answered in this session */
   skipped?: number;
-  /** which exercises those were: a shared lesson's strip leaves them out, as the score does */
-  putOff?: readonly string[];
   kind: 'lesson' | 'practice';
   dialect: string | null | undefined;
   /** what else the lesson did: today's goal, the streak, a new level, the league */
@@ -264,7 +261,7 @@ export function Results({
   // the quiet Share of the screen in front: the lesson on its results, the streak on its card on one of its big days, and otherwise none
   const shareButton =
     stage === 'results' && kind === 'lesson' ? (
-      <ShareWin text={lessonShare(t, { title: lessonName, exercises, results, putOff })} />
+      <ShareWin text={lessonShare(t, lessonName)} />
     ) : stage === 'week' && streakMilestone(results.streak.current) ? (
       <ShareWin text={streakShare(t, locale, results.streak.current)} />
     ) : null;

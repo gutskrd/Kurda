@@ -16,6 +16,7 @@
     "seed:cosmetics": "tsx scripts/seed-cosmetics.ts",
     "email:art": "tsx scripts/generate-email-art.ts",
     "invite:art": "tsx scripts/generate-invite-art.ts",
+    "share:art": "tsx scripts/generate-share-art.ts",
     "content:import": "tsx scripts/import-content.ts",
     "stories:import": "tsx scripts/import-stories.ts",
     "dict:import": "tsx scripts/import-lexicon.ts",

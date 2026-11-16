@@ -1,25 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import type { LeagueWeekResult } from './leagues.js';
 import {
-  GRID_SQUARES,
-  GRID_SQUARES_HIGH_CONTRAST,
-  LESSON_SQUARES,
-  STREAK_SQUARES,
+  GRID_MARKS,
+  GRID_MARKS_HIGH_CONTRAST,
+  WIN_MARKS,
+  gridMark,
   gridRow,
-  gridSquare,
   leagueWin,
-  lessonMarks,
-  lessonStrip,
   shareMessage,
   streakMilestone,
-  streakRow,
+  winLine,
   wordGameHeader,
   wordGameShareText,
   wordGrid,
-  type LessonMark,
   type LetterFeedback,
   type WordGameShare,
 } from './win-share.js';
+import { WIN_KINDS } from './win-link.js';
 
 /** Every letter of any alphabet: a picture has none. */
 const LETTERS = /\p{L}/u;
@@ -30,30 +27,36 @@ const win: LetterFeedback[][] = [
   ['green', 'green', 'green', 'green', 'green'],
 ];
 
-describe('the word game’s squares', () => {
-  it('draws each mark as its square', () => {
-    expect(gridSquare('green')).toBe(GRID_SQUARES.green);
-    expect(gridSquare('yellow')).toBe(GRID_SQUARES.yellow);
-    expect(gridSquare('gray')).toBe(GRID_SQUARES.gray);
+describe('the word game’s fruit', () => {
+  it('draws each mark as its fruit: a green apple in its place, a lemon in the word, an empty plate for neither', () => {
+    expect(gridMark('green')).toBe(GRID_MARKS.green);
+    expect(gridMark('yellow')).toBe(GRID_MARKS.yellow);
+    expect(gridMark('gray')).toBe(GRID_MARKS.gray);
+    expect(new Set(Object.values(GRID_MARKS)).size).toBe(3);
   });
 
-  it('draws orange and blue for a player who cannot tell green from yellow', () => {
-    expect(gridSquare('green', true)).toBe(GRID_SQUARES_HIGH_CONTRAST.green);
-    expect(gridSquare('yellow', true)).toBe(GRID_SQUARES_HIGH_CONTRAST.yellow);
-    expect(GRID_SQUARES_HIGH_CONTRAST.green).not.toBe(GRID_SQUARES.green);
-    expect(GRID_SQUARES_HIGH_CONTRAST.yellow).not.toBe(GRID_SQUARES.yellow);
+  it('draws fruit of another shape for a player who cannot tell green from yellow', () => {
+    expect(gridMark('green', true)).toBe(GRID_MARKS_HIGH_CONTRAST.green);
+    expect(gridMark('yellow', true)).toBe(GRID_MARKS_HIGH_CONTRAST.yellow);
+    expect(GRID_MARKS_HIGH_CONTRAST.green).not.toBe(GRID_MARKS.green);
+    expect(GRID_MARKS_HIGH_CONTRAST.yellow).not.toBe(GRID_MARKS.yellow);
+    expect(GRID_MARKS_HIGH_CONTRAST.green).not.toBe(GRID_MARKS_HIGH_CONTRAST.yellow);
   });
 
-  it('draws a guess as a row of squares', () => {
-    expect(gridRow(['green', 'gray', 'yellow'])).toBe('🟩⬜🟨');
-    expect(gridRow(['green'], true)).toBe('🟧');
+  it('draws a guess as a row of fruit', () => {
+    expect(gridRow(['green', 'gray', 'yellow'])).toBe('🍏⚪🍋');
+    expect(gridRow(['green'], true)).toBe('🍊');
     expect(gridRow([])).toBe('');
   });
 
   it('draws the guesses a row under a row', () => {
     const grid = wordGrid(win);
-    expect(grid.split('\n')).toEqual(['⬜🟨⬜⬜⬜', '🟩⬜🟨⬜⬜', '🟩🟩🟩🟩🟩']);
+    expect(grid.split('\n')).toEqual(['⚪🍋⚪⚪⚪', '🍏⚪🍋⚪⚪', '🍏🍏🍏🍏🍏']);
     expect(wordGrid([])).toBe('');
+  });
+
+  it('is never a coloured square: a share is not a row of blocks', () => {
+    for (const mark of [...Object.values(GRID_MARKS), ...Object.values(GRID_MARKS_HIGH_CONTRAST)]) expect(mark).not.toMatch(/[🟩🟨🟧🟦⬜⬛🟥🟪🟫]/u);
   });
 });
 
@@ -89,12 +92,12 @@ describe('the word game’s share', () => {
     const [header, blank, ...gridLines] = text.split('\n');
     expect(header).toBe('Hevalo Peyvok #7 3/6');
     expect(blank).toBe('');
-    expect(gridLines).toEqual(['⬜🟨⬜⬜⬜', '🟩⬜🟨⬜⬜', '🟩🟩🟩🟩🟩']);
+    expect(gridLines).toEqual(['⚪🍋⚪⚪⚪', '🍏⚪🍋⚪⚪', '🍏🍏🍏🍏🍏']);
   });
 
-  it('reads as it did when the phone built it', () => {
+  it('reads as one message: the score, and under it how the game went', () => {
     expect(wordGameShareText({ rows: win, solved: true, maxAttempts: 6, name: 'Hevalo Peyvok', difficulty: 'Medium' })).toBe(
-      'Hevalo Peyvok (Medium) 3/6\n\n⬜🟨⬜⬜⬜\n🟩⬜🟨⬜⬜\n🟩🟩🟩🟩🟩',
+      'Hevalo Peyvok (Medium) 3/6\n\n⚪🍋⚪⚪⚪\n🍏⚪🍋⚪⚪\n🍏🍏🍏🍏🍏',
     );
   });
 
@@ -111,123 +114,35 @@ describe('the word game’s share', () => {
     expect(LETTERS.test(grid)).toBe(false);
   });
 
-  it('draws the high-contrast squares when asked', () => {
+  it('draws the high-contrast fruit when asked', () => {
     const text = wordGameShareText({ rows: [['green', 'yellow', 'gray']], solved: true, maxAttempts: 6, name: 'Hevalo Peyvok', highContrast: true });
-    expect(text.split('\n\n')[1]).toBe('🟧🟦⬜');
+    expect(text.split('\n\n')[1]).toBe('🍊🍇⚪');
   });
 });
 
-describe('a lesson’s marks', () => {
-  const ids = ['a', 'b', 'c', 'd', 'e'];
-
-  it('marks each exercise in the lesson’s order: right the first time, or only later', () => {
-    expect(lessonMarks({ exerciseIds: ids, missedIds: ['b', 'e'], correct: 3, total: 5 })).toEqual(['first', 'later', 'first', 'first', 'later']);
+describe('the mark at the end of a line', () => {
+  it('ends a lesson’s line on an apple and a streak’s on the fire', () => {
+    expect(winLine('I finished “Silav!” on Hevalo.', 'lesson')).toBe('I finished “Silav!” on Hevalo. 🍎');
+    expect(winLine('7 days in a row.', 'streak')).toBe('7 days in a row. 🔥');
   });
 
-  it('marks a lesson with no mistakes as all right the first time', () => {
-    expect(lessonMarks({ exerciseIds: ids, missedIds: [], correct: 5, total: 5 })).toEqual(['first', 'first', 'first', 'first', 'first']);
+  it('has a mark for every win but the word game, whose line is its score', () => {
+    for (const kind of WIN_KINDS) {
+      if (kind === 'peyvok') expect(WIN_MARKS[kind]).toBe('');
+      else expect(WIN_MARKS[kind], kind).not.toBe('');
+    }
+    expect(winLine('Hevalo Peyvok 3/6', 'peyvok')).toBe('Hevalo Peyvok 3/6');
+    expect(new Set(WIN_KINDS.filter((k) => k !== 'peyvok').map((k) => WIN_MARKS[k])).size).toBe(WIN_KINDS.length - 1);
   });
 
-  it('leaves out an exercise that was put off, as the score does', () => {
-    expect(lessonMarks({ exerciseIds: ids, missedIds: ['a'], putOffIds: ['c', 'd'], correct: 2, total: 3 })).toEqual(['later', 'first', 'first']);
+  it('says nothing where there is no line: a mark alone is not a message', () => {
+    expect(winLine('', 'lesson')).toBe('');
+    expect(winLine('   ', 'streak')).toBe('');
   });
 
-  it('tallies the score, the right ones first, when the list does not account for it', () => {
-    // no list at all
-    expect(lessonMarks({ exerciseIds: [], missedIds: [], correct: 5, total: 6 })).toEqual(['first', 'first', 'first', 'first', 'first', 'later']);
-    // a list shorter than the score
-    expect(lessonMarks({ exerciseIds: ['a'], missedIds: [], correct: 1, total: 3 })).toEqual(['first', 'later', 'later']);
-    // a miss on an exercise the list does not have: the list says two right and the score says one, and the score is what the screen shows
-    expect(lessonMarks({ exerciseIds: ['a', 'b'], missedIds: ['zz'], correct: 1, total: 2 })).toEqual(['first', 'later']);
-  });
-
-  it('draws nothing it was not told: a score of nothing is no marks, and never more right than answered', () => {
-    expect(lessonMarks({ exerciseIds: [], missedIds: [], correct: 0, total: 0 })).toEqual([]);
-    expect(lessonMarks({ exerciseIds: [], missedIds: [], correct: 9, total: 2 })).toEqual(['first', 'first']);
-    expect(lessonMarks({ exerciseIds: [], missedIds: [], correct: Number.NaN, total: -4 })).toEqual([]);
-  });
-});
-
-describe('a lesson’s strip', () => {
-  const marks = (first: number, later = 0): LessonMark[] => [...Array<LessonMark>(first).fill('first'), ...Array<LessonMark>(later).fill('later')];
-
-  it('is nothing for no marks', () => {
-    expect(lessonStrip([])).toBe('');
-  });
-
-  it('is one square for one exercise', () => {
-    expect(lessonStrip(['first'])).toBe('🟩');
-    expect(lessonStrip(['later'])).toBe('🟨');
-  });
-
-  it('keeps ten squares on one row', () => {
-    const strip = lessonStrip(marks(10));
-    expect(strip).toBe('🟩'.repeat(10));
-    expect(strip).not.toContain('\n');
-  });
-
-  it('wraps the eleventh onto a second row', () => {
-    expect(lessonStrip(marks(11)).split('\n')).toEqual(['🟩'.repeat(10), '🟩']);
-  });
-
-  it('wraps a long lesson into rows of ten, the last one what is left', () => {
-    const rows = lessonStrip(marks(18, 7)).split('\n');
-    expect(rows.map((r) => [...r].length)).toEqual([10, 10, 5]);
-    expect(rows[2]).toBe('🟨'.repeat(5));
-  });
-
-  it('keeps the order it was given: a pattern of the lesson, not a count', () => {
-    expect(lessonStrip(['first', 'later', 'first', 'first', 'later'])).toBe('🟩🟨🟩🟩🟨');
-  });
-
-  it('uses two different squares, and no letters', () => {
-    expect(LESSON_SQUARES.first).not.toBe(LESSON_SQUARES.later);
-    expect(LETTERS.test(lessonStrip(marks(12, 9)))).toBe(false);
-  });
-});
-
-describe('a streak’s row', () => {
-  const lit = STREAK_SQUARES.kept;
-  const dim = STREAK_SQUARES.ahead;
-
-  it('lights one square of the week on the first day', () => {
-    expect(streakRow(1)).toBe(lit + dim.repeat(6));
-  });
-
-  it('lights as many as days were kept, in a week of seven', () => {
-    expect(streakRow(3)).toBe(lit.repeat(3) + dim.repeat(4));
-    expect([...streakRow(5)]).toHaveLength(7);
-  });
-
-  it('is a full week at seven days, with nothing beside it', () => {
-    expect(streakRow(7)).toBe(lit.repeat(7));
-  });
-
-  it('writes the count beside the week from the eighth day', () => {
-    expect(streakRow(8)).toBe(`${lit.repeat(7)} 8`);
-  });
-
-  it('stays a week and a number at thirty days and at a year: never a wall of squares', () => {
-    expect(streakRow(30)).toBe(`${lit.repeat(7)} 30`);
-    expect(streakRow(365)).toBe(`${lit.repeat(7)} 365`);
-    expect(streakRow(365).split('\n')).toHaveLength(1);
-    expect([...streakRow(3650)].filter((c) => c === lit)).toHaveLength(7);
-  });
-
-  it('writes the count as the reader’s language does, when it is handed one', () => {
-    expect(streakRow(30, '٣٠')).toBe(`${lit.repeat(7)} ٣٠`);
-    // within the week there is no count to write
-    expect(streakRow(7, '٧')).toBe(lit.repeat(7));
-  });
-
-  it('is nothing for no streak, or a number that is not one', () => {
-    expect(streakRow(0)).toBe('');
-    expect(streakRow(-3)).toBe('');
-    expect(streakRow(Number.NaN)).toBe('');
-  });
-
-  it('has no letters in it', () => {
-    for (const days of [1, 7, 8, 30, 365]) expect(LETTERS.test(streakRow(days))).toBe(false);
+  it('adds one mark and no letters', () => {
+    for (const kind of WIN_KINDS) expect(LETTERS.test(WIN_MARKS[kind]), kind).toBe(false);
+    expect(winLine('  A line.  ', 'badge')).toBe(`A line. ${WIN_MARKS.badge}`);
   });
 });
 
@@ -313,7 +228,7 @@ describe('a league week that is good news', () => {
 
 describe('the message', () => {
   it('is the line, the picture set apart under it, and the address last', () => {
-    expect(shareMessage({ line: 'A line.', picture: '🟩🟨', link: 'https://example.org' })).toBe('A line.\n\n🟩🟨\n\nhttps://example.org');
+    expect(shareMessage({ line: 'A line.', picture: '🍏🍋', link: 'https://example.org' })).toBe('A line.\n\n🍏🍋\n\nhttps://example.org');
   });
 
   it('puts the address straight under the line when there is no picture', () => {

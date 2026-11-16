@@ -2099,6 +2099,15 @@ export const tr: Catalogue = {
   'share.win.badge': 'Hevalo’da “{badge}” rozetini kazandım.',
   'share.win.leagueUp': 'Hevalo’da {tier} ligine yükseldim.',
   'share.win.leaguePlace': 'Hevalo’da {tier} liginde {rank}. oldum.',
+  'win.kicker': 'Hevalo’dan bir kartpostal',
+  'win.lesson': 'Bir ders daha bitti',
+  'win.streak': 'Üst üste {count} gün',
+  'win.streakPlain': 'Seri devam ediyor',
+  'win.badge': 'Yeni bir rozet',
+  'win.league': '{league}’nde güzel bir hafta',
+  'win.leaguePlain': 'Ligde güzel bir hafta',
+  'win.body': 'Tanıdığın biri burada Kürtçe öğreniyor, her gün birkaç dakika. Sen de gel.',
+  'win.picture': 'Bir kartpostal: bir tepede Hamo ile Hevalo, ve mektupla uçup giden bir kuş.',
 
   /* putting somebody else's post on your own profile */
   'repost.do': 'Yeniden paylaş',

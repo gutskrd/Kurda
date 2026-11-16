@@ -2098,6 +2098,15 @@ export const ar: Catalogue = {
   'share.win.badge': 'نلتُ شارة «{badge}» على Hevalo.',
   'share.win.leagueUp': 'صعدتُ إلى دوري {tier} على Hevalo.',
   'share.win.leaguePlace': 'أنهيتُ الأسبوع في المركز #{rank} في دوري {tier} على Hevalo.',
+  'win.kicker': 'بطاقة بريدية من Hevalo',
+  'win.lesson': 'درس آخر اكتمل',
+  'win.streak': 'اليوم {count} على التوالي',
+  'win.streakPlain': 'سلسلة لم تنقطع',
+  'win.badge': 'شارة جديدة',
+  'win.league': 'أسبوع جيّد في {league}',
+  'win.leaguePlain': 'أسبوع جيّد في الدوري',
+  'win.body': 'شخص تعرفه يتعلّم الكردية هنا، دقائق قليلة كل يوم. تعالَ وتعلّم معه.',
+  'win.picture': 'بطاقة بريدية: حمو و Hevalo على تلّة، وطائر يطير حاملًا رسالة.',
 
   /* putting somebody else's post on your own profile */
   'repost.do': 'إعادة النشر',

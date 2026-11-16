@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LeagueWin } from '@kurda/shared';
+import { parseWinLink, type LeagueWin } from '@kurda/shared';
 import { translator } from '../i18n/I18nProvider';
 import { en } from '../i18n/en';
 import { ku } from '../i18n/ku';
@@ -14,81 +14,65 @@ import type { WordleGame, WordleGuessRow } from '../lib/types';
 import { badgeShare, leagueShare, lessonShare, siteUrl, streakShare, wordGameShare } from './winText';
 
 /*
- * What each win says when it is shared, word for word: the catalogue's line,
- * the shared builder's picture, and the site's address. The buttons that send
- * these are tested where they stand (learn/Results, badges, leagues, the word
- * game's page).
+ * What each win says when it is shared, word for word: the catalogue's line
+ * ended on its mark, and the win's own address on the site, which is drawn
+ * as its postcard wherever it is pasted. The buttons that send these are
+ * tested where they stand (learn/Results, badges, leagues, the word game's
+ * page).
  */
 
 const t = translator(en);
 const SITE = window.location.origin;
 
-const exercises = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].map((id) => ({ id }));
-const mistake = (exerciseId: string) => ({ exerciseId, verdict: 'wrong' as const });
-
 describe('a finished lesson', () => {
-  it('names the lesson, draws a square for each exercise in order, and ends on the site’s address', () => {
-    const text = lessonShare(t, { title: 'Hello!', exercises, results: { correct: 4, total: 6, mistakes: [mistake('e2'), mistake('e5')] } });
-    expect(text).toBe(`I finished “Hello!” in Kurdish on Hevalo.\n\n🟩🟨🟩🟩🟨🟩\n\n${SITE}`);
+  it('names the lesson, ends its line on an apple, and puts the lesson’s own address under it', () => {
+    expect(lessonShare(t, 'Hello!')).toBe(`I finished “Hello!” in Kurdish on Hevalo. 🍎\n${SITE}/win/lesson`);
   });
 
   it('says a Kurdish lesson was finished when the page was not told its name', () => {
-    const results = { correct: 6, total: 6, mistakes: [] };
-    expect(lessonShare(t, { exercises, results }).split('\n')[0]).toBe('I finished a Kurdish lesson on Hevalo.');
-    expect(lessonShare(t, { title: '   ', exercises, results }).split('\n')[0]).toBe('I finished a Kurdish lesson on Hevalo.');
-    expect(lessonShare(t, { title: null, exercises, results }).split('\n\n')[1]).toBe('🟩🟩🟩🟩🟩🟩');
+    for (const title of [undefined, null, '', '   ']) expect(lessonShare(t, title).split('\n')[0], String(title)).toBe('I finished a Kurdish lesson on Hevalo. 🍎');
   });
 
-  it('leaves out an exercise that was put off, as the score does', () => {
-    const text = lessonShare(t, { title: 'Hello!', exercises, results: { correct: 3, total: 4, mistakes: [mistake('e1')] }, putOff: ['e3', 'e6'] });
-    expect(text.split('\n\n')[1]).toBe('🟨🟩🟩🟩');
-  });
-
-  it('wraps a long lesson into rows of ten', () => {
-    const long = Array.from({ length: 14 }, (_, i) => ({ id: `x${i}` }));
-    const strip = lessonShare(t, { exercises: long, results: { correct: 14, total: 14, mistakes: [] } }).split('\n\n')[1]!;
-    expect(strip.split('\n').map((row) => [...row].length)).toEqual([10, 4]);
-  });
-
-  it('draws the score as a tally when the list of exercises did not arrive', () => {
-    const text = lessonShare(t, { exercises: [], results: { correct: 5, total: 6 } });
-    expect(text.split('\n\n')[1]).toBe('🟩🟩🟩🟩🟩🟨');
+  it('is a line and an address, and no rows of squares', () => {
+    const text = lessonShare(t, 'Hello!');
+    expect(text.split('\n')).toHaveLength(2);
+    expect(text).not.toMatch(/[🟩🟨🟧🟦⬜⬛]/u);
   });
 });
 
 describe('a streak', () => {
-  it('is its days, a week of squares, and the address', () => {
-    expect(streakShare(t, 'en', 7)).toBe(`7 days of Kurdish in a row.\n\n🟧🟧🟧🟧🟧🟧🟧\n\n${SITE}`);
+  it('is its days, the fire, and the address of the card with those days on its stamp', () => {
+    expect(streakShare(t, 'en', 7)).toBe(`7 days of Kurdish in a row. 🔥\n${SITE}/win/streak/7`);
+    expect(streakShare(t, 'en', 365)).toBe(`365 days of Kurdish in a row. 🔥\n${SITE}/win/streak/365`);
   });
 
-  it('writes the count beside the week once the streak has outgrown it', () => {
-    expect(streakShare(t, 'en', 30)).toBe(`30 days of Kurdish in a row.\n\n🟧🟧🟧🟧🟧🟧🟧 30\n\n${SITE}`);
-    expect(streakShare(t, 'en', 365).split('\n\n')[1]).toBe('🟧🟧🟧🟧🟧🟧🟧 365');
-  });
-
-  it('writes the number in the reader’s own figures, in the line and beside the squares alike', () => {
+  it('writes the number in the reader’s own figures in the line, and in plain ones in the address', () => {
     const count = new Intl.NumberFormat('ckb').format(30);
-    const text = streakShare(translator(ckb), 'ckb', 30);
-    expect(text.split('\n')[0]).toContain(count);
-    expect(text.split('\n\n')[1]).toBe(`🟧🟧🟧🟧🟧🟧🟧 ${count}`);
+    const [line, link] = streakShare(translator(ckb), 'ckb', 30).split('\n') as [string, string];
+    expect(line).toContain(count);
+    expect(link).toBe(`${SITE}/win/streak/30`);
   });
 });
 
 describe('a badge', () => {
-  it('is said by its name, with the address under it and no picture', () => {
-    expect(badgeShare(t, 'Agir')).toBe(`I earned the “Agir” badge on Hevalo.\n${SITE}`);
+  it('is said by its name and ends on a medal, with the badge’s address under it', () => {
+    expect(badgeShare(t, 'Agir')).toBe(`I earned the “Agir” badge on Hevalo. 🏅\n${SITE}/win/badge`);
+  });
+
+  it('keeps the badge’s name out of the address: a name is words, and an address is drawn from a fixed list', () => {
+    expect(badgeShare(t, 'Agir & <b>').split('\n')[1]).toBe(`${SITE}/win/badge`);
   });
 });
 
 describe('a league week', () => {
   it('says the league moved up to', () => {
     const win: LeagueWin = { kind: 'promoted', tier: 'cem' };
-    expect(leagueShare(t, win, 'Çem')).toBe(`I moved up to the Çem League on Hevalo.\n${SITE}`);
+    expect(leagueShare(t, win, 'Çem')).toBe(`I moved up to the Çem League on Hevalo. 🏆\n${SITE}/win/league/cem`);
   });
 
   it('says a place in the first three and the league it was taken in', () => {
     const win: LeagueWin = { kind: 'podium', rank: 2, tier: 'okyanus' };
-    expect(leagueShare(t, win, 'Okyanûs')).toBe(`I finished #2 in the Okyanûs League on Hevalo.\n${SITE}`);
+    expect(leagueShare(t, win, 'Okyanûs')).toBe(`I finished #2 in the Okyanûs League on Hevalo. 🏆\n${SITE}/win/league/okyanus`);
   });
 });
 
@@ -111,8 +95,8 @@ describe('the word game', () => {
   });
   const words = { practice: 'Practice', difficulty: 'Medium' };
 
-  it('is the game’s name with the score, the grid of the guesses, and the address', () => {
-    expect(wordGameShare(game({}), words)).toBe(`Hevalo Peyvok (Medium) 2/6\n\n🟨🟩⬜\n🟩🟩🟩\n\n${SITE}`);
+  it('is the game’s name with the score, the guesses as rows of fruit, and the game’s address', () => {
+    expect(wordGameShare(game({}), words)).toBe(`Hevalo Peyvok (Medium) 2/6\n\n🍋🍏⚪\n🍏🍏🍏\n\n${SITE}/win/peyvok`);
   });
 
   it('calls a practice game one, and writes an X for a word that was not found', () => {
@@ -133,20 +117,24 @@ describe('the word game', () => {
 describe('every share', () => {
   const win: LeagueWin = { kind: 'podium', rank: 3, tier: 'kani' };
   const all = (tt: typeof t, locale: string): string[] => [
-    lessonShare(tt, { title: 'Hello!', exercises, results: { correct: 6, total: 6, mistakes: [] } }),
-    lessonShare(tt, { exercises, results: { correct: 6, total: 6, mistakes: [] } }),
+    lessonShare(tt, 'Hello!'),
+    lessonShare(tt),
     streakShare(tt, locale, 14),
     badgeShare(tt, 'Agir'),
     leagueShare(tt, { kind: 'promoted', tier: 'cem' }, 'Çem'),
     leagueShare(tt, win, 'Kanî'),
   ];
 
-  it('points at the site’s front door and nowhere else: never a profile, never a page about a person', () => {
+  it('points at a win’s own page on the site and nowhere else: never a profile, never a page about a person', () => {
     expect(siteUrl()).toBe(SITE);
     for (const text of all(t, 'en')) {
       const links = text.match(/https?:\/\/\S+/g) ?? [];
-      expect(links).toEqual([SITE]);
-      expect(text.endsWith(SITE)).toBe(true);
+      expect(links).toHaveLength(1);
+      expect(text.endsWith(links[0]!)).toBe(true);
+      expect(links[0]!.startsWith(`${SITE}/win/`)).toBe(true);
+      // the address is one the site reads as a win, and it says a kind and at most one detail
+      expect(parseWinLink(new URL(links[0]!).pathname)).not.toBeNull();
+      expect(new URL(links[0]!).search).toBe('');
       expect(text).not.toMatch(/\/users\/|\/profile|@/);
     }
   });

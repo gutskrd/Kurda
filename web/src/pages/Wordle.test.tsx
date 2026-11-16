@@ -277,13 +277,13 @@ describe('Peyvok’s result, shared', () => {
 
   afterEach(() => vi.unstubAllGlobals());
 
-  it('shares the day’s word as its score, its grid and the site’s address', async () => {
+  it('shares the day’s word as its score, its guesses as rows of fruit and the game’s address', async () => {
     const said = open({ daily: wonGame });
     await screen.findByText(/solved it/i);
     const share = screen.getByRole('button', { name: 'Share' });
     expect(share).toHaveClass('btn-secondary');
     await userEvent.click(share);
-    expect(said()).toBe(`Hevalo Peyvok (Medium) 1/6\n\n🟩🟩🟩\n\n${SITE}`);
+    expect(said()).toBe(`Hevalo Peyvok (Medium) 1/6\n\n🍏🍏🍏\n\n${SITE}/win/peyvok`);
   });
 
   it('gives nothing of the word away, and nothing of who played', async () => {
@@ -295,7 +295,8 @@ describe('Peyvok’s result, shared', () => {
     // "kar" was the guess and the word
     expect(text).not.toMatch(/kar/i);
     for (const theirs of ['rojda', 'u-4471', '/users/', '@']) expect(text).not.toContain(theirs);
-    expect(text.match(/https?:\/\/\S+/g)).toEqual([SITE]);
+    // one address, and it is the word game's own page, which is about nobody
+    expect(text.match(/https?:\/\/\S+/g)).toEqual([`${SITE}/win/peyvok`]);
   });
 
   it('shares a practice word that was not found the same way, with an X for the score, under the way to play again', async () => {
@@ -310,7 +311,7 @@ describe('Peyvok’s result, shared', () => {
     expect(again).toHaveClass('btn-primary');
     expect(again.compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await userEvent.click(share);
-    expect(said()).toBe(`Hevalo Peyvok Practice (Hard) X/6\n\n${Array.from({ length: 6 }, () => '⬜🟩⬜').join('\n')}\n\n${SITE}`);
+    expect(said()).toBe(`Hevalo Peyvok Practice (Hard) X/6\n\n${Array.from({ length: 6 }, () => '⚪🍏⚪').join('\n')}\n\n${SITE}/win/peyvok`);
     expect(said()).not.toMatch(/kar/i);
   });
 

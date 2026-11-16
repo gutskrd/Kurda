@@ -8,7 +8,7 @@ import { ShareWin, shareOut } from './ShareWin';
  * message copied where it has not, and nothing else done either way.
  */
 
-const TEXT = 'I finished a Kurdish lesson on Hevalo.\n\n🟩🟩🟨\n\nhttps://hevalo.test';
+const TEXT = 'I finished a Kurdish lesson on Hevalo. 🍎\nhttps://hevalo.test/win/lesson';
 
 afterEach(() => {
   vi.useRealTimers();

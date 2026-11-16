@@ -36,6 +36,7 @@ const Saved = lazy(() => import('./pages/Saved').then((m) => ({ default: m.Saved
 const DimenPost = lazy(() => import('./pages/DimenPost').then((m) => ({ default: m.DimenPost })));
 const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games })));
 const InvitePage = lazy(() => import('./play/InvitePage').then((m) => ({ default: m.InvitePage })));
+const WinPage = lazy(() => import('./share/WinPage').then((m) => ({ default: m.WinPage })));
 const Wordle = lazy(() => import('./pages/Wordle').then((m) => ({ default: m.Wordle })));
 const LastLetter = lazy(() => import('./lastletter/LastLetter').then((m) => ({ default: m.LastLetter })));
 const Impostor = lazy(() => import('./impostor/Impostor').then((m) => ({ default: m.Impostor })));
@@ -204,6 +205,9 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="/how-hevalo-teaches" element={<HowHevaloTeaches />} />
         {/* a game's invite link from a message: what it is, and the way in (shared join-link.ts) */}
         <Route path="/join/:game/:code" element={<InvitePage />} />
+        {/* a win somebody shared: the postcard its link was drawn with, and the way in (shared win-link.ts) */}
+        <Route path="/win/:kind" element={<WinPage />} />
+        <Route path="/win/:kind/:detail" element={<WinPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
       <Route path="/stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />

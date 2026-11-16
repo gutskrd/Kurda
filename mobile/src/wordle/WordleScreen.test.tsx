@@ -106,7 +106,7 @@ describe('Peyvok’s result', () => {
 describe('Peyvok’s result, shared', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('shares the day’s word as its score, its grid and the site’s address, and nothing of the word or of who played', async () => {
+  it('shares the day’s word as its score, its guesses as rows of fruit and the game’s address, and nothing of the word or of who played', async () => {
     const share = vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
     testAuth.client = serving(over('won'));
     renderWithProviders(<WordleScreen onExit={() => undefined} />);
@@ -115,7 +115,7 @@ describe('Peyvok’s result, shared', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
     const { message } = share.mock.calls[0]?.[0] as { message: string };
-    expect(message).toBe('Hevalo Peyvok (Medium) 2/6\n\n🟨🟩⬜\n🟩🟩🟩\n\nhttps://hevalo.app');
+    expect(message).toBe('Hevalo Peyvok (Medium) 2/6\n\n🍋🍏⚪\n🍏🍏🍏\n\nhttps://hevalo.app/win/peyvok');
     // "mal" and "dar" were the guesses, "dar" the word; the account is "rojda"
     expect(message).not.toMatch(/mal|dar/i);
     for (const theirs of [testAuth.user.username, testAuth.user.email, '/users/', '@']) expect(message).not.toContain(theirs);
@@ -129,7 +129,7 @@ describe('Peyvok’s result, shared', () => {
     await screen.findByText('Out of tries.');
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     const { message } = share.mock.calls[0]?.[0] as { message: string };
-    expect(message).toBe(`Hevalo Peyvok Practice (Medium) X/6\n\n${Array.from({ length: 6 }, () => '⬜🟩⬜').join('\n')}\n\nhttps://hevalo.app`);
+    expect(message).toBe(`Hevalo Peyvok Practice (Medium) X/6\n\n${Array.from({ length: 6 }, () => '⚪🍏⚪').join('\n')}\n\nhttps://hevalo.app/win/peyvok`);
     expect(message).not.toMatch(/dar/i);
   });
 });

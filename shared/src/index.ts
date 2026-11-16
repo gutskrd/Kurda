@@ -166,8 +166,10 @@ export {
   type ResultsOutcome,
   type StreakMood,
 } from './lesson-end.js';
-/** A win as it is shared: the word game's grid, a lesson's strip and a streak's row drawn in squares, and which wins are offered for sharing. */
+/** A win as it is shared: the mark its line ends on, the word game's grid, and which wins are offered for sharing. */
 export * from './win-share.js';
+/** A win's own address, and the picture a link to it is drawn with. */
+export * from './win-link.js';
 /**
  * The lesson path a course map is drawn as: which skill is current, the
  * milestones, each unit's colour and where every stop sits — so the browser
@@ -690,6 +692,12 @@ export {
   CHEST_BOX,
   CHEST_FOOT,
   CHEST_HOP,
+  SHARE_CARD,
+  SHARE_CARD_KINDS,
+  isShareCardKind,
+  shareCardSvg,
+  type ShareCardKind,
+  type ShareCardOptions,
   CHEST_HOP_LAND,
   CHEST_HOP_LID,
   CHEST_HOP_LIGHT,

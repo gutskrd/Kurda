@@ -7,6 +7,7 @@
  * ending on a word, naming the author, not claiming a picture it does not have.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { winCardName, winCardNames, winCards, winLinkUrl } from '@kurda/shared';
 import worker, { __test } from './worker';
 import { SOURCES, SOURCE_ORDER } from './teaching/sources';
 
@@ -551,5 +552,178 @@ describe('an invitation to a game', () => {
     for (const selector of ['title', 'link[rel="canonical"]', 'meta[property="og:title"]', 'meta[property="og:image"]', 'meta[name="twitter:image"]', 'meta[name="description"]']) {
       expect(REPLACED).toContain(selector);
     }
+  });
+});
+
+/**
+ * A win somebody shared (shared: win-link.ts): the link under their line is
+ * drawn as the postcard of that kind of win, and says nothing of whose it is.
+ */
+describe('a shared win', () => {
+  const { winHead, REPLACED } = __test;
+  const head = (tags: ReadonlyArray<string | ''>) => tags.filter(Boolean).join('');
+  // kept in a name of its own: written inline, the bundler takes the address for a file to pack
+  const here = import.meta.url;
+  const cards = new URL('../public/share/', here);
+
+  it('wears the postcard of its kind, and says what was done', () => {
+    const url = 'https://hevalo.app/win/lesson';
+    const tags = head(winHead({ kind: 'lesson' }, url));
+    expect(tags).toContain('<meta property="og:title" content="One more Kurdish lesson done" />');
+    expect(tags).toContain('<meta property="og:image" content="https://hevalo.app/share/lesson.png" />');
+    expect(tags).toContain('<meta property="og:image:width" content="1200" />');
+    expect(tags).toContain('<meta property="og:image:height" content="630" />');
+    expect(tags).toContain(`<link rel="canonical" href="${url}" />`);
+    expect(tags).toContain('<meta name="twitter:card" content="summary_large_image" />');
+    expect(tags).toContain('<meta name="twitter:image" content="https://hevalo.app/share/lesson.png" />');
+  });
+
+  it('says a streak’s days and a league’s own name, on the card that has them', () => {
+    const streak = head(winHead({ kind: 'streak', days: 30 }, 'https://hevalo.app/win/streak/30'));
+    expect(streak).toContain('content="30 days of Kurdish in a row"');
+    expect(streak).toContain('https://hevalo.app/share/streak-30.png');
+    const league = head(winHead({ kind: 'league', tier: 'cem' }, 'https://hevalo.app/win/league/cem'));
+    expect(league).toContain('content="A good week in the Çem League"');
+    expect(league).toContain('https://hevalo.app/share/league-cem.png');
+  });
+
+  it('says less where there is less to say: no days, one day, a streak with no card of its own, no league', () => {
+    for (const days of [null, 1]) {
+      const tags = head(winHead({ kind: 'streak', days }, 'https://hevalo.app/win/streak'));
+      expect(tags, String(days)).toContain('content="A Kurdish streak, kept alive"');
+      expect(tags, String(days)).toContain('https://hevalo.app/share/streak.png');
+    }
+    // 31 days are said, and drawn with the fire alone: only the days a streak is shared on have their figures drawn
+    const odd = head(winHead({ kind: 'streak', days: 31 }, 'https://hevalo.app/win/streak/31'));
+    expect(odd).toContain('content="31 days of Kurdish in a row"');
+    expect(odd).toContain('https://hevalo.app/share/streak.png');
+    const league = head(winHead({ kind: 'league', tier: null }, 'https://hevalo.app/win/league'));
+    expect(league).toContain('content="A good week in the league"');
+    expect(league).toContain('https://hevalo.app/share/league.png');
+  });
+
+  it('names the word game and not how it went: the same link is under a game that was lost', () => {
+    const tags = head(winHead({ kind: 'peyvok' }, 'https://hevalo.app/win/peyvok'));
+    expect(tags).toContain('content="Peyvok: the day’s Kurdish word"');
+    expect(tags).not.toMatch(/solved|won|\d\/6/i);
+  });
+
+  it('has a title and a line for every win, short enough to be shown whole', () => {
+    for (const win of winCards()) {
+      const tags = head(winHead(win, winLinkUrl('https://hevalo.app', win)));
+      const title = /<meta property="og:title" content="([^"]*)"/.exec(tags)?.[1] ?? '';
+      const line = /<meta property="og:description" content="([^"]*)"/.exec(tags)?.[1] ?? '';
+      expect(title.length, winCardName(win)).toBeGreaterThan(8);
+      expect(title.length, winCardName(win)).toBeLessThanOrEqual(60);
+      expect(line.length, winCardName(win)).toBeGreaterThan(20);
+      expect(line.length, winCardName(win)).toBeLessThanOrEqual(120);
+      expect(tags, winCardName(win)).toContain(`<title>${title}</title>`);
+    }
+  });
+
+  /*
+   * The pictures are read from the disk, as the files the site will serve. A
+   * test runs on a machine with files, while this workspace's types are the
+   * browser's: the two things asked of that machine are described here in
+   * full, so nothing else of it becomes something the app could reach for.
+   */
+  interface FileSystem {
+    readFileSync(file: URL): Uint8Array;
+    readdirSync(folder: URL): string[];
+  }
+  const fileSystem = 'node:fs';
+
+  it('has the picture of every card in the site’s public folder, at the size the head says', async () => {
+    const { readFileSync } = (await import(/* @vite-ignore */ fileSystem)) as FileSystem;
+    for (const name of winCardNames()) {
+      const png = readFileSync(new URL(`${name}.png`, cards));
+      // a PNG says what it is in its first bytes, and its width and height in its first chunk, each as four bytes
+      expect(String.fromCharCode(...png.subarray(1, 4)), name).toBe('PNG');
+      const sizes = new DataView(png.buffer, png.byteOffset, png.byteLength);
+      expect([sizes.getUint32(16), sizes.getUint32(20)], name).toEqual([1200, 630]);
+      // light enough for a phone to fetch in the middle of a conversation
+      expect(png.byteLength, name).toBeLessThan(120_000);
+    }
+  });
+
+  it('keeps no picture nobody’s link is drawn with', async () => {
+    const { readdirSync } = (await import(/* @vite-ignore */ fileSystem)) as FileSystem;
+    expect(readdirSync(cards).sort()).toEqual(winCardNames().map((name) => `${name}.png`).sort());
+  });
+
+  it('writes no tag the shell’s copy of is left standing beside it', () => {
+    const written = [...head(winHead({ kind: 'badge' }, 'https://hevalo.app/win/badge')).matchAll(/<(?:meta|link)\b[^>]*?(property|name|rel)="([^"]*)"/g)];
+    expect(written.length).toBeGreaterThan(10);
+    for (const [, by, what] of written) {
+      const selector = by === 'rel' ? `link[rel="${what}"]` : `meta[${by}="${what}"]`;
+      expect(REPLACED, selector).toContain(selector);
+    }
+    expect(REPLACED).toContain('title');
+  });
+
+  describe('through the edge script', () => {
+    /** The runtime's rewriter, as much of it as the script uses: what would be taken out of the head, and what is put in. */
+    class Rewriter {
+      private readonly asked: Array<[string, { element: (el: { remove(): void; append(content: string, options: { html: boolean }): void }) => void }]> = [];
+      on(selector: string, handlers: { element: (el: { remove(): void; append(content: string, options: { html: boolean }): void }) => void }): this {
+        this.asked.push([selector, handlers]);
+        return this;
+      }
+      transform(response: Response): Response {
+        let written = '';
+        for (const [selector, handlers] of this.asked) {
+          if (selector === 'head') handlers.element({ remove: () => undefined, append: (content) => void (written += content) });
+        }
+        return new Response(written, { status: response.status, headers: response.headers });
+      }
+    }
+    const shell = '<!doctype html><head><title>Hevalo</title></head><div id="root"></div>';
+    const assets = vi.fn(async () => new Response(shell, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } }));
+    const env = { ASSETS: { fetch: assets } } as unknown as Parameters<typeof worker.fetch>[1];
+    const get = (path: string) => worker.fetch(new Request(`https://hevalo.app${path}`), env);
+
+    afterEach(() => {
+      assets.mockClear();
+      vi.unstubAllGlobals();
+    });
+
+    it('gives a win’s address the win’s head, and keeps the page out of search', async () => {
+      vi.stubGlobal('HTMLRewriter', Rewriter);
+      const res = await get('/win/streak/30');
+      const tags = await res.text();
+      expect(res.status).toBe(200);
+      expect(res.headers.get('x-robots-tag')).toBe('noindex');
+      expect(tags).toContain('<meta property="og:image" content="https://hevalo.app/share/streak-30.png" />');
+      expect(tags).toContain('<link rel="canonical" href="https://hevalo.app/win/streak/30" />');
+    });
+
+    it('calls a win by its own address, whatever was added to it or mistyped after it', async () => {
+      vi.stubGlobal('HTMLRewriter', Rewriter);
+      for (const [path, canonical] of [
+        ['/win/lesson?ref=chat', '/win/lesson'],
+        ['/win/lesson/', '/win/lesson'],
+        ['/win/streak/many', '/win/streak'],
+        ['/win/league/gold', '/win/league'],
+        ['/win/badge/anything', '/win/badge'],
+      ] as const) {
+        const tags = await (await get(path)).text();
+        expect(tags, path).toContain(`<link rel="canonical" href="https://hevalo.app${canonical}" />`);
+        expect(tags, path).toContain(`<meta property="og:url" content="https://hevalo.app${canonical}" />`);
+      }
+    });
+
+    it('leaves an address that is no win’s to the app, untouched', async () => {
+      // no rewriter is there to be asked: reaching for one would throw
+      for (const path of ['/win', '/win/', '/win/profile', '/win/lesson/a/b', '/winner/lesson', '/app/win/lesson']) {
+        const res = await get(path);
+        expect(await res.text(), path).toBe(shell);
+        expect(res.headers.get('x-robots-tag'), path).toBeNull();
+      }
+    });
+
+    it('rewrites nothing that is not a page: a picture at a win’s address stays a picture', async () => {
+      assets.mockImplementationOnce(async () => new Response('png', { status: 200, headers: { 'content-type': 'image/png' } }));
+      expect(await (await get('/win/lesson')).text()).toBe('png');
+    });
   });
 });
