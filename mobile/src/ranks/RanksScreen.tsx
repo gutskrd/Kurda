@@ -26,6 +26,7 @@ import { GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
+import { useDirection } from '../reports/direction';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
@@ -52,6 +53,7 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const [game, setGame] = useState<RankedGame>(initial ?? 'wordle-battle');
   const [ranks, setRanks] = useState<MyRanks | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -93,20 +95,20 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
               <PressableScale
                 onPress={() => navigation.navigate('Season')}
                 accessibilityRole="button"
-                style={[styles.seasonRow, { backgroundColor: colors.controlTrack }]}
+                style={[styles.seasonRow, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
               >
                 <Icon name="calendar" size={18} color={colors.textSecondary} />
                 <View style={styles.flex}>
-                  <Text style={[styles.seasonTitle, { color: colors.textPrimary }]}>
+                  <Text style={[styles.seasonTitle, dir.text, { color: colors.textPrimary }]}>
                     {seasonTitle(t, ranks.season)} · {daysLeftText(t, ranks.season.daysLeft)}
                   </Text>
-                  <Text style={[styles.small, { color: colors.textSecondary }]}>
+                  <Text style={[styles.small, dir.text, { color: colors.textSecondary }]}>
                     {card.season.peakTier
                       ? t('ranks.seasonPeak', { rank: t(TIER_NAME_KEY[card.season.peakTier]), count: card.season.ratedGames })
                       : t('ranks.seasonGames', { count: card.season.ratedGames })}
                   </Text>
                 </View>
-                <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+                <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip} />
               </PressableScale>
               <Ladder card={card} />
               <Boards game={game} />
@@ -236,6 +238,7 @@ function Stat({ value, label }: { value: string; label: string }): React.JSX.Ele
 function Ladder({ card }: { card: RankCard }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const tiers: RankTier[] = ['sterk', ...[...RANK_TIERS].reverse().map((r) => r.key)];
   return (
     <View style={styles.section}>
@@ -253,15 +256,15 @@ function Ladder({ card }: { card: RankCard }): React.JSX.Element {
               key={tier}
               accessible
               accessibilityLabel={[rankLabel(t, tier, null), fact, here ? t('ranks.youAreHere') : null].filter(Boolean).join('. ')}
-              style={[styles.rung, here && { backgroundColor: colors.controlTrack }]}
+              style={[styles.rung, { flexDirection: dir.row }, here && { backgroundColor: colors.controlTrack }]}
             >
               <RankEmblem tier={tier} size={44} label={rankLabel(t, tier, null)} />
               <View style={styles.flex}>
-                <Text style={[styles.rungName, { color: colors.textPrimary }]}>
+                <Text style={[styles.rungName, dir.text, { color: colors.textPrimary }]}>
                   {t(TIER_NAME_KEY[tier])}
                   {meaning ? <Text style={{ color: colors.textSecondary }}>{`  ${meaning}`}</Text> : null}
                 </Text>
-                <Text style={[styles.small, { color: colors.textSecondary }]}>{fact}</Text>
+                <Text style={[styles.small, dir.text, { color: colors.textSecondary }]}>{fact}</Text>
               </View>
               {here ? (
                 <View style={[styles.here, { backgroundColor: colors.primary }]}>
@@ -280,6 +283,7 @@ function Boards({ game }: { game: RankedGame }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  const dir = useDirection();
   const [scope, setScope] = useState<RankBoardScope>('friends');
   const [board, setBoard] = useState<RankBoard | null>(null);
 
@@ -321,7 +325,7 @@ function Boards({ game }: { game: RankedGame }): React.JSX.Element {
                 key={`${e.position}-${name}`}
                 accessible
                 accessibilityLabel={`#${e.position}, ${name}, ${rank}, ${t('ranks.pointsCount', { count: e.points })}`}
-                style={[styles.entry, e.isMe && { backgroundColor: colors.controlTrack }]}
+                style={[styles.entry, { flexDirection: dir.row }, e.isMe && { backgroundColor: colors.controlTrack }]}
               >
                 <Text style={[styles.pos, { color: colors.textSecondary }]}>{e.position}</Text>
                 {e.tier && !e.placing && !e.resting ? (
@@ -332,10 +336,10 @@ function Boards({ game }: { game: RankedGame }): React.JSX.Element {
                   </View>
                 )}
                 <View style={styles.flex}>
-                  <Text style={[styles.entryName, { color: colors.textPrimary }, e.isMe && styles.bold]} numberOfLines={1}>
+                  <Text style={[styles.entryName, dir.free, { color: colors.textPrimary }, e.isMe && styles.bold]} numberOfLines={1}>
                     {name}
                   </Text>
-                  <Text style={[styles.small, { color: colors.textSecondary }]} numberOfLines={1}>
+                  <Text style={[styles.small, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
                     {rank}
                   </Text>
                 </View>

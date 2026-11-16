@@ -16,6 +16,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { formatCompact, formatNumber } from '../i18n/format';
 import { heldDim } from '../theme/MotionParts';
+import { useDirection } from '../reports/direction';
 
 /**
  * The Leaderboard tab of the league screen: everyone ranked, a page at a
@@ -218,6 +219,8 @@ export function BoardRow({
 }): React.JSX.Element {
   const { t, locale } = useI18n();
   const { colors } = useTheme();
+  // a row starts where its language reads from: in Soranî and Arabic the place is on the right and the amount on the left
+  const dir = useDirection();
   const place = entry.rank;
   const name = self ? t('games.you') : entry.username;
   const amount = amountLabel(t, type, entry.score, locale);
@@ -228,11 +231,11 @@ export function BoardRow({
     <View
       accessible
       accessibilityLabel={label}
-      style={[styles.row, self && { backgroundColor: colors.glassFill, borderColor: colors.primary, borderWidth: 1 }]}
+      style={[styles.row, { flexDirection: dir.row }, self && { backgroundColor: colors.glassFill, borderColor: colors.primary, borderWidth: 1 }]}
     >
       <Text style={[styles.rank, { color: colors.textSecondary }]}>{place ?? '–'}</Text>
       <InitialsAvatar name={entry.username} id={entry.userId} size={32} photoUrl={entry.avatarUrl ?? null} />
-      <Text style={[styles.name, self && styles.nameSelf, { color: colors.textPrimary }]} numberOfLines={1}>
+      <Text style={[styles.name, dir.free, self && styles.nameSelf, { color: colors.textPrimary }]} numberOfLines={1}>
         {name}
       </Text>
       <BoardAmount type={type} amount={entry.score} />

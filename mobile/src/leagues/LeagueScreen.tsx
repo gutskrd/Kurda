@@ -210,24 +210,24 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
       <View style={[styles.divider, { backgroundColor: colors.separator }]} />
 
       {league.joined ? (
-        <View style={styles.goalRow}>
+        <View style={[styles.goalRow, { flexDirection: dir.row }]}>
           <GoalRing xp={league.weeklyXp} goal={league.goalXp} size={84} tint={tint} />
           <View style={styles.goalText}>
-            <Text style={[styles.goalTitle, { color: colors.textPrimary }]}>
+            <Text style={[styles.goalTitle, dir.text, { color: colors.textPrimary }]}>
               {t('leagues.goalProgress', { xp: formatNumber(league.weeklyXp, locale), goal: formatNumber(league.goalXp, locale) })}
             </Text>
             {league.safe ? (
-              <View style={[styles.safe, { backgroundColor: colors.successFill }]} accessibilityLiveRegion="polite">
+              <View style={[styles.safe, { flexDirection: dir.row, alignSelf: dir.rtl ? 'flex-end' : 'flex-start', backgroundColor: colors.successFill }]} accessibilityLiveRegion="polite">
                 <Icon name="seal-check" size={16} color={colors.success} />
                 <Text style={[styles.safeText, { color: colors.success }]}>{t('leagues.safe')}</Text>
               </View>
             ) : (
-              <Text style={[styles.goalHint, { color: colors.textSecondary }]}>
+              <Text style={[styles.goalHint, dir.text, { color: colors.textSecondary }]}>
                 {league.demoteCount > 0 ? t('leagues.goalHintSafe') : t('leagues.goalHintUp')}
               </Text>
             )}
             {league.groupSize > 0 ? (
-              <Text style={[styles.goalHint, { color: colors.textSecondary }]}>{t('leagues.place', { rank: league.rank, count: league.groupSize })}</Text>
+              <Text style={[styles.goalHint, dir.text, { color: colors.textSecondary }]}>{t('leagues.place', { rank: league.rank, count: league.groupSize })}</Text>
             ) : null}
           </View>
         </View>
@@ -237,16 +237,16 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
 
       {league.lastWeek ? (
         <GlassCard>
-          <View style={styles.lastWeek}>
+          <View style={[styles.lastWeek, { flexDirection: dir.row }]}>
             {league.lastWeek.tierAfter ? (
               <LeagueEmblem tier={league.lastWeek.tierAfter} size={44} label={leagueLabel(t, league.lastWeek.tierAfter)} />
             ) : (
               <Icon name="calendar" size={28} color={colors.textSecondary} />
             )}
             <View style={styles.flex}>
-              <Text style={[sectionLabel, { color: colors.textSecondary }]}>{t('leagues.lastWeek.title')}</Text>
-              <Text style={[styles.lastLine, { color: colors.textPrimary }]}>{lastWeekLine(t, league.lastWeek)}</Text>
-              <Text style={[styles.goalHint, { color: colors.textSecondary }]}>
+              <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]}>{t('leagues.lastWeek.title')}</Text>
+              <Text style={[styles.lastLine, dir.text, { color: colors.textPrimary }]}>{lastWeekLine(t, league.lastWeek)}</Text>
+              <Text style={[styles.goalHint, dir.text, { color: colors.textSecondary }]}>
                 {[
                   league.lastWeek.rank && league.lastWeek.groupSize ? t('leagues.place', { rank: league.lastWeek.rank, count: league.lastWeek.groupSize }) : null,
                   t('leagues.xpCount', { xp: formatNumber(league.lastWeek.weeklyXp, locale) }),
@@ -262,11 +262,11 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
 
       {league.joined ? (
         <View style={styles.rules}>
-          <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
+          <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
             {t('leagues.group')}
           </Text>
           {rules.map((line) => (
-            <Text key={line} style={[styles.rule, { color: colors.textSecondary }]}>
+            <Text key={line} style={[styles.rule, dir.text, { color: colors.textSecondary }]}>
               {line}
             </Text>
           ))}
@@ -500,11 +500,13 @@ const LEAGUE_TITLE_LINE = Math.round(typography.sizes.xxl * typography.displayLi
 const TableRow = memo(function TableRow({ item, delay }: { item: TableItem; delay: number | null }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  // a row starts where its language reads from: in Soranî and Arabic the place is on the right and the XP on the left
+  const dir = useDirection();
   if (item.kind === 'gap') return <View style={styles.gap} />;
   if (item.kind === 'zone') {
     const up = item.zone === 'promotion';
     return (
-      <View style={styles.zone} accessibilityRole="header">
+      <View style={[styles.zone, { flexDirection: dir.row }]} accessibilityRole="header">
         <Icon name={up ? 'move-up' : 'move-down'} size={14} color={up ? colors.success : colors.textSecondary} />
         <Text style={[styles.zoneText, { color: up ? colors.success : colors.textSecondary }]}>
           {up ? t('leagues.zone.promotion') : t('leagues.zone.demotion')}
@@ -527,7 +529,7 @@ const TableRow = memo(function TableRow({ item, delay }: { item: TableItem; dela
           <Icon name="person" size={16} color={colors.textSecondary} />
         </View>
       )}
-      <Text style={[styles.name, { color: colors.textPrimary }, row.isSelf && styles.nameSelf]} numberOfLines={1}>
+      <Text style={[styles.name, dir.free, { color: colors.textPrimary }, row.isSelf && styles.nameSelf]} numberOfLines={1}>
         {name}
       </Text>
       {row.zone !== 'stay' ? (
@@ -538,13 +540,13 @@ const TableRow = memo(function TableRow({ item, delay }: { item: TableItem; dela
   );
   if (row.isSelf) {
     return (
-      <OwnRow accessible accessibilityLabel={label} delay={delay} style={[styles.row, { backgroundColor: colors.glassFill, borderColor: colors.primary, borderWidth: 1 }]}>
+      <OwnRow accessible accessibilityLabel={label} delay={delay} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill, borderColor: colors.primary, borderWidth: 1 }]}>
         {body}
       </OwnRow>
     );
   }
   return (
-    <View accessible accessibilityLabel={label} style={styles.row}>
+    <View accessible accessibilityLabel={label} style={[styles.row, { flexDirection: dir.row }]}>
       {body}
     </View>
   );

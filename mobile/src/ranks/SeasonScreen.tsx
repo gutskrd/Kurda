@@ -25,6 +25,7 @@ import { GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
+import { useDirection } from '../reports/direction';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
@@ -50,6 +51,8 @@ interface OwnedItem {
  * are worn from here.
  */
 export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
+  // a row starts where its language reads from: in Soranî and Arabic the emblem and the game's name are on the right
+  const dir = useDirection();
   const { client, user } = useAuth();
   const { colors, scheme } = useTheme();
   const { t } = useI18n();
@@ -112,7 +115,7 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                     {seasonTitle(t, overview.season)}
                   </Text>
                   <Text style={[styles.meaning, { color: colors.textSecondary }]}>{t(SEASON_MEANING_KEY[overview.season.name])}</Text>
-                  <View style={styles.days}>
+                  <View style={[styles.days, { flexDirection: dir.row }]}>
                     <Icon name="calendar" size={14} color={colors.textSecondary} />
                     <Text style={[styles.small, { color: colors.textSecondary }]}>{daysLeftText(t, overview.season.daysLeft)}</Text>
                   </View>
@@ -126,7 +129,7 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                 <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
                   {t('season.counting')}
                 </Text>
-                <Text style={[styles.small, { color: colors.textSecondary }]}>{t('season.countingHint', { count: overview.minGames })}</Text>
+                <Text style={[styles.small, dir.text, { color: colors.textSecondary }]}>{t('season.countingHint', { count: overview.minGames })}</Text>
                 <GlassCard>
                   <View style={styles.games}>
                     {RANKED_GAMES.map((g) => {
@@ -135,7 +138,7 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                       const done = played >= overview.minGames;
                       return (
                         <View key={g} style={styles.game}>
-                          <View style={styles.gameHead}>
+                          <View style={[styles.gameHead, { flexDirection: dir.row }]}>
                             <Text style={[styles.gameName, { color: colors.textPrimary }]}>{t(GAME_NAME_KEY[g])}</Text>
                             <Text style={[styles.small, { color: done ? colors.success : colors.textSecondary }]}>
                               {done ? t('season.counted') : t('season.gamesOf', { played, need: overview.minGames })}
@@ -158,20 +161,20 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                 <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
                   {t('season.rewards')}
                 </Text>
-                <Text style={[styles.small, { color: colors.textSecondary }]}>{t('season.rewardsHint')}</Text>
+                <Text style={[styles.small, dir.text, { color: colors.textSecondary }]}>{t('season.rewardsHint')}</Text>
                 <GlassCard padding="tight">
                   {[...overview.rewards].reverse().map((r) => (
-                    <View key={r.tier} style={styles.reward} accessible accessibilityLabel={rewardLabel(t, r.tier, r.gems, overview.season.id)}>
+                    <View key={r.tier} style={[styles.reward, { flexDirection: dir.row }]} accessible accessibilityLabel={rewardLabel(t, r.tier, r.gems, overview.season.id)}>
                       <RankEmblem tier={r.tier} size={52} season={{ name: overview.season.name, year: overview.season.year }} label={rankLabel(t, r.tier, null)} />
                       <View style={styles.flex}>
-                        <View style={styles.rewardHead}>
+                        <View style={[styles.rewardHead, { flexDirection: dir.row }]}>
                           <Text style={[styles.rewardName, { color: colors.textPrimary }]}>{t(TIER_NAME_KEY[r.tier])}</Text>
                           <View style={[styles.gems, { backgroundColor: colors.controlTrack }]}>
                             <Icon name="gem" size={12} color={colors.textPrimary} />
                             <Text style={[styles.gemsText, { color: colors.textPrimary }]}>{r.gems}</Text>
                           </View>
                         </View>
-                        <Text style={[styles.small, { color: colors.textSecondary }]}>
+                        <Text style={[styles.small, dir.text, { color: colors.textSecondary }]}>
                           {r.tier === 'sterk'
                             ? t('season.rewardSterk', { title: sterkTitle(overview.season.id) })
                             : r.tier === 'lutke'
@@ -183,7 +186,7 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                     </View>
                   ))}
                 </GlassCard>
-                <Text style={[styles.small, { color: colors.textSecondary }]}>{t('season.gemsNote')}</Text>
+                <Text style={[styles.small, dir.text, { color: colors.textSecondary }]}>{t('season.gemsNote')}</Text>
               </View>
 
               {overview.lastSeason ? (
@@ -240,7 +243,7 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                           accessibilityRole="button"
                           accessibilityState={{ selected: on }}
                           accessibilityLabel={`${t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}. ${on ? t('season.takeOff') : t('season.wear')}`}
-                          style={({ pressed }) => [styles.frameRow, { opacity: pressed ? pressedDim : 1 }]}
+                          style={({ pressed }) => [styles.frameRow, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
                         >
                           <SeasonFramed tier={tier} size={64} label={t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
                             <InitialsAvatar name={user?.displayName ?? user?.username ?? ''} id={user?.id ?? ''} size={framedAvatarSize(64)} />
