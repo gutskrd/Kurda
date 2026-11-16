@@ -25,7 +25,7 @@ import { TABLE } from '../impostor/table';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useDirection } from '../reports/direction';
-import { GradientBackground } from '../theme/glass';
+import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
 import { TileButton } from '../theme/Tile';
@@ -336,7 +336,8 @@ export function SoloGameShell<Item, H, C, B = unknown>({
           ) : (
             <GoldButton label={t('games.solo.playAgain')} onPress={() => void start()} busy={busy} disabled={!chosen} />
           )}
-          <TileButton label={t(exercise ? 'common.done' : 'games.solo.backToGames')} onPress={onExit} tone="success" />
+          {/* the quieter way out: green is for an answer that was right, and this is no answer */}
+          <ClayButton label={t(exercise ? 'common.done' : 'games.solo.backToGames')} onPress={onExit} tone="neutral" size="large" />
         </View>
       </ScrollView>
     );
@@ -405,7 +406,8 @@ export function SoloGameShell<Item, H, C, B = unknown>({
           </Cloth>
         )}
         {intro}
-        {open ? <TileButton label={t('games.solo.continue')} onPress={() => void resume()} busy={busy} tone="success" /> : null}
+        {/* a round left part-way is what most likely brought the learner back: it is offered first, in the app's own colour */}
+        {open ? <TileButton label={t('games.solo.continue')} onPress={() => void resume()} busy={busy} /> : null}
         <Text style={[styles.legend, ...text]}>{t('games.solo.difficulty')}</Text>
         <View style={[styles.chips, { flexDirection: dir.row }]} accessibilityRole="radiogroup">
           {GAME_DIFFICULTIES.map((d) => {
@@ -419,12 +421,10 @@ export function SoloGameShell<Item, H, C, B = unknown>({
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on, disabled: !can }}
                 accessibilityLabel={t(DIFFICULTY_KEY[d])}
-                style={[
-                  styles.chip,
-                  { borderColor: on ? tone : colors.controlTrack, backgroundColor: on ? colors.controlTrack : 'transparent', opacity: can ? 1 : 0.5 },
-                ]}
+                // the one chosen as the segmented control and the tab bar mark the place you are in: a wash of the violet, in its ink
+                style={[styles.chip, { backgroundColor: on ? `${colors.primary}1F` : colors.controlTrack, opacity: can ? 1 : 0.5 }]}
               >
-                <Text style={[styles.chipText, { color: colors.textPrimary, fontWeight: on ? typography.weights.semibold : typography.weights.regular }]}>
+                <Text style={[styles.chipText, { color: on ? colors.primary : colors.textPrimary, fontWeight: on ? typography.weights.semibold : typography.weights.regular }]}>
                   {t(DIFFICULTY_KEY[d])}
                 </Text>
               </PressableScale>
@@ -437,7 +437,8 @@ export function SoloGameShell<Item, H, C, B = unknown>({
         ) : (
           <GoldButton label={t('games.solo.start')} onPress={() => void start()} busy={busy} disabled={!chosen} />
         )}
-        {difficulties !== null && offered.length === 0 ? <Text style={muted}>{t('games.solo.notEnough')}</Text> : null}
+        {/* none of the three can be chosen: "try another one" would send the learner to a choice that is not there */}
+        {difficulties !== null && offered.length === 0 ? <Text style={muted}>{t('games.solo.noneYet')}</Text> : null}
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
       </ScrollView>
     );
@@ -458,7 +459,7 @@ const styles = StyleSheet.create({
   muted: { fontSize: typography.sizes.sm },
   legend: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, marginTop: spacing.sm },
   chips: { flexWrap: 'wrap', gap: spacing.sm },
-  chip: { minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, borderRadius: radii.pill, borderWidth: 1.5, justifyContent: 'center' },
+  chip: { minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, borderRadius: radii.pill, justifyContent: 'center' },
   chipText: { fontSize: typography.sizes.sm },
   bar: { alignItems: 'center', gap: spacing.sm },
   stones: { flex: 1, gap: 6 },

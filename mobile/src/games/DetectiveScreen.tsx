@@ -24,6 +24,7 @@ import { useDirection } from '../reports/direction';
 import { haptic } from '../feedback/haptics';
 import { Icon, type IconName } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
+import { ClayButton } from '../theme/glass';
 import { TileButton } from '../theme/Tile';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -372,7 +373,8 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
             {meaningIn(h, locale) ?? h.en}
           </Text>
         ))}
-        <TileButton label={t('games.detective.hint')} onPress={() => void spend()} tone="success" busy={spending} disabled={!canSpend || !board.moreHints} />
+        {/* a quieter button than the question's Check: green is for an answer that was right, and a hint is no answer */}
+        <ClayButton label={t('games.detective.hint')} icon="lightbulb" tone="neutral" size="large" onPress={() => void spend()} busy={spending} disabled={!canSpend || !board.moreHints} />
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
       </View>
 

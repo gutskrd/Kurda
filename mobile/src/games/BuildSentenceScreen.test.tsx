@@ -132,7 +132,9 @@ describe('BuildSentenceScreen', () => {
     expect(await screen.findByText('Here is how it goes.')).toBeTruthy();
     expect(client.calls.filter((c) => c.path.endsWith('/answers'))[1]!.body).toEqual({ index: 0, answer: { order: [1, 0] }, attempt: 2 });
     expect(screen.getByText('home')).toBeTruthy();
-    expect(screen.getByLabelText('No meaning listed')).toBeTruthy();
+    // a word with no meaning listed says so to a screen reader, and draws no dash under itself
+    expect(screen.getByLabelText(/, No meaning listed$/)).toBeTruthy();
+    expect(screen.queryByText('—')).toBeNull();
     expect(screen.getByText(/the verb comes at the end/)).toBeTruthy();
   });
 

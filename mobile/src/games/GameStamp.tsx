@@ -69,11 +69,12 @@ export function GameStamp({
       <View style={[styles.face, { paddingTop: pad, paddingHorizontal: pad }]}>
         <GameArt game={game} size={art} moving={moving} after={after} />
         <View style={styles.words}>
-          <Text style={[large ? styles.nameLarge : styles.name, { color: look.ink }]} numberOfLines={2} maxFontSizeMultiplier={TEXT_MAX}>
+          <Text style={[large ? styles.nameLarge : [styles.name, nameOn(width)], { color: look.ink }]} numberOfLines={2} maxFontSizeMultiplier={TEXT_MAX}>
             {name}
           </Text>
           {meaning ? (
-            <Text style={[large ? styles.meaningLarge : styles.meaning, { color: look.inkSoft }]} numberOfLines={1} maxFontSizeMultiplier={TEXT_MAX}>
+            // what tells a newcomer what the game is: on the shelf it takes a second line before it is cut short ("Der Gedächtnisdieb" on a narrow phone)
+            <Text style={[large ? styles.meaningLarge : styles.meaning, { color: look.inkSoft }]} numberOfLines={large ? 1 : 2} maxFontSizeMultiplier={TEXT_MAX}>
               {meaning}
             </Text>
           ) : null}
@@ -85,6 +86,14 @@ export function GameStamp({
 
 /** How far a stamp's words grow with the reader's text size: past this a name of two lines would outgrow any stamp. */
 const TEXT_MAX = 1.3;
+
+/**
+ * A name a little smaller on a stamp narrower than a phone's usual, as the
+ * website sets it: a name of two lines over a meaning of two lines is the
+ * most a stamp holds, and at the usual size that fills a narrow one past its
+ * edge. On a stamp of the usual width or wider it is the usual size.
+ */
+const nameOn = (width: number) => display(Math.round(Math.min(typography.sizes.md, Math.max(15, width * 0.105))));
 
 const styles = StyleSheet.create({
   paper: { position: 'absolute' },

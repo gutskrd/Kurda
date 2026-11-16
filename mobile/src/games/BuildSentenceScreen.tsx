@@ -208,11 +208,11 @@ function SentenceBoard({ round, dialect }: { round: Round; dialect: GameDialect 
           {correction.words.map((w, i) => {
             const m = meaningIn(w.meanings, locale);
             return (
-              <View key={i} style={styles.gloss}>
+              // one thing to a screen reader: the word and what it means, or that no meaning is listed
+              <View key={i} style={styles.gloss} accessible accessibilityLabel={`${w.word}, ${m ?? t('games.sentence.noGloss')}`}>
                 <Text style={[styles.glossWord, { color: tone.text }, rtl ? styles.rtl : null]}>{w.word}</Text>
-                <Text style={[styles.glossMeaning, { color: colors.textSecondary }]} accessibilityLabel={m ?? t('games.sentence.noGloss')}>
-                  {m ?? '—'}
-                </Text>
+                {/* a word no approved source gives a meaning for has nothing under it: a dash under every such word read as a row of blanks */}
+                {m ? <Text style={[styles.glossMeaning, { color: colors.textSecondary }]}>{m}</Text> : null}
               </View>
             );
           })}

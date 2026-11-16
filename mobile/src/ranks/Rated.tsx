@@ -7,7 +7,9 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
+import { Toggle } from '../theme/Toggle';
 import { useTheme } from '../theme/ThemeProvider';
+import { useDirection } from '../reports/direction';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { getExpectedGains, setLobbyRated } from './api';
@@ -42,12 +44,21 @@ export function RatedPill({ rated, small = false, style }: { rated: boolean; sma
 }
 
 /**
- * The host's choice in a setup or invite sheet: two tiles, each saying what
- * it means, read out as a radio group.
+ * The host's choice in a setup or invite sheet: two wide cards, one under the
+ * other, each saying what it means, read out as a radio group.
+ *
+ * They stood side by side, and a word for either that is longer than half a
+ * phone's width ("Freundschaftlich", "Vriendschappelijk") ran out of its card
+ * at the edge. One under the other, the name has the card's whole width, and
+ * the sentence under it two lines rather than four. The one chosen is marked
+ * as everything chosen in the app is, a wash of the violet with a violet
+ * edge, and by a tick as well as by its colour; it used to be filled solid,
+ * Rated in the gold that is kept for what is earned.
  */
 export function RatedChoice({ value, onChange }: { value: boolean; onChange: (rated: boolean) => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const options = [
     { rated: true, icon: 'mountains' as const, title: t('ranks.rated'), hint: t('ranks.ratedHint') },
     { rated: false, icon: 'handshake' as const, title: t('ranks.friendlyGame'), hint: t('ranks.friendlyHint') },
@@ -69,16 +80,21 @@ export function RatedChoice({ value, onChange }: { value: boolean; onChange: (ra
             style={({ pressed }) => [
               styles.tile,
               {
-                backgroundColor: on ? (o.rated ? colors.gold : colors.primary) : colors.controlTrack,
+                flexDirection: dir.row,
+                backgroundColor: on ? `${colors.primary}1F` : colors.controlTrack,
+                borderColor: on ? colors.primary : 'transparent',
                 opacity: pressed ? pressedDim : 1,
               },
             ]}
           >
-            <View style={styles.tileHead}>
-              <Icon name={o.icon} size={18} color={on ? (o.rated ? colors.textOnGold : colors.textOnPrimary) : colors.textPrimary} />
-              <Text style={[styles.tileTitle, { color: on ? (o.rated ? colors.textOnGold : colors.textOnPrimary) : colors.textPrimary }]}>{o.title}</Text>
+            <Icon name={o.icon} size={20} color={on ? colors.primary : colors.textPrimary} />
+            <View style={styles.tileText}>
+              <Text style={[styles.tileTitle, dir.text, { color: colors.textPrimary }]}>{o.title}</Text>
+              <Text style={[styles.tileHint, dir.text, { color: colors.textSecondary }]}>{o.hint}</Text>
             </View>
-            <Text style={[styles.tileHint, { color: on ? (o.rated ? colors.textOnGold : colors.textOnPrimary) : colors.textSecondary }]}>{o.hint}</Text>
+            <View style={[styles.tick, { borderColor: on ? colors.primary : colors.textSecondary, backgroundColor: on ? colors.primary : 'transparent' }]}>
+              {on ? <Icon name="check" size={14} color={colors.textOnPrimary} /> : null}
+            </View>
           </Pressable>
         );
       })}
@@ -120,6 +136,7 @@ export function LobbyRated({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const [gains, setGains] = useState<ExpectedGains | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -156,29 +173,26 @@ export function LobbyRated({
 
   return (
     <View style={[styles.panel, { backgroundColor: colors.controlTrack }]}>
-      <View style={styles.panelHead}>
+      <View style={[styles.panelHead, { flexDirection: dir.row }]}>
         <RatedPill rated={isRated} />
-        <Text style={[styles.panelHint, { color: colors.textSecondary }]}>
+        <Text style={[styles.panelHint, dir.text, { color: colors.textSecondary }]}>
           {isRated ? t('ranks.ratedHint') : t('ranks.friendlyHint')}
         </Text>
       </View>
 
       {isHost ? (
-        <Pressable
-          onPress={() => void change(!isRated)}
-          disabled={busy}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: isRated, disabled: busy }}
-          accessibilityLabel={t('ranks.lobby.ratedSwitch')}
-          style={({ pressed }) => [styles.switchRow, { opacity: pressed || busy ? 0.7 : 1 }]}
-        >
-          <Text style={[styles.switchLabel, { color: colors.textPrimary }]}>{t('ranks.lobby.ratedSwitch')}</Text>
-          <View style={[styles.track, { backgroundColor: isRated ? colors.gold : colors.glassBorder }]}>
-            <View style={[styles.knob, { backgroundColor: isRated ? colors.textOnGold : colors.textOnPrimary, alignSelf: isRated ? 'flex-end' : 'flex-start' }]} />
-          </View>
-        </Pressable>
+        // the app's own switch, in its violet: the one drawn here was gold when on, and by day its white track was lost on the panel
+        <View style={[styles.switchRow, { flexDirection: dir.row }]}>
+          <Text style={[styles.switchLabel, dir.text, { color: colors.textPrimary }]}>{t('ranks.lobby.ratedSwitch')}</Text>
+          <Toggle
+            value={isRated}
+            onValueChange={(next) => void change(next)}
+            disabled={busy}
+            accessibilityLabel={t('ranks.lobby.ratedSwitch')}
+          />
+        </View>
       ) : (
-        <Text style={[styles.note, { color: colors.textSecondary }]}>{t('ranks.lobby.canLeave')}</Text>
+        <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('ranks.lobby.canLeave')}</Text>
       )}
 
       {isRated && gains ? <Gains gains={gains} seatName={seatName} /> : null}
@@ -243,19 +257,18 @@ const styles = StyleSheet.create({
   pillText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   pillTextSmall: { fontSize: typography.sizes.xs },
 
-  choice: { flexDirection: 'row', gap: spacing.sm },
-  tile: { flex: 1, borderRadius: radii.md, padding: spacing.md, gap: spacing.xs, minHeight: 84 },
-  tileHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  choice: { gap: spacing.sm },
+  tile: { alignItems: 'center', gap: spacing.md - 4, minHeight: 64, borderRadius: radii.md, borderWidth: 2, paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.md - 4 },
+  tileText: { flex: 1, gap: 2 },
   tileTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  tileHint: { fontSize: typography.sizes.xs, lineHeight: 16 },
+  tileHint: { fontSize: typography.sizes.sm, lineHeight: 19 },
+  tick: { width: 22, height: 22, borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 
   panel: { alignSelf: 'stretch', borderRadius: radii.md, padding: spacing.md, gap: spacing.sm, marginTop: spacing.sm },
   panelHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   panelHint: { flex: 1, fontSize: typography.sizes.sm },
-  switchRow: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: spacing.md },
+  switchRow: { alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: spacing.md },
   switchLabel: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  track: { width: 50, height: 30, borderRadius: radii.pill, padding: 3, justifyContent: 'center' },
-  knob: { width: 24, height: 24, borderRadius: radii.pill },
   note: { fontSize: typography.sizes.sm, lineHeight: 19 },
   flex: { flex: 1 },
   friendlyNow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Animated, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Pressable } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
@@ -18,7 +17,7 @@ import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
 import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
-import { heldDim } from '../theme/MotionParts';
+import { useDirection } from '../reports/direction';
 
 type Quality = 'perfect' | 'near' | 'none';
 type Reject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane';
@@ -74,6 +73,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
 
   const [game, setGame] = useState<RhymeGameView | null>(null);
   const [found, setFound] = useState<Found[]>([]);
@@ -160,8 +160,6 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
     }
   };
 
-  const qualityColor = (q: Quality): string => (q === 'perfect' ? colors.success : colors.goldText);
-
   return (
     <GradientBackground>
       <ScreenHeader title={t('games.rhyme.name')} onBack={onExit} />
@@ -181,35 +179,42 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
           <>
             <Cloth style={styles.stage}>
               <GameArt game="rhyme" size={96} />
+              {/* the round is over whether the clock ran out or it was ended: "time's up" was said of both */}
               <Text style={styles.stageKicker} accessibilityRole="header">
-                {t('games.rhyme.timeUpRound')}
+                {t('games.solo.results.title')}
               </Text>
               <Text style={styles.stageScore}>{t('games.rhyme.scoreLine', { score: game.score, count: game.accepted })}</Text>
               <Text style={styles.stageNote}>{t('games.noXpAlone')}</Text>
             </Cloth>
             <GoldButton label={t('games.playAgain')} icon="bolt" onPress={start} />
             <ClayButton label={t('common.done')} tone="neutral" onPress={onExit} style={{ alignSelf: 'stretch' }} />
+            {/* what was found stays to be read once the clock has stopped */}
+            {found.length > 0 ? <FoundList found={found} title={t('games.rhyme.foundList')} /> : null}
           </>
         ) : (
           <>
-            <Cloth style={styles.promptRow}>
-              <View style={styles.promptCol}>
-                <Text style={styles.promptLabel}>{t('games.rhyme.rhymeWith')}</Text>
+            <Cloth style={[styles.promptRow, { flexDirection: dir.row }]}>
+              {/* the word keeps its own direction, and stands on the reading side under the words that ask for it */}
+              <View style={[styles.promptCol, { alignItems: dir.rtl ? 'flex-end' : 'flex-start' }]}>
+                <Text style={[styles.promptLabel, dir.text]}>{t('games.rhyme.rhymeWith')}</Text>
                 <Text style={styles.prompt}>{game.prompt}</Text>
               </View>
-              <View style={styles.metaCol}>
+              <View style={[styles.metaCol, { alignItems: dir.rtl ? 'flex-start' : 'flex-end' }]}>
                 <View style={[styles.timerChip, remaining <= 10000 && styles.timerLow]}>
                   <Text style={[styles.timer, remaining <= 10000 && styles.timerLowText]}>{clock(remaining)}</Text>
                 </View>
-                <Text style={styles.score}>{game.score} pts</Text>
+                <Text style={styles.score}>{t('games.party.points', { count: game.score })}</Text>
               </View>
             </Cloth>
 
             <Animated.View style={{ transform: [{ translateX: shake.translateX }] }}>
-              <View style={styles.inputRow}>
+              <View style={[styles.inputRow, { flexDirection: dir.row }]}>
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-                  placeholder={t('games.rhyme.placeholder', { word: game.prompt })}
+                  // what the field is for, to a screen reader as well: a placeholder alone is not read by every one. The word to rhyme
+                  // with is on the cloth just above; said again in the placeholder, it was cut off at the field's edge.
+                  accessibilityLabel={t('games.rhyme.yourRhyme')}
+                  placeholder={t('games.rhyme.yourRhyme')}
                   placeholderTextColor={colors.textSecondary}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -222,30 +227,42 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
                   returnKeyType="send"
                   editable={!submitting}
                 />
-                <ClayButton label={t('games.rhyme.add')} tone="primary" onPress={submit} style={styles.addBtn} />
+                <ClayButton label={t('games.rhyme.add')} tone="primary" busy={submitting} onPress={submit} />
               </View>
             </Animated.View>
             {note ? <Text style={[styles.note, { color: note.startsWith('+') ? colors.success : colors.danger }]}>{note}</Text> : null}
 
-            <View style={styles.found}>
-              {found.map((f, i) => (
-                <View key={`${f.word}-${i}`} style={[styles.foundRow, { backgroundColor: colors.controlTrack }]}>
-                  <Text style={[styles.foundWord, { color: colors.textPrimary }]}>{f.word}</Text>
-                  <View style={styles.foundMeta}>
-                    <Text style={[styles.foundQuality, { color: qualityColor(f.quality) }]}>{t(f.quality === 'perfect' ? 'games.rhyme.quality.perfect' : 'games.rhyme.quality.near')}</Text>
-                    <Text style={[styles.foundPoints, { color: colors.textSecondary }]}>+{f.points}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
+            {found.length > 0 ? <FoundList found={found} title={t('games.rhyme.foundList')} /> : null}
 
-            <Pressable onPress={() => void end(remaining > 0)} accessibilityRole="button" style={({ pressed }) => [styles.finish, pressed && heldDim]}>
-              <Text style={[styles.finishText, { color: colors.textSecondary }]}>{t('games.rhyme.endRound')}</Text>
-            </Pressable>
+            {/* the round ended early is a button as the race's Give up is, a fingertip tall: it was a line of underlined grey text */}
+            <ClayButton label={t('games.rhyme.endRound')} tone="neutral" onPress={() => void end(remaining > 0)} style={styles.finish} />
           </>
         )}
       </ScrollView>
     </GradientBackground>
+  );
+}
+
+/** The rhymes found this round, newest first: each with how good a rhyme it is and what it scored. */
+function FoundList({ found, title }: { found: readonly Found[]; title: string }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  return (
+    <View style={styles.found} accessibilityLabel={title}>
+      {found.map((f, i) => (
+        <View key={`${f.word}-${i}`} style={[styles.foundRow, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
+          <Text style={[styles.foundWord, { color: colors.textPrimary }]}>{f.word}</Text>
+          <View style={[styles.foundMeta, { flexDirection: dir.row }]}>
+            {/* a perfect rhyme is right; a near one is right too, only less so: both in the ink, the word saying which */}
+            <Text style={[styles.foundQuality, { color: f.quality === 'perfect' ? colors.success : colors.textSecondary }]}>
+              {t(f.quality === 'perfect' ? 'games.rhyme.quality.perfect' : 'games.rhyme.quality.near')}
+            </Text>
+            <Text style={[styles.foundPoints, { color: colors.textSecondary }]}>+{f.points}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -263,27 +280,25 @@ const styles = StyleSheet.create({
   // where the round's XP used to be: quiet, the colour of the cloth's smaller writing
   stageNote: { marginTop: spacing.xs, color: TABLE.inkSoft, fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center', marginTop: spacing.xs },
-  promptRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, padding: spacing.lg },
+  promptRow: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, padding: spacing.lg },
   promptCol: { flex: 1 },
   promptLabel: { color: TABLE.goldSoft, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 1 },
   prompt: { ...display(typography.sizes.xxl), color: TABLE.ink },
-  metaCol: { alignItems: 'flex-end', gap: spacing.xs },
+  metaCol: { gap: spacing.xs },
   timerChip: { borderRadius: radii.md, backgroundColor: TABLE.veil, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
   // the last ten seconds: the clock turns to a warm card, told by its ground as well as its colour
   timerLow: { backgroundColor: TABLE.goldSoft },
   timer: { color: TABLE.ink, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   timerLowText: { color: TABLE.goldInk },
   score: { color: TABLE.inkSoft, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  inputRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
+  inputRow: { gap: spacing.sm, alignItems: 'center' },
   // minWidth: a text field will not shrink below its own idea of a width, and pushed Add off the screen's edge
   input: { minHeight: MIN_TOUCH_TARGET, flex: 1, minWidth: 0, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: typography.sizes.md },
-  addBtn: { paddingHorizontal: spacing.lg },
   found: { gap: spacing.xs, marginTop: spacing.sm },
-  foundRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+  foundRow: { alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   foundWord: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  foundMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  foundMeta: { alignItems: 'center', gap: spacing.md },
   foundQuality: { fontSize: typography.sizes.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   foundPoints: { fontSize: typography.sizes.sm },
-  finish: { alignItems: 'center', marginTop: spacing.lg },
-  finishText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, textDecorationLine: 'underline' },
+  finish: { alignSelf: 'stretch', marginTop: spacing.md },
 });

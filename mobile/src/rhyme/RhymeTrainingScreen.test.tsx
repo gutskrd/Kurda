@@ -63,10 +63,31 @@ describe('RhymeTrainingScreen', () => {
     renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: /^Start/ }));
     fireEvent.click(await screen.findByRole('button', { name: 'End round' }));
-    expect(await screen.findByRole('heading', { name: 'Time’s up for this round.' })).toBeTruthy();
+    // over, whether the clock ran out or it was ended: "time's up" was said of a round ended early too
+    expect(await screen.findByRole('heading', { name: 'Round finished' })).toBeTruthy();
     expect(screen.getByText('7 pts · 3 found')).toBeTruthy();
     expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
     // nothing earned is shown, not even a zero
     expect(screen.queryByText(/\+\d+ XP/)).toBeNull();
+  });
+
+  it('keeps the rhymes found on the screen once the round is over, and says the score in words, not as pts', async () => {
+    testAuth.client = fakeClient({
+      'POST /rhyme/training': ok(round()),
+      'POST /rhyme/training/r1/guesses': ok({ game: round({ score: 5, accepted: 1 }), result: { accepted: true, quality: 'perfect', points: 5, normalized: 'kar' } }),
+      'POST /rhyme/training/r1/end': ok({ game: round({ status: 'ended', remainingMs: 0, score: 5, accepted: 1 }) }),
+    });
+    renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Start/ }));
+    expect(await screen.findByText('Points: 0')).toBeTruthy();
+    // the field says what it is for, to a screen reader too
+    const field = screen.getByLabelText('Your rhyme');
+    fireEvent.change(field, { target: { value: 'kar' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    expect(await screen.findByText('kar')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'End round' }));
+    expect(await screen.findByRole('heading', { name: 'Round finished' })).toBeTruthy();
+    expect(screen.getByText('kar')).toBeTruthy();
+    expect(screen.getByLabelText('Rhymes you found')).toBeTruthy();
   });
 });
