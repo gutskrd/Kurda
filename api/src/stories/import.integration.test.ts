@@ -17,7 +17,7 @@ import { createRedis } from '../cache/redis.js';
 import { loadConfig } from '../config/env.js';
 import { testBank, testStory } from '../test/stories.js';
 import { StoryAdminService } from './admin-service.js';
-import { STARTER_STORY_FILES, importStories, parseStoryFile, seedStarterStories } from './import.js';
+import { STARTER_STORY_FILES, STARTER_STORY_VERSIONS, importStories, linkStarterVersions, parseStoryFile, seedStarterStories } from './import.js';
 import { runStoryImportCommand } from './import-cli.js';
 import { StoriesService, bustStoryLists } from './service.js';
 
@@ -40,6 +40,34 @@ describe('the starter story files', () => {
     }
     expect([...slugs].some((sl) => sl.startsWith('kmr-'))).toBe(true);
     expect([...slugs].some((sl) => sl.startsWith('ckb-'))).toBe(true);
+  });
+
+  /*
+   * Linked, two stories are offered as one: the reader's switch between the
+   * varieties goes from one to the other. So a pair must be the same tale —
+   * here held to what the legends have in common in their file: one cover,
+   * one title in English, one level and one shelf.
+   */
+  it('names as one story only two tellings of the same tale, a Kurmancî one and a Soranî one', async () => {
+    const drafts = new Map<string, ReturnType<typeof parseStoryFile>['drafts'][number]>();
+    for (const file of STARTER_STORY_FILES) {
+      for (const draft of parseStoryFile(JSON.parse(await readFile(file, 'utf8')), 'draft').drafts) drafts.set(draft.slug, draft);
+    }
+    const paired = new Set<string>();
+    expect(STARTER_STORY_VERSIONS.length).toBeGreaterThanOrEqual(5);
+    for (const [kurmanci, sorani] of STARTER_STORY_VERSIONS) {
+      const [a, b] = [drafts.get(kurmanci), drafts.get(sorani)];
+      expect(a?.dialect, kurmanci).toBe('kurmanci');
+      expect(b?.dialect, sorani).toBe('sorani');
+      expect([b!.cover, b!.level, b!.category, b!.tradition], sorani).toEqual([a!.cover, a!.level, a!.category, a!.tradition]);
+      expect(a!.metaTranslations?.en?.title, kurmanci).toEqual(expect.any(String));
+      expect(b!.metaTranslations?.en?.title, sorani).toBe(a!.metaTranslations?.en?.title);
+      // a story is one of one pair at most
+      for (const sl of [kurmanci, sorani]) {
+        expect(paired.has(sl), sl).toBe(false);
+        paired.add(sl);
+      }
+    }
   });
 });
 
@@ -461,6 +489,99 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
       const filed = await seedStarterStories(pool, log, [await file('unfiled.json', { stories: [testStory(slug('seed-h'))] })]);
       expect(filed).toEqual({ seeded: [], refreshed: [slug('seed-h')], published: [slug('seed-h')] });
       expect(await row(slug('seed-h'))).toMatchObject({ status: 'published' });
+    });
+
+    const group = async (sl: string): Promise<string | null> =>
+      (await pool.query<{ translation_group: string | null }>(`SELECT translation_group FROM stories WHERE slug = $1`, [sl])).rows[0]?.translation_group ?? null;
+
+    it('links two starters that are one story told in both varieties, and no later start or import undoes it', async () => {
+      const pair = [slug('seed-kmr'), slug('seed-ckb')] as const;
+      const kurmanci = (over = {}) => file('versions-k.json', { stories: [testStory(pair[0], over), testStory(slug('seed-alone'))] });
+      const files = [await kurmanci(), await file('versions-s.json', { stories: [testStory(pair[1], { dialect: 'sorani' })] })];
+      // a pair whose other telling these files do not hold is not looked for
+      await seedStarterStories(pool, log, files, null, [pair, [slug('seed-alone'), slug('seed-nowhere')]]);
+      const linked = await group(pair[0]);
+      expect(linked).toEqual(expect.any(String));
+      expect(await group(pair[1])).toBe(linked);
+      expect(await group(slug('seed-alone'))).toBeNull();
+      // the reader is offered the other telling, each way
+      const reader = new StoriesService(pool);
+      expect((await reader.detail(pair[0]))!.versions).toEqual([expect.objectContaining({ slug: pair[1], dialect: 'sorani' })]);
+      expect((await reader.detail(pair[1]))!.versions).toEqual([expect.objectContaining({ slug: pair[0], dialect: 'kurmanci' })]);
+      expect((await reader.detail(slug('seed-alone')))!.versions).toEqual([]);
+
+      // the next release corrects one telling in its file: brought up to it, and the two are still one story
+      const corrected = [await kurmanci({ title: 'Sernavê nû' }), files[1]!];
+      expect((await seedStarterStories(pool, log, corrected, null, [pair])).refreshed).toEqual([pair[0]]);
+      expect(await row(pair[0])).toMatchObject({ title: 'Sernavê nû', status: 'published' });
+      expect([await group(pair[0]), await group(pair[1])]).toEqual([linked, linked]);
+      // the import command writes over a draft, and leaves its group as it found it
+      await pool.query(`UPDATE stories SET status = 'draft' WHERE slug = $1`, [pair[1]]);
+      const imported = await importStories(pool, { stories: [testStory(pair[1], { dialect: 'sorani', title: 'سەردێڕی نوێ' })] });
+      expect(imported.stories[0]!.outcome).toBe('updated');
+      expect(await group(pair[1])).toBe(linked);
+
+      // an editor decides they are two stories after all: the next start leaves them so
+      await pool.query(`UPDATE stories SET translation_group = NULL WHERE slug = ANY($1)`, [[...pair]]);
+      await seedStarterStories(pool, log, corrected, null, [pair]);
+      expect([await group(pair[0]), await group(pair[1])]).toEqual([null, null]);
+    });
+
+    it('waits for both tellings, and leaves alone a pair an editor grouped and a story that is not the starter', async () => {
+      const marked = async (pair: readonly [string, string]): Promise<boolean> =>
+        ((await pool.query(`SELECT 1 FROM content_seeds WHERE name = $1`, [`stories:versions:${pair[0]}+${pair[1]}`])).rowCount ?? 0) > 0;
+
+      // only one telling is in yet: nothing is linked, and nothing remembered, so the pair is looked at again
+      const waiting = [slug('link-kmr'), slug('link-ckb')] as const;
+      await importStories(pool, { stories: [testStory(waiting[0])] }, { source: 'starter' });
+      expect(await linkStarterVersions(pool, log, [waiting])).toEqual([]);
+      expect(await marked(waiting)).toBe(false);
+      await importStories(pool, { stories: [testStory(waiting[1], { dialect: 'sorani' })] }, { source: 'starter' });
+      expect(await linkStarterVersions(pool, log, [waiting])).toEqual([waiting]);
+      expect(await group(waiting[0])).toEqual(expect.any(String));
+      expect(await group(waiting[1])).toBe(await group(waiting[0]));
+      expect(await marked(waiting)).toBe(true);
+      expect(await linkStarterVersions(pool, log, [waiting])).toEqual([]);
+
+      // an editor has already linked one telling to something: left as it is, and remembered, so unlinking it later stays unlinked
+      const grouped = [slug('link-kmr2'), slug('link-ckb2')] as const;
+      await importStories(pool, { stories: [testStory(grouped[0]), testStory(grouped[1], { dialect: 'sorani' })] }, { source: 'starter' });
+      await pool.query(`UPDATE stories SET translation_group = gen_random_uuid() WHERE slug = $1`, [grouped[0]]);
+      const theirs = await group(grouped[0]);
+      expect(await linkStarterVersions(pool, log, [grouped])).toEqual([]);
+      expect([await group(grouped[0]), await group(grouped[1])]).toEqual([theirs, null]);
+      expect(await marked(grouped)).toBe(true);
+      await pool.query(`UPDATE stories SET translation_group = NULL WHERE slug = $1`, [grouped[0]]);
+      expect(await linkStarterVersions(pool, log, [grouped])).toEqual([]);
+      expect(await group(grouped[0])).toBeNull();
+
+      // a story an editor wrote under a starter's slug is not a telling of it
+      const mine = [slug('link-kmr3'), slug('link-ckb3')] as const;
+      await importStories(pool, { stories: [testStory(mine[0])] });
+      await importStories(pool, { stories: [testStory(mine[1], { dialect: 'sorani' })] }, { source: 'starter' });
+      expect(await linkStarterVersions(pool, log, [mine])).toEqual([]);
+      expect([await group(mine[0]), await group(mine[1])]).toEqual([null, null]);
+
+      // a database that refuses is logged, not thrown
+      const closed = new pg.Pool({ connectionString: DATABASE_URL });
+      await closed.end();
+      logs.length = 0;
+      await expect(linkStarterVersions(closed, log, [mine])).resolves.toEqual([]);
+      expect(logs.some((l) => l.level === 'warn')).toBe(true);
+    });
+
+    it('lets two instances starting together link a pair once', async () => {
+      const pair = [slug('link-race-kmr'), slug('link-race-ckb')] as const;
+      await importStories(pool, { stories: [testStory(pair[0]), testStory(pair[1], { dialect: 'sorani' })] }, { source: 'starter' });
+      const other = new pg.Pool({ connectionString: DATABASE_URL });
+      try {
+        const [a, b] = await Promise.all([linkStarterVersions(pool, log, [pair]), linkStarterVersions(other, log, [pair])]);
+        expect([...a, ...b]).toEqual([pair]);
+      } finally {
+        await other.end();
+      }
+      expect(await group(pair[0])).toEqual(expect.any(String));
+      expect(await group(pair[1])).toBe(await group(pair[0]));
     });
 
     it('lets two instances starting together seed each story once', async () => {

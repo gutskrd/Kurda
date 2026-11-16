@@ -2,7 +2,9 @@
  * Reading stories — open to everyone, signed in or not (playing a quiz on one
  * needs an account; reading does not).
  *
- *   GET /stories/library                  the library's front page: featured, recent, categories, and the caller's own rows
+ *   GET /stories/library?dialect          the library's front page: featured, the legends, recent, categories, and the caller's
+ *                                         own rows; with a dialect, that variety's page alone (kurmanci or sorani), its legends on
+ *                                         their shelf and not among the newest; without one, all of it, as older apps know it
  *   GET /stories?q&category&level&dialect&length&language&audio&sort&limit&offset
  *                                         published stories, filtered and paged (length: short, medium, long or saga)
  *   GET /stories/categories               every category
@@ -50,6 +52,11 @@ const listQuery = z.object({
   ...pageQuery,
 });
 
+/** The library shows one variety at a time; an app from before that asks for none and gets the whole library. */
+const libraryQuery = z.object({
+  dialect: z.preprocess(absentIfEmpty, z.enum(STORY_DIALECTS).optional()),
+});
+
 const storyParams = z.object({ idOrSlug: z.string().min(1).max(80) });
 const idParam = z.object({ id: z.uuid() });
 const progressBody = z.object({
@@ -61,7 +68,9 @@ const progressBody = z.object({
 export function registerStoryRoutes(app: FastifyInstance, stories: StoriesService): void {
   const viewer = (req: { user?: { id: string } | undefined }): string | null => req.user?.id ?? null;
 
-  app.get('/stories/library', async (req) => stories.library(viewer(req)));
+  app.get('/stories/library', { schema: { querystring: libraryQuery } }, async (req) =>
+    stories.library(viewer(req), (req.query as z.infer<typeof libraryQuery>).dialect ?? null),
+  );
 
   app.get('/stories/categories', async () => ({ categories: await stories.categories() }));
 

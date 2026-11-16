@@ -18,6 +18,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GlassCard } from '../theme/glass';
+import { useDirection } from '../reports/direction';
 import type { StoryDialect } from '@kurda/shared';
 import { storyTextProps, storyTextStyle } from './storyText';
 import { pressedDim } from '../theme/motion';
@@ -107,7 +108,11 @@ export function SectionLabel({ children }: { children: string }): React.JSX.Elem
   );
 }
 
-/** A short fact in a pill: "Short", "~3 min", "Done · 4/5". */
+/**
+ * A short fact in a pill: "Short", "~3 min", "Done · 4/5". Its icon stands
+ * before its label the way the language reads: on the right in Soranî and
+ * Arabic, where a fixed row left it trailing the word it marks.
+ */
 export function Pill({
   label,
   icon,
@@ -120,10 +125,11 @@ export function Pill({
   accessibilityLabel?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const dir = useDirection();
   const fg = tone === 'primary' ? colors.primary : tone === 'gold' ? colors.goldText : tone === 'success' ? colors.success : colors.textSecondary;
   const bg = tone === 'success' ? colors.successFill : colors.controlTrack;
   return (
-    <View style={[styles.pill, { backgroundColor: bg }]} accessible accessibilityLabel={accessibilityLabel ?? label}>
+    <View style={[styles.pill, { backgroundColor: bg, flexDirection: dir.row }]} accessible accessibilityLabel={accessibilityLabel ?? label}>
       {icon ? <Icon name={icon} size={13} color={fg} /> : null}
       <Text style={[styles.pillText, { color: fg }]} numberOfLines={1}>
         {label}

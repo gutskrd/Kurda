@@ -894,6 +894,8 @@ export interface StoryLibrary {
   featured: StoryListItem[];
   /** latest published first */
   recent: StoryListItem[];
+  /** the variety's legends, easiest first: a shelf of their own, so no newer story crowds one off the front page; absent from an older server */
+  legends?: StoryListItem[];
   /** started and not finished, latest read first */
   continue: StoryListItem[];
   bookmarks: StoryListItem[];

@@ -8,6 +8,7 @@ import {
   rememberedTextSize,
   resetSessionVariety,
   showEnglishFor,
+  shownVariety,
   soloCountFor,
 } from './prefs';
 
@@ -56,6 +57,35 @@ describe('the variety Stories opens on', () => {
     expect(defaultVariety('en')).toBe('kurmanci');
     expect(rememberedTextSize()).toBe(1);
     expect(rememberedSolo()).toEqual({ questionCount: null, timerSeconds: 0, textDuring: 'visible' });
+  });
+});
+
+describe('the variety the stories show', () => {
+  it('is the one chosen last on this device, whatever the course or the interface', () => {
+    rememberCourseDialect('sorani');
+    localStorage.setItem('hevalo.stories.variety', 'kurmanci');
+    expect(shownVariety('ckb')).toBe('kurmanci');
+    localStorage.setItem('hevalo.stories.variety', 'sorani');
+    expect(shownVariety('en')).toBe('sorani');
+  });
+
+  it('is Soranî for a Soranî interface before any choice, and Kurmancî otherwise, the course aside', () => {
+    rememberCourseDialect('sorani');
+    expect(shownVariety('ckb')).toBe('sorani');
+    expect(shownVariety('en')).toBe('kurmanci');
+    expect(shownVariety('ar')).toBe('kurmanci');
+  });
+
+  it('follows a choice made in this tab, on a device that remembers nothing too', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    expect(shownVariety('en')).toBe('kurmanci');
+    rememberVariety('sorani');
+    expect(shownVariety('en')).toBe('sorani');
   });
 });
 

@@ -7,8 +7,11 @@ import {
   STORY_ASSESSMENT,
   categoryName,
   glossFor,
+  storySpelling,
   storyTextDirection,
+  type GameDialect,
   type StoryDetail,
+  type StoryDialect,
   type StoryGameSummary,
   type StoryGlossEntry,
   type StoryMe,
@@ -28,13 +31,14 @@ import { STORIES_LIBRARY, createGame, gamePath, readerPath, setBookmark, storyEr
 import { useStoryCategories } from './catalogue';
 import { StoryCover } from './Cover';
 import { levelHint, levelName, minutesLeft, narratedKey } from './labels';
-import { rememberTextSize, rememberedExtraTime, rememberedTextSize } from './prefs';
+import { rememberTextSize, rememberVariety, rememberedExtraTime, rememberedTextSize } from './prefs';
 import { StoryPlayerBar, TextSizeControl } from './ReaderControls';
 import { SetupSheet } from './SetupSheet';
 import { PlayWordButton, SaveWordButton, StoryText } from './StoryText';
 import { useReadingProgress } from './useReadingProgress';
 import { useStoryAudio } from './useStoryAudio';
 import { AboutStory, ChapterContents, ChapterPicker, Reflections, hasAbout, localeDir, ownLocale, useChapterPosition, useMetaTranslation } from './Legend';
+import { VarietySwitch } from '../lore/LoreParts';
 
 type Load = { state: 'loading' } | { state: 'ready'; story: StoryDetail } | { state: 'gone' } | { state: 'error'; message: string };
 
@@ -49,25 +53,53 @@ type Load = { state: 'loading' } | { state: 'ready'; story: StoryDetail } | { st
  * at a reader's own size, with the glossary marked, the translation a toggle
  * away under each paragraph, the player docked at the foot when there are
  * recordings, and the reader's place kept on the server as they go.
+ *
+ * A story told in both varieties is one story: the Kurmancî | Soranî switch
+ * the library has stands at the head of the overview, set to the telling on
+ * show, and the other side opens that telling in this page's place — its own
+ * overview, from the top, not "the same paragraph", since the two are not cut
+ * alike — and keeps the choice, so the library opens on it too. A story told
+ * once has no switch, and names its variety in the byline instead. Opening a
+ * story of the other variety from a link shows what the link names and keeps
+ * no choice.
  */
 export function StoryReader(): React.JSX.Element {
   const { slug = '' } = useParams();
   return <StoryPage key={slug} slug={slug} />;
 }
 
+/** What the switch hands the page it opens: the other telling, asked for already, so the page has it at once. */
+interface Handover {
+  story?: StoryDetail;
+}
+
 function StoryPage({ slug }: { slug: string }): React.JSX.Element {
   const t = useT();
   const { client, status } = useAuth();
-  const [load, setLoad] = useState<Load>({ state: 'loading' });
+  const location = useLocation();
+  const navigate = useNavigate();
+  const handed = (location.state as Handover | null)?.story;
+  const [load, setLoad] = useState<Load>(() => (handed?.slug === slug ? { state: 'ready', story: handed } : { state: 'loading' }));
+  // the telling the switch handed over is shown as it came, and not asked for a second time
+  const handedOver = useRef(handed?.slug === slug);
   const [nonce, setNonce] = useState(0);
   const signedIn = status === 'signedIn';
   // where the story's card lands when it is pressed in the library, and what goes back to the card: said here, while
   // the story is still being asked for, so the page is held for the cover that comes with it (lib/viewTransition.tsx)
   const cover = useGrowsInto(`story:${slug}`);
 
+  // the hand-over is for this one opening: taken out of the history, so a reload asks for the story afresh
+  useEffect(() => {
+    if (handed) navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+  }, []); // once, as the page opens
+
   useEffect(() => {
     // the story is asked for once the session is known, so a reader's own record arrives with it
     if (status === 'restoring') return;
+    if (handedOver.current) {
+      handedOver.current = false;
+      return;
+    }
     let live = true;
     setLoad({ state: 'loading' });
     void client.get<StoryDetail>(`/stories/${encodeURIComponent(slug)}`).then((res) => {
@@ -103,11 +135,18 @@ const TRADITION_KEY: Record<StoryTradition, MessageKey> = {
   original: 'stories.overview.tradition.original',
 };
 
+/** The stories' spelling of a variety in the games' (the switch the library, the riddles and the proverbs share speaks that one). */
+const GAME_SPELLING: Record<StoryDialect, GameDialect> = { kurmanci: 'kmr', sorani: 'ckb' };
+
 function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTMLSpanElement> }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
+  const navigate = useNavigate();
   const { client, status } = useAuth();
   const signedIn = status === 'signedIn';
+  // the other telling on its way, while the switch already says it; and why the last one did not come
+  const [switching, setSwitching] = useState<StoryDialect | null>(null);
+  const [switchProblem, setSwitchProblem] = useState<string | null>(null);
   const { lang, dir } = storyTextDirection(story.dialect);
   const [me, setMe] = useState<StoryMe | null>(story.me ?? null);
   const [size, setSize] = useState(rememberedTextSize);
@@ -176,13 +215,45 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
   const left = minutesLeft({ readingMinutes: story.readingMinutes, me: me ?? undefined });
   const finished = me?.finishedAt !== null && me?.finishedAt !== undefined;
   const narrated = narratedKey(story);
-  const otherVersions = story.versions.filter((v) => v.id !== story.id);
+  // the same story in the other variety, when it has been told in both
+  const otherTelling = story.versions.find((v) => v.dialect !== story.dialect) ?? null;
+
+  /**
+   * The switch: the other telling, asked for while this one stays, then opened in this page's place (the address
+   * moves to it, Back still leads to where the reader came from) and kept as the reader's choice. One that does not
+   * come leaves the reader where they were, and says so.
+   */
+  async function switchTo(next: GameDialect): Promise<void> {
+    const dialect = storySpelling(next);
+    const version = story.versions.find((v) => v.dialect === dialect);
+    if (!version || switching || dialect === story.dialect) return;
+    setSwitching(dialect);
+    setSwitchProblem(null);
+    const res = await client.get<StoryDetail>(`/stories/${encodeURIComponent(version.slug)}`);
+    if (!res.ok) {
+      setSwitching(null);
+      setSwitchProblem(res.error.status === 404 ? t('stories.reader.updating') : describeError(res.error, t));
+      return;
+    }
+    rememberVariety(dialect);
+    navigate(readerPath(res.data.slug), { replace: true, state: { story: res.data } satisfies Handover });
+  }
 
   return (
     <article className="story-article" aria-labelledby="story-title">
       <header className="story-overview">
-        <StoryCover cover={story.cover} category={story.category} className="story-overview-cover" eager ref={cover} />
+        <StoryCover slug={story.slug} cover={story.cover} className="story-overview-cover" eager ref={cover} />
         <div className="story-overview-body">
+          {otherTelling && (
+            <div className="story-variety-reader">
+              <VarietySwitch value={GAME_SPELLING[switching ?? story.dialect]} onChange={(d) => void switchTo(d)} />
+              {switchProblem && (
+                <p className="msg msg-error" role="alert">
+                  {switchProblem}
+                </p>
+              )}
+            </div>
+          )}
           <p className="story-meta">
             <span className="story-cefr" title={levelHint(story.level, t)}>
               {levelName(story.level, t)}
@@ -209,7 +280,8 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
           <p className="story-byline">
             <span>{t(TRADITION_KEY[story.tradition])}</span>
             {story.author && <span>{story.author}</span>}
-            <span>{dialectName(story.dialect)}</span>
+            {/* which Kurdish it is: said by the switch when there is one */}
+            {!otherTelling && <span>{dialectName(story.dialect)}</span>}
           </p>
           {story.summary && (
             <p className="story-summary" lang={lang} dir={dir}>
@@ -247,15 +319,6 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
           {bookmarkProblem && (
             <p className="msg msg-error" role="alert">
               {bookmarkProblem}
-            </p>
-          )}
-          {otherVersions.length > 0 && (
-            <p className="story-versions">
-              {otherVersions.map((v) => (
-                <Link key={v.id} to={readerPath(v.slug)}>
-                  {t('stories.overview.alsoIn', { variety: dialectName(v.dialect) })}
-                </Link>
-              ))}
             </p>
           )}
         </div>

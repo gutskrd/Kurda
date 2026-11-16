@@ -32,8 +32,12 @@ import { joined } from '../play/joining';
  * not a member of a game gets the same 404 as for a game that does not exist.
  */
 
-/** The library's front page: the editors' picks, the newest, the categories, and the caller's own rows. */
-export const getLibrary = (client: ApiClient): Promise<ApiResult<StoryLibrary>> => client.get('/stories/library');
+/**
+ * The library's front page in one variety: its editors' picks, its newest, its categories and counts, and the
+ * caller's own rows (their shelves whatever the variety, their tally in it).
+ */
+export const getLibrary = (client: ApiClient, dialect: StoryDialect): Promise<ApiResult<StoryLibrary>> =>
+  client.get(`/stories/library?dialect=${dialect}`);
 
 /** The paginated list, filtered: what the library's search and chips read. */
 export const searchStories = (client: ApiClient, query: StoryQuery): Promise<ApiResult<{ stories: StoryListItem[]; total: number }>> =>

@@ -85,6 +85,23 @@ export function defaultVariety(locale: string): StoryDialect {
   return 'kurmanci';
 }
 
+/**
+ * The variety the stories show — the library, and the switch on a story told
+ * in both: the one chosen last on this device (with that switch, or on the
+ * riddles' and proverbs' shelves, which share the choice); before any choice,
+ * Soranî for a Soranî interface, otherwise Kurmancî. Unlike `defaultVariety`
+ * the learner's course does not come into it: somebody who chose Kurmancî
+ * stories keeps them, whichever course they are on. Only a choice made with a
+ * switch is kept (`rememberVariety`); opening a story of the other variety
+ * from a link is not one.
+ */
+export function shownVariety(locale: string): StoryDialect {
+  if (sessionVariety) return sessionVariety;
+  const last = read(KEY.variety);
+  if (isStoryDialect(last)) return last;
+  return locale === 'ckb' ? 'sorani' : 'kurmanci';
+}
+
 export function rememberVariety(dialect: StoryDialect): void {
   sessionVariety = dialect;
   write(KEY.variety, dialect);

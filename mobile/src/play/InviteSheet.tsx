@@ -35,7 +35,7 @@ import { listStories } from '../stories/api';
 import { DIALECT_NAME } from '../stories/labels';
 import { StoryPresetFields, useCanHostOpen } from '../stories/SetupSheet';
 import { changeSetup, initialSetup, inviteSettings, type SetupState } from '../stories/setup';
-import { useStoryPrefs } from '../stories/prefs';
+import { shownDialect, useStoryPrefs } from '../stories/prefs';
 import { Note, SectionLabel, Sheet } from '../stories/ui';
 import { createLobby, inviteFriends, listFriends, listInvites, type FriendSummary } from './api';
 import { GAME_ICON, GAME_NAME_KEY } from './labels';
@@ -147,7 +147,8 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const fixedGame = target.kind === 'lobby' ? target.game : target.kind === 'new' ? target.game : undefined;
   const [game, setGame] = useState<PlayGame>(fixedGame ?? 'stories');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const [dialect, setDialect] = useState<StoryDialect>(locale === 'ckb' ? 'sorani' : (prefs.dialect ?? 'kurmanci'));
+  // the variety Stories is showing: the one chosen with its switch, which a Soranî interface does not overrule
+  const [dialect, setDialect] = useState<StoryDialect>(shownDialect(locale, prefs.dialect));
   // The Last Letter, in the dialects whose dictionary can check players' words (asked only where it could be offered)
   const letterDialects = offeredDialects(useLastLetterAvailability(target.kind !== 'lobby'), 'group');
   // Impostor, in the varieties and at the levels its approved cards allow

@@ -8,10 +8,12 @@ import {
   PAID_STORY_REPEATS_PER_DAY,
   isAppLocale,
   STORY_ASSESSMENT,
+  STORY_DIALECTS,
   glossFor,
   storyAudioSentences,
   type StoryCategory,
   type StoryDetail,
+  type StoryDialect,
   type StoryGameMode,
   type StoryGlossEntry,
   type StoryMe,
@@ -28,7 +30,7 @@ import { limitErrorText } from '../limits/limitCopy';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
-import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
+import { ClayButton, ErrorRetry, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
@@ -45,7 +47,7 @@ import { createErrorMessage, SetupSheet } from './SetupSheet';
 import { STORY_BODY_SIZE, StoryText, storyLineHeight } from './StoryText';
 import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
 import { useNarration } from './useNarration';
-import { COLUMN, Card, Note, Pill, SectionLabel, Sheet } from './ui';
+import { COLUMN, Card, Note, Pill, SectionLabel, Sheet, useAnnouncer } from './ui';
 import { NarrationBar } from './NarrationBar';
 import { AboutStory, Reflections, StorySources } from './Afterword';
 import { chapterAt, hasIntroduction, metaFor, translatedHeading } from './legend';
@@ -106,13 +108,22 @@ type Mode = 'overview' | 'reading';
 /**
  * A story (design notes §1–§3): its overview first, then the text.
  *
- * The overview is the story's cover page: its picture, title, level with its
- * word ("A2 · Elementary"), category, minutes and words, whether it is read
- * aloud, who wrote or told it and from what tradition, its synopsis, the
- * other versions of the same story, then Read (or Continue, with the minutes
- * left) and Listen, the key vocabulary with a play button where the
- * dictionary has a clip and Save where the word is a headword, and the check
- * at the end — locked with a line until the story has been finished.
+ * The overview is the story's cover page: its picture, title, level by its
+ * plain name, category, minutes and words, whether it is read aloud, who
+ * wrote or told it and from what tradition, its synopsis, then Read (or
+ * Continue, with the minutes left) and Listen, the key vocabulary with a play
+ * button where the dictionary has a clip and Save where the word is a
+ * headword, and the check at the end — locked with a line until the story has
+ * been finished.
+ *
+ * A story told in both varieties is one story: under its cover the same
+ * Kurmancî | Soranî switch the library has, set to the telling on show. The
+ * other side opens that telling here, in place of this one and at the top of
+ * its own cover page — not at "the same paragraph", since the two tellings
+ * are not cut alike — and is kept as the reader's choice, so the library
+ * opens on it too. A story with one telling has no switch, and says which
+ * Kurdish it is among its facts instead. Opening a story of the other variety
+ * from a link shows what the link names and changes no choice.
  *
  * The text is set in the display serif, generously leaded, with glossary
  * words marked in dotted gold; a tap on one opens its meaning, part of speech
@@ -170,35 +181,79 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   // the glossary's dictionary words already in the reader's vocabulary, and a save that did not take
   const [saved, setSaved] = useState<ReadonlySet<string>>(new Set());
   const [saveError, setSaveError] = useState<{ entryId: string; text: string } | null>(null);
+  // the other telling being fetched, while the switch already says it; and why the last one did not come
+  const [switching, setSwitching] = useState<StoryDialect | null>(null);
+  const [switchError, setSwitchError] = useState<string | null>(null);
   const { narrator, state: narration } = useNarration(prefs.rate);
   const clips = useClipPlayer();
+  const { announce, region } = useAnnouncer();
+  const overview = useRef<ScrollView>(null);
   const scroll = useRef<ScrollView>(null);
   const textTop = useRef(0);
   const paragraphTops = useRef(new Map<number, number>());
   const scrollTarget = useRef<number | null>(null);
+  // the telling on show, for answers that arrive after the page has moved on to the other one
+  const shown = useRef<{ id: string; slug: string } | null>(null);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+
+  /**
+   * A story takes the page, from the first load or from the switch: whatever
+   * the page knew of the telling before goes with it — where the reader was,
+   * the translations opened, a sheet left open — and the page is its cover
+   * page, at the top.
+   */
+  const show = useCallback((next: StoryDetail): void => {
+    shown.current = { id: next.id, slug: next.slug };
+    paragraphTops.current = new Map();
+    textTop.current = 0;
+    scrollTarget.current = null;
+    setStory(next);
+    setMe(next.me ?? null);
+    // a place to go on from, when there is one: not the first paragraph, and not a story read to its end
+    setContinueFrom(next.me && next.me.paragraph > 0 && !next.me.finishedAt ? next.me.paragraph : null);
+    setMode('overview');
+    setAt(0);
+    setReachedEnd(false);
+    setTranslated(new Set());
+    setGloss(null);
+    setSaveError(null);
+    setStartError(null);
+    setUnfinished(null);
+    setSetupMode(null);
+    setChaptersOpen(false);
+  }, []);
 
   const load = useCallback(() => {
     setError(null);
     void getStory(client, slug).then((res) => {
-      if (res.ok) {
-        setStory(res.data);
-        setMe(res.data.me ?? null);
-        // a place to go on from, when there is one: not the first paragraph, and not a story read to its end
-        setContinueFrom(res.data.me && res.data.me.paragraph > 0 && !res.data.me.finishedAt ? res.data.me.paragraph : null);
-      } else setError(res.error);
+      if (!alive.current) return;
+      if (res.ok) show(res.data);
+      else setError(res.error);
     });
-  }, [client, slug]);
-  useEffect(load, [load]);
+  }, [client, slug, show]);
+  useEffect(() => {
+    // the address follows the switch (below): the telling it then names is the one already here
+    if (shown.current?.slug === slug) return;
+    load();
+  }, [load, slug]);
   /*
    * Coming back to the story — from its check, above all — the reader's own
    * record is asked again: the best score, and how many checks today, have
    * changed while the game was on top. The first focus is the load itself.
    */
   const refreshMe = useCallback(() => {
-    void getStory(client, slug).then((res) => {
-      if (res.ok) setMe(res.data.me ?? null);
+    const asked = shown.current;
+    if (!asked) return;
+    void getStory(client, asked.slug).then((res) => {
+      if (res.ok && shown.current?.id === asked.id) setMe(res.data.me ?? null);
     });
-  }, [client, slug]);
+  }, [client]);
   const focusedBefore = useRef(false);
   useFocusEffect(
     useCallback(() => {
@@ -269,7 +324,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     pending.current = null;
     lastSent.current = Date.now();
     void saveProgress(client, storyId, next).then((res) => {
-      if (res.ok) setMe(res.data.me);
+      // the reader's record on the telling it was written for: not put on the other one, if the switch has moved since
+      if (res.ok && shown.current?.id === storyId) setMe(res.data.me);
     });
   }, [client, storyId]);
   const noteProgress = (next: ProgressInput): void => {
@@ -362,6 +418,35 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     narrator.play(track, 'story', Math.max(0, start));
   };
 
+  /**
+   * The switch: the same story in the other variety, opened here in place of
+   * this one. The switch moves at once and the telling follows when it has
+   * arrived, on its own cover page; only then is the choice kept (the library
+   * opens on it too) and the address moved to the telling on show. One that
+   * does not arrive leaves the reader where they were, and says so.
+   */
+  const switchTo = (dialect: StoryDialect): void => {
+    const version = story?.versions.find((v) => v.dialect === dialect);
+    if (!story || !version || switching || dialect === story.dialect) return;
+    flush();
+    narrator.stop();
+    setSwitching(dialect);
+    setSwitchError(null);
+    void getStory(client, version.slug).then((res) => {
+      if (!alive.current) return;
+      setSwitching(null);
+      if (!res.ok) {
+        setSwitchError(res.error.status === 404 ? t('stories.reader.unavailable') : describeError(res.error, t));
+        return;
+      }
+      update({ dialect });
+      show(res.data);
+      overview.current?.scrollTo({ y: 0, animated: false });
+      navigation.setParams({ slug: res.data.slug });
+      announce(`${DIALECT_NAME[dialect]}: ${res.data.title}`);
+    });
+  };
+
   const toggleBookmark = (): void => {
     if (!story) return;
     const on = !(me?.bookmarked ?? false);
@@ -378,7 +463,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
       }));
     patch(on);
     void setBookmark(client, story.id, on).then((res) => {
-      if (!res.ok) patch(!on);
+      if (!res.ok && shown.current?.id === story.id) patch(!on);
     });
   };
 
@@ -491,6 +576,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   const category = categoryLabel(story.category, categories, locale);
   const reading = narration.current;
   const meta = metaFor(story, locale);
+  // the same story in the other variety, when it has been told in both
+  const otherTelling = story.versions.find((v) => v.dialect !== story.dialect) ?? null;
   const sections = story.sections ?? [];
   // how far the reader has got, for the chapters ticked as read: this sitting's place, else the one the server kept
   const readTo = finished ? story.paragraphs.length : Math.max(at, me?.paragraph ?? 0);
@@ -555,8 +642,21 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
       {/* the bar names the place in the app's words; the story's own title is in the body, in its own script */}
       <ScreenHeader title={t('stories.title')} onBack={mode === 'reading' ? toOverview : onExit} right={headerRight} />
       {mode === 'overview' ? (
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomInset + spacing.lg }]} showsVerticalScrollIndicator={false}>
-          <StoryCover cover={story.cover} category={story.category} style={styles.cover} radius={radii.lg} />
+        <ScrollView ref={overview} contentContainerStyle={[styles.content, { paddingBottom: bottomInset + spacing.lg }]} showsVerticalScrollIndicator={false}>
+          <StoryCover slug={story.slug} cover={story.cover} style={styles.cover} radius={radii.lg} />
+          {otherTelling ? (
+            // one story, two tellings: the library's own switch, set to the one on show
+            <View style={styles.variety}>
+              <Segmented<StoryDialect>
+                options={STORY_DIALECTS}
+                value={switching ?? story.dialect}
+                onChange={switchTo}
+                labelOf={(d) => DIALECT_NAME[d]}
+                groupLabel={t('stories.variety')}
+              />
+              {switchError ? <Note tone="danger" icon="alert">{switchError}</Note> : null}
+            </View>
+          ) : null}
           <View style={styles.head}>
             <Text {...props} style={[styles.title, { color: colors.textPrimary }, dir]} accessibilityRole="header">
               {story.title}
@@ -569,7 +669,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             <View style={[styles.pills, storyRowStyle(story.dialect)]}>
               <Pill label={levelName(story.level, t)} tone="gold" />
               {category ? <Pill icon="tag" label={category} /> : null}
-              <Pill label={DIALECT_NAME[story.dialect]} />
+              {/* which Kurdish it is: said by the switch when there is one */}
+              {otherTelling ? null : <Pill label={DIALECT_NAME[story.dialect]} />}
               <Pill label={t('stories.aboutMinutes', { count: story.readingMinutes })} />
               <Pill label={t('stories.overview.words', { count: formatNumber(story.wordCount, locale) })} />
               {narrated ? <Pill icon="headphones" label={narrated} tone="primary" /> : null}
@@ -589,22 +690,6 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             </Text>
             {story.source ? <Text style={[styles.source, { color: colors.textSecondary }]}>{t('stories.overview.source', { source: story.source })}</Text> : null}
             {story.attributionNote ? <Text style={[styles.source, { color: colors.textSecondary }]}>{story.attributionNote}</Text> : null}
-            {story.versions.length > 0 ? (
-              <View style={styles.versions}>
-                {story.versions.map((v) => (
-                  <Pressable
-                    key={v.id}
-                    onPress={() => navigation.push('StoryReader', { slug: v.slug })}
-                    accessibilityRole="button"
-                    hitSlop={VERSION_SLOP}
-                    style={({ pressed }) => [styles.version, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
-                  >
-                    <Icon name="translate" size={14} color={colors.primary} />
-                    <Text style={[styles.versionText, { color: colors.primary }]}>{t('stories.overview.readIn', { variety: DIALECT_NAME[v.dialect] })}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : null}
           </View>
 
           <View style={styles.actions}>
@@ -802,6 +887,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
           <Text style={[styles.sheetText, { color: colors.textSecondary }]}>{t('stories.reader.unfinishedBody')}</Text>
         </Sheet>
       ) : null}
+      {region}
     </GradientBackground>
   );
 }
@@ -1163,14 +1249,6 @@ const COVER_HEIGHT = 180;
  */
 const WORD_BUTTON = 40;
 const WORD_BUTTON_SLOP = hitSlopFor(WORD_BUTTON, WORD_BUTTON);
-/**
- * A chip to the same story in another variety: a small pill among the
- * credits, caught as a full fingertip. The slop is half the gap between two
- * rows of them, so one chip's never reaches into the next.
- */
-const VERSION_HEIGHT = 36;
-const VERSION_SLOP = hitSlopFor(MIN_TOUCH_TARGET, VERSION_HEIGHT);
-
 const styles = StyleSheet.create({
   content: { ...COLUMN, padding: spacing.lg, gap: spacing.lg },
   cover: { width: '100%', height: COVER_HEIGHT },
@@ -1196,9 +1274,7 @@ const styles = StyleSheet.create({
   byline: { fontSize: typography.sizes.sm, lineHeight: 20 },
   source: { fontSize: typography.sizes.xs, lineHeight: 18 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  versions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  version: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: VERSION_HEIGHT, borderRadius: radii.pill, paddingHorizontal: spacing.md - 2 },
-  versionText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  variety: { gap: spacing.sm },
   actions: { gap: spacing.sm },
   headerButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   sizeControls: { flexDirection: 'row', alignItems: 'center' },

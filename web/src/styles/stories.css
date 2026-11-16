@@ -101,6 +101,10 @@
 .story-library .story-section-title {
   margin-bottom: 10px;
 }
+/* which Kurdish the library is in (Kurmancî | Soranî): everything under it is that variety's */
+.story-variety {
+  margin-bottom: 18px;
+}
 .story-section-title {
   font-family: var(--font-sans);
   font-size: 1rem;
@@ -410,6 +414,7 @@
   outline-offset: -2px;
   border-radius: var(--r-lg);
 }
+/* the cover's own plain ground (its rug's colour) is set on it by StoryCover; this one is only the skeleton's */
 .story-cover {
   display: block;
   position: relative;
@@ -418,14 +423,11 @@
   overflow: hidden;
   background: var(--surface-3);
 }
-.story-cover > svg,
+/* the picture fills the box: cropped to it, never stretched */
 .story-cover > img {
   display: block;
   width: 100%;
   height: 100%;
-}
-/* a chosen picture fills the box as the band does: cropped to it, never stretched */
-.story-cover > img {
   object-fit: cover;
   user-select: none;
 }
@@ -712,18 +714,11 @@
 .story-overview-bookmark.is-on {
   color: var(--gold-ink);
 }
-.story-versions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  margin: 0;
-  font-size: var(--text-secondary);
-}
-.story-versions a {
-  color: var(--ink);
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+/* a story told in both varieties: the library's own switch, at the head of its overview */
+.story-variety-reader {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
 }
 
 /* the reader's tools: the size, and how long is left, in reach while the text scrolls */

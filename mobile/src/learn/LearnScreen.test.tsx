@@ -104,7 +104,8 @@ function client(
     'GET /me': ok({ user: { streak } }),
     'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
     'GET /practice/due': ok(due),
-    'GET /stories/library': ok(LIBRARY),
+    // the library asks for one variety, and with nothing chosen and an English interface that is Kurmancî
+    'GET /stories/library?dialect=kurmanci': ok(LIBRARY),
     'GET /story-games/active': ok({ games: [] }),
     'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
     'GET /play/invites': ok({ incoming: [], outgoing: [] }),

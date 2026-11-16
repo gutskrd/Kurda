@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router-dom';
-import { STORY_ASSESSMENT, lessonAudioKey, type StoryMe } from '@kurda/shared';
+import { Route, Routes, useLocation } from 'react-router-dom';
+import { STORY_ASSESSMENT, lessonAudioKey, storyRugFor, type StoryMe } from '@kurda/shared';
 import { renderApp } from '../test/utils';
 import { soundPlayer } from '../lib/sound';
 import { StoryReader } from './StoryReader';
@@ -103,7 +103,8 @@ describe('the story page', () => {
     // nothing recorded: nothing to listen to, and no bar
     expect(screen.queryByRole('button', { name: 'Listen' })).toBeNull();
     expect(screen.queryByRole('group', { name: 'Listen to the story' })).toBeNull();
-    expect(document.querySelector('.story-overview-cover svg')).not.toBeNull();
+    // no picture of its own: it lies on its rug
+    expect(document.querySelector('.story-overview-cover img')).toHaveAttribute('src', `/cosmetics/backgrounds/${storyRugFor('qelema-sin').file}`);
     // the text is under the overview, a paragraph at a time
     expect(screen.getByText(/Îro Rojîn diçe/).closest('p')).toHaveAttribute('lang', 'ku');
   });
@@ -412,10 +413,91 @@ describe('the story page', () => {
     expect(calls.some((c) => c.method === 'PUT')).toBe(false);
   });
 
-  it('links to the same story in its other variety', async () => {
-    fakeApi({ 'GET /stories/qelema-sin': detail({ versions: [{ id: 'st-1', slug: 'qelema-sin', dialect: 'kurmanci', language: 'ku' }, { id: 'st-2', slug: 'penuse-sin', dialect: 'sorani', language: 'ku' }] }) });
-    reader();
-    expect(await screen.findByRole('link', { name: 'Also in Soranî' })).toHaveAttribute('href', '/app/learn/stories/penuse-sin');
+  describe('a story told in both varieties', () => {
+    const KURMANCI = detail({ versions: [{ id: 'st-2', slug: 'penuse-sin', dialect: 'sorani', language: 'ku' }], me: me({ paragraph: 1, share: 0.5 }) });
+    const SORANI = detail({
+      id: 'st-2',
+      slug: 'penuse-sin',
+      dialect: 'sorani',
+      title: 'پێنووسە شینەکە',
+      summary: 'ڕۆژین لە قوتابخانە نوێیەکەیە.',
+      paragraphs: ['ئەمڕۆ ڕۆژین دەچێتە قوتابخانە.', 'شیلان هاوڕێیەتی.'],
+      glossary: [],
+      versions: [{ id: 'st-1', slug: 'qelema-sin', dialect: 'kurmanci', language: 'ku' }],
+      me: me(),
+    });
+    /** Where the router is, so a test can see the switch move the address. */
+    function Where(): React.JSX.Element {
+      // a plain paragraph: an <output> is a status of its own, and the page's "continue" prompt is the status looked for
+      return <p data-testid="where">{useLocation().pathname}</p>;
+    }
+    const open = (slug = 'qelema-sin') =>
+      renderApp(
+        <Routes>
+          <Route
+            path="/app/learn/stories/:slug"
+            element={
+              <>
+                <StoryReader />
+                <Where />
+              </>
+            }
+          />
+        </Routes>,
+        [`/app/learn/stories/${slug}`],
+      );
+    const group = () => screen.getByRole('group', { name: 'Which Kurdish' });
+    const chosen = () => within(group()).getAllByRole('radio').filter((r) => (r as HTMLInputElement).checked).map((r) => r.closest('label')?.textContent);
+
+    it('has the library’s switch at the head of its overview, set to the telling on show, in place of a link', async () => {
+      fakeApi({ 'GET /stories/qelema-sin': KURMANCI });
+      open();
+      await screen.findByRole('heading', { level: 1, name: 'Qelema Şîn' });
+      expect(chosen()).toEqual(['Kurmancî']);
+      expect(screen.queryByRole('link', { name: /Also in/ })).toBeNull();
+      // the switch says which Kurdish this is: the byline does not say it again
+      expect(screen.queryByText('Kurmancî', { selector: '.story-byline span' })).toBeNull();
+    });
+
+    it('opens the other telling in this page’s place, from its top, and keeps the choice for the library', async () => {
+      const { calls } = fakeApi({ 'GET /stories/qelema-sin': KURMANCI, 'GET /stories/penuse-sin': SORANI });
+      open();
+      await screen.findByRole('heading', { level: 1, name: 'Qelema Şîn' });
+      // part-way through the Kurmancî one
+      expect(screen.getByRole('button', { name: 'Continue · 1 min left' })).toBeInTheDocument();
+      await userEvent.click(within(group()).getByRole('radio', { name: 'Soranî' }));
+      const title = await screen.findByRole('heading', { level: 1, name: 'پێنووسە شینەکە' });
+      expect(title).toHaveAttribute('lang', 'ckb');
+      expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/stories/penuse-sin');
+      expect(chosen()).toEqual(['Soranî']);
+      // its own overview, its own place: unread, so Read
+      expect(screen.getByRole('button', { name: 'Read' })).toBeInTheDocument();
+      expect(screen.queryByRole('status')).toBeNull();
+      expect(localStorage.getItem('hevalo.stories.variety')).toBe('sorani');
+      // the telling the switch asked for is the one shown: not asked for a second time
+      expect(calls.filter((c) => c.path === '/stories/penuse-sin')).toHaveLength(1);
+    });
+
+    it('shows the telling a link names, and keeps no choice by it', async () => {
+      localStorage.setItem('hevalo.stories.variety', 'kurmanci');
+      fakeApi({ 'GET /stories/penuse-sin': SORANI });
+      open('penuse-sin');
+      expect(await screen.findByRole('heading', { level: 1, name: 'پێنووسە شینەکە' })).toBeInTheDocument();
+      expect(chosen()).toEqual(['Soranî']);
+      expect(localStorage.getItem('hevalo.stories.variety')).toBe('kurmanci');
+    });
+
+    it('stays on the telling it has when the other does not come, and says so', async () => {
+      fakeApi({ 'GET /stories/qelema-sin': KURMANCI, 'GET /stories/penuse-sin': refused(500, 'DOWN') });
+      open();
+      await screen.findByRole('heading', { level: 1, name: 'Qelema Şîn' });
+      await userEvent.click(within(group()).getByRole('radio', { name: 'Soranî' }));
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'Qelema Şîn' })).toBeInTheDocument();
+      expect(chosen()).toEqual(['Kurmancî']);
+      expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/stories/qelema-sin');
+      expect(localStorage.getItem('hevalo.stories.variety')).toBeNull();
+    });
   });
 
   it('shows a refused save of a word in the usual words', async () => {

@@ -1,8 +1,9 @@
 /**
  * The story library against real Postgres: the front page for everyone and
- * for a signed-in reader, the reader's shelf and reading position, their
- * shelves at /me/stories, the other versions of a story, and the glossary's
- * dictionary links as the reader gets them.
+ * for a signed-in reader, the same page in one variety at a time, the
+ * reader's shelf and reading position, their shelves at /me/stories, the
+ * other versions of a story, and the glossary's dictionary links as the
+ * reader gets them.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -77,8 +78,8 @@ describe.skipIf(!DATABASE_URL)('story library (integration)', () => {
   const call = (method: 'GET' | 'PUT' | 'DELETE', url: string, token?: string, payload?: unknown) =>
     app.inject({ method, url, payload: payload as never, headers: token ? { authorization: `Bearer ${token}` } : {}, remoteAddress: '10.97.0.3' });
   const ours = (stories: StoryListItem[]) => stories.filter((st) => st.slug.endsWith(`-${s}`));
-  const library = async (token?: string): Promise<StoryLibrary> => {
-    const res = await call('GET', '/stories/library', token);
+  const library = async (token?: string, dialect?: 'kurmanci' | 'sorani'): Promise<StoryLibrary> => {
+    const res = await call('GET', `/stories/library${dialect ? `?dialect=${dialect}` : ''}`, token);
     expect(res.statusCode, res.body).toBe(200);
     return res.json();
   };
@@ -123,6 +124,8 @@ describe.skipIf(!DATABASE_URL)('story library (integration)', () => {
   });
 
   afterAll(async () => {
+    // the checks a test finished on these stories go first: a game keeps its story from being deleted
+    await pool.query(`DELETE FROM story_games WHERE story_id IN (SELECT id FROM stories WHERE slug LIKE $1)`, [`%-${s}`]);
     await pool.query(`DELETE FROM stories WHERE slug LIKE $1`, [`%-${s}`]);
     if (dictEntry?.made) await pool.query(`DELETE FROM dict_entries WHERE id = $1`, [dictEntry.id]);
     const client = await pool.connect();
@@ -259,6 +262,96 @@ describe.skipIf(!DATABASE_URL)('story library (integration)', () => {
       }
       expect(codes.filter((c) => c === 429).length).toBeGreaterThanOrEqual(1);
       expect(codes.slice(0, 20).every((c) => c === 200)).toBe(true);
+    });
+  });
+
+  describe('GET /stories/library?dialect', () => {
+    const slugs = (stories: StoryListItem[]) => ours(stories).map((st) => st.slug).sort();
+
+    it('is one variety’s page: its stories, its counts by category and by level, its total', async () => {
+      const all = await library();
+      const kurmanci = await library(undefined, 'kurmanci');
+      const sorani = await library(undefined, 'sorani');
+      expect(slugs(kurmanci.recent)).toEqual([slug('a'), slug('b')].sort());
+      expect(slugs(sorani.recent)).toEqual([slug('c'), slug('sorani-a')].sort());
+      for (const [page, dialect] of [[kurmanci, 'kurmanci'], [sorani, 'sorani']] as const) {
+        expect([...page.featured, ...(page.legends ?? []), ...page.recent].every((st) => st.dialect === dialect)).toBe(true);
+        // the legends have their own shelf (legends-shelf.integration.test.ts): never among the newest as well
+        expect(page.legends).toEqual(expect.any(Array));
+        expect((page.legends ?? []).every((st) => st.category === 'legend')).toBe(true);
+        expect(page.recent.some((st) => st.category === 'legend')).toBe(false);
+        expect(page.featured.length).toBeLessThanOrEqual(8);
+        expect(page.recent.length).toBeLessThanOrEqual(8);
+        // every category in its place whatever it holds, and the levels adding up to the page’s own total
+        expect(page.categories.map((c) => c.slug)).toEqual(all.categories.map((c) => c.slug));
+        expect((page.levels ?? []).reduce((sum, l) => sum + l.count, 0)).toBe(page.total);
+        expect((page.levels ?? []).every((l) => l.count > 0)).toBe(true);
+        expect(page.continue).toEqual([]);
+        expect(page.bookmarks).toEqual([]);
+        expect(page).not.toHaveProperty('me');
+      }
+      // the story told in both is featured in the variety it was starred in, and stands once on each page
+      expect(slugs(kurmanci.featured)).toEqual([slug('a')]);
+      expect(slugs(sorani.featured)).toEqual([]);
+      // the two pages are the whole library cut in two: nothing counted twice, nothing lost
+      expect(kurmanci.total).toBeGreaterThanOrEqual(2);
+      expect(sorani.total).toBeGreaterThanOrEqual(2);
+      expect(kurmanci.total + sorani.total).toBe(all.total);
+      for (const c of all.categories) {
+        const of = (page: StoryLibrary) => page.categories.find((x) => x.slug === c.slug)!.count;
+        expect(of(kurmanci) + of(sorani), c.slug).toBe(c.count);
+      }
+      for (const l of all.levels ?? []) {
+        const of = (page: StoryLibrary) => page.levels?.find((x) => x.level === l.level)?.count ?? 0;
+        expect(of(kurmanci) + of(sorani), `level ${l.level}`).toBe(l.count);
+      }
+      expect(kurmanci.categories.find((c) => c.slug === 'fable')!.count).toBeGreaterThanOrEqual(2);
+      expect(sorani.categories.find((c) => c.slug === 'village')!.count).toBeGreaterThanOrEqual(1);
+      // each page was asked for and kept in its own right: asked again, none answers for another
+      expect((await library(undefined, 'sorani')).total).toBe(sorani.total);
+      expect((await library(undefined, 'kurmanci')).total).toBe(kurmanci.total);
+      expect((await library()).total).toBe(all.total);
+    });
+
+    it('answers the whole library when no variety is named, and refuses one it does not know', async () => {
+      const blank = await call('GET', '/stories/library?dialect=');
+      expect(blank.statusCode, blank.body).toBe(200);
+      expect(blank.json().total).toBe((await library()).total);
+      expect((await call('GET', '/stories/library?dialect=zazaki')).statusCode).toBe(400);
+    });
+
+    it('counts a reader’s finished stories and their checks in that variety, and keeps their own shelves whole', async () => {
+      // by now the learner has finished both Kurmancî stories, is part-way through a Soranî one, and has a Kurmancî one bookmarked
+      const kurmanci = await library(learner, 'kurmanci');
+      const sorani = await library(learner, 'sorani');
+      expect(kurmanci.me).toEqual({ finished: 2, total: kurmanci.total, averageScore: null });
+      expect(sorani.me).toEqual({ finished: 0, total: sorani.total, averageScore: null });
+      // what they are reading and what they kept is theirs, whatever its variety
+      for (const page of [kurmanci, sorani]) {
+        expect(page.continue.map((st) => st.slug)).toEqual([slug('c')]);
+        expect(page.bookmarks.map((st) => st.slug)).toEqual([slug('b')]);
+        expect([...page.featured, ...page.recent, ...page.continue, ...page.bookmarks].every((st) => st.me !== undefined)).toBe(true);
+      }
+      expect(kurmanci.recent.find((st) => st.slug === slug('a'))!.me!.finishedAt).toEqual(expect.any(String));
+
+      // a finished check on a story of each variety: 4 of 5 in Kurmancî, 1 of 5 in Soranî
+      const check = async (storyId: string, dialect: string, correct: number): Promise<void> => {
+        const game = await pool.query<{ id: string }>(
+          `INSERT INTO story_games (mode, story_id, dialect, level, length, question_count, timer_seconds, status, finished_at)
+           VALUES ('solo', $1, $2, 1, 'short', 5, 0, 'finished', now()) RETURNING id`,
+          [storyId, dialect],
+        );
+        await pool.query(`INSERT INTO story_game_players (game_id, user_id, seat, correct, answered) VALUES ($1, $2, 1, $3, 5)`, [
+          game.rows[0]!.id,
+          learnerId,
+          correct,
+        ]);
+      };
+      await check(ids.a!, 'kurmanci', 4);
+      await check(ids.c!, 'sorani', 1);
+      expect((await library(learner, 'kurmanci')).me!.averageScore).toBeCloseTo(0.8, 5);
+      expect((await library(learner, 'sorani')).me!.averageScore).toBeCloseTo(0.2, 5);
+      expect((await library(learner)).me).toMatchObject({ finished: 2, averageScore: expect.closeTo(0.5, 5) });
     });
   });
 

@@ -1,47 +1,50 @@
 import { describe, it, expect } from 'vitest';
 import { fireEvent, render } from '@testing-library/react';
-import { STORY_COVERS } from '@kurda/shared';
-import { StoryCover, kilimBand } from './Cover';
+import { STORY_COVERS, STORY_RUGS, storyRugFor } from '@kurda/shared';
+import { StoryCover } from './Cover';
+
+const rgb = (hex: string): string => `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(', ')})`;
 
 describe('a story’s cover', () => {
   it('draws the picture its key names from the shared list', () => {
-    const { container } = render(<StoryCover cover="gola-sin" category="nature" />);
+    const { container } = render(<StoryCover slug="kmr-reya-gund" cover="gola-sin" />);
     const img = container.querySelector('.story-cover img');
     expect(img).toHaveAttribute('src', '/cosmetics/backgrounds/made-06-gola-sin.webp');
     expect(img).toHaveAttribute('alt', '');
     expect(img).toHaveAttribute('loading', 'lazy');
     expect(container.querySelector('.story-cover')).toHaveAttribute('aria-hidden', 'true');
+    // no drawing of its own any more: a picture, or a plain ground
     expect(container.querySelector('svg')).toBeNull();
   });
 
   it('asks for the story page’s own picture at once', () => {
-    const { container } = render(<StoryCover cover="kilima-sor" category={null} eager />);
+    const { container } = render(<StoryCover slug="kmr-reya-gund" cover="kilima-sor" eager />);
     expect(container.querySelector('img')).toHaveAttribute('loading', 'eager');
   });
 
-  it('weaves the category’s band for no key, for a key the list does not know, and for a picture that will not load', () => {
-    const none = render(<StoryCover cover={null} category="fable" />);
-    expect(none.container.querySelector('.story-cover svg')).not.toBeNull();
-    expect(none.container.querySelector('img')).toBeNull();
-    none.unmount();
-
-    // a character's id was a cover once; it is not one of the list's pictures
-    const unknown = render(<StoryCover cover="hamo" category="fable" />);
-    expect(unknown.container.querySelector('img')).toBeNull();
-    expect(unknown.container.querySelector('.story-cover svg')).not.toBeNull();
-    unknown.unmount();
-
-    const broken = render(<StoryCover cover="bihar" category="fable" />);
-    fireEvent.error(broken.container.querySelector('img')!);
-    expect(broken.container.querySelector('img')).toBeNull();
-    expect(broken.container.querySelector('.story-cover svg')).not.toBeNull();
+  it('lays a story without a picture, or with a key the list does not know, on its own rug over that rug’s colour', () => {
+    const rug = storyRugFor('kmr-reya-gund');
+    for (const cover of [null, 'hamo']) {
+      const { container, unmount } = render(<StoryCover slug="kmr-reya-gund" cover={cover} />);
+      expect(container.querySelector('img')).toHaveAttribute('src', `/cosmetics/backgrounds/${rug.file}`);
+      expect((container.querySelector('.story-cover') as HTMLElement).style.backgroundColor).toBe(rgb(rug.ground));
+      unmount();
+    }
+    // a shelf of them is not one rug over and over
+    const seen = new Set(['kmr-qelema-sin', 'kmr-bacansor-penir-nan', 'kmr-nameya-dapire', 'kmr-top-u-ape-mehmud', 'kmr-barana-newroze', 'kmr-reya-gund', 'kmr-rovi-u-hirc'].map((sl) => storyRugFor(sl).key));
+    expect(seen.size).toBeGreaterThanOrEqual(5);
+    for (const key of seen) expect(STORY_RUGS.map((r) => r.key)).toContain(key);
   });
 
-  it('gives a category the same weave every time, and every category one', () => {
-    expect(kilimBand('fable')).toBe(kilimBand('fable'));
-    expect(kilimBand('fable')).not.toBe(kilimBand('legend'));
-    // a category this file has never heard of still gets a band, not the stone of an unfiled story
-    expect(kilimBand('poems')).not.toBe(kilimBand(null));
+  it('leaves the plain ground when the picture will not load, never a broken image', () => {
+    const rug = storyRugFor('kmr-reya-gund');
+    const broken = render(<StoryCover slug="kmr-reya-gund" cover="bihar" />);
+    fireEvent.error(broken.container.querySelector('img')!);
+    expect(broken.container.querySelector('img')).toBeNull();
+    expect((broken.container.querySelector('.story-cover') as HTMLElement).style.backgroundColor).toBe(rgb(rug.ground));
+    // given another picture, it tries that one
+    broken.rerender(<StoryCover slug="kmr-reya-gund" cover="mij" />);
+    expect(broken.container.querySelector('img')).toHaveAttribute('src', '/cosmetics/backgrounds/made-19-mij.webp');
   });
 
   it('knows a path for every cover the admin can choose, and the site serves a file there', () => {
@@ -49,7 +52,7 @@ describe('a story’s cover', () => {
     const served = new Set(Object.keys(import.meta.glob('/public/cosmetics/backgrounds/*.webp')).map((p) => p.replace(/^\/public/, '')));
     for (const c of STORY_COVERS) {
       expect(served).toContain(`/cosmetics/backgrounds/${c.file}`);
-      const { container, unmount } = render(<StoryCover cover={c.key} category={null} />);
+      const { container, unmount } = render(<StoryCover slug="kmr-reya-gund" cover={c.key} />);
       expect(container.querySelector('img')?.getAttribute('src')).toBe(`/cosmetics/backgrounds/${c.file}`);
       unmount();
     }

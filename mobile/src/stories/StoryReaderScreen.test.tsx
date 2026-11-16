@@ -124,6 +124,9 @@ describe('StoryReaderScreen', () => {
     expect(screen.getByText('Dayik nan dipêje.')).toBeTruthy();
     expect(screen.getByText('By Hevalo · Written for learners')).toBeTruthy();
     expect(screen.getByText('Source: Written for Hevalo')).toBeTruthy();
+    // told in one variety only: which one is a fact among the others, and there is no switch
+    expect(screen.getByText('Kurmancî')).toBeTruthy();
+    expect(screen.queryByRole('radiogroup', { name: 'Variety' })).toBeNull();
     // the check waits for the story to be read
     expect(screen.getByText('Finish the story first.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Start the check' }).getAttribute('aria-disabled')).toBe('true');
@@ -269,6 +272,102 @@ describe('StoryReaderScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'With a friend' }));
     const mode = await screen.findByRole('radiogroup', { name: 'Who’s playing' });
     expect(within(mode).getByRole('radio', { name: 'With a friend' }).getAttribute('aria-checked')).toBe('true');
+  });
+
+  describe('a story told in both varieties', () => {
+    const KURMANCI: StoryDetail = {
+      ...NANE_GERM,
+      versions: [{ id: 's2', slug: 'nani-germ', dialect: 'sorani', language: 'ku' }],
+      me: me({ paragraph: 1, share: 0.5 }),
+    };
+    const SORANI: StoryDetail = {
+      ...NANE_GERM,
+      id: 's2',
+      slug: 'nani-germ',
+      title: 'نانی گەرم',
+      summary: 'دایک نان دەکات.',
+      dialect: 'sorani',
+      paragraphs: ['دایکم نان دەکات. نانەکە گەرمە.', 'لە تەنیشت سۆپاکە دادەنیشین.'],
+      glossary: [],
+      versions: [{ id: 's1', slug: 'nane-germ', dialect: 'kurmanci', language: 'ku' }],
+      me: me(),
+    };
+    const both = (extra: Parameters<typeof fakeClient>[0] = {}) => routes({ 'GET /stories/nani-germ': ok(SORANI), ...extra }, KURMANCI);
+    const chosen = () =>
+      within(screen.getByRole('radiogroup', { name: 'Variety' }))
+        .getAllByRole('radio')
+        .filter((r) => r.getAttribute('aria-checked') === 'true')
+        .map((r) => r.getAttribute('aria-label'));
+    const kept = (): unknown => JSON.parse(localStorage.getItem('hevalo_stories_prefs_v1') ?? '{}').dialect;
+
+    beforeEach(() => navigation.setParams.mockClear());
+
+    it('has the library’s switch under its cover, set to the telling on show, in place of a link and of the variety among the facts', async () => {
+      testAuth.client = both();
+      renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
+      await screen.findByRole('heading', { name: 'Nanê Germ' });
+      const sides = within(screen.getByRole('radiogroup', { name: 'Variety' })).getAllByRole('radio');
+      expect(sides.map((r) => r.getAttribute('aria-label'))).toEqual(['Kurmancî', 'Soranî']);
+      expect(chosen()).toEqual(['Kurmancî']);
+      // the switch says which Kurdish this is: no pill says it a second time, and no link offers the other telling
+      expect(screen.getAllByText('Kurmancî')).toHaveLength(1);
+      expect(screen.queryByText(/Read in/)).toBeNull();
+    });
+
+    it('opens the other telling in place, at its own cover page, and keeps the choice for the library', async () => {
+      const client = both();
+      testAuth.client = client;
+      renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
+      // part-way through the Kurmancî one, and reading it
+      fireEvent.click(await screen.findByRole('button', { name: 'Continue · 1 min left' }));
+      await screen.findByText(/Dayika min nan dipêje/);
+      fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+      expect(kept()).toBeUndefined();
+
+      fireEvent.click(await screen.findByRole('radio', { name: 'Soranî' }));
+      // the switch moves at once; the telling follows
+      expect(chosen()).toEqual(['Soranî']);
+      const title = await screen.findByRole('heading', { name: 'نانی گەرم' });
+      expect(title.getAttribute('lang')).toBe('ckb');
+      expect(screen.queryByRole('heading', { name: 'Nanê Germ' })).toBeNull();
+      expect(chosen()).toEqual(['Soranî']);
+      // its own cover page, and its own place in it: unread, so Read and no place to go on from
+      expect(screen.getByRole('button', { name: 'Read' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: /Continue/ })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'germ' })).toBeNull();
+      // the choice is the reader’s own now, and the address is the telling on show — which is not asked for a second time
+      expect(kept()).toBe('sorani');
+      expect(navigation.setParams).toHaveBeenCalledWith({ slug: 'nani-germ' });
+      expect(navigation.navigate).not.toHaveBeenCalled();
+      expect(client.calls.filter((c) => c.path === '/stories/nani-germ')).toHaveLength(1);
+
+      // and back, the same way
+      fireEvent.click(screen.getByRole('radio', { name: 'Kurmancî' }));
+      expect(await screen.findByRole('heading', { name: 'Nanê Germ' })).toBeTruthy();
+      expect(kept()).toBe('kurmanci');
+      expect(navigation.setParams).toHaveBeenLastCalledWith({ slug: 'nane-germ' });
+    });
+
+    it('shows the telling a link names, whatever was chosen before, and changes no choice by it', async () => {
+      localStorage.setItem('hevalo_stories_prefs_v1', JSON.stringify({ dialect: 'kurmanci' }));
+      testAuth.client = both();
+      renderWithProviders(<StoryReaderScreen slug="nani-germ" onExit={() => undefined} />);
+      expect(await screen.findByRole('heading', { name: 'نانی گەرم' })).toBeTruthy();
+      expect(chosen()).toEqual(['Soranî']);
+      expect(kept()).toBe('kurmanci');
+      expect(navigation.setParams).not.toHaveBeenCalled();
+    });
+
+    it('stays on the telling it has when the other does not come, and says so', async () => {
+      testAuth.client = routes({ 'GET /stories/nani-germ': fail({ status: 500, kind: 'server', message: 'down' }) }, KURMANCI);
+      renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
+      fireEvent.click(await screen.findByRole('radio', { name: 'Soranî' }));
+      expect(await screen.findByText(/try again|went wrong|could not/i)).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Nanê Germ' })).toBeTruthy();
+      expect(chosen()).toEqual(['Kurmancî']);
+      expect(kept()).toBeUndefined();
+      expect(navigation.setParams).not.toHaveBeenCalled();
+    });
   });
 
   it('says a story being updated is being updated, not that something broke', async () => {

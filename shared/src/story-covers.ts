@@ -8,6 +8,13 @@
  * the story's title. One list, so the admin never offers a picture the apps
  * cannot draw, and the apps never meet a key they do not know.
  *
+ * A story with no cover of its own is not left bare: it is given one of the
+ * seven kilims (`storyCoverFor`), chosen from its slug, so a shelf of such
+ * stories is a row of different rugs and a story lies on the same rug
+ * wherever and whenever it is shown. Each kilim has a plain colour that
+ * stands for it — what a card shows while the picture is on its way, and what
+ * is left there if it never arrives.
+ *
  * The shop's files are numbered in its order (`made-06-gola-sin.webp`), which
  * is why the number is kept here beside the key rather than worked out. The
  * legends' own covers are not for sale and have no place in that order, so
@@ -28,16 +35,37 @@ export interface StoryCover {
   kind: 'scene' | 'kilim';
 }
 
-const cover = (n: number, key: string, ku: string, en: string, kind: StoryCover['kind'] = 'scene'): StoryCover => ({
+/** One of the seven kilims: a cover like any other, and the cover of a story that has none of its own. */
+export interface StoryRug extends StoryCover {
+  kind: 'kilim';
+  /** its main colour, measured from the picture: shown while the picture loads, and left in its place if it cannot */
+  ground: string;
+}
+
+const cover = (n: number, key: string, ku: string, en: string): StoryCover => ({
   key,
   file: `made-${String(n).padStart(2, '0')}-${key}.webp`,
   ku,
   en,
-  kind,
+  kind: 'scene',
 });
 
 /** A cover painted for one legend alone, not sold in the shop: its file is named for it, not numbered. */
 const legend = (key: string, ku: string, en: string): StoryCover => ({ key, file: `story-${key}.webp`, ku, en, kind: 'scene' });
+
+/** A kilim, with the colour that stands for it. */
+const rug = (n: number, key: string, ku: string, en: string, ground: string): StoryRug => ({ ...cover(n, key, ku, en), kind: 'kilim', ground });
+
+/** The seven kilims, in the shop's order. */
+export const STORY_RUGS: readonly StoryRug[] = [
+  rug(21, 'kilima-sor', 'Kilîma Sor', 'Red kilim', '#926351'),
+  rug(22, 'kilima-mor', 'Kilîma Mor', 'Purple kilim', '#8f655a'),
+  rug(23, 'kilima-zer', 'Kilîma Zer', 'Gold kilim', '#936e4e'),
+  rug(24, 'kilima-kesk', 'Kilîma Kesk', 'Green kilim', '#886f54'),
+  rug(25, 'kilima-sin', 'Kilîma Şîn', 'Blue kilim', '#95776a'),
+  rug(26, 'kilima-gulan', 'Kilîma Gulan', 'Rose kilim', '#ac917e'),
+  rug(27, 'kilima-seve', 'Kilîma Şevê', 'Night kilim', '#2a2b37'),
+];
 
 /** Every cover: the legends' own first, then the shop's in its order — the scenes, then the kilims. */
 export const STORY_COVERS: readonly StoryCover[] = [
@@ -66,19 +94,14 @@ export const STORY_COVERS: readonly StoryCover[] = [
   cover(18, 'daristana-seve', 'Daristana Şevê', 'Forest at night'),
   cover(19, 'mij', 'Mij', 'Mist'),
   cover(20, 'newroz', 'Rengên Newrozê', 'The colours of Newroz'),
-  cover(21, 'kilima-sor', 'Kilîma Sor', 'Red kilim', 'kilim'),
-  cover(22, 'kilima-mor', 'Kilîma Mor', 'Purple kilim', 'kilim'),
-  cover(23, 'kilima-zer', 'Kilîma Zer', 'Gold kilim', 'kilim'),
-  cover(24, 'kilima-kesk', 'Kilîma Kesk', 'Green kilim', 'kilim'),
-  cover(25, 'kilima-sin', 'Kilîma Şîn', 'Blue kilim', 'kilim'),
-  cover(26, 'kilima-gulan', 'Kilîma Gulan', 'Rose kilim', 'kilim'),
-  cover(27, 'kilima-seve', 'Kilîma Şevê', 'Night kilim', 'kilim'),
+  ...STORY_RUGS,
 ];
 
 /** Where the pictures live on the website, which the phone app loads them from too. */
 export const STORY_COVER_DIR = '/cosmetics/backgrounds';
 
 const byKey = new Map(STORY_COVERS.map((c) => [c.key, c]));
+const rugByKey = new Map(STORY_RUGS.map((r) => [r.key, r]));
 
 /** The cover a key names, or null for a key the apps cannot draw (none, or one from before a picture was taken out). */
 export function storyCover(key: string | null | undefined): StoryCover | null {
@@ -93,4 +116,48 @@ export function isStoryCover(key: unknown): key is string {
 export function storyCoverPath(key: string | null | undefined): string | null {
   const c = storyCover(key);
   return c ? `${STORY_COVER_DIR}/${c.file}` : null;
+}
+
+/**
+ * A slug as a number (FNV-1a, 32 bits). The same slug gives the same number
+ * on the server, the phone and the website, in this release and the next,
+ * which is what lets each of them lay a story on the same rug without asking
+ * the others.
+ */
+function slugHash(slug: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < slug.length; i++) {
+    hash ^= slug.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+/** The kilim a story without a cover of its own is given: one of the seven, always the same one for the same slug. */
+export function storyRugFor(slug: string): StoryRug {
+  return STORY_RUGS[slugHash(slug) % STORY_RUGS.length]!;
+}
+
+/** What to draw as a story's cover, and what to draw under it. */
+export interface StoryCoverArt {
+  /** the story's own cover, or the kilim it is given */
+  cover: StoryCover;
+  /** the site path of its picture */
+  path: string;
+  /** a plain colour for the cover's box: there while the picture loads, and all there is if it cannot */
+  ground: string;
+}
+
+/**
+ * The cover to draw for a story: its own picture when its `cover` is a key
+ * this list knows; otherwise — no cover chosen, or a key from before a
+ * picture was taken out — the kilim its slug gives it. The ground is the
+ * colour of the kilim drawn, and under a painted scene the colour of the
+ * kilim the story would otherwise have had, so a picture that fails leaves a
+ * plain card in a rug's colour rather than a hole.
+ */
+export function storyCoverFor(story: { slug: string; cover?: string | null }): StoryCoverArt {
+  const given = storyRugFor(story.slug);
+  const shown = storyCover(story.cover) ?? given;
+  return { cover: shown, path: `${STORY_COVER_DIR}/${shown.file}`, ground: (rugByKey.get(shown.key) ?? given).ground };
 }

@@ -178,8 +178,14 @@ export interface StoryPage {
 /** Page sizes: what a client gets without asking, and the most it may ask for. */
 export const LIST_DEFAULT_LIMIT = 24;
 export const LIST_MAX_LIMIT = 50;
-/** The library's rows (featured, recent, continue, bookmarks) each show this many at most. */
+/** The library's rows (featured, legends, recent, continue, bookmarks) each show this many at most. */
 const LIBRARY_ROW = 8;
+/**
+ * The category whose stories have a shelf of their own on a variety's front page. The legends are what a reader comes
+ * to the library looking for, and the newest-first row is where a newer story pushed one off the page (Kawa, published
+ * first, was the one gone).
+ */
+const LEGEND_CATEGORY = 'legend';
 /** GET /me/stories lists this many per shelf. */
 const MY_STORIES_MAX = 50;
 
@@ -583,30 +589,60 @@ export class StoriesService {
    * generation; a signed-in reader's own rows (continue, bookmarks, their
    * tally) are read for them each time, and their record is added to every
    * story on the page.
+   *
+   * With a `dialect` the page is that variety's alone: its featured and
+   * recent stories, its counts by category and by level, its total, and the
+   * reader's tally and average on its stories — the apps show one variety at
+   * a time, and a legend told in both would otherwise stand on the shelf
+   * twice. The reader's own shelves (continue, bookmarks) hold what they hold
+   * whatever its variety. Without one it is the whole library, as an app from
+   * before the switch asks for it.
+   *
+   * The legends have a shelf of their own (`legends`, easiest first), so a
+   * newer story can never push one off the front page. A variety's page then
+   * leaves them out of the newest row, where each would otherwise show twice.
+   * The whole library, asked for by an app that knows no such shelf, keeps
+   * them among the newest as it always has.
    */
-  async library(viewer: string | null = null): Promise<StoryLibrary> {
-    const load = async (): Promise<Pick<StoryLibrary, 'featured' | 'recent' | 'categories' | 'levels' | 'total'>> => {
-      const [featured, recent, categories, levels, total] = await Promise.all([
+  async library(viewer: string | null = null, dialect: StoryDialect | null = null): Promise<StoryLibrary> {
+    const load = async (): Promise<Pick<StoryLibrary, 'featured' | 'recent' | 'categories' | 'levels' | 'total'> & { legends: StoryListItem[] }> => {
+      const [featured, legends, recent, categories, levels, total] = await Promise.all([
         this.pool.query<ListRow>(
-          `SELECT ${LIST_COLUMNS} FROM stories s WHERE ${PUBLISHED_SQL} AND s.featured
+          `SELECT ${LIST_COLUMNS} FROM stories s WHERE ${PUBLISHED_SQL} AND s.featured AND ($1::text IS NULL OR s.dialect = $1)
            ORDER BY s.featured_at DESC NULLS LAST, s.published_at DESC LIMIT ${LIBRARY_ROW}`,
+          [dialect],
         ),
         this.pool.query<ListRow>(
-          `SELECT ${LIST_COLUMNS} FROM stories s WHERE ${PUBLISHED_SQL} ORDER BY s.published_at DESC NULLS LAST, s.title LIMIT ${LIBRARY_ROW}`,
+          `SELECT ${LIST_COLUMNS} FROM stories s WHERE ${PUBLISHED_SQL} AND s.category = $2 AND ($1::text IS NULL OR s.dialect = $1)
+           ORDER BY ${STORY_ORDER_SQL} LIMIT ${LIBRARY_ROW}`,
+          [dialect, LEGEND_CATEGORY],
+        ),
+        this.pool.query<ListRow>(
+          `SELECT ${LIST_COLUMNS} FROM stories s
+            WHERE ${PUBLISHED_SQL} AND ($1::text IS NULL OR (s.dialect = $1 AND s.category IS DISTINCT FROM $2))
+           ORDER BY s.published_at DESC NULLS LAST, s.title LIMIT ${LIBRARY_ROW}`,
+          [dialect, LEGEND_CATEGORY],
         ),
         this.pool.query<StoryCategory & { count: number }>(
           `SELECT c.slug, c.name, c.position,
-                  (SELECT count(*)::int FROM stories s WHERE s.category = c.slug AND ${PUBLISHED_SQL}) AS count
+                  (SELECT count(*)::int FROM stories s
+                    WHERE s.category = c.slug AND ${PUBLISHED_SQL} AND ($1::text IS NULL OR s.dialect = $1)) AS count
              FROM story_categories c ORDER BY c.position, c.slug`,
+          [dialect],
         ),
         // so the library's filter offers only the levels a reader would find something at
         this.pool.query<{ level: StoryLevel; count: number }>(
-          `SELECT s.level, count(*)::int AS count FROM stories s WHERE ${PUBLISHED_SQL} GROUP BY s.level ORDER BY s.level`,
+          `SELECT s.level, count(*)::int AS count FROM stories s
+            WHERE ${PUBLISHED_SQL} AND ($1::text IS NULL OR s.dialect = $1) GROUP BY s.level ORDER BY s.level`,
+          [dialect],
         ),
-        this.pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM stories s WHERE ${PUBLISHED_SQL}`),
+        this.pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM stories s WHERE ${PUBLISHED_SQL} AND ($1::text IS NULL OR s.dialect = $1)`, [
+          dialect,
+        ]),
       ]);
       return {
         featured: featured.rows.map(listItem),
+        legends: legends.rows.map(listItem),
         recent: recent.rows.map(listItem),
         categories: categories.rows,
         levels: levels.rows.map((r) => ({ level: Number(r.level) as StoryLevel, count: r.count })),
@@ -614,8 +650,11 @@ export class StoriesService {
       };
     };
     const generation = await this.generation();
+    // one entry per variety and one for the whole library: three different pages, which must never answer for each other
     const shared =
-      generation && this.cache ? await this.cache.withCache(LIST_CACHE_DOMAIN, `library:${generation}`, LIST_CACHE_TTL_SECONDS, load) : await load();
+      generation && this.cache
+        ? await this.cache.withCache(LIST_CACHE_DOMAIN, `library:${generation}:${dialect ?? '*'}`, LIST_CACHE_TTL_SECONDS, load)
+        : await load();
     if (!viewer) return { ...shared, continue: [], bookmarks: [] };
 
     const [reading, bookmarks, tally, score] = await Promise.all([
@@ -631,26 +670,30 @@ export class StoriesService {
           ORDER BY b.created_at DESC LIMIT ${LIBRARY_ROW}`,
         [viewer],
       ),
+      // the stories they finished, of the variety asked for: counted beside that variety's total
       this.pool.query<{ n: number }>(
         `SELECT count(*)::int AS n FROM story_reading r JOIN stories s ON s.id = r.story_id
-          WHERE r.user_id = $1 AND r.finished_at IS NOT NULL AND ${PUBLISHED_SQL}`,
-        [viewer],
+          WHERE r.user_id = $1 AND r.finished_at IS NOT NULL AND ${PUBLISHED_SQL} AND ($2::text IS NULL OR s.dialect = $2)`,
+        [viewer, dialect],
       ),
-      // their best share of right answers on each story they finished a game on, averaged over the stories
+      // their best share of right answers on each story they finished a game on, averaged over the stories (of that variety:
+      // a game keeps the variety of the story it was played on)
       this.pool.query<{ avg: number | null }>(
         `SELECT avg(best)::float AS avg FROM (
            SELECT max(p.correct::float / g.question_count) AS best
              FROM story_game_players p JOIN story_games g ON g.id = p.game_id
             WHERE p.user_id = $1 AND NOT p.removed AND g.finished_at IS NOT NULL AND (p.left_at IS NULL OR p.left_at >= g.finished_at)
+              AND ($2::text IS NULL OR g.dialect = $2)
             GROUP BY g.story_id) t`,
-        [viewer],
+        [viewer, dialect],
       ),
     ]);
-    const rows = [...shared.featured, ...shared.recent, ...reading.rows.map(listItem), ...bookmarks.rows.map(listItem)];
+    const rows = [...shared.featured, ...shared.legends, ...shared.recent, ...reading.rows.map(listItem), ...bookmarks.rows.map(listItem)];
     const me = await this.meFor(viewer, rows.map((s) => s.id));
     const attach = (items: StoryListItem[]): StoryListItem[] => items.map((s) => ({ ...s, me: me.get(s.id) ?? emptyMe() }));
     return {
       featured: attach(shared.featured),
+      legends: attach(shared.legends),
       recent: attach(shared.recent),
       continue: attach(reading.rows.map(listItem)),
       bookmarks: attach(bookmarks.rows.map(listItem)),

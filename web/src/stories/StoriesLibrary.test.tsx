@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes, useLocation } from 'react-router-dom';
+import { storyRugFor } from '@kurda/shared';
 import { renderApp } from '../test/utils';
 import { StoriesLibrary } from './StoriesLibrary';
 import { clearStoryLists } from './catalogue';
@@ -47,8 +48,9 @@ describe('the library', () => {
     expect(within(card).getByText('Fables')).toBeInTheDocument();
     expect(within(card).getByText('~4 min')).toBeInTheDocument();
     expect(within(card).getByText('Read aloud')).toBeInTheDocument();
-    // a story without a chosen cover wears its category's kilim band; one with a cover, its picture
-    expect(card.querySelector('.story-cover svg')).not.toBeNull();
+    // a story without a chosen cover lies on its own rug; one with a cover wears its picture
+    expect(card.querySelector('.story-cover img')).toHaveAttribute('src', `/cosmetics/backgrounds/${storyRugFor('senge-u-penge').file}`);
+    expect(card.querySelector('.story-cover svg')).toBeNull();
     expect(cardOf('Dara Tûyê', shelf('Bookmarks')).querySelector('.story-cover img')).toHaveAttribute('src', '/cosmetics/backgrounds/made-06-gola-sin.webp');
 
     // a story part-read says how long is left, and shows it as a hairline
@@ -99,13 +101,13 @@ describe('the library', () => {
     await screen.findByRole('region', { name: 'Featured' });
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search the stories' }), 'qelem');
     expect(await screen.findByText('Qelema Şîn')).toBeInTheDocument();
-    expect(calls.filter((c) => c.path.startsWith('/stories?')).map((c) => c.path)).toEqual(['/stories?q=qelem&limit=24']);
+    expect(calls.filter((c) => c.path.startsWith('/stories?')).map((c) => c.path)).toEqual(['/stories?q=qelem&dialect=kurmanci&limit=24']);
     expect(screen.getByText('Stories found: 1')).toBeInTheDocument();
     // the shelves make way for the finds
     expect(screen.queryByRole('region', { name: 'Featured' })).toBeNull();
   });
 
-  it('filters by level, variety and narration from the panel, and brings more on request', async () => {
+  it('filters by level and narration from the panel, in the variety on show, and brings more on request', async () => {
     const page = Array.from({ length: 24 }, (_, i) => listItem({ id: `p${i}`, slug: `p${i}`, title: `Çîrok ${i}` }));
     const { calls } = fakeApi({
       'GET /stories/library': libraryFixture(),
@@ -116,15 +118,14 @@ describe('the library', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
     const panel = screen.getByRole('dialog', { name: 'Sort and filter' });
     await userEvent.click(within(panel).getByRole('radio', { name: 'Beginner' }));
-    await userEvent.click(within(panel).getByRole('radio', { name: 'Soranî' }));
     await userEvent.click(within(panel).getByRole('switch', { name: 'Read aloud' }));
     await userEvent.click(await within(panel).findByRole('button', { name: 'Show 25 stories' }));
     expect(await screen.findByText('Stories found: 25')).toBeInTheDocument();
-    expect(calls.filter((c) => c.path.includes('limit=24')).map((c) => c.path)).toEqual(['/stories?level=2&dialect=sorani&audio=1&limit=24']);
+    expect(calls.filter((c) => c.path.includes('limit=24')).map((c) => c.path)).toEqual(['/stories?level=2&dialect=kurmanci&audio=1&limit=24']);
 
     await userEvent.click(screen.getByRole('button', { name: 'More stories' }));
     expect(await screen.findByText('Çîrok 24')).toBeInTheDocument();
-    expect(calls.at(-1)?.path).toBe('/stories?level=2&dialect=sorani&audio=1&limit=24&offset=24');
+    expect(calls.at(-1)?.path).toBe('/stories?level=2&dialect=kurmanci&audio=1&limit=24&offset=24');
     // every find is here: no More to ask for
     expect(screen.queryByRole('button', { name: 'More stories' })).toBeNull();
 
@@ -140,7 +141,7 @@ describe('the library', () => {
     // only categories with a story in them are offered
     expect(within(categories).queryByRole('button', { name: /Legends/ })).toBeNull();
     await userEvent.click(within(categories).getByRole('button', { name: /Nature/ }));
-    await waitFor(() => expect(calls.at(-1)?.path).toBe('/stories?category=nature&limit=24'));
+    await waitFor(() => expect(calls.at(-1)?.path).toBe('/stories?category=nature&dialect=kurmanci&limit=24'));
     expect(await screen.findByText('No stories match these filters yet.')).toBeInTheDocument();
   });
 
@@ -206,6 +207,107 @@ describe('the library', () => {
     expect(calls.find((c) => c.path === '/story-games/join')?.body).toEqual({ id: 'g5', extraTime: false });
   });
 
+  /** The Soranî page: its own stories and counts, with the reader's own shelves as they are on either page. */
+  const SORANI = () => {
+    const bazar = listItem({ id: 's9', slug: 'bazar-ckb', title: 'بازاڕ', dialect: 'sorani', category: 'everyday', me: { bookmarked: false, paragraph: 0, share: 0, finishedAt: null, bestCorrect: null, total: null, attemptsToday: 0 } });
+    return libraryFixture({ featured: [], recent: [bazar], total: 1, me: { finished: 0, total: 1, averageScore: null }, categories: [{ slug: 'everyday', name: { en: 'Everyday' }, position: 6, count: 1 }] });
+  };
+  const pages = (calls: Call[]): string[] => calls.filter((c) => c.path.startsWith('/stories/library')).map((c) => c.path);
+  const sides = () => within(screen.getByRole('group', { name: 'Which Kurdish' })).getAllByRole('radio');
+  const chosen = () => sides().filter((r) => (r as HTMLInputElement).checked).map((r) => r.closest('label')?.textContent);
+
+  it('shows one variety at a time: Kurmancî first, Soranî from the switch, and keeps the choice on this device', async () => {
+    const { calls } = fakeApi({ 'GET /stories/library': (c: Call) => (c.path.includes('dialect=sorani') ? SORANI() : libraryFixture()) });
+    library();
+    await screen.findByRole('region', { name: 'Featured' });
+    expect(sides().map((r) => r.closest('label')?.textContent)).toEqual(['Kurmancî', 'Soranî']);
+    expect(chosen()).toEqual(['Kurmancî']);
+    expect(localStorage.getItem('hevalo.stories.variety')).toBeNull();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuetext', '1 of 4 stories finished');
+
+    await userEvent.click(within(screen.getByRole('group', { name: 'Which Kurdish' })).getByRole('radio', { name: 'Soranî' }));
+    // the Soranî page: its own newest, its own counts and tally, and no Kurmancî story on its shelves
+    await waitFor(() => expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuetext', '0 of 1 stories finished'));
+    expect(chosen()).toEqual(['Soranî']);
+    expect(localStorage.getItem('hevalo.stories.variety')).toBe('sorani');
+    expect(within(shelf('Recently added')).getByText('بازاڕ')).toBeInTheDocument();
+    expect(within(shelf('Recently added')).queryByText('Şengê û Pengê')).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Featured' })).toBeNull();
+    // what the reader is part-way through is theirs, whatever its variety
+    expect(within(shelf('Continue reading')).getByText('Bazar')).toBeInTheDocument();
+    expect(pages(calls)).toEqual(['/stories/library?dialect=kurmanci', '/stories/library?dialect=sorani']);
+
+    // back again: the page shown before is there at once, and asked for again behind it
+    await userEvent.click(within(screen.getByRole('group', { name: 'Which Kurdish' })).getByRole('radio', { name: 'Kurmancî' }));
+    expect(screen.getByRole('region', { name: 'Featured' })).toBeInTheDocument();
+    await waitFor(() => expect(pages(calls)).toHaveLength(3));
+    expect(localStorage.getItem('hevalo.stories.variety')).toBe('kurmanci');
+  });
+
+  it('searches and sets a game up in the variety on show', async () => {
+    localStorage.setItem('hevalo.stories.variety', 'sorani');
+    const { calls } = fakeApi({
+      'GET /stories/library': (c: Call) => (c.path.includes('dialect=sorani') ? SORANI() : libraryFixture()),
+      'GET /stories': { stories: [listItem({ id: 's9', slug: 'bazar-ckb', title: 'بازاڕ', dialect: 'sorani' })], total: 1 },
+    });
+    library();
+    await waitFor(() => expect(chosen()).toEqual(['Soranî']));
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search the stories' }), 'baz');
+    await waitFor(() => expect(calls.some((c) => c.path === '/stories?q=baz&dialect=sorani&limit=24')).toBe(true));
+    await userEvent.clear(screen.getByRole('searchbox', { name: 'Search the stories' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Play with friends' }));
+    await waitFor(() => expect(calls.some((c) => c.path === '/stories?dialect=sorani&limit=50')).toBe(true));
+    expect(calls.some((c) => c.path.includes('dialect=kurmanci'))).toBe(false);
+  });
+
+  it('opens on the variety an address names, without making it the reader’s choice', async () => {
+    localStorage.setItem('hevalo.stories.variety', 'kurmanci');
+    const { calls } = fakeApi({ 'GET /stories/library': (c: Call) => (c.path.includes('dialect=sorani') ? SORANI() : libraryFixture()) });
+    library('/app/learn/stories?dialect=sorani');
+    await waitFor(() => expect(pages(calls)).toEqual(['/stories/library?dialect=sorani']));
+    expect(chosen()).toEqual(['Soranî']);
+    expect(localStorage.getItem('hevalo.stories.variety')).toBe('kurmanci');
+  });
+
+  it('opens on Soranî for a Soranî interface until the reader chooses', async () => {
+    localStorage.setItem('hevalo_locale', 'ckb');
+    const { calls } = fakeApi({ 'GET /stories/library': (c: Call) => (c.path.includes('dialect=sorani') ? SORANI() : libraryFixture()) });
+    library();
+    await waitFor(() => expect(pages(calls)).toEqual(['/stories/library?dialect=sorani']));
+    expect(localStorage.getItem('hevalo.stories.variety')).toBeNull();
+  });
+
+  it('gives the legends a shelf of their own after the editors’ picks, named as their category is', async () => {
+    const kawa = listItem({ id: 'k1', slug: 'kmr-kawaye-hesinkar', title: 'Kawayê Hesinkar', level: 3, length: 'saga', category: 'legend', cover: 'kawa' });
+    const fixture = libraryFixture({ legends: [kawa] });
+    fixture.categories = fixture.categories.map((c) => (c.slug === 'legend' ? { ...c, name: { en: 'Legends and history' }, count: 1 } : c));
+    fakeApi({ 'GET /stories/library': fixture });
+    library();
+    await screen.findByRole('region', { name: 'Featured' });
+    const order = ['Featured', 'Legends and history', 'Recently added'];
+    expect(regions().filter((n) => order.includes(n))).toEqual(order);
+    expect(within(shelf('Legends and history')).getByRole('link', { name: /Kawayê Hesinkar/ })).toHaveAttribute('href', '/app/learn/stories/kmr-kawaye-hesinkar');
+    // the shelf's name says what they are once: no card on it says it again
+    expect(within(shelf('Legends and history')).queryByText('Legends and history', { selector: '.story-card-meta span' })).toBeNull();
+    expect(within(shelf('Legends and history')).getByText('Kawayê Hesinkar').closest('.story-card')!.querySelector('.story-cover img')).toHaveAttribute(
+      'src',
+      '/cosmetics/backgrounds/story-kawa.webp',
+    );
+  });
+
+  it('keeps the switch when a variety has no story yet, as the way to the other', async () => {
+    fakeApi({
+      'GET /stories/library': (c: Call) =>
+        c.path.includes('dialect=sorani') ? libraryFixture({ featured: [], recent: [], continue: [], bookmarks: [], total: 0 }) : libraryFixture(),
+    });
+    library();
+    await screen.findByRole('region', { name: 'Featured' });
+    await userEvent.click(within(screen.getByRole('group', { name: 'Which Kurdish' })).getByRole('radio', { name: 'Soranî' }));
+    expect(await screen.findByText(/Stories are on their way/)).toBeInTheDocument();
+    await userEvent.click(within(screen.getByRole('group', { name: 'Which Kurdish' })).getByRole('radio', { name: 'Kurmancî' }));
+    expect(await screen.findByRole('region', { name: 'Featured' })).toBeInTheDocument();
+  });
+
   it('is Learn, on its Stories group', async () => {
     fakeApi({ 'GET /stories/library': libraryFixture() });
     library();
@@ -230,7 +332,7 @@ describe('the library’s sort and filter panel', () => {
   async function open(entry = '/app/learn/stories') {
     const api = fakeApi({
       'GET /stories/library': libraryFixture({ levels: [{ level: 1, count: 1 }, { level: 2, count: 2 }, { level: 3, count: 1 }] }),
-      'GET /stories': (c: Call) => ({ stories: [listItem({ id: 'r1', slug: 'r1', title: 'Rovî û Hirç' })], total: c.path.includes('dialect=sorani') ? 0 : 7 }),
+      'GET /stories': (c: Call) => ({ stories: [listItem({ id: 'r1', slug: 'r1', title: 'Rovî û Hirç' })], total: c.path.includes('length=saga') ? 0 : 7 }),
     });
     renderApp(
       <Routes>
@@ -266,9 +368,9 @@ describe('the library’s sort and filter panel', () => {
     // only the levels that have a story, each by a plain name with what it means
     expect(names(group('Level'))).toEqual(['Any level', 'Starter', 'Beginner', 'Intermediate']);
     expect(within(group('Level')).getByRole('radio', { name: 'Starter' })).toHaveAccessibleDescription('First words and short sentences');
-    expect(names(group('Kurdish'))).toEqual(['Either', 'Kurmancî', 'Soranî']);
-    expect(within(group('Kurdish')).getByRole('radio', { name: 'Kurmancî' })).toHaveAccessibleDescription('Northern Kurdish · Latin letters');
-    expect(within(group('Kurdish')).getByRole('radio', { name: 'Soranî' })).toHaveAccessibleDescription('Central Kurdish · Arabic script');
+    // which Kurdish is the switch at the library's top, and nowhere in the panel: two controls for one thing would be a fault
+    expect(within(panel()).queryByRole('radiogroup', { name: 'Kurdish' })).toBeNull();
+    expect(within(panel()).queryByRole('radio', { name: /Kurmancî|Soranî/ })).toBeNull();
     expect(names(group('Length'))).toEqual(['Any length', 'Short', 'Medium', 'Long', 'In chapters']);
     expect(within(group('Length')).getByRole('radio', { name: 'Short' })).toHaveAccessibleDescription('1–2 min');
     const aloud = within(panel()).getByRole('switch', { name: 'Read aloud' });
@@ -292,7 +394,7 @@ describe('the library’s sort and filter panel', () => {
     await userEvent.click(within(group('Length')).getByRole('radio', { name: 'Short' }));
     expect(await within(panel()).findByRole('button', { name: 'Show 7 stories' })).toBeInTheDocument();
     // one cheap question for the settled choices, not one per tap, and no list yet
-    expect(counts(calls)).toEqual(['/stories?level=2&length=short&limit=1']);
+    expect(counts(calls)).toEqual(['/stories?level=2&dialect=kurmanci&length=short&limit=1']);
     expect(lists(calls)).toEqual([]);
     expect(where()).toBe('');
     // the order does not change how many there are, so it asks nothing
@@ -300,7 +402,7 @@ describe('the library’s sort and filter panel', () => {
     expect(counts(calls)).toHaveLength(1);
 
     await userEvent.click(within(panel()).getByRole('button', { name: 'Show 7 stories' }));
-    await waitFor(() => expect(lists(calls)).toEqual(['/stories?level=2&length=short&sort=newest&limit=24']));
+    await waitFor(() => expect(lists(calls)).toEqual(['/stories?level=2&dialect=kurmanci&length=short&sort=newest&limit=24']));
     expect(where()).toBe('?level=A2&length=short&sort=newest');
     expect(screen.queryByRole('dialog')).toBeNull();
     // the funnel says what is on, and has the keyboard back; a chip says each part
@@ -314,14 +416,14 @@ describe('the library’s sort and filter panel', () => {
   it('says so on the button when nothing would match', async () => {
     await open();
     await userEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
-    await userEvent.click(within(group('Kurdish')).getByRole('radio', { name: 'Soranî' }));
+    await userEvent.click(within(group('Length')).getByRole('radio', { name: 'In chapters' }));
     expect(await within(panel()).findByRole('button', { name: 'No stories match' })).toBeInTheDocument();
   });
 
   it('changes nothing when it is closed without showing, and Reset puts the draft back', async () => {
-    const { calls } = await open('/app/learn/stories?dialect=kurmanci');
+    const { calls } = await open('/app/learn/stories?length=short');
     await screen.findByText('Stories found: 7');
-    const funnel = screen.getByRole('button', { name: 'Sort and filter — Kurmancî' });
+    const funnel = screen.getByRole('button', { name: 'Sort and filter — Short' });
     for (const close of ['escape', 'cross'] as const) {
       await userEvent.click(funnel);
       await userEvent.click(within(group('Level')).getByRole('radio', { name: 'Starter' }));
@@ -329,17 +431,17 @@ describe('the library’s sort and filter panel', () => {
       else await userEvent.click(within(panel()).getByRole('button', { name: 'Close' }));
       expect(screen.queryByRole('dialog')).toBeNull();
     }
-    expect(lists(calls)).toEqual(['/stories?dialect=kurmanci&limit=24']);
-    expect(where()).toBe('?dialect=kurmanci');
+    expect(lists(calls)).toEqual(['/stories?dialect=kurmanci&length=short&limit=24']);
+    expect(where()).toBe('?length=short');
 
     await userEvent.click(funnel);
     // it opens on what is shown, and the list on show already says how many
-    expect(within(group('Kurdish')).getByRole('radio', { name: 'Kurmancî' })).toHaveAttribute('aria-checked', 'true');
+    expect(within(group('Length')).getByRole('radio', { name: 'Short' })).toHaveAttribute('aria-checked', 'true');
     expect(within(group('Level')).getByRole('radio', { name: 'Any level' })).toHaveAttribute('aria-checked', 'true');
     expect(within(panel()).getByRole('button', { name: 'Show 7 stories' })).toBeInTheDocument();
     const reset = within(panel()).getByRole('button', { name: 'Reset' });
     await userEvent.click(reset);
-    expect(within(group('Kurdish')).getByRole('radio', { name: 'Either' })).toHaveAttribute('aria-checked', 'true');
+    expect(within(group('Length')).getByRole('radio', { name: 'Any length' })).toHaveAttribute('aria-checked', 'true');
     expect(reset).toBeDisabled();
     expect(within(panel()).getByRole('button', { name: 'Show 4 stories' })).toBeInTheDocument();
     await userEvent.click(within(panel()).getByRole('button', { name: 'Show 4 stories' }));
@@ -349,7 +451,7 @@ describe('the library’s sort and filter panel', () => {
 
   it('reads the order, the length and read aloud back from the address, and lets each part go from its chip', async () => {
     const { calls } = await open('/app/learn/stories?sort=title&length=long&audio=1&category=fable');
-    await waitFor(() => expect(lists(calls)).toEqual(['/stories?category=fable&length=long&audio=1&sort=title&limit=24']));
+    await waitFor(() => expect(lists(calls)).toEqual(['/stories?category=fable&dialect=kurmanci&length=long&audio=1&sort=title&limit=24']));
     // the category is named once the library has said what it is called
     expect(await screen.findByRole('button', { name: 'Sort and filter — A to Z, Long, Read aloud, Fables' })).toBeInTheDocument();
 
@@ -374,7 +476,7 @@ describe('the library’s sort and filter panel', () => {
 
   it('passes over what the address does not mean, and still reads an old level link', async () => {
     const { calls } = await open('/app/learn/stories?sort=popular&length=huge&level=b1');
-    await waitFor(() => expect(lists(calls)).toEqual(['/stories?level=3&limit=24']));
+    await waitFor(() => expect(lists(calls)).toEqual(['/stories?level=3&dialect=kurmanci&limit=24']));
     expect(screen.getByRole('button', { name: 'Sort and filter — Intermediate' })).toBeInTheDocument();
   });
 });

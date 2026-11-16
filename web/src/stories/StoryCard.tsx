@@ -67,7 +67,7 @@ export function StoryCard({
   return (
     <article className={`story-card${share > 0 ? ' has-progress' : ''}`}>
       <Link to={readerPath(story.slug)} className="story-card-link">
-        <StoryCover cover={story.cover} category={story.category} className="story-card-cover" ref={cover} />
+        <StoryCover slug={story.slug} cover={story.cover} className="story-card-cover" ref={cover} />
         <span className="story-card-body">
           <span className="story-card-title" lang={lang} dir={dir}>
             {story.title}
