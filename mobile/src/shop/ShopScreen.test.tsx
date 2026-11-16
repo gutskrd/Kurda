@@ -122,6 +122,22 @@ describe('the Shop, by kind', () => {
     expect(screen.getByRole('button', { name: 'Hevalo, Hevalo violet, Free' })).toBeTruthy();
   });
 
+  /*
+   * Green is kept for a right answer, so "Free" is a price like any other;
+   * and a row's name and meaning may take a second line rather than leave
+   * "Ronahiy…" on a narrow phone.
+   */
+  it('prints Free as a price, not in green, and lets a name and its meaning take a second line', async () => {
+    open();
+    const free = await screen.findByRole('button', { name: 'Hevalo, Hevalo violet, Free' });
+    const price = within(free).getByText('Free');
+    const name = within(free).getByText('Hevalo');
+    // in the ink the name is in, as an affordable price is
+    expect(getComputedStyle(price).color).toBe(getComputedStyle(name).color);
+    expect(getComputedStyle(name).whiteSpace).not.toBe('nowrap');
+    expect(getComputedStyle(within(free).getByText('Hevalo violet')).whiteSpace).not.toBe('nowrap');
+  });
+
   it('shows a frame the way it will be worn: round your own picture, in its row and in its sheet', async () => {
     open([...CATALOGUE, item({ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', price: 1400, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' })], { zer: 2000, gems: 0 });
     const row = await screen.findByRole('button', { name: /^Xeleka Laleyan, Tulip wreath, 1.?400 Zêr$/ });

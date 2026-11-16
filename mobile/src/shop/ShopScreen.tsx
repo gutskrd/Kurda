@@ -62,8 +62,13 @@ function attemptKey(sku: string): string {
   return `buy-${sku}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 }
 
-/** The screen's side margin, which the edge-to-edge chip rows inset their first chip by. */
-const GUTTER = spacing.lg;
+/**
+ * The screen's side margin, which the edge-to-edge chip rows inset their first
+ * chip by: the app's own gutter, so the list lines up with the close button
+ * and the purse above it (it was 24, eight in from the bar's edges, and took
+ * those sixteen points from every name at 320).
+ */
+const GUTTER = layout.gutter;
 
 /**
  * The shop, sorted by kind (KUR-070).
@@ -528,21 +533,26 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
 
           No Premium crown: Premium cannot be had in the app, and a mark for
           something nobody can get is an advert for nothing.
+
+          A name or a meaning too long for its line takes a second one: at 320
+          points one line had left "Ronahiy…" and "Kilîma K…", the very words
+          the row is there to show.
         */}
         <View style={[styles.nameRow, { flexDirection: dir.row }]}>
-          <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
+          <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
             {item.name}
           </Text>
         </View>
         {item.description ? (
-          <Text style={[styles.itemDesc, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
+          <Text style={[styles.itemDesc, dir.free, { color: colors.textSecondary }]} numberOfLines={2}>
             {item.description}
           </Text>
         ) : null}
       </View>
       <View style={[styles.priceRow, { flexDirection: dir.row }]}>
         {item.price === 0 ? (
-          <Text style={[styles.price, { color: colors.success }]}>{t('shop.free')}</Text>
+          // a price like any other: green is kept for a right answer
+          <Text style={[styles.price, { color: colors.textPrimary }]}>{t('shop.free')}</Text>
         ) : (
           <>
             <Text style={[styles.price, { color: affordable ? colors.textPrimary : colors.textSecondary }]}>{formatNumber(item.price, locale)}</Text>
@@ -604,13 +614,14 @@ function ItemDetail({
       </Text>
       {item.description ? <Text style={[styles.detailDesc, { color: colors.textSecondary }]}>{item.description}</Text> : null}
       {bought ? null : (
-        <Text style={[styles.detailPrice, { color: item.price === 0 ? colors.success : colors.textPrimary }]}>{priceWords(item, t, locale)}</Text>
+        <Text style={[styles.detailPrice, { color: colors.textPrimary }]}>{priceWords(item, t, locale)}</Text>
       )}
 
       {bought ? (
         <>
+          {/* yours now: ticked in the violet of what is yours and chosen, not the green of a right answer */}
           <View style={[styles.yours, { flexDirection: dir.row }]} accessibilityLiveRegion="polite" testID="shop-bought">
-            <Icon name="check" size={20} color={colors.success} />
+            <Icon name="check" size={20} color={colors.primary} />
             <Text style={[styles.yoursText, { color: colors.textPrimary }]}>{t('shop.itemIsYours', { name: item.name })}</Text>
           </View>
           {item.price > 0 ? (
