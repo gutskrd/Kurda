@@ -145,7 +145,7 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
         title={name}
         onBack={onExit}
         hairline
-        right={thread ? <HeaderButton icon="more" label={t('moderation.moreAbout', { name })} onPress={more} edge="end" testID="letters-more" /> : undefined}
+        right={thread ? <HeaderButton icon="more" label={t('moderation.moreAbout', { name })} onPress={more} testID="letters-more" /> : undefined}
       />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView {...page.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>

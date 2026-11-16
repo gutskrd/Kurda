@@ -108,7 +108,7 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
           label={t('feed.friends.find')}
           spoken={t('feed.friends.find')}
           delay={entering(1)}
-          onPress={() => require('friends') && navigation.navigate('Tabs', { screen: 'Search' })}
+          onPress={() => require('friends') && navigation.navigate('Search')}
         >
           <View style={[styles.find, { backgroundColor: colors.controlTrack }]}>
             <Icon name="people" size={26} color={colors.textPrimary} />

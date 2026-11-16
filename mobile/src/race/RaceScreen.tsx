@@ -34,6 +34,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { HeaderButton } from '../navigation/HeaderButton';
 import { KeyBar } from '../keyboard/KeyBar';
 import { KeyboardGuide } from '../keyboard/KeyboardGuide';
 import { ACCENT_LABEL, KeyboardSettingsSheet } from '../keyboard/KeyboardSettings';
@@ -288,14 +289,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
           title={t('games.race.name')}
           onBack={onExit}
           right={
-            <Pressable
-              onPress={() => setSettingsOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel={t('keyboard.settings.title')}
-              style={({ pressed }) => [styles.headerButton, pressed && heldDim]}
-            >
-              <Icon name="keyboard" size={22} color={colors.textPrimary} />
-            </Pressable>
+            <HeaderButton icon="keyboard" label={t('keyboard.settings.title')} onPress={() => setSettingsOpen(true)} />
           }
         />
 
@@ -592,7 +586,6 @@ const styles = StyleSheet.create({
   label: { alignSelf: 'stretch', fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.sm },
   error: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   notice: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  headerButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-end' },
   stats: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   timer: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'], minWidth: 64 },
   track: { flex: 1, height: 6, borderRadius: radii.pill, overflow: 'hidden' },

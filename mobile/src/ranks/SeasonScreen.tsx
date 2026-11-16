@@ -94,7 +94,7 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('season.title')} onBack={onExit} />
+      <ScreenHeader title={t('season.title')} onBack={onExit} browse />
       <AsyncBoundary loading={!overview && !error} error={!overview ? error : null} onRetry={load} skeleton={<SeasonSkeleton />}>
         {() =>
           overview ? (

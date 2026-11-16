@@ -80,7 +80,7 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('ranks.title')} onBack={onExit} />
+      <ScreenHeader title={t('ranks.title')} onBack={onExit} browse />
       <View style={styles.picker}>
         {/* six games, each as wide as its name and the row scrolling: shared out in sixths, every name was cut to its first letters */}
         <Chips<RankedGame> options={RANKED_GAMES} value={game} onChange={setGame} labelOf={(g) => t(GAME_NAME_KEY[g])} />

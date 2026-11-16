@@ -145,7 +145,7 @@ export function ProverbsScreen({ dialect: asked, theme, onExit }: { dialect?: Ga
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('lore.proverbs.name')} onBack={onExit} />
+      <ScreenHeader title={t('lore.proverbs.name')} onBack={onExit} browse />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom + spacing.lg }]} showsVerticalScrollIndicator={false} refreshControl={pull}>
         <CollectionTitle kurmanci={PROVERBS_NAME} localized={t('lore.proverbs.name')} />
         <VarietySwitch value={dialect} onChange={switchDialect} />

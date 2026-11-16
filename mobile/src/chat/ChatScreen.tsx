@@ -328,7 +328,7 @@ export function ChatScreen({
           onBack={onExit}
           hairline
           right={
-            <HeaderButton icon="more" label={t('chat.moreAbout', { name })} onPress={personMenu} edge="end" />
+            <HeaderButton icon="more" label={t('chat.moreAbout', { name })} onPress={personMenu} />
           }
         />
 

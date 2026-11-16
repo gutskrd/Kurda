@@ -105,7 +105,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     [client, load],
   );
 
-  const header = <ScreenHeader title={t('tags.title')} onBack={onExit} />;
+  const header = <ScreenHeader title={t('tags.title')} onBack={onExit} browse />;
 
   const autos = profile ? profile.claimable.filter((t) => t.auto) : [];
   const toClaim = catalog ? claimableCatalog(catalog, claimed) : [];

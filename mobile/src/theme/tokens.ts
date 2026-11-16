@@ -133,7 +133,7 @@ export const fontScaleCap = {
  * The page's own geometry.
  *
  * `gutter` is the space between a screen's edge and its content on a phone:
- * 16, so the five tabs line up with each other. It lives here rather than in `spacing`, which is a scale of
+ * 16, so the tabs line up with each other. It lives here rather than in `spacing`, which is a scale of
  * steps — this is one decision, not a step on it.
  */
 export const layout = {

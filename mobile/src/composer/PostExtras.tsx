@@ -4,12 +4,12 @@ import { StyleSheet, Text, View, type AccessibilityActionEvent, type PressablePr
 import { Pressable } from '../theme/Pressable';
 import type { FeedImage, PostMediaView } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { ApiError } from '../api/types';
 import { deletePost } from '../feed/api';
 import type { FeedItem } from '../feed/types';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
+import { HeaderButton } from '../navigation/HeaderButton';
 import { SendErrorNotice } from '../reports/SendError';
 import { BottomSheet } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
@@ -20,7 +20,6 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { postDeleted } from './postDeleted';
 import { pressedDim } from '../theme/motion';
-import { heldDim } from '../theme/MotionParts';
 
 /**
  * The pieces of a post's own page that came with pictures on written posts:
@@ -97,15 +96,12 @@ export function usePostMenu(
 
 /** "⋯" in the header of your own post's page, opening its menu. */
 export function PostMenuButton({ post, onDeleted }: { post: MenuPost; onDeleted?: () => void }): React.JSX.Element | null {
-  const { colors } = useTheme();
   const { t } = useI18n();
   const menu = usePostMenu(post, { onDeleted });
   if (!menu.open) return null;
   return (
     <>
-      <Pressable onPress={menu.open} accessibilityRole="button" accessibilityLabel={t('post.menu')} style={({ pressed }) => [styles.menuButton, pressed && heldDim]}>
-        <Icon name="more" size={22} color={colors.primary} />
-      </Pressable>
+      <HeaderButton icon="more" label={t('post.menu')} onPress={menu.open} />
       {menu.sheet}
     </>
   );
@@ -185,7 +181,6 @@ function MenuRow({ icon, label, danger = false, onPress }: { icon: IconName; lab
 const styles = StyleSheet.create({
   credit: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   creditText: { flex: 1, fontSize: typography.sizes.sm, fontStyle: 'italic' },
-  menuButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   // the height GlassRow gives a row a thumb is meant to land on
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52 },
   pressed: { opacity: pressedDim },

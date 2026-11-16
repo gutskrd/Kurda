@@ -51,7 +51,6 @@ const MAP = {
   'home-fill': { glyph: 'House', weight: 'fill', note: 'the Home tab, while you are on it' },
   'book-fill': { glyph: 'BookOpen', weight: 'fill', note: 'the Learn tab, while you are on it' },
   'send-fill': { glyph: 'PaperPlaneTilt', weight: 'fill', note: 'the Messages tab, while you are on it' },
-  'search-bold': { glyph: 'MagnifyingGlass', weight: 'bold', note: 'the Search tab, while you are on it: a lens has no inside to fill' },
 
   // --- the rest of the browser's façade, same glyph, same job ---
   chat: { glyph: 'ChatCircle', note: 'web ChatsIcon' },

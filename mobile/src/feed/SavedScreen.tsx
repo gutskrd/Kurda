@@ -129,7 +129,7 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('saved.title')} onBack={onExit} />
+      <ScreenHeader title={t('saved.title')} onBack={onExit} browse />
       <View style={styles.screen}>
         <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('saved.subtitle')}</Text>
 

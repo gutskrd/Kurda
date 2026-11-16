@@ -130,7 +130,7 @@ export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; 
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <ScreenHeader title={t(SET_TITLE[set])} onBack={onExit} />
+        <ScreenHeader title={t(SET_TITLE[set])} onBack={onExit} browse />
         <ScrollView ref={scroller} style={styles.screen} contentContainerStyle={[styles.column, { paddingBottom: bottom }]} showsVerticalScrollIndicator={false}>
           <Segmented
             options={DIALECTS}

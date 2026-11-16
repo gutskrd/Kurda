@@ -8,6 +8,8 @@ import {
   ENTRANCE,
   POP_SCALE,
   PRESS_SCALE,
+  RING_MS,
+  RING_STEPS,
   SHAKE_MS,
   SHAKE_STEPS,
   countAt,
@@ -146,6 +148,31 @@ export function useShake(): { translateX: Animated.Value; run: () => void } {
     Animated.sequence(SHAKE_STEPS.slice(1).map((x) => timing(translateX, x, step, { easing: Easing.inOut(Easing.quad) }))).start();
   }, [reduce, translateX]);
   return { translateX, run };
+}
+
+/**
+ * Something with news: `ring` is a number that goes up as news arrives, and
+ * each time it does the thing swings once like a rung bell (`RING_STEPS`).
+ * Not as it is first drawn — what was already waiting is not news — and not
+ * at all under Reduce Motion, where the dot beside it says it alone.
+ * `rotate` is for a transform, with the origin at the top, where a bell hangs.
+ */
+export function useRing(ring: number): { rotate: Animated.AnimatedInterpolation<string> } {
+  const reduce = useReducedMotion();
+  const degrees = useRef(new Animated.Value(0)).current;
+  const heard = useRef(ring);
+  useEffect(() => {
+    const rose = ring > heard.current;
+    heard.current = ring;
+    if (!rose || reduce) return;
+    degrees.stopAnimation();
+    degrees.setValue(0);
+    const step = RING_MS / (RING_STEPS.length - 1);
+    const swing = Animated.sequence(RING_STEPS.slice(1).map((d) => timing(degrees, d, step, { easing: Easing.inOut(Easing.quad) })));
+    swing.start();
+    return () => swing.stop();
+  }, [ring, reduce, degrees]);
+  return { rotate: degrees.interpolate({ inputRange: [-90, 90], outputRange: ['-90deg', '90deg'] }) };
 }
 
 /** A right answer: a gentle pop, up a little and back on the spring. Nothing under Reduce Motion. */

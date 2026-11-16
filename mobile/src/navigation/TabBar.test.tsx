@@ -50,31 +50,39 @@ function open({ index = 0, chats = [] as number[], groups = [] as number[], requ
 }
 
 describe('the tab bar', () => {
-  it('shows the five tabs in order, as icons, each named for a screen reader', async () => {
+  it('shows the four tabs in order, each an icon with its word under it and named for a screen reader', async () => {
     open();
     const bar = await screen.findByRole('tablist');
     const tabs = within(bar).getAllByRole('tab');
-    expect(tabs.map((t) => t.getAttribute('aria-label'))).toEqual(['Home', 'Learn', 'Messages', 'Search', 'Profile']);
-    // no words under the icons: the bar is the glyphs alone
-    for (const word of ['Home', 'Learn', 'Messages', 'Search', 'Profile']) expect(within(bar).queryByText(word)).toBeNull();
+    expect(tabs.map((t) => t.getAttribute('aria-label'))).toEqual(['Home', 'Learn', 'Messages', 'Profile']);
+    // every tab says what it is: a row of glyphs alone has to be learnt before it can be used
+    for (const word of ['Home', 'Learn', 'Messages', 'Profile']) expect(within(bar).getByText(word)).toBeTruthy();
   });
 
   /*
-   * With no words under the icons, holding a tab says which it is, for as
-   * long as it is held, and letting go takes the name away without moving.
+   * Search was the fifth tab. It opens from the magnifier at the top of
+   * every tab now, so the bar is the four places and nothing else.
    */
-  it('shows a tab’s name while it is held, and goes nowhere when it is let go', async () => {
+  it('has no tab for search', async () => {
+    open();
+    const bar = await screen.findByRole('tablist');
+    expect(within(bar).queryByRole('tab', { name: 'Search' })).toBeNull();
+  });
+
+  /*
+   * A held tab says so to whatever listens for it, and goes nowhere: the
+   * name it used to show while held is under the icon all the time now.
+   */
+  it('sends a long press on, and goes nowhere when it is let go', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       const { navigation, emitted } = open({ index: 0 });
       const learn = await screen.findByRole('tab', { name: 'Learn' });
       fireEvent.touchStart(learn, { touches: [{ identifier: 1, clientX: 0, clientY: 0 }], changedTouches: [{ identifier: 1, clientX: 0, clientY: 0 }] });
       await vi.advanceTimersByTimeAsync(600);
-      expect(screen.getByText('Learn')).toBeTruthy();
       expect(emitted).toContainEqual(expect.objectContaining({ type: 'tabLongPress', target: 'Learn-key' }));
       fireEvent.touchEnd(learn, { touches: [], changedTouches: [{ identifier: 1, clientX: 0, clientY: 0 }] });
       await vi.advanceTimersByTimeAsync(50);
-      expect(screen.queryByText('Learn')).toBeNull();
       expect(navigation.navigate).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();

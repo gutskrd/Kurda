@@ -278,7 +278,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
             {/* no friends at all is a different thing to say than none about today */}
             {data && friends.length === 0 ? (
               <Pressable
-                onPress={() => go(() => navigation.navigate('Tabs', { screen: 'Search' }))}
+                onPress={() => go(() => navigation.navigate('Search'))}
                 style={({ pressed }) => [styles.empty, pressed && heldDim]}
                 accessibilityRole="button"
                 accessibilityLabel={t('rail.findPeople')}

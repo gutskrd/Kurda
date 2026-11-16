@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { matchedParts } from '@kurda/shared';
-import { useNavigation, useScrollToTop } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
@@ -17,7 +18,8 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
+import { useScreenBottomInset } from '../navigation/tabBarLayout';
+import { BackButton } from '../navigation/BackButton';
 import { useDirection } from '../reports/direction';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { deviceStore } from '../keyboard/deviceStore';
@@ -90,7 +92,7 @@ interface LessonRow {
  * phone only) and people you may know, so the first thing a new reader sees
  * is somewhere to start rather than an instruction.
  */
-export function SearchScreen(): React.JSX.Element {
+export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   /*
    * A guest searches the words, the lessons and the games, not the people:
@@ -104,11 +106,10 @@ export function SearchScreen(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
-  const topInset = useScreenTopInset();
-  const bottomInset = useTabBarInset();
+  const insets = useSafeAreaInsets();
+  // nothing floats over the foot of this page: its last row only has to clear the home indicator
+  const bottomInset = useScreenBottomInset(spacing.lg);
   const scrollRef = useRef<ScrollView>(null);
-  // tapping Search while on Search goes back to the top of the results
-  useScrollToTop(scrollRef);
 
   const [query, setQuery] = useState('');
   const [scope, setScope] = useState<Scope>('all');
@@ -352,14 +353,27 @@ export function SearchScreen(): React.JSX.Element {
 
   return (
     <GradientBackground>
-      <View style={[styles.controls, { paddingTop: topInset }]}>
-        <SearchField
-          value={query}
-          onChangeText={setQuery}
-          label={t('search.title')}
-          placeholder={t('search.placeholder')}
-          onSubmit={() => remember(query)}
-        />
+      <View style={[styles.controls, { paddingTop: insets.top + spacing.xs }]}>
+        {/*
+          The way back, and the field in the room the magnifier and the bell
+          had, in the same rounded shape: the page grows out of the magnifier
+          that was tapped (theme/origin), and the keyboard is up for it at
+          once.
+        */}
+        <View style={[styles.bar, { flexDirection: dir.row }]}>
+          <BackButton onPress={onExit} />
+          <View style={styles.fieldWrap}>
+            <SearchField
+              value={query}
+              onChangeText={setQuery}
+              label={t('search.title')}
+              placeholder={t('search.placeholder')}
+              onSubmit={() => remember(query)}
+              autoFocus
+              floating
+            />
+          </View>
+        </View>
         <Chips options={scopes} value={scope} onChange={setScope} labelOf={(s) => t(SCOPE_LABEL[s])} />
       </View>
 
@@ -546,6 +560,8 @@ function RowsSkeleton({ rows, testID }: { rows: number; testID: string }): React
 
 const styles = StyleSheet.create({
   controls: { paddingHorizontal: layout.gutter, gap: spacing.md - 4, paddingBottom: spacing.xs },
+  bar: { alignItems: 'center', gap: spacing.sm },
+  fieldWrap: { flex: 1 },
   content: { paddingHorizontal: spacing.sm, paddingTop: spacing.md, gap: spacing.lg },
   section: { gap: spacing.xs },
   sectionHead: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.sm },

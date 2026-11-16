@@ -11,7 +11,7 @@ import {
   type Theme,
 } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator, type NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
 import { inviteRoutePath, isWordSetId } from '@kurda/shared';
@@ -92,6 +92,7 @@ import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
+import { Arrive, originOf } from './src/theme/origin';
 import { useReducedMotion } from './src/a11y/useReducedMotion';
 import { duration } from './src/theme/motion';
 import { OfflineBanner } from './src/net/OfflineBanner';
@@ -183,6 +184,8 @@ const linking: LinkingOptions<RootStackParamList> = {
     screens: {
       // `?view=games` on Learn arrives as the tab's own param
       Tabs: { screens: linkingScreens() },
+      // `hevalo://search` was the Search tab's address, and is the search page's now
+      Search: 'search',
       // a shared profile (Profile → Share) opens in the app for anyone who has it
       UserProfile: 'app/users/:userId',
       Lesson: 'lesson/:lessonId',
@@ -318,7 +321,7 @@ function SignedInTabs() {
         animation: reduceMotion ? 'none' : 'fade',
         transitionSpec: { animation: 'timing', config: { duration: duration.base } },
       }}
-      // five icons along the bottom edge, with the badges
+      // the four places in a bar that floats over the bottom of the page, with the badges
       tabBar={(props) => <TabBar {...props} />}
     >
       {/* in the order TABS gives, which is the order the tests hold it to */}
@@ -336,8 +339,6 @@ function SignedInTabs() {
                 <CivakScreen />
               ) : tab.name === 'Messages' ? (
                 <MessagesScreen />
-              ) : tab.name === 'Search' ? (
-                <SearchScreen />
               ) : (
                 <ProfileScreen />
               )
@@ -358,9 +359,21 @@ function SignedInTabs() {
 function SignedInRoot() {
   const { colors } = useTheme();
   const reduceMotion = useReducedMotion();
+  /*
+   * A pushed page. One that a press on a card, a tile or a header button
+   * opened fades in while it grows out of the thing pressed (theme/origin);
+   * any other slides in as a pushed page always has. Decided once per page,
+   * as it is first drawn, and kept: a page that faded in fades back out,
+   * over the card it came from.
+   */
+  const card = useCallback(
+    ({ route }: { route: { key: string } }): NativeStackNavigationOptions =>
+      !reduceMotion && originOf(route.key) ? { presentation: 'card', animation: 'fade' } : { presentation: 'card' },
+    [reduceMotion],
+  );
   return (
     <RealtimeProvider>
-      {/* the badges' counts, for the tab bar, Home's bell and the profile's menu */}
+      {/* the badges' counts, for the tab bar, the bell and the profile's menu */}
       <UnreadProvider>
       <PushRegistration />
       {/* a badge just earned has its moment over whatever screen is up, once a game's own result has had its turn */}
@@ -375,8 +388,18 @@ function SignedInRoot() {
           contentStyle: { backgroundColor: colors.background },
           animation: reduceMotion ? 'none' : 'default',
         }}
+        // every page stands in `Arrive`, which draws one a press opened (the ones that fade in) growing out of what was pressed
+        screenLayout={({ children, route, options }) => (
+          <Arrive routeKey={route.key} grows={options.animation === 'fade'}>
+            {children}
+          </Arrive>
+        )}
       >
         <RootStack.Screen name="Tabs" component={SignedInTabs} />
+      {/* search opens out of the magnifier that was tapped, as any page opens out of what opened it */}
+      <RootStack.Screen name="Search" options={card}>
+        {({ navigation }) => <SearchScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
       <RootStack.Screen name="Lesson" options={{ presentation: 'fullScreenModal' }}>
         {({ route, navigation }) => (
           // the results' ways on take the lesson's place, so Back from them is the path, not a finished lesson
@@ -402,7 +425,7 @@ function SignedInRoot() {
           />
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="PracticeHub" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="PracticeHub" options={card}>
         {({ navigation }) => <PracticeHubScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="JumpTest" options={{ presentation: 'fullScreenModal' }}>
@@ -441,33 +464,33 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Ranks" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Ranks" options={card}>
         {({ route, navigation }) => (
           <GuestWall reason="league" onBack={() => navigation.goBack()}>
             <RanksScreen game={route.params?.game} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Season" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Season" options={card}>
         {({ navigation }) => (
           <GuestWall reason="league" onBack={() => navigation.goBack()}>
             <SeasonScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Badges" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Badges" options={card}>
         {({ navigation }) => <BadgesScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Tree" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Tree" options={card}>
         {({ navigation }) => <TreeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="UserProfile" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="UserProfile" options={card}>
         {({ route, navigation }) => (
           <PublicProfileScreen userId={route.params.userId} onExit={() => navigation.goBack()} />
         )}
       </RootStack.Screen>
       {/* one route per person and per group (rootStack.chatRouteId) */}
-      <RootStack.Screen name="Chat" options={{ presentation: 'card' }} getId={chatRouteId}>
+      <RootStack.Screen name="Chat" options={card} getId={chatRouteId}>
         {({ route, navigation }) => (
           <GuestWall reason="message" onBack={() => navigation.goBack()}>
             <ChatScreen
@@ -479,21 +502,21 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="BlockedUsers" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="BlockedUsers" options={card}>
         {({ navigation }) => (
           <GuestWall onBack={() => navigation.goBack()}>
             <BlockedUsersScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="MyReports" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="MyReports" options={card}>
         {({ navigation }) => (
           <GuestWall onBack={() => navigation.goBack()}>
             <MyReportsScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="AccountStanding" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="AccountStanding" options={card}>
         {({ navigation }) => (
           <GuestWall onBack={() => navigation.goBack()}>
             <AccountStandingScreen onExit={() => navigation.goBack()} />
@@ -501,7 +524,7 @@ function SignedInRoot() {
         )}
       </RootStack.Screen>
       {/* leaving unwinds past the thread: the club is gone from under it */}
-      <RootStack.Screen name="GroupMembers" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="GroupMembers" options={card}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={() => navigation.goBack()}>
             <GroupMembersScreen
@@ -513,28 +536,28 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupEdit" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="GroupEdit" options={card}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={() => navigation.goBack()}>
             <GroupEditScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupRequests" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="GroupRequests" options={card}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={() => navigation.goBack()}>
             <GroupRequestsScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupBans" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="GroupBans" options={card}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={() => navigation.goBack()}>
             <GroupBansScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupThread" options={{ presentation: 'card' }} getId={groupThreadRouteId}>
+      <RootStack.Screen name="GroupThread" options={card} getId={groupThreadRouteId}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={() => navigation.goBack()}>
             <GroupThreadScreen
@@ -542,7 +565,7 @@ function SignedInRoot() {
               name={route.params.name}
               openGift={route.params.openGift}
               addFriends={route.params.addFriends}
-              onFindPeople={() => navigation.navigate('Tabs', { screen: 'Search' })}
+              onFindPeople={() => navigation.navigate('Search')}
               onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
               onExit={() => navigation.goBack()}
               onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
@@ -550,7 +573,7 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="FriendRequests" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="FriendRequests" options={card}>
         {({ navigation }) => (
           <GuestWall reason="friends" onBack={() => navigation.goBack()}>
             <FriendRequestsScreen onExit={() => navigation.goBack()} />
@@ -558,81 +581,81 @@ function SignedInRoot() {
         )}
       </RootStack.Screen>
       {/* letters by bird: a guest has no bird, and is shown the way to an account instead */}
-      <RootStack.Screen name="Letters" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Letters" options={card}>
         {({ navigation }) => (
           <GuestWall reason="message" onBack={() => navigation.goBack()}>
             <LettersScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="LetterThread" options={{ presentation: 'card' }} getId={({ params }) => params.threadId}>
+      <RootStack.Screen name="LetterThread" options={card} getId={({ params }) => params.threadId}>
         {({ route, navigation }) => (
           <GuestWall reason="message" onBack={() => navigation.goBack()}>
             <LetterThreadScreen threadId={route.params.threadId} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="LetterWidget" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="LetterWidget" options={card}>
         {({ navigation }) => (
           <GuestWall reason="message" onBack={() => navigation.goBack()}>
             <LetterWidgetScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="EventQuests" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="EventQuests" options={card}>
         {({ navigation }) => <EventQuestsScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Notifications" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Notifications" options={card}>
         {({ navigation }) => (
           <GuestWall onBack={() => navigation.goBack()}>
             <NotificationsScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="NotificationCenter" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="NotificationCenter" options={card}>
         {({ navigation }) => (
           <GuestWall onBack={() => navigation.goBack()}>
             <NotificationCenterScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Appearance" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Appearance" options={card}>
         {({ navigation }) => <AppearanceScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Settings" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Settings" options={card}>
         {({ navigation }) => <SettingsScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="SettingsPage" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="SettingsPage" options={card}>
         {({ route, navigation }) => <SettingsPageScreen page={route.params.page} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Wordle" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Wordle" options={card}>
         {({ navigation }) => <WordleScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="WordleBattle" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="WordleBattle" options={card}>
         {({ route, navigation }) => (
           <GuestWall reason="play" onBack={() => navigation.goBack()}>
             <WordleBattleScreen id={route.params?.id} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Rhyme" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Rhyme" options={card}>
         {({ navigation }) => <RhymeTrainingScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="RhymeMatch" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="RhymeMatch" options={card}>
         {({ route, navigation }) => (
           <GuestWall reason="play" onBack={() => navigation.goBack()}>
             <RhymeMatchScreen id={route.params?.id} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="LastLetter" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="LastLetter" options={card}>
         {({ route, navigation }) => (
           <GuestWall reason="play" onBack={() => navigation.goBack()}>
             <LastLetterScreen id={route.params?.id} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Impostor" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Impostor" options={card}>
         {({ route, navigation }) => (
           <GuestWall reason="play" onBack={() => navigation.goBack()}>
             <ImpostorScreen id={route.params?.id} onExit={() => navigation.goBack()} />
@@ -640,10 +663,10 @@ function SignedInRoot() {
         )}
       </RootStack.Screen>
       {/* Who Am I? on one phone reaches nobody else, so a guest may play it; its room with friends keeps the play wall inside (whoami/WhoAmIScreen) */}
-      <RootStack.Screen name="WhoAmI" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="WhoAmI" options={card}>
         {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} way={route.params?.way} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Race" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Race" options={card}>
         {({ navigation }) => (
           <GuestWall reason="play" onBack={() => navigation.goBack()}>
             <RaceScreen onExit={() => navigation.goBack()} />
@@ -655,24 +678,24 @@ function SignedInRoot() {
         Leaving one goes back there; opened by a link, with nothing behind it, it leaves to the hub rather
         than nowhere (`leaveExercise`). A guest does them too, as a guest does a lesson.
       */}
-      <RootStack.Screen name="BuildSentence" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="BuildSentence" options={card}>
         {({ navigation }) => <BuildSentenceScreen onExit={() => leaveExercise(navigation)} />}
       </RootStack.Screen>
-      <RootStack.Screen name="HearIt" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="HearIt" options={card}>
         {({ navigation }) => <HearItScreen onExit={() => leaveExercise(navigation)} />}
       </RootStack.Screen>
       {/* a learning game is learning, as a lesson is: a guest plays it too (api/src/games) */}
-      <RootStack.Screen name="MemoryThief" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="MemoryThief" options={card}>
         {({ navigation }) => <MemoryThiefScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Detective" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Detective" options={card}>
         {({ navigation }) => <DetectiveScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/* the library is reading, which a guest may do; the games behind it keep their own wall */}
-      <RootStack.Screen name="Stories" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Stories" options={card}>
         {({ route, navigation }) => <StoriesScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="StoryReader" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="StoryReader" options={card}>
         {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/* a game is not left by a swipe that was meant to scroll the story */}
@@ -684,26 +707,26 @@ function SignedInRoot() {
         )}
       </RootStack.Screen>
       {/* the riddles and the proverbs are reading and thinking, which a guest may do; the proverbs' round counts a guest's day too */}
-      <RootStack.Screen name="Riddles" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Riddles" options={card}>
         {({ route, navigation }) => <RiddlesScreen dialect={route.params?.dialect} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Riddle" options={{ presentation: 'card' }} getId={({ params }) => params.slug}>
+      <RootStack.Screen name="Riddle" options={card} getId={({ params }) => params.slug}>
         {({ route, navigation }) => <RiddleScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
       </RootStack.Screen>
-      <RootStack.Screen name="RiddleAnswer" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="RiddleAnswer" options={card}>
         {({ route, navigation }) => <RiddleAnswerScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Riddles')} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Proverbs" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Proverbs" options={card}>
         {({ route, navigation }) => <ProverbsScreen dialect={route.params?.dialect} theme={route.params?.theme} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Proverb" options={{ presentation: 'card' }} getId={({ params }) => params.slug}>
+      <RootStack.Screen name="Proverb" options={card} getId={({ params }) => params.slug}>
         {({ route, navigation }) => <ProverbScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Proverbs')} />}
       </RootStack.Screen>
       {/* a round is not left by a swipe meant to scroll its choices */}
       <RootStack.Screen name="ProverbRound" options={{ presentation: 'card', gestureEnabled: false }}>
         {({ route, navigation }) => <ProverbRoundScreen dialect={route.params.dialect} mode={route.params.mode} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Memes" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Memes" options={card}>
         {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/*
@@ -723,37 +746,37 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="MemeDetail" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="MemeDetail" options={card}>
         {({ route, navigation }) => <MemeDetailScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="EditProfile" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="EditProfile" options={card}>
         {({ navigation }) => (
           <GuestWall reason="profile" onBack={() => navigation.goBack()}>
             <EditProfileScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Friends" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Friends" options={card}>
         {({ navigation }) => (
           <GuestWall reason="friends" onBack={() => navigation.goBack()}>
             <SocialScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Dictionary" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Dictionary" options={card}>
         {({ navigation }) => <DictionaryScreen onBack={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Alphabet" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Alphabet" options={card}>
         {({ route, navigation }) => <AlphabetScreen script={route.params?.script} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Words" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Words" options={card}>
         {({ navigation }) => <WordsScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/* over Learn, as something looked at and closed: a chest opened in it takes the whole screen */}
       <RootStack.Screen name="Quests" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => <QuestsScreen place="learn" onDone={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="WordSet" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="WordSet" options={card}>
         {/* a link to a set this version does not have opens the list of sets instead */}
         {({ route, navigation }) =>
           isWordSetId(route.params.set) ? (
@@ -763,48 +786,48 @@ function SignedInRoot() {
           )
         }
       </RootStack.Screen>
-      <RootStack.Screen name="Saved" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Saved" options={card}>
         {({ navigation }) => (
           <GuestWall reason="save" onBack={() => navigation.goBack()}>
             <SavedScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Tags" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Tags" options={card}>
         {({ navigation }) => (
           <GuestWall reason="profile" onBack={() => navigation.goBack()}>
             <TagsScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="ChangeUsername" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="ChangeUsername" options={card}>
         {({ navigation }) => (
           <GuestWall reason="profile" onBack={() => navigation.goBack()}>
             <ChangeUsernameScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="ChangePassword" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="ChangePassword" options={card}>
         {({ navigation }) => (
           <GuestWall onBack={() => navigation.goBack()}>
             <ChangePasswordScreen onExit={() => navigation.goBack()} onSetPassword={(email) => navigation.navigate('ForgotPassword', { email })} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Devices" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Devices" options={card}>
         {({ navigation }) => (
           <GuestWall onBack={() => navigation.goBack()}>
             <DevicesScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="ForgotPassword" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="ForgotPassword" options={card}>
         {({ route, navigation }) => <ForgotPasswordForm email={route.params?.email} onBack={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Library" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="Library" options={card}>
         {({ navigation }) => <LibraryScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="LibraryPost" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="LibraryPost" options={card}>
         {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/*

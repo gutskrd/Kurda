@@ -183,7 +183,7 @@ export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialec
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('lore.riddles.name')} onBack={onExit} />
+      <ScreenHeader title={t('lore.riddles.name')} onBack={onExit} browse />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom + spacing.lg }]} showsVerticalScrollIndicator={false} refreshControl={pull}>
         <CollectionTitle kurmanci={RIDDLES_NAME} localized={t('lore.riddles.name')} line={solvedLine} />
         {list && list.total > 0 ? <SolvedBar solved={list.solved} total={list.total} /> : null}

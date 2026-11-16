@@ -8,12 +8,12 @@ describe('tab registry', () => {
    * reordering the list would move every tab under every thumb that has
    * learned where they are, and nothing else would notice.
    */
-  it('has exactly the five, in order: Home, Learn, Messages, Search, Profile', () => {
-    expect(TABS.map((t) => t.name)).toEqual(['Home', 'Learn', 'Messages', 'Search', 'Profile']);
+  it('has exactly the four, in order: Home, Learn, Messages, Profile', () => {
+    expect(TABS.map((t) => t.name)).toEqual(['Home', 'Learn', 'Messages', 'Profile']);
   });
 
-  it('draws a house, an open book, a paper plane, a magnifier and you', () => {
-    expect(TABS.map((t) => t.icon)).toEqual(['home', 'book', 'send', 'search', 'person']);
+  it('draws a house, an open book, a paper plane and you', () => {
+    expect(TABS.map((t) => t.icon)).toEqual(['home', 'book', 'send', 'person']);
   });
 
   it('has unique names and paths', () => {
@@ -27,7 +27,7 @@ describe('tab registry', () => {
    */
   it('labels every tab in Kurmanji with correct diacritics', () => {
     const ku = TABS.map((t) => TRANSLATIONS.ku[t.labelKey]);
-    expect(ku).toEqual(['Mal', 'Fêrbûn', 'Peyam', 'Lêgerîn', 'Profîl']);
+    expect(ku).toEqual(['Mal', 'Fêrbûn', 'Peyam', 'Profîl']);
   });
 
   it('gives no two tabs the same label, in any language', () => {
@@ -38,16 +38,27 @@ describe('tab registry', () => {
   });
 
   /*
-   * Five tabs: a fifth of a 375pt phone is 75pt, room for a glyph and a
-   * thumb. A sixth would make every tab narrower than a fingertip is wide.
+   * Four tabs: a quarter of the bar on a 320pt phone is over 70pt, room for
+   * a glyph, its word in the longest of the nine languages, and a thumb.
    */
-  it('has five tabs, each with a solid glyph for when it is the one you are on', () => {
-    expect(TABS).toHaveLength(5);
+  it('has four tabs, each with a solid glyph for when it is the one you are on', () => {
+    expect(TABS).toHaveLength(4);
     for (const tab of TABS) expect(tab.activeIcon).toBeTruthy();
   });
 
+  /*
+   * The word under a tab has a quarter of the bar and one line. Fourteen
+   * letters is what fits there at the tab label's size; a longer name would
+   * be cut short under its own icon.
+   */
+  it('names every tab in a word short enough to sit under its icon, in every language', () => {
+    for (const locale of LOCALES) {
+      for (const tab of TABS) expect(TRANSLATIONS[locale][tab.labelKey].length, `${locale} ${tab.name}`).toBeLessThanOrEqual(14);
+    }
+  });
+
   it('maps every tab to a deep-link path (hevalo://<path>)', () => {
-    expect(linkingScreens()).toEqual({ Home: 'home', Learn: 'learn', Messages: 'messages', Search: 'search', Profile: 'profile' });
+    expect(linkingScreens()).toEqual({ Home: 'home', Learn: 'learn', Messages: 'messages', Profile: 'profile' });
   });
 });
 

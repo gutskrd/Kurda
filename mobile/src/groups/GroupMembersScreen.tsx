@@ -311,7 +311,7 @@ export function GroupMembersScreen({
             }}
             onFindPeople={() => {
               setAdding(false);
-              navigation.navigate('Tabs', { screen: 'Search' });
+              navigation.navigate('Search');
             }}
           />
         ) : null}

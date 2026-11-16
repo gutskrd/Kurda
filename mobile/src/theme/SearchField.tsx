@@ -8,6 +8,7 @@ import { Icon } from './Icon';
 import { useTheme } from './ThemeProvider';
 import { radii, spacing, typography } from './tokens';
 import { pressedDim } from './motion';
+import { floating } from './floating';
 
 /**
  * A search field: a magnifier, the words, and a clear button once there are
@@ -34,9 +35,15 @@ export const SearchField = forwardRef<TextInput, {
   autoFocus?: boolean;
   /** the most that can be typed, where what is searched has a limit */
   maxLength?: number;
+  /**
+   * The search page's own field: a rounded shape in the bar's fill, floating
+   * a little off the page like the way back beside it, where every other
+   * search field is a quiet tinted box in the page.
+   */
+  floating?: boolean;
   /** where the field sits (a margin), not how it looks */
   style?: StyleProp<ViewStyle>;
-}>(function SearchField({ value, onChangeText, label, placeholder, onSubmit, returnKeyType = 'search', autoFocus, maxLength, style }, ref) {
+}>(function SearchField({ value, onChangeText, label, placeholder, onSubmit, returnKeyType = 'search', autoFocus, maxLength, floating: lifted = false, style }, ref) {
   const { colors } = useTheme();
   const input = useRef<TextInput>(null);
   useImperativeHandle(ref, () => input.current as TextInput);
@@ -50,7 +57,15 @@ export const SearchField = forwardRef<TextInput, {
     ? { paddingRight: lead, paddingLeft: clearable ? 0 : lead }
     : { paddingLeft: lead, paddingRight: clearable ? 0 : lead };
   return (
-    <View style={[styles.field, inset, { backgroundColor: colors.controlTrack, flexDirection: dir.row }, style]}>
+    <View
+      style={[
+        styles.field,
+        inset,
+        { backgroundColor: colors.controlTrack, flexDirection: dir.row },
+        lifted && [styles.lifted, floating.control, { backgroundColor: colors.barFill, shadowColor: colors.softShadow }],
+        style,
+      ]}
+    >
       <Icon name="search" size={18} color={colors.textSecondary} />
       <TextInput
         ref={input}
@@ -91,6 +106,7 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.md,
   },
+  lifted: { borderRadius: radii.pill },
   input: { flex: 1, fontSize: typography.sizes.md, minHeight: MIN_TOUCH_TARGET, paddingVertical: 0 },
   clear: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
 });

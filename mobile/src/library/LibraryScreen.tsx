@@ -160,7 +160,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('library.title')} onBack={onExit} />
+      <ScreenHeader title={t('library.title')} onBack={onExit} browse />
       <View style={styles.screen}>
 
         <View style={styles.filters}>

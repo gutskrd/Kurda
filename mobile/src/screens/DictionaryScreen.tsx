@@ -111,7 +111,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('nav.dictionary')} onBack={onBack} />
+      <ScreenHeader title={t('nav.dictionary')} onBack={onBack} browse />
       <View style={styles.screen}>
         <SearchField
           value={query}

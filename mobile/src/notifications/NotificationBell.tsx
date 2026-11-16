@@ -5,7 +5,8 @@ import { useUnread } from '../messages/unread';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
- * The bell at the top of Home, and the way into the notification list.
+ * The bell beside search at the top of every tab, and the way into the
+ * notification list.
  *
  * Likes, comments, gifts, invites, badges and notices from Hevalo used to sit
  * in the Inbox tab between friend requests and conversations — three kinds of
@@ -14,6 +15,10 @@ import { useI18n } from '../i18n/I18nContext';
  * while any are unread. A dot rather than a number on purpose: a count of
  * likes is the kind of number that asks to be checked, and this should only
  * ever say "something is new".
+ *
+ * When something arrives while the bell is in sight it swings once, as a
+ * bell that has been rung does, and is still again: the dot says "since you
+ * last looked", and the swing says "just now".
  */
 export function NotificationBell(): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
@@ -24,10 +29,11 @@ export function NotificationBell(): React.JSX.Element {
     <HeaderButton
       icon="bell"
       dot={unread > 0}
+      // one swing as something arrives, while the bell is in sight
+      ring={unread}
       label={unread > 0 ? t('notifications.unreadLabel', { count: unread }) : t('notifications.title')}
       onPress={() => navigation.navigate('NotificationCenter')}
-      edge="end"
-      testID="home-bell"
+      testID="top-bell"
     />
   );
 }

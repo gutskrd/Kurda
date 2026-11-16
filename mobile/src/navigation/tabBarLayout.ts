@@ -8,14 +8,27 @@ import { spacing } from '../theme/tokens';
  * scrollable tab screens agree on how much bottom space to reserve —
  * otherwise the bar would cover the last row of content.
  */
-/** The bar's own height, above the home indicator: the 49 points the system's tab bar is. */
-export const TAB_BAR_HEIGHT = 49;
+/** The bar's own height: an icon with its word under it, and room round both for the capsule behind the tab you are on. */
+export const TAB_BAR_HEIGHT = 64;
 
-/** Bottom padding a scrollable tab screen needs so its content clears the bar. */
+/** How far in from the screen's sides the bar floats: the page's own gutter, so it lines up with the cards above it. */
+export const TAB_BAR_SIDE = 16;
+
+/**
+ * How far above the screen's bottom edge the bar floats.
+ *
+ * Just over the home indicator on a phone that has one (most of its 34
+ * points are empty band, and the bar may sit in them), and a small margin
+ * up from the edge on a phone that has none.
+ */
+export function tabBarLift(bottomInset: number): number {
+  return Math.max(bottomInset - 8, 12);
+}
+
+/** Bottom padding a scrollable tab screen needs so its last row clears the floating bar, with a little air over it. */
 export function useTabBarInset(): number {
   const insets = useSafeAreaInsets();
-  // the bar is docked: its icons, and below them the home indicator's band
-  return insets.bottom + TAB_BAR_HEIGHT;
+  return tabBarLift(insets.bottom) + TAB_BAR_HEIGHT + spacing.md;
 }
 
 /**

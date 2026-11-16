@@ -24,7 +24,7 @@ export function StoriesScreen({ id, onExit }: { id?: string; onExit: () => void 
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('stories.title')} onBack={onExit} />
+      <ScreenHeader title={t('stories.title')} onBack={onExit} browse />
       <StoriesView />
     </GradientBackground>
   );

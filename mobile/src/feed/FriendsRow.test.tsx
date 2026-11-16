@@ -57,6 +57,6 @@ describe('the row of friends on Home', () => {
   it('offers to find friends when there are none yet', async () => {
     open([]);
     fireEvent.click(await screen.findByRole('button', { name: 'Find friends' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Search' });
+    expect(navigation.navigate).toHaveBeenCalledWith('Search');
   });
 });

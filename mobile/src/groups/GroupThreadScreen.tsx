@@ -15,6 +15,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { EmptyState } from '../theme/EmptyState';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { ActionPill, HeaderButton } from '../navigation/HeaderButton';
 import { GroupAvatar } from './GroupAvatar';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
@@ -46,7 +47,6 @@ import { ClearedLine, WelcomeCard } from './Welcome';
 import { StandingCard, type Banned } from './Standing';
 import { AddFriendsSheet } from './AddFriendsSheet';
 import { Loading } from '../theme/Loading';
-import { heldDim } from '../theme/MotionParts';
 
 const MAX_LEN = 2000;
 
@@ -527,30 +527,17 @@ export function GroupThreadScreen({
           onBack={onExit}
           hairline
           right={
-            <View style={styles.headerActions}>
-              {member ? (
-                <Pressable
-                  onPress={onOpenMembers}
-                  hitSlop={10}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('groups.info')}
-                  style={({ pressed }) => [styles.headerBtn, pressed && heldDim]}
-                >
-                  <Icon name="people" size={20} tone="primary" />
-                </Pressable>
-              ) : null}
-              {menu.length === 0 ? null : (
-                <Pressable
-                  onPress={() => showActions({ title: name, actions: menu, cancel: t('common.cancel') })}
-                  hitSlop={10}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('groups.chatOptions')}
-                  style={({ pressed }) => [styles.headerBtn, pressed && heldDim]}
-                >
-                  <Icon name="more" size={20} tone="secondary" />
-                </Pressable>
-              )}
-            </View>
+            // the group's people and its menu, one shape in the corner; either alone is the shape by itself
+            member && menu.length > 0 ? (
+              <ActionPill>
+                <HeaderButton icon="people" label={t('groups.info')} onPress={onOpenMembers} />
+                <HeaderButton icon="more" label={t('groups.chatOptions')} onPress={() => showActions({ title: name, actions: menu, cancel: t('common.cancel') })} />
+              </ActionPill>
+            ) : member ? (
+              <HeaderButton icon="people" label={t('groups.info')} onPress={onOpenMembers} />
+            ) : menu.length > 0 ? (
+              <HeaderButton icon="more" label={t('groups.chatOptions')} onPress={() => showActions({ title: name, actions: menu, cancel: t('common.cancel') })} />
+            ) : undefined
           }
         />
 
@@ -773,8 +760,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   // the runs keep their own distance (chat/MessageRow.tsx); the tails reach a little into the margin
   list: { paddingHorizontal: spacing.md - 4, paddingVertical: spacing.md },
-  headerActions: { flexDirection: 'row', alignItems: 'center' },
-  headerBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   rowEnd: { alignSelf: 'flex-end' },
   rowStart: { alignSelf: 'flex-start' },
   // a card in the middle of what the chat would fill

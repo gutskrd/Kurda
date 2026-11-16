@@ -50,7 +50,7 @@ export function WordsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <ScreenHeader title={t('words.title')} onBack={onExit} />
+        <ScreenHeader title={t('words.title')} onBack={onExit} browse />
         <ScrollView style={styles.screen} contentContainerStyle={[styles.column, { paddingBottom: bottom }]} showsVerticalScrollIndicator={false}>
           <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('words.lead')}</Text>
           <Card

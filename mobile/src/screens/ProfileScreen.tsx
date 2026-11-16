@@ -15,7 +15,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { Icon } from '../theme/Icon';
 import { useCountUp } from '../theme/animate';
-import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarInset } from '../navigation/tabBarLayout';
+import { TabHeader } from '../navigation/TopBar';
 import { useOpenMenu } from '../navigation/SideMenu';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { useDirection } from '../reports/direction';
@@ -98,25 +99,22 @@ function GuestProfile(): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const tabBarInset = useTabBarInset();
-  const topInset = useScreenTopInset();
   const openMenu = useOpenMenu();
-  const dir = useDirection();
   const { t } = useI18n();
   return (
     <GradientBackground>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: topInset, paddingBottom: tabBarInset }]} showsVerticalScrollIndicator={false}>
-        {/* the given name at the top and the menu at the end, as on the account's profile */}
-        <View style={[styles.topBar, { flexDirection: dir.row }]}>
-          <Text style={[styles.topName, dir.text, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
-            {user?.username}
-          </Text>
-          <HeaderButton icon="menu" label={t('nav.menu')} onPress={openMenu} edge="end" testID="profile-menu" />
-        </View>
+      {/* the tab's name at the top and the menu at the end, as on the account's profile */}
+      <TabHeader title={t('nav.profile')} action={<HeaderButton icon="menu" label={t('nav.menu')} onPress={openMenu} testID="profile-menu" />} />
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]} showsVerticalScrollIndicator={false}>
 
         <GlassCard style={styles.guestCard}>
           <View style={styles.guestInner}>
             <View style={styles.guestHead}>
               <InitialsAvatar name={user?.username ?? ''} id={user?.id ?? ''} size={AVATAR} photoUrl={null} />
+              {/* the name a guest was given, under the face it goes with */}
+              <Text style={[styles.guestName, { color: colors.textSecondary }]} numberOfLines={1}>
+                {user?.username}
+              </Text>
               <Text style={[styles.guestTitle, { color: colors.textPrimary }]} accessibilityRole="header">
                 {t('guest.profile.title')}
               </Text>
@@ -160,7 +158,6 @@ function AccountProfile() {
   const { colors, scheme } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
   const tabBarInset = useTabBarInset();
-  const topInset = useScreenTopInset();
   const openMenu = useOpenMenu();
   const { counts } = useUnread();
   const dir = useDirection();
@@ -369,9 +366,27 @@ function AccountProfile() {
 
   return (
     <GradientBackground>
+      {/*
+        The tab's name at the top, and the menu at the end: the shop, settings,
+        what you saved and the rest. A gift waiting to be unwrapped puts a dot
+        on it, the same dot that is on the tab. Whose profile it is, is the
+        first thing under it: the picture, the name and the handle.
+      */}
+      <TabHeader
+        title={t('nav.profile')}
+        action={
+          <HeaderButton
+            icon="menu"
+            label={counts.gifts > 0 ? t('nav.menuWaiting') : t('nav.menu')}
+            dot={counts.gifts > 0}
+            onPress={openMenu}
+            testID="profile-menu"
+          />
+        }
+      />
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={[styles.content, { paddingTop: topInset, paddingBottom: tabBarInset }]}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -384,24 +399,6 @@ function AccountProfile() {
           />
         }
       >
-        {/*
-          Who this is, at the top, and the menu at the end: the shop, settings,
-          what you saved and the rest. A gift waiting to be unwrapped puts a
-          dot on it, the same dot that is on the tab.
-        */}
-        <View style={[styles.topBar, { flexDirection: dir.row }]}>
-          <Text style={[styles.topName, dir.text, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
-            {username}
-          </Text>
-          <HeaderButton
-            icon="menu"
-            label={counts.gifts > 0 ? t('nav.menuWaiting') : t('nav.menu')}
-            dot={counts.gifts > 0}
-            onPress={openMenu}
-            edge="end"
-            testID="profile-menu"
-          />
-        </View>
 
         {/*
           The band behind the face: the background you wear, or your own
@@ -612,8 +609,6 @@ const styles = StyleSheet.create({
   // the band behind the face, clipped to its own corners
   banner: { alignSelf: 'stretch', height: BANNER, borderRadius: radii.lg, overflow: 'hidden' },
 
-  topBar: { alignSelf: 'stretch', alignItems: 'center', minHeight: MIN_TOUCH_TARGET },
-  topName: { flex: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
 
   // the face in the middle, and everything about who this is under it
   hero: { alignSelf: 'stretch', alignItems: 'center', gap: 4, marginTop: spacing.xs },
@@ -670,6 +665,7 @@ const styles = StyleSheet.create({
   guestCard: { marginTop: spacing.md },
   guestInner: { gap: spacing.md },
   guestHead: { alignItems: 'center', gap: spacing.sm },
+  guestName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   guestTitle: { ...display(typography.sizes.lg), textAlign: 'center', marginTop: spacing.xs },
   guestBody: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
   guestActions: { gap: spacing.sm },

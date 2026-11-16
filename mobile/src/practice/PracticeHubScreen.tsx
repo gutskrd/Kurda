@@ -129,7 +129,7 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('practice.title')} onBack={onExit} />
+      <ScreenHeader title={t('practice.title')} onBack={onExit} browse />
       <AsyncBoundary loading={!hub && !error} error={!hub ? error : null} onRetry={() => void load()} skeleton={<HubSkeleton />}>
         {() =>
           hub ? (

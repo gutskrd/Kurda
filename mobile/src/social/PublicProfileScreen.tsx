@@ -227,7 +227,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
     });
   }, [profile, name, share, act, block, t]);
   // nothing to end, report or block about yourself
-  const menu = profile && profile.friendStatus !== 'self' ? <HeaderButton icon="more" label={t('moderation.moreAbout', { name })} onPress={more} edge="end" testID="profile-more" /> : null;
+  const menu = profile && profile.friendStatus !== 'self' ? <HeaderButton icon="more" label={t('moderation.moreAbout', { name })} onPress={more} testID="profile-more" /> : null;
 
   if (notFound) {
     return (

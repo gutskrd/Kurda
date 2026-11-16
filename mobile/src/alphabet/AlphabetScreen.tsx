@@ -175,7 +175,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <ScreenHeader title={t('nav.alphabet')} onBack={onExit} />
+        <ScreenHeader title={t('nav.alphabet')} onBack={onExit} browse />
         <ScrollView
           ref={scroller}
           style={styles.screen}

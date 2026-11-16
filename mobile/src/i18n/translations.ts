@@ -1598,6 +1598,13 @@ export type TranslationKey =
   | 'games.youWon'
   | 'games.battle.solvedIt'
   | 'share.title'
+  // a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them
+  | 'share.win.lesson'
+  | 'share.win.lessonPlain'
+  | 'share.win.streak'
+  | 'share.win.badge'
+  | 'share.win.leagueUp'
+  | 'share.win.leaguePlace'
   | 'games.wordle.outOfTries'
   | 'games.wordle.solved'
   | 'games.wordle.daily'
@@ -4845,6 +4852,13 @@ const en: Catalog = {
   'games.youWon': 'You won!',
   'games.battle.solvedIt': 'Solved it!',
   'share.title': 'Share',
+  // a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more
+  'share.win.lesson': 'I finished “{title}” in Kurdish on Hevalo.',
+  'share.win.lessonPlain': 'I finished a Kurdish lesson on Hevalo.',
+  'share.win.streak': '{count} days of Kurdish in a row.',
+  'share.win.badge': 'I earned the “{badge}” badge on Hevalo.',
+  'share.win.leagueUp': 'I moved up to the {tier} League on Hevalo.',
+  'share.win.leaguePlace': 'I finished #{rank} in the {tier} League on Hevalo.',
   'games.wordle.outOfTries': 'Out of tries.',
   'games.wordle.solved': 'Solved it!',
   'games.wordle.daily': 'Daily',
@@ -8651,6 +8665,13 @@ const ku: Catalog = {
   'games.youWon': 'Te bir!',
   'games.battle.solvedIt': 'Te çareser kir!',
   'share.title': 'Parve bike',
+  // a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more
+  'share.win.lesson': 'Min li ser Hevalo waneyeke kurdî qedand: “{title}”.',
+  'share.win.lessonPlain': 'Min li ser Hevalo waneyeke kurdî qedand.',
+  'share.win.streak': '{count} rojên li pey hev bi kurdî.',
+  'share.win.badge': 'Min li ser Hevalo nîşana “{badge}” bi dest xist.',
+  'share.win.leagueUp': 'Ez li ser Hevalo derbasî Lîga {tier} bûm.',
+  'share.win.leaguePlace': 'Ez li ser Hevalo di Lîga {tier} de bûm #{rank}.',
   'games.wordle.outOfTries': 'Hewldan qediyan.',
   'games.wordle.solved': 'Te çareser kir!',
   'games.wordle.daily': 'Rojane',
@@ -12457,6 +12478,13 @@ const de: Catalog = {
   'games.youWon': 'Du hast gewonnen!',
   'games.battle.solvedIt': 'Gelöst!',
   'share.title': 'Teilen',
+  // a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more
+  'share.win.lesson': 'Ich habe auf Hevalo die Kurdisch-Lektion „{title}“ abgeschlossen.',
+  'share.win.lessonPlain': 'Ich habe auf Hevalo eine Kurdisch-Lektion abgeschlossen.',
+  'share.win.streak': '{count} Tage Kurdisch in Folge.',
+  'share.win.badge': 'Ich habe auf Hevalo das Abzeichen „{badge}“ verdient.',
+  'share.win.leagueUp': 'Ich bin auf Hevalo in die {tier}-Liga aufgestiegen.',
+  'share.win.leaguePlace': 'Ich habe auf Hevalo Platz {rank} in der {tier}-Liga belegt.',
   'games.wordle.outOfTries': 'Keine Versuche mehr.',
   'games.wordle.solved': 'Gelöst!',
   'games.wordle.daily': 'Täglich',
@@ -16262,6 +16290,13 @@ const es: Catalog = {
   'games.youWon': '¡Has ganado!',
   'games.battle.solvedIt': '¡Resuelto!',
   'share.title': 'Compartir',
+  // a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more
+  'share.win.lesson': 'He terminado la lección de kurdo «{title}» en Hevalo.',
+  'share.win.lessonPlain': 'He terminado una lección de kurdo en Hevalo.',
+  'share.win.streak': '{count} días seguidos de kurdo.',
+  'share.win.badge': 'He conseguido la insignia «{badge}» en Hevalo.',
+  'share.win.leagueUp': 'He subido a la Liga {tier} en Hevalo.',
+  'share.win.leaguePlace': 'He quedado en el puesto {rank} de la Liga {tier} en Hevalo.',
   'games.wordle.outOfTries': 'Se acabaron los intentos.',
   'games.wordle.solved': '¡Lo has resuelto!',
   'games.wordle.daily': 'Diario',
@@ -20067,6 +20102,13 @@ const tr: Catalog = {
   'games.youWon': 'Kazandın!',
   'games.battle.solvedIt': 'Bildin!',
   'share.title': 'Paylaş',
+  // a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more
+  'share.win.lesson': 'Hevalo’da “{title}” adlı Kürtçe dersi bitirdim.',
+  'share.win.lessonPlain': 'Hevalo’da bir Kürtçe dersi bitirdim.',
+  'share.win.streak': 'Üst üste {count} gün Kürtçe.',
+  'share.win.badge': 'Hevalo’da “{badge}” rozetini kazandım.',
+  'share.win.leagueUp': 'Hevalo’da {tier} ligine yükseldim.',
+  'share.win.leaguePlace': 'Hevalo’da {tier} liginde {rank}. oldum.',
   'games.wordle.outOfTries': 'Deneme hakkın bitti.',
   'games.wordle.solved': 'Bildin!',
   'games.wordle.daily': 'Günlük',
@@ -23872,6 +23914,13 @@ const ar: Catalog = {
   'games.youWon': 'لقد فزت!',
   'games.battle.solvedIt': 'لقد حللتها!',
   'share.title': 'مشاركة',
+  // a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more
+  'share.win.lesson': 'أنهيتُ درس الكردية «{title}» على Hevalo.',
+  'share.win.lessonPlain': 'أنهيتُ درسًا في الكردية على Hevalo.',
+  'share.win.streak': 'اليوم {count} على التوالي في تعلّم الكردية.',
+  'share.win.badge': 'نلتُ شارة «{badge}» على Hevalo.',
+  'share.win.leagueUp': 'صعدتُ إلى دوري {tier} على Hevalo.',
+  'share.win.leaguePlace': 'أنهيتُ الأسبوع في المركز #{rank} في دوري {tier} على Hevalo.',
   'games.wordle.outOfTries': 'انتهت المحاولات.',
   'games.wordle.solved': 'لقد حللتها!',
   'games.wordle.daily': 'اليومي',
@@ -27677,6 +27726,13 @@ const fr: Catalog = {
   'games.youWon': 'Tu as gagné !',
   'games.battle.solvedIt': 'Trouvé !',
   'share.title': 'Partager',
+  // a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more
+  'share.win.lesson': 'J’ai terminé la leçon de kurde « {title} » sur Hevalo.',
+  'share.win.lessonPlain': 'J’ai terminé une leçon de kurde sur Hevalo.',
+  'share.win.streak': '{count} jours de kurde d’affilée.',
+  'share.win.badge': 'J’ai obtenu le badge « {badge} » sur Hevalo.',
+  'share.win.leagueUp': 'Je monte en Ligue {tier} sur Hevalo.',
+  'share.win.leaguePlace': 'J’ai fini #{rank} de la Ligue {tier} sur Hevalo.',
   'games.wordle.outOfTries': 'Plus d’essais.',
   'games.wordle.solved': 'Trouvé !',
   'games.wordle.daily': 'Quotidien',
@@ -31482,6 +31538,13 @@ const nl: Catalog = {
   'games.youWon': 'Je hebt gewonnen!',
   'games.battle.solvedIt': 'Opgelost!',
   'share.title': 'Delen',
+  // a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more
+  'share.win.lesson': 'Ik heb op Hevalo de Koerdische les ‘{title}’ afgerond.',
+  'share.win.lessonPlain': 'Ik heb op Hevalo een Koerdische les afgerond.',
+  'share.win.streak': '{count} dagen Koerdisch op rij.',
+  'share.win.badge': 'Ik heb op Hevalo de badge ‘{badge}’ verdiend.',
+  'share.win.leagueUp': 'Ik ben op Hevalo gestegen naar Competitie {tier}.',
+  'share.win.leaguePlace': 'Ik werd op Hevalo #{rank} in Competitie {tier}.',
   'games.wordle.outOfTries': 'Geen pogingen meer.',
   'games.wordle.solved': 'Opgelost!',
   'games.wordle.daily': 'Dagelijks',
@@ -35288,6 +35351,13 @@ const ckb: Catalog = {
   'games.youWon': 'تۆ بردتەوە!',
   'games.battle.solvedIt': 'چارەسەرت کرد!',
   'share.title': 'هاوبەشکردن',
+  // a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more
+  'share.win.lesson': 'وانەیەکی کوردیم لە Hevalo تەواو کرد: «{title}».',
+  'share.win.lessonPlain': 'وانەیەکی کوردیم لە Hevalo تەواو کرد.',
+  'share.win.streak': '{count} ڕۆژی لەسەریەک بە کوردی.',
+  'share.win.badge': 'لە Hevalo نیشانەیەکم بەدەستهێنا: «{badge}».',
+  'share.win.leagueUp': 'لە Hevalo سەرکەوتم بۆ لیگی {tier}.',
+  'share.win.leaguePlace': 'لە Hevalo لە لیگی {tier} #{rank} بووم.',
   'games.wordle.outOfTries': 'هەوڵەکان تەواو بوون.',
   'games.wordle.solved': 'چارەسەرت کرد!',
   'games.wordle.daily': 'ڕۆژانە',

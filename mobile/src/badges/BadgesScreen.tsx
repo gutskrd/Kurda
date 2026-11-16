@@ -86,7 +86,7 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('badges.title')} onBack={onExit} />
+      <ScreenHeader title={t('badges.title')} onBack={onExit} browse />
       <AsyncBoundary loading={!data && !error} error={!data ? error : null} onRetry={load} skeleton={<BadgesSkeleton columns={columns} tile={tile} />}>
         {() =>
           data ? (

@@ -253,7 +253,7 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('tree.title')} onBack={onExit} />
+      <ScreenHeader title={t('tree.title')} onBack={onExit} browse />
       <AsyncBoundary loading={!data && !error && !missing} error={!data ? error : null} onRetry={load} skeleton={<TreeSkeleton size={side} />}>
         {() =>
           missing ? (

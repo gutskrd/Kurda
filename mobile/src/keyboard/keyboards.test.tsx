@@ -5,6 +5,7 @@ vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
+vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { renderWithProviders } from '../reports/testing/harness';

@@ -13,5 +13,5 @@ export function LetterWidgetButton(): React.JSX.Element | null {
   const navigation = useNavigation<RootNavigation>();
   const { t } = useI18n();
   if (Platform.OS === 'web') return null;
-  return <HeaderButton icon="widget" label={t('letterWidget.title')} onPress={() => navigation.navigate('LetterWidget')} edge="end" testID="letter-widget-button" />;
+  return <HeaderButton icon="widget" label={t('letterWidget.title')} onPress={() => navigation.navigate('LetterWidget')} testID="letter-widget-button" />;
 }

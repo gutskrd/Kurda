@@ -6,8 +6,7 @@ import { SwipePager } from '../theme/SwipePager';
 import { layout, spacing } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { LargeTitle } from '../navigation/LargeTitle';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { TabHeader } from '../navigation/TopBar';
 import { LEARN_VIEWS, type LearnView } from '../navigation/tabs';
 import type { Streak } from '../streak/format';
 import { StoriesView } from '../stories/StoriesView';
@@ -45,7 +44,6 @@ const VIEW_LABEL: Record<LearnView, TranslationKey> = {
  */
 export function LearnScreen({ view: requested, onViewShown }: { view?: LearnView; onViewShown?: () => void }): React.JSX.Element {
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
   const [view, setView] = useLearnView(requested, onViewShown);
 
   /*
@@ -78,9 +76,13 @@ export function LearnScreen({ view: requested, onViewShown }: { view?: LearnView
 
   return (
     <GradientBackground>
-      <View style={[styles.head, { paddingTop: topInset }]}>
-        {/* the streak, the day's goal and the Zêr, in the corner where they are looked for */}
-        <LargeTitle title={t('nav.learn')} right={<LearnBar reloadKey={barKey} onStreak={setStreak} />} />
+      {/*
+        Where today stands, at the reading edge where a tab's name is on the
+        others: the streak, the day's goal and the Zêr are what this tab is
+        opened to look at, and the bar of tabs already says "Learn" under it.
+      */}
+      <TabHeader lead={<LearnBar reloadKey={barKey} onStreak={setStreak} />} />
+      <View style={styles.head}>
         <Segmented options={VIEWS} value={view} onChange={setView} labelOf={(v) => t(VIEW_LABEL[v])} size="large" />
       </View>
       <SwipePager

@@ -29,6 +29,13 @@ describe('the motion tokens', () => {
     expect(bounceless(spring.bouncy)).toBe(false);
   });
 
+  it('gives a page growing out of its card a spring as long as the stack’s fade, with no bounce', () => {
+    expect(bounceless(spring.arrive)).toBe(true);
+    // still on its way when the interface's own spring has arrived, and there by the end of the fade
+    expect(settled(spring.arrive, 0.2)).toBeLessThan(settled(spring.chrome, 0.2));
+    expect(settled(spring.arrive, 0.42)).toBeGreaterThan(0.99);
+  });
+
   it('has one dim for everything that fades under a finger', () => {
     expect(pressedDim).toBe(0.6);
   });

@@ -59,7 +59,7 @@ describe('your profile', () => {
   it('puts the face on its stage with the name, the handle and the year under it, then the numbers', async () => {
     open();
     expect(await screen.findByText('23')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'rojda' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Profile' })).toBeTruthy();
     expect(screen.getByText('Rojda')).toBeTruthy();
     expect(screen.getByText(/@rojda\s+·\s+Joined 2026/)).toBeTruthy();
     expect(screen.getByText('Fêrî Kurmancî dibim.')).toBeTruthy();

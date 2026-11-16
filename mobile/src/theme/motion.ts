@@ -65,10 +65,14 @@ export const curve = {
  * bounce, for something a finger has just let go of with momentum — a sheet,
  * the menu — which is the one time Apple adds bounce to a control. `bouncy`
  * is for the moments that are allowed a little joy — an emblem landing, a
- * heart filling — at Apple's own bouncy, short of the exaggerated.
+ * heart filling — at Apple's own bouncy, short of the exaggerated. `arrive`
+ * is a whole page growing out of the card that opened it (theme/origin): no
+ * bounce, and as long as the stack takes to fade a page in, so the growing
+ * and the fading are one movement rather than one finishing inside the other.
  */
 export const spring = {
   chrome: springFor({ duration: 0.25, bounce: 0 }),
+  arrive: springFor({ duration: 0.35, bounce: 0 }),
   standard: springFor(APPLE_SPRINGS.smooth),
   release: springFor(APPLE_SPRINGS.snappy),
   bouncy: springFor(APPLE_SPRINGS.bouncy),
@@ -95,6 +99,15 @@ export const pressedDim = 0.6;
  */
 export const SHAKE_STEPS: readonly number[] = [0, -7, 6, -5, 4, -2, 0];
 export const SHAKE_MS = 300;
+
+/**
+ * A bell that has just been rung: it swings from where it hangs, one way
+ * and the other, less each time, and is still again in half a second.
+ * Degrees from rest, then back to rest. Once, as something arrives: a bell
+ * that keeps swinging is an alarm, and nothing here is one.
+ */
+export const RING_STEPS: readonly number[] = [0, -16, 12, -8, 4, 0];
+export const RING_MS = 500;
 
 /** A right answer's pop: up a little and back, once. */
 export const POP_SCALE = 1.05;

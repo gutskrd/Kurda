@@ -86,7 +86,7 @@ export function ProverbScreen({ slug, onExit }: { slug: string; onExit: () => vo
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('lore.proverbs.name')} onBack={onExit} right={<HeaderButton icon="share" label={t('lore.proverb.share')} onPress={share} edge="end" />} />
+      <ScreenHeader title={t('lore.proverbs.name')} onBack={onExit} right={<HeaderButton icon="share" label={t('lore.proverb.share')} onPress={share} />} />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom + spacing.lg }]} showsVerticalScrollIndicator={false}>
         <View style={[styles.facts, { flexDirection: dir.row }]}>
           <Pill label={traditionMark(proverb.tradition, proverb.region, t)} tone={proverb.tradition === 'new' ? 'plain' : 'gold'} />

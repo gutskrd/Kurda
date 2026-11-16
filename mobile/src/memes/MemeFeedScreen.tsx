@@ -177,7 +177,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('memes.title')} onBack={onExit} />
+      <ScreenHeader title={t('memes.title')} onBack={onExit} browse />
       <View style={styles.screen}>
 
         <View style={styles.filters}>
