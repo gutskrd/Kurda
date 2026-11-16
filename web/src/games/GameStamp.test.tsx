@@ -1,13 +1,13 @@
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { GAME_EMBLEMS, STAMP_GLOW, STAMP_GLOW_REACH, STAMP_NIGHT_GLOW, gameEmblemHue, stampSize } from '@kurda/shared';
+import { GAME_EMBLEMS, STAMP_GLOW, STAMP_GLOW_REACH, STAMP_MEANING_INK, STAMP_NIGHT_REACH, gameEmblemHue, stampLook, stampSize } from '@kurda/shared';
 import { GameStamp } from './GameStamp';
 
-/** The stamp's own box, and the paper laid outside it. */
-function drawn(container: HTMLElement): { stamp: HTMLElement; paper: HTMLElement; svg: SVGSVGElement } {
+/** The stamp's own box, and the paper laid outside it: the day's, with its long light, unless the night's is asked for. */
+function drawn(container: HTMLElement, scheme: 'day' | 'night' = 'day'): { stamp: HTMLElement; paper: HTMLElement; svg: SVGSVGElement } {
   const stamp = container.querySelector<HTMLElement>('.game-stamp')!;
-  const paper = stamp.querySelector<HTMLElement>('.game-stamp-paper')!;
+  const paper = stamp.querySelector<HTMLElement>(`.game-stamp-paper--${scheme}`)!;
   return { stamp, paper, svg: paper.querySelector('svg')! };
 }
 
@@ -47,37 +47,62 @@ describe('a game’s stamp', () => {
    * a change of scheme repaints a stamp that is already drawn, and no colour
    * is ever written into the picture to be wrong in the other scheme.
    */
-  it('draws its paper in the hue’s own variables, and hides it from a screen reader', () => {
+  it('draws its paper in the stylesheet’s variables, for each scheme, and hides it from a screen reader', () => {
     const { container } = render(<GameStamp game="detective" name="Detektîf" meaning="Detective" width={228} large />);
-    const { paper, svg } = drawn(container);
-    expect(paper).toHaveAttribute('aria-hidden', 'true');
-    expect(svg).toHaveAttribute('aria-hidden', 'true');
-    const paths = [...svg.querySelectorAll('path')];
-    expect(paths.map((path) => path.getAttribute('fill')).filter((fill) => fill !== 'none')).toEqual(['var(--game-stamp-paper)']);
-    expect(new Set(paths.map((path) => path.getAttribute('stroke')).filter(Boolean))).toEqual(new Set(['var(--game-stamp-glow)']));
-    expect(svg.outerHTML).not.toMatch(/#[0-9a-f]{3,8}\b/i);
+    for (const scheme of ['day', 'night'] as const) {
+      const { paper, svg } = drawn(container, scheme);
+      expect(paper).toHaveAttribute('aria-hidden', 'true');
+      expect(svg).toHaveAttribute('aria-hidden', 'true');
+      const paths = [...svg.querySelectorAll('path')];
+      expect(paths.map((path) => path.getAttribute('fill')).filter((fill) => fill !== 'none')).toEqual(['var(--game-stamp-paper)']);
+      expect(new Set(paths.map((path) => path.getAttribute('stroke')).filter(Boolean))).toEqual(new Set(['var(--game-stamp-glow)']));
+      expect(svg.outerHTML).not.toMatch(/#[0-9a-f]{3,8}\b/i);
+    }
   });
 
-  it('shines in full when it is the one put forward, and more quietly among others', () => {
-    const forward = light(drawn(render(<GameStamp game="race" name="Pêşbaziya Nivîsandinê" width={228} large />).container).svg);
-    const among = light(drawn(render(<GameStamp game="race" name="Pêşbaziya Nivîsandinê" width={169} />).container).svg);
-    expect(forward).toHaveLength(STAMP_GLOW.length);
-    expect(among).toHaveLength(STAMP_GLOW.length);
-    forward.forEach((shows, ring) => expect(shows).toBeGreaterThan(among[ring]!));
-    for (const shows of among) expect(shows).toBeGreaterThan(0);
+  /*
+   * By night a stamp is still light paper: the day's, a step quieter, with
+   * the day's deep ink. No night step of the hue holds those, so the
+   * component hands them to the stylesheet, from the shared stamp.
+   */
+  it('hands the stylesheet the paper and the ink it is printed in by night', () => {
+    const { container } = render(<GameStamp game="memory-thief" name="Dizê Bîrê" meaning="The memory thief" width={169} />);
+    const night = stampLook('dark', gameEmblemHue('memory-thief'));
+    const { stamp } = drawn(container);
+    expect(stamp.style.getPropertyValue('--game-stamp-night-paper')).toBe(night.paper);
+    expect(stamp.style.getPropertyValue('--game-stamp-night-ink')).toBe(night.ink);
   });
 
-  it('lays the paper outside its own box by the reach of its light, so the light takes no room on the page', () => {
+  it('shines in full when it is the one put forward, and more quietly among others, by day and by night', () => {
+    const forward = render(<GameStamp game="race" name="Pêşbaziya Nivîsandinê" width={228} large />).container;
+    const among = render(<GameStamp game="race" name="Pêşbaziya Nivîsandinê" width={169} />).container;
+    for (const scheme of ['day', 'night'] as const) {
+      const bright = light(drawn(forward, scheme).svg);
+      const quiet = light(drawn(among, scheme).svg);
+      expect(bright).toHaveLength(STAMP_GLOW.length);
+      expect(quiet).toHaveLength(STAMP_GLOW.length);
+      bright.forEach((shows, ring) => expect(shows).toBeGreaterThan(quiet[ring]!));
+      for (const shows of quiet) expect(shows).toBeGreaterThan(0);
+    }
+    // and by night fainter than by day, where a long light on a dark page is a fog
+    light(drawn(among, 'night').svg).forEach((shows, ring) => expect(shows).toBeLessThan(light(drawn(among).svg)[ring]!));
+  });
+
+  it('lays each paper outside its own box by the reach of its light, so the light takes no room on the page', () => {
     const { container } = render(<GameStamp game="race" name="Pêşbaziya Nivîsandinê" width={169} />);
-    const { stamp, svg } = drawn(container);
     const { height } = stampSize(169);
-    // the stamp's own box is the stamp, and the stylesheet is told how far past it the paper is laid
+    const { stamp } = drawn(container);
+    // the stamp's own box is the stamp
     expect(stamp.style.getPropertyValue('--game-stamp-width')).toBe('169px');
     expect(stamp.style.getPropertyValue('--game-stamp-height')).toBe(`${height}px`);
-    expect(stamp.style.getPropertyValue('--game-stamp-reach')).toBe(`${STAMP_GLOW_REACH}px`);
-    // the picture is the stamp with that reach all round it
-    expect(svg).toHaveAttribute('width', String(169 + STAMP_GLOW_REACH * 2));
-    expect(svg).toHaveAttribute('height', String(height + STAMP_GLOW_REACH * 2));
+    // and each paper is told how far past it it is laid: the day's long light, the night's short one
+    for (const [scheme, reach] of [['day', STAMP_GLOW_REACH], ['night', STAMP_NIGHT_REACH]] as const) {
+      const { paper, svg } = drawn(container, scheme);
+      expect(paper.style.getPropertyValue('--game-stamp-reach')).toBe(`${reach}px`);
+      // the picture is the stamp with that reach all round it
+      expect(svg).toHaveAttribute('width', String(169 + reach * 2));
+      expect(svg).toHaveAttribute('height', String(height + reach * 2));
+    }
   });
 
   it('is as tall for a long name as for a short one, so a row of stamps stands level', () => {
@@ -105,15 +130,16 @@ describe('a game’s stamp', () => {
 });
 
 /*
- * How much of a stamp's light is left by night is said in the stylesheet, as
- * a share of the hue mixed into nothing, because a change of scheme repaints
- * a stamp without drawing it again. The phone app takes the same share from
- * the shared stamp, so the stylesheet is read here as it is written and held
- * to it. It is read from the disk: the suite draws no styles, and a
- * stylesheet a test imports arrives empty.
+ * Which paper and which ink a stamp is printed in, by day and by night, is
+ * said in the stylesheet, because a change of scheme repaints a stamp
+ * without drawing it again; the phone app takes the same from the shared
+ * stamp, so the stylesheet is read here as it is written and held to it. It
+ * is read from the disk: the suite draws no styles, and a stylesheet a test
+ * imports arrives empty.
  */
-describe('a stamp’s light by night', () => {
-  it('is the shared stamp’s share of the day’s, and the whole of it by day', async () => {
+describe('what a stamp is printed in, as the stylesheet says it', () => {
+  /** each rule's selector and what it sets a variable to, comments taken out */
+  async function rules(variable: string): Promise<Array<{ light: boolean; value: string }>> {
     interface FileSystem {
       readFileSync(file: URL, encoding: 'utf8'): string;
     }
@@ -122,8 +148,26 @@ describe('a stamp’s light by night', () => {
     // beside this file, wherever the suite is run from; the address is taken first, or the bundler reads the pair as an asset to serve
     const here = import.meta.url;
     const sheet = readFileSync(new URL('game-stamp.css', here), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-    const glows = [...sheet.matchAll(/([^{}]*)\{[^{}]*--game-stamp-glow:\s*([^;]+);/g)].map((m) => ({ light: /data-theme=['"]light['"]/.test(m[1]!), value: m[2]!.trim() }));
-    expect(glows.find((glow) => !glow.light)?.value).toBe(`color-mix(in srgb, var(--hue-base) ${STAMP_NIGHT_GLOW * 100}%, transparent)`);
-    expect(glows.find((glow) => glow.light)?.value).toBe('var(--hue-base)');
+    return [...sheet.matchAll(new RegExp(`([^{}]*)\\{[^{}]*${variable}:\\s*([^;]+);`, 'g'))].map((m) => ({ light: /data-theme=['"]light['"]/.test(m[1]!), value: m[2]!.trim() }));
+  }
+
+  it('is the hue’s palest step and deep shade by day, and the night’s paper and ink handed over by night', async () => {
+    const papers = await rules('--game-stamp-paper');
+    expect(papers.find((rule) => rule.light)?.value).toBe('var(--hue-tint)');
+    expect(papers.find((rule) => !rule.light)?.value).toBe('var(--game-stamp-night-paper)');
+    const inks = await rules('--game-stamp-ink');
+    expect(inks.find((rule) => rule.light)?.value).toBe('var(--hue-deep)');
+    expect(inks.find((rule) => !rule.light)?.value).toBe('var(--game-stamp-night-ink)');
+  });
+
+  // the light's strength by night is in the night's own drawing, so the stylesheet takes the hue's lifted colour whole
+  it('lights a stamp in the hue itself, its strength drawn into each scheme’s paper', async () => {
+    expect((await rules('--game-stamp-glow')).map((rule) => rule.value)).toEqual(['var(--hue-base)']);
+  });
+
+  it('writes what a name means in the shared stamp’s share of the name’s ink', async () => {
+    expect((await rules('--game-stamp-ink-soft')).map((rule) => rule.value)).toEqual([
+      `color-mix(in srgb, var(--game-stamp-ink) ${Math.round(STAMP_MEANING_INK * 100)}%, var(--game-stamp-paper))`,
+    ]);
   });
 });

@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import { HUE_NAMES, hueSteps } from '../hues.js';
+import { contrastRatio, luminance } from '../letter-paper.js';
 import {
   STAMP_GLOW,
   STAMP_GLOW_REACH,
+  STAMP_MEANING_INK,
   STAMP_NIGHT_GLOW,
+  STAMP_NIGHT_REACH,
   STAMP_SHAPE,
   STAMP_SHELF_GLOW,
   stampBox,
+  stampGlow,
+  stampLook,
   stampOutline,
   stampPerforations,
   stampShapeFor,
@@ -141,5 +147,76 @@ describe('a stamp that carries a picture over a name', () => {
   it('keeps a margin on the narrowest stamp, and never gives the picture less than nothing', () => {
     expect(stampSize(100).pad).toBe(14);
     expect(stampSize(20).art).toBe(0);
+  });
+});
+
+describe('a stamp’s light at a shorter reach', () => {
+  it('reaches exactly as far as it is asked, and takes only that much room', () => {
+    const rings = stampGlow(STAMP_NIGHT_REACH);
+    expect(rings).toHaveLength(STAMP_GLOW.length);
+    expect(Math.max(...rings.map((ring) => ring.width)) / 2).toBe(STAMP_NIGHT_REACH);
+    // the same light, drawn over a shorter distance: as strong at the edge, gone sooner
+    rings.forEach((ring, i) => expect(ring.opacity).toBe(STAMP_GLOW[i]!.opacity));
+    expect(stampBox(160, 200, 1, STAMP_NIGHT_REACH).inset).toBe(STAMP_NIGHT_REACH);
+    const svg = stampSvg({ width: 160, height: 200, paper: '#e8f2ff', glow: '#7ab4fe', reach: STAMP_NIGHT_REACH });
+    expect(svg).toContain(`viewBox="0 0 ${160 + STAMP_NIGHT_REACH * 2} ${200 + STAMP_NIGHT_REACH * 2}"`);
+    expect(svg).toContain(`stroke-width="${STAMP_NIGHT_REACH * 2}"`);
+    expect(svg).not.toContain(`stroke-width="${STAMP_GLOW_REACH * 2}"`);
+  });
+
+  it('is the day’s full reach when nothing else is asked', () => {
+    expect(stampGlow()).toEqual(STAMP_GLOW);
+    expect(stampBox(160, 200)).toEqual(stampBox(160, 200, 1, STAMP_GLOW_REACH));
+  });
+});
+
+describe('what a game’s stamp is printed in', () => {
+  it('is the hue’s palest step and its deep shade by day, with the long light it always had', () => {
+    for (const hue of HUE_NAMES) {
+      const { tint, base, deep } = hueSteps('light', hue);
+      expect(stampLook('light', hue, true)).toMatchObject({ paper: tint, ink: deep, glow: base, reach: STAMP_GLOW_REACH, strength: 1 });
+      expect(stampLook('light', hue).strength).toBe(STAMP_SHELF_GLOW);
+    }
+  });
+
+  /*
+   * A stamp is paper, and paper on a dark table stays light. It used to take
+   * the night's own ground for its paper, a dark fill in its hue that the
+   * perforations were lost against.
+   */
+  it('stays light paper by night: between the day’s tint and its wash, never the night’s dark ground', () => {
+    for (const hue of HUE_NAMES) {
+      const day = hueSteps('light', hue);
+      const { paper } = stampLook('dark', hue);
+      expect(luminance(paper), hue).toBeLessThan(luminance(day.tint));
+      expect(luminance(paper), hue).toBeGreaterThan(luminance(day.wash));
+      // as far from the night's own ground as the day's paper is from the day's page, near enough
+      expect(contrastRatio(paper, hueSteps('dark', hue).tint), hue).toBeGreaterThan(8);
+    }
+  });
+
+  it('writes the name at 7:1 or better and what it means at 4.5:1 or better on its paper, by day and by night', () => {
+    for (const scheme of ['light', 'dark'] as const) {
+      for (const hue of HUE_NAMES) {
+        const look = stampLook(scheme, hue);
+        expect(contrastRatio(look.ink, look.paper), `${scheme} ${hue} name`).toBeGreaterThanOrEqual(7);
+        expect(contrastRatio(look.inkSoft, look.paper), `${scheme} ${hue} meaning`).toBeGreaterThanOrEqual(4.5);
+        // a step quieter than the name, and still the name's own colour
+        expect(contrastRatio(look.inkSoft, look.paper)).toBeLessThan(contrastRatio(look.ink, look.paper));
+        expect(STAMP_MEANING_INK).toBeGreaterThan(0.5);
+      }
+    }
+  });
+
+  it('gives off a short, faint halo by night in the night’s own hue, where the day’s long glow would be a fog', () => {
+    for (const hue of HUE_NAMES) {
+      for (const large of [true, false]) {
+        const day = stampLook('light', hue, large);
+        const night = stampLook('dark', hue, large);
+        expect(night.reach).toBeLessThan(day.reach);
+        expect(night.strength).toBeCloseTo(day.strength * STAMP_NIGHT_GLOW, 6);
+        expect(night.glow).toBe(hueSteps('dark', hue).base);
+      }
+    }
   });
 });

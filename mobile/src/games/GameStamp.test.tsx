@@ -6,11 +6,12 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, screen } from '@testing-library/react';
-import { GAME_EMBLEMS } from '@kurda/shared';
+import { cleanup, screen, waitFor } from '@testing-library/react';
+import { GAME_EMBLEMS, gameEmblemHue, stampLook } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { stampSize } from '@kurda/shared';
+import { DarkScheme } from '../theme/ThemeProvider';
 import { GameStamp } from './GameStamp';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -61,5 +62,46 @@ describe('a game’s stamp', () => {
       expect(screen.getByText(game)).toBeTruthy();
       cleanup();
     }
+  });
+});
+
+/** A colour as a browser reports it back. */
+const rgb = (hex: string): string => `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(', ')})`;
+
+/** The stamp's own paper and light, of the pictures drawn (the cover is the other). */
+const paperOf = (container: HTMLElement, fill: string): string | undefined =>
+  [...container.querySelectorAll('[data-markup]')].map((el) => el.getAttribute('data-markup') ?? '').find((markup) => markup.includes(`fill="${fill}"`));
+
+describe('a stamp by day and by night', () => {
+  it('is printed by day in the hue’s palest step and deep shade, with its long light', async () => {
+    const day = stampLook('light', gameEmblemHue('detective'), true);
+    // the app read by day: the reader's own choice, kept where the app keeps it
+    localStorage.setItem('kurda_theme_pref_v1', 'light');
+    try {
+      const { container } = renderWithProviders(<GameStamp game="detective" name="Detektîf" meaning="Detective" width={228} large />);
+      await waitFor(() => expect(paperOf(container, day.paper)).toBeTruthy());
+      const paper = paperOf(container, day.paper);
+      expect(paper).toContain(`stroke-width="${day.reach * 2}"`);
+      expect(getComputedStyle(screen.getByText('Detektîf')).color).toBe(rgb(day.ink));
+      expect(getComputedStyle(screen.getByText('Detective')).color).toBe(rgb(day.inkSoft));
+    } finally {
+      localStorage.removeItem('kurda_theme_pref_v1');
+    }
+  });
+
+  // paper on a dark table stays light: the night's own dark ground made a muddy fill the perforations were lost against
+  it('stays light paper by night, in the day’s deep ink, with a short halo', () => {
+    const night = stampLook('dark', gameEmblemHue('rhyme'));
+    const { container } = renderWithProviders(
+      <DarkScheme>
+        <GameStamp game="rhyme" name="Peyvên Hevserwa" meaning="Rhyming words" width={170} />
+      </DarkScheme>,
+    );
+    const paper = paperOf(container, night.paper);
+    expect(paper).toBeTruthy();
+    expect(paper).toContain(`stroke-width="${night.reach * 2}"`);
+    expect(paper).toContain(`stroke="${night.glow}"`);
+    expect(getComputedStyle(screen.getByText('Peyvên Hevserwa')).color).toBe(rgb(night.ink));
+    expect(getComputedStyle(screen.getByText('Rhyming words')).color).toBe(rgb(night.inkSoft));
   });
 });

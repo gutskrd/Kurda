@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { STAMP_NIGHT_GLOW, STAMP_SHELF_GLOW, gameEmblemHue, hueSteps, stampBox, stampShapeFor, stampSize, stampSvg, type GameEmblem } from '@kurda/shared';
+import { gameEmblemHue, stampBox, stampLook, stampShapeFor, stampSize, stampSvg, type GameEmblem } from '@kurda/shared';
 import { useFontScale } from '../a11y/useFontScale';
 import { useTheme } from '../theme/ThemeProvider';
 import { display } from '../theme/fonts';
@@ -15,10 +15,12 @@ import { GameArt } from './GameArt';
  * The stamp is the shared outline (shared art `stamp.ts`): pale paper in the
  * game's own hue, perforated on all four sides, giving off a soft light in
  * that hue — full for the stamp put forward today, quieter for a stamp among
- * others, and quieter again by night, where a saturated glow on a dark page
- * glares. On it, the game's cover with its
- * corners rounded, its Kurdish name in the hue's deep shade, and under the
- * name what it means in the reader's language, where the two differ.
+ * others. By night it is still light paper, a step quieter, with a short
+ * faint halo where the day's long glow would be a fog on the dark page. On
+ * it, the game's cover with its corners rounded, its Kurdish name in the
+ * hue's deep shade, and under the name what it means in the reader's
+ * language, where the two differ. What it is printed in, by day and by night,
+ * is the shared stamp's to say (`stampLook`), so the website prints the same.
  *
  * It is a picture, not a control: whoever shows it wraps it in the thing that
  * is pressed and says its name to a screen reader, so nothing in here is read
@@ -47,19 +49,16 @@ export function GameStamp({
   after?: number;
 }): React.JSX.Element {
   const { scheme } = useTheme();
-  const hue = hueSteps(scheme, gameEmblemHue(game));
+  // the paper, the inks and the light, for this scheme; the one put forward shines, and a page of them glows quietly
+  const look = stampLook(scheme, gameEmblemHue(game), large);
   // larger text asks for a taller stamp: the words keep their room, and every stamp of a row grows alike
   const textScale = useFontScale({ max: TEXT_MAX });
   const { height, pad, art } = stampSize(width, large, textScale);
-  // the one put forward shines; a page of them glows quietly, or the page is all light and no stamps
-  const strength = (large ? 1 : STAMP_SHELF_GLOW) * (scheme === 'dark' ? STAMP_NIGHT_GLOW : 1);
-  const box = stampBox(width, height, strength);
-  // by night the palest step is nearly the page's own dark, and the perforations would be lost in it: the paper is a step lighter there
-  const sheet = scheme === 'dark' ? hue.wash : hue.tint;
+  const box = stampBox(width, height, look.strength, look.reach);
   // no line round it: the light is what shows where the paper ends
   const paper = useMemo(
-    () => stampSvg({ width, height, paper: sheet, glow: hue.base, strength, ...stampShapeFor(width) }),
-    [width, height, sheet, hue.base, strength],
+    () => stampSvg({ width, height, paper: look.paper, glow: look.glow, strength: look.strength, reach: look.reach, ...stampShapeFor(width) }),
+    [width, height, look.paper, look.glow, look.strength, look.reach],
   );
   return (
     <View style={{ width, height }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -70,11 +69,11 @@ export function GameStamp({
       <View style={[styles.face, { paddingTop: pad, paddingHorizontal: pad }]}>
         <GameArt game={game} size={art} moving={moving} after={after} />
         <View style={styles.words}>
-          <Text style={[large ? styles.nameLarge : styles.name, { color: hue.deep }]} numberOfLines={2} maxFontSizeMultiplier={TEXT_MAX}>
+          <Text style={[large ? styles.nameLarge : styles.name, { color: look.ink }]} numberOfLines={2} maxFontSizeMultiplier={TEXT_MAX}>
             {name}
           </Text>
           {meaning ? (
-            <Text style={[large ? styles.meaningLarge : styles.meaning, { color: hue.deep }]} numberOfLines={1} maxFontSizeMultiplier={TEXT_MAX}>
+            <Text style={[large ? styles.meaningLarge : styles.meaning, { color: look.inkSoft }]} numberOfLines={1} maxFontSizeMultiplier={TEXT_MAX}>
               {meaning}
             </Text>
           ) : null}
@@ -94,6 +93,7 @@ const styles = StyleSheet.create({
   words: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', gap: 2, paddingBottom: 6 },
   name: { ...display(typography.sizes.md), textAlign: 'center' },
   nameLarge: { ...display(typography.sizes.xl), textAlign: 'center' },
-  meaning: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, textAlign: 'center', opacity: 0.78 },
-  meaningLarge: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center', opacity: 0.78 },
+  // in the name's ink a little quieter, as one solid colour (`StampLook.inkSoft`)
+  meaning: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  meaningLarge: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
 });
