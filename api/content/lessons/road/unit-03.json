@@ -2518,7 +2518,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Li ser serê te ye!",
+                    "say": "Li ser serê min e!",
                     "voice": "hamo",
                     "cue": "Hamo’s missing cap",
                     "new": [
@@ -2531,10 +2531,10 @@
                         "en": "head; top"
                       }
                     ],
-                    "prompt": "Li ser serê te ye!",
+                    "prompt": "Li ser serê min e!",
                     "options": [
-                      "It’s on your head!",
-                      "It’s under your bed!",
+                      "It’s on my head!",
+                      "It’s under my bed!",
                       "It’s on the table!"
                     ],
                     "correctIndex": 0

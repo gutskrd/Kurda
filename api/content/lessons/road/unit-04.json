@@ -4666,8 +4666,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ferhad dikene.",
-                        "en": "Ferhad laughs."
+                        "text": "Ferhad, tu dikenî? Tu bawer nakî?",
+                        "en": "Ferhad, are you laughing? Don’t you believe it?"
                       },
                       {
                         "speaker": 0,
@@ -4823,13 +4823,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Kulîlkên zer li ser rê ne.",
+                    "say": "Bozo li ser rê li kulîlkên zer digere.",
                     "voice": "hamo",
-                    "prompt": "Kulîlkên zer li ser rê ne.",
+                    "prompt": "Bozo li ser rê li kulîlkên zer digere.",
                     "accepted": [
-                      "There are yellow flowers along the road.",
-                      "The yellow flowers are on the road.",
-                      "There are yellow flowers on the road."
+                      "Bozo is looking for yellow flowers along the road.",
+                      "Bozo is looking for yellow flowers on the road.",
+                      "On the road, Bozo is looking for yellow flowers."
                     ]
                   }
                 },
@@ -4840,7 +4840,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Hevalo hîç sêvan naxwe! Lê sêv tune…"
+                      "Hevalo ji sêvan hez dike, lê sêv tune…"
                     ]
                   }
                 },
