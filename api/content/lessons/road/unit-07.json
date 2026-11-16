@@ -118,9 +118,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Li çiyê berf dibare.",
+                    "say": "Li çiyê berf dibare, û li gund baran.",
                     "voice": "hamo",
-                    "prompt": "Li çiyê berf ___.",
+                    "prompt": "Li çiyê berf ___, û li gund baran.",
                     "options": [
                       "dibare",
                       "dibarin",
@@ -156,13 +156,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ajovan dibêje ku baran dibare, lê ba tune.",
+                    "say": "Ajovan dikene û dibêje ku ew her roj di vê rêyê re diçe.",
                     "voice": "hamo",
-                    "prompt": "Ajovan dibêje ku baran dibare, lê ba tune.",
+                    "prompt": "Ajovan dikene û dibêje ku ew her roj di vê rêyê re diçe.",
                     "accepted": [
-                      "The driver says it’s raining, but there’s no wind.",
-                      "The driver says that it’s raining, but there’s no wind.",
-                      "The driver says it is raining but there is no wind."
+                      "The driver laughs and says he drives this road every day.",
+                      "The driver laughs and says that he takes this road every day.",
+                      "The driver laughs and says he goes along this road every day."
                     ]
                   }
                 },
@@ -231,11 +231,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hêdî here, berf dibare! Tu dizanî rêya Sêvanê kîjan e?",
+                    "say": "Hêdî here, berf dibare û ba tê! Tu dizanî rêya Sêvanê kîjan e?",
                     "voice": "hamo",
-                    "prompt": "Hêdî here, berf dibare! Tu dizanî rêya Sêvanê kîjan e?",
+                    "prompt": "Hêdî here, berf dibare û ba tê! Tu dizanî rêya Sêvanê kîjan e?",
                     "options": [
-                      "Go slowly, it’s snowing! Do you know which road goes to Sêvan?",
+                      "Go slowly, it’s snowing and windy! Do you know which road goes to Sêvan?",
                       "Go faster, it’s raining! Do you know where the market is?",
                       "Go slowly, the road is closed! Do you know the driver?"
                     ],
@@ -1713,7 +1713,7 @@
                     "prompt": "Tu dikarî gotara min bibînî?",
                     "options": [
                       "Na. Dibe ku li cem Hevalo be.",
-                      "Erê, ez çardeh salî me.",
+                      "Erê, di xewna min de.",
                       "Na, ez gotarê ji bîr dikim."
                     ],
                     "correctIndex": 0
@@ -2183,8 +2183,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Newroz cejna biharê ye, û ez ê efsaneyê dîsa bibêjim. Ew ne biha ye!",
-                    "reference": "Newroz cejna biharê ye, û ez ê efsaneyê dîsa bibêjim. Ew ne biha ye!"
+                    "prompt": "Newroz cejna biharê ye, û sersala me ye.",
+                    "reference": "Newroz cejna biharê ye, û sersala me ye."
                   }
                 }
               ]
@@ -2200,13 +2200,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez gotara xwe digirim û diçim ber mirîşkan.",
+                    "say": "Çardeh roj berî Newrozê, ez gotara xwe digirim û diçim ber mirîşkan.",
                     "voice": "hamo",
-                    "prompt": "Ez gotara xwe digirim û diçim ber mirîşkan.",
+                    "prompt": "Çardeh roj berî Newrozê, ez gotara xwe digirim û diçim ber mirîşkan.",
                     "options": [
-                      "I take my speech and go and stand before the hens.",
-                      "I take my speech and go to the market.",
-                      "I give my speech to Baran and go to sleep."
+                      "Fourteen days before Newroz, I take my speech and go and stand before the hens.",
+                      "Fourteen days before Newroz, I take my speech and go to the market.",
+                      "Four days before Newroz, I give my speech to Baran and go to sleep."
                     ],
                     "correctIndex": 0
                   }
@@ -2310,12 +2310,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bozo jî diçe! Ev xewn e? Tenê tu li vir î.",
+                    "say": "Bozo jî diçe! Tenê tu li vir î.",
                     "voice": "hamo",
-                    "prompt": "Bozo jî diçe! Ev xewn e? Tenê tu li vir î.",
+                    "prompt": "Bozo jî diçe! Tenê tu li vir î.",
                     "options": [
-                      "Bozo is leaving too! Is this a dream? Only you are here.",
-                      "Bozo is staying too! Is this a dream? Everyone is here.",
+                      "Bozo is leaving too! Only you are here.",
+                      "Bozo is staying too! Everyone is here.",
                       "Bozo is coming back! Only the hens are here."
                     ],
                     "correctIndex": 0
@@ -2331,7 +2331,7 @@
                     "prompt": "Tu dimînî? Gotara min xweş e?",
                     "options": [
                       "Erê, gelek xweş e!",
-                      "Na, ez çardeh salî me.",
+                      "Na, ez diçim.",
                       "Na, ez gotarê ji bîr dikim."
                     ],
                     "correctIndex": 0
@@ -2402,6 +2402,11 @@
                         "speaker": 0,
                         "text": "Spas. Destûr heye? Ez ê gotarê dîsa ji serî ve bibêjim!",
                         "en": "Thanks. May I? I’ll give the speech again from the beginning!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ji bîr meke, di xewna min de hemû kes dimînin!",
+                        "en": "Don’t forget, in my dream everyone stays!"
                       }
                     ],
                     "prompt": "Kî diçe?",
@@ -4515,8 +4520,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Na, ev ji gir e. Ez li ser gir gelek baz didim!",
-                        "en": "No, it’s from the hill. I jump a lot up on the hill!"
+                        "text": "Na, ev ji agir e. Ez gelek ji ser agir baz didim!",
+                        "en": "No, it’s from the fire. I jump over the fire a lot!"
                       },
                       {
                         "speaker": 1,

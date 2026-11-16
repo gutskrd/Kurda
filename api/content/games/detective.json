@@ -6,23 +6,23 @@
       "level": 2,
       "title": { "en": "The empty honey jar" },
       "intro": {
-        "en": "The doctor has given Hamo some advice, and Xezal has written it down. The neighbours keep bringing jars of honey, and Hevalo is guarding them. In the morning one jar is empty. Read the evidence on the board, answer each question, then say who ate the honey."
+        "en": "Doctor Azad has given Hamo some advice, and the neighbours keep bringing him jars of honey. In the morning one jar is empty. Read the evidence on the board, answer each question, then say who ate the honey."
       },
       "suspects": [
-        { "id": "hamo", "name": "Hamo", "about": { "en": "Who is ill in bed, or says he is." }, "portrait": "hamo" },
-        { "id": "hevalo", "name": "Hevalo", "about": { "en": "The young deer, who was guarding the jars." }, "portrait": "hevalo" },
+        { "id": "hamo", "name": "Hamo", "about": { "en": "Who is ill, or says he is." }, "portrait": "hamo" },
+        { "id": "hevalo", "name": "Hevalo", "about": { "en": "The young deer, who is always hungry." }, "portrait": "hevalo" },
         { "id": "baran", "name": "Baran", "about": { "en": "Nazê’s son from next door, nine years old." } }
       ],
       "evidence": [
-        { "id": "advice", "kind": "note", "line": { "conversation": "roadu08s2l3a", "en": "And the third piece of advice is this: honey at night is forbidden!" } },
-        { "id": "guard", "kind": "statement", "line": { "conversation": "roadu08s2l4a", "en": "But honey is forbidden. Xezal is taking the jars, and Hevalo is guarding them." } },
-        { "id": "away", "kind": "statement", "from": "hamo", "line": { "conversation": "roadu03s2l4a", "en": "No, Baran is not at home today." } },
-        { "id": "apples", "kind": "statement", "line": { "conversation": "roadu08s2l4a", "en": "No, Hevalo is innocent. He only likes apples." } },
-        { "id": "strong", "kind": "overheard", "from": "hamo", "line": { "conversation": "roadu08s2l3a", "en": "Forbidden? But honey makes me strong!" } },
-        { "id": "hide", "kind": "overheard", "from": "hamo", "line": { "conversation": "roadu08s1l4a", "en": "All right, all right… I’ll hide the honey under the bedding." } },
-        { "id": "empty", "kind": "note", "line": { "conversation": "roadu08s2l4a", "en": "In the morning… Look! A jar is empty! Who is the thief?" } },
-        { "id": "moustache", "kind": "statement", "line": { "conversation": "roadu08s2l4a", "en": "Xalo… why is your moustache full of honey?" } },
-        { "id": "innocent", "kind": "statement", "from": "hamo", "line": { "conversation": "roadu08s2l4a", "en": "I’m innocent too! I’m ill!" } }
+        { "id": "advice", "kind": "note", "line": { "conversation": "roadu08s2l3a", "en": "The doctor says honey is forbidden at night." } },
+        { "id": "empty", "kind": "note", "line": { "conversation": "roadu08s2l3a", "en": "Look, a jar is empty!" } },
+        { "id": "apples", "kind": "statement", "line": { "conversation": "roadu08s2l3a", "en": "No, Hevalo is innocent. He only eats apples." } },
+        { "id": "honest", "kind": "statement", "from": "hamo", "line": { "conversation": "roadu08s4l4a", "en": "Yes. Baran is honest, and I understand him." } },
+        { "id": "moustache", "kind": "statement", "line": { "conversation": "roadu08s2l3a", "en": "But there’s honey on your moustache, Xalo!" } },
+        { "id": "medicine", "kind": "statement", "from": "hamo", "line": { "conversation": "roadu08s2l3a", "en": "That’s not honey! It’s… medicine. I’m better!" } },
+        { "id": "innocent", "kind": "statement", "from": "hamo", "line": { "conversation": "roadu08s2l3a", "en": "I’m innocent! Do you believe me?" } },
+        { "id": "slip", "kind": "overheard", "from": "hamo", "line": { "conversation": "roadu08s4l4a", "en": "Yes, and some honey too… no, honey is forbidden!" } },
+        { "id": "look", "kind": "statement", "line": { "conversation": "roadu08s2l3a", "en": "Hevalo is looking at you. He doesn’t believe it." } }
       ],
       "steps": [
         {
@@ -32,37 +32,37 @@
           "evidence": ["advice"]
         },
         {
-          "prompt": { "en": "Who was guarding the jars?" },
-          "options": [{ "en": "Hevalo" }, { "en": "Baran" }, { "en": "Hamo" }],
+          "prompt": { "en": "What was empty in the morning?" },
+          "options": [{ "en": "A jar" }, { "en": "The teapot" }, { "en": "The apple basket" }],
           "correctIndex": 0,
-          "evidence": ["guard"]
+          "evidence": ["empty"]
         },
         {
-          "prompt": { "en": "Why could Baran not have eaten the honey?" },
-          "options": [{ "en": "He was not at home" }, { "en": "He only likes apples" }, { "en": "He was guarding the jars" }],
-          "correctIndex": 0,
-          "evidence": ["away"]
-        },
-        {
-          "prompt": { "en": "What does Hevalo like?" },
-          "options": [{ "en": "Only apples" }, { "en": "Honey and tea" }, { "en": "Nothing at all" }],
+          "prompt": { "en": "What does Hevalo eat?" },
+          "options": [{ "en": "Only apples" }, { "en": "Honey and tea" }, { "en": "Bread and cheese" }],
           "correctIndex": 0,
           "evidence": ["apples"]
         },
         {
-          "prompt": { "en": "What was there to see in the morning?" },
-          "options": [{ "en": "Honey in Hamo’s moustache" }, { "en": "An apple on Hevalo’s mouth" }, { "en": "Mud on Baran’s shoes" }],
+          "prompt": { "en": "What does Hamo say about Baran?" },
+          "options": [{ "en": "He is honest" }, { "en": "He is hungry" }, { "en": "He is ill" }],
           "correctIndex": 0,
-          "evidence": ["empty", "moustache"]
+          "evidence": ["honest"]
+        },
+        {
+          "prompt": { "en": "What was on Hamo’s moustache?" },
+          "options": [{ "en": "Honey" }, { "en": "Tea" }, { "en": "Snow" }],
+          "correctIndex": 0,
+          "evidence": ["moustache", "medicine"]
         }
       ],
       "culprit": "hamo",
       "solution": {
-        "en": "The doctor forbade honey at night, and Xezal wrote it down. Hevalo was guarding the jars, but he only likes apples, and Baran was not at home. Hamo said honey makes him strong and spoke of hiding honey under the bedding — and in the morning his moustache was full of honey. Hamo ate the honey."
+        "en": "The doctor forbade honey at night, and in the morning a jar was empty. Hevalo only eats apples, and Baran is honest. Hamo says it is medicine on his moustache, and nearly asks for honey with his medicine. Hamo ate the honey."
       },
       "hints": [
-        { "en": "Read what each suspect says, and find out who was not there at all." },
-        { "en": "One of the cards is what was there to see in the morning." },
+        { "en": "Read what each suspect says, and what the others say about them." },
+        { "en": "One of the cards is what was on someone’s face in the morning." },
         { "en": "Which of the suspects has a moustache?" }
       ]
     }
