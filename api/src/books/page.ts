@@ -29,7 +29,7 @@ import {
 import { paginate, settle, SETTLE_SHARE, type FlowItem } from './flow.js';
 import { chapterEmblem, chapterHue, type BookPicture } from './pictures.js';
 import type { BookChapter } from './road-book.js';
-import { INK, PAGE, Press, TEXT, type Stamp, type Type } from './sheet.js';
+import { INK, PAGE, Press, TEXT, blend, type Stamp, type Type } from './sheet.js';
 
 // ───────────────────────────────────────────────────────────── type
 
@@ -78,8 +78,8 @@ export function appleArt(press: Press, bites: number): Stamp {
   return squareArt(press, `apple|${b}`, () => bookAppleSvg({ bites: b }));
 }
 
-/** The stamp of a drawing the book names (pictures.ts); a number has none, being set in type. */
-function pictureArt(press: Press, picture: BookPicture): Stamp | null {
+/** The stamp of a drawing the book names (pictures.ts); a number has none, being set in type. A landmark casts `shade` where it stands on a page's own colour. */
+function pictureArt(press: Press, picture: BookPicture, shade?: string): Stamp | null {
   switch (picture.kind) {
     case 'word':
       return squareArt(press, `word|${picture.id}`, () => wordPictureSvg({ id: picture.id }));
@@ -88,7 +88,7 @@ function pictureArt(press: Press, picture: BookPicture): Stamp | null {
     case 'paint':
       return squareArt(press, `paint|${picture.colour}`, () => bookPaintSvg({ colour: picture.colour }));
     case 'landmark':
-      return squareArt(press, `landmark|${picture.landmark}`, () => pathLandmarkSvg({ landmark: picture.landmark }));
+      return squareArt(press, `landmark|${picture.landmark}|${shade ?? ''}`, () => pathLandmarkSvg({ landmark: picture.landmark, ...(shade ? { shade } : {}) }));
     case 'cast':
       return castArt(press, picture.who, picture.pose);
     case 'sapling':
@@ -99,8 +99,8 @@ function pictureArt(press: Press, picture: BookPicture): Stamp | null {
 }
 
 /** A drawing in a square of `size` at (x, y); a number is set as its figure on a round of the hue's wash. */
-export function drawPicture(press: Press, picture: BookPicture, x: number, y: number, size: number, hue: HueSteps): void {
-  const art = pictureArt(press, picture);
+export function drawPicture(press: Press, picture: BookPicture, x: number, y: number, size: number, hue: HueSteps, shade?: string): void {
+  const art = pictureArt(press, picture, shade);
   if (art) {
     press.place(art, x, y, size);
     return;
@@ -144,7 +144,8 @@ export function drawStamp(press: Press, x: number, y: number, w: number, chapter
   press.place(art, x - box.inset * k, y - box.inset * k, box.width * k);
   press.line(String(number), x + 9 * k, y + 8 * k, heavy(15 * k, blank ? '#9c917c' : hue.deep));
   if (typeof chapter === 'number') return;
-  drawPicture(press, chapterEmblem(number), x + 17 * k, y + 20 * k, 66 * k, hue);
+  // on the stamp's paper a landmark's shade is the paper's own, a step darker, and not the meadow's green
+  drawPicture(press, chapterEmblem(number), x + 17 * k, y + 20 * k, 66 * k, hue, blend(hue.tint, hue.base, 0.32));
   // the name as large as the stamp's foot has room for
   let size = 11.5 * k;
   while (size > 4 && press.measure(chapter.titleKu, 'display', size) > (STAMP.w - 16) * k) size -= 0.25;

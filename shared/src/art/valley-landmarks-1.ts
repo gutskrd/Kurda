@@ -228,10 +228,14 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += fill(smoothPath(vine, true), leaf.face);
       const lit = blobPath(27, 73.6, 9, 2.6, 8, 0.25, random) + blobPath(51, 72.4, 7, 2.2, 7, 0.25, random) + blobPath(12, 80, 4, 1.6, 6, 0.25, random);
       out += fill(lit, leaf.light);
-      const bunch = [[-1.3, 0], [1.3, 0], [0, 2.1], [-2.4, -1.9], [0, -1.9], [2.4, -1.9]] as const;
+      // three bunches hanging from the vine's edge, each of its own size and none quite like another
+      const bunch = [[-2.4, -1.9], [0, -1.9], [2.4, -1.9], [-1.3, 0], [1.3, 0], [0, 2.1], [-1.2, 4]] as const;
       let grapes = '';
-      for (const [gx, gy] of [[14, 87.5], [33, 87], [62, 85]] as const) {
-        for (const [dx, dy] of bunch) grapes += ellipsePath(gx + dx, gy + dy, 1.25, 1.25);
+      for (const [gx, gy, count] of [[14, 87.5, 6], [33, 87, 7], [62, 85, 5]] as const) {
+        for (const [dx, dy] of bunch.slice(0, count)) {
+          const r = 1.1 + random() * 0.3;
+          grapes += ellipsePath(gx + dx + (random() - 0.5) * 0.4, gy + dy, r, r);
+        }
       }
       out += fill(grapes, c(GRAPE));
       // The table stands at the vine's edge, two glasses of tea on their saucers either side of the samovar.

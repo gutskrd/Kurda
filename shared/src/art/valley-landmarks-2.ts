@@ -63,6 +63,8 @@ const HUE = {
   /** the burnt ground under the fire, and the grass round it lit warm by the flames */
   char: '#6b4a34',
   glow: '#e3dc8c',
+  /** the round of a torch's light in the air about its flame, a little warmer than the grass it is seen against */
+  torchLight: '#e4e59c',
   /** a hill further off, paler for the distance, and its flank in shade */
   farHill: '#c2d3a0',
   farHillShade: '#adc18c',
@@ -304,7 +306,7 @@ function bareTree(x: number, y: number, s: number, dark: boolean, ground: string
 
 // ─────────────────────────────────────────────────────────── 7 · Newroz
 
-const NEWROZ_FLAME: Box = { kind: 'flame', x: 50.4, y: 25, w: 26, h: 40 };
+const NEWROZ_FLAME: Box = { kind: 'flame', x: 51.6, y: 27.6, w: 26, h: 40 };
 
 /** A ribbon along a line of points, each with how wide it is there: a path up a hill that narrows as it goes. */
 function ribbon(line: readonly (readonly [number, number, number])[]): string {
@@ -320,18 +322,41 @@ function ribbon(line: readonly (readonly [number, number, number])[]): string {
   return `${smoothPath(left)}${back(right)}Z`;
 }
 
-/** A torch stuck in the ground beside the way up, `s` times full size: its stake, the rag bound round its head, and its flame. */
-function torch(x: number, y: number, s: number, dark: boolean, ground: string): string {
+/**
+ * A torch stuck in the ground beside the way up, `s` times full size: the
+ * grass round its foot lit by it, the round of its light, its stake, the rag
+ * bound round its head, and its flame with its hot core.
+ */
+function torch(x: number, y: number, s: number, dark: boolean): string {
   const q = (u: number, v: number): string => `${f(x + u * s)} ${f(y - v * s)}`;
-  const flame = `M${q(0, 9.6)}C${q(-2.2, 10)} ${q(-2.1, 12.6)} ${q(0.7, 15.6)}C${q(1.6, 13)} ${q(2.4, 10.4)} ${q(0, 9.6)}Z`;
-  const core = `M${q(0.1, 9.9)}C${q(-1, 10.2)} ${q(-0.9, 11.6)} ${q(0.4, 13)}C${q(0.9, 11.8)} ${q(1.2, 10.4)} ${q(0.1, 9.9)}Z`;
+  const flame = `M${q(0, 9.4)}C${q(-2.7, 9.8)} ${q(-2.6, 13)} ${q(0.8, 16.8)}C${q(2, 13.6)} ${q(3, 10.4)} ${q(0, 9.4)}Z`;
+  const core = `M${q(0.1, 9.8)}C${q(-1.2, 10.2)} ${q(-1.1, 11.8)} ${q(0.5, 13.6)}C${q(1.1, 12)} ${q(1.5, 10.6)} ${q(0.1, 9.8)}Z`;
   return (
-    fill(ellipsePath(x + 1.6 * s, y + 0.3, 2.4 * s, 0.8 * s), ground) +
-    stroke(`M${q(0, 0)}L${q(0.3, 8.6)}`, dusk(HUE.woodShade, dark), 1.1 * s) +
-    fill(`M${q(-0.9, 8)}h${f(2.2 * s)}v${f(-1.8 * s)}h${f(-2.2 * s)}Z`, dusk(HUE.char, dark)) +
+    fill(ellipsePath(x + 0.6 * s, y + 0.2, 4.4 * s, 1.3 * s), warm(HUE.glow, dark)) +
+    fill(ellipsePath(x + 0.3 * s, y - 12.4 * s, 3.5 * s, 3.5 * s), warm(HUE.torchLight, dark)) +
+    stroke(`M${q(0, 0)}L${q(0.3, 8.6)}`, dusk(HUE.woodShade, dark), 1.2 * s) +
+    fill(`M${q(-1, 8.2)}h${f(2.4 * s)}v${f(-2 * s)}h${f(-2.4 * s)}Z`, dusk(HUE.char, dark)) +
     fill(flame, warm(VALLEY.fire, dark)) +
     fill(core, warm(VALLEY.fireCore, dark))
   );
+}
+
+/**
+ * A log of the heap, from its foot on the ground to its top in the fire,
+ * `w` thick: its face, its side away from the light a step darker, the cut
+ * end at its foot pale with its rings, and, toward its top, the glow of the
+ * embers along its upper edge.
+ */
+function log(from: Pt, to: Pt, w: number, face: string, shade: string, end: string | null, glow: string): string {
+  const [dx, dy] = [to[0] - from[0], to[1] - from[1]];
+  const len = Math.hypot(dx, dy) || 1;
+  const [nx, ny] = [(-dy / len) * (w / 2), (dx / len) * (w / 2)];
+  const at = (t: number, side: number): Pt => [from[0] + dx * t + nx * side, from[1] + dy * t + ny * side];
+  let out = fill(poly([at(0, -1), at(1, -1), at(1, 1), at(0, 1)]), face);
+  out += fill(poly([at(0, 0.15), at(1, 0.15), at(1, 1), at(0, 1)]), shade);
+  out += stroke(`M${f(at(0.55, -0.8)[0])} ${f(at(0.55, -0.8)[1])}L${f(at(0.95, -0.8)[0])} ${f(at(0.95, -0.8)[1])}`, glow, Math.max(0.6, w * 0.24));
+  if (end) out += fill(ellipsePath(from[0], from[1], w * 0.5, w * 0.44), end);
+  return out;
 }
 
 /** A clump of narcissus, the flower of Newroz: its blades, and white heads with their yellow cups, `count` of them. */
@@ -366,22 +391,27 @@ function newroz(dark: boolean, random: () => number): string {
   const ground = c(VALLEY.meadowShade);
   const wood = c(VALLEY.trunk);
   const woodShade = c(HUE.woodShade);
+  const ember = warm(VALLEY.flame, dark);
   let out = '';
   // the next hill, paler for being further off, with its own small fire on top
   out += fill(`${smoothPath([[70, 104], [84, 92], [96, 84.4], [105, 81.2], [112, 82.6], [119, 86.4]])}L119 104Z`, c(HUE.farHill));
   out += fill(`${smoothPath([[105, 81.2], [112, 82.6], [119, 86.4]])}L119 104L110 104C111.4 96 109.6 87.6 105 81.2Z`, c(HUE.farHillShade));
   out += `<g transform="translate(103.4 76.2) scale(0.13)">${fill(FLAME.outer, warm(VALLEY.flame, dark))}${fill(FLAME.core, warm(VALLEY.fireCore, dark))}</g>`;
-  // the hill's shadow on the meadow, then the hill: its face in the light, its right flank in shade
+  // the hill's shadow on the meadow, then the hill: a long slope that swells into a shoulder, a broad uneven top,
+  // and a steeper fall on the right; its face is in the light, its right flank in shade
   out += fill(ellipsePath(70, 113.6, 47, 3.6), ground);
-  const hill: Pt[] = [[1, 114.8], [10, 107.6], [21, 98.4], [33, 88.2], [45, 78.4], [55, 71.8], [63.4, 69.4], [71.4, 70.2], [80.6, 74.4], [90.4, 81.4], [100.6, 90.2], [110.4, 100], [119, 107.6]];
+  const hill: Pt[] = [
+    [1, 114.6], [12, 112.6], [22, 108.8], [30, 103.4], [36, 96.6], [41, 89.4], [46.4, 83.2], [52.4, 78.6], [58.4, 76.2], [64.4, 75.2],
+    [70, 75.8], [74.2, 75.2], [79.4, 76.8], [84.6, 80.2], [89, 85.4], [92.8, 92.2], [96.4, 99.4], [100.8, 105], [106.4, 109.4], [113, 112.4], [119, 113.6],
+  ];
   out += fill(`${smoothPath(hill)}L119 115.4L1 115.4Z`, c(VALLEY.green));
-  out += fill(`${smoothPath(hill.slice(7))}L119 115.4L104.6 115.4C100.2 108.6 95.4 103 90.6 97.6C83.4 89.4 77.4 80.4 71.4 70.2Z`, c(VALLEY.greenShade));
+  out += fill(`${smoothPath(hill.slice(11))}L119 115.4L103.6 115.4C98.8 107 94.2 99.6 90.4 92.4C86.6 85 82.2 79 74.2 75.2Z`, c(VALLEY.greenShade));
   // the way up: a worn path that winds to the top, narrowing as it climbs, its lower edge a step darker
-  const way = [[33.6, 117, 4], [43.4, 108.6, 3.3], [37.6, 99.2, 2.7], [47.4, 89.6, 2.2], [54.6, 81.2, 1.8], [59.4, 74.6, 1.4]] as const;
+  const way = [[33.6, 117, 4], [42.6, 109.4, 3.3], [37.4, 101.4, 2.7], [45.6, 92.2, 2.2], [51.8, 84, 1.8], [58.2, 78.4, 1.4]] as const;
   out += fill(ribbon(way.map(([x, y, w]) => [x + 0.5, y + 0.8, w] as const)), c(VALLEY.dirtEdge));
   out += fill(ribbon(way), c(VALLEY.dirt));
   // a grey outcrop on the shaded flank and a smaller stone by the path
-  out += rock(94.6, 96.6, 10.4, 6.6, dark, c(VALLEY.greenShade)) + rock(24.4, 108.4, 5.6, 3.4, dark, ground);
+  out += rock(96, 101.6, 10.4, 6.6, dark, c(VALLEY.greenShade)) + rock(24.4, 108.4, 5.6, 3.4, dark, ground);
   // the almond on the lower slope, in blossom before its leaves: its limbs show between the clouds of flowers
   const almond: TreeShape = {
     foot: [14.6, 103.4],
@@ -403,30 +433,33 @@ function newroz(dark: boolean, random: () => number): string {
     dot: 0.62,
   };
   out += grownTree(almond, blossoms(dark), { face: wood, shade: woodShade }, ground, random);
-  out += narcissus(20.8, 113.8, 0.9, 3, dark, random) + narcissus(70.4, 104.2, 0.72, 2, dark, random) + narcissus(83.6, 111.6, 0.95, 4, dark, random);
-  // the torches up the way, smaller as they climb
-  out += torch(29.4, 110.6, 1, dark, ground) + torch(49.2, 103.6, 0.86, dark, ground) + torch(42.2, 92.6, 0.74, dark, ground) + torch(52.6, 82.2, 0.62, dark, ground);
+  out += narcissus(20.8, 113.8, 0.9, 3, dark, random) + narcissus(72.2, 106.4, 0.72, 2, dark, random) + narcissus(84.6, 112.4, 0.95, 4, dark, random);
+  // the torches up the way, each with its light, smaller as they climb
+  out += torch(28.4, 111.4, 1.3, dark) + torch(49.4, 104.4, 1.14, dark) + torch(40.8, 94.4, 0.98, dark) + torch(53.6, 86.4, 0.84, dark);
   // wood stacked ready on the flank: two logs side by side and one across them, their cut ends to us
-  out += stroke('M83.4 80.4L92.2 78.2M87.4 82.4L96 80.2M85.2 78.2L94 76', wood, 2.6);
-  out += fill(ellipsePath(83.4, 80.4, 1.4, 1.4) + ellipsePath(87.4, 82.4, 1.4, 1.4) + ellipsePath(85.2, 78.2, 1.4, 1.4), c(HUE.logEnd));
-  out += fill(ellipsePath(83.6, 80.5, 0.5, 0.5) + ellipsePath(87.6, 82.5, 0.5, 0.5) + ellipsePath(85.4, 78.3, 0.5, 0.5), c(HUE.logRing));
-  // the top of the hill burnt black where the fire stands
-  out += fill(blobPath(63.4, 72.2, 19.6, 3.2, 9, 0.2, random), c(HUE.char));
-  // the heap: logs and brushwood piled into a cone, its right side in shade, the cut ends of the logs at its foot
-  const heap: Pt[] = [[45, 72.6], [46.6, 69.4], [45.6, 67], [49, 65.2], [48.4, 62.4], [52.4, 60.6], [55.4, 56.4], [59.8, 53.6], [63.6, 51.6], [67.6, 53.4], [71.4, 56], [74.4, 59.4], [77.6, 61.4], [77.2, 64.2], [80.6, 66.6], [79.8, 69.2], [81.6, 72.4]];
-  out += fill(poly(heap), woodShade);
-  out += fill(poly([...heap.slice(0, 10), [66.2, 60], [69, 72.8]]), wood);
-  out += stroke('M48.6 69.6L58.4 63.4M50.6 65.2L60.2 58.8M57.6 71.4L64.6 66.6M70.6 70.2L77.2 66.2', woodShade, 0.9);
-  out += stroke('M46.4 66.6L41.4 63.8M78.2 62L82.4 58.6', wood, 0.8);
-  out += fill(ellipsePath(49.4, 71.4, 1.6, 1.4) + ellipsePath(55.4, 72.2, 1.4, 1.3) + ellipsePath(74.6, 71.8, 1.5, 1.3), c(HUE.logEnd));
-  out += fill(ellipsePath(49.6, 71.5, 0.5, 0.5) + ellipsePath(55.6, 72.3, 0.45, 0.45) + ellipsePath(74.8, 71.9, 0.5, 0.5), c(HUE.logRing));
+  out += stroke('M84.6 84.2L93.4 82M88.6 86.2L97.2 84M86.4 82L95.2 79.8', wood, 2.6);
+  out += fill(ellipsePath(84.6, 84.2, 1.4, 1.4) + ellipsePath(88.6, 86.2, 1.4, 1.4) + ellipsePath(86.4, 82, 1.4, 1.4), c(HUE.logEnd));
+  out += fill(ellipsePath(84.8, 84.3, 0.5, 0.5) + ellipsePath(88.8, 86.3, 0.5, 0.5) + ellipsePath(86.6, 82.1, 0.5, 0.5), c(HUE.logRing));
+  // the top of the hill burnt black where the fire stands, and the bed of embers under it
+  out += fill(blobPath(64.6, 77, 19, 3, 9, 0.2, random), c(HUE.char));
+  out += fill(blobPath(64.6, 74.6, 12.4, 2.6, 9, 0.24, random), ember);
+  // the heap, log by log: two at the back in shade, four leaning in at the front, one lying across their feet,
+  // and brushwood sticking out between them; the embers glow along every log's top
+  const glow = warm(VALLEY.fire, dark);
+  const end = c(HUE.logEnd);
+  out += log([50.4, 76.6], [61.4, 61.4], 3.2, woodShade, c(HUE.char), null, glow) + log([79, 76.2], [68, 61.4], 3.2, woodShade, c(HUE.char), null, glow);
+  out += stroke('M48 72.8L41.8 68.6M44 70L42.4 66.4M81.2 71.6L87 67.6M84.2 69.6L85.4 66', wood, 0.8);
+  out += log([45.6, 77.8], [59, 64.6], 3.6, wood, woodShade, end, glow) + log([55, 78.8], [62.6, 62.4], 3.3, wood, woodShade, end, glow);
+  out += log([74.4, 78.6], [66.8, 62.4], 3.3, wood, woodShade, end, glow) + log([83.4, 77.4], [70, 64.6], 3.6, wood, woodShade, end, glow);
+  out += log([52.6, 78.4], [76.6, 77.2], 2.8, wood, woodShade, end, glow);
+  out += fill(ellipsePath(58.4, 73.6, 0.9, 0.7) + ellipsePath(70.4, 74.2, 1.1, 0.8) + ellipsePath(64.4, 75.4, 0.8, 0.6), warm(VALLEY.fireCore, dark));
   out += restFlame(NEWROZ_FLAME, dark);
   // the smoke rising off the top of the flames and going away with the wind, and sparks flying with it
   // the smoke is a run of puffs, each bigger and further downwind than the last
-  const puffs = [[70.2, 20.8, 2.6, 2.4], [73.4, 16.6, 3.6, 3.2], [78.4, 12.6, 4.4, 3.6], [84.8, 9.8, 4.8, 3.4], [91.4, 8.4, 3.8, 2.6]] as const;
+  const puffs = [[71.4, 23.4, 2.6, 2.4], [74.6, 19.2, 3.6, 3.2], [79.6, 15.2, 4.4, 3.6], [86, 12.4, 4.8, 3.4], [92.6, 11, 3.8, 2.6]] as const;
   out += fill(puffs.map(([x, y, rx, ry]) => blobPath(x + 0.6, y + 0.8, rx, ry, 8, 0.16, random)).join(''), c(HUE.smokeShade));
   out += fill(puffs.map(([x, y, rx, ry]) => blobPath(x - 0.2, y - 0.2, rx * 0.97, ry * 0.95, 8, 0.16, random)).join(''), c(HUE.smoke));
-  const sparks = [[55.4, 20.6, 0.8], [80.6, 19.8, 1.05], [86.4, 26.4, 0.7], [62.6, 13.6, 0.6], [94.2, 16.8, 0.55]] as const;
+  const sparks = [[56.6, 23.2, 0.8], [81.8, 22.4, 1.05], [87.6, 29, 0.7], [63.8, 16.2, 0.6], [95.4, 19.4, 0.55]] as const;
   out += fill(sparks.map(([x, y, r]) => ellipsePath(x, y, r, r)).join(''), warm(VALLEY.fireCore, dark));
   return out;
 }
@@ -820,9 +853,11 @@ function hearth(dark: boolean, random: () => number): string {
   ];
   for (const [ry, rx0, count] of rows) {
     for (let k = 0; k < count; k++) {
+      // split logs are never all one size: each end a little bigger or smaller than its neighbour
       const lx = rx0 + k * 4.8 + (random() - 0.5) * 0.6;
-      ends += ellipsePath(lx, ry, 2.3, 2.3);
-      rings += ellipsePath(lx + 0.2, ry + 0.2, 0.9, 0.9);
+      const r = 2.05 + random() * 0.45;
+      ends += ellipsePath(lx, ry + (random() - 0.5) * 0.4, r, r * (0.92 + random() * 0.12));
+      rings += ellipsePath(lx + 0.2, ry + 0.2, r * 0.38, r * 0.38);
     }
   }
   out += fill(ends, c(HUE.logEnd)) + fill(rings, c(HUE.logRing));

@@ -1,11 +1,12 @@
 /**
- * The valley's trees (art/valley.ts) hold together: every limb runs into the
- * crown it carries and every trunk into its leaves, so no picture of the
- * road shows a branch stopping short in the air. The trees drawn limb by limb
- * (`grownTree`) refuse to be drawn otherwise; the older round trees and
- * poplars, which the lesson path still plants, are measured from what they
- * draw. And the Newroz fire's flames at rest are the very flames the apps
- * make flicker over them.
+ * The painted valley (art/valley.ts) and its landmarks hold together. Every
+ * tree's limbs run into the crown they carry and every trunk into its
+ * leaves, so no picture of the road shows a branch stopping short in the
+ * air: the trees drawn limb by limb (`grownTree`) refuse to be drawn
+ * otherwise, and the older round trees and poplars, which the lesson path
+ * still plants, are measured from what they draw. The Newroz fire's flames at
+ * rest are the very flames the apps make flicker over them. And a landmark
+ * laid on a page of its own colour casts that page's shade, not the meadow's.
  */
 import { describe, expect, it } from 'vitest';
 import { PATH_LANDMARKS } from '../path-world.js';
@@ -80,6 +81,20 @@ describe('the valley’s trees', () => {
   it('draws every landmark of the road and every one of the book’s small things with its trees joined up', () => {
     for (const landmark of PATH_LANDMARKS) for (const dark of [false, true]) expect(() => pathLandmarkSvg({ landmark, dark })).not.toThrow();
     for (const spot of BOOK_SPOTS) expect(() => bookSpotSvg({ spot })).not.toThrow();
+  });
+});
+
+describe('a landmark on a page of its own colour', () => {
+  it('casts the shade it is given instead of the meadow’s green, and refuses one that is not a colour', () => {
+    // every landmark that stands on the meadow's shade (the snowbound hearth stands on snow)
+    const onGrass = PATH_LANDMARKS.filter((landmark) => pathLandmarkSvg({ landmark }).includes('fill="#bfd291"'));
+    expect(onGrass.length).toBeGreaterThanOrEqual(PATH_LANDMARKS.length - 1);
+    for (const landmark of onGrass) {
+      const page = pathLandmarkSvg({ landmark, shade: '#e9c9b0' });
+      expect(page, landmark).not.toContain('fill="#bfd291"');
+      expect(page, landmark).toContain('fill="#e9c9b0"');
+    }
+    for (const shade of ['green', '#FFF', 'url(#a)']) expect(() => pathLandmarkSvg({ landmark: 'gate', shade }), shade).toThrow(RangeError);
   });
 });
 
