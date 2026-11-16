@@ -75,7 +75,7 @@ describe('isPlaced', () => {
 
 describe('signatureBox', () => {
   it('sits in the bottom-right corner, inset', () => {
-    const box = signatureBox(1200, 900, 'hamude');
+    const box = signatureBox(1200, 900, 'rojhat');
     expect(box.x + box.w).toBeLessThan(1200);
     expect(box.y + box.h).toBeLessThan(900);
     expect(box.x).toBeGreaterThan(600);

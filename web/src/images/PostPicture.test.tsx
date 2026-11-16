@@ -37,7 +37,7 @@ let cancel = vi.fn();
 const show = (file: File = aPicture()) => {
   done = vi.fn();
   cancel = vi.fn();
-  return renderApp(<PictureEditor file={file} handle="hamude" onDone={done} onCancel={cancel} />);
+  return renderApp(<PictureEditor file={file} handle="rojhat" onDone={done} onCancel={cancel} />);
 };
 
 /** Wait for the editor to appear (the picture is decoded first). */
@@ -103,7 +103,7 @@ describe('PictureEditor', () => {
     uploadFetch();
     renderApp(
       <StrictMode>
-        <PictureEditor file={aPicture()} handle="hamude" onDone={() => undefined} onCancel={() => undefined} />
+        <PictureEditor file={aPicture()} handle="rojhat" onDone={() => undefined} onCancel={() => undefined} />
       </StrictMode>,
     );
 

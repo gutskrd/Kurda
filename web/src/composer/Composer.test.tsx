@@ -9,7 +9,7 @@ import { jsonResponse, renderApp } from '../test/utils';
 import { Composer } from './Composer';
 import type { ComposedPost } from './types';
 
-const ME = { id: 'me-1', username: 'hamude', email: 'h@x.test', displayName: null, emailVerified: true };
+const ME = { id: 'me-1', username: 'rojhat', email: 'h@x.test', displayName: null, emailVerified: true };
 
 interface Call {
   method: string;

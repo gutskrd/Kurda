@@ -17,7 +17,7 @@ const signIn = () =>
 const aPicture = () => new File([new Uint8Array([1, 2, 3])], 'me.png', { type: 'image/png' });
 
 const me = (over: Partial<MeProfile> = {}): MeProfile =>
-  ({ id: 'me', username: 'hamude', profilePhotoUrl: null, avatarUrl: null, ...over }) as MeProfile;
+  ({ id: 'me', username: 'rojhat', profilePhotoUrl: null, avatarUrl: null, ...over }) as MeProfile;
 
 /** Answer the upload and record what was sent. */
 function photoFetch(opts: { status?: number } = {}) {
