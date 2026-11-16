@@ -44,6 +44,7 @@ import { GameArt } from '../games/GameArt';
 import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
 import { heldDim } from '../theme/MotionParts';
+import { useDirection } from '../reports/direction';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -346,6 +347,7 @@ function ResultPanel({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const won = game.status === 'won';
   return (
     <View style={styles.result}>
@@ -374,18 +376,18 @@ function ResultPanel({
 
         {edu ? (
           <View style={[styles.edu, { backgroundColor: colors.controlTrack }]}>
-            <View style={styles.eduHead}>
+            <View style={[styles.eduHead, { flexDirection: dir.row }]}>
               <Icon name="text" size={18} color={colors.primary} />
               <Text style={[styles.eduWord, { color: colors.textPrimary }]}>{edu.headword}</Text>
               {edu.pos ? <Text style={[styles.eduPos, { color: colors.textSecondary }]}>{edu.pos}</Text> : null}
             </View>
-            {edu.definition ? <Text style={[styles.eduDef, { color: colors.textSecondary }]}>{edu.definition}</Text> : null}
+            {edu.definition ? <Text style={[styles.eduDef, dir.free, { color: colors.textSecondary }]}>{edu.definition}</Text> : null}
             <Pressable
               onPress={onSave}
               accessibilityRole="button"
               // one 20-point line, caught at a fingertip's 44
               hitSlop={SAVE_SLOP}
-              style={({ pressed }) => [styles.saveRow, pressed && heldDim]}
+              style={({ pressed }) => [styles.saveRow, { flexDirection: dir.row, alignSelf: dir.rtl ? 'flex-end' : 'flex-start' }, pressed && heldDim]}
               disabled={savedWord}
             >
               <Icon name={savedWord ? 'check' : 'star'} size={16} color={colors.primary} />
@@ -396,17 +398,21 @@ function ResultPanel({
           </View>
         ) : null}
 
-        <View style={styles.resultActions}>
-          <ClayButton label={t('share.title')} icon="share" tone="neutral" onPress={onShare} style={{ flex: 1 }} />
-          <GoldButton label={t('games.wordle.practice')} icon="bolt" onPress={onPractice} style={{ flex: 1 }} />
+        {/*
+          Another word is the one thing to press, and has the table's gold; the day's word and the share are the two quieter
+          ways on, side by side at one height. Share stood beside the gold button a third shorter than it.
+        */}
+        <GoldButton label={t('games.wordle.practice')} icon="bolt" onPress={onPractice} style={styles.again} />
+        <View style={[styles.resultActions, { flexDirection: dir.row }]}>
+          <ClayButton label={t('games.wordle.daily')} icon="star" tone="neutral" onPress={onDaily} style={styles.half} />
+          <ClayButton label={t('share.title')} icon="share" tone="neutral" onPress={onShare} style={styles.half} />
         </View>
-        <ClayButton label={t('games.wordle.daily')} icon="star" tone="neutral" onPress={onDaily} style={{ alignSelf: 'stretch', marginTop: spacing.sm }} />
       </GlassCard>
 
       {stats ? (
         <GlassCard style={styles.statsCard}>
           <Text style={[styles.statsTitle, { color: colors.textSecondary }]}>{t('games.wordle.statistics')}</Text>
-          <View style={styles.statsGrid}>
+          <View style={[styles.statsGrid, { flexDirection: dir.row }]}>
             <Stat label={t('games.wordle.stat.played')} value={String(stats.played)} />
             <Stat label={t('games.wordle.stat.winPct')} value={String(stats.winPercentage)} />
             <Stat label={t('games.wordle.stat.streak')} value={String(stats.currentStreak)} />
@@ -456,7 +462,8 @@ function Stat({ label, value }: { label: string; value: string }): React.JSX.Ele
   const { colors } = useTheme();
   return (
     <View style={styles.stat}>
-      <Text style={[styles.statValue, { color: colors.primary }]}>{value}</Text>
+      {/* a figure, not something to press: in the page's ink, where the violet said it could be tapped */}
+      <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
@@ -485,17 +492,19 @@ const styles = StyleSheet.create({
   resultLine: { fontSize: typography.sizes.md, textAlign: 'center' },
   resultNote: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },
   edu: { borderRadius: radii.md, padding: spacing.md, gap: spacing.xs, marginTop: spacing.sm },
-  eduHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  eduHead: { alignItems: 'center', gap: spacing.sm },
   eduWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   eduPos: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   eduDef: { fontSize: typography.sizes.md, lineHeight: 20 },
-  saveRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.xs },
+  saveRow: { alignItems: 'center', gap: spacing.xs, marginTop: spacing.xs },
   saveText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  resultActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  again: { marginTop: spacing.sm },
+  resultActions: { gap: spacing.sm },
+  half: { flex: 1 },
   statsCard: { gap: spacing.sm },
   statsTitle: { ...sectionLabel },
   // five figures, three and two: spaced evenly, so the two under the three sit in the middle and not at the edges
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-evenly', rowGap: spacing.md },
+  statsGrid: { flexWrap: 'wrap', justifyContent: 'space-evenly', rowGap: spacing.md },
   stat: { width: '30%', alignItems: 'center' },
   statValue: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   statLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },

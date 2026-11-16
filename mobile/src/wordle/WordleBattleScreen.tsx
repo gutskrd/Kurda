@@ -42,6 +42,7 @@ import {
   type Difficulty,
 } from './battleApi';
 import { Loading } from '../theme/Loading';
+import { useDirection } from '../reports/direction';
 
 const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
 
@@ -163,6 +164,7 @@ function BattleRoom({
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
 
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [results, setResults] = useState<BattleResults | null>(null);
@@ -382,9 +384,9 @@ function BattleRoom({
             </Text>
             <View style={styles.stretch}>
               {results.ranking.map((r) => (
-                <View key={r.userId} style={styles.scoreLine}>
+                <View key={r.userId} style={[styles.scoreLine, { flexDirection: dir.row }]}>
                   <Text style={[styles.rank, { color: colors.textSecondary }]}>{r.rank}</Text>
-                  <Text style={[styles.scoreName, { color: colors.textPrimary }]}>
+                  <Text style={[styles.scoreName, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
                     {r.isMe ?? r.userId === user?.id ? t('games.you') : (r.name ?? t('games.opponent'))}
                   </Text>
                   <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>
@@ -429,8 +431,9 @@ function BattleRoom({
       {battle.opponents.length > 0 ? (
         <View style={styles.opponents}>
           {battle.opponents.map((o, i) => (
-            <View key={o.userId} style={styles.opponent}>
-              <Text style={[styles.opponentName, { color: colors.textSecondary }]}>
+            <View key={o.userId} style={[styles.opponent, { flexDirection: dir.row }]}>
+              {/* one line: a long name is cut short rather than broken in the middle of a word */}
+              <Text style={[styles.opponentName, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
                 {o.name ?? (battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent'))}
               </Text>
               <View
@@ -447,7 +450,7 @@ function BattleRoom({
                   ]}
                 />
               </View>
-              <Text style={[styles.opponentState, { color: o.solved ? colors.success : colors.textSecondary }]}>
+              <Text style={[styles.opponentState, { textAlign: dir.rtl ? 'left' : 'right', color: o.solved ? colors.success : colors.textSecondary }]}>
                 {o.solved
                   ? t('games.battle.opponentSolved')
                   : o.finished
@@ -530,21 +533,15 @@ const styles = StyleSheet.create({
   error: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   waiting: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
   loading: { marginTop: spacing.xxl },
-  scoreLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-
-    paddingVertical: spacing.sm,
-  },
+  scoreLine: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
   rank: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, width: 20 },
   scoreName: { flex: 1, fontSize: typography.sizes.md },
   scoreValue: { fontSize: typography.sizes.sm },
   xp: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   opponents: { gap: spacing.sm },
-  opponent: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  opponent: { alignItems: 'center', gap: spacing.sm },
   opponentName: { fontSize: typography.sizes.sm, width: 84 },
   track: { flex: 1, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   trackFill: { height: 6, borderRadius: radii.pill },
-  opponentState: { fontSize: typography.sizes.sm, minWidth: 72, textAlign: 'right' },
+  opponentState: { fontSize: typography.sizes.sm, minWidth: 72 },
 });

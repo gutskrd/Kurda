@@ -9,12 +9,15 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 // the result holds a badge's celebration back while its own plays, and that host listens to the navigator
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../feedback/gameFinished', () => ({ reportGameFinished: vi.fn(), leftResults: vi.fn() }));
-import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Share } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
-import { TURN_MS, TURN_STAGGER_MS, turnMs } from './WordleBoard';
+import { LIGHT } from '../theme/palette';
+import { tileTone } from '../theme/tileTones';
+import { buildBoard } from './board';
+import { TURN_MS, TURN_STAGGER_MS, WordleBoard, turnMs } from './WordleBoard';
 import { WordleScreen } from './WordleScreen';
 
 /**
@@ -201,3 +204,20 @@ describe('Peyvok while it is played', () => {
   });
 });
 
+/** A colour as a browser reports it back. */
+const rgb = (hex: string): string => `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(', ')})`;
+
+describe('Peyvok’s board', () => {
+  // the squares were edged in the glass's white hairline, which the day's pale page swallowed: an empty board was not there at all
+  it('edges an empty square so it shows on the day’s page, as a tile waiting to be chosen is edged', async () => {
+    localStorage.setItem('kurda_theme_pref_v1', 'light');
+    try {
+      renderWithProviders(<WordleBoard board={buildBoard([], 5, [])} cellSize={40} />);
+      const edge = rgb(tileTone(LIGHT, 'idle').edge);
+      await waitFor(() => expect(getComputedStyle(screen.getAllByLabelText('empty')[0]!).borderTopColor).toBe(edge));
+      expect(screen.getAllByLabelText('empty')).toHaveLength(30);
+    } finally {
+      localStorage.removeItem('kurda_theme_pref_v1');
+    }
+  });
+});

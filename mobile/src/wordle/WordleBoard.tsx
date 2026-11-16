@@ -6,6 +6,7 @@ import { fontScaleCap, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { Palette } from '../theme/palette';
+import { tileTone } from '../theme/tileTones';
 import type { BoardCell, BoardRow, Feedback } from './board';
 
 /**
@@ -130,8 +131,10 @@ function Cell({ cell, size, turn, pop }: { cell: BoardCell; size: number; turn: 
   const letter = cell.letter.toUpperCase();
   const box = { width: size, height: size };
   const text = { fontSize: size * 0.42 };
-  const typedFace = { backgroundColor: 'transparent', borderColor: cell.letter ? colors.primary : colors.glassBorder };
-  const scoredFace = { backgroundColor: feedbackColor(cell.feedback, colors), borderColor: colors.glassBorder };
+  // an empty square has the quiet edge of a tile waiting to be chosen: the glass's white hairline vanished on the day's pale page
+  const typedFace = { backgroundColor: 'transparent', borderColor: cell.letter ? colors.primary : tileTone(colors, 'idle').edge };
+  const fill = feedbackColor(cell.feedback, colors);
+  const scoredFace = { backgroundColor: fill, borderColor: fill };
   // the square is sized in points, so its letter grows only as far as still fits it
   const glyph = (ink: string) => (
     <Text style={[styles.cellText, text, { color: ink }]} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
