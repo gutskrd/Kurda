@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
-import { spacing, typography } from '../theme/tokens';
+import { layout, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import type { RootNavigation } from '../navigation/rootStack';
+import { useScreenBottomInset } from '../navigation/tabBarLayout';
+import { EmptyState } from '../theme/EmptyState';
+import { useDirection } from '../reports/direction';
 import { getSaved } from './api';
 import { useQuietRefocus } from './keep';
 import { FeedCard, FeedSkeleton } from './FeedCard';
@@ -29,11 +34,18 @@ const PAGE = 20;
  *
  * Unsaving from here removes the card, because a list of saved posts with an
  * unsaved one still sitting in it is a lie that survives until the next reload.
+ *
+ * The posts run the width of the screen with the hairline between them, as
+ * they do on Home, so a post saved from the wall looks the same here.
  */
 export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const navigation = useNavigation<RootNavigation>();
+  const dir = useDirection();
+  // nothing floats over the foot of this page: the last post only has to clear the home indicator
+  const bottom = useScreenBottomInset(spacing.lg);
 
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -131,28 +143,31 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
     <GradientBackground>
       <ScreenHeader title={t('saved.title')} onBack={onExit} browse />
       <View style={styles.screen}>
-        <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('saved.subtitle')}</Text>
+        <Text style={[styles.sub, dir.text, { color: colors.textSecondary }]}>{t('saved.subtitle')}</Text>
 
         <AsyncBoundary
           loading={items === null}
           error={items === null ? error : null}
           onRetry={() => void refresh()}
-          skeleton={<FeedSkeleton style={styles.skeleton} />}
+          skeleton={<FeedSkeleton />}
         >
           <FlatList
             data={items}
             keyExtractor={(i) => i.key}
             renderItem={renderItem}
-            contentContainerStyle={styles.list}
+            contentContainerStyle={{ paddingBottom: bottom }}
             onScroll={onScroll}
             scrollEventThrottle={64}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.textSecondary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListEmptyComponent={
-              <Text style={[styles.empty, { color: colors.textSecondary }]}>
-                {`${t('saved.emptyLead')} ${t('nav.civak')} ${t('saved.emptyTail')}`}
-              </Text>
+              // what belongs here, and the way to the posts there are to keep
+              <EmptyState
+                title={t('saved.empty')}
+                body={t('saved.empty.body')}
+                action={{ label: t('saved.empty.browse'), onPress: () => navigation.navigate('Tabs', { screen: 'Home' }) }}
+              />
             }
             ListFooterComponent={
               loadingMore ? <Loading style={{ marginVertical: spacing.md }} /> : null
@@ -168,10 +183,7 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
 const feedKey = (item: FeedItem): string => item.key;
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingHorizontal: spacing.lg },
-  sub: { fontSize: typography.sizes.sm, marginBottom: spacing.md },
-  list: { paddingBottom: 120, gap: spacing.md },
-  // the list's own gap, so the cards land where the grey ones stood
-  skeleton: { gap: spacing.md },
-  empty: { textAlign: 'center', marginTop: spacing.xl },
+  screen: { flex: 1 },
+  // in the page's gutter, where the posts' own words start
+  sub: { fontSize: typography.sizes.sm, marginBottom: spacing.sm, paddingHorizontal: layout.gutter },
 });

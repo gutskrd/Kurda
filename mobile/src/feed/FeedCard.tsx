@@ -64,8 +64,8 @@ export const DOUBLE_TAP_MS = 220;
  * `standalone` is the post on its own page: nothing to open, and its
  * comments are already under it.
  *
- * No signed-out variant, unlike the web card: the phone's tabs sit behind the
- * auth stack, so anyone looking at this has an account.
+ * A guest reads the same card: a like, a repost or a save asks first for the
+ * account those are kept on (auth/AccountGate), before anything moves.
  *
  * Memoised: a wall of twenty re-renders when one post is liked, and nineteen
  * of them have nothing new to draw.

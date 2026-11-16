@@ -250,6 +250,7 @@ export function CivakScreen(): React.JSX.Element {
                       accessibilityRole="button"
                       accessibilityLabel={t('feed.sortFilter.button')}
                       testID="home-filter"
+                      hitSlop={CHIP_SLOP}
                       style={({ pressed }) => [styles.sortChip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, pressed && heldDim]}
                     >
                       <Icon name="filter" size={16} color={colors.textSecondary} />
@@ -324,13 +325,17 @@ export function CivakScreen(): React.JSX.Element {
   );
 }
 
+/** The sort chip: drawn a fingertip less a little tall, and reaching above and below itself to a full fingertip. */
+const CHIP = MIN_TOUCH_TARGET - 8;
+const CHIP_SLOP = { top: (MIN_TOUCH_TARGET - CHIP) / 2, bottom: (MIN_TOUCH_TARGET - CHIP) / 2 };
+
 /** A post's own name on the wall: a repost and the post it repeats are two. */
 const feedKey = (item: FeedItem): string => item.key;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   // the way into sorting and narrowing: a fingertip tall, as wide as its words
-  sortChip: { alignItems: 'center', gap: spacing.xs + 2, minHeight: MIN_TOUCH_TARGET - 8, paddingHorizontal: spacing.md - 4, borderRadius: radii.pill },
+  sortChip: { alignItems: 'center', gap: spacing.xs + 2, minHeight: CHIP, paddingHorizontal: spacing.md - 4, borderRadius: radii.pill },
   sortChipText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   waiting: { paddingHorizontal: layout.gutter },
   // the chips under the faces, inside the page's gutter
