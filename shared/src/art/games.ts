@@ -5,7 +5,8 @@
  * A cover is a whole square of its own colour — an illustration, not an icon
  * on a tile — so the apps show it edge to edge and round its corners
  * themselves. Every game also has a colour (`gameEmblemTone`) for the page
- * the game is played on, taken from its cover.
+ * the game is played on, taken from its cover, and a hue (`gameEmblemHue`)
+ * for the stamp it is on the Games page.
  *
  * A cover also moves. It is drawn in parts (`gameEmblemLayers`), each with
  * its own acting (game-acting.ts): the apps lay the parts over one another
@@ -17,6 +18,7 @@
 import { GAME_EMBLEM_SAMPLES, sample, type Cover, type GamePose } from './game-acting.js';
 import { COVERS } from './game-covers.js';
 import { Drawing, checkSize, prefixFor } from './svg.js';
+import type { HueName } from '../hues.js';
 
 export { GAME_EMBLEM_SAMPLES, type GamePose };
 
@@ -48,6 +50,25 @@ const TONES: Readonly<Record<GameEmblem, string>> = {
   'who-am-i': '#2fa7a0',
 };
 
+/**
+ * The hue each game's stamp is printed in (shared `hues.ts`): the one nearest
+ * the colour its own page is tinted with (`TONES`, above), so a game is the
+ * same colour on its stamp and at its table, and no two the same, so a page
+ * of stamps is told apart by colour before a word is read. A cover has to
+ * stand off its paper by night as well, when the paper is deep: the thief's
+ * night sky is lost on an indigo paper and stands clear of a gold one.
+ */
+const HUE_OF: Readonly<Record<GameEmblem, HueName>> = {
+  peyvok: 'green',
+  rhyme: 'pink',
+  race: 'orange',
+  'memory-thief': 'gold',
+  detective: 'blue',
+  'last-letter': 'indigo',
+  impostor: 'violet',
+  'who-am-i': 'teal',
+};
+
 export function isGameEmblem(v: unknown): v is GameEmblem {
   return (GAME_EMBLEMS as readonly unknown[]).includes(v);
 }
@@ -61,6 +82,12 @@ function coverOf(game: GameEmblem): Cover {
 export function gameEmblemTone(game: GameEmblem): string {
   coverOf(game);
   return TONES[game];
+}
+
+/** The hue a game's stamp is printed in. */
+export function gameEmblemHue(game: GameEmblem): HueName {
+  coverOf(game);
+  return HUE_OF[game];
 }
 
 /** A game's cover, still: every part where it is drawn. */

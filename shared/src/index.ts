@@ -674,6 +674,19 @@ export {
   TICKET_ART_STUB,
   TICKET_ART_TEAR,
   TICKET_ART_TILES,
+  STAMP_GLOW,
+  STAMP_GLOW_REACH,
+  STAMP_NIGHT_GLOW,
+  STAMP_SHAPE,
+  STAMP_SHELF_GLOW,
+  stampBox,
+  stampOutline,
+  stampPerforations,
+  stampShapeFor,
+  stampSize,
+  stampSvg,
+  type StampOptions,
+  type StampShape,
   CHEST_BOX,
   CHEST_FOOT,
   CHEST_HOP,
@@ -747,6 +760,7 @@ export {
   gameEmblemLayers,
   gameEmblemLoopMs,
   gameEmblemSvg,
+  gameEmblemHue,
   gameEmblemTone,
   isGameEmblem,
   type GameArtOptions,
@@ -875,6 +889,8 @@ export {
   type FireStage,
 } from './fire-stages.js';
 /** The learner's tree: its kinds and prices, how it grows with water and fares without it, planting and watering. */
+/** The nine hues things are coloured in beside the app's own violet, each in the same four steps, light and dark. */
+export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 export * from './tree.js';
 /** The kept streak's card coming alive: when its medal takes its turn and when each part of the card arrives, alike on both. */
 export { STREAK_LEAVE_MS, STREAK_LEAVE_POSE, smoothPoses, streakReveal, type MedalPose, type StreakReveal } from './streak-reveal.js';

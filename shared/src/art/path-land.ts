@@ -512,22 +512,22 @@ export type PathStopLook = (typeof PATH_STOP_LOOKS)[number];
  */
 export const PATH_STOP_TONES: Record<'light' | 'dark', Record<UnitTone, { fill: string; lip: string }>> = {
   light: {
-    meadow: { fill: '#2e7a52', lip: '#1f5739' },
-    river: { fill: '#2a6a93', lip: '#1c4c6b' },
-    clay: { fill: '#a9532f', lip: '#7d3c21' },
-    dusk: { fill: '#6551a6', lip: '#493a7d' },
-    pine: { fill: '#56692b', lip: '#3e4c1e' },
-    rose: { fill: '#a3446b', lip: '#78304e' },
-    saffron: { fill: '#9a6508', lip: '#6f4806' },
+    meadow: { fill: '#058644', lip: '#006531' },
+    river: { fill: '#0073df', lip: '#0157ac' },
+    clay: { fill: '#c45001', lip: '#973c00' },
+    dusk: { fill: '#6363eb', lip: '#4a47c0' },
+    pine: { fill: '#008282', lip: '#006262' },
+    rose: { fill: '#cd3688', lip: '#a51a6a' },
+    saffron: { fill: '#c37902', lip: '#8f5d04' },
   },
   dark: {
-    meadow: { fill: '#7fcf9f', lip: '#4d9a6c' },
-    river: { fill: '#86bfe8', lip: '#4f88b3' },
-    clay: { fill: '#eda585', lip: '#b46e50' },
-    dusk: { fill: '#b9aaf0', lip: '#8273bd' },
-    pine: { fill: '#bcd283', lip: '#849a4f' },
-    rose: { fill: '#eda0bf', lip: '#b56a8a' },
-    saffron: { fill: '#f0c060', lip: '#b88a2a' },
+    meadow: { fill: '#78d694', lip: '#459b61' },
+    river: { fill: '#91c1ff', lip: '#5188cd' },
+    clay: { fill: '#ffa47a', lip: '#c16d45' },
+    dusk: { fill: '#aeb8fe', lip: '#767ecd' },
+    pine: { fill: '#57d4d4', lip: '#009a9a' },
+    rose: { fill: '#fd9ac6', lip: '#bc668e' },
+    saffron: { fill: '#eeb154', lip: '#b07a20' },
   },
 };
 

@@ -39,11 +39,12 @@ import {
   impostorWaySvg,
   impostorWayTone,
 } from './impostor.js';
-import { GAME_EMBLEMS, GAME_EMBLEM_SAMPLES, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, gameEmblemTone, isGameEmblem } from './games.js';
+import { GAME_EMBLEMS, GAME_EMBLEM_SAMPLES, gameEmblemHue, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, gameEmblemTone, isGameEmblem } from './games.js';
+import { isHueName } from '../hues.js';
 import { LETTERS, letter } from './ink.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
-import { PATH_STOP_ART, PATH_STOP_LOOKS, pathSignpostSvg, pathLandSvg, pathStonesSvg, pathStopSvg, type PathStopLook } from './path-land.js';
+import { PATH_STOP_ART, PATH_STOP_LOOKS, PATH_STOP_TONES, pathSignpostSvg, pathLandSvg, pathStonesSvg, pathStopSvg, type PathStopLook } from './path-land.js';
 import { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg } from './path-landmark.js';
 import { PATH_CAIRN_GROUNDS, PATH_LANDMARKS, PATH_LANDS, cairnBox, trailStones } from '../path-world.js';
 import { lessonPath } from '../lesson-path.js';
@@ -799,6 +800,13 @@ describe('rankEmblemSvg', () => {
 });
 
 describe('leagueEmblemSvg', () => {
+  // the lone drop stands on the canvas's foot at the smallest size, where its shadow's radius once came out below nought
+  it('never writes a gradient with a radius below nought, at any size', () => {
+    for (const tier of LEAGUE_TIERS) {
+      for (const size of [24, 32, 40, 56, 72, 96, 128, 160]) expect(leagueEmblemSvg({ tier, size }), `${tier} at ${size}`).not.toMatch(/<radialGradient[^>]*\sr="-/);
+    }
+  });
+
   it('draws every water tier, large and small, differently and deterministically', () => {
     const all = LEAGUE_TIERS.map((tier) => leagueEmblemSvg({ tier }));
     expect(new Set(all).size).toBe(6);
@@ -1150,6 +1158,13 @@ describe('the games’ emblems', () => {
   it('gives every game a colour of its own for its page', () => {
     const tones = GAME_EMBLEMS.map((game) => gameEmblemTone(game));
     expect(new Set(tones).size).toBe(GAME_EMBLEMS.length);
+  });
+
+  it('prints every game’s stamp in a hue of its own', () => {
+    const hues = GAME_EMBLEMS.map((game) => gameEmblemHue(game));
+    for (const hue of hues) expect(isHueName(hue)).toBe(true);
+    expect(new Set(hues).size).toBe(GAME_EMBLEMS.length);
+    expect(() => gameEmblemHue('toString' as never)).toThrow(RangeError);
   });
 
   it('has a colour for every game’s card, and refuses a game it has never heard of', () => {
@@ -1589,8 +1604,9 @@ describe('the lesson path’s world', () => {
     // every look its own: the stop to do now in its chapter's colour, a finished one in gold
     const looks = PATH_STOP_LOOKS.map((look) => (['base', 'face'] as const).map((part) => pathStopSvg({ look, tone: 'clay', part, idPrefix: 's' })).join(''));
     expect(new Set(looks).size).toBe(PATH_STOP_LOOKS.length);
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain('#a9532f');
-    expect(pathStopSvg({ look: 'current', tone: 'river', part: 'face' })).toContain('#2a6a93');
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain(PATH_STOP_TONES.light.clay.fill);
+    expect(pathStopSvg({ look: 'current', tone: 'river', part: 'face' })).toContain(PATH_STOP_TONES.light.river.fill);
+    expect(PATH_STOP_TONES.light.clay.fill).not.toBe(PATH_STOP_TONES.light.river.fill);
     // gold is gold in every chapter: what was earned looks the same wherever it was earned
     expect(pathStopSvg({ look: 'done', tone: 'river', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
     expect(() => pathStopSvg({ look: 'gold' as PathStopLook, tone: 'clay', part: 'face' })).toThrow(RangeError);

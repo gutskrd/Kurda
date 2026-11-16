@@ -113,6 +113,7 @@ export {
   gameEmblemLayers,
   gameEmblemLoopMs,
   gameEmblemSvg,
+  gameEmblemHue,
   gameEmblemTone,
   isGameEmblem,
   type GameArtOptions,
@@ -122,6 +123,21 @@ export {
 } from './games.js';
 export { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailArtOptions, type EmailPicture } from './email.js';
 export { TICKET_ART_BOX, TICKET_ART_OUTLINE, TICKET_ART_PERFORATION, TICKET_ART_STUB, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
+export {
+  STAMP_GLOW,
+  STAMP_GLOW_REACH,
+  STAMP_NIGHT_GLOW,
+  STAMP_SHAPE,
+  STAMP_SHELF_GLOW,
+  stampBox,
+  stampOutline,
+  stampPerforations,
+  stampShapeFor,
+  stampSize,
+  stampSvg,
+  type StampOptions,
+  type StampShape,
+} from './stamp.js';
 export {
   CHEST_BOX,
   CHEST_FOOT,

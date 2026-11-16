@@ -634,7 +634,8 @@ export function crestMarkup(dr: Drawing, c: Crest, o: CrestOptions): { markup: s
   // the crest's own thickness under it, and its shadow on the page
   const pool = dr.id('w');
   const [, py] = P(pl, [0, footOf(rim)]);
-  dr.def(radialAt(pool, [[0, '#000000', 0.22], [1, '#000000', 0]], centre[0], py + 2, Math.min(pl.s * 1.1, 117 - py)));
+  // never past the foot of the canvas; a crest that stands on the very edge leaves no room, and a radius below nought is not a gradient at all
+  dr.def(radialAt(pool, [[0, '#000000', 0.22], [1, '#000000', 0]], centre[0], py + 2, Math.max(0.5, Math.min(pl.s * 1.1, 117 - py))));
   out.push(`<ellipse cx="${n(centre[0])}" cy="${n(py + 2)}" rx="${n(pl.s * 1.1)}" ry="${n(Math.max(2, pl.s * 0.18))}" fill="url(#${pool})"/>`);
   out.push(`<path d="${rounded(pl, rim, CORNER * BEZEL)}" transform="translate(0 ${n2(o.detail === 0 ? 2.4 : 1.8)})" fill="${c.metal.deep}" fill-opacity="0.55"/>`);
 
