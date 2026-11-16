@@ -5,6 +5,16 @@ import { forgetAnswers } from '../lib/apiMemory';
 import { forgetArrivals } from '../lib/motion';
 
 /*
+ * Tests never reach the network. The app's address is the live API, so a
+ * request a test has not stubbed (or one still in flight when a test ends and
+ * its stub is taken away) would otherwise go to the real server with a test
+ * token, and its refusal would set off a token refresh inside the next test.
+ * Every test that talks to the API stubs fetch itself; anything else fails
+ * here, offline, as a network error.
+ */
+globalThis.fetch = (() => Promise.reject(new TypeError('tests do not reach the network'))) as typeof fetch;
+
+/*
  * How long a findBy… or waitFor waits for the page to catch up. Testing
  * Library's own second is often not enough when the whole suite runs at once
  * on a busy machine, and a test that fails only then is a test nobody can

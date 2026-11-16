@@ -2,6 +2,14 @@ import { vi } from 'vitest';
 import { configure } from '@testing-library/dom';
 
 /*
+ * Tests never reach the network: the app's address is the live API, so a
+ * request a test has not stubbed would otherwise go to the real server. Every
+ * test that talks to the API stubs fetch itself; anything else fails here,
+ * offline, as a network error.
+ */
+globalThis.fetch = (() => Promise.reject(new TypeError('tests do not reach the network'))) as typeof fetch;
+
+/*
  * How long a findBy… or waitFor waits for a screen to catch up. Testing
  * Library's own second is often not enough for a screen drawn through
  * react-native-web, with its art, when the whole suite runs at once on a busy

@@ -12,6 +12,14 @@ import { act } from 'react';
 import { afterEach } from 'vitest';
 import { cleanupRendered } from './render';
 
+/*
+ * Tests never reach the network: the app's address is the live API, so a
+ * request a test has not stubbed would otherwise go to the real server. Every
+ * test that talks to the API stubs fetch itself; anything else fails here,
+ * offline, as a network error.
+ */
+globalThis.fetch = (() => Promise.reject(new TypeError('tests do not reach the network'))) as typeof fetch;
+
 type ActGlobal = { IS_REACT_ACT_ENVIRONMENT?: boolean };
 const actGlobal = globalThis as ActGlobal;
 actGlobal.IS_REACT_ACT_ENVIRONMENT = true;
