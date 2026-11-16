@@ -1193,7 +1193,7 @@
                     "voice": "hamo",
                     "prompt": "Don’t forget your medicine!",
                     "accepted": [
-                      "Dermanê xwe ji bîr meke!",
+                      "Dermanê xwe ji bîr neke!",
                       "Dermanê xwe ji bîr neke!"
                     ]
                   }
@@ -1459,9 +1459,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Kincên xwe li xwe bike. Êzing kom meke, û gotar jî tune!",
+                    "say": "Kincên xwe li xwe bike. Êzing kom neke, û gotar jî tune!",
                     "voice": "hamo",
-                    "prompt": "Kincên xwe li xwe bike. Êzing kom meke, û gotar jî tune!",
+                    "prompt": "Kincên xwe li xwe bike. Êzing kom neke, û gotar jî tune!",
                     "options": [
                       "Put your clothes back on. No gathering firewood, and no speeches either!",
                       "Take your clothes off. Gather firewood, and give a speech!",
@@ -2008,7 +2008,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Xem meke, Hevalo. Tu jî bêguneh î!",
+                        "text": "Xem neke, Hevalo. Tu jî bêguneh î!",
                         "en": "Don’t worry, Hevalo. You’re innocent too!"
                       }
                     ],
@@ -2191,8 +2191,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Xem meke, Hevalo, ez dizanim ku tu bêguneh î.",
-                    "reference": "Xem meke, Hevalo, ez dizanim ku tu bêguneh î."
+                    "prompt": "Xem neke, Hevalo, ez dizanim ku tu bêguneh î.",
+                    "reference": "Xem neke, Hevalo, ez dizanim ku tu bêguneh î."
                   }
                 }
               ]

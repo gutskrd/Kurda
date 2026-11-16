@@ -164,9 +164,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Xem meke, Baran. Baweriya me bi te heye.",
+                    "say": "Xem neke, Baran. Baweriya me bi te heye.",
                     "voice": "hamo",
-                    "prompt": "Xem meke, Baran. Baweriya me bi te heye.",
+                    "prompt": "Xem neke, Baran. Baweriya me bi te heye.",
                     "accepted": [
                       "Don’t worry, Baran. We trust you.",
                       "Don’t worry, Baran. We believe you.",
@@ -2020,7 +2020,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Meçe, Hevalo! Xem meke, em ê jî bên.",
+                        "text": "Neçe, Hevalo! Xem neke, em ê jî bên.",
                         "en": "Don’t go, Hevalo! Don’t worry, we’re coming too."
                       }
                     ],
@@ -3521,9 +3521,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Dapîr dibêje: kirasê xwe yê germ ji bîr meke!",
+                    "say": "Dapîr dibêje: kirasê xwe yê germ ji bîr neke!",
                     "voice": "hamo",
-                    "prompt": "Dapîr dibêje: kirasê xwe yê germ ji bîr meke!",
+                    "prompt": "Dapîr dibêje: kirasê xwe yê germ ji bîr neke!",
                     "accepted": [
                       "Dapîr says: don’t forget your warm shirt!",
                       "Dapîr says, don’t forget your warm shirt!",

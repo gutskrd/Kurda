@@ -324,7 +324,7 @@ const lexicons = new WeakMap<RoadPlan, Lexicon>();
 /**
  * The words that show an item is in a sentence. A single word is shown by any
  * of its forms, and so is an item written as alternatives (“im / me”,
- * “meke / mekin”), which is one word in its spellings. A phrase is shown by
+ * “neke / nekin”), which is one word in its spellings. A phrase is shown by
  * the forms it brings that nothing before
  * it did — “hez kirin” by hez, not by kirin, which every other sentence has —
  * and not by forms it shares with another item of its own lesson, so two

@@ -1820,10 +1820,10 @@
                   "type": "writing",
                   "payload": {
                     "ask": "missing",
-                    "say": "Gotarê ji bîr meke!",
+                    "say": "Gotarê ji bîr neke!",
                     "voice": "hamo",
                     "cue": "Don’t forget the speech!",
-                    "prompt": "Gotarê ji ___ meke!",
+                    "prompt": "Gotarê ji ___ neke!",
                     "accepted": [
                       "bîr"
                     ]
@@ -2003,7 +2003,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Na, meke! Efsaneya bavê min du demjimêr e.",
+                        "text": "Na, neke! Efsaneya bavê min du demjimêr e.",
                         "en": "No, don’t! My father’s legend takes two hours."
                       },
                       {
@@ -2013,7 +2013,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Meçe! Rûne, ez ê efsaneyê dîsa ji serî ve bibêjim.",
+                        "text": "Neçe! Rûne, ez ê efsaneyê dîsa ji serî ve bibêjim.",
                         "en": "Don’t go! Sit down, I’ll tell the legend again from the start."
                       }
                     ],
@@ -2405,7 +2405,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ji bîr meke, di xewna min de hemû kes dimînin!",
+                        "text": "Ji bîr neke, di xewna min de hemû kes dimînin!",
                         "en": "Don’t forget, in my dream everyone stays!"
                       }
                     ],
@@ -3312,7 +3312,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Xem meke. Baran bereket e.",
+                        "text": "Xem neke. Baran bereket e.",
                         "en": "Don’t worry. Rain is a blessing."
                       },
                       {

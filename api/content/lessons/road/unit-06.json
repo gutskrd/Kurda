@@ -1230,7 +1230,7 @@
           "position": 2,
           "titleKu": "Werin, rûnin!",
           "titleEn": "Come in, sit down!",
-          "grammarMd": "**Werin, rûnin!** Come in, sit down! An order to one person ends in **-e**, to more than one in **-in**, and most take **bi-** in front: *bide / bidin* give, *bibêje / bibêjin* say, and *bixwe* eat, *vexwe* drink.\n\n- Some have no bi-: *were* come, *here* go, *rûne* sit, *derkeve* go out.\n- “Don’t!” is **me-** in place of bi-: *meke!* don’t, *meçe!* don’t go, *metirse!* don’t be afraid.",
+          "grammarMd": "**Werin, rûnin!** Come in, sit down! An order to one person ends in **-e**, to more than one in **-in**, and most take **bi-** in front: *bide / bidin* give, *bibêje / bibêjin* say, and *bixwe* eat, *vexwe* drink.\n\n- Some have no bi-: *were* come, *here* go, *rûne* sit, *derkeve* go out.\n- “Don’t!” is **ne-** in place of bi-: *neke!* don’t, *neçe!* don’t go, *netirse!* don’t be afraid.",
           "lessons": [
             {
               "key": "u06s2l1",
@@ -1842,7 +1842,7 @@
             {
               "key": "u06s2l3",
               "position": 3,
-              "titleKu": "Meke!",
+              "titleKu": "Neke!",
               "titleEn": "Don’t!",
               "exercises": [
                 {
@@ -1850,15 +1850,15 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Çar şekir? Meke!",
+                    "say": "Çar şekir? Neke!",
                     "voice": "hamo",
                     "new": [
                       {
-                        "ku": "meke",
-                        "en": "don’t! (to one person; mekin to more)"
+                        "ku": "neke",
+                        "en": "don’t! (to one person; nekin to more)"
                       }
                     ],
-                    "prompt": "Çar şekir? Meke!",
+                    "prompt": "Çar şekir? Neke!",
                     "options": [
                       "Four sugars? Don’t!",
                       "Four sugars? Drink up!",
@@ -1876,7 +1876,7 @@
                     "voice": "hamo",
                     "prompt": "Ez çar şekiran dixwazim!",
                     "options": [
-                      "Meke! Bes e!",
+                      "Neke! Bes e!",
                       "Ser çavan!",
                       "Pîroz be!"
                     ],
@@ -1888,15 +1888,15 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Tu diçî bazarê? Meçe!",
+                    "say": "Tu diçî bazarê? Neçe!",
                     "voice": "hamo",
                     "new": [
                       {
-                        "ku": "meçe",
-                        "en": "don’t go! (to one person; meçin to more)"
+                        "ku": "neçe",
+                        "en": "don’t go! (to one person; neçin to more)"
                       }
                     ],
-                    "prompt": "Tu diçî bazarê? Meçe!",
+                    "prompt": "Tu diçî bazarê? Neçe!",
                     "options": [
                       "You’re going to the market? Don’t go!",
                       "You’re going to the market? Come back soon!",
@@ -1910,12 +1910,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Tu winda dibî, meçe!",
+                    "say": "Tu winda dibî, neçe!",
                     "voice": "hamo",
                     "prompt": "Tu winda dibî, ___!",
                     "options": [
-                      "meçe",
-                      "meke",
+                      "neçe",
+                      "neke",
                       "bixwe"
                     ],
                     "correctIndex": 0
@@ -1986,7 +1986,7 @@
                   "type": "conversation",
                   "payload": {
                     "id": "roadu06s2l3a",
-                    "title": "Meke!",
+                    "title": "Neke!",
                     "speakers": [
                       {
                         "name": "Hamo",
@@ -2004,7 +2004,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Diya te dibêje: Meke!",
+                        "text": "Diya te dibêje: Neke!",
                         "en": "Your mother says: Don’t!"
                       },
                       {
@@ -2014,7 +2014,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Diya te dibêje: Meçe! Tu winda dibî, bîra te tê?",
+                        "text": "Diya te dibêje: Neçe! Tu winda dibî, bîra te tê?",
                         "en": "Your mother says: Don’t go! You get lost, remember?"
                       },
                       {
@@ -2024,7 +2024,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Xem meke, xalo. Diya te ji te hez dike.",
+                        "text": "Xem neke, xalo. Diya te ji te hez dike.",
                         "en": "Don’t worry, uncle. Your mother loves you."
                       },
                       {
@@ -2055,9 +2055,9 @@
                     ],
                     "prompt": "Edûl çi dibêje?",
                     "options": [
-                      "Meke! Meçe!",
+                      "Neke! Neçe!",
                       "Bixwe! Vexwe!",
-                      "Xem meke!"
+                      "Xem neke!"
                     ],
                     "correctIndex": 0
                   }
@@ -2071,9 +2071,9 @@
                     "cue": "to more than one",
                     "prompt": "Don’t go to the market!",
                     "options": [
-                      "Meçin bazarê!",
-                      "Meçe bazarê!",
-                      "Meçin bazar!"
+                      "Neçin bazarê!",
+                      "Neçe bazarê!",
+                      "Neçin bazar!"
                     ],
                     "correctIndex": 0
                   }
@@ -2088,7 +2088,7 @@
                     "prompt": "Tu ji kûçikan ditirsî?",
                     "options": [
                       "Na, ez natirsim.",
-                      "Meçe!",
+                      "Neçe!",
                       "Ez li cem Lorînê me."
                     ],
                     "correctIndex": 0
@@ -2131,9 +2131,9 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ez derdikevim? Diya min dibêje: Meçe!",
-                      "Ez derdikevim? Diya min dibêje: Meçe",
-                      "Ez derdikevim? Diya min dibêje Meçe"
+                      "Ez derdikevim? Diya min dibêje: Neçe!",
+                      "Ez derdikevim? Diya min dibêje: Neçe",
+                      "Ez derdikevim? Diya min dibêje Neçe"
                     ]
                   }
                 },
@@ -2143,8 +2143,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Metirse, ez li cem te me.",
-                    "reference": "Metirse, ez li cem te me."
+                    "prompt": "Netirse, ez li cem te me.",
+                    "reference": "Netirse, ez li cem te me."
                   }
                 },
                 {
@@ -2358,7 +2358,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Fermo. Meke, hêdî!",
+                        "text": "Fermo. Neke, hêdî!",
                         "en": "Here you are. Careful, gently!"
                       },
                       {
@@ -2449,10 +2449,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Lorîn dibêje: Meçin, werin hundir! Wêneyekî kevn ji bo we heye.",
-                      "Lorîn dibêje meçin, werin hundir! Wêneyekî kevn ji bo we heye.",
-                      "Lorîn dibêje: Meçin, werin hundir! Wêneyekî kevn ji bo we heye",
-                      "Lorîn dibêje Meçin werin hundir! Wêneyekî kevn ji bo we heye"
+                      "Lorîn dibêje: Neçin, werin hundir! Wêneyekî kevn ji bo we heye.",
+                      "Lorîn dibêje neçin, werin hundir! Wêneyekî kevn ji bo we heye.",
+                      "Lorîn dibêje: Neçin, werin hundir! Wêneyekî kevn ji bo we heye",
+                      "Lorîn dibêje Neçin werin hundir! Wêneyekî kevn ji bo we heye"
                     ]
                   }
                 },
@@ -2858,7 +2858,7 @@
                     "options": [
                       "Belê, ez dikarim!",
                       "Ez jî dipirsim.",
-                      "Meçe!"
+                      "Neçe!"
                     ],
                     "correctIndex": 0
                   }
@@ -3025,7 +3025,7 @@
                     "options": [
                       "Dibe ku.",
                       "Jin û mêr.",
-                      "Meke!"
+                      "Neke!"
                     ],
                     "correctIndex": 0
                   }
@@ -3054,7 +3054,7 @@
                     "cue": "to one person",
                     "prompt": "Don’t be afraid!",
                     "options": [
-                      "Metirse!",
+                      "Netirse!",
                       "Natirse!",
                       "Ditirse!"
                     ],

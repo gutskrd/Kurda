@@ -1948,15 +1948,15 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Xem meke! Simbêlê min reş e.",
+                    "say": "Xem neke! Simbêlê min reş e.",
                     "voice": "hamo",
                     "new": [
                       {
-                        "ku": "Xem meke!",
+                        "ku": "Xem neke!",
                         "en": "Don’t worry!"
                       }
                     ],
-                    "prompt": "Xem meke! Simbêlê min reş e.",
+                    "prompt": "Xem neke! Simbêlê min reş e.",
                     "options": [
                       "Don’t worry! My moustache is still black.",
                       "Don’t worry! My moustache is grey.",
@@ -1974,7 +1974,7 @@
                     "voice": "hamo",
                     "prompt": "Bîra min nayê ez çend salî me!",
                     "options": [
-                      "Xem meke!",
+                      "Xem neke!",
                       "Rojbûna te pîroz be!",
                       "Ez pênc salî me."
                     ],
@@ -2076,7 +2076,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Xem meke! Simbêlê min reş e.",
+                        "text": "Xem neke! Simbêlê min reş e.",
                         "en": "Don’t worry! My moustache is still black."
                       }
                     ],
@@ -2142,8 +2142,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Bîra min nayê, lê xem meke!",
-                    "reference": "Bîra min nayê, lê xem meke!"
+                    "prompt": "Bîra min nayê, lê xem neke!",
+                    "reference": "Bîra min nayê, lê xem neke!"
                   }
                 },
                 {
@@ -3014,9 +3014,9 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Xem meke, ez şiyar dibim û radibim!",
-                      "Xem meke, ez şiyar dibim û radibim",
-                      "Xem meke ez şiyar dibim û radibim"
+                      "Xem neke, ez şiyar dibim û radibim!",
+                      "Xem neke, ez şiyar dibim û radibim",
+                      "Xem neke ez şiyar dibim û radibim"
                     ]
                   }
                 },
@@ -3541,7 +3541,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Sibehê, xem meke! Ez ne zarok im.",
+                        "text": "Sibehê, xem neke! Ez ne zarok im.",
                         "en": "In the morning, don’t worry! I’m not a child."
                       },
                       {

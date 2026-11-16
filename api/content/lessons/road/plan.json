@@ -1276,11 +1276,11 @@
               "titleKu": "Pîroz be!",
               "titleEn": "Happy birthday!",
               "focus": "talk",
-              "beat": "Hamo announces that since nobody knows his birthday he will have one today, and again tomorrow, to be safe. “Bîra min nayê,” he admits, when you ask what year he was born. “Xem meke!” he tells you: a man is as old as his moustache, and his moustache is young.",
+              "beat": "Hamo announces that since nobody knows his birthday he will have one today, and again tomorrow, to be safe. “Bîra min nayê,” he admits, when you ask what year he was born. “Xem neke!” he tells you: a man is as old as his moustache, and his moustache is young.",
               "voice": "hamo",
               "new": [
                 {"ku": "Pîroz be!", "en": "Congratulations! Happy …! (… pîroz be)", "pos": "phrase", "forms": ["pîroz", "be"]},
-                {"ku": "Xem meke!", "en": "Don’t worry!", "pos": "phrase", "forms": ["xem", "meke"]},
+                {"ku": "Xem neke!", "en": "Don’t worry!", "pos": "phrase", "forms": ["xem", "neke"]},
                 {"ku": "bîr", "en": "memory (bîra min: I remember)", "pos": "noun", "gender": "f", "forms": ["bîr", "bîrên", "bîran", "bîrek", "bîra", "bîrê", "bîreke"]},
                 {"ku": "dîsa", "en": "again", "pos": "adv", "forms": ["dîsa"]}
               ]
@@ -1515,8 +1515,8 @@
           "position": 2,
           "titleKu": "Werin, rûnin!",
           "titleEn": "Come in, sit down!",
-          "grammar": "the imperative: bi- + present stem + -e for one, -in for more (bide, bidin); were, here, rûne without bi-; “don’t” with me- (meke, meçe)",
-          "grammarMd": "**Werin, rûnin!** Come in, sit down! An order to one person ends in **-e**, to more than one in **-in**, and most take **bi-** in front: *bide / bidin* give, *bibêje / bibêjin* say, and *bixwe* eat, *vexwe* drink.\n\n- Some have no bi-: *were* come, *here* go, *rûne* sit, *derkeve* go out.\n- “Don’t!” is **me-** in place of bi-: *meke!* don’t, *meçe!* don’t go, *metirse!* don’t be afraid.",
+          "grammar": "the imperative: bi- + present stem + -e for one, -in for more (bide, bidin); were, here, rûne without bi-; “don’t” with ne- (neke, neçe)",
+          "grammarMd": "**Werin, rûnin!** Come in, sit down! An order to one person ends in **-e**, to more than one in **-in**, and most take **bi-** in front: *bide / bidin* give, *bibêje / bibêjin* say, and *bixwe* eat, *vexwe* drink.\n\n- Some have no bi-: *were* come, *here* go, *rûne* sit, *derkeve* go out.\n- “Don’t!” is **ne-** in place of bi-: *neke!* don’t, *neçe!* don’t go, *netirse!* don’t be afraid.",
           "lessons": [
             {
               "key": "u06s2l1",
@@ -1555,15 +1555,15 @@
             {
               "key": "u06s2l3",
               "position": 3,
-              "titleKu": "Meke!",
+              "titleKu": "Neke!",
               "titleEn": "Don’t!",
               "focus": "talk",
-              "beat": "Hamo wants four sugars in his tea; his mother says “Meke!” He wants to walk to the old market alone; she says “Meçe!”: he gets lost, remember? He says he is afraid of nothing in Kobanî except his mother. Then he whispers a question to you: the other half of the photo, is it with Lorîn? You go and ask her for him.",
+              "beat": "Hamo wants four sugars in his tea; his mother says “Neke!” He wants to walk to the old market alone; she says “Neçe!”: he gets lost, remember? He says he is afraid of nothing in Kobanî except his mother. Then he whispers a question to you: the other half of the photo, is it with Lorîn? You go and ask her for him.",
               "voice": "hamo",
               "new": [
-                {"ku": "meke / mekin", "en": "don’t!", "pos": "verb", "forms": ["meke", "mekin"]},
-                {"ku": "meçe / meçin", "en": "don’t go!", "pos": "verb", "forms": ["meçe", "meçin"]},
-                {"ku": "tirsîn", "en": "to be afraid (ji … tirsîn)", "pos": "verb", "forms": ["tirsîn", "ditirsim", "ditirsî", "ditirse", "ditirsin", "natirsim", "natirse", "metirse", "metirsin"]},
+                {"ku": "neke / nekin", "en": "don’t!", "pos": "verb", "forms": ["neke", "nekin"]},
+                {"ku": "neçe / neçin", "en": "don’t go!", "pos": "verb", "forms": ["neçe", "neçin"]},
+                {"ku": "tirsîn", "en": "to be afraid (ji … tirsîn)", "pos": "verb", "forms": ["tirsîn", "ditirsim", "ditirsî", "ditirse", "ditirsin", "natirsim", "natirse", "netirse", "netirsin"]},
                 {"ku": "li cem", "en": "at (someone’s place), with", "pos": "prep", "forms": ["li", "cem"]}
               ]
             },
@@ -1631,7 +1631,7 @@
               "new": [
                 {"ku": "çîrok", "en": "story, tale", "pos": "noun", "gender": "f", "forms": ["çîrok", "çîrokên", "çîrokan", "çîrokek", "çîroka", "çîrokê", "çîrokeke"]},
                 {"ku": "gotina pêşiyan", "en": "proverb", "pos": "phrase", "forms": ["gotina", "pêşiyan", "gotin", "gotinên", "gotinan"]},
-                {"ku": "vekirin", "en": "to open", "pos": "verb", "forms": ["vekirin", "vedikim", "vedikî", "vedike", "vedikin", "venakim", "venake", "vekî", "vekin", "vemeke", "vemekin", "venekin", "veke", "vekim"]},
+                {"ku": "vekirin", "en": "to open", "pos": "verb", "forms": ["vekirin", "vedikim", "vedikî", "vedike", "vedikin", "venakim", "venake", "vekî", "vekin", "veneke", "venekin", "veke", "vekim"]},
                 {"ku": "girtin", "en": "to take, to hold; to close", "pos": "verb", "forms": ["girtin", "digirim", "digirî", "digire", "digirin", "nagirim", "nagire", "bigirî", "bigirin", "bigire", "bigirim"]}
               ]
             },
@@ -3476,7 +3476,6 @@
     {"ku": "ask", "reason": "ask is the word for deer (pezkûvî is a wild sheep or goat); its gender is not marked in the dictionaries and the course takes it as feminine — confirm, and whether the owner prefers xezal or mamiz anywhere"},
     {"ku": "zozan", "reason": "zozan: dictionaries disagree on its gender; the course takes it as feminine and mostly uses it in the plural (li zozanan) — confirm"},
     {"ku": "piştên", "reason": "piştên (sash) is the only attested spelling; its gender (the course treats it as masculine) is not in the dictionaries — confirm"},
-    {"ku": "me-", "reason": "the negative imperative: the course keeps the me- of the written standard (meke, meçe, Xem meke); in writing today ne- (neke, Xem neke) is about ten times as common, and both are correct — confirm which the owner wants taught"},
     {"ku": "Zimanê şîrîn mar ji qulê derdixe", "reason": "the proverbs take forms the collections attest: “Zimanê şîrîn mar ji qulê derdixe” (Wîkîferheng has “Gotina xweş mar ji qulê derdixe”), “Av dilop dilop dibe gol”, and “Çiya çiqas bilind be, wê rê pê keve” (the dictionary has “… wê rojekê rê pê bikeve”) — confirm"},
     {"ku": "demjimêr", "reason": "demjimêr (hour, clock) replaces the Arabic loan saet, as Kurdish schools and broadcasters write it; saet is still what many people say — confirm"},
     {"ku": "mêwe", "reason": "mêwe (fruit, feminine) replaces fêkî, from Arabic; fêkî is the commoner word in speech in the north — confirm"},

@@ -4037,9 +4037,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hingê bavê min li ber derî got: here, lê zimanê dayikê û rehên xwe ji bîr meke.",
+                    "say": "Hingê bavê min li ber derî got: here, lê zimanê dayikê û rehên xwe ji bîr neke.",
                     "voice": "hamo",
-                    "prompt": "Hingê bavê min li ber derî got: here, lê zimanê dayikê û rehên xwe ji bîr meke.",
+                    "prompt": "Hingê bavê min li ber derî got: here, lê zimanê dayikê û rehên xwe ji bîr neke.",
                     "accepted": [
                       "Then my father said at the door: go, but don’t forget your mother tongue and your roots.",
                       "Then my father, at the door, said: go, but don’t forget your mother tongue or your roots.",
