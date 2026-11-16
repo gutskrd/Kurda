@@ -2135,13 +2135,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Penîr spî ye?",
+                    "say": "Penîr an hêk?",
                     "voice": "hamo",
-                    "prompt": "Penîr spî ye?",
+                    "prompt": "Penîr an hêk?",
                     "options": [
-                      "Erê, penîr spî ye.",
-                      "Erê, ez spî me.",
-                      "Na, ew penîr e."
+                      "Penîr, spas!",
+                      "Ez baş im, spas.",
+                      "Ew spî ye."
                     ],
                     "correctIndex": 0
                   }
@@ -2263,8 +2263,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Kî? Hevalo? Na, Hevalo sêv dixwaze, ne reng.",
-                        "en": "Who did it? Hevalo? No, Hevalo wants apples, not paint."
+                        "text": "Ne Hevalo ye. Hevalo sêv dixwaze, ne reng.",
+                        "en": "It isn’t Hevalo. Hevalo wants apples, not paint."
                       },
                       {
                         "speaker": 1,

@@ -337,13 +337,118 @@
       "cover": null,
       "readingMinutes": null,
       "title": "Nexşeya kevn",
-      "summary": "Li bin dara gûzê nîvê wêneyekî kevn heye. Û li ser pencereyê rengekî zer: kî?",
-      "body": "Silav, heval! Ev nexşeya Sêvanê ye, gelek kevn e. Ez nizanim… Baş e: ew nexşeya min û Lorînê ye, xwişka min!\n\nLi ser nexşeyê deriyê şîn, dibistan, dikan û kanî hene. Li ber kaniyê dara gûzê ye.\n\nLi bin dara gûzê nîvê wêneyekî kevn heye. Di wêneyî de ez û Lorîn zarok in. Sêv di devê Lorînê de ye! Nîvek li bin nivîna min e. Nîvek li Kobaniyê ye, bi Lorînê re. Wêne du nîv e, malbat yek e.\n\nÎro li ser pencereya min rengekî zer heye. Kî? Destên Hêviyê zer in! Û Hevalo sêv dixwaze, ne nexşe!\n\nSibe em li bajêr in: ez, tu, Hevalo û Bozo. Niha çay, li ser banî. Şev baş!",
+      "summary": "Nexşeyeke kevn, bizineke birçî û nîvê wêneyekî li pişt dara gûzê.",
+      "body": "Rûne, çay germ e. Binêre, ev nexşeya Sêvanê ye, gelek kevn e. Ew nexşeya min û Lorînê ye, xwişka min.\n\nLi ser nexşeyê deriyê şîn, dibistan, dikan û kanî hene. Li ber kaniyê dara gûzê ye.\n\nBizina spî nexşeyê dixwe! Fermo, bizinê, ev nan ji te re. Bizin nan dixwe, ne nexşe.\n\nPozê Hevalo li pişt dara gûzê ye. Li wir nîvê wêneyekî kevn heye. Di wêneyî de ez û Lorîn zarok in. Sêv di devê Lorînê de ye! Nîvek li vir e, nîvek li Kobaniyê ye, li mala Lorînê.\n\nÎro li ser pencereyê rengekî zer heye. Destên Hêviyê jî zer in! Û Hevalo sêv dixwaze, ne nexşe.\n\nSibe em li bajêr in. Niha çaya xwe vexwe. Şev baş!",
       "translations": {
-        "en": "Hello, friend! This is a map of Sêvan, and it is very old. I don’t know… All right: it is my map and Lorîn’s, my sister’s!\n\nOn the map are the blue gate, the school, the shop and the spring. By the spring is the walnut tree.\n\nUnder the walnut tree there is half of an old photo. In the photo Lorîn and I are children. Lorîn has an apple in her mouth! One half is under my bed. One half is in Kobanî, with Lorîn. The photo is in two halves, but the family is one.\n\nToday there is some yellow on my window. Who? Hêvî’s hands are yellow! And Hevalo wants apples, not maps!\n\nTomorrow we go to town: me, you, Hevalo and Bozo. Now, tea, up on the roof. Good night!"
+        "en": "Sit down, the tea is hot. Look, this is a map of Sêvan, and it is very old. It is my map and Lorîn’s, my sister’s.\n\nOn the map are the blue gate, the school, the shop and the spring. By the spring is the walnut tree.\n\nThe white goat is eating the map! Here you are, goat, this bread is for you. The goat eats the bread, not the map.\n\nHevalo’s nose is behind the walnut tree. There is half of an old photo there. In the photo Lorîn and I are children. Lorîn has an apple in her mouth! One half is here, the other half is in Kobanî, at Lorîn’s house.\n\nToday there is some yellow on the window. Hêvî’s hands are yellow too! And Hevalo wants apples, not maps.\n\nTomorrow we go to town. Now drink your tea. Good night!"
       },
       "glossary": [],
       "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Lorîn kî ye?",
+          "promptEn": "Who is Lorîn?",
+          "options": [
+            "Keça Hamo",
+            "Xwişka Hamo",
+            "Mamosteya dibistanê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “ew nexşeya min û Lorînê ye, xwişka min.”",
+          "explanationEn": "Hamo says: “it is my map and Lorîn’s, my sister’s.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Nîvê wêneyê li ku ye?",
+          "promptEn": "Where is the half of the photo?",
+          "options": [
+            "Li ser banî",
+            "Di tenûrê de",
+            "Li pişt dara gûzê"
+          ],
+          "correctIndex": 2,
+          "explanation": "Pozê Hevalo li pişt dara gûzê ye, û li wir nîvê wêneyekî kevn heye.",
+          "explanationEn": "Hevalo’s nose is behind the walnut tree, and the half photo is there.",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Nîvek li vir e. Nîvek li ku ye?",
+          "promptEn": "One half is here. Where is the other half?",
+          "options": [
+            "Li dikanê",
+            "Li Kobaniyê",
+            "Li dibistanê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “nîvek li Kobaniyê ye, li mala Lorînê.”",
+          "explanationEn": "Hamo says: “the other half is in Kobanî, at Lorîn’s house.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 4
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev nexşeya ku derê ye?",
+          "promptEn": "What is this a map of?",
+          "options": [
+            "Nexşeya Sêvanê",
+            "Nexşeya Amedê",
+            "Nexşeya Kobaniyê"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “ev nexşeya Sêvanê ye.”",
+          "explanationEn": "Hamo says: “this is a map of Sêvan.”",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
+        },
+        {
+          "kind": "detail",
+          "prompt": "Bizina spî çi dixwe?",
+          "promptEn": "What does the white goat eat?",
+          "options": [
+            "Nan",
+            "Sêv",
+            "Kulîlk"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Bizin nan dixwe, ne nexşe.”",
+          "explanationEn": "“The goat eats the bread, not the map.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "Li ser pencereyê rengekî zer heye. Kî?",
+          "promptEn": "There is some yellow on the window. Who did it?",
+          "options": [
+            "Hêvî",
+            "Hevalo",
+            "Lorîn"
+          ],
+          "correctIndex": 0,
+          "explanation": "Destên Hêviyê jî zer in!",
+          "explanationEn": "Hêvî’s hands are yellow too!",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hevalo çi dixwaze?",
+          "promptEn": "What does Hevalo want?",
+          "options": [
+            "Nexşe",
+            "Sêv",
+            "Nan"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Hevalo sêv dixwaze, ne nexşe.”",
+          "explanationEn": "“Hevalo wants apples, not maps.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 2
+        },
         {
           "kind": "vocabulary",
           "prompt": "Nexşe gelek kevn e. “Kevn” çi ye?",
@@ -360,81 +465,6 @@
           "evidenceSentence": 1
         },
         {
-          "kind": "detail",
-          "prompt": "Lorîn kî ye?",
-          "promptEn": "Who is Lorîn?",
-          "options": [
-            "Keça Hamo",
-            "Xwişka Hamo",
-            "Mamosteya dibistanê"
-          ],
-          "correctIndex": 1,
-          "explanation": "Hamo dibêje: “ew nexşeya min û Lorînê ye, xwişka min!”",
-          "explanationEn": "Hamo says: “it is my map and Lorîn’s, my sister’s!”",
-          "evidenceParagraph": 0,
-          "evidenceSentence": 3
-        },
-        {
-          "kind": "detail",
-          "prompt": "Nîvê wêneyê li ku ye?",
-          "promptEn": "Where is the half of the photo?",
-          "options": [
-            "Li ser banî",
-            "Di tenûrê de",
-            "Li bin dara gûzê"
-          ],
-          "correctIndex": 2,
-          "explanation": "“Li bin dara gûzê nîvê wêneyekî kevn heye.”",
-          "explanationEn": "“Under the walnut tree there is half of an old photo.”",
-          "evidenceParagraph": 2,
-          "evidenceSentence": 0
-        },
-        {
-          "kind": "detail",
-          "prompt": "Nîvek li Kobaniyê ye. Nîvek li ku ye?",
-          "promptEn": "One half is in Kobanî. Where is the other half?",
-          "options": [
-            "Li dikanê",
-            "Li bin nivîna Hamo",
-            "Li dibistanê"
-          ],
-          "correctIndex": 1,
-          "explanation": "Hamo dibêje: “Nîvek li bin nivîna min e.”",
-          "explanationEn": "Hamo says: “One half is under my bed.”",
-          "evidenceParagraph": 2,
-          "evidenceSentence": 3
-        },
-        {
-          "kind": "inference",
-          "prompt": "Wêne du nîv e. Malbat çawa ye?",
-          "promptEn": "The photo is in two halves. What about the family?",
-          "options": [
-            "Malbat du ye",
-            "Malbat yek e",
-            "Malbat sar e"
-          ],
-          "correctIndex": 1,
-          "explanation": "Hamo dibêje: “Wêne du nîv e, malbat yek e.”",
-          "explanationEn": "Hamo says: “The photo is in two halves, but the family is one.”",
-          "evidenceParagraph": 2,
-          "evidenceSentence": 5
-        },
-        {
-          "kind": "inference",
-          "prompt": "Li ser pencereyê rengekî zer heye. Kî zer e?",
-          "promptEn": "There is some yellow on the window. Who is yellow?",
-          "options": [
-            "Hêvî",
-            "Hevalo",
-            "Lorîn"
-          ],
-          "correctIndex": 0,
-          "explanation": "“Destên Hêviyê zer in!”",
-          "explanationEn": "“Hêvî’s hands are yellow!”",
-          "evidenceParagraph": 3,
-          "evidenceSentence": 2
-        },
-        {
           "kind": "sequence",
           "prompt": "Sibe Hamo li ku ye?",
           "promptEn": "Where will Hamo be tomorrow?",
@@ -444,25 +474,10 @@
             "Li dibistanê"
           ],
           "correctIndex": 1,
-          "explanation": "“Sibe em li bajêr in: ez, tu, Hevalo û Bozo.”",
-          "explanationEn": "“Tomorrow we go to town: me, you, Hevalo and Bozo.”",
-          "evidenceParagraph": 4,
+          "explanation": "“Sibe em li bajêr in.”",
+          "explanationEn": "“Tomorrow we go to town.”",
+          "evidenceParagraph": 5,
           "evidenceSentence": 0
-        },
-        {
-          "kind": "gist",
-          "prompt": "Ev nexşeya ku derê ye?",
-          "promptEn": "What is this a map of?",
-          "options": [
-            "Nexşeya Sêvanê",
-            "Nexşeya Amedê",
-            "Nexşeya Kobaniyê"
-          ],
-          "correctIndex": 0,
-          "explanation": "Hamo dibêje: “Ev nexşeya Sêvanê ye.”",
-          "explanationEn": "Hamo says: “This is a map of Sêvan.”",
-          "evidenceParagraph": null,
-          "evidenceSentence": null
         }
       ]
     },
@@ -480,10 +495,10 @@
       "cover": null,
       "readingMinutes": null,
       "title": "Selika vala",
-      "summary": "Roja bazarê: çaya Mîrza, şekirê zêde û selikeke vala. Kes nizane kî sêvan dixwe…",
-      "body": "Îro roja bazarê ye. Em diçin bajêr: ez, tu, Hevalo û Bozo. Bozo li kulîlkan dinêre, ez li simbêlê xwe, di çem de.\n\nMîrza firoşkar e, ew sêv û mêwe difiroşe. Em çay vedixwin. Ez sê kevçî şekir dixwazim. Mîrza dibêje: zêde ye!\n\nSelikeke sêvan bi pêncî ye. Ez dibêjim: biha ye, çil! Mîrza dibêje: na, na! Ez pêncî didim. Erzan e!\n\nLê selika Mîrza vala ye! Kes nizane çima. Hevalo li min nanêre. Zikê wî tije ye, û li ser pozê wî sêv heye. Hemû dikenin.\n\nLi ser rê, Lorîn li ser telefonê ye, ji Kobaniyê. Diya me dibêje: hûn hemû tên! Kobanî, em tên!",
+      "summary": "Roja bazarê: çaya Mîrza, şekirê zêde û selikeke vala. Kes nizane kî sêvan dixwe.",
+      "body": "Îro roja bazarê ye. Em diçin bajêr, ez, tu, Hevalo û Bozo. Bozo li kulîlkan dinêre. Ez di çem de li simbêlê xwe dinêrim.\n\nMîrza sêvan difiroşe û gelek diaxive. Ez çaya wî bi sê kevçî şekir vedixwim. Mîrza dibêje ku zêde ye.\n\nSelikek sêv bi pêncî ye. Ez dibêjim ku biha ye, çil! Mîrza dibêje na. Ez pêncî didim, û dibêjim ku erzan e.\n\nLê selika Mîrza vala ye! Kes nizane çima. Hevalo li min nanêre. Zikê wî tije ye, û li ser pozê wî sêv heye. Bi simbêlê min, Hevalo sêvan naxwe! Kes bawer nake. Hemû dikenin.\n\nLi ser rê, Lorîn ji Kobaniyê li ser telefonê ye. Diya me dibêje ku em hemû tên Kobaniyê. Tu jî têyî?",
       "translations": {
-        "en": "Today is market day. We are going to town: me, you, Hevalo and Bozo. Bozo looks at the flowers, and I look at my moustache, in the river.\n\nMîrza is a seller; he sells apples and fruit. We drink tea. I want three spoonfuls of sugar. Mîrza says: too much!\n\nA basket of apples is fifty. I say: too expensive, forty! Mîrza says: no, no! I pay fifty. It’s cheap!\n\nBut Mîrza’s basket is empty! Nobody knows why. Hevalo won’t look at me. His belly is full, and there is apple on his nose. Everyone laughs.\n\nOn the road, Lorîn is on the phone, from Kobanî. Our mother says: you are all coming! Kobanî, here we come!"
+        "en": "Today is market day. We are going to town: me, you, Hevalo and Bozo. Bozo looks at the flowers. I look at my moustache in the river.\n\nMîrza sells apples and talks a lot. I drink his tea with three spoonfuls of sugar. Mîrza says that is too much.\n\nA basket of apples is fifty. I say it is too expensive: forty! Mîrza says no. I pay fifty, and I say it is cheap.\n\nBut Mîrza’s basket is empty! Nobody knows why. Hevalo won’t look at me. His belly is full, and there is apple on his nose. By my moustache, Hevalo doesn’t eat apples! Nobody believes it. Everyone laughs.\n\nOn the road, Lorîn is on the phone from Kobanî. Our mother says we are all to come to Kobanî. Are you coming too?"
       },
       "glossary": [],
       "questions": [
@@ -493,19 +508,19 @@
           "promptEn": "What does Mîrza sell?",
           "options": [
             "Goşt",
-            "Sêv û mêwe",
-            "Nivîn"
+            "Sêv",
+            "Nan"
           ],
           "correctIndex": 1,
-          "explanation": "“Mîrza firoşkar e, ew sêv û mêwe difiroşe.”",
-          "explanationEn": "“Mîrza is a seller; he sells apples and fruit.”",
+          "explanation": "“Mîrza sêvan difiroşe.”",
+          "explanationEn": "“Mîrza sells apples.”",
           "evidenceParagraph": 1,
           "evidenceSentence": 0
         },
         {
           "kind": "vocabulary",
-          "prompt": "Mîrza dibêje: zêde ye! “Zêde” çi ye?",
-          "promptEn": "Mîrza says: zêde ye! What does “zêde” mean?",
+          "prompt": "Mîrza dibêje ku zêde ye. “Zêde” çi ye?",
+          "promptEn": "Mîrza says it is zêde. What does “zêde” mean?",
           "options": [
             "Gelek e",
             "Hinek e",
@@ -515,7 +530,7 @@
           "explanation": "Sê kevçî şekir gelek e: zêde ye!",
           "explanationEn": "Three spoonfuls of sugar is a lot: too much!",
           "evidenceParagraph": 1,
-          "evidenceSentence": 3
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -534,21 +549,6 @@
         },
         {
           "kind": "inference",
-          "prompt": "Hevalo li Hamo nanêre. Çima?",
-          "promptEn": "Hevalo won’t look at Hamo. Why?",
-          "options": [
-            "Ew sêvan dixwe",
-            "Ew birçî ye",
-            "Ew li çem dinêre"
-          ],
-          "correctIndex": 0,
-          "explanation": "Hevalo dizane: sêv li ser pozê wî ye.",
-          "explanationEn": "Hevalo knows: the apple is on his nose.",
-          "evidenceParagraph": 3,
-          "evidenceSentence": 2
-        },
-        {
-          "kind": "inference",
           "prompt": "Çima selika Mîrza vala ye?",
           "promptEn": "Why is Mîrza’s basket empty?",
           "options": [
@@ -563,6 +563,36 @@
           "evidenceSentence": 3
         },
         {
+          "kind": "inference",
+          "prompt": "Hevalo li Hamo nanêre. Çima?",
+          "promptEn": "Hevalo won’t look at Hamo. Why?",
+          "options": [
+            "Ew sêvan dixwe",
+            "Ew birçî ye",
+            "Ew li çem dinêre"
+          ],
+          "correctIndex": 0,
+          "explanation": "Li ser pozê Hevalo sêv heye.",
+          "explanationEn": "There is apple on Hevalo’s nose.",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Bozo li çi dinêre?",
+          "promptEn": "What does Bozo look at?",
+          "options": [
+            "Li sêvan",
+            "Li kulîlkan",
+            "Li çem"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Bozo li kulîlkan dinêre.”",
+          "explanationEn": "“Bozo looks at the flowers.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
+        },
+        {
           "kind": "sequence",
           "prompt": "Li ser rê, kî li ser telefonê ye?",
           "promptEn": "On the road, who is on the phone?",
@@ -572,8 +602,8 @@
             "Lorîn"
           ],
           "correctIndex": 2,
-          "explanation": "“Li ser rê, Lorîn li ser telefonê ye, ji Kobaniyê.”",
-          "explanationEn": "“On the road, Lorîn is on the phone, from Kobanî.”",
+          "explanation": "“Li ser rê, Lorîn ji Kobaniyê li ser telefonê ye.”",
+          "explanationEn": "“On the road, Lorîn is on the phone from Kobanî.”",
           "evidenceParagraph": 4,
           "evidenceSentence": 0
         },
@@ -582,13 +612,13 @@
           "prompt": "Diya Hamo çi dibêje?",
           "promptEn": "What does Hamo’s mother say?",
           "options": [
-            "Pere tune!",
-            "Hûn hemû tên!",
-            "Bes e!"
+            "Pere tune",
+            "Hûn hemû tên Kobaniyê",
+            "Bes e"
           ],
           "correctIndex": 1,
-          "explanation": "“Diya me dibêje: hûn hemû tên!”",
-          "explanationEn": "“Our mother says: you are all coming!”",
+          "explanation": "“Diya me dibêje ku em hemû tên Kobaniyê.”",
+          "explanationEn": "“Our mother says we are all to come to Kobanî.”",
           "evidenceParagraph": 4,
           "evidenceSentence": 1
         },

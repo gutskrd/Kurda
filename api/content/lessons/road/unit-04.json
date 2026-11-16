@@ -708,7 +708,7 @@
                     "prompt": "Tu bi kurdî diaxivî?",
                     "options": [
                       "Do you speak Kurdish?",
-                      "Do you sell Kurdish things?",
+                      "Do you understand Kurdish?",
                       "Do you know Kurdish songs?"
                     ],
                     "correctIndex": 0
@@ -3149,8 +3149,8 @@
                     "prompt": "Ez pere didim.",
                     "options": [
                       "I’m paying.",
-                      "I’m buying money.",
-                      "I want money."
+                      "I need money.",
+                      "I’m selling."
                     ],
                     "correctIndex": 0
                   }
