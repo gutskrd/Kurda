@@ -206,6 +206,8 @@ export function ClayButton({
   // gives a little under the finger and springs back (animate.ts); still under Reduce Motion, where it fades instead
   const press = usePressScale(!off);
   const reduce = useReducedMotion();
+  // the icon leads the label on the side the language starts from, and the badge closes it on the far one
+  const dir = useDirection();
   return (
     <Pressable
       onPress={onPress}
@@ -222,7 +224,7 @@ export function ClayButton({
         style={[
           styles.clay,
           size === 'large' && styles.clayLarge,
-          { backgroundColor: fill, borderColor: edge, transform: [{ scale: press.scale }] },
+          { flexDirection: dir.row, backgroundColor: fill, borderColor: edge, transform: [{ scale: press.scale }] },
         ]}
       >
         {busy ? (
@@ -272,6 +274,8 @@ export function ErrorRetry({
 
 /** Inset of the travelling capsule from the edge of its track. */
 const SEG_PAD = 3;
+/** How much of the violet the capsule is, as the last two digits of its colour: the tab bar's own wash. */
+const SEG_WASH = '1F';
 const SEG_SLOP = { top: 6, bottom: 6 };
 
 /** A labelled (radio) segment's vertical padding: 3 + 11 + an 18pt line + 11 + 3 clears 44. */
@@ -287,10 +291,17 @@ const SEG_LINE = 18;
  * the chosen word, which it magnified and fringed with colour at the edges
  * of its letters. Up close that read as the word printed twice slightly out
  * of register, and the magnified label was the first to be cut off in a
- * longer language. The capsule is now a plain raised fill, the chosen word is
- * the same size as the others and heavier, and the slide is the only motion.
- * It is instant when the reader has asked for less motion, and mirrored in a
+ * longer language. The capsule is now a plain fill, the chosen word is the
+ * same size as the others and heavier, and the slide is the only motion. It
+ * is instant when the reader has asked for less motion, and mirrored in a
  * right-to-left language, where the first option is the one on the right.
+ *
+ * The capsule is a wash of the app's violet with the chosen word in the
+ * violet itself, exactly as the tab bar marks the place you are in: both say
+ * "here", and neither is something to press. The solid violet is kept for
+ * the button a screen is about, which often stands right under a switch. A
+ * white capsule on a grey track said "raised", which is what a card says,
+ * and left the one chosen thing on a page the palest thing on it.
  */
 export function Segmented<T extends string>({
   options,
@@ -363,7 +374,7 @@ export function Segmented<T extends string>({
           pointerEvents="none"
           style={[
             styles.segCapsule,
-            { width: seg, backgroundColor: colors.selectedFill, shadowColor: colors.softShadow, transform: [{ translateX: x }] },
+            { width: seg, backgroundColor: `${colors.primary}${SEG_WASH}`, transform: [{ translateX: x }] },
           ]}
         />
       ) : null}
@@ -390,7 +401,7 @@ export function Segmented<T extends string>({
             <Text
               style={[
                 styles.segText,
-                { color: active ? colors.textPrimary : colors.textSecondary },
+                { color: active ? colors.primary : colors.textSecondary },
                 active && styles.segTextActive,
                 wrap && styles.segTextWrap,
               ]}
@@ -535,21 +546,19 @@ const styles = StyleSheet.create({
   },
   // 50, which is what iOS gives the full-width button a screen is about
   clayLarge: { minHeight: 50, alignSelf: 'stretch' },
-  clayText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
+  // a label longer than its button's room goes on to a second line inside it, centred, where it used to run out past the button's edge
+  clayText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
   clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   clayBadgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   segTrack: { borderRadius: radii.pill, padding: SEG_PAD },
   // absolute, so it can travel independently of the row it sits behind
+  // a wash, not a raised thing: a shadow under a see-through fill shows through it as a smudge
   segCapsule: {
     position: 'absolute',
     left: 0,
     top: SEG_PAD,
     bottom: SEG_PAD,
     borderRadius: radii.pill,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
-    elevation: 1,
   },
   segItem: { flex: 1, paddingVertical: 6, paddingHorizontal: spacing.xs, alignItems: 'center', justifyContent: 'center' },
   segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
