@@ -1,5 +1,7 @@
+import { useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
+import { useDirection } from '../reports/direction';
 import { badgeDef, isRankedGame, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
@@ -46,6 +48,14 @@ export function ProgressShowcase({
 }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
+  /*
+   * Right to left, everything here starts on the right: the badges in the
+   * order chosen, the row that offers to choose them (its chevron pointing
+   * on), and the strip of ranks, which opens at its first.
+   */
+  const dir = useDirection();
+  const mirrored = dir.row === 'row-reverse';
+  const strip = useRef<ScrollView>(null);
   const leagueTier = knownTier(league?.tier);
   // a rank in a game Hevalo no longer has is not shown: there is nowhere left to play for it
   const shown = ranks.filter((r) => isRankedGame(r.game) && (r.tier || r.placing || r.resting || r.bestTier));
@@ -55,7 +65,7 @@ export function ProgressShowcase({
     <View style={styles.wrap}>
       {badges.length > 0 || own ? (
         <View style={styles.section}>
-          <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
+          <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
             {t('profile.showcase')}
           </Text>
           {badges.length > 0 ? (
@@ -64,7 +74,7 @@ export function ProgressShowcase({
               disabled={!onBadges}
               accessibilityRole={onBadges ? 'button' : undefined}
               accessibilityLabel={t('profile.showcaseA11y', { badges: badges.map((b) => showcaseLabel(t, b)).join(', ') })}
-              style={styles.badges}
+              style={[styles.badges, { flexDirection: dir.row }]}
             >
               {badges.map((b, i) => (
                 <View key={b.key} style={styles.badge}>
@@ -82,11 +92,13 @@ export function ProgressShowcase({
             <PressableScale
               onPress={onBadges}
               accessibilityRole="button"
-              style={[styles.empty, { backgroundColor: colors.controlTrack }]}
+              style={[styles.empty, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
             >
               <Icon name="medal" size={18} color={colors.textSecondary} />
-              <Text style={[styles.emptyText, { color: colors.textPrimary }]}>{t('profile.showcaseChoose')}</Text>
-              <Icon name="chevron-right" size={14} color={colors.textSecondary} />
+              <Text style={[styles.emptyText, dir.text, { color: colors.textPrimary }]}>{t('profile.showcaseChoose')}</Text>
+              <View style={dir.flip}>
+                <Icon name="chevron-right" size={14} color={colors.textSecondary} />
+              </View>
             </PressableScale>
           )}
         </View>
@@ -94,10 +106,19 @@ export function ProgressShowcase({
 
       {shown.length > 0 || leagueTier ? (
         <View style={styles.section}>
-          <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
+          <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
             {t('profile.progress')}
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+          <ScrollView
+            ref={strip}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            // right to left, the first chip is on the right: start the strip there
+            onContentSizeChange={() => {
+              if (mirrored) strip.current?.scrollToEnd({ animated: false });
+            }}
+            contentContainerStyle={[styles.chips, mirrored ? styles.chipsMirrored : null]}
+          >
             {leagueTier ? (
               <Chip
                 onPress={onLeague}
@@ -162,24 +183,25 @@ function Chip({
   onPress?: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const dir = useDirection();
   return (
     <PressableScale
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={label}
-      style={[styles.chip, { backgroundColor: colors.controlTrack }]}
+      style={[styles.chip, dir.row === 'row-reverse' ? styles.chipMirrored : null, { backgroundColor: colors.controlTrack }]}
     >
       {art}
       <View style={styles.chipText}>
-        <Text style={[styles.kicker, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.kicker, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
           {kicker}
         </Text>
-        <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+        <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
           {title}
         </Text>
         {sub ? (
-          <Text style={[styles.sub, { color: colors.textSecondary }]} numberOfLines={1}>
+          <Text style={[styles.sub, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
             {sub}
           </Text>
         ) : null}
@@ -195,10 +217,14 @@ const styles = StyleSheet.create({
   badge: { alignItems: 'center', gap: 4, width: 96 },
   medal: { width: 68, height: 68 },
   badgeName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  empty: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.md, minHeight: MIN_TOUCH_TARGET },
+  empty: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   emptyText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  chips: { gap: spacing.sm, paddingRight: spacing.lg },
+  chips: { flexDirection: 'row', gap: spacing.sm, paddingRight: spacing.lg },
+  // the strip at least as wide as the screen, so a short one still starts on the right
+  chipsMirrored: { flexDirection: 'row-reverse', flexGrow: 1, paddingRight: 0, paddingLeft: spacing.lg },
   chip: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingVertical: spacing.sm, paddingLeft: spacing.sm, paddingRight: spacing.md, minWidth: 150 },
+  // the emblem on the right, with the narrow side of the padding beside it
+  chipMirrored: { flexDirection: 'row-reverse', paddingLeft: spacing.md, paddingRight: spacing.sm },
   chipText: { gap: 1, maxWidth: 140 },
   kicker: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.4, textTransform: 'uppercase' },
   title: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

@@ -74,8 +74,6 @@ interface Me extends ProfileCosmetics {
   profilePhotoUrl: string | null;
   /** when the account was made; the year is shown under the handle */
   createdAt?: string | null;
-  /** badges earned (and the legacy tournament win), as the public profile counts them */
-  achievements?: number;
 }
 
 /**
@@ -183,6 +181,12 @@ function AccountProfile() {
     frameUrl: string | null;
     /** their tree; null before one is planted, undefined on a server without trees */
     tree: TreeGlimpse | null | undefined;
+    /**
+     * Badges earned (and the legacy tournament win), as the public profile
+     * counts them. Only the public profile sends this: `/me` never did, so the
+     * count read from there was a dash for everybody.
+     */
+    achievements: number | null;
   } | null>(null);
   const [iconsOwned, setIconsOwned] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -252,9 +256,18 @@ function AccountProfile() {
             frameSku?: string | null;
             frameUrl?: string | null;
             tree?: TreeGlimpse | null;
+            achievements?: number;
           }>(`/users/${id}`);
           if (active && p.ok) {
-            setProgress({ ranks: p.data.ranks ?? [], league: p.data.league ?? null, badges: p.data.badges ?? [], frameSku: p.data.frameSku ?? null, frameUrl: p.data.frameUrl ?? null, tree: p.data.tree });
+            setProgress({
+              ranks: p.data.ranks ?? [],
+              league: p.data.league ?? null,
+              badges: p.data.badges ?? [],
+              frameSku: p.data.frameSku ?? null,
+              frameUrl: p.data.frameUrl ?? null,
+              tree: p.data.tree,
+              achievements: p.data.achievements ?? null,
+            });
           }
         }
         if (active) {
@@ -306,6 +319,16 @@ function AccountProfile() {
   const joined = me?.createdAt ? new Date(me.createdAt) : null;
   const joinedYear = joined && !Number.isNaN(joined.getTime()) ? joined.getFullYear() : null;
   const username = me?.username ?? user?.username ?? '';
+  /*
+   * The handle and the year joined, on one line where they fit. On a narrow
+   * phone, or in a language whose "joined" is long, the second half moves to
+   * a line of its own instead of ending in an ellipsis: the year's words are
+   * held together and the dot stays with the handle, so the only break is
+   * the one between the two.
+   */
+  const handleLine = joinedYear
+    ? `@${username} ·  ${t('profile.joined', { year: joinedYear }).replace(/ /g, ' ')}`
+    : `@${username}`;
 
   /*
    * The quiet line, assembled from whatever there is.
@@ -431,13 +454,14 @@ function AccountProfile() {
             </AvatarStage>
           </Pressable>
           <View style={[styles.nameRow, { flexDirection: dir.row }]}>
-            <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+            {/* a long name takes a second line rather than losing its end */}
+            <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={2}>
               {me?.displayName ?? user?.displayName ?? user?.username}
             </Text>
             {me?.premium ? <PremiumPill /> : null}
           </View>
-          <Text style={[styles.handle, { color: colors.textSecondary }]} numberOfLines={1}>
-            {[`@${username}`, joinedYear ? t('profile.joined', { year: joinedYear }) : null].filter(Boolean).join('  ·  ')}
+          <Text style={[styles.handle, { color: colors.textSecondary }]} numberOfLines={2}>
+            {handleLine}
           </Text>
           {country ? (
             <View style={[styles.country, { flexDirection: dir.row }]}>
@@ -453,29 +477,32 @@ function AccountProfile() {
           change it, and send it to somebody, side by side and the same size —
           and beside them, the way to the people who make the rest of it worth
           having. Each is a fingertip tall.
+
+          The two say what they do in words alone, and a long name takes a
+          second line inside its button, both buttons growing to the taller
+          one. A pencil and a share glyph each took the room of three letters:
+          at 320 points that left a label sixty, and "Profil bearbeiten",
+          "Profîlê biguherîne" and both Soranî names ended in an ellipsis,
+          with single words too long for a second line to save.
         */}
         <View style={[styles.actions, { flexDirection: dir.row }]}>
           <Pressable
             onPress={() => navigation.navigate('EditProfile')}
             accessibilityRole="button"
             accessibilityLabel={t('profile.edit')}
+            testID="profile-edit"
             style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
           >
-            <Icon name="pencil" size={18} color={colors.textPrimary} />
-            <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
-              {t('profile.edit')}
-            </Text>
+            <Text style={[styles.actionText, { color: colors.textPrimary }]}>{t('profile.edit')}</Text>
           </Pressable>
           <Pressable
             onPress={share}
             accessibilityRole="button"
             accessibilityLabel={t('profile.share')}
+            testID="profile-share"
             style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
           >
-            <Icon name="share" size={18} color={colors.textPrimary} />
-            <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
-              {t('profile.share')}
-            </Text>
+            <Text style={[styles.actionText, { color: colors.textPrimary }]}>{t('profile.share')}</Text>
           </Pressable>
           <Pressable
             onPress={() => navigation.navigate('Friends')}
@@ -496,7 +523,8 @@ function AccountProfile() {
         */}
         <View style={[styles.stats, { flexDirection: dir.row }]}>
           <Stat label={t('nav.friends')} value={friends} loading={!settled} onPress={() => navigation.navigate('Friends')} />
-          <Stat label={t('profile.badges')} value={me?.achievements ?? null} loading={!settled} onPress={() => navigation.navigate('Badges')} />
+          {/* the count arrives with the public profile, after the first answers */}
+          <Stat label={t('profile.badges')} value={progress?.achievements ?? null} loading={!progressSettled} onPress={() => navigation.navigate('Badges')} />
           <Stat label={t('profile.stat.level')} value={me?.level?.level ?? 1} loading={!settled} />
         </View>
         {!settled ? (
@@ -645,21 +673,21 @@ const styles = StyleSheet.create({
   aside: { fontSize: typography.sizes.xs, textAlign: 'center' },
   showcaseSkeleton: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
 
-  actions: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
+  // the two buttons stretch to the taller of them, so a label on two lines leaves both the same size
+  actions: { alignSelf: 'stretch', alignItems: 'stretch', gap: spacing.sm, marginTop: spacing.md },
   // a fingertip tall, drawn that tall: a 36pt button with slop above and below looked smaller than it was to press
   action: {
     flex: 1,
-    flexDirection: 'row',
-    gap: spacing.xs,
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm + spacing.xs,
+    paddingVertical: spacing.xs,
   },
-  actionText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, flexShrink: 1 },
-  // the way to more friends: the one filled control of the three, round, and as tall as its neighbours
-  actionIcon: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  actionText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  // the way to more friends: the one filled control of the three, round, and as tall as its neighbours are at the least
+  actionIcon: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignSelf: 'center', borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 
   // a guest's card: the face they were given, the offer, and the four things an account keeps
   guestCard: { marginTop: spacing.md },

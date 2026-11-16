@@ -16,6 +16,13 @@ import type { TranslationKey } from '../i18n/translations';
 import { PROFILE_SECTIONS, type ProfileSection, type ProfileSections } from './sections';
 import { EmptyState } from '../theme/EmptyState';
 import { heldDim } from '../theme/MotionParts';
+import { useDirection } from '../reports/direction';
+
+/** The chosen tab's wash: the violet at the strength the tab bar and the segmented control use to say "here". */
+const CHOSEN_WASH = '1F';
+/** A tab's height, and a strip taller than one row of them by half: it has taken a second row, even at the largest text. */
+const TAB_HEIGHT = 50;
+const TWO_ROWS_AT_LEAST = (TAB_HEIGHT + 3 * 2) * 1.5;
 
 const LABEL: Record<ProfileSection, TranslationKey> = {
   posts: 'profile.tab.posts',
@@ -73,6 +80,7 @@ export function ProfileActivity({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
 
   /*
    * A section the owner has turned off is not offered to anybody else. On
@@ -85,6 +93,14 @@ export function ProfileActivity({
   // replaced instead of leaving an empty panel
   const active = shown.includes(section) ? section : (shown[0] ?? null);
   const [page, setPage] = useState<ActivityPage | null>(null);
+  /*
+   * The strip's width once it has had to take a second row, and so set its
+   * tabs three to a row. Left to themselves the tabs fill a row before
+   * starting the next, which in most languages left four on the first and
+   * the fifth alone across the whole of the second. A new width (a turned
+   * tablet) lets them find their rows again.
+   */
+  const [thirds, setThirds] = useState<number | null>(null);
 
   const load = useCallback(
     (kind: ProfileSection) => {
@@ -116,33 +132,57 @@ export function ProfileActivity({
 
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.heading, { color: colors.textSecondary }]}>{t('profile.activity')}</Text>
+      <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+        {t('profile.activity')}
+      </Text>
 
       {/*
         Scrollable would hide a tab off the edge, so they share the width and
-        keep their labels — the glyph above the word rather than beside it,
-        which is what lets five fit across a phone without "Reposts" arriving
-        as "Repo…". The same track and the same chosen fill as the switches
-        elsewhere in the app.
+        keep their labels — the glyph above the word rather than beside it.
+        Each tab is as wide as its word and the row grows to fill the strip;
+        where five words do not fit across (German's "Gespeichert", Turkish's
+        "Yeniden paylaşılanlar", all of Soranî at 320), the strip takes a
+        second row rather than cutting them to "Gespeic…". The chosen tab is
+        a wash of violet with violet ink, as the tab bar and the segmented
+        control mark the place you are in, and right to left the first tab is
+        on the right.
+
+        On your own profile a section you have hidden from everybody else is
+        still here for you, marked with the closed eye and named "Hidden" to a
+        screen reader.
       */}
-      <View style={[styles.tabs, { backgroundColor: colors.controlTrack }]} accessibilityRole="tablist">
+      <View
+        style={[styles.tabs, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
+        accessibilityRole="tablist"
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          if (thirds !== null && thirds !== width) setThirds(null);
+          else if (thirds === null && height > TWO_ROWS_AT_LEAST) setThirds(width);
+        }}
+      >
         {shown.map((s) => {
           const on = s === active;
+          const ink = on ? colors.primary : colors.textSecondary;
+          const hidden = own && sections?.[s] === false;
           return (
             <Pressable
               key={s}
               onPress={() => setSection(s)}
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
-              style={({ pressed }) => [styles.tab, on ? { backgroundColor: colors.selectedFill } : null, pressed && heldDim]}
+              accessibilityLabel={hidden ? `${t(LABEL[s])}, ${t('profile.hidden')}` : t(LABEL[s])}
+              style={({ pressed }) => [
+                styles.tab,
+                thirds !== null ? styles.tabThird : null,
+                on ? { backgroundColor: `${colors.primary}${CHOSEN_WASH}` } : null,
+                pressed && heldDim,
+              ]}
             >
-              <Icon name={GLYPH[s]} size={18} color={on ? colors.textPrimary : colors.textSecondary} />
-              <Text
-                numberOfLines={1}
-                style={[styles.tabText, { color: on ? colors.textPrimary : colors.textSecondary }]}
-              >
-                {t(LABEL[s])}{own && sections?.[s] === false ? ' ·' : ''}
-              </Text>
+              <Icon name={GLYPH[s]} size={18} color={ink} />
+              <View style={[styles.tabLabel, { flexDirection: dir.row }]}>
+                <Text style={[styles.tabText, { color: ink }]}>{t(LABEL[s])}</Text>
+                {hidden ? <Icon name="eye-off" size={12} color={ink} /> : null}
+              </View>
             </Pressable>
           );
         })}
@@ -219,23 +259,28 @@ const styles = StyleSheet.create({
   heading: { ...sectionLabel },
   tabs: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     borderRadius: radii.lg,
     padding: 3,
     gap: 2,
   },
   // the strip's own height: a tab is 50, inside 3 of padding
-  tabsSkeleton: { height: 50 + 3 * 2 },
+  tabsSkeleton: { height: TAB_HEIGHT + 3 * 2 },
+  // as wide as its word to begin with, then a share of what is left in its row
   tab: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    minHeight: 50,
+    minHeight: TAB_HEIGHT,
     paddingVertical: 6,
-    paddingHorizontal: 2,
+    paddingHorizontal: spacing.sm,
     borderRadius: radii.md,
   },
-  tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  // three to a row at the most once the strip has two, so the rows come out three and two
+  tabThird: { minWidth: '30%' },
+  tabLabel: { alignItems: 'center', gap: 3 },
+  tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, textAlign: 'center' },
   list: { gap: spacing.md },
   row: {
     borderRadius: radii.md,
