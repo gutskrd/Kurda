@@ -354,8 +354,9 @@ function Setup({
           <View style={styles.names}>
             {names.map((name, i) => (
               <View key={i} style={[styles.nameRow, { flexDirection: dir.row }]}>
-                <View style={styles.nameN}>
-                  <Text style={styles.nameNText}>{name.trim() === '' ? i + 1 : name.trim().slice(0, 1).toUpperCase()}</Text>
+                {/* the player's initial on a quiet disc: it was gold on a gold wash, 1.8:1 and gold off the table */}
+                <View style={[styles.nameN, { backgroundColor: colors.controlTrack }]}>
+                  <Text style={[styles.nameNText, { color: colors.textPrimary }]}>{name.trim() === '' ? i + 1 : name.trim().slice(0, 1).toUpperCase()}</Text>
                 </View>
                 <TextInput
                   value={name}
@@ -704,7 +705,8 @@ function Progress({ done, of }: { done: number; of: number }): React.JSX.Element
   return (
     <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {Array.from({ length: of }, (_, i) => (
-        <View key={i} style={[styles.dot, { backgroundColor: i < done ? TABLE.gold : i === done ? colors.textPrimary : colors.controlTrack }]} />
+        // how far round the room the phone has gone, filled in the violet a progress bar fills in; gold is kept for what is earned
+        <View key={i} style={[styles.dot, { backgroundColor: i < done ? colors.primary : i === done ? colors.textPrimary : colors.controlTrack }]} />
       ))}
     </View>
   );
@@ -801,7 +803,8 @@ function Choice({ label, onPress, kurdish, accent = false }: { label: string; on
       }}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.choice, { backgroundColor: colors.glassFill, borderColor: accent ? colors.gold : 'transparent', opacity: pressed ? pressedDim : 1 }]}
+      // the guess's words are edged in the violet of what can be pressed: gold is kept for what is earned
+      style={({ pressed }) => [styles.choice, { backgroundColor: colors.glassFill, borderColor: accent ? colors.primary : 'transparent', opacity: pressed ? pressedDim : 1 }]}
     >
       {kurdish ? (
         <Text style={[styles.choiceWord, { writingDirection: kurdishStyle(kurdish).writingDirection, color: colors.textPrimary }]}>{label}</Text>
@@ -946,7 +949,8 @@ function Reveal({
                   </Text>
                 </Animated.View>
               </Animated.View>
-              <Text style={[styles.flipName, { color: colors.textSecondary }]} numberOfLines={1}>
+              {/* a second line before an ellipsis: "Berfînê Xa…" is nobody's name */}
+              <Text style={[styles.flipName, { color: colors.textSecondary }]} numberOfLines={2}>
                 {name}
               </Text>
             </View>
@@ -1008,9 +1012,16 @@ function Reveal({
             accessibilityLabel={`${row.name}: ${t('games.couch.roundPoints')} ${row.round}, ${t('games.couch.total')} ${row.total}`}
             style={[styles.scoreRow, { flexDirection: dir.row, borderTopColor: colors.separator }, place > 0 ? styles.scoreRule : null]}
           >
-            <Text style={[styles.scoreName, styles.scoreText, dir.text, { color: reveal.impostors.includes(row.seat) ? colors.danger : colors.textPrimary }]} numberOfLines={1}>
-              {row.name}
-            </Text>
+            {/*
+              The impostor is marked by the card's own sign, as on the cards above: the name was red, which says "wrong", beside a
+              green +3 when the impostor had got away with it.
+            */}
+            <View style={[styles.scoreName, styles.scoreWho, { flexDirection: dir.row }]}>
+              {reveal.impostors.includes(row.seat) ? <Icon name="eye-off" size={16} color={colors.textSecondary} /> : null}
+              <Text style={[styles.scoreText, styles.flexText, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+                {row.name}
+              </Text>
+            </View>
             <Text style={[styles.scoreN, styles.scoreText, { color: row.round > 0 ? colors.success : colors.textSecondary }]}>{row.round > 0 ? `+${row.round}` : '0'}</Text>
             <Text style={[styles.scoreN, styles.scoreTotal, { color: colors.textPrimary }]}>{row.total}</Text>
           </View>
@@ -1040,8 +1051,8 @@ const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   stretch: { alignSelf: 'stretch' },
   nameRow: { alignItems: 'center', gap: spacing.sm },
-  nameN: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: `${TABLE.gold}29` },
-  nameNText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: TABLE.gold },
+  nameN: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  nameNText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   // a text field is as wide as its text wants unless told it may be narrower: without that the row runs off the card
   nameInput: { flex: 1, minWidth: 0, minHeight: 48, fontSize: typography.sizes.md, borderRadius: radii.md, paddingHorizontal: 12 },
   nameRemove: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
@@ -1124,6 +1135,8 @@ const styles = StyleSheet.create({
   scoreRule: { borderTopWidth: StyleSheet.hairlineWidth },
   scoreHead: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.4, textTransform: 'uppercase' },
   scoreName: { flex: 1 },
+  scoreWho: { alignItems: 'center', gap: spacing.xs },
+  flexText: { flexShrink: 1 },
   scoreN: { width: 72, textAlign: 'center' },
   scoreText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   scoreTotal: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

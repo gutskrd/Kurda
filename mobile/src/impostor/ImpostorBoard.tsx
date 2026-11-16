@@ -134,14 +134,15 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
         accessibilityState={{ selected: lit }}
         style={[styles.seat, { opacity: s.left ? 0.5 : 1 }]}
       >
-        {lit ? <Animated.View style={[styles.light, { backgroundColor: colors.gold, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.22] }) }]} /> : null}
-        <View style={[styles.disc, { borderColor: lit ? colors.gold : p?.isMe ? colors.primary : colors.clayBorder, backgroundColor: lit ? colors.gold : colors.glassFill }]}>
-          <Text style={[styles.discText, { color: lit ? colors.textOnGold : colors.textPrimary }]}>{name(s.seat).slice(0, 1).toUpperCase()}</Text>
+        {/* who is speaking is lit in the violet that marks the place you are in: gold is kept for what is earned */}
+        {lit ? <Animated.View style={[styles.light, { backgroundColor: colors.primary, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.22] }) }]} /> : null}
+        <View style={[styles.disc, { borderColor: lit || p?.isMe ? colors.primary : colors.clayBorder, backgroundColor: lit ? colors.primary : colors.glassFill }]}>
+          <Text style={[styles.discText, { color: lit ? colors.textOnPrimary : colors.textPrimary }]}>{name(s.seat).slice(0, 1).toUpperCase()}</Text>
         </View>
         <Text style={[styles.seatName, { color: colors.textPrimary }]} numberOfLines={1}>
           {name(s.seat)}
         </Text>
-        <Text style={[styles.seatTag, { color: lit ? colors.goldText : voted.has(s.seat) ? colors.success : colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.seatTag, { color: lit ? colors.primary : colors.textSecondary }]} numberOfLines={1}>
           {tag}
         </Text>
       </View>
@@ -158,7 +159,7 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
               ? t('games.impostor.vote.phase')
               : t('games.impostor.guessPhase')}
         </Text>
-        <Text style={[styles.whose, { color: mine ? colors.goldText : colors.textPrimary }]}>{status}</Text>
+        <Text style={[styles.whose, { color: mine ? colors.primary : colors.textPrimary }]}>{status}</Text>
         {board.phase === 'guess' && board.accused ? (
           <Text style={[styles.caught, { color: colors.danger }]}>
             {board.accused.seat === view.me?.seat ? t('games.impostor.youCaught') : t('games.impostor.caught', { name: name(board.accused.seat) })}
@@ -308,7 +309,8 @@ function Guess({ board, move }: { board: ImpostorBoard; move: Move }): React.JSX
             setBusy(false);
             if (res.ok) haptic(res.data.outcome.kind === 'guess' && res.data.outcome.right ? 'correct' : 'wrong');
           }}
-          style={({ pressed }) => [styles.option, { borderColor: colors.gold, backgroundColor: colors.glassFill, opacity: !board.yourGuess ? 0.6 : pressed ? pressedDim : 1 }]}
+          // edged in the violet of what can be pressed, as the guess on one phone is: gold is kept for what is earned
+          style={({ pressed }) => [styles.option, { borderColor: colors.primary, backgroundColor: colors.glassFill, opacity: !board.yourGuess ? 0.6 : pressed ? pressedDim : 1 }]}
         >
           <Text style={[styles.guessText, script, { color: colors.textPrimary }]}>{o}</Text>
         </Pressable>

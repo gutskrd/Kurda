@@ -147,8 +147,9 @@ export function ImpostorStart({ onCouch }: { onCouch: (ask?: CouchAsk) => void }
           <Text style={[styles.body, dir.text, { color: colors.textSecondary }]}>{t('games.impostor.intro')}</Text>
           {STEPS.map((key, i) => (
             <View key={key} style={[styles.howStep, { flexDirection: dir.row }]}>
-              <View style={styles.howN}>
-                <Text style={styles.howNText}>{i + 1}</Text>
+              {/* numbered as the setup's steps are, in the page's ink: this card is off the table, where gold is kept for what is earned */}
+              <View style={[styles.howN, { backgroundColor: colors.textPrimary }]}>
+                <Text style={[styles.howNText, { color: colors.background }]}>{i + 1}</Text>
               </View>
               <Text style={[styles.howText, dir.text, { color: colors.textPrimary }]}>{t(key)}</Text>
             </View>
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
   catMeaning: { fontSize: typography.sizes.xs, textAlign: 'center' },
   how: { gap: spacing.sm },
   howStep: { alignItems: 'flex-start', gap: spacing.sm },
-  howN: { width: 26, height: 26, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: TABLE.gold },
-  howNText: { fontWeight: typography.weights.bold, color: TABLE.goldInk },
+  howN: { width: 26, height: 26, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  howNText: { fontWeight: typography.weights.bold },
   howText: { flex: 1, fontSize: typography.sizes.md, lineHeight: 22 },
 });
