@@ -4,6 +4,7 @@ import { Pressable } from '../theme/Pressable';
 import { haptic } from '../feedback/haptics';
 import {
   STORY_GAME_MODES,
+  hueSteps,
   TEXT_DURING_OPTIONS,
   TIMER_PRESETS,
   type GameAccess,
@@ -91,8 +92,10 @@ export function StoryPresetFields({
   /** a game that exists already has its story: no "Surprise me" to pick (the lobby's settings) */
   noSurprise?: boolean;
 }): React.JSX.Element {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const { t } = useI18n();
+  // the story chosen wears the violet's wash, as every chosen option does; green is for a right answer alone
+  const chosenFill = hueSteps(scheme, 'violet').wash;
   const set = (patch: Parameters<typeof changeSetup>[1]) => onChange(changeSetup(state, patch));
   const lengths = availableLengths(stories, state.dialect);
   const ofLength = stories.filter((s) => s.dialect === state.dialect && s.length === state.length);
@@ -145,7 +148,7 @@ export function StoryPresetFields({
                     {...(s ? storyTextProps(s.dialect) : null)}
                     style={({ pressed }) => [
                       styles.pickRow,
-                      { backgroundColor: on ? colors.successFill : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+                      { backgroundColor: on ? chosenFill : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
                     ]}
                   >
                     <View style={[styles.radio, { borderColor: on ? colors.primary : colors.textSecondary }]}>

@@ -19,7 +19,7 @@ import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GlassCard } from '../theme/glass';
 import { useDirection } from '../reports/direction';
-import type { StoryDialect } from '@kurda/shared';
+import { hueSteps, type StoryDialect } from '@kurda/shared';
 import { storyTextProps, storyTextStyle } from './storyText';
 import { pressedDim } from '../theme/motion';
 
@@ -141,7 +141,9 @@ export function Pill({
 /**
  * One of a few choices that wrap onto more lines than a segmented control
  * fits: the length filter, with minutes on each. A radio group under its
- * label, each chip a fingertip tall.
+ * label, each chip a fingertip tall. The chosen one wears the violet's wash
+ * with violet words, as the segmented control's chosen side does: the solid
+ * violet is the button the sheet is about, under the choices.
  */
 export function ChoiceChips<T extends string>({
   label,
@@ -156,7 +158,8 @@ export function ChoiceChips<T extends string>({
   onChange: (v: T) => void;
   labelOf: (v: T) => string;
 }): React.JSX.Element {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
+  const violet = hueSteps(scheme, 'violet');
   return (
     <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={label}>
       {options.map((opt) => {
@@ -173,10 +176,10 @@ export function ChoiceChips<T extends string>({
             accessibilityLabel={labelOf(opt)}
             style={({ pressed }) => [
               styles.chip,
-              { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+              { backgroundColor: on ? violet.wash : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
             ]}
           >
-            <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
+            <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
               {labelOf(opt)}
             </Text>
           </Pressable>
@@ -281,6 +284,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  chipTextOn: { fontWeight: typography.weights.bold },
   note: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, borderRadius: radii.md, padding: spacing.md },
   noteText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
   liveRegion: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0.01 },

@@ -50,7 +50,7 @@ import { useNarration } from './useNarration';
 import { COLUMN, Card, Note, Pill, SectionLabel, Sheet, useAnnouncer } from './ui';
 import { NarrationBar } from './NarrationBar';
 import { AboutStory, Reflections, StorySources } from './Afterword';
-import { chapterAt, hasIntroduction, metaFor, translatedHeading } from './legend';
+import { chapterAt, hasIntroduction, metaFor, storyOwnLocale, translatedHeading } from './legend';
 import { textIn } from '../lore/labels';
 import { CHARACTER_SIZE, SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { pressedDim } from '../theme/motion';
@@ -1170,7 +1170,8 @@ function ChapterList({
   const { t, locale } = useI18n();
   const dir = storyTextStyle(story.dialect);
   const props = storyTextProps(story.dialect);
-  const translation = translationFor(story, locale);
+  // a chapter's title in the reader's language under it; none where the reader's language is the story's own (legend.ts)
+  const translation = locale === storyOwnLocale(story) ? null : translationFor(story, locale);
   const underSet = translation && isAppLocale(translation.lang) ? textIn(translation.lang) : null;
   const rows: Array<{ key: string; paragraph: number; number: string; title: string; under: string | null; read: boolean; current: boolean }> = [];
   if (hasIntroduction(story.sections)) {

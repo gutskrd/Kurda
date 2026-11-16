@@ -145,9 +145,10 @@ export function NarrationBar({
         onAccessibilityAction={(e) => seekTo(elapsed + (e.nativeEvent.actionName === 'increment' ? SEEK_STEP_MS : -SEEK_STEP_MS))}
         style={styles.line}
       >
+        {/* the line in the bar's own ink, faint ahead and whole behind: gold is for what is earned, and a place in a story is not */}
         <View pointerEvents="none" style={[styles.track, { backgroundColor: onInk }]} />
-        <View pointerEvents="none" style={[styles.fill, { backgroundColor: colors.gold, width: total > 0 ? `${(elapsed / total) * 100}%` : '0%' }]} />
-        <View pointerEvents="none" style={[styles.knob, { backgroundColor: colors.gold, left: total > 0 ? `${(elapsed / total) * 100}%` : '0%' }]} />
+        <View pointerEvents="none" style={[styles.fill, { backgroundColor: onInk, width: total > 0 ? `${(elapsed / total) * 100}%` : '0%' }]} />
+        <View pointerEvents="none" style={[styles.knob, { backgroundColor: onInk, left: total > 0 ? `${(elapsed / total) * 100}%` : '0%' }]} />
       </Pressable>
       <View style={styles.times}>
         <Text style={[styles.time, { color: onInk }]}>{clockText(elapsed)}</Text>
