@@ -1,4 +1,3 @@
-import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
 import { haptic } from '../feedback/haptics';
 import { playSound } from '../feedback/sounds';
@@ -8,7 +7,6 @@ import { useVibrationPref } from '../feedback/vibrationPref';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
 import { KeyboardSettingsList } from '../keyboard/KeyboardSettings';
-import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
 import { CREDIT_LINES } from '../screens/credits';
 import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, type Visibility } from '../social/format';
@@ -86,12 +84,14 @@ function LanguageList(): React.JSX.Element {
   );
 }
 
-/** Light, dark or the phone's own; the seasonal themes; and the page that shows them all off. */
+/**
+ * Light, dark or the phone's own, and the seasonal themes. A choice shows
+ * itself across the whole app at once, which is all the preview it needs.
+ */
 function ThemeList(): React.JSX.Element {
   const { t } = useI18n();
   const { scheme, preference, setPreference } = useTheme();
   const { optedOut, setOptedOut } = useEventTheme();
-  const navigation = useNavigation<RootNavigation>();
   return (
     <>
       <SettingsSection first footer={t('appearance.currentlyScheme', { scheme: t(scheme === 'dark' ? 'appearance.scheme.dark' : 'appearance.scheme.light') })}>
@@ -105,7 +105,6 @@ function ThemeList(): React.JSX.Element {
       </SettingsSection>
       <SettingsSection>
         <SettingsSwitch icon="star" title={t('settings.eventThemes')} value={!optedOut} onValueChange={(on) => setOptedOut(!on)} />
-        <SettingsRow icon="palette" title={t('settings.appearance')} onPress={() => navigation.navigate('Appearance')} />
       </SettingsSection>
     </>
   );

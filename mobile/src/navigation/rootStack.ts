@@ -96,7 +96,6 @@ export type RootStackParamList = {
   EventQuests: undefined;
   Notifications: undefined;
   NotificationCenter: undefined;
-  Appearance: undefined;
   Settings: undefined;
   /** One page of Settings behind a row: language, theme, sounds, keyboard, leagues, profile visibility, credits (settings/SettingsPageScreen). */
   SettingsPage: { page: SettingsPageKey };

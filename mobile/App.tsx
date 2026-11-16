@@ -99,7 +99,6 @@ import { duration } from './src/theme/motion';
 import { OfflineBanner } from './src/net/OfflineBanner';
 import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
 import { noteScreen } from './src/errors/crashReporting';
-import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SettingsPageScreen } from './src/settings/SettingsPageScreen';
 import { BlockedUsersScreen } from './src/social/BlockedUsersScreen';
@@ -619,9 +618,6 @@ function SignedInRoot() {
             <NotificationCenterScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
-      </RootStack.Screen>
-      <RootStack.Screen name="Appearance" options={card}>
-        {({ navigation }) => <AppearanceScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Settings" options={card}>
         {({ navigation }) => <SettingsScreen onExit={() => navigation.goBack()} />}
