@@ -7,6 +7,8 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from '../play/testing/navigation';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { SettingsPageScreen } from './SettingsPageScreen';
+import { titleRoom } from './list';
+import { DARK, LIGHT } from '../theme/palette';
 import { autoplayOn, loadAutoplayPref, resetAutoplayPref } from '../feedback/autoplayPref';
 
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -91,6 +93,21 @@ describe('Settings', () => {
     expect(screen.getByText('No settings match “zzzz”.')).toBeTruthy();
   });
 
+  /*
+   * A row's name keeps room for its longest word beside what the row is set
+   * to: the value ends in an ellipsis before the name breaks inside a word.
+   */
+  it('keeps a row’s longest word whole beside its value, and leaves the value some of the row', () => {
+    // "Gebruikersnaam" (14 letters) at 17 points: kept whole, even on a 320-point phone
+    expect(titleRoom('Gebruikersnaam', 1, 288)).toBeGreaterThanOrEqual(132);
+    expect(titleRoom('Sichtbarkeit des Profils', 1, 288)).toBeGreaterThanOrEqual(110);
+    // a short name asks for little, so the value keeps what it had
+    expect(titleRoom('Theme', 1, 288)).toBeLessThan(60);
+    // larger text needs more room, and the name never takes more than three fifths of the row
+    expect(titleRoom('Benutzername', 1.3, 288)).toBeGreaterThan(titleRoom('Benutzername', 1, 288));
+    expect(titleRoom('Benachrichtigungseinstellungen', 1.6, 288)).toBe(172);
+  });
+
   it('keeps signing out and deleting the account apart, at the end, and asks before deleting', () => {
     testAuth.client = fakeClient({ 'GET /me': ME() });
     const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
@@ -139,6 +156,25 @@ describe('Settings pages', () => {
     expect(client.calls.find((c) => c.method === 'PATCH')).toEqual({ method: 'PATCH', path: '/me', body: { leaguesEnabled: false } });
   });
 
+  it('says so, and offers to try again, when the account cannot be read, rather than a switch greyed out for ever', async () => {
+    let answers = 0;
+    const client = fakeClient({
+      'GET /me': () => {
+        answers += 1;
+        return answers === 1 ? { ok: false, error: { kind: 'network', message: 'offline', status: 0 } } : ME();
+      },
+    });
+    testAuth.client = client;
+    renderWithProviders(<SettingsPageScreen page="leagues" onExit={() => undefined} />);
+    const retry = await screen.findByRole('button', { name: 'Try again' });
+    expect(screen.getByRole('switch', { name: 'Take part in weekly leagues' }).getAttribute('aria-disabled')).toBe('true');
+    await act(async () => {
+      fireEvent.click(retry);
+    });
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'Take part in weekly leagues' }).getAttribute('aria-checked')).toBe('true'));
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
   // the lesson's Kurdish says itself after each answer unless this is off; it is kept on this phone
   it('lets the pronunciations after each answer be turned off, and keeps that on the phone', async () => {
     testAuth.client = fakeClient();
@@ -165,5 +201,18 @@ describe('Settings pages', () => {
     fireEvent.click(within(group).getByRole('radio', { name: 'Light' }));
     expect(within(group).getByRole('radio', { name: 'Light' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByRole('switch', { name: 'Event themes' })).toBeTruthy();
+  });
+
+  it('ticks the chosen answer in violet, the colour everything chosen wears', () => {
+    testAuth.client = fakeClient();
+    renderWithProviders(<SettingsPageScreen page="theme" onExit={() => undefined} />);
+    const group = screen.getByRole('radiogroup', { name: 'Theme' });
+    fireEvent.click(within(group).getByRole('radio', { name: 'Light' }));
+    const tick = within(group).getByRole('radio', { name: 'Light' }).querySelector('svg');
+    expect(tick).toBeTruthy();
+    // the palette's violet, not the ink the rest of the row is drawn in
+    const drawn = tick!.outerHTML.toLowerCase();
+    expect([LIGHT.primary, DARK.primary].some((violet) => drawn.includes(violet.toLowerCase()))).toBe(true);
+    expect(drawn.includes(LIGHT.textPrimary.toLowerCase())).toBe(false);
   });
 });

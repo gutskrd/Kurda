@@ -13,8 +13,12 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
+import { useDirection } from '../reports/direction';
 import { KeyboardGuide } from './KeyboardGuide';
 import { useKeyboardPrefs, type WordleLayout } from './prefs';
+
+/** The violet wash an option that is on wears, as the tab bar and the segmented control mark where you are. */
+const CHOSEN_WASH = '1F';
 
 export const ACCENT_LABEL: Record<AccentMode, TranslationKey> = {
   strict: 'keyboard.accent.strict',
@@ -42,11 +46,15 @@ const LAYOUT_LABEL: Record<WordleLayout, TranslationKey> = {
 function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const [prefs, setPrefs] = useKeyboardPrefs();
   return (
     <>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('keyboard.accent.title')}</Text>
-      <View accessibilityRole="radiogroup" style={styles.modes}>
+      <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+        {t('keyboard.accent.title')}
+      </Text>
+      {/* the mode that is on is a wash of violet, edged and ticked in it, as every choice that is on is marked */}
+      <View accessibilityRole="radiogroup" accessibilityLabel={t('keyboard.accent.title')} style={styles.modes}>
         {ACCENT_MODES.map((mode) => {
           const on = prefs.accentMode === mode;
           return (
@@ -59,19 +67,22 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
               accessibilityLabel={`${t(ACCENT_LABEL[mode])}. ${t(ACCENT_HINT[mode])}`}
-              style={[styles.mode, { backgroundColor: colors.controlTrack, borderColor: on ? colors.textPrimary : 'transparent' }]}
+              style={[
+                styles.mode,
+                { backgroundColor: on ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack, borderColor: on ? colors.primary : 'transparent' },
+              ]}
             >
-              <View style={styles.modeHead}>
-                <Text style={[styles.modeName, { color: colors.textPrimary }]}>{t(ACCENT_LABEL[mode])}</Text>
-                {on ? <Icon name="check" size={18} color={colors.textPrimary} /> : null}
+              <View style={[styles.modeHead, { flexDirection: dir.row }]}>
+                <Text style={[styles.modeName, dir.text, { color: on ? colors.primary : colors.textPrimary }]}>{t(ACCENT_LABEL[mode])}</Text>
+                {on ? <Icon name="check" size={18} color={colors.primary} /> : null}
               </View>
-              <Text style={[styles.modeHint, { color: colors.textSecondary }]}>{t(ACCENT_HINT[mode])}</Text>
+              <Text style={[styles.modeHint, dir.text, { color: colors.textSecondary }]}>{t(ACCENT_HINT[mode])}</Text>
             </PressableScale>
           );
         })}
       </View>
       {/* a race keeps the mode it started in: what counts cannot change half way */}
-      {midRace ? <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('keyboard.accent.nextRace')}</Text> : null}
+      {midRace ? <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('keyboard.accent.nextRace')}</Text> : null}
       <GlassRow
         icon="keyboard"
         title={t('keyboard.keyBar.title')}
@@ -186,8 +197,8 @@ const styles = StyleSheet.create({
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginBottom: spacing.sm },
   modes: { gap: spacing.sm, marginBottom: spacing.sm },
   mode: { borderRadius: radii.md, padding: spacing.md, gap: 2, borderWidth: 1.5, minHeight: MIN_TOUCH_TARGET },
-  modeHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  modeName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  modeHead: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  modeName: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   modeHint: { fontSize: typography.sizes.sm, lineHeight: 19 },
   hint: { fontSize: typography.sizes.sm, lineHeight: 19, marginBottom: spacing.sm },
   // the gutter is the ScrollView's own, so the options scroll edge to edge

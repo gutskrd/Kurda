@@ -20,6 +20,13 @@ export interface MyAccount {
   visibility: Visibility | null;
   leagues: boolean | null;
   minor: boolean;
+  /**
+   * What went wrong asking for the account, until it is asked again. A page
+   * that cannot show a choice without it (the leagues' switch, which waits
+   * disabled) says so and offers to try again, instead of waiting for ever.
+   */
+  failed: string | null;
+  retry: () => void;
   changeVisibility: (next: Visibility) => void;
   changeLeagues: (on: boolean) => void;
 }
@@ -35,12 +42,20 @@ export function useMyAccount(): MyAccount {
   const [visibility, setVisibility] = useState<Visibility | null>(null);
   const [leagues, setLeagues] = useState<boolean | null>(null);
   const [minor, setMinor] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+  const [round, setRound] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
+      setFailed(null);
       void client.get<Me>('/me').then((res) => {
-        if (!active || !res.ok) return;
+        if (!active) return;
+        if (!res.ok) {
+          // Hevalo offline for a while is said by the screen over the app
+          if (!isMaintenance(res.error)) setFailed(describeError(res.error, t));
+          return;
+        }
         setUsername(res.data.user.username);
         setVisibility(res.data.user.profileVisibility);
         setMinor(res.data.user.minor === true);
@@ -49,8 +64,10 @@ export function useMyAccount(): MyAccount {
       return () => {
         active = false;
       };
-    }, [client]),
+      // `round` is Try again: a new round asks again
+    }, [client, t, round]),
   );
+  const retry = useCallback(() => setRound((r) => r + 1), []);
 
   /** Saved at once and shown at once; put back, and said why, if the server says no. */
   const changeVisibility = (next: Visibility): void => {
@@ -79,5 +96,5 @@ export function useMyAccount(): MyAccount {
     });
   };
 
-  return { username, visibility, leagues, minor, changeVisibility, changeLeagues };
+  return { username, visibility, leagues, minor, failed, retry, changeVisibility, changeLeagues };
 }

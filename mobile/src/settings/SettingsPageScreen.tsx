@@ -155,13 +155,29 @@ function SoundsList(): React.JSX.Element {
   );
 }
 
+/**
+ * The account could not be read, so a choice cannot be shown as it is: what
+ * went wrong, and the way to ask again, rather than a switch that waits
+ * greyed out for ever.
+ */
+function NotRead({ failed, retry }: { failed: string; retry: () => void }): React.JSX.Element {
+  const { t } = useI18n();
+  return (
+    <>
+      <SettingsNote>{failed}</SettingsNote>
+      <SettingsRow icon="history" title={t('common.retry')} opens={false} onPress={retry} />
+    </>
+  );
+}
+
 /** In or out of the weekly leagues, and what a league is, said before it is chosen. */
 function LeaguesList(): React.JSX.Element {
   const { t } = useI18n();
-  const { leagues, minor, changeLeagues } = useMyAccount();
+  const { leagues, minor, failed, retry, changeLeagues } = useMyAccount();
   return (
     <SettingsSection first footer={t('settings.leagues.help')}>
       <SettingsSwitch icon="trophy" title={t('settings.leagues.toggle')} value={leagues === true} disabled={leagues === null} onValueChange={changeLeagues} />
+      {leagues === null && failed ? <NotRead failed={failed} retry={retry} /> : null}
       {minor ? <SettingsNote>{t('settings.leagues.minorHint')}</SettingsNote> : null}
     </SettingsSection>
   );
@@ -174,7 +190,7 @@ function LeaguesList(): React.JSX.Element {
  */
 function VisibilityList(): React.JSX.Element {
   const { t } = useI18n();
-  const { visibility, minor, changeVisibility } = useMyAccount();
+  const { visibility, minor, failed, retry, changeVisibility } = useMyAccount();
   return (
     <SettingsSection first>
       <SettingsChoice<Visibility>
@@ -186,6 +202,8 @@ function VisibilityList(): React.JSX.Element {
         isDisabled={(v) => !visibilityOffered(v, minor)}
         onChange={changeVisibility}
       />
+      {/* none of the four ticked is a page that has not been told which one it is */}
+      {visibility === null && failed ? <NotRead failed={failed} retry={retry} /> : null}
       {minor ? <SettingsNote>{t('settings.visibility.minorHint')}</SettingsNote> : null}
     </SettingsSection>
   );
