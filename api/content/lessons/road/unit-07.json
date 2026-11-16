@@ -976,11 +976,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Zivistan diçe: tav derdikeve, û berf dihele.",
+                    "say": "Zivistan diçe: tav derdikeve, germahî vedigere, û berf dihele.",
                     "voice": "hamo",
-                    "prompt": "Zivistan diçe: tav derdikeve, û berf dihele.",
+                    "prompt": "Zivistan diçe: tav derdikeve, germahî vedigere, û berf dihele.",
                     "options": [
-                      "Winter is going: the sun is coming out, and the snow is melting.",
+                      "Winter is going: the sun is coming out, the warmth is coming back, and the snow is melting.",
                       "Winter is coming: the sun is going in, and it’s snowing.",
                       "The tea is getting cold, and the snow is falling."
                     ],
@@ -1008,13 +1008,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Asman şîn e, ewr tune, û germahî tê!",
+                    "say": "Asman şîn e, ewr tune: germahî çiqas xweş e!",
                     "voice": "hamo",
-                    "prompt": "Asman şîn e, ewr tune, û germahî tê!",
+                    "prompt": "Asman şîn e, ewr tune: germahî çiqas xweş e!",
                     "accepted": [
-                      "The sky is blue, there are no clouds, and the warmth is coming!",
-                      "The sky is blue, there are no clouds, and warmth is coming!",
-                      "The sky is blue, no clouds, and the warmth is coming!"
+                      "The sky is blue, there are no clouds: how lovely the warmth is!",
+                      "The sky is blue and there are no clouds: the warmth is so nice!",
+                      "The sky is blue, no clouds: how nice the warmth is!"
                     ]
                   }
                 },
@@ -1071,13 +1071,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Telefon! Diya min ji Kobaniyê telefon dike.",
+                    "say": "Telefon! Ev telefona kê ye? Ya min e: diya min ji Kobaniyê telefon dike, bi nûçeyan.",
                     "voice": "hamo",
-                    "prompt": "Telefon! Diya min ji Kobaniyê telefon dike.",
+                    "prompt": "Telefon! Ev telefona kê ye? Ya min e: diya min ji Kobaniyê telefon dike, bi nûçeyan.",
                     "options": [
-                      "The phone! My mother is calling from Kobanî.",
-                      "The phone! My mother is coming from Kobanî.",
-                      "The phone! My father is in Kobanî."
+                      "The phone! Whose phone is it? It’s mine: my mother is calling from Kobanî, with news.",
+                      "The phone! It’s Baran’s phone: his mother is calling from school.",
+                      "The phone! My father is in Kobanî, with no news."
                     ],
                     "correctIndex": 0
                   }
@@ -1087,11 +1087,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Rê vekirî ye?",
+                    "say": "Kîjan rê vekirî ye?",
                     "voice": "hamo",
-                    "prompt": "Rê vekirî ye?",
+                    "prompt": "Kîjan rê vekirî ye?",
                     "options": [
-                      "Erê, berf dihele û rê vekirî ye.",
+                      "Rêya Kobaniyê vekirî ye: berf dihele.",
                       "Erê, çay germ e.",
                       "Na, ez pêncî salî me."
                     ],
@@ -1118,13 +1118,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Mamê min û xwarziyên min jî dixwazin bên.",
+                    "say": "Mamê min û xwarziyên min jî dixwazin bên. Bi taksiyê an bi trênê?",
                     "voice": "hamo",
-                    "prompt": "Mamê min û xwarziyên min jî dixwazin bên.",
+                    "prompt": "Mamê min û xwarziyên min jî dixwazin bên. Bi taksiyê an bi trênê?",
                     "options": [
-                      "My uncle and my nephews want to come too.",
-                      "My uncle and my nephews want to stay.",
-                      "My aunt and her children want to come too."
+                      "My uncle and my nephews want to come too. By taxi or by train?",
+                      "My uncle and my nephews want to stay. By bus?",
+                      "My aunt and her children want to come too. On foot?"
                     ],
                     "correctIndex": 0
                   }
@@ -4697,11 +4697,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Duh: agir, govend û bilûr. Îro: pişta min!",
+                    "say": "Duh: agir, govend û bilûr. Îro: êşa pişta min!",
                     "voice": "hamo",
-                    "prompt": "Duh: agir, govend û bilûr. Îro: pişta min!",
+                    "prompt": "Duh: agir, govend û bilûr. Îro: êşa pişta min!",
                     "options": [
-                      "Yesterday: the fire, the govend and the flute. Today: my back!",
+                      "Yesterday: the fire, the govend and the flute. Today: my aching back!",
                       "Today: the fire and the flute. Tomorrow: the govend!",
                       "Yesterday: snow and wind. Today: rain!"
                     ],
@@ -4759,13 +4759,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez agir vêdixim, û dûman diçe asman.",
+                    "say": "Ez agir vêdixim, dûman diçe asman, û em ji ser agir baz didin.",
                     "voice": "hamo",
-                    "prompt": "Ez agir vêdixim, û dûman diçe asman.",
+                    "prompt": "Ez agir vêdixim, dûman diçe asman, û em ji ser agir baz didin.",
                     "options": [
-                      "I light the fire, and the smoke goes up into the sky.",
-                      "I put out the fire, and the snow falls from the sky.",
-                      "I light the lamp, and the moon comes out."
+                      "I light the fire, the smoke goes up into the sky, and we jump over the fire.",
+                      "I put out the fire, the snow falls, and we go home.",
+                      "I light the lamp, the moon comes out, and we sleep."
                     ],
                     "correctIndex": 0
                   }
@@ -4791,13 +4791,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hevalo ji bilûra min dibeze!",
+                    "say": "Hevalo ji bilûra min dibeze! Ev nebaş e.",
                     "voice": "hamo",
-                    "prompt": "Hevalo ji bilûra min dibeze!",
+                    "prompt": "Hevalo ji bilûra min dibeze! Ev nebaş e.",
                     "options": [
-                      "Hevalo runs away from my flute!",
-                      "Hevalo plays my flute!",
-                      "Hevalo eats my flute!"
+                      "Hevalo runs away from my flute! That’s bad.",
+                      "Hevalo plays my flute! That’s good.",
+                      "Hevalo eats my flute! That’s sweet."
                     ],
                     "correctIndex": 0
                   }
@@ -4837,6 +4837,11 @@
                         "speaker": 0,
                         "text": "Ez serçopî me! Û piştre bavê min bilûrê lêdixe.",
                         "en": "I lead the govend! And then my father plays the flute."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ew bilûrê dide min, û dibêje: stranê bidomîne!",
+                        "en": "He gives me the flute, and says: keep the song going!"
                       },
                       {
                         "speaker": 1,
@@ -4933,11 +4938,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ev xweşiya jiyanê ye: agir, stran û hemû cîran.",
+                    "say": "Ev xweşiya jiyanê ye: agir, stran, hêsir û hemû cîran.",
                     "voice": "hamo",
-                    "prompt": "Ev xweşiya jiyanê ye: agir, stran û hemû cîran.",
+                    "prompt": "Ev xweşiya jiyanê ye: agir, stran, hêsir û hemû cîran.",
                     "options": [
-                      "This is the joy of life: the fire, the songs and all the neighbours.",
+                      "This is the joy of life: the fire, the songs, the tears and all the neighbours.",
                       "This is the end of winter: the snow, the wind and the cold.",
                       "This is the pain of life: my back, my head and my tea."
                     ],
@@ -4977,8 +4982,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Newroza we pîroz be! Ez ji we re tenduristî û xweşî dixwazim.",
-                    "reference": "Newroza we pîroz be! Ez ji we re tenduristî û xweşî dixwazim."
+                    "prompt": "Newroza we pîroz be! Ez ji we re tenduristî, xweşî û serkeftin dixwazim.",
+                    "reference": "Newroza we pîroz be! Ez ji we re tenduristî, xweşî û serkeftin dixwazim."
                   }
                 }
               ]

@@ -2044,7 +2044,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Spas! Dapîr kevçiyek hingiv zêde dide min.",
+                        "text": "Spas! Dapîr kevçiyekî hingiv zêde dide min.",
                         "en": "Thanks! Dapîr gives me an extra spoonful of honey."
                       },
                       {
@@ -4657,8 +4657,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Belê… em li vir in.",
-                        "en": "Yes… we’re here."
+                        "text": "Belê… em li vir in. Û soza min?",
+                        "en": "Yes… we’re here. And my promise?"
                       },
                       {
                         "speaker": 1,
@@ -4667,8 +4667,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Lorîn dikene û dibêje: Tu her gav dereng î!",
-                        "en": "Lorîn laughs and says: You’re always late!"
+                        "text": "Lorîn dikene û dibêje: Carinan? Na, tu her gav dereng î!",
+                        "en": "Lorîn laughs and says: Sometimes? No, you’re always late!"
                       },
                       {
                         "speaker": 1,
@@ -4695,13 +4695,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hevalo dibeze, lê otobûs nasekine.",
+                    "say": "Tenê Hevalo dibeze, lê otobûs nasekine.",
                     "voice": "hamo",
-                    "prompt": "Hevalo dibeze, lê otobûs nasekine.",
+                    "prompt": "Tenê Hevalo dibeze, lê otobûs nasekine.",
                     "options": [
-                      "Hevalo runs, but the bus doesn’t stop.",
-                      "Hevalo runs, and the bus stops.",
-                      "Hevalo sleeps, but the bus doesn’t stop."
+                      "Only Hevalo runs, but the bus doesn’t stop.",
+                      "Only Hevalo runs, and the bus stops.",
+                      "Only Hevalo sleeps, but the bus doesn’t stop."
                     ],
                     "correctIndex": 0
                   }
@@ -4779,8 +4779,8 @@
                         "right": "week"
                       },
                       {
-                        "left": "Yekşem",
-                        "right": "Sunday"
+                        "left": "kar",
+                        "right": "work"
                       }
                     ],
                     "voice": "hamo"
@@ -4825,9 +4825,9 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Hefte hemû em amade ne, û îro otobûs diçe!",
-                      "Hefte hemû em amade ne, û îro otobûs diçe",
-                      "Hefte hemû em amade ne û îro otobûs diçe"
+                      "Hefte hemû em amade ne, lê îro dem tune: otobûs diçe!",
+                      "Hefte hemû em amade ne, lê îro dem tune: otobûs diçe",
+                      "Hefte hemû em amade ne lê îro dem tune otobûs diçe"
                     ]
                   }
                 },
@@ -4868,8 +4868,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ez nizanim… lê berî her tiştî, çayek!",
-                    "reference": "Ez nizanim… lê berî her tiştî, çayek!"
+                    "prompt": "Ez fêr dibim: heşt û heşt ne yek in!",
+                    "reference": "Ez fêr dibim: heşt û heşt ne yek in!"
                   }
                 },
                 {

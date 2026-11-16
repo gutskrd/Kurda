@@ -2173,13 +2173,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hefteya borî gurê Hamo ji Bozo mezintir bû!",
+                    "say": "Par gurê Hamo biçûk bû; hefteya borî ew ji Bozo mezintir bû!",
                     "voice": "hamo",
-                    "prompt": "Hefteya borî gurê Hamo ji Bozo mezintir bû!",
+                    "prompt": "Par gurê Hamo biçûk bû; hefteya borî ew ji Bozo mezintir bû!",
                     "options": [
-                      "Last week Hamo’s wolf was bigger than Bozo!",
-                      "Last week Hamo’s wolf was smaller than Bozo!",
-                      "Next week Hamo will be bigger than Bozo!"
+                      "Last year Hamo’s wolf was small; last week it was bigger than Bozo!",
+                      "Last year Hamo’s wolf was big; last week it was smaller than Bozo!",
+                      "Next year Hamo will be bigger than Bozo!"
                     ],
                     "correctIndex": 0
                   }
@@ -2327,13 +2327,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Baran dibêje: duh ez çûm gelî, li ser keviran rûniştim û razam.",
+                    "say": "Baran dibêje: duh ez çûm gelî, li ser keviran rûniştim, razam, û bi şev rabûm.",
                     "voice": "hamo",
-                    "prompt": "Baran dibêje: duh ez çûm gelî, li ser keviran rûniştim û razam.",
+                    "prompt": "Baran dibêje: duh ez çûm gelî, li ser keviran rûniştim, razam, û bi şev rabûm.",
                     "accepted": [
-                      "Baran says: yesterday I went to the valley, sat on the stones and fell asleep.",
-                      "Baran says: yesterday I went to the valley, sat down on the stones and slept.",
-                      "Baran says, yesterday I went to the valley, sat on the stones and fell asleep."
+                      "Baran says: yesterday I went to the valley, sat on the stones, fell asleep, and got up at night.",
+                      "Baran says: yesterday I went to the valley, sat down on the stones, slept, and got up at night.",
+                      "Baran says, yesterday I went to the valley, sat on the stones, fell asleep and got up at night."
                     ]
                   }
                 },
@@ -3139,22 +3139,6 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Li qehwexaneyê her kes dibêje: Hamo diçe zozanan!",
-                    "voice": "hamo",
-                    "prompt": "Li qehwexaneyê her kes dibêje: Hamo diçe zozanan!",
-                    "options": [
-                      "At the tea house everyone is saying: Hamo is going up to the pastures!",
-                      "At the tea house everyone is saying: Hamo is going to the city!",
-                      "At the tea house nobody is saying anything."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "reply",
                     "say": "Tu berê di konekî de razayî?",
                     "voice": "hamo",
@@ -3163,6 +3147,22 @@
                       "Na, ev ê cara yekem be!",
                       "Erê, ez kon im.",
                       "Na, tu razayî."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Li qehwexaneyê her kes dibêje: Hamo diçe zozanan!",
+                    "voice": "hamo",
+                    "prompt": "Li qehwexaneyê her kes dibêje: Hamo diçe zozanan!",
+                    "options": [
+                      "At the tea house everyone is saying: Hamo is going up to the pastures!",
+                      "At the tea house everyone is saying: Hamo is going to the city!",
+                      "At the tea house nobody is saying anything."
                     ],
                     "correctIndex": 0
                   }
@@ -3675,66 +3675,6 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Wê havînê ew li hespê xwe siwar bûn û çûn zozanan.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "siwar bûn",
-                        "en": "to ride; to get on"
-                      }
-                    ],
-                    "prompt": "Wê havînê ew li hespê xwe siwar bûn û çûn zozanan.",
-                    "options": [
-                      "That summer they rode their horse up to the pastures.",
-                      "That summer they sold their horse at the market.",
-                      "That winter they walked down to the plain."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Dema ku ew panzdeh salî bû, ew li çiyan geriya.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "panzdeh",
-                        "en": "fifteen"
-                      }
-                    ],
-                    "prompt": "Dema ku ew panzdeh salî bû, ew li çiyan geriya.",
-                    "options": [
-                      "When she was fifteen, she wandered the mountains.",
-                      "When she was fifty, she wandered the mountains.",
-                      "When she was fifteen, she lived in the town."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Dema ku Dapîr panzdeh salî bû, ew li hespê siwar bû.",
-                    "voice": "hamo",
-                    "prompt": "Dema ku Dapîr ___ salî bû, ew li hespê siwar bû.",
-                    "options": [
-                      "panzdeh",
-                      "panzdehan",
-                      "sed"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
                     "say": "Hespekî malbata Dapîrê hebû, lê dibistan tunebû.",
                     "voice": "hamo",
                     "new": [
@@ -3753,45 +3693,7 @@
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Dapîr ji kuran zûtir hilkişiya ser giran.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "hilkişiya",
-                        "en": "climbed (hilkişîn: to climb)"
-                      }
-                    ],
-                    "prompt": "Dapîr ji kuran zûtir hilkişiya ser giran.",
-                    "options": [
-                      "Dapîr climbed the hills faster than the boys.",
-                      "Dapîr climbed the hills slower than the boys.",
-                      "The boys climbed the hills faster than Dapîr."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Derî vekirî ye, û Dapîr bi kelecan e! Çima?",
-                    "voice": "hamo",
-                    "prompt": "Derî vekirî ye, û Dapîr bi kelecan e! Çima?",
-                    "options": [
-                      "Biryara wê heye: ew jî tê zozanan!",
-                      "Ew hesp e.",
-                      "Ez bi kelecan im."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 8,
+                  "position": 3,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3813,37 +3715,83 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "reply",
+                    "say": "Derî vekirî ye, û Dapîr bi kelecan e! Çima?",
                     "voice": "hamo",
-                    "prompt": "She got on the horse.",
+                    "prompt": "Derî vekirî ye, û Dapîr bi kelecan e! Çima?",
                     "options": [
-                      "Ew li hespê siwar bû.",
-                      "Ew li hespê siwar bûm.",
-                      "Ew li hespê siwar dibim."
+                      "Biryara wê heye: ew jî tê zozanan!",
+                      "Ew hesp e.",
+                      "Ew ji hespê daket."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "translate",
+                  "position": 5,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Taksî tunebû: hesp aram bû, ew hilkişiya ser zinaran, meşiya û sekinî.",
+                    "ask": "meaning",
+                    "say": "Wê havînê ew li hespê xwe siwar bûn û çûn zozanan.",
                     "voice": "hamo",
-                    "prompt": "Taksî tunebû: hesp aram bû, ew hilkişiya ser zinaran, meşiya û sekinî.",
-                    "accepted": [
-                      "There was no taxi: the horse was calm, it climbed onto the rocks, walked and stopped.",
-                      "There were no taxis: the horse was calm; it climbed the cliffs, walked and stopped.",
-                      "There was no taxi: the calm horse climbed onto the rocks, walked and stopped."
-                    ]
+                    "new": [
+                      {
+                        "ku": "siwar bûn",
+                        "en": "to ride; to get on"
+                      }
+                    ],
+                    "prompt": "Wê havînê ew li hespê xwe siwar bûn û çûn zozanan.",
+                    "options": [
+                      "That summer they rode their horse up to the pastures.",
+                      "That summer they sold their horse at the market.",
+                      "That winter they walked down to the plain."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Dema ku ew panzdeh salî bû, ew li çiyê geriya.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "panzdeh",
+                        "en": "fifteen"
+                      }
+                    ],
+                    "prompt": "Dema ku ew panzdeh salî bû, ew li çiyê geriya.",
+                    "options": [
+                      "When she was fifteen, she wandered on the mountain.",
+                      "When she was fifty, she wandered the mountains.",
+                      "When she was fifteen, she lived in the town."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Dema ku Dapîr panzdeh salî bû, ew li hespê siwar bû.",
+                    "voice": "hamo",
+                    "prompt": "Dema ku Dapîr ___ salî bû, ew li hespê siwar bû.",
+                    "options": [
+                      "panzdeh",
+                      "panzdehan",
+                      "sed"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3865,19 +3813,59 @@
                   }
                 },
                 {
-                  "position": 12,
-                  "type": "listening",
+                  "position": 9,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "meaning",
+                    "say": "Dapîr ji kuran zûtir hilkişiya ser giran.",
                     "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "hilkişiya",
+                        "en": "climbed (hilkişîn: to climb)"
+                      }
+                    ],
+                    "prompt": "Dapîr ji kuran zûtir hilkişiya ser giran.",
+                    "options": [
+                      "Dapîr climbed the hills faster than the boys.",
+                      "Dapîr climbed the hills slower than the boys.",
+                      "The boys climbed the hills faster than Dapîr."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "When she was eighteen, she got on the horse.",
+                    "options": [
+                      "Dema ku ew hejdeh salî bû, ew li hespê siwar bû.",
+                      "Dema ku ew hejdeh salî bû, ew li hespê siwar bûm.",
+                      "Dema ku ew hejdeh salî bû, ew li hespê siwar dibim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Taksî tunebû: hesp aram bû, ew hilkişiya ser zinaran, meşiya û sekinî.",
+                    "voice": "hamo",
+                    "prompt": "Taksî tunebû: hesp aram bû, ew hilkişiya ser zinaran, meşiya û sekinî.",
                     "accepted": [
-                      "Li zozanan dibistan tunebû, lê her tişt hebû!",
-                      "Li zozanan dibistan tunebû lê her tişt hebû!"
+                      "There was no taxi: the horse was calm, it climbed onto the rocks, walked and stopped.",
+                      "There were no taxis: the horse was calm; it climbed the cliffs, walked and stopped.",
+                      "There was no taxi: the calm horse climbed onto the rocks, walked and stopped."
                     ]
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 12,
                   "type": "match_pairs",
                   "payload": {
                     "voice": "hamo",
@@ -3910,6 +3898,18 @@
                   }
                 },
                 {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Li zozanan dibistan tunebû, lê her tişt hebû!",
+                      "Li zozanan dibistan tunebû lê her tişt hebû!"
+                    ]
+                  }
+                },
+                {
                   "position": 14,
                   "type": "translate",
                   "payload": {
@@ -3938,10 +3938,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "When she was fifteen, she had a horse.",
+                    "prompt": "When she was fifteen, she rode a horse.",
                     "accepted": [
-                      "Dema ku ew panzdeh salî bû, hespekî wê hebû.",
-                      "Dema ew panzdeh salî bû, hespekî wê hebû."
+                      "Dema ku ew panzdeh salî bû, ew li hespekî siwar bû.",
+                      "Dema ew panzdeh salî bû, ew li hespekî siwar bû."
                     ]
                   }
                 }

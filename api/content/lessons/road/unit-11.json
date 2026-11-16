@@ -977,13 +977,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Îro ez hemû roj li baxçe xebitîm, û gund hat cem min.",
+                    "say": "Îlon e. Îro ez hemû roj li baxçe xebitîm, û gund hat cem min.",
                     "voice": "hamo",
-                    "prompt": "Îro ez hemû roj li baxçe xebitîm, û gund hat cem min.",
+                    "prompt": "Îlon e. Îro ez hemû roj li baxçe xebitîm, û gund hat cem min.",
                     "options": [
-                      "Today I worked in the orchard all day, and the village came to me.",
-                      "Today I slept in the orchard all day, and nobody came.",
-                      "Today I went to the village, and the orchard came with me."
+                      "It’s September. Today I worked in the orchard all day, and the village came to me.",
+                      "It’s September. Today I slept in the orchard all day, and nobody came.",
+                      "It’s October. Today I went to the village, and the orchard came with me."
                     ],
                     "correctIndex": 0
                   }
@@ -993,15 +993,15 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Pêşî Ferhad hat û got: bê cotkar, nan tune!",
+                    "say": "Pêşî Ferhad hat û got: bê cotkar û karker, nan tune!",
                     "voice": "hamo",
-                    "prompt": "Pêşî Ferhad hat û got: bê cotkar, nan tune!",
+                    "prompt": "Pêşî Ferhad hat û got: bê cotkar û karker, nan tune!",
                     "accepted": [
-                      "First Ferhad came and said: without farmers, there’s no bread!",
-                      "First Ferhad came and said: without farmers there is no bread!",
-                      "First Ferhad came and said: no farmers, no bread!",
-                      "Ferhad came first and said: without farmers, there’s no bread!",
-                      "Ferhad came first and said: without farmers there is no bread!"
+                      "First Ferhad came and said: without farmers and workers, there’s no bread!",
+                      "First Ferhad came and said: without farmers and workers there is no bread!",
+                      "First Ferhad came and said: no farmers and workers, no bread!",
+                      "Ferhad came first and said: without farmers and workers, there’s no bread!",
+                      "Ferhad came first and said: without farmers and workers there is no bread!"
                     ]
                   }
                 },
@@ -1225,6 +1225,11 @@
                       },
                       {
                         "speaker": 0,
+                        "text": "Baran nivîskar, Hêvî hemşîre, kurê Lorînê wergêr, û tu cotkar!",
+                        "en": "Baran a writer, Hêvî a nurse, Lorîn’s son a translator, and you a farmer!"
+                      },
+                      {
+                        "speaker": 0,
                         "text": "Aferîn! Dilê min bi kelecan lêdide.",
                         "en": "Well done! My heart is beating with excitement."
                       }
@@ -1282,21 +1287,3797 @@
           "titleKu": "Me sêv berhev kirine",
           "titleEn": "We’ve picked the apples",
           "grammarMd": "**Ez hatime.** I have come. The present perfect is the past stem + **-ime, -iyî, -iye, -ine** after a consonant, **-me, -yî, -ye, -ne** after a vowel: *ew hatiye* he has come, *em çûne* we have gone.\n\n- With an object it is ergative, like the past: *Min biryar daye.* I have decided. · *Me sêv berhev kirine.* We have picked the apples.\n- *Te hîç Amed dîtiye?* Have you ever seen Amed?",
-          "lessons": []
+          "lessons": [
+            {
+              "key": "u11s2l1",
+              "position": 1,
+              "titleKu": "Me dest pê kiriye",
+              "titleEn": "We’ve begun",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Cotmeh e, û me dest pê kiriye!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "dest pê kirin",
+                        "en": "to begin"
+                      },
+                      {
+                        "ku": "-iye / -ye (kiriye, hatiye)",
+                        "en": "has …ed: the present perfect"
+                      }
+                    ],
+                    "prompt": "Cotmeh e, û me dest pê kiriye!",
+                    "options": [
+                      "It’s October, and we’ve begun!",
+                      "It’s October, and we’ve finished!",
+                      "It’s September, and we’ve gone home!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Pêr nivîskarê me û hemşîreya me şitil çandin.",
+                    "voice": "hamo",
+                    "prompt": "Pêr nivîskarê me û hemşîreya me şitil çandin.",
+                    "accepted": [
+                      "The day before yesterday our writer and our nurse planted saplings.",
+                      "The day before yesterday, our writer and our nurse planted saplings.",
+                      "The day before yesterday our writer and nurse planted saplings.",
+                      "Two days ago our writer and our nurse planted saplings."
+                    ]
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Te dest pê kiriye?",
+                    "voice": "hamo",
+                    "prompt": "Te dest pê kiriye?",
+                    "options": [
+                      "Erê, min dest pê kiriye!",
+                      "Na, min şûşe şûştin.",
+                      "Erê, ez dest im."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ramanek min heye! Çima tu bi dilekî giran li min dinêrî?",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "raman",
+                        "en": "thought, idea"
+                      }
+                    ],
+                    "prompt": "Ramanek min heye! Çima tu bi dilekî giran li min dinêrî?",
+                    "options": [
+                      "I have an idea! Why are you looking at me with a heavy heart?",
+                      "I have an apple! Why are you looking at me so hungrily?",
+                      "I have a question! Why are you laughing at me?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Kar dest pê dike, û îsal ez her tiştî diguherînim!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "guhertin",
+                        "en": "to change"
+                      }
+                    ],
+                    "prompt": "Kar dest pê dike, û îsal ez her tiştî diguherînim!",
+                    "options": [
+                      "The work is beginning, and this year I’m changing everything!",
+                      "The work is finishing, and this year I’m changing nothing!",
+                      "The work is beginning, and this year I’m going to Amed!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I’ve thought about it, and I have an idea.",
+                    "options": [
+                      "Ez hizirîme, û ramanek min heye.",
+                      "Ez hiziriye, û ramanek min heye.",
+                      "Min hizirîme, û ramanek min heye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ez her tiştî diguherînim, û ez razî me!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "razî",
+                        "en": "content, satisfied; agreeing"
+                      }
+                    ],
+                    "prompt": "Ez her tiştî diguherînim, û ez razî me!",
+                    "options": [
+                      "I’m changing everything, and I’m satisfied!",
+                      "I’m changing nothing, and I’m angry!",
+                      "I’m changing everything, and I’m worried!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Karker çûne zeviyê, û çivîk firiyan.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "zevî",
+                        "en": "field"
+                      }
+                    ],
+                    "prompt": "Karker çûne zeviyê, û çivîk firiyan.",
+                    "options": [
+                      "The workers have gone to the field, and the birds flew off.",
+                      "The workers have gone home, and the birds have come.",
+                      "The workers are in the shop, and the birds are singing."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Tu her tiştî diguherînî. Tu razî yî?",
+                    "voice": "hamo",
+                    "prompt": "Tu her tiştî diguherînî. Tu razî yî?",
+                    "options": [
+                      "Erê, ez razî me!",
+                      "Na, ez birçî me.",
+                      "Ez dew vedixwim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Karê zeviyê qediya, û Dapîr bi ezmûna xwe bêdeng e.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "qedîn",
+                        "en": "to finish, to end (of itself)"
+                      },
+                      {
+                        "ku": "ezmûn",
+                        "en": "experience"
+                      }
+                    ],
+                    "prompt": "Karê zeviyê qediya, û Dapîr bi ezmûna xwe bêdeng e.",
+                    "options": [
+                      "The work in the field is finished, and Dapîr, with all her experience, says nothing.",
+                      "The work in the field is finished, and Dapîr is shouting at everyone.",
+                      "The work in the field has begun, and Dapîr is asleep."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "We’ve begun, and I have an idea.",
+                    "accepted": [
+                      "Me dest pê kiriye, û ramanek min heye.",
+                      "Me dest pê kiriye û ramanek min heye."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Dapîr bi ezmûna xwe dibêje: karê daran dê roja Înê biqede.",
+                    "voice": "hamo",
+                    "cue": "…will be finished on Friday.",
+                    "prompt": "Dapîr bi ezmûna xwe dibêje: karê daran dê roja Înê ___.",
+                    "accepted": [
+                      "biqede"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Bozo jî karê xwe naguherîne: ew li zeviyê giya dixwe."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "raman",
+                        "right": "idea, thought"
+                      },
+                      {
+                        "left": "razî",
+                        "right": "satisfied"
+                      },
+                      {
+                        "left": "qedîn",
+                        "right": "to finish"
+                      },
+                      {
+                        "left": "ezmûn",
+                        "right": "experience"
+                      },
+                      {
+                        "left": "dil",
+                        "right": "heart"
+                      },
+                      {
+                        "left": "hest",
+                        "right": "feeling"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "We’ve begun, and we’ve gone to the field.",
+                    "accepted": [
+                      "Me dest pê kiriye, û em çûne zeviyê.",
+                      "Me dest pê kiriye û em çûne zeviyê."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Bi ezmûna Dapîrê, kar dê biqede, û her kes dê razî be.",
+                    "reference": "Bi ezmûna Dapîrê, kar dê biqede, û her kes dê razî be."
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u11s2l2",
+              "position": 2,
+              "titleKu": "Sêv gihîştine",
+              "titleEn": "The apples are ripe",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Îro em sêvan berhev dikin, û her kes bi kelecan e!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "berhev kirin",
+                        "en": "to gather, to pick (fruit, the harvest)"
+                      }
+                    ],
+                    "prompt": "Îro em sêvan berhev dikin, û her kes bi kelecan e!",
+                    "options": [
+                      "Today we’re picking the apples, and everyone is excited!",
+                      "Today we’re selling the apples, and everyone is tired!",
+                      "Today we’re eating the apples, and Hevalo is excited!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ez li ser nêrdewanê stranan dibêjim, û hemû gund min dibihîze.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "nêrdewan",
+                        "en": "ladder"
+                      }
+                    ],
+                    "prompt": "Ez li ser nêrdewanê stranan dibêjim, û hemû gund min dibihîze.",
+                    "options": [
+                      "I sing songs at the top of the ladder, and the whole village hears me.",
+                      "I sleep on the ladder, and nobody hears me.",
+                      "I sing songs on the roof, and the whole village laughs."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Xezal li ser pêşniyarê dihizire. Tu jî sêvan berhev dikî?",
+                    "voice": "hamo",
+                    "prompt": "Xezal li ser pêşniyarê dihizire. Tu jî sêvan berhev dikî?",
+                    "options": [
+                      "Erê, ez jî sêvan berhev dikim!",
+                      "Na, ez pêşniyar im.",
+                      "Ez li zozanan dijîm."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Sindoq li bin nêrdewanê ne, û Hevalo sêvek jê dixwe.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "sindoq",
+                        "en": "box, chest"
+                      }
+                    ],
+                    "prompt": "Sindoq li bin nêrdewanê ne, û Hevalo sêvek jê dixwe.",
+                    "options": [
+                      "The crates are under the ladder, and Hevalo is eating an apple from them.",
+                      "The crates are on the roof, and Hevalo is asleep.",
+                      "The ladder is under the tree, and Hevalo is on the ladder."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Me sêv berhev kirine, û barê Bozo mezin dibe.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "bar",
+                        "en": "load"
+                      }
+                    ],
+                    "prompt": "Me sêv berhev kirine, û barê Bozo mezin dibe.",
+                    "options": [
+                      "We’ve picked apples, and Bozo’s load is getting bigger.",
+                      "We’ve sold apples, and Bozo is getting thinner.",
+                      "We’ve picked apples, and Bozo has eaten them."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The crates under the ladder are full of apples.",
+                    "options": [
+                      "Sindoqên li bin nêrdewanê tije sêv in.",
+                      "Sindoqên li bin nêrdewanê tije sêv e.",
+                      "Sindoqa li bin nêrdewanê tije sêv in."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Bar giran e, û Bozo rûdine!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "giran",
+                        "en": "heavy"
+                      }
+                    ],
+                    "prompt": "Bar giran e, û Bozo rûdine!",
+                    "options": [
+                      "The load is heavy, and Bozo sits down!",
+                      "The load is light, and Bozo runs off!",
+                      "The tea is hot, and Bozo drinks it!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Baran li ser sindoqê nivîsî: ji bo dibistanê!",
+                    "voice": "hamo",
+                    "prompt": "Baran li ser sindoqê nivîsî: ji bo dibistanê!",
+                    "accepted": [
+                      "Baran wrote on the crate: for the school!",
+                      "Baran wrote on the box: for the school!",
+                      "Baran wrote on the crate: for school!"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Selik sivik in, lê dilê Bozo giran e.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "sivik",
+                        "en": "light (not heavy)"
+                      }
+                    ],
+                    "prompt": "Selik sivik in, lê dilê Bozo giran e.",
+                    "options": [
+                      "The baskets are light, but Bozo’s heart is heavy.",
+                      "The baskets are heavy, but Bozo is happy.",
+                      "The baskets are empty, and Bozo is asleep."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ewrek li ser çiya ye: bi lez!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "bi lez",
+                        "en": "quickly, in a hurry"
+                      }
+                    ],
+                    "prompt": "Ewrek li ser çiya ye: bi lez!",
+                    "options": [
+                      "There’s a cloud over the mountain: quickly!",
+                      "There’s a star over the mountain: slowly!",
+                      "There’s a wolf on the mountain: run!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Ev bar giran e?",
+                    "voice": "hamo",
+                    "prompt": "Ev bar giran e?",
+                    "options": [
+                      "Na, ew sivik e!",
+                      "Pêr min nan şewitand.",
+                      "Bar li zozanan e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "We’re picking the apples quickly.",
+                    "accepted": [
+                      "Em sêvan bi lez berhev dikin.",
+                      "Em bi lez sêvan berhev dikin.",
+                      "Em sêv bi lez berhev dikin."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Divê kesek nêrdewanê bigire!",
+                    "voice": "hamo",
+                    "cue": "Someone must hold the ladder!",
+                    "prompt": "Divê kesek ___ bigire!",
+                    "accepted": [
+                      "nêrdewanê"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "sindoq",
+                        "right": "crate, box"
+                      },
+                      {
+                        "left": "giran",
+                        "right": "heavy"
+                      },
+                      {
+                        "left": "sivik",
+                        "right": "light"
+                      },
+                      {
+                        "left": "bi lez",
+                        "right": "quickly"
+                      },
+                      {
+                        "left": "hêvî",
+                        "right": "hope"
+                      },
+                      {
+                        "left": "hevdîtin",
+                        "right": "meeting"
+                      },
+                      {
+                        "left": "derfet",
+                        "right": "opportunity"
+                      },
+                      {
+                        "left": "dûrî",
+                        "right": "distance"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Ewr tê! Em sêvan berhev dikin, û Bozo barê xwe hildigire."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Bi lez! Selik sivik in, lê sindoq giran in.",
+                    "reference": "Bi lez! Selik sivik in, lê sindoq giran in."
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u11s2l3",
+              "position": 3,
+              "titleKu": "Civîna gund",
+              "titleEn": "The village meeting",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Êvarê civîna gund heye, li ber dibistanê.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "civîn",
+                        "en": "meeting, council"
+                      }
+                    ],
+                    "prompt": "Êvarê civîna gund heye, li ber dibistanê.",
+                    "options": [
+                      "This evening there’s a village meeting, in front of the school.",
+                      "This evening there’s a wedding, in front of the school.",
+                      "This evening the school is closed."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Berhema îsal gelek baş e, û gund bextewar e.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "berhem",
+                        "en": "harvest; produce"
+                      }
+                    ],
+                    "prompt": "Berhema îsal gelek baş e, û gund bextewar e.",
+                    "options": [
+                      "This year’s harvest is very good, and the village is happy.",
+                      "This year’s harvest is very small, and the village is sad.",
+                      "This year’s winter is very long, and the village is tired."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Tu yê bêyî civînê?",
+                    "voice": "hamo",
+                    "prompt": "Tu yê bêyî civînê?",
+                    "options": [
+                      "Erê, ez ê bêm!",
+                      "Civîn sor e.",
+                      "Na, ez civîn im."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Berhem hevpar e: ji bo her malê selikek.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "hevpar",
+                        "en": "shared, common"
+                      }
+                    ],
+                    "prompt": "Berhem hevpar e: ji bo her malê selikek.",
+                    "options": [
+                      "The harvest is shared: a basket for every house.",
+                      "The harvest is sold: money for every house.",
+                      "The harvest is small: one apple for every house."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Berbang bû, û Dapîr nan li ser sêlê çêkir.",
+                    "voice": "hamo",
+                    "prompt": "Berbang bû, û Dapîr nan li ser sêlê çêkir.",
+                    "accepted": [
+                      "Dawn came, and Dapîr made bread on the saj.",
+                      "It was dawn, and Dapîr made bread on the saj.",
+                      "At dawn Dapîr made bread on the saj.",
+                      "Dawn came, and Grandma made bread on the saj."
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Mijdar tê, û serma jî tê.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "Mijdar",
+                        "en": "November"
+                      }
+                    ],
+                    "prompt": "Mijdar tê, û serma jî tê.",
+                    "options": [
+                      "November is coming, and so is the cold.",
+                      "November is going, and the spring is coming.",
+                      "October is coming, and so are the guests."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The first basket of the harvest is for the school.",
+                    "options": [
+                      "Selika yekem a berhemê ji bo dibistanê ye.",
+                      "Selika yekem ê berhemê ji bo dibistanê ye.",
+                      "Selika yekem a berhemê ji bo dibistanê ne."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Ev selik ji bo kê ye?",
+                    "voice": "hamo",
+                    "prompt": "Ev selik ji bo kê ye?",
+                    "options": [
+                      "Ji bo hemû gund: ew hevpar e.",
+                      "Ew ji Mijdarê ye.",
+                      "Ew diz e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Mala kevirî ya li ber golê wêran e, lê dilê Dapîrê li wir e.",
+                    "voice": "hamo",
+                    "prompt": "Mala kevirî ya li ber golê wêran e, lê dilê Dapîrê li wir e.",
+                    "accepted": [
+                      "The stone house by the lake is in ruins, but Dapîr’s heart is there.",
+                      "The stone house by the lake is ruined, but Dapîr’s heart is there.",
+                      "The stone house by the lake is in ruins, but Grandma’s heart is there."
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu11s2l3a",
+                    "title": "Civîna gund",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "learner": true
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Civîn dest pê kir. Pêşî me berhem parve kir.",
+                        "en": "The meeting began. First we shared out the harvest."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û berhem çawa bû?",
+                        "en": "And how was the harvest?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Berhem hevpar e: selikek ji bo her malê, û ya pêşî ji bo dibistanê.",
+                        "en": "The harvest is shared: a basket for every house, and the first one for the school."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Paşê Xezal rabû û got: min biryar daye.",
+                        "en": "Then Xezal stood up and said: I have decided."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Çi biryar?",
+                        "en": "What decision?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Piştî zivistanê ew ê biçe Hewlêrê, û her Newrozê ew ê vegere.",
+                        "en": "After the winter she will go to Hewlêr, and she will come back every Newroz."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew ê mal û hal bibe Hewlêrê?",
+                        "en": "Will she take her household to Hewlêr?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê. Dapîrê bi ezmûna xwe got: biryareke wêrek ne şaş e.",
+                        "en": "Yes. Dapîr, with all her experience, said: a brave decision is not a wrong one."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Baran? Baran tiştek negot. Ew bêdeng ma.",
+                        "en": "Baran? Baran said nothing. He stayed silent."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Dilê wî giran e.",
+                        "en": "His heart is heavy."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê. Û Mijdar tê, û zivistan dirêj e.",
+                        "en": "Yes. And November is coming, and the winter is long."
+                      }
+                    ],
+                    "prompt": "Xezal dê kengî vegere?",
+                    "options": [
+                      "Her Newrozê.",
+                      "Di Mijdarê de.",
+                      "Îro êvarê."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Diz kî ye? Hevalo, sêva dibistanê li ku ye?"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The meeting is in November.",
+                    "accepted": [
+                      "Civîn di Mijdarê de ye.",
+                      "Civîna gund di Mijdarê de ye."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ramana min ev e: berhem hevpar e.",
+                    "voice": "hamo",
+                    "cue": "My idea: the harvest is shared.",
+                    "prompt": "Ramana min ev e: berhem ___ e.",
+                    "options": [
+                      "hevpar",
+                      "giran",
+                      "şîn"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "November is coming: the new saplings are in the soil.",
+                    "accepted": [
+                      "Mijdar tê: şitilên nû di axê de ne.",
+                      "Mijdar tê, şitilên nû di axê de ne.",
+                      "Mijdar tê: şitil di axê de ne."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Civîna gund xweş bû: berhema me hevpar e.",
+                    "reference": "Civîna gund xweş bû: berhema me hevpar e."
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u11s2l4",
+              "position": 4,
+              "titleKu": "Ez ê biçim, lê ez ê vegerim",
+              "titleEn": "I’ll go, but I’ll come back",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Xezalê li ser pêşniyarê peyamek ji dibistana Hewlêrê re nivîsiye: erê, ez ê bêm!",
+                    "voice": "hamo",
+                    "prompt": "Xezalê li ser pêşniyarê peyamek ji dibistana Hewlêrê re nivîsiye: erê, ez ê bêm!",
+                    "options": [
+                      "Xezal has written to the school in Hewlêr about the offer: yes, I’ll come!",
+                      "Xezal has written to the school in Hewlêr about the offer: no, I’ll stay!",
+                      "Xezal has read a message from Hewlêr: come quickly!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Mîrza peyam bi lez bir bajêr, û niha hemû gund dizane.",
+                    "voice": "hamo",
+                    "prompt": "Mîrza peyam bi lez bir bajêr, û niha hemû gund dizane.",
+                    "accepted": [
+                      "Mîrza quickly took the message to town, and now the whole village knows.",
+                      "Mîrza took the message to town in a hurry, and now the whole village knows.",
+                      "Mîrza quickly took the message to the town, and now the whole village knows.",
+                      "Mîrza hurried the message to town, and now everyone in the village knows."
+                    ]
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Xezal kengî dê biçe Hewlêrê?",
+                    "voice": "hamo",
+                    "prompt": "Xezal kengî dê biçe Hewlêrê?",
+                    "options": [
+                      "Di biharê de.",
+                      "Di Mijdarê de.",
+                      "Ew ji Hewlêrê hat."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Mîrza ji bajêr nûçe anî, û şekir jî kirî.",
+                    "voice": "hamo",
+                    "prompt": "Mîrza ji bajêr nûçe anî, û şekir jî kirî.",
+                    "options": [
+                      "Mîrza brought news from town, and he bought sugar too.",
+                      "Mîrza brought sugar from town, but no news.",
+                      "Mîrza sold the news in town, and bought tea."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Xezal has decided.",
+                    "options": [
+                      "Xezalê biryar daye.",
+                      "Xezal biryar daye.",
+                      "Xezalê biryar dide."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Hostayê gund jî got: ev ji bo Sêvanê rûmet û derfeteke mezin e.",
+                    "voice": "hamo",
+                    "prompt": "Hostayê gund jî got: ev ji bo Sêvanê rûmet û derfeteke mezin e.",
+                    "accepted": [
+                      "The village builder said too: this is an honour and a great opportunity for Sêvan.",
+                      "The village builder also said: this is an honour and a great opportunity for Sêvan.",
+                      "The builder of the village said too: this is an honour and a big opportunity for Sêvan."
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Piştî civînê hemû gund razî ye, lê dilê Baran giran e.",
+                    "voice": "hamo",
+                    "cue": "…but Baran’s heart is heavy.",
+                    "prompt": "Piştî civînê hemû gund razî ye, lê dilê Baran ___ e.",
+                    "options": [
+                      "giran",
+                      "sivik",
+                      "kevirî"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Bozo li zeviyê nûçe bihîst, lê ew evîndar e: tiştek naguherîne!",
+                    "voice": "hamo",
+                    "prompt": "Bozo li zeviyê nûçe bihîst, lê ew evîndar e: tiştek naguherîne!",
+                    "options": [
+                      "Bozo heard the news in the field, but he’s in love: nothing changes!",
+                      "Bozo heard the news in the field, and he ran to Hewlêr!",
+                      "Bozo didn’t hear the news: he was asleep in the field!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Kar qediya?",
+                    "voice": "hamo",
+                    "prompt": "Kar qediya?",
+                    "options": [
+                      "Erê, me hemû sêv berhev kirine.",
+                      "Nêrdewan li bin darê ye.",
+                      "Bar sivik e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "This year our shared harvest was better than last year’s.",
+                    "accepted": [
+                      "Îsal berhema me ya hevpar ji ya par baştir bû.",
+                      "Berhema me ya hevpar îsal ji ya par baştir bû.",
+                      "Îsal berhema me ya hevpar ji par baştir bû."
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Paşê Baran hat cem min, û her tişt vegot."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu11s2l4a",
+                    "title": "Gotara Baran",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "learner": true
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Baran hat cem min. Mamosteya wî dixwaze ku ew gotarek bixwîne.",
+                        "en": "Baran came to me. His teacher wants him to give a talk."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Gotarek? Li ser çi?",
+                        "en": "A talk? About what?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Li ser Sêvanê, li ber hemû dibistanê.",
+                        "en": "About Sêvan, in front of the whole school."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Baran kurekî jîr e. Ew dikare!",
+                        "en": "Baran is a clever boy. He can do it!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Lê ew ditirse. Ezmûna min heye: berê ez jî tirsiyam.",
+                        "en": "But he’s afraid. I know about this: once I was afraid too."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Tu? Te çi kir?",
+                        "en": "You? What did you do?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Min li ber mirîşkan gotar dixwend, berdewam!",
+                        "en": "I used to give speeches to the hens, all the time!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Baran jî dikare li ber mirîşkan dest pê bike!",
+                        "en": "Baran can start in front of the hens too!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ramaneke bêhempa! Bawerî girîng e. Rojekê ew ê bibe xortekî wêrek.",
+                        "en": "A great idea! Confidence matters. One day he’ll be a brave young man."
+                      }
+                    ],
+                    "prompt": "Baran ji çi ditirse?",
+                    "options": [
+                      "Ji gotara li dibistanê.",
+                      "Ji mirîşkan.",
+                      "Ji Bozo."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "In the old days, I used to swim in the lake.",
+                    "accepted": [
+                      "Berê, min li golê avjenî dikir.",
+                      "Berê min li golê avjenî dikir.",
+                      "Berê, min di golê de avjenî dikir."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Mijdar e, û Bişar konê xwe anî gund.",
+                    "voice": "hamo",
+                    "prompt": "Mijdar e, û Bişar konê xwe anî gund.",
+                    "options": [
+                      "It’s November, and Bişar brought his tent to the village.",
+                      "It’s November, and Bişar went up to the pastures.",
+                      "It’s November, and Bişar sold his tent."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The stone house was old, but it was unique.",
+                    "accepted": [
+                      "Mala kevirî kevn bû, lê bêhempa bû.",
+                      "Mala kevirî kevn bû lê bêhempa bû.",
+                      "Mala kevirî kevn bû, lê ew bêhempa bû."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ez ê biçim, lê ez ê vegerim: dûrî tiştekî naguherîne.",
+                    "reference": "Ez ê biçim, lê ez ê vegerim: dûrî tiştekî naguherîne."
+                  }
+                }
+              ]
+            }
+          ]
         },
         {
           "position": 3,
           "titleKu": "Ji ber ku…",
           "titleEn": "Because…",
           "grammarMd": "**Ez dibezim, ji ber ku ez dereng im.** I’m running because I’m late. **ji ber ku** and **çimkî** say why; **loma** and **ji ber vê yekê** say what follows: *Baran ditirse, loma ew dihizire.*\n\n- **lê** and **lêbelê** but, however · **hem … hem** both … and: *hem sêv hem tirî*\n- **bêyî ku** + the bi- form: *bêyî ku tiştekî bibêje* without saying anything",
-          "lessons": []
+          "lessons": [
+            {
+              "key": "u11s3l1",
+              "position": 1,
+              "titleKu": "Loma",
+              "titleEn": "That’s why",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Xezalê karek da pola Baran.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "pol",
+                        "en": "class (the group, the room)"
+                      }
+                    ],
+                    "prompt": "Xezalê karek da pola Baran.",
+                    "options": [
+                      "Xezal gave Baran’s class a task.",
+                      "Xezal gave Baran a red apple.",
+                      "Xezal closed Baran’s school."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Her zarok dê li ser gundê xwe biaxive, û mijara Baran Sêvan e.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "mijar",
+                        "en": "subject, topic"
+                      }
+                    ],
+                    "prompt": "Her zarok dê li ser gundê xwe biaxive, û mijara Baran Sêvan e.",
+                    "options": [
+                      "Every child will talk about their village, and Baran’s subject is Sêvan.",
+                      "Every child will sing a song, and Baran’s song is about Bozo.",
+                      "Every child will write a book, and Baran’s book is about wolves."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Pola Baran çi dike?",
+                    "voice": "hamo",
+                    "prompt": "Pola Baran çi dike?",
+                    "options": [
+                      "Her zarok gotarek amade dike.",
+                      "Aşpêj xwarinê çêdike.",
+                      "Pol li ser nêrdewanê ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Baran mijarê naxwaze, ji ber ku ew şermok e.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "ji ber ku",
+                        "en": "because"
+                      }
+                    ],
+                    "prompt": "Baran mijarê naxwaze, ji ber ku ew şermok e.",
+                    "options": [
+                      "Baran doesn’t want the subject, because he is shy.",
+                      "Baran wants the subject, because he is brave.",
+                      "Baran doesn’t want an apple, because he is full."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Pol mezin e, loma Baran ditirse.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "loma",
+                        "en": "so, that is why"
+                      }
+                    ],
+                    "prompt": "Pol mezin e, loma Baran ditirse.",
+                    "options": [
+                      "The class is big, so Baran is afraid.",
+                      "The class is small, so Baran is happy.",
+                      "The apple is big, so Hevalo is happy."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Baran is afraid because the subject is big.",
+                    "options": [
+                      "Baran ditirse, ji ber ku mijar mezin e.",
+                      "Baran ditirsim, ji ber ku mijar mezin e.",
+                      "Baran ditirse, ji ber ku mijar mezin in."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Baran şermok e, loma ew ditirse. Ji ber vê yekê em ê biaxivin, û herwiha çay vexwin.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "ji ber vê yekê",
+                        "en": "therefore, for that reason"
+                      },
+                      {
+                        "ku": "herwiha",
+                        "en": "also, likewise"
+                      }
+                    ],
+                    "prompt": "Baran şermok e, loma ew ditirse. Ji ber vê yekê em ê biaxivin, û herwiha çay vexwin.",
+                    "options": [
+                      "Baran is shy, so he’s afraid. For that reason we’ll practise talking, and drink tea as well.",
+                      "Baran is brave, so he isn’t afraid. For that reason we’ll go home, and sleep as well.",
+                      "Baran is shy, so he’s hiding. For that reason we’ll eat apples, and sing as well."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Baran ramanên xwe berhev dike, ji ber ku mijar mezin e.",
+                    "voice": "hamo",
+                    "prompt": "Baran ramanên xwe berhev dike, ji ber ku mijar mezin e.",
+                    "accepted": [
+                      "Baran is gathering his thoughts, because the subject is big.",
+                      "Baran is collecting his ideas, because the subject is big.",
+                      "Baran gathers his thoughts, because the subject is big.",
+                      "Baran collects his ideas, because the subject is big.",
+                      "Baran is gathering his thoughts because the subject is big."
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Ji ber vê yekê em ê çi bikin?",
+                    "voice": "hamo",
+                    "prompt": "Ji ber vê yekê em ê çi bikin?",
+                    "options": [
+                      "Em ê biaxivin, û herwiha çay vexwin!",
+                      "Em ê bi lez biçin malê.",
+                      "Ez sindoq im."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ez nikarim, ji ber ku… çimkî… ango… biryara min ev e: ez naxwazim!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "çimkî",
+                        "en": "because"
+                      },
+                      {
+                        "ku": "ango",
+                        "en": "that is, I mean"
+                      }
+                    ],
+                    "prompt": "Ez nikarim, ji ber ku… çimkî… ango… biryara min ev e: ez naxwazim!",
+                    "options": [
+                      "I can’t, because… because… I mean… my decision is this: I don’t want to!",
+                      "I can, because… because… I mean… my decision is this: I want to!",
+                      "I can’t, because… because… I mean… I’m hungry!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The class is big, so I’m afraid.",
+                    "accepted": [
+                      "Pol mezin e, loma ez ditirsim.",
+                      "Pol mezin e loma ez ditirsim.",
+                      "Pol mezin e, ji ber vê yekê ez ditirsim."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Ango: tu ditirsî, çimkî tu şermok î. Ji ber vê yekê em ê biaxivin, û herwiha çay vexwin!"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Mijara te çi ye?",
+                    "voice": "hamo",
+                    "prompt": "Mijara te çi ye?",
+                    "options": [
+                      "Sêvan: nerîtên me, rêwîtiyên me, û sêvên herî xweş!",
+                      "Mijar sor e.",
+                      "Ez li ser sindoqê me."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "ji ber vê yekê",
+                        "right": "for that reason"
+                      },
+                      {
+                        "left": "herwiha",
+                        "right": "also, as well"
+                      },
+                      {
+                        "left": "çimkî",
+                        "right": "because"
+                      },
+                      {
+                        "left": "ango",
+                        "right": "that is, I mean"
+                      },
+                      {
+                        "left": "pol",
+                        "right": "class"
+                      },
+                      {
+                        "left": "gur",
+                        "right": "wolf"
+                      },
+                      {
+                        "left": "berx",
+                        "right": "lamb"
+                      },
+                      {
+                        "left": "kerî",
+                        "right": "flock"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "My subject is Sêvan, because I love my village.",
+                    "accepted": [
+                      "Mijara min Sêvan e, ji ber ku ez ji gundê xwe hez dikim.",
+                      "Mijara min Sêvan e, çimkî ez ji gundê xwe hez dikim.",
+                      "Mijara min Sêvan e ji ber ku ez ji gundê xwe hez dikim."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ango: tu şermok î, loma em ê biaxivin, çimkî ez li te tê digihîjim.",
+                    "reference": "Ango: tu şermok î, loma em ê biaxivin, çimkî ez li te tê digihîjim."
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u11s3l2",
+              "position": 2,
+              "titleKu": "Lê ez ditirsim",
+              "titleEn": "But I’m afraid",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Sibe wane li dibistanê ye: mijara Baran Sêvan û berhema wê ye.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "wane",
+                        "en": "lesson, class"
+                      }
+                    ],
+                    "prompt": "Sibe wane li dibistanê ye: mijara Baran Sêvan û berhema wê ye.",
+                    "options": [
+                      "Tomorrow there’s a lesson at school: Baran’s subject is Sêvan and its harvest.",
+                      "Tomorrow there’s no school: Baran will sleep all day.",
+                      "Tomorrow there’s a wedding at school: Baran will dance."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Baran dibêje: dibistan mezin e. Ez dibêjim: lêbelê zarok hevalên te ne.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "lêbelê",
+                        "en": "however"
+                      }
+                    ],
+                    "prompt": "Baran dibêje: dibistan mezin e. Ez dibêjim: lêbelê zarok hevalên te ne.",
+                    "options": [
+                      "Baran says: the school is big. I say: however, the children are your friends.",
+                      "Baran says: the school is small. I say: however, the children are tall.",
+                      "Baran says: the school is closed. I say: then let’s drink tea."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Wane kengî dest pê dike?",
+                    "voice": "hamo",
+                    "prompt": "Wane kengî dest pê dike?",
+                    "options": [
+                      "Sibe, li dibistanê.",
+                      "Wane hevpar e.",
+                      "Min def lêxist."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Baran dibêje: zarok dê bikenin. Lêbelê eşkere ye: kenîn baş e!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "eşkere",
+                        "en": "clear, obvious"
+                      }
+                    ],
+                    "prompt": "Baran dibêje: zarok dê bikenin. Lêbelê eşkere ye: kenîn baş e!",
+                    "options": [
+                      "Baran says: the children will laugh. But it’s clear: laughing is good!",
+                      "Baran says: the children will cry. But it’s clear: crying is good!",
+                      "Baran says: the children will sleep. But it’s clear: sleep is good!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Duh Baran bêyî ku tiştekî bibêje, ji waneyê derket.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "bêyî ku",
+                        "en": "without (…-ing)"
+                      }
+                    ],
+                    "prompt": "Duh Baran bêyî ku tiştekî bibêje, ji waneyê derket.",
+                    "options": [
+                      "Yesterday Baran left the lesson without saying anything.",
+                      "Yesterday Baran came to the lesson and said everything.",
+                      "Yesterday Baran left the lesson singing a song."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "It’s clear: you’re shy, but you’re clever.",
+                    "options": [
+                      "Eşkere ye: tu şermok î, lêbelê tu jîr î.",
+                      "Eşkere ye: tu şermok e, lêbelê tu jîr î.",
+                      "Eşkere e: tu şermok î, lêbelê tu jîr î."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Tu yê hem hêdî hem baş biaxivî, bêyî ku tiştekî ji bîr bikî.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "hem … hem",
+                        "en": "both … and"
+                      }
+                    ],
+                    "prompt": "Tu yê hem hêdî hem baş biaxivî, bêyî ku tiştekî ji bîr bikî.",
+                    "options": [
+                      "You’ll speak both slowly and well, without forgetting anything.",
+                      "You’ll speak both fast and badly, and forget everything.",
+                      "You’ll sing both slowly and well, without any tea."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Eşkere ye: wekî ku ez di gotarên xwe de dikim!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "wekî ku",
+                        "en": "as, just as"
+                      }
+                    ],
+                    "prompt": "Eşkere ye: wekî ku ez di gotarên xwe de dikim!",
+                    "options": [
+                      "It’s clear: just as I do in my speeches!",
+                      "It’s clear: just as Bozo does in the field!",
+                      "It isn’t clear: I never give speeches!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Berê gotarek min jî hebû: hem mirîşkan hem Bozo guhdarî kir!",
+                    "voice": "hamo",
+                    "prompt": "Berê gotarek min jî hebû: hem mirîşkan hem Bozo guhdarî kir!",
+                    "accepted": [
+                      "I once had a speech too: both the hens and Bozo listened!",
+                      "Once I had a speech too: both the hens and Bozo listened!",
+                      "In the old days I had a speech too: both the hens and Bozo listened!",
+                      "I had a speech too once: both the hens and Bozo listened!"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Bi kurtî, tu yê biaxivî, wekî ku ez diaxivim.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "bi kurtî",
+                        "en": "in short"
+                      }
+                    ],
+                    "prompt": "Bi kurtî, tu yê biaxivî, wekî ku ez diaxivim.",
+                    "options": [
+                      "In short, you’ll speak just as I speak.",
+                      "In short, you won’t speak at all.",
+                      "In short, you’ll sing just as Hevalo sings."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I saw you: you left the lesson without saying anything.",
+                    "accepted": [
+                      "Min tu dît: tu bêyî ku tiştekî bibêjî ji waneyê derketî.",
+                      "Min tu dît: tu ji waneyê derketî, bêyî ku tiştekî bibêjî.",
+                      "Min tu dît, tu bêyî ku tiştekî bibêjî ji waneyê derketî."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Bi kurtî, tu yê hem hêdî hem baş biaxivî.",
+                    "voice": "hamo",
+                    "cue": "In short, you’ll speak slowly and well.",
+                    "prompt": "Bi kurtî, tu yê hem hêdî hem baş ___.",
+                    "accepted": [
+                      "biaxivî"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Wekî ku Xezalê di waneyê de pirsî: kî dê dest pê bike?"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "eşkere",
+                        "right": "clear, obvious"
+                      },
+                      {
+                        "left": "bi kurtî",
+                        "right": "in short"
+                      },
+                      {
+                        "left": "hirç",
+                        "right": "bear"
+                      },
+                      {
+                        "left": "kulav",
+                        "right": "felt rug"
+                      },
+                      {
+                        "left": "civîn",
+                        "right": "meeting"
+                      },
+                      {
+                        "left": "pîşe",
+                        "right": "trade"
+                      },
+                      {
+                        "left": "parve kirin",
+                        "right": "to share"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Both the hens and Hevalo will listen, but without laughing.",
+                    "accepted": [
+                      "Hem mirîşk hem Hevalo dê guhdarî bikin, lêbelê bêyî ku bikenin.",
+                      "Hem mirîşk hem jî Hevalo dê guhdarî bikin, lêbelê bêyî ku bikenin.",
+                      "Hem mirîşk hem Hevalo dê guhdarî bikin, lê bêyî ku bikenin."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Bi kurtî, wekî ku tu diaxivî? Eşkere ye: ez ji vê ditirsim!",
+                    "reference": "Bi kurtî, wekî ku tu diaxivî? Eşkere ye: ez ji vê ditirsim!"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u11s3l3",
+              "position": 3,
+              "titleKu": "Gotara Baran",
+              "titleEn": "Baran’s talk",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Em gotarê tîp bi tîp dinivîsin.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "tîp",
+                        "en": "letter (of the alphabet)"
+                      }
+                    ],
+                    "prompt": "Em gotarê tîp bi tîp dinivîsin.",
+                    "options": [
+                      "We’re writing the talk letter by letter.",
+                      "We’re reading the book page by page.",
+                      "We’re eating the apples one by one."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Mirîşk guhdarên pêşî ne.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "guhdar",
+                        "en": "listener; audience"
+                      }
+                    ],
+                    "prompt": "Mirîşk guhdarên pêşî ne.",
+                    "options": [
+                      "The hens are the first listeners.",
+                      "The hens are the first to lay eggs.",
+                      "The hens are afraid of Hevalo."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Gotar dirêj e?",
+                    "voice": "hamo",
+                    "prompt": "Gotar dirêj e?",
+                    "options": [
+                      "Na, lê her tîp girîng e.",
+                      "Erê, ew tîp e.",
+                      "Gotar li zozanan e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Baran hewl dide, û guhdar bêdeng in.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "hewl dan",
+                        "en": "to try"
+                      }
+                    ],
+                    "prompt": "Baran hewl dide, û guhdar bêdeng in.",
+                    "options": [
+                      "Baran is trying, and the listeners are quiet.",
+                      "Baran is sleeping, and the listeners are laughing.",
+                      "Baran is trying, and the listeners have gone home."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Baran şermok e, lê ew yekser dest pê dike.",
+                    "voice": "hamo",
+                    "prompt": "Baran şermok e, lê ew yekser dest pê dike.",
+                    "accepted": [
+                      "Baran is shy, but he begins straight away.",
+                      "Baran is shy, but he starts at once.",
+                      "Baran is shy, but he begins at once.",
+                      "Baran is shy, but he starts straight away."
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Hevalo bi lingê xwe çepikan lêdixe!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "çepik",
+                        "en": "clapping, applause"
+                      }
+                    ],
+                    "prompt": "Hevalo bi lingê xwe çepikan lêdixe!",
+                    "options": [
+                      "Hevalo is clapping with his hoof!",
+                      "Hevalo is dancing on one foot!",
+                      "Hevalo is eating the talk!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Baran is trying.",
+                    "options": [
+                      "Baran hewl dide.",
+                      "Baran hewl didim.",
+                      "Baran hewl bide."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Guhdar çi dikin?",
+                    "voice": "hamo",
+                    "prompt": "Guhdar çi dikin?",
+                    "options": [
+                      "Ew çepikan lêdixin!",
+                      "Ew guhdar in.",
+                      "Ew sêv in."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Write every letter, and try!",
+                    "accepted": [
+                      "Her tîpê binivîse, û hewl bide!",
+                      "Her tîpê binivîse û hewl bide!",
+                      "Her tîpê binivîse, hewl bide!"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Me zeviyê bi lez derbas kir, û em gihîştin dibistanê.",
+                    "voice": "hamo",
+                    "prompt": "Me zeviyê bi lez derbas kir, û em gihîştin dibistanê.",
+                    "accepted": [
+                      "We crossed the field quickly, and we reached the school.",
+                      "We crossed the field in a hurry, and reached the school.",
+                      "We quickly crossed the field and reached the school.",
+                      "We crossed the field quickly and got to the school."
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu11s3l3a",
+                    "title": "Li ber mirîşkan",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "learner": true
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Baran gotara xwe li ber mirîşkan xwend. Te guhdarî kir?",
+                        "en": "Baran gave his talk in front of the hens. Did you listen?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Erê, ez jî guhdar bûm.",
+                        "en": "Yes, I was one of the listeners too."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bi rastî bibêje: çawa bû?",
+                        "en": "Tell me honestly: how was it?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Baş bû! Ew şermok bû, lêbelê wî hewl da.",
+                        "en": "It was good! He was shy, but he tried."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Û Hevalo bêdeng ma, û di dawiyê de çepik lêxist!",
+                        "en": "And Hevalo stayed quiet, and in the end he clapped!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Guhdarê herî baş Hevalo ye!",
+                        "en": "Hevalo is the best listener!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Herwiha mirîşk. Lêbelê wan hêk jî kirin.",
+                        "en": "The hens too. But they laid eggs as well."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ji ber çi? Ew jî dilteng bûn?",
+                        "en": "Why? Were they upset too?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Na, ji ber ku ew mirîşk in!",
+                        "en": "No, because they are hens!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Sibe ew ê li ber hemû polê bixwîne, di waneya Xezalê de, berî xatirxwestina wê.",
+                        "en": "Tomorrow he’ll give it in front of the whole class, in Xezal’s lesson, before her farewell."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Wî îro xwend, bêyî ku bigirî. Ew ê sibe jî hewl bide.",
+                        "en": "Today he read it without crying. He’ll try tomorrow too."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê. Hewl dan her tişt e.",
+                        "en": "Yes. Trying is everything."
+                      }
+                    ],
+                    "prompt": "Kê di dawiyê de çepik lêxist?",
+                    "options": [
+                      "Hevalo.",
+                      "Bozo.",
+                      "Dapîr."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ev ne pêşbirk e: Baran dilteng e, lê ew dikare.",
+                    "voice": "hamo",
+                    "prompt": "Ev ne pêşbirk e: Baran dilteng e, lê ew dikare.",
+                    "options": [
+                      "This isn’t a contest: Baran is downhearted, but he can do it.",
+                      "This is a contest: Baran will win it.",
+                      "This isn’t a contest: Baran is asleep."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The listeners are clapping!",
+                    "accepted": [
+                      "Guhdar çepikan lêdixin!",
+                      "Guhdar çepik lêdixin!",
+                      "Guhdar çepikan lêdixin"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Baran dê hewl bide, û ev her tişt e."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Li Sêvanê em darên sêvan diçînin û bi meşkê nîvişk çêdikin.",
+                    "voice": "hamo",
+                    "cue": "…we plant apple trees…",
+                    "prompt": "Li Sêvanê em darên sêvan ___ û bi meşkê nîvişk çêdikin.",
+                    "options": [
+                      "diçînin",
+                      "dixwin",
+                      "difiroşin"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Tîp bi tîp, û di dawiyê de çepik!",
+                    "reference": "Tîp bi tîp, û di dawiyê de çepik!"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u11s3l4",
+              "position": 4,
+              "titleKu": "Rojeke mezin",
+              "titleEn": "A big day",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Îro rojeke mezin e: Baran gotara xwe di waneya Xezalê de dixwîne!",
+                    "voice": "hamo",
+                    "prompt": "Îro rojeke mezin e: Baran gotara xwe di waneya Xezalê de dixwîne!",
+                    "options": [
+                      "Today is a big day: Baran is giving his talk in Xezal’s lesson!",
+                      "Today is a holiday: Baran is asleep!",
+                      "Today is a sad day: Baran has lost his talk!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Baran hilkişiya ser sindoqê, û bêyî ku tiştekî bibêje defterê xwe hilgirt.",
+                    "voice": "hamo",
+                    "prompt": "Baran hilkişiya ser sindoqê, û bêyî ku tiştekî bibêje defterê xwe hilgirt.",
+                    "accepted": [
+                      "Baran climbed onto the crate and, without saying anything, picked up his notebook.",
+                      "Baran climbed onto the crate and picked up his notebook without saying anything.",
+                      "Baran got up on the crate and picked up his notebook without a word.",
+                      "Baran climbed onto the box and, without saying a thing, picked up his notebook."
+                    ]
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Mijara gotarê çi ye?",
+                    "voice": "hamo",
+                    "prompt": "Mijara gotarê çi ye?",
+                    "options": [
+                      "Sêvan, gundê me!",
+                      "Mijar tîp e.",
+                      "Ez nehênî me."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Sêvan gundê herî xweş e, çimkî sêvên wê herî baş in.",
+                    "voice": "hamo",
+                    "prompt": "Sêvan gundê herî xweş e, çimkî sêvên wê herî baş in.",
+                    "options": [
+                      "Sêvan is the loveliest village, because its apples are the best.",
+                      "Sêvan is the biggest city, because its streets are long.",
+                      "Sêvan is the loveliest village, because its tea is the sweetest."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Sêv sor û şîrîn in, loma Hevalo her roj sêvan dixwe.",
+                    "voice": "hamo",
+                    "cue": "…so Hevalo eats apples every day.",
+                    "prompt": "Sêv sor û şîrîn in, ___ Hevalo her roj sêvan dixwe.",
+                    "options": [
+                      "loma",
+                      "çimkî",
+                      "ango"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Û Hevalo? Hevalo diz e; lêbelê, ango… dizekî bêguneh!",
+                    "voice": "hamo",
+                    "prompt": "Û Hevalo? Hevalo diz e; lêbelê, ango… dizekî bêguneh!",
+                    "accepted": [
+                      "And Hevalo? Hevalo is a thief; however, I mean… an innocent thief!",
+                      "And Hevalo? Hevalo’s a thief; but, I mean… an innocent thief!",
+                      "And Hevalo? Hevalo is a thief; however, that is… an innocent thief!"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "It’s clear: this was the best talk of the year.",
+                    "options": [
+                      "Eşkere ye: ev gotara herî baş a salê bû.",
+                      "Eşkere e: ev gotara herî baş a salê bû.",
+                      "Eşkere ye: ev gotara herî baş ya salê bû."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Nozdeh zarokên polê, du mamoste û herwiha Hevalo: hemû çepikan lêdixin!"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Xezalê wêneyek kişand, ji bo dûriyê. Ew gelek razî ye.",
+                    "voice": "hamo",
+                    "prompt": "Xezalê wêneyek kişand, ji bo dûriyê. Ew gelek razî ye.",
+                    "options": [
+                      "Xezal took a photo, for when she is far away. She is very pleased.",
+                      "Xezal drew a picture for the school. She is very tired.",
+                      "Xezal took a photo for the newspaper. She is very angry."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu11s3l4a",
+                    "title": "Rojeke mezin",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "learner": true
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Îro tiştekî mezin qewimî!",
+                        "en": "Something big happened today!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Çi qewimî, xalo?",
+                        "en": "What happened, uncle?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Baran gotara xwe xwend, û her kesî çepik lêxist!",
+                        "en": "Baran gave his talk, and everyone clapped!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Wî çi got?",
+                        "en": "What did he say?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Mijara wî Sêvan, berhema me û serpêhatiya me ya zozanan bû.",
+                        "en": "His subject was Sêvan, our harvest and our adventure on the summer pastures."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û nehêniya wî? Mirîşk!",
+                        "en": "And his secret? The hens!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê! Wekî ku min got: guhdarên pêşî girîng in.",
+                        "en": "Yes! As I said: the first listeners matter."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ji Îlonê ve wî gotar tîp bi tîp nivîsî, û her roj hewl da.",
+                        "en": "Since September he wrote the talk letter by letter, and tried every day."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ji ber vê yekê ew bi ser ket!",
+                        "en": "That’s why he did so well!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Û niha? Ew gotarê li malê dîsa dixwîne, du caran!",
+                        "en": "And now? He’s giving the talk again at home, twice!"
+                      }
+                    ],
+                    "prompt": "Baran li malê gotarê çend caran dixwîne?",
+                    "options": [
+                      "Du caran.",
+                      "Carekê.",
+                      "Nozdeh caran."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Hevalo is a patient listener.",
+                    "accepted": [
+                      "Hevalo guhdarekî bêhnfireh e.",
+                      "Hevalo guhdarê bêhnfireh e."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Hevalo rovî ye?",
+                    "voice": "hamo",
+                    "prompt": "Hevalo rovî ye?",
+                    "options": [
+                      "Na, lê ew hem jîr hem bêhnfireh e!",
+                      "Erê, ew sêv e.",
+                      "Rovî dûr e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Piştre Dapîrê keşk anî, û Baran sêvek xwar.",
+                    "voice": "hamo",
+                    "prompt": "Piştre Dapîrê keşk anî, û Baran sêvek xwar.",
+                    "accepted": [
+                      "Afterwards Dapîr brought dried curd, and Baran ate an apple.",
+                      "Then Dapîr brought dried curd, and Baran ate an apple.",
+                      "Afterwards Grandma brought dried curd, and Baran ate an apple.",
+                      "Later Dapîr brought dried curd, and Baran ate an apple."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ji ber vê yekê, Sêvan bêhempa e!",
+                    "voice": "hamo",
+                    "cue": "So Sêvan is like no other!",
+                    "prompt": "Ji ber vê yekê, Sêvan ___ e!",
+                    "accepted": [
+                      "bêhempa"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Baran is famous now, because of his talk!",
+                    "accepted": [
+                      "Baran niha navdar e, ji ber gotara xwe!",
+                      "Baran niha navdar e ji ber gotara xwe!",
+                      "Niha Baran navdar e, ji ber gotara xwe!"
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Sêvan, çimkî sêvên wê herî baş in; Hevalo, çimkî ew Hevalo ye!",
+                    "reference": "Sêvan, çimkî sêvên wê herî baş in; Hevalo, çimkî ew Hevalo ye!"
+                  }
+                }
+              ]
+            }
+          ]
         },
         {
           "position": 4,
           "titleKu": "Planên me",
           "titleEn": "Our plans",
           "grammarMd": "**Hêvî dikim ku tu bêyî.** I hope you’ll come. After **hêvî dikim ku** (I hope that) and **armanca min ev e ku** (my aim is to) the verb takes the bi- form.\n\n- **dema ku** + the bi- form looks ahead: *Dema ku ez vegerim malê, ez ê bi kurdî biaxivim.* When I go back home, I’ll speak Kurdish.\n- *Armanca min ev e ku ez her roj hinek bixwînim.* My aim is to read a little every day.",
-          "lessons": []
+          "lessons": [
+            {
+              "key": "u11s4l1",
+              "position": 1,
+              "titleKu": "Armanca min",
+              "titleEn": "My goal",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Gotara Baran serkeftî bû; niha ew dixwaze bibe nivîskar!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "serkeftî",
+                        "en": "successful"
+                      }
+                    ],
+                    "prompt": "Gotara Baran serkeftî bû; niha ew dixwaze bibe nivîskar!",
+                    "options": [
+                      "Baran’s talk was a success; now he wants to become a writer!",
+                      "Baran’s talk was too long; now he wants to sleep!",
+                      "Baran’s talk was a success; now he wants to become a shepherd!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Armanca te çi ye?",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "armanc",
+                        "en": "goal, aim"
+                      }
+                    ],
+                    "prompt": "Armanca te çi ye?",
+                    "options": [
+                      "What is your goal?",
+                      "What is your name?",
+                      "Where is your house?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Gotara Baran çawa bû?",
+                    "voice": "hamo",
+                    "prompt": "Gotara Baran çawa bû?",
+                    "options": [
+                      "Gotareke serkeftî bû!",
+                      "Bişar ji çiya daket.",
+                      "Berx li daristanê ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Armanca Hêviyê ev e ku pisîkek bi dest bixe.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "bi dest xistin",
+                        "en": "to obtain, to achieve"
+                      }
+                    ],
+                    "prompt": "Armanca Hêviyê ev e ku pisîkek bi dest bixe.",
+                    "options": [
+                      "Hêvî’s goal is to get a cat.",
+                      "Hêvî’s goal is to become a cat.",
+                      "Hêvî’s goal is to sell her cat."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Plana Nazê ev e ku ez carekê zû bêm. Lêbelê ew ê serkeftî be?",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "plan",
+                        "en": "plan"
+                      }
+                    ],
+                    "prompt": "Plana Nazê ev e ku ez carekê zû bêm. Lêbelê ew ê serkeftî be?",
+                    "options": [
+                      "Nazê’s plan is that I come early, just once. But will it succeed?",
+                      "Nazê’s plan is that I never come. But will it succeed?",
+                      "Nazê’s plan is that I bring tea, just once. But will it be hot?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "My goal is to get a good harvest.",
+                    "options": [
+                      "Armanca min ev e ku berhemeke baş bi dest bixim.",
+                      "Armanca min ev e ku berhemeke baş bi dest bixe.",
+                      "Armanca min ev e ku berhemeke baş bi dest xist."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Bi rastî, ez ê plana xwe pêk bînim!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "pêk anîn",
+                        "en": "to carry out, to achieve"
+                      }
+                    ],
+                    "prompt": "Bi rastî, ez ê plana xwe pêk bînim!",
+                    "options": [
+                      "Truly, I will carry out my plan!",
+                      "Truly, I will forget my plan!",
+                      "Truly, I will sell my plan!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Gav bi gav, ez ê bigihîjim armanca xwe.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "gav",
+                        "en": "step"
+                      }
+                    ],
+                    "prompt": "Gav bi gav, ez ê bigihîjim armanca xwe.",
+                    "options": [
+                      "Step by step, I’ll reach my goal.",
+                      "Step by step, I’ll reach the mountain.",
+                      "Day by day, I’ll forget my goal."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Hêvî plana xwe pêk anî, û pisîkek bi dest xist!",
+                    "voice": "hamo",
+                    "prompt": "Hêvî plana xwe pêk anî, û pisîkek bi dest xist!",
+                    "accepted": [
+                      "Hêvî carried out her plan, and got a cat!",
+                      "Hêvî carried out her plan and got a cat!",
+                      "Hêvî achieved her plan, and she got a cat!",
+                      "Hêvî carried out her plan, and she got a cat!"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Fêrbûn bernameyeke dirêj e, gav bi gav.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "fêrbûn",
+                        "en": "learning"
+                      },
+                      {
+                        "ku": "bername",
+                        "en": "programme, plan"
+                      }
+                    ],
+                    "prompt": "Fêrbûn bernameyeke dirêj e, gav bi gav.",
+                    "options": [
+                      "Learning is a long programme, step by step.",
+                      "Learning is a short game, all at once.",
+                      "Learning is a long road, with no steps."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "In short, my goal is to carry out my plan.",
+                    "accepted": [
+                      "Bi kurtî, armanca min ev e ku ez plana xwe pêk bînim.",
+                      "Bi kurtî, armanca min ev e ku plana xwe pêk bînim.",
+                      "Bi kurtî armanca min ev e ku ez plana xwe pêk bînim."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Min bernameya xwe li ser maseyê danî: fêrbûn dê serkeftî be.",
+                    "voice": "hamo",
+                    "cue": "…learning will be a success.",
+                    "prompt": "Min bernameya xwe li ser maseyê danî: fêrbûn dê ___ be.",
+                    "accepted": [
+                      "serkeftî"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Gav bi gav, ez ê kurdî bi dest bixim."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "armanc",
+                        "right": "goal"
+                      },
+                      {
+                        "left": "plan",
+                        "right": "plan"
+                      },
+                      {
+                        "left": "bername",
+                        "right": "programme, plan"
+                      },
+                      {
+                        "left": "fêrbûn",
+                        "right": "learning"
+                      },
+                      {
+                        "left": "serkeftî",
+                        "right": "successful"
+                      },
+                      {
+                        "left": "raman",
+                        "right": "idea, thought"
+                      },
+                      {
+                        "left": "mijar",
+                        "right": "subject"
+                      },
+                      {
+                        "left": "bûyer",
+                        "right": "event"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Tu yê bi kurdî çi bikî?",
+                    "voice": "hamo",
+                    "prompt": "Tu yê bi kurdî çi bikî?",
+                    "options": [
+                      "Ez ê hem bixwînim hem biaxivim, û xewna xwe pêk bînim!",
+                      "Min kurdî nîşanî Bozo da.",
+                      "Ez kurdî me."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Fêrbûn gav bi gav e, û bernameya te baş e: tu ji niha ve gelek dûr hatiyî!",
+                    "reference": "Fêrbûn gav bi gav e, û bernameya te baş e: tu ji niha ve gelek dûr hatiyî!"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u11s4l2",
+              "position": 2,
+              "titleKu": "Dema ku ez vegerim",
+              "titleEn": "When I go back",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Zarok qîr dikin: Xezal li Hewlêrê cihekî biçûk dixwaze, li ber dibistanê!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "cih",
+                        "en": "place, spot"
+                      }
+                    ],
+                    "prompt": "Zarok qîr dikin: Xezal li Hewlêrê cihekî biçûk dixwaze, li ber dibistanê!",
+                    "options": [
+                      "The children shout: Xezal wants a small place in Hewlêr, in front of the school!",
+                      "The children shout: Xezal wants a big house in Sêvan!",
+                      "The children whisper: Xezal wants a small cat in Hewlêr!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ew ê her roj hewl bide ku bi zarokan re bi zimanê dayikê biaxive.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "zimanê dayikê",
+                        "en": "mother tongue"
+                      }
+                    ],
+                    "prompt": "Ew ê her roj hewl bide ku bi zarokan re bi zimanê dayikê biaxive.",
+                    "options": [
+                      "Every day she’ll try to speak with the children in their mother tongue.",
+                      "Every day she’ll try to sing with the children in the square.",
+                      "Every day she’ll try to phone her mother."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Cihê Xezalê li Hewlêrê çawa ye?",
+                    "voice": "hamo",
+                    "prompt": "Cihê Xezalê li Hewlêrê çawa ye?",
+                    "options": [
+                      "Biçûk e, li ber dibistanê.",
+                      "Guhdar çepikan lêdixin.",
+                      "Ez şaşmayî me."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Welatê te li ku ye? Û tu bi zimanê dayikê diaxivî?",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "welat",
+                        "en": "country"
+                      }
+                    ],
+                    "prompt": "Welatê te li ku ye? Û tu bi zimanê dayikê diaxivî?",
+                    "options": [
+                      "Where is your country? And do you speak your mother tongue?",
+                      "Where is your house? And do you drink tea?",
+                      "Where is your school? And do you speak English?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Li cihekî nû, tu yê bêriya malê bikî?",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "bêriya malê kirin",
+                        "en": "to be homesick (word for word: to miss home)"
+                      }
+                    ],
+                    "prompt": "Li cihekî nû, tu yê bêriya malê bikî?",
+                    "options": [
+                      "In a new place, will you be homesick?",
+                      "In a new place, will you be hungry?",
+                      "In a new place, will you sell your house?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "When I go back to my country, I’ll speak my mother tongue.",
+                    "options": [
+                      "Dema ku ez vegerim welatê xwe, ez ê bi zimanê dayikê biaxivim.",
+                      "Dema ku ez vegerim welatê xwe, ez ê bi zimanê dayikê diaxivim.",
+                      "Dema ku ez vedigerim welatê xwe, ez ê bi zimanê dayikê biaxivim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Hingê min bêriya malê dikir, lê min gotina bavê xwe digot: rehên xwe ji bîr meke.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "reh",
+                        "en": "root"
+                      }
+                    ],
+                    "prompt": "Hingê min bêriya malê dikir, lê min gotina bavê xwe digot: rehên xwe ji bîr meke.",
+                    "options": [
+                      "Back then I was homesick, but I used to repeat my father’s words: don’t forget your roots.",
+                      "Back then I was hungry, but I used to eat my father’s bread.",
+                      "Back then I was happy, and I used to forget my father’s words."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Welatê min li vir e, û gund hêz da min.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "hêz",
+                        "en": "strength"
+                      }
+                    ],
+                    "prompt": "Welatê min li vir e, û gund hêz da min.",
+                    "options": [
+                      "My country is here, and the village gave me strength.",
+                      "My country is far away, and the village gave me money.",
+                      "My house is here, and the village took my strength."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Zimanê dayikê mîna rehên darê ye, ango ew gelek girîng e.",
+                    "voice": "hamo",
+                    "prompt": "Zimanê dayikê mîna rehên darê ye, ango ew gelek girîng e.",
+                    "accepted": [
+                      "The mother tongue is like the roots of a tree, that is, it is very important.",
+                      "The mother tongue is like the roots of a tree: it is very important.",
+                      "Your mother tongue is like the roots of a tree, I mean, it’s very important.",
+                      "The mother tongue is like a tree’s roots, that is, it is very important."
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Gund hêz û dilgermî da min.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "dilgermî",
+                        "en": "warmth, enthusiasm"
+                      }
+                    ],
+                    "prompt": "Gund hêz û dilgermî da min.",
+                    "options": [
+                      "The village gave me strength and warmth.",
+                      "The village gave me tea and bread.",
+                      "The village gave me a horse and a cart."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "In a new place, in a new country, will you be homesick?",
+                    "accepted": [
+                      "Li cihekî nû, li welatekî nû, tu yê bêriya malê bikî?",
+                      "Li cihekî nû û li welatekî nû, tu yê bêriya malê bikî?",
+                      "Li cihekî nû, li welatekî nû, tu dê bêriya malê bikî?"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Dar bê reh namîne, û gund bê dilgermî.",
+                    "voice": "hamo",
+                    "cue": "A tree won’t last without roots…",
+                    "prompt": "Dar bê ___ namîne, û gund bê dilgermî.",
+                    "accepted": [
+                      "reh"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Li vî cihî, li ber vê zeviyê, gund hêz da min."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "welat",
+                        "right": "country"
+                      },
+                      {
+                        "left": "dilgermî",
+                        "right": "warmth"
+                      },
+                      {
+                        "left": "hemşîre",
+                        "right": "nurse"
+                      },
+                      {
+                        "left": "rastgo",
+                        "right": "honest"
+                      },
+                      {
+                        "left": "hesp",
+                        "right": "horse"
+                      },
+                      {
+                        "left": "xwedî",
+                        "right": "owner"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "When I’m homesick, my roots and my mother tongue give me strength.",
+                    "accepted": [
+                      "Dema ku ez bêriya malê dikim, rehên min û zimanê dayikê hêz didin min.",
+                      "Dema ku ez bêriya malê dikim, rehên min û zimanê dayikê hêzê didin min.",
+                      "Gava ku ez bêriya malê dikim, rehên min û zimanê dayikê hêz didin min."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Li vî cihî dilgermî heye: bi xêr hatî!",
+                    "reference": "Li vî cihî dilgermî heye: bi xêr hatî!"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u11s4l3",
+              "position": 3,
+              "titleKu": "Şevbêrk",
+              "titleEn": "Winter evenings",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Berfa yekem! Ez sobeyê vêdixim.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "sobe",
+                        "en": "stove"
+                      }
+                    ],
+                    "prompt": "Berfa yekem! Ez sobeyê vêdixim.",
+                    "options": [
+                      "The first snow! I’m lighting the stove.",
+                      "The first rain! I’m closing the window.",
+                      "The first snow! I’m going to bed."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Her şev şevbêrk li mala me ye!",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "şevbêrk",
+                        "en": "a winter evening of stories and visits"
+                      }
+                    ],
+                    "prompt": "Her şev şevbêrk li mala me ye!",
+                    "options": [
+                      "Every night there’s an evening of tales at our house!",
+                      "Every night there’s a wedding at our house!",
+                      "Every night our house is closed!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Sobe germ e?",
+                    "voice": "hamo",
+                    "prompt": "Sobe germ e?",
+                    "options": [
+                      "Erê, ez ê li ber sobeyê rûnim!",
+                      "Par min nan şewitand.",
+                      "Sobe li zozanan e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Di şevbêrkê de ez çîrokbêj im, mîna bavê xwe.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "çîrokbêj",
+                        "en": "storyteller"
+                      }
+                    ],
+                    "prompt": "Di şevbêrkê de ez çîrokbêj im, mîna bavê xwe.",
+                    "options": [
+                      "At the evenings of tales I’m the storyteller, like my father.",
+                      "At the evenings of tales I’m the cook, like my mother.",
+                      "At the evenings of tales I sleep, like Bozo."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Berf sivik e, û gelî spî ye.",
+                    "voice": "hamo",
+                    "prompt": "Berf sivik e, û gelî spî ye.",
+                    "accepted": [
+                      "The snow is light, and the valley is white.",
+                      "The snow is light and the valley is white.",
+                      "The snow is soft, and the valley is white."
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Mîrza dibêje: dengbêjek vê zivistanê li gundan digere.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "dengbêj",
+                        "en": "dengbêj, the traditional singer of tales"
+                      }
+                    ],
+                    "prompt": "Mîrza dibêje: dengbêjek vê zivistanê li gundan digere.",
+                    "options": [
+                      "Mîrza says: a dengbêj is going round the villages this winter.",
+                      "Mîrza says: a wolf is going round the villages this winter.",
+                      "Mîrza says: a doctor is coming to the school this winter."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Every night at the evening of tales, I tell a story.",
+                    "options": [
+                      "Her şev di şevbêrkê de ez çîrokek vedibêjim.",
+                      "Her şev di şevbêrkê de ez çîrokek vedibêje.",
+                      "Her şev di şevbêrkê de min çîrokek vedibêjim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Dengbêj dê bê mala me?",
+                    "voice": "hamo",
+                    "prompt": "Dengbêj dê bê mala me?",
+                    "options": [
+                      "Erê, em ê gazî wî bikin!",
+                      "Dengbêj sor e.",
+                      "Na, ew dew e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The storyteller sits by the stove.",
+                    "accepted": [
+                      "Çîrokbêj li ber sobeyê rûdine.",
+                      "Çîrokbêj li cem sobeyê rûdine."
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Min çîrokên bavê xwe di defterê de nivîsîn.",
+                    "voice": "hamo",
+                    "prompt": "Min çîrokên bavê xwe di defterê de nivîsîn.",
+                    "accepted": [
+                      "I wrote my father’s tales in the notebook.",
+                      "I wrote down my father’s stories in the notebook.",
+                      "I wrote my father’s stories in a notebook.",
+                      "I wrote my father’s tales down in the notebook."
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu11s4l3a",
+                    "title": "Şevbêrk",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "learner": true
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Berf barî, û sobe germ e. Planeke min a nû heye.",
+                        "en": "Snow has fallen, and the stove is warm. I have a new plan."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Planeke nû? Çi plan?",
+                        "en": "A new plan? What plan?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bernameya min a zivistanê: her şev şevbêrk, li pişt deriyê şîn. Ez ê wê pêk bînim!",
+                        "en": "My winter programme: an evening of tales every night, behind the blue gate. I’ll make it happen!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Her şev ez ê çîrokeke bavê xwe vebêjim.",
+                        "en": "Every night I’ll tell one of my father’s tales."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Tu yê bibî çîrokbêj?",
+                        "en": "You’ll be a storyteller?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ez çîrokbêj im, mîna bavê xwe! Li welatê me, şevbêrk nerîteke kevn e.",
+                        "en": "I am a storyteller, like my father! In our country, the evening of tales is an old custom."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û Xezal? Ew jî dê bê, berî xatirxwestinê?",
+                        "en": "And Xezal? Will she come too, before the farewell?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê, û herwiha hemû cîran. Ez ê gazî wan bikim.",
+                        "en": "Yes, and all the neighbours too. I’ll call them."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Û nûçeyek ji Mîrza: dengbêjek li gundan geriya.",
+                        "en": "And news from Mîrza: a dengbêj has been going round the villages."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Dengbêj? Ew dikare bê şevbêrka me!",
+                        "en": "A dengbêj? He can come to our evening of tales!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Pêşniyareke baş e! Wê demê şevbêrka me dê serkeftî be.",
+                        "en": "That’s a good suggestion! Then our evening will be a success."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Lê ez hinek nîgeran im: dengbêj ji min baştir e? Ez ê hewl bidim!",
+                        "en": "But I’m a little worried: is the dengbêj better than me? I’ll do my best!"
+                      }
+                    ],
+                    "prompt": "Bernameya Hamo ya zivistanê çi ye?",
+                    "options": [
+                      "Her şev şevbêrk û çîrokek.",
+                      "Her şev dew û nan.",
+                      "Her şev stranên dengbêj."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Dew ne ji bo zivistanê ye; çay ji bo zivistanê ye!",
+                    "voice": "hamo",
+                    "prompt": "Dew ne ji bo zivistanê ye; çay ji bo zivistanê ye!",
+                    "options": [
+                      "Ayran isn’t for winter; tea is for winter!",
+                      "Tea isn’t for winter; ayran is for winter!",
+                      "Snow isn’t for winter; rain is for winter!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The dengbêj will come to our evening of tales.",
+                    "accepted": [
+                      "Dengbêj dê bê şevbêrka me.",
+                      "Dengbêj ê bê şevbêrka me."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Sobe germ e, çay amade ye: em dest pê dikin!"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Çîrok an stran? Çîrokbêj an dengbêj? Ez ji çîrokan û ji stranan hez dikim!",
+                    "reference": "Çîrok an stran? Çîrokbêj an dengbêj? Ez ji çîrokan û ji stranan hez dikim!"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u11s4l4",
+              "position": 4,
+              "titleKu": "Zivistan hat",
+              "titleEn": "Winter has come",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Zivistan hat: berf li ser hemû banan e.",
+                    "voice": "hamo",
+                    "prompt": "Zivistan hat: berf li ser hemû banan e.",
+                    "options": [
+                      "Winter has come: there’s snow on every roof.",
+                      "Spring has come: there are flowers on every roof.",
+                      "Winter has come: there’s rain in every house."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Ferhad, cotkarê me, berhema xwe berhev kiriye.",
+                    "voice": "hamo",
+                    "prompt": "Ferhad, cotkarê me, berhema xwe berhev kiriye.",
+                    "accepted": [
+                      "Ferhad, our farmer, has gathered his harvest.",
+                      "Ferhad, our farmer, has brought in his harvest.",
+                      "Our farmer Ferhad has gathered his harvest.",
+                      "Ferhad, our farmer, has picked his harvest."
+                    ]
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Mîrza, dikandarê me, çi kir?",
+                    "voice": "hamo",
+                    "prompt": "Mîrza, dikandarê me, çi kir?",
+                    "options": [
+                      "Wî sêvên me bir bajêr.",
+                      "Ew hejdeh sindoq e.",
+                      "Mîrza li dora sobeyê ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Hêvî, hunermenda me, wêneyek çêkir û nîşanî me da.",
+                    "voice": "hamo",
+                    "prompt": "Hêvî, hunermenda me, wêneyek çêkir û nîşanî me da.",
+                    "options": [
+                      "Hêvî, our artist, made a picture and showed it to us.",
+                      "Hêvî, our artist, made a cake and gave it to us.",
+                      "Hêvî, our nurse, made a picture and hid it."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Baran has given his talk.",
+                    "options": [
+                      "Baran gotara xwe xwendiye.",
+                      "Baran gotara xwe dixwîne.",
+                      "Baran gotara xwe bixwîne."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Ezmûna vê payîzê hêja bû: kar qediya, û berhem hevpar bû.",
+                    "voice": "hamo",
+                    "prompt": "Ezmûna vê payîzê hêja bû: kar qediya, û berhem hevpar bû.",
+                    "accepted": [
+                      "The experience of this autumn was worth it: the work is finished, and the harvest was shared.",
+                      "This autumn’s experience was worthwhile: the work finished, and the harvest was shared.",
+                      "This autumn was worth it: the work is done, and the harvest was shared."
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Sal baş bû, loma em dilxweş in.",
+                    "voice": "hamo",
+                    "cue": "…so we are happy.",
+                    "prompt": "Sal baş bû, ___ em dilxweş in.",
+                    "options": [
+                      "loma",
+                      "çimkî",
+                      "lê"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Hejdeh sindoq sêv, û hemû hevpar!"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Xezal mal û hal amade dike, û ew ê bêriya Sêvanê bike.",
+                    "voice": "hamo",
+                    "prompt": "Xezal mal û hal amade dike, û ew ê bêriya Sêvanê bike.",
+                    "options": [
+                      "Xezal is getting her household ready, and she will miss Sêvan.",
+                      "Xezal is selling her house, and she won’t miss Sêvan.",
+                      "Xezal is getting her bags ready for the summer pastures."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu11s4l4a",
+                    "title": "Hebû tunebû…",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "learner": true
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Werin, li dora sobeyê rûnin!",
+                        "en": "Come, sit round the stove!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Çay amade ye?",
+                        "en": "Is the tea ready?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê. Min çaya pêşî vexwar; ev ya duyem e.",
+                        "en": "Yes. I drank the first tea; this is the second."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Payîz çawa bû?",
+                        "en": "How was the autumn?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Payîzeke hêja bû. Her kesî karê xwe kir, û planên me pêk hatin.",
+                        "en": "It was a worthwhile autumn. Everyone did their work, and our plans came true."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Me armanca xwe bi dest xist: berhemeke baş!",
+                        "en": "We reached our goal: a good harvest!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û armanca min?",
+                        "en": "And my goal?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Armanca te? Fêrbûn, gav bi gav. Û tu ji niha ve gelek dûr hatiyî.",
+                        "en": "Your goal? Learning, step by step. And you’ve already come a long way."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û Xezal?",
+                        "en": "And Xezal?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ew ê biçe, lê rehên wê li vir in, û dilgermiya gund jî.",
+                        "en": "She will go, but her roots are here, and the warmth of the village too."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Niha guhdarî bikin… Hebû tunebû…",
+                        "en": "Now listen… Once upon a time…"
+                      }
+                    ],
+                    "prompt": "Hamo çi dest pê dike?",
+                    "options": [
+                      "Çîroka yekem a zivistanê.",
+                      "Karê baxçe.",
+                      "Rêwîtiya zozanan."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Bozo walked in the snow, and he was happy.",
+                    "accepted": [
+                      "Bozo di berfê de meşiya, û ew dilxweş bû.",
+                      "Bozo di berfê de meşiya û dilxweş bû.",
+                      "Bozo di nav berfê de meşiya, û ew dilxweş bû."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Plana te ya zivistanê çi ye?",
+                    "voice": "hamo",
+                    "prompt": "Plana te ya zivistanê çi ye?",
+                    "options": [
+                      "Her şev şevbêrk û çîrok!",
+                      "Plan sor e.",
+                      "Min ard anî."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Nazê kulav şûşt, û Dapîrê ard anî, ji bo nanê zivistanê.",
+                    "voice": "hamo",
+                    "prompt": "Nazê kulav şûşt, û Dapîrê ard anî, ji bo nanê zivistanê.",
+                    "options": [
+                      "Nazê washed the felt rug, and Dapîr brought flour, for the winter bread.",
+                      "Nazê sold the felt rug, and Dapîr brought apples for the winter.",
+                      "Nazê washed the dishes, and Dapîr baked bread for the guests."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The dengbêj is on his way, and we’ll listen.",
+                    "accepted": [
+                      "Dengbêj di rê de ye, û em ê guhdarî bikin.",
+                      "Dengbêj di rê de ye û em ê guhdarî bikin.",
+                      "Dengbêj li ser rê ye, û em ê guhdarî bikin."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "In short, it was a good year, and now winter has come.",
+                    "accepted": [
+                      "Bi kurtî, sal baş bû, û niha zivistan hatiye.",
+                      "Bi kurtî sal baş bû, û niha zivistan hatiye.",
+                      "Bi kurtî, sal baş bû û niha zivistan hatiye."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Werin, li dora sobeyê rûnin: hebû tunebû…",
+                    "reference": "Werin, li dora sobeyê rûnin: hebû tunebû…"
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     }

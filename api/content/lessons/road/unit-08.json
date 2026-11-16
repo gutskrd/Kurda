@@ -308,11 +308,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "My legs hurt; I am resting.",
+                    "prompt": "My legs hurt and I’m tired: medicine, please!",
                     "accepted": [
-                      "Lingên min diêşin; ez bêhna xwe vedidim.",
-                      "Lingên min diêşin, ez bêhna xwe vedidim.",
-                      "Lingên min diêşin û ez bêhna xwe vedidim."
+                      "Lingên min diêşin û ez westiyayî me: derman, ji kerema xwe!",
+                      "Lingên min diêşin, ez westiyayî me: derman, ji kerema xwe!"
                     ]
                   }
                 },
@@ -322,8 +321,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Tav heye, berf dihele, lê ez nexweş im: dibe ku di Hezîranê de ez sax bibim!",
-                    "reference": "Tav heye, berf dihele, lê ez nexweş im: dibe ku di Hezîranê de ez sax bibim!"
+                    "prompt": "Tav heye, berf dihele, lê ez bêhna xwe vedidim: dibe ku di Hezîranê de ez sax bibim!",
+                    "reference": "Tav heye, berf dihele, lê ez bêhna xwe vedidim: dibe ku di Hezîranê de ez sax bibim!"
                   }
                 }
               ]
@@ -578,8 +577,8 @@
                         "right": "sad"
                       },
                       {
-                        "left": "doktor",
-                        "right": "doctor"
+                        "left": "dilxweş",
+                        "right": "glad, happy"
                       }
                     ]
                   }
@@ -602,10 +601,11 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The doctor comes on Monday.",
+                    "prompt": "The doctor comes on Monday; I’m glad.",
                     "accepted": [
-                      "Doktor Duşemê tê.",
-                      "Duşemê doktor tê."
+                      "Doktor Duşemê tê; ez dilxweş im.",
+                      "Doktor Duşemê tê, ez dilxweş im.",
+                      "Duşemê doktor tê; ez dilxweş im."
                     ]
                   }
                 },
@@ -628,8 +628,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ez nexweş im, lê ez dilxweş im: doktor tê!",
-                    "reference": "Ez nexweş im, lê ez dilxweş im: doktor tê!"
+                    "prompt": "Ez ne xemgîn im, ez dilxweş im: doktor tê!",
+                    "reference": "Ez ne xemgîn im, ez dilxweş im: doktor tê!"
                   }
                 }
               ]
@@ -788,8 +788,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "…û ez diçim nexweşxaneyê, û ez gelek ditirsim!",
-                        "en": "…and I go to the hospital, and I’m very scared!"
+                        "text": "Û ez diçim nexweşxaneyê, û ez gelek ditirsim!",
+                        "en": "And I go to the hospital, and I’m very scared!"
                       },
                       {
                         "speaker": 1,
@@ -803,8 +803,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "…û hemû laşê min diêşe, û pêlava min winda dibe!",
-                        "en": "…and my whole body hurts, and I lose my shoe!"
+                        "text": "Û hemû laşê min diêşe, û pêlava min winda dibe!",
+                        "en": "And my whole body hurts, and I lose my shoe!"
                       },
                       {
                         "speaker": 1,
@@ -918,10 +918,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "My tooth and my chest hurt.",
+                    "prompt": "My tooth, my chest and my whole body hurt.",
                     "accepted": [
-                      "Diranê min û singê min diêşin.",
-                      "Singê min û diranê min diêşin."
+                      "Diranê min, singê min û hemû laşê min diêşin.",
+                      "Diranê min, singê min û hemû laşê min diêşin"
                     ]
                   }
                 },
@@ -1071,11 +1071,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nazê jî dipirse, û ez dibêjim: lingên min, çokên min, pişta min, stûyê min…",
+                    "say": "Nazê jî dipirse, û ez dibêjim: milên min, tiliyên min, diranên min, singê min, stûyê min…",
                     "voice": "hamo",
-                    "prompt": "Nazê jî dipirse, û ez dibêjim: lingên min, çokên min, pişta min, stûyê min…",
+                    "prompt": "Nazê jî dipirse, û ez dibêjim: milên min, tiliyên min, diranên min, singê min, stûyê min…",
                     "options": [
-                      "Nazê asks too, and I say: my legs, my knees, my back, my neck…",
+                      "Nazê asks too, and I say: my shoulders, my fingers, my teeth, my chest, my neck…",
                       "Nazê asks too, and I say: nothing, I’m fine.",
                       "Nazê brings tea, and I say: thank you."
                     ],
@@ -1118,11 +1118,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Doktor Azad dibêje: Tu sax î. Derman ji bo cîranan e!",
+                    "say": "Doktor Azad dibêje: Tu sax î, nexweşxane ne pêwîst e. Derman ji bo cîranan e!",
                     "voice": "hamo",
-                    "prompt": "Doktor Azad dibêje: Tu sax î. Derman ji bo cîranan e!",
+                    "prompt": "Doktor Azad dibêje: Tu sax î, nexweşxane ne pêwîst e. Derman ji bo cîranan e!",
                     "options": [
-                      "Doctor Azad says: You’re healthy. The medicine is for the neighbours!",
+                      "Doctor Azad says: You’re healthy, there’s no need for the hospital. The medicine is for the neighbours!",
                       "Doctor Azad says: You’re very ill. Go to the hospital!",
                       "Doctor Azad says: The neighbours are ill. Give them tea!"
                     ],
@@ -1239,8 +1239,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ez nexweş im, lê cîranên min hene: ev derman e!",
-                    "reference": "Ez nexweş im, lê cîranên min hene: ev derman e!"
+                    "prompt": "Kuxika min tune, laşê min baş e, û ez dilxweş im: cîranên min hene!",
+                    "reference": "Kuxika min tune, laşê min baş e, û ez dilxweş im: cîranên min hene!"
                   }
                 }
               ]
@@ -1495,11 +1495,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Doktor min kontrol dike û dibêje: êzing kom meke, û gotar jî tune!",
+                    "say": "Doktor min kontrol dike û dibêje: êzing kom meke, û gotar jî tune! Tu yê çêtir bibî.",
                     "voice": "hamo",
-                    "prompt": "Doktor min kontrol dike û dibêje: êzing kom meke, û gotar jî tune!",
+                    "prompt": "Doktor min kontrol dike û dibêje: êzing kom meke, û gotar jî tune! Tu yê çêtir bibî.",
                     "options": [
-                      "The doctor examines me and says: don’t gather firewood, and no speeches either!",
+                      "The doctor examines me and says: don’t gather firewood, and no speeches either! You’ll get better.",
                       "The doctor examines me and says: gather firewood, and give a speech!",
                       "The doctor phones me and says: drink tea, and sing songs!"
                     ],
@@ -1513,8 +1513,8 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Dilê min lêdide: guhdariya min bike!",
-                      "Dilê min lêdide: guhdariya min bike"
+                      "Doktor guhdariya dilê min dike, û min kontrol dike.",
+                      "Doktor guhdariya dilê min dike, û min kontrol dike"
                     ]
                   }
                 },
@@ -1551,8 +1551,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Kuxika te biçûk e: kincên xwe li xwe bike, tu yê çêtir bibî!",
-                    "reference": "Kuxika te biçûk e: kincên xwe li xwe bike, tu yê çêtir bibî!"
+                    "prompt": "Guhdariya min bike: dilê te baş lêdide, û kuxika te biçûk e. Kincên xwe li xwe bike!",
+                    "reference": "Guhdariya min bike: dilê te baş lêdide, û kuxika te biçûk e. Kincên xwe li xwe bike!"
                   }
                 }
               ]
@@ -1611,6 +1611,22 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
+                    "say": "Divê ez çi bikim?",
+                    "voice": "hamo",
+                    "prompt": "Divê ez çi bikim?",
+                    "options": [
+                      "Divê tu her roj bimeşî.",
+                      "Divê tu her roj hingiv bixwî.",
+                      "Ez şîret im."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Bi şev hingiv qedexe ye!",
                     "voice": "hamo",
@@ -1630,51 +1646,17 @@
                   }
                 },
                 {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Hingiv qedexe ye?",
-                    "voice": "hamo",
-                    "prompt": "Hingiv qedexe ye?",
-                    "options": [
-                      "Erê, ev şîreta doktor e.",
-                      "Erê, ez dimeşim.",
-                      "Na, ez hingiv im."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ez ne lawaz im!",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "lawaz",
-                        "en": "weak, thin"
-                      }
-                    ],
-                    "prompt": "Ez ne lawaz im!",
-                    "options": [
-                      "I’m not weak!",
-                      "I’m not hungry!",
-                      "I’m not a doctor!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
                     "say": "Ez ne lawaz im, ez bihêz im! Di Gulanê de ez ê bi peyatî biçim çiyê.",
                     "voice": "hamo",
                     "new": [
+                      {
+                        "ku": "lawaz",
+                        "en": "weak, thin"
+                      },
                       {
                         "ku": "bihêz",
                         "en": "strong"
@@ -1690,7 +1672,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1706,7 +1688,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1728,11 +1710,11 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ferhad bi hingiv tê. Doktor hingiv jê digire!",
+                    "say": "Ferhad bi hingiv tê serdanê. Doktor hingiv jê digire!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1740,9 +1722,9 @@
                         "en": "from him, from her, from it"
                       }
                     ],
-                    "prompt": "Ferhad bi hingiv tê. Doktor hingiv jê digire!",
+                    "prompt": "Ferhad bi hingiv tê serdanê. Doktor hingiv jê digire!",
                     "options": [
-                      "Ferhad comes with honey. The doctor takes the honey from him!",
+                      "Ferhad comes to visit with honey. The doctor takes the honey from him!",
                       "Ferhad comes with tea. The doctor gives him the tea!",
                       "Ferhad comes with bread. The doctor eats the bread!"
                     ],
@@ -1750,21 +1732,21 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Nazê jî tê serdanê, bi hingiv. Doktor diyariyan jê digire, û dide te.",
+                    "say": "Nazê jî tê serdanê, bi hingiv. Doktor diyariyan jê digire, û dibêje: qedexe ye!",
                     "voice": "hamo",
-                    "prompt": "Nazê jî tê serdanê, bi hingiv. Doktor diyariyan jê digire, û dide te.",
+                    "prompt": "Nazê jî tê serdanê, bi hingiv. Doktor diyariyan jê digire, û dibêje: qedexe ye!",
                     "accepted": [
-                      "Nazê comes to visit too, with honey. The doctor takes the gifts from her and gives them to you.",
-                      "Nazê visits too, with honey. The doctor takes the presents from her and gives them to you."
+                      "Nazê comes to visit too, with honey. The doctor takes the gifts from her, and says: it’s forbidden!",
+                      "Nazê visits too, with honey. The doctor takes the presents from her and says: forbidden!"
                     ]
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -1779,7 +1761,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1795,7 +1777,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 12,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -1803,6 +1785,20 @@
                     "accepted": [
                       "Di xewna min de ez bihêz im, ez her roj dimeşim, û hemû hingiv li cem min e!",
                       "Di xewna min de ez bihêz im, ez her roj dimeşim, û hemû hingiv li cem min e"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I’m not weak; I walk every day.",
+                    "accepted": [
+                      "Ez ne lawaz im; ez her roj dimeşim.",
+                      "Ez ne lawaz im, ez her roj dimeşim.",
+                      "Ez ne lawaz im û ez her roj dimeşim."
                     ]
                   }
                 },
@@ -1896,23 +1892,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Sibehê zû şûşeyek vala ye!",
-                    "voice": "hamo",
-                    "prompt": "Sibehê zû şûşeyek vala ye!",
-                    "options": [
-                      "Early in the morning, a jar is empty!",
-                      "Early in the morning, a jar is full!",
-                      "Late at night, the tea is empty!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Diz kî ye?",
+                    "say": "Sibehê zû şûşeyek vala ye! Diz kî ye?",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1920,17 +1900,17 @@
                         "en": "thief"
                       }
                     ],
-                    "prompt": "Diz kî ye?",
+                    "prompt": "Sibehê zû şûşeyek vala ye! Diz kî ye?",
                     "options": [
-                      "Who is the thief?",
-                      "Where is the jar?",
-                      "Who is the doctor?"
+                      "Early in the morning a jar is empty! Who is the thief?",
+                      "Early in the morning a jar is full! Who is the doctor?",
+                      "Late at night the tea is empty! Where is the jar?"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1952,7 +1932,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu08s2l3a",
@@ -2028,7 +2008,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2044,7 +2024,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 7,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2059,7 +2039,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2074,7 +2054,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2090,7 +2070,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 10,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -2102,7 +2082,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 11,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2115,19 +2095,20 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "A jar is empty.",
+                    "prompt": "A jar is empty: who is the thief?",
                     "accepted": [
-                      "Şûşeyek vala ye."
+                      "Şûşeyek vala ye: diz kî ye?",
+                      "Şûşeyek vala ye, diz kî ye?"
                     ]
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 13,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2143,7 +2124,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 14,
                   "type": "match_pairs",
                   "payload": {
                     "voice": "hamo",
@@ -2176,7 +2157,7 @@
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 15,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -2198,11 +2179,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Doktor Azad kevçiyek li bin nivîna min dibîne.",
+                    "say": "Doktor Azad nivîna min kontrol dike, û kevçiyek li bin wê dibîne.",
                     "voice": "hamo",
-                    "prompt": "Doktor Azad kevçiyek li bin nivîna min dibîne.",
+                    "prompt": "Doktor Azad nivîna min kontrol dike, û kevçiyek li bin wê dibîne.",
                     "options": [
-                      "Doctor Azad finds a spoon under my bedding.",
+                      "Doctor Azad checks my bedding, and finds a spoon under it.",
                       "Doctor Azad finds a jar under the table.",
                       "Doctor Azad finds a cat under my bed."
                     ],
@@ -2261,11 +2242,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hêsir di çavên Hevalo de ne: ew bêguneh e!",
+                    "say": "Hêsir di çavên Hevalo de ne: ew hingiv diparêze, û ew bêguneh e!",
                     "voice": "hamo",
-                    "prompt": "Hêsir di çavên Hevalo de ne: ew bêguneh e!",
+                    "prompt": "Hêsir di çavên Hevalo de ne: ew hingiv diparêze, û ew bêguneh e!",
                     "options": [
-                      "There are tears in Hevalo’s eyes: he’s innocent!",
+                      "There are tears in Hevalo’s eyes: he guards the honey, and he’s innocent!",
                       "There’s honey on Hevalo’s nose: he’s the thief!",
                       "There are apples in Hevalo’s mouth: he’s happy!"
                     ],
@@ -2277,9 +2258,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Bi şev hingiv qedexe e.",
+                    "say": "Şîreta doktor: bi şev hingiv qedexe e.",
                     "voice": "hamo",
-                    "prompt": "Bi şev hingiv ___ e.",
+                    "prompt": "Şîreta doktor: bi şev hingiv ___ e.",
                     "options": [
                       "qedexe",
                       "bihêz",
@@ -2427,11 +2408,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Xaltiya Baran dikene, û Doktor Azad şûşeya hingiv digire û diçe malê.",
+                    "say": "Xaltiya Baran dikene. Doktor Azad şûşeya hingiv jê digire, û diçe malê.",
                     "voice": "hamo",
-                    "prompt": "Xaltiya Baran dikene, û Doktor Azad şûşeya hingiv digire û diçe malê.",
+                    "prompt": "Xaltiya Baran dikene. Doktor Azad şûşeya hingiv jê digire, û diçe malê.",
                     "options": [
-                      "Baran’s aunt laughs, and Doctor Azad takes the jar of honey and goes home.",
+                      "Baran’s aunt laughs. Doctor Azad takes the jar of honey from him, and goes home.",
                       "Baran’s aunt cries, and Doctor Azad gives me the honey.",
                       "Baran’s aunt takes the honey, and Doctor Azad stays."
                     ],
@@ -2444,8 +2425,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Sibehê, demjimêr heft û çaryek: ez bihêz im, û ez bêguneh im!",
-                    "reference": "Sibehê, demjimêr heft û çaryek: ez bihêz im, û ez bêguneh im!"
+                    "prompt": "Sibehê, demjimêr heft û çaryek: ez ne lawaz im, ez çêtir im, û ez bêguneh im!",
+                    "reference": "Sibehê, demjimêr heft û çaryek: ez ne lawaz im, ez çêtir im, û ez bêguneh im!"
                   }
                 }
               ]
@@ -2512,6 +2493,22 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "missing",
+                    "say": "Baran ji Hêviyê mezintir e.",
+                    "voice": "hamo",
+                    "prompt": "Baran ji Hêviyê ___ e.",
+                    "options": [
+                      "mezintir",
+                      "mezin",
+                      "biçûk"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Hêvî kin e, Baran dirêj e.",
                     "voice": "hamo",
@@ -2531,39 +2528,17 @@
                   }
                 },
                 {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Baran ji Hêviyê mezintir e.",
-                    "voice": "hamo",
-                    "prompt": "Baran ji Hêviyê ___ e.",
-                    "options": [
-                      "mezintir",
-                      "mezin",
-                      "herî mezin"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Kurê Lorînê yê mezin şanzdeh salî ye.",
+                    "ask": "reply",
+                    "say": "Kî dirêjtir e: Baran an Hêvî?",
                     "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "şanzdeh",
-                        "en": "sixteen"
-                      }
-                    ],
-                    "prompt": "Kurê Lorînê yê mezin şanzdeh salî ye.",
+                    "prompt": "Kî dirêjtir e: Baran an Hêvî?",
                     "options": [
-                      "Lorîn’s eldest son is sixteen.",
-                      "Lorîn’s youngest son is six.",
-                      "Lorîn’s eldest son is sixty."
+                      "Baran ji Hêviyê dirêjtir e.",
+                      "Hêvî ji Baran dirêjtir e.",
+                      "Baran kin e."
                     ],
                     "correctIndex": 0
                   }
@@ -2573,55 +2548,43 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Na… yê duyem şanzdeh e, û yê mezin hivdeh e!",
+                    "say": "Kurê Lorînê yê mezin şanzdeh salî ye… na, hivdeh!",
                     "voice": "hamo",
                     "new": [
+                      {
+                        "ku": "şanzdeh",
+                        "en": "sixteen"
+                      },
                       {
                         "ku": "hivdeh",
                         "en": "seventeen"
                       }
                     ],
-                    "prompt": "Na… yê duyem şanzdeh e, û yê mezin hivdeh e!",
+                    "prompt": "Kurê Lorînê yê mezin şanzdeh salî ye… na, hivdeh!",
                     "options": [
-                      "No… the second is sixteen, and the eldest is seventeen!",
-                      "No… the second is seven, and the eldest is ten!",
-                      "Yes… they are both sixteen!"
+                      "Lorîn’s eldest son is sixteen… no, seventeen!",
+                      "Lorîn’s youngest son is six… no, seven!",
+                      "Lorîn’s eldest son is sixty… no, seventy!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Kî mezintir e?",
-                    "voice": "hamo",
-                    "prompt": "Kî mezintir e?",
-                    "options": [
-                      "Yê hivdeh salî mezintir e.",
-                      "Hêvî dirêj e.",
-                      "Ez telefon im."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Êvarê ez telefonî Kobaniyê dikim, û ji Lorînê dipirsim: kî mezintir e?",
+                    "say": "Êvarê ez telefonî Lorînê dikim û jê dipirsim: kî hivdeh salî ye, kî şanzdeh?",
                     "voice": "hamo",
-                    "prompt": "Êvarê ez telefonî Kobaniyê dikim, û ji Lorînê dipirsim: kî mezintir e?",
+                    "prompt": "Êvarê ez telefonî Lorînê dikim û jê dipirsim: kî hivdeh salî ye, kî şanzdeh?",
                     "accepted": [
-                      "In the evening I phone Kobanî and ask Lorîn: who is older?",
-                      "In the evening I call Kobanî and ask Lorîn: who is the older one?"
+                      "In the evening I phone Lorîn and ask her: who is seventeen, who is sixteen?",
+                      "In the evening I call Lorîn and ask her: which one is seventeen, which one sixteen?"
                     ]
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2643,7 +2606,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2665,7 +2628,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2680,7 +2643,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 11,
                   "type": "match_pairs",
                   "payload": {
                     "voice": "hamo",
@@ -2713,7 +2676,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2729,43 +2692,44 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Keça Lorînê yazdeh salî ye, û ew bilûrê ji min xweştir lêdixe.",
-                      "Keça Lorînê yazdeh salî ye, û ew bilûrê ji min xweştir lêdixe"
+                      "Keça Lorînê yazdeh salî ye: ew bilûrê lêdixe, û stranan ji min xweştir dibêje.",
+                      "Keça Lorînê yazdeh salî ye: ew bilûrê lêdixe, û stranan ji min xweştir dibêje"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Lorîn’s sons are sixteen and seventeen.",
+                    "accepted": [
+                      "Kurên Lorînê şanzdeh û hivdeh salî ne."
                     ]
                   }
                 },
                 {
                   "position": 15,
-                  "type": "translate",
+                  "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Hêvî is shorter than Baran.",
+                    "prompt": "Hêvî is short, but she is clever.",
                     "accepted": [
-                      "Hêvî ji Baran kintir e."
+                      "Hêvî kin e, lê ew jîr e.",
+                      "Hêvî kin e lê ew jîr e."
                     ]
                   }
                 },
                 {
                   "position": 16,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Lorîn’s son is sixteen.",
-                    "accepted": [
-                      "Kurê Lorînê şanzdeh salî ye."
-                    ]
-                  }
-                },
-                {
-                  "position": 17,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -2830,20 +2794,14 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Kîjan mêwe herî şîrîn e?",
+                    "ask": "reply",
+                    "say": "Tu çi hildibijêrî: sêv an tirî?",
                     "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "şîrîn",
-                        "en": "sweet"
-                      }
-                    ],
-                    "prompt": "Kîjan mêwe herî şîrîn e?",
+                    "prompt": "Tu çi hildibijêrî: sêv an tirî?",
                     "options": [
-                      "Which fruit is the sweetest?",
-                      "Which fruit is the biggest?",
-                      "Which tea is the hottest?"
+                      "Ez sêvê hildibijêrim.",
+                      "Ez tirî me.",
+                      "Dibe ku sibe baran bibare."
                     ],
                     "correctIndex": 0
                   }
@@ -2852,14 +2810,20 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Tu çi hildibijêrî: sêv an tirî?",
+                    "ask": "meaning",
+                    "say": "Kîjan mêwe herî şîrîn e? Her kes tiştekî hildibijêre.",
                     "voice": "hamo",
-                    "prompt": "Tu çi hildibijêrî: sêv an tirî?",
+                    "new": [
+                      {
+                        "ku": "şîrîn",
+                        "en": "sweet"
+                      }
+                    ],
+                    "prompt": "Kîjan mêwe herî şîrîn e? Her kes tiştekî hildibijêre.",
                     "options": [
-                      "Ez sêvê hildibijêrim.",
-                      "Ez tirî me.",
-                      "Sêv şûşe ye."
+                      "Which fruit is the sweetest? Everyone chooses something.",
+                      "Which fruit is the biggest? Nobody chooses anything.",
+                      "Which tea is the hottest? Everyone drinks."
                     ],
                     "correctIndex": 0
                   }
@@ -2951,12 +2915,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Şûşeya min ji hemûyan mezintir e: ji bo bêtir şekir!",
+                    "say": "Şûşeya min taybet e: ew ji hemûyan mezintir e, ji bo bêtir şekir!",
                     "voice": "hamo",
-                    "prompt": "Şûşeya min ji hemûyan mezintir e: ji bo bêtir şekir!",
+                    "prompt": "Şûşeya min taybet e: ew ji hemûyan mezintir e, ji bo bêtir şekir!",
                     "accepted": [
-                      "My glass is the biggest of all: for more sugar!",
-                      "My glass is bigger than all the others: for more sugar!"
+                      "My glass is special: it’s the biggest of all, for more sugar!",
+                      "My glass is special: it is bigger than all the others, for more sugar!"
                     ]
                   }
                 },
@@ -3035,12 +2999,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hevalo diz e? Na, ew sêvan diparêze… di zikê xwe de! Dibe ku ew bêtir bixwaze.",
+                    "say": "Hevalo diz e? Na, ew navdar e: ew sêvan diparêze, di zikê xwe de, û bêtir dixwaze!",
                     "voice": "hamo",
-                    "prompt": "Hevalo diz e? Na, ew sêvan diparêze… di zikê xwe de! Dibe ku ew bêtir bixwaze.",
+                    "prompt": "Hevalo diz e? Na, ew navdar e: ew sêvan diparêze, di zikê xwe de, û bêtir dixwaze!",
                     "options": [
-                      "Is Hevalo a thief? No, he guards the apples… in his tummy! Maybe he wants more.",
-                      "Is Hevalo a thief? Yes, he sells the apples at the market.",
+                      "Is Hevalo a thief? No, he’s famous: he guards the apples, in his tummy, and wants more!",
+                      "Hevalo is famous: he sells apples at the market.",
                       "Hevalo guards the honey jars all night."
                     ],
                     "correctIndex": 0
@@ -3053,8 +3017,8 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ez şal û şapik li xwe dikim: ev kincên min ên bijare ne!",
-                      "Ez şal û şapik li xwe dikim: ev kincên min ên bijare ne"
+                      "Ez şal û şapik li xwe dikim: kincên min ên bijare û taybet!",
+                      "Ez şal û şapik li xwe dikim: kincên min ên bijare û taybet"
                     ]
                   }
                 },
@@ -3076,10 +3040,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "This tea is very sweet. I have no fever; I get up early!",
+                    "prompt": "This tea is very sweet. I have no fever: I get up early and go to bed late!",
                     "accepted": [
-                      "Ev çay gelek şîrîn e. Taya min tune; ez zû radibim!",
-                      "Ev çay gelek şîrîn e. Taya min tune, ez zû radibim!"
+                      "Ev çay gelek şîrîn e. Taya min tune: ez zû radibim û dereng radizim!",
+                      "Ev çay gelek şîrîn e. Taya min tune, ez zû radibim û dereng radizim!"
                     ]
                   }
                 }
@@ -3139,6 +3103,21 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The tea house is crowded.",
+                    "options": [
+                      "Qehwexane qelebalix e.",
+                      "Qehwexane qelebalix in.",
+                      "Qehwexaneyê qelebalix e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Doktor Azad dadwer e.",
                     "voice": "hamo",
@@ -3158,7 +3137,7 @@
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
@@ -3174,7 +3153,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3196,7 +3175,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu08s3l3a",
@@ -3258,8 +3237,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Û tu? Tu çi dibêjî: kîjan simbêl herî xweş e?",
-                        "en": "And you? What do you say: which moustache is the nicest?"
+                        "text": "Û tu? Tu çi dibêjî: kîjan simbêl herî xweş e? Ya te ya bijare kîjan e?",
+                        "en": "And you? What do you say: which moustache is the nicest? Which is your favourite?"
                       }
                     ],
                     "prompt": "Simbêlê kê dirêjtir e?",
@@ -3272,7 +3251,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3288,7 +3267,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3299,21 +3278,6 @@
                       "My moustache isn’t the longest, but it’s the most beautiful!",
                       "My moustache is not the longest, but it is the most beautiful!"
                     ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The tea house is crowded.",
-                    "options": [
-                      "Qehwexane qelebalix e.",
-                      "Qehwexane qelebalix in.",
-                      "Qehwexaneyê qelebalix e."
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
@@ -3350,9 +3314,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Doctor Azad is the judge.",
+                    "prompt": "Doctor Azad is the judge at the tea house.",
                     "accepted": [
-                      "Doktor Azad dadwer e."
+                      "Doktor Azad li qehwexaneyê dadwer e.",
+                      "Li qehwexaneyê Doktor Azad dadwer e."
                     ]
                   }
                 },
@@ -3440,11 +3405,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez her roj bi te û Hevalo re dimeşim.",
+                    "say": "Ez her roj bi te û Hevalo re dimeşim: ev rêya min a bijare ye!",
                     "voice": "hamo",
-                    "prompt": "Ez her roj bi te û Hevalo re dimeşim.",
+                    "prompt": "Ez her roj bi te û Hevalo re dimeşim: ev rêya min a bijare ye!",
                     "options": [
-                      "Every day I walk with you and Hevalo.",
+                      "Every day I walk with you and Hevalo: this is my favourite road!",
                       "Every day I sleep with Hevalo.",
                       "Every day I run to the market."
                     ],
@@ -3461,7 +3426,7 @@
                     "prompt": "Kî herî zû dimeşe?",
                     "options": [
                       "Hevalo herî zû dimeşe.",
-                      "Bozo herî jîr e.",
+                      "Ez şanzdeh salî me.",
                       "Ez herî kin im."
                     ],
                     "correctIndex": 0
@@ -3472,11 +3437,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez herî hêdî dimeşim: ez bi her kesî re diaxivim!",
+                    "say": "Ez herî hêdî dimeşim: li qehwexaneyê ez bi her kesî re diaxivim!",
                     "voice": "hamo",
-                    "prompt": "Ez herî hêdî dimeşim: ez bi her kesî re diaxivim!",
+                    "prompt": "Ez herî hêdî dimeşim: li qehwexaneyê ez bi her kesî re diaxivim!",
                     "options": [
-                      "I walk the slowest: I talk to everyone!",
+                      "I walk the slowest: at the tea house I talk to everyone!",
                       "I walk the fastest: I don’t talk to anyone!",
                       "I walk alone: nobody talks to me!"
                     ],
@@ -3488,12 +3453,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Dermanê herî baş hewaya çiyê ye, û ya duyem çay e.",
+                    "say": "Dermanê herî baş hewaya çiyê ye, û ya duyem çay e, bi bêtir şekir!",
                     "voice": "hamo",
-                    "prompt": "Dermanê herî baş hewaya çiyê ye, û ya duyem çay e.",
+                    "prompt": "Dermanê herî baş hewaya çiyê ye, û ya duyem çay e, bi bêtir şekir!",
                     "accepted": [
-                      "The best medicine is the mountain air, and the second best is tea.",
-                      "The best medicine is mountain air, and the second is tea."
+                      "The best medicine is the mountain air, and the second best is tea, with more sugar!",
+                      "The best medicine is mountain air, and the second is tea, with extra sugar!"
                     ]
                   }
                 },
@@ -3518,11 +3483,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Carinan em rasterast diçin çiyê, carinan em li gund digerin.",
+                    "say": "Carinan em rasterast diçin çiyê, carinan em li gund digerin û sêvên navdar dixwin.",
                     "voice": "hamo",
-                    "prompt": "Carinan em rasterast diçin çiyê, carinan em li gund digerin.",
+                    "prompt": "Carinan em rasterast diçin çiyê, carinan em li gund digerin û sêvên navdar dixwin.",
                     "options": [
-                      "Sometimes we go straight to the mountain, sometimes we walk around the village.",
+                      "Sometimes we go straight to the mountain, sometimes we walk around the village and eat the famous apples.",
                       "We always go straight home.",
                       "Sometimes we sleep on the mountain."
                     ],
@@ -3534,11 +3499,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Her gav ez dipirsim: kîjan rê ya herî kin e?",
+                    "say": "Her gav ez dipirsim: kîjan rê ya herî kin e, û kîjan ya herî dirêj?",
                     "voice": "hamo",
-                    "prompt": "Her gav ez dipirsim: kîjan rê ya herî kin e?",
+                    "prompt": "Her gav ez dipirsim: kîjan rê ya herî kin e, û kîjan ya herî dirêj?",
                     "options": [
-                      "I always ask: which road is the shortest?",
+                      "I always ask: which road is the shortest, and which is the longest?",
                       "I never ask: which road is the longest?",
                       "I always say: this road is the best!"
                     ],
@@ -3651,11 +3616,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hevalo jî tiştekî hildibijêre: sêva herî şîrîn!",
+                    "say": "Hevalo jî tiştekî hildibijêre: ji hemûyan, sêva herî şîrîn!",
                     "voice": "hamo",
-                    "prompt": "Hevalo jî tiştekî hildibijêre: sêva herî şîrîn!",
+                    "prompt": "Hevalo jî tiştekî hildibijêre: ji hemûyan, sêva herî şîrîn!",
                     "options": [
-                      "Hevalo chooses something too: the sweetest apple!",
+                      "Hevalo chooses something too: of them all, the sweetest apple!",
                       "Hevalo chooses nothing: he’s asleep!",
                       "Hevalo chooses the biggest stone!"
                     ],
@@ -3667,13 +3632,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Doktor Azad dadwerê herî baş e, û ew jî dimeşe.",
+                    "say": "Doktor Azad dadwerê pêşbirkê ye, û ew jî dimeşe: bi ser ketin ne her tişt e!",
                     "voice": "hamo",
-                    "prompt": "Doktor Azad dadwerê herî baş e, û ew jî dimeşe.",
+                    "prompt": "Doktor Azad dadwerê pêşbirkê ye, û ew jî dimeşe: bi ser ketin ne her tişt e!",
                     "options": [
-                      "Doctor Azad is the best judge, and he walks too.",
-                      "Doctor Azad is the worst judge, and he doesn’t walk.",
-                      "Doctor Azad is the fastest runner."
+                      "Doctor Azad is the contest judge, and he walks too: winning isn’t everything!",
+                      "Doctor Azad is the contest judge, and he never walks.",
+                      "Doctor Azad is the fastest runner in the contest."
                     ],
                     "correctIndex": 0
                   }
@@ -3752,7 +3717,7 @@
                     "prompt": "Tu çi dihizirî?",
                     "options": [
                       "Ez dihizirim ku ew xemgîn e.",
-                      "Ez gir im.",
+                      "Jinên cîran li vir in.",
                       "Ez dihizirim ku sibe Şemî ye."
                     ],
                     "correctIndex": 0
@@ -3849,12 +3814,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ev cara yekem e ku Baran tiştekî nabêje. Dibe ku ew li ser gir baz dide?",
+                    "say": "Ez dihizirim: ev cara yekem e ku Baran tiştekî nabêje. Dibe ku ew li ser gir baz dide?",
                     "voice": "hamo",
-                    "prompt": "Ev cara yekem e ku Baran tiştekî nabêje. Dibe ku ew li ser gir baz dide?",
+                    "prompt": "Ez dihizirim: ev cara yekem e ku Baran tiştekî nabêje. Dibe ku ew li ser gir baz dide?",
                     "accepted": [
-                      "This is the first time Baran hasn’t said anything. Maybe he’s jumping on the hill?",
-                      "It’s the first time Baran says nothing. Maybe he jumps on the hill?"
+                      "I’m thinking: this is the first time Baran hasn’t said anything. Maybe he’s jumping on the hill?",
+                      "I think: it’s the first time Baran says nothing. Maybe he jumps on the hill?"
                     ]
                   }
                 },
@@ -3908,11 +3873,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "I think he is sad.",
+                    "prompt": "I have a feeling.",
                     "options": [
-                      "Ez dihizirim ku ew xemgîn e.",
-                      "Ez dihizire ku ew xemgîn e.",
-                      "Ez dihizirim ku ew xemgîn im."
+                      "Hestekî min heye.",
+                      "Hestekî min hene.",
+                      "Hestekî min in."
                     ],
                     "correctIndex": 0
                   }
@@ -3924,8 +3889,8 @@
                     "voice": "hamo",
                     "pairs": [
                       {
-                        "left": "hizirîn",
-                        "right": "to think"
+                        "left": "bi kelecan",
+                        "right": "excited"
                       },
                       {
                         "left": "hêrs",
@@ -3957,8 +3922,8 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Jinên cîran li Baran dinêrin. Ev jiyan e: carinan zarok xemgîn in.",
-                      "Jinên cîran li Baran dinêrin. Ev jiyan e: carinan zarok xemgîn in"
+                      "Ev jiyan e: carinan zarok bi kelecan in, carinan xemgîn.",
+                      "Ev jiyan e: carinan zarok bi kelecan in, carinan xemgîn"
                     ]
                   }
                 },
@@ -3968,10 +3933,11 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Hêvî is amazed, and I am calm.",
+                    "prompt": "Hêvî is amazed; Baran isn’t excited.",
                     "accepted": [
-                      "Hêvî matmayî ye, û ez aram im.",
-                      "Hêvî matmayî ye û ez aram im."
+                      "Hêvî matmayî ye; Baran ne bi kelecan e.",
+                      "Hêvî matmayî ye, Baran ne bi kelecan e.",
+                      "Hêvî matmayî ye û Baran ne bi kelecan e."
                     ]
                   }
                 },
@@ -3994,8 +3960,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ez dihizirim, lê ez naxwazim zû bipirsim: ez ê bisekinim.",
-                    "reference": "Ez dihizirim, lê ez naxwazim zû bipirsim: ez ê bisekinim."
+                    "prompt": "Hêvî matmayî ye, lê ez aram im: ez dihizirim, û ez ê bisekinim.",
+                    "reference": "Hêvî matmayî ye, lê ez aram im: ez dihizirim, û ez ê bisekinim."
                   }
                 }
               ]
@@ -4011,35 +3977,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran li ser banê tenê ye.",
+                    "say": "Baran li ser banê tenê ye. Ez hêdî diçim ser ban, û hemû laşê min dibêje: wey!",
                     "voice": "hamo",
-                    "prompt": "Baran li ser banê tenê ye.",
+                    "prompt": "Baran li ser banê tenê ye. Ez hêdî diçim ser ban, û hemû laşê min dibêje: wey!",
                     "options": [
-                      "Baran is alone on the roof.",
-                      "Baran is with Hêvî on the roof.",
-                      "Baran is alone at school."
+                      "Baran is alone on the roof. I slowly climb up to the roof, and my whole body says: ouch!",
+                      "Baran is with Hêvî in the yard. I run to the roof, and my body says: great!",
+                      "Baran is alone at school. I go down to the yard, and my knees say: no!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 2,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ez hêdî diçim ser ban, û pişta min dibêje: wey!",
-                    "voice": "hamo",
-                    "prompt": "Ez hêdî diçim ser ban, û pişta min dibêje: wey!",
-                    "options": [
-                      "I go up to the roof slowly, and my back says: ouch!",
-                      "I run up to the roof, and my back says: great!",
-                      "I go down to the yard, and my knees say: no!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 3,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4061,7 +4011,7 @@
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 3,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
@@ -4071,13 +4021,13 @@
                     "options": [
                       "Ez dihizirim ku bawerî baş e.",
                       "Ez ban im.",
-                      "Ez bawerî me."
+                      "Ew bi otobûsê tê, û em dilîzin."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4099,7 +4049,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4121,7 +4071,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -4137,7 +4087,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4163,7 +4113,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -4177,7 +4127,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4193,11 +4143,11 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran rastgo ye.",
+                    "say": "Baran rastgo ye. Mêrên mezin jî carinan digirîn, û ev ne şerm e.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -4205,35 +4155,35 @@
                         "en": "honest"
                       }
                     ],
-                    "prompt": "Baran rastgo ye.",
+                    "prompt": "Baran rastgo ye. Mêrên mezin jî carinan digirîn, û ev ne şerm e.",
                     "options": [
-                      "Baran is honest.",
-                      "Baran is a liar.",
-                      "Baran is tired."
+                      "Baran is honest. Grown men cry sometimes too, and that’s no shame.",
+                      "Baran is a liar. Grown men never cry.",
+                      "Baran is tired. Men laugh, and that’s a shame."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Mêrên mezin jî carinan digirîn. Laşê min westiyayî ye, lê dilê min li cem Baran e.",
+                    "say": "Bavê min bilûra xwe dide min, û dibêje: Serkeftin ne her tişt e; jiyanê bidomîne.",
                     "voice": "hamo",
-                    "prompt": "Mêrên mezin jî carinan digirîn. Laşê min westiyayî ye, lê dilê min li cem Baran e.",
+                    "prompt": "Bavê min bilûra xwe dide min, û dibêje: Serkeftin ne her tişt e; jiyanê bidomîne.",
                     "accepted": [
-                      "Grown men cry sometimes too. My body is tired, but my heart is with Baran.",
-                      "Big men also cry sometimes. My body is tired, but my heart is with Baran."
+                      "My father gives me his flute and says: Success isn’t everything; keep life going.",
+                      "My father gives me his flute, and says: Success is not everything; carry on with life."
                     ]
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran guh dide, û dibêje: ez tê digihîjim.",
+                    "say": "Baran guh dide, û dibêje: ez tê digihîjim. Ew rastgo ye.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -4241,9 +4191,9 @@
                         "en": "I understand (tê gihîştin)"
                       }
                     ],
-                    "prompt": "Baran guh dide, û dibêje: ez tê digihîjim.",
+                    "prompt": "Baran guh dide, û dibêje: ez tê digihîjim. Ew rastgo ye.",
                     "options": [
-                      "Baran listens, and says: I understand.",
+                      "Baran listens, and says: I understand. He’s honest.",
                       "Baran laughs, and says: I don’t know.",
                       "Baran runs off, and says: goodbye."
                     ],
@@ -4251,7 +4201,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 13,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -4266,7 +4216,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 14,
                   "type": "match_pairs",
                   "payload": {
                     "voice": "hamo",
@@ -4299,27 +4249,27 @@
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 15,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Tu tê digihîjî? Rastî ji derewê çêtir e.",
-                      "Tu tê digihîjî? Rastî ji derewê çêtir e"
+                      "Tu tê digihîjî? Rastî ji derewê çêtir e, û nehênî biçûk dibe dema ku em wê parve dikin.",
+                      "Tu tê digihîjî? Rastî ji derewê çêtir e, û nehênî biçûk dibe dema ku em wê parve dikin"
                     ]
                   }
                 },
                 {
-                  "position": 17,
+                  "position": 16,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Baran is honest, and I trust him.",
+                    "prompt": "Baran is honest: I understand him, and I trust him.",
                     "accepted": [
-                      "Baran rastgo ye, û baweriya min bi wî heye.",
-                      "Baran rastgo ye û baweriya min bi wî heye."
+                      "Baran rastgo ye: ez li wî tê digihîjim, û baweriya min bi wî heye.",
+                      "Baran rastgo ye, ez li wî tê digihîjim û baweriya min bi wî heye."
                     ]
                   }
                 }
@@ -4379,6 +4329,22 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "missing",
+                    "say": "Beranê herî baş winda dibe!",
+                    "voice": "hamo",
+                    "prompt": "Beranê herî baş winda ___!",
+                    "options": [
+                      "dibe",
+                      "dibin",
+                      "bibe"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Ez ditirsim, û ez naçim malê. Ez tirsonek im.",
                     "voice": "hamo",
@@ -4398,7 +4364,7 @@
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
@@ -4414,23 +4380,29 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Êvarê ez her tiştî ji bavê xwe re dibêjim.",
+                    "say": "Bavê min dibêje: Tu wêrek î, kurê min.",
                     "voice": "hamo",
-                    "prompt": "Êvarê ez her tiştî ji bavê xwe re dibêjim.",
+                    "new": [
+                      {
+                        "ku": "wêrek",
+                        "en": "brave"
+                      }
+                    ],
+                    "prompt": "Bavê min dibêje: Tu wêrek î, kurê min.",
                     "options": [
-                      "In the evening I tell my father everything.",
-                      "In the evening I tell my father nothing.",
-                      "In the morning my father tells me a story."
+                      "My father says: You’re brave, my son.",
+                      "My father says: You’re a coward, my son.",
+                      "My father says: You’re hungry, my son."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu08s4l3a",
@@ -4453,7 +4425,7 @@
                       {
                         "speaker": 0,
                         "text": "Ez heşt salî me, li Miştenûrê, bi pezê bavê xwe re.",
-                        "en": "I’m eight years old, on Miştenûr, with my father’s sheep."
+                        "en": "I’m eight years old, up on Miştenûr, with my father’s sheep."
                       },
                       {
                         "speaker": 0,
@@ -4511,28 +4483,6 @@
                       "Tu wêrek î.",
                       "Tu tirsonek î.",
                       "Tu beran î."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Bavê min dibêje: Tu wêrek î, kurê min.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "wêrek",
-                        "en": "brave"
-                      }
-                    ],
-                    "prompt": "Bavê min dibêje: Tu wêrek î, kurê min.",
-                    "options": [
-                      "My father says: You’re brave, my son.",
-                      "My father says: You’re a coward, my son.",
-                      "My father says: You’re hungry, my son."
                     ],
                     "correctIndex": 0
                   }
@@ -4617,9 +4567,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Baran is brave.",
+                    "prompt": "My childhood is in Kobanî.",
                     "accepted": [
-                      "Baran wêrek e."
+                      "Zarokatiya min li Kobaniyê ye."
                     ]
                   }
                 },
@@ -4629,10 +4579,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "My father’s ram is lost.",
+                    "prompt": "I’m not a coward!",
                     "accepted": [
-                      "Beranê bavê min winda ye.",
-                      "Beranê bavê min winda dibe."
+                      "Ez ne tirsonek im!"
                     ]
                   }
                 },
@@ -4688,11 +4637,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran hêdî tê jêr, û li ber agir rûdine.",
+                    "say": "Baran hêdî tê jêr, û li ber agir rûdine. Ew ne bi hêrs e, ew aram e.",
                     "voice": "hamo",
-                    "prompt": "Baran hêdî tê jêr, û li ber agir rûdine.",
+                    "prompt": "Baran hêdî tê jêr, û li ber agir rûdine. Ew ne bi hêrs e, ew aram e.",
                     "options": [
-                      "Baran slowly comes down, and sits by the fire.",
+                      "Baran slowly comes down, and sits by the fire. He isn’t angry, he’s calm.",
                       "Baran runs up to the roof, and hides.",
                       "Baran slowly goes to bed, and sleeps."
                     ],
@@ -4704,13 +4653,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ew dibêje: Sibe ez ê bibêjim.",
+                    "say": "Ew wêrek e. Ew dibêje: Sibe ez ê bibêjim.",
                     "voice": "hamo",
-                    "prompt": "Ew dibêje: Sibe ez ê bibêjim.",
+                    "prompt": "Ew wêrek e. Ew dibêje: Sibe ez ê bibêjim.",
                     "options": [
-                      "He says: Tomorrow I’ll tell.",
-                      "He says: I’ll never tell.",
-                      "He says: Yesterday I told."
+                      "He is brave. He says: Tomorrow I’ll tell.",
+                      "He is a coward. He says: I’ll never tell.",
+                      "He is tired. He says: Yesterday I told."
                     ],
                     "correctIndex": 0
                   }
@@ -4725,7 +4674,7 @@
                     "prompt": "Tu çi dihizirî? Ew dê bibêje?",
                     "options": [
                       "Erê, sibe ew ê rastiyê bibêje.",
-                      "Na, ew minîbûs e.",
+                      "Na, ew tirsonek e.",
                       "Erê, ew derman e."
                     ],
                     "correctIndex": 0
@@ -4784,13 +4733,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Baran dikene. Şerm tune, tenê hestekî germ.",
+                    "say": "Baran dikene. Şerm tune, tenê bawerî û hestekî germ.",
                     "voice": "hamo",
-                    "prompt": "Baran dikene. Şerm tune, tenê hestekî germ.",
+                    "prompt": "Baran dikene. Şerm tune, tenê bawerî û hestekî germ.",
                     "accepted": [
-                      "Baran laughs. There’s no shame, only a warm feeling.",
-                      "Baran smiles. No shame, just a warm feeling.",
-                      "Baran laughs. No shame, only a warm feeling."
+                      "Baran laughs. There’s no shame, only trust and a warm feeling.",
+                      "Baran smiles. No shame, just trust and a warm feeling.",
+                      "Baran laughs. No shame, only trust and a warm feeling."
                     ]
                   }
                 },
@@ -4851,6 +4800,11 @@
                         "en": "He’s fine. Tomorrow he’ll tell the truth."
                       },
                       {
+                        "speaker": 0,
+                        "text": "Ev çîroka beranê min e, ji zarokatiya min!",
+                        "en": "This is the story of my ram, from my childhood!"
+                      },
+                      {
                         "speaker": 1,
                         "text": "Tu çawa dizanî?",
                         "en": "How do you know?"
@@ -4859,6 +4813,16 @@
                         "speaker": 0,
                         "text": "Ez dizanim: Baran rastgo ye. Derew ne karê wî ye.",
                         "en": "I know: Baran is honest. Lies aren’t his thing."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û nehênî?",
+                        "en": "And the secret?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Nehênî sibe; îro, sêv!",
+                        "en": "The secret tomorrow; today, the apple!"
                       },
                       {
                         "speaker": 1,
@@ -4989,8 +4953,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Sibe ez ê bibêjim. Îro, sêva Hevalo bes e.",
-                    "reference": "Sibe ez ê bibêjim. Îro, sêva Hevalo bes e."
+                    "prompt": "Sibe ez ê bibêjim. Îro sêva Hevalo bes e, û Hevalo bi kelecan e!",
+                    "reference": "Sibe ez ê bibêjim. Îro sêva Hevalo bes e, û Hevalo bi kelecan e!"
                   }
                 }
               ]
