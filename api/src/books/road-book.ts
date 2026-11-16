@@ -47,7 +47,6 @@ export interface BookPlanUnit {
 }
 
 export interface BookPlan {
-  characters: Record<string, string>;
   /** everyone and every place the road names, each with a few words on who or what it is */
   names?: Array<{ name: string; kind: string; en: string; forms?: string[] }>;
   units: BookPlanUnit[];

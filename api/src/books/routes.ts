@@ -46,7 +46,7 @@ export function registerBookRoutes(app: FastifyInstance): void {
       if (!pdf) {
         pdf = loadRoadBookSources().then((sources) => {
           const outline = roadBookChapters(sources.plan, sources.docs, sources.stories, chapters);
-          return renderRoadBook({ chapters: outline, characters: sources.plan.characters, people: roadBookCast(sources.plan, outline) });
+          return renderRoadBook({ chapters: outline, people: roadBookCast(sources.plan, outline) });
         });
         // a failed book is made again next time, not kept
         pdf.catch(() => made.delete(key));

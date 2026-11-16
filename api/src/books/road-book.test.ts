@@ -202,7 +202,7 @@ describe('the Hevalo book', () => {
   it('prints a PDF of the chapters asked for, and only those', async () => {
     const { plan, docs, stories } = await loadRoadBookSources();
     const chapters = roadBookChapters(plan, docs, stories, [3]);
-    const pdf = await renderRoadBook({ chapters, characters: plan.characters, people: roadBookCast(plan, chapters) });
+    const pdf = await renderRoadBook({ chapters, people: roadBookCast(plan, chapters) });
     expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
     // the pages before the chapters, one chapter of thirteen or so pages, the answers and the word list
     expect(pagesOf(pdf)).toBeGreaterThan(20);
@@ -215,7 +215,7 @@ describe('the Hevalo book', () => {
     const { plan, docs, stories } = await loadRoadBookSources();
     const chapters = roadBookChapters(plan, docs, stories, ALL);
     const started = performance.now();
-    const pdf = await renderRoadBook({ chapters, characters: plan.characters, people: roadBookCast(plan, chapters) });
+    const pdf = await renderRoadBook({ chapters, people: roadBookCast(plan, chapters) });
     const took = performance.now() - started;
     expect(pagesOf(pdf)).toBeGreaterThan(150);
     expect(pagesOf(pdf)).toBeLessThan(200);

@@ -8,7 +8,8 @@
  * chapter; the alphabet in pictures; the people of the road; then each
  * chapter (chapter.ts) — an opening page under its landmark, its four parts
  * lesson by lesson, the story Hamo tells, practice for a pencil, and its
- * stamp — and at the back the answers and the word list.
+ * stamp — and at the back the answers, the word list and the author's note.
+ * What the book says in its own words is in prose.ts.
  *
  * Each chapter wears one of the app's hues (pictures.ts), and an apple sits
  * in the corner of every one of its pages, a bite smaller every few pages:
@@ -24,14 +25,13 @@ import { chapterSheets } from './chapter.js';
 import { keepList, paginate } from './flow.js';
 import { STAMP, T, VIOLET, castArt, display, displayItalic, drawPicture, drawStamp, furnish, heavy, hueOf, label, runSheets, squareArt, type Block, type Places, type Sheet } from './page.js';
 import { chapterHue, pictureForName, pictureForWord, type BookPicture } from './pictures.js';
+import { AUTHOR, FRIENDS, LETTER } from './prose.js';
 import { chapterWords, roadBookAlphabet, roadBookWordList, type BookChapter, type BookName, type BookWord } from './road-book.js';
 import { INK, PAGE, Press, TEXT, type Span, type Type } from './sheet.js';
 
 export interface RoadBookOptions {
   chapters: readonly BookChapter[];
-  /** who the three friends are, in the plan's words */
-  characters: Readonly<Record<string, string>>;
-  /** everyone else the chapters speak of, in the plan's words (`roadBookCast`) */
+  /** everyone the chapters speak of, in the plan's words (`roadBookCast`) */
   people?: readonly BookName[];
   /** the address printed on the cover and the last page */
   site?: string;
@@ -123,32 +123,20 @@ function letterSheet(press: Press, chapters: readonly BookChapter[]): Sheet {
         const w = press.line(welcome.ku, TEXT.x, y + 53, displayItalic(13.5, VIOLET.deep));
         press.line('Welcome!', TEXT.x + w + 8, y + 57, T.english);
       }
-      y += 106;
-      const paragraphs: Span[][] = [
-        [
-          { text: 'I am ' },
-          { text: 'Hamo', font: 'semi' },
-          { text: ', from Kobanî, at home for thirty years now in Sêvan, a village of apple orchards under the mountains. Every line of this road is mine: in the app you hear me say it, and here you can read it at your own pace, with a pencil, in the shade of a tree if you have one.' },
-        ],
-        [{ text: 'Read everything aloud, even when you are alone. Kurdish lives in the mouth, not only on the page. And when a word will not stay in your head, go back to the app, listen, and say it after me. What you still remember on the second day is yours.' }],
-        [
-          { text: 'One more thing. If you meet a young deer with round cheeks near the apple trees, that is ' },
-          { text: 'Hevalo', font: 'semi' },
-          { text: ', your guide. He will tell you he is not hungry. Watch the apple in the corner of the page as you go through a chapter, and judge for yourself.' },
-        ],
-      ];
-      const letter: Type = { ...T.body, size: 9, lead: 12.8 };
-      for (const p of paragraphs) {
+      // the letter and how to read the book share one page, so the letter runs close under its greeting
+      y += 97;
+      const letter: Type = { ...T.body, size: 9, lead: 12.6 };
+      for (const p of LETTER) {
         const para = press.para(p, TEXT.w, letter);
         press.set(para.lines, TEXT.x, y, letter);
-        y += para.height + 8;
+        y += para.height + 6.5;
       }
-      press.line('Hamo', TEXT.x, y + 2, displayItalic(18, VIOLET.deep), 'right', TEXT.w - 6);
-      y += 46;
+      press.line('Hamo', TEXT.x, y, displayItalic(18, VIOLET.deep), 'right', TEXT.w - 6);
+      y += 36;
 
       press.line('HOW TO READ THIS BOOK', TEXT.x, y, label(VIOLET.deep));
       press.rule(TEXT.x, y + 12.5, TEXT.w, VIOLET.wash, 0.9);
-      y += 22;
+      y += 20;
       for (const [icon, text] of HOW) {
         const para = press.para(text, TEXT.w - 44, T.note);
         const h = Math.max(28, para.height);
@@ -166,7 +154,7 @@ function letterSheet(press: Press, chapters: readonly BookChapter[]): Sheet {
           press.box(ix + 15, iy + 4, 13, 20, 3, VIOLET.wash);
         } else drawPicture(press, icon, ix, iy, 28, VIOLET);
         press.set(para.lines, TEXT.x + 42, y + (h - para.height) / 2, T.note);
-        y += h + 8;
+        y += h + 5;
       }
     },
   };
@@ -208,7 +196,7 @@ function contentsSheet(press: Press, chapters: readonly BookChapter[], places: P
         y += para.height + (roomy ? 10 : 4.6);
       }
       y += 6;
-      for (const [name, key] of [['Answers', 'answers'], ['The word list', 'words']] as const) {
+      for (const [name, key] of [['Answers', 'answers'], ['The word list', 'words'], ['About the author', 'author']] as const) {
         entry(name, TEXT.x, y, places.get(key));
         y += 15.5;
       }
@@ -344,22 +332,19 @@ function alphabetSheets(press: Press, chapters: readonly BookChapter[]): Sheet[]
 
 // ───────────────────────────────────────────────────────────── the people of the road
 
-/** The first `count` sentences of a text. */
-const opening = (text: string, count: number): string => text.split(/(?<=\.)\s+(?=\p{Lu})/u).slice(0, count).join(' ');
-
-function peopleSheets(press: Press, characters: Readonly<Record<string, string>>, people: readonly BookName[]): Sheet[] {
+function peopleSheets(press: Press, people: readonly BookName[]): Sheet[] {
   const named = new Set(people.map((p) => p.name));
   const friends: Array<[CharacterId, string, string, BookPose]> = [
-    ['hamo', 'Hamo', characters.hamo ?? '', 'proud'],
-    ['hevalo', 'Hevalo', characters.hevalo ?? '', 'caught'],
-    ['xezo', 'Xezal', characters.xezo ?? '', 'smiling'],
+    ['hamo', 'Hamo', FRIENDS.hamo, 'proud'],
+    ['hevalo', 'Hevalo', FRIENDS.hevalo, 'caught'],
+    ['xezo', 'Xezal', FRIENDS.xezo, 'smiling'],
   ];
   // a book that has not met Xezal yet does not introduce her
   const shown = friends.filter(([id, name]) => id !== 'xezo' || named.has(name) || people.length === 0);
   const others = people.filter((p) => !friends.some(([, name]) => name === p.name));
   const blocks: Block[] = [{ height: 30, gap: 0, keep: true, draw: (y) => void press.line('The people of the road', TEXT.x, y + 2, display(22)) }];
   shown.forEach(([id, name, about, pose], i) => {
-    const text = press.para(opening(about, 3), TEXT.w - 94, T.body);
+    const text = press.para(about, TEXT.w - 94, T.body);
     const height = Math.max(80, text.height + 24);
     blocks.push({
       height,
@@ -583,6 +568,30 @@ function wordListSheets(press: Press, chapters: readonly BookChapter[], start = 
   return sheets;
 }
 
+// ───────────────────────────────────────────────────────────── about the author
+
+/** The author's own note, on a page of its own: in their words, with Hamo beside it, and signed with their name. */
+function authorSheet(press: Press): Sheet {
+  return {
+    furniture: { chapter: null, section: 'About the author', bites: null, plain: true },
+    draw: (): void => {
+      let y = TEXT.top + 6;
+      press.disc(TEXT.x + TEXT.w - 44, y + 44, 44, VIOLET.wash);
+      press.within(TEXT.x + TEXT.w - 88, y, 88, 88, 44, () => press.place(castArt(press, 'hamo', 'plain'), TEXT.x + TEXT.w - 85, y + 8, 84));
+      press.line('About the author', TEXT.x, y + 30, display(22));
+      y += 112;
+      const type: Type = { ...T.body, size: 9.6, lead: 14.2 };
+      for (const text of AUTHOR.paragraphs) {
+        const para = press.para(text, TEXT.w - 30, type);
+        press.set(para.lines, TEXT.x, y, type);
+        y += para.height + 10;
+      }
+      press.rule(TEXT.x + TEXT.w - 150, y + 14, 150, VIOLET.wash, 0.9);
+      press.line(AUTHOR.name, TEXT.x, y + 22, displayItalic(14, VIOLET.deep), 'right', TEXT.w);
+    },
+  };
+}
+
 // ───────────────────────────────────────────────────────────── the last page
 
 function lastSheet(press: Press, chapters: readonly BookChapter[], site: string): Sheet {
@@ -641,7 +650,7 @@ export function renderRoadBook(options: RoadBookOptions): Promise<Buffer> {
   add([contentsSheet(press, chapters, places)]);
   add([passportSheet(press, chapters, places)], [['passport', 0]]);
   add(alphabetSheets(press, chapters), [['alphabet', 0]]);
-  add(peopleSheets(press, options.characters, options.people ?? []), [['people', 0]]);
+  add(peopleSheets(press, options.people ?? []), [['people', 0]]);
   for (const c of chapters) {
     const made = chapterSheets(press, c, places);
     add(made.sheets, made.anchors);
@@ -657,6 +666,7 @@ export function renderRoadBook(options: RoadBookOptions): Promise<Buffer> {
   }
   add(back.sheets, answers);
   add(list, [['words', 0]]);
+  add([authorSheet(press)], [['author', 0]]);
   add([lastSheet(press, chapters, site)]);
 
   // every page is measured and numbered by now: only then is anything drawn, so a page can say where another is

@@ -9,7 +9,7 @@
  */
 import { writeFile } from 'node:fs/promises';
 import { loadRoadBookSources } from '../src/books/sources.js';
-import { roadBookChapters } from '../src/books/road-book.js';
+import { roadBookCast, roadBookChapters } from '../src/books/road-book.js';
 import { renderRoadBook } from '../src/books/pdf.js';
 
 async function main(): Promise<void> {
@@ -21,7 +21,7 @@ async function main(): Promise<void> {
   const sources = await loadRoadBookSources();
   const wanted = rest.length > 0 ? rest.map(Number) : [...sources.docs.keys()];
   const chapters = roadBookChapters(sources.plan, sources.docs, sources.stories, wanted);
-  const pdf = await renderRoadBook({ chapters, characters: sources.plan.characters });
+  const pdf = await renderRoadBook({ chapters, people: roadBookCast(sources.plan, chapters) });
   await writeFile(out, pdf);
   console.log(`${out}: chapters ${chapters.map((c) => c.number).join(', ')}, ${Math.round(pdf.length / 1024)} KB`);
 }
