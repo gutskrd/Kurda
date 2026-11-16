@@ -316,4 +316,50 @@ describe.skipIf(!DATABASE_URL)('road lessons (integration)', () => {
       expect(log.lines).toEqual([]);
     });
   });
+
+  /**
+   * The lesson path groups a course's units into sections by their level, and
+   * the plan beside the unit files is where the road writes each unit's.
+   */
+  describe('the units’ levels, from the plan', () => {
+    const levelled = `road-d-${s}`;
+    beforeAll(() => {
+      courses.push(levelled);
+    });
+
+    const levelsOf = async (): Promise<Array<{ unit: number; cefr: string | null }>> =>
+      (
+        await pool.query<{ unit: number; cefr: string | null }>(
+          `SELECT u.position unit, u.cefr FROM units u JOIN courses c ON c.id = u.course_id WHERE c.slug = $1 ORDER BY u.position`,
+          [levelled],
+        )
+      ).rows;
+
+    it('gives each unit its level from the plan, and follows the plan when it changes', async () => {
+      const files = {
+        'unit-01.json': roadUnitFile(levelled, 1, [{ key: 'u01s1l1', position: 1 }]),
+        'unit-05.json': roadUnitFile(levelled, 5, [{ key: 'u05s1l1', position: 1 }]),
+        'unit-10.json': roadUnitFile(levelled, 10, [{ key: 'u10s1l1', position: 1 }]),
+      };
+      const plan = (levels: Record<number, string>) => ({ course: { slug: levelled }, units: Object.entries(levels).map(([n, cefr]) => ({ number: Number(n), cefr })) });
+      const log = recorder();
+      await seedRoadLessons(pool, log, { dir: await folder({ ...files, 'plan.json': plan({ 1: 'A1', 5: 'A2', 10: 'B1', 11: 'B1' }) }), course: levelled });
+      expect(await levelsOf()).toEqual([
+        { unit: 1, cefr: 'A1' },
+        { unit: 5, cefr: 'A2' },
+        { unit: 10, cefr: 'B1' },
+      ]);
+      expect(log.lines.at(-1)!.obj).toMatchObject({ levelled: [1, 5, 10] });
+
+      // the next start changes nothing that is already right, and takes a level the writers moved
+      const again = recorder();
+      await seedRoadLessons(pool, again, { dir: await folder({ ...files, 'plan.json': plan({ 1: 'A1', 5: 'B1', 10: 'B1' }) }), course: levelled });
+      expect(again.lines.at(-1)!.obj).toMatchObject({ levelled: [5] });
+      expect((await levelsOf()).map((u) => u.cefr)).toEqual(['A1', 'B1', 'B1']);
+
+      // a plan with no levels leaves them as they are
+      await seedRoadLessons(pool, recorder(), { dir: await folder({ ...files, 'plan.json': { course: levelled, units: 'the writers’ own' } }), course: levelled });
+      expect((await levelsOf()).map((u) => u.cefr)).toEqual(['A1', 'B1', 'B1']);
+    });
+  });
 });

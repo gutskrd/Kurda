@@ -29,10 +29,10 @@ const skill = (id: string, state: PathSkill['state'], grammar = false): PathSkil
   lessons: [{ lessonId: `${id}1`, title: id, completed: state === 'completed' }],
 });
 
-/** A unit of four skills with a guide, the second one to do now: the shape of every unit of the road. */
+/** A unit of four skills closed by its story, the second one to do now: the shape of every unit of the road. */
 function unit(current = 1) {
   const skills = [0, 1, 2, 3].map((i) => skill(`s${i}`, i < current ? 'completed' : i === current ? 'unlocked' : 'locked', i === 0));
-  return lessonPath({ units: [{ unitId: 'u', title: 'U', skills }] }, { guides: true }).units[0]!;
+  return lessonPath({ units: [{ unitId: 'u', title: 'U', skills, story: { slug: 'road-01-tale', title: 'Tale' } }] }).units[0]!;
 }
 
 const overlap = (a: PathBox, b: PathBox): boolean => Math.abs(a.x - b.x) * 2 < a.w + b.w && a.y < b.y + b.h && b.y < a.y + a.h;
@@ -130,13 +130,17 @@ describe('the shepherds’ cairn beside the road', () => {
   });
 
   it('keeps out of what the land asks it to, gives a unit too short none, and keeps the trees off it', () => {
-    const u = unit(1);
+    const u = unit(2);
     const stops = u.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
     const free = cairnBox(stops, 390)!;
     const water = { x: 0, y: free.y + free.h / 2 - 20, w: 800, h: 40 };
     const moved = cairnBox(stops, 390, [water]);
     expect(moved).not.toBeNull();
     expect(overlap(moved!, water)).toBe(false);
+    // with nowhere else on the page to go, it stands nowhere rather than in the water
+    const tight = unit(1).stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
+    const there = cairnBox(tight, 390)!;
+    expect(cairnBox(tight, 390, [{ x: 0, y: there.y + there.h / 2 - 20, w: 800, h: 40 }])).toBeNull();
     expect(cairnBox(stops.slice(0, 2), 390)).toBeNull();
     const stones = trailStones(u.stops);
     expect(landClear(stops, 390, stones, free).solid).toContainEqual(free);

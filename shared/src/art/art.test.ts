@@ -1614,7 +1614,7 @@ describe('the lesson path’s world', () => {
 
   it('stands a cairn beside the road in the lands of open country, and nowhere else', () => {
     const skills = [0, 1, 2, 3].map((i) => ({ skillId: `k${i}`, title: 'S', state: (i === 0 ? 'unlocked' : 'locked') as 'unlocked' | 'locked', strength: 0, hasGrammar: i === 0, firstLessonId: `l${i}` }));
-    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills }] }, { guides: true }).units[0]!;
+    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills, story: { slug: 'road-01-tale', title: 'Tale' } }] }).units[0]!;
     const stops = unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
     const stones = trailStones(unit.stops);
     for (const land of PATH_LANDS) {
@@ -1638,7 +1638,7 @@ describe('the lesson path’s world', () => {
 
   it('draws each unit’s land within its budget, the same every time, and changes it with the season', () => {
     const skills = [0, 1, 2, 3].map((i) => ({ skillId: `k${i}`, title: 'S', state: (i === 0 ? 'unlocked' : 'locked') as 'unlocked' | 'locked', strength: 0, hasGrammar: i === 0, firstLessonId: `l${i}` }));
-    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills }] }, { guides: true }).units[0]!;
+    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills, story: { slug: 'road-01-tale', title: 'Tale' } }] }).units[0]!;
     const stops = unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
     const stones = trailStones(unit.stops);
     const drawings = new Set<string>();

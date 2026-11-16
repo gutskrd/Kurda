@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { ROAD_COURSE, parseRoadUnit, readRoadFiles, roadKey, roadSeedName, seedRoadLessons, validateRoadLesson } from './road-seed.js';
+import { ROAD_COURSE, ROAD_DIR, parseRoadUnit, readRoadFiles, readRoadLevels, roadKey, roadSeedName, seedRoadLessons, validateRoadLesson } from './road-seed.js';
 import { roadExercises, roadUnitFile } from './road-seed.fixtures.js';
 
 describe('a road unit file', () => {
@@ -126,6 +126,32 @@ describe('the road’s folder', () => {
       ['unit-01.json', undefined, 'not readable JSON'],
       ['unit-03.json', 'u02s1l1', 'another lesson already has this key'],
     ]);
+  });
+
+  it('reads each unit’s level from the plan, and only a level that is one of the six', async () => {
+    const at = await folder({
+      'plan.json': JSON.stringify({
+        units: [{ number: 1, cefr: 'A1' }, { number: 2, cefr: 'A2' }, { number: 3, cefr: 'a2' }, { number: 4.5, cefr: 'B1' }, { number: 5 }, null, 'six'],
+      }),
+    });
+    expect([...(await readRoadLevels(at))]).toEqual([
+      [1, 'A1'],
+      [2, 'A2'],
+    ]);
+    // a plan that is unreadable, shaped otherwise or missing gives none
+    const plan = new URL('plan.json', at);
+    await writeFile(plan, '{ "units": ');
+    expect((await readRoadLevels(at)).size).toBe(0);
+    await writeFile(plan, JSON.stringify({ units: 'the writers’ own' }));
+    expect((await readRoadLevels(at)).size).toBe(0);
+    await rm(plan);
+    expect((await readRoadLevels(at)).size).toBe(0);
+  });
+
+  it('finds the road’s three levels in its own plan: chapters 1–4 at A1, 5–9 at A2, 10–12 at B1', async () => {
+    const levels = await readRoadLevels(ROAD_DIR);
+    expect([...levels.keys()]).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect([...levels.values()].join(' ')).toBe('A1 A1 A1 A1 A2 A2 A2 A2 A2 B1 B1 B1');
   });
 
   it('has nothing to read before the first unit is written', async () => {

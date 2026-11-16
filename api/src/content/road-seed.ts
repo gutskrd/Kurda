@@ -28,6 +28,12 @@
  * left out until its file is fixed, and tried again on the next start; the
  * rest of its unit goes in. Nothing here throws: a broken file must not stop
  * the API from starting.
+ *
+ * Each unit's level (A1, A2, B1: the course plan's `cefr`) is the one thing
+ * read from the plan beside the unit files, since the plan is the only place
+ * it is written: the lesson path groups the units into sections by it. It
+ * follows the plan on every start (`setRoadLevels`), as no editor's screen
+ * sets a level.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import type pg from 'pg';
@@ -42,8 +48,14 @@ export const ROAD_DIR = new URL('../../content/lessons/road/', import.meta.url);
 /** The road's course. */
 export const ROAD_COURSE = 'kurmanji-road';
 
-/** The files the units are in; the plan beside them (plan.json) is the writers', not the seeder's. */
+/** The files the units are in; the plan beside them (plan.json) is the writers', and the seeder reads only its units' levels. */
 const UNIT_FILE = /^unit-\d{2}\.json$/;
+
+/** The plan beside the unit files. */
+const PLAN_FILE = 'plan.json';
+
+/** The six levels of the Common European Framework, as the plan writes them and `units.cefr` keeps them. */
+export const UNIT_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 
 /** `u01s1l1`: the unit (two digits), the skill and the lesson, by position. */
 export const ROAD_KEY = /^u\d{2}s\d{1,2}l\d{1,2}$/;
@@ -201,6 +213,51 @@ export async function readRoadFiles(dir: URL = ROAD_DIR, course: string = ROAD_C
   return out;
 }
 
+/**
+ * Each unit's level by its number, as the plan beside the unit files gives
+ * it. Read leniently: the plan is the writers' document, checked by the road
+ * check (road-check.ts), and one that is missing, unreadable or shaped
+ * otherwise gives no levels rather than stopping a start; a unit whose level
+ * is not one of the six is left without one.
+ */
+export async function readRoadLevels(dir: URL = ROAD_DIR): Promise<Map<number, string>> {
+  const levels = new Map<number, string>();
+  let plan: unknown;
+  try {
+    plan = JSON.parse(await readFile(new URL(PLAN_FILE, dir), 'utf8'));
+  } catch {
+    return levels;
+  }
+  const units = plan && typeof plan === 'object' ? (plan as { units?: unknown }).units : undefined;
+  if (!Array.isArray(units)) return levels;
+  for (const unit of units) {
+    if (!unit || typeof unit !== 'object') continue;
+    const { number, cefr } = unit as { number?: unknown; cefr?: unknown };
+    if (typeof number === 'number' && Number.isInteger(number) && typeof cefr === 'string' && (UNIT_LEVELS as readonly string[]).includes(cefr)) {
+      levels.set(number, cefr);
+    }
+  }
+  return levels;
+}
+
+/**
+ * Give the course's units the plan's levels where theirs differ, in one
+ * statement for the whole course; the positions of the units changed come
+ * back. A unit the plan does not give a level keeps whatever it has.
+ */
+export async function setRoadLevels(pool: pg.Pool, levels: ReadonlyMap<number, string>, course: string = ROAD_COURSE): Promise<number[]> {
+  if (levels.size === 0) return [];
+  const positions = [...levels.keys()];
+  const res = await pool.query<{ position: number }>(
+    `UPDATE units u SET cefr = v.cefr
+       FROM courses c, unnest($2::int[], $3::text[]) AS v(position, cefr)
+      WHERE c.id = u.course_id AND c.slug = $1 AND u.position = v.position AND u.cefr IS DISTINCT FROM v.cefr
+      RETURNING u.position`,
+    [course, positions, positions.map((p) => levels.get(p)!)],
+  );
+  return res.rows.map((r) => r.position).sort((a, b) => a - b);
+}
+
 export interface RoadSeedSummary {
   /** unit files found */
   files: number;
@@ -314,12 +371,20 @@ export async function seedRoadLessons(
     }
     const seededBefore = found.lessons.filter((l) => marked.has(roadSeedName(l.key, course)));
     summary.refreshed = await refreshRoadDrafts(pool, seededBefore, course, log);
+    // the units' levels, for the path's sections: on their own, so a failure here leaves the lessons seeded and is tried again next start
+    let levelled: number[] = [];
+    try {
+      levelled = await setRoadLevels(pool, await readRoadLevels(options.dir ?? ROAD_DIR), course);
+    } catch (err) {
+      log.warn({ err }, 'road units’ levels could not be set from the plan; tried again on the next start');
+    }
     log.info(
       {
         files: summary.files,
         seeded: summary.seeded.length,
         already: summary.already,
         refreshed: summary.refreshed.length,
+        levelled,
         occupied: summary.occupied,
         invalid: summary.invalid,
         failed: summary.failed,
