@@ -46,6 +46,9 @@ export function LargeTitle({
           numberOfLines={1}
           // one line at 34 points: grown without limit it is cut off with an ellipsis after a few letters
           maxFontSizeMultiplier={fontScaleCap.heading}
+          // a long name is set a little smaller on the phone rather than cut
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
           accessibilityRole="header"
         >
           {title}

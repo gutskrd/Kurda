@@ -78,6 +78,9 @@ export function TabHeader({
           numberOfLines={1}
           // one line beside the actions: grown without limit it is cut off after a few letters
           maxFontSizeMultiplier={fontScaleCap.heading}
+          // a long name ("الملف الشخصي" beside the menu at 320 wide) is set a little smaller rather than cut
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
           accessibilityRole="header"
         >
           {title}
