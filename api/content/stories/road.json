@@ -345,6 +345,21 @@
       "glossary": [],
       "questions": [
         {
+          "kind": "vocabulary",
+          "prompt": "Nexşe gelek kevn e. “Kevn” çi ye?",
+          "promptEn": "The map is very old. What does “kevn” mean?",
+          "options": [
+            "Ne nû ye",
+            "Ne mezin e",
+            "Ne sor e"
+          ],
+          "correctIndex": 0,
+          "explanation": "Nexşe kevn e: ew ne nû ye.",
+          "explanationEn": "The map is old: it is not new.",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
+        },
+        {
           "kind": "detail",
           "prompt": "Lorîn kî ye?",
           "promptEn": "Who is Lorîn?",
@@ -357,6 +372,21 @@
           "explanation": "Hamo dibêje: “ew nexşeya min û Lorînê ye, xwişka min.”",
           "explanationEn": "Hamo says: “it is my map and Lorîn’s, my sister’s.”",
           "evidenceParagraph": 0,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Bizina spî çi dixwe?",
+          "promptEn": "What does the white goat eat?",
+          "options": [
+            "Nan",
+            "Sêv",
+            "Kulîlk"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Bizin nan dixwe, ne nexşe.”",
+          "explanationEn": "“The goat eats the bread, not the map.”",
+          "evidenceParagraph": 2,
           "evidenceSentence": 2
         },
         {
@@ -390,36 +420,6 @@
           "evidenceSentence": 4
         },
         {
-          "kind": "gist",
-          "prompt": "Ev nexşeya ku derê ye?",
-          "promptEn": "What is this a map of?",
-          "options": [
-            "Nexşeya Sêvanê",
-            "Nexşeya Amedê",
-            "Nexşeya Kobaniyê"
-          ],
-          "correctIndex": 0,
-          "explanation": "Hamo dibêje: “ev nexşeya Sêvanê ye.”",
-          "explanationEn": "Hamo says: “this is a map of Sêvan.”",
-          "evidenceParagraph": null,
-          "evidenceSentence": null
-        },
-        {
-          "kind": "detail",
-          "prompt": "Bizina spî çi dixwe?",
-          "promptEn": "What does the white goat eat?",
-          "options": [
-            "Nan",
-            "Sêv",
-            "Kulîlk"
-          ],
-          "correctIndex": 0,
-          "explanation": "“Bizin nan dixwe, ne nexşe.”",
-          "explanationEn": "“The goat eats the bread, not the map.”",
-          "evidenceParagraph": 2,
-          "evidenceSentence": 2
-        },
-        {
           "kind": "inference",
           "prompt": "Li ser pencereyê rengekî zer heye. Kî?",
           "promptEn": "There is some yellow on the window. Who did it?",
@@ -450,21 +450,6 @@
           "evidenceSentence": 2
         },
         {
-          "kind": "vocabulary",
-          "prompt": "Nexşe gelek kevn e. “Kevn” çi ye?",
-          "promptEn": "The map is very old. What does “kevn” mean?",
-          "options": [
-            "Ne nû ye",
-            "Ne mezin e",
-            "Ne sor e"
-          ],
-          "correctIndex": 0,
-          "explanation": "Nexşe kevn e: ew ne nû ye.",
-          "explanationEn": "The map is old: it is not new.",
-          "evidenceParagraph": 0,
-          "evidenceSentence": 1
-        },
-        {
           "kind": "sequence",
           "prompt": "Sibe Hamo li ku ye?",
           "promptEn": "Where will Hamo be tomorrow?",
@@ -478,6 +463,21 @@
           "explanationEn": "“Tomorrow we go to town.”",
           "evidenceParagraph": 5,
           "evidenceSentence": 0
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev nexşeya ku derê ye?",
+          "promptEn": "What is this a map of?",
+          "options": [
+            "Nexşeya Sêvanê",
+            "Nexşeya Amedê",
+            "Nexşeya Kobaniyê"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hamo dibêje: “ev nexşeya Sêvanê ye.”",
+          "explanationEn": "Hamo says: “this is a map of Sêvan.”",
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         }
       ]
     },
@@ -502,6 +502,21 @@
       },
       "glossary": [],
       "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Bozo li çi dinêre?",
+          "promptEn": "What does Bozo look at?",
+          "options": [
+            "Li sêvan",
+            "Li kulîlkan",
+            "Li çem"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Bozo li kulîlkan dinêre.”",
+          "explanationEn": "“Bozo looks at the flowers.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
+        },
         {
           "kind": "detail",
           "prompt": "Mîrza çi difiroşe?",
@@ -549,21 +564,6 @@
         },
         {
           "kind": "inference",
-          "prompt": "Çima selika Mîrza vala ye?",
-          "promptEn": "Why is Mîrza’s basket empty?",
-          "options": [
-            "Hevalo sêvan dixwe",
-            "Mîrza sêvan difiroşe",
-            "Bozo sêvan dixwe"
-          ],
-          "correctIndex": 0,
-          "explanation": "“Zikê wî tije ye, û li ser pozê wî sêv heye.”",
-          "explanationEn": "“His belly is full, and there is apple on his nose.”",
-          "evidenceParagraph": 3,
-          "evidenceSentence": 3
-        },
-        {
-          "kind": "inference",
           "prompt": "Hevalo li Hamo nanêre. Çima?",
           "promptEn": "Hevalo won’t look at Hamo. Why?",
           "options": [
@@ -578,19 +578,19 @@
           "evidenceSentence": 2
         },
         {
-          "kind": "detail",
-          "prompt": "Bozo li çi dinêre?",
-          "promptEn": "What does Bozo look at?",
+          "kind": "inference",
+          "prompt": "Çima selika Mîrza vala ye?",
+          "promptEn": "Why is Mîrza’s basket empty?",
           "options": [
-            "Li sêvan",
-            "Li kulîlkan",
-            "Li çem"
+            "Hevalo sêvan dixwe",
+            "Mîrza sêvan difiroşe",
+            "Bozo sêvan dixwe"
           ],
-          "correctIndex": 1,
-          "explanation": "“Bozo li kulîlkan dinêre.”",
-          "explanationEn": "“Bozo looks at the flowers.”",
-          "evidenceParagraph": 0,
-          "evidenceSentence": 2
+          "correctIndex": 0,
+          "explanation": "“Zikê wî tije ye, û li ser pozê wî sêv heye.”",
+          "explanationEn": "“His belly is full, and there is apple on his nose.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
         },
         {
           "kind": "sequence",
@@ -661,21 +661,6 @@
       "glossary": [],
       "questions": [
         {
-          "kind": "detail",
-          "prompt": "Otobûs kengî diçe?",
-          "promptEn": "When does the bus leave?",
-          "options": [
-            "Di demjimêr pêncan de",
-            "Di demjimêr heştan de",
-            "Di demjimêr nehan de"
-          ],
-          "correctIndex": 1,
-          "explanation": "“Otobûs di demjimêr heştan de diçe.”",
-          "explanationEn": "“The bus leaves at eight.”",
-          "evidenceParagraph": 1,
-          "evidenceSentence": 0
-        },
-        {
           "kind": "inference",
           "prompt": "Hamo dibêje: “Cara yekem e ku ez zû me!” Çima?",
           "promptEn": "Hamo says: “It is the first time I am early!” Why?",
@@ -689,6 +674,21 @@
           "explanationEn": "Hamo says: “Sometimes I am late. All right, often.”",
           "evidenceParagraph": 0,
           "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Otobûs kengî diçe?",
+          "promptEn": "When does the bus leave?",
+          "options": [
+            "Di demjimêr pêncan de",
+            "Di demjimêr heştan de",
+            "Di demjimêr nehan de"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Otobûs di demjimêr heştan de diçe.”",
+          "explanationEn": "“The bus leaves at eight.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -736,21 +736,6 @@
           "evidenceSentence": 1
         },
         {
-          "kind": "sequence",
-          "prompt": "Demjimêr pênc û nîv e. Hamo çi dike?",
-          "promptEn": "It is half past five. What does Hamo do?",
-          "options": [
-            "Ew diçe otobûsê",
-            "Ew dibeze",
-            "Ew radize"
-          ],
-          "correctIndex": 2,
-          "explanation": "Hamo dibêje: “Tenê pênc xulek.” Û ew radize.",
-          "explanationEn": "Hamo says: “Just five minutes.” And he goes to sleep.",
-          "evidenceParagraph": 3,
-          "evidenceSentence": 3
-        },
-        {
           "kind": "vocabulary",
           "prompt": "“Tenê pênc xulek.” Pênc xulek çi ne?",
           "promptEn": "“Just five minutes.” What are five minutes?",
@@ -764,6 +749,21 @@
           "explanationEn": "Five minutes is a short time… but not for Hamo!",
           "evidenceParagraph": 3,
           "evidenceSentence": 2
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Demjimêr pênc û nîv e. Hamo çi dike?",
+          "promptEn": "It is half past five. What does Hamo do?",
+          "options": [
+            "Ew diçe otobûsê",
+            "Ew dibeze",
+            "Ew radize"
+          ],
+          "correctIndex": 2,
+          "explanation": "Hamo dibêje: “Tenê pênc xulek.” Û ew radize.",
+          "explanationEn": "Hamo says: “Just five minutes.” And he goes to sleep.",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -906,21 +906,6 @@
           "evidenceSentence": 5
         },
         {
-          "kind": "detail",
-          "prompt": "Hamo li Kobaniyê çend caran winda dibe?",
-          "promptEn": "How many times does Hamo get lost in Kobanî?",
-          "options": [
-            "Carekê",
-            "Du caran",
-            "Sê caran"
-          ],
-          "correctIndex": 1,
-          "explanation": "Hamo dibêje: “Du caran, li bajarê xwe!”",
-          "explanationEn": "Hamo says: “Twice, in my own town!”",
-          "evidenceParagraph": 1,
-          "evidenceSentence": 4
-        },
-        {
           "kind": "inference",
           "prompt": "Hamo dixwîne: “li rastê”. Ew çima winda dibe?",
           "promptEn": "Hamo reads: “on the right”. Why does he get lost?",
@@ -934,6 +919,21 @@
           "explanationEn": "“But I go left, and I get lost.”",
           "evidenceParagraph": 1,
           "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Hamo li Kobaniyê çend caran winda dibe?",
+          "promptEn": "How many times does Hamo get lost in Kobanî?",
+          "options": [
+            "Carekê",
+            "Du caran",
+            "Sê caran"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Du caran, li bajarê xwe!”",
+          "explanationEn": "Hamo says: “Twice, in my own town!”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 4
         },
         {
           "kind": "detail",
@@ -2300,6 +2300,21 @@
           "evidenceSentence": 1
         },
         {
+          "kind": "inference",
+          "prompt": "Çima Hamo şitilek çand?",
+          "promptEn": "Why did Hamo plant a sapling?",
+          "options": [
+            "Ji ber ku Hevalo birçî bû",
+            "Wekî ku malika paşîn dibêje",
+            "Ji ber ku Xezal got"
+          ],
+          "correctIndex": 1,
+          "explanation": "Malika paşîn dibêje: “Dareke nû biçînin.”",
+          "explanationEn": "The last verse says: “Plant a new tree.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
+        },
+        {
           "kind": "sequence",
           "prompt": "Piştî ku otobûs çû, Hamo çi kir?",
           "promptEn": "After the bus left, what did Hamo do?",
@@ -2343,21 +2358,6 @@
           "explanationEn": "Hamo says: “There I planted a sapling, for you.”",
           "evidenceParagraph": 2,
           "evidenceSentence": 2
-        },
-        {
-          "kind": "inference",
-          "prompt": "Çima Hamo şitilek çand?",
-          "promptEn": "Why did Hamo plant a sapling?",
-          "options": [
-            "Ji ber ku Hevalo birçî bû",
-            "Wekî ku malika paşîn dibêje",
-            "Ji ber ku Xezal got"
-          ],
-          "correctIndex": 1,
-          "explanation": "Malika paşîn dibêje: “Dareke nû biçînin.”",
-          "explanationEn": "The last verse says: “Plant a new tree.”",
-          "evidenceParagraph": 1,
-          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",
