@@ -1299,8 +1299,8 @@
           "position": 3,
           "titleKu": "Demjimêr çend e?",
           "titleEn": "What time is it?",
-          "grammar": "telling the time: Demjimêr çend e? Demjimêr sê ye. sê û nîv, heft û çaryek; at a time: di demjimêr heftan de",
-          "grammarMd": "**Demjimêr çend e?** What time is it? — **Demjimêr sê ye.** It’s three o’clock. *Nîv* is half and *çaryek* a quarter: *sê û nîv* half past three, *heft û çaryek* a quarter past seven.\n\n- “At” a time is **di demjimêr … de**, with the number in **-an**: *di demjimêr heftan de* at seven, *di demjimêr diduyan de* at two.\n- *sibeh* morning · *nîvro* noon · *êvar* evening · *şev* night",
+          "grammar": "telling the time: Demjimêr çend e? Demjimêr sê ye. sê û nîv, heft û deh xulek; at a time: di demjimêr heftan de",
+          "grammarMd": "**Demjimêr çend e?** What time is it? — **Demjimêr sê ye.** It’s three o’clock. *Nîv* is half, and minutes past the hour follow **û**: *sê û nîv* half past three, *heft û deh xulek* ten past seven.\n\n- “At” a time is **di demjimêr … de**, with the number in **-an**: *di demjimêr heftan de* at seven, *di demjimêr diduyan de* at two.\n- *sibeh* morning · *nîvro* noon · *êvar* evening · *şev* night",
           "lessons": [
             {
               "key": "u05s3l1",
