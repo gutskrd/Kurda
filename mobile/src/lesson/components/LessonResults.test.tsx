@@ -12,6 +12,7 @@ vi.mock('../../auth/AuthContext', () => import('../../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'));
 import type { ComponentProps } from 'react';
 import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { Share } from 'react-native';
 import { WORD_PICTURES, type QuestDay } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
@@ -170,5 +171,78 @@ describe('the mistakes', () => {
     expect(await screen.findByText(picture.en)).toBeTruthy();
     expect(screen.queryByText(id)).toBeNull();
     expect(screen.getByText('Hello!')).toBeTruthy();
+  });
+});
+
+/*
+ * The quiet Share over the ways on of a lesson's results: the lesson by its
+ * name, a square for each exercise as it went, and the site's address, with
+ * nothing of who is sharing. A review has none.
+ */
+describe('sharing the lesson', () => {
+  const asked = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].map((id) => ({ id, type: 'multiple_choice' as const }));
+  // six asked, the third missed the first time
+  const went: SessionResults = { ...results, correct: 5, total: 6, accuracy: 5 / 6, mistakes: [{ exerciseId: 'e3', verdict: 'wrong' }] };
+  const lesson = { title: 'Hello!', putOff: [] };
+  const sheet = () => vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
+  const said = (share: ReturnType<typeof sheet>): string => (share.mock.calls[0]?.[0] as { message: string } | undefined)?.message ?? '';
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('shares the lesson by its name, a square for each exercise in order, and the site’s address', async () => {
+    const share = sheet();
+    show({ results: went, exercises: asked, lesson });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(share.mock.calls[0]?.[0]).toEqual({ message: 'I finished “Hello!” in Kurdish on Hevalo.\n\n🟩🟩🟨🟩🟩🟩\n\nhttps://hevalo.app' });
+  });
+
+  it('stands over the ways on, once, and leaves the main one the foot of the screen', async () => {
+    show({ results: went, exercises: asked, lesson, next: { lessonId: 'l2', title: 'Malbat' }, onNext: () => undefined, onPath: () => undefined });
+    const share = await screen.findByRole('button', { name: 'Share' });
+    expect(screen.getAllByRole('button', { name: 'Share' })).toHaveLength(1);
+    // beside "Back to the path", and before the button that goes on
+    const back = screen.getByRole('button', { name: 'Back to the path' });
+    const onward = screen.getByRole('button', { name: 'Next lesson' });
+    expect(back.parentElement).toBe(share.parentElement);
+    expect(share.compareDocumentPosition(onward) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // nothing comes after the way on in the bar
+    expect(onward.parentElement!.lastElementChild).toBe(onward);
+  });
+
+  it('shares nothing that says whose lesson it was', async () => {
+    const share = sheet();
+    show({ results: went, exercises: asked, lesson });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
+    const text = said(share);
+    expect(text.length).toBeGreaterThan(0);
+    const who = testAuth.user;
+    for (const theirs of [who.username, who.email, '/users/', '/profile', '@']) expect(text, theirs).not.toContain(theirs);
+    // one address, and it is the site's front door
+    expect(text.match(/https?:\/\/\S+/g)).toEqual(['https://hevalo.app']);
+  });
+
+  it('leaves an exercise that was put off out of the squares, and says a Kurdish lesson when it has no name to give', async () => {
+    const share = sheet();
+    show({ results: { ...went, correct: 4, total: 5, accuracy: 0.8 }, exercises: asked, skipped: 1, lesson: { title: null, putOff: ['e6'] } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
+    expect(said(share)).toBe('I finished a Kurdish lesson on Hevalo.\n\n🟩🟩🟨🟩🟩\n\nhttps://hevalo.app');
+  });
+
+  it('is no way on: sharing opens neither the streak’s moment nor anything after it', async () => {
+    sheet();
+    const onDone = vi.fn();
+    show({ results: went, exercises: asked, lesson, moments: { ...NO_MOMENTS, streakKept: true }, onDone });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
+    expect(screen.queryByTestId('lesson-streak-day')).toBeNull();
+    expect(onDone).not.toHaveBeenCalled();
+    // and the results are still there, with their way on
+    expect(screen.getByRole('button', { name: 'Done' })).toBeTruthy();
+  });
+
+  it('offers no Share on a review: practice is not a lesson finished', async () => {
+    show({ results: went, exercises: asked });
+    await screen.findByRole('button', { name: 'Done' });
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
   });
 });

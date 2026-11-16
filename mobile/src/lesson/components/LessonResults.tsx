@@ -40,6 +40,8 @@ import { QuestsScreen } from '../../quests/QuestsScreen';
 import type { Locale, TranslationKey } from '../../i18n/translations';
 import type { Exercise, SessionResults } from '../types';
 import { WaterDrop } from '../../tree/TreeArt';
+import { ShareWin } from '../../share/ShareWin';
+import { lessonShare } from '../../share/winText';
 import { StreakMoment } from './StreakMoment';
 import { CARD } from '../valley';
 
@@ -48,6 +50,13 @@ interface Props {
   exercises: Exercise[];
   /** exercises put off ("can't listen now") and never answered this time */
   skipped?: number;
+  /**
+   * The lesson these results are of, for the quiet Share beside the ways on:
+   * its own name, where the player was told it, and which exercises were put
+   * off, which the shared strip leaves out as the score does. Absent for a
+   * review, which is practice and not a lesson finished, and has no Share.
+   */
+  lesson?: { title: string | null; putOff: readonly string[] } | null;
   /** what else the lesson did: today's goal, the streak, a new level, the league */
   moments?: LessonMoments;
   /** a lesson (not practice) may end with the one offer of reminders the app makes (push/ReminderOffer.tsx) */
@@ -107,6 +116,12 @@ const ACTION_WORDS: Record<ResultsAction, TranslationKey> = {
  * (StreakMoment), then today's quests when it moved any (QuestsScreen).
  * Nothing moves on by itself, and nothing here ever asks for money.
  *
+ * A lesson's results have a quiet Share in the same bar (share/ShareWin.tsx),
+ * over the buttons and beside "Back to the path" where that is: the lesson by
+ * its name, a square for each exercise as it went, and the site's address.
+ * The main way on keeps the foot of the screen to itself, where the thumb
+ * expects it, and Share takes nobody through the moments after the results.
+ *
  * Every mistake is listed with the question and its right answer, folded away
  * when there are more than three. An exercise put off is neither a mistake
  * nor a right answer: the server leaves it out of the score, and the note
@@ -116,6 +131,7 @@ export function LessonResults({
   results,
   exercises,
   skipped = 0,
+  lesson = null,
   moments = NO_MOMENTS,
   offerReminders = false,
   next = null,
@@ -184,6 +200,8 @@ export function LessonResults({
 
   const canPractise = practise.length > 0 && !!onPractise;
   const actions = resultsActions({ next: next !== null && !!onNext, practise: canPractise, goalDone });
+  // "Back to the path", where the results offer it and there is a path to go back to
+  const backLink = actions.backLink && onPath ? onPath : null;
   const run = (action: ResultsAction): (() => void) =>
     go(() => {
       if (action === 'next' && next && onNext) onNext(next.lessonId);
@@ -311,10 +329,16 @@ export function LessonResults({
 
       {/* where Check was: the main way on at the foot, under the other */}
       <View style={[styles.bar, { paddingBottom: bottom, backgroundColor: colors.barFill, borderTopColor: colors.separator }]}>
-        {actions.backLink && onPath ? (
-          <Pressable onPress={go(onPath)} accessibilityRole="button" hitSlop={4} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
-            <Text style={[styles.backText, { color: colors.textSecondary }]}>{t('lesson.results.backToPath')}</Text>
-          </Pressable>
+        {/* the quiet things, on one line over the buttons: the way back to the path, and a lesson's Share */}
+        {backLink || lesson ? (
+          <View style={[styles.quiet, { flexDirection: dir.row }]}>
+            {backLink ? (
+              <Pressable onPress={go(backLink)} accessibilityRole="button" hitSlop={4} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
+                <Text style={[styles.backText, { color: colors.textSecondary }]}>{t('lesson.results.backToPath')}</Text>
+              </Pressable>
+            ) : null}
+            {lesson ? <ShareWin text={lessonShare(t, { title: lesson.title, exercises, results, putOff: lesson.putOff })} testID="lesson-share" /> : null}
+          </View>
         ) : null}
         {actions.secondary ? <ClayButton label={t(ACTION_WORDS[actions.secondary])} tone="primary" variant="outline" size="large" onPress={run(actions.secondary)} /> : null}
         <ClayButton label={t(ACTION_WORDS[actions.primary])} tone="primary" size="large" onPress={run(actions.primary)} />
@@ -534,6 +558,8 @@ const styles = StyleSheet.create({
   pressed: { opacity: pressedDim },
   // the lesson's bar at the foot, under its hairline, where Check was
   bar: { paddingHorizontal: spacing.md, paddingTop: spacing.md - 2, gap: spacing.sm, borderTopWidth: CARD.edge },
+  // side by side in the middle, and one under the other when the reader's text size leaves no room for both
+  quiet: { alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', columnGap: spacing.md, rowGap: spacing.xs },
   back: { alignSelf: 'center', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md },
   backText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textDecorationLine: 'underline' },
 });

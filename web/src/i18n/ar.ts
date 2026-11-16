@@ -2091,6 +2091,14 @@ export const ar: Catalogue = {
   'share.sendFailed': 'لم تُرسل الرسالة. حاول مرة أخرى.',
   'share.signInToSend': 'سجّل الدخول لإرسال هذا إلى صديق.',
 
+  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
+  'share.win.lesson': 'أنهيتُ درس الكردية «{title}» على Hevalo.',
+  'share.win.lessonPlain': 'أنهيتُ درسًا في الكردية على Hevalo.',
+  'share.win.streak': 'اليوم {count} على التوالي في تعلّم الكردية.',
+  'share.win.badge': 'نلتُ شارة «{badge}» على Hevalo.',
+  'share.win.leagueUp': 'صعدتُ إلى دوري {tier} على Hevalo.',
+  'share.win.leaguePlace': 'أنهيتُ الأسبوع في المركز #{rank} في دوري {tier} على Hevalo.',
+
   /* putting somebody else's post on your own profile */
   'repost.do': 'إعادة النشر',
   'repost.undo': 'التراجع عن إعادة النشر',

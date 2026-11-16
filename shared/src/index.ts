@@ -166,6 +166,8 @@ export {
   type ResultsOutcome,
   type StreakMood,
 } from './lesson-end.js';
+/** A win as it is shared: the word game's grid, a lesson's strip and a streak's row drawn in squares, and which wins are offered for sharing. */
+export * from './win-share.js';
 /**
  * The lesson path a course map is drawn as: which skill is current, the
  * milestones, each unit's colour and where every stop sits — so the browser

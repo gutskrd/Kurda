@@ -2196,6 +2196,14 @@ export const en = {
   'share.sendFailed': 'That message did not send. Try again.',
   'share.signInToSend': 'Sign in to send this to a friend.',
 
+  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
+  'share.win.lesson': 'I finished “{title}” in Kurdish on Hevalo.',
+  'share.win.lessonPlain': 'I finished a Kurdish lesson on Hevalo.',
+  'share.win.streak': '{count} days of Kurdish in a row.',
+  'share.win.badge': 'I earned the “{badge}” badge on Hevalo.',
+  'share.win.leagueUp': 'I moved up to the {tier} League on Hevalo.',
+  'share.win.leaguePlace': 'I finished #{rank} in the {tier} League on Hevalo.',
+
   /* putting somebody else's post on your own profile */
   'repost.do': 'Repost',
   'repost.undo': 'Undo repost',

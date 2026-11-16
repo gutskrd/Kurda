@@ -14,6 +14,7 @@ import {
   freezeLine,
   nextFireStage,
   smoothPoses,
+  streakMilestone,
   streakReveal,
   streakSpeech,
   streakWeek,
@@ -33,6 +34,8 @@ import type { TranslationKey } from '../../i18n/translations';
 import { useScreenBottomInset, useScreenTopInset } from '../../navigation/tabBarLayout';
 import { DayMedalArt, StreakMedal } from '../../ranks/art';
 import { useDirection } from '../../reports/direction';
+import { ShareWin } from '../../share/ShareWin';
+import { streakShare } from '../../share/winText';
 import { FIRE_GREW, FIRE_NEXT, FIRE_STAGE_NAME } from '../../streak/fireWords';
 import { timing } from '../../theme/animate';
 import { BURST } from '../../theme/celebration';
@@ -126,6 +129,11 @@ const SPEECH: Record<StreakMood, readonly [TranslationKey, TranslationKey]> = {
  * it is. Under Reduce Motion it all fades and nothing travels: the dim screen
  * cross-fades to the warm one, the grey medal to the gold one, and the rest
  * is simply there.
+ *
+ * On one of the streak's big days (shared `streakMilestone`: a week, a
+ * fortnight, a month, a hundred days, a year) a quiet Share arrives with the
+ * way on, over it: the days, a week of squares and the site's address. On
+ * any other day there is none, so it is seen when it is there.
  */
 export function StreakMoment({ streak, goalDone, onContinue }: { streak: Streak; goalDone: boolean; onContinue: () => void }): React.JSX.Element {
   // the flame is for the day the fire grew; on any other day the card is the whole of the moment
@@ -654,6 +662,8 @@ function StreakWeekScreen({
       </ScrollView>
       {/* the way on: the last thing to arrive, and answering from the first frame */}
       <Animated.View style={[styles.bar, { paddingBottom: bottom, opacity: show.onward, transform: [{ translateY: risen(show.onward) }] }]} testID="streak-onward">
+        {/* on one of the streak's big days: a quiet Share over the way on, which keeps the foot of the screen */}
+        {streakMilestone(day) ? <ShareWin text={streakShare(t, locale, day)} testID="streak-share" /> : null}
         <ClayButton label={t(goalDone ? 'lesson.streak.seeYou' : 'common.continue')} tone="primary" size="large" onPress={onward} />
       </Animated.View>
     </View>
@@ -848,5 +858,5 @@ const styles = StyleSheet.create({
   freezeText: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   track: { height: 10, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { width: '100%', height: '100%', borderRadius: radii.pill },
-  bar: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
+  bar: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm, gap: spacing.sm },
 });

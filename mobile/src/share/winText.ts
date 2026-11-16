@@ -18,8 +18,7 @@ import {
   lessonStrip,
   shareMessage,
   streakRow,
-  wordGameHeader,
-  wordGrid,
+  wordGameShareText,
   type LeagueWin,
   type LetterFeedback,
 } from '@kurda/shared';
@@ -98,20 +97,19 @@ export function leagueShare(t: Translate, win: LeagueWin, tier: string): string 
  * it was.
  */
 export function wordGameShare(
-  game: { guesses: ReadonlyArray<{ feedback: readonly LetterFeedback[] }>; status: 'playing' | 'won' | 'lost'; mode: 'daily' | 'practice' },
-  words: { practice: string; difficulty: string; maxAttempts: number },
+  game: { guesses: ReadonlyArray<{ feedback: readonly LetterFeedback[] }>; status: 'playing' | 'won' | 'lost'; mode: 'daily' | 'practice'; remainingAttempts: number },
+  words: { practice: string; difficulty: string },
 ): string {
-  const rows = game.guesses.map((g) => g.feedback);
-  return shareMessage({
-    line: wordGameHeader({
-      rows,
+  return wordGameShareText(
+    {
+      rows: game.guesses.map((g) => g.feedback),
       solved: game.status === 'won',
-      maxAttempts: words.maxAttempts,
+      // as many rows as the board draws: the guesses made and the ones left
+      maxAttempts: game.guesses.length + game.remainingAttempts,
       name: WORD_GAME_NAME,
       practice: game.mode === 'practice' ? words.practice : undefined,
       difficulty: words.difficulty,
-    }),
-    picture: wordGrid(rows),
-    link: SITE_URL,
-  });
+    },
+    SITE_URL,
+  );
 }

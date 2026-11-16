@@ -2092,6 +2092,14 @@ export const tr: Catalogue = {
   'share.sendFailed': 'Mesaj gönderilemedi. Tekrar dene.',
   'share.signInToSend': 'Bunu bir arkadaşına göndermek için giriş yap.',
 
+  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
+  'share.win.lesson': 'Hevalo’da “{title}” adlı Kürtçe dersi bitirdim.',
+  'share.win.lessonPlain': 'Hevalo’da bir Kürtçe dersi bitirdim.',
+  'share.win.streak': 'Üst üste {count} gün Kürtçe.',
+  'share.win.badge': 'Hevalo’da “{badge}” rozetini kazandım.',
+  'share.win.leagueUp': 'Hevalo’da {tier} ligine yükseldim.',
+  'share.win.leaguePlace': 'Hevalo’da {tier} liginde {rank}. oldum.',
+
   /* putting somebody else's post on your own profile */
   'repost.do': 'Yeniden paylaş',
   'repost.undo': 'Yeniden paylaşmayı geri al',

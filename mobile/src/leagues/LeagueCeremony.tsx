@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { tierAbove, tierBelow, type LeagueTier, type LeagueWeekResult } from '@kurda/shared';
+import { leagueWin, tierAbove, tierBelow, type LeagueTier, type LeagueWeekResult } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
@@ -8,6 +8,8 @@ import { formatNumber } from '../i18n/format';
 import { LeagueEmblem } from '../ranks/art';
 import { leagueTint } from '../ranks/tint';
 import { useDirection } from '../reports/direction';
+import { ShareWin } from '../share/ShareWin';
+import { leagueShare } from '../share/winText';
 import { springTo, timing } from '../theme/animate';
 import { BURST, celebrationPlan } from '../theme/celebration';
 import { ConfettiBurst, GlowRing, SoftGlow } from '../theme/CelebrationParts';
@@ -46,6 +48,11 @@ const LAND_MS = 260;
  * words fade in. A screen reader hears each beat's line as it opens, and the
  * lines sit in the order they are read; the emblems beside the middle one
  * are decoration.
+ *
+ * A week that is good news to tell (shared `leagueWin`: moved up, or a place
+ * in the first three) has a quiet Share under the first beat's Continue,
+ * saying the league and the place and nothing of who else was in the group.
+ * A week that moved the learner down, or simply stayed, has none.
  */
 export function LeagueCeremony({
   week,
@@ -70,6 +77,8 @@ export function LeagueCeremony({
   const [light, strong] = leagueTint(now, 'dark');
   const plan = useMemo(() => celebrationPlan(reduce), [reduce]);
   const burstKind = kind === 'promoted' || kind === 'trophy';
+  // what of this week is worth telling somebody, if anything is
+  const win = leagueWin(week);
 
   const stage = Math.min(width, 420);
   const slot = Math.floor(stage / 3);
@@ -210,6 +219,7 @@ export function LeagueCeremony({
               )}
               <View style={styles.actions}>
                 <ClayButton label={t('common.continue')} tone="primary" size="large" onPress={beat === 1 ? () => setBeat(2) : onClose} />
+                {beat === 1 && win ? <ShareWin text={leagueShare(t, win, leagueName(t, win.tier))} testID="league-share" /> : null}
               </View>
             </Animated.View>
           </View>

@@ -11,6 +11,8 @@ import { Celebration } from '../ranks/Celebration';
 import { FLECKS } from '../ranks/motion';
 import { badgeTint } from '../ranks/tint';
 import { getUnseenBadges, markBadgesSeen } from '../ranks/api';
+import { ShareWin } from '../share/ShareWin';
+import { badgeShare } from '../share/winText';
 import { badgeLabel, badgeMeaning, badgeName, badgeTextKey, nextTierLine, tierLabel, unitWord } from './format';
 import { enqueue, fromEvent, fromUnseen, seenId, type PendingBadge } from './queue';
 
@@ -62,6 +64,9 @@ const SETTLE_MS = 1200;
  * a time, the highest tier of a badge only, never while another celebration
  * holds them back; each is marked seen on the server when it is closed, so
  * the browser does not celebrate it a second time.
+ *
+ * Under the two ways on there is a quiet Share (share/ShareWin.tsx). Sharing
+ * neither closes the moment nor marks the badge seen: only the ways on do.
  */
 export function BadgeCelebrationHost({ children }: { children: ReactNode }): React.JSX.Element {
   const { client } = useAuth();
@@ -195,6 +200,8 @@ function BadgeMoment({ badge, felt, onClose }: { badge: PendingBadge; felt: bool
               navigation.navigate('Badges');
             }}
           />
+          {/* under the ways on, and quieter than either: the badge by its name and the site's address, nothing of who earned it */}
+          <ShareWin text={badgeShare(t, name)} testID="badge-share" />
         </>
       }
     />

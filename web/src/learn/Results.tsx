@@ -13,6 +13,7 @@ import {
   resultsActions,
   resultsGrade,
   resultsOutcome,
+  streakMilestone,
   streakReveal,
   toLeagueTier,
   withOpened,
@@ -36,6 +37,8 @@ import type { MessageKey } from '../i18n/en';
 import { ChestScreen } from '../quests/ChestScreen';
 import { QuestList } from '../quests/QuestList';
 import { useQuestDay } from '../quests/useQuestDay';
+import { ShareWin } from '../share/ShareWin';
+import { lessonShare, streakShare } from '../share/winText';
 import { ActionBar, BarRow } from './ActionBar';
 import { kurdishText } from './map';
 import { StreakFlame, StreakWeek } from './StreakMoment';
@@ -104,12 +107,20 @@ function ownedElsewhere(target: EventTarget | null): boolean {
  * is met, "Done" — a good place to stop — with the next lesson beside it;
  * practising the mistakes whenever there are any. Enter or Space moves on
  * from anywhere that has no use of its own for them.
+ *
+ * Beside the way on, in the same bar, a quiet Share (share/ShareWin.tsx): on
+ * a lesson's results the lesson as it went, a square for each exercise; on
+ * the streak's card the streak, on one of its big days only (shared
+ * `streakMilestone`). A review is practice, not a lesson finished, and has
+ * none. It never stands where the way on stands, and nothing waits for it.
  */
 export function Results({
   title,
+  lessonName = null,
   results,
   exercises,
   skipped = 0,
+  putOff = [],
   kind,
   dialect,
   moments = NO_LESSON_MOMENTS,
@@ -122,10 +133,14 @@ export function Results({
 }: {
   /** the page's name for a screen reader: the lesson's, or "Review" */
   title: string;
+  /** the lesson's own name, when the page was told it: what a shared lesson is called */
+  lessonName?: string | null;
   results: SessionResults;
   exercises: DeliveredExercise[];
   /** exercises put off and never answered in this session */
   skipped?: number;
+  /** which exercises those were: a shared lesson's strip leaves them out, as the score does */
+  putOff?: readonly string[];
   kind: 'lesson' | 'practice';
   dialect: string | null | undefined;
   /** what else the lesson did: today's goal, the streak, a new level, the league */
@@ -246,6 +261,14 @@ export function Results({
     action === 'next' ? t('lesson.results.next') : action === 'practise' ? t('lesson.results.practise') : t('common.done');
   const share = (xpToday: number): number => (goal && goal.target > 0 ? Math.max(0, Math.min(1, xpToday / goal.target)) : 0);
 
+  // the quiet Share of the screen in front: the lesson on its results, the streak on its card on one of its big days, and otherwise none
+  const shareButton =
+    stage === 'results' && kind === 'lesson' ? (
+      <ShareWin text={lessonShare(t, { title: lessonName, exercises, results, putOff })} />
+    ) : stage === 'week' && streakMilestone(results.streak.current) ? (
+      <ShareWin text={streakShare(t, locale, results.streak.current)} />
+    ) : null;
+
   let bar: React.ReactNode;
   if (stage === 'flame') {
     // the flame has the whole screen, and moves on by itself
@@ -257,12 +280,14 @@ export function Results({
     bar = (
       <BarRow
         start={
-          stage === 'results' &&
-          practise.length > 0 && (
-            <Button variant="secondary" onClick={() => onPractise(practise)}>
-              {t('lesson.results.practise')}
-            </Button>
-          )
+          <>
+            {stage === 'results' && practise.length > 0 && (
+              <Button variant="secondary" onClick={() => onPractise(practise)}>
+                {t('lesson.results.practise')}
+              </Button>
+            )}
+            {shareButton}
+          </>
         }
       >
         <Button size="lg" className="lesson-bar-go" onClick={onward}>
@@ -299,6 +324,7 @@ export function Results({
                   {label(actions.secondary)}
                 </Button>
               )}
+              {shareButton}
               {actions.backLink && (
                 <Link to={exitTo} className="link-btn lesson-results-back">
                   {kind === 'lesson' ? t('lesson.results.backToPath') : exitLabel}

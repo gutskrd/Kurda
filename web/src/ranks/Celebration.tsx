@@ -33,6 +33,7 @@ export function Celebration({
   action,
   onClose,
   extra,
+  below,
   flecks = BURST.badge,
   seed = 7,
   colours,
@@ -50,6 +51,8 @@ export function Celebration({
   action: string;
   onClose: () => void;
   extra?: React.ReactNode;
+  /** something quieter under the button, which stays the one way on: a win's Share */
+  below?: React.ReactNode;
   /** how many flecks are thrown */
   flecks?: number;
   /** keeps the same moment looking the same */
@@ -69,6 +72,7 @@ export function Celebration({
         action={action}
         onClose={onClose}
         extra={extra}
+        below={below}
         flecks={flecks}
         seed={seed}
         colours={colours}
@@ -86,6 +90,7 @@ function CelebrationBody({
   action,
   onClose,
   extra,
+  below,
   flecks,
   seed,
   colours,
@@ -98,6 +103,7 @@ function CelebrationBody({
   action: string;
   onClose: () => void;
   extra?: React.ReactNode;
+  below?: React.ReactNode;
   flecks: number;
   seed: number;
   colours?: readonly [string, string];
@@ -122,6 +128,7 @@ function CelebrationBody({
         <Button size="lg" onClick={onClose} className="celebrate-go">
           {action}
         </Button>
+        {below}
       </div>
     </div>
   );

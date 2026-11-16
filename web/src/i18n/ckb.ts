@@ -2103,6 +2103,14 @@ export const ckb: Catalogue = {
   'share.sendFailed': 'ئەو نامەیە نەنێردرا. دووبارە هەوڵ بدەرەوە.',
   'share.signInToSend': 'بچۆ ژوورەوە بۆ ناردنی ئەمە بۆ هاوڕێیەک.',
 
+  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
+  'share.win.lesson': 'وانەیەکی کوردیم لە Hevalo تەواو کرد: «{title}».',
+  'share.win.lessonPlain': 'وانەیەکی کوردیم لە Hevalo تەواو کرد.',
+  'share.win.streak': '{count} ڕۆژی لەسەریەک بە کوردی.',
+  'share.win.badge': 'لە Hevalo نیشانەیەکم بەدەستهێنا: «{badge}».',
+  'share.win.leagueUp': 'لە Hevalo سەرکەوتم بۆ لیگی {tier}.',
+  'share.win.leaguePlace': 'لە Hevalo لە لیگی {tier} #{rank} بووم.',
+
   /* putting somebody else's post on your own profile */
   'repost.do': 'دووبارە بڵاوکردنەوە',
   'repost.undo': 'لابردنی دووبارە بڵاوکردنەوە',

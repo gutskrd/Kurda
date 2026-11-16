@@ -10,7 +10,7 @@ vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'
 // the fire as its props: how big it burns and what it grows from, whoever draws it
 vi.mock('../../theme/Fire', () => import('../../theme/testing/fireProbe'));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { AccessibilityInfo, Animated } from 'react-native';
+import { AccessibilityInfo, Animated, Share } from 'react-native';
 import { FIRE_GREW_READ_MS, FIRE_GROW, FLAME_IGNITE, STREAK_LEAVE_MS, flameMoment, streakReveal } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
@@ -495,5 +495,55 @@ describe('the flame lighting up', () => {
     expect(await size(1)).toBeCloseTo(year * flameMoment(1).zoom, 6);
     expect(await size(14)).toBeCloseTo(year * flameMoment(14).zoom, 6);
     expect(flameMoment(1).zoom).toBeGreaterThan(flameMoment(365).zoom);
+  });
+});
+
+/*
+ * The quiet Share on the streak's card, on one of its big days only: the
+ * days, a week of squares and the site's address, over the way on.
+ */
+describe('sharing the streak', () => {
+  const sheet = () => vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
+  afterEach(() => vi.restoreAllMocks());
+
+  it('offers a quiet Share over the way on, on the day the streak reaches a week', async () => {
+    listen();
+    const share = sheet();
+    const onContinue = vi.fn();
+    show({ current: 7 }, false, onContinue);
+    // not on the flame, which moves on by itself and has no bar
+    expect(within(await screen.findByTestId('lesson-streak-flame')).queryByRole('button', { name: 'Share' })).toBeNull();
+    const page = await card();
+    const bar = within(page).getByTestId('streak-onward');
+    const button = within(bar).getByRole('button', { name: 'Share' });
+    const onward = within(bar).getByRole('button', { name: 'Continue' });
+    // the way on comes after it, and is the last thing on the screen
+    expect(button.compareDocumentPosition(onward) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(bar.lastElementChild).toBe(onward);
+
+    fireEvent.click(button);
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(share.mock.calls[0]?.[0]).toEqual({ message: '7 days of Kurdish in a row.\n\n🟧🟧🟧🟧🟧🟧🟧\n\nhttps://hevalo.app' });
+    // sharing is not the way on
+    expect(onContinue).not.toHaveBeenCalled();
+  });
+
+  it('writes the count beside the week for a streak that has outgrown it', async () => {
+    listen();
+    const share = sheet();
+    show({ current: 30, longest: 30 });
+    fireEvent.click(within(await card()).getByRole('button', { name: 'Share' }));
+    expect(share.mock.calls[0]?.[0]).toEqual({ message: '30 days of Kurdish in a row.\n\n🟧🟧🟧🟧🟧🟧🟧 30\n\nhttps://hevalo.app' });
+  });
+
+  it('offers no Share on an ordinary day, nor on the first days, though the fire grows on them', async () => {
+    for (const current of [6, 8, 1, 3]) {
+      listen();
+      show({ current });
+      const page = await card();
+      expect(within(page).getByRole('button', { name: 'Continue' })).toBeTruthy();
+      expect(within(page).queryByRole('button', { name: 'Share' }), `day ${current}`).toBeNull();
+      cleanup();
+    }
   });
 });

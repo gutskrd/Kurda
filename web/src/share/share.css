@@ -1,0 +1,17 @@
+/*
+ * "Share" on a win (share/ShareWin.tsx): the quiet button beside a screen's
+ * way on. It is the surface-tone pill every secondary action is, with the
+ * share mark before its word; only what differs from that is said here.
+ */
+.share-win {
+  gap: 7px;
+}
+/* the message was copied (no share sheet on this device): said in the button itself, in the green of a thing done */
+.btn.share-win.is-done {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+  color: var(--success);
+}
+/* under a celebration's one button: close enough to belong to it, far enough not to be pressed for it */
+.celebrate-details > .share-win {
+  margin-top: 4px;
+}

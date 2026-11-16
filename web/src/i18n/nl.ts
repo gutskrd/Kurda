@@ -2097,6 +2097,14 @@ export const nl: Catalogue = {
   'share.sendFailed': 'Dat bericht is niet verstuurd. Probeer het opnieuw.',
   'share.signInToSend': 'Log in om dit naar een vriend te sturen.',
 
+  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
+  'share.win.lesson': 'Ik heb op Hevalo de Koerdische les ‘{title}’ afgerond.',
+  'share.win.lessonPlain': 'Ik heb op Hevalo een Koerdische les afgerond.',
+  'share.win.streak': '{count} dagen Koerdisch op rij.',
+  'share.win.badge': 'Ik heb op Hevalo de badge ‘{badge}’ verdiend.',
+  'share.win.leagueUp': 'Ik ben op Hevalo gestegen naar Competitie {tier}.',
+  'share.win.leaguePlace': 'Ik werd op Hevalo #{rank} in Competitie {tier}.',
+
   /* putting somebody else's post on your own profile */
   'repost.do': 'Opnieuw plaatsen',
   'repost.undo': 'Opnieuw plaatsen ongedaan maken',

@@ -12,6 +12,8 @@ import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 import { haptic } from '../lib/haptics';
 import { GameHead, stageTone } from '../games/GameHead';
+import { ShareWin } from '../share/ShareWin';
+import { wordGameShare } from '../share/winText';
 
 type Mode = 'daily' | 'practice';
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -75,6 +77,12 @@ function guessError(err: ApiError, t: (key: MessageKey) => string): string {
  * Played alone it earns no XP (XP is for lessons, stories and games played
  * online with other people), so the result shows no figure of it and says so
  * once, with where XP is earned.
+ *
+ * Under the result there is a quiet Share, as the phone's game has: the grid
+ * of squares the guesses made, with the score over it and the site's address
+ * under it (share/winText.ts). Only squares and counts, so it gives nothing
+ * of the word away, and a word that was not found can be shown as well as
+ * one that was.
  */
 export function Wordle(): React.JSX.Element {
   const { client } = useAuth();
@@ -213,6 +221,7 @@ export function Wordle(): React.JSX.Element {
               ) : (
                 <p className="muted">{t('games.wordle.comeBackTomorrow')}</p>
               )}
+              <ShareWin text={wordGameShare(game, { practice: t('games.wordle.practice'), difficulty: t(DIFFICULTY_KEY[game.difficulty]) })} />
             </div>
           )}
           <WordleKeyboard keyboard={game.keyboard} onPress={press} disabled={!playing} />

@@ -2912,7 +2912,7 @@ export type TranslationKey =
   | 'gift.picker.hideOwned'
   | 'gift.picker.selected'
   // ---- end mobile-race-rating-posting ----
-  // ---- the five tabs: Home, Learn, Messages, Search, Profile ----
+  // ---- the four tabs (Home, Learn, Messages, Profile) and search, which opens from beside the bell ----
   | 'nav.tabUnread'
   | 'nav.tabWaiting'
   | 'nav.menuWaiting'
@@ -6725,7 +6725,7 @@ const en: Catalog = {
   'gift.picker.hideOwned': 'Hide ones they already have',
   'gift.picker.selected': 'Selected: {name}',
   // ---- end mobile-race-rating-posting ----
-  // ---- the five tabs: Home, Learn, Messages, Search, Profile ----
+  // ---- the four tabs (Home, Learn, Messages, Profile) and search, which opens from beside the bell ----
   'nav.tabUnread': '{tab}, {count} unread',
   'nav.tabWaiting': '{tab}, something new',
   'nav.menuWaiting': 'Menu, a gift is waiting',
@@ -10538,7 +10538,7 @@ const ku: Catalog = {
   'gift.picker.hideOwned': 'Yên ku jixwe li ba wan hene veşêre',
   'gift.picker.selected': 'Hilbijartî: {name}',
   // ---- end mobile-race-rating-posting ----
-  // ---- the five tabs: Home, Learn, Messages, Search, Profile ----
+  // ---- the four tabs (Home, Learn, Messages, Profile) and search, which opens from beside the bell ----
   'nav.tabUnread': '{tab}, {count} nexwendî',
   'nav.tabWaiting': '{tab}, tiştekî nû',
   'nav.menuWaiting': 'Menû, diyariyek li benda te ye',
@@ -14350,7 +14350,7 @@ const de: Catalog = {
   'gift.picker.hideOwned': 'Schon Vorhandenes ausblenden',
   'gift.picker.selected': 'Ausgewählt: {name}',
   // ---- end mobile-race-rating-posting ----
-  // ---- the five tabs: Home, Learn, Messages, Search, Profile ----
+  // ---- the four tabs (Home, Learn, Messages, Profile) and search, which opens from beside the bell ----
   'nav.tabUnread': '{tab}, {count} ungelesen',
   'nav.tabWaiting': '{tab}, etwas Neues',
   'nav.menuWaiting': 'Menü, ein Geschenk wartet',
@@ -18162,7 +18162,7 @@ const es: Catalog = {
   'gift.picker.hideOwned': 'Ocultar lo que ya tienen',
   'gift.picker.selected': 'Elegido: {name}',
   // ---- end mobile-race-rating-posting ----
-  // ---- the five tabs: Home, Learn, Messages, Search, Profile ----
+  // ---- the four tabs (Home, Learn, Messages, Profile) and search, which opens from beside the bell ----
   'nav.tabUnread': '{tab}, {count} sin leer',
   'nav.tabWaiting': '{tab}, algo nuevo',
   'nav.menuWaiting': 'Menú, te espera un regalo',
@@ -21974,7 +21974,7 @@ const tr: Catalog = {
   'gift.picker.hideOwned': 'Zaten sahip olduklarını gizle',
   'gift.picker.selected': 'Seçilen: {name}',
   // ---- end mobile-race-rating-posting ----
-  // ---- the five tabs: Home, Learn, Messages, Search, Profile ----
+  // ---- the four tabs (Home, Learn, Messages, Profile) and search, which opens from beside the bell ----
   'nav.tabUnread': '{tab}, {count} okunmamış',
   'nav.tabWaiting': '{tab}, yeni bir şey var',
   'nav.menuWaiting': 'Menü, seni bir hediye bekliyor',
@@ -25786,7 +25786,7 @@ const ar: Catalog = {
   'gift.picker.hideOwned': 'أخفِ ما لديهم بالفعل',
   'gift.picker.selected': 'المختار: {name}',
   // ---- end mobile-race-rating-posting ----
-  // ---- the five tabs: Home, Learn, Messages, Search, Profile ----
+  // ---- the four tabs (Home, Learn, Messages, Profile) and search, which opens from beside the bell ----
   'nav.tabUnread': '{tab}، {count} غير مقروءة',
   'nav.tabWaiting': '{tab}، شيء جديد',
   'nav.menuWaiting': 'القائمة، هدية بانتظارك',
@@ -29598,7 +29598,7 @@ const fr: Catalog = {
   'gift.picker.hideOwned': 'Masquer ce qu’ils ont déjà',
   'gift.picker.selected': 'Choisi : {name}',
   // ---- end mobile-race-rating-posting ----
-  // ---- the five tabs: Home, Learn, Messages, Search, Profile ----
+  // ---- the four tabs (Home, Learn, Messages, Profile) and search, which opens from beside the bell ----
   'nav.tabUnread': '{tab}, {count} non lus',
   'nav.tabWaiting': '{tab}, du nouveau',
   'nav.menuWaiting': 'Menu, un cadeau t’attend',
@@ -33410,7 +33410,7 @@ const nl: Catalog = {
   'gift.picker.hideOwned': 'Verberg wat ze al hebben',
   'gift.picker.selected': 'Gekozen: {name}',
   // ---- end mobile-race-rating-posting ----
-  // ---- the five tabs: Home, Learn, Messages, Search, Profile ----
+  // ---- the four tabs (Home, Learn, Messages, Profile) and search, which opens from beside the bell ----
   'nav.tabUnread': '{tab}, {count} ongelezen',
   'nav.tabWaiting': '{tab}, iets nieuws',
   'nav.menuWaiting': 'Menu, er wacht een cadeau',
@@ -37223,7 +37223,7 @@ const ckb: Catalog = {
   'gift.picker.hideOwned': 'ئەوانەی پێشتر هەیانە بشارەوە',
   'gift.picker.selected': 'هەڵبژێردراو: {name}',
   // ---- end mobile-race-rating-posting ----
-  // ---- the five tabs: Home, Learn, Messages, Search, Profile ----
+  // ---- the four tabs (Home, Learn, Messages, Profile) and search, which opens from beside the bell ----
   'nav.tabUnread': '{tab}، {count} نەخوێندراوە',
   'nav.tabWaiting': '{tab}، شتێکی نوێ',
   'nav.menuWaiting': 'پێڕست، دیارییەک چاوەڕێتە',

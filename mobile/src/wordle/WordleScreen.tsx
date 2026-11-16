@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   Animated,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   View,
@@ -32,7 +31,8 @@ import {
   typeLetter,
   type Feedback,
 } from './board';
-import { buildShareText } from './share';
+import { shareOut } from '../share/ShareWin';
+import { wordGameShare } from '../share/winText';
 import { WordleBoard, cellSizeFor, turnMs } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
 import type { SearchResult } from '../dictionary/types';
@@ -100,7 +100,9 @@ const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
  * keyboard are derived from the returned state (pure `board.ts`); the keyboard
  * carries upgrade-only colour memory. Win/lose reveals the word with an
  * educational card (dictionary #45) and a save-to-vocabulary action (#47), plus
- * a spoiler-safe share grid.
+ * a spoiler-safe share grid: the squares of the guesses with the score over
+ * them and the site's address under them, built by the shared builder so the
+ * website's game shares the same thing.
  *
  * Peyvok is played alone, so it earns no XP, daily or practice: XP is for
  * lessons, stories and games played online with other people. The result says
@@ -237,16 +239,10 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     });
   };
 
+  // the result as the grid of squares, with the score over it and the site's address under it: the same message the website sends (share/winText.ts)
   const shareResult = () => {
     if (!game || game.status === 'playing') return;
-    const text = buildShareText({
-      rows: game.guesses.map((g) => g.feedback),
-      solved: game.status === 'won',
-      maxAttempts: MAX_ATTEMPTS,
-      mode: game.mode,
-      difficulty: game.difficulty,
-    });
-    void Share.share({ message: text }).catch(() => undefined);
+    shareOut(wordGameShare(game, { practice: t('games.wordle.practice'), difficulty: t(DIFFICULTY_KEY[game.difficulty]) }));
   };
 
   // ---- render ----------------------------------------------------------------

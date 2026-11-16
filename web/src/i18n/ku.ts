@@ -2100,6 +2100,14 @@ export const ku: Catalogue = {
   'share.sendFailed': 'Ew peyam nehat şandin. Dîsa biceribîne.',
   'share.signInToSend': 'Têkeve da ku vê ji hevalekî re bişînî.',
 
+  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
+  'share.win.lesson': 'Min li ser Hevalo waneyeke kurdî qedand: “{title}”.',
+  'share.win.lessonPlain': 'Min li ser Hevalo waneyeke kurdî qedand.',
+  'share.win.streak': '{count} rojên li pey hev bi kurdî.',
+  'share.win.badge': 'Min li ser Hevalo nîşana “{badge}” bi dest xist.',
+  'share.win.leagueUp': 'Ez li ser Hevalo derbasî Lîga {tier} bûm.',
+  'share.win.leaguePlace': 'Ez li ser Hevalo di Lîga {tier} de bûm #{rank}.',
+
   /* putting somebody else's post on your own profile */
   'repost.do': 'Ji nû ve biweşîne',
   'repost.undo': 'Ji nû ve weşandinê rake',

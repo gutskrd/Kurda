@@ -2096,6 +2096,14 @@ export const fr: Catalogue = {
   'share.sendFailed': 'Ce message n’a pas été envoyé. Réessaie.',
   'share.signInToSend': 'Connecte-toi pour l’envoyer à un ami.',
 
+  /* a win sent to somebody outside Hevalo: one plain line in the sharer's own voice, with nothing in it that names them; a streak's is only ever said of a week or more */
+  'share.win.lesson': 'J’ai terminé la leçon de kurde « {title} » sur Hevalo.',
+  'share.win.lessonPlain': 'J’ai terminé une leçon de kurde sur Hevalo.',
+  'share.win.streak': '{count} jours de kurde d’affilée.',
+  'share.win.badge': 'J’ai obtenu le badge « {badge} » sur Hevalo.',
+  'share.win.leagueUp': 'Je monte en Ligue {tier} sur Hevalo.',
+  'share.win.leaguePlace': 'J’ai fini #{rank} de la Ligue {tier} sur Hevalo.',
+
   /* putting somebody else's post on your own profile */
   'repost.do': 'Republier',
   'repost.undo': 'Annuler la republication',
