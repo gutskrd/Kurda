@@ -492,123 +492,29 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran li wir tenê ma, lê ew wêrek bû.",
+                    "say": "Baran di gelî de tenê ma.",
                     "voice": "hamo",
                     "new": [
+                      {
+                        "ku": "gelî",
+                        "en": "valley"
+                      },
                       {
                         "ku": "ma",
                         "en": "stayed, was left (the past of mayîn)"
                       }
                     ],
-                    "prompt": "Baran li wir tenê ma, lê ew wêrek bû.",
+                    "prompt": "Baran di gelî de tenê ma.",
                     "options": [
-                      "Baran was left there alone, but he was brave.",
-                      "Baran went there alone, and he was afraid.",
-                      "Baran ran from there, and he was brave."
+                      "Baran was left alone in the valley.",
+                      "Baran went into the valley with Bozo.",
+                      "Baran ran out of the valley alone."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Piştre çi bû? Tu çi dibêjî?",
-                    "voice": "hamo",
-                    "prompt": "Piştre çi bû? Tu çi dibêjî?",
-                    "options": [
-                      "Bozo reviya, û Baran di nav keviran de tenê ma.",
-                      "Baran tirsonek bû û çû malê.",
-                      "Bozo reviya, û ez tenê mam."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Gelî dirêj bû, û zinar bilind bûn.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "gelî",
-                        "en": "valley"
-                      }
-                    ],
-                    "prompt": "Gelî dirêj bû, û zinar bilind bûn.",
-                    "options": [
-                      "The valley was long, and the cliffs were high.",
-                      "The river was long, and the cliffs were low.",
-                      "The valley was short, and the trees were high."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Bozo reviya, û ez di nav keviran de tenê mam.",
-                      "Bozo reviya û ez di nav keviran de tenê mam."
-                    ]
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "match_pairs",
-                  "payload": {
-                    "voice": "hamo",
-                    "pairs": [
-                      {
-                        "left": "reviya",
-                        "right": "ran away"
-                      },
-                      {
-                        "left": "gihîşt",
-                        "right": "reached"
-                      },
-                      {
-                        "left": "gelî",
-                        "right": "valley"
-                      },
-                      {
-                        "left": "zinar",
-                        "right": "cliff"
-                      },
-                      {
-                        "left": "tilî",
-                        "right": "finger"
-                      },
-                      {
-                        "left": "govend girtin",
-                        "right": "to dance"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Gelî tije kevir bû, û Bozo di nav daran de winda bû.",
-                    "voice": "hamo",
-                    "prompt": "Gelî tije kevir bû, û Bozo di nav daran de winda bû.",
-                    "accepted": [
-                      "The valley was full of stones, and Bozo disappeared among the trees.",
-                      "The valley was full of stones, and Bozo vanished among the trees.",
-                      "The valley was full of rocks, and Bozo disappeared among the trees."
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -622,13 +528,103 @@
                   }
                 },
                 {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The valley was full of stones, and Bozo disappeared among the trees.",
+                    "accepted": [
+                      "Gelî tije kevir bû, û Bozo di nav daran de winda bû.",
+                      "Gelî tije kevir bû û Bozo di nav daran de winda bû."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Baran li wir tenê ma, lê ew wêrek bû.",
+                    "voice": "hamo",
+                    "prompt": "Baran li wir tenê ma, lê ew wêrek bû.",
+                    "options": [
+                      "Baran was left there alone, but he was brave.",
+                      "Baran went there alone, and he was afraid.",
+                      "Baran ran from there, and he was brave."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Bozo reviya, û Baran negihîşt wî.",
+                      "Bozo reviya û Baran negihîşt wî."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Piştre çi bû? Tu çi dibêjî?",
+                    "voice": "hamo",
+                    "prompt": "Piştre çi bû? Tu çi dibêjî?",
+                    "options": [
+                      "Baran di gelî de tenê ma.",
+                      "Baran di gelî de tenê mam.",
+                      "Baran tirsonek bû û çû malê."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "match_pairs",
+                  "payload": {
+                    "voice": "hamo",
+                    "pairs": [
+                      {
+                        "left": "reviya",
+                        "right": "ran away"
+                      },
+                      {
+                        "left": "gihîşt",
+                        "right": "reached"
+                      },
+                      {
+                        "left": "zinar",
+                        "right": "cliff"
+                      },
+                      {
+                        "left": "beran",
+                        "right": "ram"
+                      },
+                      {
+                        "left": "tilî",
+                        "right": "finger"
+                      },
+                      {
+                        "left": "govend girtin",
+                        "right": "to dance"
+                      }
+                    ]
+                  }
+                },
+                {
                   "position": 16,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Baran negihîşt Bozo, û ew di gelî de tenê ma.",
-                    "reference": "Baran negihîşt Bozo, û ew di gelî de tenê ma."
+                    "prompt": "Gelî dirêj bû, û Baran di nav keviran de tenê ma.",
+                    "reference": "Gelî dirêj bû, û Baran di nav keviran de tenê ma."
                   }
                 }
               ]
