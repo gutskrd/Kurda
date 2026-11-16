@@ -13,6 +13,7 @@ import {
   checkRoadPlan,
   checkRoadStories,
   familyProblems,
+  soundProblems,
   formatProblem,
   kurdishWords,
   loadRoadPlan,
@@ -487,6 +488,15 @@ describe('the road’s check, on an example unit', () => {
     expect(text).toContain('u01s1l1 key: key should be u01s1l1');
     expect(text).toContain('u01s1l1 #3 position: position should be 3');
     expect(text).toContain('u01s1l1 #1 payload.correctIndex: correctIndex must point at an option');
+  });
+});
+
+describe('how a line sounds', () => {
+  it('finds a word said three times running, and a line set out like a script', () => {
+    expect(soundProblems('Sêv, Hevalo? Erê, erê, erê!')).toHaveLength(1);
+    expect(soundProblems('Erê, erê… Sêv, sêv, sêv!')).toHaveLength(1);
+    expect(soundProblems('Hevalo: erê, erê. Ez: na, spas.')).toHaveLength(1);
+    for (const line of ['Sêv.', 'Ez sêvê dixwim.', 'Erê, erê!', 'Hêdî hêdî.', 'Gotina pêşiyan e: baran bereket e.']) expect(soundProblems(line), line).toEqual([]);
   });
 });
 

@@ -195,6 +195,24 @@ export function familyProblems(text: string): string[] {
   return out;
 }
 
+// ---------- how a line sounds ----------
+
+/*
+ * Every Kurdish line is a word or a sentence someone would really say. Two shapes give a line away as written to
+ * fill a count rather than to be said: a word said three times running ("Erê, erê, erê!"), and a line set out like a
+ * script, a name and a colon ("Hevalo: erê.").
+ */
+const SAID_THRICE = /(?<![\p{L}\p{M}])([\p{L}\p{M}]+)[\s,.!?…]+\1[\s,.!?…]+\1(?![\p{L}\p{M}])/iu;
+const SCRIPT_LINE = /(?:^|[.!?…]\s+)\p{Lu}[\p{L}\p{M}]*:\s/u;
+
+/** What makes a Kurdish line sound written rather than said, one message for each. */
+export function soundProblems(text: string): string[] {
+  const out: string[] = [];
+  if (SAID_THRICE.test(text)) out.push('says one word three times running: write a line someone would really say');
+  if (SCRIPT_LINE.test(text)) out.push('is set out like a script (a name and a colon): say it as a sentence');
+  return out;
+}
+
 // ---------- Kurdish text ----------
 
 /** What a Kurdish field may contain: the Hawar letters, digits, spaces and the punctuation the course writes. */
@@ -388,7 +406,7 @@ export const GRAMMAR_MD_MAX = 1200;
  * lesson three to five; a review lesson none, since it is there to bring back what came before.
  */
 export const ROAD_BUDGET: Record<number, { meet: number; build: number; cap: number }> = {
-  1: { meet: 4, build: 4, cap: 45 },
+  1: { meet: 4, build: 4, cap: 48 },
   2: { meet: 5, build: 5, cap: 54 },
   3: { meet: 5, build: 5, cap: 56 },
   4: { meet: 6, build: 6, cap: 64 },
@@ -771,6 +789,7 @@ export function checkRoadStories(plan: RoadPlan, stories: readonly RoadStoryInpu
     for (const t of textsIn(story)) for (const m of familyProblems(t.text)) at(m, t.path);
     storyParagraphs(body).forEach((paragraph, pi) => {
       for (const p of orthographyProblems(paragraph.replace(/[“”«»]/g, ''), true)) at(p, `body ¶${pi + 1}`);
+      for (const p of soundProblems(paragraph)) at(p, `body ¶${pi + 1}`);
     });
     // the chapter's last lesson is the furthest the learner has come
     const last = Math.max(...lex.lessons.filter((l) => l.unit.number === n).map((l) => l.index));
@@ -915,6 +934,7 @@ function checkUnit(
           const words = kurdishWords(f.text);
           if (f.strict) {
             for (const p of orthographyProblems(f.text, f.line === true || isSentence(f.text))) add(p, { ...eat, field: f.field });
+            for (const p of soundProblems(f.text)) add(p, { ...eat, field: f.field });
             const unknown = new Set<string>();
             for (const w of words) if (!/^\d+$/.test(w) && (lex.firstUse.get(w) ?? Infinity) > entry.index) unknown.add(w);
             for (const w of unknown) {
