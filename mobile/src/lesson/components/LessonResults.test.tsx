@@ -1,6 +1,23 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
-vi.mock('react-native', () => import('react-native-web'));
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+/*
+ * The web build, as everywhere else in these tests, until one says it is a
+ * phone: only a phone has notifications to ask about after a lesson.
+ */
+const device = vi.hoisted(() => ({ os: 'web' }));
+vi.mock('react-native', async () => {
+  // react-native-web ships no types
+  const rn = (await import('react-native-web')) as unknown as Record<string, object> & { Platform: object };
+  return {
+    ...rn,
+    Platform: {
+      ...rn.Platform,
+      get OS() {
+        return device.os;
+      },
+    },
+  };
+});
 vi.mock('react-native-svg', () => import('../../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../../reports/testing/stubs'));
@@ -11,12 +28,15 @@ vi.mock('../../auth/AuthContext', () => import('../../reports/testing/auth'));
 // a badge earned meanwhile waits on the celebration (badges/BadgeCelebrationHost.tsx)
 vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'));
 import type { ComponentProps } from 'react';
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { Share } from 'react-native';
 import { WORD_PICTURES, type QuestDay } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../../reports/testing/auth';
+import { notificationsStub } from '../../reports/testing/stubs';
+import { deviceStore } from '../../keyboard/deviceStore';
+import { OFFER_KEY } from '../../push/permission';
 import { characterLayers } from '../../characters/layers';
 import { NO_MOMENTS } from '../moments';
 import type { SessionResults } from '../types';
@@ -154,6 +174,115 @@ describe('the way on', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Next lesson' }));
     expect(onNext).toHaveBeenCalledWith('l2');
     expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
+  });
+
+  /*
+   * The phone's question about notifications, for an adult on a phone that
+   * has never been asked: the screen before it is the last of the moments,
+   * a screen of its own with one button, never a card among the results with
+   * the ways on beside it.
+   */
+  describe('by way of the phone’s question about notifications', () => {
+    const TITLE = 'Notifications from Hevalo';
+    /** Let what the results ask about come back: the phone's answer, the record, the account's age. */
+    const settle = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+
+    beforeEach(async () => {
+      device.os = 'ios';
+      // the phone remembers the screen was shown, and would not show it again the same week
+      await deviceStore.remove(OFFER_KEY);
+      notificationsStub.permission = { status: 'undetermined', granted: false, canAskAgain: true };
+      notificationsStub.afterRequest = { status: 'granted', granted: true, canAskAgain: true };
+      notificationsStub.requests = 0;
+      notificationsStub.failRequest = false;
+      notificationsStub.prompt = null;
+      testAuth.client = fakeClient({ 'GET /me': ok({ user: { minor: false } }), 'GET /me/quests': ok(day) });
+    });
+    afterEach(() => {
+      device.os = 'web';
+      testAuth.client = fakeClient();
+    });
+
+    it('comes last, after the streak and the quests, and the way on is taken when the phone is answered no', async () => {
+      notificationsStub.afterRequest = { status: 'denied', granted: false, canAskAgain: false };
+      const onNext = vi.fn();
+      show({
+        offerReminders: true,
+        moments: { ...NO_MOMENTS, streakKept: true },
+        results: { ...results, quests: [{ id: 'q:xp', kind: 'xp', target: 40, chest: 'rare', from: 0, to: 33, claimable: false }] },
+        next: { lessonId: 'l2', title: 'Malbat' },
+        onNext,
+      });
+      // the results say nothing about it: no card, no "Allow", no "Not now" beside the ways on
+      const next = await screen.findByRole('button', { name: 'Next lesson' });
+      await settle();
+      expect(screen.queryByText(TITLE)).toBeNull();
+      expect(screen.queryByRole('button', { name: /allow|not now/i })).toBeNull();
+
+      fireEvent.click(next);
+      expect(await screen.findByRole('heading', { name: '6 day streak' })).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+      expect(await screen.findByRole('heading', { name: 'Daily quests' })).toBeTruthy();
+      expect(await screen.findByLabelText('Earn 40 XP: 33 of 40')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+      // the screen before the phone's question: one button, and nothing asked until it is pressed
+      expect(await screen.findByRole('heading', { name: TITLE })).toBeTruthy();
+      expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Continue']);
+      expect(notificationsStub.requests).toBe(0);
+      expect(onNext).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+      await settle();
+      expect(notificationsStub.requests).toBe(1);
+      expect(onNext).toHaveBeenCalledTimes(1);
+      expect(onNext).toHaveBeenCalledWith('l2');
+    });
+
+    it('is the one moment on the way when the lesson kept no streak and moved no quest, and goes on when the phone is answered yes', async () => {
+      const onDone = vi.fn();
+      show({ offerReminders: true, onDone });
+      const done = await screen.findByRole('button', { name: 'Done' });
+      await settle();
+      fireEvent.click(done);
+      expect(await screen.findByRole('heading', { name: TITLE })).toBeTruthy();
+      expect(onDone).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+      await settle();
+      expect(notificationsStub.requests).toBe(1);
+      expect(onDone).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not follow practice, nor a lesson on a phone that has already answered', async () => {
+      const practice = vi.fn();
+      show({ onDone: practice });
+      const done = await screen.findByRole('button', { name: 'Done' });
+      await settle();
+      fireEvent.click(done);
+      expect(practice).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(TITLE)).toBeNull();
+      cleanup();
+
+      notificationsStub.permission = { status: 'denied', granted: false, canAskAgain: false };
+      const answered = vi.fn();
+      show({ offerReminders: true, onDone: answered });
+      const again = await screen.findByRole('button', { name: 'Done' });
+      await settle();
+      fireEvent.click(again);
+      expect(answered).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(TITLE)).toBeNull();
+      expect(notificationsStub.requests).toBe(0);
+    });
+
+    it('keeps nobody waiting to find out: a way on taken before the phone has said goes straight on', async () => {
+      // the account's age is still on its way from the server
+      testAuth.client = fakeClient({ 'GET /me': () => new Promise(() => undefined) });
+      const onDone = vi.fn();
+      show({ offerReminders: true, onDone });
+      fireEvent.click(await screen.findByRole('button', { name: 'Done' }));
+      expect(onDone).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(TITLE)).toBeNull();
+    });
   });
 });
 

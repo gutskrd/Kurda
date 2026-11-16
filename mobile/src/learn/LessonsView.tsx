@@ -74,9 +74,10 @@ import { PressableScale } from '../theme/MotionParts';
  * could not be loaded stays in the switch, saying so, with a way to try again.
  *
  * Learn's moments show here, one at a time: a freeze that kept the streak is
- * said once (`useKeptStreak`, from the `streak` the bar read), and while
- * reminders are off a slim banner offers them (ReminderNudge) — on a visit
- * that has no other moment.
+ * said once (`useKeptStreak`, from the `streak` the bar read), and once
+ * reminders have been turned down on a phone that will not ask again, a slim
+ * banner says where they are turned on (ReminderNudge) — on a visit that has
+ * no other moment.
  *
  * Pulled down, it reads the course again, and `onRefresh` has the bar read
  * the streak again with it.

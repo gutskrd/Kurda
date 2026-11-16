@@ -32,9 +32,10 @@ type Take =
  * and a stored copy of every learner's voice was data kept for no use. "Try again" brings the phrase back later in the lesson, like any
  * miss. A rating chosen is the answer once Check, in the action bar, sends
  * it, as on the phone; until then another can be chosen. A refused
- * microphone is said plainly, with how to allow it, and never switches
- * speaking off for good; "Can't speak now", in the action bar, puts speaking
- * off for the rest of the lesson.
+ * microphone is said plainly, as where things stand and where the browser
+ * lets that be changed, never as an instruction to allow it, and never
+ * switches speaking off for good; "Can't speak now", in the action bar, puts
+ * speaking off for the rest of the lesson.
  */
 export function Speaking({ exercise, dialect, locked, busy, formId, onReady, onAnswer }: ExerciseProps): React.JSX.Element {
   const t = useT();

@@ -493,10 +493,37 @@ describe('speaking', () => {
     serve({ 'POST /sessions/s1/answers': right });
     play({ sessionId: 's1', exercises: [speaking, typed('t', 'apple')], answered: {} });
     await userEvent.click(await screen.findByRole('button', { name: 'Record' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Hevalo was not allowed to use the microphone');
+    // where things stand and where that is changed, without telling anybody to allow anything
+    const said = await screen.findByRole('alert');
+    expect(said).toHaveTextContent('The microphone is off for Hevalo. You can turn it on from the icon in your browser’s address bar');
+    expect(said.textContent).not.toMatch(/allow/i);
+    // nothing is left waiting: the microphone can be tried again, or the exercise put off
+    expect(screen.getByRole('button', { name: 'Try the microphone again' })).toBeEnabled();
     await userEvent.click(screen.getByRole('button', { name: 'Can’t speak now' }));
     expect(await screen.findByText('Write this in Kurdish')).toBeInTheDocument();
     expect(sent('answers')).toHaveLength(0);
+  });
+
+  it('says so when the recorder will not start, hands the microphone back, and is not left waiting for it', async () => {
+    const track = { stop: vi.fn() };
+    microphone(async () => ({ getTracks: () => [track] }));
+    vi.stubGlobal(
+      'MediaRecorder',
+      class extends FakeRecorder {
+        override start(): void {
+          throw new DOMException('cannot start', 'NotSupportedError');
+        }
+      },
+    );
+    serve({});
+    play({ sessionId: 's1', exercises: [speaking, typed('t', 'apple')], answered: {} });
+    await userEvent.click(await screen.findByRole('button', { name: 'Record' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The recording did not start. Try again, or skip this one.');
+    expect(screen.queryByText('Waiting for the microphone…')).not.toBeInTheDocument();
+    expect(track.stop).toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Try the microphone again' })).toBeEnabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Can’t speak now' }));
+    expect(await screen.findByText('Write this in Kurdish')).toBeInTheDocument();
   });
 });
 

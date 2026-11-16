@@ -54,8 +54,10 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { notificationsStub } from '../reports/testing/stubs';
+import { memoryStore } from '../keyboard/deviceStore';
 import { NotificationsScreen } from '../notifications/NotificationsScreen';
 import { DevicePushControl } from './DevicePushControl';
+import { OFFER_KEY, parseOfferRecord } from './permission';
 
 patchReactNativeWeb();
 
@@ -69,35 +71,99 @@ beforeEach(() => {
   notificationsStub.permission = { ...NEVER_ASKED };
   notificationsStub.afterRequest = { ...ALLOWED };
   notificationsStub.requests = 0;
+  notificationsStub.failRequest = false;
+  notificationsStub.prompt = null;
 });
 afterEach(() => cleanup());
 
 /** react-native-web wires a press in an effect after the draw: let it run first. */
 const settle = () => act(async () => undefined);
 
-describe('Allow notifications, in Settings → Notification settings', () => {
-  it('says it has not been turned on, and shows the system prompt when asked to', async () => {
+describe('this phone’s notifications, in Settings → Notification settings', () => {
+  it('says it has not been turned on, and shows the system prompt from a row that says Continue', async () => {
     renderWithProviders(<DevicePushControl />);
     expect(await screen.findByText('This phone')).toBeTruthy();
     expect(screen.getByText('Notifications aren’t on yet')).toBeTruthy();
     expect(notificationsStub.requests).toBe(0); // nothing is asked just by looking
+    // allowing is the system prompt's own word: the app's row never says it
+    expect(screen.queryByText(/allow/i)).toBeNull();
 
     await settle();
-    fireEvent.click(screen.getByRole('button', { name: 'Allow notifications' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByText('Notifications are on')).toBeTruthy();
     expect(notificationsStub.requests).toBe(1);
-    expect(screen.queryByRole('button', { name: 'Allow notifications' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
     expect(phone.openSettings).not.toHaveBeenCalled();
   });
 
-  it('says so when the prompt is answered no', async () => {
+  it('says so when the prompt is answered no, and the row is there again, saying where it leads now', async () => {
     notificationsStub.afterRequest = { ...REFUSED_FOR_GOOD };
     renderWithProviders(<DevicePushControl />);
     await settle();
-    fireEvent.click(await screen.findByRole('button', { name: 'Allow notifications' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     expect(await screen.findByText('Notifications are off')).toBeTruthy();
     // from now on only the phone's settings can change it, and the button says where it goes
-    expect(screen.getByRole('button', { name: 'Open phone settings' })).toBeTruthy();
+    const row = screen.getByRole('button', { name: 'Open phone settings' });
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+    // idle again: it answers a press, and that press is the settings, not a prompt that would not show
+    await settle();
+    fireEvent.click(row);
+    expect(phone.openSettings).toHaveBeenCalledTimes(1);
+    expect(notificationsStub.requests).toBe(1);
+  });
+
+  it('counts a prompt answered here as reminders brought up, so Learn’s banner does not follow a no', async () => {
+    notificationsStub.afterRequest = { ...REFUSED_FOR_GOOD };
+    const store = memoryStore();
+    renderWithProviders(<DevicePushControl store={store} />);
+    await settle();
+    // looking at the page counts for nothing
+    expect(await store.get(OFFER_KEY)).toBeNull();
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    expect(await screen.findByText('Notifications are off')).toBeTruthy();
+    await settle();
+    expect(parseOfferRecord(await store.get(OFFER_KEY))?.shown).toBe(1);
+  });
+
+  it('is not a button while the phone’s question is up, and is one again whatever the answer', async () => {
+    let answer: () => void = () => undefined;
+    notificationsStub.prompt = new Promise<void>((resolve) => {
+      answer = resolve;
+    });
+    notificationsStub.afterRequest = { status: 'denied', granted: false, canAskAgain: true };
+    renderWithProviders(<DevicePushControl />);
+    await settle();
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    await settle();
+    // one question at a time
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+    expect(screen.getByText('Continue')).toBeTruthy();
+    expect(notificationsStub.requests).toBe(1);
+
+    // answered no, on a phone that would ask again: the row can be pressed again
+    await act(async () => answer());
+    expect(await screen.findByText('Notifications are off')).toBeTruthy();
+    notificationsStub.prompt = null;
+    notificationsStub.afterRequest = { ...ALLOWED };
+    await settle();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByText('Notifications are on')).toBeTruthy();
+    expect(notificationsStub.requests).toBe(2);
+  });
+
+  it('is there to press again when the asking itself fails', async () => {
+    notificationsStub.failRequest = true;
+    renderWithProviders(<DevicePushControl />);
+    await settle();
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    await settle();
+    // nothing changed on the phone, and nothing is left waiting
+    expect(screen.getByText('Notifications aren’t on yet')).toBeTruthy();
+    expect(notificationsStub.requests).toBe(1);
+    notificationsStub.failRequest = false;
+    await settle();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByText('Notifications are on')).toBeTruthy();
   });
 
   it('opens the phone’s settings once the phone will not ask again, rather than a prompt that would not show', async () => {
@@ -127,7 +193,7 @@ describe('Allow notifications, in Settings → Notification settings', () => {
     renderWithProviders(<DevicePushControl />);
     expect(await screen.findByText('Notifications are off')).toBeTruthy();
     await settle();
-    fireEvent.click(screen.getByRole('button', { name: 'Allow notifications' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByText('Notifications are on')).toBeTruthy();
     expect(notificationsStub.requests).toBe(1);
   });
@@ -163,6 +229,6 @@ describe('Allow notifications, in Settings → Notification settings', () => {
     const control = await screen.findByText('This phone');
     const categories = await screen.findByText('Categories');
     expect(control.compareDocumentPosition(categories) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(await screen.findByRole('button', { name: 'Allow notifications' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Continue' })).toBeTruthy();
   });
 });

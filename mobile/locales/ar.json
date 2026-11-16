@@ -1,6 +1,6 @@
 {
   "ios": {
-    "NSPhotoLibraryUsageDescription": "لا يصل Hevalo إلى صورك إلا عندما تختار صورة لملفك الشخصي أو لمجموعة أو لميم أو لمنشور فيه صورة.",
-    "NSMicrophoneUsageDescription": "لا يستخدم Hevalo الميكروفون إلا عندما تسجّل ملاحظة صوتية أو تؤدي تمرين تحدّث."
+    "NSPhotoLibraryUsageDescription": "يرفع Hevalo الصور التي تختارها لتكون صورة ملفك الشخصي أو صورة مجموعة أو ميمًا أو منشورًا.",
+    "NSMicrophoneUsageDescription": "يسجّل Hevalo صوتك عندما تضغط على زر التسجيل، لتنشر ملاحظة صوتية أو لتستمع إلى تمرين التحدّث الذي أدّيته."
   }
 }

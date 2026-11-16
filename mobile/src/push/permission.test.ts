@@ -7,6 +7,7 @@ import {
   OFFER_KEY,
   PUSH_UNAVAILABLE,
   REOFFER_AFTER_MS,
+  minorStatus,
   noteOffer,
   parseOfferRecord,
   readOfferRecord,
@@ -60,13 +61,31 @@ describe('settingsAction', () => {
 });
 
 describe('shouldNudgeReminders', () => {
+  const REFUSED_FOR_GOOD: PushPermissionState = { status: 'denied', canAsk: false };
   const adult = (over: Partial<Parameters<typeof shouldNudgeReminders>[0]> = {}) =>
-    shouldNudgeReminders({ permission: NEVER_ASKED, record: null, minor: false, now: NOW, ...over });
+    shouldNudgeReminders({ permission: REFUSED_FOR_GOOD, record: null, minor: false, now: NOW, ...over });
 
-  it('offers an adult whose reminders are off, never asked or turned down', () => {
+  it('tells an adult whose phone will not ask again where reminders are turned on', () => {
     expect(adult()).toBe(true);
-    expect(adult({ permission: { status: 'denied', canAsk: false } })).toBe(true);
-    expect(adult({ permission: { status: 'denied', canAsk: true } })).toBe(true);
+    expect(settingsAction(REFUSED_FOR_GOOD)).toBe('openSettings');
+  });
+
+  it('never stands in front of the phone’s own question: nothing while the phone could still ask', () => {
+    expect(adult({ permission: NEVER_ASKED })).toBe(false);
+    // Android, after one refusal: asking again would still show its prompt
+    expect(adult({ permission: { status: 'denied', canAsk: true } })).toBe(false);
+  });
+
+  it('is shown exactly where its button opens the phone’s settings, whatever the phone answers', () => {
+    const answers: PushPermissionState[] = [
+      NEVER_ASKED,
+      { status: 'undetermined', canAsk: false },
+      { status: 'denied', canAsk: true },
+      REFUSED_FOR_GOOD,
+      { status: 'granted', canAsk: false },
+      PUSH_UNAVAILABLE,
+    ];
+    for (const permission of answers) expect(adult({ permission }), JSON.stringify(permission)).toBe(settingsAction(permission) === 'openSettings');
   });
 
   it('says nothing once reminders are on, or where there are none', () => {
@@ -79,7 +98,7 @@ describe('shouldNudgeReminders', () => {
     expect(adult({ minor: null })).toBe(false);
   });
 
-  it('spends the same budget as the card after a lesson: a week apart, and twice in all', () => {
+  it('spends the same budget as the screen after a lesson: a week apart, and twice in all', () => {
     expect(adult({ record: shownAgo(6 * DAY) })).toBe(false);
     expect(adult({ record: shownAgo(7 * DAY) })).toBe(true);
     expect(adult({ record: shownAgo(30 * DAY, MAX_OFFERS) })).toBe(false);
@@ -107,7 +126,23 @@ describe('shouldOfferReminders', () => {
     expect(adult({ minor: null })).toBe(false);
   });
 
-  it('remembers a card passed over, and does not show it again within the week', () => {
+  it('is offered only where its one button leads to the phone’s question', () => {
+    const answers: PushPermissionState[] = [
+      NEVER_ASKED,
+      { status: 'undetermined', canAsk: false },
+      { status: 'denied', canAsk: true },
+      { status: 'denied', canAsk: false },
+      { status: 'granted', canAsk: false },
+      PUSH_UNAVAILABLE,
+    ];
+    for (const permission of answers) {
+      if (adult({ permission })) expect(settingsAction(permission), JSON.stringify(permission)).toBe('request');
+    }
+    // a phone that says it was never asked and will not ask: the button would lead nowhere
+    expect(adult({ permission: { status: 'undetermined', canAsk: false } })).toBe(false);
+  });
+
+  it('remembers the screen was shown, and does not show it again within the week', () => {
     expect(adult({ record: shownAgo(0) })).toBe(false);
     expect(adult({ record: shownAgo(DAY) })).toBe(false);
     expect(adult({ record: shownAgo(REOFFER_AFTER_MS - 1) })).toBe(false);
@@ -121,8 +156,57 @@ describe('shouldOfferReminders', () => {
     expect(adult({ record: shownAgo(365 * DAY, 2) })).toBe(false);
   });
 
-  it('reads a record it cannot make sense of as a card already shown recently, not as a reason to ask', () => {
+  it('reads a record it cannot make sense of as a screen already shown recently, not as a reason to ask', () => {
     expect(adult({ record: { shown: 1, lastShownAt: 'yesterday-ish' } })).toBe(false);
+  });
+});
+
+describe('minorStatus', () => {
+  /** A server answering `/me` with `reply`, and how often it was asked. */
+  const server = (reply: unknown) => {
+    const get = vi.fn(async () => reply);
+    return { get: get as unknown as Parameters<typeof minorStatus>[1]['get'], asked: get };
+  };
+
+  it('answers from the session when it knows, and asks the server only when it does not', async () => {
+    const me = server({ ok: true, data: { user: { minor: true } } });
+    expect(await minorStatus({ minor: false }, me)).toBe(false);
+    expect(await minorStatus({ minor: true }, me)).toBe(true);
+    expect(me.asked).not.toHaveBeenCalled();
+    // a fresh sign-in: the session says nothing of the age yet
+    expect(await minorStatus({}, me)).toBe(true);
+    expect(await minorStatus(null, me)).toBe(true);
+    expect(me.asked).toHaveBeenCalledTimes(2);
+    expect(me.asked).toHaveBeenCalledWith('/me');
+  });
+
+  /*
+   * The server's `minor` means "known to be 13 to 17", so it is false for a
+   * guest and for an account not yet asked its birth month. Read as "an
+   * adult", that offered reminders to people whose age nobody knows — and to
+   * guests, whose phone is not registered, so nothing would ever be sent.
+   */
+  it('does not take a guest, or an account with no birth month on record, for an adult', async () => {
+    const adultLooking = server({ ok: true, data: { user: { minor: false } } });
+    expect(await minorStatus({ minor: false, guest: true }, adultLooking)).toBeNull();
+    expect(await minorStatus({ minor: false, birthDateRequired: true }, adultLooking)).toBeNull();
+    // known from the session alone: the server is not asked
+    expect(adultLooking.asked).not.toHaveBeenCalled();
+    // and when it is the server that says so
+    expect(await minorStatus({}, server({ ok: true, data: { user: { minor: false, guest: true } } }))).toBeNull();
+    expect(await minorStatus({}, server({ ok: true, data: { user: { minor: false, birthDateRequired: true } } }))).toBeNull();
+    expect(await minorStatus({}, server({ ok: true, data: { user: { minor: false, guest: false, birthDateRequired: false } } }))).toBe(false);
+  });
+
+  it('cannot say when the server cannot, which neither rule reads as an adult', async () => {
+    expect(await minorStatus({}, server({ ok: false, error: { kind: 'network', message: 'offline' } }))).toBeNull();
+    expect(await minorStatus({}, server({ ok: true, data: { user: {} } }))).toBeNull();
+    expect(await minorStatus({}, server({ ok: true, data: {} }))).toBeNull();
+    for (const rule of [shouldOfferReminders, shouldNudgeReminders]) {
+      for (const permission of [NEVER_ASKED, { status: 'denied', canAsk: false } as const]) {
+        expect(rule({ permission, record: null, minor: null, now: NOW })).toBe(false);
+      }
+    }
   });
 });
 

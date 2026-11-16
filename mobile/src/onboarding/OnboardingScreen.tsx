@@ -349,10 +349,11 @@ function WelcomeSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
   );
 }
 
-/** Soft-ask notifications intro (KUR-095 onboarding). Informational — no OS
- *  prompt here, before there is anything to be reminded of. The system prompt
- *  comes after a lesson, from a card that can be turned down, or from the
- *  control at the top of Settings → Notification settings (push/). */
+/** Notifications intro (KUR-095 onboarding). Informational — no OS prompt
+ *  here or after it, before there is anything to be reminded of. The system
+ *  prompt comes after a lesson, by way of a screen whose one button leads to
+ *  it, or from the control at the top of Settings → Notification settings
+ *  (push/). */
 function NotificationsSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();

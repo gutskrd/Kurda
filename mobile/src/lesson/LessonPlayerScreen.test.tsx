@@ -27,7 +27,7 @@ import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-libra
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
-import { mic } from '../recording/testing/fakeMic';
+import { DENIED, mic } from '../recording/testing/fakeMic';
 import type { ApiResult } from '../api/types';
 import { LessonPlayerScreen, SessionPlayer } from './LessonPlayerScreen';
 import { onSound, resetSounds } from '../feedback/sounds';
@@ -347,6 +347,32 @@ describe('one speaking exercise after another', () => {
     expect(screen.queryByRole('button', { name: 'Stop recording' })).toBeNull();
     await waitFor(() => expect(mic.deleted).toEqual(['file:///cache/Audio/take-1.m4a']));
     expect(mic.modes.at(-1)).toEqual({ allowsRecording: false, playsInSilentMode: true });
+  });
+
+  it('is not held up by a refused microphone: it says where things stand, and the lesson goes on to its end without speaking', async () => {
+    mic.reset();
+    mic.answer = DENIED;
+    const client = fakeClient({
+      ...standing,
+      'POST /sessions/s1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }),
+      'POST /sessions/s1/complete': ok(results),
+    });
+    testAuth.client = client;
+    renderWithProviders(<SessionPlayer view={twoToSay} paths={paths} onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Start recording' }));
+    expect(await screen.findByText(/The microphone is off for Hevalo/)).toBeTruthy();
+    // no button is left busy waiting for an answer that will not come: speaking is put off from the footer
+    for (const button of screen.getAllByRole('button')) expect(button.getAttribute('aria-busy'), button.textContent ?? '').not.toBe('true');
+    expect(screen.queryByRole('button', { name: 'Start recording' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Can’t do this now — skip' }));
+
+    // the next question is asked and answered as ever, and the lesson is added up
+    await answerFirst();
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('button', { name: 'Done' })).toBeTruthy();
+    // the speaking exercises were passed over, never sent as answers
+    expect(client.calls.filter((c) => c.path === '/sessions/s1/answers')).toHaveLength(1);
+    expect(mic.calls).toEqual(['ask']);
   });
 });
 

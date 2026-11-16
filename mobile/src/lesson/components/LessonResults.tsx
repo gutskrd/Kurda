@@ -31,7 +31,7 @@ import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { TONES, type ToneColors } from '../../coursemap/path';
 import { NO_MOMENTS, type LessonMoments } from '../moments';
 import { useDirection } from '../../reports/direction';
-import { ReminderOffer } from '../../push/ReminderOffer';
+import { ReminderOffer, useReminderOffer } from '../../push/ReminderOffer';
 import { useScreenBottomInset, useScreenTopInset } from '../../navigation/tabBarLayout';
 import { HevaloWindow } from '../../characters/HevaloWindow';
 import { GoalRing } from '../../leagues/GoalRing';
@@ -59,7 +59,7 @@ interface Props {
   lesson?: { title: string | null; putOff: readonly string[] } | null;
   /** what else the lesson did: today's goal, the streak, a new level, the league */
   moments?: LessonMoments;
-  /** a lesson (not practice) may end with the one offer of reminders the app makes (push/ReminderOffer.tsx) */
+  /** a lesson (not practice) may be followed, last of all, by the screen that comes before the phone's question about notifications (push/ReminderOffer.tsx) */
   offerReminders?: boolean;
   /** the course's next lesson, when there is one to offer */
   next?: { lessonId: string; title: string } | null;
@@ -113,7 +113,13 @@ const ACTION_WORDS: Record<ResultsAction, TranslationKey> = {
  * good place to stop — and practising the mistakes now when there are any.
  * On the way to the first of them come the moments that follow the results
  * (shared `afterResults`), each once: the streak's when this lesson kept it
- * (StreakMoment), then today's quests when it moved any (QuestsScreen).
+ * (StreakMoment), then today's quests when it moved any (QuestsScreen), and
+ * last, after a lesson on a phone that has never been asked, the screen that
+ * says what Hevalo would send before the phone asks whether it may
+ * (push/ReminderOffer.tsx). That one is a screen of its own and never a card
+ * among the results: on the results it would stand beside the ways on, which
+ * are ways round the phone's question, and a screen in front of that
+ * question may have one button and no way past it.
  * Nothing moves on by itself, and nothing here ever asks for money.
  *
  * A lesson's results have a quiet Share in the same bar (share/ShareWin.tsx),
@@ -174,11 +180,15 @@ export function LessonResults({
     return () => clearTimeout(id);
   }, [moment.playing, plan.hapticAtMs]);
 
+  // whether the phone's question about notifications is due, found out while the results are read (null until it is known)
+  const remindersDue = useReminderOffer(offerReminders);
   // the moments after the results, opened on the way to whichever way on is chosen first
   const [after, setAfter] = useState<{ steps: AfterResults[]; then: () => void } | null>(null);
   const afterShown = useRef(false);
   const go = (then: () => void) => () => {
-    const steps = afterShown.current ? [] : afterResults({ streakKept: moments.streakKept, questsMoved: (results.quests ?? []).length > 0 });
+    const steps = afterShown.current
+      ? []
+      : afterResults({ streakKept: moments.streakKept, questsMoved: (results.quests ?? []).length > 0, remindersDue: remindersDue === true });
     afterShown.current = true;
     if (steps.length > 0) setAfter({ steps, then });
     else then();
@@ -197,6 +207,7 @@ export function LessonResults({
 
   if (after?.steps[0] === 'streak') return <StreakMoment streak={results.streak} goalDone={goalDone} onContinue={onward} />;
   if (after?.steps[0] === 'quests') return <QuestsScreen place="lesson" steps={results.quests} onDone={onward} />;
+  if (after?.steps[0] === 'reminders') return <ReminderOffer onDone={onward} />;
 
   const canPractise = practise.length > 0 && !!onPractise;
   const actions = resultsActions({ next: next !== null && !!onNext, practise: canPractise, goalDone });
@@ -285,9 +296,6 @@ export function LessonResults({
           </View>
 
           <Rows moments={moments} travel={plan.travel} water={results.tree?.gained ?? 0} />
-
-          {/* after the moment, never during it */}
-          {offerReminders ? <ReminderOffer ready={!moment.playing} /> : null}
 
           {actions.stopHere ? <Text style={[styles.note, { color: colors.textPrimary }]}>{t('lesson.results.goalDoneStop')}</Text> : null}
 

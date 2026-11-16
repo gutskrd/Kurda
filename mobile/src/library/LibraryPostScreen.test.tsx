@@ -8,10 +8,12 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the voice recorder and the player draw, but nothing here records or plays
+// the voice recorder and the player draw, but nothing here records or plays; a test can have the microphone refused
+const microphone = vi.hoisted(() => ({ granted: true }));
 vi.mock('expo-audio', () => ({
   RecordingPresets: { HIGH_QUALITY: {} },
-  requestRecordingPermissionsAsync: async () => ({ granted: true }),
+  requestRecordingPermissionsAsync: async () => ({ granted: microphone.granted, canAskAgain: false }),
+  getRecordingPermissionsAsync: async () => ({ granted: microphone.granted, canAskAgain: false }),
   setAudioModeAsync: async () => undefined,
   useAudioRecorder: () => ({ prepareToRecordAsync: async () => undefined, record: () => undefined, stop: async () => undefined, uri: null }),
   useAudioRecorderState: () => ({ isRecording: false, durationMillis: 0 }),
@@ -39,6 +41,7 @@ type Button = { text: string; style?: string; onPress?: () => void };
 let alert: ReturnType<typeof vi.spyOn>;
 beforeEach(() => {
   navigation.navigate.mockReset();
+  microphone.granted = true;
   testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda', profilePhotoUrl: null };
   alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
 });
@@ -174,6 +177,27 @@ describe('posting a comment', () => {
     expect(screen.queryByText('Ev dê neçe', { ignore: 'textarea' })).toBeNull();
     expect(screen.getByText('3 comments')).toBeTruthy();
     expect((screen.getByPlaceholderText('Add a comment…') as HTMLTextAreaElement).value).toBe('Ev dê neçe');
+  });
+
+  it('is written and sent as ever when the microphone is refused for a voice note', async () => {
+    microphone.granted = false;
+    const { client } = open({
+      'POST /library/posts/p1/comments': ok(comment('new', { author: undefined, authorId: 'me', body: 'Spas!', createdAt: new Date().toISOString() })),
+    });
+    await screen.findByText('No comments yet. Be the first to say something.');
+    fireEvent.click(screen.getByRole('button', { name: 'Record a voice note' }));
+    await waitFor(() => expect(alert).toHaveBeenCalled());
+    // where things stand and what can be done instead; nobody is told to allow anything
+    const said = shownAlert();
+    expect(said.title).toBe('Microphone needed');
+    expect(said.message).toBe('The microphone is off for Hevalo. You can turn it on in your phone’s settings, or write a comment instead.');
+
+    // nothing is left recording or busy, and the words go as they always did
+    expect(screen.getByRole('button', { name: 'Record a voice note' }).getAttribute('aria-disabled')).not.toBe('true');
+    type('Spas!');
+    send();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'rojda — open profile' })).toBeTruthy());
+    expect(client.calls.find((c) => c.method === 'POST')?.body).toEqual({ body: 'Spas!' });
   });
 });
 

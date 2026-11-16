@@ -180,7 +180,7 @@ describe('the practice hub', () => {
   it('sends speaking to Settings when the microphone was refused for good', async () => {
     mic.answer = DENIED;
     open(learned);
-    fireEvent.click(await screen.findByRole('button', { name: 'Speak, Allow the microphone in Settings' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Speak, The microphone is off for Hevalo: turn it on in Settings' }));
     expect(openSettings).toHaveBeenCalled();
     expect(navigation.navigate).not.toHaveBeenCalled();
   });

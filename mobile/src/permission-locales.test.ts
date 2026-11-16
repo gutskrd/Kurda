@@ -80,4 +80,28 @@ describe('the permission prompts in every language', () => {
   it('gives both plugins that write the microphone prompt the same text', () => {
     expect(pluginConfig('expo-image-picker')?.microphonePermission).toBe(pluginConfig('expo-audio')?.microphonePermission);
   });
+
+  /*
+   * The sentence inside the system's own prompt is read at review as closely
+   * as the screens are. What is asked of it: one brief, complete sentence, in
+   * the active voice and ending in a full stop, that says what the app does
+   * with what it is given. Not a request ("Turn on microphone access."), and
+   * not a need with no reason behind it ("Microphone access is needed for a
+   * better experience."). So each says what Hevalo does: it uploads the
+   * photos chosen, it records when record is tapped, and what for.
+   */
+  it('says what Hevalo does, in one complete sentence, and asks for nothing', () => {
+    for (const { code } of APP_LOCALES) {
+      const { ios } = localeFile(code);
+      for (const key of PROMPTS) {
+        const sentence = ios[key]!;
+        expect(sentence.endsWith('.'), `${code} ${key} ends as a sentence does`).toBe(true);
+        expect(sentence.slice(0, -1), `${code} ${key} is one sentence`).not.toMatch(/[.!?؟]/);
+      }
+    }
+    const english = localeFile('en').ios;
+    expect(english.NSPhotoLibraryUsageDescription).toMatch(/^Hevalo uploads the photos you choose /);
+    expect(english.NSMicrophoneUsageDescription).toMatch(/^Hevalo records your voice when you tap record, /);
+    for (const key of PROMPTS) expect(english[key], key).not.toMatch(/allow|access|need|turn on|better experience|would like|please/i);
+  });
 });

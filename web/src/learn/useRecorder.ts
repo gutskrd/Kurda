@@ -114,7 +114,15 @@ export function useRecorder(): {
       setPhase('idle');
     };
     setTake(null);
-    rec.start();
+    try {
+      rec.start();
+    } catch {
+      // a recorder that will not start is a failure the exercise can say, never "waiting for the microphone" for good
+      recorder.current = null;
+      release();
+      setPhase('failed');
+      return;
+    }
     setPhase('recording');
     timer.current = window.setTimeout(() => {
       if (rec.state !== 'inactive') rec.stop();
