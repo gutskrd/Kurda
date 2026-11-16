@@ -77,8 +77,8 @@
                     "prompt": "Kobanî dûr e?",
                     "options": [
                       "Erê, gelek dûr e.",
-                      "Erê, bi minîbûsê.",
-                      "Na, ez şiyar im."
+                      "Bi minîbûsê.",
+                      "Piştî firavînê."
                     ],
                     "correctIndex": 0
                   }
@@ -131,13 +131,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ji bo Baran, ajovan mamoste ye: Baran fêr dibe!",
+                    "say": "Ajovan bilêteke ji bo Hevalo jî difiroşe!",
                     "voice": "hamo",
-                    "prompt": "Ji bo Baran, ajovan mamoste ye: Baran fêr dibe!",
+                    "prompt": "Ajovan bilêteke ji bo Hevalo jî difiroşe!",
                     "accepted": [
-                      "For Baran, the driver is a teacher: Baran is learning!",
-                      "For Baran the driver is a teacher: Baran learns!",
-                      "To Baran, the driver is a teacher: Baran is learning!"
+                      "The driver sells a ticket for Hevalo too!",
+                      "The driver sells Hevalo a ticket too!",
+                      "The driver even sells a ticket for Hevalo!",
+                      "The driver sells a ticket for Hevalo as well!"
                     ]
                   }
                 },
@@ -146,7 +147,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hêdî, hêdî!",
+                    "say": "Hêdî, ji kerema xwe!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -154,11 +155,11 @@
                         "en": "slow; slowly"
                       }
                     ],
-                    "prompt": "Hêdî, hêdî!",
+                    "prompt": "Hêdî, ji kerema xwe!",
                     "options": [
-                      "Slowly, slowly!",
-                      "Quickly, quickly!",
-                      "Yes, yes!"
+                      "Slowly, please!",
+                      "Quickly, please!",
+                      "Stop here, please!"
                     ],
                     "correctIndex": 0
                   }
@@ -168,13 +169,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Minîbûs gelek zû diçe!",
+                    "say": "Ajovan gelek zû diçe!",
                     "voice": "hamo",
-                    "prompt": "Minîbûs gelek zû diçe!",
+                    "prompt": "Ajovan gelek zû diçe!",
                     "options": [
-                      "Hêdî, hêdî!",
+                      "Rast e. Hêdî, ji kerema xwe!",
                       "Bilêt erzan e.",
-                      "Ez fêr dibim."
+                      "Ez li malê me."
                     ],
                     "correctIndex": 0
                   }
@@ -195,7 +196,7 @@
                     "prompt": "Piştî du demjimêran, Kobanî nêzîk e!",
                     "options": [
                       "After two hours, Kobanî is near!",
-                      "After two hours, Kobanî is far!",
+                      "After two hours, Kobanî is still far!",
                       "Before two o’clock, Kobanî is near!"
                     ],
                     "correctIndex": 0
@@ -256,11 +257,12 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The driver says: Kobanî is far!",
+                    "prompt": "The driver goes too fast!",
                     "accepted": [
-                      "Ajovan dibêje: Kobanî dûr e!",
-                      "Ajovan dibêje: Kobanî dûr e",
-                      "Ajovan dibêje Kobanî dûr e"
+                      "Ajovan zêde zû diçe!",
+                      "Ajovan zêde zû diçe",
+                      "Ajovan gelek zû diçe!",
+                      "Ajovan gelek zû diçe"
                     ]
                   }
                 },
@@ -269,13 +271,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ajovan dikene, û Hevalo li pencereyê dinêre.",
+                    "say": "Hevalo li ber pencereyê ye û li çiyayan dinêre.",
                     "voice": "hamo",
-                    "prompt": "Ajovan dikene, û Hevalo li pencereyê dinêre.",
+                    "prompt": "Hevalo li ber pencereyê ye û li çiyayan dinêre.",
                     "options": [
-                      "The driver laughs, and Hevalo looks out of the window.",
-                      "The driver laughs, and Hevalo sleeps by the window.",
-                      "The baker laughs, and Hevalo looks out of the window."
+                      "Hevalo is by the window, looking at the mountains.",
+                      "Hevalo is by the window, sleeping.",
+                      "Hevalo is by the door, looking at the mountains."
                     ],
                     "correctIndex": 0
                   }
@@ -286,11 +288,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "For the road: yesterday’s bread and water.",
+                    "prompt": "Baran learns from the driver.",
                     "options": [
-                      "Ji bo rê: nanê duh û av.",
-                      "Ji bo rê: nan duh û av.",
-                      "Ji bo rê: nanê duh û avê."
+                      "Baran ji ajovan fêr dibe.",
+                      "Baran ji ajovan fêr dibim.",
+                      "Baran ajovan fêr dibe."
                     ],
                     "correctIndex": 0
                   }
@@ -302,9 +304,8 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Em ber bi minîbûsê ve dibezin: bilêta Hevalo jî heye!",
-                      "Em ber bi minîbûsê ve dibezin: bilêta Hevalo jî heye",
-                      "Em ber bi minîbûsê ve dibezin bilêta Hevalo jî heye"
+                      "Em ber bi minîbûsê ve dibezin.",
+                      "Em ber bi minîbûsê ve dibezin"
                     ]
                   }
                 },
@@ -314,8 +315,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Hêdî, hêdî! Kobanî ne dûr e, nêzîk e!",
-                    "reference": "Hêdî, hêdî! Kobanî ne dûr e, nêzîk e!"
+                    "prompt": "Hêdî hêdî, Kobanî nêzîk e!",
+                    "reference": "Hêdî hêdî, Kobanî nêzîk e!"
                   }
                 }
               ]
@@ -353,7 +354,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez disekinim û dixwînim: li rastê!",
+                    "say": "Mala Lorînê li rastê ye.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -361,11 +362,11 @@
                         "en": "on the right"
                       }
                     ],
-                    "prompt": "Ez disekinim û dixwînim: li rastê!",
+                    "prompt": "Mala Lorînê li rastê ye.",
                     "options": [
-                      "I stop and read: on the right!",
-                      "I stop and read: on the left!",
-                      "I stop and read: straight on!"
+                      "Lorîn’s house is on the right.",
+                      "Lorîn’s house is on the left.",
+                      "Lorîn’s house is straight on."
                     ],
                     "correctIndex": 0
                   }
@@ -375,13 +376,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Kolan li ku ye?",
+                    "say": "Kolana Lorînê li ku ye?",
                     "voice": "hamo",
-                    "prompt": "Kolan li ku ye?",
+                    "prompt": "Kolana Lorînê li ku ye?",
                     "options": [
                       "Li rastê.",
                       "Roja Duşemê.",
-                      "Ez dixwînim."
+                      "Ez baş im."
                     ],
                     "correctIndex": 0
                   }
@@ -391,7 +392,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Lê ez li çepê diçim!",
+                    "say": "Ez dixwînim: li rastê. Lê ez li çepê diçim!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -399,11 +400,11 @@
                         "en": "on the left"
                       }
                     ],
-                    "prompt": "Lê ez li çepê diçim!",
+                    "prompt": "Ez dixwînim: li rastê. Lê ez li çepê diçim!",
                     "options": [
-                      "But I go left!",
-                      "But I go right!",
-                      "But I go straight on!"
+                      "I read: on the right. But I go left!",
+                      "I read: on the left. But I go right!",
+                      "I read: straight on. But I go left!"
                     ],
                     "correctIndex": 0
                   }
@@ -451,7 +452,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Here, rasterast!",
+                    "say": "Rasterast here!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -463,7 +464,7 @@
                         "en": "straight on"
                       }
                     ],
-                    "prompt": "Here, rasterast!",
+                    "prompt": "Rasterast here!",
                     "options": [
                       "Go straight on!",
                       "Go left!",
@@ -481,7 +482,7 @@
                     "voice": "hamo",
                     "prompt": "Mala Lorînê li ku ye?",
                     "options": [
-                      "Here, rasterast!",
+                      "Rasterast here!",
                       "Ez winda dibim.",
                       "Roja Duşemê."
                     ],
@@ -493,13 +494,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Soza min soz e: ez winda nabim!",
+                    "say": "Soza min soz e, ez winda nabim!",
                     "voice": "hamo",
-                    "prompt": "Soza min soz e: ez winda nabim!",
+                    "prompt": "Soza min soz e, ez winda nabim!",
                     "accepted": [
+                      "My promise is a promise, I won’t get lost!",
                       "My promise is a promise: I won’t get lost!",
-                      "My promise is a promise: I don’t get lost!",
-                      "My promise is a promise: I will not get lost!"
+                      "A promise is a promise, I won’t get lost!",
+                      "My promise is a promise, I will not get lost!"
                     ]
                   }
                 },
@@ -557,9 +559,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Li vê kolanê kanî heye.",
+                    "say": "Li vê kolanê kaniyek heye.",
                     "voice": "hamo",
-                    "prompt": "Li vê kolanê kanî heye.",
+                    "prompt": "Li vê kolanê kaniyek heye.",
                     "options": [
                       "There’s a spring on this street.",
                       "There’s a spring on that street.",
@@ -577,7 +579,7 @@
                     "voice": "hamo",
                     "prompt": "Tu winda dibî?",
                     "options": [
-                      "Na! Ez rasterast diçim!",
+                      "Na, ez rasterast diçim.",
                       "Dem tune.",
                       "Xew xweş e."
                     ],
@@ -591,9 +593,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Li rastê, li çepê, rasterast… û ez winda dibim!",
-                      "Li rastê, li çepê, rasterast… û ez winda dibim",
-                      "Li rastê li çepê rasterast… û ez winda dibim"
+                      "Ez disekinim, li rastê dinêrim, li çepê dinêrim, û dîsa winda dibim!",
+                      "Ez disekinim, li rastê dinêrim, li çepê dinêrim û dîsa winda dibim!",
+                      "Ez disekinim, li rastê dinêrim, li çepê dinêrim, û dîsa winda dibim",
+                      "Ez disekinim li rastê dinêrim li çepê dinêrim û dîsa winda dibim"
                     ]
                   }
                 },
@@ -603,8 +606,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ez sêvan didim Hevalo: here, rasterast!",
-                    "reference": "Ez sêvan didim Hevalo: here, rasterast!"
+                    "prompt": "Ji kerema xwe, kolana Lorînê li ku ye?",
+                    "reference": "Ji kerema xwe, kolana Lorînê li ku ye?"
                   }
                 },
                 {
@@ -613,10 +616,14 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The street is on the right.",
+                    "cue": "to one person",
+                    "prompt": "Go straight on, the street is on the right.",
                     "accepted": [
-                      "Kolan li rastê ye.",
-                      "Kolan li rastê ye"
+                      "Rasterast here, kolan li rastê ye.",
+                      "Rasterast here, kolan li rastê ye",
+                      "Rasterast here kolan li rastê ye",
+                      "Rasterast here. Kolan li rastê ye.",
+                      "Rasterast here. Kolan li rastê ye"
                     ]
                   }
                 }
@@ -682,7 +689,7 @@
                     "prompt": "Bazar qelebalix e?",
                     "options": [
                       "Erê, gelek qelebalix e!",
-                      "Erê, ez bilind im.",
+                      "Na, ew bilind e.",
                       "Ji kerema xwe."
                     ],
                     "correctIndex": 0
@@ -760,7 +767,7 @@
                       "From up here, the roofs and gardens are beautiful!",
                       "From above, the roofs and gardens are beautiful!",
                       "From up here the roofs and the gardens are beautiful!",
-                      "From upstairs, the roofs and gardens are pretty!"
+                      "From upstairs, the roofs and gardens are lovely!"
                     ]
                   }
                 },
@@ -787,8 +794,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê! Û binêre: dikanên nû, li vir û li wir.",
-                        "en": "Yes! And look: new shops, here and there."
+                        "text": "Erê! Û binêre, li vir dikanên nû hene.",
+                        "en": "Yes! And look, there are new shops here."
                       },
                       {
                         "speaker": 1,
@@ -817,8 +824,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez li bajarê xwe dinêrim. Hêdî, hêdî!",
-                        "en": "I’m looking at my town. Slowly, slowly!"
+                        "text": "Ez li bajarê xwe dinêrim. Hêdî hêdî!",
+                        "en": "I’m looking at my town. Slowly does it!"
                       },
                       {
                         "speaker": 1,
@@ -827,18 +834,18 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez ji jêr dibêjim: Ez têm, ez têm!",
-                        "en": "I call from downstairs: I’m coming, I’m coming!"
+                        "text": "Ez ji jêr dibêjim: Ez têm!",
+                        "en": "I call up from downstairs: I’m coming!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Lorîn dîsa dibêje: Kengî?",
-                        "en": "Lorîn says again: When?"
+                        "text": "Lorîn dibêje: Çay sar dibe!",
+                        "en": "Lorîn says: The tea is getting cold!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez dîsa dibêjim: Ez têm!",
-                        "en": "I say again: I’m coming!"
+                        "text": "Çay? Ez têm, rasterast!",
+                        "en": "Tea? I’m coming, straight away!"
                       }
                     ],
                     "prompt": "Lorîn li ku dimîne?",
@@ -860,7 +867,7 @@
                     "options": [
                       "Lorîn li jor dimîne.",
                       "Lorîn li jor dimînim.",
-                      "Lorîn jor dimîne."
+                      "Lorîn li jor dimînin."
                     ],
                     "correctIndex": 0
                   }
@@ -870,13 +877,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ajovan dibêje: Roja Çarşemê û roja Pêncşemê bazar qelebalix e.",
+                    "say": "Di Nîsanê de Miştenûr kesk e.",
                     "voice": "hamo",
-                    "prompt": "Ajovan dibêje: Roja Çarşemê û roja Pêncşemê bazar qelebalix e.",
+                    "prompt": "Di Nîsanê de Miştenûr kesk e.",
                     "options": [
-                      "The driver says: On Wednesday and Thursday the market is crowded.",
-                      "The driver says: On Wednesday and Thursday the market is empty.",
-                      "The baker says: On Saturday and Sunday the market is crowded."
+                      "In April Miştenûr is green.",
+                      "In April Miştenûr is white.",
+                      "In March Miştenûr is green."
                     ],
                     "correctIndex": 0
                   }
@@ -891,8 +898,8 @@
                     "prompt": "Çay li jor e. Tu têyî?",
                     "options": [
                       "Erê, ji kerema xwe!",
-                      "Ez bilind im.",
-                      "Ev ban e."
+                      "Bazar qelebalix e.",
+                      "Ew Miştenûr e."
                     ],
                     "correctIndex": 0
                   }
@@ -918,6 +925,7 @@
                     "voice": "hamo",
                     "accepted": [
                       "Ez li jêr im, Lorîn li jor e!",
+                      "Ez li jêr im Lorîn li jor e!",
                       "Ez li jêr im, Lorîn li jor e",
                       "Ez li jêr im Lorîn li jor e"
                     ]
@@ -996,8 +1004,8 @@
                     "prompt": "Rengê deriyê te çi ye?",
                     "options": [
                       "Şîn e.",
-                      "Ez şîn im.",
-                      "Du kîlo."
+                      "Li rastê ye.",
+                      "Ew nêzîk e."
                     ],
                     "correctIndex": 0
                   }
@@ -1007,14 +1015,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ev cara duyem e ku ez winda dibim!",
+                    "say": "Ev cara duyem e ku ez winda dibim, lê ez fêr dibim!",
                     "voice": "hamo",
-                    "prompt": "Ev cara duyem e ku ez winda dibim!",
+                    "prompt": "Ev cara duyem e ku ez winda dibim, lê ez fêr dibim!",
                     "accepted": [
-                      "This is the second time I’m getting lost!",
-                      "This is the second time I get lost!",
-                      "It’s the second time I’m getting lost!",
-                      "This is the second time that I get lost!"
+                      "This is the second time I’m getting lost, but I’m learning!",
+                      "This is the second time I get lost, but I’m learning!",
+                      "It’s the second time I’m getting lost, but I’m learning!",
+                      "This is the second time I am getting lost, but I am learning!"
                     ]
                   }
                 },
@@ -1023,13 +1031,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Li vê kolanê, li rastê û li çepê, ez winda dibim!",
+                    "say": "Binêre, ev pencereya odeya min e!",
                     "voice": "hamo",
-                    "prompt": "Li vê kolanê, li rastê û li çepê, ez winda dibim!",
+                    "prompt": "Binêre, ev pencereya odeya min e!",
                     "options": [
-                      "On this street, right and left, I get lost!",
-                      "On this street, right and left, I find my way!",
-                      "On this street, right and left, I fall asleep!"
+                      "Look, this is the window of my room!",
+                      "Look, this is the door of my room!",
+                      "Look, this is my father’s window!"
                     ],
                     "correctIndex": 0
                   }
@@ -1055,13 +1063,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bilêta Hevalo jî di destê min de ye!",
+                    "say": "Diyariya diya min jî di destê min de ye!",
                     "voice": "hamo",
-                    "prompt": "Bilêta Hevalo jî di destê min de ye!",
+                    "prompt": "Diyariya diya min jî di destê min de ye!",
                     "options": [
-                      "Hevalo’s ticket is in my hand too!",
-                      "Hevalo’s apple is in my hand too!",
-                      "Hevalo’s ticket is on the table!"
+                      "My mother’s present is in my hand too!",
+                      "My mother’s apple is in my hand too!",
+                      "My mother’s present is on the table!"
                     ],
                     "correctIndex": 0
                   }
@@ -1076,8 +1084,8 @@
                     "prompt": "Lorîn li jor e?",
                     "options": [
                       "Na, ew tê jêr!",
-                      "Na, ew bilêt e.",
-                      "Erê, Adar e."
+                      "Erê, li bazarê.",
+                      "Na, ew dûr e."
                     ],
                     "correctIndex": 0
                   }
@@ -1121,11 +1129,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The driver goes slowly.",
+                    "prompt": "We come by minibus.",
                     "options": [
-                      "Ajovan hêdî diçe.",
-                      "Ajovan hêdî diçim.",
-                      "Ajovan hêdî diçin."
+                      "Em bi minîbûsê tên.",
+                      "Em bi minîbûs tên.",
+                      "Em bi minîbûsê tê."
                     ],
                     "correctIndex": 0
                   }
@@ -1153,8 +1161,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Berî Newrozê du meh hene. Di Adarê de Miştenûr qelebalix e!",
-                      "Berî Newrozê du meh hene. Di Adarê de Miştenûr qelebalix e"
+                      "Di Adarê de, meha Newrozê, Miştenûr gelek qelebalix e!",
+                      "Di Adarê de meha Newrozê Miştenûr gelek qelebalix e!",
+                      "Di Adarê de, meha Newrozê, Miştenûr gelek qelebalix e",
+                      "Di Adarê de meha Newrozê Miştenûr gelek qelebalix e"
                     ]
                   }
                 },
@@ -1164,10 +1174,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Two kilos of onions for dinner!",
+                    "prompt": "The house is on the left.",
                     "accepted": [
-                      "Du kîlo pîvaz ji bo şîvê!",
-                      "Du kîlo pîvaz ji bo şîvê"
+                      "Mal li çepê ye.",
+                      "Mal li çepê ye"
                     ]
                   }
                 },
@@ -1177,8 +1187,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Here, Hevalo! Rasterast, li vê kolanê!",
-                    "reference": "Here, Hevalo! Rasterast, li vê kolanê!"
+                    "prompt": "Hevalo, rasterast here, li vê kolanê!",
+                    "reference": "Hevalo, rasterast here, li vê kolanê!"
                   }
                 },
                 {
@@ -1187,12 +1197,12 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "On Friday the minibus goes to Sêvan.",
+                    "prompt": "On Friday the driver goes to Sêvan.",
                     "accepted": [
-                      "Roja Înê minîbûs diçe Sêvanê.",
-                      "Roja Înê minîbûs diçe Sêvanê",
-                      "Minîbûs roja Înê diçe Sêvanê.",
-                      "Minîbûs roja Înê diçe Sêvanê"
+                      "Roja Înê ajovan diçe Sêvanê.",
+                      "Roja Înê ajovan diçe Sêvanê",
+                      "Ajovan roja Înê diçe Sêvanê.",
+                      "Ajovan roja Înê diçe Sêvanê"
                     ]
                   }
                 },
@@ -1201,13 +1211,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Lorîn zû tê û li min dinêre: ew dizane çima ez têm.",
+                    "say": "Lorîn zû tê û li min dinêre. Ew dizane çima ez li vir im.",
                     "voice": "hamo",
-                    "prompt": "Lorîn zû tê û li min dinêre: ew dizane çima ez têm.",
+                    "prompt": "Lorîn zû tê û li min dinêre. Ew dizane çima ez li vir im.",
                     "options": [
-                      "Lorîn comes quickly and looks at me: she knows why I’ve come.",
-                      "Lorîn comes quickly and looks at me: she doesn’t know why I’ve come.",
-                      "Lorîn comes slowly and looks at Hevalo: she knows why he’s come."
+                      "Lorîn comes quickly and looks at me. She knows why I’m here.",
+                      "Lorîn comes slowly and looks at me. She doesn’t know why I’m here.",
+                      "Lorîn comes quickly and looks at Hevalo. She knows why he’s here."
                     ],
                     "correctIndex": 0
                   }
@@ -1264,8 +1274,8 @@
                     "prompt": "Werin hundir!",
                     "options": [
                       "Spas, em tên!",
-                      "Bes e, bi xatirê te!",
-                      "Em winda dibin."
+                      "Bi xatirê te!",
+                      "Ez li jêr im."
                     ],
                     "correctIndex": 0
                   }
@@ -1275,7 +1285,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Rûnin, rûnin!",
+                    "say": "Rûnin, xwarin amade ye!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1283,11 +1293,11 @@
                         "en": "sit down! (to more than one) — from rûniştin, to sit"
                       }
                     ],
-                    "prompt": "Rûnin, rûnin!",
+                    "prompt": "Rûnin, xwarin amade ye!",
                     "options": [
-                      "Sit down, sit down!",
-                      "Get up, get up!",
-                      "Come in, come in!"
+                      "Sit down, the food is ready!",
+                      "Get up, the food is ready!",
+                      "Sit down, the tea is cold!"
                     ],
                     "correctIndex": 0
                   }
@@ -1384,8 +1394,8 @@
                     "prompt": "Xwarziyên min li ser min in!",
                     "options": [
                       "Ew ji xalê xwe hez dikin!",
-                      "Ew li çepê ne.",
-                      "Îsal Nîsan e."
+                      "Ew li jor in.",
+                      "Bi xatirê te!"
                     ],
                     "correctIndex": 0
                   }
@@ -1463,9 +1473,9 @@
                     "voice": "hamo",
                     "prompt": "Ji bo diya min, ez zarok im; ji bo xwarziyan, ez xal im!",
                     "options": [
-                      "For my mother I’m a child; for her grandchildren I’m their uncle!",
-                      "For my mother I’m an uncle; for the children I’m a child!",
-                      "For my sister I’m a child; for the children I’m their father!"
+                      "To my mother I’m a child; to my nieces and nephews I’m their uncle!",
+                      "To my mother I’m an uncle; to the children I’m a child!",
+                      "To my sister I’m a child; to the children I’m their father!"
                     ],
                     "correctIndex": 0
                   }
@@ -1479,9 +1489,9 @@
                     "voice": "hamo",
                     "prompt": "Were, rûne! Xwarin amade ye.",
                     "options": [
-                      "Spas, ez têm!",
-                      "Ez li rastê winda dibim.",
-                      "Roj sor e."
+                      "Destê te sax be, ez têm!",
+                      "Ez derdikevim.",
+                      "Bi xatirê te!"
                     ],
                     "correctIndex": 0
                   }
@@ -1493,8 +1503,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ez xalê çar xwarziyan im!",
-                      "Ez xalê çar xwarziyan im"
+                      "Ez xalê çar xwarziyan im, û ew hemû bi min re dilîzin!",
+                      "Ez xalê çar xwarziyan im û ew hemû bi min re dilîzin!",
+                      "Ez xalê çar xwarziyan im, û ew hemû bi min re dilîzin",
+                      "Ez xalê çar xwarziyan im û ew hemû bi min re dilîzin"
                     ]
                   }
                 },
@@ -1535,7 +1547,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bixwe! Vexwe! Bide min!",
+                    "say": "Nan bide min, ji kerema xwe.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1543,11 +1555,11 @@
                         "en": "give! (to one person; bidin to more)"
                       }
                     ],
-                    "prompt": "Bixwe! Vexwe! Bide min!",
+                    "prompt": "Nan bide min, ji kerema xwe.",
                     "options": [
-                      "Eat! Drink! Give it to me!",
-                      "Eat! Drink! Sit down!",
-                      "Come! Go! Give it to me!"
+                      "Give me the bread, please.",
+                      "Give me the water, please.",
+                      "Eat the bread, please."
                     ],
                     "correctIndex": 0
                   }
@@ -1556,14 +1568,20 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Nan bide min!",
+                    "ask": "meaning",
+                    "say": "Bibêje, çay an av?",
                     "voice": "hamo",
-                    "prompt": "Nan ___ min!",
+                    "new": [
+                      {
+                        "ku": "bibêje",
+                        "en": "say! tell! (to one person; bibêjin to more)"
+                      }
+                    ],
+                    "prompt": "Bibêje, çay an av?",
                     "options": [
-                      "bide",
-                      "bixwe",
-                      "were"
+                      "Tell me, tea or water?",
+                      "Drink, tea or water?",
+                      "Tell me, bread or cheese?"
                     ],
                     "correctIndex": 0
                   }
@@ -1572,42 +1590,20 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
+                    "ask": "reply",
                     "say": "Bibêje, tu çi dixwazî?",
                     "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "bibêje",
-                        "en": "say! tell! (to one person; bibêjin to more)"
-                      }
-                    ],
                     "prompt": "Bibêje, tu çi dixwazî?",
                     "options": [
-                      "Tell me, what would you like?",
-                      "Eat, what would you like?",
-                      "Tell me, where are you going?"
+                      "Nan bide min, ji kerema xwe.",
+                      "Bi xêr hatî!",
+                      "Ez li jor im."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Bibêje! Tu çi dixwazî?",
-                    "voice": "hamo",
-                    "prompt": "Bibêje! Tu çi dixwazî?",
-                    "options": [
-                      "Tenê çayek, ji kerema xwe.",
-                      "Ez kesk im.",
-                      "Pez li jor e."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1633,7 +1629,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1655,7 +1651,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1671,11 +1667,11 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Xwarina wan li ser maseyê bilind e!",
+                    "say": "Xwarina wan gelek e, û hemû ji bo me ye!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1683,33 +1679,33 @@
                         "en": "their; them"
                       }
                     ],
-                    "prompt": "Xwarina wan li ser maseyê bilind e!",
+                    "prompt": "Xwarina wan gelek e, û hemû ji bo me ye!",
                     "options": [
-                      "Their food is piled high on the table!",
-                      "Their food is cold on the table!",
-                      "Our food is piled high on the table!"
+                      "They’ve brought lots of food, and it’s all for us!",
+                      "They’ve brought a little food, and it’s all for them!",
+                      "We’ve brought lots of food, and it’s all for them!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Bibêje, kî tê?",
+                    "voice": "hamo",
+                    "prompt": "Bibêje, kî tê?",
+                    "options": [
+                      "Mamê te û meta te!",
+                      "Di Gulanê de.",
+                      "Di Hezîranê de."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Mamê te jî tê?",
-                    "voice": "hamo",
-                    "prompt": "Mamê te jî tê?",
-                    "options": [
-                      "Erê, mamê min û meta min tên!",
-                      "Erê, di Gulanê de.",
-                      "Na, di Hezîranê de."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -1742,27 +1738,27 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Meta min ji bazarê her tiştî dikire, û ez her tiştî dixwim!",
+                    "say": "Meta min ji bazarê goşt, masî û pîvaz dikire, û ez her tiştî dixwim!",
                     "voice": "hamo",
-                    "prompt": "Meta min ji bazarê her tiştî dikire, û ez her tiştî dixwim!",
+                    "prompt": "Meta min ji bazarê goşt, masî û pîvaz dikire, û ez her tiştî dixwim!",
                     "accepted": [
-                      "My aunt buys everything at the market, and I eat everything!",
-                      "My aunt buys everything from the market, and I eat everything!",
-                      "My aunt buys everything at the market and I eat everything!"
+                      "My aunt buys meat, fish and onions at the market, and I eat everything!",
+                      "My aunt buys meat, fish and onions from the market, and I eat everything!",
+                      "My aunt buys meat, fish and onions at the market and I eat everything!"
                     ]
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "cue": "say it to one person",
+                    "cue": "to one person",
                     "prompt": "Give them bread!",
                     "options": [
                       "Nan bide wan!",
@@ -1773,7 +1769,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1789,15 +1785,31 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Mamê min û meta min tên: xwarina wan gelek e!",
-                      "Mamê min û meta min tên: xwarina wan gelek e",
-                      "Mamê min û meta min tên xwarina wan gelek e"
+                      "Mamê min û meta min tên, û xwarina wan gelek e.",
+                      "Mamê min û meta min tên û xwarina wan gelek e.",
+                      "Mamê min û meta min tên, û xwarina wan gelek e",
+                      "Mamê min û meta min tên û xwarina wan gelek e"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Tell me, what would you like?",
+                    "accepted": [
+                      "Bibêje, tu çi dixwazî?",
+                      "Bibêje, tu çi dixwazî",
+                      "Bibêje tu çi dixwazî",
+                      "Bibêje tu çi dixwazî?"
                     ]
                   }
                 },
@@ -1807,8 +1819,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Bixwe! Vexwe! Bide min! Bibêje!",
-                    "reference": "Bixwe! Vexwe! Bide min! Bibêje!"
+                    "prompt": "Ji kerema xwe, avê bide min.",
+                    "reference": "Ji kerema xwe, avê bide min."
                   }
                 },
                 {
@@ -1963,8 +1975,8 @@
                     "prompt": "Tu jî ji diya xwe ditirsî?",
                     "options": [
                       "Erê, ez jî ditirsim!",
-                      "Erê, ez li cem im.",
-                      "Meçe!"
+                      "Na, ez li hundir im.",
+                      "Pîroz be!"
                     ],
                     "correctIndex": 0
                   }
@@ -1987,8 +1999,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Çayek, û çar şekir!",
-                        "en": "A tea, and four sugars!"
+                        "text": "Çayek bi çar şekiran, ji kerema xwe!",
+                        "en": "A tea with four sugars, please!"
                       },
                       {
                         "speaker": 1,
@@ -2037,8 +2049,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Spas! Tu hevalekî baş î.",
-                        "en": "Thank you! You’re a good friend."
+                        "text": "Spas! Destê te sax be.",
+                        "en": "Thanks! Bless you."
                       }
                     ],
                     "prompt": "Edûl çi dibêje?",
@@ -2071,13 +2083,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Masî? Ez ji masiyan ditirsim!",
+                    "say": "Tu ji kûçikan ditirsî?",
                     "voice": "hamo",
-                    "prompt": "Masî? Ez ji masiyan ditirsim!",
+                    "prompt": "Tu ji kûçikan ditirsî?",
                     "options": [
-                      "Xem meke, ew şîv e!",
-                      "Meçe bazarê!",
-                      "Spî û reş."
+                      "Na, ez natirsim.",
+                      "Meçe!",
+                      "Ez li cem Lorînê me."
                     ],
                     "correctIndex": 0
                   }
@@ -2131,8 +2143,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Meke! Meçe! Xem meke!",
-                    "reference": "Meke! Meçe! Xem meke!"
+                    "prompt": "Metirse, ez li cem te me.",
+                    "reference": "Metirse, ez li cem te me."
                   }
                 },
                 {
@@ -2199,7 +2211,7 @@
                     "accepted": [
                       "This is the other half of our photo!",
                       "This is half of our photo!",
-                      "This is the half of our photo!"
+                      "Here is the other half of our photo!"
                     ]
                   }
                 },
@@ -2276,7 +2288,7 @@
                     "voice": "hamo",
                     "prompt": "Li pişt wêneyê, soza du zarokan heye.",
                     "options": [
-                      "On the back of the photo is a promise of two children.",
+                      "On the back of the photo is a promise from two children.",
                       "On the back of the photo is a letter from my mother.",
                       "On the back of the photo are two apples."
                     ],
@@ -2326,18 +2338,18 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Soza bavê me: li Newrozê, dîsa li cem me.",
-                        "en": "Our father’s promise: at Newroz, with us again."
+                        "text": "Soza bavê me ye ku li Newrozê ew dîsa tê cem me.",
+                        "en": "It’s our father’s promise that at Newroz he will come to us again."
                       },
                       {
                         "speaker": 1,
-                        "text": "Bavê te radibe… ew li wêneyê dinêre.",
-                        "en": "Your father is getting up… he’s looking at the photo."
+                        "text": "Bavê te radibe û li wêneyê dinêre.",
+                        "en": "Your father gets up and looks at the photo."
                       },
                       {
                         "speaker": 0,
-                        "text": "Belê. Ew dikene. Ew dizane.",
-                        "en": "Yes. He smiles. He knows."
+                        "text": "Belê, ew dikene, ji ber ku ew dizane.",
+                        "en": "Yes, he smiles, because he knows."
                       },
                       {
                         "speaker": 1,
@@ -2346,8 +2358,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Fermo. Meke, meke… hêdî!",
-                        "en": "Here you are. Careful, careful… gently!"
+                        "text": "Fermo. Meke, hêdî!",
+                        "en": "Here you are. Careful, gently!"
                       },
                       {
                         "speaker": 1,
@@ -2356,8 +2368,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Na. Ev wêne ji bo we jî xweş e.",
-                        "en": "No. This photo is lovely for you too."
+                        "text": "Na, lê ev wêne sî salî ye!",
+                        "en": "No, but this photo is thirty years old!"
                       }
                     ],
                     "prompt": "Li ser wêneyê kî hene?",
@@ -2437,9 +2449,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Lorîn dibêje: Werin hundir, meçin! Wêneyê kevn li vir e.",
-                      "Lorîn dibêje: Werin hundir, meçin! Wêneyê kevn li vir e",
-                      "Lorîn dibêje Werin hundir meçin! Wêneyê kevn li vir e"
+                      "Lorîn dibêje: Meçin, werin hundir! Wêneyekî kevn ji bo we heye.",
+                      "Lorîn dibêje meçin, werin hundir! Wêneyekî kevn ji bo we heye.",
+                      "Lorîn dibêje: Meçin, werin hundir! Wêneyekî kevn ji bo we heye",
+                      "Lorîn dibêje Meçin werin hundir! Wêneyekî kevn ji bo we heye"
                     ]
                   }
                 },
@@ -2449,8 +2462,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Werin, rûnin! Wêneyê kevn li vir e.",
-                    "reference": "Werin, rûnin! Wêneyê kevn li vir e."
+                    "prompt": "Sî sal in ku ev wêne li cem Lorînê ye.",
+                    "reference": "Sî sal in ku ev wêne li cem Lorînê ye."
                   }
                 },
                 {
@@ -2651,9 +2664,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Pirtûk pêwîst e?",
+                    "say": "Bibêje, pirtûk pêwîst e?",
                     "voice": "hamo",
-                    "prompt": "Pirtûk pêwîst e?",
+                    "prompt": "Bibêje, pirtûk pêwîst e?",
                     "options": [
                       "Erê, gelek pêwîst e!",
                       "Li bin maseyê ye.",
@@ -2749,9 +2762,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Pirtûkê bide min! Bibêje, çi pêwîst e?",
-                      "Pirtûkê bide min! Bibêje, çi pêwîst e",
-                      "Pirtûkê bide min! Bibêje çi pêwîst e"
+                      "Ji kerema xwe, pirtûkê bide min, ew pêwîst e.",
+                      "Ji kerema xwe pirtûkê bide min, ew pêwîst e.",
+                      "Ji kerema xwe, pirtûkê bide min, ew pêwîst e",
+                      "Ji kerema xwe pirtûkê bide min ew pêwîst e"
                     ]
                   }
                 },
@@ -2771,6 +2785,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
+                    "cue": "mother’s sister",
                     "prompt": "I must go to my aunt’s.",
                     "accepted": [
                       "Divê ez biçim cem xaltiya xwe.",
@@ -2815,7 +2830,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Mal tije ye. Diya min dipirse: Kî alîkariyê dike?",
+                    "say": "Mal tije mêvan e. Diya min dipirse: Kî alîkariyê dike?",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2823,11 +2838,11 @@
                         "en": "asks — from pirsîn, to ask"
                       }
                     ],
-                    "prompt": "Mal tije ye. Diya min dipirse: Kî alîkariyê dike?",
+                    "prompt": "Mal tije mêvan e. Diya min dipirse: Kî alîkariyê dike?",
                     "options": [
-                      "The house is full. My mother asks: Who is helping?",
+                      "The house is full of guests. My mother asks: Who is helping?",
                       "The house is empty. My mother says: Nobody is helping.",
-                      "The house is full. My sister asks: Who is eating?"
+                      "The house is full of guests. My sister asks: Who is eating?"
                     ],
                     "correctIndex": 0
                   }
@@ -2837,11 +2852,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Kî dikare alîkariyê bike?",
+                    "say": "Tu dikarî alîkariyê bikî?",
                     "voice": "hamo",
-                    "prompt": "Kî dikare alîkariyê bike?",
+                    "prompt": "Tu dikarî alîkariyê bikî?",
                     "options": [
-                      "Ez dikarim!",
+                      "Belê, ez dikarim!",
                       "Ez jî dipirsim.",
                       "Meçe!"
                     ],
@@ -3053,8 +3068,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Destûr heye? Dibe ku… piştî alîkariyê!",
-                      "Destûr heye? Dibe ku… piştî alîkariyê"
+                      "Destûr heye? Dibe ku, piştî alîkariyê!",
+                      "Destûr heye? Dibe ku piştî alîkariyê!",
+                      "Destûr heye? Dibe ku, piştî alîkariyê",
+                      "Destûr heye? Dibe ku piştî alîkariyê"
                     ]
                   }
                 },
@@ -3204,8 +3221,8 @@
                     "prompt": "Tu çîrokan dixwînî?",
                     "options": [
                       "Erê, ez ji çîrokan hez dikim!",
-                      "Erê, ez çîrok im.",
-                      "Derî veke."
+                      "Derî veke!",
+                      "Gotina pêşiyan."
                     ],
                     "correctIndex": 0
                   }
@@ -3299,8 +3316,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Pêwîst e! Bila ew bixwîne û bibêje: Şaş e, şaş e!",
-                        "en": "It is! Let him read it and say: Wrong, wrong!"
+                        "text": "Pêwîst e! Bila ew bixwîne û bikene.",
+                        "en": "It is! Let him read it and laugh."
                       }
                     ],
                     "prompt": "Gotinên pirtûkê ji ku ne?",
@@ -3333,13 +3350,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nîvro firoşkar derî digire: xewa wî tê!",
+                    "say": "Nîvro firoşkar derî digire, ji ber ku xewa wî tê.",
                     "voice": "hamo",
-                    "prompt": "Nîvro firoşkar derî digire: xewa wî tê!",
+                    "prompt": "Nîvro firoşkar derî digire, ji ber ku xewa wî tê.",
                     "options": [
-                      "At noon the bookseller closes the door: he’s sleepy!",
-                      "At noon the bookseller opens the door: he’s hungry!",
-                      "In the evening the bookseller closes the door: he’s sleepy!"
+                      "At noon the seller closes the door, because he’s sleepy.",
+                      "At noon the seller opens the door, because he’s hungry.",
+                      "In the evening the seller closes the door, because he’s sleepy."
                     ],
                     "correctIndex": 0
                   }
@@ -3349,13 +3366,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Kî derî vedike?",
+                    "say": "Gotina mêran yek e!",
                     "voice": "hamo",
-                    "prompt": "Kî derî vedike?",
+                    "prompt": "Gotina mêran yek e!",
                     "options": [
-                      "Firoşkarê bi simbêlê spî.",
-                      "Piştî firavînê.",
-                      "Gotina pêşiyan."
+                      "Belê, soz soz e.",
+                      "Derî veke!",
+                      "Piştî firavînê."
                     ],
                     "correctIndex": 0
                   }
@@ -3442,13 +3459,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bavê min dikene: Nîvê gotinan ji min in, nîv ji gund!",
+                    "say": "Bavê min dikene: Nîvê gotinan ji min in, nîv jî ji gund!",
                     "voice": "hamo",
-                    "prompt": "Bavê min dikene: Nîvê gotinan ji min in, nîv ji gund!",
+                    "prompt": "Bavê min dikene: Nîvê gotinan ji min in, nîv jî ji gund!",
                     "options": [
-                      "My father laughs: Half of the sayings are mine, half are the village’s!",
+                      "My father laughs: Half of the sayings are mine, and half are the village’s!",
                       "My father laughs: Half of the book is new, half is old!",
-                      "My father cries: Half of the sayings are mine, half are the village’s!"
+                      "My father cries: Half of the sayings are mine, and half are the village’s!"
                     ],
                     "correctIndex": 0
                   }
@@ -3463,8 +3480,8 @@
                     "prompt": "Bavê min zêde dixwîne!",
                     "options": [
                       "Lê ew ji çîrokan hez dike!",
-                      "Ez kar im.",
-                      "Bila bê."
+                      "Dibe ku, piştî firavînê.",
+                      "Derî veke!"
                     ],
                     "correctIndex": 0
                   }
@@ -3494,8 +3511,8 @@
                     "voice": "hamo",
                     "prompt": "Her car ew dibêje, û em jî dibêjin.",
                     "options": [
-                      "Every time he says it, we say it too.",
-                      "Sometimes he says it, and we listen.",
+                      "Every time he says one, we say it too.",
+                      "Sometimes he says one, and we listen.",
                       "Every time he reads, we go to sleep."
                     ],
                     "correctIndex": 0
@@ -3510,9 +3527,9 @@
                     "voice": "hamo",
                     "prompt": "Xaltiya min li pirtûkê digere û dipirse: Ev ji ku ye?",
                     "accepted": [
-                      "My aunt looks for the book and asks: Where is this from?",
-                      "My aunt looks for the book and asks: Where does this come from?",
-                      "My aunt is looking for the book and asks: Where is it from?"
+                      "My aunt looks through the book and asks: Where is this from?",
+                      "My aunt looks through the book and asks: Where does this come from?",
+                      "My aunt is looking through the book and asks: Where is it from?"
                     ]
                   }
                 },
@@ -3521,13 +3538,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ji dikana kevn, li kolana mezin.",
+                    "say": "Ew ji dikana kevn e, li kolana mezin.",
                     "voice": "hamo",
-                    "prompt": "Ji dikana kevn, li kolana mezin.",
+                    "prompt": "Ew ji dikana kevn e, li kolana mezin.",
                     "options": [
-                      "From the old shop, on the big street.",
-                      "From the new shop, on the small street.",
-                      "From the old school, on the big street."
+                      "It’s from the old shop, on the big street.",
+                      "It’s from the new shop, on the small street.",
+                      "It’s from the old school, on the big street."
                     ],
                     "correctIndex": 0
                   }
@@ -3552,13 +3569,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Jin û mêr, zarok jî, fêr dibin.",
+                    "say": "Jin, mêr û zarok, em hemû fêr dibin.",
                     "voice": "hamo",
-                    "prompt": "Jin û mêr, zarok jî, fêr dibin.",
+                    "prompt": "Jin, mêr û zarok, em hemû fêr dibin.",
                     "options": [
-                      "Women and men, and children too, are learning.",
+                      "Women, men and children, we’re all learning.",
                       "Only the children are learning.",
-                      "Women and men are going to sleep."
+                      "Women, men and children, we’re all going to sleep."
                     ],
                     "correctIndex": 0
                   }
@@ -3574,7 +3591,7 @@
                     "options": [
                       "Lê bavê te dibêje: Yek jî!",
                       "Alîkarî pêwîst e.",
-                      "Ez gund im."
+                      "Ez li gund im."
                     ],
                     "correctIndex": 0
                   }
@@ -3636,6 +3653,7 @@
                     "voice": "hamo",
                     "accepted": [
                       "Bavê min dibêje: Yek jî! Û ew deh dixwîne.",
+                      "Bavê min dibêje yek jî! Û ew deh dixwîne.",
                       "Bavê min dibêje: Yek jî! Û ew deh dixwîne",
                       "Bavê min dibêje Yek jî! Û ew deh dixwîne"
                     ]
@@ -3660,8 +3678,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Niha divê em hemû bibêjin!",
-                    "reference": "Niha divê em hemû bibêjin!"
+                    "prompt": "Gotina mêran yek e!",
+                    "reference": "Gotina mêran yek e!"
                   }
                 },
                 {
@@ -3742,11 +3760,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Nanpêj dibêje: Nanê firneyê germ e!",
+                    "say": "Li firneyê nanpêj nanê germ dide te!",
                     "voice": "hamo",
-                    "prompt": "Nanpêj dibêje: Nanê firneyê germ e!",
+                    "prompt": "Li firneyê nanpêj nanê germ dide te!",
                     "options": [
-                      "Destê te sax be!",
+                      "Destê wî sax be!",
                       "Destûr tune.",
                       "Na, rê dûr e."
                     ],
@@ -3819,7 +3837,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bi taksiyê!",
+                    "say": "Baran taksiyê dixwaze.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -3827,11 +3845,11 @@
                         "en": "taxi"
                       }
                     ],
-                    "prompt": "Bi taksiyê!",
+                    "prompt": "Baran taksiyê dixwaze.",
                     "options": [
-                      "By taxi!",
-                      "By bus!",
-                      "By plane!"
+                      "Baran wants a taxi.",
+                      "Baran wants a plane.",
+                      "Baran wants a train."
                     ],
                     "correctIndex": 0
                   }
@@ -3883,8 +3901,8 @@
                     "voice": "hamo",
                     "prompt": "Bi peyatî? Rê dûr e!",
                     "options": [
-                      "Rast e, lê li ser rê baxçe hene!",
-                      "Erê, ez trên im.",
+                      "Rast e, lê li ser rê baxçe û pez hene!",
+                      "Bi trênê.",
                       "Bi xatirê te!"
                     ],
                     "correctIndex": 0
@@ -3958,9 +3976,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Carinan bi trênê, carinan bi taksiyê!",
-                      "Carinan bi trênê, carinan bi taksiyê",
-                      "Carinan bi trênê carinan bi taksiyê"
+                      "Carinan em bi trênê diçin, carinan bi taksiyê.",
+                      "Carinan em bi trênê diçin carinan bi taksiyê.",
+                      "Carinan em bi trênê diçin, carinan bi taksiyê",
+                      "Carinan em bi trênê diçin carinan bi taksiyê"
                     ]
                   }
                 },
@@ -3970,8 +3989,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Çavên Hevalo dibêjin: Herin, bi peyatî!",
-                    "reference": "Çavên Hevalo dibêjin: Herin, bi peyatî!"
+                    "prompt": "Çavên Hevalo dibêjin: Bi peyatî herin!",
+                    "reference": "Çavên Hevalo dibêjin: Bi peyatî herin!"
                   }
                 },
                 {
@@ -4058,7 +4077,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Çiqas tişt!",
+                    "say": "Li ber derî çiqas tişt hene!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -4066,11 +4085,11 @@
                         "en": "how much, how many, how far"
                       }
                     ],
-                    "prompt": "Çiqas tişt!",
+                    "prompt": "Li ber derî çiqas tişt hene!",
                     "options": [
-                      "So many things!",
-                      "So few things!",
-                      "Whose things?"
+                      "How many things there are by the door!",
+                      "How few things there are by the door!",
+                      "Whose things are by the door?"
                     ],
                     "correctIndex": 0
                   }
@@ -4101,14 +4120,14 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Wey, çiqas tişt li vir in!",
+                    "ask": "reply",
+                    "say": "Kîjan selik ya te ye?",
                     "voice": "hamo",
-                    "prompt": "Wey, ___ tişt li vir in!",
+                    "prompt": "Kîjan selik ya te ye?",
                     "options": [
-                      "çiqas",
-                      "kîjan",
-                      "kê"
+                      "Ya biçûk.",
+                      "Ji dibistanê.",
+                      "Ez li vir im."
                     ],
                     "correctIndex": 0
                   }
@@ -4139,20 +4158,36 @@
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Tu wî nas dikî?",
+                    "ask": "missing",
+                    "say": "Mêrek min nas dike.",
                     "voice": "hamo",
-                    "prompt": "Tu wî nas dikî?",
+                    "prompt": "Mêrek min nas ___.",
                     "options": [
-                      "Erê, ji dibistanê!",
-                      "Erê, ew ya min e.",
-                      "Kîjan otobûs?"
+                      "dike",
+                      "dikim",
+                      "dibe"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Ez wî nas dikim!",
+                    "voice": "hamo",
+                    "prompt": "Ez wî nas dikim!",
+                    "options": [
+                      "Ji ku derê?",
+                      "Na, tu şaş î.",
+                      "Kîjan otobûs?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4174,7 +4209,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -4207,48 +4242,32 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Tiştekî Hevalo tune: tenê sêv yên wî ne!",
+                    "say": "Tiştekî Hevalo tune, tenê sêv yên wî ne!",
                     "voice": "hamo",
-                    "prompt": "Tiştekî Hevalo tune: tenê sêv yên wî ne!",
+                    "prompt": "Tiştekî Hevalo tune, tenê sêv yên wî ne!",
                     "accepted": [
-                      "Hevalo has nothing: only the apples are his!",
-                      "Nothing is Hevalo’s: only the apples are his!",
+                      "Hevalo has nothing, only the apples are his!",
+                      "Nothing is Hevalo’s, only the apples are his!",
                       "Hevalo has nothing; only the apples are his!"
                     ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Zarok li ber derî dilîzin, û tiştek winda dibe!",
-                    "voice": "hamo",
-                    "prompt": "Zarok li ber derî dilîzin, û tiştek winda dibe!",
-                    "options": [
-                      "The children play by the door, and something gets lost!",
-                      "The children sleep by the door, and nothing gets lost!",
-                      "The children play by the door, and Hevalo gets lost!"
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Lorîn telefonî te dike: Tu li ku yî?",
+                    "ask": "meaning",
+                    "say": "Ev selika mezin ya kê ye? Ya diya min e!",
                     "voice": "hamo",
-                    "prompt": "Lorîn telefonî te dike: Tu li ku yî?",
+                    "prompt": "Ev selika mezin ya kê ye? Ya diya min e!",
                     "options": [
-                      "Ez li kolanê me: mêrek min nas dike!",
-                      "Bajar xweşik e.",
-                      "Şaş e, ya min e."
+                      "Whose is this big basket? It’s my mother’s!",
+                      "Which is the big basket? It’s my mother’s!",
+                      "Whose is this big basket? It’s my sister’s!"
                     ],
                     "correctIndex": 0
                   }
@@ -4260,9 +4279,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Mêrek min nas dike. Ew pirtûka gotinên pêşiyan vedike: ya kê ye?",
-                      "Mêrek min nas dike. Ew pirtûka gotinên pêşiyan vedike: ya kê ye",
-                      "Mêrek min nas dike. Ew pirtûka gotinên pêşiyan vedike ya kê ye"
+                      "Lorîn telefonî min dike û dibêje: Tu li ku yî? Çiqas dereng e!",
+                      "Lorîn telefonî min dike û dibêje, tu li ku yî? Çiqas dereng e!",
+                      "Lorîn telefonî min dike û dibêje: Tu li ku yî? Çiqas dereng e",
+                      "Lorîn telefonî min dike û dibêje Tu li ku yî? Çiqas dereng e"
                     ]
                   }
                 },
@@ -4302,7 +4322,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nûçe dibêje: Sibe rêya çiyê girtî dibe.",
+                    "say": "Nûçe dibêjin ku sibe rêya çiyê girtî dibe.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -4314,11 +4334,11 @@
                         "en": "closed"
                       }
                     ],
-                    "prompt": "Nûçe dibêje: Sibe rêya çiyê girtî dibe.",
+                    "prompt": "Nûçe dibêjin ku sibe rêya çiyê girtî dibe.",
                     "options": [
-                      "The news says: Tomorrow the mountain road will close.",
-                      "The news says: Tomorrow the mountain road will open.",
-                      "The baker says: Tomorrow the mountain road will close."
+                      "The news says the mountain road will close tomorrow.",
+                      "The news says the mountain road will open tomorrow.",
+                      "The baker says the mountain road will close tomorrow."
                     ],
                     "correctIndex": 0
                   }
@@ -4393,8 +4413,8 @@
                     "prompt": "Rê vekirî ye?",
                     "options": [
                       "Erê, niha vekirî ye.",
-                      "Na, ez girtî me.",
-                      "Nûçe ji bo kê ye?"
+                      "Bi taksiyê.",
+                      "Sibe, zû."
                     ],
                     "correctIndex": 0
                   }
@@ -4448,13 +4468,13 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Xalo, nûçe çi dibêje?",
-                        "en": "Uncle, what does the news say?"
+                        "text": "Nûçe çi dibêjin?",
+                        "en": "What does the news say?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Nûçe dibêje: sibe rêya çiyê girtî dibe.",
-                        "en": "The news says: tomorrow the mountain road will close."
+                        "text": "Nûçe dibêjin ku sibe rêya çiyê girtî dibe.",
+                        "en": "The news says the mountain road will close tomorrow."
                       },
                       {
                         "speaker": 1,
@@ -4478,23 +4498,23 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Kengî?",
-                        "en": "When?"
+                        "text": "Em kengî diçin?",
+                        "en": "When do we leave?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Di demjimêr şeşan de. Dem tune ji bo xewê!",
+                        "text": "Di demjimêr şeşan de. Ji bo xewê dem tune!",
                         "en": "At six o’clock. There’s no time for sleep!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Tu şiyar dibî? Bîra te tê?",
-                        "en": "Will you wake up? Will you remember?"
+                        "text": "Tu dikarî zû şiyar bibî?",
+                        "en": "Can you wake up early?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez sê demjimêran amade dikim! Tu dikarî li wan binêrî?",
-                        "en": "I’m setting three clocks! Can you check them?"
+                        "text": "Telefona min, telefona Lorînê û demjimêra diya min amade ne. Tu dikarî li wan binêrî?",
+                        "en": "My phone, Lorîn’s phone and my mother’s clock are all set. Can you check them?"
                       },
                       {
                         "speaker": 1,
@@ -4536,13 +4556,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nanpêj nanê germ dide me: ji bo rê!",
+                    "say": "Nanpêj ji bo rê nanê germ dide me.",
                     "voice": "hamo",
-                    "prompt": "Nanpêj nanê germ dide me: ji bo rê!",
+                    "prompt": "Nanpêj ji bo rê nanê germ dide me.",
                     "options": [
-                      "The baker gives us warm bread: for the road!",
-                      "The baker sells us cold bread: for dinner!",
-                      "The driver gives us warm bread: for the road!"
+                      "The baker gives us warm bread for the road.",
+                      "The baker sells us cold bread for dinner.",
+                      "The driver gives us warm bread for the road."
                     ],
                     "correctIndex": 0
                   }
@@ -4552,12 +4572,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Soza kê?",
+                    "say": "Ev soza kê ye?",
                     "voice": "hamo",
-                    "prompt": "Soza kê?",
+                    "prompt": "Ev soza kê ye?",
                     "options": [
                       "Soza bavê te ye!",
-                      "Soza girtî ye.",
+                      "Rê girtî ye.",
                       "Bi taksiyê."
                     ],
                     "correctIndex": 0
@@ -4569,12 +4589,16 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The news says: the road is open.",
+                    "prompt": "The news says the road is open.",
                     "accepted": [
-                      "Nûçe dibêje: rê vekirî ye.",
-                      "Nûçe dibêje: rê vekirî ye",
-                      "Nûçe dibêje rê vekirî ye",
-                      "Nûçe dibêje rê vekirî ye."
+                      "Nûçe dibêjin ku rê vekirî ye.",
+                      "Nûçe dibêjin ku rê vekirî ye",
+                      "Nûçe dibêjin rê vekirî ye.",
+                      "Nûçe dibêjin rê vekirî ye",
+                      "Nûçe dibêje ku rê vekirî ye.",
+                      "Nûçe dibêje ku rê vekirî ye",
+                      "Nûçe dibêje rê vekirî ye.",
+                      "Nûçe dibêje rê vekirî ye"
                     ]
                   }
                 },
@@ -4586,6 +4610,7 @@
                     "voice": "hamo",
                     "accepted": [
                       "Sibehê, berî çivîkan, em radibin û dibezin!",
+                      "Sibehê berî çivîkan em radibin û dibezin!",
                       "Sibehê, berî çivîkan, em radibin û dibezin",
                       "Sibehê berî çivîkan em radibin û dibezin"
                     ]
@@ -4597,8 +4622,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Hinek nan, hinek penîr… û em vedigerin!",
-                    "reference": "Hinek nan, hinek penîr… û em vedigerin!"
+                    "prompt": "Em hinek nan û penîr digirin û vedigerin.",
+                    "reference": "Em hinek nan û penîr digirin û vedigerin."
                   }
                 },
                 {
@@ -4627,13 +4652,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Demjimêr pênc e, û ez şiyar im!",
+                    "say": "Nûçe dibêjin ku rê vekirî ye, lê trên tune.",
                     "voice": "hamo",
-                    "prompt": "Demjimêr pênc e, û ez şiyar im!",
+                    "prompt": "Nûçe dibêjin ku rê vekirî ye, lê trên tune.",
                     "options": [
-                      "It’s five o’clock, and I’m awake!",
-                      "It’s five o’clock, and I’m asleep!",
-                      "It’s nine o’clock, and I’m awake!"
+                      "The news says the road is open, but there’s no train.",
+                      "The news says the road is closed, and there’s no train.",
+                      "The news says the road is open, and there’s a train."
                     ],
                     "correctIndex": 0
                   }
@@ -4643,13 +4668,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Cara yekem, ez ne dereng im: ne pênc xulek jî!",
+                    "say": "Demjimêr pênc e, û cara yekem e ku ez ne dereng im!",
                     "voice": "hamo",
-                    "prompt": "Cara yekem, ez ne dereng im: ne pênc xulek jî!",
+                    "prompt": "Demjimêr pênc e, û cara yekem e ku ez ne dereng im!",
                     "options": [
-                      "For the first time, I’m not late: not even five minutes!",
-                      "For the first time, I’m late: five minutes!",
-                      "Every time, I’m not late: not even five minutes!"
+                      "It’s five o’clock, and it’s the first time I’m not late!",
+                      "It’s five o’clock, and it’s the first time I’m late!",
+                      "It’s nine o’clock, and it’s the second time I’m not late!"
                     ],
                     "correctIndex": 0
                   }
@@ -4674,13 +4699,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Tiştên te amade ne?",
+                    "say": "Kîjan selik ya min e?",
                     "voice": "hamo",
-                    "prompt": "Tiştên te amade ne?",
+                    "prompt": "Kîjan selik ya min e?",
                     "options": [
-                      "Belê, hemû tişt amade ne!",
-                      "Ez tişt im.",
-                      "Bazar girtî ye."
+                      "Ya mezin!",
+                      "Bi peyatî.",
+                      "Ji firneyê."
                     ],
                     "correctIndex": 0
                   }
@@ -4723,11 +4748,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Ten tickets, please!",
+                    "prompt": "How much is the ticket?",
                     "options": [
-                      "Deh bilêt, ji kerema xwe!",
-                      "Deh bilêtan, ji kerema xwe!",
-                      "Deh bilêtek, ji kerema xwe!"
+                      "Bilêt çiqas e?",
+                      "Bilêt kîjan e?",
+                      "Bilêt kê ye?"
                     ],
                     "correctIndex": 0
                   }
@@ -4757,8 +4782,8 @@
                     "voice": "hamo",
                     "prompt": "Li Newrozê bavê min tê Sêvanê!",
                     "options": [
-                      "Belê? Wey, gelek xweş e!",
-                      "Bi balafirê, bi peyatî.",
+                      "Wey, gelek xweş e!",
+                      "Bi balafirê.",
                       "Ez nizanim."
                     ],
                     "correctIndex": 0
@@ -4799,6 +4824,22 @@
                 },
                 {
                   "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Bavê min dibêje: Soza min tê bîra te?",
+                    "voice": "hamo",
+                    "prompt": "Bavê min dibêje: Soza min tê bîra te?",
+                    "options": [
+                      "My father says: Do you remember my promise?",
+                      "My father says: Do you know my birthday?",
+                      "My mother says: Do you remember my promise?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -4811,21 +4852,22 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "I’m phoning Nazê: we’re coming!",
+                    "prompt": "I’m phoning Nazê to say we’re coming.",
                     "accepted": [
-                      "Ez telefonî Nazê dikim: Em tên!",
-                      "Ez telefonî Nazê dikim: Em tên",
-                      "Ez telefonî Nazê dikim Em tên"
+                      "Ez telefonî Nazê dikim û dibêjim ku em tên.",
+                      "Ez telefonî Nazê dikim û dibêjim ku em tên",
+                      "Ez telefonî Nazê dikim û dibêjim em tên.",
+                      "Ez telefonî Nazê dikim û dibêjim em tên"
                     ]
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4841,7 +4883,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -4851,17 +4893,17 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The minibus goes slowly up the mountain.",
+                    "prompt": "We’re going back by minibus, not by taxi.",
                     "accepted": [
-                      "Minîbûs hêdî hêdî diçe çiyê.",
-                      "Minîbûs hêdî hêdî diçe çiyê",
-                      "Minîbûs hêdî diçe çiyê.",
-                      "Minîbûs hêdî diçe çiyê"
+                      "Em bi minîbûsê vedigerin, ne bi taksiyê.",
+                      "Em bi minîbûsê vedigerin, ne bi taksiyê",
+                      "Em bi minîbûsê vedigerin ne bi taksiyê",
+                      "Em bi minîbûsê vedigerin, ne bi taksiyê!"
                     ]
                   }
                 }

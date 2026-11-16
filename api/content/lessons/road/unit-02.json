@@ -28,28 +28,6 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ev wêne ye.",
-                    "voice": "hamo",
-                    "prompt": "Ev wêne ye.",
-                    "options": [
-                      "This is a photo.",
-                      "This is a door.",
-                      "Who is this?"
-                    ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "wêne",
-                        "en": "picture, photo"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 2,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
                     "say": "Ev bavê min e.",
                     "voice": "hamo",
                     "prompt": "Ev bavê min e.",
@@ -68,18 +46,18 @@
                   }
                 },
                 {
-                  "position": 3,
+                  "position": 2,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Were! Ev wêneyê bavê min e."
+                      "Were! Ev bavê min e."
                     ]
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 3,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -101,7 +79,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -117,7 +95,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -127,7 +105,7 @@
                     "options": [
                       "This is my mother.",
                       "This is my father.",
-                      "This is my house."
+                      "This is my tea."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -139,22 +117,24 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "reply",
+                    "say": "Ev kî ye?",
                     "voice": "hamo",
-                    "prompt": "This is my father’s photo.",
+                    "prompt": "Ev kî ye?",
                     "options": [
-                      "Ev wêneyê bavê min e.",
-                      "Ev wêne bavê min e.",
-                      "Ev bavê wêneyê min e."
+                      "Diya te ye.",
+                      "Bavê te ye.",
+                      "Çaya te ye."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "the woman in the photo"
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -176,24 +156,7 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Ev kî ye?",
-                    "voice": "hamo",
-                    "prompt": "Ev kî ye?",
-                    "options": [
-                      "Diya te ye.",
-                      "Bavê te ye.",
-                      "Çay sar e."
-                    ],
-                    "correctIndex": 0,
-                    "cue": "the woman in the photo"
-                  }
-                },
-                {
-                  "position": 10,
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -202,30 +165,90 @@
                     "prompt": "Bavê min li Kobaniyê ye. Diya min jî.",
                     "accepted": [
                       "My father is in Kobanî. My mother too.",
-                      "My father is in Kobanî. My mother is too.",
                       "My father is in Kobanî, and my mother too.",
-                      "My father is in Kobanî. So is my mother."
+                      "My father is in Kobanî. So is my mother.",
+                      "My father is in Kobanî. My mother is too."
                     ]
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Ev diya min e. Navê wê Edûl e.",
+                    "ask": "meaning",
+                    "say": "Ev wêneyê bavê min e.",
                     "voice": "hamo",
-                    "prompt": "Ev diya min e. Navê ___ Edûl e.",
+                    "prompt": "Ev wêneyê bavê min e.",
                     "options": [
-                      "wê",
-                      "wî",
-                      "te"
+                      "This is a photo of my father.",
+                      "This is my father’s house.",
+                      "This is my father’s tea."
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "wêne",
+                        "en": "picture, photo"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Her name is Edûl.",
+                    "options": [
+                      "Navê wê Edûl e.",
+                      "Navê wî Edûl e.",
+                      "Navê wê Edûl ye."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Ev wêneyê diya min e."
+                    ]
+                  }
+                },
+                {
                   "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "His name is Ibrahîm.",
+                    "accepted": [
+                      "Navê wî Ibrahîm e."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Bavê te çawa ye?",
+                    "voice": "hamo",
+                    "prompt": "Bavê te çawa ye?",
+                    "options": [
+                      "Ew baş e, spas.",
+                      "Ew bavê min e.",
+                      "Navê wî Ibrahîm e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -250,35 +273,11 @@
                         "right": "her"
                       },
                       {
-                        "left": "kî",
-                        "right": "who"
+                        "left": "min",
+                        "right": "my"
                       }
                     ],
                     "voice": "hamo"
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Her name is Edûl.",
-                    "accepted": [
-                      "Navê wê Edûl e."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "His name is Ibrahîm.",
-                    "accepted": [
-                      "Navê wî Ibrahîm e."
-                    ]
                   }
                 },
                 {
@@ -288,7 +287,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ev wêneyê bavê min e. Navê wî Ibrahîm e."
+                      "Çaya te sar e? Fermo, çayeke germ."
                     ]
                   }
                 },
@@ -298,8 +297,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ev diya min e. Navê wê Edûl e.",
-                    "reference": "Ev diya min e. Navê wê Edûl e."
+                    "prompt": "Ev wêneyê diya min e. Navê wê Edûl e.",
+                    "reference": "Ev wêneyê diya min e. Navê wê Edûl e."
                   }
                 }
               ]
@@ -390,9 +389,9 @@
                     "voice": "hamo",
                     "prompt": "Em baş in.",
                     "options": [
-                      "We are well.",
-                      "I am well.",
-                      "You are well."
+                      "We’re fine.",
+                      "I’m fine.",
+                      "You’re fine."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -413,7 +412,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "We are well.",
+                    "prompt": "We’re fine.",
                     "options": [
                       "Em baş in.",
                       "Em baş im.",
@@ -431,8 +430,8 @@
                     "voice": "hamo",
                     "prompt": "Em malbat in!",
                     "options": [
-                      "We are a family!",
-                      "We are well!",
+                      "We’re a family!",
+                      "We’re fine!",
                       "This is my family!"
                     ],
                     "correctIndex": 0,
@@ -448,26 +447,43 @@
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ew li Kobaniyê ne.",
+                    "ask": "reply",
+                    "say": "Ev kî ye?",
                     "voice": "hamo",
-                    "prompt": "Ew li Kobaniyê ne.",
+                    "prompt": "Ev kî ye?",
                     "options": [
-                      "They are in Kobanî.",
-                      "We are in Kobanî.",
-                      "They are from Kobanî."
+                      "Birayê te ye.",
+                      "Xwişka te ye.",
+                      "Bavê te ye."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "Evdila, in the photo"
                   }
                 },
                 {
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Birayê min û xwişka min li Kobaniyê ne.",
+                    "ask": "meaning",
+                    "say": "Malbata min li Kobaniyê ye.",
                     "voice": "hamo",
-                    "prompt": "Birayê min û xwişka min li Kobaniyê ___.",
+                    "prompt": "Malbata min li Kobaniyê ye.",
+                    "options": [
+                      "My family is in Kobanî.",
+                      "My family is from Sêvan.",
+                      "My brother is in Kobanî."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Birayê min û xwişkên min li Kobaniyê ne.",
+                    "voice": "hamo",
+                    "prompt": "Birayê min û xwişkên min li Kobaniyê ___.",
                     "options": [
                       "ne",
                       "in",
@@ -477,54 +493,58 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Malbata min li Kobaniyê ye.",
+                    "say": "Ew li Kobaniyê ne, ez li Sêvanê me.",
                     "voice": "hamo",
-                    "prompt": "Malbata min li Kobaniyê ye.",
+                    "prompt": "Ew li Kobaniyê ne, ez li Sêvanê me.",
                     "accepted": [
-                      "My family is in Kobanî.",
-                      "My family lives in Kobanî."
+                      "They’re in Kobanî, and I’m in Sêvan.",
+                      "They are in Kobanî, and I am in Sêvan.",
+                      "They are in Kobanî, I am in Sêvan.",
+                      "They’re in Kobanî, I’m in Sêvan.",
+                      "They live in Kobanî, and I live in Sêvan.",
+                      "They’re in Kobanî and I’m in Sêvan.",
+                      "They are in Kobanî and I am in Sêvan."
                     ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Ev kî ye?",
-                    "voice": "hamo",
-                    "prompt": "Ev kî ye?",
-                    "options": [
-                      "Birayê te ye.",
-                      "Xwişka te ye.",
-                      "Şev baş!"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "Evdila, in the photo"
                   }
                 },
                 {
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Evdila, Lorîn, Cîhan… û ev ez im!",
+                    "ask": "reply",
+                    "say": "Roj baş! Tu çayê vedixwî?",
                     "voice": "hamo",
-                    "prompt": "Evdila, Lorîn, Cîhan… û ev ez im!",
+                    "prompt": "Roj baş! Tu çayê vedixwî?",
                     "options": [
-                      "Evdila, Lorîn, Cîhan… and this is me!",
-                      "Evdila, Lorîn, Cîhan… and this is my father!",
-                      "Evdila, Lorîn, Cîhan… and who is this?"
+                      "Roj baş! Erê, spas.",
+                      "Şev baş! Erê, spas.",
+                      "Bi xatirê te!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ev malbata min e, û ev ez im!",
+                    "voice": "hamo",
+                    "prompt": "Ev malbata min e, û ev ez im!",
+                    "options": [
+                      "This is my family, and this is me!",
+                      "This is my family, and this is my father!",
+                      "This is my house, and this is me!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -533,17 +553,6 @@
                     "accepted": [
                       "Em malbat in.",
                       "Em malbatek in."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Roj baş, malbat! Fermo, nan û çay."
                     ]
                   }
                 },
@@ -565,8 +574,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ev birayê min e, ev xwişka min e. Em malbat in!",
-                    "reference": "Ev birayê min e, ev xwişka min e. Em malbat in!"
+                    "prompt": "Evdila birayê min e, Lorîn û Cîhan xwişkên min in.",
+                    "reference": "Evdila birayê min e, Lorîn û Cîhan xwişkên min in."
                   }
                 }
               ]
@@ -621,13 +630,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nazê cîrana min e.",
+                    "say": "Ev cîranên min in.",
                     "voice": "hamo",
-                    "prompt": "Nazê cîrana min e.",
+                    "prompt": "Ev cîranên min in.",
                     "options": [
-                      "Nazê is my neighbour.",
-                      "Nazê is my sister.",
-                      "Nazê is my mother."
+                      "These are my neighbours.",
+                      "This is my family.",
+                      "These are my guests."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -658,9 +667,9 @@
                     "voice": "hamo",
                     "prompt": "Tu mêvan î.",
                     "options": [
-                      "You are a guest.",
-                      "You are a neighbour.",
-                      "You are hungry."
+                      "You’re a guest.",
+                      "You’re a neighbour.",
+                      "You’re hungry."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -705,8 +714,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Silav! Hûn bi xêr hatin!",
-                        "en": "Hello! Welcome, all of you! (Nazê, Baran and Hêvî are at the blue gate)"
+                        "text": "Hûn bi xêr hatin!",
+                        "en": "Welcome, all of you! (Nazê, Baran and Hêvî are at the blue gate)"
                       },
                       {
                         "speaker": 1,
@@ -716,32 +725,37 @@
                       {
                         "speaker": 0,
                         "text": "Ev Nazê, Baran û Hêvî ne. Ew cîran in.",
-                        "en": "This is Nazê, Baran and Hêvî. They are neighbours."
+                        "en": "This is Nazê, Baran and Hêvî. They’re our neighbours."
                       },
                       {
                         "speaker": 1,
                         "text": "Silav! Ez mêvan im.",
-                        "en": "Hello! I am a guest."
+                        "en": "Hello! I’m a guest."
                       },
                       {
                         "speaker": 0,
                         "text": "Erê, tu mêvan î. Fermo, nanê Nazê! Germ e.",
-                        "en": "Yes, you are a guest. Here you are, Nazê’s bread! It’s warm."
+                        "en": "Yes, you’re a guest. Here, Nazê’s bread! It’s warm."
                       },
                       {
                         "speaker": 1,
-                        "text": "Û Hevalo? Hevalo jî mêvan e?",
-                        "en": "And Hevalo? Is Hevalo a guest too?"
+                        "text": "Spas! Û Hevalo? Ew jî mêvan e?",
+                        "en": "Thanks! And Hevalo? Is he a guest too?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo? Na… Hevalo sêv dixwaze!",
-                        "en": "Hevalo? No… Hevalo just wants apples! (he lives in the orchard, and eats it)"
+                        "text": "Hevalo? Na, Hevalo sêvan dixwe!",
+                        "en": "Hevalo? No, Hevalo just eats the apples! (he lives in the orchard, and eats it)"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hêvî? Silav, Hêvî!",
-                        "en": "Hêvî? Hello, Hêvî! (she is hiding behind her mother)"
+                        "text": "Silav, Hêvî!",
+                        "en": "Hello, Hêvî! (she is hiding behind her mother)"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hêvî, were! Tu jî mêvan î.",
+                        "en": "Come on, Hêvî! You’re a guest too."
                       },
                       {
                         "speaker": 0,
@@ -751,14 +765,14 @@
                       {
                         "speaker": 1,
                         "text": "Ew baş in, spas.",
-                        "en": "They are well, thanks."
+                        "en": "They’re well, thanks."
                       }
                     ],
-                    "prompt": "Who are Nazê, Baran and Hêvî?",
+                    "prompt": "Is Hevalo a guest, says Hamo?",
                     "options": [
-                      "Hamo’s neighbours",
-                      "Hamo’s family from Kobanî",
-                      "Guests from far away"
+                      "No, he just eats the apples",
+                      "Yes, he is a guest",
+                      "No, he is a neighbour"
                     ],
                     "correctIndex": 0
                   }
@@ -784,13 +798,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hevalo mêvan e? Na… Hevalo sêv dixwaze!",
+                    "say": "Hevalo mêvan e? Na, Hevalo sêvan dixwe!",
                     "voice": "hamo",
-                    "prompt": "Hevalo mêvan e? Na… Hevalo sêv dixwaze!",
+                    "prompt": "Hevalo mêvan e? Na, Hevalo sêvan dixwe!",
                     "accepted": [
-                      "Is Hevalo a guest? No… Hevalo wants apples!",
-                      "Is Hevalo a guest? No… Hevalo wants an apple!",
-                      "Hevalo is a guest? No… Hevalo wants apples!"
+                      "Is Hevalo a guest? No, Hevalo eats the apples!",
+                      "Is Hevalo a guest? No, Hevalo just eats apples!",
+                      "Hevalo, a guest? No, Hevalo eats apples!",
+                      "Is Hevalo a guest? No, Hevalo eats apples!"
                     ]
                   }
                 },
@@ -799,15 +814,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Malbata te çawa ye?",
+                    "say": "Hûn bi xêr hatin!",
                     "voice": "hamo",
-                    "prompt": "Malbata te çawa ye?",
+                    "prompt": "Hûn bi xêr hatin!",
                     "options": [
-                      "Baş e, spas.",
-                      "Ez mêvan im.",
-                      "Bi xêr biçî!"
+                      "Ser çavan!",
+                      "Bi xêr hatin!",
+                      "Şev baş!"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "answer for the neighbours"
                   }
                 },
                 {
@@ -815,13 +831,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bavê te çawa ye? Diya te çawa ye?",
+                    "say": "Diya te û bavê te çawa ne?",
                     "voice": "hamo",
-                    "prompt": "Bavê te çawa ye? Diya te çawa ye?",
+                    "prompt": "Diya te û bavê te çawa ne?",
                     "options": [
-                      "How is your father? How is your mother?",
-                      "Who is your father? Who is your mother?",
-                      "How is my father? How is my mother?"
+                      "How are your mother and father?",
+                      "Who are your mother and father?",
+                      "How are my mother and father?"
                     ],
                     "correctIndex": 0
                   }
@@ -845,7 +861,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ev Hêvî ye. Diya wê Nazê ye."
+                      "Ev Hêvî ye. Navê diya wê Nazê ye."
                     ]
                   }
                 },
@@ -871,10 +887,10 @@
                     "voice": "hamo",
                     "prompt": "Em cîran in, tu mêvan î.",
                     "accepted": [
-                      "We are neighbours, you are a guest.",
+                      "We are neighbours, and you are a guest.",
+                      "We’re neighbours, and you’re a guest.",
                       "We’re neighbours, you’re a guest.",
-                      "We are the neighbours, you are the guest.",
-                      "We’re the neighbours, you’re the guest.",
+                      "We are neighbours, you are a guest.",
                       "We are neighbors, you are a guest.",
                       "We’re neighbors, you’re a guest."
                     ]
@@ -886,8 +902,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Hûn bi xêr hatin! Av heye, çay heye.",
-                    "reference": "Hûn bi xêr hatin! Av heye, çay heye."
+                    "prompt": "Fermo! Nanê Nazê germ e.",
+                    "reference": "Fermo! Nanê Nazê germ e."
                   }
                 }
               ]
@@ -907,9 +923,9 @@
                     "voice": "hamo",
                     "prompt": "Ev kî ye? Ev diya te ye?",
                     "options": [
-                      "Who is this? Is this your mother?",
-                      "What is this? Is this your house?",
-                      "Who is this? Is this my mother?"
+                      "Who’s this? Is this your mother?",
+                      "What’s this? Is this your house?",
+                      "Who’s this? Is this my mother?"
                     ],
                     "correctIndex": 0
                   }
@@ -961,22 +977,6 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Wêne? Wêne tune!",
-                    "voice": "hamo",
-                    "prompt": "Wêne? Wêne tune!",
-                    "options": [
-                      "Photo? There is no photo!",
-                      "Photo? Here is the photo!",
-                      "Photo? The photo is lovely!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
                     "prompt": "Is she your sister?",
@@ -989,18 +989,35 @@
                   }
                 },
                 {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ev kî ye? Ev Hamo ye!",
+                    "voice": "hamo",
+                    "prompt": "Ev kî ye? Ev Hamo ye!",
+                    "options": [
+                      "Who’s this? It’s Hamo!",
+                      "Who’s this? It’s Baran!",
+                      "What’s this? It’s a photo!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
                   "position": 7,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Bi xêr hatin! Fermo, çay û nan.",
+                    "say": "Na, ev birayê min e!",
                     "voice": "hamo",
-                    "prompt": "Bi xêr hatin! Fermo, çay û nan.",
+                    "prompt": "Na, ev birayê min e!",
                     "accepted": [
-                      "Welcome! Here you are, tea and bread.",
-                      "Welcome, everyone! Here you are, tea and bread.",
-                      "Welcome! Here is tea and bread.",
-                      "Welcome! Here’s tea and bread."
+                      "No, that’s my brother!",
+                      "No, that is my brother!",
+                      "No, this is my brother!",
+                      "No, it’s my brother!",
+                      "No, it is my brother!"
                     ]
                   }
                 },
@@ -1009,13 +1026,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ev deriyê mala bavê min e.",
+                    "say": "Wêne? Wêne tune!",
                     "voice": "hamo",
-                    "prompt": "Ev deriyê mala bavê min e.",
+                    "prompt": "Wêne? Wêne tune!",
                     "options": [
-                      "This is the door of my father’s house.",
-                      "This is my father’s photo.",
-                      "This is my mother’s door."
+                      "Photo? What photo?",
+                      "Photo? Here’s the photo!",
+                      "Photo? What a lovely photo!"
                     ],
                     "correctIndex": 0
                   }
@@ -1058,16 +1075,15 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Ev kî ye? Ez nizanim!",
+                    "say": "Tu mêvan î. Tu çi vedixwî?",
                     "voice": "hamo",
-                    "prompt": "Ev kî ye? Ez nizanim!",
+                    "prompt": "Tu mêvan î. Tu çi vedixwî?",
                     "options": [
-                      "Ev tu yî!",
-                      "Ev ez im!",
-                      "Ev bavê min e!"
+                      "Ez avê vedixwim, spas.",
+                      "Ez mêvan im, spas.",
+                      "Tu avê vedixwî."
                     ],
-                    "correctIndex": 0,
-                    "cue": "a boy with no moustache"
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1089,7 +1105,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Na, na! Wêne tune. Fermo, çay!"
+                      "Fermo, avê vexwe! Av sar e."
                     ]
                   }
                 },
@@ -1098,16 +1114,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Tu mêvan î, hûn cîran in, em malbat in!",
+                    "say": "Ev cîranên min in, ew jî malbata min e.",
                     "voice": "hamo",
-                    "prompt": "Tu mêvan î, hûn cîran in, em malbat in!",
+                    "prompt": "Ev cîranên min in, ew jî malbata min e.",
                     "accepted": [
-                      "You are a guest, you are neighbours, we are a family!",
-                      "You’re a guest, you’re neighbours, we’re a family!",
-                      "You are a guest, you are neighbours, we are family!",
-                      "You’re a guest, you’re neighbours, we’re family!",
-                      "You are a guest, you are neighbors, we are family!",
-                      "You’re a guest, you’re neighbors, we’re family!"
+                      "These are my neighbours, and that is my family.",
+                      "These are my neighbours, and that’s my family.",
+                      "These are my neighbors, and that is my family.",
+                      "These are my neighbors, and that’s my family."
                     ]
                   }
                 },
@@ -1127,16 +1141,17 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ev Hamo ye? Erê… ev ez im.",
+                    "ask": "reply",
+                    "say": "Hûn çawa ne?",
                     "voice": "hamo",
-                    "prompt": "Ev Hamo ye? Erê… ev ez im.",
+                    "prompt": "Hûn çawa ne?",
                     "options": [
-                      "Is this Hamo? Yes… it’s me.",
-                      "Is this Hamo’s brother? Yes… it’s Evdila.",
-                      "Is this Hamo? No… it’s my father."
+                      "Em baş in, spas.",
+                      "Ez baş im, spas.",
+                      "Ew li Kobaniyê ne."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "answer for Nazê and her children"
                   }
                 },
                 {
@@ -1145,8 +1160,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Em malbat in, hûn jî malbat in!",
-                    "reference": "Em malbat in, hûn jî malbat in!"
+                    "prompt": "Ev wêneyê bavê min e. Navê wî Ibrahîm e.",
+                    "reference": "Ev wêneyê bavê min e. Navê wî Ibrahîm e."
                   }
                 }
               ]
@@ -1157,7 +1172,7 @@
           "position": 2,
           "titleKu": "Yek, du, sê",
           "titleEn": "One, two, three",
-          "grammarMd": "**Sê sêv.** Three apples. A number comes before the noun, and the noun stays as it is: *yek sêv*, *du mirîşk*, *çar zarok*.\n\n- **Çend?** How many? *Çend mirîşk?* — *Sê mirîşk.* Counting out loud, two and three are *didu* and *sisê*.\n- **Tu çend salî yî?** How old are you? — *Ez şeş salî me.*",
+          "grammarMd": "**Sê sêv.** Three apples. A number comes before the noun, and the noun stays as it is: *yek sêv*, *du mirîşk*, *çar zarok*.\n\n- **Çend?** How many? *Mirîşk çend in?* — *Sê mirîşk in.* Counting out loud, two and three are *didu* and *sisê*.\n- **Tu çend salî yî?** How old are you? — *Ez şeş salî me.*",
           "lessons": [
             {
               "key": "u02s2l1",
@@ -1253,13 +1268,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Yek mirîşk!",
+                    "say": "Yek mirîşk heye.",
                     "voice": "hamo",
-                    "prompt": "Yek mirîşk!",
+                    "prompt": "Yek mirîşk heye.",
                     "options": [
-                      "One hen!",
-                      "Two hens!",
-                      "A hungry hen!"
+                      "There is one hen.",
+                      "There are two hens.",
+                      "There’s no hen."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1286,13 +1301,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Du mirîşk!",
+                    "say": "Ew du mirîşk in.",
                     "voice": "hamo",
-                    "prompt": "Du mirîşk!",
+                    "prompt": "Ew du mirîşk in.",
                     "options": [
-                      "Two hens!",
-                      "One hen!",
-                      "Two apples!"
+                      "Those are two hens.",
+                      "That’s one hen.",
+                      "Those are two apples."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1309,11 +1324,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Two girls and one boy.",
+                    "prompt": "There is one hen.",
                     "options": [
-                      "Du keç û yek kur.",
-                      "Du keçan û yek kur.",
-                      "Keç du û kur yek."
+                      "Yek mirîşk heye.",
+                      "Mirîşk yek heye.",
+                      "Yek mirîşkê heye."
                     ],
                     "correctIndex": 0
                   }
@@ -1323,11 +1338,11 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Yek, du… yek, du, du, yek!",
+                    "say": "Hêvî xwişka Baran e.",
                     "voice": "hamo",
-                    "prompt": "Yek, du… yek, du, du, yek!",
+                    "prompt": "Hêvî xwişka Baran e.",
                     "accepted": [
-                      "One, two… one, two, two, one!"
+                      "Hêvî is Baran’s sister."
                     ]
                   }
                 },
@@ -1336,13 +1351,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Hêvî xwişka Baran e?",
+                    "say": "Hêvî li ku ye?",
                     "voice": "hamo",
-                    "prompt": "Hêvî xwişka Baran e?",
+                    "prompt": "Hêvî li ku ye?",
                     "options": [
-                      "Erê, ew xwişka wî ye.",
-                      "Erê, ew birayê wî ye.",
-                      "Na, ew kur e."
+                      "Ew li malê ye.",
+                      "Ew keç e.",
+                      "Ew du mirîşk in."
                     ],
                     "correctIndex": 0
                   }
@@ -1352,13 +1367,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Mirîşk birçî ne!",
+                    "say": "Du mirîşk birçî ne!",
                     "voice": "hamo",
-                    "prompt": "Mirîşk birçî ne!",
+                    "prompt": "Du mirîşk birçî ne!",
                     "options": [
-                      "The hens are hungry!",
+                      "Two hens are hungry!",
                       "The hens are cold!",
-                      "The hens are well!"
+                      "One hen is hungry!"
                     ],
                     "correctIndex": 0
                   }
@@ -1402,9 +1417,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "This is Nazê’s son.",
+                    "prompt": "This is Nazê’s daughter.",
                     "accepted": [
-                      "Ev kurê Nazê ye."
+                      "Ev keça Nazê ye."
                     ]
                   }
                 },
@@ -1415,7 +1430,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Hêvî keça Nazê ye. Ew xwişka Baran e."
+                      "Baran şîr vedixwe, Hêvî jî."
                     ]
                   }
                 },
@@ -1425,9 +1440,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "One apple, two apples.",
+                    "prompt": "There is one apple.",
                     "accepted": [
-                      "Yek sêv, du sêv."
+                      "Yek sêv heye.",
+                      "Sêvek heye."
                     ]
                   }
                 },
@@ -1437,8 +1453,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Yek mirîşk, du mirîşk!",
-                    "reference": "Yek mirîşk, du mirîşk!"
+                    "prompt": "Ev kurê Nazê ye, ev jî keça wê ye.",
+                    "reference": "Ev kurê Nazê ye, ev jî keça wê ye."
                   }
                 }
               ]
@@ -1451,66 +1467,6 @@
               "exercises": [
                 {
                   "position": 1,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Çend mirîşk?",
-                    "voice": "hamo",
-                    "prompt": "Çend mirîşk?",
-                    "options": [
-                      "How many hens?",
-                      "Which hen?",
-                      "Two hens?"
-                    ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "çend",
-                        "en": "how many"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 2,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Sê mirîşk.",
-                    "voice": "hamo",
-                    "prompt": "Sê mirîşk.",
-                    "options": [
-                      "Three hens.",
-                      "Two hens.",
-                      "One hen."
-                    ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "sê",
-                        "en": "three (sisê when counting)"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Çend mirîşk?",
-                    "voice": "hamo",
-                    "prompt": "Çend mirîşk?",
-                    "options": [
-                      "Sê mirîşk.",
-                      "Ez mirîşk im.",
-                      "Bi xêr hatî!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1532,13 +1488,74 @@
                   }
                 },
                 {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Kî li derî ye?",
+                    "voice": "hamo",
+                    "prompt": "Kî li derî ye?",
+                    "options": [
+                      "Dapîr Şemsê ye.",
+                      "Ev derî ye.",
+                      "Ew sêv e."
+                    ],
+                    "correctIndex": 0,
+                    "cue": "a knock at the blue gate"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Mirîşk çend in?",
+                    "voice": "hamo",
+                    "prompt": "Mirîşk çend in?",
+                    "options": [
+                      "How many hens are there?",
+                      "Where are the hens?",
+                      "Are the hens hungry?"
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "çend",
+                        "en": "how many"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Sê mirîşk in.",
+                    "voice": "hamo",
+                    "prompt": "Sê mirîşk in.",
+                    "options": [
+                      "There are three hens.",
+                      "There are two hens.",
+                      "There is one hen."
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "sê",
+                        "en": "three (sisê when counting)"
+                      }
+                    ]
+                  }
+                },
+                {
                   "position": 5,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Dapîr, hûn bi xêr hatin!"
+                      "Bi xêr hatî, Dapîr!"
                     ]
                   }
                 },
@@ -1547,13 +1564,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Çar mirîşk!",
+                    "say": "Na, çar in!",
                     "voice": "hamo",
-                    "prompt": "Çar mirîşk!",
+                    "prompt": "Na, çar in!",
                     "options": [
-                      "Four hens!",
-                      "Three hens!",
-                      "One hen!"
+                      "No, there are four!",
+                      "No, there are three!",
+                      "Yes, there are four!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1575,7 +1592,7 @@
                     "options": [
                       "sisê",
                       "yek",
-                      "du"
+                      "didu"
                     ],
                     "correctIndex": 0
                   }
@@ -1585,12 +1602,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Çend? Sê? Çar? Ez nizanim!",
+                    "say": "Sê mirîşk in? Na, çar in!",
                     "voice": "hamo",
-                    "prompt": "Çend? Sê? Çar? Ez nizanim!",
+                    "prompt": "Sê mirîşk in? Na, çar in!",
                     "accepted": [
-                      "How many? Three? Four? I don’t know!",
-                      "How many? Three? Four? I do not know!"
+                      "Three hens? No, four!",
+                      "Are there three hens? No, there are four!",
+                      "Three hens? No, there are four!"
                     ]
                   }
                 },
@@ -1636,13 +1654,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Bapîrê te çawa ye?",
+                    "say": "Hûn çend in?",
                     "voice": "hamo",
-                    "prompt": "Bapîrê te çawa ye?",
+                    "prompt": "Hûn çend in?",
                     "options": [
-                      "Ew baş e, spas.",
-                      "Ew çar e.",
-                      "Ez bapîr im."
+                      "Em çar in.",
+                      "Ez çar im.",
+                      "Çar mirîşk in."
                     ],
                     "correctIndex": 0
                   }
@@ -1653,9 +1671,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Grandma, how many hens?",
+                    "prompt": "Grandma, how many hens are there?",
                     "accepted": [
-                      "Dapîr, çend mirîşk?"
+                      "Dapîr, mirîşk çend in?"
                     ]
                   }
                 },
@@ -1664,13 +1682,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Dapîr mêvan e? Na, Dapîr cîran e!",
+                    "say": "Dapîr mêvan e? Na, Dapîr jî cîran e!",
                     "voice": "hamo",
-                    "prompt": "Dapîr mêvan e? Na, Dapîr cîran e!",
+                    "prompt": "Dapîr mêvan e? Na, Dapîr jî cîran e!",
                     "options": [
-                      "Is Grandma a guest? No, Grandma is a neighbour!",
-                      "Is Grandma hungry? No, Grandma is well!",
-                      "Is Grandma a neighbour? No, she is a guest!"
+                      "Is Grandma a guest? No, Grandma is a neighbour too!",
+                      "Is Grandma hungry? No, Grandma is fine!",
+                      "Is Grandma a neighbour? No, she’s a guest!"
                     ],
                     "correctIndex": 0
                   }
@@ -1682,7 +1700,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Çend mirîşk? Yek, didu, sisê, çar… û Hevalo!"
+                      "Mirîşk çend in? Yek, didu, sisê, çar, û Hevalo!"
                     ]
                   }
                 },
@@ -1704,8 +1722,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Dapîr dapîra Sêvanê ye!",
-                    "reference": "Dapîr dapîra Sêvanê ye!"
+                    "prompt": "Bapîrê te çawa ye, Baran?",
+                    "reference": "Bapîrê te çawa ye, Baran?"
                   }
                 }
               ]
@@ -1787,7 +1805,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Hevalo pênc salî ye… û pênc sêv dixwaze!"
+                      "Hevalo pênc salî ye û pênc sêvan dixwe!"
                     ]
                   }
                 },
@@ -1851,50 +1869,50 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Şeş! Ew şeş salî ye.",
-                        "en": "Six! She is six. (Hêvî holds up six fingers)"
+                        "text": "Ew şeş salî ye!",
+                        "en": "She’s six! (Hêvî is shy, so she holds up six fingers and you say it for her)"
                       },
                       {
                         "speaker": 0,
-                        "text": "Şeş salî! Baş e.",
-                        "en": "Six years old! Good for you."
+                        "text": "Şeş salî! Û Hevalo pênc salî ye.",
+                        "en": "Six! And Hevalo is five."
                       },
                       {
                         "speaker": 1,
-                        "text": "Û Hevalo? Ew çend salî ye?",
-                        "en": "And Hevalo? How old is he?"
+                        "text": "Pênc salî? Û ew pênc sêvan dixwe!",
+                        "en": "Five? And he eats five apples!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo pênc salî ye… û pênc sêv dixwaze!",
-                        "en": "Hevalo is five… and he wants five apples!"
+                        "text": "Erê! Hûn çend xwişk û bira ne?",
+                        "en": "He does! How many brothers and sisters are you?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Û tu? Tu çend salî yî?",
-                        "en": "And you? How old are you?"
+                        "text": "Em sê xwişk û bira ne. Û tu?",
+                        "en": "There are three of us. And you?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez? Ez Hamo me! Hûn çend zarok in?",
-                        "en": "Me? I’m Hamo! (he laughs) How many children are there in your family?"
+                        "text": "Em çar xwişk û bira ne.",
+                        "en": "There are four of us. (Hamo, Evdila, Lorîn and Cîhan)"
                       },
                       {
                         "speaker": 1,
-                        "text": "Em sê zarok in.",
-                        "en": "There are three of us children."
+                        "text": "Dapîr, zarokên te çend in?",
+                        "en": "Grandma, how many children do you have?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Sê! Em çar zarok in: ez, Evdila, Lorîn û Cîhan.",
-                        "en": "Three! There are four of us: me, Evdila, Lorîn and Cîhan."
+                        "text": "Yek, didu, sisê, çar, pênc, şeş… gelek in!",
+                        "en": "One, two, three, four, five, six… lots! (Dapîr has run out of fingers)"
                       }
                     ],
-                    "prompt": "How many children are there in Hamo’s family?",
+                    "prompt": "How many brothers and sisters are there in Hamo’s family?",
                     "options": [
                       "Four",
                       "Three",
-                      "Five"
+                      "Six"
                     ],
                     "correctIndex": 0
                   }
@@ -1904,14 +1922,16 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hûn çend zarok in?",
+                    "say": "Hûn çend xwişk û bira ne?",
                     "voice": "hamo",
-                    "prompt": "Hûn çend zarok in?",
+                    "prompt": "Hûn çend xwişk û bira ne?",
                     "accepted": [
-                      "How many children are you?",
-                      "How many children are there in your family?",
-                      "How many children are in your family?",
-                      "How many children are there?"
+                      "How many brothers and sisters are you?",
+                      "How many brothers and sisters do you have?",
+                      "How many sisters and brothers are you?",
+                      "How many brothers and sisters are there?",
+                      "How many of you are there?",
+                      "How many of you’re there?"
                     ]
                   }
                 },
@@ -1920,12 +1940,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Hûn çend zarok in?",
+                    "say": "Hûn çend xwişk û bira ne?",
                     "voice": "hamo",
-                    "prompt": "Hûn çend zarok in?",
+                    "prompt": "Hûn çend xwişk û bira ne?",
                     "options": [
-                      "Em sê zarok in.",
-                      "Ez sê zarok im.",
+                      "Em sê xwişk û bira ne.",
+                      "Ez sê xwişk im.",
                       "Em sê salî ne."
                     ],
                     "correctIndex": 0
@@ -1936,13 +1956,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Dapîr: yek, du, sê, çar, pênc, şeş… gelek!",
+                    "say": "Hêvî, çay germ e! Fermo, şîrê sar.",
                     "voice": "hamo",
-                    "prompt": "Dapîr: yek, du, sê, çar, pênc, şeş… gelek!",
+                    "prompt": "Hêvî, çay germ e! Fermo, şîrê sar.",
                     "options": [
-                      "Grandma: one, two, three, four, five, six… lots!",
-                      "Grandma: six, five, four, three… none!",
-                      "Grandma: one, two, three… thank you!"
+                      "Hêvî, the tea is hot! Here, have some cold milk.",
+                      "Hêvî, the tea is cold! Here, have some hot milk.",
+                      "Hêvî, is the tea hot? Here’s some water."
                     ],
                     "correctIndex": 0
                   }
@@ -1964,32 +1984,26 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Kurê Nazê çend salî ye?",
+                    "say": "Zarokên Nazê çend salî ne?",
                     "voice": "hamo",
-                    "prompt": "Kurê Nazê çend salî ye?",
+                    "prompt": "Zarokên Nazê çend salî ne?",
                     "options": [
-                      "How old is Nazê’s son?",
-                      "How old is Nazê’s daughter?",
-                      "How many sons does Nazê have?"
+                      "How old are Nazê’s children?",
+                      "How many children does Nazê have?",
+                      "Where are Nazê’s children?"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 13,
-                  "type": "multiple_choice",
+                  "type": "listening",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Bi xatirê te!",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Bi ___ te!",
-                    "options": [
-                      "xatirê",
-                      "xêr",
-                      "kurdî"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "said by the one who leaves"
+                    "accepted": [
+                      "Kurê Nazê jî zarok e."
+                    ]
                   }
                 },
                 {
@@ -1998,22 +2012,26 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "How many children are you?",
+                    "prompt": "How old are you?",
                     "accepted": [
-                      "Hûn çend zarok in?"
-                    ],
-                    "cue": "asking about brothers and sisters"
+                      "Tu çend salî yî?"
+                    ]
                   }
                 },
                 {
                   "position": 15,
-                  "type": "listening",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "missing",
+                    "say": "Dapîr, zarokên te çend in?",
                     "voice": "hamo",
-                    "accepted": [
-                      "Hêvî şeş salî ye, Hevalo pênc salî ye."
-                    ]
+                    "prompt": "Dapîr, zarokên te çend ___?",
+                    "options": [
+                      "in",
+                      "ne",
+                      "e"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2022,8 +2040,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Navê te çi ye? Tu çend salî yî?",
-                    "reference": "Navê te çi ye? Tu çend salî yî?"
+                    "prompt": "Tu çawa yî, Hêvî? Tu çend salî yî?",
+                    "reference": "Tu çawa yî, Hêvî? Tu çend salî yî?"
                   }
                 }
               ]
@@ -2039,13 +2057,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Dapîr: pênc mirîşk. Hêvî: na, çar!",
+                    "say": "Mirîşk çend in? Çar in.",
                     "voice": "hamo",
-                    "prompt": "Dapîr: pênc mirîşk. Hêvî: na, çar!",
+                    "prompt": "Mirîşk çend in? Çar in.",
                     "options": [
-                      "Grandma: five hens. Hêvî: no, four!",
-                      "Grandma: four hens. Hêvî: no, five!",
-                      "Grandma: five apples. Hêvî: yes, five!"
+                      "How many hens are there? Four.",
+                      "Where are the hens? In the yard.",
+                      "How many hens are there? Five."
                     ],
                     "correctIndex": 0
                   }
@@ -2072,15 +2090,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Çend mirîşk in?",
+                    "say": "Mirîşk çend in?",
                     "voice": "hamo",
-                    "prompt": "Çend mirîşk in?",
+                    "prompt": "Mirîşk çend in?",
                     "options": [
-                      "Du mirîşk in.",
+                      "Du ne.",
                       "Ez du salî me.",
                       "Mirîşk birçî ne."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "you count two in the yard"
                   }
                 },
                 {
@@ -2090,7 +2109,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Çar sêv? Na… sê sêv! Hevalo?"
+                      "Pênc sêv? Na, çar sêv in. Hevalo!"
                     ]
                   }
                 },
@@ -2121,7 +2140,7 @@
                     "options": [
                       "How old is Baran’s grandfather? I don’t know!",
                       "How is Baran’s grandfather? He is well!",
-                      "Where is Baran’s grandfather? In Kobanî!"
+                      "Where is Baran’s grandfather? I don’t know!"
                     ],
                     "correctIndex": 0
                   }
@@ -2132,11 +2151,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Two hens and four apples.",
+                    "prompt": "Two hens are hungry.",
                     "options": [
-                      "Du mirîşk û çar sêv.",
-                      "Du mirîşk û çar sêvan.",
-                      "Mirîşk du û sêv çar."
+                      "Du mirîşk birçî ne.",
+                      "Du mirîşk birçî ye.",
+                      "Du mirîşkan birçî ne."
                     ],
                     "correctIndex": 0
                   }
@@ -2146,17 +2165,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Bi kurdî çi ye? Mirîşk!",
+                    "say": "Mirîşk, were! Tu birçî yî?",
                     "voice": "hamo",
-                    "prompt": "Bi kurdî çi ye? Mirîşk!",
+                    "prompt": "Mirîşk, were! Tu birçî yî?",
                     "accepted": [
-                      "What is it in Kurdish? Hen!",
-                      "What’s it in Kurdish? Hen!",
-                      "What is it in Kurdish? A hen!",
-                      "What’s it in Kurdish? A hen!",
-                      "How do you say it in Kurdish? Hen!",
-                      "What is it in Kurdish? Chicken!",
-                      "What’s it in Kurdish? Chicken!"
+                      "Come here, hen! Are you hungry?",
+                      "Hen, come here! Are you hungry?",
+                      "Here, hen! Are you hungry?"
                     ]
                   }
                 },
@@ -2198,13 +2213,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Av sar e?",
+                    "say": "Navê keça Nazê çi ye?",
                     "voice": "hamo",
-                    "prompt": "Av sar e?",
+                    "prompt": "Navê keça Nazê çi ye?",
                     "options": [
-                      "Na, germ e.",
-                      "Na, çar mirîşk in.",
-                      "Bi xêr biçî!"
+                      "Navê wê Hêvî ye.",
+                      "Navê wî Hêvî ye.",
+                      "Navê min Hêvî ye."
                     ],
                     "correctIndex": 0
                   }
@@ -2214,13 +2229,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Navê keça Nazê çi ye? Hêvî!",
+                    "say": "Zarok gelek birçî ne!",
                     "voice": "hamo",
-                    "prompt": "Navê keça Nazê çi ye? Hêvî!",
+                    "prompt": "Zarok gelek birçî ne!",
                     "options": [
-                      "What is Nazê’s daughter’s name? Hêvî!",
-                      "Who is Nazê’s son? Baran!",
-                      "How old is Nazê’s daughter? Six!"
+                      "The children are very hungry!",
+                      "The children are very cold!",
+                      "The hens are very hungry!"
                     ],
                     "correctIndex": 0
                   }
@@ -2244,7 +2259,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Yek mirîşk… derî! Na, na! Mirîşk, were!"
+                      "Dapîr, tu çawa yî? Çay heye."
                     ]
                   }
                 },
@@ -2265,11 +2280,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hevalo, sê sêv? Na, du sêv… Hevalo!",
+                    "say": "Navê wê çi ye? Ew çend salî ye?",
                     "voice": "hamo",
-                    "prompt": "Hevalo, sê sêv? Na, du sêv… Hevalo!",
+                    "prompt": "Navê wê çi ye? Ew çend salî ye?",
                     "accepted": [
-                      "Hevalo, three apples? No, two apples… Hevalo!"
+                      "What’s her name? How old is she?",
+                      "What is her name? How old is she?"
                     ]
                   }
                 },
@@ -2308,9 +2324,9 @@
                     "voice": "hamo",
                     "prompt": "Fermo, taştê!",
                     "options": [
-                      "Here you are, breakfast!",
-                      "Here you are, supper!",
-                      "Breakfast is cold!"
+                      "Here’s breakfast!",
+                      "Here’s supper!",
+                      "Is breakfast ready?"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2351,7 +2367,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Taştê heye: nan, penîr û çay."
+                      "Ez nan û penîr dixwim."
                     ]
                   }
                 },
@@ -2383,13 +2399,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Penîr? Hêk?",
+                    "say": "Penîr an hêk?",
                     "voice": "hamo",
-                    "prompt": "Penîr? Hêk?",
+                    "prompt": "Penîr an hêk?",
                     "options": [
                       "Hêk, spas.",
                       "Bi xatirê te!",
-                      "Ez hêk im."
+                      "Taştê tune."
                     ],
                     "correctIndex": 0
                   }
@@ -2421,11 +2437,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Heft hêk, heft mêvan.",
+                    "say": "Heft hêk ji heft mêvanan re.",
                     "voice": "hamo",
-                    "prompt": "Heft hêk, heft ___.",
+                    "prompt": "Heft hêk ji heft ___ re.",
                     "options": [
-                      "mêvan",
+                      "mêvanan",
                       "salî",
                       "sê"
                     ],
@@ -2437,13 +2453,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Heşt hêk!",
+                    "say": "Heşt hêk! Yek ji Hevalo re.",
                     "voice": "hamo",
-                    "prompt": "Heşt hêk!",
+                    "prompt": "Heşt hêk! Yek ji Hevalo re.",
                     "options": [
-                      "Eight eggs!",
-                      "Seven eggs!",
-                      "Eight cheeses!"
+                      "Eight eggs! One for Hevalo.",
+                      "Seven eggs! One for Hevalo.",
+                      "Eight eggs! One for Hamo."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2460,11 +2476,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Seven eggs.",
+                    "prompt": "I’m eating bread and cheese.",
                     "options": [
-                      "Heft hêk.",
-                      "Heft hêkan.",
-                      "Hêk heft."
+                      "Ez nan û penîr dixwim.",
+                      "Ez nan û penîr vedixwim.",
+                      "Ez dixwim nan û penîr."
                     ],
                     "correctIndex": 0
                   }
@@ -2474,12 +2490,16 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Heft? Na, heşt! Hêkek ji Hevalo re.",
+                    "say": "Em heft in, an heşt? Ez nizanim!",
                     "voice": "hamo",
-                    "prompt": "Heft? Na, heşt! Hêkek ji Hevalo re.",
+                    "prompt": "Em heft in, an heşt? Ez nizanim!",
                     "accepted": [
-                      "Seven? No, eight! An egg for Hevalo.",
-                      "Seven? No, eight! One egg for Hevalo."
+                      "Are there seven of us, or eight? I don’t know!",
+                      "Are there seven of us, or eight? I do not know!",
+                      "Are we seven or eight? I don’t know!",
+                      "Are we seven or eight? I do not know!",
+                      "Seven of us, or eight? I don’t know!",
+                      "Seven of us, or eight? I do not know!"
                     ]
                   }
                 },
@@ -2488,13 +2508,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Sê zarok: Baran, Hêvî û… Hevalo!",
+                    "say": "Baran, Hêvî û Hevalo sê zarok in!",
                     "voice": "hamo",
-                    "prompt": "Sê zarok: Baran, Hêvî û… Hevalo!",
+                    "prompt": "Baran, Hêvî û Hevalo sê zarok in!",
                     "options": [
-                      "Three children: Baran, Hêvî and… Hevalo!",
-                      "Two children: Baran and Hêvî!",
-                      "Three guests: Nazê, Baran and… Hevalo!"
+                      "Baran, Hêvî and Hevalo are three children!",
+                      "Baran and Hêvî are two children!",
+                      "Baran, Hêvî and Hevalo are three guests!"
                     ],
                     "correctIndex": 0
                   }
@@ -2538,9 +2558,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Breakfast is lovely.",
+                    "prompt": "There are seven of us.",
                     "accepted": [
-                      "Taştê xweş e."
+                      "Em heft in."
                     ]
                   }
                 },
@@ -2551,7 +2571,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Çend hêk? Heşt. Spas!"
+                      "Heşt hêk in. Ev hêka wî ye."
                     ]
                   }
                 },
@@ -2573,8 +2593,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Fermo, taştê! Heft hêk, heşt hêk!",
-                    "reference": "Fermo, taştê! Heft hêk, heşt hêk!"
+                    "prompt": "Roj baş! Fermo, taştê.",
+                    "reference": "Roj baş! Fermo, taştê."
                   }
                 }
               ]
@@ -2612,13 +2632,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Na, na! Baran ne zarok e!",
+                    "say": "Ez ne zarok im!",
                     "voice": "hamo",
-                    "prompt": "Na, na! Baran ne zarok e!",
+                    "prompt": "Ez ne zarok im!",
                     "options": [
-                      "No, no! Baran is not a child!",
-                      "Yes, yes! Baran is a child!",
-                      "No, no! Baran is not hungry!"
+                      "I’m not a child!",
+                      "I’m a child!",
+                      "I’m not hungry!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2644,23 +2664,16 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "picture",
-                    "say": "şîr",
+                    "ask": "missing",
+                    "say": "Ez ne zarok im!",
                     "voice": "hamo",
-                    "prompt": "şîr",
+                    "prompt": "Ez ___ zarok im!",
                     "options": [
-                      "milk",
-                      "yoghurt",
-                      "water",
-                      "tea"
+                      "ne",
+                      "na",
+                      "tune"
                     ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "şîr",
-                        "en": "milk"
-                      }
-                    ]
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2668,13 +2681,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Neh? Na, deh!",
+                    "say": "Hevalo deh sêvan dixwe!",
                     "voice": "hamo",
-                    "prompt": "Neh? Na, deh!",
+                    "prompt": "Hevalo deh sêvan dixwe!",
                     "options": [
-                      "Nine? No, ten!",
-                      "Ten? No, nine!",
-                      "Nine? Yes, nine!"
+                      "Hevalo eats ten apples!",
+                      "Hevalo eats nine apples!",
+                      "Hevalo wants ten apples!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2764,9 +2777,9 @@
                     "voice": "hamo",
                     "prompt": "Şîr vexwe, mast bixwe!",
                     "accepted": [
-                      "Drink milk, eat yoghurt!",
+                      "Drink some milk, eat some yoghurt!",
                       "Drink the milk, eat the yoghurt!",
-                      "Drink some milk, eat some yoghurt!"
+                      "Drink milk, eat yoghurt!"
                     ]
                   }
                 },
@@ -2779,9 +2792,9 @@
                     "voice": "hamo",
                     "prompt": "Baran, tu deh salî yî?",
                     "options": [
-                      "Na, ez ne deh salî me! Ez neh salî me.",
-                      "Na, tu ne deh salî yî!",
-                      "Erê, ez mast im."
+                      "Na, ez neh salî me.",
+                      "Na, tu neh salî yî.",
+                      "Erê, ez zarok im."
                     ],
                     "correctIndex": 0,
                     "cue": "answer as Baran"
@@ -2789,6 +2802,23 @@
                 },
                 {
                   "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Ev bi kurdî çi ye?",
+                    "voice": "hamo",
+                    "prompt": "Ev bi kurdî çi ye?",
+                    "options": [
+                      "Mast.",
+                      "Şîr.",
+                      "Penîr."
+                    ],
+                    "correctIndex": 0,
+                    "cue": "a bowl of yoghurt"
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2800,18 +2830,18 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Pênc, şeş, heft, heşt, neh, deh!"
+                      "Xwişka Baran şeş salî ye, ne pênc."
                     ]
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2823,29 +2853,13 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ev malbata Nazê ye: Nazê, Baran û Hêvî.",
-                    "voice": "hamo",
-                    "prompt": "Ev malbata Nazê ye: Nazê, Baran û Hêvî.",
-                    "options": [
-                      "This is Nazê’s family: Nazê, Baran and Hêvî.",
-                      "These are Nazê’s neighbours: Baran and Hêvî.",
-                      "This is Hamo’s family: Nazê, Baran and Hêvî."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 16,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ev ne şîr e, ev mast e!",
-                    "reference": "Ev ne şîr e, ev mast e!"
+                    "prompt": "Ez ne zarok im! Ez neh salî me.",
+                    "reference": "Ez ne zarok im! Ez neh salî me."
                   }
                 }
               ]
@@ -2988,18 +3002,18 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Spas! Nan gelek xweş e!",
-                        "en": "Thanks! The bread is really good!"
+                        "text": "Spas! Nan gelek xweş e.",
+                        "en": "Thanks! The bread is really good."
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê! Destê te sax be, Nazê!",
-                        "en": "Yes! Bless your hands, Nazê!"
+                        "text": "Erê! Destê wê sax be!",
+                        "en": "It is! Bless her hands!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Destê te sax be!",
-                        "en": "Bless your hands! (you say it to Nazê too, and she smiles)"
+                        "text": "Destê te sax be, Nazê!",
+                        "en": "Bless your hands, Nazê! (you say it to her, and she smiles)"
                       },
                       {
                         "speaker": 0,
@@ -3028,8 +3042,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Spas… Na, na, ez ne tî me!",
-                        "en": "Thanks… No, no, I’m not thirsty any more!"
+                        "text": "Spas! Ez ne tî me.",
+                        "en": "Thanks! I’m not thirsty any more!"
                       }
                     ],
                     "prompt": "Why does Hamo keep filling your glass?",
@@ -3061,13 +3075,15 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Taştê xweş e: heft hêk, penîr û mast!",
+                    "say": "Penîr gelek xweş e. Destê te sax be!",
                     "voice": "hamo",
-                    "prompt": "Taştê xweş e: heft hêk, penîr û mast!",
+                    "prompt": "Penîr gelek xweş e. Destê te sax be!",
                     "accepted": [
-                      "Breakfast is lovely: seven eggs, cheese and yoghurt!",
-                      "The breakfast is lovely: seven eggs, cheese and yoghurt!",
-                      "Breakfast is tasty: seven eggs, cheese and yoghurt!"
+                      "The cheese is really good. Bless your hands!",
+                      "The cheese is very tasty. Thank you!",
+                      "The cheese is delicious. Bless your hands!",
+                      "The cheese is very good. Thank you!",
+                      "The cheese is really good. Thank you!"
                     ]
                   }
                 },
@@ -3076,13 +3092,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nan germ e. Destê wê sax be!",
+                    "say": "Nanê Nazê ye. Destê wê sax be!",
                     "voice": "hamo",
-                    "prompt": "Nan germ e. Destê wê sax be!",
+                    "prompt": "Nanê Nazê ye. Destê wê sax be!",
                     "options": [
-                      "The bread is warm. Bless her hands!",
-                      "The bread is cold. Bless his hands!",
-                      "The bread is warm. Enjoy it!"
+                      "It’s Nazê’s bread. Bless her hands!",
+                      "It’s Nazê’s bread. Bless his hands!",
+                      "It’s Nazê’s bread. Enjoy it!"
                     ],
                     "correctIndex": 0
                   }
@@ -3140,23 +3156,28 @@
                 },
                 {
                   "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ev heşt çay in. Noşî can be!",
+                    "voice": "hamo",
+                    "prompt": "Ev heşt çay in. Noşî can be!",
+                    "options": [
+                      "Here are eight glasses of tea. Enjoy!",
+                      "Here are seven glasses of tea. Enjoy!",
+                      "Eight glasses of tea? Bless your hands!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 16,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
                     "prompt": "Destê te sax be! Nan gelek xweş e.",
                     "reference": "Destê te sax be! Nan gelek xweş e."
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Fermo, av. Noşî can be!"
-                    ]
                   }
                 }
               ]
@@ -3172,13 +3193,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Noşî can be, Hêvî! Noşî can be, Hevalo!",
+                    "say": "Noşî can be, Hevalo!",
                     "voice": "hamo",
-                    "prompt": "Noşî can be, Hêvî! Noşî can be, Hevalo!",
+                    "prompt": "Noşî can be, Hevalo!",
                     "options": [
-                      "Enjoy, Hêvî! Enjoy, Hevalo!",
-                      "Bless your hands, Hêvî! Thanks, Hevalo!",
-                      "Good night, Hêvî! Good night, Hevalo!"
+                      "Enjoy, Hevalo!",
+                      "Bless your hands, Hevalo!",
+                      "Good night, Hevalo!"
                     ],
                     "correctIndex": 0
                   }
@@ -3192,8 +3213,8 @@
                     "voice": "hamo",
                     "prompt": "Tu çi dixwazî? Penîr an hêk?",
                     "options": [
-                      "Ez hêk dixwazim, spas.",
-                      "Ez hêk im, spas.",
+                      "Ez penîr dixwazim, spas.",
+                      "Tu penîr dixwazî.",
                       "Noşî can be!"
                     ],
                     "correctIndex": 0
@@ -3206,7 +3227,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Neh hêk? Deh? Na, heşt hêk!"
+                      "Mast heye, nan jî heye. Noşî can be!"
                     ]
                   }
                 },
@@ -3215,13 +3236,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Hevalo ne birçî ye.",
+                    "say": "Baran neh salî ye, ne deh.",
                     "voice": "hamo",
-                    "prompt": "Hevalo ___ birçî ye.",
+                    "prompt": "Baran neh ___ ye, ne deh.",
                     "options": [
-                      "ne",
-                      "na",
-                      "tune"
+                      "salî",
+                      "çend",
+                      "ne"
                     ],
                     "correctIndex": 0
                   }
@@ -3231,13 +3252,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hevalo, şev baş? Na, na… Roj baş!",
+                    "say": "Hêk tune! Hevalo?",
                     "voice": "hamo",
-                    "prompt": "Hevalo, şev baş? Na, na… Roj baş!",
+                    "prompt": "Hêk tune! Hevalo?",
                     "options": [
-                      "Hevalo, good night? No, no… Good morning!",
-                      "Hevalo, good morning? Yes… good night!",
-                      "Hevalo, goodbye? No… welcome!"
+                      "There are no eggs! Hevalo?",
+                      "Here are the eggs, Hevalo!",
+                      "No apples! Hevalo?"
                     ],
                     "correctIndex": 0
                   }
@@ -3248,11 +3269,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Eight eggs and ten apples.",
+                    "prompt": "Breakfast is lovely, thank you!",
                     "options": [
-                      "Heşt hêk û deh sêv.",
-                      "Heşt hêkan û deh sêvan.",
-                      "Hêk heşt û sêv deh."
+                      "Taştê xweş e, spas!",
+                      "Taştê xweş ye, spas!",
+                      "Taştê e xweş, spas!"
                     ],
                     "correctIndex": 0
                   }
@@ -3262,12 +3283,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hevalo tî ye? Av vexwe, Hevalo!",
+                    "say": "Hevalo tî ye? Avê vexwe, Hevalo!",
                     "voice": "hamo",
-                    "prompt": "Hevalo tî ye? Av vexwe, Hevalo!",
+                    "prompt": "Hevalo tî ye? Avê vexwe, Hevalo!",
                     "accepted": [
                       "Is Hevalo thirsty? Drink some water, Hevalo!",
-                      "Is Hevalo thirsty? Drink water, Hevalo!",
+                      "Is Hevalo thirsty? Drink the water, Hevalo!",
                       "Hevalo is thirsty? Drink some water, Hevalo!"
                     ]
                   }
@@ -3277,13 +3298,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Em cîran in, em malbat in.",
+                    "say": "Malbata Nazê gelek birçî ye!",
                     "voice": "hamo",
-                    "prompt": "Em cîran in, em malbat in.",
+                    "prompt": "Malbata Nazê gelek birçî ye!",
                     "options": [
-                      "We are neighbours, we are family.",
-                      "We are guests, we are hungry.",
-                      "You are neighbours, you are family."
+                      "Nazê’s family is very hungry!",
+                      "Nazê’s family is very thirsty!",
+                      "Nazê’s children are very little!"
                     ],
                     "correctIndex": 0
                   }
@@ -3331,7 +3352,7 @@
                     "prompt": "Penîr xweş e?",
                     "options": [
                       "Erê, gelek xweş e. Destê te sax be!",
-                      "Na, ez ne penîr im.",
+                      "Erê, ez tî me.",
                       "Şev baş!"
                     ],
                     "correctIndex": 0
@@ -3366,13 +3387,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Erê, erê… Hevalo jî hêk dixwaze!",
+                    "say": "Em heft in, û bi Hevalo re heşt!",
                     "voice": "hamo",
-                    "prompt": "Erê, erê… Hevalo jî hêk dixwaze!",
+                    "prompt": "Em heft in, û bi Hevalo re heşt!",
                     "options": [
-                      "Yes, yes… Hevalo wants an egg too!",
-                      "No, no… Hevalo wants cheese!",
-                      "Yes… Hevalo is an egg too!"
+                      "There are seven of us, and eight with Hevalo!",
+                      "There are eight of us, and seven without Hevalo!",
+                      "Seven eggs, and an eighth for Hevalo!"
                     ],
                     "correctIndex": 0
                   }
@@ -3394,13 +3415,15 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Heft hêk, heft nan, heft çay: noşî can be!",
+                    "say": "Ez şîr vedixwim, Hêvî jî mast dixwe.",
                     "voice": "hamo",
-                    "prompt": "Heft hêk, heft nan, heft çay: noşî can be!",
+                    "prompt": "Ez şîr vedixwim, Hêvî jî mast dixwe.",
                     "accepted": [
-                      "Seven eggs, seven breads, seven teas: enjoy!",
-                      "Seven eggs, seven loaves of bread, seven glasses of tea: enjoy!",
-                      "Seven eggs, seven breads, seven teas, enjoy!"
+                      "I’m drinking milk, and Hêvî is eating yoghurt.",
+                      "I am drinking milk, and Hêvî is eating yoghurt.",
+                      "I drink milk, and Hêvî eats yoghurt.",
+                      "I’m drinking milk and Hêvî is eating yoghurt.",
+                      "I am drinking milk and Hêvî is eating yoghurt."
                     ]
                   }
                 },
@@ -3410,8 +3433,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Noşî can be! Destê te sax be!",
-                    "reference": "Noşî can be! Destê te sax be!"
+                    "prompt": "Spas, Nazê! Destê te sax be.",
+                    "reference": "Spas, Nazê! Destê te sax be."
                   }
                 }
               ]
@@ -3464,7 +3487,7 @@
                     "options": [
                       "I have a donkey.",
                       "I want a donkey.",
-                      "I am a donkey."
+                      "I have a dog."
                     ],
                     "correctIndex": 0
                   }
@@ -3531,13 +3554,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Pisîkeke Nazê heye. Ew şîr dixwaze.",
+                    "say": "Pisîkeke Nazê heye.",
                     "voice": "hamo",
-                    "prompt": "Pisîkeke Nazê heye. Ew şîr dixwaze.",
+                    "prompt": "Pisîkeke Nazê heye.",
                     "options": [
-                      "Nazê has a cat. It wants milk.",
-                      "Nazê wants a cat. It wants milk.",
-                      "Nazê is a cat. She wants milk."
+                      "Nazê has a cat.",
+                      "Nazê wants a cat.",
+                      "Nazê has a dog."
                     ],
                     "correctIndex": 0
                   }
@@ -3622,12 +3645,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Bozo mêvan e? Na, Bozo kerekî mezin e!",
+                    "say": "Bozo nan dixwe. Bixwe, Bozo!",
                     "voice": "hamo",
-                    "prompt": "Bozo mêvan e? Na, Bozo kerekî mezin e!",
+                    "prompt": "Bozo nan dixwe. Bixwe, Bozo!",
                     "accepted": [
-                      "Is Bozo a guest? No, Bozo is a big donkey!",
-                      "Bozo is a guest? No, Bozo is a big donkey!"
+                      "Bozo is eating bread. Eat up, Bozo!",
+                      "Bozo is eating the bread. Eat, Bozo!",
+                      "Bozo eats bread. Eat, Bozo!",
+                      "Bozo is eating bread. Eat, Bozo!"
                     ]
                   }
                 },
@@ -3684,7 +3709,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bozo, were! Bozo gelek mezin e."
+                      "Em malbateke mezin in, Bozo, Şêro, Hevalo û ez!"
                     ]
                   }
                 },
@@ -3706,8 +3731,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Neh mirîşkên Dapîrê hene, kerekî min heye!",
-                    "reference": "Neh mirîşkên Dapîrê hene, kerekî min heye!"
+                    "prompt": "Deh mirîşkên Dapîrê hene, kerekî min jî heye!",
+                    "reference": "Deh mirîşkên Dapîrê hene, kerekî min jî heye!"
                   }
                 }
               ]
@@ -3770,6 +3795,23 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
+                    "say": "Hêvî, tu biçûk î?",
+                    "voice": "hamo",
+                    "prompt": "Hêvî, tu biçûk î?",
+                    "options": [
+                      "Na, ez ne biçûk im!",
+                      "Erê, tu biçûk î!",
+                      "Na, ez ne tî me!"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "answer as Hêvî"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "missing",
                     "say": "Kurê Nazê mezin e, keça wê biçûk e.",
                     "voice": "hamo",
@@ -3783,7 +3825,7 @@
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 5,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -3794,7 +3836,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
@@ -3817,23 +3859,23 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Yek şekir, du şekir… pênc şekir!",
+                    "say": "Ez çayê bi pênc şekiran vedixwim.",
                     "voice": "hamo",
-                    "prompt": "Yek şekir, du şekir… pênc şekir!",
+                    "prompt": "Ez çayê bi pênc şekiran vedixwim.",
                     "options": [
-                      "One sugar, two sugars… five sugars!",
-                      "One egg, two eggs… five eggs!",
-                      "One sugar, two sugars… no sugar!"
+                      "I take my tea with five sugars.",
+                      "I take my tea with no sugar.",
+                      "I drink five glasses of tea."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3848,7 +3890,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3856,9 +3898,9 @@
                     "voice": "hamo",
                     "prompt": "Xwarin xweş e!",
                     "options": [
-                      "The food is tasty!",
-                      "The water is cold!",
-                      "The food is little!"
+                      "The food is lovely!",
+                      "The food is hot!",
+                      "Is the food good?"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3870,7 +3912,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
@@ -3880,28 +3922,33 @@
                     "options": [
                       "Erê, gelek xweş e. Destê te sax be!",
                       "Noşî can be!",
-                      "Na, ez xwarin im."
+                      "Na, ez ne biçûk im."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hevalên Baran mezin in.",
+                    "say": "Xwarina Nazê xweş e. Ew cîrana me ye.",
                     "voice": "hamo",
-                    "prompt": "Hevalên Baran mezin in.",
+                    "prompt": "Xwarina Nazê xweş e. Ew cîrana me ye.",
                     "accepted": [
-                      "Baran’s friends are big.",
-                      "Baran’s friends are grown up.",
-                      "The friends of Baran are big."
+                      "Nazê’s food is lovely. She’s our neighbour.",
+                      "Nazê’s food is lovely. She is our neighbour.",
+                      "Nazê’s cooking is lovely. She is our neighbour.",
+                      "Nazê’s cooking is lovely. She’s our neighbour.",
+                      "Nazê’s food is tasty. She’s our neighbour.",
+                      "Nazê’s food is tasty. She is our neighbour.",
+                      "Nazê’s food is lovely. She is our neighbor.",
+                      "Nazê’s food is lovely. She’s our neighbor."
                     ]
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3913,57 +3960,43 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Pênc şekir? Na, gelek şekir! Xwarin xweş e."
+                      "Pênc şekir? Erê, çaya min biçûk e!"
                     ]
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Silav! Xwarin heye. Tu birçî yî?",
-                    "voice": "hamo",
-                    "prompt": "Silav! Xwarin heye. Tu birçî yî?",
-                    "options": [
-                      "Erê, ez gelek birçî me!",
-                      "Ez biçûk im.",
-                      "Şekir heye."
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 14,
-                  "type": "writing",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "reply",
+                    "say": "Hevalê te kî ye?",
                     "voice": "hamo",
-                    "prompt": "Hêvî is little.",
-                    "accepted": [
-                      "Hêvî biçûk e."
-                    ]
+                    "prompt": "Hevalê te kî ye?",
+                    "options": [
+                      "Hevalê min Hevalo ye!",
+                      "Hevalê min biçûk e!",
+                      "Navê min Hêvî ye."
+                    ],
+                    "correctIndex": 0,
+                    "cue": "answer as Hêvî"
                   }
                 },
                 {
                   "position": 15,
-                  "type": "translate",
+                  "type": "writing",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Xwarina me heye, şekirê me heye: noşî can be!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Xwarina me heye, şekirê me heye: noşî can be!",
+                    "prompt": "Come here, Hêvî!",
                     "accepted": [
-                      "We have food, we have sugar: enjoy!",
-                      "There is our food, there is our sugar: enjoy!",
-                      "There’s our food, there’s our sugar: enjoy!",
-                      "We’ve got food, we’ve got sugar: enjoy!"
+                      "Hêvî, were!",
+                      "Were, Hêvî!"
                     ]
                   }
                 },
@@ -3973,8 +4006,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Hevalo heval e! Hevalo hevalekî baş e.",
-                    "reference": "Hevalo heval e! Hevalo hevalekî baş e."
+                    "prompt": "Xwarin heye, şekir jî heye. Noşî can be!",
+                    "reference": "Xwarin heye, şekir jî heye. Noşî can be!"
                   }
                 }
               ]
@@ -4016,8 +4049,8 @@
                     "voice": "hamo",
                     "prompt": "Fermo, şîv!",
                     "options": [
-                      "Here you are, supper!",
-                      "Here you are, breakfast!",
+                      "Here’s supper!",
+                      "Here’s breakfast!",
                       "Supper is cold!"
                     ],
                     "correctIndex": 0,
@@ -4074,7 +4107,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Yek, du, sê… deh! Aferîn!"
+                      "Şêro kûçikekî mezin e. Ew jî şîv dixwaze!"
                     ]
                   }
                 },
@@ -4134,8 +4167,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Şîv! Kerem bikin!",
-                        "en": "Supper! Come, everyone, help yourselves!"
+                        "text": "Fermo, şîv! Kerem bikin!",
+                        "en": "Supper’s ready! Come on, everyone, help yourselves!"
                       },
                       {
                         "speaker": 1,
@@ -4144,13 +4177,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Kerem bike, nan bixwe!",
-                        "en": "Go ahead, have some bread!"
+                        "text": "Hêvî, sêv çend in?",
+                        "en": "Hêvî, how many apples are there?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hêvî: yek, du, sê… deh!",
-                        "en": "Hêvî: one, two, three… ten! (she counts all the way without a mistake)"
+                        "text": "Deh in!",
+                        "en": "Ten! (you say it with her, and she counts every one without a mistake)"
                       },
                       {
                         "speaker": 0,
@@ -4174,13 +4207,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez? Ez ji Kobaniyê me, û ji Sêvanê jî!",
-                        "en": "Me? I’m from Kobanî, and from Sêvan too!"
+                        "text": "Ez ji Kobaniyê me, û ji Sêvanê jî!",
+                        "en": "I’m from Kobanî, and from Sêvan too!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hevalo! Nanê min!",
-                        "en": "Hevalo! My bread! (he has eaten the bread you were holding)"
+                        "text": "Na, Hevalo! Nanê min!",
+                        "en": "No, Hevalo! My bread! (he has eaten the bread you were holding)"
                       },
                       {
                         "speaker": 0,
@@ -4221,10 +4254,10 @@
                     "voice": "hamo",
                     "prompt": "Kerem bikin! Şîv xweş e.",
                     "accepted": [
+                      "Help yourselves! Supper is lovely.",
                       "Please help yourselves! Supper is lovely.",
-                      "Help yourselves, everyone! The supper is lovely.",
-                      "Please, help yourselves! Dinner is lovely.",
-                      "Please help yourselves! Supper is tasty."
+                      "Help yourselves, everyone! Supper is lovely.",
+                      "Please help yourselves! Dinner is lovely."
                     ]
                   }
                 },
@@ -4233,15 +4266,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Tu ji ku derê yî?",
+                    "say": "Bi xatirê te! Şev baş!",
                     "voice": "hamo",
-                    "prompt": "Tu ji ku ___ yî?",
+                    "prompt": "Bi ___ te! Şev baş!",
                     "options": [
-                      "derê",
-                      "çi",
-                      "kî"
+                      "xatirê",
+                      "xêr",
+                      "kurdî"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "Dapîr is going home"
                   }
                 },
                 {
@@ -4264,12 +4298,28 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Şêro kûçikekî mezin e. Ew jî şîv dixwaze!"
+                      "Bi xêr biçî, Dapîr! Şev baş!"
                     ]
                   }
                 },
                 {
                   "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Bapîrê te ji ku derê ye?",
+                    "voice": "hamo",
+                    "prompt": "Bapîrê te ji ku derê ye?",
+                    "options": [
+                      "Ew ji Almanyayê ye.",
+                      "Ew baş e, spas.",
+                      "Ez ji Almanyayê me."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -4281,27 +4331,13 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Tu ji ku derê yî? Ez ji Kobaniyê me.",
-                    "voice": "hamo",
-                    "prompt": "Tu ji ku derê yî? Ez ji Kobaniyê me.",
-                    "accepted": [
-                      "Where are you from? I am from Kobanî.",
-                      "Where are you from? I’m from Kobanî."
-                    ]
-                  }
-                },
-                {
                   "position": 16,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Kerem bike! Şîv heye, çay û şekir jî.",
-                    "reference": "Kerem bike! Şîv heye, çay û şekir jî."
+                    "prompt": "Kerem bike! Şîv heye, şekir jî heye.",
+                    "reference": "Kerem bike! Şîv heye, şekir jî heye."
                   }
                 }
               ]
@@ -4321,9 +4357,9 @@
                     "voice": "hamo",
                     "prompt": "Kerekî min heye, pisîkeke min tune.",
                     "options": [
-                      "I have a donkey, I don’t have a cat.",
-                      "I have a cat, I don’t have a donkey.",
-                      "I want a donkey, I don’t want a cat."
+                      "I have a donkey, but no cat.",
+                      "I have a cat, but no donkey.",
+                      "I want a donkey, not a cat."
                     ],
                     "correctIndex": 0
                   }
@@ -4337,8 +4373,8 @@
                     "voice": "hamo",
                     "prompt": "Pisîkeke te heye?",
                     "options": [
-                      "Na, pisîka min tune.",
-                      "Erê, ez pisîk im.",
+                      "Na, pisîkeke min tune.",
+                      "Na, pisîkeke te tune.",
                       "Aferîn!"
                     ],
                     "correctIndex": 0
@@ -4351,7 +4387,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Du zarokên Nazê hene: kurek û keçek."
+                      "Wêneyên malbata min hene."
                     ]
                   }
                 },
@@ -4366,7 +4402,7 @@
                     "options": [
                       "Hevalo has no apples!",
                       "Hevalo has six apples!",
-                      "Hevalo wants no apples!"
+                      "Hevalo doesn’t want apples!"
                     ],
                     "correctIndex": 0
                   }
@@ -4376,13 +4412,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Kerem bike, Hevalo, sêvek!",
+                    "say": "Hêvî keçeke biçûk e, Baran kurekî mezin e.",
                     "voice": "hamo",
-                    "prompt": "Kerem bike, Hevalo, ___!",
+                    "prompt": "Hêvî keçeke biçûk e, Baran kurekî ___ e.",
                     "options": [
-                      "sêvek",
-                      "pisîk",
-                      "ker"
+                      "mezin",
+                      "biçûk",
+                      "tî"
                     ],
                     "correctIndex": 0
                   }
@@ -4417,8 +4453,8 @@
                       "Hevalo has six apples! I do not have any apples.",
                       "Hevalo has six apples! I have none.",
                       "Hevalo has six apples! I’ve none.",
-                      "Hevalo has six apples! I have no apples left.",
-                      "Hevalo has six apples! I’ve no apples left."
+                      "Now Hevalo has six apples! I have none.",
+                      "Now Hevalo has six apples! I’ve none."
                     ]
                   }
                 },
@@ -4427,13 +4463,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hevalên Hevalo: Bozo û Şêro.",
+                    "say": "Hevalên Hevalo Bozo û Şêro ne.",
                     "voice": "hamo",
-                    "prompt": "Hevalên Hevalo: Bozo û Şêro.",
+                    "prompt": "Hevalên Hevalo Bozo û Şêro ne.",
                     "options": [
-                      "Hevalo’s friends: Bozo and Şêro.",
-                      "Hevalo’s apples: Bozo and Şêro.",
-                      "Hevalo’s family: Nazê and Baran."
+                      "Hevalo’s friends are Bozo and Şêro.",
+                      "Bozo and Şêro are Hamo’s neighbours.",
+                      "Hevalo’s apples are with Bozo and Şêro."
                     ],
                     "correctIndex": 0
                   }
@@ -4476,13 +4512,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Xwarin heye, şîv heye, şekir jî heye. Kerem bike!",
+                    "say": "Xwarin heye, şîv jî heye. Kerem bike!",
                     "voice": "hamo",
-                    "prompt": "Xwarin heye, şîv heye, şekir jî heye. Kerem bike!",
+                    "prompt": "Xwarin heye, şîv jî heye. Kerem bike!",
                     "options": [
                       "Spas! Destê te sax be.",
-                      "Ez şîv im, spas!",
-                      "Pisîkeke min tune."
+                      "Pisîkeke min tune.",
+                      "Bi xêr hatin!"
                     ],
                     "correctIndex": 0
                   }
@@ -4507,7 +4543,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bavê min li Kobaniyê ye. Pisîkeke wî heye."
+                      "Çay heye, şekir tune! Wey!"
                     ]
                   }
                 },
@@ -4516,13 +4552,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Tu ji ku derê yî? Çi heye, çi tune?",
+                    "say": "Şîv sar e? Na, germ e.",
                     "voice": "hamo",
-                    "prompt": "Tu ji ku derê yî? Çi heye, çi tune?",
+                    "prompt": "Şîv sar e? Na, germ e.",
                     "options": [
-                      "Where are you from? What have you got, and what haven’t you?",
-                      "Who are you? Who is here, and who isn’t?",
-                      "How old are you? What is this, and what is that?"
+                      "Is supper cold? No, it’s hot.",
+                      "Is supper hot? No, it’s cold.",
+                      "Is the tea cold? No, it’s hot."
                     ],
                     "correctIndex": 0
                   }
@@ -4544,13 +4580,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hêvî keçeke biçûk e, Baran kurekî mezin e.",
+                    "say": "Mêvanê me ji ku derê ye?",
                     "voice": "hamo",
-                    "prompt": "Hêvî keçeke biçûk e, Baran kurekî mezin e.",
+                    "prompt": "Mêvanê me ji ku derê ye?",
                     "accepted": [
-                      "Hêvî is a little girl, Baran is a big boy.",
-                      "Hêvî is a small girl, Baran is a big boy.",
-                      "Hêvî is a little girl and Baran is a big boy."
+                      "Where is our guest from?",
+                      "Where’s our guest from?"
                     ]
                   }
                 },
@@ -4560,8 +4595,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Kerekî min heye, kûçikekî min heye, sêvên min tune!",
-                    "reference": "Kerekî min heye, kûçikekî min heye, sêvên min tune!"
+                    "prompt": "Ez ne birçî me, spas. Şîv gelek xweş e!",
+                    "reference": "Ez ne birçî me, spas. Şîv gelek xweş e!"
                   }
                 }
               ]

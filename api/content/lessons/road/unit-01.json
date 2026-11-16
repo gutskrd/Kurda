@@ -15,7 +15,7 @@
           "position": 1,
           "titleKu": "Silav!",
           "titleEn": "Hello!",
-          "grammarMd": "**Ez baş im.** I am well. In Kurmancî “am” and “are” are not words of their own: they are short endings after the word they go with.\n\n- **ez … im** after a consonant, **ez … me** after a vowel: *Ez baş im.* · *Ez Hamo me.*\n- **tu … î** after a consonant, **tu … yî** after a vowel: *Tu baş î?* · *Tu çawa yî?*",
+          "grammarMd": "**Ez baş im.** I am well. In Kurmancî “am” and “are” are not words of their own: they are short endings after the word they go with.\n\n- **ez … im** after a consonant, **ez … me** after a vowel: *Ez baş im.* · *Ez Hamo me.*\n- **tu … î** after a consonant, **tu … yî** after a vowel: *Tu baş î?* · *Tu çawa yî?*\n- *Sêv* → **Ez sêvê dixwim.** I’m eating the apple: the verb comes last, and the apple you eat takes **-ê**.",
           "lessons": [
             {
               "key": "u01s1l1",
@@ -73,62 +73,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Silav! Sêv?",
-                    "voice": "hamo",
-                    "prompt": "Silav! Sêv?",
-                    "options": [
-                      "Hello! An apple?",
-                      "Hello! Some bread?",
-                      "Thank you! An apple?"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Erê, erê!",
-                    "voice": "hamo",
-                    "prompt": "Erê, erê!",
-                    "options": [
-                      "Yes, yes!",
-                      "No, no!",
-                      "Hello, hello!"
-                    ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "erê",
-                        "en": "yes"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Silav, Hevalo!"
-                    ]
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
                     "say": "Spas!",
                     "voice": "hamo",
                     "prompt": "Spas!",
                     "options": [
                       "Thanks!",
                       "Hello!",
-                      "Yes!"
+                      "Here you are!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -140,86 +91,105 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Sêv?",
+                    "say": "Silav!",
                     "voice": "hamo",
-                    "prompt": "Sêv?",
+                    "prompt": "Silav!",
                     "options": [
-                      "Erê, spas!",
                       "Silav!",
-                      "Spas, Hevalo!"
+                      "Spas!",
+                      "Silav, Hevalo!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ez sêvê dixwim.",
+                    "voice": "hamo",
+                    "prompt": "Ez sêvê dixwim.",
+                    "options": [
+                      "I’m eating the apple.",
+                      "I want the apple.",
+                      "The apple is mine."
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "ez",
+                        "en": "I"
+                      },
+                      {
+                        "ku": "Ez … dixwim.",
+                        "en": "I eat …, I’m eating …"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Silav, Hevalo!"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Erê, spas!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Erê, spas!",
+                    "prompt": "I’m eating the apple.",
                     "accepted": [
-                      "Yes, thanks!",
-                      "Yes, thank you!",
-                      "Yes please!",
-                      "Yes, please, thank you!"
+                      "Ez sêvê dixwim.",
+                      "Ez sêv dixwim."
                     ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Hevalo sêvê dixwe!",
+                    "voice": "hamo",
+                    "prompt": "Hevalo sêvê dixwe!",
+                    "options": [
+                      "Hevalo is eating the apple!",
+                      "Hevalo wants the apple!",
+                      "Hevalo, eat the apple!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "missing",
+                    "say": "Ez sêvê dixwim.",
                     "voice": "hamo",
-                    "prompt": "Thanks, Hevalo!",
+                    "prompt": "Ez sêvê ___.",
                     "options": [
-                      "Spas, Hevalo!",
-                      "Silav, Hevalo!",
-                      "Erê, Hevalo!"
+                      "dixwim",
+                      "dixwe",
+                      "spas"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Sêv, Hevalo? Erê, erê, erê!",
-                    "voice": "hamo",
-                    "prompt": "Sêv, Hevalo? Erê, erê, erê!",
-                    "options": [
-                      "An apple, Hevalo? Yes, yes, yes!",
-                      "Hello, Hevalo! Yes, yes, yes!",
-                      "An apple, Hevalo? Thanks, thanks!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Sêv? Erê, spas!",
-                    "voice": "hamo",
-                    "prompt": "Sêv? Erê, ___!",
-                    "options": [
-                      "spas",
-                      "silav",
-                      "sêv"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 12,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -232,31 +202,83 @@
                         "right": "apple"
                       },
                       {
-                        "left": "erê",
-                        "right": "yes"
-                      },
-                      {
                         "left": "spas",
                         "right": "thanks"
+                      },
+                      {
+                        "left": "ez",
+                        "right": "I"
+                      },
+                      {
+                        "left": "dixwim",
+                        "right": "I eat"
                       }
                     ],
                     "voice": "hamo"
                   }
                 },
                 {
-                  "position": 13,
-                  "type": "translate",
+                  "position": 11,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Yes, thanks!",
+                    "prompt": "Hevalo is eating the apple!",
+                    "options": [
+                      "Hevalo sêvê dixwe!",
+                      "Hevalo sêvê dixwim!",
+                      "Hevalo dixwe sêvê!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ez jî sêvekê dixwim.",
+                    "voice": "hamo",
+                    "prompt": "Ez jî sêvekê dixwim.",
+                    "options": [
+                      "I’m having an apple too.",
+                      "I want an apple too.",
+                      "Hevalo is having an apple too."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
                     "accepted": [
-                      "Erê, spas!"
+                      "Wey, Hevalo sêvê dixwe!"
                     ]
                   }
                 },
                 {
                   "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Spas! Ez jî sêvekê dixwim.",
+                    "voice": "hamo",
+                    "prompt": "Spas! Ez jî sêvekê dixwim.",
+                    "accepted": [
+                      "Thanks! I’ll have an apple too.",
+                      "Thanks! I am having an apple too.",
+                      "Thanks! I’m having an apple too.",
+                      "Thanks! I’m eating an apple too.",
+                      "Thanks! I am eating an apple too.",
+                      "Thank you! I’ll have an apple too."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -268,74 +290,13 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Sêv? Erê, spas!",
-                    "reference": "Sêv? Erê, spas!"
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "conversation",
-                  "payload": {
-                    "id": "roadu01s1l1a",
-                    "title": "Silav!",
-                    "speakers": [
-                      {
-                        "name": "Hamo",
-                        "character": "hamo"
-                      },
-                      {
-                        "learner": true
-                      }
-                    ],
-                    "lines": [
-                      {
-                        "speaker": 0,
-                        "text": "Silav!",
-                        "en": "Hello!"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Silav!",
-                        "en": "Hello!"
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Sêv?",
-                        "en": "An apple?"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Erê, spas!",
-                        "en": "Yes, thanks!"
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Sêv, Hevalo?",
-                        "en": "An apple, Hevalo?"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Erê, erê, erê!",
-                        "en": "Yes, yes, yes! (you say it for Hevalo, who is nodding so hard his ears flap)"
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Erê, erê… Sêv, sêv, sêv!",
-                        "en": "Yes, yes… Apples, apples, apples! (he laughs and fills your hands)"
-                      }
-                    ],
-                    "prompt": "What do you say when Hamo offers an apple?",
-                    "options": [
-                      "Erê, spas!",
-                      "Silav!",
-                      "Sêv?"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Ez sêvê dixwim.",
+                    "reference": "Ez sêvê dixwim."
                   }
                 }
               ]
@@ -355,16 +316,12 @@
                     "voice": "hamo",
                     "prompt": "Ez Hamo me.",
                     "options": [
-                      "I am Hamo.",
-                      "Hello, Hamo!",
-                      "Thanks, Hamo!"
+                      "I’m Hamo.",
+                      "I’m fine.",
+                      "Hello, Hamo!"
                     ],
                     "correctIndex": 0,
                     "new": [
-                      {
-                        "ku": "ez",
-                        "en": "I"
-                      },
                       {
                         "ku": "im / me",
                         "en": "am (im after a consonant, me after a vowel)"
@@ -388,19 +345,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez baş im.",
+                    "say": "Erê, spas!",
                     "voice": "hamo",
-                    "prompt": "Ez baş im.",
+                    "prompt": "Erê, spas!",
                     "options": [
-                      "I am well.",
-                      "I am Hamo.",
-                      "I am an apple."
+                      "Yes, please!",
+                      "No, thanks!",
+                      "Hello, thanks!"
                     ],
                     "correctIndex": 0,
                     "new": [
                       {
-                        "ku": "baş",
-                        "en": "good, well, fine"
+                        "ku": "erê",
+                        "en": "yes"
                       }
                     ]
                   }
@@ -416,7 +373,7 @@
                     "options": [
                       "me",
                       "im",
-                      "baş"
+                      "erê"
                     ],
                     "correctIndex": 0
                   }
@@ -430,9 +387,9 @@
                     "voice": "hamo",
                     "prompt": "Na, spas.",
                     "options": [
-                      "No, thanks.",
+                      "No, thank you.",
                       "Yes, please.",
-                      "Hello, thanks."
+                      "Thanks, Hevalo."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -448,24 +405,47 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Silav! Ez Hamo me.",
+                    "say": "Sêv?",
                     "voice": "hamo",
-                    "prompt": "Silav! Ez Hamo me.",
+                    "prompt": "Sêv?",
                     "options": [
-                      "Silav!",
                       "Na, spas.",
-                      "Sêv?"
+                      "Silav!",
+                      "Ez Hamo me."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "a third apple: say no politely"
                   }
                 },
                 {
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
+                    "say": "Ez baş im.",
+                    "voice": "hamo",
+                    "prompt": "Ez baş im.",
+                    "options": [
+                      "I’m fine.",
+                      "I’m Hamo.",
+                      "I’m eating."
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "baş",
+                        "en": "good, well, fine"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "I am well.",
+                    "prompt": "I’m fine.",
                     "options": [
                       "Ez baş im.",
                       "Ez baş me.",
@@ -475,39 +455,43 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Na, na! Ez baş im!",
-                    "voice": "hamo",
-                    "prompt": "Na, na! Ez baş im!",
-                    "options": [
-                      "No, no! I am fine!",
-                      "Yes, yes! I am Hamo!",
-                      "No, no! I am an apple!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Sêv? Na, spas.",
+                    "say": "Na, spas. Ez sêvekê dixwim.",
                     "voice": "hamo",
-                    "prompt": "Sêv? Na, spas.",
+                    "prompt": "Na, spas. Ez sêvekê dixwim.",
                     "accepted": [
-                      "An apple? No, thanks.",
-                      "An apple? No, thank you.",
-                      "Apple? No, thanks.",
-                      "Apple? No, thank you."
+                      "No, thanks. I’m eating an apple.",
+                      "No, thanks. I am eating an apple.",
+                      "No thanks, I’m eating an apple.",
+                      "No thanks, I am eating an apple.",
+                      "No, thank you. I’m eating an apple.",
+                      "No, thank you. I am eating an apple.",
+                      "No, thanks. I’m already eating an apple.",
+                      "No, thanks. I am already eating an apple."
                     ]
                   }
                 },
                 {
                   "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Na, Hevalo! Ez sêvê dixwim.",
+                    "voice": "hamo",
+                    "prompt": "Na, Hevalo! Ez sêvê dixwim.",
+                    "options": [
+                      "No, Hevalo! I’m eating the apple.",
+                      "Yes, Hevalo! Eat the apple.",
+                      "No, Hevalo! I’m fine."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -523,31 +507,15 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "No, thanks.",
+                    "prompt": "No, thank you.",
                     "accepted": [
                       "Na, spas."
                     ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Hevalo: erê, erê. Ez: na, spas.",
-                    "voice": "hamo",
-                    "prompt": "Hevalo: erê, erê. Ez: na, spas.",
-                    "options": [
-                      "Hevalo: yes, yes. Me: no, thanks.",
-                      "Hevalo: no, thanks. Me: yes, yes.",
-                      "Hevalo: hello. Me: thanks."
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
@@ -556,20 +524,16 @@
                   "payload": {
                     "pairs": [
                       {
-                        "left": "ez",
-                        "right": "I"
-                      },
-                      {
-                        "left": "baş",
-                        "right": "good, well"
+                        "left": "erê",
+                        "right": "yes"
                       },
                       {
                         "left": "na",
                         "right": "no"
                       },
                       {
-                        "left": "erê",
-                        "right": "yes"
+                        "left": "baş",
+                        "right": "good, well"
                       },
                       {
                         "left": "spas",
@@ -578,6 +542,10 @@
                       {
                         "left": "silav",
                         "right": "hello"
+                      },
+                      {
+                        "left": "ez",
+                        "right": "I"
                       }
                     ],
                     "voice": "hamo"
@@ -590,7 +558,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Sêv? Na, spas. Ez baş im."
+                      "Erê, ez baş im."
                     ]
                   }
                 },
@@ -600,9 +568,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "I am well.",
+                    "prompt": "Yes, please!",
                     "accepted": [
-                      "Ez baş im."
+                      "Erê, spas!"
                     ]
                   }
                 },
@@ -612,8 +580,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Erê, ez baş im. Na, spas!",
-                    "reference": "Erê, ez baş im. Na, spas!"
+                    "prompt": "Na, spas. Ez baş im.",
+                    "reference": "Na, spas. Ez baş im."
                   }
                 }
               ]
@@ -634,8 +602,8 @@
                     "prompt": "Tu baş î?",
                     "options": [
                       "Are you well?",
-                      "I am well.",
-                      "Hello, Hevalo!"
+                      "I’m well.",
+                      "Are you Hamo?"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -677,7 +645,7 @@
                     "options": [
                       "How are you?",
                       "Who are you?",
-                      "Are you an apple?"
+                      "Are you eating?"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -699,7 +667,7 @@
                     "options": [
                       "Ez baş im, spas.",
                       "Tu baş î.",
-                      "Sêv? Na, spas."
+                      "Erê, spas!"
                     ],
                     "correctIndex": 0
                   }
@@ -732,54 +700,6 @@
                 },
                 {
                   "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ez baş im, spas. Û tu?",
-                    "voice": "hamo",
-                    "prompt": "Ez baş im, spas. Û tu?",
-                    "options": [
-                      "I am well, thanks. And you?",
-                      "I am Hamo, thanks. And you?",
-                      "No, thanks. And you?"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Ez baş im. Û tu?",
-                    "voice": "hamo",
-                    "prompt": "Ez baş im. Û tu?",
-                    "options": [
-                      "Ez jî baş im.",
-                      "Na, spas.",
-                      "Tu çawa yî?"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Tu çawa yî?",
-                    "voice": "hamo",
-                    "prompt": "Tu çawa ___?",
-                    "options": [
-                      "yî",
-                      "î",
-                      "im"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu01s1l3a",
@@ -796,45 +716,98 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Silav! Tu çawa yî?",
-                        "en": "Hello! How are you?"
+                        "text": "Silav!",
+                        "en": "Hello!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Silav! Ez baş im, spas. Û tu?",
-                        "en": "Hello! I am well, thanks. And you?"
+                        "text": "Silav!",
+                        "en": "Hello!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez jî baş im, spas.",
-                        "en": "I am well too, thanks."
+                        "text": "Tu çawa yî?",
+                        "en": "How are you?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Û Hevalo?",
-                        "en": "And Hevalo? (he has an apple in each cheek)"
+                        "text": "Ez baş im, spas. Û tu?",
+                        "en": "I’m fine, thanks. And you?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo, tu çawa yî?",
-                        "en": "Hevalo, how are you? (crunch, crunch)"
+                        "text": "Ez jî baş im. Hevalo, tu çawa yî?",
+                        "en": "I’m fine too. Hevalo, how are you?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hevalo? Tu baş î?",
-                        "en": "Hevalo? Are you well? (crunch)"
+                        "text": "Hevalo sêvê dixwe.",
+                        "en": "Hevalo is eating the apple. (no answer, only crunching)"
                       },
                       {
                         "speaker": 0,
-                        "text": "Sêv? Erê. Baş? Erê!",
-                        "en": "Apple? Yes. Well? Yes! (Hamo answers for him, laughing)"
+                        "text": "Tu jî sêvekê dixwî?",
+                        "en": "Will you have an apple too?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Erê, spas!",
+                        "en": "Yes, please!"
                       }
                     ],
                     "prompt": "Why doesn’t Hevalo answer?",
                     "options": [
-                      "His mouth is full of apples.",
+                      "He is busy eating an apple.",
                       "He is asleep.",
-                      "He is far away."
+                      "He doesn’t know you yet."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ez baş im. Û tu?",
+                    "voice": "hamo",
+                    "prompt": "Ez baş im. Û tu?",
+                    "options": [
+                      "I’m fine. And you?",
+                      "I’m Hamo. And you?",
+                      "I’m fine. Thank you."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Ez baş im. Û tu?",
+                    "voice": "hamo",
+                    "prompt": "Ez baş im. Û tu?",
+                    "options": [
+                      "Ez jî baş im.",
+                      "Na, spas.",
+                      "Tu çawa yî?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Tu sêvê dixwî?",
+                    "voice": "hamo",
+                    "prompt": "Tu sêvê dixwî?",
+                    "options": [
+                      "Are you eating the apple?",
+                      "Do you want the apple?",
+                      "Is he eating the apple?"
                     ],
                     "correctIndex": 0
                   }
@@ -856,14 +829,14 @@
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Tu Hevalo yî? Erê!",
+                    "ask": "missing",
+                    "say": "Tu çawa yî?",
                     "voice": "hamo",
-                    "prompt": "Tu Hevalo yî? Erê!",
+                    "prompt": "Tu çawa ___?",
                     "options": [
-                      "Are you Hevalo? Yes!",
-                      "I am Hevalo. Yes!",
-                      "How is Hevalo? Well!"
+                      "yî",
+                      "î",
+                      "im"
                     ],
                     "correctIndex": 0
                   }
@@ -887,7 +860,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ez jî baş im!"
+                      "Ez jî baş im, spas."
                     ]
                   }
                 },
@@ -931,8 +904,8 @@
                     "prompt": "Silav, Hevalo! Tu çawa yî?",
                     "options": [
                       "Hello, Hevalo! How are you?",
-                      "Thanks, Hevalo! Are you well?",
-                      "Hello, Hevalo! Who are you?"
+                      "Hello, Hevalo! Are you eating?",
+                      "Thanks, Hevalo! How are you?"
                     ],
                     "correctIndex": 0
                   }
@@ -942,46 +915,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Silav! Tu baş î?",
+                    "say": "Tu sêvekê dixwî?",
                     "voice": "hamo",
-                    "prompt": "Silav! Tu baş î?",
+                    "prompt": "Tu sêvekê dixwî?",
                     "options": [
-                      "Erê, ez baş im. Û tu?",
-                      "Na, spas.",
-                      "Tu baş î."
+                      "Erê, spas!",
+                      "Ez baş im.",
+                      "Silav!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Hevalo, tu Hamo yî? Erê!",
-                    "voice": "hamo",
-                    "prompt": "Hevalo, tu Hamo yî? Erê!",
-                    "options": [
-                      "Hevalo, are you Hamo? Yes!",
-                      "Hevalo, I am Hamo! Thanks!",
-                      "Hevalo, how are you? No!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Tu çawa yî, Hevalo? Erê!"
-                    ]
-                  }
-                },
-                {
-                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -997,54 +943,78 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 4,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Na, spas. Ez baş im."
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Are you Hevalo?",
+                    "prompt": "Are you having an apple too?",
                     "options": [
-                      "Tu Hevalo yî?",
-                      "Tu Hevalo î?",
-                      "Ez Hevalo yî?"
+                      "Tu jî sêvekê dixwî?",
+                      "Tu jî sêvekê dixwim?",
+                      "Ez jî sêvekê dixwî?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Tu baş î, Hevalo?",
+                    "voice": "hamo",
+                    "prompt": "Tu baş î, Hevalo?",
+                    "options": [
+                      "Are you well, Hevalo?",
+                      "Are you eating, Hevalo?",
+                      "Is that you, Hevalo?"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 7,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Sêv? Na, spas. Ez baş im.",
+                    "ask": "reply",
+                    "say": "Hevalo, tu sêvekê dixwî?",
                     "voice": "hamo",
-                    "prompt": "Sêv? Na, spas. Ez baş im.",
-                    "accepted": [
-                      "An apple? No, thanks. I am fine.",
-                      "An apple? No, thanks. I’m fine.",
-                      "An apple? No, thank you. I am fine.",
-                      "An apple? No, thank you. I’m fine.",
-                      "An apple? No, thanks. I am well.",
-                      "An apple? No, thanks. I’m well.",
-                      "Apple? No, thanks. I am fine.",
-                      "Apple? No, thanks. I’m fine."
-                    ]
+                    "prompt": "Hevalo, tu sêvekê dixwî?",
+                    "options": [
+                      "Erê, spas!",
+                      "Na, spas.",
+                      "Ez Hamo me."
+                    ],
+                    "correctIndex": 0,
+                    "cue": "answer for Hevalo, who loves apples"
                   }
                 },
                 {
                   "position": 8,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Tu sêv î? Erê!",
+                    "ask": "to-english",
+                    "say": "Erê, ez baş im. Û tu?",
                     "voice": "hamo",
-                    "prompt": "Tu sêv î? Erê!",
-                    "options": [
-                      "Are you an apple? Yes!",
-                      "Is this an apple? No!",
-                      "Are you well? Thanks!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Erê, ez baş im. Û tu?",
+                    "accepted": [
+                      "Yes, I’m fine. And you?",
+                      "Yes, I am fine. And you?",
+                      "Yes, I am well. And you?",
+                      "Yes, I’m well. And you?"
+                    ]
                   }
                 },
                 {
@@ -1073,8 +1043,8 @@
                         "right": "thanks"
                       },
                       {
-                        "left": "baş",
-                        "right": "good, well"
+                        "left": "sêv",
+                        "right": "apple"
                       }
                     ],
                     "voice": "hamo"
@@ -1084,17 +1054,16 @@
                   "position": 10,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Sêv? Sêv? Sêv?",
+                    "ask": "missing",
+                    "say": "Na, Hevalo! Ez sêvê dixwim!",
                     "voice": "hamo",
-                    "prompt": "Sêv? Sêv? Sêv?",
+                    "prompt": "Na, Hevalo! Ez sêvê ___!",
                     "options": [
-                      "Na, spas!",
-                      "Erê, erê, erê!",
-                      "Silav!"
+                      "dixwim",
+                      "dixwe",
+                      "dixwî"
                     ],
-                    "correctIndex": 0,
-                    "cue": "your third apple"
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1103,9 +1072,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Yes, I am well.",
+                    "prompt": "No, thanks. I’m fine.",
                     "accepted": [
-                      "Erê, ez baş im."
+                      "Na, spas. Ez baş im.",
+                      "Na, spas, ez baş im."
                     ]
                   }
                 },
@@ -1113,14 +1083,14 @@
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Hevalo, tu baş î?",
+                    "ask": "meaning",
+                    "say": "Hevalo sêvekê dixwe, ez jî.",
                     "voice": "hamo",
-                    "prompt": "Hevalo, tu baş ___?",
+                    "prompt": "Hevalo sêvekê dixwe, ez jî.",
                     "options": [
-                      "î",
-                      "yî",
-                      "im"
+                      "Hevalo is eating an apple, and so am I.",
+                      "Hevalo wants an apple, and so do I.",
+                      "Hevalo is eating my apple."
                     ],
                     "correctIndex": 0
                   }
@@ -1132,7 +1102,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Silav! Ez baş im, spas. Û tu?"
+                      "Tu jî sêvekê dixwî?"
                     ]
                   }
                 },
@@ -1154,21 +1124,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Silav, Hevalo! Tu çawa yî?",
-                    "reference": "Silav, Hevalo! Tu çawa yî?"
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Hevalo, tu çawa yî? Erê!",
-                    "voice": "hamo",
-                    "prompt": "Hevalo, tu çawa yî? Erê!",
-                    "accepted": [
-                      "Hevalo, how are you? Yes!"
-                    ]
+                    "prompt": "Silav! Ez Hamo me. Tu çawa yî?",
+                    "reference": "Silav! Ez Hamo me. Tu çawa yî?"
                   }
                 }
               ]
@@ -1179,7 +1136,7 @@
           "position": 2,
           "titleKu": "Çay û nan",
           "titleEn": "Tea and bread",
-          "grammarMd": "**Ev çay e.** This is tea. “Is” is an ending too: **e** after a consonant, **ye** after a vowel.\n\n- *Ev nan e.* This is bread. · *Çay xweş e.* The tea is nice. · *Ev Hevalo ye.* This is Hevalo.\n- To ask, put **çi** (what) where the answer would be: *Ev çi ye?* What is this? — *Ev sêv e.*",
+          "grammarMd": "**Ev çay e.** This is tea. “Is” is an ending too: **e** after a consonant, **ye** after a vowel.\n\n- *Ev nan e.* This is bread. · *Çay xweş e.* The tea is nice. · *Ev Hevalo ye.* This is Hevalo.\n- To ask, put **çi** (what) where the answer would be: *Ev çi ye?* What is this? — *Ev sêv e.*\n- *Av* → **Ez avê vedixwim.** I drink the water. *Çay* takes **-ê** too (*Ez çayê vedixwim*), but *nan* and *şîr* stay as they are: *Ez nan dixwim.* · *Ez şîr vedixwim.*",
           "lessons": [
             {
               "key": "u01s2l1",
@@ -1197,9 +1154,9 @@
                     "prompt": "çay",
                     "options": [
                       "tea",
-                      "apple",
-                      "house",
-                      "donkey"
+                      "water",
+                      "bread",
+                      "apple"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1215,19 +1172,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Fermo, çay!",
+                    "say": "Ez çayê vedixwim.",
                     "voice": "hamo",
-                    "prompt": "Fermo, çay!",
+                    "prompt": "Ez çayê vedixwim.",
                     "options": [
-                      "Here you are, tea!",
-                      "Tea or water?",
-                      "Thanks for the tea!"
+                      "I’m drinking the tea.",
+                      "I’m eating the bread.",
+                      "I want some tea."
                     ],
                     "correctIndex": 0,
                     "new": [
                       {
-                        "ku": "fermo",
-                        "en": "here you are; please, go ahead"
+                        "ku": "Ez … vedixwim.",
+                        "en": "I drink …, I’m drinking …"
                       }
                     ]
                   }
@@ -1237,53 +1194,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "nan",
-                    "voice": "hamo",
-                    "prompt": "nan",
-                    "options": [
-                      "bread",
-                      "tea",
-                      "apple",
-                      "cat"
-                    ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "nan",
-                        "en": "bread"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Fermo, çay!",
-                    "voice": "hamo",
-                    "prompt": "Fermo, çay!",
-                    "options": [
-                      "Spas!",
-                      "Fermo!",
-                      "Tu çawa yî?"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "picture",
                     "say": "av",
                     "voice": "hamo",
                     "prompt": "av",
                     "options": [
                       "water",
                       "tea",
-                      "bread",
-                      "apple"
+                      "milk",
+                      "bread"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1295,34 +1213,62 @@
                   }
                 },
                 {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ez avê vedixwim.",
+                    "voice": "hamo",
+                    "prompt": "Ez avê ___.",
+                    "options": [
+                      "vedixwim",
+                      "dixwim",
+                      "vedixwe"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "nan",
+                    "voice": "hamo",
+                    "prompt": "nan",
+                    "options": [
+                      "bread",
+                      "cheese",
+                      "apple",
+                      "tea"
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "nan",
+                        "en": "bread"
+                      }
+                    ]
+                  }
+                },
+                {
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Çay an av?",
+                    "say": "Ez nan dixwim.",
                     "voice": "hamo",
-                    "prompt": "Çay an av?",
+                    "prompt": "Ez nan dixwim.",
                     "options": [
-                      "Tea or water?",
-                      "Tea and bread?",
-                      "Water, thank you!"
+                      "I’m eating bread.",
+                      "I’m drinking water.",
+                      "I want bread."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 7,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Fermo, nan!"
-                    ]
-                  }
-                },
-                {
-                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
@@ -1330,11 +1276,34 @@
                     "voice": "hamo",
                     "prompt": "Çay an av?",
                     "options": [
-                      "Çay, spas!",
-                      "Silav!",
-                      "Ez çay im."
+                      "Çay, spas.",
+                      "Ez baş im.",
+                      "Silav!"
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "şîr",
+                    "voice": "hamo",
+                    "prompt": "şîr",
+                    "options": [
+                      "milk",
+                      "water",
+                      "yoghurt",
+                      "tea"
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "şîr",
+                        "en": "milk"
+                      }
+                    ]
                   }
                 },
                 {
@@ -1342,46 +1311,40 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Sêv? Na, Hevalo… nan!",
+                    "say": "Hevalo şîr vedixwe.",
                     "voice": "hamo",
-                    "prompt": "Sêv? Na, Hevalo… nan!",
+                    "prompt": "Hevalo şîr vedixwe.",
                     "options": [
-                      "An apple? No, Hevalo… bread!",
-                      "Bread? Yes, Hevalo… an apple!",
-                      "Water? No, Hevalo… tea!"
+                      "Hevalo is drinking milk.",
+                      "Hevalo is eating bread.",
+                      "Hevalo wants milk."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 10,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Tea or water?",
-                    "options": [
-                      "Çay an av?",
-                      "Çay û av?",
-                      "Çay, av?"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "I’m drinking the water.",
+                    "accepted": [
+                      "Ez avê vedixwim.",
+                      "Ez av vedixwim."
+                    ]
                   }
                 },
                 {
                   "position": 11,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Çay an av?",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Çay ___ av?",
-                    "options": [
-                      "an",
-                      "û",
-                      "na"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "I’m drinking milk.",
+                    "accepted": [
+                      "Ez şîr vedixwim."
+                    ]
                   }
                 },
                 {
@@ -1402,16 +1365,16 @@
                         "right": "water"
                       },
                       {
-                        "left": "fermo",
-                        "right": "here you are"
+                        "left": "şîr",
+                        "right": "milk"
                       },
                       {
-                        "left": "sêv",
-                        "right": "apple"
+                        "left": "vedixwim",
+                        "right": "I drink"
                       },
                       {
-                        "left": "na",
-                        "right": "no"
+                        "left": "dixwim",
+                        "right": "I eat"
                       }
                     ],
                     "voice": "hamo"
@@ -1421,11 +1384,15 @@
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Tu çawa yî? Tu çayê vedixwî?",
                     "voice": "hamo",
-                    "prompt": "Here you are, bread!",
+                    "prompt": "Tu çawa yî? Tu çayê vedixwî?",
                     "accepted": [
-                      "Fermo, nan!"
+                      "How are you? Will you have some tea?",
+                      "How are you? Would you like some tea?",
+                      "How are you? Are you drinking tea?",
+                      "How are you? Do you drink tea?"
                     ]
                   }
                 },
@@ -1436,7 +1403,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Av? Na, spas. Çay!"
+                      "Erê, ez çayê vedixwim."
                     ]
                   }
                 },
@@ -1446,9 +1413,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Water or tea?",
+                    "prompt": "Tea or water?",
                     "accepted": [
-                      "Av an çay?"
+                      "Çay an av?"
                     ]
                   }
                 },
@@ -1458,8 +1425,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Fermo! Çay, nan û av.",
-                    "reference": "Fermo! Çay, nan û av."
+                    "prompt": "Ez nan dixwim, Hevalo şîr vedixwe.",
+                    "reference": "Ez nan dixwim, Hevalo şîr vedixwe."
                   }
                 }
               ]
@@ -1480,7 +1447,7 @@
                     "prompt": "Ev çay e.",
                     "options": [
                       "This is tea.",
-                      "This is bread.",
+                      "This is water.",
                       "Is this tea?"
                     ],
                     "correctIndex": 0,
@@ -1507,7 +1474,7 @@
                     "options": [
                       "What is this?",
                       "Who is this?",
-                      "This is water."
+                      "This is bread."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1528,7 +1495,7 @@
                     "prompt": "Ev çi ye?",
                     "options": [
                       "Ev nan e.",
-                      "Erê, spas.",
+                      "Ev av e.",
                       "Tu baş î?"
                     ],
                     "correctIndex": 0,
@@ -1553,49 +1520,17 @@
                 },
                 {
                   "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ev Hevalo ye!",
-                    "voice": "hamo",
-                    "prompt": "Ev Hevalo ye!",
-                    "options": [
-                      "This is Hevalo!",
-                      "This is an apple!",
-                      "Is this Hevalo?"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Ev Hevalo ye!",
-                    "voice": "hamo",
-                    "prompt": "Ev Hevalo ___!",
-                    "options": [
-                      "ye",
-                      "e",
-                      "yî"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ev çi ye? Ev sêv e."
+                      "Ev şîr e, ji Hevalo re."
                     ]
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1604,7 +1539,7 @@
                     "prompt": "Çay xweş e.",
                     "options": [
                       "The tea is lovely.",
-                      "The tea is water.",
+                      "The tea is hot.",
                       "Is the tea nice?"
                     ],
                     "correctIndex": 0,
@@ -1617,7 +1552,23 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ev Hevalo ye.",
+                    "voice": "hamo",
+                    "prompt": "Ev Hevalo ___.",
+                    "options": [
+                      "ye",
+                      "e",
+                      "yî"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -1632,55 +1583,56 @@
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "translate",
+                  "position": 9,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Nan xweş e, çay xweş e.",
+                    "ask": "meaning",
+                    "say": "Tu çi dixwî?",
                     "voice": "hamo",
-                    "prompt": "Nan xweş e, çay xweş e.",
-                    "accepted": [
-                      "The bread is nice, the tea is nice.",
-                      "The bread is tasty, the tea is tasty.",
-                      "The bread is good, the tea is good.",
-                      "Bread is nice, tea is nice."
-                    ]
+                    "prompt": "Tu çi dixwî?",
+                    "options": [
+                      "What are you eating?",
+                      "What are you drinking?",
+                      "Are you eating?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Tu çi vedixwî?",
+                    "voice": "hamo",
+                    "prompt": "Tu çi vedixwî?",
+                    "options": [
+                      "Ez çayê vedixwim.",
+                      "Ez nan dixwim.",
+                      "Ev çay e."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 11,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Çay xweş e?",
+                    "ask": "to-english",
+                    "say": "Nan xweş e, çay jî xweş e.",
                     "voice": "hamo",
-                    "prompt": "Çay xweş e?",
-                    "options": [
-                      "Erê, xweş e. Spas!",
-                      "Na, ez çay im.",
-                      "Ev çi ye?"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Nan xweş e, çay jî xweş e.",
+                    "accepted": [
+                      "The bread is nice, and so is the tea.",
+                      "The bread is lovely, and the tea is too.",
+                      "The bread is good, and the tea is good too.",
+                      "The bread is tasty, and the tea is tasty too.",
+                      "The bread is nice and the tea is nice too."
+                    ]
                   }
                 },
                 {
                   "position": 12,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ev sêv e? Na, ev Hevalo ye!",
-                    "voice": "hamo",
-                    "prompt": "Ev sêv e? Na, ev Hevalo ye!",
-                    "options": [
-                      "Is this an apple? No, this is Hevalo!",
-                      "This is an apple! Yes, this is Hevalo!",
-                      "Is this tea? No, this is water!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 13,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1692,19 +1644,30 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 13,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hevalo, ev çi ye? Xweş e?",
+                    "say": "Hevalo çi dixwe?",
                     "voice": "hamo",
-                    "prompt": "Hevalo, ev çi ye? Xweş e?",
+                    "prompt": "Hevalo çi dixwe?",
                     "options": [
-                      "Hevalo, what is this? Is it tasty?",
-                      "Hevalo, who is this? Is he nice?",
-                      "Hevalo, is this tea? Is it hot?"
+                      "What is Hevalo eating?",
+                      "What is Hevalo drinking?",
+                      "Is Hevalo eating?"
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Ev çi ye? Ev Hevalo ye!"
+                    ]
                   }
                 },
                 {
@@ -1713,7 +1676,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The bread is nice.",
+                    "prompt": "The bread is lovely.",
                     "accepted": [
                       "Nan xweş e."
                     ]
@@ -1725,8 +1688,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ev çi ye? Ev çay e. Çay xweş e!",
-                    "reference": "Ev çi ye? Ev çay e. Çay xweş e!"
+                    "prompt": "Ez çayê vedixwim. Çay xweş e!",
+                    "reference": "Ez çayê vedixwim. Çay xweş e!"
                   }
                 }
               ]
@@ -1766,7 +1729,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Silav! Bi xêr hatî!"
+                      "Silav, bi xêr hatî!"
                     ]
                   }
                 },
@@ -1779,7 +1742,7 @@
                     "voice": "hamo",
                     "prompt": "Ser çavan!",
                     "options": [
-                      "Thank you! (I’m glad to be here)",
+                      "Thank you, glad to be here!",
                       "Welcome to my home!",
                       "Here you are!"
                     ],
@@ -1803,7 +1766,7 @@
                     "options": [
                       "Ser çavan!",
                       "Bi xêr hatî!",
-                      "Fermo!"
+                      "Ez baş im."
                     ],
                     "correctIndex": 0
                   }
@@ -1813,19 +1776,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Wey! Çay germ e!",
+                    "say": "Fermo, çay.",
                     "voice": "hamo",
-                    "prompt": "Wey! Çay germ e!",
+                    "prompt": "Fermo, çay.",
                     "options": [
-                      "Ouch! The tea is hot!",
-                      "Wow! The tea is lovely!",
-                      "Oh! This is water!"
+                      "Here you are, tea.",
+                      "Tea, please.",
+                      "Is this tea?"
                     ],
                     "correctIndex": 0,
                     "new": [
                       {
-                        "ku": "germ",
-                        "en": "hot, warm"
+                        "ku": "fermo",
+                        "en": "here you are; please, go ahead"
                       }
                     ]
                   }
@@ -1841,13 +1804,35 @@
                     "options": [
                       "hatî",
                       "spas",
-                      "germ"
+                      "çavan"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Wey, çay germ e!",
+                    "voice": "hamo",
+                    "prompt": "Wey, çay germ e!",
+                    "options": [
+                      "Ooh, the tea is hot!",
+                      "Ooh, the tea is lovely!",
+                      "Is the tea hot?"
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "germ",
+                        "en": "hot, warm"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu01s2l3a",
@@ -1864,51 +1849,51 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Silav! Bi xêr hatî!",
-                        "en": "Hello! Welcome! (he has run back to the blue gate and opened it again with a bow)"
+                        "text": "Bi xêr hatî!",
+                        "en": "Welcome! (he has run back to the blue gate, and opens it again with a bow)"
                       },
                       {
                         "speaker": 1,
-                        "text": "Silav! Ser çavan!",
-                        "en": "Hello! Thank you, glad to be here!"
+                        "text": "Ser çavan!",
+                        "en": "Thank you, glad to be here!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Bi xêr hatî, bi xêr hatî! Fermo, çay.",
-                        "en": "Welcome, welcome! Here you are, tea."
+                        "text": "Fermo, çay. Tu nan dixwî?",
+                        "en": "Here you are, tea. Will you have some bread?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Spas! Wey, çay germ e!",
-                        "en": "Thanks! Ouch, the tea is hot!"
+                        "text": "Erê, spas. Wey, çay germ e!",
+                        "en": "Yes, please. Ooh, the tea is hot!"
                       },
                       {
                         "speaker": 0,
                         "text": "Erê, çay germ e. Nan jî germ e.",
-                        "en": "Yes, the tea is hot. The bread is warm too. (he blows on his glass)"
+                        "en": "Yes, the tea is hot. The bread is warm too."
                       },
                       {
                         "speaker": 1,
-                        "text": "Hevalo? Ev çi ye?",
-                        "en": "Hevalo? What is this? (the deer is blowing on the bread)"
+                        "text": "Hevalo nan dixwe!",
+                        "en": "Hevalo is eating the bread! (he blew on it first, very helpfully)"
                       },
                       {
                         "speaker": 0,
-                        "text": "Nan germ e, Hevalo? Spas, Hevalo, spas!",
-                        "en": "Is the bread hot, Hevalo? Thank you, Hevalo, thank you!"
+                        "text": "Hevalo, nan xweş e?",
+                        "en": "Hevalo, is the bread nice? (he nods, chewing)"
                       }
                     ],
-                    "prompt": "How does Hevalo help?",
+                    "prompt": "What does Hevalo do with the bread?",
                     "options": [
-                      "He blows on the bread.",
-                      "He drinks the tea.",
-                      "He opens the gate."
+                      "He eats it.",
+                      "He gives it to you.",
+                      "He drops it in the tea."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -1923,7 +1908,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -1932,14 +1917,15 @@
                     "prompt": "Bi xêr hatî! Fermo, çay û nan.",
                     "accepted": [
                       "Welcome! Here you are, tea and bread.",
+                      "Welcome! Here’s some tea and bread.",
+                      "Welcome! Here is some tea and bread.",
                       "Welcome! Here is tea and bread.",
-                      "Welcome! Here’s tea and bread.",
-                      "Welcome! Here, tea and bread."
+                      "Welcome! Here’s tea and bread."
                     ]
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
@@ -1949,23 +1935,7 @@
                     "options": [
                       "Spas!",
                       "Bi xêr hatî!",
-                      "Ez çay im."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Hevalo, nan germ e?",
-                    "voice": "hamo",
-                    "prompt": "Hevalo, nan germ e?",
-                    "options": [
-                      "Hevalo, is the bread hot?",
-                      "Hevalo, is the tea cold?",
-                      "Hevalo, is this bread?"
+                      "Ev çi ye?"
                     ],
                     "correctIndex": 0
                   }
@@ -1989,7 +1959,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Çay germ e, nan jî germ e."
+                      "Ez çayê vedixwim. Çay germ û xweş e."
                     ]
                   }
                 },
@@ -2007,16 +1977,6 @@
                 },
                 {
                   "position": 15,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Silav! Ser çavan!",
-                    "reference": "Silav! Ser çavan!"
-                  }
-                },
-                {
-                  "position": 16,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2028,7 +1988,18 @@
                       "hatî",
                       "germ"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "the answer to a welcome"
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Bi xêr hatî! Fermo, çay.",
+                    "reference": "Bi xêr hatî! Fermo, çay."
                   }
                 }
               ]
@@ -2044,14 +2015,14 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "çay",
+                    "say": "şîr",
                     "voice": "hamo",
-                    "prompt": "çay",
+                    "prompt": "şîr",
                     "options": [
-                      "tea",
+                      "milk",
                       "water",
-                      "bread",
-                      "apple"
+                      "tea",
+                      "bread"
                     ],
                     "correctIndex": 0
                   }
@@ -2060,14 +2031,14 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ev çay e? Na, ev av e!",
+                    "ask": "reply",
+                    "say": "Tu çayê vedixwî?",
                     "voice": "hamo",
-                    "prompt": "Ev çay e? Na, ev av e!",
+                    "prompt": "Tu çayê vedixwî?",
                     "options": [
-                      "Is this tea? No, this is water!",
-                      "This is tea! Yes, it is hot!",
-                      "Is this water? No, this is bread!"
+                      "Erê, spas!",
+                      "Ev çay e.",
+                      "Bi xêr hatî!"
                     ],
                     "correctIndex": 0
                   }
@@ -2076,14 +2047,14 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Fermo, çay!",
+                    "ask": "meaning",
+                    "say": "Ev çay e? Na, ev av e.",
                     "voice": "hamo",
-                    "prompt": "Fermo, çay!",
+                    "prompt": "Ev çay e? Na, ev av e.",
                     "options": [
-                      "Spas! Çay xweş e.",
-                      "Bi xêr hatî!",
-                      "Ev çi ye?"
+                      "Is this tea? No, it’s water.",
+                      "This is tea. Yes, it’s hot.",
+                      "Is this water? No, it’s milk."
                     ],
                     "correctIndex": 0
                   }
@@ -2093,13 +2064,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Ev çi ye?",
+                    "say": "Şîr ji Hevalo re ye.",
                     "voice": "hamo",
-                    "prompt": "Ev ___ ye?",
+                    "prompt": "Şîr ji Hevalo re ___.",
                     "options": [
-                      "çi",
-                      "çay",
-                      "tu"
+                      "ye",
+                      "e",
+                      "yî"
                     ],
                     "correctIndex": 0
                   }
@@ -2111,7 +2082,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Çay germ e, av xweş e."
+                      "Hevalo nan dixwe, ez çayê vedixwim."
                     ]
                   }
                 },
@@ -2121,81 +2092,66 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Here you are, water!",
+                    "prompt": "The milk is for Hevalo.",
                     "options": [
-                      "Fermo, av!",
-                      "Spas, av!",
-                      "Silav, av!"
+                      "Şîr ji Hevalo re ye.",
+                      "Şîr ji Hevalo re e.",
+                      "Hevalo ji şîr re ye."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Û ev? Ev jî çay e!",
-                    "voice": "hamo",
-                    "prompt": "Û ev? Ev jî çay e!",
-                    "options": [
-                      "And this? This is tea too!",
-                      "And this? This is bread!",
-                      "And you? You are tea too!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hevalo, nan çawa ye? Xweş e?",
+                    "say": "Tu çi vedixwî? Çay an av?",
                     "voice": "hamo",
-                    "prompt": "Hevalo, nan çawa ye? Xweş e?",
+                    "prompt": "Tu çi vedixwî? Çay an av?",
                     "accepted": [
-                      "Hevalo, how is the bread? Is it tasty?",
-                      "Hevalo, how is the bread? Is it nice?",
-                      "Hevalo, how is the bread? Is it good?"
+                      "What will you drink? Tea or water?",
+                      "What would you like to drink? Tea or water?",
+                      "What are you drinking? Tea or water?"
                     ]
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
-                    "say": "nan",
+                    "say": "av",
                     "voice": "hamo",
-                    "prompt": "nan",
+                    "prompt": "av",
                     "options": [
-                      "bread",
-                      "tea",
                       "water",
+                      "milk",
+                      "tea",
                       "apple"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Çay germ e?",
+                    "say": "Ev çi ye?",
                     "voice": "hamo",
-                    "prompt": "Çay germ e?",
+                    "prompt": "Ev çi ye?",
                     "options": [
-                      "Erê, germ e. Spas!",
-                      "Ser çavan!",
-                      "Ez germ im."
+                      "Ev şîr e.",
+                      "Ev çay e.",
+                      "Şîr xweş e."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "a bowl of milk"
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 10,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -2208,23 +2164,39 @@
                         "right": "water"
                       },
                       {
+                        "left": "şîr",
+                        "right": "milk"
+                      },
+                      {
+                        "left": "nan",
+                        "right": "bread"
+                      },
+                      {
                         "left": "germ",
                         "right": "hot, warm"
                       },
                       {
-                        "left": "xweş",
-                        "right": "nice, tasty"
-                      },
-                      {
                         "left": "fermo",
                         "right": "here you are"
-                      },
-                      {
-                        "left": "çi",
-                        "right": "what"
                       }
                     ],
                     "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Fermo, Hevalo, sêvek!",
+                    "voice": "hamo",
+                    "prompt": "Fermo, Hevalo, sêvek!",
+                    "options": [
+                      "Here you are, Hevalo, an apple!",
+                      "Hevalo, eat the apple!",
+                      "Thanks for the apple, Hevalo!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2233,49 +2205,53 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The tea is hot and lovely.",
+                    "prompt": "I’m drinking the tea. It’s lovely.",
                     "accepted": [
-                      "Çay germ e û xweş e.",
-                      "Çay germ û xweş e."
+                      "Ez çayê vedixwim. Xweş e.",
+                      "Ez çayê vedixwim. Çay xweş e.",
+                      "Ez çay vedixwim. Xweş e."
                     ]
                   }
                 },
                 {
                   "position": 13,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Çay? Erê! Çay? Erê! Çay? Na, spas!",
-                    "voice": "hamo",
-                    "prompt": "Çay? Erê! Çay? Erê! Çay? Na, spas!",
-                    "options": [
-                      "Tea? Yes! Tea? Yes! Tea? No, thanks!",
-                      "Tea? No! Tea? No! Tea? Yes, please!",
-                      "Water? Yes! Tea? Yes! Bread? No!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bi xêr hatî! Fermo, sêv û çay."
+                      "Na, spas, ez avê vedixwim."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Is this tea?",
+                    "accepted": [
+                      "Ev çay e?"
                     ]
                   }
                 },
                 {
                   "position": 15,
-                  "type": "writing",
+                  "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Ez sêvê dixwim, Hevalo şîr vedixwe.",
                     "voice": "hamo",
-                    "prompt": "Is this water?",
+                    "prompt": "Ez sêvê dixwim, Hevalo şîr vedixwe.",
                     "accepted": [
-                      "Ev av e?"
+                      "I’m eating the apple, and Hevalo is drinking milk.",
+                      "I am eating the apple, and Hevalo is drinking milk.",
+                      "I’m eating the apple, Hevalo is drinking milk.",
+                      "I am eating the apple, Hevalo is drinking milk.",
+                      "I eat the apple, Hevalo drinks milk.",
+                      "I’m eating an apple, and Hevalo is drinking milk.",
+                      "I am eating an apple, and Hevalo is drinking milk."
                     ]
                   }
                 },
@@ -2285,8 +2261,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Spas! Çay germ e, çay xweş e.",
-                    "reference": "Spas! Çay germ e, çay xweş e."
+                    "prompt": "Spas! Çay germ û xweş e.",
+                    "reference": "Spas! Çay germ û xweş e."
                   }
                 }
               ]
@@ -2351,8 +2327,8 @@
                     "voice": "hamo",
                     "prompt": "Navê te çi ye?",
                     "options": [
-                      "What is your name?",
-                      "What is my name?",
+                      "What’s your name?",
+                      "What’s my name?",
                       "What is this?"
                     ],
                     "correctIndex": 0,
@@ -2412,10 +2388,11 @@
                     "prompt": "Ev kî ye?",
                     "options": [
                       "Ev Hevalo ye.",
-                      "Ev çay e.",
+                      "Ev sêv e.",
                       "Navê te çi ye?"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "he points at the deer"
                   }
                 },
                 {
@@ -2424,7 +2401,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "What is your name?",
+                    "prompt": "What’s your name?",
                     "options": [
                       "Navê te çi ye?",
                       "Navê min çi ye?",
@@ -2442,10 +2419,11 @@
                     "voice": "hamo",
                     "prompt": "Navê te xweş e!",
                     "accepted": [
+                      "What a lovely name!",
                       "Your name is lovely!",
+                      "You have a lovely name!",
                       "Your name is nice!",
-                      "You have a nice name!",
-                      "You have a lovely name!"
+                      "What a nice name!"
                     ]
                   }
                 },
@@ -2454,13 +2432,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ev kî ye? Ev tu yî, Hevalo?",
+                    "say": "Hevalo, sêva min!",
                     "voice": "hamo",
-                    "prompt": "Ev kî ye? Ev tu yî, Hevalo?",
+                    "prompt": "Hevalo, sêva min!",
                     "options": [
-                      "Who is this? Is this you, Hevalo?",
-                      "What is this? Is this tea, Hevalo?",
-                      "Who are you? Are you Hamo, Hevalo?"
+                      "Hevalo, my apple!",
+                      "Hevalo, your apple!",
+                      "Hevalo, eat the apple!"
                     ],
                     "correctIndex": 0
                   }
@@ -2472,7 +2450,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ez Hamo me. Tu kî yî?"
+                      "Ev çaya te ye. Fermo!"
                     ]
                   }
                 },
@@ -2514,15 +2492,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Ev Hevalo ye?",
+                    "say": "Ev sêva te ye?",
                     "voice": "hamo",
-                    "prompt": "Ev Hevalo ye?",
+                    "prompt": "Ev sêva te ye?",
                     "options": [
-                      "Erê, ev Hevalo ye.",
-                      "Erê, ev çay e.",
-                      "Na, ev tu yî."
+                      "Erê, sêva min e!",
+                      "Erê, sêva te ye!",
+                      "Na, ev çay e."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "Hevalo has it in his mouth"
                   }
                 },
                 {
@@ -2542,13 +2521,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Ev kî ye? Ev Hevalo ye.",
+                    "say": "Ev çaya te ye.",
                     "voice": "hamo",
-                    "prompt": "Ev ___ ye? Ev Hevalo ye.",
+                    "prompt": "Ev çaya ___ ye.",
                     "options": [
-                      "kî",
-                      "çi",
-                      "te"
+                      "te",
+                      "tu",
+                      "kî"
                     ],
                     "correctIndex": 0
                   }
@@ -2559,7 +2538,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "What is your name?",
+                    "prompt": "What’s your name?",
                     "accepted": [
                       "Navê te çi ye?"
                     ]
@@ -2593,7 +2572,7 @@
                     "prompt": "Ev mala min e.",
                     "options": [
                       "This is my house.",
-                      "This is my tea.",
+                      "This is my door.",
                       "Is this your house?"
                     ],
                     "correctIndex": 0,
@@ -2616,8 +2595,8 @@
                     "options": [
                       "house",
                       "door",
-                      "tea",
-                      "apple"
+                      "tree",
+                      "bread"
                     ],
                     "correctIndex": 0
                   }
@@ -2631,8 +2610,8 @@
                     "voice": "hamo",
                     "prompt": "Ew derî ye.",
                     "options": [
-                      "That is a door.",
-                      "This is a house.",
+                      "That’s the door.",
+                      "This is the house.",
                       "Who is that?"
                     ],
                     "correctIndex": 0,
@@ -2659,8 +2638,8 @@
                     "options": [
                       "door",
                       "house",
-                      "bread",
-                      "tea"
+                      "tea",
+                      "bread"
                     ],
                     "correctIndex": 0
                   }
@@ -2707,8 +2686,8 @@
                     "prompt": "Hevalo birçî ye.",
                     "options": [
                       "Hevalo is hungry.",
-                      "Hevalo is well.",
-                      "Hevalo is a door."
+                      "Hevalo is fine.",
+                      "Hevalo is eating."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2739,12 +2718,10 @@
                     "voice": "hamo",
                     "prompt": "Ew Hevalo ye. Ew birçî ye!",
                     "accepted": [
-                      "That is Hevalo. He is hungry!",
                       "That’s Hevalo. He’s hungry!",
-                      "This is Hevalo. He is hungry!",
-                      "This is Hevalo. He’s hungry!",
-                      "It is Hevalo. He is hungry!",
-                      "It’s Hevalo. He’s hungry!"
+                      "That is Hevalo. He is hungry!",
+                      "It’s Hevalo. He’s hungry!",
+                      "It is Hevalo. He is hungry!"
                     ]
                   }
                 },
@@ -2754,7 +2731,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "I am hungry.",
+                    "prompt": "I’m hungry.",
                     "options": [
                       "Ez birçî me.",
                       "Ez birçî im.",
@@ -2767,36 +2744,20 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ew derî? Na, na! Ew mala sêvan e.",
-                    "voice": "hamo",
-                    "prompt": "Ew derî? Na, na! Ew mala sêvan e.",
-                    "options": [
-                      "That door? No, no! That’s the apple house.",
-                      "That door? Yes! That’s my house.",
-                      "That door? No, no! That’s the tea house."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "reply",
                     "say": "Tu birçî yî?",
                     "voice": "hamo",
                     "prompt": "Tu birçî yî?",
                     "options": [
-                      "Erê, ez birçî me!",
-                      "Erê, tu birçî yî!",
+                      "Erê, ez birçî me.",
+                      "Erê, tu birçî yî.",
                       "Ew derî ye."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2808,13 +2769,29 @@
                   }
                 },
                 {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Hevalo, tu birçî yî?",
+                    "voice": "hamo",
+                    "prompt": "Hevalo, tu birçî yî?",
+                    "options": [
+                      "Hevalo, are you hungry?",
+                      "Hevalo, are you well?",
+                      "Hevalo, is that the door?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
                   "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ew birçî ye, ez jî birçî me!"
+                      "Spas, mala te xweş e."
                     ]
                   }
                 },
@@ -2824,7 +2801,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "That is a door.",
+                    "prompt": "That’s the door.",
                     "accepted": [
                       "Ew derî ye."
                     ]
@@ -2859,7 +2836,7 @@
                     "options": [
                       "What is it in Kurdish?",
                       "Is this Kurdish tea?",
-                      "Who is Kurdish?"
+                      "What is this?"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2898,7 +2875,7 @@
                     "options": [
                       "I don’t know.",
                       "I know!",
-                      "I am not well."
+                      "I’m not hungry."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2963,16 +2940,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Ev çi ye?",
+                    "say": "Ew çi ye?",
                     "voice": "hamo",
-                    "prompt": "Ev çi ye?",
+                    "prompt": "Ew çi ye?",
                     "options": [
                       "Ez nizanim.",
                       "Bi xêr hatî!",
                       "Ser çavan!"
                     ],
                     "correctIndex": 0,
-                    "cue": "a strange old tool"
+                    "cue": "a strange old tool over the stove"
                   }
                 },
                 {
@@ -2994,42 +2971,42 @@
                       {
                         "speaker": 1,
                         "text": "Ev bi kurdî çi ye?",
-                        "en": "What is this in Kurdish? (you point at the door)"
+                        "en": "What’s this in Kurdish? (you point at the door)"
                       },
                       {
                         "speaker": 0,
                         "text": "Derî.",
-                        "en": "Door."
+                        "en": "A door."
                       },
                       {
                         "speaker": 1,
-                        "text": "Û ev? Bi kurdî çi ye?",
-                        "en": "And this? What is it in Kurdish?"
+                        "text": "Û ev?",
+                        "en": "And this?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ev? Ev nan e. Nan germ e!",
-                        "en": "This? This is bread. The bread is warm!"
+                        "text": "Ev nan e. Tu nan dixwî?",
+                        "en": "This is bread. Will you have some?"
                       },
                       {
                         "speaker": 1,
-                        "text": "Û ew? Ew çi ye?",
-                        "en": "And that? What is that? (a strange old tool over the stove)"
+                        "text": "Erê, spas. Û ew? Ew çi ye?",
+                        "en": "Yes, please. And that? What’s that? (an old tool over the stove)"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew? Ew… ew… Ez nizanim!",
-                        "en": "That? It’s… it’s… I don’t know!"
+                        "text": "Ew? Ez nizanim!",
+                        "en": "That? I don’t know!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Wey! Hevalo! Çay!",
-                        "en": "Oh no! Hevalo! The tea! (he has knocked the tray with his nose)"
+                        "text": "Wey, çaya min!",
+                        "en": "Oh no, my tea! (Hevalo has knocked the tray with his nose)"
                       },
                       {
                         "speaker": 0,
-                        "text": "Bibore, bibore!",
-                        "en": "Sorry, sorry! (Hamo says it for Hevalo, who looks sorry for almost a second)"
+                        "text": "Bibore! Hevalo birçî ye.",
+                        "en": "Sorry! Hevalo is hungry. (he looks sorry for almost a second)"
                       }
                     ],
                     "prompt": "What does Hamo not know?",
@@ -3061,12 +3038,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Bibore! Çay germ e.",
+                    "say": "Bibore, navê te çi ye?",
                     "voice": "hamo",
-                    "prompt": "Bibore! Çay germ e.",
+                    "prompt": "Bibore, navê te çi ye?",
                     "accepted": [
-                      "Sorry! The tea is hot.",
-                      "Excuse me! The tea is hot."
+                      "Excuse me, what’s your name?",
+                      "Excuse me, what is your name?",
+                      "Sorry, what’s your name?",
+                      "Sorry, what is your name?"
                     ]
                   }
                 },
@@ -3075,13 +3054,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bibore, bibore! Hevalo birçî ye.",
+                    "say": "Bibore! Hevalo birçî ye.",
                     "voice": "hamo",
-                    "prompt": "Bibore, bibore! Hevalo birçî ye.",
+                    "prompt": "Bibore! Hevalo birçî ye.",
                     "options": [
-                      "Sorry, sorry! Hevalo is hungry.",
-                      "Thanks, thanks! Hevalo is well.",
-                      "Welcome, welcome! Hevalo is a guest."
+                      "Sorry! Hevalo is hungry.",
+                      "Thanks! Hevalo is fine.",
+                      "Welcome! Hevalo is hungry."
                     ],
                     "correctIndex": 0
                   }
@@ -3105,7 +3084,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bibore! Navê te çi ye?"
+                      "Bi xêr hatî! Tu sêvekê dixwî?"
                     ]
                   }
                 },
@@ -3148,8 +3127,8 @@
                     "voice": "hamo",
                     "prompt": "Ev kî ye? Ev tu yî!",
                     "options": [
-                      "Who is this? It’s you!",
-                      "What is this? It’s tea!",
+                      "Who’s this? It’s you!",
+                      "What’s this? It’s tea!",
                       "Who are you? I’m Hamo!"
                     ],
                     "correctIndex": 0
@@ -3160,16 +3139,15 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Ev çi ye? Bi kurdî çi ye?",
+                    "say": "Hevalo li ku ye?",
                     "voice": "hamo",
-                    "prompt": "Ev çi ye? Bi kurdî çi ye?",
+                    "prompt": "Hevalo li ku ye?",
                     "options": [
-                      "Çay.",
-                      "Ez Hamo me.",
-                      "Bibore!"
+                      "Ez nizanim.",
+                      "Ew birçî ye.",
+                      "Erê, spas."
                     ],
-                    "correctIndex": 0,
-                    "cue": "a glass of tea"
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -3204,13 +3182,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ev çi ye? Ev Hevalo ye!",
+                    "say": "Tu birçî yî? Tu çi dixwî?",
                     "voice": "hamo",
-                    "prompt": "Ev çi ye? Ev Hevalo ye!",
+                    "prompt": "Tu birçî yî? Tu çi dixwî?",
                     "options": [
-                      "What is this? It’s Hevalo!",
-                      "Who is this? It’s an apple!",
-                      "What is this? It’s a door!"
+                      "Are you hungry? What will you have?",
+                      "Are you thirsty? What will you drink?",
+                      "Are you hungry? Who are you?"
                     ],
                     "correctIndex": 0
                   }
@@ -3235,13 +3213,20 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hevalo! Bibore, bibore!",
+                    "say": "Erê, ez birçî me. Ez nan dixwim.",
                     "voice": "hamo",
-                    "prompt": "Hevalo! Bibore, bibore!",
+                    "prompt": "Erê, ez birçî me. Ez nan dixwim.",
                     "accepted": [
-                      "Hevalo! Sorry, sorry!",
-                      "Hevalo! I’m sorry, I’m sorry!",
-                      "Hevalo! I am sorry, I am sorry!"
+                      "Yes, I’m hungry. I’ll have some bread.",
+                      "Yes, I am hungry. I’ll have some bread.",
+                      "Yes, I’m hungry. I’m eating bread.",
+                      "Yes, I am hungry. I am eating bread.",
+                      "Yes, I am hungry. I eat bread.",
+                      "Yes, I’m hungry. I eat bread.",
+                      "Yes, I’m hungry. I’ll eat bread.",
+                      "Yes, I am hungry. I’ll eat bread.",
+                      "Yes, I’m hungry. I’ll have bread.",
+                      "Yes, I am hungry. I’ll have bread."
                     ]
                   }
                 },
@@ -3283,31 +3268,31 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Ev kî ye?",
+                    "say": "Tu çi vedixwî?",
                     "voice": "hamo",
-                    "prompt": "Ev kî ye?",
+                    "prompt": "Tu çi vedixwî?",
                     "options": [
-                      "Ev Hevalo ye!",
-                      "Ev çay e!",
-                      "Ev derî ye!"
+                      "Ez avê vedixwim.",
+                      "Ez nan dixwim.",
+                      "Ez birçî me."
                     ],
-                    "correctIndex": 0,
-                    "cue": "a deer pretending to be a chair"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 10,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Ev mala Hamo ye. Bi xêr hatî!",
+                    "ask": "meaning",
+                    "say": "Wey! Ev Hevalo ye!",
                     "voice": "hamo",
-                    "prompt": "Ev mala Hamo ye. Bi xêr hatî!",
-                    "accepted": [
-                      "This is Hamo’s house. Welcome!",
-                      "This is the house of Hamo. Welcome!",
-                      "This is Hamo’s home. Welcome!"
-                    ]
+                    "prompt": "Wey! Ev Hevalo ye!",
+                    "options": [
+                      "Whoa! It’s Hevalo!",
+                      "Whoa! It’s a chair!",
+                      "Who’s this? Is it Hevalo?"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -3324,29 +3309,29 @@
                 },
                 {
                   "position": 12,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Tu birçî yî? Ez jî birçî me!",
-                    "voice": "hamo",
-                    "prompt": "Tu birçî yî? Ez jî birçî me!",
-                    "options": [
-                      "Are you hungry? I am hungry too!",
-                      "Are you well? I am well too!",
-                      "Who are you? I am Hamo too!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bi kurdî çi ye? Ez nizanim!"
+                      "Navê min Hamo ye. Tu kî yî?"
                     ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ser çavan! Mala te xweş e.",
+                    "voice": "hamo",
+                    "prompt": "Ser ___! Mala te xweş e.",
+                    "options": [
+                      "çavan",
+                      "hatî",
+                      "baş"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -3363,18 +3348,17 @@
                 },
                 {
                   "position": 15,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Ev çi ye? Ev nan e.",
+                    "ask": "to-english",
+                    "say": "Ez nizanim. Ev bi kurdî çi ye?",
                     "voice": "hamo",
-                    "prompt": "Ev ___ ye? Ev nan e.",
-                    "options": [
-                      "çi",
-                      "kî",
-                      "min"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Ez nizanim. Ev bi kurdî çi ye?",
+                    "accepted": [
+                      "I don’t know. What’s this in Kurdish?",
+                      "I do not know. What is this in Kurdish?",
+                      "I don’t know. What is this in Kurdish?"
+                    ]
                   }
                 },
                 {
@@ -3383,8 +3367,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ev kî ye? Ev çi ye? Bi kurdî çi ye?",
-                    "reference": "Ev kî ye? Ev çi ye? Bi kurdî çi ye?"
+                    "prompt": "Erê, ev mala min e. Bi xêr hatî!",
+                    "reference": "Erê, ev mala min e. Bi xêr hatî!"
                   }
                 }
               ]
@@ -3395,7 +3379,7 @@
           "position": 4,
           "titleKu": "Şev baş!",
           "titleEn": "Good night!",
-          "grammarMd": "Some Kurdish is best learnt whole, before its grammar. Kurdish puts the verb last, so what you want comes first:\n\n- **Ez çay dixwazim.** I want tea. · *Tu çi dixwazî?* What do you want? · *Hevalo sêv dixwaze.* Hevalo wants an apple.\n- **Nan heye?** Is there bread? — *Erê, heye.* · *Na, tune.* No, there isn’t. · **Were!** Come! · **Bixwe!** Eat! · **Vexwe!** Drink!",
+          "grammarMd": "Some Kurdish is best learnt whole, before its grammar. Kurdish puts the verb last, so what you want comes first:\n\n- **Ez nan dixwazim.** I want bread. · *Tu çi dixwazî?* What would you like? · *Hevalo sêvekê dixwaze.* Hevalo wants an apple.\n- **Nan heye?** Is there bread? — *Erê, heye.* · *Na, tune.* No, there isn’t. · **Were!** Come! · **Bixwe!** Eat! · **Vexwe!** Drink!",
           "lessons": [
             {
               "key": "u01s4l1",
@@ -3413,7 +3397,7 @@
                     "prompt": "Ez nan dixwazim.",
                     "options": [
                       "I want bread.",
-                      "I am bread.",
+                      "I’m eating bread.",
                       "I want water."
                     ],
                     "correctIndex": 0,
@@ -3429,36 +3413,20 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
+                    "ask": "reply",
                     "say": "Tu çi dixwazî?",
                     "voice": "hamo",
                     "prompt": "Tu çi dixwazî?",
                     "options": [
-                      "What do you want?",
-                      "Who are you?",
-                      "Do you want tea?"
+                      "Ez çayê dixwazim.",
+                      "Ez çayê vedixwim.",
+                      "Tu çayê dixwazî."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Tu çi dixwazî?",
-                    "voice": "hamo",
-                    "prompt": "Tu çi dixwazî?",
-                    "options": [
-                      "Ez çay dixwazim.",
-                      "Ez çay im.",
-                      "Tu çay dixwazî."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3468,7 +3436,7 @@
                     "options": [
                       "Are there any apples?",
                       "Is this an apple?",
-                      "Is the apple nice?"
+                      "Do you want an apple?"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3476,6 +3444,17 @@
                         "ku": "heye",
                         "en": "there is; is there …?"
                       }
+                    ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Erê, heye. Fermo!"
                     ]
                   }
                 },
@@ -3490,7 +3469,7 @@
                     "options": [
                       "Here you are, eat!",
                       "Here you are, drink!",
-                      "Here, come!"
+                      "Thanks, I’m eating!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3503,23 +3482,12 @@
                 },
                 {
                   "position": 6,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Erê, heye. Bixwe!"
-                    ]
-                  }
-                },
-                {
-                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Hevalo sêv dixwaze.",
+                    "say": "Hevalo sêvekê dixwaze.",
                     "voice": "hamo",
-                    "prompt": "Hevalo sêv ___.",
+                    "prompt": "Hevalo sêvekê ___.",
                     "options": [
                       "dixwaze",
                       "dixwazim",
@@ -3529,13 +3497,13 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Çay vexwe!",
+                    "say": "Çayê vexwe!",
                     "voice": "hamo",
-                    "prompt": "Çay vexwe!",
+                    "prompt": "Çayê vexwe!",
                     "options": [
                       "Drink your tea!",
                       "Eat your bread!",
@@ -3551,22 +3519,22 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
                     "prompt": "I want water.",
                     "options": [
-                      "Ez av dixwazim.",
-                      "Ez dixwazim av.",
-                      "Ez av dixwaze."
+                      "Ez avê dixwazim.",
+                      "Ez dixwazim avê.",
+                      "Ez avê dixwaze."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
@@ -3575,14 +3543,14 @@
                     "prompt": "Av heye?",
                     "options": [
                       "Erê, heye. Vexwe!",
-                      "Erê, ez av im.",
+                      "Erê, ez avê vedixwim.",
                       "Bi kurdî çi ye?"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3592,12 +3560,13 @@
                     "accepted": [
                       "Eat, drink! My home is your home.",
                       "Eat and drink! My home is your home.",
-                      "Eat, drink! My house is your house."
+                      "Eat, drink! My house is your house.",
+                      "Eat and drink! My house is your house."
                     ]
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 11,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -3618,37 +3587,55 @@
                         "right": "Drink!"
                       },
                       {
-                        "left": "nan",
-                        "right": "bread"
+                        "left": "dixwim",
+                        "right": "I eat"
                       },
                       {
-                        "left": "av",
-                        "right": "water"
+                        "left": "vedixwim",
+                        "right": "I drink"
                       }
                     ],
                     "voice": "hamo"
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
                     "prompt": "I want tea.",
                     "accepted": [
+                      "Ez çayê dixwazim.",
                       "Ez çay dixwazim."
                     ]
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Hevalo? Ew sêv dixwaze!"
+                      "Ew çi dixwaze? Ew sêvekê dixwaze!"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Na, spas, ez avê dixwazim.",
+                    "voice": "hamo",
+                    "prompt": "Na, spas, ez avê dixwazim.",
+                    "accepted": [
+                      "No, thanks, I’d like water.",
+                      "No, thanks, I want water.",
+                      "No thanks, I’d like some water.",
+                      "No, thank you, I want water.",
+                      "No, thanks, I’d like some water."
                     ]
                   }
                 },
@@ -3714,7 +3701,7 @@
                     "prompt": "Sêv heye?",
                     "options": [
                       "Na, sêv tune.",
-                      "Erê, ez sêv im.",
+                      "Erê, fermo!",
                       "Bi xêr hatî!"
                     ],
                     "correctIndex": 0,
@@ -3750,7 +3737,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Hevalo, were! Hevalo?"
+                      "Hevalo, were! Ew li ku ye?"
                     ]
                   }
                 },
@@ -3765,7 +3752,7 @@
                     "options": [
                       "The water is cold.",
                       "The water is hot.",
-                      "There is no water."
+                      "There’s no water."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3778,6 +3765,22 @@
                 },
                 {
                   "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Çay germ e, av sar e.",
+                    "voice": "hamo",
+                    "prompt": "Çay germ e, av ___ e.",
+                    "options": [
+                      "sar",
+                      "germ",
+                      "tune"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3799,22 +3802,6 @@
                   }
                 },
                 {
-                  "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Çay gelek germ e, av sar e.",
-                    "voice": "hamo",
-                    "prompt": "Çay gelek germ e, av ___ e.",
-                    "options": [
-                      "sar",
-                      "germ",
-                      "tune"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 8,
                   "type": "translate",
                   "payload": {
@@ -3833,7 +3820,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "There is no bread.",
+                    "prompt": "There’s no bread.",
                     "options": [
                       "Nan tune.",
                       "Nan heye.",
@@ -3852,7 +3839,7 @@
                     "prompt": "Tu çi dixwazî? Sêv tune.",
                     "options": [
                       "Ez nan dixwazim, spas.",
-                      "Ez sêv dixwazim!",
+                      "Ez sêvê dixwazim!",
                       "Sêv heye."
                     ],
                     "correctIndex": 0
@@ -3864,8 +3851,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Come, drink some tea!",
+                    "prompt": "Come and drink your tea!",
                     "accepted": [
+                      "Were, çayê vexwe!",
                       "Were, çay vexwe!"
                     ]
                   }
@@ -3875,13 +3863,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Sêv tune… Hevalo, tu birçî yî? Na?!",
+                    "say": "Sêv tune, Hevalo jî tune!",
                     "voice": "hamo",
-                    "prompt": "Sêv tune… Hevalo, tu birçî yî? Na?!",
+                    "prompt": "Sêv tune, Hevalo jî tune!",
                     "options": [
-                      "No apples… Hevalo, are you hungry? No?!",
-                      "Apples! Hevalo, are you well? Yes?!",
-                      "No bread… Hevalo, are you cold? No?!"
+                      "No apples, and no Hevalo either!",
+                      "No apples, but here’s Hevalo!",
+                      "Lots of apples, and Hevalo too!"
                     ],
                     "correctIndex": 0
                   }
@@ -3893,7 +3881,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bibore, ez nizanim… Sêv tune! Hevalo, were!"
+                      "Bibore, sêv tune. Were, nan bixwe."
                     ]
                   }
                 },
@@ -3914,13 +3902,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Sêv tune! Hevalo, were!",
+                    "say": "Ez gelek birçî me.",
                     "voice": "hamo",
-                    "prompt": "Sêv ___! Hevalo, were!",
+                    "prompt": "Ez gelek birçî ___.",
                     "options": [
-                      "tune",
-                      "heye",
-                      "sar"
+                      "me",
+                      "im",
+                      "ye"
                     ],
                     "correctIndex": 0
                   }
@@ -3953,7 +3941,7 @@
                     "prompt": "Şev baş!",
                     "options": [
                       "Good night!",
-                      "Good day!",
+                      "Good morning!",
                       "Goodbye!"
                     ],
                     "correctIndex": 0,
@@ -3969,12 +3957,28 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
+                    "say": "Şev baş!",
+                    "voice": "hamo",
+                    "prompt": "Şev baş!",
+                    "options": [
+                      "Şev baş!",
+                      "Bi xêr hatî!",
+                      "Ez nizanim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Roj baş!",
                     "voice": "hamo",
                     "prompt": "Roj baş!",
                     "options": [
-                      "Good day!",
+                      "Good morning!",
                       "Good night!",
                       "Welcome!"
                     ],
@@ -3982,25 +3986,9 @@
                     "new": [
                       {
                         "ku": "Roj baş!",
-                        "en": "Good day!"
+                        "en": "Good day! Good morning!"
                       }
                     ]
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Roj baş!",
-                    "voice": "hamo",
-                    "prompt": "Roj baş!",
-                    "options": [
-                      "Roj baş!",
-                      "Şev baş!",
-                      "Bi xêr hatî!"
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
@@ -4010,7 +3998,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Roj baş! Çay heye. Vexwe!"
+                      "Roj baş! Çay heye, vexwe!"
                     ]
                   }
                 },
@@ -4040,6 +4028,22 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "missing",
+                    "say": "Bi xatirê te!",
+                    "voice": "hamo",
+                    "prompt": "Bi xatirê ___!",
+                    "options": [
+                      "te",
+                      "min",
+                      "tu"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Bi xêr biçî!",
                     "voice": "hamo",
@@ -4059,7 +4063,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
@@ -4075,7 +4079,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu01s4l3a",
@@ -4097,43 +4101,43 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Şev baş! Spas, gelek spas.",
-                        "en": "Good night! Thank you, thank you very much."
+                        "text": "Şev baş! Gelek spas.",
+                        "en": "Good night! Thank you very much."
                       },
                       {
                         "speaker": 0,
-                        "text": "Roj baş! Tu baş î? Çay heye. Vexwe!",
-                        "en": "Good morning! (next morning, at the gate) Are you well? There’s tea. Drink!"
+                        "text": "Roj baş! Tu çawa yî?",
+                        "en": "Good morning! How are you? (next morning, at the gate)"
                       },
                       {
                         "speaker": 1,
-                        "text": "Roj baş! Erê, ez baş im. Spas!",
-                        "en": "Good morning! Yes, I am well. Thanks!"
+                        "text": "Roj baş! Ez baş im, spas.",
+                        "en": "Good morning! I’m fine, thanks."
                       },
                       {
                         "speaker": 0,
-                        "text": "Tu çi dixwazî? Nan? Sêv?",
-                        "en": "What would you like? Bread? An apple?"
+                        "text": "Çay heye. Vexwe!",
+                        "en": "There’s tea. Drink up!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Na, spas. Bi xatirê te!",
-                        "en": "No, thanks. Goodbye!"
+                        "text": "Spas, çay xweş e. Bi xatirê te!",
+                        "en": "Thanks, the tea is lovely. Goodbye!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Bi xêr biçî! Bi xêr biçî, Hevalo!",
-                        "en": "Go well! Go well, Hevalo!"
+                        "text": "Bi xêr biçî!",
+                        "en": "Go well!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hevalo? Hevalo, were!",
-                        "en": "Hevalo? Hevalo, come! (ten steps down the lane, he has turned back)"
+                        "text": "Hevalo, were!",
+                        "en": "Hevalo, come on! (ten steps down the lane, he has turned back)"
                       },
                       {
                         "speaker": 0,
-                        "text": "Sêv dixwaze! Fermo, Hevalo, sêv.",
-                        "en": "He wants an apple! Here you are, Hevalo, an apple."
+                        "text": "Hevalo sêvekê dixwaze. Fermo, Hevalo!",
+                        "en": "Hevalo wants an apple. Here you are, Hevalo!"
                       }
                     ],
                     "prompt": "Why does Hevalo turn back?",
@@ -4146,7 +4150,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -4161,7 +4165,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -4178,7 +4182,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -4188,12 +4192,12 @@
                     "accepted": [
                       "Good morning! How are you?",
                       "Good day! How are you?",
-                      "Hello! How are you?"
+                      "Morning! How are you?"
                     ]
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -4205,18 +4209,18 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bi xêr biçî, Hevalo! Hevalo?"
+                      "Bi xêr biçî, Hevalo!"
                     ]
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -4228,13 +4232,13 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Roj baş! Spas, gelek spas. Bi xatirê te!",
-                    "reference": "Roj baş! Spas, gelek spas. Bi xatirê te!"
+                    "prompt": "Roj baş! Çay gelek xweş e, spas.",
+                    "reference": "Roj baş! Çay gelek xweş e, spas."
                   }
                 }
               ]
@@ -4284,7 +4288,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ev mala Nazê ye. Mal gelek xweş e."
+                      "Ev mala Nazê ye."
                     ]
                   }
                 },
@@ -4293,13 +4297,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Sêvan çawa ye? Xweş e?",
+                    "say": "Sêvan gelek xweş e!",
                     "voice": "hamo",
-                    "prompt": "Sêvan çawa ye? Xweş e?",
+                    "prompt": "Sêvan gelek xweş e!",
                     "options": [
-                      "How is Sêvan? Is it nice?",
-                      "Who is Sêvan? Is she nice?",
-                      "Is this Sêvan? Is it cold?"
+                      "Sêvan is really lovely!",
+                      "Sêvan is very cold!",
+                      "Is Sêvan lovely?"
                     ],
                     "correctIndex": 0
                   }
@@ -4328,9 +4332,9 @@
                     "voice": "hamo",
                     "prompt": "The water is cold. I want tea.",
                     "options": [
-                      "Av sar e. Ez çay dixwazim.",
-                      "Av sar e. Ez çay dixwaze.",
-                      "Av sar e. Ez dixwazim çay."
+                      "Av sar e. Ez çayê dixwazim.",
+                      "Av sar e. Ez çayê dixwaze.",
+                      "Av sar e. Ez dixwazim çayê."
                     ],
                     "correctIndex": 0
                   }
@@ -4340,14 +4344,15 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Sêv tune, Hevalo! Fermo, nan bixwe.",
+                    "say": "Sêv tune, Hevalo! Nan bixwe.",
                     "voice": "hamo",
-                    "prompt": "Sêv tune, Hevalo! Fermo, nan bixwe.",
+                    "prompt": "Sêv tune, Hevalo! Nan bixwe.",
                     "accepted": [
-                      "There are no apples, Hevalo! Here you are, eat some bread.",
-                      "There are no apples, Hevalo! Here, eat bread.",
-                      "No apples, Hevalo! Here you are, eat bread.",
-                      "There are no apples, Hevalo! Here you are, eat bread."
+                      "There are no apples, Hevalo! Have some bread.",
+                      "No apples, Hevalo! Eat some bread.",
+                      "There are no apples, Hevalo! Eat bread.",
+                      "No apples, Hevalo! Have some bread.",
+                      "There are no apples, Hevalo! Eat some bread."
                     ]
                   }
                 },
@@ -4360,9 +4365,9 @@
                     "voice": "hamo",
                     "prompt": "Tu çi dixwazî?",
                     "options": [
-                      "Ez av dixwazim, spas.",
-                      "Av tune, spas.",
-                      "Ez av im."
+                      "Ez şîr dixwazim, spas.",
+                      "Tu şîr dixwazî.",
+                      "Şîr tune, spas."
                     ],
                     "correctIndex": 0
                   }
@@ -4374,7 +4379,7 @@
                     "pairs": [
                       {
                         "left": "Roj baş!",
-                        "right": "Good day!"
+                        "right": "Good morning!"
                       },
                       {
                         "left": "Şev baş!",
@@ -4422,9 +4427,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Sêvan is very nice.",
+                    "prompt": "Hevalo wants an apple.",
                     "accepted": [
-                      "Sêvan gelek xweş e."
+                      "Hevalo sêvekê dixwaze.",
+                      "Hevalo sêv dixwaze."
                     ]
                   }
                 },
@@ -4448,9 +4454,9 @@
                     "voice": "hamo",
                     "prompt": "Çay heye. Vexwe!",
                     "options": [
-                      "Spas, gelek spas!",
+                      "Gelek spas!",
                       "Bi xêr biçî!",
-                      "Na, ez çay im."
+                      "Çay tune."
                     ],
                     "correctIndex": 0
                   }
@@ -4472,15 +4478,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ez nizanim, bibore. Bi kurdî çi ye?",
+                    "say": "Ez nizanim, bibore. Ev bi kurdî çi ye?",
                     "voice": "hamo",
-                    "prompt": "Ez nizanim, bibore. Bi kurdî çi ye?",
+                    "prompt": "Ez nizanim, bibore. Ev bi kurdî çi ye?",
                     "accepted": [
-                      "I don’t know, sorry. What is it in Kurdish?",
-                      "I don’t know, sorry. What’s it in Kurdish?",
-                      "I do not know, sorry. What is it in Kurdish?",
-                      "I don’t know, sorry. How do you say it in Kurdish?",
-                      "I do not know, sorry. How do you say it in Kurdish?"
+                      "I don’t know, sorry. What’s this in Kurdish?",
+                      "I do not know, sorry. What is this in Kurdish?",
+                      "Sorry, I don’t know. What’s this in Kurdish?",
+                      "Sorry, I do not know. What is this in Kurdish?"
                     ]
                   }
                 },
@@ -4490,8 +4495,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Spas, gelek spas! Bi xatirê te!",
-                    "reference": "Spas, gelek spas! Bi xatirê te!"
+                    "prompt": "Gelek spas! Bi xatirê te!",
+                    "reference": "Gelek spas! Bi xatirê te!"
                   }
                 }
               ]

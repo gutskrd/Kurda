@@ -14,10 +14,10 @@
       "cover": null,
       "readingMinutes": null,
       "title": "Sêv tune!",
-      "summary": "Silav û bi xêr hatî! Çay heye, nan heye, av heye. Sêv heye? Na, sêv tune! Hevalo?",
-      "body": "Silav! Navê min Hamo ye. Ez ji Kobaniyê me, û ev mala min e, li Sêvanê. Bi xêr hatî!\n\nEv Hevalo ye. Hevalo birçî ye. Ew çi dixwaze? Sêv, sêv û sêv! Sêv gelek xweş e.\n\nFermo, çay! Çay germ e, av sar e, nan jî germ e. Bixwe, vexwe! Mala min mala te ye.\n\nEv çi ye? Bi kurdî çi ye? Ev derî ye, ev nan e. Û ew? Ez nizanim! Bibore.\n\nŞev e. Ez sêv dixwazim. Sêv heye? Na, sêv tune! Hevalo, were! Hevalo, tu birçî yî? Na?\n\nHevalo baş e. Hevalo gelek, gelek baş e! Şev baş, Hevalo. Şev baş, Sêvan!",
+      "summary": "Bi xêr hatî Sêvanê! Çay heye, nan heye, şîr heye. Sêv heye? Na, sêv tune! Hevalo?",
+      "body": "Silav! Navê min Hamo ye. Ez ji Kobaniyê me, û ev mala min e, li Sêvanê. Bi xêr hatî!\n\nEv jî Hevalo ye. Ew çi dixwe? Sêvan! Ew çi vedixwe? Şîr! Û ew çi dixwaze? Sêva te!\n\nFermo, çay! Çay germ e, av sar e, nan jî germ e. Bixwe, vexwe, mala min mala te ye. Ez nan dixwim, tu çayê vedixwî, Hevalo jî sêva te dixwe!\n\nEv çi ye? Bi kurdî çi ye? Ev derî ye, ev nan e. Û ew? Ez nizanim, bibore!\n\nÎcar şev e. Ez birçî me, ez sêvekê dixwazim. Sêv heye? Na, sêv tune! Hevalo, were! Hevalo? Ew li ku ye?\n\nHevalo birçî ye? Na! Hevalo gelek baş e. Şev baş, Hevalo. Şev baş, Sêvan!",
       "translations": {
-        "en": "Hello! My name is Hamo. I am from Kobanî, and this is my home, here in Sêvan. Welcome!\n\nThis is Hevalo. Hevalo is hungry. What does he want? Apples, apples and apples! Apples are very tasty.\n\nHere you are, tea! The tea is hot, the water is cold, and the bread is warm too. Eat, drink! My home is your home.\n\nWhat is this? What is it in Kurdish? This is a door, this is bread. And that? I don’t know! Sorry.\n\nIt is night. I want an apple. Are there any apples? No, there are no apples! Hevalo, come here! Hevalo, are you hungry? No?\n\nHevalo is fine. Hevalo is very, very fine! Good night, Hevalo. Good night, Sêvan!"
+        "en": "Hello! My name is Hamo. I’m from Kobanî, and this is my home, here in Sêvan. Welcome!\n\nAnd this is Hevalo. What does he eat? Apples! What does he drink? Milk! And what does he want? Your apple!\n\nHere you are, tea! The tea is hot, the water is cold, and the bread is warm too. Eat, drink, my home is your home. I eat my bread, you drink your tea, and Hevalo eats your apple!\n\nWhat is this? What is it in Kurdish? This is a door, this is bread. And that? I don’t know, sorry!\n\nAnd now it is night. I’m hungry, I’d like an apple. Are there any apples? No, there are no apples! Hevalo, come here! Hevalo? Where is he?\n\nIs Hevalo hungry? No! Hevalo is very well indeed. Good night, Hevalo. Good night, Sêvan!"
       },
       "glossary": [],
       "questions": [
@@ -31,14 +31,14 @@
             "Ji Amedê"
           ],
           "correctIndex": 0,
-          "explanation": "Hamo: “Ez ji Kobaniyê me.”",
-          "explanationEn": "Hamo says: “I am from Kobanî.”",
+          "explanation": "“Ez ji Kobaniyê me.”",
+          "explanationEn": "Hamo says: “I’m from Kobanî.”",
           "evidenceParagraph": 0,
           "evidenceSentence": 2
         },
         {
           "kind": "inference",
-          "prompt": "Mala Hamo li Kobaniyê ye, an li Sêvanê?",
+          "prompt": "Mala Hamo li ku ye?",
           "promptEn": "Where is Hamo’s home?",
           "options": [
             "Li Kobaniyê",
@@ -46,25 +46,25 @@
             "Li Amedê"
           ],
           "correctIndex": 1,
-          "explanation": "Hamo: “Ev mala min e, li Sêvanê.”",
+          "explanation": "“Ev mala min e, li Sêvanê.”",
           "explanationEn": "Hamo says: “This is my home, here in Sêvan.”",
           "evidenceParagraph": 0,
           "evidenceSentence": 2
         },
         {
           "kind": "detail",
-          "prompt": "Hevalo çi dixwaze?",
-          "promptEn": "What does Hevalo want?",
+          "prompt": "Hevalo çi vedixwe?",
+          "promptEn": "What does Hevalo drink?",
           "options": [
             "Çay",
-            "Sêv",
-            "Nan"
+            "Şîr",
+            "Av"
           ],
           "correctIndex": 1,
-          "explanation": "Hevalo birçî ye: sêv, sêv û sêv!",
-          "explanationEn": "Hevalo is hungry: apples, apples and apples!",
+          "explanation": "“Ew çi vedixwe? Şîr!”",
+          "explanationEn": "“What does he drink? Milk!”",
           "evidenceParagraph": 1,
-          "evidenceSentence": 3
+          "evidenceSentence": 4
         },
         {
           "kind": "vocabulary",
@@ -76,10 +76,25 @@
             "Av tune."
           ],
           "correctIndex": 0,
-          "explanation": "Çay germ e, av sar e.",
+          "explanation": "“Çay germ e, av sar e.”",
           "explanationEn": "The tea is hot, the water is cold.",
           "evidenceParagraph": 2,
           "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Hamo çi dixwe?",
+          "promptEn": "What does Hamo eat?",
+          "options": [
+            "Sêv",
+            "Şîr",
+            "Nan"
+          ],
+          "correctIndex": 2,
+          "explanation": "“Ez nan dixwim.”",
+          "explanationEn": "Hamo says: “I eat my bread.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -91,8 +106,8 @@
             "Ev nan e."
           ],
           "correctIndex": 1,
-          "explanation": "Hamo: “Ez nizanim! Bibore.”",
-          "explanationEn": "Hamo says: “I don’t know! Sorry.”",
+          "explanation": "“Û ew? Ez nizanim, bibore!”",
+          "explanationEn": "Hamo says: “And that? I don’t know, sorry!”",
           "evidenceParagraph": 3,
           "evidenceSentence": 4
         },
@@ -106,8 +121,8 @@
             "Na, sêv tune."
           ],
           "correctIndex": 2,
-          "explanation": "Hamo: “Na, sêv tune!”",
-          "explanationEn": "Hamo says: “No, there are no apples!”",
+          "explanation": "“Sêv heye? Na, sêv tune!”",
+          "explanationEn": "“Are there any apples? No, there are no apples!”",
           "evidenceParagraph": 4,
           "evidenceSentence": 3
         },
@@ -121,23 +136,23 @@
             "Ez nizanim."
           ],
           "correctIndex": 1,
-          "explanation": "Sêv tune, û Hevalo gelek, gelek baş e!",
-          "explanationEn": "The apples are gone, and Hevalo is very, very fine!",
+          "explanation": "“Hevalo birçî ye? Na! Hevalo gelek baş e.”",
+          "explanationEn": "Hevalo is not hungry at all: he is very well indeed!",
           "evidenceParagraph": 5,
-          "evidenceSentence": 1
+          "evidenceSentence": 2
         },
         {
           "kind": "gist",
-          "prompt": "Hevalo û sêv: çi ye?",
-          "promptEn": "Hevalo and the apples: what happens?",
+          "prompt": "Kî sêvan dixwe?",
+          "promptEn": "Who eats the apples?",
           "options": [
-            "Hevalo sêv dixwaze, û sêv tune!",
-            "Hevalo çay dixwaze.",
-            "Hamo sêv dixwaze, Hevalo nan dixwaze."
+            "Hevalo",
+            "Hamo",
+            "Tu"
           ],
           "correctIndex": 0,
-          "explanation": "Hevalo sêv dixwaze. Şev e, û sêv tune!",
-          "explanationEn": "Hevalo wants apples. At night, the apples are gone!",
+          "explanation": "Hevalo sêva te dixwe, û şev e, sêv tune!",
+          "explanationEn": "Hevalo eats your apple, and by night the apples are gone!",
           "evidenceParagraph": null,
           "evidenceSentence": null
         }
@@ -158,19 +173,13 @@
       "readingMinutes": null,
       "title": "Wêneyê biçûk",
       "summary": "Cîran li mala Hamo ne. Wêneyên malbata wî hene, û wêneyekî biçûk jî: kurekî deh salî. Ev kî ye?",
-      "body": "Silav! Cîranên min li mala min in: Nazê, Baran, Hêvî û Dapîr Şemsê. Hûn bi xêr hatin!\n\nEv wêneyên malbata min in. Ev bavê min e, Ibrahîm, û bilûra wî. Ev diya min e, Edûl. Ev birayê min e, Evdila, û ev xwişkên min in, Lorîn û Cîhan. Ew li Kobaniyê ne. Em malbat in.\n\nEv wêneyekî biçûk e. Ev kî ye? Kurekî biçûk e, deh salî. Simbêlê wî tune!\n\nHêvî: “Ev kî ye?” Dapîr: “Ev Hamo ye!” Erê, erê, ev ez im.\n\nWêne? Wêne tune! Fermo, çay û şekir. Noşî can be!\n\nÛ Hevalo? Sêvên Hevalo tune. Nazê, Baran, Hêvî, Dapîr, tu û ez: “Fermo, Hevalo, sêvek!” Şeş sêvên Hevalo hene! Û sêvên min? Tune!",
+      "body": "Cîranên min li mala min in, Nazê, Baran, Hêvî û Dapîr Şemsê. Hûn bi xêr hatin!\n\nEv wêneyên malbata min in. Ev bavê min e, Ibrahîm. Ev diya min e, Edûl. Ev birayê min e, Evdila, û ev xwişkên min in, Lorîn û Cîhan. Ew li Kobaniyê ne.\n\nEv wêneyekî biçûk e. Ev kî ye? Kurekî deh salî ye, û simbêlê wî tune!\n\n“Dapîr, ev kî ye?” “Ev Hamo ye, keça min!” Erê, ev ez im. Wêne? Wêne tune!\n\nPênc şekir ji çaya min re. Noşî can be!\n\nÛ Hevalo? Sêvên Hevalo tune. Sêvek ji Nazê, yek ji Baran, yek ji Hêviyê, yek ji Dapîrê, yek ji te, yek jî ji min. Şeş sêvên Hevalo hene! Û sêvên min? Tune!",
       "translations": {
-        "en": "Hello! My neighbours are at my house: Nazê, Baran, Hêvî and Grandma Şemsê. Welcome, all of you!\n\nThese are the photos of my family. This is my father, Ibrahîm, and his shepherd’s flute. This is my mother, Edûl. This is my brother, Evdila, and these are my sisters, Lorîn and Cîhan. They are in Kobanî. We are a family.\n\nThis is a little photo. Who is this? It is a little boy, ten years old. He has no moustache!\n\nHêvî: “Who is this?” Grandma: “This is Hamo!” Yes, yes, it’s me.\n\nPhoto? There is no photo! Here you are, tea and sugar. Enjoy!\n\nAnd Hevalo? Hevalo has no apples. Nazê, Baran, Hêvî, Grandma, you and I: “Here you are, Hevalo, an apple!” Now Hevalo has six apples! And my apples? None!"
+        "en": "My neighbours are at my house: Nazê, Baran, Hêvî and Grandma Şemsê. Welcome, all of you!\n\nThese are the photos of my family. This is my father, Ibrahîm. This is my mother, Edûl. This is my brother, Evdila, and these are my sisters, Lorîn and Cîhan. They are in Kobanî.\n\nThis is a little photo. Who is this? A boy of ten, and he has no moustache!\n\n“Grandma, who is this?” “That’s Hamo, my girl!” Yes, it’s me. Photo? What photo?\n\nFive sugars for my tea. Enjoy!\n\nAnd Hevalo? Hevalo has no apples. An apple from Nazê, one from Baran, one from Hêvî, one from Grandma, one from you, and one from me too. Now Hevalo has six apples! And my apples? None!"
       },
       "glossary": [
         {
-          "term": "bilûra",
-          "meanings": {
-            "en": "flute (a shepherd’s flute)"
-          }
-        },
-        {
-          "term": "Simbêlê",
+          "term": "simbêlê",
           "meanings": {
             "en": "moustache (simbêlê wî: his moustache)"
           }
@@ -187,7 +196,7 @@
             "Baran"
           ],
           "correctIndex": 0,
-          "explanation": "Hamo: “Ev bavê min e, Ibrahîm.”",
+          "explanation": "“Ev bavê min e, Ibrahîm.”",
           "explanationEn": "Hamo says: “This is my father, Ibrahîm.”",
           "evidenceParagraph": 1,
           "evidenceSentence": 1
@@ -202,55 +211,70 @@
             "Li Amedê"
           ],
           "correctIndex": 1,
-          "explanation": "Hamo: “Ew li Kobaniyê ne.”",
+          "explanation": "“Ew li Kobaniyê ne.”",
           "explanationEn": "Hamo says: “They are in Kobanî.”",
           "evidenceParagraph": 1,
           "evidenceSentence": 4
         },
         {
           "kind": "vocabulary",
-          "prompt": "Kurekî biçûk. Biçûk çi ye?",
-          "promptEn": "A little boy. What does “biçûk” mean?",
+          "prompt": "Wêneyekî biçûk. Biçûk çi ye?",
+          "promptEn": "A little photo. What does “biçûk” mean?",
           "options": [
             "Ne mezin",
             "Ne tî",
             "Ne birçî"
           ],
           "correctIndex": 0,
-          "explanation": "Ew kurekî biçûk e: ew ne mezin e.",
-          "explanationEn": "The boy in the photo is little: he is not big.",
+          "explanation": "Wêne biçûk e: ew ne mezin e.",
+          "explanationEn": "The photo is little: it is not big.",
           "evidenceParagraph": 2,
-          "evidenceSentence": 2
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
           "prompt": "Kurê biçûk çend salî ye?",
-          "promptEn": "How old is the little boy?",
+          "promptEn": "How old is the boy in the little photo?",
           "options": [
             "Şeş salî",
             "Neh salî",
             "Deh salî"
           ],
           "correctIndex": 2,
-          "explanation": "Hamo: “Kurekî biçûk e, deh salî.”",
-          "explanationEn": "Hamo says: “It is a little boy, ten years old.”",
+          "explanation": "“Kurekî deh salî ye.”",
+          "explanationEn": "Hamo says: “A boy of ten.”",
           "evidenceParagraph": 2,
           "evidenceSentence": 2
         },
         {
           "kind": "inference",
-          "prompt": "Simbêlê wî tune. Ev kurê biçûk kî ye?",
-          "promptEn": "He has no moustache. Who is the little boy?",
+          "prompt": "Ev kurê biçûk kî ye?",
+          "promptEn": "Who is the little boy?",
           "options": [
             "Hamo",
             "Evdila",
             "Baran"
           ],
           "correctIndex": 0,
-          "explanation": "Dapîr: “Ev Hamo ye!” Û Hamo: “Erê, ev ez im.”",
-          "explanationEn": "Grandma says: “This is Hamo!” And Hamo: “Yes, it’s me.”",
+          "explanation": "“Ev Hamo ye, keça min!” Û Hamo: “Erê, ev ez im.”",
+          "explanationEn": "Grandma says: “That’s Hamo!” And Hamo: “Yes, it’s me.”",
           "evidenceParagraph": 3,
           "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Çend şekir ji çaya Hamo re?",
+          "promptEn": "How many sugars go into Hamo’s tea?",
+          "options": [
+            "Yek",
+            "Pênc",
+            "Deh"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Pênc şekir ji çaya min re.”",
+          "explanationEn": "Hamo says: “Five sugars for my tea.”",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -262,7 +286,7 @@
             "Yek"
           ],
           "correctIndex": 1,
-          "explanation": "Hamo: “Şeş sêvên Hevalo hene!”",
+          "explanation": "“Şeş sêvên Hevalo hene!”",
           "explanationEn": "Hamo says: “Now Hevalo has six apples!”",
           "evidenceParagraph": 5,
           "evidenceSentence": 3
@@ -277,7 +301,7 @@
             "Erê, deh sêv"
           ],
           "correctIndex": 1,
-          "explanation": "Hamo: “Û sêvên min? Tune!”",
+          "explanation": "“Û sêvên min? Tune!”",
           "explanationEn": "Hamo says: “And my apples? None!”",
           "evidenceParagraph": 5,
           "evidenceSentence": 5
@@ -289,10 +313,10 @@
           "options": [
             "Cîran, wêneyên malbatê û sêvên Hevalo",
             "Mirîşk û ker, cîran tune",
-            "Malbata Hamo ji Kobaniyê"
+            "Malbata Hamo, ji Kobaniyê"
           ],
           "correctIndex": 0,
-          "explanation": "Cîran li mala Hamo ne, wêneyên malbata wî hene, û Hevalo şeş sêv dixwaze!",
+          "explanation": "Cîran li mala Hamo ne, wêneyên malbata wî hene, û şeş sêvên Hevalo hene!",
           "explanationEn": "The neighbours are at Hamo’s, his family photos are on the wall, and Hevalo collects six apples!",
           "evidenceParagraph": null,
           "evidenceSentence": null
@@ -600,27 +624,12 @@
       "readingMinutes": null,
       "title": "Pênc xulek",
       "summary": "Hamo soz dide ku roja Şemiyê, ji bo otobûsa Kobaniyê, ew dereng namîne. Lê pênc xulekên Hamo ne pênc xulek in!",
-      "body": "Tu dizanî, heval? Carinan ez dereng im. Baş e, gelek caran. Lê roja Şemiyê em hemû diçin Kobaniyê, mala diya min. Ez soz didim: ez dereng namînim! Soza min soz e.\n\nOtobûs di demjimêr heştan de diçe. Sê demjimêrên min hene, lê ez tenê ji demjimêra çayê bawer dikim. Êvara Înê ez li ser telefonê dinivîsim: heşt. Hevalo li telefonê dinêre. Çi heye, Hevalo? Heşt heşt e!\n\nRoja Şemiyê ez di demjimêr pêncan de şiyar dibim. Cara yekem, ez zû me! Ez li kaniyê destên xwe dişom. Çay amade ye, nan û penîr jî. Hevalo jî şiyar e û sêvan dixwaze.\n\nDemjimêr pênc û nîv e. Berî otobûsê du demjimêr û nîv hene. Ez dibêjim: Tenê pênc xulek. Û ez radizim.\n\nEz şiyar dibim, û demjimêr heşt û deh xulek e! Telefona min tiştekî nabêje. Em hemû dibezin, Baran û Hêvî jî. Hevalo zû dibeze, lê otobûs nasekine. Otobûs diçe Kobaniyê, û em li vir in.\n\nEz bi Lorînê re li ser telefonê diaxivim. Ew dikene: Pênc xulek? Birayê min, tu her gav dereng î! Lê xem meke: hûn dîsa tên!\n\nÊvar e. Em hemû li malê ne, û kes naxive. Demjimêr heşt e, û telefona min dibêje: Heşt! Heşt! Hemû li min dinêrin. Ez radibim û dibêjim: Baş e. Kî çay dixwaze?",
+      "body": "Tu dizanî? Carinan ez dereng im. Baş e, gelek caran. Lê roja Şemiyê em hemû diçin Kobaniyê, mala diya min. Ez soz didim ku ez dereng namînim. Soza min soz e!\n\nOtobûs di demjimêr heştan de diçe. Sê demjimêrên min hene, lê ez tenê ji demjimêra çayê bawer dikim. Êvara Înê ez telefona xwe ji bo heştan amade dikim. Hevalo li telefonê dinêre. Ez dibêjim: Xem meke, Hevalo!\n\nRoja Şemiyê ez di demjimêr pêncan de şiyar dibim. Cara yekem e ku ez zû me! Ez li kaniyê destên xwe dişom. Çay amade ye, nan û penîr jî. Hevalo jî şiyar e û sêvan dixwaze.\n\nDemjimêr pênc û nîv e. Berî otobûsê du demjimêr û nîv hene. Ez dibêjim: Tenê pênc xulek. Û ez radizim.\n\nEz şiyar dibim, û demjimêr heşt û deh xulek e! Telefon min şiyar nake. Em hemû dibezin, Baran û Hêvî jî. Hevalo zû dibeze, lê otobûs nasekine. Otobûs diçe Kobaniyê, û em li vir in.\n\nEz bi Lorînê re li ser telefonê diaxivim. Ew dikene: Pênc xulek? Birayê min, tu her gav dereng î! Lê xem meke, hûn dîsa tên.\n\nÊvar e. Em hemû li malê ne, û kes naxive. Demjimêr heşt e, û telefona min dibêje: Rabe! Hemû li min dinêrin. Ez radibim û dibêjim: Baş e. Kî çay dixwaze?",
       "translations": {
-        "en": "You know, friend? Sometimes I am late. All right, often. But on Saturday we are all going to Kobanî, to my mother’s house. I give my word: I won’t be late! My promise is a promise.\n\nThe bus leaves at eight. I have three clocks, but I only trust the tea clock. On Friday evening I write on my phone: eight. Hevalo looks at the phone. What is it, Hevalo? Eight is eight!\n\nOn Saturday I wake up at five. For the first time, I am early! I wash my hands at the spring. The tea is ready, and the bread and cheese too. Hevalo is awake too, and wants apples.\n\nIt is half past five. There are two and a half hours before the bus. I say: Just five minutes. And I go to sleep.\n\nI wake up, and it is ten past eight! My phone says nothing. We all run, Baran and Hêvî too. Hevalo runs fast, but the bus does not stop. The bus goes to Kobanî, and we are here.\n\nI talk to Lorîn on the phone. She laughs: Five minutes? My brother, you are always late! But don’t worry: you will come another time!\n\nIt is evening. We are all at home, and nobody says a word. It is eight o’clock, and my phone says: Eight! Eight! Everyone looks at me. I get up and say: All right. Who wants tea?"
+        "en": "You know what? Sometimes I am late. All right, often. But on Saturday we are all going to Kobanî, to my mother’s house. I promise I won’t be late. My promise is a promise!\n\nThe bus leaves at eight. I have three clocks, but I only trust the tea clock. On Friday evening I set my phone for eight. Hevalo looks at the phone. I say: Don’t worry, Hevalo!\n\nOn Saturday I wake up at five. It is the first time I am early! I wash my hands at the spring. The tea is ready, and the bread and cheese too. Hevalo is awake too, and wants apples.\n\nIt is half past five. There are two and a half hours before the bus. I say: Just five minutes. And I go to sleep.\n\nI wake up, and it is ten past eight! The phone does not wake me. We all run, Baran and Hêvî too. Hevalo runs fast, but the bus does not stop. The bus goes to Kobanî, and we are still here.\n\nI talk to Lorîn on the phone. She laughs: Five minutes? My brother, you are always late! But don’t worry, you will come another day.\n\nIt is evening. We are all at home, and nobody says a word. It is eight o’clock, and my phone says: Get up! Everyone looks at me. I get up and say: All right. Who wants tea?"
       },
       "glossary": [],
       "questions": [
-        {
-          "kind": "inference",
-          "prompt": "Hamo dibêje: “Cara yekem, ez zû me!” Çima?",
-          "promptEn": "Hamo says: “For the first time, I am early!” Why?",
-          "options": [
-            "Ew her gav zû ye",
-            "Ew gelek caran dereng e",
-            "Ew hîç şiyar nabe"
-          ],
-          "correctIndex": 1,
-          "explanation": "Hamo dibêje: “Carinan ez dereng im. Baş e, gelek caran.”",
-          "explanationEn": "Hamo says: “Sometimes I am late. All right, often.”",
-          "evidenceParagraph": 0,
-          "evidenceSentence": 2
-        },
         {
           "kind": "detail",
           "prompt": "Otobûs kengî diçe?",
@@ -635,6 +644,21 @@
           "explanationEn": "“The bus leaves at eight.”",
           "evidenceParagraph": 1,
           "evidenceSentence": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo dibêje: “Cara yekem e ku ez zû me!” Çima?",
+          "promptEn": "Hamo says: “It is the first time I am early!” Why?",
+          "options": [
+            "Ew her gav zû ye",
+            "Ew gelek caran dereng e",
+            "Ew hîç şiyar nabe"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hamo dibêje: “Carinan ez dereng im. Baş e, gelek caran.”",
+          "explanationEn": "Hamo says: “Sometimes I am late. All right, often.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -668,8 +692,8 @@
         },
         {
           "kind": "vocabulary",
-          "prompt": "“Cara yekem, ez zû me!” Ev çi ye?",
-          "promptEn": "“For the first time, I am early!” What does it mean?",
+          "prompt": "“Cara yekem e ku ez zû me!” Ev çi ye?",
+          "promptEn": "“It is the first time I am early!” What does it mean?",
           "options": [
             "Ez ne dereng im",
             "Ez birçî me",
@@ -680,21 +704,6 @@
           "explanationEn": "Early: not late. It is five o’clock, and Hamo is awake!",
           "evidenceParagraph": 2,
           "evidenceSentence": 1
-        },
-        {
-          "kind": "vocabulary",
-          "prompt": "“Tenê pênc xulek.” Pênc xulek çi ne?",
-          "promptEn": "“Just five minutes.” What are five minutes?",
-          "options": [
-            "Demeke biçûk",
-            "Rojek",
-            "Hefteyek"
-          ],
-          "correctIndex": 0,
-          "explanation": "Pênc xulek demeke biçûk e… lê ne ji bo Hamo!",
-          "explanationEn": "Five minutes is a short time… but not for Hamo!",
-          "evidenceParagraph": 3,
-          "evidenceSentence": 2
         },
         {
           "kind": "sequence",
@@ -712,16 +721,31 @@
           "evidenceSentence": 3
         },
         {
+          "kind": "vocabulary",
+          "prompt": "“Tenê pênc xulek.” Pênc xulek çi ne?",
+          "promptEn": "“Just five minutes.” What are five minutes?",
+          "options": [
+            "Demeke biçûk",
+            "Rojek",
+            "Hefteyek"
+          ],
+          "correctIndex": 0,
+          "explanation": "Pênc xulek demeke biçûk e… lê ne ji bo Hamo!",
+          "explanationEn": "Five minutes is a short time… but not for Hamo!",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
+        },
+        {
           "kind": "detail",
-          "prompt": "Rast an şaş? Demjimêr heşt û deh xulek e, û telefona Hamo dibêje: Heşt!",
-          "promptEn": "True or false? It is ten past eight, and Hamo’s phone says: Eight!",
+          "prompt": "Rast an şaş? Demjimêr heşt û deh xulek e, û telefona Hamo dibêje: Rabe!",
+          "promptEn": "True or false? It is ten past eight, and Hamo’s phone says: Get up!",
           "options": [
             "Rast",
             "Şaş"
           ],
           "correctIndex": 1,
-          "explanation": "Şaş e. Hamo dibêje: “Telefona min tiştekî nabêje.”",
-          "explanationEn": "False. Hamo says: “My phone says nothing.”",
+          "explanation": "Şaş e. Hamo dibêje: “Telefon min şiyar nake.”",
+          "explanationEn": "False. Hamo says: “The phone does not wake me.”",
           "evidenceParagraph": 4,
           "evidenceSentence": 1
         },
@@ -750,23 +774,23 @@
             "Hamo zû ye"
           ],
           "correctIndex": 0,
-          "explanation": "Lorîn birayê xwe dizane: ew her gav dereng e!",
-          "explanationEn": "Lorîn knows her brother: he is always late!",
+          "explanation": "Lorîn dizane ku birayê wê her gav dereng e!",
+          "explanationEn": "Lorîn knows that her brother is always late!",
           "evidenceParagraph": 5,
           "evidenceSentence": 2
         },
         {
           "kind": "inference",
-          "prompt": "Telefona Hamo kengî dibêje: Heşt?",
-          "promptEn": "When does Hamo’s phone say: Eight?",
+          "prompt": "Telefona Hamo kengî dibêje: Rabe?",
+          "promptEn": "When does Hamo’s phone say: Get up?",
           "options": [
             "Sibehê, di demjimêr heştan de",
             "Êvarê, di demjimêr heştan de",
             "Hîç"
           ],
           "correctIndex": 1,
-          "explanation": "“Êvar e… Demjimêr heşt e, û telefona min dibêje: Heşt!”",
-          "explanationEn": "“It is evening… It is eight o’clock, and my phone says: Eight!”",
+          "explanation": "“Êvar e… Demjimêr heşt e, û telefona min dibêje: Rabe!”",
+          "explanationEn": "“It is evening… It is eight o’clock, and my phone says: Get up!”",
           "evidenceParagraph": 6,
           "evidenceSentence": 2
         },
@@ -781,7 +805,7 @@
           ],
           "correctIndex": 0,
           "explanation": "Hamo dibêje “tenê pênc xulek” û radize. Otobûs diçe, û ew li vir in.",
-          "explanationEn": "Hamo says “just five minutes” and goes to sleep. The bus leaves without them.",
+          "explanationEn": "Hamo says “just five minutes” and goes back to sleep. The bus leaves without them.",
           "evidenceParagraph": null,
           "evidenceSentence": null
         }
@@ -802,9 +826,9 @@
       "readingMinutes": null,
       "title": "Soza bavê me",
       "summary": "Li Kobaniyê, bajarê Hamo, Lorîn bi pirtûkeke kevn tê. Di pirtûkê de nîvê wêneyê heye, û soza bavê wan.",
-      "body": "Were, heval, rûne! Çayê vexwe, germ e. Tu dizanî? Otobûs diçe, lê em jî diçin! Em bi Ferhad re diçin rêya mezin, û ji wir bi minîbûsê diçin Kobaniyê. Ajovan zû diçe, û ez dibêjim: Hêdî, hêdî!\n\nKobanî bajarê min e, lê bajar mezin dibe. Kolan nû ne, mal bilind in, û bazar qelebalix e. Ez dixwînim: li rastê. Ez li çepê diçim, û ez winda dibim. Du caran! Li bajarê xwe!\n\nDiya min, Edûl, derî vedike: Werin hundir! Rûnin! Bixwin! Xwarziyên min dibêjin: Xalo, xalo! Û çar zarok li ser min in. Diya min dibêje: Bixwe! Ez dixwim. Ew dibêje: Dîsa bixwe! Ez dîsa dixwim. Kes nikare ji ber maseyê rabe. Ez pêncî salî me, lê li vê malê ez zarok im.\n\nPiştî şîvê, Lorîn bi pirtûkeke kevn tê. Di pirtûkê de nîvê wêneyê me heye: bavê me, li ser Miştenûrê, li Newrozê. Sî sal in ku ew li cem Lorînê ye.\n\nLi pişt wêneyê soza du zarokan heye: Rojekê, li Newrozê, bavê me dîsa ji bo me bilûra xwe lêdixe. Tê bîra min, heval. Ez û Lorîn, em zarok in, û em vê dinivîsin.\n\nBavê min, Ibrahîm, radibe. Ew bilûra xwe digire, li me dinêre û dibêje: Li Newrozê ez têm Sêvanê. Soza min soz e!\n\nSoza min soz e! Niha ez dizanim ev gotin ji ku tê. Lorîn dikene, ez dikenim, û diya min dibêje: Rûnin! Divê hûn dîsa bixwin!",
+      "body": "Were, rûne! Çayê vexwe, germ e. Tu dizanî? Otobûs diçe, lê em jî diçin! Em bi Ferhad re diçin rêya mezin, û ji wir bi minîbûsê diçin Kobaniyê. Ajovan gelek zû diçe, û ez dibêjim: Hêdî, ji kerema xwe!\n\nKobanî bajarê min e, lê bajar mezin dibe. Kolan nû ne, mal bilind in, û bazar qelebalix e. Ez dixwînim: li rastê. Lê ez li çepê diçim, û ez winda dibim. Du caran, li bajarê xwe!\n\nDiya min, Edûl, derî vedike û dibêje: Werin hundir, rûnin! Çar xwarziyên min dibezin û li ser min in. Diya min dibêje: Bixwe! Ez dixwim. Ew dibêje: Dîsa bixwe! Ez dîsa dixwim. Kes nikare ji ber maseyê rabe. Ez pêncî salî me, lê li vê malê ez zarok im.\n\nPiştî şîvê, Lorîn bi pirtûkeke kevn tê. Di pirtûkê de nîvê wêneyê me heye: bavê me, li ser Miştenûrê, li Newrozê. Sî sal in ku ew li cem Lorînê ye.\n\nLi pişt wêneyê soza du zarokan heye: Rojekê, li Newrozê, bavê me dîsa ji bo me bilûra xwe lêdixe. Ez û Lorîn li wêneyê dinêrin, û em dikenin. Ev soza me ye.\n\nBavê min, Ibrahîm, radibe. Ew bilûra xwe digire, li me dinêre û dibêje: Li Newrozê ez têm Sêvanê. Soza min soz e!\n\nSoza min soz e! Niha ez dizanim ev gotin ji ku tê. Lorîn dikene, ez dikenim, û diya min dibêje: Rûnin! Divê hûn dîsa bixwin!",
       "translations": {
-        "en": "Come, friend, sit down! Drink your tea, it is hot. You know what? The bus goes, but we go too! We go with Ferhad to the main road, and from there we go to Kobanî by minibus. The driver goes fast, and I say: Slowly, slowly!\n\nKobanî is my town, but the town keeps growing. The streets are new, the houses are tall, and the market is crowded. I read: on the right. I go left, and I get lost. Twice! In my own town!\n\nMy mother, Edûl, opens the door: Come in! Sit down! Eat! My nieces and nephews say: Uncle, uncle! And four children are all over me. My mother says: Eat! I eat. She says: Eat again! I eat again. Nobody can get up from the table. I am fifty years old, but in this house I am a child.\n\nAfter dinner, Lorîn comes with an old book. In the book is the other half of our photo: our father, on Miştenûr, at Newroz. For thirty years it has been with Lorîn.\n\nOn the back of the photo is the promise of two children: One day, at Newroz, our father will play his flute for us again. I remember, friend. Lorîn and I are children, and we write it.\n\nMy father, Ibrahîm, gets up. He takes his flute, looks at us and says: At Newroz I am coming to Sêvan. My promise is a promise!\n\nMy promise is a promise! Now I know where that saying comes from. Lorîn laughs, I laugh, and my mother says: Sit down! You must eat again!"
+        "en": "Come, sit down! Drink your tea, it is hot. You know what? The bus goes without us, but we go too! We go with Ferhad to the main road, and from there we go to Kobanî by minibus. The driver goes very fast, and I say: Slowly, please!\n\nKobanî is my town, but the town keeps growing. The streets are new, the houses are tall, and the market is crowded. I read: on the right. But I go left, and I get lost. Twice, in my own town!\n\nMy mother, Edûl, opens the door and says: Come in, sit down! My four nieces and nephews run up and climb all over me. My mother says: Eat! I eat. She says: Eat some more! I eat some more. Nobody can get up from the table. I am fifty years old, but in this house I am a child.\n\nAfter dinner, Lorîn comes with an old book. In the book is the other half of our photo: our father, on Miştenûr, at Newroz. For thirty years it has been with Lorîn.\n\nOn the back of the photo is the promise of two children: One day, at Newroz, our father will play his flute for us again. Lorîn and I look at the photo, and we laugh. This is our promise.\n\nMy father, Ibrahîm, gets up. He takes his flute, looks at us and says: At Newroz I am coming to Sêvan. My promise is a promise!\n\nMy promise is a promise! Now I know where that saying comes from. Lorîn laughs, I laugh, and my mother says: Sit down! You must eat some more!"
       },
       "glossary": [
         {
@@ -846,25 +870,10 @@
             "Bi peyatî"
           ],
           "correctIndex": 1,
-          "explanation": "“Ajovan zû diçe, û ez dibêjim: Hêdî, hêdî!”",
-          "explanationEn": "“The driver goes fast, and I say: Slowly, slowly!”",
+          "explanation": "“Ajovan gelek zû diçe, û ez dibêjim: Hêdî, ji kerema xwe!”",
+          "explanationEn": "“The driver goes very fast, and I say: Slowly, please!”",
           "evidenceParagraph": 0,
           "evidenceSentence": 5
-        },
-        {
-          "kind": "inference",
-          "prompt": "Hamo dixwîne: “li rastê”. Ew çima winda dibe?",
-          "promptEn": "Hamo reads: “on the right”. Why does he get lost?",
-          "options": [
-            "Ew li çepê diçe",
-            "Ew li rastê diçe",
-            "Ew radize"
-          ],
-          "correctIndex": 0,
-          "explanation": "“Ez li çepê diçim, û ez winda dibim.”",
-          "explanationEn": "“I go left, and I get lost.”",
-          "evidenceParagraph": 1,
-          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -876,10 +885,25 @@
             "Sê caran"
           ],
           "correctIndex": 1,
-          "explanation": "Hamo dibêje: “Du caran! Li bajarê xwe!”",
-          "explanationEn": "Hamo says: “Twice! In my own town!”",
+          "explanation": "Hamo dibêje: “Du caran, li bajarê xwe!”",
+          "explanationEn": "Hamo says: “Twice, in my own town!”",
           "evidenceParagraph": 1,
           "evidenceSentence": 4
+        },
+        {
+          "kind": "inference",
+          "prompt": "Hamo dixwîne: “li rastê”. Ew çima winda dibe?",
+          "promptEn": "Hamo reads: “on the right”. Why does he get lost?",
+          "options": [
+            "Ew li çepê diçe",
+            "Ew li rastê diçe",
+            "Ew radize"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Lê ez li çepê diçim, û ez winda dibim.”",
+          "explanationEn": "“But I go left, and I get lost.”",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -906,10 +930,10 @@
             "Kes naxwe"
           ],
           "correctIndex": 0,
-          "explanation": "Rabûn: ji ber maseyê çûn. Edûl dibêje: rûnin û bixwin!",
-          "explanationEn": "To get up is to leave the table. Edûl says: sit down and eat!",
+          "explanation": "Edûl dibêje: rûnin û bixwin! Kes ji ber maseyê naçe.",
+          "explanationEn": "Edûl says: sit down and eat! Nobody leaves the table.",
           "evidenceParagraph": 2,
-          "evidenceSentence": 9
+          "evidenceSentence": 6
         },
         {
           "kind": "inference",
@@ -924,7 +948,7 @@
           "explanation": "Diya wî dibêje “Bixwe!”, û ew dixwe. Ew zarok e!",
           "explanationEn": "His mother says “Eat!”, and he eats: just like a child.",
           "evidenceParagraph": 2,
-          "evidenceSentence": 10
+          "evidenceSentence": 7
         },
         {
           "kind": "sequence",

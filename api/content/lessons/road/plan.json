@@ -72,8 +72,8 @@
           "position": 1,
           "titleKu": "Silav!",
           "titleEn": "Hello!",
-          "grammar": "“to be” as an ending: ez … im / me, tu … î / yî (Ez baş im. Tu çawa yî?)",
-          "grammarMd": "**Ez baş im.** I am well. In Kurmancî “am” and “are” are not words of their own: they are short endings after the word they go with.\n\n- **ez … im** after a consonant, **ez … me** after a vowel: *Ez baş im.* · *Ez Hamo me.*\n- **tu … î** after a consonant, **tu … yî** after a vowel: *Tu baş î?* · *Tu çawa yî?*",
+          "grammar": "“to be” as an ending: ez … im / me, tu … î / yî (Ez baş im. Tu çawa yî?); and Ez sêvê dixwim, I eat the apple, learnt whole",
+          "grammarMd": "**Ez baş im.** I am well. In Kurmancî “am” and “are” are not words of their own: they are short endings after the word they go with.\n\n- **ez … im** after a consonant, **ez … me** after a vowel: *Ez baş im.* · *Ez Hamo me.*\n- **tu … î** after a consonant, **tu … yî** after a vowel: *Tu baş î?* · *Tu çawa yî?*\n- *Sêv* → **Ez sêvê dixwim.** I’m eating the apple: the verb comes last, and the apple you eat takes **-ê**.",
           "lessons": [
             {
               "key": "u01s1l1",
@@ -81,13 +81,14 @@
               "titleKu": "Silav!",
               "titleEn": "Hello!",
               "focus": "meet",
-              "beat": "Hevalo, the young deer who is your guide, trots you up a lane of apple trees to a blue gate. It swings open, and a man with a magnificent black moustache beams at you: “Silav!” He holds out a red apple, “Sêv?”, and Hevalo nods so hard his ears flap. Your turn: “Erê, spas!”",
+              "beat": "Hevalo, the young deer who is your guide, trots you up a lane of apple trees to a blue gate. It swings open, and a man with a magnificent black moustache beams at you: “Silav!” He hands you a red apple. “Spas!” you say, and take a bite: “Ez sêvê dixwim.” Hevalo watches every bite, and the moment you look away, Hevalo sêvê dixwe: your apple.",
               "voice": "hamo",
               "new": [
                 {"ku": "silav", "en": "hello", "pos": "interj", "forms": ["silav"]},
-                {"ku": "sêv", "en": "apple", "pos": "noun", "gender": "f", "forms": ["sêv", "sêvên", "sêvan", "sêvek", "sêva", "sêvê", "sêveke"]},
-                {"ku": "erê", "en": "yes", "pos": "interj", "forms": ["erê"]},
-                {"ku": "spas", "en": "thanks", "pos": "interj", "forms": ["spas"]}
+                {"ku": "sêv", "en": "apple", "pos": "noun", "gender": "f", "forms": ["sêv", "sêvên", "sêvan", "sêvek", "sêva", "sêvê", "sêveke", "sêvekê"]},
+                {"ku": "spas", "en": "thanks", "pos": "interj", "forms": ["spas"]},
+                {"ku": "ez", "en": "I", "pos": "pron", "forms": ["ez"]},
+                {"ku": "Ez … dixwim.", "en": "I eat …, I’m eating … (tu … dixwî: you eat; … dixwe: he, she eats)", "pos": "phrase", "forms": ["ez", "dixwim", "dixwî", "dixwe"]}
               ]
             },
             {
@@ -96,13 +97,13 @@
               "titleKu": "Ez baş im",
               "titleEn": "I am well",
               "focus": "build",
-              "beat": "“Ez Hamo me,” he says, and gives the end of his moustache a proud little lift. He offers another apple; Hevalo says yes again, so Hamo teaches you the polite way out, “Na, spas.” Then an apple drops from the tree onto his head. “Ez baş im!” he announces, rubbing it, and he means it.",
+              "beat": "“Ez Hamo me,” he says, and gives the end of his moustache a proud little lift. Another apple? “Erê, spas!” A third? Hamo teaches you the polite way out: “Na, spas.” Hevalo has never once said no to an apple. Then an apple drops from the tree onto Hamo’s head. “Ez baş im!” he announces, rubbing it, and he means it.",
               "voice": "hamo",
               "new": [
-                {"ku": "ez", "en": "I", "pos": "pron", "forms": ["ez"]},
+                {"ku": "erê", "en": "yes", "pos": "interj", "forms": ["erê"]},
+                {"ku": "na", "en": "no", "pos": "interj", "forms": ["na"]},
                 {"ku": "baş", "en": "good, well, fine", "pos": "adj", "forms": ["baş"]},
-                {"ku": "im / me", "en": "am (im after a consonant, me after a vowel)", "pos": "cop", "forms": ["im", "me"]},
-                {"ku": "na", "en": "no", "pos": "interj", "forms": ["na"]}
+                {"ku": "im / me", "en": "am (im after a consonant, me after a vowel)", "pos": "cop", "forms": ["im", "me"]}
               ]
             },
             {
@@ -125,7 +126,7 @@
               "titleKu": "Silav, Hevalo!",
               "titleEn": "Hello, Hevalo!",
               "focus": "review",
-              "beat": "Hamo practises everything with you at the gate: hello, how are you, yes please, no thank you. Then he tries it all on Hevalo, who answers every question with the same word, “erê”, as long as there is an apple in it.",
+              "beat": "Hamo practises everything with you at the gate: hello, how are you, yes please, no thank you, I’m eating the apple. Then he tries his questions on Hevalo, who nods at any question with an apple in it and looks at the sky for the rest.",
               "voice": "hamo",
               "new": []
             }
@@ -135,8 +136,8 @@
           "position": 2,
           "titleKu": "Çay û nan",
           "titleEn": "Tea and bread",
-          "grammar": "ev … e / ye: this is … (Ev çay e.), and the question Ev çi ye?",
-          "grammarMd": "**Ev çay e.** This is tea. “Is” is an ending too: **e** after a consonant, **ye** after a vowel.\n\n- *Ev nan e.* This is bread. · *Çay xweş e.* The tea is nice. · *Ev Hevalo ye.* This is Hevalo.\n- To ask, put **çi** (what) where the answer would be: *Ev çi ye?* What is this? — *Ev sêv e.*",
+          "grammar": "ev … e / ye: this is … (Ev çay e.), and the question Ev çi ye?; Ez avê vedixwim, I drink the water, learnt whole",
+          "grammarMd": "**Ev çay e.** This is tea. “Is” is an ending too: **e** after a consonant, **ye** after a vowel.\n\n- *Ev nan e.* This is bread. · *Çay xweş e.* The tea is nice. · *Ev Hevalo ye.* This is Hevalo.\n- To ask, put **çi** (what) where the answer would be: *Ev çi ye?* What is this? — *Ev sêv e.*\n- *Av* → **Ez avê vedixwim.** I drink the water. *Çay* takes **-ê** too (*Ez çayê vedixwim*), but *nan* and *şîr* stay as they are: *Ez nan dixwim.* · *Ez şîr vedixwim.*",
           "lessons": [
             {
               "key": "u01s2l1",
@@ -144,13 +145,14 @@
               "titleKu": "Çay, nan, av",
               "titleEn": "Tea, bread, water",
               "focus": "meet",
-              "beat": "Hamo sits you down under the oldest apple tree and comes back with a tray: a glass of tea, warm bread, a jug of water from the spring. “Fermo!” with each one, and with each one Hevalo pushes his nose in to make sure it is not an apple.",
+              "beat": "Hamo sits you down under the oldest apple tree and comes back with a tray: a glass of tea, warm bread, water from the spring, and a bowl of milk for Hevalo, who is young enough to love it. You drink your tea, “Ez çayê vedixwim”, Hamo eats his bread, and Hevalo drinks his milk, loudly, and then pushes his nose into everything else in case it is an apple.",
               "voice": "hamo",
               "new": [
-                {"ku": "çay", "en": "tea", "pos": "noun", "gender": "f", "forms": ["çay", "çayên", "çayan", "çayek", "çaya", "çayê", "çayeke"]},
+                {"ku": "çay", "en": "tea", "pos": "noun", "gender": "f", "forms": ["çay", "çayên", "çayan", "çayek", "çaya", "çayê", "çayeke", "çayekê"]},
                 {"ku": "nan", "en": "bread", "pos": "noun", "gender": "m", "forms": ["nan", "nanên", "nanan", "nanek", "nanê", "nanekî", "nanî"]},
                 {"ku": "av", "en": "water", "pos": "noun", "gender": "f", "forms": ["av", "avên", "avan", "avek", "ava", "avê", "aveke"]},
-                {"ku": "fermo", "en": "here you are; please, go ahead", "pos": "interj", "forms": ["fermo"]}
+                {"ku": "şîr", "en": "milk", "pos": "noun", "gender": "m", "forms": ["şîr", "şîrên", "şîran", "şîrek", "şîrê", "şîrekî", "şîrî"]},
+                {"ku": "Ez … vedixwim.", "en": "I drink …, I’m drinking … (tu … vedixwî: you drink; … vedixwe: he, she drinks)", "pos": "phrase", "forms": ["ez", "vedixwim", "vedixwî", "vedixwe"]}
               ]
             },
             {
@@ -174,12 +176,13 @@
               "titleKu": "Bi xêr hatî!",
               "titleEn": "Welcome!",
               "focus": "talk",
-              "beat": "Halfway through his tea Hamo jumps up: he forgot the most important thing! Back to the blue gate he goes, opens it again with a bow and says it properly, “Bi xêr hatî!”, and teaches you the answer every guest gives, “Ser çavan!”. The tea is very hot; Hamo blows on his glass, and Hevalo, helpfully, blows on the bread.",
+              "beat": "Halfway through his tea Hamo jumps up: he forgot the most important thing! Back to the blue gate he goes, opens it again with a bow and says it properly, “Bi xêr hatî!”, and teaches you the answer every guest gives, “Ser çavan!”. Then “Fermo!”: a fresh glass of tea, very hot. Hamo blows on his glass, and Hevalo, helpfully, blows on the bread.",
               "voice": "hamo",
               "new": [
                 {"ku": "Bi xêr hatî!", "en": "Welcome! (to one person; Bi xêr hatin! to more than one)", "pos": "phrase", "forms": ["bi", "xêr", "hatî", "hatin"]},
                 {"ku": "Ser çavan!", "en": "Thank you! (the answer to a welcome; word for word “on my eyes”)", "pos": "phrase", "forms": ["ser", "çavan"]},
-                {"ku": "germ", "en": "hot, warm", "pos": "adj", "forms": ["germ"]}
+                {"ku": "germ", "en": "hot, warm", "pos": "adj", "forms": ["germ"]},
+                {"ku": "fermo", "en": "here you are; please, go ahead", "pos": "interj", "forms": ["fermo"]}
               ]
             },
             {
@@ -262,7 +265,7 @@
           "titleKu": "Şev baş!",
           "titleEn": "Good night!",
           "grammar": "whole phrases first: Ez … dixwazim (I want …), … heye? / … tune (is there …? / there isn’t), and Were!, Bixwe!, Vexwe!",
-          "grammarMd": "Some Kurdish is best learnt whole, before its grammar. Kurdish puts the verb last, so what you want comes first:\n\n- **Ez çay dixwazim.** I want tea. · *Tu çi dixwazî?* What do you want? · *Hevalo sêv dixwaze.* Hevalo wants an apple.\n- **Nan heye?** Is there bread? — *Erê, heye.* · *Na, tune.* No, there isn’t. · **Were!** Come! · **Bixwe!** Eat! · **Vexwe!** Drink!",
+          "grammarMd": "Some Kurdish is best learnt whole, before its grammar. Kurdish puts the verb last, so what you want comes first:\n\n- **Ez nan dixwazim.** I want bread. · *Tu çi dixwazî?* What would you like? · *Hevalo sêvekê dixwaze.* Hevalo wants an apple.\n- **Nan heye?** Is there bread? — *Erê, heye.* · *Na, tune.* No, there isn’t. · **Were!** Come! · **Bixwe!** Eat! · **Vexwe!** Drink!",
           "lessons": [
             {
               "key": "u01s4l1",
@@ -401,7 +404,7 @@
           "titleKu": "Yek, du, sê",
           "titleEn": "One, two, three",
           "grammar": "numbers before the noun, which does not change (du sêv, sê mirîşk); çend? how many?; age with salî",
-          "grammarMd": "**Sê sêv.** Three apples. A number comes before the noun, and the noun stays as it is: *yek sêv*, *du mirîşk*, *çar zarok*.\n\n- **Çend?** How many? *Çend mirîşk?* — *Sê mirîşk.* Counting out loud, two and three are *didu* and *sisê*.\n- **Tu çend salî yî?** How old are you? — *Ez şeş salî me.*",
+          "grammarMd": "**Sê sêv.** Three apples. A number comes before the noun, and the noun stays as it is: *yek sêv*, *du mirîşk*, *çar zarok*.\n\n- **Çend?** How many? *Mirîşk çend in?* — *Sê mirîşk in.* Counting out loud, two and three are *didu* and *sisê*.\n- **Tu çend salî yî?** How old are you? — *Ez şeş salî me.*",
           "lessons": [
             {
               "key": "u02s2l1",
@@ -496,7 +499,6 @@
               "new": [
                 {"ku": "neh", "en": "nine", "pos": "num", "forms": ["neh", "nehan"]},
                 {"ku": "deh", "en": "ten", "pos": "num", "forms": ["deh", "dehan"]},
-                {"ku": "şîr", "en": "milk", "pos": "noun", "gender": "m", "forms": ["şîr", "şîrên", "şîran", "şîrek", "şîrê", "şîrekî", "şîrî"]},
                 {"ku": "mast", "en": "yoghurt", "pos": "noun", "gender": "m", "forms": ["mast", "mastên", "mastan", "mastek", "mastê", "mastekî", "mastî"]},
                 {"ku": "ne", "en": "not (with the copula: ez ne … im)", "pos": "particle", "forms": ["ne"]}
               ]
@@ -3462,6 +3464,7 @@
     {"ku": "Bi xêr hatin!", "reason": "taught in chapter 1 as a form of “Bi xêr hatî!” for more than one person (hatin is a listed form) — confirm"},
     {"ku": "Bi kurdî çi ye?", "reason": "taught in chapter 1 as “What is it in Kurdish?”; “Bi kurdî jê re çi dibêjin?” is the fuller way — confirm the short one sounds natural"},
     {"ku": "Ez … dixwazim.", "reason": "taught whole in chapter 1, with dixwazî and dixwaze, before the present tense (chapter 4) — confirm the forms"},
+    {"ku": "Ez sêvê dixwim. Ez avê vedixwim. Ez şîr vedixwim.", "reason": "chapter 1 now teaches Ez … dixwim and Ez … vedixwim whole from its first lessons, with -ê on sêv, av and çay (sêvê, avê, çayê) and none on nan and şîr, the owner’s own example; bare forms (Ez sêv dixwim) are accepted as answers — confirm"},
     {"ku": "Noşî can be!", "reason": "said to someone eating or drinking; regional use varies (Noşîcan be, Afiyet be) — confirm the owner’s form and spelling"},
     {"ku": "Aferîn!", "reason": "well done: spelt aferîn; some write aferin — confirm"},
     {"ku": "Tu ji ku derê yî?", "reason": "where are you from: the course teaches ku derê; “Tu ji ku yî?” is shorter and also common — confirm"},

@@ -28,7 +28,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Îro Şemî ye.",
+                    "say": "Roja Şemiyê em diçin Kobaniyê!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -36,11 +36,11 @@
                         "en": "Saturday"
                       }
                     ],
-                    "prompt": "Îro Şemî ye.",
+                    "prompt": "Roja Şemiyê em diçin Kobaniyê!",
                     "options": [
-                      "Today is Saturday.",
-                      "Today is Sunday.",
-                      "Tomorrow is Saturday."
+                      "On Saturday we’re going to Kobanî!",
+                      "On Sunday we’re going to Kobanî!",
+                      "On Saturday we’re going to Amed!"
                     ],
                     "correctIndex": 0
                   }
@@ -50,7 +50,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Em kengî diçin Kobaniyê?",
+                    "say": "Em kengî diçin?",
                     "voice": "hamo",
                     "new": [
                       {
@@ -58,11 +58,11 @@
                         "en": "when"
                       }
                     ],
-                    "prompt": "Em kengî diçin Kobaniyê?",
+                    "prompt": "Em kengî diçin?",
                     "options": [
-                      "When are we going to Kobanî?",
-                      "Why are we going to Kobanî?",
-                      "How are we going to Kobanî?"
+                      "When are we going?",
+                      "Where are we going?",
+                      "Why are we going?"
                     ],
                     "correctIndex": 0
                   }
@@ -72,13 +72,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Em kengî diçin?",
+                    "say": "Em kengî diçin Kobaniyê?",
                     "voice": "hamo",
-                    "prompt": "Em kengî diçin?",
+                    "prompt": "Em kengî diçin Kobaniyê?",
                     "options": [
-                      "Roja Şemiyê!",
-                      "Ji Kobaniyê.",
-                      "Bi xêr hatî!"
+                      "Roja Şemiyê.",
+                      "Ji Sêvanê.",
+                      "Erê, em diçin."
                     ],
                     "correctIndex": 0
                   }
@@ -88,7 +88,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Yekşem roja betlaneyê ye.",
+                    "say": "Roja Yekşemê betlane ye.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -100,11 +100,11 @@
                         "en": "holiday, day off"
                       }
                     ],
-                    "prompt": "Yekşem roja betlaneyê ye.",
+                    "prompt": "Roja Yekşemê betlane ye.",
                     "options": [
-                      "Sunday is a holiday.",
+                      "Sunday is a day off.",
                       "Sunday is market day.",
-                      "Saturday is a holiday."
+                      "Saturday is a day off."
                     ],
                     "correctIndex": 0
                   }
@@ -120,7 +120,7 @@
                     "options": [
                       "Yekşem",
                       "Şemî",
-                      "kengî"
+                      "betlane"
                     ],
                     "correctIndex": 0
                   }
@@ -130,7 +130,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Şîrê duh ji bo pisîkê ye.",
+                    "say": "Hevalo ji duh ve birçî ye!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -138,11 +138,11 @@
                         "en": "yesterday"
                       }
                     ],
-                    "prompt": "Şîrê duh ji bo pisîkê ye.",
+                    "prompt": "Hevalo ji duh ve birçî ye!",
                     "options": [
-                      "Yesterday’s milk is for the cat.",
-                      "Today’s milk is for the cat.",
-                      "Yesterday’s milk is for the dog."
+                      "Hevalo has been hungry since yesterday!",
+                      "Hevalo has been asleep since yesterday!",
+                      "Hevalo has been hungry since Sunday!"
                     ],
                     "correctIndex": 0
                   }
@@ -151,14 +151,14 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Duh, îro, sibe.",
+                    "ask": "reply",
+                    "say": "Betlane kengî ye?",
                     "voice": "hamo",
-                    "prompt": "Duh, ___, sibe.",
+                    "prompt": "Betlane kengî ye?",
                     "options": [
-                      "îro",
-                      "Yekşem",
-                      "kengî"
+                      "Roja Yekşemê.",
+                      "Ji duh ve.",
+                      "Erê, betlane ye."
                     ],
                     "correctIndex": 0
                   }
@@ -179,8 +179,8 @@
                     "prompt": "Vê hefteyê em diçin Kobaniyê!",
                     "options": [
                       "This week we’re going to Kobanî!",
-                      "This year we’re going to Kobanî!",
-                      "This week we’re going to Amed!"
+                      "Next week we’re going to Kobanî!",
+                      "This week we’re going to the market!"
                     ],
                     "correctIndex": 0
                   }
@@ -190,15 +190,15 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Roja Şemiyê bazar tije ye, lê tişt erzan in.",
+                    "say": "Roja Yekşemê bazar tije ye, û tişt erzan in.",
                     "voice": "hamo",
-                    "prompt": "Roja Şemiyê bazar tije ye, lê tişt erzan in.",
+                    "prompt": "Roja Yekşemê bazar tije ye, û tişt erzan in.",
                     "accepted": [
-                      "On Saturday the market is full, but things are cheap.",
-                      "On Saturday the market is crowded, but things are cheap.",
-                      "The market is full on Saturday, but things are cheap.",
-                      "On Saturdays the market is full, but things are cheap.",
-                      "On Saturday the market is full but things are cheap."
+                      "On Sunday the market is full, and things are cheap.",
+                      "On Sunday the market is busy, and things are cheap.",
+                      "On Sundays the market is full, and things are cheap.",
+                      "On Sunday the market is full and things are cheap.",
+                      "The market is full on Sunday, and things are cheap."
                     ]
                   }
                 },
@@ -211,9 +211,9 @@
                     "voice": "hamo",
                     "prompt": "Roja Yekşemê tu çi dikî?",
                     "options": [
-                      "Ez diçim bazarê û kulîlkan dikirim.",
-                      "Zikê min tije ye.",
-                      "Ez Yekşem im."
+                      "Ez diçim bazarê û hevalên xwe dibînim.",
+                      "Roja Şemiyê.",
+                      "Ez baş im, spas."
                     ],
                     "correctIndex": 0
                   }
@@ -245,7 +245,7 @@
                       },
                       {
                         "left": "betlane",
-                        "right": "holiday"
+                        "right": "day off"
                       }
                     ],
                     "voice": "hamo"
@@ -256,13 +256,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hefteyek heft roj e, û Hevalo heft roj birçî ye!",
+                    "say": "Di hefteyê de heft roj hene.",
                     "voice": "hamo",
-                    "prompt": "Hefteyek heft roj e, û Hevalo heft roj birçî ye!",
+                    "prompt": "Di hefteyê de heft roj hene.",
                     "options": [
-                      "A week is seven days, and Hevalo is hungry all seven!",
-                      "A week is seven days, and Hevalo sleeps all seven!",
-                      "A week is eight days, and Hevalo is hungry all eight!"
+                      "There are seven days in a week.",
+                      "There are six days in a week.",
+                      "There are seven weeks in a month."
                     ],
                     "correctIndex": 0
                   }
@@ -271,13 +271,14 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "reply",
+                    "say": "Tu tî yî? Tu şîr dixwazî?",
                     "voice": "hamo",
-                    "prompt": "When is the holiday?",
+                    "prompt": "Tu tî yî? Tu şîr dixwazî?",
                     "options": [
-                      "Betlane kengî ye?",
-                      "Betlane kengî e?",
-                      "Kengî betlane?"
+                      "Spas, lê zikê min tije ye.",
+                      "Roja Yekşemê.",
+                      "Ez ji Sêvanê me."
                     ],
                     "correctIndex": 0
                   }
@@ -289,10 +290,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ji duh ve Hêvî dibêje: Kengî em diçin?",
-                      "Ji duh ve Hêvî dibêje kengî em diçin?",
-                      "Ji duh ve Hêvî dibêje: Kengî em diçin",
-                      "Ji duh ve Hêvî dibêje Kengî em diçin"
+                      "Hêvî ji duh ve dibêje: Em kengî diçin?",
+                      "Hêvî ji duh ve dibêje, em kengî diçin?",
+                      "Hêvî ji duh ve dibêje: Em kengî diçin",
+                      "Hêvî ji duh ve dibêje Em kengî diçin"
                     ]
                   }
                 },
@@ -302,8 +303,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ji bo min hefte hemû betlane ye!",
-                    "reference": "Ji bo min hefte hemû betlane ye!"
+                    "prompt": "Ji bo min, hemû rojên hefteyê betlane ne!",
+                    "reference": "Ji bo min, hemû rojên hefteyê betlane ne!"
                   }
                 },
                 {
@@ -312,13 +313,17 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Today is Saturday, tomorrow is Sunday.",
+                    "prompt": "We’re going on Saturday, not on Sunday.",
                     "accepted": [
-                      "Îro Şemî ye, sibe Yekşem e.",
-                      "Îro Şemî ye, sibe Yekşem e",
-                      "Îro Şemî ye sibe Yekşem e",
-                      "Îro Şemî ye. Sibe Yekşem e.",
-                      "Îro Şemî ye. Sibe Yekşem e"
+                      "Em roja Şemiyê diçin, ne roja Yekşemê.",
+                      "Em roja Şemiyê diçin, ne roja Yekşemê",
+                      "Em roja Şemiyê diçin ne roja Yekşemê",
+                      "Roja Şemiyê em diçin, ne roja Yekşemê.",
+                      "Roja Şemiyê em diçin, ne roja Yekşemê",
+                      "Roja Şemiyê em diçin ne roja Yekşemê",
+                      "Em Şemiyê diçin, ne Yekşemê.",
+                      "Em Şemiyê diçin, ne Yekşemê",
+                      "Em Şemiyê diçin ne Yekşemê"
                     ]
                   }
                 }
@@ -345,7 +350,7 @@
                     ],
                     "prompt": "Baran li dibistanê dixwîne.",
                     "options": [
-                      "Baran reads at school.",
+                      "Baran studies at school.",
                       "Baran sleeps at school.",
                       "Baran eats at school."
                     ],
@@ -357,7 +362,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Roja Duşemê ew dixwîne, roja Sêşemê jî.",
+                    "say": "Roja Duşemê Baran dixwîne, roja Sêşemê jî.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -369,11 +374,11 @@
                         "en": "Tuesday"
                       }
                     ],
-                    "prompt": "Roja Duşemê ew dixwîne, roja Sêşemê jî.",
+                    "prompt": "Roja Duşemê Baran dixwîne, roja Sêşemê jî.",
                     "options": [
-                      "He reads on Monday, and on Tuesday too.",
-                      "He reads on Sunday, and on Monday too.",
-                      "He sleeps on Monday, and on Tuesday too."
+                      "Baran studies on Monday, and on Tuesday too.",
+                      "Baran studies on Sunday, and on Monday too.",
+                      "Baran plays on Monday, and on Tuesday too."
                     ],
                     "correctIndex": 0
                   }
@@ -399,7 +404,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Mamoste dibêje: Piştî taştê, xwendin!",
+                    "say": "Mamoste dibêje: Piştî taştê em dixwînin.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -407,11 +412,11 @@
                         "en": "after"
                       }
                     ],
-                    "prompt": "Mamoste dibêje: Piştî taştê, xwendin!",
+                    "prompt": "Mamoste dibêje: Piştî taştê em dixwînin.",
                     "options": [
-                      "The teacher says: After breakfast, reading!",
-                      "The teacher says: After breakfast, sleep!",
-                      "The teacher says: Before breakfast, reading!"
+                      "The teacher says: After breakfast we study.",
+                      "The teacher says: Before breakfast we study.",
+                      "The teacher says: After breakfast we sleep."
                     ],
                     "correctIndex": 0
                   }
@@ -426,8 +431,8 @@
                     "prompt": "Tu kengî dixwînî?",
                     "options": [
                       "Piştî taştê.",
-                      "Ez nû me.",
-                      "Ji Sêvanê."
+                      "Li dibistanê.",
+                      "Ez baş im."
                     ],
                     "correctIndex": 0
                   }
@@ -437,7 +442,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Berî şîvê jî xwendin!",
+                    "say": "Berî şîvê jî ew dixwîne.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -445,11 +450,11 @@
                         "en": "before"
                       }
                     ],
-                    "prompt": "Berî şîvê jî xwendin!",
+                    "prompt": "Berî şîvê jî ew dixwîne.",
                     "options": [
-                      "Before dinner, reading too!",
-                      "After dinner, reading too!",
-                      "Before dinner, tea too!"
+                      "He studies before dinner too.",
+                      "He studies after dinner too.",
+                      "He eats before dinner too."
                     ],
                     "correctIndex": 0
                   }
@@ -481,12 +486,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Duh, îro, sibe, dusibe.",
+                    "say": "Sibe Yekşem e, dusibe Duşem e.",
                     "voice": "hamo",
-                    "prompt": "Duh, îro, sibe, ___.",
+                    "prompt": "Sibe Yekşem e, ___ Duşem e.",
                     "options": [
                       "dusibe",
-                      "Duşem",
+                      "duh",
                       "berî"
                     ],
                     "correctIndex": 0
@@ -501,10 +506,10 @@
                     "voice": "hamo",
                     "prompt": "Baran dikene û dibêje: Ez ji dibistanê hez dikim!",
                     "accepted": [
-                      "Baran laughs and says: I like school!",
                       "Baran laughs and says: I love school!",
-                      "Baran laughs and says I like school!",
-                      "Baran is laughing and says: I like school!"
+                      "Baran laughs and says: I like school!",
+                      "Baran laughs and says I love school!",
+                      "Baran laughs and says I like school!"
                     ]
                   }
                 },
@@ -535,7 +540,7 @@
                       },
                       {
                         "left": "dixwîne",
-                        "right": "he reads"
+                        "right": "he studies"
                       }
                     ],
                     "voice": "hamo"
@@ -545,14 +550,14 @@
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ez li bin dara gûzê dixwînim, ne li dibistanê!",
+                    "ask": "reply",
+                    "say": "Hevalo jî roja Sêşemê dixwîne!",
                     "voice": "hamo",
-                    "prompt": "Ez li bin dara gûzê dixwînim, ne li dibistanê!",
+                    "prompt": "Hevalo jî roja Sêşemê dixwîne!",
                     "options": [
-                      "I read under the walnut tree, not at school!",
-                      "I sleep under the walnut tree, not at school!",
-                      "I read at school, not under the walnut tree!"
+                      "Ez bawer nakim!",
+                      "Berî taştê.",
+                      "Roja Duşemê."
                     ],
                     "correctIndex": 0
                   }
@@ -561,42 +566,44 @@
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "reply",
+                    "say": "Mamoste ji ku derê ye?",
                     "voice": "hamo",
-                    "prompt": "I see Baran on Tuesday.",
+                    "prompt": "Mamoste ji ku derê ye?",
                     "options": [
-                      "Ez roja Sêşemê Baran dibînim.",
-                      "Ez roja Sêşemê Baran dibîne.",
-                      "Ez roja Sêşem Baran dibînim."
+                      "Ji Amedê.",
+                      "Ji dibistanê.",
+                      "Roja Duşemê."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 13,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Hevalo jî roja Sêşemê dixwîne!",
-                    "voice": "hamo",
-                    "prompt": "Hevalo jî roja Sêşemê dixwîne!",
-                    "options": [
-                      "Ez bawer nakim!",
-                      "Ez Sêşem im!",
-                      "Mast biha ye."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Roja Duşemê Baran piştî taştê dixwîne.",
-                      "Roja Duşemê Baran piştî taştê dixwîne"
+                      "Roja Duşemê, berî dibistanê, Baran nan û mast dixwe.",
+                      "Roja Duşemê berî dibistanê Baran nan û mast dixwe.",
+                      "Roja Duşemê, berî dibistanê, Baran nan û mast dixwe",
+                      "Roja Duşemê berî dibistanê Baran nan û mast dixwe"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "After breakfast we study.",
+                    "accepted": [
+                      "Piştî taştê em dixwînin.",
+                      "Piştî taştê em dixwînin",
+                      "Em piştî taştê dixwînin.",
+                      "Em piştî taştê dixwînin"
                     ]
                   }
                 },
@@ -606,8 +613,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Piştî taştê xwendin, berî şîvê jî xwendin!",
-                    "reference": "Piştî taştê xwendin, berî şîvê jî xwendin!"
+                    "prompt": "Ez jî dixwînim, lê li bin dara gûzê!",
+                    "reference": "Ez jî dixwînim, lê li bin dara gûzê!"
                   }
                 },
                 {
@@ -616,7 +623,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Today is Sunday; the day after tomorrow is Tuesday.",
+                    "prompt": "Today is Sunday, the day after tomorrow is Tuesday.",
                     "accepted": [
                       "Îro Yekşem e, dusibe Sêşem e.",
                       "Îro Yekşem e, dusibe Sêşem e",
@@ -708,8 +715,8 @@
                     "prompt": "Tu jî dinivîsî?",
                     "options": [
                       "Erê, ez jî dinivîsim.",
-                      "Erê, ez jî dinivîse.",
-                      "Na, ez Çarşem im."
+                      "Roja Pêncşemê.",
+                      "Ez li hewşê me."
                     ],
                     "correctIndex": 0
                   }
@@ -730,7 +737,7 @@
                     "prompt": "Tu çend rojan li Sêvanê dimînî?",
                     "options": [
                       "How many days are you staying in Sêvan?",
-                      "How many days are you going to Kobanî?",
+                      "How many days are you going to Kobanî for?",
                       "How many apples are there in Sêvan?"
                     ],
                     "correctIndex": 0
@@ -741,13 +748,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Roja Pêncşemê ez ji diya xwe re dinivîsim.",
+                    "say": "Ez ji diya xwe re dinivîsim.",
                     "voice": "hamo",
-                    "prompt": "Roja ___ ez ji diya xwe re dinivîsim.",
+                    "prompt": "Ez ji diya xwe re ___.",
                     "options": [
-                      "Pêncşemê",
-                      "Pêncşem",
-                      "Çarşem"
+                      "dinivîsim",
+                      "dinivîse",
+                      "dinivîsî"
                     ],
                     "correctIndex": 0
                   }
@@ -763,7 +770,7 @@
                     "accepted": [
                       "Hevalo’s eyes say: There are apples, we’re staying!",
                       "Hevalo’s eyes say: There are apples, we are staying!",
-                      "Hevalo’s eyes say: There are apples, we stay!",
+                      "Hevalo’s eyes say: There are apples, so we’re staying!",
                       "Hevalo’s eyes say there are apples, we’re staying!"
                     ]
                   }
@@ -773,13 +780,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Mêvan roja Yekşemê tên. Tu dimînî?",
+                    "say": "Mêvan roja Pêncşemê tên. Tu dimînî?",
                     "voice": "hamo",
-                    "prompt": "Mêvan roja Yekşemê tên. Tu dimînî?",
+                    "prompt": "Mêvan roja Pêncşemê tên. Tu dimînî?",
                     "options": [
                       "Erê, ez dimînim!",
-                      "Erê, ez dimîne!",
-                      "Na, ez mêvan im."
+                      "Roja Pêncşemê.",
+                      "Ez ji Sêvanê me."
                     ],
                     "correctIndex": 0
                   }
@@ -816,14 +823,9 @@
                     ],
                     "lines": [
                       {
-                        "speaker": 0,
-                        "text": "Îro Yekşem e. Sibe Duşem, dusibe Sêşem…",
-                        "en": "Today is Sunday. Tomorrow Monday, the day after Tuesday…"
-                      },
-                      {
                         "speaker": 1,
-                        "text": "Û roja Çarşemê?",
-                        "en": "And on Wednesday?"
+                        "text": "Dusibe Çarşem e. Tu çi dikî?",
+                        "en": "The day after tomorrow is Wednesday. What are you doing?"
                       },
                       {
                         "speaker": 0,
@@ -832,13 +834,13 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Û tu kengî ji diya xwe re dinivîsî?",
-                        "en": "And when do you write to your mother?"
+                        "text": "Û roja Pêncşemê?",
+                        "en": "And on Thursday?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Roja Pêncşemê. Ez dinivîsim ku em hemû tên!",
-                        "en": "On Thursday. I write that we’re all coming!"
+                        "text": "Roja Pêncşemê ez ji diya xwe re dinivîsim ku em hemû tên.",
+                        "en": "On Thursday I write to my mother that we’re all coming."
                       },
                       {
                         "speaker": 1,
@@ -847,13 +849,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez dinivîsim û dikenim, dinivîsim û dikenim…",
-                        "en": "I write and laugh, write and laugh…"
+                        "text": "Ez tiştên xweş dinivîsim!",
+                        "en": "I’m writing funny things!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Diya te jî dikene!",
-                        "en": "Your mother will laugh too!"
+                        "text": "Diya te jî dikene.",
+                        "en": "Your mother will laugh too."
                       },
                       {
                         "speaker": 0,
@@ -867,13 +869,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Li çavên wî binêre. Çavên Hevalo dibêjin: Sêv hene, em dimînin!",
-                        "en": "Look at his eyes. Hevalo’s eyes say: There are apples, we’re staying!"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Baş e, em dimînin!",
-                        "en": "All right, we’re staying!"
+                        "text": "Li çavên wî binêre. Sêv hene, em dimînin!",
+                        "en": "Look at his eyes. There are apples, we’re staying!"
                       }
                     ],
                     "prompt": "Roja Pêncşemê Hamo çi dike?",
@@ -887,29 +884,28 @@
                 },
                 {
                   "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "On Thursday I write.",
-                    "accepted": [
-                      "Roja Pêncşemê ez dinivîsim.",
-                      "Roja Pêncşemê ez dinivîsim",
-                      "Ez roja Pêncşemê dinivîsim.",
-                      "Ez roja Pêncşemê dinivîsim"
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Dapîr bi firoşkaran re diaxive, û Hevalo li hewşê dimîne.",
-                      "Dapîr bi firoşkaran re diaxive, û Hevalo li hewşê dimîne",
-                      "Dapîr bi firoşkaran re diaxive û Hevalo li hewşê dimîne"
+                      "Dapîr bi firoşkarê pîvazan re diaxive.",
+                      "Dapîr bi firoşkarê pîvazan re diaxive"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "On Thursday I write to my mother.",
+                    "accepted": [
+                      "Roja Pêncşemê ez ji diya xwe re dinivîsim.",
+                      "Roja Pêncşemê ez ji diya xwe re dinivîsim",
+                      "Ez roja Pêncşemê ji diya xwe re dinivîsim.",
+                      "Ez roja Pêncşemê ji diya xwe re dinivîsim"
                     ]
                   }
                 },
@@ -918,13 +914,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Roja Pêncşemê ez dinivîsim û dikenim, dinivîsim û dikenim…",
+                    "say": "Pîvazên wî biha ne, lê gelek xweş in.",
                     "voice": "hamo",
-                    "prompt": "Roja Pêncşemê ez dinivîsim û dikenim, dinivîsim û dikenim…",
+                    "prompt": "Pîvazên wî biha ne, lê gelek xweş in.",
                     "options": [
-                      "On Thursday I write and laugh, write and laugh…",
-                      "On Thursday I read and laugh, read and laugh…",
-                      "On Wednesday I write and cry, write and cry…"
+                      "His onions are expensive, but very good.",
+                      "His onions are cheap, and very good.",
+                      "His apples are expensive, but very good."
                     ],
                     "correctIndex": 0
                   }
@@ -945,10 +941,12 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The day after tomorrow is Wednesday.",
+                    "prompt": "On Wednesday the guests are coming.",
                     "accepted": [
-                      "Dusibe Çarşem e.",
-                      "Dusibe Çarşem e"
+                      "Roja Çarşemê mêvan tên.",
+                      "Roja Çarşemê mêvan tên",
+                      "Mêvan roja Çarşemê tên.",
+                      "Mêvan roja Çarşemê tên"
                     ]
                   }
                 }
@@ -965,12 +963,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Piştî şîvê em hemû li malê dimînin û dinivîsin.",
+                    "say": "Piştî şîvê em hemû li malê dimînin û hefteya xwe dinivîsin.",
                     "voice": "hamo",
-                    "prompt": "Piştî şîvê em hemû li malê dimînin û dinivîsin.",
+                    "prompt": "Piştî şîvê em hemû li malê dimînin û hefteya xwe dinivîsin.",
                     "options": [
-                      "After dinner we all stay at home and write.",
-                      "Before dinner we all stay at home and write.",
+                      "After dinner we all stay at home and write out our week.",
+                      "Before dinner we all stay at home and write out our week.",
                       "After dinner we all go out and read."
                     ],
                     "correctIndex": 0
@@ -981,14 +979,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Baran dinivîse: Şeş roj dibistan, yek roj betlane.",
+                    "say": "Ji heft rojan, şeş dibistan in û yek betlane ye.",
                     "voice": "hamo",
-                    "prompt": "Baran dinivîse: Şeş roj dibistan, yek roj betlane.",
+                    "prompt": "Ji heft rojan, şeş dibistan in û yek betlane ye.",
                     "accepted": [
-                      "Baran writes: Six days of school, one day of holiday.",
-                      "Baran writes: Six days school, one day holiday.",
-                      "Baran writes: Six days of school and one day of holiday.",
-                      "Baran writes: six days of school, one day off."
+                      "Of seven days, six are school and one is a holiday.",
+                      "Of the seven days, six are school and one is a day off.",
+                      "Out of seven days, six are school and one is a holiday.",
+                      "Of seven days six are school and one is a holiday."
                     ]
                   }
                 },
@@ -997,13 +995,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hêvî dinivîse: masî, kartol û bacansor!",
+                    "say": "Hêvî ji bo şîvê masî, kartol û bacansor dixwaze.",
                     "voice": "hamo",
-                    "prompt": "Hêvî dinivîse: masî, kartol û bacansor!",
+                    "prompt": "Hêvî ji bo şîvê masî, kartol û bacansor dixwaze.",
                     "options": [
-                      "Hêvî writes: fish, potatoes and tomatoes!",
-                      "Hêvî eats: fish, potatoes and tomatoes!",
-                      "Hêvî writes: meat, onions and tomatoes!"
+                      "Hêvî wants fish, potatoes and tomatoes for dinner.",
+                      "Hêvî wants meat, potatoes and tomatoes for dinner.",
+                      "Hêvî wants fish, potatoes and tomatoes for breakfast."
                     ],
                     "correctIndex": 0
                   }
@@ -1013,13 +1011,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Ji bo şîvê tu çi dixwazî?",
+                    "say": "Kî dinivîse?",
                     "voice": "hamo",
-                    "prompt": "Ji bo şîvê tu çi dixwazî?",
+                    "prompt": "Kî dinivîse?",
                     "options": [
-                      "Ez masî dixwazim.",
-                      "Ez bizin im.",
-                      "Hefte heft roj e."
+                      "Ez! Ez dikarim.",
+                      "Roja Şemiyê.",
+                      "Ez ji Sêvanê me."
                     ],
                     "correctIndex": 0
                   }
@@ -1029,13 +1027,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hamo dinivîse: çay, çay, çay… û roja Şemiyê: Kobanî!",
+                    "say": "Ez li ser hemû rojan çay dinivîsim, û li ser Şemiyê Kobanî!",
                     "voice": "hamo",
-                    "prompt": "Hamo dinivîse: çay, çay, çay… û roja Şemiyê: Kobanî!",
+                    "prompt": "Ez li ser hemû rojan çay dinivîsim, û li ser Şemiyê Kobanî!",
                     "options": [
-                      "Hamo writes: tea, tea, tea… and on Saturday: Kobanî!",
-                      "Hamo writes: tea, tea, tea… and on Sunday: Kobanî!",
-                      "Hamo writes: bread, bread, bread… and on Saturday: Kobanî!"
+                      "I write tea on all the days, and Kobanî on Saturday!",
+                      "I write tea on all the days, and Kobanî on Sunday!",
+                      "I write bread on all the days, and Kobanî on Saturday!"
                     ],
                     "correctIndex": 0
                   }
@@ -1044,13 +1042,14 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "reply",
+                    "say": "Roja Çarşemê tu çi dikî?",
                     "voice": "hamo",
-                    "prompt": "Bozo doesn’t write either.",
+                    "prompt": "Roja Çarşemê tu çi dikî?",
                     "options": [
-                      "Bozo jî nanivîse.",
-                      "Bozo jî na dinivîse.",
-                      "Bozo jî nanivîsim."
+                      "Ez û Dapîr li ber tenûrê ne.",
+                      "Roja Pêncşemê.",
+                      "Ez baş im, spas."
                     ],
                     "correctIndex": 0
                   }
@@ -1059,40 +1058,56 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Bizin li ser maseyê ye!",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Bizin li ser maseyê ye!",
+                    "prompt": "Bozo doesn’t write either, he’s a donkey!",
                     "options": [
-                      "The goat is on the table!",
-                      "The goat is under the table!",
-                      "The cat is on the table!"
+                      "Bozo jî nanivîse, ew ker e!",
+                      "Bozo jî na dinivîse, ew ker e!",
+                      "Bozo jî nanivîsim, ew ker e!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Binêre, bizin li ser maseyê ye!",
+                    "voice": "hamo",
+                    "prompt": "Binêre, bizin li ser maseyê ye!",
+                    "options": [
+                      "Look, the goat is on the table!",
+                      "Look, the goat is under the table!",
+                      "Look, the cat is on the table!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Na, bizin! Ev ne xwarin e!",
-                      "Na, bizin! Ev ne xwarin e",
-                      "Na bizin! Ev ne xwarin e"
+                      "Na, bizinê! Ev ne xwarin e!",
+                      "Na bizinê, ev ne xwarin e!",
+                      "Na, bizinê! Ev ne xwarin e",
+                      "Na bizinê! Ev ne xwarin e"
                     ]
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Dapîr Şemiyê bi sor dinivîse.",
+                    "say": "Dapîr Şemiyê bi rengê sor dinivîse.",
                     "voice": "hamo",
                     "cue": "in red",
-                    "prompt": "Dapîr Şemiyê bi ___ dinivîse.",
+                    "prompt": "Dapîr Şemiyê bi rengê ___ dinivîse.",
                     "options": [
                       "sor",
                       "şîn",
@@ -1102,7 +1117,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -1115,10 +1130,6 @@
                         "right": "week"
                       },
                       {
-                        "left": "duh",
-                        "right": "yesterday"
-                      },
-                      {
                         "left": "berî",
                         "right": "before"
                       },
@@ -1127,47 +1138,51 @@
                         "right": "after"
                       },
                       {
+                        "left": "Pêncşem",
+                        "right": "Thursday"
+                      },
+                      {
                         "left": "betlane",
-                        "right": "holiday"
+                        "right": "day off"
                       }
                     ],
                     "voice": "hamo"
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hevalo naxwîne, lê sêvan dixwe!",
+                    "say": "Hevalo naxwîne û nanivîse, lê ji duh ve sêvan dixwe!",
                     "voice": "hamo",
-                    "prompt": "Hevalo naxwîne, lê sêvan dixwe!",
+                    "prompt": "Hevalo naxwîne û nanivîse, lê ji duh ve sêvan dixwe!",
                     "accepted": [
-                      "Hevalo doesn’t read, but he eats apples!",
-                      "Hevalo does not read, but he eats apples!",
-                      "Hevalo can’t read, but he eats apples!",
-                      "Hevalo doesn’t read but eats apples!"
+                      "Hevalo doesn’t read or write, but he’s been eating apples since yesterday!",
+                      "Hevalo doesn’t read or write, but he has been eating apples since yesterday!",
+                      "Hevalo can’t read or write, but he’s been eating apples since yesterday!",
+                      "Hevalo doesn’t read and doesn’t write, but he’s been eating apples since yesterday!"
                     ]
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Dusibe Şemî ye: em diçin Kobaniyê! Tu jî têyî?",
+                    "say": "Dusibe Şemî ye, em diçin Kobaniyê! Tu jî têyî?",
                     "voice": "hamo",
-                    "prompt": "Dusibe Şemî ye: em diçin Kobaniyê! Tu jî têyî?",
+                    "prompt": "Dusibe Şemî ye, em diçin Kobaniyê! Tu jî têyî?",
                     "options": [
                       "Erê, ez jî têm!",
-                      "Erê, ez jî tê!",
-                      "Na, duh."
+                      "Roja Şemiyê.",
+                      "Ez li malê me."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1180,29 +1195,29 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Duh çay, îro çay, sibe çay!",
-                    "reference": "Duh çay, îro çay, sibe çay!"
+                    "prompt": "Ez berî taştê çay vedixwim, piştî taştê jî.",
+                    "reference": "Ez berî taştê çay vedixwim, piştî taştê jî."
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Enough, Hevalo! Enough apples!",
+                    "prompt": "Enough, Hevalo, your tummy is full!",
                     "accepted": [
-                      "Bes e, Hevalo! Sêv bes e!",
-                      "Bes e, Hevalo! Sêv bes e",
-                      "Bes e Hevalo! Sêv bes e",
-                      "Bes e, Hevalo! Sêv bes in!",
-                      "Bes e, Hevalo! Sêv bes in",
-                      "Bes e Hevalo! Sêv bes in"
+                      "Bes e, Hevalo, zikê te tije ye!",
+                      "Bes e, Hevalo, zikê te tije ye",
+                      "Bes e Hevalo zikê te tije ye",
+                      "Hevalo, bes e, zikê te tije ye!",
+                      "Hevalo, bes e, zikê te tije ye",
+                      "Hevalo bes e zikê te tije ye"
                     ]
                   }
                 }
@@ -1315,7 +1330,7 @@
                     "options": [
                       "Di Adarê de.",
                       "Di Nîsanê de.",
-                      "Bi xêr hatî!"
+                      "Roja Duşemê."
                     ],
                     "correctIndex": 0
                   }
@@ -1325,19 +1340,19 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Îsal Newroz li Sêvanê ye!",
+                    "say": "Newroz sala nû ye.",
                     "voice": "hamo",
                     "new": [
                       {
-                        "ku": "îsal",
-                        "en": "this year"
+                        "ku": "sal",
+                        "en": "year"
                       }
                     ],
-                    "prompt": "Îsal Newroz li Sêvanê ye!",
+                    "prompt": "Newroz sala nû ye.",
                     "options": [
-                      "This year Newroz is in Sêvan!",
-                      "This year Newroz is in Kobanî!",
-                      "Every year Newroz is in Sêvan!"
+                      "Newroz is the new year.",
+                      "Newroz is the new month.",
+                      "Newroz is the old year."
                     ],
                     "correctIndex": 0
                   }
@@ -1367,15 +1382,15 @@
                     "voice": "hamo",
                     "new": [
                       {
-                        "ku": "saleke",
-                        "en": "a year — sal, year"
+                        "ku": "îsal",
+                        "en": "this year"
                       }
                     ],
                     "prompt": "Îsal saleke baş e!",
                     "options": [
                       "This year is a good year!",
                       "This month is a good month!",
-                      "This year is a bad year!"
+                      "Next year is a good year!"
                     ],
                     "correctIndex": 0
                   }
@@ -1385,7 +1400,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hemû salê roja Înê ji bo çayê ye: ez naxwînim, naxebitim!",
+                    "say": "Roja Înê ez çay vedixwim û tiştekî nakim.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1393,11 +1408,11 @@
                         "en": "Friday"
                       }
                     ],
-                    "prompt": "Hemû salê roja Înê ji bo çayê ye: ez naxwînim, naxebitim!",
+                    "prompt": "Roja Înê ez çay vedixwim û tiştekî nakim.",
                     "options": [
-                      "All year round, Friday is for tea: I don’t read, I don’t work!",
-                      "All year round, Friday is for work: I read and I write!",
-                      "All year round, Sunday is for tea: I don’t read, I don’t work!"
+                      "On Friday I drink tea and do nothing.",
+                      "On Friday I drink tea and work all day.",
+                      "On Sunday I drink tea and do nothing."
                     ],
                     "correctIndex": 0
                   }
@@ -1407,13 +1422,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Roja Înê ye. Tu çi dixwazî?",
+                    "say": "Îro În e. Tu çi dixwazî?",
                     "voice": "hamo",
-                    "prompt": "Roja Înê ye. Tu çi dixwazî?",
+                    "prompt": "Îro În e. Tu çi dixwazî?",
                     "options": [
                       "Çayek, ji kerema xwe!",
-                      "Ez kulîlkan dikirim.",
-                      "Ez În im."
+                      "Di Nîsanê de.",
+                      "Ez baş im, spas."
                     ],
                     "correctIndex": 0
                   }
@@ -1469,15 +1484,17 @@
                 },
                 {
                   "position": 13,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "On Friday we drink tea.",
-                    "accepted": [
-                      "Roja Înê em çay vedixwin.",
-                      "Roja Înê em çay vedixwin"
-                    ]
+                    "prompt": "This year Newroz is on a Tuesday.",
+                    "options": [
+                      "Îsal Newroz roja Sêşemê ye.",
+                      "Îsal Newroz roja Sêşem e.",
+                      "Îsal Newroz roja Sêşemê e."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1487,9 +1504,11 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Duşem, Sêşem… û roja Înê: çay! Noşî can be!",
-                      "Duşem, Sêşem… û roja Înê: çay! Noşî can be",
-                      "Duşem Sêşem… û roja Înê çay! Noşî can be"
+                      "Îro În e. Fermo çaya te, noşî can be!",
+                      "Îro În e. Fermo çaya te. Noşî can be!",
+                      "Îro În e, fermo çaya te, noşî can be!",
+                      "Îro În e. Fermo çaya te, noşî can be",
+                      "Îro În e. Fermo çaya te noşî can be"
                     ]
                   }
                 },
@@ -1499,8 +1518,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Adar û Nîsan: mehên xweş!",
-                    "reference": "Adar û Nîsan: mehên xweş!"
+                    "prompt": "Adar û Nîsan mehên xweş in.",
+                    "reference": "Adar û Nîsan mehên xweş in."
                   }
                 },
                 {
@@ -1509,10 +1528,12 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "This year is a good year.",
+                    "prompt": "This year is a good year for apples.",
                     "accepted": [
-                      "Îsal saleke baş e.",
-                      "Îsal saleke baş e"
+                      "Îsal ji bo sêvan saleke baş e.",
+                      "Îsal ji bo sêvan saleke baş e",
+                      "Îsal saleke baş e ji bo sêvan.",
+                      "Îsal saleke baş e ji bo sêvan"
                     ]
                   }
                 }
@@ -1545,7 +1566,7 @@
                     "options": [
                       "Baran’s birthday is in May.",
                       "Baran’s birthday is in June.",
-                      "Baran’s school is in May."
+                      "Hêvî’s birthday is in May."
                     ],
                     "correctIndex": 0
                   }
@@ -1593,7 +1614,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hêvî dibêje: Diyariya min?",
+                    "say": "Hêvî dibêje: Diyariya min li ku ye?",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1601,11 +1622,11 @@
                         "en": "present, gift"
                       }
                     ],
-                    "prompt": "Hêvî dibêje: Diyariya min?",
+                    "prompt": "Hêvî dibêje: Diyariya min li ku ye?",
                     "options": [
-                      "Hêvî says: My present?",
-                      "Hêvî says: My birthday?",
-                      "Hêvî says: My apple?"
+                      "Hêvî says: Where’s my present?",
+                      "Hêvî says: Where’s my apple?",
+                      "Hêvî says: Where’s my mother?"
                     ],
                     "correctIndex": 0
                   }
@@ -1638,7 +1659,7 @@
                     "options": [
                       "Di Hezîranê de.",
                       "Ez şeş salî me.",
-                      "Diyariya min."
+                      "Ez diyariyek dixwazim."
                     ],
                     "correctIndex": 0
                   }
@@ -1690,14 +1711,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Diya min dizane, lê ew li Kobaniyê dimîne.",
+                    "say": "Ez nizanim rojbûna min kengî ye, lê diya min dizane.",
                     "voice": "hamo",
-                    "prompt": "Diya min dizane, lê ew li Kobaniyê dimîne.",
+                    "prompt": "Ez nizanim rojbûna min kengî ye, lê diya min dizane.",
                     "accepted": [
-                      "My mother knows, but she lives in Kobanî.",
-                      "My mother knows, but she stays in Kobanî.",
-                      "My mother knows, but she is in Kobanî.",
-                      "My mother knows but she lives in Kobanî."
+                      "I don’t know when my birthday is, but my mother knows.",
+                      "I do not know when my birthday is, but my mother knows.",
+                      "I don’t know when my birthday is but my mother knows.",
+                      "I don’t know when my birthday is, but my mum knows."
                     ]
                   }
                 },
@@ -1739,13 +1760,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Rojbûna Hamo? Dapîr dibêje Pêncşem, Hamo dibêje Çarşem, û em çayê vedixwin.",
+                    "say": "Dapîr dibêje rojbûna min di Gulanê de ye, ez dibêjim di Hezîranê de.",
                     "voice": "hamo",
-                    "prompt": "Rojbûna Hamo? Dapîr dibêje Pêncşem, Hamo dibêje Çarşem, û em çayê vedixwin.",
+                    "prompt": "Dapîr dibêje rojbûna min di Gulanê de ye, ez dibêjim di Hezîranê de.",
                     "options": [
-                      "Hamo’s birthday? Dapîr says Thursday, Hamo says Wednesday, and we drink tea.",
-                      "Hamo’s birthday? Dapîr says Wednesday, Hamo says Thursday, and we drink tea.",
-                      "Hamo’s birthday? Dapîr says Thursday, Hamo says Wednesday, and we go home."
+                      "Dapîr says my birthday is in May, I say it’s in June.",
+                      "Dapîr says my birthday is in June, I say it’s in May.",
+                      "Dapîr says my birthday is in March, I say it’s in June."
                     ],
                     "correctIndex": 0
                   }
@@ -1756,11 +1777,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "My birthday is in June.",
+                    "prompt": "My birthday is in May.",
                     "options": [
-                      "Rojbûna min di Hezîranê de ye.",
-                      "Rojbûna min di Hezîran de ye.",
-                      "Rojbûna min Hezîranê ye."
+                      "Rojbûna min di Gulanê de ye.",
+                      "Rojbûna min di Gulan de ye.",
+                      "Rojbûna min Gulanê ye."
                     ],
                     "correctIndex": 0
                   }
@@ -1775,8 +1796,8 @@
                     "prompt": "Ji bo rojbûna Hêviyê em çi didin?",
                     "options": [
                       "Diyariyek û sêvek!",
-                      "Ez dikarim.",
-                      "Ez tî me."
+                      "Di Hezîranê de.",
+                      "Ew şeş salî ye."
                     ],
                     "correctIndex": 0
                   }
@@ -1788,8 +1809,8 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Diyariya Hêviyê di destê Baran de ye.",
-                      "Diyariya Hêviyê di destê Baran de ye"
+                      "Rojbûna min di Gulanê de ye? Ez nizanim!",
+                      "Rojbûna min di Gulanê de ye? Ez nizanim"
                     ]
                   }
                 },
@@ -1799,8 +1820,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Yekem Gulan, duyem Hezîran!",
-                    "reference": "Yekem Gulan, duyem Hezîran!"
+                    "prompt": "Hêvî zaroka duyem e, lê diyariya yekem dixwaze!",
+                    "reference": "Hêvî zaroka duyem e, lê diyariya yekem dixwaze!"
                   }
                 },
                 {
@@ -1809,10 +1830,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "My birthday is in May.",
+                    "prompt": "My birthday is in June.",
                     "accepted": [
-                      "Rojbûna min di Gulanê de ye.",
-                      "Rojbûna min di Gulanê de ye"
+                      "Rojbûna min di Hezîranê de ye.",
+                      "Rojbûna min di Hezîranê de ye"
                     ]
                   }
                 }
@@ -1840,7 +1861,7 @@
                     "prompt": "Rojbûna te pîroz be!",
                     "options": [
                       "Happy birthday!",
-                      "Happy holiday!",
+                      "Happy Newroz!",
                       "Good night!"
                     ],
                     "correctIndex": 0
@@ -1911,13 +1932,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Îro rojbûna yekem, sibe rojbûna duyem!",
+                    "say": "Îro rojbûna min e, sibe dîsa!",
                     "voice": "hamo",
-                    "prompt": "Îro rojbûna yekem, sibe rojbûna ___!",
+                    "prompt": "Îro rojbûna min e, sibe ___!",
                     "options": [
-                      "duyem",
-                      "yekem",
-                      "dîsa"
+                      "dîsa",
+                      "duh",
+                      "kengî"
                     ],
                     "correctIndex": 0
                   }
@@ -1927,7 +1948,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Xem meke! Simbêlê min zarok e!",
+                    "say": "Xem meke! Simbêlê min reş e.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1935,11 +1956,11 @@
                         "en": "Don’t worry!"
                       }
                     ],
-                    "prompt": "Xem meke! Simbêlê min zarok e!",
+                    "prompt": "Xem meke! Simbêlê min reş e.",
                     "options": [
-                      "Don’t worry! My moustache is a child!",
-                      "Don’t worry! My moustache is old!",
-                      "Don’t laugh! My moustache is a child!"
+                      "Don’t worry! My moustache is still black.",
+                      "Don’t worry! My moustache is grey.",
+                      "Don’t laugh! My moustache is still black."
                     ],
                     "correctIndex": 0
                   }
@@ -1965,13 +1986,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ez li rojbûna xwe digerim!",
+                    "say": "Ez li bazarê digerim û ji xwe re diyariyek dikirim!",
                     "voice": "hamo",
-                    "prompt": "Ez li rojbûna xwe digerim!",
+                    "prompt": "Ez li bazarê digerim û ji xwe re diyariyek dikirim!",
                     "accepted": [
-                      "I’m looking for my birthday!",
-                      "I am looking for my birthday!",
-                      "I’m searching for my birthday!"
+                      "I walk around the market and buy myself a present!",
+                      "I walk around the market and buy a present for myself!",
+                      "I go around the market and buy myself a present!",
+                      "I wander round the market and buy myself a present!"
                     ]
                   }
                 },
@@ -2024,18 +2046,18 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Çend sal? Bîra min nayê! Pêncî? Pêncî û pênc?",
-                        "en": "How many years? I don’t remember! Fifty? Fifty-five?"
+                        "text": "Ez pêncî salî me, an pêncî û pênc. Bîra min nayê!",
+                        "en": "I’m fifty, or fifty-five. I don’t remember!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Wey! Îcar rojbûna te tune?",
-                        "en": "Oh! So you have no birthday?"
+                        "text": "Îcar tu rojbûna xwe nizanî?",
+                        "en": "So you don’t know your birthday?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Heye! Rojbûna min îro ye, û sibe dîsa!",
-                        "en": "I do! My birthday is today, and again tomorrow!"
+                        "text": "Na. Îcar rojbûna min îro ye, û sibe dîsa!",
+                        "en": "No. So my birthday is today, and again tomorrow!"
                       },
                       {
                         "speaker": 1,
@@ -2044,7 +2066,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Spas! Dapîr kevçiyekî hingiv zêde dide min.",
+                        "text": "Spas! Dapîr kevçiyek hingiv zêde dide min.",
                         "en": "Thanks! Dapîr gives me an extra spoonful of honey."
                       },
                       {
@@ -2054,8 +2076,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Xem meke! Simbêlê min zarok e!",
-                        "en": "Don’t worry! My moustache is a child!"
+                        "text": "Xem meke! Simbêlê min reş e.",
+                        "en": "Don’t worry! My moustache is still black."
                       }
                     ],
                     "prompt": "Rojbûna Hamo kengî ye?",
@@ -2072,13 +2094,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Dapîr li ber tenûrê dibêje: Rojbûna Hamo di Adarê de ye!",
+                    "say": "Dapîr li ber tenûrê nan dide min û dibêje: Pîroz be!",
                     "voice": "hamo",
-                    "prompt": "Dapîr li ber tenûrê dibêje: Rojbûna Hamo di Adarê de ye!",
+                    "prompt": "Dapîr li ber tenûrê nan dide min û dibêje: Pîroz be!",
                     "options": [
-                      "At the tenûr Dapîr says: Hamo’s birthday is in March!",
-                      "At the tenûr Dapîr says: Hamo’s birthday is in April!",
-                      "At the market Dapîr says: Hamo’s birthday is in March!"
+                      "At the tenûr Dapîr gives me bread and says: Happy birthday!",
+                      "At the tenûr Dapîr gives me tea and says: Happy birthday!",
+                      "At the market Dapîr gives me bread and says: Good night!"
                     ],
                     "correctIndex": 0
                   }
@@ -2107,9 +2129,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Li bazarê diyariyan difiroşin, lê rojbûna min tune!",
-                      "Li bazarê diyariyan difiroşin, lê rojbûna min tune",
-                      "Li bazarê diyariyan difiroşin lê rojbûna min tune"
+                      "Mîrza sêvan difiroşe, lê îro sêvek bi diyarî dide min!",
+                      "Mîrza sêvan difiroşe lê îro sêvek bi diyarî dide min!",
+                      "Mîrza sêvan difiroşe, lê îro sêvek bi diyarî dide min",
+                      "Mîrza sêvan difiroşe lê îro sêvek bi diyarî dide min"
                     ]
                   }
                 },
@@ -2168,9 +2191,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Duşem, Sêşem, Çarşem, Pêncşem, În… Şemî!",
-                      "Duşem, Sêşem, Çarşem, Pêncşem, În… Şemî",
-                      "Duşem Sêşem Çarşem Pêncşem În… Şemî"
+                      "Îro Sêşem e, û Şemî piştî çar rojan e.",
+                      "Îro Sêşem e û Şemî piştî çar rojan e.",
+                      "Îro Sêşem e, û Şemî piştî çar rojan e",
+                      "Îro Sêşem e û Şemî piştî çar rojan e"
                     ]
                   }
                 },
@@ -2179,13 +2203,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Newroz di Adarê de ye: berî Newrozê du meh hene.",
+                    "say": "Newroz di Adarê de ye, û berî wê du meh hene.",
                     "voice": "hamo",
-                    "prompt": "Newroz di Adarê de ye: berî Newrozê du meh hene.",
+                    "prompt": "Newroz di Adarê de ye, û berî wê du meh hene.",
                     "options": [
-                      "Newroz is in March: there are two months before Newroz.",
-                      "Newroz is in April: there are two weeks before Newroz.",
-                      "Newroz is in March: there are two days before Newroz."
+                      "Newroz is in March, and there are two months before it.",
+                      "Newroz is in April, and there are two weeks before it.",
+                      "Newroz is in March, and there are two days before it."
                     ],
                     "correctIndex": 0
                   }
@@ -2199,10 +2223,10 @@
                     "voice": "hamo",
                     "prompt": "Çima meha sêvan tune?",
                     "accepted": [
-                      "Why is there no month of apples?",
+                      "Why is there no month for apples?",
                       "Why is there no apple month?",
                       "Why isn’t there a month for apples?",
-                      "Why is there no month for apples?"
+                      "Why is there no month of apples?"
                     ]
                   }
                 },
@@ -2247,7 +2271,7 @@
                     "voice": "hamo",
                     "prompt": "Îsal rojbûna te kengî ye?",
                     "options": [
-                      "Di Gulanê de, roja Înê.",
+                      "Di Gulanê de, roja Çarşemê.",
                       "Ez bîst salî me.",
                       "Erê, rast e."
                     ],
@@ -2276,11 +2300,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The dog is under the table.",
+                    "prompt": "The dog wants bread too.",
                     "options": [
-                      "Kûçik li bin maseyê ye.",
-                      "Kûçik li bin mase ye.",
-                      "Kûçik li bin maseyê ne."
+                      "Kûçik jî nan dixwaze.",
+                      "Kûçik jî nan dixwazim.",
+                      "Kûçik jî nan dixwazin."
                     ],
                     "correctIndex": 0
                   }
@@ -2307,8 +2331,8 @@
                         "right": "this year"
                       },
                       {
-                        "left": "rojbûn",
-                        "right": "birthday"
+                        "left": "Duşem",
+                        "right": "Monday"
                       },
                       {
                         "left": "dîsa",
@@ -2323,13 +2347,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Firoşkar dibêje: Tirî bi bîst e!",
+                    "say": "Roja Pêncşemê firoşkar tirî difiroşe, kîloyek bi bîst.",
                     "voice": "hamo",
-                    "prompt": "Firoşkar dibêje: Tirî bi bîst e!",
+                    "prompt": "Roja Pêncşemê firoşkar tirî difiroşe, kîloyek bi bîst.",
                     "options": [
-                      "The seller says: Grapes are twenty!",
-                      "The seller says: Grapes are cheap!",
-                      "The seller says: Apples are twenty!"
+                      "On Thursday the seller sells grapes, twenty a kilo.",
+                      "On Thursday the seller sells apples, twenty a kilo.",
+                      "On Wednesday the seller sells grapes, thirty a kilo."
                     ],
                     "correctIndex": 0
                   }
@@ -2343,9 +2367,9 @@
                     "voice": "hamo",
                     "prompt": "Tirî bi bîst e. Tu dixwazî?",
                     "options": [
-                      "Na, spas. Pere tune!",
-                      "Erê, ez bîst im.",
-                      "Di Hezîranê de."
+                      "Erê, lê pere tune!",
+                      "Di Hezîranê de.",
+                      "Ez bîst salî me."
                     ],
                     "correctIndex": 0
                   }
@@ -2356,10 +2380,12 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Walnuts and honey for breakfast!",
+                    "prompt": "There are walnuts and honey for breakfast.",
                     "accepted": [
-                      "Gûz û hingiv ji bo taştê!",
-                      "Gûz û hingiv ji bo taştê"
+                      "Ji bo taştê gûz û hingiv hene.",
+                      "Ji bo taştê gûz û hingiv hene",
+                      "Gûz û hingiv ji bo taştê hene.",
+                      "Gûz û hingiv ji bo taştê hene"
                     ]
                   }
                 },
@@ -2368,13 +2394,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hêvî dibêje: Bîra te tê? Diyariya min!",
+                    "say": "Hêvî dîsa dibêje: Diyariya min tê bîra te?",
                     "voice": "hamo",
-                    "prompt": "Hêvî dibêje: Bîra te tê? Diyariya min!",
+                    "prompt": "Hêvî dîsa dibêje: Diyariya min tê bîra te?",
                     "options": [
-                      "Hêvî says: Do you remember? My present!",
-                      "Hêvî says: Do you know? My birthday!",
-                      "Hêvî says: Do you remember? My apple!"
+                      "Hêvî says again: Do you remember my present?",
+                      "Hêvî says again: Do you know my birthday?",
+                      "Hêvî says again: Do you remember my apple?"
                     ],
                     "correctIndex": 0
                   }
@@ -2395,14 +2421,12 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Nazê writes: Saturday!",
+                    "prompt": "We’re all going on Saturday.",
                     "accepted": [
-                      "Nazê dinivîse: Şemî!",
-                      "Nazê dinivîse: Şemî",
-                      "Nazê dinivîse Şemî",
-                      "Nazê dinivîse: Roja Şemiyê!",
-                      "Nazê dinivîse: Roja Şemiyê",
-                      "Nazê dinivîse Roja Şemiyê"
+                      "Em hemû roja Şemiyê diçin.",
+                      "Em hemû roja Şemiyê diçin",
+                      "Roja Şemiyê em hemû diçin.",
+                      "Roja Şemiyê em hemû diçin"
                     ]
                   }
                 }
@@ -2488,7 +2512,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Demjimêra duyem dibêje: diwanzdeh!",
+                    "say": "Demjimêra duyem dibêje diwanzdeh!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2496,11 +2520,11 @@
                         "en": "twelve"
                       }
                     ],
-                    "prompt": "Demjimêra duyem dibêje: diwanzdeh!",
+                    "prompt": "Demjimêra duyem dibêje diwanzdeh!",
                     "options": [
-                      "The second clock says: twelve!",
-                      "The first clock says: twelve!",
-                      "The second clock says: eleven!"
+                      "The second clock says twelve!",
+                      "The first clock says twelve!",
+                      "The second clock says eleven!"
                     ],
                     "correctIndex": 0
                   }
@@ -2564,7 +2588,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Sibehê demjimêr çay e, êvarê jî!",
+                    "say": "Sibehê ez çay vedixwim, êvarê jî.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2576,11 +2600,11 @@
                         "en": "evening"
                       }
                     ],
-                    "prompt": "Sibehê demjimêr çay e, êvarê jî!",
+                    "prompt": "Sibehê ez çay vedixwim, êvarê jî.",
                     "options": [
-                      "In the morning the clock says tea, and in the evening too!",
-                      "In the morning the clock says twelve, and in the evening too!",
-                      "In the evening the clock says tea, but not in the morning!"
+                      "I drink tea in the morning, and in the evening too.",
+                      "I drink tea in the morning, but not in the evening.",
+                      "I drink milk in the morning, and in the evening too."
                     ],
                     "correctIndex": 0
                   }
@@ -2590,13 +2614,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Sibeh e. Tu çi dixwazî?",
+                    "say": "Sibeh baş! Tu çi dixwazî?",
                     "voice": "hamo",
-                    "prompt": "Sibeh e. Tu çi dixwazî?",
+                    "prompt": "Sibeh baş! Tu çi dixwazî?",
                     "options": [
-                      "Çayek, ji kerema xwe!",
-                      "Demjimêr şaş e.",
-                      "Pênc xulek."
+                      "Sibeh baş! Çayek, ji kerema xwe.",
+                      "Êvar baş!",
+                      "Demjimêr şaş e."
                     ],
                     "correctIndex": 0
                   }
@@ -2639,14 +2663,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Di Hezîranê de diyariya Hêviyê demjimêreke biçûk e.",
+                    "say": "Demjimêr yazdeh e, û pozê Hevalo di selika sêvan de ye!",
                     "voice": "hamo",
-                    "prompt": "Di Hezîranê de diyariya Hêviyê demjimêreke biçûk e.",
+                    "prompt": "Demjimêr yazdeh e, û pozê Hevalo di selika sêvan de ye!",
                     "accepted": [
-                      "In June Hêvî’s present is a little clock.",
-                      "In June Hêvî’s present is a small clock.",
-                      "In June Hêvî’s gift is a little clock.",
-                      "Hêvî’s present in June is a little clock."
+                      "It’s eleven o’clock, and Hevalo’s nose is in the apple basket!",
+                      "It’s eleven, and Hevalo’s nose is in the apple basket!",
+                      "It is eleven o’clock, and Hevalo’s nose is in the apple basket!",
+                      "It’s eleven o’clock and Hevalo’s nose is in the basket of apples!"
                     ]
                   }
                 },
@@ -2655,13 +2679,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Demjimêr yazdeh e, û ker li ber selikê ye!",
+                    "say": "Demjimêra biçûk şaş e!",
                     "voice": "hamo",
-                    "prompt": "Demjimêr yazdeh e, û ker li ber selikê ye!",
+                    "prompt": "Demjimêra biçûk şaş e!",
                     "options": [
-                      "It’s eleven, and the donkey is by the basket!",
-                      "It’s eleven, and the donkey is in the basket!",
-                      "It’s twelve, and the dog is by the basket!"
+                      "The little clock is wrong!",
+                      "The little clock is right!",
+                      "The big clock is wrong!"
                     ],
                     "correctIndex": 0
                   }
@@ -2684,8 +2708,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Sibehê demjimêr çay e, êvarê jî!",
-                    "reference": "Sibehê demjimêr çay e, êvarê jî!"
+                    "prompt": "Sibeh baş! Demjimêr çend e?",
+                    "reference": "Sibeh baş! Demjimêr çend e?"
                   }
                 },
                 {
@@ -2710,10 +2734,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "What time is it? Tea o’clock!",
+                    "prompt": "It’s five past twelve.",
                     "accepted": [
-                      "Demjimêr çend e? Demjimêr çay e!",
-                      "Demjimêr çend e? Demjimêr çay e"
+                      "Demjimêr diwanzdeh û pênc xulek e.",
+                      "Demjimêr diwanzdeh û pênc xulek e"
                     ]
                   }
                 }
@@ -2730,7 +2754,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Çil mirîşkên me hene, û ez bi wan re şiyar dibim.",
+                    "say": "Ez bi mirîşkan re şiyar dibim.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2742,11 +2766,11 @@
                         "en": "I become, I get — from bûn, to be, to become"
                       }
                     ],
-                    "prompt": "Çil mirîşkên me hene, û ez bi wan re şiyar dibim.",
+                    "prompt": "Ez bi mirîşkan re şiyar dibim.",
                     "options": [
-                      "We have forty hens, and I wake up with them.",
-                      "We have forty hens, and I go to sleep with them.",
-                      "We have four hens, and I wake up with them."
+                      "I wake up with the hens.",
+                      "I go to sleep with the hens.",
+                      "I eat with the hens."
                     ],
                     "correctIndex": 0
                   }
@@ -2772,7 +2796,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Çay germ dibe, ez radibim.",
+                    "say": "Çay germ dibe, û ez radibim.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2780,11 +2804,11 @@
                         "en": "I get up — from rabûn, to get up"
                       }
                     ],
-                    "prompt": "Çay germ dibe, ez radibim.",
+                    "prompt": "Çay germ dibe, û ez radibim.",
                     "options": [
-                      "The tea gets hot, I get up.",
-                      "The tea gets cold, I go to sleep.",
-                      "The tea is hot, I sit down."
+                      "The tea gets hot, and I get up.",
+                      "The tea gets cold, and I go to sleep.",
+                      "The tea is hot, and I sit down."
                     ],
                     "correctIndex": 0
                   }
@@ -2800,7 +2824,7 @@
                     "options": [
                       "Di demjimêr heftan de.",
                       "Ez şiyar im.",
-                      "Çil û pênc."
+                      "Ez baş im."
                     ],
                     "correctIndex": 0
                   }
@@ -2880,9 +2904,9 @@
                     ],
                     "prompt": "Xew xweş e!",
                     "options": [
-                      "Sleep is nice!",
-                      "Tea is nice!",
-                      "Sleep is cold!"
+                      "Sleep is lovely!",
+                      "Tea is lovely!",
+                      "Sleep is bad!"
                     ],
                     "correctIndex": 0
                   }
@@ -2896,7 +2920,7 @@
                     "voice": "hamo",
                     "prompt": "Îro dîsa rojbûna min e!",
                     "options": [
-                      "Pîroz be!",
+                      "Dîsa? Pîroz be!",
                       "Xew xweş e.",
                       "Ez li kaniyê me."
                     ],
@@ -2941,14 +2965,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Baran dibêje: çil, pêncî… lê Hamo radize!",
+                    "say": "Ez dibêjim pênc xulek, lê ez çil an pêncî xulekan radizim!",
                     "voice": "hamo",
-                    "prompt": "Baran dibêje: çil, pêncî… lê Hamo radize!",
+                    "prompt": "Ez dibêjim pênc xulek, lê ez çil an pêncî xulekan radizim!",
                     "accepted": [
-                      "Baran says: forty, fifty… but Hamo is asleep!",
-                      "Baran says: forty, fifty… but Hamo sleeps!",
-                      "Baran says: forty, fifty… but Hamo is sleeping!",
-                      "Baran says forty, fifty… but Hamo is asleep!"
+                      "I say five minutes, but I sleep for forty or fifty minutes!",
+                      "I say five minutes, but I sleep forty or fifty minutes!",
+                      "I say five minutes but I sleep for forty or fifty minutes!",
+                      "I say five minutes, but I sleep for forty or fifty!"
                     ]
                   }
                 },
@@ -2958,11 +2982,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Hevalo’s eyes are awake.",
+                    "prompt": "I sleep in my bed.",
                     "options": [
-                      "Çavên Hevalo şiyar in.",
-                      "Çavên Hevalo şiyar e.",
-                      "Çavê Hevalo şiyar in."
+                      "Ez di nivîna xwe de radizim.",
+                      "Ez di nivîna xwe de radize.",
+                      "Ez di nivîn xwe de radizim."
                     ],
                     "correctIndex": 0
                   }
@@ -2972,13 +2996,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Tê bîra min: piştî çayê, xew!",
+                    "say": "Xewa min tê.",
                     "voice": "hamo",
-                    "prompt": "Tê bîra min: piştî çayê, xew!",
+                    "prompt": "Xewa min tê.",
                     "options": [
-                      "I remember: after tea, sleep!",
-                      "I remember: after tea, work!",
-                      "I don’t remember: before tea, what?"
+                      "I’m sleepy.",
+                      "I’m hungry.",
+                      "I’m awake."
                     ],
                     "correctIndex": 0
                   }
@@ -3002,8 +3026,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Pênc xulek, ez radizim: xew baş e!",
-                    "reference": "Pênc xulek, ez radizim: xew baş e!"
+                    "prompt": "Pênc xulek, û ez radibim!",
+                    "reference": "Pênc xulek, û ez radibim!"
                   }
                 },
                 {
@@ -3056,13 +3080,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Ez têm, ez têm!",
+                    "say": "Ez têm!",
                     "voice": "hamo",
-                    "prompt": "Ez têm, ez têm!",
+                    "prompt": "Ez têm!",
                     "options": [
                       "Tu dereng î!",
                       "Destê te sax be!",
-                      "Ez dereng im."
+                      "Ser çavan!"
                     ],
                     "correctIndex": 0
                   }
@@ -3072,7 +3096,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Firavîn nîvro ye.",
+                    "say": "Em nîvro firavînê dixwin.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -3084,11 +3108,11 @@
                         "en": "noon"
                       }
                     ],
-                    "prompt": "Firavîn nîvro ye.",
+                    "prompt": "Em nîvro firavînê dixwin.",
                     "options": [
-                      "Lunch is at noon.",
-                      "Dinner is at noon.",
-                      "Lunch is at one."
+                      "We have lunch at noon.",
+                      "We have dinner at noon.",
+                      "We have lunch at one."
                     ],
                     "correctIndex": 0
                   }
@@ -3098,12 +3122,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Firavîn nîvro ye.",
+                    "say": "Em nîvro firavînê dixwin.",
                     "voice": "hamo",
-                    "prompt": "Firavîn ___ ye.",
+                    "prompt": "Em ___ firavînê dixwin.",
                     "options": [
                       "nîvro",
-                      "êvar",
+                      "êvarê",
                       "şev"
                     ],
                     "correctIndex": 0
@@ -3114,7 +3138,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez ne dereng im: hûn zû ne!",
+                    "say": "Ez ne dereng im, hûn zû ne!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -3122,11 +3146,11 @@
                         "en": "early; quickly"
                       }
                     ],
-                    "prompt": "Ez ne dereng im: hûn zû ne!",
+                    "prompt": "Ez ne dereng im, hûn zû ne!",
                     "options": [
-                      "I’m not late: you’re early!",
-                      "I’m not early: you’re late!",
-                      "I’m not hungry: you’re late!"
+                      "I’m not late, you’re early!",
+                      "I’m not early, you’re late!",
+                      "I’m not hungry, you’re late!"
                     ],
                     "correctIndex": 0
                   }
@@ -3152,13 +3176,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ez têm, ez têm… û demjimêr yek e!",
+                    "say": "Nazê dikene: Bîst sal in ku tu dereng î!",
                     "voice": "hamo",
-                    "prompt": "Ez têm, ez têm… û demjimêr yek e!",
+                    "prompt": "Nazê dikene: Bîst sal in ku tu dereng î!",
                     "accepted": [
-                      "I’m coming, I’m coming… and it’s one o’clock!",
-                      "I am coming, I am coming… and it is one o’clock!",
-                      "I’m coming, I’m coming… and it’s one!"
+                      "Nazê laughs: You’ve been late for twenty years!",
+                      "Nazê laughs: For twenty years you’ve been late!",
+                      "Nazê laughs: You have been late for twenty years!",
+                      "Nazê laughs: you’ve been late for twenty years!"
                     ]
                   }
                 },
@@ -3185,18 +3210,18 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê! Xewa min xweş e… Pênc xulek!",
-                        "en": "Yes! My sleep is lovely… Five minutes!"
+                        "text": "Ez şiyar im! Pênc xulek, û ez têm.",
+                        "en": "I’m awake! Five minutes, and I’m coming."
                       },
                       {
                         "speaker": 1,
-                        "text": "Demjimêr diwanzdeh e, nîvro ye. Firavîn heye!",
-                        "en": "It’s twelve, it’s noon. There’s lunch!"
+                        "text": "Nîvro ye, firavîn heye!",
+                        "en": "It’s noon, there’s lunch!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez têm, ez têm! Ez simbêlê xwe dişom.",
-                        "en": "I’m coming, I’m coming! I’m washing my moustache."
+                        "text": "Ez têm! Ez simbêlê xwe dişom.",
+                        "en": "I’m coming! I’m washing my moustache."
                       },
                       {
                         "speaker": 1,
@@ -3205,8 +3230,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Na, na! Pênc xulek pênc xulek e!",
-                        "en": "No, no! Five minutes is five minutes!"
+                        "text": "Na, ez zû têm!",
+                        "en": "No, I’m coming quickly!"
                       },
                       {
                         "speaker": 1,
@@ -3215,8 +3240,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez? Dereng? Na! Firavîn zû ye.",
-                        "en": "Me? Late? No! Lunch is early."
+                        "text": "Ez dereng im? Na! Hûn hemû zû ne.",
+                        "en": "Me, late? No! You’re all early."
                       },
                       {
                         "speaker": 1,
@@ -3225,13 +3250,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Nazê jî zû ye. Hûn hemû zû ne!",
-                        "en": "Nazê is early too. You’re all early!"
+                        "text": "Nazê jî zû ye!",
+                        "en": "Nazê is early too!"
                       },
                       {
                         "speaker": 1,
                         "text": "Rûne! Firavîn sar e.",
-                        "en": "Sit down! Lunch is cold."
+                        "en": "Sit down! The lunch is cold."
                       },
                       {
                         "speaker": 0,
@@ -3284,13 +3309,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Fermo, firavîn!",
+                    "say": "Ez dereng im, lê ji bo te diyariyek heye!",
                     "voice": "hamo",
-                    "prompt": "Fermo, firavîn!",
+                    "prompt": "Ez dereng im, lê ji bo te diyariyek heye!",
                     "options": [
-                      "Hezar spas!",
-                      "Diyariya min?",
-                      "Bi xatirê te!"
+                      "Hezar spas! Ev çi ye?",
+                      "Bi xatirê te!",
+                      "Ez ne birçî me."
                     ],
                     "correctIndex": 0
                   }
@@ -3315,9 +3340,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Firavîn nîvro ye, lê Hamo dereng tê.",
-                      "Firavîn nîvro ye, lê Hamo dereng tê",
-                      "Firavîn nîvro ye lê Hamo dereng tê"
+                      "Em nîvro firavînê dixwin, lê ez dereng têm.",
+                      "Em nîvro firavînê dixwin lê ez dereng têm.",
+                      "Em nîvro firavînê dixwin, lê ez dereng têm",
+                      "Em nîvro firavînê dixwin lê ez dereng têm"
                     ]
                   }
                 },
@@ -3327,8 +3353,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ez ne dereng im: hûn zû ne!",
-                    "reference": "Ez ne dereng im: hûn zû ne!"
+                    "prompt": "Ez ne dereng im, hûn zû ne!",
+                    "reference": "Ez ne dereng im, hûn zû ne!"
                   }
                 },
                 {
@@ -3359,13 +3385,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Demjimêr heft e: çay!",
+                    "say": "Demjimêr heft e. Çay germ e!",
                     "voice": "hamo",
-                    "prompt": "Demjimêr heft e: çay!",
+                    "prompt": "Demjimêr heft e. Çay germ e!",
                     "options": [
-                      "It’s seven: tea!",
-                      "It’s eight: tea!",
-                      "It’s seven: bread!"
+                      "It’s seven. The tea is hot!",
+                      "It’s eight. The tea is hot!",
+                      "It’s seven. The tea is cold!"
                     ],
                     "correctIndex": 0
                   }
@@ -3375,13 +3401,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Demjimêr heft û deh xulek e: ez destên xwe dişom.",
+                    "say": "Demjimêr heft û deh xulek e, û ez destên xwe dişom.",
                     "voice": "hamo",
-                    "prompt": "Demjimêr heft û deh xulek e: ez destên xwe dişom.",
+                    "prompt": "Demjimêr heft û deh xulek e, û ez destên xwe dişom.",
                     "options": [
-                      "It’s ten past seven: I wash my hands.",
-                      "It’s half past seven: I wash my hands.",
-                      "It’s ten past seven: I go to sleep."
+                      "It’s ten past seven, and I’m washing my hands.",
+                      "It’s half past seven, and I’m washing my hands.",
+                      "It’s ten past seven, and I’m going to sleep."
                     ],
                     "correctIndex": 0
                   }
@@ -3396,8 +3422,8 @@
                     "prompt": "Destên xwe bişo!",
                     "options": [
                       "Baş e, ez destên xwe dişom.",
-                      "Ez pisîk im.",
-                      "Deh xulek e."
+                      "Ez şiyar im.",
+                      "Demjimêr heft e."
                     ],
                     "correctIndex": 0
                   }
@@ -3407,13 +3433,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nîvro, diwanzdeh: firavîn. Piştî firavînê: xew!",
+                    "say": "Nîvro em firavînê dixwin, û piştî firavînê ez radizim.",
                     "voice": "hamo",
-                    "prompt": "Nîvro, diwanzdeh: firavîn. Piştî firavînê: xew!",
+                    "prompt": "Nîvro em firavînê dixwin, û piştî firavînê ez radizim.",
                     "options": [
-                      "Noon, twelve: lunch. After lunch: sleep!",
-                      "Noon, twelve: lunch. After lunch: work!",
-                      "Evening, eleven: dinner. After dinner: sleep!"
+                      "At noon we have lunch, and after lunch I sleep.",
+                      "At noon we have lunch, and after lunch I work.",
+                      "In the evening we have dinner, and after dinner I sleep."
                     ],
                     "correctIndex": 0
                   }
@@ -3423,10 +3449,10 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Hamo radize, û pisîk li ser kursiyê ye.",
+                    "say": "Ez radizim, û pisîk li ser kursiyê radize.",
                     "voice": "hamo",
                     "cue": "on the chair",
-                    "prompt": "Hamo radize, û pisîk li ser ___ ye.",
+                    "prompt": "Ez radizim, û pisîk li ser ___ radize.",
                     "options": [
                       "kursiyê",
                       "kursî",
@@ -3440,14 +3466,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Kes nizane xewa Hamo çend demjimêr e!",
+                    "say": "Kes nizane xewa min çend demjimêr e!",
                     "voice": "hamo",
-                    "prompt": "Kes nizane xewa Hamo çend demjimêr e!",
+                    "prompt": "Kes nizane xewa min çend demjimêr e!",
                     "accepted": [
-                      "Nobody knows how many hours Hamo’s nap is!",
-                      "No one knows how many hours Hamo’s nap is!",
-                      "Nobody knows how many hours Hamo sleeps!",
-                      "Nobody knows how many hours Hamo’s sleep is!"
+                      "Nobody knows how many hours my nap is!",
+                      "No one knows how many hours my nap is!",
+                      "Nobody knows how many hours my sleep is!",
+                      "Nobody knows how many hours my nap lasts!"
                     ]
                   }
                 },
@@ -3456,13 +3482,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Êvar e. Hamo çi dike? Çay vedixwe!",
+                    "say": "Êvarê, di demjimêr nehan de, ez dîsa çay vedixwim.",
                     "voice": "hamo",
-                    "prompt": "Êvar e. Hamo çi dike? Çay vedixwe!",
+                    "prompt": "Êvarê, di demjimêr nehan de, ez dîsa çay vedixwim.",
                     "options": [
-                      "It’s evening. What is Hamo doing? Drinking tea!",
-                      "It’s morning. What is Hamo doing? Drinking tea!",
-                      "It’s evening. What is Hamo doing? Sleeping!"
+                      "In the evening, at nine, I drink tea again.",
+                      "In the morning, at nine, I drink tea again.",
+                      "In the evening, at nine, I go to sleep again."
                     ],
                     "correctIndex": 0
                   }
@@ -3473,11 +3499,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The chair is empty.",
+                    "prompt": "The apple basket is empty!",
                     "options": [
-                      "Kursî vala ye.",
-                      "Kursî vala e.",
-                      "Kursî vala ne."
+                      "Selika sêvan vala ye!",
+                      "Selika sêvan vala e!",
+                      "Selik sêvan vala ye!"
                     ],
                     "correctIndex": 0
                   }
@@ -3487,7 +3513,7 @@
                   "type": "conversation",
                   "payload": {
                     "id": "roadu05s3l4a",
-                    "title": "Heşt heşt e!",
+                    "title": "Heşt, sibehê an êvarê?",
                     "speakers": [
                       {
                         "name": "Hamo",
@@ -3505,8 +3531,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Zû! Ez li ser telefonê dinivîsim: heşt!",
-                        "en": "Early! I write on the phone: eight!"
+                        "text": "Zû! Telefona min di demjimêr heştan de min şiyar dike.",
+                        "en": "Early! My phone wakes me at eight."
                       },
                       {
                         "speaker": 1,
@@ -3515,25 +3541,30 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Heşt heşt e! Xem meke.",
-                        "en": "Eight is eight! Don’t worry."
+                        "text": "Sibehê, xem meke! Ez ne zarok im.",
+                        "en": "In the morning, don’t worry! I’m not a child."
                       },
                       {
                         "speaker": 1,
-                        "text": "Lê kes nizane…",
-                        "en": "But nobody knows…"
+                        "text": "Ez li telefona te dinêrim.",
+                        "en": "I’m having a look at your phone."
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez dizanim! Ez mezin im, ez dizanim!",
-                        "en": "I know! I’m a grown-up, I know!"
+                        "text": "Fermo, binêre. Heşt e, ne?",
+                        "en": "Go on, look. It’s eight, isn’t it?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Erê, heşt e…",
+                        "en": "Yes, it’s eight…"
                       }
                     ],
-                    "prompt": "Hamo li ser telefonê çi dinivîse?",
+                    "prompt": "Telefona Hamo kengî wî şiyar dike?",
                     "options": [
-                      "Heşt",
-                      "Neh",
-                      "Çay"
+                      "Di demjimêr heştan de.",
+                      "Di demjimêr nehan de.",
+                      "Di demjimêr diwanzdehan de."
                     ],
                     "correctIndex": 0
                   }
@@ -3545,9 +3576,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Demjimêr yazdeh e, diwanzdeh e, lê Hamo hîç nayê!",
-                      "Demjimêr yazdeh e, diwanzdeh e, lê Hamo hîç nayê",
-                      "Demjimêr yazdeh e diwanzdeh e lê Hamo hîç nayê"
+                      "Piştî firavînê ez radizim, û kes min hîç şiyar nake.",
+                      "Piştî firavînê ez radizim û kes min hîç şiyar nake.",
+                      "Piştî firavînê ez radizim, û kes min hîç şiyar nake",
+                      "Piştî firavînê ez radizim û kes min hîç şiyar nake"
                     ]
                   }
                 },
@@ -3586,6 +3618,22 @@
                 },
                 {
                   "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Xewa pisîka mezin jî tê.",
+                    "voice": "hamo",
+                    "prompt": "Xewa pisîka mezin jî tê.",
+                    "options": [
+                      "The big cat is sleepy too.",
+                      "The little cat is sleepy too.",
+                      "The big cat is hungry too."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -3595,7 +3643,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3608,34 +3656,18 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "I wash my hands early.",
+                    "prompt": "At eleven I go to bed.",
                     "accepted": [
-                      "Ez zû destên xwe dişom.",
-                      "Ez zû destên xwe dişom",
-                      "Ez destên xwe zû dişom.",
-                      "Ez destên xwe zû dişom"
+                      "Di demjimêr yazdehan de ez radizim.",
+                      "Di demjimêr yazdehan de ez radizim",
+                      "Ez di demjimêr yazdehan de radizim.",
+                      "Ez di demjimêr yazdehan de radizim"
                     ]
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Heşt heşt e!",
-                    "voice": "hamo",
-                    "prompt": "Heşt heşt e!",
-                    "options": [
-                      "Eight is eight!",
-                      "Eight is late!",
-                      "Eight is early!"
-                    ],
-                    "correctIndex": 0
                   }
                 }
               ]
@@ -3746,7 +3778,7 @@
                     "prompt": "Ez carinan dereng im.",
                     "options": [
                       "Carinan? Gelek caran!",
-                      "Pozê min biçûk e.",
+                      "Ez her roj radizim.",
                       "Roja Duşemê ye."
                     ],
                     "correctIndex": 0
@@ -3843,9 +3875,9 @@
                     "voice": "hamo",
                     "prompt": "Ez her roj dixebitim!",
                     "options": [
-                      "Aferîn!",
-                      "Ez kar im.",
-                      "Biçûk e."
+                      "Her roj? Ez bawer nakim!",
+                      "Bi xêr hatî!",
+                      "Ez ji Sêvanê me."
                     ],
                     "correctIndex": 0
                   }
@@ -3888,13 +3920,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Çima ez dereng im? Ez nizanim! Kar gelek e.",
+                    "say": "Çima ez gelek caran dereng im? Ji ber ku kar gelek e!",
                     "voice": "hamo",
-                    "prompt": "Çima ez dereng im? Ez nizanim! Kar gelek e.",
+                    "prompt": "Çima ez gelek caran dereng im? Ji ber ku kar gelek e!",
                     "accepted": [
-                      "Why am I late? I don’t know! There’s a lot of work.",
-                      "Why am I late? I do not know! There is a lot of work.",
-                      "Why am I late? I don’t know! The work is a lot."
+                      "Why am I often late? Because there’s a lot of work!",
+                      "Why am I often late? Because there is a lot of work!",
+                      "Why am I late so often? Because there’s a lot of work!",
+                      "Why am I often late? Because there’s so much work!"
                     ]
                   }
                 },
@@ -3906,9 +3939,9 @@
                     "voice": "hamo",
                     "prompt": "On holidays I wake up late.",
                     "options": [
-                      "Roja betlaneyê ez dereng şiyar dibim.",
-                      "Roja betlaneyê ez dereng şiyar dibe.",
-                      "Roja betlaneyê ez dereng şiyar im."
+                      "Rojên betlaneyê ez dereng şiyar dibim.",
+                      "Rojên betlaneyê ez dereng şiyar dibe.",
+                      "Rojên betlaneyê ez dereng şiyar im."
                     ],
                     "correctIndex": 0
                   }
@@ -3920,9 +3953,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Karê min li baxçe ye, û ez her roj dixebitim.",
-                      "Karê min li baxçe ye, û ez her roj dixebitim",
-                      "Karê min li baxçe ye û ez her roj dixebitim"
+                      "Karê min li baxçe ye, û ez bi darên sêvan re diaxivim.",
+                      "Karê min li baxçe ye û ez bi darên sêvan re diaxivim.",
+                      "Karê min li baxçe ye, û ez bi darên sêvan re diaxivim",
+                      "Karê min li baxçe ye û ez bi darên sêvan re diaxivim"
                     ]
                   }
                 },
@@ -3932,8 +3966,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Carinan, gelek caran, her gav!",
-                    "reference": "Carinan, gelek caran, her gav!"
+                    "prompt": "Ez carinan dereng im, ne her gav!",
+                    "reference": "Ez carinan dereng im, ne her gav!"
                   }
                 },
                 {
@@ -3942,14 +3976,14 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Sometimes I work, sometimes I sleep.",
+                    "prompt": "Sometimes I work, often I sleep!",
                     "accepted": [
-                      "Carinan ez dixebitim, carinan ez radizim.",
-                      "Carinan ez dixebitim, carinan ez radizim",
-                      "Carinan ez dixebitim carinan ez radizim",
-                      "Carinan dixebitim, carinan radizim.",
-                      "Carinan dixebitim, carinan radizim",
-                      "Carinan dixebitim carinan radizim"
+                      "Carinan ez dixebitim, gelek caran ez radizim!",
+                      "Carinan ez dixebitim, gelek caran ez radizim",
+                      "Carinan ez dixebitim gelek caran ez radizim",
+                      "Carinan dixebitim, gelek caran radizim!",
+                      "Carinan dixebitim, gelek caran radizim",
+                      "Carinan dixebitim gelek caran radizim"
                     ]
                   }
                 }
@@ -4070,8 +4104,8 @@
                     "prompt": "Tu jî dilîzî?",
                     "options": [
                       "Erê, ez jî dilîzim!",
-                      "Erê, ez jî dilîze!",
-                      "Devê min tije ye."
+                      "Devê min tije ye.",
+                      "Ez ji Sêvanê me."
                     ],
                     "correctIndex": 0
                   }
@@ -4081,7 +4115,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran fêr dibe: otobûs çawa diçe?",
+                    "say": "Baran li otobûsê dinêre û fêr dibe.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -4089,11 +4123,11 @@
                         "en": "learns — from fêr bûn, to learn"
                       }
                     ],
-                    "prompt": "Baran fêr dibe: otobûs çawa diçe?",
+                    "prompt": "Baran li otobûsê dinêre û fêr dibe.",
                     "options": [
-                      "Baran is learning how the bus works.",
-                      "Baran is asking when the bus goes.",
-                      "Baran is learning where the bus goes."
+                      "Baran watches the bus and learns.",
+                      "Baran watches the bus and sleeps.",
+                      "Baran waits for the bus and learns."
                     ],
                     "correctIndex": 0
                   }
@@ -4103,7 +4137,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hamo dibêje: Belê, belê!",
+                    "say": "Belê, tu rast dibêjî.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -4111,11 +4145,11 @@
                         "en": "yes (polite); indeed"
                       }
                     ],
-                    "prompt": "Hamo dibêje: Belê, belê!",
+                    "prompt": "Belê, tu rast dibêjî.",
                     "options": [
-                      "Hamo says: Yes, yes!",
-                      "Hamo says: No, no!",
-                      "Hamo says: Later, later!"
+                      "Yes, you’re right.",
+                      "No, you’re wrong.",
+                      "Yes, you’re late."
                     ],
                     "correctIndex": 0
                   }
@@ -4125,11 +4159,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Otobûs di demjimêr heştan de diçe.",
+                    "say": "Otobûs ji bo kesî namîne.",
                     "voice": "hamo",
-                    "prompt": "Otobûs di demjimêr heştan de diçe.",
+                    "prompt": "Otobûs ji bo kesî namîne.",
                     "options": [
-                      "Belê, belê!",
+                      "Belê, ez dizanim.",
                       "Ez fêr dibim.",
                       "Zikê min tije ye."
                     ],
@@ -4141,7 +4175,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Berî otobûsê, tenê çayek!",
+                    "say": "Berî otobûsê ez tenê çayek vedixwim.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -4149,11 +4183,11 @@
                         "en": "only, just; alone"
                       }
                     ],
-                    "prompt": "Berî otobûsê, tenê çayek!",
+                    "prompt": "Berî otobûsê ez tenê çayek vedixwim.",
                     "options": [
-                      "Before the bus, just one tea!",
-                      "After the bus, just one tea!",
-                      "Before the bus, no tea!"
+                      "Before the bus I drink just one tea.",
+                      "After the bus I drink just one tea.",
+                      "Before the bus I drink no tea."
                     ],
                     "correctIndex": 0
                   }
@@ -4177,7 +4211,7 @@
                       },
                       {
                         "left": "tenê",
-                        "right": "only"
+                        "right": "only, just"
                       },
                       {
                         "left": "amade",
@@ -4196,14 +4230,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Otobûs hîç dereng namîne, tenê Hamo dereng dimîne!",
+                    "say": "Otobûs dereng namîne, tenê ez dereng dimînim!",
                     "voice": "hamo",
-                    "prompt": "Otobûs hîç dereng namîne, tenê Hamo dereng dimîne!",
+                    "prompt": "Otobûs dereng namîne, tenê ez dereng dimînim!",
                     "accepted": [
-                      "The bus is never late, only Hamo is late!",
-                      "The bus is never late, only Hamo is!",
-                      "The bus is never late; only Hamo is late!",
-                      "The bus is not late at all, only Hamo is late!"
+                      "The bus is never late, only I am!",
+                      "The bus isn’t late, only I am late!",
+                      "The bus is not late, only I am late!",
+                      "The bus is never late; only I am!"
                     ]
                   }
                 },
@@ -4213,11 +4247,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "On Tuesday Hêvî plays on the bus.",
+                    "prompt": "We learn at school.",
                     "options": [
-                      "Roja Sêşemê Hêvî di otobûsê de dilîze.",
-                      "Roja Sêşemê Hêvî di otobûsê de dilîzim.",
-                      "Roja Sêşem Hêvî di otobûs de dilîze."
+                      "Em li dibistanê fêr dibin.",
+                      "Em li dibistanê fêr dibe.",
+                      "Em li dibistan fêr dibin."
                     ],
                     "correctIndex": 0
                   }
@@ -4229,9 +4263,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Hêvî dilîze, Baran fêr dibe, û Hamo dibêje: Belê, belê!",
-                      "Hêvî dilîze, Baran fêr dibe, û Hamo dibêje: Belê, belê",
-                      "Hêvî dilîze Baran fêr dibe û Hamo dibêje Belê belê"
+                      "Hêvî dilîze, Baran fêr dibe, û ez tenê çay vedixwim.",
+                      "Hêvî dilîze, Baran fêr dibe û ez tenê çay vedixwim.",
+                      "Hêvî dilîze, Baran fêr dibe, û ez tenê çay vedixwim",
+                      "Hêvî dilîze Baran fêr dibe û ez tenê çay vedixwim"
                     ]
                   }
                 },
@@ -4241,8 +4276,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Otobûs amade ye? Berî otobûsê, tenê çayek!",
-                    "reference": "Otobûs amade ye? Berî otobûsê, tenê çayek!"
+                    "prompt": "Otobûs amade ye, lê ez ne amade me!",
+                    "reference": "Otobûs amade ye, lê ez ne amade me!"
                   }
                 },
                 {
@@ -4251,10 +4286,11 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "I am learning Kurdish.",
+                    "prompt": "Yes, I’m ready!",
                     "accepted": [
-                      "Ez kurdî fêr dibim.",
-                      "Ez kurdî fêr dibim"
+                      "Belê, ez amade me!",
+                      "Belê, ez amade me",
+                      "Belê ez amade me"
                     ]
                   }
                 }
@@ -4282,8 +4318,8 @@
                     "prompt": "Soza min soz e!",
                     "options": [
                       "My promise is a promise!",
-                      "My clock is a clock!",
-                      "My tea is tea!"
+                      "My promise is a joke!",
+                      "My promise is for tomorrow!"
                     ],
                     "correctIndex": 0
                   }
@@ -4298,8 +4334,8 @@
                     "prompt": "Tu soz didî?",
                     "options": [
                       "Erê, ez soz didim!",
-                      "Na, ez çay im.",
-                      "Dusibe."
+                      "Dusibe, di demjimêr heştan de.",
+                      "Ez tenê çayek dixwazim."
                     ],
                     "correctIndex": 0
                   }
@@ -4321,7 +4357,7 @@
                     "options": [
                       "There’s no time for tea!",
                       "There’s no tea in the house!",
-                      "There’s time for tea!"
+                      "There’s always time for tea!"
                     ],
                     "correctIndex": 0
                   }
@@ -4363,7 +4399,7 @@
                     "options": [
                       "The bus won’t stop? I’ll run!",
                       "The bus won’t go? I’ll walk!",
-                      "The bus is stopping? I’ll sit!"
+                      "The bus is stopping? I’ll sit down!"
                     ],
                     "correctIndex": 0
                   }
@@ -4423,8 +4459,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Heşt? Baş e. Kerem bike, berî otobûsê çayek!",
-                        "en": "Eight? Fine. Go on, a tea before the bus!"
+                        "text": "Baş e. Kerem bike, em berî otobûsê çay vedixwin!",
+                        "en": "Fine. Go on, we’ll have tea before the bus!"
                       },
                       {
                         "speaker": 1,
@@ -4444,7 +4480,7 @@
                       {
                         "speaker": 0,
                         "text": "Nasekine? Ez dibezim! Ez û Hevalo, em dibezin.",
-                        "en": "It doesn’t stop? I’ll run! Hevalo and I, we’ll run."
+                        "en": "It won’t stop? I’ll run! Hevalo and I will run."
                       },
                       {
                         "speaker": 1,
@@ -4453,13 +4489,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Carinan? Na! Bawer bike: soza min soz e!",
-                        "en": "Sometimes? No! Believe me: my promise is a promise!"
+                        "text": "Carinan? Na! Bawer bike, soza min soz e!",
+                        "en": "Sometimes? No! Believe me, my promise is a promise!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hemû li Nazê dinêrin…",
-                        "en": "Everyone looks at Nazê…"
+                        "text": "Hemû li Nazê dinêrin.",
+                        "en": "Everyone looks at Nazê."
                       },
                       {
                         "speaker": 0,
@@ -4471,7 +4507,7 @@
                     "options": [
                       "Di demjimêr heştan de.",
                       "Piştî çayê.",
-                      "Di nîvro de."
+                      "Nîvro."
                     ],
                     "correctIndex": 0
                   }
@@ -4496,13 +4532,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Li ser nexşeyê: Sêvan, çem û Kobanî!",
+                    "say": "Li ser nexşeyê, rê ji Sêvanê li ber çem diçe Kobaniyê.",
                     "voice": "hamo",
-                    "prompt": "Li ser nexşeyê: Sêvan, çem û Kobanî!",
+                    "prompt": "Li ser nexşeyê, rê ji Sêvanê li ber çem diçe Kobaniyê.",
                     "options": [
-                      "On the map: Sêvan, the river and Kobanî!",
-                      "On the map: Sêvan, the mountain and Kobanî!",
-                      "On the table: Sêvan, the river and Kobanî!"
+                      "On the map, the road goes from Sêvan along the river to Kobanî.",
+                      "On the map, the road goes from Sêvan over the mountain to Kobanî.",
+                      "On the map, the river goes from Kobanî to Sêvan."
                     ],
                     "correctIndex": 0
                   }
@@ -4513,12 +4549,12 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "There’s no time for tea!",
+                    "prompt": "This year I won’t be late!",
                     "accepted": [
-                      "Ji bo çayê dem tune!",
-                      "Ji bo çayê dem tune",
-                      "Dem tune ji bo çayê!",
-                      "Dem tune ji bo çayê"
+                      "Îsal ez dereng namînim!",
+                      "Îsal ez dereng namînim",
+                      "Ez îsal dereng namînim!",
+                      "Ez îsal dereng namînim"
                     ]
                   }
                 },
@@ -4529,9 +4565,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Dusibe Şemî ye, û dem tune: ne pênc xulek jî!",
-                      "Dusibe Şemî ye, û dem tune: ne pênc xulek jî",
-                      "Dusibe Şemî ye û dem tune ne pênc xulek jî"
+                      "Dusibe Şemî ye, û ji bo xewê dem tune!",
+                      "Dusibe Şemî ye û ji bo xewê dem tune!",
+                      "Dusibe Şemî ye, û ji bo xewê dem tune",
+                      "Dusibe Şemî ye û ji bo xewê dem tune"
                     ]
                   }
                 },
@@ -4553,6 +4590,22 @@
                 },
                 {
                   "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Nazê soza min dinivîse.",
+                    "voice": "hamo",
+                    "prompt": "Nazê soza min dinivîse.",
+                    "options": [
+                      "Nazê writes down my promise.",
+                      "Nazê reads my promise.",
+                      "Nazê forgets my promise."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -4562,7 +4615,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -4587,13 +4640,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Roja Şemiyê ye. Ez dibêjim: pênc xulek… û demjimêr heşt û nîv e!",
+                    "say": "Roja Şemiyê ez şiyar dibim, û demjimêr heşt û nîv e!",
                     "voice": "hamo",
-                    "prompt": "Roja Şemiyê ye. Ez dibêjim: pênc xulek… û demjimêr heşt û nîv e!",
+                    "prompt": "Roja Şemiyê ez şiyar dibim, û demjimêr heşt û nîv e!",
                     "options": [
-                      "It’s Saturday. I say: five minutes… and it’s half past eight!",
-                      "It’s Sunday. I say: five minutes… and it’s half past eight!",
-                      "It’s Saturday. I say: five minutes… and it’s half past five!"
+                      "On Saturday I wake up, and it’s half past eight!",
+                      "On Sunday I wake up, and it’s half past eight!",
+                      "On Saturday I wake up, and it’s half past five!"
                     ],
                     "correctIndex": 0
                   }
@@ -4603,13 +4656,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Telefona min dibêje: heşt, êvarê!",
+                    "say": "Wey! Telefona min êvarê di demjimêr heştan de min şiyar dike!",
                     "voice": "hamo",
-                    "prompt": "Telefona min dibêje: heşt, êvarê!",
+                    "prompt": "Wey! Telefona min êvarê di demjimêr heştan de min şiyar dike!",
                     "options": [
-                      "My phone says: eight, in the evening!",
-                      "My phone says: eight, in the morning!",
-                      "My clock says: nine, in the evening!"
+                      "Oh no! My phone wakes me at eight in the evening!",
+                      "Oh no! My phone wakes me at eight in the morning!",
+                      "Oh no! My clock wakes me at nine in the evening!"
                     ],
                     "correctIndex": 0
                   }
@@ -4637,18 +4690,18 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Çi? Heşt û nîv? Telefona min tiştekî nabêje!",
-                        "en": "What? Half past eight? My phone isn’t saying anything!"
+                        "text": "Çi? Heşt û nîv? Lê telefon min şiyar nake!",
+                        "en": "What? Half past eight? But the phone didn’t wake me!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Binêre: heşt, êvarê!",
-                        "en": "Look: eight, in the evening!"
+                        "text": "Binêre, heşt e, lê êvarê!",
+                        "en": "Look, it’s eight, but in the evening!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Êvarê? Wey! Em dibezin!",
-                        "en": "In the evening? Oh no! We run!"
+                        "text": "Êvarê? Wey! Zû, em dibezin!",
+                        "en": "In the evening? Oh no! Quick, let’s run!"
                       },
                       {
                         "speaker": 1,
@@ -4657,8 +4710,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Hevalo dibeze… lê otobûs nasekine.",
-                        "en": "Hevalo runs… but the bus doesn’t stop."
+                        "text": "Hevalo dibeze, lê otobûs nasekine.",
+                        "en": "Hevalo runs, but the bus doesn’t stop."
                       },
                       {
                         "speaker": 1,
@@ -4667,8 +4720,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Belê… em li vir in. Û soza min?",
-                        "en": "Yes… we’re here. And my promise?"
+                        "text": "Belê, em li vir in. Û soza min?",
+                        "en": "Yes, we’re here. And my promise?"
                       },
                       {
                         "speaker": 1,
@@ -4677,25 +4730,25 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Lorîn dikene û dibêje: Carinan? Na, tu her gav dereng î!",
-                        "en": "Lorîn laughs and says: Sometimes? No, you’re always late!"
+                        "text": "Lorîn dikene û dibêje: Tu her gav dereng î!",
+                        "en": "Lorîn laughs and says: You’re always late!"
                       },
                       {
                         "speaker": 1,
                         "text": "Em niha çawa diçin Kobaniyê?",
-                        "en": "How are we going to Kobanî now?"
+                        "en": "How are we going to get to Kobanî now?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez nizanim… Lê berî her tiştî, çayek!",
-                        "en": "I don’t know… But before anything else, a tea!"
+                        "text": "Ez nizanim… lê ji bo çayê her gav dem heye!",
+                        "en": "I don’t know… but there’s always time for tea!"
                       }
                     ],
-                    "prompt": "Telefona Hamo çi dibêje?",
+                    "prompt": "Telefona Hamo kengî wî şiyar dike?",
                     "options": [
-                      "Heşt, êvarê!",
-                      "Heşt, sibehê!",
-                      "Neh û nîv!"
+                      "Êvarê, di demjimêr heştan de.",
+                      "Sibehê, di demjimêr heştan de.",
+                      "Di demjimêr nehan de."
                     ],
                     "correctIndex": 0
                   }
@@ -4705,13 +4758,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Tenê Hevalo dibeze, lê otobûs nasekine.",
+                    "say": "Hemû dibezin, lê otobûs ji bo kesî nasekine.",
                     "voice": "hamo",
-                    "prompt": "Tenê Hevalo dibeze, lê otobûs nasekine.",
+                    "prompt": "Hemû dibezin, lê otobûs ji bo kesî nasekine.",
                     "options": [
-                      "Only Hevalo runs, but the bus doesn’t stop.",
-                      "Only Hevalo runs, and the bus stops.",
-                      "Only Hevalo sleeps, but the bus doesn’t stop."
+                      "Everyone runs, but the bus doesn’t stop for anyone.",
+                      "Everyone runs, and the bus stops for them.",
+                      "Everyone sleeps, and the bus doesn’t stop for anyone."
                     ],
                     "correctIndex": 0
                   }
@@ -4754,11 +4807,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "How are we going to Kobanî now?",
+                    "prompt": "Is there a bus on Sunday too?",
                     "options": [
-                      "Em niha çawa diçin Kobaniyê?",
-                      "Em niha çawa diçin Kobanî?",
-                      "Em niha çawa diçe Kobaniyê?"
+                      "Roja Yekşemê jî otobûs heye?",
+                      "Roja Yekşem jî otobûs heye?",
+                      "Roja Yekşemê jî otobûs hene?"
                     ],
                     "correctIndex": 0
                   }
@@ -4801,13 +4854,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Cara yekem e: Hamo û hemû gund dibezin!",
+                    "say": "Ev cara yekem e ku ez dibezim!",
                     "voice": "hamo",
-                    "prompt": "Cara yekem e: Hamo û hemû gund dibezin!",
+                    "prompt": "Ev cara yekem e ku ez dibezim!",
                     "options": [
-                      "It’s the first time: Hamo and the whole village are running!",
-                      "It’s the first time: Hamo and the whole village are sleeping!",
-                      "It’s the last time: Hamo and the whole village are running!"
+                      "This is the first time I’m running!",
+                      "This is the last time I’m running!",
+                      "This is the first time I’m late!"
                     ],
                     "correctIndex": 0
                   }
@@ -4835,9 +4888,10 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Hefte hemû em amade ne, lê îro dem tune: otobûs diçe!",
-                      "Hefte hemû em amade ne, lê îro dem tune: otobûs diçe",
-                      "Hefte hemû em amade ne lê îro dem tune otobûs diçe"
+                      "Hemû amade ne, tenê ez radizim!",
+                      "Hemû amade ne tenê ez radizim!",
+                      "Hemû amade ne, tenê ez radizim",
+                      "Hemû amade ne tenê ez radizim"
                     ]
                   }
                 },
@@ -4846,13 +4900,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Lorîn li ser telefonê dibêje: Hûn kengî tên?",
+                    "say": "Em niha çawa diçin Kobaniyê?",
                     "voice": "hamo",
-                    "prompt": "Lorîn li ser telefonê dibêje: Hûn kengî tên?",
+                    "prompt": "Em niha çawa diçin Kobaniyê?",
                     "options": [
-                      "Ez nizanim… roja Yekşemê?",
-                      "Em nan in.",
-                      "Bi xatirê te!"
+                      "Em li ser telefonê bi Lorînê re diaxivin.",
+                      "Roja Şemiyê.",
+                      "Em amade ne."
                     ],
                     "correctIndex": 0
                   }
@@ -4863,12 +4917,12 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "There’s a bus on Sunday too.",
+                    "prompt": "I work every day.",
                     "accepted": [
-                      "Roja Yekşemê jî otobûs heye.",
-                      "Roja Yekşemê jî otobûs heye",
-                      "Otobûs roja Yekşemê jî heye.",
-                      "Otobûs roja Yekşemê jî heye"
+                      "Ez her roj dixebitim.",
+                      "Ez her roj dixebitim",
+                      "Her roj ez dixebitim.",
+                      "Her roj ez dixebitim"
                     ]
                   }
                 },
@@ -4878,8 +4932,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ez fêr dibim: heşt û heşt ne yek in!",
-                    "reference": "Ez fêr dibim: heşt û heşt ne yek in!"
+                    "prompt": "Belê, carinan ez dereng im.",
+                    "reference": "Belê, carinan ez dereng im."
                   }
                 },
                 {
@@ -4888,10 +4942,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Hamo is sleeping in his room.",
+                    "prompt": "The children are playing in the room.",
                     "accepted": [
-                      "Hamo di odeya xwe de radize.",
-                      "Hamo di odeya xwe de radize"
+                      "Zarok di odeyê de dilîzin.",
+                      "Zarok di odeyê de dilîzin"
                     ]
                   }
                 }
