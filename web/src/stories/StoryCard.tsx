@@ -4,6 +4,7 @@ import { storyTextDirection, type StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { BookmarkIcon, HeadphonesIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { useGrowsFrom } from '../lib/viewTransition';
 import { readerPath, setBookmark } from './api';
 import { StoryCover } from './Cover';
 import { levelHint, levelName, minutesLeft, narratedKey } from './labels';
@@ -44,6 +45,8 @@ export function StoryCard({
   const left = minutesLeft(story);
   const share = story.me ? (story.me.finishedAt ? 1 : Math.max(0, Math.min(1, story.me.share))) : 0;
   const narrated = narratedKey(story);
+  // the cover goes with the reader into the story, and the story's own cover comes back to this card, whichever shelf it was on
+  const cover = useGrowsFrom(`story:${story.slug}`, { within: '.story-card' });
 
   async function toggle(): Promise<void> {
     if (busy) return;
@@ -64,7 +67,7 @@ export function StoryCard({
   return (
     <article className={`story-card${share > 0 ? ' has-progress' : ''}`}>
       <Link to={readerPath(story.slug)} className="story-card-link">
-        <StoryCover cover={story.cover} category={story.category} className="story-card-cover" />
+        <StoryCover cover={story.cover} category={story.category} className="story-card-cover" ref={cover} />
         <span className="story-card-body">
           <span className="story-card-title" lang={lang} dir={dir}>
             {story.title}

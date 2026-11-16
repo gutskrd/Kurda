@@ -1,5 +1,7 @@
 import { lazy } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+// the browser's router, with each change of page carried instead of cut
+import { CarriedRouter } from './lib/viewTransition';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { arrivalHeld } from './auth/arrival';
 import { MarketingLayout } from './layouts/MarketingLayout';
@@ -426,7 +428,7 @@ export function App(): React.JSX.Element {
       {/* inside both: it reads the signed-in account and sets the language */}
       <AccountLocale />
       <RealtimeProvider>
-      <BrowserRouter>
+      <CarriedRouter>
         <ProfileModalProvider>
         {/* inside the router: it reads the URL to know which chat is open */}
         <MessagesProvider>
@@ -449,7 +451,7 @@ export function App(): React.JSX.Element {
         </MaintenanceGate>
         </MessagesProvider>
         </ProfileModalProvider>
-      </BrowserRouter>
+      </CarriedRouter>
       </RealtimeProvider>
     </AuthProvider>
     </I18nProvider>

@@ -105,17 +105,23 @@ export function kilimBand(category: string | null): string {
  * is given (`.story-cover`), so the card and the page's wide band share one
  * drawing. A card's picture waits until it is near the screen; the story
  * page's own (`eager`) is the first thing on it, so it is asked for at once.
+ *
+ * `ref` reaches the cover's box, picture or band: a card's cover is what
+ * travels to the story's page when the card is pressed, and back again
+ * (lib/viewTransition.tsx).
  */
 export function StoryCover({
   cover,
   category,
   className,
   eager = false,
+  ref,
 }: {
   cover: string | null;
   category: string | null;
   className?: string;
   eager?: boolean;
+  ref?: React.Ref<HTMLSpanElement>;
 }): React.JSX.Element {
   const src = storyCoverPath(cover);
   // the picture that would not load, so the band takes its place until the key changes
@@ -124,10 +130,10 @@ export function StoryCover({
   const cls = `story-cover${className ? ` ${className}` : ''}`;
   if (src && failed !== src) {
     return (
-      <span className={`${cls} has-picture`} aria-hidden="true">
+      <span ref={ref} className={`${cls} has-picture`} aria-hidden="true">
         <img src={src} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" draggable={false} onError={() => setFailed(src)} />
       </span>
     );
   }
-  return <span className={cls} aria-hidden="true" dangerouslySetInnerHTML={band} />;
+  return <span ref={ref} className={cls} aria-hidden="true" dangerouslySetInnerHTML={band} />;
 }

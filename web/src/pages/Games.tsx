@@ -11,6 +11,7 @@ import { ChevronIcon, TrophyIcon, UserIcon, UsersIcon } from '../components/icon
 import { JoinCodeEntry } from '../play/JoinCode';
 import { WEB_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
 import { GameArt } from '../games/GameArt';
+import { useGrowsFrom } from '../lib/viewTransition';
 import '../games/games-page.css';
 
 /** Who a game is played with, said on its card. */
@@ -153,8 +154,27 @@ function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: bo
   );
 }
 
-/** One game: its cover, what it is, and its ways in. */
-function GameCard({ game, signedIn, hero = false, place = 0 }: { game: GameEntry; signedIn: boolean; hero?: boolean; place?: number }): React.JSX.Element {
+/**
+ * One game: its cover, what it is, and its ways in.
+ *
+ * `settled` says the shelf has its final shape. Until the learning games have
+ * been counted the page holds only the three that are always here, and which
+ * of them is put forward changes when the rest arrive: a card is somewhere
+ * for a cover to come back to only once it is where it will stay.
+ */
+function GameCard({
+  game,
+  signedIn,
+  settled,
+  hero = false,
+  place = 0,
+}: {
+  game: GameEntry;
+  signedIn: boolean;
+  settled: boolean;
+  hero?: boolean;
+  place?: number;
+}): React.JSX.Element {
   const t = useT();
   // a hand on a shelf card — over it, on it, or the keyboard in it — plays its emblem through once more
   const [again, setAgain] = useState(0);
@@ -162,12 +182,19 @@ function GameCard({ game, signedIn, hero = false, place = 0 }: { game: GameEntry
   const name = t(game.nameKey);
   const meaningKey = MEANING[game.id];
   const meaning = meaningKey ? t(meaningKey) : null;
+  // the cover goes with the reader into the game: whichever of the card's ways is pressed, it becomes the picture at the
+  // head of that page, and comes back from there to this card (lib/viewTransition.tsx)
+  const cover = useGrowsFrom(settled ? `game:${game.id}` : null, { within: '.gp-card' });
   return (
     <article className={`gp-card${hero ? ' gp-card--hero' : ''}`} style={toneOf(game.id)} onPointerEnter={stir} onPointerDown={stir} onFocus={stir}>
       <div className="gp-card-art">
         {/* the game put forward acts for as long as it is in view; on the shelf each cover plays through once as it
             arrives, a moment after the card before it, and then rests — one thing moving at a time, never the shelf */}
-        {hero ? <GameArt game={game.id} size={164} moving /> : <GameArt game={game.id} size={104} moving="once" after={300 + place * 160} again={again} />}
+        {hero ? (
+          <GameArt game={game.id} size={164} moving ref={cover} />
+        ) : (
+          <GameArt game={game.id} size={104} moving="once" after={300 + place * 160} again={again} ref={cover} />
+        )}
       </div>
       <div className="gp-card-text">
         {hero && <p className="gp-kicker">{t('games.featured')}</p>}
@@ -234,6 +261,8 @@ export function Games(): React.JSX.Element {
   );
   const open = games.filter((g) => g.ready);
   const soon = games.filter((g) => !g.ready);
+  // nothing of the learning games is listed until they have been counted, and then all of them are, ready or not
+  const settled = learnGames.length > 0;
   // the game put forward stands above the shelf, and is not said twice on it
   const featured = featuredGame(games, Date.now());
   const shelf = open.filter((g) => g !== featured);
@@ -243,7 +272,7 @@ export function Games(): React.JSX.Element {
       <LearnHeader view="games" />
       <h2 className="sr-only">{t('games.title')}</h2>
 
-      {featured && <GameCard game={featured} signedIn={signedIn} hero />}
+      {featured && <GameCard game={featured} signedIn={signedIn} settled={settled} hero />}
 
       <div className="gp-quick">
         {/* a friend's code, into their game: one way in for every online game, where somebody holding a code looks first */}
@@ -261,7 +290,7 @@ export function Games(): React.JSX.Element {
 
       <div className="gp-shelf">
         {shelf.map((g, i) => (
-          <GameCard key={g.id} game={g} signedIn={signedIn} place={i} />
+          <GameCard key={g.id} game={g} signedIn={signedIn} settled={settled} place={i} />
         ))}
       </div>
 

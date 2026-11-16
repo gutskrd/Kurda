@@ -26,6 +26,7 @@ import { describeError } from '../lib/api';
 import { haptic } from '../lib/haptics';
 import { dialectName } from '../learn/map';
 import { GameArt } from './GameArt';
+import { useGrowsInto } from '../lib/viewTransition';
 // a round wears one of the path's tones (`lp-tone-*`), and the shell's own look is the games' stylesheet
 import '../learn/path.css';
 import './games.css';
@@ -172,6 +173,8 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   // the game's own picture (shared/src/art/games.ts), for its start and its result
   const emblem = staged && isGameEmblem(game) ? game : null;
   const tone = emblem ? ({ '--gs-tone': gameEmblemTone(emblem) } as React.CSSProperties) : undefined;
+  // where the game's card lands when it is pressed on the Games page: its cover on the start, which acts the game out
+  const cover = useGrowsInto(emblem ? `game:${game}` : null);
   const [phase, setPhase] = useState<Phase>('intro');
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
   const [session, setSession] = useState<SoloSessionView<Item, B> | null>(null);
@@ -181,6 +184,19 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  // an exercise has no cover: its card among Learn's tools lands on its name, which is also the heading that takes the focus
+  const exercise = useGrowsInto(staged ? null : `learn:${game}`, { shape: 'card' });
+  const exerciseName = useCallback(
+    (el: HTMLHeadingElement | null) => {
+      heading.current = el;
+      const undo = exercise(el);
+      return () => {
+        heading.current = null;
+        undo?.();
+      };
+    },
+    [exercise],
+  );
 
   // the difficulty offered first: the suggested one when it can be played, else the first that can
   const offered = difficulties ?? [];
@@ -408,7 +424,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
     <section className={`solo solo--intro${stage}`} style={tone} aria-labelledby="solo-title">
       {staged ? (
         <div className="gs-hero">
-          {emblem && <GameArt game={emblem} size={148} moving />}
+          {emblem && <GameArt game={emblem} size={148} moving ref={cover} />}
           <p className="gs-hero-meta">{t('games.solo.variety', { variety: dialectName(dialect) })}</p>
           <h1 id="solo-title" ref={heading} tabIndex={-1} className="gs-hero-title">
             {title}
@@ -417,7 +433,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
         </div>
       ) : (
         <>
-          <h1 id="solo-title" ref={heading} tabIndex={-1} className="solo-title">
+          <h1 id="solo-title" ref={exerciseName} tabIndex={-1} className="solo-title">
             {title}
           </h1>
           <p className="solo-blurb">{blurb}</p>

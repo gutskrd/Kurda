@@ -1,3 +1,5 @@
+import { growFromOpener } from '../lib/opener';
+
 /**
  * Nudge a small popup menu so all of it can be seen.
  *
@@ -10,6 +12,12 @@
  * page went up under the app's bar fixed at the top, out of reach: it opens
  * downward instead. Call it after the menu is drawn (a layout effect), each
  * time it opens.
+ *
+ * Once it is where it will stand, the menu grows out of the press that opened
+ * it (lib/opener.ts), so it is seen to come from its button and not merely to
+ * be there. That is done here, last, because here is where every such menu is
+ * placed as it opens, and where it comes from can only be worked out once it
+ * has been.
  */
 export function keepInView(el: HTMLElement, edge = 8): void {
   el.style.transform = '';
@@ -36,6 +44,7 @@ export function keepInView(el: HTMLElement, edge = 8): void {
   if (r.right > right) dx = right - r.right;
   if (r.left + dx < left) dx = left - r.left;
   if (dx !== 0) el.style.transform = `translateX(${Math.round(dx)}px)`;
+  growFromOpener(el);
 }
 
 /** Where the app's bar fixed at the top of the page ends, in px from the top of the window: the stylesheet's own measure of it. */

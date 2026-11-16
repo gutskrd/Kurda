@@ -15,6 +15,7 @@ import { ChainIcon } from '../components/icons';
 import { Loading } from '../components/states';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { GameArt } from '../games/GameArt';
+import { useGrowsInto } from '../lib/viewTransition';
 import { GameHead, stageTone } from '../games/GameHead';
 import { dialectName } from '../learn/map';
 import { InviteForm } from '../play/InviteSheet';
@@ -53,6 +54,8 @@ export function LastLetter(): React.JSX.Element {
 
 function Start(): React.JSX.Element {
   const t = useT();
+  // where the game's card lands when it is pressed on the Games page: its cover, large, on the game's start
+  const cover = useGrowsInto('game:last-letter');
   const locale = useLocale();
   const { client } = useAuth();
   const navigate = useNavigate();
@@ -91,7 +94,7 @@ function Start(): React.JSX.Element {
   return (
     <div className="ll-start">
       <div className="gs-hero">
-        <GameArt game="last-letter" size={148} moving />
+        <GameArt game="last-letter" size={148} moving ref={cover} />
         <p className="gs-hero-line">{t('games.lastLetter.intro')}</p>
       </div>
       <section className="ll-way" aria-labelledby="ll-friends">

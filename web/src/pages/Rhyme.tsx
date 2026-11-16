@@ -10,6 +10,7 @@ import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 import { haptic } from '../lib/haptics';
 import { GameArt } from '../games/GameArt';
+import { useGrowsInto } from '../lib/viewTransition';
 import { GameHead, stageTone } from '../games/GameHead';
 
 type Dialect = 'kurmanci' | 'sorani';
@@ -48,6 +49,8 @@ const REJECT_KEY: Record<string, MessageKey> = {
 export function Rhyme(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
+  // where the game's card lands when it is pressed on the Games page: its cover, large, before a round is on
+  const cover = useGrowsInto('game:rhyme');
   const [dialect, setDialect] = useState<Dialect>('kurmanci');
   const [game, setGame] = useState<RhymeGame | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -160,7 +163,7 @@ export function Rhyme(): React.JSX.Element {
       {!started ? (
         <div className="gs-start">
           <div className="gs-hero">
-            <GameArt game="rhyme" size={148} moving />
+            <GameArt game="rhyme" size={148} moving ref={cover} />
             <p className="gs-hero-line">{t('games.rhyme.body')}</p>
           </div>
           <Button size="lg" className="gs-go" onClick={() => void start()}>

@@ -20,6 +20,7 @@ import { ErrorState, Loading } from '../components/states';
 import { ArrowIcon, BookmarkIcon, HeadphonesIcon, LockIcon } from '../components/icons';
 import { describeError } from '../lib/api';
 import { prefersReducedMotion } from '../lib/motion';
+import { useGrowsInto } from '../lib/viewTransition';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { dialectName } from '../learn/map';
@@ -60,6 +61,9 @@ function StoryPage({ slug }: { slug: string }): React.JSX.Element {
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [nonce, setNonce] = useState(0);
   const signedIn = status === 'signedIn';
+  // where the story's card lands when it is pressed in the library, and what goes back to the card: said here, while
+  // the story is still being asked for, so the page is held for the cover that comes with it (lib/viewTransition.tsx)
+  const cover = useGrowsInto(`story:${slug}`);
 
   useEffect(() => {
     // the story is asked for once the session is known, so a reader's own record arrives with it
@@ -87,7 +91,7 @@ function StoryPage({ slug }: { slug: string }): React.JSX.Element {
       {load.state === 'loading' && <Loading label={t('stories.reader.loading')} />}
       {load.state === 'gone' && <ErrorState title={t('stories.reader.goneTitle')} message={t('stories.reader.updating')} />}
       {load.state === 'error' && <ErrorState message={load.message} onRetry={() => setNonce((n) => n + 1)} />}
-      {load.state === 'ready' && <ReadStory story={load.story} />}
+      {load.state === 'ready' && <ReadStory story={load.story} cover={cover} />}
     </div>
   );
 }
@@ -99,7 +103,7 @@ const TRADITION_KEY: Record<StoryTradition, MessageKey> = {
   original: 'stories.overview.tradition.original',
 };
 
-function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
+function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTMLSpanElement> }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const { client, status } = useAuth();
@@ -177,7 +181,7 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
   return (
     <article className="story-article" aria-labelledby="story-title">
       <header className="story-overview">
-        <StoryCover cover={story.cover} category={story.category} className="story-overview-cover" eager />
+        <StoryCover cover={story.cover} category={story.category} className="story-overview-cover" eager ref={cover} />
         <div className="story-overview-body">
           <p className="story-meta">
             <span className="story-cefr" title={levelHint(story.level, t)}>

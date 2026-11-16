@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import { GAME_EMBLEM_SAMPLES, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, type GameEmblem } from '@kurda/shared';
 import { prefersReducedMotion } from '../lib/motion';
 import './game-art.css';
@@ -30,6 +30,10 @@ import './game-art.css';
  * into view (`moving="once"`, `after` a moment later than the card before
  * it) and then rests, and plays once more each time `again` changes — the
  * card under it hovered, focused or pressed.
+ *
+ * `ref` reaches the cover's own box, still or moving: it is what a game's
+ * card hands to its page when the card is pressed, and the page back to the
+ * card (lib/viewTransition.tsx).
  */
 export function GameArt({
   game,
@@ -37,6 +41,7 @@ export function GameArt({
   moving = false,
   after = 0,
   again = 0,
+  ref,
 }: {
   game: GameEmblem;
   size?: number;
@@ -44,18 +49,50 @@ export function GameArt({
   after?: number;
   /** with `moving="once"`: each change plays the emblem through once more, unless it is already playing */
   again?: number;
+  ref?: React.Ref<HTMLSpanElement>;
 }): React.JSX.Element {
   const idPrefix = `ga${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
   const plays = moving !== false && !prefersReducedMotion();
   const still = useMemo(() => (plays ? null : { __html: gameEmblemSvg({ game, size, idPrefix }) }), [plays, game, size, idPrefix]);
-  if (still) return <span className="gp-art" aria-hidden="true" dangerouslySetInnerHTML={still} />;
-  return <MovingArt game={game} size={size} idPrefix={idPrefix} after={after} once={moving === 'once'} again={again} />;
+  if (still) return <span ref={ref} className="gp-art" aria-hidden="true" dangerouslySetInnerHTML={still} />;
+  return <MovingArt game={game} size={size} idPrefix={idPrefix} after={after} once={moving === 'once'} again={again} given={ref} />;
 }
 
-function MovingArt({ game, size, idPrefix, after, once, again }: { game: GameEmblem; size: number; idPrefix: string; after: number; once: boolean; again: number }): React.JSX.Element {
+function MovingArt({
+  game,
+  size,
+  idPrefix,
+  after,
+  once,
+  again,
+  given,
+}: {
+  game: GameEmblem;
+  size: number;
+  idPrefix: string;
+  after: number;
+  once: boolean;
+  again: number;
+  given?: React.Ref<HTMLSpanElement>;
+}): React.JSX.Element {
   const layers = useMemo(() => gameEmblemLayers({ game, size, idPrefix }), [game, size, idPrefix]);
   const frame = useRef<HTMLSpanElement>(null);
   const acting = useRef<Animation[]>([]);
+  // one box for two holders: the cover's own, which plays its parts, and the caller's
+  const held = useCallback(
+    (el: HTMLSpanElement | null) => {
+      frame.current = el;
+      const undo = typeof given === 'function' ? given(el) : undefined;
+      if (given && typeof given !== 'function') given.current = el;
+      return () => {
+        frame.current = null;
+        if (typeof undo === 'function') undo();
+        else if (typeof given === 'function') given(null);
+        else if (given) given.current = null;
+      };
+    },
+    [given],
+  );
 
   useEffect(() => {
     const root = frame.current;
@@ -121,7 +158,7 @@ function MovingArt({ game, size, idPrefix, after, once, again }: { game: GameEmb
   }, [again, once, after]);
 
   return (
-    <span ref={frame} className="gp-art gp-art--moving" aria-hidden="true" style={{ width: size, height: size }}>
+    <span ref={held} className="gp-art gp-art--moving" aria-hidden="true" style={{ width: size, height: size }}>
       {layers.map((layer, i) => (
         <span
           key={i}

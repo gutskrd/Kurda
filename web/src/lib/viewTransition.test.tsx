@@ -1,0 +1,546 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { CarriedRouter, HOLD_MS, carriesPages, forgetCarried, isAnotherPage, useGrowsFrom, useGrowsInto } from './viewTransition';
+
+/** A browser that plays motion, or one whose reader asked for less of it. */
+function withMotion(reduced = false): void {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: reduced && query.includes('prefers-reduced-motion'),
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+}
+
+/** What wears a travelling name right now, by test id. */
+function wearing(): string[] {
+  return [...document.querySelectorAll<HTMLElement>('[data-testid]')]
+    .filter((el) => el.style.viewTransitionName)
+    .map((el) => `${el.dataset.testid}=${el.style.viewTransitionName}`);
+}
+
+/** One transition the page asked the browser for, as the stand-in below saw it. */
+interface Asked {
+  /** what wore a name when the picture of the old page was taken */
+  before: string[];
+  /** whether the root said a page was changing at that moment */
+  changing: boolean;
+  /** settles when the next page has been drawn for the new picture */
+  updated: Promise<void>;
+  skipped: boolean;
+  /** the movement ends */
+  finish: () => void;
+}
+
+/**
+ * The browser's side of a view transition, as far as the page can tell: it
+ * takes the old picture when it is asked, calls back a moment later for the
+ * new page, and is over when it is told to be.
+ */
+function withTransitions(): Asked[] {
+  const asked: Asked[] = [];
+  const start = (update: () => Promise<void>): ViewTransition => {
+    let finish = (): void => undefined;
+    const finished = new Promise<void>((resolve) => (finish = resolve));
+    const changing = document.documentElement.classList.contains('is-changing-page');
+    const one: Asked = { before: wearing(), changing, updated: Promise.resolve(), skipped: false, finish };
+    one.updated = Promise.resolve().then(() => update());
+    asked.push(one);
+    const skipTransition = (): void => {
+      one.skipped = true;
+      finish();
+    };
+    return { finished, ready: one.updated, updateCallbackDone: one.updated, skipTransition, types: new Set<string>() } as unknown as ViewTransition;
+  };
+  document.startViewTransition = start as unknown as Document['startViewTransition'];
+  return asked;
+}
+
+/** Lets the page catch up: the browser's turn, and the page's own drawing after it. */
+async function settled(ms = 30): Promise<void> {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  });
+}
+
+/**
+ * Waits until the next page has been drawn for the browser's new picture.
+ * In two steps, because of how a test draws: what the page schedules while a
+ * test is waiting on it is only drawn once that wait is over, so the wait for
+ * the page cannot be the same wait as the one the page is drawn in.
+ */
+async function pictured(one: Asked): Promise<void> {
+  await settled();
+  await act(async () => one.updated);
+}
+
+/** Puts the window at a place down the page: a browser without layout never scrolls by itself. */
+function scrolledTo(top: number): void {
+  Object.defineProperty(window, 'scrollY', { value: top, configurable: true });
+}
+
+/** Which cards are off the screen, by test id: a browser without layout puts everything at nowhere, so the tests say where things are. */
+let offScreen: string[] = [];
+
+/** A list with the same card on two shelves, and a link that belongs to neither. */
+function List(): React.JSX.Element {
+  const first = useGrowsFrom('thing:1', { within: '.card' });
+  const second = useGrowsFrom('thing:1', { within: '.card' });
+  return (
+    <main>
+      <h1>the list</h1>
+      <article className="card">
+        <span data-testid="first-picture" ref={first} />
+        <Link to="/thing/1">open from the first shelf</Link>
+      </article>
+      <article className="card">
+        <span data-testid="second-picture" ref={second} />
+        <Link to="/thing/1">open from the second shelf</Link>
+        <Link to="/elsewhere">somewhere else</Link>
+      </article>
+      <Link to="/thing/1">a bare link to the thing</Link>
+      <Link to="/?sort=newest">newest first</Link>
+      <Link to="/slow">a page with no head</Link>
+      <Link to="/old">an old address</Link>
+      <Hurried />
+    </main>
+  );
+}
+
+/** Buttons that change the address twice before anything has been drawn. */
+function Hurried(): React.JSX.Element {
+  const navigate = useNavigate();
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          void navigate('/thing/1');
+          void navigate('/elsewhere');
+        }}
+      >
+        two pages at once
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void navigate('/elsewhere');
+          void navigate('/elsewhere?tab=2', { replace: true });
+        }}
+      >
+        a page and then its tab
+      </button>
+    </>
+  );
+}
+
+/** Says where the router thinks the reader is, which has to be where the address bar says. */
+function Elsewhere(): React.JSX.Element {
+  const { search } = useLocation();
+  return <h1>elsewhere{search}</h1>;
+}
+
+function Thing(): React.JSX.Element {
+  const head = useGrowsInto('thing:1');
+  return (
+    <main>
+      <h1>the thing</h1>
+      <span data-testid="page-head" ref={head} />
+    </main>
+  );
+}
+
+/** A page of two cards: one opens a page that says a head is coming and never shows it, the other a page that says nothing. */
+function Slow(): React.JSX.Element {
+  const slow = useGrowsFrom('slow:1');
+  const bare = useGrowsFrom('bare:1');
+  return (
+    <main>
+      <h1>the slow page</h1>
+      <Link data-testid="slow-card" ref={slow} to="/slow/1">
+        open the slow thing
+      </Link>
+      <Link data-testid="bare-card" ref={bare} to="/bare/1">
+        open the bare thing
+      </Link>
+    </main>
+  );
+}
+
+/** Its head is promised from the start and waits for something that never arrives. */
+function SlowThing(): React.JSX.Element {
+  useGrowsInto('slow:1');
+  return <h1>the slow thing</h1>;
+}
+
+function App(): React.JSX.Element {
+  return (
+    <CarriedRouter>
+      <Routes>
+        <Route path="/" element={<List />} />
+        <Route path="/thing/1" element={<Thing />} />
+        <Route path="/elsewhere" element={<Elsewhere />} />
+        <Route path="/old" element={<Navigate to="/elsewhere" replace />} />
+        <Route path="/slow" element={<Slow />} />
+        <Route path="/slow/1" element={<SlowThing />} />
+        <Route path="/bare/1" element={<h1>the bare thing</h1>} />
+      </Routes>
+    </CarriedRouter>
+  );
+}
+
+beforeEach(() => {
+  window.history.replaceState(null, '', '/');
+  offScreen = [];
+  // everything is a hundred pixels square near the top of the window, unless a test has put it off the screen
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function box(this: HTMLElement) {
+    const away = offScreen.includes(this.dataset.testid ?? '') ? 5000 : 0;
+    return { left: 10, top: 10 + away, right: 110, bottom: 110 + away, width: 100, height: 100, x: 10, y: 10 + away, toJSON: () => ({}) } as DOMRect;
+  });
+  // a window that scrolls where it is told to, as far as it is told
+  window.scrollTo = vi.fn((to: ScrollToOptions) => scrolledTo(to.top ?? 0)) as unknown as typeof window.scrollTo;
+});
+
+afterEach(() => {
+  forgetCarried();
+  scrolledTo(0);
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  delete (document as { startViewTransition?: unknown }).startViewTransition;
+  document.documentElement.className = '';
+});
+
+describe('whether a change of page is carried', () => {
+  it('is not, in a browser without view transitions', () => {
+    withMotion();
+    expect(carriesPages()).toBe(false);
+  });
+
+  it('is not, for a reader who asked for less motion', () => {
+    withMotion(true);
+    withTransitions();
+    expect(carriesPages()).toBe(false);
+  });
+
+  it('is not, where the browser cannot even be asked about motion', () => {
+    withTransitions();
+    expect(carriesPages()).toBe(false);
+  });
+
+  it('is, in a browser that has them, for a reader who has not', () => {
+    withMotion();
+    withTransitions();
+    expect(carriesPages()).toBe(true);
+  });
+
+  it('counts another path as another page, and what follows the ? or the # as the same one', () => {
+    expect(isAnotherPage({ pathname: '/app' }, { pathname: '/app/learn' })).toBe(true);
+    expect(isAnotherPage({ pathname: '/app/learn' }, { pathname: '/app/learn' })).toBe(false);
+    expect(isAnotherPage({ pathname: '/app/' }, { pathname: '/app' })).toBe(false);
+  });
+});
+
+describe('a change of page', () => {
+  it('happens as it always did in a browser without view transitions', async () => {
+    withMotion();
+    render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'open from the first shelf' }));
+    expect(await screen.findByRole('heading', { name: 'the thing' })).toBeInTheDocument();
+    expect(wearing()).toEqual([]);
+    expect(document.documentElement).not.toHaveClass('is-changing-page');
+  });
+
+  it('happens as it always did for a reader who asked for less motion: the browser is not asked for a transition', async () => {
+    withMotion(true);
+    const asked = withTransitions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'open from the first shelf' }));
+    expect(await screen.findByRole('heading', { name: 'the thing' })).toBeInTheDocument();
+    expect(asked).toHaveLength(0);
+    expect(wearing()).toEqual([]);
+  });
+
+  it('is handed to the browser as one transition, with the bars told for exactly as long as it lasts', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'a page with no head' }));
+    expect(asked).toHaveLength(1);
+    expect(asked[0]!.changing).toBe(true);
+    // the old page is still the one drawn while its picture is taken
+    expect(screen.getByRole('heading', { name: 'the list' })).toBeInTheDocument();
+    await settled();
+    expect(screen.getByRole('heading', { name: 'the slow page' })).toBeInTheDocument();
+    expect(document.documentElement).toHaveClass('is-changing-page');
+    await act(async () => asked[0]!.finish());
+    expect(document.documentElement).not.toHaveClass('is-changing-page');
+  });
+
+  it('is not a transition when only what follows the ? changes', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'newest first' }));
+    await settled();
+    expect(window.location.search).toBe('?sort=newest');
+    expect(asked).toHaveLength(0);
+  });
+
+  it('takes a page that only sends the reader on as part of the same change: one transition, to where it leads', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'an old address' }));
+    await pictured(asked[0]!);
+    expect(screen.getByRole('heading', { name: 'elsewhere' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/elsewhere');
+    expect(asked).toHaveLength(1);
+    expect(asked[0]!.skipped).toBe(false);
+  });
+
+  it('takes two changes of address made at once as one change, and ends on the second', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'two pages at once' }));
+    await pictured(asked[0]!);
+    expect(screen.getByRole('heading', { name: 'elsewhere' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/elsewhere');
+    expect(asked).toHaveLength(1);
+  });
+
+  it('draws what follows a change of page after it, never before: the page ends where the address bar does', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'a page and then its tab' }));
+    await pictured(asked[0]!);
+    expect(window.location.search).toBe('?tab=2');
+    expect(screen.getByRole('heading', { name: 'elsewhere?tab=2' })).toBeInTheDocument();
+    expect(asked).toHaveLength(1);
+  });
+
+  it('still happens when the browser refuses the transition outright', async () => {
+    withMotion();
+    document.startViewTransition = (() => {
+      throw new Error('not now');
+    }) as unknown as Document['startViewTransition'];
+    render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'a page with no head' }));
+    expect(await screen.findByRole('heading', { name: 'the slow page' })).toBeInTheDocument();
+    expect(document.documentElement).not.toHaveClass('is-changing-page');
+  });
+});
+
+describe('a card pressed', () => {
+  it('wears the name as its page is left, hands it to the head of the page it opens, and nothing wears it afterwards', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'open from the second shelf' }));
+    // the same card is on the page twice: only the one that was pressed is named
+    expect(asked[0]!.before).toEqual(['second-picture=carried-picture']);
+    await pictured(asked[0]!);
+    expect(screen.getByRole('heading', { name: 'the thing' })).toBeInTheDocument();
+    expect(wearing()).toEqual(['page-head=carried-picture']);
+    await act(async () => asked[0]!.finish());
+    expect(wearing()).toEqual([]);
+  });
+
+  it('carries nothing when the link pressed is not the card’s own', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'a bare link to the thing' }));
+    expect(asked[0]!.before).toEqual([]);
+    await pictured(asked[0]!);
+    // the page changes all the same, plainly
+    expect(screen.getByRole('heading', { name: 'the thing' })).toBeInTheDocument();
+    expect(wearing()).toEqual([]);
+  });
+
+  it('does not hold the page for a head the page it opens never promised', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'a page with no head' }));
+    await pictured(asked[0]!);
+    await act(async () => asked[0]!.finish());
+    const began = Date.now();
+    fireEvent.click(screen.getByRole('link', { name: 'open the bare thing' }));
+    await pictured(asked[1]!);
+    expect(Date.now() - began).toBeLessThan(HOLD_MS / 2);
+    expect(screen.getByRole('heading', { name: 'the bare thing' })).toBeInTheDocument();
+    expect(wearing()).toEqual([]);
+  });
+
+  it('does not hold the page either for another link in the card, to some other page', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    const began = Date.now();
+    fireEvent.click(screen.getByRole('link', { name: 'somewhere else' }));
+    await pictured(asked[0]!);
+    expect(Date.now() - began).toBeLessThan(HOLD_MS / 2);
+    expect(screen.getByRole('heading', { name: 'elsewhere' })).toBeInTheDocument();
+    expect(wearing()).toEqual([]);
+  });
+
+  it('carries nothing into another tab, nor into whatever is opened next', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    // the browser would open the link elsewhere; here there is no elsewhere, so the press is simply let go
+    document.addEventListener('click', (e) => e.preventDefault(), { once: true });
+    fireEvent.click(screen.getByRole('link', { name: 'open from the first shelf' }), { ctrlKey: true });
+    expect(asked).toHaveLength(0);
+    fireEvent.click(screen.getByRole('link', { name: 'a bare link to the thing' }));
+    expect(asked[0]!.before).toEqual([]);
+    await pictured(asked[0]!);
+    expect(wearing()).toEqual([]);
+  });
+
+  it('lets the page change plainly when the page it opens promised a head and does not show it in time', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'a page with no head' }));
+    await pictured(asked[0]!);
+    await act(async () => asked[0]!.finish());
+    const began = Date.now();
+    fireEvent.click(screen.getByRole('link', { name: 'open the slow thing' }));
+    expect(asked[1]!.before).toEqual(['slow-card=carried-picture']);
+    await pictured(asked[1]!);
+    // the page was held for the head, and no longer than that
+    expect(Date.now() - began).toBeGreaterThanOrEqual(HOLD_MS - 20);
+    expect(Date.now() - began).toBeLessThan(HOLD_MS + 400);
+    expect(screen.getByRole('heading', { name: 'the slow thing' })).toBeInTheDocument();
+    expect(wearing()).toEqual([]);
+    expect(asked[1]!.skipped).toBe(false);
+  });
+});
+
+describe('going back', () => {
+  /** From the list into the thing, through the second shelf’s card, and the movement over. */
+  async function opened(asked: Asked[]): Promise<void> {
+    fireEvent.click(screen.getByRole('link', { name: 'open from the second shelf' }));
+    await pictured(asked[0]!);
+    await act(async () => asked[0]!.finish());
+  }
+
+  it('shrinks the head to the card it came from, when the card is on the screen', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    await opened(asked);
+    act(() => window.history.back());
+    await settled();
+    expect(asked).toHaveLength(2);
+    expect(asked[1]!.before).toEqual(['page-head=carried-picture']);
+    await pictured(asked[1]!);
+    expect(screen.getByRole('heading', { name: 'the list' })).toBeInTheDocument();
+    // one of the two cards for it, and one only
+    expect(wearing()).toHaveLength(1);
+    expect(wearing()[0]).toMatch(/^(first|second)-picture=carried-picture$/);
+    await act(async () => asked[1]!.finish());
+    expect(wearing()).toEqual([]);
+  });
+
+  it('is the plain change when the card is no longer on the screen, and does not wait for it', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    await opened(asked);
+    offScreen = ['first-picture', 'second-picture'];
+    const began = Date.now();
+    act(() => window.history.back());
+    await settled();
+    await pictured(asked[1]!);
+    expect(Date.now() - began).toBeLessThan(HOLD_MS);
+    expect(screen.getByRole('heading', { name: 'the list' })).toBeInTheDocument();
+    expect(wearing()).toEqual([]);
+  });
+
+  it('puts the page back where it was left', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    scrolledTo(640);
+    await opened(asked);
+    // the thing's own page is at its top
+    scrolledTo(0);
+    act(() => window.history.back());
+    await settled();
+    await pictured(asked[1]!);
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 640, behavior: 'instant' });
+    expect(window.scrollY).toBe(640);
+  });
+
+  it('waits for a list that is still growing, and puts it back once it is long enough', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    scrolledTo(640);
+    await opened(asked);
+    scrolledTo(0);
+    // the list comes back short, and is its full length a moment later: until then it cannot be scrolled past 100
+    let long = false;
+    window.scrollTo = vi.fn((to: ScrollToOptions) => scrolledTo(long ? (to.top ?? 0) : Math.min(to.top ?? 0, 100))) as unknown as typeof window.scrollTo;
+    window.setTimeout(() => (long = true), 150);
+    const began = Date.now();
+    act(() => window.history.back());
+    await settled();
+    await pictured(asked[1]!);
+    expect(window.scrollY).toBe(640);
+    expect(Date.now() - began).toBeGreaterThanOrEqual(140);
+    expect(Date.now() - began).toBeLessThan(HOLD_MS);
+    // and the head still found its card, at the place the reader left
+    expect(wearing()).toHaveLength(1);
+  });
+
+  it('gives up on a list that never gets long enough, and shows it as near as it goes', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    scrolledTo(640);
+    await opened(asked);
+    scrolledTo(0);
+    window.scrollTo = vi.fn((to: ScrollToOptions) => scrolledTo(Math.min(to.top ?? 0, 100))) as unknown as typeof window.scrollTo;
+    const began = Date.now();
+    act(() => window.history.back());
+    await settled();
+    await pictured(asked[1]!);
+    expect(window.scrollY).toBe(100);
+    expect(Date.now() - began).toBeGreaterThanOrEqual(HOLD_MS - 20);
+    expect(Date.now() - began).toBeLessThan(HOLD_MS + 400);
+    expect(asked[1]!.skipped).toBe(false);
+  });
+
+  it('is not carried a second time when the browser has already moved the page across, under a swipe', async () => {
+    withMotion();
+    const asked = withTransitions();
+    // what a phone's browser says of a Back made by swiping from the edge of the screen; said before the page is
+    // there to hear it, so the page hears it said
+    window.addEventListener('popstate', (e) => Object.defineProperty(e, 'hasUAVisualTransition', { value: true }), { capture: true, once: true });
+    render(<App />);
+    await opened(asked);
+    act(() => window.history.back());
+    await settled();
+    expect(await screen.findByRole('heading', { name: 'the list' })).toBeInTheDocument();
+    expect(asked).toHaveLength(1);
+    expect(wearing()).toEqual([]);
+  });
+
+  it('is left to the browser, with no transition, for a page whose place is not known', async () => {
+    withMotion();
+    const asked = withTransitions();
+    render(<App />);
+    await opened(asked);
+    // the tab was loaded again on the thing’s page: what was remembered of the list is gone
+    forgetCarried();
+    act(() => window.history.back());
+    await settled();
+    expect(await screen.findByRole('heading', { name: 'the list' })).toBeInTheDocument();
+    expect(asked).toHaveLength(1);
+  });
+});

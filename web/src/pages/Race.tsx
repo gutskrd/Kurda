@@ -25,6 +25,7 @@ import { KeyboardSettings } from '../keyboard/KeyboardSettings';
 import { guideNudgeDue } from '../keyboard/guide';
 import { getKeyboardPrefs, useKeyboardPrefs } from '../keyboard/prefs';
 import { GameArt } from '../games/GameArt';
+import { useGrowsInto } from '../lib/viewTransition';
 import { GameHead, stageTone } from '../games/GameHead';
 import { RaceText } from '../race/RaceText';
 import { capTyping } from '../race/input';
@@ -84,6 +85,8 @@ export function Race(): React.JSX.Element {
   const { locale } = useI18n();
   const [prefs, setPrefs] = useKeyboardPrefs();
   const ids = useId();
+  // where the game's card lands when it is pressed on the Games page: its cover, large, before a race is on
+  const cover = useGrowsInto('game:race');
 
   // the variety the last race was in; a Soranî interface starts in Soranî
   const [dialect, setDialect] = useState<TypingDialect>(
@@ -317,7 +320,7 @@ export function Race(): React.JSX.Element {
       {!game && (
         <div className="race-lobby">
           <div className="gs-hero">
-            <GameArt game="race" size={148} moving />
+            <GameArt game="race" size={148} moving ref={cover} />
             <p className="gs-hero-line">{t('games.race.intro')}</p>
           </div>
           <div className="race-choice">

@@ -5,6 +5,7 @@ import { preloadCatalogue } from './i18n/catalogues';
 import { applyTheme, watchSystemTheme } from './theme/theme';
 import { startArtOverrides } from './art/overrides';
 import { installPressFeedback } from './lib/press';
+import { watchOpeners } from './lib/opener';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -61,6 +62,8 @@ watchSystemTheme();
 startArtOverrides();
 // a button shows pressed only for a real press, never for a finger that is scrolling (lib/press.ts)
 installPressFeedback();
+// where the last press was, so a dialog can grow out of what opened it (lib/opener.ts)
+watchOpeners();
 
 /*
  * The language before the app.

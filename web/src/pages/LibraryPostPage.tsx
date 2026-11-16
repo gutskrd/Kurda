@@ -14,6 +14,7 @@ import { CARD_LABEL_KEY } from '../feed/postKinds';
 import { PostActions, useEngagement } from '../feed/FeedCard';
 import { useT } from '../i18n/I18nProvider';
 import type { FeedItem, PostEngagement } from '../lib/types';
+import { useGrowsInto } from '../lib/viewTransition';
 import { ReportAction } from '../reports/ReportAction';
 
 const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
@@ -40,6 +41,8 @@ export function LibraryPostPage(): React.JSX.Element {
   // kept with the post it is for, so another post's numbers never show for a moment on this one
   const [counts, setCounts] = useState<{ id: string; engagement: PostEngagement } | null>(null);
   const commentsRef = useRef<HTMLDivElement>(null);
+  // where the post's card lands when it is opened from a wall, and what goes back to the card (the wall names it the same way)
+  const whole = useGrowsInto(`post:library:${id}`, { shape: 'card' });
 
   useEffect(() => {
     // asked once whoever is reading is known, so "liked" is yours and not a guest's
@@ -85,7 +88,7 @@ export function LibraryPostPage(): React.JSX.Element {
         {back.label}
       </Link>
 
-      <article className={`post-full post-full-${post.type}`}>
+      <article ref={whole} className={`post-full post-full-${post.type}`}>
         <div className="post-meta">
           {kindKey && <span className="badge">{t(kindKey)}</span>}
           {post.audioUrl && <span className="badge badge-gold">{t('library.audio')}</span>}
