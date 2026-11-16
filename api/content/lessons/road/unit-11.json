@@ -4899,11 +4899,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Xezal mal û hal amade dike, û ew ê bêriya Sêvanê bike.",
+                    "say": "Xezal mal û hal ji bo cihê xwe yê nû amade dike, û ew ê bêriya Sêvanê bike.",
                     "voice": "hamo",
-                    "prompt": "Xezal mal û hal amade dike, û ew ê bêriya Sêvanê bike.",
+                    "prompt": "Xezal mal û hal ji bo cihê xwe yê nû amade dike, û ew ê bêriya Sêvanê bike.",
                     "options": [
-                      "Xezal is getting her household ready, and she will miss Sêvan.",
+                      "Xezal is getting her household ready for her new place, and she will miss Sêvan.",
                       "Xezal is selling her house, and she won’t miss Sêvan.",
                       "Xezal is getting her bags ready for the summer pastures."
                     ],
@@ -4948,8 +4948,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Payîzeke hêja bû. Her kesî karê xwe kir, û planên me pêk hatin.",
-                        "en": "It was a worthwhile autumn. Everyone did their work, and our plans came true."
+                        "text": "Payîzeke hêja bû. Her kesî karê xwe kir, û bername û planên me pêk hatin.",
+                        "en": "It was a worthwhile autumn. Everyone did their work, and our programme and plans came true."
                       },
                       {
                         "speaker": 0,
@@ -4978,8 +4978,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Niha guhdarî bikin… Hebû tunebû…",
-                        "en": "Now listen… Once upon a time…"
+                        "text": "Çîrokbêj dest pê dike. Niha guhdarî bikin… Hebû tunebû…",
+                        "en": "The storyteller begins. Now listen… Once upon a time…"
                       }
                     ],
                     "prompt": "Hamo çi dest pê dike?",
@@ -5071,8 +5071,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Werin, li dora sobeyê rûnin: hebû tunebû…",
-                    "reference": "Werin, li dora sobeyê rûnin: hebû tunebû…"
+                    "prompt": "Werin, li dora sobeyê rûnin: bi zimanê dayikê, hebû tunebû…",
+                    "reference": "Werin, li dora sobeyê rûnin: bi zimanê dayikê, hebû tunebû…"
                   }
                 }
               ]
