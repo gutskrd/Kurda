@@ -3,6 +3,7 @@ import type { PromptToken } from '@kurda/shared';
 import { SpeakerIcon } from '../components/icons';
 import { onPlaying, play } from '../lib/sound';
 import { useT } from '../i18n/I18nProvider';
+import type { LineToken } from './asks';
 
 /**
  * A speech bubble: what an exercise asks, said by the character standing
@@ -46,6 +47,90 @@ export function PromptWords({ text, tokens }: { text: string | undefined; tokens
   );
 }
 
+/** What a missing-word item's gap holds: nothing yet, the word chosen or typed, and how that word was graded. */
+export interface GapFill {
+  text: string;
+  verdict: 'right' | 'wrong' | null;
+}
+
+/**
+ * An item's line, alone in its bubble (`lineTokens`): a Kurdish line in the
+ * display face, each word the course knows a tap away from its meanings and a
+ * word the item brings in underlined a little more strongly; an English line
+ * in the plain face. A missing-word item's gap is a slot the width of a word,
+ * which holds the word chosen or typed as the learner answers (`gap`), so the
+ * sentence is read whole before Check.
+ */
+export function LineWords({
+  tokens,
+  english,
+  lang,
+  dir,
+  big = false,
+  gap,
+}: {
+  tokens: readonly LineToken[];
+  english: boolean;
+  /** the course's Kurdish, for a Kurdish line */
+  lang?: string;
+  dir: 'ltr' | 'rtl';
+  /** a single word to name (a picture item's): larger still */
+  big?: boolean;
+  gap?: GapFill;
+}): React.JSX.Element {
+  const t = useT();
+  const [open, setOpen] = useState<number | null>(null);
+  const base = useId();
+  const toggle = useCallback((i: number, on: boolean) => setOpen((now) => (on ? i : now === i ? null : now)), []);
+  return (
+    <div
+      className={`lesson-prompt lesson-line-text${english ? ' is-english' : ''}${big ? ' is-big' : ''}`}
+      lang={english ? undefined : lang}
+      dir={english ? 'auto' : dir}
+    >
+      {tokens.map((token, i) =>
+        token.gap ? (
+          <span key={i} className={`lesson-gap${gap?.text ? ' is-filled' : ''}${gap?.verdict ? ` is-${gap.verdict}` : ''}`}>
+            {gap?.text ? gap.text : <span className="sr-only">{t('lesson.ask.gap')}</span>}
+          </span>
+        ) : token.meanings?.length ? (
+          <Word key={i} index={i} id={`${base}-w${i}`} text={token.text} meanings={token.meanings} isNew={token.isNew} open={open === i} onToggle={toggle} />
+        ) : (
+          <span key={i}>{token.text}</span>
+        ),
+      )}
+    </div>
+  );
+}
+
+/**
+ * The native recording of a line, at the start of its bubble: the speaker in a
+ * round red button, and under it the same recording at 0.75× in a small chip,
+ * each lit while it plays (`PlayButton`).
+ */
+export function LinePlay({ src }: { src: string }): React.JSX.Element {
+  const t = useT();
+  const [rate, setRate] = useState<number | null>(null);
+  useEffect(() => onPlaying((now, speed) => setRate(now === src ? speed : null)), [src]);
+  const label = t('lesson.listen.slow');
+  return (
+    <span className="lesson-line-play">
+      <button
+        type="button"
+        className={`lesson-play lesson-play-round${rate === 1 ? ' is-on' : ''}`}
+        aria-label={t('lesson.hear')}
+        title={t('lesson.hear')}
+        onClick={() => play(src)}
+      >
+        <SpeakerIcon size={22} />
+      </button>
+      <button type="button" className={`lesson-slow-chip${rate === 0.75 ? ' is-on' : ''}`} aria-label={label} title={label} onClick={() => play(src, 0.75)}>
+        0.75×
+      </button>
+    </span>
+  );
+}
+
 /** How near the window's edge a word's meanings may come. */
 const EDGE = 8;
 
@@ -56,6 +141,7 @@ function Word({
   meanings,
   open,
   onToggle,
+  isNew = false,
 }: {
   index: number;
   id: string;
@@ -63,6 +149,8 @@ function Word({
   meanings: string[];
   open: boolean;
   onToggle: (index: number, on: boolean) => void;
+  /** a word the item brings in: its underline a little stronger */
+  isNew?: boolean;
 }): React.JSX.Element {
   const t = useT();
   const wrap = useRef<HTMLSpanElement>(null);
@@ -106,7 +194,7 @@ function Word({
       <button
         ref={button}
         type="button"
-        className={`lesson-word${open ? ' is-open' : ''}`}
+        className={`lesson-word${isNew ? ' is-new' : ''}${open ? ' is-open' : ''}`}
         aria-label={label}
         aria-expanded={open}
         aria-controls={open ? id : undefined}

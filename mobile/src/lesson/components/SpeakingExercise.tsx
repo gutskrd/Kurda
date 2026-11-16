@@ -15,6 +15,7 @@ import type { TranslationKey } from '../../i18n/translations';
 import { useDirection } from '../../reports/direction';
 import { knownVoice } from '../../characters/SpeakingCharacter';
 import { CharacterStage } from '../../characters/CharacterStage';
+import { askHeadline } from '../asks';
 import { ExerciseHeadline } from './ExerciseHeadline';
 import { ModelButton } from './ModelButton';
 import { saidStyle } from './SpeechBubble';
@@ -55,6 +56,9 @@ const FAILED: Record<'start' | 'save', TranslationKey> = {
  * to turn it back on; it now says so, offers the phone's settings where it
  * can be allowed again, and "Can't speak now", in the footer beside Check,
  * puts speaking off without a mistake.
+ *
+ * An item that asks for it to be repeated ('repeat') is headed "Repeat after
+ * Hamo" — whoever says its recording — and "Say it aloud" where nobody does.
  */
 export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, disabled }: Props) {
   const { colors } = useTheme();
@@ -70,6 +74,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
   const dir = useDirection();
   // who says the native model, when an editor has chosen somebody
   const voice = knownVoice(exercise.modelAudioVoice);
+  const headline = askHeadline(exercise);
 
   // a fresh recording arrived → validate it, then it is ready to rate
   const { result, reset } = recorder;
@@ -123,7 +128,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
 
   return (
     <View style={styles.container}>
-      <ExerciseHeadline>{t('lesson.speak.prompt')}</ExerciseHeadline>
+      <ExerciseHeadline>{headline ? t(headline.key, headline.params) : t('lesson.speak.prompt')}</ExerciseHeadline>
       {exercise.prompt ? <Text style={[saidStyle(exercise.prompt), { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       {model.supported && voice ? (

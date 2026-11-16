@@ -1,20 +1,25 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Modal, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type TextStyle } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
 import Svg, { Line } from 'react-native-svg';
-import { scriptDialect, type PromptToken } from '@kurda/shared';
+import { scriptDialect, type NewWord, type PromptToken } from '@kurda/shared';
 import { useI18n } from '../../i18n/I18nContext';
 import { MenuIn, heldDim } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../../theme/tokens';
 import { useValley } from '../ValleyScope';
 import { CARD } from '../valley';
+import { aroundGap, glossTokens, type GlossToken } from '../asks';
 
 /** The popover's edge, and the rule between two meanings in it: the lesson's hairline. */
 const EDGE = CARD.edge;
 
 /** The dotted line under a word that can be asked about. */
 const DOTS = 3;
+
+/** The dots under a word the item brings in for the first time: a little heavier, closer set, in the gold of the badge that says so. */
+const FRESH_DOTS = { width: 2.5, dash: '3 3' } as const;
+const DOTS_AS_EVER = { width: 2, dash: '2 4' } as const;
 
 /** The popover's arrow: a square turned to a point, half of it showing. */
 const ARROW = 12;
@@ -38,8 +43,27 @@ interface Opened {
  *
  * Soranî reads from the right: its words, and the lines they wrap onto, start
  * there.
+ *
+ * The words an item brings in for the first time (`newWords`) lead with the
+ * meaning the item gives them, and their dots are a little heavier and in
+ * gold, the colour of the badge over the question that says there is a new
+ * word in it. A line with a gap in it (a 'missing' item) has `gap` drawn in
+ * the gap's place, between the words either side.
  */
-export function PromptWords({ prompt, tokens, style }: { prompt: string; tokens?: PromptToken[]; style?: StyleProp<TextStyle> }): React.JSX.Element {
+export function PromptWords({
+  prompt,
+  tokens,
+  newWords,
+  gap,
+  style,
+}: {
+  prompt: string;
+  tokens?: PromptToken[];
+  newWords?: NewWord[];
+  /** what stands in the line's gap (`GAP`): the slot the chosen or typed word goes in */
+  gap?: ReactNode;
+  style?: StyleProp<TextStyle>;
+}): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const screen = useWindowDimensions();
@@ -52,8 +76,15 @@ export function PromptWords({ prompt, tokens, style }: { prompt: string; tokens?
   const valley = useValley();
   const face = valley.card;
   const edge = valley.line;
+  const glossed = useMemo(() => glossTokens(prompt, tokens, newWords), [prompt, tokens, newWords]);
+  // the line's words in order, and the gap among them where it has one and something is to stand in it
+  const pieces = useMemo<Array<GlossToken | null>>(() => {
+    const around = gap !== undefined ? aroundGap(glossed) : null;
+    return around ? [...around.before, null, ...around.after] : glossed;
+  }, [glossed, gap]);
+  const hasGap = pieces.includes(null);
 
-  if (!tokens || !tokens.some((token) => token.meanings && token.meanings.length > 0)) {
+  if (!hasGap && !glossed.some((token) => token.meanings && token.meanings.length > 0)) {
     return <Text style={[style, direction]}>{prompt}</Text>;
   }
 
@@ -65,7 +96,7 @@ export function PromptWords({ prompt, tokens, style }: { prompt: string; tokens?
   };
   const close = (): void => setOpen(null);
 
-  const meanings = open ? (tokens[open.index]?.meanings ?? []) : [];
+  const meanings = open ? (pieces[open.index]?.meanings ?? []) : [];
   // under the word and centred on it, kept inside the screen's margins; placed once its own width is known
   const left = open && width > 0 ? Math.max(layout.gutter, Math.min(screen.width - layout.gutter - width, open.x + open.w / 2 - width / 2)) : 0;
   const arrowAt = open ? open.x + open.w / 2 - left - ARROW / 2 : 0;
@@ -73,8 +104,10 @@ export function PromptWords({ prompt, tokens, style }: { prompt: string; tokens?
   return (
     <>
       <View style={[styles.words, { flexDirection: rtl ? 'row-reverse' : 'row' }]}>
-        {tokens.map((token, i) =>
-          token.meanings && token.meanings.length > 0 ? (
+        {pieces.map((token, i) =>
+          token === null ? (
+            <View key="gap">{gap}</View>
+          ) : token.meanings && token.meanings.length > 0 ? (
             <Pressable
               key={i}
               ref={(el) => {
@@ -91,7 +124,17 @@ export function PromptWords({ prompt, tokens, style }: { prompt: string; tokens?
               {/* laid over the word's width rather than given one, so the word alone decides how wide it is */}
               <View style={styles.dots}>
                 <Svg width="100%" height={DOTS} style={StyleSheet.absoluteFill}>
-                  <Line x1="1" y1={DOTS / 2} x2="100%" y2={DOTS / 2} stroke={colors.textSecondary} strokeWidth={2} strokeDasharray="2 4" strokeLinecap="round" />
+                  <Line
+                    x1="1"
+                    y1={DOTS / 2}
+                    x2="100%"
+                    y2={DOTS / 2}
+                    stroke={token.fresh ? colors.goldText : colors.textSecondary}
+                    strokeWidth={(token.fresh ? FRESH_DOTS : DOTS_AS_EVER).width}
+                    strokeDasharray={(token.fresh ? FRESH_DOTS : DOTS_AS_EVER).dash}
+                    strokeLinecap="round"
+                    testID={token.fresh ? 'fresh-word-dots' : undefined}
+                  />
                 </Svg>
               </View>
             </Pressable>

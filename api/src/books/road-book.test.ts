@@ -19,10 +19,10 @@ describe('the Hevalo book', () => {
     expect(one!.parts[0]!.grammarMd).toContain('Ez baş im');
     // chapter 1's conversations are Hamo talking with the learner, who is "You" in the book
     expect(one!.parts[0]!.dialogue!.lines.slice(0, 2).map((l) => [l.who, l.text])).toEqual([
-      ['Hamo', 'Silav! Bi xêr hatî!'],
-      ['You', 'Silav! Ser çavan!'],
+      ['Hamo', 'Silav!'],
+      ['You', 'Silav!'],
     ]);
-    expect(one!.tale).toMatchObject({ title: 'Mêvan, çay û sêv' });
+    expect(one!.tale).toMatchObject({ title: 'Sêv tune!' });
     expect(one!.tale!.paragraphs).toHaveLength(one!.tale!.english.length);
     expect(one!.practice.some((p) => p.direction === 'to-kurdish')).toBe(true);
     expect(one!.practice.some((p) => p.direction === 'to-english')).toBe(true);

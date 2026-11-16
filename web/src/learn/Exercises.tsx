@@ -22,7 +22,9 @@ import { useMediaQuery } from '../lib/useMediaQuery';
 import { useT } from '../i18n/I18nProvider';
 import { kurdishText } from './map';
 import { PlayButton } from './PlayButton';
-import { Bubble, PromptWords, SoundBubble } from './Bubble';
+import { askHeadline, lineIsEnglish, lineTokens } from './asks';
+import { Bubble, LinePlay, LineWords, PromptWords, SoundBubble, type GapFill } from './Bubble';
+import { PictureArt, pictureName } from './Pictures';
 import { Tile, type TileState } from './Tile';
 import { ExerciseVoice, exerciseClips } from './Voice';
 import { BuiltAnswer, useAnswerMode } from './WordTiles';
@@ -129,19 +131,100 @@ function Said({ exercise }: { exercise: DeliveredExercise }): React.JSX.Element 
   );
 }
 
+/**
+ * A few words of context beside an item's line, where the line alone could be
+ * read two ways ("to two people"): a small pill under the bubble.
+ */
+export function Cue({ text }: { text: string | undefined }): React.JSX.Element | null {
+  if (!text) return null;
+  return (
+    <p className="lesson-cue" dir="auto">
+      {text}
+    </p>
+  );
+}
+
+/**
+ * The line of an item that says what it asks, alone in its bubble — the
+ * headline says what to do with it — and its cue under it. A Kurdish line is
+ * in the display face with its words a tap from their meanings, the words the
+ * item brings in first among them, and the native recording at the start, at
+ * full speed and at 0.75×, when it can be heard before answering. An English
+ * line, to put into Kurdish or to choose the Kurdish for, is plain words with
+ * nothing to hear: the recording would be the answer. A missing word's gap
+ * holds the word chosen or typed (`gap`).
+ */
+function AskedLine({ exercise, dialect, gap }: { exercise: DeliveredExercise; dialect: string | null | undefined; gap?: GapFill }): React.JSX.Element | null {
+  const { lang, dir } = kurdishText(dialect);
+  const line = exercise.prompt ?? '';
+  const tokens = useMemo(() => lineTokens(line, exercise.promptTokens, exercise.newWords), [line, exercise.promptTokens, exercise.newWords]);
+  if (!line) return <Cue text={exercise.cue} />;
+  const english = lineIsEnglish(exercise);
+  const model = english ? undefined : exercise.modelAudioUrl;
+  return (
+    <>
+      <Bubble className={`is-line${exercise.ask === 'picture' ? ' is-word' : ''}`}>
+        {model && <LinePlay src={model} />}
+        <LineWords tokens={tokens} english={english} lang={lang} dir={dir} big={exercise.ask === 'picture'} gap={gap} />
+      </Bubble>
+      <Cue text={exercise.cue} />
+    </>
+  );
+}
+
 // ---------- multiple choice ----------
 
-/** Choose one: the question in a bubble, with whoever says its recordings, and the options under it (`Choices`). */
+/**
+ * How an item's options are laid out: cards of words (in the Kurdish face
+ * when they are Kurdish), a missing word's short chips in a row that wraps, or
+ * pictures.
+ */
+export type ChoiceLook = 'text' | 'kurdish' | 'chips' | 'pictures';
+
+function lookOf(exercise: DeliveredExercise): ChoiceLook {
+  switch (exercise.ask) {
+    case 'picture':
+      return 'pictures';
+    case 'missing':
+      return 'chips';
+    case 'reply':
+    case 'choose-kurdish':
+      return 'kurdish';
+    default:
+      return 'text';
+  }
+}
+
+/**
+ * Choose one: the question in a bubble, with whoever says its recordings, and
+ * the options under it (`Choices`). An item that says what it asks has its
+ * headline from that, the line alone in the bubble, and options laid out for
+ * what they are; a missing word's gap shows the word chosen.
+ */
 export function MultipleChoice(props: ExerciseProps): React.JSX.Element {
   const t = useT();
-  const { exercise, feedback } = props;
+  const { exercise, dialect, feedback } = props;
+  const [chosen, setChosen] = useState<number | null>(null);
+  const headline = askHeadline(exercise, t, { tiles: false, dialect });
+  if (headline === null)
+    return (
+      <div className="lesson-exercise">
+        <Ask focus>{t('lesson.mc.ask')}</Ask>
+        <Scene exercise={exercise} feedback={feedback}>
+          <Said exercise={exercise} />
+        </Scene>
+        <Choices {...props} />
+      </div>
+    );
+  const word = chosen !== null ? (exercise.options?.[chosen] ?? '') : '';
+  const gap = exercise.ask === 'missing' ? { text: word, verdict: word ? verdictOf(feedback) : null } : undefined;
   return (
     <div className="lesson-exercise">
-      <Ask focus>{t('lesson.mc.ask')}</Ask>
+      <Ask focus>{headline}</Ask>
       <Scene exercise={exercise} feedback={feedback}>
-        <Said exercise={exercise} />
+        <AskedLine exercise={exercise} dialect={dialect} gap={gap} />
       </Scene>
-      <Choices {...props} />
+      <Choices {...props} look={lookOf(exercise)} onChosen={setChosen} />
     </div>
   );
 }
@@ -154,13 +237,31 @@ export function MultipleChoice(props: ExerciseProps): React.JSX.Element {
  * does. Once it is graded the chosen option and the right one are marked with
  * a tick and a cross as well as a colour. (The alphabet's quick questions
  * still answer on the tap: one letter at a time is a different rhythm.)
+ *
+ * `look` lays them out for what they are: Kurdish cards in the Kurdish face,
+ * a missing word's chips in a row that wraps like word tiles, or square cards
+ * with a picture each, named for a screen reader by what they show.
+ * `onChosen` hears each choice, for a gap that shows it.
  */
-export function Choices({ exercise, locked, busy, feedback, formId, onReady, onAnswer }: ExerciseProps): React.JSX.Element {
+export function Choices({
+  exercise,
+  dialect,
+  locked,
+  busy,
+  feedback,
+  formId,
+  onReady,
+  onAnswer,
+  look = 'text',
+  onChosen,
+}: ExerciseProps & { look?: ChoiceLook; onChosen?: (chosen: number | null) => void }): React.JSX.Element {
   const t = useT();
   const options = exercise.options ?? [];
   const [chosen, setChosen] = useState<number | null>(null);
+  const kurdish = kurdishText(dialect);
 
   useEffect(() => onReady(chosen !== null), [chosen, onReady]);
+  useEffect(() => onChosen?.(chosen), [chosen, onChosen]);
 
   const choose = (i: number): void => {
     if (locked || busy) return;
@@ -184,6 +285,103 @@ export function Choices({ exercise, locked, busy, feedback, formId, onReady, onA
 
   // graded: the right option is the one the correction names, or the one chosen when it was right
   const right = (i: number): boolean => (feedback?.accepted ? i === chosen : feedback?.correction === options[i]);
+  // the one chosen pops (right) or shakes (wrong) as it is graded — styles/motion.css
+  const stateOf = (i: number): TileState => (!locked ? (i === chosen ? 'picked' : 'idle') : right(i) ? 'right' : i === chosen ? 'wrong' : 'dim');
+  const chosenClass = (i: number): string => (locked && i === chosen ? ' is-chosen' : '');
+  // a tick on the right one and a cross on a wrong choice, said in words too
+  const mark = (i: number, className: string, size: number): React.ReactNode =>
+    locked && right(i) ? (
+      <span className={className}>
+        <CheckIcon size={size} />
+        <span className="sr-only">{t('lesson.mc.right')}</span>
+      </span>
+    ) : locked && i === chosen ? (
+      <span className={className}>
+        <CloseIcon size={size} />
+        <span className="sr-only">{t('lesson.mc.yourChoice')}</span>
+      </span>
+    ) : null;
+
+  let list: React.ReactNode;
+  if (look === 'pictures') {
+    list = (
+      <div className={`lesson-pictures is-${Math.min(options.length, 4)}`} role="group" aria-label={t('lesson.mc.options')}>
+        {options.map((id, i) => (
+          <Tile
+            key={`${i}:${id}`}
+            state={stateOf(i)}
+            className={`lesson-picture${chosenClass(i)}`}
+            aria-pressed={locked ? undefined : i === chosen}
+            disabled={locked || busy}
+            onClick={() => choose(i)}
+          >
+            <span className="lesson-picture-key">
+              <span className="lesson-option-key" aria-hidden="true">
+                {i + 1}
+              </span>
+              {mark(i, 'lesson-option-mark', 18)}
+            </span>
+            <PictureArt id={id} />
+            <span className="sr-only">{pictureName(id)}</span>
+          </Tile>
+        ))}
+      </div>
+    );
+  } else if (look === 'chips') {
+    list = (
+      <div className="lesson-chips" role="group" aria-label={t('lesson.mc.options')}>
+        {options.map((option, i) => (
+          <Tile
+            key={`${i}:${option}`}
+            state={stateOf(i)}
+            className={`lesson-chip${chosenClass(i)}`}
+            aria-pressed={locked ? undefined : i === chosen}
+            disabled={locked || busy}
+            onClick={() => choose(i)}
+          >
+            {mark(i, 'lesson-chip-mark', 16)}
+            <span lang={kurdish.lang} dir={kurdish.dir}>
+              {option}
+            </span>
+          </Tile>
+        ))}
+      </div>
+    );
+  } else {
+    list = (
+      <div className={`lesson-options${look === 'kurdish' ? ' is-kurdish' : ''}`} role="group" aria-label={t('lesson.mc.options')}>
+        {options.map((option, i) => {
+          const clip = exercise.audio?.[option];
+          return (
+            <div className="lesson-option-row" key={`${i}:${option}`}>
+              <Tile
+                state={stateOf(i)}
+                className={`lesson-option${chosenClass(i)}`}
+                aria-pressed={locked ? undefined : i === chosen}
+                disabled={locked || busy}
+                onClick={() => choose(i)}
+              >
+                <span className="lesson-option-key" aria-hidden="true">
+                  {i + 1}
+                </span>
+                {look === 'kurdish' ? (
+                  <span className="lesson-option-text" lang={kurdish.lang} dir={kurdish.dir}>
+                    {option}
+                  </span>
+                ) : (
+                  <span className="lesson-option-text" dir="auto">
+                    {option}
+                  </span>
+                )}
+                {mark(i, 'lesson-option-mark', 18)}
+              </Tile>
+              {clip && <Sound src={clip} label={t('lesson.mc.hearOption', { option })} size="sm" />}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <form
@@ -194,44 +392,7 @@ export function Choices({ exercise, locked, busy, feedback, formId, onReady, onA
         if (!locked && !busy && chosen !== null) onAnswer({ choice: chosen });
       }}
     >
-      <div className="lesson-options" role="group" aria-label={t('lesson.mc.options')}>
-        {options.map((option, i) => {
-          // the one chosen pops (right) or shakes (wrong) as it is graded — styles/motion.css
-          const state: TileState = !locked ? (i === chosen ? 'picked' : 'idle') : right(i) ? 'right' : i === chosen ? 'wrong' : 'dim';
-          const clip = exercise.audio?.[option];
-          return (
-            <div className="lesson-option-row" key={`${i}:${option}`}>
-              <Tile
-                state={state}
-                className={`lesson-option${locked && i === chosen ? ' is-chosen' : ''}`}
-                aria-pressed={locked ? undefined : i === chosen}
-                disabled={locked || busy}
-                onClick={() => choose(i)}
-              >
-                <span className="lesson-option-key" aria-hidden="true">
-                  {i + 1}
-                </span>
-                <span className="lesson-option-text" dir="auto">
-                  {option}
-                </span>
-                {locked && right(i) && (
-                  <span className="lesson-option-mark">
-                    <CheckIcon size={18} />
-                    <span className="sr-only">{t('lesson.mc.right')}</span>
-                  </span>
-                )}
-                {locked && !right(i) && i === chosen && (
-                  <span className="lesson-option-mark">
-                    <CloseIcon size={18} />
-                    <span className="sr-only">{t('lesson.mc.yourChoice')}</span>
-                  </span>
-                )}
-              </Tile>
-              {clip && <Sound src={clip} label={t('lesson.mc.hearOption', { option })} size="sm" />}
-            </div>
-          );
-        })}
-      </div>
+      {list}
       {/* kept in its place once answered (unseen), so nothing above the verdict moves */}
       {options.length > 1 && (
         <p className={`lesson-hint lesson-hint--keys${locked ? ' is-spent' : ''}`} aria-hidden={locked || undefined}>
@@ -247,17 +408,27 @@ export function Choices({ exercise, locked, busy, feedback, formId, onReady, onA
 /**
  * Translate, or write a sentence: what to put into words in a bubble, and the
  * answer — built from word tiles when the item brings a bank (`BuiltAnswer`),
- * else typed with the key bar.
+ * else typed with the key bar. An item that says what it asks has its
+ * headline from that and the line alone in the bubble; a missing word's gap
+ * shows what is being typed or laid, so the sentence is read whole.
  */
 export function TypedExercise({ exercise, dialect, locked, busy, feedback, formId, onReady, onAnswer }: ExerciseProps): React.JSX.Element {
   const t = useT();
   const [mode, setMode] = useAnswerMode(exercise.bank);
+  const [written, setWritten] = useState('');
   const writing = exercise.type === 'writing';
+  const headline = askHeadline(exercise, t, { tiles: mode === 'tiles', dialect });
+  const missing = exercise.ask === 'missing';
+  const word = written.trim();
   return (
     <div className="lesson-exercise">
-      <Ask focus={false}>{writing ? t('lesson.write.ask') : mode === 'tiles' ? t('lesson.translate.askTiles') : t('lesson.translate.ask')}</Ask>
+      <Ask focus={false}>{headline ?? (writing ? t('lesson.write.ask') : mode === 'tiles' ? t('lesson.translate.askTiles') : t('lesson.translate.ask'))}</Ask>
       <Scene exercise={exercise} feedback={feedback}>
-        <Said exercise={exercise} />
+        {headline === null ? (
+          <Said exercise={exercise} />
+        ) : (
+          <AskedLine exercise={exercise} dialect={dialect} gap={missing ? { text: word, verdict: word ? verdictOf(feedback) : null } : undefined} />
+        )}
       </Scene>
       <BuiltAnswer
         bank={exercise.bank}
@@ -271,6 +442,7 @@ export function TypedExercise({ exercise, dialect, locked, busy, feedback, formI
         verdict={verdictOf(feedback)}
         onReady={onReady}
         onAnswer={onAnswer}
+        onText={missing ? setWritten : undefined}
       />
     </div>
   );
@@ -316,6 +488,7 @@ export function Listening({ exercise, dialect, locked, busy, feedback, formId, o
       <Ask focus={false}>{mode === 'tiles' ? t('lesson.listen.askTiles') : t('lesson.listen.ask')}</Ask>
       <Scene exercise={exercise} feedback={feedback}>
         <SoundBubble src={src} label={played ? t('lesson.listen.again') : t('lesson.listen.play')} />
+        <Cue text={exercise.cue} />
       </Scene>
       {exercise.prompt && (
         <p className="lesson-hint" dir="auto">

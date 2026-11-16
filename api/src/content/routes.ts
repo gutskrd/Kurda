@@ -23,7 +23,7 @@ export function registerLessonRoutes(
   const sessions = new LessonSessionService(app.db, { xp, gems, milestones });
   const content = new ContentRepository(app.db);
 
-  /** A skill's markdown grammar note for the "Tips" tab (KUR-038). */
+  /** A skill's markdown grammar note for the "Tips" tab (KUR-038), and the words its lessons bring in, for its guide. */
   app.get(
     '/skills/:id/grammar',
     { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
@@ -31,7 +31,7 @@ export function registerLessonRoutes(
       const { id } = req.params as { id: string };
       const grammarMd = await content.grammarForSkill(id);
       if (grammarMd === null) throw new AppError('GRAMMAR_NOT_FOUND', 404, 'no grammar note for this skill');
-      return { skillId: id, grammarMd };
+      return { skillId: id, grammarMd, words: await content.newWordsForSkill(id) };
     },
   );
 

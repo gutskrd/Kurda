@@ -471,6 +471,35 @@ html:has(.lesson-bar) {
   font-size: 0.8rem;
   font-weight: 650;
 }
+/*
+ * Over an item that brings in new words, in the kicker's place: a small pill
+ * in the pomegranate's soft fill, its words in the red as the kicker's are,
+ * and a gold sparkle — gold is "notice this" (5:1 and more, both schemes).
+ */
+.lesson-new {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 -8px;
+  padding: 4px 12px 4px 9px;
+  border: 1.5px solid color-mix(in srgb, var(--vale-red) 30%, var(--vale-card));
+  border-radius: var(--r-pill);
+  background: var(--vale-red-soft);
+  color: var(--vale-red-ink);
+  font-size: var(--text-tab);
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.lesson-new svg {
+  flex: none;
+  color: var(--gold);
+}
+[dir='rtl'] .lesson-new {
+  letter-spacing: normal;
+}
 .lesson-exercise {
   display: grid;
   gap: 20px;
@@ -795,6 +824,116 @@ html:has(.lesson-bar) {
   width: 16px;
   height: 16px;
 }
+/* options in Kurdish — a reply, a missing word, the Kurdish for an English line — in the display face, as the line itself is */
+.lesson-options.is-kurdish .lesson-option-text {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* a missing word's options: short Kurdish chips in a row that wraps, like the word tiles they stand for */
+.lesson-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.lesson .lesson-chip {
+  min-width: 72px;
+  min-height: 52px;
+  padding-inline: 18px;
+  border-radius: 14px;
+  font-family: var(--font-display);
+  font-size: 1.3125rem;
+  font-weight: 700;
+}
+/* once graded, the tick or the cross before the word, in its own colour */
+.lesson-chip-mark {
+  display: inline-flex;
+  margin-inline-start: -4px;
+}
+
+/*
+ * Which picture: square cream cards, each a word's picture and the number
+ * that chooses it in the corner, where the tick or the cross goes once it is
+ * graded (as an option's chip). Three or four in a row while they keep a
+ * picture large enough to read at a glance; four go two by two on a phone.
+ */
+/* never wider than a picture needs: on a wide screen a row of them stands in the middle, as the word tiles do */
+.lesson-pictures {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 176px));
+  justify-content: center;
+  gap: 10px;
+}
+.lesson-pictures.is-2 {
+  --cols: 2;
+}
+.lesson-pictures.is-4 {
+  --cols: 2;
+}
+@media (min-width: 560px) {
+  .lesson-pictures {
+    gap: 14px;
+  }
+  .lesson-pictures.is-4 {
+    --cols: 4;
+  }
+}
+.lesson .lesson-picture {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 12px;
+}
+/* two by two on a phone: a little shorter than square, so the four stay in view with the line above them */
+@media (max-width: 559px) {
+  .lesson .lesson-pictures.is-4 .lesson-picture {
+    aspect-ratio: 1.2;
+  }
+}
+.lesson-picture-key {
+  position: absolute;
+  top: 8px;
+  inset-inline-start: 8px;
+  display: grid;
+}
+.lesson-picture-key > * {
+  grid-area: 1 / 1;
+}
+.lesson-picture-art {
+  display: block;
+  width: min(100%, 112px);
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+.lesson-picture-art > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* the picture drawn for the page's own scheme: dark unless the page is light */
+.lesson-picture-art.is-light {
+  display: none;
+}
+:root[data-theme='light'] .lesson-picture-art.is-light {
+  display: block;
+}
+:root[data-theme='light'] .lesson-picture-art.is-dark {
+  display: none;
+}
+/* a picture this page does not know yet: its name, so it can still be chosen */
+.lesson-picture-art.is-word {
+  display: grid;
+  place-items: center;
+  aspect-ratio: auto;
+  font-size: 1rem;
+}
+.lesson .lesson-picture.is-dim {
+  opacity: 0.45;
+}
 .lesson-hint {
   margin: 0;
   font-size: 0.86rem;
@@ -986,6 +1125,149 @@ html:has(.lesson-bar) {
   }
 }
 /*
+ * An asked item's line, alone in its bubble: larger than a whole question
+ * was, the recording's two buttons in a column at its start, level with the
+ * middle of the line however many rows it takes. A picture item's word is
+ * larger still; an English line is in the plain face.
+ */
+.lesson-bubble.is-line {
+  align-items: center;
+  gap: 14px;
+  padding-block: 14px 15px;
+  padding-inline: 14px 20px;
+}
+.lesson-bubble .lesson-line-text {
+  font-size: clamp(1.3rem, 2.4vw + 0.75rem, 1.75rem);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.lesson-bubble .lesson-line-text.is-big {
+  font-size: clamp(1.9rem, 4vw + 1rem, 2.5rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+.lesson-bubble .lesson-line-text.is-english {
+  font-family: var(--font-sans);
+  font-size: clamp(1.15rem, 1.6vw + 0.75rem, 1.4rem);
+  line-height: 1.35;
+}
+.lesson-bubble.is-line:not(:has(.lesson-line-play)) {
+  padding-inline-start: 20px;
+}
+.lesson-line-play {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.lesson-bubble .lesson-line-play .lesson-play-round {
+  width: 42px;
+  height: 42px;
+  margin: 0;
+}
+.lesson-bubble .lesson-line-play .lesson-play-round svg {
+  width: 21px;
+  height: 21px;
+}
+/* the same recording at 0.75×: a small chip under the speaker, lit in the red while it plays */
+.lesson-slow-chip {
+  position: relative;
+  min-width: 42px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1.5px solid var(--vale-line);
+  border-radius: var(--r-pill);
+  background: var(--vale-paper);
+  color: var(--vale-muted);
+  font: inherit;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+/* a fingertip's reach, a little past the chip */
+.lesson-slow-chip::after {
+  content: '';
+  position: absolute;
+  inset: -9px -3px;
+}
+@media (hover: hover) {
+  .lesson-slow-chip:hover {
+    border-color: var(--vale-edge);
+    color: var(--ink);
+  }
+}
+.lesson-slow-chip.is-on {
+  border-color: var(--vale-red);
+  background: var(--vale-red-soft);
+  color: var(--vale-red-ink);
+}
+.lesson-slow-chip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+@media (max-width: 480px) {
+  .lesson-bubble.is-line {
+    gap: 12px;
+    padding-block: 12px 13px;
+    padding-inline: 12px 16px;
+  }
+  .lesson-bubble.is-line:not(:has(.lesson-line-play)) {
+    padding-inline-start: 16px;
+  }
+}
+
+/* a missing word's gap: an empty slot the width of a word, ruled under, which takes the word chosen or typed */
+.lesson-gap {
+  display: inline-block;
+  min-width: 3.2em;
+  margin: 0 0.12em;
+  padding: 0 0.2em;
+  border-bottom: 2.5px solid var(--vale-field-edge);
+  color: var(--vale-red-ink);
+  line-height: 1.1;
+  text-align: center;
+  vertical-align: baseline;
+}
+.lesson-gap:not(.is-filled)::before {
+  content: '\200b';
+}
+.lesson-gap.is-filled {
+  min-width: 2em;
+  border-bottom-color: var(--vale-red);
+}
+.lesson-gap.is-right {
+  border-bottom-color: var(--vale-green);
+  color: var(--vale-right-ink);
+}
+.lesson-gap.is-wrong {
+  border-bottom-color: var(--vale-red-ink);
+  color: var(--vale-wrong-ink);
+}
+
+/* a few words of context under the line: a quiet pill, not part of what is said */
+.lesson-cue {
+  justify-self: start;
+  max-width: 100%;
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--vale-track);
+  color: var(--vale-muted);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+/*
  * Whoever says it stands on warm paper beside the bubble, a pale sun behind
  * their head (CharacterStage draws them; only its ground changes here): the
  * stage grows with what is said beside them rather than letting a long
@@ -1058,6 +1340,11 @@ html:has(.lesson-bar) {
   content: '';
   position: absolute;
   inset: -10px -3px;
+}
+/* a word the item brings in: the same dots in the red of its badge, a little heavier */
+.lesson-word.is-new {
+  text-decoration-color: var(--vale-red-ink);
+  text-decoration-thickness: 2.5px;
 }
 .lesson-word.is-open {
   text-decoration-color: var(--gold);

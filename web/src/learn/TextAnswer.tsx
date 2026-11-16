@@ -61,6 +61,7 @@ export function TextAnswer({
   verdict = null,
   onReady,
   onAnswer,
+  onText,
 }: {
   /** the form's id, which the action bar's Check submits */
   id: string;
@@ -76,6 +77,8 @@ export function TextAnswer({
   /** whether anything has been typed, for Check */
   onReady: (ready: boolean) => void;
   onAnswer: (answer: { text: string }, given: string) => void;
+  /** hears the text as it is typed, for a gap that shows it */
+  onText?: (text: string) => void;
 }): React.JSX.Element {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
@@ -85,6 +88,7 @@ export function TextAnswer({
   const written = text.trim().length > 0;
 
   useEffect(() => onReady(written), [written, onReady]);
+  useEffect(() => onText?.(text), [text, onText]);
 
   // the field is where a typed exercise starts, so the caret is put there, after anything it starts with
   useEffect(() => {

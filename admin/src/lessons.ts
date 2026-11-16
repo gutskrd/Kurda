@@ -4,7 +4,19 @@
  * payload schemas (api/src/content/exercises.ts), said in words, so a draft is
  * not sent only to come back refused. The server still decides.
  */
-import { CHARACTER_NAMES, CONVERSATION_LIMITS as CONV, conversationSpeaker, isSpeakerId, lessonAudioKey } from '@kurda/shared';
+import {
+  ASKS_BY_TYPE,
+  CHARACTER_NAMES,
+  CONVERSATION_LIMITS as CONV,
+  GAP,
+  WORD_PICTURES,
+  WORD_PICTURE_IDS,
+  conversationSpeaker,
+  isSpeakerId,
+  lessonAudioKey,
+  splitGap,
+  type ExerciseAsk,
+} from '@kurda/shared';
 
 export type ContentStatus = 'draft' | 'in_review' | 'published' | 'archived';
 
@@ -161,6 +173,40 @@ export function blankPayload(type: ExerciseType, from: Payload = {}): Payload {
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.map(str) : []);
 
+/** What each ask is called in the editor, with what its question box then holds. */
+export const ASK_NAME: Record<ExerciseAsk, string> = {
+  meaning: 'What does this mean? — a Kurdish line, answers in English',
+  'choose-kurdish': 'Select the correct translation — an English line, answers in Kurdish',
+  picture: 'Which picture is it? — a Kurdish word, answers are picture names',
+  reply: 'What do you answer? — a Kurdish line, Kurdish replies',
+  missing: 'Fill in the missing word — a Kurdish line with ___',
+  'to-english': 'Translate this sentence — a Kurdish line',
+  'to-kurdish': 'Write this in Kurmancî — an English line',
+  hear: 'What you hear — no line, only the recording',
+  repeat: 'Repeat after the speaker — the Kurdish line to say',
+};
+
+/** What an item that says what it asks must keep to: the server's rules (api/src/content/exercises.ts), in an editor's words. */
+function askIssues(ex: Exercise, out: Issue[]): void {
+  const p = ex.payload;
+  if (p.ask !== undefined && !(ASKS_BY_TYPE[ex.type] ?? []).includes(p.ask as ExerciseAsk)) {
+    out.push({ path: 'ask', message: 'Choose what it asks from the list for its kind.' });
+    return;
+  }
+  if (str(p.cue).length > 60) out.push({ path: 'cue', message: 'The cue is longer than 60 characters: keep it to a few words.' });
+  const words = Array.isArray(p.new) ? (p.new as Array<Record<string, unknown>>) : [];
+  if (words.length > 6) out.push({ path: 'new', message: 'At most 6 new words on one item.' });
+  words.forEach((w, i) => {
+    if (!str(w?.ku).trim() || !str(w?.en).trim()) out.push({ path: `new.${i}`, message: `New word ${i + 1}: give the word and its meaning, as “word = meaning”.` });
+  });
+  if (p.ask === 'missing' && splitGap(str(p.prompt)) === null) out.push({ path: 'prompt', message: `A missing-word line holds exactly one ${GAP}.` });
+  if (p.ask === 'picture') {
+    strings(p.options).forEach((o, i) => {
+      if (o.trim() && !Object.hasOwn(WORD_PICTURES, o)) out.push({ path: `options.${i}`, message: `“${o}” is not a word picture (try: ${WORD_PICTURE_IDS.slice(0, 6).join(', ')}…).` });
+    });
+  }
+}
+
 /** The limits of the server's schemas, said as an editor would want them. */
 export function exerciseIssues(ex: Exercise): Issue[] {
   const p = ex.payload;
@@ -181,6 +227,7 @@ export function exerciseIssues(ex: Exercise): Issue[] {
     });
   };
   if (str(p.say).length > 300) out.push({ path: 'say', message: '“Say” is longer than 300 characters.' });
+  askIssues(ex, out);
   if (ex.type !== 'conversation' && p.voice !== undefined && !isSpeakerId(p.voice)) {
     out.push({ path: 'voice', message: 'Choose who records it: Hamo, Xezal, Hevalo or none.' });
   }

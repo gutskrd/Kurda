@@ -4,7 +4,8 @@ import { Button } from '../components/Button';
 import { MicIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { Ask, Prompt, type ExerciseProps } from './Exercises';
+import { askHeadline } from './asks';
+import { Ask, Cue, Prompt, type ExerciseProps } from './Exercises';
 import { PlayButton } from './PlayButton';
 import { recorderSupported, useRecorder } from './useRecorder';
 import { ExerciseVoice, exerciseClips } from './Voice';
@@ -35,7 +36,7 @@ type Take =
  * speaking off for good; "Can't speak now", in the action bar, puts speaking
  * off for the rest of the lesson.
  */
-export function Speaking({ exercise, locked, busy, formId, onReady, onAnswer }: ExerciseProps): React.JSX.Element {
+export function Speaking({ exercise, dialect, locked, busy, formId, onReady, onAnswer }: ExerciseProps): React.JSX.Element {
   const t = useT();
   const recorder = useRecorder();
   const [taken, setTaken] = useState<Take>({ status: 'none' });
@@ -182,7 +183,8 @@ export function Speaking({ exercise, locked, busy, formId, onReady, onAnswer }: 
 
   return (
     <div className="lesson-exercise" ref={root}>
-      <Ask focus>{t('lesson.speak.ask')}</Ask>
+      {/* "Repeat after Hamo" when the item says it asks that and Hamo says the model */}
+      <Ask focus>{askHeadline(exercise, t, { tiles: false, dialect }) ?? t('lesson.speak.ask')}</Ask>
       {/* the speaker stays while the take is compared: it speaks again when the model is played there */}
       <ExerciseVoice clips={exerciseClips(exercise)}>
         <Prompt text={exercise.prompt} />
@@ -191,6 +193,7 @@ export function Speaking({ exercise, locked, busy, formId, onReady, onAnswer }: 
             <PlayButton src={exercise.modelAudioUrl} label={t('lesson.speak.model')} round />
           </div>
         )}
+        <Cue text={exercise.cue} />
       </ExerciseVoice>
       <div className="lesson-speak" ref={controls}>
         {body}

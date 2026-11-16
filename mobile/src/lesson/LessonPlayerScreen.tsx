@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import { feedbackKind, nextLaunch, pairKey, praiseFor, practisableMistakes, typedHint, type ResumeMemory, type TypedHint } from '@kurda/shared';
+import { feedbackKind, nextLaunch, pairKey, praiseFor, practisableMistakes, typedHint, type NewWord, type ResumeMemory, type TypedHint } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { GrammarTips } from '../grammar/GrammarTips';
@@ -16,6 +16,7 @@ import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLay
 import { useHardwareBack } from '../navigation/hardwareBack';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { encodeAnswer } from './answers';
+import { BADGE, NewWordBadge } from './components/AskParts';
 import { ExerciseSlide } from './components/ExerciseSlide';
 import { FeedbackFooter } from './components/FeedbackFooter';
 import { knownVoice, type CharacterReaction } from '../characters/SpeakingCharacter';
@@ -461,6 +462,9 @@ function SessionPlayerBody({
   const reask = isReask(state);
   // how the answer on screen was graded, for the exercise to answer back with
   const verdict = state.feedback ? (state.feedback.accepted ? 'right' : 'wrong') : null;
+  // a picture item's right answer is a picture, already checked where it stands: its name in the bar would be the catalogue's id
+  const picture = ex?.ask === 'picture';
+  const shownFeedback = useMemo(() => (state.feedback && picture ? { ...state.feedback, correction: undefined } : state.feedback), [state.feedback, picture]);
 
   /*
    * A verdict arriving: felt and heard (`feelAnswer`), the run counted on, and
@@ -626,9 +630,14 @@ function SessionPlayerBody({
   const staged =
     ex?.type === 'listening' ||
     ((ex?.type === 'multiple_choice' || ex?.type === 'translate') && !!ex.prompt) ||
+    (ex?.type === 'writing' && !!ex.ask && !!ex.prompt) ||
     (ex?.type === 'speaking' && !!ex.modelAudioUrl && knownVoice(ex.modelAudioVoice) !== null) ||
     (ex?.type === 'conversation' && conversationCast(ex.speakers ?? []) !== null);
   const fb = state.feedback;
+  // the words this question brings in, said over it in the lesson name's place: in a lesson, and the first time it is asked
+  const fresh: NewWord[] | null = kind === 'lesson' && !reask && ex?.newWords && ex.newWords.length > 0 ? ex.newWords : null;
+  // a lesson that brings in new words keeps the kicker's line as tall as their badge, so nothing moves as it comes and goes
+  const badged = kind === 'lesson' && state.exercises.some((e) => (e.newWords?.length ?? 0) > 0);
   const standIn: CharacterReaction | null =
     !fb || staged || fb.exerciseType === 'speaking'
       ? null
@@ -696,11 +705,18 @@ function SessionPlayerBody({
       ) : null}
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        {title !== undefined ? (
+        {fresh ? (
+          // a new word in this question: said where the lesson's name is, in a line as tall, so nothing under it moves
+          <View style={[styles.kickerRow, styles.badged]}>
+            <NewWordBadge words={fresh} />
+          </View>
+        ) : title !== undefined ? (
           // the lesson's name over its questions, which stays where it is as they turn; its line is kept while it is on its way
-          <Text style={[styles.kicker, dir.free, { color: valley.redText }]} numberOfLines={1} testID="lesson-title">
-            {title ?? ' '}
-          </Text>
+          <View style={[styles.kickerRow, badged && styles.badged]}>
+            <Text style={[styles.kicker, dir.free, { color: valley.redText }]} numberOfLines={1} testID="lesson-title">
+              {title ?? ' '}
+            </Text>
+          </View>
         ) : null}
         {/*
           One question leaves and the next arrives, the way the intro's slides
@@ -750,7 +766,7 @@ function SessionPlayerBody({
           </PressableScale>
         ) : (
           <FeedbackFooter
-            feedback={state.feedback}
+            feedback={shownFeedback}
             answersItself={answersItself}
             staged={staged}
             standIn={standIn}
@@ -926,7 +942,10 @@ const styles = StyleSheet.create({
   progressWrap: { flex: 1 },
   body: { paddingHorizontal: layout.gutter, paddingTop: spacing.md + 6, paddingBottom: spacing.lg, flexGrow: 1 },
   // the lesson's name: small, tracked capitals in the pomegranate's red, just over the question
-  kicker: { fontSize: 11, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: spacing.xs },
+  kicker: { fontSize: 11, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.4, textTransform: 'uppercase' },
+  kickerRow: { justifyContent: 'center', marginBottom: spacing.xs },
+  // the kicker's line, as tall as the new word's badge that takes its place on some questions
+  badged: { minHeight: BADGE },
   tallying: { fontSize: typography.sizes.md },
   leaveBody: { fontSize: typography.sizes.md, lineHeight: 22 },
   leaveActions: { gap: spacing.sm, marginTop: spacing.sm },

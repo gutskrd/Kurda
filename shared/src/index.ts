@@ -40,6 +40,9 @@ export {
  * the phone run the same rules, so they cannot disagree about what counts.
  */
 export {
+  ASKS_BY_TYPE,
+  EXERCISE_ASKS,
+  GAP,
   REASK_GAP,
   RUN_SHOWN_FROM,
   VERDICT_TIMING,
@@ -54,11 +57,14 @@ export {
   progress,
   reduce,
   runMilestone,
+  splitGap,
   type DeliveredExercise,
+  type ExerciseAsk,
   type ExerciseType,
   type Feedback,
   type FeedbackKind,
   type GradeResult,
+  type NewWord,
   type PendingAnswer,
   type PlayableSession,
   type PromptToken,
@@ -832,6 +838,11 @@ export {
   PIGEON_POSES,
   type PigeonPose,
   type SongbirdPose,
+  WORD_PICTURES,
+  WORD_PICTURE_IDS,
+  wordPictureSvg,
+  type WordPictureId,
+  type WordPictureOptions,
 } from './art/index.js';
 /**
  * The art's metals, for the parts of a screen drawn around an emblem — a

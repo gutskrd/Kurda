@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import type { NewWord } from '@kurda/shared';
 import { validateExercisePayload } from './exercises.js';
 import { silentListening, type SilentListening } from '../lessonaudio/publish-guard.js';
 
@@ -162,6 +163,35 @@ export class ContentRepository {
       [skillId],
     );
     return res.rows[0]?.grammar_md ?? null;
+  }
+
+  /**
+   * The words a skill's published lessons bring in, in the order a learner
+   * meets them, each once: what its items mark new. The skill's guide lists
+   * them beside its tips, so a learner can look back at what the skill taught.
+   */
+  async newWordsForSkill(skillId: string): Promise<NewWord[]> {
+    const res = await this.pool.query<{ words: unknown }>(
+      `SELECT e.payload -> 'new' AS words
+         FROM exercises e
+         JOIN lessons l ON l.id = e.lesson_id
+        WHERE l.skill_id = $1 AND l.status = 'published' AND jsonb_typeof(e.payload -> 'new') = 'array'
+        ORDER BY l.position, e.position`,
+      [skillId],
+    );
+    const seen = new Set<string>();
+    const out: NewWord[] = [];
+    for (const row of res.rows) {
+      for (const w of Array.isArray(row.words) ? row.words : []) {
+        const ku = typeof w?.ku === 'string' ? w.ku : '';
+        const en = typeof w?.en === 'string' ? w.en : '';
+        const key = ku.trim().toLowerCase();
+        if (!key || !en || seen.has(key)) continue;
+        seen.add(key);
+        out.push({ ku, en });
+      }
+    }
+    return out;
   }
 
   async addExercise(

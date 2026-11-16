@@ -3,6 +3,7 @@ import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
 import {
   RESULTS_TIMING,
+  WORD_PICTURES,
   afterResults,
   isSoraniDialect,
   resultsActions,
@@ -12,6 +13,7 @@ import {
   sittingPace,
   type AfterResults,
   type ResultsAction,
+  type WordPictureId,
 } from '@kurda/shared';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { display } from '../../theme/fonts';
@@ -138,6 +140,11 @@ export function LessonResults({
   const pct = Math.round(results.accuracy * 100);
   const mistakes = results.mistakes ?? [];
   const promptFor = (id: string, prompt?: string) => prompt ?? exercises.find((e) => e.id === id)?.prompt ?? '';
+  // a picture item's answer is a picture, which the server names by its catalogue id: said by what it shows instead
+  const answerFor = (id: string, correction: string): string =>
+    exercises.find((e) => e.id === id)?.ask === 'picture' && Object.prototype.hasOwnProperty.call(WORD_PICTURES, correction)
+      ? WORD_PICTURES[correction as WordPictureId].en
+      : correction;
   const [folded, setFolded] = useState(mistakes.length > MISTAKES_OPEN);
 
   // Hevalo cheers as the buzz lands (`hapticAtMs`), or at once when the moment is skipped
@@ -292,7 +299,7 @@ export function LessonResults({
                       ) : null}
                       {m.correction ? (
                         <Text style={[styles.mistakeAnswer, dir.text, { color: colors.textPrimary }]}>
-                          {t('lesson.answer')} <Text style={styles.mistakeAnswerValue}>{m.correction}</Text>
+                          {t('lesson.answer')} <Text style={styles.mistakeAnswerValue}>{answerFor(m.exerciseId, m.correction)}</Text>
                         </Text>
                       ) : null}
                     </View>

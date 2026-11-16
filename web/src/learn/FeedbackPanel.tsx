@@ -113,6 +113,7 @@ export interface RunMark {
  */
 export function FeedbackPanel({
   feedback,
+  kurdishAnswer = false,
   dialect,
   speaker = null,
   hevalo = null,
@@ -122,6 +123,8 @@ export function FeedbackPanel({
   onContinue,
 }: {
   feedback: Feedback;
+  /** the right answer is Kurdish whatever the item's type (a reply chosen in Kurdish, a missing word) */
+  kurdishAnswer?: boolean;
   dialect: string | null | undefined;
   /** who says the model, when nobody above does (`feedbackClip`) */
   speaker?: SpokenClip | null;
@@ -143,7 +146,7 @@ export function FeedbackPanel({
   const typed = TYPED.has(feedback.exerciseType) && feedback.given !== undefined && !!feedback.correction;
   const diff = typed ? letterDiff(feedback.given!, feedback.correction!) : null;
   const hint = typed ? hintLine(typedHint(feedback.given!, feedback.correction!, dialect), dir === 'rtl', t) : null;
-  const kurdish = KURDISH_ANSWER.has(feedback.exerciseType);
+  const kurdish = kurdishAnswer || KURDISH_ANSWER.has(feedback.exerciseType);
   const shownRun = run && run.count >= RUN_SHOWN_FROM ? run : null;
   const model = feedback.modelAudioUrl;
 

@@ -35,14 +35,60 @@ export type Verdict = 'correct' | 'typo' | 'wrong';
 /** How a learner judged their own recording, beside the native model. */
 export type SelfRating = 'good' | 'close' | 'retry';
 
+/**
+ * What an item asks of the learner, which names its headline: the road's items
+ * say it, so the bubble can hold the line alone; an item without one is asked
+ * as its type always was. `meaning`: what the Kurdish line means. `picture`:
+ * which picture the Kurdish word is (its options are `WORD_PICTURES` ids).
+ * `reply`: what to answer a character's Kurdish line, in Kurdish. `missing`: the
+ * word for the line's gap (`GAP`). `to-english` / `to-kurdish`: put the line
+ * into the other language. `hear`: what the recording says. `repeat`: say the
+ * line after its speaker. `choose-kurdish`: which Kurdish says the English line.
+ */
+export type ExerciseAsk = 'meaning' | 'choose-kurdish' | 'picture' | 'reply' | 'missing' | 'to-english' | 'to-kurdish' | 'hear' | 'repeat';
+
+export const EXERCISE_ASKS: readonly ExerciseAsk[] = ['meaning', 'choose-kurdish', 'picture', 'reply', 'missing', 'to-english', 'to-kurdish', 'hear', 'repeat'];
+
+/** Which asks each exercise type can make. */
+export const ASKS_BY_TYPE: Readonly<Partial<Record<ExerciseType, readonly ExerciseAsk[]>>> = {
+  multiple_choice: ['meaning', 'choose-kurdish', 'picture', 'reply', 'missing'],
+  translate: ['to-english', 'to-kurdish'],
+  writing: ['to-kurdish', 'missing'],
+  listening: ['hear'],
+  speaking: ['repeat'],
+};
+
+/** The gap in a `missing` item's line, where the chosen word goes. */
+export const GAP = '___';
+
+/** A `missing` item's line around its gap: what comes before it and after it; null when the line has no single gap. */
+export function splitGap(line: string): { before: string; after: string } | null {
+  const at = line.indexOf(GAP);
+  if (at < 0 || line.indexOf(GAP, at + GAP.length) >= 0) return null;
+  return { before: line.slice(0, at), after: line.slice(at + GAP.length) };
+}
+
+/** A word an item brings in for the first time, with what it means. */
+export interface NewWord {
+  ku: string;
+  en: string;
+}
+
 /** An exercise as the server delivers it: the answer is never in it. */
 export interface DeliveredExercise {
   id: string;
   /** a lesson's order; practice items have none */
   position?: number;
   type: ExerciseType;
+  /** the line the bubble holds when `ask` is said; otherwise the item's whole question */
   prompt?: string;
-  /** multiple choice, in the order this session shows them */
+  /** what the item asks, which names its headline; absent on items written before there were asks */
+  ask?: ExerciseAsk;
+  /** a few words of context shown beside the line, where the line alone could be read two ways */
+  cue?: string;
+  /** the words this item brings in for the first time, with their meanings */
+  newWords?: NewWord[];
+  /** multiple choice, in the order this session shows them (picture ids for a `picture` item) */
   options?: string[];
   /** match pairs: the Kurdish cards, and their meanings, each side shuffled */
   lefts?: string[];

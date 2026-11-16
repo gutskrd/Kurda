@@ -1,0 +1,145 @@
+/**
+ * What an item asks (`ExerciseAsk`), and what that changes on the screen.
+ *
+ * The road's items name what they ask, so the bubble can hold the line alone
+ * and the headline say, in a few words, what to do with it: "What does this
+ * mean?", "Fill in the missing word", "Repeat after Hamo". This module is the
+ * part of that with no React in it: which headline an item gets, which of its
+ * lines and options are Kurdish (and so set in the display face), and the
+ * line's words with what each means, new words first.
+ *
+ * An item without an ask gets null from `askHeadline`, and its exercise keeps
+ * the headline it always had.
+ */
+import { CHARACTER_NAMES, GAP, isSoraniDialect, type ExerciseAsk, type NewWord, type PromptToken } from '@kurda/shared';
+import type { TranslationKey } from '../i18n/translations';
+import type { Exercise } from './types';
+import { knownVoice } from '../characters/voice';
+
+/** A headline: its key, and what goes into it. */
+export interface Headline {
+  key: TranslationKey;
+  params?: Record<string, string>;
+}
+
+const PLAIN: Partial<Record<ExerciseAsk, TranslationKey>> = {
+  meaning: 'lesson.ask.meaning',
+  'choose-kurdish': 'lesson.ask.chooseKurdish',
+  picture: 'lesson.ask.picture',
+  reply: 'lesson.ask.reply',
+  missing: 'lesson.ask.missing',
+  'to-english': 'lesson.ask.toEnglish',
+};
+
+/**
+ * The headline an item's ask gives it; null for an item with none, which
+ * keeps its exercise's own. `dialect` is the course's variety, for "Write this
+ * in Kurmancî" or "… in Soranî"; `tiles` says a listening item is answered
+ * from word tiles ("Tap what you hear") rather than typed.
+ */
+export function askHeadline(exercise: Exercise, { dialect, tiles = false }: { dialect?: string | null; tiles?: boolean } = {}): Headline | null {
+  const ask = exercise.ask;
+  if (!ask) return null;
+  const plain = PLAIN[ask];
+  if (plain) return { key: plain };
+  switch (ask) {
+    case 'to-kurdish':
+      return { key: isSoraniDialect(exercise.dialect ?? dialect) ? 'lesson.ask.toSorani' : 'lesson.ask.toKurmanci' };
+    case 'hear':
+      return { key: tiles ? 'lesson.listen.tapPrompt' : 'lesson.listen.prompt' };
+    case 'repeat': {
+      // after somebody only when there is somebody to hear: a recording, said by a character the app can draw
+      const voice = exercise.modelAudioUrl ? knownVoice(exercise.modelAudioVoice) : null;
+      return voice ? { key: 'lesson.ask.repeatAfter', params: { name: CHARACTER_NAMES[voice.speaker] } } : { key: 'lesson.speak.prompt' };
+    }
+    default:
+      return null;
+  }
+}
+
+/** The line in the bubble is English — the learner puts it into Kurdish — rather than Kurdish to hear and read. */
+export function lineIsEnglish(ask: ExerciseAsk | undefined): boolean {
+  return ask === 'to-kurdish' || ask === 'choose-kurdish';
+}
+
+/** The options are Kurdish, set in the display face as the lesson's Kurdish is everywhere else. */
+export function optionsAreKurdish(ask: ExerciseAsk | undefined): boolean {
+  return ask === 'reply' || ask === 'missing' || ask === 'choose-kurdish';
+}
+
+/** A word of the line with what it means, and whether this item brings it in for the first time. */
+export interface GlossToken extends PromptToken {
+  fresh?: boolean;
+}
+
+/** A word, for comparing a token with a new word: lower case, without the punctuation around it. */
+function bare(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
+    .trim();
+}
+
+/** The new word a token is, when it is one. */
+export function freshWord(text: string, newWords: readonly NewWord[] | undefined): NewWord | null {
+  if (!newWords || newWords.length === 0) return null;
+  const word = bare(text);
+  if (!word) return null;
+  return newWords.find((w) => bare(w.ku) === word) ?? null;
+}
+
+/** A line cut into its words and what lies between them, for a line that came without tokens. */
+function tokenize(line: string): PromptToken[] {
+  return line
+    .split(/([\p{L}\p{M}\p{N}'’-]+)/u)
+    .filter((part) => part.length > 0)
+    .map((text) => ({ text }));
+}
+
+/**
+ * The line's words with their meanings. A new word (`newWords`) leads with the
+ * meaning the item gives it — "am (after a vowel)" says more about "me" here
+ * than a dictionary's first sense — and is marked `fresh`, so it can be drawn
+ * a little more strongly than the words already met; one the course does not
+ * know at all still gets the item's meaning. A line that came without tokens
+ * is cut into words here, so its new words can still be tapped.
+ */
+export function glossTokens(line: string, tokens: readonly PromptToken[] | undefined, newWords: readonly NewWord[] | undefined): GlossToken[] {
+  const base: readonly PromptToken[] = tokens && tokens.length > 0 ? tokens : tokenize(line);
+  if (!newWords || newWords.length === 0) return [...base];
+  return base.map((token) => {
+    const fresh = freshWord(token.text, newWords);
+    if (!fresh) return token;
+    const others = (token.meanings ?? []).filter((m) => m.toLowerCase() !== fresh.en.toLowerCase());
+    return { text: token.text, meanings: [fresh.en, ...others].slice(0, 3), fresh: true };
+  });
+}
+
+/**
+ * The line's words either side of its gap (`GAP`), for a 'missing' item: a
+ * token holding the gap among other letters ("___." as one) is cut there, and
+ * what is left either side keeps no meaning — it is punctuation, or part of a
+ * word the gap splits. Null when the line has no single gap.
+ */
+export function aroundGap(tokens: readonly GlossToken[]): { before: GlossToken[]; after: GlossToken[] } | null {
+  const joined = tokens.map((t) => t.text).join('');
+  const at = joined.indexOf(GAP);
+  if (at < 0 || joined.indexOf(GAP, at + GAP.length) >= 0) return null;
+  const before: GlossToken[] = [];
+  const after: GlossToken[] = [];
+  let start = 0;
+  for (const token of tokens) {
+    const end = start + token.text.length;
+    if (end <= at) before.push(token);
+    else if (start >= at + GAP.length) after.push(token);
+    else {
+      // the token the gap is in: what lies before the gap and after it, as plain text
+      const head = token.text.slice(0, Math.max(0, at - start));
+      const tail = token.text.slice(Math.max(0, at + GAP.length - start));
+      if (head) before.push({ text: head });
+      if (tail) after.push({ text: tail });
+    }
+    start = end;
+  }
+  return { before, after };
+}

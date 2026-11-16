@@ -183,3 +183,20 @@ describe('a conversation in the editor', () => {
     });
   });
 });
+
+describe('an item that says what it asks', () => {
+  const mc = (payload: Record<string, unknown>): Exercise => ({ position: 1, type: 'multiple_choice', payload: { prompt: 'Silav!', options: ['Hello!', 'Goodbye!'], correctIndex: 0, ...payload } });
+
+  it('takes only an ask its kind can make, a short cue and new words written as word and meaning', () => {
+    expect(exerciseIssues(mc({ ask: 'meaning', cue: 'at the gate', new: [{ ku: 'silav', en: 'hello' }] }))).toEqual([]);
+    expect(exerciseIssues(mc({ ask: 'hear' })).map((i) => i.path)).toEqual(['ask']);
+    expect(exerciseIssues(mc({ ask: 'meaning', cue: 'x'.repeat(61) })).map((i) => i.path)).toEqual(['cue']);
+    expect(exerciseIssues(mc({ ask: 'meaning', new: [{ ku: 'silav', en: '' }] })).map((i) => i.path)).toEqual(['new.0']);
+  });
+
+  it('holds a missing word to one gap, and a picture item to pictures the apps can draw', () => {
+    expect(exerciseIssues(mc({ ask: 'missing', prompt: 'Ez baş im.' })).map((i) => i.path)).toEqual(['prompt']);
+    expect(exerciseIssues(mc({ ask: 'missing', prompt: 'Ez ___ im.' }))).toEqual([]);
+    expect(exerciseIssues(mc({ ask: 'picture', prompt: 'sêv', options: ['apple', 'unicorn'] })).map((i) => i.path)).toEqual(['options.1']);
+  });
+});

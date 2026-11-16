@@ -252,6 +252,7 @@ export function BuiltAnswer({
   verdict,
   onReady,
   onAnswer,
+  onText,
 }: {
   bank: readonly string[] | undefined;
   mode: AnswerMode;
@@ -264,10 +265,15 @@ export function BuiltAnswer({
   verdict: 'right' | 'wrong' | null;
   onReady: (ready: boolean) => void;
   onAnswer: (answer: { text: string }, given: string) => void;
+  /** hears the answer as it is built or typed, for a gap that shows it */
+  onText?: (text: string) => void;
 }): React.JSX.Element {
   const t = useT();
   const [placed, setPlaced] = useState<number[]>([]);
   const [typed, setTyped] = useState('');
+  useEffect(() => {
+    if (mode === 'tiles' && bank) onText?.(tileAnswer(bank, placed));
+  }, [mode, bank, placed, onText]);
   const toKeys = (letter = ''): void => {
     const built = bank ? tileAnswer(bank, placed) : '';
     setTyped(built && letter ? `${built} ${letter}` : built || letter);
@@ -290,7 +296,18 @@ export function BuiltAnswer({
         onType={toKeys}
       />
     ) : (
-      <TextAnswer id={formId} label={label} initial={typed} dialect={dialect} locked={locked} busy={busy} verdict={verdict} onReady={onReady} onAnswer={onAnswer} />
+      <TextAnswer
+        id={formId}
+        label={label}
+        initial={typed}
+        dialect={dialect}
+        locked={locked}
+        busy={busy}
+        verdict={verdict}
+        onReady={onReady}
+        onAnswer={onAnswer}
+        onText={onText}
+      />
     );
   if (!bank?.length) return answer;
   return (
