@@ -1095,7 +1095,7 @@
                     "options": [
                       "Na, nan û çay bes e!",
                       "Erê, sêzdeh derzî!",
-                      "Na, ez heb im."
+                      "Erê, heb û derzî!"
                     ],
                     "correctIndex": 0
                   }
@@ -1940,60 +1940,6 @@
                 },
                 {
                   "position": 8,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The shepherd lives on the mountain.",
-                    "accepted": [
-                      "Şivan li çiyê dijî.",
-                      "Şivan li çiyê dijî"
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Dibe ku ew askeke kûvî be!",
-                    "reference": "Dibe ku ew askeke kûvî be!"
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Em ê biçin serdana Bişar?",
-                    "voice": "hamo",
-                    "prompt": "Em ê biçin serdana Bişar?",
-                    "options": [
-                      "Erê! Li gund germahî zêde ye.",
-                      "Erê, duh em çûn.",
-                      "Na, Bişar şivan e."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Something wild comes every night.",
-                    "options": [
-                      "Her şev tiştekî kûvî tê.",
-                      "Her şev tiştekî kûvî hatin.",
-                      "Her şev tiştek kûvî tê."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2008,7 +1954,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 9,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu09s2l3a",
@@ -2088,7 +2034,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2103,7 +2049,35 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Something wild comes every night.",
+                    "options": [
+                      "Her şev tiştekî kûvî tê.",
+                      "Her şev tiştekî kûvî hatin.",
+                      "Her şev tiştek kûvî tê."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The shepherd lives on the mountain.",
+                    "accepted": [
+                      "Şivan li çiyê dijî.",
+                      "Şivan li çiyê dijî"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
@@ -2113,9 +2087,35 @@
                     "options": [
                       "Dibe ku ew askeke kûvî be!",
                       "Ew peyamek e.",
-                      "Ez nizanim, ez şivan im."
+                      "Dibe ku ew peyam be."
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Em ê biçin serdana Bişar?",
+                    "voice": "hamo",
+                    "prompt": "Em ê biçin serdana Bişar?",
+                    "options": [
+                      "Erê! Li gund germahî zêde ye.",
+                      "Erê, duh em çûn.",
+                      "Na, Bişar şivan e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Dibe ku ew askeke kûvî be!",
+                    "reference": "Dibe ku ew askeke kûvî be!"
                   }
                 }
               ]
@@ -2183,7 +2183,7 @@
                     "prompt": "Di çîroka Hêviyê de ew rovî ye. Di ya Baran de çi ye?",
                     "options": [
                       "Ask e, û ew ji gur direve!",
-                      "Ez ask im!",
+                      "Ask bûn, û ew ji gur direvin!",
                       "Ew rovî bû, duh."
                     ],
                     "correctIndex": 0
@@ -2311,11 +2311,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Dapîr is honest, and her story is my favourite.",
+                    "prompt": "Dapîr is honest, and her story is my favourite story.",
                     "accepted": [
-                      "Dapîr rastgo ye, û çîroka wê ya min a bijare ye.",
-                      "Dapîr rastgo ye û çîroka wê ya min a bijare ye.",
-                      "Dapîr rastgo ye, û çîroka wê çîroka min a bijare ye."
+                      "Dapîr rastgo ye, û çîroka wê çîroka min a bijare ye.",
+                      "Dapîr rastgo ye û çîroka wê çîroka min a bijare ye."
                     ]
                   }
                 },
@@ -2508,7 +2507,7 @@
                     "options": [
                       "Ya Bozo, ji kerema xwe!",
                       "Ya Bozo, ji kerema te!",
-                      "Ez gur hildibijêrim çîrok."
+                      "Yê Bozo, ji kerema xwe!"
                     ],
                     "correctIndex": 0
                   }
@@ -2687,7 +2686,7 @@
                     "options": [
                       "Bêhnfireh be, Baran!",
                       "Bêhnfireh bû, Baran!",
-                      "Yekser bû, xalo!"
+                      "Bêhnfireh in, Baran!"
                     ],
                     "correctIndex": 0
                   }
@@ -2750,10 +2749,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Dapîr worked all day.",
+                    "prompt": "Dapîr worked all day, and Hevalo slept.",
                     "accepted": [
-                      "Dapîr hemû rojê xebitî.",
-                      "Dapîr hemû rojê xebitî"
+                      "Dapîr hemû rojê xebitî, û Hevalo raza.",
+                      "Dapîr hemû rojê xebitî û Hevalo raza."
                     ]
                   }
                 },
@@ -3031,19 +3030,37 @@
                 },
                 {
                   "position": 2,
-                  "type": "writing",
+                  "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Di pêşbirka amadekariyê de, Dapîr û Hêvî ji hemûyan bêtir xebitîn û bi ser ketin.",
                     "voice": "hamo",
-                    "prompt": "This is my decision: we’ll come back in autumn.",
+                    "prompt": "Di pêşbirka amadekariyê de, Dapîr û Hêvî ji hemûyan bêtir xebitîn û bi ser ketin.",
                     "accepted": [
-                      "Ev biryara min e: em ê di payîzê de vegerin.",
-                      "Ev biryara min e: di payîzê de em ê vegerin."
+                      "In the packing race, Dapîr and Hêvî worked harder than anyone and won.",
+                      "Dapîr and Hêvî worked more than everyone in the packing race, and won.",
+                      "In the race to get ready, Dapîr and Hêvî worked hardest and won."
                     ]
                   }
                 },
                 {
                   "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Li qehwexaneyê her kes dibêje ku em diçin zozanan.",
+                    "voice": "hamo",
+                    "prompt": "Li qehwexaneyê her kes dibêje ku em diçin zozanan.",
+                    "options": [
+                      "At the tea house everyone is saying we’re going up to the pastures.",
+                      "At the tea house everyone is saying we’re going to the city.",
+                      "At the tea house nobody is saying anything."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
@@ -3066,7 +3083,38 @@
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Li zozanan bereket heye; şîr û penîr zêde ne.",
+                    "voice": "hamo",
+                    "prompt": "Li zozanan bereket heye; şîr û penîr zêde ne.",
+                    "accepted": [
+                      "On the pastures there is plenty; there’s lots of milk and cheese.",
+                      "There is plenty on the summer pastures; milk and cheese are plentiful.",
+                      "On the pastures there is abundance; there’s plenty of milk and cheese."
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Tu berê di konekî de razayî?",
+                    "voice": "hamo",
+                    "prompt": "Tu berê di konekî de razayî?",
+                    "options": [
+                      "Na, ev ê cara yekem be!",
+                      "Erê, sibe ez razam.",
+                      "Na, ez ê razim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3088,39 +3136,20 @@
                   }
                 },
                 {
-                  "position": 5,
-                  "type": "multiple_choice",
+                  "position": 8,
+                  "type": "writing",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Tu berê di konekî de razayî?",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Tu berê di konekî de razayî?",
-                    "options": [
-                      "Na, ev ê cara yekem be!",
-                      "Erê, sibe ez razam.",
-                      "Na, kon raza."
-                    ],
-                    "correctIndex": 0
+                    "prompt": "This is my decision: we’ll come back in autumn.",
+                    "accepted": [
+                      "Ev biryara min e: em ê di payîzê de vegerin.",
+                      "Ev biryara min e: di payîzê de em ê vegerin."
+                    ]
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Li qehwexaneyê her kes dibêje ku em diçin zozanan.",
-                    "voice": "hamo",
-                    "prompt": "Li qehwexaneyê her kes dibêje ku em diçin zozanan.",
-                    "options": [
-                      "At the tea house everyone is saying we’re going up to the pastures.",
-                      "At the tea house everyone is saying we’re going to the city.",
-                      "At the tea house nobody is saying anything."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
+                  "position": 9,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -3129,37 +3158,6 @@
                       "Pêşî em ê konan amade bikin, paşê em ê bar bikin.",
                       "Pêşî em ê konan amade bikin û paşê em ê bar bikin."
                     ]
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Li zozanan bereket heye; şîr û penîr zêde ne.",
-                    "voice": "hamo",
-                    "prompt": "Li zozanan bereket heye; şîr û penîr zêde ne.",
-                    "accepted": [
-                      "On the pastures there is plenty; there’s lots of milk and cheese.",
-                      "There is plenty on the summer pastures; milk and cheese are plentiful.",
-                      "On the pastures there is abundance; there’s plenty of milk and cheese."
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Kî bar dike?",
-                    "voice": "hamo",
-                    "prompt": "Kî bar dike?",
-                    "options": [
-                      "Em hemû bar dikin, Dapîr jî!",
-                      "Kon bar dike.",
-                      "Tenê Bozo bar dike."
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
@@ -3177,6 +3175,62 @@
                 },
                 {
                   "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Kî bar dike?",
+                    "voice": "hamo",
+                    "prompt": "Kî bar dike?",
+                    "options": [
+                      "Em hemû bar dikin, Dapîr jî!",
+                      "Em hemû bar dikim.",
+                      "Tenê Bozo bar dike."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Îsal em ê biçin zozanan!",
+                    "voice": "hamo",
+                    "prompt": "Îsal em ê biçin ___!",
+                    "options": [
+                      "zozanan",
+                      "kon",
+                      "biryar"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Hingê em ê bar bikin.",
+                    "voice": "hamo",
+                    "cue": "Then we’ll move up there.",
+                    "prompt": "Hingê em ê ___ bikin.",
+                    "accepted": [
+                      "bar"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Konê Bişar li zozanan e.",
+                    "reference": "Konê Bişar li zozanan e."
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3191,7 +3245,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 16,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu09s3l3a",
@@ -3274,61 +3328,6 @@
                     ],
                     "correctIndex": 0
                   }
-                },
-                {
-                  "position": 13,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Di pêşbirka amadekariyê de, Dapîr û Hêvî ji hemûyan bêtir xebitîn û bi ser ketin.",
-                    "voice": "hamo",
-                    "prompt": "Di pêşbirka amadekariyê de, Dapîr û Hêvî ji hemûyan bêtir xebitîn û bi ser ketin.",
-                    "accepted": [
-                      "In the packing race, Dapîr and Hêvî worked harder than anyone and won.",
-                      "Dapîr and Hêvî worked more than everyone in the packing race, and won.",
-                      "In the race to get ready, Dapîr and Hêvî worked hardest and won."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Îsal em ê biçin zozanan!",
-                    "voice": "hamo",
-                    "prompt": "Îsal em ê biçin ___!",
-                    "options": [
-                      "zozanan",
-                      "kon",
-                      "biryar"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Hingê em ê bar bikin.",
-                    "voice": "hamo",
-                    "cue": "Then we’ll move up there.",
-                    "prompt": "Hingê em ê ___ bikin.",
-                    "accepted": [
-                      "bar"
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Konê Bişar li zozanan e.",
-                    "reference": "Konê Bişar li zozanan e."
-                  }
                 }
               ]
             },
@@ -3397,7 +3396,7 @@
                     "options": [
                       "Rojek bi peyatî.",
                       "Duh bi peyatî.",
-                      "Ez dûr im."
+                      "Rojek bi trênê."
                     ],
                     "correctIndex": 0
                   }
@@ -3459,7 +3458,7 @@
                     "options": [
                       "Na, pêşî çay!",
                       "Erê, duh.",
-                      "Na, ez yekser im."
+                      "Erê, em yekser çûn."
                     ],
                     "correctIndex": 0
                   }
@@ -4068,7 +4067,7 @@
                     "options": [
                       "Erê, ez ê hişyar rabim!",
                       "Erê, ez hişyar rabûm.",
-                      "Na, ez berbang im."
+                      "Na, ez ê hişyar rabûm."
                     ],
                     "correctIndex": 0
                   }
@@ -4140,8 +4139,8 @@
                     "voice": "hamo",
                     "prompt": "Bozo çima şermok e?",
                     "options": [
-                      "Em tê nagihîjin, xalo.",
-                      "Dibe ku ew ji werîsan ditirse.",
+                      "Em tê nagihîjin, xalo. Dibe ku ev nehênî be!",
+                      "Ji ber ku ew werîs e.",
                       "Ji ber ku ez şermok im."
                     ],
                     "correctIndex": 0
@@ -4476,7 +4475,7 @@
                     "prompt": "Vê hefteyê Bozo panzdeh caran reviya. Bi şaşî?",
                     "options": [
                       "Na, ji bo evînê!",
-                      "Erê, ew şop e.",
+                      "Erê, bi tevahî bi şaşî.",
                       "Na, ez reviyam."
                     ],
                     "correctIndex": 0
@@ -4677,7 +4676,7 @@
                     "options": [
                       "Ya Dapîrê: ew rê nas dike!",
                       "Ya Bozo: ew evîndar e!",
-                      "Ez rê me."
+                      "Ya trênê."
                     ],
                     "correctIndex": 0
                   }
@@ -4687,13 +4686,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Gotara Dapîrê dirêj e, lê xweş e: berê li vir askên kûvî hebûn.",
+                    "say": "Gotara Dapîrê dirêj e, lê xweş e. Berê li vir askên kûvî hebûn.",
                     "voice": "hamo",
-                    "prompt": "Gotara Dapîrê dirêj e, lê xweş e: berê li vir askên kûvî hebûn.",
+                    "prompt": "Gotara Dapîrê dirêj e, lê xweş e. Berê li vir askên kûvî hebûn.",
                     "accepted": [
-                      "Dapîr’s talk is long, but lovely: in the old days there were wild deer here.",
-                      "Dapîr’s speech is long but nice: there used to be wild deer here.",
-                      "Dapîr’s talk is long, but it’s lovely: once there were wild deer here."
+                      "Dapîr’s talk is long, but lovely. In the old days there were wild deer here.",
+                      "Dapîr’s speech is long but nice. There used to be wild deer here.",
+                      "Dapîr’s talk is long, but it’s lovely. Once there were wild deer here."
                     ]
                   }
                 },

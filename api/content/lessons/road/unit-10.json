@@ -167,7 +167,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bişar hevalê min ê kevn e. Min her tişt du caran got!",
+                    "say": "Min her tişt du caran ji Bişar re got!",
                     "voice": "hamo",
                     "new": [
                       {
@@ -175,11 +175,11 @@
                         "en": "said (the past of gotin: min got, I said)"
                       }
                     ],
-                    "prompt": "Bişar hevalê min ê kevn e. Min her tişt du caran got!",
+                    "prompt": "Min her tişt du caran ji Bişar re got!",
                     "options": [
-                      "Bişar is my old friend. I said everything twice!",
-                      "Bişar is my new neighbour. I said nothing at all!",
-                      "Bişar is my old friend. He said everything twice!"
+                      "I told Bişar everything twice!",
+                      "I told Bişar nothing at all!",
+                      "Bişar told me everything twice!"
                     ],
                     "correctIndex": 0
                   }
@@ -688,19 +688,31 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Te çaya xwe vexwar? Niha bêdeng be!",
+                    "say": "Te ew dît?",
                     "voice": "hamo",
-                    "prompt": "Te çaya xwe vexwar? Niha bêdeng be!",
+                    "prompt": "Te ew dît?",
                     "options": [
-                      "Baş e, ez ê bêdeng bibim.",
-                      "Erê, tu bêdeng î.",
-                      "Erê, min ew dît."
+                      "Erê, min ew dît!",
+                      "Erê, ez ew dîtim!",
+                      "Erê, min ew dibînim!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 4,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Bêdeng be: çivîkek firiya, lê ask netirsiya.",
+                      "Bêdeng be, çivîkek firiya, lê ask netirsiya."
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -722,23 +734,23 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Te ew dît?",
+                    "say": "Te çaya xwe vexwar?",
                     "voice": "hamo",
-                    "prompt": "Te ew dît?",
+                    "prompt": "Te çaya xwe vexwar?",
                     "options": [
-                      "Erê, min ew dît!",
-                      "Erê, ez ew dîtim!",
-                      "Erê, min ew dibînim!"
+                      "Erê, min ew vexwar.",
+                      "Erê, ez ew vexwar.",
+                      "Erê, min ew vedixwim."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -753,7 +765,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -775,35 +787,7 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Bêdeng be: çivîkek firiya, lê ask netirsiya.",
-                      "Bêdeng be, çivîkek firiya, lê ask netirsiya."
-                    ]
-                  }
-                },
-                {
                   "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Bişar her şev li wir xwê datîne.",
-                    "voice": "hamo",
-                    "prompt": "Bişar her şev li wir ___ datîne.",
-                    "options": [
-                      "xwê",
-                      "giya",
-                      "tûr"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -818,7 +802,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 10,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu10s1l3a",
@@ -898,7 +882,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -910,6 +894,22 @@
                       "It was a summer evening; we sat around the fire and the flock went to sleep.",
                       "It was a summer evening. We sat round the fire, and the flock fell asleep."
                     ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Bişar her şev li wir xwê datîne.",
+                    "voice": "hamo",
+                    "prompt": "Bişar her şev li wir ___ datîne.",
+                    "options": [
+                      "xwê",
+                      "giya",
+                      "tûr"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2240,13 +2240,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Bişar dibêje ku min di dawiyê de dît: ez bi şaşî herî dereng hatim!",
+                    "say": "Bişar dibêje ku wî ez di dawiyê de dîtim. Ez herî dereng hatim, bi şaşî!",
                     "voice": "hamo",
-                    "prompt": "Bişar dibêje ku min di dawiyê de dît: ez bi şaşî herî dereng hatim!",
+                    "prompt": "Bişar dibêje ku wî ez di dawiyê de dîtim. Ez herî dereng hatim, bi şaşî!",
                     "accepted": [
-                      "Bişar says he saw me last of all: by mistake I came the latest!",
-                      "Bişar says he saw me at the end: I arrived last of all, by mistake!",
-                      "Bişar says I was the last he saw: by mistake I came latest of all!"
+                      "Bişar says he saw me last of all. I came the latest, by mistake!",
+                      "Bişar says he saw me at the end. I arrived last of all, by mistake!",
+                      "Bişar says I was the last one he saw. I came latest, by mistake!"
                     ]
                   }
                 },
@@ -2484,7 +2484,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nerîta me ev bû: em her havîn dihatin vir.",
+                    "say": "Nerîta me ev bû: em her havîn dihatin vê mala kevirî.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -2496,11 +2496,11 @@
                         "en": "custom, tradition"
                       }
                     ],
-                    "prompt": "Nerîta me ev bû: em her havîn dihatin vir.",
+                    "prompt": "Nerîta me ev bû: em her havîn dihatin vê mala kevirî.",
                     "options": [
-                      "This was our custom: we used to come here every summer.",
-                      "This was our custom: we never came here in summer.",
-                      "This is our custom: we will come here next summer."
+                      "This was our custom: every summer we used to come to this stone house.",
+                      "This was our custom: we never came to this stone house in summer.",
+                      "This is our custom: we will come to this stone house next summer."
                     ],
                     "correctIndex": 0
                   }
@@ -2562,28 +2562,6 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Wê li ser vî banî keşk çêdikir.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "keşk",
-                        "en": "dried curd (balls of dried yoghurt)"
-                      }
-                    ],
-                    "prompt": "Wê li ser vî banî keşk çêdikir.",
-                    "options": [
-                      "She used to make dried curd on this roof.",
-                      "She used to sleep on this roof.",
-                      "She made bread on this roof once."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "picture",
                     "say": "berx",
                     "voice": "hamo",
@@ -2604,22 +2582,29 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "translate",
+                  "position": 7,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Dapîr rabû û got: min li vir keşk çêdikir. Min ev nivîsî.",
+                    "ask": "meaning",
+                    "say": "Wê li ser vî banî keşk çêdikir.",
                     "voice": "hamo",
-                    "prompt": "Dapîr rabû û got: min li vir keşk çêdikir. Min ev nivîsî.",
-                    "accepted": [
-                      "Dapîr got up and said: I used to make dried curd here. I wrote it down.",
-                      "Dapîr stood up and said: I used to make curd here. I wrote this down.",
-                      "Dapîr got up and said, I used to make dried curd here. I wrote it down."
-                    ]
+                    "new": [
+                      {
+                        "ku": "keşk",
+                        "en": "dried curd (balls of dried yoghurt)"
+                      }
+                    ],
+                    "prompt": "Wê li ser vî banî keşk çêdikir.",
+                    "options": [
+                      "She used to make dried curd on this roof.",
+                      "She used to sleep on this roof.",
+                      "She made bread on this roof once."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2638,6 +2623,21 @@
                       "She worked a little, and played with the dogs."
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Dapîr rabû û got ku wê li vir keşk çêdikir, û min ev nivîsî.",
+                    "voice": "hamo",
+                    "prompt": "Dapîr rabû û got ku wê li vir keşk çêdikir, û min ev nivîsî.",
+                    "accepted": [
+                      "Dapîr got up and said she used to make dried curd here, and I wrote it down.",
+                      "Dapîr stood up and said that she used to make curd here, and I wrote this down.",
+                      "Dapîr got up and said she used to make dried curd here, and I wrote that down."
+                    ]
                   }
                 },
                 {
@@ -3212,7 +3212,7 @@
                     "options": [
                       "Erê! Ji bo hevdîtinê, ez ê bêm.",
                       "Erê, tu yê bêyî.",
-                      "Na, ez kon im."
+                      "Na, ez ê li Sêvanê bimînim."
                     ],
                     "correctIndex": 0
                   }
@@ -3334,7 +3334,7 @@
                     "prompt": "Te Zerê dît?",
                     "options": [
                       "Na, min tiştek nebihîst, û ew bêdeng çû.",
-                      "Na, ez Zerê me.",
+                      "Erê, min ew dîtin.",
                       "Erê, ez ew dîtim."
                     ],
                     "correctIndex": 0
@@ -3484,11 +3484,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Dema ku Dapîr şanzdeh salî bû, berxekî şermok li pişt zinarekî ma, û wê ew dît.",
+                    "say": "Dema ku Dapîr keçikeke şanzdeh salî bû, berxekî şermok li pişt zinarekî ma, û wê ew dît.",
                     "voice": "hamo",
-                    "prompt": "Dema ku Dapîr şanzdeh salî bû, berxekî şermok li pişt zinarekî ma, û wê ew dît.",
+                    "prompt": "Dema ku Dapîr keçikeke şanzdeh salî bû, berxekî şermok li pişt zinarekî ma, û wê ew dît.",
                     "options": [
-                      "When Dapîr was sixteen, a shy lamb stayed behind a rock, and she found it.",
+                      "When Dapîr was a girl of sixteen, a shy lamb stayed behind a rock, and she found it.",
                       "When Dapîr was sixteen, a brave lamb ran away, and she lost it.",
                       "When Dapîr was sixty, a wolf stayed behind a rock, and she saw it."
                     ],
@@ -3590,8 +3590,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Min nivîsî: Hevalo tûr bir, û min nan şewitand!",
-                    "reference": "Min nivîsî: Hevalo tûr bir, û min nan şewitand!"
+                    "prompt": "Min nivîsî: Hevalo tûr bir, û Bişar nan şewitand!",
+                    "reference": "Min nivîsî: Hevalo tûr bir, û Bişar nan şewitand!"
                   }
                 },
                 {
@@ -4180,8 +4180,8 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ta tune, ez hişyar im, lê ez şaşmayî me: havîneke bêhempa bû!",
-                      "Ta tune, ez hişyar im, lê ez şaşmayî me, havîneke bêhempa bû!"
+                      "Ta tune, ez ne nexweş im. Ez tenê şaşmayî me: havîneke bêhempa bû!",
+                      "Ta tune, ez ne nexweş im. Ez tenê şaşmayî me, havîneke bêhempa bû!"
                     ]
                   }
                 },
@@ -4195,7 +4195,7 @@
                     "prompt": "Havîneke mîna vê heye?",
                     "options": [
                       "Na, me tu caran havîneke mîna vê derbas nekir!",
-                      "Erê, ez havîn im.",
+                      "Erê, her sal.",
                       "Na, havîn mîna min e."
                     ],
                     "correctIndex": 0
@@ -4329,35 +4329,17 @@
                   "position": 3,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Min hemû serpêhatî vegotin, û min wêne kişandin.",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Min hemû serpêhatî vegotin, û min wêne kişandin.",
+                    "prompt": "What happened? I’ll write it in my notebook.",
                     "accepted": [
-                      "I told all the adventures, and I took photos.",
-                      "I told every adventure, and I took pictures.",
-                      "I told all the adventures and took photos."
+                      "Çi qewimî? Ez ê di deftera xwe de binivîsim.",
+                      "Çi qewimî? Ez ê wê di deftera xwe de binivîsim."
                     ]
                   }
                 },
                 {
                   "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Tu çima nîgeran î?",
-                    "voice": "hamo",
-                    "prompt": "Tu çima nîgeran î?",
-                    "options": [
-                      "Sêva me dê zû bigihîje, û dibistan jî nêzîk e.",
-                      "Ez defter im.",
-                      "Tu nîgeran î."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4374,6 +4356,22 @@
                       "I’m writing the important things, and some unimportant ones too.",
                       "I’m forgetting the important things, and the small ones too.",
                       "I’m writing nothing important."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Tu çima nîgeran î?",
+                    "voice": "hamo",
+                    "prompt": "Tu çima nîgeran î?",
+                    "options": [
+                      "Sêva me dê zû bigihîje, û dibistan jî nêzîk e.",
+                      "Ji ber ku ez bextewar im.",
+                      "Tu nîgeran î."
                     ],
                     "correctIndex": 0
                   }
@@ -4418,33 +4416,21 @@
                 },
                 {
                   "position": 8,
-                  "type": "listening",
+                  "type": "translate",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "to-english",
+                    "say": "Min hemû serpêhatî vegotin, û min wêne kişandin.",
                     "voice": "hamo",
+                    "prompt": "Min hemû serpêhatî vegotin, û min wêne kişandin.",
                     "accepted": [
-                      "Hêviya min ev e: tu yê bimînî.",
-                      "Hêviya min ev e, tu yê bimînî."
+                      "I told all the adventures, and I took photos.",
+                      "I told every adventure, and I took pictures.",
+                      "I told all the adventures and took photos."
                     ]
                   }
                 },
                 {
                   "position": 9,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Par jî em bextewar bûn, lê me havîneke mîna vê derbas nekir.",
-                    "voice": "hamo",
-                    "prompt": "Par jî em bextewar bûn, lê me havîneke mîna vê derbas nekir.",
-                    "accepted": [
-                      "Last year we were happy too, but we didn’t spend a summer like this.",
-                      "We were happy last year too, but we didn’t have a summer like this one.",
-                      "Last year we were happy too, but we did not spend such a summer."
-                    ]
-                  }
-                },
-                {
-                  "position": 10,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu10s4l3a",
@@ -4524,19 +4510,30 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "multiple_choice",
+                  "position": 10,
+                  "type": "translate",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Te li zozanan çi dît?",
+                    "ask": "to-english",
+                    "say": "Par jî em bextewar bûn, lê me havîneke mîna vê derbas nekir.",
                     "voice": "hamo",
-                    "prompt": "Te li zozanan çi dît?",
-                    "options": [
-                      "Min askeke kûvî dît, û şopên wê.",
-                      "Ez askeke kûvî dîtim.",
-                      "Min askeke kûvî dibînim."
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Par jî em bextewar bûn, lê me havîneke mîna vê derbas nekir.",
+                    "accepted": [
+                      "Last year we were happy too, but we didn’t spend a summer like this.",
+                      "We were happy last year too, but we didn’t have a summer like this one.",
+                      "Last year we were happy too, but we did not spend such a summer."
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Hêviya min ev e: tu yê bimînî.",
+                      "Hêviya min ev e, tu yê bimînî."
+                    ]
                   }
                 },
                 {
@@ -4579,15 +4576,18 @@
                 },
                 {
                   "position": 15,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "reply",
+                    "say": "Te li zozanan çi dît?",
                     "voice": "hamo",
-                    "prompt": "What happened? I’ll write it in my notebook.",
-                    "accepted": [
-                      "Çi qewimî? Ez ê di deftera xwe de binivîsim.",
-                      "Çi qewimî? Ez ê wê di deftera xwe de binivîsim."
-                    ]
+                    "prompt": "Te li zozanan çi dît?",
+                    "options": [
+                      "Min askeke kûvî dît, û şopên wê.",
+                      "Ez askeke kûvî dîtim.",
+                      "Min askeke kûvî dibînim."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
