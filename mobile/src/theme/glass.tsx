@@ -14,6 +14,7 @@ import { springTo, usePressScale } from './animate';
 import { pressedDim } from './motion';
 import { MenuIn, heldRow, heldDim } from './MotionParts';
 import { EmptyState } from './EmptyState';
+import { tileTone } from './tileTones';
 
 /** Full-bleed spatial gradient backdrop for a screen. */
 export function GradientBackground({ children, style }: { children?: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
@@ -211,8 +212,10 @@ export function ClayButton({
       ? colors.textOnPrimary
       : colors.textPrimary;
   // the outline variant has no fill, so its rim is the whole button; a filled
-  // one already has a shape and a rim round it is just a rim
-  const edge = outline ? (toneColor ?? colors.glassBorder) : 'transparent';
+  // one already has a shape and a rim round it is just a rim. A neutral one's
+  // rim is a lesson tile's quiet edge, a step off the surface in both themes:
+  // the glass hairline it had was white, and by day left the button no shape.
+  const edge = outline ? (toneColor ?? tileTone(colors, 'idle').edge) : 'transparent';
   const off = busy || disabled;
   // gives a little under the finger and springs back (animate.ts); still under Reduce Motion, where it fades instead
   const press = usePressScale(!off);
