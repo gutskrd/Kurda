@@ -1,519 +1,669 @@
 /**
- * The Hevalo book laid out as a PDF: A5 pages on warm paper, headings in
- * Fraunces and reading text in Literata (both under the SIL Open Font
- * Licence, shipped by their packages), and the app's own drawings — the
- * characters, and each chapter's landmark on its ground — drawn as vectors,
- * so they print sharp at any size.
+ * The Hevalo book laid out as a PDF: an illustrated coursebook of the
+ * Kurmanji Road, A5 on warm paper, made on request from the course's own
+ * files (road-book.ts gathers them; this file sets the book in order).
  *
- * The order: a cover; a letter from Hamo; the alphabet with a word and an
- * English sound for each letter; the people of the road; then each chapter —
- * an opening page with its landmark and what it teaches, a page or two for
- * each part (words, the grammar, a conversation with Hamo, sentences to read
- * aloud), Hamo's story with its English under each paragraph and its
- * questions, and practice — and at the back the word list and the answers.
+ * The order: a cover; a letter from Hamo and how to read the book; the
+ * contents; the passport of the road, with a stamp to cancel for each
+ * chapter; the alphabet in pictures; the people of the road; then each
+ * chapter (chapter.ts) — an opening page under its landmark, its four parts
+ * lesson by lesson, the story Hamo tells, practice for a pencil, and its
+ * stamp — and at the back the answers and the word list.
+ *
+ * Each chapter wears one of the app's hues (pictures.ts), and an apple sits
+ * in the corner of every one of its pages, a bite smaller every few pages:
+ * the deer who is never hungry, he says, has been at it again.
+ *
+ * Pages are broken by rule (flow.ts): everything is measured first, so a
+ * heading never ends a page and a list never leaves one line behind; and
+ * since the whole book is measured before a page is drawn, the contents and
+ * every chapter's opening page can say where things are.
  */
-import { createRequire } from 'node:module';
-import PDFDocument from 'pdfkit';
-import SVGtoPDF from 'svg-to-pdfkit';
-import { LATIN_LETTERS, ALPHABET_MEANINGS, characterSvg, likeFor, pathGroundColour, pathLandmarkSvg, type CharacterId } from '@kurda/shared';
-import { roadBookWordList, type BookChapter } from './road-book.js';
-
-const require = createRequire(import.meta.url);
-const font = (pkg: string, file: string): string => require.resolve(`@expo-google-fonts/${pkg}/${file}`);
-const FONTS = {
-  display: font('fraunces', '600SemiBold/Fraunces_600SemiBold.ttf'),
-  displayLight: font('fraunces', '400Regular_Italic/Fraunces_400Regular_Italic.ttf'),
-  body: font('literata', '400Regular/Literata_400Regular.ttf'),
-  italic: font('literata', '400Regular_Italic/Literata_400Regular_Italic.ttf'),
-  bold: font('literata', '700Bold/Literata_700Bold.ttf'),
-} as const;
-
-/** A5, in points. */
-const W = 419.53;
-const H = 595.28;
-const M = { left: 46, right: 46, top: 50, bottom: 58 } as const;
-const TEXT_W = W - M.left - M.right;
-
-const PAPER = '#FBF6EC';
-const INK = '#2B241F';
-const MUTED = '#7B6F64';
-const RULE = '#E4D9C6';
-const ACCENT = '#A2512E';
-
-/** A colour made darker by `k` (0–1), for text on a chapter's own ground. */
-function deepen(hex: string, k: number): string {
-  const v = parseInt(hex.slice(1), 16);
-  const c = (s: number): string => Math.round(((v >> s) & 255) * (1 - k)).toString(16).padStart(2, '0');
-  return `#${c(16)}${c(8)}${c(0)}`;
-}
-
-/** A sound hint with its marked letters, "f[a]ther", as plain text with the sound in capitals: "fAther" reads badly, so the marks are dropped. */
-function soundHint(letter: string): string {
-  const like = likeFor(letter, 'en');
-  return like ? `${like.before}${like.sound ?? ''}${like.after}` : '';
-}
+import { HUES, bookAppleSvg, bookPostmarkSvg, letterBirdSvg, likeFor, pathLandmarkSvg, stampBox, stampShapeFor, stampSvg, BOOK_APPLE_BITES, type BookPose, type CharacterId } from '@kurda/shared';
+import { chapterSheets } from './chapter.js';
+import { keepList, paginate } from './flow.js';
+import { STAMP, T, VIOLET, castArt, display, displayItalic, drawPicture, drawStamp, furnish, heavy, hueOf, label, runSheets, squareArt, type Block, type Places, type Sheet } from './page.js';
+import { chapterHue, pictureForName, pictureForWord, type BookPicture } from './pictures.js';
+import { chapterWords, roadBookAlphabet, roadBookWordList, type BookChapter, type BookName, type BookWord } from './road-book.js';
+import { INK, PAGE, Press, TEXT, type Span, type Type } from './sheet.js';
 
 export interface RoadBookOptions {
   chapters: readonly BookChapter[];
-  /** who the people of the road are, in the plan's words */
+  /** who the three friends are, in the plan's words */
   characters: Readonly<Record<string, string>>;
-  /** the address printed on the cover and the colophon */
+  /** everyone else the chapters speak of, in the plan's words (`roadBookCast`) */
+  people?: readonly BookName[];
+  /** the address printed on the cover and the last page */
   site?: string;
 }
 
-type Doc = InstanceType<typeof PDFDocument>;
+/** A line of the plan's that this book teaches, with its meaning, or null when these chapters do not have it. */
+function taught(chapters: readonly BookChapter[], ku: string): BookWord | null {
+  for (const c of chapters) for (const w of chapterWords(c)) if (w.ku === ku) return w;
+  return null;
+}
 
-class Book {
-  readonly doc: Doc;
-  /** what each page's footer says, by page */
-  private readonly footers: Array<string | null> = [];
-  /** the next page's paper and footer: a page the text flows onto keeps the last page's */
-  private next: { footer: string | null; paper: string } = { footer: null, paper: PAPER };
+// ───────────────────────────────────────────────────────────── the cover
 
-  constructor(title: string) {
-    this.doc = new PDFDocument({ size: 'A5', autoFirstPage: false, bufferPages: true, margins: { ...M }, info: { Title: title, Author: 'Hevalo', Subject: 'Learning Kurmancî' } });
-    this.doc.registerFont('display', FONTS.display);
-    this.doc.registerFont('displayItalic', FONTS.displayLight);
-    this.doc.registerFont('body', FONTS.body);
-    this.doc.registerFont('italic', FONTS.italic);
-    this.doc.registerFont('bold', FONTS.bold);
-    // the drawings' dotted lines are dashes of no length with round caps, which the PDF writer refuses: a hair of length draws the same dot
-    const dash = this.doc.dash.bind(this.doc);
-    const hair = (v: number): number => (v > 0 ? v : 0.01);
-    this.doc.dash = ((length: number | number[], options?: { space?: number; phase?: number }) =>
-      dash((Array.isArray(length) ? length.map(hair) : hair(length)) as number, options)) as typeof this.doc.dash;
-    // every page, the ones the book asks for and the ones a long text flows onto, on paper and with its footer
-    this.doc.on('pageAdded', () => {
-      const { x, y } = this.doc;
-      this.doc.save().rect(0, 0, W, H).fill(this.next.paper).restore();
-      this.doc.x = x;
-      this.doc.y = y;
-      this.footers.push(this.next.footer);
-      this.next = { footer: this.next.footer, paper: PAPER };
-    });
-  }
+function coverSheet(press: Press, chapters: readonly BookChapter[], site: string): Sheet {
+  return {
+    furniture: null,
+    draw: (): void => {
+      const doc = press.doc;
+      // the hill the three of them stand on, in the app's own violet
+      doc.save().ellipse(PAGE.w / 2 + 30, PAGE.h + 150, 420, 340).fill(VIOLET.wash).restore();
+      doc.save().ellipse(PAGE.w / 2 - 60, PAGE.h + 196, 400, 330).fill(VIOLET.tint).restore();
+      press.line('HEVALO’S BOOK', TEXT.x, 46, label(VIOLET.deep, 7.4));
+      const title = heavy(41, INK.ink);
+      press.line('Rêya', TEXT.x, 62, title);
+      press.line('Kurmancî', TEXT.x, 62 + 43, title);
+      press.line('The Kurmanji Road', TEXT.x, 158, displayItalic(15.5, VIOLET.deep));
+      const about = press.para('Every lesson of the road with Hamo, Xezal and Hevalo, in words and pictures.', 168, { ...T.body, color: INK.soft });
+      press.set(about.lines, TEXT.x, 185, { ...T.body, color: INK.soft });
 
-  page(footer: string | null, paper = PAPER): void {
-    this.next = { footer, paper };
-    this.doc.addPage();
-    this.doc.x = M.left;
-    this.doc.y = M.top;
-  }
+      // the stamp a letter from Sêvan would carry, a little askew, its postmark, and the bird that brought it
+      const first = chapters[0]?.number ?? 1;
+      const k = 1.02;
+      const [sx, sy] = [274, 50];
+      doc.save();
+      doc.rotate(6, { origin: [sx + 50 * k, sy + 63 * k] });
+      // on paper a stamp's light is a faint halo: the shelf's glow, made for a screen, prints as a heavy coloured blur
+      const box = stampBox(STAMP.w, STAMP.h, 0.4);
+      const paper = press.art('stamp|cover', box.width, box.height, () => stampSvg({ width: STAMP.w, height: STAMP.h, paper: VIOLET.tint, glow: VIOLET.base, strength: 0.4, edge: VIOLET.base, ...stampShapeFor(STAMP.w) }));
+      press.place(paper, sx - box.inset * k, sy - box.inset * k, box.width * k);
+      press.place(castArt(press, 'hevalo', 'caught'), sx + 11 * k, sy + 13 * k, 78 * k);
+      press.line('SÊVAN', sx, sy + 101 * k, label(VIOLET.deep, 8.4), 'center', STAMP.w * k);
+      doc.restore();
+      press.place(squareArt(press, `postmark|${chapterHue(first)}`, () => bookPostmarkSvg({ ink: HUES.light[chapterHue(first)].deep })), 226, 24, 88, { turn: -12 });
+      press.place(squareArt(press, 'bird|letter', () => letterBirdSvg({ bird: 2, pose: 'wings-up', letter: true })), 196, 196, 68);
 
-  /** Room for `h` more points on this page, or a new page with the same footer. */
-  room(h: number): void {
-    if (this.doc.y + h > H - M.bottom) this.page(this.next.footer);
-  }
+      // the three friends at the blue gate
+      const ground = 502;
+      press.place(squareArt(press, 'landmark|gate|orchard', () => pathLandmarkSvg({ landmark: 'gate', ground: 'orchard' })), 150, ground - 232, 262);
+      const stand = (who: CharacterId, pose: string, x: number, h: number, forward = 0): void => {
+        const art = castArt(press, who, pose, 'full');
+        press.place(art, x, ground + forward - h, (h * art.w) / art.h);
+      };
+      stand('xezo', 'smiling', 34, 176);
+      stand('hamo', 'proud', 108, 212);
+      // the deer a step nearer than the gate, so its tree is behind his antlers and not round his shoulders
+      stand('hevalo', 'caught', 352, 142, 20);
 
-  svg(svg: string, x: number, y: number, w: number, h: number): void {
-    SVGtoPDF(this.doc, svg, x, y, { width: w, height: h, preserveAspectRatio: 'xMidYMid meet' });
-  }
+      const span = chapters.length === 0 ? '' : chapters.length === 1 ? `Chapter ${chapters[0]!.number} · ${chapters[0]!.titleKu}` : `Chapters ${chapters[0]!.number} to ${chapters.at(-1)!.number}`;
+      const pill = display(10.5, VIOLET.deep);
+      const w = press.measure(span, pill.font, pill.size) + 28;
+      press.box((PAGE.w - w) / 2, 526, w, 22, 11, INK.card);
+      press.line(span, (PAGE.w - w) / 2, 526 + 11 - pill.lead / 2, pill, 'center', w);
+      press.line(site, TEXT.x, 557, { ...T.tiny, color: VIOLET.deep }, 'center', TEXT.w);
+    },
+  };
+}
 
-  heading(text: string, size = 17, color = INK): void {
-    this.room(size * 2.4);
-    this.doc.font('display').fontSize(size).fillColor(color).text(text, M.left, this.doc.y, { width: TEXT_W });
-    this.doc.moveDown(0.35);
-  }
+// ───────────────────────────────────────────────────────────── a letter from Hamo
 
-  /** A small heading, never left alone at the foot of a page: it keeps room for what it heads. */
-  label(text: string, color = ACCENT, keep = 72): void {
-    this.room(keep);
-    this.doc.font('bold').fontSize(7.5).fillColor(color).text(text.toUpperCase(), M.left, this.doc.y, { width: TEXT_W, characterSpacing: 1.2 });
-    this.doc.moveDown(0.3);
-  }
+const HOW: ReadonlyArray<readonly [BookPicture | 'bubble' | 'words' | 'pairs', string]> = [
+  [{ kind: 'cast', who: 'hevalo', pose: 'curious' }, 'Every lesson opens with its little scene. Read it first: it tells you where you are and who is up to what.'],
+  ['bubble', 'The line in the speech bubble is Hamo’s. Say it out loud, as he says it in the app, until it comes out by itself.'],
+  ['words', 'New words come with a picture where there is one. A small m or f marks a masculine or a feminine noun: Kurdish cares.'],
+  ['pairs', 'Kurdish stands on the left and English on the right, everywhere. Cover the right side with your hand and see how far you get.'],
+  [{ kind: 'word', id: 'pen' }, 'Each chapter ends with a story, practice for a pencil, and a stamp for your passport. The answers wait at the back.'],
+];
 
-  /** A little Markdown: paragraphs, "- " lists, **bold** and *italic*. */
-  md(text: string, size = 10, color = INK): void {
-    for (const block of text.split(/\n\s*\n/)) {
-      const lines = block.split('\n');
-      const bullets = lines.every((l) => /^\s*[-•]\s+/.test(l));
-      if (bullets) {
-        for (const l of lines) this.runs(l.replace(/^\s*[-•]\s+/, ''), size, color, 12);
-      } else {
-        this.runs(lines.join(' '), size, color, 0);
+function letterSheet(press: Press, chapters: readonly BookChapter[]): Sheet {
+  const hello = taught(chapters, 'silav');
+  const welcome = taught(chapters, 'Bi xêr hatî!');
+  return {
+    furniture: { chapter: null, section: 'A letter from Hamo', bites: null, plain: true },
+    draw: (): void => {
+      let y = TEXT.top + 6;
+      press.disc(TEXT.x + TEXT.w - 44, y + 44, 44, VIOLET.wash);
+      press.within(TEXT.x + TEXT.w - 88, y, 88, 88, 44, () => press.place(castArt(press, 'hamo', 'proud'), TEXT.x + TEXT.w - 85, y + 8, 84));
+      press.line(hello ? 'Silav!' : 'Hello!', TEXT.x, y + 14, heavy(31, INK.ink));
+      if (welcome) {
+        const w = press.line(welcome.ku, TEXT.x, y + 53, displayItalic(13.5, VIOLET.deep));
+        press.line('Welcome!', TEXT.x + w + 8, y + 57, T.english);
       }
-      this.doc.moveDown(0.35);
-    }
-  }
+      y += 106;
+      const paragraphs: Span[][] = [
+        [
+          { text: 'I am ' },
+          { text: 'Hamo', font: 'semi' },
+          { text: ', from Kobanî, at home for thirty years now in Sêvan, a village of apple orchards under the mountains. Every line of this road is mine: in the app you hear me say it, and here you can read it at your own pace, with a pencil, in the shade of a tree if you have one.' },
+        ],
+        [{ text: 'Read everything aloud, even when you are alone. Kurdish lives in the mouth, not only on the page. And when a word will not stay in your head, go back to the app, listen, and say it after me. What you still remember on the second day is yours.' }],
+        [
+          { text: 'One more thing. If you meet a young deer with round cheeks near the apple trees, that is ' },
+          { text: 'Hevalo', font: 'semi' },
+          { text: ', your guide. He will tell you he is not hungry. Watch the apple in the corner of the page as you go through a chapter, and judge for yourself.' },
+        ],
+      ];
+      const letter: Type = { ...T.body, size: 9, lead: 12.8 };
+      for (const p of paragraphs) {
+        const para = press.para(p, TEXT.w, letter);
+        press.set(para.lines, TEXT.x, y, letter);
+        y += para.height + 8;
+      }
+      press.line('Hamo', TEXT.x, y + 2, displayItalic(18, VIOLET.deep), 'right', TEXT.w - 6);
+      y += 46;
 
-  private runs(text: string, size: number, color: string, indent: number): void {
-    const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/).filter((p) => p !== '');
-    this.room(size * 2);
-    const x = M.left + indent;
-    if (indent > 0) this.doc.font('body').fontSize(size).fillColor(ACCENT).text('•', M.left + 2, this.doc.y, { continued: false, lineBreak: false });
-    const y = this.doc.y;
-    parts.forEach((p, i) => {
-      const bold = p.startsWith('**');
-      const italic = !bold && p.startsWith('*');
-      const plain = bold ? p.slice(2, -2) : italic ? p.slice(1, -1) : p;
-      const options = { width: TEXT_W - indent, continued: i < parts.length - 1, lineGap: 1.6 };
-      this.doc.font(bold ? 'bold' : italic ? 'italic' : 'body').fontSize(size).fillColor(color);
-      // only the first run is placed; the rest follow on from it (a run given an empty place would lose its options)
-      if (i === 0) this.doc.text(plain, x, y, options);
-      else this.doc.text(plain, options);
-    });
-  }
-
-  rule(): void {
-    this.room(14);
-    const y = this.doc.y + 4;
-    this.doc.save().moveTo(M.left, y).lineTo(W - M.right, y).lineWidth(0.6).strokeColor(RULE).stroke().restore();
-    this.doc.y = y + 8;
-  }
-
-  /** Every page's footer: the running title on the left and the page number on the right, from the second page on. */
-  finish(): Buffer[] {
-    const range = this.doc.bufferedPageRange();
-    for (let i = range.start; i < range.start + range.count; i++) {
-      const label = this.footers[i - range.start];
-      if (label === null || label === undefined) continue;
-      this.doc.switchToPage(i);
-      // in the bottom margin, where text would otherwise start a new page: this page's own margins, never the shared ones
-      this.doc.page.margins = { ...this.doc.page.margins, bottom: 0 };
-      const y = H - M.bottom + 26;
-      this.doc.font('italic').fontSize(7.5).fillColor(MUTED);
-      this.doc.text(label, M.left, y, { width: TEXT_W / 2, lineBreak: false });
-      this.doc.text(String(i + 1), M.left + TEXT_W / 2, y, { width: TEXT_W / 2, align: 'right', lineBreak: false });
-    }
-    return [];
-  }
+      press.line('HOW TO READ THIS BOOK', TEXT.x, y, label(VIOLET.deep));
+      press.rule(TEXT.x, y + 12.5, TEXT.w, VIOLET.wash, 0.9);
+      y += 22;
+      for (const [icon, text] of HOW) {
+        const para = press.para(text, TEXT.w - 44, T.note);
+        const h = Math.max(28, para.height);
+        const [ix, iy] = [TEXT.x + 2, y + (h - 28) / 2];
+        if (icon === 'bubble') {
+          press.bubble(ix + 2, iy + 5, 26, 16, VIOLET.wash, { side: 'left', at: 9 });
+          press.rule(ix + 8, iy + 11, 14, VIOLET.deep, 1.1);
+          press.rule(ix + 8, iy + 15.5, 9, VIOLET.deep, 1.1);
+        } else if (icon === 'words') {
+          press.box(ix, iy + 3, 28, 22, 6, VIOLET.wash);
+          press.line('m', ix + 4.5, iy + 8.5, { font: 'bold', size: 8, color: VIOLET.deep, lead: 11 });
+          press.line('f', ix + 18, iy + 8.5, { font: 'bold', size: 8, color: VIOLET.deep, lead: 11 });
+        } else if (icon === 'pairs') {
+          press.box(ix, iy + 4, 13, 20, 3, INK.ink);
+          press.box(ix + 15, iy + 4, 13, 20, 3, VIOLET.wash);
+        } else drawPicture(press, icon, ix, iy, 28, VIOLET);
+        press.set(para.lines, TEXT.x + 42, y + (h - para.height) / 2, T.note);
+        y += h + 8;
+      }
+    },
+  };
 }
 
-function cover(book: Book, chapters: readonly BookChapter[], site: string): void {
-  const { doc } = book;
-  book.page(null, '#F4EBDA');
-  const first = chapters[0]?.land ?? { landmark: 'gate' as const, ground: 'orchard' as const, host: 'hamo' as const };
-  const ground = pathGroundColour(first.ground);
-  // the ground the three of them stand on, under the village gate
-  doc.save().ellipse(W / 2, 410, 190, 46).fill(ground).restore();
-  book.svg(pathLandmarkSvg({ landmark: first.landmark, size: 240 }), W / 2 - 120, 170, 240, 240);
-  const stand = (id: CharacterId, x: number, h: number): void => book.svg(characterSvg(id, { crop: 'full' }), x, 430 - h, h * 0.62, h);
-  stand('xezo', 52, 200);
-  stand('hamo', 150, 236);
-  stand('hevalo', 268, 170);
-  doc.font('display').fontSize(36).fillColor(INK).text('Rêya Kurmancî', M.left, 64, { width: TEXT_W, align: 'center' });
-  doc.font('displayItalic').fontSize(14).fillColor(ACCENT).text('Pirtûka Hevalo · The Kurmanji Road', M.left, 110, { width: TEXT_W, align: 'center' });
-  const span = chapters.length === 0 ? '' : chapters.length === 1 ? `Chapter ${chapters[0]!.number}` : `Chapters ${chapters[0]!.number}–${chapters.at(-1)!.number}`;
-  doc.font('body').fontSize(10).fillColor(MUTED).text(span, M.left, 470, { width: TEXT_W, align: 'center' });
-  doc.font('italic').fontSize(9).fillColor(MUTED).text(`Learn Kurmancî with Hamo, Xezal and Hevalo · ${site}`, M.left, 520, { width: TEXT_W, align: 'center' });
+// ───────────────────────────────────────────────────────────── the contents
+
+function contentsSheet(press: Press, chapters: readonly BookChapter[], places: Places): Sheet {
+  return {
+    furniture: { chapter: null, section: 'Contents', bites: null, plain: true },
+    draw: (): void => {
+      let y = TEXT.top + 2;
+      press.line('What is in the book', TEXT.x, y, display(22));
+      y += 38;
+      const number = display(9, INK.ink);
+      const entry = (text: string, x: number, at: number, page: number | undefined, after = 0): void => {
+        const w = after > 0 ? after : press.line(text, x, at, { ...T.body, font: 'semi' });
+        const pw = page === undefined ? 0 : press.measure(String(page), number.font, number.size);
+        if (page !== undefined) press.line(String(page), TEXT.x, at + 1, number, 'right', TEXT.w);
+        press.dots(x + w + 6, at + 9.6, TEXT.x + TEXT.w - pw - 6 - (x + w + 6), INK.line);
+      };
+      for (const [name, key] of [['The passport of the road', 'passport'], ['The alphabet', 'alphabet'], ['The people of the road', 'people']] as const) {
+        entry(name, TEXT.x, y, places.get(key));
+        y += 15.5;
+      }
+      y += 8;
+      // with few chapters there is room to name each one's parts under it at leisure
+      const roomy = chapters.length <= 8;
+      for (const c of chapters) {
+        const hue = hueOf(c);
+        press.disc(TEXT.x + 8, y + 8, 8, hue.wash);
+        press.line(String(c.number), TEXT.x, y + 2.6, { font: 'bold', size: 8, color: hue.deep, lead: 10.8 }, 'center', 16);
+        const w = press.line(c.titleKu, TEXT.x + 24, y + 1, display(11.2, INK.ink));
+        const ew = press.line(c.titleEn, TEXT.x + 24 + w + 7, y + 3.4, { ...T.english, size: 8.2 });
+        entry('', TEXT.x + 24, y + 2, places.get(`${c.number}:opener`), w + 7 + ew);
+        y += 16.5;
+        const para = press.para(c.parts.map((p) => p.titleKu).join('  ·  '), TEXT.w - 24, T.tiny, roomy ? 2 : 1);
+        press.set(para.lines, TEXT.x + 24, y, T.tiny);
+        y += para.height + (roomy ? 10 : 4.6);
+      }
+      y += 6;
+      for (const [name, key] of [['Answers', 'answers'], ['The word list', 'words']] as const) {
+        entry(name, TEXT.x, y, places.get(key));
+        y += 15.5;
+      }
+    },
+  };
 }
 
-function letter(book: Book): void {
-  const { doc } = book;
-  book.page('Rêya Kurmancî');
-  book.svg(characterSvg('hamo', { crop: 'bust', mouth: 'grin' }), W - M.right - 92, M.top - 6, 92, 92);
-  doc.font('display').fontSize(22).fillColor(INK).text('Silav, hevalê min!', M.left, M.top + 20, { width: TEXT_W - 100 });
-  doc.moveDown(1.6);
-  book.md(
+// ───────────────────────────────────────────────────────────── the passport
+
+function passportSheet(press: Press, chapters: readonly BookChapter[], places: Places): Sheet {
+  const have = new Map(chapters.map((c) => [c.number, c]));
+  return {
+    furniture: { chapter: null, section: 'The passport of the road', bites: null, plain: true },
+    draw: (): void => {
+      let y = TEXT.top + 2;
+      press.place(squareArt(press, 'bird|hello', () => letterBirdSvg({ bird: 2, pose: 'hello' })), TEXT.x + TEXT.w - 52, y - 10, 56);
+      press.line('The passport of the road', TEXT.x, y, display(22));
+      y += 33;
+      const intro = press.para(
+        'Letters in Sêvan travel by bird, and every chapter of the road has a stamp of its own. Finish a chapter, then come back here and cancel its stamp: draw the postmark in the ring and write the date under it. Colour it in, if you like. Twelve stamps, and the road is yours.',
+        TEXT.w - 62,
+        T.body,
+      );
+      press.set(intro.lines, TEXT.x, y, T.body);
+      y += intro.height + 16;
+      const cols = 4;
+      const w = 72;
+      const h = (w * STAMP.h) / STAMP.w;
+      const cell = TEXT.w / cols;
+      const rowH = (TEXT.top + TEXT.room - y - 4) / 3;
+      for (let n = 1; n <= 12; n++) {
+        const [col, row] = [(n - 1) % cols, Math.floor((n - 1) / cols)];
+        const x = TEXT.x + col * cell + (cell - w) / 2;
+        const top = y + row * rowH;
+        const chapter = have.get(n);
+        drawStamp(press, x, top, w, chapter ?? n);
+        const hue = HUES.light[chapterHue(n)];
+        // the ring the reader's own postmark goes in, over the stamp's corner; under the stamp where the chapter is, and a line for the date
+        press.ring(x + w - 5, top + 7, 11.5, chapter ? hue.deep : '#b9ad96', 0.8, 1.6);
+        const page = chapter ? places.get(`${n}:opener`) : undefined;
+        press.line(chapter ? (page === undefined ? '' : `page ${page}`) : 'further up the road', x - 10, top + h + 5, { ...T.tiny, color: chapter ? hue.deep : INK.soft }, 'center', w + 20);
+        press.dots(x + 4, top + h + 26, w - 8, chapter ? hue.base : INK.line);
+      }
+    },
+  };
+}
+
+// ───────────────────────────────────────────────────────────── the alphabet
+
+function alphabetSheets(press: Press, chapters: readonly BookChapter[]): Sheet[] {
+  // a letter is best shown by a thing that can be drawn: a word with a picture of its own before a number or a colour
+  const drawn = roadBookAlphabet(chapters, (w) => pictureForWord(w)?.kind === 'word');
+  const any = roadBookAlphabet(chapters, (w) => pictureForWord(w) !== null);
+  const letters = drawn.map((l, i) => (l.word && pictureForWord(l.word) ? l : any[i]!));
+  const intro = press.para(
     [
-      'I am **Hamo**, from Sêvan, a village of apple orchards under the mountains. You will hear my voice all along this road: every word in the lessons is me, saying it the way we say it at home.',
-      'This book walks the road with you. Each chapter has its **words**, the **grammar** in a few lines, a **conversation** we have together, sentences to **read aloud**, and a **story** I tell at the end of it. Read everything aloud, even when you are alone: Kurdish lives in the mouth, not only on the page.',
-      'Do the practice with a pencil and check yourself at the back of the book. When something will not stay in your head, go back to the app, listen to me say it, and say it after me. Then come back here tomorrow and try again: what you remember on the second day is yours.',
-      'And if you see a young deer with round cheeks near the apple trees, that is **Hevalo**. Do not believe him when he says he is not hungry.',
-      '*Bi xêr hatî* — welcome.',
-    ].join('\n\n'),
-    10.5,
+      { text: 'Kurmancî is written as it is said: each letter has one sound, always. The letters with a hat are long, ' },
+      { text: 'ê î û', font: 'semi' },
+      { text: '; ' },
+      { text: 'ç', font: 'semi' },
+      { text: ' and ' },
+      { text: 'ş', font: 'semi' },
+      { text: ' are English ch and sh; ' },
+      { text: 'x', font: 'semi' },
+      { text: ' is the ch of Scottish loch, and ' },
+      { text: 'q', font: 'semi' },
+      { text: ' is a k made deep in the throat. Each letter is shown in a word of this book.' },
+    ],
+    TEXT.w,
+    T.body,
   );
-  doc.moveDown(0.6);
-  doc.font('displayItalic').fontSize(16).fillColor(ACCENT).text('— Hamo', { width: TEXT_W, align: 'right' });
-}
-
-function alphabet(book: Book): void {
-  const { doc } = book;
-  book.page('Rêya Kurmancî · Alfabe');
-  book.label('Alfabe · The alphabet');
-  book.heading('Thirty-one letters, one sound each', 17);
-  book.md('Kurmancî is written as it is said: each letter has one sound. The ones with a hat are long, **ê î û**; **ç ş** are *ch* and *sh*; **x** is the *ch* of Scottish *loch*; **q** is a *k* made deep in the throat. Here is each letter with a word Hamo uses every day.', 9.5);
-  doc.moveDown(0.4);
   const cols = 3;
-  const cellW = TEXT_W / cols;
-  const cellH = 46;
-  let y = doc.y;
-  LATIN_LETTERS.forEach((l, i) => {
-    const col = i % cols;
-    if (col === 0 && i > 0) y += cellH;
-    if (y + cellH > H - M.bottom) {
-      book.page('Rêya Kurmancî · Alfabe');
-      y = M.top;
+  const rows = [5, 6];
+  const head = 35 + intro.height + 14;
+  // the cells are as tall as lets the two pages hold them all: five rows under the introduction, six on the page after
+  const cell = { w: TEXT.w / cols, h: Math.min(86, (TEXT.room - head) / rows[0]!, TEXT.room / rows[1]!) };
+  const hintType: Type = { ...T.tiny, size: 7, lead: 8.9 };
+  const drawCell = (index: number, x: number, y: number): void => {
+    const l = letters[index]!;
+    const inner = cell.w - 18;
+    press.box(x + 2, y, cell.w - 4, cell.h - 6, 9, index % 2 === 0 ? VIOLET.tint : INK.card);
+    press.line(`${l.upper}${l.id}`, x + 9, y + 5, heavy(25, VIOLET.deep));
+    const like = likeFor(l.id, 'en');
+    if (like) {
+      // a sound English has no word for is described instead, and a description needs no "as in" before it
+      const plain = !like.sound || like.before.length > 8;
+      const said: Span[] = [{ text: plain ? like.before : `as in ${like.before}` }, ...(like.sound ? [{ text: like.sound, font: 'bold' as const, color: VIOLET.deep }, { text: like.after }] : [])];
+      const hint = press.para(said, inner, hintType, 3);
+      press.set(hint.lines, x + 9, y + 49.5, hintType);
     }
-    const x = M.left + col * cellW;
-    doc.font('display').fontSize(18).fillColor(ACCENT).text(`${l.upper}${l.id}`, x, y, { width: 40, lineBreak: false });
-    doc.font('bold').fontSize(9.5).fillColor(INK).text(l.word, x + 40, y + 2, { width: cellW - 44, lineBreak: false });
-    doc.font('italic').fontSize(8).fillColor(MUTED).text(ALPHABET_MEANINGS[l.meaning].en, x + 40, y + 14, { width: cellW - 44, lineBreak: false });
-    doc.font('body').fontSize(7).fillColor(MUTED).text(`as in ${soundHint(l.id)}`, x, y + 27, { width: cellW - 8, height: 18, ellipsis: true });
-  });
-  doc.y = y + cellH;
-}
-
-function people(book: Book, characters: Readonly<Record<string, string>>): void {
-  const { doc } = book;
-  book.page('Rêya Kurmancî · The people of the road');
-  book.label('The people of the road');
-  const who: Array<[CharacterId, string, string]> = [
-    ['hamo', 'Hamo', characters.hamo ?? ''],
-    ['xezo', 'Xezal', characters.xezo ?? ''],
-    ['hevalo', 'Hevalo', characters.hevalo ?? ''],
-  ];
-  for (const [id, name, about] of who) {
-    book.room(150);
-    const y = doc.y;
-    book.svg(characterSvg(id, { crop: 'bust' }), M.left, y, 84, 84);
-    doc.font('display').fontSize(16).fillColor(INK).text(name, M.left + 96, y + 4, { width: TEXT_W - 96 });
-    // the first three sentences: who they are, not the whole plan
-    const short = about.split(/(?<=\.)\s+/).slice(0, 3).join(' ');
-    doc.font('body').fontSize(9).fillColor(INK).text(short, M.left + 96, doc.y + 2, { width: TEXT_W - 96, lineGap: 1.4 });
-    doc.y = Math.max(doc.y, y + 92) + 12;
-  }
-}
-
-function opener(book: Book, c: BookChapter): void {
-  const { doc } = book;
-  const ground = pathGroundColour(c.land.ground);
-  book.page(`Beş ${c.number} · ${c.titleKu}`);
-  // the chapter's land across the top of the page, its landmark standing on it
-  doc.save().rect(0, 0, W, 200).fill(ground).restore();
-  doc.save().rect(0, 192, W, 8).fill(deepen(ground, 0.12)).restore();
-  book.svg(pathLandmarkSvg({ landmark: c.land.landmark, size: 176 }), W / 2 - 88, 22, 176, 176);
-  book.svg(characterSvg(c.land.host === 'xezo' ? 'xezo' : 'hamo', { crop: 'full' }), W - M.right - 64, 84, 64, 116);
-  doc.y = 216;
-  book.label(`Beş ${c.number} · Chapter ${c.number} · ${c.cefr}`, deepen(ground, 0.45));
-  doc.font('display').fontSize(28).fillColor(INK).text(c.titleKu, M.left, doc.y, { width: TEXT_W });
-  doc.font('displayItalic').fontSize(13).fillColor(MUTED).text(c.titleEn, M.left, doc.y, { width: TEXT_W });
-  doc.moveDown(0.6);
-  book.md(c.summary, 9.2);
-  book.rule();
-  book.label('In this chapter');
-  for (const p of c.parts) {
-    book.room(20);
-    doc.font('bold').fontSize(10).fillColor(INK).text(`${p.position}. ${p.titleKu}`, M.left, doc.y, { continued: true, width: TEXT_W });
-    doc.font('italic').fontSize(10).fillColor(MUTED).text(`  ${p.titleEn}`, { width: TEXT_W });
-    doc.moveDown(0.15);
-  }
-}
-
-function part(book: Book, c: BookChapter, p: BookChapter['parts'][number]): void {
-  const { doc } = book;
-  const accent = deepen(pathGroundColour(c.land.ground), 0.45);
-  book.page(`Beş ${c.number} · ${c.titleKu}`);
-  book.label(`Beş ${c.number} · part ${p.position}`, accent);
-  doc.font('display').fontSize(20).fillColor(INK).text(p.titleKu, M.left, doc.y, { width: TEXT_W });
-  doc.font('displayItalic').fontSize(12).fillColor(MUTED).text(p.titleEn, { width: TEXT_W });
-  doc.moveDown(0.7);
-
-  if (p.words.length > 0) {
-    book.label('Peyv · Words', accent);
-    const half = TEXT_W / 2;
-    let y = doc.y;
-    p.words.forEach((w, i) => {
-      const col = i % 2;
-      if (col === 0 && i > 0) y += 26;
-      if (y + 26 > H - M.bottom) {
-        book.page(`Beş ${c.number} · ${c.titleKu}`);
-        y = M.top;
-      }
-      const x = M.left + col * half;
-      doc.font('bold').fontSize(9.6).fillColor(INK).text(w.ku, x, y, { width: half - 30, lineBreak: false, ellipsis: true });
-      if (w.gender) doc.font('italic').fontSize(7).fillColor(accent).text(w.gender, x + half - 24, y + 1.5, { width: 16, lineBreak: false });
-      doc.font('italic').fontSize(8).fillColor(MUTED).text(w.en, x, y + 11.5, { width: half - 10, height: 12, ellipsis: true });
+    if (!l.word) return;
+    const picture = pictureForWord(l.word);
+    if (picture) drawPicture(press, picture, x + cell.w - 47, y + 3, 36, VIOLET);
+    // the word with its letter marked in the app's violet, and what it means after it
+    let wx = x + 9;
+    const at = l.at;
+    for (const [text, color] of [[l.word.ku.slice(0, at), INK.ink], [l.word.ku.slice(at, at + l.id.length), INK.violet], [l.word.ku.slice(at + l.id.length), INK.ink]] as const) {
+      if (text !== '') wx += press.line(text, wx, y + 36, { ...T.word, color });
+    }
+    const gloss = press.wrap(l.word.en.replace(/\s*\(.*$/, ''), x + 9 + inner - wx - 5, T.gloss, 1);
+    press.set(gloss, wx + 5, y + 37.6, T.gloss);
+  };
+  const sheets: Sheet[] = [];
+  let from = 0;
+  rows.forEach((count, pageIndex) => {
+    const start = from;
+    const end = Math.min(letters.length, from + count * cols);
+    from = end;
+    sheets.push({
+      furniture: { chapter: null, section: 'The alphabet', bites: null, plain: pageIndex === 0 },
+      draw: (): void => {
+        let y = TEXT.top;
+        if (pageIndex === 0) {
+          press.line('Thirty-one letters, one sound each', TEXT.x, y + 2, display(22));
+          press.set(intro.lines, TEXT.x, y + 35, T.body);
+          y += head;
+        }
+        for (let i = start; i < end; i++) drawCell(i, TEXT.x + ((i - start) % cols) * cell.w, y + Math.floor((i - start) / cols) * cell.h);
+        const rest = end - start;
+        if (pageIndex === 1 && rest % cols !== 0) {
+          // the cells the alphabet leaves over are Hevalo's
+          const [x, top] = [TEXT.x + (rest % cols) * cell.w, y + Math.floor(rest / cols) * cell.h];
+          const free = (cols - (rest % cols)) * cell.w;
+          press.place(castArt(press, 'hevalo', 'curious'), x + free - 70, top + 2, 66);
+          const aside = press.para('Thirty-one letters, and not one of them is an apple. Hevalo has checked.', free - 84, T.caption);
+          press.set(aside.lines, x + 10, top + (cell.h - 6 - aside.height) / 2, T.caption);
+        }
+      },
     });
-    doc.y = y + 30;
-  }
-
-  if (p.grammarMd.trim() !== '') {
-    book.rule();
-    book.label('Rêziman · Grammar', accent);
-    book.md(p.grammarMd, 9.4);
-  }
-
-  if (p.dialogue) {
-    book.rule();
-    book.label(`Axaftin · Talk with Hamo${p.dialogue.title ? ` · ${p.dialogue.title}` : ''}`, accent);
-    for (const l of p.dialogue.lines) {
-      book.room(30);
-      const y = doc.y;
-      doc.font('bold').fontSize(8).fillColor(l.learner ? ACCENT : accent).text(l.who, M.left, y + 1, { width: 50, lineBreak: false });
-      doc.font('body').fontSize(9.8).fillColor(INK).text(l.text, M.left + 54, y, { width: TEXT_W - 54 });
-      if (l.en) doc.font('italic').fontSize(8).fillColor(MUTED).text(l.en, M.left + 54, doc.y, { width: TEXT_W - 54 });
-      doc.moveDown(0.3);
-    }
-  }
-
-  if (p.sentences.length > 0) {
-    book.rule();
-    book.label('Bi dengekî bilind bixwîne · Read aloud', accent);
-    for (const s of p.sentences) {
-      book.room(28);
-      doc.font('body').fontSize(9.8).fillColor(INK).text(s.ku, M.left, doc.y, { width: TEXT_W });
-      doc.font('italic').fontSize(8).fillColor(MUTED).text(s.en, { width: TEXT_W });
-      doc.moveDown(0.3);
-    }
-  }
-}
-
-function tale(book: Book, c: BookChapter): void {
-  if (!c.tale) return;
-  const { doc } = book;
-  const accent = deepen(pathGroundColour(c.land.ground), 0.45);
-  book.page(`Beş ${c.number} · ${c.titleKu}`);
-  book.svg(characterSvg('hamo', { crop: 'bust', mouth: 'grin' }), W - M.right - 70, M.top - 8, 70, 70);
-  book.label('Çîroka Hamo · Hamo’s story', accent);
-  doc.font('display').fontSize(22).fillColor(INK).text(c.tale.title, M.left, doc.y, { width: TEXT_W - 80 });
-  doc.moveDown(1);
-  c.tale.paragraphs.forEach((p, i) => {
-    book.room(60);
-    doc.font('body').fontSize(11).fillColor(INK).text(p, M.left, doc.y, { width: TEXT_W, lineGap: 2.2 });
-    const en = c.tale!.english[i];
-    if (en) doc.font('italic').fontSize(8.4).fillColor(MUTED).text(en, M.left, doc.y + 3, { width: TEXT_W, lineGap: 1.2 });
-    doc.moveDown(0.8);
   });
-  if (c.tale.glossary.length > 0) {
-    book.rule();
-    book.label('Ferheng · Glossary', accent);
-    for (const g of c.tale.glossary) {
-      book.room(16);
-      doc.font('bold').fontSize(9).fillColor(INK).text(g.term, M.left, doc.y, { continued: true });
-      doc.font('italic').fontSize(9).fillColor(MUTED).text(`  ${g.en}`);
-    }
-  }
-  if (c.tale.questions.length > 0) {
-    book.rule();
-    book.label('Pirs · Questions', accent);
-    c.tale.questions.forEach((q, i) => {
-      book.room(40);
-      doc.font('bold').fontSize(9.4).fillColor(INK).text(`${i + 1}. ${q.prompt}`, M.left, doc.y, { width: TEXT_W });
-      doc.font('body').fontSize(9).fillColor(INK).text(q.options.map((o, k) => `${'abcdef'[k]}) ${o}`).join('    '), M.left + 12, doc.y + 1, { width: TEXT_W - 12 });
-      doc.moveDown(0.45);
-    });
-  }
+  return sheets;
 }
 
-function practice(book: Book, c: BookChapter): void {
-  if (c.practice.length === 0) return;
-  const { doc } = book;
-  const accent = deepen(pathGroundColour(c.land.ground), 0.45);
-  book.page(`Beş ${c.number} · ${c.titleKu}`);
-  book.label(`Beş ${c.number} · Practice`, accent);
-  doc.font('display').fontSize(20).fillColor(INK).text('Bi pênûsê · With a pencil', M.left, doc.y, { width: TEXT_W });
-  doc.moveDown(0.6);
-  const groups: Array<[string, typeof c.practice]> = [
-    ['Write it in Kurdish', c.practice.filter((p) => p.direction === 'to-kurdish')],
-    ['Say what it means in English', c.practice.filter((p) => p.direction === 'to-english')],
+// ───────────────────────────────────────────────────────────── the people of the road
+
+/** The first `count` sentences of a text. */
+const opening = (text: string, count: number): string => text.split(/(?<=\.)\s+(?=\p{Lu})/u).slice(0, count).join(' ');
+
+function peopleSheets(press: Press, characters: Readonly<Record<string, string>>, people: readonly BookName[]): Sheet[] {
+  const named = new Set(people.map((p) => p.name));
+  const friends: Array<[CharacterId, string, string, BookPose]> = [
+    ['hamo', 'Hamo', characters.hamo ?? '', 'proud'],
+    ['hevalo', 'Hevalo', characters.hevalo ?? '', 'caught'],
+    ['xezo', 'Xezal', characters.xezo ?? '', 'smiling'],
   ];
-  let n = 0;
-  for (const [title, items] of groups) {
-    if (items.length === 0) continue;
-    book.label(title, accent);
-    for (const p of items) {
-      n += 1;
-      book.room(30);
-      const y = doc.y;
-      doc.font('bold').fontSize(9).fillColor(accent).text(`${n}.`, M.left, y, { width: 18, lineBreak: false });
-      doc.font(p.direction === 'to-kurdish' ? 'italic' : 'body').fontSize(9.8).fillColor(INK).text(p.ask, M.left + 20, y, { width: TEXT_W - 20 });
-      const line = doc.y + 9;
-      doc.save().moveTo(M.left + 20, line).lineTo(W - M.right, line).lineWidth(0.5).dash(1.5, { space: 2.5 }).strokeColor(RULE).stroke().undash().restore();
-      doc.y = line + 8;
+  // a book that has not met Xezal yet does not introduce her
+  const shown = friends.filter(([id, name]) => id !== 'xezo' || named.has(name) || people.length === 0);
+  const others = people.filter((p) => !friends.some(([, name]) => name === p.name));
+  const blocks: Block[] = [{ height: 30, gap: 0, keep: true, draw: (y) => void press.line('The people of the road', TEXT.x, y + 2, display(22)) }];
+  shown.forEach(([id, name, about, pose], i) => {
+    const text = press.para(opening(about, 3), TEXT.w - 94, T.body);
+    const height = Math.max(80, text.height + 24);
+    blocks.push({
+      height,
+      gap: 14,
+      draw: (y) => {
+        const x = i % 2 === 0 ? TEXT.x : TEXT.x + TEXT.w - 80;
+        press.disc(x + 40, y + 40, 40, VIOLET.wash);
+        press.within(x, y, 80, 80, 40, () => press.place(castArt(press, id, pose), x + 3, y + 8, 76));
+        const tx = i % 2 === 0 ? TEXT.x + 94 : TEXT.x;
+        press.line(name, tx, y, display(15));
+        press.set(text.lines, tx, y + 21, T.body);
+      },
+    });
+  });
+  if (others.length > 0) {
+    blocks.push({
+      height: 14,
+      gap: 20,
+      keep: true,
+      draw: (y) => {
+        const w = press.line('AND ALONG THE WAY', TEXT.x, y, label(VIOLET.deep));
+        press.rule(TEXT.x + w + 8, y + 5, TEXT.w - w - 8, VIOLET.wash, 0.9);
+      },
+    });
+    const cols = 2;
+    const cw = (TEXT.w - 14) / cols;
+    const about: Type = { ...T.gloss, size: 7.9, lead: 9.6 };
+    const cells = others.map((p) => {
+      const picture = pictureForName(p.name);
+      const text = press.para(p.en, cw - 50, about, 3);
+      return { p, picture, text, height: Math.max(40, 14 + text.height) };
+    });
+    const rows: Block[] = [];
+    for (let i = 0; i < cells.length; i += cols) {
+      const row = cells.slice(i, i + cols);
+      rows.push({
+        height: Math.max(...row.map((c) => c.height)),
+        gap: i === 0 ? 10 : 6,
+        draw: (y) => {
+          row.forEach((c, k) => {
+            const x = TEXT.x + k * (cw + 14);
+            press.disc(x + 20, y + 20, 20, VIOLET.tint);
+            if (c.picture) drawPicture(press, c.picture, x + 3, y + 3, 34, VIOLET);
+            else press.line(c.p.name.slice(0, 1), x, y + 11, display(15, VIOLET.deep), 'center', 40);
+            press.line(c.p.name, x + 48, y + 3, { ...T.word, size: 9.8 });
+            press.set(c.text.lines, x + 48, y + 16.5, about);
+          });
+        },
+      });
     }
-    doc.moveDown(0.5);
+    blocks.push(...keepList(rows));
   }
+  return runSheets(press, blocks, (index) => ({ chapter: null, section: 'The people of the road', bites: null, plain: index === 0 }));
 }
 
-function wordList(book: Book, chapters: readonly BookChapter[]): void {
-  const { doc } = book;
-  const words = roadBookWordList(chapters);
-  if (words.length === 0) return;
-  book.page('Rêya Kurmancî · Word list');
-  book.label('Ferheng · Word list');
-  book.heading('Every word of the road so far', 17);
-  doc.font('italic').fontSize(8.5).fillColor(MUTED).text('In Kurdish alphabetical order, with the chapter each word is first met in. m and f mark masculine and feminine nouns.', { width: TEXT_W });
-  doc.moveDown(0.6);
-  const colW = TEXT_W / 2;
-  const top = doc.y;
-  let col = 0;
-  let y = top;
-  let pageTop = top;
-  for (const w of words) {
-    if (y + 13 > H - M.bottom) {
-      if (col === 0) {
-        col = 1;
-        y = pageTop;
-      } else {
-        book.page('Rêya Kurmancî · Word list');
-        col = 0;
-        pageTop = M.top;
-        y = pageTop;
-      }
-    }
-    const x = M.left + col * colW;
-    const kuW = colW * 0.44;
-    doc.font('bold').fontSize(8).fillColor(INK).text(w.ku, x, y, { width: kuW - 4, height: 11, lineBreak: false, ellipsis: true });
-    doc
-      .font('italic')
-      .fontSize(7.2)
-      .fillColor(MUTED)
-      .text(`${w.gender ? `${w.gender} · ` : ''}${w.en.replace(/\s*\(.*?\)/g, '')} · ${w.chapter}`, x + kuW, y + 0.6, { width: colW - kuW - 8, height: 11, lineBreak: false, ellipsis: true });
-    y += 12.5;
-  }
-}
+// ───────────────────────────────────────────────────────────── the answers
 
-function answers(book: Book, chapters: readonly BookChapter[]): void {
-  const { doc } = book;
-  book.page('Rêya Kurmancî · Answers');
-  book.label('Bersiv · Answers');
-  book.heading('Check yourself', 17);
+/** The answers' pages, and how much of the last of them they fill. */
+function answerSheets(press: Press, chapters: readonly BookChapter[], noted: (anchor: string, index: number) => void): { sheets: Sheet[]; used: number } {
+  const blocks: Block[] = [
+    {
+      height: 46,
+      gap: 0,
+      keep: true,
+      anchor: 'answers',
+      draw: (y) => {
+        press.line('Answers', TEXT.x, y + 2, display(22));
+        press.line('No peeking, says Hamo. Hevalo is looking at the sky.', TEXT.x, y + 31, T.english);
+      },
+    },
+  ];
+  const type: Type = { ...T.note, size: 8.1, lead: 10.8 };
+  const letters = (answers: readonly number[]): string => answers.map((a, i) => `${i + 1}${'abcdef'[a] ?? '?'}`).join('  ');
   for (const c of chapters) {
-    book.room(40);
-    doc.font('display').fontSize(12).fillColor(INK).text(`Beş ${c.number} · ${c.titleKu}`, M.left, doc.y, { width: TEXT_W });
-    doc.moveDown(0.2);
-    if (c.tale && c.tale.questions.length > 0) {
-      doc.font('italic').fontSize(8.6).fillColor(MUTED).text(`Hamo’s story: ${c.tale.questions.map((q, i) => `${i + 1}${'abcdef'[q.answer]}`).join(', ')}`, { width: TEXT_W });
-    }
-    c.practice.forEach((p, i) => {
-      book.room(14);
-      doc.font('body').fontSize(8.6).fillColor(INK).text(`${i + 1}. ${p.answer}`, M.left, doc.y, { width: TEXT_W });
+    const hue = hueOf(c);
+    blocks.push({
+      height: 18,
+      gap: 15,
+      keep: true,
+      draw: (y) => {
+        press.disc(TEXT.x + 8, y + 9, 8, hue.wash);
+        press.line(String(c.number), TEXT.x, y + 3.6, { font: 'bold', size: 8, color: hue.deep, lead: 10.8 }, 'center', 16);
+        press.line(c.titleKu, TEXT.x + 23, y + 1.4, display(11.6));
+      },
     });
-    doc.moveDown(0.6);
+    const rows: Array<[string, Span[]]> = [];
+    const talks = c.parts.flatMap((p) => p.lessons.filter((l) => l.dialogue?.question).map((l) => `${p.position}.${l.position} ${'abcdef'[l.dialogue!.question!.answer] ?? '?'}`));
+    if (talks.length > 0) rows.push(['Conversations', [{ text: talks.join('   ') }]]);
+    if (c.tale && c.tale.questions.length > 0) rows.push(['Hamo’s story', [{ text: letters(c.tale.questions.map((q) => q.answer)) }]]);
+    const pr = c.practice;
+    const kurdish = (list: readonly string[]): Span[] => list.flatMap((text, i): Span[] => [{ text: `${i + 1} `, font: 'bold', color: hue.deep }, { text: `${text}${i < list.length - 1 ? '   ' : ''}`, font: 'semi' }]);
+    if (pr.match.length >= 4) rows.push(['Join them up', pr.match.flatMap((m, i): Span[] => [{ text: m.ku, font: 'semi' }, { text: ` ${m.en}${i < pr.match.length - 1 ? '   ·   ' : ''}`, font: 'italic', color: INK.soft }])]);
+    if (pr.gaps.length > 0) rows.push(['Fill the gap', kurdish(pr.gaps.map((g) => g.answer))]);
+    if (pr.replies.length > 0) rows.push(['What do you say?', kurdish(pr.replies.map((r) => r.answer))]);
+    if (pr.toKurdish.length > 0) rows.push(['Into Kurdish', kurdish(pr.toKurdish.map((t) => t.ku))]);
+    if (pr.pictures.length >= 3) rows.push(['The pictures', kurdish(pr.pictures.map((p) => p.ku))]);
+    const made: Block[] = rows.map(([name, spans], i) => {
+      const para = press.para(spans, TEXT.w - 84, type);
+      return {
+        height: para.height,
+        gap: i === 0 ? 5 : 4,
+        draw: (y: number) => {
+          press.line(name.toUpperCase(), TEXT.x, y + 2.2, label(hue.deep, 5.6));
+          press.set(para.lines, TEXT.x + 84, y, type);
+        },
+      };
+    });
+    blocks.push(...keepList(made));
   }
+  const sheets = runSheets(press, blocks, (index) => ({ chapter: null, section: 'Answers', bites: null, plain: index === 0 }), noted);
+  return { sheets, used: paginate(blocks, TEXT.room).at(-1)?.used ?? 0 };
 }
 
-function colophon(book: Book, site: string): void {
-  const { doc } = book;
-  book.page('Rêya Kurmancî');
-  doc.y = H / 2 - 60;
-  doc.font('displayItalic').fontSize(14).fillColor(ACCENT).text('Bi xêr bimînî!', M.left, doc.y, { width: TEXT_W, align: 'center' });
-  doc.moveDown(0.6);
-  doc.font('body').fontSize(9).fillColor(MUTED).text(
-    `Rêya Kurmancî — The Kurmanji Road. Written for Hevalo, with Hamo’s voice in the app at ${site}. The drawings are Hevalo’s own. Set in Fraunces and Literata, both under the SIL Open Font Licence. New chapters arrive in the book as they go online.`,
-    M.left + 20,
-    doc.y,
-    { width: TEXT_W - 40, align: 'center', lineGap: 1.5 },
-  );
+// ───────────────────────────────────────────────────────────── the word list
+
+/** How much of a page the word list needs left to begin on it: its heading and a dozen words. */
+const WORDS_BEGIN = 200;
+
+/**
+ * The word list, three columns to a page. It begins `start` points down its
+ * first page, so it can follow the answers on theirs; and its last page is
+ * shared out evenly among the columns, with Hevalo asleep under them where
+ * they leave him room.
+ */
+function wordListSheets(press: Press, chapters: readonly BookChapter[], start = 0): Sheet[] {
+  const words = roadBookWordList(chapters);
+  if (words.length === 0) return [];
+  const cols = 3;
+  const gutter = 10;
+  const cw = (TEXT.w - gutter * (cols - 1)) / cols;
+  const rowH = 10.9;
+  const ku: Type = { font: 'semi', size: 7.9, color: INK.ink, lead: 10.4 };
+  const en: Type = { font: 'italic', size: 7.2, color: INK.soft, lead: 10.4 };
+  // what goes down the columns: a letter at the head of its words, then the words
+  type Entry = { letter: string } | { word: (typeof words)[number] };
+  const entries: Entry[] = [];
+  let letter = '';
+  for (const w of words) {
+    const first = w.ku.replace(/^[^\p{L}]+/u, '').slice(0, 1).toUpperCase();
+    if (first !== letter) {
+      letter = first;
+      entries.push({ letter });
+    }
+    entries.push({ word: w });
+  }
+  const heightOf = (e: Entry): number => ('letter' in e ? 20 : rowH);
+  const favourite = taught(chapters, 'sêv');
+  const sheets: Sheet[] = [];
+  let at = 0;
+  let pageIndex = 0;
+  while (at < entries.length) {
+    const first = pageIndex === 0;
+    const head = first ? TEXT.top + start : TEXT.top;
+    const top = first ? head + 58 : head;
+    const room = TEXT.top + TEXT.room - top;
+    // the last page is shared out among its columns rather than filled one at a time
+    let left = 0;
+    for (let k = at; k < entries.length; k++) left += heightOf(entries[k]!);
+    const last = left <= room * cols;
+    const share = last ? Math.min(room, left / cols + rowH * 2) : room;
+    const columns: Entry[][] = [];
+    let foot = top;
+    for (let col = 0; col < cols && at < entries.length; col++) {
+      const column: Entry[] = [];
+      let used = 0;
+      const limit = col === cols - 1 ? room : share;
+      while (at < entries.length) {
+        const e = entries[at]!;
+        // a letter never ends a column: it needs two of its words under it
+        const need = 'letter' in e ? heightOf(e) + rowH * 2 : heightOf(e);
+        if (used + need > limit && column.length > 0) break;
+        column.push(e);
+        used += heightOf(e);
+        at += 1;
+      }
+      columns.push(column);
+      foot = Math.max(foot, top + used);
+    }
+    const ends = at >= entries.length;
+    sheets.push({
+      furniture: { chapter: null, section: 'The word list', bites: null, plain: first },
+      draw: (): void => {
+        if (first) {
+          press.line('Every word of the road', TEXT.x, head + 2, display(22));
+          const intro = press.para('In the order of the Kurdish alphabet, each with the chapter it is first met in. m and f mark masculine and feminine nouns.', TEXT.w, T.english);
+          press.set(intro.lines, TEXT.x, head + 31, T.english);
+        }
+        columns.forEach((column, col) => {
+          const x = TEXT.x + col * (cw + gutter);
+          let y = top;
+          for (const e of column) {
+            if ('letter' in e) {
+              press.line(e.letter, x, y + 3, display(12.5, VIOLET.deep));
+              press.rule(x + 14, y + 12.5, cw - 14, VIOLET.wash, 0.8);
+            } else {
+              const w = e.word;
+              const hue = HUES.light[chapterHue(w.chapter)];
+              press.disc(x + 5, y + 5.4, 5, hue.wash);
+              press.line(String(w.chapter), x, y + 1.3, { font: 'bold', size: 5.6, color: hue.deep, lead: 8 }, 'center', 10);
+              const name = press.wrap(w.ku, cw * 0.62, ku, 1);
+              press.set(name, x + 13, y, ku);
+              const used = 13 + (name[0]?.width ?? 0) + 4;
+              const gloss = press.wrap(`${w.gender ? `${w.gender === 'mf' ? 'm/f' : w.gender} · ` : ''}${w.en.replace(/\s*[(;].*$/, '')}`, cw - used, en, 1);
+              press.set(gloss, x + used, y + 0.5, en);
+            }
+            y += heightOf(e);
+          }
+        });
+        // under the last of the words, where there is room: the one who slept through them
+        const free = TEXT.top + TEXT.room - foot;
+        if (ends && free >= 120) {
+          const mid = foot + free / 2;
+          press.place(castArt(press, 'hevalo', 'asleep'), PAGE.w / 2 - 30, mid - 40, 60);
+          const count = `${words.length} words, and Hevalo slept through most of them.`;
+          press.line(favourite ? `${count} His favourite is still ${favourite.ku}.` : count, TEXT.x, mid + 26, T.english, 'center', TEXT.w);
+        }
+      },
+    });
+    pageIndex += 1;
+  }
+  return sheets;
 }
+
+// ───────────────────────────────────────────────────────────── the last page
+
+function lastSheet(press: Press, chapters: readonly BookChapter[], site: string): Sheet {
+  // what the village says to someone setting off, when the book has got that far; before that, what the one who stays says
+  const farewell = taught(chapters, 'Rêya te vekirî be!') ?? taught(chapters, 'Bi xêr biçî!');
+  return {
+    furniture: null,
+    draw: (): void => {
+      const doc = press.doc;
+      doc.save().ellipse(PAGE.w / 2, PAGE.h + 150, 420, 330).fill(VIOLET.wash).restore();
+      doc.save().ellipse(PAGE.w / 2 + 70, PAGE.h + 190, 380, 320).fill(VIOLET.tint).restore();
+      press.place(squareArt(press, 'bird|letter', () => letterBirdSvg({ bird: 2, pose: 'wings-up', letter: true })), PAGE.w / 2 - 48, 52, 96);
+      let y = 162;
+      if (farewell) {
+        press.line(farewell.ku, TEXT.x, y, heavy(25, INK.ink), 'center', TEXT.w);
+        press.line(farewell.en.replace(/\s*\(.*$/, ''), TEXT.x, y + 36, displayItalic(12.5, VIOLET.deep), 'center', TEXT.w);
+        y += 74;
+      }
+      const type: Type = { ...T.body, color: INK.soft };
+      const about = press.para(
+        `Rêya Kurmancî, the Kurmanji Road: every word, line and story as the lessons have them, with Hamo’s voice in the app at ${site}. The drawings are Hevalo’s own, made for the app and for this book. Set in Fraunces and Literata, both under the SIL Open Font Licence. New chapters arrive in the book as they go online.`,
+        TEXT.w - 76,
+        type,
+      );
+      press.set(about.lines, TEXT.x + 38, y, type, 'center', TEXT.w - 76);
+      y += about.height + 22;
+      const core = squareArt(press, `apple|${BOOK_APPLE_BITES}`, () => bookAppleSvg({ bites: BOOK_APPLE_BITES }));
+      [-1, 0, 1].forEach((k) => press.place(core, PAGE.w / 2 - 13 + k * 34, y, 26, { turn: k * 14 }));
+      press.line('No apples were left over in the making of this book.', TEXT.x, y + 34, T.english, 'center', TEXT.w);
+      // Hevalo, who knows nothing about it, stands on the hill below, clear of the words
+      const deer = castArt(press, 'hevalo', 'innocent', 'full');
+      const dh = Math.min(158, PAGE.h - 34 - (y + 58));
+      const dw = (dh * deer.w) / deer.h;
+      press.place(deer, PAGE.w / 2 - dw / 2, PAGE.h - 34 - dh, dw);
+    },
+  };
+}
+
+// ───────────────────────────────────────────────────────────── the book
 
 /** The book for these chapters, as PDF bytes. */
 export function renderRoadBook(options: RoadBookOptions): Promise<Buffer> {
   const site = options.site ?? 'hevalo.app';
   const chapters = options.chapters;
-  const book = new Book(chapters.length === 1 ? `Rêya Kurmancî · Beş ${chapters[0]!.number}` : 'Rêya Kurmancî · Pirtûka Hevalo');
-  const chunks: Buffer[] = [];
-  book.doc.on('data', (c: Buffer) => chunks.push(c));
-  const done = new Promise<Buffer>((resolve, reject) => {
-    book.doc.on('end', () => resolve(Buffer.concat(chunks)));
-    book.doc.on('error', reject);
-  });
-  cover(book, chapters, site);
-  letter(book);
-  alphabet(book);
-  people(book, options.characters);
+  const press = new Press(chapters.length === 1 ? `Rêya Kurmancî · ${chapters[0]!.number} · ${chapters[0]!.titleKu}` : 'Rêya Kurmancî · Hevalo’s book');
+  const places: Places = new Map();
+  const sheets: Sheet[] = [];
+  /** Sheets added to the book, with the anchors among them noted at the pages they fall on (an anchor's place is counted from the first of the sheets). */
+  const add = (made: Sheet[], anchors: ReadonlyArray<readonly [string, number]> = []): void => {
+    for (const [anchor, index] of anchors) places.set(anchor, sheets.length + index + 1);
+    sheets.push(...made);
+  };
+
+  add([coverSheet(press, chapters, site)]);
+  add([letterSheet(press, chapters)]);
+  add([contentsSheet(press, chapters, places)]);
+  add([passportSheet(press, chapters, places)], [['passport', 0]]);
+  add(alphabetSheets(press, chapters), [['alphabet', 0]]);
+  add(peopleSheets(press, options.characters, options.people ?? []), [['people', 0]]);
   for (const c of chapters) {
-    opener(book, c);
-    for (const p of c.parts) part(book, c, p);
-    tale(book, c);
-    practice(book, c);
+    const made = chapterSheets(press, c, places);
+    add(made.sheets, made.anchors);
   }
-  wordList(book, chapters);
-  answers(book, chapters);
-  colophon(book, site);
-  book.finish();
-  book.doc.end();
-  return done;
+  // the word list begins under the answers where their last page has room for it, and on a page of its own where not
+  const answers: Array<[string, number]> = [];
+  const back = answerSheets(press, chapters, (anchor, index) => answers.push([anchor, index]));
+  const under = back.sheets.length > 0 && TEXT.room - back.used >= WORDS_BEGIN;
+  const list = wordListSheets(press, chapters, under ? back.used + 30 : 0);
+  if (under && list.length > 0) {
+    const [above, below] = [back.sheets.pop()!, list.shift()!];
+    list.unshift({ furniture: above.furniture, draw: (page) => (above.draw(page), below.draw(page)) });
+  }
+  add(back.sheets, answers);
+  add(list, [['words', 0]]);
+  add([lastSheet(press, chapters, site)]);
+
+  // every page is measured and numbered by now: only then is anything drawn, so a page can say where another is
+  sheets.forEach((sheet, i) => {
+    press.page();
+    if (sheet.furniture) furnish(press, sheet.furniture, i + 1);
+    sheet.draw(i + 1);
+  });
+  return press.finish();
 }

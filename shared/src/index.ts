@@ -859,6 +859,24 @@ export {
   wordPictureSvg,
   type WordPictureId,
   type WordPictureOptions,
+  BOOK_APPLE_BITES,
+  BOOK_BACKDROP,
+  BOOK_PAINTS,
+  BOOK_POSES,
+  BOOK_SETTINGS,
+  BOOK_SPOTS,
+  bookAppleSvg,
+  bookBackdropSvg,
+  bookCastSvg,
+  bookPaintSvg,
+  bookPostmarkSvg,
+  bookSpotSvg,
+  type BookArtOptions,
+  type BookCastOptions,
+  type BookPaint,
+  type BookPose,
+  type BookSetting,
+  type BookSpot,
 } from './art/index.js';
 /**
  * The art's metals, for the parts of a screen drawn around an emblem — a
@@ -871,6 +889,8 @@ export {
   TIER_METAL as ART_TIER_METAL,
   type Metal as ArtMetal,
 } from './art/palette.js';
+/** The nine hues things are coloured in beside the app's own violet, each in the same four steps, light and dark. */
+export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
 export * from './art/fire.js';
 /** How big the fire burns: its stages from cold logs to the Newroz fire, by the streak's days or a run of right answers. */
@@ -889,8 +909,6 @@ export {
   type FireStage,
 } from './fire-stages.js';
 /** The learner's tree: its kinds and prices, how it grows with water and fares without it, planting and watering. */
-/** The nine hues things are coloured in beside the app's own violet, each in the same four steps, light and dark. */
-export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 export * from './tree.js';
 /** The kept streak's card coming alive: when its medal takes its turn and when each part of the card arrives, alike on both. */
 export { STREAK_LEAVE_MS, STREAK_LEAVE_POSE, smoothPoses, streakReveal, type MedalPose, type StreakReveal } from './streak-reveal.js';

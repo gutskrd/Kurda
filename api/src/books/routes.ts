@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { AppError } from '../plugins/errors.js';
 import { roadChapters } from '../content/road-chapters.js';
 import { renderRoadBook } from './pdf.js';
-import { roadBookChapters } from './road-book.js';
+import { roadBookCast, roadBookChapters } from './road-book.js';
 import { loadRoadBookSources } from './sources.js';
 
 const pdfQuery = z.object({ chapter: z.coerce.number().int().min(1).max(12).optional() });
@@ -44,9 +44,10 @@ export function registerBookRoutes(app: FastifyInstance): void {
       const key = chapters.join(',');
       let pdf = made.get(key);
       if (!pdf) {
-        pdf = loadRoadBookSources().then((sources) =>
-          renderRoadBook({ chapters: roadBookChapters(sources.plan, sources.docs, sources.stories, chapters), characters: sources.plan.characters }),
-        );
+        pdf = loadRoadBookSources().then((sources) => {
+          const outline = roadBookChapters(sources.plan, sources.docs, sources.stories, chapters);
+          return renderRoadBook({ chapters: outline, characters: sources.plan.characters, people: roadBookCast(sources.plan, outline) });
+        });
         // a failed book is made again next time, not kept
         pdf.catch(() => made.delete(key));
         if (made.size >= MADE_MAX) made.delete(made.keys().next().value!);

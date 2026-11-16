@@ -193,3 +193,23 @@ export {
 } from './path-land.js';
 export { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg, type PathLandmarkOptions, type PathLoop, type PathLoopKind, type PathLoopOptions } from './path-landmark.js';
 export { WORD_PICTURES, WORD_PICTURE_IDS, wordPictureSvg, type WordPictureId, type WordPictureOptions } from './word-pictures.js';
+export {
+  BOOK_APPLE_BITES,
+  BOOK_BACKDROP,
+  BOOK_PAINTS,
+  BOOK_POSES,
+  BOOK_SETTINGS,
+  BOOK_SPOTS,
+  bookAppleSvg,
+  bookBackdropSvg,
+  bookCastSvg,
+  bookPaintSvg,
+  bookPostmarkSvg,
+  bookSpotSvg,
+  type BookArtOptions,
+  type BookCastOptions,
+  type BookPaint,
+  type BookPose,
+  type BookSetting,
+  type BookSpot,
+} from './book.js';
