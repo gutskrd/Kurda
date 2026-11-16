@@ -205,7 +205,8 @@ export function CosmeticPicker({
         accessibilityHint={on ? t('edit.hint.takeOff') : t('edit.hint.wear')}
         style={[styles.tile, { width: tile }]}
       >
-        <View style={[styles.ring, wide ? styles.ringWide : styles.ringSquare, { borderColor: on ? colors.textPrimary : 'transparent' }]}>
+        {/* what you are wearing is ringed and ticked in the violet every choice that is on wears */}
+        <View style={[styles.ring, wide ? styles.ringWide : styles.ringSquare, { borderColor: on ? colors.primary : 'transparent' }]}>
           {tier ? (
             <View style={[styles.frameTile, { width: art, height: art, backgroundColor: colors.controlTrack }]}>
               <SeasonFramed tier={tier} size={Math.round(art * 0.86)} label={name}>
@@ -236,15 +237,15 @@ export function CosmeticPicker({
             </View>
           ) : null}
           {on ? (
-            <View style={[styles.check, dir.row === 'row-reverse' ? styles.checkLeft : styles.checkRight, { backgroundColor: colors.textPrimary }]}>
-              <Icon name="check" size={12} color={colors.background} />
+            <View style={[styles.check, dir.row === 'row-reverse' ? styles.checkLeft : styles.checkRight, { backgroundColor: colors.primary }]}>
+              <Icon name="check" size={12} tone="onPrimary" />
             </View>
           ) : null}
         </View>
         <Text
           style={[
             styles.tileName,
-            { color: on ? colors.textPrimary : colors.textSecondary, fontWeight: on ? typography.weights.semibold : typography.weights.regular },
+            { color: on ? colors.primary : colors.textSecondary, fontWeight: on ? typography.weights.semibold : typography.weights.regular },
           ]}
           numberOfLines={2}
         >
