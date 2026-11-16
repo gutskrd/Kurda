@@ -1263,17 +1263,18 @@
                 },
                 {
                   "position": 3,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Berê havîn dirêjtir nebûn; berê demjimêr tune bûn!",
+                    "ask": "reply",
+                    "say": "Tu li kîjan bajarî dijî?",
                     "voice": "hamo",
-                    "prompt": "Berê havîn dirêjtir nebûn; berê demjimêr tune bûn!",
-                    "accepted": [
-                      "Summers weren’t longer in the old days; in the old days there were no clocks!",
-                      "In the old days summers weren’t longer; there were just no clocks!",
-                      "Summers were no longer in the old days; back then there were no clocks!"
-                    ]
+                    "prompt": "Tu li kîjan bajarî dijî?",
+                    "options": [
+                      "Ez li bajarekî mezin dijîm.",
+                      "Ez li bajarekî mezin jiyam.",
+                      "Ez ê li bajarekî mezin bijîm."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1303,66 +1304,6 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Dema ku ez xort bûm, ez vegeriyam Sêvanê û li vir mam.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "xort",
-                        "en": "young man"
-                      }
-                    ],
-                    "prompt": "Dema ku ez xort bûm, ez vegeriyam Sêvanê û li vir mam.",
-                    "options": [
-                      "When I was a young man, I came back to Sêvan and stayed here.",
-                      "When I was a young man, I left Sêvan and never came back.",
-                      "When I was a child, I came to Sêvan for one day."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Tu li kîjan bajarî dijî?",
-                    "voice": "hamo",
-                    "prompt": "Tu li kîjan bajarî dijî?",
-                    "options": [
-                      "Ez li bajarekî mezin dijîm.",
-                      "Ez li bajarekî mezin jiyam.",
-                      "Ez ji bajêr derketim."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ez xortekî ciwan bûm, bi şal û şapik û simbêlekî reş.",
-                    "voice": "hamo",
-                    "new": [
-                      {
-                        "ku": "ciwan",
-                        "en": "young; handsome"
-                      }
-                    ],
-                    "prompt": "Ez xortekî ciwan bûm, bi şal û şapik û simbêlekî reş.",
-                    "options": [
-                      "I was a handsome young man, in the traditional suit, with a black moustache.",
-                      "I was an old man, in the traditional suit, with a white moustache.",
-                      "I was a young man, in a new shirt, with no moustache."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
                     "say": "Hefteya borî Dapîr nexweş bû; niha ew çêtir e.",
                     "voice": "hamo",
                     "new": [
@@ -1381,16 +1322,71 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 6,
                   "type": "writing",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "missing",
+                    "say": "Ez niha li Sêvanê dijîm.",
                     "voice": "hamo",
-                    "prompt": "When I was a young man, I was handsome.",
+                    "cue": "I live in Sêvan now.",
+                    "prompt": "Ez niha li Sêvanê ___.",
                     "accepted": [
-                      "Dema ku ez xort bûm, ez ciwan bûm.",
-                      "Dema ez xort bûm, ez ciwan bûm."
+                      "dijîm"
                     ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Dema ku ez xort bûm, ez vegeriyam Sêvanê û li vir mam.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "xort",
+                        "en": "young man"
+                      }
+                    ],
+                    "prompt": "Dema ku ez xort bûm, ez vegeriyam Sêvanê û li vir mam.",
+                    "options": [
+                      "When I was a young man, I came back to Sêvan and stayed here.",
+                      "When I was a young man, I left Sêvan and never came back.",
+                      "When I was a child, I came to Sêvan for one day."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Hefteya borî em derketin û çûn serdana xalê xwe.",
+                    "reference": "Hefteya borî em derketin û çûn serdana xalê xwe."
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ez xortekî ciwan bûm, bi şal û şapik û simbêlekî reş.",
+                    "voice": "hamo",
+                    "new": [
+                      {
+                        "ku": "ciwan",
+                        "en": "young; handsome"
+                      }
+                    ],
+                    "prompt": "Ez xortekî ciwan bûm, bi şal û şapik û simbêlekî reş.",
+                    "options": [
+                      "I was a handsome young man, in the traditional suit, with a black moustache.",
+                      "I was an old man, in the traditional suit, with a white moustache.",
+                      "I was a young man, in a new shirt, with no moustache."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1426,65 +1422,29 @@
                     "options": [
                       "ciwan",
                       "borî",
-                      "pêr"
+                      "dereng"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 12,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "I came back to Sêvan, and now I live here.",
-                    "accepted": [
-                      "Ez vegeriyam Sêvanê, û niha ez li vir dijîm.",
-                      "Ez vegeriyam Sêvanê û niha ez li vir dijîm.",
-                      "Ez vegeriyam Sêvanê, niha ez li vir dijîm."
-                    ]
-                  }
-                },
-                {
-                  "position": 13,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Bozo kengî reviya?",
+                    "say": "Bozo kengî vegeriya?",
                     "voice": "hamo",
-                    "prompt": "Bozo kengî reviya?",
+                    "prompt": "Bozo kengî vegeriya?",
                     "options": [
-                      "Duh, û pêr jî!",
-                      "Sibe, û dusibe jî!",
-                      "Pêr ez reviyam."
+                      "Pêr, bi şev!",
+                      "Sibe, bi şev!",
+                      "Pêr ez vegeriyam."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 14,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Hefteya borî em derketin û çûn serdana xalê xwe.",
-                    "reference": "Hefteya borî em derketin û çûn serdana xalê xwe."
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Xalê min pêr ji Kobaniyê vegeriya.",
-                      "Xalê min pêr ji Kobaniyê vegeriya"
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
+                  "position": 13,
                   "type": "match_pairs",
                   "payload": {
                     "voice": "hamo",
@@ -1502,18 +1462,59 @@
                         "right": "young; handsome"
                       },
                       {
-                        "left": "pêr",
-                        "right": "the day before yesterday"
-                      },
-                      {
                         "left": "borî",
                         "right": "last, past"
                       },
                       {
                         "left": "jiyîn",
                         "right": "to live"
+                      },
+                      {
+                        "left": "xal",
+                        "right": "uncle (mother’s brother)"
                       }
                     ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Xalê min pêr ji Kobaniyê vegeriya.",
+                      "Xalê min pêr ji Kobaniyê vegeriya"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "When I was a young man, I was handsome.",
+                    "accepted": [
+                      "Dema ku ez xort bûm, ez ciwan bûm.",
+                      "Dema ez xort bûm, ez ciwan bûm."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Bozo kengî reviya?",
+                    "voice": "hamo",
+                    "prompt": "Bozo kengî reviya?",
+                    "options": [
+                      "Duh, û pêr jî!",
+                      "Sibe, û dusibe jî!",
+                      "Pêr ez reviyam."
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
