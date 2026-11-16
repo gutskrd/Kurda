@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { RouteFallback } from '../components/RouteFallback';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TopNav } from '../components/TopNav';
@@ -9,17 +9,27 @@ import { PlayProvider } from '../play/PlayProvider';
 import { InviteBanner } from '../play/InviteBanner';
 import { useNavLinks } from './navLinks';
 import { PageTop } from './usePageTop';
+import { PlacesBar } from './PlacesBar';
+import { PHONE_CHROME, isPlaceRoot } from './roots';
+import { useTrail } from './trail';
 import { useT } from '../i18n/I18nProvider';
+import { useMediaQuery } from '../lib/useMediaQuery';
 import { FeedbackHost } from '../feedback/FeedbackHost';
 
 /**
  * The app shell. Content pages set their own container + header.
  *
- * One bar at every width (`TopNav`): the places, the search field and the
- * bell on a wide screen, folded into a menu on a phone — one list
- * (`useNavLinks`, shared with the landing page), so a place is in the same
- * position on every screen. The bar stays at the top while the page scrolls,
- * and on a wide screen the social column stays at the side.
+ * One list of places (`useNavLinks`, shared with the landing page), so a
+ * place is in the same position on every screen. On a wide screen they are
+ * in the top bar (`TopNav`) with the search field and the bell; the bar stays
+ * at the top while the page scrolls, and the social column stays at the side.
+ *
+ * On a phone the shell wears the phone app's chrome. The places are a bar
+ * floating over the bottom of the window (`PlacesBar`), on the root of each
+ * place and nowhere else: a page you went into has the way back at its top
+ * and its bottom edge to itself (`isPlaceRoot`). Which of the two is drawn is
+ * decided here, by the window's width, and not left to the styles to hide
+ * one: two lists of the same links in the page would be read out twice.
  *
  * A guest is shown only what a guest can use. Offering links that bounce you to
  * a sign-in wall is worse than not offering them — it teaches you the app is
@@ -33,6 +43,10 @@ import { FeedbackHost } from '../feedback/FeedbackHost';
 export function AppLayout(): React.JSX.Element {
   const t = useT();
   const links = useNavLinks();
+  const { pathname, search } = useLocation();
+  const phone = useMediaQuery(PHONE_CHROME);
+  // each page drawn here is noted, so the way back knows what is behind the next one
+  useTrail();
 
   return (
     <RailProvider>
@@ -44,7 +58,7 @@ export function AppLayout(): React.JSX.Element {
         {t('nav.skipToContent')}
       </a>
       {/* a visitor keeps "Get started" in a phone's bar here, where most pages have no other way in */}
-      <TopNav links={links} joinOnPhone />
+      <TopNav links={links} joinOnPhone placesBelow />
       <main id="main" className="app-main">
         {/*
          * The page waits here, and nothing else does.
@@ -62,6 +76,8 @@ export function AppLayout(): React.JSX.Element {
           </Suspense>
         </ErrorBoundary>
       </main>
+      {/* a phone's bar of places, after main as the sidebar is, so the page is reached before either */}
+      {phone && isPlaceRoot(pathname, search) && <PlacesBar links={links} />}
       {/* after main, so a screen reader reaches the page before the sidebar */}
       <SocialRail />
       {/* "Rojda invited you to Peyvok Battle" — Join or Not now, wherever you are */}

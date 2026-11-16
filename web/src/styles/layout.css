@@ -373,6 +373,9 @@ button.nav-link {
  * at the end. The places fold into the menu, which drops from the bar as a
  * list across the screen — each a full-width row of glyph and word, 48px
  * tall, the page you are on lit — over a scrim that a press closes.
+ *
+ * This is the public pages' bar. Inside the app a phone has the phone app's
+ * chrome in its place, with the places along the bottom (shell.css).
  */
 @media (max-width: 768px) {
   .nav-inner {

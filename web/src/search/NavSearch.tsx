@@ -50,7 +50,9 @@ interface Option {
 
 /**
  * Search, in the bar: a field on a wide screen, a button that turns the bar
- * into a field on a phone, and the results in a panel hanging from it.
+ * into a field on a phone, and the results in a panel hanging from it. On a
+ * phone the field and the results open out of that button, so the search is
+ * seen to come from where it was asked for.
  *
  * It is the one search box. People and words come back together as you type,
  * a few of each — enough to pick the person or the word you meant without
@@ -93,6 +95,8 @@ export function NavSearch(): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const [recents, setRecents] = useState<string[]>(readRecentSearches);
+  /** the middle of the button that opens the search on a phone, which the field and its results open out of (shell.css) */
+  const [from, setFrom] = useState<{ x: number; y: number } | null>(null);
 
   const term = query.trim();
   const debounced = useDebouncedValue(term, DEBOUNCE_MS);
@@ -102,9 +106,15 @@ export function NavSearch(): React.JSX.Element {
    * Open, and put the cursor in the field. The open state is committed first
    * (`flushSync`) because on a phone the field is not on screen until it is,
    * and a phone only raises its keyboard for a focus given in the same tap.
+   * Where the button is, is read first: once open, the field is over it. A
+   * wide screen has no button, and nothing to read.
    */
   const show = useCallback((): void => {
-    flushSync(() => setOpen(true));
+    const button = openerRef.current?.getBoundingClientRect();
+    flushSync(() => {
+      if (button && button.width > 0) setFrom({ x: Math.round(button.left + button.width / 2), y: Math.round(button.top + button.height / 2) });
+      setOpen(true);
+    });
     // the field is in the bar, always in sight: focusing it must not scroll the page under it
     inputRef.current?.focus({ preventScroll: true });
   }, []);
@@ -299,6 +309,7 @@ export function NavSearch(): React.JSX.Element {
     <div
       ref={boxRef}
       className={`nav-search${open ? ' is-open' : ''}`}
+      style={from ? ({ '--search-from-x': `${from.x}px`, '--search-from-y': `${from.y}px` } as React.CSSProperties) : undefined}
       onBlur={(e) => {
         // tabbing out of the search closes it; a press elsewhere is the pointer handler's
         const next = e.relatedTarget as Node | null;

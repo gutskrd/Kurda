@@ -72,17 +72,18 @@
 /*
  * A card that rises over the bottom of the page, beside the results rather
  * than over them: on a phone across the width with a gutter, on a wide screen
- * at the bottom right of the page, clear of the social rail.
+ * at the bottom right of the page, clear of the social rail. Where a phone
+ * has its bar of places it rises over that too (`--bottom-chrome`, shell.css).
  */
 .rb-host {
   position: fixed;
   z-index: 90;
   left: 12px;
   right: 12px;
-  bottom: 12px;
+  bottom: calc(12px + var(--bottom-chrome, 0px));
   margin-inline: auto;
   max-width: 420px;
-  max-height: calc(100dvh - var(--nav-h) - 24px);
+  max-height: calc(100dvh - var(--nav-h) - var(--bottom-chrome, 0px) - 24px);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 20px 20px 16px;
@@ -100,7 +101,7 @@
 /* on a phone, half the screen at most: the results keep the other half */
 @media (max-width: 560px) {
   .rb-host {
-    max-height: min(50dvh, calc(100dvh - var(--nav-h) - 24px));
+    max-height: min(50dvh, calc(100dvh - var(--nav-h) - var(--bottom-chrome, 0px) - 24px));
   }
 }
 @keyframes rb-rise {

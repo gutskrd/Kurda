@@ -5,6 +5,7 @@ import type { WhoAmIDeal } from '@kurda/shared';
 import { jsonResponse } from '../test/utils';
 import { renderPlay, where } from '../play/testing';
 import { forgetMpAvailability } from '../games/mpAvailability';
+import { BackButton } from '../layouts/BackButton';
 import { WhoAmI } from './WhoAmI';
 
 /**
@@ -702,6 +703,42 @@ describe('Ez kî me? on one phone, a game', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Leave the game' }));
     await userEvent.click(within(await screen.findByRole('dialog', { name: 'Leave this game?' })).getByRole('button', { name: 'Leave the game' }));
     await waitFor(() => expect(where()).toBe('/app/games/who-am-i'));
+  });
+
+  it('asks the same of the way back in a phone’s top bar, which is one more way out of the page', async () => {
+    serve();
+    renderPlay(
+      <>
+        <BackButton links={[]} />
+        <WhoAmI />
+      </>,
+      { route: '/app/games/who-am-i?couch=1' },
+    );
+    await start(['Azad', 'Berfîn']);
+    await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    const asked = await screen.findByRole('dialog', { name: 'Leave this game?' });
+    expect(where()).toBe('/app/games/who-am-i?couch=1');
+    await userEvent.click(within(asked).getByRole('button', { name: 'Keep playing' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.getByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeInTheDocument();
+  });
+
+  it('lets the bar’s way back go at once before a game, when there is nothing to lose', async () => {
+    serve();
+    renderPlay(
+      <>
+        <BackButton links={[]} />
+        <WhoAmI />
+      </>,
+      { route: '/app/games/who-am-i?couch=1' },
+    );
+    await screen.findAllByRole('textbox');
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    // opened cold here: out to the games, which the page stands under
+    await waitFor(() => expect(where()).toBe('/app/games'));
   });
 
   it('remembers the names on this phone for the next game', async () => {

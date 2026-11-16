@@ -31,6 +31,7 @@ import { Modal } from '../components/Modal';
 import { Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { useAsksBeforeLeaving } from '../layouts/BackButton';
 import { dialectName } from '../learn/map';
 import { haptic } from '../lib/haptics';
 import { useCelebrationMoment } from '../lib/motion';
@@ -249,6 +250,8 @@ export function Couch(): React.JSX.Element {
 
   const under = game !== null && game.step.at !== 'end';
   const head = <GameHead game="who-am-i" title={t('games.whoAmI.name')} meaning={t('games.whoAmI.meaning')} onBack={under ? () => setLeaving('/app/games') : undefined} />;
+  // the way back in a phone's top bar is asked the same question as the game's own
+  useAsksBeforeLeaving(under ? () => setLeaving('/app/games') : null);
 
   if (offers === null) {
     return (
