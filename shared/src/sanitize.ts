@@ -1,12 +1,7 @@
 /**
- * XSS-safe output encoding for user-generated content (KUR-108). Kurda's API is
- * JSON, so the real XSS risk is at *render* time in the web/admin surfaces —
- * this module is the single, shared, tested primitive those surfaces use to
- * escape UGC (bios, chat, group names) before putting it in HTML.
- *
- * Crucially, escaping only touches the five HTML-significant characters, so
- * Kurdish text and its combining diacritics pass through byte-for-byte intact
- * (the edge case): `ê î û ç ş` and composed/decomposed forms are never altered.
+ * Escaping and checks for text users send: HTML escaping for user content the web and admin render, control-character
+ * stripping for input, and guards for untrusted JSON and links. Escaping touches only the five HTML-significant characters,
+ * so Kurdish letters and their combining marks pass through unchanged.
  */
 
 const HTML_ESCAPES: Record<string, string> = {
@@ -22,12 +17,7 @@ export function escapeHtml(input: string): string {
   return input.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]!);
 }
 
-/**
- * Strip control characters that have no place in user text — C0/C1 controls
- * except tab (U+0009) and newline (U+000A) — while preserving all printable
- * Unicode, including combining diacritical marks (U+0300+). Use on INPUT to
- * reject invisible/injection tricks without mangling legitimate Kurdish text.
- */
+/** Removes C0 and C1 control characters except tab and newline; every printable character, combining marks included, stays. */
 export function stripControlChars(input: string): string {
   let out = '';
   for (const ch of input) {
@@ -36,4 +26,19 @@ export function stripControlChars(input: string): string {
     if (!isControl) out += ch;
   }
   return out;
+}
+
+/** A plain object, as untrusted JSON gives one: not null and not an array. */
+export function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+/** A web address a browser would open over https: parsed, not pattern-matched, so "https://" alone is refused too. */
+export function isHttpsUrl(v: string): boolean {
+  try {
+    const url = new URL(v);
+    return url.protocol === 'https:' && url.hostname !== '';
+  } catch {
+    return false;
+  }
 }

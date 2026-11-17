@@ -30,6 +30,7 @@
  * `asLetterDialect`, and the dictionary's own spelling comes from
  * `dictionaryDialect`.
  */
+import { INVISIBLE } from '../kurdish-text.js';
 
 export type LetterDialect = 'kmr' | 'ckb';
 
@@ -66,10 +67,6 @@ export function letterDirection(dialect: LetterDialect): 'ltr' | 'rtl' {
   return dialect === 'ckb' ? 'rtl' : 'ltr';
 }
 
-// zero-width space, non-joiner and joiner, bidi marks, embeddings and isolates,
-// the Arabic letter mark, the byte-order mark and tatweel: they change how text
-// is drawn, never what it says
-const INVISIBLE = /[​-‏‪-‮⁦-⁩؜﻿ـ]/g;
 // Arabic short-vowel marks and other combining marks over Arabic letters: Soranî writes every vowel as a letter
 const ARABIC_MARKS = /[ً-ٰٟۖ-ۭ]/g;
 

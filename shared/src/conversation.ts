@@ -20,6 +20,7 @@
 import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey } from './lesson-audio.js';
 import { CHARACTER_NAMES } from './characters/types.js';
 import { SPEAKERS, isSpeakerId, type RecordingVoice, type SpeakerId } from './lipsync/speakers.js';
+import { isRecord } from './sanitize.js';
 
 export const CONVERSATION_LIMITS = {
   speakersMin: 2,
@@ -145,10 +146,6 @@ export interface ConversationClip {
   character: SpeakerId | null;
   text: string;
   key: string;
-}
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
 /**

@@ -9,6 +9,7 @@
  * and "spas" in another are one recording, not two.
  */
 import { normalizeKurdish } from './kurdish-text.js';
+import { isRecord } from './sanitize.js';
 
 /** The longest recording worth keeping: one sentence, said at a learner's pace. */
 export const LESSON_AUDIO_MAX_SECONDS = 15;
@@ -86,10 +87,6 @@ export function lessonAudioKey(text: string): string {
     key = key.replace(EDGE_QUOTES, '').replace(TRAILING_PUNCTUATION, '').trim();
   }
   return key;
-}
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
 /**

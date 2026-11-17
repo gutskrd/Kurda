@@ -74,12 +74,12 @@ const SHAPES: readonly (readonly string[])[] = [
   ['م', 'ن'],
 ];
 
-type Random = () => number;
+export type Random = () => number;
 
 /** The synthesised clips alone: what a round asks with before any recordings have arrived. */
 const SYNTHESISED = alphabetSounds();
 
-function shuffle<T>(xs: readonly T[], rand: Random): T[] {
+export function shuffle<T>(xs: readonly T[], rand: Random): T[] {
   const out = [...xs];
   for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));

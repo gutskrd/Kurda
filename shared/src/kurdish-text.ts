@@ -124,7 +124,7 @@ export function foldLetter(ch: string): string {
  * isolates a phone inserts around right-to-left text, the Arabic letter mark,
  * the byte-order mark, and tatweel (the typographic stretch `ـ`).
  */
-const INVISIBLE = /[​-‏‪-‮⁦-⁩؜﻿ـ]/g;
+export const INVISIBLE = /[​-‏‪-‮⁦-⁩؜﻿ـ]/g;
 
 /**
  * A typed answer as grading compares it: the same Kurdish text whichever

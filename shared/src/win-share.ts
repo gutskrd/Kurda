@@ -22,12 +22,10 @@
  * Nothing here is told who the sender is, so nothing here can say.
  */
 
-import { FIRE_STAGE_DAYS, fireGrewToday } from './fire-stages.js';
+import { FIRE_STAGE_DAYS, fireGrewToday, whole } from './fire-stages.js';
 import type { LeagueTier, LeagueWeekResult } from './leagues.js';
 import { isLeagueTier } from './leagues.js';
 import type { WinKind } from './win-link.js';
-
-const whole = (n: number): number => (Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0);
 
 // ---- the word game's grid ------------------------------------------------------------
 

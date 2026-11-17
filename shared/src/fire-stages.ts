@@ -61,7 +61,8 @@ export const FIRE_GROW = { delayMs: 600, ms: 1100 } as const;
 /** The stage's place in `FIRE_STAGES`: 0 for cold, 7 for the Newroz fire. */
 export const fireStageIndex = (stage: FireStage): number => FIRE_STAGES.indexOf(stage);
 
-const whole = (n: number): number => (Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0);
+/** A count as a whole number: never negative, and 0 for anything that is not a number. */
+export const whole = (n: number): number => (Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0);
 
 /** The level on a ladder of stages and the counts they start at, for a count of `n`. */
 function levelOn(ladder: readonly (readonly [FireStage, number])[], n: number, after: number): FireLevel {

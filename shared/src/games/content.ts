@@ -29,6 +29,7 @@
 import { z } from 'zod';
 import { APP_LOCALE_CODES, type AppLocale } from '../locales.js';
 import { SPEAKERS, type RecordingVoice, type SpeakerId } from '../lipsync/speakers.js';
+import { isHttpsUrl } from '../sanitize.js';
 import { GAME_DIALECTS, fitsDialect, foldForDialect, gameWords, type GameDialect } from './dialect.js';
 import type { GamesAvailability } from './solo.js';
 import { WHO_AM_I_MAX_SOMETIMES } from './who-am-i/game.js';
@@ -122,16 +123,6 @@ export interface ContentOrigin {
 export const SENTENCE_WORDS = { min: 3, max: 10 } as const;
 /** Words that vanish from a memory passage. */
 export const PASSAGE_HIDDEN = { min: 2, max: 6 } as const;
-
-/** A web address a browser would open over https: parsed, as a story's source is, so "https://" alone is refused too. */
-function isHttpsUrl(v: string): boolean {
-  try {
-    const url = new URL(v);
-    return url.protocol === 'https:' && url.hostname !== '';
-  } catch {
-    return false;
-  }
-}
 
 function build() {
   const kurdish = (max: number) => z.string().trim().min(1, 'write the Kurdish here').max(max, `keep it to ${max} characters`);

@@ -29,7 +29,7 @@
  */
 import { letterProblem } from './letters.js';
 import { normalizeKurdish } from './kurdish-text.js';
-import { stripControlChars } from './sanitize.js';
+import { isRecord, stripControlChars } from './sanitize.js';
 import { mix } from './art/svg.js';
 
 // ───────────────────────────────────────────────────────────── the page
@@ -316,7 +316,6 @@ export type DecorProblem =
 
 export type DecorCheck = { ok: true; value: LetterDecor } | { ok: false; problem: DecorProblem };
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const oneOf = <T extends string>(list: readonly T[], v: unknown): v is T => typeof v === 'string' && (list as readonly string[]).includes(v);
 

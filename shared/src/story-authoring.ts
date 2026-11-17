@@ -18,6 +18,7 @@
 import { LESSON_AUDIO_TEXT_MAX } from './lesson-audio.js';
 import { normalizeKurdish } from './kurdish-text.js';
 import { isAppLocale } from './locales.js';
+import { isHttpsUrl } from './sanitize.js';
 import {
   CEFR_LEVELS,
   GLOSSARY_MAX,
@@ -397,16 +398,6 @@ function entriesOf<T>(v: Record<string, T> | null | undefined): Array<[string, T
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** A web address a browser would open over https: parsed, not pattern-matched, so "https://" alone is refused too. */
-function isHttpsUrl(v: string): boolean {
-  try {
-    const url = new URL(v);
-    return url.protocol === 'https:' && url.hostname !== '';
-  } catch {
-    return false;
-  }
-}
 
 function sameOption(v: string): string {
   return v.normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase();

@@ -1,3 +1,4 @@
+import { shuffle, type Random } from '../alphabet/practice.js';
 import { wordSetSounds, type WordSetSounds } from './sounds.js';
 import {
   CALENDAR_MONTHS,
@@ -62,19 +63,8 @@ const NEAR_COLOUR: Record<string, readonly string[]> = {
   purple: ['pink', 'blue'], pink: ['red', 'purple'], grey: ['white', 'black'],
 };
 
-type Random = () => number;
-
 /** The synthesised clips alone: what a round asks with before any recordings have arrived. */
 const SYNTHESISED = wordSetSounds();
-
-function shuffle<T>(xs: readonly T[], rand: Random): T[] {
-  const out = [...xs];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [out[i], out[j]] = [out[j]!, out[i]!];
-  }
-  return out;
-}
 
 /**
  * The words most easily mistaken for `word`, nearest first: the colours
