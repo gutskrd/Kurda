@@ -1,34 +1,11 @@
 /**
- * Game-rank emblems (contract 4, R4/B3): six tiers, each a crest — a cut
- * stone in a rounded bezel, set in the tier's own metal, with a setting that
- * grows as the player climbs (see crest.ts).
- *
- *   Deşt, the plain     a carnelian shield, alone in its bezel
- *   Gir, the hills      an emerald kite with a first pair of wings
- *   Zozan, the pasture  a turquoise hexagon, its wings fuller, beads round its bezel
- *   Çiya, the mountain  a sapphire peak on a laurel
- *   Lûtke, the summit   an amethyst octagon under a crown of pearls, glowing
- *   Stêrk, the star     a round stone of starlight in gold, the full crest: a star on its crown, a hanging stone, the sun's rays
- *
- * Into each stone is cut, in white, the place it is named for — a sheaf of
- * wheat, the hills, the black tent, the snowy peak, the star over the summit,
- * the eight-pointed star — so the crest still says where you are.
- *
- * The division is a small plaque under the crest with three stones set in
- * it, lit as the player climbs: one for III, two for II, three for I —
- * counted, not coloured, so it reads for everyone; the title carries the
- * numeral.
- *
- * A season's emblem — the peak tier a player reached, kept for good (R5) —
- * swaps the stones for the season's own plaque: its glyph (blossom, sun,
- * leaf, snowflake, the same as the season event badges) and the year's last
- * two figures, so last spring's Çiya is not this spring's.
- *
- * Small sizes get their own drawing rather than a shrunken one: under
- * SMALL_EMBLEM pixels the crest fills its square, keeps its longest feathers and
- * drops the division (the app writes it beside it); under TINY_EMBLEM the
- * stone's table and its glyph go, and the setting keeps only what makes its
- * outline.
+ * Game-rank emblems: six tiers, each a crest (crest.ts) whose cut stone sits in the tier's metal with a setting that
+ * grows as the player climbs, from a lone carnelian shield (Deşt) to Stêrk's full crest. Each stone carries the glyph of
+ * the place the tier is named for. The division is a plaque of three stones under the crest, lit one, two or three
+ * for III, II and I, counted rather than coloured; the title carries the numeral. A season emblem (the peak tier of a
+ * season) swaps the plaque for the season's glyph and the year's last two figures. Below `SMALL_EMBLEM` pixels the
+ * crest fills its square and drops the division (the app prints it alongside); below `TINY_EMBLEM` the stone's table
+ * and glyph go too and only the outline-defining setting stays.
  */
 import { SEASON_ICONS } from './icons.js';
 import { paintIcon } from './iconpaint.js';
@@ -48,9 +25,9 @@ function rankField(t: RankTier): Field {
   return RANK_FIELD[t];
 }
 
-/** Under this many pixels an emblem is drawn in its small version: filling its square, no division. */
+/** Below this many pixels the small version is drawn: filling its square, without the division. */
 export const SMALL_EMBLEM = 56;
-/** Under this many pixels an emblem keeps only what says its tier: its outline, its colours, its cut. */
+/** Below this many pixels an emblem keeps only what identifies its tier: outline, colours and cut. */
 export const TINY_EMBLEM = 32;
 
 /** How much of a drawing to keep at `size` pixels. */
@@ -75,7 +52,7 @@ export function rankCrest(tier: RankTier): Crest {
   return { ...LADDER[tier], gem: RANK_GEM[tier], metal: RANK_METAL[tier], glyph: RANK_GLYPHS[tier] };
 }
 
-/** How much room a crest has: large ones leave the foot for the division; small ones fill the square. */
+/** The room a crest has: large ones leave the foot for the division; small ones fill the square. */
 export function crestBox(detail: Detail, marked: boolean): CrestBox {
   if (detail === 2) return { top: 2, bottom: 118, cap: 40 };
   if (detail === 1) return { top: 3, bottom: 117, cap: 36 };
@@ -142,16 +119,13 @@ function seasonMark(dr: Drawing, tier: RankTier, season: Season, year: number, c
 
 export interface RankEmblemOptions {
   tier: RankTier;
-  /** 3 = III (lowest) … 1 = I; leave out for the tier alone (and always for Stêrk) */
+  /** 3 is III (lowest) to 1 is I; omit for the tier alone, and always for Stêrk. */
   division?: RankDivision;
-  /**
-   * For a season's emblem: the season and its year, shown under the
-   * medallion in place of a division.
-   */
+  /** For a season emblem: the season and year, shown under the medallion instead of a division. */
   season?: { name: Season; year: number };
-  /** pixels; default 128 */
+  /** Size in pixels; defaults to 128. */
   size?: number;
-  /** the accessible label; defaults to "Çiya II (Mountain)" */
+  /** The accessible label; defaults to "Çiya II (Mountain)". */
   title?: string;
   idPrefix?: string;
 }
@@ -161,24 +135,22 @@ const ROMAN: Record<RankDivision, string> = { 3: 'III', 2: 'II', 1: 'I' };
 /** Where the pips or the plaque sit under a large medallion. */
 const FOOT_Y = 104;
 
-/** How many rated games place a player (R4). */
+/** How many rated games place a player. */
 export const PLACEMENT_GAMES = 5;
 
 export interface PlacementEmblemOptions {
-  /** placement games played so far, 0–5 */
+  /** Placement games played so far, 0–5. */
   done: number;
-  /** pixels; default 128 */
+  /** Size in pixels; defaults to 128. */
   size?: number;
-  /** the accessible label; defaults to "Placing 2/5" */
+  /** The accessible label; defaults to "Placing 2/5". */
   title?: string;
   idPrefix?: string;
 }
 
 /**
- * The emblem before a first tier ("Placing 3/5"): a pearl crest whose stone
- * is cut in five facets round its table, one for each placement game, each
- * lit in Hevalo's violet as it is played — so the count shows in the stone
- * itself, at any size — and five small stones under it that count the same.
+ * The emblem before a first tier ("Placing 3/5"): a pearl crest whose stone has five facets, one lit in violet per
+ * placement game played, so the count shows at any size, with five small stones under it counting the same.
  */
 export function placementEmblemSvg(opts: PlacementEmblemOptions): string {
   const { done } = opts;
@@ -187,7 +159,7 @@ export function placementEmblemSvg(opts: PlacementEmblemOptions): string {
   const detail = detailFor(size);
   const dr = new Drawing(prefixFor(opts.idPrefix, 'placing', done, detail));
   const crest: Crest = { cut: 'pentagon', gem: PEARL, metal: PEARL, wings: 0, base: 0, crown: 'none', beads: false, glow: 0, rays: false };
-  // the facet at the top is the first game, and the count goes round clockwise
+  // The top facet is the first game; the count runs clockwise.
   const order = [4, 0, 1, 2, 3];
   const { markup } = crestMarkup(dr, crest, { detail, box: crestBox(detail, detail === 0), table: (i) => (order.indexOf(i) < done ? PLACING : PEARL) });
   dr.add(markup);

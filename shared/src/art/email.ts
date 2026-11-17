@@ -1,34 +1,10 @@
 /**
- * The pictures of Hevalo's emails: one small scene for what each email is
- * about, drawn as the app's other object pictures are (cutout.ts), so a
- * letter from Hevalo looks like it came from the same place as the app.
- *
- * Each picture is a loop: it is drawn for a moment `at` of its turn, from 0
- * up to 1, and the last moment leads back into the first, so it can play for
- * as long as the email is open. The motion says what the email says — the
- * envelope opens on a letter with a tick, the code is typed in, the padlock
- * closes — and stays small: nothing flashes, nothing crosses the tile.
- * Every picture also has one moment it rests on (`emailPictureStill`), which
- * is the picture where nothing moves.
- *
- * An email shows its picture on a tile of the picture's own pale colour
- * (`emailPictureTone`), above the heading. Email programs do not draw SVG,
- * so the pictures are written out as images, the loop and the still
- * (api/scripts/generate-email-art.ts, into web/public/email/), and those are
- * what a message points at; this file is where they are drawn.
- *
- *   letter     an envelope opening on a letter with a tick: confirming an address
- *   code       a card the six places of a code are typed into: a code to enter
- *   key        a key swinging on its nail: setting or resetting a password
- *   lock       a padlock clicking shut: a password that was changed
- *   shield     a shield, its guard spreading round it: sign-ins held back
- *   badge      a name badge a new name is written on: a username that was changed
- *   device     a phone answering with a tick: a sign-in from somewhere new
- *   hourglass  an hourglass running and turning over: an account to be deleted in some days
- *   flag       a flag flying: a report waiting for a moderator
- *   document   a page a seal is set on: a copyright notice
- *   scales     a pair of scales weighing: a decision on a notice
- *   bell       a bell ringing: something that needs looking at now
+ * The pictures in Hevalo's emails: a small looping scene per email kind, in the cut-out style of the app's object
+ * pictures (cutout.ts). Each is drawn at a moment `at` from 0 to 1 whose end leads back into its start; the motion
+ * illustrates the email (an envelope opening, a code being typed, a padlock closing) and stays small. Each also has a
+ * resting moment (`emailPictureStill`) for the still image, and a pale tile colour (`emailPictureTone`). Email clients
+ * do not render SVG, so api/scripts/generate-email-art.ts writes the loop and still as images into web/public/email/;
+ * this file draws them.
  */
 import { dab, form, ring, rr, type Tones } from './cutout.js';
 import { Drawing, checkSize, n, n2, prefixFor, tint } from './svg.js';
@@ -37,12 +13,12 @@ export const EMAIL_PICTURES = ['letter', 'code', 'key', 'lock', 'shield', 'badge
 export type EmailPicture = (typeof EMAIL_PICTURES)[number];
 
 export interface EmailArtOptions {
-  /** how big it is drawn, in pixels (it is square) */
+  /** Size in pixels; the drawing is square. */
   size?: number;
-  /** its text label; an email says what it is about in words, so the picture is decoration there */
+  /** The accessible label; the email says what it is about in words, so the picture is decoration there. */
   title?: string;
   idPrefix?: string;
-  /** the moment of its loop it is drawn at, from 0 up to 1; left out, the moment it rests on */
+  /** The moment of its loop, from 0 up to 1; defaults to the resting moment. */
   at?: number;
 }
 
@@ -57,7 +33,7 @@ const PURPLE = '#8a5bd6';
 const ORANGE = '#f08a34';
 const STEEL = '#9aa5b4';
 const NIGHT = '#3b2f63';
-/** The deep tone lines are drawn in: never black. */
+/** The deep tone lines are drawn in, never black. */
 const INK = '#3a2b4d';
 const CREAM: Tones = { light: '#fffaf1', base: '#f6ead6', shade: '#cdb898' };
 const WHITE: Tones = { light: '#ffffff', base: '#eef2f7', shade: '#bcc6d4' };
@@ -76,7 +52,7 @@ const dot = (dr: Drawing, cx: number, cy: number, r: number, hex: string): void 
 };
 /** A round bead: a dab as wide as it is tall. */
 const bead = (dr: Drawing, cx: number, cy: number, r: number, hex: string, drop = 2.4): void => dab(dr, cx, cy, r, r, hex, drop);
-/** A tick, in the light of the thing it is drawn on. */
+/** A tick in the light colour of what it is drawn on. */
 const tick = (dr: Drawing, cx: number, cy: number, k: number, hex = '#ffffff', width = 5): void => {
   line(dr, `M${n(cx - 7 * k)} ${n(cy + 0.5 * k)}L${n(cx - 2 * k)} ${n(cy + 5.5 * k)}L${n(cx + 7.5 * k)} ${n(cy - 5 * k)}`, hex, width);
 };
@@ -91,7 +67,7 @@ const glint = (dr: Drawing, x: number, y: number, s: number, hex = GOLD): void =
       `Q${n(x - c)} ${n(y + c)} ${n(x - s)} ${n(y)}Q${n(x - c)} ${n(y - c)} ${n(x)} ${n(y - s)}Z" fill="${hex}"/>`,
   );
 };
-/** What a thing stands on: a flat patch of the tile's own colour, a little deeper, smaller when the thing is lifted. */
+/** What a thing stands on: a flat patch a little deeper than the tile, smaller when the thing is lifted. */
 const ground = (dr: Drawing, tone: string, cx: number, rx: number, k = 1): void => {
   dr.add(`<ellipse cx="${n(cx)}" cy="109" rx="${n(rx * k)}" ry="${n(4.4 * k)}" fill="${tint(tone, -0.09)}"/>`);
 };
@@ -115,29 +91,29 @@ const grow = (kx: number, ky: number, cx: number, cy: number): string => `transl
 // ───────────────────────────────────────────────────────────── the clock
 
 const TAU = Math.PI * 2;
-/** A swing back and forth, once a loop: 0 at the start, there at a quarter, back, the other way, back. */
+/** A back-and-forth swing, once a loop: 0, peak at a quarter, back, the other way, back. */
 const sway = (t: number, shift = 0): number => Math.sin(TAU * (t + shift));
-/** There and back, once a loop: 0, up to 1 at the half, 0 again. */
+/** There and back once a loop: 0, up to 1 at the half, 0 again. */
 const swell = (t: number, shift = 0): number => 0.5 - 0.5 * Math.cos(TAU * (t + shift));
 const clamp = (x: number): number => Math.min(1, Math.max(0, x));
-/** How far `t` is through the stretch from `a` to `b`, eased at both ends; 0 before it and 1 after. */
+/** How far `t` is through the span `a` to `b`, eased at both ends; 0 before and 1 after. */
 const through = (t: number, a: number, b: number): number => {
   const x = clamp((t - a) / (b - a));
   return x * x * (3 - 2 * x);
 };
-/** A quick rise and settle after `at`, for something that lands: 0, a little over 1, then 1. */
+/** A quick rise and settle after `at`, for something landing: 0, slightly over 1, then 1. */
 const land = (t: number, at: number, takes: number): number => {
   const x = clamp((t - at) / takes);
   return x === 0 ? 0 : 1 + 0.28 * Math.sin(x * Math.PI) * (1 - x) - (1 - x) ** 3;
 };
-/** The moment within the loop, whatever number was asked for. */
+/** The moment within the loop for any number. */
 const moment = (at: number): number => ((at % 1) + 1) % 1;
 
 type Draw = (dr: Drawing, t: number, tone: string) => void;
 
 // ───────────────────────────────────────────────────────────── the pictures
 
-/** An envelope opens, and a letter with a green tick comes up out of it and goes back in. */
+/** An envelope opens, and a letter with a green tick rises out of it and goes back in. */
 const letter: Draw = (dr, t, tone) => {
   const open = swell(t, 0.5);
   const flap = through(open, 0, 0.42);
@@ -145,7 +121,7 @@ const letter: Draw = (dr, t, tone) => {
   const lift = 1.6 * rise;
   ground(dr, tone, 60, 36, 1 - 0.04 * rise);
   within(dr, move(0, -lift), () => {
-    // the flap turns over its hinge: down over the front when shut, standing up behind the letter when open
+    // The flap turns over its hinge: down over the front when shut, standing up behind the letter when open.
     const hinge = 1 - 2 * flap;
     const drawFlap = (): void => {
       if (Math.abs(hinge) < 0.04) return;
@@ -155,13 +131,13 @@ const letter: Draw = (dr, t, tone) => {
       });
     };
     if (hinge < 0) drawFlap();
-    // the letter
+    // The letter.
     const top = 56 - 38 * rise;
     form(dr, rr(31, top, 58, 54, 7), WHITE, 0, 2);
     line(dr, `M41 ${n(top + 36)}H79M47 ${n(top + 44)}H73`, tint(INK, 0.78), 3);
     bead(dr, 60, top + 18, 11, GREEN, 2.4);
     tick(dr, 60, top + 18, 0.78, '#ffffff', 4);
-    // the envelope's front
+    // The envelope's front.
     form(dr, rr(19, 47, 82, 55, 10), CREAM, 5, 2.4);
     line(dr, 'M22 98L47 75M98 98L73 75', tint(CREAM.shade, 0.2), 2.2);
     if (hinge >= 0) drawFlap();
@@ -170,14 +146,14 @@ const letter: Draw = (dr, t, tone) => {
   glint(dr, 25, 38, 4.5 * swell(t, 0.35) * rise);
 };
 
-/** A message with six places, typed into one after another; then a green tick says the code is whole. */
+/** A message with six places typed into one after another, then a green tick when the code is complete. */
 const code: Draw = (dr, t, tone) => {
   const typed = clamp((t - 0.06) / 0.46) * 6;
   const done = land(t, 0.56, 0.16);
   const away = 1 - through(t, 0.9, 1);
   ground(dr, tone, 60, 38);
   form(dr, rr(11, 22, 98, 78, 16), WHITE, 5, 2.6);
-  // who it is from and what it is, as two lines over the code
+  // Sender and subject, as two lines over the code.
   line(dr, 'M24 39H58', tint(INK, 0.45), 4.6);
   line(dr, 'M24 50H76', tint(INK, 0.74), 4.6);
   for (let i = 0; i < 6; i++) {
@@ -187,7 +163,7 @@ const code: Draw = (dr, t, tone) => {
     if (here > 0) {
       faded(dr, away, () => dot(dr, x + 5.7, 74, 3.9 * (0.5 + 0.5 * Math.min(1, here * 2.2)), INK));
     } else if (typed > i - 1 && typed < 6 && away === 1 && Math.floor(typed * 2.4) % 2 === 0) {
-      // the place being typed into shows where the next one goes
+      // A caret marks the place being typed into.
       dr.add(`<path d="${rr(x + 4.6, 66.5, 2.2, 15, 1.1)}" fill="${PURPLE}"/>`);
     }
   }
@@ -202,7 +178,7 @@ const code: Draw = (dr, t, tone) => {
   glint(dr, 20, 14, 5 * swell(t, 0.25) * clamp(done) * away);
 };
 
-/** A gold key hanging on a nail, swinging a little, a glint on it now and then. */
+/** A gold key swinging a little on a nail, with an occasional glint. */
 const key: Draw = (dr, t, tone) => {
   const swing = 9 * sway(t);
   ground(dr, tone, 60 - swing * 0.9, 22);
@@ -242,7 +218,7 @@ const lock: Draw = (dr, t, tone) => {
   glint(dr, 24, 44, 5.5 * click);
 };
 
-/** A shield with a tick, its guard spreading out round it and fading, again and again. */
+/** A shield with a tick, a guard ring spreading out round it and fading, repeatedly. */
 const shield: Draw = (dr, t, tone) => {
   const outline = 'M60 16L94 27.5V56C94 79 79 95 60 104C41 95 26 79 26 56V27.5Z';
   ground(dr, tone, 60, 30);
@@ -251,14 +227,14 @@ const shield: Draw = (dr, t, tone) => {
     const k = 1 + 0.3 * p;
     dr.add(`<g transform="${grow(k, k, 60, 60)}" opacity="${n2(0.5 * (1 - p) * Math.min(1, p * 6))}"><path d="${outline}" fill="none" stroke="${BLUE}" stroke-width="${n(3 / k)}" stroke-linejoin="round"/></g>`);
   }
-  // the shield itself stands still: it is what does not move
+  // The shield itself stays still.
   form(dr, outline, tones(BLUE), 5, 2.8);
   line(dr, 'M60 26L86 34.5V56C86 74 75 87 60 94.5', tint(BLUE, -0.16), 2.4);
   tick(dr, 60, 59, 1.8, '#ffffff', 8);
   glint(dr, 99, 26, 6 * swell(t, 0.2));
 };
 
-/** A name badge swaying on its clip, a new name being written on its line. */
+/** A name badge swaying on its clip, with a new name being written on its line. */
 const badge: Draw = (dr, t, tone) => {
   const swing = 3.6 * sway(t);
   const written = through(t, 0.1, 0.46);
@@ -271,13 +247,13 @@ const badge: Draw = (dr, t, tone) => {
     dot(dr, 60, 36.5, 3.6, tint(ORANGE, -0.36));
     bead(dr, 40, 72, 12, PURPLE, 2.6);
     if (written > 0.02) faded(dr, away, () => line(dr, `M62 66H${n(62 + 30 * written)}`, INK, 5.4));
-    // the pen's place, while the name is being written
+    // The pen's caret while the name is being written.
     if (written > 0.02 && written < 0.98) dr.add(`<path d="${rr(63.5 + 30 * written, 59.5, 2.4, 13, 1.2)}" fill="${PURPLE}"/>`);
     line(dr, 'M62 80H82', tint(INK, 0.6), 5.4);
   });
 };
 
-/** A phone whose screen answers with a green tick, the answer spreading across it. */
+/** A phone whose screen answers with a green tick that spreads across it. */
 const device: Draw = (dr, t, tone) => {
   const bob = 1.4 * sway(t);
   ground(dr, tone, 60, 26, 1 - 0.03 * sway(t));
@@ -301,9 +277,8 @@ const device: Draw = (dr, t, tone) => {
 };
 
 /**
- * An hourglass: the sand runs through, and then the glass turns over and it
- * runs again. Its parts are turned as points and drawn where they land, so
- * the light stays where it is while the glass turns under it.
+ * An hourglass: the sand runs through, then the glass turns over and it runs again. Parts are rotated as points and
+ * drawn where they land, so the lighting stays fixed while the glass turns.
  */
 const hourglass: Draw = (dr, t, tone) => {
   const run = clamp(t / 0.72);
@@ -314,11 +289,11 @@ const hourglass: Draw = (dr, t, tone) => {
     return [60 + dx * Math.cos(over) - dy * Math.sin(over), 60 + dx * Math.sin(over) + dy * Math.cos(over)];
   };
   const turned = (points: ReadonlyArray<readonly [number, number]>): string => poly(points.map(at));
-  /** half the glass's inner width at a height: wide at the ends, a neck in the middle */
+  /** Half the glass's inner width at a height: wide at the ends, narrow at the neck. */
   const half = (y: number): number => 2.4 + 15.6 * (Math.abs(y - 60) - 3) / 25;
   ground(dr, tone, 60, 30, 1 - 0.12 * Math.sin(over));
   form(dr, turned([[38, 27], [82, 27], [82, 31], [64, 58], [64, 62], [82, 89], [82, 93], [38, 93], [38, 89], [56, 62], [56, 58], [38, 31]]), WHITE, 4, 2.4);
-  // the sand above, sinking, and the sand below, rising; all of one is all of the other, turned over
+  // Sand above sinks as sand below rises; a full top is a full bottom turned over.
   const above = 32 + 25 * run;
   const below = 88 - 25 * run;
   if (run < 0.99) dr.add(`<path d="${turned([[60 - half(above), above], [60 + half(above), above], [62.4, 57], [57.6, 57]])}" fill="${GOLD}"/>`);
@@ -329,7 +304,7 @@ const hourglass: Draw = (dr, t, tone) => {
   form(dr, end(93), WOOD, 3, 2);
 };
 
-/** A red flag on its pole, flying: the cloth runs in waves from the pole to its tails. */
+/** A red flag flying on its pole, waves running from the pole to its tails. */
 const flag: Draw = (dr, t, tone) => {
   const edge = (x: number, y: number, shift: number): [number, number] => {
     const far = (x - 41) / 55;
@@ -343,12 +318,12 @@ const flag: Draw = (dr, t, tone) => {
   bead(dr, 36.5, 13, 6.5, GOLD, 2);
 };
 
-/** A written page, its corner folded, and a gold seal set down on it, its ribbons settling and the light catching it. */
+/** A written page with a folded corner, a gold seal landing on it, ribbons settling and catching the light. */
 const document: Draw = (dr, t, tone) => {
   const set = land(t, 0.14, 0.2);
   const away = 1 - through(t, 0.9, 1);
   const press = Math.sin(Math.PI * clamp((t - 0.16) / 0.14)) * (t < 0.3 ? 1 : 0);
-  // the ribbons swing from the seal after it lands, less and less
+  // The ribbons swing from the seal after it lands, less and less.
   const settle = 9 * Math.sin(TAU * 2.5 * (t - 0.3)) * (1 - through(t, 0.3, 0.86)) * (t > 0.3 ? 1 : 0);
   ground(dr, tone, 60, 32);
   within(dr, grow(1, 1 - 0.012 * press, 60, 106), () => {
@@ -376,7 +351,7 @@ const document: Draw = (dr, t, tone) => {
   glint(dr, 22, 30, 4 * swell(t, 0.2) * clamp(set) * away * (t > 0.4 ? 1 : 0));
 };
 
-/** A pair of scales, the beam tipping one way and the other as it weighs. */
+/** A pair of scales, the beam tipping one way and then the other. */
 const scales: Draw = (dr, t, tone) => {
   const tip = (7 * sway(t) * Math.PI) / 180;
   const arm = 34;
@@ -397,9 +372,9 @@ const scales: Draw = (dr, t, tone) => {
   bead(dr, 60, 31, 7, GOLD, 2.2);
 };
 
-/** A bell rings: it swings fast, its clapper a beat behind, the sound going out each side; then it hangs still. */
+/** A bell rings, its clapper a beat behind and sound lines either side, then hangs still. */
 const bell: Draw = (dr, t, tone) => {
-  // it starts from hanging still and comes back to it, so the loop closes on a bell at rest
+  // It starts and ends hanging still, so the loop closes on a bell at rest.
   const loud = through(t, 0, 0.07) * (1 - through(t, 0.42, 0.72));
   const swing = 13 * loud * Math.sin(TAU * 3 * t);
   const clapper = 22 * loud * Math.sin(TAU * 3 * t - 1.1);
@@ -419,7 +394,7 @@ const bell: Draw = (dr, t, tone) => {
   }
 };
 
-/** Each picture: how it is drawn, its tile's pale colour, how long its loop takes, the moment it rests on, and what it is. */
+/** Each picture: its drawing, tile colour, loop length, resting moment and title. */
 const PICTURES: Readonly<Record<EmailPicture, { draw: Draw; tone: string; loopMs: number; still: number; title: string }>> = {
   letter: { draw: letter, tone: '#e3f3e6', loopMs: 3600, still: 0, title: 'An envelope open on a letter with a tick' },
   code: { draw: code, tone: '#ebe5fa', loopMs: 3600, still: 0.78, title: 'A code typed into its six places' },
@@ -445,17 +420,17 @@ export function emailPictureTone(picture: EmailPicture): string {
   return known(picture).tone;
 }
 
-/** How long one turn of a picture's loop takes, in milliseconds. */
+/** How long one loop of a picture takes, in milliseconds. */
 export function emailPictureLoopMs(picture: EmailPicture): number {
   return known(picture).loopMs;
 }
 
-/** The moment of its loop a picture rests on: what is shown where nothing moves. */
+/** The moment of its loop a picture rests on, shown where nothing moves. */
 export function emailPictureStill(picture: EmailPicture): number {
   return known(picture).still;
 }
 
-/** One email picture at a moment of its loop, on nothing: the tile under it is the email's (or the image's) own. */
+/** One email picture at a moment of its loop, with no background; the tile under it belongs to the email or image. */
 export function emailPictureSvg(opts: EmailArtOptions & { picture: EmailPicture }): string {
   const picture = known(opts.picture);
   const size = checkSize(opts.size, 120);

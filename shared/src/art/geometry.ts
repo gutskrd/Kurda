@@ -54,10 +54,9 @@ function edgeNormals(points: readonly Pt[]): Pt[] {
 }
 
 /**
- * The outline moved out by `d` (in by a negative `d`), corner by corner: each
- * point goes to where its two neighbouring edges, each moved by `d`, meet.
- * That keeps a hexagon a hexagon with straight sides, and a sharp corner is
- * capped at three times `d` so a star's points do not shoot off to infinity.
+ * The outline moved out by `d` (in for a negative `d`): each point goes to where its two neighbouring edges, each
+ * moved by `d`, meet, which keeps straight sides straight. Sharp corners are capped at three times `d` so a star's
+ * points do not shoot off.
  */
 export function offset(points: readonly Pt[], d: number): Pt[] {
   const normals = edgeNormals(points);
@@ -87,12 +86,9 @@ export function place(points: readonly Pt[], { x = 0, y = 0, deg = 0, s = 1 }: {
 }
 
 /**
- * A closed path through `vertices` with each corner rounded by a quadratic
- * that starts `radius` before the vertex and ends `radius` after it — the
- * same corners `roundedPolygon` samples, written exactly. A badge's body is
- * drawn four or five times over (its shadow, rim, lip, field and clip), so a
- * path of a dozen curves instead of a hundred points is most of what keeps a
- * page of them light.
+ * A closed path through `vertices` with each corner rounded by a quadratic from `radius` before the vertex to `radius`
+ * after it. A badge body is drawn four or five times (shadow, rim, lip, field, clip), so a dozen exact curves instead of
+ * sampled points keeps a page of badges light.
  */
 export function roundPath(vertices: readonly Pt[], radius: number | readonly number[]): string {
   const count = vertices.length;
@@ -116,17 +112,15 @@ export function roundPath(vertices: readonly Pt[], radius: number | readonly num
   return `${d}Z`;
 }
 
-/** A rounded outline: its corners, and how round each is. */
+/** A rounded outline: its corners, and each corner's radius. */
 export interface RoundShape {
   vertices: Pt[];
   radii: number[];
 }
 
 /**
- * A rounded outline moved in by `d` (out by a negative `d`): the corners move
- * as `offset` moves them, a convex corner's rounding shrinks by `d` and a
- * hollow one's grows by it, which is what keeps a rim the same width all the
- * way round.
+ * A rounded outline moved in by `d` (out for a negative `d`): corners move as in `offset`, a convex corner's radius
+ * shrinks by `d` and a concave one's grows by it, which keeps a rim the same width all the way round.
  */
 export function insetRound(shape: RoundShape, d: number): RoundShape {
   const { vertices, radii } = shape;
