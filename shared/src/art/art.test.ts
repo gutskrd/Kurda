@@ -1592,7 +1592,7 @@ describe('the lesson path’s world', () => {
           const svg = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, dark, seed: 'u' });
           const elements = sound(svg, `0 0 ${width} ${unit.height}`);
           expect(parse(svg).attrs['aria-hidden']).toBe('true');
-          // a few hundred elements, and no more than the whole village weighs on a wide page
+          // A few hundred elements, and a capped size, since a path draws two or three lands at once.
           expect(elements, `${land.ground} ${width}`).toBeLessThan(width > 400 ? 420 : 260);
           expect(svg.length, `${land.ground} ${width}`).toBeLessThan((width > 400 ? 64 : 36) * 1024);
           drawings.add(svg);
