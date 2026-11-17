@@ -16,8 +16,10 @@ import { pressedDim } from './motion';
  * language's words do not fit — which a segmented control can only answer by
  * cutting them off.
  *
- * The chosen chip is the one solid thing in the row, in the primary colour,
- * and says it is selected to a screen reader too.
+ * The chosen chip wears the violet wash with violet words, as a switch that
+ * is on does, and says it is selected to a screen reader too. It was solid
+ * violet, which the app keeps for a screen's main button: a row of filters
+ * read as a row of things to press.
  *
  * It is laid inside the page's gutter but scrolls out to the screen's edges,
  * so a chip that does not fit is cut by the edge of the phone — which reads
@@ -70,15 +72,15 @@ export function Chips<T extends string>({
             hitSlop={{ top: 4, bottom: 4 }}
             style={({ pressed }) => [
               styles.chip,
-              { backgroundColor: active ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+              { backgroundColor: active ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
             ]}
           >
-            <Text style={[styles.text, { color: active ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
+            <Text style={[styles.text, { color: active ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
               {label}
             </Text>
             {count ? (
-              <View style={[styles.count, { backgroundColor: active ? colors.textOnPrimary : colors.primary }]}>
-                <Text style={[styles.countText, { color: active ? colors.primary : colors.textOnPrimary }]}>{count > 9 ? '9+' : count}</Text>
+              <View style={[styles.count, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.countText, { color: colors.textOnPrimary }]}>{count > 9 ? '9+' : count}</Text>
               </View>
             ) : null}
           </Pressable>
@@ -87,6 +89,9 @@ export function Chips<T extends string>({
     </ScrollView>
   );
 }
+
+/** How much of the violet a chosen chip is, as the last two digits of its colour: the tab bar's own wash. */
+const CHOSEN_WASH = '1F';
 
 const styles = StyleSheet.create({
   scroller: { flexGrow: 0, marginHorizontal: -layout.gutter },

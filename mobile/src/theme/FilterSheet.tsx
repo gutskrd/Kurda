@@ -135,7 +135,8 @@ export function FilterOption({ label, hint, icon, on, onPress }: { label: string
         <Text style={[styles.optionText, dir.text, { color: colors.textPrimary }, on && styles.optionOn]}>{label}</Text>
         {hint ? <Text style={[styles.optionHint, dir.text, { color: colors.textSecondary }]}>{hint}</Text> : null}
       </View>
-      {on ? <Icon name="check" size={20} color={colors.textPrimary} /> : null}
+      {/* the chosen option's tick in the violet of what is chosen */}
+      {on ? <Icon name="check" size={20} color={colors.primary} /> : null}
     </Pressable>
   );
 }
