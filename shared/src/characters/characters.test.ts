@@ -13,10 +13,10 @@ import {
   STAGE_FIGURE_SHARE,
   WINDOW_PLACE,
   WINDOW_VIEW,
-  BURROW_PLACE,
-  BURROW_VIEW,
-  burrowArt,
-  type BurrowArt,
+  PEEK_PLACE,
+  PEEK_VIEW,
+  peekArt,
+  type PeekArt,
   characterArt,
   characterSvg,
   cropBody,
@@ -857,48 +857,48 @@ describe('the pen', () => {
   });
 });
 
-describe('the hole Hevalo looks out of', () => {
-  const layers = (drawn: BurrowArt): string[] => [drawn.back, drawn.front, drawn.shadow];
+describe('the tear in the page Hevalo pokes his head through', () => {
+  const layers = (drawn: PeekArt): string[] => [drawn.back, drawn.cast, drawn.front, drawn.shadow];
 
-  it('is three well-formed drawings in its box, behind him, on our side of him and his shade, in the light and in the dark', () => {
+  it('is four well-formed drawings in its box, behind him, his shadow on the page, on our side of him and his shade, on a light page and a dark one', () => {
     for (const dark of [false, true]) {
-      const drawn = burrowArt({ dark, idPrefix: `hole${dark ? 'd' : 'l'}` });
+      const drawn = peekArt({ dark, idPrefix: `tear${dark ? 'd' : 'l'}` });
       for (const layer of layers(drawn)) {
         const svg = parse(layer).children[0] as El;
         expect(svg.name).toBe('svg');
-        expect(svg.attrs.viewBox).toBe(`${BURROW_VIEW.x} ${BURROW_VIEW.y} ${BURROW_VIEW.w} ${BURROW_VIEW.h}`);
+        expect(svg.attrs.viewBox).toBe(`${PEEK_VIEW.x} ${PEEK_VIEW.y} ${PEEK_VIEW.w} ${PEEK_VIEW.h}`);
         expect(svg.attrs['aria-hidden']).toBe('true');
         const { problems, ids, refs } = inspect(layer);
         expect(problems).toEqual([]);
         for (const r of refs) expect(ids).toContain(r);
-        for (const i of ids) expect(i.startsWith(`hole${dark ? 'd' : 'l'}-`)).toBe(true);
-        expect(inside(extent(layer), BURROW_VIEW)).toBe(true);
+        for (const i of ids) expect(i.startsWith(`tear${dark ? 'd' : 'l'}-`)).toBe(true);
+        expect(inside(extent(layer), PEEK_VIEW)).toBe(true);
       }
     }
-    expect(burrowArt().back).not.toBe(burrowArt({ dark: true }).back);
-    expect(burrowArt({ idPrefix: 'again' })).toEqual(burrowArt({ idPrefix: 'again' }));
+    expect(peekArt().back).not.toBe(peekArt({ dark: true }).back);
+    expect(peekArt({ idPrefix: 'again' })).toEqual(peekArt({ idPrefix: 'again' }));
   });
 
-  it('keeps two holes on a page apart: each its own ids', () => {
-    const ids = [...layers(burrowArt({ idPrefix: 'one' })), ...layers(burrowArt({ idPrefix: 'two' }))].flatMap((m) => inspect(m).ids);
+  it('keeps two tears on a page apart: each its own ids', () => {
+    const ids = [...layers(peekArt({ idPrefix: 'one' })), ...layers(peekArt({ idPrefix: 'two' }))].flatMap((m) => inspect(m).ids);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('puts all of his head and antlers in the picture, and cuts him off under his chin, inside the hole', () => {
+  it('puts all of his head and antlers in the picture, and cuts him off under his chin, at the tear’s foot', () => {
     const art = characterArt('hevalo');
     const head = extent(headGroup(art));
-    const f = BURROW_PLACE.figure;
+    const f = PEEK_PLACE.figure;
     // his head crop's box, in the picture's units
-    const box = { x: BURROW_VIEW.x + f.left * BURROW_VIEW.w, y: BURROW_VIEW.y + f.top * BURROW_VIEW.h, w: f.width * BURROW_VIEW.w };
+    const box = { x: PEEK_VIEW.x + f.left * PEEK_VIEW.w, y: PEEK_VIEW.y + f.top * PEEK_VIEW.h, w: f.width * PEEK_VIEW.w };
     expect(box.x).toBeCloseTo(art.neck!.box.x);
     expect(box.y).toBeCloseTo(art.neck!.box.y);
     expect(box.w).toBeCloseTo(art.neck!.box.w);
     // the cut is under his head and above where his neck widens into his chest at the window's sill
-    const cut = BURROW_VIEW.y + BURROW_PLACE.cut * BURROW_VIEW.h;
+    const cut = PEEK_VIEW.y + PEEK_PLACE.cut * PEEK_VIEW.h;
     expect(cut).toBeGreaterThan(head.y + head.h - 1);
     expect(cut).toBeLessThan(600);
-    // and he waits in the hole wholly under it before he comes up
-    expect(BURROW_VIEW.y + (BURROW_PLACE.figure.top + BURROW_PLACE.drop) * BURROW_VIEW.h).toBeCloseTo(cut);
-    expect(head.y).toBeGreaterThan(BURROW_VIEW.y);
+    // and he waits behind the page wholly under it before he comes through
+    expect(PEEK_VIEW.y + (PEEK_PLACE.figure.top + PEEK_PLACE.drop) * PEEK_VIEW.h).toBeCloseTo(cut);
+    expect(head.y).toBeGreaterThan(PEEK_VIEW.y);
   });
 });

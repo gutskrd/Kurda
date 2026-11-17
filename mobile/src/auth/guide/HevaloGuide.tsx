@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { CharacterPoint } from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
-import { HevaloBurrow } from '../../characters/HevaloBurrow';
+import { HevaloPeek } from '../../characters/HevaloPeek';
 import type { CharacterReaction } from '../../characters/SpeakingCharacter';
 import { useDirection } from '../../reports/direction';
 import { timing } from '../../theme/animate';
@@ -12,7 +12,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { useScreenFocus } from './focus';
 import { useSpokenLine } from './speech';
 
-/** How tall Hevalo and his hole stand beside his bubble, from his antlers to the grass. */
+/** How tall Hevalo and the tear he looks through stand beside his bubble, from his antlers to the tear's foot. */
 export const GUIDE_HEIGHT = 96;
 
 /**
@@ -29,8 +29,8 @@ const TAIL = 12;
 /**
  * Hevalo at the top of a step, saying its line.
  *
- * He looks out of a hole in the ground beside a speech bubble with the
- * words in it (characters/HevaloBurrow), coming up out of it as the screen
+ * He pokes his head through a tear in the page beside a speech bubble with
+ * the words in it (characters/HevaloPeek), coming through as the screen
  * opens: cut off at the waist and floating beside his words, he read as half
  * a deer. He says the words: his mouth moves with the line (guide/speech.ts), he breathes,
  * blinks, and looks where he is told (`gaze`, at the field), tilts his head
@@ -64,7 +64,7 @@ export function HevaloGuide({
   return (
     <View style={[styles.row, { flexDirection: dir.row }, style]} testID="hevalo-guide">
       <View aria-hidden testID="hevalo-guide-figure">
-        <HevaloBurrow
+        <HevaloPeek
           size={GUIDE_HEIGHT}
           speech={speech}
           text={says}

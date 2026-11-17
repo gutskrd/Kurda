@@ -77,7 +77,7 @@ export { CHARACTER_GLOW, stageBackdrop, type StageOptions } from './stage.js';
 export { LEAN_DEGREES, eyeShift, gazeTargets, leanToward, lookAcross, standTogether, standingSpots, togetherBackdrop, type StandingPlace } from './together.js';
 export { BLINK_MS, NOD_DEGREES, eyesAt, speakingFrame, voiceTimeline, type SpeakingFrame, type SpeakingInput } from './speaking.js';
 export { WINDOW_PLACE, WINDOW_POP, WINDOW_VIEW, windowArt, type WindowArt, type WindowShare } from './window.js';
-export { BURROW_PLACE, BURROW_POP, BURROW_VIEW, burrowArt, type BurrowArt } from './burrow.js';
+export { PEEK_PLACE, PEEK_POP, PEEK_VIEW, peekArt, type PeekArt } from './peek.js';
 export {
   COMPANION_DOZE_MS,
   COMPANION_EDGE,
