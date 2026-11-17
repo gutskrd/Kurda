@@ -26,10 +26,6 @@ export const DIFFICULTY_LEVELS: Readonly<Record<GameDifficulty, readonly GameLev
   advanced: [4, 5],
 };
 
-export function isGameDifficulty(v: unknown): v is GameDifficulty {
-  return v === 'beginner' || v === 'intermediate' || v === 'advanced';
-}
-
 /** The difficulty a content level belongs to. */
 export function difficultyOfLevel(level: number): GameDifficulty {
   return level <= 2 ? 'beginner' : level === 3 ? 'intermediate' : 'advanced';

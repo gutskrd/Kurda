@@ -14,7 +14,6 @@
  * difficulty they are typed, with the key bar, and graded as lessons grade a
  * typed answer: a slip of a mark (ê for e, ێ for ی) is accepted as a typo.
  */
-import type { SpeakerId } from '../../lipsync/speakers.js';
 import type { Meanings } from '../content.js';
 import type { GameDifficulty } from '../solo.js';
 
@@ -59,7 +58,6 @@ export function studySeconds(words: number, difficulty: GameDifficulty): number 
 
 /** Where the vanished words came from, which the explanation after a passage names. */
 export type MemoryWhy = 'glossary' | 'vocabulary';
-export const MEMORY_WHY: readonly MemoryWhy[] = ['glossary', 'vocabulary'];
 
 // ---------- what the apps are sent ----------
 
@@ -88,9 +86,6 @@ export type MemoryVerdict = 'right' | 'typo' | 'wrong';
 export interface MemoryThiefCorrection {
   words: Array<{ gap: number; term: string; meanings: Partial<Meanings> | null; given: string | null; verdict: MemoryVerdict }>;
 }
-
-/** A conversation's lines say who speaks each one; a story's passage has one unspoken line. */
-export type MemorySpeakers = Array<SpeakerId | null>;
 
 /** The passage as it is studied, line by line, before anything is known of what will vanish. */
 export function memoryTextLines(text: string): MemoryStudyPiece[][] {

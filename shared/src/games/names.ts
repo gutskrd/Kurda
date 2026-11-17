@@ -25,5 +25,3 @@ export const GAME_NAMES = {
   impostor: 'Xapînok',
   'who-am-i': 'Ez kî me?',
 } as const;
-
-export type NamedGame = keyof typeof GAME_NAMES;

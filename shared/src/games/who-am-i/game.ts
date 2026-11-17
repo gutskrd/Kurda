@@ -377,11 +377,6 @@ export function sharedCategory(category: string, tiles: ReadonlyArray<{ category
   return tiles.length > 0 && tiles.every((t) => t.category === category) ? category : null;
 }
 
-/** The answer to a question about an identity as yes or not: what apps from before the four answers read. */
-export function answerFor(identity: Pick<WhoAmIIdentity, 'facts'>, fact: string): boolean {
-  return verdictFor(identity, fact) === 'yes';
-}
-
 /** What the card said to a question asked, from either of its forms: its verdict, or the yes or no of a list kept before there were three. */
 export function askedVerdict(a: WhoAmIAsked): WhoAmIAnswer {
   return a.verdict ?? (a.answer ? 'yes' : 'no');

@@ -27,11 +27,6 @@ export const MULTI_GAME_SEGMENT: Readonly<Record<MultiGame, string>> = {
 export const AWAY_AFTER_MISSED_TURNS = 2;
 /** How long an away player's turn waits for them before it is passed over: long enough to tap back in. */
 export const AWAY_TURN_GRACE_MS = 4_000;
-/** A game whose every person has been gone or away this long is ended where it stands. */
-export const ABANDONED_MINUTES = 10;
-
-/** Who plays a computer seat. */
-export const HEVALO_BOT = 'hevalo';
 
 // ---------------------------------------------------------------------------
 // placement XP

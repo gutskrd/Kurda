@@ -56,21 +56,6 @@ export const MIN_WORD_LETTERS = 2;
 /** The most: a typed line longer than this is not one word. */
 export const MAX_WORD_LETTERS = 24;
 
-/** Any spelling of a dialect, as the tables and the apps have used them, to the canonical code. */
-export function asLetterDialect(value: unknown): LetterDialect | null {
-  switch (value) {
-    case 'kmr':
-    case 'kurmanji':
-    case 'kurmanci':
-      return 'kmr';
-    case 'ckb':
-    case 'sorani':
-      return 'ckb';
-    default:
-      return null;
-  }
-}
-
 /** The dictionary's spelling of a dialect (`dict_entries.dialect`). */
 export function dictionaryDialect(dialect: LetterDialect): 'kurmanji' | 'sorani' {
   return dialect === 'kmr' ? 'kurmanji' : 'sorani';
@@ -196,13 +181,6 @@ export function nextLetter(dialect: LetterDialect, word: string): string | null 
   return last === null ? null : chainLetter(dialect, last);
 }
 
-/** Whether `next` begins with the letter `previous` ends with (see `chainLetter`). */
-export function followsOn(dialect: LetterDialect, previous: string, next: string): boolean {
-  const want = nextLetter(dialect, previous);
-  const first = firstLetter(dialect, next);
-  return want !== null && first !== null && chainLetter(dialect, first) === want;
-}
-
 /** Whether a word begins with a chain letter (as `nextLetter` gives it). */
 export function beginsWith(dialect: LetterDialect, word: string, letter: string): boolean {
   const first = firstLetter(dialect, word);
@@ -261,9 +239,4 @@ export function lookupSpellings(dialect: LetterDialect, key: string): string[] {
     spellings = next;
   });
   return spellings;
-}
-
-/** Whether `letter` is a letter of the dialect's alphabet. */
-export function isLetterOf(dialect: LetterDialect, letter: string): boolean {
-  return (dialect === 'kmr' ? KMR_SET : CKB_SET).has(letter);
 }

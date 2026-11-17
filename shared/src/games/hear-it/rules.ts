@@ -27,10 +27,6 @@ import type { GameDifficulty } from '../solo.js';
 export const HEAR_STAGES = ['word', 'phrase', 'sentence', 'type'] as const;
 export type HearStage = (typeof HEAR_STAGES)[number];
 
-export function isHearStage(v: unknown): v is HearStage {
-  return (HEAR_STAGES as readonly unknown[]).includes(v);
-}
-
 /** Words a recording's text has, for each rung it can stand on. */
 export const HEAR_WORDS: Readonly<Record<HearStage, { min: number; max: number }>> = {
   word: { min: 1, max: 1 },

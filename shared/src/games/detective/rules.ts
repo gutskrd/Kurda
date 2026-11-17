@@ -20,13 +20,6 @@ import type { CaseFileContent, ContentOrigin, GameLevel, Meanings } from '../con
 /** Hints one case allows, whatever they are spent on. */
 export const DETECTIVE_HINTS = 3;
 
-/** A case's items in the order they are played: every deduction step, then the accusation. */
-export type CaseItem = { kind: 'step'; step: number } | { kind: 'accuse' };
-
-export function caseItems(c: Pick<CaseFileContent, 'steps'>): CaseItem[] {
-  return [...c.steps.map((_, step): CaseItem => ({ kind: 'step', step })), { kind: 'accuse' }];
-}
-
 /** The evidence the accusation rests on: every step's, once each, in the order the steps use it. */
 export function accusationEvidence(c: Pick<CaseFileContent, 'steps'>): string[] {
   return [...new Set(c.steps.flatMap((s) => s.evidence))];
@@ -42,14 +35,6 @@ export function unusedEvidence(c: Pick<CaseFileContent, 'steps' | 'evidence'>): 
 export function suspectPortrait(s: { id: string; portrait?: SpeakerId }): SpeakerId | null {
   if (s.portrait) return s.portrait;
   return isSpeakerId(s.id) ? s.id : null;
-}
-
-/**
- * The cards a hint may still translate: those not yet found (by a deduction
- * made) or translated, in the board's order.
- */
-export function untranslated(c: Pick<CaseFileContent, 'evidence'>, known: ReadonlySet<string>): string[] {
-  return c.evidence.map((e) => e.id).filter((id) => !known.has(id));
 }
 
 // ---------- what travels between the server and the apps ----------
@@ -84,11 +69,6 @@ export interface DetectiveCorrection {
   culprit: string | null;
   solution: Meanings | null;
   walk: NotebookEntry[] | null;
-}
-
-/** POST /games/detective/sessions/:id/hints: spend a hint on a card's meaning, or (no card) on the next written hint. */
-export interface DetectiveHintAsk {
-  evidence?: string;
 }
 
 /**

@@ -162,25 +162,6 @@ export function saysBanned(text: string, dialect: GameDialect, banned: readonly 
   return null;
 }
 
-/**
- * Whether a typed guess names the word: one of its words is the word (folded
- * leniently, as a guess typed in a hurry is), or the word with a short ending
- * (an article, a plural, the ezafe). A word of several words is guessed when
- * the guess holds them in a row.
- */
-export function guessNames(guess: string, word: string, dialect: GameDialect): boolean {
-  const target = gameWords(word).map((w) => key(w, dialect));
-  if (target.length === 0) return false;
-  if (target.length > 1) return ` ${foldForDialect(guess, dialect, true)} `.includes(` ${target.join(' ')} `);
-  const t = target[0]!;
-  return gameWords(guess).some((g) => {
-    const w = key(g, dialect);
-    if (w === t) return true;
-    const extra = w.length - t.length;
-    return t.length > SHORT_UP_TO && extra > 0 && extra <= 3 && w.startsWith(t);
-  });
-}
-
 /** Whether two clues are the same clue, as the variety's letters fold. */
 export function sameClue(a: string, b: string, dialect: GameDialect): boolean {
   const ka = foldForDialect(a, dialect, true);

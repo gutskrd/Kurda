@@ -53,10 +53,6 @@ export const LEARN_GAME_IDS = [
 ] as const;
 export type LearnGameId = (typeof LEARN_GAME_IDS)[number];
 
-export function isLearnGameId(v: unknown): v is LearnGameId {
-  return (LEARN_GAME_IDS as readonly unknown[]).includes(v);
-}
-
 /**
  * Games that were part of Hevalo once and are not any more. No list, page,
  * invitation or lobby offers one, and the server refuses to start one. The
@@ -277,11 +273,6 @@ export function paysAlone(id: LearnGameId): boolean {
  * API's list of game sources (and its league cap).
  */
 export const LEARN_GAME_XP_SOURCES: readonly string[] = [...new Set([...LEARN_GAMES.flatMap((g) => g.xpSources), ...RETIRED_GAME_XP_SOURCES])];
-
-/** Everything the solo kit runs a round of, the lessons' two exercises included, in the registry's order. */
-export function soloGames(): LearnGame[] {
-  return LEARN_GAMES.filter((g) => g.mode === 'solo' || g.mode === 'both');
-}
 
 /** A game as Learn lists it, and whether it can be played in the learner's variety yet. */
 export interface ListedLearnGame {

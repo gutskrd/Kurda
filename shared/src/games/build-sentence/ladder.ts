@@ -23,10 +23,6 @@ import type { GameDifficulty } from '../solo.js';
 export const SENTENCE_RUNGS = ['short', 'question', 'negation', 'ezafe', 'verb-final', 'two-clauses'] as const;
 export type SentenceRung = (typeof SENTENCE_RUNGS)[number];
 
-export function isSentenceRung(v: unknown): v is SentenceRung {
-  return (SENTENCE_RUNGS as readonly unknown[]).includes(v);
-}
-
 /** A rung's place on the ladder, from 1. */
 export function rungStep(rung: SentenceRung): number {
   return SENTENCE_RUNGS.indexOf(rung) + 1;

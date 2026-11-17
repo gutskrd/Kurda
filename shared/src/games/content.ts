@@ -74,10 +74,6 @@ export const GAME_CONTENT_KINDS = [
 ] as const;
 export type GameContentKind = (typeof GAME_CONTENT_KINDS)[number];
 
-export function isGameContentKind(v: unknown): v is GameContentKind {
-  return (GAME_CONTENT_KINDS as readonly unknown[]).includes(v);
-}
-
 /**
  * The stories' workflow, for game content:
  *
@@ -102,10 +98,6 @@ export const GAME_CONTENT_REVIEW_NOTE_MAX = 600;
 /** A content level, 1 to 5, in the shared plain-name order (1 is the first). */
 export const GAME_LEVELS = [1, 2, 3, 4, 5] as const;
 export type GameLevel = (typeof GAME_LEVELS)[number];
-
-export function isGameLevel(v: unknown): v is GameLevel {
-  return (GAME_LEVELS as readonly unknown[]).includes(v);
-}
 
 // ---------- the parts the schemas share ----------
 
@@ -631,12 +623,6 @@ export interface DetectiveBoardView {
 export type DetectiveItemView =
   | { index: number; kind: 'step'; prompt: Meanings; options: Meanings[] }
   | { index: number; kind: 'accuse'; suspects: string[] };
-
-/** Who Am I?: the questions that can be asked, and the guesses to pick from. */
-export interface WhoAmIRoundView {
-  questions: Array<{ id: string; ku: string; meanings: Meanings }>;
-  guesses: string[];
-}
 
 // ---------- what the admin panel is sent ----------
 
