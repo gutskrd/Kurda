@@ -94,7 +94,7 @@ export function ReminderNudge({ hold, store = deviceStore }: { hold: boolean; st
   };
 
   return (
-    <View style={[styles.banner, { flexDirection: dir.row, backgroundColor: colors.surface }]} testID="learn-reminders">
+    <View style={[styles.banner, { flexDirection: dir.row, backgroundColor: colors.surface }, dir.row === 'row-reverse' && styles.bannerMirrored]} testID="learn-reminders">
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <SpeakingCharacter speaker="hevalo" player={null} playing={false} size={HEVALO} flip={dir.rtl} />
       </View>
@@ -110,6 +110,8 @@ export function ReminderNudge({ hold, store = deviceStore }: { hold: boolean; st
 
 const styles = StyleSheet.create({
   banner: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingStart: spacing.sm, paddingEnd: spacing.xs },
+  // mirrored by hand, the start and end the padding knows are still left and right: Hevalo's side keeps the wider edge
+  bannerMirrored: { paddingStart: spacing.xs, paddingEnd: spacing.sm },
   words: { flex: 1, gap: spacing.xs },
   line: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   // a 16pt ✕ in a 44pt target

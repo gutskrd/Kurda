@@ -354,7 +354,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                 accessible
                 accessibilityLabel={`${t(card.name)}, ${t('games.comingSoon')}`}
                 testID={`game-${card.key}`}
-                style={[styles.soon, { backgroundColor: colors.surface, flexDirection: dir.row }]}
+                style={[styles.soon, { backgroundColor: colors.surface, flexDirection: dir.row }, dir.row === 'row-reverse' && styles.soonMirrored]}
               >
                 <View style={styles.soonArt}>
                   <GameArt game={card.emblem} size={36} />
@@ -473,6 +473,8 @@ const styles = StyleSheet.create({
   // a game not open yet is only named: quieter than a card, and nothing to press
   soonRow: { flexWrap: 'wrap', gap: spacing.sm },
   soon: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.pill, paddingVertical: 6, paddingStart: 6, paddingEnd: spacing.md },
+  // mirrored by hand: the picture's side is the right, and keeps the narrow edge
+  soonMirrored: { paddingStart: spacing.md, paddingEnd: 6 },
   soonArt: { opacity: 0.7 },
   soonName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
 });
