@@ -10,7 +10,7 @@ import { Drift } from '../auth/guide/Drift';
 import { useScreenFocus } from '../auth/guide/focus';
 import { HevaloGuide, SpeechBubble } from '../auth/guide/HevaloGuide';
 import { useSpokenLine } from '../auth/guide/speech';
-import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { HevaloBurrow } from '../characters/HevaloBurrow';
 import { useDirection } from '../reports/direction';
 import { springTo } from '../theme/animate';
 import { ClayButton, GradientBackground } from '../theme/glass';
@@ -332,17 +332,8 @@ function WelcomeSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
     <View style={[styles.slide, styles.centered]}>
       <SpeechBubble text={hello} tail="bottom" style={styles.heroBubble} />
       <Drift direction={arriving} mirrored={mirrored}>
-        <SpeakingCharacter
-          speaker="hevalo"
-          player={speech.player}
-          playing={speech.playing}
-          source={speech.source}
-          text={hello}
-          crop="half"
-          height={HERO_HEIGHT}
-          onPress={greeted}
-          style={styles.hero}
-        />
+        {/* out of his hole, not cut off at the legs and floating */}
+        <HevaloBurrow size={HERO_HEIGHT} speech={speech} text={hello} onPress={greeted} style={styles.hero} />
       </Drift>
       <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>

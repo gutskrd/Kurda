@@ -26,7 +26,8 @@ vi.mock('../theme/animate', async (original) => ({
   },
 }));
 
-import { act, cleanup, screen } from '@testing-library/react';
+import { act, cleanup, screen, within } from '@testing-library/react';
+import { BURROW_VIEW } from '@kurda/shared';
 import { Animated, Text } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -122,12 +123,17 @@ describe('LaunchScreen', () => {
     const hero = screen.getByTestId('launch-hero');
     expect(shown(hero)).toBe(0);
     expect(hero.style.transform).toContain('scale(0.6)');
-    // drawn as the picture's deer: as wide, with his eyes on its eyes
+    // drawn as the picture's deer, looking out of his hole: as big, with his eyes on its eyes
     const layers = characterLayers('hevalo', 'half');
     const place = heroPlace(SPLASH_IMAGE_WIDTH, layers.frame, layers.eyesAt);
-    expect(hero.style.width).toBe(`${place.width}px`);
-    expect(hero.style.left).toBe(`${place.left}px`);
-    expect(hero.style.top).toBe(`${place.top}px`);
+    const scale = place.width / layers.frame.w;
+    const px = (v: string): number => Number.parseFloat(v);
+    expect(px(hero.style.width)).toBeCloseTo(BURROW_VIEW.w * scale);
+    expect(px(hero.style.height)).toBeCloseTo(BURROW_VIEW.h * scale);
+    // his own frame sits where the picture's deer did, so his eyes do too
+    expect(px(hero.style.left) + (layers.frame.x - BURROW_VIEW.x) * scale).toBeCloseTo(place.left);
+    expect(px(hero.style.top) + (layers.frame.y - BURROW_VIEW.y) * scale).toBeCloseTo(place.top);
+    expect(within(hero).getByTestId('hevalo-burrow')).toBeTruthy();
   });
 
   it('has a light drifting across the page, which is the one thing that loops', async () => {

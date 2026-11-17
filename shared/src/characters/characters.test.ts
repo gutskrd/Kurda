@@ -13,6 +13,10 @@ import {
   STAGE_FIGURE_SHARE,
   WINDOW_PLACE,
   WINDOW_VIEW,
+  BURROW_PLACE,
+  BURROW_VIEW,
+  burrowArt,
+  type BurrowArt,
   characterArt,
   characterSvg,
   cropBody,
@@ -850,5 +854,51 @@ describe('the pen', () => {
     );
     expect(d.startsWith('M0,0')).toBe(true);
     expect(d.endsWith('z')).toBe(true);
+  });
+});
+
+describe('the hole Hevalo looks out of', () => {
+  const layers = (drawn: BurrowArt): string[] => [drawn.back, drawn.front, drawn.shadow];
+
+  it('is three well-formed drawings in its box, behind him, on our side of him and his shade, in the light and in the dark', () => {
+    for (const dark of [false, true]) {
+      const drawn = burrowArt({ dark, idPrefix: `hole${dark ? 'd' : 'l'}` });
+      for (const layer of layers(drawn)) {
+        const svg = parse(layer).children[0] as El;
+        expect(svg.name).toBe('svg');
+        expect(svg.attrs.viewBox).toBe(`${BURROW_VIEW.x} ${BURROW_VIEW.y} ${BURROW_VIEW.w} ${BURROW_VIEW.h}`);
+        expect(svg.attrs['aria-hidden']).toBe('true');
+        const { problems, ids, refs } = inspect(layer);
+        expect(problems).toEqual([]);
+        for (const r of refs) expect(ids).toContain(r);
+        for (const i of ids) expect(i.startsWith(`hole${dark ? 'd' : 'l'}-`)).toBe(true);
+        expect(inside(extent(layer), BURROW_VIEW)).toBe(true);
+      }
+    }
+    expect(burrowArt().back).not.toBe(burrowArt({ dark: true }).back);
+    expect(burrowArt({ idPrefix: 'again' })).toEqual(burrowArt({ idPrefix: 'again' }));
+  });
+
+  it('keeps two holes on a page apart: each its own ids', () => {
+    const ids = [...layers(burrowArt({ idPrefix: 'one' })), ...layers(burrowArt({ idPrefix: 'two' }))].flatMap((m) => inspect(m).ids);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('puts all of his head and antlers in the picture, and cuts him off under his chin, inside the hole', () => {
+    const art = characterArt('hevalo');
+    const head = extent(headGroup(art));
+    const f = BURROW_PLACE.figure;
+    // his head crop's box, in the picture's units
+    const box = { x: BURROW_VIEW.x + f.left * BURROW_VIEW.w, y: BURROW_VIEW.y + f.top * BURROW_VIEW.h, w: f.width * BURROW_VIEW.w };
+    expect(box.x).toBeCloseTo(art.neck!.box.x);
+    expect(box.y).toBeCloseTo(art.neck!.box.y);
+    expect(box.w).toBeCloseTo(art.neck!.box.w);
+    // the cut is under his head and above where his neck widens into his chest at the window's sill
+    const cut = BURROW_VIEW.y + BURROW_PLACE.cut * BURROW_VIEW.h;
+    expect(cut).toBeGreaterThan(head.y + head.h - 1);
+    expect(cut).toBeLessThan(600);
+    // and he waits in the hole wholly under it before he comes up
+    expect(BURROW_VIEW.y + (BURROW_PLACE.figure.top + BURROW_PLACE.drop) * BURROW_VIEW.h).toBeCloseTo(cut);
+    expect(head.y).toBeGreaterThan(BURROW_VIEW.y);
   });
 });
