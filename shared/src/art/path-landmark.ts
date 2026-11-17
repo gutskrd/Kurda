@@ -9,14 +9,14 @@
  * art/valley-landmarks-1.ts and -2.ts. Here they are framed as pictures: on
  * the 120-unit canvas, decorative unless named. Each draws its moving part at
  * rest; the apps lay `pathLoopSvg` over it at `PATH_LANDMARK_LOOP` and move it
- * gently (a kilim or a flag in the wind, steam or smoke rising, a ripple, the
- * Newroz flame, a bee, the bus stop's sign), and hold it still under Reduce
- * Motion.
+ * gently (a kilim, the castle's pennant or the school's flag of Kurdistan in
+ * the wind, steam or smoke rising, a ripple, the Newroz flame, a bee, the bus
+ * stop's sign), and hold it still under Reduce Motion.
  */
 import type { PathGround, PathLandmark } from '../path-world.js';
 import { pathGroundShade } from './path-land.js';
 import { CANVAS, escapeXml, n2, prefixFor, seeded } from './svg.js';
-import { FLAME, VALLEY, dusk, ellipsePath, fill, stroke, warm, type ValleyLandmark, type ValleyLoopKind } from './valley.js';
+import { KURDISTAN_FLAG, VALLEY, dusk, ellipsePath, fill, kurdistanFlag, stroke, warm, type ValleyLandmark, type ValleyLoopKind } from './valley.js';
 import { VALLEY_LANDMARKS_1 } from './valley-landmarks-1.js';
 import { VALLEY_LANDMARKS_2 } from './valley-landmarks-2.js';
 
@@ -84,7 +84,8 @@ const LOOP_VIEW: Record<PathLoopKind, { w: number; h: number }> = {
   steam: { w: 16, h: 24 },
   water: { w: 30, h: 12 },
   flag: { w: 20, h: 16 },
-  flame: { w: FLAME.w, h: FLAME.h },
+  colours: { w: KURDISTAN_FLAG.w, h: KURDISTAN_FLAG.h },
+  flame: { w: 26, h: 40 },
   smoke: { w: 16, h: 30 },
   bee: { w: 34, h: 34 },
   sign: { w: 18, h: 26 },
@@ -124,9 +125,13 @@ export function pathLoopSvg(opts: PathLoopOptions): string {
       body += stroke(ellipsePath(15, 6, 11, 3.6), dark ? '#9fd2e6' : '#ffffff', 1.6);
       body += stroke(ellipsePath(15, 6, 5, 1.8), dark ? '#9fd2e6' : '#ffffff', 1.2);
       break;
+    case 'colours':
+      // the school's flag of Kurdistan, the very cloth the school draws at rest, so the moving one lies exactly over it
+      body += kurdistanFlag(dark);
+      break;
     case 'flame':
-      // the Newroz fire's own flames, so the moving ones lie exactly over the ones drawn at rest
-      body += fill(FLAME.outer, warm(VALLEY.flame, dark)) + fill(FLAME.face, warm(VALLEY.fire, dark)) + fill(FLAME.core, warm(VALLEY.fireCore, dark));
+      body += fill('M13 2C19 12 24 20 21 30C19 37 7 37 5 30C2 22 9 16 9 9C11 13 12 12 13 2Z', warm(VALLEY.fire, dark));
+      body += fill('M13 16C16 21 18 25 16 30C14 34 10 34 9 30C8 26 11 22 13 16Z', warm(VALLEY.fireCore, dark));
       break;
     case 'bee':
       // on the rim of its circle; the apps turn the circle

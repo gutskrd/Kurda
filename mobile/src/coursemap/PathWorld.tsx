@@ -174,6 +174,7 @@ function Loop({ kind, xml, left, top, width, height, live }: { kind: string; xml
     switch (kind) {
       case 'kilim':
       case 'flag':
+      case 'colours':
         return { transformOrigin: '0% 0%', transform: [{ rotate: wave.interpolate({ inputRange: [-1, 1], outputRange: ['-5deg', '5deg'] }) }, { scaleX: wave.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.9, 1, 0.94] }) }] };
       case 'steam':
       case 'smoke':

@@ -39,16 +39,7 @@ function openerSheet(press: Press, c: BookChapter, places: Places): Sheet {
       // the land the chapter is set in fills what the words leave of the page
       const band = Math.max(150, Math.min(262, PAGE.h - MARGIN.bottom - below + 4));
       doc.save().rect(0, 0, PAGE.w, band).fill(tone.band).restore();
-      // far mountains in the chapter's colour, a step from its sky, then the hill everyone stands on
-      const ridge = (x: number, y: number): [number, number] => [PAGE.w * x, band - y];
-      const far: Array<[number, number]> = [[0, 104], [0.1, 118], [0.22, 132], [0.3, 124], [0.42, 140], [0.54, 120], [0.64, 110], [0.76, 128], [0.86, 116], [1, 100]];
-      const range = doc.save().moveTo(...ridge(0, 0)).lineTo(...ridge(0, 104));
-      for (let i = 1; i < far.length; i++) {
-        const [x0, y0] = far[i - 1]!;
-        const [x1, y1] = far[i]!;
-        range.quadraticCurveTo(...ridge((x0 + x1) / 2 + 0.01, (y0 + y1) / 2 + 6), ...ridge(x1, y1));
-      }
-      range.lineTo(...ridge(1, 0)).fill(blend(tone.band, hue.base, 0.14)).restore();
+      // the one soft hill everyone stands on, under an open sky, so the landmark is the whole picture
       doc
         .save()
         .moveTo(0, band - 34)

@@ -81,25 +81,7 @@ export const VALLEY = {
   snowShade: '#dde5ee',
   fire: '#f08a3c',
   fireCore: '#ffd36b',
-  /** the outer edge of a flame, a step deeper than the fire */
-  flame: '#e0623a',
   smoke: '#e7e3dc',
-} as const;
-
-/**
- * A bonfire's flames on their own 26 × 40 canvas, foot at the bottom: three
- * tongues of different heights leaning a little with the wind, the outer
- * fire a step deeper than its face, and the hot core low down where the wood
- * is. The Newroz fire draws them at rest and the apps lay the same shape over
- * it to flicker (`pathLoopSvg`), so the two always agree.
- */
-export const FLAME = {
-  w: 26,
-  h: 40,
-  outer:
-    'M13 39.8C7.6 39.8 2.8 37 1.8 31.6C1.1 27.4 2.6 23.6 3.4 20.6C3.9 18.6 3.6 16.6 2.8 14.6C6.2 16.4 7.8 18.8 8.2 21.2C8.3 15.2 9.6 10 11.6 5.4C12.6 9 13.2 12.4 13.2 15.6C14.2 10 15.8 5 17.6 0.4C18.8 5.6 20.2 9.8 20.6 14.8C21.8 13.4 22.8 12 23.4 10.2C25.6 15.4 26 21.6 25 27.4C24.2 33.6 20.4 39.8 13 39.8Z',
-  face: 'M13 39.4C8.6 39.4 4.6 37 4.4 32.2C4.2 28.4 6.4 25.6 6.8 22.6C8.6 24.4 9.6 26.4 9.8 28.4C10.2 22.4 11.6 17.6 13.8 13.6C14.6 16.6 15.4 19.2 15.6 21.4C16.4 17.4 17.6 13.8 18.6 10.6C20.6 15.6 21.4 18.8 21 22.6C22 21.8 22.4 20.6 22.6 19.4C24 24.6 23.6 30.4 22 33.8C20.4 37.4 17.2 39.4 13 39.4Z',
-  core: 'M13.2 39C10 39 7.8 37.2 7.8 34.6C7.8 32 9.8 30.4 10.6 27.6C12 29.6 12.6 31 12.8 32.4C13.2 29 14.6 26.2 16.4 24C17.6 27.6 18.4 30.6 18.2 33.4C18 36.8 16.2 39 13.2 39Z',
 } as const;
 
 /** The evening's violet, as the village's dusk (art/kingdom/pen.ts). */
@@ -449,8 +431,13 @@ export function poplarLeaves(dark: boolean): Foliage {
 
 // ─────────────────────────────────────────────────────────── landmarks
 
-/** The one small moving thing of a landmark, which the apps lay over it and move gently (`pathLoopSvg`). */
-export type ValleyLoopKind = 'kilim' | 'steam' | 'water' | 'flag' | 'flame' | 'smoke' | 'bee' | 'sign';
+/**
+ * The one small moving thing of a landmark, which the apps lay over it and
+ * move gently (`pathLoopSvg`): a kilim, the castle's pennant (`flag`) or the
+ * school's flag of Kurdistan (`colours`) stirring, steam or smoke rising,
+ * water rippling, the Newroz flame, a bee, the bus stop's sign.
+ */
+export type ValleyLoopKind = 'kilim' | 'steam' | 'water' | 'flag' | 'colours' | 'flame' | 'smoke' | 'bee' | 'sign';
 
 /**
  * A chapter's landmark in the painted valley, on the 120-unit canvas: its
@@ -461,4 +448,112 @@ export type ValleyLoopKind = 'kilim' | 'steam' | 'water' | 'flag' | 'flame' | 's
 export interface ValleyLandmark {
   draw: (dark: boolean, random: () => number) => string;
   loop: { kind: ValleyLoopKind; x: number; y: number; w: number; h: number };
+}
+
+// ─────────────────────────────────────────────────────────── the flag of Kurdistan
+
+/**
+ * The flag's colours, softened a little to sit in the painting but kept true
+ * enough that nobody could take it for another flag: its red, its white, its
+ * green and the sun's gold, and each band one step darker where the cloth
+ * folds away from the light.
+ */
+const FLAG = {
+  red: '#dc3a32',
+  redShade: '#b42d27',
+  white: '#fbf9f3',
+  whiteShade: '#dcd7cb',
+  green: '#2f9247',
+  greenShade: '#237238',
+  sun: '#f6b821',
+} as const;
+
+type Cubic = readonly [Pt, Pt, Pt, Pt];
+
+/**
+ * The flag of Kurdistan as the school flies it, on its own 20 × 16 canvas
+ * with the pole along the left edge: three bands of equal depth, red over
+ * white over green, and in the middle of the white the golden sun of
+ * twenty-one rays, one standing straight up. The cloth is two deep for every
+ * three it flies, as the flag is. `top` is its upper edge from the pole to
+ * the free end, one easy wave in the wind; every band follows it down.
+ */
+export const KURDISTAN_FLAG = {
+  w: 20,
+  h: 16,
+  depth: 12.2,
+  rays: 21,
+  top: [[0.5, 1], [6.6, -0.1], [12.4, 2.5], [18.8, 1.4]] as Cubic,
+} as const;
+
+/** The point `t` of the way along a cubic Bézier. */
+function cubicAt([a, b, c, d]: Cubic, t: number): Pt {
+  const u = 1 - t;
+  const w = [u * u * u, 3 * u * u * t, 3 * u * t * t, t * t * t] as const;
+  return [w[0] * a[0] + w[1] * b[0] + w[2] * c[0] + w[3] * d[0], w[0] * a[1] + w[1] * b[1] + w[2] * c[1] + w[3] * d[1]];
+}
+
+/** The stretch of a cubic Bézier between `t0` and `t1`, as a cubic of its own (de Casteljau's halving, twice). */
+function cubicPart(q: Cubic, t0: number, t1: number): Cubic {
+  const split = ([a, b, c, d]: Cubic, t: number): [Cubic, Cubic] => {
+    const l = (p: Pt, r: Pt): Pt => [p[0] + (r[0] - p[0]) * t, p[1] + (r[1] - p[1]) * t];
+    const [ab, bc, cd] = [l(a, b), l(b, c), l(c, d)];
+    const [abc, bcd] = [l(ab, bc), l(bc, cd)];
+    const m = l(abc, bcd);
+    return [[a, ab, abc, m], [m, bcd, cd, d]];
+  };
+  return split(split(q, t1)[0], t0 / t1)[1];
+}
+
+/** The cloth hanging under a stretch of its top edge, from `from` to `to` below it: along the edge, down its far end, back along the edge lowered, and up. */
+function cloth(edge: Cubic, from: number, to: number): string {
+  const at = ([x, y]: Pt, dy: number): string => `${f(x)} ${f(y + dy)}`;
+  const [a, b, c, d] = edge;
+  return `M${at(a, from)}C${at(b, from)} ${at(c, from)} ${at(d, from)}L${at(d, to)}C${at(c, to)} ${at(b, to)} ${at(a, to)}Z`;
+}
+
+/**
+ * Where the sun sits and how big it is: in the middle of the white, halfway
+ * along the cloth, its rays reaching almost to the red and the green.
+ */
+export function kurdistanSun(): { x: number; y: number; r: number; disc: number } {
+  const { top, depth } = KURDISTAN_FLAG;
+  const middle = (top[0][0] + top[3][0]) / 2;
+  // the edge runs steadily away from the pole, so halving finds the point of it above the middle of the cloth
+  let [lo, hi] = [0, 1];
+  for (let i = 0; i < 30; i++) {
+    const t = (lo + hi) / 2;
+    if (cubicAt(top, t)[0] < middle) lo = t;
+    else hi = t;
+  }
+  const r = (depth / 3) * 0.47;
+  return { x: middle, y: cubicAt(top, lo)[1] + depth / 2, r, disc: r * 0.56 };
+}
+
+/**
+ * The flag of Kurdistan (`KURDISTAN_FLAG`), painted flat on its own canvas:
+ * the three bands, one fold in shade toward the free end where the wave
+ * turns the cloth from the light, and the sun clear of the fold. The school
+ * draws it at rest and the apps lay the same cloth over it to stir in the
+ * wind (`pathLoopSvg`), so the two always agree.
+ */
+export function kurdistanFlag(dark: boolean): string {
+  const c = (hex: string): string => dusk(hex, dark);
+  const { top, depth, rays } = KURDISTAN_FLAG;
+  const third = depth / 3;
+  // each band reaches a hair under the next, which is laid over it, so no seam of what is behind the flag opens between them
+  const bands = (edge: Cubic, red: string, white: string, green: string): string =>
+    fill(cloth(edge, 0, third + 0.2), c(red)) + fill(cloth(edge, third, 2 * third + 0.2), c(white)) + fill(cloth(edge, 2 * third, depth), c(green));
+  let out = bands(top, FLAG.red, FLAG.white, FLAG.green);
+  out += bands(cubicPart(top, 0.66, 0.86), FLAG.redShade, FLAG.whiteShade, FLAG.greenShade);
+  // the sun: a star of rays round its disc, drawn ten times over and scaled down so its fine points keep their places
+  const sun = kurdistanSun();
+  const pts: Pt[] = [];
+  for (let k = 0; k < rays; k++) {
+    const a = -Math.PI / 2 + (k * 2 * Math.PI) / rays;
+    pts.push([Math.cos(a) * sun.r * 10, Math.sin(a) * sun.r * 10]);
+    pts.push([Math.cos(a + Math.PI / rays) * sun.disc * 10, Math.sin(a + Math.PI / rays) * sun.disc * 10]);
+  }
+  out += `<g transform="translate(${f(sun.x)} ${f(sun.y)}) scale(0.1)">${fill(polygon(pts), c(FLAG.sun))}</g>`;
+  return out;
 }
