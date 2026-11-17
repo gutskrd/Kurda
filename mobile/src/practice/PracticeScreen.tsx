@@ -21,7 +21,7 @@ export const PRACTICE_PATHS: SessionPaths = {
 interface PracticeStart {
   sessionId?: string;
   exercises?: Exercise[];
-  /** what a session opened again already has answered (GET /practice/sessions/:id) */
+  /** What a session opened again already has answered (GET /practice/sessions/:id). */
   answered?: Record<string, RecordedAnswer>;
   completed?: boolean;
   empty?: boolean;
@@ -29,21 +29,15 @@ interface PracticeStart {
 }
 
 /**
- * Practice/review mode (KUR-034): reuses the lesson player over the SR queue —
- * or over `exerciseIds`, a finished lesson's mistakes ("Practise these now"),
- * which the server builds a session from instead, or over another kind of
- * practice the hub started (`mode`, and `unitId` for a unit's review).
+ * Practice and review: the lesson player over the review queue, over `exerciseIds` (a finished lesson's mistakes,
+ * from which the server builds a session), or over another kind the hub started (`mode`, and `unitId` for a
+ * unit's review).
  *
- * With `sessionId` it is a review left part-way through (Learn's "Continue
- * review", from GET /practice/due's `open`), opened again where it stopped:
- * the session is read back with what was already answered rather than a new
- * one started beside it, which would leave the first unfinished for good.
+ * With `sessionId` it resumes a review left part-way (Learn's "Continue review", from GET /practice/due's
+ * `open`), reading the session back with its answers rather than starting a new one beside it.
  *
- * Nothing to practise, or a session that would not start, is said as every
- * empty screen in the app says it (theme/EmptyState): Hevalo's fawn, what is
- * not here, and the way on — with Back beside it, since a full-screen modal
- * has no other way out. It was a gold check, which says something was
- * earned, and "Nothing to review yet" offered only the lesson to start.
+ * Nothing to practise, or a session that would not start, shows the shared empty state (theme/EmptyState) with
+ * Back beside the way on, since a full-screen modal has no other exit.
  */
 export function PracticeScreen({
   navigation,
@@ -58,7 +52,7 @@ export function PracticeScreen({
   exerciseIds?: string[];
   mode?: PracticeMode;
   unitId?: string;
-  /** an unfinished review to pick up, in place of starting one */
+  /** An unfinished review to pick up, in place of starting one. */
   sessionId?: string;
 }) {
   const { client } = useAuth();
@@ -67,7 +61,7 @@ export function PracticeScreen({
   const [error, setError] = useState<ApiError | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  // the ids by value: the same mistakes passed again are the same session to start
+  // The ids by value: the same mistakes passed again are the same session to start.
   const chosen = exerciseIds && exerciseIds.length > 0 ? exerciseIds.join(',') : null;
   useEffect(() => {
     let active = true;
@@ -87,7 +81,7 @@ export function PracticeScreen({
     };
   }, [client, reloadKey, chosen, mode, unitId, sessionId]);
 
-  // a full-screen modal with no header: every state that is not the session has a way back out of it
+  // A full-screen modal with no header: every state that is not the session has a way back out of it.
   const back = { label: t('common.back'), onPress: onExit };
   if (error) {
     const retry = isRetryable(error) ? { label: t('common.retry'), onPress: () => setReloadKey((k) => k + 1) } : null;
@@ -99,7 +93,7 @@ export function PracticeScreen({
   }
   if (!start) return <SessionLoading onExit={onExit} />;
 
-  // nothing due → nudge toward the next new lesson; nothing of another kind → back to the hub's other kinds
+  // Nothing due: point to the next new lesson; nothing of another kind: back to the hub's other kinds.
   if (start.empty || !start.sessionId || !start.exercises?.length) {
     const kind = !chosen && mode && mode !== 'review';
     const suggestion = !kind ? start.suggestion : null;
@@ -118,14 +112,14 @@ export function PracticeScreen({
     );
   }
 
-  // adapt the practice payload to the shared player's SessionView shape
+  // Adapt the practice payload to the shared player's SessionView shape.
   const view: SessionView = {
     sessionId: start.sessionId,
     lessonId: '',
     expiresAt: '2999-01-01T00:00:00Z',
     completed: start.completed === true,
     exercises: start.exercises.map((ex, i) => ({ ...ex, position: i + 1 })),
-    // a review opened again carries what was answered, and the player goes on from there
+    // A resumed review carries what was answered, and the player continues from there.
     answered: start.answered ?? {},
   };
   return (
@@ -134,7 +128,7 @@ export function PracticeScreen({
       paths={PRACTICE_PATHS}
       kind="practice"
       onExit={onExit}
-      // what was missed here can be practised again at once, in this session's place
+      // What was missed here can be practised again at once, in this session's place.
       onPractise={(ids) => navigation.replace('Practice', { exerciseIds: ids })}
       onPath={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
     />
@@ -150,6 +144,6 @@ function Centered({ children }: { children: React.ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  // the empty state keeps its own margins
+  // The empty state keeps its own margins.
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

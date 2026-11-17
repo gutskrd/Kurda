@@ -79,7 +79,7 @@ describe('the practice hub', () => {
     open(learned);
     const hero = await screen.findByTestId('practice-hero');
     expect(within(hero).getByText('8 words due')).toBeTruthy();
-    // the button says what a session pays: half of a fresh lesson, in the server's own numbers
+    // The button says what a session pays: half of a fresh lesson, in the server's own numbers.
     expect(within(hero).getByText('+5–10 XP')).toBeTruthy();
     fireEvent.click(within(hero).getByRole('button', { name: 'Start, 8 words due, +5–10 XP' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Practice', { mode: 'review' });
@@ -129,16 +129,15 @@ describe('the practice hub', () => {
       fireEvent.click(button);
     }
     expect(navigation.navigate).not.toHaveBeenCalled();
-    // the way to the lessons pays nothing of its own, so it promises nothing
+    // The way to the lessons pays nothing of its own, so it promises nothing.
     expect(within(hero).queryByText('+5–10 XP')).toBeNull();
     fireEvent.click(within(hero).getByRole('button', { name: 'Go to lessons' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Learn', params: { view: 'lessons' } });
   });
 
   /*
-   * Build a Sentence and Hear It, Find It are practice now: the hub
-   * lists each while it can be done in the learner's Kurdish, beside the kind
-   * it is nearest to, and its row opens the exercise's own screen.
+   * Build a Sentence and Hear It, Find It are listed beside their nearest kind while available in the learner's
+   * Kurdish, and open their own screens.
    */
   it('lists the two exercises that have a screen of their own, and opens each from its row', async () => {
     open(learned, availability(true, true));
@@ -155,7 +154,7 @@ describe('the practice hub', () => {
     expect(felt).toContain('select');
     fireEvent.click(hear);
     expect(navigation.navigate).toHaveBeenLastCalledWith('HearIt');
-    // a game is never listed among the practice
+    // A game is never listed among the practice.
     expect(screen.queryByText('Dizê Bîrê')).toBeNull();
   });
 
@@ -164,7 +163,7 @@ describe('the practice hub', () => {
     expect(await screen.findByRole('button', { name: /^Hear It, Find It, / })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Build a Sentence/ })).toBeNull();
     cleanup();
-    // no answer about the exercises: the hub stands as it always did, with its five kinds
+    // No answer about the exercises: the hub stands as it always did, with its five kinds.
     open(learned);
     expect(await screen.findByRole('button', { name: 'Mistakes, 3 to put right' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Hear It, Find It/ })).toBeNull();

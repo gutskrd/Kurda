@@ -32,7 +32,7 @@ const navigation = { navigate: vi.fn(), replace: vi.fn() } as unknown as RootNav
 const session = ok({ sessionId: 'p1', exercises: [{ id: 'mc2', type: 'multiple_choice', prompt: 'Bread?', options: ['av', 'nan'] }] });
 
 describe('practice', () => {
-  // "Practise these now" from a lesson's results: the server builds the session from those, not from what is due
+  // "Practise these now" from a lesson's results: the server builds the session from those, not from what is due.
   it('practises the exercises it is given', async () => {
     const client = fakeClient({ 'POST /practice/session': session, 'GET /me': ok({ user: {} }) });
     testAuth.client = client;
@@ -56,7 +56,7 @@ describe('practice', () => {
     expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
   });
 
-  // a full-screen modal with no header: the lesson it suggests is never the only way out of it
+  // A full-screen modal with no header: the lesson it suggests is never the only way out of it.
   it('offers the next lesson when nothing is due, and a way back beside it', async () => {
     testAuth.client = fakeClient({ 'POST /practice/session': ok({ empty: true, suggestion: { lessonId: 'l1', title: 'Food' } }) });
     const onExit = vi.fn();
@@ -84,7 +84,7 @@ describe('practice', () => {
     expect(await screen.findByText('Bread?')).toBeTruthy();
   });
 
-  // a full-screen modal with no header: while the session is on its way, the ✕ is the way out
+  // A full-screen modal with no header: while the session is on its way, the ✕ is the way out.
   it('can be closed while it is still starting', () => {
     testAuth.client = fakeClient({ 'POST /practice/session': () => new Promise<ApiResult<never>>(() => undefined) });
     const onExit = vi.fn();
@@ -94,7 +94,7 @@ describe('practice', () => {
     expect(onExit).toHaveBeenCalledTimes(1);
   });
 
-  // Learn's Continue review: the session left part-way, read back with its answers, and never a new one started
+  // Learn's Continue review: the unfinished session, read back with its answers, rather than a new one.
   it('picks up a review left part-way through where it stopped', async () => {
     const client = fakeClient({
       'GET /practice/sessions/p9': ok({
@@ -114,7 +114,7 @@ describe('practice', () => {
     expect(screen.queryByText('Water?')).toBeNull();
     expect(client.calls.some((c) => c.path === '/practice/session')).toBe(false);
 
-    // Android's back asks before leaving a review with answers in it, as the ✕ does
+    // Android's back asks before leaving a review with answers in it, as the ✕ does.
     const onExit = vi.fn();
     cleanup();
     renderWithProviders(<PracticeScreen navigation={navigation} sessionId="p9" onExit={onExit} />);

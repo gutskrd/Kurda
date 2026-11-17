@@ -30,32 +30,20 @@ import { exercisesOf, type PhoneExercise } from './exercises';
 import { ROW_HUES, heroOf, hubRows, practiceXpRange, type Hero, type HubRow, type Line } from './hub';
 
 /**
- * Practice's hub: the one thing most worth doing now, and every other kind of
- * practice a tap away.
+ * The practice hub: the one thing most worth doing now, and every other kind of practice a tap away.
  *
- * At the top, a card on the app's own pale violet with one button: the words
- * due for review, with how many; with none due, the unit finished last, to go
- * back over; with nothing to go back over, the hardest words again; and
- * before any lesson, the way to the lessons. Hamo stands at its end, glad to
- * see you, and the button says what a session pays. Under it, a row for each
- * other kind — mistakes, words, listening, speaking, a unit of your choice —
- * its name and one line, with a big badge in a hue of its own at the end that
- * pops under the finger. Two of the rows open an exercise with a screen of its own, Build a
- * Kurdish Sentence after the words and Hear It, Find It after listening, each
- * there only while it can be done in the learner's Kurdish (exercises.ts).
- * The card and the rows rise in one after another as the hub arrives
- * (`useListEntrance`), and simply stand there on a later visit. A kind with
- * nothing in it stays in the list, dimmed, and says what would put something
- * there, so nothing disappears without a word.
+ * The top card, on the app's pale violet, has one button: reviewing due words with their count; else the unit
+ * finished last; else the hardest words; and before any lesson, the way to the lessons. Hamo stands at its end,
+ * and the button says what a session pays. Below are rows for the other kinds (mistakes, words, listening,
+ * speaking, a chosen unit), each with a line and a badge in its own hue that pops under the finger. Build a
+ * Kurdish Sentence and Hear It, Find It have their own screens and appear only while available in the learner's
+ * Kurdish (exercises.ts). The card and rows rise in on arrival (`useListEntrance`) and stand still on later
+ * visits. An empty kind stays listed, dimmed, saying what would fill it.
  *
- * It reads the hub in one request (GET /practice/hub), again each time the
- * screen comes back into view — after a session, the counts have moved — and
- * when pulled down. What the exercises can be done with is asked alongside
- * it and waited for, so the list arrives whole and no row moves under a
- * thumb; when that cannot be had the hub stands without them. Speaking also
- * listens to the microphone: refused for
- * good, its row is the way to Settings, and coming back from there finds out
- * whether it was allowed.
+ * The hub loads in one request (GET /practice/hub), again whenever the screen regains focus and on pull to
+ * refresh. Exercise availability is awaited alongside, so the list arrives whole; without it the hub shows
+ * without them. If the microphone is denied for good, the speaking row leads to Settings, and returning rechecks
+ * it.
  */
 export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
@@ -91,7 +79,7 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
     }, [load]),
   );
 
-  // back from Settings, where the microphone may just have been allowed
+  // Back from Settings, where the microphone may just have been allowed.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') void micRefused().then(setRefused);
@@ -109,7 +97,7 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
     [navigation],
   );
 
-  // one row object per kind for as long as the hub stands, so the rows (memoised) are drawn again only when it changes
+  // One row object per kind while the hub is unchanged, so the memoised rows re-render only when it changes.
   const rows = useMemo(() => (hub ? hubRows(hub, { micRefused: refused, exercises }) : []), [hub, refused, exercises]);
   const entering = useListEntrance(hub !== null);
 
@@ -150,7 +138,7 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
               </Text>
               <View style={styles.rows}>
                 {rows.map((row, i) => (
-                  // the card at the top is the first to arrive; each row follows a beat after the one above
+                  // The card at the top is the first to arrive; each row follows a beat after the one above.
                   <Rise key={row.key} delay={entering(i + 1)}>
                     <PracticeRow row={row} detail={say(row.detail)} onPress={press} />
                   </Rise>
@@ -177,14 +165,10 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
 }
 
 /**
- * The card at the top, on the pale wash of the app's violet whatever it
- * offers: what it is, how much, Hamo at its end, and one button that says
- * what a session pays. It was painted in a colour of its own for each thing
- * it could offer, a green one day and an ochre the next, with the button in a
- * third colour on top; one quiet ground and the one violet button is the same
- * card every day, and the button is what the eye goes to. Hamo cheers as the card arrives and greets a tap; the words
- * beside him say everything he would, so a screen reader passes him by. The
- * button pops once the card has settled: the way in, offered.
+ * The top card on the pale violet wash: what it offers and how much, Hamo at its end, and one button saying what
+ * a session pays. One ground and one violet button every day, so the eye goes to the button. Hamo cheers on
+ * arrival and greets a tap; the text says everything he would, so screen readers skip him. The button pops once
+ * the card settles.
  */
 function HeroCard({
   hero,
@@ -219,7 +203,7 @@ function HeroCard({
     else onStart('review');
   };
   const label = hero.kind === 'none' ? t('practice.hub.toLessons') : t('practice.hub.start');
-  // what a session pays, on the button; the way to the lessons pays nothing of its own
+  // What a session pays, on the button; the way to the lessons pays nothing of its own.
   const xp = hero.kind === 'none' ? null : practiceXpRange();
   const pays = xp ? t('practice.hub.xp', { min: formatNumber(xp.min, locale), max: formatNumber(xp.max, locale) }) : null;
   const spoken = hero.kind === 'none' ? label : `${label}, ${title}, ${pays}`;
@@ -256,12 +240,9 @@ function HeroCard({
 }
 
 /**
- * One kind of practice: its name and one line, and at the end a big badge in
- * its own hue — the hue's pale wash, with the glyph in its deep shade — which
- * pops under the finger: the row answers before the next screen does. A kind
- * with nothing in it is dimmed, its badge in grey. A line that says something
- * is waiting is in the app's violet, as everything to be acted on is. Memoised: the hub's rows are drawn again only when the
- * hub changes, not as the screen's own state does.
+ * One kind of practice: name, a line, and a badge in its own hue (pale wash, glyph in the deep shade) that pops
+ * under the finger, so the row responds before the next screen opens. An empty kind is dimmed with a grey badge.
+ * A line about something waiting is violet. Memoised, so rows re-render only when the hub changes.
  */
 const PracticeRow = memo(function PracticeRow({ row, detail, onPress }: { row: HubRow; detail: string; onPress: (row: HubRow) => void }): React.JSX.Element {
   const { colors, scheme } = useTheme();
@@ -302,7 +283,7 @@ const PracticeRow = memo(function PracticeRow({ row, detail, onPress }: { row: H
   );
 });
 
-/** The units finished, each in its own colour with its number, the latest first: tap one to review it. */
+/** Finished units, each in its own colour with its number, latest first; tap one to review it. */
 function UnitPicker({
   visible,
   units,
@@ -349,7 +330,7 @@ function UnitPicker({
   );
 }
 
-/** How long a load may take before its placeholder shows: a quick answer arrives without a flash of grey. */
+/** How long a load may take before its placeholder shows, so a quick answer arrives without a grey flash. */
 const PLACEHOLDER_AFTER_MS = 300;
 
 /** The hub while it loads, shape for shape: the card, the heading, the five rows. */
@@ -375,9 +356,9 @@ function HubSkeleton(): React.JSX.Element {
 
 /** Hamo on the card, head to waist: as tall as its words, not taller than the card wants to be. */
 const CHARACTER_HEIGHT = 116;
-/** The card at its usual size: Hamo beside its words, and the large button */
+/** The card at its usual size: Hamo beside its words, and the large button. */
 const HERO_HEIGHT = 222;
-/** a row at its usual size */
+/** A row at its usual size. */
 const ROW_HEIGHT = 76;
 /** Room round a badge's glyph: the badge is a tile, not an icon. */
 const BADGE_ROOM = 30;
@@ -393,7 +374,7 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   heroTitle: { ...display(typography.sizes.lg) },
   heroBody: { fontSize: typography.sizes.sm, lineHeight: 20, opacity: 0.82 },
-  // he stands at the card's foot, waist at its padding, so the button sits under his hands
+  // He stands at the card's foot, waist at its padding, so the button sits under his hands.
   heroCharacter: { marginBottom: -(spacing.md + 4) + spacing.xs },
 
   section: { marginTop: spacing.lg, marginBottom: spacing.xs },
