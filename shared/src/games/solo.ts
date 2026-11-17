@@ -1,22 +1,13 @@
 /**
- * A solo learning game, from either side: the difficulties a round is played
- * at, what each answer pays, when a round counts as learning, and the shapes
- * a session travels in between the server and both apps.
- *
- * A round is made on the server (POST /games/solo/sessions), which keeps the
- * answers; the apps are sent the items without them. Each answer is checked
- * on the server and comes back with a hint or the correction; finishing pays
- * once. Shared so the apps can say before a round what it can pay, by the
- * numbers the server pays by.
+ * A solo learning game from either side: its difficulties, what each answer pays, when a round counts as learning, and
+ * the session shapes. The server makes a round (POST /games/solo/sessions) and keeps the answers; the apps get items
+ * without them, each answer comes back checked with a hint or correction, and finishing pays once. Shared so the apps can
+ * say what a round can pay by the server's numbers.
  */
 import type { GameDialect } from './dialect.js';
 import type { GameLevel } from './content.js';
 
-/**
- * The three difficulties a player chooses from, and the content levels each
- * one draws on (in the shared plain-name order, 1 the first): beginner = 1–2,
- * intermediate = 3, advanced = 4–5.
- */
+/** The three difficulties and the content levels each draws on: beginner 1–2, intermediate 3, advanced 4–5. */
 export const GAME_DIFFICULTIES = ['beginner', 'intermediate', 'advanced'] as const;
 export type GameDifficulty = (typeof GAME_DIFFICULTIES)[number];
 
@@ -46,16 +37,12 @@ export const GAME_REPEAT_XP_DAYS = 14;
 /** What getting an item right on the first try adds. */
 export const FIRST_TRY_BONUS_XP = 1;
 
-/** XP for one item answered right, by its level: harder content pays more. */
+/** XP for one right item by its level: harder content pays more. */
 export function baseAnswerXp(level: number): number {
   return level <= 2 ? 1 : level === 3 ? 2 : 3;
 }
 
-/**
- * What one answer pays: nothing when wrong, nothing for an item already
- * answered right in the last GAME_REPEAT_XP_DAYS days, else the level's XP and
- * the first-try bonus.
- */
+/** What one answer pays: nothing when wrong or for an item answered right within GAME_REPEAT_XP_DAYS, else the level's XP plus the first-try bonus. */
 export function answerXp(level: number, outcome: { correct: boolean; firstTry: boolean; repeat: boolean }): number {
   if (!outcome.correct || outcome.repeat) return 0;
   return baseAnswerXp(level) + (outcome.firstTry ? FIRST_TRY_BONUS_XP : 0);
@@ -73,12 +60,9 @@ export function roundLearningNeeds(total: number): number {
 }
 
 /**
- * Whether a finished round was learning (the streak, the daily goal, its XP):
- * at least half of its items answered right on the first try, as
- * `countsAsLearning` has it for lessons. A second try comes after a hint that
- * rules an option out, so counting it would let tapping at random pass most
- * rounds of three or four options; on first tries alone a round tapped through
- * pays nothing and keeps no streak.
+ * Whether a finished round was learning (streak, daily goal, XP): at least half its items right on the first try, as
+ * `countsAsLearning` has it for lessons. Second tries come after a hint that rules an option out, so counting them would let
+ * random tapping pass; on first tries alone a tapped-through round pays nothing.
  */
 export function roundCountsAsLearning(firstTry: number, total: number): boolean {
   return firstTry >= roundLearningNeeds(total);
@@ -106,7 +90,7 @@ export interface SoloSessionView<Item, Board = unknown> {
   maxAttempts: number;
   finished: boolean;
   expiresAt: string;
-  /** what the whole round shares beside its items, for a game that has one (Detective's case board) */
+  /** what the whole round shares beside its items, for a game that has it (Detective's case board) */
   board?: Board;
 }
 
@@ -124,9 +108,9 @@ export interface SoloAnswerResult<Hint, Correction> {
   correction: Correction | null;
   /** the explanation's key, which the apps word in the reader's language */
   why: string | null;
-  /** what this item will pay at the finish (0 when wrong or a repeat) */
+  /** what this item will pay at the finish; 0 when wrong or a repeat */
   xp: number;
-  /** this item was answered right in the last GAME_REPEAT_XP_DAYS days, so it pays nothing now */
+  /** answered right within GAME_REPEAT_XP_DAYS, so it pays nothing now */
   repeat: boolean;
 }
 
@@ -136,9 +120,9 @@ export interface SoloResults {
   total: number;
   firstTry: number;
   xp: number;
-  /** whether it was learning: the streak and the daily goal moved */
+  /** it was learning: the streak and the daily goal moved */
   learningCounted: boolean;
-  /** answers right on the first try it needed to count */
+  /** first-try right answers it needed to count */
   needed: number;
   items: Array<{ index: number; correct: boolean; firstTry: boolean; xp: number; repeat: boolean }>;
   /** the streak after the round, when it counted */
@@ -148,9 +132,9 @@ export interface SoloResults {
 /** Whether a game can be played now, per variety and content level (GET /games/availability). */
 export interface GameAvailability {
   id: string;
-  /** approved items for each level, 1 to 5 (for content without levels, the whole count at every level) */
+  /** approved items per level, 1 to 5 (content without levels: the whole count at every level) */
   levels: Record<GameLevel, number>;
-  /** whether the content is filed by level; a game without levels is played at any difficulty or none */
+  /** whether the content is filed by level; a game without levels plays at any difficulty or none */
   levelled: boolean;
   minimum: number;
   /** the difficulties with enough approved content */
@@ -163,11 +147,7 @@ export interface GamesAvailability {
   games: GameAvailability[];
 }
 
-/**
- * The difficulties whose levels together hold at least `minimum` items. For
- * content without levels every difficulty is the same pool: all of them when
- * it holds enough, none when it does not.
- */
+/** The difficulties whose levels together hold at least `minimum` items; content without levels is one pool, so all or none. */
 export function availableDifficulties(levels: Readonly<Record<number, number>>, minimum: number, levelled = true): GameDifficulty[] {
   if (!levelled) return (levels[1] ?? 0) >= minimum ? [...GAME_DIFFICULTIES] : [];
   return GAME_DIFFICULTIES.filter((d) => DIFFICULTY_LEVELS[d].reduce((sum, l) => sum + (levels[l] ?? 0), 0) >= minimum);

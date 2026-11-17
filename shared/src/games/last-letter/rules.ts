@@ -1,34 +1,18 @@
 /**
- * The Last Letter: a word chain. Each player in turn gives a word that begins
- * with the letter the last word ended with, in the game's one dialect, before
- * their time runs out. A word that is not in the dictionary, does not begin
- * with the right letter, was already played or is not one word costs a strike,
- * and so does letting the time run out; the turn passes either way. Three
- * strikes and you are out; the last player standing wins.
+ * The Last Letter: a word chain in one dialect. Each player in turn gives a word beginning with the letter the last word
+ * ended with, before their time runs out. A word not in the dictionary, with the wrong first letter, already played or not
+ * one word costs a strike, as does running out of time; the turn passes either way. Three strikes and you are out; the
+ * last player standing wins.
  *
- * Two rules keep a chain from sticking on a letter. In Kurmancî a word that
- * ends in a soft vowel (ê, î, û, i, u or o) passes on the letter before it
- * (`softEnding`: azadî → d, êvarê → r), because hardly any word begins with î
- * and many end in it; Soranî has no such rule. And in either variety, once
- * every player still in has been struck in a row on the same letter (`stuck`),
- * the next word may begin with any letter, so nobody is struck on it in turn
- * until the game ends.
+ * Two rules keep a chain from sticking. In Kurmancî a word ending in a soft vowel (ê, î, û, i, u or o) passes on the
+ * letter before it (`softEnding`: azadî → d, êvarê → r), since many words end in î and hardly any begin with it. And once
+ * everyone still in has been struck in a row on one letter (`stuck`), the next word may begin with any letter.
  *
- * A word typed with a mark left off (kecik for keçik) is not a strike when
- * the dictionary or the course has exactly one word it could be: the server
- * says so (`verdict: 'spelling'`), the state stays as it was, the turn and its
- * clock go on, and only the player who typed it is asked "Did you mean …?".
- *
- * These are the rules alone, pure (shared/src/games/multi/rules.ts): whether a
- * word is in the dictionary, and its meaning, are decided on the server before
- * a move reaches `apply` (api/src/mp/games/last-letter.ts), and Hevalo's words
- * are chosen there too. Everything else — whose turn it is, the letter, the
- * repeats, the strikes, the end and the places — is decided here.
- *
- * Nothing in a Last Letter game is hidden, but one thing is never shown: what
- * a player typed that was refused. Other players see the strike and its reason
- * ("not in the dictionary"), never the text, which goes back to the player who
- * typed it alone.
+ * A word typed without a mark (kecik for keçik) that is exactly one known word is no strike: the server says so
+ * (`verdict: 'spelling'`), the state, turn and clock stay, and only its typist is asked "Did you mean …?". Pure rules
+ * (multi/rules.ts): dictionary checks, meanings and Hevalo's words are decided on the server before `apply`
+ * (api/src/mp/games/last-letter.ts). Nothing is hidden, but refused text is never shown to others: they see only the
+ * strike and its reason.
  */
 import { beginsWith, chainLetter, nextLetter, startSpellings, wordLetters, type LetterDialect } from '../letters.js';
 import type { ApplyResult, GameRules, Placed, RulesSeat, RulesStart } from '../multi/rules.js';
@@ -36,13 +20,13 @@ import type { ApplyResult, GameRules, Placed, RulesSeat, RulesStart } from '../m
 export const LAST_LETTER_MIN_PLAYERS = 2;
 export const LAST_LETTER_MAX_PLAYERS = 6;
 export const LAST_LETTER_MAX_STRIKES = 3;
-/** A chain this long ends the game: the fewest strikes, then the most words, win. */
+/** A chain this long ends the game: fewest strikes, then most words, win. */
 export const LAST_LETTER_MAX_CHAIN = 80;
 /** The turn times a host may choose; the first is the default for a new player, the middle one otherwise. */
 export const LAST_LETTER_TURN_SECONDS = [20, 30, 45] as const;
 export type LastLetterTurnSeconds = (typeof LAST_LETTER_TURN_SECONDS)[number];
 export const LAST_LETTER_DEFAULT_TURN_SECONDS: LastLetterTurnSeconds = 30;
-/** How long Hevalo takes over a word, at least and at most: long enough to read as thinking. */
+/** How long Hevalo takes over a word, at least and at most, so he reads as thinking. */
 export const HEVALO_THINK_MS = [1_400, 3_200] as const;
 
 export interface LastLetterSettings {
@@ -57,20 +41,18 @@ export type LastLetterStrikeReason = 'not-a-word' | 'wrong-letter' | 'used' | 'n
 export type LastLetterMeanings = Partial<Record<string, string>>;
 
 /**
- * A word as the server prepared it for `apply`: the dictionary's verdict, and
- * the meaning when an admin's curated entry or a lesson gives one. `spelling`
- * is a word typed with a mark left off that is exactly one known word, which
- * `suggestion` names.
+ * A word as the server prepared it for `apply`: the dictionary's verdict and the meaning when a curated entry or a lesson
+ * gives one. `spelling` is a word missing a mark that is exactly one known word, named by `suggestion`.
  */
 export interface LastLetterMove {
-  /** the word in the dialect's letters (`wordKey`), or null when what was typed is not one word of the dialect */
+  /** the word in the dialect's letters (`wordKey`), or null when the text is not one word of the dialect */
   key: string | null;
   verdict: 'ok' | 'not-a-word' | 'not-allowed' | 'spelling';
   /** the English meaning, for boards and apps that read only that */
   meaning: string | null;
   /** every language the meaning is known in, English among them */
   meanings?: LastLetterMeanings | null;
-  /** with `verdict: 'spelling'`: the word the player most likely meant, in the dialect's letters */
+  /** with `verdict: 'spelling'`, the word the player most likely meant, in the dialect's letters */
   suggestion?: string | null;
 }
 
@@ -89,7 +71,7 @@ interface SeatState {
   bot: string | null;
   strikes: number;
   words: number;
-  /** the order seats went out in (1 = first out); null while still in */
+  /** the order seats went out in (1 is first out); null while still in */
   outOrder: number | null;
   /** went out by leaving, not by strikes */
   left: boolean;
@@ -99,7 +81,7 @@ interface ChainWord {
   seat: number;
   word: string;
   meaning: string | null;
-  /** absent in a chain played before meanings were kept in every language */
+  /** absent in chains played before meanings were kept in every language */
   meanings?: LastLetterMeanings | null;
   at: number;
 }
@@ -121,7 +103,7 @@ export interface LastLetterState {
   /** the most recent strikes, newest last */
   strikes: Strike[];
   outs: number;
-  /** strikes in a row since the last word was accepted; absent in a game saved before it was counted, which reads as 0 */
+  /** strikes in a row since the last accepted word; absent in older saved games, read as 0 */
   stuck?: number;
   finishedAt: number | null;
   endedBy: 'last-standing' | 'chain-full' | 'abandoned' | null;
@@ -134,7 +116,7 @@ export interface LastLetterChainWord {
   seat: number;
   word: string;
   meaning: string | null;
-  /** the meaning in every language it is known in; an app shows its own language, else English */
+  /** the meaning in every known language; an app shows its own, else English */
   meanings: LastLetterMeanings | null;
 }
 
@@ -143,7 +125,7 @@ export interface LastLetterBoard {
   turnSeconds: number;
   maxStrikes: number;
   turn: { seat: number; n: number; startedAt: string; endsAt: string } | null;
-  /** the letter the next word must begin with (null for the first word, which may begin with any) */
+  /** the letter the next word must begin with; null for the first word, which may begin with any */
   required: string | null;
   /** how a word beginning with it is written at its start (Soranî: ا is written ئا) */
   requiredSpellings: string[];
@@ -163,9 +145,9 @@ export interface LastLetterBoard {
 
 const KEEP_STRIKES = 8;
 
-/** A number in [0, 1) from the game's seed and a salt: Hevalo's choices, the same on every replica. */
+/** A number in [0, 1) from the game's seed and a salt, so Hevalo's choices are the same on every replica. */
 export function seededUnit(seed: string, salt: string | number): number {
-  // FNV-1a over the seed and the salt, then one round of mixing
+  // FNV-1a over the seed and the salt, then one round of mixing.
   let h = 0x811c9dc5;
   const s = `${seed}:${salt}`;
   for (let i = 0; i < s.length; i++) {
@@ -184,11 +166,7 @@ export function hevaloThinkMs(seed: string, n: number): number {
   return Math.round(lo + (hi - lo) * seededUnit(seed, `think:${n}`));
 }
 
-/**
- * Whether Hevalo, on turn `n`, cannot think of a word even though one exists:
- * more often as the chain grows, so a long game against Hevalo can be won. A
- * miss is a strike like anyone's.
- */
+/** Whether Hevalo, on turn `n`, misses a word that exists: more often as the chain grows, so a long game against him can be won. A miss is a strike. */
 export function hevaloMisses(seed: string, n: number, chainLength: number): boolean {
   const chance = Math.min(0.35, 0.05 + 0.012 * chainLength);
   return seededUnit(seed, `miss:${n}`) < chance;
@@ -212,12 +190,10 @@ function clone(state: LastLetterState): LastLetterState {
 export const LAST_LETTER_SOFT_ENDINGS: ReadonlySet<string> = new Set(['ê', 'î', 'û', 'i', 'u', 'o']);
 
 /**
- * The letter a word hands on, and the soft ending it passed over (null when
- * none). In Kurmancî the vowels at the end of a word that are soft endings
- * are walked back to the first other letter: azadî → d, derî → r, êvarê → r,
- * xwê → w. A word that is nothing but such vowels hands on its last letter.
- * Soranî hands on its last letter always (`nextLetter`). Null for something
- * that is not one word of the dialect.
+ * The letter a word hands on, and the soft ending it passed over (null when none). In Kurmancî trailing soft vowels are
+ * walked back to the first other letter (azadî → d, derî → r, êvarê → r, xwê → w); a word of nothing but such vowels hands
+ * on its last letter. Soranî always hands on its last letter (`nextLetter`). Null for something not one word of the
+ * dialect.
  */
 export function softEnding(dialect: LetterDialect, word: string): { letter: string; vowel: string | null } | null {
   const plain = nextLetter(dialect, word);
@@ -237,10 +213,8 @@ function isOpen(state: Pick<LastLetterState, 'seats' | 'stuck'>): boolean {
 }
 
 /**
- * The letter the next word must begin with, as a chain compares letters:
- * null before the first word, and null once everyone still in has been
- * struck on it in a row (any letter will do then). The server's checks,
- * Hevalo's words and the apps' slip check all read it from here.
+ * The letter the next word must begin with, as a chain compares letters: null before the first word, and null once
+ * everyone still in was struck on it in a row. The server's checks, Hevalo's words and the apps' slip check all read it.
  */
 export function requiredLetter(state: Pick<LastLetterState, 'dialect' | 'chain'> & Partial<Pick<LastLetterState, 'seats' | 'stuck'>>): string | null {
   const last = state.chain[state.chain.length - 1];
@@ -254,7 +228,7 @@ function turnLength(state: LastLetterState, seat: number, n: number): number {
   return s?.bot ? hevaloThinkMs(state.seed, n) : state.turnMs;
 }
 
-/** The turn after the current one, or the end of the game when one player (or none) is left. */
+/** The turn after the current one, or the end when one player or none is left. */
 function nextTurn(state: LastLetterState, now: number): void {
   const left = state.seats.filter(inGame);
   if (state.chain.length >= LAST_LETTER_MAX_CHAIN) return finish(state, now, 'chain-full');
@@ -305,7 +279,7 @@ export const lastLetterRules: GameRules<LastLetterState, LastLetterMove, LastLet
       finishedAt: null,
       endedBy: null,
     };
-    // who begins is drawn, so the host does not always go first
+    // Who begins is drawn, so the host does not always go first.
     const first = state.seats[Math.floor(seededUnit(start.seed, 'first') * state.seats.length)] ?? state.seats[0];
     if (!first) {
       finish(state, start.now, 'last-standing');
@@ -320,7 +294,7 @@ export const lastLetterRules: GameRules<LastLetterState, LastLetterMove, LastLet
     if (state.turn.seat !== seat) return { ok: false, reason: 'not-your-turn' };
     const next = clone(state);
     const required = requiredLetter(next);
-    // a mark left off a word that is exactly one known word: no strike, and the turn goes on as it was
+    // A word missing a mark that is exactly one known word: no strike, and the turn goes on as it was.
     const suggestion = move.verdict === 'spelling' ? move.suggestion : null;
     if (suggestion && (required === null || beginsWith(next.dialect, suggestion, required)) && !next.chain.some((w) => w.word === suggestion)) {
       const mover = next.seats.find((s) => s.seat === seat)!;
@@ -391,7 +365,7 @@ export const lastLetterRules: GameRules<LastLetterState, LastLetterMove, LastLet
     return state.finishedAt !== null;
   },
 
-  // ended where it stood with everyone gone: nobody played it out
+  // Ended where it stood with everyone gone: nobody played it out.
   counted(state: LastLetterState): boolean {
     return state.finishedAt !== null && state.endedBy !== 'abandoned';
   },
@@ -438,7 +412,7 @@ export const lastLetterRules: GameRules<LastLetterState, LastLetterMove, LastLet
   },
 
   places(state: LastLetterState): readonly Placed[] {
-    // still in: fewest strikes, then most words; then the rest, the last out first
+    // Still in: fewest strikes, then most words; then the rest, last out first.
     const standing = state.seats
       .filter(inGame)
       .sort((a, b) => a.strikes - b.strikes || b.words - a.words || a.seat - b.seat);

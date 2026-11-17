@@ -1,42 +1,21 @@
 /**
- * Who Am I?: a player has a hidden identity — an animal, a thing, a job, a
- * food or drink, a place, or something of nature, each a word from published
- * lessons — on a card the others can read, and finds out what it is by asking
- * questions from an approved list, then guessing from a few tiles. What the
- * card says to a question comes from the identity's facts table, never from
- * anyone typing: "Does it fly?" asks the fact `can-fly`, and the identity's
- * row says yes, no, or "sometimes" where honest people would answer either
- * way (a dog at home, a sour pomegranate). Fewer questions score more.
+ * Who Am I?: a player's hidden identity (an animal, an object, a job, a food or drink, a place, or something in nature,
+ * each a word from published lessons) is on a card the others read, and they find it by asking questions from an approved
+ * list, then guessing from a few tiles. The card's answer comes from the identity's facts table, never from typing:
+ * "Does it fly?" asks `can-fly`, and the row says yes, no or "sometimes" where honest people would say either. Friends
+ * reading the card answer yes, could be, no or not sure (`WHO_AM_I_SAYS`), scored by `markOf` so careful reasoning never
+ * loses to the card.
  *
- * The friends who read the card have four answers: yes, could be, no and not
- * sure (`WHO_AM_I_SAYS`). How each is scored against what the card says is
- * `markOf`: a friend who reasons well never loses to the card, so yes or no to
- * a "sometimes" card is right, "could be" to a plain yes or no is close, and
- * only yes against no is wrong.
- *
- * This module is what the game's rules (rules.ts) are played with, pure:
- *   - the facts an identity may have, and what each one means (the admin's
- *     facts table is these, and a question template asks exactly one of them);
- *   - how a hidden identity is dealt: the candidates shown as tiles (the
- *     identity among others that share most of its facts), and the questions
- *     offered — only those every candidate has an answer to, so the list
- *     itself never gives the identity away, and of those the ones that tell
- *     the tiles apart, with a wide one or two a learner starts with, so
- *     hardly any question costs a point for nothing;
- *   - the points a solved identity is worth;
- *   - which questions to suggest next, for a learner who does not know where
- *     to begin (`suggestWhoAmIQuestions`);
- *   - the shapes a round travels in.
- *
- * The Kurdish here is none: the identities' words and the questions are
- * approved `game_content` rows, and the answers are the dialect's own words
- * for them from each app's catalogue.
+ * Pure helpers the rules (rules.ts) play with: the facts and their meanings (the admin's facts table), dealing (tiles that
+ * share most facts, and only questions every tile can answer, preferring those that tell the tiles apart, so the list never
+ * gives the identity away), points, suggested next questions (`suggestWhoAmIQuestions`), and round shapes. No Kurdish
+ * lives here: words and questions are approved `game_content` rows, answers each app's catalogue words.
  */
 import { seededUnit } from '../last-letter/rules.js';
 import type { GameDifficulty } from '../solo.js';
 import type { Meanings } from '../content.js';
 
-/** What an identity can be. Drinks are food here (the card says "food or drink"); `nature` is the sun, rain, a tree, a flower. */
+/** What an identity can be. Drinks count as food (the card says "food or drink"); `nature` is the sun, rain, a tree, a flower. */
 export const WHO_AM_I_CATEGORIES = ['animal', 'object', 'profession', 'food', 'place', 'nature'] as const;
 export type WhoAmICategory = (typeof WHO_AM_I_CATEGORIES)[number];
 
@@ -45,14 +24,9 @@ export function isWhoAmICategory(v: unknown): v is WhoAmICategory {
 }
 
 /**
- * The facts an identity's table can answer, each with what it means in
- * English for the people who fill the table in. A question template asks one
- * of them.
- *
- * The order is the order a player who knows the game asks in, widest first:
- * the suggestions read it (`suggestWhoAmIQuestions`). A narrow fact is only
- * set on the kinds of thing its question makes sense for, so "Does this
- * person sell things?" is never dealt beside an apple.
+ * The facts an identity's table can answer, each with its English meaning for whoever fills the table; a question template
+ * asks one. Listed widest first, the order a seasoned player asks in, which the suggestions follow. A narrow fact is set
+ * only on kinds of thing its question suits, so "Does this person sell things?" is never dealt beside an apple.
  */
 export const WHO_AM_I_FACTS = [
   { key: 'alive', en: 'It is alive' },
@@ -106,29 +80,23 @@ export function isWhoAmIFact(v: unknown): v is WhoAmIFact {
 // ---------- what a card says, and what the friends say ----------
 
 /**
- * One row of an identity's facts table: yes, no, or "sometimes" — honestly
- * either, as a dog is at home in one family and in the yard in another. A
- * fact the table does not set is a question never dealt beside this card.
+ * One row of an identity's table: yes, no, or "sometimes" (a dog is indoors in one family, in the yard in another). An
+ * unset fact is never dealt beside this card.
  */
 export type WhoAmIFactValue = boolean | 'sometimes';
 /** What a card says to a question: its verdict. */
 export type WhoAmIAnswer = 'yes' | 'no' | 'sometimes';
-/** What a friend who reads the card can say, in the order the keys stand: yes, could be, no, and not sure below them. */
+/** What a friend reading the card can say, in key order: yes, could be, no, and not sure below them. */
 export const WHO_AM_I_SAYS = ['yes', 'sometimes', 'no', 'unsure'] as const;
 export type WhoAmISays = (typeof WHO_AM_I_SAYS)[number];
 /** How a friend's answer is scored against the card (`markOf`). */
 export type WhoAmIMark = 'right' | 'close' | 'wrong' | 'unsure';
 /**
- * The most rows of one identity's table that may say "sometimes". A card that
- * is "sometimes" about everything teaches nothing, and no one picks which card
- * they read, so a few honest ones cannot be played for points.
+ * The most "sometimes" rows one identity's table may have: a card that is "sometimes" about everything teaches nothing,
+ * and players cannot pick cards to farm a few.
  */
 export const WHO_AM_I_MAX_SOMETIMES = 3;
-/**
- * How many answers a table offers its friends: the four, or yes and no alone
- * for a table made by an app from before the four (whose cards are then dealt
- * without their "sometimes" rows, `asTwoAnswers`).
- */
+/** How many answers a table offers: all four, or yes and no for tables from older apps, whose cards are dealt without "sometimes" rows (`asTwoAnswers`). */
 export const WHO_AM_I_ANSWER_COUNTS = [2, 4] as const;
 export type WhoAmIAnswerCount = (typeof WHO_AM_I_ANSWER_COUNTS)[number];
 
@@ -157,10 +125,8 @@ export function verdictFor(identity: Pick<WhoAmIIdentity, 'facts'>, fact: string
  *   no                            wrong    right    right
  *   not sure                      unsure   unsure   unsure
  *
- * Yes and no are both right on a "sometimes" card: either is what a person who
- * thinks it through might say, and the card must never make them lose for it.
- * "Could be" on a plain yes or no is close, not right, so the game still
- * teaches that the card had a clear answer. Only yes against no is wrong.
+ * Yes and no are both right on a "sometimes" card, since either is a reasonable answer; "could be" on a plain yes or no is
+ * close, so the game still teaches that the card was clear. Only yes against no is wrong.
  */
 export function markOf(says: WhoAmISays, verdict: WhoAmIAnswer): WhoAmIMark {
   if (says === 'unsure') return 'unsure';
@@ -169,12 +135,7 @@ export function markOf(says: WhoAmISays, verdict: WhoAmIAnswer): WhoAmIMark {
   return says === verdict ? 'right' : 'wrong';
 }
 
-/**
- * An identity as a table of two answers deals it: without its "sometimes"
- * rows, so those questions are never dealt beside it and nothing it says needs
- * a third answer. For a table made by an older app, and for a phone from
- * before the four answers, which would read anything but yes as no.
- */
+/** An identity dealt for a two-answer table, without its "sometimes" rows, for tables from older apps and phones that read anything but yes as no. */
 export function asTwoAnswers<T extends Pick<WhoAmIIdentity, 'facts'>>(identity: T): T {
   if (!Object.values(identity.facts).includes('sometimes')) return identity;
   return { ...identity, facts: Object.fromEntries(Object.entries(identity.facts).filter(([, v]) => typeof v === 'boolean')) };
@@ -182,31 +143,24 @@ export function asTwoAnswers<T extends Pick<WhoAmIIdentity, 'facts'>>(identity: 
 
 /** Wrong guesses at an identity before its player is out. */
 export const WHO_AM_I_GUESSES = 2;
-/**
- * The same, in one room, where there are no tiles to pick from: the player says who they are and anything may be
- * said, so one more miss is allowed.
- */
+/** The same in one room, where there are no tiles and anything may be said aloud, so one more miss is allowed. */
 export const WHO_AM_I_ROOM_GUESSES = 3;
-/** Tiles to guess from, by difficulty; beginners also see what each tile means. */
+/** Tiles to guess from by difficulty; beginners also see each tile's meaning. */
 export const WHO_AM_I_CANDIDATES: Readonly<Record<GameDifficulty, number>> = { beginner: 4, intermediate: 6, advanced: 8 };
 /** The fewest tiles a deal may fall back to when too few identities share enough facts. */
 export const WHO_AM_I_MIN_CANDIDATES = 3;
 /** Questions an identity needs on offer to be worth dealing, and the most offered at once. */
 export const WHO_AM_I_MIN_QUESTIONS = 4;
 export const WHO_AM_I_MAX_QUESTIONS = 12;
-/**
- * Approved question templates a dialect needs before the game is offered in
- * it. A deal offers only the questions that tell its tiles apart, so a short
- * list leaves a board of one kind of thing with too few to ask.
- */
+/** Approved question templates a dialect needs before the game is offered in it, since a deal offers only questions that tell its tiles apart. */
 export const WHO_AM_I_MIN_TEMPLATES = 20;
 
-/** What a solved identity starts at; each question and each wrong guess costs some. */
+/** What a solved identity starts at; each question and wrong guess costs some. */
 export const WHO_AM_I_START_POINTS = 10;
 export const WHO_AM_I_QUESTION_COST = 1;
 export const WHO_AM_I_WRONG_GUESS_COST = 3;
 
-/** Points for one identity: fewer questions score more; a solved one is worth at least 1, an unsolved one nothing. */
+/** Points for one identity: fewer questions score more; solved is worth at least 1, unsolved nothing. */
 export function whoAmIPoints(questions: number, wrongGuesses: number, solved: boolean): number {
   if (!solved) return 0;
   return Math.max(1, WHO_AM_I_START_POINTS - questions * WHO_AM_I_QUESTION_COST - wrongGuesses * WHO_AM_I_WRONG_GUESS_COST);
@@ -232,16 +186,16 @@ export interface WhoAmITemplate {
   fact: string;
 }
 
-/** A hidden identity, dealt: the server keeps all of it, and sends its player `candidates` and `questions` only. */
+/** A dealt identity: the server keeps all of it and sends its player only `candidates` and `questions`. */
 export interface WhoAmIDeal {
   identity: WhoAmIIdentity;
-  /** the tiles, shuffled; the identity is one of them (a deal made before tiles carried their category has none) */
+  /** the tiles, shuffled, the identity among them (deals from before tiles carried a category have none) */
   candidates: Array<{ id: string; word: string; meanings: Meanings; category?: string }>;
   /** the questions offered: each fact asked once, every candidate with an answer to it */
   questions: Array<{ id: string; ku: string; meanings: Meanings; fact: string }>;
 }
 
-/** A number from 0 to 1 for a label: the same number for the same label, and nothing a label's number says about another's. */
+/** A number from 0 to 1 per label: the same for the same label, and revealing nothing about another label's. */
 export type DealUnit = (label: string) => number;
 
 function draw<T>(unit: DealUnit, salt: string, items: readonly T[], keyOf: (item: T) => string): T[] {
@@ -251,7 +205,7 @@ function draw<T>(unit: DealUnit, salt: string, items: readonly T[], keyOf: (item
     .map((x) => x.item);
 }
 
-/** The facts every one of these identities has an answer to (yes, no or sometimes). */
+/** The facts every one of these identities answers (yes, no or sometimes). */
 function sharedFacts(ids: readonly WhoAmIIdentity[]): Set<string> {
   const [first, ...rest] = ids;
   if (!first) return new Set();
@@ -259,12 +213,9 @@ function sharedFacts(ids: readonly WhoAmIIdentity[]): Set<string> {
 }
 
 /**
- * Keeps, of a list of identities, those no question could confuse with the
- * hidden one or with one kept before: each answers the hidden identity's
- * facts in a way of its own. A cat and a dog that say the same to all the
- * same questions cannot be told apart by asking, and a round that deals both
- * is a coin toss; only the first of such a pair is dealt. "Sometimes" is an
- * answer of its own here, since the asker is told it.
+ * Keeps the identities no question could confuse with the hidden one or one kept before: each answers the hidden
+ * identity's facts its own way. A cat and a dog answering alike cannot be told apart by asking, so only the first of such a
+ * pair is dealt. "Sometimes" counts as its own answer, since the asker is told it.
  */
 function tellsApart(target: WhoAmIIdentity): (p: WhoAmIIdentity) => boolean {
   const keys = Object.keys(target.facts).sort();
@@ -280,18 +231,13 @@ function tellsApart(target: WhoAmIIdentity): (p: WhoAmIIdentity) => boolean {
 }
 
 /**
- * The wide questions a deal may keep although every tile answers them alike:
- * the ones a learner starts with, and on one phone, where nobody sees the
- * tiles, still worth an answer. At most WHO_AM_I_WIDE_KEPT of them, and never
- * one the card's kind already answers.
+ * The wide questions a deal may keep although every tile answers them alike: where learners start, and still worth asking
+ * on one phone where nobody sees the tiles. At most WHO_AM_I_WIDE_KEPT, and never one the card's kind already answers.
  */
 const WIDE: readonly WhoAmIFact[] = ['alive', 'animal', 'person', 'place'];
 const WHO_AM_I_WIDE_KEPT = 2;
 
-/**
- * How well a question tells tiles apart: how many tiles are left out of its
- * largest answer (yes, no or sometimes). Nought when every tile answers alike.
- */
+/** How well a question tells tiles apart: how many tiles fall outside its largest answer group; 0 when every tile answers alike. */
 function splitOf(tiles: readonly WhoAmIIdentity[], fact: string): number {
   const buckets = new Map<string, number>();
   for (const t of tiles) {
@@ -302,20 +248,13 @@ function splitOf(tiles: readonly WhoAmIIdentity[], fact: string): number {
 }
 
 /**
- * Deal one hidden identity: up to `want` tiles (the identity, and the others
- * that share most of its facts, none answering every question as another
- * does), and the questions every tile can answer. Of those, only the ones
- * that tell the tiles apart are dealt, best first, with at most two wide ones
- * beside them (`WIDE`): a question every tile answers alike costs a point and
- * says nothing. Only when that leaves fewer than WHO_AM_I_MIN_QUESTIONS is the
- * list made up to that from the rest. Fewer tiles are dealt when that is what
- * it takes to have WHO_AM_I_MIN_QUESTIONS questions; null when even
- * WHO_AM_I_MIN_CANDIDATES cannot.
+ * Deals one hidden identity: up to `want` tiles (the identity and those sharing most of its facts, none answering exactly
+ * like another) and the questions every tile can answer. Only questions that tell the tiles apart are dealt, best first,
+ * with at most two wide ones (`WIDE`), topped up from the rest only to reach WHO_AM_I_MIN_QUESTIONS; fewer tiles are dealt
+ * if that is what it takes. Null when even WHO_AM_I_MIN_CANDIDATES cannot work.
  *
- * The questions depend on the tiles as a set, never on which of them is the
- * hidden one, so the list gives nothing away. Everything is drawn from the
- * seed (through `unit`, where the caller gives one): the same deal on every
- * replica, and a round read again is the round it was.
+ * The questions depend on the tiles as a set, never on which is hidden, so the list gives nothing away. Everything comes
+ * from the seed (through `unit` when given), so every replica deals the same and a round reads back the same.
  */
 export function dealWhoAmI(
   target: WhoAmIIdentity,
@@ -323,9 +262,8 @@ export function dealWhoAmI(
   templates: readonly WhoAmITemplate[],
   opts: { seed: string; salt: string; want: number; unit?: DealUnit },
 ): WhoAmIDeal | null {
-  // The server deals with a draw keyed by a secret of its own (`unit`). The seed's plain hash is only for a caller
-  // that has no secret to keep (a test, a preview): its numbers can be worked back from the order of what it deals,
-  // and with them the hidden identity.
+  // The server draws with a secret key (`unit`). The seed's plain hash is only for callers with nothing to hide (a test, a
+  // preview), since its numbers can be worked back from the deal's order, and the hidden identity with them.
   const unit: DealUnit = opts.unit ?? ((label) => seededUnit(opts.seed, label));
   const others = draw(
     unit,
@@ -334,7 +272,7 @@ export function dealWhoAmI(
     (p) => p.id,
   )
     .map((p) => ({ p, same: p.category === target.category, shared: Object.keys(target.facts).filter((k) => hasWhoAmIFact(p.facts, k)).length }))
-    // the identity's own kind first, so the kind the card names tells the tiles nothing apart
+    // The identity's own kind first, so the kind the card names does not tell the tiles apart.
     .sort((a, b) => Number(b.same) - Number(a.same) || b.shared - a.shared)
     .map((x) => x.p)
     .filter(tellsApart(target));
@@ -349,35 +287,31 @@ export function dealWhoAmI(
     if (asked.length < WHO_AM_I_MIN_QUESTIONS) continue;
     const split = new Map(asked.map((t) => [t.id, splitOf(tiles, t.fact)]));
     const splitting = asked.filter((t) => split.get(t.id)! > 0).sort((a, b) => split.get(b.id)! - split.get(a.id)!);
-    // a question every tile answers alike tells nothing: only a couple of the wide ones stay, and none the card's kind answers
+    // A question every tile answers alike tells nothing: only a couple of wide ones stay, and none the card's kind answers.
     const kind = sharedCategory(target.category, tiles);
     const known = isWhoAmICategory(kind) ? KIND_SETTLES[kind] : {};
     const flat = asked.filter((t) => split.get(t.id) === 0).sort((a, b) => factOrder(a.fact) - factOrder(b.fact));
     const wide = flat.filter((t) => (WIDE as readonly string[]).includes(t.fact) && !(t.fact in known)).slice(0, WHO_AM_I_WIDE_KEPT);
-    // when the list must still be made up to the least a deal offers, it is with what the card has not already said
+    // When the list must still be topped up to the minimum, use what the card has not already said.
     const rest = flat.filter((t) => !wide.includes(t)).sort((a, b) => Number(a.fact in known) - Number(b.fact in known));
     const short = Math.max(0, WHO_AM_I_MIN_QUESTIONS - splitting.length - wide.length);
     const questions = [...splitting, ...wide, ...rest.slice(0, short)].slice(0, WHO_AM_I_MAX_QUESTIONS);
     return {
       identity: target,
       candidates: draw(unit, `${opts.salt}:tiles`, tiles, (x) => x.id).map((x) => ({ id: x.id, word: x.word, meanings: x.meanings, category: x.category })),
-      // the list is drawn again, so its order says nothing about which questions split the tiles
+      // The list is shuffled again, so its order does not reveal which questions split the tiles.
       questions: draw(unit, `${opts.salt}:asked`, questions, (q) => q.id).map((q) => ({ id: q.id, ku: q.ku, meanings: q.meanings, fact: q.fact })),
     };
   }
   return null;
 }
 
-/**
- * The kind of thing a hidden identity is, as its card may name it: only when
- * every tile is of that kind. Among tiles of several kinds the kind would
- * single the identity out, so the card names none.
- */
+/** The kind a hidden identity's card may name: only when every tile is of that kind, since otherwise the kind would single it out. */
 export function sharedCategory(category: string, tiles: ReadonlyArray<{ category?: string }>): string | null {
   return tiles.length > 0 && tiles.every((t) => t.category === category) ? category : null;
 }
 
-/** What the card said to a question asked, from either of its forms: its verdict, or the yes or no of a list kept before there were three. */
+/** What the card said to an asked question, from its verdict or, in lists kept before there were three, its yes or no. */
 export function askedVerdict(a: WhoAmIAsked): WhoAmIAnswer {
   return a.verdict ?? (a.answer ? 'yes' : 'no');
 }
@@ -387,11 +321,8 @@ export function askedVerdict(a: WhoAmIAsked): WhoAmIAnswer {
 type Settled = Partial<Record<WhoAmIFact, boolean>>;
 
 /**
- * What an answer settles besides itself: an animal is alive and is neither a
- * person nor a place, and so on. What it settles settles more in turn (a hen
- * that lays eggs is an animal, so it is alive). Only ever used to choose which
- * questions to suggest; what a card says to a question is its facts table's
- * alone, and a "sometimes" from the card settles nothing but its own question.
+ * What an answer settles besides itself (an animal is alive and neither a person nor a place), transitively. Used only to
+ * choose suggestions: the card's answers are its facts table's alone, and a "sometimes" settles only its own question.
  */
 const SETTLES: Partial<Record<WhoAmIFact, { yes?: Settled; no?: Settled }>> = {
   animal: { yes: { alive: true, person: false, place: false, drink: false } },
@@ -402,7 +333,7 @@ const SETTLES: Partial<Record<WhoAmIFact, { yes?: Settled; no?: Settled }>> = {
   drink: { yes: { edible: false, alive: false, animal: false, person: false, place: false } },
   fruit: { yes: { edible: true, drink: false, animal: false, person: false, place: false } },
   building: { yes: { place: true } },
-  // these are only ever asked of animals: a yes says it is one
+  // These are only ever asked of animals, so a yes says it is one.
   wild: { yes: { animal: true } },
   'kept-by-people': { yes: { animal: true } },
   'gives-milk': { yes: { animal: true } },
@@ -410,10 +341,7 @@ const SETTLES: Partial<Record<WhoAmIFact, { yes?: Settled; no?: Settled }>> = {
   'has-feathers': { yes: { animal: true } },
 };
 
-/**
- * What the kind of thing on the card settles, when the card names its kind. Food is food or drink, so it says neither;
- * but nothing on a plate or in a glass is alive, so a holder who can see the kind is never sent to ask that.
- */
+/** What the card's named kind settles. Food is food or drink, so it settles neither, but nothing on a plate or in a glass is alive. */
 const KIND_SETTLES: Record<WhoAmICategory, Settled> = {
   animal: { alive: true, animal: true, person: false, place: false, drink: false },
   object: { alive: false, animal: false, person: false, place: false, edible: false, drink: false },
@@ -424,10 +352,9 @@ const KIND_SETTLES: Record<WhoAmICategory, Settled> = {
 };
 
 /**
- * Questions that are about some kinds of thing only: not worth asking once
- * the answers so far rule those out. Each entry is a list of ways to rule them
- * out, and a way holds when every answer it names is known: "Is it sweet?" is
- * beside the point once it is neither eaten nor drunk, or once it is a person.
+ * Questions only about some kinds of thing, not worth asking once the answers rule those kinds out. Each entry lists ways
+ * to rule them out, each holding when every answer it names is known: "Is it sweet?" is beside the point once it is
+ * neither eaten nor drunk, or is a person.
  */
 const FOOD_ONLY: ReadonlyArray<Settled> = [{ edible: false, drink: false }, { animal: true }, { person: true }, { place: true }];
 const ASKED_OF: Partial<Record<WhoAmIFact, ReadonlyArray<Settled>>> = {
@@ -465,34 +392,24 @@ const ASKED_OF: Partial<Record<WhoAmIFact, ReadonlyArray<Settled>>> = {
   red: [{ person: true }],
   'swim-in': [{ place: false }],
   'helps-sick': [{ animal: true }, { edible: true }],
-  // a job, an animal or a machine works outdoors: beside the point once it is neither a person nor an animal
+  // A job, an animal or a machine works outdoors: beside the point once it is neither a person nor an animal.
   'works-outdoors': [{ person: false, animal: false }],
 };
 
-/** Where a fact stands in the order a player asks in (`WHO_AM_I_FACTS`); one the list does not know goes last. */
+/** A fact's place in the asking order (`WHO_AM_I_FACTS`); an unknown fact goes last. */
 function factOrder(fact: string): number {
   const at = WHO_AM_I_FACTS.findIndex((f) => f.key === fact);
   return at < 0 ? WHO_AM_I_FACTS.length : at;
 }
 
-/** How many questions are suggested at once: few enough to read at a glance. */
+/** How many questions are suggested at once, few enough to read at a glance. */
 export const WHO_AM_I_SUGGESTIONS = 3;
 
 /**
- * The questions to suggest next, best first: the ones a player would ask if
- * they knew the game. The wide ones come before the narrow ones ("Is it
- * alive?" before "Does it fly?"), a question whose answer follows from what
- * has been answered already is left out (an animal is not asked whether it
- * is a place), and so is one about a kind of thing that has been ruled out
- * (nothing that is not an animal is asked whether it flies) until nothing
- * better is left. When every answer left is already known the list is empty.
- *
- * It reads only what the player can already see: the questions they were
- * dealt, the answers they have had, and the kind of thing the card names
- * when it names one. Nothing about the hidden identity goes into it, so the
- * suggestions say nothing the list did not. A "sometimes" from the card
- * answers its own question and nothing more: a dog that is sometimes at home
- * is still an animal to be asked about.
+ * The questions to suggest next, best first, as a seasoned player would ask: wide before narrow ("Is it alive?" before
+ * "Does it fly?"), leaving out questions whose answers follow from those already had, and putting last those about a kind
+ * already ruled out. Empty when every remaining answer is known. It reads only what the player can see (their questions,
+ * their answers, the card's named kind), never the hidden identity, and a "sometimes" answers only its own question.
  */
 export function suggestWhoAmIQuestions(
   questions: ReadonlyArray<{ id: string; fact: string }>,
@@ -525,23 +442,22 @@ export function suggestWhoAmIQuestions(
   const open = questions.filter((q) => !done.has(q.id)).sort((a, b) => factOrder(a.fact) - factOrder(b.fact));
   const beside = (q: { fact: string }): boolean =>
     isWhoAmIFact(q.fact) && (ASKED_OF[q.fact] ?? []).some((way) => Object.entries(way).every(([fact, value]) => known.get(fact) === value));
-  // A question whose answer is already known is never suggested: it costs a point for nothing. One that is only
-  // beside the point comes after everything else, since a card can still surprise; when even those are gone the
-  // list is empty, which is its own advice.
+  // A question with a known answer is never suggested, as it costs a point for nothing. One merely beside the point comes
+  // after everything else, since a card can still surprise; when even those are gone the empty list is its own advice.
   const unknown = open.filter((q) => !known.has(q.fact));
   return [...unknown.filter((q) => !beside(q)), ...unknown.filter(beside)].slice(0, Math.max(0, count)).map((q) => q.id);
 }
 
 // ---------- what the apps are sent ----------
 
-/** One tile to guess from: the word, and what it means when the difficulty shows that. */
+/** One tile to guess from: the word, and its meaning when the difficulty shows it. */
 export interface WhoAmITile {
   id: string;
   word: string;
   meanings: Meanings | null;
 }
 
-/** One question that can be asked: its Kurdish, and what it means (shown when it is tapped). */
+/** One question that can be asked: its Kurdish and its meaning, shown when tapped. */
 export interface WhoAmIQuestion {
   id: string;
   ku: string;
@@ -549,10 +465,8 @@ export interface WhoAmIQuestion {
 }
 
 /**
- * A question asked, and what the card said to it. `answer` is yes or not, as
- * apps from before the four answers read it (a "sometimes" is not yes);
- * `verdict` is the card's own word, missing only from a list kept before it
- * (`askedVerdict` reads either).
+ * A question asked and what the card said. `answer` is yes or not as older apps read it ("sometimes" is not yes);
+ * `verdict` is the card's own word, missing only from lists kept before it (`askedVerdict` reads either).
  */
 export interface WhoAmIAsked {
   question: string;

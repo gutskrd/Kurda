@@ -1,12 +1,7 @@
 /**
- * The multiplayer learning games the generic engine runs (api/src/mp), and
- * the numbers every one of them shares: how long a turn may be missed before a
- * player is away, how Hevalo plays a seat, and how placement XP is paid.
- *
- * `MULTI_GAMES` is the one list. The play layer's `PLAY_GAMES`, Game Ranks'
- * `RANKED_GAMES` and the invite links all add it to the games that came before,
- * so a new game is one line here (and one in the migration that widens the
- * database's own lists), not a change to every map.
+ * The multiplayer learning games the generic engine runs (api/src/mp) and the numbers they share: when a player counts as
+ * away, how Hevalo plays a seat, and how placement XP is paid. `MULTI_GAMES` is the one list that `PLAY_GAMES`,
+ * `RANKED_GAMES` and invite links extend, so a new game is one line here plus the migration widening the database's lists.
  */
 
 export const MULTI_GAMES = ['last-letter', 'impostor', 'who-am-i'] as const;
@@ -16,7 +11,7 @@ export function isMultiGame(v: unknown): v is MultiGame {
   return (MULTI_GAMES as readonly unknown[]).includes(v);
 }
 
-/** The address segment of each game's page (`/app/games/<segment>`), as players know the game. */
+/** Each game's page segment (`/app/games/<segment>`), the name players know. */
 export const MULTI_GAME_SEGMENT: Readonly<Record<MultiGame, string>> = {
   'last-letter': 'last-letter',
   impostor: 'impostor',
@@ -25,7 +20,7 @@ export const MULTI_GAME_SEGMENT: Readonly<Record<MultiGame, string>> = {
 
 /** A player who lets this many turns in a row run out is away: their next turns are passed over at once. */
 export const AWAY_AFTER_MISSED_TURNS = 2;
-/** How long an away player's turn waits for them before it is passed over: long enough to tap back in. */
+/** How long an away player's turn waits before it is passed over: long enough to tap back in. */
 export const AWAY_TURN_GRACE_MS = 4_000;
 
 // ---------------------------------------------------------------------------
@@ -38,9 +33,8 @@ export const PLACEMENT_WIN_XP = 60;
 export const PLACEMENT_LAST_XP = 15;
 
 /**
- * Playing the same people again on the same day pays less: the k-th game of a
- * day against any of the same opponents pays this share (1st, 2nd, 3rd, 4th,
- * then nothing). Games against new people pay in full.
+ * Playing the same people again the same day pays less: the k-th game against any of the same opponents pays this share,
+ * then nothing. New opponents pay in full.
  */
 export const REPEAT_OPPONENT_SHARE = [1, 1, 0.5, 0.25, 0] as const;
 

@@ -1,15 +1,8 @@
 /**
- * What `GET /mp/:game/:id` answers: one lobby or game of any multiplayer
- * learning game, as one viewer may see it. The envelope — the lobby, the
- * seats, the clock, the result — is the same for every game, so both apps draw
- * the room around a game once (`GameRoom`); `board` is the game's own view for
- * this viewer, built by its rules' `viewFor` and never more than that seat may
- * see.
- *
- * People are seats. Another player's `userId` is `seat:N`, their name only
- * when the viewer may see it (a friend, or anyone in a game open to adults),
- * and a report names the seat; nothing here is ever an account id but the
- * viewer's own.
+ * What `GET /mp/:game/:id` answers: one lobby or game of any multiplayer learning game as one viewer may see it. The
+ * envelope (lobby, seats, clock, result) is the same for every game, so both apps draw the room once (`GameRoom`); `board`
+ * is the game's own view for this viewer from its rules' `viewFor`. People are seats: another player's `userId` is
+ * `seat:N`, their name only when the viewer may see it, and no account id appears but the viewer's own.
  */
 import type { GameAccess } from '../../stories.js';
 import type { RatedState } from '../../ranks.js';
@@ -25,14 +18,14 @@ export interface MultiSeat {
   seat: number;
   /** the viewer's own id on their own seat, `seat:N` on everyone else's */
   userId: string;
-  /** null unless the viewer may see it: shown as "Player N" (or Hevalo, for a computer seat) */
+  /** null unless the viewer may see it, shown as "Player N" (or Hevalo, for a computer seat) */
   name: string | null;
   avatarUrl: string | null;
   isMe: boolean;
   isHost: boolean;
   /** left after the start; stays listed so seats do not move */
   gone: boolean;
-  /** missed two turns in a row, or not heard from: their turns are passed over until they are back */
+  /** missed two turns in a row or not heard from, so their turns are passed over until they are back */
   away: boolean;
   team: number | null;
   /** a computer seat ('hevalo'); null for a person */
@@ -54,7 +47,7 @@ export interface MultiView<Board = unknown, Settings = unknown> {
   status: MultiStatus;
   /** bumped by every change; `?v=` waits for a newer one */
   version: number;
-  /** the server's clock when this was built: every countdown is drawn from it */
+  /** the server's clock when this was built, which every countdown is drawn from */
   serverNow: string;
   dialect: LetterDialect;
   /** the settings anyone in the lobby may see */
@@ -84,7 +77,7 @@ export interface MultiView<Board = unknown, Settings = unknown> {
   board: Board;
 }
 
-/** `POST /mp/:game/:id/moves`: the view after the move, and what the mover alone is told about it. */
+/** `POST /mp/:game/:id/moves`: the view after the move, and what only the mover is told. */
 export interface MultiMoveAnswer<Board = unknown, Outcome = unknown, Settings = unknown> {
   view: MultiView<Board, Settings>;
   outcome: Outcome;

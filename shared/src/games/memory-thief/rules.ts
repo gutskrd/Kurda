@@ -1,32 +1,23 @@
 /**
- * The Memory Thief: how long a passage is studied, how many of its words the
- * thief takes, how they are given back, and the shapes a round travels in.
- *
- * The passages are approved ones — published stories, a paragraph at a time,
- * a few lines of a published lesson conversation, published `passage` rows —
- * and the words that vanish are approved too: a story's glossary terms, or
- * words the published lessons teach, each with the meaning an approved source
- * gives it. Nothing here writes Kurdish; what is decided here is only how hard
- * a round is.
- *
- * Easier rounds give longer to study and take fewer words, and the words are
- * given back from tiles with a few decoys among them; at the advanced
- * difficulty they are typed, with the key bar, and graded as lessons grade a
- * typed answer: a slip of a mark (ê for e, ێ for ی) is accepted as a typo.
+ * The Memory Thief: how long a passage is studied, how many words the thief takes, how they are given back, and the round
+ * shapes. Passages are approved (a story paragraph, a few lines of a lesson conversation, published `passage` rows) and so
+ * are the vanishing words (story glossary terms or lesson words, with approved meanings); this decides only difficulty.
+ * Easier rounds study longer, lose fewer words and restore them from tiles with decoys; advanced types them with the key
+ * bar, graded like a lesson's typed answer, so a missing mark (ê for e, ێ for ی) is a typo.
  */
 import type { Meanings } from '../content.js';
 import type { GameDifficulty } from '../solo.js';
 
-/** Passages in one round: each is studied and restored, which takes longer than a sentence. */
+/** Passages in one round; each is studied and restored, which takes longer than a sentence. */
 export const MEMORY_ROUND_PASSAGES = 5;
 
-/** Words a passage may have to be one: fewer is no memory test, more than a screen holds is a wall. */
+/** Words a passage may have: fewer is no memory test, more than a screen is a wall. */
 export const MEMORY_PASSAGE_WORDS = { min: 12, max: 90 } as const;
 
 /** Lines of a conversation taken as one passage. */
 export const MEMORY_CONVERSATION_LINES = { min: 3, max: 4 } as const;
 
-/** Words the thief takes, by difficulty (always within 2–6): a passage needs at least `min` words worth taking. */
+/** Words the thief takes by difficulty (always within 2–6); a passage needs at least `min` words worth taking. */
 export const MEMORY_HIDDEN: Readonly<Record<GameDifficulty, { min: number; max: number }>> = {
   beginner: { min: 2, max: 3 },
   intermediate: { min: 3, max: 4 },
@@ -43,7 +34,7 @@ export function memoryAnswerMode(difficulty: GameDifficulty): MemoryAnswerMode {
   return difficulty === 'advanced' ? 'type' : 'tiles';
 }
 
-/** Seconds to study, by difficulty: a little to settle in, then some for every word, within bounds. */
+/** Seconds to study by difficulty: a little to settle, then some per word, within bounds. */
 const STUDY: Readonly<Record<GameDifficulty, { base: number; perWord: number; min: number; max: number }>> = {
   beginner: { base: 15, perWord: 1, min: 20, max: 75 },
   intermediate: { base: 10, perWord: 0.7, min: 15, max: 55 },
@@ -62,19 +53,17 @@ export type MemoryWhy = 'glossary' | 'vocabulary';
 // ---------- what the apps are sent ----------
 
 /**
- * A piece of the passage as the restore phase lays it out: text as written,
- * a gap (numbered from 0; a word that vanished from two places is the same
- * gap twice), or, in a conversation, the start of a line (by its place in
- * `speakers`).
+ * A piece of the passage in the restore phase: text as written, a gap (from 0; a word vanishing in two places is the same
+ * gap twice), or in a conversation a line's start (by its place in `speakers`).
  */
 export type MemoryPart = { text: string } | { gap: number } | { line: number };
 
-/** An answer: the word given back to each gap, by its number; an empty string for a gap left empty. */
+/** An answer: the word given back for each gap by number; '' for a gap left empty. */
 export interface MemoryThiefAnswer {
   gaps: string[];
 }
 
-/** After a wrong first try: which gaps are still wrong (never the words that go there). */
+/** After a wrong first try: which gaps are still wrong, never the words that go there. */
 export interface MemoryThiefHint {
   wrong: number[];
 }
@@ -82,27 +71,23 @@ export interface MemoryThiefHint {
 /** How a gap's word was given back: right, right but for a mark (typed only), or not. */
 export type MemoryVerdict = 'right' | 'typo' | 'wrong';
 
-/** Once a passage is done: every vanished word in place, what it means, and what was given back for it. */
+/** Once a passage is done: every vanished word in place, its meaning, and what was given back for it. */
 export interface MemoryThiefCorrection {
   words: Array<{ gap: number; term: string; meanings: Partial<Meanings> | null; given: string | null; verdict: MemoryVerdict }>;
 }
 
-/** The passage as it is studied, line by line, before anything is known of what will vanish. */
+/** The passage as studied, line by line, before anything is known of what will vanish. */
 export function memoryTextLines(text: string): MemoryStudyPiece[][] {
   return text.split('\n').map((line) => [{ text: line }]);
 }
 
-/** A piece of a line as the study phase shows it: text as written, or a word that is about to vanish (and its gap). */
+/** A piece of a line in the study phase: text as written, or a word about to vanish (and its gap). */
 export type MemoryStudyPiece = { text: string } | { gap: number; word: string };
 
 /**
- * The passage line by line with every word that will vanish in its place, for
- * the words to lift off as the study ends: `parts` laid over `text`. A gap's
- * word is what the line has where the gap stands — up to the next space, less
- * the punctuation that closes it, as the server cut it. Without the text (a
- * round come back to after its words vanished, which is never sent the
- * passage again) every gap's word is empty. Pure; both apps stage the same
- * lines from it.
+ * The passage line by line with every vanishing word in place, for the words to lift off as study ends: `parts` laid
+ * over `text`. A gap's word is the line's text where the gap stands, up to the next space less closing punctuation, as the
+ * server cut it. Without the text (a round revisited after its words vanished) every gap's word is empty.
  */
 export function memoryStudyLines(text: string | null, parts: readonly MemoryPart[]): MemoryStudyPiece[][] {
   if (text === null) {
