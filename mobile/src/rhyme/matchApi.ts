@@ -95,30 +95,30 @@ export const createMatch = (client: ApiClient, dialect: Dialect, rated?: boolean
   client.post('/rhyme/matches', rated === undefined ? { dialect } : { dialect, rated });
 
 export const joinMatch = (client: ApiClient, id: string): Promise<ApiResult<MatchState>> =>
-  client.post(`/rhyme/matches/${id}/join`);
+  client.post(`/rhyme/matches/${encodeURIComponent(id)}/join`);
 
 export const startMatch = (client: ApiClient, id: string): Promise<ApiResult<MatchState>> =>
-  client.post(`/rhyme/matches/${id}/start`);
+  client.post(`/rhyme/matches/${encodeURIComponent(id)}/start`);
 
 /** Leave: out of the lobby (the host leaving calls it off for everyone), or out of a match under way, your score standing. */
 export const leaveMatch = (client: ApiClient, id: string): Promise<ApiResult<{ ok: true }>> =>
-  client.post(`/rhyme/matches/${id}/leave`);
+  client.post(`/rhyme/matches/${encodeURIComponent(id)}/leave`);
 
 /** The host takes a player out of the lobby, by seat; they cannot join it again. */
 export const removeFromMatch = (client: ApiClient, id: string, seat: number): Promise<ApiResult<MatchState>> =>
-  client.post(`/rhyme/matches/${id}/remove`, { seat });
+  client.post(`/rhyme/matches/${encodeURIComponent(id)}/remove`, { seat });
 
 export const submitRhyme = (
   client: ApiClient,
   id: string,
   word: string,
 ): Promise<ApiResult<{ match: MatchState; result: SubmitOutcome }>> =>
-  client.post(`/rhyme/matches/${id}/submissions`, { word });
+  client.post(`/rhyme/matches/${encodeURIComponent(id)}/submissions`, { word });
 
 export const getMatch = (client: ApiClient, id: string): Promise<ApiResult<MatchState>> =>
   // an invite to it accepted a moment ago is let land first: until it has, this is nobody's match (play/joining.ts)
-  joined(id).then(() => client.get(`/rhyme/matches/${id}`));
+  joined(id).then(() => client.get(`/rhyme/matches/${encodeURIComponent(id)}`));
 
 /** 409s until the match is over — the prompt and everyone's words are in here. */
 export const getMatchResults = (client: ApiClient, id: string): Promise<ApiResult<MatchResults>> =>
-  client.get(`/rhyme/matches/${id}/results`);
+  client.get(`/rhyme/matches/${encodeURIComponent(id)}/results`);

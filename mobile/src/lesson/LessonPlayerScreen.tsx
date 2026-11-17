@@ -127,7 +127,7 @@ export function LessonPlayerScreen({
     }
     let active = true;
     setTitle(null);
-    void client.get<CourseMap>(`/courses/${courseId}/map`).then((res) => {
+    void client.get<CourseMap>(`/courses/${encodeURIComponent(courseId)}/map`).then((res) => {
       if (active) setTitle((res.ok ? lessonTitle(res.data, lessonId) : null) ?? undefined);
     });
     return () => {
@@ -138,7 +138,7 @@ export function LessonPlayerScreen({
   useEffect(() => {
     let active = true;
     setLoadError(null);
-    void client.get<SessionView>(`/lessons/${lessonId}/session`).then(async (res) => {
+    void client.get<SessionView>(`/lessons/${encodeURIComponent(lessonId)}/session`).then(async (res) => {
       if (!active) return;
       if (!res.ok) {
         setLoadError(describeError(res.error, t));
@@ -449,7 +449,7 @@ function SessionPlayerBody({
         setGoalDone(standing?.goalCompleted === true);
       });
       if (kind === 'lesson' && courseId && onNext) {
-        void client.get<CourseMap>(`/courses/${courseId}/map`).then((map) => {
+        void client.get<CourseMap>(`/courses/${encodeURIComponent(courseId)}/map`).then((map) => {
           if (map.ok) setNext(nextLaunch(map.data, view.lessonId));
         });
       }
