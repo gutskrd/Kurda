@@ -245,7 +245,8 @@ export function Question({
 
       {status ? (
         <View style={styles.statusRow}>
-          {locked ? <Icon name="check" size={16} color={colors.success} /> : null}
+          {/* sent, not yet judged: violet, so no tick says "right" before the reveal does */}
+          {locked ? <Icon name="check" size={16} color={colors.primary} /> : null}
           <Text style={[styles.status, { color: colors.textPrimary }]}>{status}</Text>
         </View>
       ) : null}

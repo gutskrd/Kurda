@@ -102,12 +102,13 @@ export function EntryView({
           })}
           <button
             type="button"
-            className="btn btn-ghost btn-sm"
+            className={`btn btn-ghost btn-sm dict-save${entry.saved ? ' is-on' : ''}`}
             onClick={() => void toggleSave()}
             aria-pressed={entry.saved === true}
             aria-label={entry.saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
           >
-            <BookmarkIcon size={16} />
+            {/* a saved word is on: filled, in the violet of everything chosen, as a bookmarked story is */}
+            <BookmarkIcon size={16} weight={entry.saved ? 'fill' : 'regular'} />
             <span>{entry.saved ? t('dictionary.savedWord') : t('dictionary.saveWord')}</span>
           </button>
         </div>

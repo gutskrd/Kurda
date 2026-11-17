@@ -550,7 +550,8 @@ function ProgressCard({ me }: { me: NonNullable<StoryLibrary['me']> }): React.JS
       accessibilityLabel={`${t('stories.library.progressTitle')}. ${read}. ${t('stories.library.averageScore')}: ${score}`}
     >
       <View style={styles.ring}>
-        <Ring fraction={fraction} size={64} color={colors.gold} />
+        {/* how far along the reading is: the violet of progress, as the course's bar is (gold is for what is earned) */}
+        <Ring fraction={fraction} size={64} color={colors.primary} />
         <View style={styles.ringCenter} pointerEvents="none">
           <Text style={[styles.ringText, { color: colors.textPrimary }]} numberOfLines={1}>
             {formatNumber(percent, locale)}%
@@ -653,7 +654,7 @@ export function StoryCard({
           <StoryCover slug={story.slug} cover={story.cover} style={styles.cover} radius={radii.sm} />
           {share > 0 ? (
             <View style={[styles.hairline, { backgroundColor: colors.scrim }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-              <View style={[styles.hairlineFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.gold }]} />
+              <View style={[styles.hairlineFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.primary }]} />
             </View>
           ) : null}
         </View>
@@ -679,10 +680,11 @@ export function StoryCard({
         */}
         <View style={styles.foot}>
           <View style={[styles.facts, storyRowStyle(story.dialect), { flexDirection: dir.row }]}>
-            <Pill label={level} tone="gold" />
+            {/* a level is information, not a prize: the quiet pill */}
+            <Pill label={level} />
             <Text style={[styles.factText, { color: colors.textSecondary }]}>{minutes}</Text>
             {narrated ? <Icon name="headphones" size={14} color={colors.textSecondary} /> : null}
-            {story.me?.finishedAt ? <Icon name="check" size={14} color={colors.success} /> : null}
+            {story.me?.finishedAt ? <Icon name="check" size={14} color={colors.primary} /> : null}
           </View>
           {category ? (
             <Text style={[styles.category, dir.text, { color: colors.textSecondary, textAlign: storyTextStyle(story.dialect).textAlign }]} numberOfLines={2}>
@@ -699,7 +701,8 @@ export function StoryCard({
         hitSlop={6}
         style={({ pressed }) => [styles.bookmark, { backgroundColor: colors.surface, opacity: pressed ? pressedDim : 1 }]}
       >
-        <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={18} color={bookmarked ? colors.gold : colors.textSecondary} />
+        {/* on is violet, as everything chosen is */}
+        <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={18} color={bookmarked ? colors.primary : colors.textSecondary} />
       </Pressable>
     </View>
   );

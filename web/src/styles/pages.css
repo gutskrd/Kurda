@@ -4720,6 +4720,10 @@ a.mkp-activity-row:hover {
   align-items: center;
   gap: 8px;
 }
+/* a saved word is on, and on is the violet of everything chosen, as a bookmarked story is */
+.dict-save.is-on {
+  color: var(--primary);
+}
 /* a pronunciation with a character: the speaker beside its button (dictionary/EntryView.tsx) */
 .dict-voice {
   display: inline-flex;

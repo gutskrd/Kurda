@@ -248,7 +248,8 @@
 .lore-solved-bar > span {
   display: block;
   height: 100%;
-  background: var(--gold);
+  /* how far through the riddles: the violet of progress along a road, as the phone's line is */
+  background: var(--primary);
   border-radius: inherit;
   transition: width var(--dur-progress) var(--ease-out);
 }

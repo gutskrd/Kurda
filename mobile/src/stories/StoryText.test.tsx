@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { StoryGlossEntry } from '@kurda/shared';
+import { hueSteps, type StoryGlossEntry } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
+import { PALETTES } from '../theme/palette';
 import { STORY_BODY_SIZE, StoryText, storyLineHeight } from './StoryText';
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -17,6 +18,10 @@ const story = {
   paragraphs: ['Dayika min nan dipêje. Nan germ e.', 'Em nan dixwin.'],
   glossary: [nan],
 };
+
+/** A colour's red, green and blue, however it is written: #862be2, rgb(134, 43, 226) or rgba(134,43,226,1.00). */
+const rgbOf = (colour: string): number[] =>
+  colour.startsWith('#') ? [1, 3, 5].map((at) => parseInt(colour.slice(at, at + 2), 16)) : (colour.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
 
 describe('storyLineHeight', () => {
   it('spaces lines for the reader’s size alone — React Native adds the system text size to it', () => {
@@ -67,6 +72,25 @@ describe('StoryText', () => {
     view.rerender(<StoryText story={story} current={null} onReplay={onReplay} />);
     fireEvent.click(screen.getByText('Nan germ e.', { exact: false }));
     expect(onReplay).toHaveBeenCalledTimes(1);
+  });
+
+  it('lays the violet’s wash behind the sentence being read and underlines a word that opens its meaning in violet, by day and by night', async () => {
+    try {
+      for (const scheme of ['light', 'dark'] as const) {
+        // the theme the reader chose, kept where the app keeps it
+        localStorage.setItem('kurda_theme_pref_v1', scheme);
+        renderWithProviders(<StoryText story={story} current={{ paragraph: 0, sentence: 1 }} onGloss={vi.fn()} />);
+        const reading = (): string => (screen.getByText('Nan germ e.', { exact: false }) as HTMLElement).style.backgroundColor;
+        await waitFor(() => expect(rgbOf(reading())).toEqual(rgbOf(hueSteps(scheme, 'violet').wash)));
+        const word = screen.getAllByText('nan')[0] as HTMLElement;
+        expect(rgbOf(word.style.textDecorationColor)).toEqual(rgbOf(PALETTES[scheme].primary));
+        // the sentence that is not being read has no band at all
+        expect((screen.getByText('Dayika min', { exact: false }) as HTMLElement).style.backgroundColor).toBe('');
+        cleanup();
+      }
+    } finally {
+      localStorage.removeItem('kurda_theme_pref_v1');
+    }
   });
 
   it('gives a Listen button only to a paragraph that has recordings, and says which one plays', () => {

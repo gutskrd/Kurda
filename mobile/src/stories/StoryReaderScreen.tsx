@@ -126,7 +126,7 @@ type Mode = 'overview' | 'reading';
  * from a link shows what the link names and changes no choice.
  *
  * The text is set in the display serif, generously leaded, with glossary
- * words marked in dotted gold; a tap on one opens its meaning, part of speech
+ * words marked in dotted violet; a tap on one opens its meaning, part of speech
  * and the same play and save; a Translation toggle under each paragraph shows
  * it in the reader's language. Every string from the story carries the
  * story's own direction and language (`storyTextStyle`), so a Soranî story
@@ -515,7 +515,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
       accessibilityState={{ selected: me?.bookmarked ?? false }}
       style={({ pressed }) => [styles.headerButton, pressed && heldDim]}
     >
-      <Icon name={me?.bookmarked ? 'bookmark-fill' : 'bookmark'} size={22} color={me?.bookmarked ? colors.gold : colors.textPrimary} />
+      <Icon name={me?.bookmarked ? 'bookmark-fill' : 'bookmark'} size={22} color={me?.bookmarked ? colors.primary : colors.textPrimary} />
     </Pressable>
   );
 
@@ -667,7 +667,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
               </Text>
             ) : null}
             <View style={[styles.pills, storyRowStyle(story.dialect)]}>
-              <Pill label={levelName(story.level, t)} tone="gold" />
+              <Pill label={levelName(story.level, t)} />
               {category ? <Pill icon="tag" label={category} /> : null}
               {/* which Kurdish it is: said by the switch when there is one */}
               {otherTelling ? null : <Pill label={DIALECT_NAME[story.dialect]} />}
@@ -923,7 +923,8 @@ function CheckCard({
   return (
     <Card style={styles.check}>
       <View style={styles.checkHead}>
-        <Icon name={unlocked ? 'check' : 'lock'} size={20} color={unlocked ? colors.success : colors.textSecondary} />
+        {/* open or not yet: a state, not a right answer, so violet rather than green */}
+        <Icon name={unlocked ? 'check' : 'lock'} size={20} color={unlocked ? colors.primary : colors.textSecondary} />
         <Text style={[styles.checkTitle, { color: colors.textPrimary }]} accessibilityRole="header">
           {t('stories.check.title')}
         </Text>
@@ -1026,7 +1027,7 @@ function VocabularyRow({
           hitSlop={WORD_BUTTON_SLOP}
           style={({ pressed }) => [styles.wordPlay, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
         >
-          <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={18} color={saved ? colors.gold : colors.primary} />
+          <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={18} color={colors.primary} />
         </Pressable>
       ) : saveColumn && playable ? (
         <View style={styles.wordSlot} />
@@ -1142,7 +1143,7 @@ function ChapterLine({
         {sections.map((s, i) => {
           const end = sections[i + 1]?.paragraph ?? story.paragraphs.length;
           const read = readTo >= end - 1;
-          return <View key={s.paragraph} style={[styles.chapterStone, { backgroundColor: read || i === chapter ? colors.gold : colors.controlTrack, opacity: i === chapter && !read ? 0.55 : 1 }]} />;
+          return <View key={s.paragraph} style={[styles.chapterStone, { backgroundColor: read || i === chapter ? colors.primary : colors.controlTrack, opacity: i === chapter && !read ? 0.55 : 1 }]} />;
         })}
       </View>
     </Pressable>
@@ -1194,7 +1195,7 @@ function ChapterList({
           style={({ pressed }) => [styles.chapterRow, { flexDirection: storyRowDirection(story.dialect) }, r.current && { backgroundColor: colors.controlTrack }, pressed && heldRow(colors.controlTrack)]}
           testID={`chapter-row-${r.key}`}
         >
-          <Text style={[styles.chapterNumber, { color: colors.goldText }]}>{r.number}</Text>
+          <Text style={[styles.chapterNumber, { color: colors.textSecondary }]}>{r.number}</Text>
           <View style={styles.chapterMain}>
             <Text {...(r.key === 'intro' ? {} : props)} style={[styles.chapterTitle, { color: colors.textPrimary }, r.key === 'intro' ? null : dir]}>
               {r.title}
@@ -1206,7 +1207,7 @@ function ChapterList({
             ) : null}
             {r.current ? <Text style={[styles.chapterHere, { color: colors.primary }]}>{t('stories.reader.chapterHere')}</Text> : null}
           </View>
-          {r.read ? <Icon name="check" size={16} color={colors.success} /> : null}
+          {r.read ? <Icon name="check" size={16} color={colors.primary} /> : null}
         </Pressable>
       ))}
     </View>

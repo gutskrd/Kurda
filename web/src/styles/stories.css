@@ -122,6 +122,7 @@
   display: grid;
   gap: 10px;
 }
+/* the way back into a story: progress along a road, and a thing to press, so the violet (gold is for what is earned) */
 .story-continue-card {
   display: flex;
   align-items: center;
@@ -129,12 +130,12 @@
   min-height: 64px;
   padding: 12px 16px;
   border-radius: var(--r-lg);
-  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
-  background: var(--gold-soft);
+  border: 1px solid color-mix(in srgb, var(--primary) 34%, transparent);
+  background: var(--primary-soft);
   color: var(--ink);
 }
 .story-continue-card:hover {
-  border-color: var(--gold);
+  border-color: var(--primary);
 }
 .story-continue-text {
   display: flex;
@@ -159,7 +160,7 @@
   gap: 4px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--gold-ink);
+  color: var(--primary);
   white-space: nowrap;
 }
 [dir='rtl'] .story-chevron {
@@ -197,7 +198,7 @@
   stroke: var(--surface-3);
 }
 .story-progress-ring-fill {
-  stroke: var(--gold);
+  stroke: var(--primary);
   stroke-linecap: round;
   transition: stroke-dasharray var(--dur-progress) var(--ease-out);
 }
@@ -511,25 +512,25 @@
 .story-narrated::before {
   margin-inline-end: -5px;
 }
+/* a level is information, not a prize: the quiet pill, the control's track with the secondary ink, as the phone has it */
 .story-cefr {
   display: inline-flex;
   align-items: center;
   min-height: 20px;
   padding: 0 7px;
   border-radius: var(--r-xs);
-  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
-  background: var(--gold-soft);
-  color: var(--gold-ink);
+  background: var(--surface-2);
+  color: var(--ink-3);
   font-size: var(--text-tab);
   font-weight: 700;
   /* a level's plain name is a word like any other, one line however long it is in a language */
   white-space: nowrap;
 }
+/* that it is read aloud is a fact like the minutes beside it, in their ink */
 .story-narrated {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: var(--gold-ink);
 }
 /* how far the reader got, as a hairline along the card's foot */
 .story-card-progress {
@@ -540,7 +541,7 @@
 .story-card-progress > span {
   display: block;
   height: 100%;
-  background: var(--gold);
+  background: var(--primary);
   transition: width var(--dur-progress) var(--ease-out);
 }
 [dir='rtl'] .story-card-progress > span {
@@ -563,8 +564,9 @@
 .story-card-bookmark:hover {
   background: color-mix(in srgb, var(--app-bg) 90%, transparent);
 }
+/* a bookmark that is on is the violet of everything chosen */
 .story-card-bookmark.is-on {
-  color: var(--gold-ink);
+  color: var(--primary);
 }
 .story-card-bookmark:focus-visible {
   outline: 2px solid var(--focus);
@@ -712,7 +714,7 @@
   }
 }
 .story-overview-bookmark.is-on {
-  color: var(--gold-ink);
+  color: var(--primary);
 }
 /* a story told in both varieties: the library's own switch, at the head of its overview */
 .story-variety-reader {
@@ -797,8 +799,8 @@
   margin: 0 0 18px;
   padding: 12px 16px;
   border-radius: var(--r-lg);
-  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
-  background: var(--gold-soft);
+  border: 1px solid color-mix(in srgb, var(--primary) 34%, transparent);
+  background: var(--primary-soft);
   font-size: var(--text-secondary);
   color: var(--ink);
 }
@@ -840,10 +842,16 @@
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-/* the sentence being read sits on a gold band, and says itself again when tapped */
+/*
+ * The sentence being read sits on the violet's wash, as everything that says
+ * "here" does (gold is for what is earned), and says itself again when tapped.
+ * The wash is the shared hue's own step, the phone's to the digit: the text
+ * wears the violet (StoryText.tsx). Its words keep their ink on it, at 14:1
+ * by day and 11:1 by night.
+ */
 .story-sentence.is-reading {
-  background: color-mix(in srgb, var(--gold) 22%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 22%, transparent);
+  background: var(--hue-wash);
+  box-shadow: 0 0 0 2px var(--hue-wash);
   cursor: pointer;
 }
 .story-sentence.is-evidence,
@@ -851,6 +859,7 @@
   background: color-mix(in srgb, var(--success) 18%, transparent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 18%, transparent);
 }
+/* the band's own wash, with the violet of what can be pressed on it: 4.6:1 by day, 5.4:1 by night */
 .story-replay {
   display: inline-grid;
   place-items: center;
@@ -860,12 +869,12 @@
   margin-inline-start: 4px;
   border-radius: 50%;
   border: 0;
-  background: color-mix(in srgb, var(--gold) 28%, transparent);
-  color: var(--gold-ink);
+  background: var(--hue-wash);
+  color: var(--primary);
   cursor: pointer;
 }
 .story-replay:hover {
-  background: color-mix(in srgb, var(--gold) 44%, transparent);
+  background: color-mix(in srgb, var(--primary) 22%, var(--hue-wash));
 }
 .story-gloss-hold {
   /* a glossary word keeps the quote or comma beside it on its own line */
@@ -880,14 +889,15 @@
   font: inherit;
   color: inherit;
   cursor: help;
+  /* a word that opens its meaning can be pressed, so its dotted line is the violet */
   text-decoration: underline dotted;
-  text-decoration-color: var(--gold);
+  text-decoration-color: var(--primary);
   text-decoration-thickness: 2px;
   text-underline-offset: 0.28em;
 }
 .story-gloss:hover,
 .story-gloss[aria-expanded='true'] {
-  color: var(--gold-ink);
+  color: var(--primary);
 }
 .story-gloss:focus-visible {
   outline: 2px solid var(--focus);
@@ -927,7 +937,8 @@
   max-width: 36em;
   margin: 8px 0 0;
   padding-inline-start: 14px;
-  border-inline-start: 2px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  /* a quiet line, no colour of its own: the translation belongs to the paragraph above it, it is not a mark */
+  border-inline-start: 2px solid var(--border-strong);
   font-family: var(--font-sans);
   font-size: calc(var(--story-size) * 0.95rem);
   line-height: 1.6;
@@ -969,7 +980,7 @@
   max-width: min(340px, calc(100vw - 24px));
   padding: 12px 14px 10px;
   border-radius: var(--r-md);
-  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  border: 1px solid var(--border-strong);
   background: var(--panel-bg);
   box-shadow: var(--shadow);
   color: var(--ink);
@@ -990,7 +1001,7 @@
   font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--gold-ink);
+  color: var(--ink);
 }
 .story-gloss-pos,
 .story-word-pos {
@@ -1058,10 +1069,11 @@
   background: var(--surface-2);
   color: var(--ink);
 }
+/* a saved word is on, and on is the violet, as a bookmarked story is */
 .story-save.is-on {
-  color: var(--gold-ink);
-  border-color: color-mix(in srgb, var(--gold) 50%, transparent);
-  background: var(--gold-soft);
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+  background: var(--primary-soft);
 }
 .story-save-problem {
   flex: 1 1 100%;
@@ -1288,7 +1300,7 @@
   transition: background var(--dur) var(--ease-out);
 }
 .story-contents-bar > li.is-read {
-  background: var(--gold);
+  background: var(--primary);
 }
 .story-contents-bar > li.is-here:not(.is-read) {
   background: var(--ink-3);
@@ -1371,7 +1383,7 @@
 }
 .story-contents-mark {
   flex: none;
-  color: var(--gold-ink);
+  color: var(--primary);
 }
 /* in the reader's tools: where the reader is, and the way to any chapter */
 .story-chapter-pick select {
@@ -1531,6 +1543,8 @@
   --player-dim: var(--ink-4);
   --player-fill: var(--surface-2);
   --player-line: var(--border-strong);
+  /* how much has been heard: the violet of progress along a road, or the bar's own ink where the bar is the violet */
+  --player-heard: var(--primary);
   display: inline-flex;
   flex-direction: column;
   gap: 4px;
@@ -1548,7 +1562,7 @@
   display: inline-grid;
   place-items: center;
   width: 32px;
-  color: var(--gold-ink);
+  color: var(--player-ink-2);
 }
 .story-player-btn {
   display: inline-grid;
@@ -1652,11 +1666,11 @@
   outline-offset: 2px;
   border-radius: var(--r-pill);
 }
-/* a thin line, the gold of what has been heard up to the dot, drawn once for each engine */
+/* a thin line, whole up to the dot where it has been heard, drawn once for each engine */
 .story-player-seek::-webkit-slider-runnable-track {
   height: 3px;
   border-radius: var(--r-pill);
-  background: linear-gradient(to right, var(--gold) var(--seek), var(--player-line) var(--seek));
+  background: linear-gradient(to right, var(--player-heard) var(--seek), var(--player-line) var(--seek));
 }
 .story-player-seek::-moz-range-track {
   height: 3px;
@@ -1666,7 +1680,7 @@
 .story-player-seek::-moz-range-progress {
   height: 3px;
   border-radius: var(--r-pill);
-  background: var(--gold);
+  background: var(--player-heard);
 }
 .story-player-seek::-webkit-slider-thumb {
   appearance: none;
@@ -1676,7 +1690,7 @@
   margin-top: -5.5px;
   border-radius: 50%;
   border: 0;
-  background: var(--gold);
+  background: var(--player-heard);
   box-shadow: 0 0 0 2px var(--player-ink);
 }
 .story-player-seek::-moz-range-thumb {
@@ -1684,12 +1698,12 @@
   height: 14px;
   border-radius: 50%;
   border: 0;
-  background: var(--gold);
+  background: var(--player-heard);
   box-shadow: 0 0 0 2px var(--player-ink);
 }
 /* a right-to-left page reads the line from its right, as it reads everything */
 [dir='rtl'] .story-player-seek::-webkit-slider-runnable-track {
-  background: linear-gradient(to left, var(--gold) var(--seek), var(--player-line) var(--seek));
+  background: linear-gradient(to left, var(--player-heard) var(--seek), var(--player-line) var(--seek));
 }
 .story-player-notes {
   display: flex;
@@ -1713,6 +1727,7 @@
   --player-dim: color-mix(in srgb, var(--primary-ink) 38%, transparent);
   --player-fill: color-mix(in srgb, var(--primary-ink) 12%, transparent);
   --player-line: color-mix(in srgb, var(--primary-ink) 28%, transparent);
+  --player-heard: var(--primary-ink);
   position: sticky;
   bottom: calc(12px + env(safe-area-inset-bottom));
   z-index: 6;
@@ -2180,7 +2195,7 @@
   /* focused by the page so a screen reader starts here; nothing to press */
   outline: none;
 }
-/* the ring beside the counter: filled as far as this question, in the gold of what is being done */
+/* the ring beside the counter: filled as far as this question, in the violet of where you are, as the phone's steps are */
 .sg-q-ring {
   flex: none;
   transform: rotate(-90deg);
@@ -2193,7 +2208,7 @@
   stroke: var(--surface-3);
 }
 .sg-q-ring-fill {
-  stroke: var(--gold);
+  stroke: var(--primary);
   stroke-linecap: round;
   transition: stroke-dasharray var(--dur-progress) var(--ease-out);
 }

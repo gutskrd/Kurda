@@ -203,7 +203,8 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.facts, { flexDirection: dir.row }]}>
-          <Pill label={t(DIFFICULTY_KEY[riddle.difficulty])} tone="gold" />
+          {/* how hard it is is information, not a prize: the quiet pill, as its neighbours are */}
+          <Pill label={t(DIFFICULTY_KEY[riddle.difficulty])} />
           <Pill label={t(CATEGORY_KEY[riddle.category])} />
           {daily ? <Pill icon="calendar" label={t('lore.riddles.daily')} /> : null}
         </View>

@@ -7,6 +7,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from '../play/testing/navigation';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
+import { PALETTES } from '../theme/palette';
 import { resetPrefsCache, shownDialect } from './prefs';
 import { NO_FILTER, isFiltering, libraryQuery } from './LibraryFilter';
 import { StoriesView } from './StoriesView';
@@ -109,6 +110,14 @@ const SORANI_LIBRARY = library({
   total: 1,
   me: { finished: 0, total: 1, averageScore: null },
 });
+
+/** The colour an icon was drawn in. */
+const fillOf = (button: HTMLElement): string | null | undefined => button.querySelector('path')?.getAttribute('fill');
+/** A colour's red, green and blue, however it is written: #595870 or rgb(89, 88, 112). */
+const rgbOf = (colour: string): number[] =>
+  colour.startsWith('#') ? [1, 3, 5].map((at) => parseInt(colour.slice(at, at + 2), 16)) : (colour.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+// the app opens by night until the reader chooses otherwise, and nobody has in these tests
+const NIGHT = PALETTES.dark;
 
 async function openJoin(): Promise<void> {
   fireEvent.click(screen.getByRole('button', { name: 'Join with a code' }));
@@ -515,6 +524,9 @@ describe('StoriesView', () => {
     const bookmarks = screen.getByRole('heading', { name: 'Bookmarks' }).parentElement!;
     expect(within(bookmarks).getByRole('button', { name: 'Nanê Germ' })).toBeTruthy();
     expect(screen.getAllByRole('button', { name: 'Bookmarked' }).length).toBeGreaterThanOrEqual(3);
+    // a bookmark that is on is the violet of everything chosen; one that is off, the page's quiet ink
+    for (const on of screen.getAllByRole('button', { name: 'Bookmarked' })) expect(fillOf(on)).toBe(NIGHT.primary);
+    for (const off of screen.getAllByRole('button', { name: 'Bookmark' })) expect(fillOf(off)).toBe(NIGHT.textSecondary);
 
     // the Soranî story's bookmark cannot be taken off: the mark comes back and the refusal is said
     const before = screen.getAllByRole('button', { name: 'Bookmarked' }).length;
@@ -522,6 +534,15 @@ describe('StoriesView', () => {
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Bookmarked' }).length).toBe(before));
     expect(screen.getByText(/try again|went wrong|could not/i)).toBeTruthy();
     stop();
+  });
+
+  it('names a story’s level in the quiet pill, not in the gold of what is earned', async () => {
+    testAuth.client = client();
+    renderWithProviders(<StoriesView />);
+    await screen.findByRole('heading', { name: 'Featured' });
+    const levels = screen.getAllByText('Starter');
+    expect(levels.length).toBeGreaterThan(0);
+    for (const level of levels) expect(rgbOf(level.style.color)).toEqual(rgbOf(NIGHT.textSecondary));
   });
 
   it('says the stories are on their way rather than showing empty shelves', async () => {

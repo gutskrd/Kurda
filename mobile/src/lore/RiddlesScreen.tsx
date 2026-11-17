@@ -218,14 +218,14 @@ export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialec
   );
 }
 
-/** How far through the variety's riddles the reader is: a thin gold line, drawn once where it stands. */
+/** How far through the variety's riddles the reader is: a thin violet line, as all progress along a road is, drawn once where it stands. */
 function SolvedBar({ solved, total }: { solved: number; total: number }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   const share = total > 0 ? Math.min(1, solved / total) : 0;
   return (
     <View style={[styles.bar, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <View style={[styles.barFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.gold }]} />
+      <View style={[styles.barFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.primary }]} />
     </View>
   );
 }
@@ -266,7 +266,7 @@ function DailyRiddle({ riddle, translated, onOpen }: { riddle: RiddleCard; trans
         </Text>
       ) : null}
       <View style={[styles.dailyFoot, { flexDirection: dir.row }]}>
-        <Pill label={t(DIFFICULTY_KEY[riddle.difficulty])} tone="gold" />
+        <Pill label={t(DIFFICULTY_KEY[riddle.difficulty])} />
         {riddle.state !== 'new' ? <Pill label={t(STATE_KEY[riddle.state])} tone={riddle.state === 'solved' ? 'success' : 'plain'} /> : null}
         <View style={styles.flex} />
         <Text style={[styles.dailyGo, { color: colors.primary }]}>{riddle.state === 'solved' || riddle.state === 'revealed' ? t('lore.riddle.seeAnswer') : t('lore.riddles.go')}</Text>

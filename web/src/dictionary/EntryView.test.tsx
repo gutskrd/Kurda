@@ -52,3 +52,29 @@ describe('a dictionary entry’s pronunciations', () => {
     expect(document.querySelector('.speaking-character')).toBeNull();
   });
 });
+
+describe('a saved word', () => {
+  it('is on, as a bookmarked story is, and is taken off at a tap', async () => {
+    const asked: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        const path = new URL(url).pathname;
+        asked.push(`${init?.method ?? 'GET'} ${path}`);
+        if (path === '/dictionary/entries/d1/save') return jsonResponse(200, { saved: false });
+        if (path === '/dictionary/entries/d1') return jsonResponse(200, { id: 'd1', headword: 'roj', dialect: 'kurmanji', senses: [], audio: [], xrefs: [], saved: true });
+        return jsonResponse(401, {});
+      }),
+    );
+    renderApp(<EntryView entryId="d1" onOpenEntry={vi.fn()} />);
+    // on: pressed, and drawn as everything that is on (the violet, styles/pages.css)
+    const on = await screen.findByRole('button', { name: 'Remove bookmark' });
+    expect(on).toHaveAttribute('aria-pressed', 'true');
+    expect(on).toHaveClass('dict-save', 'is-on');
+    await userEvent.click(on);
+    const off = await screen.findByRole('button', { name: 'Bookmark word' });
+    expect(off).toHaveAttribute('aria-pressed', 'false');
+    expect(off).not.toHaveClass('is-on');
+    expect(asked).toContain('DELETE /dictionary/entries/d1/save');
+  });
+});
