@@ -1,11 +1,7 @@
 import type { ApiError } from '../api/types';
 import { describeError, isOffline, isRetryable, type Translate } from '../api/errors';
 
-/**
- * The state a data-driven screen is in (KUR-278). A single discriminated union so
- * every screen renders one of loading / offline / error+retry / empty / ready —
- * never an infinite spinner or a blank screen.
- */
+/** The state a data screen is in: loading, offline, error with retry, empty or ready. */
 export type AsyncStatus =
   | { kind: 'loading' }
   | { kind: 'offline' }
@@ -14,27 +10,26 @@ export type AsyncStatus =
   | { kind: 'ready' };
 
 export interface AsyncInput {
-  /** the translator, because a screen state carries a sentence a person reads */
+  /** The translator, because a screen state carries a sentence a person reads. */
   t: Translate;
-  /** a request is in flight and we have nothing to show yet */
+  /** A request is in flight and we have nothing to show yet. */
   loading: boolean;
-  /** live connectivity (useIsOnline) */
+  /** Live connectivity (useIsOnline). */
   online: boolean;
-  /** the last request's error, if any */
+  /** The last request's error, if any. */
   error?: ApiError | null;
-  /** the request succeeded but returned nothing */
+  /** The request succeeded but returned nothing. */
   isEmpty?: boolean;
 }
 
 /**
- * Derive the screen state. Order matters and is chosen so the user is never stuck:
- *   - a real error → offline (if it looks like lost connectivity) or error+retry
- *   - offline while still loading → show offline, not a spinner that never ends
- *   - loading → loading
- *   - offline with nothing to show → offline
- *   - empty result → empty
- *   - otherwise → ready
- * Pure, so it's fully unit-testable; the component only renders what this returns.
+ * Derive the screen state, in this order so the user is never stuck:
+ *   - an error: offline if it looks like lost connectivity, else error with retry
+ *   - offline while still loading: offline, not an endless spinner
+ *   - loading
+ *   - offline with nothing to show: offline
+ *   - an empty result: empty
+ *   - otherwise ready
  */
 export function deriveAsyncState(input: AsyncInput): AsyncStatus {
   const { loading, online, error, isEmpty = false, t } = input;

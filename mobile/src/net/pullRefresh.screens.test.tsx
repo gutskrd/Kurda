@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the pull to refresh as a button: the web's control has nothing to pull
+// The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('./usePullRefresh', () => import('./testing/pullRefresh'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { BadgesResponse, MyRanks } from '@kurda/shared';
@@ -19,12 +19,7 @@ import { BadgesScreen } from '../badges/BadgesScreen';
 import { RanksScreen } from '../ranks/RanksScreen';
 import { BlockedUsersScreen } from '../social/BlockedUsersScreen';
 
-/*
- * Pull down to read again, on the screens that list something and had no
- * tests of their own to say it in: the badges, a game's rank, and the people
- * blocked. Each is read again from the server when pulled, the way it is
- * read on opening.
- */
+/* Pull to refresh on list screens without tests of their own (badges, a game's rank, blocked people): each reloads from the server. */
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(cleanup);
