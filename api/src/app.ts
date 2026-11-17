@@ -257,6 +257,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   // and moderation's pseudonyms and banned-address hashes, with the same secret
   setModerationKey(config.JWT_SECRET);
   const app = Fastify({
+    // the start's own work, the content each deploy seeds or brings up to its files (stories, lessons, the games'
+    // decks), runs in onReady hooks, which Fastify cuts off at this limit: its 10 s default is too short for a first
+    // seed of a whole deck on a small server, and a start that is cut off fails the deploy
+    pluginTimeout: 120_000,
     logger: {
       level: config.LOG_LEVEL,
       // pretty logs are a dev nicety; structured JSON everywhere else
