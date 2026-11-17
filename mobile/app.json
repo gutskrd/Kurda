@@ -25,6 +25,7 @@
       },
       "supportsTablet": false,
       "bundleIdentifier": "app.hevalo.mobile",
+      "appleTeamId": "C66L2R2VX2",
       "appStoreUrl": "",
       "usesAppleSignIn": true,
       "entitlements": {
