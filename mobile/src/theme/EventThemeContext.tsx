@@ -7,6 +7,8 @@ import { getThemeOptOut, setThemeOptOut } from './themePref.js';
 interface EventThemeValue {
   /** The pack to apply, or null (opted out / nothing live). */
   pack: EventThemePack | null;
+  /** Whether any event is running now, theme or not: the menu offers the events page only then. */
+  live: boolean;
   optedOut: boolean;
   setOptedOut: (value: boolean) => void;
   /** Re-resolve now (e.g. on a screen transition near the event boundary). */
@@ -15,6 +17,7 @@ interface EventThemeValue {
 
 const EventThemeContext = createContext<EventThemeValue>({
   pack: null,
+  live: false,
   optedOut: false,
   setOptedOut: () => {},
   refresh: () => {},
@@ -74,7 +77,7 @@ export function EventThemeProvider({ children }: { children: ReactNode }) {
   const pack = resolveEventTheme(active, optedOut);
 
   return (
-    <EventThemeContext.Provider value={{ pack, optedOut, setOptedOut, refresh }}>
+    <EventThemeContext.Provider value={{ pack, live: active.length > 0, optedOut, setOptedOut, refresh }}>
       {children}
     </EventThemeContext.Provider>
   );

@@ -9,10 +9,10 @@ import type { Dialect } from './matchApi';
  *
  * A variety without enough curated prompts would open a round on a word of
  * the other variety, or on none at all (a match then failed with "no words"),
- * so it keeps its place in the choice, marked coming soon, and says so where
- * Start would be. Until the server answers, and whenever it cannot say, both
- * are offered, as they were before it could. The website does the same
- * (web/src/pages/Rhyme.tsx).
+ * so the phone leaves it out of the choice until it has them: a choice that
+ * reads "coming soon" is a promise, not a game, and a choice of one is no
+ * choice and is not shown. Until the server answers, and whenever it cannot
+ * say, both are offered, as they were before it could.
  */
 
 export const RHYME_DIALECTS: readonly Dialect[] = ['kurmanci', 'sorani'];
@@ -48,6 +48,11 @@ export function useRhymeOffered(): RhymeOffered {
     };
   }, [client]);
   return offered;
+}
+
+/** The varieties to offer in the choice, in their usual order: the ones the server has not ruled out. */
+export function offeredRhymeDialects(offered: RhymeOffered): Dialect[] {
+  return RHYME_DIALECTS.filter((d) => isRhymeOffered(offered, d));
 }
 
 /** Whether rounds can be started in `dialect`: anything the server has not ruled out is. */

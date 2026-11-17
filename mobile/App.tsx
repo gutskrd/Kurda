@@ -90,7 +90,7 @@ import { GroupBansScreen } from './src/groups/GroupBansScreen';
 import { PushRegistration } from './src/push/PushRegistration';
 import { PushHost } from './src/push/PushHost';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
-import { EventThemeProvider } from './src/theme/EventThemeContext';
+import { EventThemeProvider, useEventTheme } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
@@ -264,6 +264,8 @@ function OpenHeldLink(): null {
  */
 function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof useAccountGate>['require']): MenuGroup[] {
   const giftBadge = unreadBadge(useUnread().counts.gifts) ?? undefined;
+  // the events page only while one runs: between events it could say nothing but "check back soon"
+  const { live: eventLive } = useEventTheme();
   return [
     {
       titleKey: null,
@@ -276,7 +278,7 @@ function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof us
       links: [
         { key: 'library', labelKey: 'library.title', icon: 'book', onPress: () => navigation.navigate('Library') },
         { key: 'memes', labelKey: 'memes.title', icon: 'image', onPress: () => navigation.navigate('Memes') },
-        { key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') },
+        ...(eventLive ? [{ key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') } as const] : []),
         { key: 'league', labelKey: 'leagues.screenTitle', icon: 'trophy', onPress: () => require('league') && navigation.navigate('League') },
         { key: 'ranks', labelKey: 'ranks.title', icon: 'mountains', onPress: () => require('league') && navigation.navigate('Ranks') },
       ],

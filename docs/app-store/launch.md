@@ -87,7 +87,8 @@ by the account holder.
   | Social media disabled for users under 13 | No | there are no accounts under 13, but the store means the age-range check, which 1.0.0 does not make |
   | Messaging and chat | Yes | direct messages and groups |
   | Advertising | No | |
-  | Profanity, horror, alcohol, medical, wellness, sexuality, violence | None | the app's own content; what members post is moderated |
+  | Realistic violence | Infrequent/Mild | the legends and the history behind them tell of killings and a massacre (Halabja), in words, never shown |
+  | Profanity, horror, alcohol, medical, wellness, sexuality, cartoon or fantasy violence | None | the app's own content; what members post is moderated |
   | Gambling, simulated gambling | No | |
   | Contests | None | leagues pay Zêr and gems, which are not money |
   | Loot boxes | No | a quest's chest is earned, never bought, and holds Zêr |
@@ -95,7 +96,9 @@ by the account holder.
   | Dating and relationships | No | |
 
 - [ ] **Availability**: every country and region except the **United States**
-      and **Brazil** (section 0).
+      and **Brazil** (section 0), and **China mainland**: the country list
+      names Taiwan, Palestine and Kurdistan as countries, which that
+      storefront refuses.
 - [ ] Export compliance: the build already declares
       `ITSAppUsesNonExemptEncryption = false` (only the system's HTTPS).
 - [ ] Accessibility Nutrition Labels (optional): fill in only what was tried
@@ -108,9 +111,10 @@ Most of the app sits behind an account, and a new account waits for an emailed
 code. A reviewer cannot receive that code, so give them accounts that are
 already through it.
 
-- [ ] **Demo account 1**: an adult account, email confirmed, with at least one
-      friend, one group, a few posts in its feed, a tree planted, and some Zêr
-      to spend in the shop.
+- [ ] **Demo account 1**: an adult account (a birth month that makes it
+      18 or over), email confirmed, with at least one friend, one group, a few
+      posts in its feed, a letter on its window, a tree planted, and some Zêr
+      to spend in the shop. Sign in with it on a phone once before submitting.
 - [ ] **Demo account 2**: the friend, so that chat, gifts and a game against a
       person can be tried. Put both sign-ins in the notes, never in this
       repository.
@@ -136,6 +140,16 @@ already through it.
   > Account deletion (Guideline 5.1.1(v)): Settings → Delete account. It is
   > also offered on the email-code screen of a new account.
   >
+  > Letters (pen pals): a learner can send one letter at a time to another
+  > learner chosen at random, and only within the same age band (13–15,
+  > 16–17, adults). Letters carry no links or contact details, pass the same
+  > word filter, and every letter can be reported and its writer blocked.
+  > Direct messages are between friends only, and people under 18 cannot be
+  > sent friend requests.
+  >
+  > The "How are you enjoying Hevalo?" stars are our own feedback form; they
+  > never lead to the App Store, and the store's rating prompt is the system's.
+  >
   > Sign in with Apple is offered wherever Google is.
   > Nothing is sold: Zêr and gems are earned by learning and cannot be bought.
   > The app has no advertising and no third-party analytics.
@@ -145,10 +159,24 @@ already through it.
 
 ## 4. Server settings (owner, on the hosting dashboard)
 
-- [ ] `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`: the Sign in with
-      Apple key. Without them a deleted account's Apple sign-in is not revoked
-      with Apple, which the deletion guideline asks for.
-- [ ] `APPLE_CLIENT_IDS` contains `app.hevalo.mobile`.
+Nobody has signed in with Apple or Google on the live server yet (its logs
+have no such request), so none of these has been proven by use. Check each on
+the dashboard before submitting, and sign in once with Apple from the
+TestFlight build (section 6).
+
+- [ ] `APPLE_CLIENT_IDS` contains `app.hevalo.mobile`. Without it the server
+      answers every Sign in with Apple with "not configured", the button the
+      reviewer is most likely to try fails, and the app is rejected under 2.1.
+- [ ] `APPLE_TEAM_ID` (`C66L2R2VX2`), `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`: the
+      Sign in with Apple key. Without them a deleted account's Apple sign-in
+      is not revoked with Apple, which the deletion guideline asks for. Set
+      them before review: only sign-ins made after the key exists can be
+      revoked.
+- [ ] Email delivery works (the email service's key is set and the sending
+      domain verified): a new email account cannot get past its code without
+      it.
+- [ ] Media storage works: a profile picture and a voice note upload from the
+      TestFlight build.
 - [ ] `GOOGLE_CLIENT_IDS` contains the web, iOS and Android client ids, and the
       build has `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` and
       `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`. Without them the Google button is
@@ -206,6 +234,11 @@ the provisioning profile and the push notification key itself.
       delete account.
 - [ ] The same walk with the system text size at its largest, and once in a
       right-to-left language.
+- [ ] After the first upload, read App Store Connect's processing email. The
+      photo picker's library contains camera code the app never calls; if the
+      email asks for a camera purpose string (ITMS-90683), say so and one is
+      added before submitting.
+- [ ] No in-app purchase products attached to the 1.0.0 submission.
 
 ## 7. The day it is approved
 
