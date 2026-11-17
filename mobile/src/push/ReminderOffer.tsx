@@ -18,31 +18,22 @@ import { minorStatus, readOfferRecord, saveOfferShown, shouldOfferReminders } fr
 /** How tall Hevalo's window stands on the screen. */
 const WINDOW = 200;
 
-/**
- * How long the phone has to bring its question up before a second press of
- * the button goes on without the answer. A press sooner than this is the
- * same press made twice.
- */
+/** How long the phone has to show its prompt before a second press continues without the answer; a sooner press is the same press twice. */
 export const ANSWER_WAIT_MS = 1500;
 
-/** Android's back on the screen: it stays. The one way on is the button, by way of the phone's question. */
+/** Android's back stays on the screen; the one way on is the button, through the system prompt. */
 const stay = (): void => undefined;
 
 /**
- * Whether a lesson's results are to be followed by the screen below
- * (permission.ts's `shouldOfferReminders`): never asked yet, an adult, not
- * shown too recently. Null while that is being found out, and false where
- * `enabled` is not set (practice has no such screen).
- *
- * Found out as the results open, so the answer is there well before a way on
- * is pressed. A way on pressed sooner than that goes without the screen,
- * which is then not counted and follows another lesson: nothing waits on
- * this, and anything that cannot be read is a reason not to ask.
+ * Whether a lesson's results are followed by the screen below (`shouldOfferReminders` in permission.ts): never
+ * asked, an adult, not shown too recently. Null while unknown, and false unless `enabled` (practice has no such
+ * screen). Worked out as the results open; a way on pressed before that skips the screen without counting it, and
+ * anything unreadable is a reason not to ask.
  */
 export function useReminderOffer(enabled: boolean, store: DeviceStore = deviceStore): boolean | null {
   const { client, user } = useAuth();
   const [due, setDue] = useState<boolean | null>(enabled ? null : false);
-  // what the rule reads of the account, one by one, so it is worked out again only when one of them changes
+  // The account fields the rule reads, separately, so it is recomputed only when one changes.
   const minor = user?.minor;
   const guest = user?.guest;
   const birthDateRequired = user?.birthDateRequired;
@@ -58,7 +49,7 @@ export function useReminderOffer(enabled: boolean, store: DeviceStore = deviceSt
       let offer = false;
       try {
         const permission = await readPermission();
-        // the cheap answer first: most of the time there is nothing to ask about
+        // The cheap answer first: most of the time there is nothing to ask about.
         if (permission.status === 'undetermined') {
           const [record, isMinor] = await Promise.all([readOfferRecord(store), minorStatus({ minor, guest, birthDateRequired }, client)]);
           offer = shouldOfferReminders({ permission, record, minor: isMinor, now: Date.now() });
@@ -77,31 +68,18 @@ export function useReminderOffer(enabled: boolean, store: DeviceStore = deviceSt
 }
 
 /**
- * The screen that comes before the phone's question about notifications
- * (KUR-094), last of the moments that follow a lesson's results: Hevalo at
- * his window, what he would send, and one button.
+ * The screen before the system notification prompt, last of the moments after a lesson's results: Hevalo at his
+ * window, what he would send, and one button.
  *
- * The button says "Continue" and brings up the phone's own question, and
- * that is all there is to press. The platform's guidelines for a screen
- * shown before a system prompt ask for exactly this: one button, named for
- * going on rather than for an answer ("Allow" is the prompt's word, and an
- * app that uses it is steering the choice), and no way to leave without
- * having seen the prompt, so no "Not now", no ✕ and no skip. Android's back
- * stays on the screen for the same reason. The yes and the no are given to
- * the phone, where they belong.
+ * The button says "Continue" and raises the system prompt, and nothing else can be pressed. Platform guidelines
+ * for a pre-prompt screen ask for one button named for continuing (not "Allow") and no way to leave without
+ * seeing the prompt, so there is no "Not now", ✕ or skip, and Android's back stays here.
  *
- * What it says is what the server sends an adult who has changed no setting
- * (api notifications/streak-reminder-service.ts, letters/service.ts,
- * badges/service.ts): a reminder on a day the streak is still waiting, word
- * of a letter, word of a badge. It promises nothing else, shows no picture
- * of the prompt and points at neither of its buttons.
- *
- * Whatever the phone answers, the lesson's way on is taken: allowed, turned
- * down, an error, or a phone that turns out not to ask at all. Nothing spins
- * while the answer is awaited, and the wait cannot hold anybody here: once
- * the phone has had time to ask (`ANSWER_WAIT_MS`), pressing the button
- * again goes on without the answer. Counted as shown when it is seen
- * (permission.ts keeps the record), which is what makes it rare.
+ * It describes what the server sends an adult with default settings (api
+ * notifications/streak-reminder-service.ts, letters/service.ts, badges/service.ts): a streak reminder, a letter
+ * notice, a badge notice. Whatever the phone answers, the lesson's way on is taken. Nothing spins while waiting,
+ * and after `ANSWER_WAIT_MS` a second press continues without the answer. Counted as shown when seen
+ * (permission.ts), which keeps it rare.
  */
 export function ReminderOffer({ onDone, store = deviceStore }: { onDone: () => void; store?: DeviceStore }): React.JSX.Element {
   const { t } = useI18n();
@@ -110,7 +88,7 @@ export function ReminderOffer({ onDone, store = deviceStore }: { onDone: () => v
   const top = useScreenTopInset();
   const bottom = useScreenBottomInset(spacing.lg);
   const title = t('lesson.reminder.title');
-  // the Android channel is named in the reader's language before the phone asks (device.ts)
+  // The Android channel is named in the reader's language before the phone asks (device.ts).
   const channel = t('notifications.title');
   const onward = useRef(onDone);
   onward.current = onDone;
@@ -123,11 +101,11 @@ export function ReminderOffer({ onDone, store = deviceStore }: { onDone: () => v
     noted.current = true;
     void saveOfferShown(store, Date.now()).catch(() => undefined);
     AccessibilityInfo.announceForAccessibility?.(title);
-    // once, as it is seen
+    // Once, as it is seen.
   }, []);
 
   useHardwareBack(stay);
-  // a badge earned meanwhile waits its turn: its celebration comes over the screen with buttons of its own, and this screen has one
+  // A badge earned meanwhile waits its turn: its celebration has its own buttons, and this screen has one.
   useCelebrationHold(true);
 
   /** The lesson's way on, taken once however many things ask for it. */
@@ -139,12 +117,12 @@ export function ReminderOffer({ onDone, store = deviceStore }: { onDone: () => v
 
   const ask = useCallback(() => {
     if (askedAt.current !== null) {
-      // the phone was asked and nothing has come back: the button still goes on
+      // The phone was asked and nothing came back: the button still continues.
       if (Date.now() - askedAt.current >= ANSWER_WAIT_MS) leave();
       return;
     }
     askedAt.current = Date.now();
-    // either way the answer is the phone's to keep; here it only ends the wait
+    // Either way the answer is the phone's to keep; here it only ends the wait.
     void requestPermission(channel).then(leave, leave);
   }, [channel, leave]);
 
@@ -152,7 +130,7 @@ export function ReminderOffer({ onDone, store = deviceStore }: { onDone: () => v
   return (
     <View style={[styles.screen, { paddingTop: top }]} testID="lesson-reminders">
       <ScrollView contentContainerStyle={styles.body}>
-        {/* he is there already: nothing arrives on this screen but the reader */}
+        {/* He is there already: nothing arrives on this screen but the reader. */}
         <HevaloWindow size={WINDOW} flip={dir.rtl} pop={false} />
         <Text style={[styles.title, reading, { color: colors.textPrimary }]} accessibilityRole="header">
           {title}
@@ -183,6 +161,6 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.xl), textAlign: 'center', marginTop: spacing.sm },
   text: { fontSize: typography.sizes.md, lineHeight: 24, textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
-  // the way on keeps the foot of the screen, where the lesson's own buttons were
+  // The way on keeps the foot of the screen, where the lesson's own buttons were.
   bar: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
 });

@@ -3,9 +3,8 @@ import { Linking, Platform } from 'react-native';
 import { PUSH_UNAVAILABLE, toPermissionState, type PushPermissionState } from './permission';
 
 /**
- * The phone's side of notifications permission (KUR-094): reading it, asking
- * for it, and the way to the phone's own settings. The rules for *when* to ask
- * are in permission.ts; this only does what it is told.
+ * The phone's side of notification permission: reading it, asking for it, and opening the phone's settings. When
+ * to ask is decided in permission.ts.
  */
 
 /** The Android channel every push lands in; the API names it on each message (push/provider.ts). */
@@ -26,11 +25,9 @@ export async function readPermission(): Promise<PushPermissionState> {
 }
 
 /**
- * The channel Android files the notifications under, named in the reader's
- * language (it is what the phone's settings list). Android 13 shows no
- * permission prompt until an app has a channel, so it is made before asking.
- * Default importance: a sound and a place in the shade, never a banner over
- * whatever the person is doing.
+ * The Android notification channel, named in the reader's language (the phone's settings list it). Android 13
+ * shows no permission prompt until an app has a channel, so it is created before asking. Default importance: a
+ * sound and a place in the shade, never a heads-up banner.
  */
 export async function ensureChannel(name: string): Promise<void> {
   if (Platform.OS !== 'android') return;
@@ -40,13 +37,13 @@ export async function ensureChannel(name: string): Promise<void> {
       importance: Notifications.AndroidImportance.DEFAULT,
     });
   } catch {
-    // without it the system's own fallback channel is used; nothing to tell anyone
+    // Without it the system's own fallback channel is used; nothing to tell anyone.
   }
 }
 
 const granted = new Set<() => void>();
 
-/** Called when this app has just been allowed to notify (PushRegistration then registers the phone). */
+/** Called when this app has just been allowed to notify; PushRegistration then registers the phone. */
 export function onPermissionGranted(listener: () => void): () => void {
   granted.add(listener);
   return () => {
@@ -68,7 +65,7 @@ export async function requestPermission(channelName: string): Promise<PushPermis
   return state;
 }
 
-/** This app's page in the phone's settings, where a "no" given to the system prompt can be changed. */
+/** This app's page in the phone's settings, where a "no" to the system prompt can be changed. */
 export function openPhoneSettings(): void {
   void Linking.openSettings().catch(() => undefined);
 }

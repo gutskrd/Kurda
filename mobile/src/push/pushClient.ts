@@ -7,7 +7,7 @@ export interface DevicePush {
   platform: PushPlatform;
 }
 
-/** Register/refresh this device's push token with the backend (KUR-094). */
+/** Register or refresh this device's push token with the backend. */
 export function registerDevice(client: ApiClient, device: DevicePush): Promise<unknown> {
   return client.post('/me/devices', device);
 }

@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 /*
- * The phone's own platform, so the control has push to talk about (on the web
- * build it draws nothing), a spy where the phone's settings would open, and an
- * app state a test can bring back to the front.
+ * A native platform (on the web the control draws nothing), a spy for opening the phone's settings, and an app
+ * state a test can foreground.
  */
 const phone = vi.hoisted(() => {
   const listeners = new Set<(state: string) => void>();
@@ -15,7 +14,7 @@ const phone = vi.hoisted(() => {
   };
 });
 vi.mock('react-native', async () => {
-  // react-native-web ships no types; these three are what this file replaces
+  // react-native-web ships no types; these three are what this file replaces.
   const rn = (await import('../play/testing/native')) as unknown as Record<string, object> & { Platform: object; Linking: object; AppState: object };
   return {
     ...rn,
@@ -84,8 +83,8 @@ describe('this phone’s notifications, in Settings → Notification settings', 
     renderWithProviders(<DevicePushControl />);
     expect(await screen.findByText('This phone')).toBeTruthy();
     expect(screen.getByText('Notifications aren’t on yet')).toBeTruthy();
-    expect(notificationsStub.requests).toBe(0); // nothing is asked just by looking
-    // allowing is the system prompt's own word: the app's row never says it
+    expect(notificationsStub.requests).toBe(0); // Nothing is asked just by looking.
+    // Allowing is the system prompt's own word: the app's row never says it.
     expect(screen.queryByText(/allow/i)).toBeNull();
 
     await settle();
@@ -102,10 +101,10 @@ describe('this phone’s notifications, in Settings → Notification settings', 
     await settle();
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     expect(await screen.findByText('Notifications are off')).toBeTruthy();
-    // from now on only the phone's settings can change it, and the button says where it goes
+    // From now on only the phone's settings can change it, and the button says where it goes.
     const row = screen.getByRole('button', { name: 'Open phone settings' });
     expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
-    // idle again: it answers a press, and that press is the settings, not a prompt that would not show
+    // Idle again: it answers a press, and that press is the settings, not a prompt that would not show.
     await settle();
     fireEvent.click(row);
     expect(phone.openSettings).toHaveBeenCalledTimes(1);
@@ -117,7 +116,7 @@ describe('this phone’s notifications, in Settings → Notification settings', 
     const store = memoryStore();
     renderWithProviders(<DevicePushControl store={store} />);
     await settle();
-    // looking at the page counts for nothing
+    // Looking at the page counts for nothing.
     expect(await store.get(OFFER_KEY)).toBeNull();
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     expect(await screen.findByText('Notifications are off')).toBeTruthy();
@@ -135,12 +134,12 @@ describe('this phone’s notifications, in Settings → Notification settings', 
     await settle();
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     await settle();
-    // one question at a time
+    // One question at a time.
     expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
     expect(screen.getByText('Continue')).toBeTruthy();
     expect(notificationsStub.requests).toBe(1);
 
-    // answered no, on a phone that would ask again: the row can be pressed again
+    // Answered no, on a phone that would ask again: the row can be pressed again.
     await act(async () => answer());
     expect(await screen.findByText('Notifications are off')).toBeTruthy();
     notificationsStub.prompt = null;
@@ -157,7 +156,7 @@ describe('this phone’s notifications, in Settings → Notification settings', 
     await settle();
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     await settle();
-    // nothing changed on the phone, and nothing is left waiting
+    // Nothing changed on the phone, and nothing is left waiting.
     expect(screen.getByText('Notifications aren’t on yet')).toBeTruthy();
     expect(notificationsStub.requests).toBe(1);
     notificationsStub.failRequest = false;
@@ -180,7 +179,7 @@ describe('this phone’s notifications, in Settings → Notification settings', 
     notificationsStub.permission = { ...REFUSED_FOR_GOOD };
     renderWithProviders(<DevicePushControl />);
     expect(await screen.findByText('Notifications are off')).toBeTruthy();
-    // switched on in the phone's settings, then back to Hevalo
+    // Switched on in the phone's settings, then back to Hevalo.
     notificationsStub.permission = { ...ALLOWED };
     await act(async () => phone.toFront());
     expect(await screen.findByText('Notifications are on')).toBeTruthy();
