@@ -7,6 +7,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { showActions } from '../theme/actionSheet';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
@@ -152,7 +153,9 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
           {!thread ? (
             error ? (
               <ErrorRetry message={describeError(error, t)} onRetry={() => void load()} />
-            ) : null
+            ) : (
+              <ThreadSkeleton />
+            )
           ) : (
             <>
               <View style={[styles.who, { flexDirection: dir.row }]}>
@@ -228,8 +231,29 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
   );
 }
 
+/**
+ * The correspondence while it is read, in its own shape: their bird and their
+ * name, and a sheet of paper with a few lines on it — not a blank under the
+ * header.
+ */
+function ThreadSkeleton(): React.JSX.Element {
+  const { t } = useI18n();
+  const dir = useDirection();
+  const start = dir.row === 'row-reverse' ? 'flex-end' : 'flex-start';
+  return (
+    <View style={styles.skeleton} accessibilityLabel={t('common.loading')} testID="letters-thread-loading">
+      <View style={[styles.who, { flexDirection: dir.row }]}>
+        <Skeleton width={52} height={52} radius={radii.pill} />
+        <SkeletonText size={typography.sizes.xl} width="40%" align={start} style={styles.flex} />
+      </View>
+      <Skeleton height={260} radius={radii.xs} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  skeleton: { gap: spacing.lg },
   content: { padding: layout.gutter, paddingBottom: spacing.xxl, gap: spacing.lg },
   who: { alignItems: 'center', gap: spacing.md - 4 },
   name: { flex: 1, ...display(typography.sizes.xl) },

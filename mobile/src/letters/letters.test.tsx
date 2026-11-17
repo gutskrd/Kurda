@@ -157,6 +157,35 @@ describe('the letters screen', () => {
     expect(await screen.findByTestId('letters-write')).toBeTruthy();
   });
 
+  it('stands in the page’s shape while it is read, never a blank under the header', async () => {
+    let answer: (r: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({ 'GET /letters': () => new Promise((resolve) => (answer = resolve)) } as never);
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(screen.getByTestId('letters-loading')).toBeTruthy();
+    await act(async () => answer(ok(home())));
+    expect(await screen.findByTestId('letters-write')).toBeTruthy();
+    expect(screen.queryByTestId('letters-loading')).toBeNull();
+  });
+
+  it('says why when calling your bird back did not get through, and keeps it out there', async () => {
+    const out = { since: '2026-11-13T10:00:00.000Z', visiting: false };
+    testAuth.client = fakeClient({ 'GET /letters': ok(home({ out })), 'DELETE /letters/out': fail({ kind: 'network', message: 'offline' }) });
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('letters-recall'));
+    expect(await screen.findByTestId('letters-error')).toBeTruthy();
+    expect(screen.getByTestId('letters-out')).toBeTruthy();
+  });
+
+  it('says why when a visiting bird could not be sent on, and keeps it at the window', async () => {
+    testAuth.client = fakeClient({ 'GET /letters': ok(home({ visitor })), 'DELETE /letters/visitor': fail({ kind: 'network', message: 'offline' }) });
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('letters-visitor-send-on'));
+    fireEvent.click(screen.getByTestId('letters-visitor-send-on-yes'));
+    expect(await screen.findByTestId('letters-visitor')).toBeTruthy();
+    // said under the answer being written, where the reader is
+    expect(await screen.findByTestId('letters-visitor-answer-problem')).toBeTruthy();
+  });
+
   it('says when every call of the day is made, and offers no call', async () => {
     testAuth.client = fakeClient({ 'GET /letters': ok(home({ birdsOut: 3, sky: [1, 2, 3], callsLeft: 0 })) });
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
@@ -298,6 +327,16 @@ describe('the letters screen', () => {
 });
 
 describe('a correspondence', () => {
+  it('stands in its own shape while it is read, never a blank under the header', async () => {
+    let answer: (r: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({ [`GET /letters/threads/${THREAD}`]: () => new Promise((resolve) => (answer = resolve)) } as never);
+    renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
+    expect(screen.getByTestId('letters-thread-loading')).toBeTruthy();
+    await act(async () => answer(ok(thread())));
+    expect(await screen.findByText(LETTER)).toBeTruthy();
+    expect(screen.queryByTestId('letters-thread-loading')).toBeNull();
+  });
+
   it('gives the paper to write back on when it is your turn, and sends the letter', async () => {
     const client = fakeClient({
       [`GET /letters/threads/${THREAD}`]: ok(thread()),

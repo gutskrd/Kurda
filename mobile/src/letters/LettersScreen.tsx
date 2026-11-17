@@ -15,6 +15,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -277,6 +278,7 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   const sendOn = async (): Promise<void> => {
     if (!visitor) return;
     setBusy(true);
+    setError(null);
     const res = await client.delete('/letters/visitor');
     setBusy(false);
     setAskingOn(false);
@@ -284,7 +286,11 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
       haptic('tap');
       setMoment({ kind: 'sentOn', name: visitor.person.name });
       setScene((s) => s && { ...s, visitor: { kind: 'leaving', bird: visitor.person.bird, how: 'sent-on' } });
+      return;
     }
+    // the bird is still at the window: said, so the button is not taken for one that did nothing
+    haptic('error');
+    setError(letterErrorText(res.error, t) ?? describeError(res.error, t));
   };
 
   /** The visiting bird has flown off through the window, with your answer or on to somebody else. */
@@ -306,13 +312,18 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   const recall = async (): Promise<void> => {
     if (!home) return;
     setBusy(true);
+    setError(null);
     const res = await client.delete('/letters/out');
     setBusy(false);
     if (res.ok || res.error.status === 404) {
       setScene((s) => s && { ...s, own: { kind: 'arriving', bird: home.bird } });
       setMoment({ kind: 'rest' });
       void load();
+      return;
     }
+    // still out there: said, so the button is not taken for one that did nothing
+    haptic('error');
+    setError(letterErrorText(res.error, t) ?? describeError(res.error, t));
   };
 
   const chooseBird = async (): Promise<void> => {
@@ -483,12 +494,15 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           {!home || !scene ? (
             loadError ? (
               <ErrorRetry message={describeError(loadError, t)} onRetry={() => void load()} />
-            ) : null
+            ) : (
+              <LettersSkeleton size={size} />
+            )
           ) : (
             <>
               <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('letters.lead')}</Text>
               {shown ? (
-                <View>
+                // as wide as the window, so what sits on the window sits on it, not on the edge of the screen beyond it
+                <View style={[styles.windowSpot, { width: size }]}>
                   {size > 0 ? <LetterWindow scene={shown} size={size} onOwnGone={ownGone} onVisitorGone={visitorGone} onVisitorLanded={visitorLanded} /> : null}
                   {/* the one control that is about your own bird, which bird it is, sits on the window itself */}
                   {canChange ? (
@@ -498,7 +512,7 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
                       accessibilityLabel={t('letters.bird.change')}
                       hitSlop={8}
                       testID="letters-bird-change"
-                      style={[styles.change, { flexDirection: dir.row, backgroundColor: colors.surface, borderColor: colors.separator }]}
+                      style={[styles.change, dir.row === 'row-reverse' ? styles.changeLeft : styles.changeRight, { flexDirection: dir.row, backgroundColor: colors.surface, borderColor: colors.separator }]}
                     >
                       <Icon name="palette" size={15} color={colors.textPrimary} />
                       <Text style={[styles.changeText, { color: colors.textPrimary }]}>{t('letters.bird.change')}</Text>
@@ -666,8 +680,34 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   );
 }
 
+/**
+ * The screen while it is read, in its own shape: the line over the window,
+ * the window, the button under it and the pen pals' heading — so the page
+ * that arrives is the one that was standing there, not a blank under the
+ * header.
+ */
+function LettersSkeleton({ size }: { size: number }): React.JSX.Element {
+  const { t } = useI18n();
+  const dir = useDirection();
+  const start = dir.row === 'row-reverse' ? 'flex-end' : 'flex-start';
+  return (
+    <View style={styles.skeleton} accessibilityLabel={t('common.loading')} testID="letters-loading">
+      <View>
+        <SkeletonText size={typography.sizes.sm} lineHeight={20} width="92%" align={start} />
+        <SkeletonText size={typography.sizes.sm} lineHeight={20} width="58%" align={start} />
+      </View>
+      {size > 0 ? <Skeleton width={size} height={size} radius={radii.xl} style={styles.skeletonWindow} /> : null}
+      <Skeleton height={50} radius={radii.pill} />
+      <SkeletonText size={typography.sizes.xs} width={96} align={start} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  skeleton: { gap: spacing.lg },
+  skeletonWindow: { alignSelf: 'center' },
+  windowSpot: { alignSelf: 'center' },
   content: { padding: layout.gutter, paddingBottom: spacing.xxl, gap: spacing.lg },
   lead: { fontSize: typography.sizes.sm, lineHeight: 20 },
   hero: { alignItems: 'center', gap: spacing.sm, marginTop: -spacing.sm },
@@ -685,7 +725,6 @@ const styles = StyleSheet.create({
   change: {
     position: 'absolute',
     top: spacing.sm + 2,
-    end: spacing.sm + 2,
     alignItems: 'center',
     gap: 6,
     minHeight: 34,
@@ -693,6 +732,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     borderWidth: StyleSheet.hairlineWidth * 2,
   },
+  // in the window's corner on the side a line ends on
+  changeRight: { right: spacing.sm + 2 },
+  changeLeft: { left: spacing.sm + 2 },
   changeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   how: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth * 2, paddingHorizontal: spacing.md },
   howLines: { gap: spacing.sm, paddingBottom: spacing.md, paddingStart: 18 + spacing.sm + 2 },

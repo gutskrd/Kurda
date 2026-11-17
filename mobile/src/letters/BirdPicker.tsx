@@ -81,7 +81,7 @@ export function BirdPicker({
               accessibilityState={{ checked: bird === picked, disabled: busy }}
               accessibilityLabel={mine ? t('letters.bird.yours', { name }) : name}
               testID={`letters-bird-${bird}`}
-              style={[styles.bird, { borderColor: bird === picked ? colors.textPrimary : 'transparent' }]}
+              style={[styles.bird, { borderColor: bird === picked ? colors.primary : 'transparent' }]}
             >
               <BirdBadge bird={bird} size={48} />
               {mine ? <View style={[styles.mine, { backgroundColor: colors.textPrimary, borderColor: colors.surface }]} /> : null}
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   strong: { fontWeight: typography.weights.bold },
   // two even rows of four
   birds: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm, maxWidth: 4 * (48 + 10) + 3 * spacing.sm + 2, marginVertical: spacing.xs },
-  // each bird a round button, at least a finger wide; the one picked ringed in the ink colour
+  // each bird a round button, at least a finger wide; the one picked ringed in violet, as whatever is chosen is
   bird: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', padding: 3, borderWidth: 2, borderRadius: radii.pill },
   // the bird that is yours now, marked with a small dot when choosing another
   mine: { position: 'absolute', right: 2, bottom: 2, width: 12, height: 12, borderWidth: 2, borderRadius: radii.pill },
