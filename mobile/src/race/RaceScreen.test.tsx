@@ -43,7 +43,7 @@ function result(over: Partial<RaceResultView> = {}): RaceResultView {
     accented: 0,
     errors: 0,
     elapsedMs: 3100,
-    // a race is run alone, so the server pays nothing for it
+    // A race is run alone, so the server pays nothing for it.
     xpAwarded: 0,
     personalBest: false,
     ...over,
@@ -92,7 +92,7 @@ describe('RaceScreen', () => {
   it('reads a letter put in the middle as the next letter at the end', async () => {
     const client = await startRaceWith({ 'POST /race': ok(game()), [FINISH]: ok(result()) });
     typeKeys('ez ji');
-    // the cursor moved to offset 3 and "w" went in there
+    // The cursor moved to offset 3 and "w" went in there.
     type('ez wji');
     expect(field().value).toBe('ez jiw');
     expect(client.calls.some((c) => c.path.endsWith('/finish'))).toBe(false);
@@ -140,7 +140,7 @@ describe('RaceScreen', () => {
     expect(screen.getByText('100%')).toBeTruthy();
     expect(screen.getByText('3.1s')).toBeTruthy();
     expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
-    // nothing earned is shown, not even a zero
+    // Nothing earned is shown, not even a zero.
     expect(screen.queryByText('XP')).toBeNull();
     expect(screen.queryByText(/^\+\d/)).toBeNull();
   });
@@ -160,10 +160,8 @@ describe('RaceScreen', () => {
       [FINISH]: () => (++calls === 1 ? fail({ kind: 'server', status: 500, message: 'down' }) : ok(result())),
     });
     /*
-     * Given up inside act(), so the failed finish has been shown and the
-     * button made pressable again — on screen and in its press handler, which
-     * hears it in an effect after the draw — before it is pressed a second
-     * time. Waiting only for it to look enabled let a press land in between.
+     * Give up inside act(), so the failed finish is shown and the button re-enabled, in its press handler too,
+     * before the second press; waiting only for it to look enabled let a press land in between.
      */
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Give up and score' }));
@@ -174,7 +172,7 @@ describe('RaceScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Give up and score' }));
     await screen.findByText('Race again');
     expect(client.calls.filter((c) => c.path.endsWith('/finish'))).toHaveLength(2);
-    // giving up is never a moment for the rating box
+    // Giving up is never a moment for the rating box.
     expect(reportGameFinished).toHaveBeenCalledWith({ moment: 'other', gaveUp: true });
   });
 
@@ -187,7 +185,7 @@ describe('RaceScreen', () => {
     typeKeys('ez ji welat');
     const retry = await screen.findByRole('button', { name: 'Try again' });
     expect(screen.queryByRole('button', { name: 'Give up and score' })).toBeNull();
-    // the field is back, with the keyboard
+    // The field is back, with the keyboard.
     await waitFor(() => expect(document.activeElement).toBe(field()));
     fireEvent.click(retry);
     await screen.findByText('Race again');
@@ -238,9 +236,9 @@ describe('RaceScreen', () => {
     typeKeys('ez ji welat');
     await screen.findByText('Race again');
     fireEvent.click(screen.getByRole('button', { name: 'Race again' }));
-    // the rating box, if it came, went with the results
+    // The rating box, if it came, went with the results.
     expect(leftResults).toHaveBeenCalled();
-    // while the next text loads there is no field to type into the old race
+    // While the next text loads there is no field to type into the old race.
     await waitFor(() => expect(screen.queryByLabelText('Type the text')).toBeNull());
     await act(async () => release(undefined));
     await screen.findByLabelText('Type the text');
@@ -262,7 +260,7 @@ describe('RaceScreen', () => {
     renderWithProviders(<RaceScreen onExit={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: 'Start race' }));
     expect(await screen.findByText('Get the Kurmancî keyboard')).toBeTruthy();
-    // the clock has not started: nothing was asked of the server yet
+    // The clock has not started, so nothing was asked of the server yet.
     expect(client.calls.filter((c) => c.path === '/race')).toHaveLength(0);
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     await screen.findByLabelText('Type the text');
@@ -276,7 +274,7 @@ describe('RaceScreen', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Give up and score' }));
     expect(await screen.findByText('Accents: 2 of 5 typed with their accent')).toBeTruthy();
-    // the deer holds up the letters of the race's own variety
+    // The deer holds up the letters of the race's own variety.
     expect(screen.getByText('ç ê î')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Accents giving you trouble/ }));
     expect(await screen.findByText('Get the Kurmancî keyboard')).toBeTruthy();
