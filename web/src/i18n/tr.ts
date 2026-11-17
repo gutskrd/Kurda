@@ -1947,7 +1947,7 @@ export const tr: Catalogue = {
   'edit.noFrames': 'Henüz çerçeven yok. Bir sezon bittiğinde yeterince dereceli maç oynayan herkes bir profil çerçevesi alır.',
   'edit.seeSeason': 'Bu sezona bak',
   'edit.manageTags': 'Etiketleri yönet',
-  'edit.tagsNote': 'Etiketler buradan kullanıma alınmaz — seninkileri bu sayfanın aşağısında, Etiketler ve rozetler bölümünde bulursun.',
+  'edit.tagsNote': 'Etiketler buradan kullanıma alınmaz — seninkileri bu sayfanın aşağısında, Etiketler bölümünde bulursun.',
   'edit.buyForGems': 'Satın al · {price} mücevher',
   'edit.notEnoughGems': 'Yeterli mücevher yok',
   'shop.loading': 'Mağaza yükleniyor…',
@@ -1966,7 +1966,7 @@ export const tr: Catalogue = {
   'shop.nothingYet': 'Burada henüz bir şey yok — yakında tekrar bak.',
   'shop.owned': 'Sende',
   'shop.isYours': '{name} artık senin. Profili düzenle’den kullanıma al.',
-  'shop.isYoursTag': '{name} artık senin. Onu Profili düzenle’de, Etiketler ve rozetler altında bulabilirsin.',
+  'shop.isYoursTag': '{name} artık senin. Onu Profili düzenle’de, Etiketler altında bulabilirsin.',
   'shop.isYoursOther': '{name} artık senin.',
   'shop.onItsWay': '{name}, {to} kişisine gönderiliyor.',
   'shop.subtitle': 'Zêr ile profil arka planları, simgeler, çerçeveler ve etiketler satın al — kendin için ya da bir arkadaşına hediye olarak.',
@@ -3114,7 +3114,7 @@ export const tr: Catalogue = {
   'notifications.quietTo': 'Bitiş',
 
   // ---- tags & badges (KUR-286/287) ----------------------------------------
-  'tags.title': 'Etiketler ve rozetler',
+  'tags.title': 'Etiketler',
   'tags.main': 'Ana etiket',
   'tags.noMain': 'Henüz ana etiket yok.',
   'tags.yours': 'Etiketlerin',

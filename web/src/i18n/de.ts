@@ -1952,7 +1952,7 @@ export const de: Catalogue = {
   'edit.noFrames': 'Noch keine Rahmen. Wenn eine Saison endet, bekommt jeder, der genug gewertete Spiele gespielt hat, einen Profilrahmen.',
   'edit.seeSeason': 'Zur aktuellen Saison',
   'edit.manageTags': 'Tags verwalten',
-  'edit.tagsNote': 'Tags werden nicht hier ausgerüstet – deine findest du unter „Tags & Abzeichen“ weiter unten auf dieser Seite.',
+  'edit.tagsNote': 'Tags werden nicht hier ausgerüstet – deine findest du unter „Tags“ weiter unten auf dieser Seite.',
   'edit.buyForGems': 'Kaufen · {price} Edelsteine',
   'edit.notEnoughGems': 'Nicht genug Edelsteine',
   'shop.loading': 'Shop wird geladen…',
@@ -1971,7 +1971,7 @@ export const de: Catalogue = {
   'shop.nothingYet': 'Hier ist noch nichts – schau später wieder vorbei.',
   'shop.owned': 'Im Besitz',
   'shop.isYours': '{name} gehört dir. Rüste es unter „Profil bearbeiten“ aus.',
-  'shop.isYoursTag': '{name} gehört dir. Du findest es unter „Tags & Abzeichen“ in „Profil bearbeiten“.',
+  'shop.isYoursTag': '{name} gehört dir. Du findest es unter „Tags“ in „Profil bearbeiten“.',
   'shop.isYoursOther': '{name} gehört dir.',
   'shop.onItsWay': '{name} ist unterwegs zu {to}.',
   'shop.subtitle': 'Kauf Profil-Hintergründe, Symbole, Rahmen und Tags mit Zêr – für dich selbst oder als Geschenk für einen Freund.',
@@ -3119,7 +3119,7 @@ export const de: Catalogue = {
   'notifications.quietTo': 'Bis',
 
   // ---- tags & badges (KUR-286/287) ----------------------------------------
-  'tags.title': 'Tags & Abzeichen',
+  'tags.title': 'Tags',
   'tags.main': 'Haupt-Tag',
   'tags.noMain': 'Noch kein Haupt-Tag.',
   'tags.yours': 'Deine Tags',

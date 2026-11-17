@@ -1954,7 +1954,7 @@ export const ku: Catalogue = {
   'edit.noFrames': 'Hê çarçoveyên te tune ne. Dema demsalek diqede, her kesê ku têra xwe lîstikên rêzkirî lîstibe çarçoveyeke profîlê distîne.',
   'edit.seeSeason': 'Li vê demsalê binêre',
   'edit.manageTags': 'Nîşanan birêve bibe',
-  'edit.tagsNote': 'Nîşan li vir nayên danîn — yên te di bin Nîşan û taybetmendî de ne, li jêrê vê rûpelê.',
+  'edit.tagsNote': 'Nîşan li vir nayên danîn — yên te di bin “Nîşan” de ne, li jêrê vê rûpelê.',
   'edit.buyForGems': 'Bikire · {price} gewher',
   'edit.notEnoughGems': 'Gewher têrê nake',
   'shop.loading': 'Firoşgeh tê barkirin…',
@@ -1973,7 +1973,7 @@ export const ku: Catalogue = {
   'shop.nothingYet': 'Hê li vir tiştek tune — pişt re dîsa binêre.',
   'shop.owned': 'Ya te',
   'shop.isYours': '{name} ya te ye. Wê ji Guherandina Profîlê deyne.',
-  'shop.isYoursTag': '{name} ya te ye. Tu dê wê di Guherandina Profîlê de, di bin Nîşan û taybetmendî de bibînî.',
+  'shop.isYoursTag': '{name} ya te ye. Tu dê wê di Guherandina Profîlê de, di bin “Nîşan” de bibînî.',
   'shop.isYoursOther': '{name} ya te ye.',
   'shop.onItsWay': '{name} di rê de ye bo {to}.',
   'shop.subtitle': 'Bi Zêr paşxaneyên profîlê, îkon, çarçove û nîşanan bikire — ji bo xwe, an wek diyariyekê ji hevalekî re.',
@@ -3122,7 +3122,7 @@ export const ku: Catalogue = {
   'notifications.quietTo': 'Heta',
 
   // ---- tags & badges (KUR-286/287) ----------------------------------------
-  'tags.title': 'Nîşan û taybetmendî',
+  'tags.title': 'Nîşan',
   'tags.main': 'Nîşana sereke',
   'tags.noMain': 'Hê nîşana sereke tune.',
   'tags.yours': 'Nîşanên te',

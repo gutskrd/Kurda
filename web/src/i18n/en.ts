@@ -2041,7 +2041,7 @@ export const en = {
   'edit.noFrames': 'No frames yet. When a season ends, everyone who played enough rated games gets a profile frame.',
   'edit.seeSeason': 'See this season',
   'edit.manageTags': 'Manage tags',
-  'edit.tagsNote': 'Tags aren’t equipped here — you’ll find yours under Tags & badges, further down this page.',
+  'edit.tagsNote': 'Tags aren’t equipped here — you’ll find yours under Tags, further down this page.',
   'edit.buyForGems': 'Buy · {price} gems',
   'edit.notEnoughGems': 'Not enough gems',
 
@@ -2062,7 +2062,7 @@ export const en = {
   'shop.nothingYet': 'Nothing here yet — check back soon.',
   'shop.owned': 'Owned',
   'shop.isYours': '{name} is yours. Equip it from Edit profile.',
-  'shop.isYoursTag': '{name} is yours. You’ll find it under Tags & badges in Edit profile.',
+  'shop.isYoursTag': '{name} is yours. You’ll find it under Tags in Edit profile.',
   'shop.isYoursOther': '{name} is yours.',
   'shop.onItsWay': '{name} is on its way to {to}.',
   'shop.subtitle': 'Buy profile backgrounds, icons, frames and tags with Zêr — for yourself, or as a gift for a friend.',
@@ -3221,7 +3221,7 @@ export const en = {
   'notifications.quietTo': 'To',
 
   // ---- tags & badges (KUR-286/287) ----------------------------------------
-  'tags.title': 'Tags & badges',
+  'tags.title': 'Tags',
   'tags.main': 'Main tag',
   'tags.noMain': 'No main tag yet.',
   'tags.yours': 'Your tags',

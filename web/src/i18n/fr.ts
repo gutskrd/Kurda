@@ -1951,7 +1951,7 @@ export const fr: Catalogue = {
   'edit.noFrames': 'Pas encore de cadre. À la fin d’une saison, chaque personne qui a joué assez de parties classées reçoit un cadre de profil.',
   'edit.seeSeason': 'Voir la saison en cours',
   'edit.manageTags': 'Gérer les étiquettes',
-  'edit.tagsNote': 'Les étiquettes ne s’équipent pas ici — tu trouveras les tiennes sous Étiquettes et badges, plus bas sur cette page.',
+  'edit.tagsNote': 'Les étiquettes ne s’équipent pas ici — tu trouveras les tiennes sous Étiquettes, plus bas sur cette page.',
   'edit.buyForGems': 'Acheter · {price} gemmes',
   'edit.notEnoughGems': 'Pas assez de gemmes',
   'shop.loading': 'Chargement de la boutique…',
@@ -1970,7 +1970,7 @@ export const fr: Catalogue = {
   'shop.nothingYet': 'Rien ici pour l’instant — reviens bientôt.',
   'shop.owned': 'Possédé',
   'shop.isYours': '{name} est à toi. Équipe-le depuis Modifier le profil.',
-  'shop.isYoursTag': '{name} est à toi. Tu le trouveras sous Étiquettes et badges, dans Modifier le profil.',
+  'shop.isYoursTag': '{name} est à toi. Tu le trouveras sous Étiquettes, dans Modifier le profil.',
   'shop.isYoursOther': '{name} est à toi.',
   'shop.onItsWay': '{name} est en route pour {to}.',
   'shop.subtitle': 'Achète des arrière-plans de profil, des icônes, des cadres et des étiquettes avec des Zêr — pour toi, ou en cadeau pour un ami.',
@@ -3118,7 +3118,7 @@ export const fr: Catalogue = {
   'notifications.quietTo': 'À',
 
   // ---- tags & badges (KUR-286/287) ----------------------------------------
-  'tags.title': 'Étiquettes et badges',
+  'tags.title': 'Étiquettes',
   'tags.main': 'Étiquette principale',
   'tags.noMain': 'Pas encore d’étiquette principale.',
   'tags.yours': 'Tes étiquettes',

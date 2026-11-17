@@ -1952,7 +1952,7 @@ export const nl: Catalogue = {
   'edit.noFrames': 'Nog geen randen. Als een seizoen eindigt, krijgt iedereen die genoeg gerankte potjes speelde een profielrand.',
   'edit.seeSeason': 'Bekijk dit seizoen',
   'edit.manageTags': 'Tags beheren',
-  'edit.tagsNote': 'Tags stel je hier niet in — je vindt ze onder Tags en badges, verderop op deze pagina.',
+  'edit.tagsNote': 'Tags stel je hier niet in — je vindt ze onder Tags, verderop op deze pagina.',
   'edit.buyForGems': 'Kopen · {price} edelstenen',
   'edit.notEnoughGems': 'Niet genoeg edelstenen',
   'shop.loading': 'Winkel laden…',
@@ -1971,7 +1971,7 @@ export const nl: Catalogue = {
   'shop.nothingYet': 'Hier is nog niets — kom straks terug.',
   'shop.owned': 'In bezit',
   'shop.isYours': '{name} is van jou. Stel hem in via Profiel bewerken.',
-  'shop.isYoursTag': '{name} is van jou. Je vindt hem onder Tags en badges in Profiel bewerken.',
+  'shop.isYoursTag': '{name} is van jou. Je vindt hem onder Tags in Profiel bewerken.',
   'shop.isYoursOther': '{name} is van jou.',
   'shop.onItsWay': '{name} is onderweg naar {to}.',
   'shop.subtitle': 'Koop profielachtergronden, iconen, randen en tags met Zêr — voor jezelf of als cadeau voor een vriend.',
@@ -3119,7 +3119,7 @@ export const nl: Catalogue = {
   'notifications.quietTo': 'Tot',
 
   // ---- tags & badges (KUR-286/287) ----------------------------------------
-  'tags.title': 'Tags en badges',
+  'tags.title': 'Tags',
   'tags.main': 'Hoofdtag',
   'tags.noMain': 'Nog geen hoofdtag.',
   'tags.yours': 'Jouw tags',

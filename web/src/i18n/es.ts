@@ -1950,7 +1950,7 @@ export const es: Catalogue = {
   'edit.noFrames': 'Todavía no tienes marcos. Cuando termina una temporada, quien haya jugado suficientes clasificatorias recibe un marco de perfil.',
   'edit.seeSeason': 'Ver esta temporada',
   'edit.manageTags': 'Gestionar etiquetas',
-  'edit.tagsNote': 'Las etiquetas no se equipan aquí: encontrarás las tuyas en Etiquetas e insignias, más abajo en esta página.',
+  'edit.tagsNote': 'Las etiquetas no se equipan aquí: encontrarás las tuyas en Etiquetas, más abajo en esta página.',
   'edit.buyForGems': 'Comprar · {price} gemas',
   'edit.notEnoughGems': 'No tienes suficientes gemas',
   'shop.loading': 'Cargando la tienda…',
@@ -1969,7 +1969,7 @@ export const es: Catalogue = {
   'shop.nothingYet': 'Aquí todavía no hay nada; vuelve pronto.',
   'shop.owned': 'Ya lo tienes',
   'shop.isYours': '{name} ya es tuyo. Equípalo desde Editar perfil.',
-  'shop.isYoursTag': 'La etiqueta {name} ya es tuya. La encontrarás en Etiquetas e insignias, dentro de Editar perfil.',
+  'shop.isYoursTag': 'La etiqueta {name} ya es tuya. La encontrarás en Etiquetas, dentro de Editar perfil.',
   'shop.isYoursOther': '{name} ya es tuyo.',
   'shop.onItsWay': '{name} va camino de {to}.',
   'shop.subtitle': 'Compra fondos de perfil, iconos, marcos y etiquetas con Zêr, para ti o como regalo para un amigo.',
@@ -3117,7 +3117,7 @@ export const es: Catalogue = {
   'notifications.quietTo': 'Hasta',
 
   // ---- tags & badges (KUR-286/287) ----------------------------------------
-  'tags.title': 'Etiquetas e insignias',
+  'tags.title': 'Etiquetas',
   'tags.main': 'Etiqueta principal',
   'tags.noMain': 'Todavía no hay etiqueta principal.',
   'tags.yours': 'Tus etiquetas',

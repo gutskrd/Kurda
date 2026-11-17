@@ -317,7 +317,7 @@ describe('CosmeticCustomizer', () => {
     await userEvent.click(screen.getByRole('tab', { name: /Tags/ }));
     const tag = screen.getByText('Kurdish Tag').closest('figure')!;
     expect(within(tag).getByText('Owned')).toBeInTheDocument();
-    // not equipped here: Tags & badges, further down the same page (TagsCard's #tags)
+    // not equipped here: Tags, further down the same page (TagsCard's #tags)
     expect(within(tag).queryByRole('button', { name: 'Equip' })).not.toBeInTheDocument();
     expect(within(tag).getByRole('link', { name: 'Manage tags' })).toHaveAttribute('href', '#tags');
     expect(tag.querySelector('.item-glyph svg')).not.toBeNull();

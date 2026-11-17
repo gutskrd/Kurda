@@ -21,7 +21,7 @@ import { EmptyState } from '../theme/EmptyState';
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * Tags & badges management (KUR-287): shows the user's effective main tag +
+ * Tags (KUR-287): shows the user's effective main tag +
  * claimable/auto tags, lets them claim self-claim tags (sensitive ones require
  * explicit consent, #109), show/hide claimed tags, and revoke them. Purchase
  * tags (e.g. Kurdish) link out to the Shop.

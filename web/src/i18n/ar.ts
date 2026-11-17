@@ -1946,7 +1946,7 @@ export const ar: Catalogue = {
   'edit.noFrames': 'لا توجد إطارات بعد. عند انتهاء الموسم، يحصل كل من لعب عددًا كافيًا من المباريات المصنّفة على إطار للملف الشخصي.',
   'edit.seeSeason': 'شاهد هذا الموسم',
   'edit.manageTags': 'إدارة الوسوم',
-  'edit.tagsNote': 'لا تُستخدم الوسوم من هنا — ستجد وسومك في «الوسوم والشارات» أسفل هذه الصفحة.',
+  'edit.tagsNote': 'لا تُستخدم الوسوم من هنا — ستجد وسومك في «الوسوم» أسفل هذه الصفحة.',
   'edit.buyForGems': 'اشترِ · {price} جوهرة',
   'edit.notEnoughGems': 'الجواهر لا تكفي',
   'shop.loading': 'جارٍ تحميل المتجر…',
@@ -1965,7 +1965,7 @@ export const ar: Catalogue = {
   'shop.nothingYet': 'لا شيء هنا بعد — عُد قريبًا.',
   'shop.owned': 'تمتلكها',
   'shop.isYours': '{name} أصبح لك. استخدمه من «تعديل الملف الشخصي».',
-  'shop.isYoursTag': '{name} أصبح لك. ستجده في «الوسوم والشارات» ضمن تعديل الملف الشخصي.',
+  'shop.isYoursTag': '{name} أصبح لك. ستجده في «الوسوم» ضمن تعديل الملف الشخصي.',
   'shop.isYoursOther': '{name} أصبح لك.',
   'shop.onItsWay': '{name} في طريقه إلى {to}.',
   'shop.subtitle': 'اشترِ خلفيات ملف شخصي وأيقونات وإطارات ووسومًا بـ Zêr — لنفسك أو هدية لصديق.',
@@ -3113,7 +3113,7 @@ export const ar: Catalogue = {
   'notifications.quietTo': 'إلى',
 
   // ---- tags & badges (KUR-286/287) ----------------------------------------
-  'tags.title': 'الوسوم والشارات',
+  'tags.title': 'الوسوم',
   'tags.main': 'الوسم الرئيسي',
   'tags.noMain': 'لا يوجد وسم رئيسي بعد.',
   'tags.yours': 'وسومك',

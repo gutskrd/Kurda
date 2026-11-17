@@ -285,7 +285,8 @@ function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof us
       links: [
         { key: 'saved', labelKey: 'saved.title', icon: 'bookmark', onPress: () => require('save') && navigation.navigate('Saved') },
         { key: 'badges', labelKey: 'badges.title', icon: 'medal', onPress: () => navigation.navigate('Badges') },
-        { key: 'tags', labelKey: 'tags.title', icon: 'star', onPress: () => require('profile') && navigation.navigate('Tags') },
+        // its own glyph: the star is the events row's, two rows up
+        { key: 'tags', labelKey: 'tags.title', icon: 'tag', onPress: () => require('profile') && navigation.navigate('Tags') },
         { key: 'shop', labelKey: 'profile.shop', icon: 'cart', badge: giftBadge, onPress: () => require('shop') && navigation.navigate('Shop') },
         { key: 'settings', labelKey: 'settings.title', icon: 'gear', onPress: () => navigation.navigate('Settings') },
       ],
