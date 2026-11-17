@@ -1,4 +1,4 @@
-import { HELPLINE_URL, isSanctionKind, type SanctionKind } from '@kurda/shared';
+import { HELPLINE_URL, isSanctionKind, letterNoticeOf, type SanctionKind } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 import { SANCTION_LABEL } from './labels';
 import { formatUntil, MY_REPORTS_PATH, STANDING_PATH } from './restriction';
@@ -93,10 +93,13 @@ export function socialNotification(note: InboxNote, t: Translate, locale?: strin
       };
     }
     case 'letter': {
-      // a bird has come to the window: straight to the correspondence it came from
-      const thread = str(data.threadId);
-      const to = thread && /^[0-9a-f-]{36}$/i.test(thread) ? `/app/letters/${thread}` : '/app/letters';
-      return { title: t('letters.notify.title'), body: t('letters.notify.body'), to };
+      // a bird has come to the window, or your own bird home with an answer: to the window, naming the correspondence,
+      // so its bird lands there before the letter is read (and that correspondence opens when there is nothing to land)
+      const notice = letterNoticeOf(data);
+      const to = notice?.threadId ? `/app/letters?bird=${notice.threadId}` : '/app/letters';
+      return notice?.how === 'home'
+        ? { title: t('letters.notify.homeTitle'), body: t('letters.notify.homeBody'), to }
+        : { title: t('letters.notify.title'), body: t('letters.notify.body'), to };
     }
     case 'gift': {
       const to = giftChatPath(str(data.chat), str(data.giftId));

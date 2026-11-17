@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { letterNoticeOf } from '@kurda/shared';
 import { socialNotification } from '../reports/notifications';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
@@ -70,6 +71,18 @@ export interface Arrival {
   title: string;
   body: string;
   who: RailFriend | null;
+  /** a letter's notification: the correspondence it came in, or null when it names none */
+  letter?: { threadId: string | null };
+}
+
+/**
+ * The arrivals worth a toast on the page at `pathname`. A letter is not
+ * announced on the letters page, whose window lands its bird itself, nor in
+ * the correspondence it came in, which shows it; anywhere else it is.
+ */
+export function toastsHere(arrivals: readonly Arrival[], pathname: string): Arrival[] {
+  const path = pathname.replace(/\/+$/, '');
+  return arrivals.filter((a) => !a.letter || (path !== '/app/letters' && (a.letter.threadId === null || path !== `/app/letters/${a.letter.threadId}`)));
 }
 
 const EMPTY: SocialRailData = {
@@ -201,12 +214,14 @@ function arrivalKeys(data: SocialRailData, t: Translate, locale: string): Arriva
       .map((n) => {
         // in the reader's words where the notification's data says what it is
         const view = socialNotification(n, t, locale);
+        const letter = letterNoticeOf(n.data);
         return {
           key: `note:${n.id}`,
           kind: 'notification' as const,
           title: view?.title ?? n.title,
           body: (view ? view.body : n.body) ?? '',
           who: null,
+          ...(letter ? { letter: { threadId: letter.threadId } } : {}),
         };
       }),
   ];

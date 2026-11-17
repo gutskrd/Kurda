@@ -75,6 +75,7 @@ import { MessagesScreen } from './src/messages/MessagesScreen';
 import { FriendRequestsScreen } from './src/messages/FriendRequestsScreen';
 import { LettersScreen } from './src/letters/LettersScreen';
 import { LetterThreadScreen } from './src/letters/LetterThreadScreen';
+import { LETTER_LINKS } from './src/letters/links';
 import { LetterWidgetScreen } from './src/widget/LetterWidgetScreen';
 import { LetterWidgetSync } from './src/widget/LetterWidgetSync';
 import { UnreadProvider, useUnread } from './src/messages/unread';
@@ -218,9 +219,9 @@ const linking: LinkingOptions<RootStackParamList> = {
       // a shared post: the address the website gives a written one and a picture
       LibraryPost: 'app/library/:postId',
       MemeDetail: 'app/dimen/:postId',
-      // the letters and one correspondence at the website's own addresses; the home-screen letter widget opens these
-      Letters: 'app/letters',
-      LetterThread: 'app/letters/:threadId',
+      // the letters and one correspondence at the website's own addresses; the home-screen letter widget opens these,
+      // and a letter's notification names its bird on the window's (`app/letters?bird=…`, letters/links.ts)
+      ...LETTER_LINKS,
     },
   },
 };
@@ -583,9 +584,10 @@ function SignedInRoot() {
       </RootStack.Screen>
       {/* letters by bird: a guest has no bird, and is shown the way to an account instead */}
       <RootStack.Screen name="Letters" options={card}>
-        {({ navigation }) => (
+        {({ route, navigation }) => (
           <GuestWall reason="message" onBack={() => navigation.goBack()}>
-            <LettersScreen onExit={() => navigation.goBack()} />
+            {/* a notification's bird is let go once the window has acted on it, so coming back does not act on it again */}
+            <LettersScreen bird={route.params?.bird} onBirdUsed={() => navigation.setParams({ bird: undefined })} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>

@@ -66,6 +66,24 @@ describe('socialNotification', () => {
     expect(giftChatPath('nonsense', 'g2')).toBeNull();
   });
 
+  it('sends a letter to the window, naming its correspondence, so its bird lands there first', () => {
+    const thread = '11111111-2222-4333-8444-555555555555';
+    expect(socialNotification(note({ kind: 'letter', threadId: thread, fromUserId: 'u1' }), t)).toEqual({
+      title: 'A bird came to your window',
+      body: 'There’s a letter for you.',
+      to: `/app/letters?bird=${thread}`,
+    });
+    // a correspondence that is not one is never followed: the window opens as it is
+    expect(socialNotification(note({ kind: 'letter', threadId: '../../me' }), t)?.to).toBe('/app/letters');
+  });
+
+  it('says your own bird came home with an answer, in the reader’s words', () => {
+    const thread = '11111111-2222-4333-8444-555555555555';
+    const view = socialNotification(note({ kind: 'letter', threadId: thread, how: 'home', letterId: 'aaaaaaaa-0000-4000-8000-000000000001' }), t);
+    expect(view).toEqual({ title: 'Your bird came home', body: 'It brought an answer to your letter.', to: `/app/letters?bird=${thread}` });
+    expect(socialNotification(note({ kind: 'letter', threadId: thread, how: 'home' }), translator(ku))?.title).toBe('Balindeyê te vegeriya malê');
+  });
+
   it('leaves everything else as the server wrote it', () => {
     expect(socialNotification(note({ kind: 'play_invite' }), t)).toBeNull();
     expect(socialNotification(note(null), t)).toBeNull();

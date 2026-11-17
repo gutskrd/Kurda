@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { ApiClient, createApiClient, describeError } from '../lib/api';
 import { persistTokens } from '../lib/tokenStorage';
 import { forgetAnswers } from '../lib/apiMemory';
+import { forgetDrafts } from '../letters/drafts';
 import { thisDeviceName } from '../lib/deviceName';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
 import type { AuthPayload, SessionUser } from '../lib/types';
@@ -188,8 +189,9 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       // not wait on a slow network
       void client.endSession();
       storage.clear();
-      // and nothing this account loaded stays behind for whoever is here next
+      // and nothing this account loaded, or was writing, stays behind for whoever is here next
       forgetAnswers();
+      forgetDrafts();
       setUser(null);
       setStatus('signedOut');
     },

@@ -54,6 +54,7 @@ const BY_KIND: Readonly<Record<string, Exclude<NoticeFilter, 'all'>>> = {
 
 const BY_CATEGORY: Readonly<Record<string, Exclude<NoticeFilter, 'all'>>> = {
   friends: 'people',
+  letters: 'people',
   games: 'games',
   progress: 'progress',
   streak: 'progress',

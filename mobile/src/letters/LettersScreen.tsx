@@ -1,15 +1,33 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import {
   BIRD_OUT_DAYS,
   LETTER_FLIGHT,
   PEN_PALS_MAX,
+  firstLook,
+  flightOf,
+  lookAfterAnswer,
+  lookAfterBirdChosen,
+  lookAfterCall,
+  lookAfterLanded,
+  lookAfterOwnGone,
+  lookAfterRecall,
+  lookAfterSend,
+  lookAfterSendOn,
+  lookAfterVisitorGone,
+  lookInMotion,
+  lookWithMoment,
+  nextLook,
+  untilServerTime,
   type BirdOutResult,
-  type LetterPerson,
+  type LetterReturnReason,
   type LetterVisitor,
   type LettersHome,
   type VisitorAnswer,
+  type WindowLook,
+  type WindowMoment,
+  type WindowSpot,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -24,6 +42,7 @@ import { sectionLabel } from '../theme/fonts';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useI18n } from '../i18n/I18nContext';
+import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
 import { ReportSheet } from '../reports/ReportSheet';
 import { describeError } from '../api/errors';
@@ -35,51 +54,30 @@ import { LetterComposer, rememberPaper, rememberedPaper, type ComposedLetter } f
 import { usePaperScroll } from './usePaperScroll';
 import { letterErrorText } from './errors';
 import { BirdPicker } from './BirdPicker';
+import { NEW_LETTER, keepDraft, moveDraft, strayAnswers, threadDraft, useLetterDrafts, visitorDraft } from './drafts';
+import { useLettersHome } from './useLettersHome';
 import { LetterWidgetButton } from '../widget/LetterWidgetButton';
-
-/**
- * What the screen is showing under the window: the letters as they stand,
- * writing your own letter, your bird on its way out, your answer on its way
- * home with somebody's bird, that bird sent on, your own bird home with an
- * answer, or a pen pal's bird come with their next letter.
- */
-type Moment =
-  | { kind: 'rest' }
-  | { kind: 'writing' }
-  | { kind: 'sent' }
-  /** your bird has flown and waits out there: said at once, before the screen has read again */
-  | { kind: 'waiting' }
-  | { kind: 'answered'; person: LetterPerson; threadId: string }
-  | { kind: 'sentOn'; name: string }
-  | { kind: 'homecoming'; person: LetterPerson; threadId: string }
-  | { kind: 'arrival'; person: LetterPerson; threadId: string };
 
 /** The window is as wide as the screen allows, and no wider than a hand's width of sky. */
 const WINDOW_MAX = 300;
 
-/**
- * The screen's first look at what the server says: your bird where it is, a
- * bird at the window still there, your bird home with an answer landing, or
- * else a pen pal's bird coming in with their next letter, said in words
- * under it.
- */
-function firstLook(home: LettersHome): { scene: WindowScene; moment: Moment } {
-  const back = home.homecoming !== null && home.out === null;
-  const pal = !home.visitor && !back ? home.arrival : null;
-  return {
-    scene: {
-      own: home.out ? { kind: 'away' } : back ? { kind: 'arriving', bird: home.bird } : { kind: 'home', bird: home.bird },
-      visitor: home.visitor ? { kind: 'here', bird: home.visitor.person.bird } : pal ? { kind: 'arriving', bird: pal.person.bird } : { kind: 'none' },
-      sky: home.sky,
-    },
-    moment:
-      back && home.homecoming
-        ? { kind: 'homecoming', person: home.homecoming.person, threadId: home.homecoming.threadId }
-        : pal
-          ? { kind: 'arrival', person: pal.person, threadId: pal.threadId }
-          : { kind: 'rest' },
-  };
-}
+/** A correspondence's id, as a notification names it (`bird`): anything else is not followed. */
+const THREAD_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A bird at the window is read again a moment after its day is up, so it is seen flying on rather than left there. */
+const AFTER_LEAVING_MS = 1500;
+/** Times further off than this are left to the next read: nobody keeps one screen open for a day. */
+const TIMED_MAX_MS = 26 * 3_600_000;
+
+/** Why your bird came home by itself, as said under the window. */
+const RETURNED: Record<LetterReturnReason, TranslationKey> = {
+  unanswered: 'letters.returned.unanswered',
+  band: 'letters.returned.band',
+  full: 'letters.returned.full',
+};
+
+/** An answer whose bird had flown on, kept to send another way: to a correspondence with that person, or with your own bird. */
+type Kept = { name: string; threadId: string } | { name: null; threadId: null };
 
 /**
  * Letters by bird, on the phone: writing to somebody new in Kurdish, and the
@@ -96,164 +94,279 @@ function firstLook(home: LettersHome): { scene: WindowScene; moment: Moment } {
  * window. It comes down with its letter and waits on the sill beside your
  * bird while you read it. Answer it, and that same bird carries your letter
  * home and the two of you are pen pals; or send it on its way, asked once
- * first, for somebody else. While it is there your own bird stays home. When
- * your own bird comes home from somebody's window with their answer, the
- * screen shows it landing, and the way to read it; and every letter a pen
- * pal writes after that comes to the window by their own bird, which lands
- * beside yours and lays the letter on the sill until it is read.
+ * first, for somebody else. While it is there your own bird stays home.
+ *
+ * Every letter lands at the window once, however it was heard of: your own
+ * bird home with an answer, or a pen pal's bird with their next letter,
+ * flies in and lays it on the sill (felt as a light knock, for anybody who
+ * has not asked the phone for less motion), and after that waits there,
+ * without a flight, until the letter is read. What the window acts out is
+ * worked out by the shared window logic (shared/src/letter-window.ts) from
+ * the letters as the server last said them and from what is done here, and
+ * they are read again whenever they may have changed (useLettersHome.ts), so
+ * a bird that comes while the screen is open lands then. One letter is acted
+ * out at a time; a quiet line says when another is waiting its turn. A
+ * notification names its correspondence (`bird`): that bird lands first, or,
+ * when there is nothing of it to land or the window is busy, the
+ * correspondence opens instead.
+ *
+ * While your bird is out a line says where it is: out over the country
+ * waiting to be called, or at somebody's window while they read your letter;
+ * and when it came home by itself with your letter, why.
  *
  * Every letter is written on paper of your own (LetterComposer.tsx), which
  * opens on the paper you last wrote on: its lines, colour and ink, and notes
  * stuck to it. A first letter to somebody new carries no drawing — drawings
  * travel only between pen pals — but the answer to a bird at your window may.
+ * What is on the paper is kept as it is written (drafts.ts), and an answer
+ * whose bird flew on before it was sent is kept for that person's
+ * correspondence, or for your own bird.
  *
  * Under it your pen pals, the one most recently written to first, each with
  * whose turn it is, and one short list of how it works. Reporting and
  * blocking are on each correspondence, and on a visiting bird's letter.
  */
-export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
-  const { client } = useAuth();
+export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void; bird?: string; onBirdUsed?: () => void }): React.JSX.Element {
+  const { client, user } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { t } = useI18n();
   const { colors } = useTheme();
   const dir = useDirection();
   const reduce = useReducedMotion();
   const { width } = useWindowDimensions();
-  const [home, setHome] = useState<LettersHome | null>(null);
-  const [loadError, setLoadError] = useState<ApiError | null>(null);
-  const [moment, setMoment] = useState<Moment>({ kind: 'rest' });
-  // what the window acts out: set from the screen once it is read, then by what is done here
-  const [scene, setScene] = useState<WindowScene | null>(null);
-  // the bird at the window, as the call brought it or the screen found it
-  const [visitor, setVisitor] = useState<LetterVisitor | null>(null);
+  const home = useLettersHome();
+  const data = home.read?.data ?? null;
+  const who = user?.id ?? null;
+  const draftsReady = useLetterDrafts(who);
   const [askingOn, setAskingOn] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [calling, setCalling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [kept, setKept] = useState<Kept | null>(null);
   const [howOpen, setHowOpen] = useState(false);
   // choosing a new bird after the first, and the one picked while choosing, which the window shows on the sill
   const [changing, setChanging] = useState(false);
   const [picked, setPicked] = useState<number | null>(null);
   const [birdError, setBirdError] = useState<string | null>(null);
-  // left for a correspondence: coming back, the screen starts afresh from what the server then says, as the website's page does
-  const away = useRef(false);
   // the page the paper lies on: held still while drawing, and kept with the writing above the keyboard
   const page = usePaperScroll();
 
-  const load = useCallback(
-    async (afresh = false): Promise<void> => {
-      const res = await client.get<LettersHome>('/letters');
-      if (res.ok) {
-        if (afresh) {
-          const look = firstLook(res.data);
-          setScene(look.scene);
-          setMoment(look.moment);
-          setVisitor(res.data.visitor);
-          setAskingOn(false);
-          setError(null);
-        }
-        setHome(res.data);
-        // the paper you last wrote on, for this sheet and for a correspondence opened from here
-        rememberPaper(res.data.paper);
-        setLoadError(null);
-      } else setLoadError(res.error);
-    },
-    [client],
-  );
+  // what the window acts out: worked out from each read of the letters, and by what is done here (`apply`), the
+  // latest always in the ref so a flight that ends and a read that comes in the same moment both build on it
+  const [look, setLook] = useState<WindowLook | null>(null);
+  const current = useRef<WindowLook | null>(null);
+  // the letters this window has told the server landed, so each is told once
+  const told = useRef(new Set<string>());
+  const apply = useCallback((change: (l: WindowLook) => WindowLook): WindowLook | null => {
+    const was = current.current;
+    if (!was) return null;
+    const next = change(was);
+    if (next !== was) {
+      current.current = next;
+      setLook(next);
+    }
+    return next;
+  }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      void load(away.current);
-      away.current = false;
-    }, [load]),
-  );
+  // the paper you last wrote on, for this sheet and for a correspondence opened from here
+  useEffect(() => rememberPaper(data?.paper), [data?.paper]);
 
+  // the correspondence a notification was about: acted on with a read asked after it came, which knows of its letter
+  const hint = bird && THREAD_ID.test(bird) ? bird : null;
+  const [hintFrom, setHintFrom] = useState<{ id: string; seq: number } | null>(null);
+  const readSoFar = useRef(home.read);
+  readSoFar.current = home.read;
+  const { asked, reload } = home;
   useEffect(() => {
-    if (!home) return;
-    if (!scene) {
-      const look = firstLook(home);
-      setScene(look.scene);
-      setVisitor(home.visitor);
-      if (look.moment.kind === 'homecoming' || look.moment.kind === 'arrival') setMoment(look.moment);
+    if (!hint) {
+      setHintFrom(null);
       return;
     }
-    // read again: the birds out there are as the screen now says
-    setScene((s) => (s && s.sky.join() !== home.sky.join() ? { ...s, sky: home.sky } : s));
-  }, [home, scene]);
+    // the first read is already on its way; once the letters are there, a new hint asks again
+    if (readSoFar.current === null) setHintFrom({ id: hint, seq: asked() });
+    else {
+      setHintFrom({ id: hint, seq: asked() + 1 });
+      reload();
+    }
+  }, [hint, asked, reload]);
+  const ready = hint !== null && hintFrom?.id === hint && home.read !== null && home.read.seq >= hintFrom.seq ? hint : null;
+
+  // the window is held still for anything open under it or on its way, so nothing is swapped out under the person; a
+  // letter being written and a bird in flight hold it by themselves, and the look runs again as soon as any hold ends
+  const held = askingOn || changing || reporting || busy;
+  const moving = look !== null && lookInMotion(look);
+  const saying = look?.moment.kind ?? null;
+  useEffect(() => {
+    if (!data) return;
+    const was = current.current;
+    const next = was ? nextLook(was, data, { held, hint: ready }) : firstLook(data, ready);
+    if (next !== was) {
+      current.current = next;
+      setLook(next);
+    }
+  }, [data, held, ready, moving, saying]);
+
+  // what was made of a notification's bird: it lands here, and is let go; or its correspondence opens over the window
+  const birdUsed = useRef(onBirdUsed);
+  birdUsed.current = onBirdUsed;
+  useEffect(() => {
+    if (!bird) return;
+    if (!hint) {
+      birdUsed.current?.();
+      return;
+    }
+    const made = look?.hint;
+    if (!made || made.threadId !== hint) return;
+    if (made.outcome === 'open-thread') navigation.navigate('LetterThread', { threadId: hint });
+    birdUsed.current?.();
+  }, [bird, hint, look?.hint, navigation]);
+
+  // a bird at the window whose day is up, or yours at somebody else's, is read again then, by the server's clock
+  const visitorLeaves = data?.visitor?.leavesAt ?? null;
+  const ownLeaves = data?.out?.leavesBy ?? null;
+  const readAt = home.read?.at ?? 0;
+  useEffect(() => {
+    if (!data) return;
+    const times = [visitorLeaves, ownLeaves]
+      .filter((at): at is string => typeof at === 'string')
+      .map((at) => untilServerTime(at, data, readAt, Date.now()))
+      .filter((ms) => ms > -AFTER_LEAVING_MS && ms < TIMED_MAX_MS);
+    if (times.length === 0) return;
+    const timer = setTimeout(reload, Math.max(0, Math.min(...times)) + AFTER_LEAVING_MS);
+    return () => clearTimeout(timer);
+  }, [data, visitorLeaves, ownLeaves, readAt, reload]);
+
+  /**
+   * The answer begun to a bird that has left the window without it, kept to
+   * send another way: to a correspondence with that person if you write to
+   * each other already, or else with your own bird to somebody new. Says
+   * where it went, or null when nothing was written (an answer sent, or one
+   * sent on or blocked, has been let go already).
+   */
+  const keepAnswer = useCallback(
+    (came: LetterVisitor, penPals: LettersHome['penPals']): Kept | null => {
+      const pal = penPals.find((p) => p.person.id === came.person.id);
+      const moved = pal
+        ? moveDraft(who, visitorDraft(came.letter.id), threadDraft(pal.threadId), { strokes: true })
+        : moveDraft(who, visitorDraft(came.letter.id), NEW_LETTER, { strokes: false });
+      return moved ? (pal ? { name: pal.person.name, threadId: pal.threadId } : { name: null, threadId: null }) : null;
+    },
+    [who],
+  );
+
+  // a bird that leaves the window by itself (its day up while an answer was being written, or answered on another
+  // phone or the website) takes nothing with it: what was on the paper is kept, and the screen says where
+  const lastVisitor = useRef<LetterVisitor | null>(null);
+  const visitorNow = look?.visitor ?? null;
+  const palsNow = data?.penPals ?? null;
+  useEffect(() => {
+    const was = lastVisitor.current;
+    lastVisitor.current = visitorNow;
+    if (!was || visitorNow?.letter.id === was.letter.id || !palsNow) return;
+    const moved = keepAnswer(was, palsNow);
+    if (moved) setKept(moved);
+  }, [visitorNow, palsNow, keepAnswer]);
+
+  // an answer begun to a bird whose day ran out while the app was closed is found once the drafts are read, and kept
+  // for your own bird (who it was for is not known any more), said once
+  const strayChecked = useRef(false);
+  useEffect(() => {
+    if (strayChecked.current || !data || !who || !draftsReady) return;
+    strayChecked.current = true;
+    let moved = false;
+    for (const place of strayAnswers(who, data.visitor?.letter.id ?? null)) moved = moveDraft(who, place, NEW_LETTER, { strokes: false }) || moved;
+    if (moved) setKept({ name: null, threadId: null });
+  }, [data, who, draftsReady]);
 
   // a window with no width yet (a screen still being laid out) is not drawn until it has one
   const size = Math.max(0, Math.min(width - layout.gutter * 2, WINDOW_MAX));
 
-  const out = home !== null && (home.out !== null || moment.kind === 'waiting');
-  const here = visitor !== null && scene?.visitor.kind !== 'leaving' && scene?.visitor.kind !== 'none';
+  const scene = look?.scene ?? null;
+  const moment: WindowMoment = look?.moment ?? { kind: 'rest' };
+  const visitor = look?.visitor ?? null;
+  const out = scene !== null && (scene.own.kind === 'away' || moment.kind === 'waiting');
+  const here = visitor !== null && scene !== null && (scene.visitor.kind === 'arriving' || scene.visitor.kind === 'here');
+  // nothing is being said of the sill, or only that your bird came home by itself: the bird can be chosen then
+  const calm = moment.kind === 'rest' || moment.kind === 'returned';
   // the bird is chosen at home, while nothing else is going on: the first time before the first letter, later whenever wanted
-  const choosing = home !== null && home.refusal === null && !out && !here && moment.kind === 'rest' && (!home.birdChosen || changing);
+  const choosing = data !== null && data.refusal === null && !out && !here && calm && (!data.birdChosen || changing);
   // your own bird can be changed while it is home and nothing else is happening at the window: the button sits on the window itself
-  const canChange = home !== null && home.refusal === null && home.birdChosen && !out && !here && !choosing && (moment.kind === 'rest' || moment.kind === 'writing');
-  const pick = picked ?? home?.bird ?? 0;
+  const canChange = data !== null && data.refusal === null && data.birdChosen && !out && !here && !choosing && (calm || moment.kind === 'writing');
+  const pick = picked ?? data?.bird ?? 0;
   const shown = useMemo<WindowScene | null>(
-    () => (choosing && scene?.own.kind === 'home' ? { ...scene, own: { kind: 'home', bird: pick } } : scene),
+    () => (choosing && scene && (scene.own.kind === 'home' || scene.own.kind === 'here') ? { ...scene, own: { kind: scene.own.kind, bird: pick } } : scene),
     [choosing, scene, pick],
   );
 
+  const said = (err: ApiError): string => letterErrorText(err, t) ?? describeError(err, t);
+
   const openThread = (threadId: string): void => {
-    away.current = true;
     navigation.navigate('LetterThread', { threadId });
   };
 
+  /** The letter on the sill opened before its bird is down: it was seen at the window all the same, so it does not fly in again next time. */
+  const readLanded = (threadId: string): void => {
+    const shownLanding = current.current?.landing;
+    if (shownLanding && !shownLanding.item.landed && shownLanding.item.letterId) tellLanded([shownLanding.item.letterId]);
+    openThread(threadId);
+  };
+
   const send = async (letter: ComposedLetter): Promise<void> => {
-    if (!home) return;
+    if (!data) return;
+    home.drop();
     setBusy(true);
     setError(null);
     const res = await client.post<BirdOutResult>('/letters/out', letter);
     setBusy(false);
     if (!res.ok) {
       haptic('error');
-      setError(letterErrorText(res.error, t) ?? describeError(res.error, t));
+      // refused because your bird is out already, sent from another phone or the website: the paper is put away (what
+      // is on it is kept for when the bird is home) and the letters read again show the bird out, with the way back
+      setError(said(res.error));
+      if (res.error.code === 'BIRD_OUT') apply((l) => lookWithMoment(l, { kind: 'rest' }));
+      home.reload();
       return;
     }
     haptic('tap');
-    setMoment({ kind: 'sent' });
-    setScene((s) => s && { ...s, own: { kind: 'leaving', bird: home.bird } });
+    keepDraft(who, NEW_LETTER, null);
+    setKept(null);
+    apply((l) => lookAfterSend(l, data.bird, res.data));
   };
 
   /** Your bird has flown out through the window: it waits out there now. */
   const ownGone = (): void => {
-    setScene((s) => s && { ...s, own: { kind: 'away' } });
-    setMoment((m) => (m.kind === 'sent' ? { kind: 'waiting' } : m));
-    void load();
+    apply(lookAfterOwnGone);
+    home.reload();
   };
 
   const call = async (): Promise<void> => {
+    home.drop();
     setBusy(true);
     setCalling(true);
     setError(null);
+    setKept(null);
     const res = await client.post<{ visitor: LetterVisitor }>('/letters/call', {});
     setBusy(false);
     setCalling(false);
     if (!res.ok) {
+      // a bird already at the window (called on another phone) is shown there by the read
       haptic('error');
-      setError(letterErrorText(res.error, t) ?? describeError(res.error, t));
-      void load();
+      setError(said(res.error));
+      home.reload();
       return;
     }
     haptic('tap');
-    const came = res.data.visitor;
-    setVisitor(came);
     setAskingOn(false);
     // the first bird out there is the one that comes: it leaves the sky as it sets out
-    setScene((s) => s && { ...s, visitor: { kind: 'arriving', bird: came.person.bird }, sky: s.sky.slice(1) });
-    setMoment({ kind: 'rest' });
-  };
-
-  /** The bird called to the window has landed and laid its letter down. */
-  const visitorLanded = (): void => {
-    setScene((s) => (s && s.visitor.kind === 'arriving' ? { ...s, visitor: { kind: 'here', bird: s.visitor.bird } } : s));
+    apply((l) => lookAfterCall(l, res.data.visitor));
+    home.reload();
   };
 
   const answer = async (letter: ComposedLetter): Promise<void> => {
-    if (!visitor) return;
+    const came = current.current?.visitor;
+    if (!came || !data) return;
+    home.drop();
     setBusy(true);
     setError(null);
     const res = await client.post<VisitorAnswer>('/letters/visitor', letter);
@@ -261,134 +374,211 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     if (!res.ok) {
       haptic('error');
       const gone = res.error.code === 'NO_VISITOR' || res.error.code === 'BIRD_GONE';
-      setError(gone ? t('letters.visitor.gone') : (letterErrorText(res.error, t) ?? describeError(res.error, t)));
       if (gone) {
-        setVisitor(null);
-        setScene((s) => s && { ...s, visitor: { kind: 'none' } });
-        void load();
+        // the bird flew on before the answer reached it: the answer is kept, to go to them in your letters if you
+        // write to each other already, or else with your own bird to somebody new
+        setKept(keepAnswer(came, data.penPals));
+        apply(lookAfterVisitorGone);
       }
+      setError(gone ? t('letters.visitor.gone') : said(res.error));
+      home.reload();
       return;
     }
     haptic('celebrate');
+    keepDraft(who, visitorDraft(came.letter.id), null);
     // your letter drops onto the sill, their bird takes it home, and the two birds chirp to each other
-    setMoment({ kind: 'answered', person: res.data.person, threadId: res.data.threadId });
-    setScene((s) => s && { ...s, visitor: { kind: 'leaving', bird: visitor.person.bird, how: 'answered' }, song: (s.song ?? 0) + 1 });
+    apply((l) => lookAfterAnswer(l, res.data));
+    home.reload();
   };
 
   const sendOn = async (): Promise<void> => {
-    if (!visitor) return;
+    const came = current.current?.visitor;
+    if (!came) return;
+    home.drop();
     setBusy(true);
     setError(null);
     const res = await client.delete('/letters/visitor');
     setBusy(false);
     setAskingOn(false);
-    if (res.ok || res.error.status === 404) {
+    if (res.ok) {
       haptic('tap');
-      setMoment({ kind: 'sentOn', name: visitor.person.name });
-      setScene((s) => s && { ...s, visitor: { kind: 'leaving', bird: visitor.person.bird, how: 'sent-on' } });
-      return;
+      // an answer begun to a bird sent on is not for anybody else
+      keepDraft(who, visitorDraft(came.letter.id), null);
+      apply(lookAfterSendOn);
+    } else if (res.error.status !== 404) {
+      // still at the window: said, so the button is not taken for one that did nothing
+      haptic('error');
+      setError(said(res.error));
     }
-    // the bird is still at the window: said, so the button is not taken for one that did nothing
-    haptic('error');
-    setError(letterErrorText(res.error, t) ?? describeError(res.error, t));
+    // a 404 is a bird that had flown on already: the read says so, and the window shows it going
+    home.reload();
   };
 
   /** The visiting bird has flown off through the window, with your answer or on to somebody else. */
   const visitorGone = (): void => {
-    setVisitor(null);
-    setScene((s) => s && { ...s, visitor: { kind: 'none' } });
-    setMoment((m) => (m.kind === 'sentOn' ? { kind: 'rest' } : m));
-    void load();
+    apply(lookAfterVisitorGone);
+    home.reload();
+  };
+
+  /**
+   * The window says it showed these letters land, each once however many
+   * moments say so; asked again once if the network failed, and otherwise
+   * they land again on the next visit.
+   */
+  const tellLanded = (letterIds: readonly string[], again = true): void => {
+    const fresh = letterIds.filter((id) => !told.current.has(id));
+    if (fresh.length === 0) return;
+    for (const id of fresh) told.current.add(id);
+    void client.post('/letters/landed', { letterIds: fresh }).then((res) => {
+      if (res.ok || res.error.kind !== 'network') return;
+      for (const id of fresh) told.current.delete(id);
+      if (again) setTimeout(() => tellLanded(fresh, false), 5000);
+    });
+  };
+
+  /**
+   * A bird flying in has come down on the sill: its letter has landed, and
+   * the server is told at once rather than when the bird has finished laying
+   * it down and looking about, so a screen left meanwhile does not land it
+   * again next time. A bird bringing a letter is felt landing too, a light
+   * knock, when it was seen flying in: not for a reader who asked for less
+   * motion, nor with no window drawn.
+   */
+  const touchdown = (spot: WindowSpot, seen = true): void => {
+    const l = current.current;
+    if (!l) return;
+    let letter: string | null = null;
+    if (l.landing?.spot === spot && !l.landing.item.landed) letter = l.landing.item.letterId || null;
+    else if (spot === 'own' && !l.landing && l.returned && !l.returned.landed) letter = l.returned.letterId;
+    const bringing = (l.landing?.spot === spot && !l.landing.item.landed) || (spot === 'own' && !l.landing && l.returned !== null && !l.returned.landed);
+    if (bringing && seen && !reduce) haptic('tap');
+    if (letter) tellLanded([letter]);
+  };
+
+  /** A bird has settled on the sill with its letter laid down: the window shows it there from now on. */
+  const landedAt = (spot: WindowSpot): void => {
+    const was = current.current;
+    if (!was) return;
+    const done = lookAfterLanded(was, spot);
+    if (!done.landed) return;
+    current.current = done.look;
+    setLook(done.look);
+    tellLanded(done.post);
   };
 
   // with no window drawn there is no flight to watch, so what follows one follows at once
   useEffect(() => {
     if (size > 0 || !scene) return;
     if (scene.own.kind === 'leaving') ownGone();
-    if (scene.visitor.kind === 'arriving') visitorLanded();
-    else if (scene.visitor.kind === 'leaving') visitorGone();
+    else if (scene.own.kind === 'arriving') {
+      touchdown('own', false);
+      landedAt('own');
+    }
+    if (scene.visitor.kind === 'arriving') {
+      touchdown('sill', false);
+      landedAt('sill');
+    } else if (scene.visitor.kind === 'leaving') visitorGone();
   }, [size, scene]);
 
   const recall = async (): Promise<void> => {
-    if (!home) return;
+    if (!data) return;
+    home.drop();
     setBusy(true);
     setError(null);
     const res = await client.delete('/letters/out');
     setBusy(false);
-    if (res.ok || res.error.status === 404) {
-      setScene((s) => s && { ...s, own: { kind: 'arriving', bird: home.bird } });
-      setMoment({ kind: 'rest' });
-      void load();
-      return;
+    // called back, it flies home with its letter; any other answer (answered meanwhile, or not out) is what the read shows
+    if (res.ok) apply((l) => lookAfterRecall(l, data.bird));
+    else if (res.error.status !== 404) {
+      // still out there: said, so the button is not taken for one that did nothing
+      haptic('error');
+      setError(said(res.error));
     }
-    // still out there: said, so the button is not taken for one that did nothing
-    haptic('error');
-    setError(letterErrorText(res.error, t) ?? describeError(res.error, t));
+    home.reload();
   };
 
   const chooseBird = async (): Promise<void> => {
-    if (!home) return;
+    if (!data) return;
     setBusy(true);
     setBirdError(null);
     const res = await client.post<LettersHome>('/letters/bird', { bird: pick });
     setBusy(false);
-    // spent meanwhile, in another tab or on another phone: the Zêr there are now say how many are missing
+    // spent meanwhile, on another phone or the website: the Zêr there are now say how many are missing
     if (!res.ok && res.error.code === 'INSUFFICIENT_FUNDS') {
       haptic('error');
-      void load();
+      home.reload();
       return;
     }
-    // the same bird again is no change: there is nothing to pay and nothing to say
+    // sent out meanwhile from somewhere else: a bird out is not changed, and the read shows it out
+    if (!res.ok && res.error.code === 'BIRD_OUT') {
+      haptic('error');
+      setChanging(false);
+      setPicked(null);
+      setError(said(res.error));
+      home.reload();
+      return;
+    }
+    // the same bird again is no change: there is nothing to pay and nothing to say; any other refusal is said in
+    // your language, and the letters read again show why
     if (!res.ok && res.error.code !== 'LETTER_BIRD_SAME') {
       haptic('error');
-      setBirdError(describeError(res.error, t));
+      setBirdError(said(res.error));
+      home.reload();
       return;
     }
     haptic('celebrate');
-    if (res.ok) setHome(res.data);
     setChanging(false);
     setPicked(null);
-    setScene((s) => s && { ...s, own: { kind: 'home', bird: res.ok ? res.data.bird : pick } });
+    apply((l) => lookAfterBirdChosen(l, res.ok ? res.data.bird : pick));
+    home.reload();
   };
+
   // the picker takes the place of whatever is open under the window, the paper included, so the button always does what it says
   const startChanging = (): void => {
-    if (!home) return;
-    setPicked(home.bird);
+    if (!data) return;
+    setPicked(data.bird);
     setBirdError(null);
     setError(null);
-    setMoment({ kind: 'rest' });
+    apply((l) => lookWithMoment(l, { kind: 'rest' }));
     setChanging(true);
   };
 
+  const write = (): void => {
+    setError(null);
+    setKept(null);
+    apply((l) => lookWithMoment(l, { kind: 'writing' }));
+  };
+
   const visitorName = visitor?.person.name ?? '';
-  const canWrite = home !== null && home.refusal === null && !out && !here && home.roomForMore;
+  const room = data?.roomForMore ?? false;
+  const canWrite = data !== null && scene !== null && data.refusal === null && !out && !here && room && scene.own.kind !== 'leaving';
   const quiet = [styles.status, { color: colors.textSecondary }];
   const strong = [styles.status, styles.strong, { color: colors.textPrimary }];
 
   let status: React.ReactNode = null;
-  if (home && scene) {
-    const room = home.roomForMore;
-    const canCall = home.refusal === null && !here && room && home.birdsOut > 0 && home.callsLeft > 0;
+  let picker: React.ReactNode = null;
+  if (data && scene && look) {
+    const canCall = data.refusal === null && !here && room && data.birdsOut > 0 && data.callsLeft > 0;
     // the birds out there: the first few of them as they look, how many there are, and the way to call one, as one card
     const sky =
-      home.refusal === null && room && !here ? (
+      data.refusal === null && room && !here ? (
         <View style={[styles.sky, { backgroundColor: colors.surface, borderColor: colors.separator }]}>
           <View style={[styles.skyTop, { flexDirection: dir.row }]}>
-            {home.sky.length > 0 ? (
+            {data.sky.length > 0 ? (
               <View style={[styles.skyBirds, { flexDirection: dir.row }]}>
-                {home.sky.slice(0, 4).map((bird, i) => (
-                  <View key={`${i}-${bird}`} style={[styles.skyBird, i > 0 ? styles.skyBirdOver : null, { borderColor: colors.surface }]}>
-                    <BirdBadge bird={bird} size={32} />
+                {data.sky.slice(0, 4).map((b, i) => (
+                  <View key={`${i}-${b}`} style={[styles.skyBird, i > 0 ? styles.skyBirdOver : null, { borderColor: colors.surface }]}>
+                    <BirdBadge bird={b} size={32} />
                   </View>
                 ))}
               </View>
             ) : null}
             <Text style={[styles.skyText, dir.text, { color: colors.textSecondary }]} testID="letters-sky">
-              {home.birdsOut === 0 ? t('letters.sky.none') : home.birdsOut === 1 ? t('letters.sky.one') : t('letters.sky.many', { count: home.birdsOut })}
+              {data.birdsOut === 0 ? t('letters.sky.none') : data.birdsOut === 1 ? t('letters.sky.one') : t('letters.sky.many', { count: data.birdsOut })}
             </Text>
           </View>
-          {home.birdsOut > 0 ? (
-            home.callsLeft > 0 ? (
+          {data.birdsOut > 0 ? (
+            data.callsLeft > 0 ? (
               <ClayButton
                 label={calling ? t('letters.calling') : t('letters.call')}
                 onPress={() => void call()}
@@ -403,9 +593,10 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           ) : null}
         </View>
       ) : null;
+    const writeButton = <ClayButton label={t('letters.write')} onPress={write} tone="primary" style={styles.wide} testID="letters-write" />;
 
-    if (home.refusal === 'birth_month') status = <Text style={quiet}>{t('letters.refusal.birthMonth')}</Text>;
-    else if (home.refusal === 'restricted') status = <Text style={quiet}>{t('letters.refusal.restricted')}</Text>;
+    if (data.refusal === 'birth_month') status = <Text style={quiet}>{t('letters.refusal.birthMonth')}</Text>;
+    else if (data.refusal === 'restricted') status = <Text style={quiet}>{t('letters.refusal.restricted')}</Text>;
     else if (moment.kind === 'answered') {
       const { person, threadId } = moment;
       status =
@@ -415,11 +606,12 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           <>
             <Text style={strong}>{t('letters.pals.now', { name: person.name })}</Text>
             <ClayButton label={t('letters.pals.open', { name: person.name })} onPress={() => openThread(threadId)} variant="outline" testID="letters-pals-open" />
-            {canWrite ? <ClayButton label={t('letters.write')} onPress={() => setMoment({ kind: 'writing' })} variant="outline" testID="letters-write" /> : null}
+            {canWrite ? <ClayButton label={t('letters.write')} onPress={write} variant="outline" testID="letters-write" /> : null}
             {sky}
           </>
         );
-    } else if (moment.kind === 'sentOn' && scene.visitor.kind === 'leaving') status = <Text style={quiet}>{t('letters.visitor.sentOn', { name: moment.name })}</Text>;
+    } else if ((moment.kind === 'sentOn' || moment.kind === 'flownOn') && scene.visitor.kind === 'leaving')
+      status = <Text style={quiet}>{t('letters.visitor.sentOn', { name: moment.name })}</Text>;
     else if (here && visitor)
       status =
         scene.visitor.kind === 'arriving' ? (
@@ -428,6 +620,13 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           <>
             <Text style={strong}>{t('letters.visitor.title', { name: visitorName })}</Text>
             <Text style={quiet}>{t('letters.visitor.body')}</Text>
+            {/* your own bird came home with an answer while this one was here: it is said, and can be read, all the same */}
+            {moment.kind === 'homecoming' ? (
+              <View style={[styles.also, { borderTopColor: colors.separator }]}>
+                <Text style={[styles.status, { color: colors.textPrimary }]}>{t('letters.home.title', { name: moment.person.name })}</Text>
+                <ClayButton label={t('letters.home.read')} onPress={() => readLanded(moment.threadId)} variant="outline" testID="letters-home-read" />
+              </View>
+            ) : null}
           </>
         );
     else if (moment.kind === 'homecoming' || moment.kind === 'arrival') {
@@ -435,65 +634,84 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
       status = (
         <>
           <Text style={strong}>{moment.kind === 'homecoming' ? t('letters.home.title', { name: person.name }) : t('letters.arrival.title', { name: person.name })}</Text>
-          <ClayButton label={t('letters.home.read')} onPress={() => openThread(threadId)} tone="primary" style={styles.wide} testID="letters-home-read" />
+          <ClayButton
+            label={t('letters.home.read')}
+            onPress={() => readLanded(threadId)}
+            tone="primary"
+            style={styles.wide}
+            testID="letters-home-read"
+          />
         </>
       );
-    } else if (moment.kind === 'sent') status = <Text style={quiet}>{t('letters.flying')}</Text>;
+    } else if (moment.kind === 'returned')
+      status = (
+        <>
+          <Text style={strong}>{t('letters.returned.title')}</Text>
+          <Text style={quiet} testID="letters-returned">
+            {t(RETURNED[moment.why], { days: BIRD_OUT_DAYS, max: PEN_PALS_MAX })}
+          </Text>
+          {choosing ? null : canWrite ? writeButton : !room ? <Text style={quiet}>{t('letters.full', { max: PEN_PALS_MAX })}</Text> : null}
+          {choosing ? null : sky}
+        </>
+      );
+    else if (moment.kind === 'sent') status = <Text style={quiet}>{t('letters.flying')}</Text>;
     else if (out)
       status = (
         <>
           <Text style={strong}>{t('letters.out.title')}</Text>
+          {/* where your bird is: out over the country waiting to be called, or at somebody's window being read */}
           <Text style={quiet} testID="letters-out">
-            {home.out?.visiting ? t('letters.out.visiting') : t('letters.out.body', { days: BIRD_OUT_DAYS })}
+            {flightOf(data) === 'window' ? t('letters.out.visiting') : t('letters.out.body', { days: BIRD_OUT_DAYS })}
           </Text>
           <ClayButton label={t('letters.recall')} onPress={() => void recall()} variant="outline" busy={busy && !calling} disabled={busy} testID="letters-recall" />
           {sky}
         </>
       );
-    else if (choosing)
-      status = (
-        <BirdPicker
-          first={!home.birdChosen}
-          current={home.bird}
-          picked={pick}
-          zer={home.zer}
-          busy={busy}
-          error={birdError}
-          onPick={(bird) => {
-            haptic('select');
-            setPicked(bird);
-            setBirdError(null);
-          }}
-          onConfirm={() => void chooseBird()}
-          onCancel={() => {
-            setChanging(false);
-            setPicked(null);
-          }}
-        />
-      );
+    // the picker is the one thing under the window while a bird is chosen, as the paper is while a letter is written
+    else if (choosing || moment.kind === 'writing') status = null;
     else if (!room) status = <Text style={quiet}>{t('letters.full', { max: PEN_PALS_MAX })}</Text>;
-    // while a letter is being written the paper is the one thing under the window
-    else if (moment.kind === 'writing') status = null;
     else
       status = (
         <>
-          <ClayButton label={t('letters.write')} onPress={() => setMoment({ kind: 'writing' })} tone="primary" style={styles.wide} testID="letters-write" />
+          {writeButton}
           {sky}
         </>
       );
+
+    picker = choosing ? (
+      <BirdPicker
+        first={!data.birdChosen}
+        current={data.bird}
+        picked={pick}
+        zer={data.zer}
+        busy={busy}
+        error={birdError}
+        onPick={(b) => {
+          haptic('select');
+          setPicked(b);
+          setBirdError(null);
+        }}
+        onConfirm={() => void chooseBird()}
+        onCancel={() => {
+          setChanging(false);
+          setPicked(null);
+        }}
+      />
+    ) : null;
   }
 
   // a called bird's letter unfolds once the bird has landed with it; a reader who asked for less motion has it at once
   const unfold = scene?.visitor.kind === 'arriving' && !reduce ? LETTER_FLIGHT.ms : null;
+  const shownError = error && !here && moment.kind !== 'writing';
 
   return (
     <GradientBackground>
       <ScreenHeader title={t('letters.title')} onBack={onExit} hairline right={<LetterWidgetButton />} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView {...page.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {!home || !scene ? (
-            loadError ? (
-              <ErrorRetry message={describeError(loadError, t)} onRetry={() => void load()} />
+          {!data || !scene || !look || !draftsReady ? (
+            home.error && !data ? (
+              <ErrorRetry message={describeError(home.error, t)} onRetry={home.reload} />
             ) : (
               <LettersSkeleton size={size} />
             )
@@ -503,7 +721,17 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
               {shown ? (
                 // as wide as the window, so what sits on the window sits on it, not on the edge of the screen beyond it
                 <View style={[styles.windowSpot, { width: size }]}>
-                  {size > 0 ? <LetterWindow scene={shown} size={size} onOwnGone={ownGone} onVisitorGone={visitorGone} onVisitorLanded={visitorLanded} /> : null}
+                  {size > 0 ? (
+                    <LetterWindow
+                      scene={shown}
+                      size={size}
+                      onOwnGone={ownGone}
+                      onVisitorGone={visitorGone}
+                      onVisitorLanded={() => landedAt('sill')}
+                      onOwnLanded={() => landedAt('own')}
+                      onTouchdown={(spot) => touchdown(spot)}
+                    />
+                  ) : null}
                   {/* the one control that is about your own bird, which bird it is, sits on the window itself */}
                   {canChange ? (
                     <PressableScale
@@ -522,10 +750,28 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
               ) : null}
               <View style={styles.hero} accessibilityLiveRegion="polite">
                 {status}
-                {error && !here && moment.kind !== 'writing' ? (
+                {picker}
+                {look.waiting && moment.kind !== 'writing' && !choosing ? (
+                  <Text style={[styles.status, styles.quiet, { color: colors.textSecondary }]} testID="letters-waiting-line">
+                    {t('letters.window.waiting')}
+                  </Text>
+                ) : null}
+                {shownError ? (
                   <Text style={[styles.status, { color: colors.danger }]} testID="letters-error">
                     {error}
                   </Text>
+                ) : null}
+                {kept && !here && moment.kind !== 'writing' ? (
+                  kept.threadId ? (
+                    // the correspondence it can go to now, one tap away
+                    <PressableScale onPress={() => openThread(kept.threadId)} accessibilityRole="link" testID="letters-kept">
+                      <Text style={[styles.status, styles.quiet, styles.link, { color: colors.textPrimary }]}>{t('letters.draft.kept', { name: kept.name })}</Text>
+                    </PressableScale>
+                  ) : (
+                    <Text style={[styles.status, styles.quiet, { color: colors.textSecondary }]} testID="letters-kept">
+                      {t('letters.draft.keptOwn')}
+                    </Text>
+                  )
                 ) : null}
               </View>
 
@@ -537,13 +783,14 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
                   onSend={(letter) => void send(letter)}
                   onCancel={() => {
                     setError(null);
-                    setMoment({ kind: 'rest' });
+                    apply((l) => lookWithMoment(l, { kind: 'rest' }));
                   }}
                   error={error}
                   autoFocus
                   canDraw={false}
-                  paper={home.paper ?? rememberedPaper()}
+                  paper={data.paper ?? rememberedPaper()}
                   host={page.host}
+                  draft={NEW_LETTER}
                   testID="letters-paper"
                 />
               ) : null}
@@ -554,14 +801,16 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
                     <LetterSheet letter={visitor.letter} from={visitorName} onReport={() => setReporting(true)} />
                     {/* answering the bird at your window makes you pen pals, so this letter may carry a drawing */}
                     <LetterComposer
+                      key={visitor.letter.id}
                       label={t('letters.visitor.answerLabel', { name: visitorName })}
                       sendLabel={t('letters.visitor.send', { name: visitorName })}
                       busy={busy}
                       onSend={(letter) => void answer(letter)}
                       error={error}
                       canDraw
-                      paper={home.paper ?? rememberedPaper()}
+                      paper={data.paper ?? rememberedPaper()}
                       host={page.host}
+                      draft={visitorDraft(visitor.letter.id)}
                       testID="letters-visitor-answer"
                     />
                     <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('letters.visitor.ownWaits', { name: visitorName })}</Text>
@@ -603,10 +852,10 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
                 <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
                   {t('letters.penPals')}
                 </Text>
-                {home.penPals.length === 0 ? (
+                {data.penPals.length === 0 ? (
                   <Text style={[styles.empty, dir.text, { color: colors.textSecondary }]}>{t('letters.empty')}</Text>
                 ) : (
-                  home.penPals.map((p) => (
+                  data.penPals.map((p) => (
                     <PressableScale
                       key={p.threadId}
                       onPress={() => openThread(p.threadId)}
@@ -672,6 +921,7 @@ export function LettersScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           onClose={() => setReporting(false)}
           onBlocked={() => {
             setReporting(false);
+            keepDraft(who, visitorDraft(visitor.letter.id), null);
             visitorGone();
           }}
         />
@@ -714,7 +964,10 @@ const styles = StyleSheet.create({
   status: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center', maxWidth: 360 },
   strong: { fontWeight: typography.weights.bold },
   quiet: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  link: { textDecorationLine: 'underline' },
   wide: { alignSelf: 'stretch' },
+  // your own bird home with an answer while a visitor is on the sill: said under the visitor's words, with its own way in
+  also: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs, paddingTop: spacing.md, borderTopWidth: StyleSheet.hairlineWidth * 2 },
   sky: { alignSelf: 'stretch', gap: spacing.md - 2, padding: spacing.md, borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth * 2 },
   skyTop: { alignItems: 'center', gap: spacing.md - 2 },
   skyBirds: { alignItems: 'center' },

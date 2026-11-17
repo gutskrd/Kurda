@@ -32,7 +32,9 @@ const EXEMPT_ROUTES = new Set(['/health', '/metrics']);
 function limitKey(req: FastifyRequest, route: string, per: 'ip' | 'user-or-ip'): string {
   const principal =
     per === 'user-or-ip' && req.user?.id ? `user:${req.user.id}` : `ip:${networkKey(req.ip) ?? req.ip}`;
-  return `ratelimit:${route}:${principal}`;
+  // a read and a write at the same address are two routes with two budgets: reading a correspondence again and again
+  // (it reloads whenever a letter comes) must never use up the few replies a minute that writing to it allows
+  return `ratelimit:${req.method}:${route}:${principal}`;
 }
 
 export interface RateLimitHooks {

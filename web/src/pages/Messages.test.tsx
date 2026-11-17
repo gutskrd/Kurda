@@ -60,6 +60,18 @@ describe('Messages', () => {
     expect(screen.getByText('2')).toBeInTheDocument(); // unread badge
   });
 
+  it('reads the letters row the way the window does, so opening the conversations never lands a letter', async () => {
+    const pal = { threadId: 't1', person: { id: 'p1', name: 'Rojîn', bird: 3 }, lastLetterAt: '2026-08-24T10:00:00Z', yourTurn: true, unread: 1 };
+    const fetchMock = vi.fn(routedFetch({ '/chat/conversations': { conversations: [] }, '/letters': { penPals: [pal], bird: 2, visitor: null, out: null } }));
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp(<Messages />, ['/app/messages']);
+
+    expect(await screen.findByText('Rojîn wrote to you')).toBeInTheDocument();
+    const reads = fetchMock.mock.calls.map(([url]) => String(url)).filter((url) => new URL(url, 'http://x').pathname.endsWith('/letters'));
+    expect(reads.length).toBeGreaterThan(0);
+    for (const url of reads) expect(new URL(url, 'http://x').search).toBe('?landings=1');
+  });
+
   it('opens a thread and sends a message', async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.includes('/chat/u2/messages') && init?.method === 'POST') {

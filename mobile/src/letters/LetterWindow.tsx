@@ -30,6 +30,7 @@ import {
   type LetterSkyBird,
   type LetterSpot,
   type LetterWindowPart,
+  type LetterWindowScene,
   type PigeonPose,
 } from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
@@ -73,15 +74,14 @@ import { radii } from '../theme/tokens';
  * the window still, nothing drifting past, and each play and flight as it
  * ends, at once. The whole picture is decoration: the screen says in words
  * what is happening.
+ *
+ * What it acts out (`scene`) is worked out by the shared window logic
+ * (shared/src/letter-window.ts), for this screen and the website alike. Your
+ * own bird can also be `here`: settled back on the sill with the letter it
+ * brought, without a flight, as a bird that has landed once stays until its
+ * letter is read.
  */
-export interface WindowScene {
-  own: { kind: 'home'; bird: number } | { kind: 'leaving'; bird: number } | { kind: 'away' } | { kind: 'arriving'; bird: number };
-  visitor: { kind: 'none' } | { kind: 'arriving'; bird: number } | { kind: 'here'; bird: number } | { kind: 'leaving'; bird: number; how: 'answered' | 'sent-on' };
-  /** the birds out there, by colour, the next to come first */
-  sky: readonly number[];
-  /** sung once each time this changes: two people have just become pen pals */
-  song?: number;
-}
+export type WindowScene = LetterWindowScene;
 
 const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
 const native = { useNativeDriver: true } as const;
@@ -879,6 +879,8 @@ export function LetterWindow({
   onOwnGone,
   onVisitorGone,
   onVisitorLanded,
+  onOwnLanded,
+  onTouchdown,
 }: {
   scene: WindowScene;
   size: number;
@@ -886,8 +888,12 @@ export function LetterWindow({
   onOwnGone?: () => void;
   /** the visiting bird has flown off through the window */
   onVisitorGone?: () => void;
-  /** the bird called to the window has landed and laid its letter down */
+  /** the bird in the visitor's spot, called or bringing a pen pal's letter, has landed and laid its letter down */
   onVisitorLanded?: () => void;
+  /** your own bird has flown home and laid the letter it brought on the sill */
+  onOwnLanded?: () => void;
+  /** a bird flying in has come down on the sill, in your own bird's spot or the visitor's: its letter is there from now on */
+  onTouchdown?: (spot: 'own' | 'sill') => void;
 }): React.JSX.Element {
   const reduce = useReducedMotion();
   const alive = useMotionAlive();
@@ -904,6 +910,23 @@ export function LetterWindow({
   landed.current = onVisitorLanded;
   useEffect(() => {
     if (visitor.kind === 'arriving' && visitorFlight.phase === 'settled') landed.current?.();
+  }, [visitor.kind, visitorFlight.phase]);
+  // your own bird home: said once it is down and has laid its letter, which is when the letter has landed (at once
+  // for a reader who asked for less motion, whose flight is seen as it ends)
+  const ownLanded = useRef(onOwnLanded);
+  ownLanded.current = onOwnLanded;
+  useEffect(() => {
+    if (own.kind === 'arriving' && ownFlight.phase === 'settled') ownLanded.current?.();
+  }, [own.kind, ownFlight.phase]);
+  // the moment a bird coming in is down, before it has laid its letter and looked about: a screen left during that
+  // play has still seen the bird land, so it is said then too
+  const touchdown = useRef(onTouchdown);
+  touchdown.current = onTouchdown;
+  useEffect(() => {
+    if (own.kind === 'arriving' && ownFlight.phase === 'after') touchdown.current?.('own');
+  }, [own.kind, ownFlight.phase]);
+  useEffect(() => {
+    if (visitor.kind === 'arriving' && visitorFlight.phase === 'after') touchdown.current?.('sill');
   }, [visitor.kind, visitorFlight.phase]);
   const drifts = useMemo(() => letterDrifts(treeSeasonAt(new Date()), sky), [sky]);
   // the notes rise once each time two people become pen pals, and are gone again after
@@ -940,8 +963,8 @@ export function LetterWindow({
   const light = { opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) };
 
   // a bird flies off to the right of the window, wherever it stood, and comes in facing the way it comes; your own stays
-  // facing the letter it brought home until that is read, and then turns round
-  const ownBack = own.kind === 'arriving';
+  // facing the letter it brought home until that is read (`here`, once it has landed), and then turns round
+  const ownBack = own.kind === 'arriving' || own.kind === 'here';
   const visitorBack = visitor.kind === 'arriving';
   return (
     <View {...HIDDEN} style={[styles.window, { width: size, height: size }]} testID="letter-window">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LETTER_BIRDS, LETTER_MAX, LETTER_MIN, letterAgeBand, letterBirdOf, letterProblem, letterText } from './letters.js';
+import { LETTER_BIRDS, LETTER_MAX, LETTER_MIN, letterAgeBand, letterBirdOf, letterNoticeOf, letterProblem, letterText } from './letters.js';
 
 const NOW = new Date(Date.UTC(2026, 10, 13));
 
@@ -30,6 +30,20 @@ describe('what a letter may hold', () => {
     expect(letterProblem('   ')).toBe('short');
     expect(letterProblem('a'.repeat(LETTER_MAX))).toBeNull();
     expect(letterProblem('a'.repeat(LETTER_MAX + 1))).toBe('long');
+  });
+
+  it('refuses a letter of nothing but marks nobody sees, and keeps the joiners inside Soranî words', () => {
+    for (const blank of ['​', '‌‌', '‏‎', '⁠ ﻿']) expect(letterProblem(blank), JSON.stringify(blank)).toBe('short');
+    expect(letterProblem('سڵاو، ناوی من ڕۆژە‌یە')).toBeNull();
+  });
+
+  it('refuses a letter of characters made to look blank, and marks with no letter under them', () => {
+    // Hangul fillers, the blank Braille pattern, a grapheme joiner, variation selectors and a Mongolian free variation selector
+    for (const blank of ['ㅤ', 'ﾠﾠ', 'ᅟᅠ', '⠀⠀⠀', '͏', '️', '\u{E0100}', '᠋'])
+      expect(letterProblem(blank), JSON.stringify(blank)).toBe('short');
+    // a letter with its marks on letters, or a heart drawn with a variation selector, is still a letter
+    expect(letterProblem('Silav é')).toBeNull();
+    expect(letterProblem('❤️')).toBeNull();
   });
 
   it('refuses a link, however it is written', () => {
@@ -72,3 +86,27 @@ describe('letterText', () => {
   });
 });
 
+describe('a letter’s notification', () => {
+  const thread = '48cc9c07-1111-4c2e-9a00-000000000002';
+  const letter = '48cc9c07-1111-4c2e-9a00-000000000003';
+
+  it('reads which correspondence, which letter, and whether it is your own bird home', () => {
+    expect(letterNoticeOf({ kind: 'letter', threadId: thread, letterId: letter, how: 'home', fromUserId: 'not an id' })).toEqual({
+      threadId: thread,
+      how: 'home',
+      letterId: letter,
+      fromUserId: null,
+    });
+  });
+
+  it('takes a notification from before `how` for a pen pal’s letter, and never follows an id that is not one', () => {
+    expect(letterNoticeOf({ kind: 'letter', threadId: thread })).toEqual({ threadId: thread, how: 'window', letterId: null, fromUserId: null });
+    expect(letterNoticeOf({ kind: 'letter', threadId: '../../settings', how: 'elsewhere' })?.threadId).toBeNull();
+  });
+
+  it('is nothing for any other notification', () => {
+    expect(letterNoticeOf({ kind: 'gift', threadId: thread })).toBeNull();
+    expect(letterNoticeOf(null)).toBeNull();
+    expect(letterNoticeOf('letter')).toBeNull();
+  });
+});

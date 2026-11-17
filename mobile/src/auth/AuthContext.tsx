@@ -1,8 +1,10 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { AppState } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 import { ApiClient } from '../api/client';
 import { useHeartbeat } from './useHeartbeat';
 import { defaultApiBaseUrl } from '../api/env';
-import type { TokenStorage } from '../api/types';
+import type { ApiError, TokenStorage } from '../api/types';
 import { describeError, describeErrorOr, isMaintenance } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
 import type { Locale } from '../i18n/translations';
@@ -203,6 +205,49 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/** A restore that could not reach Hevalo is asked again this long after, doubling each time up to the longest wait. */
+const RESTORE_RETRY_MS = 2000;
+const RESTORE_RETRY_MAX_MS = 30_000;
+
+/** The network, or Hevalo itself, did not answer: nothing was said about the session. */
+function unreachable(error: ApiError): boolean {
+  return error.kind === 'network' || error.kind === 'server' || error.kind === 'rate_limited';
+}
+
+/**
+ * Calls `again` once: when the phone comes back online after being offline,
+ * when the app comes back to the front, or after `waitMs`, whichever is first.
+ * Returns the way to stop waiting.
+ */
+function whenReachable(again: () => void, waitMs: number): () => void {
+  let done = false;
+  let wasOffline = false;
+  const once = (): void => {
+    if (done) return;
+    done = true;
+    stop();
+    again();
+  };
+  const timer = setTimeout(once, waitMs);
+  // told the state at once and on every change: only a change from offline to online is a reason to ask now
+  const net = NetInfo.addEventListener((state) => {
+    if (state.isConnected === false) wasOffline = true;
+    else if (state.isConnected === true && wasOffline) once();
+  });
+  const front = AppState.addEventListener('change', (state) => {
+    if (state === 'active') once();
+  });
+  function stop(): void {
+    clearTimeout(timer);
+    net();
+    front.remove();
+  }
+  return () => {
+    done = true;
+    stop();
+  };
+}
+
 interface AuthPayload {
   user: SessionUser;
   tokens: { accessToken: string; refreshToken: string };
@@ -246,8 +291,10 @@ export function AuthProvider({
   const [user, setUser] = useState<SessionUser | null>(null);
   const [ageStop, setAgeStop] = useState<AgeStopKind | null>(null);
   const [suspension, setSuspension] = useState<SuspendedErrorDetails | null>(null);
-  // a restore asked again once Hevalo is back from being offline
+  // a restore asked again once Hevalo is back from being offline, or the phone is back online
   const [restoreRound, setRestoreRound] = useState(0);
+  // how many restores in a row could not reach Hevalo, so each waits a little longer than the last
+  const unreached = useRef(0);
 
   const client = useMemo(
     () =>
@@ -283,15 +330,22 @@ export function AuthProvider({
       const me = await client.get<{ user: SessionUser }>('/me');
       if (cancelled) return;
       if (me.ok) {
+        unreached.current = 0;
         setUser(me.data.user);
         setStatus('signedIn');
       } else if (isMaintenance(me.error)) {
         // Hevalo is offline, not the session: it waits under the notice and
         // is restored once Hevalo is back, rather than landing on sign-in
         stopWaiting = onMaintenanceOver(() => setRestoreRound((n) => n + 1));
+      } else if (unreachable(me.error) && (await storage.get())) {
+        // no network, or a server slow to wake: that is not a failed session either. It waits on the launch screen
+        // and is asked again as soon as it may answer, and a notification tapped to open the app (a letter, most
+        // often) is followed once it is in, instead of the person landing on sign-in with the letter out of reach
+        const wait = Math.min(RESTORE_RETRY_MAX_MS, RESTORE_RETRY_MS * 2 ** unreached.current);
+        unreached.current += 1;
+        if (!cancelled) stopWaiting = whenReachable(() => setRestoreRound((n) => n + 1), wait);
       } else {
-        // ApiClient already cleared storage on auth failures; network
-        // failures also land signed out rather than hanging on restore
+        // ApiClient already cleared storage on auth failures
         setStatus('signedOut');
       }
     })();

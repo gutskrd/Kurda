@@ -430,6 +430,19 @@
   color: var(--ink-3);
   font-size: var(--text-secondary);
 }
+/* your own bird home with an answer while a visitor is on the sill: said under the visitor's words, with its own way in */
+.letters-status--also {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--ink);
+  font-size: var(--text-secondary);
+}
+.letters-status--also a {
+  display: inline-block;
+  padding-block: 8px;
+  font-weight: 700;
+}
 /* a quiet way out, set in line with the words around it rather than in a button's padding */
 .letters-text-button {
   justify-self: start;

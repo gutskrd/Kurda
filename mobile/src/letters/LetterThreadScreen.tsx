@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { LetterItem, LetterThread } from '@kurda/shared';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { Alert, AppState, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LETTERS_CHANGED, type LetterItem, type LetterThread } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { useUserEvents, type UserEvent } from '../realtime/useUserEvents';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { showActions } from '../theme/actionSheet';
@@ -23,6 +24,11 @@ import { LetterComposer, rememberedPaper, type ComposedLetter } from './LetterCo
 import { usePaperScroll } from './usePaperScroll';
 import { useWidgetPin } from './widgetPin';
 import { letterErrorText } from './errors';
+import { keepDraft, threadDraft, useLetterDrafts } from './drafts';
+import { onLetterNotice } from './letterPushes';
+
+/** Coming back to the app reads the correspondence again, but not more often than this. */
+const FRONT_GAP_MS = 5000;
 
 /**
  * One correspondence, on the phone (the website's /app/letters/:id,
@@ -39,9 +45,17 @@ import { letterErrorText } from './errors';
  * The pen pal's ⋯ holds what ends things, plainly named: report them, block
  * them, and say goodbye, asked first, which closes the letters for both. A
  * letter written to you can be reported on its own, from under it.
+ *
+ * While it is in view it is read again when the server says something
+ * changed in your letters, when a letter's notification for it arrives, and
+ * when the app comes back to the front, so their next letter appears here
+ * while it is open (it still lands at your window once, as every letter
+ * does). A letter being written back is kept as it is written (drafts.ts).
  */
 export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onExit: () => void }): React.JSX.Element {
-  const { client } = useAuth();
+  const { client, user } = useAuth();
+  const who = user?.id ?? null;
+  const draftsReady = useLetterDrafts(who);
   const { t } = useI18n();
   const { colors } = useTheme();
   const dir = useDirection();
@@ -65,11 +79,38 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
     } else setError(res.error);
   }, [client, threadId]);
 
+  const shownAt = useRef(0);
   useFocusEffect(
     useCallback(() => {
+      shownAt.current = Date.now();
       void load();
     }, [load]),
   );
+
+  // while it is in view: a letter in it, an answer, a goodbye, said by the server or by a notification for it
+  const focused = useIsFocused();
+  const inView = useRef(focused);
+  inView.current = focused;
+  const again = useCallback(() => {
+    if (!inView.current) return;
+    shownAt.current = Date.now();
+    void load();
+  }, [load]);
+  useUserEvents(
+    useCallback(
+      (event: UserEvent) => {
+        if (event.type === LETTERS_CHANGED) again();
+      },
+      [again],
+    ),
+  );
+  useEffect(() => onLetterNotice((notice) => (notice.threadId === threadId ? again() : undefined)), [again, threadId]);
+  useEffect(() => {
+    const front = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && Date.now() - shownAt.current >= FRONT_GAP_MS) again();
+    });
+    return () => front.remove();
+  }, [again]);
 
   const name = thread?.person.name ?? '';
 
@@ -84,6 +125,7 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
       return;
     }
     haptic('tap');
+    keepDraft(who, threadDraft(threadId), null);
     setSent(res.data.letter);
     setPaperKey((k) => k + 1);
   };
@@ -135,8 +177,10 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
     });
   }, [thread, name, goodbye, block, t]);
 
-  const letters = thread ? (sent && !thread.letters.some((l) => l.id === sent.id) ? [...thread.letters, sent] : thread.letters) : [];
-  const yourTurn = thread !== null && thread.yourTurn && !sent;
+  // a letter just sent shows at once, until a read of the correspondence has it; from then on the server says whose turn it is
+  const pending = thread && sent && !thread.letters.some((l) => l.id === sent.id) ? sent : null;
+  const letters = thread ? (pending ? [...thread.letters, pending] : thread.letters) : [];
+  const yourTurn = thread !== null && thread.yourTurn && !pending;
   // the paper you last wrote on anywhere, or else the one you last wrote on to them
   const ownPaper = rememberedPaper() ?? [...letters].reverse().find((l) => l.mine && l.decor)?.decor?.paper ?? null;
 
@@ -150,8 +194,8 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
       />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView {...page.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {!thread ? (
-            error ? (
+          {!thread || !draftsReady ? (
+            error && !thread ? (
               <ErrorRetry message={describeError(error, t)} onRetry={() => void load()} />
             ) : (
               <ThreadSkeleton />
@@ -203,6 +247,7 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
                   canDraw
                   paper={ownPaper}
                   host={page.host}
+                  draft={threadDraft(threadId)}
                   testID="letters-reply"
                 />
               ) : (

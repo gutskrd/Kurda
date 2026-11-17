@@ -46,6 +46,7 @@ import {
 } from './list';
 import { useUnread } from './unread';
 import { BirdBadge } from '../letters/LetterParts';
+import { LETTERS_HOME_PATH } from '../letters/homePath';
 
 interface RequestRow {
   userId: string;
@@ -120,7 +121,8 @@ export function MessagesScreen(): React.JSX.Element {
       client.get<{ unread: { groupId: string; unread: number }[] }>('/me/groups/unread'),
       client.get<{ requests: RequestRow[] }>('/friends/requests'),
       client.get<{ notifications: InboxItem[] }>('/me/notifications'),
-      client.get<LettersHome>('/letters'),
+      // with the letters still to land, so listing them here never counts one as landed at the window (letters/homePath.ts)
+      client.get<LettersHome>(LETTERS_HOME_PATH),
     ]);
     // a server from before letters answers with nothing to show: the row is simply not drawn
     if (l.ok && Array.isArray(l.data?.penPals)) setLetters(l.data);

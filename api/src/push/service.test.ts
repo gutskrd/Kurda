@@ -70,6 +70,21 @@ describe('PushService.deliver', () => {
     expect(provider.sent).toHaveLength(0);
   });
 
+  it('holds a letter back until quiet hours end, and drops anything else they stop', async () => {
+    const provider = new StubPushProvider();
+    const { svc } = fakeTokens([dev('a1')]);
+    const morning = new Date('2026-11-18T07:00:00Z');
+    const gate = { allows: vi.fn(async () => false), quietUntil: vi.fn(async () => morning) };
+    const service = new PushService(svc, provider, gate);
+    expect(await service.deliver('u1', { category: 'letters', title: 't', body: 'b' })).toEqual({ sent: 0, pruned: 0, suppressed: true, heldUntil: morning });
+    expect(await service.deliver('u1', { category: 'friends', title: 't', body: 'b' })).toEqual({ sent: 0, pruned: 0, suppressed: true });
+    expect(gate.quietUntil).toHaveBeenCalledTimes(1);
+    // letters turned off are never sent, so nothing is held for them
+    gate.quietUntil.mockResolvedValueOnce(null as unknown as Date);
+    expect(await service.deliver('u1', { category: 'letters', title: 't', body: 'b' })).toEqual({ sent: 0, pruned: 0, suppressed: true });
+    expect(provider.sent).toHaveLength(0);
+  });
+
   it('is a no-op when the user has no devices', async () => {
     const provider = new StubPushProvider();
     const { svc, prune } = fakeTokens([]);

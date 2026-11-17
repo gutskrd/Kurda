@@ -12,7 +12,7 @@
  */
 import type { MessageKey } from '../i18n/en';
 
-export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'games', 'progress', 'events', 'marketing'] as const;
+export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'letters', 'games', 'progress', 'events', 'marketing'] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
 /**
@@ -29,6 +29,8 @@ export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 export const CATEGORY_LABEL: Record<NotificationCategory, MessageKey> = {
   streak: 'notifications.pref.streak',
   friends: 'notifications.pref.friends',
+  // letters by bird have their own switch: somebody writing to you is not the same as a friend's news
+  letters: 'notifications.pref.letters',
   games: 'notifications.pref.games',
   // league and badge news (contract 4): off by default for a teen, on the server's side
   progress: 'notifications.pref.progress',
@@ -39,6 +41,8 @@ export const CATEGORY_LABEL: Record<NotificationCategory, MessageKey> = {
 export interface NotificationPrefs {
   streak: boolean;
   friends: boolean;
+  /** a pen pal's bird at the window, your own home with an answer; as `friends` is until it is chosen (the server's rule) */
+  letters: boolean;
   games: boolean;
   /** league and badge news (contract 4) */
   progress: boolean;

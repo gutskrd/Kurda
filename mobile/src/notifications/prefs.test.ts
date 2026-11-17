@@ -27,7 +27,7 @@ describe('stepMinute', () => {
 describe('quietEnabled', () => {
   it('is true only when both bounds are set', () => {
     const base: NotificationPrefs = {
-      streak: true, friends: true, games: true, events: true, progress: true, marketing: false,
+      streak: true, friends: true, letters: true, games: true, events: true, progress: true, marketing: false,
       quietStartMin: null, quietEndMin: null,
     };
     expect(quietEnabled(base)).toBe(false);

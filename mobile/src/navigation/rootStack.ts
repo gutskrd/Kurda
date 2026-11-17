@@ -79,8 +79,12 @@ export type RootStackParamList = {
   Chat: { userId: string; username: string; openGift?: string };
   /** The friend requests waiting on you, opened from the row at the top of Messages. */
   FriendRequests: undefined;
-  /** Letters by bird: your window, writing to somebody new, and your pen pals (letters/LettersScreen), from the row at the top of Messages. */
-  Letters: undefined;
+  /**
+   * Letters by bird: your window, writing to somebody new, and your pen pals
+   * (letters/LettersScreen), from the row at the top of Messages. A letter's
+   * notification names its correspondence (`bird`), whose bird lands first.
+   */
+  Letters: { bird?: string } | undefined;
   /** One correspondence with a pen pal (letters/LetterThreadScreen), from Letters or from a bird's arrival in the notifications. */
   LetterThread: { threadId: string };
   /** The home-screen letter widget's page (widget/LetterWidgetScreen), from the letters screen's header. */

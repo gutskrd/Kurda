@@ -15,6 +15,8 @@ export interface DeliveryReport {
   pruned: number;
   /** True when preferences/quiet hours blocked delivery at send time. */
   suppressed?: boolean;
+  /** For a push quiet hours held back that is to go when they end (`HELD_IN_QUIET`): when that is. */
+  heldUntil?: Date;
 }
 
 /**
@@ -28,9 +30,19 @@ const FRESH_FOR: Partial<Record<NotificationCategory, number>> = {
   streak: 2 * 60 * 60,
 };
 
+/**
+ * The categories whose push waits for quiet hours to end instead of being
+ * dropped. A letter is a person writing to you: missing the push because it
+ * came at night would leave its bird waiting unseen, while a reminder or the
+ * news of a badge is worth nothing the next morning.
+ */
+export const HELD_IN_QUIET: ReadonlySet<NotificationCategory> = new Set(['letters']);
+
 /** Delivery-time preference gate (KUR-095). */
 export interface NotificationGate {
   allows(userId: string, category: NotificationCategory, at?: Date): Promise<boolean>;
+  /** when a push held back only by quiet hours could go (notifications/prefs-service.ts) */
+  quietUntil?(userId: string, category: NotificationCategory, at?: Date): Promise<Date | null>;
 }
 
 /**
@@ -52,7 +64,8 @@ export class PushService {
     // preferences + quiet hours are checked at delivery time (KUR-095), so a
     // change is honored even for a send already queued when it was made.
     if (this.gate && !(await this.gate.allows(userId, notification.category))) {
-      return { sent: 0, pruned: 0, suppressed: true };
+      const heldUntil = HELD_IN_QUIET.has(notification.category) ? await this.gate.quietUntil?.(userId, notification.category) : null;
+      return { sent: 0, pruned: 0, suppressed: true, ...(heldUntil ? { heldUntil } : {}) };
     }
 
     const devices = await this.tokens.forUser(userId);

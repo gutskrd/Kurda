@@ -27,6 +27,7 @@ import { membersLine } from '../groups/memberCount';
 import { announceGroupsChanged, useGroupsChanged } from '../groups/groupsChanged';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
 import { BirdBadge } from '../letters/LetterParts';
+import { LETTERS_HOME_PATH } from '../letters/useLettersHome';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -260,7 +261,9 @@ function FriendRequestsRow(): React.JSX.Element | null {
  */
 function LettersRow(): React.JSX.Element | null {
   const t = useT();
-  const { data } = useApiGet<LettersHome>('/letters');
+  // read as the window reads it, which leaves every letter to land there: a plain read is an old app's, which takes a
+  // letter it would show as landed, so opening the conversations would use up a bird before the window ever showed it
+  const { data } = useApiGet<LettersHome>(LETTERS_HOME_PATH);
   // an answer without the shape (a server from before letters) draws no row rather than breaking the list
   if (!data || !Array.isArray(data.penPals)) return null;
   const unread = data.penPals.reduce((n, p) => n + p.unread, 0);

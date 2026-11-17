@@ -385,7 +385,7 @@ describe('your bird and your tree, in the Shop', () => {
       'GET /me/wallet': ok({ balances }),
       'GET /me/inventory': ok({ items: [], refreshedItems: [] }),
       'GET /me/gifts': ok({ gifts: [], unseen: 0 }),
-      'GET /letters': missing,
+      'GET /letters?landings=1': missing,
       'GET /me/tree': missing,
       ...routes,
     });
@@ -397,7 +397,7 @@ describe('your bird and your tree, in the Shop', () => {
 
   describe('the bird', () => {
     it('shows yours in a row, and in its sheet the eight birds as one group, yours ticked and said to be yours', async () => {
-      openOwn({ 'GET /letters': ok(letters()) });
+      openOwn({ 'GET /letters?landings=1': ok(letters()) });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
       const group = await screen.findByRole('radiogroup', { name: 'Choose a new bird' });
       expect(within(group).getAllByRole('radio')).toHaveLength(8);
@@ -409,7 +409,7 @@ describe('your bird and your tree, in the Shop', () => {
     });
 
     it('takes the first bird for free, with no question, and posts the bird picked', async () => {
-      const client = openOwn({ 'GET /letters': ok(letters({ birdChosen: false, bird: 1 })), 'POST /letters/bird': ok(letters({ bird: 4 })) });
+      const client = openOwn({ 'GET /letters?landings=1': ok(letters({ birdChosen: false, bird: 1 })), 'POST /letters/bird': ok(letters({ bird: 4 })) });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Choose your bird' }));
       expect(screen.getByText('Your bird carries your letters. Your first one is free; a new one later costs 500 Zêr.')).toBeTruthy();
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
@@ -423,7 +423,7 @@ describe('your bird and your tree, in the Shop', () => {
     });
 
     it('asks first before a new bird, as the Shop asks before a purchase, with its price and the balance', async () => {
-      const client = openOwn({ 'GET /letters': ok(letters()), 'POST /letters/bird': ok(letters({ bird: 4, zer: 50 })) });
+      const client = openOwn({ 'GET /letters?landings=1': ok(letters()), 'POST /letters/bird': ok(letters({ bird: 4, zer: 50 })) });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       expect(disabled('shop-bird-get')).toBe(false);
@@ -444,7 +444,7 @@ describe('your bird and your tree, in the Shop', () => {
     });
 
     it('says how many Zêr are missing when the balance is short, and does not offer the buy', async () => {
-      const client = openOwn({ 'GET /letters': ok(letters({ zer: 300 })) }, { zer: 300, gems: 0 });
+      const client = openOwn({ 'GET /letters?landings=1': ok(letters({ zer: 300 })) }, { zer: 300, gems: 0 });
       fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' }));
       fireEvent.click(screen.getByRole('radio', { name: 'Brown bird' }));
       expect(screen.getByText('You need 200 more Zêr.')).toBeTruthy();
@@ -458,7 +458,7 @@ describe('your bird and your tree, in the Shop', () => {
       // spent on something else, in another place, between the Shop opening and the bird being bought
       let spent = false;
       openOwn({
-        'GET /letters': () => ok(letters(spent ? { zer: 100 } : {})),
+        'GET /letters?landings=1': () => ok(letters(spent ? { zer: 100 } : {})),
         'POST /letters/bird': () => {
           spent = true;
           return fail({ kind: 'client', status: 402, code: 'INSUFFICIENT_FUNDS', message: 'not enough' });
@@ -542,9 +542,9 @@ describe('your bird and your tree, in the Shop', () => {
   });
 
   it('offers to read the bird again, calmly, when it could not be read', async () => {
-    const client = openOwn({ 'GET /letters': inTurn(fail({ kind: 'server', status: 500, message: 'down' }), ok(letters())) });
+    const client = openOwn({ 'GET /letters?landings=1': inTurn(fail({ kind: 'server', status: 500, message: 'down' }), ok(letters())) });
     fireEvent.click(await screen.findByRole('button', { name: 'Your pen pal bird, Try again' }));
     expect(await screen.findByRole('button', { name: 'Your pen pal bird, Pink bird' })).toBeTruthy();
-    expect(client.calls.filter((c) => c.path === '/letters')).toHaveLength(2);
+    expect(client.calls.filter((c) => c.path === '/letters?landings=1')).toHaveLength(2);
   });
 });

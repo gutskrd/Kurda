@@ -75,6 +75,9 @@ interface RequestOptions {
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
+/** What came of asking for a new access token: one came, the session was refused, or Hevalo could not be reached to ask. */
+type Refresh = 'fresh' | 'refused' | 'unreachable';
+
 /**
  * A unique id for the Idempotency-Key header. Uses `crypto.randomUUID` when the
  * runtime has it (browsers, Node 19+), but falls back to a non-crypto UUID on
@@ -98,8 +101,9 @@ export function generateRequestId(): string {
  *
  * - attaches the access token, and this install's device id, to every request
  * - on 401: refreshes once (single-flight across concurrent requests),
- *   replays the original request, and logs out if refresh fails or the
- *   replay 401s again
+ *   replays the original request, and logs out if the refresh is refused or
+ *   the replay 401s again; a refresh that cannot reach Hevalo keeps the
+ *   session and comes back as a network failure
  * - every mutating request carries an Idempotency-Key generated BEFORE
  *   the first attempt; the post-refresh replay reuses the same key, so
  *   the server can dedupe and the call can never double-apply
@@ -110,7 +114,7 @@ export class ApiClient {
   private readonly fetchFn: FetchLike;
   private readonly idGenerator: () => string;
   private readonly timeoutMs: number;
-  private refreshInFlight: Promise<boolean> | null = null;
+  private refreshInFlight: Promise<Refresh> | null = null;
 
   constructor(private readonly opts: ApiClientOptions) {
     this.fetchFn = opts.fetchFn ?? ((url, init) => fetch(url, init));
@@ -221,7 +225,10 @@ export class ApiClient {
     if (first !== 'unauthorized') return first;
 
     const refreshed = await this.refreshOnce();
-    if (!refreshed) {
+    // a refresh that never reached Hevalo, or that Hevalo could not answer, says nothing about the session: it is kept
+    // for when Hevalo can be reached, and the call comes back as the network failure it was
+    if (refreshed === 'unreachable') return { ok: false, error: { kind: 'network', message: 'network request failed' } satisfies ApiError };
+    if (refreshed === 'refused') {
       return this.loggedOut();
     }
 
@@ -248,16 +255,16 @@ export class ApiClient {
   }
 
   /** Single-flight: concurrent 401s wait on one refresh call. */
-  private refreshOnce(): Promise<boolean> {
+  private refreshOnce(): Promise<Refresh> {
     this.refreshInFlight ??= this.doRefresh().finally(() => {
       this.refreshInFlight = null;
     });
     return this.refreshInFlight;
   }
 
-  private async doRefresh(): Promise<boolean> {
+  private async doRefresh(): Promise<Refresh> {
     const tokens = await this.opts.storage.get();
-    if (!tokens) return false;
+    if (!tokens) return 'refused';
     let res: Response;
     try {
       res = await this.timedFetch(`${this.opts.baseUrl}/auth/refresh`, {
@@ -266,19 +273,23 @@ export class ApiClient {
         body: JSON.stringify({ refreshToken: tokens.refreshToken }),
       });
     } catch {
-      return false;
+      // no network, or a server waking up past the timeout: a notification tapped on a train must not sign anybody out
+      return 'unreachable';
     }
+    // Hevalo down, busy or asking to slow down has not refused the session: only its answer about the token counts
+    if (res.status >= 500 || res.status === 429) return 'unreachable';
     if (!res.ok) {
       if (res.status === 403) {
         const body = (await res.json().catch(() => null)) as { code?: string; details?: unknown } | null;
         const details = body?.code === 'ACCOUNT_SUSPENDED' ? suspendedDetails(body.details) : null;
         if (details) this.opts.onSuspended?.(details);
       }
-      return false;
+      return 'refused';
     }
-    const next = (await res.json()) as TokenPair;
+    const next = (await res.json().catch(() => null)) as TokenPair | null;
+    if (!next) return 'unreachable';
     await this.opts.storage.set(next);
-    return true;
+    return 'fresh';
   }
 
   private async loggedOut<T>(): Promise<ApiResult<T>> {

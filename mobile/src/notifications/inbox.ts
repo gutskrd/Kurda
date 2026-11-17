@@ -1,5 +1,5 @@
 /** Pure notification-inbox helpers (KUR-097) — no React Native. */
-import { isPlayGame, type IncomingInvite, type PlayGame } from '@kurda/shared';
+import { isPlayGame, letterNoticeOf, type IncomingInvite, type PlayGame } from '@kurda/shared';
 import type { Translate } from '../api/errors';
 import type { IconName } from '../theme/icon-paths';
 import { socialDeepLink, type SocialDeepLink } from '../reports/deepLinks';
@@ -28,9 +28,13 @@ export type DeepLink =
   | { screen: 'League' }
   /** someone asked to come back to a group you run: the requests themselves, waiting on an answer */
   | { screen: 'GroupRequests'; params: { groupId: string } }
-  /** a bird came to your window: the correspondence its letter is in, or the letters when that is not said */
-  | { screen: 'LetterThread'; params: { threadId: string } }
-  | { screen: 'Letters' }
+  /**
+   * a bird came to your window, or your own came home with an answer: the
+   * window, naming the correspondence (`bird`), so its bird lands there before
+   * the letter is read; the window opens that correspondence itself when there
+   * is nothing of it to land. Without a correspondence, just the window.
+   */
+  | { screen: 'Letters'; params?: { bird: string } }
   // gifts, report outcomes and decisions on your account (reports/deepLinks.ts)
   | SocialDeepLink;
 
@@ -82,11 +86,10 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
     if (data.kind === 'group_removed' || letBackOnly) return null;
     return { screen: 'GroupThread', params: { groupId, name: str(data.groupName) ?? '' } };
   }
-  // a pen pal's letter: straight to the correspondence it came in
-  if (data.kind === 'letter') {
-    const threadId = str(data.threadId);
-    return threadId && /^[0-9a-f-]{36}$/i.test(threadId) ? { screen: 'LetterThread', params: { threadId } } : { screen: 'Letters' };
-  }
+  // a letter: to the window, with its bird named, rather than straight into the correspondence, where reading it
+  // first used to take its landing away; an id that is not one is never followed
+  const letter = letterNoticeOf(data);
+  if (letter) return letter.threadId ? { screen: 'Letters', params: { bird: letter.threadId } } : { screen: 'Letters' };
   // progress (contract 4): badges and the weekly league
   if (data.kind === 'badge') return { screen: 'Badges' };
   if (data.kind === 'league_safe' || data.kind === 'league_promotion' || data.kind === 'league_trophy') return { screen: 'League' };

@@ -1,18 +1,20 @@
-import type { BadgeUnlockedEvent, GiftUserEvent, PlayUserEvent } from '@kurda/shared';
+import type { BadgeUnlockedEvent, GiftUserEvent, LettersChangedEvent, PlayUserEvent } from '@kurda/shared';
 import type { RealtimeEvent } from './RealtimeClient';
 
 /**
  * Everything the gateway pushes on your own channel that is not a direct
  * message (those are `useChatSocket`'s): game invites and their answers,
- * "something changed in a game you are in", rematch offers, gifts, and a
- * badge just earned (its celebration).
+ * "something changed in a game you are in", rematch offers, gifts, a badge
+ * just earned (its celebration), and "something changed in your letters"
+ * (`letters_changed`: a bird came, went or landed), which carries nothing and
+ * only says to read the letters again.
  *
  * The quiz's `challenge_*` and `match_*` went with the quiz.
  */
-export type UserEvent = PlayUserEvent | GiftUserEvent | BadgeUnlockedEvent;
+export type UserEvent = PlayUserEvent | GiftUserEvent | BadgeUnlockedEvent | LettersChangedEvent;
 
 /** The prefixes this channel carries for `useUserEvents`; a new kind of user event adds its prefix here. */
-const MINE = ['play_', 'rematch_', 'gift_', 'badge_'];
+const MINE = ['play_', 'rematch_', 'gift_', 'badge_', 'letters_'];
 
 /** Is this an event meant for the person, rather than a room's traffic or a DM? */
 export function isUserEvent(type: unknown): type is UserEvent['type'] {

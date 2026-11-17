@@ -498,6 +498,8 @@ export {
 export {
   BIRD_CALLS_PER_DAY,
   BIRD_OUT_DAYS,
+  LANDINGS_MAX,
+  LETTERS_CHANGED,
   LETTERS_PER_DAY,
   LETTER_AGE_BANDS,
   LETTER_BIRDS,
@@ -511,15 +513,21 @@ export {
   isLetterBird,
   letterAgeBand,
   letterBirdOf,
+  letterNoticeOf,
   letterProblem,
   letterText,
   type BirdOutResult,
   type LetterAgeBand,
+  type LetterFlight,
   type LetterItem,
+  type LetterLanding,
+  type LetterNotice,
   type LetterPerson,
   type LetterProblem,
+  type LetterReturnReason,
   type LetterThread,
   type LetterVisitor,
+  type LettersChangedEvent,
   type LettersHome,
   type LettersRefusal,
   type PenPal,
@@ -527,6 +535,32 @@ export {
 } from './letters.js';
 /** A letter's own paper, the drawing and notes on it, the colours it is drawn in, and the letter widget's shapes. */
 export * from './letter-paper.js';
+/** The letters window, worked out once for both apps: which bird is where on the sill, and what is said under it. */
+export {
+  emptyLook,
+  firstLook,
+  flightOf,
+  landingsOf,
+  lookAfterAnswer,
+  lookAfterBirdChosen,
+  lookAfterCall,
+  lookAfterLanded,
+  lookAfterOwnGone,
+  lookAfterRecall,
+  lookAfterSend,
+  lookAfterSendOn,
+  lookAfterVisitorGone,
+  lookInMotion,
+  lookWithMoment,
+  nextLook,
+  untilServerTime,
+  type LetterWindowScene,
+  type WindowLanded,
+  type WindowLook,
+  type WindowMoment,
+  type WindowReturn,
+  type WindowSpot,
+} from './letter-window.js';
 
 /**
  * Stories and their quizzes (they replaced the ranked quiz): the presets, the

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { CloseButton } from '../components/CloseButton';
@@ -9,7 +9,7 @@ import { GroupThread } from '../chat/GroupThread';
 import { RailStrip } from './RailStrip';
 import { badgeLabel, elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
-import type { RailFriend, SocialRailData } from './useSocialRail';
+import { toastsHere, type RailFriend, type SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
 import { RequestTicket } from './FriendTickets';
 import { useT } from '../i18n/I18nProvider';
@@ -64,6 +64,9 @@ export function SocialRail(): React.JSX.Element | null {
   const { data, loading, arrivals, dismiss, refresh, open, setOpen, collapsed, setCollapsed } = useRail();
   /** the conversation docked beside the rail — a person or a group, if any */
   const [dock, setDock] = useState<DockTarget | null>(null);
+  // a letter is not announced where it is already being shown: its window, or its correspondence
+  const { pathname } = useLocation();
+  const toasts = useMemo(() => toastsHere(arrivals, pathname), [arrivals, pathname]);
 
   if (!present || status !== 'signedIn') return null;
 
@@ -134,7 +137,7 @@ export function SocialRail(): React.JSX.Element | null {
         />
       )}
 
-      <RailToasts arrivals={arrivals} onDismiss={dismiss} onOpen={() => setOpen(true)} />
+      <RailToasts arrivals={toasts} onDismiss={dismiss} onOpen={() => setOpen(true)} />
     </>
   );
 }

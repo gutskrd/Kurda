@@ -71,6 +71,8 @@ import {
 import { Choice, Glyph, InkSample, MiniSheet, PaintDot, SizeDot, SwatchRow, ToolAction, ToolBar, ToolSample, type PaperTool } from './PaperTools';
 import type { PaperHost } from './usePaperScroll';
 import { DECOR_PROBLEM } from './errors';
+import { draftOf, keepDraft } from './drafts';
+import { useAuth } from '../auth/AuthContext';
 
 /**
  * Writing a letter, on the phone: the letter is written on its own sheet of
@@ -175,6 +177,7 @@ export function LetterComposer({
   canDraw,
   paper: firstPaper,
   host,
+  draft: place,
   testID,
 }: {
   label: string;
@@ -194,6 +197,12 @@ export function LetterComposer({
   paper?: LetterPaper | null;
   /** the page the sheet lies on, which it holds still while drawing and scrolls to keep the writing in sight */
   host?: PaperHost;
+  /**
+   * Where this letter is written from (letters/drafts.ts): what is on the
+   * paper is kept there as it is written, and the paper opens on it again.
+   * The screen lets it go once the letter has been sent.
+   */
+  draft?: string;
   testID?: string;
 }): React.JSX.Element {
   const { t, rtl } = useI18n();
@@ -201,13 +210,17 @@ export function LetterComposer({
   const dir = useDirection();
   const id = (part: string): string | undefined => (testID ? `${testID}-${part}` : undefined);
 
-  const [body, setBody] = useState('');
+  // a letter left unsent here before opens as it was left: its words, its paper, and what was drawn and stuck on it
+  const who = useAuth().user?.id ?? null;
+  const [left] = useState(() => (place ? draftOf(who, place) : null));
+  const [body, setBody] = useState(left?.body ?? '');
   const [tried, setTried] = useState(false);
   const [tool, setTool] = useState<PaperTool>('write');
-  const [paper, setPaper] = useState<LetterPaper>(firstPaper ?? DEFAULT_PAPER);
-  const [drawing, setDrawing] = useState<Drawing>(EMPTY_DRAWING);
-  const [pen, setPen] = useState<{ tool: DrawTool; size: PenSize; paint: Paint }>({ tool: 'pen', size: 'm', paint: (firstPaper ?? DEFAULT_PAPER).ink });
-  const [placed, setPlaced] = useState<Placed[]>([]);
+  const [paper, setPaper] = useState<LetterPaper>(left?.paper ?? firstPaper ?? DEFAULT_PAPER);
+  // a drawing kept is drawn again stroke by stroke, so it can be undone as it was made
+  const [drawing, setDrawing] = useState<Drawing>(() => (left && canDraw ? left.strokes.reduce(addStroke, EMPTY_DRAWING) : EMPTY_DRAWING));
+  const [pen, setPen] = useState<{ tool: DrawTool; size: PenSize; paint: Paint }>({ tool: 'pen', size: 'm', paint: (left?.paper ?? firstPaper ?? DEFAULT_PAPER).ink });
+  const [placed, setPlaced] = useState<Placed[]>(() => (left ? left.notes.map((note, key) => ({ key, note })) : []));
   const [chosen, setChosen] = useState<number | null>(null);
   const [asking, setAsking] = useState(false);
   const [notesFull, setNotesFull] = useState(false);
@@ -222,7 +235,7 @@ export function LetterComposer({
   const caret = useRef<View>(null);
   const canvas = useRef<View>(null);
   const typing = useRef(false);
-  const nextKey = useRef(0);
+  const nextKey = useRef(left?.notes.length ?? 0);
 
   const scale = width / PAPER_W;
   const notes = useMemo(() => placed.map((p) => p.note), [placed]);
@@ -232,6 +245,11 @@ export function LetterComposer({
   const length = pagesFor(writing, drawing.strokes, notes) * PAPER_H;
   const room = useMemo(() => canDrawMore(decor), [decor]);
   const drawingOn = tool === 'draw' && canDraw;
+
+  // what is on the paper is kept as it is written, so nothing that changes on the screen around it can lose it
+  useEffect(() => {
+    if (place) keepDraft(who, place, { body, paper, strokes: canDraw ? [...drawing.strokes] : [], notes: kept });
+  }, [who, place, body, paper, drawing.strokes, kept, canDraw]);
 
   // a moment after it opens, so the keyboard rises once the paper is in its place — unless another tool was taken up meanwhile
   const toolNow = useRef(tool);

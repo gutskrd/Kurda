@@ -90,7 +90,7 @@ describe('Messages', () => {
       roomForMore: true,
       paper: DEFAULT_PAPER,
     };
-    open({}, { 'GET /letters': ok(home) });
+    open({}, { 'GET /letters?landings=1': ok(home) });
     const row = await screen.findByTestId('messages-letters');
     expect(row.getAttribute('aria-label')).toBe('Letters, Baran’s bird is at your window');
     fireEvent.click(row);

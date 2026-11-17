@@ -2,7 +2,7 @@
 
 import type { TranslationKey } from '../i18n/translations.js';
 
-export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'games', 'events', 'progress', 'marketing'] as const;
+export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'letters', 'games', 'events', 'progress', 'marketing'] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
 /**
@@ -15,6 +15,8 @@ export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 export const CATEGORY_LABEL: Record<NotificationCategory, TranslationKey> = {
   streak: 'notifications.pref.streak',
   friends: 'notifications.pref.friends',
+  // letters by bird have their own switch: somebody writing to you is not the same as a friend's news
+  letters: 'notifications.pref.letters',
   games: 'notifications.pref.games',
   events: 'notifications.pref.events',
   progress: 'notifications.pref.progress',
@@ -24,6 +26,8 @@ export const CATEGORY_LABEL: Record<NotificationCategory, TranslationKey> = {
 export interface NotificationPrefs {
   streak: boolean;
   friends: boolean;
+  /** a pen pal's bird at the window, your own home with an answer; as `friends` is until it is chosen (the server's rule) */
+  letters: boolean;
   games: boolean;
   events: boolean;
   /** leagues and badges: a promotion, safe this week, a badge earned (off by default for a minor) */

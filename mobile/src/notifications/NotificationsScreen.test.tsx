@@ -28,6 +28,7 @@ afterEach(() => {
 const PREFS: NotificationPrefs = {
   streak: true,
   friends: true,
+  letters: true,
   games: true,
   events: true,
   progress: true,
@@ -51,6 +52,19 @@ describe('notification settings', () => {
     expect(switchNamed('Streak reminders').getAttribute('aria-checked')).toBe('false');
     expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ streak: false });
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('gives letters a switch of their own, beside friends', async () => {
+    const client = fakeClient({ 'GET /me/notification-prefs': ok({ ...PREFS, letters: false }), 'PUT /me/notification-prefs': (body) => ok({ ...PREFS, ...(body as object) }) });
+    testAuth.client = client;
+    renderWithProviders(<NotificationsScreen onExit={() => undefined} />);
+    const letters = await screen.findByRole('switch', { name: 'Letters' });
+    expect(letters.getAttribute('aria-checked')).toBe('false');
+    expect(switchNamed('Friend activity').getAttribute('aria-checked')).toBe('true');
+    await act(async () => {
+      fireEvent.click(letters);
+    });
+    expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ letters: true });
   });
 
   /*

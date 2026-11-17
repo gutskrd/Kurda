@@ -18,6 +18,7 @@ import { Pop, PressableScale } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ART, YoursRow, YoursRowSkeleton } from './YoursRow';
+import { LETTERS_HOME_PATH } from '../letters/homePath';
 
 /**
  * Your pen pal bird, in the Shop, as the website has it (web/src/shop/YourBird.tsx).
@@ -65,7 +66,7 @@ export function useLettersHome(): LettersHomeState {
       setState({ data: null, loading: false, error: null });
       return;
     }
-    const res = await client.get<LettersHome>('/letters');
+    const res = await client.get<LettersHome>(LETTERS_HOME_PATH);
     if (res.ok) setState({ data: isLettersHome(res.data) ? res.data : null, loading: false, error: null });
     else if (res.error.status === 404 || res.error.status === 403) setState({ data: null, loading: false, error: null });
     else setState((s) => ({ data: s.data, loading: false, error: s.data ? null : res.error }));
@@ -147,7 +148,7 @@ function BirdSheet({
     // spent meanwhile, somewhere else: the Zêr there are now say how many are missing; the same bird again
     // is no change, and there is nothing to pay or to say
     if (res.error.code === 'INSUFFICIENT_FUNDS' || res.error.code === 'LETTER_BIRD_SAME') {
-      const again = await client.get<LettersHome>('/letters');
+      const again = await client.get<LettersHome>(LETTERS_HOME_PATH);
       setBusy(false);
       if (again.ok && isLettersHome(again.data)) {
         home.set(again.data);

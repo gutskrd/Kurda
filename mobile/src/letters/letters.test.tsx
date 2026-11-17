@@ -8,14 +8,30 @@ vi.mock('expo-notifications', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// whether the screen under test is the one in front: a screen behind another reads nothing until it is come back to
+const focus = vi.hoisted(() => ({ on: true }));
+vi.mock('@react-navigation/native', async () => ({ ...(await import('../play/testing/navigation')), useIsFocused: () => focus.on }));
 vi.mock('../widget/reload', () => ({ reloadLetterWidget: vi.fn() }));
+// a letter's notification arriving while the app is open, as the phone hands it over
+const pushes = vi.hoisted(() => ({ listeners: new Set<(notice: unknown) => void>() }));
+vi.mock('./letterPushes', () => ({
+  onLetterNotice: (listener: (notice: unknown) => void) => {
+    pushes.listeners.add(listener);
+    return () => pushes.listeners.delete(listener);
+  },
+}));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import { DEFAULT_PAPER, type LetterThread, type LetterVisitor, type LettersHome, type VisitorAnswer } from '@kurda/shared';
+import { AppState } from 'react-native';
+import { DEFAULT_PAPER, type LetterLanding, type LetterThread, type LetterVisitor, type LettersHome, type VisitorAnswer } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation, refocus } from '../play/testing/navigation';
+import { RealtimeProvider } from '../realtime/RealtimeProvider';
+import { FakeSocket } from '../realtime/testing/fakeSocket';
+import { onHaptic, resetHaptics, type HapticEvent } from '../feedback/haptics';
+import { memoryStore } from '../keyboard/deviceStore';
+import { DRAFTS_KEY, setDraftStoreForTests } from './drafts';
 import { LettersScreen } from './LettersScreen';
 import { LetterThreadScreen } from './LetterThreadScreen';
 
@@ -63,11 +79,17 @@ const thread = (over: Partial<LetterThread> = {}): LetterThread => ({
   ...over,
 });
 
+let dropDrafts: () => void = () => undefined;
 beforeEach(() => {
   navigation.navigate.mockClear();
+  focus.on = true;
+  // each test starts on a phone with nothing half written
+  dropDrafts = setDraftStoreForTests(memoryStore());
 });
 afterEach(() => {
   cleanup();
+  dropDrafts();
+  pushes.listeners.clear();
   Reflect.deleteProperty(document.documentElement, 'clientWidth');
   window.dispatchEvent(new Event('resize'));
 });
@@ -86,7 +108,7 @@ async function write(body: string): Promise<void> {
 
 describe('the letters screen', () => {
   it('offers one thing to do with your bird at home: write a letter', async () => {
-    testAuth.client = fakeClient({ 'GET /letters': ok(home()) });
+    testAuth.client = fakeClient({ 'GET /letters?landings=1': ok(home()) });
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     expect(await screen.findByTestId('letters-write')).toBeTruthy();
     expect(screen.getByText('No pen pals yet. Call a bird to your window, or send yours out, and someone will write back.')).toBeTruthy();
@@ -95,7 +117,7 @@ describe('the letters screen', () => {
   it('says in plain words that nobody else has a bird out when yours flies off to wait, and how to call it back', async () => {
     let out: LettersHome['out'] = null;
     const client = fakeClient({
-      'GET /letters': () => Promise.resolve(ok(home({ out }))),
+      'GET /letters?landings=1': () => Promise.resolve(ok(home({ out }))),
       'POST /letters/out': () => {
         const since = '2026-11-13T10:00:00.000Z';
         out = { since, visiting: false };
@@ -116,7 +138,7 @@ describe('the letters screen', () => {
 
   it('shows how many birds are out, calls one down with its letter, and answers it with the same bird', async () => {
     const answered: VisitorAnswer = { threadId: THREAD, person: baran, letter: { ...visitor.letter, id: 'l10', mine: true, body: 'Silav' } };
-    const client = fakeClient({ 'GET /letters': ok(home({ birdsOut: 2, sky: [4, 6] })), 'POST /letters/call': ok({ visitor }), 'POST /letters/visitor': ok(answered) });
+    const client = fakeClient({ 'GET /letters?landings=1': ok(home({ birdsOut: 2, sky: [4, 6] })), 'POST /letters/call': ok({ visitor }), 'POST /letters/visitor': ok(answered) });
     testAuth.client = client;
     phoneWide();
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
@@ -142,7 +164,7 @@ describe('the letters screen', () => {
   });
 
   it('asks once before sending a visiting bird on its way', async () => {
-    const client = fakeClient({ 'GET /letters': ok(home({ visitor })), 'DELETE /letters/visitor': ok(null) });
+    const client = fakeClient({ 'GET /letters?landings=1': ok(home({ visitor })), 'DELETE /letters/visitor': ok(null) });
     testAuth.client = client;
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByTestId('letters-visitor-send-on'));
@@ -159,7 +181,7 @@ describe('the letters screen', () => {
 
   it('stands in the page’s shape while it is read, never a blank under the header', async () => {
     let answer: (r: unknown) => void = () => undefined;
-    testAuth.client = fakeClient({ 'GET /letters': () => new Promise((resolve) => (answer = resolve)) } as never);
+    testAuth.client = fakeClient({ 'GET /letters?landings=1': () => new Promise((resolve) => (answer = resolve)) } as never);
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     expect(screen.getByTestId('letters-loading')).toBeTruthy();
     await act(async () => answer(ok(home())));
@@ -169,7 +191,7 @@ describe('the letters screen', () => {
 
   it('says why when calling your bird back did not get through, and keeps it out there', async () => {
     const out = { since: '2026-11-13T10:00:00.000Z', visiting: false };
-    testAuth.client = fakeClient({ 'GET /letters': ok(home({ out })), 'DELETE /letters/out': fail({ kind: 'network', message: 'offline' }) });
+    testAuth.client = fakeClient({ 'GET /letters?landings=1': ok(home({ out })), 'DELETE /letters/out': fail({ kind: 'network', message: 'offline' }) });
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByTestId('letters-recall'));
     expect(await screen.findByTestId('letters-error')).toBeTruthy();
@@ -177,7 +199,7 @@ describe('the letters screen', () => {
   });
 
   it('says why when a visiting bird could not be sent on, and keeps it at the window', async () => {
-    testAuth.client = fakeClient({ 'GET /letters': ok(home({ visitor })), 'DELETE /letters/visitor': fail({ kind: 'network', message: 'offline' }) });
+    testAuth.client = fakeClient({ 'GET /letters?landings=1': ok(home({ visitor })), 'DELETE /letters/visitor': fail({ kind: 'network', message: 'offline' }) });
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByTestId('letters-visitor-send-on'));
     fireEvent.click(screen.getByTestId('letters-visitor-send-on-yes'));
@@ -187,7 +209,7 @@ describe('the letters screen', () => {
   });
 
   it('says when every call of the day is made, and offers no call', async () => {
-    testAuth.client = fakeClient({ 'GET /letters': ok(home({ birdsOut: 3, sky: [1, 2, 3], callsLeft: 0 })) });
+    testAuth.client = fakeClient({ 'GET /letters?landings=1': ok(home({ birdsOut: 3, sky: [1, 2, 3], callsLeft: 0 })) });
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     expect(await screen.findByText('That’s all the birds you can call today. Call again tomorrow.')).toBeTruthy();
     expect(screen.queryByTestId('letters-call')).toBeNull();
@@ -195,7 +217,7 @@ describe('the letters screen', () => {
 
   it('shows your bird home with an answer, and the way to read it, and starts afresh once it is read', async () => {
     let homecoming: LettersHome['homecoming'] = { threadId: THREAD, person: baran };
-    testAuth.client = fakeClient({ 'GET /letters': () => Promise.resolve(ok(home({ homecoming }))) } as never);
+    testAuth.client = fakeClient({ 'GET /letters?landings=1': () => Promise.resolve(ok(home({ homecoming }))) } as never);
     phoneWide();
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeTruthy();
@@ -213,7 +235,7 @@ describe('the letters screen', () => {
 
   it('brings a pen pal’s next letter to the window by their own bird, and the way to read it', async () => {
     let arrival: LettersHome['arrival'] = { threadId: THREAD, person: baran };
-    testAuth.client = fakeClient({ 'GET /letters': () => Promise.resolve(ok(home({ arrival }))) } as never);
+    testAuth.client = fakeClient({ 'GET /letters?landings=1': () => Promise.resolve(ok(home({ arrival }))) } as never);
     phoneWide();
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
@@ -231,7 +253,7 @@ describe('the letters screen', () => {
   it('asks for a bird to be chosen first, for free, before the first letter', async () => {
     let chosen: number | null = null;
     const client = fakeClient({
-      'GET /letters': () => Promise.resolve(ok(home(chosen === null ? { birdChosen: false, bird: 1 } : { bird: chosen }))),
+      'GET /letters?landings=1': () => Promise.resolve(ok(home(chosen === null ? { birdChosen: false, bird: 1 } : { bird: chosen }))),
       'POST /letters/bird': (body: unknown) => {
         chosen = (body as { bird: number }).bird;
         return Promise.resolve(ok(home({ bird: chosen })));
@@ -249,7 +271,7 @@ describe('the letters screen', () => {
   });
 
   it('asks Zêr for a new bird, says how many are missing, and lets the bird stay as it is', async () => {
-    const client = fakeClient({ 'GET /letters': ok(home({ bird: 1, zer: 120 })) });
+    const client = fakeClient({ 'GET /letters?landings=1': ok(home({ bird: 1, zer: 120 })) });
     testAuth.client = client;
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByTestId('letters-bird-change'));
@@ -264,7 +286,7 @@ describe('the letters screen', () => {
   });
 
   it('opens the bird picker from the paper too, closing the paper', async () => {
-    testAuth.client = fakeClient({ 'GET /letters': ok(home({ bird: 1, zer: 900 })) });
+    testAuth.client = fakeClient({ 'GET /letters?landings=1': ok(home({ bird: 1, zer: 900 })) });
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByTestId('letters-write'));
     expect(screen.getByTestId('letters-paper-input')).toBeTruthy();
@@ -276,7 +298,7 @@ describe('the letters screen', () => {
   it('pays for a new bird once another is picked, and says so when the Zêr fall short', async () => {
     let zer = 900;
     const client = fakeClient({
-      'GET /letters': () => Promise.resolve(ok(home({ bird: 1, zer }))),
+      'GET /letters?landings=1': () => Promise.resolve(ok(home({ bird: 1, zer }))),
       'POST /letters/bird': () => {
         zer = 120;
         return Promise.resolve(fail({ code: 'INSUFFICIENT_FUNDS', status: 402 }));
@@ -294,7 +316,7 @@ describe('the letters screen', () => {
 
   it('opens a first letter on the paper you last wrote on, sends it on that paper, and keeps drawing for pen pals', async () => {
     const sage = { style: 'grid', tone: 'sage', ink: 'forest' } as const;
-    const client = fakeClient({ 'GET /letters': ok(home({ paper: sage })), 'POST /letters/out': ok({ kind: 'waiting', since: '2026-11-13T10:00:00.000Z' }) });
+    const client = fakeClient({ 'GET /letters?landings=1': ok(home({ paper: sage })), 'POST /letters/out': ok({ kind: 'waiting', since: '2026-11-13T10:00:00.000Z' }) });
     testAuth.client = client;
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     await write(LETTER);
@@ -306,7 +328,7 @@ describe('the letters screen', () => {
   });
 
   it('lets an answer to a bird at your window be drawn on: the two of you are pen pals once it goes', async () => {
-    testAuth.client = fakeClient({ 'GET /letters': ok(home({ visitor })) });
+    testAuth.client = fakeClient({ 'GET /letters?landings=1': ok(home({ visitor })) });
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     await screen.findByTestId('letters-visitor');
     fireEvent.click(screen.getByRole('tab', { name: 'Draw' }));
@@ -315,7 +337,7 @@ describe('the letters screen', () => {
   });
 
   it('refuses a letter with a link before the bird leaves, and sends nothing', async () => {
-    const client = fakeClient({ 'GET /letters': ok(home()) });
+    const client = fakeClient({ 'GET /letters?landings=1': ok(home()) });
     testAuth.client = client;
     renderWithProviders(<LettersScreen onExit={() => undefined} />);
     await write(`${LETTER} www.example.org`);
@@ -373,5 +395,501 @@ describe('a correspondence', () => {
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
     expect(await screen.findByTestId('letters-closed')).toBeTruthy();
     await waitFor(() => expect(screen.queryByTestId('letters-reply-input')).toBeNull());
+  });
+});
+
+const HOME = 'GET /letters?landings=1';
+const L1 = 'a1b2c3d4-0000-4000-8000-000000000001';
+const L2 = 'a1b2c3d4-0000-4000-8000-000000000002';
+const T2 = '7a0c2d3f-2e3b-4c4d-9e5f-6a7b8c9d0e1f';
+const azad = { id: 'u-azad', name: 'Azad', bird: 5 };
+/** A letter at the window still to land: a pen pal’s bird with Baran’s next letter, unless said otherwise. */
+const landing = (over: Partial<LetterLanding> = {}): LetterLanding => ({
+  letterId: L1,
+  threadId: THREAD,
+  person: baran,
+  how: 'window',
+  landed: false,
+  read: false,
+  deliveredAt: '2026-11-14T10:00:00.000Z',
+  ...over,
+});
+/** Azad’s bird at the window, called by somebody and waiting for an answer. */
+const azadsBird: LetterVisitor = { ...visitor, person: azad, letter: { ...visitor.letter, id: 'l77', body: 'Silav, ez Azad im.' } };
+const gets = (client: { calls: Array<{ method: string; path: string }> }): number => client.calls.filter((c) => c.method === 'GET' && c.path === '/letters?landings=1').length;
+const landedPosts = (client: { calls: Array<{ path: string; body?: unknown }> }): unknown[] => client.calls.filter((c) => c.path === '/letters/landed').map((c) => c.body);
+const flush = () =>
+  act(async () => {
+    await new Promise((r) => setTimeout(r, 0));
+  });
+
+describe('every bird lands at the window', () => {
+  it('lands the bird a notification named, says so once, lets the name go, and opens its letter from the window', async () => {
+    const used = vi.fn();
+    const client = fakeClient({ [HOME]: ok(home({ landings: [landing()] })), 'POST /letters/landed': ok(null) });
+    testAuth.client = client;
+    phoneWide();
+    renderWithProviders(<LettersScreen onExit={() => undefined} bird={THREAD} onBirdUsed={used} />);
+    expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId('letter-on-sill')).toBeTruthy());
+    await waitFor(() => expect(landedPosts(client)).toEqual([{ letterIds: [L1] }]));
+    expect(used).toHaveBeenCalled();
+    expect(navigation.navigate).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId('letters-home-read'));
+    expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD });
+    // said once, however many moments say so
+    expect(landedPosts(client)).toHaveLength(1);
+  });
+
+  it('opens the correspondence instead when a notification’s bird has nothing to land', async () => {
+    const used = vi.fn();
+    testAuth.client = fakeClient({ [HOME]: ok(home({ landings: [] })) });
+    renderWithProviders(<LettersScreen onExit={() => undefined} bird={THREAD} onBirdUsed={used} />);
+    await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD }));
+    expect(used).toHaveBeenCalled();
+  });
+
+  it('never follows a named bird that is not a correspondence’s id, and lets it go', async () => {
+    const used = vi.fn();
+    testAuth.client = fakeClient({ [HOME]: ok(home()) });
+    renderWithProviders(<LettersScreen onExit={() => undefined} bird="../settings" onBirdUsed={used} />);
+    expect(await screen.findByTestId('letters-write')).toBeTruthy();
+    expect(used).toHaveBeenCalled();
+    expect(navigation.navigate).not.toHaveBeenCalled();
+  });
+
+  it('opens the correspondence when a called bird holds the sill, and lands its letter once that bird is sent on', async () => {
+    let at: LetterVisitor | null = azadsBird;
+    const client = fakeClient({
+      [HOME]: () => Promise.resolve(ok(home({ visitor: at, landings: [landing()] }))),
+      'DELETE /letters/visitor': () => {
+        at = null;
+        return Promise.resolve(ok(null));
+      },
+      'POST /letters/landed': ok(null),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} bird={THREAD} onBirdUsed={() => undefined} />);
+    await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD }));
+    // still at the window, Azad’s bird waits for its answer, and Baran’s letter has not landed
+    expect(await screen.findByText('Silav, ez Azad im.')).toBeTruthy();
+    expect(landedPosts(client)).toEqual([]);
+    fireEvent.click(screen.getByTestId('letters-visitor-send-on'));
+    fireEvent.click(screen.getByTestId('letters-visitor-send-on-yes'));
+    expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
+    await waitFor(() => expect(landedPosts(client)).toEqual([{ letterIds: [L1] }]));
+  });
+
+  it('lands a bird named while the window is already open', async () => {
+    let landings: LetterLanding[] = [];
+    const client = fakeClient({ [HOME]: () => Promise.resolve(ok(home({ landings }))), 'POST /letters/landed': ok(null) } as never);
+    testAuth.client = client;
+    const shown = renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(await screen.findByTestId('letters-write')).toBeTruthy();
+    landings = [landing()];
+    shown.rerender(<LettersScreen onExit={() => undefined} bird={THREAD} onBirdUsed={() => undefined} />);
+    expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
+    expect(navigation.navigate).not.toHaveBeenCalled();
+  });
+
+  it('reads the letters again when a letter’s notification arrives while the window is in view, and lands its bird', async () => {
+    let landings: LetterLanding[] = [];
+    const client = fakeClient({ [HOME]: () => Promise.resolve(ok(home({ landings }))), 'POST /letters/landed': ok(null) } as never);
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(await screen.findByTestId('letters-write')).toBeTruthy();
+    landings = [landing()];
+    act(() => pushes.listeners.forEach((hear) => hear({ threadId: THREAD, how: 'window', letterId: L1, fromUserId: null })));
+    expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
+    await waitFor(() => expect(landedPosts(client)).toEqual([{ letterIds: [L1] }]));
+  });
+
+  it('reads the letters again when the app comes back to the front, but not twice in a few seconds', async () => {
+    const fronts: Array<(state: string) => void> = [];
+    const listen = vi.spyOn(AppState, 'addEventListener').mockImplementation(((_: string, fn: (state: string) => void) => {
+      fronts.push(fn);
+      return { remove: () => undefined };
+    }) as never);
+    try {
+      let landings: LetterLanding[] = [];
+      const client = fakeClient({ [HOME]: () => Promise.resolve(ok(home({ landings }))), 'POST /letters/landed': ok(null) } as never);
+      testAuth.client = client;
+      renderWithProviders(<LettersScreen onExit={() => undefined} />);
+      expect(await screen.findByTestId('letters-write')).toBeTruthy();
+      const before = gets(client);
+      // just read: coming straight back asks nothing
+      act(() => fronts.forEach((fn) => fn('active')));
+      expect(gets(client)).toBe(before);
+      landings = [landing()];
+      const later = Date.now() + 6000;
+      const clock = vi.spyOn(Date, 'now').mockReturnValue(later);
+      try {
+        act(() => fronts.forEach((fn) => fn('active')));
+      } finally {
+        clock.mockRestore();
+      }
+      expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
+      expect(gets(client)).toBe(before + 1);
+    } finally {
+      listen.mockRestore();
+    }
+  });
+
+  it('reads nothing while another screen is in front of it', async () => {
+    const client = fakeClient({ [HOME]: ok(home()) });
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(await screen.findByTestId('letters-write')).toBeTruthy();
+    const before = gets(client);
+    focus.on = false;
+    act(() => refocus());
+    const read = gets(client);
+    act(() => pushes.listeners.forEach((hear) => hear({ threadId: THREAD, how: 'window', letterId: L1, fromUserId: null })));
+    await flush();
+    // the focus read is the screen coming back; a notification while it is behind another asks nothing
+    expect(read).toBe(before + 1);
+    expect(gets(client)).toBe(read);
+  });
+
+  it('lands a bird that comes while the window is open, said by the server, and reads again when the connection comes back', async () => {
+    const realWebSocket = (globalThis as { WebSocket?: unknown }).WebSocket;
+    FakeSocket.all = [];
+    (globalThis as { WebSocket?: unknown }).WebSocket = FakeSocket;
+    try {
+      let landings: LetterLanding[] = [];
+      const client = fakeClient({
+        'POST /realtime/ticket': ok({ ticket: 'tk' }),
+        [HOME]: () => Promise.resolve(ok(home({ landings }))),
+        'POST /letters/landed': ok(null),
+      } as never);
+      testAuth.client = client;
+      renderWithProviders(
+        <RealtimeProvider>
+          <LettersScreen onExit={() => undefined} />
+        </RealtimeProvider>,
+      );
+      expect(await screen.findByTestId('letters-write')).toBeTruthy();
+      await flush();
+      const before = gets(client);
+      act(() => FakeSocket.all[0]!.hello());
+      await waitFor(() => expect(gets(client)).toBe(before + 1));
+      landings = [landing({ how: 'home' })];
+      act(() => FakeSocket.all[0]!.push('user:me', { type: 'letters_changed' }));
+      expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeTruthy();
+      await waitFor(() => expect(landedPosts(client)).toEqual([{ letterIds: [L1] }]));
+    } finally {
+      (globalThis as { WebSocket?: unknown }).WebSocket = realWebSocket;
+    }
+  });
+
+  it('shows a letter that landed before already on the sill, without a flight, and does not say it landed again', async () => {
+    const client = fakeClient({ [HOME]: ok(home({ landings: [landing({ landed: true, read: true })] })), 'POST /letters/landed': ok(null) });
+    testAuth.client = client;
+    phoneWide();
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
+    expect(screen.getByTestId('letter-on-sill')).toBeTruthy();
+    await flush();
+    expect(landedPosts(client)).toEqual([]);
+  });
+
+  it('lands one bird at a time, says another is waiting, and lands the next once the first is read', async () => {
+    let landings = [landing(), landing({ letterId: L2, threadId: T2, person: azad, deliveredAt: '2026-11-14T11:00:00.000Z' })];
+    const client = fakeClient({ [HOME]: () => Promise.resolve(ok(home({ landings }))), 'POST /letters/landed': ok(null) } as never);
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    // the older letter first
+    expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
+    expect(screen.getByText('Another bird is waiting to come in.')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('letters-home-read'));
+    expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD });
+    // read there and come back to: Azad’s bird comes in now
+    landings = [landings[1]!];
+    act(() => refocus());
+    expect(await screen.findByText('Azad’s bird brought you a letter')).toBeTruthy();
+    expect(screen.queryByText('Another bird is waiting to come in.')).toBeNull();
+    await waitFor(() => expect(landedPosts(client)).toEqual([{ letterIds: [L1] }, { letterIds: [L2] }]));
+  });
+
+  it('lands a pen pal’s letter waiting behind a called bird once that bird is answered', async () => {
+    let at: LetterVisitor | null = azadsBird;
+    const answered: VisitorAnswer = { threadId: T2, person: azad, letter: { ...azadsBird.letter, id: 'l78', mine: true, body: 'Silav Azad' } };
+    const client = fakeClient({
+      [HOME]: () => Promise.resolve(ok(home({ visitor: at, landings: [landing()] }))),
+      'POST /letters/visitor': () => {
+        at = null;
+        return Promise.resolve(ok(answered));
+      },
+      'POST /letters/landed': ok(null),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Silav, ez Azad im.')).toBeTruthy();
+    expect(screen.getByText('Another bird is waiting to come in.')).toBeTruthy();
+    fireEvent.change(screen.getByTestId('letters-visitor-answer-input'), { target: { value: 'Silav Azad' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send it home with Azad’s bird' }));
+    expect(await screen.findByText('Baran’s bird brought you a letter')).toBeTruthy();
+    await waitFor(() => expect(landedPosts(client)).toEqual([{ letterIds: [L1] }]));
+  });
+
+  it('says your own bird’s answer home beside a called bird, and again once that bird has taken your answer', async () => {
+    let at: LetterVisitor | null = azadsBird;
+    let landed = false;
+    const answered: VisitorAnswer = { threadId: T2, person: azad, letter: { ...azadsBird.letter, id: 'l78', mine: true, body: 'Silav Azad' } };
+    const client = fakeClient({
+      [HOME]: () => Promise.resolve(ok(home({ visitor: at, landings: [landing({ how: 'home', landed })] }))),
+      'POST /letters/visitor': () => {
+        at = null;
+        return Promise.resolve(ok(answered));
+      },
+      'POST /letters/landed': () => {
+        landed = true;
+        return Promise.resolve(ok(null));
+      },
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Silav, ez Azad im.')).toBeTruthy();
+    // under the visitor's words: your bird home with Baran's answer, and the way to read it
+    expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeTruthy();
+    expect(screen.getByTestId('letters-home-read')).toBeTruthy();
+    await waitFor(() => expect(landedPosts(client)).toEqual([{ letterIds: [L1] }]));
+    fireEvent.change(screen.getByTestId('letters-visitor-answer-input'), { target: { value: 'Silav Azad' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send it home with Azad’s bird' }));
+    // once Azad's bird has flown off with the answer, the letter still to read is what the window says
+    await waitFor(() => expect(screen.queryByTestId('letters-visitor-answer-input')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('You and Azad are pen pals now')).toBeNull());
+    expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('letters-home-read'));
+    expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD });
+    expect(landedPosts(client)).toHaveLength(1);
+  });
+
+  it('keeps an answer being written when its bird flies on by itself, and says where it is', async () => {
+    let at: LetterVisitor | null = visitor;
+    testAuth.client = fakeClient({ [HOME]: () => Promise.resolve(ok(home({ visitor: at }))) } as never);
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.change(await screen.findByTestId('letters-visitor-answer-input'), { target: { value: 'Silav Baran, ez Rojda me.' } });
+    // its day is up: read again, the server has it at the window no more
+    at = null;
+    act(() => refocus());
+    expect(await screen.findByText('Your answer is kept. You can send it with your own bird.')).toBeTruthy();
+    expect(screen.queryByTestId('letters-visitor-answer-input')).toBeNull();
+    fireEvent.click(screen.getByTestId('letters-write'));
+    expect((screen.getByTestId('letters-paper-input') as HTMLTextAreaElement).value).toBe('Silav Baran, ez Rojda me.');
+  });
+
+  it('keeps an answer begun to a bird whose day ran out while the app was closed, for your own bird', async () => {
+    dropDrafts();
+    const kept = { body: 'Silav, ez Rojda me.', paper: DEFAULT_PAPER, strokes: [], notes: [], at: Date.now() };
+    dropDrafts = setDraftStoreForTests(memoryStore({ [DRAFTS_KEY]: JSON.stringify({ who: 'me', drafts: { 'visitor:old1': kept } }) }));
+    testAuth.client = fakeClient({ [HOME]: ok(home()) });
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Your answer is kept. You can send it with your own bird.')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('letters-write'));
+    expect((screen.getByTestId('letters-paper-input') as HTMLTextAreaElement).value).toBe('Silav, ez Rojda me.');
+  });
+
+  it('shows the bird already at the window when a call is refused for it, and does not call again', async () => {
+    let at: LetterVisitor | null = null;
+    const client = fakeClient({
+      [HOME]: () => Promise.resolve(ok(home({ birdsOut: 2, sky: [4, 6], visitor: at }))),
+      'POST /letters/call': () => {
+        // called on another phone a moment before
+        at = visitor;
+        return Promise.resolve(fail({ code: 'VISITOR_HERE', status: 409 }));
+      },
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('letters-call'));
+    expect(await screen.findByText('Silav! Ez Baran im.')).toBeTruthy();
+    expect(screen.getByTestId('letters-visitor-answer-input')).toBeTruthy();
+    expect(screen.queryByTestId('letters-call')).toBeNull();
+    expect(client.calls.filter((c) => c.path === '/letters/call')).toHaveLength(1);
+  });
+
+  it('shows your bird out, with the way to call it back, when a letter is refused because it already is', async () => {
+    let out: LettersHome['out'] = null;
+    testAuth.client = fakeClient({
+      [HOME]: () => Promise.resolve(ok(home({ out }))),
+      'POST /letters/out': () => {
+        // sent out from the website a moment before
+        out = { since: '2026-11-13T10:00:00.000Z', visiting: false };
+        return Promise.resolve(fail({ code: 'BIRD_OUT', status: 409 }));
+      },
+    } as never);
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    await write(LETTER);
+    fireEvent.click(screen.getByTestId('letters-paper-send'));
+    expect(await screen.findByTestId('letters-out')).toBeTruthy();
+    expect(screen.getByTestId('letters-recall')).toBeTruthy();
+    expect(screen.queryByTestId('letters-paper-input')).toBeNull();
+  });
+
+  it('lands the answer your bird brought when it was answered just before you called it back', async () => {
+    let state: Partial<LettersHome> = { out: { since: '2026-11-13T10:00:00.000Z', visiting: true }, flight: 'window' };
+    const client = fakeClient({
+      [HOME]: () => Promise.resolve(ok(home(state))),
+      'DELETE /letters/out': () => {
+        state = { out: null, flight: 'homeward', landings: [landing({ how: 'home' })] };
+        return Promise.resolve(fail({ code: 'BIRD_ANSWERED', status: 404 }));
+      },
+      'POST /letters/landed': ok(null),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('letters-recall'));
+    expect(await screen.findByText('Your bird came home with a letter from Baran')).toBeTruthy();
+    expect(screen.queryByTestId('letters-error')).toBeNull();
+    await waitFor(() => expect(landedPosts(client)).toEqual([{ letterIds: [L1] }]));
+  });
+
+  it('says where your bird is while it is out: waiting out there, or at somebody’s window', async () => {
+    testAuth.client = fakeClient({ [HOME]: ok(home({ out: { since: '2026-11-13T10:00:00.000Z', visiting: true, leavesBy: '2026-11-14T10:00:00.000Z' }, flight: 'window' })) });
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Someone has called your bird to their window and is reading your letter right now.')).toBeTruthy();
+  });
+
+  it('brings your bird home with its letter when nobody called it, says why, and says it landed once', async () => {
+    const client = fakeClient({
+      [HOME]: ok(home({ returned: { letterId: L2, since: '2026-11-13T10:00:00.000Z', why: 'unanswered' }, flight: 'home' })),
+      'POST /letters/landed': ok(null),
+    });
+    testAuth.client = client;
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Your bird came back with your letter')).toBeTruthy();
+    expect(screen.getByText('Nobody called it in 14 days. Send it out again whenever you like.')).toBeTruthy();
+    expect(screen.getByTestId('letters-write')).toBeTruthy();
+    await waitFor(() => expect(landedPosts(client)).toEqual([{ letterIds: [L2] }]));
+  });
+
+  it('keeps a letter being written when the screen is left, and opens the paper on it again', async () => {
+    testAuth.client = fakeClient({ [HOME]: ok(home()) });
+    const first = renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    await write('Silav hevalo, tu çawa yî?');
+    first.unmount();
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('letters-write'));
+    expect((screen.getByTestId('letters-paper-input') as HTMLTextAreaElement).value).toBe('Silav hevalo, tu çawa yî?');
+  });
+
+  it('keeps an answer whose bird flew on before it was sent, for your own bird', async () => {
+    let at: LetterVisitor | null = visitor;
+    testAuth.client = fakeClient({
+      [HOME]: () => Promise.resolve(ok(home({ visitor: at }))),
+      'POST /letters/visitor': () => {
+        at = null;
+        return Promise.resolve(fail({ code: 'NO_VISITOR', status: 404 }));
+      },
+    } as never);
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.change(await screen.findByTestId('letters-visitor-answer-input'), { target: { value: 'Silav Baran, ez Rojda me.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send it home with Baran’s bird' }));
+    expect(await screen.findByText('Your answer is kept. You can send it with your own bird.')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('letters-write'));
+    expect((screen.getByTestId('letters-paper-input') as HTMLTextAreaElement).value).toBe('Silav Baran, ez Rojda me.');
+  });
+
+  it('keeps an answer whose bird flew on for the correspondence with that person, and opens it there', async () => {
+    let at: LetterVisitor | null = visitor;
+    const pal = { threadId: THREAD, person: baran, yourTurn: true, unread: 0, lastLetterAt: '2026-11-13T10:00:00.000Z' };
+    testAuth.client = fakeClient({
+      [HOME]: () => Promise.resolve(ok(home({ visitor: at, penPals: [pal] as never }))),
+      'POST /letters/visitor': () => {
+        at = null;
+        return Promise.resolve(fail({ code: 'BIRD_GONE', status: 409 }));
+      },
+      [`GET /letters/threads/${THREAD}`]: ok(thread()),
+    } as never);
+    const shown = renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.change(await screen.findByTestId('letters-visitor-answer-input'), { target: { value: 'Silav Baran, ez Rojda me.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send it home with Baran’s bird' }));
+    fireEvent.click(await screen.findByText('Your answer is kept. You can send it to Baran in your letters.'));
+    expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD });
+    shown.unmount();
+    renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
+    await waitFor(() => expect((screen.getByTestId('letters-reply-input') as HTMLTextAreaElement).value).toBe('Silav Baran, ez Rojda me.'));
+  });
+
+  it('lands a bird without a buzz for a reader who asked for less motion', async () => {
+    resetHaptics();
+    const felt: HapticEvent[] = [];
+    const stop = onHaptic((event) => felt.push(event));
+    try {
+      const client = fakeClient({ [HOME]: ok(home({ landings: [landing()] })), 'POST /letters/landed': ok(null) });
+      testAuth.client = client;
+      phoneWide();
+      renderWithProviders(<LettersScreen onExit={() => undefined} />);
+      await waitFor(() => expect(landedPosts(client)).toHaveLength(1));
+      expect(felt).toEqual([]);
+    } finally {
+      stop();
+    }
+  });
+});
+
+describe('a correspondence, kept up to date', () => {
+  it('reads itself again when a letter for it arrives, and not for another correspondence', async () => {
+    let letters = thread({ yourTurn: false }).letters;
+    const client = fakeClient({ [`GET /letters/threads/${THREAD}`]: () => Promise.resolve(ok(thread({ letters, yourTurn: letters.length > 2 }))) } as never);
+    testAuth.client = client;
+    renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
+    expect(await screen.findByTestId('letters-waiting')).toBeTruthy();
+    const asked = () => client.calls.filter((c) => c.path === `/letters/threads/${THREAD}`).length;
+    const before = asked();
+    act(() => pushes.listeners.forEach((hear) => hear({ threadId: T2, how: 'window', letterId: L2, fromUserId: null })));
+    await flush();
+    expect(asked()).toBe(before);
+    letters = [...letters, { id: 'l3', mine: false, body: 'Ez jî baş im, spas!', removed: false, sentAt: '2026-11-14T10:00:00.000Z', readAt: null, decor: null }];
+    act(() => pushes.listeners.forEach((hear) => hear({ threadId: THREAD, how: 'window', letterId: L1, fromUserId: null })));
+    expect(await screen.findByText('Ez jî baş im, spas!')).toBeTruthy();
+    expect(screen.getByTestId('letters-reply-input')).toBeTruthy();
+  });
+
+  it('reads itself again when the server says letters changed', async () => {
+    const realWebSocket = (globalThis as { WebSocket?: unknown }).WebSocket;
+    FakeSocket.all = [];
+    (globalThis as { WebSocket?: unknown }).WebSocket = FakeSocket;
+    try {
+      let closed = false;
+      testAuth.client = fakeClient({
+        'POST /realtime/ticket': ok({ ticket: 'tk' }),
+        [`GET /letters/threads/${THREAD}`]: () => Promise.resolve(ok(thread({ closed, yourTurn: !closed }))),
+      } as never);
+      renderWithProviders(
+        <RealtimeProvider>
+          <LetterThreadScreen threadId={THREAD} onExit={() => undefined} />
+        </RealtimeProvider>,
+      );
+      expect(await screen.findByTestId('letters-reply-input')).toBeTruthy();
+      await flush();
+      act(() => FakeSocket.all[0]!.hello());
+      // they said goodbye on their phone
+      closed = true;
+      act(() => FakeSocket.all[0]!.push('user:me', { type: 'letters_changed' }));
+      expect(await screen.findByTestId('letters-closed')).toBeTruthy();
+    } finally {
+      (globalThis as { WebSocket?: unknown }).WebSocket = realWebSocket;
+    }
+  });
+
+  it('keeps a letter being written back, and lets it go once it is sent', async () => {
+    const client = fakeClient({
+      [`GET /letters/threads/${THREAD}`]: ok(thread()),
+      [`POST /letters/threads/${THREAD}`]: ok({ letter: { id: 'l3', mine: true, body: 'Spas Baran!', removed: false, sentAt: '2026-11-13T11:00:00.000Z', readAt: null, decor: null } }),
+    });
+    testAuth.client = client;
+    const first = renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
+    fireEvent.change(await screen.findByTestId('letters-reply-input'), { target: { value: 'Spas Baran!' } });
+    first.unmount();
+    const second = renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
+    await waitFor(() => expect((screen.getByTestId('letters-reply-input') as HTMLTextAreaElement).value).toBe('Spas Baran!'));
+    fireEvent.click(screen.getByTestId('letters-reply-send'));
+    expect(await screen.findByTestId('letters-waiting')).toBeTruthy();
+    second.unmount();
+    // their answer comes, and the paper that opens for it is a fresh one
+    renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
+    await waitFor(() => expect((screen.getByTestId('letters-reply-input') as HTMLTextAreaElement).value).toBe(''));
   });
 });

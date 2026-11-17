@@ -16,10 +16,12 @@ export type { HapticEvent } from './hapticPacing';
  *              stepper, a switch, another tab
  *   tap        a light impact, the knock of something landing: a sheet
  *              settling at another height, a hold that took, a refresh
- *              pulled (on Android; iOS's own control already knocks), and
- *              something sent, given or taken — a message, a post, a like, a
- *              reaction, a friend request, a game started, something bought
- *              in the shop, the day's Zêr claimed
+ *              pulled (on Android; iOS's own control already knocks), a bird
+ *              touching down on the letters window's sill with a letter, seen
+ *              flying in (never for a reader who asked for less motion, who
+ *              sees no flight), and something sent, given or taken — a
+ *              message, a post, a like, a reaction, a friend request, a game
+ *              started, something bought in the shop, the day's Zêr claimed
  *   correct    the system's "success": a right answer, an outcome
  *   wrong      the system's "warning": a wrong answer. Never the harsh error
  *              pattern — the person getting it wrong is often a child

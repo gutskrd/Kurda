@@ -293,9 +293,34 @@ export async function restoreContent(db: Executor, rec: RemovalRecord): Promise<
       if (r.rowCount) await db.query(`UPDATE ${posts} SET comment_count = comment_count + 1 WHERE id = $1`, [rec.postId]);
       return;
     }
-    case 'letter':
-      if (rec.previousStatus !== 'removed') await db.query(`UPDATE letters SET status = $2 WHERE id = $1::uuid AND status = 'removed'`, [rec.id, rec.previousStatus]);
+    case 'letter': {
+      if (rec.previousStatus === 'removed') return;
+      // a bird taken down while it was out comes back home with its letter rather than out again: nobody is waiting for
+      // it now, its writer may have sent another bird meanwhile, and they saw it go, so it has nothing to land
+      if (rec.previousStatus === 'flying') {
+        await db.query(`UPDATE letters SET status = 'recalled', recalled_at = now(), landed_at = now() WHERE id = $1::uuid AND status = 'removed'`, [rec.id]);
+        return;
+      }
+      // a bird that had come home by itself before it was taken down came home long ago: given back, it is not news
+      // that it is home, so it is not said to have just come back with a date weeks old
+      if (rec.previousStatus === 'recalled') {
+        await db.query(`UPDATE letters SET status = 'recalled', landed_at = COALESCE(landed_at, now()) WHERE id = $1::uuid AND status = 'removed'`, [rec.id]);
+        return;
+      }
+      // a letter given back after the correspondence has moved on past it is no news: it is read and landed, so no bird
+      // brings it to the window weeks later in the middle of letters already answered
+      await db.query(
+        `UPDATE letters l SET status = $2,
+                read_at = CASE WHEN later.answered THEN COALESCE(l.read_at, now()) ELSE l.read_at END,
+                landed_at = CASE WHEN later.answered THEN COALESCE(l.landed_at, now()) ELSE l.landed_at END
+           FROM (SELECT EXISTS (
+                   SELECT 1 FROM letters x JOIN letters r ON r.thread_id = x.thread_id AND r.sender_id = x.recipient_id
+                    WHERE x.id = $1::uuid AND r.status IN ('delivered','removed') AND r.delivered_at > x.delivered_at) AS answered) later
+          WHERE l.id = $1::uuid AND l.status = 'removed'`,
+        [rec.id, rec.previousStatus],
+      );
       return;
+    }
     case 'dm_message':
     case 'group_message': {
       const table = rec.type === 'dm_message' ? 'dm_messages' : 'group_messages';

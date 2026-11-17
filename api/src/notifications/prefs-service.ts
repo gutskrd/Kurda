@@ -3,6 +3,7 @@ import {
   allows,
   defaultPrefs,
   minuteOfDayInTz,
+  minutesToQuietEnd,
   NOTIFICATION_CATEGORIES,
   type NotificationCategory,
   type NotificationPrefs,
@@ -18,6 +19,8 @@ interface PrefsRow {
   marketing: boolean;
   /** null: never chosen, so the default for their age, like `streak` */
   progress: boolean | null;
+  /** null: never chosen, so as `friends` is, which letters were sent under before they had a setting of their own */
+  letters: boolean | null;
   quiet_start_min: number | null;
   quiet_end_min: number | null;
 }
@@ -31,6 +34,7 @@ function toPrefs(row: PrefsRow, minor: boolean): NotificationPrefs {
     events: row.events,
     marketing: row.marketing,
     progress: row.progress ?? defaultPrefs({ minor }).progress,
+    letters: row.letters ?? row.friends,
     quietStartMin: row.quiet_start_min,
     quietEndMin: row.quiet_end_min,
   };
@@ -43,6 +47,7 @@ export interface PrefsPatch {
   events?: boolean;
   marketing?: boolean;
   progress?: boolean;
+  letters?: boolean;
   quietStartMin?: number | null;
   quietEndMin?: number | null;
 }
@@ -68,7 +73,7 @@ export class NotificationPrefsService {
   private async stored(userId: string): Promise<{ row: PrefsRow | null; minor: boolean }> {
     const res = await this.pool.query<PrefsRow & { minor: boolean; has_row: boolean }>(
       `SELECT ${notKnownAdultSql('u')} AS minor, p.user_id IS NOT NULL AS has_row,
-              p.streak, p.friends, p.games, p.events, p.marketing, p.progress, p.quiet_start_min, p.quiet_end_min
+              p.streak, p.friends, p.games, p.events, p.marketing, p.progress, p.letters, p.quiet_start_min, p.quiet_end_min
          FROM users u LEFT JOIN notification_prefs p ON p.user_id = u.id
         WHERE u.id = $1`,
       [userId],
@@ -99,17 +104,18 @@ export class NotificationPrefsService {
       events: patch.events ?? row?.events ?? base.events,
       marketing: patch.marketing ?? row?.marketing ?? base.marketing,
       progress: patch.progress ?? row?.progress ?? null,
+      letters: patch.letters ?? row?.letters ?? null,
       quiet_start_min: patch.quietStartMin === undefined ? (row?.quiet_start_min ?? null) : patch.quietStartMin,
       quiet_end_min: patch.quietEndMin === undefined ? (row?.quiet_end_min ?? null) : patch.quietEndMin,
     };
     await this.pool.query(
       `INSERT INTO notification_prefs
-         (user_id, streak, friends, games, events, marketing, progress, quiet_start_min, quiet_end_min, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
+         (user_id, streak, friends, games, events, marketing, progress, letters, quiet_start_min, quiet_end_min, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now())
        ON CONFLICT (user_id) DO UPDATE SET
          streak = EXCLUDED.streak, friends = EXCLUDED.friends, games = EXCLUDED.games,
          events = EXCLUDED.events, marketing = EXCLUDED.marketing, progress = EXCLUDED.progress,
-         quiet_start_min = EXCLUDED.quiet_start_min, quiet_end_min = EXCLUDED.quiet_end_min,
+         letters = EXCLUDED.letters, quiet_start_min = EXCLUDED.quiet_start_min, quiet_end_min = EXCLUDED.quiet_end_min,
          updated_at = now()`,
       [
         userId,
@@ -119,6 +125,7 @@ export class NotificationPrefsService {
         next.events,
         next.marketing,
         next.progress,
+        next.letters,
         next.quiet_start_min,
         next.quiet_end_min,
       ],
@@ -130,6 +137,21 @@ export class NotificationPrefsService {
   async allows(userId: string, category: NotificationCategory, at: Date = new Date()): Promise<boolean> {
     const [prefs, tz] = await Promise.all([this.get(userId), this.timezone(userId)]);
     return allows(prefs, category, minuteOfDayInTz(at, tz));
+  }
+
+  /**
+   * When a push the gate holds back would be allowed: the end of the user's
+   * quiet hours, at the start of that minute, while the category is on and
+   * `at` is inside them. Null when the category is off (it is never sent) or
+   * the moment is not quiet.
+   */
+  async quietUntil(userId: string, category: NotificationCategory, at: Date = new Date()): Promise<Date | null> {
+    const [prefs, tz] = await Promise.all([this.get(userId), this.timezone(userId)]);
+    if (!prefs[category]) return null;
+    const left = minutesToQuietEnd(prefs, minuteOfDayInTz(at, tz));
+    if (left === null) return null;
+    const minuteStart = at.getTime() - (at.getTime() % 60_000);
+    return new Date(minuteStart + left * 60_000);
   }
 
   private async timezone(userId: string): Promise<string> {
