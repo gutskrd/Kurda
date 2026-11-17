@@ -6,22 +6,13 @@ import { RealtimeClient, type RealtimeListener, type RealtimeState } from './Rea
 const RealtimeContext = createContext<RealtimeClient | null>(null);
 
 /**
- * The app's one realtime connection, for everything that listens: your own
- * channel (invites, gifts, direct messages), and any room a screen is looking
- * at (a group chat). Mounted once, above the signed-in screens.
+ * The app's single realtime connection: your own channel (invites, gifts, direct messages) and any room a screen
+ * is showing (a group chat). Mounted once above the signed-in screens. It closes when the app goes to the
+ * background, because iOS freezes background sockets without closing them, and reopens with the same rooms in the
+ * foreground.
  *
- * It follows the app: closed when the app goes to the background — iOS
- * freezes a background socket without closing it, and a frozen socket that
- * looks open is how the old listener went deaf — and opened again, with the
- * same rooms, as soon as the app is back in front.
- *
- * Every hook below works without it too (they do nothing), so a screen can be
- * rendered on its own in a test or before sign-in finishes.
- *
- * A guest has no channel to listen on — nobody can write to them, invite them
- * or send them a gift, and the ticket is one of the routes refused to them —
- * so no connection is opened for one. The hooks then do nothing, as they do
- * before sign-in.
+ * The hooks below do nothing without it, so a screen renders alone in a test or before sign-in. Guests get no
+ * connection: nobody can message, invite or gift them, and the ticket route refuses guests.
  */
 export function RealtimeProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { client, baseUrl, status, isGuest } = useAuth();
@@ -58,11 +49,8 @@ export function useRealtime(): RealtimeClient | null {
 }
 
 /**
- * Every event the connection receives, with the room it came from.
- *
- * The handler is held in a ref, so a screen may pass a fresh closure on each
- * render without unsubscribing and resubscribing (and missing what arrived in
- * between).
+ * Every event the connection receives, with its room. The handler is kept in a ref, so a fresh closure each
+ * render does not resubscribe and miss events.
  */
 export function useRealtimeListener(onEvent: RealtimeListener): void {
   const realtime = useRealtime();
@@ -75,9 +63,8 @@ export function useRealtimeListener(onEvent: RealtimeListener): void {
 }
 
 /**
- * Called each time the connection is ready, including the first time. Events
- * sent while the phone was offline or in the background were not delivered;
- * a screen showing live state refetches it here.
+ * Called each time the connection is ready, including the first. Events sent while offline or in the background
+ * were not delivered, so screens with live state refetch here.
  */
 export function useRealtimeReconnect(onOpen: () => void): void {
   const realtime = useRealtime();
@@ -89,7 +76,7 @@ export function useRealtimeReconnect(onOpen: () => void): void {
   }, [realtime]);
 }
 
-/** Watch a room while mounted (null watches nothing). Shared and counted, so two screens can watch one room. */
+/** Watch a room while mounted (null watches nothing); reference-counted, so two screens can watch one room. */
 export function useRealtimeRoom(room: string | null): void {
   const realtime = useRealtime();
   useEffect(() => {

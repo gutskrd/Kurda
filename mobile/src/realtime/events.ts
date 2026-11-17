@@ -2,18 +2,13 @@ import type { BadgeUnlockedEvent, GiftUserEvent, LettersChangedEvent, PlayUserEv
 import type { RealtimeEvent } from './RealtimeClient';
 
 /**
- * Everything the gateway pushes on your own channel that is not a direct
- * message (those are `useChatSocket`'s): game invites and their answers,
- * "something changed in a game you are in", rematch offers, gifts, a badge
- * just earned (its celebration), and "something changed in your letters"
- * (`letters_changed`: a bird came, went or landed), which carries nothing and
- * only says to read the letters again.
- *
- * The quiz's `challenge_*` and `match_*` went with the quiz.
+ * Events on your own channel other than direct messages (those are `useChatSocket`'s): game invites and answers,
+ * game state changes, rematch offers, gifts, badge unlocks, and `letters_changed`, which carries nothing and only
+ * says to reload the letters.
  */
 export type UserEvent = PlayUserEvent | GiftUserEvent | BadgeUnlockedEvent | LettersChangedEvent;
 
-/** The prefixes this channel carries for `useUserEvents`; a new kind of user event adds its prefix here. */
+/** The event prefixes `useUserEvents` carries; a new kind of user event adds its prefix here. */
 const MINE = ['play_', 'rematch_', 'gift_', 'badge_', 'letters_'];
 
 /** Is this an event meant for the person, rather than a room's traffic or a DM? */
@@ -22,9 +17,8 @@ export function isUserEvent(type: unknown): type is UserEvent['type'] {
 }
 
 /**
- * Only what arrived on the person's own channel (`user:<id>`). A game shared
- * into a group chat also sends `play_changed` to the group's room, and a
- * screen watching that room must not hear it a second time as a personal event.
+ * Only events from the person's own channel (`user:<id>`): a game shared into a group chat also sends
+ * `play_changed` to the group's room, which must not count twice.
  */
 export function userEventOf(event: RealtimeEvent, room: string): UserEvent | null {
   return room.startsWith('user:') && isUserEvent(event.type) ? (event as unknown as UserEvent) : null;
