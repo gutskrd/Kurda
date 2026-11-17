@@ -81,6 +81,41 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     expect(cancelled.rows[0].deletion_requested_at).toBeNull();
   });
 
+  /*
+   * Signing in again is what calls a deletion off, so no device may simply
+   * carry on as before: every session ends when the deletion is asked for,
+   * the one that asked and every other, and the next thing each sees is the
+   * sign-in screen.
+   */
+  it('DELETE /me ends every session the account has, on every device', async () => {
+    const user = await makeUser('graceall');
+    const elsewhere = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: user.email, password: 'a-strong-password1' },
+      remoteAddress: '10.13.1.5',
+    });
+    expect(elsewhere.statusCode).toBe(200);
+    const other = elsewhere.json().tokens as { accessToken: string; refreshToken: string };
+    const me = (token: string) => app.inject({ method: 'GET', url: '/me', headers: { authorization: `Bearer ${token}` }, remoteAddress: '10.13.1.6' });
+    expect((await me(other.accessToken)).statusCode).toBe(200);
+
+    const del = await app.inject({ method: 'DELETE', url: '/me', headers: { authorization: `Bearer ${user.token}` }, remoteAddress: '10.13.1.7' });
+    expect(del.statusCode).toBe(200);
+    expect(del.json().deletionScheduled).toBe(true);
+
+    // neither the device that asked nor the other one goes on working, and the other cannot renew its session
+    expect((await me(user.token)).statusCode).toBe(401);
+    expect((await me(other.accessToken)).statusCode).toBe(401);
+    const renewed = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken: other.refreshToken }, remoteAddress: '10.13.1.6' });
+    expect(renewed.statusCode).toBe(401);
+    const live = await pool.query(`SELECT 1 FROM refresh_tokens WHERE user_id = $1 AND revoked_at IS NULL`, [user.id]);
+    expect(live.rowCount).toBe(0);
+    // the deletion itself is still on its way, until somebody signs in
+    const marked = await pool.query(`SELECT deletion_requested_at FROM users WHERE id = $1`, [user.id]);
+    expect(marked.rows[0].deletion_requested_at).not.toBeNull();
+  });
+
   it('deletion scrubs PII after the grace period but keeps the row', async () => {
     const user = await makeUser('anon');
     await pool.query(
