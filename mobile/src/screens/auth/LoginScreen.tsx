@@ -12,7 +12,8 @@ import type { AuthStackParamList } from '../../navigation/authStack';
 import { LinkText } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+/** `presented`: the first screen of the sign-in a guest opens over the app, whose way out is ✕. */
+type Props = NativeStackScreenProps<AuthStackParamList, 'Login'> & { presented?: boolean };
 
 /**
  * Refusals that are not a wrong password: sign-in is held back for a while
@@ -29,7 +30,7 @@ const HELD_BACK = new Set(['CAPTCHA_REQUIRED', 'LOCKED']);
  * ways to a reset and to signing up are where they were on the form. The
  * address a screen sent along is already filled in.
  */
-export function LoginScreen({ navigation, route }: Props) {
+export function LoginScreen({ navigation, route, presented = false }: Props) {
   const { login } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -97,7 +98,7 @@ export function LoginScreen({ navigation, route }: Props) {
   ) : null;
 
   // on success the session is applied and the app root shows the signed-in screens: nothing to do here
-  return <StepFlow steps={steps} onFinish={() => undefined} onExit={navigation.canGoBack() ? () => navigation.goBack() : undefined} notice={notice} testID="login-flow" />;
+  return <StepFlow steps={steps} onFinish={() => undefined} onExit={navigation.canGoBack() ? () => navigation.goBack() : undefined} presented={presented} notice={notice} testID="login-flow" />;
 }
 
 const styles = StyleSheet.create({

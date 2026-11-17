@@ -49,7 +49,9 @@ export function SignInModal({ email, onExit }: { email?: string; onExit: () => v
       UNSTABLE_router={authRouter}
     >
       {/* the form's own back reaches the parent stack and closes the modal */}
-      <Stack.Screen name="Login" component={LoginScreen} initialParams={email ? { email } : undefined} />
+      <Stack.Screen name="Login" initialParams={email ? { email } : undefined}>
+        {(props) => <LoginScreen {...props} presented />}
+      </Stack.Screen>
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="Register">
         {({ navigation }) => (
