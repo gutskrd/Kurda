@@ -22,7 +22,9 @@ import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AccountGateProvider, GuestWall, useAccountGate } from './src/auth/AccountGate';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, legacyTabPath, linkingScreens } from './src/navigation/tabs';
-import { holdLink, takeHeldLink } from './src/navigation/heldLink';
+import { holdLink, launchLinkKeeper, linkHolding, takeHeldLink } from './src/navigation/heldLink';
+import { authRouter, rootRouter } from './src/navigation/returnTo';
+import { stackOptions } from './src/navigation/stackOptions';
 import { TabBar } from './src/navigation/TabBar';
 import { prepareAudioSession } from './src/recording/useMicRecorder';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
@@ -383,13 +385,10 @@ function SignedInRoot() {
       {/* one offer to create an account, for every screen that finds a guest at something only an account can do */}
       <AccountGateProvider>
       <RootStack.Navigator
-        screenOptions={{
-          headerShown: false,
-          // scene paints the theme background during the push/pop so a transition
-          // never flashes a white frame; reduced-motion disables the slide entirely.
-          contentStyle: { backgroundColor: colors.background },
-          animation: reduceMotion ? 'none' : 'default',
-        }}
+        // the options every stack shares (navigation/stackOptions)
+        screenOptions={stackOptions(reduceMotion, colors.background)}
+        // a place already open is gone back to, not stacked again (navigation/returnTo)
+        UNSTABLE_router={rootRouter}
         // every page stands in `Arrive`, which draws one a press opened (the ones that fade in) growing out of what was pressed
         screenLayout={({ children, route, options }) => (
           <Arrive routeKey={route.key} grows={options.animation === 'fade'}>
@@ -865,14 +864,18 @@ function Root() {
   const { status, user, ageStop, suspension, clearSuspension, baseUrl } = useAuth();
   const onboarding = useOnboarding();
   const reduceMotion = useReducedMotion();
+  const { colors } = useTheme();
 
-  // a link opened while signed out (the one that started the app, or one tapped since) waits for the sign-in
+  // a link opened before the signed-in screens are there waits for them; the launch link only for the first screens (navigation/heldLink)
+  const [keepLaunchLink] = useState(launchLinkKeeper);
+  const holding = linkHolding(status, user);
   useEffect(() => {
-    if (status !== 'signedOut') return;
-    void Linking.getInitialURL().then((url) => holdLink(url, linking.prefixes));
+    if (status === 'restoring') return;
+    if (keepLaunchLink(holding)) void Linking.getInitialURL().then((url) => holdLink(url, linking.prefixes));
+    if (holding === 'none') return;
     const sub = Linking.addEventListener('url', ({ url }) => holdLink(url, linking.prefixes));
     return () => sub.remove();
-  }, [status]);
+  }, [status, holding, keepLaunchLink]);
 
   if (status === 'restoring' || !onboarding.ready) {
     return <LaunchScreen />;
@@ -913,7 +916,9 @@ function Root() {
       <AuthStack.Navigator
         initialRouteName={AUTH_INITIAL_ROUTE}
         // signing in slides between its screens as the app does, and does not slide for somebody who asked for less motion
-        screenOptions={{ headerShown: false, animation: reduceMotion ? 'none' : 'default' }}
+        screenOptions={stackOptions(reduceMotion, colors.background)}
+        // each form once: "Create account" and "Sign in" go back to the other form rather than stack it again
+        UNSTABLE_router={authRouter}
       >
         {/* Welcome's back walks into the intro (KUR-271): choice → notifications → welcome → language */}
         <AuthStack.Screen name="Welcome">

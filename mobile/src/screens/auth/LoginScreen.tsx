@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { radii, spacing, typography } from '../../theme/tokens';
@@ -36,6 +36,11 @@ export function LoginScreen({ navigation, route }: Props) {
   const [email, setEmail] = useState(route.params?.email ?? '');
   const [password, setPassword] = useState('');
   const [heldBack, setHeldBack] = useState<string | null>(null);
+  // gone back to with another address (the sign-up's "you have an account", the reset's "back to sign in"), the field takes it
+  const sentEmail = route.params?.email;
+  useEffect(() => {
+    if (sentEmail) setEmail(sentEmail);
+  }, [sentEmail]);
 
   const steps: FlowStep[] = [
     {
