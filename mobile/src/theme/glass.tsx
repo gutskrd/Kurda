@@ -420,8 +420,9 @@ export function Segmented<T extends string>({
                 wrap && styles.segTextWrap,
               ]}
               numberOfLines={wrap ? 2 : 1}
-              adjustsFontSizeToFit={wrap}
-              minimumFontScale={wrap ? 0.8 : undefined}
+              // a label a little too long for its share ("Geschichten" in a third of a 320-point phone) is set a little smaller rather than cut
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
               // a segment is a share of the control's width: its label grows only as far as still fits one
               maxFontSizeMultiplier={fontScaleCap.fixedBox}
             >
