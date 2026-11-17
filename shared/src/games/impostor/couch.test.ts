@@ -3,6 +3,7 @@ import {
   COUCH_DEFAULTS,
   COUCH_MAX_PLAYERS,
   COUCH_NAME_MAX,
+  COUCH_SECOND_VOTE_SECONDS,
   couchCastVote,
   couchGuess,
   couchHand,
@@ -14,10 +15,13 @@ import {
   couchReader,
   couchReveal,
   couchScores,
+  couchSecondTimeUp,
   couchSeen,
   couchSettingsFor,
   couchSpeaker,
   couchStart,
+  couchStillHidden,
+  couchSuspects,
   couchToVote,
   couchTotals,
   couchVoter,
@@ -103,6 +107,17 @@ describe('the deal', () => {
     expect(s.order).toEqual([0, 1, 2, 3, 4].map((i) => (i + first) % 5));
   });
 
+  it('never lets an impostor speak first, with one impostor or two', () => {
+    for (const seed of Array.from({ length: 40 }, (_, i) => `first-${i}`)) {
+      for (const impostors of [1, 2] as const) {
+        const s = couchStart('kmr', NAMES, { ...COUCH_DEFAULTS, impostors }, CARD, seed);
+        expect(s.impostors).not.toContain(s.order[0]);
+        const first = s.order[0]!;
+        expect(s.order).toEqual(NAMES.map((_, i) => (i + first) % NAMES.length));
+      }
+    }
+  });
+
   it('allows a second impostor only in a room of six or more', () => {
     expect(couchSettingsFor(5, CARD, { ...COUCH_DEFAULTS, impostors: 2 }).impostors).toBe(1);
     expect(couchSettingsFor(6, CARD, { ...COUCH_DEFAULTS, impostors: 2 }).impostors).toBe(2);
@@ -112,6 +127,17 @@ describe('the deal', () => {
   it('plays the plain game when a card has no second word for the odd one out', () => {
     expect(couchSettingsFor(4, { twin: null }, { ...COUCH_DEFAULTS, way: 'odd' }).way).toBe('classic');
     expect(couchSettingsFor(4, CARD, { ...COUCH_DEFAULTS, way: 'odd' }).way).toBe('odd');
+  });
+
+  it('says when this round alone fell back to the plain game, and the next card plays the way the room asked', () => {
+    const odd = { ...COUCH_DEFAULTS, way: 'odd' } as const;
+    const plain = couchStart('kmr', NAMES.slice(0, 4), odd, { ...CARD, twin: null }, 's');
+    expect(plain.settings.way).toBe('classic');
+    expect(plain.oddFallback).toBe(true);
+    const next = couchStart('kmr', NAMES.slice(0, 4), odd, CARD, 't');
+    expect(next.settings.way).toBe('odd');
+    expect(next.oddFallback).toBe(false);
+    expect(couchStart('kmr', NAMES.slice(0, 4), COUCH_DEFAULTS, { ...CARD, twin: null }, 's').oddFallback).toBe(false);
   });
 });
 
@@ -250,10 +276,106 @@ describe('the reveal', () => {
   it('says who it was, the word, the guess and every vote', () => {
     const s = voted(round(), [1, 0, 1, 1]);
     const end = couchGuess(s, s.options.indexOf('hesp'));
-    expect(couchReveal(end)).toEqual({ impostors: [1], word: 'pisîk', meanings: { en: 'cat' }, twin: null, accused: 1, caught: true, guessed: 'hesp', votes: [1, 0, 1, 1], endedBy: 'caught' });
+    expect(couchReveal(end)).toEqual({
+      impostors: [1],
+      word: 'pisîk',
+      meanings: { en: 'cat' },
+      twin: null,
+      accused: 1,
+      caught: true,
+      guessed: 'hesp',
+      votes: [1, 0, 1, 1],
+      endedBy: 'caught',
+      escape: null,
+      second: null,
+      stillHidden: null,
+    });
+  });
+
+  it('says why the impostor got away: a shared top, the wrong seat, or nobody named', () => {
+    expect(couchReveal(voted(round(), [1, 0, 3, 2]))?.escape).toBe('tie');
+    expect(couchReveal(voted(round(), [2, 2, 3, 2]))).toMatchObject({ escape: 'wrong-out', accused: 2 });
+    expect(couchReveal(voted(round(), [null, null, null, null]))?.escape).toBe('no-votes');
+    // a room that points at nobody could not agree
+    expect(couchReveal(couchPoint(couchToVote(clued(round(4, { vote: 'open' }))), null))?.escape).toBe('tie');
   });
 
   it('shows the other word after an odd-word round', () => {
     expect(couchReveal(voted(round(4, { way: 'odd' }), [1, 0, 1, 1]))?.twin).toEqual({ word: 'kûçik', meanings: { en: 'dog' } });
+  });
+});
+
+describe('two impostors', () => {
+  /** A room of six with seats 1 and 4 the impostors, voted on in private, the first vote catching seat 1. */
+  const caughtOne = (settings: Partial<CouchSettings> = {}): CouchState => {
+    const s = round(6, { impostors: 2, ...settings }, [1, 4]);
+    return settings.vote === 'open' ? couchPoint(couchToVote(clued(s)), 1) : voted(s, [1, 0, 1, 1, 1, 1]);
+  };
+
+  it('hunt the second once the first is caught and has guessed, everyone else voting once more', () => {
+    const s = caughtOne();
+    expect(s.phase).toBe('guess');
+    const after = couchGuess(s, s.options.indexOf('hesp'));
+    expect(after.phase).toBe('second');
+    expect(after.endedBy).toBe('caught');
+    expect(couchStillHidden(after)).toBe(4);
+    expect(after.second?.voters).toEqual([0, 2, 3, 4, 5]);
+    expect(couchSuspects(after)).toEqual([0, 2, 3, 4, 5]);
+    expect(couchScores(after)).toEqual([0, 0, 0, 0, 0, 0]);
+    expect(couchReveal(after)).toBeNull();
+    expect(COUCH_SECOND_VOTE_SECONDS).toBe(30);
+  });
+
+  it('go straight to the second vote when the odd one out is caught', () => {
+    const s = caughtOne({ way: 'odd' });
+    expect(s.phase).toBe('second');
+    expect(s.endedBy).toBe('caught');
+  });
+
+  it('never let the caught impostor vote again or be named again', () => {
+    let s = couchGuess(caughtOne(), 0);
+    expect(couchVoter(s)).toBe(0);
+    expect(couchCastVote(s, 1)).toBe(s);
+    expect(couchCastVote(s, 0)).toBe(s);
+    s = couchCastVote(s, 4);
+    expect(couchVoter(s)).toBe(2);
+    const open = couchGuess(caughtOne({ vote: 'open' }), 0);
+    expect(couchPoint(open, 1)).toBe(open);
+  });
+
+  it('pay the room’s right votes when the second is found, and nothing more to the second', () => {
+    const s = [4, 4, 4, 0, 4].reduce((x, v) => couchCastVote(x, v), couchGuess(caughtOne(), caughtOne().options.indexOf('hesp')));
+    expect(s.phase).toBe('reveal');
+    const { rightVote, caught } = IMPOSTOR_POINTS;
+    // seats 0, 2, 3 and 5 named seat 1 in the first vote and seat 4 in the second (seat 4's own vote counts for nothing)
+    const found = rightVote + caught + rightVote;
+    expect(couchScores(s)).toEqual([found, 0, found, found, 0, found]);
+    expect(couchReveal(s)).toMatchObject({
+      second: { accused: 4, caught: true, votes: [{ seat: 0, for: 4 }, { seat: 2, for: 4 }, { seat: 3, for: 4 }, { seat: 4, for: 0 }, { seat: 5, for: 4 }] },
+      stillHidden: null,
+    });
+  });
+
+  it('pay an impostor still hidden after the second vote, or when its clock runs out', () => {
+    const start = couchGuess(caughtOne(), caughtOne().options.indexOf('pisîk'));
+    // seats 3 and 0 share the top: the room could not agree
+    const missed = [3, 3, 0, 0, 2].reduce((x, v) => couchCastVote(x, v), start);
+    expect(couchScores(missed)[4]).toBe(IMPOSTOR_POINTS.escaped);
+    expect(couchScores(missed)[1]).toBe(IMPOSTOR_POINTS.guessedWord);
+    expect(couchReveal(missed)?.stillHidden).toBe(4);
+    const late = couchSecondTimeUp(couchCastVote(start, 4));
+    expect(late.phase).toBe('reveal');
+    // one vote in, for the right seat, is the most votes alone at the top
+    expect(couchReveal(late)).toMatchObject({ second: { accused: 4, caught: true }, stillHidden: null });
+    const silent = couchSecondTimeUp(couchGuess(caughtOne({ vote: 'open' }), 0));
+    expect(couchReveal(silent)?.stillHidden).toBe(4);
+    expect(couchSecondTimeUp(round())).toEqual(round());
+  });
+
+  it('are both paid at once when the first vote catches neither, with no second vote', () => {
+    const s = voted(round(6, { impostors: 2 }, [1, 4]), [2, 2, 3, 2, 2, 2]);
+    expect(s.phase).toBe('reveal');
+    expect(s.second).toBeNull();
+    expect(couchReveal(s)?.stillHidden).toBeNull();
   });
 });

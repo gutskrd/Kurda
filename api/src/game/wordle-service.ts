@@ -1,7 +1,7 @@
 import type pg from 'pg';
-import { dictionaryKey } from '@kurda/shared';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
+import { SavedWordsService, type SaveResult } from '../dictionary/saved-words-service.js';
 import {
   applyGuess,
   initGame,
@@ -17,6 +17,7 @@ import {
 import {
   applyGameResult,
   averageGuesses,
+  dailyRepeatWindow,
   emptyStats,
   filterByDifficulty,
   pickDailyWord,
@@ -25,7 +26,8 @@ import {
   type Difficulty,
   type WordleStats,
 } from './wordle-daily.js';
-import { loadWordlePool } from './word-pool.js';
+import { isWordleGuess, loadWordlePool, recentTargets, wordleEntryId } from './word-pool.js';
+import { meaningsOf, type WordMeanings } from './word-meanings.js';
 
 export type WordleMode = 'daily' | 'practice';
 
@@ -39,6 +41,24 @@ export type StartResult =
 export type GuessResult =
   | { ok: true; game: WordleGameView }
   | { ok: false; reason: GuessRejection | 'not-found' | 'finished' };
+
+export type SaveWordResult =
+  | { ok: true; saved: SaveResult; wordsLearned: number }
+  | { ok: false; reason: 'not-found' | 'not-finished' | 'no-entry' };
+
+/**
+ * The answer of a finished game, for the results card: what it means in every
+ * language a word card gives (the app shows the reader's own), and the
+ * dictionary entry to save it as. Exactly this word — never the nearest
+ * search hit, which is how a different word's meaning used to be shown.
+ */
+export interface WordleWordCard {
+  /** null when the dictionary has no entry spelt exactly so, and there is nothing to save */
+  entryId: string | null;
+  meanings: WordMeanings;
+  /** already in the player's saved words */
+  saved: boolean;
+}
 
 /**
  * Client-safe view of a game. `target` is only ever populated once the game is
@@ -57,6 +77,8 @@ export interface WordleGameView {
   /** revealed only when the game is finished */
   target: string | null;
   xpAwarded: number | null;
+  /** once the game is finished: the answer's meanings and its dictionary entry; null while playing */
+  word: WordleWordCard | null;
 }
 
 interface GameRow {
@@ -72,6 +94,8 @@ interface GameRow {
   started_at: Date;
   finished_at: Date | null;
   time_ms: number | null;
+  /** when the player saved this game's word (1751000590000): it counts once toward words learned */
+  word_saved_at?: Date | null;
 }
 
 export const MAX_ATTEMPTS = 6;
@@ -86,54 +110,63 @@ export class WordleService {
   private readonly streaks: StreakService;
   private readonly now: () => Date;
   private readonly milestones?: MilestoneRecorder;
+  private readonly savedWords: SavedWordsService;
 
   constructor(
     private readonly pool: pg.Pool,
-    deps: { streaks?: StreakService; now?: () => Date; milestones?: MilestoneRecorder } = {},
+    deps: { streaks?: StreakService; now?: () => Date; milestones?: MilestoneRecorder; savedWords?: SavedWordsService } = {},
   ) {
     this.streaks = deps.streaks ?? new StreakService(pool);
     this.now = deps.now ?? (() => new Date());
     this.milestones = deps.milestones;
+    this.savedWords = deps.savedWords ?? new SavedWordsService(pool);
   }
 
   /**
-   * Start (or resume) today's daily game. The word is the same for every player
-   * on a given UTC day. A second call the same day returns the existing game
+   * Start (or resume) today's daily game at a difficulty. There is one daily
+   * word per difficulty, the same for every player on a given UTC day; a
+   * second call the same day at the same difficulty returns the existing game
    * (resumes an unfinished one, or the finished result) — never a fresh word.
+   * Another difficulty is another daily, so the chips the apps show in daily
+   * mode each mean what they say.
    */
   async startDaily(userId: string, difficulty: Difficulty): Promise<StartResult> {
     const dayIndex = utcDayIndex(this.now());
 
-    const existing = await this.pool.query<GameRow>(
-      `SELECT * FROM wordle_games WHERE user_id = $1 AND mode = 'daily' AND day_index = $2`,
-      [userId, dayIndex],
-    );
-    const found = existing.rows[0];
-    if (found) return { ok: true, game: this.toView(found) };
+    const found = await this.dailyGame(userId, dayIndex, difficulty);
+    if (found) return { ok: true, game: await this.withWord(userId, found) };
 
-    const picked = await this.pickTarget(difficulty, dayIndex);
+    const picked = await this.dailyTarget(difficulty, dayIndex);
     if (!picked) return { ok: false, reason: 'empty-pool' };
+    // an empty band fell back to another one: that band's daily, if the player has one already, is the game
+    if (picked.difficulty !== difficulty) {
+      const fallen = await this.dailyGame(userId, dayIndex, picked.difficulty);
+      if (fallen) return { ok: true, game: await this.withWord(userId, fallen) };
+    }
 
     // Two asks at once (a page that mounts twice, two devices opening the app together) both find no game above and
-    // both come here. The day's one game is the table's to keep (`wordle_games_one_daily_per_day`): the second insert
-    // steps aside and is given the game the first one made, rather than failing the request with the index's name.
+    // both come here. The day's game at a difficulty is the table's to keep (`wordle_games_one_daily_per_difficulty`):
+    // the second insert steps aside and is given the game the first one made, rather than failing the request.
     const inserted = await this.pool.query<GameRow>(
       `INSERT INTO wordle_games (user_id, mode, difficulty, day_index, target, target_length)
        VALUES ($1, 'daily', $2, $3, $4, $5)
-       ON CONFLICT (user_id, day_index) WHERE mode = 'daily' DO NOTHING
+       ON CONFLICT (user_id, day_index, difficulty) WHERE mode = 'daily' DO NOTHING
        RETURNING *`,
       [userId, picked.difficulty, dayIndex, picked.target, toLetters(picked.target).length],
     );
     const made = inserted.rows[0];
     if (made) return { ok: true, game: this.toView(made) };
-    const theirs = await this.pool.query<GameRow>(`SELECT * FROM wordle_games WHERE user_id = $1 AND mode = 'daily' AND day_index = $2`, [userId, dayIndex]);
-    const kept = theirs.rows[0];
-    return kept ? { ok: true, game: this.toView(kept) } : { ok: false, reason: 'empty-pool' };
+    const kept = await this.dailyGame(userId, dayIndex, picked.difficulty);
+    return kept ? { ok: true, game: await this.withWord(userId, kept) } : { ok: false, reason: 'empty-pool' };
   }
 
-  /** Start a fresh practice game: random word, unlimited, no streak/daily effect. */
+  /**
+   * Start a fresh practice game: a random word, unlimited, no streak/daily
+   * effect — and none of the player's last RECENT_TARGETS words, so the same
+   * word does not come round twice in an evening.
+   */
   async startPractice(userId: string, difficulty: Difficulty): Promise<StartResult> {
-    const picked = await this.pickTarget(difficulty, null);
+    const picked = await this.practiceTarget(userId, difficulty);
     if (!picked) return { ok: false, reason: 'empty-pool' };
 
     const inserted = await this.pool.query<GameRow>(
@@ -170,7 +203,7 @@ export class WordleService {
 
       const game = this.rehydrate(row);
       const normalized = normalizeWord(word);
-      const known = await this.wordExists(client, normalized);
+      const known = await isWordleGuess(client, normalized);
       const dict = new InMemoryDictionary(known ? [normalized] : []);
       const applied = applyGuess(game, row.target, word, dict);
       if (!applied.ok) {
@@ -205,7 +238,7 @@ export class WordleService {
         await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
       }
       if (finished) await this.milestones?.recordSoloGame?.(userId).catch(() => undefined);
-      const view = this.toView(updated.rows[0]!);
+      const view = await this.withWord(userId, updated.rows[0]!);
       view.xpAwarded = xpAwarded;
       return { ok: true, game: view };
     } catch (err) {
@@ -226,6 +259,45 @@ export class WordleService {
     );
     const stats = res.rows[0] ? fromStatsRow(res.rows[0]) : emptyStats();
     return { ...stats, winPercentage: winPercentage(stats), averageGuesses: averageGuesses(stats) };
+  }
+
+  /**
+   * Save a finished game's word to the player's words (SM-2, as the
+   * dictionary's own save does), and count it once toward `wordsLearned`.
+   * Saving it again changes nothing and counts nothing; a full list is the
+   * dictionary's refusal, passed on as it is.
+   */
+  async saveWord(userId: string, gameId: string): Promise<SaveWordResult> {
+    const res = await this.pool.query<GameRow>(`SELECT * FROM wordle_games WHERE id = $1 AND user_id = $2`, [gameId, userId]);
+    const row = res.rows[0];
+    if (!row) return { ok: false, reason: 'not-found' };
+    if (row.status === 'playing') return { ok: false, reason: 'not-finished' };
+    const entryId = await wordleEntryId(this.pool, row.target);
+    if (!entryId) return { ok: false, reason: 'no-entry' };
+
+    const saved = await this.savedWords.save(userId, entryId, await this.userTimeZone(this.pool, userId), this.now());
+
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      // a game's word counts once, however often it is saved (or unsaved and saved again)
+      const first = await client.query(`UPDATE wordle_games SET word_saved_at = now() WHERE id = $1 AND word_saved_at IS NULL`, [gameId]);
+      if (first.rowCount) {
+        await client.query(
+          `INSERT INTO wordle_stats (user_id, words_learned, updated_at) VALUES ($1, 1, now())
+           ON CONFLICT (user_id) DO UPDATE SET words_learned = wordle_stats.words_learned + 1, updated_at = now()`,
+          [userId],
+        );
+      }
+      const stats = await client.query<{ words_learned: number }>(`SELECT words_learned FROM wordle_stats WHERE user_id = $1`, [userId]);
+      await client.query('COMMIT');
+      return { ok: true, saved, wordsLearned: stats.rows[0]?.words_learned ?? 0 };
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   // ---- internals -------------------------------------------------------------
@@ -293,7 +365,7 @@ export class WordleService {
     );
   }
 
-  private async userTimeZone(client: pg.PoolClient, userId: string): Promise<string> {
+  private async userTimeZone(client: Pick<pg.Pool, 'query'>, userId: string): Promise<string> {
     const res = await client.query<{ timezone: string }>(
       `SELECT timezone FROM users WHERE id = $1`,
       [userId],
@@ -301,46 +373,99 @@ export class WordleService {
     return res.rows[0]?.timezone ?? 'UTC';
   }
 
-  /**
-   * Is this a word at all?
-   *
-   * Looked up by the folded key, not the one the guess was normalized with.
-   * Almost every Kurmancî word carries a ç ê î ş or û, and an imported lexicon
-   * stores those folded (1751000115000) — matching on the unfolded key would
-   * reject hundreds of thousands of real words. A missing word is a correct
-   * answer thrown out, which is the more annoying failure of the two.
-   */
-  private async wordExists(executor: Pick<pg.Pool, 'query'>, normalized: string): Promise<boolean> {
-    if (!normalized) return false;
-    const res = await executor.query<{ exists: boolean }>(
-      `SELECT EXISTS (SELECT 1 FROM dict_entries WHERE headword_folded = $1) AS exists`,
-      [dictionaryKey(normalized)],
+  /** The player's daily game of that day at that difficulty, if there is one. */
+  private async dailyGame(userId: string, dayIndex: number, difficulty: Difficulty): Promise<GameRow | null> {
+    const res = await this.pool.query<GameRow>(
+      `SELECT * FROM wordle_games WHERE user_id = $1 AND mode = 'daily' AND day_index = $2 AND difficulty = $3`,
+      [userId, dayIndex, difficulty],
     );
-    return res.rows[0]?.exists ?? false;
+    return res.rows[0] ?? null;
   }
 
   /**
-   * Pick a target for a difficulty, falling back to an easier tier when the
-   * pool is empty (per the spec's empty-pool edge case). `dayIndex` null → a
-   * random practice word; otherwise the deterministic daily pick.
+   * The daily word of a day at a difficulty, falling back to an easier tier
+   * when the pool is empty (per the spec's empty-pool edge case).
    */
-  private async pickTarget(
-    difficulty: Difficulty,
-    dayIndex: number | null,
-  ): Promise<{ target: string; difficulty: Difficulty } | null> {
+  private async dailyTarget(difficulty: Difficulty, dayIndex: number): Promise<{ target: string; difficulty: Difficulty } | null> {
     const order = [difficulty, ...HARDER_TO_EASIER.filter((d) => d !== difficulty)];
     // the word list read once, and each tier's pool cut from it (an empty tier used to read it all again)
     const words = await loadWordlePool(this.pool);
     for (const tier of order) {
       const pool = filterByDifficulty(words, tier);
       if (pool.length === 0) continue;
-      const target =
-        dayIndex === null
-          ? pool[Math.floor(Math.random() * pool.length)]!
-          : pickDailyWord(pool, dayIndex, tier);
-      if (target) return { target, difficulty: tier };
+      return { target: await this.scheduledWord(tier, dayIndex, pool), difficulty: tier };
     }
     return null;
+  }
+
+  /**
+   * A day's word at a difficulty, as the schedule (`wordle_daily`) holds it.
+   *
+   * The first player to ask on a day sets it, and from then on it is that
+   * day's word whatever happens to the pool: a word an admin adds reorders
+   * the permutation `pickDailyWord` walks, and used to move today's word for
+   * everyone who had not played yet. A day already played before the schedule
+   * existed keeps the word it was played with. A new word skips every word set
+   * in the last `dailyRepeatWindow` days, so a growing pool never brings one
+   * back early either.
+   */
+  private async scheduledWord(difficulty: Difficulty, dayIndex: number, pool: readonly string[]): Promise<string> {
+    const set = await this.pool.query<{ word: string }>(`SELECT word FROM wordle_daily WHERE day_index = $1 AND difficulty = $2`, [
+      dayIndex,
+      difficulty,
+    ]);
+    if (set.rows[0]) return set.rows[0].word;
+
+    const played = await this.pool.query<{ target: string }>(
+      `SELECT target FROM wordle_games WHERE mode = 'daily' AND day_index = $1 AND difficulty = $2 ORDER BY started_at LIMIT 1`,
+      [dayIndex, difficulty],
+    );
+    let word = played.rows[0]?.target ?? null;
+    if (!word) {
+      const recent = await this.pool.query<{ word: string }>(
+        `SELECT word FROM wordle_daily WHERE difficulty = $1 AND day_index >= $2 AND day_index < $3`,
+        [difficulty, dayIndex - dailyRepeatWindow(pool.length), dayIndex],
+      );
+      word = pickDailyWord(pool, dayIndex, difficulty, new Set(recent.rows.map((r) => r.word)))!;
+    }
+    // two first asks at once: one sets the day's word, and both are given it
+    await this.pool.query(`INSERT INTO wordle_daily (day_index, difficulty, word) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`, [
+      dayIndex,
+      difficulty,
+      word,
+    ]);
+    const kept = await this.pool.query<{ word: string }>(`SELECT word FROM wordle_daily WHERE day_index = $1 AND difficulty = $2`, [
+      dayIndex,
+      difficulty,
+    ]);
+    return kept.rows[0]?.word ?? word;
+  }
+
+  /**
+   * A practice word: random, falling back to an easier tier when the pool is
+   * empty, and none of the player's recent targets while the band has others.
+   */
+  private async practiceTarget(userId: string, difficulty: Difficulty): Promise<{ target: string; difficulty: Difficulty } | null> {
+    const order = [difficulty, ...HARDER_TO_EASIER.filter((d) => d !== difficulty)];
+    const [words, recent] = await Promise.all([loadWordlePool(this.pool), recentTargets(this.pool, [userId])]);
+    for (const tier of order) {
+      const pool = filterByDifficulty(words, tier);
+      if (pool.length === 0) continue;
+      const fresh = pool.filter((w) => !recent.has(w));
+      const from = fresh.length > 0 ? fresh : pool;
+      return { target: from[Math.floor(Math.random() * from.length)]!, difficulty: tier };
+    }
+    return null;
+  }
+
+  /** The view of a game, with the answer's card once it is finished. */
+  private async withWord(userId: string, row: GameRow): Promise<WordleGameView> {
+    const view = this.toView(row);
+    if (row.status === 'playing') return view;
+    const [meanings, entryId] = await Promise.all([meaningsOf(this.pool, 'kmr', [row.target]), wordleEntryId(this.pool, row.target)]);
+    const saved = entryId ? await this.savedWords.isSaved(userId, entryId) : false;
+    view.word = { entryId, meanings: meanings.get(row.target) ?? {}, saved };
+    return view;
   }
 
   /**
@@ -372,6 +497,7 @@ export class WordleService {
       remainingAttempts: Math.max(0, MAX_ATTEMPTS - row.guesses.length),
       target: finished ? row.target : null,
       xpAwarded: null,
+      word: null,
     };
   }
 }

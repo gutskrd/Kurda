@@ -24,6 +24,14 @@
  * with any problem is logged and left for a later start, once the file is
  * fixed. A seeded one is remembered in `content_seeds`, as the starter
  * stories and the first case are, so a starter an editor deleted stays gone.
+ *
+ * An entry may be kept back (`"status": "held"`: a saying waiting for a
+ * native speaker and a source) or taken out (`"status": "retired"`). A held
+ * one is seeded as a draft and never published, and an untouched row of it
+ * that is live goes back to draft; a retired one is never seeded, and an
+ * untouched row of it is archived. The status is the file's, not the row's,
+ * so it is taken off before the entry is checked.
+ *
  * Nothing here throws: a broken file must not stop the API starting.
  */
 import { readFile } from 'node:fs/promises';
@@ -54,12 +62,17 @@ const PROVERB_LEVEL = 3;
 
 const seedName = (kind: LoreKind, slug: string): string => `game_content:starter:${kind}:${slug}`;
 
+/** What the file says of an entry beside its text: live (no status), held back, or taken out. */
+export const STARTER_LORE_STATUSES = ['held', 'retired'] as const;
+export type StarterLoreStatus = 'live' | (typeof STARTER_LORE_STATUSES)[number];
+
 const entry = z.looseObject({
   slug: z.string(),
   dialect: z.enum(GAME_DIALECTS),
   translations: z.record(z.string(), z.unknown()).default({}),
   notes: z.string().nullish(),
   level: z.number().int().min(1).max(5).optional(),
+  status: z.enum(STARTER_LORE_STATUSES).optional(),
 });
 const fileSchemas = {
   riddle: z.object({ riddles: z.array(entry) }),
@@ -81,7 +94,15 @@ function tidy(value: unknown): unknown {
 
 /** One entry as it will be written: its row and its translations, or every problem with it. */
 export type StarterLore =
-  | { ok: true; slug: string; dialect: GameDialect; level: number; payload: unknown; translations: Array<{ locale: AppLocale; payload: LoreTranslation }> }
+  | {
+      ok: true;
+      slug: string;
+      dialect: GameDialect;
+      level: number;
+      status: StarterLoreStatus;
+      payload: unknown;
+      translations: Array<{ locale: AppLocale; payload: LoreTranslation }>;
+    }
   | { ok: false; slug: string; issues: GameContentIssue[] };
 
 /** A file's entries, each checked whole (pure, for the tests and for the seeding). */
@@ -90,7 +111,7 @@ export function starterLore(kind: LoreKind, file: unknown): { entries: StarterLo
   if (!parsed.success) return { unreadable: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ') };
   const list = 'riddles' in parsed.data ? parsed.data.riddles : parsed.data.proverbs;
   const entries = list.map((raw): StarterLore => {
-    const { translations, dialect, level, notes, ...rest } = tidy(raw) as z.infer<typeof entry> & Record<string, unknown>;
+    const { translations, dialect, level, notes, status, ...rest } = tidy(raw) as z.infer<typeof entry> & Record<string, unknown>;
     const checked = checkGameContent(kind, dialect, { ...rest, ...(notes ? { notes } : {}) });
     if (!checked.ok) return { ok: false, slug: String(raw.slug), issues: checked.issues };
     const hints = kind === 'riddle' ? (checked.payload as RiddleContent).hints.length : undefined;
@@ -107,7 +128,7 @@ export function starterLore(kind: LoreKind, file: unknown): { entries: StarterLo
     }
     if (issues.length > 0) return { ok: false, slug: String(raw.slug), issues };
     const stored = kind === 'riddle' ? RIDDLE_LEVELS[(checked.payload as RiddleContent).difficulty] : (level ?? PROVERB_LEVEL);
-    return { ok: true, slug: String(raw.slug), dialect, level: stored, payload: checked.payload, translations: out };
+    return { ok: true, slug: String(raw.slug), dialect, level: stored, status: status ?? 'live', payload: checked.payload, translations: out };
   });
   return { entries };
 }
@@ -116,10 +137,12 @@ export async function seedStarterLore(
   pool: pg.Pool,
   log: Pick<FastifyBaseLogger, 'info' | 'warn'>,
   files: Readonly<Record<LoreKind, URL>> = STARTER_LORE_FILES,
-): Promise<{ seeded: string[]; refreshed: string[]; published: string[] }> {
+): Promise<{ seeded: string[]; refreshed: string[]; published: string[]; held: string[]; retired: string[] }> {
   const seeded: string[] = [];
   const refreshed: string[] = [];
   const published: string[] = [];
+  const held: string[] = [];
+  const retired: string[] = [];
   for (const kind of Object.keys(files) as LoreKind[]) {
     try {
       let read: ReturnType<typeof starterLore>;
@@ -142,6 +165,8 @@ export async function seedStarterLore(
           log.warn({ kind, slug: e.slug, issues: e.issues.slice(0, 10) }, 'starter riddle or proverb has errors; not seeded until they are fixed');
           continue;
         }
+        // a starter taken out of the collection is never put in
+        if (e.status === 'retired') continue;
         const client = await pool.connect();
         try {
           await client.query('BEGIN');
@@ -170,7 +195,7 @@ export async function seedStarterLore(
           client.release();
         }
       }
-      // every starter no person has changed: brought up to its file, and published
+      // every starter no person has changed: brought up to its file, and published, held back or archived as it says
       for (const e of read.entries) {
         if (!e.ok) continue;
         const outcome = await keepCurrent(pool, kind, e);
@@ -180,6 +205,8 @@ export async function seedStarterLore(
         }
         if (outcome.refreshed) refreshed.push(`${kind}:${e.slug}`);
         if (outcome.published) published.push(`${kind}:${e.slug}`);
+        if (outcome.held) held.push(`${kind}:${e.slug}`);
+        if (outcome.retired) retired.push(`${kind}:${e.slug}`);
       }
     } catch (err) {
       log.warn({ err, kind }, 'starter riddles or proverbs could not be seeded');
@@ -188,7 +215,9 @@ export async function seedStarterLore(
   if (seeded.length > 0) log.info({ seeded }, 'starter riddles and proverbs seeded');
   if (refreshed.length > 0) log.info({ refreshed }, 'starter riddles and proverbs brought up to their files');
   if (published.length > 0) log.info({ published }, 'starter riddles and proverbs published');
-  return { seeded, refreshed, published };
+  if (held.length > 0) log.info({ held }, 'starter riddles and proverbs held back as drafts');
+  if (retired.length > 0) log.info({ retired }, 'starter riddles and proverbs retired');
+  return { seeded, refreshed, published, held, retired };
 }
 
 /** A value as text with its keys in order, so a row read back from jsonb compares equal to the file it came from. */
@@ -206,16 +235,26 @@ function stable(value: unknown): string {
  * One starter brought up to its file and published, under a row lock, when no
  * person has changed it: the row's text and level, and each translation no
  * reviewer has touched (a translation the file adds is added; one a reviewer
- * marked or edited stays theirs).
+ * marked or edited stays theirs). A held one is kept a draft, and goes back
+ * to one if it was live; a retired one is archived.
  */
 async function keepCurrent(
   pool: pg.Pool,
   kind: LoreKind,
   e: Extract<StarterLore, { ok: true }>,
-): Promise<{ refreshed: boolean; published: boolean } | 'failed'> {
+): Promise<{ refreshed: boolean; published: boolean; held: boolean; retired: boolean } | 'failed'> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    if (e.status === 'retired') {
+      const gone = await client.query(
+        `UPDATE game_content SET status = 'archived', lock_version = lock_version + 1
+          WHERE kind = $1 AND dialect = $2 AND origin = $3 AND source = 'starter' AND updated_by IS NULL AND status IN ('draft', 'published')`,
+        [kind, e.dialect, `starter:${e.slug}`],
+      );
+      await client.query('COMMIT');
+      return { refreshed: false, published: false, held: false, retired: (gone.rowCount ?? 0) > 0 };
+    }
     const found = await client.query<{ id: string; status: string; level: number; payload: unknown }>(
       `SELECT id, status, level, payload FROM game_content
         WHERE kind = $1 AND dialect = $2 AND origin = $3 AND source = 'starter' AND updated_by IS NULL AND status IN ('draft', 'published')
@@ -225,6 +264,7 @@ async function keepCurrent(
     const row = found.rows[0];
     let refreshed = false;
     let published = false;
+    let held = false;
     if (row) {
       if (row.level !== e.level || stable(row.payload) !== stable(e.payload)) {
         // the version moves, so an editor with the row open reloads before saving over it
@@ -259,7 +299,14 @@ async function keepCurrent(
           refreshed = true;
         }
       }
-      if (row.status === 'draft') {
+      if (e.status === 'held' && row.status === 'published') {
+        // back to a draft until a native speaker has confirmed it: the version moves, as for any change
+        await client.query(
+          `UPDATE game_content SET status = 'draft', review_status = 'unreviewed', lock_version = lock_version + 1 WHERE id = $1`,
+          [row.id],
+        );
+        held = true;
+      } else if (e.status === 'live' && row.status === 'draft') {
         await client.query(
           `UPDATE game_content SET status = 'published', review_status = 'approved', reviewed_at = now(), published_at = now() WHERE id = $1`,
           [row.id],
@@ -268,7 +315,7 @@ async function keepCurrent(
       }
     }
     await client.query('COMMIT');
-    return { refreshed, published };
+    return { refreshed, published, held, retired: false };
   } catch {
     await client.query('ROLLBACK').catch(() => undefined);
     return 'failed';

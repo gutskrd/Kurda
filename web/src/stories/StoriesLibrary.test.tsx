@@ -150,9 +150,9 @@ describe('the library', () => {
     fakeApi({ 'GET /stories/library': libraryFixture() });
     library();
     // on the Categories shelf, and in the panel's categories alike
-    expect(await screen.findAllByRole('button', { name: /Çîrokên heywanan/ })).toHaveLength(1);
+    expect(await screen.findAllByRole('button', { name: /Çîrokên ajalan/ })).toHaveLength(1);
     await userEvent.click(await screen.findByRole('button', { name: 'Rêz bike û parzûn bike' }));
-    expect(within(screen.getByRole('dialog')).getByRole('radio', { name: /Çîrokên heywanan/ })).toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).getByRole('radio', { name: /Çîrokên ajalan/ })).toBeInTheDocument();
   });
 
   it('names the categories it knows in every language from its own words, and one added since from the list', async () => {

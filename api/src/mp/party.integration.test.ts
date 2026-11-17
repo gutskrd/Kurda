@@ -16,7 +16,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { IMPOSTOR_GUESS_OPTIONS, type ImpostorBoard, type ImpostorState, type MultiView } from '@kurda/shared';
+import { IMPOSTOR_CATEGORY_MIN, type ImpostorBoard, type ImpostorState, type MultiView } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
@@ -315,7 +315,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
           { word, meanings: { en: `${word} meaning` }, category, hint: { ku: `${tag}kom`, meanings: { en: 'a group of things' } }, forms: [] },
         ]);
       };
-      for (let i = 0; i < IMPOSTOR_GUESS_OPTIONS; i++) await add(`${tag}kat${letters(i)}`, chosen);
+      // just enough for a fair round: the word and its rivals all of one category
+      for (let i = 0; i < IMPOSTOR_CATEGORY_MIN; i++) await add(`${tag}kat${letters(i)}`, chosen);
       await add(`${tag}yekane`, lone);
       await bustAvailability(app.cache);
       await bustGamePools(app.cache);
@@ -445,11 +446,13 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
       await repo.addExercise(lesson, 1, 'match_pairs', {
         pairs: [
           { left: `${tag}pisik`, right: 'cat' },
-          { left: `${tag}kucik`, right: 'the dog' },
+          { left: `${tag}kucik`, right: 'dog' },
+          // a form glossed with its article ("the dog"), which as a card would show the form as the word
+          { left: `${tag}kucike`, right: 'the dog' },
           { left: `${tag}rev`, right: 'to run' },
           { left: `${tag}lewra`, right: 'because' },
           // the category's own name, taught as a word: never a card of that category
-          { left: 'heywan', right: 'cat, animal' },
+          { left: 'ajal', right: 'cat, animal' },
         ],
       });
       await repo.publishLesson(lesson);
@@ -458,7 +461,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
       const editor = await register('dseditor', '{content_editor}');
       const picked = await call(editor, 'GET', `/admin/game-content/vocabulary?dialect=kmr&q=${tag}`);
       expect(picked.status, picked.raw).toBe(200);
-      expect(picked.body.words.map((w: { ku: string }) => w.ku).sort()).toEqual([`${tag}kucik`, `${tag}lewra`, `${tag}pisik`, `${tag}rev`]);
+      expect(picked.body.words.map((w: { ku: string }) => w.ku).sort()).toEqual([`${tag}kucik`, `${tag}kucike`, `${tag}lewra`, `${tag}pisik`, `${tag}rev`]);
 
       const imported = await call(editor, 'POST', '/admin/game-content/import', { from: 'vocabulary', dialect: 'kmr' });
       expect(imported.status, imported.raw).toBe(200);
@@ -467,17 +470,17 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
         [`${tag}%`],
       );
       const starters = rows.rows.filter((r) => r.source === 'starter');
-      // a word no category takes ("because") makes no card; a verb goes among the verbs
+      // a word no category takes ("because") makes no card, nor does a form; a verb goes among the verbs
       expect(starters.map((r) => r.payload.word).sort()).toEqual([`${tag}kucik`, `${tag}pisik`, `${tag}rev`]);
       for (const r of starters) {
         const verb = r.payload.word === `${tag}rev`;
         expect(r).toMatchObject({
           status: 'draft',
           review_status: 'unreviewed',
-          payload: verb ? { category: 'actions', hint: { ku: 'lêker' } } : { category: 'animals', hint: { ku: 'heywan' } },
+          payload: verb ? { category: 'actions', hint: { ku: 'lêker' } } : { category: 'animals', hint: { ku: 'ajal' } },
         });
       }
-      const ownName = await pool.query(`SELECT 1 FROM game_content WHERE kind = 'word_card' AND payload->>'word' = 'heywan' AND created_by = $1`, [editor.id]);
+      const ownName = await pool.query(`SELECT 1 FROM game_content WHERE kind = 'word_card' AND payload->>'word' = 'ajal' AND created_by = $1`, [editor.id]);
       expect(ownName.rowCount).toBe(0);
       // an import run twice adds nothing
       const again = await call(editor, 'POST', '/admin/game-content/import', { from: 'vocabulary', dialect: 'kmr' });

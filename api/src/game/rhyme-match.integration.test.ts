@@ -134,6 +134,16 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
     expect(hostRow.score).toBeGreaterThan(p2Row.score);
     expect(hostRow.xpAwarded!).toBeGreaterThan(p2Row.xpAwarded!);
 
+    // the rhyme nobody found is shown at the end, and none that anybody did
+    expect(results!.missed.map((m) => m.word)).toEqual([rhymes[2]]);
+    // how many were perfect, and when the last one came, are kept for the tie-break
+    const counted = await pool.query<{ perfect: number; last_scored_at: Date | null }>(
+      `SELECT perfect, last_scored_at FROM rhyme_match_players WHERE match_id = $1 AND user_id = $2`,
+      [matchId, host],
+    );
+    expect(counted.rows[0]!.perfect).toBe(2);
+    expect(counted.rows[0]!.last_scored_at).not.toBeNull();
+
     // XP landed in the ledger and is idempotent (calling results again = no change)
     expect(await ledgerXp(host)).toBe(hostRow.xpAwarded);
     await svc().results(matchId, host);

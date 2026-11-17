@@ -8,11 +8,12 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('../feedback/gameFinished', () => ({ reportGameFinished: vi.fn(), leftResults: vi.fn() }));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { reportGameFinished } from '../feedback/gameFinished';
+import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 import { RhymeTrainingScreen } from './RhymeTrainingScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -89,5 +90,124 @@ describe('RhymeTrainingScreen', () => {
     expect(await screen.findByRole('heading', { name: 'Round finished' })).toBeTruthy();
     expect(screen.getByText('kar')).toBeTruthy();
     expect(screen.getByLabelText('Rhymes you found')).toBeTruthy();
+  });
+});
+
+/*
+ * A variety without enough curated prompts would open a round on the other
+ * variety's word, or on none: it keeps its place in the choice, marked coming
+ * soon, and says so where Start would be. The screen opens on the learner's
+ * own variety when rounds are offered in it.
+ */
+describe('Rhyme training, in the varieties it is offered in', () => {
+  const availability = (sorani: boolean) =>
+    ok({ dialects: { kurmanci: { prompts: 150, available: true }, sorani: { prompts: sorani ? 80 : 0, available: sorani } }, minimum: 40 });
+
+  afterEach(() => {
+    resetCourseDialect();
+    localStorage.clear();
+  });
+
+  it('marks a variety with no rounds yet as coming soon, and offers no Start in it', async () => {
+    const client = fakeClient({ 'GET /rhyme/availability': availability(false), 'POST /rhyme/training': ok(round()) });
+    testAuth.client = client;
+    renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
+
+    const sorani = await screen.findByRole('radio', { name: 'Soranî · Coming soon' });
+    expect(screen.getByRole('radio', { name: 'Kurmancî' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(sorani);
+    expect(screen.getByText('Rhyme games aren’t offered in this Kurdish yet.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Start/ })).toBeNull();
+    expect(client.calls.some((c) => c.path === '/rhyme/training')).toBe(false);
+
+    // the other variety brings Start back, and its round is asked for in that variety
+    fireEvent.click(screen.getByRole('radio', { name: 'Kurmancî' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Start/ }));
+    await waitFor(() => expect(client.calls.find((c) => c.path === '/rhyme/training')?.body).toEqual({ dialect: 'kurmanci' }));
+  });
+
+  it('opens on the variety a Soranî learner is learning once rounds are offered in it, and on Kurmancî before', async () => {
+    rememberCourseDialect('sorani');
+    testAuth.client = fakeClient({ 'GET /rhyme/availability': availability(false) });
+    renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Kurmancî' }).getAttribute('aria-checked')).toBe('true'));
+    expect(screen.getByRole('button', { name: /^Start/ })).toBeTruthy();
+    cleanup();
+
+    const sorani = round({ dialect: 'sorani', prompt: 'باران' });
+    const client = fakeClient({ 'GET /rhyme/availability': availability(true), 'POST /rhyme/training': ok(sorani) });
+    testAuth.client = client;
+    renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
+    expect(screen.getByRole('radio', { name: 'Soranî' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: /^Start/ }));
+    // the round is the Soranî one, and its word reads right to left on an English screen
+    const prompt = await screen.findByText('باران');
+    expect(client.calls.find((c) => c.path === '/rhyme/training')?.body).toEqual({ dialect: 'sorani' });
+    expect(getComputedStyle(prompt).direction).toBe('rtl');
+    expect(screen.queryByText(/Coming soon/)).toBeNull();
+  });
+
+  it('offers both, as before, when the server cannot say', async () => {
+    testAuth.client = fakeClient({ 'GET /rhyme/availability': { ok: false, error: { kind: 'server', message: 'x', status: 500 } } });
+    renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
+    fireEvent.click(screen.getByRole('radio', { name: 'Soranî' }));
+    expect(screen.getByRole('button', { name: /^Start/ })).toBeTruthy();
+    expect(screen.queryByText(/Coming soon/)).toBeNull();
+  });
+});
+
+describe('Rhyme training, once a round is over', () => {
+  const baran = (over: Record<string, unknown> = {}) => round({ prompt: 'baran', dialect: 'kurmanci', ...over });
+  const missed = [
+    { word: 'nan', meanings: { en: 'bread', fr: 'pain' } },
+    { word: 'jiyan', meanings: {} },
+  ];
+
+  afterEach(() => localStorage.removeItem('kurda_locale_v1'));
+
+  it('lists the rhymes the round missed, each with what it means in the reader’s language', async () => {
+    localStorage.setItem('kurda_locale_v1', 'fr');
+    testAuth.client = fakeClient({
+      'POST /rhyme/training': ok(baran()),
+      'POST /rhyme/training/r1/end': ok({ game: baran({ status: 'ended', remainingMs: 0, missed }) }),
+    });
+    renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: /^Commencer/ }));
+    // nothing of what was missed while the clock runs
+    await screen.findByText('baran');
+    expect(screen.queryByText('nan')).toBeNull();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Terminer la manche' }));
+    const list = await screen.findByTestId('missed-rhymes');
+    expect(within(list).getByRole('heading', { name: 'Les rimes qui t’ont échappé' })).toBeTruthy();
+    expect(within(list).getByText('nan')).toBeTruthy();
+    expect(within(list).getByText('pain')).toBeTruthy();
+    // a word nobody has written a meaning for is still a rhyme worth knowing
+    expect(within(list).getByText('jiyan')).toBeTruthy();
+  });
+
+  it('shows no list when there is nothing the round missed', async () => {
+    testAuth.client = fakeClient({
+      'POST /rhyme/training': ok(baran()),
+      'POST /rhyme/training/r1/end': ok({ game: baran({ status: 'ended', remainingMs: 0, missed: [] }) }),
+    });
+    renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Start/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'End round' }));
+    expect(await screen.findByRole('heading', { name: 'Round finished' })).toBeTruthy();
+    expect(screen.queryByText('Rhymes you missed')).toBeNull();
+  });
+
+  it('turns away a word whose ending does all the rhyming, in general words', async () => {
+    // malan is mal with an ending: only the ending rhymes with baran
+    testAuth.client = fakeClient({
+      'POST /rhyme/training': ok(baran()),
+      'POST /rhyme/training/r1/guesses': ok({ game: baran(), result: { accepted: false, quality: 'none', points: 0, normalized: 'malan', reason: 'inflected' } }),
+    });
+    renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Start/ }));
+    fireEvent.change(await screen.findByLabelText('Your rhyme'), { target: { value: 'malan' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    expect(await screen.findByText('Not accepted — try another.')).toBeTruthy();
   });
 });

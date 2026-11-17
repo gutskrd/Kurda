@@ -47,7 +47,8 @@ export function TableChoices({
   const difficulties = GAME_DIFFICULTIES.filter((d) => open.find((o) => o.dialect === chosenDialect)?.difficulties?.includes(d));
   const chosenDifficulty = difficulty && difficulties.includes(difficulty) ? difficulty : (difficulties[0] ?? null);
   useEffect(() => {
-    onChange(chosenDialect && chosenDifficulty ? { dialect: chosenDialect, difficulty: chosenDifficulty, minutes } : null);
+    // a table this app makes offers the friends all four answers (yes, could be, no, not sure); one without the count is a table of two
+    onChange(chosenDialect && chosenDifficulty ? { dialect: chosenDialect, difficulty: chosenDifficulty, minutes, answers: 4 } : null);
   }, [chosenDialect, chosenDifficulty, minutes, onChange]);
   if (!chosenDialect || !chosenDifficulty) return <p className="story-setup-note">{t('games.whoAmI.notOffered')}</p>;
   return (

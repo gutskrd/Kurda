@@ -125,6 +125,8 @@ describe.skipIf(!DATABASE_URL)('wordle battle (integration)', () => {
     expect(p2Row.solved).toBe(false);
     expect(hostRow.guesses.length).toBe(1); // full history revealed
     expect(hostRow.xpAwarded!).toBeGreaterThan(p2Row.xpAwarded!);
+    // what the word means goes to everyone with it; these test words have no card and no gloss
+    expect(results!.meanings).toEqual({});
 
     // XP actually landed in the ledger, and is idempotent (no double-award)
     expect(await ledgerXp(host)).toBe(hostRow.xpAwarded);

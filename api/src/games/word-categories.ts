@@ -17,6 +17,16 @@
  * own; and a word with several meanings ("box, chest") goes where its first
  * meaning goes, which is the one the lesson taught.
  *
+ * The same categories name the cards of Impostor's curated deck
+ * (impostor-deck.ts, api/content/games/impostor.json): a deck card names its
+ * category by slug, and its hint is built from the name here, so renaming a
+ * category renames every card's hint. Two categories are folded into others
+ * the deck's way: drinks into food ("food and drink"), since there are too
+ * few drinks for a round of their own, and play into sports. An English
+ * meaning that sorted words into the wrong place is not listed at all (a saw
+ * is also "saw", the scales of a fish are not the scales of a shop, the
+ * spring of water is not the season), so such a word waits for a person.
+ *
  * [native-speaker review] every `kmr` and `ckb` name below.
  */
 import type { Meanings } from '@kurda/shared';
@@ -35,7 +45,8 @@ export interface StarterCategory {
 export const STARTER_CATEGORIES: readonly StarterCategory[] = [
   {
     slug: 'animals',
-    name: { kmr: 'heywan', ckb: 'ئاژەڵ' },
+    // ajal, as the legends and riddles write it: heywan is the Arabic loan
+    name: { kmr: 'ajal', ckb: 'ئاژەڵ' },
     meanings: { en: 'animal', de: 'Tier', es: 'animal', fr: 'animal', nl: 'dier', tr: 'hayvan', ar: 'حيوان' },
     words: [
       'cat', 'dog', 'horse', 'cow', 'sheep', 'goat', 'bird', 'fish', 'chicken', 'hen', 'rooster', 'donkey', 'mouse', 'wolf', 'bear', 'fox', 'lion',
@@ -47,13 +58,14 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
   },
   {
     slug: 'food',
-    name: { kmr: 'xwarin', ckb: 'خواردن' },
-    meanings: { en: 'food', de: 'Essen', es: 'comida', fr: 'nourriture', nl: 'eten', tr: 'yemek', ar: 'طعام' },
+    name: { kmr: 'xwarin û vexwarin', ckb: 'خواردن و خواردنەوە' },
+    meanings: { en: 'food and drink', de: 'Essen und Trinken', es: 'comida y bebida', fr: 'nourriture et boissons', nl: 'eten en drinken', tr: 'yiyecek ve içecek', ar: 'طعام وشراب' },
     words: [
       'bread', 'cheese', 'rice', 'meat', 'egg', 'soup', 'yoghurt', 'yogurt', 'butter', 'honey', 'salt', 'sugar', 'oil', 'cake', 'flour', 'bulgur',
       'kebab', 'dolma', 'dinner', 'breakfast', 'lunch', 'meal', 'olive', 'walnut', 'maize', 'corn', 'nut', 'almond', 'pistachio', 'chickpeas',
       'pasta', 'jam', 'molasses', 'spice', 'biscuit', 'chocolate', 'ice cream', 'sandwich', 'stew', 'pilaf', 'flatbread', 'food', 'cream', 'sausage',
-      'omelette', 'pie', 'pancake', 'dough', 'sesame', 'raisin', 'hazelnut',
+      'omelette', 'pie', 'pancake', 'dough', 'sesame', 'raisin', 'hazelnut', 'water', 'tea', 'coffee', 'milk', 'juice', 'ayran', 'sherbet',
+      'lemonade', 'buttermilk', 'syrup', 'compote', 'mineral water', 'hot chocolate', 'drink', 'herbal tea',
     ],
   },
   {
@@ -77,15 +89,6 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     ],
   },
   {
-    slug: 'drinks',
-    name: { kmr: 'vexwarin', ckb: 'خواردنەوە' },
-    meanings: { en: 'drink', de: 'Getränk', es: 'bebida', fr: 'boisson', nl: 'drankje', tr: 'içecek', ar: 'مشروب' },
-    words: [
-      'water', 'tea', 'coffee', 'milk', 'juice', 'ayran', 'sherbet', 'lemonade', 'cola', 'soda', 'wine', 'beer', 'buttermilk', 'syrup', 'compote',
-      'mineral water', 'hot chocolate', 'drink', 'herbal tea',
-    ],
-  },
-  {
     slug: 'family',
     name: { kmr: 'malbat', ckb: 'خێزان' },
     meanings: { en: 'family', de: 'Familie', es: 'familia', fr: 'famille', nl: 'familie', tr: 'aile', ar: 'عائلة' },
@@ -101,7 +104,7 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     name: { kmr: 'laş', ckb: 'لەش' },
     meanings: { en: 'body', de: 'Körper', es: 'cuerpo', fr: 'corps', nl: 'lichaam', tr: 'vücut', ar: 'جسم' },
     words: [
-      'head', 'hand', 'foot', 'leg', 'arm', 'eye', 'ear', 'nose', 'mouth', 'tooth', 'hair', 'face', 'heart', 'finger', 'knee', 'shoulder', 'neck',
+      'head', 'hand', 'foot', 'leg', 'arm', 'eye', 'nose', 'mouth', 'tooth', 'hair', 'face', 'heart', 'finger', 'knee', 'shoulder', 'neck',
       'tongue', 'lip', 'stomach', 'belly', 'chest', 'bone', 'back', 'blood', 'tear', 'moustache', 'beard', 'skin', 'thumb', 'elbow', 'wrist',
       'ankle', 'cheek', 'chin', 'forehead', 'eyebrow', 'eyelash', 'throat', 'lung', 'brain', 'palm', 'heel', 'toe', 'waist', 'body', 'rib', 'vein',
       'muscle', 'jaw', 'liver', 'kidney',
@@ -148,7 +151,7 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     meanings: { en: 'nature', de: 'Natur', es: 'naturaleza', fr: 'nature', nl: 'natuur', tr: 'doğa', ar: 'طبيعة' },
     words: [
       'mountain', 'river', 'tree', 'flower', 'sea', 'lake', 'sun', 'moon', 'star', 'sky', 'rain', 'snow', 'wind', 'cloud', 'forest', 'stone', 'rock',
-      'field', 'grass', 'valley', 'hill', 'leaf', 'ground', 'earth', 'soil', 'mud', 'rose', 'sapling', 'root', 'summer pastures', 'slope', 'cave',
+      'field', 'grass', 'valley', 'hill', 'leaf', 'ground', 'earth', 'soil', 'mud', 'sapling', 'root', 'summer pastures', 'slope', 'cave',
       'waterfall', 'island', 'desert', 'beach', 'shore', 'sand', 'plain', 'meadow', 'bush', 'branch', 'seed', 'oak', 'pine', 'stream', 'pond',
       'wave', 'summit', 'peak', 'cliff', 'nature', 'thorn', 'blossom', 'moss', 'reed', 'poplar', 'willow', 'horizon', 'volcano', 'glacier',
     ],
@@ -190,8 +193,8 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     meanings: { en: 'school', de: 'Schule', es: 'escuela', fr: 'école', nl: 'school', tr: 'okul', ar: 'مدرسة' },
     words: [
       'book', 'pen', 'pencil', 'notebook', 'lesson', 'class', 'classroom', 'student', 'pupil', 'blackboard', 'board', 'desk', 'bag', 'paper',
-      'homework', 'exam', 'ruler', 'eraser', 'question', 'answer', 'letter', 'page', 'classmate', 'certificate', 'diploma', 'learning', 'list',
-      'dictionary', 'chalk', 'grade', 'mark', 'break', 'alphabet', 'text', 'exercise', 'subject', 'topic', 'information', 'knowledge', 'schoolbag',
+      'homework', 'exam', 'ruler', 'eraser', 'question', 'answer', 'page', 'classmate', 'certificate', 'diploma', 'learning', 'list',
+      'dictionary', 'chalk', 'grade', 'break', 'alphabet', 'text', 'exercise', 'subject', 'topic', 'information', 'knowledge', 'schoolbag',
       'timetable', 'headteacher', 'calculator', 'compass',
     ],
   },
@@ -201,7 +204,7 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     meanings: { en: 'time', de: 'Zeit', es: 'tiempo', fr: 'temps', nl: 'tijd', tr: 'zaman', ar: 'وقت' },
     words: [
       'day', 'night', 'morning', 'evening', 'noon', 'afternoon', 'week', 'month', 'year', 'hour', 'minute', 'today', 'tomorrow', 'yesterday',
-      'spring', 'summer', 'autumn', 'winter', 'season', 'clock', 'saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday',
+      'summer', 'autumn', 'winter', 'season', 'clock', 'saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday',
       'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december', 'dawn',
       'day after tomorrow', 'day before yesterday', 'last year', 'future', 'now', 'early', 'late', 'later', 'sometimes', 'before', 'always', 'never',
       'often', 'soon', 'second', 'century', 'calendar', 'midnight', 'sunrise', 'sunset', 'weekend', 'time', 'past', 'moment', 'age', 'youth',
@@ -230,16 +233,6 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     ],
   },
   {
-    slug: 'play',
-    name: { kmr: 'lîstik', ckb: 'یاری' },
-    meanings: { en: 'game', de: 'Spiel', es: 'juego', fr: 'jeu', nl: 'spel', tr: 'oyun', ar: 'لعبة' },
-    words: [
-      'ball', 'game', 'chess', 'toy', 'kite', 'swing', 'backgammon', 'dance', 'doll', 'puzzle', 'marble', 'hide and seek', 'dice', 'card', 'cards',
-      'riddle', 'role', 'turn', 'tag', 'skipping rope', 'slide', 'seesaw', 'balloon', 'playground', 'board game', 'dominoes', 'yo-yo',
-      'spinning top',
-    ],
-  },
-  {
     slug: 'music',
     name: { kmr: 'muzîk', ckb: 'مۆسیقا' },
     meanings: { en: 'music', de: 'Musik', es: 'música', fr: 'musique', nl: 'muziek', tr: 'müzik', ar: 'موسيقى' },
@@ -264,7 +257,7 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     name: { kmr: 'amûr', ckb: 'ئامێر' },
     meanings: { en: 'tool', de: 'Werkzeug', es: 'herramienta', fr: 'outil', nl: 'gereedschap', tr: 'alet', ar: 'أداة' },
     words: [
-      'hammer', 'saw', 'axe', 'shovel', 'rope', 'ladder', 'needle', 'scissors', 'broom', 'lock', 'nail', 'bucket', 'basket', 'plough', 'sickle',
+      'hammer', 'axe', 'shovel', 'rope', 'ladder', 'needle', 'scissors', 'broom', 'lock', 'nail', 'bucket', 'basket', 'plough', 'sickle',
       'pump', 'wheelbarrow', 'pickaxe', 'drill', 'screwdriver', 'pliers', 'spade', 'rake', 'chain', 'hook', 'brush', 'tape', 'glue', 'thread',
       'wire', 'tool', 'machine', 'net', 'whip', 'stick', 'cane', 'anvil', 'chisel', 'file', 'spanner', 'hoe', 'pitchfork', 'bellows', 'loom',
       'spindle',
@@ -295,8 +288,8 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     name: { kmr: 'hewa', ckb: 'کەشوهەوا' },
     meanings: { en: 'weather', de: 'Wetter', es: 'clima', fr: 'météo', nl: 'weer', tr: 'hava', ar: 'طقس' },
     words: [
-      'weather', 'sunshine', 'cold', 'ice', 'storm', 'cloudy', 'clear', 'fog', 'mist', 'thunder', 'lightning', 'rainbow', 'hail', 'frost', 'heat',
-      'warmth', 'hot', 'warm', 'shade', 'shadow', 'drop', 'flood', 'drought', 'breeze', 'snowstorm', 'temperature', 'degree', 'humid', 'dry', 'wet',
+      'weather', 'sunshine', 'cold', 'ice', 'storm', 'cloudy', 'fog', 'mist', 'thunder', 'lightning', 'rainbow', 'hail', 'frost', 'heat',
+      'hot', 'warm', 'shade', 'shadow', 'drop', 'flood', 'drought', 'breeze', 'snowstorm', 'temperature', 'degree', 'humid', 'dry', 'wet',
       'sunny', 'rainy', 'windy', 'snowy', 'dew', 'drizzle', 'sleet', 'thaw',
     ],
   },
@@ -306,7 +299,7 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     meanings: { en: 'health', de: 'Gesundheit', es: 'salud', fr: 'santé', nl: 'gezondheid', tr: 'sağlık', ar: 'صحة' },
     words: [
       'illness', 'medicine', 'fever', 'cough', 'wound', 'pill', 'health', 'ill', 'healthy', 'injection', 'flu', 'headache', 'toothache', 'bandage',
-      'plaster', 'clinic', 'patient', 'operation', 'vaccine', 'diet', 'sleep', 'rest', 'vitamin', 'allergy', 'sneeze', 'pulse', 'thermometer',
+      'plaster', 'clinic', 'operation', 'vaccine', 'diet', 'sleep', 'rest', 'vitamin', 'allergy', 'sneeze', 'pulse', 'thermometer',
       'prescription', 'cure', 'wheelchair', 'crutch', 'ointment', 'stitches', 'bruise', 'burn', 'swelling',
     ],
   },
@@ -333,10 +326,15 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     slug: 'stories',
     name: { kmr: 'çîrok', ckb: 'چیرۆک' },
     meanings: { en: 'story', de: 'Märchen', es: 'cuento', fr: 'conte', nl: 'verhaal', tr: 'masal', ar: 'حكاية' },
+    words: ['story', 'tale', 'adventure', 'secret', 'trick', 'fable', 'epic', 'poem', 'event', 'riddle', 'dungeon', 'mystery', 'hero tale'],
+  },
+  {
+    slug: 'legends',
+    name: { kmr: 'efsane', ckb: 'ئەفسانە' },
+    meanings: { en: 'legend', de: 'Sage', es: 'leyenda', fr: 'légende', nl: 'legende', tr: 'efsane', ar: 'أسطورة' },
     words: [
-      'story', 'tale', 'legend', 'king', 'prince', 'lord', 'giant', 'ogre', 'treasure', 'adventure', 'secret', 'storyteller', 'hero', 'princess',
-      'queen', 'dragon', 'witch', 'fairy', 'magic', 'sword', 'shield', 'crown', 'trick', 'spell', 'curse', 'monster', 'ghost', 'fable', 'myth',
-      'epic', 'poem', 'event', 'palace', 'throne', 'knight', 'dwarf', 'wizard', 'genie',
+      'legend', 'king', 'prince', 'lord', 'giant', 'ogre', 'treasure', 'storyteller', 'hero', 'princess', 'queen', 'dragon', 'magic', 'sword',
+      'shield', 'crown', 'spell', 'monster', 'myth', 'palace', 'throne', 'knight', 'wizard', 'genie',
     ],
   },
   {
@@ -345,8 +343,8 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     meanings: { en: 'money', de: 'Geld', es: 'dinero', fr: 'argent', nl: 'geld', tr: 'para', ar: 'مال' },
     words: [
       'money', 'price', 'bill', 'debt', 'salary', 'rent', 'kilo', 'expensive', 'cheap', 'gold', 'silver', 'coin', 'banknote', 'wallet', 'purse',
-      'cash', 'loan', 'profit', 'loss', 'tax', 'discount', 'receipt', 'customer', 'bargain', 'wage', 'savings', 'cost', 'free', 'rich', 'poor',
-      'scales', 'weight', 'measure', 'gram', 'litre', 'metre',
+      'cash', 'loan', 'profit', 'loss', 'tax', 'discount', 'receipt', 'customer', 'bargain', 'wage', 'savings', 'cost', 'rich', 'poor',
+      'weight', 'measure', 'gram', 'litre', 'metre',
     ],
   },
   {
@@ -375,8 +373,9 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
   },
   {
     slug: 'actions',
+    // lêker and کردار are the grammar's word for a verb, and every card in it is one
     name: { kmr: 'lêker', ckb: 'کردار' },
-    meanings: { en: 'action', de: 'Tätigkeit', es: 'acción', fr: 'action', nl: 'handeling', tr: 'eylem', ar: 'فعل' },
+    meanings: { en: 'verb', de: 'Verb', es: 'verbo', fr: 'verbe', nl: 'werkwoord', tr: 'fiil', ar: 'فعل' },
     words: [],
     verbs: [
       'run', 'stop', 'wait', 'hide', 'make', 'build', 'sew', 'play', 'light', 'decorate', 'continue', 'keep going', 'cry', 'hurt', 'beat', 'walk',
@@ -404,7 +403,7 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     meanings: { en: 'language', de: 'Sprache', es: 'lengua', fr: 'langue', nl: 'taal', tr: 'dil', ar: 'لغة' },
     words: [
       'language', 'word', 'name', 'meaning', 'news', 'message', 'joke', 'rumour', 'lie', 'truth', 'advice', 'complaint', 'sentence', 'speech',
-      'conversation', 'hello', 'thanks', 'sorry', 'goodbye', 'welcome', 'please', 'kurdish', 'dialect', 'grammar', 'translation', 'accent',
+      'conversation', 'hello', 'thanks', 'goodbye', 'welcome', 'please', 'kurdish', 'dialect', 'grammar', 'translation', 'accent',
       'silence', 'promise', 'oath', 'shout', 'whisper', 'thought', 'idea', 'opinion', 'offer', 'farewell', 'syllable', 'vowel', 'consonant',
     ],
   },
@@ -446,7 +445,8 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     words: [
       'goalkeeper', 'football', 'race', 'contest', 'match', 'team', 'player', 'referee', 'swimming', 'wrestling', 'running', 'basketball',
       'volleyball', 'tennis', 'boxing', 'skiing', 'cycling', 'gymnastics', 'medal', 'champion', 'trophy', 'stadium', 'score', 'coach', 'sport',
-      'horse riding', 'archery', 'marathon', 'penalty',
+      'horse riding', 'archery', 'marathon', 'penalty', 'ball', 'game', 'chess', 'toy', 'kite', 'swing', 'backgammon', 'doll', 'puzzle',
+      'hide and seek', 'dice', 'cards', 'skipping rope', 'seesaw', 'balloon', 'playground', 'board game', 'dominoes', 'spinning top', 'prize',
     ],
   },
   {
@@ -455,7 +455,16 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     meanings: { en: 'world', de: 'Welt', es: 'mundo', fr: 'monde', nl: 'wereld', tr: 'dünya', ar: 'عالم' },
     words: [
       'country', 'homeland', 'world', 'border', 'flag', 'nation', 'capital', 'continent', 'region', 'ocean', 'planet', 'north', 'south', 'east',
-      'west', 'europe', 'asia', 'kurdistan', 'equator', 'pole', 'province', 'state', 'abroad',
+      'west', 'europe', 'asia', 'equator', 'pole', 'province', 'state', 'abroad',
+    ],
+  },
+  {
+    slug: 'kurdistan',
+    name: { kmr: 'Kurdistan', ckb: 'کوردستان' },
+    meanings: { en: 'Kurdistan', de: 'Kurdistan', es: 'Kurdistán', fr: 'Kurdistan', nl: 'Koerdistan', tr: 'Kürdistan', ar: 'كردستان' },
+    words: [
+      'kurdistan', 'amed', 'diyarbakir', 'erbil', 'hewler', 'sulaymaniyah', 'kirkuk', 'duhok', 'qamishli', 'kobani', 'afrin', 'mahabad',
+      'sanandaj', 'sine', 'wan', 'zakho', 'tigris', 'euphrates', 'zagros', 'mount judi', 'mount ararat', 'ararat',
     ],
   },
 ];

@@ -13,6 +13,7 @@
  */
 import type { Meanings } from './content.js';
 import type { GameDialect } from './dialect.js';
+import type { WhoAmIFactValue } from './who-am-i/game.js';
 
 /** Where a word can be picked from. */
 export const GAME_WORD_SOURCES = ['vocabulary', 'dictionary'] as const;
@@ -42,9 +43,9 @@ export interface WordCardRequest {
   dialect: GameDialect;
   ref: string;
   level: number;
-  /** an identity's category and yes/no facts */
+  /** an identity's category and facts: yes, no, or "sometimes" where honest people would answer either way */
   category?: string;
-  facts?: Record<string, boolean>;
+  facts?: Record<string, WhoAmIFactValue>;
 }
 
 /** Whether a ref names a place a word can come from. */

@@ -172,6 +172,23 @@ describe('the round on the proverbs', () => {
     ]);
   });
 
+  it('plays “How does it end?” in Kurdish, the missing word a gap among Kurdish words', async () => {
+    const complete: SoloSessionView<ProverbRoundItemView> = {
+      ...round(),
+      game: 'proverb-complete',
+      items: [{ index: 0, mode: 'complete', dialect: 'kmr', proverb: 'Av dilop dilop dibe ….', before: 'Av dilop dilop dibe', after: '.', locale: 'en', options: ['gol', 'dil', 'gul'] }],
+      states: [{ index: 0, attempts: 0, correct: false, firstTry: false, done: false }],
+    };
+    const { calls } = fakeApi({ 'GET /proverbs/rounds/open': { id: null }, 'POST /proverbs/rounds': complete });
+    pages('/app/learn/proverbs/play?dialect=kmr');
+    await userEvent.click(await screen.findByRole('radio', { name: /How does it end\?/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Start' }));
+    expect(calls.find((c) => c.method === 'POST' && c.path === '/proverbs/rounds')?.body).toEqual({ dialect: 'kmr', mode: 'complete' });
+    expect(await screen.findByText('Which word finishes this proverb?', { selector: '.lore-eyebrow' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Which word finishes this proverb?' })).toHaveTextContent('…');
+    expect(screen.getByRole('button', { name: 'gol' })).toHaveAttribute('lang', 'ku');
+  });
+
   it('says plainly when there are not proverbs enough for a round', async () => {
     fakeApi({ 'GET /proverbs/rounds/open': { id: null }, 'POST /proverbs/rounds': new Response(JSON.stringify({ code: 'NOT_ENOUGH_CONTENT', message: 'x' }), { status: 409, headers: { 'content-type': 'application/json' } }) });
     pages('/app/learn/proverbs/play?dialect=ckb');

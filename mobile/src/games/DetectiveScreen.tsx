@@ -321,12 +321,56 @@ function Question({ round, board }: { round: Round; board: Board }): React.JSX.E
   );
 }
 
+/** The marks a player may leave on a suspect while reading, in the order they are offered. */
+const SUSPECT_NOTES = ['innocent', 'suspicious', 'unsure'] as const;
+type SuspectNote = (typeof SUSPECT_NOTES)[number];
+const NOTE_KEY: Record<SuspectNote, TranslationKey> = {
+  innocent: 'games.detective.notes.innocent',
+  suspicious: 'games.detective.notes.suspicious',
+  unsure: 'games.detective.notes.unsure',
+};
+
+/**
+ * The player's own marks on one suspect: a notebook, not an answer, so they
+ * are never sent anywhere and last only while the case is open. Tapping the
+ * chosen mark again takes it off, for a player who changes their mind.
+ */
+function SuspectNotes({ name, note, onNote }: { name: string; note: SuspectNote | undefined; onNote: (note: SuspectNote | undefined) => void }): React.JSX.Element {
+  const { t } = useI18n();
+  const { colors, scheme } = useTheme();
+  const dir = useDirection();
+  const tone = TONES[scheme][GAME.tone];
+  return (
+    <View style={[styles.marks, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={t('games.detective.notes.label', { name })}>
+      {SUSPECT_NOTES.map((n) => {
+        const on = note === n;
+        return (
+          <PressableScale
+            key={n}
+            onPress={() => {
+              haptic('tap');
+              onNote(on ? undefined : n);
+            }}
+            accessibilityRole="radio"
+            accessibilityLabel={t(NOTE_KEY[n])}
+            accessibilityState={{ checked: on }}
+            style={[styles.mark, { borderColor: on ? tone.fill : colors.separator, backgroundColor: on ? colors.selectedFill : colors.surface }]}
+          >
+            <Text style={[styles.markText, { color: colors.textPrimary }]}>{t(NOTE_KEY[n])}</Text>
+          </PressableScale>
+        );
+      })}
+    </View>
+  );
+}
+
 function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): React.JSX.Element | null {
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
   const tone = TONES[scheme][GAME.tone];
   const { board, spend, spending, error } = useBoard(round);
+  const [notes, setNotes] = useState<Record<string, SuspectNote | undefined>>({});
   if (!board) return null;
   const look = round.result && !round.result.done ? (round.result.hint?.look ?? []) : [];
   const name = (id: string | null) => board.suspects.find((s) => s.id === id)?.name ?? null;
@@ -347,12 +391,14 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
 
       <View style={[styles.boardField, { backgroundColor: colors.controlTrack }]} accessibilityLabel={t('games.detective.board')}>
         <Text style={[dir.text, styles.section, { color: tone.text }]}>{t('games.detective.suspects')}</Text>
+        <Text style={[dir.text, styles.muted, { color: colors.textSecondary }]}>{t('games.detective.notes.hint')}</Text>
         <View style={[styles.suspects, { flexDirection: dir.row }]}>
           {board.suspects.map((s) => (
             <View key={s.id} style={[styles.suspect, { backgroundColor: colors.surface }]}>
               <Portrait suspect={s} />
               <Text style={[styles.suspectName, { color: colors.textPrimary }]}>{s.name}</Text>
               <Text style={[styles.suspectAbout, { color: colors.textSecondary }]}>{meaningIn(s.about, locale) ?? s.about.en}</Text>
+              <SuspectNotes name={s.name} note={notes[s.id]} onNote={(note) => setNotes((was) => ({ ...was, [s.id]: note }))} />
             </View>
           ))}
         </View>
@@ -445,6 +491,9 @@ const styles = StyleSheet.create({
   suspect: { flexGrow: 1, flexBasis: 96, alignItems: 'center', gap: 4, padding: spacing.sm, borderRadius: radii.md },
   suspectName: { fontWeight: typography.weights.semibold },
   suspectAbout: { fontSize: typography.sizes.xs, textAlign: 'center' },
+  marks: { flexWrap: 'wrap', justifyContent: 'center', gap: 4 },
+  mark: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.sm, borderWidth: 1.5, borderRadius: radii.pill },
+  markText: { fontSize: typography.sizes.xs },
   portrait: { borderRadius: radii.pill, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   initial: { position: 'absolute', bottom: 4, fontSize: 12, fontWeight: '700' },
   card: { borderWidth: 2, borderRadius: radii.sm, padding: spacing.md, paddingTop: spacing.lg, gap: spacing.sm },

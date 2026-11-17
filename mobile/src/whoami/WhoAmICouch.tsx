@@ -10,7 +10,9 @@ import {
   WHO_AM_I_COUCH_NAME_MAX,
   WHO_AM_I_HELP_POINTS,
   WHO_AM_I_QUESTION_COST,
+  WHO_AM_I_ROOM_GUESSES,
   couchName,
+  markOf,
   roomAnswers,
   startCouchTable,
   whoAmIPoints,
@@ -20,6 +22,7 @@ import {
   type WhoAmICouchDeals,
   type WhoAmICouchOffer,
   type WhoAmIQuestion,
+  type WhoAmISays,
   type WhoAmITableState,
 } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -43,18 +46,20 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import {
+  AnswerButtons,
   Fold,
   ForeheadCard,
   Foreheads,
+  JudgeButtons,
   QuestionCard,
   QuestionDeck,
   ScoringNote,
   SuggestedQuestions,
   VerdictCard,
-  YesNoButtons,
+  answerWord,
   kindOf,
-  yesNo,
   type CardFace,
+  type Judged,
   type TableSeat,
 } from './WhoAmIStage';
 import { pressedDim } from '../theme/motion';
@@ -70,16 +75,18 @@ import { pressedDim } from '../theme/motion';
  * Whoever holds it picks a question, one of the few suggested or any on their
  * list, and reads it out, then turns the phone to their friends. There, and
  * only there, the holder's card is on the screen beside the question: the
- * friends read it and tap yes or no themselves. The card is hidden again, the
- * phone says what the card's own answer is and how the friends did, and the
- * holder goes on or passes the phone on. A holder may also ask the room a
- * question of their own: the friends look at the card and answer out loud,
- * and the phone only counts it.
+ * friends read it and tap yes, could be, no or not sure themselves. The card
+ * is hidden again, the phone says what the card's own answer is and how the
+ * friends did, and the holder goes on or passes the phone on. A holder may
+ * also ask the room a question of their own: the friends look at the card and
+ * answer out loud, and the phone only counts it.
  *
  * Nothing lists the words a player might be: a list of choices would make
  * the game a quiz. A holder who thinks they know says who they are out loud
  * and turns the phone to their friends once more, and the friends, reading
- * the card, tap whether that is it.
+ * the card, tap whether that is it, whether it is close (another word for the
+ * same thing, or the word another region says, which costs no guess and
+ * passes the turn on), or not yet.
  *
  * What it is careful about, because one screen is read by people who must not
  * see their own card:
@@ -156,7 +163,7 @@ type Moment =
   | { at: 'turn' }
   | { at: 'say'; put: Put }
   | { at: 'friends'; put: Put }
-  | { at: 'guessed'; seat: number; correct: boolean };
+  | { at: 'guessed'; seat: number; judged: Judged };
 
 /**
  * How long the way to the friends' screen takes no tap after it appears:
@@ -214,7 +221,10 @@ export function WhoAmICouch({
   async function deal(players: string[], level: GameDifficulty): Promise<void> {
     setBusy(true);
     setFailed(null);
-    const res = await client.post<WhoAmICouchDeals>('/games/who-am-i/couch/deal', { dialect: offer.dialect, difficulty: level, players: players.length });
+    // The room's size is all the server is told: the names stay on this phone. The friends are offered all four
+    // answers, so the cards come with their "sometimes" rows; a server that deals for two says so, and two it is.
+    const body = { dialect: offer.dialect, difficulty: level, players: players.length, answers: 4 };
+    const res = await client.post<WhoAmICouchDeals>('/games/who-am-i/couch/deal', body);
     setBusy(false);
     if (!res.ok) {
       // too few approved cards for a room this size is the room's to change; asking too often says so itself; anything else is the connection
@@ -434,7 +444,8 @@ function Setup({
           </Card>
         ) : null}
 
-        <ScoringNote />
+        {/* one more miss in a room than at a table online, since a guess here is said, not picked */}
+        <ScoringNote guesses={WHO_AM_I_ROOM_GUESSES} />
       </ScrollView>
 
       {/* Deal the cards: under the list, where a thumb is, whatever the list is scrolled to */}
@@ -479,7 +490,7 @@ type Play = (table: WhoAmITableState, moment: Moment) => void;
 
 function Round({ game, play }: { game: Game; play: Play }): React.JSX.Element | null {
   const { table, moment, players } = game;
-  if (moment.at === 'guessed') return <Guessed game={game} seat={moment.seat} correct={moment.correct} onNext={() => play(table, { at: 'pass' })} />;
+  if (moment.at === 'guessed') return <Guessed game={game} seat={moment.seat} judged={moment.judged} onNext={() => play(table, { at: 'pass' })} />;
   const seat = table.turn;
   if (seat === null) return null;
   const name = players[seat]!;
@@ -582,8 +593,15 @@ function Turn({ game, seat, play }: { game: Game; seat: number; play: Play }): R
   if (view.phase === 'decide') {
     // the card's own answer to the question just asked from the list; a question asked out loud leaves none
     const told = view.told && view.told.seat === seat ? view.told : null;
-    // the friends tapped one answer between them, so the first given is what they all said
-    const said = told?.answers.find((a) => a.yes !== null)?.yes ?? null;
+    // the friends tapped one answer between them, so the first given is what they all said, and how it went for them all
+    const friends = told?.answers.find((a) => a.says !== null) ?? null;
+    const words = told && friends?.says ? { said: answerWord(dialect, friends.says, t), truth: answerWord(dialect, told.verdict, t) } : null;
+    // Close and not sure are no mistake, and are never called one: only yes against no is wrong.
+    const missed: TranslationKey =
+      friends?.mark === 'close' ? 'games.whoAmI.friends.close' : friends?.mark === 'unsure' ? 'games.whoAmI.friends.unsure' : 'games.whoAmI.friends.wrong';
+    const note = friends?.mark === 'right' ? t('games.whoAmI.friends.right', { count: WHO_AM_I_HELP_POINTS }) : words ? t(missed, words) : undefined;
+    // the card the verdict came from, by its id on this phone's deal, for a friend who saw it to say its answer looks wrong
+    const card = table.seats.find((s) => s.seat === seat)?.deal?.identity.id ?? null;
     return (
       <>
         {told ? (
@@ -591,15 +609,10 @@ function Turn({ game, seat, play }: { game: Game; seat: number; play: Play }): R
             dialect={dialect}
             heading={t('games.whoAmI.asks', { name })}
             question={told.question}
-            truth={told.truth}
+            verdict={told.verdict}
             plain
-            note={
-              said === null
-                ? undefined
-                : said === told.truth
-                  ? t('games.whoAmI.friends.right', { count: WHO_AM_I_HELP_POINTS })
-                  : t('games.whoAmI.friends.wrong', { said: yesNo(dialect, said, t), truth: yesNo(dialect, told.truth, t) })
-            }
+            note={note}
+            report={card ? { body: { identity: card, question: told.question.id } } : null}
           />
         ) : (
           <Cloth style={styles.stage}>
@@ -726,11 +739,13 @@ function SayIt({
 /**
  * The friends' screen, the holder looking away: the holder's card on the
  * deer's forehead, read by everyone but them, and what to answer. A question
- * from the list the friends answer by tapping yes or no, which asks it of the
- * rules and answers it for the whole room in one step. A question of the
- * holder's own they answer out loud, and one tap counts it. Who the holder
- * said they are the friends judge against the card, and their tap is the
- * guess. Every one of these taps takes the card off the screen at once.
+ * from the list the friends answer by tapping yes, could be, no or not sure,
+ * which asks it of the rules and answers it for the whole room in one step. A
+ * question of the holder's own they answer out loud, and one tap counts it.
+ * Who the holder said they are the friends judge against the card, and their
+ * tap is the guess: right, close (another word for the same thing, say a
+ * region's own, which spends no guess and passes the turn on), or not yet.
+ * Every one of these taps takes the card off the screen at once.
  */
 function Friends({ game, seat, put, question, play }: { game: Game; seat: number; put: Put; question: WhoAmIQuestion | null; play: Play }): React.JSX.Element {
   const { colors } = useTheme();
@@ -741,14 +756,18 @@ function Friends({ game, seat, put, question, play }: { game: Game; seat: number
   // the card on a forehead, read from the seat beside it: anyone but its wearer may
   const card: CardFace | null = whoAmITableRules.viewFor(table, (seat + 1) % players.length).seats.find((s) => s.seat === seat)?.card ?? null;
 
-  const answer = (yes: boolean): void => {
+  const answer = (says: WhoAmISays): void => {
     const now = Date.now();
     const asked = question ? whoAmITableRules.apply(table, seat, { kind: 'ask', question: question.id }, now) : null;
     // a question the rules will not take was never put to the room: back to the board, with nothing spent
     if (!asked?.ok) return play(table, { at: 'turn' });
-    const next = roomAnswers(asked.state, yes, now);
-    // felt in the hands that tapped it: whether the card agrees with them
-    haptic(next.told?.truth === yes ? 'correct' : 'wrong');
+    const next = roomAnswers(asked.state, says, now);
+    // an answer the table does not offer leaves the question unanswered: it was never put to the room either
+    if (next.phase !== 'decide' || !next.told) return play(table, { at: 'turn' });
+    // Felt in the hands that tapped it, by how the card scores it: right and wrong as they are, and close or not sure
+    // as no more than a light knock, since neither is a mistake.
+    const mark = markOf(says, next.told.verdict);
+    haptic(mark === 'right' ? 'correct' : mark === 'wrong' ? 'wrong' : 'tap');
     play(next, { at: 'turn' });
   };
   const heard = (): void => {
@@ -756,13 +775,15 @@ function Friends({ game, seat, put, question, play }: { game: Game; seat: number
     const counted = whoAmITableRules.apply(table, seat, { kind: 'aloud' }, Date.now());
     play(counted.ok ? counted.state : table, { at: 'turn' });
   };
-  const judge = (right: boolean): void => {
-    // the room reads the card, so the room is the judge: its tap is the guess, right or wrong
-    const judged = whoAmITableRules.apply(table, seat, { kind: 'said', right }, Date.now());
+  const judge = (judgement: Judged): void => {
+    // the room reads the card, so the room is the judge: its tap is the guess, right, close or wrong
+    const move = judgement === 'close' ? ({ kind: 'said', right: false, close: true } as const) : ({ kind: 'said', right: judgement === 'right' } as const);
+    const judged = whoAmITableRules.apply(table, seat, move, Date.now());
     if (!judged.ok) return play(table, { at: 'turn' });
-    // a right one is felt as its celebration lands (Solved); a miss here and now
-    if (!right) haptic('wrong');
-    play(judged.state, { at: 'guessed', seat, correct: right });
+    // a right one is felt as its celebration lands (Solved); a miss here and now; close, which is no miss, as a light knock
+    if (judgement === 'wrong') haptic('wrong');
+    if (judgement === 'close') haptic('tap');
+    play(judged.state, { at: 'guessed', seat, judged: judgement });
   };
 
   return (
@@ -778,16 +799,22 @@ function Friends({ game, seat, put, question, play }: { game: Game; seat: number
           <Text style={styles.stageSay}>
             {put.kind === 'guess'
               ? t('games.whoAmI.judge.ask', { name })
-              : t('games.whoAmI.friends.aloud', { name, yes: yesNo(dialect, true, t), no: yesNo(dialect, false, t) })}
+              : t('games.whoAmI.friends.aloud', {
+                  name,
+                  yes: answerWord(dialect, 'yes', t),
+                  sometimes: answerWord(dialect, 'sometimes', t),
+                  no: answerWord(dialect, 'no', t),
+                  unsure: answerWord(dialect, 'unsure', t),
+                })}
           </Text>
         )}
       </Cloth>
       {put.kind === 'guess' ? (
-        <YesNoButtons dialect={dialect} labels={{ yes: t('games.whoAmI.judge.yes'), no: t('games.whoAmI.notYet') }} onAnswer={judge} />
+        <JudgeButtons labels={{ right: t('games.whoAmI.judge.yes'), close: t('games.whoAmI.judge.close'), wrong: t('games.whoAmI.notYet') }} onJudge={judge} />
       ) : question ? (
         <>
           <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('games.whoAmI.friends.ask')}</Text>
-          <YesNoButtons dialect={dialect} onAnswer={answer} />
+          <AnswerButtons dialect={dialect} answers={table.answers} onAnswer={answer} />
         </>
       ) : (
         <GoldButton label={t('games.whoAmI.friends.done')} icon="eye-off" onPress={heard} />
@@ -798,18 +825,21 @@ function Friends({ game, seat, put, question, play }: { game: Game; seat: number
 
 /**
  * What saying who they are came to. Right: the card comes off, and the
- * celebration plays. Not yet: no word to name, only how many more times they
- * may say it. The last miss: the card comes off all the same, and says who
- * they were.
+ * celebration plays. Close: no miss, and it says so, that no guess was spent
+ * and that the turn passes on, with the card still hidden. Not yet: no word to
+ * name, only how many more times they may say it. The last miss: the card
+ * comes off all the same, and says who they were.
  */
-function Guessed({ game, seat, correct, onNext }: { game: Game; seat: number; correct: boolean; onNext: () => void }): React.JSX.Element | null {
+function Guessed({ game, seat, judged, onNext }: { game: Game; seat: number; judged: Judged; onNext: () => void }): React.JSX.Element | null {
   const { t } = useI18n();
   const view = whoAmITableRules.viewFor(game.table, seat);
   const mine = view.mine;
   if (!mine) return null;
   // the player's own card, only where the rules have taken it off: said rightly, or out of guesses
   const identity = mine.identity;
-  if (correct && identity) return <Solved dialect={view.dialect} category={mine.category} identity={identity} points={mine.points} onNext={onNext} />;
+  if (judged === 'right' && identity) {
+    return <Solved dialect={view.dialect} category={mine.category} identity={identity} points={mine.points} onNext={onNext} />;
+  }
   return (
     <>
       <Cloth style={styles.stage}>
@@ -820,8 +850,8 @@ function Guessed({ game, seat, correct, onNext }: { game: Game; seat: number; co
           </Text>
         ) : (
           <>
-            <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.stageTitle}>
-              {t('games.whoAmI.said.wrong')}
+            <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={judged === 'close' ? styles.stageSay : styles.stageTitle}>
+              {t(judged === 'close' ? 'games.whoAmI.said.close' : 'games.whoAmI.said.wrong')}
             </Text>
             <Text style={styles.stageLine}>{t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}</Text>
           </>

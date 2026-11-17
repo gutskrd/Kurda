@@ -2,7 +2,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { WordleService } from './wordle-service.js';
-import { utcDayIndex, type Difficulty } from './wordle-daily.js';
+import { filterByDifficulty, pickDailyWord, utcDayIndex, type Difficulty } from './wordle-daily.js';
+import { loadWordlePool } from './word-pool.js';
 import { dictionaryKey, letterKey } from '@kurda/shared';
 import { DictionaryRepository } from '../dictionary/repository.js';
 
@@ -18,18 +19,24 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
   const entryIds: string[] = [];
   const suffix = Math.random().toString(36).slice(2, 8);
   const userIds: string[] = [];
+  const cardIds: string[] = [];
+  /** The days whose schedule these tests write, cleared afterwards so a second run starts from the same place. */
+  const days = new Set<number>();
 
-  const serviceAt = (date: Date): WordleService =>
-    new WordleService(pool, { now: () => date });
+  const serviceAt = (date: Date): WordleService => {
+    days.add(utcDayIndex(date));
+    return new WordleService(pool, { now: () => date });
+  };
 
   /** A curated word, written the way the seed migration and the admin screen write one. */
-  async function seedWord(headword: string): Promise<void> {
+  async function seedWord(headword: string, dialect = 'kurmanji'): Promise<string> {
     const res = await pool.query<{ id: string }>(
       `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, in_games)
-       VALUES ($1, $2, $3, 'kurmanji', true) RETURNING id`,
-      [headword, letterKey(headword), dictionaryKey(headword)],
+       VALUES ($1, $2, $3, $4, true) RETURNING id`,
+      [headword, letterKey(headword), dictionaryKey(headword), dialect],
     );
     entryIds.push(res.rows[0]!.id);
+    return res.rows[0]!.id;
   }
 
   async function makeUser(): Promise<string> {
@@ -75,6 +82,8 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
       client.release();
     }
     if (entryIds.length) await pool.query(`DELETE FROM dict_entries WHERE id = ANY($1)`, [entryIds]);
+    if (cardIds.length) await pool.query(`DELETE FROM game_content WHERE id = ANY($1)`, [cardIds]);
+    if (days.size) await pool.query(`DELETE FROM wordle_daily WHERE day_index = ANY($1)`, [[...days]]);
     await pool.end();
   });
 
@@ -208,13 +217,12 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
   });
 
   /**
-   * The reason a guess is looked up by the folded key (1751000115000). An
-   * imported word is written by the repository, which stores ç ê î ş û folded;
-   * matching on the unfolded key rejected every one of them, and nearly every
-   * Kurmancî word has one. Guessed here both ways, because a player typing the
-   * plain letters has still named a word the dictionary knows.
+   * A guess is found by the folded key (1751000115000), which is how an
+   * imported word is stored, and then compared with its marks: a player who
+   * typed the plain letters typed another word, and the tiles would score it as
+   * that one. sevci is not sêvçî.
    */
-  it('accepts an imported word, diacritics or not', async () => {
+  it('accepts an imported word as it is spelt, and not its letters without their marks', async () => {
     const imported = `sêvçî`;
     entryIds.push(await new DictionaryRepository(pool).createEntry(imported));
 
@@ -222,10 +230,149 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
     const gameId = await insertGame(u, 'practice', 'medium', 'malan', null);
     const svc = serviceAt(new Date());
 
-    for (const guess of [imported, 'sevci']) {
-      const res = await svc.guess(u, gameId, guess);
-      expect(res.ok, guess).toBe(true);
-    }
+    expect((await svc.guess(u, gameId, imported)).ok).toBe(true);
+    const folded = await svc.guess(u, gameId, 'sevci');
+    expect(folded).toEqual({ ok: false, reason: 'not-a-word' });
+    const row = await pool.query<{ guesses: unknown[] }>(`SELECT guesses FROM wordle_games WHERE id = $1`, [gameId]);
+    expect(row.rows[0]!.guesses).toHaveLength(1); // the refused one cost nothing
+  });
+
+  it('takes a word of another dialect of the dictionary as no Kurmancî guess, and a word the course teaches as one', async () => {
+    await seedWord('zazak', 'zazaki');
+    const card = await pool.query<{ id: string }>(
+      `INSERT INTO game_content (kind, dialect, level, payload, status, review_status, source)
+       VALUES ('word_card', 'kmr', 1, $1, 'published', 'approved', 'admin') RETURNING id`,
+      [JSON.stringify({ word: 'qirşo', category: 'things', meanings: { en: 'a word only a lesson has' } })],
+    );
+    cardIds.push(card.rows[0]!.id);
+    const u = await makeUser();
+    const gameId = await insertGame(u, 'practice', 'medium', 'malan', null);
+    const svc = serviceAt(new Date());
+    expect(await svc.guess(u, gameId, 'zazak')).toEqual({ ok: false, reason: 'not-a-word' });
+    expect((await svc.guess(u, gameId, 'qirşo')).ok).toBe(true);
+  });
+
+  it('gives each difficulty its own daily game the same day, and the same one again when asked twice', async () => {
+    const u = await makeUser();
+    const svc = serviceAt(new Date('2026-08-12T09:00:00Z'));
+    const easy = await svc.startDaily(u, 'easy');
+    const medium = await svc.startDaily(u, 'medium');
+    expect(easy.ok && medium.ok).toBe(true);
+    if (!easy.ok || !medium.ok) return;
+    expect(easy.game.id).not.toBe(medium.game.id);
+    expect([easy.game.difficulty, easy.game.targetLength]).toEqual(['easy', 4]);
+    expect([medium.game.difficulty, medium.game.targetLength]).toEqual(['medium', 5]);
+    const again = await svc.startDaily(u, 'easy');
+    expect(again.ok && again.game.id).toBe(easy.game.id);
+  });
+
+  /**
+   * The schedule's whole point: the first player of the day fixes the word,
+   * and a word added to the pool afterwards — which reorders the permutation
+   * the pick walks — does not move it for anybody who comes later.
+   */
+  it('keeps the day’s word for everyone once the first player has it, however the pool changes', async () => {
+    const day = new Date('2026-08-13T08:00:00Z');
+    const first = await serviceAt(day).startDaily(await makeUser(), 'medium');
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const target = (await pool.query<{ target: string }>(`SELECT target FROM wordle_games WHERE id = $1`, [first.game.id])).rows[0]!.target;
+
+    for (const w of ['nûjen', 'şîrev', 'gewez', 'birûz', 'tavik']) await seedWord(w);
+    const later = await serviceAt(new Date('2026-08-13T20:00:00Z')).startDaily(await makeUser(), 'medium');
+    expect(later.ok).toBe(true);
+    if (!later.ok) return;
+    const theirs = (await pool.query<{ target: string }>(`SELECT target FROM wordle_games WHERE id = $1`, [later.game.id])).rows[0]!.target;
+    expect(theirs).toBe(target);
+    const scheduled = await pool.query<{ word: string }>(`SELECT word FROM wordle_daily WHERE day_index = $1 AND difficulty = 'medium'`, [
+      utcDayIndex(day),
+    ]);
+    expect(scheduled.rows[0]?.word).toBe(target);
+  });
+
+  it('keeps the word a day was already played with before there was a schedule', async () => {
+    const day = new Date('2026-08-14T10:00:00Z');
+    const dayIndex = utcDayIndex(day);
+    days.add(dayIndex);
+    await pool.query(`DELETE FROM wordle_daily WHERE day_index = $1`, [dayIndex]);
+    await insertGame(await makeUser(), 'daily', 'hard', 'kurdis', dayIndex);
+
+    const res = await serviceAt(day).startDaily(await makeUser(), 'hard');
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    const target = (await pool.query<{ target: string }>(`SELECT target FROM wordle_games WHERE id = $1`, [res.game.id])).rows[0]!.target;
+    expect(target).toBe('kurdis');
+  });
+
+  it('does not set a daily word that was set within the repeat window', async () => {
+    const day = new Date('2026-08-16T10:00:00Z');
+    const dayIndex = utcDayIndex(day);
+    days.add(dayIndex - 1);
+    await pool.query(`DELETE FROM wordle_daily WHERE day_index IN ($1, $2)`, [dayIndex, dayIndex - 1]);
+    // the word the day would have had, set yesterday as if the pool had been ordered differently then
+    const own = pickDailyWord(filterByDifficulty(await loadWordlePool(pool), 'medium'), dayIndex, 'medium')!;
+    await pool.query(`INSERT INTO wordle_daily (day_index, difficulty, word) VALUES ($1, 'medium', $2)`, [dayIndex - 1, own]);
+
+    const res = await serviceAt(day).startDaily(await makeUser(), 'medium');
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    const target = (await pool.query<{ target: string }>(`SELECT target FROM wordle_games WHERE id = $1`, [res.game.id])).rows[0]!.target;
+    expect(target).not.toBe(own);
+  });
+
+  it('counts a day once in the streak when two difficulties are played on it', async () => {
+    const u = await makeUser();
+    const svc = serviceAt(new Date());
+    const day = 21100;
+    await svc.guess(u, await insertGame(u, 'daily', 'easy', 'mala', day), 'mala');
+    await svc.guess(u, await insertGame(u, 'daily', 'medium', 'kurdi', day), 'kurdi');
+    const stats = await svc.stats(u);
+    expect([stats.wins, stats.currentStreak, stats.lastDailyDayIndex]).toEqual([2, 1, day]);
+  });
+
+  /**
+   * The results card: exactly the answer's meaning, never a search's nearest
+   * hit (which is how the phone once showed another word's), and a save that
+   * counts once toward the words learned.
+   */
+  it('shows the finished game’s word with its meaning, and saves it to the player’s words once', async () => {
+    const entryId = await seedWord('zirav');
+    await pool.query(`INSERT INTO dict_senses (entry_id, position, pos, definition_en) VALUES ($1, 1, 'adjective', 'thin, slender')`, [entryId]);
+    const u = await makeUser();
+    const svc = serviceAt(new Date());
+    const gameId = await insertGame(u, 'practice', 'medium', 'zirav', null);
+
+    expect(await svc.saveWord(u, gameId)).toEqual({ ok: false, reason: 'not-finished' });
+    const won = await svc.guess(u, gameId, 'zirav');
+    expect(won.ok).toBe(true);
+    if (!won.ok) return;
+    expect(won.game.word).toEqual({ entryId, meanings: { en: 'thin, slender' }, saved: false });
+
+    const saved = await svc.saveWord(u, gameId);
+    expect(saved.ok && saved.wordsLearned).toBe(1);
+    const twice = await svc.saveWord(u, gameId);
+    expect(twice.ok && twice.wordsLearned).toBe(1);
+    expect((await svc.stats(u)).wordsLearned).toBe(1);
+    expect(await svc.saveWord(await makeUser(), gameId)).toEqual({ ok: false, reason: 'not-found' });
+
+    // the word shows as saved on the game from now on
+    const resumed = await pool.query(`SELECT 1 FROM saved_words WHERE user_id = $1 AND entry_id = $2`, [u, entryId]);
+    expect(resumed.rowCount).toBe(1);
+  });
+
+  it('gives the meanings of the word’s card, in every language it has, before a dictionary gloss', async () => {
+    const entryId = await seedWord('fireh');
+    await pool.query(`INSERT INTO dict_senses (entry_id, position, pos, definition_en) VALUES ($1, 1, 'adjective', 'wide (gloss)')`, [entryId]);
+    const card = await pool.query<{ id: string }>(
+      `INSERT INTO game_content (kind, dialect, level, payload, status, review_status, source)
+       VALUES ('word_card', 'kmr', 1, $1, 'published', 'approved', 'admin') RETURNING id`,
+      [JSON.stringify({ word: 'fireh', category: 'qualities', meanings: { en: 'wide', de: 'breit', ckb: 'پان' } })],
+    );
+    cardIds.push(card.rows[0]!.id);
+    const u = await makeUser();
+    const gameId = await insertGame(u, 'practice', 'medium', 'fireh', null);
+    const won = await serviceAt(new Date()).guess(u, gameId, 'fireh');
+    expect(won.ok && won.game.word?.meanings).toEqual({ en: 'wide', de: 'breit', ckb: 'پان' });
   });
 
   it('keeps the streak at 0 on a daily loss, and pays nothing for taking part', async () => {

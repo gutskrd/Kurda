@@ -29,6 +29,7 @@ import {
   foldForDialect,
   gameWords,
   hearItClipPath,
+  learnGame,
   lessonAudioKey,
   textScript,
 } from '@kurda/shared';
@@ -255,8 +256,11 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Dizê Bîrê and Hear It, Find It 
     const draft = await repo.createLesson(skill, 2, 'D', 'Draft');
     await repo.addExercise(draft, 1, 'match_pairs', { pairs: [{ left: `${tag}draftword`, right: 'draft' }, { left: `${tag}draftother`, right: 'other' }] });
 
-    // two published stories (beginner and advanced) and a draft no game may read
-    await story(1, [0, 1, 2, 3, 4, 5, 6, 7].map((i) => paragraph(i, 'Roj germ e.')), 'published');
+    // two published stories (beginner and advanced) and a draft no game may read; the beginner one has as many
+    // passages as the game asks of a difficulty before it opens it, so the suite holds on an empty database too
+    const beginner = [0, 1, 2, 3, 4, 5, 6, 7];
+    for (let i = 30; beginner.length < learnGame('memory-thief').minimum; i++) beginner.push(i);
+    await story(1, beginner.map((i) => paragraph(i, 'Roj germ e.')), 'published');
     await story(4, [8, 9, 10, 11, 12, 13].map((i) => paragraph(i, 'Ba li ser çiyayê hênik e û ewr hatin.')), 'published');
     await story(1, [paragraph(20, `Ev ${tag}draftonly ye.`)], 'draft');
 

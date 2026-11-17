@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccessibilityInfo } from 'react-native';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
+import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 import { forgetPartyOffers } from '../party/offer';
 import { forgetImpostorCategories } from './categories';
 import { CouchGame } from './CouchGame';
@@ -14,7 +15,9 @@ import { ImpostorScreen } from './ImpostorScreen';
  * score: the setup and what it asks the server for (never a name), the phone
  * going round with each card shown only while it is pressed, the clues in turn
  * with their clock, the two kinds of vote, the caught impostor's guess, the
- * reveal, and the next game from the same cards.
+ * reveal, and the next game from the same cards. Then the taps that can be
+ * taken back for a moment, the second vote of a round with two impostors, the
+ * evening keeping the way the room chose, and the learner's own Kurdish first.
  */
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -44,6 +47,7 @@ afterEach(() => {
   localStorage.clear();
   forgetPartyOffers();
   forgetImpostorCategories();
+  resetCourseDialect();
 });
 
 // stand-in Kurdish for the fixtures, never shown to a learner
@@ -130,6 +134,35 @@ const NO_CLOCKS: Array<[string, string]> = [
   ['Time per clue', 'No clock'],
   ['Time to talk', 'No clock'],
 ];
+
+/**
+ * Clocks a test can move on, that still run by themselves a millisecond at a
+ * time (so the taps between are as quick as on real clocks): the moment to
+ * take a tap back, or a vote's clock, can be let pass at once.
+ */
+function quickClock(): void {
+  vi.useFakeTimers({ shouldAdvanceTime: true, advanceTimeDelta: 1, toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
+}
+
+/** The moment to take a tap back over, or as much time as a test asks for. */
+function momentPasses(ms = 3_000): void {
+  act(() => {
+    vi.advanceTimersByTime(ms);
+  });
+}
+
+/** One private vote: the phone taken by the voter, and the seat they name. */
+async function castVote(voter: string, suspect: string): Promise<void> {
+  press(await screen.findByText(`I’m ${voter}`).then(() => `I’m ${voter}`));
+  press(`Vote for ${suspect}`);
+}
+
+/** The caught impostor handed the phone, choosing a word and saying it is their answer. */
+async function guess(impostor: string, word: string): Promise<void> {
+  press(await screen.findByText(`I’m ${impostor}`).then(() => `I’m ${impostor}`));
+  press(word);
+  press('Yes, that’s my answer');
+}
 
 describe('the way in', () => {
   it('is the first thing to press on the start, opens the game for one phone, and the back arrow returns', async () => {
@@ -291,6 +324,7 @@ describe('the phone going round', () => {
 
 describe('a round', () => {
   it('goes from the cards to the clues, a private vote, the caught impostor’s guess and the score, then deals the next card', async () => {
+    quickClock();
     const client = fakeClient(offered());
     testAuth.client = client;
     renderWithProviders(<CouchGame onLeave={() => undefined} />);
@@ -317,11 +351,21 @@ describe('a round', () => {
       press(`Vote for ${name === impostor ? NAMES.find((n) => n !== impostor)! : impostor}`);
     }
 
+    // the last vote is counted once its moment is over, and nothing is shown before then
+    expect(screen.getByText(`You voted for ${NAMES.at(-1) === impostor ? NAMES.find((n) => n !== impostor) : impostor}`)).toBeTruthy();
+    expect(screen.queryByText(/was caught/)).toBeNull();
+    momentPasses();
+
     // caught: the phone goes to the impostor for one guess among four words
     expect(await screen.findByText(`${impostor} was caught! Hand them the phone for one guess at the word.`)).toBeTruthy();
     press(`I’m ${impostor}`);
     for (const word of ['pisîk', 'hesp', 'mişk', 'ker']) expect(screen.getByRole('button', { name: word })).toBeTruthy();
+    // a word tapped is asked about once more, and can be chosen again
+    press('mişk');
+    expect(screen.getByRole('heading', { name: 'Your answer: mişk?' })).toBeTruthy();
+    press('Choose again');
     press('hesp');
+    press('Yes, that’s my answer');
 
     // every card turned over, the word, who it was, the votes and the score
     expect(await screen.findByText(`The impostor was ${impostor}`)).toBeTruthy();
@@ -364,7 +408,8 @@ describe('a round', () => {
     expect(await screen.findByText('Pass the phone to Azad')).toBeTruthy();
   });
 
-  it('takes the room’s one choice when the vote is by pointing, and lets the impostor go when they could not agree', async () => {
+  it('takes the room’s one choice when the vote is by pointing, and says the votes were tied when they could not agree', async () => {
+    quickClock();
     testAuth.client = fakeClient(offered());
     renderWithProviders(<CouchGame onLeave={() => undefined} />);
     await start([...NO_CLOCKS, ['The vote', 'By pointing']]);
@@ -375,12 +420,30 @@ describe('a round', () => {
     expect(await screen.findByText('Count to three and point!')).toBeTruthy();
     for (const name of NAMES) expect(screen.getByRole('button', { name })).toBeTruthy();
     press('We couldn’t agree');
+    momentPasses();
     expect(await screen.findByText(`The impostor was ${impostor}`)).toBeTruthy();
+    expect(screen.getByText('The votes were tied.')).toBeTruthy();
     expect(screen.getByText('The impostor slipped away.')).toBeTruthy();
     expect(screen.getByLabelText(new RegExp(`^${impostor}: This game [1-9]`))).toBeTruthy();
   });
 
+  it('says who the room pointed at when it was not the impostor', async () => {
+    quickClock();
+    testAuth.client = fakeClient(offered());
+    renderWithProviders(<CouchGame onLeave={() => undefined} />);
+    await start([...NO_CLOCKS, ['The vote', 'By pointing']]);
+    const cards = await dealRound();
+    const wrong = NAMES[cards.findIndex((c) => !c.includes('impostor'))]!;
+    await screen.findByText('Round 1 of 2');
+    press('Go to the vote');
+    press(await screen.findByText(wrong).then(() => wrong));
+    momentPasses();
+    expect(await screen.findByText(`The players voted out ${wrong}, but they weren’t the impostor.`)).toBeTruthy();
+    expect(screen.getByText('The impostor slipped away.')).toBeTruthy();
+  });
+
   it('gives the odd one out a card like anyone’s, with another word on it, and says both at the end', async () => {
+    quickClock();
     testAuth.client = fakeClient(offered());
     renderWithProviders(<CouchGame onLeave={() => undefined} />);
     await start([...NO_CLOCKS, ['Kind of game', /^Odd word out/], ['The vote', 'By pointing']]);
@@ -391,12 +454,14 @@ describe('a round', () => {
     await screen.findByText('Round 1 of 2');
     press('Go to the vote');
     press(odd);
+    momentPasses();
     // caught, the odd one out has no word to name: the cards turn at once
     expect(await screen.findByText('The odd one out was found: the table wins.')).toBeTruthy();
     expect(screen.getByText(/The other word was/).textContent).toContain('kûçik');
   });
 
   it('ends the evening from the score, or goes back to change the game', async () => {
+    quickClock();
     const onLeave = vi.fn();
     testAuth.client = fakeClient(offered());
     renderWithProviders(<CouchGame onLeave={onLeave} />);
@@ -405,6 +470,7 @@ describe('a round', () => {
     await screen.findByText('Round 1 of 2');
     press('Go to the vote');
     press('We couldn’t agree');
+    momentPasses();
     await screen.findByText('Next game');
     press('Change the game');
     expect(await screen.findByRole('button', { name: 'Deal the cards' })).toBeTruthy();
@@ -414,7 +480,197 @@ describe('a round', () => {
     await screen.findByText('Round 1 of 2');
     press('Go to the vote');
     press('We couldn’t agree');
+    momentPasses();
     press(await screen.findByText('Finish').then(() => 'Finish'));
     expect(onLeave).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks for a fresh batch without the words already played tonight', async () => {
+    quickClock();
+    const client = fakeClient(offered(ok({ dialect: 'kmr', cards: [card('pisîk')] })));
+    testAuth.client = client;
+    renderWithProviders(<CouchGame onLeave={() => undefined} />);
+    await start([...NO_CLOCKS, ['The vote', 'By pointing']]);
+    await dealRound();
+    await screen.findByText('Round 1 of 2');
+    press('Go to the vote');
+    press('We couldn’t agree');
+    momentPasses();
+    press(await screen.findByText('Next game').then(() => 'Next game'));
+    expect(await screen.findByText('Game 2')).toBeTruthy();
+    expect(client.calls.filter((c) => c.method === 'POST').map((c) => c.body)).toEqual([
+      { dialect: 'kmr', difficulty: 'beginner', category: null },
+      { dialect: 'kmr', difficulty: 'beginner', category: null, exclude: ['pisîk'] },
+    ]);
+  });
+});
+
+describe('taking a tap back', () => {
+  it('goes back to the clues from the vote for a moment, and then the way back is gone', async () => {
+    quickClock();
+    testAuth.client = fakeClient(offered());
+    renderWithProviders(<CouchGame onLeave={() => undefined} />);
+    await start(NO_CLOCKS);
+    await dealRound();
+    await screen.findByText('Round 1 of 2');
+    const speaker = screen.getByRole('heading', { name: /, your clue$/ }).textContent;
+    press('Go to the vote');
+    expect(await screen.findByText('Pass the phone to Azad')).toBeTruthy();
+    press('Undo');
+    expect(screen.getByRole('heading', { name: speaker! })).toBeTruthy();
+    press('Go to the vote');
+    momentPasses();
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+    expect(screen.getByText('Pass the phone to Azad')).toBeTruthy();
+  });
+
+  it('takes a private vote back to the voter’s own screen, and never says whom it named to the next one', async () => {
+    quickClock();
+    testAuth.client = fakeClient(offered());
+    renderWithProviders(<CouchGame onLeave={() => undefined} />);
+    await start(NO_CLOCKS);
+    await dealRound();
+    await screen.findByText('Round 1 of 2');
+    press('Go to the vote');
+    press(await screen.findByText('I’m Azad').then(() => 'I’m Azad'));
+    press('I can’t decide');
+    expect(await screen.findByText('Pass the phone to Berfîn')).toBeTruthy();
+    expect(screen.queryByText(/can’t decide|voted for/)).toBeNull();
+    press('Undo');
+    // Azad still has the phone: their own vote, not the screen that asks for it
+    expect(screen.getByRole('heading', { name: 'Azad, who is it?' })).toBeTruthy();
+    press('Vote for Ciwan');
+    expect(await screen.findByText('Pass the phone to Berfîn')).toBeTruthy();
+  });
+
+  it('holds the last vote for its moment, and taking it back shows nothing of what it would have', async () => {
+    quickClock();
+    testAuth.client = fakeClient(offered());
+    renderWithProviders(<CouchGame onLeave={() => undefined} />);
+    await start(NO_CLOCKS);
+    const cards = await dealRound();
+    const impostor = NAMES[cards.findIndex((c) => c.includes('impostor'))]!;
+    await screen.findByText('Round 1 of 2');
+    press('Go to the vote');
+    for (const name of NAMES.slice(0, -1)) await castVote(name, name === impostor ? NAMES.find((n) => n !== name)! : impostor);
+    press(await screen.findByText('I’m Dîlan').then(() => 'I’m Dîlan'));
+    press('I can’t decide');
+    expect(screen.getByText('I can’t decide')).toBeTruthy();
+    press('Undo');
+    expect(screen.getByRole('heading', { name: 'Dîlan, who is it?' })).toBeTruthy();
+    momentPasses();
+    // nothing was counted: the vote is still Dîlan's to make
+    expect(screen.queryByText(/was caught|slipped away/)).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Dîlan, who is it?' })).toBeTruthy();
+  });
+});
+
+const SIX = ['Azad', 'Berfîn', 'Ciwan', 'Dîlan', 'Evîn', 'Firat'];
+
+/** A game of six with two impostors, dealt and taken to the vote: who the impostors are, read off the cards. */
+async function twoImpostors(chips: Array<[group: string, chip: string | RegExp]>): Promise<string[]> {
+  await screen.findByRole('button', { name: 'Deal the cards' });
+  press('Add a player');
+  press('Add a player');
+  for (const [i, name] of SIX.entries()) fireEvent.change(screen.getByLabelText(`Player ${i + 1}`), { target: { value: name } });
+  choose('Impostors', '2');
+  openRules();
+  for (const [group, chip] of [['Times round for clues', '1'], ...NO_CLOCKS, ...chips] as Array<[string, string | RegExp]>) choose(group, chip);
+  press('Deal the cards');
+  const cards: string[] = [];
+  for (const name of SIX) cards.push(await readCard(name));
+  await screen.findByText('Round 1 of 1');
+  for (let i = 0; i < SIX.length; i++) press('Next');
+  return SIX.filter((_, i) => cards[i]!.includes('You’re the impostor'));
+}
+
+describe('two impostors', () => {
+  it('has the room vote again for the second once the first is caught, and pays for the catch', async () => {
+    quickClock();
+    testAuth.client = fakeClient(offered());
+    renderWithProviders(<CouchGame onLeave={() => undefined} />);
+    const [first, other] = await twoImpostors([['The vote', 'By pointing']]);
+    press(await screen.findByText(first!).then(() => first!));
+    momentPasses();
+    await guess(first!, 'hesp');
+    // what the second vote is for, and its clock, before anyone is named
+    expect(await screen.findByRole('heading', { name: 'One impostor is caught. Who is the other one?' })).toBeTruthy();
+    expect(screen.getByText('Everyone else votes once more: 30 seconds.')).toBeTruthy();
+    press('Go to the vote');
+    expect(screen.getByRole('timer')).toBeTruthy();
+    // the impostor already caught is not among those the room can name
+    expect(screen.queryByRole('button', { name: first! })).toBeNull();
+    press(other!);
+    momentPasses();
+    expect(await screen.findByText(`${other} was caught!`)).toBeTruthy();
+    const both = [first!, other!].sort((a, b) => SIX.indexOf(a) - SIX.indexOf(b));
+    expect(screen.getByText(`The impostors were ${both[0]} and ${both[1]}`)).toBeTruthy();
+    expect(screen.queryByText(/stayed hidden/)).toBeNull();
+  });
+
+  it('pays the impostor nobody found in time once the second vote’s clock runs out', async () => {
+    quickClock();
+    testAuth.client = fakeClient(offered());
+    renderWithProviders(<CouchGame onLeave={() => undefined} />);
+    const [first, other] = await twoImpostors([]);
+    // everyone names the first impostor, who names someone else
+    for (const name of SIX) await castVote(name, name === first ? SIX.find((n) => n !== first && n !== other)! : first!);
+    momentPasses();
+    await guess(first!, 'hesp');
+    press(await screen.findByText('Go to the vote').then(() => 'Go to the vote'));
+    // one vote is cast, for someone who is not the other impostor, and then the time is up
+    const voter = SIX.find((n) => n !== first)!;
+    const wrong = SIX.find((n) => n !== first && n !== other && n !== voter)!;
+    await castVote(voter, wrong);
+    momentPasses(31_000);
+    expect(await screen.findByText(`${other} stayed hidden to the end: +3.`)).toBeTruthy();
+    expect(screen.getByText(`${voter} voted for ${wrong}`)).toBeTruthy();
+    // who had not voted when the clock ran out did not vote at all
+    for (const name of SIX.filter((n) => n !== first && n !== voter)) expect(screen.getByText(`${name} didn’t vote`)).toBeTruthy();
+    expect(screen.getByLabelText(new RegExp(`^${other}: This game 3,`))).toBeTruthy();
+  });
+});
+
+describe('the evening', () => {
+  it('plays one round the plain way when a card has no odd word, says so, and goes back to the odd word after', async () => {
+    quickClock();
+    testAuth.client = fakeClient(offered(ok({ dialect: 'kmr', cards: [card('pisîk', null), card('hirç', 'rovî')] })));
+    renderWithProviders(<CouchGame onLeave={() => undefined} />);
+    await start([...NO_CLOCKS, ['Kind of game', /^Odd word out/], ['The vote', 'By pointing']]);
+    expect(await screen.findByText('No odd word this time, so this game is classic.')).toBeTruthy();
+    const first = await dealRound();
+    expect(first.filter((c) => c.includes('You’re the impostor'))).toHaveLength(1);
+    await screen.findByText('Round 1 of 2');
+    press('Go to the vote');
+    press('We couldn’t agree');
+    momentPasses();
+    press(await screen.findByText('Next game').then(() => 'Next game'));
+    expect(await screen.findByText('Game 2')).toBeTruthy();
+    expect(screen.queryByText('No odd word this time, so this game is classic.')).toBeNull();
+    const second = await dealRound();
+    expect(second.filter((c) => c.includes('rovî'))).toHaveLength(1);
+    expect(second.some((c) => c.includes('impostor'))).toBe(false);
+  });
+
+  it('opens the setup on the learner’s own Kurdish where the game is offered in it', async () => {
+    rememberCourseDialect('ckb');
+    const client = fakeClient({
+      ...offered(),
+      'GET /games/impostor/couch?dialect=ckb': ok({
+        dialect: 'ckb',
+        difficulties: [{ difficulty: 'beginner', cards: 20, categories: [{ slug: 'animals', ku: 'ئاژەڵ', meanings: { en: 'animal' }, cards: 12 }] }],
+      }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<CouchGame onLeave={() => undefined} />);
+    await screen.findByRole('button', { name: 'Deal the cards' });
+    // both varieties are offered, and the categories shown are the Soranî ones
+    expect(within(screen.getByRole('radiogroup', { name: 'Variety' })).getAllByRole('radio')).toHaveLength(2);
+    const categories = within(screen.getByRole('radiogroup', { name: 'Category' }));
+    expect(categories.getByRole('radio', { name: /ئاژەڵ/ })).toBeTruthy();
+    expect(categories.queryByRole('radio', { name: /heywan/ })).toBeNull();
+    // and the cards are asked for in it
+    press('Deal the cards');
+    await waitFor(() => expect(client.calls.find((c) => c.method === 'POST')?.body).toMatchObject({ dialect: 'ckb' }));
   });
 });

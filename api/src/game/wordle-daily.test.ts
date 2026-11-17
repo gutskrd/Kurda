@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   applyGameResult,
   averageGuesses,
+  DAILY_REPEAT_DAYS,
+  dailyRepeatWindow,
   DIFFICULTY_LENGTHS,
   emptyStats,
   filterByDifficulty,
@@ -59,6 +61,28 @@ describe('pickDailyWord', () => {
 
   it('handles negative day indices without going out of range', () => {
     expect(pickDailyWord(pool, -3, 'hard')).not.toBeNull();
+  });
+
+  /**
+   * A pool that grew reorders the permutation, so the day's own word can be
+   * one players were set a few days ago: the pick walks on past those.
+   */
+  it('walks on past words set lately, and takes the day’s own word when every word was', () => {
+    const own = pickDailyWord(pool, 7, 'easy')!;
+    const next = pickDailyWord(pool, 7, 'easy', new Set([own]));
+    expect(next).not.toBeNull();
+    expect(next).not.toBe(own);
+    expect(pickDailyWord(pool, 7, 'easy', new Set(pool))).toBe(own);
+  });
+});
+
+describe('dailyRepeatWindow', () => {
+  it('is half a year, or one day less than the pool lasts when that is shorter', () => {
+    expect(DAILY_REPEAT_DAYS).toBe(180);
+    expect(dailyRepeatWindow(400)).toBe(180);
+    expect(dailyRepeatWindow(120)).toBe(119);
+    expect(dailyRepeatWindow(1)).toBe(0);
+    expect(dailyRepeatWindow(0)).toBe(0);
   });
 });
 
@@ -129,6 +153,21 @@ describe('applyGameResult — stats + streak', () => {
     s = applyGameResult(s, dailyWin(10)).stats;
     s = applyGameResult(s, { won: false, guesses: 6, timeMs: 9000, daily: true, dayIndex: 11 }).stats;
     expect(winPercentage(s)).toBe(50);
+  });
+
+  /** There is a daily word per difficulty now: a second one the same day must not read as a gap, nor undo the first. */
+  it('counts a day once when a player finishes two dailies on it', () => {
+    let s = emptyStats();
+    s = applyGameResult(s, dailyWin(10)).stats;
+    s = applyGameResult(s, dailyWin(11)).stats; // streak 2
+    s = applyGameResult(s, dailyWin(11)).stats; // the easy word as well as the medium one
+    expect(s.currentStreak).toBe(2);
+    expect(s.wins).toBe(3);
+    s = applyGameResult(s, { won: false, guesses: 6, timeMs: 9000, daily: true, dayIndex: 11 }).stats; // and a hard one lost
+    expect(s.currentStreak).toBe(2);
+    expect(s.losses).toBe(1);
+    s = applyGameResult(s, dailyWin(12)).stats;
+    expect(s.currentStreak).toBe(3);
   });
 
   it('counts words learned when saved to vocabulary', () => {

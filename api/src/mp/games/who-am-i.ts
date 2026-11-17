@@ -2,10 +2,12 @@ import type pg from 'pg';
 import { z } from 'zod';
 import {
   GAME_DIFFICULTIES,
+  WHO_AM_I_SAYS,
   WHO_AM_I_TABLE_DEFAULT_MINUTES,
   WHO_AM_I_TABLE_MAX_PLAYERS,
   WHO_AM_I_TABLE_MIN_PLAYERS,
   WHO_AM_I_TABLE_MINUTES,
+  whoAmISaysOf,
   whoAmITableRules,
   type GameDifficulty,
   type WhoAmITableBoard,
@@ -29,9 +31,18 @@ import type { GameModule, LobbyChoices } from '../module.js';
  * rules' `viewFor` is the only way any of it leaves the server.
  *
  * Nothing in the game is typed: a move is a question picked from the list,
- * yes or no to somebody else's question, a tile tapped, or a pass. What a
- * card says to a question is the facts table's, never the table's: the
- * friends' answers are scored against it, and the asker is told the card's.
+ * an answer to somebody else's question (yes, could be, no or not sure), a
+ * tile tapped, or a pass. What a card says to a question is the facts
+ * table's, never the table's: the friends' answers are scored against it, and
+ * the asker is told the card's.
+ *
+ * A table offers the four answers only when the app that made it asks for
+ * them (`answers: 4`); one made by an app from before the four offers yes and
+ * no. Either is dealt the cards as they are: these rules score a "sometimes"
+ * card fairly whatever the friends say (yes and no are both right), and no
+ * card's facts ever leave the server. An app from before the four answers
+ * with `{ yes }` at any table, and reads a "sometimes" from the card as no:
+ * the one thing it cannot show.
  *
  * Offered in a dialect with enough approved question templates and, at some
  * difficulty, enough identities.
@@ -49,10 +60,11 @@ const lobbySchema = z
     maxPlayers: z.number().int().min(WHO_AM_I_TABLE_MIN_PLAYERS).max(WHO_AM_I_TABLE_MAX_PLAYERS).default(WHO_AM_I_TABLE_MAX_PLAYERS),
     access: z.enum(['friends', 'open']).default('friends'),
     rated: z.boolean().optional(),
+    answers: z.union([z.literal(2), z.literal(4)]).default(2),
   })
   .transform(
     (s): LobbyChoices<WhoAmITableSettings> => ({
-      settings: { dialect: s.dialect, minutes: s.minutes, difficulty: s.difficulty },
+      settings: { dialect: s.dialect, minutes: s.minutes, difficulty: s.difficulty, answers: s.answers },
       dialect: s.dialect,
       maxPlayers: s.maxPlayers,
       access: s.access,
@@ -60,12 +72,18 @@ const lobbySchema = z
     }),
   );
 
-const moveSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('ask'), question: z.string().min(1).max(80) }),
-  z.object({ kind: z.literal('answer'), yes: z.boolean() }),
-  z.object({ kind: z.literal('guess'), tile: z.string().min(1).max(80) }),
-  z.object({ kind: z.literal('pass') }),
-]);
+// An answer comes as `says` from today's apps and as `yes` from apps before the four answers; a body with neither says
+// nothing, and is refused before it reaches the table.
+const moveSchema = z
+  .discriminatedUnion('kind', [
+    z.object({ kind: z.literal('ask'), question: z.string().min(1).max(80) }),
+    z.object({ kind: z.literal('answer'), says: z.enum(WHO_AM_I_SAYS).optional(), yes: z.boolean().optional() }),
+    z.object({ kind: z.literal('guess'), tile: z.string().min(1).max(80) }),
+    z.object({ kind: z.literal('pass') }),
+  ])
+  .superRefine((m, ctx) => {
+    if (m.kind === 'answer' && m.says === undefined && m.yes === undefined) ctx.addIssue({ code: 'custom', path: ['says'], message: 'say an answer' });
+  });
 type RawMove = z.infer<typeof moveSchema>;
 
 /** The difficulties a table can be played at in a dialect. */
@@ -88,7 +106,7 @@ export const whoAmITableModule: GameModule<WhoAmITableState, WhoAmITableMove, Wh
   },
 
   publicSettings(settings) {
-    return { dialect: settings.dialect, minutes: settings.minutes, difficulty: settings.difficulty };
+    return { dialect: settings.dialect, minutes: settings.minutes, difficulty: settings.difficulty, answers: settings.answers === 4 ? 4 : 2 };
   },
 
   /** A table is made only at a difficulty the dialect's identities fill. */
@@ -114,7 +132,9 @@ export const whoAmITableModule: GameModule<WhoAmITableState, WhoAmITableMove, Wh
 
   async prepare(_db, _state, _seat, { raw }) {
     // a move carries nothing but its own choice: the rules judge whose turn it is and what the turn is waiting for
-    return { move: raw, text: null };
+    if (raw.kind !== 'answer') return { move: raw, text: null };
+    // either form of an answer is the same answer to the rules, and the schema has already refused a body with neither
+    return { move: { kind: 'answer', says: whoAmISaysOf(raw)! }, text: null };
   },
 
   async availability(db, dialect) {

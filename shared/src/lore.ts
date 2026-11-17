@@ -274,10 +274,11 @@ export const RIDDLE_MATCHING = {
     endings: ['yeke', 'yeki', 'eke', 'eki', 'yek', 'yen', 'ek', 'en', 'ya', 'ye', 'yi', 'a', 'e', 'i'],
   },
   ckb: {
-    before: ['ئەو', 'ئەم'],
+    // ئەوە and ئەمە: "it is …" as it is most often said (ئەوە دەرزییە)
+    before: ['ئەو', 'ئەم', 'ئەوە', 'ئەمە'],
     after: ['ە', 'یە'],
-    // as the lenient fold leaves them: ێ as ی
-    endings: ['ەکەیە', 'ەکە', 'یەک', 'کە', 'یک', 'یە', 'ە', 'ی'],
+    // as the lenient fold leaves them: ێ as ی; یەکەیە and یەکە are the definite form after a vowel (دەرزییەکە)
+    endings: ['یەکەیە', 'ەکەیە', 'یەکە', 'ەکە', 'یەک', 'کە', 'یک', 'یە', 'ە', 'ی'],
   },
 } as const satisfies Record<GameDialect, { before: readonly string[]; after: readonly string[]; endings: readonly string[] }>;
 
@@ -429,7 +430,67 @@ export interface RiddleList {
   total: number;
 }
 
-export type RiddleGuessResult = { correct: false } | { correct: true; answer: RiddleAnswer; xp: number };
+/**
+ * How a wrong guess was near, when it was:
+ *   close    — a word a thinking player might give, which the riddle lists as near (`near`)
+ *   spelling — one letter away from the answer or a form it accepts
+ *   language — the answer, but in the learner's own language rather than Kurdish
+ * A near guess still counts as a guess, and pays and reveals nothing.
+ */
+export const RIDDLE_NEAR_KINDS = ['close', 'spelling', 'language'] as const;
+export type RiddleNear = (typeof RIDDLE_NEAR_KINDS)[number];
+
+export type RiddleGuessResult = { correct: false; near?: RiddleNear } | { correct: true; answer: RiddleAnswer; xp: number };
+
+/** The shortest answer a spelling slip is allowed for: a shorter word one letter away is another word. */
+export const RIDDLE_SPELLING_MIN = 4;
+
+/** Whether two words are one edit apart (a letter more, less or different), compared letter by letter. */
+export function oneEditApart(a: string, b: string): boolean {
+  const x = [...a];
+  const y = [...b];
+  if (Math.abs(x.length - y.length) > 1 || a === b) return false;
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < x.length && j < y.length) {
+    if (x[i] === y[j]) {
+      i++;
+      j++;
+      continue;
+    }
+    if (++edits > 1) return false;
+    if (x.length > y.length) i++;
+    else if (y.length > x.length) j++;
+    else {
+      i++;
+      j++;
+    }
+  }
+  return edits + (x.length - i) + (y.length - j) <= 1;
+}
+
+/**
+ * How near a wrong guess is (pure, for the server and the tests): one the
+ * riddle lists as near, then one letter away from an answer of four letters
+ * or more, then the answer in the learner's own language. Null when it is
+ * none of these.
+ */
+export function riddleGuessNear(
+  guess: string,
+  riddle: { answers: readonly string[]; near?: readonly string[]; translated?: readonly string[] },
+  dialect: GameDialect,
+): RiddleNear | null {
+  if (gameWords(guess).length === 0) return null;
+  if (riddle.near && riddle.near.length > 0 && riddleGuessMatches(guess, riddle.near, dialect)) return 'close';
+  const forms = riddleGuessForms(guess, dialect);
+  const targets = riddle.answers.map((a) => riddleKey(a, dialect)).filter((k) => [...k].length >= RIDDLE_SPELLING_MIN);
+  if (forms.some((f) => targets.some((t) => oneEditApart(f, t)))) return 'spelling';
+  const translated = (riddle.translated ?? []).map((t) => t.normalize('NFC').toLocaleLowerCase().replace(/[^\p{L}\p{N} ]/gu, '').replace(/\s+/g, ' ').trim());
+  const typed = guess.normalize('NFC').toLocaleLowerCase().replace(/[^\p{L}\p{N} ]/gu, '').replace(/\s+/g, ' ').trim();
+  if (typed !== '' && translated.some((t) => t !== '' && (t === typed || t.replace(/^(the|a|an) /, '') === typed.replace(/^(the|a|an) /, '')))) return 'language';
+  return null;
+}
 
 /** Another wording of a proverb: another region's, or the other variety's counterpart. */
 export interface ProverbVariant {
@@ -467,26 +528,38 @@ export interface ProverbList {
  * server makes it and keeps its answers):
  *   meaning   — a proverb, and three meanings to choose its own from
  *   situation — a little scene, and three proverbs to choose the one that fits
- * Its options are in one language, the learner's when enough proverbs are
- * translated into it, else English, so no option stands out by being in
- * another language. It pays no XP, as no game played alone does; a round
+ *   complete  — a proverb with its last word missing, and three Kurdish words
+ *               to finish it with: the one way to play that is all in Kurdish
+ * The first two have their options in one language, the learner's when enough
+ * proverbs are translated into it, else English, so no option stands out by
+ * being in another language. It pays no XP, as no game played alone does; a round
  * with at least half its items right on the first try counts for the streak
  * and the daily goal, as those rounds do.
  */
-export const PROVERB_ROUND_MODES = ['meaning', 'situation'] as const;
+export const PROVERB_ROUND_MODES = ['meaning', 'situation', 'complete'] as const;
 export type ProverbRoundMode = (typeof PROVERB_ROUND_MODES)[number];
 
 /** The round's name among the solo rounds, by mode: what its sessions are filed under. */
-export const PROVERB_ROUND_GAMES = { meaning: 'proverb-meaning', situation: 'proverb-situation' } as const satisfies Record<ProverbRoundMode, string>;
+export const PROVERB_ROUND_GAMES = {
+  meaning: 'proverb-meaning',
+  situation: 'proverb-situation',
+  complete: 'proverb-complete',
+} as const satisfies Record<ProverbRoundMode, string>;
 export type ProverbRoundGame = (typeof PROVERB_ROUND_GAMES)[ProverbRoundMode];
 
 export const PROVERB_ROUND_ITEMS = 5;
 export const PROVERB_ROUND_OPTIONS = 3;
 
-/** One item, without its answer. In a scene the proverb it is about is never written out: it is shown as … */
+/**
+ * One item, without its answer. In a scene the proverb it is about is never
+ * written out: it is shown as … And a proverb to finish has its missing word
+ * as … too, with what stands before and after the gap (`before`, `after`) for
+ * a screen that draws the gap itself.
+ */
 export type ProverbRoundItemView =
   | { index: number; mode: 'meaning'; dialect: GameDialect; proverb: string; locale: AppLocale; options: string[] }
-  | { index: number; mode: 'situation'; dialect: GameDialect; scene: string; locale: AppLocale; options: string[] };
+  | { index: number; mode: 'situation'; dialect: GameDialect; scene: string; locale: AppLocale; options: string[] }
+  | { index: number; mode: 'complete'; dialect: GameDialect; proverb: string; before: string; after: string; locale: AppLocale; options: string[] };
 
 export interface ProverbRoundAnswer {
   choice: number;

@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { AppError } from '../plugins/errors.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
-import { classifyRhyme, normalizeWord, rhymePrefix, PERFECT_FROM, type RhymeQuality } from '../game/rhyme.js';
+import { classifyRhyme, normalizeWord, rhymePattern, type Dialect, type RhymeQuality } from '../game/rhyme.js';
 import { applyRulings, rhymeGroupSizes } from '../game/rhyme-groups.js';
 
 /**
@@ -24,8 +24,9 @@ import { dictionaryKey, letterCount } from '@kurda/shared';
  * validates guesses against it, and Rhyme draws prompts from it and only accepts
  * submissions that are in it. So adding a word here makes it playable everywhere.
  *
- * Rhymes are NOT stored — `classifyRhyme` derives them from how many letters two
- * words end with in common, so an admin curates *words* and the rhyme sets follow.
+ * Rhymes are NOT stored — `classifyRhyme` derives them from how two words end
+ * (the rime in Kurmancî, the last letters in Soranî), so an admin curates
+ * *words* and the rhyme sets follow.
  * `GET /admin/dictionary/rhymes` exposes that computation so an admin can see
  * which words currently rhyme with a given one and spot thin coverage.
  *
@@ -82,6 +83,9 @@ const rebuildBody = z.object({
   /** preview the outcome without writing it */
   dryRun: z.boolean().default(false),
 });
+
+/** The dictionary's name for a rhyme game's dialect (`dict_entries.dialect`). */
+const DICTIONARY_DIALECT: Record<Dialect, string> = { kurmanci: 'kurmanji', sorani: 'sorani' };
 
 interface WordRow {
   id: string;
@@ -397,8 +401,9 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   app.get('/admin/dictionary/rhymes', { schema: { querystring: rhymeQuery }, preHandler: canEdit }, async (req) => {
     const { word, dialect } = req.query as z.infer<typeof rhymeQuery>;
     const target = normalizeWord(word);
-    const anyPrefix = rhymePrefix(word, 1);
-    const perfectPrefix = rhymePrefix(word, PERFECT_FROM);
+    // the dialect's own rule (rhyme.ts): an index prefix, and the patterns that tell a rhyme from a word that shares it
+    const pattern = rhymePattern(word, dialect);
+    const dict = DICTIONARY_DIALECT[dialect];
 
     // an admin's explicit decisions for this prompt, so the UI can show which
     // pairs are curated rather than merely derived
@@ -408,26 +413,24 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     );
     const decided = new Map(overrides.rows.map((o) => [o.rhyme_normalized, o.quality]));
 
-    const listed = anyPrefix
+    const listed = pattern
       ? await app.db.query<{ headword: string; headword_normalized: string; perfect: boolean }>(
           // perfect first, then alphabetically, so thin coverage shows at a glance
-          `SELECT headword, headword_normalized,
-                  ($2::text IS NOT NULL AND rhyme_key LIKE $2 || '%') AS perfect
+          `SELECT headword, headword_normalized, (rhyme_key ~ $3) AS perfect
              FROM dict_entries
-            WHERE rhyme_key LIKE $1 || '%' AND headword_normalized <> $3
+            WHERE rhyme_key LIKE $1 || '%' AND rhyme_key ~ $2 AND headword_normalized <> $4 AND dialect = $5
             ORDER BY perfect DESC, headword ASC
-            LIMIT $4`,
-          [anyPrefix, perfectPrefix, target, RHYME_LIST_LIMIT],
+            LIMIT $6`,
+          [pattern.prefix, pattern.any, pattern.perfect, target, dict, RHYME_LIST_LIMIT],
         )
       : { rows: [], rowCount: 0 };
 
-    const counts = anyPrefix
+    const counts = pattern
       ? await app.db.query<{ any_rhyme: string; perfect: string }>(
-          `SELECT count(*)::text AS any_rhyme,
-                  count(*) FILTER (WHERE $2::text IS NOT NULL AND rhyme_key LIKE $2 || '%')::text AS perfect
+          `SELECT count(*)::text AS any_rhyme, count(*) FILTER (WHERE rhyme_key ~ $3)::text AS perfect
              FROM dict_entries
-            WHERE rhyme_key LIKE $1 || '%' AND headword_normalized <> $3`,
-          [anyPrefix, perfectPrefix, target],
+            WHERE rhyme_key LIKE $1 || '%' AND rhyme_key ~ $2 AND headword_normalized <> $4 AND dialect = $5`,
+          [pattern.prefix, pattern.any, pattern.perfect, target, dict],
         )
       : { rows: [{ any_rhyme: '0', perfect: '0' }] };
 
@@ -447,8 +450,8 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
      */
     const named = decided.size
       ? await app.db.query<{ headword: string; headword_normalized: string }>(
-          `SELECT headword, headword_normalized FROM dict_entries WHERE headword_normalized = ANY($1)`,
-          [[...decided.keys()]],
+          `SELECT headword, headword_normalized FROM dict_entries WHERE headword_normalized = ANY($1) AND dialect = $2`,
+          [[...decided.keys()], dict],
         )
       : { rows: [] };
 
@@ -463,7 +466,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
       if (byNormalized.has(r.headword_normalized)) continue;
       byNormalized.set(r.headword_normalized, {
         word: r.headword,
-        derived: classifyRhyme(word, r.headword),
+        derived: classifyRhyme(word, r.headword, dialect),
       });
     }
 
@@ -521,21 +524,23 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
    * prompts are on it.
    */
   app.get('/admin/rhyme/prompts', { schema: { querystring: promptsQuery }, preHandler: canEdit }, async (req) => {
-    // `dialect` is still accepted and still ignored: a rhyme is decided by the
-    // letters two words end with, which is the same question in either script.
-    const { q, limit, offset } = req.query as z.infer<typeof promptsQuery>;
+    // One dialect at a time: a round opens on a word of its own dialect, and the two rhyme by different rules (the
+    // rime in Kurmancî, the last letters in Soranî), so their counts are not the same question.
+    const { q, dialect, limit, offset } = req.query as z.infer<typeof promptsQuery>;
+    const dict = DICTIONARY_DIALECT[dialect];
 
     const poolSizeRow = await app.db.query<{ n: string; curated: string }>(
       `SELECT count(*)::text AS n, count(*) FILTER (WHERE is_rhyme_prompt)::text AS curated
-         FROM dict_entries WHERE in_games`,
+         FROM dict_entries WHERE in_games AND dialect = $1`,
+      [dict],
     );
     const poolSize = Number(poolSizeRow.rows[0]?.n ?? 0);
     // Rounds fall back to the WHOLE pool while nothing is curated, so that is
     // genuinely the set of possible base words — say so rather than showing none.
     const usingFallback = Number(poolSizeRow.rows[0]?.curated ?? 0) === 0;
 
-    const params: unknown[] = [];
-    const conds = ['in_games'];
+    const params: unknown[] = [dict];
+    const conds = ['in_games', 'dialect = $1'];
     if (!usingFallback) conds.push('is_rhyme_prompt');
     if (q) {
       params.push(`%${normalizeWord(q)}%`);
@@ -554,14 +559,14 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     ]);
     const page = pageRows.rows;
 
-    const groups = await rhymeGroupSizes(app);
+    const groups = await rhymeGroupSizes(app, dialect);
     const names = page.map((r) => r.headword_normalized);
     // how many dictionary rows *are* each prompt: a word never rhymes with
     // itself, and the grouped counts above cannot know which row is which
     const selves = await app.db.query<{ headword_normalized: string; n: string }>(
       `SELECT headword_normalized, count(*)::text AS n FROM dict_entries
-        WHERE headword_normalized = ANY($1) GROUP BY 1`,
-      [names],
+        WHERE headword_normalized = ANY($1) AND dialect = $2 GROUP BY 1`,
+      [names, dict],
     );
     const selfCount = new Map(selves.rows.map((r) => [r.headword_normalized, Number(r.n)]));
 
@@ -581,6 +586,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         row.headword,
         groups.countsFor(row.headword, selfCount.get(row.headword_normalized) ?? 0),
         byPrompt.get(row.headword_normalized) ?? [],
+        dialect,
       );
       return {
         id: row.id,
@@ -625,11 +631,13 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     '/admin/rhyme/prompts/rebuild',
     { schema: { body: rebuildBody }, preHandler: canEdit },
     async (req) => {
-      const { dryRun } = req.body as z.infer<typeof rebuildBody>;
+      const { dialect, dryRun } = req.body as z.infer<typeof rebuildBody>;
+      const dict = DICTIONARY_DIALECT[dialect];
       const all = await app.db.query<WordRow>(
-        // rebuild decides which pool words a round may open on; what they rhyme
-        // against is the dictionary, which is what the grouped counts below read
-        `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries WHERE in_games`,
+        // rebuild decides which pool words of the dialect a round may open on; what they rhyme
+        // against is the dialect's dictionary, which is what the grouped counts below read
+        `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries WHERE in_games AND dialect = $1`,
+        [dict],
       );
       const decided = await app.db.query<{ prompt_normalized: string; rhyme_normalized: string; quality: string }>(
         `SELECT prompt_normalized, rhyme_normalized, quality FROM rhyme_overrides`,
@@ -641,11 +649,11 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         byPrompt.set(d.prompt_normalized, m);
       }
 
-      const groups = await rhymeGroupSizes(app);
+      const groups = await rhymeGroupSizes(app, dialect);
       const selves = await app.db.query<{ headword_normalized: string; n: string }>(
         `SELECT headword_normalized, count(*)::text AS n FROM dict_entries
-          WHERE headword_normalized = ANY($1) GROUP BY 1`,
-        [all.rows.map((r) => r.headword_normalized)],
+          WHERE headword_normalized = ANY($1) AND dialect = $2 GROUP BY 1`,
+        [all.rows.map((r) => r.headword_normalized), dict],
       );
       const selfCount = new Map(selves.rows.map((r) => [r.headword_normalized, Number(r.n)]));
 
@@ -658,6 +666,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
           row.headword,
           groups.countsFor(row.headword, selfCount.get(row.headword_normalized) ?? 0),
           byPrompt.get(row.headword_normalized) ?? [],
+          dialect,
         );
         if (perfect + near > 0) playable.push(row.id);
         else unplayable.push(row.headword);

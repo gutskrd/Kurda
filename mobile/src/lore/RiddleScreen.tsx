@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Platform, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
-import { RIDDLE_MATCHING, riddleXp, type RiddleAnswer, type RiddleDetail, type RiddleHint } from '@kurda/shared';
+import { RIDDLE_MATCHING, riddleXp, type RiddleAnswer, type RiddleDetail, type RiddleGuessResult, type RiddleHint, type RiddleNear } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
@@ -22,7 +22,15 @@ import { Pressable } from '../theme/Pressable';
 import { SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { getRiddle, guessRiddle, revealRiddle, riddleUrl, takeHint } from './api';
+import type { TranslationKey } from '../i18n/translations';
+import { getRiddle, revealRiddle, riddleUrl, takeHint } from './api';
+
+/** How a near guess is told, by how it was near. */
+const NEAR_KEY: Record<RiddleNear, TranslationKey> = {
+  close: 'lore.riddle.near',
+  spelling: 'lore.riddle.spelling',
+  language: 'lore.riddle.inKurdish',
+};
 import { CATEGORY_KEY, DIFFICULTY_KEY, centred, dialectOfSlug, inReaderLanguage, kurdishIn } from './labels';
 import { InLanguage } from './parts';
 import { mergeHints, rememberAnswer, rememberedAnswer, rememberedList } from './store';
@@ -67,6 +75,8 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
   const [fresh, setFresh] = useState<number | null>(null);
   const [guess, setGuess] = useState('');
   const [verdict, setVerdict] = useState<'right' | 'wrong' | null>(null);
+  // how near the last wrong guess was, when it was: said instead of a plain "not quite"
+  const [near, setNear] = useState<RiddleNear | null>(null);
   const [solved, setSolved] = useState<{ answer: RiddleAnswer; xp: number } | null>(null);
   const [busy, setBusy] = useState<'guess' | 'hint' | 'reveal' | null>(null);
   const [confirm, setConfirm] = useState(false);
@@ -114,7 +124,8 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
     if (!riddle || !text || busy) return;
     setBusy('guess');
     setProblem(null);
-    const res = await guessRiddle(client, slug, text);
+    // the interface language goes with the guess, so the answer said in it is told to say it in Kurdish
+    const res = await client.post<RiddleGuessResult>(`/riddles/${encodeURIComponent(slug)}/guess`, { guess: text, locale });
     setBusy(null);
     if (!res.ok) {
       setProblem(describeError(res.error, t));
@@ -128,8 +139,9 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
       announce(t('lore.riddle.right'));
     } else {
       setVerdict('wrong');
+      setNear(res.data.near ?? null);
       haptic('wrong');
-      announce(t('lore.riddle.wrong'));
+      announce(t(res.data.near ? NEAR_KEY[res.data.near] : 'lore.riddle.wrong'));
     }
   };
 
@@ -273,7 +285,9 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
               verdict={verdict}
               style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.surface }]}
             />
-            {verdict === 'wrong' ? <Text style={[styles.wrong, dir.text, { color: colors.textPrimary }]}>{t('lore.riddle.wrong')}</Text> : null}
+            {verdict === 'wrong' ? (
+              <Text style={[styles.wrong, dir.text, { color: colors.textPrimary }]}>{t(near ? NEAR_KEY[near] : 'lore.riddle.wrong')}</Text>
+            ) : null}
             <ClayButton label={t('games.solo.check')} tone="primary" size="large" busy={busy === 'guess'} disabled={guess.trim() === ''} onPress={() => void check()} />
             <Text style={[styles.small, dir.text, { color: colors.textSecondary }]}>{t('lore.riddle.matching', { before: rule.before[0], after: rule.after[0] })}</Text>
             <Text style={[styles.small, dir.text, { color: colors.goldText }]}>

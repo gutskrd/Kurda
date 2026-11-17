@@ -175,6 +175,30 @@ describe('InviteSheet', () => {
     expect(within(list).getByText('No friend by that name.')).toBeInTheDocument();
   });
 
+  it('makes a Rhyme Match only in a variety with enough prompts for one, whichever the learner chose', async () => {
+    localStorage.setItem('hevalo.learn.courseDialect', 'sorani');
+    const { calls } = api({
+      'GET /rhyme/availability': { dialects: { kurmanci: { prompts: 150, available: true }, sorani: { prompts: 3, available: false } }, minimum: 40 },
+    });
+    open({ kind: 'new', game: 'rhyme-match' }, true);
+    await screen.findByRole('checkbox', { name: /Berfin/ });
+    await waitFor(() => expect(calls.some((c) => c.path === '/rhyme/availability')).toBe(true));
+    expect(screen.queryByRole('radiogroup', { name: 'Dialect' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
+    await waitFor(() => expect(posted(calls, '/play/lobbies')).toEqual({ game: 'rhyme-match', settings: { dialect: 'kurmanci', rated: false } }));
+  });
+
+  it('offers both varieties for a Rhyme Match once both have prompts, the learner’s own chosen first', async () => {
+    localStorage.setItem('hevalo.learn.courseDialect', 'sorani');
+    const { calls } = api({
+      'GET /rhyme/availability': { dialects: { kurmanci: { prompts: 150, available: true }, sorani: { prompts: 80, available: true } }, minimum: 40 },
+    });
+    open({ kind: 'new', game: 'rhyme-match' }, true);
+    expect(await screen.findByRole('radio', { name: 'Soranî' })).toBeChecked();
+    await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
+    await waitFor(() => expect(posted(calls, '/play/lobbies')).toEqual({ game: 'rhyme-match', settings: { dialect: 'sorani', rated: false } }));
+  });
+
   it('points somewhere useful when there is nobody to ask yet', async () => {
     api({ 'GET /friends': { friends: [] } });
     open({ kind: 'new', game: 'rhyme-match' }, true);

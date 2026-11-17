@@ -1,13 +1,33 @@
 import { describe, expect, it } from 'vitest';
 import { compareRhymePlayers, rankRhyme, rhymePlacementXp, RHYME_PARTICIPATION_XP, RHYME_WIN_XP, type RhymeMatchPlayerResult } from './rhyme-match.js';
 
-const p = (userId: string, score: number, accepted: number): RhymeMatchPlayerResult => ({ userId, score, accepted });
+const p = (userId: string, score: number, accepted: number, perfect?: number, lastAt?: number | null): RhymeMatchPlayerResult => ({
+  userId,
+  score,
+  accepted,
+  perfect,
+  lastAt,
+});
 
 describe('compareRhymePlayers', () => {
-  it('orders by score desc, then fewer submissions', () => {
-    expect(compareRhymePlayers(p('a', 30, 3), p('b', 20, 1))).toBeLessThan(0); // higher score first
-    expect(compareRhymePlayers(p('a', 20, 2), p('b', 20, 5))).toBeLessThan(0); // tie → fewer submissions first
+  it('orders by score first', () => {
+    expect(compareRhymePlayers(p('a', 30, 3), p('b', 20, 1))).toBeLessThan(0);
     expect(compareRhymePlayers(p('a', 20, 3), p('b', 20, 3))).toBe(0);
+  });
+
+  /** The old tie-break put the player with fewer rhymes ahead, which on an equal score rewarded finding less. */
+  it('breaks a tie on more perfect rhymes, never on fewer words', () => {
+    expect(compareRhymePlayers(p('a', 20, 2, 1), p('b', 20, 5, 2))).toBeGreaterThan(0);
+    expect(compareRhymePlayers(p('a', 20, 5, 3), p('b', 20, 2, 2))).toBeLessThan(0);
+  });
+
+  it('then on whose last rhyme came first, and a player with none comes after', () => {
+    expect(compareRhymePlayers(p('a', 20, 2, 2, 5_000), p('b', 20, 2, 2, 9_000))).toBeLessThan(0);
+    expect(compareRhymePlayers(p('a', 0, 0, 0, null), p('b', 0, 0, 0, 1_000))).toBeGreaterThan(0);
+  });
+
+  it('reads a player counted before the tie-break columns as no perfect rhymes and no time', () => {
+    expect(compareRhymePlayers(p('a', 20, 2), p('b', 20, 2))).toBe(0);
   });
 });
 

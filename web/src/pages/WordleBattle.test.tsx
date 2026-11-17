@@ -210,6 +210,31 @@ describe('WordleBattle', () => {
     expect(await screen.findByText('Rematch asked — waiting for Rojda.')).toBeInTheDocument();
   });
 
+  it('says under the word everyone raced for what it means, in the reader’s language', async () => {
+    localStorage.setItem('hevalo_locale', 'es');
+    const finished = { ...activeBattle, status: 'finished', target: 'kar' };
+    const results = { id: 'b1', target: 'kar', meanings: { en: 'work', es: 'trabajo' }, difficulty: 'medium', ranking: [] };
+    signedIn((url) => {
+      if (url.includes('/wordle/battles/b1/results')) return jsonResponse(200, results);
+      if (url.includes('/wordle/battles/b1')) return jsonResponse(200, finished);
+      return undefined;
+    });
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
+    expect(await screen.findByText('trabajo')).toBeInTheDocument();
+  });
+
+  it('says nothing more than the word when nobody has written what it means', async () => {
+    const finished = { ...activeBattle, status: 'finished', target: 'kar' };
+    signedIn((url) => {
+      if (url.includes('/wordle/battles/b1/results')) return jsonResponse(200, { id: 'b1', target: 'kar', meanings: {}, difficulty: 'medium', ranking: [] });
+      if (url.includes('/wordle/battles/b1')) return jsonResponse(200, finished);
+      return undefined;
+    });
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
+    expect(await screen.findByText('The word was kar.')).toBeInTheDocument();
+    expect(document.querySelector('.wg-meaning-line')).toBeNull();
+  });
+
   it('shows everyone in the lobby that it is Rated, and what a win or a loss would do', async () => {
     const rated = { rated: true, counts: null, friendlyReason: null, damped: false };
     const guestLobby = { ...lobby, isHost: false, rated, players: [seat(1, { name: 'Rojda', isHost: true }), seat(2, { userId: 'me', isMe: true })] };

@@ -20,11 +20,11 @@ import { GameHead, stageTone } from '../games/GameHead';
 import { dialectName } from '../learn/map';
 import { InviteForm } from '../play/InviteSheet';
 import { ChipRadio } from '../play/ChipRadio';
-import { GameRoom } from '../play/MultiRoom';
+import { GameRoom, multiSeatName } from '../play/MultiRoom';
 import { playError } from '../play/playApi';
 import { useGameView } from '../play/useGameView';
 import { defaultVariety } from '../stories/prefs';
-import { LastLetterBoardView, langOf } from './Board';
+import { ChainReview, LastLetterBoardView, langOf } from './Board';
 import { offeredDialects, useLastLetterAvailability } from './availability';
 import './last-letter.css';
 
@@ -96,6 +96,7 @@ function Start(): React.JSX.Element {
       <div className="gs-hero">
         <GameArt game="last-letter" size={148} moving ref={cover} />
         <p className="gs-hero-line">{t('games.lastLetter.intro')}</p>
+        <p className="muted ll-soft-rule">{t('games.lastLetter.softRule')}</p>
       </div>
       <section className="ll-way" aria-labelledby="ll-friends">
         <h2 id="ll-friends" className="ll-way-title">
@@ -161,12 +162,28 @@ function Room({ id }: { id: string }): React.JSX.Element {
       }}
       playing={(v) => <LastLetterBoardView view={v} skew={room.skew} move={room.move} />}
       ending={(v) => {
-        if (v.board?.endedBy === 'chain-full') return <p className="muted">{t('games.lastLetter.chainFull')}</p>;
+        const name = (seat: number): string => {
+          const p = v.players.find((x) => x.seat === seat);
+          return p ? multiSeatName(p, t) : t('stories.game.playerN', { seat });
+        };
+        const review = v.board ? <ChainReview board={v.board} name={name} /> : null;
         const winner = v.results?.[0];
         const hevaloWon = v.mode === 'solo' && winner && v.players.find((p) => p.seat === winner.seat)?.bot;
-        if (hevaloWon) return <p className="muted">{t('games.lastLetter.hevaloWon')}</p>;
-        if (winner && winner.seat === v.me?.seat) return <p className="muted">{t('games.lastLetter.lastStanding')}</p>;
-        return null;
+        const line =
+          v.board?.endedBy === 'chain-full'
+            ? t('games.lastLetter.chainFull')
+            : hevaloWon
+              ? t('games.lastLetter.hevaloWon')
+              : winner && winner.seat === v.me?.seat
+                ? t('games.lastLetter.lastStanding')
+                : null;
+        if (!line && !review) return null;
+        return (
+          <>
+            {line && <p className="muted">{line}</p>}
+            {review}
+          </>
+        );
       }}
       scoreOf={(r) => t('games.lastLetter.words', { count: r.score })}
     />

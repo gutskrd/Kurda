@@ -1,8 +1,15 @@
 /**
  * What Who Am I?'s starter identities are and what is true of each: a short
  * table of everyday things — animals, food, things in a house, jobs, places —
- * with the questions each answers yes to (`WHO_AM_I_FACTS`). Every other
- * question is a no.
+ * with the questions each answers yes to (`WHO_AM_I_FACTS`), and the few it
+ * answers "sometimes" to, where honest people would say either (a dog in the
+ * house or in the yard). Every other question its kind is asked is a no, and
+ * a question its kind is never asked ("Does it sell things?" of a cat) is left
+ * unset, so it is never dealt beside the card.
+ *
+ * The curated deck (who-am-i-deck.ts) is what the game is played with; this
+ * table makes a card only for a course word the deck does not have yet, and
+ * says only what it can say safely.
  *
  * The table holds no Kurdish. A thing is named by its English meaning, lower
  * case and without an article, exactly as the course's vocabulary gives a
@@ -25,22 +32,45 @@ export interface StarterIdentity {
   category: WhoAmICategory;
   /** the facts that are true of it */
   yes: readonly WhoAmIFact[];
+  /** the facts that are true of it only sometimes */
+  sometimes: readonly WhoAmIFact[];
+  /** every fact it is asked about: its kind's, and any of its own */
+  asked: readonly WhoAmIFact[];
 }
 
-type Row = readonly [names: string, yes: readonly WhoAmIFact[]];
+/**
+ * Each row: the thing's English names, the first its own, then what is true
+ * of it beyond its kind, and what more there is to say: what is only
+ * sometimes true, a fact asked of it that its kind is not asked (a tractor
+ * works outdoors), and meanings that are another thing altogether (a word
+ * glossed "nanny" is not a nurse, whatever else its gloss says).
+ */
+type Row = readonly [names: string, yes: readonly WhoAmIFact[], more?: { sometimes?: readonly WhoAmIFact[]; asks?: readonly WhoAmIFact[]; unless?: readonly string[] }];
 
 const ANIMAL: readonly WhoAmIFact[] = ['alive', 'animal'];
-const FOOD: readonly WhoAmIFact[] = ['edible', 'at-home'];
+const FOOD: readonly WhoAmIFact[] = ['edible'];
 const PERSON: readonly WhoAmIFact[] = ['alive', 'person'];
 const PLACE: readonly WhoAmIFact[] = ['place', 'bigger-than-person'];
 
-/** Each row: the thing's English names, the first its own, then what is true of it beyond its kind. */
+/** The questions each kind of thing is asked: the wide ones, and the narrow ones that make sense for it. */
+const WIDE: readonly WhoAmIFact[] = ['alive', 'animal', 'person', 'edible', 'place'];
+const ASKED: Record<'animal' | 'food' | 'object' | 'profession' | 'place', readonly WhoAmIFact[]> = {
+  animal: [...WIDE, 'can-fly', 'lives-in-water', 'four-legs', 'bigger-than-person', 'at-home', 'works-outdoors'],
+  food: [...WIDE, 'sweet', 'helps-sick'],
+  object: [...WIDE, 'can-fly', 'bigger-than-person', 'at-home', 'uses-electricity'],
+  profession: [...WIDE, 'helps-sick', 'works-outdoors'],
+  place: [...WIDE, 'bigger-than-person', 'at-home', 'helps-sick'],
+};
+
 const ANIMALS: readonly Row[] = [
   ['cat', ['four-legs', 'at-home']],
-  ['dog', ['four-legs', 'at-home']],
-  ['horse', ['four-legs', 'bigger-than-person']],
+  // a dog lives in the yard or with the flock in many homes, and a sheepdog works outdoors
+  ['dog', ['four-legs'], { sometimes: ['at-home', 'works-outdoors'] }],
+  // a village horse ploughs and carries loads; a town's does not
+  ['horse', ['four-legs', 'bigger-than-person'], { sometimes: ['works-outdoors'] }],
   ['cow', ['four-legs', 'bigger-than-person', 'edible']],
-  ['sheep|ewe|ram', ['four-legs', 'edible']],
+  // "sheep" is the flock or small livestock at large in many regions: the ram is the one card that means one animal
+  ['ram', ['four-legs', 'edible']],
   ['goat', ['four-legs', 'edible']],
   ['lamb', ['four-legs', 'edible']],
   ['elephant', ['four-legs', 'bigger-than-person']],
@@ -80,7 +110,8 @@ const FOODS: readonly Row[] = [
   ['garlic', []],
   ['olive', []],
   ['walnut', []],
-  ['honey', ['sweet']],
+  // the household's cough remedy, though nobody calls it medicine
+  ['honey', ['sweet'], { sometimes: ['helps-sick'] }],
   ['sugar', ['sweet']],
   ['cake', ['sweet']],
   ['chocolate', ['sweet']],
@@ -88,7 +119,8 @@ const FOODS: readonly Row[] = [
   ['apple', ['sweet']],
   ['grape|grapes', ['sweet']],
   ['watermelon', ['sweet']],
-  ['pomegranate', ['sweet']],
+  // sour pomegranates are as common as sweet ones
+  ['pomegranate', [], { sometimes: ['sweet'] }],
   ['fig', ['sweet']],
   ['banana', ['sweet']],
   ['pear', ['sweet']],
@@ -115,7 +147,8 @@ const OBJECTS: readonly Row[] = [
   ['bed', ['at-home', 'bigger-than-person']],
   ['door', ['at-home', 'bigger-than-person']],
   ['wardrobe|cupboard', ['at-home', 'bigger-than-person']],
-  ['lamp', ['at-home', 'uses-electricity']],
+  // the oil lamp is a lamp too
+  ['lamp', ['at-home'], { sometimes: ['uses-electricity'] }],
   ['television|tv', ['at-home', 'uses-electricity']],
   ['radio', ['at-home', 'uses-electricity']],
   ['computer', ['at-home', 'uses-electricity']],
@@ -123,7 +156,7 @@ const OBJECTS: readonly Row[] = [
   ['fridge|refrigerator', ['at-home', 'uses-electricity', 'bigger-than-person']],
   ['bus', ['bigger-than-person']],
   ['lorry|truck', ['bigger-than-person']],
-  ['tractor', ['bigger-than-person']],
+  ['tractor', ['bigger-than-person', 'works-outdoors'], { asks: ['works-outdoors'] }],
   ['ship', ['bigger-than-person']],
   ['boat', ['bigger-than-person']],
   ['airplane|aeroplane|plane', ['can-fly', 'bigger-than-person']],
@@ -146,7 +179,8 @@ const PROFESSIONS: readonly Row[] = [
   ['carpenter', []],
   ['blacksmith', []],
   ['doctor', ['helps-sick']],
-  ['nurse', ['helps-sick']],
+  // a nanny or a wet-nurse raised a family's children and nursed nobody sick
+  ['nurse', ['helps-sick'], { unless: ['nanny', 'wet-nurse', 'wet nurse', 'nursemaid'] }],
   ['dentist', ['helps-sick']],
   ['pharmacist', ['helps-sick']],
   ['farmer', ['works-outdoors']],
@@ -199,10 +233,19 @@ const PLACES: readonly Row[] = [
   ['room', ['at-home']],
 ];
 
-function rows(category: WhoAmICategory, always: readonly WhoAmIFact[], list: readonly Row[]): Array<[string, StarterIdentity]> {
-  return list.flatMap(([names, yes]) => {
+const UNLESS = new Map<string, ReadonlySet<string>>();
+
+function rows(category: keyof typeof ASKED, always: readonly WhoAmIFact[], list: readonly Row[]): Array<[string, StarterIdentity]> {
+  return list.flatMap(([names, yes, more]) => {
     const all = names.split('|');
-    const identity: StarterIdentity = { thing: all[0]!, category, yes: [...new Set([...always, ...yes])] };
+    const identity: StarterIdentity = {
+      thing: all[0]!,
+      category,
+      yes: [...new Set([...always, ...yes])],
+      sometimes: more?.sometimes ?? [],
+      asked: [...new Set([...ASKED[category], ...(more?.asks ?? [])])],
+    };
+    if (more?.unless) UNLESS.set(identity.thing, new Set(more.unless));
     return all.map((name): [string, StarterIdentity] => [name, identity]);
   });
 }
@@ -224,6 +267,10 @@ export const STARTER_IDENTITIES: ReadonlyMap<string, StarterIdentity> = new Map(
  */
 export function starterIdentityOf(en: string | undefined): StarterIdentity | null {
   if (!en || /^\s*to\s+/i.test(en)) return null;
-  const first = meaningKeys(en)[0];
-  return first ? (STARTER_IDENTITIES.get(first) ?? null) : null;
+  const keys = meaningKeys(en);
+  const found = keys[0] ? (STARTER_IDENTITIES.get(keys[0]) ?? null) : null;
+  // a gloss that also names another thing the row is not ("nurse, nanny") is that other thing, and no card is made
+  const unless = found ? UNLESS.get(found.thing) : undefined;
+  if (found && unless && [...unless].some((u) => en.toLowerCase().includes(u))) return null;
+  return found;
 }

@@ -1206,6 +1206,7 @@ describe('Xapînok’s pictures', () => {
     'animals', 'food', 'fruit', 'vegetables', 'drinks', 'family', 'body', 'clothes', 'home', 'jobs', 'nature', 'town', 'transport', 'colours',
     'school', 'time', 'kitchen', 'feelings', 'play', 'music', 'celebrations', 'tools', 'village', 'numbers', 'weather', 'health', 'people',
     'taste', 'stories', 'money', 'qualities', 'character', 'actions', 'culture', 'language', 'work', 'travel', 'things', 'sports', 'world',
+    'kurdistan', 'legends',
   ];
 
   it('draws a valid, self-contained picture for every category, way to play and emblem, small and large', () => {
@@ -1216,7 +1217,7 @@ describe('Xapînok’s pictures', () => {
     }
   });
 
-  it('has a picture of its own for each of the forty starter categories, and no two alike', () => {
+  it('has a picture of its own for each starter category, and no two alike', () => {
     expect([...IMPOSTOR_CATEGORY_PICTURES].sort()).toEqual([...STARTER].sort());
     const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id').replace(/<title[^>]*>[^<]*<\/title>/, '');
     const all = [null, ...IMPOSTOR_CATEGORY_PICTURES].map((category) => strip(impostorCategorySvg({ category })));

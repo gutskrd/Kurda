@@ -68,6 +68,14 @@ describe('reading a starter entry', () => {
     expect(out.entries[0]).toMatchObject({ ok: false, slug: 'kmr-sample' });
   });
 
+  it('reads a held or retired entry as its file says, the status taken off before the entry is checked', () => {
+    const out = starterLore('riddle', { riddles: [{ ...entry, status: 'held' }, { ...entry, slug: 'kmr-gone', status: 'retired' }, entry] });
+    if ('unreadable' in out) throw new Error(out.unreadable);
+    expect(out.entries.map((e) => (e.ok ? e.status : e.issues))).toEqual(['held', 'retired', 'live']);
+    expect(out.entries[0]!.ok && out.entries[0]!.payload).not.toHaveProperty('status');
+    expect(starterLore('riddle', { riddles: [{ ...entry, status: 'hidden' }] })).toHaveProperty('unreadable');
+  });
+
   it('says a file of the wrong shape is unreadable', () => {
     expect(starterLore('proverb', { riddles: [] })).toHaveProperty('unreadable');
   });

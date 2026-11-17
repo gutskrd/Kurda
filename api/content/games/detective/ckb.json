@@ -1,0 +1,1453 @@
+{
+  "cases": [
+    {
+      "slug": "ckb-kilil",
+      "dialect": "ckb",
+      "level": 1,
+      "title": {
+        "en": "The house key",
+        "ku": "Kilîta malê",
+        "ckb": "کلیلی ماڵەوە",
+        "de": "Der Hausschlüssel",
+        "es": "La llave de casa",
+        "tr": "Ev anahtarı",
+        "ar": "مفتاح البيت",
+        "fr": "La clé de la maison",
+        "nl": "De huissleutel"
+      },
+      "intro": {
+        "en": "It is half past seven, and the house key is gone. Who took it?",
+        "ku": "Demjimêr heft û nîv e, û kilîta malê winda ye. Kê ew bir?",
+        "ckb": "کاتژمێر حەوت و نیوە، و کلیلی ماڵەوە ون بووە. کێ بردی؟",
+        "de": "Es ist halb acht, und der Hausschlüssel ist weg. Wer hat ihn genommen?",
+        "es": "Son las siete y media y la llave de casa ha desaparecido. ¿Quién la cogió?",
+        "tr": "Saat yedi buçuk ve ev anahtarı ortada yok. Kim aldı?",
+        "ar": "الساعة السابعة والنصف، ومفتاح البيت مفقود. من أخذه؟",
+        "fr": "Il est sept heures et demie, et la clé de la maison a disparu. Qui l’a prise ?",
+        "nl": "Het is half acht, en de huissleutel is weg. Wie heeft hem gepakt?"
+      },
+      "suspects": [
+        {
+          "id": "hemin",
+          "name": "هێمن",
+          "about": {
+            "en": "The big brother, who says he hasn’t seen it.",
+            "ku": "Birayê mezin, ku dibêje ew nedîtiye.",
+            "ckb": "برا گەورەکە، کە دەڵێت نەیبینیوە.",
+            "de": "Der große Bruder, der sagt, er habe ihn nicht gesehen.",
+            "es": "El hermano mayor, que dice que no la ha visto.",
+            "tr": "Onu görmediğini söyleyen ağabey.",
+            "ar": "الأخ الأكبر، الذي يقول إنه لم يره.",
+            "fr": "Le grand frère, qui dit ne pas l’avoir vue.",
+            "nl": "De grote broer, die zegt dat hij hem niet heeft gezien."
+          }
+        },
+        {
+          "id": "jino",
+          "name": "ژینۆ",
+          "about": {
+            "en": "Hêmin’s little sister.",
+            "ku": "Xwişka biçûk a Hêmin.",
+            "ckb": "خوشکە بچووکەکەی هێمن.",
+            "de": "Hêmins kleine Schwester.",
+            "es": "La hermana pequeña de Hêmin.",
+            "tr": "Hêmin’in küçük kız kardeşi.",
+            "ar": "أخت هێمن الصغيرة.",
+            "fr": "La petite sœur de Hêmin.",
+            "nl": "Het zusje van Hêmin."
+          }
+        },
+        {
+          "id": "dayk",
+          "name": "دایکی هێمن",
+          "about": {
+            "en": "Hêmin’s mother, late for work.",
+            "ku": "Diya Hêmin, ku ji kar dereng dimîne.",
+            "ckb": "دایکی هێمن، کە بۆ کار دوا دەکەوێت.",
+            "de": "Hêmins Mutter, spät dran für die Arbeit.",
+            "es": "La madre de Hêmin, que llega tarde al trabajo.",
+            "tr": "İşe geç kalan, Hêmin’in annesi.",
+            "ar": "أم هێمن، المتأخرة عن العمل.",
+            "fr": "La mère de Hêmin, en retard pour le travail.",
+            "nl": "De moeder van Hêmin, te laat voor haar werk."
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "pele",
+          "kind": "note",
+          "line": {
+            "story": "ckb-the-house-key",
+            "paragraph": 0,
+            "sentence": 1,
+            "opens": "دایکی",
+            "en": "Hêmin’s mother is in a hurry, because she has to go to work.",
+            "meanings": {
+              "ku": "Diya Hêmin bi lez e, ji ber ku divê ew biçe ser kar.",
+              "de": "Hêmins Mutter hat es eilig, denn sie muss zur Arbeit.",
+              "es": "La madre de Hêmin tiene prisa, porque tiene que ir a trabajar.",
+              "tr": "Hêmin’in annesi acele ediyor, çünkü işe gitmesi gerekiyor.",
+              "ar": "أم هێمن مستعجلة، لأن عليها الذهاب إلى العمل.",
+              "fr": "La mère de Hêmin est pressée, car elle doit aller travailler.",
+              "nl": "De moeder van Hêmin heeft haast, want ze moet naar haar werk."
+            }
+          }
+        },
+        {
+          "id": "pirsi",
+          "kind": "statement",
+          "line": {
+            "story": "ckb-the-house-key",
+            "paragraph": 1,
+            "sentence": 0,
+            "opens": "دایکی",
+            "en": "His mother asks: “Hêmin, have you seen the house key?”",
+            "meanings": {
+              "ku": "Diya wî dipirse: “Hêmin, te kilîta malê dîtiye?”",
+              "de": "Seine Mutter fragt: „Hêmin, hast du den Hausschlüssel gesehen?“",
+              "es": "Su madre pregunta: «Hêmin, ¿has visto la llave de casa?»",
+              "tr": "Annesi soruyor: “Hêmin, ev anahtarını gördün mü?”",
+              "ar": "تسأل أمه: «هێمن، هل رأيت مفتاح البيت؟»",
+              "fr": "Sa mère demande : « Hêmin, tu as vu la clé de la maison ? »",
+              "nl": "Zijn moeder vraagt: ‘Hêmin, heb je de huissleutel gezien?’"
+            }
+          },
+          "from": "dayk"
+        },
+        {
+          "id": "na",
+          "kind": "statement",
+          "line": {
+            "story": "ckb-the-house-key",
+            "paragraph": 1,
+            "sentence": 1,
+            "opens": "هێمن",
+            "en": "Hêmin says: “No, Mum, I haven’t seen it.”",
+            "meanings": {
+              "ku": "Hêmin dibêje: “Na dayê, min ew nedîtiye.”",
+              "de": "Hêmin sagt: „Nein, Mama, ich habe ihn nicht gesehen.“",
+              "es": "Hêmin dice: «No, mamá, no la he visto».",
+              "tr": "Hêmin diyor ki: “Hayır anne, görmedim.”",
+              "ar": "يقول هێمن: «لا يا أمي، لم أره».",
+              "fr": "Hêmin dit : « Non, maman, je ne l’ai pas vue. »",
+              "nl": "Hêmin zegt: ‘Nee, mam, ik heb hem niet gezien.’"
+            }
+          },
+          "from": "hemin"
+        },
+        {
+          "id": "mez",
+          "kind": "note",
+          "line": {
+            "story": "ckb-the-house-key",
+            "paragraph": 2,
+            "sentence": 1,
+            "opens": "کلیلەکە",
+            "en": "The key is not on the table.",
+            "meanings": {
+              "ku": "Kilît ne li ser maseyê ye.",
+              "de": "Der Schlüssel liegt nicht auf dem Tisch.",
+              "es": "La llave no está en la mesa.",
+              "tr": "Anahtar masanın üstünde değil.",
+              "ar": "المفتاح ليس على الطاولة.",
+              "fr": "La clé n’est pas sur la table.",
+              "nl": "De sleutel ligt niet op tafel."
+            }
+          }
+        },
+        {
+          "id": "janta",
+          "kind": "note",
+          "line": {
+            "story": "ckb-the-house-key",
+            "paragraph": 2,
+            "sentence": 2,
+            "opens": "لە",
+            "en": "It isn’t in the bag either.",
+            "meanings": {
+              "ku": "Di çenteyê de jî nîne.",
+              "de": "In der Tasche ist er auch nicht.",
+              "es": "Tampoco está en el bolso.",
+              "tr": "Çantada da değil.",
+              "ar": "وليس في الحقيبة أيضًا.",
+              "fr": "Elle n’est pas non plus dans le sac.",
+              "nl": "In de tas zit hij ook niet."
+            }
+          }
+        },
+        {
+          "id": "dest",
+          "kind": "note",
+          "line": {
+            "story": "ckb-the-house-key",
+            "paragraph": 3,
+            "sentence": 2,
+            "opens": "کلیلەکە",
+            "en": "The key is in her hand!",
+            "meanings": {
+              "ku": "Kilît di destê wê de ye!",
+              "de": "Der Schlüssel ist in ihrer Hand!",
+              "es": "¡La llave está en su mano!",
+              "tr": "Anahtar onun elinde!",
+              "ar": "المفتاح في يدها!",
+              "fr": "La clé est dans sa main !",
+              "nl": "De sleutel zit in haar hand!"
+            }
+          }
+        },
+        {
+          "id": "yari",
+          "kind": "statement",
+          "line": {
+            "story": "ckb-the-house-key",
+            "paragraph": 3,
+            "sentence": 4,
+            "opens": "یاری",
+            "en": "“I’m playing with it.”",
+            "meanings": {
+              "ku": "“Ez pê dilîzim.”",
+              "de": "„Ich spiele damit.“",
+              "es": "«Estoy jugando con ella».",
+              "tr": "“Onunla oynuyorum.”",
+              "ar": "«ألعب به».",
+              "fr": "« Je joue avec. »",
+              "nl": "‘Ik speel ermee.’"
+            }
+          },
+          "from": "jino"
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "Why is Hêmin’s mother in a hurry?",
+            "ku": "Çima diya Hêmin bi lez e?",
+            "ckb": "بۆچی دایکی هێمن لە پەلەدایە؟",
+            "de": "Warum hat Hêmins Mutter es eilig?",
+            "es": "¿Por qué tiene prisa la madre de Hêmin?",
+            "tr": "Hêmin’in annesi neden acele ediyor?",
+            "ar": "لماذا أم هێمن مستعجلة؟",
+            "fr": "Pourquoi la mère de Hêmin est-elle pressée ?",
+            "nl": "Waarom heeft de moeder van Hêmin haast?"
+          },
+          "options": [
+            {
+              "en": "She has to go to work",
+              "ku": "Divê biçe ser kar",
+              "ckb": "دەبێت بچێتە سەر کار",
+              "de": "Sie muss zur Arbeit",
+              "es": "Tiene que ir a trabajar",
+              "tr": "İşe gitmesi gerek",
+              "ar": "عليها الذهاب إلى العمل",
+              "fr": "Elle doit aller travailler",
+              "nl": "Ze moet naar haar werk"
+            },
+            {
+              "en": "The bus is leaving",
+              "ku": "Otobûs diçe",
+              "ckb": "پاسەکە دەڕوات",
+              "de": "Der Bus fährt gleich",
+              "es": "El autobús se va",
+              "tr": "Otobüs kalkıyor",
+              "ar": "الحافلة ستنطلق",
+              "fr": "Le bus va partir",
+              "nl": "De bus vertrekt"
+            },
+            {
+              "en": "Guests are coming",
+              "ku": "Mêvan tên",
+              "ckb": "میوان دێن",
+              "de": "Gäste kommen",
+              "es": "Llegan invitados",
+              "tr": "Misafir geliyor",
+              "ar": "الضيوف قادمون",
+              "fr": "Des invités arrivent",
+              "nl": "Er komt bezoek"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "pele"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Has Hêmin seen the key?",
+            "ku": "Hêmin kilît dîtiye?",
+            "ckb": "هێمن کلیلەکەی بینیوە؟",
+            "de": "Hat Hêmin den Schlüssel gesehen?",
+            "es": "¿Ha visto Hêmin la llave?",
+            "tr": "Hêmin anahtarı gördü mü?",
+            "ar": "هل رأى هێمن المفتاح؟",
+            "fr": "Hêmin a-t-il vu la clé ?",
+            "nl": "Heeft Hêmin de sleutel gezien?"
+          },
+          "options": [
+            {
+              "en": "No, he says",
+              "ku": "Na, ew wisa dibêje",
+              "ckb": "نەخێر، وا دەڵێت",
+              "de": "Nein, sagt er",
+              "es": "No, según él",
+              "tr": "Hayır, öyle diyor",
+              "ar": "لا، هكذا يقول",
+              "fr": "Non, dit-il",
+              "nl": "Nee, zegt hij"
+            },
+            {
+              "en": "Yes, on the table",
+              "ku": "Erê, li ser maseyê",
+              "ckb": "بەڵێ، لەسەر مێزەکە",
+              "de": "Ja, auf dem Tisch",
+              "es": "Sí, en la mesa",
+              "tr": "Evet, masada",
+              "ar": "نعم، على الطاولة",
+              "fr": "Oui, sur la table",
+              "nl": "Ja, op tafel"
+            },
+            {
+              "en": "Yes, in the bag",
+              "ku": "Erê, di çenteyê de",
+              "ckb": "بەڵێ، لە ناو جانتاکە",
+              "de": "Ja, in der Tasche",
+              "es": "Sí, en el bolso",
+              "tr": "Evet, çantada",
+              "ar": "نعم، في الحقيبة",
+              "fr": "Oui, dans le sac",
+              "nl": "Ja, in de tas"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "pirsi",
+            "na"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Where have they looked?",
+            "ku": "Li ku geriyane?",
+            "ckb": "لە کوێ گەڕاون؟",
+            "de": "Wo haben sie gesucht?",
+            "es": "¿Dónde han buscado?",
+            "tr": "Nerelere baktılar?",
+            "ar": "أين بحثوا؟",
+            "fr": "Où ont-ils cherché ?",
+            "nl": "Waar hebben ze gezocht?"
+          },
+          "options": [
+            {
+              "en": "On the table and in the bag",
+              "ku": "Li ser maseyê û di çenteyê de",
+              "ckb": "لەسەر مێزەکە و لە ناو جانتاکە",
+              "de": "Auf dem Tisch und in der Tasche",
+              "es": "En la mesa y en el bolso",
+              "tr": "Masada ve çantada",
+              "ar": "على الطاولة وفي الحقيبة",
+              "fr": "Sur la table et dans le sac",
+              "nl": "Op tafel en in de tas"
+            },
+            {
+              "en": "Under the bed",
+              "ku": "Li bin nivînan",
+              "ckb": "لە ژێر جێگاکە",
+              "de": "Unter dem Bett",
+              "es": "Debajo de la cama",
+              "tr": "Yatağın altında",
+              "ar": "تحت السرير",
+              "fr": "Sous le lit",
+              "nl": "Onder het bed"
+            },
+            {
+              "en": "In the garden",
+              "ku": "Li baxçe",
+              "ckb": "لە باخچەکە",
+              "de": "Im Garten",
+              "es": "En el jardín",
+              "tr": "Bahçede",
+              "ar": "في الحديقة",
+              "fr": "Dans le jardin",
+              "nl": "In de tuin"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "mez",
+            "janta"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What does the one with the key say?",
+            "ku": "Yê ku kilît li cem e çi dibêje?",
+            "ckb": "ئەوەی کلیلەکەی لایە چی دەڵێت؟",
+            "de": "Was sagt das Kind mit dem Schlüssel?",
+            "es": "¿Qué dice quien tiene la llave?",
+            "tr": "Anahtarı olan ne diyor?",
+            "ar": "ماذا يقول من معه المفتاح؟",
+            "fr": "Que dit celui qui a la clé ?",
+            "nl": "Wat zegt degene met de sleutel?"
+          },
+          "options": [
+            {
+              "en": "It’s mine! I’m playing with it.",
+              "ku": "Ev ya min e! Ez pê dilîzim.",
+              "ckb": "ئەمە هی منە! یاری پێ دەکەم.",
+              "de": "Das ist meiner! Ich spiele damit.",
+              "es": "¡Es mía! Estoy jugando con ella.",
+              "tr": "Bu benim! Onunla oynuyorum.",
+              "ar": "هذا لي! ألعب به.",
+              "fr": "C’est à moi ! Je joue avec.",
+              "nl": "Die is van mij! Ik speel ermee."
+            },
+            {
+              "en": "Here you are, Mum.",
+              "ku": "Fermo, dayê.",
+              "ckb": "فەرموو، دایە.",
+              "de": "Hier, Mama.",
+              "es": "Toma, mamá.",
+              "tr": "Al anne.",
+              "ar": "تفضلي يا أمي.",
+              "fr": "Tiens, maman.",
+              "nl": "Alsjeblieft, mam."
+            },
+            {
+              "en": "I found it in the garden.",
+              "ku": "Min ew li baxçe dît.",
+              "ckb": "لە باخچەکە دۆزیمەوە.",
+              "de": "Ich habe ihn im Garten gefunden.",
+              "es": "La encontré en el jardín.",
+              "tr": "Bahçede buldum.",
+              "ar": "وجدته في الحديقة.",
+              "fr": "Je l’ai trouvée dans le jardin.",
+              "nl": "Ik heb hem in de tuin gevonden."
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "dest",
+            "yari"
+          ]
+        }
+      ],
+      "culprit": "jino",
+      "solution": {
+        "en": "Hêmin’s mother has to go to work, and the key is not on the table or in the bag. Hêmin hasn’t seen it. Then the key turns up in Jîno’s hand: she says it is hers, to play with. Jîno took the key. Now it has its own place, by the door.",
+        "ku": "Divê diya Hêmin biçe ser kar, û kilît ne li ser maseyê ye, ne jî di çenteyê de. Hêmin ew nedîtiye. Paşê kilît di destê Jîno de xuya dibe: ew dibêje ya wê ye, ji bo lîstikê. Jîno kilît bir. Niha cihê wê heye, li ber derî.",
+        "ckb": "دەبێت دایکی هێمن بچێتە سەر کار، و کلیلەکە نە لەسەر مێزەکەیە نە لە ناو جانتاکە. هێمن نەیبینیوە. پاشان کلیلەکە لە دەستی ژینۆدا دەردەکەوێت: دەڵێت هی خۆیەتی بۆ یاریکردن. ژینۆ کلیلەکەی برد. ئێستا شوێنی خۆی هەیە، لە تەنیشت دەرگاکە.",
+        "de": "Hêmins Mutter muss zur Arbeit, und der Schlüssel liegt weder auf dem Tisch noch in der Tasche. Hêmin hat ihn nicht gesehen. Dann taucht der Schlüssel in Jînos Hand auf: Sie sagt, er gehöre ihr, zum Spielen. Jîno hat den Schlüssel genommen. Jetzt hat er seinen Platz neben der Tür.",
+        "es": "La madre de Hêmin tiene que ir a trabajar, y la llave no está ni en la mesa ni en el bolso. Hêmin no la ha visto. Entonces la llave aparece en la mano de Jîno: dice que es suya, para jugar. Jîno cogió la llave. Ahora tiene su sitio, junto a la puerta.",
+        "tr": "Hêmin’in annesi işe gitmeli; anahtar ne masada ne çantada. Hêmin onu görmemiş. Sonra anahtar Jîno’nun elinde çıkıyor: onun olduğunu, oynamak için aldığını söylüyor. Anahtarı Jîno aldı. Artık kapının yanında bir yeri var.",
+        "ar": "على أم هێمن الذهاب إلى العمل، والمفتاح ليس على الطاولة ولا في الحقيبة. هێمن لم يره. ثم يظهر المفتاح في يد ژينۆ: تقول إنه لها، لتلعب به. ژينۆ أخذت المفتاح. والآن له مكانه، بجانب الباب.",
+        "fr": "La mère de Hêmin doit aller travailler, et la clé n’est ni sur la table ni dans le sac. Hêmin ne l’a pas vue. Puis la clé apparaît dans la main de Jîno : elle dit que c’est la sienne, pour jouer. C’est Jîno qui a pris la clé. Maintenant, elle a sa place, près de la porte.",
+        "nl": "De moeder van Hêmin moet naar haar werk, en de sleutel ligt niet op tafel en zit niet in de tas. Hêmin heeft hem niet gezien. Dan duikt de sleutel op in de hand van Jîno: ze zegt dat hij van haar is, om mee te spelen. Jîno heeft de sleutel gepakt. Nu heeft hij een vaste plek, bij de deur."
+      },
+      "hints": [
+        {
+          "en": "Who is small enough to think a key is a toy?",
+          "ku": "Kî ewqas biçûk e ku kilîtê wek lîstokekê bibîne?",
+          "ckb": "کێ ئەوەندە بچووکە کە کلیل بە یاری بزانێت؟",
+          "de": "Wer ist klein genug, um einen Schlüssel für ein Spielzeug zu halten?",
+          "es": "¿Quién es tan pequeño como para creer que una llave es un juguete?",
+          "tr": "Kim bir anahtarı oyuncak sanacak kadar küçük?",
+          "ar": "من الصغير بما يكفي ليظن المفتاح لعبة؟",
+          "fr": "Qui est assez petit pour prendre une clé pour un jouet ?",
+          "nl": "Wie is klein genoeg om een sleutel voor speelgoed aan te zien?"
+        },
+        {
+          "en": "Look at the last card closely.",
+          "ku": "Li karta dawî baş binêre.",
+          "ckb": "بە وردی سەیری دوا کارت بکە.",
+          "de": "Sieh dir die letzte Karte genau an.",
+          "es": "Mira bien la última tarjeta.",
+          "tr": "Son karta dikkatle bak.",
+          "ar": "انظر جيدًا إلى البطاقة الأخيرة.",
+          "fr": "Regarde bien la dernière carte.",
+          "nl": "Kijk goed naar de laatste kaart."
+        }
+      ]
+    },
+    {
+      "slug": "ckb-dolme",
+      "dialect": "ckb",
+      "level": 1,
+      "title": {
+        "en": "Whose dolma?",
+        "ku": "Dolmeya kê?",
+        "ckb": "دۆڵمەی کێ؟",
+        "de": "Wessen Dolma?",
+        "es": "¿De quién es la dolma?",
+        "tr": "Kimin dolması?",
+        "ar": "دولمة من؟",
+        "fr": "La dolma de qui ?",
+        "nl": "Wiens dolma?"
+      },
+      "intro": {
+        "en": "The guests say it is the tastiest dolma ever. But who really made it?",
+        "ku": "Mêvan dibêjin ev dolmeya herî xweş e. Lê bi rastî kê ew çêkir?",
+        "ckb": "میوانەکان دەڵێن ئەمە خۆشترین دۆڵمەیە. بەڵام بە ڕاستی کێ دروستی کرد؟",
+        "de": "Die Gäste sagen, es sei die leckerste Dolma aller Zeiten. Aber wer hat sie wirklich gemacht?",
+        "es": "Los invitados dicen que es la dolma más rica del mundo. Pero ¿quién la hizo de verdad?",
+        "tr": "Misafirler bunun gelmiş geçmiş en lezzetli dolma olduğunu söylüyor. Ama gerçekte kim yaptı?",
+        "ar": "يقول الضيوف إنها ألذّ دولمة على الإطلاق. لكن من صنعها حقًا؟",
+        "fr": "Les invités disent que c’est la meilleure dolma du monde. Mais qui l’a vraiment faite ?",
+        "nl": "De gasten zeggen dat het de lekkerste dolma ooit is. Maar wie heeft hem echt gemaakt?"
+      },
+      "suspects": [
+        {
+          "id": "dapire",
+          "name": "داپیرە",
+          "about": {
+            "en": "Grandmother, whose dolma is famous.",
+            "ku": "Dapîr, ku dolmeya wê navdar e.",
+            "ckb": "داپیرە، کە دۆڵمەکەی ناوبانگی هەیە.",
+            "de": "Oma, deren Dolma berühmt ist.",
+            "es": "La abuela, cuya dolma es famosa.",
+            "tr": "Dolması ünlü olan nine.",
+            "ar": "الجدّة، ذات الدولمة الشهيرة.",
+            "fr": "Grand-mère, dont la dolma est célèbre.",
+            "nl": "Oma, wier dolma beroemd is."
+          }
+        },
+        {
+          "id": "hero",
+          "name": "هێرۆ",
+          "about": {
+            "en": "Grandmother’s granddaughter.",
+            "ku": "Neviya Dapîrê.",
+            "ckb": "نەوەکەی داپیرە.",
+            "de": "Omas Enkelin.",
+            "es": "La nieta de la abuela.",
+            "tr": "Ninenin torunu.",
+            "ar": "حفيدة الجدّة.",
+            "fr": "La petite-fille de grand-mère.",
+            "nl": "Oma’s kleindochter."
+          }
+        },
+        {
+          "id": "zerin",
+          "name": "پوورە زێڕین",
+          "about": {
+            "en": "The neighbour who gives the rice.",
+            "ku": "Cîrana ku birinc dide.",
+            "ckb": "ئەو دراوسێیەی برنجەکە دەدات.",
+            "de": "Die Nachbarin, die den Reis gibt.",
+            "es": "La vecina que da el arroz.",
+            "tr": "Pirinci veren komşu.",
+            "ar": "الجارة التي تعطي الأرز.",
+            "fr": "La voisine qui donne le riz.",
+            "nl": "De buurvrouw die de rijst geeft."
+          }
+        },
+        {
+          "id": "xal",
+          "name": "خاڵی هێرۆ",
+          "about": {
+            "en": "Hêro’s uncle, who loves dolma.",
+            "ku": "Xalê Hêro, ku ji dolmeyê hez dike.",
+            "ckb": "خاڵی هێرۆ، کە حەزی لە دۆڵمەیە.",
+            "de": "Hêros Onkel, der Dolma liebt.",
+            "es": "El tío de Hêro, al que le encanta la dolma.",
+            "tr": "Dolmaya bayılan, Hêro’nun dayısı.",
+            "ar": "خال هێرۆ، الذي يحب الدولمة.",
+            "fr": "L’oncle de Hêro, qui adore la dolma.",
+            "nl": "De oom van Hêro, die dol is op dolma."
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "birinc",
+          "kind": "note",
+          "line": {
+            "story": "ckb-grandmas-dolma",
+            "paragraph": 1,
+            "sentence": 1,
+            "opens": "گەڵای",
+            "en": "There were vine leaves, but the rice had run out!",
+            "meanings": {
+              "ku": "Pelên mêwê hebûn, lê birinc nemabû!",
+              "de": "Weinblätter waren da, aber der Reis war alle!",
+              "es": "Había hojas de parra, ¡pero se había acabado el arroz!",
+              "tr": "Asma yaprağı vardı ama pirinç bitmişti!",
+              "ar": "كان هناك ورق عنب، لكن الأرز نفد!",
+              "fr": "Il y avait des feuilles de vigne, mais plus de riz !",
+              "nl": "Er waren wijnbladeren, maar de rijst was op!"
+            }
+          }
+        },
+        {
+          "id": "zerin",
+          "kind": "statement",
+          "line": {
+            "story": "ckb-grandmas-dolma",
+            "paragraph": 2,
+            "sentence": 0,
+            "opens": "پوورە",
+            "en": "Aunt Zêrîn gave Hêro a bag of rice and said: “Your grandmother’s dolma is famous.”",
+            "meanings": {
+              "ku": "Pûre Zêrînê kîsikek birinc da Hêro û got: “Dolmeya dapîra te navdar e.”",
+              "de": "Tante Zêrîn gab Hêro eine Tüte Reis und sagte: „Die Dolma deiner Oma ist berühmt.“",
+              "es": "La tía Zêrîn le dio a Hêro una bolsa de arroz y dijo: «La dolma de tu abuela es famosa».",
+              "tr": "Zêrîn teyze Hêro’ya bir torba pirinç verip dedi ki: “Ninenin dolması ünlüdür.”",
+              "ar": "أعطت الخالة زێڕين هێرۆ كيس أرز وقالت: «دولمة جدتك مشهورة».",
+              "fr": "Tante Zêrîn a donné un sac de riz à Hêro et a dit : « La dolma de ta grand-mère est célèbre. »",
+              "nl": "Tante Zêrîn gaf Hêro een zak rijst en zei: ‘De dolma van je oma is beroemd.’"
+            }
+          },
+          "from": "zerin"
+        },
+        {
+          "id": "fer",
+          "kind": "note",
+          "line": {
+            "story": "ckb-grandmas-dolma",
+            "paragraph": 3,
+            "sentence": 0,
+            "opens": "لە",
+            "en": "At home, Grandmother taught her step by step.",
+            "meanings": {
+              "ku": "Li malê, Dapîrê gav bi gav ew fêr kir.",
+              "de": "Zu Hause zeigte Oma ihr alles Schritt für Schritt.",
+              "es": "En casa, la abuela le enseñó paso a paso.",
+              "tr": "Evde nine ona adım adım öğretti.",
+              "ar": "في البيت، علّمتها الجدّة خطوة بخطوة.",
+              "fr": "À la maison, grand-mère lui a appris pas à pas.",
+              "nl": "Thuis leerde oma het haar stap voor stap."
+            }
+          }
+        },
+        {
+          "id": "pec",
+          "kind": "note",
+          "line": {
+            "story": "ckb-grandmas-dolma",
+            "paragraph": 3,
+            "sentence": 3,
+            "opens": "سێیەم",
+            "en": "Third, Hêro rolled the leaves one by one.",
+            "meanings": {
+              "ku": "Ya sêyem, Hêro pel yek bi yek pêçan.",
+              "de": "Drittens rollte Hêro die Blätter eins nach dem anderen.",
+              "es": "Tercero, Hêro enrolló las hojas una a una.",
+              "tr": "Üçüncü olarak Hêro yaprakları tek tek sardı.",
+              "ar": "ثالثًا، لفّت هێرۆ الأوراق واحدةً واحدة.",
+              "fr": "Troisièmement, Hêro a roulé les feuilles une à une.",
+              "nl": "Ten derde rolde Hêro de bladeren een voor een."
+            }
+          }
+        },
+        {
+          "id": "rek",
+          "kind": "note",
+          "line": {
+            "story": "ckb-grandmas-dolma",
+            "paragraph": 4,
+            "sentence": 2,
+            "opens": "دواتر",
+            "en": "Later Hêro learned, and the dolmas were neat and even.",
+            "meanings": {
+              "ku": "Paşê Hêro fêr bû, û dolme xweşik û rêkûpêk bûn.",
+              "de": "Später konnte Hêro es, und die Dolmas wurden schön gleichmäßig.",
+              "es": "Después Hêro aprendió, y las dolmas quedaron bonitas y parejas.",
+              "tr": "Sonra Hêro öğrendi ve dolmalar düzgün, güzel oldu.",
+              "ar": "لاحقًا تعلّمت هێرۆ، وصارت الدولمة جميلة ومرتّبة.",
+              "fr": "Ensuite Hêro a appris, et les dolmas étaient belles et régulières.",
+              "nl": "Later kon Hêro het, en de dolma’s werden mooi en gelijk."
+            }
+          }
+        },
+        {
+          "id": "xwes",
+          "kind": "statement",
+          "line": {
+            "story": "ckb-grandmas-dolma",
+            "paragraph": 6,
+            "sentence": 1,
+            "opens": "خاڵی",
+            "en": "Hêro’s uncle ate a dolma and said: “This is the tastiest dolma I have ever eaten!”",
+            "meanings": {
+              "ku": "Xalê Hêro dolmeyek xwar û got: “Ev dolmeya herî xweş e ku min heta niha xwariye!”",
+              "de": "Hêros Onkel aß eine Dolma und sagte: „Das ist die leckerste Dolma, die ich je gegessen habe!“",
+              "es": "El tío de Hêro comió una dolma y dijo: «¡Es la dolma más rica que he comido nunca!»",
+              "tr": "Hêro’nun dayısı bir dolma yedi ve dedi ki: “Şimdiye kadar yediğim en lezzetli dolma bu!”",
+              "ar": "أكل خال هێرۆ دولمة وقال: «هذه ألذّ دولمة أكلتها في حياتي!»",
+              "fr": "L’oncle de Hêro a mangé une dolma et a dit : « C’est la meilleure dolma que j’aie jamais mangée ! »",
+              "nl": "De oom van Hêro at een dolma en zei: ‘Dit is de lekkerste dolma die ik ooit heb gegeten!’"
+            }
+          },
+          "from": "xal"
+        },
+        {
+          "id": "vejare",
+          "kind": "statement",
+          "line": {
+            "story": "ckb-grandmas-dolma",
+            "paragraph": 6,
+            "sentence": 2,
+            "opens": "داپیرە",
+            "en": "Grandmother said: “This time Hêro made it.”",
+            "meanings": {
+              "ku": "Dapîrê got: “Vê carê Hêro ew çêkir.”",
+              "de": "Oma sagte: „Diesmal hat Hêro sie gemacht.“",
+              "es": "La abuela dijo: «Esta vez la ha hecho Hêro».",
+              "tr": "Nine dedi ki: “Bu sefer Hêro yaptı.”",
+              "ar": "قالت الجدّة: «هذه المرة صنعتها هێرۆ».",
+              "fr": "Grand-mère a dit : « Cette fois, c’est Hêro qui l’a faite. »",
+              "nl": "Oma zei: ‘Deze keer heeft Hêro hem gemaakt.’"
+            }
+          },
+          "from": "dapire"
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "What had run out?",
+            "ku": "Çi nemabû?",
+            "ckb": "چی نەمابوو؟",
+            "de": "Was war alle?",
+            "es": "¿Qué se había acabado?",
+            "tr": "Ne bitmişti?",
+            "ar": "ما الذي نفد؟",
+            "fr": "Qu’est-ce qui manquait ?",
+            "nl": "Wat was er op?"
+          },
+          "options": [
+            {
+              "en": "The rice",
+              "ku": "Birinc",
+              "ckb": "برنج",
+              "de": "Der Reis",
+              "es": "El arroz",
+              "tr": "Pirinç",
+              "ar": "الأرز",
+              "fr": "Le riz",
+              "nl": "De rijst"
+            },
+            {
+              "en": "The vine leaves",
+              "ku": "Pelên mêwê",
+              "ckb": "گەڵای مێو",
+              "de": "Die Weinblätter",
+              "es": "Las hojas de parra",
+              "tr": "Asma yaprakları",
+              "ar": "ورق العنب",
+              "fr": "Les feuilles de vigne",
+              "nl": "De wijnbladeren"
+            },
+            {
+              "en": "The tomatoes",
+              "ku": "Bacansor",
+              "ckb": "تەماتە",
+              "de": "Die Tomaten",
+              "es": "Los tomates",
+              "tr": "Domatesler",
+              "ar": "الطماطم",
+              "fr": "Les tomates",
+              "nl": "De tomaten"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "birinc"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Where does the rice come from?",
+            "ku": "Birinc ji ku tê?",
+            "ckb": "برنجەکە لە کوێوە دێت؟",
+            "de": "Woher kommt der Reis?",
+            "es": "¿De dónde sale el arroz?",
+            "tr": "Pirinç nereden geliyor?",
+            "ar": "من أين يأتي الأرز؟",
+            "fr": "D’où vient le riz ?",
+            "nl": "Waar komt de rijst vandaan?"
+          },
+          "options": [
+            {
+              "en": "From Aunt Zêrîn next door",
+              "ku": "Ji Pûre Zêrînê, cîrana wan",
+              "ckb": "لە پوورە زێڕینی دراوسێیان",
+              "de": "Von Tante Zêrîn nebenan",
+              "es": "De la tía Zêrîn, la vecina",
+              "tr": "Yan komşu Zêrîn teyzeden",
+              "ar": "من الخالة زێڕين، جارتهم",
+              "fr": "De tante Zêrîn, la voisine",
+              "nl": "Van tante Zêrîn van hiernaast"
+            },
+            {
+              "en": "From the shop on the corner",
+              "ku": "Ji dikana serê kolanê",
+              "ckb": "لە دوکانەکەی سەر کۆڵانەکە",
+              "de": "Aus dem Laden an der Ecke",
+              "es": "De la tienda de la esquina",
+              "tr": "Köşedeki dükkândan",
+              "ar": "من المتجر عند الزاوية",
+              "fr": "De la boutique du coin",
+              "nl": "Uit de winkel op de hoek"
+            },
+            {
+              "en": "From the uncle’s house",
+              "ku": "Ji mala xal",
+              "ckb": "لە ماڵی خاڵ",
+              "de": "Aus dem Haus des Onkels",
+              "es": "De la casa del tío",
+              "tr": "Dayının evinden",
+              "ar": "من بيت الخال",
+              "fr": "De chez l’oncle",
+              "nl": "Van het huis van de oom"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "zerin"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Who taught step by step?",
+            "ku": "Kê gav bi gav fêr kir?",
+            "ckb": "کێ هەنگاو بە هەنگاو فێری کرد؟",
+            "de": "Wer hat es Schritt für Schritt gezeigt?",
+            "es": "¿Quién enseñó paso a paso?",
+            "tr": "Adım adım kim öğretti?",
+            "ar": "من علّم خطوة بخطوة؟",
+            "fr": "Qui a appris pas à pas ?",
+            "nl": "Wie leerde het stap voor stap?"
+          },
+          "options": [
+            {
+              "en": "Grandmother",
+              "ku": "Dapîr",
+              "ckb": "داپیرە",
+              "de": "Oma",
+              "es": "La abuela",
+              "tr": "Nine",
+              "ar": "الجدّة",
+              "fr": "Grand-mère",
+              "nl": "Oma"
+            },
+            {
+              "en": "Aunt Zêrîn",
+              "ku": "Pûre Zêrîn",
+              "ckb": "پوورە زێڕین",
+              "de": "Tante Zêrîn",
+              "es": "La tía Zêrîn",
+              "tr": "Zêrîn teyze",
+              "ar": "الخالة زێڕين",
+              "fr": "Tante Zêrîn",
+              "nl": "Tante Zêrîn"
+            },
+            {
+              "en": "The uncle",
+              "ku": "Xal",
+              "ckb": "خاڵ",
+              "de": "Der Onkel",
+              "es": "El tío",
+              "tr": "Dayı",
+              "ar": "الخال",
+              "fr": "L’oncle",
+              "nl": "De oom"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "fer"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "How were the dolmas in the end?",
+            "ku": "Di dawiyê de dolme çawa bûn?",
+            "ckb": "لە کۆتاییدا دۆڵمەکان چۆن بوون؟",
+            "de": "Wie waren die Dolmas am Ende?",
+            "es": "¿Cómo quedaron las dolmas al final?",
+            "tr": "Sonunda dolmalar nasıldı?",
+            "ar": "كيف كانت الدولمة في النهاية؟",
+            "fr": "Comment étaient les dolmas à la fin ?",
+            "nl": "Hoe waren de dolma’s uiteindelijk?"
+          },
+          "options": [
+            {
+              "en": "Neat and even",
+              "ku": "Xweşik û rêkûpêk",
+              "ckb": "جوان و ڕێک",
+              "de": "Schön gleichmäßig",
+              "es": "Bonitas y parejas",
+              "tr": "Düzgün ve güzel",
+              "ar": "جميلة ومرتّبة",
+              "fr": "Belles et régulières",
+              "nl": "Mooi en gelijk"
+            },
+            {
+              "en": "Torn and messy",
+              "ku": "Dirandî û tevlihev",
+              "ckb": "دڕاو و تێکەڵ",
+              "de": "Zerrissen und unordentlich",
+              "es": "Rotas y desordenadas",
+              "tr": "Yırtık ve dağınık",
+              "ar": "ممزّقة وغير مرتّبة",
+              "fr": "Déchirées et en désordre",
+              "nl": "Gescheurd en rommelig"
+            },
+            {
+              "en": "Too full of rice",
+              "ku": "Pir tije birinc",
+              "ckb": "زۆر پڕ لە برنج",
+              "de": "Viel zu voll mit Reis",
+              "es": "Demasiado llenas de arroz",
+              "tr": "Fazla pirinçle dolu",
+              "ar": "محشوّة بالأرز أكثر من اللازم",
+              "fr": "Trop pleines de riz",
+              "nl": "Veel te vol met rijst"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "pec",
+            "rek"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What does the uncle say about the dolma?",
+            "ku": "Xal li ser dolmeyê çi dibêje?",
+            "ckb": "خاڵ دەربارەی دۆڵمەکە چی دەڵێت؟",
+            "de": "Was sagt der Onkel über die Dolma?",
+            "es": "¿Qué dice el tío de la dolma?",
+            "tr": "Dayı dolma için ne diyor?",
+            "ar": "ماذا يقول الخال عن الدولمة؟",
+            "fr": "Que dit l’oncle de la dolma ?",
+            "nl": "Wat zegt de oom over de dolma?"
+          },
+          "options": [
+            {
+              "en": "It is the tastiest he has ever eaten",
+              "ku": "Ya herî xweş e ku wî heta niha xwariye",
+              "ckb": "خۆشترینە کە تا ئێستا خواردوویەتی",
+              "de": "Es ist die leckerste, die er je gegessen hat",
+              "es": "Es la más rica que ha comido nunca",
+              "tr": "Şimdiye dek yediği en lezzetlisi",
+              "ar": "هي ألذّ ما أكله في حياته",
+              "fr": "C’est la meilleure qu’il ait jamais mangée",
+              "nl": "Het is de lekkerste die hij ooit heeft gegeten"
+            },
+            {
+              "en": "There is too much rice in it",
+              "ku": "Pir birinc tê de heye",
+              "ckb": "برنجی زۆری تێدایە",
+              "de": "Es ist zu viel Reis darin",
+              "es": "Lleva demasiado arroz",
+              "tr": "İçinde çok fazla pirinç var",
+              "ar": "فيها أرز كثير",
+              "fr": "Il y a trop de riz dedans",
+              "nl": "Er zit te veel rijst in"
+            },
+            {
+              "en": "Grandmother’s old dolma was better",
+              "ku": "Dolmeya kevn a Dapîrê xweştir bû",
+              "ckb": "دۆڵمە کۆنەکەی داپیرە خۆشتر بوو",
+              "de": "Omas alte Dolma war besser",
+              "es": "La dolma de antes de la abuela era mejor",
+              "tr": "Ninenin eski dolması daha iyiydi",
+              "ar": "دولمة الجدّة القديمة كانت أفضل",
+              "fr": "L’ancienne dolma de grand-mère était meilleure",
+              "nl": "Oma’s dolma van vroeger was lekkerder"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "xwes",
+            "vejare"
+          ]
+        }
+      ],
+      "culprit": "hero",
+      "solution": {
+        "en": "The rice had run out, so Hêro fetched some from Aunt Zêrîn. Grandmother taught step by step, and Hêro rolled the leaves until the dolmas were neat. When the uncle called it the best dolma ever, Grandmother said: this time Hêro made it. Hêro really made the dolma.",
+        "ku": "Birinc nemabû, loma Hêro ji Pûre Zêrînê anî. Dapîrê gav bi gav fêr kir, û Hêro pel pêçan heta ku dolme rêkûpêk bûn. Dema xal got ev dolmeya herî xweş e, Dapîrê got: vê carê Hêro ew çêkir. Bi rastî Hêro dolme çêkir.",
+        "ckb": "برنج نەمابوو، بۆیە هێرۆ لە پوورە زێڕینەوە هێنای. داپیرە هەنگاو بە هەنگاو فێری کرد، و هێرۆ گەڵاکانی پێچایەوە تا دۆڵمەکان ڕێک بوون. کاتێک خاڵ وتی ئەمە خۆشترین دۆڵمەیە، داپیرە وتی: ئەمجارە هێرۆ دروستی کردووە. بە ڕاستی هێرۆ دۆڵمەکەی دروست کرد.",
+        "de": "Der Reis war alle, also holte Hêro welchen bei Tante Zêrîn. Oma zeigte alles Schritt für Schritt, und Hêro rollte die Blätter, bis die Dolmas gleichmäßig waren. Als der Onkel sie die beste Dolma aller Zeiten nannte, sagte Oma: Diesmal hat Hêro sie gemacht. Hêro hat die Dolma wirklich gemacht.",
+        "es": "Se había acabado el arroz, así que Hêro fue a por él a casa de la tía Zêrîn. La abuela le enseñó paso a paso, y Hêro enrolló las hojas hasta que las dolmas quedaron perfectas. Cuando el tío dijo que era la mejor dolma de su vida, la abuela dijo: esta vez la ha hecho Hêro. Hêro hizo de verdad la dolma.",
+        "tr": "Pirinç bitmişti, Hêro da Zêrîn teyzeden getirdi. Nine adım adım öğretti, Hêro da dolmalar düzgün olana kadar yaprakları sardı. Dayı bunun en iyi dolma olduğunu söyleyince nine dedi ki: Bu sefer Hêro yaptı. Dolmayı gerçekten Hêro yaptı.",
+        "ar": "نفد الأرز، فأحضرت هێرۆ بعضه من الخالة زێڕين. علّمت الجدّة خطوة بخطوة، ولفّت هێرۆ الأوراق حتى صارت الدولمة مرتّبة. وحين قال الخال إنها أفضل دولمة على الإطلاق، قالت الجدّة: هذه المرة صنعتها هێرۆ. هێرۆ هي من صنع الدولمة حقًا.",
+        "fr": "Il n’y avait plus de riz, alors Hêro est allée en chercher chez tante Zêrîn. Grand-mère a appris pas à pas, et Hêro a roulé les feuilles jusqu’à ce que les dolmas soient parfaites. Quand l’oncle a dit que c’était la meilleure dolma du monde, grand-mère a répondu : cette fois, c’est Hêro qui l’a faite. C’est vraiment Hêro qui a fait la dolma.",
+        "nl": "De rijst was op, dus Hêro haalde wat bij tante Zêrîn. Oma leerde het stap voor stap, en Hêro rolde de bladeren tot de dolma’s mooi gelijk waren. Toen de oom zei dat het de beste dolma ooit was, zei oma: deze keer heeft Hêro hem gemaakt. Hêro heeft de dolma echt gemaakt."
+      },
+      "hints": [
+        {
+          "en": "Who rolled the leaves?",
+          "ku": "Kê pel pêçan?",
+          "ckb": "کێ گەڵاکانی پێچایەوە؟",
+          "de": "Wer hat die Blätter gerollt?",
+          "es": "¿Quién enrolló las hojas?",
+          "tr": "Yaprakları kim sardı?",
+          "ar": "من لفّ الأوراق؟",
+          "fr": "Qui a roulé les feuilles ?",
+          "nl": "Wie rolde de bladeren?"
+        },
+        {
+          "en": "Listen to what Grandmother says at the end.",
+          "ku": "Guhdarî bike ka Dapîr di dawiyê de çi dibêje.",
+          "ckb": "گوێ بگرە بزانە داپیرە لە کۆتاییدا چی دەڵێت.",
+          "de": "Hör hin, was Oma am Ende sagt.",
+          "es": "Escucha lo que dice la abuela al final.",
+          "tr": "Ninenin sonunda ne dediğini dinle.",
+          "ar": "استمع إلى ما تقوله الجدّة في النهاية.",
+          "fr": "Écoute ce que dit grand-mère à la fin.",
+          "nl": "Luister naar wat oma aan het eind zegt."
+        }
+      ]
+    },
+    {
+      "slug": "ckb-top",
+      "dialect": "ckb",
+      "level": 2,
+      "title": {
+        "en": "The ball in the garden",
+        "ku": "Top di baxçe de",
+        "ckb": "تۆپەکەی ناو باخچەکە",
+        "de": "Der Ball im Garten",
+        "es": "El balón en el jardín",
+        "tr": "Bahçedeki top",
+        "ar": "الكرة في الحديقة",
+        "fr": "Le ballon dans le jardin",
+        "nl": "De bal in de tuin"
+      },
+      "intro": {
+        "en": "A minute before the end of the game, the ball flies into old Mam Rehîm’s garden. Who kicked it?",
+        "ku": "Xulekek berî dawiya lîstikê, top difire nav baxçeyê Mam Rehîmê pîr. Kê lê xist?",
+        "ckb": "خولەکێک پێش کۆتایی یارییەکە، تۆپەکە دەفڕێتە ناو باخچەی مام ڕەحیمی پیر. کێ لێیدا؟",
+        "de": "Eine Minute vor Spielende fliegt der Ball in den Garten des alten Mam Rehîm. Wer hat ihn geschossen?",
+        "es": "A un minuto del final, el balón vuela al jardín del viejo Mam Rehîm. ¿Quién lo chutó?",
+        "tr": "Maçın bitmesine bir dakika kala top yaşlı Mam Rehîm’in bahçesine uçuyor. Topa kim vurdu?",
+        "ar": "قبل نهاية المباراة بدقيقة، تطير الكرة إلى حديقة العم رحيم العجوز. من ركلها؟",
+        "fr": "Une minute avant la fin du match, le ballon s’envole dans le jardin du vieux Mam Rehîm. Qui l’a tiré ?",
+        "nl": "Een minuut voor het einde vliegt de bal de tuin van de oude Mam Rehîm in. Wie schoot hem?"
+      },
+      "suspects": [
+        {
+          "id": "saman",
+          "name": "سامان",
+          "about": {
+            "en": "A boy of the street, who kicks hard.",
+            "ku": "Kurekî kolanê, ku bi hêz li topê dixe.",
+            "ckb": "کوڕێکی کۆڵانەکە، کە بە هێز تۆپ لێدەدات.",
+            "de": "Ein Junge aus der Straße, der kräftig schießt.",
+            "es": "Un chico de la calle que chuta fuerte.",
+            "tr": "Topa sert vuran mahalleden bir oğlan.",
+            "ar": "فتى من الحي، يركل بقوة.",
+            "fr": "Un garçon de la rue, qui tire fort.",
+            "nl": "Een jongen uit de straat, die hard schiet."
+          }
+        },
+        {
+          "id": "narin",
+          "name": "نارین",
+          "about": {
+            "en": "The goalkeeper.",
+            "ku": "Dergevan.",
+            "ckb": "گۆڵپارێزەکە.",
+            "de": "Die Torhüterin.",
+            "es": "La portera.",
+            "tr": "Kaleci.",
+            "ar": "حارسة المرمى.",
+            "fr": "La gardienne de but.",
+            "nl": "De keepster."
+          }
+        },
+        {
+          "id": "rehim",
+          "name": "مام ڕەحیم",
+          "about": {
+            "en": "The old neighbour who lives alone.",
+            "ku": "Cîranê pîr ê ku bi tenê dijî.",
+            "ckb": "دراوسێ پیرەکە کە بە تەنیا دەژی.",
+            "de": "Der alte Nachbar, der allein lebt.",
+            "es": "El viejo vecino que vive solo.",
+            "tr": "Yalnız yaşayan yaşlı komşu.",
+            "ar": "الجار العجوز الذي يعيش وحده.",
+            "fr": "Le vieux voisin qui vit seul.",
+            "nl": "De oude buurman die alleen woont."
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "encam",
+          "kind": "note",
+          "line": {
+            "story": "ckb-the-ball-in-the-garden",
+            "paragraph": 1,
+            "sentence": 1,
+            "opens": "ئەنجامەکە",
+            "en": "The score was two all, and only one minute was left.",
+            "meanings": {
+              "ku": "Encam du bi du bû, û tenê xulekek mabû.",
+              "de": "Es stand zwei zu zwei, und es war nur noch eine Minute übrig.",
+              "es": "Iban dos a dos y solo quedaba un minuto.",
+              "tr": "Skor ikiye ikiydi ve sadece bir dakika kalmıştı.",
+              "ar": "كانت النتيجة اثنين لاثنين، ولم تبقَ إلا دقيقة واحدة.",
+              "fr": "Le score était de deux partout, et il ne restait qu’une minute.",
+              "nl": "Het stond twee-twee, en er was nog maar één minuut over."
+            }
+          }
+        },
+        {
+          "id": "lida",
+          "kind": "note",
+          "line": {
+            "story": "ckb-the-ball-in-the-garden",
+            "paragraph": 1,
+            "sentence": 2,
+            "opens": "سامان",
+            "en": "Saman kicked the ball with all his strength towards Narîn’s goal.",
+            "meanings": {
+              "ku": "Saman bi hemû hêza xwe li topê xist ber bi golê Narînê ve.",
+              "de": "Saman schoss den Ball mit aller Kraft auf Narîns Tor.",
+              "es": "Saman chutó el balón con todas sus fuerzas hacia la portería de Narîn.",
+              "tr": "Saman topa bütün gücüyle Narîn’in kalesine doğru vurdu.",
+              "ar": "ركل سامان الكرة بكل قوته نحو مرمى نارين.",
+              "fr": "Saman a tiré de toutes ses forces vers le but de Narîn.",
+              "nl": "Saman schoot de bal met al zijn kracht naar het doel van Narîn."
+            }
+          }
+        },
+        {
+          "id": "fri",
+          "kind": "note",
+          "line": {
+            "story": "ckb-the-ball-in-the-garden",
+            "paragraph": 1,
+            "sentence": 3,
+            "opens": "تۆپەکە",
+            "en": "The ball flew over Narîn’s head and the wall, and landed in Mam Rehîm’s garden.",
+            "meanings": {
+              "ku": "Top di ser serê Narînê û dîwar re firiya û ket nav baxçeyê Mam Rehîm.",
+              "de": "Der Ball flog über Narîns Kopf und die Mauer und landete in Mam Rehîms Garten.",
+              "es": "El balón voló por encima de Narîn y del muro y cayó en el jardín de Mam Rehîm.",
+              "tr": "Top Narîn’in başının ve duvarın üstünden uçup Mam Rehîm’in bahçesine düştü.",
+              "ar": "طارت الكرة فوق رأس نارين والجدار، وسقطت في حديقة العم رحيم.",
+              "fr": "Le ballon est passé au-dessus de Narîn et du mur, et a atterri dans le jardin de Mam Rehîm.",
+              "nl": "De bal vloog over het hoofd van Narîn en de muur en kwam in de tuin van Mam Rehîm terecht."
+            }
+          }
+        },
+        {
+          "id": "nacim",
+          "kind": "statement",
+          "line": {
+            "story": "ckb-the-ball-in-the-garden",
+            "paragraph": 2,
+            "sentence": 3,
+            "opens": "سامان",
+            "en": "Saman said: “I’m not going!”",
+            "meanings": {
+              "ku": "Saman got: “Ez naçim!”",
+              "de": "Saman sagte: „Ich gehe nicht!“",
+              "es": "Saman dijo: «¡Yo no voy!»",
+              "tr": "Saman dedi ki: “Ben gitmiyorum!”",
+              "ar": "قال سامان: «أنا لن أذهب!»",
+              "fr": "Saman a dit : « Moi, je n’y vais pas ! »",
+              "nl": "Saman zei: ‘Ik ga niet!’"
+            }
+          },
+          "from": "saman"
+        },
+        {
+          "id": "ime",
+          "kind": "statement",
+          "line": {
+            "story": "ckb-the-ball-in-the-garden",
+            "paragraph": 3,
+            "sentence": 0,
+            "opens": "لە",
+            "en": "In the end Narîn, the goalkeeper, said: “The ball is ours, so we must fetch it ourselves.”",
+            "meanings": {
+              "ku": "Di dawiyê de Narîna dergevan got: “Top ya me ye, loma divê em bi xwe wê bînin.”",
+              "de": "Schließlich sagte Narîn, die Torhüterin: „Der Ball gehört uns, also müssen wir ihn selbst holen.“",
+              "es": "Al final Narîn, la portera, dijo: «El balón es nuestro, así que tenemos que ir a buscarlo nosotros».",
+              "tr": "Sonunda kaleci Narîn dedi ki: “Top bizim, o hâlde onu kendimiz almalıyız.”",
+              "ar": "في النهاية قالت نارين حارسة المرمى: «الكرة لنا، إذن علينا أن نجلبها بأنفسنا».",
+              "fr": "Finalement Narîn, la gardienne, a dit : « Le ballon est à nous, donc c’est à nous d’aller le chercher. »",
+              "nl": "Uiteindelijk zei Narîn, de keepster: ‘De bal is van ons, dus moeten we hem zelf halen.’"
+            }
+          },
+          "from": "narin"
+        },
+        {
+          "id": "dur",
+          "kind": "statement",
+          "line": {
+            "story": "ckb-the-ball-in-the-garden",
+            "paragraph": 4,
+            "sentence": 3,
+            "opens": "بەڵام",
+            "en": "“But you stood too far from your goal, so you couldn’t catch it.”",
+            "meanings": {
+              "ku": "“Lê tu pir ji golê xwe dûr sekinîbûyî, loma te nikaribû wê bigirî.”",
+              "de": "„Aber du standest zu weit vor deinem Tor, darum konntest du ihn nicht fangen.“",
+              "es": "«Pero estabas demasiado lejos de tu portería, por eso no pudiste pararlo».",
+              "tr": "“Ama kalenden çok uzakta duruyordun, o yüzden tutamadın.”",
+              "ar": "«لكنكِ وقفتِ بعيدةً جدًا عن مرماك، لذلك لم تستطيعي إمساكها».",
+              "fr": "« Mais tu étais trop loin de ton but, c’est pour ça que tu n’as pas pu l’arrêter. »",
+              "nl": "‘Maar je stond te ver van je doel, daarom kon je hem niet vangen.’"
+            }
+          },
+          "from": "rehim"
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "What was the score?",
+            "ku": "Encam çi bû?",
+            "ckb": "ئەنجامەکە چی بوو؟",
+            "de": "Wie stand es?",
+            "es": "¿Cómo iba el marcador?",
+            "tr": "Skor neydi?",
+            "ar": "ما كانت النتيجة؟",
+            "fr": "Quel était le score ?",
+            "nl": "Hoe stond het?"
+          },
+          "options": [
+            {
+              "en": "Two all, with one minute left",
+              "ku": "Du bi du, û xulekek mabû",
+              "ckb": "دوو بە دوو، و خولەکێک مابوو",
+              "de": "Zwei zu zwei, noch eine Minute",
+              "es": "Dos a dos, con un minuto por jugar",
+              "tr": "İkiye iki, bir dakika kalmıştı",
+              "ar": "اثنين لاثنين، وبقيت دقيقة",
+              "fr": "Deux partout, à une minute de la fin",
+              "nl": "Twee-twee, nog één minuut"
+            },
+            {
+              "en": "One nil, at half time",
+              "ku": "Yek bi sifirê, di nîvê lîstikê de",
+              "ckb": "یەک بە سفر، لە نیوەی یارییەکەدا",
+              "de": "Eins zu null, zur Halbzeit",
+              "es": "Uno a cero, en el descanso",
+              "tr": "Bire sıfır, devre arasında",
+              "ar": "واحد لصفر، في منتصف المباراة",
+              "fr": "Un à zéro, à la mi-temps",
+              "nl": "Een-nul, bij de rust"
+            },
+            {
+              "en": "Three two, at the start",
+              "ku": "Sê bi du, di destpêkê de",
+              "ckb": "سێ بە دوو، لە سەرەتادا",
+              "de": "Drei zu zwei, am Anfang",
+              "es": "Tres a dos, al principio",
+              "tr": "Üçe iki, başta",
+              "ar": "ثلاثة لاثنين، في البداية",
+              "fr": "Trois à deux, au début",
+              "nl": "Drie-twee, aan het begin"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "encam"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Where did the ball land?",
+            "ku": "Top ket ku?",
+            "ckb": "تۆپەکە کەوتە کوێ؟",
+            "de": "Wo ist der Ball gelandet?",
+            "es": "¿Dónde cayó el balón?",
+            "tr": "Top nereye düştü?",
+            "ar": "أين سقطت الكرة؟",
+            "fr": "Où le ballon est-il tombé ?",
+            "nl": "Waar kwam de bal terecht?"
+          },
+          "options": [
+            {
+              "en": "In Mam Rehîm’s garden",
+              "ku": "Di baxçeyê Mam Rehîm de",
+              "ckb": "لە ناو باخچەی مام ڕەحیم",
+              "de": "In Mam Rehîms Garten",
+              "es": "En el jardín de Mam Rehîm",
+              "tr": "Mam Rehîm’in bahçesinde",
+              "ar": "في حديقة العم رحيم",
+              "fr": "Dans le jardin de Mam Rehîm",
+              "nl": "In de tuin van Mam Rehîm"
+            },
+            {
+              "en": "On the school roof",
+              "ku": "Li ser banê dibistanê",
+              "ckb": "لەسەر بانی قوتابخانەکە",
+              "de": "Auf dem Schuldach",
+              "es": "En el tejado de la escuela",
+              "tr": "Okulun çatısında",
+              "ar": "على سطح المدرسة",
+              "fr": "Sur le toit de l’école",
+              "nl": "Op het dak van de school"
+            },
+            {
+              "en": "In the middle of the street",
+              "ku": "Di nîvê kolanê de",
+              "ckb": "لە ناوەڕاستی کۆڵانەکەدا",
+              "de": "Mitten auf der Straße",
+              "es": "En medio de la calle",
+              "tr": "Sokağın ortasında",
+              "ar": "في وسط الشارع",
+              "fr": "Au milieu de la rue",
+              "nl": "Midden op straat"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "lida",
+            "fri"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Who went to fetch the ball?",
+            "ku": "Kî çû ku topê bîne?",
+            "ckb": "کێ چوو تۆپەکە بهێنێتەوە؟",
+            "de": "Wer ging den Ball holen?",
+            "es": "¿Quién fue a buscar el balón?",
+            "tr": "Topu almaya kim gitti?",
+            "ar": "من ذهب لجلب الكرة؟",
+            "fr": "Qui est allé chercher le ballon ?",
+            "nl": "Wie ging de bal halen?"
+          },
+          "options": [
+            {
+              "en": "The goalkeeper",
+              "ku": "Dergevan",
+              "ckb": "گۆڵپارێزەکە",
+              "de": "Die Torhüterin",
+              "es": "La portera",
+              "tr": "Kaleci",
+              "ar": "حارسة المرمى",
+              "fr": "La gardienne de but",
+              "nl": "De keepster"
+            },
+            {
+              "en": "Mam Rehîm himself",
+              "ku": "Mam Rehîm bi xwe",
+              "ckb": "خودی مام ڕەحیم",
+              "de": "Mam Rehîm selbst",
+              "es": "El propio Mam Rehîm",
+              "tr": "Mam Rehîm’in kendisi",
+              "ar": "العم رحيم نفسه",
+              "fr": "Mam Rehîm lui-même",
+              "nl": "Mam Rehîm zelf"
+            },
+            {
+              "en": "Nobody went",
+              "ku": "Kes neçû",
+              "ckb": "کەس نەچوو",
+              "de": "Niemand ging",
+              "es": "No fue nadie",
+              "tr": "Kimse gitmedi",
+              "ar": "لم يذهب أحد",
+              "fr": "Personne n’y est allé",
+              "nl": "Niemand ging"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "nacim",
+            "ime"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Why couldn’t the goalkeeper catch the ball?",
+            "ku": "Çima dergevanê nikaribû topê bigire?",
+            "ckb": "بۆچی گۆڵپارێزەکە نەیتوانی تۆپەکە بگرێت؟",
+            "de": "Warum konnte die Torhüterin den Ball nicht fangen?",
+            "es": "¿Por qué no pudo parar el balón la portera?",
+            "tr": "Kaleci topu neden tutamadı?",
+            "ar": "لماذا لم تستطع الحارسة إمساك الكرة؟",
+            "fr": "Pourquoi la gardienne n’a-t-elle pas pu arrêter le ballon ?",
+            "nl": "Waarom kon de keepster de bal niet vangen?"
+          },
+          "options": [
+            {
+              "en": "She stood too far from her goal",
+              "ku": "Ew pir ji golê xwe dûr sekinîbû",
+              "ckb": "زۆر لە گۆڵەکەی دوور وەستابوو",
+              "de": "Sie stand zu weit vor ihrem Tor",
+              "es": "Estaba demasiado lejos de su portería",
+              "tr": "Kalesinden çok uzakta duruyordu",
+              "ar": "وقفت بعيدةً جدًا عن مرماها",
+              "fr": "Elle était trop loin de son but",
+              "nl": "Ze stond te ver van haar doel"
+            },
+            {
+              "en": "The sun was in her eyes",
+              "ku": "Tav di çavên wê de bû",
+              "ckb": "خۆر لە چاوی دەدا",
+              "de": "Die Sonne blendete sie",
+              "es": "Le daba el sol en los ojos",
+              "tr": "Güneş gözünü alıyordu",
+              "ar": "كانت الشمس في عينيها",
+              "fr": "Elle avait le soleil dans les yeux",
+              "nl": "De zon scheen in haar ogen"
+            },
+            {
+              "en": "She was talking to a friend",
+              "ku": "Ew bi hevalekê re dipeyivî",
+              "ckb": "قسەی لەگەڵ هاوڕێیەکی دەکرد",
+              "de": "Sie redete mit einer Freundin",
+              "es": "Estaba hablando con una amiga",
+              "tr": "Bir arkadaşıyla konuşuyordu",
+              "ar": "كانت تتحدث مع صديقة",
+              "fr": "Elle parlait avec une amie",
+              "nl": "Ze praatte met een vriendin"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "dur"
+          ]
+        }
+      ],
+      "culprit": "saman",
+      "solution": {
+        "en": "With the score at two all, Saman kicked the ball with all his strength towards Narîn’s goal. It flew over her head and the wall into Mam Rehîm’s garden. Saman wouldn’t go, so Narîn did. Saman kicked the ball — and Mam Rehîm said it was a fine kick.",
+        "ku": "Dema encam du bi du bû, Saman bi hemû hêza xwe li topê xist ber bi golê Narînê ve. Top di ser serê wê û dîwar re firiya nav baxçeyê Mam Rehîm. Saman neçû, loma Narîn çû. Saman li topê xist — û Mam Rehîm got ku ew lêxisteke xweş bû.",
+        "ckb": "کاتێک ئەنجامەکە دوو بە دوو بوو، سامان بە هەموو هێزی خۆیەوە تۆپەکەی بەرەو گۆڵەکەی نارین لێدا. تۆپەکە بەسەر سەری ئەو و دیوارەکەدا فڕی بۆ ناو باخچەی مام ڕەحیم. سامان نەچوو، بۆیە نارین چوو. سامان تۆپەکەی لێدا — و مام ڕەحیم وتی لێدانێکی جوان بوو.",
+        "de": "Beim Stand von zwei zu zwei schoss Saman den Ball mit aller Kraft auf Narîns Tor. Er flog über ihren Kopf und die Mauer in Mam Rehîms Garten. Saman wollte nicht gehen, also ging Narîn. Saman hat den Ball geschossen – und Mam Rehîm sagte, es war ein schöner Schuss.",
+        "es": "Con dos a dos en el marcador, Saman chutó el balón con todas sus fuerzas hacia la portería de Narîn. Voló por encima de ella y del muro hasta el jardín de Mam Rehîm. Saman no quiso ir, así que fue Narîn. Saman chutó el balón… y Mam Rehîm dijo que fue un buen disparo.",
+        "tr": "Skor ikiye ikiyken Saman topa bütün gücüyle Narîn’in kalesine doğru vurdu. Top onun başının ve duvarın üstünden Mam Rehîm’in bahçesine uçtu. Saman gitmek istemedi, bu yüzden Narîn gitti. Topa Saman vurdu… Mam Rehîm de güzel bir vuruş olduğunu söyledi.",
+        "ar": "حين كانت النتيجة اثنين لاثنين، ركل سامان الكرة بكل قوته نحو مرمى نارين. طارت فوق رأسها والجدار إلى حديقة العم رحيم. لم يرد سامان الذهاب، فذهبت نارين. سامان ركل الكرة، وقال العم رحيم إنها كانت ركلة جميلة.",
+        "fr": "À deux partout, Saman a tiré de toutes ses forces vers le but de Narîn. Le ballon est passé au-dessus d’elle et du mur, jusque dans le jardin de Mam Rehîm. Saman n’a pas voulu y aller, alors Narîn y est allée. C’est Saman qui a tiré… et Mam Rehîm a dit que c’était un beau tir.",
+        "nl": "Bij twee-twee schoot Saman de bal met al zijn kracht naar het doel van Narîn. Hij vloog over haar hoofd en de muur de tuin van Mam Rehîm in. Saman wilde niet gaan, dus ging Narîn. Saman schoot de bal – en Mam Rehîm zei dat het een mooi schot was."
+      },
+      "hints": [
+        {
+          "en": "Who kicked towards the goal?",
+          "ku": "Kê ber bi golê ve li topê xist?",
+          "ckb": "کێ بەرەو گۆڵەکە تۆپی لێدا؟",
+          "de": "Wer hat aufs Tor geschossen?",
+          "es": "¿Quién chutó hacia la portería?",
+          "tr": "Kaleye doğru kim vurdu?",
+          "ar": "من ركل نحو المرمى؟",
+          "fr": "Qui a tiré vers le but ?",
+          "nl": "Wie schoot er op het doel?"
+        },
+        {
+          "en": "Who didn’t want to go to Mam Rehîm’s door?",
+          "ku": "Kê nexwest biçe ber deriyê Mam Rehîm?",
+          "ckb": "کێ نەیویست بچێتە بەردەم دەرگای مام ڕەحیم؟",
+          "de": "Wer wollte nicht zu Mam Rehîms Tür gehen?",
+          "es": "¿Quién no quería ir a la puerta de Mam Rehîm?",
+          "tr": "Mam Rehîm’in kapısına kim gitmek istemedi?",
+          "ar": "من لم يرد الذهاب إلى باب العم رحيم؟",
+          "fr": "Qui ne voulait pas aller à la porte de Mam Rehîm ?",
+          "nl": "Wie wilde niet naar de deur van Mam Rehîm?"
+        }
+      ]
+    }
+  ]
+}

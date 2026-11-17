@@ -1,17 +1,23 @@
 /**
  * Who Am I? at a table, for two to six: everyone wears a card on their
  * forehead that everyone else can read and they cannot. In turn, a player
- * asks one yes/no question about their own card, picked from an approved
- * Kurdish list; the others, who can see the card, answer yes or no; and the
- * card itself then says which it is. With the answer in hand the player may
- * guess, from a few tiles, or pass the turn on. Fewer questions score more,
- * and every right answer given about somebody else's card scores a point.
+ * asks one question about their own card, picked from an approved Kurdish
+ * list; the others, who can see the card, answer yes, could be, no, or not
+ * sure; and the card itself then says which it is: yes, no, or "sometimes"
+ * where honest people would say either. With the answer in hand the player
+ * may guess, from a few tiles, or pass the turn on. Fewer questions score
+ * more, and every right answer given about somebody else's card scores a
+ * point, up to WHO_AM_I_HELP_CAP a game, so helping never outweighs finding
+ * one's own card at a table of six.
  *
  * Accurate, and not to be cheated:
  *   - The truth of a question is the card's, read from the identity's facts
- *     table (`answerFor`), never what the table said. A friend who answers
+ *     table (`verdictFor`), never what the table said. A friend who answers
  *     wrong, by mistake or to mislead, changes nothing the asker is told and
- *     only misses their own point.
+ *     only misses their own point. How an answer is scored against the card
+ *     is `markOf`: right, close, wrong or not sure, and only right scores.
+ *     "Not sure" is an answer, honestly given: it takes part, scores nothing
+ *     and is never wrong.
  *   - A player's own identity is in every view but their own, until they
  *     have it, are out, or the game is over. Nothing about it is in theirs:
  *     their tiles and questions are dealt so that neither gives it away
@@ -20,9 +26,17 @@
  *   - While a question is being answered, a view says who has answered and
  *     not what, so nobody copies an answer and the asker reads nothing from
  *     the first one in.
- *   - Nothing is typed. A move is a question picked, yes or no, a tile, or a
- *     pass, and every one is checked here: whose turn it is, what the turn
- *     is waiting for, a question asked once, an answer given once.
+ *   - Nothing is typed. A move is a question picked, one of the answers, a
+ *     tile, or a pass, and every one is checked here: whose turn it is, what
+ *     the turn is waiting for, a question asked once, an answer given once.
+ *
+ * Apps from before the four answers still play: they answer with `yes` (true
+ * or false), which is read as yes or no, and a table they make offers two
+ * answers (`answers: 2`), whose cards the server deals without their
+ * "sometimes" rows. A game's state saved before the four answers is read as
+ * it was (`clone`), so a game running through an update carries on. Every
+ * board still carries the yes-or-no fields those apps read beside the new
+ * ones (`pending.mine`, `told.truth`, each answer's `yes`).
  *
  * These are the rules alone, pure (shared/src/games/multi/rules.ts). The
  * game online is run by the server from them (api/src/mp/games/who-am-i.ts),
@@ -35,11 +49,15 @@
  * The room answers it from the card they can read, nothing checks the answer,
  * and it costs what any question costs. There are no tiles to pick from
  * there either: the player says who they are, and the room, reading the
- * card, says whether that is right (`said`). With nothing to pick from, one
- * more miss is allowed, and a turn is never forced to be a guess: the room
- * can go on asking for as long as it likes, and ends the game itself. Only
- * the phone's own game sets this: the server never does, so a game that is
- * paid for takes neither move, and its guesses are tiles the server checks.
+ * card, says whether that is right (`said`), or that it is close: another
+ * word for the same thing, or the word another region says (pisîk and
+ * kitik), which spends no guess and passes the turn on. With nothing to
+ * pick from, one more miss is allowed, and a turn is never forced to be a
+ * guess: the room can go on asking for as long as it likes, and ends the
+ * game itself. Only the phone's own game sets this: the server never does,
+ * so a game that is paid for takes neither move, and its guesses are tiles
+ * the server checks. A beginner in one room is told what kind of thing
+ * their card is: with no tiles on the phone, the kind singles nothing out.
  *
  * A learner who does not know what to ask is shown where to begin: each view
  * names a few of its own questions as the ones to ask next
@@ -62,13 +80,19 @@ import type { ApplyResult, GameRules, Placed, RulesSeat, RulesStart } from '../m
 import {
   WHO_AM_I_GUESSES,
   WHO_AM_I_ROOM_GUESSES,
-  answerFor,
+  isWhoAmISays,
+  markOf,
   sharedCategory,
   suggestWhoAmIQuestions,
+  verdictFor,
   whoAmIPoints,
+  type WhoAmIAnswer,
+  type WhoAmIAnswerCount,
   type WhoAmIAsked,
   type WhoAmIDeal,
+  type WhoAmIMark,
   type WhoAmIQuestion,
+  type WhoAmISays,
   type WhoAmITile,
 } from './game.js';
 
@@ -88,6 +112,14 @@ export const WHO_AM_I_ANSWER_SECONDS = 30;
 export const WHO_AM_I_DECIDE_SECONDS = 30;
 /** What a right answer about somebody else's card is worth. */
 export const WHO_AM_I_HELP_POINTS = 1;
+/**
+ * The most a game's right answers about other cards can add up to. At a table
+ * of six a player answers about five questions for each one they ask, and a
+ * card of their own is worth at most WHO_AM_I_START_POINTS: without a cap,
+ * answering would outscore finding out who you are, and a player who is out
+ * would keep collecting.
+ */
+export const WHO_AM_I_HELP_CAP = 6;
 
 export interface WhoAmITableSettings {
   dialect: LetterDialect;
@@ -97,22 +129,45 @@ export interface WhoAmITableSettings {
   deals?: ReadonlyArray<{ seat: number; deal: WhoAmIDeal }>;
   /** a table in one room, on one phone: a question may also be asked out loud. Never set for a game the server runs. */
   open?: boolean;
+  /**
+   * The answers friends are offered: 4 (yes, could be, no, not sure), or 2 (yes and no) when this is not set, as for a
+   * table made by an app from before the four. A table of two is dealt cards without their "sometimes" rows.
+   */
+  answers?: WhoAmIAnswerCount;
 }
 
 export type WhoAmITableMove =
   | { kind: 'ask'; question: string }
   /** a question of the player's own, asked of the room out loud: only at an `open` table */
   | { kind: 'aloud' }
+  /** an answer to the question on the table: yes, could be, no, or not sure (the last two only at a table of four answers) */
+  | { kind: 'answer'; says: WhoAmISays }
+  /** the same as apps from before the four answers send it: yes or no */
   | { kind: 'answer'; yes: boolean }
   | { kind: 'guess'; tile: string }
-  /** the player said who they are and the room, reading the card, says whether that is it: only at an `open` table */
-  | { kind: 'said'; right: boolean }
+  /**
+   * The player said who they are and the room, reading the card, says whether that is it, or that it is close (another
+   * word for the same thing): only at an `open` table. A close guess spends nothing and passes the turn.
+   */
+  | { kind: 'said'; right: boolean; close?: true }
   | { kind: 'pass' };
 
-/** What the mover is told at once: whether a guess was right. Everything else is on the board. */
+/**
+ * What an answer move says, from either of its forms: `says`, or the yes or no
+ * of apps from before the four answers. Null for a move that carries neither,
+ * or carries something no app sends.
+ */
+export function whoAmISaysOf(move: { says?: unknown; yes?: unknown }): WhoAmISays | null {
+  if (move.says !== undefined) return isWhoAmISays(move.says) ? move.says : null;
+  return move.yes === true ? 'yes' : move.yes === false ? 'no' : null;
+}
+
+/** What the mover is told at once: whether a guess was right, or close. Everything else is on the board. */
 export interface WhoAmITableOutcome {
   kind: WhoAmITableMove['kind'];
   correct: boolean | null;
+  /** a guess said out loud that the room called close: no guess spent, and `correct` is null */
+  close?: true;
 }
 
 export type WhoAmITablePhase = 'ask' | 'answer' | 'decide';
@@ -130,14 +185,14 @@ interface TableSeat {
   left: boolean;
   /** right answers given about other seats' cards */
   helped: number;
-  /** answers given at all, right or wrong */
+  /** answers given at all, "not sure" among them: everything but a turn let run out */
   answered: number;
 }
 
 /** One seat's answer to the question on the table; null when their time ran out. */
 interface TableAnswer {
   seat: number;
-  yes: boolean | null;
+  says: WhoAmISays | null;
 }
 
 export interface WhoAmITableState {
@@ -145,6 +200,8 @@ export interface WhoAmITableState {
   difficulty: GameDifficulty;
   /** a table in one room: questions may be asked out loud */
   open: boolean;
+  /** the answers friends are offered (a state saved before there were four has none, and is a table of two) */
+  answers: WhoAmIAnswerCount;
   seed: string;
   startedAt: number;
   endsAt: number;
@@ -157,8 +214,11 @@ export interface WhoAmITableState {
   turns: number;
   /** the question being answered, in the answer wait */
   pending: { question: string; answers: TableAnswer[] } | null;
-  /** the last question answered: who asked, what the card said, and how everyone answered */
-  told: { seat: number; question: string; truth: boolean; answers: TableAnswer[] } | null;
+  /**
+   * The last question answered: who asked, what the card said, and how everyone answered. `truth` is whether the card
+   * said yes, as apps from before the four answers read it; `verdict` is what it said.
+   */
+  told: { seat: number; question: string; truth: boolean; verdict: WhoAmIAnswer; answers: TableAnswer[] } | null;
   finishedAt: number | null;
   endedBy: 'all-done' | 'time' | 'too-few' | 'abandoned' | null;
 }
@@ -170,11 +230,16 @@ export interface WhoAmITableCard {
   category: string;
 }
 
+/** How one answer to the last question went: scored against the card (`markOf`), or `none` when its time ran out. */
+export type WhoAmITableMark = WhoAmIMark | 'none';
+
 export interface WhoAmITableBoard {
   dialect: LetterDialect;
   difficulty: GameDifficulty;
   /** a table in one room: the player on turn may also ask the room a question of their own */
   open: boolean;
+  /** the answers friends are offered: the four, or yes and no alone */
+  answers: WhoAmIAnswerCount;
   startedAt: string;
   endsAt: string;
   turn: number | null;
@@ -183,7 +248,7 @@ export interface WhoAmITableBoard {
   turns: number;
   /** the viewer's own game: their identity only once they have it, are out, or the game is over */
   mine: {
-    /** what kind of thing it is, when every tile is that kind (`sharedCategory`) */
+    /** what kind of thing it is, when every tile is that kind (`sharedCategory`), and always for a beginner in one room */
     category: string | null;
     /** the tiles to guess from; none at an open table, where a guess is said out loud */
     tiles: WhoAmITile[];
@@ -220,21 +285,56 @@ export interface WhoAmITableBoard {
     solvedAt: string | null;
     card: WhoAmITableCard | null;
   }>;
-  /** the question being answered: who has answered (never what), and the viewer's own answer */
-  pending: { seat: number; question: WhoAmIQuestion; answered: number[]; waiting: number[]; mine: boolean | null } | null;
-  /** the last question answered */
-  told: { seat: number; question: WhoAmIQuestion; truth: boolean; answers: Array<{ seat: number; yes: boolean | null; right: boolean }> } | null;
+  /**
+   * The question being answered: who has answered (never what), and the viewer's own answer. `says` is that answer;
+   * `mine` is the same as yes or no for apps from before the four answers (null for any other answer).
+   */
+  pending: { seat: number; question: WhoAmIQuestion; answered: number[]; waiting: number[]; mine: boolean | null; says: WhoAmISays | null } | null;
+  /**
+   * The last question answered. `verdict` is what the card said, and each answer has what was said and how it went
+   * (`mark`). `truth`, `yes` and `right` are the same as apps from before the four answers read them: whether the card
+   * said yes, the answer as yes or no (null for any other), and whether it scored.
+   */
+  told: {
+    seat: number;
+    question: WhoAmIQuestion;
+    truth: boolean;
+    verdict: WhoAmIAnswer;
+    answers: Array<{ seat: number; yes: boolean | null; says: WhoAmISays | null; right: boolean; mark: WhoAmITableMark }>;
+  } | null;
   /** once the game is over: who everyone was */
   reveal: Array<{ seat: number; word: string; meanings: Meanings }> | null;
   endedBy: WhoAmITableState['endedBy'];
 }
 
+/** One answer as a state stores it: `says`, or the yes or no a state saved before the four answers holds. */
+function readAnswer(a: TableAnswer | { seat: number; yes?: boolean | null; says?: WhoAmISays | null }): TableAnswer {
+  if ('says' in a && a.says !== undefined) return { seat: a.seat, says: a.says };
+  const yes = (a as { yes?: boolean | null }).yes;
+  return { seat: a.seat, says: yes === true ? 'yes' : yes === false ? 'no' : null };
+}
+
+/**
+ * A copy to change, read in the shape of today: a state saved before the four
+ * answers (each answer a yes or no, the card's word a truth, no count of
+ * answers) comes back as the same game with them, so it carries on as it was.
+ */
 function clone(state: WhoAmITableState): WhoAmITableState {
+  const told = state.told;
   return {
     ...state,
-    seats: state.seats.map((s) => ({ ...s, asked: [...s.asked], guesses: [...s.guesses] })),
-    pending: state.pending ? { question: state.pending.question, answers: state.pending.answers.map((a) => ({ ...a })) } : null,
-    told: state.told ? { ...state.told, answers: state.told.answers.map((a) => ({ ...a })) } : null,
+    answers: state.answers === 4 ? 4 : 2,
+    seats: state.seats.map((s) => ({ ...s, asked: s.asked.map((a) => ({ ...a })), guesses: [...s.guesses] })),
+    pending: state.pending ? { question: state.pending.question, answers: state.pending.answers.map(readAnswer) } : null,
+    told: told
+      ? {
+          seat: told.seat,
+          question: told.question,
+          truth: told.truth,
+          verdict: told.verdict ?? (told.truth ? 'yes' : 'no'),
+          answers: told.answers.map(readAnswer),
+        }
+      : null,
   };
 }
 
@@ -247,9 +347,9 @@ function questions(s: TableSeat): number {
   return s.asked.length + s.aloud;
 }
 
-/** A seat's score: what its own card earned, and a point for every right answer about another's. */
+/** A seat's score: what its own card earned, and a point for every right answer about another's, up to the cap. */
 function points(s: TableSeat): number {
-  return whoAmIPoints(questions(s), wrong(s), s.solvedAt !== null) + s.helped * WHO_AM_I_HELP_POINTS;
+  return whoAmIPoints(questions(s), wrong(s), s.solvedAt !== null) + Math.min(WHO_AM_I_HELP_CAP, s.helped * WHO_AM_I_HELP_POINTS);
 }
 
 /** Still guessing: at the table, with a card, neither solved nor out. */
@@ -324,23 +424,25 @@ function unanswered(state: WhoAmITableState): number[] {
 
 /**
  * Everyone has answered, or run out of time to: the card says which it is.
- * The asker's list takes the card's answer, each answer that matched it
- * scores its giver a point, and the asker decides what to do with it.
+ * The asker's list takes the card's verdict, each answer the card scores as
+ * right (`markOf`) scores its giver a point, and the asker decides what to do
+ * with it. Every answer given counts as taking part, "not sure" too; only a
+ * turn let run out does not.
  */
 function resolve(state: WhoAmITableState, now: number): void {
   const asker = state.seats.find((s) => s.seat === state.turn);
   const pending = state.pending;
   if (!asker || !asker.deal || !pending) return;
   const q = asker.deal.questions.find((x) => x.id === pending.question);
-  const truth = q ? answerFor(asker.deal.identity, q.fact) : false;
-  asker.asked.push({ question: pending.question, answer: truth });
+  const verdict: WhoAmIAnswer = q ? verdictFor(asker.deal.identity, q.fact) : 'no';
+  asker.asked.push({ question: pending.question, answer: verdict === 'yes', verdict });
   for (const a of pending.answers) {
     const giver = state.seats.find((s) => s.seat === a.seat);
-    if (!giver || a.yes === null) continue;
+    if (!giver || a.says === null) continue;
     giver.answered++;
-    if (a.yes === truth) giver.helped++;
+    if (markOf(a.says, verdict) === 'right') giver.helped++;
   }
-  state.told = { seat: asker.seat, question: pending.question, truth, answers: pending.answers.map((a) => ({ ...a })) };
+  state.told = { seat: asker.seat, question: pending.question, truth: verdict === 'yes', verdict, answers: pending.answers.map((a) => ({ ...a })) };
   state.pending = null;
   state.phase = 'decide';
   state.phaseEndsAt = now + WHO_AM_I_DECIDE_SECONDS * 1000;
@@ -351,6 +453,25 @@ function tookPart(s: TableSeat): boolean {
   return questions(s) > 0 || s.answered > 0 || s.guesses.length > 0;
 }
 
+/** An answer as yes or no, for apps from before the four answers: null for any other answer, and for none. */
+function yesOrNo(says: WhoAmISays | null): boolean | null {
+  return says === 'yes' ? true : says === 'no' ? false : null;
+}
+
+/** The last question answered, as a board shows it: each answer with what was said and how the card scored it. */
+function toldView(told: NonNullable<WhoAmITableState['told']>, question: WhoAmIQuestion): NonNullable<WhoAmITableBoard['told']> {
+  return {
+    seat: told.seat,
+    question,
+    truth: told.truth,
+    verdict: told.verdict,
+    answers: told.answers.map((a) => {
+      const mark: WhoAmITableMark = a.says === null ? 'none' : markOf(a.says, told.verdict);
+      return { seat: a.seat, yes: yesOrNo(a.says), says: a.says, right: mark === 'right', mark };
+    }),
+  };
+}
+
 export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoAmITableSettings, WhoAmITableBoard, WhoAmITableOutcome> = {
   init(settings: WhoAmITableSettings, seats: readonly RulesSeat[], start: RulesStart): WhoAmITableState {
     const deals = new Map((settings.deals ?? []).map((d) => [d.seat, d.deal]));
@@ -358,6 +479,7 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
       dialect: settings.dialect,
       difficulty: settings.difficulty,
       open: settings.open === true,
+      answers: settings.answers === 4 ? 4 : 2,
       seed: start.seed,
       startedAt: start.now,
       endsAt: start.now + settings.minutes * 60_000,
@@ -384,10 +506,14 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
 
     if (move.kind === 'answer') {
       // an answer is about somebody else's card, while their question is on the table, and is given once
+      const says = whoAmISaysOf(move);
+      if (says === null) return { ok: false, reason: 'no-such-answer' };
+      // a table of two answers offers yes and no alone: its cards were dealt with nothing else to say
+      if (next.answers === 2 && says !== 'yes' && says !== 'no') return { ok: false, reason: 'not-offered' };
       if (next.phase !== 'answer' || !next.pending) return { ok: false, reason: 'nothing-asked' };
       if (seat === next.turn) return { ok: false, reason: 'own-question' };
       if (next.pending.answers.some((a) => a.seat === seat)) return { ok: false, reason: 'answered' };
-      next.pending.answers.push({ seat, yes: move.yes });
+      next.pending.answers.push({ seat, says });
       if (unanswered(next).length === 0) resolve(next, now);
       return { ok: true, state: next, outcome: { kind: 'answer', correct: null } };
     }
@@ -433,6 +559,12 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
     if (move.kind === 'said') {
       // the room is the judge only where it sits together with the card in front of it
       if (!next.open) return { ok: false, reason: 'not-here' };
+      if (move.close === true) {
+        if (move.right) return { ok: false, reason: 'right-or-close' };
+        // another word for the same thing, or another region's word for it: no guess is spent, and the turn goes on
+        advance(next, now);
+        return { ok: true, state: next, outcome: { kind: 'said', correct: null, close: true } };
+      }
       me.guesses.push({ tile: '', correct: move.right });
       if (move.right) me.solvedAt = now;
       else if (wrong(me) >= allowed(next)) me.out = true;
@@ -469,7 +601,7 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
     if (next.phase === 'answer' && next.pending) {
       // those who did not answer in time, or are away, are passed over: the card does not wait for them
       const waiting = new Set(unanswered(next));
-      for (const seat of seats) if (waiting.has(seat)) next.pending.answers.push({ seat, yes: null });
+      for (const seat of seats) if (waiting.has(seat)) next.pending.answers.push({ seat, says: null });
       if (unanswered(next).length === 0) resolve(next, now);
       return next;
     }
@@ -518,14 +650,19 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
     return state.finishedAt !== null && state.endedBy !== 'abandoned' && state.seats.filter(tookPart).length >= 2;
   },
 
-  viewFor(state: WhoAmITableState, seat: number | null): WhoAmITableBoard {
+  viewFor(saved: WhoAmITableState, seat: number | null): WhoAmITableBoard {
+    // read in today's shape, so a game saved before the four answers is shown as it was
+    const state = clone(saved);
     const done = state.finishedAt !== null;
     const me = seat === null ? undefined : state.seats.find((s) => s.seat === seat);
     const deal = me?.deal ?? null;
     const showMeanings = state.difficulty === 'beginner';
     // who may read the cards at all: someone with a card of their own, still at the table
     const reads = !!me && present(me);
-    const kind = deal ? sharedCategory(deal.identity.category, deal.candidates) : null;
+    // A beginner in one room is always told the kind: there are no tiles on the phone for the kind to single the card
+    // out from. Anywhere else it is named only when every tile is of that kind.
+    const toldKind = state.open && state.difficulty === 'beginner';
+    const kind = deal ? (toldKind ? deal.identity.category : sharedCategory(deal.identity.category, deal.candidates)) : null;
     const question = (owner: number, id: string): WhoAmIQuestion => {
       const q = state.seats.find((s) => s.seat === owner)?.deal?.questions.find((x) => x.id === id);
       return { id, ku: q?.ku ?? '', meanings: q?.meanings ?? { en: '' } };
@@ -535,6 +672,7 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
       dialect: state.dialect,
       difficulty: state.difficulty,
       open: state.open,
+      answers: state.answers,
       startedAt: new Date(state.startedAt).toISOString(),
       endsAt: new Date(state.endsAt).toISOString(),
       turn: state.turn,
@@ -585,17 +723,11 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
               question: question(state.turn, state.pending.question),
               answered: state.pending.answers.map((a) => a.seat),
               waiting: unanswered(state),
-              mine: state.pending.answers.find((a) => a.seat === seat)?.yes ?? null,
+              mine: yesOrNo(state.pending.answers.find((a) => a.seat === seat)?.says ?? null),
+              says: state.pending.answers.find((a) => a.seat === seat)?.says ?? null,
             }
           : null,
-      told: state.told
-        ? {
-            seat: state.told.seat,
-            question: question(state.told.seat, state.told.question),
-            truth: state.told.truth,
-            answers: state.told.answers.map((a) => ({ seat: a.seat, yes: a.yes, right: a.yes === state.told!.truth })),
-          }
-        : null,
+      told: state.told ? toldView(state.told, question(state.told.seat, state.told.question)) : null,
       reveal: done ? state.seats.filter((s) => s.deal).map((s) => ({ seat: s.seat, word: s.deal!.identity.word, meanings: s.deal!.identity.meanings })) : null,
       endedBy: state.endedBy,
     };

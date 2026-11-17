@@ -385,3 +385,43 @@
     grid-column: span 6;
   }
 }
+
+/* the player's own marks on a suspect while reading: three small chips, one lit at a time */
+.dt-notes-hint {
+  margin: -0.25rem 0 0.5rem;
+}
+
+.dt-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  grid-column: 1 / -1;
+}
+
+.dt-note {
+  min-height: 32px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.15));
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.dt-note.is-on.is-innocent {
+  background: var(--success-soft, #e3f4e8);
+  border-color: var(--success, #2e8b57);
+}
+
+.dt-note.is-on.is-suspicious {
+  background: var(--warning-soft, #fdecd8);
+  border-color: var(--warning, #c46a12);
+}
+
+.dt-note.is-on.is-unsure {
+  background: var(--surface-2, #eef0f3);
+  border-color: var(--muted, #7a808a);
+}

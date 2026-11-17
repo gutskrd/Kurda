@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { dictionaryKey, type GameAccess, type InviteSummary, type LobbyCard, type RatedState } from '@kurda/shared';
+import { type GameAccess, type InviteSummary, type LobbyCard, type RatedState } from '@kurda/shared';
 import { pickRhymePrompt } from './rhyme-prompt.js';
 import { XpService } from '../xp/service.js';
 import { RankService } from '../ranks/service.js';
@@ -28,15 +28,9 @@ import {
   type SeatRow,
 } from '../play/lobby.js';
 import type { LobbyChange, LobbyFacts, Series } from '../play/types.js';
-import {
-  evaluateSubmission,
-  normalizeWord,
-  InMemoryLexicon,
-  type Dialect,
-  type RhymeQuality,
-  type RhymeReject,
-} from './rhyme.js';
+import { evaluateSubmission, normalizeWord, rhymeWordKey, type Dialect, type RhymeQuality, type RhymeReject } from './rhyme.js';
 import { rankRhyme, rhymePlacementXp, type RhymeMatchPlayerResult } from './rhyme-match.js';
+import { missedRhymes, rhymeLexicon, type RhymeHint } from './rhyme-words.js';
 import { filterText } from '../moderation/filter.js';
 
 const DEFAULT_WINDOW_MS = 60_000;
@@ -121,6 +115,8 @@ export interface RhymeMatchResults {
     xpAwarded: number | null;
     usedWords: string[];
   }>;
+  /** rhymes the viewer did not find (nor anybody else in the match), with their meanings */
+  missed: RhymeHint[];
 }
 
 interface MatchRow extends LobbyRow {
@@ -137,6 +133,10 @@ interface PlayerRow extends SeatRow {
   used_words: string[];
   score: number;
   accepted: number;
+  /** accepted rhymes that were perfect (1751000595000) */
+  perfect: number;
+  /** when the last accepted rhyme was scored */
+  last_scored_at: Date | null;
   xp_awarded: number | null;
 }
 
@@ -306,9 +306,8 @@ export class RhymeMatchService {
         };
       }
 
-      const normalized = normalizeWord(word);
-      const known = await this.wordExists(client, normalized);
-      const lexicon = new InMemoryLexicon(known ? [{ word: normalized, dialect: match.dialect }] : []);
+      const normalized = rhymeWordKey(word, match.dialect);
+      const words = await rhymeLexicon(client, match.dialect, normalized);
 
       // an admin's explicit verdict for this exact pair, if one exists
       const override = await client.query<{ quality: string }>(
@@ -321,14 +320,16 @@ export class RhymeMatchService {
       const result = evaluateSubmission(
         { prompt: match.prompt, submission: word, elapsedMs, windowMs: match.window_ms, dialect: match.dialect, usedWords: player.used_words },
         // the words found are shown to everybody in the match when it ends: one the filter refuses is not taken
-        { lexicon, overrideQuality, isProfane: (w) => filterText(w).flagged },
+        { ...words, overrideQuality, isProfane: (w) => filterText(w).flagged },
       );
 
       if (result.accepted) {
+        // how many were perfect, and when the last came, are the tie-break (rhyme-match.ts)
         await client.query(
-          `UPDATE rhyme_match_players SET used_words = $3::jsonb, score = score + $4, accepted = accepted + 1
+          `UPDATE rhyme_match_players SET used_words = $3::jsonb, score = score + $4, accepted = accepted + 1,
+                  perfect = perfect + $5, last_scored_at = $6
            WHERE match_id = $1 AND user_id = $2`,
-          [matchId, userId, JSON.stringify([...player.used_words, result.normalized]), result.points],
+          [matchId, userId, JSON.stringify([...player.used_words, result.normalized]), result.points, result.quality === 'perfect' ? 1 : 0, now],
         );
       }
       return { ok: true, ended: false, result };
@@ -483,10 +484,14 @@ export class RhymeMatchService {
     const ranked = rankRhyme(players.rows.map((r) => this.toResult(r)));
     const byId = new Map(players.rows.map((r) => [r.user_id, r]));
     const seen = new Map((await seatPlayers(this.pool, match, players.rows, userId, this.publicUrl)).map((p) => [p.seat, p]));
+    // every word anybody in the match found is on the results already, so none of those is "missed"
+    const found = players.rows.flatMap((r) => r.used_words);
+    const missed = await missedRhymes(this.pool, match.dialect, match.prompt, found).catch(() => []);
     return {
       id: match.id,
       prompt: match.prompt,
       dialect: match.dialect,
+      missed,
       ranking: ranked.map((r) => {
         const row = byId.get(r.userId)!;
         const who = seen.get(row.seat)!;
@@ -793,24 +798,12 @@ export class RhymeMatchService {
   }
 
   private toResult(r: PlayerRow): RhymeMatchPlayerResult {
-    return { userId: r.user_id, score: r.score, accepted: r.accepted };
-  }
-
-  /**
-   * Is this a word at all?
-   *
-   * Looked up by the folded key, not the one the guess was normalized with.
-   * Almost every Kurmancî word carries a ç ê î ş or û, and an imported lexicon
-   * stores those folded (1751000115000) — matching on the unfolded key would
-   * reject hundreds of thousands of real words. A missing word is a correct
-   * answer thrown out, which is the more annoying failure of the two.
-   */
-  private async wordExists(client: pg.PoolClient, normalized: string): Promise<boolean> {
-    if (!normalized) return false;
-    const res = await client.query<{ exists: boolean }>(
-      `SELECT EXISTS (SELECT 1 FROM dict_entries WHERE headword_folded = $1) AS exists`,
-      [dictionaryKey(normalized)],
-    );
-    return res.rows[0]?.exists ?? false;
+    return {
+      userId: r.user_id,
+      score: r.score,
+      accepted: r.accepted,
+      perfect: r.perfect ?? 0,
+      lastAt: r.last_scored_at ? r.last_scored_at.getTime() : null,
+    };
   }
 }

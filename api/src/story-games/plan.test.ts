@@ -34,6 +34,20 @@ const bank: BankQuestion[] = [
 const games = Array.from({ length: 40 }, (_, i) => `game-${i}`);
 
 describe('buildPlan', () => {
+  it('asks last what the players answered in their last games of the story, and repeats only when the bank runs out', () => {
+    for (const id of games) {
+      const first = buildPlan(id, bank, 5);
+      const met = new Set(first.map((p) => p.questionId));
+      const second = buildPlan(`${id}-again`, bank, 5, met);
+      // twelve questions, five met: the second game of five meets none of them again but the one overall question
+      expect(second.filter((p) => met.has(p.questionId)).map((p) => p.kind)).toEqual(['gist']);
+      // with ten met, two are fresh and the rest must come from what was met
+      const ten = new Set(bank.slice(0, 10).map((b) => b.id));
+      const third = buildPlan(`${id}-third`, bank, 5, ten);
+      expect(third.filter((p) => !ten.has(p.questionId)).map((p) => p.questionId).sort()).toEqual([bank[10]!.id, bank[11]!.id].sort());
+    }
+  });
+
   it('asks the right number of questions, none twice, the overall one last', () => {
     for (const id of games) {
       for (const count of [3, 5, 10]) {

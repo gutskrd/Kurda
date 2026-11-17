@@ -130,7 +130,7 @@
       "question": "Mamikê mino, teştek mast, li dereke rast. Ew çi ye?",
       "hints": [
         "Bi şev derdikeve; kes nikare jê bixwe, kes jî nagihêjê.",
-        "Carinan tijî û girover e, carinan wek kevanekê zirav dibe."
+        "Carinan tije û girover e, carinan wek kevanekî zirav dibe."
       ],
       "answer": "Hîv",
       "accepted": [
@@ -345,7 +345,8 @@
           "note": "Numbered Kurmancî riddles (section MAMIK (TIŞTANOK), opener ‘Tiştanok, miştanok li bin kevirê xiştanok’); answers include Sîya mirov, Kûsî, Jûjî, Agir, Dîk, Tifing; has ‘Wekî pirpel e, nivîs lê bel e, bi bend û bal e, ji te re heval e’ (Pirtûk)."
         }
       ],
-      "notes": "Traditional; wording as Kurdish Wikisource ‘Mamik’ gives it (‘Ez çûm ser zinarekî, Tiliya min ket qulekî, Dengê min çû hezarekî’, answer written ‘Tiving’), also in the Mardin Artuklu thesis (answer ‘Tifeng’); bernamegeh lists ‘Tifing’ among its answers. Hawar spelling ‘tifing’; the others accepted. ‘Ew çi ye?’ added. CONTENT FLAG for the owner: the answer is a (hunting) rifle — authentic and clever, but drop it if a weapon does not suit a family collection."
+      "notes": "Traditional; wording as Kurdish Wikisource ‘Mamik’ gives it (‘Ez çûm ser zinarekî, Tiliya min ket qulekî, Dengê min çû hezarekî’, answer written ‘Tiving’), also in the Mardin Artuklu thesis (answer ‘Tifeng’); bernamegeh lists ‘Tifing’ among its answers. Hawar spelling ‘tifing’; the others accepted. ‘Ew çi ye?’ added. CONTENT FLAG for the owner: the answer is a (hunting) rifle — authentic and clever, but drop it if a weapon does not suit a family collection.",
+      "status": "retired"
     },
     {
       "slug": "kmr-dik",
@@ -1104,9 +1105,9 @@
       "category": "wordplay",
       "tradition": "new",
       "region": null,
-      "question": "Ez di devê te de radizêm, lê tu min ji pirtûkan jî hîn dibî. Ez çi me?",
+      "question": "Ez di devê te de radizim, lê tu min ji pirtûkan jî hîn dibî. Ez çi me?",
       "hints": [
-        "Ez sor û nerm im, û tama xwarinê ez pêşî dinasim.",
+        "Ez sor û nerm im, û ez pêşî xwarinê tam dikim.",
         "Tu niha bi vê sepanê min hîn dibî."
       ],
       "answer": "Ziman",
@@ -1119,7 +1120,7 @@
         "ckb": {
           "question": "لە دەمی تۆدا دەخەوم، بەڵام لە پەرتووکەکانیشەوە فێرم دەبیت. من چیم؟",
           "hints": [
-            "سوور و نەرمم، و تامی خواردن یەکەم جار من دەیناسم.",
+            "سوور و نەرمم، و من پێش هەموو کەس تامی خواردن دەکەم.",
             "ئێستا بەم ئەپە فێرم دەبیت."
           ],
           "answer": "زمان",
@@ -1382,7 +1383,8 @@
         }
       },
       "sources": [],
-      "notes": "New. Pun ker (donkey) / ker, kerr (deaf). It laughs at the donkey’s name, not at deaf people, but please check it reads that way; drop it if in doubt. In Soranî the two words differ (کەر / کەڕ), so the ckb rendering explains it. Check the verb ‘dizirim’ (I bray)."
+      "notes": "New. Pun ker (donkey) / ker, kerr (deaf). It laughs at the donkey’s name, not at deaf people, but please check it reads that way; drop it if in doubt. In Soranî the two words differ (کەر / کەڕ), so the ckb rendering explains it. Check the verb ‘dizirim’ (I bray).",
+      "status": "retired"
     },
     {
       "slug": "kmr-yeksem",
@@ -1597,7 +1599,9 @@
         "stekan",
         "îstîkana çayê",
         "piyale",
-        "qedeh"
+        "qedeh",
+        "piyala çayê",
+        "qedeha çayê"
       ],
       "explanation": "Îstîkana çayê ya kurdan navzirav e, wek gula lalê; dema çaya tarî û germ tê de ye, ew sor dibe — sor dibe, lê ne ji şerman. Çaydan wê tijî dike, mêvan wê vala dike.",
       "translations": {
@@ -1675,7 +1679,10 @@
         }
       },
       "sources": [],
-      "notes": "New. ‘navzirav’ (slim-waisted) for the tulip-shaped glass — check the word. Accepted names: îstîkan, îstekan, stekan, piyale, qedeh; add the local word if it is missing."
+      "notes": "New. ‘navzirav’ (slim-waisted) for the tulip-shaped glass — check the word. Accepted names: îstîkan, îstekan, stekan, piyale, qedeh; add the local word if it is missing.",
+      "near": [
+        "çay"
+      ]
     },
     {
       "slug": "kmr-sel",
@@ -1684,7 +1691,7 @@
       "category": "culture",
       "tradition": "new",
       "region": null,
-      "question": "Pişta min wek ya kûsiyê ye û agir di bin min de ye; nan li ser pişta min dipije, lê ez parîyekê jî naxwim. Ez çi me?",
+      "question": "Pişta min wek ya kûsiyê ye û agir di bin min de ye; nan li ser pişta min dipije, lê ez pariyekê jî naxwim. Ez çi me?",
       "hints": [
         "Diya te li ser min nanê tenik û mezin çêdike.",
         "Ez ji hesin im; hevîrê tenik li ser min di kêliyekê de dipije."
@@ -1793,7 +1800,9 @@
         "newruz",
         "nevroz",
         "nowruz",
-        "nûroj"
+        "nûroj",
+        "cejna newrozê",
+        "roja newrozê"
       ],
       "explanation": "Newroz ‘roja nû’ ye: ji ‘new’ (nû) û ‘roz’ (roj) pêk tê. Ew her sal di 21ê Adarê de tê, lê her car nû ye; agirên Newrozê çîroka Kawayê Hesinkar bi bîr tînin.",
       "translations": {
@@ -2170,7 +2179,7 @@
       "question": "Zivistanê kumekî spî li serê min e, biharê kirasekî kesk li ber min e; ez tu carî ji cihê xwe naçim, lê ewr tên û li ser milên min rûdinên. Ez çi me?",
       "hints": [
         "Kanî ji dilê min derdikevin û şivan pezê xwe dibin ser min.",
-        "Gotineke pêşiyan dibêje: ji bilî min, dostên kurdan tune ne."
+        "Gotineke pêşiyan dibêje: “… çiqas bilind be, wê rê pê keve.”"
       ],
       "answer": "Çiya",
       "accepted": [
@@ -2178,79 +2187,79 @@
         "çiyê",
         "çiyayê bilind"
       ],
-      "explanation": "Zivistanê berf wek kumekî spî li serê çiyê ye, biharê giya wek kirasekî kesk e; ewr li ser lûtkeyan dimînin. Û gotina pêşiyan a navdar dibêje: ‘Ji bilî çiyan, dostên kurdan tune ne.’",
+      "explanation": "Zivistanê berf wek kumekî spî li serê çiyê ye, biharê giya wek kirasekî kesk e; ewr li ser lûtkeyan dimînin. Û gotina pêşiyan dibêje: ‘Çiya çiqas bilind be, wê rê pê keve.’",
       "translations": {
         "ckb": {
           "question": "لە زستاندا کڵاوێکی سپیم لەسەرە، لە بەهاردا کراسێکی سەوزم لەبەرە؛ هەرگیز لە شوێنی خۆم ناجووڵێم، بەڵام هەورەکان دێن و لەسەر شانەکانم دادەنیشن. من چیم؟",
           "hints": [
             "کانییەکان لە دڵمەوە هەڵدەقوڵێن و شوان مەڕەکانی دەباتە سەرم.",
-            "پەندێکی پێشینان دەڵێت: کورد جگە لە من هیچ دۆستێکی نییە."
+            "پەندێکی پێشینان دەڵێت: «… هەرچەندە بەرز بێت، ڕێگای پێدا دەکەوێت.»"
           ],
           "answer": "چیا",
-          "explanation": "لە زستاندا بەفر وەک کڵاوێکی سپی لەسەر لووتکەی چیایە، لە بەهاریشدا گیا وەک کراسێکی سەوز؛ هەورەکان لەسەر لووتکەکان دەمێننەوە. پەندە بەناوبانگەکەش دەڵێت: «کورد جگە لە چیا هیچ دۆستێکی نییە»."
+          "explanation": "لە زستاندا بەفر وەک کڵاوێکی سپی لەسەر لووتکەی چیایە، لە بەهاریشدا گیا وەک کراسێکی سەوز؛ هەورەکان لەسەر لووتکەکان دەمێننەوە. پەندی پێشینانیش دەڵێت: «چیا هەرچەندە بەرز بێت، ڕێگای پێدا دەکەوێت.»"
         },
         "en": {
           "question": "In winter I wear a white cap, in spring a green shirt; I never leave my place, yet the clouds come and sit on my shoulders. What am I?",
           "hints": [
             "Springs well up from my heart, and the shepherd takes his flock up onto me.",
-            "A Kurdish saying goes: the Kurds have no friends but me."
+            "A Kurdish proverb says: ‘However high the …, a road will cross it.’"
           ],
           "answer": "A mountain",
-          "explanation": "In winter the snow sits on the peak like a white cap, in spring the grass is its green shirt, and the clouds rest on its summits. And the famous saying goes: ‘The Kurds have no friends but the mountains.’"
+          "explanation": "In winter the snow sits on the peak like a white cap, in spring the grass is its green shirt, and the clouds rest on its summits. And a Kurdish proverb says: ‘However high the mountain, a road will cross it.’"
         },
         "nl": {
           "question": "In de winter draag ik een witte muts, in de lente een groen hemd; ik kom nooit van mijn plek, toch komen de wolken op mijn schouders zitten. Wat ben ik?",
           "hints": [
             "Bronnen wellen op uit mijn hart en de herder drijft zijn kudde op mij.",
-            "Een Koerdisch gezegde luidt: de Koerden hebben geen vrienden behalve mij."
+            "Een Koerdisch spreekwoord zegt: ‘Hoe hoog de … ook is, er loopt een weg overheen.’"
           ],
           "answer": "Een berg",
-          "explanation": "In de winter ligt de sneeuw als een witte muts op de top, in de lente is het gras zijn groene hemd, en de wolken rusten op zijn toppen. En het bekende gezegde luidt: ‘De Koerden hebben geen vrienden behalve de bergen.’"
+          "explanation": "In de winter ligt de sneeuw als een witte muts op de top, in de lente is het gras zijn groene hemd, en de wolken rusten op zijn toppen. En een Koerdisch spreekwoord zegt: ‘Hoe hoog de berg ook is, er loopt een weg overheen.’"
         },
         "de": {
           "question": "Im Winter trage ich eine weiße Mütze, im Frühling ein grünes Hemd; ich rühre mich nie vom Fleck, und doch kommen die Wolken und setzen sich auf meine Schultern. Was bin ich?",
           "hints": [
             "Quellen sprudeln aus meinem Herzen, und der Hirte treibt seine Herde zu mir hinauf.",
-            "Ein kurdisches Sprichwort sagt: Die Kurden haben keine Freunde außer mir."
+            "Ein kurdisches Sprichwort sagt: ‚Wie hoch der … auch ist, ein Weg führt über ihn.‘"
           ],
           "answer": "Ein Berg",
-          "explanation": "Im Winter sitzt der Schnee wie eine weiße Mütze auf dem Gipfel, im Frühling ist das Gras sein grünes Hemd, und die Wolken ruhen auf seinen Gipfeln. Und das bekannte Sprichwort sagt: ‚Die Kurden haben keine Freunde außer den Bergen.‘"
+          "explanation": "Im Winter sitzt der Schnee wie eine weiße Mütze auf dem Gipfel, im Frühling ist das Gras sein grünes Hemd, und die Wolken ruhen auf seinen Gipfeln. Und ein kurdisches Sprichwort sagt: ‚Wie hoch der Berg auch ist, ein Weg führt über ihn.‘"
         },
         "es": {
           "question": "En invierno llevo un gorro blanco y en primavera una camisa verde; nunca me muevo de mi sitio, pero las nubes vienen a sentarse en mis hombros. ¿Qué soy?",
           "hints": [
             "De mi corazón brotan manantiales y el pastor sube su rebaño hasta mí.",
-            "Un dicho kurdo dice: los kurdos no tienen más amigos que yo."
+            "Un refrán kurdo dice: «Por alto que sea el …, un camino lo cruzará»."
           ],
           "answer": "Una montaña",
-          "explanation": "En invierno la nieve cubre la cima como un gorro blanco, en primavera la hierba es su camisa verde, y las nubes descansan en sus cumbres. Y el famoso dicho reza: «Los kurdos no tienen más amigos que las montañas»."
+          "explanation": "En invierno la nieve cubre la cima como un gorro blanco, en primavera la hierba es su camisa verde, y las nubes descansan en sus cumbres. Y un refrán kurdo dice: «Por alto que sea el monte, un camino lo cruzará»."
         },
         "fr": {
           "question": "L’hiver je porte un bonnet blanc, au printemps une chemise verte ; je ne bouge jamais de ma place, et pourtant les nuages viennent s’asseoir sur mes épaules. Que suis-je ?",
           "hints": [
             "Des sources jaillissent de mon cœur et le berger y mène son troupeau.",
-            "Un dicton kurde dit : les Kurdes n’ont pas d’autres amis que moi."
+            "Un proverbe kurde dit : « Si haute que soit la …, un chemin la franchira. »"
           ],
           "answer": "Une montagne",
-          "explanation": "L’hiver, la neige coiffe le sommet comme un bonnet blanc ; au printemps, l’herbe est sa chemise verte, et les nuages se posent sur ses cimes. Et le célèbre dicton le dit : « Les Kurdes n’ont pas d’autres amis que les montagnes. »"
+          "explanation": "L’hiver, la neige coiffe le sommet comme un bonnet blanc ; au printemps, l’herbe est sa chemise verte, et les nuages se posent sur ses cimes. Et un proverbe kurde dit : « Si haute que soit la montagne, un chemin la franchira. »"
         },
         "tr": {
           "question": "Kışın başımda beyaz bir külah, baharda üstümde yeşil bir gömlek var; yerimden hiç kıpırdamam ama bulutlar gelip omuzlarıma oturur. Ben neyim?",
           "hints": [
             "Kalbimden pınarlar fışkırır, çoban sürüsünü üstüme çıkarır.",
-            "Bir Kürt sözü der ki: Kürtlerin benden başka dostu yoktur."
+            "Bir Kürt atasözü der ki: ‘… ne kadar yüksek olursa olsun, üstünden bir yol geçer.’"
           ],
           "answer": "Dağ",
-          "explanation": "Kışın kar zirvede beyaz bir külah gibi durur, baharda çimen onun yeşil gömleğidir, bulutlar da doruklarında dinlenir. Ünlü söz de bunu söyler: ‘Kürtlerin dağlardan başka dostu yoktur.’"
+          "explanation": "Kışın kar zirvede beyaz bir külah gibi durur, baharda çimen onun yeşil gömleğidir, bulutlar da doruklarında dinlenir. Bir Kürt atasözü de der ki: ‘Dağ ne kadar yüksek olursa olsun, üstünden bir yol geçer.’"
         },
         "ar": {
           "question": "في الشتاء أعتمر قبّعة بيضاء، وفي الربيع ألبس قميصًا أخضر؛ لا أبرح مكاني أبدًا، ومع ذلك تأتي الغيوم وتجلس على كتفيّ. فما أنا؟",
           "hints": [
             "تنبع العيون من قلبي، ويصعد الراعي بقطيعه إليّ.",
-            "يقول مثلٌ كردي: لا أصدقاء للكرد إلا أنا."
+            "يقول مثلٌ كردي: «مهما علا الـ…، يمرّ به طريق»."
           ],
           "answer": "الجبل",
-          "explanation": "في الشتاء يستقرّ الثلج على القمة كقبّعة بيضاء، وفي الربيع يصير العشب قميصه الأخضر، وتستريح الغيوم على ذُراه. ويقول المثل الشهير: «لا أصدقاء للكرد إلا الجبال»."
+          "explanation": "في الشتاء يستقرّ الثلج على القمة كقبّعة بيضاء، وفي الربيع يصير العشب قميصه الأخضر، وتستريح الغيوم على ذُراه. ويقول مثلٌ كردي: «مهما علا الجبل، يمرّ به طريق»."
         }
       },
       "sources": [],
@@ -2587,13 +2596,13 @@
       "explanation": "لە کوردیدا «ڕۆژ» هەم ناوی خۆرە و هەم ناوی ڕۆژێکی هەفتە: هەفتە حەوت ڕۆژی هەیە، بەڵام ئاسمان تەنیا یەک ڕۆژی هەیە کە دەدرەوشێتەوە.",
       "translations": {
         "ku": {
-          "question": "Di hefteyê de heft ji wan hene, lê ezman tenê yek ji wan heye. Ew çi ye?",
+          "question": "Di hefteyê de heft hene, lê li ezmên tenê yek heye. Ew çi ye?",
           "hints": [
             "Navên yên din hene: Şemî, Yekşem, Duşem…",
             "Yek ji wan germ û ronak e û her sibe hiltê."
           ],
           "answer": "Roj",
-          "explanation": "Bi kurdî ‘roj’ hem navê tavê ye, hem jî navê rojeke hefteyê: hefte heft roj e, lê ezman tenê yek roj heye ku dibiriqe."
+          "explanation": "Bi kurdî ‘roj’ hem navê tavê ye, hem jî navê rojeke hefteyê: hefte heft roj e, lê li ezmên tenê rojek heye ku dibiriqe."
         },
         "en": {
           "question": "A week has seven of them, but the sky has only one. What is it?",
@@ -2660,7 +2669,10 @@
         }
       },
       "sources": [],
-      "notes": "New. Wordplay ڕۆژ = day and sun (also Kurmancî roj, and partly Turkish gün). Check that ڕۆژ for ‘sun’ is natural enough in Soranî beside خۆر. Hint 1 avoids ڕۆژژمێر (calendar), which would give the word away."
+      "notes": "New. Wordplay ڕۆژ = day and sun (also Kurmancî roj, and partly Turkish gün). Check that ڕۆژ for ‘sun’ is natural enough in Soranî beside خۆر. Hint 1 avoids ڕۆژژمێر (calendar), which would give the word away.",
+      "near": [
+        "خۆر"
+      ]
     },
     {
       "slug": "ckb-xal",
@@ -2785,7 +2797,7 @@
             "Baxçeyên Helebceyê bi vê fêkiyê navdar in."
           ],
           "answer": "Hinar",
-          "explanation": "Qalikê hinarê qutiyeke sor e û libên wê wek yaqûtan dibiriqin; ava wê jî destan sor dike. Hinarê Helebceyê bi tama xwe navdar e."
+          "explanation": "Qalikê hinarê qutiyeke sor e û libên wê wek yaqûtan dibiriqin; ava wê jî destan sor dike. Hinara Helebceyê bi tama xwe navdar e."
         },
         "en": {
           "question": "A red box full of red rubies; open it and your hands turn red. What is it?",

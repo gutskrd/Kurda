@@ -9,9 +9,10 @@
  * are not in this list: they have their own pages, rules and tables, and stay
  * as they are. These are the games built on the shared kit (api/src/games).
  *
- * A game is shown to a learner only when it has enough approved content for
- * their variety (`minimum`, at some difficulty), and only by an app that has
- * a screen for it; there is no "coming soon".
+ * A game opens for a learner only when it has enough approved content for
+ * their variety (`minimum`, at some difficulty), and is listed only by an app
+ * that has a screen for it. One still short of content is listed after the
+ * open ones as coming soon, with no way in (`listedLearnGames`).
  *
  * What a game pays: XP only when it is played online with other people. A
  * round played alone, against Hevalo, or on one phone passed round a room
@@ -170,7 +171,8 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     freeText: false,
     sources: ['story-passages', 'conversations'],
     contentKinds: ['passage'],
-    minimum: 6,
+    // fifteen passages a difficulty, so a round of five is not the same few passages again and again
+    minimum: 15,
     xpSources: [],
     dialects: GAME_DIALECTS,
     glyph: 'eye',
@@ -198,7 +200,8 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     freeText: false,
     sources: ['lesson-sentences', 'story-passages', 'recordings'],
     contentKinds: ['case_file'],
-    minimum: 1,
+    // three cases a difficulty, so a learner who solves one has another to go to
+    minimum: 3,
     xpSources: [],
     dialects: GAME_DIALECTS,
     glyph: 'search',
@@ -208,11 +211,13 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     id: 'last-letter',
     mode: 'both',
     place: 'games',
-    players: { min: 1, max: 8 },
+    // alone against Hevalo, or two to six with friends (last-letter/rules.ts)
+    players: { min: 1, max: 6 },
     freeText: false,
     sources: ['dictionary', 'vocabulary'],
     contentKinds: [],
-    minimum: 200,
+    // the words a chain can check, as its own rule counts them (LAST_LETTER_MIN_DICTIONARY_WORDS)
+    minimum: 1500,
     // with friends; a game against Hevalo pays nothing
     xpSources: ['game_last_letter'],
     dialects: GAME_DIALECTS,

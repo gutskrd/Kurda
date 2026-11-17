@@ -165,7 +165,7 @@ export function libraryFixture(over: Partial<StoryLibrary> = {}): StoryLibrary {
     bookmarks: [kept],
     // the list's own names: the page names a category it knows from the catalogue instead ("Animal fables", not "Fables")
     categories: [
-      { slug: 'fable', name: { en: 'Fables', ku: 'Çîrokên heywanan' }, position: 1, count: 1 },
+      { slug: 'fable', name: { en: 'Fables', ku: 'Çîrokên ajalan' }, position: 1, count: 1 },
       { slug: 'everyday', name: { en: 'Everyday' }, position: 6, count: 1 },
       { slug: 'nature', name: { en: 'Nature' }, position: 5, count: 1 },
       { slug: 'legend', name: { en: 'Legends' }, position: 2, count: 0 },

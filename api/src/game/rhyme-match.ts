@@ -4,8 +4,13 @@
  * (KUR-299). The server drives the match (session engine #051, realtime #049);
  * this decides the finishing order + placement XP, fully unit-testable.
  *
- * Order: highest score first; if tied, the player who needed fewer submissions
- * (more efficient) ranks higher; still tied → share a rank.
+ * Order: highest score first; if tied, more perfect rhymes; still tied, the
+ * player whose last rhyme came first; still tied → share a rank.
+ *
+ * The tie-break used to put the player with *fewer* accepted rhymes ahead, as
+ * the more efficient one, which on an equal score rewarded finding less. A
+ * perfect rhyme is the better find, and of two players with the same, the one
+ * who got there first did the faster thinking.
  */
 
 export interface RhymeMatchPlayerResult {
@@ -13,6 +18,10 @@ export interface RhymeMatchPlayerResult {
   score: number;
   /** number of accepted rhymes submitted */
   accepted: number;
+  /** how many of those were perfect rhymes (0 when not known: a match finished before this was counted) */
+  perfect?: number;
+  /** when the last accepted rhyme was scored (ms since the epoch), or null for a player who scored none */
+  lastAt?: number | null;
 }
 
 export interface RankedRhymePlayer extends RhymeMatchPlayerResult {
@@ -22,7 +31,10 @@ export interface RankedRhymePlayer extends RhymeMatchPlayerResult {
 
 export function compareRhymePlayers(a: RhymeMatchPlayerResult, b: RhymeMatchPlayerResult): number {
   if (a.score !== b.score) return b.score - a.score; // higher score wins
-  if (a.accepted !== b.accepted) return a.accepted - b.accepted; // fewer submissions = more efficient
+  const perfect = (b.perfect ?? 0) - (a.perfect ?? 0);
+  if (perfect !== 0) return perfect; // more perfect rhymes
+  const at = (p: RhymeMatchPlayerResult): number => p.lastAt ?? Number.MAX_SAFE_INTEGER;
+  if (at(a) !== at(b)) return at(a) - at(b); // the earlier last rhyme
   return 0;
 }
 

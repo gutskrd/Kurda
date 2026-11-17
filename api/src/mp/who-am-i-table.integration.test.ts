@@ -2,8 +2,10 @@
  * Ez kî me? with friends on the multiplayer engine, through the routes,
  * against real Postgres: what each player's payload holds (everybody's card
  * but their own), a turn in which the others answer and the card decides,
- * the clocks, scoring and placement XP, where the game is offered, and what
- * a view costs to read.
+ * a table of four answers ("could be" and "not sure" beside yes and no) and
+ * the fields apps from before the four still read, a wrong card reported by
+ * a player who reads it, the clocks, scoring and placement XP, where the
+ * game is offered, and what a view costs to read.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -26,7 +28,29 @@ interface User {
   token: string;
 }
 
-const FACTS = ['alive', 'animal', 'person', 'edible', 'place', 'can-fly', 'lives-in-water', 'four-legs', 'bigger-than-person', 'at-home', 'sweet', 'uses-electricity'];
+// as many questions as the game needs before it is offered, every one of them answered by every card
+const FACTS = [
+  'alive',
+  'animal',
+  'person',
+  'edible',
+  'place',
+  'can-fly',
+  'lives-in-water',
+  'four-legs',
+  'bigger-than-person',
+  'at-home',
+  'wild',
+  'kept-by-people',
+  'gives-milk',
+  'lays-eggs',
+  'has-feathers',
+  'smaller-than-hand',
+  'in-village',
+  'makes-sound',
+  'works-outdoors',
+  'lifted-by-hand',
+];
 
 describe.skipIf(!DATABASE_URL || !REDIS_URL)('Ez kî me? with friends (integration)', () => {
   const config = loadConfig({ DATABASE_URL, ...(REDIS_URL ? { REDIS_URL } : {}), NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
@@ -211,13 +235,13 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Ez kî me? with friends (integrati
       // the other answers wrong: the asker is told what the card says, not what the table said
       expect((await moveOf(second, id, { kind: 'answer', yes: !truth })).status).toBe(200);
       const told = (await view(asker, id)).board!;
-      expect(told).toMatchObject({ phase: 'decide', pending: null, told: { truth } });
-      expect(told.mine!.asked).toEqual([{ question: q.id, answer: truth }]);
+      expect(told).toMatchObject({ phase: 'decide', pending: null, told: { truth, verdict: truth ? 'yes' : 'no' } });
+      expect(told.mine!.asked).toEqual([{ question: q.id, answer: truth, verdict: truth ? 'yes' : 'no' }]);
       expect(told.seats.find((s) => s.seat === dealt.turn)!.asked).toBe(1);
       const firstSeat = await seatOf(id, first);
       const secondSeat = await seatOf(id, second);
-      expect(told.told!.answers.find((a) => a.seat === firstSeat)).toMatchObject({ yes: truth, right: true });
-      expect(told.told!.answers.find((a) => a.seat === secondSeat)).toMatchObject({ yes: !truth, right: false });
+      expect(told.told!.answers.find((a) => a.seat === firstSeat)).toMatchObject({ yes: truth, says: truth ? 'yes' : 'no', right: true, mark: 'right' });
+      expect(told.told!.answers.find((a) => a.seat === secondSeat)).toMatchObject({ yes: !truth, says: truth ? 'no' : 'yes', right: false, mark: 'wrong' });
       expect(told.seats.find((s) => s.seat === firstSeat)).toMatchObject({ helped: 1, points: 1 });
       expect(told.seats.find((s) => s.seat === secondSeat)).toMatchObject({ helped: 0, points: 0 });
 
@@ -257,8 +281,85 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Ez kî me? with friends (integrati
       await expire(id, 'phaseEndsAt');
       const board = (await view(asker, id)).board!;
       expect(board.phase).toBe('decide');
-      expect(board.mine!.asked).toEqual([{ question: q.id, answer: deal.identity.facts[q.fact] === true }]);
-      expect(board.told!.answers).toEqual([{ seat: [...players.keys()].find((s) => s !== dealt.turn), yes: null, right: false }]);
+      const truth = deal.identity.facts[q.fact] === true;
+      expect(board.mine!.asked).toEqual([{ question: q.id, answer: truth, verdict: truth ? 'yes' : 'no' }]);
+      expect(board.told!.answers).toEqual([{ seat: [...players.keys()].find((s) => s !== dealt.turn), yes: null, says: null, right: false, mark: 'none' }]);
+    });
+
+    it('offers "could be" and "not sure" at a table of four answers, scores them against the card, and keeps what older apps read', async () => {
+      const { host, guests, id } = await started('who-am-i', { minutes: 5, difficulty: 'beginner', answers: 4 }, 'four', 2);
+      const players = await seated(id, [host, ...guests]);
+      const dealt = await state<Dealt & { answers: number }>(id);
+      expect(dealt.answers).toBe(4);
+      const asker = players.get(dealt.turn!)!;
+      const [first, second] = [...players].filter(([seat]) => seat !== dealt.turn).map(([, who]) => who) as [User, User];
+      const deal = dealt.seats.find((s) => s.seat === dealt.turn)!.deal;
+      const q = deal.questions[0]!;
+      const truth = deal.identity.facts[q.fact] === true;
+      expect((await view(host, id)).board!.answers).toBe(4);
+
+      expect((await moveOf(asker, id, { kind: 'ask', question: q.id })).status).toBe(200);
+      // a body that says no answer at all is no move
+      expect((await moveOf(first, id, { kind: 'answer' })).status).toBe(400);
+      expect((await moveOf(first, id, { kind: 'answer', says: 'sometimes' })).status).toBe(200);
+      const pending = (await view(first, id)).board!.pending!;
+      expect(pending).toMatchObject({ says: 'sometimes', mine: null });
+      // an app from before the four still answers with yes or no
+      expect((await moveOf(second, id, { kind: 'answer', yes: truth })).status).toBe(200);
+      const told = (await view(asker, id)).board!.told!;
+      expect(told).toMatchObject({ truth, verdict: truth ? 'yes' : 'no' });
+      const firstSeat = await seatOf(id, first);
+      const secondSeat = await seatOf(id, second);
+      // "could be" to a plain yes or no is close: no point, never wrong
+      expect(told.answers.find((a) => a.seat === firstSeat)).toEqual({ seat: firstSeat, yes: null, says: 'sometimes', right: false, mark: 'close' });
+      expect(told.answers.find((a) => a.seat === secondSeat)).toEqual({ seat: secondSeat, yes: truth, says: truth ? 'yes' : 'no', right: true, mark: 'right' });
+      const board = (await view(asker, id)).board!;
+      expect(board.seats.find((s) => s.seat === firstSeat)).toMatchObject({ helped: 0 });
+      expect(board.seats.find((s) => s.seat === secondSeat)).toMatchObject({ helped: 1 });
+
+      // the next question: "not sure" scores nothing and costs nothing, and still counts as answering
+      expect((await moveOf(asker, id, { kind: 'pass' })).status).toBe(200);
+      const next = await state<Dealt>(id);
+      const nextAsker = players.get(next.turn!)!;
+      const nq = next.seats.find((s) => s.seat === next.turn)!.deal.questions[0]!;
+      expect((await moveOf(nextAsker, id, { kind: 'ask', question: nq.id })).status).toBe(200);
+      for (const [seat, who] of players) if (seat !== next.turn) expect((await moveOf(who, id, { kind: 'answer', says: 'unsure' })).status).toBe(200);
+      const unsure = (await view(nextAsker, id)).board!.told!;
+      for (const a of unsure.answers) expect(a).toMatchObject({ says: 'unsure', yes: null, right: false, mark: 'unsure' });
+    });
+
+    it('keeps a table of two answers to yes and no', async () => {
+      const { host, guests, id } = await started('who-am-i', { minutes: 5, difficulty: 'beginner' }, 'two', 1);
+      const players = await seated(id, [host, ...guests]);
+      const dealt = await state<Dealt>(id);
+      const asker = players.get(dealt.turn!)!;
+      const friend = [...players].find(([seat]) => seat !== dealt.turn)![1];
+      expect((await view(host, id)).board!.answers).toBe(2);
+      expect((await moveOf(asker, id, { kind: 'ask', question: dealt.seats.find((s) => s.seat === dealt.turn)!.deal.questions[0]!.id })).status).toBe(200);
+      const refused = await moveOf(friend, id, { kind: 'answer', says: 'unsure' });
+      expect(refused.status).toBe(409);
+      expect(refused.body).toMatchObject({ code: 'MOVE_REFUSED', details: { reason: 'not-offered' } });
+      expect((await moveOf(friend, id, { kind: 'answer', says: 'no' })).status).toBe(200);
+    });
+
+    it('takes a report of a wrong card from a player who reads it, and from nobody who cannot', async () => {
+      const { host, guests, id } = await started('who-am-i', { minutes: 5, difficulty: 'beginner', answers: 4 }, 'report', 1);
+      const players = await seated(id, [host, ...guests]);
+      const dealt = await state<Dealt>(id);
+      const [seatA, seatB] = [...players.keys()] as [number, number];
+      const cardOfB = dealt.seats.find((s) => s.seat === seatB)!.deal;
+      const q = cardOfB.questions[0]!;
+      // a player reads every card but their own: the one at seat A may report seat B's
+      const reported = await call(players.get(seatA)!, 'POST', '/games/who-am-i/report', { game: id, seat: seatB, question: q.id });
+      expect(reported.status, reported.raw).toBe(200);
+      expect(reported.body).toEqual({ counted: true });
+      const note = (await pool.query<{ review_note: string }>(`SELECT review_note FROM game_content WHERE id = $1`, [cardOfB.identity.id])).rows[0]!.review_note;
+      expect(note).toBe(`Players flagged an answer as wrong: ${q.fact} ×1.`);
+      // nobody reports a card they cannot see, nor a question not dealt beside it, nor at a table they are not at
+      expect((await call(players.get(seatB)!, 'POST', '/games/who-am-i/report', { game: id, seat: seatB, question: q.id })).status).toBe(404);
+      expect((await call(players.get(seatA)!, 'POST', '/games/who-am-i/report', { game: id, seat: seatB, question: 'not-a-question' })).status).toBe(404);
+      const stranger = await register('repstranger');
+      expect((await call(stranger, 'POST', '/games/who-am-i/report', { game: id, seat: seatB, question: q.id })).status).toBe(404);
     });
 
     it('passes the turn on when its player lets it run out, and ends on its clock', async () => {

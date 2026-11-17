@@ -346,6 +346,8 @@ describe.skipIf(!DATABASE_URL)('battle lobbies (integration)', () => {
       const first = await wordle.startPairRematch(id);
       if (!first.ok) throw new Error(first.reason);
       expect(await wordle.startPairRematch(id)).toEqual(first);
+      // a rematch is a new word: the series so far is left out while the band has others
+      expect(await targetOf(first.id)).not.toBe(target);
       const next = await wordle.state(first.id, a);
       expect(next.status).toBe('active');
       expect(next.players.map((p) => p.seat)).toEqual([1, 2]);

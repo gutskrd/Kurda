@@ -58,13 +58,22 @@ describe('the proverbs’ list', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Dost ew e ku di roja teng de bê.' })).toBeNull());
   });
 
-  it('opens a proverb, and the round in the variety on show', async () => {
-    testAuth.client = fakeClient({ 'GET /proverbs?dialect=kmr': ok(PROVERBS) });
+  it('opens a proverb, and the round in the variety on show once there are proverbs enough for one', async () => {
+    // a round asks about five different proverbs, so the list needs five before it offers one
+    const five = { ...PROVERBS, proverbs: [...PROVERBS.proverbs, proverb({ slug: 'kmr-a1' }), proverb({ slug: 'kmr-a2' }), proverb({ slug: 'kmr-a3' })] };
+    testAuth.client = fakeClient({ 'GET /proverbs?dialect=kmr': ok(five) });
     renderWithProviders(<ProverbsScreen dialect="kmr" onExit={() => undefined} />);
     fireEvent.click(await screen.findByTestId('proverb-today'));
     expect(navigation.navigate).toHaveBeenCalledWith('Proverb', { slug: 'kmr-av-dilop' });
     fireEvent.click(screen.getByTestId('proverbs-round'));
     expect(navigation.navigate).toHaveBeenCalledWith('ProverbRound', { dialect: 'kmr' });
+  });
+
+  it('offers no round while there are too few proverbs for one', async () => {
+    testAuth.client = fakeClient({ 'GET /proverbs?dialect=kmr': ok(PROVERBS) });
+    renderWithProviders(<ProverbsScreen dialect="kmr" onExit={() => undefined} />);
+    await screen.findByTestId('proverb-today');
+    expect(screen.queryByTestId('proverbs-round')).toBeNull();
   });
 });
 
@@ -161,6 +170,36 @@ describe('the proverbs’ round', () => {
     expect(screen.getByText(/earns no XP/)).toBeTruthy();
     expect(screen.queryByText(/\+\d+ XP/)).toBeNull();
     expect(tries).toBe(6);
+  });
+
+  it('asks for the word that ends a proverb, a gap until it is found and the word in its place after', async () => {
+    const gaps: ProverbRoundItemView[] = [0, 1, 2, 3, 4].map((index) => ({
+      index,
+      mode: 'complete',
+      dialect: 'kmr',
+      proverb: `Av dilop dilop dibe gol ${index}.`,
+      before: 'Av dilop dilop dibe',
+      after: '.',
+      locale: 'en',
+      options: ['çem', 'gol', 'behr'],
+    }));
+    const client = fakeClient({
+      'GET /proverbs/rounds/open?dialect=kmr&mode=complete': ok({ id: null }),
+      'POST /proverbs/rounds': ok({ ...session(), game: 'proverb-complete', items: gaps }),
+      'POST /proverbs/rounds/r1/answers': (body) => {
+        const { index, answer, attempt } = body as { index: number; answer: { choice: number }; attempt: number };
+        return ok({ index, attempt, correct: answer.choice === 1, firstTry: attempt === 1, done: true, hint: null, correction, why: 'meaning', xp: 0, repeat: false });
+      },
+    });
+    testAuth.client = client;
+    renderWithProviders(<ProverbRoundScreen dialect="kmr" mode="complete" onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('proverb-round-start'));
+    expect(client.calls.find((c) => c.method === 'POST')?.body).toEqual({ dialect: 'kmr', mode: 'complete' });
+    // the gap gives nothing away before the answer
+    expect((await screen.findByTestId('proverb-round-prompt')).textContent).toBe('Av dilop dilop dibe ….');
+    expect(screen.getByText('Which word finishes this proverb?')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'gol' }));
+    await waitFor(() => expect(screen.getByTestId('proverb-round-prompt').textContent).toBe('Av dilop dilop dibe gol.'));
   });
 
   it('offers the round left unfinished first', async () => {

@@ -31,6 +31,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
+import { useCourseDialect } from '../learn/courseDialect';
 import { listStories } from '../stories/api';
 import { DIALECT_NAME } from '../stories/labels';
 import { StoryPresetFields, useCanHostOpen } from '../stories/SetupSheet';
@@ -123,6 +124,44 @@ export function sentText(going: readonly TicketHolder[], invited: number, t: Tra
 const SENT_HOLD_MS = 900;
 
 /**
+ * The Kurdish a sheet opens on: the one Stories shows when the learner chose
+ * it with its switch, else the learner's own (the course on their path).
+ * The course reads as Kurmancî both when it is and while nothing is known
+ * yet, so only a Soranî course is taken from it, and otherwise the interface
+ * decides as it did before.
+ */
+export function openingVariety(chosen: StoryDialect | null, course: 'kmr' | 'ckb', locale: string): StoryDialect {
+  return chosen ?? (course === 'ckb' ? 'sorani' : shownDialect(locale, null));
+}
+
+const RHYME_DIALECTS: readonly StoryDialect[] = ['kurmanci', 'sorani'];
+
+/**
+ * The varieties a Rhyme Match can be made in now (`GET /rhyme/availability`):
+ * a variety without enough curated prompts cannot start a match, so it is not
+ * offered. Until the server answers, or when it cannot say, both are offered,
+ * as they were before it could.
+ */
+function useRhymeDialects(enabled: boolean): readonly StoryDialect[] {
+  const { client } = useAuth();
+  const [open, setOpen] = useState<readonly StoryDialect[] | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    let alive = true;
+    void client.get<{ dialects?: Partial<Record<StoryDialect, { available?: boolean }>> }>('/rhyme/availability').then((r) => {
+      const dialects = r.ok ? r.data?.dialects : undefined;
+      if (!alive || !dialects) return;
+      const offered = RHYME_DIALECTS.filter((d) => dialects[d]?.available === true);
+      if (offered.length > 0) setOpen(offered);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [client, enabled]);
+  return open ?? RHYME_DIALECTS;
+}
+
+/**
  * "Invite to play" (contract §B1): every place a game with friends starts —
  * a friend's profile, the friends list, the chat composer, a game's lobby,
  * the end of a game — opens this one sheet: the game, its presets, and
@@ -147,14 +186,20 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const fixedGame = target.kind === 'lobby' ? target.game : target.kind === 'new' ? target.game : undefined;
   const [game, setGame] = useState<PlayGame>(fixedGame ?? 'stories');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  // the variety Stories is showing: the one chosen with its switch, which a Soranî interface does not overrule
-  const [dialect, setDialect] = useState<StoryDialect>(shownDialect(locale, prefs.dialect));
+  // the variety Stories is showing (the one chosen with its switch, which a Soranî interface does not overrule), else the
+  // learner's own; until the host picks one, it follows them as they are read
+  const course = useCourseDialect();
+  const [pickedDialect, setDialect] = useState<StoryDialect | null>(null);
+  const dialect = pickedDialect ?? openingVariety(prefs.dialect, course, locale);
   // The Last Letter, in the dialects whose dictionary can check players' words (asked only where it could be offered)
   const letterDialects = offeredDialects(useLastLetterAvailability(target.kind !== 'lobby'), 'group');
   // Impostor, in the varieties and at the levels its approved cards allow
   const impostorOffer = usePartyOffer('impostor', target.kind !== 'lobby') ?? [];
   // a table of Who Am I?, where its content lets it be played
   const tableOffers = useMpAvailability('who-am-i', target.kind !== 'lobby');
+  // a Rhyme Match is made in a variety with enough prompts for one: the chosen one when it has them
+  const rhymeDialects = useRhymeDialects(target.kind !== 'lobby' && game === 'rhyme-match');
+  const rhymeDialect: StoryDialect = rhymeDialects.includes(dialect) ? dialect : rhymeDialects[0]!;
   const offeredGames = PLAY_GAMES.filter(
     (g) =>
       fixedGame === g ||
@@ -280,7 +325,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const categoryNow = impostorCategories.some((c) => c.slug === category) ? category : '';
   const settings = (): Record<string, unknown> => {
     if (game === 'wordle-battle') return { difficulty, rated };
-    if (game === 'rhyme-match') return { dialect, rated };
+    if (game === 'rhyme-match') return { dialect: rhymeDialect, rated };
     if (game === 'impostor') {
       const party = partyChoice();
       return { dialect: party.dialect, difficulty: party.level, clueSeconds: Number(clueSeconds), category: categoryNow || null, rated };
@@ -470,6 +515,20 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
                 labelOf={(d) => t(DIFFICULTY_KEY[d])}
               />
             </View>
+          ) : game === 'rhyme-match' ? (
+            // a Rhyme Match offers only the varieties it can be made in, and asks nothing while there is one
+            rhymeDialects.length > 1 ? (
+              <View style={styles.field}>
+                <SectionLabel>{t('stories.variety')}</SectionLabel>
+                <Segmented<StoryDialect>
+                  groupLabel={t('stories.variety')}
+                  options={rhymeDialects}
+                  value={rhymeDialect}
+                  onChange={setDialect}
+                  labelOf={(d) => DIALECT_NAME[d]}
+                />
+              </View>
+            ) : null
           ) : (
             <View style={styles.field}>
               <SectionLabel>{t('stories.variety')}</SectionLabel>

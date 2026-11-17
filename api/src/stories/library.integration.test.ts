@@ -2,8 +2,9 @@
  * The story library against real Postgres: the front page for everyone and
  * for a signed-in reader, the same page in one variety at a time, the
  * reader's shelf and reading position, their shelves at /me/stories, the
- * other versions of a story, and the glossary's dictionary links as the
- * reader gets them.
+ * other versions of a story, the glossary's dictionary links as the reader
+ * gets them, and the categories, with the fables' Kurmancî name as its
+ * migration leaves it.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -379,8 +380,45 @@ describe.skipIf(!DATABASE_URL)('story library (integration)', () => {
       expect(res.statusCode).toBe(200);
       expect(res.json().categories.slice(0, 2)).toEqual([
         { slug: 'folktale', name: { en: 'Folktales', ku: 'Çîrokên gelêrî', ckb: 'چیرۆکی گەلێری' }, position: 0 },
-        { slug: 'fable', name: { en: 'Animal fables', ku: 'Çîrokên heywanan', ckb: 'چیرۆکی ئاژەڵان' }, position: 1 },
+        { slug: 'fable', name: { en: 'Animal fables', ku: 'Çîrokên ajalan', ckb: 'چیرۆکی ئاژەڵان' }, position: 1 },
       ]);
+    });
+
+    it('names the fables with ajal, and leaves a name an editor chose by hand', async () => {
+      // the migration as it is written (a path the compiler does not follow: a migration is plain JavaScript)
+      const path = '../../migrations/1751000600000_story-fable-ajal.js';
+      const migration = (await import(/* @vite-ignore */ path)) as Record<'up' | 'down', (pgm: unknown) => void>;
+      const run = async (step: 'up' | 'down'): Promise<void> => {
+        const statements: string[] = [];
+        migration[step]({ sql: (q: string) => statements.push(q) });
+        expect(statements).toHaveLength(1);
+        for (const q of statements) await pool.query(q);
+      };
+      const fable = async (): Promise<Record<string, string>> =>
+        (await pool.query<{ name: Record<string, string> }>(`SELECT name FROM story_categories WHERE slug = 'fable'`)).rows[0]!.name;
+      const setKu = (ku: string) => pool.query(`UPDATE story_categories SET name = jsonb_set(name, '{ku}', to_jsonb($1::text)) WHERE slug = 'fable'`, [ku]);
+      const before = await fable();
+      try {
+        // a database still holding the name the library was seeded with: only the Kurmancî changes, and a second run changes nothing
+        await setKu('Çîrokên heywanan');
+        await run('up');
+        expect(await fable()).toEqual({ ...before, ku: 'Çîrokên ajalan' });
+        await run('up');
+        expect((await fable()).ku).toBe('Çîrokên ajalan');
+        await run('down');
+        expect(await fable()).toEqual({ ...before, ku: 'Çîrokên heywanan' });
+
+        // an editor’s own name is theirs, whichever way the migration runs
+        await setKu('Çîrokên ajalên kûvî');
+        await run('up');
+        expect((await fable()).ku).toBe('Çîrokên ajalên kûvî');
+        await run('down');
+        expect((await fable()).ku).toBe('Çîrokên ajalên kûvî');
+      } finally {
+        await pool.query(`UPDATE story_categories SET name = $1::jsonb WHERE slug = 'fable'`, [JSON.stringify(before)]);
+        // the front page keeps the categories it last answered
+        await bustStoryLists(cache);
+      }
     });
   });
 });

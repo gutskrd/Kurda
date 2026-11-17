@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Alert, type AlertButton } from 'react-native';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
@@ -8,6 +8,7 @@ import type { MatchState } from './matchApi';
 import { RhymeMatchScreen } from './RhymeMatchScreen';
 import { backOut, navigation } from '../play/testing/navigation';
 import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
+import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 
 vi.mock('react-native', () => import('react-native-web'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -171,6 +172,85 @@ describe('RhymeMatchScreen', () => {
       // staying keeps the round
       expect(onExit).not.toHaveBeenCalled();
       expect(screen.getByLabelText('Your rhyme')).toBeTruthy();
+    });
+  });
+
+  /*
+   * A variety without enough curated prompts cannot open a match (it used to
+   * fail with "no words" once Create was pressed): it is marked coming soon and
+   * says so in place of Create. A match opens on the learner's own variety.
+   */
+  describe('making a match, in the varieties it is offered in', () => {
+    const availability = (sorani: boolean) =>
+      ok({ dialects: { kurmanci: { prompts: 150, available: true }, sorani: { prompts: sorani ? 80 : 0, available: sorani } }, minimum: 40 });
+    afterEach(() => resetCourseDialect());
+
+    it('marks a variety with no matches yet as coming soon, and offers no Create in it', async () => {
+      const client = fakeClient({ 'GET /rhyme/availability': availability(false), 'POST /rhyme/matches': ok(lobby()), 'GET /rhyme/matches/m1': ok(lobby()) });
+      testAuth.client = client;
+      renderWithProviders(<RhymeMatchScreen onExit={() => undefined} />);
+      fireEvent.click(await screen.findByRole('radio', { name: 'Soranî · Coming soon' }));
+      expect(screen.getByText('Rhyme games aren’t offered in this Kurdish yet.')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Create match' })).toBeNull();
+
+      fireEvent.click(screen.getByRole('radio', { name: 'Kurmancî' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Create match' }));
+      await waitFor(() => expect(client.calls.find((c) => c.path === '/rhyme/matches')?.body).toMatchObject({ dialect: 'kurmanci' }));
+    });
+
+    it('opens on the variety a Soranî learner is learning, once matches are offered in it', async () => {
+      rememberCourseDialect('sorani');
+      const client = fakeClient({ 'GET /rhyme/availability': availability(true), 'POST /rhyme/matches': ok(lobby({ dialect: 'sorani' })), 'GET /rhyme/matches/m1': ok(lobby({ dialect: 'sorani' })) });
+      testAuth.client = client;
+      renderWithProviders(<RhymeMatchScreen onExit={() => undefined} />);
+      // nothing pressed but Create: the match is made in the learner's own variety
+      fireEvent.click(screen.getByRole('button', { name: 'Create match' }));
+      await waitFor(() => expect(client.calls.find((c) => c.path === '/rhyme/matches')?.body).toMatchObject({ dialect: 'sorani' }));
+    });
+  });
+
+  describe('a round and its results', () => {
+    const me = { userId: 'me', seat: 1, name: null, isMe: true, rank: 1, score: 10, accepted: 1, xpAwarded: 20, usedWords: ['jiyan'] };
+    const rojda = { userId: 'seat:2', seat: 2, name: 'Rojda', isMe: false, rank: 2, score: 0, accepted: 0, xpAwarded: 5, usedWords: [] };
+
+    it('lists after the table’s own results the rhymes nobody found, each with its meaning', async () => {
+      testAuth.client = fakeClient({
+        'GET /rhyme/matches/m1': ok(lobby({ status: 'finished', code: null, prompt: 'baran' })),
+        'GET /rhyme/matches/m1/results': ok({
+          id: 'm1',
+          prompt: 'baran',
+          dialect: 'kurmanci',
+          ranking: [me, rojda],
+          missed: [{ word: 'nan', meanings: { en: 'bread' } }, { word: 'ziman', meanings: {} }],
+        }),
+        'GET /play/invites': ok({ incoming: [], outgoing: [] }),
+        'GET /play/rhyme-match/m1/rematch': ok({ state: 'none' }),
+      });
+      renderWithProviders(<RhymeMatchScreen id="m1" onExit={() => undefined} />);
+      const list = await screen.findByTestId('missed-rhymes');
+      expect(within(list).getByRole('heading', { name: 'Rhymes you missed' })).toBeTruthy();
+      expect(within(list).getByText('nan')).toBeTruthy();
+      expect(within(list).getByText('bread')).toBeTruthy();
+      expect(within(list).getByText('ziman')).toBeTruthy();
+      // after the table's own results, not in place of them
+      expect(screen.getByText('Rojda').compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('turns away a word whose ending does all the rhyming, in general words, and writes a Soranî prompt right to left', async () => {
+      const baran = lobby({ status: 'active', code: null, prompt: 'baran', remainingMs: 45_000 });
+      testAuth.client = fakeClient({
+        'GET /rhyme/matches/m1': ok(baran),
+        'POST /rhyme/matches/m1/submissions': ok({ match: baran, result: { accepted: false, quality: 'none', points: 0, normalized: 'malan', reason: 'inflected' } }),
+      });
+      renderWithProviders(<RhymeMatchScreen id="m1" onExit={() => undefined} />);
+      fireEvent.change(await screen.findByLabelText('Your rhyme'), { target: { value: 'malan' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+      expect(await screen.findByText('Not accepted — try another.')).toBeTruthy();
+      cleanup();
+
+      testAuth.client = fakeClient({ 'GET /rhyme/matches/m1': ok(lobby({ status: 'active', code: null, dialect: 'sorani', prompt: 'باران', remainingMs: 45_000 })) });
+      renderWithProviders(<RhymeMatchScreen id="m1" onExit={() => undefined} />);
+      expect(getComputedStyle(await screen.findByText('باران')).direction).toBe('rtl');
     });
   });
 });

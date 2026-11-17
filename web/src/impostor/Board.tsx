@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   IMPOSTOR_CLUE_LIMITS,
+  IMPOSTOR_UNSURE_VOTE,
   dialectDirection,
   impostorClueSlip,
   meaningIn,
@@ -9,6 +10,7 @@ import {
   type MultiMoveAnswer,
   type MultiView,
 } from '@kurda/shared';
+import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { ImpostorIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -49,8 +51,10 @@ function rows<T>(items: readonly T[]): [T[], T[]] {
  *   that you are the impostor, with the category everyone is shown;
  * - the clues so far, round by round, each in the game's Kurdish;
  * - on your turn the clue box, which says a slip it can see before the clue
- *   is sent; in the vote, a button for each other player; once the impostor
- *   is caught, the four words they guess from.
+ *   is sent; in the vote, a button for each other player and one for not
+ *   being sure, which names nobody and still counts as a vote, so the table
+ *   is not kept waiting; once the impostor is caught, the four words they
+ *   guess from.
  *
  * The countdown is drawn from the server's clock. Under Reduce Motion the
  * light does not move and the cards do not turn; the colours say it.
@@ -266,16 +270,21 @@ function VotePanel({ view, board, name, move }: { view: ImpostorView; board: Imp
       </h3>
       {mine !== null ? (
         <p className="imp-vote-cast" role="status">
-          {t('games.impostor.vote.cast', { name: name(mine) })}
+          {mine === IMPOSTOR_UNSURE_VOTE ? t('games.impostor.vote.castUnsure') : t('games.impostor.vote.cast', { name: name(mine) })}
         </p>
       ) : board.yourVote ? (
-        <div className="imp-vote-options">
-          {others.map((s) => (
-            <Button key={s.seat} variant="secondary" disabled={busy} onClick={() => void vote(s.seat)}>
-              {t('games.impostor.vote.pick', { name: name(s.seat) })}
-            </Button>
-          ))}
-        </div>
+        <>
+          <div className="imp-vote-options">
+            {others.map((s) => (
+              <Button key={s.seat} variant="secondary" disabled={busy} onClick={() => void vote(s.seat)}>
+                {t('games.impostor.vote.pick', { name: name(s.seat) })}
+              </Button>
+            ))}
+          </div>
+          <Button variant="ghost" block className="imp-vote-unsure" disabled={busy} onClick={() => void vote(IMPOSTOR_UNSURE_VOTE)}>
+            {t('games.impostor.vote.unsure')}
+          </Button>
+        </>
       ) : null}
       <p className="muted">{t('games.impostor.vote.waiting', { count: board.vote?.voted.length ?? 0, total: present })}</p>
       {error && (
@@ -316,11 +325,13 @@ function GuessPanel({ board, move }: { board: ImpostorBoard; move: Move }): Reac
 /**
  * The reveal, once the game is over: every seat's card turns over — the
  * impostor's shows who they were, the rest the word — then the word with its
- * meaning, how it ended, every clue and who voted for whom.
+ * meaning, how it ended (and, when the impostor got away, why: a tied vote,
+ * or the table voting out someone else), every clue and who voted for whom.
  */
 export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Element | null {
   const t = useT();
   const locale = useLocale();
+  const { user } = useAuth();
   const board = view.board;
   const [still] = useState(prefersReducedMotion);
   const [turned, setTurned] = useState(still);
@@ -333,6 +344,19 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
   const reveal = board.reveal;
   const name = seatNamer(view, t);
   const script = dialectDirection(board.dialect);
+  // these lines are about someone, so they read with names, the viewer's own included (the server leaves it out of the
+  // seats, so it comes from the account): "You" in their place reads wrongly in Kurdish, where the one who voted takes
+  // another form (te, not tu), and in English after "wasn't"
+  const mine = user ? user.displayName || user.username : null;
+  const named = (seat: number): string => (view.players.find((p) => p.seat === seat)?.isMe && mine ? mine : name(seat));
+  // a server from before the reasons were kept sends none, and the reveal simply says the impostor got away
+  const escape = reveal.escape ?? null;
+  const why =
+    escape === 'tie'
+      ? t('games.impostor.end.tie')
+      : escape === 'wrong-out' && board.accused
+        ? t('games.impostor.end.wrongOut', { name: named(board.accused.seat) })
+        : null;
   return (
     <div className={`imp-reveal${still ? ' is-still' : ''}`}>
       <ol className="imp-reveal-cards" aria-label={t('games.impostor.table')}>
@@ -370,6 +394,7 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
       <p className="imp-reveal-who">
         {reveal.impostor === view.me?.seat ? t('games.impostor.reveal.youWere') : t('games.impostor.reveal.impostor', { name: name(reveal.impostor) })}
       </p>
+      {why && <p className="muted">{why}</p>}
       {board.endedBy && <p className="muted">{t(IMPOSTOR_END_KEY[board.endedBy])}</p>}
       {reveal.guessed && (
         <p className="muted">
@@ -386,7 +411,13 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
           </h3>
           <ul className="imp-votes">
             {reveal.votes.map((v) => (
-              <li key={v.seat}>{v.for === null ? t('games.impostor.noVote', { name: name(v.seat) }) : t('games.impostor.votedFor', { name: name(v.seat), target: name(v.for) })}</li>
+              <li key={v.seat}>
+                {v.for === null
+                  ? t('games.impostor.noVote', { name: named(v.seat) })
+                  : v.for === IMPOSTOR_UNSURE_VOTE
+                    ? t('games.impostor.votedUnsure', { name: named(v.seat) })
+                    : t('games.impostor.votedFor', { name: named(v.seat), target: named(v.for) })}
+              </li>
             ))}
           </ul>
         </section>

@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { POINTS_BASE, SPEED_BONUS } from './scoring.js';
 import {
   classifyRhyme,
+  inflectionStems,
+  rhymePattern,
+  rhymeWordKey,
+  rimeOf,
   sharedEnding,
   rhymeKey,
   rhymePrefix,
@@ -66,20 +70,19 @@ describe('rhymeKey and rhymePrefix', () => {
   });
 
   /**
-   * The equivalence the whole scheme rests on: two words rhyme perfectly iff
-   * their rhyme keys share a two-character prefix, and at all iff they share
-   * one. Asserted directly rather than trusted.
+   * The equivalence Soranî's rule rests on: two words rhyme perfectly iff their
+   * rhyme keys share a two-character prefix, and at all iff they share one.
+   * Asserted directly rather than trusted.
    */
-  it('agrees with classifyRhyme', () => {
+  it('agrees with classifyRhyme for Soranî', () => {
     const pairs: Array<[string, string]> = [
-      ['kurdistan', 'baran'],
-      ['gul', 'kul'],
-      ['dil', 'gîl'],
-      ['roj', 'soz'],
-      ['av', 'dil'],
+      ['باران', 'نان'],
+      ['دار', 'شار'],
+      ['باران', 'هاوین'],
+      ['ئاو', 'دار'],
     ];
     for (const [a, b] of pairs) {
-      const quality = classifyRhyme(a, b);
+      const quality = classifyRhyme(a, b, 'sorani');
       const sharesTwo = rhymePrefix(a, 2) !== null && rhymeKey(b).startsWith(rhymePrefix(a, 2)!);
       const sharesOne = rhymePrefix(a, 1) !== null && rhymeKey(b).startsWith(rhymePrefix(a, 1)!);
       expect(sharesTwo, `${a}/${b} perfect`).toBe(quality === 'perfect');
@@ -104,48 +107,135 @@ describe('rhymeKey and rhymePrefix', () => {
   });
 });
 
-describe('classifyRhyme (Kurmancî)', () => {
-  it('perfect on two shared letters or more', () => {
-    expect(classifyRhyme('gul', 'kul')).toBe('perfect'); // -ul
-    expect(classifyRhyme('jîn', 'şîn')).toBe('perfect'); // -în
-    expect(classifyRhyme('kurdistan', 'baran')).toBe('perfect'); // -an
+describe('rimeOf', () => {
+  it('is the last vowel and what follows it, with the consonants after it as the coda', () => {
+    expect(rimeOf('bajar')).toEqual({ rime: 'ar', coda: 'r', vowel: 'a' });
+    expect(rimeOf('derî')).toEqual({ rime: 'î', coda: '', vowel: 'î' });
+    expect(rimeOf('dest')).toEqual({ rime: 'est', coda: 'st', vowel: 'e' });
+    expect(rimeOf('şîrîn')).toEqual({ rime: 'în', coda: 'n', vowel: 'î' });
   });
 
-  it('near on exactly one', () => {
-    expect(classifyRhyme('dil', 'gîl')).toBe('near'); // -l, then i vs î
-    expect(classifyRhyme('roj', 'baj')).toBe('near'); // -j, then o vs a
+  it('reads w and y as consonants, and has nothing for a word with no vowel', () => {
+    expect(rimeOf('kew')?.rime).toBe('ew');
+    expect(rimeOf('çay')?.rime).toBe('ay');
+    expect(rimeOf('xwş')).toBeNull();
+  });
+});
+
+describe('classifyRhyme (Kurmancî, by the rime)', () => {
+  it('is perfect on the same last vowel and everything after it', () => {
+    expect(classifyRhyme('dar', 'bajar')).toBe('perfect');
+    expect(classifyRhyme('dar', 'êvar')).toBe('perfect');
+    expect(classifyRhyme('baran', 'şivan')).toBe('perfect');
+    expect(classifyRhyme('baran', 'ziman')).toBe('perfect');
+    expect(classifyRhyme('gul', 'kul')).toBe('perfect');
   });
 
-  /**
-   * The narrowing this rule makes. The old engine compared the final vowel and
-   * the coda separately, so `roj`/`soz` counted as a slant rhyme on the shared
-   * -o-. A rhyme now has to reach the end of the word: if the last letters
-   * differ there is no rhyme, whatever the words share further back.
-   */
-  it('none when the last letters differ, however much precedes them', () => {
+  /** Kurdish verse rhymes derî with azadî: one shared î and nothing after it is a full rhyme, not half of one. */
+  it('takes words ending on the same vowel as a perfect rhyme', () => {
+    expect(classifyRhyme('derî', 'kanî')).toBe('perfect');
+    expect(classifyRhyme('derî', 'azadî')).toBe('perfect');
+    expect(classifyRhyme('masî', 'kurmancî')).toBe('perfect');
+  });
+
+  it('is near on the same final consonants after a different vowel', () => {
+    expect(classifyRhyme('dar', 'dêr')).toBe('near');
+    expect(classifyRhyme('dil', 'gul')).toBe('near');
+    expect(classifyRhyme('dest', 'mast')).toBe('near');
+    expect(classifyRhyme('roj', 'baj')).toBe('near');
+  });
+
+  /** The old rule called any shared last letter a rhyme; derî and bira end on a vowel each, and not the same one. */
+  it('is none when the words share neither the rime nor the consonants it ends in', () => {
+    expect(classifyRhyme('derî', 'bira')).toBe('none');
+    expect(classifyRhyme('derî', 'dar')).toBe('none');
     expect(classifyRhyme('roj', 'soz')).toBe('none');
-    expect(classifyRhyme('roj', 'gul')).toBe('none');
     expect(classifyRhyme('av', 'dil')).toBe('none');
+  });
+
+  it('tells ê from e and î from i, which rhyme differently', () => {
+    expect(classifyRhyme('şev', 'sêv')).toBe('near');
+    expect(classifyRhyme('dil', 'gîl')).toBe('near');
   });
 
   it('is case- and punctuation-insensitive', () => {
     expect(classifyRhyme('GUL', ' kul! ')).toBe('perfect');
   });
 
-  /**
-   * Letters, not sounds, so it needs no vowel table per dialect and reads
-   * Soranî's script the same way it reads Kurmancî's.
-   */
-  it('works the same in Arabic script', () => {
-    // کوردستان / باران — ن, ا, then ت against ر: two shared letters
-    expect(classifyRhyme('کوردستان', 'باران')).toBe('perfect');
-    // کوردی / فارسی — ی, then د against س: one
-    expect(classifyRhyme('کوردی', 'فارسی')).toBe('near');
-  });
-
   it('is none when either side has no letters at all', () => {
     expect(classifyRhyme('roj', '123')).toBe('none');
     expect(classifyRhyme('', 'roj')).toBe('none');
+  });
+});
+
+describe('classifyRhyme (Soranî, by the last letters)', () => {
+  it('is perfect on two shared final letters and near on one', () => {
+    // کوردستان / باران: ن, ا, then ت against ر
+    expect(classifyRhyme('کوردستان', 'باران', 'sorani')).toBe('perfect');
+    // کوردی / فارسی: ی, then د against س
+    expect(classifyRhyme('کوردی', 'فارسی', 'sorani')).toBe('near');
+    expect(classifyRhyme('دار', 'ئاو', 'sorani')).toBe('none');
+  });
+});
+
+describe('rhymePattern', () => {
+  /**
+   * The database finds a word's rhymes by its reversed headword: the prefix an
+   * index answers, then the anchored patterns. They must say exactly what
+   * classifyRhyme says, or a prompt is offered with partners the round refuses.
+   */
+  it('agrees with classifyRhyme over a set of Kurmancî words', () => {
+    const words = ['dar', 'bajar', 'êvar', 'dêr', 'baran', 'şivan', 'derî', 'kanî', 'bira', 'mal', 'dil', 'gul', 'dest', 'mast', 'av', 'çav', 'kew'];
+    for (const prompt of words) {
+      const pattern = rhymePattern(prompt, 'kurmanci')!;
+      for (const other of words) {
+        if (other === prompt) continue;
+        const key = rhymeKey(other);
+        const any = key.startsWith(pattern.prefix) && new RegExp(pattern.any, 'u').test(key);
+        const perfect = key.startsWith(pattern.prefix) && new RegExp(pattern.perfect, 'u').test(key);
+        const quality = classifyRhyme(prompt, other);
+        expect(perfect, `${prompt}/${other} perfect`).toBe(quality === 'perfect');
+        expect(any, `${prompt}/${other} rhymes`).toBe(quality !== 'none');
+      }
+    }
+  });
+
+  it('has nothing for a word with no vowel, and no perfect partner for a one-letter Soranî word', () => {
+    expect(rhymePattern('xwş', 'kurmanci')).toBeNull();
+    const one = rhymePattern('و', 'sorani')!;
+    expect(new RegExp(one.perfect, 'u').test('و')).toBe(false);
+  });
+});
+
+describe('rhymeWordKey', () => {
+  it('keeps the marks, so a word typed without them is another word', () => {
+    expect(rhymeWordKey('Şev', 'kurmanci')).toBe('şev');
+    expect(rhymeWordKey('sev', 'kurmanci')).toBe('sev');
+    expect(rhymeWordKey('sev', 'kurmanci')).not.toBe(rhymeWordKey('şev', 'kurmanci'));
+  });
+
+  it('reads the Arabic keyboard’s letters as Soranî ones, and refuses the other script', () => {
+    expect(rhymeWordKey('كوردي', 'sorani')).toBe(rhymeWordKey('کوردی', 'sorani'));
+    expect(rhymeWordKey('baran', 'sorani')).toBe('');
+    expect(rhymeWordKey('باران', 'kurmanci')).toBe('');
+  });
+});
+
+describe('inflectionStems', () => {
+  it('proposes the word without a Kurmancî ending, longest ending first', () => {
+    expect(inflectionStems('malan', 'kurmanci')).toContainEqual({ stem: 'mal', ending: 'an' });
+    expect(inflectionStems('malên', 'kurmanci')[0]).toEqual({ stem: 'mal', ending: 'ên' });
+    // î becomes iy before an ending: deriyê is derî with -ê
+    expect(inflectionStems('deriyê', 'kurmanci')).toContainEqual({ stem: 'derî', ending: 'iyê' });
+  });
+
+  it('never leaves a stem of one letter', () => {
+    expect(inflectionStems('ma', 'kurmanci')).toEqual([]);
+  });
+
+  it('knows the Soranî definite and plural endings', () => {
+    expect(inflectionStems('دارەکە', 'sorani')).toContainEqual({ stem: 'دار', ending: 'ەکە' });
+    expect(inflectionStems('داران', 'sorani')).toContainEqual({ stem: 'دار', ending: 'ان' });
   });
 });
 
@@ -240,5 +330,60 @@ describe('evaluateSubmission', () => {
     const fast = evaluateSubmission({ ...base, submission: 'kul', elapsedMs: 500 }, { lexicon });
     const slow = evaluateSubmission({ ...base, submission: 'kul', elapsedMs: 9000 }, { lexicon });
     expect(fast.points).toBeGreaterThan(slow.points);
+  });
+
+  /**
+   * The exploit this closes: the prompt şev typed as "sev" was looked up by the
+   * folded key, found (şev and sêv both fold to it), and scored as a perfect
+   * rhyme of the prompt itself. Every check now uses the word as written.
+   */
+  it('does not take the prompt typed without its marks, nor count one word three ways', () => {
+    const words = new InMemoryLexicon([{ word: 'şev', dialect: 'kurmanci' }, { word: 'sêv', dialect: 'kurmanci' }, { word: 'dev', dialect: 'kurmanci' }]);
+    const at = { prompt: 'şev', elapsedMs: 1000, windowMs: 10000, dialect: 'kurmanci' as Dialect };
+    expect(evaluateSubmission({ ...at, submission: 'sev' }, { lexicon: words })).toMatchObject({ accepted: false, reason: 'not-a-word' });
+    expect(evaluateSubmission({ ...at, submission: 'ŞEV' }, { lexicon: words })).toMatchObject({ accepted: false, reason: 'is-prompt' });
+    const dev = evaluateSubmission({ ...at, submission: 'dev' }, { lexicon: words });
+    expect(dev).toMatchObject({ accepted: true, quality: 'perfect', normalized: 'dev' });
+    expect(evaluateSubmission({ ...at, submission: 'Dev!', usedWords: [dev.normalized] }, { lexicon: words })).toMatchObject({ reason: 'already-used' });
+    // sêv is a word of its own, a near rhyme of şev by its vowel, and not the same word as it
+    expect(evaluateSubmission({ ...at, submission: 'sêv' }, { lexicon: words })).toMatchObject({ accepted: true, quality: 'near' });
+  });
+
+  describe('an ending doing all the rhyming', () => {
+    const words = new InMemoryLexicon(
+      ['mal', 'malan', 'mala', 'bira', 'baran', 'şivan', 'şiv', 'gul', 'gulan'].map((word) => ({ word, dialect: 'kurmanci' as Dialect })),
+    );
+    const at = { prompt: 'baran', elapsedMs: 1000, windowMs: 10000, dialect: 'kurmanci' as Dialect };
+
+    it('refuses a noun given a plural ending to rhyme with it', () => {
+      expect(evaluateSubmission({ ...at, submission: 'malan' }, { lexicon: words })).toMatchObject({ accepted: false, reason: 'inflected' });
+      expect(evaluateSubmission({ ...at, prompt: 'bira', submission: 'mala' }, { lexicon: words })).toMatchObject({ reason: 'inflected' });
+    });
+
+    it('takes it when the stem rhymes too, or when the word was chosen by hand', () => {
+      // şiv does not rhyme with baran, but şivan is a word in its own right: somebody chose it
+      const chosen = (w: string) => w === 'şivan';
+      expect(evaluateSubmission({ ...at, submission: 'şivan' }, { lexicon: words, isChosen: chosen })).toMatchObject({ accepted: true, quality: 'perfect' });
+      expect(evaluateSubmission({ ...at, submission: 'şivan' }, { lexicon: words })).toMatchObject({ reason: 'inflected' });
+    });
+
+    it('leaves a curator’s ruling alone', () => {
+      const overrideQuality = (p: string, s: string) => (p === 'baran' && s === 'gulan' ? ('perfect' as const) : undefined);
+      expect(evaluateSubmission({ ...at, submission: 'gulan' }, { lexicon: words, overrideQuality })).toMatchObject({ accepted: true });
+    });
+
+    it('takes a word whose stem is not a word at all', () => {
+      const few = new InMemoryLexicon([{ word: 'ziman', dialect: 'kurmanci' }]);
+      expect(evaluateSubmission({ ...at, submission: 'ziman' }, { lexicon: few })).toMatchObject({ accepted: true });
+    });
+
+    it('refuses a Soranî plural the same way, but not a rhyme that reaches into the stem', () => {
+      const ckb = new InMemoryLexicon(['کتێب', 'کتێبان', 'دار', 'داران', 'شار', 'باران'].map((word) => ({ word, dialect: 'sorani' as Dialect })));
+      const so = { prompt: 'باران', elapsedMs: 1000, windowMs: 10000, dialect: 'sorani' as Dialect };
+      expect(evaluateSubmission({ ...so, submission: 'کتێبان' }, { lexicon: ckb })).toMatchObject({ reason: 'inflected' });
+      // داران shares ـاران with باران, more than its ending: the stem rhymes into it
+      expect(evaluateSubmission({ ...so, submission: 'داران' }, { lexicon: ckb })).toMatchObject({ accepted: true, quality: 'perfect' });
+      expect(evaluateSubmission({ ...so, prompt: 'دار', submission: 'شار' }, { lexicon: ckb })).toMatchObject({ accepted: true, quality: 'perfect' });
+    });
   });
 });

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { whoAmITableRules, type WhoAmIDeal, type WhoAmITableMove, type WhoAmITableState } from '@kurda/shared';
+import { whoAmITableRules, type WhoAmIDeal, type WhoAmIFactValue, type WhoAmITableMove, type WhoAmITableState } from '@kurda/shared';
 import { jsonResponse } from '../test/utils';
 import { renderPlay, where } from '../play/testing';
 import { forgetMpAvailability } from '../games/mpAvailability';
@@ -98,6 +98,10 @@ describe('Ez kî me?, the start', () => {
     expect(screen.getByText('How it scores')).toBeInTheDocument();
     expect(screen.getByText(/^After 2 wrong guesses you are out/)).toBeInTheDocument();
     expect(screen.queryByText(/^After 3 wrong guesses/)).toBeNull();
+    // what answering is worth, up to its cap, and how the two answers in between score
+    expect(screen.getByText('Plus 1 for every right answer you give about a friend’s card, up to 6 a game.')).toBeInTheDocument();
+    expect(screen.getByText(/^When the card says “could be”, yes, no and could be all count as right\./)).toBeInTheDocument();
+    expect(screen.getByText('“Not sure” scores nothing and costs nothing.')).toBeInTheDocument();
   });
 
   it('makes a table with friends at the level and the longest time chosen, and opens its lobby', async () => {
@@ -107,10 +111,11 @@ describe('Ez kî me?, the start', () => {
     await userEvent.click(await within(friends).findByRole('radio', { name: '15 min' }));
     expect(within(friends).getByRole('radio', { name: 'Beginner' })).toBeChecked();
     await userEvent.click(within(friends).getByRole('button', { name: 'Create game' }));
+    // a table this app makes offers the friends all four answers
     await waitFor(() =>
       expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/play/lobbies'))?.body).toEqual({
         game: 'who-am-i',
-        settings: { dialect: 'kmr', difficulty: 'beginner', minutes: 15, rated: false },
+        settings: { dialect: 'kmr', difficulty: 'beginner', minutes: 15, answers: 4, rated: false },
       }),
     );
     await waitFor(() => expect(where()).toBe('/app/games/who-am-i?id=r9'));
@@ -165,9 +170,10 @@ const WORDS = {
   kmr: { cat: 'pisîk', bird: 'çûk', dog: 'kûçik', fish: 'masî', horse: 'hesp' },
   ckb: { cat: 'پشیلە', bird: 'باڵندە', dog: 'سەگ', fish: 'ماسی', horse: 'ئەسپ' },
 };
-const FACTS: Record<string, Record<string, boolean>> = {
+// A bird is at home in one family and in the sky for another: its card says "could be" to that question.
+const FACTS: Record<string, Record<string, WhoAmIFactValue>> = {
   cat: { 'can-fly': false, 'at-home': true },
-  bird: { 'can-fly': true, 'at-home': false },
+  bird: { 'can-fly': true, 'at-home': 'sometimes' },
   dog: { 'can-fly': false, 'at-home': true },
 };
 
@@ -190,13 +196,18 @@ const seat = (n: number, extra: Record<string, unknown> = {}) => ({ seat: n, use
 /**
  * A table of three under way, the reader in seat 1 wearing the cat, Rojda the
  * bird and Baran the dog. `play` is a move by anyone at the table, as the
- * server would take it; the page's own moves arrive through the route.
+ * server would take it; the page's own moves arrive through the route. The
+ * friends are offered all four answers, as at a table this app makes, unless
+ * `answers` says two, as at one an older app made.
  */
-function table(opts: { dialect?: 'kmr' | 'ckb'; difficulty?: 'beginner' | 'intermediate'; questions?: WhoAmIDeal['questions']; refuse?: { status: number; body: unknown } } = {}) {
+function table(
+  opts: { dialect?: 'kmr' | 'ckb'; difficulty?: 'beginner' | 'intermediate'; answers?: 2 | 4; questions?: WhoAmIDeal['questions']; refuse?: { status: number; body: unknown } } = {},
+) {
   const dialect = opts.dialect ?? 'kmr';
   const difficulty = opts.difficulty ?? 'beginner';
+  const answers = opts.answers ?? 4;
   let state: WhoAmITableState = whoAmITableRules.init(
-    { dialect, minutes: 10, difficulty, deals: [1, 2, 3].map((n, i) => ({ seat: n, deal: deal((['cat', 'bird', 'dog'] as const)[i]!, dialect, opts.questions) })) },
+    { dialect, minutes: 10, difficulty, answers, deals: [1, 2, 3].map((n, i) => ({ seat: n, deal: deal((['cat', 'bird', 'dog'] as const)[i]!, dialect, opts.questions) })) },
     [1, 2, 3].map((n) => ({ seat: n, team: null, bot: null })),
     { now: Date.now(), seed: 'a-seed' },
   );
@@ -211,7 +222,7 @@ function table(opts: { dialect?: 'kmr' | 'ckb'; difficulty?: 'beginner' | 'inter
       version,
       serverNow: new Date().toISOString(),
       dialect,
-      settings: { dialect, minutes: 10, difficulty },
+      settings: { dialect, minutes: 10, difficulty, answers },
       access: 'friends',
       code: null,
       rated: { rated: false, counts: null, friendlyReason: null, damped: false },
@@ -246,12 +257,15 @@ function table(opts: { dialect?: 'kmr' | 'ckb'; difficulty?: 'beginner' | 'inter
       version += 1;
       return { view: view(), outcome: res.outcome };
     },
+    'POST /games/who-am-i/report': { counted: true },
     '/mp/who-am-i/r1': () => view(),
   });
   const moves = () => calls.filter((c) => c.method === 'POST' && c.url.endsWith('/moves')).map((c) => c.body);
   return {
     play,
     moves,
+    /** what the page said looks wrong about a card */
+    reports: () => calls.filter((c) => c.method === 'POST' && c.url.endsWith('/games/who-am-i/report')).map((c) => c.body),
     /** time running out, as the server settles it: for these seats' wait, or at `at` for the whole game */
     expire: (seats: number[], at = Date.now()) => {
       state = whoAmITableRules.timeout(state, seats, at);
@@ -512,7 +526,7 @@ describe('Ez kî me?, the table online, on my turn', () => {
     moved();
     const asked = await screen.findByRole('group', { name: 'Rojda asks about their card:' });
     await userEvent.click(within(asked).getByRole('button', { name: /^Erê/ }));
-    await waitFor(() => expect(t.moves()[1]).toEqual({ kind: 'answer', yes: true }));
+    await waitFor(() => expect(t.moves()[1]).toEqual({ kind: 'answer', says: 'yes' }));
   });
 
   it('opens the words by itself once every question is asked, offers no pass and no way back, and says why', async () => {
@@ -550,14 +564,14 @@ describe('Ez kî me?, the table online, on my turn', () => {
 });
 
 describe('Ez kî me?, the table online, answering a friend', () => {
-  it('shows their card beside their question, takes my yes or no once, and says who was right', async () => {
+  it('shows their card beside their question, takes my answer once from four keys, and says who was right', async () => {
     const t = table();
     t.play(1, { kind: 'pass' });
     t.play(2, { kind: 'ask', question: 'q1' });
     const moved = open();
 
     expect(await screen.findByText('Rojda’s turn')).toBeInTheDocument();
-    expect(screen.getByText('Look at Rojda’s card and answer: yes or no?')).toBeInTheDocument();
+    expect(screen.getByText('Look at Rojda’s card and answer the question.')).toBeInTheDocument();
     const asked = screen.getByRole('region', { name: 'Rojda asks about their card:' });
     const question = within(asked).getByRole('button', { name: 'Ew dikare bifire?' });
     await userEvent.click(question);
@@ -569,13 +583,21 @@ describe('Ez kî me?, the table online, answering a friend', () => {
     // and mine is still nowhere to be read
     expectOwnCardUnread('pisîk');
 
-    // two large buttons, in the dialect's own yes and no
+    // four keys in the dialect's own words: yes, could be and no in a row, and not sure under them, each with a mark
     const answer = within(asked).getByRole('group', { name: 'Rojda asks about their card:' });
+    expect(within(answer).getAllByRole('button').map((b) => b.textContent)).toEqual(['Erê yes', 'Dibe could be', 'Na no', 'Nizanim not sure']);
     const yes = within(answer).getByRole('button', { name: 'Erê yes' });
-    expect(within(answer).getByRole('button', { name: 'Na no' })).toBeInTheDocument();
+    expect(yes).toHaveClass('is-yes');
+    expect(within(answer).getByRole('button', { name: 'Dibe could be' })).toHaveClass('is-sometimes');
+    expect(within(answer).getByRole('button', { name: 'Na no' })).toHaveClass('is-no');
+    expect(within(answer).getByRole('button', { name: 'Nizanim not sure' })).toHaveClass('is-unsure');
+    for (const key of within(answer).getAllByRole('button')) expect(key.querySelector('.wa-answer-mark svg')).not.toBeNull();
     expect(within(yes).getByText('Erê')).toHaveAttribute('lang', 'ku');
+    // the row reads in the dialect's direction, with not sure on its own under it
+    expect(yes.parentElement).toHaveAttribute('dir', 'ltr');
+    expect(within(answer).getByRole('button', { name: 'Nizanim not sure' }).parentElement).toBe(answer);
     await userEvent.click(yes);
-    await waitFor(() => expect(t.moves()).toEqual([{ kind: 'answer', yes: true }]));
+    await waitFor(() => expect(t.moves()).toEqual([{ kind: 'answer', says: 'yes' }]));
     expect(await within(asked).findByText('Answered. Waiting for the others.', { selector: '.wa-pending-note' })).toBeInTheDocument();
     expect(within(asked).queryByRole('button', { name: /^Erê/ })).toBeNull();
     expect(within(within(asked).getByRole('list', { name: 'Who has answered' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['You Answered', 'Baran Still thinking']);
@@ -613,7 +635,7 @@ describe('Ez kî me?, the table online, answering a friend', () => {
     t.play(2, { kind: 'ask', question: 'q1' });
     const moved = open();
     await userEvent.click(await screen.findByRole('button', { name: 'Na no' }));
-    await waitFor(() => expect(t.moves()).toEqual([{ kind: 'answer', yes: false }]));
+    await waitFor(() => expect(t.moves()).toEqual([{ kind: 'answer', says: 'no' }]));
     // Baran's twenty seconds ran out: the card does not wait for him
     t.expire([3]);
     moved();
@@ -662,7 +684,7 @@ describe('Ez kî me?, the table online, answering a friend', () => {
     }
   });
 
-  it('answers in Soranî right to left, with Soranî’s own yes and no', async () => {
+  it('answers in Soranî right to left, with Soranî’s own four answers, the yes first from the right', async () => {
     const t = table({ dialect: 'ckb' });
     t.play(1, { kind: 'pass' });
     t.play(2, { kind: 'ask', question: 'q1' });
@@ -674,7 +696,111 @@ describe('Ez kî me?, the table online, answering a friend', () => {
     expect(within(asked).getByText('باڵندە')).toHaveAttribute('dir', 'rtl');
     const yes = within(asked).getByRole('button', { name: 'بەڵێ yes' });
     expect(within(yes).getByText('بەڵێ')).toHaveAttribute('lang', 'ckb');
+    // the row runs right to left, so the yes stands on the right as a Soranî reader begins
+    expect(yes.parentElement).toHaveAttribute('dir', 'rtl');
+    expect(within(asked).getByRole('button', { name: 'ڕەنگە could be' })).toBeInTheDocument();
     expect(within(asked).getByRole('button', { name: 'نەخێر no' })).toBeInTheDocument();
+    await userEvent.click(within(asked).getByRole('button', { name: 'نازانم not sure' }));
+    await waitFor(() => expect(t.moves()).toEqual([{ kind: 'answer', says: 'unsure' }]));
+    expect(within(await within(asked).findByText('Answered. Waiting for the others.', { selector: '.wa-pending-note' })).getByText('نازانم')).toHaveAttribute('lang', 'ckb');
+  });
+
+  it('calls “could be” right on a card that says it, says what that means, and calls it close on a plain yes or no', async () => {
+    const t = table();
+    t.play(1, { kind: 'pass' });
+    // Rojda's bird is at home in some families and not in others: her card says "could be"
+    t.play(2, { kind: 'ask', question: 'q2' });
+    const moved = open();
+    await userEvent.click(await screen.findByRole('button', { name: 'Dibe could be' }));
+    await waitFor(() => expect(t.moves()).toEqual([{ kind: 'answer', says: 'sometimes' }]));
+    // what I said stands beside the wait, in the dialect's own word
+    expect(within(await screen.findByText('Answered. Waiting for the others.', { selector: '.wa-pending-note' })).getByText('Dibe')).toHaveClass('is-sometimes');
+    t.play(3, { kind: 'answer', yes: false });
+    moved();
+
+    // an amber verdict: the card's own "could be", what it means, and every friend who reasoned it out is right
+    const verdict = await screen.findByRole('region', { name: /^The card says:/ });
+    expect(verdict).toHaveClass('is-sometimes');
+    expect(within(verdict).getByText('Dibe')).toHaveAttribute('lang', 'ku');
+    expect(verdict).toHaveTextContent('could be');
+    expect(within(verdict).getByText('Sometimes yes, sometimes no.')).toBeInTheDocument();
+    expect(within(verdict).getByText('You answered right: +1')).toBeInTheDocument();
+    expect(within(within(verdict).getByRole('list', { name: 'How the table answered' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['You Right', 'Baran Right']);
+    expect(screen.getByText('Rojda’s turn').closest('[aria-live="polite"]')).toHaveTextContent('The card says: Dibe');
+    expect(seatOf('You')).toHaveTextContent('Points: 1');
+    expect(seatOf('Baran')).toHaveTextContent('Points: 1');
+
+    // Baran's dog cannot fly, plainly: "could be" is close to that, and scores nothing, and nobody is told they were wrong
+    t.play(2, { kind: 'pass' });
+    t.play(3, { kind: 'ask', question: 'q1' });
+    moved();
+    await userEvent.click(await screen.findByRole('button', { name: 'Dibe could be' }));
+    await waitFor(() => expect(t.moves()[1]).toEqual({ kind: 'answer', says: 'sometimes' }));
+    t.play(2, { kind: 'answer', yes: false });
+    moved();
+    const plain = await screen.findByRole('region', { name: /^The card says: Na/ });
+    expect(plain).toHaveClass('is-no');
+    expect(within(plain).queryByText('Sometimes yes, sometimes no.')).toBeNull();
+    expect(within(plain).getByText('Close, but not quite: no point this time.')).toBeInTheDocument();
+    expect(within(within(plain).getByRole('list', { name: 'How the table answered' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['You Close', 'Rojda Right']);
+    expect(plain).not.toHaveTextContent('Wrong');
+    expect(seatOf('You')).toHaveTextContent('Points: 1');
+  });
+
+  it('takes “not sure” as an answer that scores nothing and costs nothing', async () => {
+    const t = table();
+    t.play(1, { kind: 'pass' });
+    t.play(2, { kind: 'ask', question: 'q1' });
+    const moved = open();
+    await userEvent.click(await screen.findByRole('button', { name: 'Nizanim not sure' }));
+    await waitFor(() => expect(t.moves()).toEqual([{ kind: 'answer', says: 'unsure' }]));
+    t.play(3, { kind: 'answer', yes: true });
+    moved();
+    const verdict = await screen.findByRole('region', { name: /^The card says: Erê/ });
+    expect(within(verdict).getByText('You weren’t sure: no point this time, and nothing lost.')).toBeInTheDocument();
+    expect(within(within(verdict).getByRole('list', { name: 'How the table answered' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['You Not sure', 'Baran Right']);
+    expect(verdict).not.toHaveTextContent('Wrong');
+    expect(seatOf('You')).toHaveTextContent('Points: 0');
+  });
+
+  it('offers yes and no alone at a table made for two answers, as an older app made it', async () => {
+    const t = table({ answers: 2 });
+    t.play(1, { kind: 'pass' });
+    t.play(2, { kind: 'ask', question: 'q1' });
+    open();
+    const answer = await screen.findByRole('group', { name: 'Rojda asks about their card:' });
+    expect(within(answer).getAllByRole('button').map((b) => b.textContent)).toEqual(['Erê yes', 'Na no']);
+    // the scoring note says nothing of answers the table does not offer
+    expect(screen.queryByText('“Not sure” scores nothing and costs nothing.')).toBeNull();
+    expect(screen.queryByText(/^When the card says “could be”/)).toBeNull();
+    await userEvent.click(within(answer).getByRole('button', { name: 'Na no' }));
+    await waitFor(() => expect(t.moves()).toEqual([{ kind: 'answer', says: 'no' }]));
+  });
+
+  it('lets a reader who saw the card say its answer looks wrong, once, and never asks the player who could not see it', async () => {
+    const t = table();
+    t.play(1, { kind: 'pass' });
+    t.play(2, { kind: 'ask', question: 'q1' });
+    t.play(1, { kind: 'answer', yes: false });
+    t.play(3, { kind: 'answer', yes: true });
+    const moved = open();
+    const verdict = await screen.findByRole('region', { name: /^The card says:/ });
+    await userEvent.click(within(verdict).getByRole('button', { name: 'Is this answer wrong?' }));
+    // the game, whose card and which question, and nothing else
+    await waitFor(() => expect(t.reports()).toEqual([{ game: 'r1', seat: 2, question: 'q1' }]));
+    const thanks = await within(verdict).findByText('Thanks! We’ll take a look at this card.');
+    expect(thanks).toHaveFocus();
+    expect(within(verdict).queryByRole('button', { name: 'Is this answer wrong?' })).toBeNull();
+
+    // my own question: I cannot see my card, so I am not asked whether it is wrong
+    t.play(2, { kind: 'pass' });
+    t.play(3, { kind: 'pass' });
+    t.play(1, { kind: 'ask', question: 'q1' });
+    t.play(2, { kind: 'answer', yes: false });
+    t.play(3, { kind: 'answer', yes: false });
+    moved();
+    expect(await screen.findByText('You asked:')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Is this answer wrong?' })).toBeNull();
   });
 });
 

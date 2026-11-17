@@ -189,6 +189,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('riddles and proverbs (integration)
       expect(hint.statusCode, hint.body).toBe(200);
       expect(hint.json().hint).toEqual({ index: 1, text: `Alîkarî ${tag}du`, translations: { en: `enhint${tag}two` } });
       expect((await call('POST', `/riddles/${slug}/guess`, '', { guess: 'na' })).json()).toEqual({ correct: false });
+      // one letter off the answer is near, and says so without giving anything away
+      expect((await call('POST', `/riddles/${slug}/guess`, '', { guess: `${tag}bersivv` })).json()).toEqual({ correct: false, near: 'spelling' });
       const right = await call('POST', `/riddles/${slug}/guess`, '', { guess: `Ew ${tag.toUpperCase()}CEWABA` });
       expect(right.json()).toMatchObject({ correct: true, xp: 0, answer: { answer: `${tag}bersiv`, region: 'Botan', translations: { en: { answer: `enanswer${tag}` } } } });
       expect((await call('POST', `/riddles/${slug}/reveal`, '')).json().answer.explanation).toBe(`Ji ber ku ${tag}ravekirin.`);
@@ -395,8 +397,10 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('riddles and proverbs (integration)
           seeded: [`riddle:kmr-${tag}-starter`],
           refreshed: [],
           published: [`riddle:kmr-${tag}-starter`],
+          held: [],
+          retired: [],
         });
-        expect(await seedStarterLore(pool, log, files)).toEqual({ seeded: [], refreshed: [], published: [] });
+        expect(await seedStarterLore(pool, log, files)).toEqual({ seeded: [], refreshed: [], published: [], held: [], retired: [] });
         const read = async () =>
           (
             await pool.query<{ id: string; status: string; review_status: string; source: string; level: number; payload: { notes?: string } }>(
@@ -433,6 +437,20 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('riddles and proverbs (integration)
 
         await pool.query(`DELETE FROM game_content WHERE id = $1`, [id]);
         expect((await seedStarterLore(pool, log, files)).seeded).toEqual([]);
+
+        // a starter held back goes back to a draft that learners never see, and one retired is archived
+        const second = riddle(`kmr-${tag}-held`, { tradition: 'new', region: null, sources: [] });
+        const writeOne = (status?: 'held' | 'retired') =>
+          writeFile(riddles, JSON.stringify({ riddles: [{ ...second, dialect: 'kmr', ...(status ? { status } : {}), translations: { en: riddleEn } }] }));
+        await writeOne();
+        expect((await seedStarterLore(pool, log, files)).published).toEqual([`riddle:kmr-${tag}-held`]);
+        await writeOne('held');
+        expect((await seedStarterLore(pool, log, files)).held).toEqual([`riddle:kmr-${tag}-held`]);
+        expect((await call('GET', `/riddles/kmr-${tag}-held`, '')).statusCode).toBe(404);
+        await writeOne('retired');
+        expect((await seedStarterLore(pool, log, files)).retired).toEqual([`riddle:kmr-${tag}-held`]);
+        const status = await pool.query<{ status: string }>(`SELECT status FROM game_content WHERE kind = 'riddle' AND payload->>'slug' = $1`, [`kmr-${tag}-held`]);
+        expect(status.rows).toEqual([{ status: 'archived' }]);
       } finally {
         await rm(dir, { recursive: true, force: true });
       }

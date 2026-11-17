@@ -13,14 +13,14 @@ import { describeError } from '../api/errors';
 import { leftResults } from '../feedback/gameFinished';
 import { useI18n } from '../i18n/I18nContext';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { GameRoom } from '../play/GameRoom';
+import { GameRoom, multiSeatName } from '../play/GameRoom';
 import { InviteSheet } from '../play/InviteSheet';
 import { JoinCodeCard } from '../play/JoinByCode';
 import { useGameView } from '../play/useGameView';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
-import { LastLetterBoardView } from './LastLetterBoard';
+import { ChainReview, LastLetterBoardView } from './LastLetterBoard';
 import { offeredDialects, useLastLetterAvailability } from './availability';
 import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
@@ -99,6 +99,7 @@ function Start({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Elemen
           {/* the game's own cover, as its stamp shows it: a link in the brand's violet was a picture of nothing in the game */}
           <GameArt game="last-letter" size={72} />
           <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.intro')}</Text>
+          <Text style={[styles.note, { color: colors.textSecondary }]}>{t('games.lastLetter.softRule')}</Text>
         </View>
       </GlassCard>
       <GlassCard>
@@ -169,6 +170,11 @@ function Room({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpen: (i
       }}
       playing={(v) => <LastLetterBoardView view={v} skew={room.skew} move={room.move} />}
       ending={(v) => {
+        const name = (seat: number): string => {
+          const p = v.players.find((x) => x.seat === seat);
+          return p ? multiSeatName(p, t) : t('stories.player', { seat });
+        };
+        const review = v.board ? <ChainReview board={v.board} name={name} /> : null;
         const winner = v.results?.[0];
         const text =
           v.board?.endedBy === 'chain-full'
@@ -178,7 +184,13 @@ function Room({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpen: (i
               : winner && winner.seat === v.me?.seat
                 ? t('games.lastLetter.lastStanding')
                 : null;
-        return text ? <Text style={[styles.blurb, { color: colors.textSecondary }]}>{text}</Text> : null;
+        if (!text && !review) return null;
+        return (
+          <>
+            {text ? <Text style={[styles.blurb, { color: colors.textSecondary }]}>{text}</Text> : null}
+            {review}
+          </>
+        );
       }}
       scoreOf={(r) => t('games.lastLetter.words', { count: r.score })}
     />

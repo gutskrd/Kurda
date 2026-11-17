@@ -4,7 +4,10 @@ import {
   lastLetter,
   lastLetterSlip,
   letterDirection,
+  typingKeys,
+  type AppLocale,
   type LastLetterBoard,
+  type LastLetterChainWord,
   type LastLetterOutcome,
   type LastLetterStrikeReason,
   type LetterDialect,
@@ -13,7 +16,8 @@ import {
 } from '@kurda/shared';
 import { Button } from '../components/Button';
 import { useTypeOnly } from '../components/typeOnly';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
+import { KeyBar } from '../keyboard/KeyBar';
 import type { MessageKey } from '../i18n/en';
 import { haptic } from '../lib/haptics';
 import { prefersReducedMotion } from '../lib/motion';
@@ -38,6 +42,18 @@ export const REASON_KEY: Record<LastLetterStrikeReason, MessageKey> = {
 /** The language tag a Kurdish word is marked with, so a screen reader says it as Kurdish. */
 export function langOf(dialect: LetterDialect): string {
   return dialect === 'ckb' ? 'ckb' : 'ku';
+}
+
+/**
+ * What a chain word means in the reader's language: the lesson or the
+ * dictionary may give it in several, and English stands in for the rest. A
+ * board from before meanings were kept in every language has only `meaning`.
+ */
+export function meaningIn(word: Pick<LastLetterChainWord, 'meaning' | 'meanings'>, locale: AppLocale): { text: string; lang: string } | null {
+  const own = word.meanings?.[locale];
+  if (own) return { text: own, lang: locale };
+  const en = word.meanings?.en ?? word.meaning;
+  return en ? { text: en, lang: 'en' } : null;
 }
 
 /** What the word box says about a slip it can see before a word is sent (shared `lastLetterSlip`). */
@@ -142,9 +158,17 @@ export function LastLetterBoardView({
                 {board.requiredSpellings.join(' · ')}
               </span>
             </p>
+          ) : board.openLetter ? (
+            <p className="ll-starts ll-note">{t('games.lastLetter.openLetter', { letter: board.openLetter })}</p>
           ) : (
             <p className="ll-starts muted">{t('games.lastLetter.firstWord')}</p>
           )}
+          {/* a soft ending passes on the letter before it: said once under the letter, so the ring never looks wrong */}
+          {board.required && board.requiredFrom ? (
+            <p className="ll-note muted">
+              {t('games.lastLetter.softEnding', { word: board.requiredFrom.word, vowel: board.requiredFrom.vowel, letter: board.required })}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -208,6 +232,7 @@ export function TurnRing({ share, low, label, children }: { share: number; low: 
 /** The chain so far: each word a card, its first and last letters lit so the links show. */
 export function WordChain({ board, name, mySeat }: { board: LastLetterBoard; name: (seat: number) => string; mySeat: number | null }): React.JSX.Element {
   const t = useT();
+  const locale = useLocale();
   const list = useRef<HTMLOListElement>(null);
   const dir = letterDirection(board.dialect);
   const lang = langOf(board.dialect);
@@ -233,14 +258,15 @@ export function WordChain({ board, name, mySeat }: { board: LastLetterBoard; nam
         {board.chain.map((w) => {
           const first = firstLetter(board.dialect, w.word);
           const last = lastLetter(board.dialect, w.word);
+          const meaning = meaningIn(w, locale);
           return (
             <li key={w.n} className={`ll-card${w.seat === mySeat ? ' is-mine' : ''}`}>
               <span className="ll-word" lang={lang} dir={dir}>
                 <WordLetters word={w.word} first={first} last={last} dialect={board.dialect} />
               </span>
-              {w.meaning && (
-                <span className="ll-meaning" lang="en" dir="ltr">
-                  {w.meaning}
+              {meaning && (
+                <span className="ll-meaning" lang={meaning.lang}>
+                  {meaning.text}
                 </span>
               )}
               <span className="ll-by">{name(w.seat)}</span>
@@ -249,6 +275,44 @@ export function WordChain({ board, name, mySeat }: { board: LastLetterBoard; nam
         })}
       </ol>
     </div>
+  );
+}
+
+/**
+ * Every word of a finished game, in the order it was played, with who played
+ * it and what it means: the game was a list of words, and its end is the
+ * moment to read them again.
+ */
+export function ChainReview({ board, name }: { board: LastLetterBoard; name: (seat: number) => string }): React.JSX.Element | null {
+  const t = useT();
+  const locale = useLocale();
+  if (board.chain.length === 0) return null;
+  const lang = langOf(board.dialect);
+  const dir = letterDirection(board.dialect);
+  return (
+    <section className="ll-review" aria-labelledby="ll-review-title">
+      <h3 id="ll-review-title" className="ll-review-title">
+        {t('games.lastLetter.review')}
+      </h3>
+      <ol className="ll-review-list">
+        {board.chain.map((w) => {
+          const meaning = meaningIn(w, locale);
+          return (
+            <li key={w.n} className="ll-review-row">
+              <span className="ll-review-word" lang={lang} dir={dir}>
+                {w.word}
+              </span>
+              {meaning && (
+                <span className="ll-review-meaning" lang={meaning.lang}>
+                  {meaning.text}
+                </span>
+              )}
+              <span className="ll-review-by muted">{name(w.seat)}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }
 
@@ -281,6 +345,8 @@ function WordComposer({
   const [word, setWord] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // a word the server took for a slip of a mark: no strike, and the word it most likely was offered in its place
+  const [didYouMean, setDidYouMean] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const { handlers: typeOnly, notice: pasteNotice } = useTypeOnly(t('games.rhyme.noPasting'));
   const hint = useMemo(() => precheck(board, word), [board, word]);
@@ -294,8 +360,27 @@ function WordComposer({
     setError(null);
     const res = await move({ word });
     setBusy(false);
-    if (res.ok) setWord('');
-    else setError(describeError(res.error, t));
+    if (!res.ok) {
+      setError(describeError(res.error, t));
+      return;
+    }
+    const spelling = res.data.outcome?.spelling ?? null;
+    setDidYouMean(spelling);
+    setWord(spelling ?? '');
+    if (spelling) input.current?.focus();
+  }
+
+  /** A letter from the key bar, typed where the cursor is. */
+  function insert(letter: string): void {
+    const el = input.current;
+    const at = el?.selectionStart ?? word.length;
+    const end = el?.selectionEnd ?? at;
+    setWord(word.slice(0, at) + letter + word.slice(end));
+    setDidYouMean(null);
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(at + letter.length, at + letter.length);
+    });
   }
 
   // in a right-to-left box a sentence in the reader's language is clipped and reads backwards: the letter alone says it
@@ -314,22 +399,28 @@ function WordComposer({
         ref={input}
         className="input ll-input"
         value={word}
-        onChange={(e) => setWord(e.target.value)}
+        onChange={(e) => {
+          setWord(e.target.value);
+          setDidYouMean(null);
+        }}
         placeholder={placeholder}
         lang={langOf(board.dialect)}
         dir={dir}
         maxLength={40}
         aria-invalid={hint ? true : undefined}
-        aria-describedby={hint || error || pasteNotice ? 'll-word-hint' : undefined}
+        aria-describedby={hint || error || pasteNotice || didYouMean ? 'll-word-hint' : undefined}
         {...typeOnly}
       />
       {/* busy, it keeps its word and its width: an ellipsis in its place shrank the button and said nothing */}
       <Button type="submit" disabled={busy || !word.trim() || hint !== null} aria-busy={busy || undefined}>
         {t('games.lastLetter.send')}
       </Button>
-      {(pasteNotice ?? error ?? hint) && (
+      <KeyBar keys={typingKeys(board.dialect)} onKey={insert} disabled={busy} lang={langOf(board.dialect) as 'ku' | 'ckb'} dir={dir} />
+      {(pasteNotice ?? error ?? hint ?? didYouMean) && (
         <p id="ll-word-hint" className="ll-hint" role="status">
-          {pasteNotice ?? error ?? (hint ? t(hint.key, hint.letter ? { letter: hint.letter } : undefined) : null)}
+          {pasteNotice ??
+            error ??
+            (hint ? t(hint.key, hint.letter ? { letter: hint.letter } : undefined) : didYouMean ? t('games.lastLetter.didYouMean', { word: didYouMean }) : null)}
         </p>
       )}
     </form>

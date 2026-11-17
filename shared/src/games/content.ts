@@ -31,6 +31,7 @@ import { APP_LOCALE_CODES, type AppLocale } from '../locales.js';
 import { SPEAKERS, type RecordingVoice, type SpeakerId } from '../lipsync/speakers.js';
 import { GAME_DIALECTS, fitsDialect, foldForDialect, gameWords, type GameDialect } from './dialect.js';
 import type { GamesAvailability } from './solo.js';
+import { WHO_AM_I_MAX_SOMETIMES } from './who-am-i/game.js';
 import {
   LORE_COUNTS,
   LORE_LIMITS,
@@ -49,9 +50,9 @@ import {
  *   passage           — The Memory Thief: a passage and the key words that vanish from it
  *   case_file         — Detective: suspects, evidence lines, deduction steps, the solution
  *   word_category     — Impostor: a category's Kurdish name and its meaning
- *   word_card         — Impostor: a word, its category and the impostor's hint
- *   identity          — Who Am I?: an identity and its yes/no facts
- *   question_template — Who Am I?: a yes/no question and the fact that answers it
+ *   word_card         — Impostor: a word, its category, the impostor's hint and the twin an odd-word round deals
+ *   identity          — Who Am I?: an identity and its facts (yes, no or sometimes)
+ *   question_template — Who Am I?: a question and the fact that answers it
  *   riddle            — the Stories' riddles: a question, its hints, its answer and the forms it accepts
  *   proverb           — the Stories' proverbs: a saying, its themes, its variants and a scene it is said in
  *
@@ -238,13 +239,23 @@ function build() {
     hint: z.strictObject({ ku: kurdish(80), meanings }),
     /** other forms of the word a clue may not say either (plurals, the ezafe); the game hears common endings by itself */
     forms: z.array(kurdish(60)).max(12).default([]),
+    /** a word close to this one but not it (a cat for a dog), dealt to the odd one out in a round where they get a word of their own */
+    twin: kurdish(60).optional(),
   });
   const identity = z.strictObject({
     word: kurdish(60),
     meanings,
     category: slug,
-    /** yes/no facts by key ("has-legs": true), which the question templates ask */
-    facts: z.record(slug, z.boolean()).refine((f) => Object.keys(f).length >= 4, { message: 'give at least four facts' }),
+    /**
+     * Facts by key ("four-legs": true), which the question templates ask: yes, no, or "sometimes" where honest people
+     * would answer either way. A fact left out is a question never asked of this card.
+     */
+    facts: z
+      .record(slug, z.union([z.boolean(), z.literal('sometimes')]))
+      .refine((f) => Object.keys(f).length >= 4, { message: 'give at least four facts' })
+      .refine((f) => Object.values(f).filter((v) => v === 'sometimes').length <= WHO_AM_I_MAX_SOMETIMES, {
+        message: `mark at most ${WHO_AM_I_MAX_SOMETIMES} facts as sometimes`,
+      }),
   });
   const questionTemplate = z.strictObject({ ku: kurdish(160), meanings, fact: slug });
 
@@ -271,6 +282,8 @@ function build() {
     answer: kurdish(LORE_LIMITS.answer),
     /** what else a learner may type and be right: with and without an ending, synonyms, both spellings */
     accepted: z.array(kurdish(LORE_LIMITS.answer)).min(LORE_COUNTS.accepted.min).max(LORE_COUNTS.accepted.max),
+    /** related words a reasoning player might give, told they are close rather than wrong (never a spelling of the answer) */
+    near: z.array(kurdish(LORE_LIMITS.answer)).max(LORE_COUNTS.accepted.max).optional(),
     explanation: kurdish(LORE_LIMITS.explanation),
     sources,
     notes,
@@ -386,6 +399,7 @@ export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload)
       add('word', p.word);
       add('hint.ku', p.hint.ku);
       (p.forms ?? []).forEach((f, i) => add(`forms.${i}`, f));
+      add('twin', p.twin);
       break;
     }
     case 'identity':
@@ -400,6 +414,7 @@ export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload)
       p.hints.forEach((h, i) => add(`hints.${i}`, h));
       add('answer', p.answer);
       p.accepted.forEach((a, i) => add(`accepted.${i}`, a));
+      (p.near ?? []).forEach((n, i) => add(`near.${i}`, n));
       add('explanation', p.explanation);
       break;
     }

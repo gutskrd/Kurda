@@ -4,6 +4,7 @@ import { COUCH_WAYS, dialectDirection, impostorCategoriesInOrder, impostorCatego
 import { LinkButton } from '../components/Button';
 import { ChevronIcon, ImpostorIcon, PlayIcon, UsersIcon } from '../components/icons';
 import { Loading } from '../components/states';
+import { useGameDialect } from '../games/soloRounds';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { usePartyOffer } from '../party/offer';
 import { InviteForm } from '../play/InviteSheet';
@@ -24,13 +25,16 @@ const STEPS = ['games.impostor.how.card', 'games.impostor.how.clues', 'games.imp
  * a room; under it the three ways to play and the categories, each of which
  * opens the setup with that choice made; then how a round goes, and last the
  * game with friends who are somewhere else. Nothing here is offered where
- * there are no approved word cards, and the page says so plainly then.
+ * there are no approved word cards, and the page says so plainly then. The
+ * categories shown are the learner's own Kurdish where the game is offered
+ * in it, as the setup they open is.
  */
 export function ImpostorStart(): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const offer = usePartyOffer('impostor');
-  const dialect = offer?.[0]?.dialect ?? null;
+  const preferred = useGameDialect();
+  const dialect = (offer?.find((o) => o.dialect === preferred) ?? offer?.[0])?.dialect ?? null;
   const couch = useImpostorCategories(dialect);
   if (offer === null) return <Loading />;
   if (dialect === null) {

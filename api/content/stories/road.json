@@ -831,7 +831,7 @@
           "promptEn": "“It is the first time I am early!” What does it mean?",
           "options": [
             "Ez ne dereng im",
-            "Ez birçî me",
+            "Ez gelek birçî me",
             "Ez radizim"
           ],
           "correctIndex": 0,
@@ -1032,7 +1032,7 @@
           "promptEn": "“The ajovan goes very fast.” Where is the ajovan?",
           "options": [
             "Li minîbûsê",
-            "Li bazarê",
+            "Li nav bazarê",
             "Li malê"
           ],
           "correctIndex": 0,
@@ -1684,7 +1684,7 @@
           "prompt": "Çima Baran dikene?",
           "promptEn": "Why does Baran laugh?",
           "options": [
-            "Doktor Azad tê malê",
+            "Doktor Azad dîsa tê malê",
             "Hevalo sêva xwe dide wî",
             "Pêlavên wî nû ne"
           ],
@@ -1754,7 +1754,7 @@
           "options": [
             "Erê, rojekê",
             "Na, ew berî her kesî rabû",
-            "Erê, bi şaşî"
+            "Erê, ew piştî her kesî rabû"
           ],
           "correctIndex": 1,
           "explanation": "Hamo dibêje: «Ez berbangê hişyar rabûm, berî her kesî!»",
@@ -2120,8 +2120,8 @@
           "prompt": "Çima sêva Hevalo ket?",
           "promptEn": "Why did Hevalo’s apple fall?",
           "options": [
-            "Ji ber ku ew li Zerê dinêrî",
-            "Ji ber ku ew westiyayî bû",
+            "Ji ber ku Zerê li wî dinêrî",
+            "Ji ber ku ew gelek westiyayî bû",
             "Ji ber ku Bişar ew girt"
           ],
           "correctIndex": 0,

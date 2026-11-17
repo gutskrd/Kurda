@@ -1,6 +1,8 @@
 /**
  * Starter content written for the learning games, seeded once each: today,
- * Detective's first case (api/content/games).
+ * Detective's first case (api/content/games), and then Impostor's curated
+ * deck (impostor-deck.ts), which supersedes the cards the starter library
+ * made for it.
  *
  * A starter case is written in the interface languages only — its title,
  * suspects, questions and solution — and its evidence names lines of the
@@ -24,7 +26,9 @@ import type pg from 'pg';
 import type { FastifyBaseLogger } from 'fastify';
 import { z } from 'zod';
 import { EVIDENCE_KINDS, GAME_DIALECTS, checkGameContent, conversationLineKey, isSpeakerId } from '@kurda/shared';
+import type { Cache } from '../cache/cache.js';
 import { conversationPayloadSchema } from '../content/exercises.js';
+import { IMPOSTOR_DECK_FILE, seedImpostorDeck } from './impostor-deck.js';
 
 export const STARTER_GAME_FILES = [new URL('../../content/games/detective.json', import.meta.url)];
 
@@ -121,12 +125,27 @@ async function conversationsNamed(pool: pg.Pool, ids: readonly string[]): Promis
   return new Map(res.rows.map((r) => [r.conversation, { exerciseId: r.id, payload: r.payload }]));
 }
 
+/**
+ * What to seed besides the case files: Impostor's deck, which by default goes
+ * in with the case files the API ships and not with case files a caller names
+ * itself (a test seeding one case of its own wants that case alone), and the
+ * cache whose pools and counts are read afresh after it.
+ */
+export interface StarterSeedOptions {
+  deck?: URL | null;
+  cache?: Cache | null;
+}
+
 export async function seedStarterGameContent(
   pool: pg.Pool,
   log: Pick<FastifyBaseLogger, 'info' | 'warn'>,
   files: readonly URL[] = STARTER_GAME_FILES,
+  options: StarterSeedOptions = {},
 ): Promise<{ seeded: string[] }> {
   const seeded: string[] = [];
+  const deck = options.deck !== undefined ? options.deck : files === STARTER_GAME_FILES ? IMPOSTOR_DECK_FILE : null;
+  // the deck is its own file with its own checks: a case that waits for its lessons never holds it up
+  if (deck) await seedImpostorDeck(pool, log, options.cache ?? null, deck);
   try {
     const cases: StarterCase[] = [];
     for (const file of files) {

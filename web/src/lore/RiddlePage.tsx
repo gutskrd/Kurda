@@ -10,6 +10,7 @@ import {
   typingKeys,
   type RiddleDetail,
   type RiddleGuessResult,
+  type RiddleNear,
   type RiddleHint,
   type RiddleState,
 } from '@kurda/shared';
@@ -18,6 +19,7 @@ import { Button } from '../components/Button';
 import { ArrowIcon, CheckIcon, HintIcon } from '../components/icons';
 import { ErrorState, Loading } from '../components/states';
 import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 import { KeyBar } from '../keyboard/KeyBar';
 import { describeError } from '../lib/api';
 import { haptic } from '../lib/haptics';
@@ -27,6 +29,13 @@ import { ChallengeButton, GuestNote, Translated } from './LoreParts';
 import './lore.css';
 
 type Load = { state: 'loading' } | { state: 'ready'; riddle: RiddleDetail } | { state: 'gone' } | { state: 'error'; message: string };
+
+/** How a near guess is told, by how it was near. */
+const NEAR_KEY: Record<RiddleNear, MessageKey> = {
+  close: 'lore.riddle.near',
+  spelling: 'lore.riddle.spelling',
+  language: 'lore.riddle.inKurdish',
+};
 
 /** What the answer page is handed when it is reached from here: a right guess's answer and pay, or a reveal the learner confirmed. */
 export type AnswerArrival = { solved: Extract<RiddleGuessResult, { correct: true }> } | { reveal: true };
@@ -210,7 +219,10 @@ function GuessForm({ riddle, hintsTaken, onWrong }: { riddle: RiddleDetail; hint
   const [busy, setBusy] = useState(false);
   const [wrong, setWrong] = useState(0);
   const [tried, setTried] = useState<string | null>(null);
+  // how near the last wrong guess was, when it was: said instead of a plain "not quite"
+  const [near, setNear] = useState<RiddleNear | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const locale = useLocale();
   const field = useRef<HTMLInputElement>(null);
   const caret = useRef<number | null>(null);
 
@@ -237,7 +249,8 @@ function GuessForm({ riddle, hintsTaken, onWrong }: { riddle: RiddleDetail; hint
     if (!text || busy || text === tried) return;
     setBusy(true);
     setProblem(null);
-    const res = await client.post<RiddleGuessResult>(`/riddles/${encodeURIComponent(riddle.slug)}/guess`, { guess: text });
+    // the interface language, so a guess that is the answer in it is told to say it in Kurdish
+    const res = await client.post<RiddleGuessResult>(`/riddles/${encodeURIComponent(riddle.slug)}/guess`, { guess: text, locale });
     setBusy(false);
     if (!res.ok) {
       setProblem(describeError(res.error, t));
@@ -251,6 +264,7 @@ function GuessForm({ riddle, hintsTaken, onWrong }: { riddle: RiddleDetail; hint
       return;
     }
     haptic('wrong');
+    setNear(res.data.near ?? null);
     setTried(text);
     setWrong((n) => n + 1);
     onWrong();
@@ -259,7 +273,11 @@ function GuessForm({ riddle, hintsTaken, onWrong }: { riddle: RiddleDetail; hint
   }
 
   const hintsLeft = riddle.hintCount - hintsTaken;
-  const verdict = wrong === 0 ? '' : wrong === 1 ? t('lore.riddle.wrong.first') : hintsLeft > 0 ? t('lore.riddle.wrong.hint') : t('lore.riddle.wrong.again');
+  const nearLine = near ? t(NEAR_KEY[near]) : null;
+  const verdict =
+    wrong === 0
+      ? ''
+      : (nearLine ?? (wrong === 1 ? t('lore.riddle.wrong.first') : hintsLeft > 0 ? t('lore.riddle.wrong.hint') : t('lore.riddle.wrong.again')));
   const full = RIDDLE_XP[riddle.difficulty];
   const half = riddleXp(riddle.difficulty, { hintsUsed: 1, guesses: 1, revealed: false });
 

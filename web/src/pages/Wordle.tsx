@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, WordleGame } from '../lib/types';
@@ -6,6 +6,7 @@ import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { TrophyIcon } from '../components/icons';
 import { WordleBoard, WordleKeyboard, useReveal } from '../components/WordleBoard';
+import { WordAnswer, type WordMeanings } from '../components/WordAnswer';
 import { useWordleKeys } from '../keyboard/wordleKeys';
 import { useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
@@ -17,6 +18,14 @@ import { wordGameShare } from '../share/winText';
 
 type Mode = 'daily' | 'practice';
 type Difficulty = 'easy' | 'medium' | 'hard';
+
+/**
+ * A game as the server sends it: once it is finished, `word` is the answer's
+ * card, with its meanings in every language a word card gives and the
+ * dictionary entry to save it as (null when there is none spelt exactly so).
+ * A server from before it sends no `word`, and the result is as it was.
+ */
+type PeyvokGame = WordleGame & { word?: { entryId: string | null; meanings: WordMeanings; saved: boolean } | null };
 
 const DIFFICULTY_KEY: Record<Difficulty, MessageKey> = {
   easy: 'games.difficulty.easy',
@@ -78,6 +87,11 @@ function guessError(err: ApiError, t: (key: MessageKey) => string): string {
  * online with other people), so the result shows no figure of it and says so
  * once, with where XP is earned.
  *
+ * The result names the word, found or not, with what it means in the
+ * reader's language and Save to vocabulary (components/WordAnswer.tsx): the
+ * meaning is the word card's for exactly this word, never the nearest
+ * dictionary hit, and a word nobody has written a meaning for is shown alone.
+ *
  * Under the result there is a quiet Share, as the phone's game has: the grid
  * of squares the guesses made, with the score over it and the site's address
  * under it (share/winText.ts). Only squares and counts, so it gives nothing
@@ -91,7 +105,7 @@ export function Wordle(): React.JSX.Element {
   const [mode, setMode] = useState<Mode>(() => readChoice().mode);
   const [difficulty, setDifficulty] = useState<Difficulty>(() => readChoice().difficulty);
   useEffect(() => writeChoice({ mode, difficulty }), [mode, difficulty]);
-  const [game, setGame] = useState<WordleGame | null>(null);
+  const [game, setGame] = useState<PeyvokGame | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [emptyPool, setEmptyPool] = useState(false);
   const [current, setCurrent] = useState('');
@@ -101,6 +115,12 @@ export function Wordle(): React.JSX.Element {
   const [refusals, setRefusals] = useState(0);
   // the last guess's row is still turning over: the result waits for the tiles to have said it
   const { revealing, hold } = useReveal();
+  // Save to vocabulary on the finished game's word: on its way, and why it did not land
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  // Each difficulty has a daily of its own, so the chips are pressed one after another; only the game asked for
+  // last may land, or a slow answer for the chip left behind would show its word under the chip pressed after it.
+  const asked = useRef(0);
 
   const refuse = useCallback((why: string) => {
     setNotice(why);
@@ -109,13 +129,17 @@ export function Wordle(): React.JSX.Element {
   }, []);
 
   const start = useCallback(async () => {
+    const ask = ++asked.current;
     setGame(null);
     setLoadError(null);
     setEmptyPool(false);
     setCurrent('');
     setNotice(null);
     setRefusals(0);
-    const res = await client.post<WordleGame>(`/wordle/${mode}`, { difficulty });
+    setSaving(false);
+    setSaveError(null);
+    const res = await client.post<PeyvokGame>(`/wordle/${mode}`, { difficulty });
+    if (ask !== asked.current) return;
     if (res.ok) setGame(res.data);
     else if (res.error.code === 'EMPTY_POOL') setEmptyPool(true);
     else setLoadError(describeError(res.error, t));
@@ -139,7 +163,7 @@ export function Wordle(): React.JSX.Element {
     }
     setSubmitting(true);
     setNotice(null);
-    const res = await client.post<WordleGame>(`/wordle/games/${game.id}/guesses`, { word: current });
+    const res = await client.post<PeyvokGame>(`/wordle/games/${game.id}/guesses`, { word: current });
     setSubmitting(false);
     if (res.ok) {
       setGame(res.data);
@@ -153,6 +177,22 @@ export function Wordle(): React.JSX.Element {
       refuse(guessError(res.error, t));
     }
   }, [client, game, playing, submitting, current, t, refuse, hold]);
+
+  /**
+   * The finished game's word into the player's vocabulary, by the game rather than by the entry: the server saves
+   * exactly the word the game was about, and counts it once toward the words learned however often it is pressed.
+   */
+  const saveWord = useCallback(async () => {
+    const id = game?.id;
+    if (!id || !game.word?.entryId || game.word.saved || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    const res = await client.post<{ saved: boolean }>(`/wordle/games/${id}/save`);
+    setSaving(false);
+    if (res.ok) setGame((g) => (g && g.id === id && g.word ? { ...g, word: { ...g.word, saved: true } } : g));
+    // a full vocabulary, or the network: said as the dictionary says it, under the button
+    else setSaveError(describeError(res.error, t));
+  }, [client, game, saving, t]);
 
   const press = useCallback(
     (key: string) => {
@@ -215,6 +255,18 @@ export function Wordle(): React.JSX.Element {
                 {game.status === 'won' ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
                 {game.target && game.status === 'lost' && <> {t('games.wordle.theWordWas', { word: game.target })}</>}
               </p>
+              {/* found or not, the word is the lesson: what it means, and a way to keep it */}
+              {game.target && (
+                <WordAnswer
+                  word={game.target}
+                  meanings={game.word?.meanings}
+                  save={
+                    game.word?.entryId
+                      ? { saved: game.word.saved, busy: saving, onSave: () => void saveWord(), error: saveError }
+                      : undefined
+                  }
+                />
+              )}
               <p className="gs-alone">{t('games.noXpAlone')}</p>
               {mode === 'practice' ? (
                 <Button onClick={() => void start()}>{t('games.playAgain')}</Button>

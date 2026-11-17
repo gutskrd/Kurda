@@ -26,6 +26,7 @@ import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
 import { WordleBoard, cellSizeFor } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
+import { WordMeaningLine } from './WordAnswer';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import {
   createBattle,
@@ -407,6 +408,8 @@ function BattleRoom({
               <Text style={[styles.blurb, { color: colors.textSecondary }]}>
                 {t('games.wordle.theWordWas')} {results.target.toUpperCase()}
               </Text>
+              {/* the word everyone raced for, and what it means: the one thing a battle teaches */}
+              <WordMeaningLine word={results.target} meanings={results.meanings} />
               <View style={styles.stretch}>
                 {results.ranking.map((r) => (
                   <View key={r.userId} style={[styles.scoreLine, { flexDirection: dir.row }]}>

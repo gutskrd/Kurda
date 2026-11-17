@@ -79,15 +79,19 @@ function byTextPosition(a: BankQuestion, b: BankQuestion): number {
  *   and each stretch gives its first question in the random order;
  * - no one kind more than half the questions, and at least one detail question
  *   when the bank has one, so a game is not four vocabulary items;
- * - asked in the order of the text, the overall question last.
+ * - asked in the order of the text, the overall question last;
+ * - the questions the game's players answered in their last few games of the
+ *   same story (`recent`) ranked after every other, so a second game asks
+ *   what the first did not wherever the bank allows, and only then repeats.
  *
  * The caller has already checked the bank holds `count` questions.
  */
-export function buildPlan(gameId: string, bank: readonly BankQuestion[], count: number): PlannedQuestion[] {
+export function buildPlan(gameId: string, bank: readonly BankQuestion[], count: number, recent: ReadonlySet<string> = new Set()): PlannedQuestion[] {
   const n = Math.min(count, bank.length);
   if (n === 0) return [];
   const rank = new Map<string, number>();
-  optionOrder(bank.length, `story-plan:${gameId}`).forEach((bankIndex, r) => rank.set(bank[bankIndex]!.id, r));
+  // a question met lately comes after all the others in the random order, which every choice below follows
+  optionOrder(bank.length, `story-plan:${gameId}`).forEach((bankIndex, r) => rank.set(bank[bankIndex]!.id, r + (recent.has(bank[bankIndex]!.id) ? bank.length : 0)));
   const byRank = (a: BankQuestion, b: BankQuestion) => rank.get(a.id)! - rank.get(b.id)!;
 
   // the overall question, if there is one and room for more than it
@@ -104,10 +108,11 @@ export function buildPlan(gameId: string, bank: readonly BankQuestion[], count: 
     kindCount.set(q.kind, (kindCount.get(q.kind) ?? 0) + 1);
   };
 
-  // one from each stretch of the text, the first in the random order that fits
+  // one from each stretch of the text, the first in the random order that fits; a stretch holding only questions
+  // met lately gives none, and the fill below takes a fresh one from elsewhere first
   for (let s = 0; s < want; s++) {
     const stretch = rest.slice(Math.floor((s * rest.length) / want), Math.floor(((s + 1) * rest.length) / want));
-    const pick = stretch.filter((q) => !chosen.includes(q) && fits(q)).sort(byRank)[0];
+    const pick = stretch.filter((q) => !chosen.includes(q) && fits(q) && !recent.has(q.id)).sort(byRank)[0];
     if (pick) take(pick);
   }
   // stretches whose questions were all of a kind already at its cap: fill from

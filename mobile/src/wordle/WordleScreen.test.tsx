@@ -68,7 +68,6 @@ const serving = (game: ReturnType<typeof over>) =>
   fakeClient({
     'GET /wordle/stats': ok(STATS),
     [`POST /wordle/${game.mode}`]: ok(game),
-    'GET /dictionary/search?q=dar': ok({ results: [] }),
   });
 
 describe('Peyvok’s result', () => {
@@ -152,7 +151,6 @@ describe('Peyvok while it is played', () => {
       'GET /wordle/stats': ok(STATS),
       'POST /wordle/daily': ok(playing),
       'POST /wordle/games/w1/guesses': () => new Promise((r) => (resolve = r)),
-      'GET /dictionary/search?q=dar': ok({ results: [] }),
     } as never);
     renderWithProviders(<WordleScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Daily' }));
@@ -219,5 +217,122 @@ describe('Peyvok’s board', () => {
     } finally {
       localStorage.removeItem('kurda_theme_pref_v1');
     }
+  });
+});
+
+/*
+ * The result names the word and what it means, in the reader's language, from
+ * the word card for exactly that word, which comes with the finished game; and
+ * Save to vocabulary saves it by the game, so the server keeps the word the
+ * game was about and counts it once. The dictionary used to be searched for the
+ * word afterwards, and its first hit, a different word, was shown when none was
+ * spelt exactly so.
+ */
+describe('Peyvok’s word, once the game is over', () => {
+  const card = { entryId: 'e-dar', meanings: { en: 'tree', ku: 'dar', de: 'Baum' }, saved: false };
+  const withWord = (game: ReturnType<typeof over>, word: unknown) => ({ ...game, word });
+
+  afterEach(() => localStorage.removeItem('kurda_locale_v1'));
+
+  it('shows what the word means in the reader’s language, and saves it to the vocabulary by the game', async () => {
+    localStorage.setItem('kurda_locale_v1', 'de');
+    const client = fakeClient({
+      'GET /wordle/stats': ok(STATS),
+      'POST /wordle/daily': ok(withWord(over('won'), card)),
+      'POST /wordle/games/w1/save': ok({ saved: true, scheduled: true, wordsLearned: 10 }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<WordleScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Täglich' }));
+    expect(await screen.findByText('Baum')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Zum Wortschatz hinzufügen' }));
+    const done = await screen.findByRole('button', { name: 'Zum Wortschatz hinzugefügt' });
+    expect(done.getAttribute('aria-disabled')).toBe('true');
+    // saved by the game, once, and the dictionary never searched for a word that might not be this one
+    expect(client.calls.filter((c) => c.path === '/wordle/games/w1/save')).toHaveLength(1);
+    expect(client.calls.some((c) => c.path.startsWith('/dictionary/'))).toBe(false);
+  });
+
+  it('opens a word saved before as saved, and falls back to English where the reader’s language has no meaning', async () => {
+    localStorage.setItem('kurda_locale_v1', 'nl');
+    testAuth.client = fakeClient({ 'GET /wordle/stats': ok(STATS), 'POST /wordle/daily': ok(withWord(over('won'), { ...card, saved: true })) });
+    renderWithProviders(<WordleScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Dagelijks' }));
+    expect(await screen.findByText('tree')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Toegevoegd aan je woordenschat' }).getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('never gives the word as its own meaning: a Kurmancî reader is shown the English instead', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ku');
+    testAuth.client = fakeClient({ 'GET /wordle/stats': ok(STATS), 'POST /wordle/daily': ok(withWord(over('won'), card)) });
+    renderWithProviders(<WordleScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Rojane' }));
+    const answer = await screen.findByTestId('peyvok-answer');
+    expect(within(answer).getByText('tree')).toBeTruthy();
+    expect(within(answer).getAllByText('dar')).toHaveLength(1);
+  });
+
+  it('names a word that was not found, with no meaning nobody wrote and no Save without a dictionary entry', async () => {
+    testAuth.client = fakeClient({
+      'GET /wordle/stats': ok(STATS),
+      'POST /wordle/practice': ok(withWord(over('lost', 'practice'), { entryId: null, meanings: {}, saved: false })),
+    });
+    renderWithProviders(<WordleScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Practice' }));
+    const answer = await screen.findByTestId('peyvok-answer');
+    expect(within(answer).getByText('dar')).toBeTruthy();
+    expect(within(answer).queryByText('tree')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save to vocabulary' })).toBeNull();
+  });
+
+  it('says why a save did not land, under the button, and keeps the button to try again', async () => {
+    testAuth.client = fakeClient({
+      'GET /wordle/stats': ok(STATS),
+      'POST /wordle/daily': ok(withWord(over('won'), card)),
+      'POST /wordle/games/w1/save': { ok: false, error: { kind: 'network', message: 'Network request failed' } },
+    });
+    renderWithProviders(<WordleScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Daily' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save to vocabulary' }));
+    const answer = screen.getByTestId('peyvok-answer');
+    // the reason is said where the button is, to a screen reader as well
+    await waitFor(() => expect(answer.querySelector('[aria-live="polite"]')?.textContent).toMatch(/\w/));
+    expect(screen.getByRole('button', { name: 'Save to vocabulary' }).getAttribute('aria-disabled')).not.toBe('true');
+  });
+
+  it('plays the next word at the difficulty chosen on the result: each difficulty has a daily of its own', async () => {
+    const client = fakeClient({
+      'GET /wordle/stats': ok(STATS),
+      'POST /wordle/daily': (body: unknown) => ok({ ...over('won'), difficulty: (body as { difficulty: string }).difficulty }),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<WordleScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Daily' }));
+    await screen.findByText('Solved it!');
+    fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Daily' }));
+    await waitFor(() => expect(client.calls.filter((c) => c.path === '/wordle/daily').map((c) => c.body)).toEqual([{ difficulty: 'medium' }, { difficulty: 'hard' }]));
+  });
+
+  it('shows the game asked for last, even when the one asked before answers after it', async () => {
+    let answerDaily: (answer: unknown) => void = () => undefined;
+    const playing = { ...over('won'), id: 'w3', mode: 'practice', status: 'playing', guesses: [], remainingAttempts: 6, target: null };
+    let practices = 0;
+    testAuth.client = fakeClient({
+      'GET /wordle/stats': ok(STATS),
+      'POST /wordle/practice': () => ok(practices++ === 0 ? over('lost', 'practice') : playing),
+      'POST /wordle/daily': () => new Promise((r) => (answerDaily = r)),
+    } as never);
+    renderWithProviders(<WordleScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Practice' }));
+    await screen.findByText('Out of tries.');
+    // the day’s word is slow to come; another practice word is pressed meanwhile, and comes at once
+    fireEvent.click(screen.getByRole('button', { name: 'Daily' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Practice' }));
+    expect(await screen.findByRole('button', { name: 'Enter' })).toBeTruthy();
+    await act(async () => answerDaily(ok(over('won'))));
+    expect(screen.queryByText('Solved it!')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Enter' })).toBeTruthy();
   });
 });

@@ -19,6 +19,7 @@ import {
   wordKey,
   wordLetters,
   type LastLetterBoard,
+  type LastLetterMeanings,
   type LastLetterMove,
   type LastLetterOutcome,
   type LastLetterSettings,
@@ -52,7 +53,15 @@ type Executor = Pick<pg.Pool, 'query'>;
  *
  * The meaning shown beside a word is the short English gloss of an entry an
  * admin curated for the games (`in_games`) — never a gloss nobody reviewed,
- * and never one of the dictionary's Kurdish definitions, which nobody has.
+ * and never one of the dictionary's Kurdish definitions, which nobody has —
+ * or the meanings a lesson gives a word it teaches, in every language it
+ * gives them, each short enough for a card.
+ *
+ * A word that is not there but differs from exactly one word that is only by
+ * its marks (kecik for keçik, cay for çay) is not judged at all: the move
+ * says which word it most likely was (`verdict: 'spelling'`) and the rules
+ * ask the player, who keeps the turn. Two or more such words, and the guess
+ * would be ours to make, so it is struck as any other word not found.
  *
  * Hevalo plays only curated words of the game's dialect, chosen at random among
  * those that fit, and now and then cannot think of one (more often as the chain
@@ -73,6 +82,21 @@ const MEANING_MAX = 40;
 const HEVALO_LETTERS = [3, 9] as const;
 /** The longest a typed word is kept with its move. */
 const KEEP_TYPED = 64;
+
+/** A word the course teaches: its English meaning, and every language its lesson gives it in. */
+export interface TaughtWord {
+  meaning: string | null;
+  meanings: LastLetterMeanings | null;
+}
+
+/** What the dictionary and the course say of a word a player typed. */
+export interface CheckedWord {
+  found: boolean;
+  meaning: string | null;
+  meanings: LastLetterMeanings | null;
+  /** when not found: the one known word it differs from only by its marks */
+  spelling: string | null;
+}
 
 const turnSeconds = z.custom<LastLetterTurnSeconds>((v) => (LAST_LETTER_TURN_SECONDS as readonly unknown[]).includes(v), {
   message: `one of ${LAST_LETTER_TURN_SECONDS.join(', ')}`,
@@ -133,22 +157,37 @@ const ENTRY_COLUMNS = `e.headword, e.in_games,
  * Whether `key` (a word in the dialect's letters) is a word a chain takes, and
  * the meaning to show with it. One indexed lookup (`headword_folded`) over the
  * spellings the dictionary may hold it under; every candidate is then compared
- * in the dialect's own letters.
+ * in the dialect's own letters. The same lookup holds the words that differ
+ * from it only by their marks, so a word not found is checked for being one
+ * of those (`spelling`) at no extra cost.
  */
-export async function checkWord(db: Executor, dialect: LetterDialect, key: string): Promise<{ found: boolean; meaning: string | null }> {
+export async function checkWord(db: Executor, dialect: LetterDialect, key: string): Promise<CheckedWord> {
   const keys = [...new Set(lookupSpellings(dialect, key).map((s) => dictionaryKey(s)))];
   const res = await db.query<EntryRow>(
     `SELECT ${ENTRY_COLUMNS} FROM dict_entries e WHERE e.headword_folded = ANY($1::text[]) AND e.dialect = $2 LIMIT 40`,
     [keys, dictionaryDialect(dialect)],
   );
+  const taught = await courseWords(db, dialect);
   const fit = res.rows.filter((e) => usable(dialect, key, e));
   if (fit.length > 0) {
     const meaning = meaningOf(fit);
-    // a word the dictionary has but nobody glossed for the games still shows the meaning its lesson gives it
-    return { found: true, meaning: meaning ?? (await courseWords(db, dialect)).get(key) ?? null };
+    // a word the dictionary has but nobody glossed for the games still shows the meanings its lesson gives it
+    const lesson = taught.get(key);
+    if (meaning) return { found: true, meaning, meanings: { ...(lesson?.meanings ?? {}), en: meaning }, spelling: null };
+    return { found: true, meaning: lesson?.meaning ?? null, meanings: lesson?.meanings ?? null, spelling: null };
   }
-  const taught = await courseWords(db, dialect);
-  return taught.has(key) ? { found: true, meaning: taught.get(key) ?? null } : { found: false, meaning: null };
+  const lesson = taught.get(key);
+  if (lesson) return { found: true, meaning: lesson.meaning, meanings: lesson.meanings, spelling: null };
+  // not a word: is it one word with a mark left off?
+  const folded = new Set(keys);
+  const near = new Set<string>();
+  for (const e of res.rows) {
+    const other = wordKey(dialect, e.headword);
+    if (other && other !== key && usable(dialect, other, e)) near.add(other);
+  }
+  for (const other of taught.keys()) if (other !== key && folded.has(dictionaryKey(other))) near.add(other);
+  const only = near.size === 1 ? [...near][0]! : null;
+  return { found: false, meaning: null, meanings: null, spelling: only && !filterText(only).flagged ? only : null };
 }
 
 /**
@@ -161,14 +200,14 @@ export async function checkWord(db: Executor, dialect: LetterDialect, key: strin
  * somebody types. A card published or taken down shows within that minute.
  */
 const COURSE_WORDS_MS = 60_000;
-const courseWordsKept = new Map<LetterDialect, { at: number; words: Promise<Map<string, string | null>> }>();
+const courseWordsKept = new Map<LetterDialect, { at: number; words: Promise<Map<string, TaughtWord>> }>();
 
 /** Read the cards again on the next ask (for the tests, which publish a card and play it at once). */
 export function forgetCourseWords(): void {
   courseWordsKept.clear();
 }
 
-export function courseWords(db: Executor, dialect: LetterDialect, now: number = Date.now()): Promise<Map<string, string | null>> {
+export function courseWords(db: Executor, dialect: LetterDialect, now: number = Date.now()): Promise<Map<string, TaughtWord>> {
   const kept = courseWordsKept.get(dialect);
   if (kept && now - kept.at < COURSE_WORDS_MS) return kept.words;
   const words = readCourseWords(db, dialect);
@@ -180,18 +219,23 @@ export function courseWords(db: Executor, dialect: LetterDialect, now: number = 
   return words;
 }
 
-async function readCourseWords(db: Executor, dialect: LetterDialect): Promise<Map<string, string | null>> {
-  const res = await db.query<{ word: string; en: string | null }>(
-    `SELECT payload->>'word' AS word, payload->'meanings'->>'en' AS en FROM game_content
+async function readCourseWords(db: Executor, dialect: LetterDialect): Promise<Map<string, TaughtWord>> {
+  const res = await db.query<{ word: string; meanings: Record<string, unknown> | null }>(
+    `SELECT payload->>'word' AS word, payload->'meanings' AS meanings FROM game_content
       WHERE kind = 'word_card' AND dialect = $1 AND status = 'published' AND review_status = 'approved'`,
     [dialect],
   );
-  const out = new Map<string, string | null>();
+  const out = new Map<string, TaughtWord>();
   for (const row of res.rows) {
     const key = typeof row.word === 'string' ? wordKey(dialect, row.word) : null;
     if (!key || isProperNoun(dialect, row.word) || filterText(key).flagged || out.has(key)) continue;
-    const en = row.en?.trim() ?? '';
-    out.set(key, en.length > 0 && en.length <= MEANING_MAX ? en : null);
+    // each language's meaning that fits on a card; one that explains rather than translates is left out
+    const meanings: LastLetterMeanings = {};
+    for (const [lang, text] of Object.entries(row.meanings ?? {})) {
+      const t = typeof text === 'string' ? text.trim() : '';
+      if (t.length > 0 && t.length <= MEANING_MAX) meanings[lang] = t;
+    }
+    out.set(key, { meaning: meanings.en ?? null, meanings: Object.keys(meanings).length > 0 ? meanings : null });
   }
   return out;
 }
@@ -216,7 +260,8 @@ export async function hevaloWord(db: Executor, state: LastLetterState): Promise<
     if (!key || used.has(key) || isProperNoun(dialect, e.headword)) continue;
     if (required && !beginsWith(dialect, key, required)) continue;
     if (!usable(dialect, key, e) || filterText(key).flagged) continue;
-    return { key, verdict: 'ok', meaning: meaningOf([e]) };
+    const meaning = meaningOf([e]);
+    return { key, verdict: 'ok', meaning, meanings: meaning ? { en: meaning } : null };
   }
   // no curated word fits: one the course teaches, of the same size, chosen at random among those that fit
   const taught = [...(await courseWords(db, dialect))].filter(([key]) => {
@@ -224,7 +269,7 @@ export async function hevaloWord(db: Executor, state: LastLetterState): Promise<
     return letters >= HEVALO_LETTERS[0] && letters <= HEVALO_LETTERS[1] && !used.has(key) && (!required || beginsWith(dialect, key, required));
   });
   const pick = taught[Math.floor(Math.random() * taught.length)];
-  return pick ? { key: pick[0], verdict: 'ok', meaning: pick[1] } : null;
+  return pick ? { key: pick[0], verdict: 'ok', meaning: pick[1].meaning, meanings: pick[1].meanings } : null;
 }
 
 /**
@@ -270,13 +315,20 @@ export const lastLetterModule: GameModule<LastLetterState, LastLetterMove, LastL
     const key = wordKey(state.dialect, raw.word);
     if (key === null) return { move: { key: null, verdict: 'not-a-word', meaning: null }, text: typed };
     if (filterText(key).flagged) return { move: { key, verdict: 'not-allowed', meaning: null }, text: typed, offense: true };
-    // the rules strike a wrong letter or a repeat whatever the dictionary says: no lookup for those
+    // the rules strike a wrong letter or a repeat whatever the dictionary says: no lookup for those, except a wrong
+    // letter that is the right one with a mark left off (cay when ç is asked for), which may be a spelling slip
     const required = requiredLetter(state);
-    if ((required !== null && !beginsWith(state.dialect, key, required)) || state.chain.some((w) => w.word === key)) {
+    const wrongLetter = required !== null && !beginsWith(state.dialect, key, required);
+    const slipOfMark = wrongLetter && dictionaryKey(Array.from(key)[0] ?? '') === dictionaryKey(required!);
+    if ((wrongLetter && !slipOfMark) || state.chain.some((w) => w.word === key)) {
       return { move: { key, verdict: 'ok', meaning: null }, text: typed };
     }
-    const { found, meaning } = await checkWord(db, state.dialect, key);
-    return { move: { key, verdict: found ? 'ok' : 'not-a-word', meaning }, text: typed };
+    const checked = await checkWord(db, state.dialect, key);
+    if (!checked.found && checked.spelling) {
+      return { move: { key, verdict: 'spelling', meaning: null, suggestion: checked.spelling }, text: typed };
+    }
+    if (wrongLetter) return { move: { key, verdict: 'ok', meaning: null }, text: typed };
+    return { move: { key, verdict: checked.found ? 'ok' : 'not-a-word', meaning: checked.meaning, meanings: checked.meanings }, text: typed };
   },
 
   bot(db, state) {

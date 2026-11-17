@@ -45,6 +45,7 @@ import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
 import { WhoAmICouch, useCouchOffer } from './WhoAmICouch';
 import {
+  AnswerButtons,
   ForeheadCard,
   Foreheads,
   GuessTiles,
@@ -52,10 +53,9 @@ import {
   QuestionDeck,
   ScoringNote,
   VerdictCard,
-  YesNoButtons,
+  answerWord,
   kindOf,
   listed,
-  yesNo,
   type TableSeat,
 } from './WhoAmIStage';
 
@@ -76,7 +76,9 @@ const END_KEY: Record<NonNullable<WhoAmITableBoard['endedBy']>, TranslationKey> 
 /**
  * Who Am I? on the phone: everyone wears a Kurdish word on their forehead
  * that the others can read and they cannot, and finds out who they are by
- * asking yes/no questions in Kurdish. Never played alone.
+ * asking yes/no questions in Kurdish. The friends who read the card answer
+ * yes, could be, no or not sure, and the card's own answer is the judge of
+ * theirs. Never played alone.
  *
  * Without an id, the start: the night stage with the hidden deer, what the
  * game is in two short sentences, and its two ways, each offered only where
@@ -297,6 +299,9 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
   const [missed, setMissed] = useState<string | null>(null);
   // the moment of the game at which the reader last said they know who they are: the tiles are open for that moment only
   const [knowsAt, setKnowsAt] = useState<string | null>(null);
+  // the questions this reader has said look wrong on a card, by seat and question: the same verdict is drawn twice, loud
+  // while it is decided on and quiet after, and the thank-you stays a thank-you in both
+  const [reported, setReported] = useState<readonly string[]>([]);
   const board = view.board;
   if (!board || board.turn === null) return null;
   const me = view.me?.seat ?? null;
@@ -410,16 +415,29 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
     ) : acting ? (
       <ClayButton label={t('games.whoAmI.iKnow')} tone="primary" size="large" disabled={busy} onPress={() => setKnowsAt(moment)} />
     ) : null;
-  /** What the card said to the last question, and how each friend answered: loud while it is decided on, quiet after. */
+  // The asker's card is theirs to read only once it is off their forehead: a reader who could see it may say its answer
+  // looks wrong, and the asker, who could not, is not asked to.
+  const readsCard = !!told && me !== null && (told.seat !== me || mine?.identity != null);
+  const reportKey = told ? `${told.seat}:${told.question.id}` : '';
+  /** What the card said to the last question, and how each friend's answer went by it: loud while it is decided on, quiet after. */
   const verdict = (quiet: boolean): React.JSX.Element | null =>
     told ? (
       <VerdictCard
         dialect={dialect}
         heading={told.seat === me ? t('games.whoAmI.yourQuestion') : t('games.whoAmI.asks', { name: name(told.seat) })}
         question={told.question}
-        truth={told.truth}
-        answers={told.answers.map((a) => ({ seat: a.seat, name: name(a.seat), yes: a.yes, right: a.right }))}
+        verdict={told.verdict}
+        answers={told.answers.map((a) => ({ seat: a.seat, name: name(a.seat), says: a.says, mark: a.mark }))}
         quiet={quiet}
+        report={
+          readsCard
+            ? {
+                body: { game: view.id, seat: told.seat, question: told.question.id },
+                done: reported.includes(reportKey),
+                onDone: () => setReported((r) => [...r, reportKey]),
+              }
+            : null
+        }
       />
     ) : null;
   // with every question asked there is nothing to wait for: the turn is a guess, and the banner says so
@@ -475,10 +493,10 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
               </View>
             ) : null}
             {toAnswer ? (
-              <YesNoButtons dialect={dialect} disabled={busy} onAnswer={(yes) => void act({ kind: 'answer', yes })} />
+              <AnswerButtons dialect={dialect} answers={board.answers} disabled={busy} onAnswer={(says) => void act({ kind: 'answer', says })} />
             ) : answered ? (
               <Text accessibilityLiveRegion="polite" style={[styles.line, { color: colors.textPrimary }]}>
-                {pending.mine === null ? t('games.whoAmI.wait.answer.done') : t('games.whoAmI.youSaid', { answer: yesNo(dialect, pending.mine, t) })}
+                {pending.says === null ? t('games.whoAmI.wait.answer.done') : t('games.whoAmI.youSaid', { answer: answerWord(dialect, pending.says, t) })}
               </Text>
             ) : null}
           </View>
@@ -518,7 +536,7 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
 
       {/* the last question stays on the table while the next turn is chosen, for whoever missed what the card said */}
       {phase === 'ask' ? verdict(true) : null}
-      <ScoringNote />
+      <ScoringNote answers={board.answers} />
     </View>
   );
 }

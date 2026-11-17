@@ -43,15 +43,9 @@ import {
 import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
 import { useDirection } from '../reports/direction';
-
-const DIALECTS: readonly Dialect[] = ['kurmanci', 'sorani'];
-
-/**
- * A dialect is called by its own name in every language, the way a language is.
- * Not a catalogue entry: translating "Kurmancî" into Kurmancî nine times is how
- * you end up with nine spellings of one word.
- */
-const DIALECT_NAME: Record<Dialect, string> = { kurmanci: 'Kurmancî', sorani: 'Soranî' };
+import { useCourseDialect } from '../learn/courseDialect';
+import { MissedRhymes, wordDirection } from '../wordle/WordAnswer';
+import { DIALECT_NAME, RHYME_DIALECTS, isRhymeOffered, openingRhymeDialect, useRhymeOffered } from './availability';
 
 const REJECT_KEY: Record<RhymeReject, TranslationKey> = {
   'not-a-word': 'games.rhyme.reject.notAWord',
@@ -59,6 +53,8 @@ const REJECT_KEY: Record<RhymeReject, TranslationKey> = {
   'already-used': 'games.rhyme.reject.alreadyUsed',
   'no-rhyme': 'games.rhyme.reject.noRhyme',
   profane: 'games.rhyme.reject.profane',
+  // an ending doing all the rhyming (malan for baran) has no sentence of its own yet: the general one says it fairly
+  inflected: 'games.rhyme.reject.other',
   'window-closed': 'games.rhymeMatch.timeUpMatch',
 };
 
@@ -80,6 +76,12 @@ const TICK_MS = 200;
  * Going back from the lobby leaves it (play/backOut), asked first; the host
  * can take a player out by seat; and Android's back while the clock runs asks
  * before it leaves the round.
+ *
+ * A match is made in the learner's own variety when matches are offered in it
+ * (availability.ts); one without enough prompts yet is marked coming soon and
+ * says so in place of Create, where it used to fail with "no words". The
+ * prompt and the rhymes are written in the match's own direction, and the
+ * results end with the rhymes nobody at the table found, with their meanings.
  */
 export function RhymeMatchScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -108,9 +110,14 @@ export function RhymeMatchScreen({ id: initialId, onExit }: { id?: string; onExi
 function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
-  const [dialect, setDialect] = useState<Dialect>('kurmanci');
+  const offered = useRhymeOffered();
+  const course = useCourseDialect();
+  // the learner's own variety where matches are offered in it, until the host picks one
+  const [picked, setPicked] = useState<Dialect | null>(null);
+  const dialect = picked ?? openingRhymeDialect(offered, course, locale);
+  const canCreate = isRhymeOffered(offered, dialect);
   const [rated, setRated] = useRatedChoice('rhyme-match');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,26 +141,38 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
           <Text style={[styles.label, dir.text, { color: colors.textSecondary }]}>{t('games.dialect')}</Text>
           <View style={styles.stretch}>
             <Segmented<Dialect>
-              options={DIALECTS}
+              options={RHYME_DIALECTS}
               value={dialect}
-              onChange={setDialect}
-              labelOf={(d) => DIALECT_NAME[d]}
+              onChange={(d) => {
+                setPicked(d);
+                setError(null);
+              }}
+              labelOf={(d) => (isRhymeOffered(offered, d) ? DIALECT_NAME[d] : `${DIALECT_NAME[d]} · ${t('games.comingSoon')}`)}
+              groupLabel={t('games.dialect')}
+              wrap
             />
           </View>
           {/* Rated or Friendly, before the room exists: the host can still change it in the lobby */}
           <View style={styles.stretch}>
             <RatedChoice value={rated} onChange={setRated} />
           </View>
-          <ClayButton
-            label={t('games.rhymeMatch.create')}
-            // working on it: the button turns and takes no second press, and a screen reader is told what it is doing
-            accessibilityLabel={busy ? t('games.creating') : undefined}
-            busy={busy}
-            icon="play"
-            tone="primary"
-            onPress={() => void create()}
-            style={styles.stretch}
-          />
+          {/* a variety with no matches yet says so where Create would be: nothing to press that cannot work */}
+          {canCreate ? (
+            <ClayButton
+              label={t('games.rhymeMatch.create')}
+              // working on it: the button turns and takes no second press, and a screen reader is told what it is doing
+              accessibilityLabel={busy ? t('games.creating') : undefined}
+              busy={busy}
+              icon="play"
+              tone="primary"
+              onPress={() => void create()}
+              style={styles.stretch}
+            />
+          ) : (
+            <Text style={[styles.blurb, styles.stretch, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+              {t('games.rhyme.notOffered')}
+            </Text>
+          )}
           {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
         </View>
       </GlassCard>
@@ -438,6 +457,8 @@ function MatchRoom({
                   </View>
                 ))}
               </View>
+              {/* what nobody at the table found, each with its meaning: the next match goes better for it */}
+              <MissedRhymes hints={results.missed} dialect={results.dialect} tone="card" />
             </>
           ) : (
             <Loading />
@@ -468,7 +489,7 @@ function MatchRoom({
       <View style={styles.stage}>
         <View>
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.rhyme.rhymeWith')}</Text>
-          <Text style={[styles.prompt, { color: colors.textPrimary }]}>{match.prompt}</Text>
+          <Text style={[styles.prompt, wordDirection(match.dialect), { color: colors.textPrimary }]}>{match.prompt}</Text>
         </View>
         <Text
           accessibilityLabel={t('games.timeLeft')}
@@ -524,7 +545,7 @@ function MatchRoom({
         <View style={styles.found} accessibilityLabel={t('games.rhyme.foundList')}>
           {found.map((f, i) => (
             <View key={`${f.word}-${i}`} style={[styles.foundRow, { backgroundColor: colors.controlTrack }]}>
-              <Text style={[styles.foundWord, { color: colors.textPrimary }]}>{f.word}</Text>
+              <Text style={[styles.foundWord, wordDirection(match.dialect), { color: colors.textPrimary }]}>{f.word}</Text>
               <View style={styles.foundMeta}>
                 <Text style={[styles.foundQuality, { color: f.quality === 'perfect' ? colors.success : colors.goldText }]}>
                   {t(f.quality === 'perfect' ? 'games.rhyme.quality.perfect' : 'games.rhyme.quality.near')}

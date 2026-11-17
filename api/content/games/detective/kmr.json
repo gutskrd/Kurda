@@ -1,0 +1,4245 @@
+{
+  "cases": [
+    {
+      "slug": "kmr-renge-zer",
+      "dialect": "kmr",
+      "level": 2,
+      "title": {
+        "en": "The yellow window",
+        "ku": "Pencereya zer",
+        "ckb": "پەنجەرە زەردەکە",
+        "de": "Das gelbe Fenster",
+        "es": "La ventana amarilla",
+        "tr": "Sarı pencere",
+        "ar": "النافذة الصفراء",
+        "fr": "La fenêtre jaune",
+        "nl": "Het gele raam"
+      },
+      "intro": {
+        "en": "There is fresh yellow paint on Hamo’s window. Who painted it? Read the cards, answer each question, then say who did it.",
+        "ku": "Li ser pencereya Hamo rengekî zer ê nû heye. Kê ew boyax kir? Li kartan binêre, bersiva her pirsê bide, paşê bibêje kê kir.",
+        "ckb": "ڕەنگێکی زەردی تازە لەسەر پەنجەرەکەی حەمۆیە. کێ بۆیاخی کرد؟ کارتەکان بخوێنەوە، وەڵامی هەر پرسیارێک بدەرەوە، پاشان بڵێ کێ کردی.",
+        "de": "An Hamos Fenster ist frische gelbe Farbe. Wer hat sie aufgetragen? Lies die Karten, beantworte jede Frage und sag dann, wer es war.",
+        "es": "Hay pintura amarilla fresca en la ventana de Hamo. ¿Quién la pintó? Lee las tarjetas, responde cada pregunta y di quién fue.",
+        "tr": "Hamo’nun penceresinde taze sarı boya var. Kim boyadı? Kartları oku, her soruyu yanıtla, sonra kimin yaptığını söyle.",
+        "ar": "على نافذة حمو طلاءٌ أصفر جديد. من طلاها؟ اقرأ البطاقات، وأجب عن كل سؤال، ثم قل من فعلها.",
+        "fr": "Il y a de la peinture jaune toute fraîche sur la fenêtre de Hamo. Qui l’a peinte ? Lis les cartes, réponds à chaque question, puis dis qui l’a fait.",
+        "nl": "Er zit verse gele verf op Hamo’s raam. Wie heeft het geverfd? Lees de kaarten, beantwoord elke vraag en zeg dan wie het was."
+      },
+      "suspects": [
+        {
+          "id": "hevalo",
+          "name": "Hevalo",
+          "about": {
+            "en": "The young deer, who loves apples.",
+            "ku": "Askê ciwan, ku ji sêvan hez dike.",
+            "ckb": "ئاسکە گەنجەکە، کە حەزی لە سێوە.",
+            "de": "Das junge Reh, das Äpfel liebt.",
+            "es": "El cervatillo, al que le encantan las manzanas.",
+            "tr": "Elmayı çok seven genç geyik.",
+            "ar": "الغزال الصغير الذي يحب التفاح.",
+            "fr": "Le jeune chevreuil, qui adore les pommes.",
+            "nl": "Het jonge hertje, dat dol is op appels."
+          },
+          "portrait": "hevalo"
+        },
+        {
+          "id": "kucik",
+          "name": "Kûçikê reş",
+          "about": {
+            "en": "The black dog of the street.",
+            "ku": "Kûçikê reş ê kolanê.",
+            "ckb": "سەگە ڕەشەکەی کۆڵانەکە.",
+            "de": "Der schwarze Hund aus der Straße.",
+            "es": "El perro negro de la calle.",
+            "tr": "Sokağın kara köpeği.",
+            "ar": "الكلب الأسود في الحي.",
+            "fr": "Le chien noir de la rue.",
+            "nl": "De zwarte hond uit de straat."
+          }
+        },
+        {
+          "id": "bizin",
+          "name": "Bizina spî",
+          "about": {
+            "en": "Dapîr Şemsê’s white goat.",
+            "ku": "Bizina spî ya Dapîr Şemsê.",
+            "ckb": "بزنە سپییەکەی داپیرە شەمسێ.",
+            "de": "Die weiße Ziege von Oma Şemsê.",
+            "es": "La cabra blanca de la abuela Şemsê.",
+            "tr": "Şemsê Nine’nin beyaz keçisi.",
+            "ar": "عنزة الجدة شمسێ البيضاء.",
+            "fr": "La chèvre blanche de mamie Şemsê.",
+            "nl": "De witte geit van oma Şemsê."
+          }
+        },
+        {
+          "id": "hevi",
+          "name": "Hêvî",
+          "about": {
+            "en": "Baran’s little sister, from next door.",
+            "ku": "Xwişka biçûk a Baran, ji mala cîran.",
+            "ckb": "خوشکە بچووکەکەی باران، لە ماڵی دراوسێوە.",
+            "de": "Barans kleine Schwester von nebenan.",
+            "es": "La hermana pequeña de Baran, la vecina.",
+            "tr": "Yan evden Baran’ın küçük kız kardeşi.",
+            "ar": "أخت باران الصغيرة، من بيت الجيران.",
+            "fr": "La petite sœur de Baran, la voisine.",
+            "nl": "Het zusje van Baran, van hiernaast."
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "zer",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu03s2l4a",
+            "en": "Look! There’s some yellow on the window.",
+            "meanings": {
+              "ckb": "سەیر کە! ڕەنگێکی زەرد لەسەر پەنجەرەکەیە.",
+              "de": "Schau! Am Fenster ist etwas Gelbes.",
+              "es": "¡Mira! Hay algo amarillo en la ventana.",
+              "tr": "Bak! Pencerede biraz sarı var.",
+              "ar": "انظر! على النافذة شيءٌ أصفر.",
+              "fr": "Regarde ! Il y a du jaune sur la fenêtre.",
+              "nl": "Kijk! Er zit wat geel op het raam."
+            }
+          }
+        },
+        {
+          "id": "nu",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu03s2l4a",
+            "en": "That paint is fresh!",
+            "meanings": {
+              "ckb": "ئەم ڕەنگە تازەیە!",
+              "de": "Die Farbe ist frisch!",
+              "es": "¡Esa pintura está fresca!",
+              "tr": "Bu boya taze!",
+              "ar": "هذا الطلاء جديد!",
+              "fr": "Cette peinture est fraîche !",
+              "nl": "Die verf is nog nat!"
+            }
+          }
+        },
+        {
+          "id": "sev",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu03s2l4a",
+            "en": "It isn’t Hevalo. Hevalo wants apples, not paint.",
+            "meanings": {
+              "ckb": "هەڤاڵۆ نییە. هەڤاڵۆ سێوی دەوێت، نەک ڕەنگ.",
+              "de": "Es ist nicht Hevalo. Hevalo will Äpfel, keine Farbe.",
+              "es": "No es Hevalo. Hevalo quiere manzanas, no pintura.",
+              "tr": "Hevalo değil. Hevalo elma ister, boya değil.",
+              "ar": "ليس هيفالو. هيفالو يريد التفاح، لا الطلاء.",
+              "fr": "Ce n’est pas Hevalo. Hevalo veut des pommes, pas de la peinture.",
+              "nl": "Het is Hevalo niet. Hevalo wil appels, geen verf."
+            }
+          }
+        },
+        {
+          "id": "nexse",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu03s2l4a",
+            "en": "No. The goat wants maps, not paint!",
+            "meanings": {
+              "ckb": "نا. بزنەکە نەخشەی دەوێت، نەک ڕەنگ!",
+              "de": "Nein. Die Ziege will Landkarten, keine Farbe!",
+              "es": "No. ¡La cabra quiere mapas, no pintura!",
+              "tr": "Hayır. Keçi harita ister, boya değil!",
+              "ar": "لا. العنزة تريد الخرائط، لا الطلاء!",
+              "fr": "Non. La chèvre veut des cartes, pas de la peinture !",
+              "nl": "Nee. De geit wil landkaarten, geen verf!"
+            }
+          }
+        },
+        {
+          "id": "hewse",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu03s2l4a",
+            "en": "Look, Baran’s sister is in the yard.",
+            "meanings": {
+              "ckb": "سەیر کە، خوشکەکەی باران لە حەوشەکەیە.",
+              "de": "Schau, Barans Schwester ist im Hof.",
+              "es": "Mira, la hermana de Baran está en el patio.",
+              "tr": "Bak, Baran’ın kız kardeşi avluda.",
+              "ar": "انظر، أخت باران في الفناء.",
+              "fr": "Regarde, la sœur de Baran est dans la cour.",
+              "nl": "Kijk, Barans zus is op het erf."
+            }
+          }
+        },
+        {
+          "id": "ser",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu03s2l4a",
+            "en": "Hêvî? Yes, and there’s yellow on her too!",
+            "meanings": {
+              "ckb": "هێڤی؟ بەڵێ، ئەویش ڕەنگی زەردی لەسەرە!",
+              "de": "Hêvî? Ja, und an ihr ist auch Gelb!",
+              "es": "¿Hêvî? ¡Sí, y ella también tiene amarillo encima!",
+              "tr": "Hêvî mi? Evet, onun üstünde de sarı var!",
+              "ar": "هێڤي؟ نعم، وعليها أيضًا شيءٌ أصفر!",
+              "fr": "Hêvî ? Oui, et elle a du jaune sur elle aussi !",
+              "nl": "Hêvî? Ja, en er zit ook geel op haar!"
+            }
+          }
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "What is on the window?",
+            "ku": "Li ser pencereyê çi heye?",
+            "ckb": "چی لەسەر پەنجەرەکەیە؟",
+            "de": "Was ist am Fenster?",
+            "es": "¿Qué hay en la ventana?",
+            "tr": "Pencerede ne var?",
+            "ar": "ماذا على النافذة؟",
+            "fr": "Qu’y a-t-il sur la fenêtre ?",
+            "nl": "Wat zit er op het raam?"
+          },
+          "options": [
+            {
+              "en": "Yellow paint",
+              "ku": "Rengê zer",
+              "ckb": "ڕەنگی زەرد",
+              "de": "Gelbe Farbe",
+              "es": "Pintura amarilla",
+              "tr": "Sarı boya",
+              "ar": "طلاء أصفر",
+              "fr": "De la peinture jaune",
+              "nl": "Gele verf"
+            },
+            {
+              "en": "Snow",
+              "ku": "Berf",
+              "ckb": "بەفر",
+              "de": "Schnee",
+              "es": "Nieve",
+              "tr": "Kar",
+              "ar": "ثلج",
+              "fr": "De la neige",
+              "nl": "Sneeuw"
+            },
+            {
+              "en": "An apple",
+              "ku": "Sêvek",
+              "ckb": "سێوێک",
+              "de": "Ein Apfel",
+              "es": "Una manzana",
+              "tr": "Bir elma",
+              "ar": "تفاحة",
+              "fr": "Une pomme",
+              "nl": "Een appel"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "zer",
+            "nu"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What does Hevalo want?",
+            "ku": "Hevalo çi dixwaze?",
+            "ckb": "هەڤاڵۆ چی دەوێت؟",
+            "de": "Was will Hevalo?",
+            "es": "¿Qué quiere Hevalo?",
+            "tr": "Hevalo ne istiyor?",
+            "ar": "ماذا يريد هيفالو؟",
+            "fr": "Que veut Hevalo ?",
+            "nl": "Wat wil Hevalo?"
+          },
+          "options": [
+            {
+              "en": "Apples, not paint",
+              "ku": "Sêv, ne reng",
+              "ckb": "سێو، نەک ڕەنگ",
+              "de": "Äpfel, keine Farbe",
+              "es": "Manzanas, no pintura",
+              "tr": "Elma, boya değil",
+              "ar": "التفاح، لا الطلاء",
+              "fr": "Des pommes, pas de peinture",
+              "nl": "Appels, geen verf"
+            },
+            {
+              "en": "Paint, not apples",
+              "ku": "Reng, ne sêv",
+              "ckb": "ڕەنگ، نەک سێو",
+              "de": "Farbe, keine Äpfel",
+              "es": "Pintura, no manzanas",
+              "tr": "Boya, elma değil",
+              "ar": "الطلاء، لا التفاح",
+              "fr": "De la peinture, pas de pommes",
+              "nl": "Verf, geen appels"
+            },
+            {
+              "en": "Maps",
+              "ku": "Nexşe",
+              "ckb": "نەخشە",
+              "de": "Landkarten",
+              "es": "Mapas",
+              "tr": "Harita",
+              "ar": "خرائط",
+              "fr": "Des cartes",
+              "nl": "Landkaarten"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "sev"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What does the white goat want?",
+            "ku": "Bizina spî çi dixwaze?",
+            "ckb": "بزنە سپییەکە چی دەوێت؟",
+            "de": "Was will die weiße Ziege?",
+            "es": "¿Qué quiere la cabra blanca?",
+            "tr": "Beyaz keçi ne istiyor?",
+            "ar": "ماذا تريد العنزة البيضاء؟",
+            "fr": "Que veut la chèvre blanche ?",
+            "nl": "Wat wil de witte geit?"
+          },
+          "options": [
+            {
+              "en": "Maps, not paint",
+              "ku": "Nexşe, ne reng",
+              "ckb": "نەخشە، نەک ڕەنگ",
+              "de": "Landkarten, keine Farbe",
+              "es": "Mapas, no pintura",
+              "tr": "Harita, boya değil",
+              "ar": "الخرائط، لا الطلاء",
+              "fr": "Des cartes, pas de peinture",
+              "nl": "Landkaarten, geen verf"
+            },
+            {
+              "en": "Yellow paint",
+              "ku": "Rengê zer",
+              "ckb": "ڕەنگی زەرد",
+              "de": "Gelbe Farbe",
+              "es": "Pintura amarilla",
+              "tr": "Sarı boya",
+              "ar": "طلاء أصفر",
+              "fr": "De la peinture jaune",
+              "nl": "Gele verf"
+            },
+            {
+              "en": "Fresh bread",
+              "ku": "Nanê germ",
+              "ckb": "نانی گەرم",
+              "de": "Frisches Brot",
+              "es": "Pan recién hecho",
+              "tr": "Taze ekmek",
+              "ar": "خبز طازج",
+              "fr": "Du pain frais",
+              "nl": "Vers brood"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "nexse"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Who is in the yard?",
+            "ku": "Kî li hewşê ye?",
+            "ckb": "کێ لە حەوشەکەیە؟",
+            "de": "Wer ist im Hof?",
+            "es": "¿Quién está en el patio?",
+            "tr": "Avluda kim var?",
+            "ar": "من في الفناء؟",
+            "fr": "Qui est dans la cour ?",
+            "nl": "Wie is er op het erf?"
+          },
+          "options": [
+            {
+              "en": "Baran’s sister",
+              "ku": "Xwişka Baran",
+              "ckb": "خوشکەکەی باران",
+              "de": "Barans Schwester",
+              "es": "La hermana de Baran",
+              "tr": "Baran’ın kız kardeşi",
+              "ar": "أخت باران",
+              "fr": "La sœur de Baran",
+              "nl": "Barans zus"
+            },
+            {
+              "en": "Dapîr Şemsê",
+              "ku": "Dapîr Şemsê",
+              "ckb": "داپیرە شەمسێ",
+              "de": "Oma Şemsê",
+              "es": "La abuela Şemsê",
+              "tr": "Şemsê Nine",
+              "ar": "الجدة شمسێ",
+              "fr": "Mamie Şemsê",
+              "nl": "Oma Şemsê"
+            },
+            {
+              "en": "Nobody",
+              "ku": "Kes",
+              "ckb": "هیچ کەس",
+              "de": "Niemand",
+              "es": "Nadie",
+              "tr": "Kimse",
+              "ar": "لا أحد",
+              "fr": "Personne",
+              "nl": "Niemand"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "hewse",
+            "ser"
+          ]
+        }
+      ],
+      "culprit": "hevi",
+      "solution": {
+        "en": "The paint on the window is fresh. Hevalo wants apples and the goat wants maps, not paint. But Hêvî, in the yard, has yellow on her too: Hêvî painted the window. Well done, Hêvî! It’s a lovely colour.",
+        "ku": "Rengê li ser pencereyê nû ye. Hevalo sêvan dixwaze û bizin nexşeyan, ne reng. Lê Hêvî li hewşê ye, û rengê zer li ser wê jî heye: Hêviyê pencere boyax kir. Aferîn, Hêvî! Rengekî xweş e.",
+        "ckb": "ڕەنگەکەی سەر پەنجەرەکە تازەیە. هەڤاڵۆ سێوی دەوێت و بزنەکە نەخشەی دەوێت، نەک ڕەنگ. بەڵام هێڤی لە حەوشەکەیە و ڕەنگی زەردیشی لەسەرە: هێڤی پەنجەرەکەی بۆیاخ کرد. دەستت خۆش بێت، هێڤی! ڕەنگێکی جوانە.",
+        "de": "Die Farbe am Fenster ist frisch. Hevalo will Äpfel und die Ziege Landkarten, keine Farbe. Aber Hêvî im Hof hat auch Gelb an sich: Hêvî hat das Fenster gestrichen. Gut gemacht, Hêvî! Eine schöne Farbe.",
+        "es": "La pintura de la ventana está fresca. Hevalo quiere manzanas y la cabra mapas, no pintura. Pero Hêvî, en el patio, también tiene amarillo encima: Hêvî pintó la ventana. ¡Bien hecho, Hêvî! Es un color precioso.",
+        "tr": "Penceredeki boya taze. Hevalo elma, keçi de harita istiyor, boya değil. Ama avludaki Hêvî’nin üstünde de sarı var: pencereyi Hêvî boyadı. Aferin Hêvî! Çok güzel bir renk.",
+        "ar": "الطلاء على النافذة جديد. هيفالو يريد التفاح والعنزة تريد الخرائط، لا الطلاء. لكن هێڤي في الفناء وعليها أيضًا أصفر: هێڤي طلت النافذة. أحسنتِ يا هێڤي! إنه لون جميل.",
+        "fr": "La peinture de la fenêtre est fraîche. Hevalo veut des pommes et la chèvre des cartes, pas de la peinture. Mais Hêvî, dans la cour, a du jaune sur elle aussi : c’est Hêvî qui a peint la fenêtre. Bravo, Hêvî ! C’est une jolie couleur.",
+        "nl": "De verf op het raam is nog nat. Hevalo wil appels en de geit landkaarten, geen verf. Maar Hêvî, op het erf, heeft ook geel op zich: Hêvî heeft het raam geverfd. Goed gedaan, Hêvî! Het is een mooie kleur."
+      },
+      "hints": [
+        {
+          "en": "Two suspects want something else, not paint.",
+          "ku": "Du gumanbar tiştekî din dixwazin, ne reng.",
+          "ckb": "دوو گومانلێکراو شتێکی تریان دەوێت، نەک ڕەنگ.",
+          "de": "Zwei Verdächtige wollen etwas anderes, keine Farbe.",
+          "es": "Dos sospechosos quieren otra cosa, no pintura.",
+          "tr": "İki şüpheli boya değil, başka bir şey istiyor.",
+          "ar": "مشتبهان اثنان يريدان شيئًا آخر، لا الطلاء.",
+          "fr": "Deux suspects veulent autre chose que de la peinture.",
+          "nl": "Twee verdachten willen iets anders, geen verf."
+        },
+        {
+          "en": "Look for someone with paint on them.",
+          "ku": "Li yekî bigere ku reng li ser wî heye.",
+          "ckb": "بگەڕێ بەدوای کەسێکدا کە ڕەنگی لەسەرە.",
+          "de": "Such jemanden, an dem Farbe ist.",
+          "es": "Busca a alguien que tenga pintura encima.",
+          "tr": "Üstünde boya olan birini ara.",
+          "ar": "ابحث عن شخص عليه طلاء.",
+          "fr": "Cherche quelqu’un qui a de la peinture sur lui.",
+          "nl": "Zoek iemand met verf op zich."
+        }
+      ]
+    },
+    {
+      "slug": "kmr-nive-wene",
+      "dialect": "kmr",
+      "level": 2,
+      "title": {
+        "en": "Half a photo",
+        "ku": "Nîvê wêneyekî",
+        "ckb": "نیوەی وێنەیەک",
+        "de": "Ein halbes Foto",
+        "es": "Media foto",
+        "tr": "Yarım fotoğraf",
+        "ar": "نصف صورة",
+        "fr": "La moitié d’une photo",
+        "nl": "Een halve foto"
+      },
+      "intro": {
+        "en": "Hevalo finds half of an old photo behind the tree. Where is the other half, and who has it?",
+        "ku": "Hevalo li pişt darê nîvê wêneyekî kevn dibîne. Nîvê din li ku ye, û li cem kê ye?",
+        "ckb": "هەڤاڵۆ لە پشت دارەکەوە نیوەی وێنەیەکی کۆن دەدۆزێتەوە. نیوەکەی تر لە کوێیە و لای کێیە؟",
+        "de": "Hevalo findet hinter dem Baum die Hälfte eines alten Fotos. Wo ist die andere Hälfte, und wer hat sie?",
+        "es": "Hevalo encuentra media foto antigua detrás del árbol. ¿Dónde está la otra mitad y quién la tiene?",
+        "tr": "Hevalo ağacın arkasında eski bir fotoğrafın yarısını buluyor. Öbür yarısı nerede, kimde?",
+        "ar": "يجد هيفالو نصف صورة قديمة خلف الشجرة. أين النصف الآخر، ومع من؟",
+        "fr": "Hevalo trouve la moitié d’une vieille photo derrière l’arbre. Où est l’autre moitié, et qui l’a ?",
+        "nl": "Hevalo vindt achter de boom de helft van een oude foto. Waar is de andere helft, en wie heeft die?"
+      },
+      "suspects": [
+        {
+          "id": "hevalo",
+          "name": "Hevalo",
+          "about": {
+            "en": "The young deer, always hungry.",
+            "ku": "Askê ciwan, ku her tim birçî ye.",
+            "ckb": "ئاسکە گەنجەکە، کە هەمیشە برسییەتی.",
+            "de": "Das junge Reh, immer hungrig.",
+            "es": "El cervatillo, siempre con hambre.",
+            "tr": "Hep aç olan genç geyik.",
+            "ar": "الغزال الصغير، الجائع دائمًا.",
+            "fr": "Le jeune chevreuil, toujours affamé.",
+            "nl": "Het jonge hertje, altijd hongerig."
+          },
+          "portrait": "hevalo"
+        },
+        {
+          "id": "lorin",
+          "name": "Lorîn",
+          "about": {
+            "en": "Hamo’s sister, who lives in Kobanî.",
+            "ku": "Xwişka Hamo, ku li Kobaniyê dijî.",
+            "ckb": "خوشکەکەی حەمۆ، کە لە کۆبانێ دەژی.",
+            "de": "Hamos Schwester, die in Kobanî lebt.",
+            "es": "La hermana de Hamo, que vive en Kobanî.",
+            "tr": "Kobanî’de yaşayan, Hamo’nun kız kardeşi.",
+            "ar": "أخت حمو، التي تعيش في كوباني.",
+            "fr": "La sœur de Hamo, qui vit à Kobanî.",
+            "nl": "Hamo’s zus, die in Kobanî woont."
+          }
+        },
+        {
+          "id": "bizin",
+          "name": "Bizina spî",
+          "about": {
+            "en": "Dapîr Şemsê’s white goat, who eats maps.",
+            "ku": "Bizina spî ya Dapîr Şemsê, ku nexşeyan dixwe.",
+            "ckb": "بزنە سپییەکەی داپیرە شەمسێ، کە نەخشە دەخوات.",
+            "de": "Oma Şemsês weiße Ziege, die Landkarten frisst.",
+            "es": "La cabra blanca de la abuela Şemsê, que se come los mapas.",
+            "tr": "Haritaları yiyen, Şemsê Nine’nin beyaz keçisi.",
+            "ar": "عنزة الجدة شمسێ البيضاء، التي تأكل الخرائط.",
+            "fr": "La chèvre blanche de mamie Şemsê, qui mange les cartes.",
+            "nl": "De witte geit van oma Şemsê, die landkaarten opeet."
+          }
+        },
+        {
+          "id": "hamo",
+          "name": "Hamo",
+          "about": {
+            "en": "Hevalo’s friend, who tells the stories.",
+            "ku": "Hevalê Hevalo, ku çîrokan dibêje.",
+            "ckb": "هاوڕێکەی هەڤاڵۆ، کە چیرۆکەکان دەگێڕێتەوە.",
+            "de": "Hevalos Freund, der die Geschichten erzählt.",
+            "es": "El amigo de Hevalo, que cuenta las historias.",
+            "tr": "Hikâyeleri anlatan, Hevalo’nun arkadaşı.",
+            "ar": "صديق هيفالو، الذي يروي الحكايات.",
+            "fr": "L’ami de Hevalo, qui raconte les histoires.",
+            "nl": "De vriend van Hevalo, die de verhalen vertelt."
+          },
+          "portrait": "hamo"
+        }
+      ],
+      "evidence": [
+        {
+          "id": "poz",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu03s3l3a",
+            "en": "Look! Hevalo’s nose is behind the tree.",
+            "meanings": {
+              "ckb": "سەیر کە! لووتی هەڤاڵۆ لە پشت دارەکەیە.",
+              "de": "Schau! Hevalos Nase ist hinter dem Baum.",
+              "es": "¡Mira! La nariz de Hevalo está detrás del árbol.",
+              "tr": "Bak! Hevalo’nun burnu ağacın arkasında.",
+              "ar": "انظر! أنف هيفالو خلف الشجرة.",
+              "fr": "Regarde ! Le nez de Hevalo est derrière l’arbre.",
+              "nl": "Kijk! Hevalo’s neus is achter de boom."
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "niv",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu03s3l3a",
+            "en": "No, it isn’t an apple. It’s half of an old photo!",
+            "meanings": {
+              "ckb": "نا، سێو نییە. نیوەی وێنەیەکی کۆنە!",
+              "de": "Nein, das ist kein Apfel. Es ist die Hälfte eines alten Fotos!",
+              "es": "No, no es una manzana. ¡Es media foto antigua!",
+              "tr": "Hayır, elma değil. Eski bir fotoğrafın yarısı!",
+              "ar": "لا، ليست تفاحة. إنها نصف صورة قديمة!",
+              "fr": "Non, ce n’est pas une pomme. C’est la moitié d’une vieille photo !",
+              "nl": "Nee, het is geen appel. Het is een halve oude foto!"
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "zarok",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu03s3l4a",
+            "en": "In this photo, Lorîn and I are children.",
+            "meanings": {
+              "ckb": "لەم وێنەیەدا من و لۆرین منداڵین.",
+              "de": "Auf diesem Foto sind Lorîn und ich Kinder.",
+              "es": "En esta foto, Lorîn y yo somos niños.",
+              "tr": "Bu fotoğrafta Lorîn’le ben çocuğuz.",
+              "ar": "في هذه الصورة، أنا ولورين طفلان.",
+              "fr": "Sur cette photo, Lorîn et moi sommes enfants.",
+              "nl": "Op deze foto zijn Lorîn en ik kinderen."
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "xwisk",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu03s3l3a",
+            "en": "That’s Lorîn, my sister. She has an apple in her mouth!",
+            "meanings": {
+              "ckb": "ئەوە لۆرینە، خوشکەکەم. سێوێک لە دەمیدایە!",
+              "de": "Das ist Lorîn, meine Schwester. Sie hat einen Apfel im Mund!",
+              "es": "Es Lorîn, mi hermana. ¡Tiene una manzana en la boca!",
+              "tr": "Bu Lorîn, kız kardeşim. Ağzında bir elma var!",
+              "ar": "تلك لورين، أختي. في فمها تفاحة!",
+              "fr": "C’est Lorîn, ma sœur. Elle a une pomme dans la bouche !",
+              "nl": "Dat is Lorîn, mijn zus. Ze heeft een appel in haar mond!"
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "kobani",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu03s3l4a",
+            "en": "The other half is in Kobanî, at Lorîn’s house.",
+            "meanings": {
+              "ckb": "نیوەکەی تر لە کۆبانێیە، لە ماڵی لۆرین.",
+              "de": "Die andere Hälfte ist in Kobanî, bei Lorîn zu Hause.",
+              "es": "La otra mitad está en Kobanî, en casa de Lorîn.",
+              "tr": "Öbür yarısı Kobanî’de, Lorîn’in evinde.",
+              "ar": "النصف الآخر في كوباني، في بيت لورين.",
+              "fr": "L’autre moitié est à Kobanî, chez Lorîn.",
+              "nl": "De andere helft is in Kobanî, bij Lorîn thuis."
+            }
+          },
+          "from": "hamo"
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "Where does Hevalo find something?",
+            "ku": "Hevalo li ku tiştekî dibîne?",
+            "ckb": "هەڤاڵۆ لە کوێ شتێک دەدۆزێتەوە؟",
+            "de": "Wo findet Hevalo etwas?",
+            "es": "¿Dónde encuentra Hevalo algo?",
+            "tr": "Hevalo bir şeyi nerede buluyor?",
+            "ar": "أين يجد هيفالو شيئًا؟",
+            "fr": "Où Hevalo trouve-t-il quelque chose ?",
+            "nl": "Waar vindt Hevalo iets?"
+          },
+          "options": [
+            {
+              "en": "Behind the tree",
+              "ku": "Li pişt darê",
+              "ckb": "لە پشت دارەکە",
+              "de": "Hinter dem Baum",
+              "es": "Detrás del árbol",
+              "tr": "Ağacın arkasında",
+              "ar": "خلف الشجرة",
+              "fr": "Derrière l’arbre",
+              "nl": "Achter de boom"
+            },
+            {
+              "en": "Under the table",
+              "ku": "Li bin maseyê",
+              "ckb": "لە ژێر مێزەکە",
+              "de": "Unter dem Tisch",
+              "es": "Debajo de la mesa",
+              "tr": "Masanın altında",
+              "ar": "تحت الطاولة",
+              "fr": "Sous la table",
+              "nl": "Onder de tafel"
+            },
+            {
+              "en": "By the spring",
+              "ku": "Li ber kaniyê",
+              "ckb": "لە تەنیشت کانییەکە",
+              "de": "An der Quelle",
+              "es": "Junto a la fuente",
+              "tr": "Pınarın yanında",
+              "ar": "عند النبع",
+              "fr": "Près de la source",
+              "nl": "Bij de bron"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "poz"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What is it?",
+            "ku": "Ew çi ye?",
+            "ckb": "ئەوە چییە؟",
+            "de": "Was ist es?",
+            "es": "¿Qué es?",
+            "tr": "O ne?",
+            "ar": "ما هو؟",
+            "fr": "Qu’est-ce que c’est ?",
+            "nl": "Wat is het?"
+          },
+          "options": [
+            {
+              "en": "Half of an old photo",
+              "ku": "Nîvê wêneyekî kevn",
+              "ckb": "نیوەی وێنەیەکی کۆن",
+              "de": "Die Hälfte eines alten Fotos",
+              "es": "Media foto antigua",
+              "tr": "Eski bir fotoğrafın yarısı",
+              "ar": "نصف صورة قديمة",
+              "fr": "La moitié d’une vieille photo",
+              "nl": "Een halve oude foto"
+            },
+            {
+              "en": "An apple",
+              "ku": "Sêvek",
+              "ckb": "سێوێک",
+              "de": "Ein Apfel",
+              "es": "Una manzana",
+              "tr": "Bir elma",
+              "ar": "تفاحة",
+              "fr": "Une pomme",
+              "nl": "Een appel"
+            },
+            {
+              "en": "An old map",
+              "ku": "Nexşeyeke kevn",
+              "ckb": "نەخشەیەکی کۆن",
+              "de": "Eine alte Landkarte",
+              "es": "Un mapa antiguo",
+              "tr": "Eski bir harita",
+              "ar": "خريطة قديمة",
+              "fr": "Une vieille carte",
+              "nl": "Een oude landkaart"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "niv"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Who are the two children in the photo?",
+            "ku": "Du zarokên di wêneyî de kî ne?",
+            "ckb": "ئەو دوو منداڵەی ناو وێنەکە کێن؟",
+            "de": "Wer sind die zwei Kinder auf dem Foto?",
+            "es": "¿Quiénes son los dos niños de la foto?",
+            "tr": "Fotoğraftaki iki çocuk kim?",
+            "ar": "من الطفلان في الصورة؟",
+            "fr": "Qui sont les deux enfants sur la photo ?",
+            "nl": "Wie zijn de twee kinderen op de foto?"
+          },
+          "options": [
+            {
+              "en": "Hamo and his sister",
+              "ku": "Hamo û xwişka wî",
+              "ckb": "حەمۆ و خوشکەکەی",
+              "de": "Hamo und seine Schwester",
+              "es": "Hamo y su hermana",
+              "tr": "Hamo ile kız kardeşi",
+              "ar": "حمو وأخته",
+              "fr": "Hamo et sa sœur",
+              "nl": "Hamo en zijn zus"
+            },
+            {
+              "en": "Hevalo and the goat",
+              "ku": "Hevalo û bizin",
+              "ckb": "هەڤاڵۆ و بزنەکە",
+              "de": "Hevalo und die Ziege",
+              "es": "Hevalo y la cabra",
+              "tr": "Hevalo ile keçi",
+              "ar": "هيفالو والعنزة",
+              "fr": "Hevalo et la chèvre",
+              "nl": "Hevalo en de geit"
+            },
+            {
+              "en": "Two neighbours’ children",
+              "ku": "Zarokên du cîranan",
+              "ckb": "منداڵی دوو دراوسێ",
+              "de": "Die Kinder zweier Nachbarn",
+              "es": "Los hijos de dos vecinos",
+              "tr": "İki komşunun çocukları",
+              "ar": "طفلا جارين",
+              "fr": "Les enfants de deux voisins",
+              "nl": "De kinderen van twee buren"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "zarok",
+            "xwisk"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Where is the other half?",
+            "ku": "Nîvê din li ku ye?",
+            "ckb": "نیوەکەی تر لە کوێیە؟",
+            "de": "Wo ist die andere Hälfte?",
+            "es": "¿Dónde está la otra mitad?",
+            "tr": "Öbür yarısı nerede?",
+            "ar": "أين النصف الآخر؟",
+            "fr": "Où est l’autre moitié ?",
+            "nl": "Waar is de andere helft?"
+          },
+          "options": [
+            {
+              "en": "In Kobanî",
+              "ku": "Li Kobaniyê",
+              "ckb": "لە کۆبانێ",
+              "de": "In Kobanî",
+              "es": "En Kobanî",
+              "tr": "Kobanî’de",
+              "ar": "في كوباني",
+              "fr": "À Kobanî",
+              "nl": "In Kobanî"
+            },
+            {
+              "en": "In Sêvan",
+              "ku": "Li Sêvanê",
+              "ckb": "لە سێڤان",
+              "de": "In Sêvan",
+              "es": "En Sêvan",
+              "tr": "Sêvan’da",
+              "ar": "في سيفان",
+              "fr": "À Sêvan",
+              "nl": "In Sêvan"
+            },
+            {
+              "en": "In the goat’s mouth",
+              "ku": "Di devê bizinê de",
+              "ckb": "لە دەمی بزنەکەدا",
+              "de": "Im Maul der Ziege",
+              "es": "En la boca de la cabra",
+              "tr": "Keçinin ağzında",
+              "ar": "في فم العنزة",
+              "fr": "Dans la bouche de la chèvre",
+              "nl": "In de bek van de geit"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "kobani"
+          ]
+        }
+      ],
+      "culprit": "lorin",
+      "solution": {
+        "en": "Hevalo found half of an old photo behind the tree. In it, Hamo and his sister are children. The other half is in Kobanî, at her house: Lorîn has the other half.",
+        "ku": "Hevalo li pişt darê nîvê wêneyekî kevn dît. Di wêneyî de Hamo û xwişka wî zarok in. Nîvê din li Kobaniyê ye, li mala wê: nîvê din li cem Lorînê ye.",
+        "ckb": "هەڤاڵۆ لە پشت دارەکەوە نیوەی وێنەیەکی کۆنی دۆزییەوە. لە وێنەکەدا حەمۆ و خوشکەکەی منداڵن. نیوەکەی تر لە کۆبانێیە، لە ماڵی ئەو: نیوەکەی تر لای لۆرینە.",
+        "de": "Hevalo fand hinter dem Baum die Hälfte eines alten Fotos. Darauf sind Hamo und seine Schwester Kinder. Die andere Hälfte ist in Kobanî, bei ihr zu Hause: Lorîn hat die andere Hälfte.",
+        "es": "Hevalo encontró media foto antigua detrás del árbol. En ella, Hamo y su hermana son niños. La otra mitad está en Kobanî, en casa de ella: Lorîn tiene la otra mitad.",
+        "tr": "Hevalo ağacın arkasında eski bir fotoğrafın yarısını buldu. Fotoğrafta Hamo ile kız kardeşi çocuk. Öbür yarısı Kobanî’de, onun evinde: öbür yarı Lorîn’de.",
+        "ar": "وجد هيفالو نصف صورة قديمة خلف الشجرة. فيها حمو وأخته طفلان. النصف الآخر في كوباني، في بيتها: النصف الآخر مع لورين.",
+        "fr": "Hevalo a trouvé la moitié d’une vieille photo derrière l’arbre. On y voit Hamo et sa sœur enfants. L’autre moitié est à Kobanî, chez elle : c’est Lorîn qui a l’autre moitié.",
+        "nl": "Hevalo vond achter de boom de helft van een oude foto. Daarop zijn Hamo en zijn zus kinderen. De andere helft is in Kobanî, bij haar thuis: Lorîn heeft de andere helft."
+      },
+      "hints": [
+        {
+          "en": "The photo has two halves: one here, one far away.",
+          "ku": "Du nîvên wêneyî hene: yek li vir, yek li dûr.",
+          "ckb": "وێنەکە دوو نیوەی هەیە: یەکێک لێرە، یەکێک لە دوور.",
+          "de": "Das Foto hat zwei Hälften: eine hier, eine weit weg.",
+          "es": "La foto tiene dos mitades: una aquí y otra lejos.",
+          "tr": "Fotoğrafın iki yarısı var: biri burada, biri uzakta.",
+          "ar": "للصورة نصفان: واحد هنا، وواحد بعيد.",
+          "fr": "La photo a deux moitiés : l’une ici, l’autre loin.",
+          "nl": "De foto heeft twee helften: een hier, een ver weg."
+        },
+        {
+          "en": "Who lives in Kobanî?",
+          "ku": "Kî li Kobaniyê dijî?",
+          "ckb": "کێ لە کۆبانێ دەژی؟",
+          "de": "Wer lebt in Kobanî?",
+          "es": "¿Quién vive en Kobanî?",
+          "tr": "Kobanî’de kim yaşıyor?",
+          "ar": "من يعيش في كوباني؟",
+          "fr": "Qui vit à Kobanî ?",
+          "nl": "Wie woont er in Kobanî?"
+        }
+      ]
+    },
+    {
+      "slug": "kmr-selika-vala",
+      "dialect": "kmr",
+      "level": 2,
+      "title": {
+        "en": "The empty basket",
+        "ku": "Selika vala",
+        "ckb": "سەبەتە بەتاڵەکە",
+        "de": "Der leere Korb",
+        "es": "La cesta vacía",
+        "tr": "Boş sepet",
+        "ar": "السلة الفارغة",
+        "fr": "Le panier vide",
+        "nl": "De lege mand"
+      },
+      "intro": {
+        "en": "At the market, Mîrza’s basket of apples is suddenly empty. Who ate the apples?",
+        "ku": "Li bazarê, selika sêvan a Mîrza ji nişka ve vala ye. Kê sêv xwarin?",
+        "ckb": "لە بازاڕدا، سەبەتە سێوەکەی میرزا لەناکاو بەتاڵ دەبێت. کێ سێوەکانی خوارد؟",
+        "de": "Auf dem Markt ist Mîrzas Apfelkorb plötzlich leer. Wer hat die Äpfel gegessen?",
+        "es": "En el mercado, la cesta de manzanas de Mîrza se queda vacía de repente. ¿Quién se comió las manzanas?",
+        "tr": "Pazarda Mîrza’nın elma sepeti birden boşalıyor. Elmaları kim yedi?",
+        "ar": "في السوق، تفرغ سلة تفاح ميرزا فجأة. من أكل التفاح؟",
+        "fr": "Au marché, le panier de pommes de Mîrza est soudain vide. Qui a mangé les pommes ?",
+        "nl": "Op de markt is de appelmand van Mîrza ineens leeg. Wie heeft de appels opgegeten?"
+      },
+      "suspects": [
+        {
+          "id": "hevalo",
+          "name": "Hevalo",
+          "about": {
+            "en": "The young deer, always hungry.",
+            "ku": "Askê ciwan, ku her tim birçî ye.",
+            "ckb": "ئاسکە گەنجەکە، کە هەمیشە برسییەتی.",
+            "de": "Das junge Reh, immer hungrig.",
+            "es": "El cervatillo, siempre con hambre.",
+            "tr": "Hep aç olan genç geyik.",
+            "ar": "الغزال الصغير، الجائع دائمًا.",
+            "fr": "Le jeune chevreuil, toujours affamé.",
+            "nl": "Het jonge hertje, altijd hongerig."
+          },
+          "portrait": "hevalo"
+        },
+        {
+          "id": "hamo",
+          "name": "Hamo",
+          "about": {
+            "en": "Hevalo’s friend, who tells the stories.",
+            "ku": "Hevalê Hevalo, ku çîrokan dibêje.",
+            "ckb": "هاوڕێکەی هەڤاڵۆ، کە چیرۆکەکان دەگێڕێتەوە.",
+            "de": "Hevalos Freund, der die Geschichten erzählt.",
+            "es": "El amigo de Hevalo, que cuenta las historias.",
+            "tr": "Hikâyeleri anlatan, Hevalo’nun arkadaşı.",
+            "ar": "صديق هيفالو، الذي يروي الحكايات.",
+            "fr": "L’ami de Hevalo, qui raconte les histoires.",
+            "nl": "De vriend van Hevalo, die de verhalen vertelt."
+          },
+          "portrait": "hamo"
+        },
+        {
+          "id": "ferhad",
+          "name": "Ferhad",
+          "about": {
+            "en": "A neighbour with a little donkey.",
+            "ku": "Cîranek ku kereke wî ya biçûk heye.",
+            "ckb": "دراوسێیەک کە گوێدرێژێکی بچووکی هەیە.",
+            "de": "Ein Nachbar mit einem kleinen Esel.",
+            "es": "Un vecino con un burrito.",
+            "tr": "Küçük bir eşeği olan bir komşu.",
+            "ar": "جارٌ لديه حمار صغير.",
+            "fr": "Un voisin qui a un petit âne.",
+            "nl": "Een buurman met een ezeltje."
+          }
+        },
+        {
+          "id": "bozo",
+          "name": "Bozo",
+          "about": {
+            "en": "Hamo’s slow old donkey.",
+            "ku": "Kerê Hamo yê pîr û hêdî.",
+            "ckb": "گوێدرێژە پیر و هێواشەکەی حەمۆ.",
+            "de": "Hamos langsamer alter Esel.",
+            "es": "El viejo y lento burro de Hamo.",
+            "tr": "Hamo’nun yaşlı, ağır eşeği.",
+            "ar": "حمار حمو العجوز البطيء.",
+            "fr": "Le vieil âne lent de Hamo.",
+            "nl": "Hamo’s oude, trage ezel."
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "cay",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu04s3l4a",
+            "en": "Twenty? A tea is twenty! Mîrza, one tea!",
+            "meanings": {
+              "ckb": "بیست؟ چایەک بە بیستە! میرزا، چایەک!",
+              "de": "Zwanzig? Ein Tee kostet zwanzig! Mîrza, einen Tee!",
+              "es": "¿Veinte? ¡Un té cuesta veinte! ¡Mîrza, un té!",
+              "tr": "Yirmi mi? Bir çay yirmi! Mîrza, bir çay!",
+              "ar": "عشرون؟ الشاي بعشرين! ميرزا، كوب شاي!",
+              "fr": "Vingt ? Un thé, c’est vingt ! Mîrza, un thé !",
+              "nl": "Twintig? Een thee kost twintig! Mîrza, één thee!"
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "vala",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu04s4l3a",
+            "en": "Mîrza says his basket is empty. Why?",
+            "meanings": {
+              "ckb": "میرزا دەڵێت سەبەتەکەی بەتاڵە. بۆچی؟",
+              "de": "Mîrza sagt, sein Korb ist leer. Warum?",
+              "es": "Mîrza dice que su cesta está vacía. ¿Por qué?",
+              "tr": "Mîrza sepetinin boş olduğunu söylüyor. Neden?",
+              "ar": "يقول ميرزا إن سلته فارغة. لماذا؟",
+              "fr": "Mîrza dit que son panier est vide. Pourquoi ?",
+              "nl": "Mîrza zegt dat zijn mand leeg is. Waarom?"
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "zik",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu04s4l3a",
+            "en": "Hevalo is over there, and his belly is full!",
+            "meanings": {
+              "ckb": "هەڤاڵۆ لەوێیە و سکی پڕە!",
+              "de": "Hevalo ist da drüben, und sein Bauch ist voll!",
+              "es": "¡Hevalo está allí y tiene la barriga llena!",
+              "tr": "Hevalo orada ve karnı tok!",
+              "ar": "هيفالو هناك، وبطنه ممتلئ!",
+              "fr": "Hevalo est là-bas, et il a le ventre plein !",
+              "nl": "Hevalo staat daar, en zijn buik zit vol!"
+            }
+          }
+        },
+        {
+          "id": "naxwe",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu04s4l3a",
+            "en": "No! Hevalo never eats apples. He doesn’t even like apples!",
+            "meanings": {
+              "ckb": "نا! هەڤاڵۆ هەرگیز سێو ناخوات. حەزیشی لە سێو نییە!",
+              "de": "Nein! Hevalo isst nie Äpfel. Er mag nicht einmal Äpfel!",
+              "es": "¡No! Hevalo nunca come manzanas. ¡Ni siquiera le gustan!",
+              "tr": "Hayır! Hevalo asla elma yemez. Elmayı sevmez bile!",
+              "ar": "لا! هيفالو لا يأكل التفاح أبدًا. إنه لا يحبه حتى!",
+              "fr": "Non ! Hevalo ne mange jamais de pommes. Il ne les aime même pas !",
+              "nl": "Nee! Hevalo eet nooit appels. Hij houdt niet eens van appels!"
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "poz",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu04s4l3a",
+            "en": "I don’t believe it. There’s a bit of apple on his nose!",
+            "meanings": {
+              "ckb": "باوەڕ ناکەم. پارچەیەک سێو لەسەر لووتیەتی!",
+              "de": "Das glaube ich nicht. Auf seiner Nase ist ein Stück Apfel!",
+              "es": "No me lo creo. ¡Tiene un trozo de manzana en la nariz!",
+              "tr": "İnanmıyorum. Burnunda bir parça elma var!",
+              "ar": "لا أصدق. على أنفه قطعة تفاح!",
+              "fr": "Je n’y crois pas. Il a un bout de pomme sur le nez !",
+              "nl": "Dat geloof ik niet. Er zit een stukje appel op zijn neus!"
+            }
+          }
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "What is Hamo buying from Mîrza?",
+            "ku": "Hamo ji Mîrza çi dikire?",
+            "ckb": "حەمۆ چی لە میرزا دەکڕێت؟",
+            "de": "Was kauft Hamo bei Mîrza?",
+            "es": "¿Qué le compra Hamo a Mîrza?",
+            "tr": "Hamo Mîrza’dan ne alıyor?",
+            "ar": "ماذا يشتري حمو من ميرزا؟",
+            "fr": "Qu’achète Hamo à Mîrza ?",
+            "nl": "Wat koopt Hamo bij Mîrza?"
+          },
+          "options": [
+            {
+              "en": "A tea",
+              "ku": "Çayek",
+              "ckb": "چایەک",
+              "de": "Einen Tee",
+              "es": "Un té",
+              "tr": "Bir çay",
+              "ar": "كوب شاي",
+              "fr": "Un thé",
+              "nl": "Een thee"
+            },
+            {
+              "en": "A basket of apples",
+              "ku": "Selikek sêv",
+              "ckb": "سەبەتەیەک سێو",
+              "de": "Einen Korb Äpfel",
+              "es": "Una cesta de manzanas",
+              "tr": "Bir sepet elma",
+              "ar": "سلة تفاح",
+              "fr": "Un panier de pommes",
+              "nl": "Een mand appels"
+            },
+            {
+              "en": "Bread and cheese",
+              "ku": "Nan û penîr",
+              "ckb": "نان و پەنیر",
+              "de": "Brot und Käse",
+              "es": "Pan y queso",
+              "tr": "Ekmek ve peynir",
+              "ar": "خبز وجبن",
+              "fr": "Du pain et du fromage",
+              "nl": "Brood en kaas"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "cay"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What is empty?",
+            "ku": "Çi vala ye?",
+            "ckb": "چی بەتاڵە؟",
+            "de": "Was ist leer?",
+            "es": "¿Qué está vacío?",
+            "tr": "Ne boş?",
+            "ar": "ما الفارغ؟",
+            "fr": "Qu’est-ce qui est vide ?",
+            "nl": "Wat is leeg?"
+          },
+          "options": [
+            {
+              "en": "Mîrza’s basket",
+              "ku": "Selika Mîrza",
+              "ckb": "سەبەتەکەی میرزا",
+              "de": "Mîrzas Korb",
+              "es": "La cesta de Mîrza",
+              "tr": "Mîrza’nın sepeti",
+              "ar": "سلة ميرزا",
+              "fr": "Le panier de Mîrza",
+              "nl": "De mand van Mîrza"
+            },
+            {
+              "en": "The teapot",
+              "ku": "Çaydan",
+              "ckb": "قۆرییەکە",
+              "de": "Die Teekanne",
+              "es": "La tetera",
+              "tr": "Çaydanlık",
+              "ar": "إبريق الشاي",
+              "fr": "La théière",
+              "nl": "De theepot"
+            },
+            {
+              "en": "Ferhad’s bag",
+              "ku": "Çenteyê Ferhad",
+              "ckb": "جانتاکەی فەرهاد",
+              "de": "Ferhads Tasche",
+              "es": "La bolsa de Ferhad",
+              "tr": "Ferhad’ın çantası",
+              "ar": "حقيبة فرهاد",
+              "fr": "Le sac de Ferhad",
+              "nl": "De tas van Ferhad"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "vala"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "How is Hevalo’s belly?",
+            "ku": "Zikê Hevalo çawa ye?",
+            "ckb": "سکی هەڤاڵۆ چۆنە؟",
+            "de": "Wie ist Hevalos Bauch?",
+            "es": "¿Cómo está la barriga de Hevalo?",
+            "tr": "Hevalo’nun karnı nasıl?",
+            "ar": "كيف بطن هيفالو؟",
+            "fr": "Comment est le ventre de Hevalo ?",
+            "nl": "Hoe is Hevalo’s buik?"
+          },
+          "options": [
+            {
+              "en": "Full",
+              "ku": "Tije ye",
+              "ckb": "پڕە",
+              "de": "Voll",
+              "es": "Llena",
+              "tr": "Tok",
+              "ar": "ممتلئ",
+              "fr": "Plein",
+              "nl": "Vol"
+            },
+            {
+              "en": "Empty",
+              "ku": "Vala ye",
+              "ckb": "بەتاڵە",
+              "de": "Leer",
+              "es": "Vacía",
+              "tr": "Boş",
+              "ar": "فارغ",
+              "fr": "Vide",
+              "nl": "Leeg"
+            },
+            {
+              "en": "It hurts",
+              "ku": "Diêşe",
+              "ckb": "دێشێت",
+              "de": "Er tut weh",
+              "es": "Le duele",
+              "tr": "Ağrıyor",
+              "ar": "يؤلمه",
+              "fr": "Il a mal",
+              "nl": "Het doet pijn"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "zik"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Hamo says Hevalo never eats apples. What is on Hevalo’s nose?",
+            "ku": "Hamo dibêje ku Hevalo hîç sêvan naxwe. Li ser pozê Hevalo çi heye?",
+            "ckb": "حەمۆ دەڵێت هەڤاڵۆ هەرگیز سێو ناخوات. چی لەسەر لووتی هەڤاڵۆیە؟",
+            "de": "Hamo sagt, Hevalo isst nie Äpfel. Was ist auf Hevalos Nase?",
+            "es": "Hamo dice que Hevalo nunca come manzanas. ¿Qué tiene Hevalo en la nariz?",
+            "tr": "Hamo, Hevalo’nun asla elma yemediğini söylüyor. Hevalo’nun burnunda ne var?",
+            "ar": "يقول حمو إن هيفالو لا يأكل التفاح أبدًا. ماذا على أنف هيفالو؟",
+            "fr": "Hamo dit que Hevalo ne mange jamais de pommes. Qu’y a-t-il sur le nez de Hevalo ?",
+            "nl": "Hamo zegt dat Hevalo nooit appels eet. Wat zit er op Hevalo’s neus?"
+          },
+          "options": [
+            {
+              "en": "A bit of apple",
+              "ku": "Hinek sêv",
+              "ckb": "پارچەیەک سێو",
+              "de": "Ein Stück Apfel",
+              "es": "Un trozo de manzana",
+              "tr": "Bir parça elma",
+              "ar": "قطعة تفاح",
+              "fr": "Un bout de pomme",
+              "nl": "Een stukje appel"
+            },
+            {
+              "en": "Some tea",
+              "ku": "Hinek çay",
+              "ckb": "کەمێک چا",
+              "de": "Etwas Tee",
+              "es": "Un poco de té",
+              "tr": "Biraz çay",
+              "ar": "قليل من الشاي",
+              "fr": "Un peu de thé",
+              "nl": "Een beetje thee"
+            },
+            {
+              "en": "Nothing at all",
+              "ku": "Hîç tiştek",
+              "ckb": "هیچ شتێک",
+              "de": "Gar nichts",
+              "es": "Nada",
+              "tr": "Hiçbir şey",
+              "ar": "لا شيء",
+              "fr": "Rien du tout",
+              "nl": "Helemaal niets"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "naxwe",
+            "poz"
+          ]
+        }
+      ],
+      "culprit": "hevalo",
+      "solution": {
+        "en": "Mîrza’s basket is empty, and Hamo was only buying a tea. Hevalo’s belly is full, and though Hamo says Hevalo never eats apples, there is a bit of apple on his nose. Hevalo ate the apples.",
+        "ku": "Selika Mîrza vala ye, û Hamo tenê çayek dikirî. Zikê Hevalo tije ye, û her çiqas Hamo dibêje ku Hevalo hîç sêvan naxwe, li ser pozê wî hinek sêv heye. Hevalo sêv xwarin.",
+        "ckb": "سەبەتەکەی میرزا بەتاڵە، و حەمۆ تەنیا چایەکی دەکڕی. سکی هەڤاڵۆ پڕە، و هەرچەندە حەمۆ دەڵێت هەڤاڵۆ هەرگیز سێو ناخوات، پارچەیەک سێو لەسەر لووتیەتی. هەڤاڵۆ سێوەکانی خوارد.",
+        "de": "Mîrzas Korb ist leer, und Hamo hat nur einen Tee gekauft. Hevalos Bauch ist voll, und obwohl Hamo sagt, dass Hevalo nie Äpfel isst, hat er ein Stück Apfel auf der Nase. Hevalo hat die Äpfel gegessen.",
+        "es": "La cesta de Mîrza está vacía, y Hamo solo compraba un té. Hevalo tiene la barriga llena y, aunque Hamo dice que nunca come manzanas, tiene un trozo de manzana en la nariz. Hevalo se comió las manzanas.",
+        "tr": "Mîrza’nın sepeti boş, Hamo ise sadece bir çay alıyordu. Hevalo’nun karnı tok ve Hamo onun asla elma yemediğini söylese de burnunda bir parça elma var. Elmaları Hevalo yedi.",
+        "ar": "سلة ميرزا فارغة، وكان حمو يشتري كوب شاي فقط. بطن هيفالو ممتلئ، ورغم أن حمو يقول إنه لا يأكل التفاح أبدًا، على أنفه قطعة تفاح. هيفالو أكل التفاح.",
+        "fr": "Le panier de Mîrza est vide, et Hamo achetait seulement un thé. Hevalo a le ventre plein et, même si Hamo dit qu’il ne mange jamais de pommes, il a un bout de pomme sur le nez. C’est Hevalo qui a mangé les pommes.",
+        "nl": "De mand van Mîrza is leeg, en Hamo kocht alleen een thee. Hevalo’s buik zit vol, en hoewel Hamo zegt dat hij nooit appels eet, zit er een stukje appel op zijn neus. Hevalo heeft de appels opgegeten."
+      },
+      "hints": [
+        {
+          "en": "Someone’s friend speaks up for them. Check it against what you see.",
+          "ku": "Hevalê yekî wî diparêze. Gotinên wî bide ber tiştê ku tu dibînî.",
+          "ckb": "هاوڕێی کەسێک بەرگری لێ دەکات. لەگەڵ ئەوەی دەیبینیت بەراوردی بکە.",
+          "de": "Ein Freund nimmt jemanden in Schutz. Vergleiche es mit dem, was du siehst.",
+          "es": "Un amigo defiende a alguien. Compáralo con lo que ves.",
+          "tr": "Bir arkadaşı birini savunuyor. Gördüklerinle karşılaştır.",
+          "ar": "صديقٌ يدافع عن أحدهم. قارن ذلك بما تراه.",
+          "fr": "Un ami prend la défense de quelqu’un. Compare avec ce que tu vois.",
+          "nl": "Een vriend neemt het voor iemand op. Vergelijk dat met wat je ziet."
+        },
+        {
+          "en": "Whose belly is full?",
+          "ku": "Zikê kê tije ye?",
+          "ckb": "سکی کێ پڕە؟",
+          "de": "Wessen Bauch ist voll?",
+          "es": "¿Quién tiene la barriga llena?",
+          "tr": "Kimin karnı tok?",
+          "ar": "بطن من ممتلئ؟",
+          "fr": "Qui a le ventre plein ?",
+          "nl": "Wiens buik zit vol?"
+        }
+      ]
+    },
+    {
+      "slug": "kmr-otobus",
+      "dialect": "kmr",
+      "level": 3,
+      "title": {
+        "en": "The bus that left",
+        "ku": "Otobûsa ku çû",
+        "ckb": "ئەو پاسەی ڕۆیشت",
+        "de": "Der Bus ist weg",
+        "es": "El autobús que se fue",
+        "tr": "Kaçan otobüs",
+        "ar": "الحافلة التي فاتت",
+        "fr": "Le bus parti sans eux",
+        "nl": "De bus die vertrok"
+      },
+      "intro": {
+        "en": "Everyone was ready for Kobanî, and the bus left without them. Whose fault was it?",
+        "ku": "Her kes ji bo Kobaniyê amade bû, û otobûs bê wan çû. Sûcê kê bû?",
+        "ckb": "هەموو کەس بۆ کۆبانێ ئامادە بوو، و پاسەکە بەبێ ئەوان ڕۆیشت. تاوانی کێ بوو؟",
+        "de": "Alle waren bereit für Kobanî, und der Bus fuhr ohne sie ab. Wessen Schuld war das?",
+        "es": "Todos estaban listos para ir a Kobanî, y el autobús se fue sin ellos. ¿De quién fue la culpa?",
+        "tr": "Herkes Kobanî’ye hazırdı ama otobüs onlarsız gitti. Kimin suçuydu?",
+        "ar": "كان الجميع مستعدًا للذهاب إلى كوباني، وانطلقت الحافلة من دونهم. خطأ من كان ذلك؟",
+        "fr": "Tout le monde était prêt pour Kobanî, et le bus est parti sans eux. À qui la faute ?",
+        "nl": "Iedereen was klaar voor Kobanî, en de bus vertrok zonder hen. Wiens schuld was dat?"
+      },
+      "suspects": [
+        {
+          "id": "hamo",
+          "name": "Hamo",
+          "about": {
+            "en": "He promised not to be late.",
+            "ku": "Wî soz da ku dereng nemîne.",
+            "ckb": "بەڵێنی دا دوا نەکەوێت.",
+            "de": "Er hat versprochen, nicht zu spät zu kommen.",
+            "es": "Prometió no llegar tarde.",
+            "tr": "Geç kalmayacağına söz verdi.",
+            "ar": "وعد ألّا يتأخر.",
+            "fr": "Il a promis de ne pas être en retard.",
+            "nl": "Hij beloofde niet te laat te komen."
+          },
+          "portrait": "hamo"
+        },
+        {
+          "id": "telefon",
+          "name": "Telefona Hamo",
+          "about": {
+            "en": "Hamo’s phone, which should have woken him.",
+            "ku": "Telefona Hamo, ku diviyabû wî şiyar bike.",
+            "ckb": "تەلەفۆنەکەی حەمۆ، کە دەبوو بەئاگای بهێنێت.",
+            "de": "Hamos Handy, das ihn hätte wecken sollen.",
+            "es": "El teléfono de Hamo, que debía despertarlo.",
+            "tr": "Onu uyandırması gereken Hamo’nun telefonu.",
+            "ar": "هاتف حمو، الذي كان يجب أن يوقظه.",
+            "fr": "Le téléphone de Hamo, qui aurait dû le réveiller.",
+            "nl": "Hamo’s telefoon, die hem had moeten wekken."
+          }
+        },
+        {
+          "id": "naze",
+          "name": "Nazê",
+          "about": {
+            "en": "The neighbour who only laughs.",
+            "ku": "Cîrana ku tenê dikene.",
+            "ckb": "ئەو دراوسێیەی تەنیا پێدەکەنێت.",
+            "de": "Die Nachbarin, die nur lacht.",
+            "es": "La vecina que solo se ríe.",
+            "tr": "Sadece gülen komşu.",
+            "ar": "الجارة التي تضحك فقط.",
+            "fr": "La voisine qui ne fait que rire.",
+            "nl": "De buurvrouw die alleen maar lacht."
+          }
+        },
+        {
+          "id": "ajovan",
+          "name": "Ajovan",
+          "about": {
+            "en": "The bus driver, who does not wait.",
+            "ku": "Ajovanê otobûsê, ku nasekine.",
+            "ckb": "شۆفێری پاسەکە، کە ناوەستێت.",
+            "de": "Der Busfahrer, der nicht wartet.",
+            "es": "El conductor del autobús, que no espera.",
+            "tr": "Beklemeyen otobüs şoförü.",
+            "ar": "سائق الحافلة، الذي لا ينتظر.",
+            "fr": "Le chauffeur du bus, qui n’attend pas.",
+            "nl": "De buschauffeur, die niet wacht."
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "hest",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu05s4l3a",
+            "en": "On Saturday the bus leaves at eight.",
+            "meanings": {
+              "ckb": "ڕۆژی شەممە پاسەکە کاتژمێر هەشت دەڕوات.",
+              "de": "Am Samstag fährt der Bus um acht.",
+              "es": "El sábado el autobús sale a las ocho.",
+              "tr": "Cumartesi otobüs sekizde kalkıyor.",
+              "ar": "يوم السبت تنطلق الحافلة في الثامنة.",
+              "fr": "Samedi, le bus part à huit heures.",
+              "nl": "Op zaterdag vertrekt de bus om acht uur."
+            }
+          }
+        },
+        {
+          "id": "soz",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu05s4l3a",
+            "en": "Sometimes? No! Believe me, my promise is a promise!",
+            "meanings": {
+              "ckb": "هەندێک جار؟ نا! باوەڕم پێ بکە، بەڵێنم بەڵێنە!",
+              "de": "Manchmal? Nein! Glaub mir, versprochen ist versprochen!",
+              "es": "¿A veces? ¡No! Créeme, lo prometido es deuda.",
+              "tr": "Bazen mi? Hayır! İnan bana, söz sözdür!",
+              "ar": "أحيانًا؟ لا! صدّقني، وعدي وعد!",
+              "fr": "Parfois ? Non ! Crois-moi, promis, c’est promis !",
+              "nl": "Soms? Nee! Geloof me, beloofd is beloofd!"
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "naze",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu05s4l3a",
+            "en": "And Nazê just laughs. Why?",
+            "meanings": {
+              "ckb": "و نازێ تەنیا پێدەکەنێت. بۆچی؟",
+              "de": "Und Nazê lacht nur. Warum?",
+              "es": "Y Nazê solo se ríe. ¿Por qué?",
+              "tr": "Nazê ise sadece gülüyor. Neden?",
+              "ar": "ونازێ تضحك فقط. لماذا؟",
+              "fr": "Et Nazê ne fait que rire. Pourquoi ?",
+              "nl": "En Nazê lacht alleen maar. Waarom?"
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "siyar",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu05s4l4a",
+            "en": "What? Half past eight? But the phone didn’t wake me!",
+            "meanings": {
+              "ckb": "چی؟ هەشت و نیو؟ بەڵام تەلەفۆنەکە بەئاگای نەهێنام!",
+              "de": "Was? Halb neun? Aber das Handy hat mich nicht geweckt!",
+              "es": "¿Qué? ¿Las ocho y media? ¡Pero el teléfono no me despertó!",
+              "tr": "Ne? Sekiz buçuk mu? Ama telefon beni uyandırmadı!",
+              "ar": "ماذا؟ الثامنة والنصف؟ لكن الهاتف لم يوقظني!",
+              "fr": "Quoi ? Huit heures et demie ? Mais le téléphone ne m’a pas réveillé !",
+              "nl": "Wat? Half negen? Maar de telefoon heeft me niet gewekt!"
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "evar",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu05s4l4a",
+            "en": "Look, it’s eight, but in the evening!",
+            "meanings": {
+              "ckb": "سەیر کە، هەشتە، بەڵام ئێوارە!",
+              "de": "Schau, acht Uhr, aber abends!",
+              "es": "Mira, son las ocho, ¡pero de la tarde!",
+              "tr": "Bak, sekiz ama akşam sekizi!",
+              "ar": "انظر، إنها الثامنة، لكن مساءً!",
+              "fr": "Regarde, huit heures, mais du soir !",
+              "nl": "Kijk, acht uur, maar ’s avonds!"
+            }
+          }
+        },
+        {
+          "id": "nasekine",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu05s4l4a",
+            "en": "Hevalo runs, but the bus doesn’t stop.",
+            "meanings": {
+              "ckb": "هەڤاڵۆ ڕادەکات، بەڵام پاسەکە ناوەستێت.",
+              "de": "Hevalo rennt, aber der Bus hält nicht an.",
+              "es": "Hevalo corre, pero el autobús no para.",
+              "tr": "Hevalo koşuyor ama otobüs durmuyor.",
+              "ar": "يركض هيفالو، لكن الحافلة لا تتوقف.",
+              "fr": "Hevalo court, mais le bus ne s’arrête pas.",
+              "nl": "Hevalo rent, maar de bus stopt niet."
+            }
+          },
+          "from": "hamo"
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "When does the bus leave?",
+            "ku": "Otobûs kengî diçe?",
+            "ckb": "پاسەکە کەی دەڕوات؟",
+            "de": "Wann fährt der Bus?",
+            "es": "¿Cuándo sale el autobús?",
+            "tr": "Otobüs ne zaman kalkıyor?",
+            "ar": "متى تنطلق الحافلة؟",
+            "fr": "Quand le bus part-il ?",
+            "nl": "Wanneer vertrekt de bus?"
+          },
+          "options": [
+            {
+              "en": "At eight in the morning",
+              "ku": "Di heştê sibehê de",
+              "ckb": "کاتژمێر هەشتی بەیانی",
+              "de": "Um acht Uhr morgens",
+              "es": "A las ocho de la mañana",
+              "tr": "Sabah sekizde",
+              "ar": "في الثامنة صباحًا",
+              "fr": "À huit heures du matin",
+              "nl": "Om acht uur ’s ochtends"
+            },
+            {
+              "en": "At half past eight",
+              "ku": "Di heşt û nîvan de",
+              "ckb": "کاتژمێر هەشت و نیو",
+              "de": "Um halb neun",
+              "es": "A las ocho y media",
+              "tr": "Sekiz buçukta",
+              "ar": "في الثامنة والنصف",
+              "fr": "À huit heures et demie",
+              "nl": "Om half negen"
+            },
+            {
+              "en": "At eight in the evening",
+              "ku": "Di heştê êvarê de",
+              "ckb": "کاتژمێر هەشتی ئێوارە",
+              "de": "Um acht Uhr abends",
+              "es": "A las ocho de la tarde",
+              "tr": "Akşam sekizde",
+              "ar": "في الثامنة مساءً",
+              "fr": "À huit heures du soir",
+              "nl": "Om acht uur ’s avonds"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "hest"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What did Hamo promise?",
+            "ku": "Hamo çi soz da?",
+            "ckb": "حەمۆ چ بەڵێنێکی دا؟",
+            "de": "Was hat Hamo versprochen?",
+            "es": "¿Qué prometió Hamo?",
+            "tr": "Hamo ne söz verdi?",
+            "ar": "بماذا وعد حمو؟",
+            "fr": "Qu’a promis Hamo ?",
+            "nl": "Wat heeft Hamo beloofd?"
+          },
+          "options": [
+            {
+              "en": "Not to be late",
+              "ku": "Ku dereng nemîne",
+              "ckb": "کە دوا نەکەوێت",
+              "de": "Nicht zu spät zu kommen",
+              "es": "No llegar tarde",
+              "tr": "Geç kalmamayı",
+              "ar": "ألّا يتأخر",
+              "fr": "De ne pas être en retard",
+              "nl": "Niet te laat te komen"
+            },
+            {
+              "en": "To make tea for everyone",
+              "ku": "Ku ji her kesî re çayê çêke",
+              "ckb": "کە چا بۆ هەمووان دروست بکات",
+              "de": "Für alle Tee zu kochen",
+              "es": "Preparar té para todos",
+              "tr": "Herkese çay yapmayı",
+              "ar": "أن يعدّ الشاي للجميع",
+              "fr": "De faire du thé pour tout le monde",
+              "nl": "Thee te zetten voor iedereen"
+            },
+            {
+              "en": "To drive the bus himself",
+              "ku": "Ku bi xwe otobûsê bajo",
+              "ckb": "کە خۆی پاسەکە لێبخوڕێت",
+              "de": "Den Bus selbst zu fahren",
+              "es": "Conducir él mismo el autobús",
+              "tr": "Otobüsü kendisi kullanmayı",
+              "ar": "أن يقود الحافلة بنفسه",
+              "fr": "De conduire le bus lui-même",
+              "nl": "Zelf de bus te besturen"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "soz",
+            "naze"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Why didn’t the phone wake Hamo in the morning?",
+            "ku": "Çima telefonê sibehê Hamo şiyar nekir?",
+            "ckb": "بۆچی تەلەفۆنەکە بەیانی حەمۆی بەئاگا نەهێنا؟",
+            "de": "Warum hat das Handy Hamo am Morgen nicht geweckt?",
+            "es": "¿Por qué el teléfono no despertó a Hamo por la mañana?",
+            "tr": "Telefon Hamo’yu sabah neden uyandırmadı?",
+            "ar": "لماذا لم يوقظ الهاتف حمو في الصباح؟",
+            "fr": "Pourquoi le téléphone n’a-t-il pas réveillé Hamo le matin ?",
+            "nl": "Waarom heeft de telefoon Hamo ’s ochtends niet gewekt?"
+          },
+          "options": [
+            {
+              "en": "It was set for eight in the evening",
+              "ku": "Ji bo heştê êvarê amade bû",
+              "ckb": "بۆ هەشتی ئێوارە ڕێکخرابوو",
+              "de": "Er war auf acht Uhr abends gestellt",
+              "es": "Estaba puesto para las ocho de la tarde",
+              "tr": "Akşam sekize kurulmuştu",
+              "ar": "كان مضبوطًا على الثامنة مساءً",
+              "fr": "Il était réglé sur huit heures du soir",
+              "nl": "Hij stond op acht uur ’s avonds"
+            },
+            {
+              "en": "Its battery was empty",
+              "ku": "Bataryaya wê vala bû",
+              "ckb": "پاترییەکەی بەتاڵ بوو",
+              "de": "Sein Akku war leer",
+              "es": "Se le había acabado la batería",
+              "tr": "Şarjı bitmişti",
+              "ar": "كانت بطاريته فارغة",
+              "fr": "Sa batterie était vide",
+              "nl": "De batterij was leeg"
+            },
+            {
+              "en": "Nazê had taken it",
+              "ku": "Nazê ew biribû",
+              "ckb": "نازێ بردبووی",
+              "de": "Nazê hatte es mitgenommen",
+              "es": "Nazê se lo había llevado",
+              "tr": "Nazê onu almıştı",
+              "ar": "كانت نازێ قد أخذته",
+              "fr": "Nazê l’avait pris",
+              "nl": "Nazê had hem meegenomen"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "siyar",
+            "evar"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Does the bus wait for them?",
+            "ku": "Otobûs li benda wan dimîne?",
+            "ckb": "پاسەکە چاوەڕێیان دەکات؟",
+            "de": "Wartet der Bus auf sie?",
+            "es": "¿Los espera el autobús?",
+            "tr": "Otobüs onları bekliyor mu?",
+            "ar": "هل تنتظرهم الحافلة؟",
+            "fr": "Le bus les attend-il ?",
+            "nl": "Wacht de bus op hen?"
+          },
+          "options": [
+            {
+              "en": "No, it doesn’t stop",
+              "ku": "Na, nasekine",
+              "ckb": "نەخێر، ناوەستێت",
+              "de": "Nein, er hält nicht",
+              "es": "No, no para",
+              "tr": "Hayır, durmuyor",
+              "ar": "لا، لا تتوقف",
+              "fr": "Non, il ne s’arrête pas",
+              "nl": "Nee, hij stopt niet"
+            },
+            {
+              "en": "Yes, for five minutes",
+              "ku": "Erê, pênc xulekan",
+              "ckb": "بەڵێ، پێنج خولەک",
+              "de": "Ja, fünf Minuten",
+              "es": "Sí, cinco minutos",
+              "tr": "Evet, beş dakika",
+              "ar": "نعم، خمس دقائق",
+              "fr": "Oui, cinq minutes",
+              "nl": "Ja, vijf minuten"
+            },
+            {
+              "en": "Yes, until everyone is on board",
+              "ku": "Erê, heta ku her kes siwar bibe",
+              "ckb": "بەڵێ، تا هەموو کەس سوار دەبێت",
+              "de": "Ja, bis alle eingestiegen sind",
+              "es": "Sí, hasta que suben todos",
+              "tr": "Evet, herkes binene kadar",
+              "ar": "نعم، حتى يصعد الجميع",
+              "fr": "Oui, jusqu’à ce que tout le monde soit monté",
+              "nl": "Ja, tot iedereen is ingestapt"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "nasekine"
+          ]
+        }
+      ],
+      "culprit": "hamo",
+      "solution": {
+        "en": "The bus leaves at eight in the morning, and Hamo promised not to be late. But the phone was set for eight in the evening, and Hamo set it. Nazê only laughs because she knows him, and the bus never waits. It was Hamo — but there is always time for tea!",
+        "ku": "Otobûs di heştê sibehê de diçe, û Hamo soz da ku dereng nemîne. Lê telefon ji bo heştê êvarê amade bû, û Hamo bi xwe ew amade kiribû. Nazê tenê dikene, ji ber ku wî nas dike, û otobûs qet nasekine. Hamo bû — lê ji bo çayê her gav dem heye!",
+        "ckb": "پاسەکە کاتژمێر هەشتی بەیانی دەڕوات، و حەمۆ بەڵێنی دا دوا نەکەوێت. بەڵام تەلەفۆنەکە بۆ هەشتی ئێوارە ڕێکخرابوو، و حەمۆ خۆی ڕێکی خستبوو. نازێ تەنیا پێدەکەنێت چونکە دەیناسێت، و پاسەکەش هەرگیز ناوەستێت. حەمۆ بوو — بەڵام هەمیشە کات بۆ چا هەیە!",
+        "de": "Der Bus fährt um acht Uhr morgens, und Hamo hat versprochen, nicht zu spät zu kommen. Aber das Handy war auf acht Uhr abends gestellt – von Hamo selbst. Nazê lacht nur, weil sie ihn kennt, und der Bus wartet nie. Es war Hamo – aber für Tee ist immer Zeit!",
+        "es": "El autobús sale a las ocho de la mañana, y Hamo prometió no llegar tarde. Pero el teléfono estaba puesto para las ocho de la tarde, y lo puso Hamo. Nazê solo se ríe porque lo conoce, y el autobús nunca espera. Fue Hamo… ¡pero siempre hay tiempo para un té!",
+        "tr": "Otobüs sabah sekizde kalkıyor ve Hamo geç kalmayacağına söz verdi. Ama telefon akşam sekize kurulmuştu ve onu Hamo kurmuştu. Nazê onu tanıdığı için sadece gülüyor, otobüs de asla beklemiyor. Suçlu Hamo… ama çaya her zaman vakit var!",
+        "ar": "تنطلق الحافلة في الثامنة صباحًا، ووعد حمو ألّا يتأخر. لكن الهاتف كان مضبوطًا على الثامنة مساءً، وحمو هو من ضبطه. نازێ تضحك فقط لأنها تعرفه، والحافلة لا تنتظر أبدًا. إنه حمو، لكن هناك دائمًا وقت للشاي!",
+        "fr": "Le bus part à huit heures du matin, et Hamo a promis de ne pas être en retard. Mais le téléphone était réglé sur huit heures du soir, et c’est Hamo qui l’avait réglé. Nazê ne fait que rire parce qu’elle le connaît, et le bus n’attend jamais. C’était Hamo… mais il y a toujours le temps pour un thé !",
+        "nl": "De bus vertrekt om acht uur ’s ochtends, en Hamo beloofde niet te laat te komen. Maar de telefoon stond op acht uur ’s avonds, en dat had Hamo zelf gedaan. Nazê lacht alleen omdat ze hem kent, en de bus wacht nooit. Het was Hamo – maar voor thee is er altijd tijd!"
+      },
+      "hints": [
+        {
+          "en": "Eight o’clock comes twice a day.",
+          "ku": "Demjimêr heşt rojê du caran tê.",
+          "ckb": "کاتژمێر هەشت ڕۆژی دوو جار دێت.",
+          "de": "Acht Uhr kommt zweimal am Tag.",
+          "es": "Las ocho llegan dos veces al día.",
+          "tr": "Saat sekiz günde iki kez gelir.",
+          "ar": "الساعة الثامنة تأتي مرتين في اليوم.",
+          "fr": "Huit heures arrive deux fois par jour.",
+          "nl": "Acht uur komt twee keer per dag."
+        },
+        {
+          "en": "Who set the phone?",
+          "ku": "Kê telefon amade kir?",
+          "ckb": "کێ تەلەفۆنەکەی ڕێکخست؟",
+          "de": "Wer hat das Handy gestellt?",
+          "es": "¿Quién puso el teléfono?",
+          "tr": "Telefonu kim kurdu?",
+          "ar": "من ضبط الهاتف؟",
+          "fr": "Qui a réglé le téléphone ?",
+          "nl": "Wie heeft de telefoon ingesteld?"
+        }
+      ]
+    },
+    {
+      "slug": "kmr-pirtuka-gotinan",
+      "dialect": "kmr",
+      "level": 3,
+      "title": {
+        "en": "The book of sayings",
+        "ku": "Pirtûka gotinan",
+        "ckb": "کتێبی پەندەکان",
+        "de": "Das Buch der Sprichwörter",
+        "es": "El libro de los refranes",
+        "tr": "Atasözleri kitabı",
+        "ar": "كتاب الأمثال",
+        "fr": "Le livre des proverbes",
+        "nl": "Het boek met spreekwoorden"
+      },
+      "intro": {
+        "en": "Hamo goes to the bookshop for a book of proverbs. The bookseller laughs: he knows whose sayings fill it. Whose are they?",
+        "ku": "Hamo ji bo pirtûkeke gotinên pêşiyan diçe dikanê. Firoşkar dikene: ew dizane gotinên kê di pirtûkê de ne. Yên kê ne?",
+        "ckb": "حەمۆ بۆ کتێبێکی پەندی پێشینان دەچێتە کتێبفرۆشییەکە. کتێبفرۆشەکە پێدەکەنێت: دەزانێت پەندەکانی ناو کتێبەکە هی کێن. هی کێن؟",
+        "de": "Hamo geht in den Buchladen, um ein Buch mit Sprichwörtern zu kaufen. Der Buchhändler lacht: Er weiß, von wem die Sprüche darin stammen. Von wem?",
+        "es": "Hamo va a la librería a por un libro de refranes. El librero se ríe: sabe de quién son los refranes. ¿De quién son?",
+        "tr": "Hamo bir atasözleri kitabı almak için kitapçıya gidiyor. Kitapçı gülüyor: içindeki sözlerin kimin olduğunu biliyor. Kimin?",
+        "ar": "يذهب حمو إلى المكتبة لشراء كتاب أمثال. يضحك البائع: فهو يعرف أقوال من تملأ الكتاب. أقوال من هي؟",
+        "fr": "Hamo va à la librairie chercher un livre de proverbes. Le libraire rit : il sait de qui viennent les dictons. De qui ?",
+        "nl": "Hamo gaat naar de boekwinkel voor een boek met spreekwoorden. De boekverkoper lacht: hij weet van wie de spreuken zijn. Van wie?"
+      },
+      "suspects": [
+        {
+          "id": "firoskar",
+          "name": "Firoşkar",
+          "about": {
+            "en": "The old bookseller, who knows everyone.",
+            "ku": "Firoşkarê pîr ê pirtûkan, ku her kesî nas dike.",
+            "ckb": "کتێبفرۆشە پیرەکە، کە هەموو کەس دەناسێت.",
+            "de": "Der alte Buchhändler, der jeden kennt.",
+            "es": "El viejo librero, que conoce a todo el mundo.",
+            "tr": "Herkesi tanıyan yaşlı kitapçı.",
+            "ar": "بائع الكتب العجوز، الذي يعرف الجميع.",
+            "fr": "Le vieux libraire, qui connaît tout le monde.",
+            "nl": "De oude boekverkoper, die iedereen kent."
+          }
+        },
+        {
+          "id": "hamo",
+          "name": "Hamo",
+          "about": {
+            "en": "Hevalo’s friend, who tells the stories.",
+            "ku": "Hevalê Hevalo, ku çîrokan dibêje.",
+            "ckb": "هاوڕێکەی هەڤاڵۆ، کە چیرۆکەکان دەگێڕێتەوە.",
+            "de": "Hevalos Freund, der die Geschichten erzählt.",
+            "es": "El amigo de Hevalo, que cuenta las historias.",
+            "tr": "Hikâyeleri anlatan, Hevalo’nun arkadaşı.",
+            "ar": "صديق هيفالو، الذي يروي الحكايات.",
+            "fr": "L’ami de Hevalo, qui raconte les histoires.",
+            "nl": "De vriend van Hevalo, die de verhalen vertelt."
+          },
+          "portrait": "hamo"
+        },
+        {
+          "id": "ibrahim",
+          "name": "Ibrahîm",
+          "about": {
+            "en": "Hamo’s father, who lives in Kobanî.",
+            "ku": "Bavê Hamo, ku li Kobaniyê dijî.",
+            "ckb": "باوکی حەمۆ، کە لە کۆبانێ دەژی.",
+            "de": "Hamos Vater, der in Kobanî lebt.",
+            "es": "El padre de Hamo, que vive en Kobanî.",
+            "tr": "Kobanî’de yaşayan, Hamo’nun babası.",
+            "ar": "والد حمو، الذي يعيش في كوباني.",
+            "fr": "Le père de Hamo, qui vit à Kobanî.",
+            "nl": "Hamo’s vader, die in Kobanî woont."
+          }
+        },
+        {
+          "id": "lorin",
+          "name": "Lorîn",
+          "about": {
+            "en": "Hamo’s sister, who lives in Kobanî.",
+            "ku": "Xwişka Hamo, ku li Kobaniyê dijî.",
+            "ckb": "خوشکەکەی حەمۆ، کە لە کۆبانێ دەژی.",
+            "de": "Hamos Schwester, die in Kobanî lebt.",
+            "es": "La hermana de Hamo, que vive en Kobanî.",
+            "tr": "Kobanî’de yaşayan, Hamo’nun kız kardeşi.",
+            "ar": "أخت حمو، التي تعيش في كوباني.",
+            "fr": "La sœur de Hamo, qui vit à Kobanî.",
+            "nl": "Hamo’s zus, die in Kobanî woont."
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "bav",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu06s2l4a",
+            "en": "This is my father. His name is Ibrahîm.",
+            "meanings": {
+              "ckb": "ئەمە باوکمە. ناوی ئیبراهیمە.",
+              "de": "Das ist mein Vater. Er heißt Ibrahîm.",
+              "es": "Este es mi padre. Se llama Ibrahîm.",
+              "tr": "Bu benim babam. Adı İbrahîm.",
+              "ar": "هذا أبي. اسمه إبراهيم.",
+              "fr": "C’est mon père. Il s’appelle Ibrahîm.",
+              "nl": "Dit is mijn vader. Hij heet Ibrahîm."
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "dereng",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu06s3l3a",
+            "en": "It’s late. The bookseller is closing the door.",
+            "meanings": {
+              "ckb": "درەنگە. کتێبفرۆشەکە دەرگاکە دادەخات.",
+              "de": "Es ist spät. Der Buchhändler schließt die Tür.",
+              "es": "Es tarde. El librero está cerrando la puerta.",
+              "tr": "Geç oldu. Kitapçı kapıyı kapatıyor.",
+              "ar": "الوقت متأخر. البائع يغلق الباب.",
+              "fr": "Il est tard. Le libraire ferme la porte.",
+              "nl": "Het is laat. De boekverkoper doet de deur dicht."
+            }
+          }
+        },
+        {
+          "id": "kur",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu06s3l3a",
+            "en": "The bookseller opens the door and says: Ibrahîm’s boy?",
+            "meanings": {
+              "ckb": "کتێبفرۆشەکە دەرگاکە دەکاتەوە و دەڵێت: کوڕی ئیبراهیم؟",
+              "de": "Der Buchhändler öffnet die Tür und sagt: Ibrahîms Junge?",
+              "es": "El librero abre la puerta y dice: ¿El hijo de Ibrahîm?",
+              "tr": "Kitapçı kapıyı açıp diyor ki: İbrahîm’in oğlu mu?",
+              "ar": "يفتح البائع الباب ويقول: ابن إبراهيم؟",
+              "fr": "Le libraire ouvre la porte et dit : le fils d’Ibrahîm ?",
+              "nl": "De boekverkoper doet open en zegt: de zoon van Ibrahîm?"
+            }
+          },
+          "from": "firoskar"
+        },
+        {
+          "id": "pirtuk",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu06s3l3a",
+            "en": "A book of proverbs, for my father.",
+            "meanings": {
+              "ckb": "کتێبێکی پەندی پێشینان، بۆ باوکم.",
+              "de": "Ein Buch mit Sprichwörtern, für meinen Vater.",
+              "es": "Un libro de refranes, para mi padre.",
+              "tr": "Babam için bir atasözleri kitabı.",
+              "ar": "كتاب أمثال، لأبي.",
+              "fr": "Un livre de proverbes, pour mon père.",
+              "nl": "Een boek met spreekwoorden, voor mijn vader."
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "gotin",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu06s3l3a",
+            "en": "He says: The sayings in this book come from your father!",
+            "meanings": {
+              "ckb": "دەڵێت: پەندەکانی ئەم کتێبە هی باوکتن!",
+              "de": "Er sagt: Die Sprüche in diesem Buch stammen von deinem Vater!",
+              "es": "Dice: ¡Los refranes de este libro son de tu padre!",
+              "tr": "Diyor ki: Bu kitaptaki sözler babandan!",
+              "ar": "يقول: أقوال هذا الكتاب من أبيك!",
+              "fr": "Il dit : les dictons de ce livre viennent de ton père !",
+              "nl": "Hij zegt: de spreuken in dit boek komen van je vader!"
+            }
+          },
+          "from": "hamo"
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "Who is the man in the old photo?",
+            "ku": "Mêrê di wêneyê kevn de kî ye?",
+            "ckb": "ئەو پیاوەی ناو وێنە کۆنەکە کێیە؟",
+            "de": "Wer ist der Mann auf dem alten Foto?",
+            "es": "¿Quién es el hombre de la foto antigua?",
+            "tr": "Eski fotoğraftaki adam kim?",
+            "ar": "من الرجل في الصورة القديمة؟",
+            "fr": "Qui est l’homme sur la vieille photo ?",
+            "nl": "Wie is de man op de oude foto?"
+          },
+          "options": [
+            {
+              "en": "Hamo’s father",
+              "ku": "Bavê Hamo",
+              "ckb": "باوکی حەمۆ",
+              "de": "Hamos Vater",
+              "es": "El padre de Hamo",
+              "tr": "Hamo’nun babası",
+              "ar": "والد حمو",
+              "fr": "Le père de Hamo",
+              "nl": "Hamo’s vader"
+            },
+            {
+              "en": "The bookseller",
+              "ku": "Firoşkar",
+              "ckb": "کتێبفرۆشەکە",
+              "de": "Der Buchhändler",
+              "es": "El librero",
+              "tr": "Kitapçı",
+              "ar": "بائع الكتب",
+              "fr": "Le libraire",
+              "nl": "De boekverkoper"
+            },
+            {
+              "en": "Lorîn’s teacher",
+              "ku": "Mamosteyê Lorînê",
+              "ckb": "مامۆستاکەی لۆرین",
+              "de": "Lorîns Lehrer",
+              "es": "El maestro de Lorîn",
+              "tr": "Lorîn’in öğretmeni",
+              "ar": "معلم لورين",
+              "fr": "Le professeur de Lorîn",
+              "nl": "De leraar van Lorîn"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "bav"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What is the bookseller doing when Hamo arrives?",
+            "ku": "Dema Hamo tê, firoşkar çi dike?",
+            "ckb": "کاتێک حەمۆ دێت، کتێبفرۆشەکە چی دەکات؟",
+            "de": "Was macht der Buchhändler, als Hamo ankommt?",
+            "es": "¿Qué hace el librero cuando llega Hamo?",
+            "tr": "Hamo geldiğinde kitapçı ne yapıyor?",
+            "ar": "ماذا يفعل البائع حين يصل حمو؟",
+            "fr": "Que fait le libraire quand Hamo arrive ?",
+            "nl": "Wat doet de boekverkoper als Hamo aankomt?"
+          },
+          "options": [
+            {
+              "en": "Closing the door",
+              "ku": "Derî digire",
+              "ckb": "دەرگاکە دادەخات",
+              "de": "Er schließt die Tür",
+              "es": "Cierra la puerta",
+              "tr": "Kapıyı kapatıyor",
+              "ar": "يغلق الباب",
+              "fr": "Il ferme la porte",
+              "nl": "Hij doet de deur dicht"
+            },
+            {
+              "en": "Reading a book",
+              "ku": "Pirtûkekê dixwîne",
+              "ckb": "کتێبێک دەخوێنێتەوە",
+              "de": "Er liest ein Buch",
+              "es": "Lee un libro",
+              "tr": "Kitap okuyor",
+              "ar": "يقرأ كتابًا",
+              "fr": "Il lit un livre",
+              "nl": "Hij leest een boek"
+            },
+            {
+              "en": "Drinking tea",
+              "ku": "Çayê vedixwe",
+              "ckb": "چا دەخواتەوە",
+              "de": "Er trinkt Tee",
+              "es": "Bebe té",
+              "tr": "Çay içiyor",
+              "ar": "يشرب الشاي",
+              "fr": "Il boit du thé",
+              "nl": "Hij drinkt thee"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "dereng",
+            "kur"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What does Hamo want to buy?",
+            "ku": "Hamo dixwaze çi bikire?",
+            "ckb": "حەمۆ دەیەوێت چی بکڕێت؟",
+            "de": "Was will Hamo kaufen?",
+            "es": "¿Qué quiere comprar Hamo?",
+            "tr": "Hamo ne almak istiyor?",
+            "ar": "ماذا يريد حمو أن يشتري؟",
+            "fr": "Qu’est-ce que Hamo veut acheter ?",
+            "nl": "Wat wil Hamo kopen?"
+          },
+          "options": [
+            {
+              "en": "A book of proverbs for his father",
+              "ku": "Pirtûkeke gotinên pêşiyan ji bo bavê xwe",
+              "ckb": "کتێبێکی پەندی پێشینان بۆ باوکی",
+              "de": "Ein Buch mit Sprichwörtern für seinen Vater",
+              "es": "Un libro de refranes para su padre",
+              "tr": "Babası için bir atasözleri kitabı",
+              "ar": "كتاب أمثال لأبيه",
+              "fr": "Un livre de proverbes pour son père",
+              "nl": "Een boek met spreekwoorden voor zijn vader"
+            },
+            {
+              "en": "A notebook for his sister",
+              "ku": "Deftereke ji bo xwişka xwe",
+              "ckb": "دەفتەرێک بۆ خوشکەکەی",
+              "de": "Ein Heft für seine Schwester",
+              "es": "Un cuaderno para su hermana",
+              "tr": "Kız kardeşi için bir defter",
+              "ar": "دفترًا لأخته",
+              "fr": "Un cahier pour sa sœur",
+              "nl": "Een schrift voor zijn zus"
+            },
+            {
+              "en": "A map of Kobanî for himself",
+              "ku": "Nexşeyeke Kobaniyê ji bo xwe",
+              "ckb": "نەخشەیەکی کۆبانێ بۆ خۆی",
+              "de": "Eine Karte von Kobanî für sich selbst",
+              "es": "Un mapa de Kobanî para él",
+              "tr": "Kendisi için bir Kobanî haritası",
+              "ar": "خريطة لكوباني لنفسه",
+              "fr": "Une carte de Kobanî pour lui-même",
+              "nl": "Een kaart van Kobanî voor zichzelf"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "pirtuk"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Why does the bookseller laugh?",
+            "ku": "Çima firoşkar dikene?",
+            "ckb": "بۆچی کتێبفرۆشەکە پێدەکەنێت؟",
+            "de": "Warum lacht der Buchhändler?",
+            "es": "¿Por qué se ríe el librero?",
+            "tr": "Kitapçı neden gülüyor?",
+            "ar": "لماذا يضحك البائع؟",
+            "fr": "Pourquoi le libraire rit-il ?",
+            "nl": "Waarom lacht de boekverkoper?"
+          },
+          "options": [
+            {
+              "en": "The sayings in the book come from Hamo’s father",
+              "ku": "Gotinên pirtûkê ji bavê Hamo ne",
+              "ckb": "پەندەکانی کتێبەکە هی باوکی حەمۆن",
+              "de": "Die Sprüche im Buch stammen von Hamos Vater",
+              "es": "Los refranes del libro son del padre de Hamo",
+              "tr": "Kitaptaki sözler Hamo’nun babasından",
+              "ar": "أقوال الكتاب من والد حمو",
+              "fr": "Les dictons du livre viennent du père de Hamo",
+              "nl": "De spreuken in het boek komen van Hamo’s vader"
+            },
+            {
+              "en": "The book is far too expensive",
+              "ku": "Pirtûk pir biha ye",
+              "ckb": "کتێبەکە زۆر گرانە",
+              "de": "Das Buch ist viel zu teuer",
+              "es": "El libro es demasiado caro",
+              "tr": "Kitap çok pahalı",
+              "ar": "الكتاب غالٍ جدًا",
+              "fr": "Le livre est beaucoup trop cher",
+              "nl": "Het boek is veel te duur"
+            },
+            {
+              "en": "Hamo has come without any money",
+              "ku": "Hamo bê pere hatiye",
+              "ckb": "حەمۆ بەبێ پارە هاتووە",
+              "de": "Hamo ist ohne Geld gekommen",
+              "es": "Hamo ha venido sin dinero",
+              "tr": "Hamo parasız gelmiş",
+              "ar": "جاء حمو بلا نقود",
+              "fr": "Hamo est venu sans argent",
+              "nl": "Hamo is zonder geld gekomen"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "gotin"
+          ]
+        }
+      ],
+      "culprit": "ibrahim",
+      "solution": {
+        "en": "Hamo wants a book of proverbs for his father. The bookseller, who knows Hamo as Ibrahîm’s boy, laughs: the sayings in that book come from Hamo’s father. They are Ibrahîm’s.",
+        "ku": "Hamo ji bo bavê xwe pirtûkeke gotinên pêşiyan dixwaze. Firoşkar, ku Hamo wekî kurê Ibrahîm nas dike, dikene: gotinên wê pirtûkê ji bavê Hamo ne. Ew yên Ibrahîm in.",
+        "ckb": "حەمۆ کتێبێکی پەندی پێشینانی بۆ باوکی دەوێت. کتێبفرۆشەکە، کە حەمۆ وەک کوڕی ئیبراهیم دەناسێت، پێدەکەنێت: پەندەکانی ئەو کتێبە هی باوکی حەمۆن. هی ئیبراهیمن.",
+        "de": "Hamo möchte ein Buch mit Sprichwörtern für seinen Vater. Der Buchhändler, der Hamo als Ibrahîms Jungen kennt, lacht: Die Sprüche in dem Buch stammen von Hamos Vater. Sie sind von Ibrahîm.",
+        "es": "Hamo quiere un libro de refranes para su padre. El librero, que conoce a Hamo como el hijo de Ibrahîm, se ríe: los refranes de ese libro son del padre de Hamo. Son de Ibrahîm.",
+        "tr": "Hamo babası için bir atasözleri kitabı istiyor. Hamo’yu İbrahîm’in oğlu olarak tanıyan kitapçı gülüyor: o kitaptaki sözler Hamo’nun babasından. Sözler İbrahîm’in.",
+        "ar": "يريد حمو كتاب أمثال لأبيه. البائع، الذي يعرف حمو بأنه ابن إبراهيم، يضحك: أقوال ذلك الكتاب من والد حمو. إنها أقوال إبراهيم.",
+        "fr": "Hamo veut un livre de proverbes pour son père. Le libraire, qui connaît Hamo comme le fils d’Ibrahîm, rit : les dictons de ce livre viennent du père de Hamo. Ce sont ceux d’Ibrahîm.",
+        "nl": "Hamo wil een boek met spreekwoorden voor zijn vader. De boekverkoper, die Hamo kent als de zoon van Ibrahîm, lacht: de spreuken in dat boek komen van Hamo’s vader. Ze zijn van Ibrahîm."
+      },
+      "hints": [
+        {
+          "en": "What does the bookseller call Hamo at the door?",
+          "ku": "Firoşkar li ber derî ji Hamo re çi dibêje?",
+          "ckb": "کتێبفرۆشەکە لەبەردەم دەرگاکە بە حەمۆ چی دەڵێت؟",
+          "de": "Wie nennt der Buchhändler Hamo an der Tür?",
+          "es": "¿Cómo llama el librero a Hamo en la puerta?",
+          "tr": "Kitapçı kapıda Hamo’ya ne diyor?",
+          "ar": "بماذا ينادي البائع حمو عند الباب؟",
+          "fr": "Comment le libraire appelle-t-il Hamo à la porte ?",
+          "nl": "Hoe noemt de boekverkoper Hamo bij de deur?"
+        },
+        {
+          "en": "Who is the book for?",
+          "ku": "Pirtûk ji bo kê ye?",
+          "ckb": "کتێبەکە بۆ کێیە؟",
+          "de": "Für wen ist das Buch?",
+          "es": "¿Para quién es el libro?",
+          "tr": "Kitap kimin için?",
+          "ar": "لمن الكتاب؟",
+          "fr": "Pour qui est le livre ?",
+          "nl": "Voor wie is het boek?"
+        }
+      ]
+    },
+    {
+      "slug": "kmr-pista-hamo",
+      "dialect": "kmr",
+      "level": 3,
+      "title": {
+        "en": "Hamo’s sore back",
+        "ku": "Pişta Hamo",
+        "ckb": "پشتئێشەی حەمۆ",
+        "de": "Hamos Rücken",
+        "es": "La espalda de Hamo",
+        "tr": "Hamo’nun sırtı",
+        "ar": "ظهر حمو",
+        "fr": "Le dos de Hamo",
+        "nl": "Hamo’s rug"
+      },
+      "intro": {
+        "en": "The morning after Newroz, Hamo cannot get out of bed: his back hurts. What did it?",
+        "ku": "Sibeha piştî Newrozê, Hamo nikare ji nivînan rabe: pişta wî diêşe. Çi ew êşand?",
+        "ckb": "بەیانی دوای نەورۆز، حەمۆ ناتوانێت لە جێگاکەی هەستێت: پشتی دێشێت. چی ئازاری دا؟",
+        "de": "Am Morgen nach Newroz kommt Hamo nicht aus dem Bett: Sein Rücken tut weh. Woher kommt das?",
+        "es": "La mañana después de Newroz, Hamo no puede levantarse: le duele la espalda. ¿Qué ha sido?",
+        "tr": "Newroz’un ertesi sabahı Hamo yataktan kalkamıyor: sırtı ağrıyor. Neden?",
+        "ar": "في صباح ما بعد نوروز، لا يستطيع حمو النهوض من فراشه: ظهره يؤلمه. ما السبب؟",
+        "fr": "Le matin après Newroz, Hamo n’arrive pas à se lever : il a mal au dos. Qu’est-ce qui en est la cause ?",
+        "nl": "De ochtend na Newroz komt Hamo niet uit bed: zijn rug doet pijn. Waar komt dat van?"
+      },
+      "suspects": [
+        {
+          "id": "govend",
+          "name": "Govend",
+          "about": {
+            "en": "The circle dance that lasted all day.",
+            "ku": "Govenda ku hemû rojê dom kir.",
+            "ckb": "ئەو هەڵپەڕکێیەی هەموو ڕۆژەکە درێژەی کێشا.",
+            "de": "Der Kreistanz, der den ganzen Tag dauerte.",
+            "es": "El baile en corro que duró todo el día.",
+            "tr": "Bütün gün süren halay.",
+            "ar": "رقصة الدبكة التي دامت طوال اليوم.",
+            "fr": "La ronde qui a duré toute la journée.",
+            "nl": "De kringdans die de hele dag duurde."
+          }
+        },
+        {
+          "id": "agir",
+          "name": "Agirê Newrozê",
+          "about": {
+            "en": "The Newroz fire on the hill.",
+            "ku": "Agirê Newrozê yê li ser gir.",
+            "ckb": "ئاگری نەورۆز لەسەر گردەکە.",
+            "de": "Das Newroz-Feuer auf dem Hügel.",
+            "es": "La hoguera de Newroz en la colina.",
+            "tr": "Tepedeki Newroz ateşi.",
+            "ar": "نار نوروز على التلّة.",
+            "fr": "Le feu de Newroz sur la colline.",
+            "nl": "Het Newroz-vuur op de heuvel."
+          }
+        },
+        {
+          "id": "ba",
+          "name": "Bayê sar",
+          "about": {
+            "en": "The cold wind of the storm.",
+            "ku": "Bayê sar ê bahozê.",
+            "ckb": "بای ساردی زریانەکە.",
+            "de": "Der kalte Wind des Sturms.",
+            "es": "El viento frío de la tormenta.",
+            "tr": "Fırtınanın soğuk rüzgârı.",
+            "ar": "ريح العاصفة الباردة.",
+            "fr": "Le vent froid de la tempête.",
+            "nl": "De koude wind van de storm."
+          }
+        },
+        {
+          "id": "nivin",
+          "name": "Nivîn",
+          "about": {
+            "en": "Hamo’s old bed.",
+            "ku": "Nivînên kevn ên Hamo.",
+            "ckb": "جێگا کۆنەکەی حەمۆ.",
+            "de": "Hamos altes Bett.",
+            "es": "La vieja cama de Hamo.",
+            "tr": "Hamo’nun eski yatağı.",
+            "ar": "فراش حمو القديم.",
+            "fr": "Le vieux lit de Hamo.",
+            "nl": "Hamo’s oude bed."
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "pist",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu07s4l3a",
+            "en": "Ow, my back hurts!",
+            "meanings": {
+              "ckb": "ئای، پشتم دێشێت!",
+              "de": "Au, mein Rücken tut weh!",
+              "es": "¡Ay, me duele la espalda!",
+              "tr": "Ah, sırtım ağrıyor!",
+              "ar": "آه، ظهري يؤلمني!",
+              "fr": "Aïe, j’ai mal au dos !",
+              "nl": "Au, mijn rug doet pijn!"
+            }
+          }
+        },
+        {
+          "id": "her-der",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu07s4l3a",
+            "en": "Everywhere. My back, my knees, my head…",
+            "meanings": {
+              "ckb": "هەموو شوێنێک. پشتم، ئەژنۆکانم، سەرم…",
+              "de": "Überall. Mein Rücken, meine Knie, mein Kopf …",
+              "es": "Por todas partes. La espalda, las rodillas, la cabeza…",
+              "tr": "Her yerim. Sırtım, dizlerim, başım…",
+              "ar": "في كل مكان. ظهري، ركبتاي، رأسي…",
+              "fr": "Partout. Mon dos, mes genoux, ma tête…",
+              "nl": "Overal. Mijn rug, mijn knieën, mijn hoofd…"
+            }
+          }
+        },
+        {
+          "id": "ji-govende",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu07s4l3a",
+            "en": "That’s from the govend!",
+            "meanings": {
+              "ckb": "ئەوە لە هەڵپەڕکێیەوەیە!",
+              "de": "Das kommt vom Govend!",
+              "es": "¡Eso es por el govend!",
+              "tr": "O halaydan!",
+              "ar": "هذا من الدبكة!",
+              "fr": "C’est à cause du govend !",
+              "nl": "Dat komt van de govend!"
+            }
+          }
+        },
+        {
+          "id": "ji-agir",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu07s4l3a",
+            "en": "No, it’s from the fire. I jump over the fire a lot!",
+            "meanings": {
+              "ckb": "نا، لە ئاگرەکەوەیە. من زۆر بەسەر ئاگردا باز دەدەم!",
+              "de": "Nein, das kommt vom Feuer. Ich springe oft über das Feuer!",
+              "es": "No, es por la hoguera. ¡Salto mucho por encima del fuego!",
+              "tr": "Hayır, ateşten. Ateşin üstünden çok atlıyorum!",
+              "ar": "لا، إنه من النار. أقفز فوق النار كثيرًا!",
+              "fr": "Non, c’est à cause du feu. Je saute beaucoup par-dessus le feu !",
+              "nl": "Nee, het komt van het vuur. Ik spring vaak over het vuur!"
+            }
+          }
+        },
+        {
+          "id": "ba",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu07s1l3a",
+            "en": "Thanks. The wind is very cold!",
+            "meanings": {
+              "ckb": "سوپاس. باکە زۆر ساردە!",
+              "de": "Danke. Der Wind ist sehr kalt!",
+              "es": "Gracias. ¡El viento es muy frío!",
+              "tr": "Teşekkürler. Rüzgâr çok soğuk!",
+              "ar": "شكرًا. الريح باردة جدًا!",
+              "fr": "Merci. Le vent est très froid !",
+              "nl": "Bedankt. De wind is erg koud!"
+            }
+          }
+        },
+        {
+          "id": "cay",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu07s4l3a",
+            "en": "Very bad. Please bring me a hot tea, and some honey.",
+            "meanings": {
+              "ckb": "زۆر خراپە. تکایە چایەکی گەرم و کەمێک هەنگوینم بۆ بهێنە.",
+              "de": "Sehr schlimm. Bring mir bitte einen heißen Tee und etwas Honig.",
+              "es": "Muy mal. Por favor, tráeme un té caliente y un poco de miel.",
+              "tr": "Çok kötü. Lütfen bana sıcak bir çay ve biraz bal getir.",
+              "ar": "سيئ جدًا. أحضر لي من فضلك شايًا ساخنًا وقليلًا من العسل.",
+              "fr": "Très mal. Apporte-moi un thé chaud, s’il te plaît, et un peu de miel.",
+              "nl": "Heel erg. Breng me alsjeblieft een hete thee en wat honing."
+            }
+          }
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "Where does it hurt?",
+            "ku": "Li ku diêşe?",
+            "ckb": "لە کوێ دێشێت؟",
+            "de": "Wo tut es weh?",
+            "es": "¿Dónde le duele?",
+            "tr": "Neresi ağrıyor?",
+            "ar": "أين الألم؟",
+            "fr": "Où a-t-il mal ?",
+            "nl": "Waar doet het pijn?"
+          },
+          "options": [
+            {
+              "en": "His back, his knees and his head",
+              "ku": "Pişt, çok û serê wî",
+              "ckb": "پشت و ئەژنۆ و سەری",
+              "de": "Rücken, Knie und Kopf",
+              "es": "La espalda, las rodillas y la cabeza",
+              "tr": "Sırtı, dizleri ve başı",
+              "ar": "ظهره وركبتاه ورأسه",
+              "fr": "Au dos, aux genoux et à la tête",
+              "nl": "Zijn rug, zijn knieën en zijn hoofd"
+            },
+            {
+              "en": "Only his hand",
+              "ku": "Tenê destê wî",
+              "ckb": "تەنیا دەستی",
+              "de": "Nur die Hand",
+              "es": "Solo la mano",
+              "tr": "Sadece eli",
+              "ar": "يده فقط",
+              "fr": "Seulement à la main",
+              "nl": "Alleen zijn hand"
+            },
+            {
+              "en": "His teeth and his ears",
+              "ku": "Diran û guhên wî",
+              "ckb": "ددان و گوێکانی",
+              "de": "Zähne und Ohren",
+              "es": "Los dientes y los oídos",
+              "tr": "Dişleri ve kulakları",
+              "ar": "أسنانه وأذناه",
+              "fr": "Aux dents et aux oreilles",
+              "nl": "Zijn tanden en zijn oren"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "pist",
+            "her-der"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What does his friend think the pain is from?",
+            "ku": "Hevalê wî difikire ku êş ji çi ye?",
+            "ckb": "هاوڕێکەی پێی وایە ئازارەکە لە چییەوەیە؟",
+            "de": "Wovon kommt der Schmerz, meint sein Freund?",
+            "es": "¿De qué cree su amigo que viene el dolor?",
+            "tr": "Arkadaşı ağrının neden olduğunu düşünüyor?",
+            "ar": "ممّ يظن صديقه أن الألم؟",
+            "fr": "D’où vient la douleur, d’après son ami ?",
+            "nl": "Waar denkt zijn vriend dat de pijn van komt?"
+          },
+          "options": [
+            {
+              "en": "The govend",
+              "ku": "Govend",
+              "ckb": "هەڵپەڕکێ",
+              "de": "Vom Govend",
+              "es": "El govend",
+              "tr": "Halay",
+              "ar": "الدبكة",
+              "fr": "Le govend",
+              "nl": "De govend"
+            },
+            {
+              "en": "The cold wind",
+              "ku": "Bayê sar",
+              "ckb": "بای سارد",
+              "de": "Vom kalten Wind",
+              "es": "El viento frío",
+              "tr": "Soğuk rüzgâr",
+              "ar": "الريح الباردة",
+              "fr": "Le vent froid",
+              "nl": "De koude wind"
+            },
+            {
+              "en": "Too much honey",
+              "ku": "Pir hingiv",
+              "ckb": "هەنگوینی زۆر",
+              "de": "Von zu viel Honig",
+              "es": "Demasiada miel",
+              "tr": "Fazla bal",
+              "ar": "العسل الكثير",
+              "fr": "Trop de miel",
+              "nl": "Te veel honing"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "ji-govende"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What does Hamo say he does a lot at Newroz?",
+            "ku": "Hamo dibêje ku li Newrozê gelek çi dike?",
+            "ckb": "حەمۆ دەڵێت لە نەورۆزدا زۆر چی دەکات؟",
+            "de": "Was macht Hamo an Newroz oft, sagt er?",
+            "es": "¿Qué dice Hamo que hace mucho en Newroz?",
+            "tr": "Hamo Newroz’da en çok ne yaptığını söylüyor?",
+            "ar": "ماذا يقول حمو إنه يفعل كثيرًا في نوروز؟",
+            "fr": "Que dit Hamo faire souvent à Newroz ?",
+            "nl": "Wat zegt Hamo dat hij met Newroz veel doet?"
+          },
+          "options": [
+            {
+              "en": "Jump over the fire",
+              "ku": "Ji ser agir baz dide",
+              "ckb": "بەسەر ئاگردا باز دەدات",
+              "de": "Über das Feuer springen",
+              "es": "Saltar por encima del fuego",
+              "tr": "Ateşin üstünden atlamak",
+              "ar": "القفز فوق النار",
+              "fr": "Sauter par-dessus le feu",
+              "nl": "Over het vuur springen"
+            },
+            {
+              "en": "Sleep by the open window",
+              "ku": "Li ber pencereya vekirî radize",
+              "ckb": "لە تەنیشت پەنجەرەی کراوە دەخەوێت",
+              "de": "Am offenen Fenster schlafen",
+              "es": "Dormir junto a la ventana abierta",
+              "tr": "Açık pencerenin yanında uyumak",
+              "ar": "النوم قرب النافذة المفتوحة",
+              "fr": "Dormir près de la fenêtre ouverte",
+              "nl": "Bij het open raam slapen"
+            },
+            {
+              "en": "Carry firewood up the hill",
+              "ku": "Êzing hildigire ser gir",
+              "ckb": "دار دەباتە سەر گردەکە",
+              "de": "Brennholz auf den Hügel tragen",
+              "es": "Subir leña a la colina",
+              "tr": "Tepeye odun taşımak",
+              "ar": "حمل الحطب إلى التلّة",
+              "fr": "Monter du bois sur la colline",
+              "nl": "Brandhout de heuvel op dragen"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "ji-agir"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "When was the wind so cold?",
+            "ku": "Ba kengî ewqas sar bû?",
+            "ckb": "با کەی ئەوەندە سارد بوو؟",
+            "de": "Wann war der Wind so kalt?",
+            "es": "¿Cuándo hizo un viento tan frío?",
+            "tr": "Rüzgâr ne zaman bu kadar soğuktu?",
+            "ar": "متى كانت الريح بهذا البرد؟",
+            "fr": "Quand le vent était-il si froid ?",
+            "nl": "Wanneer was de wind zo koud?"
+          },
+          "options": [
+            {
+              "en": "On the day of the storm, before Newroz",
+              "ku": "Roja bahozê, berî Newrozê",
+              "ckb": "ڕۆژی زریانەکە، پێش نەورۆز",
+              "de": "Am Tag des Sturms, vor Newroz",
+              "es": "El día de la tormenta, antes de Newroz",
+              "tr": "Fırtına günü, Newroz’dan önce",
+              "ar": "يوم العاصفة، قبل نوروز",
+              "fr": "Le jour de la tempête, avant Newroz",
+              "nl": "Op de dag van de storm, vóór Newroz"
+            },
+            {
+              "en": "On the night of the fire",
+              "ku": "Şeva agir",
+              "ckb": "شەوی ئاگرەکە",
+              "de": "In der Nacht des Feuers",
+              "es": "La noche de la hoguera",
+              "tr": "Ateş gecesi",
+              "ar": "ليلة النار",
+              "fr": "La nuit du feu",
+              "nl": "In de nacht van het vuur"
+            },
+            {
+              "en": "This morning, in bed",
+              "ku": "Vê sibehê, di nivînan de",
+              "ckb": "ئەم بەیانییە، لە جێگادا",
+              "de": "Heute Morgen im Bett",
+              "es": "Esta mañana, en la cama",
+              "tr": "Bu sabah, yatakta",
+              "ar": "هذا الصباح، في الفراش",
+              "fr": "Ce matin, au lit",
+              "nl": "Vanochtend, in bed"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "ba"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What does Hamo ask for, for the pain?",
+            "ku": "Hamo ji bo êşê çi dixwaze?",
+            "ckb": "حەمۆ بۆ ئازارەکە چی داوا دەکات؟",
+            "de": "Was wünscht sich Hamo gegen den Schmerz?",
+            "es": "¿Qué pide Hamo para el dolor?",
+            "tr": "Hamo ağrı için ne istiyor?",
+            "ar": "ماذا يطلب حمو من أجل الألم؟",
+            "fr": "Que demande Hamo contre la douleur ?",
+            "nl": "Wat vraagt Hamo tegen de pijn?"
+          },
+          "options": [
+            {
+              "en": "A hot tea and some honey",
+              "ku": "Çayeke germ û hinek hingiv",
+              "ckb": "چایەکی گەرم و کەمێک هەنگوین",
+              "de": "Einen heißen Tee und etwas Honig",
+              "es": "Un té caliente y un poco de miel",
+              "tr": "Sıcak bir çay ve biraz bal",
+              "ar": "شايًا ساخنًا وقليلًا من العسل",
+              "fr": "Un thé chaud et un peu de miel",
+              "nl": "Een hete thee en wat honing"
+            },
+            {
+              "en": "A doctor from the city",
+              "ku": "Doktorekî ji bajêr",
+              "ckb": "دکتۆرێک لە شارەوە",
+              "de": "Einen Arzt aus der Stadt",
+              "es": "Un médico de la ciudad",
+              "tr": "Şehirden bir doktor",
+              "ar": "طبيبًا من المدينة",
+              "fr": "Un médecin de la ville",
+              "nl": "Een dokter uit de stad"
+            },
+            {
+              "en": "Another day of govend",
+              "ku": "Rojeke din a govendê",
+              "ckb": "ڕۆژێکی تری هەڵپەڕکێ",
+              "de": "Noch einen Tag Govend",
+              "es": "Otro día de govend",
+              "tr": "Bir gün daha halay",
+              "ar": "يومًا آخر من الدبكة",
+              "fr": "Une autre journée de govend",
+              "nl": "Nog een dag govend"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "cay"
+          ]
+        }
+      ],
+      "culprit": "agir",
+      "solution": {
+        "en": "Hamo’s back, knees and head hurt. His friend blames the govend, and the wind was cold, but that was on the day of the storm. Hamo says it himself: at Newroz he jumps over the fire a lot. The Newroz fire did it — or rather, all that jumping!",
+        "ku": "Pişt, çok û serê Hamo diêşin. Hevalê wî sûc dide govendê, û ba sar bû, lê ew roja bahozê bû. Hamo bi xwe dibêje: li Newrozê ew gelek ji ser agir baz dide. Agirê Newrozê bû — an jî, ew hemû baz dan!",
+        "ckb": "پشت و ئەژنۆ و سەری حەمۆ دێشێن. هاوڕێکەی تاوان دەخاتە سەر هەڵپەڕکێ، و باکەش سارد بوو، بەڵام ئەوە ڕۆژی زریانەکە بوو. حەمۆ خۆی دەڵێت: لە نەورۆزدا زۆر بەسەر ئاگردا باز دەدات. ئاگری نەورۆز بوو — یان باشتر بڵێین، ئەو هەموو بازدانە!",
+        "de": "Hamos Rücken, Knie und Kopf tun weh. Sein Freund gibt dem Govend die Schuld, und der Wind war kalt, aber das war am Tag des Sturms. Hamo sagt es selbst: An Newroz springt er oft über das Feuer. Das Newroz-Feuer war es – oder besser gesagt, das viele Springen!",
+        "es": "A Hamo le duelen la espalda, las rodillas y la cabeza. Su amigo culpa al govend, y el viento era frío, pero eso fue el día de la tormenta. Hamo lo dice él mismo: en Newroz salta mucho por encima del fuego. Fue la hoguera de Newroz… ¡o mejor dicho, tanto salto!",
+        "tr": "Hamo’nun sırtı, dizleri ve başı ağrıyor. Arkadaşı halayı suçluyor, rüzgâr da soğuktu ama o fırtına günüydü. Hamo kendisi söylüyor: Newroz’da ateşin üstünden çok atlıyor. Suçlu Newroz ateşi… daha doğrusu o kadar çok atlamak!",
+        "ar": "يؤلم حمو ظهره وركبتاه ورأسه. صديقه يلوم الدبكة، والريح كانت باردة، لكن ذلك كان يوم العاصفة. حمو نفسه يقول: في نوروز يقفز فوق النار كثيرًا. إنها نار نوروز، أو بالأحرى كل ذلك القفز!",
+        "fr": "Hamo a mal au dos, aux genoux et à la tête. Son ami accuse le govend, et le vent était froid, mais c’était le jour de la tempête. Hamo le dit lui-même : à Newroz, il saute beaucoup par-dessus le feu. C’est le feu de Newroz… ou plutôt tous ces sauts !",
+        "nl": "Hamo’s rug, knieën en hoofd doen pijn. Zijn vriend geeft de govend de schuld, en de wind was koud, maar dat was op de dag van de storm. Hamo zegt het zelf: met Newroz springt hij vaak over het vuur. Het was het Newroz-vuur – of eigenlijk al dat springen!"
+      },
+      "hints": [
+        {
+          "en": "Two suspects come from Newroz itself.",
+          "ku": "Du gumanbar ji Newrozê bi xwe tên.",
+          "ckb": "دوو گومانلێکراو لە خودی نەورۆزەوە دێن.",
+          "de": "Zwei Verdächtige gehören zu Newroz selbst.",
+          "es": "Dos sospechosos vienen del propio Newroz.",
+          "tr": "İki şüpheli doğrudan Newroz’dan.",
+          "ar": "مشتبهان اثنان من نوروز نفسه.",
+          "fr": "Deux suspects viennent de Newroz même.",
+          "nl": "Twee verdachten horen bij Newroz zelf."
+        },
+        {
+          "en": "Listen to what Hamo says about it himself.",
+          "ku": "Guhdarî bike ka Hamo bi xwe çi dibêje.",
+          "ckb": "گوێ بگرە بزانە حەمۆ خۆی چی دەڵێت.",
+          "de": "Hör hin, was Hamo selbst dazu sagt.",
+          "es": "Escucha lo que dice el propio Hamo.",
+          "tr": "Hamo’nun kendisinin ne dediğini dinle.",
+          "ar": "استمع إلى ما يقوله حمو نفسه.",
+          "fr": "Écoute ce que Hamo en dit lui-même.",
+          "nl": "Luister naar wat Hamo er zelf over zegt."
+        }
+      ]
+    },
+    {
+      "slug": "kmr-honey-jar",
+      "dialect": "kmr",
+      "level": 4,
+      "title": {
+        "en": "The empty honey jar",
+        "ku": "Şûşeya hingiv a vala",
+        "ckb": "شووشە هەنگوینە بەتاڵەکە",
+        "de": "Das leere Honigglas",
+        "es": "El tarro de miel vacío",
+        "tr": "Boş bal kavanozu",
+        "ar": "جرّة العسل الفارغة",
+        "fr": "Le pot de miel vide",
+        "nl": "De lege honingpot"
+      },
+      "intro": {
+        "en": "Doctor Azad has given Hamo some advice, and the neighbours keep bringing him jars of honey. In the morning one jar is empty. Read the evidence, answer each question, then say who ate the honey.",
+        "ku": "Doktor Azad şîret da Hamo, û cîran her tim şûşeyên hingiv jê re tînin. Sibehê şûşeyek vala ye. Li delîlan binêre, bersiva her pirsê bide, paşê bibêje kê hingiv xwar.",
+        "ckb": "دکتۆر ئازاد ئامۆژگاری حەمۆی کرد، و دراوسێکان بەردەوام شووشەی هەنگوینی بۆ دەهێنن. بەیانی شووشەیەک بەتاڵە. بەڵگەکان بخوێنەوە، وەڵامی هەر پرسیارێک بدەرەوە، پاشان بڵێ کێ هەنگوینەکەی خوارد.",
+        "de": "Doktor Azad hat Hamo einen Rat gegeben, und die Nachbarn bringen ihm ständig Honiggläser. Am Morgen ist ein Glas leer. Lies die Beweise, beantworte jede Frage und sag dann, wer den Honig gegessen hat.",
+        "es": "El doctor Azad le ha dado un consejo a Hamo, y los vecinos no paran de traerle tarros de miel. Por la mañana un tarro está vacío. Lee las pruebas, responde cada pregunta y di quién se comió la miel.",
+        "tr": "Doktor Azad Hamo’ya bir öğüt verdi; komşular da ona sürekli bal kavanozu getiriyor. Sabah bir kavanoz boş. Kanıtları oku, her soruyu yanıtla, sonra balı kimin yediğini söyle.",
+        "ar": "نصح الطبيب آزاد حمو، والجيران لا يكفّون عن إحضار جرار العسل له. في الصباح، جرّة فارغة. اقرأ الأدلة، وأجب عن كل سؤال، ثم قل من أكل العسل.",
+        "fr": "Le docteur Azad a donné un conseil à Hamo, et les voisins n’arrêtent pas de lui apporter des pots de miel. Le matin, un pot est vide. Lis les indices, réponds à chaque question, puis dis qui a mangé le miel.",
+        "nl": "Dokter Azad heeft Hamo een advies gegeven, en de buren brengen hem steeds potten honing. ’s Ochtends is er een pot leeg. Lees het bewijs, beantwoord elke vraag en zeg dan wie de honing heeft opgegeten."
+      },
+      "suspects": [
+        {
+          "id": "hamo",
+          "name": "Hamo",
+          "about": {
+            "en": "Who is ill, or says he is.",
+            "ku": "Yê ku nexweş e, an dibêje ku nexweş e.",
+            "ckb": "ئەوەی نەخۆشە، یان دەڵێت نەخۆشە.",
+            "de": "Der krank ist, oder sagt, er sei es.",
+            "es": "El que está enfermo, o dice estarlo.",
+            "tr": "Hasta olan, ya da öyle diyen.",
+            "ar": "المريض، أو من يقول إنه مريض.",
+            "fr": "Celui qui est malade, ou qui le dit.",
+            "nl": "Die ziek is, of zegt dat hij het is."
+          },
+          "portrait": "hamo"
+        },
+        {
+          "id": "hevalo",
+          "name": "Hevalo",
+          "about": {
+            "en": "The young deer, always hungry.",
+            "ku": "Askê ciwan, ku her tim birçî ye.",
+            "ckb": "ئاسکە گەنجەکە، کە هەمیشە برسییەتی.",
+            "de": "Das junge Reh, immer hungrig.",
+            "es": "El cervatillo, siempre con hambre.",
+            "tr": "Hep aç olan genç geyik.",
+            "ar": "الغزال الصغير، الجائع دائمًا.",
+            "fr": "Le jeune chevreuil, toujours affamé.",
+            "nl": "Het jonge hertje, altijd hongerig."
+          },
+          "portrait": "hevalo"
+        },
+        {
+          "id": "baran",
+          "name": "Baran",
+          "about": {
+            "en": "Nazê’s son from next door, nine years old.",
+            "ku": "Kurê Nazê yê cîran, neh salî.",
+            "ckb": "کوڕەکەی نازێ لە ماڵی دراوسێ، تەمەنی نۆ ساڵە.",
+            "de": "Nazês Sohn von nebenan, neun Jahre alt.",
+            "es": "El hijo de Nazê, el vecino, de nueve años.",
+            "tr": "Nazê’nin yan evdeki dokuz yaşındaki oğlu.",
+            "ar": "ابن نازێ من بيت الجيران، في التاسعة.",
+            "fr": "Le fils de Nazê, le voisin, neuf ans.",
+            "nl": "De zoon van Nazê van hiernaast, negen jaar."
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "advice",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu08s2l3a",
+            "en": "The doctor says honey is forbidden at night.",
+            "meanings": {
+              "ckb": "دکتۆر دەڵێت هەنگوین بە شەو قەدەغەیە.",
+              "de": "Der Arzt sagt, Honig ist nachts verboten.",
+              "es": "El médico dice que la miel está prohibida por la noche.",
+              "tr": "Doktor geceleri balın yasak olduğunu söylüyor.",
+              "ar": "يقول الطبيب إن العسل ممنوع ليلًا.",
+              "fr": "Le docteur dit que le miel est interdit la nuit.",
+              "nl": "De dokter zegt dat honing ’s nachts verboden is."
+            }
+          }
+        },
+        {
+          "id": "empty",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu08s2l3a",
+            "en": "Look, a jar is empty!",
+            "meanings": {
+              "ckb": "سەیر کە، شووشەیەک بەتاڵە!",
+              "de": "Schau, ein Glas ist leer!",
+              "es": "¡Mira, un tarro está vacío!",
+              "tr": "Bak, bir kavanoz boş!",
+              "ar": "انظر، جرّة فارغة!",
+              "fr": "Regarde, un pot est vide !",
+              "nl": "Kijk, er is een pot leeg!"
+            }
+          }
+        },
+        {
+          "id": "apples",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu08s2l3a",
+            "en": "No, Hevalo is innocent. He only eats apples.",
+            "meanings": {
+              "ckb": "نا، هەڤاڵۆ بێتاوانە. تەنیا سێو دەخوات.",
+              "de": "Nein, Hevalo ist unschuldig. Er isst nur Äpfel.",
+              "es": "No, Hevalo es inocente. Solo come manzanas.",
+              "tr": "Hayır, Hevalo masum. O sadece elma yer.",
+              "ar": "لا، هيفالو بريء. إنه يأكل التفاح فقط.",
+              "fr": "Non, Hevalo est innocent. Il ne mange que des pommes.",
+              "nl": "Nee, Hevalo is onschuldig. Hij eet alleen appels."
+            }
+          }
+        },
+        {
+          "id": "honest",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu08s4l4a",
+            "en": "Yes. Baran is honest, and I understand him.",
+            "meanings": {
+              "ckb": "بەڵێ. باران ڕاستگۆیە، و من لێی تێدەگەم.",
+              "de": "Ja. Baran ist ehrlich, und ich verstehe ihn.",
+              "es": "Sí. Baran es sincero, y yo lo entiendo.",
+              "tr": "Evet. Baran dürüsttür, ben de onu anlıyorum.",
+              "ar": "نعم. باران صادق، وأنا أفهمه.",
+              "fr": "Oui. Baran est honnête, et je le comprends.",
+              "nl": "Ja. Baran is eerlijk, en ik begrijp hem."
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "moustache",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu08s2l3a",
+            "en": "But there’s honey on your moustache, Xalo!",
+            "meanings": {
+              "ckb": "بەڵام هەنگوین لەسەر سمێڵتە، خاڵە!",
+              "de": "Aber an deinem Schnurrbart ist Honig, Xalo!",
+              "es": "¡Pero tienes miel en el bigote, Xalo!",
+              "tr": "Ama bıyığında bal var, Xalo!",
+              "ar": "لكن على شاربك عسل يا خالو!",
+              "fr": "Mais il y a du miel sur ta moustache, Xalo !",
+              "nl": "Maar er zit honing op je snor, Xalo!"
+            }
+          }
+        },
+        {
+          "id": "medicine",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu08s2l3a",
+            "en": "That’s not honey! It’s… medicine. I’m better!",
+            "meanings": {
+              "ckb": "ئەوە هەنگوین نییە! ئەوە… دەرمانە. باشترم!",
+              "de": "Das ist kein Honig! Das ist … Medizin. Mir geht’s besser!",
+              "es": "¡Eso no es miel! Es… medicina. ¡Estoy mejor!",
+              "tr": "O bal değil! O… ilaç. Daha iyiyim!",
+              "ar": "هذا ليس عسلًا! إنه… دواء. أنا أفضل!",
+              "fr": "Ce n’est pas du miel ! C’est… un médicament. Je vais mieux !",
+              "nl": "Dat is geen honing! Het is … medicijn. Ik ben beter!"
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "innocent",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu08s2l3a",
+            "en": "I’m innocent! Do you believe me?",
+            "meanings": {
+              "ckb": "من بێتاوانم! باوەڕم پێ دەکەیت؟",
+              "de": "Ich bin unschuldig! Glaubst du mir?",
+              "es": "¡Soy inocente! ¿Me crees?",
+              "tr": "Ben masumum! Bana inanıyor musun?",
+              "ar": "أنا بريء! هل تصدقني؟",
+              "fr": "Je suis innocent ! Tu me crois ?",
+              "nl": "Ik ben onschuldig! Geloof je me?"
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "slip",
+          "kind": "overheard",
+          "line": {
+            "conversation": "roadu08s4l4a",
+            "en": "Yes, and some honey too… no, honey is forbidden!",
+            "meanings": {
+              "ckb": "بەڵێ، و کەمێک هەنگوینیش… نا، هەنگوین قەدەغەیە!",
+              "de": "Ja, und etwas Honig auch … nein, Honig ist verboten!",
+              "es": "Sí, y un poco de miel también… ¡no, la miel está prohibida!",
+              "tr": "Evet, biraz da bal… hayır, bal yasak!",
+              "ar": "نعم، وقليلًا من العسل أيضًا… لا، العسل ممنوع!",
+              "fr": "Oui, et un peu de miel aussi… non, le miel est interdit !",
+              "nl": "Ja, en ook wat honing … nee, honing is verboden!"
+            }
+          },
+          "from": "hamo"
+        },
+        {
+          "id": "look",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu08s2l3a",
+            "en": "Hevalo is looking at you. He doesn’t believe it.",
+            "meanings": {
+              "ckb": "هەڤاڵۆ سەیرت دەکات. باوەڕ ناکات.",
+              "de": "Hevalo schaut dich an. Er glaubt es nicht.",
+              "es": "Hevalo te está mirando. No se lo cree.",
+              "tr": "Hevalo sana bakıyor. İnanmıyor.",
+              "ar": "هيفالو ينظر إليك. إنه لا يصدق.",
+              "fr": "Hevalo te regarde. Il n’y croit pas.",
+              "nl": "Hevalo kijkt naar je. Hij gelooft het niet."
+            }
+          }
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "What did the doctor forbid?",
+            "ku": "Doktor çi qedexe kir?",
+            "ckb": "دکتۆر چی قەدەغە کرد؟",
+            "de": "Was hat der Arzt verboten?",
+            "es": "¿Qué prohibió el médico?",
+            "tr": "Doktor neyi yasakladı?",
+            "ar": "ماذا منع الطبيب؟",
+            "fr": "Qu’a interdit le docteur ?",
+            "nl": "Wat heeft de dokter verboden?"
+          },
+          "options": [
+            {
+              "en": "Honey at night",
+              "ku": "Hingiv bi şev",
+              "ckb": "هەنگوین بە شەو",
+              "de": "Honig in der Nacht",
+              "es": "La miel por la noche",
+              "tr": "Gece bal",
+              "ar": "العسل ليلًا",
+              "fr": "Le miel la nuit",
+              "nl": "Honing ’s nachts"
+            },
+            {
+              "en": "Tea in the morning",
+              "ku": "Çaya sibehê",
+              "ckb": "چا بە بەیانی",
+              "de": "Tee am Morgen",
+              "es": "El té por la mañana",
+              "tr": "Sabah çay",
+              "ar": "الشاي صباحًا",
+              "fr": "Le thé le matin",
+              "nl": "Thee ’s ochtends"
+            },
+            {
+              "en": "Walking every day",
+              "ku": "Her roj meşîn",
+              "ckb": "پیاسەکردن هەموو ڕۆژێک",
+              "de": "Jeden Tag spazieren",
+              "es": "Caminar todos los días",
+              "tr": "Her gün yürümek",
+              "ar": "المشي كل يوم",
+              "fr": "Marcher tous les jours",
+              "nl": "Elke dag wandelen"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "advice"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What was empty in the morning?",
+            "ku": "Sibehê çi vala bû?",
+            "ckb": "بەیانی چی بەتاڵ بوو؟",
+            "de": "Was war am Morgen leer?",
+            "es": "¿Qué estaba vacío por la mañana?",
+            "tr": "Sabah ne boştu?",
+            "ar": "ما الذي كان فارغًا في الصباح؟",
+            "fr": "Qu’est-ce qui était vide le matin ?",
+            "nl": "Wat was er ’s ochtends leeg?"
+          },
+          "options": [
+            {
+              "en": "A jar",
+              "ku": "Şûşeyek",
+              "ckb": "شووشەیەک",
+              "de": "Ein Glas",
+              "es": "Un tarro",
+              "tr": "Bir kavanoz",
+              "ar": "جرّة",
+              "fr": "Un pot",
+              "nl": "Een pot"
+            },
+            {
+              "en": "The teapot",
+              "ku": "Çaydan",
+              "ckb": "قۆرییەکە",
+              "de": "Die Teekanne",
+              "es": "La tetera",
+              "tr": "Çaydanlık",
+              "ar": "إبريق الشاي",
+              "fr": "La théière",
+              "nl": "De theepot"
+            },
+            {
+              "en": "The apple basket",
+              "ku": "Selika sêvan",
+              "ckb": "سەبەتەی سێوەکان",
+              "de": "Der Apfelkorb",
+              "es": "La cesta de manzanas",
+              "tr": "Elma sepeti",
+              "ar": "سلة التفاح",
+              "fr": "Le panier de pommes",
+              "nl": "De appelmand"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "empty"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What does Hevalo eat?",
+            "ku": "Hevalo çi dixwe?",
+            "ckb": "هەڤاڵۆ چی دەخوات؟",
+            "de": "Was isst Hevalo?",
+            "es": "¿Qué come Hevalo?",
+            "tr": "Hevalo ne yer?",
+            "ar": "ماذا يأكل هيفالو؟",
+            "fr": "Que mange Hevalo ?",
+            "nl": "Wat eet Hevalo?"
+          },
+          "options": [
+            {
+              "en": "Only apples",
+              "ku": "Tenê sêv",
+              "ckb": "تەنیا سێو",
+              "de": "Nur Äpfel",
+              "es": "Solo manzanas",
+              "tr": "Sadece elma",
+              "ar": "التفاح فقط",
+              "fr": "Seulement des pommes",
+              "nl": "Alleen appels"
+            },
+            {
+              "en": "Honey and tea",
+              "ku": "Hingiv û çay",
+              "ckb": "هەنگوین و چا",
+              "de": "Honig und Tee",
+              "es": "Miel y té",
+              "tr": "Bal ve çay",
+              "ar": "العسل والشاي",
+              "fr": "Du miel et du thé",
+              "nl": "Honing en thee"
+            },
+            {
+              "en": "Bread and cheese",
+              "ku": "Nan û penîr",
+              "ckb": "نان و پەنیر",
+              "de": "Brot und Käse",
+              "es": "Pan y queso",
+              "tr": "Ekmek ve peynir",
+              "ar": "الخبز والجبن",
+              "fr": "Du pain et du fromage",
+              "nl": "Brood en kaas"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "apples"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What does Hamo nearly say he takes with his medicine?",
+            "ku": "Hamo hema hema dibêje ku ew bi dermanê xwe re çi dixwe?",
+            "ckb": "حەمۆ خەریکە دەڵێت لەگەڵ دەرمانەکەیدا چی دەخوات؟",
+            "de": "Was nimmt Hamo zu seiner Medizin, beinahe hätte er es gesagt?",
+            "es": "¿Qué casi dice Hamo que toma con su medicina?",
+            "tr": "Hamo ilacıyla birlikte neyi aldığını neredeyse söylüyor?",
+            "ar": "ماذا يكاد حمو يقول إنه يتناوله مع دوائه؟",
+            "fr": "Que Hamo dit-il presque prendre avec son médicament ?",
+            "nl": "Wat zegt Hamo bijna dat hij bij zijn medicijn neemt?"
+          },
+          "options": [
+            {
+              "en": "Some honey",
+              "ku": "Hinek hingiv",
+              "ckb": "کەمێک هەنگوین",
+              "de": "Etwas Honig",
+              "es": "Un poco de miel",
+              "tr": "Biraz bal",
+              "ar": "قليلًا من العسل",
+              "fr": "Un peu de miel",
+              "nl": "Wat honing"
+            },
+            {
+              "en": "Some tea",
+              "ku": "Hinek çay",
+              "ckb": "کەمێک چا",
+              "de": "Etwas Tee",
+              "es": "Un poco de té",
+              "tr": "Biraz çay",
+              "ar": "قليلًا من الشاي",
+              "fr": "Un peu de thé",
+              "nl": "Wat thee"
+            },
+            {
+              "en": "An apple",
+              "ku": "Sêvek",
+              "ckb": "سێوێک",
+              "de": "Einen Apfel",
+              "es": "Una manzana",
+              "tr": "Bir elma",
+              "ar": "تفاحة",
+              "fr": "Une pomme",
+              "nl": "Een appel"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "slip"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What was on someone’s moustache in the morning?",
+            "ku": "Sibehê li ser simbêlê yekî çi hebû?",
+            "ckb": "بەیانی چی لەسەر سمێڵی کەسێک بوو؟",
+            "de": "Was klebte am Morgen an jemandes Schnurrbart?",
+            "es": "¿Qué tenía alguien en el bigote por la mañana?",
+            "tr": "Sabah birinin bıyığında ne vardı?",
+            "ar": "ماذا كان على شارب أحدهم في الصباح؟",
+            "fr": "Qu’y avait-il sur la moustache de quelqu’un le matin ?",
+            "nl": "Wat zat er ’s ochtends op iemands snor?"
+          },
+          "options": [
+            {
+              "en": "Honey",
+              "ku": "Hingiv",
+              "ckb": "هەنگوین",
+              "de": "Honig",
+              "es": "Miel",
+              "tr": "Bal",
+              "ar": "عسل",
+              "fr": "Du miel",
+              "nl": "Honing"
+            },
+            {
+              "en": "Tea",
+              "ku": "Çay",
+              "ckb": "چا",
+              "de": "Tee",
+              "es": "Té",
+              "tr": "Çay",
+              "ar": "شاي",
+              "fr": "Du thé",
+              "nl": "Thee"
+            },
+            {
+              "en": "Snow",
+              "ku": "Berf",
+              "ckb": "بەفر",
+              "de": "Schnee",
+              "es": "Nieve",
+              "tr": "Kar",
+              "ar": "ثلج",
+              "fr": "De la neige",
+              "nl": "Sneeuw"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "moustache",
+            "medicine"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Does Hevalo believe Hamo when he says he is innocent?",
+            "ku": "Dema Hamo dibêje ku ew bêguneh e, Hevalo jê bawer dike?",
+            "ckb": "کاتێک حەمۆ دەڵێت بێتاوانە، هەڤاڵۆ باوەڕی پێ دەکات؟",
+            "de": "Glaubt Hevalo Hamo, als er sagt, er sei unschuldig?",
+            "es": "¿Cree Hevalo a Hamo cuando dice que es inocente?",
+            "tr": "Hamo masum olduğunu söylediğinde Hevalo ona inanıyor mu?",
+            "ar": "هل يصدّق هيفالو حمو حين يقول إنه بريء؟",
+            "fr": "Hevalo croit-il Hamo quand il dit qu’il est innocent ?",
+            "nl": "Gelooft Hevalo Hamo als hij zegt dat hij onschuldig is?"
+          },
+          "options": [
+            {
+              "en": "No",
+              "ku": "Na",
+              "ckb": "نەخێر",
+              "de": "Nein",
+              "es": "No",
+              "tr": "Hayır",
+              "ar": "لا",
+              "fr": "Non",
+              "nl": "Nee"
+            },
+            {
+              "en": "Yes",
+              "ku": "Erê",
+              "ckb": "بەڵێ",
+              "de": "Ja",
+              "es": "Sí",
+              "tr": "Evet",
+              "ar": "نعم",
+              "fr": "Oui",
+              "nl": "Ja"
+            },
+            {
+              "en": "He does not hear him",
+              "ku": "Ew wî nabihîze",
+              "ckb": "گوێی لێ نابێت",
+              "de": "Er hört ihn nicht",
+              "es": "No lo oye",
+              "tr": "Onu duymuyor",
+              "ar": "لا يسمعه",
+              "fr": "Il ne l’entend pas",
+              "nl": "Hij hoort hem niet"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "innocent",
+            "look"
+          ]
+        }
+      ],
+      "culprit": "hamo",
+      "background": [
+        "honest"
+      ],
+      "solution": {
+        "en": "The doctor forbade honey at night, and in the morning a jar was empty. Hevalo only eats apples, and Baran is honest. There was honey on Hamo’s moustache, though he says it is medicine, and he nearly says he takes honey with his medicine. Hamo ate the honey.",
+        "ku": "Doktor hingiv bi şev qedexe kir, û sibehê şûşeyek vala bû. Hevalo tenê sêvan dixwe, û Baran rastgo ye. Li ser simbêlê Hamo hingiv hebû, her çiqas ew dibêje ku derman e, û ew hema hema dibêje ku bi dermanê xwe re hingiv dixwe. Hamo hingiv xwar.",
+        "ckb": "دکتۆر هەنگوینی بە شەو قەدەغە کرد، و بەیانی شووشەیەک بەتاڵ بوو. هەڤاڵۆ تەنیا سێو دەخوات، و باران ڕاستگۆیە. هەنگوین لەسەر سمێڵی حەمۆ بوو، هەرچەندە دەڵێت دەرمانە، و خەریکە دەڵێت لەگەڵ دەرمانەکەیدا هەنگوین دەخوات. حەمۆ هەنگوینەکەی خوارد.",
+        "de": "Der Arzt hat Honig in der Nacht verboten, und am Morgen war ein Glas leer. Hevalo isst nur Äpfel, und Baran ist ehrlich. An Hamos Schnurrbart klebte Honig, obwohl er sagt, es sei Medizin, und beinahe sagt er, dass er Honig zu seiner Medizin nimmt. Hamo hat den Honig gegessen.",
+        "es": "El médico prohibió la miel por la noche, y por la mañana un tarro estaba vacío. Hevalo solo come manzanas, y Baran es sincero. Hamo tenía miel en el bigote, aunque dice que es medicina, y casi dice que toma miel con su medicina. Hamo se comió la miel.",
+        "tr": "Doktor geceleri balı yasakladı ve sabah bir kavanoz boştu. Hevalo sadece elma yer, Baran da dürüsttür. Hamo’nun bıyığında bal vardı; o, ilaç olduğunu söylüyor ve ilacıyla bal aldığını neredeyse ağzından kaçırıyor. Balı Hamo yedi.",
+        "ar": "منع الطبيب العسل ليلًا، وفي الصباح كانت جرّة فارغة. هيفالو يأكل التفاح فقط، وباران صادق. كان على شارب حمو عسل، مع أنه يقول إنه دواء، ويكاد يقول إنه يتناول العسل مع دوائه. حمو أكل العسل.",
+        "fr": "Le docteur a interdit le miel la nuit, et le matin un pot était vide. Hevalo ne mange que des pommes, et Baran est honnête. Il y avait du miel sur la moustache de Hamo, même s’il dit que c’est un médicament, et il dit presque qu’il prend du miel avec son médicament. C’est Hamo qui a mangé le miel.",
+        "nl": "De dokter verbood honing ’s nachts, en ’s ochtends was er een pot leeg. Hevalo eet alleen appels, en Baran is eerlijk. Er zat honing op Hamo’s snor, al zegt hij dat het medicijn is, en hij zegt bijna dat hij honing bij zijn medicijn neemt. Hamo heeft de honing opgegeten."
+      },
+      "hints": [
+        {
+          "en": "Read what each suspect says, and what the others say about them.",
+          "ku": "Bixwîne ka her gumanbar çi dibêje, û yên din li ser wî çi dibêjin.",
+          "ckb": "بخوێنەوە هەر گومانلێکراوێک چی دەڵێت، و ئەوانی تر چی دەربارەی دەڵێن.",
+          "de": "Lies, was jeder Verdächtige sagt und was die anderen über ihn sagen.",
+          "es": "Lee lo que dice cada sospechoso y lo que dicen los demás de él.",
+          "tr": "Her şüphelinin ne dediğini ve diğerlerinin onun hakkında ne dediğini oku.",
+          "ar": "اقرأ ما يقوله كل مشتبه به، وما يقوله الآخرون عنه.",
+          "fr": "Lis ce que dit chaque suspect, et ce que les autres disent de lui.",
+          "nl": "Lees wat elke verdachte zegt, en wat de anderen over hem zeggen."
+        },
+        {
+          "en": "Which of the suspects has a moustache?",
+          "ku": "Simbêlê kîjan gumanbarî heye?",
+          "ckb": "کام گومانلێکراو سمێڵی هەیە؟",
+          "de": "Welcher Verdächtige hat einen Schnurrbart?",
+          "es": "¿Cuál de los sospechosos tiene bigote?",
+          "tr": "Şüphelilerden hangisinin bıyığı var?",
+          "ar": "أيّ المشتبه بهم له شارب؟",
+          "fr": "Lequel des suspects a une moustache ?",
+          "nl": "Welke verdachte heeft een snor?"
+        }
+      ]
+    },
+    {
+      "slug": "kmr-sopen-bozo",
+      "dialect": "kmr",
+      "level": 4,
+      "title": {
+        "en": "Tracks by the spring",
+        "ku": "Şopên li ber kaniyê",
+        "ckb": "شوێنپێکانی لای کانییەکە",
+        "de": "Spuren an der Quelle",
+        "es": "Huellas junto a la fuente",
+        "tr": "Pınarın yanındaki izler",
+        "ar": "آثار عند النبع",
+        "fr": "Des traces près de la source",
+        "nl": "Sporen bij de bron"
+      },
+      "intro": {
+        "en": "Bozo has run off again, and there are tracks on the ground. Whose tracks are they — and why did he go?",
+        "ku": "Bozo dîsa reviya, û li erdê şop hene. Ev şopên kê ne — û çima ew çû?",
+        "ckb": "بۆزۆ دیسان هەڵهات، و شوێنپێ لەسەر زەوییەکەن. ئەم شوێنپێیانە هی کێن — و بۆچی ڕۆیشت؟",
+        "de": "Bozo ist wieder weggelaufen, und auf dem Boden sind Spuren. Wessen Spuren sind das – und warum ist er gegangen?",
+        "es": "Bozo se ha vuelto a escapar, y hay huellas en el suelo. ¿De quién son y por qué se fue?",
+        "tr": "Bozo yine kaçtı ve yerde izler var. Bu izler kimin, o neden gitti?",
+        "ar": "هرب بوزو مرة أخرى، وعلى الأرض آثار. آثار من هذه، ولماذا ذهب؟",
+        "fr": "Bozo s’est encore sauvé, et il y a des traces par terre. À qui sont-elles, et pourquoi est-il parti ?",
+        "nl": "Bozo is weer weggelopen, en er staan sporen op de grond. Van wie zijn ze – en waarom ging hij?"
+      },
+      "suspects": [
+        {
+          "id": "beran",
+          "name": "Beran",
+          "about": {
+            "en": "The village rams, out on the hill.",
+            "ku": "Beranên gund, li ser gir.",
+            "ckb": "بەرانەکانی گوندەکە، لەسەر گردەکە.",
+            "de": "Die Widder des Dorfes, draußen am Hang.",
+            "es": "Los carneros del pueblo, en la colina.",
+            "tr": "Tepedeki köy koçları.",
+            "ar": "كباش القرية، على التلّة.",
+            "fr": "Les béliers du village, sur la colline.",
+            "nl": "De rammen van het dorp, op de heuvel."
+          }
+        },
+        {
+          "id": "gur",
+          "name": "Gur",
+          "about": {
+            "en": "The wolf from Hamo’s stories.",
+            "ku": "Gurê çîrokên Hamo.",
+            "ckb": "گورگەکەی چیرۆکەکانی حەمۆ.",
+            "de": "Der Wolf aus Hamos Geschichten.",
+            "es": "El lobo de las historias de Hamo.",
+            "tr": "Hamo’nun hikâyelerindeki kurt.",
+            "ar": "الذئب في حكايات حمو.",
+            "fr": "Le loup des histoires de Hamo.",
+            "nl": "De wolf uit Hamo’s verhalen."
+          }
+        },
+        {
+          "id": "bozo",
+          "name": "Bozo",
+          "about": {
+            "en": "Hamo’s slow old donkey.",
+            "ku": "Kerê Hamo yê pîr û hêdî.",
+            "ckb": "گوێدرێژە پیر و هێواشەکەی حەمۆ.",
+            "de": "Hamos langsamer alter Esel.",
+            "es": "El viejo y lento burro de Hamo.",
+            "tr": "Hamo’nun yaşlı, ağır eşeği.",
+            "ar": "حمار حمو العجوز البطيء.",
+            "fr": "Le vieil âne lent de Hamo.",
+            "nl": "Hamo’s oude, trage ezel."
+          }
+        },
+        {
+          "id": "hevalo",
+          "name": "Hevalo",
+          "about": {
+            "en": "The young deer, always hungry.",
+            "ku": "Askê ciwan, ku her tim birçî ye.",
+            "ckb": "ئاسکە گەنجەکە، کە هەمیشە برسییەتی.",
+            "de": "Das junge Reh, immer hungrig.",
+            "es": "El cervatillo, siempre con hambre.",
+            "tr": "Hep aç olan genç geyik.",
+            "ar": "الغزال الصغير، الجائع دائمًا.",
+            "fr": "Le jeune chevreuil, toujours affamé.",
+            "nl": "Het jonge hertje, altijd hongerig."
+          },
+          "portrait": "hevalo"
+        }
+      ],
+      "evidence": [
+        {
+          "id": "reviya",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu09s4l3a",
+            "en": "Bozo has run away again! I’m calling him, but he isn’t coming.",
+            "meanings": {
+              "ckb": "بۆزۆ دیسان هەڵهات! بانگی دەکەم، بەڵام نایەت.",
+              "de": "Bozo ist wieder weggelaufen! Ich rufe ihn, aber er kommt nicht.",
+              "es": "¡Bozo se ha vuelto a escapar! Lo llamo, pero no viene.",
+              "tr": "Bozo yine kaçtı! Onu çağırıyorum ama gelmiyor.",
+              "ar": "هرب بوزو مرة أخرى! أناديه، لكنه لا يأتي.",
+              "fr": "Bozo s’est encore sauvé ! Je l’appelle, mais il ne vient pas.",
+              "nl": "Bozo is weer weggelopen! Ik roep hem, maar hij komt niet."
+            }
+          }
+        },
+        {
+          "id": "sop",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu09s4l3a",
+            "en": "Look, xalo, there are tracks here!",
+            "meanings": {
+              "ckb": "سەیر کە خاڵە، لێرە شوێنپێ هەیە!",
+              "de": "Schau, Xalo, hier sind Spuren!",
+              "es": "¡Mira, xalo, aquí hay huellas!",
+              "tr": "Bak xalo, burada izler var!",
+              "ar": "انظر يا خالو، هنا آثار!",
+              "fr": "Regarde, xalo, il y a des traces ici !",
+              "nl": "Kijk, xalo, hier zijn sporen!"
+            }
+          }
+        },
+        {
+          "id": "ne-beran",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu09s4l3a",
+            "en": "These aren’t rams’ tracks. These are Bozo’s tracks!",
+            "meanings": {
+              "ckb": "ئەمانە شوێنپێی بەران نین. ئەمانە شوێنپێی بۆزۆن!",
+              "de": "Das sind keine Widderspuren. Das sind Bozos Spuren!",
+              "es": "No son huellas de carnero. ¡Son las huellas de Bozo!",
+              "tr": "Bunlar koç izi değil. Bunlar Bozo’nun izleri!",
+              "ar": "هذه ليست آثار كباش. هذه آثار بوزو!",
+              "fr": "Ce ne sont pas des traces de bélier. Ce sont celles de Bozo !",
+              "nl": "Dit zijn geen sporen van rammen. Dit zijn Bozo’s sporen!"
+            }
+          }
+        },
+        {
+          "id": "hevalo",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu09s4l3a",
+            "en": "Hevalo is following the tracks. Let’s go too!",
+            "meanings": {
+              "ckb": "هەڤاڵۆ بەدوای شوێنپێکاندا دەڕوات. با ئێمەش بڕۆین!",
+              "de": "Hevalo folgt den Spuren. Gehen wir auch!",
+              "es": "Hevalo sigue las huellas. ¡Vamos nosotros también!",
+              "tr": "Hevalo izleri takip ediyor. Biz de gidelim!",
+              "ar": "هيفالو يتبع الآثار. لنذهب نحن أيضًا!",
+              "fr": "Hevalo suit les traces. Allons-y aussi !",
+              "nl": "Hevalo volgt de sporen. Laten wij ook gaan!"
+            }
+          }
+        },
+        {
+          "id": "ker",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu09s4l3a",
+            "en": "And Bozo is here, with Ferhad’s little donkey!",
+            "meanings": {
+              "ckb": "و بۆزۆ لێرەیە، لەگەڵ گوێدرێژە بچووکەکەی فەرهاد!",
+              "de": "Und Bozo ist hier, bei Ferhads kleiner Eselin!",
+              "es": "¡Y Bozo está aquí, con la burrita de Ferhad!",
+              "tr": "Bozo da burada, Ferhad’ın küçük eşeğiyle!",
+              "ar": "وبوزو هنا، مع أتان فرهاد الصغيرة!",
+              "fr": "Et Bozo est là, avec la petite ânesse de Ferhad !",
+              "nl": "En Bozo is hier, bij het ezeltje van Ferhad!"
+            }
+          }
+        },
+        {
+          "id": "evindar",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu09s4l3a",
+            "en": "No, today Bozo is brave. Bozo is in love!",
+            "meanings": {
+              "ckb": "نا، ئەمڕۆ بۆزۆ ئازایە. بۆزۆ دڵدارە!",
+              "de": "Nein, heute ist Bozo mutig. Bozo ist verliebt!",
+              "es": "No, hoy Bozo es valiente. ¡Bozo está enamorado!",
+              "tr": "Hayır, bugün Bozo cesur. Bozo âşık!",
+              "ar": "لا، اليوم بوزو شجاع. بوزو عاشق!",
+              "fr": "Non, aujourd’hui Bozo est courageux. Bozo est amoureux !",
+              "nl": "Nee, vandaag is Bozo dapper. Bozo is verliefd!"
+            }
+          }
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "What is on the ground?",
+            "ku": "Li erdê çi heye?",
+            "ckb": "چی لەسەر زەوییەکەیە؟",
+            "de": "Was ist auf dem Boden?",
+            "es": "¿Qué hay en el suelo?",
+            "tr": "Yerde ne var?",
+            "ar": "ماذا على الأرض؟",
+            "fr": "Qu’y a-t-il par terre ?",
+            "nl": "Wat ligt er op de grond?"
+          },
+          "options": [
+            {
+              "en": "Tracks",
+              "ku": "Şop",
+              "ckb": "شوێنپێ",
+              "de": "Spuren",
+              "es": "Huellas",
+              "tr": "İzler",
+              "ar": "آثار",
+              "fr": "Des traces",
+              "nl": "Sporen"
+            },
+            {
+              "en": "Apples",
+              "ku": "Sêv",
+              "ckb": "سێو",
+              "de": "Äpfel",
+              "es": "Manzanas",
+              "tr": "Elmalar",
+              "ar": "تفاح",
+              "fr": "Des pommes",
+              "nl": "Appels"
+            },
+            {
+              "en": "A rope",
+              "ku": "Werîsek",
+              "ckb": "گوریسێک",
+              "de": "Ein Seil",
+              "es": "Una cuerda",
+              "tr": "Bir ip",
+              "ar": "حبل",
+              "fr": "Une corde",
+              "nl": "Een touw"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "reviya",
+            "sop"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What does Hamo say the tracks are not?",
+            "ku": "Hamo dibêje ku şop yên kê nînin?",
+            "ckb": "حەمۆ دەڵێت شوێنپێکان هی کێ نین؟",
+            "de": "Wessen Spuren sind es laut Hamo nicht?",
+            "es": "¿De quién dice Hamo que no son las huellas?",
+            "tr": "Hamo izlerin kimin olmadığını söylüyor?",
+            "ar": "آثار من يقول حمو إنها ليست؟",
+            "fr": "De qui Hamo dit-il que ce ne sont pas les traces ?",
+            "nl": "Van wie zijn de sporen volgens Hamo niet?"
+          },
+          "options": [
+            {
+              "en": "The rams’",
+              "ku": "Yên beranan",
+              "ckb": "هی بەرانەکان",
+              "de": "Von den Widdern",
+              "es": "De los carneros",
+              "tr": "Koçların",
+              "ar": "آثار الكباش",
+              "fr": "Celles des béliers",
+              "nl": "Van de rammen"
+            },
+            {
+              "en": "Ferhad’s",
+              "ku": "Yên Ferhad",
+              "ckb": "هی فەرهاد",
+              "de": "Von Ferhad",
+              "es": "De Ferhad",
+              "tr": "Ferhad’ın",
+              "ar": "آثار فرهاد",
+              "fr": "Celles de Ferhad",
+              "nl": "Van Ferhad"
+            },
+            {
+              "en": "Hamo’s own",
+              "ku": "Yên Hamo bi xwe",
+              "ckb": "هی خودی حەمۆ",
+              "de": "Seine eigenen",
+              "es": "Las suyas propias",
+              "tr": "Kendi izleri",
+              "ar": "آثار حمو نفسه",
+              "fr": "Les siennes",
+              "nl": "Zijn eigen"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "ne-beran"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Who follows the tracks first?",
+            "ku": "Pêşî kî bi şopan re diçe?",
+            "ckb": "یەکەم جار کێ بەدوای شوێنپێکاندا دەڕوات؟",
+            "de": "Wer folgt den Spuren als Erster?",
+            "es": "¿Quién sigue las huellas primero?",
+            "tr": "İzleri ilk kim takip ediyor?",
+            "ar": "من يتبع الآثار أولًا؟",
+            "fr": "Qui suit les traces en premier ?",
+            "nl": "Wie volgt de sporen als eerste?"
+          },
+          "options": [
+            {
+              "en": "Hevalo",
+              "ku": "Hevalo",
+              "ckb": "هەڤاڵۆ",
+              "de": "Hevalo",
+              "es": "Hevalo",
+              "tr": "Hevalo",
+              "ar": "هيفالو",
+              "fr": "Hevalo",
+              "nl": "Hevalo"
+            },
+            {
+              "en": "Ferhad",
+              "ku": "Ferhad",
+              "ckb": "فەرهاد",
+              "de": "Ferhad",
+              "es": "Ferhad",
+              "tr": "Ferhad",
+              "ar": "فرهاد",
+              "fr": "Ferhad",
+              "nl": "Ferhad"
+            },
+            {
+              "en": "Bişar the shepherd",
+              "ku": "Bişarê şivan",
+              "ckb": "بیشاری شوان",
+              "de": "Bişar, der Hirte",
+              "es": "Bişar, el pastor",
+              "tr": "Çoban Bişar",
+              "ar": "بيشار الراعي",
+              "fr": "Bişar, le berger",
+              "nl": "Bişar de herder"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "hevalo"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Who is waiting at the spring?",
+            "ku": "Li ber kaniyê kî li bendê ye?",
+            "ckb": "لای کانییەکە کێ چاوەڕێیە؟",
+            "de": "Wer wartet an der Quelle?",
+            "es": "¿Quién espera junto a la fuente?",
+            "tr": "Pınarın başında kim bekliyor?",
+            "ar": "من ينتظر عند النبع؟",
+            "fr": "Qui attend près de la source ?",
+            "nl": "Wie wacht er bij de bron?"
+          },
+          "options": [
+            {
+              "en": "Ferhad’s little donkey",
+              "ku": "Kera biçûk a Ferhad",
+              "ckb": "گوێدرێژە بچووکەکەی فەرهاد",
+              "de": "Ferhads kleine Eselin",
+              "es": "La burrita de Ferhad",
+              "tr": "Ferhad’ın küçük eşeği",
+              "ar": "أتان فرهاد الصغيرة",
+              "fr": "La petite ânesse de Ferhad",
+              "nl": "Het ezeltje van Ferhad"
+            },
+            {
+              "en": "A hungry wolf",
+              "ku": "Gurekî birçî",
+              "ckb": "گورگێکی برسی",
+              "de": "Ein hungriger Wolf",
+              "es": "Un lobo hambriento",
+              "tr": "Aç bir kurt",
+              "ar": "ذئب جائع",
+              "fr": "Un loup affamé",
+              "nl": "Een hongerige wolf"
+            },
+            {
+              "en": "The village rams",
+              "ku": "Beranên gund",
+              "ckb": "بەرانەکانی گوند",
+              "de": "Die Widder des Dorfes",
+              "es": "Los carneros del pueblo",
+              "tr": "Köyün koçları",
+              "ar": "كباش القرية",
+              "fr": "Les béliers du village",
+              "nl": "De rammen van het dorp"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "ker"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Why did he run off, as Hamo says?",
+            "ku": "Li gorî Hamo, ew çima reviya?",
+            "ckb": "بە گوتەی حەمۆ، بۆچی هەڵهات؟",
+            "de": "Warum ist er weggelaufen, sagt Hamo?",
+            "es": "¿Por qué se escapó, según Hamo?",
+            "tr": "Hamo’ya göre neden kaçtı?",
+            "ar": "لماذا هرب، كما يقول حمو؟",
+            "fr": "Pourquoi s’est-il sauvé, d’après Hamo ?",
+            "nl": "Waarom liep hij weg, volgens Hamo?"
+          },
+          "options": [
+            {
+              "en": "He is in love",
+              "ku": "Ew evîndar e",
+              "ckb": "دڵدارە",
+              "de": "Er ist verliebt",
+              "es": "Está enamorado",
+              "tr": "Âşık",
+              "ar": "إنه عاشق",
+              "fr": "Il est amoureux",
+              "nl": "Hij is verliefd"
+            },
+            {
+              "en": "He was hungry",
+              "ku": "Ew birçî bû",
+              "ckb": "برسی بوو",
+              "de": "Er hatte Hunger",
+              "es": "Tenía hambre",
+              "tr": "Açtı",
+              "ar": "كان جائعًا",
+              "fr": "Il avait faim",
+              "nl": "Hij had honger"
+            },
+            {
+              "en": "He was afraid of a wolf",
+              "ku": "Ew ji gur ditirsiya",
+              "ckb": "لە گورگ دەترسا",
+              "de": "Er hatte Angst vor einem Wolf",
+              "es": "Tenía miedo de un lobo",
+              "tr": "Kurttan korkmuştu",
+              "ar": "كان خائفًا من ذئب",
+              "fr": "Il avait peur d’un loup",
+              "nl": "Hij was bang voor een wolf"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "evindar"
+          ]
+        }
+      ],
+      "culprit": "bozo",
+      "solution": {
+        "en": "Bozo ran off again, and there were tracks on the ground. Hamo says they are not the rams’. Hevalo followed them down to the spring, where Bozo stood with Ferhad’s little donkey. The tracks are Bozo’s, and he went because he is in love!",
+        "ku": "Bozo dîsa reviya, û li erdê şop hebûn. Hamo dibêje ku ew ne yên beranan in. Hevalo bi wan re çû heta kaniyê, û li wir Bozo bi kera biçûk a Ferhad re bû. Şop yên Bozo ne, û ew çû ji ber ku evîndar e!",
+        "ckb": "بۆزۆ دیسان هەڵهات، و شوێنپێ لەسەر زەوییەکە بوون. حەمۆ دەڵێت هی بەرانەکان نین. هەڤاڵۆ بەدوایاندا چوو تا کانییەکە، و لەوێ بۆزۆ لەگەڵ گوێدرێژە بچووکەکەی فەرهاد بوو. شوێنپێکان هی بۆزۆن، و ڕۆیشت چونکە دڵدارە!",
+        "de": "Bozo ist wieder weggelaufen, und auf dem Boden waren Spuren. Hamo sagt, es seien keine Widderspuren. Hevalo folgte ihnen bis zur Quelle, wo Bozo bei Ferhads kleiner Eselin stand. Die Spuren sind von Bozo, und er ist gegangen, weil er verliebt ist!",
+        "es": "Bozo se volvió a escapar, y había huellas en el suelo. Hamo dice que no son de los carneros. Hevalo las siguió hasta la fuente, donde Bozo estaba con la burrita de Ferhad. Las huellas son de Bozo, ¡y se fue porque está enamorado!",
+        "tr": "Bozo yine kaçtı ve yerde izler vardı. Hamo bunların koç izi olmadığını söylüyor. Hevalo izleri pınara kadar takip etti; Bozo orada Ferhad’ın küçük eşeğiyle birlikteydi. İzler Bozo’nun, o da âşık olduğu için gitti!",
+        "ar": "هرب بوزو مرة أخرى، وكانت على الأرض آثار. يقول حمو إنها ليست آثار الكباش. تبعها هيفالو حتى النبع، وهناك كان بوزو مع أتان فرهاد الصغيرة. الآثار لبوزو، وقد ذهب لأنه عاشق!",
+        "fr": "Bozo s’est encore sauvé, et il y avait des traces par terre. Hamo dit que ce ne sont pas celles des béliers. Hevalo les a suivies jusqu’à la source, où Bozo était avec la petite ânesse de Ferhad. Les traces sont celles de Bozo, et il est parti parce qu’il est amoureux !",
+        "nl": "Bozo liep weer weg, en er stonden sporen op de grond. Hamo zegt dat ze niet van de rammen zijn. Hevalo volgde ze tot bij de bron, waar Bozo bij het ezeltje van Ferhad stond. De sporen zijn van Bozo, en hij ging omdat hij verliefd is!"
+      },
+      "hints": [
+        {
+          "en": "Hamo knows these tracks well.",
+          "ku": "Hamo van şopan baş nas dike.",
+          "ckb": "حەمۆ ئەم شوێنپێیانە باش دەناسێت.",
+          "de": "Hamo kennt diese Spuren gut.",
+          "es": "Hamo conoce bien estas huellas.",
+          "tr": "Hamo bu izleri iyi tanıyor.",
+          "ar": "حمو يعرف هذه الآثار جيدًا.",
+          "fr": "Hamo connaît bien ces traces.",
+          "nl": "Hamo kent deze sporen goed."
+        },
+        {
+          "en": "Who is missing from the village this morning?",
+          "ku": "Vê sibehê kî ji gund kêm e?",
+          "ckb": "ئەم بەیانییە کێ لە گوندەکە ونە؟",
+          "de": "Wer fehlt heute Morgen im Dorf?",
+          "es": "¿Quién falta esta mañana en el pueblo?",
+          "tr": "Bu sabah köyde kim yok?",
+          "ar": "من الغائب عن القرية هذا الصباح؟",
+          "fr": "Qui manque au village ce matin ?",
+          "nl": "Wie ontbreekt er vanochtend in het dorp?"
+        }
+      ]
+    },
+    {
+      "slug": "kmr-tiste-kuvi",
+      "dialect": "kmr",
+      "level": 4,
+      "title": {
+        "en": "The wild visitor",
+        "ku": "Mêvanê kûvî",
+        "ckb": "میوانە کێوییەکە",
+        "de": "Der wilde Besucher",
+        "es": "El visitante salvaje",
+        "tr": "Yabani ziyaretçi",
+        "ar": "الزائر البرّي",
+        "fr": "Le visiteur sauvage",
+        "nl": "De wilde bezoeker"
+      },
+      "intro": {
+        "en": "Every night, something wild comes to Bişar’s tent on the mountain. Who is the night visitor?",
+        "ku": "Her şev, tiştekî kûvî tê ber konê Bişar li çiyê. Mêvanê şevê kî ye?",
+        "ckb": "هەموو شەوێک، شتێکی کێوی دێتە لای ڕەشماڵەکەی بیشار لە شاخ. میوانی شەو کێیە؟",
+        "de": "Jede Nacht kommt etwas Wildes zu Bişars Zelt in den Bergen. Wer ist der nächtliche Besucher?",
+        "es": "Cada noche, algo salvaje se acerca a la tienda de Bişar en la montaña. ¿Quién es el visitante nocturno?",
+        "tr": "Her gece dağda Bişar’ın çadırına yabani bir şey geliyor. Gece ziyaretçisi kim?",
+        "ar": "كل ليلة، يأتي شيءٌ برّي إلى خيمة بيشار في الجبل. من زائر الليل؟",
+        "fr": "Chaque nuit, quelque chose de sauvage vient près de la tente de Bişar dans la montagne. Qui est le visiteur de la nuit ?",
+        "nl": "Elke nacht komt er iets wilds bij de tent van Bişar in de bergen. Wie is de nachtelijke bezoeker?"
+      },
+      "suspects": [
+        {
+          "id": "gur",
+          "name": "Gur",
+          "about": {
+            "en": "A wolf from the mountain.",
+            "ku": "Gurekî çiyê.",
+            "ckb": "گورگێکی شاخ.",
+            "de": "Ein Wolf aus den Bergen.",
+            "es": "Un lobo de la montaña.",
+            "tr": "Dağdan bir kurt.",
+            "ar": "ذئبٌ من الجبل.",
+            "fr": "Un loup de la montagne.",
+            "nl": "Een wolf uit de bergen."
+          }
+        },
+        {
+          "id": "diz",
+          "name": "Diz",
+          "about": {
+            "en": "A thief, after the sheep.",
+            "ku": "Dizek, ji bo pez.",
+            "ckb": "دزێک، بە دوای مەڕەکاندا.",
+            "de": "Ein Dieb, der es auf die Schafe abgesehen hat.",
+            "es": "Un ladrón que busca las ovejas.",
+            "tr": "Koyunların peşindeki bir hırsız.",
+            "ar": "لصٌّ يطمع في الغنم.",
+            "fr": "Un voleur qui en veut aux moutons.",
+            "nl": "Een dief die op de schapen uit is."
+          }
+        },
+        {
+          "id": "zere",
+          "name": "Zerê",
+          "about": {
+            "en": "A wild doe, golden like the sun.",
+            "ku": "Askeke kûvî, zer mîna rojê.",
+            "ckb": "ئاسکێکی کێوی، زێڕین وەک خۆر.",
+            "de": "Eine wilde Hirschkuh, golden wie die Sonne.",
+            "es": "Una cierva salvaje, dorada como el sol.",
+            "tr": "Güneş gibi sarı, yabani bir dişi geyik.",
+            "ar": "ظبيةٌ برّية، صفراء كالشمس.",
+            "fr": "Une biche sauvage, dorée comme le soleil.",
+            "nl": "Een wilde hinde, goudkleurig als de zon."
+          }
+        },
+        {
+          "id": "bizin",
+          "name": "Bizina Bişar",
+          "about": {
+            "en": "Bişar’s own goat, who wanders at night.",
+            "ku": "Bizina Bişar bi xwe, ku bi şev digere.",
+            "ckb": "بزنەکەی خودی بیشار، کە بە شەو دەگەڕێت.",
+            "de": "Bişars eigene Ziege, die nachts umherstreift.",
+            "es": "La propia cabra de Bişar, que vaga de noche.",
+            "tr": "Geceleri dolaşan, Bişar’ın kendi keçisi.",
+            "ar": "عنزة بيشار نفسه، التي تتجوّل ليلًا.",
+            "fr": "La chèvre de Bişar lui-même, qui se promène la nuit.",
+            "nl": "Bişars eigen geit, die ’s nachts rondzwerft."
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "id": "her-sev",
+          "kind": "message",
+          "line": {
+            "conversation": "roadu09s2l3a",
+            "en": "Every night, when it gets dark, something wild comes to him.",
+            "meanings": {
+              "ckb": "هەموو شەوێک، کاتێک تاریک دادێت، شتێکی کێوی دێتە لای.",
+              "de": "Jede Nacht, wenn es dunkel wird, kommt etwas Wildes zu ihm.",
+              "es": "Cada noche, cuando oscurece, algo salvaje se le acerca.",
+              "tr": "Her gece hava kararınca ona yabani bir şey geliyor.",
+              "ar": "كل ليلة، حين يحلّ الظلام، يأتيه شيءٌ برّي.",
+              "fr": "Chaque nuit, quand il fait noir, quelque chose de sauvage vient à lui.",
+              "nl": "Elke nacht, als het donker wordt, komt er iets wilds bij hem."
+            }
+          }
+        },
+        {
+          "id": "ne-gur",
+          "kind": "message",
+          "line": {
+            "conversation": "roadu09s2l3a",
+            "en": "No, it isn’t a wolf, and it isn’t a thief. It’s afraid of Bişar and runs away.",
+            "meanings": {
+              "ckb": "نا، گورگ نییە، دزیش نییە. لە بیشار دەترسێت و ڕادەکات.",
+              "de": "Nein, es ist kein Wolf und kein Dieb. Es hat Angst vor Bişar und läuft weg.",
+              "es": "No, no es un lobo ni un ladrón. Le tiene miedo a Bişar y huye.",
+              "tr": "Hayır, ne kurt ne hırsız. Bişar’dan korkuyor ve kaçıyor.",
+              "ar": "لا، ليس ذئبًا ولا لصًّا. إنه يخاف من بيشار ويهرب.",
+              "fr": "Non, ce n’est ni un loup ni un voleur. Il a peur de Bişar et s’enfuit.",
+              "nl": "Nee, het is geen wolf en geen dief. Het is bang voor Bişar en rent weg."
+            }
+          }
+        },
+        {
+          "id": "xwe",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu10s1l3a",
+            "en": "Yes, it’s a wild doe. She is licking the salt.",
+            "meanings": {
+              "ckb": "بەڵێ، ئاسکێکی کێوییە. خوێکە دەلێسێتەوە.",
+              "de": "Ja, es ist eine wilde Hirschkuh. Sie leckt am Salz.",
+              "es": "Sí, es una cierva salvaje. Está lamiendo la sal.",
+              "tr": "Evet, yabani bir dişi geyik. Tuzu yalıyor.",
+              "ar": "نعم، إنها ظبية برّية. تلعق الملح.",
+              "fr": "Oui, c’est une biche sauvage. Elle lèche le sel.",
+              "nl": "Ja, het is een wilde hinde. Ze likt aan het zout."
+            }
+          }
+        },
+        {
+          "id": "bisar",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu10s1l3a",
+            "en": "Bişar. He puts salt out every night.",
+            "meanings": {
+              "ckb": "بیشار. هەموو شەوێک خوێ دادەنێت.",
+              "de": "Bişar. Er legt jede Nacht Salz aus.",
+              "es": "Bişar. Pone sal todas las noches.",
+              "tr": "Bişar. Her gece tuz koyuyor.",
+              "ar": "بيشار. يضع الملح كل ليلة.",
+              "fr": "Bişar. Il met du sel chaque nuit.",
+              "nl": "Bişar. Hij legt elke nacht zout neer."
+            }
+          }
+        },
+        {
+          "id": "sop",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu10s2l3a",
+            "en": "Xalo, look, there are the tracks of two deer on the meadow!",
+            "meanings": {
+              "ckb": "خاڵە، سەیر کە، شوێنپێی دوو ئاسک لەسەر مێرگەکەیە!",
+              "de": "Xalo, schau, auf der Wiese sind die Spuren von zwei Rehen!",
+              "es": "¡Xalo, mira, hay huellas de dos ciervos en el prado!",
+              "tr": "Xalo, bak, çayırda iki geyiğin izleri var!",
+              "ar": "انظر يا خالو، على المرج آثار غزالين!",
+              "fr": "Xalo, regarde, il y a les traces de deux cerfs dans le pré !",
+              "nl": "Xalo, kijk, er staan sporen van twee herten op de wei!"
+            }
+          }
+        },
+        {
+          "id": "gol",
+          "kind": "statement",
+          "line": {
+            "conversation": "roadu10s2l3a",
+            "en": "For fifty years nobody saw this lake, only the wild deer. And look, Hevalo and Zerê!",
+            "meanings": {
+              "ckb": "پەنجا ساڵە کەس ئەم دەریاچەیەی نەبینیوە، تەنیا ئاسکە کێوییەکان. و سەیر کە، هەڤاڵۆ و زەرێ!",
+              "de": "Fünfzig Jahre lang hat niemand diesen See gesehen, nur die wilden Rehe. Und schau, Hevalo und Zerê!",
+              "es": "Durante cincuenta años nadie vio este lago, solo los ciervos salvajes. ¡Y mira, Hevalo y Zerê!",
+              "tr": "Elli yıldır bu gölü kimse görmedi, yalnızca yabani geyikler. Bak, Hevalo ile Zerê!",
+              "ar": "خمسون عامًا لم يرَ أحدٌ هذه البحيرة إلا الغزلان البرّية. وانظر، هيفالو وزەرێ!",
+              "fr": "Pendant cinquante ans, personne n’a vu ce lac, sauf les cerfs sauvages. Et regarde, Hevalo et Zerê !",
+              "nl": "Vijftig jaar heeft niemand dit meer gezien, alleen de wilde herten. En kijk, Hevalo en Zerê!"
+            }
+          }
+        }
+      ],
+      "steps": [
+        {
+          "prompt": {
+            "en": "When does the wild visitor come?",
+            "ku": "Mêvanê kûvî kengî tê?",
+            "ckb": "میوانە کێوییەکە کەی دێت؟",
+            "de": "Wann kommt der wilde Besucher?",
+            "es": "¿Cuándo viene el visitante salvaje?",
+            "tr": "Yabani ziyaretçi ne zaman geliyor?",
+            "ar": "متى يأتي الزائر البرّي؟",
+            "fr": "Quand le visiteur sauvage vient-il ?",
+            "nl": "Wanneer komt de wilde bezoeker?"
+          },
+          "options": [
+            {
+              "en": "Every night, when it gets dark",
+              "ku": "Her şev, dema ku tarî dibe",
+              "ckb": "هەموو شەوێک، کاتێک تاریک دادێت",
+              "de": "Jede Nacht, wenn es dunkel wird",
+              "es": "Cada noche, cuando oscurece",
+              "tr": "Her gece, hava kararınca",
+              "ar": "كل ليلة، حين يحلّ الظلام",
+              "fr": "Chaque nuit, quand il fait noir",
+              "nl": "Elke nacht, als het donker wordt"
+            },
+            {
+              "en": "Every morning, at dawn",
+              "ku": "Her sibeh, berbangê",
+              "ckb": "هەموو بەیانییەک، لە بەرەبەیاندا",
+              "de": "Jeden Morgen, im Morgengrauen",
+              "es": "Cada mañana, al amanecer",
+              "tr": "Her sabah, şafakta",
+              "ar": "كل صباح، عند الفجر",
+              "fr": "Chaque matin, à l’aube",
+              "nl": "Elke ochtend, bij zonsopgang"
+            },
+            {
+              "en": "Only at Newroz",
+              "ku": "Tenê li Newrozê",
+              "ckb": "تەنیا لە نەورۆزدا",
+              "de": "Nur an Newroz",
+              "es": "Solo en Newroz",
+              "tr": "Sadece Newroz’da",
+              "ar": "في نوروز فقط",
+              "fr": "Seulement à Newroz",
+              "nl": "Alleen met Newroz"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "her-sev"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Is it a wolf or a thief?",
+            "ku": "Ew gur e an diz e?",
+            "ckb": "گورگە یان دز؟",
+            "de": "Ist es ein Wolf oder ein Dieb?",
+            "es": "¿Es un lobo o un ladrón?",
+            "tr": "Kurt mu, hırsız mı?",
+            "ar": "أهو ذئب أم لص؟",
+            "fr": "Est-ce un loup ou un voleur ?",
+            "nl": "Is het een wolf of een dief?"
+          },
+          "options": [
+            {
+              "en": "Neither: it runs from Bişar",
+              "ku": "Ne yek jî: ew ji Bişar direve",
+              "ckb": "هیچیان: لە بیشار ڕادەکات",
+              "de": "Keins von beiden: Es läuft vor Bişar weg",
+              "es": "Ninguno: huye de Bişar",
+              "tr": "Hiçbiri: Bişar’dan kaçıyor",
+              "ar": "لا هذا ولا ذاك: إنه يهرب من بيشار",
+              "fr": "Ni l’un ni l’autre : il fuit Bişar",
+              "nl": "Geen van beide: het rent weg voor Bişar"
+            },
+            {
+              "en": "A wolf, after the sheep",
+              "ku": "Gur e, ji bo pez",
+              "ckb": "گورگە، بە دوای مەڕەکاندا",
+              "de": "Ein Wolf, hinter den Schafen her",
+              "es": "Un lobo, tras las ovejas",
+              "tr": "Kurt, koyunların peşinde",
+              "ar": "ذئب، يطمع في الغنم",
+              "fr": "Un loup, après les moutons",
+              "nl": "Een wolf, op de schapen uit"
+            },
+            {
+              "en": "A thief, after the apples",
+              "ku": "Diz e, ji bo sêvan",
+              "ckb": "دزە، بە دوای سێوەکاندا",
+              "de": "Ein Dieb, hinter den Äpfeln her",
+              "es": "Un ladrón, tras las manzanas",
+              "tr": "Hırsız, elmaların peşinde",
+              "ar": "لص، يطمع في التفاح",
+              "fr": "Un voleur, après les pommes",
+              "nl": "Een dief, op de appels uit"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "ne-gur"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "What is the doe doing at the edge of the meadow?",
+            "ku": "Ask li ber mêrgê çi dike?",
+            "ckb": "ئاسکەکە لە لێواری مێرگەکەدا چی دەکات؟",
+            "de": "Was macht die Hirschkuh am Rand der Wiese?",
+            "es": "¿Qué hace la cierva al borde del prado?",
+            "tr": "Dişi geyik çayırın kenarında ne yapıyor?",
+            "ar": "ماذا تفعل الظبية عند طرف المرج؟",
+            "fr": "Que fait la biche au bord du pré ?",
+            "nl": "Wat doet de hinde aan de rand van de wei?"
+          },
+          "options": [
+            {
+              "en": "Licking the salt",
+              "ku": "Xwê dixwe",
+              "ckb": "خوێکە دەلێسێتەوە",
+              "de": "Sie leckt am Salz",
+              "es": "Lame la sal",
+              "tr": "Tuzu yalıyor",
+              "ar": "تلعق الملح",
+              "fr": "Elle lèche le sel",
+              "nl": "Ze likt aan het zout"
+            },
+            {
+              "en": "Eating the apples",
+              "ku": "Sêvan dixwe",
+              "ckb": "سێوەکان دەخوات",
+              "de": "Sie frisst die Äpfel",
+              "es": "Se come las manzanas",
+              "tr": "Elmaları yiyor",
+              "ar": "تأكل التفاح",
+              "fr": "Elle mange les pommes",
+              "nl": "Ze eet de appels"
+            },
+            {
+              "en": "Drinking at the spring",
+              "ku": "Ji kaniyê av vedixwe",
+              "ckb": "لە کانییەکە ئاو دەخواتەوە",
+              "de": "Sie trinkt an der Quelle",
+              "es": "Bebe en la fuente",
+              "tr": "Pınardan su içiyor",
+              "ar": "تشرب من النبع",
+              "fr": "Elle boit à la source",
+              "nl": "Ze drinkt bij de bron"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "xwe"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Who puts the salt out?",
+            "ku": "Kê xwê li wir danî?",
+            "ckb": "کێ خوێکەی لەوێ دانا؟",
+            "de": "Wer legt das Salz aus?",
+            "es": "¿Quién pone la sal?",
+            "tr": "Tuzu oraya kim koydu?",
+            "ar": "من وضع الملح هناك؟",
+            "fr": "Qui met le sel ?",
+            "nl": "Wie legt het zout neer?"
+          },
+          "options": [
+            {
+              "en": "Bişar, every night",
+              "ku": "Bişar, her şev",
+              "ckb": "بیشار، هەموو شەوێک",
+              "de": "Bişar, jede Nacht",
+              "es": "Bişar, todas las noches",
+              "tr": "Bişar, her gece",
+              "ar": "بيشار، كل ليلة",
+              "fr": "Bişar, chaque nuit",
+              "nl": "Bişar, elke nacht"
+            },
+            {
+              "en": "Hevalo, for his friend",
+              "ku": "Hevalo, ji bo hevalê xwe",
+              "ckb": "هەڤاڵۆ، بۆ هاوڕێکەی",
+              "de": "Hevalo, für seinen Freund",
+              "es": "Hevalo, para su amigo",
+              "tr": "Hevalo, arkadaşı için",
+              "ar": "هيفالو، لصديقه",
+              "fr": "Hevalo, pour son ami",
+              "nl": "Hevalo, voor zijn vriend"
+            },
+            {
+              "en": "Nobody: it was always there",
+              "ku": "Kes: ew her tim li wir bû",
+              "ckb": "هیچ کەس: هەمیشە لەوێ بوو",
+              "de": "Niemand: Es war immer schon da",
+              "es": "Nadie: siempre estuvo allí",
+              "tr": "Kimse: hep oradaydı",
+              "ar": "لا أحد: كان هناك دائمًا",
+              "fr": "Personne : il a toujours été là",
+              "nl": "Niemand: het lag er altijd al"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "bisar"
+          ]
+        },
+        {
+          "prompt": {
+            "en": "Whose tracks are on the meadow?",
+            "ku": "Şopên kê li ser mêrgê ne?",
+            "ckb": "شوێنپێی کێ لەسەر مێرگەکەیە؟",
+            "de": "Wessen Spuren sind auf der Wiese?",
+            "es": "¿De quién son las huellas del prado?",
+            "tr": "Çayırdaki izler kimin?",
+            "ar": "آثار من على المرج؟",
+            "fr": "À qui sont les traces dans le pré ?",
+            "nl": "Van wie zijn de sporen op de wei?"
+          },
+          "options": [
+            {
+              "en": "Two deer’s",
+              "ku": "Yên du askan",
+              "ckb": "هی دوو ئاسک",
+              "de": "Von zwei Rehen",
+              "es": "De dos ciervos",
+              "tr": "İki geyiğin",
+              "ar": "آثار غزالين",
+              "fr": "Celles de deux cerfs",
+              "nl": "Van twee herten"
+            },
+            {
+              "en": "A wolf’s",
+              "ku": "Yên gurekî",
+              "ckb": "هی گورگێک",
+              "de": "Von einem Wolf",
+              "es": "De un lobo",
+              "tr": "Bir kurdun",
+              "ar": "آثار ذئب",
+              "fr": "Celles d’un loup",
+              "nl": "Van een wolf"
+            },
+            {
+              "en": "A goat’s",
+              "ku": "Yên bizinekê",
+              "ckb": "هی بزنێک",
+              "de": "Von einer Ziege",
+              "es": "De una cabra",
+              "tr": "Bir keçinin",
+              "ar": "آثار عنزة",
+              "fr": "Celles d’une chèvre",
+              "nl": "Van een geit"
+            }
+          ],
+          "correctIndex": 0,
+          "evidence": [
+            "sop",
+            "gol"
+          ]
+        }
+      ],
+      "culprit": "zere",
+      "solution": {
+        "en": "Something wild comes to Bişar every night, but it is no wolf and no thief: it runs from him. A wild doe licks the salt Bişar puts out each night, and the tracks of two deer lead to the hidden lake, where Hevalo and Zerê are together. The night visitor is Zerê.",
+        "ku": "Her şev tiştekî kûvî tê cem Bişar, lê ew ne gur e û ne diz e: ew ji wî direve. Askeke kûvî xwêya ku Bişar her şev datîne dixwe, û şopên du askan diçin gola veşartî, ku Hevalo û Zerê li wir bi hev re ne. Mêvanê şevê Zerê ye.",
+        "ckb": "هەموو شەوێک شتێکی کێوی دێتە لای بیشار، بەڵام نە گورگە و نە دز: لێی ڕادەکات. ئاسکێکی کێوی ئەو خوێیە دەلێسێتەوە کە بیشار هەموو شەوێک دایدەنێت، و شوێنپێی دوو ئاسک دەگەنە دەریاچە شاراوەکە، کە هەڤاڵۆ و زەرێ لەوێ پێکەوەن. میوانی شەو زەرێیە.",
+        "de": "Jede Nacht kommt etwas Wildes zu Bişar, aber es ist weder Wolf noch Dieb: Es läuft vor ihm weg. Eine wilde Hirschkuh leckt das Salz, das Bişar jede Nacht auslegt, und die Spuren zweier Rehe führen zum versteckten See, wo Hevalo und Zerê zusammen sind. Der nächtliche Besucher ist Zerê.",
+        "es": "Cada noche algo salvaje se acerca a Bişar, pero no es un lobo ni un ladrón: huye de él. Una cierva salvaje lame la sal que Bişar pone cada noche, y las huellas de dos ciervos llevan al lago escondido, donde están juntos Hevalo y Zerê. El visitante nocturno es Zerê.",
+        "tr": "Her gece Bişar’a yabani bir şey geliyor ama ne kurt ne hırsız: ondan kaçıyor. Yabani bir dişi geyik Bişar’ın her gece koyduğu tuzu yalıyor ve iki geyiğin izleri, Hevalo ile Zerê’nin birlikte olduğu gizli göle gidiyor. Gece ziyaretçisi Zerê.",
+        "ar": "يأتي بيشار كل ليلة شيءٌ برّي، لكنه ليس ذئبًا ولا لصًّا: إنه يهرب منه. ظبية برّية تلعق الملح الذي يضعه بيشار كل ليلة، وآثار غزالين تقود إلى البحيرة الخفية، حيث هيفالو وزەرێ معًا. زائر الليل هو زەرێ.",
+        "fr": "Chaque nuit, quelque chose de sauvage vient vers Bişar, mais ce n’est ni un loup ni un voleur : il le fuit. Une biche sauvage lèche le sel que Bişar met chaque nuit, et les traces de deux cerfs mènent au lac caché, où Hevalo et Zerê sont ensemble. Le visiteur de la nuit, c’est Zerê.",
+        "nl": "Elke nacht komt er iets wilds bij Bişar, maar het is geen wolf en geen dief: het rent voor hem weg. Een wilde hinde likt aan het zout dat Bişar elke nacht neerlegt, en de sporen van twee herten leiden naar het verborgen meer, waar Hevalo en Zerê samen zijn. De nachtelijke bezoeker is Zerê."
+      },
+      "hints": [
+        {
+          "en": "The visitor is afraid of people.",
+          "ku": "Mêvan ji mirovan ditirse.",
+          "ckb": "میوانەکە لە خەڵک دەترسێت.",
+          "de": "Der Besucher hat Angst vor Menschen.",
+          "es": "El visitante tiene miedo de la gente.",
+          "tr": "Ziyaretçi insanlardan korkuyor.",
+          "ar": "الزائر يخاف من الناس.",
+          "fr": "Le visiteur a peur des gens.",
+          "nl": "De bezoeker is bang voor mensen."
+        },
+        {
+          "en": "Who likes salt, and has a golden colour?",
+          "ku": "Kî ji xwê hez dike, û rengê wî zer e?",
+          "ckb": "کێ حەزی لە خوێیە و ڕەنگی زێڕینە؟",
+          "de": "Wer mag Salz und hat eine goldene Farbe?",
+          "es": "¿Quién come sal y tiene un color dorado?",
+          "tr": "Kim tuzu sever ve rengi sarıdır?",
+          "ar": "من يحب الملح، ولونه أصفر؟",
+          "fr": "Qui aime le sel et a une couleur dorée ?",
+          "nl": "Wie houdt van zout en is goudkleurig?"
+        }
+      ]
+    }
+  ]
+}

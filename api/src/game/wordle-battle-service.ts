@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { dictionaryKey, type GameAccess, type InviteSummary, type LobbyCard, type RatedState } from '@kurda/shared';
+import { type GameAccess, type InviteSummary, type LobbyCard, type RatedState } from '@kurda/shared';
 import { XpService } from '../xp/service.js';
 import { RankService } from '../ranks/service.js';
 import { ratedStateOf } from '../ranks/games.js';
@@ -41,8 +41,9 @@ import {
   type WordleGame,
 } from './wordle.js';
 import { filterByDifficulty, type Difficulty } from './wordle-daily.js';
-import { loadWordlePool } from './word-pool.js';
+import { isWordleGuess, loadWordlePool, recentTargets } from './word-pool.js';
 import { placementXp, rankBattle, type BattlePlayerResult } from './wordle-battle.js';
+import { meaningsOf, type WordMeanings } from './word-meanings.js';
 
 const MAX_ATTEMPTS = 6;
 const HARDER_TO_EASIER: readonly Difficulty[] = ['hard', 'medium', 'easy'];
@@ -143,6 +144,8 @@ export interface BattleState {
 export interface BattleResults {
   id: string;
   target: string;
+  /** what the word means, in every language a word card gives (the app shows the reader's own) */
+  meanings: WordMeanings;
   difficulty: Difficulty;
   ranking: Array<{
     /** the viewer's own id on their own row, `seat:N` on everyone else's */
@@ -262,7 +265,7 @@ export class WordleBattleService {
   ): Promise<CreateResult> {
     const access = opts.access ?? 'friends';
     if (access === 'open' && !(await mayHostOpen(this.pool, userId))) return { ok: false, reason: 'open-needs-adult' };
-    const picked = await this.pickTarget(opts.difficulty);
+    const picked = await this.pickTarget(opts.difficulty, await recentTargets(this.pool, [userId]));
     if (!picked) return { ok: false, reason: 'empty-pool' };
     const maxPlayers = Math.min(8, Math.max(2, opts.maxPlayers ?? 8));
     const rated =
@@ -374,7 +377,7 @@ export class WordleBattleService {
 
       const game = this.rehydrate(battle, player);
       const normalized = normalizeWord(word);
-      const dict = new InMemoryDictionary((await this.wordExists(client, normalized)) ? [normalized] : []);
+      const dict = new InMemoryDictionary((await isWordleGuess(client, normalized)) ? [normalized] : []);
       const applied = applyGuess(game, battle.target, word, dict);
       if (!applied.ok) return { ok: false, reason: applied.reason };
 
@@ -582,9 +585,11 @@ export class WordleBattleService {
     const ranked = rankBattle(players.rows.map((r) => this.toBattleResult(r)));
     const byId = new Map(players.rows.map((r) => [r.user_id, r]));
     const seen = new Map((await seatPlayers(this.pool, battle, players.rows, userId, this.publicUrl)).map((p) => [p.seat, p]));
+    const meanings = await meaningsOf(this.pool, 'kmr', [battle.target]).catch(() => new Map<string, WordMeanings>());
     return {
       id: battle.id,
       target: battle.target,
+      meanings: meanings.get(battle.target) ?? {},
       difficulty: battle.difficulty,
       ranking: ranked.map((r) => {
         const row = byId.get(r.userId)!;
@@ -627,7 +632,7 @@ export class WordleBattleService {
   async startPairRematch(battleId: string): Promise<NextResult> {
     const old = (await this.pool.query<BattleRow>(`SELECT * FROM wordle_battles WHERE id = $1`, [battleId])).rows[0];
     if (!old) return { ok: false, reason: 'not-found' };
-    const picked = old.next_lobby_id ? null : await this.pickTarget(old.difficulty);
+    const picked = old.next_lobby_id ? null : await this.pickTarget(old.difficulty, await this.seenInSeries(battleId));
     const now = this.now();
     let created: string | null = null;
     const res = await this.tx<NextResult>(async (client) => {
@@ -694,7 +699,7 @@ export class WordleBattleService {
   async openNextRound(hostId: string, battleId: string): Promise<NextResult> {
     const old = (await this.pool.query<BattleRow>(`SELECT * FROM wordle_battles WHERE id = $1`, [battleId])).rows[0];
     if (!old) return { ok: false, reason: 'not-found' };
-    const picked = old.next_lobby_id ? null : await this.pickTarget(old.difficulty);
+    const picked = old.next_lobby_id ? null : await this.pickTarget(old.difficulty, await this.seenInSeries(battleId));
     const now = this.now();
     let created: string | null = null;
     const res = await this.tx<NextResult>(async (client) => {
@@ -953,31 +958,39 @@ export class WordleBattleService {
   }
 
   /**
-   * Is this a word at all?
-   *
-   * Looked up by the folded key, not the one the guess was normalized with.
-   * Almost every Kurmancî word carries a ç ê î ş or û, and an imported lexicon
-   * stores those folded (1751000115000) — matching on the unfolded key would
-   * reject hundreds of thousands of real words. A missing word is a correct
-   * answer thrown out, which is the more annoying failure of the two.
+   * The words a next round should not set: every word of the series so far
+   * (this battle and the rematches before it), and the latest Peyvok words of
+   * everyone who played in it (word-pool.ts `recentTargets`).
    */
-  private async wordExists(client: pg.PoolClient, normalized: string): Promise<boolean> {
-    if (!normalized) return false;
-    const res = await client.query<{ exists: boolean }>(
-      `SELECT EXISTS (SELECT 1 FROM dict_entries WHERE headword_folded = $1) AS exists`,
-      [dictionaryKey(normalized)],
+  private async seenInSeries(battleId: string): Promise<Set<string>> {
+    const chain = await rematchChain(this.pool, T, battleId);
+    const rows = await this.pool.query<{ target: string }>(`SELECT target FROM wordle_battles WHERE id = ANY($1::uuid[])`, [chain]);
+    const players = await this.pool.query<{ user_id: string }>(
+      `SELECT user_id FROM wordle_battle_players WHERE battle_id = $1 AND NOT removed`,
+      [battleId],
     );
-    return res.rows[0]?.exists ?? false;
+    const seen = await recentTargets(this.pool, players.rows.map((p) => p.user_id));
+    for (const r of rows.rows) seen.add(r.target);
+    return seen;
   }
 
-  private async pickTarget(difficulty: Difficulty): Promise<{ target: string; difficulty: Difficulty } | null> {
+  /**
+   * A random word of the difficulty, falling back to an easier tier when a
+   * band is empty, and none of `seen` while the band has others: a series of
+   * rounds used to draw with no memory, so the same word could come twice in
+   * one evening, or be the word a player had already solved that morning.
+   */
+  private async pickTarget(difficulty: Difficulty, seen: ReadonlySet<string> = new Set()): Promise<{ target: string; difficulty: Difficulty } | null> {
     const order = [difficulty, ...HARDER_TO_EASIER.filter((d) => d !== difficulty)];
     // Kurmancî game words the keyboard can type (word-pool.ts); guess
-    // validation stays over the whole dictionary
+    // validation stays over the whole Kurmancî dictionary
     const words = await loadWordlePool(this.pool);
     for (const tier of order) {
       const pool = filterByDifficulty(words, tier);
-      if (pool.length > 0) return { target: pool[Math.floor(Math.random() * pool.length)]!, difficulty: tier };
+      if (pool.length === 0) continue;
+      const fresh = pool.filter((w) => !seen.has(w));
+      const from = fresh.length > 0 ? fresh : pool;
+      return { target: from[Math.floor(Math.random() * from.length)]!, difficulty: tier };
     }
     return null;
   }

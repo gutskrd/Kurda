@@ -204,7 +204,16 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Detektîf (integration)', () => {
       expect(row.status).toBe('published');
       const after = (await call('GET', '/games/availability?dialect=kmr', '')).json().games.find((g: { id: string }) => g.id === 'detective');
       expect(after.levels['2']).toBe(waiting + 1);
-      expect(after.difficulties).toContain('beginner');
+      // a difficulty opens at the game's minimum of cases, and not before
+      const beginnerCases = (a: { levels: Record<string, number> }) => a.levels['1']! + a.levels['2']!;
+      expect(after.difficulties.includes('beginner')).toBe(beginnerCases(after) >= after.minimum);
+      for (let n = beginnerCases(after); n < after.minimum; n++) {
+        const more = (await call('POST', '/admin/game-content', editor, { kind: 'case_file', dialect: 'kmr', level: 2, payload: { ...payload, title: { en: `The lost thing ${n}` } } })).json();
+        const approved = (await call('POST', `/admin/game-content/${more.id}/review`, editor, { approved: true, lockVersion: more.lockVersion })).json();
+        expect((await call('POST', `/admin/game-content/${more.id}/publish`, editor, { lockVersion: approved.lockVersion })).json().status).toBe('published');
+      }
+      const opened = (await call('GET', '/games/availability?dialect=kmr', '')).json().games.find((g: { id: string }) => g.id === 'detective');
+      expect(opened.difficulties).toContain('beginner');
     });
 
     it('deals the case with its board, hides every meaning until found or bought with a hint, and pays no XP for a case solved alone', async () => {
@@ -249,7 +258,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Detektîf (integration)', () => {
       const resumed = (await call('GET', `/games/solo/sessions/${id}`, learner)).json();
       expect(resumed.board.notebook).toHaveLength(2);
       expect(resumed.board.evidence.find((e: { id: string }) => e.id === 'home').meanings.en).toBeTruthy();
-      const accused = await call('POST', `/games/solo/sessions/${id}/answers`, learner, { index: 2, answer: { choice: items[2]!.suspects!.indexOf('xezo') } });
+      // the suspects are shown in an order drawn for the round, so the choice is made from the view, as a player makes it
+      const accused = await call('POST', `/games/solo/sessions/${id}/answers`, learner, { index: 2, answer: { choice: view.items[2].suspects.indexOf('xezo') } });
       expect(accused.json()).toMatchObject({ correct: true, why: 'accuse', correction: { culprit: 'xezo', solution: { en: 'Xezo wanted it, and it was at home.' } } });
       expect(accused.json().correction.walk).toHaveLength(2);
 
@@ -293,7 +303,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Detektîf (integration)', () => {
       for (let i = 0; i < 2; i++) {
         await call('POST', `/games/solo/sessions/${second.id}/answers`, sleuth, { index: i, answer: { choice: items[i]!.shown!.indexOf(items[i]!.correctIndex!) } });
       }
-      await call('POST', `/games/solo/sessions/${second.id}/answers`, sleuth, { index: 2, answer: { choice: items[2]!.suspects!.indexOf('xezo') } });
+      await call('POST', `/games/solo/sessions/${second.id}/answers`, sleuth, { index: 2, answer: { choice: second.items[2].suspects.indexOf('xezo') } });
       const done = (await call('POST', `/games/solo/sessions/${second.id}/finish`, sleuth)).json();
       expect(done).toMatchObject({ correct: 3, learningCounted: true, xp: 0 });
 

@@ -1,0 +1,2508 @@
+{
+  "passages": [
+    {
+      "story": "ckb-the-house-key",
+      "paragraph": 2,
+      "opens": "هەموویان بەدوای",
+      "words": [
+        {
+          "term": "مێزەکە",
+          "meanings": {
+            "en": "table",
+            "de": "Tisch",
+            "es": "mesa",
+            "fr": "table",
+            "nl": "tafel",
+            "tr": "masa",
+            "ar": "طاولة",
+            "ku": "mase"
+          }
+        },
+        {
+          "term": "کلیلەکە",
+          "meanings": {
+            "en": "key",
+            "de": "Schlüssel",
+            "es": "llave",
+            "fr": "clé",
+            "nl": "sleutel",
+            "tr": "anahtar",
+            "ar": "مفتاح",
+            "ku": "kilît"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-house-key",
+      "paragraph": 3,
+      "opens": "لەناکاو ژینۆ",
+      "words": [
+        {
+          "term": "کلیلەکە",
+          "meanings": {
+            "en": "key",
+            "de": "Schlüssel",
+            "es": "llave",
+            "fr": "clé",
+            "nl": "sleutel",
+            "tr": "anahtar",
+            "ar": "مفتاح",
+            "ku": "kilît"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-house-key",
+      "paragraph": 4,
+      "opens": "دایکی پێدەکەنێت",
+      "words": [
+        {
+          "term": "دەرگاکە",
+          "meanings": {
+            "en": "door",
+            "de": "Tür",
+            "es": "puerta",
+            "fr": "porte",
+            "nl": "deur",
+            "tr": "kapı",
+            "ar": "باب",
+            "ku": "derî"
+          }
+        },
+        {
+          "term": "کلیلەکە",
+          "meanings": {
+            "en": "key",
+            "de": "Schlüssel",
+            "es": "llave",
+            "fr": "clé",
+            "nl": "sleutel",
+            "tr": "anahtar",
+            "ar": "مفتاح",
+            "ku": "kilît"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-warm-bread",
+      "paragraph": 0,
+      "opens": "ناوم ئاراسە",
+      "words": [
+        {
+          "term": "بەیانییەک",
+          "meanings": {
+            "en": "morning",
+            "de": "Morgen",
+            "es": "mañana (la parte del día)",
+            "fr": "matin",
+            "nl": "ochtend",
+            "tr": "sabah",
+            "ar": "صباح",
+            "ku": "sibeh"
+          }
+        },
+        {
+          "term": "نان",
+          "meanings": {
+            "en": "bread",
+            "de": "Brot",
+            "es": "pan",
+            "fr": "pain",
+            "nl": "brood",
+            "tr": "ekmek",
+            "ar": "خبز",
+            "ku": "nan"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-warm-bread",
+      "paragraph": 1,
+      "opens": "ئەمڕۆ نانەکە",
+      "words": [
+        {
+          "term": "ئەمڕۆ",
+          "meanings": {
+            "en": "today",
+            "de": "heute",
+            "es": "hoy",
+            "fr": "aujourd’hui",
+            "nl": "vandaag",
+            "tr": "bugün",
+            "ar": "اليوم",
+            "ku": "îro"
+          }
+        },
+        {
+          "term": "نانەکە",
+          "meanings": {
+            "en": "bread",
+            "de": "Brot",
+            "es": "pan",
+            "fr": "pain",
+            "nl": "brood",
+            "tr": "ekmek",
+            "ar": "خبز",
+            "ku": "nan"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-warm-bread",
+      "paragraph": 3,
+      "opens": "وەستا کەریم",
+      "words": [
+        {
+          "term": "پارەکە",
+          "meanings": {
+            "en": "money",
+            "de": "Geld",
+            "es": "dinero",
+            "fr": "argent",
+            "nl": "geld",
+            "tr": "para",
+            "ar": "مال، نقود",
+            "ku": "pere"
+          }
+        },
+        {
+          "term": "نانەکە",
+          "meanings": {
+            "en": "bread",
+            "de": "Brot",
+            "es": "pan",
+            "fr": "pain",
+            "nl": "brood",
+            "tr": "ekmek",
+            "ar": "خبز",
+            "ku": "nan"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-warm-bread",
+      "paragraph": 4,
+      "opens": "بەڵام من",
+      "words": [
+        {
+          "term": "نیوەڕۆ",
+          "meanings": {
+            "en": "noon",
+            "de": "Mittag",
+            "es": "mediodía",
+            "fr": "midi",
+            "nl": "middag",
+            "tr": "öğle",
+            "ar": "ظهر",
+            "ku": "nîvro"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-first-day-diary",
+      "paragraph": 1,
+      "opens": "ئەمڕۆ یەکەم",
+      "words": [
+        {
+          "term": "ئەمڕۆ",
+          "meanings": {
+            "en": "today",
+            "de": "heute",
+            "es": "hoy",
+            "fr": "aujourd’hui",
+            "nl": "vandaag",
+            "tr": "bugün",
+            "ar": "اليوم",
+            "ku": "îro"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-grandmas-dolma",
+      "paragraph": 0,
+      "opens": "ڕۆژی هەینی",
+      "words": [
+        {
+          "term": "ئێوارە",
+          "meanings": {
+            "en": "evening",
+            "de": "Abend",
+            "es": "tarde, noche",
+            "fr": "soir",
+            "nl": "avond",
+            "tr": "akşam",
+            "ar": "مساء",
+            "ku": "êvar"
+          }
+        },
+        {
+          "term": "برنج",
+          "meanings": {
+            "en": "rice",
+            "de": "Reis",
+            "es": "arroz",
+            "fr": "riz",
+            "nl": "rijst",
+            "tr": "pirinç",
+            "ar": "أرز",
+            "ku": "birinc"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-grandmas-dolma",
+      "paragraph": 1,
+      "opens": "داپیرە سەیری",
+      "words": [
+        {
+          "term": "برنج",
+          "meanings": {
+            "en": "rice",
+            "de": "Reis",
+            "es": "arroz",
+            "fr": "riz",
+            "nl": "rijst",
+            "tr": "pirinç",
+            "ar": "أرز",
+            "ku": "birinc"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-grandmas-dolma",
+      "paragraph": 3,
+      "opens": "لە ماڵەوە",
+      "words": [
+        {
+          "term": "خوێ",
+          "meanings": {
+            "en": "salt",
+            "de": "Salz",
+            "es": "sal",
+            "fr": "sel",
+            "nl": "zout",
+            "tr": "tuz",
+            "ar": "ملح",
+            "ku": "xwê"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-grandmas-dolma",
+      "paragraph": 4,
+      "opens": "سەرەتا گەڵاکان",
+      "words": [
+        {
+          "term": "برنج",
+          "meanings": {
+            "en": "rice",
+            "de": "Reis",
+            "es": "arroz",
+            "fr": "riz",
+            "nl": "rijst",
+            "tr": "pirinç",
+            "ar": "أرز",
+            "ku": "birinc"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-grandmas-dolma",
+      "paragraph": 5,
+      "opens": "پاشان دۆڵمەکانیان",
+      "words": [
+        {
+          "term": "کاتژمێر",
+          "meanings": {
+            "en": "hour; clock",
+            "de": "Stunde; Uhr",
+            "es": "hora; reloj",
+            "fr": "heure; horloge",
+            "nl": "uur; klok",
+            "tr": "saat",
+            "ar": "ساعة",
+            "ku": "demjimêr"
+          }
+        },
+        {
+          "term": "ئاگر",
+          "meanings": {
+            "en": "fire",
+            "de": "Feuer",
+            "es": "fuego",
+            "fr": "feu",
+            "nl": "vuur",
+            "tr": "ateş",
+            "ar": "نار",
+            "ku": "agir"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-ball-in-the-garden",
+      "paragraph": 0,
+      "opens": "هەموو هەینییەک،",
+      "words": [
+        {
+          "term": "نیوەڕۆ",
+          "meanings": {
+            "en": "noon",
+            "de": "Mittag",
+            "es": "mediodía",
+            "fr": "midi",
+            "nl": "middag",
+            "tr": "öğle",
+            "ar": "ظهر",
+            "ku": "nîvro"
+          }
+        },
+        {
+          "term": "بەرد",
+          "meanings": {
+            "en": "stone",
+            "de": "Stein",
+            "es": "piedra",
+            "fr": "pierre",
+            "nl": "steen",
+            "tr": "taş",
+            "ar": "حجر",
+            "ku": "kevir"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-ball-in-the-garden",
+      "paragraph": 1,
+      "opens": "ئەو هەینییە",
+      "words": [
+        {
+          "term": "تۆپەکە",
+          "meanings": {
+            "en": "ball",
+            "de": "Ball",
+            "es": "pelota",
+            "fr": "balle, ballon",
+            "nl": "bal",
+            "tr": "top",
+            "ar": "كرة",
+            "ku": "gog"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-ball-in-the-garden",
+      "paragraph": 3,
+      "opens": "لە کۆتاییدا",
+      "words": [
+        {
+          "term": "تۆپەکە",
+          "meanings": {
+            "en": "ball",
+            "de": "Ball",
+            "es": "pelota",
+            "fr": "balle, ballon",
+            "nl": "bal",
+            "tr": "top",
+            "ar": "كرة",
+            "ku": "gog"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-ball-in-the-garden",
+      "paragraph": 5,
+      "opens": "نارین سەری",
+      "words": [
+        {
+          "term": "ساڵ",
+          "meanings": {
+            "en": "year",
+            "de": "Jahr",
+            "es": "año",
+            "fr": "année",
+            "nl": "jaar",
+            "tr": "yıl",
+            "ar": "سنة",
+            "ku": "sal"
+          }
+        },
+        {
+          "term": "ئێوارە",
+          "meanings": {
+            "en": "evening",
+            "de": "Abend",
+            "es": "tarde, noche",
+            "fr": "soir",
+            "nl": "avond",
+            "tr": "akşam",
+            "ar": "مساء",
+            "ku": "êvar"
+          }
+        },
+        {
+          "term": "تۆپ",
+          "meanings": {
+            "en": "ball",
+            "de": "Ball",
+            "es": "pelota",
+            "fr": "balle, ballon",
+            "nl": "bal",
+            "tr": "top",
+            "ar": "كرة",
+            "ku": "gog"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-a-dress-for-newroz",
+      "paragraph": 0,
+      "opens": "ئێوارەی پێش",
+      "words": [
+        {
+          "term": "بەیانی",
+          "meanings": {
+            "en": "morning",
+            "de": "Morgen",
+            "es": "mañana (la parte del día)",
+            "fr": "matin",
+            "nl": "ochtend",
+            "tr": "sabah",
+            "ar": "صباح",
+            "ku": "sibeh"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-a-dress-for-newroz",
+      "paragraph": 1,
+      "opens": "بەڵام کراسەکە",
+      "words": [
+        {
+          "term": "کراسەکە",
+          "meanings": {
+            "en": "shirt, dress",
+            "de": "Hemd, Kleid",
+            "es": "camisa, vestido",
+            "fr": "chemise, robe",
+            "nl": "hemd, jurk",
+            "tr": "gömlek, elbise",
+            "ar": "قميص، ثوب",
+            "ku": "kiras"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-a-dress-for-newroz",
+      "paragraph": 3,
+      "opens": "کراسەکە کەمێک",
+      "words": [
+        {
+          "term": "کراسەکە",
+          "meanings": {
+            "en": "shirt, dress",
+            "de": "Hemd, Kleid",
+            "es": "camisa, vestido",
+            "fr": "chemise, robe",
+            "nl": "hemd, jurk",
+            "tr": "gömlek, elbise",
+            "ar": "قميص، ثوب",
+            "ku": "kiras"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-a-dress-for-newroz",
+      "paragraph": 4,
+      "opens": "بەیانی ڕۆژان",
+      "words": [
+        {
+          "term": "بەیانی",
+          "meanings": {
+            "en": "morning",
+            "de": "Morgen",
+            "es": "mañana (la parte del día)",
+            "fr": "matin",
+            "nl": "ochtend",
+            "tr": "sabah",
+            "ar": "صباح",
+            "ku": "sibeh"
+          }
+        },
+        {
+          "term": "کراسەکە",
+          "meanings": {
+            "en": "shirt, dress",
+            "de": "Hemd, Kleid",
+            "es": "camisa, vestido",
+            "fr": "chemise, robe",
+            "nl": "hemd, jurk",
+            "tr": "gömlek, elbise",
+            "ar": "قميص، ثوب",
+            "ku": "kiras"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-fox-and-the-old-woman",
+      "paragraph": 0,
+      "opens": "هەبوو نەبوو،",
+      "words": [
+        {
+          "term": "پیرێژنێک",
+          "meanings": {
+            "en": "old woman",
+            "de": "alte Frau",
+            "es": "anciana",
+            "fr": "vieille femme",
+            "nl": "oude vrouw",
+            "tr": "yaşlı kadın",
+            "ar": "عجوز، امرأة مسنّة",
+            "ku": "pîrejin"
+          }
+        },
+        {
+          "term": "دەرگاکە",
+          "meanings": {
+            "en": "door",
+            "de": "Tür",
+            "es": "puerta",
+            "fr": "porte",
+            "nl": "deur",
+            "tr": "kapı",
+            "ar": "باب",
+            "ku": "derî"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-fox-and-the-old-woman",
+      "paragraph": 1,
+      "opens": "ڕۆژێک پیرێژن",
+      "words": [
+        {
+          "term": "دار",
+          "meanings": {
+            "en": "wood, firewood",
+            "de": "Holz, Brennholz",
+            "es": "leña",
+            "fr": "bois",
+            "nl": "hout, brandhout",
+            "tr": "odun",
+            "ar": "حطب",
+            "ku": "dar, êzing"
+          }
+        },
+        {
+          "term": "ڕێوییەک",
+          "meanings": {
+            "en": "fox",
+            "de": "Fuchs",
+            "es": "zorro",
+            "fr": "renard",
+            "nl": "vos",
+            "tr": "tilki",
+            "ar": "ثعلب",
+            "ku": "rovî"
+          }
+        },
+        {
+          "term": "شیرەکە",
+          "meanings": {
+            "en": "milk",
+            "de": "Milch",
+            "es": "leche",
+            "fr": "lait",
+            "nl": "melk",
+            "tr": "süt",
+            "ar": "حليب",
+            "ku": "şîr"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-fox-and-the-old-woman",
+      "paragraph": 2,
+      "opens": "ڕێوی هاواری",
+      "words": [
+        {
+          "term": "دۆڵەکە",
+          "meanings": {
+            "en": "valley",
+            "de": "Tal",
+            "es": "valle",
+            "fr": "vallée",
+            "nl": "dal",
+            "tr": "vadi",
+            "ar": "وادٍ",
+            "ku": "gelî, newal"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-fox-and-the-old-woman",
+      "paragraph": 3,
+      "opens": "ڕێوی ڕایکرد",
+      "words": [
+        {
+          "term": "گردێک",
+          "meanings": {
+            "en": "hill",
+            "de": "Hügel",
+            "es": "colina",
+            "fr": "colline",
+            "nl": "heuvel",
+            "tr": "tepe",
+            "ar": "تلّ",
+            "ku": "gir"
+          }
+        },
+        {
+          "term": "ڕەش",
+          "meanings": {
+            "en": "black",
+            "de": "schwarz",
+            "es": "negro",
+            "fr": "noir",
+            "nl": "zwart",
+            "tr": "siyah",
+            "ar": "أسود",
+            "ku": "reş"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-fox-and-the-old-woman",
+      "paragraph": 4,
+      "opens": "ڕێوی چوو",
+      "words": [
+        {
+          "term": "گردەکە",
+          "meanings": {
+            "en": "hill",
+            "de": "Hügel",
+            "es": "colina",
+            "fr": "colline",
+            "nl": "heuvel",
+            "tr": "tepe",
+            "ar": "تلّ",
+            "ku": "gir"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-fox-and-the-old-woman",
+      "paragraph": 5,
+      "opens": "ڕێوی بە",
+      "words": [
+        {
+          "term": "ئاوەکە",
+          "meanings": {
+            "en": "water",
+            "de": "Wasser",
+            "es": "agua",
+            "fr": "eau",
+            "nl": "water",
+            "tr": "su",
+            "ar": "ماء",
+            "ku": "av"
+          }
+        },
+        {
+          "term": "بەردەکە",
+          "meanings": {
+            "en": "stone",
+            "de": "Stein",
+            "es": "piedra",
+            "fr": "pierre",
+            "nl": "steen",
+            "tr": "taş",
+            "ar": "حجر",
+            "ku": "kevir"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-fox-and-the-old-woman",
+      "paragraph": 6,
+      "opens": "لەو کاتەدا",
+      "words": [
+        {
+          "term": "گەنج",
+          "meanings": {
+            "en": "young person",
+            "de": "junger Mensch",
+            "es": "joven",
+            "fr": "jeune",
+            "nl": "jongere",
+            "tr": "genç",
+            "ar": "شابّ",
+            "ku": "xort, ciwan"
+          }
+        },
+        {
+          "term": "شوانەکە",
+          "meanings": {
+            "en": "shepherd",
+            "de": "Hirte",
+            "es": "pastor",
+            "fr": "berger",
+            "nl": "herder",
+            "tr": "çoban",
+            "ar": "راعٍ",
+            "ku": "şivan"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-fox-and-the-old-woman",
+      "paragraph": 7,
+      "opens": "ئاو بە",
+      "words": [
+        {
+          "term": "ئاو",
+          "meanings": {
+            "en": "water",
+            "de": "Wasser",
+            "es": "agua",
+            "fr": "eau",
+            "nl": "water",
+            "tr": "su",
+            "ar": "ماء",
+            "ku": "av"
+          }
+        },
+        {
+          "term": "سەوز",
+          "meanings": {
+            "en": "green",
+            "de": "grün",
+            "es": "verde",
+            "fr": "vert",
+            "nl": "groen",
+            "tr": "yeşil",
+            "ar": "أخضر",
+            "ku": "kesk"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-fox-and-the-old-woman",
+      "paragraph": 8,
+      "opens": "ئێوارە ڕێوی",
+      "words": [
+        {
+          "term": "ئێوارە",
+          "meanings": {
+            "en": "evening",
+            "de": "Abend",
+            "es": "tarde, noche",
+            "fr": "soir",
+            "nl": "avond",
+            "tr": "akşam",
+            "ar": "مساء",
+            "ku": "êvar"
+          }
+        },
+        {
+          "term": "بەیانییەک",
+          "meanings": {
+            "en": "morning",
+            "de": "Morgen",
+            "es": "mañana (la parte del día)",
+            "fr": "matin",
+            "nl": "ochtend",
+            "tr": "sabah",
+            "ar": "صباح",
+            "ku": "sibeh"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-road-to-the-village",
+      "paragraph": 1,
+      "opens": "ئەمساڵ بەیانییەکی",
+      "words": [
+        {
+          "term": "کاتژمێر",
+          "meanings": {
+            "en": "hour; clock",
+            "de": "Stunde; Uhr",
+            "es": "hora; reloj",
+            "fr": "heure; horloge",
+            "nl": "uur; klok",
+            "tr": "saat",
+            "ar": "ساعة",
+            "ku": "demjimêr"
+          }
+        },
+        {
+          "term": "دۆڵ",
+          "meanings": {
+            "en": "valley",
+            "de": "Tal",
+            "es": "valle",
+            "fr": "vallée",
+            "nl": "dal",
+            "tr": "vadi",
+            "ar": "وادٍ",
+            "ku": "gelî, newal"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-road-to-the-village",
+      "paragraph": 2,
+      "opens": "شەوی پێشوو",
+      "words": [
+        {
+          "term": "شۆفێرەکە",
+          "meanings": {
+            "en": "driver",
+            "de": "Fahrer",
+            "es": "conductor",
+            "fr": "chauffeur",
+            "nl": "chauffeur",
+            "tr": "şoför",
+            "ar": "سائق",
+            "ku": "ajovan"
+          }
+        },
+        {
+          "term": "تراکتۆرێک",
+          "meanings": {
+            "en": "tractor",
+            "de": "Traktor",
+            "es": "tractor",
+            "fr": "tracteur",
+            "nl": "tractor",
+            "tr": "traktör",
+            "ar": "جرّار",
+            "ku": "traktor"
+          }
+        },
+        {
+          "term": "پاسەکە",
+          "meanings": {
+            "en": "bus",
+            "de": "Bus",
+            "es": "autobús",
+            "fr": "bus",
+            "nl": "bus",
+            "tr": "otobüs",
+            "ar": "حافلة",
+            "ku": "otobûs"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-road-to-the-village",
+      "paragraph": 4,
+      "opens": "بە درێژایی",
+      "words": [
+        {
+          "term": "پیاوەکە",
+          "meanings": {
+            "en": "man",
+            "de": "Mann",
+            "es": "hombre",
+            "fr": "homme",
+            "nl": "man",
+            "tr": "adam, erkek",
+            "ar": "رجل",
+            "ku": "mêr"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-the-road-to-the-village",
+      "paragraph": 6,
+      "opens": "باپیرم باوەشی",
+      "words": [
+        {
+          "term": "دوێنێ",
+          "meanings": {
+            "en": "yesterday",
+            "de": "gestern",
+            "es": "ayer",
+            "fr": "hier",
+            "nl": "gisteren",
+            "tr": "dün",
+            "ar": "أمس",
+            "ku": "duh"
+          }
+        },
+        {
+          "term": "باران",
+          "meanings": {
+            "en": "rain",
+            "de": "Regen",
+            "es": "lluvia",
+            "fr": "pluie",
+            "nl": "regen",
+            "tr": "yağmur",
+            "ar": "مطر",
+            "ku": "baran"
+          }
+        },
+        {
+          "term": "پاسەکە",
+          "meanings": {
+            "en": "bus",
+            "de": "Bus",
+            "es": "autobús",
+            "fr": "bus",
+            "nl": "bus",
+            "tr": "otobüs",
+            "ar": "حافلة",
+            "ku": "otobûs"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 0,
+      "opens": "ئەم چیرۆکە",
+      "words": [
+        {
+          "term": "نەوە",
+          "meanings": {
+            "en": "grandchild",
+            "de": "Enkelkind",
+            "es": "nieto",
+            "fr": "petit-enfant",
+            "nl": "kleinkind",
+            "tr": "torun",
+            "ar": "حفيد",
+            "ku": "nevî"
+          }
+        },
+        {
+          "term": "ماندوو",
+          "meanings": {
+            "en": "tired",
+            "de": "müde",
+            "es": "cansado",
+            "fr": "fatigué",
+            "nl": "moe",
+            "tr": "yorgun",
+            "ar": "متعب",
+            "ku": "westiyayî"
+          }
+        },
+        {
+          "term": "بەهارێک",
+          "meanings": {
+            "en": "spring (the season)",
+            "de": "Frühling",
+            "es": "primavera",
+            "fr": "printemps",
+            "nl": "lente",
+            "tr": "ilkbahar",
+            "ar": "ربيع",
+            "ku": "bihar"
+          }
+        },
+        {
+          "term": "کورد",
+          "meanings": {
+            "en": "a Kurd",
+            "de": "Kurde",
+            "es": "kurdo",
+            "fr": "Kurde",
+            "nl": "Koerd",
+            "tr": "Kürt",
+            "ar": "كردي",
+            "ku": "kurd"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 2,
+      "opens": "لە سەردەمێکی",
+      "words": [
+        {
+          "term": "دۆڵ",
+          "meanings": {
+            "en": "valley",
+            "de": "Tal",
+            "es": "valle",
+            "fr": "vallée",
+            "nl": "dal",
+            "tr": "vadi",
+            "ar": "وادٍ",
+            "ku": "gelî, newal"
+          }
+        },
+        {
+          "term": "پاشایەک",
+          "meanings": {
+            "en": "king",
+            "de": "König",
+            "es": "rey",
+            "fr": "roi",
+            "nl": "koning",
+            "tr": "padişah, kral",
+            "ar": "ملك",
+            "ku": "padîşah"
+          }
+        },
+        {
+          "term": "ڕەش",
+          "meanings": {
+            "en": "black",
+            "de": "schwarz",
+            "es": "negro",
+            "fr": "noir",
+            "nl": "zwart",
+            "tr": "siyah",
+            "ar": "أسود",
+            "ku": "reş"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 3,
+      "opens": "ڕۆژێک شتێکی",
+      "words": [
+        {
+          "term": "پاشا",
+          "meanings": {
+            "en": "king",
+            "de": "König",
+            "es": "rey",
+            "fr": "roi",
+            "nl": "koning",
+            "tr": "padişah, kral",
+            "ar": "ملك",
+            "ku": "padîşah"
+          }
+        },
+        {
+          "term": "بەیانی",
+          "meanings": {
+            "en": "morning",
+            "de": "Morgen",
+            "es": "mañana (la parte del día)",
+            "fr": "matin",
+            "nl": "ochtend",
+            "tr": "sabah",
+            "ar": "صباح",
+            "ku": "sibeh"
+          }
+        },
+        {
+          "term": "ڕەش",
+          "meanings": {
+            "en": "black",
+            "de": "schwarz",
+            "es": "negro",
+            "fr": "noir",
+            "nl": "zwart",
+            "tr": "siyah",
+            "ar": "أسود",
+            "ku": "reş"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 5,
+      "opens": "لەو ڕۆژەوە،",
+      "words": [
+        {
+          "term": "بەیانییەک",
+          "meanings": {
+            "en": "morning",
+            "de": "Morgen",
+            "es": "mañana (la parte del día)",
+            "fr": "matin",
+            "nl": "ochtend",
+            "tr": "sabah",
+            "ar": "صباح",
+            "ku": "sibeh"
+          }
+        },
+        {
+          "term": "گەنج",
+          "meanings": {
+            "en": "young person",
+            "de": "junger Mensch",
+            "es": "joven",
+            "fr": "jeune",
+            "nl": "jongere",
+            "tr": "genç",
+            "ar": "شابّ",
+            "ku": "xort, ciwan"
+          }
+        },
+        {
+          "term": "بەهار",
+          "meanings": {
+            "en": "spring (the season)",
+            "de": "Frühling",
+            "es": "primavera",
+            "fr": "printemps",
+            "nl": "lente",
+            "tr": "ilkbahar",
+            "ar": "ربيع",
+            "ku": "bihar"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 7,
+      "opens": "لە چێشتخانەی",
+      "words": [
+        {
+          "term": "ئاشپەزێک",
+          "meanings": {
+            "en": "cook",
+            "de": "Koch",
+            "es": "cocinero",
+            "fr": "cuisinier",
+            "nl": "kok",
+            "tr": "aşçı",
+            "ar": "طبّاخ",
+            "ku": "aşpêj"
+          }
+        },
+        {
+          "term": "بەیانییەک",
+          "meanings": {
+            "en": "morning",
+            "de": "Morgen",
+            "es": "mañana (la parte del día)",
+            "fr": "matin",
+            "nl": "ochtend",
+            "tr": "sabah",
+            "ar": "صباح",
+            "ku": "sibeh"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 9,
+      "opens": "بە شەو",
+      "words": [
+        {
+          "term": "گەنجەکە",
+          "meanings": {
+            "en": "young person",
+            "de": "junger Mensch",
+            "es": "joven",
+            "fr": "jeune",
+            "nl": "jongere",
+            "tr": "genç",
+            "ar": "شابّ",
+            "ku": "xort, ciwan"
+          }
+        },
+        {
+          "term": "بەیانی",
+          "meanings": {
+            "en": "morning",
+            "de": "Morgen",
+            "es": "mañana (la parte del día)",
+            "fr": "matin",
+            "nl": "ochtend",
+            "tr": "sabah",
+            "ar": "صباح",
+            "ku": "sibeh"
+          }
+        },
+        {
+          "term": "دەرگا",
+          "meanings": {
+            "en": "door",
+            "de": "Tür",
+            "es": "puerta",
+            "fr": "porte",
+            "nl": "deur",
+            "tr": "kapı",
+            "ar": "باب",
+            "ku": "derî"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 12,
+      "opens": "لە شاردا",
+      "words": [
+        {
+          "term": "ئێوارە",
+          "meanings": {
+            "en": "evening",
+            "de": "Abend",
+            "es": "tarde, noche",
+            "fr": "soir",
+            "nl": "avond",
+            "tr": "akşam",
+            "ar": "مساء",
+            "ku": "êvar"
+          }
+        },
+        {
+          "term": "داس",
+          "meanings": {
+            "en": "sickle",
+            "de": "Sichel",
+            "es": "hoz",
+            "fr": "faucille",
+            "nl": "sikkel",
+            "tr": "orak",
+            "ar": "منجل",
+            "ku": "das"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 14,
+      "opens": "ڕۆژێک، بەرەبەیان،",
+      "words": [
+        {
+          "term": "کچەکە",
+          "meanings": {
+            "en": "daughter, girl",
+            "de": "Tochter, Mädchen",
+            "es": "hija, chica",
+            "fr": "fille",
+            "nl": "dochter, meisje",
+            "tr": "kız",
+            "ar": "بنت",
+            "ku": "keç"
+          }
+        },
+        {
+          "term": "دەرگا",
+          "meanings": {
+            "en": "door",
+            "de": "Tür",
+            "es": "puerta",
+            "fr": "porte",
+            "nl": "deur",
+            "tr": "kapı",
+            "ar": "باب",
+            "ku": "derî"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 16,
+      "opens": "ئەو ڕۆژە",
+      "words": [
+        {
+          "term": "مار",
+          "meanings": {
+            "en": "snake",
+            "de": "Schlange",
+            "es": "serpiente",
+            "fr": "serpent",
+            "nl": "slang",
+            "tr": "yılan",
+            "ar": "أفعى",
+            "ku": "mar"
+          }
+        },
+        {
+          "term": "ڕەش",
+          "meanings": {
+            "en": "black",
+            "de": "schwarz",
+            "es": "negro",
+            "fr": "noir",
+            "nl": "zwart",
+            "tr": "siyah",
+            "ar": "أسود",
+            "ku": "reş"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 18,
+      "opens": "سەرەتا تەنیا",
+      "words": [
+        {
+          "term": "شوانێک",
+          "meanings": {
+            "en": "shepherd",
+            "de": "Hirte",
+            "es": "pastor",
+            "fr": "berger",
+            "nl": "herder",
+            "tr": "çoban",
+            "ar": "راعٍ",
+            "ku": "şivan"
+          }
+        },
+        {
+          "term": "جووتیارێک",
+          "meanings": {
+            "en": "farmer",
+            "de": "Bauer",
+            "es": "agricultor",
+            "fr": "agriculteur",
+            "nl": "boer",
+            "tr": "çiftçi",
+            "ar": "مزارع",
+            "ku": "cotkar"
+          }
+        },
+        {
+          "term": "نانەوایەک",
+          "meanings": {
+            "en": "baker",
+            "de": "Bäcker",
+            "es": "panadero",
+            "fr": "boulanger",
+            "nl": "bakker",
+            "tr": "fırıncı",
+            "ar": "خبّاز",
+            "ku": "nanpêj"
+          }
+        },
+        {
+          "term": "چەقۆ",
+          "meanings": {
+            "en": "knife",
+            "de": "Messer",
+            "es": "cuchillo",
+            "fr": "couteau",
+            "nl": "mes",
+            "tr": "bıçak",
+            "ar": "سكين",
+            "ku": "kêr"
+          }
+        },
+        {
+          "term": "بەرد",
+          "meanings": {
+            "en": "stone",
+            "de": "Stein",
+            "es": "piedra",
+            "fr": "pierre",
+            "nl": "steen",
+            "tr": "taş",
+            "ar": "حجر",
+            "ku": "kevir"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 20,
+      "opens": "بە شەو",
+      "words": [
+        {
+          "term": "ڕەشەکە",
+          "meanings": {
+            "en": "black",
+            "de": "schwarz",
+            "es": "negro",
+            "fr": "noir",
+            "nl": "zwart",
+            "tr": "siyah",
+            "ar": "أسود",
+            "ku": "reş"
+          }
+        },
+        {
+          "term": "گەنج",
+          "meanings": {
+            "en": "young person",
+            "de": "junger Mensch",
+            "es": "joven",
+            "fr": "jeune",
+            "nl": "jongere",
+            "tr": "genç",
+            "ar": "شابّ",
+            "ku": "xort, ciwan"
+          }
+        },
+        {
+          "term": "دایکێک",
+          "meanings": {
+            "en": "mother",
+            "de": "Mutter",
+            "es": "madre",
+            "fr": "mère",
+            "nl": "moeder",
+            "tr": "anne",
+            "ar": "أم",
+            "ku": "dê"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 21,
+      "opens": "بەرەبەیان گەیشتنە",
+      "words": [
+        {
+          "term": "دەرگا",
+          "meanings": {
+            "en": "door",
+            "de": "Tür",
+            "es": "puerta",
+            "fr": "porte",
+            "nl": "deur",
+            "tr": "kapı",
+            "ar": "باب",
+            "ku": "derî"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 22,
+      "opens": "کاوە چووە",
+      "words": [
+        {
+          "term": "مارەکە",
+          "meanings": {
+            "en": "snake",
+            "de": "Schlange",
+            "es": "serpiente",
+            "fr": "serpent",
+            "nl": "slang",
+            "tr": "yılan",
+            "ar": "أفعى",
+            "ku": "mar"
+          }
+        },
+        {
+          "term": "دایک",
+          "meanings": {
+            "en": "mother",
+            "de": "Mutter",
+            "es": "madre",
+            "fr": "mère",
+            "nl": "moeder",
+            "tr": "anne",
+            "ar": "أم",
+            "ku": "dê"
+          }
+        },
+        {
+          "term": "پاشا",
+          "meanings": {
+            "en": "king",
+            "de": "König",
+            "es": "rey",
+            "fr": "roi",
+            "nl": "koning",
+            "tr": "padişah, kral",
+            "ar": "ملك",
+            "ku": "padîşah"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 25,
+      "opens": "ئەو شەوە",
+      "words": [
+        {
+          "term": "پیرێژنێک",
+          "meanings": {
+            "en": "old woman",
+            "de": "alte Frau",
+            "es": "anciana",
+            "fr": "vieille femme",
+            "nl": "oude vrouw",
+            "tr": "yaşlı kadın",
+            "ar": "عجوز، امرأة مسنّة",
+            "ku": "pîrejin"
+          }
+        },
+        {
+          "term": "ئاگرەکە",
+          "meanings": {
+            "en": "fire",
+            "de": "Feuer",
+            "es": "fuego",
+            "fr": "feu",
+            "nl": "vuur",
+            "tr": "ateş",
+            "ar": "نار",
+            "ku": "agir"
+          }
+        },
+        {
+          "term": "دەرگا",
+          "meanings": {
+            "en": "door",
+            "de": "Tür",
+            "es": "puerta",
+            "fr": "porte",
+            "nl": "deur",
+            "tr": "kapı",
+            "ar": "باب",
+            "ku": "derî"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 27,
+      "opens": "تا ئەمڕۆش،",
+      "words": [
+        {
+          "term": "ساڵێک",
+          "meanings": {
+            "en": "year",
+            "de": "Jahr",
+            "es": "año",
+            "fr": "année",
+            "nl": "jaar",
+            "tr": "yıl",
+            "ar": "سنة",
+            "ku": "sal"
+          }
+        },
+        {
+          "term": "گۆرانی",
+          "meanings": {
+            "en": "song",
+            "de": "Lied",
+            "es": "canción",
+            "fr": "chanson",
+            "nl": "lied",
+            "tr": "şarkı",
+            "ar": "أغنية",
+            "ku": "stran"
+          }
+        },
+        {
+          "term": "کورد",
+          "meanings": {
+            "en": "a Kurd",
+            "de": "Kurde",
+            "es": "kurdo",
+            "fr": "Kurde",
+            "nl": "Koerd",
+            "tr": "Kürt",
+            "ar": "كردي",
+            "ku": "kurd"
+          }
+        },
+        {
+          "term": "ترس",
+          "meanings": {
+            "en": "fear",
+            "de": "Angst",
+            "es": "miedo",
+            "fr": "peur",
+            "nl": "angst",
+            "tr": "korku",
+            "ar": "خوف",
+            "ku": "tirs"
+          }
+        },
+        {
+          "term": "ئاگر",
+          "meanings": {
+            "en": "fire",
+            "de": "Feuer",
+            "es": "fuego",
+            "fr": "feu",
+            "nl": "vuur",
+            "tr": "ateş",
+            "ar": "نار",
+            "ku": "agir"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-kaway-asinger",
+      "paragraph": 28,
+      "opens": "کاوە نە",
+      "words": [
+        {
+          "term": "دیارییەک",
+          "meanings": {
+            "en": "present, gift",
+            "de": "Geschenk",
+            "es": "regalo",
+            "fr": "cadeau",
+            "nl": "cadeau",
+            "tr": "hediye",
+            "ar": "هدية",
+            "ku": "diyarî"
+          }
+        },
+        {
+          "term": "ئاگرێک",
+          "meanings": {
+            "en": "fire",
+            "de": "Feuer",
+            "es": "fuego",
+            "fr": "feu",
+            "nl": "vuur",
+            "tr": "ateş",
+            "ar": "نار",
+            "ku": "agir"
+          }
+        },
+        {
+          "term": "پاشا",
+          "meanings": {
+            "en": "king",
+            "de": "König",
+            "es": "rey",
+            "fr": "roi",
+            "nl": "koning",
+            "tr": "padişah, kral",
+            "ar": "ملك",
+            "ku": "padîşah"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-shamaran",
+      "paragraph": 12,
+      "opens": "جاماسپ لەوێ",
+      "words": [
+        {
+          "term": "هەفتە",
+          "meanings": {
+            "en": "week",
+            "de": "Woche",
+            "es": "semana",
+            "fr": "semaine",
+            "nl": "week",
+            "tr": "hafta",
+            "ar": "أسبوع",
+            "ku": "hefte"
+          }
+        },
+        {
+          "term": "ساڵ",
+          "meanings": {
+            "en": "year",
+            "de": "Jahr",
+            "es": "año",
+            "fr": "année",
+            "nl": "jaar",
+            "tr": "yıl",
+            "ar": "سنة",
+            "ku": "sal"
+          }
+        },
+        {
+          "term": "ئاو",
+          "meanings": {
+            "en": "water",
+            "de": "Wasser",
+            "es": "agua",
+            "fr": "eau",
+            "nl": "water",
+            "tr": "su",
+            "ar": "ماء",
+            "ku": "av"
+          }
+        },
+        {
+          "term": "ڕۆژ",
+          "meanings": {
+            "en": "day",
+            "de": "Tag",
+            "es": "día",
+            "fr": "jour",
+            "nl": "dag",
+            "tr": "gün",
+            "ar": "يوم",
+            "ku": "roj"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-shamaran",
+      "paragraph": 13,
+      "opens": "پێی نیشان",
+      "words": [
+        {
+          "term": "گیایەک",
+          "meanings": {
+            "en": "grass, plant",
+            "de": "Gras, Pflanze",
+            "es": "hierba, planta",
+            "fr": "herbe, plante",
+            "nl": "gras, plant",
+            "tr": "ot, bitki",
+            "ar": "عشب، نبات",
+            "ku": "giya"
+          }
+        },
+        {
+          "term": "گوێ",
+          "meanings": {
+            "en": "ear",
+            "de": "Ohr",
+            "es": "oreja",
+            "fr": "oreille",
+            "nl": "oor",
+            "tr": "kulak",
+            "ar": "أذن",
+            "ku": "guh"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-shamaran",
+      "paragraph": 15,
+      "opens": "لە کۆتاییدا",
+      "words": [
+        {
+          "term": "مار",
+          "meanings": {
+            "en": "snake",
+            "de": "Schlange",
+            "es": "serpiente",
+            "fr": "serpent",
+            "nl": "slang",
+            "tr": "yılan",
+            "ar": "أفعى",
+            "ku": "mar"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-mem-u-zin",
+      "paragraph": 2,
+      "opens": "لە سەردەمێکی",
+      "words": [
+        {
+          "term": "ڕووبارەکە",
+          "meanings": {
+            "en": "river",
+            "de": "Fluss",
+            "es": "río",
+            "fr": "rivière",
+            "nl": "rivier",
+            "tr": "nehir",
+            "ar": "نهر",
+            "ku": "çem"
+          }
+        },
+        {
+          "term": "شارێک",
+          "meanings": {
+            "en": "a city",
+            "de": "eine Stadt",
+            "es": "una ciudad",
+            "fr": "une ville",
+            "nl": "een stad",
+            "tr": "bir şehir",
+            "ar": "مدينة",
+            "ku": "bajarek"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-mem-u-zin",
+      "paragraph": 3,
+      "opens": "میر دوو",
+      "words": [
+        {
+          "term": "هاوین",
+          "meanings": {
+            "en": "summer",
+            "de": "Sommer",
+            "es": "verano",
+            "fr": "été",
+            "nl": "zomer",
+            "tr": "yaz",
+            "ar": "صيف",
+            "ku": "havîn"
+          }
+        },
+        {
+          "term": "بەهار",
+          "meanings": {
+            "en": "spring (the season)",
+            "de": "Frühling",
+            "es": "primavera",
+            "fr": "printemps",
+            "nl": "lente",
+            "tr": "ilkbahar",
+            "ar": "ربيع",
+            "ku": "bihar"
+          }
+        },
+        {
+          "term": "ڕووناک",
+          "meanings": {
+            "en": "bright",
+            "de": "hell",
+            "es": "luminoso",
+            "fr": "lumineux",
+            "nl": "helder",
+            "tr": "parlak",
+            "ar": "مشرق",
+            "ku": "ronî"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-mem-u-zin",
+      "paragraph": 7,
+      "opens": "زستان ڕۆیشت،",
+      "words": [
+        {
+          "term": "زستان",
+          "meanings": {
+            "en": "winter",
+            "de": "Winter",
+            "es": "invierno",
+            "fr": "hiver",
+            "nl": "winter",
+            "tr": "kış",
+            "ar": "شتاء",
+            "ku": "zivistan"
+          }
+        },
+        {
+          "term": "ئاوەکە",
+          "meanings": {
+            "en": "water",
+            "de": "Wasser",
+            "es": "agua",
+            "fr": "eau",
+            "nl": "water",
+            "tr": "su",
+            "ar": "ماء",
+            "ku": "av"
+          }
+        },
+        {
+          "term": "بەهار",
+          "meanings": {
+            "en": "spring (the season)",
+            "de": "Frühling",
+            "es": "primavera",
+            "fr": "printemps",
+            "nl": "lente",
+            "tr": "ilkbahar",
+            "ar": "ربيع",
+            "ku": "bihar"
+          }
+        },
+        {
+          "term": "دەهۆڵ",
+          "meanings": {
+            "en": "big drum",
+            "de": "große Trommel",
+            "es": "tambor grande",
+            "fr": "grosse caisse",
+            "nl": "grote trom",
+            "tr": "davul",
+            "ar": "طبل",
+            "ku": "dahol"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-mem-u-zin",
+      "paragraph": 10,
+      "opens": "لە دەشتەکەدا،",
+      "words": [
+        {
+          "term": "سوور",
+          "meanings": {
+            "en": "red",
+            "de": "rot",
+            "es": "rojo",
+            "fr": "rouge",
+            "nl": "rood",
+            "tr": "kırmızı",
+            "ar": "أحمر",
+            "ku": "sor"
+          }
+        },
+        {
+          "term": "گەنج",
+          "meanings": {
+            "en": "young person",
+            "de": "junger Mensch",
+            "es": "joven",
+            "fr": "jeune",
+            "nl": "jongere",
+            "tr": "genç",
+            "ar": "شابّ",
+            "ku": "xort, ciwan"
+          }
+        },
+        {
+          "term": "گیاکە",
+          "meanings": {
+            "en": "grass, plant",
+            "de": "Gras, Pflanze",
+            "es": "hierba, planta",
+            "fr": "herbe, plante",
+            "nl": "gras, plant",
+            "tr": "ot, bitki",
+            "ar": "عشب، نبات",
+            "ku": "giya"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-mem-u-zin",
+      "paragraph": 16,
+      "opens": "بەم جۆرە",
+      "words": [
+        {
+          "term": "زەماوەندەکە",
+          "meanings": {
+            "en": "wedding",
+            "de": "Hochzeit",
+            "es": "boda",
+            "fr": "mariage",
+            "nl": "bruiloft",
+            "tr": "düğün",
+            "ar": "عرس",
+            "ku": "dawet"
+          }
+        },
+        {
+          "term": "دەهۆڵ",
+          "meanings": {
+            "en": "big drum",
+            "de": "große Trommel",
+            "es": "tambor grande",
+            "fr": "grosse caisse",
+            "nl": "grote trom",
+            "tr": "davul",
+            "ar": "طبل",
+            "ku": "dahol"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-mem-u-zin",
+      "paragraph": 17,
+      "opens": "مەمیش دەیویست",
+      "words": [
+        {
+          "term": "ئەستێرە",
+          "meanings": {
+            "en": "star",
+            "de": "Stern",
+            "es": "estrella",
+            "fr": "étoile",
+            "nl": "ster",
+            "tr": "yıldız",
+            "ar": "نجمة",
+            "ku": "stêrk"
+          }
+        },
+        {
+          "term": "بەردێک",
+          "meanings": {
+            "en": "stone",
+            "de": "Stein",
+            "es": "piedra",
+            "fr": "pierre",
+            "nl": "steen",
+            "tr": "taş",
+            "ar": "حجر",
+            "ku": "kevir"
+          }
+        },
+        {
+          "term": "دەنگێکی",
+          "meanings": {
+            "en": "a voice",
+            "de": "eine Stimme",
+            "es": "una voz",
+            "fr": "une voix",
+            "nl": "een stem",
+            "tr": "bir ses",
+            "ar": "صوت",
+            "ku": "dengekî"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-mem-u-zin",
+      "paragraph": 19,
+      "opens": "ڕۆژێک میر",
+      "words": [
+        {
+          "term": "دار",
+          "meanings": {
+            "en": "tree",
+            "de": "Baum",
+            "es": "árbol",
+            "fr": "arbre",
+            "nl": "boom",
+            "tr": "ağaç",
+            "ar": "شجرة",
+            "ku": "dar"
+          }
+        },
+        {
+          "term": "هەنار",
+          "meanings": {
+            "en": "pomegranate",
+            "de": "Granatapfel",
+            "es": "granada",
+            "fr": "grenade",
+            "nl": "granaatappel",
+            "tr": "nar",
+            "ar": "رمان",
+            "ku": "hinar"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-mem-u-zin",
+      "paragraph": 20,
+      "opens": "یەکەم جار",
+      "words": [
+        {
+          "term": "کاتژمێر",
+          "meanings": {
+            "en": "hour; clock",
+            "de": "Stunde; Uhr",
+            "es": "hora; reloj",
+            "fr": "heure; horloge",
+            "nl": "uur; klok",
+            "tr": "saat",
+            "ar": "ساعة",
+            "ku": "demjimêr"
+          }
+        },
+        {
+          "term": "چرا",
+          "meanings": {
+            "en": "lamp",
+            "de": "Lampe",
+            "es": "lámpara",
+            "fr": "lampe",
+            "nl": "lamp",
+            "tr": "lamba",
+            "ar": "مصباح",
+            "ku": "çira"
+          }
+        },
+        {
+          "term": "ئاگر",
+          "meanings": {
+            "en": "fire",
+            "de": "Feuer",
+            "es": "fuego",
+            "fr": "feu",
+            "nl": "vuur",
+            "tr": "ateş",
+            "ar": "نار",
+            "ku": "agir"
+          }
+        },
+        {
+          "term": "بێدەنگی",
+          "meanings": {
+            "en": "silence",
+            "de": "Stille",
+            "es": "silencio",
+            "fr": "silence",
+            "nl": "stilte",
+            "tr": "sessizlik",
+            "ar": "صمت",
+            "ku": "bêdengî"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-siyabend-u-xece",
+      "paragraph": 5,
+      "opens": "سیابەند چووە",
+      "words": [
+        {
+          "term": "براکە",
+          "meanings": {
+            "en": "brother",
+            "de": "Bruder",
+            "es": "hermano",
+            "fr": "frère",
+            "nl": "broer",
+            "tr": "erkek kardeş",
+            "ar": "أخ",
+            "ku": "bira"
+          }
+        },
+        {
+          "term": "باوک",
+          "meanings": {
+            "en": "father",
+            "de": "Vater",
+            "es": "padre",
+            "fr": "père",
+            "nl": "vader",
+            "tr": "baba",
+            "ar": "أب",
+            "ku": "bav"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-siyabend-u-xece",
+      "paragraph": 9,
+      "opens": "بەرەبەیان گەیشتنە",
+      "words": [
+        {
+          "term": "بەرەبەیان",
+          "meanings": {
+            "en": "dawn",
+            "de": "Morgendämmerung",
+            "es": "amanecer",
+            "fr": "aube",
+            "nl": "dageraad",
+            "tr": "şafak",
+            "ar": "فجر",
+            "ku": "berbang"
+          }
+        },
+        {
+          "term": "بەفر",
+          "meanings": {
+            "en": "snow",
+            "de": "Schnee",
+            "es": "nieve",
+            "fr": "neige",
+            "nl": "sneeuw",
+            "tr": "kar",
+            "ar": "ثلج",
+            "ku": "berf"
+          }
+        },
+        {
+          "term": "شین",
+          "meanings": {
+            "en": "blue",
+            "de": "blau",
+            "es": "azul",
+            "fr": "bleu",
+            "nl": "blauw",
+            "tr": "mavi",
+            "ar": "أزرق",
+            "ku": "şîn"
+          }
+        },
+        {
+          "term": "گیا",
+          "meanings": {
+            "en": "grass, plant",
+            "de": "Gras, Pflanze",
+            "es": "hierba, planta",
+            "fr": "herbe, plante",
+            "nl": "gras, plant",
+            "tr": "ot, bitki",
+            "ar": "عشب، نبات",
+            "ku": "giya"
+          }
+        },
+        {
+          "term": "هەور",
+          "meanings": {
+            "en": "cloud",
+            "de": "Wolke",
+            "es": "nube",
+            "fr": "nuage",
+            "nl": "wolk",
+            "tr": "bulut",
+            "ar": "غيمة",
+            "ku": "ewr"
+          }
+        },
+        {
+          "term": "سپی",
+          "meanings": {
+            "en": "white",
+            "de": "weiß",
+            "es": "blanco",
+            "fr": "blanc",
+            "nl": "wit",
+            "tr": "beyaz",
+            "ar": "أبيض",
+            "ku": "spî"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-qelay-dimdim",
+      "paragraph": 5,
+      "opens": "خەڵک لە",
+      "words": [
+        {
+          "term": "پاشا",
+          "meanings": {
+            "en": "king",
+            "de": "König",
+            "es": "rey",
+            "fr": "roi",
+            "nl": "koning",
+            "tr": "padişah, kral",
+            "ar": "ملك",
+            "ku": "padîşah"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-qelay-dimdim",
+      "paragraph": 9,
+      "opens": "کامیان ڕاستە؟",
+      "words": [
+        {
+          "term": "ئاڵایەک",
+          "meanings": {
+            "en": "flag",
+            "de": "Fahne",
+            "es": "bandera",
+            "fr": "drapeau",
+            "nl": "vlag",
+            "tr": "bayrak",
+            "ar": "علم",
+            "ku": "ala"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-qelay-dimdim",
+      "paragraph": 13,
+      "opens": "زستان هات.",
+      "words": [
+        {
+          "term": "تۆپ",
+          "meanings": {
+            "en": "cannon",
+            "de": "Kanone",
+            "es": "cañón",
+            "fr": "canon",
+            "nl": "kanon",
+            "tr": "top",
+            "ar": "مدفع",
+            "ku": "top"
+          }
+        },
+        {
+          "term": "زستان",
+          "meanings": {
+            "en": "winter",
+            "de": "Winter",
+            "es": "invierno",
+            "fr": "hiver",
+            "nl": "winter",
+            "tr": "kış",
+            "ar": "شتاء",
+            "ku": "zivistan"
+          }
+        },
+        {
+          "term": "بەفر",
+          "meanings": {
+            "en": "snow",
+            "de": "Schnee",
+            "es": "nieve",
+            "fr": "neige",
+            "nl": "sneeuw",
+            "tr": "kar",
+            "ar": "ثلج",
+            "ku": "berf"
+          }
+        },
+        {
+          "term": "بەرد",
+          "meanings": {
+            "en": "stone",
+            "de": "Stein",
+            "es": "piedra",
+            "fr": "pierre",
+            "nl": "steen",
+            "tr": "taş",
+            "ar": "حجر",
+            "ku": "kevir"
+          }
+        },
+        {
+          "term": "ئاگر",
+          "meanings": {
+            "en": "fire",
+            "de": "Feuer",
+            "es": "fuego",
+            "fr": "feu",
+            "nl": "vuur",
+            "tr": "ateş",
+            "ar": "نار",
+            "ku": "agir"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-qelay-dimdim",
+      "paragraph": 16,
+      "opens": "لە دەرەوە",
+      "words": [
+        {
+          "term": "کانییەک",
+          "meanings": {
+            "en": "spring (of water)",
+            "de": "Quelle",
+            "es": "manantial",
+            "fr": "source",
+            "nl": "bron",
+            "tr": "pınar",
+            "ar": "نبع",
+            "ku": "kanî"
+          }
+        },
+        {
+          "term": "قەڵایەک",
+          "meanings": {
+            "en": "castle, fortress",
+            "de": "Burg, Festung",
+            "es": "castillo, fortaleza",
+            "fr": "château fort, forteresse",
+            "nl": "burcht, vesting",
+            "tr": "kale",
+            "ar": "قلعة",
+            "ku": "kela"
+          }
+        },
+        {
+          "term": "ئاو",
+          "meanings": {
+            "en": "water",
+            "de": "Wasser",
+            "es": "agua",
+            "fr": "eau",
+            "nl": "water",
+            "tr": "su",
+            "ar": "ماء",
+            "ku": "av"
+          }
+        }
+      ]
+    },
+    {
+      "story": "ckb-qelay-dimdim",
+      "paragraph": 18,
+      "opens": "ئاو بڕا.",
+      "words": [
+        {
+          "term": "سەهۆڵ",
+          "meanings": {
+            "en": "ice",
+            "de": "Eis",
+            "es": "hielo",
+            "fr": "glace",
+            "nl": "ijs",
+            "tr": "buz",
+            "ar": "جليد",
+            "ku": "qeşa"
+          }
+        },
+        {
+          "term": "زستان",
+          "meanings": {
+            "en": "winter",
+            "de": "Winter",
+            "es": "invierno",
+            "fr": "hiver",
+            "nl": "winter",
+            "tr": "kış",
+            "ar": "شتاء",
+            "ku": "zivistan"
+          }
+        },
+        {
+          "term": "ئاو",
+          "meanings": {
+            "en": "water",
+            "de": "Wasser",
+            "es": "agua",
+            "fr": "eau",
+            "nl": "water",
+            "tr": "su",
+            "ar": "ماء",
+            "ku": "av"
+          }
+        }
+      ]
+    }
+  ]
+}

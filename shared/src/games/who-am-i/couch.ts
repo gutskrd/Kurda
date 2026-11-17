@@ -6,13 +6,13 @@
  * sitting together, and nobody has to remember anything. Whoever holds the
  * phone picks a question, one of the few it suggests or any on their list,
  * and reads it out, then turns the phone to the room: there the friends see
- * the card and the question together and tap yes or no themselves. The phone
- * hides the card again and says what the card's own answer is. A player may
- * also ask the room a question of their own; the friends answer that one out
- * loud, looking at the card, and the phone only counts it. There are no
- * tiles to guess from: a player who thinks they know says who they are, the
- * phone is turned to the room once more, and the friends say whether that is
- * right.
+ * the card and the question together and tap their answer themselves (yes,
+ * could be, no, or not sure). The phone hides the card again and says what
+ * the card's own answer is. A player may also ask the room a question of
+ * their own; the friends answer that one out loud, looking at the card, and
+ * the phone only counts it. There are no tiles to guess from: a player who
+ * thinks they know says who they are, the phone is turned to the room once
+ * more, and the friends say whether that is right, or close.
  *
  * It is the same game by the same rules: this module only starts a table
  * from the cards the server dealt for the room (api/src/games/who-am-i.ts),
@@ -26,7 +26,7 @@
  */
 import type { GameDialect } from '../dialect.js';
 import type { GameDifficulty } from '../solo.js';
-import type { WhoAmIDeal } from './game.js';
+import type { WhoAmIAnswerCount, WhoAmIDeal, WhoAmISays } from './game.js';
 import { WHO_AM_I_TABLE_MAX_PLAYERS, WHO_AM_I_TABLE_MIN_PLAYERS, WHO_AM_I_TABLE_MINUTES, whoAmITableRules, type WhoAmITableState } from './rules.js';
 
 export const WHO_AM_I_COUCH_MIN_PLAYERS = WHO_AM_I_TABLE_MIN_PLAYERS;
@@ -45,6 +45,11 @@ export interface WhoAmICouchDeals {
   dialect: GameDialect;
   difficulty: GameDifficulty;
   deals: WhoAmIDeal[];
+  /**
+   * The answers the friends are offered, as the server dealt the cards for: 4 when the app asked for them, else 2 (and
+   * then the cards came without their "sometimes" rows). A server from before the four sends none, which is 2.
+   */
+  answers?: WhoAmIAnswerCount;
 }
 
 /** The table for a room: seat `i` is the i-th player, wearing the i-th card. */
@@ -59,6 +64,7 @@ export function startCouchTable(dealt: WhoAmICouchDeals, now: number, seed: stri
       deals: dealt.deals.map((deal, seat) => ({ seat, deal })),
       // the room is together: a player may ask it a question of their own
       open: true,
+      answers: dealt.answers,
     },
     seats,
     { now, seed },
@@ -67,14 +73,18 @@ export function startCouchTable(dealt: WhoAmICouchDeals, now: number, seed: stri
 
 /**
  * What the room said to the question on the table, tapped by the friends
- * while they read the card, and given for everyone who was still to answer it. The state comes back with the card's own answer on
- * it (`told`); unchanged when no question is being answered.
+ * while they read the card, and given for everyone who was still to answer
+ * it: yes, could be, no or not sure (or, from a screen of two keys, true for
+ * yes and false for no). The state comes back with the card's own answer on
+ * it (`told`); unchanged when no question is being answered, or when the
+ * table does not offer that answer.
  */
-export function roomAnswers(state: WhoAmITableState, yes: boolean, now: number): WhoAmITableState {
+export function roomAnswers(state: WhoAmITableState, says: WhoAmISays | boolean, now: number): WhoAmITableState {
+  const answer = typeof says === 'boolean' ? ({ kind: 'answer', yes: says } as const) : ({ kind: 'answer', says } as const);
   let next = state;
   for (const seat of whoAmITableRules.waitingFor(state)) {
     if (next.phase !== 'answer') break;
-    const applied = whoAmITableRules.apply(next, seat, { kind: 'answer', yes }, now);
+    const applied = whoAmITableRules.apply(next, seat, answer, now);
     if (applied.ok) next = applied.state;
   }
   return next;

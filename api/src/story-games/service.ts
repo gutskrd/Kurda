@@ -1810,7 +1810,8 @@ export class StoryGamesService {
    * reader goes straight to the first question.
    */
   private async beginGame(t: Tx, story: GameStory, skipReading: boolean): Promise<void> {
-    const plan = buildPlan(t.game.id, story.questions, t.game.question_count);
+    const recent = await this.recentlyAnswered(t);
+    const plan = buildPlan(t.game.id, story.questions, t.game.question_count, recent);
     const snapshot: StorySnapshot = {
       slug: story.slug,
       title: story.title,
@@ -1831,6 +1832,30 @@ export class StoryGamesService {
       [JSON.stringify(plan), JSON.stringify(snapshot), t.now, hard, soft, story.dialect, story.level, story.length],
     );
     if (solo && skipReading) await this.openQuestion(t, 0);
+  }
+
+  /**
+   * The questions this game's players answered in each one's last three games
+   * of the same story, by question id, for the plan to ask last: a story with
+   * a bank only just above its minimum otherwise asks most of the same
+   * questions the second time round.
+   */
+  private async recentlyAnswered(t: Tx): Promise<Set<string>> {
+    const players = t.players.filter((p) => !p.removed && !p.left_at).map((p) => p.user_id);
+    if (players.length === 0) return new Set();
+    const res = await t.client.query<{ id: string }>(
+      `SELECT DISTINCT last.plan -> a.question_index ->> 'questionId' AS id
+         FROM unnest($1::uuid[]) AS u(user_id)
+         CROSS JOIN LATERAL (
+           SELECT g.id, g.plan FROM story_games g JOIN story_game_players p ON p.game_id = g.id AND p.user_id = u.user_id
+            WHERE g.story_id = $2 AND g.id <> $3 AND g.plan IS NOT NULL
+            ORDER BY g.started_at DESC NULLS LAST, g.created_at DESC
+            LIMIT 3
+         ) last
+         JOIN story_game_answers a ON a.game_id = last.id AND a.user_id = u.user_id`,
+      [players, t.game.story_id, t.game.id],
+    );
+    return new Set(res.rows.map((r) => r.id).filter((id): id is string => typeof id === 'string'));
   }
 
   private async openQuestion(t: Tx, index: number): Promise<void> {

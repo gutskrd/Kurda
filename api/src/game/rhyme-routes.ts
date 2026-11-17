@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { RhymeService } from './rhyme-service.js';
+import { RHYME_MIN_PROMPTS } from './rhyme-words.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 
 const startBody = z.object({
@@ -23,7 +24,17 @@ export function registerRhymeRoutes(
 ): void {
   const rhyme = new RhymeService(app.db, deps);
 
-  /** Start a solo training round with a random dictionary prompt. */
+  /**
+   * Which dialects a rhyme round is offered in: each with how many curated
+   * prompts it has, and whether that is enough (RHYME_MIN_PROMPTS). Both apps
+   * show a dialect that is not as coming soon, for training and for matches.
+   */
+  app.get('/rhyme/availability', { config: { skipValidation: true }, preHandler: requireAuth }, async () => ({
+    dialects: await rhyme.availability(),
+    minimum: RHYME_MIN_PROMPTS,
+  }));
+
+  /** Start a solo training round with a random prompt of the chosen dialect. */
   app.post(
     '/rhyme/training',
     // a round is a row and several reads: thirty a minute is more than anyone plays

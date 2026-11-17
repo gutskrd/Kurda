@@ -12,6 +12,7 @@ import { resetPrefsCache, shownDialect } from './prefs';
 import { NO_FILTER, isFiltering, libraryQuery } from './LibraryFilter';
 import { StoriesView } from './StoriesView';
 import { StoriesScreen } from './StoriesScreen';
+import { forgetReach, reachLimitOf, reachOf } from '../testing/reach';
 
 // jsdom has no matchMedia, and react-native-web reads the colour scheme and
 // Reduce Motion (for the loading skeleton) through it
@@ -35,6 +36,8 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 // the pull to refresh as a button: the web's control has nothing to pull
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
+// every control noted as it is drawn, so its reach can be read
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 
 const story = (over: Partial<StoryListItem>): StoryListItem => ({
   id: 's1',
@@ -76,7 +79,7 @@ const BAJAR = story({ id: 's2', slug: 'bajar', title: 'Bajar', length: 'long', l
 const BAZAR = story({ id: 's3', slug: 'bazar', title: 'بازاڕ', dialect: 'sorani', category: 'fable', me: me({ bookmarked: true }) });
 
 const CATEGORIES: StoryLibrary['categories'] = [
-  { slug: 'fable', name: { en: 'Animal fables', ku: 'Çîrokên heywanan' }, position: 2, count: 1 },
+  { slug: 'fable', name: { en: 'Animal fables', ku: 'Çîrokên ajalan' }, position: 2, count: 1 },
   { slug: 'village', name: { en: 'Village life' }, position: 5, count: 1 },
   { slug: 'everyday', name: { en: 'Everyday life' }, position: 7, count: 1 },
 ];
@@ -105,7 +108,7 @@ function client(extra: Parameters<typeof fakeClient>[0] = {}, lib: StoryLibrary 
 const SORANI_LIBRARY = library({
   featured: [],
   recent: [BAZAR],
-  categories: [{ slug: 'fable', name: { en: 'Animal fables', ku: 'Çîrokên heywanan' }, position: 2, count: 1 }],
+  categories: [{ slug: 'fable', name: { en: 'Animal fables', ku: 'Çîrokên ajalan' }, position: 2, count: 1 }],
   levels: [{ level: 1, count: 1 }],
   total: 1,
   me: { finished: 0, total: 1, averageScore: null },
@@ -176,7 +179,23 @@ describe('StoriesView', () => {
     navigation.navigate.mockClear();
     navigation.replace.mockClear();
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    forgetReach();
+  });
+
+  it('lets the Categories chips share the gaps between them, and a card’s bookmark answer a fingertip inside the card', async () => {
+    testAuth.client = client();
+    renderWithProviders(<StoriesView />);
+    await screen.findByRole('heading', { name: 'Categories' });
+    // 36 tall, wrapping onto rows 8 apart and 8 from each other: half of that every way, so 44 by the word and 8 more
+    for (const name of ['All stories, 3', 'Animal fables, 1', 'Village life, 1']) {
+      expect(reachLimitOf(name)).toEqual({ top: 4, bottom: 4, left: 4, right: 4 });
+      expect(reachOf(name)).toEqual({ top: 4, bottom: 4, left: 4, right: 4 });
+    }
+    // drawn at 32 over the cover, 14 in from the card's corner: 8 every way reaches 48 and stays on the card
+    expect(reachOf('Bookmark')).toEqual({ top: 8, bottom: 8, left: 8, right: 8 });
+  });
 
   it('reads the library and the games under way again when pulled down', async () => {
     const c = client();
@@ -270,6 +289,9 @@ describe('StoriesView', () => {
     fireEvent.change(screen.getByLabelText('Search stories'), { target: { value: 'na' } });
     fireEvent.change(screen.getByLabelText('Search stories'), { target: { value: 'nan' } });
     expect(await screen.findByText('25 stories found')).toBeTruthy();
+    // the clear button sits at the field's end, 4 from the funnel: the two share that gap, and the funnel still reaches 8 above and below
+    expect(reachOf('Clear search')).toEqual({ top: 2, bottom: 2, left: 2, right: 2 });
+    expect(reachOf('stories-filter')).toEqual({ top: 8, bottom: 8, left: 2, right: 2 });
     // the pause swallowed the half-typed word
     expect(c.calls.filter((call) => call.path.startsWith('/stories?')).map((call) => call.path)).toEqual(['/stories?q=nan&dialect=kurmanci&limit=24']);
     expect(screen.queryByRole('heading', { name: 'Featured' })).toBeNull();

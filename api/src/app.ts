@@ -176,6 +176,8 @@ import { RoadChapterWatch } from './content/road-chapters.js';
 import { seedStarterGameContent } from './games/starters.js';
 import { seedStarterLibrary } from './games/starter-library.js';
 import { seedStarterLore } from './lore/starters.js';
+import { seedDetectiveCases } from './games/detective-cases.js';
+import { seedMemoryThiefDeck } from './games/memory-thief-deck.js';
 import { registerContentAdminRoutes } from './content/admin-routes.js';
 import { UserAdminService } from './admin/user-admin-service.js';
 import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
@@ -746,6 +748,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
         await seedStarterLibrary(app.db, app.log, app.cache);
         // and the Stories' starter riddles and proverbs, published and kept as their files say until someone changes them (lore/starters.ts)
         await seedStarterLore(app.db, app.log);
+        // and Detective's cases and the Memory Thief's word deck, each kept as its files say until someone changes a row
+        // (games/detective-cases.ts, games/memory-thief-deck.ts); both read the course and the stories seeded above
+        await seedDetectiveCases(app.db, app.log, app.cache);
+        await seedMemoryThiefDeck(app.db, app.log, app.cache);
       });
     }
     // the push and notification services set up with the leagues, above

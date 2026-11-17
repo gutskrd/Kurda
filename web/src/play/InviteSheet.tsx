@@ -80,6 +80,33 @@ const PARTY_LEVEL_KEY = {
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => window.setTimeout(resolve, ms));
 
+const RHYME_DIALECTS: readonly Dialect[] = ['kurmanci', 'sorani'];
+
+/**
+ * The varieties a Rhyme Match can be made in now (`GET /rhyme/availability`):
+ * a variety without enough curated prompts cannot start a match, so it is not
+ * offered. Until the server answers, or when it cannot say, both are offered,
+ * as they were before it could.
+ */
+function useRhymeDialects(enabled: boolean): readonly Dialect[] {
+  const { client } = useAuth();
+  const [open, setOpen] = useState<readonly Dialect[] | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    let alive = true;
+    void client.get<{ dialects?: Partial<Record<Dialect, { available?: boolean }>> }>('/rhyme/availability').then((r) => {
+      const dialects = r.ok ? r.data?.dialects : undefined;
+      if (!alive || !dialects) return;
+      const offered = RHYME_DIALECTS.filter((d) => dialects[d]?.available === true);
+      if (offered.length > 0) setOpen(offered);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [client, enabled]);
+  return open ?? RHYME_DIALECTS;
+}
+
 /** The sheet's own heading, from what it was opened for. */
 function useTitle(target: InviteTarget): string {
   const t = useT();
@@ -247,6 +274,9 @@ export function InviteForm({
   const impostorCategories = categoriesAt(useImpostorCategories(game === 'impostor' && target.kind !== 'lobby' ? (partyHere?.dialect ?? null) : null), difficultyNow);
   const [category, setCategory] = useState('');
   const categoryNow = impostorCategories.some((c) => c.slug === category) ? category : '';
+  // a Rhyme Match is made in a variety with enough prompts for one: the chosen one when it has them
+  const rhymeDialects = useRhymeDialects(target.kind !== 'lobby' && game === 'rhyme-match');
+  const rhymeDialect: Dialect = rhymeDialects.includes(dialect) ? dialect : rhymeDialects[0]!;
   const [turnSeconds, setTurnSeconds] = useState<LastLetterTurnSeconds>(LAST_LETTER_DEFAULT_TURN_SECONDS);
   // a Last Letter lobby is in one dialect the dictionary can check: the chosen one if it is offered
   const letterDialect: LetterDialect =
@@ -275,7 +305,7 @@ export function InviteForm({
       case 'wordle-battle':
         return { difficulty, rated };
       case 'rhyme-match':
-        return { dialect, rated };
+        return { dialect: rhymeDialect, rated };
       case 'last-letter':
         return { dialect: letterDialect, turnSeconds, rated };
       case 'impostor':
@@ -407,12 +437,12 @@ export function InviteForm({
         />
       )}
 
-      {target.kind !== 'lobby' && game === 'rhyme-match' && (
+      {target.kind !== 'lobby' && game === 'rhyme-match' && rhymeDialects.length > 1 && (
         <ChipRadio
           label={t('games.dialect')}
-          value={dialect}
+          value={rhymeDialect}
           onChange={setDialect}
-          options={(['kurmanci', 'sorani'] as const).map((d) => ({ value: d, label: dialectName(d) }))}
+          options={rhymeDialects.map((d) => ({ value: d, label: dialectName(d) }))}
         />
       )}
 

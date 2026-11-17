@@ -248,4 +248,43 @@ describe('WordleBattleScreen', () => {
     await waitFor(() => expect(reportGameFinished).toHaveBeenCalledWith({ moment: 'won' }));
     expect(reportGameFinished).toHaveBeenCalledTimes(1);
   });
+
+  /* The word everyone raced for is the one thing a battle teaches: what it means is said under it. */
+  describe('the word, once the battle is over', () => {
+    const finished = (meanings: Record<string, string> | undefined) => {
+      testAuth.client = fakeClient({
+        'GET /wordle/battles/b1': ok(lobby({ status: 'finished', code: null, target: 'kar' })),
+        'GET /wordle/battles/b1/results': ok({
+          id: 'b1',
+          target: 'kar',
+          ...(meanings ? { meanings } : {}),
+          difficulty: 'medium',
+          ranking: [{ userId: 'me', isMe: true, rank: 1, solved: true, guessCount: 3, progress: 3, xpAwarded: 20 }],
+        }),
+        'GET /play/invites': ok({ incoming: [], outgoing: [] }),
+        'GET /play/wordle-battle/b1/rematch': ok({ state: 'none' }),
+      });
+    };
+    afterEach(() => localStorage.removeItem('kurda_locale_v1'));
+
+    it('says under the word what it means, in the reader’s language', async () => {
+      localStorage.setItem('kurda_locale_v1', 'es');
+      finished({ en: 'work', es: 'trabajo' });
+      renderWithProviders(<WordleBattleScreen id="b1" onExit={() => undefined} />);
+      expect(await screen.findByText('trabajo')).toBeTruthy();
+      expect(screen.getByText(/KAR/)).toBeTruthy();
+    });
+
+    it('says nothing more than the word when nobody has written what it means, or the server sends none', async () => {
+      finished({});
+      renderWithProviders(<WordleBattleScreen id="b1" onExit={() => undefined} />);
+      expect(await screen.findByText(/KAR/)).toBeTruthy();
+      expect(screen.queryByTestId('word-meaning-line')).toBeNull();
+      cleanup();
+      finished(undefined);
+      renderWithProviders(<WordleBattleScreen id="b1" onExit={() => undefined} />);
+      expect(await screen.findByText(/KAR/)).toBeTruthy();
+      expect(screen.queryByTestId('word-meaning-line')).toBeNull();
+    });
+  });
 });

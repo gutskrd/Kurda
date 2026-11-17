@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { COUCH_WAYS, impostorCategoriesInOrder, impostorCategoryTone, impostorWayTone, meaningIn, type CouchWay } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
+import { useCourseDialect } from '../learn/courseDialect';
 import { InviteSheet } from '../play/InviteSheet';
 import { JoinCodeCard } from '../play/JoinByCode';
 import { usePartyOffer } from '../party/offer';
@@ -38,7 +39,9 @@ export interface CouchAsk {
  * of which opens the setup with that choice made; then how a round goes, and
  * a code from someone else. A game with friends who are elsewhere is the
  * second button on the table. Nothing is offered where there are no approved
- * word cards, and the screen says so plainly then.
+ * word cards, and the screen says so plainly then. The categories shown are
+ * the learner's own Kurdish where the game is offered in it, as the setup
+ * they open is.
  */
 export function ImpostorStart({ onCouch }: { onCouch: (ask?: CouchAsk) => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -46,7 +49,8 @@ export function ImpostorStart({ onCouch }: { onCouch: (ask?: CouchAsk) => void }
   const dir = useDirection();
   const offer = usePartyOffer('impostor');
   const [inviting, setInviting] = useState(false);
-  const dialect = offer?.[0]?.dialect ?? null;
+  const preferred = useCourseDialect();
+  const dialect = (offer?.find((o) => o.dialect === preferred) ?? offer?.[0])?.dialect ?? null;
   const couch = useImpostorCategories(dialect);
   if (offer === null) return <Loading style={styles.loading} />;
   if (dialect === null) {

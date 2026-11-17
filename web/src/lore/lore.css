@@ -988,3 +988,12 @@
     transform: none;
   }
 }
+
+/* the proverb’s missing word: a blank to fill, then the word once it is found */
+.lore-gap {
+  display: inline-block;
+  min-width: 3.5em;
+  padding: 0 0.35em;
+  border-bottom: 2px dashed currentColor;
+  text-align: center;
+}

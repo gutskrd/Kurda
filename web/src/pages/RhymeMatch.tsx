@@ -24,9 +24,11 @@ import { playError } from '../play/playApi';
 import { useQuietInvites } from '../play/quietInvites';
 import { PlayerReport } from '../reports/PlayerReport';
 import type { GameAccess, RatedState } from '@kurda/shared';
+import { dialectDirection } from '@kurda/shared';
 import { LobbyRated, RatedBadge, shownRated } from '../ranks/rated';
 import { RankResult } from '../ranks/RankResult';
 import { haptic } from '../lib/haptics';
+import { MissedRhymes, type RhymeHint } from '../components/WordAnswer';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -76,6 +78,8 @@ interface MatchResults {
     accepted: number;
     xpAwarded: number | null;
   }>;
+  /** perfect rhymes nobody in the match found, with their meanings; absent from a server from before it */
+  missed?: RhymeHint[];
 }
 
 const REJECT_KEY: Record<string, MessageKey> = {
@@ -84,6 +88,8 @@ const REJECT_KEY: Record<string, MessageKey> = {
   'already-used': 'games.rhyme.reject.alreadyUsed',
   'no-rhyme': 'games.rhyme.reject.noRhyme',
   profane: 'games.rhyme.reject.profane',
+  // an ending doing all the rhyming (malan for baran) has no sentence of its own yet: the general one says it fairly
+  inflected: 'games.rhyme.reject.other',
 };
 
 /** Rhyme Match (KUR-299): head-to-head timed rhyming. Create → invite, or hand out the code → play. */
@@ -245,6 +251,8 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   const playerCount = match.players.filter((p) => !p.gone).length;
   const room = Math.max(0, match.maxPlayers - playerCount);
   const seconds = Math.ceil(remaining / 1000);
+  // the prompt and the rhymes are in the match's own letters: a Soranî word reads right to left, whatever the page does
+  const script = dialectDirection(match.dialect === 'sorani' ? 'ckb' : 'kmr');
 
   if (match.status === 'lobby') {
     return (
@@ -325,6 +333,8 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
                 );
               })}
             </RankList>
+            {/* what nobody at the table found, each with its meaning: the next match goes better for it */}
+            <MissedRhymes hints={results.missed} dialect={results.dialect} />
           </>
         )}
         {match.me != null && (
@@ -347,7 +357,9 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
       <div className="rhyme-stage">
         <div className="rhyme-prompt-box">
           <span className="rhyme-label">{t('games.rhyme.rhymeWith')}</span>
-          <span className="rhyme-prompt">{match.prompt}</span>
+          <span className="rhyme-prompt" lang={script.lang} dir={script.dir}>
+            {match.prompt}
+          </span>
         </div>
         <div className="rhyme-meters">
           <div className={`rhyme-timer${seconds <= 5 && active ? ' low' : ''}`} aria-label={t('games.timeLeft')}>{seconds}s</div>
@@ -379,6 +391,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
             onChange={(e) => setWord(e.target.value)}
             placeholder={t('games.rhyme.placeholder', { word: match.prompt ?? '' })}
             maxLength={64}
+            dir="auto"
             aria-label={t('games.rhyme.yourRhyme')}
             autoFocus
             {...typeOnly}
@@ -403,7 +416,9 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
         <ul className="rhyme-found" aria-label={t('games.rhyme.foundList')}>
           {found.map((f, i) => (
             <li key={`${f.word}-${i}`} className={`rhyme-chip rhyme-${f.quality}`}>
-              <span>{f.word}</span>
+              <span lang={script.lang} dir={script.dir}>
+                {f.word}
+              </span>
               <span className="rhyme-pts">+{f.points}</span>
             </li>
           ))}

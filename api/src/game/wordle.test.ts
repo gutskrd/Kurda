@@ -178,14 +178,18 @@ describe('applyGuess — game flow', () => {
     expect(game.status).toBe('lost');
   });
 
-  it('is a no-op once the game is over', () => {
+  it('is a no-op once the game is over, and says the game is finished', () => {
     const g0 = initGame(5);
     const won = applyGuess(g0, 'gulan', 'gulan', dict);
     expect(won.ok).toBe(true);
     if (won.ok) {
       const after = applyGuess(won.game, 'gulan', 'çîrok', dict);
       expect(after.ok).toBe(false);
+      if (!after.ok) expect(after.reason).toBe('finished');
       expect(after.game.guesses).toHaveLength(1);
+      // a guess of the wrong length is not what is wrong with it
+      const short = applyGuess(won.game, 'gulan', 'mal', dict);
+      expect(!short.ok && short.reason).toBe('finished');
     }
   });
 

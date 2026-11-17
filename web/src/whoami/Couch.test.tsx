@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { WhoAmIDeal } from '@kurda/shared';
+import type { WhoAmIDeal, WhoAmIFactValue } from '@kurda/shared';
 import { jsonResponse } from '../test/utils';
 import { renderPlay, where } from '../play/testing';
 import { forgetMpAvailability } from '../games/mpAvailability';
@@ -36,10 +36,11 @@ const QUESTIONS = [
   { id: 'q2', ku: 'Ew li malê tê dîtin?', meanings: { en: 'Do you find it at home?' }, fact: 'at-home' },
   { id: 'q3', ku: 'Ew cihek e?', meanings: { en: 'Is it a place?' }, fact: 'place' },
 ];
-const CARDS: Record<string, { word: string; en: string; facts: Record<string, boolean> }> = {
+// A dog lives in the house with one family and in the yard with another: its card says "could be" to that question.
+const CARDS: Record<string, { word: string; en: string; facts: Record<string, WhoAmIFactValue> }> = {
   cat: { word: 'pisîk', en: 'cat', facts: { 'can-fly': false, 'at-home': true, place: false } },
   bird: { word: 'çûk', en: 'bird', facts: { 'can-fly': true, 'at-home': false, place: false } },
-  dog: { word: 'kûçik', en: 'dog', facts: { 'can-fly': false, 'at-home': true, place: false } },
+  dog: { word: 'kûçik', en: 'dog', facts: { 'can-fly': false, 'at-home': 'sometimes', place: false } },
   fish: { word: 'masî', en: 'fish', facts: {} },
   horse: { word: 'hesp', en: 'horse', facts: {} },
 };
@@ -57,12 +58,21 @@ const offer = (difficulties: string[]) => ({
   '/games/who-am-i/couch?dialect=ckb': { dialect: 'ckb', difficulties: [] },
 });
 
-/** A signed-in reader, and a server that offers the game in Kurmancî and deals a card for every player asked for. */
-function serve(routes: Record<string, unknown> = {}): Call[] {
+/**
+ * A signed-in reader, and a server that offers the game in Kurmancî and deals a card for every player asked for, for
+ * as many answers as the phone asked for (two when it asked for none, as the real one does).
+ */
+function serve(routes: Record<string, unknown> = {}, deals: WhoAmIDeal[] = DEALS): Call[] {
   const calls: Call[] = [];
   const all: Record<string, unknown> = {
     ...offer(['beginner', 'intermediate']),
-    'POST /games/who-am-i/couch/deal': (body: { difficulty: string; players: number }) => ({ dialect: 'kmr', difficulty: body.difficulty, deals: DEALS.slice(0, body.players) }),
+    'POST /games/who-am-i/couch/deal': (body: { difficulty: string; players: number; answers?: number }) => ({
+      dialect: 'kmr',
+      difficulty: body.difficulty,
+      deals: deals.slice(0, body.players),
+      answers: body.answers === 4 ? 4 : 2,
+    }),
+    'POST /games/who-am-i/report': { counted: true },
     ...routes,
   };
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
@@ -90,6 +100,7 @@ function serve(routes: Record<string, unknown> = {}): Call[] {
 }
 
 const deals = (calls: Call[]): Call[] => calls.filter((c) => c.url.includes('/games/who-am-i/couch/deal'));
+const reports = (calls: Call[]): unknown[] => calls.filter((c) => c.url.includes('/games/who-am-i/report')).map((c) => c.body);
 
 /** The setup filled in with these names, and the cards dealt. */
 async function start(names: string[]): Promise<void> {
@@ -131,14 +142,14 @@ async function turnToFriends(): Promise<void> {
 }
 
 /** A suggested question picked, read out, and the phone turned to the friends, who tap this answer. */
-async function askSuggested(question: RegExp, answer: 'Erê yes' | 'Na no'): Promise<void> {
+async function askSuggested(question: RegExp, answer: 'Erê yes' | 'Dibe could be' | 'Na no' | 'Nizanim not sure'): Promise<void> {
   await userEvent.click(within(screen.getByRole('list', { name: 'Suggested' })).getByRole('button', { name: question }));
   await turnToFriends();
   await userEvent.click(await screen.findByRole('button', { name: answer }));
 }
 
-/** A guess said out loud: the holder says they know, turns the phone round, and the friends tap whether that is it. */
-async function sayWho(verdict: 'Yes, that’s it!' | 'Not yet'): Promise<void> {
+/** A guess said out loud: the holder says they know, turns the phone round, and the friends tap whether that is it, or close. */
+async function sayWho(verdict: 'Yes, that’s it!' | 'Close!' | 'Not yet'): Promise<void> {
   await userEvent.click(screen.getByRole('button', { name: 'I know who I am!' }));
   await turnToFriends();
   await userEvent.click(await screen.findByRole('button', { name: verdict }));
@@ -205,7 +216,8 @@ describe('Ez kî me? on one phone, the setup', () => {
     expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeInTheDocument();
     expect(deals(calls)).toHaveLength(1);
     expect(deals(calls)[0]!.method).toBe('POST');
-    expect(deals(calls)[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'intermediate', players: 3 });
+    // the friends are offered all four answers, so the cards are asked for with their "sometimes" rows
+    expect(deals(calls)[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'intermediate', players: 3, answers: 4 });
     expect(JSON.stringify(calls)).not.toContain('Azad');
     expect(JSON.stringify(calls)).not.toContain('Berfîn');
   });
@@ -320,8 +332,8 @@ describe('Ez kî me? on one phone, a turn', () => {
     expect(screen.getByText('Can it fly?')).toBeInTheDocument();
     expect(said()).toBe('Azad is… Is it true? Tap your answer.');
     const answers = screen.getByRole('group', { name: 'Is it true? Tap your answer.' });
+    expect(within(answers).getAllByRole('button').map((b) => b.textContent)).toEqual(['Erê yes', 'Dibe could be', 'Na no', 'Nizanim not sure']);
     expect(within(within(answers).getByRole('button', { name: 'Erê yes' })).getByText('Erê')).toHaveAttribute('lang', 'ku');
-    expect(within(answers).getByRole('button', { name: 'Na no' })).toBeInTheDocument();
 
     // the page hidden, or another window in front: the card is gone, and the phone is back a step
     act(() => {
@@ -394,6 +406,69 @@ describe('Ez kî me? on one phone, a turn', () => {
     expect(within(verdict).queryByText(/right/)).toBeNull();
   });
 
+  it('calls “could be” on a plain answer close, and “not sure” no mistake, with nothing lost for either', async () => {
+    serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    // a cat plainly does not fly: "could be" is close to that, and nobody is told they were wrong
+    await askSuggested(/^Ew dikare bifire\?/, 'Dibe could be');
+    const close = await screen.findByRole('region', { name: /^The card says:/ });
+    expect(within(close).getByText(/^Your friends said/)).toHaveTextContent('Your friends said Dibe. Close, but the card says Na.');
+    for (const word of within(close).getAllByText(/^(Dibe|Na)$/, { selector: '.wa-word' })) expect(word).toHaveAttribute('lang', 'ku');
+    expect(close.querySelector('.wa-verdict-you')).not.toHaveTextContent(/wrong/i);
+    await userEvent.click(screen.getByRole('button', { name: 'Next player' }));
+
+    // Berfîn's friends cannot tell from her card: that is said kindly too, and they are not scored for it
+    await take('Berfîn');
+    await askSuggested(/^Ew dikare bifire\?/, 'Nizanim not sure');
+    const unsure = await screen.findByRole('region', { name: /^The card says:/ });
+    expect(within(unsure).getByText(/^Your friends weren’t sure/)).toHaveTextContent('Your friends weren’t sure. The card says Erê.');
+    expect(unsure.querySelector('.wa-verdict-you')).not.toHaveTextContent(/wrong/i);
+    await userEvent.click(screen.getByRole('button', { name: 'Next player' }));
+
+    // neither earned the room a point: Azad finds his card worth ten less the one question, and nothing more
+    await take('Azad');
+    await sayWho('Yes, that’s it!');
+    expect(await headlineWith('pisîk')).toHaveTextContent('You are pisîk!');
+    expect(screen.getByText('Points: 9')).toBeInTheDocument();
+  });
+
+  it('shows an amber verdict that says what “could be” means, where the card itself says it', async () => {
+    // Azad wears the dog, which lives in the house with some families and in the yard with others
+    serve({}, [deal('dog'), deal('cat')]);
+    open();
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    await askSuggested(/^Ew li malê tê dîtin\?/, 'Erê yes');
+    const verdict = await screen.findByRole('region', { name: /^The card says:/ });
+    expect(verdict).toHaveClass('is-sometimes');
+    expect(within(verdict).getByText('Dibe', { selector: '.wa-stamp' })).toHaveAttribute('lang', 'ku');
+    expect(verdict).toHaveTextContent('could be');
+    expect(within(verdict).getByText('Sometimes yes, sometimes no.')).toBeInTheDocument();
+    // yes is right on a card that says it could be: whoever reasons it out never loses to the card
+    expect(within(verdict).getByText('Your friends got it right: +1 for each of them.')).toBeInTheDocument();
+    expect(said()).toBe('The card says: Dibe');
+    // and the list of what he knows wears the same amber stamp
+    expect(within(screen.getByRole('region', { name: 'What you know so far' })).getByText('Dibe')).toHaveClass('wa-stamp', 'is-sometimes');
+  });
+
+  it('lets the room say the card’s answer looks wrong, sending only the card and the question', async () => {
+    const calls = serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    await askSuggested(/^Ew dikare bifire\?/, 'Erê yes');
+    const verdict = await screen.findByRole('region', { name: /^The card says:/ });
+    await userEvent.click(within(verdict).getByRole('button', { name: 'Is this answer wrong?' }));
+    await waitFor(() => expect(reports(calls)).toEqual([{ identity: 'i-cat', question: 'q1' }]));
+    expect(await within(verdict).findByText('Thanks! We’ll take a look at this card.')).toHaveFocus();
+    expect(within(verdict).queryByRole('button', { name: 'Is this answer wrong?' })).toBeNull();
+    // the names in the room never leave the phone, and nothing on the screen gave the card away
+    expect(JSON.stringify(calls)).not.toContain('Azad');
+    expectNoCard();
+  });
+
   it('counts a question of the player’s own, asked out loud, and gives no verdict on it', async () => {
     serve();
     open();
@@ -415,11 +490,12 @@ describe('Ez kî me? on one phone, a turn', () => {
     await turnToFriends();
     expect(await screen.findByRole('heading', { name: 'Azad is…' })).toBeInTheDocument();
     expect(screen.getByRole('figure', { name: 'Azad’s card' })).toHaveTextContent('pisîk');
-    // what to say is on the screen in the dialect's own two words
+    // what to say is on the screen in the dialect's own four words
     const say = screen.getByText(/^Answer Azad out loud:/);
-    expect(say).toHaveTextContent('Answer Azad out loud: yes (Erê) or no (Na).');
-    for (const word of within(say).getAllByText(/^(Erê|Na)$/)) expect(word).toHaveAttribute('lang', 'ku');
-    expect(said()).toBe('Azad is… Answer Azad out loud: yes (Erê) or no (Na).');
+    expect(say).toHaveTextContent('Answer Azad out loud: yes (Erê), could be (Dibe), no (Na) or not sure (Nizanim).');
+    expect(within(say).getAllByText(/^(Erê|Dibe|Na|Nizanim)$/)).toHaveLength(4);
+    for (const word of within(say).getAllByText(/^(Erê|Dibe|Na|Nizanim)$/)) expect(word).toHaveAttribute('lang', 'ku');
+    expect(said()).toBe('Azad is… Answer Azad out loud: yes (Erê), could be (Dibe), no (Na) or not sure (Nizanim).');
     expect(screen.queryByRole('button', { name: 'Erê yes' })).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Done: hide the card' }));
 
@@ -534,7 +610,7 @@ describe('Ez kî me? on one phone, a guess said out loud', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(await screen.findByText('Points if you guess now: 10 · Guesses left: 3')).toBeInTheDocument();
 
-    // the friends see the card and say whether that was it, on two keys of the answers' own colours
+    // the friends see the card and say whether that was it, or close, on three keys in the answers' own colours
     await userEvent.click(screen.getByRole('button', { name: 'I know who I am!' }));
     await turnToFriends();
     expect(await screen.findByRole('heading', { name: 'Azad is…' })).toBeInTheDocument();
@@ -543,7 +619,9 @@ describe('Ez kî me? on one phone, a guess said out loud', () => {
     expect(card).toHaveTextContent('cat');
     expect(said()).toBe('Azad is… Did Azad get it right?');
     const judge = screen.getByRole('group', { name: 'Did Azad get it right?' });
+    expect(within(judge).getAllByRole('button').map((b) => b.textContent)).toEqual(['Yes, that’s it!', 'Close!', 'Not yet']);
     expect(within(judge).getByRole('button', { name: 'Yes, that’s it!' })).toHaveClass('is-yes');
+    expect(within(judge).getByRole('button', { name: 'Close!' })).toHaveClass('is-sometimes');
     expect(within(judge).getByRole('button', { name: 'Not yet' })).toHaveClass('is-no');
 
     // the page hidden: the card is gone, and the phone is back a step with nothing judged
@@ -592,6 +670,29 @@ describe('Ez kî me? on one phone, a guess said out loud', () => {
     expect(screen.getByText('Points: 9')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByRole('heading', { name: 'Berfîn’s turn. Hand them the phone.' })).toBeInTheDocument();
+  });
+
+  it('takes a guess the room calls close as no miss: no guess spent, the card still hidden, and the turn passed on', async () => {
+    serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    // another word for the same thing (kitik for pisîk): the friends call it close
+    await sayWho('Close!');
+    expect(await screen.findByRole('heading', { name: 'Close! No guess is used up, and the turn passes on.' })).toBeInTheDocument();
+    expect(screen.getByText('Guesses left: 3')).toBeInTheDocument();
+    expect(said()).toBe('Close! No guess is used up, and the turn passes on.');
+    // no buzz for it, and the card is not given away
+    expectNoCard();
+    expect(screen.queryByText('Not yet!')).toBeNull();
+    expect(screen.queryByText('Out of guesses')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    // the turn has gone on to Berfîn, and back with Azad it cost him nothing
+    await take('Berfîn');
+    await userEvent.click(screen.getByRole('button', { name: 'Skip my turn' }));
+    await take('Azad');
+    expect(screen.getByText('Points if you guess now: 10 · Guesses left: 3')).toBeInTheDocument();
   });
 
   it('puts a player out at the third miss, one more than a table online allows', async () => {
@@ -677,8 +778,8 @@ describe('Ez kî me? on one phone, a game', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Play again' }));
     expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeInTheDocument();
     expect(deals(calls).map((c) => c.body)).toEqual([
-      { dialect: 'kmr', difficulty: 'beginner', players: 2 },
-      { dialect: 'kmr', difficulty: 'beginner', players: 2 },
+      { dialect: 'kmr', difficulty: 'beginner', players: 2, answers: 4 },
+      { dialect: 'kmr', difficulty: 'beginner', players: 2, answers: 4 },
     ]);
     expect(JSON.stringify(calls)).not.toContain('Azad');
   });

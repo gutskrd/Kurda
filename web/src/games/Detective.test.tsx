@@ -109,6 +109,22 @@ describe('Detektîf', () => {
     expect(document.body).not.toHaveTextContent('XP');
   });
 
+  it('lets the player mark each suspect, one mark at a time, and take a mark back', async () => {
+    server({});
+    renderApp(<Detective />, ['/app/games/detective']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    const marks = await screen.findByRole('group', { name: 'Your mark for Hamo' });
+    expect(screen.getByText('As you read, mark what you think of each suspect.')).toBeInTheDocument();
+    const suspicious = within(marks).getByRole('button', { name: 'Suspicious' });
+    await userEvent.click(suspicious);
+    expect(suspicious).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(within(marks).getByRole('button', { name: 'Not sure' }));
+    expect(suspicious).toHaveAttribute('aria-pressed', 'false');
+    expect(within(marks).getByRole('button', { name: 'Not sure' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(within(marks).getByRole('button', { name: 'Not sure' }));
+    expect(within(marks).getByRole('button', { name: 'Not sure' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it('opens without a word on what a case could pay or a hint could cost', async () => {
     server({});
     renderApp(<Detective />, ['/app/games/detective']);

@@ -11,7 +11,9 @@ import { Impostor } from './Impostor';
  * what it asks the server for (never a name), the phone going round with each
  * card shown only while it is pressed, the clues in turn with their clock,
  * the two kinds of vote, the caught impostor's guess, the reveal, and the
- * next game from the same cards.
+ * next game from the same cards. Then the taps that can be taken back for a
+ * moment, the second vote of a round with two impostors, the evening keeping
+ * the way the room chose, and the learner's own Kurdish first.
  */
 
 // stand-in Kurdish for the fixtures, never shown to a learner
@@ -296,8 +298,31 @@ async function toVote(chips: Chip[]): Promise<{ impostor: string; others: string
   return { impostor, others: NAMES.filter((n) => n !== impostor) };
 }
 
+/**
+ * Clocks a test can move on, that still run by themselves a millisecond at a
+ * time (so the taps between are as quick as on real clocks): the moment to
+ * take a tap back, or a vote's clock, can be let pass at once.
+ */
+function quickClock(): void {
+  vi.useFakeTimers({ shouldAdvanceTime: true, advanceTimeDelta: 1, toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
+}
+
+/** The moment to take a tap back over, or as much time as a test asks for. */
+function momentPasses(ms = 3_000): void {
+  act(() => {
+    vi.advanceTimersByTime(ms);
+  });
+}
+
+/** One private vote: the phone taken by the voter, and the seat they name. */
+async function castVote(voter: string, suspect: string): Promise<void> {
+  await userEvent.click(await screen.findByRole('button', { name: `I’m ${voter}` }));
+  await userEvent.click(screen.getByRole('button', { name: `Vote for ${suspect}` }));
+}
+
 describe('the vote and what follows', () => {
-  it('takes each vote in private, catches the impostor, and lets them guess the word', async () => {
+  it('takes each vote in private, catches the impostor, and lets them guess the word once they say it is their answer', async () => {
+    quickClock();
     serve(offered());
     renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
     const { impostor, others } = await toVote([]);
@@ -309,9 +334,20 @@ describe('the vote and what follows', () => {
       expect(screen.queryByRole('button', { name: `Vote for ${name}` })).toBeNull();
       await userEvent.click(screen.getByRole('button', { name: `Vote for ${name === impostor ? others[0]! : impostor}` }));
     }
+    // the last vote is counted once its moment is over, and nothing is shown before then
+    expect(screen.getByText(`You voted for ${NAMES.at(-1) === impostor ? others[0] : impostor}`)).toBeInTheDocument();
+    expect(screen.queryByText(/was caught/)).toBeNull();
+    momentPasses();
     expect(await screen.findByText(`${impostor} was caught! Hand them the phone for one guess at the word.`)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: `I’m ${impostor}` }));
+    // a word tapped is asked about once more, and can be chosen again
+    await userEvent.click(screen.getByRole('button', { name: 'mişk' }));
+    const asked = screen.getByRole('heading', { name: /^Your answer:/ });
+    expect(asked).toHaveTextContent('Your answer: mişk?');
+    expect(within(asked).getByText('mişk')).toHaveAttribute('lang', 'ku');
+    await userEvent.click(screen.getByRole('button', { name: 'Choose again' }));
     await userEvent.click(screen.getByRole('button', { name: 'hesp' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Yes, that’s my answer' }));
     expect(await screen.findByText(`The impostor was ${impostor}`)).toBeInTheDocument();
     expect(screen.getByText('Caught, and the guess was wrong: the table wins.')).toBeInTheDocument();
     // three right votes and the catch: 1 + 2 each for the table, nothing for the impostor
@@ -320,29 +356,225 @@ describe('the vote and what follows', () => {
     expect(screen.getByText(`${others[0]} voted for ${impostor}`)).toBeInTheDocument();
   });
 
-  it('takes the room’s one choice when the vote is made by pointing, and the impostor slips away from a wrong one', async () => {
+  it('takes the room’s one choice when the vote is made by pointing, and says the impostor slipped away from a wrong one', async () => {
+    quickClock();
     serve(offered());
     renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
     const { impostor, others } = await toVote(['By pointing']);
     await userEvent.click(screen.getByRole('button', { name: 'Go to the vote' }));
     expect(await screen.findByRole('heading', { name: 'Count to three and point!' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: others[0]! }));
+    momentPasses();
     expect(await screen.findByText('The impostor slipped away.')).toBeInTheDocument();
+    expect(screen.getByText(`The players voted out ${others[0]}, but they weren’t the impostor.`)).toBeInTheDocument();
     expect(screen.getByText(`The impostor was ${impostor}`)).toBeInTheDocument();
     // the word on every card but the impostor's, and once more with its meaning
     expect(screen.getAllByText('pisîk')).toHaveLength(NAMES.length);
   });
 
+  it('says the votes were tied when the room could not agree', async () => {
+    quickClock();
+    serve(offered());
+    renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
+    await toVote(['By pointing']);
+    await userEvent.click(screen.getByRole('button', { name: 'Go to the vote' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'We couldn’t agree' }));
+    momentPasses();
+    expect(await screen.findByText('The votes were tied.')).toBeInTheDocument();
+    expect(screen.getByText('The impostor slipped away.')).toBeInTheDocument();
+  });
+
   it('plays the next game from the same cards, with the score carried on', async () => {
+    quickClock();
     const calls = serve(offered());
     renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
     const { others } = await toVote(['By pointing']);
     await userEvent.click(screen.getByRole('button', { name: 'Go to the vote' }));
     await userEvent.click(await screen.findByRole('button', { name: others[0]! }));
+    momentPasses();
     await userEvent.click(await screen.findByRole('button', { name: 'Next game' }));
     expect(await screen.findByText('Game 2')).toBeInTheDocument();
     expect(calls.filter((c) => c.url.includes('/games/impostor/couch/deck'))).toHaveLength(1);
     const second = await dealRound();
     expect(second.filter((c) => c.includes('hirç'))).toHaveLength(3);
+  });
+
+  it('asks for a fresh batch without the words already played tonight', async () => {
+    quickClock();
+    const calls = serve(offered({ dialect: 'kmr', cards: [card('pisîk')] }));
+    renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
+    const { others } = await toVote(['By pointing']);
+    await userEvent.click(screen.getByRole('button', { name: 'Go to the vote' }));
+    await userEvent.click(await screen.findByRole('button', { name: others[0]! }));
+    momentPasses();
+    await userEvent.click(await screen.findByRole('button', { name: 'Next game' }));
+    expect(await screen.findByText('Game 2')).toBeInTheDocument();
+    const asked = calls.filter((c) => c.url.includes('/games/impostor/couch/deck')).map((c) => c.body);
+    expect(asked).toEqual([
+      { dialect: 'kmr', difficulty: 'beginner', category: null },
+      { dialect: 'kmr', difficulty: 'beginner', category: null, exclude: ['pisîk'] },
+    ]);
+  });
+});
+
+describe('taking a tap back', () => {
+  it('goes back to the clues from the vote for a moment, and then the way back is gone', async () => {
+    quickClock();
+    serve(offered());
+    renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
+    await start(['1', NO_CLUE_CLOCK]);
+    await dealRound();
+    const speaker = screen.getByText(/, your clue$/).textContent;
+    await userEvent.click(screen.getByRole('button', { name: 'Go to the vote' }));
+    expect(await screen.findByText('Pass the phone to Azad')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(screen.getByText(speaker!)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Go to the vote' }));
+    momentPasses();
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+    expect(screen.getByText('Pass the phone to Azad')).toBeInTheDocument();
+  });
+
+  it('takes a private vote back to the voter’s own screen, and never says whom it named to the next one', async () => {
+    quickClock();
+    serve(offered());
+    renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
+    await toVote([]);
+    await userEvent.click(screen.getByRole('button', { name: 'Go to the vote' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'I’m Azad' }));
+    await userEvent.click(screen.getByRole('button', { name: 'I can’t decide' }));
+    expect(await screen.findByText('Pass the phone to Berfîn')).toBeInTheDocument();
+    expect(screen.queryByText(/can’t decide|voted for/)).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    // Azad still has the phone: their own vote, not the screen that asks for it
+    expect(screen.getByRole('heading', { name: 'Azad, who is it?' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Vote for Ciwan' }));
+    expect(await screen.findByText('Pass the phone to Berfîn')).toBeInTheDocument();
+  });
+
+  it('holds the last vote for its moment, and taking it back shows nothing of what it would have', async () => {
+    quickClock();
+    serve(offered());
+    renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
+    const { impostor } = await toVote([]);
+    await userEvent.click(screen.getByRole('button', { name: 'Go to the vote' }));
+    for (const name of NAMES.slice(0, -1)) await castVote(name, name === impostor ? NAMES.find((n) => n !== name)! : impostor);
+    await userEvent.click(await screen.findByRole('button', { name: 'I’m Dîlan' }));
+    await userEvent.click(screen.getByRole('button', { name: 'I can’t decide' }));
+    expect(screen.getByText('I can’t decide')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(screen.getByRole('heading', { name: 'Dîlan, who is it?' })).toBeInTheDocument();
+    momentPasses();
+    // nothing was counted: the vote is still Dîlan's to make
+    expect(screen.queryByText(/was caught|slipped away/)).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Dîlan, who is it?' })).toBeInTheDocument();
+  });
+});
+
+const SIX = ['Azad', 'Berfîn', 'Ciwan', 'Dîlan', 'Evîn', 'Firat'];
+
+/** A game of six with two impostors, dealt and taken to the vote: who the impostors are, read off the cards. */
+async function twoImpostors(chips: Chip[]): Promise<string[]> {
+  await userEvent.click(await screen.findByRole('button', { name: 'Add a player' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Add a player' }));
+  const boxes = screen.getAllByRole('textbox');
+  for (const [i, name] of SIX.entries()) await userEvent.type(boxes[i]!, name);
+  for (const chip of [['Impostors', '2'], ['Times round for clues', '1'], NO_CLUE_CLOCK, ...chips] as Chip[]) {
+    const within_ = Array.isArray(chip) ? within(screen.getByRole('radiogroup', { name: chip[0] })) : screen;
+    await userEvent.click(within_.getByRole('radio', { name: Array.isArray(chip) ? chip[1] : chip }));
+  }
+  await userEvent.click(screen.getByRole('button', { name: 'Deal the cards' }));
+  const cards: string[] = [];
+  for (const name of SIX) cards.push(await readCard(name));
+  for (let i = 0; i < SIX.length; i++) await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Go to the vote' }));
+  return SIX.filter((_, i) => cards[i]!.includes('You’re the impostor'));
+}
+
+describe('two impostors', () => {
+  it('has the room vote again for the second once the first is caught, and pays for the catch', async () => {
+    quickClock();
+    serve(offered());
+    renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
+    const [first, other] = await twoImpostors(['By pointing']);
+    await userEvent.click(await screen.findByRole('button', { name: first! }));
+    momentPasses();
+    await userEvent.click(await screen.findByRole('button', { name: `I’m ${first}` }));
+    await userEvent.click(screen.getByRole('button', { name: 'hesp' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Yes, that’s my answer' }));
+    // what the second vote is for, and its clock, before anyone is named
+    expect(await screen.findByRole('heading', { name: 'One impostor is caught. Who is the other one?' })).toBeInTheDocument();
+    expect(screen.getByText('Everyone else votes once more: 30 seconds.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Go to the vote' }));
+    expect(screen.getByRole('timer')).toBeInTheDocument();
+    // the impostor already caught is not among those the room can name
+    expect(screen.queryByRole('button', { name: first! })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: other! }));
+    momentPasses();
+    expect(await screen.findByText(`${other} was caught!`)).toBeInTheDocument();
+    expect(screen.getByText(`The impostors were ${[first, other].sort((a, b) => SIX.indexOf(a!) - SIX.indexOf(b!)).join(' and ')}`)).toBeInTheDocument();
+    expect(screen.queryByText(/stayed hidden/)).toBeNull();
+  });
+
+  it('pays the impostor nobody found in time once the second vote’s clock runs out', async () => {
+    quickClock();
+    serve(offered());
+    renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
+    const [first, other] = await twoImpostors([]);
+    // everyone names the first impostor, who names someone else
+    for (const name of SIX) await castVote(name, name === first ? SIX.find((n) => n !== first && n !== other)! : first!);
+    momentPasses();
+    await userEvent.click(await screen.findByRole('button', { name: `I’m ${first}` }));
+    await userEvent.click(screen.getByRole('button', { name: 'hesp' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Yes, that’s my answer' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Go to the vote' }));
+    // one vote is cast, for someone who is not the other impostor, and then the time is up
+    const voter = SIX.find((n) => n !== first)!;
+    const wrong = SIX.find((n) => n !== first && n !== other && n !== voter)!;
+    await castVote(voter, wrong);
+    momentPasses(31_000);
+    expect(await screen.findByText(`${other} stayed hidden to the end: +3.`)).toBeInTheDocument();
+    expect(screen.getByText(`${voter} voted for ${wrong}`)).toBeInTheDocument();
+    // who had not voted when the clock ran out did not vote at all
+    const late = SIX.filter((n) => n !== first && n !== voter);
+    for (const name of late) expect(screen.getByText(`${name} didn’t vote`)).toBeInTheDocument();
+    const row = within(screen.getByRole('table')).getAllByRole('row').find((r) => r.textContent!.startsWith(other!))!;
+    expect(row).toHaveTextContent(/\+3\s*3$/);
+  });
+});
+
+describe('the evening', () => {
+  it('plays one round the plain way when a card has no odd word, says so, and goes back to the odd word after', async () => {
+    quickClock();
+    serve(offered({ dialect: 'kmr', cards: [card('pisîk', null), card('hirç', 'rovî')] }));
+    renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
+    await start(['1', NO_CLUE_CLOCK, /^Odd word out/, 'By pointing']);
+    expect(await screen.findByText('No odd word this time, so this game is classic.')).toBeInTheDocument();
+    const first = await dealRound();
+    expect(first.filter((c) => c.includes('You’re the impostor'))).toHaveLength(1);
+    for (let i = 0; i < NAMES.length; i++) await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Go to the vote' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'We couldn’t agree' }));
+    momentPasses();
+    await userEvent.click(await screen.findByRole('button', { name: 'Next game' }));
+    expect(await screen.findByText('Game 2')).toBeInTheDocument();
+    expect(screen.queryByText('No odd word this time, so this game is classic.')).toBeNull();
+    const second = await dealRound();
+    expect(second.filter((c) => c.includes('rovî'))).toHaveLength(1);
+    expect(second.some((c) => c.includes('impostor'))).toBe(false);
+  });
+
+  it('opens the setup on the learner’s own Kurdish where the game is offered in it', async () => {
+    localStorage.setItem('hevalo.learn.courseDialect', 'sorani');
+    serve({
+      ...offered(),
+      '/games/impostor/couch?dialect=ckb': {
+        dialect: 'ckb',
+        difficulties: [{ difficulty: 'beginner', cards: 20, categories: [{ slug: 'animals', ku: 'ئاژەڵ', meanings: { en: 'animal' }, cards: 12 }] }],
+      },
+    });
+    renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
+    expect(await screen.findByRole('radio', { name: 'Soranî' })).toBeChecked();
+    expect(within(screen.getByRole('radiogroup', { name: 'Category' })).getByRole('radio', { name: /ئاژەڵ/ })).toBeInTheDocument();
   });
 });

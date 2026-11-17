@@ -689,7 +689,8 @@ function addGames(builder: Builder, games: readonly GameInput[]): void {
         say(e.ku, e.recording, isSpeakerId(e.speaker) ? e.speaker : null, label, { sure: en(e.meanings), cue: from ? `From ${from}.` : null });
       });
     } else {
-      say(p.ku, undefined, null, `${GAME_NAME.question_template} · a question (not played aloud in the game yet)`, { sure: en(p.meanings) });
+      // every question of the deck, both varieties': the player who asks one reads it out loud, and the recording is its model
+      say(p.ku, undefined, null, `${GAME_NAME.question_template} · a question the player reads out loud`, { sure: en(p.meanings) });
     }
   }
 }
