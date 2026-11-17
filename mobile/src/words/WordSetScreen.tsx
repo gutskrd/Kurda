@@ -226,7 +226,8 @@ function WordTile({
   const label = today ? t('words.tileLabel', { word: said, meaning: glossIn(RELATIVE_DAYS.today, locale) }) : said;
   const arabic = dialect === 'ckb';
   // the tick sits where the script's line starts
-  const tick = seen ? <Icon name="check" size={12} color={colors.success} style={[styles.corner, arabic ? styles.right : styles.left]} /> : null;
+  // opened, in the violet of what is on: green is for a right answer
+  const tick = seen ? <Icon name="check" size={12} color={colors.primary} style={[styles.corner, arabic ? styles.right : styles.left]} /> : null;
   const press = { onPress, accessibilityRole: 'button' as const, accessibilityLabel: label };
 
   if (word.set === 'colours') return <ColourTile word={word} dialect={dialect} width={width} seen={seen} press={press} />;
@@ -294,7 +295,7 @@ function ColourTile({
         <Text style={[styles.chipText, scriptText(dialect), { color: colors.textPrimary }]} maxFontSizeMultiplier={1.6}>
           {wordIn(word, dialect)}
         </Text>
-        {seen ? <Icon name="check" size={12} color={colors.success} /> : null}
+        {seen ? <Icon name="check" size={12} color={colors.primary} /> : null}
       </View>
     </PressableScale>
   );

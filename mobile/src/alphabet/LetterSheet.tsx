@@ -264,7 +264,8 @@ function SoraniCard({ letter, audio, player }: { letter: SoraniLetter; audio: Al
       <Head script="ckb" glyph={letter.char} ipa={letter.ipa} label={letter.char} sound={sound} word={word} audio={audio} player={player} />
       {locale === 'ar' && letter.kurdishOnly ? (
         <View style={[styles.badge, startOf(dir.row), { backgroundColor: colors.controlTrack }]}>
-          <Text style={[styles.badgeText, { color: colors.goldText }]}>{t('alphabet.notInArabic')}</Text>
+          {/* "look at this", in the app's violet */}
+          <Text style={[styles.badgeText, { color: colors.primary }]}>{t('alphabet.notInArabic')}</Text>
         </View>
       ) : null}
       {like ? (

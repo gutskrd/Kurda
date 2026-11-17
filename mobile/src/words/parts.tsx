@@ -26,8 +26,8 @@ import { radii, spacing, typography } from '../theme/tokens';
  * The small parts the word sets are drawn with, on their tiles, their sheet
  * and their practice alike: a colour's swatch, a number's digits (Soranî's
  * own beside the Western ones), a day's name with the number inside it marked
- * in gold — the colour the alphabet keeps for "notice this" — and a word with
- * its Soranî Latin under the script.
+ * in the app's violet and underlined — "look at this", as the alphabet marks a
+ * letter in its word — and a word with its Soranî Latin under the script.
  */
 
 /**
@@ -68,7 +68,7 @@ export function DayName({ day, dialect, style }: { day: WordDay; dialect: Alphab
     <Text style={[scriptText(dialect), { color: colors.textPrimary }, style]} accessibilityLanguage={scriptLanguage(dialect)}>
       {parts ? (
         <>
-          <Text style={[styles.mark, { color: colors.goldText, textDecorationColor: colors.gold }]}>{parts.number}</Text>
+          <Text style={[styles.mark, { color: colors.primary, textDecorationColor: colors.primary }]}>{parts.number}</Text>
           {parts.rest}
         </>
       ) : (
@@ -120,7 +120,7 @@ export function WordText({
   );
 }
 
-/** How many of this set's words have been opened here, as the alphabet shows its letters. */
+/** How many of this set's words have been opened here, as the alphabet shows its letters: in the violet every bar of progress is in. */
 export function Progress({ explored, total }: { explored: number; total: number }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -132,9 +132,9 @@ export function Progress({ explored, total }: { explored: number; total: number 
   return (
     <View style={[styles.progress, { flexDirection: dir.row }]}>
       <View style={[styles.track, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <View style={[styles.fill, { width: `${Math.round((explored / total) * 100)}%`, backgroundColor: colors.success }, dir.rtl && styles.fillEnd]} />
+        <View style={[styles.fill, { width: `${Math.round((explored / total) * 100)}%`, backgroundColor: colors.primary }, dir.rtl && styles.fillEnd]} />
       </View>
-      <Text style={[styles.progressText, { color: all ? colors.success : colors.textSecondary }, all && styles.progressDone]} accessibilityLiveRegion="polite">
+      <Text style={[styles.progressText, { color: all ? colors.primary : colors.textSecondary }, all && styles.progressDone]} accessibilityLiveRegion="polite">
         {words}
       </Text>
     </View>

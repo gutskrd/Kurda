@@ -112,9 +112,9 @@ function Card({ id, script, title, body, seen, total, onPress }: CardProps): Rea
         <Text style={[styles.body, dir.text, { color: colors.textSecondary }]}>{body}</Text>
         <View style={[styles.progress, { flexDirection: dir.row }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <View style={[styles.track, { backgroundColor: colors.controlTrack }]}>
-            <View style={[styles.fill, { width: `${total > 0 ? Math.round((Math.min(seen, total) / total) * 100) : 0}%`, backgroundColor: colors.success }, dir.rtl && styles.fillEnd]} />
+            <View style={[styles.fill, { width: `${total > 0 ? Math.round((Math.min(seen, total) / total) * 100) : 0}%`, backgroundColor: colors.primary }, dir.rtl && styles.fillEnd]} />
           </View>
-          <Text style={[styles.count, { color: all ? colors.success : colors.textSecondary }]}>{progress}</Text>
+          <Text style={[styles.count, { color: all ? colors.primary : colors.textSecondary }]}>{progress}</Text>
         </View>
       </View>
       <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip ?? undefined} />

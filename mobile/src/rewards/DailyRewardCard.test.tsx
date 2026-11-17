@@ -120,3 +120,15 @@ describe('the day’s Zêr while it loads', () => {
     expect(screen.queryByText('Daily Zêr')).toBeNull();
   });
 });
+
+describe('the week of the day’s Zêr', () => {
+  /* a day taken lost its name to its check, so a screen reader heard only its amount */
+  it('says each day whole: its name, its Zêr, and whether it was taken', async () => {
+    testAuth.client = fakeClient({ 'GET /rewards/daily': () => ok(status(false)) });
+    renderWithProviders(<DailyRewardCard />);
+    expect(await screen.findByLabelText('Day 1, 5 Zêr, Claimed')).toBeTruthy();
+    expect(screen.getByLabelText('Day 2, 10 Zêr, Claimed')).toBeTruthy();
+    expect(screen.getByLabelText('Day 3, 15 Zêr')).toBeTruthy();
+    expect(screen.getByLabelText('Day 7, 50 Zêr')).toBeTruthy();
+  });
+});

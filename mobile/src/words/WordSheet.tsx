@@ -178,7 +178,7 @@ function Card({ word, dialect, audio, player }: { word: SetWord; dialect: Alphab
                 accessibilityLabel={t('words.tileLabel', { word: `${wordIn(relative, dialect)} ${wordIn(day, dialect)}`, meaning: glossIn(relative, glossLocale) })}
               >
                 <View style={styles.relativeWhen}>
-                  <Text style={[styles.relativeWord, scriptText(dialect), { color: when === 'today' ? colors.goldText : colors.textPrimary }]}>
+                  <Text style={[styles.relativeWord, scriptText(dialect), { color: when === 'today' ? colors.primary : colors.textPrimary }]}>
                     {wordIn(relative, dialect)}
                   </Text>
                   <Text style={[styles.relativeGloss, { color: colors.textSecondary }]}>{glossIn(relative, glossLocale)}</Text>

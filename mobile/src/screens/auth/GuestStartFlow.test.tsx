@@ -53,7 +53,7 @@ describe('starting as a guest', () => {
     await press(en['common.continue']);
     expect(await screen.findByText(en['guide.guest.goal.question'])).toBeTruthy();
     await turned();
-    fireEvent.click(screen.getByRole('button', { name: '30' }));
+    fireEvent.click(screen.getByRole('radio', { name: '30 XP a day' }));
     await press(en['guide.guest.start']);
     await waitFor(() => expect(auth.continueAsGuest).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(auth.client.put).toHaveBeenCalledWith('/me/daily-goal', { goal: 30 }));

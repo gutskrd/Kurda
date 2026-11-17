@@ -2917,6 +2917,7 @@ export type TranslationKey =
   | 'learn.today.goal'
   | 'learn.today.goalMet'
   | 'learn.today.goalSetting'
+  | 'learn.today.goalOption'
   | 'learn.today.streakStart'
   | 'learn.bar.streak'
   | 'learn.bar.zer'
@@ -6732,6 +6733,7 @@ const en: Catalog = {
   'learn.tools.sentenceHint': 'Put the words in order',
   'learn.tools.hearHint': 'Find what you heard',
   'learn.map.title': 'Course map',
+  'learn.today.goalOption': '{xp} XP a day',
   'learn.games.invites': 'Invites from friends',
   'learn.games.leagueHint': 'This week',
   'games.card.wordle': 'Guess the Kurdish word in six tries.',
@@ -10545,6 +10547,7 @@ const ku: Catalog = {
   'games.card.whoAmI': 'Bi kurdî pirsên erê-na bipirse û peyva xwe bibîne.',
   'games.mode.solo': 'Bi tenê',
   'games.mode.friends': 'Bi hevalan re',
+  'learn.today.goalOption': 'Rojê {xp} XP',
   'games.mode.both': 'Bi tenê an bi hevalan re',
   'games.comingSoon': 'Di demeke nêzîk de',
   'games.featured': 'Bijarte',
@@ -14358,6 +14361,7 @@ const de: Catalog = {
   'games.sentence.prompt': 'Bau das auf Kurdisch',
   'games.sentence.line': 'Dein Satz',
   'games.sentence.tray': 'Wörter zum Verwenden',
+  'learn.today.goalOption': '{xp} XP am Tag',
   'games.sentence.hint': 'Schau ab dem markierten Wort noch einmal hin.',
   'games.sentence.hintMissing': 'Bis hier stimmt es – am Ende fehlt noch ein Wort.',
   'games.sentence.misplaced': 'Erstes Wort an der falschen Stelle',
@@ -18171,6 +18175,7 @@ const es: Catalog = {
   'games.sentence.ladder.locked': 'Se abre tras una buena ronda en el peldaño anterior',
   'games.sentence.ladder.count': 'Frases: {n}',
   'games.sentence.ladder.opened': 'Nuevo peldaño abierto: {rung}',
+  'learn.today.goalOption': '{xp} XP al día',
   'games.sentence.rung.short': 'Frases cortas',
   'games.sentence.rung.question': 'Preguntas',
   'games.sentence.rung.negation': 'Decir «no»',
@@ -21984,6 +21989,7 @@ const tr: Catalog = {
   'games.sentence.why.question': 'Soru, düz cümlenin sırasını korur: soru kelimesi cevabın duracağı yerde durur.',
   'games.sentence.why.negation': 'Kürtçe olumsuzluğu fiilin kendisine, başına ekler; bu yüzden fiil yine sonda kalır.',
   'games.sentence.why.ezafe': 'İzafe bir kelimeyi onu niteleyen ya da ona sahip olan kelimeye bağlar ve niteleyen kelime arkadan gelir.',
+  'learn.today.goalOption': 'Günde {xp} XP',
   'games.sentence.why.verb-final': 'Özne başta, fiil sonda gelir; zaman, yer ve nesne aralarında yer alır.',
   'games.sentence.why.two-clauses': 'Her yan cümle kendi sırasını korur ve fiili sonundadır; bağlayan kelime ikincisini başlatır.',
   'games.detective.name': 'Detektîf',
@@ -25797,6 +25803,7 @@ const ar: Catalog = {
   'games.detective.evidence': 'الأدلة',
   'games.detective.kind.message': 'رسالة',
   'games.detective.kind.statement': 'إفادة',
+  'learn.today.goalOption': '{xp} XP في اليوم',
   'games.detective.kind.overheard': 'كلام مسموع',
   'games.detective.kind.note': 'ملاحظة',
   'games.detective.from': 'من {name}',
@@ -29610,6 +29617,7 @@ const fr: Catalog = {
   'games.detective.notebookEmpty': 'Ce que tu découvres s’inscrit ici.',
   'games.detective.step': 'Question {n} sur {total}',
   'games.detective.options': 'Réponses au choix',
+  'learn.today.goalOption': '{xp} XP par jour',
   'games.detective.look': 'Relis les cartes marquées.',
   'games.detective.noted': 'Noté dans ton carnet.',
   'games.detective.accuse': 'Qui a fait le coup ?',
@@ -33423,6 +33431,7 @@ const nl: Catalog = {
   'games.detective.hintsLeft': 'Tips over: {n}',
   'games.detective.hintsFew': 'Een zaak heeft maar een paar tips. Gebruik ze waar ze het meest helpen.',
   'games.detective.hint': 'Tip lezen',
+  'learn.today.goalOption': '{xp} XP per dag',
   'games.detective.why.step': 'De kaarten die het bewijzen zijn nu vertaald, en de conclusie staat in je notitieboek.',
   'games.detective.why.accuse': 'De oplossing loopt alle aanwijzingen langs die je hebt gevonden.',
   'games.card.detective': 'Los een zaak op met Koerdisch bewijs en wijs dan de dader aan.',
@@ -37237,6 +37246,7 @@ const ckb: Catalog = {
   'games.solo.difficulty.advanced': 'پێشکەوتوو',
   'games.solo.upToXp': 'تا {xp} XP',
   'games.solo.start': 'دەست پێبکە',
+  'learn.today.goalOption': 'ڕۆژانە {xp} XP',
   'games.solo.continue': 'خولەکەت تەواو بکە',
   'games.solo.progress': '{n} لە {total}',
   'games.solo.check': 'بیپشکنە',
