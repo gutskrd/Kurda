@@ -212,6 +212,24 @@ function BattleRoom({
     });
   }, [battle?.status, results, client, id]);
 
+  /*
+   * A battle played here to its end is a finished game for the rating box, as
+   * a rhyme match is, once its results are in; one opened already finished,
+   * from an old link, is not. It used to be told when the player's own board
+   * ended, and the box then sat over the board, the opponents' progress and
+   * "waiting for the others" while the battle was still being played.
+   */
+  const played = useRef(false);
+  useEffect(() => {
+    if (battle?.status === 'active' && battle.me) played.current = true;
+  }, [battle?.status, battle?.me]);
+  useEffect(() => {
+    if (!results || !played.current) return;
+    played.current = false;
+    const mine = results.ranking.find((r) => r.isMe ?? r.userId === user?.id);
+    if (mine) reportGameFinished({ moment: mine.rank === 1 ? 'won' : 'other' });
+  }, [results, user?.id]);
+
   const me = battle?.me ?? null;
   const active = battle?.status === 'active' && me != null && me.status === 'playing' && !me.solved;
   // an invite waits while a battle is on (the banner would sit over the board)
@@ -234,12 +252,9 @@ function BattleRoom({
     if (res.ok) {
       setBattle(res.data);
       setDraft([]);
-      // this guess finished your board (solved, or out of tries): a game played to its end
+      // this guess finished your board (solved, or out of tries): felt now; the battle itself is over when everyone's board is
       const after = res.data.me;
-      if (after && (after.solved || after.status !== 'playing')) {
-        haptic(after.solved ? 'correct' : 'wrong');
-        reportGameFinished({ moment: after.solved ? 'won' : 'other' });
-      }
+      if (after && (after.solved || after.status !== 'playing')) haptic(after.solved ? 'correct' : 'wrong');
     } else {
       // a rejected guess costs no attempt — the draft stays put, with a reason
       setNotice(guessMessage(res.error, t));
