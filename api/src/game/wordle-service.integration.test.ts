@@ -336,14 +336,15 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
    * counts once toward the words learned.
    */
   it('shows the finished game’s word with its meaning, and saves it to the player’s words once', async () => {
-    const entryId = await seedWord('zirav');
+    // a made-up word, so no word list the migrations seed (the Peyvok pool holds zirav) has an entry of its own for it
+    const entryId = await seedWord('zuqav');
     await pool.query(`INSERT INTO dict_senses (entry_id, position, pos, definition_en) VALUES ($1, 1, 'adjective', 'thin, slender')`, [entryId]);
     const u = await makeUser();
     const svc = serviceAt(new Date());
-    const gameId = await insertGame(u, 'practice', 'medium', 'zirav', null);
+    const gameId = await insertGame(u, 'practice', 'medium', 'zuqav', null);
 
     expect(await svc.saveWord(u, gameId)).toEqual({ ok: false, reason: 'not-finished' });
-    const won = await svc.guess(u, gameId, 'zirav');
+    const won = await svc.guess(u, gameId, 'zuqav');
     expect(won.ok).toBe(true);
     if (!won.ok) return;
     expect(won.game.word).toEqual({ entryId, meanings: { en: 'thin, slender' }, saved: false });
