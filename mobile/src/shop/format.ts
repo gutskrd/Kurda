@@ -1,6 +1,6 @@
 /** Pure shop view helpers (KUR-070) — no React Native, so unit-testable. */
 
-import { itemCategory, type ItemCategory, type ItemSort } from '@kurda/shared';
+import type { ItemCategory, ItemSort } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
 export type Currency = 'zer' | 'gems';
@@ -57,18 +57,6 @@ export const SORT_LABEL: Record<ItemSort, TranslationKey> = {
   'price-desc': 'shop.sort.priceDesc',
   name: 'shop.sort.name',
 };
-
-/**
- * The words for a section heading.
- *
- * Every category the server sends is filed under one of the shared kinds, so
- * a heading is always a word — never the server's own (`BACKGROUND`) and never
- * a translation key, which is a string too and once rendered straight to
- * screen as SHOP.CATEGORY.MISC. A category nobody has a kind for is "More".
- */
-export function sectionTitle(category: string, t: (key: TranslationKey) => string): string {
-  return t(KIND_LABEL[itemCategory(category)]);
-}
 
 /** "1 item", "27 items". */
 export function itemsText(t: Translate, count: number): string {

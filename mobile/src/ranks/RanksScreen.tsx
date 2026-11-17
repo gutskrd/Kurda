@@ -36,7 +36,7 @@ import { getMyRanks, getRankBoard } from './api';
 import { PlacementEmblem, RankEmblem } from './art';
 import { TIER_NAME_KEY, cardHeadline, daysLeftText, nextStepText, rankLabel, rankName, seasonTitle, tierMeaning } from './format';
 import { Meter } from './Meter';
-import { ShieldPips } from './RankCard';
+import { ShieldPips } from './ShieldPips';
 import { PLACING_TINT, rankTint } from './tint';
 import { PressableScale } from '../theme/MotionParts';
 

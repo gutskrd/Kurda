@@ -78,14 +78,3 @@ export function bucket(friends: readonly RailFriend[]): Buckets {
   offline.sort((a, b) => (b.lastSeenAt ?? '').localeCompare(a.lastSeenAt ?? ''));
   return { playing, online, offline };
 }
-
-/**
- * How many things are waiting on you, which is what the badge counts.
- *
- * Friend requests and game invites, not unread messages: a badge that included
- * every unread group message would be a number you learn to ignore, and the
- * things here are the ones that go stale — a challenge expires in two minutes.
- */
-export function waitingCount(data: Pick<SocialRailData, 'unread'>): number {
-  return data.unread.requests + data.unread.challenges;
-}

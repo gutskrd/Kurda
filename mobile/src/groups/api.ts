@@ -49,10 +49,6 @@ export interface GroupMessage extends Partial<ChatMessageExtras> {
   deleted: boolean;
 }
 
-export function myGroups(client: ApiClient): Promise<ApiResult<{ groups: Group[] }>> {
-  return client.get<{ groups: Group[] }>('/me/groups');
-}
-
 /**
  * A page of history, newest last. `before` is the oldest message already held,
  * which is how the server pages backwards; the window is 30 and set by it.
@@ -88,13 +84,6 @@ export function sendToGroup(client: ApiClient, groupId: string, body: string): P
 
 export function markGroupRead(client: ApiClient, groupId: string): Promise<ApiResult<{ ok: true }>> {
   return client.post<{ ok: true }>(`/groups/${groupId}/chat/read`);
-}
-
-/** Unread counts for every group the reader is in, in one call. */
-export function groupUnread(
-  client: ApiClient,
-): Promise<ApiResult<{ unread: Array<{ groupId: string; unread: number }> }>> {
-  return client.get<{ unread: Array<{ groupId: string; unread: number }> }>('/me/groups/unread');
 }
 
 export function leaveGroup(client: ApiClient, groupId: string): Promise<ApiResult<{ ok: true }>> {

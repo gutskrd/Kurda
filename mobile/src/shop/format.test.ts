@@ -5,7 +5,6 @@ import {
   canGift,
   itemsText,
   kindWithCount,
-  sectionTitle,
   CONFIRM_THRESHOLD_ZER,
   needsConfirmation,
   withinBalance,
@@ -42,21 +41,6 @@ describe('the shop’s sections', () => {
     ]);
     expect(sections.map((s) => s.category)).toEqual(['background', 'icon', 'tag', 'other']);
     expect(sections[1]!.items.map((i) => i.sku)).toEqual(['i1', 'i2']);
-  });
-});
-
-describe('sectionTitle', () => {
-  it('translates each kind', () => {
-    expect(sectionTitle('background', t as never)).toBe('translated:shop.kind.background');
-    expect(sectionTitle('icon', t as never)).toBe('translated:shop.kind.icon');
-    expect(sectionTitle('tag', t as never)).toBe('translated:shop.kind.tag');
-  });
-
-  it('files a category nobody has a kind for under "More", rather than showing the server’s word', () => {
-    // the old shop headed sections BACKGROUND, ICON, TAG and once SHOP.CATEGORY.MISC
-    for (const category of ['misc', 'cosmetic', 'powerup', 'brand-new-thing']) {
-      expect(sectionTitle(category, t as never)).toBe('translated:shop.kind.other');
-    }
   });
 });
 

@@ -30,7 +30,7 @@ import {
 } from './format';
 import { Meter } from './Meter';
 import { FLECKS, countUpMs } from './motion';
-import { ShieldPips } from './RankCard';
+import { ShieldPips } from './ShieldPips';
 import { PLACING_TINT, confettiColours, rankGlow, rankTint } from './tint';
 
 /** A result is recorded as the game ends; asked again a few times while it is on its way. */

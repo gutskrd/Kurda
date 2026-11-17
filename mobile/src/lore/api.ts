@@ -8,7 +8,6 @@ import type {
   ProverbView,
   RiddleAnswer,
   RiddleDetail,
-  RiddleGuessResult,
   RiddleHint,
   RiddleList,
   SoloAnswerResult,
@@ -42,9 +41,6 @@ export const getRiddle = (client: ApiClient, slug: string): Promise<ApiResult<{ 
 /** One hint, by its place (0, then 1): taken in order. */
 export const takeHint = (client: ApiClient, slug: string, index: number): Promise<ApiResult<{ hint: RiddleHint }>> =>
   client.post(`/riddles/${slugPath(slug)}/hint`, { index });
-
-export const guessRiddle = (client: ApiClient, slug: string, guess: string): Promise<ApiResult<RiddleGuessResult>> =>
-  client.post(`/riddles/${slugPath(slug)}/guess`, { guess });
 
 /** The answer, asked for: a signed-in learner's riddle is revealed from then on (one already solved stays solved). */
 export const revealRiddle = (client: ApiClient, slug: string): Promise<ApiResult<{ answer: RiddleAnswer }>> => client.post(`/riddles/${slugPath(slug)}/reveal`);

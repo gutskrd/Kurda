@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bucket, waitingCount, type RailFriend } from './rail';
+import { bucket, type RailFriend } from './rail';
 import { elapsed, lastSeen } from './time';
 import { LOCALES, TRANSLATIONS } from '../i18n/translations';
 
@@ -58,17 +58,6 @@ describe('bucket', () => {
 
   it('holds up with nobody at all', () => {
     expect(bucket([])).toEqual({ playing: [], online: [], offline: [] });
-  });
-});
-
-describe('waitingCount', () => {
-  /*
-   * Unread group messages are deliberately not in it. A badge that counted every
-   * message is a number you learn to ignore; these are the two that go stale.
-   */
-  it('counts what expires, not what accumulates', () => {
-    expect(waitingCount({ unread: { requests: 2, challenges: 1, notifications: 40, groups: 99 } })).toBe(3);
-    expect(waitingCount({ unread: { requests: 0, challenges: 0, notifications: 12, groups: 7 } })).toBe(0);
   });
 });
 

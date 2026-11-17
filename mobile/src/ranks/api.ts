@@ -5,7 +5,6 @@ import type {
   MyRanks,
   RankBoard,
   RankBoardScope,
-  RankCard,
   RankResult,
   RankedGame,
   SeasonEmblem,
@@ -23,8 +22,6 @@ import type { ApiResult } from '../api/types';
 
 /** Your rank in every game, a running rated-game cooldown, and the season. */
 export const getMyRanks = (client: ApiClient): Promise<ApiResult<MyRanks>> => client.get('/ranks/me');
-
-export const getRankCard = (client: ApiClient, game: RankedGame): Promise<ApiResult<RankCard>> => client.get(`/ranks/me/${game}`);
 
 /** What a finished game did to your rank, with its one plain reason. */
 export const getRankResult = (client: ApiClient, game: RankedGame, ref: string): Promise<ApiResult<RankResult>> =>
