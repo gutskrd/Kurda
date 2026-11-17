@@ -2,7 +2,7 @@
 import { isValidElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { STORY_COVERS } from '@kurda/shared';
+import { STORY_COVERS, storyRugFor } from '@kurda/shared';
 import type { AdminStory, AdminStorySummary } from '../stories';
 import { failure, fakeApi, json, on, type Call, type Route } from '../test/fetch';
 import { button, choose, click, render, settle, text, type } from '../test/dom';
@@ -495,7 +495,11 @@ describe('the editor', () => {
     // every shared cover, and None
     expect(covers.querySelectorAll('[role="radio"]')).toHaveLength(STORY_COVERS.length + 1);
     expect(button(covers, 'None')!.getAttribute('aria-checked')).toBe('true');
-    expect(c.querySelector('.st-pv-cover')!.classList.contains('is-kilim')).toBe(true);
+    // with none chosen, the preview lays the story on the kilim the apps give it, over that rug's own colour
+    const rug = storyRugFor(storyFixture().slug);
+    expect(c.querySelector('.st-pv-cover img')!.getAttribute('src')).toBe(`https://hevalo.app/cosmetics/backgrounds/${rug.file}`);
+    expect((c.querySelector('.st-pv-cover') as HTMLElement).style.backgroundColor).not.toBe('');
+    expect(c.querySelector('.st-pv-cover')!.getAttribute('data-cover')).toBe(rug.key);
     await click(button(covers, 'Blue lake'));
     expect(button(covers, 'Blue lake')!.getAttribute('aria-checked')).toBe('true');
     expect(covers.querySelector('[aria-label="Blue lake"] img')!.getAttribute('src')).toBe('https://hevalo.app/cosmetics/backgrounds/made-06-gola-sin.webp');
