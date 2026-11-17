@@ -92,13 +92,7 @@
   "theme/BottomSheet.tsx": {
     "hitSlop": 1
   },
-  "whoami/WhoAmICouch.tsx": {
-    "persistTaps": 1
-  },
   "wordle/WordleKeyboard.tsx": {
-    "hitSlop": 1
-  },
-  "wordle/WordleScreen.tsx": {
     "hitSlop": 1
   }
 }

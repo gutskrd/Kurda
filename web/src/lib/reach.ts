@@ -75,6 +75,8 @@ export const REACH_CONTROLS = [
   '.story-player-btn',
   '.story-player-rate',
   '.letters-change',
+  // a suspect's notes in Detective, small pills that wrap under the name (games/detective.css)
+  '.dt-note',
 ] as const;
 
 /** Links on a line of their own, which reach only under a coarse pointer. */
@@ -122,6 +124,8 @@ export const LARGE_ENOUGH = [
   '.chat-game-action',
   // a lesson's tile (learn/Tile.tsx)
   '.tile',
+  // Who Am I's answers and verdicts, 84 tall in a row of three (whoami/whoami.css)
+  '.wa-answer-btn',
 ] as const;
 
 /** The sideways-scrolling rows that hold controls, each with room above and below them for their reach. */

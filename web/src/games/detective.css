@@ -395,6 +395,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
+  /* the notes wrap, so each reaches half the gap toward the next one either way */
+  --reach-room-x: 0.3rem;
+  --reach-room-y: 0.3rem;
   margin-top: 0.35rem;
   grid-column: 1 / -1;
 }

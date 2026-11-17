@@ -20,14 +20,14 @@
  * count may fall and may not rise, so the habits go as files are touched and
  * do not come back; `--update` lowers the baseline to what is there now and
  * never raises it. Once a habit has gone from every file it is a rule with no
- * baseline (`HARD`): a bare switch or a sheet without ReachReset now fails
- * wherever it appears, since there is no old code left to excuse it.
+ * baseline (`HARD`): a bare switch, a sheet without ReachReset or a list
+ * that drops taps under the keyboard now fails wherever it appears, since
+ * there is no old code left to excuse it.
  *
- * And a list in a file with a text field keeps a tap that lands on it while
- * the keyboard is up (`keyboardShouldPersistTaps`). Without it the first tap
- * on a button under a search field only closes the keyboard, and a person
- * taps again thinking they missed. It is counted the same way only because a
- * few lists still lack it; once none do, it becomes a rule with no baseline.
+ * That last one: a list in a file with a text field keeps a tap that lands on
+ * it while the keyboard is up (`keyboardShouldPersistTaps`). Without it the
+ * first tap on a button under a search field only closes the keyboard, and a
+ * person taps again thinking they missed.
  *
  * `--report` prints every pressable with where it is, the size its style
  * declares, where its reach comes from (auto, open, explicit, group, none)
@@ -60,7 +60,7 @@ const RATCHETS = {
 };
 
 /** The habits no file has any more: each is allowed nowhere, whatever the baseline says, and `--update` never writes them. */
-const HARD = new Set(['bareToggle', 'modal']);
+const HARD = new Set(['bareToggle', 'modal', 'persistTaps']);
 
 /** Where a habit is the point rather than a slip, and why. */
 const EXEMPT = {

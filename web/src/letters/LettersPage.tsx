@@ -535,7 +535,7 @@ export function LettersPage(): React.JSX.Element {
           {moment.kind === 'homecoming' && (
             <p className="letters-status letters-status--also">
               {t('letters.home.title', { name: moment.person.name })}{' '}
-              <Link to={`/app/letters/${moment.threadId}`} onClick={() => readLanded()}>
+              <Link to={`/app/letters/${moment.threadId}`} className="reach-line" onClick={() => readLanded()}>
                 {t('letters.home.read')}
               </Link>
             </p>
@@ -646,7 +646,9 @@ export function LettersPage(): React.JSX.Element {
           {kept && !here && moment.kind !== 'writing' && (
             <p className="letters-status letters-status--quiet">
               {kept.threadId ? (
-                <Link to={`/app/letters/${kept.threadId}`}>{t('letters.draft.kept', { name: kept.name })}</Link>
+                <Link to={`/app/letters/${kept.threadId}`} className="reach-line">
+                  {t('letters.draft.kept', { name: kept.name })}
+                </Link>
               ) : (
                 t('letters.draft.keptOwn')
               )}

@@ -250,7 +250,7 @@ export function WhoAmICouch({
     return (
       <>
         {header}
-        <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <Card style={styles.centered}>
             <Text accessibilityRole="header" style={[styles.heading, { color: colors.textPrimary }]}>
               {t('games.whoAmI.endConfirm.title')}
