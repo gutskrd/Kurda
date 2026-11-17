@@ -1,55 +1,26 @@
 /**
- * The letters window, worked out once for both apps: what it acts out, from
- * what the server says (`GET /letters`) and from what is done at it.
+ * The letters window for both apps: what it acts out, as a pure function of its current look and the last read of
+ * `GET /letters`, so a test can hold it to the rule that matters most: no letter still to land waits while its bird has a
+ * free spot on the sill.
  *
- * Each app used to work this out by itself, and both lost birds there: a
- * first look that showed one bird and hid the rest, reloads that copied only
- * the sky, so nothing that came while the window was open was ever shown,
- * and a phone that looked again properly only after a correspondence had
- * been opened from it. Here it is one pure function of two things, the look
- * the window has now and the page as last read, so the rule that matters
- * most is one a test can hold it to: no letter still to land waits while
- * there is a free spot on the sill for its bird.
+ * The sill has two spots. `own` is your bird's: it stands there at home, flies out with a letter and lands there again
+ * with an answer (a `home` landing), with its own letter when nobody called it (`returned`), or when you call it back.
+ * `sill` is the visitor's: a bird you called, or a pen pal's bird with their next letter (a `window` landing). An answer
+ * whose bird is out again is brought to `sill` by its writer's bird instead of waiting for yours.
  *
- * The sill has two spots. Your own bird's (`own`): it stands there at home,
- * flies out with a letter, and lands there again coming home, with the answer
- * somebody wrote (a `home` landing), with its own letter when nobody called
- * it (`returned`), or with its letter when you called it back. And the
- * visitor's spot (`sill`): a bird you called, waiting for your answer, or a
- * pen pal's bird with their next letter (a `window` landing). An answer whose
- * bird is out again is brought to the visitor's spot by its writer's own
- * bird, rather than waiting up to two weeks for yours to come back.
+ * Every letter lands once: its bird flies in, the window reports it (`lookAfterLanded` gives the ids to post to
+ * /letters/landed), and the letter then waits on the sill until read. One letter is acted out at a time; `waiting` says
+ * another is queued.
  *
- * Every letter lands once (`LetterLanding`): its bird flies in, the window
- * says so (`lookAfterLanded` gives the ids to post to /letters/landed), and
- * after that the letter waits on the sill, with no flight, until it is read.
- * One letter is acted out at a time; any other waits its turn, and `waiting`
- * says there is one.
+ * The apps keep a `WindowLook` in state, start it with `firstLook` and pass each new read through `nextLook` with `held`
+ * (a sheet open, a bird being chosen, a request in flight; writing holds by itself). While held or while a bird flies,
+ * only the sky changes. Each action goes through its `lookAfter…` function and each finished flight through
+ * `lookAfterOwnGone`, `lookAfterVisitorGone` or `lookAfterLanded`.
  *
- * How the apps use it:
- *
- *   const [look, setLook] = useState<WindowLook | null>(null);
- *   const moving = look !== null && lookInMotion(look);
- *   useEffect(() => {
- *     if (data) setLook((l) => (l ? nextLook(l, data, { held, hint }) : firstLook(data, hint)));
- *   }, [data, held, hint, moving]);
- *
- * `held` is anything on the page that must not be swapped out under the
- * person: a sheet open, a bird being chosen, a request on its way. Writing a
- * letter holds by itself. While the window is held, or a bird is flying, only
- * the sky changes; the rest catches up as soon as that ends. Each thing done
- * at the window goes through its `lookAfter…` function, and each flight the
- * window finishes through `lookAfterOwnGone`, `lookAfterVisitorGone` or
- * `lookAfterLanded`.
- *
- * What is done at the window shows before the server has been read again,
- * and a read the window had already been given when something was done is
- * not news to it after that (`actedOn`): it still places letters, but it
- * never takes back a bird that has just flown or come. A read the server made
- * before something done here (its `now` earlier than that action's own time,
- * `asOf`) is passed over the same way, and so is a bird that has left this
- * window (`left`). The apps still drop the answer to a read they asked for
- * before their last action, so that a slow one never comes in after it.
+ * Actions show before the server is read again, so the read in hand when acting is no longer news (`actedOn`): it still
+ * places letters but never takes back a bird that just flew or came. Reads made before the latest action (`asOf`) and birds
+ * that left this window (`left`) are passed over the same way. The apps also drop replies to reads requested before their
+ * last action.
  */
 import type { BirdOutResult, LetterFlight, LetterLanding, LetterPerson, LetterReturnReason, LetterVisitor, LettersHome, VisitorAnswer } from './letters.js';
 
@@ -57,11 +28,11 @@ import type { BirdOutResult, LetterFlight, LetterLanding, LetterPerson, LetterRe
 export interface LetterWindowScene {
   /** your bird: at home on the sill, flying out, out there, flying in, or settled back with the letter it brought (`here`) */
   own: { kind: 'home'; bird: number } | { kind: 'leaving'; bird: number } | { kind: 'away' } | { kind: 'arriving'; bird: number } | { kind: 'here'; bird: number };
-  /** a bird called to the window or a pen pal's bird with a letter: coming down, settled, or leaving answered or sent on */
+  /** a called bird or a pen pal's bird with a letter: coming down, settled, or leaving answered or sent on */
   visitor: { kind: 'none' } | { kind: 'arriving'; bird: number } | { kind: 'here'; bird: number } | { kind: 'leaving'; bird: number; how: 'answered' | 'sent-on' };
   /** the birds out there, by colour, the next to come first */
   sky: readonly number[];
-  /** sung once each time this changes: two people have just become pen pals */
+  /** changes each time two people have just become pen pals, which plays the song once */
   song?: number;
 }
 
@@ -76,7 +47,7 @@ export type WindowMoment =
   | { kind: 'rest' }
   | { kind: 'writing' }
   | { kind: 'sent' }
-  /** your bird has flown and waits out there: said at once, before the page has been read again */
+  /** your bird has flown and waits out there; said at once, before the page is read again */
   | { kind: 'waiting' }
   | { kind: 'answered'; person: LetterPerson; threadId: string }
   | { kind: 'sentOn'; name: string }
@@ -89,12 +60,12 @@ export type WindowMoment =
   /** your own bird home by itself with its letter, nobody having answered it */
   | { kind: 'returned'; letterId: string; why: LetterReturnReason };
 
-/** Your bird home by itself with its letter, as the window shows it; it stays said until the bird flies out again. */
+/** Your bird home by itself with its letter, as the window shows it until the bird flies out again. */
 export interface WindowReturn {
   letterId: string;
   since: string;
   why: LetterReturnReason;
-  /** its landing has been said to the server */
+  /** its landing has been reported to the server */
   landed: boolean;
 }
 
@@ -102,49 +73,46 @@ export interface WindowReturn {
 export interface WindowLook {
   scene: LetterWindowScene;
   moment: WindowMoment;
-  /** the bird called to the window, as the call brought it or the server says; kept while it flies off, for its name */
+  /** the called bird, as the call brought it or the server says; kept while it flies off, for its name */
   visitor: LetterVisitor | null;
   /** the letter being acted out now, and in which spot */
   landing: { item: LetterLanding; spot: WindowSpot } | null;
   /** your bird home by itself, while the window shows it so */
   returned: WindowReturn | null;
-  /** what was made of the correspondence named on arriving (a notification's `?bird=`): its bird lands here, or the correspondence opens instead */
+  /** what came of the correspondence named on arrival (a notification's `?bird=`): its bird lands here, or the correspondence opens */
   hint: { threadId: string; outcome: 'land' | 'open-thread' } | null;
-  /** another letter is waiting its turn at the window */
+  /** another letter is waiting its turn */
   waiting: boolean;
   /** the last read of the page the window was given */
   seen: LettersHome | null;
-  /** the read the window had been given when something was last done at it: no longer news, so only used to place letters */
+  /** the read in hand when something was last done here: no longer news, so used only to place letters */
   actedOn: LettersHome | null;
-  /** the server's time of the latest thing done here that said one: a read made before it is out of date */
+  /** the server time of the latest action here that returned one; a read made before it is out of date */
   asOf: string | null;
-  /** the letters of the birds that left this window, which an out-of-date read must not bring back */
+  /** letters of the birds that left this window, which an out-of-date read must not bring back */
   left: readonly string[];
-  /** the letters this window has said landed, which a read from before it said so must not land again */
+  /** letters this window reported landed, which an earlier read must not land again */
   landed: readonly string[];
 }
 
-/** What a finished flight onto the sill comes to: the next look, the letters to post to /letters/landed, and whether a bird landed at all. */
+/** What a finished flight onto the sill comes to: the next look, the ids to post to /letters/landed, and whether a bird landed. */
 export interface WindowLanded {
   look: WindowLook;
   post: string[];
   landed: boolean;
 }
 
-/** How many of the birds that left this window, and of the letters landed at it, it remembers: more than ever come and go while one page is open. */
+/** How many departed birds and landed letters the window remembers: more than ever pass while one page is open. */
 const KEPT = 16;
 /** The moments a letter may take over: nothing else is being said, or only something that has had its moment. */
 const PICKABLE: ReadonlySet<WindowMoment['kind']> = new Set(['rest', 'waiting', 'answered', 'returned', 'homecoming', 'arrival']);
-/** The moments said of what is on the sill, worked out again from it whenever it changes. */
+/** The moments derived from what is on the sill, recomputed whenever it changes. */
 const DERIVED: ReadonlySet<WindowMoment['kind']> = new Set(['rest', 'returned', 'homecoming', 'arrival']);
 
 /**
- * Every letter still to land at the window, or landed and not yet read,
- * oldest first. A server from before landings sent only its newest answer
- * home and newest pen pal's letter, each until it was read; those come back
- * as landings that are never counted as landed and have no letter id, so
- * nothing is posted for them, and they land on each visit until read, as
- * they always did.
+ * Every letter still to land or landed and unread, oldest first. An older server sent only its newest answer home and
+ * newest pen pal's letter; those become landings never counted as landed and without ids, so nothing is posted for them
+ * and they land on each visit until read.
  */
 export function landingsOf(home: LettersHome): readonly LetterLanding[] {
   if (home.landings) return home.landings;
@@ -157,11 +125,7 @@ export function landingsOf(home: LettersHome): readonly LetterLanding[] {
   return legacy;
 }
 
-/**
- * Where your own bird is now, for the calm line at the window: at home, out
- * over the country waiting to be called, at somebody's window, or on its way
- * home. A server from before `flight` said only whether it was out.
- */
+/** Where your own bird is, for the line under the window; an older server without `flight` said only whether it was out. */
 export function flightOf(home: LettersHome): LetterFlight {
   if (home.flight) return home.flight;
   if (home.out) return home.out.visiting ? 'window' : 'sky';
@@ -169,24 +133,22 @@ export function flightOf(home: LettersHome): LetterFlight {
 }
 
 /**
- * How long from `now`, in milliseconds on this device's clock, until `at`, a
- * time on the server's clock: a visitor's `leavesAt`, a bird's `homeBy`. The
- * page says the server's time as it was read (`now`, read at `readAt` here),
- * so a phone whose clock is set wrong still sees a bird leave on time.
+ * Milliseconds on this device's clock until `at`, a server time such as a visitor's `leavesAt`, using the server's `now`
+ * from a read made at `readAt`, so a phone with a wrong clock still sees a bird leave on time.
  */
 export function untilServerTime(at: string, home: Pick<LettersHome, 'now'>, readAt: number, now: number): number {
   const server = home.now ? Date.parse(home.now) : readAt;
   return Date.parse(at) - server - (now - readAt);
 }
 
-/** Whether a bird is on its way off the sill or onto it: the window holds still for everything else until it is through. */
+/** Whether a bird is flying off or onto the sill; everything else holds still until it is through. */
 export function lookInMotion(look: WindowLook): boolean {
   const own = look.scene.own.kind;
   const sill = look.scene.visitor.kind;
   return own === 'leaving' || own === 'arriving' || sill === 'arriving' || sill === 'leaving';
 }
 
-/** The window as it is before anything is acted out: your bird at home or away, nothing at the window. */
+/** The window before anything is acted out: your bird at home or away, nothing at the window. */
 export function emptyLook(home: LettersHome): WindowLook {
   return {
     scene: { own: home.out ? { kind: 'away' } : { kind: 'home', bird: home.bird }, visitor: { kind: 'none' }, sky: home.sky },
@@ -205,33 +167,29 @@ export function emptyLook(home: LettersHome): WindowLook {
 }
 
 /**
- * The window's first look at the page: a bird at the window already there,
- * your bird where it is, and the first letter still to land flying in (or
- * already on the sill, if it landed before). `hint` names the correspondence
- * a notification was about, whose letter lands first if it can.
+ * The window's first look: a bird already at the window, your bird where it is, and the first letter still to land flying
+ * in (or already on the sill if it landed before). `hint` names a notification's correspondence, whose letter lands first
+ * if it can.
  */
 export function firstLook(home: LettersHome, hint?: string | null): WindowLook {
   return nextLook(emptyLook(home), home, { held: false, hint });
 }
 
 /**
- * The window after another read of the page. In order:
+ * The window after another read, in order:
  *   1. the sky is always as the server says;
  *   2. nothing else changes while the window is held or a bird is flying;
- *   3. a bird at the window the server has is shown there (one it no longer
- *      has flies off: home with an answer written elsewhere, or on);
+ *   3. a bird at the window the server lists is shown there, and one it no longer lists flies off (home with an answer
+ *      written elsewhere, or on);
  *   4. your bird is away while it is out, and flies home when it is not;
- *   5. a letter shown that the server no longer lists (read, and landed)
- *      leaves the sill, unless it was read in its correspondence first and
- *      has only just landed here, with nothing else to land; and your bird
- *      home by itself is shown coming back;
- *   6. with nothing being shown, the next letter lands where its bird fits:
- *      the named correspondence first, then letters that have not landed
- *      before, then answers home, then the oldest.
+ *   5. a shown letter the server no longer lists (read and landed) leaves the sill, unless it was read in its
+ *      correspondence first and only just landed here with nothing else to land; your bird home by itself flies back in;
+ *   6. with nothing shown, the next letter lands where its bird fits: the named correspondence first, then letters never
+ *      landed, then answers home, then the oldest.
  */
 export function nextLook(look: WindowLook, home: LettersHome, opts: { held?: boolean; hint?: string | null } = {}): WindowLook {
   const late = readBefore(look, home);
-  // a read older than something done here says nothing new, so the newest read there is places the letters
+  // A read older than something done here says nothing new, so the newest read in hand places the letters.
   const basis = late ? (look.seen ?? home) : home;
   const fresh = !late && home !== look.actedOn;
   const held = opts.held === true || holds(look);
@@ -241,11 +199,11 @@ export function nextLook(look: WindowLook, home: LettersHome, opts: { held?: boo
   const homeward = fresh && !held ? adopt(d, home) : false;
   const hint = opts.hint || null;
   if (!held) place(d, basis, hint, homeward);
-  // a bird that was away and brought nothing to land (called back elsewhere) still flies home, rather than appearing there
+  // A bird that was away and brought nothing to land (called back elsewhere) still flies home rather than appearing there.
   if (homeward && d.own.kind === 'home') d.own = { kind: 'arriving', bird: d.own.bird };
   if (!hint) d.hint = null;
   else if (look.hint?.threadId !== hint) {
-    // its letter is at the window, or flying in: it lands here, unless the person is busy with something they started
+    // Its letter is at the window or flying in: it lands here, unless the person is busy with something they started.
     const showing = d.landing?.item.threadId === hint && opts.held !== true && d.moment.kind !== 'writing';
     d.hint = { threadId: hint, outcome: showing ? 'land' : 'open-thread' };
   }
@@ -254,7 +212,7 @@ export function nextLook(look: WindowLook, home: LettersHome, opts: { held?: boo
   return finish(look, d);
 }
 
-/** The moment set by the page itself (writing, back to rest), with what the sill shows said again when it is rest. */
+/** Sets the moment the page itself causes (writing, back to rest); at rest, what the sill shows is said again. */
 export function lookWithMoment(look: WindowLook, moment: WindowMoment): WindowLook {
   const d = draftOf(look);
   d.moment = moment;
@@ -262,7 +220,7 @@ export function lookWithMoment(look: WindowLook, moment: WindowMoment): WindowLo
   return finish(look, d);
 }
 
-/** Your bird flies out with a letter (`POST /letters/out` answered): anything it brought home stays to be shown on the sill. */
+/** Your bird flies out with a letter (`POST /letters/out` answered); anything it brought home stays to be shown on the sill. */
 export function lookAfterSend(look: WindowLook, bird: number, sent?: BirdOutResult | null): WindowLook {
   return acted(look, (d) => {
     d.own = { kind: 'leaving', bird };
@@ -273,7 +231,7 @@ export function lookAfterSend(look: WindowLook, bird: number, sent?: BirdOutResu
   });
 }
 
-/** Your bird has flown out through the window: it waits out there now. */
+/** Your bird has flown out through the window and now waits out there. */
 export function lookAfterOwnGone(look: WindowLook): WindowLook {
   if (look.scene.own.kind !== 'leaving') return look;
   return flew(look, (d) => {
@@ -282,7 +240,7 @@ export function lookAfterOwnGone(look: WindowLook): WindowLook {
   });
 }
 
-/** A bird called to the window (`POST /letters/call` answered): the first bird out there sets out, and a letter in its spot makes way. */
+/** A bird called (`POST /letters/call` answered): the first bird out sets off, and a letter in its spot makes way. */
 export function lookAfterCall(look: WindowLook, visitor: LetterVisitor): WindowLook {
   return acted(look, (d) => {
     if (d.landing?.spot === 'sill') d.landing = null;
@@ -294,7 +252,7 @@ export function lookAfterCall(look: WindowLook, visitor: LetterVisitor): WindowL
   });
 }
 
-/** The visitor answered (`POST /letters/visitor` answered): your letter drops onto the sill, its bird takes it home, and the two birds sing. */
+/** The visitor answered (`POST /letters/visitor` answered): your letter drops onto the sill, its bird takes it home, and the birds sing. */
 export function lookAfterAnswer(look: WindowLook, answer: VisitorAnswer): WindowLook {
   const visitor = look.visitor;
   if (!visitor) return look;
@@ -307,7 +265,7 @@ export function lookAfterAnswer(look: WindowLook, answer: VisitorAnswer): Window
   });
 }
 
-/** The visitor sent on its way (`DELETE /letters/visitor` answered): it picks its letter up again and goes. */
+/** The visitor sent on (`DELETE /letters/visitor` answered): it picks its letter up again and goes. */
 export function lookAfterSendOn(look: WindowLook): WindowLook {
   const visitor = look.visitor;
   if (!visitor) return look;
@@ -318,26 +276,21 @@ export function lookAfterSendOn(look: WindowLook): WindowLook {
   });
 }
 
-/**
- * The visitor has flown off through the window, or is gone without a flight
- * (its answer refused because it had already flown on): the sill is free.
- */
+/** The visitor has flown off, or is gone without a flight because its answer was refused after it flew on: the sill is free. */
 export function lookAfterVisitorGone(look: WindowLook): WindowLook {
   return flew(look, (d) => {
     if (d.visitor) d.left = remember(d.left, d.visitor.letter.id);
     d.visitor = null;
     if (d.landing?.spot !== 'sill') d.sill = { kind: 'none' };
     if (d.moment.kind === 'sentOn' || d.moment.kind === 'flownOn') d.moment = { kind: 'rest' };
-    // a letter that landed while the visitor was here (your bird home with an answer) has its turn now that the sill is
-    // the window's again: the pen pals just made were said while their bird flew off, and are in the list below
+    // A letter that landed while the visitor was here gets its turn now; the new pen pals were announced as their bird left.
     else if (d.moment.kind === 'answered' && d.landing) d.moment = momentOf(d.landing);
   });
 }
 
 /**
- * Your bird called back (`DELETE /letters/out` answered 204): it flies home
- * with its letter. Any other answer is not a recall: read the page again and
- * let the next look show what did happen (an answer home, as often as not).
+ * Your bird called back (`DELETE /letters/out` answered 204): it flies home with its letter. Any other answer is not a
+ * recall: read the page again and let the next look show what happened.
  */
 export function lookAfterRecall(look: WindowLook, bird: number): WindowLook {
   return acted(look, (d) => {
@@ -354,11 +307,9 @@ export function lookAfterBirdChosen(look: WindowLook, bird: number): WindowLook 
 }
 
 /**
- * A bird has finished flying onto the sill, in your own spot or the
- * visitor's. Its letter has landed: post `post` to /letters/landed (once;
- * nothing is posted for a bird called to the window, a letter that had
- * landed before, or a letter from a server without landings). `landed` is
- * false when no bird was on its way there, so nothing happened.
+ * A bird has finished flying onto the sill in either spot, so its letter has landed: post `post` to /letters/landed once.
+ * Nothing is posted for a called bird, a letter that landed before or a letter from a server without landings. `landed`
+ * is false when no bird was on its way there.
  */
 export function lookAfterLanded(look: WindowLook, spot: WindowSpot): WindowLanded {
   const d = draftOf(look);
@@ -405,7 +356,7 @@ function draftOf(look: WindowLook): Draft {
   return { ...rest, own: scene.own, sill: scene.visitor, sky: scene.sky, song: scene.song };
 }
 
-/** Something done at the window: the read it was done on is no longer news (`actedOn`), and the sill is said again. */
+/** An action at the window: the read it was done on is no longer news (`actedOn`), and the sill is said again. */
 function acted(look: WindowLook, change: (d: Draft) => void): WindowLook {
   const d = draftOf(look);
   d.actedOn = look.seen;
@@ -416,12 +367,8 @@ function acted(look: WindowLook, change: (d: Draft) => void): WindowLook {
 }
 
 /**
- * A flight through the window finished. That is not something done on a read
- * of the page, so the read the window was given meanwhile stays news: had it
- * counted as acted on, a read that came while a bird was flying (your own
- * bird home after its letter was answered at the same moment as yours) would
- * never be taken in, and your bird would stay away with its answer brought in
- * on the other bird.
+ * A finished flight. It is not an action on a read, so a read that came during the flight stays news; otherwise your bird,
+ * home after its letter was answered at the same moment as yours, would stay away with its answer on the other bird.
  */
 function flew(look: WindowLook, change: (d: Draft) => void): WindowLook {
   const d = draftOf(look);
@@ -437,18 +384,18 @@ function holds(look: WindowLook): boolean {
   return m === 'writing' || m === 'sent' || m === 'sentOn' || m === 'flownOn' || lookInMotion(look);
 }
 
-/** A read the server made before the latest thing done here that said its time. */
+/** Whether the server made this read before the latest action here that returned a time. */
 function readBefore(look: WindowLook, home: LettersHome): boolean {
   return look.asOf !== null && typeof home.now === 'string' && Date.parse(home.now) < Date.parse(look.asOf);
 }
 
-/** Steps 3 to 5 of `nextLook`: the server's birds taken in. Says whether your bird has just been found home after being away. */
+/** Steps 3 to 5 of `nextLook`: takes in the server's birds; says whether your bird was just found home after being away. */
 function adopt(d: Draft, home: LettersHome): boolean {
-  // the bird at the window; one that has left it never comes back to it, so a read from before it left cannot bring it back
+  // The bird at the window; one that left never comes back, so a read from before it left cannot restore it.
   const server = home.visitor && !d.left.includes(home.visitor.letter.id) ? home.visitor : null;
   if (server && d.visitor?.letter.id !== server.letter.id) {
-    // called from another device, or by a call whose answer was lost: it is there already, so it is shown there, without
-    // a flight; a pen pal's letter in its spot makes way, still to land
+    // Called from another device, or by a call whose answer was lost: shown there without a flight, and a pen pal's letter
+    // in its spot makes way, still to land.
     if (d.landing?.spot === 'sill') d.landing = null;
     d.visitor = server;
     d.sill = { kind: 'here', bird: server.person.bird };
@@ -457,7 +404,7 @@ function adopt(d: Draft, home: LettersHome): boolean {
     const gone = d.visitor;
     d.left = remember(d.left, gone.letter.id);
     if (d.sill.kind === 'here') {
-      // answered on another device, it flies home with that answer and the two are pen pals; otherwise it flew on by itself
+      // Answered on another device, it flies home with that answer and the two are pen pals; otherwise it flew on by itself.
       const pal = home.penPals.find((p) => p.person.id === gone.person.id);
       d.sill = { kind: 'leaving', bird: d.sill.bird, how: pal ? 'answered' : 'sent-on' };
       d.moment = pal ? { kind: 'answered', person: pal.person, threadId: pal.threadId } : { kind: 'flownOn', name: gone.person.name };
@@ -465,7 +412,7 @@ function adopt(d: Draft, home: LettersHome): boolean {
     } else d.visitor = null;
   }
 
-  // your own bird: away while it is out, its answer or its letter left to be shown on the sill; home again when it is not
+  // Your own bird: away while out, with its answer or letter left to show on the sill; home again when not.
   let homeward = false;
   if (home.out) {
     if (d.own.kind === 'home' || d.own.kind === 'here') {
@@ -480,9 +427,9 @@ function adopt(d: Draft, home: LettersHome): boolean {
   if (d.moment.kind === 'waiting') d.moment = { kind: 'rest' };
   if ((d.own.kind === 'home' || d.own.kind === 'here') && d.own.bird !== home.bird) d.own = { kind: d.own.kind, bird: home.bird };
 
-  // a letter shown that the server no longer lists has been read and has landed, here or on another device; but one
-  // read in its correspondence first and only just landed here is what the person is looking at: it stays on the sill
-  // for this visit, rather than its bird vanishing a moment after it came down, unless another letter needs the window
+  // A shown letter the server no longer lists was read and landed, here or elsewhere. One read in its correspondence first
+  // and only just landed here is what the person is looking at, so it stays for this visit unless another letter needs the
+  // window.
   const shown = d.landing;
   if (shown) {
     const now = landingsOf(home).find((l) => keyOf(l) === keyOf(shown.item));
@@ -503,7 +450,7 @@ function adopt(d: Draft, home: LettersHome): boolean {
     }
   }
 
-  // your bird home by itself, nobody having answered it: it flies in once, and is said to be home until it flies out again
+  // Your bird home by itself: it flies in once and is said to be home until it flies out again.
   const back = home.out ? null : (home.returned ?? null);
   if (back && d.returned?.letterId !== back.letterId && d.landing?.spot !== 'own' && (d.own.kind === 'home' || d.own.kind === 'here')) {
     d.returned = { letterId: back.letterId, since: back.since, why: back.why, landed: false };
@@ -513,13 +460,13 @@ function adopt(d: Draft, home: LettersHome): boolean {
   return homeward;
 }
 
-/** Step 6 of `nextLook`: with nothing being shown, the first letter that has a spot for its bird lands there. */
+/** Step 6 of `nextLook`: with nothing shown, the first letter whose bird has a free spot lands there. */
 function place(d: Draft, home: LettersHome, hint: string | null, homeward: boolean): void {
   if (d.landing || !PICKABLE.has(d.moment.kind)) return;
   for (const item of inTurn(landingsOf(home).map((l) => known(d, l)), hint)) {
-    // your own bird brings its answer home to its own spot while that is free (at home, or back with only its own letter)
+    // Your own bird brings its answer home while its spot is free (at home, or back with only its own letter).
     if (item.how === 'home' && (d.own.kind === 'home' || (d.own.kind === 'here' && !d.returned))) {
-      // seen landing before, it is simply there; but a bird this window saw away always flies in
+      // Seen landing before, it is simply there, but a bird this window saw away always flies in.
       d.own = { kind: item.landed && !homeward ? 'here' : 'arriving', bird: d.own.bird };
       d.landing = { item, spot: 'own' };
       d.moment = momentOf(d.landing);
@@ -534,7 +481,7 @@ function place(d: Draft, home: LettersHome, hint: string | null, homeward: boole
   }
 }
 
-/** The letters in the order they land: the named correspondence, then not landed before, then answers home, then the oldest. */
+/** The letters in landing order: the named correspondence, then those never landed, then answers home, then the oldest. */
 function inTurn(list: readonly LetterLanding[], hint: string | null): LetterLanding[] {
   const rank = (l: LetterLanding): number[] => [l.threadId === hint ? 0 : 1, l.landed ? 1 : 0, l.how === 'home' ? 0 : 1];
   return [...list].sort((a, b) => {
@@ -545,13 +492,13 @@ function inTurn(list: readonly LetterLanding[], hint: string | null): LetterLand
   });
 }
 
-/** Whether a letter the server lists is not the one being shown, so it waits its turn. */
+/** Whether a letter the server lists is not the one being shown, and so waits its turn. */
 function waitingIn(d: Draft, home: LettersHome): boolean {
   const shown = d.landing ? keyOf(d.landing.item) : null;
   return landingsOf(home).some((l) => keyOf(l) !== shown);
 }
 
-/** What is said of the sill when nothing else is being said: the letter on it, or your bird home by itself. */
+/** What is said of the sill when nothing else is: the letter on it, or your bird home by itself. */
 function settle(d: Draft): void {
   if (!DERIVED.has(d.moment.kind)) return;
   const said: WindowMoment = d.landing
@@ -567,7 +514,7 @@ function momentOf(landing: NonNullable<WindowLook['landing']>): WindowMoment {
   return landing.spot === 'own' ? { kind: 'homecoming', person, threadId, letterId } : { kind: 'arrival', person, threadId, letterId };
 }
 
-/** A letter landed in its spot: posted once, if the server can be told of it, and landed from then on. */
+/** A letter landed in its spot: posted once if the server can be told, and landed from then on. */
 function landedHere(d: Draft, landing: NonNullable<WindowLook['landing']>, post: string[]): NonNullable<WindowLook['landing']> {
   if (landing.item.landed) return landing;
   const id = landing.item.letterId;
@@ -578,12 +525,12 @@ function landedHere(d: Draft, landing: NonNullable<WindowLook['landing']>, post:
   return { item: { ...landing.item, landed: true }, spot: landing.spot };
 }
 
-/** A letter as the server lists it, landed if this window has said so already, whatever an earlier read says. */
+/** A letter as the server lists it, landed if this window already reported it, whatever an earlier read says. */
 function known(d: Draft, item: LetterLanding): LetterLanding {
   return !item.landed && item.letterId && d.landed.includes(item.letterId) ? { ...item, landed: true } : item;
 }
 
-/** A letter's own id, or for a server without landings, which of its two letters it is. */
+/** A letter's id, or for a server without landings, which of its two letters it is. */
 function keyOf(l: LetterLanding): string {
   return l.letterId || `${l.how}:${l.threadId}`;
 }
@@ -598,7 +545,7 @@ function latest(a: string | null, b: string | null | undefined): string | null {
   return a === null || Date.parse(b) > Date.parse(a) ? b : a;
 }
 
-/** The value already held when the new one is the same, so a look that has not changed is the same look. */
+/** The value already held when the new one is equal, so an unchanged look stays the same object. */
 function keep<T>(old: T, next: T): T {
   return old === next || JSON.stringify(old) === JSON.stringify(next) ? old : next;
 }

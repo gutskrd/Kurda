@@ -1,38 +1,19 @@
 /**
- * Starting a game with friends, the same way for every online game — Peyvok
- * Battle, Rhyme Match and Stories: invite a friend from the game, their
- * profile, the friends list or your chat with them; they get an in-app invite
- * they can Join or turn down; and when a game ends, the same people can play
- * again without anyone sending a link. Links and join codes still work, as a
- * fallback.
- *
- * Shaped after the apps people already know (lichess, chess.com, Kahoot): one
- * pending invite per host, friend and game, a newer one replacing it; preset
- * reasons for "not now", never free text; a two-player rematch that starts when
- * both ask for it; a group "play again" the host opens and the others join with
- * one tap — nobody is ever put into a game they did not choose.
- *
- * Shared so the API, the browser and the phone agree on the names, the states
- * and the limits.
+ * Playing online games with friends, the same for every game: in-app invites a friend joins or turns down, join codes and
+ * links as a fallback, and rematches without a new link. One pending invite per host, friend and game (a newer one
+ * replaces it), preset decline reasons only, and nobody is ever put into a game they did not choose. Shared so the API,
+ * the browser and the phone agree on names, states and limits.
  */
 import { MULTI_GAMES } from './games/multi/games.js';
 
-/**
- * The online games you can invite friends to: the three with engines of their
- * own, then every game the generic multiplayer engine runs (`MULTI_GAMES`),
- * so a new learning game joins invites, codes, cards and rematches by being
- * added there.
- */
+/** The online games friends can be invited to: the three with their own engines, then every `MULTI_GAMES` game. */
 export const PLAY_GAMES = ['wordle-battle', 'rhyme-match', 'stories', ...MULTI_GAMES] as const;
 export type PlayGame = (typeof PLAY_GAMES)[number];
 
 /**
- * `POST /play/join {code}`: the game a code joined, and its lobby, for the app
- * to open. Every lobby of every game has a code (`normalizeJoinCode` reads what
- * was typed; `formatJoinCode` shows it as "ABC 234"), and a code is cleared as
- * soon as its game can no longer be joined. Refusals are 404 GAME_NOT_FOUND for
- * a code that is not open to the caller, 409 GAME_FULL, and 409 GAME_STARTED
- * for a story game whose questions began.
+ * `POST /play/join {code}`: the game and lobby a code joined. Every lobby has a code (`normalizeJoinCode`,
+ * `formatJoinCode`), cleared once the game can no longer be joined. Refusals: 404 GAME_NOT_FOUND for a code not open to
+ * the caller, 409 GAME_FULL, and 409 GAME_STARTED for a story game whose questions began.
  */
 export interface JoinedByCode {
   game: PlayGame;
@@ -47,19 +28,11 @@ export function isPlayGame(v: unknown): v is PlayGame {
 export const INVITE_STATUSES = ['pending', 'accepted', 'declined', 'cancelled', 'expired'] as const;
 export type InviteStatus = (typeof INVITE_STATUSES)[number];
 
-/**
- * Why someone turned an invite down — presets only, never free text, and the
- * host is shown the soft wording ("can't play right now" / "would rather play
- * something else").
- */
+/** Why someone turned an invite down: presets only, never free text, shown to the host in soft wording. */
 export const DECLINE_REASONS = ['later', 'not_this_game'] as const;
 export type DeclineReason = (typeof DECLINE_REASONS)[number];
 
-/**
- * A live invite lasts this long at most. It also ends as soon as the lobby
- * starts without the invitee (for games that cannot be joined late), is
- * cancelled, or fills up.
- */
+/** A live invite lasts at most this long; it also ends when the lobby starts without the invitee, is cancelled or fills. */
 export const INVITE_TTL_MINUTES = 15;
 
 /** Friends one invite request may name; a duo invites one, a group up to seven. */
@@ -72,33 +45,23 @@ export const DECLINE_COOLDOWN_MINUTES = 10;
 export const REMATCH_OFFER_SECONDS = 60;
 
 /**
- * What the API answers, with code NOT_FOUND, for a path it has no route for
- * (api/src/plugins/errors.ts). The games' own "no such game" is NOT_FOUND
- * too, but never with these words.
+ * The API's NOT_FOUND message for a path with no route (api/src/plugins/errors.ts). A game's own "no such game" is
+ * NOT_FOUND too, but never with these words.
  */
 export const ROUTE_NOT_FOUND_MESSAGE = 'route not found';
 
-/**
- * The server has no such route: an app newer than the API it talks to — a
- * build of a branch whose API has not been deployed yet, say, where
- * `/play/lobbies` does not exist. The apps say that plainly rather than read
- * it as a game that has ended ("This game isn't available"), which is what an
- * invite to a friend used to show against such a server.
- */
+/** The server has no such route: the app is newer than the API, so the apps say that rather than "This game isn't available". */
 export function isMissingRoute(error: { code?: string; message?: string }): boolean {
   return error.code === 'NOT_FOUND' && error.message === ROUTE_NOT_FOUND_MESSAGE;
 }
 
-/** The person who sent an invite, as the invitee sees them (always a friend). */
+/** Who sent an invite, as the invitee sees them; always a friend. */
 export interface InvitePerson {
   name: string;
   avatarUrl: string | null;
 }
 
-/**
- * What the invite is for, short enough for a banner: each game fills only
- * its own fields.
- */
+/** What an invite is for, short enough for a banner; each game fills only its own fields. */
 export interface InviteSummary {
   /** Peyvok Battle: easy | medium | hard */
   difficulty?: string;
@@ -110,11 +73,7 @@ export interface InviteSummary {
   questionCount?: number;
   /** Stories: solo | duo | group */
   mode?: string;
-  /**
-   * Every game: Rated or Friendly (Game Ranks), so the banner and the card
-   * show it before anyone joins. Whether a Rated game then counts is decided
-   * when it starts (the game's `rated` state).
-   */
+  /** Every game: Rated or Friendly, shown before anyone joins. Whether a rated game counts is decided when it starts. */
   rated?: boolean;
 }
 
@@ -135,7 +94,7 @@ export interface IncomingInvite {
 /** One friend's answer, as the host sees it (outgoing). */
 export interface OutgoingInviteState {
   inviteId: string;
-  /** a friend of the host, so their id and name are theirs to see */
+  /** a friend of the host, so the host may see their id and name */
   userId: string;
   name: string;
   avatarUrl: string | null;
@@ -150,16 +109,13 @@ export interface InviteLists {
   outgoing: Array<{ game: PlayGame; lobbyId: string; invitees: OutgoingInviteState[] }>;
 }
 
-/**
- * A game card in a chat — the live state of a lobby someone shared there. The
- * card asks for this when it is shown and when a `play_changed` arrives.
- */
+/** A game card in a chat: the live state of a shared lobby, fetched when shown and on each `play_changed`. */
 export type LobbyCardStatus = 'open' | 'full' | 'started' | 'finished' | 'cancelled' | 'unavailable';
 
 export interface LobbyCard {
   game: PlayGame;
   lobbyId: string;
-  /** 'unavailable' when this viewer may not see or join it (looks the same as gone) */
+  /** 'unavailable' when this viewer may not see or join it; looks the same as gone */
   status: LobbyCardStatus;
   players: number;
   maxPlayers: number;
@@ -171,9 +127,8 @@ export interface LobbyCard {
 }
 
 /**
- * After a game: a two-player game offers a rematch both must ask for (it then
- * starts at once with the same settings); a bigger game's host opens the next
- * round and everyone else gets a one-tap Join.
+ * After a game: two players get a rematch both must ask for, which starts at once with the same settings; in a bigger game
+ * the host opens the next round and the others join with one tap.
  */
 export interface RematchState {
   kind: 'pair' | 'round';

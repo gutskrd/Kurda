@@ -1,23 +1,8 @@
 /**
- * Shareable links to Hevalo online-game lobbies.
- *
- * A link points at a lobby route that anyone can open: in the browser it routes
- * to the lobby, pasted into a Hevalo DM it renders as an invite card, and on
- * the phone it is what the share sheet hands to whichever app the person you
- * sent it to opens.
- *
- * Shared rather than web-only, for the reason the locale and country rosters
- * are: the two apps have to agree on the *exact* shape of this URL or an invite
- * made on one is unreadable to the other. A copy that drifts by a single query
- * parameter breaks the feature silently, in the one direction nobody tests —
- * someone else's link, in someone else's app.
- *
- * Only our own game-lobby path shape is ever recognized, and the only thing
- * done with a match is routing inside the app with the extracted id, so parsing
- * arbitrary message text is safe.
- *
- * What is NOT here: what a lobby is *called*. That is a catalogue key, and the
- * two apps key their catalogues differently, so each keeps its own map.
+ * Shareable links to online-game lobbies: the browser routes them, a DM shows them as an invite card, and the phone
+ * shares and opens them. Shared because both apps must agree on the exact URL, or an invite from one is unreadable in
+ * the other. Only our own lobby path is matched and only its id is used, so parsing any message text is safe. Lobby names
+ * are catalogue keys and stay in each app.
  */
 
 import { MULTI_GAME_SEGMENT, type MultiGame } from './games/multi/games.js';
@@ -29,11 +14,7 @@ export interface GameInvite {
   id: string;
 }
 
-/**
- * The path segment each game's lobby lives at. A game's type is what the
- * server and the database call it; its address is what people see in a link,
- * so it carries the game's name as players know it.
- */
+/** Each game's lobby path segment: the game's name as players know it, not its type in the server and database. */
 const SEGMENT: Record<GameInviteType, string> = {
   'wordle-battle': 'peyvok-battle',
   'rhyme-match': 'rhyme-match',
@@ -41,10 +22,7 @@ const SEGMENT: Record<GameInviteType, string> = {
   ...MULTI_GAME_SEGMENT,
 };
 
-/**
- * Addresses a lobby had before, still read: a link already sent in a chat,
- * an email or a push keeps working after the game was renamed.
- */
+/** Segments a lobby had before a rename, still read so links already sent keep working. */
 const OLD_SEGMENT: Record<string, GameInviteType> = { 'wordle-battle': 'wordle-battle' };
 
 const BY_SEGMENT: Record<string, GameInviteType> = {
@@ -55,37 +33,25 @@ const BY_SEGMENT: Record<string, GameInviteType> = {
 /** Every segment a lobby link may have, for the patterns below. */
 const SEGMENTS = Object.keys(BY_SEGMENT).join('|');
 
-/** The in-app route for a lobby (also the path segment used in a share link). */
+/** The in-app route for a lobby, also the path of a share link. */
 export function invitePath(invite: GameInvite): string {
   return `/app/games/${SEGMENT[invite.type]}?id=${encodeURIComponent(invite.id)}`;
 }
 
-/**
- * The same path as a route pattern, with no leading slash and no query.
- *
- * React Navigation's linking config wants exactly this shape, and it must be
- * the same path `invitePath` builds or the phone will not recognise the link
- * the phone itself sent. Derived from one place so it cannot be two.
- */
+/** The same path as a route pattern, with no leading slash or query, for the phone's link config; it must match `invitePath`. */
 export function inviteRoutePath(type: GameInviteType): string {
   return invitePath({ type, id: 'x' }).replace(/^\//, '').split('?')[0]!;
 }
 
-// matches "/app/games/<segment>?id=<id>" anywhere in a string, any origin (or none)
+// Matches "/app/games/<segment>?id=<id>" anywhere in a string, with any origin or none.
 const INVITE_RE = new RegExp(String.raw`/app/games/(${SEGMENTS})\?id=([A-Za-z0-9][A-Za-z0-9-]{5,63})`);
 
-/**
- * The link itself, for removing it from displayed text. Global so a body with
- * several links is fully cleaned; built fresh per call because a global regex
- * carries lastIndex between uses.
- */
+/** The link itself, for removing it from shown text: global, and built per call because a global regex keeps lastIndex. */
 export function inviteLinkPattern(): RegExp {
-  // built from a raw source string rather than a literal: the escaping stays
-  // readable, and `/` needs none inside the constructor
   return new RegExp(String.raw`\S*/app/games/(?:${SEGMENTS})\?id=[A-Za-z0-9-]+\S*`, 'g');
 }
 
-/** Extract the first game invite from arbitrary text, or null. */
+/** The first game invite in any text, or null. */
 export function parseInvite(text: string): GameInvite | null {
   const m = INVITE_RE.exec(text);
   if (!m) return null;

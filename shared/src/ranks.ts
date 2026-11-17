@@ -1,20 +1,14 @@
 /**
- * Game Ranks (contract-4 §R): one skill rating per online game, shown as the
- * points and the mountain tier it climbs through, seasonal, chosen per game
- * (Rated or Friendly).
+ * Game Ranks: one seasonal skill rating per online game, shown as points and the mountain tier they climb through, with
+ * each game chosen as Rated or Friendly.
  *
- * The rating is OpenSkill (Weng-Lin, Plackett-Luce): a mean μ and an
- * uncertainty σ per player and game. What a player sees is one number,
- * `pointsOf(μ, σ)` = 40 × (μ − 3σ), never below 0 — the cautious estimate, so a
- * new player starts at 0 and climbs as the system gets sure of them, and there
- * is no hidden second number to argue about: "your rank is your rating".
+ * The rating is a Weng-Lin Bayesian model (Plackett-Luce): a mean μ and an uncertainty σ per player and game. Players see
+ * only `pointsOf(μ, σ)` = 40 × (μ − 3σ), never below 0: the cautious estimate, so a new player starts at 0 and climbs as
+ * the rating grows sure, with no hidden second number.
  *
- * Everything the API, both apps and the admin panel must agree on lives here:
- * the games that have a rank, the tier table (ONE copy, so it can be tuned in
- * one place), the season calendar and rewards, the reason codes a result is
- * explained with, and the shapes the API sends. Names are catalogue keys: the
- * Kurmancî tier names below are the canonical ones, shown with their English
- * meaning; every app translates them (ckb included) — [native-speaker review].
+ * The API, both apps and the admin agree on everything here: the ranked games, the one tier table, the season calendar
+ * and rewards, the reason codes and the API shapes. The Kurmancî tier names are canonical; every app translates them.
+ * [native-speaker review]
  */
 import type { PlayGame } from './play.js';
 import { MULTI_GAMES } from './games/multi/games.js';
@@ -24,10 +18,8 @@ import { MULTI_GAMES } from './games/multi/games.js';
 // ---------------------------------------------------------------------------
 
 /**
- * The games with opponents. Duo and group Stories share the Stories rating;
- * Typing Race and the solo games have nobody to rank against, so no rank.
- * Every multiplayer learning game has one (a game against Hevalo plays as
- * friendly: there is nobody to rank against).
+ * The games with opponents. Duo and group Stories share the Stories rating; Typing Race and the solo games have nobody to
+ * rank against. A game against Hevalo plays as friendly.
  */
 export const RANKED_GAMES = ['wordle-battle', 'rhyme-match', 'stories', ...MULTI_GAMES] as const satisfies readonly PlayGame[];
 export type RankedGame = (typeof RANKED_GAMES)[number];
@@ -40,7 +32,7 @@ export function isRankedGame(v: unknown): v is RankedGame {
 // the model's constants
 // ---------------------------------------------------------------------------
 
-/** OpenSkill's defaults: everyone starts at μ = 25, σ = 25/3, which is 0 points. */
+/** The rating model's defaults: everyone starts at μ = 25, σ = 25/3, which is 0 points. */
 export const START_MU = 25;
 export const START_SIGMA = 25 / 3;
 /** Shown points per unit of (μ − 3σ). */
@@ -50,46 +42,33 @@ export const POINTS_SCALE = 40;
 export const PLACEMENT_GAMES = 5;
 /** After placement, a "?" stays beside the points while σ is above this. */
 export const PROVISIONAL_SIGMA = 3;
-/** Reaching a new tier (not division): this many rated games cannot drop you below its floor. */
+/** After reaching a new tier (not a division), this many rated games cannot drop you below its floor. */
 export const SHIELD_GAMES = 3;
-/** No rated game for this long: others see "Resting" (the owner still sees the rank). */
+/** After this long without a rated game others see "Resting"; the owner still sees the rank. */
 export const RESTING_DAYS = 28;
-/** σ grows this much per idle week (capped at START_SIGMA): only future gains move, never the points shown. */
+/** σ grows this much per idle week, capped at START_SIGMA, so only future gains move, never the points shown. */
 export const IDLE_SIGMA_PER_WEEK = 0.1;
-/** A new season raises σ to at least this, keeping μ: points dip a little, good players re-climb fast. */
+/** A new season raises σ to at least this, keeping μ: points dip a little and good players climb back fast. */
 export const SEASON_SIGMA_FLOOR = 4;
 
-/**
- * The apex, Stêrk: Lûtke I, in the top 1% of the game's active rated players
- * (at least the top 20), with 30 rated games and one in the last 14 days.
- */
+/** The apex, Stêrk: Lûtke I and the top 1% of the game's active rated players (at least the top 20), with 30 rated games and one in the last 14 days. */
 export const STERK_RULE = { minPoints: 1400, topShare: 0.01, minTop: 20, minGames: 30, activeDays: 14 } as const;
-/**
- * Below this many active rated players in a game, percentiles, the Top board
- * and Stêrk stay hidden: a "top 1%" of a dozen people means nothing. Tier and
- * the friends board still show.
- */
+/** Below this many active rated players, percentiles, the Top board and Stêrk stay hidden, since a top 1% of a dozen means nothing. */
 export const FEW_PLAYERS = 50;
 
 /**
- * Repeat-opponent damping: the k-th rated game in 24 h between the same two
- * players counts with this weight (1st, 2nd, 3rd, 4th, then 0 — friendly from
- * there). A group game takes the smallest weight among its pairs.
+ * Repeat-opponent damping: the weight of the k-th rated game in 24 h between the same two players, then 0 (friendly).
+ * A group game takes the smallest weight among its pairs.
  */
 export const REPEAT_WEIGHTS = [1, 1, 0.5, 0.25, 0] as const;
 export const REPEAT_WINDOW_HOURS = 24;
 
-/**
- * A new account (under 3 days old, or fewer than 3 finished lessons or games
- * of any kind) may play rated, but moves the others by at most half.
- */
+/** A new account (under 3 days old, or under 3 finished lessons or games) may play rated but moves the others by at most half. */
 export const NEW_ACCOUNT_RULE = { days: 3, activities: 3, influence: 0.5 } as const;
 
 /**
- * Leaving a started rated game is last place. Leaves in a row, each within 24 h
- * of the one before, add a rated-game cooldown: none for the first, then
- * 10 minutes, 30 minutes, 2 hours (and 2 hours from then on). 24 h without a
- * leave starts the ladder again.
+ * Leaving a started rated game counts as last place. Each leave within 24 h of the last adds a rated-game cooldown: none
+ * for the first, then 10 minutes, 30 minutes and 2 hours from then on. A day without a leave resets it.
  */
 export const LEAVE_COOLDOWN_MINUTES = [0, 10, 30, 120] as const;
 export const LEAVE_LADDER_HOURS = 24;
@@ -107,7 +86,7 @@ export function leaveCooldownMinutes(step: number): number {
 }
 
 // ---------------------------------------------------------------------------
-// tiers — the ONE table (tune here)
+// tiers: the one table, tuned here
 // ---------------------------------------------------------------------------
 
 /** The points-based tiers, lowest first; Stêrk sits above them and is not points-based. */
@@ -129,9 +108,9 @@ export function isRankTier(v: unknown): v is RankTier {
   return (RANK_TIER_KEYS as readonly unknown[]).includes(v);
 }
 
-/** Each tier has three divisions of this many points: III, II, I (I the highest). */
+/** Each tier has three divisions of this many points: III, II, I (I highest). */
 export const DIVISION_POINTS = 100;
-/** 3 = III (lowest), 1 = I (highest). Lûtke I is open-ended (1400+). */
+/** 3 is III (lowest), 1 is I (highest). Lûtke I is open-ended (1400+). */
 export type Division = 1 | 2 | 3;
 
 /** The points a rating is shown as: 40 × (μ − 3σ), rounded, never below 0. */
@@ -139,7 +118,7 @@ export function pointsOf(mu: number, sigma: number): number {
   return Math.max(0, Math.round(POINTS_SCALE * (mu - 3 * sigma)));
 }
 
-/** The points tier for a score (Stêrk is decided on top of this, by standing). */
+/** The points tier for a score; Stêrk is decided on top of this, by standing. */
 export function tierOf(points: number): PointsTier {
   let tier: PointsTier = RANK_TIERS[0].key;
   for (const t of RANK_TIERS) if (points >= t.floor) tier = t.key;
@@ -152,7 +131,7 @@ export function tierFloor(tier: RankTier): number {
   return RANK_TIERS.find((t) => t.key === tier)!.floor;
 }
 
-/** Position in the climb, 0 = Deşt … 5 = Stêrk; for comparing tiers. */
+/** Position in the climb, 0 Deşt to 5 Stêrk, for comparing tiers. */
 export function tierIndex(tier: RankTier): number {
   return RANK_TIER_KEYS.indexOf(tier);
 }
@@ -170,7 +149,7 @@ export interface RankStep {
 }
 
 export interface Progress {
-  /** the division after this one, or null at Lûtke I (the climb's last step; Stêrk is by standing) */
+  /** the division after this one, or null at Lûtke I, the last step (Stêrk is by standing) */
   next: RankStep | null;
   /** the current division's first point and the next one's */
   from: number;
@@ -180,7 +159,7 @@ export interface Progress {
   pointsToGo: number | null;
 }
 
-/** How far along the current division a score is, and what comes next: the progress bar. */
+/** How far along the current division a score is and what comes next, for the progress bar. */
 export function progressToNext(points: number): Progress {
   const p = Math.max(0, Math.round(points));
   const tier = tierOf(p);
@@ -203,9 +182,8 @@ export function progressToNext(points: number): Progress {
 // ---------------------------------------------------------------------------
 
 /**
- * Seasons follow the calendar quarters (UTC) and are named for the season
- * they mostly fall in: Zivistan (Winter, Jan–Mar), Bihar (Spring, Apr–Jun),
- * Havîn (Summer, Jul–Sep), Payîz (Autumn, Oct–Dec) — and the year.
+ * Seasons follow the calendar quarters (UTC) and are named for the season they mostly fall in, with the year: Zivistan
+ * (Jan–Mar), Bihar (Apr–Jun), Havîn (Jul–Sep), Payîz (Oct–Dec).
  */
 export const SEASON_NAMES = ['zivistan', 'bihar', 'havin', 'payiz'] as const;
 export type SeasonName = (typeof SEASON_NAMES)[number];
@@ -218,7 +196,7 @@ export const SEASON_LABELS: Readonly<Record<SeasonName, { ku: string; en: string
 };
 
 export interface Season {
-  /** e.g. '2026-Q4' — the key the API stores everything under */
+  /** such as '2026-Q4': the key the API stores everything under */
   id: string;
   name: SeasonName;
   year: number;
@@ -260,7 +238,7 @@ export function previousSeasonId(id: string): string {
   return seasonOf(new Date(new Date(s.startsAt).getTime() - 1)).id;
 }
 
-/** Whole days left in a season at `now` (0 on its last day), for a calm "12 days left". */
+/** Whole days left in a season at `now`, 0 on its last day. */
 export function seasonDaysLeft(season: Season, now: Date): number {
   const ms = new Date(season.endsAt).getTime() - now.getTime();
   return Math.max(0, Math.floor(ms / 86_400_000));
@@ -276,9 +254,8 @@ export function sterkTitle(seasonId: string): string {
 export const SEASON_REWARD_MIN_GAMES = 10;
 
 /**
- * The season's Gems by the best peak tier across games (one payout per player
- * per season), to accounts active that season and in good standing. Small on
- * purpose: the frame and the emblem are the reward; Gems never buy a win.
+ * The season's Gems by the best peak tier across games, once per player per season, for accounts active that season and
+ * in good standing. Small on purpose: the frame and the emblem are the reward, and Gems never buy a win.
  */
 export const SEASON_REWARD_GEMS: Readonly<Record<RankTier, number>> = {
   dest: 10,
@@ -289,7 +266,7 @@ export const SEASON_REWARD_GEMS: Readonly<Record<RankTier, number>> = {
   sterk: 100,
 };
 
-/** The profile frame (a cosmetic, kept forever) for a season's best peak tier; Lûtke and Stêrk are animated. */
+/** The profile frame, a cosmetic kept forever, for a season's best peak tier; Lûtke and Stêrk are animated. */
 export function seasonFrameSku(tier: RankTier): string {
   return tier === 'lutke' || tier === 'sterk' ? `frame_rank_${tier}_animated` : `frame_rank_${tier}`;
 }
@@ -299,18 +276,11 @@ export function seasonFrameSku(tier: RankTier): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Why a game the host set to Rated plays as friendly, decided when it starts
- * (and in the lobby, as "it would be friendly because…"):
- * - `chosen`: the host chose Friendly;
- * - `solo`, `need-two`: nobody to rank against;
- * - `unverified`, `no-birth-month`: someone's account has no confirmed email
- *   or no birth month yet;
- * - `restricted`: someone may not play rated games (suspended, banned, or
- *   their account is under review);
- * - `cooldown`: someone is on a short break from rated games after leaving
- *   several in a row;
- * - `repeat-opponent`: friendly from here — the same players have played a lot
- *   of rated games together today.
+ * Why a game the host set to Rated plays as friendly, decided at the start and previewed in the lobby: `chosen`, the host
+ * chose Friendly; `solo` and `need-two`, nobody to rank against; `unverified` and `no-birth-month`, someone lacks a
+ * confirmed email or a birth month; `restricted`, someone may not play rated (suspended, banned or under review);
+ * `cooldown`, someone left several rated games in a row; `repeat-opponent`, the same players have played many rated games
+ * together today.
  */
 export const FRIENDLY_REASONS = [
   'chosen',
@@ -324,14 +294,11 @@ export const FRIENDLY_REASONS = [
 ] as const;
 export type FriendlyReason = (typeof FRIENDLY_REASONS)[number];
 
-/**
- * A game's Rated/Friendly badge, shown in the invite banner, the card, the
- * lobby and the game header — before anyone joins.
- */
+/** A game's Rated or Friendly badge, shown in the invite banner, the card, the lobby and the game header before anyone joins. */
 export interface RatedState {
-  /** what the host chose (the badge before the start) */
+  /** what the host chose, the badge before the start */
   rated: boolean;
-  /** decided when the game started: true counts, false plays as friendly; null before the start */
+  /** decided at the start: true counts, false plays as friendly; null before then */
   counts: boolean | null;
   /** why it plays as friendly, once decided (`chosen` when the host chose Friendly) */
   friendlyReason: FriendlyReason | null;
@@ -340,16 +307,10 @@ export interface RatedState {
 }
 
 /**
- * The one plain reason a rated result is explained with — never a sad one:
- * - `placement`: one of the first five games ("+31 · placement game");
- * - `beat-stronger`: you beat a higher-ranked player ("+24 · you beat a higher-ranked player");
- * - `expected-win`: a win against a lower-ranked player ("+7 · expected win");
- * - `won`: a win between equals;
- * - `draw`: a tie;
- * - `lost-to-stronger`: a loss to a higher-ranked player ("−6 · close game against a stronger player");
- * - `lost-to-weaker`, `lost`: a loss to a lower-ranked player, or between equals;
- * - `left`: you left the game (it counts as last place);
- * - `shield`: your tier's shield held you at its floor.
+ * The one plain reason a rated result is explained with, never a sad one: `placement` (one of the first five games),
+ * `beat-stronger`, `expected-win`, `won` (between equals), `draw`, `lost-to-stronger` ("close game against a stronger
+ * player"), `lost-to-weaker` and `lost`, `left` (counts as last place), and `shield` (the tier's shield held you at its
+ * floor).
  */
 export const RANK_REASONS = [
   'placement',
@@ -380,7 +341,7 @@ export interface RankCard {
   placement: { played: number; of: number } | null;
   /** the "?" beside the points: still uncertain after placement */
   provisional: boolean;
-  /** rated games the shield still covers (0 = none) */
+  /** rated games the shield still covers (0: none) */
   shieldGames: number;
   progress: Progress | null;
   ratedGames: number;
@@ -395,7 +356,7 @@ export interface RankCard {
 
 export interface MyRanks {
   ranks: RankCard[];
-  /** set while a rated-game cooldown runs (after leaving several rated games in a row) */
+  /** set while a rated-game cooldown runs after leaving several rated games in a row */
   cooldownUntil: string | null;
   season: Season & { daysLeft: number };
 }
@@ -420,15 +381,11 @@ export type RankResult =
       placement: { played: number; of: number } | null;
       /** the new shield after a tier-up, or what is left of one */
       shieldGames: number;
-      /**
-       * The share of a full change this result was applied with (1 = full):
-       * `damping` × `newAccountLimit`. Each part has its own reason, so a
-       * client that explains a part-weight result says the one that applies.
-       */
+      /** The share of a full change applied (1 is full): `damping` × `newAccountLimit`, each with its own reason for the client to say. */
       weight: number;
-      /** repeat-opponent damping for the whole game, decided at its start (1 = none): "you've played a lot of rated games together today" */
+      /** repeat-opponent damping for the whole game, decided at its start (1: none) */
       damping: number;
-      /** how far new accounts among your opponents may move you (1 = none were new; down to 0.5) */
+      /** how far new accounts among your opponents may move you (1: none were new; down to 0.5) */
       newAccountLimit: number;
       progress: Progress | null;
     }
@@ -437,16 +394,14 @@ export type RankResult =
       gameRef: string;
       counted: false;
       friendlyReason: FriendlyReason | null;
-      /** the game counted, but its result is not in yet, or an admin voided it */
+      /** the game counted but its result is not in yet, or an admin voided it */
       pending?: boolean;
       voided?: boolean;
     };
 
 /**
- * Why a counted result moved you less than a full game, if it did — the line
- * both apps put under it: the same players have played a lot of rated games
- * together today (`repeat-opponent`), someone in it is new to Hevalo
- * (`new-account`), or both. Null for a full-weight result.
+ * Why a counted result moved you less than a full game, the line both apps put under it: the same players have played
+ * many rated games together today, someone in it is new, or both. Null for a full-weight result.
  */
 export type PartWeightReason = 'repeat-opponent' | 'new-account' | 'both';
 
@@ -469,12 +424,12 @@ export interface ExpectedOpponent {
   lose: number;
 }
 
-/** `GET /ranks/expected/:game/:lobbyId`: the chess.com "Win ≈ +24 · Lose ≈ −8", per opponent. */
+/** `GET /ranks/expected/:game/:lobbyId`: "Win ≈ +24 · Lose ≈ −8", per opponent. */
 export interface ExpectedGains {
   game: RankedGame;
   lobbyId: string;
   rated: boolean;
-  /** whether it would count if it started now, and if not why (`self` true when the reason is the viewer's own) */
+  /** whether it would count if it started now, and if not why (`self` when the reason is the viewer's own) */
   wouldCount: boolean;
   friendlyReason: FriendlyReason | null;
   self: boolean;
@@ -489,7 +444,7 @@ export type RankBoardScope = 'friends' | 'top';
 
 export interface RankBoardEntry {
   position: number;
-  /** null: shown as "Player" (Top board: profile not public) */
+  /** null shows as "Player" (on the Top board when the profile is not public) */
   name: string | null;
   /** the viewer's own row */
   isMe: boolean;
@@ -505,14 +460,14 @@ export interface RankBoard {
   game: RankedGame;
   scope: RankBoardScope;
   entries: RankBoardEntry[];
-  /** your own place on this board, shown only to you (null when you are not on it) */
+  /** your own place on this board, shown only to you; null when you are not on it */
   me: { position: number; points: number } | null;
   /** Top board only: hidden while the game has fewer than FEW_PLAYERS active rated players */
   hidden: boolean;
   activePlayers: number | null;
 }
 
-/** A season's result in one game, kept forever (the emblem). */
+/** A season's result in one game, kept forever as the emblem. */
 export interface SeasonEmblem {
   seasonId: string;
   game: RankedGame;
@@ -561,7 +516,7 @@ export interface TierSpread {
   tiers: Array<{ tier: RankTier; players: number; share: number }>;
 }
 
-/** A pair of players whose rated games together look unusual (signals only, never punished automatically). */
+/** A pair whose rated games together look unusual: signals only, never punished automatically. */
 export interface SuspiciousPair {
   game: RankedGame;
   a: { userId: string; username: string };
@@ -578,7 +533,7 @@ export interface SuspiciousPair {
   score: number;
 }
 
-/** One rated game as the admin sees it: enough to find it again and to void it. */
+/** One rated game as the admin sees it: enough to find it again and void it. */
 export interface AdminRatedGame {
   game: RankedGame;
   gameRef: string;
@@ -586,7 +541,7 @@ export interface AdminRatedGame {
   at: string;
   /** players who were ranked in it */
   players: number;
-  /** repeat-opponent damping (1 = full) */
+  /** repeat-opponent damping (1: full) */
   weight: number;
   voided: boolean;
   voidReason: string | null;
@@ -628,7 +583,7 @@ export interface AdminSeasonReward {
 
 /** `GET /admin/seasons/:id/rewards` */
 export interface AdminSeasonRewards {
-  /** who would be rewarded if the season closed now (an open season: Stêrk is judged only at its close) */
+  /** who would be rewarded if the season closed now; Stêrk is judged only at the close */
   rewards: AdminSeasonReward[];
   /** what was handed out already, with when */
   given: Array<AdminSeasonReward & { grantedAt: string }>;
