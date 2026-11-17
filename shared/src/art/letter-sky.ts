@@ -78,7 +78,10 @@ export function letterFlightFrom(spot: LetterSpot): Array<{ at: number; x: numbe
 
 // ───────────────────────────────────────────────────────────── the birds out there
 
-/** One bird far off: its size (share of the window's width), one round's duration, and per moment its facing (1 right, -1 left) and middle in shares of the window. */
+/**
+ * One bird far off: its size (share of the window's width), one round's duration, and per moment its facing (1 right,
+ * -1 left) and middle in shares of the window.
+ */
 export interface LetterSkyBird {
   size: number;
   ms: number;

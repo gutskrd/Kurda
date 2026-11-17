@@ -1,37 +1,16 @@
 /**
- * The lesson path's world in the painted valley (art/valley.ts): the land
- * each unit's road crosses, the road itself, and the stops along it. The
- * chapters' landmarks and their moving parts are art/path-landmark.ts.
+ * The lesson path's world in the painted valley style (valley.ts): each unit's land, the road through it and its
+ * stops; chapter landmarks are in path-landmark.ts. Each land opens under its banner with hills, then terraced fields,
+ * orchards, poplars, an optional stream, and an earth road through every stop: warm dirt where walked, paler ahead.
  *
- * The owner chose this look over the old isometric board of stepping stones:
- * Hamo's country seen from a little above in the late afternoon, painted in
- * flat planes with no outlines. Each unit's land opens under its banner with
- * a line of hills, then terraced fields, orchards and poplars, a stream where
- * the land has one, and a worn earth road through every stop. The road the
- * learner has walked is the warm dirt of a track in use; the road ahead is
- * paler, waiting.
+ * - `pathLandSvg`: one unit's ground at its display size, with scatter kept off the stops, road, landmark and places
+ *   people stand (`landClear`), and the shepherds' cairn in open-country lands (`cairnBox`).
+ * - `pathStonesSvg`: the walked stretches of road, laid over the road ahead stop to stop (found by `trailStones`).
+ * - `pathStopSvg`: a stop as a base and a face, so a press can push the face into the base. A skill's glyph is set by
+ *   the app; the guide's book, story scroll, jump gate and chapter saddlebag are drawn here.
+ * - `pathSignpostSvg`: the signpost at the end of the path while the next unit is being made.
  *
- * - `pathLandSvg`: one unit's ground at the size it is shown, in points — its
- *   hills, fields, stream and bridge, the road ahead, trees, sheep, flowers,
- *   and in the lands of open country the shepherds' cairn on its knoll
- *   (`cairnBox` says where) — kept off the stops, the road, the landmark and
- *   the places people stand (`landClear`).
- * - `pathStonesSvg`: the stretches of road already walked, in warm dirt, laid
- *   over the road ahead from stop to stop (the stretches are known by the
- *   trail's stones, `trailStones`).
- * - `pathStopSvg`: a stop as two pictures, its base and its face, so a press
- *   can push the face down into the base: a raised round token on the road —
- *   gold once done, the unit's own colour for the one to do now, cream when
- *   open, field stone while shut. A skill's glyph is the app's own (a check, a
- *   number, a padlock); the guide's book, a story's scroll, the jump's gate
- *   and the chapter's saddlebag of gifts are drawn here. A chapter's story is
- *   its prize: its scroll lies rolled and tied on stone until the chapter is
- *   done, and open on gold from then on.
- * - `pathSignpostSvg`: the signpost at the end of the path while the next
- *   unit is still being made, one plank pointing on up the road.
- *
- * Deterministic: the same inputs give the same string, ids from a hash of
- * what was asked for (svg.ts), scatter from a generator seeded with it.
+ * Deterministic: ids come from a hash of the request (svg.ts) and scatter from a generator seeded with it.
  */
 import type { UnitTone } from '../lesson-path.js';
 import { PATH_GEOMETRY } from '../lesson-path.js';
@@ -56,24 +35,24 @@ import {
 
 // ───────────────────────────────────────────────────────────── the lands
 
-/** What grows in a land: the trees and the things that stand about like them. */
+/** What grows in a land: trees and things that stand about like them. */
 type Growth = 'fruit' | 'apple' | 'walnut' | 'poplar' | 'blossom' | 'autumn' | 'autumnPoplar' | 'bush' | 'bare' | 'pine' | 'snowpine' | 'rock' | 'hay';
 
-/** A unit's land: its ground and the shade things cast on it, its fields, its hills, what grows there, and whether a stream runs across. */
+/** A unit's land: its ground and the shade cast on it, fields, hills, growth, and whether a stream crosses. */
 interface Land {
   base: string;
   shade: string;
-  /** the terraces, each its face and the step of shade along its foot; with furrows where it is ploughed or cut */
+  /** The terraces, each a face with a step of shade at its foot, furrowed where ploughed or cut. */
   fields: readonly { face: string; step: string; furrow?: string }[];
-  /** the line of hills under the unit's banner: the far ridge and the near one */
+  /** The hills under the unit's banner: the far ridge and the near one. */
   hills: { far: string; near: string; snow?: boolean };
   growth: readonly Growth[];
-  /** how many trees to every 10 000 square points */
+  /** Trees per 10 000 square points. */
   density: number;
   flowers: readonly string[];
   stream: boolean;
   sheep: number;
-  /** the road ahead and its edge, where the land's own ground asks for another colour (the snow) */
+  /** The road ahead and its edge, where the land's ground needs another colour (snow). */
   road?: { face: string; edge: string };
 }
 
@@ -82,10 +61,7 @@ const SPRING_FIELDS = [
   { face: VALLEY.green, step: VALLEY.greenShade },
 ] as const;
 
-/**
- * The twelve lands of the road's year, from Sêvan's orchards in spring to the
- * winter by the stove (shared `PATH_LANDS` gives each unit its land).
- */
+/** The twelve lands of the road's year, from spring orchards to the winter stove (`PATH_LANDS` assigns them to units). */
 const LANDS: Record<PathGround, Land> = {
   orchard: { base: VALLEY.meadow, shade: VALLEY.meadowShade, fields: SPRING_FIELDS, hills: { far: VALLEY.far, near: VALLEY.mid, snow: true }, growth: ['fruit', 'fruit', 'poplar', 'bush'], density: 0.74, flowers: ['#ffffff', VALLEY.blossom], stream: false, sheep: 2 },
   meadow: { base: '#cfe2a0', shade: '#b8d08a', fields: [{ face: VALLEY.green, step: VALLEY.greenShade }, { face: '#dce8a8', step: '#c3d68e' }], hills: { far: VALLEY.far, near: '#b3c99a' }, growth: ['poplar', 'walnut', 'bush', 'fruit'], density: 0.78, flowers: ['#ffffff', '#ffe68a'], stream: true, sheep: 2 },
@@ -112,24 +88,24 @@ const LANDS: Record<PathGround, Land> = {
   },
 };
 
-/** The ground's own colour, for an app that fills a unit not drawn yet (far from the screen) with its base alone. */
+/** The ground's base colour, for an app filling a unit that is not drawn yet (far off screen). */
 export function pathGroundColour(ground: PathGround, dark = false): string {
   const land = LANDS[ground];
   if (!land) throw new RangeError(`art: no ground ${String(ground)}`);
   return dusk(land.base, dark);
 }
 
-/** The shade things cast on a land's ground, by day or by evening: a landmark stands in it as the trees do. */
+/** The shade cast on a land's ground by day or evening; a landmark stands in it as the trees do. */
 export function pathGroundShade(ground: PathGround, dark = false): string {
   const land = LANDS[ground];
   if (!land) throw new RangeError(`art: no ground ${String(ground)}`);
   return dusk(land.shade, dark);
 }
 
-/** The road's widths: its edge, the track, and the two worn ruts in it. */
+/** The road's widths: its edge, the track, and the two ruts in it. */
 const ROAD = { edge: 46, face: 38, ruts: 20 } as const;
 
-/** The S between two points on the road, as the stones of the trail lie along it (path-world.ts): one place `t` along it. */
+/** A point `t` along the S-curve between two stops, as the trail's stones lie (path-world.ts). */
 function along(a: { x: number; y: number }, b: { x: number; y: number }, t: number): Pt {
   const bend = PATH_GEOMETRY.step / 2;
   const u = 1 - t;
@@ -137,7 +113,7 @@ function along(a: { x: number; y: number }, b: { x: number; y: number }, t: numb
   return [w[0] * a.x + w[1] * a.x + w[2] * b.x + w[3] * b.x, w[0] * a.y + w[1] * (a.y + bend) + w[2] * (b.y - bend) + w[3] * b.y];
 }
 
-/** The road through a unit, in logical x: from the top edge's middle, through every stop, to the bottom edge's middle, where the next unit's road begins. */
+/** The road through a unit in logical x: from the top edge's middle through every stop to the bottom edge's middle, where the next unit's road starts. */
 function roadLine(stops: readonly WorldStop[], height: number): Pt[] {
   const anchors = [{ x: 0, y: -6 }, ...stops, { x: 0, y: height + 6 }];
   const out: Pt[] = [];
@@ -149,24 +125,21 @@ function roadLine(stops: readonly WorldStop[], height: number): Pt[] {
 
 export interface PathLandOptions {
   ground: PathGround;
-  /** the size it is shown, in points: the unit's path, edge to edge */
+  /** Display width in points: the unit's path, edge to edge. */
   width: number;
   height: number;
-  /** the unit's stops and stones, in the path's logical terms (`lessonPath`, `trailStones`) */
+  /** The unit's stops and stones in the path's logical terms (`lessonPath`, `trailStones`). */
   stops: readonly WorldStop[];
   stones: readonly TrailStone[];
   dark?: boolean;
-  /** drawn for a right-to-left page: what leans toward the end of the line stands on the left */
+  /** Drawn for a right-to-left page: what leans toward the end of the line stands on the left. */
   rtl?: boolean;
-  /** varies the scatter, so two units on the same ground are not the same picture */
+  /** Varies the scatter, so two units on the same ground differ. */
   seed?: string;
   idPrefix?: string;
 }
 
-/**
- * One unit's land, edge to edge. Decorative: the stops on it say everything
- * there is to say, so it is hidden from screen readers.
- */
+/** One unit's land, edge to edge. Decorative and hidden from screen readers; the stops carry the meaning. */
 export function pathLandSvg(opts: PathLandOptions): string {
   const { width: W, height: H, dark = false, rtl = false } = opts;
   if (!(W > 0) || !(H > 0) || !Number.isFinite(W) || !Number.isFinite(H)) throw new RangeError(`art: land size must be positive, got ${W}×${H}`);
@@ -181,7 +154,7 @@ export function pathLandSvg(opts: PathLandOptions): string {
 
   out.push(`<rect width="${n(W)}" height="${n(H)}" fill="${c(land.base)}"/>`);
 
-  // the hills under the banner: the far ridge with its snow where the land has mountains, then the near one
+  // The hills under the banner: the far ridge, snowy where the land has mountains, then the near one.
   const ridge = (base: number, amp: number, step: number): Pt[] => {
     const pts: Pt[] = [];
     for (let x = -step; x <= W + step; x += step) pts.push([x, base - random() * amp]);
@@ -198,12 +171,12 @@ export function pathLandSvg(opts: PathLandOptions): string {
   out.push(fill(`${smoothPath(near)}L${n(W + 40)} 130L-40 130Z`, c(land.hills.near)));
   out.push(fill(`${smoothPath(near.map(([x, y]) => [x, y + 22] as Pt))}L${n(W + 40)} 140L-40 140Z`, c(land.base)));
 
-  // where the stream crosses, between the first two stops after the unit's head
+  // Where the stream crosses, between the first two stops after the unit's head.
   const streamY = land.stream && opts.stops.length > 2 ? (opts.stops[1]!.y + opts.stops[2]!.y) / 2 + 6 : null;
-  // a shepherds' cairn on its knoll, in the lands of open country, where the room beside the path allows, out of the water
+  // A shepherds' cairn in open-country lands, where there is room beside the path and away from the water.
   const cairnAt = PATH_CAIRN_GROUNDS.includes(opts.ground) ? cairnBox(opts.stops, W, streamY === null ? [] : [{ x: 0, y: streamY - 26, w: 2 * W, h: 52 }]) : null;
   const { solid, tall } = landClear(opts.stops, W, opts.stones, cairnAt);
-  // the road itself, every few points along it, so nothing grows on it
+  // Sample the road every few points, so nothing grows on it.
   const road = roadLine(opts.stops, H);
   const onRoad: PathBox[] = road.filter((_, i) => i % 2 === 0).map(([x, y]) => ({ x, y: y - 26, w: ROAD.edge + 12, h: 52 }));
   const free = (x: number, y: number, w: number, h: number, also: readonly PathBox[] = []): boolean => {
@@ -213,7 +186,7 @@ export function pathLandSvg(opts: PathLandOptions): string {
     return true;
   };
 
-  // terraces down the slope, each with its step of shade along its foot, and furrows where it is ploughed or cut
+  // Terraces down the slope, each with a step of shade at its foot, furrowed where ploughed or cut.
   const bands = Math.max(2, Math.round((H - 140) / 170));
   for (let i = 0; i < bands; i++) {
     const field = land.fields[i % land.fields.length]!;
@@ -236,7 +209,7 @@ export function pathLandSvg(opts: PathLandOptions): string {
     }
   }
 
-  // the stream, under the road's bridge
+  // The stream, under the road's bridge.
   if (streamY !== null) {
     const pts: Pt[] = [];
     const steps = Math.max(5, Math.round(W / 70));
@@ -252,12 +225,12 @@ export function pathLandSvg(opts: PathLandOptions): string {
     out.push(stroke(ripples, c(VALLEY.waterLight), 2));
   }
 
-  // the road ahead, pale and waiting; the walked stretches are laid over it in warm dirt (`pathStonesSvg`)
+  // The road ahead, pale; walked stretches are laid over it in warm dirt (`pathStonesSvg`).
   const roadD = smoothPath(road.map(([x, y]) => [X(x), y] as Pt));
   out.push(stroke(roadD, c(land.road?.edge ?? VALLEY.pathEdge), ROAD.edge));
   out.push(stroke(roadD, c(land.road?.face ?? VALLEY.path), ROAD.face));
 
-  // where the road crosses the stream: a bridge of planks carrying it
+  // A plank bridge where the road crosses the stream.
   if (streamY !== null) {
     let best = road[0]!;
     for (const p of road) if (Math.abs(p[1] - streamY) < Math.abs(best[1] - streamY)) best = p;
@@ -270,7 +243,7 @@ export function pathLandSvg(opts: PathLandOptions): string {
     out.push(fill([[-28, -22], [28, -22], [-28, 22], [28, 22]].map(([dx, dy]) => ellipsePath(bx + dx!, streamY + dy!, 3.6, 3.6)).join(''), c('#6a4428')));
   }
 
-  // flowers and pebbles: small, many, few elements (one path per colour)
+  // Flowers and pebbles: many small shapes in few elements, one path per colour.
   const blooms: string[] = land.flowers.map(() => '');
   let pebbles = '';
   const smalls = Math.round((W * H) / 9000);
@@ -285,7 +258,7 @@ export function pathLandSvg(opts: PathLandOptions): string {
   blooms.forEach((d, i) => out.push(fill(d, dark ? mix(land.flowers[i]!, '#2a2448', 0.3) : land.flowers[i]!)));
   out.push(fill(pebbles, c(VALLEY.pebble)));
 
-  // trees, rocks and hay, back to front, out of the way of the road and of anyone standing by it
+  // Trees, rocks and hay, back to front, clear of the road and anyone standing by it.
   const want = Math.round(((W * H) / 10000) * land.density);
   const placed: { x: number; y: number; kind: Growth; s: number }[] = [];
   for (let tries = 0; tries < want * 14 && placed.length < want; tries++) {
@@ -300,7 +273,7 @@ export function pathLandSvg(opts: PathLandOptions): string {
     if (placed.some((p) => Math.abs(p.x - lx) < fw * 0.9 && Math.abs(p.y - (y + fh)) < fh * 0.7)) continue;
     placed.push({ x: lx, y: y + fh, kind, s });
   }
-  // sheep grazing where there is grass and room
+  // Sheep grazing where there is grass and room.
   const flock: Pt[] = [];
   for (let tries = 0; tries < 60 && flock.length < land.sheep; tries++) {
     const lx = (random() - 0.5) * (W - 40);
@@ -395,10 +368,8 @@ function growth(x: number, y: number, kind: Growth, s: number, dark: boolean, gr
 }
 
 /**
- * The shepherds' cairn on its knoll of golden grass, fitted to its box: a
- * stack of flat stones, each smaller than the one under it, lit on the left
- * and in shade on the right, a red rag tied to the top one, as a waymark
- * where a mountain path needs one.
+ * The shepherds' cairn on a knoll of golden grass, fitted to its box: flat stones shrinking upward, lit on the left and
+ * shaded on the right, with a red rag tied to the top as a waymark.
  */
 function cairnOn(box: PathBox, X: (x: number) => number, dark: boolean): string {
   const c = (hex: string): string => dusk(hex, dark);
@@ -431,19 +402,16 @@ export interface PathStonesOptions {
   width: number;
   height: number;
   stones: readonly TrailStone[];
-  /** walked: the road in warm dirt, laid over the pale road ahead the land draws; ahead: nothing more to lay */
+  /** Walked: lay the road in warm dirt over the pale road ahead; ahead: nothing to lay. */
   walked: boolean;
   dark?: boolean;
   rtl?: boolean;
 }
 
 /**
- * The stretches of road already walked, from each stop to the next, in the
- * warm dirt of a track in use over the pale road ahead (`pathLandSvg`): its
- * edge, its face, and its two worn ruts — three elements however many
- * stretches. A stretch is known by its stones (`trailStones`), which lie
- * along it clear of the stops; it is carried on past its first and last
- * stone to the stops' edges, which the stops then cover.
+ * The walked stretches of road between stops, in warm dirt over the pale road ahead (`pathLandSvg`): edge, face and two
+ * ruts, three elements however many stretches. A stretch is found by its stones (`trailStones`) and extended past its
+ * first and last stone to the stops' edges, which the stops then cover.
  */
 export function pathStonesSvg(opts: PathStonesOptions): string {
   const { width: W, height: H, dark = false, rtl = false, walked } = opts;
@@ -456,7 +424,7 @@ export function pathStonesSvg(opts: PathStonesOptions): string {
     for (const s of opts.stones) stretches.set(s.to, [...(stretches.get(s.to) ?? []), s]);
     for (const list of stretches.values()) {
       const pts: Pt[] = list.map((s) => [X(s.x), s.y]);
-      // carried on to the stops it joins, along the way it was heading
+      // Extend to the stops it joins, along its heading.
       const reach = (from: Pt, toward: Pt): Pt => {
         const dx = from[0] - toward[0];
         const dy = from[1] - toward[1];
@@ -481,10 +449,8 @@ export function pathStonesSvg(opts: PathStonesOptions): string {
 // ───────────────────────────────────────────────────────────── the stops
 
 /**
- * A stop's picture: `box` points square, the stop's centre at (`cx`, `cy`)
- * in it. The token's face is `rx` × `ry`, standing `side` proud of the road
- * (`raised` for the current skill, lifted higher); `press` is how far the
- * face goes down into its base under a finger.
+ * A stop's picture: `box` points square with the stop's centre at (`cx`, `cy`). The token's face is `rx` × `ry`,
+ * standing `side` above the road (`raised` for the current skill); `press` is how far the face sinks under a finger.
  */
 export const PATH_STOP_ART = { box: 112, cx: 56, cy: 58, rx: 36, ry: 31, side: 8, raised: 12, press: 6 } as const;
 
@@ -508,9 +474,8 @@ export const PATH_STOP_LOOKS = [
 export type PathStopLook = (typeof PATH_STOP_LOOKS)[number];
 
 /**
- * The units' colours: the `fill` and `lip` the apps paint a unit's banner
- * with (mobile coursemap/path.ts, web learn/path.css), and the token of the
- * stop to do now — deep by day, light by evening.
+ * The units' colours: the `fill` and `lip` the apps paint a unit's banner with (mobile coursemap/path.ts, web
+ * learn/path.css), also used for the current stop's token, deep by day and light by evening.
  */
 export const PATH_STOP_TONES: Record<'light' | 'dark', Record<UnitTone, { fill: string; lip: string }>> = {
   light: {
@@ -533,7 +498,7 @@ export const PATH_STOP_TONES: Record<'light' | 'dark', Record<UnitTone, { fill: 
   },
 };
 
-/** A token's colours: its face, its side, the ring just inside its rim, and its one highlight. */
+/** A token's colours: face, side, the ring inside its rim, and its highlight. */
 interface Token {
   face: string;
   side: string;
@@ -541,7 +506,7 @@ interface Token {
   glint: string;
 }
 
-/** The colours of every look, by day and by evening. */
+/** Every look's colours, by day and by evening. */
 function tokenOf(look: PathStopLook, t: { fill: string; lip: string }, dark: boolean): Token {
   const stone: Token = dark
     ? { face: '#6a6670', side: '#4a4651', ring: '#7a7680', glint: '#8f8b95' }
@@ -565,7 +530,7 @@ function tokenOf(look: PathStopLook, t: { fill: string; lip: string }, dark: boo
       return { ...cream, side: stone.side, ring: mix(t.fill, cream.face, 0.4) };
     case 'guide':
       return { ...cream, ring: mix(t.fill, cream.face, 0.55) };
-    // a chapter's story, open once every topic of the chapter is done, is the chapter's prize: won, so gold
+    // A chapter's story, open once every topic is done, is the chapter's prize, so it is gold.
     case 'story':
       return gold;
     default:
@@ -576,19 +541,17 @@ function tokenOf(look: PathStopLook, t: { fill: string; lip: string }, dark: boo
 export interface PathStopOptions {
   look: PathStopLook;
   tone: UnitTone;
-  /** the base (its shade on the road, and its side) or the face that a press pushes down */
+  /** The base (its shade on the road and its side), or the face a press pushes down. */
   part: 'base' | 'face';
   dark?: boolean;
-  /** how big it is shown, in points; the drawing is `PATH_STOP_ART.box` square */
+  /** Display size in points; the drawing is `PATH_STOP_ART.box` square. */
   size?: number;
   idPrefix?: string;
 }
 
 /**
- * One stop, base or face: a round token raised a little off the road. The
- * face of a skill carries nothing but its colour, its ring and its one
- * highlight: the app sets its glyph on it. The guide's book, a story's
- * scroll, the jump's gate and the chapter's saddlebag are part of the face.
+ * One stop, base or face: a round token raised off the road. A skill's face has only its colour, ring and highlight,
+ * and the app sets its glyph; the guide's book, story scroll, jump gate and chapter saddlebag are part of the face.
  */
 export function pathStopSvg(opts: PathStopOptions): string {
   const { look, tone, part, dark = false } = opts;
@@ -607,19 +570,19 @@ export function pathStopSvg(opts: PathStopOptions): string {
 
   if (part === 'base') {
     let body = '';
-    // the stop to do now stands in a soft ring of its own colour on the road, so the eye finds it
+    // The current stop sits in a soft ring of its own colour, so the eye finds it.
     if (look === 'current') {
       body += `<path d="${ellipsePath(cx, cy + 4, rx + 16, ry + 13)}" fill="${t.fill}" fill-opacity="0.16"/>`;
       body += `<path d="${ellipsePath(cx, cy + 4, rx + 9, ry + 7)}" fill="${t.fill}" fill-opacity="0.18"/>`;
     }
-    // its shade on the road, then its side: the face carried down by `side`
+    // Its shade on the road, then its side: the face extended down by `side`.
     body += `<path d="${ellipsePath(cx + 4, cy + side + ry * 0.55, rx * 0.98, ry * 0.4)}" fill="${shade}" fill-opacity="${dark ? 0.32 : 0.16}"/>`;
     body += fill(`M${n(cx - rx)} ${n(cy)}L${n(cx - rx)} ${n(cy + side)}A${n(rx)} ${n(ry)} 0 0 0 ${n(cx + rx)} ${n(cy + side)}L${n(cx + rx)} ${n(cy)}Z${ellipsePath(cx, cy + side, rx, ry)}`, k.side);
     if (look === 'strong') body += stroke(`M${n(cx - rx - 2)} ${n(cy + side)}A${n(rx + 2)} ${n(ry + 2)} 0 0 0 ${n(cx + rx + 2)} ${n(cy + side)}`, warm('#f2b632', dark), 3);
     return wrap(prefix, size, B, body);
   }
 
-  // the face: its colour, the ring inside its rim, and its one highlight along the upper left
+  // The face: its colour, the ring inside its rim, and its highlight along the upper left.
   let body = '';
   if (look === 'strong') body += fill(ellipsePath(cx, cy, rx + 3, ry + 3), warm('#ffd96a', dark));
   body += fill(ellipsePath(cx, cy, rx, ry), k.face);
@@ -638,7 +601,7 @@ function wrap(prefix: string, size: number, box: number, body: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(size)}" viewBox="0 0 ${box} ${box}" aria-hidden="true" focusable="false" id="${prefix}">${body}</svg>`;
 }
 
-/** An open book on the token, its cover in the unit's colour, two pages of lines. */
+/** An open book on the token, its cover in the unit's colour, with two lined pages. */
 function book(x: number, y: number, cover: { fill: string; lip: string }, dark: boolean): string {
   const page = dark ? '#ece3cf' : '#fffaf0';
   const pageShade = dark ? '#cfc4ab' : '#efe0c0';
@@ -654,7 +617,7 @@ function book(x: number, y: number, cover: { fill: string; lip: string }, dark: 
   return out;
 }
 
-/** A scroll on the token: open, its lines and Hevalo's apple in the corner; or rolled and tied with a red ribbon while its chapter waits. */
+/** A scroll on the token: open with its lines and Hevalo's apple in the corner, or rolled and tied while its chapter waits. */
 function scroll(x: number, y: number, dark: boolean, shut: boolean): string {
   const paper = dark ? '#e3d6b6' : '#f7e7c2';
   const roll = dark ? '#b79d6d' : '#d9b97a';
@@ -672,13 +635,13 @@ function scroll(x: number, y: number, dark: boolean, shut: boolean): string {
     fill(`M${n(x - 17)} ${n(y - 15)}h34v22h-34Z`, paper) +
     stroke(`M${n(x - 11)} ${n(y - 8)}h22M${n(x - 11)} ${n(y - 3)}h18M${n(x - 11)} ${n(y + 2)}h10`, roll, 1.6) +
     fill(`M${n(x - 21)} ${n(y - 19)}h42a4 4 0 0 1 0 8h-42a4 4 0 0 1 0 -8ZM${n(x - 21)} ${n(y + 4)}h42a4 4 0 0 1 0 8h-42a4 4 0 0 1 0 -8Z`, roll) +
-    // the road's running joke in the corner of every tale: an apple, which Hevalo will find
+    // The running joke in the corner of every story: an apple, which Hevalo will find.
     fill(ellipsePath(x + 10, y + 1, 3.4, 3.2), red) +
     fill(`M${n(x + 10.8)} ${n(y - 2.8)}q3 -2 5 -0.4q-3 1.6 -5 0.4Z`, dusk(VALLEY.leaf, dark))
   );
 }
 
-/** The jump's gate on its slab: an arch of earth wall with blue doors, Sêvan's gate, shut. */
+/** The jump's gate on its slab: an earth-wall arch with blue doors, shut. */
 function gate(x: number, y: number, dark: boolean): string {
   const c = (hex: string): string => dusk(hex, dark);
   return (
@@ -692,9 +655,8 @@ function gate(x: number, y: number, dark: boolean): string {
 }
 
 /**
- * The chapter's gift: a heybe, the woven saddlebag a guest's gifts come home
- * in, its two pockets in madder with a row of indigo lozenges and its flap
- * tied; open, the flap thrown back on gold and sweets.
+ * The chapter's gift: a heybe, the woven saddlebag a guest's gifts come home in, with madder pockets, a row of indigo
+ * lozenges and a tied flap; open, the flap is thrown back on gold and sweets.
  */
 function saddlebag(x: number, y: number, open: boolean, dark: boolean): string {
   const c = (hex: string): string => dusk(hex, dark, 0.2);
@@ -725,11 +687,9 @@ export interface PathSignpostOptions {
 }
 
 /**
- * Where the path stops for now: a wooden signpost on the 120-unit canvas,
- * one long plank pointing on up the road toward the chapter still being
- * made and a short one back the way the learner came, a kilim ribbon tied
- * round the post, and a little cairn of stones at its foot, as shepherds
- * leave to say the way goes on. Decorative: the words beside it say where.
+ * The end of the path for now, on the 120-unit canvas: a wooden signpost with a long plank pointing on up the road and
+ * a short one back, a kilim ribbon round the post and a small cairn at its foot. Decorative; the words beside it say
+ * where.
  */
 export function pathSignpostSvg(opts: PathSignpostOptions = {}): string {
   const { dark = false } = opts;
@@ -739,18 +699,18 @@ export function pathSignpostSvg(opts: PathSignpostOptions = {}): string {
   const c = (hex: string): string => dusk(hex, dark);
   const wood = { light: c('#d29a63'), face: c('#ab743f'), shade: c('#7c522b') };
   let out = fill(ellipsePath(62, 108, 36, 7), c(VALLEY.meadowShade));
-  // the stones at its foot, the largest first so the small ones sit on it
+  // The stones at its foot, largest first so the small ones sit on it.
   for (const [x, y, r] of [[76, 104, 10], [44, 106, 7], [77, 96, 6]] as const) {
     out += fill(ellipsePath(x, y, r, r * 0.6), c('#b4ab98'));
     out += fill(ellipsePath(x - r * 0.15, y - r * 0.12, r * 0.82, r * 0.44), c('#ddd6c8'));
   }
-  // the post: lit on its left, in shade on its right, a cap against the rain
+  // The post: lit on the left, shaded on the right, with a cap.
   out += fill('M55 106V26h5v80Z', wood.face) + fill('M60 106V26h4v80Z', wood.shade) + fill('M53.5 23h12v4h-12Z', wood.light);
-  // the long plank, pointing on up the road, and the short one back the way the learner came
+  // The long plank pointing on up the road, and the short one back.
   out += fill('M40 34h50l9 7l-9 7h-50Z', wood.face) + fill('M40 34h50l9 7h-59Z', wood.light);
   out += stroke('M47 41h10M62 41h9M76 41h7', wood.shade, 1.8);
   out += fill('M75 58h-38l-7 5l7 5h38Z', wood.shade) + fill('M75 58h-38l-7 5h45Z', wood.face);
-  // a kilim ribbon tied round the post, its ends lifting in the wind
+  // A kilim ribbon round the post, its ends lifting in the wind.
   out += fill('M54 28h11v5h-11Z', dusk(VALLEY.red, dark, 0.15)) + stroke('M54 30.5h11', warm(VALLEY.gold, dark), 1.2);
   out += fill('M65 29q8 -4 13 2q-7 -1 -12 3Z', dusk(VALLEY.red, dark, 0.15)) + fill('M65 31q6 4 8 12q-4 -6 -9 -9Z', dusk(VALLEY.redDark, dark, 0.15));
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(size)}" viewBox="0 0 ${CANVAS} ${CANVAS}" aria-hidden="true" focusable="false" id="${prefix}">${out}</svg>`;
