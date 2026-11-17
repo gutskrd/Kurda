@@ -544,7 +544,7 @@ function SignedInRoot() {
         )}
       </RootStack.Screen>
       {/* leaving unwinds past the thread: the club is gone from under it */}
-      <RootStack.Screen name="GroupMembers" options={card}>
+      <RootStack.Screen name="GroupMembers" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={backFrom(navigation)}>
             <GroupMembersScreen
@@ -556,21 +556,21 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupEdit" options={card}>
+      <RootStack.Screen name="GroupEdit" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={backFrom(navigation)}>
             <GroupEditScreen groupId={route.params.groupId} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupRequests" options={card}>
+      <RootStack.Screen name="GroupRequests" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={backFrom(navigation)}>
             <GroupRequestsScreen groupId={route.params.groupId} onExit={backFrom(navigation)} />
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupBans" options={card}>
+      <RootStack.Screen name="GroupBans" options={card} getId={({ params }) => params.groupId}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={backFrom(navigation)}>
             <GroupBansScreen groupId={route.params.groupId} onExit={backFrom(navigation)} />
