@@ -1,26 +1,14 @@
 /**
- * Xezo: a young woman in a long burgundy Kurdish dress with wide hanging
- * sleeves, a gold coin necklace and a broad gold belt hung with coins, her
- * long black hair falling past her waist, her hands resting one by the other
- * in front of her.
+ * Xezo: a young woman in a long burgundy Kurdish dress with wide hanging sleeves, a gold coin necklace and a broad coin
+ * belt, long black hair past her waist, hands resting together in front. Drawn flat with no outlines: the dress in a lit
+ * and a shaded red, the hair black with a few lighter strands, warm brown skin with a blush on each cheek and a soft shade
+ * under the chin. Her hair is in three parts so her head can nod without the long hair swinging: the crown and the hair
+ * framing her face go with the head, the hair behind her shoulders and the two locks over her chest with the body, and
+ * the head's hair reaches over both and under her face, so a small turn never opens a gap.
  *
- * Drawn flat, each part one tone, with no outlines: the dress in two reds,
- * lit and shaded, the hair black with a few lighter strands, the skin one
- * warm brown with a blush on each cheek and a soft shade under the chin.
- *
- * Her hair is in three parts so her head can nod without the long hair
- * swinging with it: the crown and the hair framing her face belong to the
- * head; the hair behind her shoulders and the two locks over her chest belong
- * to the body. The head's hair reaches down over the tops of both, and lies
- * under her face as well as round it, so a small turn never opens a gap.
- *
- * Who she is. Xezal is bright and quick, a little cheeky and easily
- * delighted: she giggles with her shoulders, tilts her head to listen, and
- * winks when you get something right. She blushes when she is pleased or
- * teased. Her two loose wisps of hair have somewhere to go: she tucks the
- * near one back now and then with a tilt of the head and a glance aside. A miss gets
- * a short pout, brows knitted and lips pushed out, that lasts a moment and
- * is gone, because she is on your side.
+ * Character: Xezal is bright, quick, a little cheeky and easily delighted. She giggles with her shoulders, tilts her head
+ * to listen, winks at a right answer, blushes when pleased or teased, and now and then tucks back her near wisp of hair. A
+ * miss gets a short pout that is gone in a moment, because she is on your side.
  */
 import type { Pt } from '../art/svg.js';
 import { linearAt, n, radialBox } from '../art/svg.js';
@@ -61,13 +49,9 @@ const C = {
 // ─────────────────────────────────────────────────────────────── the body
 
 /**
- * The hair that falls behind her shoulders, from just above the head's pivot
- * to below her elbows. It begins there and not under the crown because it
- * stays with the body while the crown's cap turns with her head: begun at
- * the temple, its flat top stood out of the cap as a step on whichever side
- * the head turned away from. At the pivot's height a turn barely moves the
- * cap's edge, so the two meet there without a seam, and above it the cap is
- * the whole outline, on the same line.
+ * The hair behind her shoulders, from just above the head's pivot to below her elbows. It stays with the body while the
+ * crown turns with the head, so it starts at the pivot's height, where a turn barely moves the crown's edge and the two
+ * meet without a seam; started higher, its flat top stood out of the crown as a step.
  */
 const BACK_HAIR: Knot[] = [
   [79, 208, 0.4], [50.4, 302.9], [42.5, 333.4], [42.4, 347.9], [45.5, 360.9],
@@ -76,7 +60,7 @@ const BACK_HAIR: Knot[] = [
   [252.6, 333.4], [249.5, 317.4], [245.5, 304.1], [211.7, 208, 0.4],
 ];
 
-/** The dress, neckline to hem: the V at the front, the sleeves widening from the shoulders. */
+/** The dress, neckline to hem: the V at the front and the sleeves widening from the shoulders. */
 const DRESS: Knot[] = [
   [111.6, 226.3], [82.9, 233.9], [78.4, 238.4], [76.3, 244], [72.9, 252], [69.2, 268], [65.9, 284], [57.9, 316],
   [53.6, 344], [53.4, 366], [54.2, 372], [55.6, 376], [56.6, 379.5], [56.2, 383], [56.2, 548], [55.1, 570],
@@ -88,7 +72,7 @@ const DRESS: Knot[] = [
 ];
 
 
-/** The shade down her left side: the sleeve hanging in shadow, and the skirt below it. */
+/** The shade down her left side: the sleeve hanging in shadow and the skirt below it. */
 const SHADE_LEFT: Knot[] = [
   [94.2, 387.2], [105.1, 387.5], [109.7, 393], [117.8, 394.5], [119.1, 396.9], [115.9, 436.1], [114.2, 440.1],
   [112.2, 457.6], [110.5, 487.1], [106.4, 513.4], [103.6, 555.4], [102, 561.6], [101, 578.4], [97.9, 597.9],
@@ -97,7 +81,7 @@ const SHADE_LEFT: Knot[] = [
   [94, 401.1],
 ];
 
-/** The shade on her right: the skirt beside her, with a lit fold running down through it. */
+/** The shade on her right: the skirt beside her, with a lit fold down through it. */
 const SHADE_RIGHT: Knot[] = [
   [165.5, 415.9], [162, 422.1], [163.8, 434.9], [163.5, 444.9], [169.6, 496.1], [169.7, 511.4], [173, 528.4],
   [174.5, 546.6], [176.5, 556.9], [178.4, 585.9], [180.9, 598.4], [184, 641.6], [190.6, 691.4], [191.4, 716.1],
@@ -107,7 +91,7 @@ const SHADE_RIGHT: Knot[] = [
   [174, 453.9], [166.8, 416.5],
 ];
 
-/** The sleeves where they fall from the shoulders, behind the hair; each lit only at the elbow. */
+/** The sleeves falling from the shoulders behind the hair, each lit only at the elbow. */
 const SHADE_SHOULDER_LEFT: Knot[] = [
   [86, 236], [78.4, 238.4], [72.9, 252], [69.2, 268], [65.9, 284], [57.9, 316], [53.6, 344], [53.4, 366], [55.4, 370.3, 0.1], [56.5, 360.9],
   [60.2, 352.4], [66.1, 348], [71.4, 346.7], [75.1, 347], [81.3, 350.2], [85.1, 360.1], [87.9, 373.9],
@@ -122,11 +106,9 @@ const SHADE_SHOULDER_RIGHT: Knot[] = [
 ];
 
 /**
- * The two locks of hair that fall forward over her chest, each ending behind
- * the belt. Each begins well up under the crown's cap and reaches out to the
- * back hair at the shoulder: the cap turns with her head, these stay with
- * her body, and so the hem of hair over each sleeve and the outline of the
- * shoulders hold still however she tilts.
+ * The two locks falling forward over her chest, each ending behind the belt. Each starts well up under the crown and
+ * reaches out to the back hair at the shoulder, so while the crown turns with the head, the hair over each sleeve and the
+ * shoulders' outline hold still.
  */
 const LOCK_LEFT: Knot[] = [
   [91.2, 372.3, 0.4], [90.1, 371.8], [88.9, 368.2], [88.3, 361.2], [87.1, 357.8], [88.4, 344.8], [87.8, 340.1],
@@ -143,7 +125,7 @@ const LOCK_RIGHT: Knot[] = [
   [190.2, 347.6], [179.8, 352],
 ];
 
-/** Light along single strands of hair: fine soft lines. Those on the crown move with her head. */
+/** Light along single strands of hair, as fine soft lines; those on the crown move with her head. */
 const STRANDS_HEAD: readonly (readonly Pt[])[] = [
   [
     [100.7, 181.9],
@@ -160,7 +142,7 @@ const STRANDS_HEAD: readonly (readonly Pt[])[] = [
     [191.2, 228],
     [191.6, 240],
   ],
-  // the sweep of the hair combed down from the middle parting, one wave to each side
+  // The sweep of hair combed down from the middle parting, one wave each side.
   [
     [141.8, 110.2],
     [127.5, 113.5],
@@ -217,7 +199,7 @@ function strands(list: readonly (readonly Pt[])[]): string {
   return line(list.map((s) => curve(s.map(([x, y]) => [x, y] as const), false)).join(''), C.sheen, 1.2, ' stroke-opacity="0.7"');
 }
 
-/** Her neck and the skin of her chest down to the V, under the dress: a little darker toward the V. */
+/** Her neck and chest down to the V, under the dress, a little darker toward the V. */
 const NECK: Knot[] = [
   [115.4, 222, 0],
   [172, 222, 0],
@@ -227,10 +209,8 @@ const NECK: Knot[] = [
 ];
 
 /**
- * Her shoes below the hem: the left a pointed heeled boot turned outward, the
- * right seen from the front. Each outline is smooth all the way round — sole,
- * arch and heel are one clean line, with no nicks where the edge turns — and
- * the tops reach up under the hem (the dress is drawn over them).
+ * Her shoes below the hem: the left a pointed heeled boot turned out, the right seen from the front. Each outline is one
+ * smooth line without nicks, and the tops reach up under the hem, which is drawn over them.
  */
 const FOOT_LEFT: Knot[] = [
   [89.2, 739, 0], [133.6, 739, 0], [133.6, 756], [132.9, 761.6], [131.9, 765.6], [130.6, 767.9, 0.35],
@@ -302,7 +282,7 @@ function coins(list: readonly (readonly [number, number, number])[], rimColour: 
 }
 
 function necklace(): string {
-  // the two strings of rosy beads, from behind her neck down to the first coins
+  // The two strings of rosy beads, from behind her neck down to the first coins.
   const strings = curve([[121.6, 227.6], [121, 249], [122.4, 268.6]], false) + curve([[167.4, 227.6], [167.4, 240], [165.6, 250], [164.2, 261], [163.4, 268.6]], false);
   const links: Pt[] = [
     [128.4, 283],
@@ -324,7 +304,7 @@ function necklace(): string {
   );
 }
 
-/** The belt's outline: a tall boss in the middle, a plate either side, and wings that flare out and up at the ends. */
+/** The belt's outline: a tall boss in the middle, a plate either side, and wings flaring out and up at the ends. */
 const BELT: Knot[] = [
   [97.2, 347.6, 0.3], [104, 350.8], [112.4, 353, 0.3], [112.4, 342.2, 0.3], [113.6, 340.8], [119.8, 339.8],
   [123.4, 338.2], [127, 339.2], [132.6, 339.2], [139.1, 335.2], [143.4, 334.2], [147.6, 335.3], [154.5, 339.3],
@@ -355,25 +335,25 @@ function belt(metal: string, rim: string): string {
     [127.8, 390.6, 6.8],
     [143.8, 392.8, 6.8],
   ];
-  // each coin hangs from two beads
+  // Each coin hangs from two beads.
   const chain = (x: number, y: number): string => `M${n(x)},${n(y)}v3.2`;
   return (
-    // the shade the belt throws on the dress
+    // The shade the belt throws on the dress.
     fill(curve([[112, 362], [144, 358], [176, 362], [172, 377], [144, 381], [116, 377]]), C.dressShade, alpha(0.5)) +
     beadsAlong(chain(101.2, 370.4) + chain(115, 375.2) + chain(127.8, 378.4) + chain(143.8, 379.6), C.goldLight, 3, 3.2) +
     coins(pendants, C.goldLight) +
-    // the metal, with a bright rim just inside its edge and where each wing meets its plate
+    // The metal, with a bright rim just inside its edge and where each wing meets its plate.
     clipped(rim, fill('M95,332h98v46h-98z', `url(#${metal})`) + line(curve(BELT) + 'M112.4,352.6V369.6M174.6,352V371', C.goldLight, 2.4)) +
-    // the engraving on each plate and wing, worked in a darker gold
+    // The engraving on each plate and wing, in a darker gold.
     fill(oval(124.4, 356.4, 6.6, 7.4) + oval(162.8, 356.4, 6.6, 7.4) + oval(104.6, 359, 3.2, 4.2) + oval(182.6, 358, 3.2, 4.2), C.goldShade, alpha(0.7)) +
     fill(oval(124.4, 356.4, 4, 4.6) + oval(162.8, 356.4, 4, 4.6), C.gold) +
     fill(oval(124.4, 356.4, 1.6, 1.8) + oval(162.8, 356.4, 1.6, 1.8) + oval(104.6, 359, 1.2) + oval(182.6, 358, 1.2), C.goldHi) +
-    // the boss: a bright rim, and inside it a long hollow with two studs
+    // The boss: a bright rim, and inside it a long hollow with two studs.
     fill(curve(BOSS), C.goldLight) +
     fill(oval(143.6, 355, 5.6, 17.2), C.gold) +
     fill(oval(143.6, 355, 3.4, 12.6), C.goldShade) +
     fill(oval(143.6, 348.6, 1.7, 2.8) + oval(143.6, 361.4, 1.7, 2.8), C.goldLight) +
-    // light along the top edges
+    // Light along the top edges.
     line(curve([[114, 341.2], [123.4, 339.4], [133, 340.2]], false) + curve([[154.2, 340.4], [164.4, 339.2], [173, 342]], false), C.goldHi, 0.9) +
     line(curve([[98, 348.6], [104.4, 351.6], [111.6, 353.6]], false) + curve([[189.6, 348.6], [183.6, 351], [177.2, 353.6]], false), C.goldHi, 0.8)
   );
@@ -408,10 +388,10 @@ function body(p: string): string {
       fill(curve(LOCK_LEFT) + curve(LOCK_RIGHT), C.hair),
       strands(STRANDS_BODY),
       belt(id('metal'), id('beltrim')),
-      // her hands lighter toward the fingertips
+      // Her hands lighter toward the fingertips.
       fill(curve(HAND_LEFT) + curve(HAND_RIGHT), `url(#${id('hand')})`),
       fill(HAND_GAPS.map((s) => taper(s, [0, 0.9, 0.9])).join(''), C.handGap, alpha(0.85)),
-      // the fingers of her curled hand, one behind another
+      // The fingers of her curled hand, one behind another.
       line(curve([[76.4, 428.4], [83, 436.4], [90.4, 442.6]], false) + curve([[80.6, 422.8], [88, 431.6], [96.2, 438.6]], false), C.shade, 0.8, ' stroke-opacity="0.45"'),
     ],
   );
@@ -420,14 +400,10 @@ function body(p: string): string {
 // ─────────────────────────────────────────────────────────────── the head
 
 /**
- * The crown and the hair down either side of her face, to her shoulders,
- * parted in the middle. It runs on under her face, so the face is laid on
- * hair rather than beside it. Down to the height of the head's pivot its
- * sides are the outline, on the line the back hair continues; below that
- * they curve in, a few units inside the back hair and the two locks that
- * take over the outline there: those stay with the body when the head
- * tilts, and a corner of the cap that reached the outline would swing out
- * past it and show as a step.
+ * The crown and the hair down either side of her face to her shoulders, parted in the middle, running on under her face so
+ * the face lies on hair. Down to the head's pivot its sides are the outline, on the back hair's line; below that they curve
+ * a few units inside the back hair and the locks, which stay with the body, so no corner of the crown swings out past them
+ * as a step when the head tilts.
  */
 const HAIR_CAP: Knot[] = [
   [146.1, 106.3], [154.9, 107.2], [164.3, 110.3], [172.8, 115.3], [181.5, 122.9], [188.7, 131.9], [192.7, 140.2],
@@ -440,7 +416,7 @@ const HAIR_CAP: Knot[] = [
   [135.6, 107.2],
 ];
 
-/** Her face and neck, round-cheeked, down to just above the collar of her dress. */
+/** Her face and neck, round-cheeked, down to just above the dress's collar. */
 const FACE: Knot[] = [
   [143.3, 132.8, 0.3], [144.2, 134.1], [149.6, 142], [155.7, 147.9], [162.9, 152.7], [174, 157.6], [174.8, 158.8],
   [175.3, 184.6], [174.8, 192.2], [173.5, 196.7], [170, 203.9], [163.5, 210.8], [163, 212.1], [163.3, 225.6],
@@ -475,10 +451,8 @@ const BROW_RIGHT: Pt[] = [
 const BROW_WIDTH = [0.4, 1.7, 2.3, 2.3, 1.8, 0.5];
 
 /**
- * Two loose wisps that escape the parting, one curling down onto each
- * temple, as she has always worn them. The near one is a layer of its own
- * that swings from its root when she tucks it back; the far one stays with
- * the head.
+ * Two loose wisps escaping the parting onto each temple. The near one is its own layer, swinging from its root when she
+ * tucks it back; the far one stays with the head.
  */
 const WISP_NEAR: readonly Pt[] = [
   [113.6, 151],
@@ -498,7 +472,7 @@ function wisp(spine: readonly Pt[]): string {
   return fill(taper(spine, WISP_WIDTHS), C.hair);
 }
 
-/** A small rose worn above her temple, on the hair: five petals round a lighter heart, two leaves beneath. */
+/** A small rose above her temple: five petals round a lighter heart, two leaves beneath. */
 function temple(): string {
   const [cx, cy] = [107.5, 134.5];
   const ring = (count: number, r: number, size: number, squash: number): string =>
@@ -514,20 +488,19 @@ function temple(): string {
 }
 
 /**
- * How the brows sit for each state: each carried `dy` up or down (and `dx`
- * toward the nose), and its inner end a further `slant` beyond that, fading
- * to nothing at the temple, so a raised brow lifts most where a brow does.
+ * How the brows sit per state: each moved `dy` (and `dx` toward the nose), its inner end a further `slant` fading to nothing
+ * at the temple, so a raised brow lifts most where a brow does.
  */
 const BROW_MOVES: Readonly<Record<BrowState, { left: readonly [number, number, number]; right: readonly [number, number, number] }>> = {
   neutral: { left: [0, 0, 0], right: [0, 0, 0] },
   raised: { left: [0, -2.4, -0.4], right: [0, -2.4, -0.4] },
-  // one brow up, most at its inner end: "really?"
+  // One brow up, most at its inner end: "really?"
   one: { left: [0, -1.4, -2.4], right: [0, 0.2, 0.3] },
-  // both drawn down and in toward the nose, the inner ends lowest: the pout's brows
+  // Both drawn down and in toward the nose, inner ends lowest: the pout's brows.
   knit: { left: [0.8, 0.9, 1.4], right: [-0.8, 0.9, 1.4] },
 };
 
-/** Her brows as they sit for `state`; at rest they are exactly as drawn. */
+/** Her brows for `state`; at rest exactly as drawn. */
 function brows(state: BrowState): string {
   const moved = (spine: readonly Pt[], [dx, dy, slant]: readonly [number, number, number]): Pt[] => {
     const outer = (spine[0] as Pt)[0];
@@ -538,17 +511,12 @@ function brows(state: BrowState): string {
   return fill(taper(moved(BROW_LEFT, m.left), BROW_WIDTH) + taper(moved(BROW_RIGHT, m.right), BROW_WIDTH), C.brow);
 }
 
-/**
- * The near wisp, as a layer of their own: it swings about its own root, so
- * a swing carries its tip a few units along the temple and its root
- * nowhere. It stays hair coming out of hair; swung from the parting, as it
- * once was, its root lifted off the face.
- */
+/** The near wisp as its own layer, swinging about its own root, so a swing moves its tip a few units along the temple and keeps its root in the hair. */
 function wisps(): RigPart {
   return { art: wisp(WISP_NEAR), pivot: { x: 113.6, y: 149.5 } };
 }
 
-/** The blush deepening on both cheeks when she is pleased or teased: the same spots as the faint one she always has, wider and pinker. */
+/** The blush deepening on both cheeks when she is pleased or teased: her usual faint spots, wider and pinker. */
 function blush(p: string): string {
   const id = `${p}blushDeep`;
   return part(
@@ -563,7 +531,7 @@ function blush(p: string): string {
   );
 }
 
-/** Her head; `bare`, without the brows and the near wisp, for a player that draws those as layers of their own. */
+/** Her head; `bare` leaves out the brows and the near wisp, for a player that draws those as their own layers. */
 function head(p: string, bare = false): string {
   const id = (name: string): string => `${p}${name}`;
   return part(
@@ -584,7 +552,7 @@ function head(p: string, bare = false): string {
       fill(curve(CHIN), C.shade, alpha(0.85)),
       ellipse(121.4, 188.6, 9, 6.6, `url(#${id('blush')})`),
       ellipse(165.4, 188.6, 9, 6.6, `url(#${id('blush')})`),
-      // the nose: a soft shade down one side and a softer one beneath it
+      // The nose: a soft shade down one side and a softer one beneath.
       fill(taper([[137.6, 177.4], [137.3, 183.4], [137.6, 188.4], [138.6, 190.6]], [0, 1.4, 1.7, 0.9]), C.shade, alpha(0.55)),
       fill(taper([[137.4, 190.4], [140.2, 191.3], [143.2, 190.9]], [0.3, 1.2, 0.3]), C.shade, alpha(0.5)),
       ...(bare ? [] : [brows('neutral')]),
@@ -594,7 +562,7 @@ function head(p: string, bare = false): string {
 
 // ─────────────────────────────────────────────────────────────── the eyes
 
-/** Her left eye's opening (on the viewer's left), round and open; the right is its mirror. */
+/** Her left eye's opening (on the viewer's left), round and open; the right mirrors it. */
 const EYE: Knot[] = [
   [116.8, 174.8, 0.15],
   [119.6, 172.6],
@@ -638,7 +606,7 @@ const flip = (pts: readonly Pt[]): Pt[] => pts.map(([x, y]) => [2 * EYE_AXIS - x
 type Side = 'left' | 'right';
 const SIDES: readonly Side[] = ['left', 'right'];
 
-/** The middle of the eyes, up and down: what they open wider about. */
+/** The eyes' middle, up and down, about which they open wider. */
 const EYE_MID = 175.15;
 
 /** Points made `tall` times further from the eyes' middle line, for an eye opened wide. */
@@ -651,11 +619,9 @@ function lid(side: Side, tall = 1): string {
 }
 
 /**
- * The open eyes asked for: each its white, its iris in a clip of its own,
- * the faint line of its lower lid and the dark line of its upper one. `tag`
- * names the clips and the irises' light, so a part drawn for one state never
- * defines another's; `tall` opens them wider and `pupil` shrinks the pupils,
- * for a startled look.
+ * The open eyes asked for: each white, its iris in its own clip, the faint lower lid line and the dark upper one. `tag`
+ * names the clips and the irises' light so one state's parts never define another's; `tall` opens them wider and `pupil`
+ * shrinks the pupils, for a startled look.
  */
 function eyesDrawn(p: string, tag: string, sides: readonly Side[], tall = 1, pupil = 2): string {
   const id = (name: string): string => `${p}${tag}${name}`;
@@ -681,7 +647,7 @@ function eyesDrawn(p: string, tag: string, sides: readonly Side[], tall = 1, pup
     ],
     [
       fill(sides.map((side) => curve(opening(side))).join(''), C.white),
-      // each iris in its eye's clip and a group of its own, so it can look aside (`irisReach`) and never past the eye
+      // Each iris in its eye's clip and its own group, so it can look aside (`irisReach`) but never past the eye.
       ...sides.map((side) => clipped(id(side === 'left' ? 'L' : 'R'), `<g data-iris="${side}">${iris(side === 'left' ? 126.9 : 159.2)}</g>`)),
       line(sides.map(under).join(''), C.lid, 0.6, ' stroke-opacity="0.3"'),
       fill(sides.map((side) => lid(side, tall)).join(''), C.lid),
@@ -698,7 +664,7 @@ function eyesWide(p: string): string {
   return eyesDrawn(p, 'wide', SIDES, 1.4, 1.6);
 }
 
-/** A blink: the eyes shut, the lash line curving down where the lids meet, the crease of each lid above it. */
+/** A blink: the eyes shut, the lash line curving down where the lids meet, each lid's crease above it. */
 function eyesClosed(): string {
   const shut: Pt[] = [
     [115.8, 174.4],
@@ -725,7 +691,7 @@ function eyesClosed(): string {
   );
 }
 
-/** A smiling eye: shut, the lash line curved up along where the upper lid was, its lash still at the outer end. */
+/** A smiling eye: shut, the lash line curved up where the upper lid was, its lash still at the outer end. */
 function smilingEye(side: Side): string {
   const f = (pts: readonly Pt[]): Pt[] => (side === 'left' ? pts : flip(pts)).map(([x, y]) => [x, y + 2.2] as Pt);
   return taper(f(LID), [0.5, 1.4, 1.8, 1.7, 1.2, 0.3]) + LASHES.map((l) => taper(f(l), [0.8, 0.5, 0])).join('');
@@ -748,7 +714,7 @@ export function drawXezo(p: string): CharacterArt {
     name: 'Xezo',
     viewBox: { x: 26, y: 98, w: 236, h: 678 },
     bust: { x: 78, y: 101, w: 131, h: 131 },
-    // head to hips: her hands at her belt, and the fall of her dress below it
+    // Head to hips: her hands at her belt, and the fall of her dress below it.
     half: { x: 26, y: 98, w: 236, h: 362 },
     headPivot: { x: 143.5, y: 216 },
     body: body(p),

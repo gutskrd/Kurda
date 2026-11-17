@@ -1,14 +1,8 @@
 /**
- * The people in a conversation on one stage, side by side, looking at each
- * other: where each stands, which way round it is drawn, and where its eyes
- * look while the lines go back and forth.
- *
- * Every character is drawn facing us, so two of them face each other with
- * their eyes: each iris (the deer's pupils) moves toward whoever it looks at,
- * and the head leans a little that way. A face drawn turned a little (Hamo's)
- * is stood the other way round where that would turn it from the others.
- *
- * In the stage's own points, the same on the web and on the phone.
+ * The people in a conversation on one stage, side by side and looking at each other: where each stands, which way round,
+ * and where its eyes look as the lines go back and forth. Every character is drawn facing us, so they face each other with
+ * their eyes: irises (the deer's pupils) move toward whoever they look at and the head leans that way. A face drawn turned
+ * (Hamo's) is mirrored where it would turn from the others. In the stage's points, alike on both apps.
  */
 import { n, prefixFor } from '../art/svg.js';
 import { pupilShift } from './life.js';
@@ -18,10 +12,10 @@ import type { CharacterArt, CharacterId, CharacterPoint } from './types.js';
 /** How far a head leans toward whoever it looks at, in degrees. */
 export const LEAN_DEGREES = 2;
 
-/** Two people stand this near the middle, as shares of the stage's width: near enough to talk, with room for each. */
+/** Two people stand this near the middle, as shares of the stage's width: close enough to talk, with room for each. */
 const PAIR = [0.28, 0.72] as const;
 
-/** Where `count` people stand, as shares of the width from the left: two as a pair, more spread evenly. */
+/** Where `count` people stand as shares of the width from the left: two as a pair, more spread evenly. */
 export function standingSpots(count: number): number[] {
   if (count === 2) return [...PAIR];
   return Array.from({ length: Math.max(0, count) }, (_, i) => (i + 0.5) / count);
@@ -33,24 +27,22 @@ export interface StandingPlace {
   id: CharacterId;
   /** the middle of where it stands, as a share of the stage's width from the left as seen */
   at: number;
-  /** drawn the other way round, so that a face drawn turned a little turns toward the others */
+  /** drawn the other way round, so a face drawn turned turns toward the others */
   mirrored: boolean;
-  /** the whole figure (`viewBox`) in points on the stage: its left edge, its top, and how tall it is drawn */
+  /** the whole figure (`viewBox`) in stage points: its left edge, its top and its drawn height */
   left: number;
   top: number;
   height: number;
 }
 
 /**
- * Where each character stands on a stage `width` by `height` points: in
- * order from the start side (the right, for a page read right to left), every
- * one at the same size, head to waist as tall as the stage less `headroom`
- * above the heads, or smaller where the widest of them would not fit beside
- * the others; the stage's bottom edge cuts each off at the waist or below it.
+ * Where each character stands on a stage `width` by `height` points, in order from the start side (the right on
+ * right-to-left pages), all the same size: head to waist as tall as the stage less `headroom`, or smaller where the widest
+ * would not fit beside the others. The stage's bottom cuts each off at the waist or below.
  */
 export function standTogether(arts: readonly CharacterArt[], width: number, height: number, headroom: number, rtl = false): StandingPlace[] {
   const spots = standingSpots(arts.length);
-  // the room each has across: up to halfway to the next one, and no further than the stage's edge
+  // The room each has across: up to halfway to the next one and no further than the stage's edge.
   let room = 1;
   spots.forEach((spot, i) => {
     room = Math.min(room, spot * 2, (1 - spot) * 2);
@@ -63,7 +55,7 @@ export function standTogether(arts: readonly CharacterArt[], width: number, heig
     const at = rtl ? 1 - spot : spot;
     const mirrored = art.turned === 'left' ? at < 0.5 : art.turned === 'right' ? at > 0.5 : false;
     const unit = tall / art.half.h;
-    // turned round, the half box lies where its mirror image does, about the middle of the whole figure
+    // Mirrored, the half box lies where its mirror image does, about the middle of the whole figure.
     const halfX = mirrored ? 2 * art.viewBox.x + art.viewBox.w - art.half.x - art.half.w : art.half.x;
     return {
       part,
@@ -77,11 +69,7 @@ export function standTogether(arts: readonly CharacterArt[], width: number, heig
   });
 }
 
-/**
- * Which way one looks to see another, in its own drawing's terms (a figure
- * drawn the other way round looks the other way in them): straight across,
- * -1 to the left and 1 to the right.
- */
+/** Which way one looks to see another, in its own drawing's terms (a mirrored figure looks the other way in them): straight across, -1 left and 1 right. */
 export function lookAcross(from: StandingPlace, to: StandingPlace): CharacterPoint {
   if (to.at === from.at) return { x: 0, y: 0 };
   const seen = to.at > from.at ? 1 : -1;
@@ -89,8 +77,7 @@ export function lookAcross(from: StandingPlace, to: StandingPlace): CharacterPoi
 }
 
 /**
- * How far each eye's pupil moves from where it is drawn, in drawing units,
- * to look `look` (each way from -1 to 1): the deer's pupils within their
+ * How far each pupil moves from where it is drawn, in drawing units, to look `look` (-1 to 1): the deer's within their
  * whites (`pupilShift`), a person's irises within their eyes (`irisReach`).
  */
 export function eyeShift(art: CharacterArt, look: CharacterPoint): { left: CharacterPoint; right: CharacterPoint } {
@@ -108,9 +95,8 @@ export function leanToward(look: CharacterPoint): number {
 }
 
 /**
- * Whom each speaker looks at while line `at` is said (the line heard last,
- * or the first before any is): everyone at the one saying it, and they at
- * whoever spoke before them, or else whoever answers them.
+ * Whom each speaker looks at while line `at` is said (or the first before any): everyone at the speaker, and the speaker
+ * at whoever spoke before, or else whoever answers.
  */
 export function gazeTargets(count: number, lines: readonly { speaker: number }[], at: number | null): number[] {
   const now = Math.min(Math.max(0, at ?? 0), Math.max(0, lines.length - 1));
@@ -124,9 +110,8 @@ export function gazeTargets(count: number, lines: readonly { speaker: number }[]
 }
 
 /**
- * What the people in a conversation stand in front of: each one's own light
- * (shared `CHARACTER_GLOW`) behind it, run together across the stage in
- * between, as `stageBackdrop` is for one.
+ * What the people in a conversation stand in front of: each one's light (`CHARACTER_GLOW`) behind it, blended across the
+ * stage between, as `stageBackdrop` is for one.
  */
 export function togetherBackdrop(places: readonly { id: CharacterId; at: number }[], width: number, height: number, options: StageOptions = {}): string {
   const p = `${prefixFor(options.idPrefix ?? `stage2${places.map((s) => s.id).join('')}`)}-`;

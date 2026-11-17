@@ -1,37 +1,21 @@
 import type { BrowState, CharacterArt, CharacterId, CharacterPoint, EyeState, MouthShape } from './types.js';
 
 /**
- * How a character is alive between the words: the same on the website and
- * on the phone, which each play it with their own animation.
+ * How a character stays alive between words, alike on both apps, each with its own animation. Alive, never busy: it
+ * breathes, its head drifts a degree, it blinks every few seconds and glances about, and each has its own habits
+ * (`CHARACTER_HABITS`). Taps get a greeting, then a giggle, then a start and a laugh (`tapActs`); a right answer gets a
+ * cheer and a miss a curious tilt, never a sad face, since the learner is often a child. Screens can ask for more
+ * (`CharacterReaction`).
  *
- * Alive, never busy. A character breathes, its head drifts a degree either
- * way, it blinks every few seconds and now and then glances about; each has
- * a habit or two of its own (`CHARACTER_HABITS`): the deer twitches an ear,
- * sniffs and rarely lets his tongue show, Hamo gives the near end of his
- * moustache a small lift, Xezal tucks a wisp of hair back. Nothing more until
- * somebody does something: a tap gets a greeting (both ears up, a blink, a
- * sniff and a little hop), a second quick tap a giggle, a third a start and
- * then a laugh (`tapActs`); a right answer a cheer, a miss a curious tilt of
- * the head — never a sad face, because the person who missed is often a
- * child learning. A screen can ask for more (`CharacterReaction`): a wink, a
- * start, a giggle, Hamo's chuckle, Xezal's pout, the tongue.
- *
- * Every act is shared, and each character plays it its own way (`actFor`):
- * Hamo meets a miss with one brow raised, Xezal with a moment's pout, the
- * deer with the curious tilt as it is (his ears ask the question); a cheer
- * ends in a grin, with Hamo's moustache lifted and Xezal's wink and blush.
- *
- * An act is a short movement made of tracks, each a list of keys: at `t` (a
- * share of the act's length) the track reaches `v`, easing in and out from
- * the key before. A platform plays a track as it likes (a run of timings on
- * the phone, a frame loop on the web); `sampleKeys` says where it is at any
- * moment, for the web and for tests.
+ * Every act is shared and played each character's way (`actFor`). An act is a set of tracks, each a list of keys: at `t`
+ * (a share of the act) the track reaches `v`, easing from the key before. Platforms play tracks their own way (timing runs
+ * on the phone, a frame loop on the web); `sampleKeys` gives a track's value at any moment.
  */
 
-/** One track: at each `t` from 0 to 1 the value is `v`. The first key is at 0 and the last at 1. */
+/** One track: the value `v` at each `t` from 0 to 1; the first key is at 0 and the last at 1. */
 export type Keys = readonly (readonly [t: number, v: number])[];
 
-/** A span of an act, from `from` to `to` (shares of its length), when the eyes or the mouth are held a certain way. */
+/** Spans of an act, from `from` to `to` (shares of its length), in which the eyes or mouth are held a certain way. */
 export type Hold<T> = readonly (readonly [from: number, to: number, value: T])[];
 
 /** The cheeks blushing, for a character drawn with a blush. */
@@ -39,14 +23,14 @@ export type CheekState = 'blush';
 
 export interface Act {
   ms: number;
-  /** each ear's lift in degrees: up is positive, laid back negative (the deer's ears; ignored without them) */
+  /** each ear's lift in degrees, up positive and laid back negative (the deer's; ignored without ears) */
   earLeft?: Keys;
   earRight?: Keys;
   /** the nose's size, 1 as drawn */
   sniff?: Keys;
   /** how far the whole figure rises off the ground, as a share of its height */
   rise?: Keys;
-  /** the figure's height about its feet, 1 as drawn: below for a crouch, above for a stretch */
+  /** the figure's height about its feet, 1 as drawn: lower to crouch, higher to stretch */
   stretch?: Keys;
   /** degrees the head tilts about the neck, beyond any nod */
   tilt?: Keys;
@@ -54,15 +38,15 @@ export interface Act {
   wiggle?: Keys;
   /** degrees the near end of a moustache lifts about its root (Hamo's; ignored without one) */
   lift?: Keys;
-  /** degrees a loose lock of hair swings about where it parts from the rest (Xezal's wisps; ignored without one) */
+  /** degrees a loose lock swings about where it parts (Xezal's wisp; ignored without one) */
   hair?: Keys;
   eyes?: Hold<EyeState>;
   mouth?: Hold<MouthShape>;
-  /** how the brows sit while it lasts (the deer's lids; ignored by a character drawn without a brow layer) */
+  /** how the brows sit meanwhile (the deer's lids; ignored without a brow layer) */
   brows?: Hold<BrowState>;
-  /** the cheeks blushing while it lasts (ignored by a character drawn without a blush) */
+  /** the cheeks blushing meanwhile (ignored without a blush) */
   cheeks?: Hold<CheekState>;
-  /** where the eyes look while it lasts, each way from -1 to 1 of their reach */
+  /** where the eyes look meanwhile, each way from -1 to 1 of their reach */
   look?: CharacterPoint;
 }
 
@@ -84,15 +68,12 @@ export type ActName =
   | 'tuck';
 
 /**
- * What a screen can ask a character to do about something it saw: a cheer
- * for a right answer, a curious `hmm` for a miss, and the rest for the
- * moments in between. A character plays each in its own way (`reactionAct`):
- * only Hamo chuckles, the others giggle; only Xezal pouts, the others go
- * `hmm`.
+ * What a screen can ask a character to do about what it saw: a cheer for a right answer, a curious `hmm` for a miss, and
+ * the rest for moments between. Each character plays them its way (`reactionAct`): only Hamo chuckles, only Xezal pouts.
  */
 export type CharacterReaction = 'cheer' | 'hmm' | 'wink' | 'surprised' | 'giggle' | 'chuckle' | 'pout' | 'tongue';
 
-/** An ear's flick: back, forward past where it rests, and settled. */
+/** An ear's flick: back, forward past rest, settled. */
 const TWITCH: Keys = [
   [0, 0],
   [0.25, -11],
@@ -119,7 +100,7 @@ const EARS_UP: Keys = [
   [1, 0],
 ];
 
-/** The shoulders going, as they do in a laugh: the figure a touch shorter and taller by turns. */
+/** The shoulders going in a laugh: the figure a touch shorter and taller by turns. */
 const SHAKING: Keys = [
   [0, 1],
   [0.15, 0.982],
@@ -130,7 +111,7 @@ const SHAKING: Keys = [
   [1, 1],
 ];
 
-/** A blink inside an act, starting at `at`: half shut, shut, half shut, over about 190 ms of an act `ms` long. */
+/** A blink inside an act starting at `at`: half shut, shut, half shut over about 190 ms of an act `ms` long. */
 function blinkAt(at: number, ms: number): Hold<EyeState> {
   const half = 50 / ms;
   const shut = 90 / ms;
@@ -142,10 +123,7 @@ function blinkAt(at: number, ms: number): Hold<EyeState> {
 }
 
 export const ACTS: Readonly<Record<ActName, Act>> = {
-  /**
-   * Coming on screen: the ears, laid back, spring up past where they rest
-   * and settle, and the character blinks as if it had just seen you.
-   */
+  /** Coming on screen: the laid-back ears spring up past rest and settle, and the character blinks as if just seeing you. */
   arrive: {
     ms: 900,
     earLeft: [
@@ -269,11 +247,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
       [0.55, 0.9, 'grin'],
     ],
   },
-  /**
-   * A miss: the head tilts, the ears dip and come back, the eyes look up and
-   * aside as if thinking it over, and it settles with a slow blink. Curious,
-   * not sorry.
-   */
+  /** A miss: the head tilts, the ears dip and recover, the eyes look up and aside as if thinking, then a slow blink. Curious, not sorry. */
   hmm: {
     ms: 1700,
     tilt: [
@@ -298,7 +272,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
     mouth: [[0.2, 0.75, 'mbp']],
     eyes: blinkAt(0.78, 1700),
   },
-  /** A wink: the near eye shut in a smile, a grin, the head dipped a touch toward that side; Xezal blushes with it. */
+  /** A wink: the near eye shut in a smile, a grin, the head dipped a touch that way; Xezal blushes with it. */
   wink: {
     ms: 800,
     tilt: [
@@ -311,7 +285,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
     mouth: [[0.15, 0.85, 'grin']],
     cheeks: [[0.15, 0.9, 'blush']],
   },
-  /** A start: the figure drawn up straight for a moment, ears up, brows up, eyes wide and the mouth a small round "oh". */
+  /** A start: drawn up straight for a moment, ears and brows up, eyes wide, the mouth a small round "oh". */
   surprised: {
     ms: 900,
     earLeft: EARS_UP,
@@ -326,7 +300,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
     brows: [[0.05, 0.8, 'raised']],
     mouth: [[0.08, 0.8, 'o']],
   },
-  /** A giggle: a quick rock from side to side with the shoulders going, eyes smiling, the grin opening on the laugh and closing again. */
+  /** A giggle: a quick rock from side to side with the shoulders going, eyes smiling, the grin opening and closing. */
   giggle: {
     ms: 1100,
     wiggle: [
@@ -352,11 +326,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
     ],
     cheeks: [[0.1, 0.95, 'blush']],
   },
-  /**
-   * Hamo's chuckle, with his whole face: brows up, eyes shut in a smile, the
-   * shoulders going with the head, the mouth opening and closing on the
-   * laugh, and the near end of his moustache lifted with the smile.
-   */
+  /** Hamo's chuckle with his whole face: brows up, eyes shut in a smile, shoulders and head going, mouth opening and closing, moustache lifted. */
   chuckle: {
     ms: 1400,
     stretch: SHAKING,
@@ -383,7 +353,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
       [0.8, 0.9, 'grin'],
     ],
   },
-  /** Xezal's pout: brows knitted, lips pushed out, the head tilted and the eyes down and aside, and over with a blink. */
+  /** Xezal's pout: brows knitted, lips pushed out, head tilted, eyes down and aside, over with a blink. */
   pout: {
     ms: 1300,
     tilt: [
@@ -397,7 +367,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
     mouth: [[0.12, 0.8, 'u']],
     eyes: blinkAt(0.82, 1300),
   },
-  /** The tongue poked out, cheekily: the head cocked, ears up, eyes smiling. */
+  /** The tongue poked out cheekily: head cocked, ears up, eyes smiling. */
   tongue: {
     ms: 1000,
     tilt: [
@@ -421,7 +391,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
     eyes: [[0.15, 0.85, 'happy']],
     mouth: [[0.15, 0.85, 'tongue']],
   },
-  /** Hamo's habit: a small, slow lift of the near end of his moustache and a settle, as a man pleased with himself gives it, a smile in his eyes. */
+  /** Hamo's habit: a small slow lift of his moustache's near end and a settle, with a smile in his eyes. */
   preen: {
     ms: 1600,
     lift: [
@@ -433,7 +403,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
     ],
     eyes: [[0.35, 0.8, 'happy']],
   },
-  /** Xezal's habit: tucking a wisp back — the head tilts, the loose hair swings back and settles, her eyes go aside and come back smiling. */
+  /** Xezal's habit: tucking a wisp back as the head tilts, her eyes going aside and back smiling. */
   tuck: {
     ms: 1400,
     tilt: [
@@ -442,7 +412,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
       [0.7, 6],
       [1, 0],
     ],
-    // positive turns the wisp back toward the hair it came from, where it hides a moment, and it springs back
+    // Positive turns the wisp back toward the hair, where it hides a moment before springing back.
     hair: [
       [0, 0],
       [0.25, 9],
@@ -456,11 +426,8 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
 };
 
 /**
- * What each character lays over the shared act to play it in its own way:
- * Hamo meets a miss with one brow raised and cheers with his brows up and
- * his moustache lifted at the end; Xezal pouts at a miss and ends a cheer
- * with a wink and a blush; the deer plays every act as it is shared, his
- * ears and his hops being his own way already.
+ * What each character lays over the shared act: Hamo meets a miss with one raised brow and ends a cheer with brows up and
+ * his moustache lifted; Xezal pouts at a miss and ends a cheer with a wink and a blush; the deer plays every act as shared.
  */
 const OWN_WAY: Readonly<Record<CharacterId, Partial<Record<ActName, Partial<Act>>>>> = {
   hevalo: {},
@@ -488,7 +455,7 @@ const OWN_WAY: Readonly<Record<CharacterId, Partial<Record<ActName, Partial<Act>
   },
 };
 
-/** The act `name` as `id` plays it: the shared act, with what is its own laid over. */
+/** The act `name` as `id` plays it: the shared act with that character's own parts laid over. */
 export function actFor(id: CharacterId, name: ActName): Act {
   const own = OWN_WAY[id]?.[name];
   const base = ACTS[name];
@@ -502,14 +469,10 @@ export function reactionAct(id: CharacterId, reaction: CharacterReaction): ActNa
   return reaction;
 }
 
-/** Taps this close together are one run: the first greets, the second gets a giggle, the third a start and then a laugh. */
+/** Taps this close together are one run: a greeting, then a giggle, then a start and a laugh. */
 export const TAP_RUN_MS = 1600;
 
-/**
- * What the `taps`th quick tap in a run gets, in order: a greeting; a giggle;
- * a start, and then the character's laugh (Hamo's chuckle, the others'
- * giggle). After the third the run begins again.
- */
+/** What the `taps`th quick tap in a run gets: a greeting; a giggle; a start, then the character's laugh. The run then starts again. */
 export function tapActs(id: CharacterId, taps: number): ActName[] {
   const step = ((Math.max(1, Math.floor(taps)) - 1) % 3) + 1;
   if (step === 1) return ['greet'];
@@ -517,7 +480,7 @@ export function tapActs(id: CharacterId, taps: number): ActName[] {
   return ['surprised', reactionAct(id, 'chuckle')];
 }
 
-/** An ease in and out: slow off the mark, slow into the next key. */
+/** Easing in and out: slow off the mark and slow into the next key. */
 export function easeInOut(x: number): number {
   return x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2;
 }
@@ -545,10 +508,7 @@ export function sampleHold<T>(hold: Hold<T> | undefined, t: number): T | null {
   return null;
 }
 
-/**
- * A track as a run of steps for an animation library: go to `to` over `ms`,
- * one after the other from the first key's value.
- */
+/** A track as steps for an animation library: go to `to` over `ms`, one after another from the first key's value. */
 export function keySteps(keys: Keys, actMs: number): { to: number; ms: number }[] {
   const steps: { to: number; ms: number }[] = [];
   for (let i = 1; i < keys.length; i++) {
@@ -561,18 +521,16 @@ export function keySteps(keys: Keys, actMs: number): { to: number; ms: number }[
 
 // ─────────────────────────────────────────────────────────────── between acts
 
-/** The breath: the figure's height swells by this share and back, once every `ms`. */
+/** The breath: the figure's height swells by this share and back once every `ms`. */
 export const BREATH = { ms: 3600, depth: 0.012 } as const;
 
-/** The head's drift while still: this many degrees either way, once every `ms`. */
+/** The head's drift while still: this many degrees either way once every `ms`. */
 export const SWAY = { ms: 6200, degrees: 1.1 } as const;
 
 /**
- * Resting — asleep where there is nothing yet to do: the eyes shut, the head
- * dipped `dip` degrees to one side, a breath slower and deeper than awake,
- * and a "z" drifting up from beside the head every `zMs`, `zRise` of the
- * figure's height before it fades. No blinks, glances or twitches: it is
- * still. A tap still wakes it for its greeting, and it settles back.
+ * Resting, asleep while there is nothing to do: eyes shut, head dipped `dip` degrees, a slower deeper breath, and a "z"
+ * rising `zRise` of the figure's height every `zMs` before it fades. No blinks, glances or twitches. A tap still wakes it
+ * for its greeting, and it settles back.
  */
 export const RESTING = { breathMs: 5600, depth: 0.022, dip: 5, zMs: 2400, zRise: 0.22 } as const;
 
@@ -580,10 +538,8 @@ export const RESTING = { breathMs: 5600, depth: 0.022, dip: 5, zMs: 2400, zRise:
 export const BLINK_STEPS = { half: 50, shut: 90 } as const;
 
 /**
- * How often each habit comes round, in milliseconds (a random time between
- * the two each time), and how long a glance rests where it looks. Everyone
- * blinks and glances; which of the rest each character has is in
- * `CHARACTER_HABITS`.
+ * How often each habit comes round in ms (a random time between the two), and how long a glance rests. Everyone blinks and
+ * glances; which other habits each character has is in `CHARACTER_HABITS`.
  */
 export const HABITS = {
   blink: [2600, 6000],
@@ -601,17 +557,13 @@ export const HABITS = {
   tuck: [12000, 26000],
 } as const;
 
-/** Something a character does by itself now and then: one of `acts`, picked at random, every so often. */
+/** Something a character does by itself now and then: one of `acts` at random, every so often. */
 export interface Habit {
   acts: readonly ActName[];
   every: readonly [number, number];
 }
 
-/**
- * Each character's own habits, with their own timing: the deer flicks an
- * ear, sniffs and rarely lets his tongue show; Hamo lifts the near end of
- * his moustache; Xezal tucks a wisp of hair back.
- */
+/** Each character's own habits and timing: the deer flicks an ear, sniffs and rarely shows his tongue; Hamo lifts his moustache; Xezal tucks a wisp back. */
 export const CHARACTER_HABITS: Readonly<Record<CharacterId, readonly Habit[]>> = {
   hevalo: [
     { acts: ['twitchLeft', 'twitchRight'], every: HABITS.twitch },
@@ -628,23 +580,19 @@ export function pickAct(habit: Habit, random: () => number = Math.random): ActNa
   return habit.acts[i] ?? (habit.acts[0] as ActName);
 }
 
-/** A random time between the two ends of a habit's range. */
+/** A random time within a habit's range. */
 export function between([min, max]: readonly [number, number], random: () => number = Math.random): number {
   return min + random() * (max - min);
 }
 
-/** Somewhere to glance: anywhere across, and a little up or down rather than far. */
+/** Somewhere to glance: anywhere across, and only a little up or down. */
 export function glanceTarget(random: () => number = Math.random): CharacterPoint {
   return { x: Math.round((random() * 2 - 1) * 100) / 100, y: Math.round((random() * 1.1 - 0.5) * 100) / 100 };
 }
 
 // ─────────────────────────────────────────────────────────────── looking at things
 
-/**
- * Where to look, each way from -1 to 1, for something at `dx`, `dy` from
- * the eyes (any unit, the same both ways): straight at it, further the
- * further away it is, at full stretch from about `far` away.
- */
+/** Where to look, each way from -1 to 1, for something at `dx`, `dy` from the eyes (any unit): further the further away, at full stretch from about `far`. */
 export function lookToward(dx: number, dy: number, far: number): CharacterPoint {
   const distance = Math.hypot(dx, dy);
   if (!(distance > 0) || !(far > 0)) return { x: 0, y: 0 };
@@ -653,14 +601,13 @@ export function lookToward(dx: number, dy: number, far: number): CharacterPoint 
 }
 
 /**
- * How far each pupil moves from where it is drawn, in drawing units, to look
- * `look` (each way from -1 to 1), with `focus` from 0 (as drawn, turned in
- * towards each other) to 1 (in the middle of its eye, looking).
+ * How far each pupil moves from where it is drawn, in drawing units, to look `look` (-1 to 1), with `focus` from 0 (as
+ * drawn, turned in) to 1 (centred, looking).
  */
 export function pupilShift(art: CharacterArt, look: CharacterPoint, focus: number): { left: CharacterPoint; right: CharacterPoint } {
   const rig = art.rig;
   if (!rig) return { left: { x: 0, y: 0 }, right: { x: 0, y: 0 } };
-  // looking out past the edge of the reach is clamped to its ellipse, so a pupil never leaves its white
+  // A look past the reach is clamped to its ellipse, so a pupil never leaves its white.
   const length = Math.hypot(look.x, look.y);
   const k = length > 1 ? 1 / length : 1;
   const x = look.x * k * rig.look.reach.x;
@@ -672,12 +619,12 @@ export function pupilShift(art: CharacterArt, look: CharacterPoint, focus: numbe
   return { left: one(rig.look.left), right: one(rig.look.right) };
 }
 
-/** The middle of the eyes, in drawing units: what a look is measured from. */
+/** The middle of the eyes in drawing units, which a look is measured from. */
 export function eyesMiddle(art: CharacterArt): CharacterPoint {
   if (art.rig) {
     const { left, right } = art.rig.look;
     return { x: (left.centre.x + right.centre.x) / 2, y: (left.centre.y + right.centre.y) / 2 };
   }
-  // a face is about a third of the way down a bust
+  // A face sits about a third of the way down a bust.
   return { x: art.bust.x + art.bust.w / 2, y: art.bust.y + art.bust.h * 0.48 };
 }
