@@ -58,6 +58,8 @@
   gap: 6px;
   min-height: 34px;
   padding: 0 13px 0 11px;
+  /* the pill sits alone in the window's corner, so a finger may land a little further from it than the shared reach allows */
+  --reach-open: 6px;
   border: 0;
   border-radius: var(--r-pill);
   background: var(--surface);
@@ -70,12 +72,6 @@
   transition:
     transform var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast) ease;
-}
-/* a finger needs more room than the pill shows */
-.letters-change::after {
-  content: '';
-  position: absolute;
-  inset: -6px;
 }
 .letters-change:hover {
   box-shadow: var(--shadow), 0 0 0 1px var(--border-strong);

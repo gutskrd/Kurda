@@ -38,10 +38,10 @@ const reachSheet = parsed.get('styles/reach.css')!;
  * forgotten: each entry must still be found wanting (a test below checks
  * that), and comes off its list in the change that gives it its room.
  */
-/** Rows on the impostor's start screen, which take their room with that screen's next change (impostor/start.css). */
-const ROOM_AWAITED = new Set(['.imp-cat-strip', '.pic-radio.is-strip .pic-radio-options']);
-/** The letters' change pill, whose old hand-made area goes with the letters' next change (letters/letters.css). */
-const AFTER_AWAITED = new Set(['.letters-change']);
+/** Scrolling rows that still wait for their room (none now: the impostor's start screen took its own). */
+const ROOM_AWAITED = new Set<string>();
+/** Controls whose old hand-made area past their edges still waits to go (none now: the letters' change pill gave its up). */
+const AFTER_AWAITED = new Set<string>();
 
 /**
  * Rows that keep less room than the rest, and why: the kinds of shop item
@@ -501,7 +501,7 @@ describe('the rest of the stylesheets', () => {
     expect(afterReaches(others).filter(({ entry }) => !AFTER_AWAITED.has(entry)).map(({ at }) => at)).toEqual([]);
   });
 
-  it('still owe the letters’ pill its change, until that change comes and it leaves the list', () => {
+  it('still owe each control on the waiting list its change, until that change comes and it leaves the list', () => {
     const owed = new Set(afterReaches(others).map(({ entry }) => entry));
     expect([...AFTER_AWAITED].filter((entry) => !owed.has(entry))).toEqual([]);
   });
@@ -537,7 +537,7 @@ describe('the rows that scroll sideways', () => {
     expect(short).toEqual([]);
   });
 
-  it('still owe the impostor’s rows their room, until that change comes and they leave the list', () => {
+  it('still owe each row on the waiting list its room, until that change comes and it leaves the list', () => {
     const roomy = [...ROOM_AWAITED].filter((row) => {
       const boxes = scrollerBoxes(row, others);
       return boxes.length > 0 && boxes.every((b) => (b.top ?? -1) >= ROOM && (b.bottom ?? -1) >= ROOM);

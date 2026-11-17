@@ -33,7 +33,9 @@ respects Reduce Motion, and meets WCAG AA contrast in light **and** dark.
       highlight slide, board/shake animations all do this).
 
 ## Touch targets
-- [ ] Interactive targets are ≥ 44×44 pt (use `hitSlop` to extend small icons).
+- [ ] Interactive targets are drawn ≥ 44×44 pt and answer over ≥ 48×48 pt. The app's
+      `Pressable` extends a small control from the size its style states; see
+      `a11y/a11y.ts` (`reachSlop`, `MIN_REACH`) and `theme/Pressable.tsx` (`ReachGroup`).
 
 ## Helpers in this repo
 - `a11y/contrast.ts` — `contrastRatio`, `checkContrast`, `AA_NORMAL`/`AA_LARGE`.

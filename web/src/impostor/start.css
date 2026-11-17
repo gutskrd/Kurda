@@ -209,8 +209,9 @@
 .imp-cat-strip {
   display: flex;
   gap: var(--space-2);
-  margin: 0 calc(var(--space-4) * -1);
-  padding: 2px var(--space-4) var(--space-2);
+  /* 8px more room above the row, taken back in its margin, so a finger just over a picture still lands on it and nothing moves */
+  margin: -8px calc(var(--space-4) * -1) 0;
+  padding: 10px var(--space-4) var(--space-2);
   list-style: none;
   overflow-x: auto;
   scroll-snap-type: x proximity;
@@ -279,8 +280,9 @@
 }
 .pic-radio.is-strip .pic-radio-options {
   display: flex;
-  margin: 0 calc(var(--space-4) * -1);
-  padding: 2px var(--space-4) var(--space-2);
+  /* 8px more room above the row, taken back in its margin, so a finger just over a picture still lands on it and nothing moves */
+  margin: -8px calc(var(--space-4) * -1) 0;
+  padding: 10px var(--space-4) var(--space-2);
   overflow-x: auto;
   scrollbar-width: none;
 }

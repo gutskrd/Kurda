@@ -6,6 +6,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { useDirection } from '../reports/direction';
 import { PressableScale } from '../theme/MotionParts';
+import { ReachGroup } from '../theme/Pressable';
 import { Icon, type IconName } from '../theme/Icon';
 import { fontScaleCap, radii, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -37,10 +38,15 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
     text: t('letters.paper.text'),
     paper: t('letters.paper.paper'),
   };
+  const mirrored = dir.row === 'row-reverse';
   return (
     <View style={[styles.bar, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]} accessibilityRole="tablist" accessibilityLabel={t('letters.paper.tools')}>
-      {TOOLS.map((each) => {
+      {TOOLS.map((each, i) => {
         const active = each === tool;
+        // the bar is all tools: each answers in its half of the gaps beside it, and the two at the ends out to the bar's own edge
+        const atLeft = mirrored ? i === TOOLS.length - 1 : i === 0;
+        const atRight = mirrored ? i === 0 : i === TOOLS.length - 1;
+        const reach = { top: BAR_PAD, bottom: BAR_PAD, left: atLeft ? BAR_PAD : BAR_GAP / 2, right: atRight ? BAR_PAD : BAR_GAP / 2 };
         const locked = each === 'draw' && !canDraw;
         // the tool in use as the tab bar and the segmented control show where you are: a wash of violet, in violet ink
         const tint = active ? colors.primary : colors.textSecondary;
@@ -56,6 +62,7 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
             accessibilityLabel={name[each]}
             accessibilityHint={locked ? t('letters.paper.drawLocked') : undefined}
             testID={`letter-tool-${each}`}
+            hitSlop={reach}
             style={[styles.barItem, active ? { backgroundColor: `${colors.primary}${CHOSEN_WASH}` } : null, locked ? styles.locked : null]}
           >
             {each === 'draw' ? locked ? <Icon name="lock" size={17} color={tint} /> : <Glyph kind="draw" color={tint} /> : <Icon name={TOOL_ICON[each]} size={17} color={tint} />}
@@ -70,6 +77,18 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
 }
 
 const TOOL_ICON: Record<Exclude<PaperTool, 'draw'>, IconName> = { write: 'pencil', text: 'text-t', paper: 'note' };
+
+/** The tool bar's padding and the gap between its tools, as `styles.bar` draws them. */
+const BAR_PAD = 3;
+const BAR_GAP = 2;
+
+/**
+ * Choices and actions stand 2pt apart in their rows, and their rows at least
+ * 4pt apart: each answers a finger in its half of the gaps around it, so no
+ * strip between two of them presses nothing and none reaches into another.
+ */
+const ROW_GAP = 2;
+const ROWS_APART = 4;
 
 /** How much of the violet the chosen tool's ground is, as the last two digits of its colour: the segmented control's own wash (theme/glass). */
 const CHOSEN_WASH = '1F';
@@ -129,20 +148,23 @@ export function Choice({
 }): React.JSX.Element {
   const { colors } = useTheme();
   return (
-    <PressableScale
-      onPress={() => {
-        if (!checked) haptic('select');
-        onPress();
-      }}
-      disabled={disabled}
-      accessibilityRole="radio"
-      accessibilityState={{ checked, disabled }}
-      accessibilityLabel={label}
-      testID={testID}
-      style={[styles.choice, { borderColor: checked ? colors.primary : 'transparent' }, disabled ? styles.locked : null]}
-    >
-      {children}
-    </PressableScale>
+    <ReachGroup gap={ROW_GAP} rowGap={ROWS_APART}>
+      <PressableScale
+        reach="open"
+        onPress={() => {
+          if (!checked) haptic('select');
+          onPress();
+        }}
+        disabled={disabled}
+        accessibilityRole="radio"
+        accessibilityState={{ checked, disabled }}
+        accessibilityLabel={label}
+        testID={testID}
+        style={[styles.choice, { borderColor: checked ? colors.primary : 'transparent' }, disabled ? styles.locked : null]}
+      >
+        {children}
+      </PressableScale>
+    </ReachGroup>
   );
 }
 
@@ -161,17 +183,20 @@ export function ToolAction({
   testID?: string;
 }): React.JSX.Element {
   return (
-    <PressableScale
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      accessibilityLabel={label}
-      testID={testID}
-      style={[styles.action, disabled ? styles.locked : null]}
-    >
-      {children}
-    </PressableScale>
+    <ReachGroup gap={ROW_GAP} rowGap={ROWS_APART}>
+      <PressableScale
+        reach="open"
+        onPress={onPress}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
+        accessibilityLabel={label}
+        testID={testID}
+        style={[styles.action, disabled ? styles.locked : null]}
+      >
+        {children}
+      </PressableScale>
+    </ReachGroup>
   );
 }
 
@@ -289,7 +314,7 @@ export function Glyph({ kind, color, size = 17 }: { kind: 'draw' | 'undo' | 'red
 }
 
 const styles = StyleSheet.create({
-  bar: { borderRadius: radii.md, padding: 3, gap: 2 },
+  bar: { borderRadius: radii.md, padding: BAR_PAD, gap: BAR_GAP },
   barItem: { flex: 1, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: radii.sm, paddingHorizontal: 2, paddingVertical: 4 },
   barText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium },
   barTextOn: { fontWeight: typography.weights.semibold },
