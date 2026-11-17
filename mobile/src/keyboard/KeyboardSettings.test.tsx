@@ -6,6 +6,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
