@@ -222,3 +222,10 @@ export type TabNavigation = CompositeNavigationProp<BottomTabNavigationProp<TabP
  */
 export const chatRouteId = ({ params }: { params: RootStackParamList['Chat'] }): string => params.userId;
 export const groupThreadRouteId = ({ params }: { params: RootStackParamList['GroupThread'] }): string => params.groupId;
+
+/**
+ * One page per person, as one conversation per person: without an id, a
+ * friend tapped on somebody's profile (or a notification about somebody
+ * else) turned the profile in front into theirs, with no page to go back to.
+ */
+export const userProfileRouteId = ({ params }: { params: RootStackParamList['UserProfile'] }): string => params.userId;

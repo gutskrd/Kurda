@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { Pressable, ReachReset } from '../theme/Pressable';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useModalSlide } from '../a11y/useReducedMotion';
 import { SettingsRow } from '../settings/list';
 import { Icon } from '../theme/Icon';
 import { spacing } from '../theme/tokens';
@@ -36,6 +37,7 @@ export function FeedbackSettingsRows({
   const dir = useDirection();
   const topInset = useScreenTopInset();
   const [open, setOpen] = useState(false);
+  const slide = useModalSlide();
   const store = storeUrls ? rateUrl(os, storeUrls) : rateUrl(os);
 
   return (
@@ -44,7 +46,7 @@ export function FeedbackSettingsRows({
       {store ? (
         <SettingsRow icon="star" title={t('appFeedback.rateRow')} opens={false} onPress={() => void Linking.openURL(store).catch(() => undefined)} />
       ) : null}
-      <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} animationType={slide} presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
         {/* a sheet of its own, not beside the settings' controls: their groups' caps stop here */}
         <ReachReset>
           <KeyboardAvoidingView

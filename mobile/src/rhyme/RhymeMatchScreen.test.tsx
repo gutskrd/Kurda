@@ -7,7 +7,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import type { MatchState } from './matchApi';
 import { RhymeMatchScreen } from './RhymeMatchScreen';
 import { backOut, navigation } from '../play/testing/navigation';
-import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
+import { pressBack, resetHardwareBack, swipeHeld } from '../navigation/testing/hardwareBack';
 import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -169,6 +169,7 @@ describe('RhymeMatchScreen', () => {
       renderWithProviders(<RhymeMatchScreen id="m1" onExit={onExit} />);
       await waitFor(() => expect(pressBack()).toBe(true));
       expect(alert.mock.calls[0]?.[0]).toBe('Leave this game?');
+      expect(swipeHeld()).toBe(true);
       // staying keeps the round
       expect(onExit).not.toHaveBeenCalled();
       expect(screen.getByLabelText('Your rhyme')).toBeTruthy();

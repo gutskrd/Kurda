@@ -22,15 +22,19 @@ import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AccountGateProvider, GuestWall, useAccountGate } from './src/auth/AccountGate';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, legacyTabPath, linkingScreens } from './src/navigation/tabs';
-import { holdLink, takeHeldLink } from './src/navigation/heldLink';
+import { holdLink, launchLinkKeeper, linkHolding, takeHeldLink } from './src/navigation/heldLink';
+import { authRouter, rootRouter } from './src/navigation/returnTo';
+import { cardOptions, stackOptions } from './src/navigation/stackOptions';
 import { TabBar } from './src/navigation/TabBar';
 import { prepareAudioSession } from './src/recording/useMicRecorder';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
+import { useCloseOnBlur } from './src/navigation/edgePanel';
 import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
 import {
   chatRouteId,
   groupThreadRouteId,
+  userProfileRouteId,
   type RootNavigation,
   type RootStackParamList,
   type TabParamList,
@@ -309,6 +313,11 @@ function SignedInTabs() {
   const [slideOpen, setSlideOpen] = useState(false);
   const openSlide = useCallback(() => setSlideOpen(true), []);
   const closeSlide = useCallback(() => setSlideOpen(false), []);
+  const closePanels = useCallback(() => {
+    setMenuOpen(false);
+    setSlideOpen(false);
+  }, []);
+  useCloseOnBlur(navigation, closePanels);
   return (
     <MenuProvider value={openMenu}>
     <SlideProvider value={openSlide}>
@@ -371,10 +380,11 @@ function SignedInRoot() {
    * over the card it came from.
    */
   const card = useCallback(
-    ({ route }: { route: { key: string } }): NativeStackNavigationOptions =>
-      !reduceMotion && originOf(route.key) ? { presentation: 'card', animation: 'fade' } : { presentation: 'card' },
+    ({ route }: { route: { key: string } }): NativeStackNavigationOptions => cardOptions(!reduceMotion && originOf(route.key) !== null),
     [reduceMotion],
   );
+  // a card whose swipe would leave a game or a round under way: it still grows out of what opened it
+  const heldCard = useCallback((args: { route: { key: string } }): NativeStackNavigationOptions => ({ ...card(args), gestureEnabled: false }), [card]);
   return (
     <RealtimeProvider>
       {/* the badges' counts, for the tab bar, the bell and the profile's menu */}
@@ -385,13 +395,10 @@ function SignedInRoot() {
       {/* one offer to create an account, for every screen that finds a guest at something only an account can do */}
       <AccountGateProvider>
       <RootStack.Navigator
-        screenOptions={{
-          headerShown: false,
-          // scene paints the theme background during the push/pop so a transition
-          // never flashes a white frame; reduced-motion disables the slide entirely.
-          contentStyle: { backgroundColor: colors.background },
-          animation: reduceMotion ? 'none' : 'default',
-        }}
+        // the options every stack shares (navigation/stackOptions)
+        screenOptions={stackOptions(reduceMotion, colors.background)}
+        // a place already open is gone back to, not stacked again (navigation/returnTo)
+        UNSTABLE_router={rootRouter}
         // every page stands in `Arrive`, which draws one a press opened (the ones that fade in) growing out of what was pressed
         screenLayout={({ children, route, options }) => (
           <Arrive routeKey={route.key} grows={options.animation === 'fade'}>
@@ -488,7 +495,8 @@ function SignedInRoot() {
       <RootStack.Screen name="Tree" options={card}>
         {({ navigation }) => <TreeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="UserProfile" options={card}>
+      {/* one page per person, as per conversation (rootStack.userProfileRouteId) */}
+      <RootStack.Screen name="UserProfile" options={card} getId={userProfileRouteId}>
         {({ route, navigation }) => (
           <PublicProfileScreen userId={route.params.userId} onExit={() => navigation.goBack()} />
         )}
@@ -701,7 +709,7 @@ function SignedInRoot() {
         {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/* a game is not left by a swipe that was meant to scroll the story */}
-      <RootStack.Screen name="StoryGame" options={{ presentation: 'card', gestureEnabled: false }}>
+      <RootStack.Screen name="StoryGame" options={heldCard}>
         {({ route, navigation }) => (
           <GuestWall reason="play" onBack={() => navigation.goBack()}>
             <StoryGameScreen key={route.params.id} id={route.params.id} onExit={() => navigation.goBack()} />
@@ -725,7 +733,7 @@ function SignedInRoot() {
         {({ route, navigation }) => <ProverbScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Proverbs')} />}
       </RootStack.Screen>
       {/* a round is not left by a swipe meant to scroll its choices */}
-      <RootStack.Screen name="ProverbRound" options={{ presentation: 'card', gestureEnabled: false }}>
+      <RootStack.Screen name="ProverbRound" options={heldCard}>
         {({ route, navigation }) => <ProverbRoundScreen dialect={route.params.dialect} mode={route.params.mode} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Memes" options={card}>
@@ -867,14 +875,18 @@ function Root() {
   const { status, user, ageStop, suspension, clearSuspension, baseUrl } = useAuth();
   const onboarding = useOnboarding();
   const reduceMotion = useReducedMotion();
+  const { colors } = useTheme();
 
-  // a link opened while signed out (the one that started the app, or one tapped since) waits for the sign-in
+  // a link opened before the signed-in screens are there waits for them; the launch link only for the first screens (navigation/heldLink)
+  const [keepLaunchLink] = useState(launchLinkKeeper);
+  const holding = linkHolding(status, user);
   useEffect(() => {
-    if (status !== 'signedOut') return;
-    void Linking.getInitialURL().then((url) => holdLink(url, linking.prefixes));
+    if (status === 'restoring') return;
+    if (keepLaunchLink(holding)) void Linking.getInitialURL().then((url) => holdLink(url, linking.prefixes));
+    if (holding === 'none') return;
     const sub = Linking.addEventListener('url', ({ url }) => holdLink(url, linking.prefixes));
     return () => sub.remove();
-  }, [status]);
+  }, [status, holding, keepLaunchLink]);
 
   if (status === 'restoring' || !onboarding.ready) {
     return <LaunchScreen />;
@@ -915,7 +927,9 @@ function Root() {
       <AuthStack.Navigator
         initialRouteName={AUTH_INITIAL_ROUTE}
         // signing in slides between its screens as the app does, and does not slide for somebody who asked for less motion
-        screenOptions={{ headerShown: false, animation: reduceMotion ? 'none' : 'default' }}
+        screenOptions={stackOptions(reduceMotion, colors.background)}
+        // each form once: "Create account" and "Sign in" go back to the other form rather than stack it again
+        UNSTABLE_router={authRouter}
       >
         {/* Welcome's back walks into the intro (KUR-271): choice → notifications → welcome → language */}
         <AuthStack.Screen name="Welcome">

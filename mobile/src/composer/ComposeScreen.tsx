@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  BackHandler,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -25,6 +24,7 @@ import {
   type WrittenPostType,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
@@ -444,12 +444,8 @@ export function ComposeScreen({
     return true;
   }, [changed, ready, posting, onExit]);
 
-  // Android's back button asks too, rather than dropping an edit
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-    const sub = BackHandler.addEventListener('hardwareBackPress', requestClose);
-    return () => sub.remove();
-  }, [requestClose]);
+  // Android's back asks too, rather than dropping an edit; only while the composer is in front, not under Account standing
+  useHardwareBack(requestClose);
 
   const deleteDraft = async () => {
     setClosing(false);
