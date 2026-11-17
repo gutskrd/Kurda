@@ -152,6 +152,21 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
     expect(sent.some((s) => s.userId === atRisk)).toBe(true);
   });
 
+  /*
+   * One statement reads every learner's day, so a single zone Postgres does
+   * not know (stored before sign-up checked against the database's list)
+   * used to fail the whole run, and nobody was reminded that hour.
+   */
+  it('reads a zone the database does not know as UTC, and still reminds everyone else', async () => {
+    const odd = await register('streakZ', '10.96.0.5');
+    await seed(odd, 5, '2026-06-20');
+    await pool.query(`UPDATE users SET timezone = 'BET' WHERE id = $1`, [odd]);
+    sent.length = 0;
+    await service.runHourly(new Date('2026-06-21T08:30:00Z'));
+    expect(sent.some((s) => s.userId === odd)).toBe(true);
+    expect(sent.some((s) => s.userId === atRisk)).toBe(true);
+  });
+
   it('does not fire the primary reminder outside the practice hour', async () => {
     sent.length = 0;
     await service.runHourly(new Date('2026-06-15T15:30:00Z')); // local hour 15 ≠ 8
