@@ -3,16 +3,10 @@ import { maintenanceNoticeOf, type MaintenanceNotice, type StatusResponse } from
 import type { ApiClient } from '../api/client';
 
 /**
- * Hevalo taken offline for a while, from the admin console (shared
- * maintenance.ts).
- *
- * One notice for the whole app, kept here rather than in a context, because
- * what hears of it first is the API client, which has no React in it: any call
- * answered 503 MAINTENANCE puts the notice here (api/client.ts `onMaintenance`),
- * and the screen over everything (MaintenanceScreen.tsx) is up for as long as
- * there is one. That screen asks `GET /status` until the answer is null; then
- * the notice goes, and whatever was waiting on it — the screens under it, a
- * session still being restored — asks again (`onMaintenanceOver`).
+ * The app-wide maintenance notice (shared maintenance.ts). It lives in a module rather than a context because the
+ * API client, which has no React, sets it: any 503 MAINTENANCE response puts it here (api/client.ts
+ * `onMaintenance`), and MaintenanceScreen shows while it is set. When `GET /status` answers null the notice
+ * clears and anything waiting on it retries (`onMaintenanceOver`).
  */
 
 let notice: MaintenanceNotice | null = null;
@@ -65,10 +59,8 @@ export function useMaintenance(): MaintenanceNotice | null {
 }
 
 /**
- * Ask `GET /status` (public, no session needed) whether Hevalo is back, and act
- * on the answer: null takes the screen down, a notice keeps it up with what the
- * admin says now. A question that did not get an answer — no connection, the
- * host still waking — says nothing either way, so the screen stays.
+ * Ask the public `GET /status` whether Hevalo is back: null clears the notice, a notice updates it. No answer (no
+ * connection, a host still starting) changes nothing.
  */
 export async function checkStatus(client: Pick<ApiClient, 'get'>): Promise<void> {
   const res = await client.get<StatusResponse>('/status');
