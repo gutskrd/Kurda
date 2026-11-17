@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { PracticeMode, RecordedAnswer } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { SessionLoading, SessionPlayer, type SessionPaths } from '../lesson/LessonPlayerScreen';
@@ -7,11 +7,8 @@ import type { Exercise, SessionView } from '../lesson/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import type { ApiError } from '../api/types';
 import { describeError, isRetryable } from '../api/errors';
-import { spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
-import { ClayButton, GradientBackground } from '../theme/glass';
-import { Icon } from '../theme/Icon';
-import { useTheme } from '../theme/ThemeProvider';
+import { EmptyState } from '../theme/EmptyState';
+import { GradientBackground } from '../theme/glass';
 import { useI18n } from '../i18n/I18nContext';
 
 /** A practice session's endpoints; a test to jump ahead is answered through them too. */
@@ -41,6 +38,12 @@ interface PracticeStart {
  * review", from GET /practice/due's `open`), opened again where it stopped:
  * the session is read back with what was already answered rather than a new
  * one started beside it, which would leave the first unfinished for good.
+ *
+ * Nothing to practise, or a session that would not start, is said as every
+ * empty screen in the app says it (theme/EmptyState): Hevalo's fawn, what is
+ * not here, and the way on — with Back beside it, since a full-screen modal
+ * has no other way out. It was a gold check, which says something was
+ * earned, and "Nothing to review yet" offered only the lesson to start.
  */
 export function PracticeScreen({
   navigation,
@@ -59,7 +62,6 @@ export function PracticeScreen({
   sessionId?: string;
 }) {
   const { client } = useAuth();
-  const { colors } = useTheme();
   const { t } = useI18n();
   const [start, setStart] = useState<PracticeStart | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -85,15 +87,13 @@ export function PracticeScreen({
     };
   }, [client, reloadKey, chosen, mode, unitId, sessionId]);
 
+  // a full-screen modal with no header: every state that is not the session has a way back out of it
+  const back = { label: t('common.back'), onPress: onExit };
   if (error) {
-    const message = describeError(error, t);
-    const retryable = isRetryable(error);
+    const retry = isRetryable(error) ? { label: t('common.retry'), onPress: () => setReloadKey((k) => k + 1) } : null;
     return (
       <Centered>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('practice.startFailed')}</Text>
-        <Text style={[styles.detail, { color: colors.textSecondary }]}>{message}</Text>
-        {retryable ? <Primary label={t('common.retry')} onPress={() => setReloadKey((k) => k + 1)} /> : null}
-        <Primary label={t('common.back')} onPress={onExit} />
+        <EmptyState art="offline" title={t('practice.startFailed')} body={describeError(error, t)} action={retry ?? back} secondary={retry ? back : undefined} />
       </Centered>
     );
   }
@@ -102,19 +102,18 @@ export function PracticeScreen({
   // nothing due → nudge toward the next new lesson; nothing of another kind → back to the hub's other kinds
   if (start.empty || !start.sessionId || !start.exercises?.length) {
     const kind = !chosen && mode && mode !== 'review';
+    const suggestion = !kind ? start.suggestion : null;
+    const next = suggestion
+      ? { label: t('practice.startLabel', { title: suggestion.title }), onPress: () => navigation.replace('Lesson', { lessonId: suggestion.lessonId }) }
+      : null;
     return (
       <Centered>
-        <Icon name="check" size={56} color={colors.gold} />
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t(kind ? 'practice.emptyKind.title' : 'practice.empty.title')}</Text>
-        <Text style={[styles.detail, { color: colors.textSecondary }]}>{t(kind ? 'practice.emptyKind.body' : 'practice.empty.body')}</Text>
-        {start.suggestion && !kind ? (
-          <Primary
-            label={t('practice.startLabel', { title: start.suggestion.title })}
-            onPress={() => navigation.replace('Lesson', { lessonId: start.suggestion!.lessonId })}
-          />
-        ) : (
-          <Primary label={t('common.back')} onPress={onExit} />
-        )}
+        <EmptyState
+          title={t(kind ? 'practice.emptyKind.title' : 'practice.empty.title')}
+          body={t(kind ? 'practice.emptyKind.body' : 'practice.empty.body')}
+          action={next ?? back}
+          secondary={next ? back : undefined}
+        />
       </Centered>
     );
   }
@@ -150,18 +149,7 @@ function Centered({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Primary({ label, onPress }: { label: string; onPress: () => void }) {
-  return <ClayButton label={label} tone="primary" size="large" onPress={onPress} />;
-}
-
 const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-    padding: spacing.xl,
-  },
-  title: { ...display(typography.sizes.xl), textAlign: 'center' },
-  detail: { fontSize: typography.sizes.md, textAlign: 'center' },
+  // the empty state keeps its own margins
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

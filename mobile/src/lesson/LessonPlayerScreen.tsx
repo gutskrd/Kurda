@@ -34,6 +34,7 @@ import type { AnswerResult, RetryResult, SelfRating, SessionResults, SessionView
 import type { ApiClient } from '../api/client';
 import type { CourseMap } from '../coursemap/types';
 import { useI18n } from '../i18n/I18nContext';
+import { formatNumber } from '../i18n/format';
 import type { TranslationKey } from '../i18n/translations';
 import { deviceStore } from '../keyboard/deviceStore';
 import { useQuietInvites } from '../play/quietInvites';
@@ -283,7 +284,7 @@ function SessionPlayerBody({
   const { client, isGuest } = useAuth();
   const { colors } = useTheme();
   const valley = useValley();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const topInset = useScreenTopInset();
   const bottomInset = useScreenBottomInset(spacing.lg);
   // the way out and the bar read from the right in Soranî and Arabic, as every other screen's header does
@@ -692,7 +693,7 @@ function SessionPlayerBody({
 
       <BottomSheet visible={leaving} onClose={() => setLeaving(false)} title={t('lesson.leave.title')} testID="lesson-leave">
         <Text style={[styles.leaveBody, dir.text, { color: colors.textSecondary }]}>
-          {t('lesson.leave.body', { done: state.answeredCount, total: state.exercises.length })}
+          {t('lesson.leave.body', { done: formatNumber(state.answeredCount, locale), total: formatNumber(state.exercises.length, locale) })}
         </Text>
         <View style={styles.leaveActions}>
           <ClayButton label={t('lesson.leave.stay')} tone="primary" onPress={() => setLeaving(false)} />

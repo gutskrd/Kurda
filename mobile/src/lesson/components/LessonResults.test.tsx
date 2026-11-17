@@ -38,6 +38,7 @@ import { notificationsStub } from '../../reports/testing/stubs';
 import { deviceStore } from '../../keyboard/deviceStore';
 import { OFFER_KEY } from '../../push/permission';
 import { characterLayers } from '../../characters/layers';
+import { FakeAudio } from '../../characters/testing/audio';
 import { NO_MOMENTS } from '../moments';
 import type { SessionResults } from '../types';
 import { LessonResults } from './LessonResults';
@@ -287,6 +288,9 @@ describe('the way on', () => {
 });
 
 describe('the mistakes', () => {
+  // an answer is set apart from the line it stands in, so it keeps its own way of reading in a line of the other way
+  const isolated = (answer: string): string => `\u2068${answer}\u2069`;
+
   // the server names a picture by its catalogue id, which is not always what the picture shows ("ewe" is a sheep)
   it('name a missed picture by what it shows', async () => {
     const [id, picture] = Object.entries(WORD_PICTURES).find(([key, p]) => key !== p.en)!;
@@ -297,9 +301,33 @@ describe('the mistakes', () => {
         { id: 'm1', type: 'multiple_choice', ask: 'meaning', prompt: 'Silav!', options: ['Hello!', 'No!'] },
       ],
     });
-    expect(await screen.findByText(picture.en)).toBeTruthy();
-    expect(screen.queryByText(id)).toBeNull();
-    expect(screen.getByText('Hello!')).toBeTruthy();
+    expect(await screen.findByText(isolated(picture.en))).toBeTruthy();
+    expect(screen.queryByText(isolated(id))).toBeNull();
+    expect(screen.getByText(isolated('Hello!'))).toBeTruthy();
+  });
+
+  // a listening item asks with a sound and no words, so its answer used to stand alone with nothing to say what it answered
+  it('put a missed listening clip beside its answer, to be heard again', async () => {
+    FakeAudio.made = [];
+    vi.stubGlobal('Audio', FakeAudio);
+    try {
+      const clip = 'https://media.test/birci.mp3';
+      show({
+        results: { ...results, mistakes: [{ exerciseId: 'l1', verdict: 'wrong', correction: 'Tu birçî yî?' }, { exerciseId: 'm1', verdict: 'wrong', prompt: 'Silav!', correction: 'Hello!' }] },
+        exercises: [
+          { id: 'l1', type: 'listening', ask: 'hear', audioUrl: clip, bank: ['Tu', 'birçî', 'yî?', 'germ'] },
+          { id: 'm1', type: 'multiple_choice', ask: 'meaning', prompt: 'Silav!', options: ['Hello!', 'No!'] },
+        ],
+      });
+      expect(await screen.findByText(isolated('Tu birçî yî?'))).toBeTruthy();
+      // the one clip, beside the listening answer and not beside the one asked in words
+      const hear = screen.getAllByRole('button', { name: 'Play audio' });
+      expect(hear).toHaveLength(1);
+      fireEvent.click(hear[0]!);
+      expect(FakeAudio.of(clip)?.paused).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 

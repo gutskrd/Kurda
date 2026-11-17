@@ -8,6 +8,7 @@ import { ensureContrast } from '../../a11y/ensureContrast';
 import { ConversationStage, conversationCast } from '../../characters/ConversationStage';
 import type { PlaybackClock } from '../../characters/voice';
 import { useI18n } from '../../i18n/I18nContext';
+import { formatNumber } from '../../i18n/format';
 import { AVATAR_COLORS, AVATAR_TEXT_COLOR, deriveInitials } from '../../profile/initials';
 import { useDirection } from '../../reports/direction';
 import { ClayButton } from '../../theme/glass';
@@ -72,7 +73,7 @@ const NONE: readonly never[] = [];
  */
 export function ConversationExercise({ exercise, choice, onSelect, disabled, feedback = null, dialect }: Props) {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
   const speakers: readonly ConversationSpeaker[] = exercise.speakers ?? NONE;
@@ -177,7 +178,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
                   <Pressable
                     onPress={() => audio.playLine(i)}
                     accessibilityRole="button"
-                    accessibilityLabel={t('lesson.conversation.playLine', { n: i + 1, name })}
+                    accessibilityLabel={t('lesson.conversation.playLine', { n: formatNumber(i + 1, locale), name })}
                     hitSlop={hitSlopFor(PLAY, PLAY)}
                     style={({ pressed }) => [
                       styles.play,

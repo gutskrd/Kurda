@@ -16,7 +16,7 @@ vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwa
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
-import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import type { ApiResult } from '../api/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { PracticeScreen } from './PracticeScreen';
@@ -54,6 +54,34 @@ describe('practice', () => {
     renderWithProviders(<PracticeScreen navigation={navigation} mode="listen" onExit={() => undefined} />);
     expect(await screen.findByText('Nothing to practise here right now')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+  });
+
+  // a full-screen modal with no header: the lesson it suggests is never the only way out of it
+  it('offers the next lesson when nothing is due, and a way back beside it', async () => {
+    testAuth.client = fakeClient({ 'POST /practice/session': ok({ empty: true, suggestion: { lessonId: 'l1', title: 'Food' } }) });
+    const onExit = vi.fn();
+    const replace = vi.fn();
+    renderWithProviders(<PracticeScreen navigation={{ ...navigation, replace } as unknown as RootNavigation} onExit={onExit} />);
+    expect(await screen.findByText('Nothing to review yet')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Start: Food' }));
+    expect(replace).toHaveBeenCalledWith('Lesson', { lessonId: 'l1' });
+  });
+
+  it('says when practice would not start, with another try and a way back', async () => {
+    let tries = 0;
+    testAuth.client = fakeClient({
+      'POST /practice/session': () => (++tries === 1 ? fail({ kind: 'network', message: 'offline', status: undefined }) : session),
+      'GET /me': ok({ user: {} }),
+    });
+    const onExit = vi.fn();
+    renderWithProviders(<PracticeScreen navigation={navigation} onExit={onExit} />);
+    expect(await screen.findByText('Couldn’t start practice.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Bread?')).toBeTruthy();
   });
 
   // a full-screen modal with no header: while the session is on its way, the ✕ is the way out

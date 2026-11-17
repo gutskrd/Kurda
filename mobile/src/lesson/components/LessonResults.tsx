@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
 import {
   RESULTS_TIMING,
   WORD_PICTURES,
   afterResults,
+  hueSteps,
   isSoraniDialect,
   resultsActions,
   resultsGrade,
@@ -27,7 +28,7 @@ import { ConfettiBurst, GlowRing, SoftGlow, useCelebration } from '../../theme/C
 import { BURST } from '../../theme/celebration';
 import { timing, useCountUp } from '../../theme/animate';
 import { duration, pressedDim } from '../../theme/motion';
-import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
+import { MIN_TOUCH_TARGET, hitSlopFor } from '../../a11y/a11y';
 import { TONES, type ToneColors } from '../../coursemap/path';
 import { NO_MOMENTS, type LessonMoments } from '../moments';
 import { useDirection } from '../../reports/direction';
@@ -43,6 +44,8 @@ import { WaterDrop } from '../../tree/TreeArt';
 import { ShareWin } from '../../share/ShareWin';
 import { lessonShare } from '../../share/winText';
 import { StreakMoment } from './StreakMoment';
+import { PlayDisc } from './ModelButton';
+import { useAudio } from '../useAudio';
 import { CARD } from '../valley';
 
 interface Props {
@@ -128,7 +131,10 @@ const ACTION_WORDS: Record<ResultsAction, TranslationKey> = {
  * expects it, and Share takes nobody through the moments after the results.
  *
  * Every mistake is listed with the question and its right answer, folded away
- * when there are more than three. An exercise put off is neither a mistake
+ * when there are more than three. A listening item's question was a sound,
+ * with no words to list: its clip stands beside the answer instead, to be
+ * heard again, where the answer used to stand alone with nothing to say what
+ * it answered. An exercise put off is neither a mistake
  * nor a right answer: the server leaves it out of the score, and the note
  * says how many were put off, as the web's does.
  */
@@ -167,6 +173,9 @@ export function LessonResults({
       ? WORD_PICTURES[correction as WordPictureId].en
       : correction;
   const [folded, setFolded] = useState(mistakes.length > MISTAKES_OPEN);
+  // the cards' bands as tall as the tallest, so the three numbers stand level when one band's word takes two lines
+  const [band, setBand] = useState(0);
+  const fitBand = useCallback((height: number) => setBand((was) => Math.max(was, Math.ceil(height))), []);
 
   // Hevalo cheers as the buzz lands (`hapticAtMs`), or at once when the moment is skipped
   const [cheer, setCheer] = useState(false);
@@ -261,6 +270,8 @@ export function LessonResults({
           <View style={[styles.cards, { flexDirection: dir.row }]}>
             <StatCard
               index={0}
+              band={band}
+              onBand={fitBand}
               travel={plan.travel}
               tone={gold}
               icon="bolt"
@@ -271,6 +282,8 @@ export function LessonResults({
             />
             <StatCard
               index={1}
+              band={band}
+              onBand={fitBand}
               travel={plan.travel}
               tone={tones.meadow}
               icon="target"
@@ -278,11 +291,13 @@ export function LessonResults({
               to={pct}
               show={(n) => `${formatNumber(n, locale)}%`}
               a11yLabel={t('lesson.results.accuracy')}
-              a11yValue={`${pct}%, ${gradeWord}, ${t('lesson.results.firstTries', { correct: results.correct, total: results.total })}`}
+              a11yValue={`${pct}%, ${gradeWord}, ${t('lesson.results.firstTries', { correct: formatNumber(results.correct, locale), total: formatNumber(results.total, locale) })}`}
             />
             {sitting && clock ? (
               <StatCard
                 index={2}
+                band={band}
+                onBand={fitBand}
                 travel={plan.travel}
                 tone={tones.river}
                 icon="clock"
@@ -298,7 +313,7 @@ export function LessonResults({
 
           {actions.stopHere ? <Text style={[styles.note, { color: colors.textPrimary }]}>{t('lesson.results.goalDoneStop')}</Text> : null}
 
-          {skipped > 0 ? <Text style={[styles.note, { color: colors.textSecondary }]}>{t('lesson.skipped', { count: skipped })}</Text> : null}
+          {skipped > 0 ? <Text style={[styles.note, { color: colors.textSecondary }]}>{t('lesson.skipped', { count: formatNumber(skipped, locale) })}</Text> : null}
 
           {mistakes.length > 0 ? (
             <View style={[styles.mistakes, { backgroundColor: colors.controlTrack }]}>
@@ -317,18 +332,25 @@ export function LessonResults({
               </Pressable>
               {folded
                 ? null
-                : mistakes.map((m) => (
-                    <View key={m.exerciseId} style={styles.mistakeRow}>
-                      {promptFor(m.exerciseId, m.prompt) ? (
-                        <Text style={[styles.mistakePrompt, dir.free, { color: colors.textSecondary }]}>{promptFor(m.exerciseId, m.prompt)}</Text>
-                      ) : null}
-                      {m.correction ? (
-                        <Text style={[styles.mistakeAnswer, dir.text, { color: colors.textPrimary }]}>
-                          {t('lesson.answer')} <Text style={styles.mistakeAnswerValue}>{answerFor(m.exerciseId, m.correction)}</Text>
-                        </Text>
-                      ) : null}
-                    </View>
-                  ))}
+                : mistakes.map((m) => {
+                    const prompt = promptFor(m.exerciseId, m.prompt);
+                    const exercise = exercises.find((e) => e.id === m.exerciseId);
+                    const clip = exercise?.type === 'listening' ? exercise.audioUrl : undefined;
+                    return (
+                      <View key={m.exerciseId} style={styles.mistakeRow}>
+                        {prompt ? <Text style={[styles.mistakePrompt, dir.free, { color: colors.textSecondary }]}>{prompt}</Text> : null}
+                        {m.correction ? (
+                          <View style={[styles.answerLine, { flexDirection: dir.row }]}>
+                            {clip ? <HearAgain url={clip} /> : null}
+                            <Text style={[styles.mistakeAnswer, styles.answerWords, dir.text, { color: colors.textPrimary }]}>
+                              {/* the answer set apart from the words round it, so an English answer in a Soranî line keeps its full stop at its own end */}
+                              {t('lesson.answer')} <Text style={styles.mistakeAnswerValue}>{`⁨${answerFor(m.exerciseId, m.correction)}⁩`}</Text>
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    );
+                  })}
             </View>
           ) : null}
         </Animated.View>
@@ -366,14 +388,53 @@ function clockWords(totalSeconds: number, locale: Locale): string {
   return `${formatNumber(minutes, locale)}:${ss}`;
 }
 
+/** The narrowest phone whose results cards each have room for an icon beside a number as wide as "100%". */
+const ICON_ROOM = 360;
+
+/** The play mark beside a listening mistake's answer, drawn smaller than a fingertip and reaching one. */
+const HEAR = 32;
+
+/**
+ * A listening mistake's clip, the lesson's round play mark beside its right
+ * answer, said again when tapped. Nothing where this host cannot play it, or
+ * the clip will not load: the answer then stands alone, as it did.
+ */
+function HearAgain({ url }: { url: string }): React.JSX.Element | null {
+  const { t } = useI18n();
+  const audio = useAudio(url);
+  if (!audio.supported || audio.error) return null;
+  return (
+    <Pressable
+      onPress={() => audio.play(1)}
+      accessibilityRole="button"
+      accessibilityLabel={t('lesson.listen.play')}
+      hitSlop={hitSlopFor(HEAR, HEAR)}
+      style={({ pressed }) => pressed && styles.pressed}
+      testID="mistake-hear"
+    >
+      <PlayDisc size={HEAR} playing={audio.playing} />
+    </Pressable>
+  );
+}
+
 /**
  * One of the three cards: a band of its colour naming what it counts, and
  * under it, framed in the same colour, an icon and the number counting up to
  * where it ends. They rise in one after another as the words land; under
  * Reduce Motion they are simply there, with the final number.
+ *
+ * A third of a narrow phone is not much: a band's word takes a second line
+ * rather than losing its end ("Good practi…", "XP دەستهات…"), with every band
+ * as tall as the tallest so the three numbers still stand level; and on a
+ * phone narrower than `ICON_ROOM` the icon steps aside for the number, which
+ * the band names anyway, so "100%" is never cut to "1…". A number still too
+ * wide for its card (much larger text) is set a little smaller where the
+ * phone can.
  */
 function StatCard({
   index,
+  band,
+  onBand,
   travel,
   tone,
   icon,
@@ -384,6 +445,10 @@ function StatCard({
   a11yValue,
 }: {
   index: number;
+  /** the height every band is given: the tallest one's */
+  band: number;
+  /** each band's own height, once it is laid out */
+  onBand: (height: number) => void;
   travel: boolean;
   tone: ToneColors;
   icon: IconName;
@@ -399,6 +464,7 @@ function StatCard({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
+  const roomy = useWindowDimensions().width >= ICON_ROOM;
   const delayMs = RESULTS_TIMING.tilesAtMs + index * RESULTS_TIMING.tileStaggerMs;
   const shown = useCountUp(to, { delayMs: travel ? delayMs : 0 });
   const rise = useRef(new Animated.Value(travel ? 0 : 1)).current;
@@ -419,12 +485,14 @@ function StatCard({
       accessible
       accessibilityLabel={`${a11yLabel ?? label}: ${a11yValue}`}
     >
-      <Text style={[styles.cardLabel, { color: tone.ink }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
-        {label}
-      </Text>
+      <View style={[styles.cardBand, { minHeight: band }]} onLayout={(e) => onBand(e.nativeEvent.layout.height)}>
+        <Text style={[styles.cardLabel, { color: tone.ink }]} numberOfLines={2} maxFontSizeMultiplier={1.2}>
+          {label}
+        </Text>
+      </View>
       <View style={[styles.cardBody, { flexDirection: dir.row, backgroundColor: colors.surface }]}>
-        <Icon name={icon} size={20} color={tone.text} />
-        <Text style={[styles.cardValue, { color: tone.text }]} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+        {roomy ? <Icon name={icon} size={20} color={tone.text} /> : null}
+        <Text style={[styles.cardValue, { color: tone.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} maxFontSizeMultiplier={1.3}>
           {show(shown)}
         </Text>
       </View>
@@ -438,7 +506,9 @@ function StatCard({
  * after it. A row whose numbers could not be read is left out, never guessed.
  */
 function Rows({ moments, travel, water }: { moments: LessonMoments; travel: boolean; water: number }): React.JSX.Element | null {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
+  // a goal met is something earned, in the gold of everything earned: it was the green of a right answer
+  const gold = hueSteps(scheme, 'gold');
   const { t, locale } = useI18n();
   const dir = useDirection();
   const goal = moments.goal ?? null;
@@ -493,11 +563,11 @@ function Rows({ moments, travel, water }: { moments: LessonMoments; travel: bool
   return (
     <View style={styles.rows} accessibilityLiveRegion="polite">
       {goalWords ? (
-        <View style={[styles.row, { flexDirection: dir.row, backgroundColor: met ? colors.successFill : colors.controlTrack }]} accessible accessibilityLabel={goalWords}>
+        <View style={[styles.row, { flexDirection: dir.row, backgroundColor: met ? gold.wash : colors.controlTrack }]} accessible accessibilityLabel={goalWords}>
           {goal && goalXp !== null ? (
             <GoalRing xp={goalXp} goal={goal.target} size={36} tint={[colors.gold, colors.goldText]} showNumbers={false} />
           ) : (
-            <Icon name="seal-check" size={18} color={colors.success} />
+            <Icon name="seal-check" size={18} color={gold.deep} />
           )}
           <Text style={[styles.rowText, dir.text, { color: colors.textPrimary }]}>{goalWords}</Text>
         </View>
@@ -507,7 +577,8 @@ function Rows({ moments, travel, water }: { moments: LessonMoments; travel: bool
           <Icon name="trophy" size={18} color={colors.goldText} />
           <Text style={[styles.rowText, dir.text, { color: colors.textPrimary }]}>{leagueWords}</Text>
           {league.toRank < league.fromRank ? (
-            <Text style={[styles.rowUp, { color: colors.success }]}>{t('lesson.results.leagueUp', { rank: formatNumber(league.toRank, locale) })}</Text>
+            // a place won is earned, in the trophy's gold beside it
+            <Text style={[styles.rowUp, { color: colors.goldText }]}>{t('lesson.results.leagueUp', { rank: formatNumber(league.toRank, locale) })}</Text>
           ) : null}
         </Animated.View>
       ) : null}
@@ -547,7 +618,8 @@ const styles = StyleSheet.create({
   cards: { alignSelf: 'stretch', gap: spacing.sm + 2, marginTop: spacing.xs },
   // a band of colour, and the framed body under it: the band's fill is the frame
   card: { flex: 1, minWidth: 0, borderRadius: radii.lg, padding: 3, paddingTop: 0 },
-  cardLabel: { fontSize: 12, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase', textAlign: 'center', paddingVertical: 5, paddingHorizontal: 4 },
+  cardBand: { justifyContent: 'center', paddingVertical: 5, paddingHorizontal: 4 },
+  cardLabel: { fontSize: 12, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase', textAlign: 'center' },
   cardBody: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: radii.lg - 3, paddingVertical: spacing.sm + 6, paddingHorizontal: spacing.xs },
   cardValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   rows: { alignSelf: 'stretch', gap: spacing.sm },
@@ -561,6 +633,9 @@ const styles = StyleSheet.create({
   mistakeRow: { gap: spacing.xs },
   mistakePrompt: { fontSize: typography.sizes.sm },
   mistakeAnswer: { fontSize: typography.sizes.md },
+  // a listening mistake's play mark at the start of its answer, the words wrapping beside it
+  answerLine: { alignItems: 'center', gap: spacing.sm },
+  answerWords: { flex: 1 },
   mistakeAnswerValue: { fontWeight: typography.weights.bold },
   pressed: { opacity: pressedDim },
   // the lesson's bar at the foot, under its hairline, where Check was
