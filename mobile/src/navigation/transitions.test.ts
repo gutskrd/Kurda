@@ -55,6 +55,10 @@ describe('every native stack', () => {
     expect(navigators.filter(({ tag }) => !/screenOptions=\{stackOptions\(/.test(tag)).map(({ file }) => file)).toEqual([]);
   });
 
+  it('pushes every card with the card options, so each one grows from a press and swipes back alike', () => {
+    expect(files.filter(({ text }) => /presentation: 'card'/.test(text)).map(({ file }) => file)).toEqual([]);
+  });
+
   it('goes back to a place already open', () => {
     expect(navigators.filter(({ tag }) => !/UNSTABLE_router=\{\w+Router\}/.test(tag)).map(({ file }) => file)).toEqual([]);
   });

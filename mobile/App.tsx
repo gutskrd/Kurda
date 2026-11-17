@@ -24,10 +24,11 @@ import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/au
 import { TABS, legacyTabPath, linkingScreens } from './src/navigation/tabs';
 import { holdLink, launchLinkKeeper, linkHolding, takeHeldLink } from './src/navigation/heldLink';
 import { authRouter, rootRouter } from './src/navigation/returnTo';
-import { stackOptions } from './src/navigation/stackOptions';
+import { cardOptions, stackOptions } from './src/navigation/stackOptions';
 import { TabBar } from './src/navigation/TabBar';
 import { prepareAudioSession } from './src/recording/useMicRecorder';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
+import { useCloseOnBlur } from './src/navigation/edgePanel';
 import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
 import {
@@ -309,6 +310,11 @@ function SignedInTabs() {
   const [slideOpen, setSlideOpen] = useState(false);
   const openSlide = useCallback(() => setSlideOpen(true), []);
   const closeSlide = useCallback(() => setSlideOpen(false), []);
+  const closePanels = useCallback(() => {
+    setMenuOpen(false);
+    setSlideOpen(false);
+  }, []);
+  useCloseOnBlur(navigation, closePanels);
   return (
     <MenuProvider value={openMenu}>
     <SlideProvider value={openSlide}>
@@ -371,10 +377,11 @@ function SignedInRoot() {
    * over the card it came from.
    */
   const card = useCallback(
-    ({ route }: { route: { key: string } }): NativeStackNavigationOptions =>
-      !reduceMotion && originOf(route.key) ? { presentation: 'card', animation: 'fade' } : { presentation: 'card' },
+    ({ route }: { route: { key: string } }): NativeStackNavigationOptions => cardOptions(!reduceMotion && originOf(route.key) !== null),
     [reduceMotion],
   );
+  // a card whose swipe would leave a game or a round under way: it still grows out of what opened it
+  const heldCard = useCallback((args: { route: { key: string } }): NativeStackNavigationOptions => ({ ...card(args), gestureEnabled: false }), [card]);
   return (
     <RealtimeProvider>
       {/* the badges' counts, for the tab bar, the bell and the profile's menu */}
@@ -698,7 +705,7 @@ function SignedInRoot() {
         {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/* a game is not left by a swipe that was meant to scroll the story */}
-      <RootStack.Screen name="StoryGame" options={{ presentation: 'card', gestureEnabled: false }}>
+      <RootStack.Screen name="StoryGame" options={heldCard}>
         {({ route, navigation }) => (
           <GuestWall reason="play" onBack={() => navigation.goBack()}>
             <StoryGameScreen key={route.params.id} id={route.params.id} onExit={() => navigation.goBack()} />
@@ -722,7 +729,7 @@ function SignedInRoot() {
         {({ route, navigation }) => <ProverbScreen key={route.params.slug} slug={route.params.slug} onExit={() => leaveLore(navigation, 'Proverbs')} />}
       </RootStack.Screen>
       {/* a round is not left by a swipe meant to scroll its choices */}
-      <RootStack.Screen name="ProverbRound" options={{ presentation: 'card', gestureEnabled: false }}>
+      <RootStack.Screen name="ProverbRound" options={heldCard}>
         {({ route, navigation }) => <ProverbRoundScreen dialect={route.params.dialect} mode={route.params.mode} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Memes" options={card}>
