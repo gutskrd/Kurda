@@ -537,9 +537,14 @@ const styles = StyleSheet.create({
   // no box: a hairline across the page under each post, the same room above and below it
   post: { paddingTop: spacing.sm + 4, paddingBottom: spacing.sm + 4 },
   head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
-  byline: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+  /*
+   * Who, and what kind of post and when, on one line where they fit; where
+   * they do not (a narrow phone, a long name, Soranî's longer "6h ago") the
+   * kind and the time go under the name rather than squeeze it to "wa…".
+   */
+  byline: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6 },
   who: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  meta: { flexShrink: 0, fontSize: typography.sizes.sm },
+  meta: { flexShrink: 1, fontSize: typography.sizes.sm },
   more: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginVertical: -6, marginEnd: -spacing.sm - 2 },
   words: { paddingHorizontal: layout.gutter, gap: 6, paddingBottom: spacing.sm + 2 },
   title: { fontSize: TITLE_SIZE, lineHeight: TITLE_LINE, fontWeight: typography.weights.bold },
