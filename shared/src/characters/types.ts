@@ -12,10 +12,6 @@ export const CHARACTER_NAMES: Readonly<Record<CharacterId, string>> = {
   xezo: 'Xezo',
 };
 
-export function isCharacterId(value: unknown): value is CharacterId {
-  return typeof value === 'string' && (CHARACTER_IDS as readonly string[]).includes(value);
-}
-
 /** A rectangle in the character's own drawing units. */
 export interface CharacterBox {
   x: number;

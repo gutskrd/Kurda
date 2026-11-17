@@ -5,7 +5,6 @@ import {
   BROW_STATES,
   CHARACTER_IDS,
   CHARACTER_NAMES,
-  CHARACTERS,
   DEFAULT_CHARACTER,
   EXPRESSION_MOUTHS,
   EYE_STATES,
@@ -20,7 +19,6 @@ import {
   faceLayers,
   headFor,
   headGroup,
-  isCharacterId,
   stageBackdrop,
   stageFigure,
   windowArt,
@@ -272,11 +270,7 @@ describe('the characters', () => {
   it('are Hevalo, Hamo and Xezo, by those names', () => {
     expect([...CHARACTER_IDS]).toEqual(['hevalo', 'hamo', 'xezo']);
     expect(CHARACTER_NAMES).toEqual({ hevalo: 'Hevalo', hamo: 'Hamo', xezo: 'Xezo' });
-    expect(CHARACTERS.map((c) => c.name)).toEqual(['Hevalo', 'Hamo', 'Xezo']);
     expect(DEFAULT_CHARACTER).toBe('hevalo');
-    expect(isCharacterId('hamo')).toBe(true);
-    expect(isCharacterId('Hamo')).toBe(false);
-    expect(isCharacterId(undefined)).toBe(false);
   });
 
   for (const id of CHARACTER_IDS) {

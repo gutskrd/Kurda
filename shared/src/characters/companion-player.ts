@@ -88,7 +88,7 @@ function inputOf(el: Element | null): HTMLInputElement | null {
 }
 
 /** What kind of box an input is to him: a password (and whether it is shown), a code of digits, words, or nothing to watch. */
-export function companionField(input: HTMLInputElement | null): { field: CompanionField; shown: boolean } {
+function companionField(input: HTMLInputElement | null): { field: CompanionField; shown: boolean } {
   if (!input) return { field: 'none', shown: false };
   const fill = (input.getAttribute('autocomplete') ?? '').toLowerCase();
   // a shown password is a text box, but its autocomplete still says what it is
@@ -103,7 +103,7 @@ export function companionField(input: HTMLInputElement | null): { field: Compani
  * at about half the font's size each, so as not to measure the text on every
  * key. Near enough for his eyes, which look its way rather than at a letter.
  */
-export function companionCaret(input: HTMLInputElement): CharacterPoint {
+function companionCaret(input: HTMLInputElement): CharacterPoint {
   const box = input.getBoundingClientRect();
   const style = window.getComputedStyle(input);
   const start = Number.parseFloat(style.paddingLeft) || 0;

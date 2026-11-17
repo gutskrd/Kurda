@@ -4,7 +4,6 @@ import {
   BROW_STATES,
   CHARACTER_HABITS,
   CHARACTER_IDS,
-  CHARACTER_REACTIONS,
   EYE_STATES,
   MOUTH_SHAPES,
   TAP_RUN_MS,
@@ -133,7 +132,6 @@ describe('the acts', () => {
   });
 
   it('plays a reaction as the character it is for: only Hamo chuckles, only Xezo pouts', () => {
-    for (const reaction of CHARACTER_REACTIONS) for (const id of CHARACTER_IDS) expect(ACTS[reactionAct(id, reaction)]).toBeDefined();
     expect(reactionAct('hamo', 'chuckle')).toBe('chuckle');
     expect(reactionAct('xezo', 'chuckle')).toBe('giggle');
     expect(reactionAct('hevalo', 'chuckle')).toBe('giggle');

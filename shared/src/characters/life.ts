@@ -92,8 +92,6 @@ export type ActName =
  */
 export type CharacterReaction = 'cheer' | 'hmm' | 'wink' | 'surprised' | 'giggle' | 'chuckle' | 'pout' | 'tongue';
 
-export const CHARACTER_REACTIONS: readonly CharacterReaction[] = ['cheer', 'hmm', 'wink', 'surprised', 'giggle', 'chuckle', 'pout', 'tongue'];
-
 /** An ear's flick: back, forward past where it rests, and settled. */
 const TWITCH: Keys = [
   [0, 0],
@@ -638,11 +636,6 @@ export function between([min, max]: readonly [number, number], random: () => num
 /** Somewhere to glance: anywhere across, and a little up or down rather than far. */
 export function glanceTarget(random: () => number = Math.random): CharacterPoint {
   return { x: Math.round((random() * 2 - 1) * 100) / 100, y: Math.round((random() * 1.1 - 0.5) * 100) / 100 };
-}
-
-/** Whether a character has the parts the deer's habits move. */
-export function hasRig(art: CharacterArt): boolean {
-  return art.rig !== undefined;
 }
 
 // ─────────────────────────────────────────────────────────────── looking at things

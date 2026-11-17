@@ -16,7 +16,7 @@
  */
 import { escapeXml, n, prefixFor } from '../art/svg.js';
 import type { BrowState, CharacterBox, CharacterArt, CharacterId, EyeState, MouthShape } from './types.js';
-import { BROW_STATES, CHARACTER_IDS, CHARACTER_NAMES, EYE_STATES, MOUTH_SHAPES } from './types.js';
+import { BROW_STATES, EYE_STATES, MOUTH_SHAPES } from './types.js';
 import { drawHevalo } from './hevalo.js';
 import { drawHamo } from './hamo.js';
 import { drawXezo } from './xezo.js';
@@ -28,7 +28,6 @@ export {
   EXPRESSION_MOUTHS,
   EYE_STATES,
   MOUTH_SHAPES,
-  isCharacterId,
   type BrowState,
   type CharacterBox,
   type CharacterArt,
@@ -46,7 +45,6 @@ export {
   BLINK_STEPS,
   BREATH,
   CHARACTER_HABITS,
-  CHARACTER_REACTIONS,
   HABITS,
   RESTING,
   SWAY,
@@ -56,7 +54,6 @@ export {
   easeInOut,
   eyesMiddle,
   glanceTarget,
-  hasRig,
   keySteps,
   lookToward,
   pickAct,
@@ -111,9 +108,6 @@ const DRAW: Record<CharacterId, (prefix: string) => CharacterArt> = {
 
 /** Hevalo is the app's own mascot, so he speaks unless someone has chosen another. */
 export const DEFAULT_CHARACTER: CharacterId = 'hevalo';
-
-/** Who can speak, in the order a picker shows them. */
-export const CHARACTERS: readonly { id: CharacterId; name: string }[] = CHARACTER_IDS.map((id) => ({ id, name: CHARACTER_NAMES[id] }));
 
 /** Drawings already made, by prefix: a player asks for the same parts on every frame. */
 const made = new Map<string, CharacterArt>();
