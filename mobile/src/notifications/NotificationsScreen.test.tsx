@@ -76,7 +76,16 @@ describe('notification settings', () => {
       fireEvent.click(earlier);
     });
     expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ quietStartMin: 21 * 60 + 30 });
-    expect(screen.getByText('21:30')).toBeTruthy();
+    // in the reader's own way of writing the time: English counts twelve hours
+    expect(screen.getByText(/^9:30\sPM$/)).toBeTruthy();
+  });
+
+  // the list it is opened from is "Notifications": this page is named as the gear that opens it
+  it('is called by the name of the gear that opens it, not by the list’s', async () => {
+    testAuth.client = fakeClient({ 'GET /me/notification-prefs': ok(PREFS) });
+    renderWithProviders(<NotificationsScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Notification settings')).toBeTruthy();
+    expect(screen.queryByText('Notifications')).toBeNull();
   });
 
   it('puts quiet hours back too when turning them off did not save', async () => {
@@ -87,6 +96,6 @@ describe('notification settings', () => {
       fireEvent.click(quiet);
     });
     expect(switchNamed('Enable quiet hours').getAttribute('aria-checked')).toBe('true');
-    expect(screen.getByText('22:00')).toBeTruthy();
+    expect(screen.getByText(/^10:00\sPM$/)).toBeTruthy();
   });
 });

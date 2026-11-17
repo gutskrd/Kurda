@@ -37,9 +37,17 @@ export interface NotificationPrefs {
 const STEP = 30;
 
 /** "HH:MM" for a minute-of-day. */
-export function formatMinute(min: number): string {
+export function formatMinute(min: number, locale?: string): string {
   const h = Math.floor(min / 60) % 24;
   const m = min % 60;
+  // in the reader's language, which decides between twelve hours and twenty-four ("10:00 PM", "22:00"), as every other time in the app is
+  if (locale) {
+    try {
+      return new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' }).format(new Date(2000, 0, 1, h, m));
+    } catch {
+      // a language the phone has no data for: the clock as the day writes it, below
+    }
+  }
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 

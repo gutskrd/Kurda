@@ -387,7 +387,8 @@ export function NotificationHeading({ title, first, action }: { title: string; f
       </Text>
       {action ? (
         <Pressable onPress={action.onPress} accessibilityRole="button" accessibilityLabel={action.label} style={({ pressed }) => [styles.markAll, pressed && styles.pressed]}>
-          <Text style={[styles.markAllText, { color: colors.textPrimary }]} numberOfLines={1}>
+          {/* violet, as what can be pressed is: it is the one thing on the list's head that does something */}
+          <Text style={[styles.markAllText, { color: colors.primary }]} numberOfLines={1}>
             {action.label}
           </Text>
         </Pressable>

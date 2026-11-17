@@ -8,6 +8,12 @@ describe('formatMinute', () => {
     expect(formatMinute(9 * 60 + 5)).toBe('09:05');
     expect(formatMinute(22 * 60)).toBe('22:00');
   });
+
+  it('writes the time as the reader’s language does, twelve hours or twenty-four', () => {
+    expect(formatMinute(22 * 60, 'en-US')).toMatch(/^10:00\sPM$/);
+    expect(formatMinute(7 * 60, 'de')).toMatch(/^0?7:00$/);
+    expect(formatMinute(22 * 60, 'de')).toBe('22:00');
+  });
 });
 
 describe('stepMinute', () => {
