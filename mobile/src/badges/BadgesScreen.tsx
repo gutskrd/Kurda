@@ -45,14 +45,10 @@ import {
 import { pressedDim } from '../theme/motion';
 
 /**
- * Badges (contract 4 §B, §U): every badge by family, the tier each has
- * reached, how far it is to the next ("7 / 30 days"), the secrets as "???"
- * until found (with a hint once one is), how rare each tier is once enough
- * people learn here, and the three chosen for the profile.
- *
- * Nothing here is a list of failures: a badge not earned yet is drawn quietly
- * with what it takes, and the page opens on what has been earned, then on the
- * few nearest their next tier: people try hardest when a goal is close.
+ * Badges: every badge by family, the tier reached, progress to the next ("7 / 30 days"), secrets as "???" until
+ * found (with a hint once one is), how rare each tier is once enough people use the app, and the three chosen for
+ * the profile. Unearned badges are drawn quietly with what they take, and the page opens on what has been earned,
+ * then the few nearest their next tier.
  */
 export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const dir = useDirection();
@@ -64,7 +60,7 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const [error, setError] = useState<ApiError | null>(null);
   const [open, setOpen] = useState<BadgeView | null>(null);
   const [picking, setPicking] = useState(false);
-  // earned since the app opened: marked "New" on their tiles
+  // Earned since the app opened: marked "New" on their tiles.
   const fresh = useFreshBadges();
 
   const load = useCallback(() => {
@@ -80,7 +76,7 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       void load();
     }, [load]),
   );
-  // pulled down, the badges are read again
+  // Pulled down, the badges are read again.
   const pull = usePullRefresh(load);
 
   const columns = width >= 600 ? 5 : width >= 360 ? 3 : 2;
@@ -176,12 +172,8 @@ const SLOT_MEDAL = 84;
 const SLOT_EMPTY = 72;
 
 /**
- * The three on the profile, in their order, and the way to choose them.
- *
- * Three to a row on any phone: each place a third of the row, at most the 96
- * it is drawn at, with the medal sized to its place. They were 96 each
- * whatever the width, which on a 360-point phone is wider than the card, and
- * the third went off its edge.
+ * The three showcase badges in order, and the way to choose them: each place a third of the row up to 96, with
+ * the medal sized to fit, so three fit any phone.
  */
 function Showcase({ data, onPick, onOpen }: { data: BadgesResponse; onPick: () => void; onOpen: (b: BadgeView) => void }): React.JSX.Element {
   const dir = useDirection();
@@ -252,7 +244,7 @@ function MonthlyChallenge({ month }: { month: BadgesResponse['monthlyChallenge']
         <Text style={[styles.monthText, dir.text, { color: colors.textPrimary }]}>
           {t('badges.monthly', { days: formatNumber(Math.min(month.days, month.goal), locale), goal: formatNumber(month.goal, locale) })}
         </Text>
-        {/* the month's challenge met is something earned, in the gold of everything earned: it was a right answer's green */}
+        {/* The month's challenge met is something earned, so it is in the earned gold. */}
         {done ? <Icon name="seal-check" size={16} color={colors.goldText} /> : null}
       </View>
       <Meter fraction={month.goal > 0 ? month.days / month.goal : 0} tint={badgeTint(3, scheme)} height={6} />
@@ -261,17 +253,15 @@ function MonthlyChallenge({ month }: { month: BadgesResponse['monthlyChallenge']
 }
 
 /**
- * The badges while they load: the showcase card with its three places, then
- * each family's heading over a grid of the same number of columns and the
- * same tile width the real grid will use, so a phone and a tablet each get
- * their own grey.
+ * The loading placeholder: the showcase card's three places, then each family's heading over a grid with the real
+ * column count and tile width.
  */
 function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): React.JSX.Element {
   const dir = useDirection();
   const { t } = useI18n();
   const medal = Math.min(76, tile - spacing.sm * 2);
   const { height } = useWindowDimensions();
-  // a family is its heading and two rows of tiles: as many as reach the foot of the screen
+  // A family is its heading and two rows of tiles: as many as reach the foot of the screen.
   const families = Math.max(2, Math.ceil((height - 260) / (2 * (medal + 64) + 40)));
   return (
     <View style={styles.content} accessibilityLabel={t('common.loading')}>
@@ -312,14 +302,14 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
   );
 }
 
-/** The stage a badge stands on in its sheet, and the ellipse of the sheet's surface that rises under it. */
+/** The stage a badge stands on in its sheet, and the ellipse of the sheet surface rising under it. */
 const STAGE = 196;
 const RISE = 150;
 
-/** display(22) sets 1.12 */
+/** display(22) sets 1.12. */
 const SUMMARY_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
 
-/** One badge in the grid; `fresh` is a badge earned since the app opened, which wears a "New" chip. */
+/** One badge in the grid; `fresh` means earned since the app opened, shown with a "New" chip. */
 function BadgeTile({ badge, width, fresh = false, onPress }: { badge: BadgeView; width: number; fresh?: boolean; onPress: () => void }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
@@ -350,10 +340,13 @@ function BadgeTile({ badge, width, fresh = false, onPress }: { badge: BadgeView;
   );
 }
 
-/** How strongly a badge's own colour washes the stage it stands on: a tint of the sheet, not a colour of its own. */
+/** How strongly a badge's colour tints the stage it stands on. */
 const WASH = 0.18;
 
-/** A badge's colour as a wash over the sheet: the art's own (shared `badgeColour`), grey until earned, one violet for every secret not yet found. */
+/**
+ * A badge's colour as a wash over the sheet: its art's own (shared `badgeColour`), grey until earned, violet for
+ * any undiscovered secret.
+ */
 function washOf(badge: BadgeView): string | null {
   if (!hasBadgeArt(badge.key)) return null;
   const hex = badgeColour(badge.key, badge.hidden ? 'secret' : badge.tier > 0 ? 'earned' : 'locked');
@@ -362,11 +355,9 @@ function washOf(badge: BadgeView): string | null {
 }
 
 /**
- * One badge up close, in a sheet from the foot of the screen: the badge on a
- * soft wash of its own colour, the sheet's surface rising under it in a
- * shallow curve; when it was earned (or how far there is to go), its name,
- * what the name means, a short rule, what it takes; then each tier with when
- * it was earned and how rare it is, and one button to put it away.
+ * One badge up close in a bottom sheet: the badge on a wash of its colour over a curved surface; when it was
+ * earned or how far to go; its name, meaning, rule and requirement; then each tier with its date and rarity, and
+ * a close button.
  */
 function BadgeSheet({
   badge,
@@ -390,7 +381,7 @@ function BadgeSheet({
   const name = badge.hidden ? t('badges.secretName') : badgeName(t, badge.key);
   const meaning = badge.hidden ? null : badgeMeaning(t, badge.key);
   const wash = washOf(badge);
-  // when the tier it shows was earned; a badge not yet earned says how far there is to go instead
+  // When the shown tier was earned; an unearned badge shows how far there is to go instead.
   const earned = badge.tier > 0 ? dateOf(badge.tierEarnedAt[badge.tier - 1] ?? badge.earnedAt, locale) : '';
   const num = (v: number): string => formatNumber(v, locale);
   const kicker = badge.hidden ? null : earned ? t('badges.earnedOn', { date: earned }) : badge.tier > 0 ? null : progressText(t, badge, num);
@@ -409,7 +400,7 @@ function BadgeSheet({
     <Sheet onClose={onClose} footer={<ClayButton label={t('common.done')} tone="primary" size="large" onPress={onClose} />}>
       <View style={styles.sheetHero}>
         <View style={[styles.stage, wash ? { backgroundColor: wash } : null]} testID="badge-stage">
-          {/* the sheet's own surface, rising under the badge: the top of a wide ellipse */}
+          {/* The sheet's own surface, rising under the badge: the top of a wide ellipse. */}
           <View style={[styles.stageRise, { backgroundColor: colors.background }]} />
           <BadgeMedal
             badgeKey={badge.key}
@@ -438,7 +429,7 @@ function BadgeSheet({
 
       {!badge.hidden && badge.next !== null ? (
         <View style={styles.sheetProgress}>
-          {/* said once: over the name it is already said for a badge not yet earned */}
+          {/* Said once: over the name it is already said for a badge not yet earned. */}
           {badge.tier > 0 ? <Text style={[styles.sheetProgressText, dir.text, { color: colors.textPrimary }]}>{progressText(t, badge, num)}</Text> : null}
           <Meter fraction={nextFraction(badge)} tint={badgeTint(badge.tier + 1, scheme)} height={8} label={progressText(t, badge, num) ?? undefined} />
         </View>
@@ -470,7 +461,7 @@ function BadgeSheet({
                       .join(' · ')}
                   </Text>
                 </View>
-                {/* a tier won is earned, in the gold of everything earned: it was a right answer's green */}
+                {/* A tier won is earned, so it is in the earned gold. */}
                 <Icon name={reached ? 'seal-check' : 'lock'} size={18} color={reached ? colors.goldText : colors.textSecondary} />
               </View>
             );
@@ -484,7 +475,7 @@ function BadgeSheet({
 
       {badge.tier > 0 && !badge.hidden ? (
         <View style={styles.showcaseAction}>
-          {/* the quieter of the sheet's two buttons: Done, at its foot, is the one that puts it away */}
+          {/* The quieter of the sheet's two buttons: Done, at its foot, is the one that puts it away. */}
           <ClayButton
             label={shown ? t('badges.showcaseRemove') : t('badges.showcaseAdd')}
             icon={shown ? 'check' : 'plus'}
@@ -552,7 +543,7 @@ function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onCl
               accessibilityLabel={badgeLabel(t, b)}
               style={({ pressed }) => [
                 styles.pick,
-                // a badge taken is ringed in the violet of every choice, with its place in the violet beside it: the ring was the page's ink
+                // A chosen badge is ringed in violet like every selected choice, with its place number in violet beside it.
                 { backgroundColor: colors.controlTrack, borderColor: on ? colors.primary : 'transparent', opacity: pressed ? pressedDim : !on && keys.length >= SHOWCASE_SIZE ? 0.5 : 1 },
               ]}
             >
@@ -607,10 +598,10 @@ const styles = StyleSheet.create({
   legacy: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radii.md, padding: spacing.md },
   legacyText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   sheetHero: { alignItems: 'center', gap: spacing.xs + 2 },
-  // the wash the badge stands on: as wide as the sheet's column, its lower edge under the curve the surface rises in
+  // The wash the badge stands on: as wide as the sheet's column, its lower edge under the surface's curve.
   stage: { alignSelf: 'stretch', height: STAGE, alignItems: 'center', justifyContent: 'flex-end', borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, overflow: 'hidden', marginBottom: spacing.xs },
   stageRise: { position: 'absolute', left: '-14%', right: '-14%', bottom: -RISE * 0.58, height: RISE, borderRadius: radii.pill },
-  // small capitals, as a label on a medal is: when it was earned
+  // Small capitals, as on a medal's label: when it was earned.
   sheetKicker: { fontSize: 12, fontWeight: typography.weights.semibold, letterSpacing: 1.2, textTransform: 'uppercase', textAlign: 'center' },
   sheetName: { ...display(typography.sizes.xl), textAlign: 'center' },
   sheetMeaning: { fontSize: typography.sizes.md, textAlign: 'center' },
@@ -627,7 +618,7 @@ const styles = StyleSheet.create({
   pick: { width: '31%', alignItems: 'center', gap: spacing.xs, borderRadius: radii.md, borderWidth: 1.5, padding: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   pickName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   order: { position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  // the place's number in the corner the row starts from, on the right in Soranî and Arabic
+  // The place's number in the corner the row starts from, on the right in Soranî and Arabic.
   orderRtl: { right: undefined, left: 6 },
   orderText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
 });

@@ -18,10 +18,8 @@ import { badgeLabel, badgeMeaning, badgeName, badgeTextKey, nextTierLine, tierLa
 import { enqueue, fromEvent, fromUnseen, seenId, type PendingBadge } from './queue';
 
 /**
- * Holding the badges back while something else is being celebrated: a rank
- * result counting up, a tier's own moment. The badge earned by the same game
- * waits until that is over, then has its turn (contract 4 §U: "badge tier-ups
- * queued after").
+ * Holds badges back while something else is celebrated (a rank result counting up, a tier's moment); a badge from
+ * the same game waits its turn.
  */
 interface Gate {
   hold: () => () => void;
@@ -41,44 +39,35 @@ const NONE: ReadonlySet<string> = new Set();
 const FreshContext = createContext<ReadonlySet<string>>(NONE);
 
 /**
- * The badges unlocked since the app opened, by key: the ones found waiting
- * when it started and the ones earned while it is open, whether their
- * celebration has played yet or not. They are news until the app is next
- * opened, so the Badges page and a profile's showcase mark them "New"
- * (NewChip) without asking the server anything more.
+ * Badges unlocked since the app opened, by key: those waiting at start and those earned while open, celebrated or
+ * not. They count as new until the next launch, so the Badges page and profile showcase mark them "New" (NewChip)
+ * without asking the server.
  */
 export function useFreshBadges(): ReadonlySet<string> {
   return useContext(FreshContext);
 }
 
 /**
- * A moment between the unlock and the celebration, so a badge earned by the
- * game that just ended does not jump in front of that game's own result
- * before the result has had a chance to hold it back.
+ * A pause between unlock and celebration, so a badge from the game that just ended does not jump ahead of that
+ * game's result before it can hold it back.
  */
 const SETTLE_MS = 1200;
 
 /**
- * Celebrates each badge as it is earned, once (contract 4 §B2): from
- * `badge_unlocked` on the app's one realtime connection, and from the unlocks
- * not yet seen when the app opens (it was closed when they happened). One at
- * a time, the highest tier of a badge only, never while another celebration
- * holds them back; each is marked seen on the server when it is closed, so
- * the browser does not celebrate it a second time.
- *
- * Under the two ways on there is a quiet Share (share/ShareWin.tsx). Sharing
- * neither closes the moment nor marks the badge seen: only the ways on do.
+ * Celebrates each badge once as it is earned: from `badge_unlocked` on the realtime connection, and from unlocks
+ * not yet seen at launch. One at a time, only a badge's highest tier, never while another celebration holds them
+ * back; each is marked seen on the server when closed, so the web app does not celebrate it again. A quiet Share
+ * sits under the two ways on (share/ShareWin.tsx); sharing neither closes the moment nor marks the badge seen.
  */
 export function BadgeCelebrationHost({ children }: { children: ReactNode }): React.JSX.Element {
   const { client } = useAuth();
   const [queue, setQueue] = useState<PendingBadge[]>([]);
   const [holds, setHolds] = useState(0);
   const [ready, setReady] = useState(false);
-  // every badge that arrived new this session, kept after its celebration for the "New" chips
+  // Every badge that arrived new this session, kept after its celebration for the "New" chips.
   const [fresh, setFresh] = useState<ReadonlySet<string>>(NONE);
   const seen = useRef(new Set<string>());
-  // the unlocks that came while the app was open, as the person earned them —
-  // felt as they are celebrated; the ones waiting from before are only shown
+  // Unlocks earned while the app was open get the haptic as they are celebrated; ones waiting from before are only shown.
   const live = useRef(new Set<string>());
 
   const add = useCallback((items: PendingBadge[]) => {
@@ -116,7 +105,7 @@ export function BadgeCelebrationHost({ children }: { children: ReactNode }): Rea
   );
 
   const head = queue[0] ?? null;
-  // a new head waits a moment before it shows (see SETTLE_MS)
+  // A new head waits a moment before it shows (see SETTLE_MS).
   useEffect(() => {
     setReady(false);
     if (!head) return;
@@ -170,10 +159,10 @@ function BadgeMoment({ badge, felt, onClose }: { badge: PendingBadge; felt: bool
   const kicker = badge.secret ? t('badges.unlock.secret') : badge.tier > 1 && tierCount > 1 ? t('badges.unlock.tierUp') : t('badges.unlock.title');
   const label = badgeLabel(t, { key: badge.key, tier: badge.tier, tierKey: badge.tierKey, tierCount, hidden: false });
   const [light, strong] = badgeTint(tierCount > 1 ? badge.tier : 3, 'dark');
-  // what this tier took: "30 days", "25 wins" (a single badge has no number to name)
+  // What this tier took: "30 days", "25 wins" (a single badge has no number to name).
   const threshold = tierCount > 1 ? def.tiers[badge.tier - 1] : undefined;
   const reached = typeof threshold === 'number' ? `${n(threshold)} ${unitWord(t, def.unit, threshold)}` : null;
-  // and the tier after it, so a new goal is in view the moment this one is won
+  // And the tier after it, so a new goal is in view the moment this one is won.
   const next = badge.secret ? null : nextTierLine(t, badge.key, badge.tier, n);
   return (
     <Celebration
@@ -202,7 +191,7 @@ function BadgeMoment({ badge, felt, onClose }: { badge: PendingBadge; felt: bool
               navigation.navigate('Badges');
             }}
           />
-          {/* under the ways on, and quieter than either: the badge by its name and the site's address, nothing of who earned it */}
+          {/* Under the ways on and quieter than either: the badge's name and the site's address, nothing about who earned it. */}
           <ShareWin text={badgeShare(t, name)} testID="badge-share" />
         </>
       }
