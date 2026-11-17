@@ -114,7 +114,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
     const [res, invited, mine] = await Promise.all([
       client.get<{ notifications: InboxItem[] }>('/me/notifications'),
       listInvites(client),
-      // the friend list alone: the social panel's summary has the same list, and reads requests, groups and notifications besides
+      // the friend list alone, not the social summary, which reads requests, groups and notifications besides
       isGuest ? null : client.get<{ friends?: NoticeFriend[] }>('/friends'),
     ]);
     if (invited.ok) setInvites(liveInvites(invited.data.incoming, Date.now()));

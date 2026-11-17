@@ -53,9 +53,8 @@ const FRESH_MS = 15_000;
  *
  * Four cheap counts — unread direct messages, unread group messages, friend
  * requests, unopened notifications — read when the shell first appears, when
- * the app comes back from the background (not from a Control Centre swipe,
- * which leaves the connection open and hearing everything: net/backFromBackground.ts),
- * when the realtime connection comes back,
+ * the app comes back from the background (net/backFromBackground.ts), when
+ * the realtime connection comes back,
  * when a direct message or a gift arrives on your own channel, and when a
  * screen that has just read something says so. No timer: a badge that is
  * wrong for a few seconds until you look is better than a phone asking the

@@ -1,12 +1,7 @@
 /**
- * The indexes behind the busiest reads, against real Postgres: that each read
- * is answered by looking at the asker's own rows rather than by walking a
- * whole table (migrations 1751000630000 and 1751000640000).
- *
- * Each case fills the tables with enough rows for the planner to plan as it
- * would on a full database — a test database's near-empty tables are quicker
- * to read end to end, and a plan for them says nothing — asks for the plan,
- * and rolls everything back, statistics included.
+ * The busiest reads use the indexes made for them (migrations 1751000630000
+ * and 1751000640000), on tables filled enough to plan as a full database
+ * would; everything, statistics included, is rolled back.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';

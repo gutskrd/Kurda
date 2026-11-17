@@ -11,19 +11,12 @@ import { onBackFromBackground } from '../net/backFromBackground';
  * happened to open the Shop. A count on the way in is the smallest thing that
  * actually tells someone.
  *
- * It used to ask `/me/gifts/unseen` every minute, from every signed-in phone,
- * whether anything had arrived. Now a gift says so itself: it arrives on your
- * own channel (`gift_received`, which GiftArrivals passes on with
- * `refreshGiftBadge`), and the count is read when the badge is first drawn,
- * when the app comes back from the background (net/backFromBackground.ts),
- * and when a gift arrives or is opened. No timer.
- *
- * It is read from `/me/gifts/unseen`, which counts the gifts and nothing
- * else. It was read from `/me/social` for a while, the social panel's
- * summary, which reads the whole friend list with who is playing what, the
- * requests, the groups and the notifications to answer it — among the most
- * expensive requests the app makes, made at every start and every return to
- * the app for one number on a badge.
+ * A gift says so itself: it arrives on your own channel (`gift_received`,
+ * which GiftArrivals passes on with `refreshGiftBadge`), and the count is
+ * read when the badge is first drawn, when the app comes back from the
+ * background, and when a gift arrives or is opened. No timer. It asks
+ * `/me/gifts/unseen`, one count, not the social summary, which reads the
+ * friend list, requests, groups and notifications as well.
  */
 
 /**

@@ -1,24 +1,10 @@
 import type { AppStateStatus } from 'react-native';
 
 /**
- * Knowing when the app has really been away.
- *
- * Several things read the server again "when the app comes back to the
- * front": the badges' counts, the gift count, the event theme. They listened
- * for `active`, and iOS says `active` after every Control Centre swipe, every
- * notification pulled down and read in place, every Face ID prompt and every
- * glance at the app switcher — each of which only passes through `inactive`
- * while the app goes on running, with its realtime connection open and
- * hearing everything. Each of those asked the server for everything again,
- * half a dozen requests for a swipe.
- *
- * This says "back" only after the app has been in the background, which is
- * where the connection is closed (realtime/RealtimeProvider.tsx) and where
- * something could have been missed. Android has no `inactive`: leaving the
- * app is `background` there, so nothing changes for it.
- *
- * React Native's AppState is handed in rather than imported, so this stays
- * plain code a test can drive.
+ * Says when the app is in front again after being in the background, the only
+ * time something could have been missed: iOS also reports `active` after every
+ * Control Centre swipe or Face ID prompt, while the app runs on with its
+ * realtime connection open, and asking the server again then is waste.
  */
 
 interface AppStateLike {

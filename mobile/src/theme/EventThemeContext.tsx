@@ -27,15 +27,9 @@ const POLL_MS = 60_000;
 /**
  * Tracks the active event theme app-wide (KUR-092). Live events are re-polled on
  * mount, when the app comes back from the background, and on a slow interval
- * while the app is not in the background, so the theme applies while an event
- * runs and reverts cleanly once it ends — there is no persisted theme state to
- * leave stale. Opt-out short-circuits to null.
- *
- * The interval stops in the background: a phone in a pocket shows no theme,
- * and an Android app left open behind another kept asking once a minute for
- * as long as the system let it run. Coming back asks at once and starts it
- * again; a Control Centre swipe, which never stopped it, asks nothing
- * (net/backFromBackground.ts).
+ * that stops in the background, where nobody sees a theme, so the theme
+ * applies while an event runs and reverts cleanly once it ends — there is no
+ * persisted theme state to leave stale. Opt-out short-circuits to null.
  */
 export function EventThemeProvider({ children }: { children: ReactNode }) {
   const { client, status } = useAuth();
