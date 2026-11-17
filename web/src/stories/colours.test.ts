@@ -59,13 +59,16 @@ describe('the stories’ colours', () => {
     expect(declared(stories, '.story-sentence.is-reading')).toMatch(/background:\s*var\(--hue-wash\)/);
   });
 
-  it('keep the gold for what is earned, and out of the library and the reader', () => {
+  it('run the game’s time bar in the violet, and turn it and the clock red when time is short, as the phone does', () => {
+    expect(declared(stories, '.sg-timebar span')).toMatch(/background:\s*var\(--primary\)/);
+    expect(declared(stories, '.sg-timebar.is-low span')).toMatch(/background:\s*var\(--danger\)/);
+    expect(declared(stories, '.sg-clock.is-low')).toMatch(/color:\s*var\(--danger\)/);
+  });
+
+  it('keep the gold for what is earned alone: the best check score, the points, the podium', () => {
     const golden = rules(stories)
       .filter((r) => /--gold/.test(r.body))
       .flatMap((r) => r.selectors);
-    expect(golden).toEqual(expect.arrayContaining(['.story-check-best', '.sg-xp']));
-    for (const selector of golden) {
-      expect(selector).not.toMatch(/\.story-(cefr|narrated|card|overview|continue|progress|resume|sentence|replay|gloss|para|save|contents|player)/);
-    }
+    expect(golden.sort()).toEqual(['.sg-podium-place', '.sg-podium-step.is-1', '.sg-xp', '.story-check-best']);
   });
 });

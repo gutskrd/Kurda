@@ -1837,10 +1837,11 @@
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
+/* a line about a choice: the quiet ink, as the phone's setup sheet has it */
 .story-setup-note {
   margin: -8px 0 0;
   font-size: 0.85rem;
-  color: var(--gold-ink);
+  color: var(--ink-3);
 }
 .story-setup .msg {
   margin: 0;
@@ -1910,13 +1911,13 @@
   font-size: 0.85rem;
   color: var(--ink-2);
 }
+/* a note in the game: the quiet box the phone's notes are, the control's track under the ink (gold is for what is earned) */
 .sg-note {
   margin: 0;
   padding: 10px 14px;
   border-radius: var(--r-md);
-  border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent);
-  background: var(--gold-soft);
-  color: var(--gold-ink);
+  background: var(--surface-2);
+  color: var(--ink-2);
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -1983,13 +1984,14 @@
   min-width: 0;
   font-weight: 550;
 }
+/* who hosts is a fact about the game, not a prize: the crown and the word in the quiet ink, as on the phone */
 .sg-host {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--gold-ink);
+  color: var(--ink-3);
 }
 .sg-away {
   font-size: 0.75rem;
@@ -2123,7 +2125,7 @@
 }
 .sg-dock-note {
   font-size: 0.85rem;
-  color: var(--gold-ink);
+  color: var(--ink-3);
 }
 .sg-dock-error {
   font-size: 0.85rem;
@@ -2223,8 +2225,9 @@
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
+/* the last ten seconds: red, the clock and its bar together, as the phone's are */
 .sg-clock.is-low {
-  color: var(--gold-ink);
+  color: var(--danger);
 }
 .sg-timebar {
   height: 6px;
@@ -2235,12 +2238,16 @@
 .sg-timebar span {
   display: block;
   height: 100%;
-  background: var(--gold);
+  /* the time left: the violet of a road, until it runs short */
+  background: var(--primary);
   transform-origin: left center;
   transition: transform 1s linear;
 }
 [dir='rtl'] .sg-timebar span {
   transform-origin: right center;
+}
+.sg-timebar.is-low span {
+  background: var(--danger);
 }
 .sg-prompt {
   margin: 4px 0 0;

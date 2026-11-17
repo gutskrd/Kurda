@@ -164,7 +164,8 @@ export function Lobby({
                   <View style={styles.playerFacts}>
                     {p.isHost ? (
                       <View style={styles.fact}>
-                        <Icon name="crown" size={12} color={colors.gold} />
+                        {/* who hosts is a fact about the game, not a prize: the crown in the line's own quiet ink */}
+                        <Icon name="crown" size={12} color={colors.textSecondary} />
                         <Text style={[styles.factText, { color: colors.textSecondary }]}>{t('stories.lobby.host')}</Text>
                       </View>
                     ) : null}

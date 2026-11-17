@@ -329,8 +329,9 @@ function HintCard({ hint, dialect }: { hint: RiddleHint; dialect: RiddleDetail['
   return (
     <View style={[styles.hint, { backgroundColor: colors.controlTrack }]} testID={`riddle-hint-${hint.index}`}>
       <View style={[styles.hintHead, { flexDirection: dir.row }]}>
-        <Icon name="lightbulb" size={14} color={colors.goldText} />
-        <Text style={[styles.hintLabel, { color: colors.goldText }]}>{t('lore.riddle.hintN', { n: hint.index + 1 })}</Text>
+        {/* which hint this is: a label in the quiet ink, as the website numbers its hints */}
+        <Icon name="lightbulb" size={14} color={colors.textSecondary} />
+        <Text style={[styles.hintLabel, { color: colors.textSecondary }]}>{t('lore.riddle.hintN', { n: hint.index + 1 })}</Text>
       </View>
       <Text {...ku.props} style={[styles.hintText, { color: colors.textPrimary }, ku.style]}>
         {hint.text}

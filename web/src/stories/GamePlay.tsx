@@ -282,7 +282,7 @@ export function GameQuestion({
           )}
         </div>
         {timed && left !== null && ends !== null && (
-          <div className="sg-timebar" aria-hidden>
+          <div className={`sg-timebar${left <= 10_000 ? ' is-low' : ''}`} aria-hidden>
             <span style={{ transform: `scaleX(${Math.min(1, left / (view.settings.timerSeconds * (view.extraTime ? 2 : 1) * 1000))})` }} />
           </div>
         )}

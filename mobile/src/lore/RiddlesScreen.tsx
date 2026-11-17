@@ -253,9 +253,10 @@ function DailyRiddle({ riddle, translated, onOpen }: { riddle: RiddleCard; trans
       style={[styles.daily, { backgroundColor: colors.surface }]}
       testID="riddle-daily"
     >
+      {/* a label, in the page's quiet ink as the website has it: gold is for what is earned */}
       <View style={[styles.dailyKicker, { flexDirection: dir.row }]}>
-        <Icon name="calendar" size={14} color={colors.goldText} />
-        <Text style={[sectionLabel, { color: colors.goldText }]}>{t('lore.riddles.daily')}</Text>
+        <Icon name="calendar" size={14} color={colors.textSecondary} />
+        <Text style={[sectionLabel, { color: colors.textSecondary }]}>{t('lore.riddles.daily')}</Text>
       </View>
       <Text {...ku.props} style={[styles.dailyQuestion, { color: colors.textPrimary }, ku.style]}>
         {riddle.question}

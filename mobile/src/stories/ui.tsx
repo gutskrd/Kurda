@@ -111,7 +111,8 @@ export function SectionLabel({ children }: { children: string }): React.JSX.Elem
 /**
  * A short fact in a pill: "Short", "~3 min", "Done · 4/5". Its icon stands
  * before its label the way the language reads: on the right in Soranî and
- * Arabic, where a fixed row left it trailing the word it marks.
+ * Arabic, where a fixed row left it trailing the word it marks. It has no
+ * gold: a fact is not a prize, and gold is for what is earned.
  */
 export function Pill({
   label,
@@ -121,12 +122,12 @@ export function Pill({
 }: {
   label: string;
   icon?: IconName;
-  tone?: 'plain' | 'primary' | 'gold' | 'success';
+  tone?: 'plain' | 'primary' | 'success';
   accessibilityLabel?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
-  const fg = tone === 'primary' ? colors.primary : tone === 'gold' ? colors.goldText : tone === 'success' ? colors.success : colors.textSecondary;
+  const fg = tone === 'primary' ? colors.primary : tone === 'success' ? colors.success : colors.textSecondary;
   const bg = tone === 'success' ? colors.successFill : colors.controlTrack;
   return (
     <View style={[styles.pill, { backgroundColor: bg, flexDirection: dir.row }]} accessible accessibilityLabel={accessibilityLabel ?? label}>
