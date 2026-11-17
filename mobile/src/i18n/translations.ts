@@ -1405,7 +1405,6 @@ export type TranslationKey =
   | 'onboarding.prop.read'
   | 'onboarding.prop.streak'
   | 'onboarding.notify.title'
-  | 'onboarding.notify.body'
   | 'onboarding.notify.later'
   | 'common.continue'
 
@@ -4758,7 +4757,6 @@ const en: Catalog = {
   'onboarding.prop.read': 'Read stories & poems from the community',
   'onboarding.prop.streak': 'Keep your streak and climb the leagues',
   'onboarding.notify.title': 'Reminders, if you want them',
-  'onboarding.notify.body': 'On a day your streak is still waiting, Hevalo leaves you a reminder in your notifications, in your language.',
   'onboarding.notify.later': 'You can turn them on or off any time in Settings → Notification settings.',
   'common.continue': 'Continue',
   'common.skip': 'Skip',
@@ -8657,7 +8655,6 @@ const ku: Catalog = {
   'onboarding.prop.read': 'Çîrok û helbestên civakê bixwîne',
   'onboarding.prop.streak': 'Rêzeya xwe biparêze û di lîgan de hilkişe',
   'onboarding.notify.title': 'Bîranîn, heke tu bixwazî',
-  'onboarding.notify.body': 'Rojeke ku rêzeya te hê li benda te be, Hevalo di agahdariyên te de bîranînekê ji te re dihêle, bi zimanê te.',
   'onboarding.notify.later': 'Tu dikarî her dem di Mîheng → Mîhengên agahdariyan de wan vekî an bigirî.',
   'common.continue': 'Berdewam bike',
   'common.skip': 'Bibihurîne',
@@ -12555,7 +12552,6 @@ const de: Catalog = {
   'onboarding.prop.read': 'Lies Geschichten und Gedichte aus der Community',
   'onboarding.prop.streak': 'Halte deine Serie und steig in den Ligen auf',
   'onboarding.notify.title': 'Erinnerungen, wenn du möchtest',
-  'onboarding.notify.body': 'An einem Tag, an dem deine Serie noch wartet, hinterlässt dir Hevalo eine Erinnerung in deinen Mitteilungen – in deiner Sprache.',
   'onboarding.notify.later': 'Du kannst sie jederzeit unter Einstellungen → Mitteilungseinstellungen ein- oder ausschalten.',
   'common.continue': 'Weiter',
   'common.skip': 'Überspringen',
@@ -16453,7 +16449,6 @@ const es: Catalog = {
   'onboarding.prop.read': 'Lee relatos y poemas de la comunidad',
   'onboarding.prop.streak': 'Mantén tu racha y sube de liga',
   'onboarding.notify.title': 'Recordatorios, si los quieres',
-  'onboarding.notify.body': 'Los días en que tu racha aún te espera, Hevalo te deja un recordatorio en tus notificaciones, en tu idioma.',
   'onboarding.notify.later': 'Puedes activarlos o desactivarlos cuando quieras en Ajustes → Ajustes de notificaciones.',
   'common.continue': 'Continuar',
   'common.skip': 'Omitir',
@@ -20351,7 +20346,6 @@ const tr: Catalog = {
   'onboarding.prop.read': 'Topluluğun hikâye ve şiirlerini oku',
   'onboarding.prop.streak': 'Serini koru ve liglerde yüksel',
   'onboarding.notify.title': 'İstersen hatırlatmalar',
-  'onboarding.notify.body': 'Serinin hâlâ seni beklediği bir gün Hevalo, bildirimlerine kendi dilinde bir hatırlatma bırakır.',
   'onboarding.notify.later': 'Bunları istediğin zaman Ayarlar → Bildirim ayarları bölümünden açıp kapatabilirsin.',
   'common.continue': 'Devam et',
   'common.skip': 'Atla',
@@ -24249,7 +24243,6 @@ const ar: Catalog = {
   'onboarding.prop.read': 'اقرأ قصص المجتمع وقصائده',
   'onboarding.prop.streak': 'حافظ على سلسلتك وتقدّم في الدوريات',
   'onboarding.notify.title': 'تذكيرات، إن أردتها',
-  'onboarding.notify.body': 'في يوم ما زالت فيه سلسلتك تنتظرك، يترك لك Hevalo تذكيرًا في إشعاراتك، بلغتك.',
   'onboarding.notify.later': 'يمكنك تفعيلها أو إيقافها في أي وقت من الإعدادات ← إعدادات الإشعارات.',
   'common.continue': 'متابعة',
   'common.skip': 'تخطٍّ',
@@ -28147,7 +28140,6 @@ const fr: Catalog = {
   'onboarding.prop.read': 'Lis les récits et poèmes de la communauté',
   'onboarding.prop.streak': 'Garde ta série et grimpe dans les ligues',
   'onboarding.notify.title': 'Des rappels, si tu le souhaites',
-  'onboarding.notify.body': 'Un jour où ta série t’attend encore, Hevalo te laisse un rappel dans tes notifications, dans ta langue.',
   'onboarding.notify.later': 'Tu pourras les activer ou les désactiver à tout moment dans Réglages → Réglages des notifications.',
   'common.continue': 'Continuer',
   'common.skip': 'Passer',
@@ -32045,7 +32037,6 @@ const nl: Catalog = {
   'onboarding.prop.read': 'Lees verhalen en gedichten uit de community',
   'onboarding.prop.streak': 'Houd je reeks vast en klim in de competities',
   'onboarding.notify.title': 'Herinneringen, als je dat wilt',
-  'onboarding.notify.body': 'Op een dag dat je reeks nog op je wacht, laat Hevalo een herinnering voor je achter bij je meldingen, in jouw taal.',
   'onboarding.notify.later': 'Je kunt ze altijd aan- of uitzetten via Instellingen → Meldingsinstellingen.',
   'common.continue': 'Doorgaan',
   'common.skip': 'Overslaan',
@@ -35944,7 +35935,6 @@ const ckb: Catalog = {
   'onboarding.prop.read': 'چیرۆک و هۆنراوەی کۆمەڵگا بخوێنەوە',
   'onboarding.prop.streak': 'زنجیرەکەت بپارێزە و لە لیگەکاندا سەربکەوە',
   'onboarding.notify.title': 'بیرخستنەوە، ئەگەر بتەوێت',
-  'onboarding.notify.body': 'لە ڕۆژێکدا کە زنجیرەکەت هێشتا چاوەڕێتە، Hevalo بیرخستنەوەیەک لە ئاگادارکردنەوەکانتدا بۆت جێدەهێڵێت، بە زمانی خۆت.',
   'onboarding.notify.later': 'دەتوانیت هەر کاتێک لە ڕێکخستنەکان ← ڕێکخستنی ئاگادارکردنەوەکان بیانکەیتەوە یان بیانکوژێنیتەوە.',
   'common.continue': 'بەردەوام بە',
   'common.skip': 'تێپەڕاندن',

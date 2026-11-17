@@ -368,12 +368,12 @@ function NotificationsSlide({ arriving, mirrored }: SlideArrival): React.JSX.Ele
   return (
     <View style={[styles.slide, styles.centered]}>
       <HevaloGuide says={t('guide.intro.notify.says')} style={styles.guideArt} />
-      {/* one breath as the slide arrives, then still but for the float: there are three lines to read under it */}
+      {/* one breath as the slide arrives, then still but for the float: there are two lines to read under it */}
       <Drift direction={arriving} mirrored={mirrored} style={styles.notifArt}>
         <BreathingIcon name="bell" size={56} tone="primary" breaths={1} />
       </Drift>
       <Text style={[styles.title, { color: colors.textPrimary }, styles.notifTitle]}>{t('onboarding.notify.title')}</Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('onboarding.notify.body')}</Text>
+      {/* what a reminder is, Hevalo has just said in the bubble above: the slide does not say it a second time */}
       <Text style={[styles.notifHint, { color: colors.textSecondary }]}>{t('onboarding.notify.later')}</Text>
     </View>
   );
