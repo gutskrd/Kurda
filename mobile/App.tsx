@@ -411,7 +411,7 @@ function SignedInRoot() {
             onExit={() => navigation.goBack()}
             onNext={(lessonId) => navigation.replace('Lesson', { lessonId, courseId: route.params.courseId })}
             onPractise={(exerciseIds) => navigation.replace('Practice', { exerciseIds })}
-            onPath={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+            onPath={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
           />
         )}
       </RootStack.Screen>
@@ -436,7 +436,7 @@ function SignedInRoot() {
             courseId={route.params.courseId}
             unitId={route.params.unitId}
             onExit={() => navigation.goBack()}
-            onPath={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+            onPath={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
             onAgain={() => navigation.replace('JumpTest', route.params)}
           />
         )}
@@ -454,7 +454,7 @@ function SignedInRoot() {
             {/* Zêr is earned by learning, so "earn more" opens the lessons */}
             <ShopScreen
               onExit={() => navigation.goBack()}
-              onEarnMore={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+              onEarnMore={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
             />
           </GuestWall>
         )}
@@ -532,7 +532,7 @@ function SignedInRoot() {
             <GroupMembersScreen
               groupId={route.params.groupId}
               onExit={() => navigation.goBack()}
-              onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
+              onLeft={() => navigation.popTo('Tabs', { screen: 'Messages' })}
               onEdit={() => navigation.navigate('GroupEdit', { groupId: route.params.groupId })}
             />
           </GuestWall>
@@ -568,7 +568,7 @@ function SignedInRoot() {
               openGift={route.params.openGift}
               addFriends={route.params.addFriends}
               onFindPeople={() => navigation.navigate('Search')}
-              onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
+              onLeft={() => navigation.popTo('Tabs', { screen: 'Messages' })}
               onExit={() => navigation.goBack()}
               onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
             />

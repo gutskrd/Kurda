@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { ApiClient } from '../api/client';
 import { useHeartbeat } from './useHeartbeat';
+import { deviceTimeZone, useTimeZoneSync } from './timeZone';
 import { defaultApiBaseUrl } from '../api/env';
 import type { ApiError, TokenStorage } from '../api/types';
 import { describeError, describeErrorOr, isMaintenance } from '../api/errors';
@@ -49,6 +50,8 @@ export interface SessionUser {
    * an older server, which reads as a full account.
    */
   guest?: boolean;
+  /** The IANA zone the server counts this account's days in (auth/timeZone.ts); absent on an older server. */
+  timezone?: string;
 }
 
 /** A failed request, with the server's code when it sent one. */
@@ -285,6 +288,11 @@ export function AuthProvider({
     const name = deviceName();
     return name ? { deviceName: name } : {};
   });
+  // the zone a new account counts its days in, from the start (auth/timeZone.ts); read when it is sent, as a phone travels
+  const zone = (): { timezone?: string } => {
+    const timezone = deviceTimeZone();
+    return timezone ? { timezone } : {};
+  };
 
   const { t, locale } = useI18n();
   const [status, setStatus] = useState<AuthStatus>('restoring');
@@ -317,6 +325,10 @@ export function AuthProvider({
 
   // a guest has no friends to be seen online by, so the presence beat is not sent for one
   useHeartbeat(client, status === 'signedIn' && user?.guest !== true);
+
+  // the account's days are the learner's own: its time zone kept the device's (auth/timeZone.ts)
+  const zoneTaken = useCallback((timezone: string) => setUser((u) => (u ? { ...u, timezone } : u)), []);
+  useTimeZoneSync(client, user?.timezone, status === 'signedIn', zoneTaken);
 
   useEffect(() => {
     let cancelled = false;
@@ -398,6 +410,7 @@ export function AuthProvider({
       const res = await client.post<AuthPayload>('/auth/register', {
         ...input,
         ...device,
+        ...zone(),
         acceptTerms: true,
       });
       if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
@@ -406,7 +419,7 @@ export function AuthProvider({
     },
     continueAsGuest: async () => {
       // the language chosen in the intro is the account's, as it is for a sign-up: a claim later keeps it
-      const res = await client.post<AuthPayload>('/auth/guest', { ...device, locale });
+      const res = await client.post<AuthPayload>('/auth/guest', { ...device, ...zone(), locale });
       if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
       await applyAuth(res.data);
       return null;

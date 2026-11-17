@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
-import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { ClayButton, ErrorRetry, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -206,12 +206,18 @@ function BattleRoom({
   }, [load]);
   useLobbyRefresh('wordle-battle', id, () => void load(), !gone && battle?.status !== 'finished' && battle?.status !== 'cancelled');
 
+  // the results are asked for once the battle is over, when nothing polls any more: one that does not come is said,
+  // with a way to ask again, rather than left as a spinner
+  const [resultsFailed, setResultsFailed] = useState(false);
+  const [resultsAsk, setResultsAsk] = useState(0);
   useEffect(() => {
     if (battle?.status !== 'finished' || results) return;
+    setResultsFailed(false);
     void getResults(client, id).then((r) => {
       if (r.ok) setResults(r.data);
+      else setResultsFailed(true);
     });
-  }, [battle?.status, results, client, id]);
+  }, [battle?.status, results, client, id, resultsAsk]);
 
   /*
    * A battle played here to its end is a finished game for the rating box, as
@@ -431,6 +437,8 @@ function BattleRoom({
                 ))}
               </View>
             </>
+          ) : resultsFailed ? (
+            <ErrorRetry onRetry={() => setResultsAsk((n) => n + 1)} />
           ) : (
             <Loading />
           )}

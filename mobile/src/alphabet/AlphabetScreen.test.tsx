@@ -232,7 +232,7 @@ describe('the alphabet', () => {
     await press('Play Peyvok');
     expect(navigation.navigate).toHaveBeenCalledWith('Wordle');
     await press('Learn colours, numbers, days and months');
-    expect(navigation.navigate).toHaveBeenCalledWith('Words');
+    expect(navigation.popTo).toHaveBeenCalledWith('Words');
   });
 });
 

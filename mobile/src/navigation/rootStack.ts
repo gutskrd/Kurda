@@ -24,10 +24,13 @@ export type TabParamList = {
  */
 export type RootStackParamList = {
   /**
-   * The tab shell. A screen above it reaches a tab with
-   * `navigate('Tabs', { screen: 'Messages' })` — naming the tab alone only
-   * works from inside the tabs, since a navigator looks for a name among its
-   * own screens and its parents', never its children's.
+   * The tab shell. A screen above it goes back down to a tab with
+   * `popTo('Tabs', { screen: 'Messages' })`: `navigate('Tabs', …)` from a
+   * screen above would push a second tab shell over the stack rather than
+   * return to the first, so Back would lead into the screens left behind.
+   * Naming the tab alone only works from inside the tabs, since a navigator
+   * looks for a name among its own screens and its parents', never its
+   * children's.
    */
   Tabs: NavigatorScreenParams<TabParamList> | undefined;
   /**

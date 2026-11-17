@@ -131,7 +131,7 @@ describe('the bar over a pushed page', () => {
 
   it('closes, in words, a page that was presented over what you were doing', () => {
     show(<ScreenHeader title="Shop" onBack={() => undefined} leading="close" />);
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy();
   });
 
   /*

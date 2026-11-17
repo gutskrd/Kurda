@@ -469,15 +469,28 @@ export function runMilestone(run: number): number | null {
 export const VERDICT_TIMING = { sheetMs: 200, actAtMs: 120, runAtMs: 160, runMs: 320, modelAtMs: 350 } as const;
 
 /**
+ * How many items one practice session holds: the server builds a review of
+ * this many (api practice/practice-select.ts) and takes no more when it is
+ * handed the items itself.
+ */
+export const PRACTICE_SESSION_SIZE = 10;
+
+/**
  * The exercises answered wrong for the first time in a session's results that
- * practice can take ("practise these now"): practice cannot grade speaking.
+ * practice can take ("practise these now"): practice cannot grade speaking,
+ * and one session holds `PRACTICE_SESSION_SIZE` of them, the first missed
+ * first. A lesson of sixteen with eleven missed asked for eleven, which the
+ * server refused, and the button that was to practise them showed an error.
  */
 export function practisableMistakes(
   mistakes: ReadonlyArray<{ exerciseId: string }>,
   exercises: ReadonlyArray<DeliveredExercise>,
 ): string[] {
   const types = new Map(exercises.map((ex) => [ex.id, ex.type]));
-  return mistakes.map((m) => m.exerciseId).filter((id) => types.has(id) && types.get(id) !== 'speaking');
+  return mistakes
+    .map((m) => m.exerciseId)
+    .filter((id) => types.has(id) && types.get(id) !== 'speaking')
+    .slice(0, PRACTICE_SESSION_SIZE);
 }
 
 /** A pending answer, waiting for the network (KUR-029 edge case). */

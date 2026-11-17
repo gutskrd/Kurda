@@ -580,6 +580,7 @@ function ProgressCard({ me }: { me: NonNullable<StoryLibrary['me']> }): React.JS
 function ContinueCard({ game, onOpen }: { game: StoryGameSummary; onOpen: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const where =
     game.status === 'lobby'
       ? t('stories.status.lobby')
@@ -595,18 +596,20 @@ function ContinueCard({ game, onOpen }: { game: StoryGameSummary; onOpen: () => 
       {...storyTextProps(game.dialect)}
       accessibilityValue={{ text: `${t(MODE_KEY[game.mode])}, ${where}` }}
       accessibilityHint={t('stories.continue')}
-      style={[styles.continue, { backgroundColor: colors.surface }]}
+      style={[styles.continue, { flexDirection: dir.row, backgroundColor: colors.surface }]}
     >
       <View style={styles.rowMain}>
         <Text {...storyTextProps(game.dialect)} style={[styles.rowTitle, { color: colors.textPrimary }, storyTextStyle(game.dialect)]} numberOfLines={1}>
           {game.storyTitle}
         </Text>
-        <Text style={[styles.rowMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.rowMeta, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
           {t(MODE_KEY[game.mode])} · {where}
         </Text>
       </View>
       <Text style={[styles.continueText, { color: colors.primary }]}>{t('stories.continueButton')}</Text>
-      <Icon name="chevron-right" size={16} color={colors.primary} />
+      <View style={dir.flip}>
+        <Icon name="chevron-right" size={16} color={colors.primary} />
+      </View>
     </PressableScale>
   );
 }

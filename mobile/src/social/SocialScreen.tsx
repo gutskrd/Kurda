@@ -261,7 +261,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
           style={styles.head}
           right={
             <Pressable
-              onPress={() => navigation.navigate('Tabs', { screen: 'Messages' })}
+              onPress={() => navigation.popTo('Tabs', { screen: 'Messages' })}
               reachSize={{ height: LINK_LINE }}
               style={({ pressed }) => [styles.messagesLink, { flexDirection: dir.row }, pressed && heldDim]}
               accessibilityRole="button"

@@ -9,7 +9,7 @@ import { refreshFelt } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
+import { ClayButton, ErrorRetry, GlassCard, GradientBackground } from '../theme/glass';
 import { display, statValue, statCaption } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -543,7 +543,8 @@ function AccountProfile() {
         <GiftedNote background={me?.background} icon={me?.icon} />
 
         {/* the four at a glance, once the first answers are in; the league's tile fills in as the showcase arrives */}
-        {settled && me ? <OverviewGrid tiles={tiles} /> : <OverviewSkeleton />}
+        {/* the account could not be read: said, with the way to ask again, rather than a shimmer that never ends */}
+        {settled && me ? <OverviewGrid tiles={tiles} /> : settled ? <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} /> : <OverviewSkeleton />}
 
         {/* the three badges chosen for the profile, each game's rank and the league */}
         {!progress && !progressSettled ? (

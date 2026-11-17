@@ -202,6 +202,9 @@
         }
       },
       "package": "app.hevalo.mobile",
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
       "playStoreUrl": "",
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",

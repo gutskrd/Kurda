@@ -54,6 +54,7 @@ export {
   isReask,
   nextRun,
   practisableMistakes,
+  PRACTICE_SESSION_SIZE,
   progress,
   reduce,
   runMilestone,

@@ -5,7 +5,7 @@ import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
-import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { ClayButton, ErrorRetry, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
@@ -239,12 +239,18 @@ function MatchRoom({
   }, [load]);
   useLobbyRefresh('rhyme-match', id, () => void load(), !gone && match?.status !== 'finished' && match?.status !== 'cancelled');
 
+  // the results are asked for once the match is over, when nothing polls any more: one that does not come is said,
+  // with a way to ask again, rather than left as a spinner
+  const [resultsFailed, setResultsFailed] = useState(false);
+  const [resultsAsk, setResultsAsk] = useState(0);
   useEffect(() => {
     if (match?.status !== 'finished' || results) return;
+    setResultsFailed(false);
     void getMatchResults(client, id).then((r) => {
       if (r.ok) setResults(r.data);
+      else setResultsFailed(true);
     });
-  }, [match?.status, results, client, id]);
+  }, [match?.status, results, client, id, resultsAsk]);
 
   // A match played here to its end is a finished game for the rating box; one
   // opened already finished, from an old link, is not.
@@ -460,6 +466,8 @@ function MatchRoom({
               {/* what nobody at the table found, each with its meaning: the next match goes better for it */}
               <MissedRhymes hints={results.missed} dialect={results.dialect} tone="card" />
             </>
+          ) : resultsFailed ? (
+            <ErrorRetry onRetry={() => setResultsAsk((n) => n + 1)} />
           ) : (
             <Loading />
           )}
