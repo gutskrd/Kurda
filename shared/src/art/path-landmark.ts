@@ -1,17 +1,7 @@
 /**
- * Each chapter's landmark beside the lesson path, in the painted valley
- * (art/valley.ts), and the one small thing in it that moves.
- *
- * The twelve landmarks walk the road's year in Sêvan — the blue gate, Hamo's
- * teahouse, the spring under the walnut, market day, the bus stop, Amed's
- * black walls, the Newroz fire, the hives, the old bridge, the black tents of
- * the summer pastures, the school, and the winter hearth — and are drawn in
- * art/valley-landmarks-1.ts and -2.ts. Here they are framed as pictures: on
- * the 120-unit canvas, decorative unless named. Each draws its moving part at
- * rest; the apps lay `pathLoopSvg` over it at `PATH_LANDMARK_LOOP` and move it
- * gently (the flag of Kurdistan by the gate, over the bazaar, the school and
- * Amed's tower in the wind, steam or smoke rising, a ripple, the Newroz flame, a bee, the bus
- * stop's sign), and hold it still under Reduce Motion.
+ * Each chapter's landmark beside the lesson path (drawn in valley-landmarks-1.ts and -2.ts), framed on the 120-unit
+ * canvas and decorative unless named. Each landmark draws its one moving part at rest; the apps lay `pathLoopSvg` over
+ * it at `PATH_LANDMARK_LOOP`, animate it gently, and hold it still under Reduce Motion.
  */
 import type { PathGround, PathLandmark } from '../path-world.js';
 import { pathGroundShade } from './path-land.js';
@@ -42,11 +32,11 @@ export interface PathLandmarkOptions {
   landmark: PathLandmark;
   dark?: boolean;
   size?: number;
-  /** its name for a screen reader; without one the drawing is decorative and hidden */
+  /** The accessible label; without one the drawing is decorative and hidden. */
   title?: string;
-  /** the land it stands on, whose own shade it casts; the meadow's by default */
+  /** The land it stands on, whose shade it casts; the meadow by default. */
   ground?: PathGround;
-  /** the colour of the shade it casts where it stands on a page of its own colour rather than on the path's land (a book's chapter opener, a stamp) */
+  /** The shade colour when it stands on a page of its own colour rather than the path's land (a chapter opener, a stamp). */
   shade?: string;
   idPrefix?: string;
 }
@@ -60,14 +50,14 @@ export function pathLandmarkSvg(opts: PathLandmarkOptions): string {
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   if (opts.shade !== undefined && !/^#[0-9a-f]{6}$/.test(opts.shade)) throw new RangeError(`art: a landmark's shade is a six-digit colour, not ${String(opts.shade)}`);
   const prefix = prefixFor(opts.idPrefix, 'landmark', landmark, dark);
-  // drawn standing in the meadow's shade, then given the shade of the land it stands on, so a market's shadow is not grass
+  // Drawn with the meadow's shade, then recoloured to the shade of the land it stands on, so a market's shadow is not grass.
   const meadow = dusk(VALLEY.meadowShade, dark);
   const shade = opts.shade ?? (opts.ground ? pathGroundShade(opts.ground, dark) : meadow);
   const body = art
     .draw(dark, seeded(`valley-landmark|${landmark}`), opts.shade !== undefined)
     .split(`fill="${meadow}"`)
     .join(`fill="${shade}"`)
-    // a pole's shadow is a line of the meadow's shade, and on a page of its own colour it is that page's shade too, never a green stick
+    // A pole's shadow is a stroke in the meadow's shade; recolour it too, so it is never a green stick.
     .split(`stroke="${meadow}"`)
     .join(`stroke="${shade}"`);
   const label = opts.title
@@ -79,12 +69,12 @@ export function pathLandmarkSvg(opts: PathLandmarkOptions): string {
 export interface PathLoopOptions {
   kind: PathLoopKind;
   dark?: boolean;
-  /** how wide it is shown; its height follows its own canvas */
+  /** Display width; the height follows the sprite's own canvas. */
   size?: number;
   idPrefix?: string;
 }
 
-/** The sprite's own canvas for each kind: the sprite fills it, and the apps move it about its anchor. */
+/** Each sprite's canvas: the sprite fills it, and the apps move it about its anchor. */
 const LOOP_VIEW: Record<PathLoopKind, { w: number; h: number }> = {
   steam: { w: 16, h: 24 },
   water: { w: 30, h: 12 },
@@ -95,10 +85,7 @@ const LOOP_VIEW: Record<PathLoopKind, { w: number; h: number }> = {
   sign: { w: 18, h: 26 },
 };
 
-/**
- * The one small moving thing of a landmark, as a picture of its own, painted
- * as the valley is: flat, no outline. Decorative.
- */
+/** A landmark's moving part as its own decorative picture, painted flat with no outline like the valley. */
 export function pathLoopSvg(opts: PathLoopOptions): string {
   const { kind, dark = false } = opts;
   const view = LOOP_VIEW[kind];
@@ -119,7 +106,7 @@ export function pathLoopSvg(opts: PathLoopOptions): string {
       body += stroke(ellipsePath(15, 6, 5, 1.8), dark ? '#9fd2e6' : '#ffffff', 1.2);
       break;
     case 'colours':
-      // the school's flag of Kurdistan, the very cloth the school draws at rest, so the moving one lies exactly over it
+      // The school's flag is the same cloth the school draws at rest, so the moving one lies exactly over it.
       body += kurdistanFlag(dark);
       break;
     case 'flame':
@@ -127,7 +114,7 @@ export function pathLoopSvg(opts: PathLoopOptions): string {
       body += fill('M13 16C16 21 18 25 16 30C14 34 10 34 9 30C8 26 11 22 13 16Z', warm(VALLEY.fireCore, dark));
       break;
     case 'bee':
-      // on the rim of its circle; the apps turn the circle
+      // On the rim of its circle; the apps rotate the circle.
       body += fill(ellipsePath(17, 4, 3.4, 2.4), '#2a2018');
       body += fill('M15.6 2.2h1.2v3.6h-1.2zM18 2.2h1.1v3.6h-1.1z', '#f6c836');
       body += `<path d="${ellipsePath(16, 1.2, 2.2, 1.4)}" fill="#ffffff" fill-opacity="0.85"/>`;

@@ -1,10 +1,6 @@
 /**
- * The cut-out: the one way the app's small object pictures are built, so that
- * the cards of Letters and words (word-sets.ts) and the pictures of Kurdish
- * Impostor's categories (impostor.ts) read as one family. A form is a flat
- * shape lit from the upper left: its thickness shows as a darker band below
- * it, as the coin stands forward on its edge, and a sliver of light runs along
- * its upper rim. A dab is a round blob of colour with one spot of light.
+ * The cut-out style shared by the small object pictures (word-sets.ts, impostor.ts), so they read as one family: a
+ * flat form lit from the upper left, with a darker thickness band below and a sliver of light on its upper rim.
  */
 import type { Drawing } from './svg.js';
 import { n, tint } from './svg.js';
@@ -33,10 +29,8 @@ export function ring(cx: number, cy: number, r: number): string {
 export const at = (dx: number, dy: number): string => ` transform="translate(${n(dx)} ${n(dy)})"`;
 
 /**
- * One cut-out form: its thickness as a band of `shade` showing `drop` below
- * it, its face, and a lit rim along its upper left — the face in `light`,
- * then the face again in `base` moved down and right by `rim` and clipped to
- * the shape, so only a sliver of the light stays.
+ * One cut-out form: a `shade` band `drop` below it, the face in `light`, then the face in `base` shifted by `rim` and
+ * clipped to the shape, so only a lit sliver shows on the upper left.
  */
 export function form(dr: Drawing, d: string, tones: Tones, drop: number, rim: number, evenodd = false): void {
   const rule = evenodd ? ' fill-rule="evenodd"' : '';

@@ -1,14 +1,7 @@
 /**
- * The glyphs still drawn as a few flat parts, in a 40-unit box centred on
- * 0,0: the four seasons' marks on a season's rank emblem — spring's flower,
- * summer's Kurdish sun of twenty-one rays, an autumn leaf, a snowflake —
- * painted in the emblem's metal (iconpaint.ts). A badge's own symbol is one
- * filled glyph instead (badge-glyphs.ts).
- *
- * A part says what it is rather than what colour it is: the main body, its
- * shaded face, a named accent, snow, a cut line, a stroked line, a
- * highlight. Parts marked `fine` turn to noise at 32 pixels and are left out
- * of the small drawing.
+ * The season marks on a season's rank emblem, as flat parts in a 40-unit box centred on 0,0, painted in the emblem's
+ * metal by iconpaint.ts. A part names its role, not its colour. Parts marked `fine` are dropped from the small drawing,
+ * where they turn to noise at 32 pixels.
  */
 import type { AccentName } from './palette.js';
 import { n } from './svg.js';
@@ -31,13 +24,13 @@ export type Part =
 
 const rad = (deg: number): number => (deg * Math.PI) / 180;
 
-/** A circle as a path (two half arcs; every renderer draws that the same). */
+/** A circle as two half arcs, which every renderer draws the same. */
 export const circ = (cx: number, cy: number, r: number): string =>
   `M${n(cx - r)},${n(cy)}A${n(r)},${n(r)} 0 1 0 ${n(cx + r)},${n(cy)}A${n(r)},${n(r)} 0 1 0 ${n(cx - r)},${n(cy)}Z`;
 
 const polygon = (pts: readonly (readonly [number, number])[]): string => `M${pts.map(([x, y]) => `${n(x)},${n(y)}`).join('L')}Z`;
 
-/** The seeds at a flower's heart: five dots in a ring, so they read as seeds and never as a face. */
+/** Five dots in a ring at a flower's heart; a ring reads as seeds and never as a face. */
 const seeds = (r: number, dot: number): string =>
   Array.from({ length: 5 }, (_, i) => circ(Math.cos(rad(i * 72 - 90)) * r, Math.sin(rad(i * 72 - 90)) * r, dot)).join('');
 

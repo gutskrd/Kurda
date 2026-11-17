@@ -1,14 +1,9 @@
 /**
- * How the streak's fire moves (`fire.ts`): every moving part has a motion,
- * a few poses on fixed stops through its period, and both apps play the same
- * poses — the website as CSS keyframes, the phone off one native clock per
- * fire, sampled here.
+ * How the streak fire's moving parts move (`fire.ts`): each part has a few poses at fixed stops through its period, and
+ * both apps play the same poses, the web as CSS keyframes and the phone sampled off one native clock per fire.
  */
 
-/**
- * Every part's period divides this, so the phone can drive a whole fire from
- * one looping clock and the loop never shows a seam.
- */
+/** Every part's period divides this, so the phone drives a whole fire from one looping clock with no seam. */
 export const FIRE_CYCLE_MS = 4800;
 
 /** Where a looping part's four poses fall in its period; after the last it eases back to the first. */
@@ -19,10 +14,9 @@ export const FIRE_RISE_STOPS = [0, 0.12, 0.35, 0.6, 0.85, 1] as const;
 export const FIRE_GROW_STOPS = [0, 0.3, 0.6, 1] as const;
 
 /**
- * One pose of a moving part, in the drawing's units, about the part's own
- * origin: moved by `x`, `y`; stretched by `sx`, `sy`; leaning by `skew`
- * degrees (positive leans its top to the left, as CSS's skewX does); turned
- * by `r` degrees clockwise; `o` its opacity. Anything left out stays at rest.
+ * One pose of a moving part, about its own origin, in drawing units: moved by `x`, `y`; stretched by `sx`, `sy`;
+ * skewed `skew` degrees (positive leans the top left, as CSS skewX does); turned `r` degrees clockwise; opacity `o`.
+ * Omitted fields stay at rest.
  */
 export interface FirePose {
   x?: number;
@@ -36,19 +30,18 @@ export interface FirePose {
 
 export interface FireMotion {
   /**
-   * 'loop' eases through `FIRE_LOOP_STOPS` and back; 'rise' runs straight
-   * through `FIRE_RISE_STOPS`; 'grow' eases once through `FIRE_GROW_STOPS`
-   * over the growth and stays
+   * 'loop' eases through `FIRE_LOOP_STOPS` and back; 'rise' runs linearly through `FIRE_RISE_STOPS`; 'grow' eases once
+   * through `FIRE_GROW_STOPS` over the growth and holds.
    */
   kind: 'loop' | 'rise' | 'grow';
   periodMs: number;
-  /** how far into its period the part starts, 0 to 1 */
+  /** How far into its period the part starts, 0 to 1. */
   phase: number;
-  /** one pose per stop of its kind */
+  /** One pose per stop of its kind. */
   poses: readonly FirePose[];
 }
 
-/** A motion moved by only `share` of its full amount: the light version's gentler flicker. */
+/** A motion scaled to `share` of its amount, for the small version's gentler flicker. */
 export function calmMotion(motion: FireMotion, share: number): FireMotion {
   const toward = (v: number | undefined, rest: number): number | undefined => (v === undefined ? undefined : rest + (v - rest) * share);
   return {
@@ -73,11 +66,8 @@ const REST: Required<FirePose> = { x: 0, y: 0, sx: 1, sy: 1, skew: 0, r: 0, o: 1
 export const FIRE_POSE_FIELDS = ['x', 'y', 'sx', 'sy', 'skew', 'r', 'o'] as const;
 
 /**
- * Where a part is at `u` (0 to 1) through its own period, phase already
- * applied by the caller: a loop eases in and out between its poses (a sine
- * ease, the same curve the website's keyframes are given), and so does a
- * growth, which then stays at its last; a rise moves straight from one to
- * the next.
+ * A part's pose at `u` (0 to 1) through its period, phase already applied. Loops and growths ease between poses with
+ * the same sine curve the web keyframes use (a growth then holds its last); a rise is linear.
  */
 export function firePoseAt(motion: FireMotion, u: number): Required<FirePose> {
   const stops = fireStops(motion);
@@ -89,7 +79,7 @@ export function firePoseAt(motion: FireMotion, u: number): Required<FirePose> {
   const from = stops[i] as number;
   const loop = motion.kind === 'loop';
   const last = i === stops.length - 1;
-  // a loop's last pose eases back to its first by the end of the period; a rise and a growth hold their last
+  // A loop's last pose eases back to its first by the end of the period; a rise and a growth hold their last.
   const to = last ? (loop ? 1 : from) : (stops[i + 1] as number);
   const a = poses[i] ?? {};
   const b = last ? (loop ? (poses[0] ?? {}) : a) : (poses[i + 1] ?? {});
@@ -106,12 +96,9 @@ export function firePoseAt(motion: FireMotion, u: number): Required<FirePose> {
 }
 
 /**
- * A part's motion laid along one clock running 0 → 1 over `FIRE_CYCLE_MS`,
- * for the phone: `input` and the pose at each, sampled finely enough
- * (`perPeriod` samples each time round) that straight lines between samples
- * follow the curve. The first and last samples are the same pose, so the
- * clock loops without a seam. A growth is laid along its own run, 0 → 1
- * over `FIRE_GROW.ms`, instead.
+ * A part's motion along one clock running 0 → 1 over `FIRE_CYCLE_MS`, for the phone: input points and poses, sampled
+ * `perPeriod` times per period so linear interpolation follows the curve. The first and last samples match so the
+ * clock loops cleanly. A growth uses its own run, 0 → 1 over `FIRE_GROW.ms`.
  */
 export function fireSamples(motion: FireMotion, perPeriod = 24): { input: number[]; poses: Required<FirePose>[] } {
   const repeats = motion.kind === 'grow' ? 1 : FIRE_CYCLE_MS / motion.periodMs;

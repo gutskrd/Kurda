@@ -1,17 +1,8 @@
 /**
- * The streak's medals: what a kept streak is handed, and the small ones the
- * days of its week wear.
- *
- * The medal is a soft pentagon of the sun's gold with a laurel pressed into
- * it — the oldest sign there is for "you kept at it", and one that says so
- * with no word and no number, so it is the same medal on the third day and
- * the three-hundredth. A day's medal is the same piece small and round: gold
- * with the laurel for a day learned, ice blue with a snowflake for a day a
- * freeze kept.
- *
- * Made the way a badge is (badges.ts): one colour modelled in a few soft
- * steps, lit from the upper left, with its thickness under it. No tag and no
- * plate: at the size a day's medal is drawn there is room for one thing.
+ * The streak medals: the medal a kept streak earns, and the small ones on the days of its week. The streak medal is a
+ * soft gold pentagon with a pressed laurel, with no number, so it is the same on day three and day three hundred. A
+ * day's medal is small and round: gold with the laurel for a day learned, ice blue with a snowflake for a frozen day.
+ * Modelled like a badge (badges.ts), but with no tag or plate.
  */
 import { BADGE_GLYPHS, GLYPH_VIEWBOX } from './badge-glyphs.js';
 import { regular, roundPath } from './geometry.js';
@@ -37,10 +28,8 @@ const ICE: MedalTone = { light: '#d6eeff', mid: '#9fd2f8', dark: '#6fb6ec', deep
 const rad = (deg: number): number => (deg * Math.PI) / 180;
 
 /**
- * A laurel: two branches rising from the foot of a circle up its sides,
- * leaves in pairs, one leaning out and a shorter one leaning in, smaller
- * toward the tips, which stop short of meeting. Returns the leaves as one
- * path and the two stems as another.
+ * A laurel: two branches up the sides of a circle, leaves in pairs (one leaning out, a shorter one in) shrinking toward
+ * tips that stop short of meeting. Returns the leaves and the two stems as separate paths.
  */
 function laurel(cx: number, cy: number, r: number, len: number, width: number): { leaves: string; stems: string } {
   const pairs = 5;
@@ -54,7 +43,7 @@ function laurel(cx: number, cy: number, r: number, len: number, width: number): 
       const t = k / (pairs - 1);
       const deg = from + (to - from) * t;
       const a = rad(deg);
-      // the way the branch grows there, and the way out from the circle
+      // The branch's direction at this point, and the outward direction from the circle.
       const grow: Pt = [side * Math.sin(a), -Math.cos(a)];
       const out: Pt = [side * Math.cos(a), Math.sin(a)];
       const lean = (by: number): Pt => [grow[0] * Math.cos(rad(by)) + out[0] * Math.sin(rad(by)), grow[1] * Math.cos(rad(by)) + out[1] * Math.sin(rad(by))];
@@ -62,7 +51,7 @@ function laurel(cx: number, cy: number, r: number, len: number, width: number): 
       leaves.push(leaf(at(deg), lean(46), len * taper, width * taper));
       if (k < pairs - 1) leaves.push(leaf(at(deg - 8), lean(-40), len * 0.72 * taper, width * 0.86 * taper));
     }
-    // the last leaf carries on the way the branch was going
+    // The last leaf continues the branch's direction.
     const tip = rad(to);
     leaves.push(leaf(at(to - 6), [side * Math.sin(tip), -Math.cos(tip)], len * 0.62, width * 0.62));
     const [x0, y0] = at(from + 14);
@@ -96,20 +85,18 @@ function pressed(dr: Drawing, t: MedalTone, top: number, bottom: number, draw: (
 }
 
 export interface MedalOptions {
-  /** pixels; default 96 */
+  /** Size in pixels; defaults to 96. */
   size?: number;
-  /** the medal before it is lit: yesterday's, in greys (the streak's card opens on it, under the gold one) */
+  /** Yesterday's medal in greys; the streak card opens on it, under the gold one. */
   unlit?: boolean;
-  /** the accessible label */
+  /** The accessible label. */
   title?: string;
   idPrefix?: string;
 }
 
 /**
- * The streak's medal: a soft pentagon of gold with a laurel pressed into it,
- * and a soft shadow under it. `unlit` is the same medal before today's
- * lesson lit it, in greys, the same shapes at the same places, so that one
- * laid over the other is one medal changing colour.
+ * The streak medal: a gold pentagon with a pressed laurel and a soft shadow. `unlit` draws the same shapes in greys at
+ * the same places, so one laid over the other reads as a single medal changing colour.
  */
 export function streakMedalSvg(opts: MedalOptions = {}): string {
   const size = checkSize(opts.size, 96);
@@ -137,12 +124,7 @@ export function streakMedalSvg(opts: MedalOptions = {}): string {
 
 export type DayMedal = 'learned' | 'frozen';
 
-/**
- * A day's medal in the streak's week: small and round, gold with the laurel
- * for a day learned, ice blue with a snowflake for a day a freeze kept. It is
- * drawn to be read at the size of a fingertip, so it has no shadow and its
- * sign is large.
- */
+/** A day's medal in the streak week, read at fingertip size: no shadow and a large sign. */
 export function dayMedalSvg(opts: MedalOptions & { kind: DayMedal }): string {
   const { kind } = opts;
   if (kind !== 'learned' && kind !== 'frozen') throw new RangeError(`art: unknown day medal ${String(kind)}`);
@@ -161,7 +143,7 @@ export function dayMedalSvg(opts: MedalOptions & { kind: DayMedal }): string {
       }),
     );
   } else {
-    // winter's own glyph, the one its badge shows
+    // Winter's glyph, the one its badge shows.
     const box = 76;
     const k = box / GLYPH_VIEWBOX;
     const d = (BADGE_GLYPHS.zivistan ?? []).join('');

@@ -1,22 +1,9 @@
 /**
- * Season frames (contract 4, R5/B3): the ring a player's avatar wears in the
- * colour of the best rank tier they reached in a season, kept for good.
- *
- * The middle is empty: the frame is laid over the avatar, which shows through.
- * `SEASON_FRAME_INNER` says how much of the frame's width the avatar should
- * fill, so both apps size it the same.
- *
- * The ring is the rank medallion's rim, and it grows the way the medallions
- * do: a plain metal ring for Deşt; a ring of dots for Gir; a kilim band for
- * Zozan; small laurel sprigs at the foot for Çiya; laurels up the sides and a
- * crown of three rounded peaks for Lûtke; and for Stêrk the full wreath, a
- * star on the crown and a soft glow round the outside. Lûtke and Stêrk frames
- * have a shine (SEASON_FRAME_SHINE): a soft gleam that travels round the
- * ring. The gleam is its own drawing, `seasonFrameShineSvg`, the same size as
- * the frame and centred on it, so an app lays it on top and turns it (CSS on
- * the web, Animated on the phone) — and leaves it still, or does not draw it,
- * when the person has asked for reduced motion. Passing `shine: true` to
- * `seasonFrameSvg` bakes one gleam into the frame instead, for a still picture.
+ * Season frames: the ring an avatar wears in the colour of the best rank tier reached in a season. The middle is empty
+ * and the avatar shows through; `SEASON_FRAME_INNER` is how much of the frame's width the avatar fills, so both apps
+ * size it alike. The ring gains ornament tier by tier as the rank medallions do. Lûtke and Stêrk frames have a
+ * travelling gleam, drawn separately (`seasonFrameShineSvg`) at the frame's size so apps can rotate it, or leave it
+ * still under reduced motion; `shine: true` bakes one gleam into a still frame instead.
  */
 import { circ } from './icons.js';
 import type { RankTier } from './keys.js';
@@ -34,7 +21,7 @@ const OUTER = 47;
 /** The avatar's diameter as a fraction of the frame's size. */
 export const SEASON_FRAME_INNER = INNER / C;
 
-/** Which frames have the travelling gleam (the "animated variant" of R5). */
+/** Which frames have the travelling gleam. */
 export const SEASON_FRAME_SHINE: Record<RankTier, boolean> = {
   dest: false,
   gir: false,
@@ -116,11 +103,11 @@ function gleam(dr: Drawing, from = -158, to = -98): string {
 
 export interface SeasonFrameOptions {
   tier: RankTier;
-  /** pixels; default 128 */
+  /** Size in pixels; defaults to 128. */
   size?: number;
-  /** bake one still gleam into the frame */
+  /** Bake one still gleam into the frame. */
   shine?: boolean;
-  /** the accessible label; defaults to "Lûtke season frame" */
+  /** The accessible label; defaults to "Lûtke season frame". */
   title?: string;
   idPrefix?: string;
 }
@@ -137,7 +124,7 @@ export function seasonFrameSvg(opts: SeasonFrameOptions): string {
   const g = LADDER[tier];
   const out: string[] = [];
 
-  // the ring's own light, round the outside only: nothing is laid over the avatar
+  // The ring's glow, outside only: nothing is laid over the avatar.
   if (g.glow > 0) {
     const glow = dr.id('o');
     dr.def(
@@ -154,7 +141,7 @@ export function seasonFrameSvg(opts: SeasonFrameOptions): string {
     );
     out.push(`<path d="${ring(C, C, 59, OUTER - 1)}" fill="url(#${glow})" fill-rule="evenodd"/>`);
   }
-  // the ring's shadow: the pin's edge below it, falling a little onto the avatar's top
+  // The ring's shadow, falling a little onto the avatar's top.
   out.push(`<path d="${ring(C, C, OUTER, INNER)}" transform="translate(0 ${bold ? 2.6 : 2})" fill="${m.deep}" fill-opacity="0.5" fill-rule="evenodd"/>`);
 
   if (g.laurel !== 0) {
@@ -163,10 +150,10 @@ export function seasonFrameSvg(opts: SeasonFrameOptions): string {
     const scale = detail === 2 ? 1.3 : detail === 1 ? 1.15 : 1;
     out.push(laurel({ cx: C, cy: C, r: OUTER + 3.2, from: l.from, to: l.to, leaves, len: 8.2 * scale, width: 3.3 * scale, m, edged: !bold }));
   }
-  // the crown stands in the thirteen units above the ring, its star kept inside the square
+  // The crown fits in the thirteen units above the ring, its star inside the square.
   if (g.crown !== 'none') out.push(crown(dr, m, C, C - OUTER + 4.5, bold ? 27 : 24, bold ? 12.5 : 11.5, detail === 2 && g.crown === 'pearls' ? 'none' : g.crown, bold ? 5.2 : 4.8));
 
-  // the ring: smooth metal, edged in its own darkest tone, with the lip at the avatar's edge
+  // The ring: smooth metal edged in its darkest tone, with the lip at the avatar's edge.
   out.push(
     `<path d="${ring(C, C, OUTER, INNER)}" fill="url(#${rimMetal(dr, m, C, C, OUTER)})" fill-rule="evenodd" stroke="${m.deep}" stroke-width="${n2(detail === 2 ? 3 : bold ? 2.2 : 1.2)}"/>`,
   );
@@ -183,16 +170,13 @@ export function seasonFrameSvg(opts: SeasonFrameOptions): string {
 }
 
 export interface SeasonFrameShineOptions {
-  /** the frame the gleam is for; it only changes the default title */
+  /** The frame the gleam belongs to; only the default title depends on it. */
   tier: RankTier;
   size?: number;
   idPrefix?: string;
 }
 
-/**
- * The frame's gleam on its own, to lay over the frame and turn about its
- * centre. Decorative: its title says so, and apps hide it from screen readers.
- */
+/** The frame's gleam alone, to lay over the frame and rotate about its centre. Decorative and hidden from screen readers. */
 export function seasonFrameShineSvg(opts: SeasonFrameShineOptions): string {
   if (!RANK_TIERS.includes(opts.tier)) throw new RangeError(`art: unknown rank tier ${String(opts.tier)}`);
   const size = checkSize(opts.size, 128);

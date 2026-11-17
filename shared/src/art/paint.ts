@@ -1,14 +1,7 @@
 /**
- * How light is put down, shared by the badges, emblems and frames so they are
- * lit the same way: like an enamel pin held under one soft light from the
- * upper left. A rim is smooth metal, bright where it faces the light and
- * shaded where it turns away; the enamel sits a little below it, so the rim's
- * inside edge (its lip) is shaded at the top and caught by light at the
- * bottom; the enamel has one soft gloss across its upper part; and the whole
- * piece stands a little off the page on a short shadow of its own colour.
- *
- * Everything is round: rims, pips, leaves, crown peaks and star points are
- * curves, never cut facets or blades, so the set stays friendly at any size.
+ * Shared lighting for badges, emblems and frames, so all are lit like an enamel pin under one soft light from the upper
+ * left: a smooth metal rim, enamel set a little below it (so the rim's lip is shaded at the top and lit at the bottom),
+ * one soft gloss, and a short shadow in the piece's own colour. Every shape is rounded, never faceted.
  */
 import type { Metal } from './palette.js';
 import type { Drawing, Pt } from './svg.js';
@@ -16,10 +9,10 @@ import { linearAt, linearBox, n, n2, pt, radialBox } from './svg.js';
 import { roundPath } from './geometry.js';
 import { circ } from './icons.js';
 
-/** A metal with, optionally, the colours of a mother-of-pearl sheen to run through instead. */
+/** A metal, optionally with mother-of-pearl sheen colours to run through instead. */
 export type RimMetal = Metal & { sheen?: readonly string[] };
 
-/** The bright half of a metal, lit from above over each shape's own box: what a glyph is made of. */
+/** The bright half of a metal, lit from above over each shape's own box; glyphs are filled with it. */
 export function metalBox(dr: Drawing, m: Metal): string {
   const id = dr.id('b');
   dr.def(
@@ -44,10 +37,8 @@ export function metalBoxDark(dr: Drawing, m: Metal): string {
 }
 
 /**
- * A rim's metal across a piece centred on cx,cy and `r` in reach: its
- * highlight at the upper left, its shade at the lower right. A sheen runs
- * through its own colours instead, as mother-of-pearl does. Returns the
- * gradient's id.
+ * A rim's metal gradient over a piece centred on cx,cy with reach `r`: highlight at the upper left, shade at the lower
+ * right, or the sheen's colours instead. Returns the gradient id.
  */
 export function rimMetal(dr: Drawing, m: RimMetal, cx: number, cy: number, r: number): string {
   const id = dr.id('m');
@@ -63,7 +54,7 @@ export function rimMetal(dr: Drawing, m: RimMetal, cx: number, cy: number, r: nu
   return id;
 }
 
-/** The lip, the rim's inside edge: in its shade at the upper left, where the rim stands over the enamel, and lit at the lower right. */
+/** The lip, the rim's inside edge: shaded at the upper left, where the rim stands over the enamel, and lit at the lower right. */
 export function lipMetal(dr: Drawing, m: Metal, cx: number, cy: number, r: number): string {
   const id = dr.id('m');
   dr.def(
@@ -83,7 +74,7 @@ export function lipMetal(dr: Drawing, m: Metal, cx: number, cy: number, r: numbe
   return id;
 }
 
-/** A small diamond, the kilim's commonest mark. */
+/** A small diamond, the commonest kilim mark. */
 export function diamondAt(cx: number, cy: number, w: number, h: number, deg = 0): string {
   const a = (deg * Math.PI) / 180;
   const c = Math.cos(a);
@@ -108,7 +99,7 @@ export function dotsAt(points: readonly Pt[], r: number): string {
   return points.map(([x, y]) => circ(x, y, r)).join('');
 }
 
-/** `count` points round a circle, the first at the top (or `phase` of a step on). */
+/** `count` points round a circle, the first at the top (or `phase` of a step past it). */
 export function roundAbout(cx: number, cy: number, r: number, count: number, phase = 0): Pt[] {
   const out: Pt[] = [];
   for (let i = 0; i < count; i++) {
@@ -119,9 +110,8 @@ export function roundAbout(cx: number, cy: number, r: number, count: number, pha
 }
 
 /**
- * A kilim band along a rim: small diamonds with a dark eye at their heart,
- * and a bead between each two — the border of a rug, run round a rim.
- * `marks` are where the diamonds go and which way the rim runs there.
+ * A kilim band along a rim: small diamonds with a dark eye, a bead between each pair. `marks` give each diamond's place
+ * and the rim's direction there.
  */
 export function kilimAlong(marks: readonly { p: Pt; angle: number }[], size: number, light: string, eye: string): string {
   const gems: string[] = [];
@@ -147,10 +137,8 @@ export function kilimRing(cx: number, cy: number, r: number, count: number, size
 }
 
 /**
- * Pips in a row, centred on cx,cy: the count says the division or the tier,
- * so colour is never the only signal. A lit pip is a raised bead of the
- * metal; an unlit one an empty socket — told apart by shape as well as by
- * colour, on a dark page and a light one alike.
+ * Pips in a row centred on cx,cy, counting the division or tier so colour is never the only signal: a lit pip is a
+ * raised metal bead, an unlit one an empty socket.
  */
 export function pips(dr: Drawing, m: Metal, count: number, lit: number, cx: number, cy: number, r: number, gap: number): string {
   const bead = dr.id('pip');
@@ -183,18 +171,18 @@ export function pips(dr: Drawing, m: Metal, count: number, lit: number, cx: numb
 export interface LaurelOptions {
   cx: number;
   cy: number;
-  /** the radius the stems follow */
+  /** The radius the stems follow. */
   r: number;
-  /** where the right-hand stem starts and ends, in degrees (90 = straight down, 0 = right, −90 = the top) */
+  /** Where the right-hand stem starts and ends, in degrees (90 straight down, 0 right, −90 the top). */
   from: number;
   to: number;
-  /** leaves on each side of each stem */
+  /** Leaves on each side of each stem. */
   leaves: number;
-  /** a leaf's length and width at the stem's foot; they taper toward its tip */
+  /** A leaf's length and width at the stem's foot; they taper toward the tip. */
   len: number;
   width: number;
   m: Metal;
-  /** stroke the leaves' edges (large sizes) */
+  /** Stroke the leaves' edges, for large sizes. */
   edged: boolean;
 }
 
@@ -211,10 +199,8 @@ const rot = (u: Pt, deg: number): Pt => {
 };
 
 /**
- * A pair of laurel branches, mirrored about cx: from the foot of a piece up
- * its sides, leaves in pairs either side of a curved stem, smaller toward the
- * tip. Drawn before the piece, so the inner leaves tuck in behind its rim.
- * Returns markup.
+ * A pair of laurel branches mirrored about cx, rising from a piece's foot up its sides with leaves shrinking toward the
+ * tip. Draw it before the piece so the inner leaves tuck behind the rim. Returns markup.
  */
 export function laurel(o: LaurelOptions): string {
   const { cx, cy, r, from, to, leaves, len, width, m, edged } = o;
@@ -228,14 +214,14 @@ export function laurel(o: LaurelOptions): string {
     const deg = from + (to - from) * Math.min(1, t * 0.94 + 0.03);
     const a = (deg * Math.PI) / 180;
     const base: Pt = [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
-    // the way the stem grows, and which way is out
+    // The stem's direction here, and which way is out.
     const grow: Pt = [-Math.sin(a) * dir, Math.cos(a) * dir];
     const taper = 1 - 0.38 * t;
     const l = len * taper;
     const w = width * taper;
     const outward = dir > 0 ? -1 : 1;
     if (k === leaves) {
-      // the tip: one leaf straight on along the stem
+      // The tip: one leaf straight on along the stem.
       outer.push(leaf(base, grow, l * 0.9, w * 0.9), leaf(mirror(base), mirrorU(grow), l * 0.9, w * 0.9));
       break;
     }
@@ -262,9 +248,8 @@ export function laurel(o: LaurelOptions): string {
 }
 
 /**
- * A crown of three rounded peaks — the summit, worn on top of a piece — with
- * a pearl on each peak, or for the highest tier a soft star set on the middle
- * one like a finial. Its foot tucks behind the piece's rim. Returns markup.
+ * A crown of three rounded peaks with a pearl on each, or for the top tier a soft star on the middle one. Its foot
+ * tucks behind the piece's rim. Returns markup.
  */
 export function crown(dr: Drawing, m: Metal, cx: number, foot: number, w: number, h: number, top: 'pearls' | 'star' | 'none', starR = w * 0.24): string {
   const v: Pt[] = [
@@ -293,7 +278,7 @@ export function crown(dr: Drawing, m: Metal, cx: number, foot: number, w: number
   return out.join('');
 }
 
-/** A five-point star with every point and every notch rounded: a friendly star, not a burst. */
+/** A five-point star with every point and notch rounded. */
 export function softStar(cx: number, cy: number, r: number, inner = 0.5): string {
   const v: Pt[] = [];
   const radii: number[] = [];
