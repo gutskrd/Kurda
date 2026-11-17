@@ -15,6 +15,7 @@ import { SlideSwap } from '../theme/SlideSwap';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
 import { useHardwareBack } from '../navigation/hardwareBack';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useModalSlide } from '../a11y/useReducedMotion';
 import { encodeAnswer } from './answers';
 import { BADGE, NewWordBadge } from './components/AskParts';
 import { ExerciseSlide } from './components/ExerciseSlide';
@@ -324,6 +325,7 @@ function SessionPlayerBody({
   const [results, setResults] = useState<SessionResults | null>(null);
   const [skipSpeaking, setSkipSpeaking] = useState(false);
   const [showTips, setShowTips] = useState(false);
+  const tipsSlide = useModalSlide();
   const [leaving, setLeaving] = useState(false);
   // the finished lesson could not be added up (offline, a server hiccup): said, with a retry, never a spinner for ever
   const [completeFailed, setCompleteFailed] = useState(false);
@@ -702,7 +704,7 @@ function SessionPlayerBody({
       </BottomSheet>
 
       {view.grammarMd ? (
-        <Modal visible={showTips} animationType="slide" onRequestClose={() => setShowTips(false)}>
+        <Modal visible={showTips} animationType={tipsSlide} onRequestClose={() => setShowTips(false)}>
           {/* the tips are a screen of their own over the lesson: nothing in the lesson caps their reach */}
           <ReachReset>
             <GrammarTips source={view.grammarMd} onClose={() => setShowTips(false)} />
