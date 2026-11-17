@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { PEEK_PLACE, PEEK_POP, PEEK_VIEW, peekArt, type CharacterPoint } from '@kurda/shared';
@@ -7,6 +7,17 @@ import { springTo } from '../theme/animate';
 import { useTheme } from '../theme/ThemeProvider';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 import type { PlaybackClock } from './voice';
+
+/**
+ * Where he looks unless told otherwise: straight at whoever is reading, his
+ * pupils in the middle of his eyes. Left to rest they sit turned in toward
+ * each other, as on the icon, and at the size the first screens draw him that
+ * read as a cross-eyed stare.
+ */
+export const GAZE_AT_READER: CharacterPoint = { x: 0, y: 0 };
+
+/** When, once he has started up through the tear, he is through enough to be glad about it: a share of the spring. */
+const GLAD_AT = 0.55;
 
 /** How far past the picture's top and sides a hop or a twitch of an ear may carry him before anything cuts him off, as a share of its height. */
 const ROOM = 0.3;
@@ -26,8 +37,9 @@ export interface PeekSpeech {
  * the air. As the picture appears he comes up through the tear on a spring,
  * the shadow his head throws on the page and his shade in the dark under his
  * chin coming with him, all on one value; under Reduce Motion he is simply there. Alive as ever: he
- * blinks, glances about, looks where he is told (`gaze`), follows a finger,
- * and cheers or tilts his head at a `reaction`.
+ * blinks, glances about, looks at the reader unless told to look elsewhere
+ * (`gaze`), follows a finger, cheers as he comes through, and cheers or
+ * tilts his head at a `reaction`.
  *
  * Given `speech` and the `text` of a line, he says it: his mouth moves with
  * the words by the clock the speech keeps (auth/guide/speech.ts).
@@ -40,7 +52,7 @@ export interface PeekSpeech {
 export function HevaloPeek({
   size,
   reaction = null,
-  gaze = null,
+  gaze = GAZE_AT_READER,
   resting = false,
   flip = false,
   pop = true,
@@ -69,6 +81,13 @@ export function HevaloPeek({
   const width = (size * PEEK_VIEW.w) / PEEK_VIEW.h;
   const drop = PEEK_PLACE.drop * size;
   const rise = useRef(new Animated.Value(pop && !reduce ? drop : 0)).current;
+  // through the page, he is glad of it: a cheer as the spring settles, unless the screen has a reaction of its own for him
+  const [glad, setGlad] = useState<CharacterReaction | null>(null);
+  useEffect(() => {
+    if (!pop || reduce) return;
+    const id = setTimeout(() => setGlad('cheer'), PEEK_POP.delayMs + PEEK_POP.ms * GLAD_AT);
+    return () => clearTimeout(id);
+  }, [pop, reduce]);
 
   useEffect(() => {
     // asked for less motion — an answer that may arrive a moment after he appears — he is simply there
@@ -118,7 +137,7 @@ export function HevaloPeek({
             size={figure.width * width}
             flip={flip}
             gaze={gaze}
-            reaction={reaction}
+            reaction={reaction ?? glad}
             resting={resting}
             onPress={onPress}
           />
