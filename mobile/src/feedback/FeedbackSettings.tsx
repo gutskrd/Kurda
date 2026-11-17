@@ -11,6 +11,7 @@ import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { rateUrl } from './appInfo';
 import { RatingBox } from './RatingBox';
 import { heldDim } from '../theme/MotionParts';
+import { useDirection } from '../reports/direction';
 
 /**
  * "Send feedback" and "Rate Hevalo", in Settings → About.
@@ -31,6 +32,8 @@ export function FeedbackSettingsRows({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  // the close at the end of the line the language reads along, where a sheet's own close is
+  const dir = useDirection();
   const topInset = useScreenTopInset();
   const [open, setOpen] = useState(false);
   const store = storeUrls ? rateUrl(os, storeUrls) : rateUrl(os);
@@ -46,7 +49,7 @@ export function FeedbackSettingsRows({
           style={[styles.sheet, { backgroundColor: colors.background }]}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View style={[styles.top, { paddingTop: Platform.OS === 'ios' ? spacing.sm : topInset }]}>
+          <View style={[styles.top, { flexDirection: dir.row, paddingTop: Platform.OS === 'ios' ? spacing.sm : topInset }]}>
             <Pressable
               onPress={() => setOpen(false)}
               accessibilityRole="button"

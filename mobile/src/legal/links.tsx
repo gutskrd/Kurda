@@ -77,11 +77,12 @@ export function AgreeLine({ style }: { style?: StyleProp<TextStyle> }): React.JS
       {parts.map((part, i) =>
         // the odd pieces are the placeholders' names
         i % 2 === 1 && (part === 'terms' || part === 'privacy') ? (
+          // a link is violet, as everything pressable is; the underline says so without the colour too
           <Text
             key={i}
             accessibilityRole="link"
             onPress={() => openLegal(part)}
-            style={[styles.link, { color: colors.textPrimary }]}
+            style={[styles.link, { color: colors.primary }]}
           >
             {t(part === 'terms' ? 'auth.legal.terms' : 'auth.legal.privacy')}
           </Text>

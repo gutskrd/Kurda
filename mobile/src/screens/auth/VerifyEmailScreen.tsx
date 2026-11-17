@@ -13,7 +13,8 @@ import { haptic } from '../../feedback/haptics';
 import { useI18n } from '../../i18n/I18nContext';
 import { useDirection } from '../../reports/direction';
 import { Icon } from '../../theme/Icon';
-import { PressableScale } from '../../theme/MotionParts';
+import { PressableScale, heldDim } from '../../theme/MotionParts';
+import { Pressable } from '../../theme/Pressable';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 
@@ -118,7 +119,8 @@ export function VerifyEmailScreen(): React.JSX.Element {
             style={[styles.address, { backgroundColor: colors.controlTrack, flexDirection: dir.row, alignSelf: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' }]}
             testID="change-address"
           >
-            <Text style={[styles.addressText, { color: colors.textPrimary }]} numberOfLines={1}>
+            {/* whole, on a second line if need be: the end of the address is what somebody checks before "Wrong address?" */}
+            <Text style={[styles.addressText, { color: colors.textPrimary }]} numberOfLines={2}>
               {user.email}
             </Text>
             <Icon name="pencil" size={16} color={colors.textSecondary} />
@@ -150,20 +152,29 @@ export function VerifyEmailScreen(): React.JSX.Element {
             {resendError}
           </Text>
         ) : null}
-        {/* one sentence, the way it is said: "Didn't get it? Check your spam folder, then send a new code" */}
-        <Text style={[styles.resend, dir.text, { color: colors.textSecondary }]}>
-          {t('auth.verify.didntGetIt')}{' '}
-          <Text
-            onPress={cooldown > 0 ? undefined : () => void onResend()}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: cooldown > 0 }}
-            style={[styles.resendLink, { color: cooldown > 0 ? colors.textSecondary : colors.textPrimary }]}
-            testID="resend"
-          >
-            {cooldown > 0 ? t('auth.verify.sendNewIn', { seconds: cooldown }) : t('auth.verify.sendNew')}
+        {/*
+          One sentence, the way it is said: "Didn't get it? Check your spam
+          folder, then send a new code". The whole sentence is the button, a
+          fingertip tall at the least: the bold words alone were a target
+          twenty-two points high in the middle of a line.
+        */}
+        <Pressable
+          onPress={cooldown > 0 ? undefined : () => void onResend()}
+          disabled={cooldown > 0}
+          accessibilityRole="button"
+          accessibilityLabel={cooldown > 0 ? t('auth.verify.sendNewIn', { seconds: cooldown }) : t('auth.verify.sendNew')}
+          accessibilityState={{ disabled: cooldown > 0 }}
+          style={({ pressed }) => [styles.resendTarget, pressed && heldDim]}
+          testID="resend"
+        >
+          <Text style={[styles.resend, dir.text, { color: colors.textSecondary }]}>
+            {t('auth.verify.didntGetIt')}{' '}
+            <Text style={[styles.resendLink, { color: cooldown > 0 ? colors.textSecondary : colors.textPrimary }]}>
+              {cooldown > 0 ? t('auth.verify.sendNewIn', { seconds: cooldown }) : t('auth.verify.sendNew')}
+            </Text>
+            .
           </Text>
-          .
-        </Text>
+        </Pressable>
         {/* how long each thing lasts, said once and small */}
         <Text style={[styles.small, dir.text, { color: colors.textSecondary }]}>
           {t('auth.verify.expiresIn15')} {t('auth.verify.keptFor', { days: UNCONFIRMED_SIGNUP_DAYS })}
@@ -240,6 +251,7 @@ const styles = StyleSheet.create({
   addressText: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   footer: { marginTop: spacing.lg, gap: spacing.sm },
   notice: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  resendTarget: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   resend: { fontSize: typography.sizes.sm, lineHeight: 22 },
   resendLink: { fontWeight: typography.weights.semibold },
   small: { fontSize: typography.sizes.xs, lineHeight: 18 },

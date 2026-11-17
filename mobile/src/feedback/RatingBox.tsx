@@ -23,6 +23,10 @@ import { HevaloDeer } from './HevaloDeer';
 import { dismissFeedback, sendFeedback } from './api';
 import { APP_VERSION, appPlatform } from './appInfo';
 import { heldDim } from '../theme/MotionParts';
+import { useDirection } from '../reports/direction';
+
+/** The violet wash an option that is on wears, as the tab bar and the segmented control mark where you are. */
+const CHOSEN_WASH = '1F';
 
 const CATEGORY_LABEL: Record<AppFeedbackCategory, TranslationKey> = {
   lessons: 'appFeedback.category.lessons',
@@ -69,6 +73,7 @@ export function RatingBox({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  const dir = useDirection();
   const [stars, setStars] = useState(0);
   const [categories, setCategories] = useState<AppFeedbackCategory[]>([]);
   const [comment, setComment] = useState('');
@@ -168,15 +173,19 @@ export function RatingBox({
         // Over a game's results it starts small — the deer beside the
         // question, the stars, "Not now" — so the results and their buttons
         // stay in sight above it; it grows only once a star is tapped.
-        <View style={styles.head}>
+        <View style={[styles.head, { flexDirection: dir.row }]}>
           <HevaloDeer size={72} board={{ kind: 'stars', stars }} />
-          <Text style={[styles.title, styles.headTitle, { color: colors.textPrimary }]} accessibilityRole="header">
+          <Text style={[styles.title, styles.headTitle, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
             {t('appFeedback.question')}
           </Text>
         </View>
       )}
 
-      <View style={styles.stars} accessibilityRole="radiogroup" accessibilityLabel={t('appFeedback.question')}>
+      {/*
+        The stars fill from the side the language starts from, and the ones
+        chosen are violet, as a choice is: gold is kept for what is earned.
+      */}
+      <View style={[styles.stars, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={t('appFeedback.question')}>
         {[1, 2, 3, 4, 5].map((n) => {
           const on = n <= stars;
           return (
@@ -191,7 +200,7 @@ export function RatingBox({
               accessibilityLabel={t(STAR_LABEL[n]!)}
               style={({ pressed }) => [styles.star, pressed && heldDim]}
             >
-              <Icon name={on ? 'star-fill' : 'star'} size={36} color={on ? colors.gold : colors.textSecondary} />
+              <Icon name={on ? 'star-fill' : 'star'} size={36} color={on ? colors.primary : colors.textSecondary} />
             </Pressable>
           );
         })}
@@ -209,7 +218,8 @@ export function RatingBox({
       ) : null}
 
       {settings || followUp === 'improve' ? (
-        <View style={styles.chips}>
+        // what it is about, as many as apply: one that is on is a wash of violet with violet words
+        <View style={[styles.chips, { flexDirection: dir.row }]}>
           {APP_FEEDBACK_CATEGORIES.map((c) => {
             const on = categories.includes(c);
             return (
@@ -218,9 +228,9 @@ export function RatingBox({
                 onPress={() => toggle(c)}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
-                style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }, pressed && heldDim]}
+                style={({ pressed }) => [styles.chip, { backgroundColor: on ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack }, pressed && heldDim]}
               >
-                <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>
+                <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.primary : colors.textPrimary }]}>
                   {t(CATEGORY_LABEL[c])}
                 </Text>
               </Pressable>
@@ -232,7 +242,7 @@ export function RatingBox({
       {/* a field says what it is for in words that stay, not only in a placeholder that goes —
           unless the line just above already asks it (the under-3 thank-you does) */}
       {settings || followUp === 'love' ? (
-        <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+        <Text style={[styles.fieldLabel, dir.text, { color: colors.textSecondary }]}>
           {t(followUp === 'love' && !settings ? 'appFeedback.loveLabel' : 'appFeedback.improveLabel')}
         </Text>
       ) : null}
@@ -245,7 +255,8 @@ export function RatingBox({
           placeholder={t('appFeedback.improvePlaceholder')}
           placeholderTextColor={colors.textSecondary}
           accessibilityLabel={t(followUp === 'love' && !settings ? 'appFeedback.loveLabel' : 'appFeedback.improveLabel')}
-          style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
+          // right to left, what is typed starts at the right
+          style={[styles.input, dir.row === 'row-reverse' && styles.inputMirrored, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
         />
       ) : null}
 
@@ -292,6 +303,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  chipTextOn: { fontWeight: typography.weights.semibold },
   fieldLabel: { alignSelf: 'stretch', fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   input: {
     alignSelf: 'stretch',
@@ -302,6 +314,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     textAlignVertical: 'top',
   },
+  inputMirrored: { textAlign: 'right' },
   error: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   stretch: { alignSelf: 'stretch' },
   notNow: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md },

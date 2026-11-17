@@ -37,6 +37,9 @@ describe('the error boundary round the screens', () => {
       </AppErrorBoundary>,
     );
     expect(await screen.findByTestId('crash-retry')).toBeTruthy();
+    // the calm fawn the offline state wears, not a red alarm: it is never the reader's doing
+    expect(screen.getByTestId('crash-art')).toBeTruthy();
+    expect(document.querySelector('svg')).toBeNull();
     expect(reportRenderError).toHaveBeenCalledTimes(1);
     const [error, componentStack] = vi.mocked(reportRenderError).mock.calls[0]!;
     expect((error as Error).message).toBe('lesson is undefined');

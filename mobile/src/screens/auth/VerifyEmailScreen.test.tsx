@@ -123,6 +123,25 @@ describe('confirming an address', () => {
     expect(session.resendVerificationCode).toHaveBeenCalledTimes(1);
   });
 
+  // the bold words were a target twenty-two points tall in the middle of a line
+  it('makes the whole sentence the button that sends a new code, and names it by what it does', () => {
+    const session = unconfirmed();
+    renderWithProviders(<VerifyEmailScreen />);
+    const button = screen.getByRole('button', { name: 'send a new code' });
+    expect(button.textContent).toMatch(/^Didn’t get it\?.*send a new code\.$/);
+    fireEvent.click(button);
+    expect(session.resendVerificationCode).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the whole address the code went to, on a second line where it is long', () => {
+    unconfirmed({});
+    testAuth.user = { ...testAuth.user, email: 'a.very.long.address.for.a.narrow.phone@example.org' };
+    renderWithProviders(<VerifyEmailScreen />);
+    const address = screen.getByText('a.very.long.address.for.a.narrow.phone@example.org');
+    // one line would be nowrap with an ellipsis at its end
+    expect(getComputedStyle(address).whiteSpace).not.toBe('nowrap');
+  });
+
   it('says so when no more emails can be sent today', async () => {
     unconfirmed({ resendVerificationCode: vi.fn(async () => 'Too many emails for today.') });
     renderWithProviders(<VerifyEmailScreen />);

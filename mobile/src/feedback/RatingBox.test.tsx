@@ -26,6 +26,7 @@ import { leftResults, reportGameFinished, setRatingBoxInset, useRatingBoxInset }
 import { FeedbackSession } from './session';
 import { requestStoreReview } from './storeReview';
 import { APP_VERSION } from './appInfo';
+import { DARK, LIGHT } from '../theme/palette';
 
 patchReactNativeWeb({ reduceMotion: true });
 
@@ -36,6 +37,23 @@ beforeEach(() => {
   vi.mocked(requestStoreReview).mockClear();
 });
 afterEach(cleanup);
+
+describe('RatingBox, as a choice is marked', () => {
+  // a rating given is a choice, so violet; gold is kept for what is earned
+  it('fills the chosen stars in violet, not gold, and marks a chosen topic with the violet wash', () => {
+    testAuth.client = fakeClient();
+    renderWithProviders(<RatingBox source="settings" onClose={() => undefined} />);
+    fireEvent.click(screen.getByRole('radio', { name: '4 stars' }));
+    const star = screen.getByRole('radio', { name: '1 star' }).querySelector('svg')!.outerHTML.toLowerCase();
+    expect([LIGHT.primary, DARK.primary].some((violet) => star.includes(violet.toLowerCase()))).toBe(true);
+    expect([LIGHT.gold, DARK.gold].some((gold) => star.includes(gold.toLowerCase()))).toBe(false);
+    const bugs = screen.getByRole('checkbox', { name: 'Bugs' });
+    fireEvent.click(bugs);
+    expect(bugs.getAttribute('aria-checked')).toBe('true');
+    // a wash is the violet with a little of it showing, not the solid
+    expect(getComputedStyle(bugs).backgroundColor).not.toBe(getComputedStyle(screen.getByRole('button', { name: 'Send' }).firstElementChild as HTMLElement).backgroundColor);
+  });
+});
 
 describe('RatingBox after a first game', () => {
   it('asks under three stars what could be better, and sends the stars, the chips and the words', async () => {
