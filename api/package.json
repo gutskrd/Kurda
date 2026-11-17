@@ -22,7 +22,8 @@
     "dict:import": "tsx scripts/import-lexicon.ts",
     "events:seed": "tsx scripts/seed-events.ts",
     "worker": "tsx src/workers/main.ts",
-    "dev:db": "node scripts/dev-db.mjs"
+    "dev:db": "node scripts/dev-db.mjs",
+    "book:export": "tsx scripts/book-export.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1101.0",
