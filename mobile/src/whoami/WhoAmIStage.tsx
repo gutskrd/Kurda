@@ -90,24 +90,31 @@ const PAPER_EDGE = '#d8ccb0';
 const PAPER_INK = '#2a2a33';
 const PAPER_SOFT = '#5b5b66';
 /**
- * Yes, could be and no, each with the edge its key stands on, and the white written on all three (5.2:1, 5.5:1 and
- * 5.3:1). Could be is a deep amber, between the green and the clay, and as dark as they are, so the same ink reads.
+ * Yes, could be and no as three clear colours that read at a glance and belong together: a fresh green, the app's
+ * gold and a warm red, each with the darker edge its key stands on. Green and red carry white (5.0:1 and 5.1:1); gold
+ * is too light for white, so it carries the deep brown the app writes on gold (8.6:1), as a yellow sign does.
  */
-const YES = '#2e7a52';
-const YES_EDGE = '#1f5739';
-const MAYBE = '#8a6212';
-const MAYBE_EDGE = '#5e430b';
-const NO = '#a9532f';
-const NO_EDGE = '#7d3c21';
 const ON_ANSWER = '#ffffff';
-const ON_ANSWER_SOFT = 'rgba(255, 255, 255, 0.86)';
-const ON_ANSWER_VEIL = 'rgba(255, 255, 255, 0.16)';
+const ON_ANSWER_SOFT = 'rgba(255, 255, 255, 0.88)';
+const ON_ANSWER_VEIL = 'rgba(255, 255, 255, 0.18)';
+const ON_GOLD = '#3a2800';
+const ON_GOLD_SOFT = 'rgba(58, 40, 0, 0.82)';
+const ON_GOLD_VEIL = 'rgba(58, 40, 0, 0.1)';
 
-/** What the card can say, as the fill of the key or the card that says it and the edge that key stands on. */
-const FILL: Record<WhoAmIAnswer, { face: string; edge: string }> = {
-  yes: { face: YES, edge: YES_EDGE },
-  sometimes: { face: MAYBE, edge: MAYBE_EDGE },
-  no: { face: NO, edge: NO_EDGE },
+/** What the card can say, as the fill of the key or the card that says it, the edge that key stands on, and the ink written on it. */
+const FILL: Record<WhoAmIAnswer, { face: string; edge: string; ink: string; soft: string; veil: string }> = {
+  yes: { face: '#1a7f45', edge: '#11592f', ink: ON_ANSWER, soft: ON_ANSWER_SOFT, veil: ON_ANSWER_VEIL },
+  sometimes: { face: '#ffbf1f', edge: '#b98500', ink: ON_GOLD, soft: ON_GOLD_SOFT, veil: ON_GOLD_VEIL },
+  no: { face: '#c9382a', edge: '#8e2418', ink: ON_ANSWER, soft: ON_ANSWER_SOFT, veil: ON_ANSWER_VEIL },
+};
+
+/**
+ * The same three as words written on the page itself, the stamps: a step deeper on the light page and a step lighter
+ * on the dark one, so each reads on its own ground (at least 6:1 on either), while keeping its hue.
+ */
+const WORD_ON_PAGE: Record<'light' | 'dark', Record<WhoAmIAnswer, string>> = {
+  light: { yes: '#17723a', sometimes: '#7a5600', no: '#b42318' },
+  dark: { yes: '#86e2a4', sometimes: '#ffcf5c', no: '#ff9c90' },
 };
 
 type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
@@ -275,7 +282,7 @@ export function ForeheadCard({
  */
 function Stamp({ dialect, answer, large = false }: { dialect: GameDialect; answer: WhoAmISays; large?: boolean }): React.JSX.Element {
   const { t } = useI18n();
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const reduce = useReducedMotion();
   const land = useRef(new Animated.Value(reduce ? 1 : 0)).current;
   useEffect(() => {
@@ -285,7 +292,7 @@ function Stamp({ dialect, answer, large = false }: { dialect: GameDialect; answe
     return () => anim.stop();
   }, [land, reduce]);
   const scale = land.interpolate({ inputRange: [0, 1], outputRange: [1.6, 1] });
-  const colour = answer === 'unsure' ? colors.textSecondary : FILL[answer].face;
+  const colour = answer === 'unsure' ? colors.textSecondary : WORD_ON_PAGE[scheme][answer];
   return (
     <Animated.Text
       style={[
@@ -391,7 +398,7 @@ export function Foreheads({ dialect, seats, label }: { dialect: GameDialect; sea
               <View accessible={false} importantForAccessibility="no-hide-descendants">
                 <SvgXml xml={svg} width={MINI} height={MINI} />
               </View>
-              <View style={[styles.miniCard, { borderColor: s.solved ? YES : s.out ? NO : tone.fill }]}>
+              <View style={[styles.miniCard, { borderColor: s.solved ? FILL.yes.face : s.out ? FILL.no.face : tone.fill }]}>
                 {s.card ? (
                   <>
                     <Text style={[styles.miniWord, kurdish(dialect)]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
@@ -413,7 +420,7 @@ export function Foreheads({ dialect, seats, label }: { dialect: GameDialect; sea
                 )}
               </View>
               {s.solved || s.out ? (
-                <View style={[styles.badge, { backgroundColor: s.solved ? YES : NO }]}>
+                <View style={[styles.badge, { backgroundColor: s.solved ? FILL.yes.face : FILL.no.face }]}>
                   <Icon name={s.solved ? 'check' : 'close'} size={12} color={ON_ANSWER} />
                 </View>
               ) : null}
@@ -758,7 +765,7 @@ function AnswerKey({
   const quiet = answer === 'unsure';
   const paint = quiet
     ? { face: colors.bubbleTheirs, edge: colors.switchOff, ink: colors.bubbleTheirsInk, soft: colors.textSecondary }
-    : { ...FILL[answer], ink: ON_ANSWER, soft: ON_ANSWER };
+    : FILL[answer];
   const face = quiet ? [styles.unsureFace, { flexDirection: dialectRow(dialect) }] : styles.answerFace;
   return (
     <Pressable
@@ -848,8 +855,8 @@ export function JudgeButtons({ labels, onJudge }: { labels: Readonly<Record<Judg
           >
             {({ pressed }) => (
               <View style={[styles.judgeFace, { flexDirection: dir.row, backgroundColor: paint.face }, pressed ? styles.down : null]}>
-                <AnswerMark answer={JUDGED_AS[judged]} size={22} color={ON_ANSWER} />
-                <Text style={styles.answerPhrase}>{labels[judged]}</Text>
+                <AnswerMark answer={JUDGED_AS[judged]} size={22} color={paint.ink} />
+                <Text style={[styles.answerPhrase, { color: paint.ink }]}>{labels[judged]}</Text>
               </View>
             )}
           </Pressable>
@@ -982,7 +989,7 @@ export function VerdictCard({
   const dir = useDirection();
   const paint = quiet
     ? { fill: colors.glassFill, ink: colors.textPrimary, soft: colors.textSecondary, veil: colors.controlTrack }
-    : { fill: FILL[verdict].face, ink: ON_ANSWER, soft: ON_ANSWER_SOFT, veil: ON_ANSWER_VEIL };
+    : { fill: FILL[verdict].face, ink: FILL[verdict].ink, soft: FILL[verdict].soft, veil: FILL[verdict].veil };
   const said = answerWord(dialect, verdict, t);
   return (
     <View accessibilityLiveRegion="polite" style={[styles.verdict, { backgroundColor: paint.fill }]}>
@@ -1239,7 +1246,7 @@ const styles = StyleSheet.create({
   // one under the other each is as tall as its own face: sharing out a height that is not there would fold them flat
   judgeEdge: { borderRadius: radii.lg, paddingBottom: 5 },
   judgeFace: { minHeight: 64, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radii.lg },
-  answerPhrase: { flexShrink: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center', color: ON_ANSWER },
+  answerPhrase: { flexShrink: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
 
   verdict: { alignItems: 'center', gap: spacing.sm, padding: spacing.md, borderRadius: radii.xl },
   verdictHeading: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },

@@ -32,20 +32,28 @@
   --wa-paper: #fbf6e9;
   --wa-paper-ink: #2a2a33;
   --wa-paper-soft: #5b5b66;
-  /* yes, could be and no as words on the page's own surfaces: light on the dark theme, deep on the light one (9.3:1 and 6.7:1 for could be) */
+  /* yes, could be and no as words on the page's own surfaces: a step lighter on the dark theme, a step deeper on the light one, each at least 6:1 */
   --wa-yes: #86e2a4;
-  --wa-maybe: #f0c66e;
-  --wa-no: #f2b59a;
-  /* and as the fill of the card that carries the verdict, the same in both themes (7.5:1 under the ink for each) */
-  --wa-yes-fill: #1f5c3d;
-  --wa-maybe-fill: #6b4c0c;
-  --wa-no-fill: #7d3c21;
-  --wa-verdict-ink: #fdf9f0;
+  --wa-maybe: #ffcf5c;
+  --wa-no: #ff9c90;
+  /*
+   * and as the keys and the card that carries the verdict, the same in both themes: a fresh green, the app's gold and a
+   * warm red, clear apart at a glance, each on the darker edge it stands on. Green and red carry white (5.0:1 and
+   * 5.1:1); gold is too light for white and carries the deep brown the app writes on gold (8.6:1), as a yellow sign does.
+   */
+  --wa-yes-fill: #1a7f45;
+  --wa-yes-lip: #11592f;
+  --wa-maybe-fill: #ffbf1f;
+  --wa-maybe-lip: #b98500;
+  --wa-maybe-ink: #3a2800;
+  --wa-no-fill: #c9382a;
+  --wa-no-lip: #8e2418;
+  --wa-verdict-ink: #ffffff;
 }
 :root[data-theme='light'] .wa-page {
-  --wa-yes: #256843;
+  --wa-yes: #17723a;
   --wa-maybe: #7a5600;
-  --wa-no: #934627;
+  --wa-no: #b42318;
 }
 
 .wa-title,
@@ -535,7 +543,7 @@ p.wa-q-text {
   gap: var(--space-2);
 }
 .wa-answer-btn {
-  --lip: #173f2b;
+  --lip: var(--wa-yes-lip);
   display: grid;
   align-content: center;
   justify-items: center;
@@ -555,11 +563,12 @@ p.wa-q-text {
     box-shadow var(--dur-fast) var(--ease-out);
 }
 .wa-answer-btn.is-sometimes {
-  --lip: #45310a;
+  --lip: var(--wa-maybe-lip);
   background: var(--wa-maybe-fill);
+  color: var(--wa-maybe-ink);
 }
 .wa-answer-btn.is-no {
-  --lip: #552714;
+  --lip: var(--wa-no-lip);
   background: var(--wa-no-fill);
 }
 /* not sure: one line, mark, word and gloss side by side, on the page's own raised surface */
@@ -647,7 +656,7 @@ p.wa-q-text {
 
 /* ---- the card's own verdict --------------------------------------------------------------- */
 .wa-verdict {
-  --lip: #173f2b;
+  --lip: var(--wa-yes-lip);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   justify-items: center;
@@ -661,11 +670,12 @@ p.wa-q-text {
   box-shadow: 0 4px 0 var(--lip);
 }
 .wa-verdict.is-sometimes {
-  --lip: #45310a;
+  --lip: var(--wa-maybe-lip);
   background: var(--wa-maybe-fill);
+  color: var(--wa-maybe-ink);
 }
 .wa-verdict.is-no {
-  --lip: #552714;
+  --lip: var(--wa-no-lip);
   background: var(--wa-no-fill);
 }
 /* what "could be" means, under the card's stamp: the one answer a learner may not expect a card to give */
@@ -716,7 +726,8 @@ p.wa-q-text {
   font-weight: 700;
 }
 .wa-verdict .wa-answers li {
-  background: rgba(255, 255, 255, 0.14);
+  /* a veil of the card's own ink, so it shows on the gold as on the green and the red */
+  background: color-mix(in srgb, currentColor 13%, transparent);
 }
 /* each friend's answer by its mark as well as its word: right, close, wrong, not sure */
 .wa-answers li.is-right .wa-answers-mark::before {
@@ -759,7 +770,7 @@ p.wa-q-text {
   cursor: pointer;
 }
 .wa-report-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, currentColor 12%, transparent);
   opacity: 1;
 }
 .wa-report-btn:disabled {
