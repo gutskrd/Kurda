@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { markGiftsSeen, receivedGifts, type ReceivedGift } from './gifts';
 import { giftsWereOpened } from './useUnseenGifts';
+import { useDirection } from '../reports/direction';
 
 /**
  * What people have sent you, at the top of the shop (KUR-087).
@@ -28,6 +29,8 @@ export function ReceivedGifts(): React.JSX.Element | null {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  // the picture on the side the language starts from; an item's name read in its own direction
+  const dir = useDirection();
   const [gifts, setGifts] = useState<ReceivedGift[] | null>(null);
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export function ReceivedGifts(): React.JSX.Element | null {
 
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.heading, { color: colors.textSecondary }]}>{t('shop.yourGifts')}</Text>
+      <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]}>{t('shop.yourGifts')}</Text>
       {gifts.map((g) => {
         const art = assetUrl(g.assetUrl);
         return (
@@ -59,9 +62,10 @@ export function ReceivedGifts(): React.JSX.Element | null {
             style={[
               styles.row,
               {
+                flexDirection: dir.row,
                 backgroundColor: colors.glassFill,
-                // an unopened one is worth pointing at, once
-                borderColor: g.seenAt ? colors.glassBorder : colors.gold,
+                // an unopened one is worth pointing at, once: in violet, as anything new is (gold is for what is earned)
+                borderColor: g.seenAt ? colors.glassBorder : colors.primary,
               },
             ]}
           >
@@ -73,10 +77,10 @@ export function ReceivedGifts(): React.JSX.Element | null {
               )}
             </View>
             <View style={styles.main}>
-              <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+              <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
                 {g.name}
               </Text>
-              <Text style={[styles.from, { color: colors.textSecondary }]} numberOfLines={1}>
+              <Text style={[styles.from, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
                 {g.from ? t('shop.giftFrom', { name: g.from.username }) : t('shop.giftFromFormer')}
               </Text>
             </View>
@@ -92,7 +96,6 @@ const styles = StyleSheet.create({
   wrap: { paddingTop: spacing.md, paddingBottom: spacing.sm, gap: spacing.xs },
   heading: { ...sectionLabel },
   row: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     padding: spacing.sm,

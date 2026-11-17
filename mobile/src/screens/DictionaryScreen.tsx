@@ -10,8 +10,9 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchHit, SearchResult } from '../dictionary/types';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useDirection } from '../reports/direction';
 import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -32,6 +33,12 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  /*
+   * Right to left, the rows start on the right; a headword and its meaning
+   * are read in their own direction (Latin Kurmancî and English stay left to
+   * right on a Soranî page), lined up with the page.
+   */
+  const dir = useDirection();
   const tabBarInset = useTabBarInset();
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<SearchResult | null>(null);
@@ -120,11 +127,11 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
           placeholder={t('dictionary.searchPlaceholder')}
         />
 
-        {result?.fuzzy ? <Text style={[styles.banner, { color: colors.textSecondary }]}>{t('dictionary.noExactMatch')}</Text> : null}
+        {result?.fuzzy ? <Text style={[styles.banner, dir.text, { color: colors.textSecondary }]}>{t('dictionary.noExactMatch')}</Text> : null}
 
         {showRecents ? (
           <View style={styles.recents}>
-            <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>{t('dictionary.recent')}</Text>
+            <Text style={[styles.recentsTitle, dir.text, { color: colors.textSecondary }]}>{t('dictionary.recent')}</Text>
             {recents.map((r) => (
               <Pressable
                 key={r}
@@ -132,7 +139,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
                 style={({ pressed }) => [styles.recentRow, pressed && heldRow(colors.controlTrack)]}
                 accessibilityRole="button"
               >
-                <Text style={[styles.recentText, { color: colors.primary }]}>{r}</Text>
+                <Text style={[styles.recentText, dir.free, { color: colors.primary }]}>{r}</Text>
               </Pressable>
             ))}
           </View>
@@ -142,19 +149,20 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
 
         {isEmpty && saved.length > 0 ? (
           <View style={styles.recents}>
-            <View style={styles.savedHeading}>
-              <Icon name="bookmark" size={13} color={colors.gold} />
-              <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>{t('saved.title')}</Text>
+            {/* the heading's mark in the heading's own grey: saving a word is not earning it, which is what gold is for */}
+            <View style={[styles.savedHeading, { flexDirection: dir.row }]}>
+              <Icon name="bookmark" size={13} color={colors.textSecondary} />
+              <Text style={[styles.recentsTitle, dir.text, { color: colors.textSecondary }]}>{t('saved.title')}</Text>
             </View>
             {saved.map((w) => (
-              <View key={w.entryId} style={styles.savedRow}>
+              <View key={w.entryId} style={[styles.savedRow, { flexDirection: dir.row }]}>
                 <Pressable
                   style={({ pressed }) => [styles.savedMain, pressed && heldRow(colors.controlTrack)]}
                   onPress={() => setOpenEntry(w.entryId)}
                   accessibilityRole="button"
                 >
-                  <Text style={[styles.recentText, { color: colors.primary }]}>{w.headword}</Text>
-                  <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
+                  <Text style={[styles.recentText, dir.free, { color: colors.primary }]}>{w.headword}</Text>
+                  <Text style={[styles.hitDef, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
                     {w.definitionEn ?? w.definitionKu ?? ''}
                   </Text>
                 </Pressable>
@@ -190,8 +198,8 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
           contentContainerStyle={[styles.hitsBody, { paddingBottom: tabBarInset }]}
           renderItem={({ item }) => (
             <Pressable onPress={() => openHit(item)} style={({ pressed }) => [styles.hit, pressed && heldRow(colors.controlTrack)]} accessibilityRole="button">
-              <Text style={[styles.hitWord, { color: colors.textPrimary }]}>{item.headword}</Text>
-              <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
+              <Text style={[styles.hitWord, dir.free, { color: colors.textPrimary }]}>{item.headword}</Text>
+              <Text style={[styles.hitDef, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
                 {item.pos ? `${item.pos} · ` : ''}
                 {item.definitionEn ?? item.definitionKu ?? ''}
               </Text>
@@ -208,11 +216,12 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
 /** The saved words in grey: the heading, then each word, its meaning and its ✕. */
 function SavedSkeleton(): React.JSX.Element {
   const { t } = useI18n();
+  const dir = useDirection();
   return (
     <View style={styles.recents} accessibilityLabel={t('common.loading')}>
       <SkeletonText size={typography.sizes.xs} width={72} />
       {[0, 1, 2, 3, 4].map((i) => (
-        <View key={i} style={styles.savedRow}>
+        <View key={i} style={[styles.savedRow, { flexDirection: dir.row }]}>
           <View style={styles.savedMain}>
             <SkeletonText size={typography.sizes.md} width={i % 2 ? 56 : 80} />
             <SkeletonText size={typography.sizes.sm} width={i % 2 ? '44%' : '60%'} />
@@ -242,15 +251,16 @@ function HitsSkeleton(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, padding: spacing.lg, gap: spacing.sm },
+  // the app's own gutter at the sides, so the field and the words line up with the way back above them
+  screen: { flex: 1, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, gap: spacing.sm },
   banner: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   recents: { gap: spacing.xs },
-  savedHeading: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  savedHeading: { alignItems: 'center', gap: spacing.xs },
   recentsTitle: { ...sectionLabel },
   // a row to tap: a fingertip tall, the word in the middle of it
   recentRow: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingVertical: spacing.sm },
   recentText: { fontSize: typography.sizes.md },
-  savedRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
+  savedRow: { alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
   savedMain: { flex: 1 },
   // a fingertip's worth around the small cross, so it is not missed for the row beside it
   removeButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },

@@ -26,6 +26,7 @@ import { HevaloDeer } from '../feedback/HevaloDeer';
 import { guidePlatform, guideSteps, lettersTyped, stepParts, tryLetters } from './guide';
 import { useKeyboardPrefs } from './prefs';
 import { heldDim } from '../theme/MotionParts';
+import { useDirection } from '../reports/direction';
 
 /** The phones this card has steps for; the browser has its own guide for computers. */
 const PHONES: readonly KeyboardPlatform[] = ['ios', 'android'];
@@ -58,6 +59,8 @@ export function KeyboardGuide({
   onClose: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  // each step's number on the side the reader's language starts from, its words lined up after it
+  const dir = useDirection();
   const { t } = useI18n();
   const topInset = useScreenTopInset();
   const [prefs, setPrefs] = useKeyboardPrefs();
@@ -149,11 +152,11 @@ export function KeyboardGuide({
 
           <View style={styles.steps}>
             {steps.map((step, i) => (
-              <View key={step.key} style={styles.step}>
+              <View key={step.key} style={[styles.step, { flexDirection: dir.row }]}>
                 <View style={[styles.stepNo, { backgroundColor: colors.controlTrack }]}>
                   <Text style={[styles.stepNoText, { color: colors.textPrimary }]}>{i + 1}</Text>
                 </View>
-                <Text style={[styles.stepText, { color: colors.textPrimary }]}>
+                <Text style={[styles.stepText, dir.text, { color: colors.textPrimary }]}>
                   {stepParts(step, t(step.key as TranslationKey)).map((part, j) =>
                     part.ui ? (
                       <Text key={j} style={styles.ui}>
@@ -169,7 +172,7 @@ export function KeyboardGuide({
           </View>
 
           <View style={[styles.try, { backgroundColor: colors.glassFill }]}>
-            <Text style={[styles.tryTitle, { color: colors.textPrimary }]}>
+            <Text style={[styles.tryTitle, dir.text, { color: colors.textPrimary }]}>
               {t('keyboard.guide.tryIt', { letters: letters.join(' ') })}
             </Text>
             <View style={[styles.tryLetters, sorani && styles.rtl]}>
@@ -258,7 +261,7 @@ const styles = StyleSheet.create({
   },
   platformText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   steps: { gap: spacing.md },
-  step: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },
+  step: { gap: spacing.md, alignItems: 'flex-start' },
   stepNo: { width: 28, height: 28, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   stepNoText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   stepText: { flex: 1, fontSize: typography.sizes.md, lineHeight: 22 },

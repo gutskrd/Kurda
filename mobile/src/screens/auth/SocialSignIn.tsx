@@ -11,6 +11,7 @@ import { Icon, type IconName } from '../../theme/Icon';
 import { PressableScale } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
+import { useDirection } from '../../reports/direction';
 
 /**
  * The ways in through Apple and Google, for every screen that offers them:
@@ -166,6 +167,8 @@ export function MethodButton({
   background: string;
   foreground: string;
 } & ({ icon: IconName; mark?: never } | { mark: React.JSX.Element; icon?: never })) {
+  // the mark leads the words on the side the language starts from, as a ClayButton's icon does
+  const dir = useDirection();
   return (
     <PressableScale
       onPress={() => {
@@ -173,7 +176,7 @@ export function MethodButton({
         onPress();
       }}
       accessibilityRole="button"
-      style={[styles.method, { backgroundColor: background }]}
+      style={[styles.method, { flexDirection: dir.row, backgroundColor: background }]}
     >
       {mark ?? (icon ? <Icon name={icon} size={20} color={foreground} /> : null)}
       <Text style={[styles.methodText, { color: foreground }]}>{label}</Text>
@@ -186,7 +189,6 @@ const styles = StyleSheet.create({
   // match the custom method buttons beside it.
   appleButton: { height: 50, width: '100%' },
   method: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
