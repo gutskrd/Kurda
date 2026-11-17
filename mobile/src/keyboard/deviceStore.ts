@@ -1,15 +1,10 @@
 import { Platform } from 'react-native';
 
 /**
- * A few small values kept on this device: keyboard settings, a composer
- * draft, whether the keyboard guide has been shown.
- *
- * AsyncStorage on a phone (it lives in the app's own container, so it goes
- * with an uninstall, which is right for preferences about this device), the
- * browser's localStorage on the web build. Every read and write is allowed to
- * fail — a private window, a full disk, the native module missing in a test —
- * and failing means "nothing saved", never an error on screen: these are
- * conveniences, and the app works the same without them.
+ * Small values kept on this device: keyboard settings, a composer draft, whether the keyboard guide was shown.
+ * AsyncStorage on phones (it goes with an uninstall, which suits device preferences) and localStorage on the web.
+ * Every read and write may fail (private window, full disk, missing native module in tests), and failing means
+ * "nothing saved", never an error: these are conveniences.
  */
 export interface DeviceStore {
   get(key: string): Promise<string | null>;
@@ -23,8 +18,8 @@ type AsyncStorageLike = {
   removeItem(key: string): Promise<void>;
 };
 
-// Loaded lazily, as onboarding/storage.ts does: the web bundle must never
-// evaluate the native module, whose web entry throws when it is imported.
+// Loaded lazily, as in onboarding/storage.ts: the web bundle must never evaluate the native module, whose web
+// entry throws on import.
 let native: AsyncStorageLike | null = null;
 function asyncStorage(): AsyncStorageLike {
   if (!native) {
@@ -59,14 +54,14 @@ export const deviceStore: DeviceStore = {
     try {
       await backend()?.setItem(key, value);
     } catch {
-      // a preference that could not be saved is used for this session only
+      // A preference that could not be saved is used for this session only.
     }
   },
   async remove(key) {
     try {
       await backend()?.removeItem(key);
     } catch {
-      // nothing to do: it was either never there or cannot be reached
+      // Nothing to do: it was never there or cannot be reached.
     }
   },
 };
