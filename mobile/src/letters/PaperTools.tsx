@@ -42,7 +42,8 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
       {TOOLS.map((each) => {
         const active = each === tool;
         const locked = each === 'draw' && !canDraw;
-        const tint = active ? colors.textPrimary : colors.textSecondary;
+        // the tool in use as the tab bar and the segmented control show where you are: a wash of violet, in violet ink
+        const tint = active ? colors.primary : colors.textSecondary;
         return (
           <PressableScale
             key={each}
@@ -55,7 +56,7 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
             accessibilityLabel={name[each]}
             accessibilityHint={locked ? t('letters.paper.drawLocked') : undefined}
             testID={`letter-tool-${each}`}
-            style={[styles.barItem, active ? { backgroundColor: colors.selectedFill } : null, locked ? styles.locked : null]}
+            style={[styles.barItem, active ? { backgroundColor: `${colors.primary}${CHOSEN_WASH}` } : null, locked ? styles.locked : null]}
           >
             {each === 'draw' ? locked ? <Icon name="lock" size={17} color={tint} /> : <Glyph kind="draw" color={tint} /> : <Icon name={TOOL_ICON[each]} size={17} color={tint} />}
             <Text maxFontSizeMultiplier={fontScaleCap.fixedBox} numberOfLines={1} style={[styles.barText, { color: tint }, active ? styles.barTextOn : null]}>
@@ -69,6 +70,9 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
 }
 
 const TOOL_ICON: Record<Exclude<PaperTool, 'draw'>, IconName> = { write: 'pencil', text: 'text-t', paper: 'note' };
+
+/** How much of the violet the chosen tool's ground is, as the last two digits of its colour: the segmented control's own wash (theme/glass). */
+const CHOSEN_WASH = '1F';
 
 /**
  * A row of choices that scrolls sideways when it is wider than the phone, as
@@ -107,7 +111,7 @@ export function SwatchRow({ label, shown = false, children, testID }: { label: s
   );
 }
 
-/** One choice in a row: a fingertip-wide round, ringed in the ink colour when it is the one chosen. */
+/** One choice in a row: a fingertip-wide round, ringed in violet when it is the one chosen, as whatever is chosen is. */
 export function Choice({
   label,
   checked,
@@ -135,7 +139,7 @@ export function Choice({
       accessibilityState={{ checked, disabled }}
       accessibilityLabel={label}
       testID={testID}
-      style={[styles.choice, { borderColor: checked ? colors.textPrimary : 'transparent' }, disabled ? styles.locked : null]}
+      style={[styles.choice, { borderColor: checked ? colors.primary : 'transparent' }, disabled ? styles.locked : null]}
     >
       {children}
     </PressableScale>
