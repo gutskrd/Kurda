@@ -6,16 +6,10 @@ import type { AgeStopKind } from '../../auth/birthMonth';
 import { AuthScreenShell } from './AuthForm';
 
 /**
- * What somebody under 13 sees instead of an account.
- *
- * Polite and plain, and never a reason to try again: it says who Hevalo is for,
- * that nothing was kept (or, for an account that existed, that it has been
- * closed), and that they are welcome back at 13. There is no form underneath
- * and no button back to one — handing back an empty form would only invite a
- * different year. It lasts for as long as the app is open.
- *
- * The browser's version also points at the alphabet page, which needs no
- * account; the phone has no page like that, so it does not promise one.
+ * What someone under 13 sees instead of an account: who Hevalo is for, that nothing was kept (or that the account
+ * was closed), and that they are welcome back at 13. There is deliberately no form or way back to one, which would
+ * only invite a different year. It lasts while the app is open. Unlike the website it does not mention the
+ * alphabet page, which the phone does not have.
  */
 export function AgeStopScreen({ kind }: { kind: AgeStopKind }) {
   const { colors } = useTheme();

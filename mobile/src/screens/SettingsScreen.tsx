@@ -20,38 +20,28 @@ import { useKeyboardPrefs } from '../keyboard/prefs';
 import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
 import { SearchField } from '../theme/SearchField';
 import { useConfirmDelete } from '../auth/useConfirmDelete';
-import { LEGAL_URLS, SUPPORT_EMAIL, contactSupport, openLegal } from '../legal/links';
+import { SUPPORT_EMAIL, contactSupport, openLegal } from '../legal/links';
 import { useMyAccount } from '../settings/account';
 import { useSettingsAttention } from '../settings/attention';
 import type { SettingsPageKey } from '../settings/SettingsPageScreen';
 import { SettingsNote, SettingsPage, SettingsRow, SettingsSection, useOnOff } from '../settings/list';
 import { VersionLine } from '../settings/VersionLine';
 
-/** The website's copyright page: a notice, counter-notices and the repeat-infringer policy. */
-export const COPYRIGHT_URL = LEGAL_URLS.copyright;
-
-/** One row of the list, and the words it can be found by. */
+/** One row of the list, and the words search finds it by. */
 interface Entry {
   key: string;
-  /** its name and value, and the names of what is on the page behind it */
+  /** Its name and value, and the names of what is on the page behind it. */
   terms: Array<string | undefined>;
   row: ReactNode;
 }
 
 /**
- * Settings: one list, in a few short sections, each row saying what it is set
- * to now.
+ * Settings: one list in short sections, each row showing its current value. Ordered by how often each is wanted:
+ * account, app behaviour, privacy, help and legal, then sign-out and deletion apart at the end so nobody reaches
+ * them by accident. A choice with several answers gets its own page. The version and build sit at the foot,
+ * since support asks for them first.
  *
- * The order is how often each is wanted and how much it matters: the account
- * first, where people look for it; then how the app behaves; then who can see
- * you; then help and the fine print; and at the very end, apart from the rest,
- * the rows that sign you out or delete the account, so nobody reaches them
- * while looking for something else. Every choice with more than one answer is
- * a page of its own, where each answer says what it means. Under it all, in
- * one quiet line, the version and build, which is what support asks first.
- *
- * The search at the top finds a row by its name, its value, or the name of
- * anything on the page behind it ("accent" finds Keyboard and accents).
+ * Search matches a row's name, value, or anything on the page behind it ("accent" finds Keyboard and accents).
  */
 export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client, logout, isGuest } = useAuth();
@@ -67,16 +57,9 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const [query, setQuery] = useState('');
 
   /**
-   * Sign out on every device, including this one.
-   *
-   * The server bumps the token version, which invalidates every refresh
-   * token there is — so this device's session dies with the rest. Signing out
-   * locally afterwards is not tidying up; it is the only way the app and the
-   * server still agree about what just happened.
-   *
-   * And only afterwards. When the server did not take it, nothing was signed
-   * out anywhere, and signing this phone out regardless would leave the person
-   * believing the other devices were out too.
+   * Signs out every device, this one included. The server bumps the token version, which invalidates every refresh
+   * token, so this device signs out locally too, but only after the server agreed: otherwise the person would
+   * believe the other devices were signed out when none were.
    */
   const endEverySession = async () => {
     const res = await client.delete('/me/sessions');
@@ -84,7 +67,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
       await logout();
       return;
     }
-    // Hevalo offline for a while is said by the screen over the app, not by an alert on top of it
+    // Maintenance is shown by the screen over the app, not by an alert.
     if (isMaintenance(res.error)) return;
     haptic('error');
     Alert.alert(t('settings.sessions.signOutFailed'), describeError(res.error, t));
@@ -100,12 +83,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
     ]);
   };
 
-  /**
-   * Ask for a copy of everything.
-   *
-   * The answer is 202 and an email later, not a file now, so the only honest
-   * acknowledgement is that it was asked for.
-   */
+  /** Requests a data export. The server answers 202 and emails it later, so the app only confirms the request. */
   const [exporting, setExporting] = useState(false);
   const requestExport = () => {
     if (exporting) return;
@@ -118,26 +96,20 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   };
 
   /*
-   * Apple-required in-app account deletion (KUR-275). The server keeps the
-   * account for a grace period and signing back in cancels it, so we warn,
-   * sign out, and then say it again over the welcome screen: leaving without
-   * a word read as the app having crashed, and it is the one moment the way
-   * back has to be clear (auth/useConfirmDelete, shared with the screens a
-   * new account waits at).
+   * In-app account deletion, which Apple requires. The server keeps the account for a grace period and signing back
+   * in cancels it, so the app warns, signs out, and repeats how to undo it over the welcome screen
+   * (auth/useConfirmDelete, shared with the screens a new account waits at).
    */
   const confirmDelete = useConfirmDelete();
 
   /*
-   * A guest has no email and no password, so logging out is the end of the
-   * account and of everything learned on it. It asks first, and the first
-   * answer it offers is the one that keeps the progress: making the account.
+   * Logging a guest out loses the account and its progress, since a guest has no email or password. It asks first,
+   * and the first answer offered is the one that keeps the progress: creating an account.
    */
   const [guestLeaving, setGuestLeaving] = useState(false);
   /*
-   * An account is asked too, in the same sheet: signing out costs it nothing
-   * that cannot be got back, but the row sits between "Sign out everywhere"
-   * and "Delete account", and a thumb that lands on it by mistake used to be
-   * out of the app, and on the sign-in screen, before it had lifted.
+   * An account is asked too, in the same sheet: the row sits between "Sign out everywhere" and "Delete account", so
+   * a mistaken tap must not sign out immediately.
    */
   const [leaving, setLeaving] = useState(false);
   const askedLogout = () => {
@@ -155,11 +127,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const visibility = account.visibility ? t(VISIBILITY_LABEL[account.visibility]) : undefined;
   const username = account.username ? `@${account.username}` : undefined;
 
-  /*
-   * A guest's account section is one row: the way to an account. The name,
-   * the password and the devices are an account's to change, and a guest has
-   * no password and no other devices to see.
-   */
+  // A guest's account section is one row, the way to an account: there is no name, password or device list to change.
   const accountEntries: Entry[] = isGuest
     ? [
         {
@@ -211,7 +179,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
             <SettingsRow
               icon="bell"
               title={t('notifications.title')}
-              // the phone is not letting them through: the one thing in this section to act on
+              // Notifications blocked by the phone is the one thing in this section to act on.
               value={attention.pushOff ? t('settings.off') : undefined}
               attention={attention.pushOff}
               onPress={() => navigation.navigate('Notifications')}
@@ -255,13 +223,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           row: <SettingsRow icon="eye" title={t('settings.privacy.title')} value={visibility} onPress={page('visibility')} />,
         },
         {
-          // the only way back from a block: the person is a 404 to you afterwards, so no other screen can offer to undo it
+          // The only way to undo a block: a blocked person is a 404 to you, so no other screen can offer it.
           key: 'blocked',
           terms: [t('settings.blocked.title')],
           row: <SettingsRow icon="block" title={t('settings.blocked.title')} onPress={() => navigation.navigate('BlockedUsers')} />,
         },
         {
-          // what you reported and what came of it; what is limited on your account and why
+          // Your reports and their outcomes, and any limits on your account and why.
           key: 'reports',
           terms: [t('reports.title')],
           row: <SettingsRow icon="flag" title={t('reports.title')} onPress={() => navigation.navigate('MyReports')} />,
@@ -273,7 +241,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
             <SettingsRow
               icon={limited ? 'alert' : 'shield'}
               title={t('standing.title')}
-              // said in words, not only in gold: what is wrong, before it is opened
+              // Said in words, not only in colour, before it is opened.
               subtitle={limited ? t(`standing.status.${attention.standing!}` as const) : undefined}
               attention={limited}
               onPress={() => navigation.navigate('AccountStanding')}
@@ -283,28 +251,24 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
       ],
     },
     {
-      /*
-       * Somewhere to ask, and then what the app is and answers to. They were
-       * one list of ten rows, where the way to reach a person was the third
-       * of ten under a heading that did not say help was in it.
-       */
+      // Help first, then what the app is and answers to.
       key: 'help',
       title: t('settings.group.help'),
       entries: [
         {
-          // tell us what you think, and (once the app is in the stores) rate it there
+          // Feedback, and a store rating once the app is listed.
           key: 'feedback',
           terms: [t('appFeedback.sendRow'), t('appFeedback.rateRow')],
           row: <FeedbackSettingsRows />,
         },
         {
-          // the answers first: most questions have been asked before, and the answer is quicker than an email
+          // The FAQ first: most questions have been asked before.
           key: 'faq',
           terms: [t('settings.faq')],
           row: <SettingsRow icon="question" title={t('settings.faq')} opens={false} onPress={() => openLegal('faq')} />,
         },
         {
-          // the mail app, or the address copied when there is none to open
+          // Opens the mail app, or copies the address when there is none.
           key: 'support',
           terms: [t('settings.support'), SUPPORT_EMAIL],
           row: <SettingsRow icon="mail" title={t('settings.support')} subtitle={SUPPORT_EMAIL} opens={false} onPress={() => void contactSupport(t)} />,
@@ -316,7 +280,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
       title: t('settings.group.about'),
       entries: [
         {
-          // the website's pages the app answers to, each opened on hevalo.app so there is one copy of each
+          // Each legal and about page opens on hevalo.app, so there is one copy of each.
           key: 'teaching',
           terms: [t('settings.teaching')],
           row: <SettingsRow icon="book" title={t('settings.teaching')} opens={false} onPress={() => openLegal('teaching')} />,
@@ -355,8 +319,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           row: <SettingsRow icon="heart" title={t('settings.credits.title')} onPress={page('credits')} />,
         },
         {
-          // the business's registration, at the foot of the legal rows the way an imprint closes a page;
-          // the name, address and the rest are on the About page the row above opens
+          // The business registration, shown as text at the foot of the legal rows; the full imprint is on the About page.
           key: 'kvk',
           terms: [t('settings.kvk'), PROVIDER.kvk],
           row: <SettingsRow icon="place-work" title={t('settings.kvk')} value={PROVIDER.kvk} />,
@@ -364,7 +327,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
       ],
     },
     {
-      // apart from the rest, at the end: nobody looking for something else reaches these by accident
+      // Kept apart at the end so nobody looking for something else reaches these by accident.
       key: 'leave',
       entries: [
         {
@@ -396,21 +359,17 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           terms: [t('settings.delete.title')],
           row: <SettingsRow icon="trash" title={t('settings.delete.title')} destructive opens={false} onPress={confirmDelete} />,
         },
-        // a guest has no other devices and no data to ask for, but can always leave, and take the account with them
+        // A guest has no other devices and no data to export, but can always sign out or delete the account.
       ].filter((entry) => !isGuest || entry.key === 'logout' || entry.key === 'delete'),
     },
   ];
 
-  /*
-   * A guest is in no league and has no profile to show or hide, no blocks,
-   * no reports and no standing: the league switch and the privacy section
-   * would each open on the server refusing them.
-   */
+  // A guest has no league, profile visibility, blocks, reports or standing, so those rows would only meet refusals.
   const offered = isGuest
     ? sections.filter((s) => s.key !== 'privacy').map((s) => ({ ...s, entries: s.entries.filter((e) => e.key !== 'leagues') }))
     : sections;
 
-  // every word typed, found anywhere in a row's words; accents set aside, so "e" finds "ê"
+  // Every typed word must appear somewhere in the row's terms; accents are folded, so "e" finds "ê".
   const words = foldForSearch(query).split(/\s+/).filter(Boolean);
   const finds = (e: Entry): boolean => {
     const said = foldForSearch(e.terms.filter(Boolean).join(' '));

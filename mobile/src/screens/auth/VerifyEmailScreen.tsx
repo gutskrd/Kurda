@@ -19,35 +19,17 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 
 const CODE_LENGTH = 6;
-/** Server allows 4 resends/hour per user — keep taps well under that (KUR-014). */
+/** The server allows 4 resends an hour per user; this keeps taps well under that. */
 const RESEND_COOLDOWN_SEC = 45;
 
 /**
- * Blocks the app until the signed-in user proves they own their email by
- * entering the 6-digit code we emailed at signup (KUR-014). On success the
- * auth context flips `emailVerified`, which makes the navigation root fall
- * through to the signed-in experience.
+ * Blocks the app until the user enters the 6-digit code emailed at sign-up; on success `emailVerified` flips and
+ * the navigation root moves on. Asked as a StepFlow step like the rest of sign-up. The code sends as the last digit
+ * lands, and a wrong one shakes and shows its error.
  *
- * It is the last question of signing up, so it is asked the way the others
- * were (auth/guide/StepFlow): Hevalo says what has happened, the question is
- * the heading, and there is one thing to do under it. It used to be a card of
- * its own, a glyph over a grey field and five links in a column, and read as
- * a different app from the questions that led to it.
- *
- * The code is typed a digit to a box and sent as the last one lands; the
- * button is there for whoever would rather press it. A wrong code shakes, is
- * said under the boxes, and gets Hevalo's tilt of the head.
- *
- * The address the code went to is shown as it was typed, because a typo is
- * only ever caught by seeing it back, and it is a button: tapping it turns
- * the question into "what's your email?", the code goes to the new address,
- * and the way back is the chevron. The account, its name and its password
- * stay. Starting over used to be the only way, and found the username taken
- * by the sign-up just left behind.
- *
- * Under the boxes, quietly: the way to another code, how long everything
- * lasts, and the two ways out. Deleting is offered here because the account
- * exists already, code or no code.
+ * The address is shown as typed so a typo can be caught, and tapping it changes the address while keeping the
+ * account. Below sit resend, how long things last, and two ways out; deletion is offered because the account
+ * already exists.
  */
 export function VerifyEmailScreen(): React.JSX.Element {
   const { user, verifyEmailCode, resendVerificationCode, changePendingEmail, logout } = useAuth();
@@ -56,7 +38,7 @@ export function VerifyEmailScreen(): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
   const [code, setCode] = useState('');
-  // the code as it stands this instant: the last digit sends it before the state has been drawn
+  // The code as it stands right now: the last digit sends it before state has re-rendered.
   const typed = useRef('');
   const [changing, setChanging] = useState(false);
   const [address, setAddress] = useState('');
@@ -99,7 +81,7 @@ export function VerifyEmailScreen(): React.JSX.Element {
       setNotice(null);
       setResendError(null);
       const err = await verifyEmailCode(typed.current);
-      // on success the gate lifts by itself (emailVerified flips); a code that was not right is typed again from the first box
+      // On success the gate lifts by itself; a wrong code is retyped from the first box.
       if (err) setTyped('');
       return err ? { ok: false, error: err } : { ok: true };
     },
@@ -119,7 +101,7 @@ export function VerifyEmailScreen(): React.JSX.Element {
             style={[styles.address, { backgroundColor: colors.controlTrack, flexDirection: dir.row, alignSelf: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' }]}
             testID="change-address"
           >
-            {/* whole, on a second line if need be: the end of the address is what somebody checks before "Wrong address?" */}
+            {/* Wraps rather than truncates, since the end of the address is what people check. */}
             <Text style={[styles.addressText, { color: colors.textPrimary }]} numberOfLines={2}>
               {user.email}
             </Text>
@@ -153,14 +135,9 @@ export function VerifyEmailScreen(): React.JSX.Element {
           </Text>
         ) : null}
         {/*
-          One sentence, the way it is said: "Didn't get it? Check your spam
-          folder, then send a new code". The whole sentence is the button, a
-          fingertip tall at the least: the bold words alone were a target
-          twenty-two points high in the middle of a line.
-
-          It keeps its press while it waits and is only disabled (onResend
-          waits too): a press that came and went would take its reach with
-          it, and a reach that returns later is cut off at the footer's edge.
+          The whole sentence is the resend button, at least a fingertip tall; the bold words alone were a 22-point target.
+          It stays pressed while waiting and is only disabled, since a lost press would take its reach with it and a reach
+          returning later is cut off at the footer's edge.
         */}
         <Pressable
           onPress={() => void onResend()}
@@ -179,11 +156,11 @@ export function VerifyEmailScreen(): React.JSX.Element {
             .
           </Text>
         </Pressable>
-        {/* how long each thing lasts, said once and small */}
+        {/* How long each thing lasts, once and small. */}
         <Text style={[styles.small, dir.text, { color: colors.textSecondary }]}>
           {t('auth.verify.expiresIn15')} {t('auth.verify.keptFor', { days: UNCONFIRMED_SIGNUP_DAYS })}
         </Text>
-        {/* the two ways out, side by side and quiet: this is not what the screen is for */}
+        {/* The two ways out, side by side and quiet. */}
         <WaysOut
           ways={[
             { label: t('auth.verify.startOver'), onPress: () => void logout() },
@@ -200,7 +177,7 @@ export function VerifyEmailScreen(): React.JSX.Element {
     says: t('guide.verify.changeSays'),
     action: t('auth.verify.sendThere'),
     check: () => {
-      // checked as sign-up checks an address, so a second typo is caught before another code is sent
+      // Checked as sign-up checks an address, so a second typo is caught before another code is sent.
       const why = validateEmail(address);
       return why ? t(FIELD_ERROR_COPY[why], FIELD_ERROR_VARS) : null;
     },
@@ -226,7 +203,7 @@ export function VerifyEmailScreen(): React.JSX.Element {
     <StepFlow
       steps={[changing ? addressStep : codeStep]}
       progress={false}
-      // the address was put right: back to the code, which is now on its way there
+      // The address is fixed: back to the code, now on its way there.
       onFinish={() => {
         if (!changing) return;
         setChanging(false);

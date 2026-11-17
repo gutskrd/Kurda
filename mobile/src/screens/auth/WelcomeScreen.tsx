@@ -17,48 +17,30 @@ import { AppleButton, GoogleButton, MethodButton, useSocialSignIn } from './Soci
 import { useI18n } from '../../i18n/I18nContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'> & {
-  /** re-open the intro (language / welcome / notifications slides) — from the app root */
+  /** Reopens the intro slides, from the app root. */
   onBack?: () => void;
 };
 
 /**
- * The sign-in method choice (KUR-271): Apple / Google / email. The auth stack's
- * initial route, so Login/Register can always go back here; its own back
- * re-opens the intro slides.
- *
- * Sign in with Apple (KUR-276) and Google (KUR-018) are both wired end-to-end:
- * the native flow returns an identity token that the backend (POST /auth/oauth)
- * verifies. Apple's own button is shown only where the OS supports it (iOS 13+),
- * per App Store rules. Google is enabled once its client IDs are configured
- * (EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID + backend GOOGLE_CLIENT_IDS); until then it
- * falls back to a "coming soon" notice rather than a broken flow. See
- * docs/auth/google-signin.md.
- *
- * Hevalo greets from the window over the choice, and the quiet way in under
- * it — try Hevalo first, as a guest — opens his two-step introduction
- * (GuestStartFlow) in this screen's place, with its own way back here.
+ * The sign-in choice: Apple, Google or email. The auth stack's first route, so Login and Register can always go back
+ * here. Apple and Google return an identity token that POST /auth/oauth verifies; Apple's button shows only where
+ * the OS supports it (iOS 13+), and Google's only in builds with its client ids (docs/auth/google-signin.md). Trying
+ * as a guest opens GuestStartFlow in this screen's place.
  */
 export function WelcomeScreen({ navigation, onBack }: Props) {
   const { colors } = useTheme();
   const { baseUrl } = useAuth();
-  // Apple's button where the phone has it, and both sheets with their answers (SocialSignIn)
+  // Apple's button where available, and both sign-in sheets (SocialSignIn).
   const { appleAvailable, onApple, onGoogle } = useSocialSignIn();
   const { t } = useI18n();
   const [conn, setConn] = useState<'checking' | 'ok' | 'fail'>('checking');
-  // the guest introduction, in place of the choice, until it is left or the session starts
+  // The guest introduction replaces the choice until it is left or the session starts.
   const [guestFlow, setGuestFlow] = useState(false);
-  // the ways in rise one after another under the head the shell brings in (AUTH_HEAD_ROWS)
+  // The options rise in one by one after the head (AUTH_HEAD_ROWS).
   const entering = useListEntrance(true);
   const row = (i: number) => entering(AUTH_HEAD_ROWS + i);
 
-  // Connection diagnostic (KUR-008): show which API the build actually points at
-  // and whether the device can reach it, so a "nothing happens" sign-in has an
-  // obvious cause (wrong URL baked in / unreachable) instead of a silent hang.
-  //
-  // Development only, like the readout it feeds. A release build showed nobody
-  // the answer and still asked the question on every launch — a health probe
-  // against the API from every phone that opened the app, for a line that was
-  // not rendered.
+  // Development only: which API the build points at and whether it answers, so a silent sign-in has an obvious cause.
   useEffect(() => {
     if (!__DEV__) return;
     let active = true;
@@ -90,11 +72,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
             <AppleButton onPress={() => void onApple()} />
           </Rise>
         ) : null}
-        {/*
-          Only in a build that has Google's client ids. Without them the button
-          led nowhere ("coming soon"), and a sign-in button that leads nowhere
-          is an unfinished app to anybody reviewing it.
-        */}
+        {/* Only in builds with Google client ids: a button that leads nowhere reads as an unfinished app. */}
         {isGoogleConfigured ? (
           <Rise delay={row(1)}>
             <GoogleButton onPress={() => void onGoogle()} />
@@ -117,32 +95,19 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
         </Pressable>
       </Rise>
 
-      {/*
-        The quiet way in: try the lessons first, as a guest, and decide about
-        an account later. Quieter than the sign-in link above it on purpose —
-        it is the way for somebody not ready to choose, not the way in. It
-        opens Hevalo's introduction, which starts the session at its end.
-      */}
+      {/* Trying as a guest, deliberately quieter than the sign-in link: it is for someone not ready to choose. */}
       <Rise delay={row(4)}>
         <Pressable onPress={() => setGuestFlow(true)} style={({ pressed }) => [styles.link, pressed && heldDim]} accessibilityRole="button" testID="welcome-guest">
           <Text style={[styles.linkText, { color: colors.textSecondary }]}>{t('welcome.guest')}</Text>
         </Pressable>
       </Rise>
 
-      {/* the rules and the privacy policy, each a link: Apple, Google and a guest session make an account too */}
+      {/* Terms and privacy links: Apple, Google and guest sessions create accounts too. */}
       <Rise delay={row(5)}>
         <AgreeLine style={styles.agree} />
       </Rise>
 
-      {/*
-        Which API this build talks to, and whether it answers.
-
-        Development only. It is genuinely useful while pointing a simulator at
-        localhost or a staging host — and it has no business on the first screen
-        of a release build, where it is a debug readout under the sign-in
-        buttons that names the backend to anyone who opens the app. Nobody needs
-        to be told that, and nobody outside development was ever meant to see it.
-      */}
+      {/* Development only: which API this build talks to, and whether it answers. Release builds must not show it. */}
       {__DEV__ ? (
         <View style={styles.diag}>
           <Text style={[styles.diagText, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -165,7 +130,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
 const styles = StyleSheet.create({
   methods: { gap: spacing.md },
   link: { marginTop: spacing.sm, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
-  // centred on every line: "Hevalo erst ausprobieren, ohne Konto" takes two at 320, and its second sat against the edge
+  // Centred on every line: the German label wraps at 320 points.
   linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, textAlign: 'center' },
   agree: { marginTop: spacing.lg, paddingHorizontal: spacing.md },
   diag: { marginTop: spacing.xl, alignItems: 'center', gap: 2 },

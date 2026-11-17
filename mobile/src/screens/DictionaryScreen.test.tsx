@@ -33,7 +33,7 @@ const word = (entryId: string, headword: string, definitionEn: string): SavedWor
 });
 const SAVED = [word('e1', 'mal', 'house'), word('e2', 'av', 'water'), word('e3', 'nan', 'bread')];
 
-// the saved words as the list shows them, top to bottom
+// The saved words as listed, top to bottom.
 const headwords = () => screen.getAllByRole('button', { name: /^Remove / }).map((b) => b.getAttribute('aria-label')?.replace('Remove ', ''));
 
 describe('the saved words', () => {
@@ -47,11 +47,7 @@ describe('the saved words', () => {
     expect(headwords()).toEqual(['mal', 'nan']);
   });
 
-  /*
-   * A word that vanished from the list while the server kept it would come
-   * back the next time the screen opened: it goes back in its place now, and
-   * why is said, as the entry’s own bookmark does.
-   */
+  // Otherwise the word would vanish and come back on the next visit, since the server kept it.
   it('puts the word back in its place and says why when the server did not let it go', async () => {
     const offline: ApiResult<never> = { ok: false, error: { kind: 'network', message: 'Network request failed' } };
     testAuth.client = fakeClient({ 'GET /me/saved-words': ok({ words: SAVED }), 'DELETE /dictionary/entries/e2/save': offline });

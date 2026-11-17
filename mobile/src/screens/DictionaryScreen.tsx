@@ -24,20 +24,14 @@ import { EmptyState } from '../theme/EmptyState';
 import { SearchField } from '../theme/SearchField';
 
 /**
- * Dictionary tab (KUR-045): search-as-you-type with debounce, recent
- * searches, an entry detail page (senses/examples/audio), and a
- * closest-matches state when nothing matches exactly.
+ * The dictionary: search as you type, recent searches, saved words, entry details, and closest matches when nothing
+ * matches exactly. A pushed screen, so `onBack` leaves it.
  */
-/** `onBack` is how you leave: this is a pushed screen, not a tab, since #809. */
 export function DictionaryScreen({ onBack }: { onBack: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  /*
-   * Right to left, the rows start on the right; a headword and its meaning
-   * are read in their own direction (Latin Kurmancî and English stay left to
-   * right on a Soranî page), lined up with the page.
-   */
+  // Rows mirror right to left, while headwords and meanings keep their own direction.
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
   const [query, setQuery] = useState('');
@@ -48,7 +42,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
   const [recents, setRecents] = useState<string[]>([]);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const [saved, setSaved] = useState<SavedWord[]>([]);
-  // the saved words' place is held until the first answer, so the list does not drop in under the field
+  // Saved words hold their place until the first answer, so the list does not drop in under the field.
   const [savedSettled, setSavedSettled] = useState(false);
   const debounced = useDebouncedValue(query, 250);
 
@@ -93,7 +87,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
         entryId={openEntry}
         onBack={() => {
           setOpenEntry(null);
-          loadSaved(); // bookmark may have changed
+          loadSaved(); // A bookmark may have changed.
         }}
       />
     );
@@ -106,7 +100,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
     setSaved((s) => s.filter((w) => w.entryId !== entryId));
     void client.delete(`/dictionary/entries/${entryId}/save`).then((res) => {
       if (res.ok) return;
-      // it did not take: the word goes back in its place and why is said, as the entry's own bookmark does
+      // The removal failed: put the word back in its place and say why, as the entry's own bookmark does.
       setSaved((s) => (s.some((w) => w.entryId === entryId) ? s : [...s.slice(0, at), word, ...s.slice(at)]));
       if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
     });
@@ -114,7 +108,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
 
   const results = result?.results ?? [];
   const isEmpty = query.trim().length === 0;
-  // a saved word's ✕ is at the row's end: on the right, or on the left where the row is mirrored
+  // A saved word's ✕ is at the row's end, which is on the left when the row is mirrored.
   const towardWord = dir.row === 'row-reverse' ? 'right' : 'left';
   const removeReach = reachSlop(MIN_TOUCH_TARGET, MIN_TOUCH_TARGET, { edge: SAVED_ROW_REACH, limit: { [towardWord]: 0 } });
   const showRecents = isEmpty && recents.length > 0;
@@ -152,7 +146,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
 
         {isEmpty && saved.length > 0 ? (
           <View style={styles.recents}>
-            {/* the heading's mark in the heading's own grey: saving a word is not earning it, which is what gold is for */}
+            {/* The heading's icon in grey: gold is for what is earned, and saving a word is not. */}
             <View style={[styles.savedHeading, { flexDirection: dir.row }]}>
               <Icon name="bookmark" size={13} color={colors.textSecondary} />
               <Text style={[styles.recentsTitle, dir.text, { color: colors.textSecondary }]}>{t('saved.title')}</Text>
@@ -198,7 +192,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
         <FlatList
           data={results}
           keyExtractor={(h) => h.entryId}
-          // the gutter inside the list, so a held row's highlight can reach past its edges
+          // The gutter sits inside the list so a pressed row's highlight can reach past it.
           style={styles.hits}
           contentContainerStyle={[styles.hitsBody, { paddingBottom: tabBarInset }]}
           renderItem={({ item }) => (
@@ -218,7 +212,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
   );
 }
 
-/** The saved words in grey: the heading, then each word, its meaning and its ✕. */
+/** The saved-words placeholder: heading, then rows of word, meaning and ✕. */
 function SavedSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
@@ -240,7 +234,7 @@ function SavedSkeleton(): React.JSX.Element {
   );
 }
 
-/** Results in grey while a search is out: the word and its first meaning, at the rows' own spacing. */
+/** The results placeholder while searching: word and first meaning, at the rows' spacing. */
 function HitsSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   return (
@@ -256,29 +250,26 @@ function HitsSkeleton(): React.JSX.Element {
 }
 
 /*
- * A saved word and its ✕ share their row's height: both reach up and down
- * through the row's padding and half the gap to the next row, so a tap
- * along the row lands on one of the two and never on the row beside it. The
- * word reaches as far to either side, and stops short of the ✕; the ✕
- * reaches nothing toward the word, because a tap that falls between them
- * must not remove a word somebody meant to open.
+ * A saved word and its ✕ each reach through the row's padding and half the gap to the next row, so a tap along the
+ * row never lands on a neighbour. The ✕ reaches nothing toward the word, so a tap between them opens the word rather
+ * than removing it.
  */
 const SAVED_ROW_REACH = spacing.sm + spacing.xs / 2;
 const SAVED_WORD_REACH = reachSlop(null, null, { edge: SAVED_ROW_REACH });
 
 const styles = StyleSheet.create({
-  // the app's own gutter at the sides, so the field and the words line up with the way back above them
+  // The app's gutter, so the field lines up with the back button above.
   screen: { flex: 1, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, gap: spacing.sm },
   banner: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   recents: { gap: spacing.xs },
   savedHeading: { alignItems: 'center', gap: spacing.xs },
   recentsTitle: { ...sectionLabel },
-  // a row to tap: a fingertip tall, the word in the middle of it
+  // A fingertip tall, the word centred.
   recentRow: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingVertical: spacing.sm },
   recentText: { fontSize: typography.sizes.md },
   savedRow: { alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
   savedMain: { flex: 1 },
-  // a fingertip's worth around the small cross, so it is not missed for the row beside it
+  // A full touch target round the small cross.
   removeButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   hits: { marginHorizontal: -spacing.sm },
   hitsBody: { paddingHorizontal: spacing.sm },

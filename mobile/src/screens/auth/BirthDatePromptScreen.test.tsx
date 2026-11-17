@@ -16,15 +16,9 @@ import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { BirthDatePromptScreen } from './BirthDatePromptScreen';
 
-/*
- * The birth month an account came in without, asked the way sign-up asks it:
- * how old on the ruler, then which month; what the two come to shown back
- * before it is saved once; and the server's answers, each where it belongs.
- */
-
 patchReactNativeWeb({ reduceMotion: true });
 
-/** What the screen asks of the session, as the stand-in session answers it. */
+/** What the screen asks of the session, as the test session answers it. */
 type Session = typeof testAuth & {
   refreshUser: () => Promise<void>;
   stopForAge: (kind: 'refused' | 'closed') => Promise<void>;
@@ -43,7 +37,7 @@ function held(answer: Parameters<typeof fakeClient>[0] = { 'POST /me/birth-date'
   return session;
 }
 
-/** a step on its way out has gone */
+/** Waits for the outgoing step to leave. */
 async function turned(): Promise<void> {
   await waitFor(() => expect(document.querySelector('[data-testid^="slide-out"]')).toBeNull());
 }
@@ -62,7 +56,7 @@ function chooseAge(age: number): void {
   });
 }
 
-/** Answers both questions as somebody `age` years old born in March would, up to Save. */
+/** Answers both questions as someone `age` years old born in March, up to Save. */
 async function answer(age: number): Promise<void> {
   chooseAge(age);
   await press('Continue');
@@ -80,7 +74,7 @@ describe('the birth month an account came in without', () => {
     renderWithProviders(<BirthDatePromptScreen />);
     expect(screen.getByRole('heading', { name: 'How old are you?' })).toBeTruthy();
     expect(screen.getByText('We ask everyone. Only the month and year are kept, promise.')).toBeTruthy();
-    // nothing is answered by tapping on
+    // Tapping on answers nothing.
     await press('Continue');
     expect(screen.getByText('Pick your age on the ruler to go on.')).toBeTruthy();
     expect(session.client.calls).toEqual([]);
@@ -91,12 +85,12 @@ describe('the birth month an account came in without', () => {
     renderWithProviders(<BirthDatePromptScreen />);
     await answer(34);
     const year = birthYearFrom(34, 3);
-    // read over once: it cannot be changed later
+    // Shown back once, since it cannot be changed later.
     expect(screen.getByTestId('birth-summary').textContent).toContain(`March ${year}`);
     expect(screen.getByText('Check it before you save: it can’t be changed later.')).toBeTruthy();
     await press('Save');
     await waitFor(() => expect(session.client.calls).toEqual([{ method: 'POST', path: '/me/birth-date', body: { birthYear: year, birthMonth: 3 } }]));
-    // the gate lifts once the account no longer says a birth month is needed
+    // The gate lifts once the account no longer needs a birth month.
     await waitFor(() => expect(session.refreshUser).toHaveBeenCalledTimes(1));
   });
 

@@ -48,22 +48,16 @@ import { Fire } from '../theme/Fire';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
 
-/** How big the face is: the largest thing on the screen, in the middle, over the numbers. */
+/** The avatar's size: the largest thing on the screen. */
 const AVATAR = 96;
-/** The face with a season frame round it: the frame's ring sits outside the face, which stays the same size. */
+/** The avatar with a season frame: the ring sits outside the avatar, which keeps its size. */
 const FRAMED = Math.round(AVATAR / SEASON_FRAME_INNER);
-/** The tinted stage the face springs in onto: room round the frame for its two soft discs. */
+/** The tinted stage the avatar springs onto, with room round the frame for its two soft discs. */
 const STAGE = FRAMED + 36;
-/** How tall the band behind the face is: what you wear as a background, or your own horizon until you wear one. */
+/** The banner behind the avatar: the worn background, or the learner's own horizon until they wear one. */
 const BANNER = 124;
 
-/**
- * The parts of `/me` a profile puts on screen.
- *
- * `ProfileCosmetics` is the half the browser draws and this one draws too:
- * the background, the worn icon, premium, the country, the favourites. Both
- * apps declare it from the same endpoint, so it is declared the same way.
- */
+/** The parts of `/me` a profile shows. `ProfileCosmetics` is declared the same way as on the website, from the same endpoint. */
 interface Me extends ProfileCosmetics {
   id: string;
   username: string;
@@ -72,20 +66,14 @@ interface Me extends ProfileCosmetics {
   xp: number;
   streak: Streak;
   profilePhotoUrl: string | null;
-  /** when the account was made; the year is shown under the handle */
+  /** When the account was made; the year shows under the handle. */
   createdAt?: string | null;
 }
 
 /**
- * The Profile tab: your profile, or, as a guest, the offer of one.
- *
- * A guest has a generated name and nothing of their own to show — no face, no
- * bio, no friends, no profile anyone else can open — and most of what the
- * account's profile loads is refused to them. So the tab is not that profile
- * with its numbers greyed out; it is a card that says they are learning as a
- * guest, what an account keeps for them, and the two ways to one. The menu
- * stays, because the places behind it that are open to anyone (the badges, the
- * library, settings) are reached through it.
+ * The Profile tab: your profile, or for a guest, an offer of one. A guest has nothing of their own to show and most
+ * profile requests are refused to them, so they get a card explaining what an account keeps and how to make one.
+ * The menu stays, since badges, the library and settings are open to anyone.
  */
 export function ProfileScreen(): React.JSX.Element {
   const { isGuest } = useAccountGate();
@@ -101,7 +89,7 @@ function GuestProfile(): React.JSX.Element {
   const { t } = useI18n();
   return (
     <GradientBackground>
-      {/* the tab's name at the top and the menu at the end, as on the account's profile */}
+      {/* Tab title and menu, as on the account's profile. */}
       <TabHeader title={t('nav.profile')} action={<HeaderButton icon="menu" label={t('nav.menu')} onPress={openMenu} testID="profile-menu" />} />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]} showsVerticalScrollIndicator={false}>
 
@@ -109,7 +97,7 @@ function GuestProfile(): React.JSX.Element {
           <View style={styles.guestInner}>
             <View style={styles.guestHead}>
               <InitialsAvatar name={user?.username ?? ''} id={user?.id ?? ''} size={AVATAR} photoUrl={null} />
-              {/* the name a guest was given, under the face it goes with */}
+              {/* The guest's generated name. */}
               <Text style={[styles.guestName, { color: colors.textSecondary }]} numberOfLines={1}>
                 {user?.username}
               </Text>
@@ -131,24 +119,11 @@ function GuestProfile(): React.JSX.Element {
 }
 
 /**
- * Your profile: your face on its stage, who you are, how you are doing, and
- * what you have made.
- *
- * In the order somebody opening their own profile wants it answered: is this
- * me (the band of sky or the background you wear, the face over its edge, the
- * name, the handle and the year you joined), what can I do with it (Edit and
- * Share side by side, and the way to more friends beside them), how am I
- * doing (three numbers that count up, then the four tiles of the overview —
- * the streak with its fire, the course, the league with its emblem, the XP)
- * — and then the badges and the ranks, and what you have written.
- *
- * What you wear as a background is in the band, as it is on the website, and
- * no words are written over it: a name over somebody's artwork was only as
- * readable as the artwork let it be.
- *
- * What it is not is a menu. Everything that is a place rather than a thing
- * you do to a profile — the shop, settings, what you saved, badges, tags, the
- * library — is behind the menu at the top, one tap away.
+ * Your own profile, in the order its owner looks for things: identity (banner, avatar, name, handle and year
+ * joined), actions (Edit, Share, find friends), progress (three counters and the overview tiles), then badges,
+ * ranks and writing. Nothing is written over the banner, since text on someone's artwork is only as readable as
+ * the artwork allows. Places rather than profile actions (shop, settings, saved, badges, tags, library) live in
+ * the menu.
  */
 function AccountProfile() {
   const { user, client } = useAuth();
@@ -160,61 +135,47 @@ function AccountProfile() {
   const { counts } = useUnread();
   const dir = useDirection();
   const scrollRef = useRef<ScrollView>(null);
-  // tapping Profile while on Profile goes back to the top
+  // Tapping the Profile tab while on it scrolls to the top.
   useScrollToTop(scrollRef);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [me, setMe] = useState<Me | null>(null);
-  // the first answers are in: until then the numbers and the lines under them are held in grey, not shown as zeros
+  // Until the first answers arrive the numbers are grey placeholders, not zeros.
   const [settled, setSettled] = useState(false);
-  // and the showcase's, which comes after them
+  // And the showcase's, which arrives after them.
   const [progressSettled, setProgressSettled] = useState(false);
   const [zer, setZer] = useState<number | null>(null);
   const [friends, setFriends] = useState<number | null>(null);
-  /** what the profile shows of the climb: ranks, the league, the showcase, the season frame */
+  /** Ranks, league, showcase and season frame. */
   const [progress, setProgress] = useState<{
     ranks: ProfileRank[];
     league: ProfileLeague | null;
     badges: ShowcaseBadge[];
     frameSku: string | null;
-    /** the picture of a frame from the shop; a season frame is drawn from its SKU */
+    /** A shop frame's picture; a season frame is drawn from its SKU. */
     frameUrl: string | null;
-    /** their tree; null before one is planted, undefined on a server without trees */
+    /** Their tree; null before one is planted, undefined on a server without trees. */
     tree: TreeGlimpse | null | undefined;
-    /**
-     * Badges earned (and the legacy tournament win), as the public profile
-     * counts them. Only the public profile sends this: `/me` never did, so the
-     * count read from there was a dash for everybody.
-     */
+    /** Badges earned (and the legacy tournament win), as the public profile counts them; `/me` does not send this. */
     achievements: number | null;
   } | null>(null);
   const [iconsOwned, setIconsOwned] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [streakOpen, setStreakOpen] = useState(false);
-  // a pull down the page: everything below is asked for again
+  // Pull to refresh asks for everything below again.
   const [refreshing, setRefreshing] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const { t, locale } = useI18n();
   const showSendError = useSendErrorAlert();
-  // badges earned since the app opened wear a "New" chip in the showcase
+  // Badges earned since the app opened wear a "New" chip in the showcase.
   const fresh = useFreshBadges();
-  // which Kurdish the lesson path is teaching, for the course tile
+  // The course's dialect, for the course tile.
   const course = useCourseDialect();
 
   /*
-   * Who you are, in the four places the server keeps it.
-   *
-   * The session user carries identity and nothing else, so everything a
-   * profile actually shows — the bio, the level, the streak, the photo, what
-   * you are wearing — comes from /me, the purse from /me/wallet, the friend
-   * count from /friends and what you own from /me/inventory. The browser
-   * loads exactly these.
-   */
-  /*
-   * Asked for again each time the tab comes back into view, and on a pull:
-   * a new name or picture saved in Edit Profile, Zêr spent in the shop or XP
-   * from a lesson shows the moment you return, not the next time the app
-   * starts. What is on the screen stays there while the new answers come in.
+   * The session user carries identity only, so the profile comes from /me, the wallet from /me/wallet, the friend
+   * count from /friends and owned items from /me/inventory, as on the website. Fetched again on every focus and pull,
+   * so changes made elsewhere show on return; the old values stay on screen meanwhile.
    */
   useFocusEffect(
     useCallback(() => {
@@ -234,19 +195,11 @@ function AccountProfile() {
           setPhotoUrl(m.data.user.profilePhotoUrl ?? null);
         }
         if (w.ok) setZer(w.data.balances.zer);
-        // an API that predates paging sends no total — it sent the whole list
+        // An older API sends no total, only the whole list.
         if (f.ok) setFriends(f.data.total ?? f.data.friends.length);
         if (inv.ok) setIconsOwned((inv.data.items ?? []).filter((i) => i.category === 'icon').length);
 
-        /*
-         * Your ranks, league, showcase and season frame.
-         *
-         * `/me` does not carry them, and the public profile endpoint already
-         * works them out the same way it does for everybody else — so this asks
-         * for your own public profile rather than adding a second way to
-         * compute them. The browser does exactly this. (It used to ask for a
-         * frozen all-time "#rank", which Game Ranks replaced.)
-         */
+        // Ranks, league, showcase and season frame come from your own public profile, which already computes them, as the website does.
         const id = m.ok ? m.data.user.id : null;
         if (id) {
           const p = await client.get<{
@@ -283,7 +236,7 @@ function AccountProfile() {
 
   const changePhoto = useCallback(async () => {
     if (uploading) return;
-    // the system picker hands back only the chosen picture, so there is no permission to ask for
+    // The system picker returns only the chosen picture, so no permission is needed.
     const picked = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -300,10 +253,8 @@ function AccountProfile() {
   }, [client, uploading, showSendError, t, locale]);
 
   /*
-   * Your profile's address, to send to somebody. A tapped link opens the
-   * profile on the website, even on a phone with the app: the app does not
-   * claim hevalo.app links until the association files exist (see `linking`
-   * in App.tsx), so the message promises a page, not the app.
+   * Shares your profile's address. The app does not claim hevalo.app links until the association files exist (see
+   * `linking` in App.tsx), so the message promises a web page, not the app.
    */
   const share = useCallback(() => {
     const id = me?.id ?? user?.id;
@@ -314,39 +265,25 @@ function AccountProfile() {
 
   const country = me?.country ? countryName(me.country, locale) ?? me.country : null;
   const leagueTier = knownTier(progress?.league?.tier);
-  // the stage under the face is the league's water, or the brand before there is a league
+  // The stage takes the league's colour, or the brand's before there is a league.
   const stageTint = leagueTier ? leagueTint(leagueTier, scheme)[1] : colors.primary;
   const joined = me?.createdAt ? new Date(me.createdAt) : null;
   const joinedYear = joined && !Number.isNaN(joined.getTime()) ? joined.getFullYear() : null;
   const username = me?.username ?? user?.username ?? '';
   /*
-   * The handle and the year joined, on one line where they fit. On a narrow
-   * phone, or in a language whose "joined" is long, the second half moves to
-   * a line of its own instead of ending in an ellipsis: the year's words are
-   * held together and the dot stays with the handle, so the only break is
-   * the one between the two.
+   * Handle and year joined share a line where they fit; otherwise the year moves to its own line rather than being
+   * cut off. The year's words stay together and the dot stays with the handle, so that is the only break.
    */
   const handleLine = joinedYear
     ? `@${username} ·  ${t('profile.joined', { year: joinedYear }).replace(/ /g, ' ')}`
     : `@${username}`;
 
-  /*
-   * The quiet line, assembled from whatever there is.
-   *
-   * The icon count is zero for most people, so this is built rather than
-   * written out: an interpunct between the parts that exist, and no line at
-   * all when none do. The XP has its own tile in the overview now.
-   */
+  // Built from the parts that exist, joined by interpuncts, and absent when none do (most people own no icons).
   const aside = [zer === null ? null : `${formatNumber(zer, locale)} Zêr`, iconsOwned ? `${iconsOwned} ${t('profile.stat.icons')}` : null].filter(
     (part): part is string => part !== null,
   );
 
-  /*
-   * The four tiles of the overview. The streak opens its whole story, with
-   * the numbers a missed day never takes away; the course opens the lesson
-   * path; the league opens the league. XP is a number about you with nothing
-   * behind it, so it is not pressable.
-   */
+  // The overview tiles. XP has nothing behind it, so it is the only one not pressable.
   const tiles = useMemo<OverviewTile[]>(() => {
     const burning = streak && streak.current > 0 ? fireLevel(streak.current) : null;
     return [
@@ -389,12 +326,7 @@ function AccountProfile() {
 
   return (
     <GradientBackground>
-      {/*
-        The tab's name at the top, and the menu at the end: the shop, settings,
-        what you saved and the rest. A gift waiting to be unwrapped puts a dot
-        on it, the same dot that is on the tab. Whose profile it is, is the
-        first thing under it: the picture, the name and the handle.
-      */}
+      {/* The menu holds the shop, settings, saved items and the rest; an unopened gift puts a dot on it, as on the tab. */}
       <TabHeader
         title={t('nav.profile')}
         action={
@@ -423,26 +355,18 @@ function AccountProfile() {
         }
       >
 
-        {/*
-          The band behind the face: the background you wear, or your own
-          horizon until you wear one (the picture the website draws in your
-          banner). It is a picture, and nothing is written over it.
-        */}
+        {/* The banner: the worn background, or the learner's horizon until they wear one. Nothing is written over it. */}
         <View style={[styles.banner, { backgroundColor: colors.controlTrack }]}>
-          {/* the horizon is always there underneath: a background that is still loading, or is a film the phone does not play, leaves it showing */}
+          {/* The horizon stays underneath, so a background still loading, or a video the phone does not play, leaves it showing. */}
           {(me?.id ?? user?.id) ? <Horizon seed={me?.id ?? user?.id ?? ''} width={windowWidth - layout.gutter * 2} height={BANNER} /> : null}
           {me?.background ? <CosmeticBackground background={me.background} style={StyleSheet.absoluteFill} /> : null}
         </View>
 
-        {/*
-          The face in the middle on its stage, over the band's lower edge,
-          springing in as the profile opens; under it the name, the handle and
-          the year, where they are from, and who they are in their own words.
-        */}
+        {/* The avatar on its stage over the banner's lower edge, then name, handle, year, location and bio. */}
         <View style={[styles.hero, styles.heroOverBanner]}>
           <Pressable onPress={changePhoto} accessibilityRole="button" accessibilityLabel={t('profile.changePhoto')} style={({ pressed }) => pressed && heldDim}>
             <AvatarStage tint={stageTint} size={STAGE}>
-              {/* the frame rings the face; the face and its icon stay their own size inside it */}
+              {/* The frame rings the avatar; the avatar and its icon keep their size inside it. */}
               <Framed sku={progress?.frameSku} url={progress?.frameUrl} size={FRAMED} label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
                 {face}
               </Framed>
@@ -454,7 +378,7 @@ function AccountProfile() {
             </AvatarStage>
           </Pressable>
           <View style={[styles.nameRow, { flexDirection: dir.row }]}>
-            {/* a long name takes a second line rather than losing its end */}
+            {/* A long name wraps to a second line rather than being cut. */}
             <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={2}>
               {me?.displayName ?? user?.displayName ?? user?.username}
             </Text>
@@ -473,20 +397,10 @@ function AccountProfile() {
         </View>
 
         {/*
-          What people do with their own profile, straight under who they are:
-          change it, and send it to somebody, side by side and the same size —
-          and beside them, the way to the people who make the rest of it worth
-          having. Each is a fingertip tall.
-
-          The two say what they do in words alone, and a long name takes a
-          second line inside its button, both buttons growing to the taller
-          one. A pencil and a share glyph each took the room of three letters:
-          at 320 points that left a label sixty, and "Profil bearbeiten",
-          "Profîlê biguherîne" and both Soranî names ended in an ellipsis,
-          with single words too long for a second line to save.
-
-          The three stand a gap apart and each reaches at most half of it
-          toward the next, so a tap between two goes to the nearer one.
+          Edit and Share, the same size side by side, and the find-friends button. The buttons are text only: icons left
+          too little room at 320 points and long labels in German, Kurmancî and Soranî were cut off. A long label wraps and
+          both buttons grow to match. Each reaches at most half the gap toward the next, so a tap between goes to the
+          nearer one.
         */}
         <View style={[styles.actions, { flexDirection: dir.row }]}>
           <ReachGroup gap={spacing.sm}>
@@ -520,15 +434,10 @@ function AccountProfile() {
           </ReachGroup>
         </View>
 
-        {/*
-          Three numbers that answer "how am I doing", counting up as they
-          arrive. The friend count opens the friends, the badge count the
-          badges, the way such counts do everywhere; the level is a number
-          about you with nothing behind it, so it is not pressable.
-        */}
+        {/* Friends and badges counts open their pages; the level has nothing behind it, so it is not pressable. */}
         <View style={[styles.stats, { flexDirection: dir.row }]}>
           <Stat label={t('nav.friends')} value={friends} loading={!settled} onPress={() => navigation.navigate('Friends')} />
-          {/* the count arrives with the public profile, after the first answers */}
+          {/* The count arrives with the public profile, after the first answers. */}
           <Stat label={t('profile.badges')} value={progress?.achievements ?? null} loading={!progressSettled} onPress={() => navigation.navigate('Badges')} />
           <Stat label={t('profile.stat.level')} value={me?.level?.level ?? 1} loading={!settled} />
         </View>
@@ -542,12 +451,12 @@ function AccountProfile() {
 
         <GiftedNote background={me?.background} icon={me?.icon} />
 
-        {/* the four at a glance, once the first answers are in; the league's tile fills in as the showcase arrives */}
+        {/* The overview tiles once the first answers are in; the league tile fills in as the showcase arrives. */}
         {settled && me ? <OverviewGrid tiles={tiles} /> : <OverviewSkeleton />}
 
-        {/* the three badges chosen for the profile, each game's rank and the league */}
+        {/* The three showcased badges, each game's rank, and the league. */}
         {!progress && !progressSettled ? (
-          // your own profile always has the badges' row, chosen or still to choose
+          // Your own profile always has the badges row, chosen or not.
           <View style={styles.showcaseSkeleton}>
             <SkeletonText size={typography.sizes.xs} width={64} />
             <Skeleton height={MIN_TOUCH_TARGET} radius={radii.md} />
@@ -567,7 +476,7 @@ function AccountProfile() {
           />
         ) : null}
 
-        {/* only where there is one; an empty frame saying so is not a showcase */}
+        {/* Only where there is one. */}
         {me?.favoritePoem ? <FavoriteRow label={t('profile.favoritePoem')} title={me.favoritePoem.title} /> : null}
         {me?.favoriteStory ? <FavoriteRow label={t('profile.favoriteStory')} title={me.favoriteStory.title} /> : null}
 
@@ -578,16 +487,7 @@ function AccountProfile() {
   );
 }
 
-/**
- * One of the three: the number, counting up to where it is as it arrives,
- * then what it counts. A number not known is a dash, never a zero that reads
- * as the real one.
- */
-/**
- * The course tile's picture: the flag Hevalo serves for its own Kurdish, or,
- * until it loads or where it will not, the book the Learn tab wears — never
- * an empty box beside the course's name.
- */
+/** The course tile's picture: the course's flag, or the Learn tab's book until it loads or if it fails, never an empty box. */
 function CourseFlag(): React.JSX.Element {
   const { colors } = useTheme();
   const [broken, setBroken] = useState(false);
@@ -596,6 +496,7 @@ function CourseFlag(): React.JSX.Element {
   return <Image source={{ uri }} style={styles.courseFlag} resizeMode="contain" accessibilityElementsHidden onError={() => setBroken(true)} />;
 }
 
+/** A profile counter that counts up as it arrives; an unknown value is a dash, never a zero that reads as real. */
 function Stat({ label, value, onPress, loading = false }: { label: string; value: number | null; onPress?: () => void; loading?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const { locale } = useI18n();
@@ -605,7 +506,7 @@ function Stat({ label, value, onPress, loading = false }: { label: string; value
   const body = (
     <>
       {loading ? (
-        // the number's own line, held: a 0 or a 1 shown before the real one arrives reads as the real one
+        // A placeholder, since a 0 or 1 shown before the real number reads as real.
         <SkeletonText size={typography.sizes.lg} width={28} align="center" />
       ) : (
         <Text style={[styles.statValue, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -617,7 +518,7 @@ function Stat({ label, value, onPress, loading = false }: { label: string; value
       </Text>
     </>
   );
-  // the number as it will be, not as it is mid-count, is what a screen reader is told
+  // Screen readers hear the final number, not the one mid-count.
   if (!onPress) {
     return (
       <View accessible accessibilityLabel={`${settled} ${label}`} style={styles.stat}>
@@ -639,15 +540,15 @@ function Stat({ label, value, onPress, loading = false }: { label: string; value
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.gutter, gap: spacing.sm },
-  // the band behind the face, clipped to its own corners
+  // Clipped to its own corners.
   banner: { alignSelf: 'stretch', height: BANNER, borderRadius: radii.lg, overflow: 'hidden' },
 
 
-  // the face in the middle, and everything about who this is under it
+  // The avatar centred, with everything about who this is under it.
   hero: { alignSelf: 'stretch', alignItems: 'center', gap: 4, marginTop: spacing.xs },
-  // half the stage stands over the band's lower edge (less the gap the column puts between the two)
+  // Half the stage overlaps the banner's lower edge, less the column's gap.
   heroOverBanner: { marginTop: -(STAGE / 2 + spacing.sm) },
-  // the working picture sits over the face alone, not over the stage round it
+  // The upload spinner covers the avatar alone, not the stage.
   avatarOverlay: {
     position: 'absolute',
     top: 0,
@@ -659,7 +560,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // the three numbers share the width, evenly
+  // The three numbers share the width evenly.
   stats: { alignSelf: 'stretch', justifyContent: 'space-around', marginTop: spacing.sm },
   stat: { alignItems: 'center', gap: 2, minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   statValue: { ...statValue, fontVariant: ['tabular-nums'] },
@@ -669,8 +570,7 @@ const styles = StyleSheet.create({
   name: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
   handle: { fontSize: typography.sizes.sm, textAlign: 'center' },
   country: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
-  // the browser draws a plain 22x16 image and so does this; a corner radius on
-  // something this small is a rounding error rather than a shape
+  // A plain 22x16 image, as on the website; a radius this small would be a rounding error.
   flag: { width: 22, height: 16 },
   courseFlag: { width: 30, height: 22 },
   countryName: { fontSize: typography.sizes.sm },
@@ -678,9 +578,9 @@ const styles = StyleSheet.create({
   aside: { fontSize: typography.sizes.xs, textAlign: 'center' },
   showcaseSkeleton: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
 
-  // the two buttons stretch to the taller of them, so a label on two lines leaves both the same size
+  // Both buttons stretch to the taller, so a two-line label keeps them the same size.
   actions: { alignSelf: 'stretch', alignItems: 'stretch', gap: spacing.sm, marginTop: spacing.md },
-  // a fingertip tall, drawn that tall: a 36pt button with slop above and below looked smaller than it was to press
+  // Drawn a full fingertip tall: a 36pt button with hit slop looked smaller than its target.
   action: {
     flex: 1,
     minHeight: MIN_TOUCH_TARGET,
@@ -691,10 +591,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   actionText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  // the way to more friends: the one filled control of the three, round, and as tall as its neighbours are at the least
+  // Find friends: the one filled control of the three, round, and at least as tall as its neighbours.
   actionIcon: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignSelf: 'center', borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 
-  // a guest's card: the face they were given, the offer, and the four things an account keeps
+  // A guest's card: their avatar, the offer, and what an account keeps.
   guestCard: { marginTop: spacing.md },
   guestInner: { gap: spacing.md },
   guestHead: { alignItems: 'center', gap: spacing.sm },
