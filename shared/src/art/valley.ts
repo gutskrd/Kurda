@@ -433,11 +433,12 @@ export function poplarLeaves(dark: boolean): Foliage {
 
 /**
  * The one small moving thing of a landmark, which the apps lay over it and
- * move gently (`pathLoopSvg`): a kilim or the flag of Kurdistan (`colours`,
- * over the school's yard and Amed's tower) stirring, steam or smoke rising,
- * water rippling, the Newroz flame, a bee, the bus stop's sign.
+ * move gently (`pathLoopSvg`): the flag of Kurdistan (`colours`, by the
+ * gate, over the bazaar, the school's yard and Amed's tower) stirring, steam
+ * or smoke rising, water rippling, the Newroz flame, a bee, the bus stop's
+ * sign.
  */
-export type ValleyLoopKind = 'kilim' | 'steam' | 'water' | 'colours' | 'flame' | 'smoke' | 'bee' | 'sign';
+export type ValleyLoopKind = 'steam' | 'water' | 'colours' | 'flame' | 'smoke' | 'bee' | 'sign';
 
 /**
  * A chapter's landmark in the painted valley, on the 120-unit canvas: its

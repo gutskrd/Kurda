@@ -129,7 +129,7 @@ function FreshStones({ xml, width, height }: { xml: string; width: number; heigh
   );
 }
 
-/** A unit's landmark, and over it its loop: a kilim or a flag stirring, steam or smoke rising, water rippling, the fire, a bee, a sign. */
+/** A unit's landmark, and over it its loop: the flag of Kurdistan stirring, steam or smoke rising, water rippling, the fire, a bee, a sign. */
 function Landmark({
   landmark,
   ground,
@@ -172,7 +172,6 @@ function Loop({ kind, xml, left, top, width, height, live }: { kind: string; xml
   const wave = t.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: [0, 1, 0, -1, 0] });
   const style = ((): object => {
     switch (kind) {
-      case 'kilim':
       case 'colours':
         return { transformOrigin: '0% 0%', transform: [{ rotate: wave.interpolate({ inputRange: [-1, 1], outputRange: ['-5deg', '5deg'] }) }, { scaleX: wave.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.9, 1, 0.94] }) }] };
       case 'steam':

@@ -6,9 +6,9 @@
  * otherwise, and the older round trees and poplars, which the lesson path
  * still plants, are measured from what they draw. The Newroz fire burns on
  * its ring of stones on a green mound, its flame at rest in the box the apps
- * make it flicker in. The school and Amed's tower fly the flag of
- * Kurdistan, true to the flag, and the apps make the very same cloth stir
- * over it; no other flag flies. And a landmark laid on a page of its own
+ * make it flicker in. The gate, the bazaar, the school and Amed's tower fly
+ * the flag of Kurdistan, true to the flag, and the apps make the very same
+ * cloth stir over it; no other flag flies. And a landmark laid on a page of its own
  * colour casts that page's shade, not the meadow's.
  */
 import { describe, expect, it } from 'vitest';
@@ -202,6 +202,6 @@ describe('the school’s flag', () => {
       if (loop.kind !== 'colours') continue;
       expect(pathLandmarkSvg({ landmark: landmark as keyof typeof PATH_LANDMARK_LOOP, dark: false }), landmark).toContain(kurdistanFlag(false));
     }
-    expect(Object.entries(PATH_LANDMARK_LOOP).filter(([, l]) => l.kind === 'colours').map(([k]) => k).sort()).toEqual(['citywall', 'school']);
+    expect(Object.entries(PATH_LANDMARK_LOOP).filter(([, l]) => l.kind === 'colours').map(([k]) => k).sort()).toEqual(['bazaar', 'citywall', 'gate', 'school']);
   });
 });

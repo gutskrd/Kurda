@@ -129,29 +129,6 @@ function castShadow(x: number, y: number, w: number, d: number, len: number, col
 }
 
 /**
- * A kilim hung from its top edge, filling its 18 × 22 box as the moving
- * sprite does: a madder field with its turned edge in shade, two cream bands,
- * the saffron "eye" diamond with its indigo heart and a small eye either side
- * (the commonest mark of Kurdish flat weaves), and the wool fringe below.
- */
-function kilim(x: number, y: number, dark: boolean): string {
-  const cx = x + 8.5;
-  const cy = y + 10.5;
-  const eye = (ex: number, ey: number, rx: number, ry: number): string =>
-    `M${f(ex)} ${f(ey - ry)}L${f(ex + rx)} ${f(ey)}L${f(ex)} ${f(ey + ry)}L${f(ex - rx)} ${f(ey)}Z`;
-  let fringe = '';
-  for (let k = 0; k < 6; k++) fringe += `M${f(x + 2.5 + k * 2.6)} ${f(y + 19.4)}v2`;
-  return (
-    stroke(fringe, dusk(VALLEY.woolShade, dark), 0.9) +
-    fill(box(x + 1, y + 1, 16, 18.6), dusk(VALLEY.red, dark)) +
-    fill(box(x + 14.4, y + 1, 2.6, 18.6), dusk(VALLEY.redDark, dark)) +
-    fill(box(x + 1, y + 3.6, 13.4, 1.6) + box(x + 1, y + 15.8, 13.4, 1.6), dusk(VALLEY.cream, dark)) +
-    fill(eye(cx, cy, 4.2, 5), dusk(VALLEY.gold, dark)) +
-    fill(eye(cx, cy, 1.7, 2.1) + eye(x + 3.3, cy, 1.3, 1.6) + eye(x + 13.4, cy, 1.3, 1.6), dusk(VALLEY.indigo, dark))
-  );
-}
-
-/**
  * Steam at rest over a samovar, in its 16 × 24 box: three soft puffs going up
  * from the box's foot. By evening it takes a little more of the dusk than a
  * solid thing would, because it is thin and the light comes through it.
@@ -165,19 +142,36 @@ function steam(x: number, y: number, dark: boolean, random: () => number): strin
 // ───────────────────────────────────────────────────────────── the landmarks
 
 /** The first six chapters' landmarks, by name. */
-/** Where the flag of Kurdistan flies over Amed's tower: its pole at x 71, the cloth the apps make stir laid exactly over the one drawn. */
+/*
+ * Where the flag of Kurdistan flies in these chapters, each box's left edge on its pole: by Sêvan's gate to greet
+ * whoever comes up the road, over the bazaar's stalls, and over Amed's tower. The cloth the apps make stir is laid
+ * exactly over the one drawn.
+ */
+const GATE_FLAG: ValleyLandmark['loop'] = { kind: 'colours', x: 15, y: 50, w: 20, h: 16 };
+const BAZAAR_FLAG: ValleyLandmark['loop'] = { kind: 'colours', x: 96, y: 52, w: 20, h: 16 };
 const CITY_FLAG: ValleyLandmark['loop'] = { kind: 'colours', x: 71, y: 12, w: 20, h: 16 };
+
+/** A flagpole from the ground at (x, foot) up to the flag's box, with the gold knob at its top and its sliver of shadow. */
+function flagpole(box: ValleyLandmark['loop'], foot: number, dark: boolean, ground: string): string {
+  const x = box.x;
+  return (
+    fill(`M${f(x - 0.8)} ${f(foot - 0.6)}L${f(x + 6.4)} ${f(foot + 2.2)}L${f(x + 7)} ${f(foot + 1.2)}L${f(x + 0.8)} ${f(foot - 1.2)}Z`, ground) +
+    stroke(`M${f(x)} ${f(foot)}V${f(box.y)}`, dusk(VALLEY.trunk, dark), 1.6) +
+    fill(ellipsePath(x, box.y - 1, 1.4, 1.4), dusk(VALLEY.gold, dark)) +
+    kurdistanFlagAt(box, dark)
+  );
+}
 
 export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar' | 'busstop' | 'citywall', ValleyLandmark> = {
   /**
    * Sêvan's blue gate: a low earth wall across the picture, the gate's pier
    * standing a little forward of it with the blue double door in its arch,
    * two flat-roofed houses behind (apricots drying on the taller one's
-   * roof), an apricot tree over the wall, and a kilim hung on a post by the
-   * gate to greet whoever comes up the road.
+   * roof), an apricot tree over the wall, and the flag of Kurdistan on its
+   * pole by the gate to greet whoever comes up the road.
    */
   gate: {
-    loop: { kind: 'kilim', x: 16, y: 61, w: 18, h: 22 },
+    loop: GATE_FLAG,
     draw(dark, random) {
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
@@ -200,11 +194,8 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += fill('M50 112V97A8 8 0 0 1 58 89V112Z', c(VALLEY.gate));
       out += fill('M66 112V97A8 8 0 0 0 58 89V112Z', c(VALLEY.gateLight));
       out += fill(ellipsePath(56.2, 102, 0.9, 0.9) + ellipsePath(59.8, 102, 0.9, 0.9), c(VALLEY.gold));
-      // The kilim hangs on its post by the gate, at rest where the moving sprite will lie.
-      // the post's shadow: a thin sliver along the ground to the lower right, as every shadow in the valley falls
-      out += fill('M14.2 111.4L21.4 114.2L22 113.2L15.8 110.8Z', ground);
-      out += stroke('M15 112V60M14 61.4H36', c(VALLEY.trunk), 1.8);
-      out += kilim(16, 61, dark);
+      // The flag of Kurdistan on its pole by the gate, at rest where the moving cloth will lie; the pole's shadow a thin sliver to the lower right.
+      out += flagpole(GATE_FLAG, 112, dark, ground);
       return out;
     },
   },
@@ -355,11 +346,11 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
   /**
    * Market day: two stalls under striped awnings, one madder and cream, one
    * blue, their counters heaped with apples, apricots and pomegranates,
-   * crates of fruit on the ground before them, and a kilim hung for sale on
-   * its own frame.
+   * crates of fruit on the ground before them, and the flag of Kurdistan
+   * flying over the stalls.
    */
   bazaar: {
-    loop: { kind: 'kilim', x: 95, y: 63, w: 18, h: 22 },
+    loop: BAZAAR_FLAG,
     draw(dark, random) {
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
@@ -428,11 +419,8 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       // Crates of apples and apricots stand on the ground before the first stall.
       out += castShadow(8, 112, 14, 6, 5, ground) + block(8, 112, 14, 7, 6, wood) + heap(9.5, 103.6, 13, VALLEY.apple, VALLEY.redDark);
       out += castShadow(24, 113, 12, 6, 5, ground) + block(24, 113, 12, 7, 6, wood) + heap(25, 104.6, 12, VALLEY.fruit, VALLEY.goldDark);
-      // The kilim for sale hangs on its own frame, at rest where the moving sprite will lie.
-      // each post's shadow a thin sliver on the ground to the lower right
-      out += fill('M93.2 107.4L99.4 110.2L100 109.2L94.8 106.8Z' + 'M113.2 105.4L117.4 107.4L118 106.4L114.8 104.8Z', ground);
-      out += stroke('M94 108V62M114 106V62M93 63.4H115', c(VALLEY.trunk), 1.8);
-      out += kilim(95, 63, dark);
+      // The flag of Kurdistan over the stalls, at rest where the moving cloth will lie.
+      out += flagpole(BAZAAR_FLAG, 108, dark, ground);
       return out;
     },
   },
