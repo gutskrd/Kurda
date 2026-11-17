@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { roadStoryChapter } from '@kurda/shared';
+import { roadStoryChapter, topicRounds } from '@kurda/shared';
 import { ROAD_COURSE } from '../content/road-seed.js';
 import { skillStrength } from '../placement/skill-strength.js';
 import { PUBLISHED_SQL } from '../stories/service.js';
@@ -19,6 +19,8 @@ export interface LessonNode {
   title: string;
   /** this learner has finished this lesson — this version or an earlier one */
   completed: boolean;
+  /** how many times they have finished it, any version, replays included */
+  times: number;
 }
 
 export interface SkillNode {
@@ -32,6 +34,13 @@ export interface SkillNode {
   firstLessonId: string | null;
   /** the skill's published lessons in order, so a map can show each one */
   lessons: LessonNode[];
+  /**
+   * Full rounds of its lessons played (0–3, the stars on its stop) and the
+   * pieces of its ring filled, by the shared rule (`topicRounds`), so both
+   * apps draw the same ring.
+   */
+  rounds: number;
+  pieces: number;
 }
 
 /** The story that closes a chapter of the road, once it is out for learners to read. */
@@ -57,8 +66,10 @@ export interface CourseMap {
   /**
    * The course's units up to the last one with a lesson out: a unit still
    * being made at the end is not shown as empty stops, it is `upcoming`.
+   * `level` is the unit's level in the course plan ('A1'), which the path
+   * groups units into sections by; null where the course gives none.
    */
-  units: Array<{ unitId: string; title: string; skills: SkillNode[]; story: UnitStory | null }>;
+  units: Array<{ unitId: string; title: string; level: string | null; skills: SkillNode[]; story: UnitStory | null }>;
   upcoming: UpcomingUnit | null;
   /**
    * Skills up to this level are open because a test let the learner through
@@ -75,9 +86,15 @@ interface SkillRow {
   unit_id: string;
   unit_title: string;
   unit_position: number;
+  unit_level: string | null;
 }
 
-/** Course map with per-skill lock/complete/gold/decay state (KUR-040). */
+/**
+ * Course map with per-skill lock/complete/gold/decay state (KUR-040), how
+ * many times each lesson was finished and so each skill's rounds and ring
+ * (shared `topicRounds`), and each unit's level, which the lesson path
+ * groups units into sections by.
+ */
 export class CourseMapService {
   /** `roadCourse`: the slug of the course whose chapters end with Hamo's stories (a test names its own) */
   constructor(
@@ -109,7 +126,7 @@ export class CourseMapService {
     const [skills, lessons, completed, reviews, progress, stories] = await Promise.all([
       this.pool.query<SkillRow>(
         `SELECT s.id skill_id, s.title_en skill_title, (s.grammar_md IS NOT NULL) has_grammar,
-                u.id unit_id, u.title_en unit_title, u.position unit_position
+                u.id unit_id, u.title_en unit_title, u.position unit_position, u.cefr unit_level
          FROM skills s JOIN units u ON u.id = s.unit_id
          WHERE u.course_id = $1
          ORDER BY u.position ASC, s.position ASC`,
@@ -123,16 +140,21 @@ export class CourseMapService {
          ORDER BY l.skill_id, l.position, l.version DESC`,
         [courseId],
       ),
-      // finished lessons by place, not by row: a corrected version of a lesson
-      // is a new row at the same place, and to the learner who finished the
-      // old one it is still the lesson they finished (as `LessonSlot` in
-      // content/sessions.ts) — keyed by row, a content fix re-locked the rest
-      // of the course behind a lesson they had already done
-      this.pool.query<{ skill_id: string; position: number }>(
-        `SELECT DISTINCT l.skill_id, l.position
-         FROM lesson_sessions ls JOIN lessons l ON l.id = ls.lesson_id
-         WHERE ls.user_id = $1 AND ls.completed_at IS NOT NULL`,
-        [userId],
+      // how many times each lesson was finished, by place, not by row: a
+      // corrected version of a lesson is a new row at the same place, and to
+      // the learner who finished the old one it is still the lesson they
+      // finished (as `LessonSlot` in content/sessions.ts) — keyed by row, a
+      // content fix re-locked the rest of the course behind a lesson they had
+      // already done. Every replay is a session of its own, so the count is
+      // the rounds the rings show; one read for the whole map.
+      this.pool.query<{ skill_id: string; position: number; times: number }>(
+        `SELECT l.skill_id, l.position, count(*)::int times
+         FROM lesson_sessions ls
+         JOIN lessons l ON l.id = ls.lesson_id
+         JOIN skills s ON s.id = l.skill_id JOIN units u ON u.id = s.unit_id
+         WHERE ls.user_id = $1 AND ls.completed_at IS NOT NULL AND u.course_id = $2
+         GROUP BY l.skill_id, l.position`,
+        [userId, courseId],
       ),
       this.pool.query<{ skill_id: string; easiness: number; repetitions: number }>(
         `SELECT l.skill_id, r.easiness, r.repetitions
@@ -158,16 +180,12 @@ export class CourseMapService {
       if (n !== null) storyOf.set(n, { slug: st.slug, title: st.title });
     }
 
-    const doneSlots = new Set(completed.rows.map((r) => `${r.skill_id}:${r.position}`));
+    const timesAt = new Map(completed.rows.map((r) => [`${r.skill_id}:${r.position}`, r.times]));
     const lessonsBySkill = new Map<string, LessonNode[]>();
     for (const l of lessons.rows) {
       const list = lessonsBySkill.get(l.skill_id) ?? [];
-      list.push({
-        lessonId: l.id,
-        position: l.position,
-        title: l.title_en,
-        completed: doneSlots.has(`${l.skill_id}:${l.position}`),
-      });
+      const times = timesAt.get(`${l.skill_id}:${l.position}`) ?? 0;
+      list.push({ lessonId: l.id, position: l.position, title: l.title_en, completed: times > 0, times });
       lessonsBySkill.set(l.skill_id, list);
     }
     const reviewsBySkill = new Map<string, Array<{ easiness: number; repetitions: number }>>();
@@ -197,11 +215,19 @@ export class CourseMapService {
         hasGrammar: s.has_grammar,
         firstLessonId: firstIncomplete?.lessonId ?? skillLessons[0]?.lessonId ?? null,
         lessons: skillLessons,
+        ...topicRounds(skillLessons.map((l) => l.times)),
       };
 
       let unit = units.find((u) => u.unitId === s.unit_id);
       if (!unit) {
-        unit = { unitId: s.unit_id, title: s.unit_title, skills: [], story: storyOf.get(s.unit_position) ?? null, position: s.unit_position };
+        unit = {
+          unitId: s.unit_id,
+          title: s.unit_title,
+          level: s.unit_level,
+          skills: [],
+          story: storyOf.get(s.unit_position) ?? null,
+          position: s.unit_position,
+        };
         units.push(unit);
       }
       unit.skills.push(node);

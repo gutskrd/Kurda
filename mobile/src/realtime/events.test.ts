@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { isChatEvent, isUserEvent, userEventOf } from './events';
 
 describe('which events reach which hook', () => {
-  it('passes invites, rematch offers and gifts to useUserEvents, and nothing else', () => {
-    for (const type of ['play_invite', 'play_invite_update', 'play_changed', 'rematch_update', 'gift_received', 'gift_opened']) {
+  it('passes invites, rematch offers, gifts and letters news to useUserEvents, and nothing else', () => {
+    for (const type of ['play_invite', 'play_invite_update', 'play_changed', 'rematch_update', 'gift_received', 'gift_opened', 'letters_changed']) {
       expect(isUserEvent(type), type).toBe(true);
     }
     for (const type of ['dm', 'dm_typing', 'group_msg', 'challenge_invite', 'match_found', 42, undefined]) {
@@ -15,6 +15,11 @@ describe('which events reach which hook', () => {
     const ev = { type: 'play_changed', game: 'stories', lobbyId: 'l' };
     expect(userEventOf(ev, 'user:me')).toEqual(ev);
     expect(userEventOf(ev, 'group:g')).toBeNull();
+  });
+
+  it('hears that something changed in your letters only on your own channel', () => {
+    expect(userEventOf({ type: 'letters_changed' }, 'user:me')).toEqual({ type: 'letters_changed' });
+    expect(userEventOf({ type: 'letters_changed' }, 'group:g')).toBeNull();
   });
 
   it('gives direct messages, receipts and typing to the chat hook, from your own channel only', () => {

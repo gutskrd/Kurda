@@ -169,14 +169,14 @@ export function keyboardFromGuesses(guesses: GuessRow[]): Record<string, LetterF
 
 export type ApplyResult =
   | { ok: true; game: WordleGame; row: GuessRow }
-  | { ok: false; game: WordleGame; reason: GuessRejection };
+  | { ok: false; game: WordleGame; reason: GuessRejection | 'finished' };
 
 /**
  * Apply a guess to the game. Rejected guesses (wrong length / not a word) do
  * not consume an attempt and leave the game unchanged. A valid guess is scored
  * against the (server-held) target, appended, and the status advances to `won`
  * on an all-green guess or `lost` after MAX_ATTEMPTS. Applying to a finished
- * game is a no-op.
+ * game changes nothing and says so: `finished`, not a reason about the guess.
  */
 export function applyGuess(
   game: WordleGame,
@@ -185,7 +185,7 @@ export function applyGuess(
   dict: KurdishDictionary,
 ): ApplyResult {
   if (game.status !== 'playing') {
-    return { ok: false, game, reason: 'wrong-length' };
+    return { ok: false, game, reason: 'finished' };
   }
 
   const validation = validateGuess(guess, game.targetLength, dict);

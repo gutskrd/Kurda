@@ -112,6 +112,33 @@ describe('cards from approved words', () => {
   });
 });
 
+describe('the facts table', () => {
+  it('says sometimes where honest people would answer either way, at most three times a card', async () => {
+    const api = fakeApi(on('GET', /^\/admin\/game-content\/words\?/, json({ words })), on('POST', '/admin/game-content/from-word', json(row(), 201)));
+    const page = await open('#/game-content/words');
+    const identities = page.querySelectorAll('section')[page.querySelectorAll('section').length - 1]!;
+    await click(button(identities.querySelectorAll('.gc-word')[0]!, 'Use this word'));
+    await choose(Array.from(identities.querySelectorAll('select')).find((s) => s.querySelector('option[value="animal"]'))!, 'animal');
+    for (const fact of ['It is alive', 'It is an animal']) await choose(identities.querySelector(`select[aria-label="${fact}"]`), 'yes');
+    for (const fact of ['You find it at home', 'It works outdoors', 'It makes a sound']) await choose(identities.querySelector(`select[aria-label="${fact}"]`), 'sometimes');
+    // three is a card’s share: a fourth row cannot say it, and a row that does keeps the choice
+    const fourth = identities.querySelector<HTMLSelectElement>('select[aria-label="It can fly"]')!;
+    expect(fourth.querySelector<HTMLOptionElement>('option[value="sometimes"]')!.disabled).toBe(true);
+    expect(identities.querySelector<HTMLSelectElement>('select[aria-label="It makes a sound"]')!.querySelector<HTMLOptionElement>('option[value="sometimes"]')!.disabled).toBe(false);
+    await click(button(identities, 'Make an identity'));
+    expect(api.calls.find((c) => c.method === 'POST')!.body).toMatchObject({
+      facts: { alive: true, animal: true, 'at-home': 'sometimes', 'works-outdoors': 'sometimes', 'makes-sound': 'sometimes' },
+    });
+  });
+
+  it('shows a stored sometimes as such, and nature as a kind of thing', async () => {
+    fakeApi(on('GET', `/admin/game-content/${ID}`, json(row({ payload: { ...row().payload, category: 'nature', facts: { alive: false, 'in-sky': 'sometimes', hot: false, place: false } } }))));
+    const page = await open(`#/game-content/${ID}`);
+    expect(page.querySelector<HTMLSelectElement>('select[aria-label="It is in the sky"]')!.value).toBe('sometimes');
+    expect(text(page)).toContain('Nature');
+  });
+});
+
 describe('the editors', () => {
   it('keeps an identity’s Kurdish read only, as it was copied, and lets its other meanings be written', async () => {
     fakeApi(on('GET', `/admin/game-content/${ID}`, json(row())));

@@ -161,6 +161,42 @@ describe('Tîpa Dawî, the room', () => {
     expect(await screen.findByText(/vexwarin|xwari/)).toBeInTheDocument();
   });
 
+  it('says why the letter is the one before a soft ending, and when any letter will do', async () => {
+    serve({
+      '/mp/last-letter/g1': active({ required: 'd', requiredSpellings: ['d'], requiredFrom: { word: 'azadî', vowel: 'î' }, chain: [{ n: 1, seat: 2, word: 'azadî', meaning: null }] }),
+    });
+    renderPlay(<LastLetter />, { route: '/app/games/last-letter?id=g1' });
+    expect(await screen.findByText('azadî ends in î, so the letter before it counts: d')).toBeInTheDocument();
+  });
+
+  it('opens the letter once everyone was stuck on it', async () => {
+    serve({ '/mp/last-letter/g1': active({ required: null, requiredSpellings: [], openLetter: 'm', chain: [{ n: 1, seat: 2, word: 'qelem', meaning: null }] }) });
+    renderPlay(<LastLetter />, { route: '/app/games/last-letter?id=g1' });
+    expect(await screen.findByText('Nobody found a word starting with m, so the next word may start with any letter.')).toBeInTheDocument();
+  });
+
+  it('asks “did you mean” for a mark left off, keeps the turn, and offers the word in the box', async () => {
+    serve({
+      '/mp/last-letter/g1': active({ required: 'k', requiredSpellings: ['k'], chain: [{ n: 1, seat: 2, word: 'çok', meaning: null }] }),
+      'POST /mp/last-letter/g1/moves': {
+        view: active({ required: 'k', requiredSpellings: ['k'], chain: [{ n: 1, seat: 2, word: 'çok', meaning: null }] }),
+        outcome: { accepted: false, reason: null, strikes: 0, out: false, spelling: 'keçik' },
+      },
+    });
+    renderPlay(<LastLetter />, { route: '/app/games/last-letter?id=g1' });
+    const input = await screen.findByLabelText('Your word');
+    await userEvent.type(input, 'kecik');
+    await userEvent.click(screen.getByRole('button', { name: 'Play the word' }));
+    expect(await screen.findByText('Did you mean keçik? It’s still your turn.')).toBeInTheDocument();
+    expect(input).toHaveValue('keçik');
+  });
+
+  it('shows a word’s meaning in the reader’s language when the lesson gives it', async () => {
+    serve({ '/mp/last-letter/g1': active({ chain: [{ n: 1, seat: 2, word: 'sêv', meaning: 'apple', meanings: { en: 'apple', de: 'Apfel' } }] }) });
+    renderPlay(<LastLetter />, { route: '/app/games/last-letter?id=g1' });
+    expect(await screen.findByText('apple')).toBeInTheDocument();
+  });
+
   it('writes a Soranî game right to left, with how a first vowel is written', async () => {
     serve({
       '/mp/last-letter/g1': active({ dialect: 'ckb', required: 'ا', requiredSpellings: ['ئا'], chain: [{ n: 1, seat: 2, word: 'چرا', meaning: null }] }, { dialect: 'ckb' }),
@@ -193,6 +229,8 @@ describe('Tîpa Dawî, the room', () => {
     renderPlay(<LastLetter />, { route: '/app/games/last-letter?id=g1' });
     expect(await screen.findByRole('heading', { name: 'Game over' })).toBeInTheDocument();
     expect(screen.getByText('Hevalo won this time.')).toBeInTheDocument();
+    // and every word of the game, read again with who played it
+    expect(screen.getByRole('heading', { name: 'The words of this game' })).toBeInTheDocument();
     const results = screen.getByRole('list', { name: 'Results' });
     expect(within(results).getByText('Hevalo')).toBeInTheDocument();
     expect(within(results).getByText('Words: 8')).toBeInTheDocument();

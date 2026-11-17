@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { Pressable } from '../theme/Pressable';
-import { lessonStates, lessonXpRange, type PathStop, type PathUnit } from '@kurda/shared';
+import { TOPIC_STARS, lessonStates, lessonXpRange, starPath, type PathStop, type PathUnit } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
@@ -10,7 +11,7 @@ import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import type { ToneColors } from './path';
+import { RING, STAR, type ToneColors } from './path';
 import type { SkillNode } from './types';
 import { pressedDim } from '../theme/motion';
 import { heldRow } from '../theme/MotionParts';
@@ -25,9 +26,16 @@ type Unit = PathUnit<SkillNode>;
  * what opens it.
  *
  * A skill's lessons are listed too, each one a way in once it is open, so a
- * finished lesson can be played again on its own. Above the button, what the
- * lesson it opens pays (shared `lessonXpRange`, the server's own numbers): a
- * first time through, or a replay's smaller share.
+ * finished lesson can be played again on its own; and once it has a star, its
+ * stars and the round it is in, with what another round earns. Above the
+ * button, what the lesson it opens pays (shared `lessonXpRange`, the server's
+ * own numbers): a first time through, or a replay's smaller share.
+ *
+ * A chapter's story is its prize: shut, it says what opens it; open, it says
+ * the chapter is complete, opens the story in the reader, and offers the
+ * chapter's own review in practice (`onPractise`) — what the chest at a
+ * chapter's end offered before the story took its place, and still offers in
+ * a unit that has no story.
  */
 export function StopSheet({
   open,
@@ -35,6 +43,7 @@ export function StopSheet({
   onClose,
   onLesson,
   onReview,
+  onPractise,
   onTips,
   onStory,
 }: {
@@ -43,6 +52,8 @@ export function StopSheet({
   onClose: () => void;
   onLesson: (lessonId: string) => void;
   onReview: () => void;
+  /** the chapter's own review in practice */
+  onPractise: (unitId: string) => void;
   onTips: (skill: SkillNode) => void;
   onStory: (slug: string) => void;
 }): React.JSX.Element {
@@ -51,7 +62,7 @@ export function StopSheet({
     <BottomSheet visible={open !== null} onClose={onClose} contentStyle={styles.scroller}>
       {open && tone ? (
         <SheetScrollView contentContainerStyle={styles.body}>
-          <Card stop={open.stop} unit={open.unit} tone={tone} onLesson={onLesson} onReview={onReview} onTips={onTips} onStory={onStory} />
+          <Card stop={open.stop} unit={open.unit} tone={tone} onLesson={onLesson} onReview={onReview} onPractise={onPractise} onTips={onTips} onStory={onStory} />
         </SheetScrollView>
       ) : null}
     </BottomSheet>
@@ -64,6 +75,7 @@ function Card({
   tone,
   onLesson,
   onReview,
+  onPractise,
   onTips,
   onStory,
 }: {
@@ -72,6 +84,7 @@ function Card({
   tone: ToneColors;
   onLesson: (lessonId: string) => void;
   onReview: () => void;
+  onPractise: (unitId: string) => void;
   onTips: (skill: SkillNode) => void;
   onStory: (slug: string) => void;
 }): React.JSX.Element | null {
@@ -98,13 +111,24 @@ function Card({
     );
   }
 
+  // the chapter is complete: said in gold, as what was won
+  const complete = (
+    <View style={[styles.won, { flexDirection: dir.row, alignSelf: dir.rtl ? 'flex-end' : 'flex-start', backgroundColor: colors.gold }]} testID="lp-chapter-complete">
+      <Icon name="check" size={14} color={colors.textOnGold} />
+      <Text style={[styles.wonText, { color: colors.textOnGold }]}>{t('coursemap.path.trophyDone')}</Text>
+    </View>
+  );
+  const practise = (
+    <ClayButton label={t('coursemap.path.practiseChapter')} variant="outline" size="large" onPress={() => onPractise(unit.unitId)} style={styles.action} />
+  );
+
   if (stop.kind === 'trophy') {
     return (
       <>
         {eyebrow(t('coursemap.path.unit', { n: unit.number }))}
         {title(stop.earned ? t('coursemap.path.trophyDone') : t('coursemap.path.trophyTitle'))}
         {line(stop.earned ? t('coursemap.path.trophyDoneWhy', { unit: unit.title }) : t('coursemap.path.trophyHow', { unit: unit.title }))}
-        {stop.earned ? <ClayButton label={t('coursemap.path.practise')} variant="outline" size="large" onPress={onReview} style={styles.action} /> : null}
+        {stop.earned ? practise : null}
       </>
     );
   }
@@ -113,21 +137,24 @@ function Card({
     return (
       <>
         {eyebrow(t('coursemap.path.unit', { n: unit.number }))}
+        {stop.open ? complete : null}
         {title(t('coursemap.path.storyTitle'))}
         <Text style={[styles.tale, dir.text, { color: colors.textPrimary }]}>{stop.title}</Text>
         {line(stop.open ? t('coursemap.path.storyOpen') : t('coursemap.path.storyShut'))}
+        {stop.open ? null : (
+          <Text style={[styles.small, dir.text, { color: colors.textSecondary }]}>{t('coursemap.path.unitDone', { done: unit.done, total: unit.total })}</Text>
+        )}
         {stop.open ? <ClayButton label={t('coursemap.path.storyRead')} tone="primary" size="large" onPress={() => onStory(stop.slug)} style={styles.action} /> : null}
+        {stop.open ? practise : null}
       </>
     );
   }
 
-  // the guide opens the unit's notes, never this card
-  if (stop.kind === 'guide') return null;
-
   const { skill } = stop;
   const lessons = skill.lessons ?? [];
   const states = lessonStates(skill);
-  const share = stop.lessonsTotal > 0 ? stop.lessonsDone / stop.lessonsTotal : 0;
+  // the round being played: its lessons finished, and once every round is played, all of them
+  const share = stop.lessonsTotal > 0 ? (stop.rounds > 0 ? stop.pieces / stop.lessonsTotal : stop.lessonsDone / stop.lessonsTotal) : 0;
   const launch = stop.launch;
   const action =
     stop.state === 'locked' || !launch
@@ -192,14 +219,23 @@ function Card({
       ) : null}
       {stop.lessonsTotal > 0 && stop.state !== 'locked' ? (
         <View style={styles.progress}>
-          <View style={[styles.bar, { backgroundColor: colors.controlTrack }]}>
-            <View style={[styles.barFill, { width: `${Math.round(share * 100)}%`, backgroundColor: tone.fill }, dir.rtl && styles.barEnd]} />
-          </View>
+          {stop.rounds > 0 ? <Stars rounds={stop.rounds} /> : null}
+          {stop.rounds < TOPIC_STARS ? (
+            // a place on the road, not something won: the app's violet, as the ring's pieces are
+            <View style={[styles.bar, { backgroundColor: colors.controlTrack }]}>
+              <View style={[styles.barFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.primary }, dir.rtl && styles.barEnd]} />
+            </View>
+          ) : null}
           <Text style={[styles.small, dir.text, { color: colors.textSecondary }]}>
-            {t('coursemap.path.lessonsDone', { done: stop.lessonsDone, total: stop.lessonsTotal })}
+            {stop.rounds >= TOPIC_STARS
+              ? t('coursemap.path.roundsDone', { last: TOPIC_STARS })
+              : stop.rounds > 0
+                ? t('coursemap.path.round', { round: stop.rounds + 1, last: TOPIC_STARS, done: stop.pieces, total: stop.lessonsTotal })
+                : t('coursemap.path.lessonsDone', { done: stop.lessonsDone, total: stop.lessonsTotal })}
           </Text>
         </View>
       ) : null}
+      {stop.state === 'done' && stop.rounds > 0 ? line(t(stop.rounds < TOPIC_STARS ? 'coursemap.path.roundsWhy' : 'coursemap.path.roundsAll')) : null}
       {stop.state === 'done' ? line(stop.finish === 'refresh' ? t('coursemap.path.refreshWhy') : t('coursemap.strength', { percent: skill.strength })) : null}
       {stop.state === 'locked' ? line(stop.after ? t('coursemap.path.lockedAfter', { title: stop.after.title }) : t('coursemap.lockedBadge')) : null}
       {stop.state !== 'locked' && !launch ? line(t('coursemap.path.notYet')) : null}
@@ -227,6 +263,33 @@ function Card({
   );
 }
 
+/**
+ * A topic's stars in its sheet, three in a row: one in the app's gold for
+ * each round played, the rest the ring's empty track. Said by the line under
+ * them, so a screen reader passes them by.
+ */
+function Stars({ rounds }: { rounds: number }): React.JSX.Element {
+  const { colors, scheme } = useTheme();
+  const dir = useDirection();
+  return (
+    <View style={[styles.stars, { flexDirection: dir.row }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID={`lp-sheet-stars-${rounds}`}>
+      {Array.from({ length: TOPIC_STARS }, (_, i) => (
+        <Svg key={i} width={STAR_SIZE} height={STAR_SIZE} viewBox="0 0 24 24">
+          <Path
+            d={starPath(12, 12.6, 10.6)}
+            fill={i < rounds ? colors.gold : RING[scheme].track}
+            stroke={i < rounds ? STAR.edge : RING[scheme].edge}
+            strokeWidth={1.4}
+            strokeLinejoin="round"
+          />
+        </Svg>
+      ))}
+    </View>
+  );
+}
+
+const STAR_SIZE = 26;
+
 const styles = StyleSheet.create({
   // the gutter is the scroll view's own, so the card scrolls edge to edge
   scroller: { paddingHorizontal: 0 },
@@ -248,6 +311,9 @@ const styles = StyleSheet.create({
   barFill: { height: 8, borderRadius: radii.pill },
   barEnd: { alignSelf: 'flex-end' },
   action: { marginTop: spacing.xs },
+  stars: { gap: 4 },
+  won: { alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill },
+  wonText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   xp: { alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill },
   xpText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   tips: { alignSelf: 'center', alignItems: 'center', gap: spacing.xs + 2, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md },

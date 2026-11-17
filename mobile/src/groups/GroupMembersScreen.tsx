@@ -10,7 +10,7 @@ import { haptic } from '../feedback/haptics';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { GradientBackground } from '../theme/glass';
+import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { EmptyState } from '../theme/EmptyState';
@@ -91,6 +91,8 @@ export function GroupMembersScreen({
   const [detail, setDetail] = useState<GroupDetail | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // the page could not be read at all: said, with the way to ask again
+  const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [reporting, setReporting] = useState(false);
   const [banning, setBanning] = useState<GroupMember | null>(null);
   const [adding, setAdding] = useState(false);
@@ -102,12 +104,13 @@ export function GroupMembersScreen({
       groupDetail(client, groupId).then((res) => {
         if (res.ok) {
           setDetail(res.data);
+          setLoadError(null);
           // someone banned is told a group's name and nothing of its people: this page is not theirs either
           setMissing(res.data.myRole === null);
         } else if (res.error.code === 'GROUP_NOT_FOUND' || res.error.status === 404) setMissing(true);
-        else setError(describeError(res.error, t));
+        else setLoadError(res.error);
       }),
-    [client, groupId, t],
+    [client, groupId],
   );
 
   useFocusEffect(
@@ -218,8 +221,14 @@ export function GroupMembersScreen({
         {missing ? (
           <EmptyState title={t('groups.missing.title')} body={t('groups.missing.body')} action={{ label: t('groups.missing.back'), onPress: onExit }} />
         ) : detail === null ? (
-          error ? (
-            <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>
+          loadError ? (
+            <ErrorRetry
+              message={describeError(loadError, t)}
+              onRetry={() => {
+                setLoadError(null);
+                void load();
+              }}
+            />
           ) : (
             <InfoSkeleton />
           )
@@ -311,7 +320,7 @@ export function GroupMembersScreen({
             }}
             onFindPeople={() => {
               setAdding(false);
-              navigation.navigate('Tabs', { screen: 'Search' });
+              navigation.navigate('Search');
             }}
           />
         ) : null}
@@ -369,7 +378,8 @@ function MemberRow({
       ) : onMore ? (
         <Pressable
           onPress={onMore}
-          hitSlop={4}
+          // a fingertip past its edges, still inside the row: a near miss opens the menu rather than the profile behind it
+          reach="open"
           accessibilityRole="button"
           accessibilityLabel={t('post.menu')}
           style={({ pressed }) => [styles.more, pressed && heldDim]}

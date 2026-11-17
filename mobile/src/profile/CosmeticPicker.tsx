@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { Toggle } from '../theme/Toggle';
+import { ToggleRow } from '../theme/Toggle';
 import { countByCategory, itemCategory, matchesQuery, type ItemCategory } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -205,7 +205,8 @@ export function CosmeticPicker({
         accessibilityHint={on ? t('edit.hint.takeOff') : t('edit.hint.wear')}
         style={[styles.tile, { width: tile }]}
       >
-        <View style={[styles.ring, wide ? styles.ringWide : styles.ringSquare, { borderColor: on ? colors.textPrimary : 'transparent' }]}>
+        {/* what you are wearing is ringed and ticked in the violet every choice that is on wears */}
+        <View style={[styles.ring, wide ? styles.ringWide : styles.ringSquare, { borderColor: on ? colors.primary : 'transparent' }]}>
           {tier ? (
             <View style={[styles.frameTile, { width: art, height: art, backgroundColor: colors.controlTrack }]}>
               <SeasonFramed tier={tier} size={Math.round(art * 0.86)} label={name}>
@@ -236,15 +237,15 @@ export function CosmeticPicker({
             </View>
           ) : null}
           {on ? (
-            <View style={[styles.check, dir.row === 'row-reverse' ? styles.checkLeft : styles.checkRight, { backgroundColor: colors.textPrimary }]}>
-              <Icon name="check" size={12} color={colors.background} />
+            <View style={[styles.check, dir.row === 'row-reverse' ? styles.checkLeft : styles.checkRight, { backgroundColor: colors.primary }]}>
+              <Icon name="check" size={12} tone="onPrimary" />
             </View>
           ) : null}
         </View>
         <Text
           style={[
             styles.tileName,
-            { color: on ? colors.textPrimary : colors.textSecondary, fontWeight: on ? typography.weights.semibold : typography.weights.regular },
+            { color: on ? colors.primary : colors.textSecondary, fontWeight: on ? typography.weights.semibold : typography.weights.regular },
           ]}
           numberOfLines={2}
         >
@@ -318,16 +319,10 @@ export function CosmeticPicker({
           {/*
             Showing it and owning it are different questions, so they are
             different controls: this hides the icon without giving it up.
+            The words turn it as well as the switch does.
           */}
           {current === 'icon' && ofKind.length > 0 ? (
-            <View style={[styles.toggleRow, { flexDirection: dir.row }]}>
-              <Text style={[styles.toggleLabel, dir.text, { color: colors.textPrimary }]}>{t('edit.showPremiumIcon')}</Text>
-              <Toggle
-                value={showIcon}
-                onValueChange={toggleIcon}
-                accessibilityLabel={t('edit.showPremiumIcon')}
-              />
-            </View>
+            <ToggleRow label={t('edit.showPremiumIcon')} value={showIcon} onValueChange={toggleIcon} />
           ) : null}
         </>
       )}
@@ -361,7 +356,5 @@ const styles = StyleSheet.create({
   empty: { fontSize: typography.sizes.sm, lineHeight: 19 },
   start: { alignSelf: 'flex-start' },
   end: { alignSelf: 'flex-end' },
-  toggleRow: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, minHeight: MIN_TOUCH_TARGET },
-  toggleLabel: { flex: 1, fontSize: typography.ios.row },
   error: { fontSize: typography.sizes.sm },
 });

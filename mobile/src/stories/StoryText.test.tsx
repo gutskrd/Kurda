@@ -1,14 +1,18 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { StoryGlossEntry } from '@kurda/shared';
+import { hueSteps, type StoryGlossEntry } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
+import { PALETTES } from '../theme/palette';
 import { STORY_BODY_SIZE, StoryText, storyLineHeight } from './StoryText';
+import { forgetReach, reachOf } from '../testing/reach';
 
 vi.mock('react-native', () => import('react-native-web'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
+// every control noted as it is drawn, so its reach can be read
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 
 const nan: StoryGlossEntry = { term: 'nan', meanings: { en: 'bread' } };
 
@@ -18,6 +22,10 @@ const story = {
   glossary: [nan],
 };
 
+/** A colour's red, green and blue, however it is written: #862be2, rgb(134, 43, 226) or rgba(134,43,226,1.00). */
+const rgbOf = (colour: string): number[] =>
+  colour.startsWith('#') ? [1, 3, 5].map((at) => parseInt(colour.slice(at, at + 2), 16)) : (colour.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+
 describe('storyLineHeight', () => {
   it('spaces lines for the reader’s size alone — React Native adds the system text size to it', () => {
     expect(storyLineHeight(STORY_BODY_SIZE)).toBe(30);
@@ -26,7 +34,23 @@ describe('storyLineHeight', () => {
 });
 
 describe('StoryText', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    forgetReach();
+  });
+
+  it('lets a paragraph’s translation toggle answer a finger past its edges, but not over the words above it', () => {
+    const translation = { paragraphs: ['My mother bakes bread. The bread is warm.', 'We eat bread.'], lang: 'en' };
+    const text = (shown: number[]) => (
+      <StoryText story={story} onGloss={() => undefined} translation={translation} translated={new Set(shown)} onToggleTranslation={() => undefined} />
+    );
+    const view = renderWithProviders(text([]));
+    // 32 tall and alone on its line: 8 past its sides and its foot, and only the paragraph's 4 up toward a word that opens its meaning
+    expect(reachOf('Translation of paragraph 1')).toEqual({ top: 4, bottom: 8, left: 8, right: 8 });
+    // the same with the translation shown above it
+    view.rerender(text([0]));
+    expect(reachOf('Hide the translation of paragraph 1')).toEqual({ top: 4, bottom: 8, left: 8, right: 8 });
+  });
 
   it('marks a glossary word the first time in each paragraph, and opens its meaning', () => {
     const onGloss = vi.fn();
@@ -67,6 +91,25 @@ describe('StoryText', () => {
     view.rerender(<StoryText story={story} current={null} onReplay={onReplay} />);
     fireEvent.click(screen.getByText('Nan germ e.', { exact: false }));
     expect(onReplay).toHaveBeenCalledTimes(1);
+  });
+
+  it('lays the violet’s wash behind the sentence being read and underlines a word that opens its meaning in violet, by day and by night', async () => {
+    try {
+      for (const scheme of ['light', 'dark'] as const) {
+        // the theme the reader chose, kept where the app keeps it
+        localStorage.setItem('kurda_theme_pref_v1', scheme);
+        renderWithProviders(<StoryText story={story} current={{ paragraph: 0, sentence: 1 }} onGloss={vi.fn()} />);
+        const reading = (): string => (screen.getByText('Nan germ e.', { exact: false }) as HTMLElement).style.backgroundColor;
+        await waitFor(() => expect(rgbOf(reading())).toEqual(rgbOf(hueSteps(scheme, 'violet').wash)));
+        const word = screen.getAllByText('nan')[0] as HTMLElement;
+        expect(rgbOf(word.style.textDecorationColor)).toEqual(rgbOf(PALETTES[scheme].primary));
+        // the sentence that is not being read has no band at all
+        expect((screen.getByText('Dayika min', { exact: false }) as HTMLElement).style.backgroundColor).toBe('');
+        cleanup();
+      }
+    } finally {
+      localStorage.removeItem('kurda_theme_pref_v1');
+    }
   });
 
   it('gives a Listen button only to a paragraph that has recordings, and says which one plays', () => {

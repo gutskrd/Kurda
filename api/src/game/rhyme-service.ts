@@ -1,15 +1,9 @@
 import type pg from 'pg';
-import { dictionaryKey } from '@kurda/shared';
 import { pickRhymePrompt } from './rhyme-prompt.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
-import {
-  evaluateSubmission,
-  InMemoryLexicon,
-  normalizeWord,
-  type Dialect,
-  type RhymeResult,
-  type RhymeQuality,
-} from './rhyme.js';
+import { filterText } from '../moderation/filter.js';
+import { evaluateSubmission, normalizeWord, rhymeWordKey, type Dialect, type RhymeResult, type RhymeQuality } from './rhyme.js';
+import { missedRhymes, rhymeAvailability, rhymeLexicon, type RhymeDialectAvailability, type RhymeHint } from './rhyme-words.js';
 
 /** Answer window for a training round. */
 const WINDOW_MS = 60_000;
@@ -28,6 +22,8 @@ export interface RhymeGameView {
   accepted: number;
   status: 'active' | 'ended';
   xpAwarded: number | null;
+  /** once the round has ended: rhymes the player did not find, with their meanings; null while it runs */
+  missed: RhymeHint[] | null;
 }
 
 export type StartResult = { ok: true; game: RhymeGameView } | { ok: false; reason: 'empty-lexicon' };
@@ -75,9 +71,18 @@ export class RhymeService {
     await this.milestones?.recordSoloGame?.(userId).catch(() => undefined);
   }
 
-  /** Start a training round with a random dictionary prompt. */
+  /** Which dialects have enough prompts to be offered (rhyme-words.ts), for the apps to show the rest as coming soon. */
+  async availability(): Promise<Record<Dialect, RhymeDialectAvailability>> {
+    return rhymeAvailability(this.pool);
+  }
+
+  /**
+   * Start a training round with a random prompt **of the round's dialect**: a
+   * Soranî learner used to be handed a Kurmancî prompt in the Latin alphabet,
+   * which no Soranî answer could rhyme with.
+   */
   async startTraining(userId: string, dialect: Dialect = 'kurmanci'): Promise<StartResult> {
-    const prompt = await pickRhymePrompt(this.pool);
+    const prompt = await pickRhymePrompt(this.pool, dialect);
     if (!prompt) return { ok: false, reason: 'empty-lexicon' };
 
     const inserted = await this.pool.query<GameRow>(
@@ -117,7 +122,7 @@ export class RhymeService {
         const xpAwarded = await this.finish(client, row);
         await client.query('COMMIT');
         await this.finished(userId);
-        const view = this.toView({ ...row, status: 'ended' });
+        const view = await this.endedView({ ...row, status: 'ended' });
         view.xpAwarded = xpAwarded;
         return {
           ok: true,
@@ -126,9 +131,8 @@ export class RhymeService {
         };
       }
 
-      const normalized = normalizeWord(word);
-      const known = await this.wordExists(client, normalized);
-      const lexicon = new InMemoryLexicon(known ? [{ word: normalized, dialect: row.dialect }] : []);
+      const normalized = rhymeWordKey(word, row.dialect);
+      const words = await rhymeLexicon(client, row.dialect, normalized);
 
       // an admin's explicit verdict for this exact pair, if one exists
       const override = await client.query<{ quality: string }>(
@@ -147,7 +151,8 @@ export class RhymeService {
           dialect: row.dialect,
           usedWords: row.used_words,
         },
-        { lexicon, overrideQuality },
+        // a round played alone is still a round of words on a screen: the word filter applies here as in a match
+        { ...words, overrideQuality, isProfane: (w) => filterText(w).flagged },
       );
 
       let updated = row;
@@ -192,7 +197,7 @@ export class RhymeService {
       const xpAwarded = await this.finish(client, row);
       await client.query('COMMIT');
       await this.finished(userId);
-      const view = this.toView({ ...row, status: 'ended' });
+      const view = await this.endedView({ ...row, status: 'ended' });
       view.xpAwarded = xpAwarded;
       return {
         ok: true,
@@ -215,22 +220,11 @@ export class RhymeService {
     return 0;
   }
 
-  /**
-   * Is this a word at all?
-   *
-   * Looked up by the folded key, not the one the guess was normalized with.
-   * Almost every Kurmancî word carries a ç ê î ş or û, and an imported lexicon
-   * stores those folded (1751000115000) — matching on the unfolded key would
-   * reject hundreds of thousands of real words. A missing word is a correct
-   * answer thrown out, which is the more annoying failure of the two.
-   */
-  private async wordExists(executor: Pick<pg.Pool, 'query'>, normalized: string): Promise<boolean> {
-    if (!normalized) return false;
-    const res = await executor.query<{ exists: boolean }>(
-      `SELECT EXISTS (SELECT 1 FROM dict_entries WHERE headword_folded = $1) AS exists`,
-      [dictionaryKey(normalized)],
-    );
-    return res.rows[0]?.exists ?? false;
+  /** The view of a round that has ended, with the rhymes the player missed. */
+  private async endedView(row: GameRow): Promise<RhymeGameView> {
+    const view = this.toView(row);
+    view.missed = await missedRhymes(this.pool, row.dialect, row.prompt, row.used_words).catch(() => []);
+    return view;
   }
 
   private toView(row: GameRow): RhymeGameView {
@@ -250,6 +244,7 @@ export class RhymeService {
       accepted: row.accepted,
       status: row.status,
       xpAwarded: null,
+      missed: null,
     };
   }
 }

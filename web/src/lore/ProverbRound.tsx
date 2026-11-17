@@ -35,6 +35,7 @@ type Phase = 'intro' | 'round' | 'results';
 const MODE_KEY: Record<ProverbRoundMode, { name: MessageKey; line: MessageKey; ask: MessageKey }> = {
   meaning: { name: 'lore.round.mode.meaning', line: 'lore.round.mode.meaningLine', ask: 'lore.round.ask.meaning' },
   situation: { name: 'lore.round.mode.situation', line: 'lore.round.mode.situationLine', ask: 'lore.round.ask.situation' },
+  complete: { name: 'lore.round.mode.complete', line: 'lore.round.mode.completeLine', ask: 'lore.round.ask.complete' },
 };
 
 /** The first item still to answer, or the length when every one is done. */
@@ -335,6 +336,15 @@ function RoundItem({
         <p className="lore-round-prompt lore-display lore-verse" lang={kurdish.lang} dir={kurdish.dir}>
           {item.proverb}
         </p>
+      ) : item.mode === 'complete' ? (
+        // the missing word is a gap of its own, so it reads as a blank to fill and a screen reader says so
+        <p className="lore-round-prompt lore-display lore-verse" lang={kurdish.lang} dir={kurdish.dir}>
+          {item.before}{' '}
+          <span className="lore-gap" role="img" aria-label={t('lore.round.ask.complete')}>
+            {right !== null ? item.options[right] : '…'}
+          </span>
+          {item.after}
+        </p>
       ) : (
         <p className="lore-round-scene" lang={item.locale} dir="auto">
           {item.scene}
@@ -348,7 +358,7 @@ function RoundItem({
             <li key={i}>
               <button
                 type="button"
-                className={`lore-option${isStruck ? ' is-struck' : ''}${isRight ? ' is-right' : ''}${item.mode === 'situation' ? ' lore-display' : ''}`}
+                className={`lore-option${isStruck ? ' is-struck' : ''}${isRight ? ' is-right' : ''}${item.mode !== 'meaning' ? ' lore-display' : ''}`}
                 disabled={busy || done || isStruck}
                 onClick={() => onChoose(i)}
                 lang={optionLang.lang}

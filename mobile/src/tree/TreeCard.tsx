@@ -58,12 +58,11 @@ export function TreeCard(): React.JSX.Element | null {
           <TreeArt species="beru" stage={1} size={ART} />
         </View>
         <View style={styles.main}>
-          <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+          {/* the invitation is one sentence, said whole: in German it is three lines of this card, and two cut it at "deine Lektionen …" */}
+          <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
             {t('tree.card.plant')}
           </Text>
-          <Text style={[styles.sub, dir.text, { color: colors.textSecondary }]} numberOfLines={2}>
-            {t('tree.card.plantSub')}
-          </Text>
+          <Text style={[styles.sub, dir.text, { color: colors.textSecondary }]}>{t('tree.card.plantSub')}</Text>
         </View>
         <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip ?? undefined} />
       </PressableScale>
@@ -92,9 +91,7 @@ export function TreeCard(): React.JSX.Element | null {
             {stageName(t, tree.stage)}
           </Text>
         </View>
-        <Text style={[styles.sub, dir.text, { color: colors.textSecondary }]} numberOfLines={2}>
-          {sub}
-        </Text>
+        <Text style={[styles.sub, dir.text, { color: colors.textSecondary }]}>{sub}</Text>
       </View>
       {tree.water > 0 ? (
         <View style={[styles.water, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]} testID="tree-card-water">

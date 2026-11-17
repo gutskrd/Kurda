@@ -10,6 +10,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 import { forgetImpostorCategories } from '../impostor/categories';
+import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 import { forgetPartyOffers } from '../party/offer';
 import { navigation } from './testing/navigation';
 import { InviteSheet, orderFriends, recentPlayers, sentText } from './InviteSheet';
@@ -131,6 +132,7 @@ describe('InviteSheet', () => {
     localStorage.clear();
     resetPrefsCache();
     resetRatedChoices();
+    resetCourseDialect();
     navigation.navigate.mockClear();
   });
   afterEach(cleanup);
@@ -266,6 +268,67 @@ describe('InviteSheet', () => {
     });
     forgetPartyOffers();
     forgetImpostorCategories();
+  });
+
+  it('opens Xapînok on the learner’s own Kurdish where it is offered in it, whatever the interface speaks', async () => {
+    rememberCourseDialect('ckb');
+    const offered = (dialect: 'kmr' | 'ckb') =>
+      ok({ dialect, games: [{ id: 'impostor', available: true, difficulties: ['beginner'], levels: {}, levelled: true, minimum: 12 }] });
+    const client = fakeClient(
+      routes({
+        'GET /games/availability?dialect=kmr': offered('kmr'),
+        'GET /games/availability?dialect=ckb': offered('ckb'),
+        'POST /play/lobbies': ok({ game: 'impostor', lobbyId: 'i2', invited: 0 }),
+      }),
+    );
+    testAuth.client = client;
+    const onClose = vi.fn();
+    renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
+    fireEvent.click(await screen.findByRole('radio', { name: 'Xapînok' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toMatchObject({ game: 'impostor', settings: { dialect: 'ckb', difficulty: 'beginner' } });
+    forgetPartyOffers();
+    forgetImpostorCategories();
+  });
+
+  it('makes a Rhyme Match only in a variety with enough prompts for one, whichever the learner learns', async () => {
+    rememberCourseDialect('ckb');
+    const client = fakeClient(
+      routes({
+        'GET /rhyme/availability': ok({ dialects: { kurmanci: { prompts: 150, available: true }, sorani: { prompts: 3, available: false } }, minimum: 40 }),
+        'POST /play/lobbies': ok({ game: 'rhyme-match', lobbyId: 'm2', invited: 0 }),
+      }),
+    );
+    testAuth.client = client;
+    const onClose = vi.fn();
+    renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
+    fireEvent.click(await screen.findByRole('radio', { name: 'Pêşbaziya Serwayan' }));
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/rhyme/availability')).toBe(true));
+    // one variety can make it: nothing to choose
+    await waitFor(() => expect(screen.queryByRole('radiogroup', { name: 'Variety' })).toBeNull());
+    fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toMatchObject({ game: 'rhyme-match', settings: { dialect: 'kurmanci', rated: false } });
+  });
+
+  it('offers both varieties for a Rhyme Match once both have prompts, the learner’s own first', async () => {
+    rememberCourseDialect('ckb');
+    const client = fakeClient(
+      routes({
+        'GET /rhyme/availability': ok({ dialects: { kurmanci: { prompts: 150, available: true }, sorani: { prompts: 80, available: true } }, minimum: 40 }),
+        'POST /play/lobbies': ok({ game: 'rhyme-match', lobbyId: 'm3', invited: 0 }),
+      }),
+    );
+    testAuth.client = client;
+    const onClose = vi.fn();
+    renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
+    fireEvent.click(await screen.findByRole('radio', { name: 'Pêşbaziya Serwayan' }));
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/rhyme/availability')).toBe(true));
+    expect(screen.getByRole('radiogroup', { name: 'Variety' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toMatchObject({ game: 'rhyme-match', settings: { dialect: 'sorani' } });
   });
 
   it('asks Rated or Friendly for a new game, says what each means, and sends the host’s choice', async () => {

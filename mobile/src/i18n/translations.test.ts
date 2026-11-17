@@ -178,3 +178,80 @@ describe('the games’ names', () => {
     }
   });
 });
+
+/*
+ * The words round the phone's own questions: whether Hevalo may notify, and
+ * whether it may use the microphone.
+ *
+ * To allow or not is the phone's question and the phone's word. A screen of
+ * the app's own that says "Allow" before that question is read at review as
+ * steering the answer, and a line after a refusal that tells somebody to
+ * allow is the same push made a second time. So the app says where things
+ * stand and where that is changed, and what can be done instead, in every
+ * language. And what it says Hevalo sends is what the server sends.
+ */
+describe('the words round the phone’s own questions', () => {
+  /** "Allow", in the stem each language's own prompt and the app's older lines used. */
+  const ALLOW: Record<(typeof LOCALES)[number], RegExp> = {
+    en: /allow/i,
+    ku: /destûr/i,
+    ckb: /ڕێگە/,
+    de: /erlaub/i,
+    es: /perm[ií]t|permiso/i,
+    tr: /izin/i,
+    ar: /سماح|اسمح|يسمح/,
+    fr: /autoris/i,
+    nl: /toesta|toegesta|\bsta\b[^.]*\btoe\b/i,
+  };
+  const BEFORE = ['lesson.reminder.title', 'lesson.reminder.body', 'lesson.reminder.note'] as const;
+  const AFTER = [
+    'lesson.speak.micOff',
+    'recorder.micNeeded',
+    'recorder.micHelp',
+    'practice.hub.micOff',
+    'learn.reminders.line',
+    'notifications.device.notAsked',
+    'notifications.device.off',
+    'notifications.device.openSettings',
+  ] as const;
+
+  it('never say "allow", before the question or after a refusal, in any language', () => {
+    for (const locale of LOCALES) {
+      for (const key of [...BEFORE, ...AFTER]) expect(TRANSLATIONS[locale][key], `${locale} ${key}`).not.toMatch(ALLOW[locale]);
+    }
+  });
+
+  /*
+   * What is pushed to a phone (api notifications/streak-reminder-service.ts,
+   * letters/service.ts, badges/service.ts): a reminder on a day the streak is
+   * still waiting, a letter, a badge. A message, a gift and an invite to play
+   * are written to the list inside the app and never pushed, so the screen
+   * before the question may not name them.
+   */
+  it('say what Hevalo sends before the phone asks, and nothing the server does not push', () => {
+    const body = TRANSLATIONS.en['lesson.reminder.body'];
+    for (const sent of [/reminder/i, /streak/i, /letter/i, /badge/i]) expect(body).toMatch(sent);
+    expect(body).not.toMatch(/message|gift|invit|story|offer|news/i);
+    // no reward for saying yes, and no pointing at the question's buttons
+    for (const key of BEFORE) expect(TRANSLATIONS.en[key], key).not.toMatch(/tap|press|choose|free|bonus|xp|gem|unlock|don’t miss|never miss/i);
+  });
+
+  it('say, before the phone asks, that it can be changed in Settings, by the name Settings has in each language', () => {
+    for (const locale of LOCALES) {
+      // the stem, since Kurmancî and Turkish put an ending on the word
+      const settings = TRANSLATIONS[locale]['settings.title'].slice(0, 6);
+      expect(TRANSLATIONS[locale]['lesson.reminder.note'], locale).toContain(settings);
+    }
+  });
+
+  it('say after a refused microphone that it is off for Hevalo, where it is turned on, and what can be done instead', () => {
+    const off = 'The microphone is off for Hevalo.';
+    expect(TRANSLATIONS.en['lesson.speak.micOff']).toBe(`${off} You can turn it on in your device settings, or skip this one.`);
+    expect(TRANSLATIONS.en['recorder.micHelp']).toBe(`${off} You can turn it on in your phone’s settings, or write a comment instead.`);
+    for (const locale of LOCALES) {
+      for (const key of ['lesson.speak.micOff', 'recorder.micHelp', 'practice.hub.micOff'] as const) {
+        expect(TRANSLATIONS[locale][key], `${locale} ${key}`).toContain('Hevalo');
+      }
+    }
+  });
+});

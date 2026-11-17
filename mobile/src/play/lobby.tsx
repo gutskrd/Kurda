@@ -116,7 +116,8 @@ export function LobbyPeople({
                   <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
                     {name}
                   </Text>
-                  {p.isHost ? <Icon name="crown" size={14} color={colors.gold} /> : null}
+                  {/* who hosts, in the quiet ink of a detail: gold is kept for what is earned */}
+                  {p.isHost ? <Icon name="crown" size={14} color={colors.textSecondary} /> : null}
                   {/* anyone else in the lobby can be reported, by seat */}
                   {!p.isMe ? <PlayerReportButton game={game} gameId={lobbyId} seat={p.seat} name={p.name ?? null} /> : null}
                   {onRemove && isHost && !p.isMe && !p.isHost ? (

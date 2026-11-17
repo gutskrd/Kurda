@@ -16,7 +16,7 @@
  * chooses between them.
  */
 import type pg from 'pg';
-import { rhymePrefix, type Dialect } from './rhyme.js';
+import { rhymePattern, type Dialect } from './rhyme.js';
 
 /** How many random candidates to consider before settling for the first. */
 const TRIES = 5;
@@ -38,9 +38,9 @@ const DICTIONARY_DIALECT: Record<Dialect, string> = { kurmanci: 'kurmanji', sora
  * A random prompt from the pool that something in the dictionary rhymes with.
  *
  * With a `dialect`, only words of that dialect are candidates, and only words
- * of that dialect count as partners: a Soranî match used to be handed a
+ * of that dialect count as partners: a Soranî round used to be handed a
  * Kurmancî prompt in the Latin alphabet, which no Soranî answer could rhyme
- * with. Without one, any word will do (solo training, as before).
+ * with. Both modes pass one now; without one, any word will do.
  *
  * Returns null only when the pool (of that dialect) is empty. If none of the
  * candidates has a partner — which takes a dictionary with nothing else ending
@@ -66,14 +66,15 @@ export async function pickRhymePrompt(executor: Executor, dialect?: Dialect): Pr
   if (!first) return null;
 
   for (const candidate of candidates.rows) {
-    const prefix = rhymePrefix(candidate.headword, 1);
-    if (prefix === null) continue;
-    // bound as a parameter, so the reversed-headword index answers it as a
-    // range rather than the table being read; EXISTS stops at the first hit
+    // a partner by the dialect's own rule (rhyme.ts): the rime in Kurmancî, the last letters in Soranî
+    const pattern = rhymePattern(candidate.headword, dialect ?? 'kurmanci');
+    if (pattern === null) continue;
+    // the prefix bound as a parameter, so the reversed-headword index answers it as a range rather than the table
+    // being read; the pattern then tells a partner from a word that only shares those letters
     const partner = await executor.query(
       `SELECT 1 FROM dict_entries
-        WHERE rhyme_key LIKE $1 || '%' AND headword_normalized <> $2 AND ($3::text IS NULL OR dialect = $3) LIMIT 1`,
-      [prefix, candidate.headword_normalized, dict],
+        WHERE rhyme_key LIKE $1 || '%' AND rhyme_key ~ $2 AND headword_normalized <> $3 AND ($4::text IS NULL OR dialect = $4) LIMIT 1`,
+      [pattern.prefix, pattern.any, candidate.headword_normalized, dict],
     );
     if (partner.rowCount) return candidate.headword;
   }

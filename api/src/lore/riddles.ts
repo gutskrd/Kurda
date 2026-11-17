@@ -31,6 +31,7 @@ import {
   dailyLorePick,
   isAppLocale,
   riddleGuessMatches,
+  riddleGuessNear,
   riddleXp,
   type AppLocale,
   type GameDialect,
@@ -247,14 +248,23 @@ export class RiddleService {
 
   /**
    * A guess, checked by the shared rule (`riddleGuessMatches`). Right, it
-   * comes back with the answer; wrong, with nothing more. A signed-in
-   * learner's guesses before a solve or a reveal are counted, and the first
-   * right one solves the riddle and pays.
+   * comes back with the answer; wrong, with how near it was when it was
+   * (`riddleGuessNear`: a word the riddle lists as near, a letter away, or
+   * the answer in the learner's own language, `locale`), and nothing more:
+   * a near guess reveals nothing. A signed-in learner's guesses before a
+   * solve or a reveal are counted, near ones too, and the first right one
+   * solves the riddle and pays.
    */
-  async guess(slug: string, text: string, userId: string | null): Promise<RiddleGuessResult> {
+  async guess(slug: string, text: string, userId: string | null, locale: AppLocale | null = null): Promise<RiddleGuessResult> {
     const r = await this.one(slug);
     const correct = riddleGuessMatches(text, [r.payload.answer, ...r.payload.accepted], r.dialect);
-    if (!userId) return correct ? { correct: true, answer: answer(r), xp: 0 } : { correct: false };
+    const wrong = (): RiddleGuessResult => {
+      // the answer in a Kurdish interface's own language is the answer itself: only another language's is a near miss
+      const own = locale && locale !== 'ku' && locale !== 'ckb' ? r.translations[locale]?.answer : undefined;
+      const near = riddleGuessNear(text, { answers: [r.payload.answer, ...r.payload.accepted], near: r.payload.near, translated: own ? [own] : [] }, r.dialect);
+      return near ? { correct: false, near } : { correct: false };
+    };
+    if (!userId) return correct ? { correct: true, answer: answer(r), xp: 0 } : wrong();
     const xp = await this.tx(async (client) => {
       const p = await this.lockProgress(client, userId, r.id);
       // once solved, or once its answer was shown, a guess changes nothing
@@ -274,7 +284,7 @@ export class RiddleService {
       ]);
       return paid;
     });
-    return correct ? { correct: true, answer: answer(r), xp } : { correct: false };
+    return correct ? { correct: true, answer: answer(r), xp } : wrong();
   }
 
   /** The answer, asked for. A signed-in learner's riddle is revealed from now on, unless they had already solved it. */

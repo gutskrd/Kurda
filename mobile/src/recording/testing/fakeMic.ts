@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
  * expo-audio's recorder and expo-file-system's file calls, for the tests of
  * what records a take: a speaking exercise and a voice note.
  *
- * The microphone answers as the test says (`mic.answer`), every audio mode
- * set is kept in order (`mic.modes`), and a take runs on the test's clock
- * (`mic.recorder.run(ms)`) rather than a real one. As on an iPhone, a take's
- * clock goes back to nought the moment it stops, so a duration read after
- * stopping is caught out. Each take is written to a file of its own, which
- * `mic.files` holds until something deletes it.
+ * The microphone answers as the test says (`mic.answer`), or cannot be asked
+ * for at all (`mic.failToAsk`), every audio mode set is kept in order
+ * (`mic.modes`), and a take runs on the test's clock (`mic.recorder.run(ms)`)
+ * rather than a real one. As on an iPhone, a take's clock goes back to nought
+ * the moment it stops, so a duration read after stopping is caught out. Each
+ * take is written to a file of its own, which `mic.files` holds until
+ * something deletes it.
  *
  * Wired with `vi.mock('expo-audio', () => import('…/recording/testing/fakeMic'))`
  * and the same for 'expo-file-system/legacy'.
@@ -94,6 +95,8 @@ export const mic = {
   /** how big the next take's file turns out */
   nextSize: 24_000,
   failToPrepare: false,
+  /** the request for the microphone itself goes wrong: no answer, an error */
+  failToAsk: false,
   /** the recorder the component under test made */
   recorder: null as FakeRecorder | null,
   reset(): void {
@@ -107,6 +110,7 @@ export const mic = {
     mic.takes = 0;
     mic.nextSize = 24_000;
     mic.failToPrepare = false;
+    mic.failToAsk = false;
     mic.recorder = null;
   },
 };
@@ -117,6 +121,7 @@ export const RecordingPresets = { HIGH_QUALITY: { extension: '.m4a' } };
 
 export async function requestRecordingPermissionsAsync(): Promise<Permission> {
   mic.calls.push('ask');
+  if (mic.failToAsk) throw new Error('the microphone could not be asked for');
   return mic.answer;
 }
 

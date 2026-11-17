@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { formatJoinCode, isPlayGame, parseJoinLink, type GameEmblem, type JoinLinkGame, type JoinedByCode } from '@kurda/shared';
+import { formatJoinCode, isPlayGame, parseJoinLink, PLAY_GAME_EMBLEM, type JoinedByCode } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { GameArt } from '../games/GameArt';
@@ -35,14 +35,6 @@ import './invite-page.css';
  * exists: `parseJoinLink` reads nothing else.
  */
 
-/** The picture each game's invitation wears: its emblem. A story game has none, and wears the ticket. */
-const EMBLEM: Partial<Record<JoinLinkGame, GameEmblem>> = {
-  'wordle-battle': 'peyvok',
-  'rhyme-match': 'rhyme',
-  'last-letter': 'last-letter',
-  impostor: 'impostor',
-  'who-am-i': 'who-am-i',
-};
 
 type Phase = 'ready' | 'joining' | 'joined' | 'refused';
 
@@ -89,7 +81,8 @@ export function InvitePage(): React.JSX.Element {
     );
   }
 
-  const emblem = EMBLEM[link.game] ?? null;
+  // the picture the invitation wears: its game's stamp (a story game has none, and wears the ticket)
+  const emblem = PLAY_GAME_EMBLEM[link.game] ?? null;
   const name = host ? host.displayName || host.username : null;
   const back = location.pathname + location.search;
   const signedIn = status === 'signedIn';

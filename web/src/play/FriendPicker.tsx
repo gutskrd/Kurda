@@ -7,6 +7,7 @@ import { TicketIcon } from '../components/icons';
 import { SearchField } from '../components/SearchField';
 import { useT } from '../i18n/I18nProvider';
 import type { UserSummary } from '../lib/types';
+import { ticketToneClass } from '../ui/Ticket';
 import { recentFriends } from './playApi';
 
 /** Friends a picker asks for: as many as `GET /friends` gives in one page. */
@@ -95,7 +96,7 @@ export function FriendPicker({
 
   const recentCount = visible.filter((f) => recent.includes(f.userId)).length;
   return (
-    <fieldset className={`invite-friends${tone ? ` ticket--${tone}` : ''}`}>
+    <fieldset className={`invite-friends${tone ? ` ${ticketToneClass(tone)}` : ''}`}>
       <legend className="chip-radio-legend">{t('play.invite.friends')}</legend>
       <SearchField
         icon

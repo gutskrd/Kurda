@@ -8,6 +8,8 @@ import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { Celebration, useCelebrationsHeld } from '../ranks/Celebration';
 import { badgeDesc, badgeNamed, badgeTierNamed, unitWord, withMeaning, type Translate } from '../ranks/names';
+import { ShareWin } from '../share/ShareWin';
+import { badgeShare } from '../share/winText';
 import { Medal } from './parts';
 
 /** One unlock waiting to be celebrated. */
@@ -29,6 +31,9 @@ export interface Unlock {
  *
  * Never on top of a game being played, and never over a game's own result:
  * both hold the queue until they are done.
+ *
+ * Under the way on there is a quiet Share (share/ShareWin.tsx): the badge by
+ * its name, said plainly, and the site's address. Nothing about who earned it.
  */
 export function BadgeCelebrations(): React.JSX.Element | null {
   const { client, status } = useAuth();
@@ -111,6 +116,7 @@ export function BadgeCelebrations(): React.JSX.Element | null {
         </>
       }
       action={queue.length > 1 ? t('badges.next') : t('rankResult.continue')}
+      below={<ShareWin text={badgeShare(t, named.name)} />}
       onClose={done}
     />
   );

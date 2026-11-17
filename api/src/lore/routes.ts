@@ -7,14 +7,14 @@
  *   GET  /riddles/daily?dialect=           { slug }: the riddle of the viewer's day
  *   GET  /riddles/:slug                    { riddle }: its card, and the hints this learner has taken
  *   POST /riddles/:slug/hint               { index }: one hint (kept, in order, for a signed-in learner)
- *   POST /riddles/:slug/guess              { guess }: { correct: false } or { correct: true, answer, xp }
+ *   POST /riddles/:slug/guess              { guess, locale? }: { correct: false, near? } or { correct: true, answer, xp }
  *   POST /riddles/:slug/reveal             { answer }: the answer, asked for (a signed-in learner's riddle is revealed from now on)
  *   GET  /proverbs?dialect=&theme=         { proverbs, themes, today }
  *   GET  /proverbs/:slug                   { proverb }
  *
  * The round on the proverbs is a solo round, so it needs an account (a
  * guest's counts), as every game played alone does:
- *   POST /proverbs/rounds                  { dialect, mode: 'meaning' | 'situation' }: a round of five, without its answers (20 a minute)
+ *   POST /proverbs/rounds                  { dialect, mode: 'meaning' | 'situation' | 'complete' }: a round of five, without its answers (20 a minute)
  *   GET  /proverbs/rounds/open?dialect=&mode=   { id }: the round of that mode left unfinished, to come back to, or null
  *   GET  /proverbs/rounds/:id              the round as it stands
  *   POST /proverbs/rounds/:id/answers      { index, answer: { choice }, attempt? }: one try, checked here
@@ -38,6 +38,8 @@ import {
   PROVERB_ROUND_MODES,
   PROVERB_THEMES,
   SOLO_MAX_ATTEMPTS,
+  isAppLocale,
+  type AppLocale,
 } from '@kurda/shared';
 import { requireAuth } from '../plugins/auth.js';
 import type { SoloService } from '../games/solo.js';
@@ -50,7 +52,8 @@ const dialectQuery = z.object({ dialect: z.enum(GAME_DIALECTS) });
 const proverbQuery = z.object({ dialect: z.enum(GAME_DIALECTS), theme: z.preprocess(absentIfEmpty, z.enum(PROVERB_THEMES).optional()) });
 const slugParam = z.object({ slug: z.string().regex(GAME_SLUG_PATTERN) });
 const hintBody = z.object({ index: z.number().int().min(0).max(LORE_COUNTS.hints.max - 1) });
-const guessBody = z.object({ guess: z.string().trim().min(1).max(LORE_LIMITS.answer * 2) });
+// the interface language, so a guess that is the answer in it can be told to say it in Kurdish
+const guessBody = z.object({ guess: z.string().trim().min(1).max(LORE_LIMITS.answer * 2), locale: z.string().max(8).optional() });
 const idParam = z.object({ id: z.uuid() });
 const roundBody = z.object({ dialect: z.enum(GAME_DIALECTS), mode: z.enum(PROVERB_ROUND_MODES) });
 const openQuery = roundBody;
@@ -94,7 +97,12 @@ export function registerLoreRoutes(app: FastifyInstance, deps: LoreDeps): { ridd
   );
 
   app.post('/riddles/:slug/guess', { schema: { params: slugParam, body: guessBody }, config: TRIES }, async (req) =>
-    riddles.guess((req.params as z.infer<typeof slugParam>).slug, (req.body as z.infer<typeof guessBody>).guess, viewer(req)),
+    riddles.guess(
+      (req.params as z.infer<typeof slugParam>).slug,
+      (req.body as z.infer<typeof guessBody>).guess,
+      viewer(req),
+      isAppLocale((req.body as z.infer<typeof guessBody>).locale) ? ((req.body as z.infer<typeof guessBody>).locale as AppLocale) : null,
+    ),
   );
 
   app.post('/riddles/:slug/reveal', { schema: { params: slugParam }, config: { ...TRIES, skipValidation: true } }, async (req) =>

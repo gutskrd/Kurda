@@ -6,6 +6,7 @@ import { AA_NORMAL, contrastRatio } from '../a11y/contrast';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { DARK, LIGHT } from '../theme/palette';
+import { gameColour } from './joinCode';
 import { Ticket, TicketBurst, TicketStamp, ticketTone, useChangedSinceMount } from './Ticket';
 
 vi.mock('react-native', () => import('./testing/native'));
@@ -22,14 +23,18 @@ afterEach(() => {
 const tick = () => act(async () => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 
 describe('ticketTone', () => {
-  it('fills a game’s stub with that game’s own colour, a friendship’s with the brand’s ink, and a spent one in grey', () => {
+  it('fills a game’s stub with that game’s own colour, a friendship’s with the brand’s violet, and a spent one in grey', () => {
     for (const colors of [LIGHT, DARK]) {
-      expect(ticketTone(colors, 'wordle-battle').face).toBe(colors.success);
-      expect(ticketTone(colors, 'rhyme-match').face).toBe(colors.gold);
+      for (const game of ['wordle-battle', 'rhyme-match', 'impostor', 'who-am-i'] as const) {
+        const { face } = ticketTone(colors, game);
+        expect(face).toBe(gameColour(colors, game));
+        // the green says a right answer and the gold something earned: an invitation is neither
+        expect([colors.success, colors.gold]).not.toContain(face);
+      }
       expect(ticketTone(colors, 'stories').face).toBe(colors.primary);
       expect(ticketTone(colors, 'friend').face).toBe(colors.primary);
       const spent = ticketTone(colors, 'rhyme-match', true);
-      expect(spent.face).not.toBe(colors.gold);
+      expect(spent.face).not.toBe(gameColour(colors, 'rhyme-match'));
       expect(spent.lip).toBeNull();
     }
   });

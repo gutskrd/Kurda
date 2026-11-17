@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useEffect, useState } from 'react';
 import { render, screen, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { LEAVE_MS } from '../lib/motion';
+import { RECENT_MS, watchOpeners } from '../lib/opener';
 import { Modal } from './Modal';
 import { Sheet } from './Sheet';
 
@@ -164,5 +165,127 @@ describe.each([
     expect(document.querySelector('.sheet-grip')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});
+
+describe('where a dialog comes from', () => {
+  let stop: () => void = () => undefined;
+
+  beforeEach(() => {
+    stop = watchOpeners();
+  });
+
+  afterEach(() => {
+    stop();
+    vi.useRealTimers();
+    vi.stubGlobal('matchMedia', undefined);
+  });
+
+  /** The panel of whatever is open, or still leaving. */
+  const panel = (): HTMLElement => document.querySelector<HTMLElement>('.modal-panel, .sheet-panel')!;
+
+  it('grows out of the point that was pressed to open it', () => {
+    withMotion();
+    render(
+      <I18nProvider>
+        <Opened />
+      </I18nProvider>,
+    );
+    // a browser without layout rests the panel at the window's corner with no size, so its middle is that corner
+    fireEvent.click(screen.getByRole('button', { name: 'open' }), { clientX: 310, clientY: 620, detail: 1 });
+    expect(screen.getByRole('dialog', { name: 'Invite friends' })).toBe(panel());
+    expect(panel()).toHaveClass('is-from-opener');
+    expect(panel().style.transformOrigin).toBe('calc(50% + 310px) calc(50% + 620px)');
+  });
+
+  it('grows out of the control the keyboard was on', () => {
+    withMotion();
+    render(
+      <I18nProvider>
+        <Opened />
+      </I18nProvider>,
+    );
+    const opener = screen.getByRole('button', { name: 'open' });
+    const drawn = { left: 40, top: 700, right: 140, bottom: 740, width: 100, height: 40, x: 40, y: 700, toJSON: () => ({}) };
+    opener.getBoundingClientRect = () => drawn as DOMRect;
+    opener.focus();
+    // Enter on a button reaches the page as a click at no point at all
+    fireEvent.click(opener, { clientX: 0, clientY: 0, detail: 0 });
+    expect(panel()).toHaveClass('is-from-opener');
+    expect(panel().style.transformOrigin).toBe('calc(50% + 90px) calc(50% + 720px)');
+  });
+
+  it('goes back to where it came from: the picture that leaves keeps the same point', () => {
+    withMotion();
+    render(
+      <I18nProvider>
+        <Opened />
+      </I18nProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'open' }), { clientX: 310, clientY: 620, detail: 1 });
+    vi.useFakeTimers();
+    act(() => {
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(panel().closest('.is-leaving')).not.toBeNull();
+    expect(panel()).toHaveClass('is-from-opener');
+    expect(panel().style.transformOrigin).toBe('calc(50% + 310px) calc(50% + 620px)');
+  });
+
+  it('rises in the middle, as it always did, when nothing opened it', () => {
+    withMotion();
+    // a dialog that is simply there: a badge earned, a warning to read
+    render(
+      <I18nProvider>
+        <Page tick={0} />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('dialog', { name: 'Invite friends' })).not.toHaveClass('is-from-opener');
+    expect(panel().style.transformOrigin).toBe('');
+  });
+
+  it('rises in the middle when it arrives by itself, long after the last press', () => {
+    withMotion();
+    vi.useFakeTimers();
+    /** A dialog the page opens when it is told to, not when something is pressed. */
+    const arrives = (open: boolean): React.JSX.Element => (
+      <I18nProvider>
+        <Modal open={open} onClose={() => undefined} label="A badge earned">
+          <p>Well done</p>
+        </Modal>
+      </I18nProvider>
+    );
+    const { rerender } = render(arrives(false));
+    fireEvent.click(document.body, { clientX: 310, clientY: 620, detail: 1 });
+    vi.advanceTimersByTime(RECENT_MS + 100);
+    act(() => rerender(arrives(true)));
+    expect(screen.getByRole('dialog', { name: 'A badge earned' })).not.toHaveClass('is-from-opener');
+    expect(panel().style.transformOrigin).toBe('');
+  });
+
+  it('does not grow from anywhere for a reader who asked for less motion', () => {
+    withMotion(true);
+    render(
+      <I18nProvider>
+        <Opened />
+      </I18nProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'open' }), { clientX: 310, clientY: 620, detail: 1 });
+    expect(screen.getByRole('dialog', { name: 'Invite friends' })).not.toHaveClass('is-from-opener');
+    expect(panel().style.transformOrigin).toBe('');
+  });
+
+  it('is not asked of a sheet, which comes from the bottom edge whatever opened it', () => {
+    withMotion();
+    render(
+      <I18nProvider>
+        <Opened sheet />
+      </I18nProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'open' }), { clientX: 310, clientY: 620, detail: 1 });
+    expect(screen.getByRole('dialog', { name: 'Invite friends' })).toHaveClass('sheet-panel');
+    expect(panel()).not.toHaveClass('is-from-opener');
+    expect(panel().style.transformOrigin).toBe('');
   });
 });

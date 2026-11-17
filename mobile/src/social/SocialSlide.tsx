@@ -8,17 +8,19 @@ import { useAuth } from '../auth/AuthContext';
 import { useEdgePanel } from '../navigation/edgePanel';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { GroupAvatar } from '../groups/GroupAvatar';
 import { TicketBadge } from '../play/Ticket';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { bucket, type RailFriend, type SocialRailData } from './rail';
 import { elapsed, lastSeen } from './time';
 import { Loading } from '../theme/Loading';
+import { useDirection } from '../reports/direction';
 
 const WIDTH_RATIO = 0.86;
 
@@ -31,8 +33,9 @@ const WIDTH_RATIO = 0.86;
  * same problem and none of the answer: friends live on one tab, groups on
  * another, and who is *in a game right now* was not anywhere at all.
  *
- * It comes from the right, the side its button is on, and it moves as the
- * profile's menu does (`useEdgePanel`): the same spring in and out, a drag or
+ * It comes from the side its button is on — the right, and the left in
+ * Soranî and Arabic, where Messages' header is mirrored — with its rows
+ * mirrored too, and it moves as the profile's menu does (`useEdgePanel`): the same spring in and out, a drag or
  * a flick towards its edge to shut it, and Android's back. The two are never
  * open on one screen — the menu belongs to Profile, this to Messages — so
  * there is no guessing which panel a swipe meant. It used to run a timing of
@@ -47,14 +50,18 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const insets = useSafeAreaInsets();
+  // the end edge, where the new-message button is: the right, or the left when the reading runs right to left
+  const fromRight = dir.row !== 'row-reverse';
+  const sign = fromRight ? 1 : -1;
 
   const [data, setData] = useState<SocialRailData | null>(null);
   const [loading, setLoading] = useState(false);
 
   const width = Math.round(Dimensions.get('window').width * WIDTH_RATIO);
   // how far it is from open, towards the right edge: 0 is open, `width` is gone
-  const { away, panHandlers } = useEdgePanel({ open, onClose, width, sign: 1 });
+  const { away, panHandlers } = useEdgePanel({ open, onClose, width, sign });
 
   /*
    * Read when it opens, not on a timer.
@@ -89,7 +96,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
   const { playing, online, offline } = bucket(friends);
 
   const heading = (key: TranslationKey, count?: number) => (
-    <Text style={[styles.heading, { color: colors.textSecondary }]}>
+    <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]}>
       {count === undefined ? t(key) : `${t(key)} · ${count}`}
     </Text>
   );
@@ -97,18 +104,18 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
   const person = (f: RailFriend, detail: string) => (
     <PressableScale
       key={f.userId}
-      style={[styles.row, { backgroundColor: colors.controlTrack }]}
+      style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
       onPress={() => go(() => navigation.navigate('Chat', { userId: f.userId, username: f.username }))}
       accessibilityRole="button"
       accessibilityLabel={t('rail.messageWho', { name: f.displayName ?? f.username })}
     >
       <InitialsAvatar name={f.username} id={f.userId} size={34} photoUrl={f.avatarUrl ?? undefined} />
       <View style={styles.rowMain}>
-        <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+        <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
           {f.username}
         </Text>
         {detail ? (
-          <Text style={[styles.detail, { color: colors.textSecondary }]} numberOfLines={1}>
+          <Text style={[styles.detail, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
             {detail}
           </Text>
         ) : null}
@@ -144,29 +151,30 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
         accessibilityViewIsModal={open}
         style={[
           styles.panel,
+          fromRight ? styles.panelRight : styles.panelLeft,
           {
             width,
             backgroundColor: colors.background,
             paddingTop: insets.top + spacing.md,
             paddingBottom: insets.bottom,
-            transform: [{ translateX: away }],
+            transform: [{ translateX: away.interpolate({ inputRange: [0, 1], outputRange: [0, sign] }) }],
           },
         ]}
       >
         {/* past the screen's edge, so a panel pulled further open than it goes shows more panel, not a gap */}
-        <View pointerEvents="none" style={[styles.skirt, { width, backgroundColor: colors.background }]} />
-        <View style={styles.head}>
+        <View pointerEvents="none" style={[styles.skirt, fromRight ? styles.skirtRight : styles.skirtLeft, { width, backgroundColor: colors.background }]} />
+        <View style={[styles.head, { flexDirection: dir.row }]}>
           {/*
             Opened by Messages' new-message pencil: your people, by who is
             around, and a tap on one opens the conversation with them.
           */}
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
+          <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
             {t('messages.new')}
           </Text>
           <Pressable
             onPress={onClose}
-            // a 20-point glyph, caught at a fingertip's 44
-            hitSlop={hitSlopFor(20, 20)}
+            // a 20-point glyph, caught at a fingertip
+            reachSize={{ width: 20, height: 20 }}
             accessibilityRole="button"
             accessibilityLabel={t('rail.closePanel')}
             style={({ pressed }) => pressed && heldDim}
@@ -186,15 +194,15 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                 {data.challenges.map((c) => (
                   <PressableScale
                     key={`c:${c.userId}`}
-                    style={[styles.row, { backgroundColor: colors.controlTrack }]}
+                    style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
                     onPress={() => go(() => navigation.navigate('FriendRequests'))}
                     accessibilityRole="button"
                     accessibilityLabel={t('rail.wantsToPlay', { name: c.displayName ?? c.username })}
                   >
-                    <InitialsAvatar name={c.username} id={c.userId} size={34} />
+                    <InitialsAvatar name={c.username} id={c.userId} size={34} photoUrl={c.avatarUrl ?? undefined} />
                     <View style={styles.rowMain}>
-                      <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>{c.username}</Text>
-                      <Text style={[styles.detail, { color: colors.textPrimary }]} numberOfLines={1}>
+                      <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>{c.username}</Text>
+                      <Text style={[styles.detail, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
                         {t('rail.wantsToPlay', { name: c.displayName ?? c.username })}
                       </Text>
                     </View>
@@ -203,22 +211,22 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                 {data.requests.map((r) => (
                   <PressableScale
                     key={`r:${r.userId}`}
-                    style={[styles.row, { backgroundColor: colors.controlTrack }]}
+                    style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
                     onPress={() => go(() => navigation.navigate('FriendRequests'))}
                     accessibilityRole="button"
                     accessibilityLabel={t('rail.wantsToBeFriendsWith', { name: r.displayName ?? r.username })}
                   >
                     {/* a friend request is a ticket, as an invite to play is: its glyph on the face's corner */}
                     <View>
-                      <InitialsAvatar name={r.username} id={r.userId} size={34} />
-                      <View style={styles.ticketBadge}>
+                      <InitialsAvatar name={r.username} id={r.userId} size={34} photoUrl={r.avatarUrl ?? undefined} />
+                      <View style={[styles.ticketBadge, fromRight ? styles.ticketBadgeRight : styles.ticketBadgeLeft]}>
                         <TicketBadge tone="friend" size={16} ring={colors.background} />
                       </View>
                     </View>
                     <View style={styles.rowMain}>
-                      <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>{r.username}</Text>
-                      <Text style={[styles.detail, { color: colors.textSecondary }]} numberOfLines={1}>
-                        {t('rail.wantsToBeFriendsWith', { name: r.displayName ?? r.username })}
+                      <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>{r.username}</Text>
+                      <Text style={[styles.detail, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {r.displayName ? t('rail.wantsToBeFriendsWith', { name: r.displayName }) : t('rail.wantsToBeFriends')}
                       </Text>
                     </View>
                   </PressableScale>
@@ -238,6 +246,12 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                 {heading('rail.friendsOnline', online.length)}
                 {online.map((f) => person(f, ''))}
               </View>
+            ) : friends.length > 0 && playing.length === 0 ? (
+              // friends, and none of them about: said where they would be, not under the ones who are away
+              <View style={styles.group}>
+                {heading('rail.friendsOnline')}
+                <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('rail.nobodyRightNow')}</Text>
+              </View>
             ) : null}
 
             {data && data.groups.length > 0 ? (
@@ -246,15 +260,16 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                 {data.groups.map((g) => (
                   <PressableScale
                     key={g.id}
-                    style={[styles.row, { backgroundColor: colors.controlTrack }]}
+                    style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
                     onPress={() => go(() => navigation.navigate('GroupThread', { groupId: g.id, name: g.name }))}
                     accessibilityRole="button"
                     accessibilityLabel={g.name}
                   >
-                    <InitialsAvatar name={g.name} id={g.id} size={34} />
+                    {/* a group in its rounded square, as Messages draws it, so it is never mistaken for a person of that name */}
+                    <GroupAvatar name={g.name} id={g.id} size={34} photoUrl={g.photoUrl ?? null} />
                     <View style={styles.rowMain}>
-                      <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>{g.name}</Text>
-                      <Text style={[styles.detail, { color: colors.textSecondary }]} numberOfLines={1}>
+                      <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>{g.name}</Text>
+                      <Text style={[styles.detail, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
                         {t('rail.members', { count: g.memberCount })}
                       </Text>
                     </View>
@@ -278,7 +293,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
             {/* no friends at all is a different thing to say than none about today */}
             {data && friends.length === 0 ? (
               <Pressable
-                onPress={() => go(() => navigation.navigate('Tabs', { screen: 'Search' }))}
+                onPress={() => go(() => navigation.navigate('Search'))}
                 style={({ pressed }) => [styles.empty, pressed && heldDim]}
                 accessibilityRole="button"
                 accessibilityLabel={t('rail.findPeople')}
@@ -286,8 +301,6 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('rail.noFriendsYet')}</Text>
                 <Text style={[styles.emptyLink, { color: colors.primary }]}>{t('rail.findPeople')}</Text>
               </Pressable>
-            ) : data && playing.length === 0 && online.length === 0 ? (
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('rail.nobodyRightNow')}</Text>
             ) : null}
           </ScrollView>
         )}
@@ -297,11 +310,18 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
 }
 
 const styles = StyleSheet.create({
-  panel: { position: 'absolute', top: 0, bottom: 0, right: 0 },
-  skirt: { position: 'absolute', top: 0, bottom: 0, left: '100%' },
-  ticketBadge: { position: 'absolute', right: -5, bottom: -4 },
+  panel: { position: 'absolute', top: 0, bottom: 0 },
+  panelRight: { right: 0 },
+  panelLeft: { left: 0 },
+  skirt: { position: 'absolute', top: 0, bottom: 0 },
+  skirtRight: { left: '100%' },
+  skirtLeft: { right: '100%' },
+  // on the face's corner on the side its row ends on
+  ticketBadge: { position: 'absolute', bottom: -4 },
+  ticketBadgeRight: { right: -5 },
+  ticketBadgeLeft: { left: -5 },
+  note: { fontSize: typography.sizes.sm },
   head: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.md,
@@ -312,7 +332,7 @@ const styles = StyleSheet.create({
   body: { padding: spacing.lg, gap: spacing.lg },
   group: { gap: spacing.xs },
   heading: { ...sectionLabel },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
+  row: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
   rowMain: { flex: 1 },
   name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   detail: { fontSize: typography.sizes.sm },

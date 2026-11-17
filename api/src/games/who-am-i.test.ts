@@ -1,11 +1,13 @@
 /**
  * Ez kî me? without a database: what a table is dealt from, how a whole
- * table is dealt, and the picked words a card is made of (word-cards.ts).
+ * table is dealt, what a phone from before the four answers is dealt, the
+ * table's settings and moves as the server takes them, a reported card's
+ * note, and the picked words a card is made of (word-cards.ts).
  */
 import { describe, expect, it } from 'vitest';
-import { WHO_AM_I_MIN_TEMPLATES, type GameContentKind } from '@kurda/shared';
+import { GAME_CONTENT_REVIEW_NOTE_MAX, WHO_AM_I_MIN_TEMPLATES, type GameContentKind, type WhoAmIDeal, type WhoAmIIdentity } from '@kurda/shared';
 import type { TrustedSources } from './sources.js';
-import { dealTable, identitiesAt, tableDifficulties, whoAmIPool } from './who-am-i.js';
+import { asTwoAnswerDeal, countReport, dealSeat, dealTable, identitiesAt, tableDifficulties, tellsTilesApart, whoAmIPool } from './who-am-i.js';
 import { whoAmITableModule } from '../mp/games/who-am-i.js';
 import { GameWordCards, entryCandidate } from './word-cards.js';
 
@@ -20,7 +22,7 @@ const IDENTITIES = Array.from({ length: 10 }, (_, i) => ({
     word: `ajal${'abcdefghij'[i]}`,
     meanings: { en: `animal ${i}` },
     category: 'animal',
-    facts: { ...Object.fromEntries(FACTS.map((f, j) => [f, ((i >> (j % 4)) & 1) === 1 || j < 2])), 'not-a-fact': true },
+    facts: { ...Object.fromEntries(FACTS.map((f, j) => [f, ((i >> (j % 4)) & 1) === 1 || j < 2])), 'not-a-fact': true, ...(i === 0 ? { 'at-home': 'sometimes' } : {}) },
   },
 }));
 
@@ -40,6 +42,8 @@ describe('the pool', () => {
     const { identities, templates } = await whoAmIPool(sources, 'kmr');
     expect(identities).toHaveLength(10);
     expect(identities[0]!.facts).not.toHaveProperty('not-a-fact');
+    // a card's "sometimes" is kept: the server's rules score it, and the tiles are chosen from the cards as they are
+    expect(identities[0]!.facts['at-home']).toBe('sometimes');
     expect(templates.map((t) => t.fact)).toContain('sweet');
     expect(identitiesAt(identities, 'beginner')).toHaveLength(7);
     expect(identitiesAt(identities, 'intermediate')).toHaveLength(0);
@@ -108,7 +112,96 @@ describe('a table the server runs', () => {
 
   it('is never opened by what a lobby is made with', () => {
     const made = whoAmITableModule.lobbySchema.parse({ dialect: 'kmr', difficulty: 'beginner', open: true, deals: [] });
-    expect(made.settings).toEqual({ dialect: 'kmr', minutes: 10, difficulty: 'beginner' });
+    expect(made.settings).toEqual({ dialect: 'kmr', minutes: 10, difficulty: 'beginner', answers: 2 });
+  });
+
+  it('offers the four answers only to a table made by an app that asks for them', () => {
+    expect(whoAmITableModule.lobbySchema.parse({ dialect: 'kmr', answers: 4 }).settings.answers).toBe(4);
+    // an app from before the four sends nothing: yes and no
+    expect(whoAmITableModule.lobbySchema.parse({ dialect: 'kmr' }).settings.answers).toBe(2);
+    expect(whoAmITableModule.lobbySchema.safeParse({ dialect: 'kmr', answers: 3 }).success).toBe(false);
+    expect(whoAmITableModule.publicSettings({ dialect: 'kmr', minutes: 10, difficulty: 'beginner', answers: 4 })).toMatchObject({ answers: 4 });
+    expect(whoAmITableModule.publicSettings({ dialect: 'kmr', minutes: 10, difficulty: 'beginner' })).toMatchObject({ answers: 2 });
+  });
+
+  it('takes an answer in either form, and nothing that says no answer at all', async () => {
+    const parse = (m: unknown) => whoAmITableModule.moveSchema.safeParse(m);
+    for (const says of ['yes', 'sometimes', 'no', 'unsure']) expect(parse({ kind: 'answer', says }).success).toBe(true);
+    expect(parse({ kind: 'answer', yes: false }).success).toBe(true);
+    expect(parse({ kind: 'answer' }).success).toBe(false);
+    expect(parse({ kind: 'answer', says: 'maybe' }).success).toBe(false);
+    // the rules are handed today's form, whichever the app sent
+    const prepare = async (raw: unknown) => (await whoAmITableModule.prepare({} as never, {} as never, 1, { raw: parse(raw).data!, text: null })).move;
+    expect(await prepare({ kind: 'answer', yes: true })).toEqual({ kind: 'answer', says: 'yes' });
+    expect(await prepare({ kind: 'answer', yes: false })).toEqual({ kind: 'answer', says: 'no' });
+    expect(await prepare({ kind: 'answer', says: 'unsure' })).toEqual({ kind: 'answer', says: 'unsure' });
+    expect(await prepare({ kind: 'pass' })).toEqual({ kind: 'pass' });
+  });
+});
+
+describe('a phone from before the four answers', () => {
+  const identity = (over: Partial<WhoAmIIdentity> = {}): WhoAmIIdentity => ({ id: 'i', key: 'k', level: 1, word: 'kûçik', meanings: { en: 'dog' }, category: 'animal', facts: {}, ...over });
+  const deal = (facts: WhoAmIIdentity['facts']): WhoAmIDeal => ({
+    identity: identity({ facts }),
+    candidates: [{ id: 'i', word: 'kûçik', meanings: { en: 'dog' } }],
+    questions: Object.keys(facts).map((fact) => ({ id: `q-${fact}`, ku: `${fact}?`, meanings: { en: fact }, fact })),
+  });
+
+  it('is dealt a card without its "sometimes" rows, and without the questions they answered', () => {
+    const trimmed = asTwoAnswerDeal(deal({ alive: true, animal: true, 'at-home': 'sometimes', 'works-outdoors': 'sometimes', 'can-fly': false }));
+    expect(trimmed.identity.facts).toEqual({ alive: true, animal: true, 'can-fly': false });
+    expect(trimmed.questions.map((q) => q.fact)).toEqual(['alive', 'animal', 'can-fly']);
+    // every question it can still ask has a plain yes or no on the card
+    for (const q of trimmed.questions) expect(typeof trimmed.identity.facts[q.fact]).toBe('boolean');
+  });
+
+  it('is dealt a card with nothing to trim exactly as it was', () => {
+    const plain = deal({ alive: true, animal: true, 'can-fly': false, 'four-legs': true });
+    expect(asTwoAnswerDeal(plain)).toEqual(plain);
+  });
+});
+
+describe('a deal worth playing', () => {
+  it('can tell every tile apart by its questions, or is drawn again', () => {
+    const tile = (id: string, facts: WhoAmIIdentity['facts']): WhoAmIIdentity => ({ id, key: id, level: 1, word: id, meanings: { en: id }, category: 'animal', facts });
+    const a = tile('a', { alive: true, 'can-fly': true });
+    const b = tile('b', { alive: true, 'can-fly': false });
+    const twin = tile('c', { alive: true, 'can-fly': true, 'four-legs': true });
+    const asked = (facts: string[]): WhoAmIDeal => ({
+      identity: a,
+      candidates: [a, b, twin].map((t) => ({ id: t.id, word: t.word, meanings: t.meanings })),
+      questions: facts.map((fact) => ({ id: fact, ku: fact, meanings: { en: fact }, fact })),
+    });
+    // a and the twin answer the only questions dealt alike: asking could never find which is which
+    expect(tellsTilesApart(asked(['alive', 'can-fly']), [a, b, twin])).toBe(false);
+    expect(tellsTilesApart(asked(['alive', 'can-fly', 'four-legs']), [a, b, twin])).toBe(true);
+  });
+
+  it('deals every seat of the test pool a board its questions can solve', async () => {
+    const pool = await whoAmIPool(sources, 'kmr');
+    for (const target of identitiesAt(pool.identities, 'beginner')) {
+      const dealt = dealSeat(target, pool.identities, pool.templates, { seed: 'x', seat: 1, want: 4 })!;
+      expect(dealt.candidates.some((c) => c.id === target.id)).toBe(true);
+      expect(tellsTilesApart(dealt, pool.identities)).toBe(true);
+    }
+  });
+});
+
+describe('a card a player reports', () => {
+  it('counts each report by the fact it was about, most reported first, on the note’s first line', () => {
+    const once = countReport(null, 'at-home');
+    expect(once).toBe('Players flagged an answer as wrong: at-home ×1.');
+    const twice = countReport(countReport(once, 'sweet'), 'sweet');
+    expect(twice).toBe('Players flagged an answer as wrong: sweet ×2, at-home ×1.');
+  });
+
+  it('keeps whatever an editor wrote below the count, and never outgrows a review note', () => {
+    const note = countReport('Check the facts table with a native speaker.', 'at-home');
+    expect(note).toBe('Players flagged an answer as wrong: at-home ×1.\nCheck the facts table with a native speaker.');
+    expect(countReport(note, 'at-home')).toBe('Players flagged an answer as wrong: at-home ×2.\nCheck the facts table with a native speaker.');
+    const long = countReport('x'.repeat(GAME_CONTENT_REVIEW_NOTE_MAX), 'at-home');
+    expect(long.length).toBeLessThanOrEqual(GAME_CONTENT_REVIEW_NOTE_MAX);
+    expect(long.startsWith('Players flagged an answer as wrong: at-home ×1.')).toBe(true);
   });
 });
 

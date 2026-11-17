@@ -9,7 +9,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachGroup } from '../theme/Pressable';
 import { haptic } from '../feedback/haptics';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
@@ -18,7 +18,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GlassCard } from '../theme/glass';
-import type { StoryDialect } from '@kurda/shared';
+import { useDirection } from '../reports/direction';
+import { hueSteps, type StoryDialect } from '@kurda/shared';
 import { storyTextProps, storyTextStyle } from './storyText';
 import { pressedDim } from '../theme/motion';
 
@@ -107,7 +108,12 @@ export function SectionLabel({ children }: { children: string }): React.JSX.Elem
   );
 }
 
-/** A short fact in a pill: "Short", "~3 min", "Done · 4/5". */
+/**
+ * A short fact in a pill: "Short", "~3 min", "Done · 4/5". Its icon stands
+ * before its label the way the language reads: on the right in Soranî and
+ * Arabic, where a fixed row left it trailing the word it marks. It has no
+ * gold: a fact is not a prize, and gold is for what is earned.
+ */
 export function Pill({
   label,
   icon,
@@ -116,14 +122,15 @@ export function Pill({
 }: {
   label: string;
   icon?: IconName;
-  tone?: 'plain' | 'primary' | 'gold' | 'success';
+  tone?: 'plain' | 'primary' | 'success';
   accessibilityLabel?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const fg = tone === 'primary' ? colors.primary : tone === 'gold' ? colors.goldText : tone === 'success' ? colors.success : colors.textSecondary;
+  const dir = useDirection();
+  const fg = tone === 'primary' ? colors.primary : tone === 'success' ? colors.success : colors.textSecondary;
   const bg = tone === 'success' ? colors.successFill : colors.controlTrack;
   return (
-    <View style={[styles.pill, { backgroundColor: bg }]} accessible accessibilityLabel={accessibilityLabel ?? label}>
+    <View style={[styles.pill, { backgroundColor: bg, flexDirection: dir.row }]} accessible accessibilityLabel={accessibilityLabel ?? label}>
       {icon ? <Icon name={icon} size={13} color={fg} /> : null}
       <Text style={[styles.pillText, { color: fg }]} numberOfLines={1}>
         {label}
@@ -135,7 +142,9 @@ export function Pill({
 /**
  * One of a few choices that wrap onto more lines than a segmented control
  * fits: the length filter, with minutes on each. A radio group under its
- * label, each chip a fingertip tall.
+ * label, each chip a fingertip tall. The chosen one wears the violet's wash
+ * with violet words, as the segmented control's chosen side does: the solid
+ * violet is the button the sheet is about, under the choices.
  */
 export function ChoiceChips<T extends string>({
   label,
@@ -150,32 +159,38 @@ export function ChoiceChips<T extends string>({
   onChange: (v: T) => void;
   labelOf: (v: T) => string;
 }): React.JSX.Element {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
+  const violet = hueSteps(scheme, 'violet');
   return (
     <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={label}>
-      {options.map((opt) => {
-        const on = opt === value;
-        return (
-          <Pressable
-            key={opt}
-            onPress={() => {
-              if (!on) haptic('select');
-              onChange(opt);
-            }}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: on }}
-            accessibilityLabel={labelOf(opt)}
-            style={({ pressed }) => [
-              styles.chip,
-              { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
-            ]}
-          >
-            <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
-              {labelOf(opt)}
-            </Text>
-          </Pressable>
-        );
-      })}
+      {/* the chips wrap onto rows as far apart as they are side by side: each reaches half that gap every way */}
+      <ReachGroup gap={CHOICE_GAP} rowGap={CHOICE_GAP}>
+        {options.map((opt) => {
+          const on = opt === value;
+          return (
+            <Pressable
+              key={opt}
+              onPress={() => {
+                if (!on) haptic('select');
+                onChange(opt);
+              }}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={labelOf(opt)}
+              // as wide as its words, which are not known before it is drawn: `open` reaches past every edge, and the group caps it to the gap
+              reach="open"
+              style={({ pressed }) => [
+                styles.chip,
+                { backgroundColor: on ? violet.wash : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+              ]}
+            >
+              <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
+                {labelOf(opt)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ReachGroup>
     </View>
   );
 }
@@ -251,6 +266,9 @@ export function useFocusOn(ref: RefObject<View | Text | null>, key: string | num
   }, [ref, key]);
 }
 
+/** The space between choice chips, side by side and from row to row. */
+const CHOICE_GAP = spacing.sm;
+
 const styles = StyleSheet.create({
   cardBody: { gap: spacing.sm },
   // the body and the footer keep their own gutters, so the body scrolls edge to edge
@@ -266,7 +284,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   pillText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: CHOICE_GAP },
   chip: {
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.pill,
@@ -275,6 +293,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  chipTextOn: { fontWeight: typography.weights.bold },
   note: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, borderRadius: radii.md, padding: spacing.md },
   noteText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
   liveRegion: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0.01 },

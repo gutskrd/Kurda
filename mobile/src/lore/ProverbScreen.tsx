@@ -86,22 +86,23 @@ export function ProverbScreen({ slug, onExit }: { slug: string; onExit: () => vo
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('lore.proverbs.name')} onBack={onExit} right={<HeaderButton icon="share" label={t('lore.proverb.share')} onPress={share} edge="end" />} />
+      <ScreenHeader title={t('lore.proverbs.name')} onBack={onExit} right={<HeaderButton icon="share" label={t('lore.proverb.share')} onPress={share} />} />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom + spacing.lg }]} showsVerticalScrollIndicator={false}>
         <View style={[styles.facts, { flexDirection: dir.row }]}>
-          <Pill label={traditionMark(proverb.tradition, proverb.region, t)} tone={proverb.tradition === 'new' ? 'plain' : 'gold'} />
+          {/* where a proverb comes from is information, not a prize: the quiet pill, as its themes are */}
+          <Pill label={traditionMark(proverb.tradition, proverb.region, t)} />
           {proverb.themes.map((th) => (
             <Pill key={th} label={t(THEME_KEY[th])} />
           ))}
         </View>
 
         <View style={styles.verse}>
-          <View style={[styles.rule, { backgroundColor: colors.gold }]} />
+          <View style={[styles.rule, { backgroundColor: colors.textSecondary }]} />
           <Text {...ku.props} style={[styles.proverb, { color: colors.textPrimary }, centred(ku.style)]} accessibilityRole="header" testID="proverb-text">
             {proverb.text}
           </Text>
           {v ? <InLanguage text={v.translation} lang={lang} align="center" style={[styles.translation, { color: colors.textSecondary }]} /> : null}
-          <View style={[styles.rule, { backgroundColor: colors.gold }]} />
+          <View style={[styles.rule, { backgroundColor: colors.textSecondary }]} />
         </View>
 
         {v?.literal ? (
@@ -173,7 +174,8 @@ const styles = StyleSheet.create({
   skeleton: { alignItems: 'center', paddingTop: spacing.xxl },
   facts: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs },
   verse: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
-  rule: { width: 32, height: 2, borderRadius: radii.pill },
+  // a quiet line above and below the verse: the page's secondary ink, softened, as the story's chapter rule is
+  rule: { width: 32, height: 2, borderRadius: radii.pill, opacity: 0.4 },
   proverb: { ...display(typography.sizes.xl), lineHeight: Math.round(typography.sizes.xl * 1.4) },
   translation: { fontSize: typography.sizes.lg, lineHeight: 30 },
   lead: { fontSize: typography.sizes.md, lineHeight: 24, fontWeight: typography.weights.semibold },

@@ -60,6 +60,7 @@ import {
   GAME_DIALECTS,
   GAME_DIFFICULTIES,
   LEARN_GAME_IDS,
+  PROVERB_ROUND_MODES,
   SOLO_MAX_ATTEMPTS,
   SOLO_ROUND_ITEMS,
   TRANSLATION_REVIEW,
@@ -174,7 +175,8 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
     'last-letter': {
       count: async (dialect) => {
         const { words, hevalo } = await lastLetterCounts(app.db, dialect);
-        const n = hevalo;
+        // the count shown against the minimum is the words a chain can check, which is what the minimum is of
+        const n = words;
         return { levels: { 1: n, 2: n, 3: n, 4: n, 5: n }, difficulties: lastLetterAvailability(dialect, words, hevalo).group ? [...GAME_DIFFICULTIES] : [] };
       },
     },
@@ -191,8 +193,7 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
   solo.register(hearing);
   solo.register(new DetectiveGame(sources));
   // the Stories' proverbs, a round of each way to play them
-  solo.register(new ProverbRound('meaning'));
-  solo.register(new ProverbRound('situation'));
+  for (const mode of PROVERB_ROUND_MODES) solo.register(new ProverbRound(mode));
   const translations = new GameContentTranslations(app.db);
   const content = new GameContentAdminService(app.db, sources, availability, cache, translations);
   return { sources, sentences, memory, hearing, availability, solo, content, translations };

@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachReset } from '../theme/Pressable';
 import type { EquippableCategory, GiftCard } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { assetUrl } from '../api/env';
@@ -273,7 +273,9 @@ export function GiftUnwrap({
 
   return (
     <Modal visible transparent animationType={reduce ? 'none' : 'fade'} onRequestClose={onClose}>
-      {full ? <DarkScheme>{content}</DarkScheme> : content}
+      <ReachReset>
+        {full ? <DarkScheme>{content}</DarkScheme> : content}
+      </ReachReset>
     </Modal>
   );
 }

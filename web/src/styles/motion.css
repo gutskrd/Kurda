@@ -6,7 +6,10 @@
  * answer pops when it was right and shakes once when it was not, and so does
  * a field a form was refused over; a bar slides to its new value; a list's
  * first screenful rises in once, the first time it arrives in a tab; a sheet
- * or a dialog comes up while the scrim fades, and leaves the way it came; a
+ * or a dialog comes up while the scrim fades, and leaves the way it came — a
+ * dialog and a small menu out of whatever was pressed to open them; a page
+ * fades into the next, and the picture of a card that was pressed travels to
+ * the head of its page, and back to the card on the way back; a
  * heart pops with a tiny burst, and the day's coin with the same burst in
  * gold; a Peyvok row turns over tile by tile, its colour changing while each
  * tile is edge-on; a speaking character rises into its tile; a join code's
@@ -644,6 +647,137 @@
   .sheet-overlay.is-leaving .sheet-panel {
     animation-name: sheet-down;
   }
+}
+/*
+ * A dialog opened from something comes from it (components/Modal.tsx, on
+ * lib/opener.ts): its panel grows out of the point that was pressed, or out
+ * of the control the keyboard was on, on the same spring, and closing takes
+ * it back there. The point is the panel's transform origin, set as it opens.
+ * The few pixels a dialog rises are left out here: where it comes from is the
+ * opener's to say, and a rise on top of that pulled it off its line. A dialog
+ * that opens by itself has no opener, and keeps the rise. A sheet comes from
+ * the bottom edge, which is where it lives, whatever opened it.
+ */
+@keyframes panel-grow {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  40% {
+    opacity: 1;
+  }
+}
+@keyframes panel-shrink {
+  to {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+}
+.modal-panel.is-from-opener {
+  animation-name: panel-grow;
+}
+.modal-overlay.is-leaving .modal-panel.is-from-opener {
+  animation-name: panel-shrink;
+}
+/*
+ * A small menu that hangs from its ⋯ comes from it the same way, quicker: it
+ * grows a little, out of the point that was pressed, as it fades in. The
+ * class and the point are given when the menu has been placed
+ * (reports/keepInView.ts). It is the `scale` that grows, not the transform:
+ * placing a menu back inside the window is done with a transform of its own,
+ * which a movement written as one would have thrown away while it played.
+ */
+@keyframes menu-grow {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+.grows-from-opener {
+  animation: menu-grow var(--dur-fast) var(--ease-out);
+}
+
+/* ---- a change of page ----------------------------------------------------------- */
+/*
+ * Going to another page is carried, not cut (lib/viewTransition.tsx): the
+ * browser keeps a picture of the page being left and the next one fades in
+ * over it, in one `--dur`. Nothing in the page travels: a whole page sliding
+ * or growing on every link would be movement on the most used thing there is.
+ *
+ * The bars are not the page. For as long as a page is changing, the top bar
+ * and a phone's bar of places each carry a name of their own, which lifts
+ * them out of the page's picture: they are drawn above it, where they stand,
+ * while the page changes beneath them, and a picture on its way to a page
+ * passes under them as the page itself does. A bar the next page does not
+ * have fades with the page it belonged to.
+ *
+ * It is the bars that are named, and not the page's own region. The page
+ * scrolls with the window, so a picture of `main` is as tall as the document
+ * and hangs from wherever the document's top is: tried, it moved the old page
+ * by however far the two pages' scrolls differed, and was drawn over both
+ * bars and over anything open above the page. So the page is everything
+ * without a name of its own, and whatever is on the screen is in its picture,
+ * in the order it was drawn. An open dialog or sheet is over the bars, so
+ * while one is, the bars stay in the picture under it.
+ */
+.is-changing-page .nav {
+  view-transition-name: top-bar;
+}
+.is-changing-page .places-bar {
+  view-transition-name: places-bar;
+}
+.is-changing-page:has(.modal-overlay, .sheet-overlay) :is(.nav, .places-bar) {
+  view-transition-name: none;
+}
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: var(--dur);
+  animation-timing-function: var(--ease-out);
+}
+/*
+ * What a card carries to its page, and a page back to its card: the picture
+ * crosses the screen from the one box to the other and takes its size, in
+ * `--dur-slow` on the emphasis curve, which never passes where it stops (a
+ * picture that overshot its place would be read as a second movement).
+ *
+ * A picture fills its box all the way, cut to it and never stretched, so a
+ * cover that is wider on the page than on its card stays one picture. A card
+ * that becomes a page is words, and words are not scaled: both ends are drawn
+ * at their own size from the box's top corner, the card fading as the box
+ * opens to the page's size and shows the page inside it. One that finds
+ * nothing to land on is only part of the page it was on, and goes with it, at
+ * the page's pace.
+ */
+::view-transition-group(carried-picture),
+::view-transition-group(carried-card),
+::view-transition-old(carried-picture),
+::view-transition-new(carried-picture),
+::view-transition-old(carried-card),
+::view-transition-new(carried-card) {
+  animation-duration: var(--dur-slow);
+}
+::view-transition-group(carried-picture),
+::view-transition-group(carried-card) {
+  animation-timing-function: var(--ease-emphasis);
+}
+::view-transition-old(carried-picture),
+::view-transition-new(carried-picture) {
+  block-size: 100%;
+  object-fit: cover;
+}
+::view-transition-group(carried-card) {
+  overflow: clip;
+}
+::view-transition-old(carried-card),
+::view-transition-new(carried-card) {
+  inline-size: auto;
+}
+::view-transition-old(carried-picture):only-child,
+::view-transition-new(carried-picture):only-child,
+::view-transition-old(carried-card):only-child,
+::view-transition-new(carried-card):only-child {
+  animation-duration: var(--dur);
 }
 
 /* ---- a like ------------------------------------------------------------------ */
@@ -1312,6 +1446,24 @@
   }
   .code-ticket-code:active .code-tile {
     transform: none;
+  }
+}
+/*
+ * A change of page, still: the page simply changes. Nothing is carried for a
+ * reader who asked for less motion (lib/viewTransition.tsx does not begin),
+ * and should the browser picture a page all the same, the old picture is not
+ * shown and nothing fades, travels or grows. A dialog does not grow from its
+ * opener either: it is asked for no origin (components/Modal.tsx), and is
+ * there as it was before.
+ */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  ::view-transition-old(*) {
+    display: none;
   }
 }
 /* tickets, still: nothing swings, tears, folds, shakes, flies or bursts — the state and the stamp are the answer */

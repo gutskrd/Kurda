@@ -166,6 +166,10 @@ export {
   type ResultsOutcome,
   type StreakMood,
 } from './lesson-end.js';
+/** A win as it is shared: the mark its line ends on, the word game's grid, and which wins are offered for sharing. */
+export * from './win-share.js';
+/** A win's own address, and the picture a link to it is drawn with. */
+export * from './win-link.js';
 /**
  * The lesson path a course map is drawn as: which skill is current, the
  * milestones, each unit's colour and where every stop sits — so the browser
@@ -197,19 +201,25 @@ export {
   type PathMapInput,
   type PathSkill,
   type PathSkillState,
+  type PathSection,
   type PathSnapshot,
   type PathStop,
   type PathUnit,
   type PathUnitInput,
   type PlacedStop,
-  type GuideStop,
   type ReviewStop,
+  type RingAt,
+  type RingChange,
+  type SectionState,
   type SkillStop,
   type StopState,
+  type StoryStop,
   type TrophyStop,
   type UnitTone,
   unitTone,
 } from './lesson-path.js';
+/** A topic's rounds: the ring round its stop and the stars under it, from how often each lesson was finished. */
+export { PATH_RING, TOPIC_STARS, nextInRound, ringPieces, roundStars, starPath, topicRounds, type TopicRounds } from './lesson-rounds.js';
 /** The land the lesson path runs through: each unit's landscape, landmark and host, and where they stand. */
 export {
   PATH_GROUNDS,
@@ -488,6 +498,8 @@ export {
 export {
   BIRD_CALLS_PER_DAY,
   BIRD_OUT_DAYS,
+  LANDINGS_MAX,
+  LETTERS_CHANGED,
   LETTERS_PER_DAY,
   LETTER_AGE_BANDS,
   LETTER_BIRDS,
@@ -501,15 +513,21 @@ export {
   isLetterBird,
   letterAgeBand,
   letterBirdOf,
+  letterNoticeOf,
   letterProblem,
   letterText,
   type BirdOutResult,
   type LetterAgeBand,
+  type LetterFlight,
   type LetterItem,
+  type LetterLanding,
+  type LetterNotice,
   type LetterPerson,
   type LetterProblem,
+  type LetterReturnReason,
   type LetterThread,
   type LetterVisitor,
+  type LettersChangedEvent,
   type LettersHome,
   type LettersRefusal,
   type PenPal,
@@ -517,6 +535,32 @@ export {
 } from './letters.js';
 /** A letter's own paper, the drawing and notes on it, the colours it is drawn in, and the letter widget's shapes. */
 export * from './letter-paper.js';
+/** The letters window, worked out once for both apps: which bird is where on the sill, and what is said under it. */
+export {
+  emptyLook,
+  firstLook,
+  flightOf,
+  landingsOf,
+  lookAfterAnswer,
+  lookAfterBirdChosen,
+  lookAfterCall,
+  lookAfterLanded,
+  lookAfterOwnGone,
+  lookAfterRecall,
+  lookAfterSend,
+  lookAfterSendOn,
+  lookAfterVisitorGone,
+  lookInMotion,
+  lookWithMoment,
+  nextLook,
+  untilServerTime,
+  type LetterWindowScene,
+  type WindowLanded,
+  type WindowLook,
+  type WindowMoment,
+  type WindowReturn,
+  type WindowSpot,
+} from './letter-window.js';
 
 /**
  * Stories and their quizzes (they replaced the ranked quiz): the presets, the
@@ -526,7 +570,10 @@ export * from './letter-paper.js';
 export * from './stories.js';
 /** What a story must be before it is saved or published, one copy for the API, the importer and the editor. */
 export * from './story-authoring.js';
-/** The pictures a story can wear as its cover: the shop's backgrounds, keyed as `stories.cover` stores them. */
+/**
+ * The pictures a story can wear as its cover: the shop's backgrounds, keyed as `stories.cover` stores them — and the
+ * kilim a story without one is given (`storyCoverFor`), with the plain colour that stands in for it.
+ */
 export * from './story-covers.js';
 /**
  * The Stories' riddles and proverbs: their lists and translations, what
@@ -672,6 +719,30 @@ export {
   TICKET_ART_STUB,
   TICKET_ART_TEAR,
   TICKET_ART_TILES,
+  STAMP_GLOW,
+  STAMP_GLOW_REACH,
+  STAMP_MEANING_INK,
+  STAMP_NIGHT_GLOW,
+  STAMP_NIGHT_REACH,
+  STAMP_SHAPE,
+  STAMP_SHELF_GLOW,
+  stampBox,
+  stampGlow,
+  stampLook,
+  stampOutline,
+  stampPerforations,
+  stampShapeFor,
+  stampSize,
+  stampSvg,
+  type StampLook,
+  type StampOptions,
+  type StampShape,
+  SHARE_CARD,
+  SHARE_CARD_KINDS,
+  isShareCardKind,
+  shareCardSvg,
+  type ShareCardKind,
+  type ShareCardOptions,
   CHEST_BOX,
   CHEST_FOOT,
   CHEST_HOP,
@@ -745,8 +816,11 @@ export {
   gameEmblemLayers,
   gameEmblemLoopMs,
   gameEmblemSvg,
+  gameEmblemHue,
   gameEmblemTone,
   isGameEmblem,
+  PLAY_GAME_EMBLEM,
+  playGameHue,
   type GameArtOptions,
   type GameEmblem,
   type GameEmblemLayer,
@@ -843,6 +917,29 @@ export {
   wordPictureSvg,
   type WordPictureId,
   type WordPictureOptions,
+  BOOK_APPLE_BITES,
+  BOOK_BACKDROP,
+  BOOK_PAINTS,
+  BOOK_POSES,
+  BOOK_SETTINGS,
+  BOOK_SPOTS,
+  bookAppleSvg,
+  bookBackdropSvg,
+  bookCastSvg,
+  bookPaintSvg,
+  bookPostmarkSvg,
+  bookRidgeAt,
+  bookSkyMarks,
+  bookSpotSvg,
+  type BookArtOptions,
+  type BookCastOptions,
+  type BookOrb,
+  type BookPaint,
+  type BookPose,
+  type BookSetting,
+  type BookSkyBox,
+  type BookSkyMark,
+  type BookSpot,
 } from './art/index.js';
 /**
  * The art's metals, for the parts of a screen drawn around an emblem — a
@@ -855,6 +952,8 @@ export {
   TIER_METAL as ART_TIER_METAL,
   type Metal as ArtMetal,
 } from './art/palette.js';
+/** The nine hues things are coloured in beside the app's own violet, each in the same four steps, light and dark. */
+export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
 export * from './art/fire.js';
 /** How big the fire burns: its stages from cold logs to the Newroz fire, by the streak's days or a run of right answers. */

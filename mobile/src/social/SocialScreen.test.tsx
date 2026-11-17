@@ -10,7 +10,9 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 // the pull to refresh as a button: the web's control has nothing to pull
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { forgetReach, reachOf } from '../testing/reach';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -22,7 +24,10 @@ import { SocialScreen } from './SocialScreen';
  */
 
 patchReactNativeWeb({ reduceMotion: true });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  forgetReach();
+});
 
 function open(extra: Record<string, unknown> = {}) {
   const client = fakeClient({
@@ -52,6 +57,14 @@ describe('Friends', () => {
     expect(screen.queryByRole('button', { name: 'Accept friend request from rojin' })).toBeNull();
     expect(screen.getByText('You and Rojîn are friends now')).toBeTruthy();
     await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/friends/requests/u3/accept')).toBe(true));
+  });
+
+  // a line of words and a button under a fingertip's height, each reached to one up and down, inside the row it sits in
+  it('answers a finger a little above or below the Messages link and a suggestion’s Add', async () => {
+    open();
+    await screen.findByText('zana');
+    expect(reachOf('Messages')).toEqual({ top: 13, bottom: 13, left: 0, right: 0 });
+    expect(reachOf('Add')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
   });
 
   it('declines through the same route', async () => {

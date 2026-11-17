@@ -10,6 +10,7 @@ import type { HapticEvent } from '../feedback/hapticPacing';
 import { Narrator, narrationTrack, type NarrationState, type PlayerLike, type PlayerStatus } from './narration';
 import { NarrationBar, lineTime, rateLabel } from './NarrationBar';
 import type { NarrationRate } from './prefs';
+import { forgetReach, reachOf } from '../testing/reach';
 
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -17,6 +18,8 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 // the bar's position hook lives beside the phone's player; nothing here plays
 vi.mock('expo-audio', () => ({ createAudioPlayer: () => ({}) }));
+// every control noted as it is drawn, so its reach can be read
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 
 patchReactNativeWeb({ reduceMotion: true });
 
@@ -106,7 +109,22 @@ describe('lineTime', () => {
 });
 
 describe('NarrationBar', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    forgetReach();
+  });
+
+  it('answers a finger a fingertip past the seek line and the speed, with the clock out of the line’s reach', () => {
+    mount();
+    // the line is 32 tall: 8 above and below makes 48, and it spans the bar, so nothing at its ends
+    expect(reachOf('Position in the story')).toEqual({ top: 8, bottom: 8, left: 0, right: 0 });
+    // the times stand the line's reach further off, so a tap on the clock is not a jump in the story
+    expect(getComputedStyle(screen.getByLabelText('Position in the story')).marginBottom).toBe('8px');
+    // the speed is 44 by 32: up to 48 each way, and only as far as the row it stands in
+    expect(reachOf('Speed: 1×')).toEqual({ top: 8, bottom: 8, left: 2, right: 2 });
+    // the steps beside the play button are 44: 2 each way, inside the 4 between them and it
+    expect(reachOf('Previous sentence')).toEqual({ top: 2, bottom: 2, left: 2, right: 2 });
+  });
 
   it('plays the whole story from its button, says where it is, and times the stitched track', async () => {
     const { f, narrator } = mount();

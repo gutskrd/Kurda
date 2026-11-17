@@ -58,6 +58,8 @@
   gap: 6px;
   min-height: 34px;
   padding: 0 13px 0 11px;
+  /* the pill sits alone in the window's corner, so a finger may land a little further from it than the shared reach allows */
+  --reach-open: 6px;
   border: 0;
   border-radius: var(--r-pill);
   background: var(--surface);
@@ -70,12 +72,6 @@
   transition:
     transform var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast) ease;
-}
-/* a finger needs more room than the pill shows */
-.letters-change::after {
-  content: '';
-  position: absolute;
-  inset: -6px;
 }
 .letters-change:hover {
   box-shadow: var(--shadow), 0 0 0 1px var(--border-strong);
@@ -430,6 +426,19 @@
   color: var(--ink-3);
   font-size: var(--text-secondary);
 }
+/* your own bird home with an answer while a visitor is on the sill: said under the visitor's words, with its own way in */
+.letters-status--also {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--ink);
+  font-size: var(--text-secondary);
+}
+.letters-status--also a {
+  display: inline-block;
+  padding-block: 8px;
+  font-weight: 700;
+}
 /* a quiet way out, set in line with the words around it rather than in a button's padding */
 .letters-text-button {
   justify-self: start;
@@ -770,8 +779,9 @@
   flex: none;
   padding: 2px 10px;
   border-radius: var(--r-pill);
-  background: var(--gold-soft);
-  color: var(--gold-ink);
+  /* something new to read, in the app's own colour like every other unread mark */
+  background: var(--primary);
+  color: var(--primary-ink);
   font-size: var(--text-caption);
   font-weight: 700;
 }

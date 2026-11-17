@@ -5,7 +5,7 @@ import { Pressable } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { SendButton } from '../chat/SendButton';
-import { MIN_TOUCH_TARGET, decorative } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, decorative, reachSlop } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
@@ -20,6 +20,7 @@ import { authorOf, type ThreadComment } from './thread';
 import type { CommentThread } from './useCommentThread';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
+import { useDirection } from '../reports/direction';
 
 /**
  * A post's comments, one level of replies under each, and the composer that
@@ -44,6 +45,7 @@ export function CommentList({
   renderAudio?: (url: string) => ReactNode;
 }): React.JSX.Element {
   const { t } = useI18n();
+  const dir = useDirection();
   const { top, replies } = thread.state;
   if (top === null) return <CommentsSkeleton />;
   if (top.length === 0) return <EmptyState title={t('comments.empty')} />;
@@ -60,7 +62,7 @@ export function CommentList({
       {top.map((c) => (
         <View key={c.id}>
           <CommentRow comment={c} thread={thread} onReport={onReport} renderAudio={renderAudio} />
-          {replies[c.id] ? <View style={styles.replies}>{branch(c.id)}</View> : null}
+          {replies[c.id] ? <View style={dir.row === 'row-reverse' ? styles.repliesRight : styles.replies}>{branch(c.id)}</View> : null}
         </View>
       ))}
     </View>
@@ -88,12 +90,27 @@ function CommentRow({
   const { require } = useAccountGate();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  // in Soranî and Arabic a comment starts on the right; what somebody wrote keeps its own direction
+  const dir = useDirection();
+  const edge = dir.row === 'row-reverse' ? 'flex-end' : 'flex-start';
   const navigation = useNavigation<RootNavigation>();
   const author = authorOf(c, user);
   const removed = c.status === 'removed';
   const mine = c.authorId === user?.id;
   const size = nested ? REPLY_AVATAR : AVATAR;
   const loading = thread.loadingReplies.includes(c.id);
+  /*
+   * The picture and the words beside it share the gap between them, half
+   * each. The picture's other sides reach to a fingertip; a reply's picture
+   * sits just under the line of the comment it answers, whose Reply reaches
+   * down to meet it, so it reaches up only its half of that gap too. Reply
+   * is first on its line, so its own reach toward the picture is the other
+   * half. hitSlop is the physical left and right, so the sides follow the row.
+   */
+  const mirrored = dir.row === 'row-reverse';
+  const faceTop = nested ? SEAM : undefined;
+  const faceSlop = reachSlop(size, size, { limit: mirrored ? { left: SEAM, top: faceTop } : { right: SEAM, top: faceTop } });
+  const replySlop = mirrored ? { ...ACTION_SLOP, right: SEAM } : { ...ACTION_SLOP, left: SEAM };
 
   // your own name opens your own profile tab, not the page others see you on
   const openProfile = () =>
@@ -105,13 +122,20 @@ function CommentRow({
   const voiceOnly = !removed && !c.body && Boolean(c.audioMediaId || c.audioUrl);
 
   return (
-    <View style={[styles.comment, c.pending ? styles.pending : null]}>
+    <View style={[styles.comment, { flexDirection: dir.row }, c.pending ? styles.pending : null]}>
       {/* the picture opens them too, for a thumb; a screen reader is offered the name alone, not the same button twice */}
-      <Pressable onPress={openProfile} disabled={c.pending} hitSlop={(MIN_TOUCH_TARGET - size) / 2} {...decorative()} style={({ pressed }) => pressed && heldDim}>
+      <Pressable
+        onPress={openProfile}
+        disabled={c.pending}
+        hitSlop={faceSlop}
+        {...decorative()}
+        testID={`comment-face-${c.id}`}
+        style={({ pressed }) => pressed && heldDim}
+      >
         <InitialsAvatar name={author.username} id={author.id} size={size} photoUrl={author.avatarUrl} />
       </Pressable>
       <View style={styles.main}>
-        <View style={styles.byline}>
+        <View style={[styles.byline, { flexDirection: dir.row }]}>
           <Pressable
             onPress={openProfile}
             disabled={c.pending}
@@ -120,7 +144,7 @@ function CommentRow({
             accessibilityLabel={t('friends.openProfile', { username: author.username })}
             style={({ pressed }) => [styles.who, pressed && heldDim]}
           >
-            <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+            <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
               {author.username}
             </Text>
           </Pressable>
@@ -131,22 +155,23 @@ function CommentRow({
         {audio}
         {!audio || c.body ? (
           voiceOnly ? (
-            <View style={styles.voice}>
+            <View style={[styles.voice, { flexDirection: dir.row }]}>
               <Icon name="speaker" size={16} color={colors.textPrimary} />
-              <Text style={[styles.body, styles.voiceText, { color: colors.textPrimary }]}>{text}</Text>
+              <Text style={[styles.body, styles.voiceText, dir.text, { color: colors.textPrimary }]}>{text}</Text>
             </View>
           ) : (
-            <Text style={[styles.body, { color: removed ? colors.textSecondary : colors.textPrimary }]}>{text}</Text>
+            <Text style={[styles.body, removed ? dir.text : dir.free, { color: removed ? colors.textSecondary : colors.textPrimary }]}>{text}</Text>
           )
         ) : null}
 
         {/* nothing to answer or take back until the server has it */}
         {!c.pending && !removed ? (
-          <View style={styles.actions}>
+          <View style={[styles.actions, { flexDirection: dir.row }]}>
             <Pressable
               onPress={() => require('comment') && thread.reply(c)}
-              hitSlop={ACTION_SLOP}
+              hitSlop={replySlop}
               accessibilityRole="button"
+              testID={`comment-reply-${c.id}`}
               style={({ pressed }) => [styles.action, pressed && heldDim]}
             >
               <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('comments.reply')}</Text>
@@ -157,7 +182,8 @@ function CommentRow({
                 onPress={() => thread.confirmDelete(c)}
                 hitSlop={ACTION_SLOP}
                 accessibilityRole="button"
-                style={({ pressed }) => [styles.action, styles.actionApart, pressed && heldDim]}
+                testID={`comment-delete-${c.id}`}
+                style={({ pressed }) => [styles.action, dir.row === 'row-reverse' ? styles.actionApartLeft : styles.actionApart, pressed && heldDim]}
               >
                 <Text style={[styles.actionText, { color: colors.danger }]}>{t('common.delete')}</Text>
               </Pressable>
@@ -167,7 +193,8 @@ function CommentRow({
                 hitSlop={ACTION_SLOP}
                 accessibilityRole="button"
                 accessibilityLabel={t('moderation.reportComment')}
-                style={({ pressed }) => [styles.action, pressed && heldDim]}
+                testID={`comment-report-${c.id}`}
+                style={({ pressed }) => [styles.action, { flexDirection: dir.row }, pressed && heldDim]}
               >
                 <Icon name="flag" size={12} color={colors.textSecondary} />
                 <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
@@ -180,10 +207,11 @@ function CommentRow({
           <Pressable
             onPress={() => void thread.showReplies(c.id)}
             disabled={loading}
-            hitSlop={ACTION_SLOP}
+            hitSlop={MORE_SLOP}
             accessibilityRole="button"
             accessibilityState={{ busy: loading }}
-            style={({ pressed }) => [styles.more, pressed && heldDim]}
+            testID={`comment-more-${c.id}`}
+            style={({ pressed }) => [styles.more, { flexDirection: dir.row, alignSelf: edge }, pressed && heldDim]}
           >
             <View style={[styles.moreRule, { backgroundColor: colors.separator }]} />
             <Text style={[styles.actionText, { color: colors.textSecondary }]}>
@@ -228,6 +256,8 @@ export function CommentComposer({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  // in Soranî and Arabic the words start on the right and Send sits on the left, as in a chat
+  const dir = useDirection();
   const bottom = useScreenBottomInset(spacing.md);
   const { isGuest, require } = useAccountGate();
   const target = thread.replyingTo;
@@ -243,9 +273,9 @@ export function CommentComposer({
           accessibilityRole="button"
           accessibilityLabel={placeholder}
           testID="comment-composer-guest"
-          style={({ pressed }) => [styles.composer, { backgroundColor: colors.glassFill, opacity: pressed ? pressedDim : 1 }]}
+          style={({ pressed }) => [styles.composer, dir.row === 'row-reverse' ? styles.composerRtl : null, { flexDirection: dir.row, backgroundColor: colors.glassFill, opacity: pressed ? pressedDim : 1 }]}
         >
-          <Text style={[styles.input, { color: colors.textSecondary }]} numberOfLines={1}>
+          <Text style={[styles.input, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
             {placeholder}
           </Text>
           <View style={styles.send}>
@@ -258,8 +288,8 @@ export function CommentComposer({
   return (
     <View style={[styles.composerWrap, { paddingBottom: bottom }]}>
       {target ? (
-        <View style={styles.replying}>
-          <Text style={[styles.replyingText, { color: colors.textSecondary }]} numberOfLines={1}>
+        <View style={[styles.replying, { flexDirection: dir.row }]}>
+          <Text style={[styles.replyingText, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
             {t('comments.replyingTo', { name: target.name })}
           </Text>
           <Pressable
@@ -274,10 +304,10 @@ export function CommentComposer({
         </View>
       ) : null}
       {children}
-      <View style={[styles.composer, { backgroundColor: colors.glassFill }]}>
+      <View style={[styles.composer, dir.row === 'row-reverse' ? styles.composerRtl : null, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}>
         <TextInput
           ref={thread.inputRef}
-          style={[styles.input, { color: colors.textPrimary }]}
+          style={[styles.input, dir.free, { color: colors.textPrimary }]}
           placeholder={placeholder}
           placeholderTextColor={colors.textSecondary}
           accessibilityLabel={target ? t('comments.replyingTo', { name: target.name }) : placeholder}
@@ -310,12 +340,32 @@ export function CommentsSkeleton(): React.JSX.Element {
   );
 }
 
-/** a line of small text is about 20pt tall; this takes its touch area to 44 */
-const ACTION_SLOP = { top: 12, bottom: 12, left: 8, right: 8 };
-const BYLINE_SLOP = { top: 12, bottom: 12, left: 4, right: 4 };
+/*
+ * A thread is the most crowded stack of controls in the app: a name, a line
+ * of Reply and Report, and "Show replies", over and over, a few points apart.
+ * No two reaches overlap, because where two do the later one takes the tap
+ * even from the control the finger was nearer; so each reaches into a gap
+ * only as far as its neighbour leaves it, and where there is room, to a
+ * fingertip's 44:
+ *
+ * - Reply and Report are 24 tall (a 16pt line and 4 above and below) and 16
+ *   apart; they reach 12 up into the words and 8 down, so 44, and 8 toward
+ *   each other, meeting in the middle.
+ * - The next comment starts 12 below the last line; that line reaches 8 of it
+ *   and the next name the other 4. The name reaches 12 down into the words
+ *   under it, which are not a control, and 4 to either side; the picture
+ *   beside it opens the same profile.
+ * - "Show replies" stands 18 below Reply (2 and its own 16), each reaching 8
+ *   toward the other, so 40 tall.
+ */
+/** half the 8 between a picture and the words beside it */
+const SEAM = spacing.sm / 2;
+const ACTION_SLOP = { top: 12, bottom: 8, left: 8, right: 8 };
+const BYLINE_SLOP = { top: SEAM, bottom: 12, left: SEAM, right: SEAM };
+const MORE_SLOP = { top: 8, bottom: 8 };
 
 const styles = StyleSheet.create({
-  comment: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.sm },
+  comment: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.sm + 4 },
   pending: { opacity: 0.6 },
   main: { flex: 1, gap: 2 },
   byline: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
@@ -326,18 +376,22 @@ const styles = StyleSheet.create({
   voice: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   voiceText: { flexShrink: 1 },
   actions: { flexDirection: 'row', gap: spacing.md, paddingTop: 2 },
-  action: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  action: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.xs },
   actionApart: { marginLeft: 'auto' },
+  actionApartLeft: { marginRight: 'auto' },
   actionText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  more: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm, alignSelf: 'flex-start' },
+  more: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md, paddingVertical: spacing.xs, alignSelf: 'flex-start' },
   moreRule: { width: 24, height: StyleSheet.hairlineWidth },
   // under the words of the comment they answer, not under its picture
   replies: { marginLeft: AVATAR + spacing.sm },
+  repliesRight: { marginRight: AVATAR + spacing.sm },
   composerWrap: { gap: spacing.sm, paddingTop: spacing.sm },
   replying: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md },
   replyingText: { flex: 1, fontSize: typography.sizes.sm },
   cancel: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderRadius: radii.lg, paddingLeft: spacing.md, paddingRight: spacing.xs, paddingVertical: 2 },
+  // the words' room on the right, Send's on the left
+  composerRtl: { paddingLeft: spacing.xs, paddingRight: spacing.md },
   input: { minHeight: MIN_TOUCH_TARGET, flex: 1, fontSize: typography.sizes.md, maxHeight: 120, paddingVertical: spacing.sm },
   send: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
 });

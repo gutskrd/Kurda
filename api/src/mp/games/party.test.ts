@@ -4,7 +4,7 @@
  * deal never travels in anything a client sent.
  */
 import { describe, expect, it } from 'vitest';
-import { IMPOSTOR_CATEGORY_PICTURES, impostorRules, type ImpostorSettings, type WordCardContent } from '@kurda/shared';
+import { IMPOSTOR_CATEGORY_MIN, IMPOSTOR_CATEGORY_PICTURES, IMPOSTOR_UNSURE_VOTE, impostorRules, type ImpostorSettings, type WordCardContent } from '@kurda/shared';
 import { dealFrom, impostorModule } from './impostor.js';
 import { STARTER_CATEGORIES, meaningKeys, starterCategoryOf } from '../../games/word-categories.js';
 
@@ -56,6 +56,9 @@ describe('Xapînok on the server', () => {
     const schema = impostorModule.moveSchema;
     expect(schema.safeParse({ clue: 'heywan' }).success).toBe(true);
     expect(schema.safeParse({ vote: 2 }).success).toBe(true);
+    // seat 0 is nobody's: the vote of someone who is not sure
+    expect(schema.safeParse({ vote: IMPOSTOR_UNSURE_VOTE }).success).toBe(true);
+    expect(schema.safeParse({ vote: -1 }).success).toBe(false);
     expect(schema.safeParse({ guess: 3 }).success).toBe(true);
     expect(schema.safeParse({ guess: 4 }).success).toBe(false);
     expect(schema.safeParse({ clue: 'heywan', vote: 2 }).success).toBe(false);
@@ -63,28 +66,33 @@ describe('Xapînok on the server', () => {
     expect(impostorModule.freeText!.textOf({ vote: 2 })).toBeNull();
   });
 
-  it('deals one card and three others for the guess, the same category first, never the word twice', () => {
-    const pool = [card('pisîk', 'animals'), card('kûçik', 'animals'), card('hesp', 'animals'), card('Pisik', 'animals'), card('sêv', 'fruit'), card('nan', 'food')];
-    const deal = dealFrom(pool, 'kmr', 'seed-1')!;
-    expect(deal.decoys).toHaveLength(3);
-    const words = [deal.card.word, ...deal.decoys].map((w) => w.toLowerCase().replace('î', 'i'));
-    expect(new Set(words).size).toBe(4);
-    const animals = ['pisîk', 'kûçik', 'hesp', 'Pisik'];
-    if (animals.includes(deal.card.word)) expect(deal.decoys.filter((d) => animals.includes(d))).toHaveLength(2);
-    expect(dealFrom(pool.slice(0, 3), 'kmr', 'seed-1')).toBeNull();
+  const ANIMALS = ['pisîk', 'kûçik', 'hesp', 'ker', 'mişk', 'gur', 'hirç', 'rovî'];
+  const FRUIT = ['sêv', 'hirmî', 'tirî', 'xox'];
+
+  it('deals one card and three others of its category for the guess, never the word give or take an ending', () => {
+    const pool = [...ANIMALS.map((w) => card(w, 'animals')), card('Pisik', 'animals'), card('kûçikek', 'animals'), card('nan', 'food')];
+    for (const seed of ['seed-1', 'seed-2', 'seed-3', 'seed-4', 'seed-5', 'seed-6']) {
+      const deal = dealFrom(pool, 'kmr', seed)!;
+      expect(deal.decoys).toHaveLength(3);
+      const words = [deal.card.word, ...deal.decoys].map((w) => w.toLowerCase().replace('î', 'i').replace(/ek$/, ''));
+      expect(new Set(words).size, words.join(' ')).toBe(4);
+      // food has one card: never dealt from, and never needed for the guess
+      expect([deal.card.word, ...deal.decoys]).not.toContain('nan');
+    }
+    expect(dealFrom(pool.slice(0, IMPOSTOR_CATEGORY_MIN - 1), 'kmr', 'seed-1')).toBeNull();
   });
 
   it('draws the word from the category asked for, and deals nothing from one with too few cards', () => {
-    const pool = [card('pisîk', 'animals'), card('kûçik', 'animals'), card('hesp', 'animals'), card('ker', 'animals'), card('sêv', 'fruit'), card('nan', 'food')];
+    const pool = [...ANIMALS.map((w) => card(w, 'animals')), ...FRUIT.map((w) => card(w, 'fruit')), card('nan', 'food')];
     for (const seed of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
       const deal = dealFrom(pool, 'kmr', seed, 'animals')!;
-      expect(['pisîk', 'kûçik', 'hesp', 'ker']).toContain(deal.card.word);
-      // with three more animals to choose among, the guess stays inside the category
-      expect(deal.decoys.every((d) => ['pisîk', 'kûçik', 'hesp', 'ker'].includes(d))).toBe(true);
+      expect(ANIMALS).toContain(deal.card.word);
+      expect(deal.decoys.every((d) => ANIMALS.includes(d))).toBe(true);
+      // a game of any category deals only from one with enough cards to be fair
+      expect(ANIMALS).toContain(dealFrom(pool, 'kmr', seed, null)!.card.word);
     }
     expect(dealFrom(pool, 'kmr', 'a', 'fruit')).toBeNull();
     expect(dealFrom(pool, 'kmr', 'a', 'nowhere')).toBeNull();
-    expect(dealFrom(pool, 'kmr', 'a', null)).not.toBeNull();
   });
 
   it('offers a difficulty only with enough approved cards, and deals only from them', async () => {
@@ -105,17 +113,20 @@ describe('Xapînok on the server', () => {
 
   it('offers a category only with enough approved cards at the lobby’s difficulty, and deals from it', async () => {
     const things = Array.from({ length: 12 }, (_, i) => ({ kind: 'word_card', level: 1, payload: card(`peyv${'abcdefghijkl'[i]}`, 'things').payload }));
-    const animals = ['pisîk', 'kûçik', 'hesp', 'ker'].map((w) => ({ kind: 'word_card', level: 1, payload: card(w, 'animals').payload }));
-    // four fruits too, but for an advanced game: not a beginner’s category
-    const fruit = ['sêv', 'hirmî', 'tirî', 'xox'].map((w) => ({ kind: 'word_card', level: 5, payload: card(w, 'fruit').payload }));
-    const db = contentDb([...things, ...animals, ...fruit]);
+    const animals = ANIMALS.map((w) => ({ kind: 'word_card', level: 1, payload: card(w, 'animals').payload }));
+    // fruit too, but for an advanced game: not a beginner’s category
+    const fruit = [...FRUIT, 'hejîr', 'gêlas', 'tû', 'beh'].map((w) => ({ kind: 'word_card', level: 5, payload: card(w, 'fruit').payload }));
+    // and a beginner’s category with too few cards to be fair
+    const small = ['nan', 'penîr', 'mast', 'hêk'].map((w) => ({ kind: 'word_card', level: 1, payload: card(w, 'food').payload }));
+    const db = contentDb([...things, ...animals, ...fruit, ...small]);
     const of = (category: string) => impostorModule.lobbySchema.parse({ dialect: 'kmr', difficulty: 'beginner', category });
     expect(await impostorModule.offers!(db, of('animals'))).toBe(true);
     expect(await impostorModule.offers!(db, of('fruit'))).toBe(false);
+    expect(await impostorModule.offers!(db, of('food'))).toBe(false);
     expect(await impostorModule.offers!(db, of('nowhere'))).toBe(false);
     for (const seed of ['s', 't', 'u', 'v']) {
       const dealt = (await impostorModule.deal!(db, of('animals').settings, { dialect: 'kmr', seed, seats: [] })) as ImpostorSettings;
-      expect(['pisîk', 'kûçik', 'hesp', 'ker']).toContain(dealt.deal!.card.word);
+      expect(ANIMALS).toContain(dealt.deal!.card.word);
     }
     // the approved cards of a category can be withdrawn between making the lobby and starting it
     await expect(impostorModule.deal!(contentDb(things), of('animals').settings, { dialect: 'kmr', seed: 's', seats: [] })).rejects.toMatchObject({ code: 'GAME_UNAVAILABLE' });
@@ -180,6 +191,14 @@ describe('the starter categories', () => {
   });
 
   it('are forty, wide enough that most of what a course teaches can become a card', () => {
+    // drinks are dealt as food and play as sports; Kurdistan and the legends are categories of their own
+    expect(STARTER_CATEGORIES.map((c) => c.slug)).not.toContain('drinks');
+    expect(STARTER_CATEGORIES.map((c) => c.slug)).not.toContain('play');
+    expect(STARTER_CATEGORIES.map((c) => c.slug)).toEqual(expect.arrayContaining(['kurdistan', 'legends']));
+    // a meaning that sorted words into the wrong place is not listed at all
+    for (const misfire of ['saw', 'patient', 'scales', 'spring', 'rose', 'ear', 'mark', 'free', 'warmth', 'clear', 'sorry', 'letter']) {
+      expect(starterCategoryOf(misfire), misfire).toBeNull();
+    }
     expect(STARTER_CATEGORIES).toHaveLength(40);
     // each has a picture of its own for its tile (shared/src/art/impostor.ts)
     expect(STARTER_CATEGORIES.map((c) => c.slug).filter((slug) => !IMPOSTOR_CATEGORY_PICTURES.includes(slug))).toEqual([]);

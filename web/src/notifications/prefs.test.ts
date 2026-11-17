@@ -15,6 +15,7 @@ import { en } from '../i18n/en';
 const prefs = (over: Partial<NotificationPrefs> = {}): NotificationPrefs => ({
   streak: true,
   friends: true,
+  letters: true,
   games: true,
   progress: true,
   events: true,

@@ -229,12 +229,19 @@
   outline: 2px solid var(--focus, var(--ink));
   outline-offset: -2px;
 }
-/* the range: a row of chips that wraps, the chosen one filled in ink */
+/*
+ * The range: a row of chips that wraps, the chosen one filled in ink. Each
+ * chip reaches past its edges (reach.css), but only as far as half the gap
+ * to the chip beside it or on the next line, so two reaches meet in the
+ * middle of the gap rather than one taking the other's presses.
+ */
 .ffilter-periods {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   padding: 4px 10px 8px;
+  --reach-room-x: 6px;
+  --reach-room-y: 6px;
 }
 .ffilter-period {
   height: 34px;

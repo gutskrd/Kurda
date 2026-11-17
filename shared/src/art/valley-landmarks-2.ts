@@ -26,6 +26,10 @@ import {
   fill,
   flowers,
   foliage,
+  bark,
+  grownTree,
+  kurdistanFlagAt,
+  orchardTree,
   poplar,
   poplarLeaves,
   roundTree,
@@ -178,52 +182,29 @@ function restRipple(box: Box, dark: boolean): string {
 }
 
 /**
- * Smoke going up from the bottom middle of the box: one plume, thin where it
- * leaves the fire and billowing into rounded lobes as it rises and drifts,
- * its shade a step down along its lower right.
+ * Smoke going up from the bottom middle of the box, as it rises on a still
+ * day: three puffs, each a little bigger than the one below it, a little
+ * further over to the right, and a little thinner, so the air shows through
+ * the last of them; each puff its shade a step down along its lower right.
  */
 function restSmoke(box: Box, face: string, shade: string): string {
   const s = box.w / 16;
-  const k = box.h / s / 30;
-  const plume: Pt[] = [
-    [8, 29.6],
-    [9.6, 26.4],
-    [10.4, 23],
-    [12.6, 19.6],
-    [13.2, 15],
-    [14.8, 10.6],
-    [14.2, 5.4],
-    [11.6, 2],
-    [8.4, 3],
-    [7.2, 6.6],
-    [4.4, 9.2],
-    [3.2, 13.6],
-    [5, 17],
-    [4, 20.6],
-    [5.8, 24],
-    [7, 27.2],
+  const k = box.h / 30;
+  const puffs: ReadonlyArray<readonly [x: number, y: number, r: number, alpha: number]> = [
+    [8, 25.4, 2.6, 0.95],
+    [9.4, 16.8, 3.6, 0.75],
+    [10.8, 7, 4.6, 0.5],
   ];
-  const at = (dx: number, dy: number): Pt[] => plume.map(([px, py]) => [box.x + (px + dx) * s, box.y + (py * k + dy) * s] as Pt);
-  // the face is drawn a little up and to the left of the shade, its foot pulled up so the shade shows under it
-  const lit = at(-0.3, -0.3).map(([x, y], i) => (i === 0 ? [x, y - 0.6 * s] : [x, y]) as Pt);
-  return fill(smoothPath(at(0.7, 0.6), true), shade) + fill(smoothPath(lit, true), face);
-}
-
-/** A kilim flag hanging from the pole at the box's left edge: madder red, a cream band, a gold diamond and an indigo hem, its free end ragged. */
-function restFlag(box: Box, dark: boolean): string {
-  const s = box.w / 20;
-  const c = (hex: string): string => dusk(hex, dark);
-  const body = 'M0.5 1L18 1.6C19 1.7 19.4 2.4 19.2 3.4L18.8 11.2L17 13L15.4 11.4L13.6 13.1L12 11.4L10.2 13L8.6 11.4L0.5 11.6Z';
-  const fold = 'M10.5 1.3L14.5 1.5L14 11.7L12 11.4L10.2 13L10.3 1.3Z';
-  return (
-    `<g transform="translate(${f(box.x)} ${f(box.y)}) scale(${n(s)})">` +
-    fill(body, c(VALLEY.red)) +
-    fill(fold, c(VALLEY.redDark)) +
-    fill('M0.5 4.3L19.1 4.6L19 5.9L0.5 5.7Z', c(VALLEY.cream)) +
-    fill('M6 6.6L8.4 8.4L6 10.2L3.6 8.4Z', c(VALLEY.gold)) +
-    fill('M0.5 10.4L18.9 10.3L18.8 11.2L0.5 11.4Z', c(VALLEY.indigo)) +
-    '</g>'
-  );
+  let out = '';
+  for (const [px, py, r, alpha] of puffs) {
+    const [cx, cy] = [box.x + px * s, box.y + py * k];
+    const lobes = (dx: number, dy: number): string =>
+      ellipsePath(cx - r * 0.6 * s + dx, cy + r * 0.2 * s + dy, r * 0.6 * s, r * 0.52 * s) +
+      ellipsePath(cx + dx, cy - r * 0.22 * s + dy, r * 0.72 * s, r * 0.64 * s) +
+      ellipsePath(cx + r * 0.58 * s + dx, cy + r * 0.16 * s + dy, r * 0.58 * s, r * 0.5 * s);
+    out += `<path d="${lobes(0.5 * s, 0.5 * s)}" fill="${shade}" fill-opacity="${alpha}"/><path d="${lobes(0, 0)}" fill="${face}" fill-opacity="${alpha}"/>`;
+  }
+  return out;
 }
 
 // ─────────────────────────────────────────────────────────── small brushes of these chapters
@@ -349,52 +330,65 @@ function newroz(dark: boolean, random: () => number): string {
 const HIVES_BEE: Box = { kind: 'bee', x: 43, y: 24, w: 34, h: 34 };
 
 /**
- * One painted box hive standing on the plank, seen a little from above and
- * to the right as the village's houses are: its two boxes, the side in
- * shade, the lid overhanging with its top in the light, and the entrance
- * slot over its landing board.
+ * One painted box hive, seen a little from above and to the right as the
+ * village's houses are, its foot at (x, y): `boxes` boxes stacked to `h`
+ * high with a seam between each, its side in shade, the entrance slot over
+ * its landing board, and the lid overhanging with its top in the light. A
+ * hive that stands in the wind has a flat stone on its lid.
  */
-function hive(x: number, y: number, tones: { face: string; side: string }, dark: boolean): string {
+function hive(x: number, y: number, w: number, h: number, boxes: number, tones: { face: string; side: string }, dark: boolean, stone = false): string {
   const c = (hex: string): string => dusk(hex, dark);
-  const w = 20;
-  const h = 23;
-  const d = 8;
+  const d = 7.4;
   let out = fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d, y - d / 2 - h], [x + w, y - h]]), c(tones.side));
-  out += fill(`M${f(x)} ${f(y - h)}h${w}v${h}h${-w}Z`, c(tones.face));
-  out += stroke(`M${f(x)} ${f(y - h * 0.42)}h${w}l${d} ${-d / 2}`, c(tones.side), 1);
-  out += fill(`M${f(x + 5)} ${f(y - 3.2)}h${w - 10}v1.8h${-(w - 10)}Z`, c(VALLEY.window));
-  out += fill(`M${f(x + 4)} ${f(y - 1.4)}h${w - 8}v1.4h${-(w - 8)}Z`, c(HUE.woodLight));
+  out += fill(`M${f(x)} ${f(y - h)}h${f(w)}v${f(h)}h${f(-w)}Z`, c(tones.face));
+  let seams = '';
+  for (let k = 1; k < boxes; k++) seams += `M${f(x)} ${f(y - (h * k) / boxes)}h${f(w)}l${f(d)} ${f(-d / 2)}`;
+  if (seams) out += stroke(seams, c(tones.side), 0.9);
+  out += fill(`M${f(x + w * 0.24)} ${f(y - 3.2)}h${f(w * 0.52)}v1.7h${f(-w * 0.52)}Z`, c(VALLEY.window));
+  out += fill(`M${f(x + w * 0.18)} ${f(y - 1.4)}h${f(w * 0.64)}v1.4h${f(-w * 0.64)}Z`, c(HUE.woodLight));
   // the lid: its side, its front edge, its lit top
   const t = y - h;
   out += fill(poly([[x + w + 1, t], [x + w + 1 + d, t - d / 2], [x + w + 1 + d, t - d / 2 - 3], [x + w + 1, t - 3]]), c(VALLEY.wallSide));
-  out += fill(`M${f(x - 1)} ${f(t - 3)}h${w + 2}v3h${-(w + 2)}Z`, c(VALLEY.parapet));
+  out += fill(`M${f(x - 1)} ${f(t - 3)}h${f(w + 2)}v3h${f(-(w + 2))}Z`, c(VALLEY.parapet));
   out += fill(poly([[x - 1, t - 3], [x - 1 + d, t - 3 - d / 2], [x + w + 1 + d, t - 3 - d / 2], [x + w + 1, t - 3]]), c(VALLEY.roof));
+  if (stone) {
+    const [sx, sy] = [x + w * 0.5 + d * 0.4, t - 3 - d * 0.22];
+    out += fill(`M${f(sx - 5.4)} ${f(sy + 0.6)}C${f(sx - 5)} ${f(sy - 2.2)} ${f(sx + 3)} ${f(sy - 2.6)} ${f(sx + 5.6)} ${f(sy - 0.4)}C${f(sx + 5.8)} ${f(sy + 1)} ${f(sx - 4.6)} ${f(sy + 1.6)} ${f(sx - 5.4)} ${f(sy + 0.6)}Z`, c(VALLEY.stoneSide));
+    out += fill(`M${f(sx - 4.8)} ${f(sy - 0.2)}C${f(sx - 4.2)} ${f(sy - 2)} ${f(sx + 2.4)} ${f(sy - 2.4)} ${f(sx + 4.4)} ${f(sy - 0.8)}C${f(sx + 1.6)} ${f(sy - 0.2)} ${f(sx - 2)} ${f(sy)} ${f(sx - 4.8)} ${f(sy - 0.2)}Z`, c(VALLEY.stone));
+  }
+  return out;
+}
+
+/** The two stones a hive stands on, its shadow on the grass falling to the lower right. */
+function hiveStand(x: number, y: number, w: number, h: number, ground: string, dark: boolean): string {
+  const c = (hex: string): string => dusk(hex, dark);
+  let out = fill(poly([[x + 1, y + 4], [x + w + 9, y + 4], [x + w + 16, y - 1], [x + 9, y - 1]]), ground);
+  out += fill(poly([[x + w, y], [x + w + 7.4, y - 3.7], [x + w + 7.4 + h * 0.3, y - 3.7 + h * 0.16], [x + w + h * 0.3, y + h * 0.16]]), ground);
+  for (const sx of [x + 1, x + w - 6]) out += fill(`M${f(sx)} ${f(y)}h6v4.6h-6Z`, c(VALLEY.stoneSide)) + fill(`M${f(sx)} ${f(y)}h4.2v4.6h-4.2Z`, c(VALLEY.stone));
   return out;
 }
 
 /**
- * The beehives at the edge of the flowering meadow: three painted box hives
- * in a row on a plank stand, a fruit tree in blossom behind them, poppies,
- * daisies and buttercups in the grass, a jar of the honey with a cloth tied
- * over it, and a bee out over the flowers.
+ * The beehives at the edge of the flowering meadow: three painted box hives,
+ * each on its own stones and none like another (the blue one two boxes high
+ * with a stone on its lid against the wind, the cream one low, the saffron
+ * one older and standing back), a fruit tree in blossom behind them, patches
+ * of poppies, daisies and buttercups in the grass, a jar of the honey with a
+ * cloth tied over it, and a bee out over the flowers.
  */
 function hives(dark: boolean, random: () => number): string {
   const c = (hex: string): string => dusk(hex, dark);
   const ground = c(VALLEY.meadowShade);
   let out = '';
-  // the fruit tree in blossom behind the hives, and the flowers growing up behind the stand
-  out += roundTree(102, 88, 0.72, foliage(dark, VALLEY.blossom), ground, random);
-  out += wildflowers([[6, 96, 9, c(HUE.poppy)], [9, 97, 6, c(VALLEY.blossomWhite)], [96, 96, 8, c(HUE.buttercup)]], c(VALLEY.leafShade));
-  // the stand: its shadow on the grass, the stone feet, the plank's lit top, its face, and its end in shade
-  out += fill(ellipsePath(58, 106.4, 44, 3.2), ground);
-  for (const x of [11, 49, 87]) out += fill(`M${x} 101h6v5.5h-6Z`, c(VALLEY.stoneSide)) + fill(`M${x} 101h4v5.5h-4Z`, c(VALLEY.stone));
-  out += fill(poly([[6, 100], [12, 97], [100, 97], [94, 100]]), c(HUE.woodLight));
-  out += fill('M6 100h88v3h-88Z', c(HUE.wood));
-  out += fill(poly([[94, 100], [100, 97], [100, 100], [94, 103]]), c(HUE.woodShade));
-  // the three hives: Sêvan's blue, cream, and saffron
-  out += hive(10, 98.6, { face: VALLEY.gate, side: VALLEY.gateDark }, dark);
-  out += hive(38, 98.6, { face: HUE.hiveCream, side: HUE.hiveCreamSide }, dark);
-  out += hive(66, 98.6, { face: VALLEY.gold, side: VALLEY.goldDark }, dark);
+  // the fruit tree in blossom behind the hives, and a few flowers growing up behind them
+  out += grownTree({ ...orchardTree(101, 90, 0.8, 0.5, random), dot: 0.9 }, foliage(dark, VALLEY.blossom), bark(dark), ground, random);
+  out += wildflowers([[4.6, 97, 8, c(HUE.poppy)], [62.4, 95, 6, c(VALLEY.blossomWhite)]], c(VALLEY.leafShade));
+  // the saffron hive stands furthest back, the blue one in the middle distance, the cream one nearest
+  out += hiveStand(70, 97.6, 18, 24, ground, dark) + hive(70, 97.6, 18, 24, 2, { face: VALLEY.gold, side: VALLEY.goldDark }, dark);
+  out += hiveStand(9, 100.4, 19, 30, ground, dark) + hive(9, 100.4, 19, 30, 2, { face: VALLEY.gate, side: VALLEY.gateDark }, dark, true);
+  out += hiveStand(39, 104, 21, 19, ground, dark) + hive(39, 104, 21, 19, 1, { face: HUE.hiveCream, side: HUE.hiveCreamSide }, dark);
+  // a bee coming in to land at the blue hive's door
+  out += fill(ellipsePath(26.4, 94.2, 1.1, 0.8), dusk(HUE.beeBody, dark, 0.1)) + fill(ellipsePath(26, 93.3, 0.8, 0.5), dusk('#ffffff', dark, 0.15));
   // the honey jar: its shadow, the glass full of honey with its lit edge and shaded side, a red cloth tied over its mouth
   out += fill(ellipsePath(110, 114, 6, 1.7), ground);
   out += fill('M101 104a3 3 0 0 1 3 -3h6a3 3 0 0 1 3 3v8a2.5 2.5 0 0 1 -2.5 2.5h-7a2.5 2.5 0 0 1 -2.5 -2.5Z', warm(VALLEY.gold, dark));
@@ -403,23 +397,21 @@ function hives(dark: boolean, random: () => number): string {
   const cloth = 'M100.4 101.6C100.4 98.6 103 97.4 107 97.4C111 97.4 113.6 98.6 113.6 101.6L112.6 103.4L110.4 102.4L107 103.4L103.6 102.4L101.4 103.4Z';
   out += fill(cloth, c(VALLEY.red));
   out += stroke('M101.4 101.2H112.6', c(VALLEY.cream), 1);
-  // the meadow's flowers in front
+  // the meadow's flowers in patches of different sizes, not in a row, with grass between them
   out += wildflowers(
     [
-      [6, 115, 6, c(HUE.poppy)],
-      [9.5, 114, 9, c(VALLEY.blossomWhite)],
-      [13, 116, 5, c(HUE.buttercup)],
-      [16, 114, 8, c(HUE.poppy)],
-      [20, 115.6, 5, c(VALLEY.blossomWhite)],
-      [74, 115.6, 5, c(HUE.buttercup)],
-      [78, 114, 8, c(HUE.poppy)],
-      [82, 115.4, 6, c(VALLEY.blossomWhite)],
-      [86, 114.4, 9, c(HUE.buttercup)],
-      [90, 116, 5, c(HUE.poppy)],
+      [5.4, 115.4, 6.4, c(HUE.poppy)],
+      [8.6, 113.8, 9, c(VALLEY.blossomWhite)],
+      [12.4, 115.8, 4.6, c(HUE.poppy)],
+      [33.6, 112.2, 5.4, c(HUE.buttercup)],
+      [80.4, 115.2, 7.6, c(HUE.poppy)],
+      [84.2, 113.6, 5, c(VALLEY.blossomWhite)],
+      [91.4, 115.8, 8.4, c(HUE.buttercup)],
     ],
     c(VALLEY.leafShade),
   );
-  out += flowers(46, 111, c(VALLEY.blossomWhite)) + flowers(30, 109.6, c(HUE.buttercup)) + flowers(60, 112, c(HUE.poppy));
+  out += flowers(64, 113, c(VALLEY.blossomWhite)) + flowers(21.4, 109.4, c(HUE.buttercup));
+  out += tuft(18.6, 115.6, 1, c(VALLEY.leafShade)) + tuft(70.4, 111.4, 0.8, c(VALLEY.leafShade)) + tuft(97, 112.6, 0.9, c(VALLEY.leafShade));
   out += restBee(HIVES_BEE, dark);
   return out;
 }
@@ -438,9 +430,10 @@ function bridge(dark: boolean, random: () => number): string {
   const c = (hex: string): string => dusk(hex, dark);
   const ground = c(VALLEY.meadowShade);
   let out = '';
-  // the trees on the banks, behind the bridge's two ramps
-  out += poplar(14, 99, 0.74, poplarLeaves(dark), ground);
-  out += roundTree(104, 98, 0.72, foliage(dark), ground, random);
+  // the trees on the banks, behind the bridge's two ramps: two poplars of different heights, and a walnut grown wide
+  out += poplar(19.4, 100.6, 0.56, poplarLeaves(dark), ground);
+  out += poplar(12.6, 99, 0.76, poplarLeaves(dark), ground);
+  out += grownTree(orchardTree(103.6, 98.4, 0.74, -0.4, random), foliage(dark), bark(dark), ground, random);
   // the bridge's shadow along its foot, falling to the lower right
   out += fill(poly([[8, 108], [112, 108], [116, 111], [14, 111.5]]), ground);
   // the bridge: its face, and the parapet's top in the light
@@ -568,13 +561,13 @@ function tents(dark: boolean, random: () => number): string {
 
 // ─────────────────────────────────────────────────────────── 11 · the school
 
-const SCHOOL_FLAG: Box = { kind: 'flag', x: 96, y: 20, w: 20, h: 16 };
+const SCHOOL_FLAG: Box = { kind: 'colours', x: 96, y: 20, w: 20, h: 16 };
 
 /**
  * The village school in autumn: one long whitewashed room under a red tin
  * roof, its gable end in shade, a row of tall windows and a blue door, the
- * flag on its pole by the yard, and the trees gone orange and yellow, their
- * leaves on the ground.
+ * flag of Kurdistan on its pole by the yard, and the trees gone orange and
+ * yellow, their leaves on the ground.
  */
 function school(dark: boolean, random: () => number): string {
   const c = (hex: string): string => dusk(hex, dark);
@@ -587,11 +580,11 @@ function school(dark: boolean, random: () => number): string {
   const rise = 8;
   const top = y - h;
   const ridgeY = top - d / 4 - rise;
-  // the poplar behind the roof, and the yard of beaten earth the school stands in
-  out += poplar(78, 84, 0.84, autumnPoplar(dark), c(VALLEY.meadowShade));
+  // the poplar behind the roof, its foot in the yard behind the building, and the yard of beaten earth the school stands in
+  out += poplar(80, 101, 0.98, autumnPoplar(dark), c(VALLEY.meadowShade));
   out += fill(blobPath(60, 106.4, 55, 8.4, 12, 0.08, random), c(VALLEY.dirt));
   // the school's shadow, its gable end in shade, its front, the blue plinth, the windows and the door
-  out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d + 11, y - d / 2 + 6], [x + w + 11, y + 6]]), c(VALLEY.dirtEdge));
+  out += `<path d="${ellipsePath(x + w + d * 0.6, y + 1.4, d, 2.6)}" fill="${c(VALLEY.dirtEdge)}" fill-opacity="0.6"/>`;
   out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d, top - d / 2], [x + w + d / 2, ridgeY], [x + w, top]]), c(HUE.whitewashSide));
   out += fill(`M${x} ${top}h${w}v${h}h${-w}Z`, c(HUE.whitewash));
   out += fill(`M${x} ${y - 3}h${w}v3h${-w}Z`, c(VALLEY.gate));
@@ -623,15 +616,15 @@ function school(dark: boolean, random: () => number): string {
   }
   out += stroke(ribs.join(''), c(VALLEY.redDark), 0.6);
   out += stroke(`M${f(x - 2 + d / 2)} ${f(ridgeY)}H${f(x + w + 2 + d / 2)}`, c(VALLEY.redDark), 1.6);
-  // the round tree at the yard's corner, in its autumn orange
-  out += roundTree(12, 112, 0.6, autumnLeaves(dark), c(VALLEY.dirtEdge), random);
-  // the flagpole on its stone foot, and the flag hanging at rest
+  // the tree at the yard's corner in its autumn orange, its limbs showing where the leaves have thinned
+  out += grownTree(orchardTree(12.6, 112, 0.6, 0.6, random), autumnLeaves(dark), bark(dark), c(VALLEY.dirtEdge), random);
+  // the flagpole on its stone foot, and the flag of Kurdistan flying from it
   const px = SCHOOL_FLAG.x;
   out += fill(ellipsePath(px + 5, 110.5, 6, 1.6), c(VALLEY.dirtEdge));
   out += fill(`M${px - 3} 110.5v-3h6v3Z`, c(VALLEY.stoneSide)) + fill(`M${px - 3} 107.5l1.5 -1h6l-1.5 1Z`, c(VALLEY.stone));
   out += stroke(`M${px} 107V${SCHOOL_FLAG.y}`, c(HUE.pole), 1.5);
   out += fill(ellipsePath(px, SCHOOL_FLAG.y - 1, 1.5, 1.5), c(VALLEY.gold));
-  out += restFlag(SCHOOL_FLAG, dark);
+  out += kurdistanFlagAt(SCHOOL_FLAG, dark);
   // fallen leaves on the yard
   let leaves = '';
   for (let k = 0; k < 10; k++) leaves += ellipsePath(22 + random() * 84, 106 + random() * 7, 1.2, 0.8);
@@ -665,7 +658,8 @@ function hearth(dark: boolean, random: () => number): string {
   const h = 27;
   const d = 16;
   const top = y - h;
-  out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d + 11, y - d / 2 + 6], [x + w + 11, y + 6]]), snowShade);
+  // the house's shadow lies soft on the snow, inside the drift, as a shadow on snow does
+  out += `<path d="${ellipsePath(x + w + d * 0.62, y + 1.4, d * 0.95, 2.4)}" fill="${snowShade}" fill-opacity="0.7"/>`;
   out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d, top - d / 2], [x + w, top]]), c(VALLEY.wallSide));
   out += fill(`M${x} ${top}h${w}v${h}h${-w}Z`, c(VALLEY.wall));
   out += fill(`M${x + 9} ${y}v-14a5.5 5.5 0 0 1 11 0v14Z`, c(VALLEY.gate));
@@ -721,9 +715,11 @@ function hearth(dark: boolean, random: () => number): string {
   ];
   for (const [ry, rx0, count] of rows) {
     for (let k = 0; k < count; k++) {
+      // split logs are never all one size: each end a little bigger or smaller than its neighbour
       const lx = rx0 + k * 4.8 + (random() - 0.5) * 0.6;
-      ends += ellipsePath(lx, ry, 2.3, 2.3);
-      rings += ellipsePath(lx + 0.2, ry + 0.2, 0.9, 0.9);
+      const r = 2.05 + random() * 0.45;
+      ends += ellipsePath(lx, ry + (random() - 0.5) * 0.4, r, r * (0.92 + random() * 0.12));
+      rings += ellipsePath(lx + 0.2, ry + 0.2, r * 0.38, r * 0.38);
     }
   }
   out += fill(ends, c(HUE.logEnd)) + fill(rings, c(HUE.logRing));
@@ -735,7 +731,7 @@ function hearth(dark: boolean, random: () => number): string {
   const drift: Pt[] = [[x - 3, y + 1.2], [x + 10, y - 1.8], [x + 30, y - 1], [x + w + 2, y - 2], [x + w + 4, y + 1], [x + w - 6, y + 3], [x + 20, y + 3.6]];
   out += fill(smoothPath(drift, true), snow);
   let steps = '';
-  for (let k = 0; k < 4; k++) steps += ellipsePath(x + 14.5 - k * 2.2 + (k % 2) * 2.4, y + 3.4 + k * 3.4, 1.3, 0.8);
+  for (let k = 0; k < 4; k++) steps += ellipsePath(x + 14.5 - k * 2.2 + (k % 2) * 2.4, y + 3.2 + k * 2.6, 1.3, 0.8);
   out += fill(steps, snowShade);
   out += restSmoke(HEARTH_SMOKE, c(HUE.smokeOnSnow), c(HUE.smokeOnSnowShade));
   return out;

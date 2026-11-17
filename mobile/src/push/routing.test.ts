@@ -65,6 +65,13 @@ describe('pushTarget: each push the API sends opens somewhere sensible', () => {
     expect(await landing({ kind: 'sanction', category: 'moderation' })).toEqual([['AccountStanding', undefined]]);
   });
 
+  it('a letter opens the window with its bird named, which lands it before it is read', async () => {
+    const T = '6f9b1c2e-1d2a-4b3c-8d4e-5f6a7b8c9d0e';
+    expect(pushTarget({ kind: 'letter', threadId: T, how: 'home', category: 'letters' })).toEqual({ kind: 'link', link: { screen: 'Letters', params: { bird: T } } });
+    expect(await landing({ kind: 'letter', threadId: T, category: 'letters' })).toEqual([['Letters', { bird: T }]]);
+    expect(await landing({ kind: 'letter', category: 'letters' })).toEqual([['Letters', undefined]]);
+  });
+
   it('a caring message is read in full in the notification list, which has its helpline', async () => {
     expect(pushTarget({ kind: 'caring_message', helplineUrl: 'https://example.org/help' })).toEqual({ kind: 'inbox' });
     expect(await landing({ kind: 'caring_message' })).toEqual([['NotificationCenter', undefined]]);
@@ -105,6 +112,21 @@ describe('isConversationOnScreen', () => {
     expect(isConversationOnScreen({ kind: 'gift', chat: `group:${CLUB}` }, { name: 'Chat', params: { userId: CLUB } })).toBe(false);
     expect(isConversationOnScreen({ category: 'streak' }, { name: 'Chat', params: { userId: FRIEND } })).toBe(false);
     expect(isConversationOnScreen(null, { name: 'Chat', params: { userId: FRIEND } })).toBe(false);
+  });
+
+  it('hides a letter over the letters window and over its own correspondence, which show it themselves', () => {
+    const T = '6f9b1c2e-1d2a-4b3c-8d4e-5f6a7b8c9d0e';
+    const letter = { kind: 'letter', threadId: T, how: 'window', category: 'letters' };
+    expect(isConversationOnScreen(letter, { name: 'Letters' })).toBe(true);
+    expect(isConversationOnScreen(letter, { name: 'Letters', params: { bird: CLUB } })).toBe(true);
+    expect(isConversationOnScreen(letter, { name: 'LetterThread', params: { threadId: T } })).toBe(true);
+    // anywhere else it is news: another correspondence, Home, a chat
+    expect(isConversationOnScreen(letter, { name: 'LetterThread', params: { threadId: CLUB } })).toBe(false);
+    expect(isConversationOnScreen(letter, { name: 'Tabs' })).toBe(false);
+    expect(isConversationOnScreen(letter, { name: 'Chat', params: { userId: FRIEND } })).toBe(false);
+    // a letter naming no correspondence is still hidden over the window, and shown over every correspondence
+    expect(isConversationOnScreen({ kind: 'letter' }, { name: 'Letters' })).toBe(true);
+    expect(isConversationOnScreen({ kind: 'letter' }, { name: 'LetterThread', params: { threadId: T } })).toBe(false);
   });
 
   it('is false for news about one’s own place in the group that is open, which the chat does not say', () => {

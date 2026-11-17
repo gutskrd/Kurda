@@ -6,6 +6,7 @@ import {
   lastLetterRules as R,
   requiredLetter,
   seededUnit,
+  softEnding,
   type LastLetterMove,
   type LastLetterState,
 } from './rules.js';
@@ -64,10 +65,11 @@ describe('a turn', () => {
     expect(requiredLetter(r.state)).toBe('v');
   });
 
-  it('keeps ê its own letter', () => {
-    const s1 = play(start(), 1, ok('dê')).state;
-    expect(play(s1, 2, ok('evar')).outcome.reason).toBe('wrong-letter');
-    expect(play(s1, 2, ok('êvar')).outcome.accepted).toBe(true);
+  it('keeps ê its own letter, never e', () => {
+    const s1 = play(start(), 1, ok('xwe')).state;
+    expect(requiredLetter(s1)).toBe('e');
+    expect(play(s1, 2, ok('êvar')).outcome.reason).toBe('wrong-letter');
+    expect(play(s1, 2, ok('evîn')).outcome.accepted).toBe(true);
   });
 
   it('strikes a word already in the chain', () => {
@@ -86,7 +88,14 @@ describe('a turn', () => {
 
   it('keeps the meaning a curated entry gave', () => {
     const r = play(start(), 1, ok('sêv', 'apple'));
-    expect(R.viewFor(r.state, 2).chain).toEqual([{ n: 1, seat: 1, word: 'sêv', meaning: 'apple' }]);
+    expect(R.viewFor(r.state, 2).chain).toEqual([{ n: 1, seat: 1, word: 'sêv', meaning: 'apple', meanings: { en: 'apple' } }]);
+  });
+
+  it('keeps a meaning in every language it is known in, and reads a chain saved before that with its English', () => {
+    const r = play(start(), 1, { key: 'sêv', verdict: 'ok', meaning: 'apple', meanings: { en: 'apple', de: 'Apfel' } });
+    expect(R.viewFor(r.state, 2).chain[0]!.meanings).toEqual({ en: 'apple', de: 'Apfel' });
+    const saved = { ...r.state, chain: r.state.chain.map(({ meanings: _gone, ...w }) => w) };
+    expect(R.viewFor(saved, 2).chain[0]!.meanings).toEqual({ en: 'apple' });
   });
 
   it('strikes a turn whose time ran out, only for the seat whose turn it was', () => {
@@ -96,6 +105,85 @@ describe('a turn', () => {
     expect(next.seats.find((x) => x.seat === 1)!.strikes).toBe(1);
     expect(next.strikes.at(-1)).toEqual({ seat: 1, reason: 'time', turn: 1 });
     expect(next.turn).toMatchObject({ seat: 2, n: 2, startedAt: T0 + 30_000 });
+  });
+});
+
+describe('soft endings', () => {
+  it('pass on the letter before a soft vowel in Kurmancî, walking back over every one', () => {
+    expect(softEnding('kmr', 'azadî')).toEqual({ letter: 'd', vowel: 'î' });
+    expect(softEnding('kmr', 'derî')).toEqual({ letter: 'r', vowel: 'î' });
+    expect(softEnding('kmr', 'êvarê')).toEqual({ letter: 'r', vowel: 'ê' });
+    expect(softEnding('kmr', 'xwê')).toEqual({ letter: 'w', vowel: 'ê' });
+    expect(softEnding('kmr', 'radyo')).toEqual({ letter: 'y', vowel: 'o' });
+    // a and e are not soft: the word hands on its last letter
+    expect(softEnding('kmr', 'derya')).toEqual({ letter: 'a', vowel: null });
+    expect(softEnding('kmr', 'mal')).toEqual({ letter: 'l', vowel: null });
+    // Soranî has no soft endings
+    expect(softEnding('ckb', 'ئازادی')).toEqual({ letter: 'ی', vowel: null });
+  });
+
+  it('decide the letter, and the board says where it came from', () => {
+    const s1 = play(start(), 1, ok('azadî')).state;
+    expect(requiredLetter(s1)).toBe('d');
+    expect(R.viewFor(s1, 2)).toMatchObject({ required: 'd', requiredFrom: { word: 'azadî', vowel: 'î' }, openLetter: null });
+    expect(play(s1, 2, ok('îro')).outcome.reason).toBe('wrong-letter');
+    expect(play(s1, 2, ok('dar')).outcome.accepted).toBe(true);
+    expect(R.viewFor(play(s1, 2, ok('dar')).state, 3).requiredFrom).toBeNull();
+  });
+});
+
+describe('a letter nobody can find', () => {
+  const struck = (state: LastLetterState, seat: number) => play(state, seat, { key: 'xyzq', verdict: 'not-a-word', meaning: null }).state;
+
+  it('opens to any letter once everyone still in has been struck on it in a row', () => {
+    let s = play(start(3), 1, ok('qelem')).state;
+    s = struck(s, 2);
+    s = struck(s, 3);
+    expect(requiredLetter(s)).toBe('m');
+    s = struck(s, 1);
+    expect(s.stuck).toBe(3);
+    expect(requiredLetter(s)).toBeNull();
+    expect(R.viewFor(s, 2)).toMatchObject({ required: null, openLetter: 'm', requiredFrom: null });
+    // any letter now, and an accepted word closes it again
+    const r = play(s, 2, ok('sêv'));
+    expect(r.outcome.accepted).toBe(true);
+    expect(r.state.stuck).toBe(0);
+    expect(requiredLetter(r.state)).toBe('v');
+  });
+
+  it('counts only the players still in, and reads a game saved before it was counted as nobody stuck', () => {
+    let s = play(start(2), 1, ok('qelem')).state;
+    s = struck(s, 2);
+    expect(requiredLetter(s)).toBe('m');
+    const saved: LastLetterState = { ...s, stuck: undefined };
+    expect(requiredLetter(saved)).toBe('m');
+    s = struck(s, 1);
+    expect(requiredLetter(s)).toBeNull();
+  });
+
+  it('counts a turn run out as a strike on the letter', () => {
+    let s = play(start(2), 1, ok('qelem')).state;
+    s = R.timeout(s, [2], s.turn!.endsAt);
+    s = R.timeout(s, [1], s.turn!.endsAt);
+    expect(requiredLetter(s)).toBeNull();
+  });
+});
+
+describe('a mark left off', () => {
+  it('is not a strike when the server knows the one word it could be: the turn and its clock go on', () => {
+    const s1 = play(start(), 1, ok('mal')).state;
+    const r = play(s1, 2, { key: 'lez', verdict: 'spelling', meaning: null, suggestion: 'lêz' }, T0 + 5000);
+    expect(r.outcome).toEqual({ accepted: false, reason: null, strikes: 0, out: false, spelling: 'lêz' });
+    expect(r.state).toBe(s1);
+    expect(r.state.turn).toEqual(s1.turn);
+  });
+
+  it('is struck as not a word when the word it could be does not follow on, or was played already', () => {
+    const s1 = play(start(), 1, ok('mal')).state;
+    expect(play(s1, 2, { key: 'kecik', verdict: 'spelling', meaning: null, suggestion: 'keçik' }).outcome.reason).toBe('wrong-letter');
+    // a stand-in word to bring the chain back to l, after lêv was played
+    const s2 = play(play(s1, 2, ok('lêv')).state, 3, ok('val')).state;
+    expect(play(s2, 1, { key: 'lev', verdict: 'spelling', meaning: null, suggestion: 'lêv' }).outcome.reason).toBe('not-a-word');
   });
 });
 

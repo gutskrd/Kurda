@@ -14,6 +14,7 @@ afterEach(() => {
 const stored = (over: Partial<NotificationPrefs> = {}): NotificationPrefs => ({
   streak: true,
   friends: true,
+  letters: true,
   games: true,
   progress: true,
   events: true,
@@ -58,6 +59,19 @@ describe('NotificationPrefsCard', () => {
     expect(screen.getByRole('checkbox', { name: 'Leagues and badges' })).toBeChecked();
     // the opt-in one, off until somebody says otherwise
     expect(screen.getByRole('checkbox', { name: 'News & offers' })).not.toBeChecked();
+  });
+
+  it('gives letters a switch of their own, beside friends', async () => {
+    const s = server(stored({ letters: false }));
+    vi.stubGlobal('fetch', s.fetch);
+    renderApp(<NotificationPrefsCard />);
+
+    const letters = await screen.findByRole('checkbox', { name: 'Letters' });
+    expect(letters).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Friend activity' })).toBeChecked();
+    await userEvent.click(letters);
+    await waitFor(() => expect(s.puts).toHaveLength(1));
+    expect(s.puts[0]).toEqual({ letters: true });
   });
 
   it('patches only the category that was touched', async () => {

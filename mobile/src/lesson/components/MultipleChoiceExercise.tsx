@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
-import { hitSlopFor } from '../../a11y/a11y';
 import { spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AnswerMotion } from '../../theme/MotionParts';
@@ -59,7 +58,11 @@ interface Props {
  * words, the one chosen standing in the line's gap (`WordChoices`); and option
  * cards otherwise, their words in the display face where they are Kurdish
  * ('reply', 'choose-kurdish'). A conversation's question has no ask of its
- * own, and keeps the look it had.
+ * own and no bubble: it stands plainly under the conversation, in the display
+ * face the lesson's questions are in and a step under the headline, reading
+ * its own way in every language as the options do. It was set in the plain
+ * face at 28 bold, bigger than the headline over it and louder than the
+ * conversation it asks about.
  */
 export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled, feedback = null, standalone = true }: Props) {
   const { colors } = useTheme();
@@ -99,7 +102,7 @@ export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled, f
                 onPress={say}
                 accessibilityRole="button"
                 accessibilityLabel={t('lesson.speak.playModel')}
-                hitSlop={hitSlopFor(SPEAKER, SPEAKER)}
+                reachSize={{ width: SPEAKER, height: SPEAKER }}
                 style={({ pressed }) => pressed && styles.pressed}
               >
                 <PlayDisc size={SPEAKER} playing={model.playing} />
@@ -111,7 +114,7 @@ export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled, f
           </View>
         </PromptScene>
       ) : exercise.prompt ? (
-        <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text>
+        <Text style={[styles.prompt, dir.free, { color: colors.textPrimary }]}>{exercise.prompt}</Text>
       ) : null}
       {ask === 'picture' ? (
         <PictureChoices {...choices} />
@@ -157,7 +160,7 @@ const SPEAKER = 32;
 
 const styles = StyleSheet.create({
   container: { gap: spacing.lg },
-  prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  prompt: { ...display(typography.sizes.lg) },
   // the play mark at the top of the bubble's start, however many lines follow it
   said: { alignItems: 'flex-start', gap: spacing.sm + 2 },
   grow: { flexShrink: 1 },

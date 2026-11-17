@@ -8,6 +8,7 @@ import { PostSkeleton } from '../components/skeletons';
 import { Comments } from '../library/Comments';
 import { ArrowIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { useGrowsInto } from '../lib/viewTransition';
 import { FeedCard } from '../feed/FeedCard';
 
 const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
@@ -34,6 +35,8 @@ export function DimenPost(): React.JSX.Element {
   const [counts, setCounts] = useState<{ id: string; engagement: PostEngagement } | null>(null);
   const [size, setSize] = useState<{ url: string; width: number; height: number } | null>(null);
   const commentsRef = useRef<HTMLDivElement>(null);
+  // the post's card on a wall lands on the post drawn below (feed/FeedCard.tsx): said here, before the post has arrived, so the page is held for it
+  useGrowsInto(`post:image:${id}`, { shape: 'card' });
 
   useEffect(() => {
     // asked once whoever is reading is known, so "liked" is yours and not a guest's

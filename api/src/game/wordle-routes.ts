@@ -4,6 +4,7 @@ import { requireAuth } from '../plugins/auth.js';
 import { WordleService } from './wordle-service.js';
 import type { StreakService } from '../streaks/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
+import { SavedWordsService, type SavedWordsBadges } from '../dictionary/saved-words-service.js';
 
 const difficultyBody = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
@@ -20,11 +21,14 @@ const guessBody = z.object({
  */
 export function registerWordleRoutes(
   app: FastifyInstance,
-  deps: { streaks?: StreakService; milestones?: MilestoneRecorder } = {},
+  deps: { streaks?: StreakService; milestones?: MilestoneRecorder & Partial<SavedWordsBadges> } = {},
 ): void {
-  const wordle = new WordleService(app.db, deps);
+  // a word saved from a game moves the Gencîne badge, as one saved from the dictionary does
+  const onWordSaved = deps.milestones?.onWordSaved?.bind(deps.milestones);
+  const savedWords = new SavedWordsService(app.db, undefined, onWordSaved ? { onWordSaved } : undefined);
+  const wordle = new WordleService(app.db, { ...deps, savedWords });
 
-  /** Start (or resume) today's shared daily puzzle. */
+  /** Start (or resume) today's shared daily puzzle at a difficulty: one daily word per difficulty. */
   app.post(
     '/wordle/daily',
     // a round is a row and a read of the word pool: thirty a minute is more than anyone plays, and few enough not to be a tap left running
@@ -76,6 +80,35 @@ export function registerWordleRoutes(
           return reply.code(422).send({ code: 'WRONG_LENGTH', message: 'guess is the wrong length' });
         case 'not-a-word':
           return reply.code(422).send({ code: 'NOT_A_WORD', message: 'not a valid Kurdish word' });
+      }
+    },
+  );
+
+  /**
+   * Save a finished game's word to the player's words, the entry its results
+   * card names; it counts once toward the stats' words learned. 404 for a
+   * game that is not theirs, 409 while it is still being played, and 404
+   * NO_ENTRY for a word the dictionary has no entry for (there is nothing to
+   * save it as).
+   */
+  app.post(
+    '/wordle/games/:id/save',
+    {
+      schema: { params: z.object({ id: z.uuid() }) },
+      config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000 } },
+      preHandler: requireAuth,
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const res = await wordle.saveWord(req.user!.id, id);
+      if (res.ok) return { saved: true, scheduled: res.saved.scheduled, wordsLearned: res.wordsLearned };
+      switch (res.reason) {
+        case 'not-found':
+          return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such game' });
+        case 'not-finished':
+          return reply.code(409).send({ code: 'GAME_NOT_OVER', message: 'finish the game first' });
+        case 'no-entry':
+          return reply.code(404).send({ code: 'NO_ENTRY', message: 'this word has no dictionary entry to save' });
       }
     },
   );

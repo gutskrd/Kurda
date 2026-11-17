@@ -8,11 +8,11 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { act, cleanup, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
-import { refocus } from '../play/testing/navigation';
+import { navigation, refocus } from '../play/testing/navigation';
 import { SavedScreen } from './SavedScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -53,5 +53,19 @@ describe('the saved posts, come back to from one of them', () => {
     await waitFor(() => expect(screen.queryByText('Helbest b')).toBeNull());
     expect(screen.getByText('Helbest a')).toBeTruthy();
     expect(screen.getByText('Helbest c')).toBeTruthy();
+  });
+});
+
+describe('the saved posts, before anything is saved', () => {
+  it('says what belongs here, and leads to the posts there are to keep', async () => {
+    testAuth.client = fakeClient({ 'GET /me/saved?limit=20&offset=0': ok({ items: [] }) });
+    navigation.navigate.mockReset();
+    renderWithProviders(<SavedScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Nothing saved yet')).toBeTruthy();
+    expect(screen.getByText('Tap the bookmark on any post to keep it here.')).toBeTruthy();
+    // the old words named a place the app no longer has
+    expect(screen.queryByText(/Community/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Browse posts' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Home' });
   });
 });

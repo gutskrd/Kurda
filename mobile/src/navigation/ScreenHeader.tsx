@@ -1,17 +1,14 @@
 import { useCallback, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachGroup } from '../theme/Pressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, spacing, typography } from '../theme/tokens';
-import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { pressedDim } from '../theme/motion';
-
-/** How far a 26pt glyph sits inside its 44pt target: the header reaches out by this much so the glyph meets the gutter. */
-const EDGE_SLACK = (MIN_TOUCH_TARGET - 26) / 2;
+import { BackButton } from './BackButton';
+import { GlobalActions } from './TopBar';
 
 /**
  * The bar at the top of a screen that is not a tab.
@@ -34,27 +31,51 @@ const EDGE_SLACK = (MIN_TOUCH_TARGET - 26) / 2;
  * whatever is left means the middle is the middle, whatever either side holds
  * and whatever language it holds it in. That is what UINavigationBar does.
  *
- * And each side is at least as wide as the wider of the two holds, measured,
- * so a long title is cut short with an ellipsis instead of running over the
- * way back — a club's name beside "گەڕانەوە" and two buttons was drawn
- * straight across both.
+ * And each side is at least as wide as what it holds, measured, so a long
+ * title is cut short with an ellipsis instead of running over the way back —
+ * a club's name beside "گەڕانەوە" and two buttons was drawn straight across
+ * both. A title that fits is centred, because the two sides share what is
+ * left equally. One that does not fit between two equal sides takes the room
+ * the narrower side is not using, and sits a little off centre rather than
+ * being cut short: beside search and the bell, which are wider than the way
+ * back, that is the difference between "Buchstaben und Wörter" and
+ * "Buchstaben un…".
  *
  * The bar itself is 44pt tall — the same minimum a fingertip needs, which is
  * not a coincidence, because the back button is the thing in it — and it sits
- * straight under the status bar, where the system's own bar sits. It used to
+ * just under the status bar, where the system's own bar sits. It used to
  * start 16pt lower, which on every pushed screen pushed the page down by that
  * much and put the way back further from the thumb than anywhere else.
  *
- * The way back is the chevron alone, in the ink of the page, in a 44pt square:
- * the shape every social app and the system's own photos and messages use. A
- * "Back" beside it took 53pt in English and more in German and Soranî, and
- * that was the room a club's name needed — "Hevalên Kur…" was cut short on
- * every phone. The title is the system's: 17pt, semibold, the face of the
- * text under it, not a display serif one size short of a heading.
+ * The way back is a disc with a chevron in it (`BackButton`), at the side
+ * reading starts from: the first thing at the top of every pushed page, the
+ * same shape and in the same place, so leaving a page never has to be looked
+ * for. A "Back" beside the chevron took 53pt in English and more in German
+ * and Soranî, and that was the room a club's name needed — "Hevalên Kur…"
+ * was cut short on every phone. The title is the system's: 17pt, semibold,
+ * the face of the text under it, not a display serif one size short of a
+ * heading.
+ *
+ * Opposite the way back is what the page can do. A page with actions of its
+ * own shows those. A page to browse that has none (`browse`) keeps search
+ * and the bell there, in the pill the tabs have, so they are where they were
+ * a moment ago. A page where something is being done — a game in play, a
+ * form, a setting — keeps that corner empty: the page is the task, and the
+ * only way off it is the way back.
  *
  * In Soranî and Arabic the bar is mirrored: the way back is on the right and
  * its chevron points right, which is the direction "back" is for a reader of
  * those languages.
+ *
+ * The way back and the actions answer a fingertip past their edges, since
+ * nothing else in the bar is pressable. Where the title is (a conversation's
+ * face and name, a way into whoever it names), it stands one gap from each
+ * side, and the three share those gaps: each answers up to the middle, so a
+ * tap a little wide of the name opens the profile and one a little wide of
+ * the chevron goes back. The title answers the same way from the first time
+ * it is drawn, before it can be pressed (a group's people arrive with the
+ * group), because a reach that arrived later would be cut off at the bar's
+ * edge.
  */
 /**
  * How far a title may be set smaller to fit between the two sides before it
@@ -65,12 +86,16 @@ const EDGE_SLACK = (MIN_TOUCH_TARGET - 26) / 2;
  */
 const TITLE_FIT = 0.8;
 
+/** The room between the way back, the title and the actions; a title that can be pressed shares it with each neighbour. */
+const BAR_GAP = spacing.sm;
+
 export function ScreenHeader({
   title,
   onBack,
   leading = 'back',
   backLabel,
   right,
+  browse = false,
   hairline = false,
   titleAvatar,
   onTitlePress,
@@ -97,6 +122,11 @@ export function ScreenHeader({
   /** A trailing action, if the screen has one. */
   right?: ReactNode;
   /**
+   * A page to browse rather than a task: with no action of its own, it
+   * keeps search and the bell at its far end, as the tabs do.
+   */
+  browse?: boolean;
+  /**
    * A hairline under the bar, for screens whose content scrolls beneath it.
    *
    * Drawn with `separator`, not `glassBorder`: this is a line between two
@@ -117,9 +147,12 @@ export function ScreenHeader({
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const dir = useDirection();
+  // what stands opposite the way back: the page's own action, or search and the bell on a page to browse
+  const trailing = right ?? (browse && onBack && leading === 'back' ? <GlobalActions /> : null);
+  // a title that is a way in is a third control in the bar, one gap from each side
+  const titleControl = !!title && !!(titleAvatar || onTitlePress);
   // how wide the way back and the trailing actions are, so neither side is squeezed under the title
   const [ends, setEnds] = useState({ start: 0, end: 0 });
   const measure = useCallback(
@@ -129,80 +162,73 @@ export function ScreenHeader({
     },
     [],
   );
-  const sideMin = { minWidth: Math.max(ends.start, ends.end) };
 
   return (
     <View
       style={[
         styles.wrap,
-        { paddingTop: insets.top },
+        { paddingTop: insets.top + spacing.xs },
         hairline && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator },
         style,
       ]}
     >
-      <View style={[styles.bar, { flexDirection: dir.row }]}>
-        <View style={[styles.side, sideMin, { flexDirection: dir.row }]}>
-          {onBack ? (
-            <Pressable
-              onLayout={measure('start')}
-              onPress={onBack}
-              accessibilityRole="button"
-              accessibilityLabel={backLabel ?? (leading === 'close' ? t('common.cancel') : t('common.back'))}
-              style={({ pressed }) => [styles.leading, pressed && styles.pressed]}
-            >
-              {leading === 'close' ? (
-                <Icon name="close" size={24} color={colors.textPrimary} />
-              ) : (
-                <Icon name="chevron-left" size={26} color={colors.textPrimary} style={dir.flip ?? undefined} />
-              )}
-            </Pressable>
-          ) : null}
-        </View>
+      {/* always the group, so the bar is never drawn afresh; with no title to press it caps nothing */}
+      <ReachGroup gap={titleControl ? BAR_GAP : undefined}>
+        <View style={[styles.bar, { flexDirection: dir.row }]}>
+          <View style={[styles.side, { minWidth: ends.start, flexDirection: dir.row }]}>
+            {onBack ? (
+              <View onLayout={measure('start')}>
+                <BackButton onPress={onBack} kind={leading} label={backLabel} />
+              </View>
+            ) : null}
+          </View>
 
-        {title && (titleAvatar || onTitlePress) ? (
-          <Pressable
-            onPress={onTitlePress}
-            disabled={!onTitlePress}
-            accessibilityRole={onTitlePress ? 'button' : 'header'}
-            accessibilityLabel={title}
-            accessibilityHint={titleHint}
-            style={({ pressed }) => [styles.titleRow, { flexDirection: dir.row }, pressed && styles.pressed]}
-          >
-            {titleAvatar}
-            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={TITLE_FIT}>
+          {titleControl ? (
+            <Pressable
+              onPress={onTitlePress}
+              disabled={!onTitlePress}
+              accessibilityRole={onTitlePress ? 'button' : 'header'}
+              accessibilityLabel={title}
+              accessibilityHint={titleHint}
+              // as far above and below as the way back, and its half of each gap beside it (the group's cap)
+              reach="open"
+              style={({ pressed }) => [styles.titleRow, { flexDirection: dir.row }, pressed && styles.pressed]}
+            >
+              {titleAvatar}
+              <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={TITLE_FIT}>
+                {title}
+              </Text>
+            </Pressable>
+          ) : title ? (
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={TITLE_FIT} accessibilityRole="header">
               {title}
             </Text>
-          </Pressable>
-        ) : title ? (
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={TITLE_FIT} accessibilityRole="header">
-            {title}
-          </Text>
-        ) : null}
-
-        <View style={[styles.side, sideMin, { flexDirection: dir.row, justifyContent: 'flex-start' }]}>
-          {/* the trailing slot runs to the far edge whichever side that is */}
-          <View style={styles.sideFill} />
-          {right ? (
-            <View onLayout={measure('end')} style={[styles.trailing, { flexDirection: dir.row }]}>
-              {right}
-            </View>
           ) : null}
+
+          <View style={[styles.side, { minWidth: ends.end, flexDirection: dir.row, justifyContent: 'flex-start' }]}>
+            {/* the trailing slot runs to the far edge whichever side that is */}
+            <View style={styles.sideFill} />
+            {trailing ? (
+              <View onLayout={measure('end')} style={[styles.trailing, { flexDirection: dir.row }]}>
+                {trailing}
+              </View>
+            ) : null}
+          </View>
         </View>
-      </View>
+      </ReachGroup>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  // the gutter less the room round a 44pt control's glyph, so the chevron itself lines up with the page's text
-  wrap: { paddingHorizontal: layout.gutter - EDGE_SLACK, paddingBottom: spacing.xs },
-  bar: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: spacing.sm },
+  // the way back and the actions are shapes of their own now, and a shape lines up with the page's gutter by its edge
+  wrap: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
+  bar: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: BAR_GAP },
   // equal shares of what the title does not use, so the title is centred
   // without anybody having to guess how wide the way back is
   side: { flex: 1, alignItems: 'center' },
   sideFill: { flex: 1 },
-  trailing: { alignItems: 'center' },
-  leading: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
+  trailing: { alignItems: 'center', gap: spacing.sm },
   pressed: { opacity: pressedDim },
   title: { fontSize: typography.ios.row, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
   // the face and the name together, centred as the title alone is, a fingertip tall

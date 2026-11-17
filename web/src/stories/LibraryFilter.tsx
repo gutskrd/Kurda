@@ -5,24 +5,25 @@
  * The search field stays in view and searches as you type. Everything else
  * is behind the funnel beside it, in one panel: the order (easiest first,
  * newest, A to Z), the level by its plain name with a line on what it means,
- * which Kurdish, the length with the minutes it takes, read aloud or not, and
- * the category with how many stories it holds. Choices there are a draft
- * until "Show N stories", whose number is asked of the server as they change.
- * While anything is on, the funnel is filled, its name says what, and a chip
- * for each part under the search says so too, with a ✕ that lets just that
- * part go — and "Clear all" once there are two.
+ * the length with the minutes it takes, read aloud or not, and the category
+ * with how many stories it holds. Choices there are a draft until "Show N
+ * stories", whose number is asked of the server as they change. While
+ * anything is on, the funnel is filled, its name says what, and a chip for
+ * each part under the search says so too, with a ✕ that lets just that part
+ * go — and "Clear all" once there are two.
+ *
+ * Which Kurdish is not in the panel: the library shows one variety at a time,
+ * chosen by the switch at its top (StoriesLibrary.tsx), and every list and
+ * count here is that variety's.
  *
  * What is chosen lives in the address, so a filtered shelf can be linked to.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   DEFAULT_STORY_SORT,
-  STORY_DIALECTS,
   STORY_LENGTHS,
   STORY_LEVELS,
-  categoryName,
   cefrOf,
-  isStoryDialect,
   isStoryLength,
   isStoryLevel,
   isStorySort,
@@ -42,14 +43,12 @@ import { HeadphonesIcon, SortIcon, TagIcon } from '../components/icons';
 import { SearchField } from '../components/SearchField';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { dialectName } from '../learn/map';
-import { levelHint, levelName } from './labels';
+import { categoryLabel, categoryTitle, levelHint, levelName } from './labels';
 import { LENGTH_KEY, minutesLabel } from './SetupSheet';
 
 /** What narrows or orders the library, apart from the words typed in the search. */
 export interface LibraryFilters {
   level: StoryLevel | null;
-  dialect: StoryDialect | null;
   length: StoryLength | null;
   narrated: boolean;
   category: string | null;
@@ -57,7 +56,7 @@ export interface LibraryFilters {
 }
 
 /** The library as it opens: its shelves, nothing narrowed. */
-export const NO_FILTERS: LibraryFilters = { level: null, dialect: null, length: null, narrated: false, category: null, sort: DEFAULT_STORY_SORT };
+export const NO_FILTERS: LibraryFilters = { level: null, length: null, narrated: false, category: null, sort: DEFAULT_STORY_SORT };
 
 export const SORT_KEY: Record<StorySort, MessageKey> = {
   level: 'stories.sort.easiest',
@@ -66,24 +65,23 @@ export const SORT_KEY: Record<StorySort, MessageKey> = {
 };
 
 export function isPlain(f: LibraryFilters): boolean {
-  return f.level === null && f.dialect === null && f.length === null && !f.narrated && f.category === null && f.sort === DEFAULT_STORY_SORT;
+  return f.level === null && f.length === null && !f.narrated && f.category === null && f.sort === DEFAULT_STORY_SORT;
 }
 
 /**
  * The filters and the search words from the address. A level is written as
  * its CEFR letter there, as links already made have it, and read as a letter
- * or a number; anything the address does not mean is passed over.
+ * or a number; anything the address does not mean is passed over. A variety
+ * in the address (`dialect`) is not a filter: the library reads it itself.
  */
 export function readFilters(params: URLSearchParams): LibraryFilters & { q: string } {
   const rawLevel = params.get('level');
   const level = rawLevel ? (levelOfCefr(rawLevel) ?? (isStoryLevel(Number(rawLevel)) ? (Number(rawLevel) as StoryLevel) : null)) : null;
-  const dialect = params.get('dialect');
   const length = params.get('length');
   const sort = params.get('sort');
   return {
     q: params.get('q') ?? '',
     level,
-    dialect: isStoryDialect(dialect) ? dialect : null,
     length: isStoryLength(length) ? length : null,
     narrated: params.get('audio') === '1',
     category: params.get('category'),
@@ -96,7 +94,6 @@ export function writeFilters(q: string, f: LibraryFilters): URLSearchParams {
   const p = new URLSearchParams();
   if (q.trim()) p.set('q', q.trim());
   if (f.level) p.set('level', cefrOf(f.level));
-  if (f.dialect) p.set('dialect', f.dialect);
   if (f.length) p.set('length', f.length);
   if (f.narrated) p.set('audio', '1');
   if (f.category) p.set('category', f.category);
@@ -104,12 +101,12 @@ export function writeFilters(q: string, f: LibraryFilters): URLSearchParams {
   return p;
 }
 
-/** What GET /stories is asked; the default order is left out, so its lists are the ones they always were. */
-export function queryOf(q: string, f: LibraryFilters): StoryQuery {
+/** What GET /stories is asked, in the variety on show; the default order is left out, so its lists are the ones they always were. */
+export function queryOf(q: string, f: LibraryFilters, dialect: StoryDialect): StoryQuery {
   return {
     q: q.trim() || undefined,
     level: f.level ?? undefined,
-    dialect: f.dialect ?? undefined,
+    dialect,
     length: f.length ?? undefined,
     audio: f.narrated || undefined,
     category: f.category ?? undefined,
@@ -128,10 +125,10 @@ const COUNT_DEBOUNCE_MS = 250;
  * again — the whole library's count, the list on show, a draft seen before.
  * Null until there is a number.
  */
-function useDraftCount(open: boolean, q: string, draft: LibraryFilters, known: { key: string; total: number }[]): number | null {
+function useDraftCount(open: boolean, q: string, draft: LibraryFilters, dialect: StoryDialect, known: { key: string; total: number }[]): number | null {
   const { client } = useAuth();
   const seen = useRef(new Map<string, number>());
-  const key = storyQueryString({ ...queryOf(q, draft), sort: undefined, limit: 1 });
+  const key = storyQueryString({ ...queryOf(q, draft, dialect), sort: undefined, limit: 1 });
   const fromKnown = known.find((k) => k.key === key)?.total;
   const [count, setCount] = useState<number | null>(null);
 
@@ -175,6 +172,7 @@ export function LibraryFilterBar({
   onType,
   value,
   onChange,
+  dialect,
   library,
   shownTotal,
 }: {
@@ -185,6 +183,9 @@ export function LibraryFilterBar({
   onType: (q: string) => void;
   value: LibraryFilters;
   onChange: (next: LibraryFilters) => void;
+  /** the variety on show: every count here is of its stories */
+  dialect: StoryDialect;
+  /** that variety's front page, for its total and the levels and categories that hold something */
   library: StoryLibrary | null;
   /** how many stories the list on show has in all, once it is known */
   shownTotal: number | null;
@@ -198,12 +199,12 @@ export function LibraryFilterBar({
   // what is known without asking: the whole library, and the list on show
   const known = useMemo(() => {
     const out: { key: string; total: number }[] = [];
-    const countKey = (f: LibraryFilters, words: string): string => storyQueryString({ ...queryOf(words, f), sort: undefined, limit: 1 });
+    const countKey = (f: LibraryFilters, words: string): string => storyQueryString({ ...queryOf(words, f, dialect), sort: undefined, limit: 1 });
     if (library) out.push({ key: countKey(NO_FILTERS, ''), total: library.total });
     if (shownTotal !== null) out.push({ key: countKey(value, q), total: shownTotal });
     return out;
-  }, [library, shownTotal, value, q]);
-  const count = useDraftCount(sheet.open, q, draft, known);
+  }, [library, shownTotal, value, q, dialect]);
+  const count = useDraftCount(sheet.open, q, draft, dialect, known);
   const number = (n: number): string => n.toLocaleString(locale);
   const applyLabel =
     count === null
@@ -219,11 +220,8 @@ export function LibraryFilterBar({
     return STORY_LEVELS.filter((l) => l === draft.level || have.some((h) => h.level === l && h.count > 0));
   }, [library?.levels, draft.level]);
   const categories = (library?.categories ?? []).filter((c) => c.count > 0 || c.slug === draft.category);
-  const categoryOf = (slug: string): string => {
-    const found = library?.categories.find((c) => c.slug === slug);
-    return found ? categoryName(found, locale) : slug;
-  };
-  const minutesFor = (length: StoryLength): string => minutesLabel(draft.dialect ?? 'kurmanci', length, t);
+  const categoryOf = (slug: string): string => categoryLabel(slug, library?.categories, locale, t) ?? slug;
+  const minutesFor = (length: StoryLength): string => minutesLabel(dialect, length, t);
 
   // what is on, in the order the panel has it: one chip each, and the funnel's name
   const chips: Array<{ key: string; label: string; icon?: React.ReactNode; clear: string; undo: Partial<LibraryFilters> }> = [];
@@ -234,7 +232,6 @@ export function LibraryFilterBar({
     chips.push({ key, label, icon, clear: t('stories.filter.remove', { what: label }), undo });
   };
   if (value.level) chip('level', levelName(value.level, t), { level: null });
-  if (value.dialect) chip('dialect', dialectName(value.dialect), { dialect: null });
   if (value.length) chip('length', t(LENGTH_KEY[value.length]), { length: null });
   if (value.narrated) chip('narrated', t('stories.narrated'), { narrated: false }, <HeadphonesIcon size={15} />);
   if (value.category) chip('category', categoryOf(value.category), { category: null }, <TagIcon size={15} />);
@@ -281,21 +278,6 @@ export function LibraryFilterBar({
             </FilterRadios>
           </FilterSection>
 
-          <FilterSection title={t('stories.filter.kurdish')} id={`${id}-dialect`}>
-            <FilterRadios label={`${id}-dialect`} axis="vertical">
-              <FilterOption on={draft.dialect === null} label={t('stories.filter.eitherKurdish')} onChoose={() => set({ dialect: null })} />
-              {STORY_DIALECTS.map((d) => (
-                <FilterOption
-                  key={d}
-                  on={draft.dialect === d}
-                  label={dialectName(d)}
-                  hint={t(d === 'sorani' ? 'stories.filter.soraniHint' : 'stories.filter.kurmanciHint')}
-                  onChoose={() => set({ dialect: d })}
-                />
-              ))}
-            </FilterRadios>
-          </FilterSection>
-
           <FilterSection title={t('stories.length')} id={`${id}-length`}>
             <FilterRadios label={`${id}-length`} axis="vertical">
               <FilterOption on={draft.length === null} label={t('stories.filter.anyLength')} onChoose={() => set({ length: null })} />
@@ -317,7 +299,7 @@ export function LibraryFilterBar({
                   <FilterPill
                     key={c.slug}
                     on={draft.category === c.slug}
-                    label={categoryName(c, locale)}
+                    label={categoryTitle(c, locale, t)}
                     count={number(c.count)}
                     countLabel={t('stories.library.categoryCount', { count: number(c.count) })}
                     onChoose={() => set({ category: c.slug })}

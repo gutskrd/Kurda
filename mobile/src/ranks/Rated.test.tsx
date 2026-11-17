@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ExpectedGains } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
-import { LobbyRated, RatedPill } from './Rated';
+import { LobbyRated, RatedChoice, RatedPill } from './Rated';
 
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -40,6 +40,21 @@ describe('RatedPill', () => {
   });
 });
 
+describe('RatedChoice', () => {
+  afterEach(cleanup);
+  it('offers Rated and Friendly as a radio group, each saying what it means, the one chosen checked', () => {
+    const onChange = vi.fn();
+    renderWithProviders(<RatedChoice value={false} onChange={onChange} />);
+    expect(screen.getByRole('radiogroup', { name: 'Game type' })).toBeTruthy();
+    const friendly = screen.getByRole('radio', { name: 'Friendly. Just for fun. Everyone’s rank stays as it is.' });
+    const ratedOne = screen.getByRole('radio', { name: 'Rated. Counts for your rank. Beating a stronger player is worth more.' });
+    expect(friendly.getAttribute('aria-checked')).toBe('true');
+    expect(ratedOne.getAttribute('aria-checked')).toBe('false');
+    fireEvent.click(ratedOne);
+    expect(onChange).toHaveBeenCalledWith(true);
+  });
+});
+
 describe('LobbyRated', () => {
   afterEach(cleanup);
 
@@ -67,9 +82,11 @@ describe('LobbyRated', () => {
     testAuth.client = client;
     const onChanged = vi.fn();
     renderWithProviders(<LobbyRated game="wordle-battle" lobbyId={LOBBY} rated={rated} isHost players={2} seatName={seatName} onChanged={onChanged} />);
-    const toggle = screen.getByRole('switch', { name: 'Rated game' });
-    expect(toggle.getAttribute('aria-checked')).toBe('true');
-    fireEvent.click(toggle);
+    // the whole line is the switch, which a screen reader hears as one switch that is on
+    expect(screen.getAllByRole('switch')).toHaveLength(1);
+    expect(screen.getByRole('switch', { name: 'Rated game' }).getAttribute('aria-checked')).toBe('true');
+    // a tap on its words turns it, as a tap on the switch does
+    fireEvent.click(screen.getByText('Rated game'));
     await waitFor(() => expect(onChanged).toHaveBeenCalled());
     expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ rated: false });
   });

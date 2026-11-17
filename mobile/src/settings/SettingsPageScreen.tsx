@@ -1,4 +1,3 @@
-import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
 import { haptic } from '../feedback/haptics';
 import { playSound } from '../feedback/sounds';
@@ -8,7 +7,6 @@ import { useVibrationPref } from '../feedback/vibrationPref';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
 import { KeyboardSettingsList } from '../keyboard/KeyboardSettings';
-import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
 import { CREDIT_LINES } from '../screens/credits';
 import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, type Visibility } from '../social/format';
@@ -86,12 +84,14 @@ function LanguageList(): React.JSX.Element {
   );
 }
 
-/** Light, dark or the phone's own; the seasonal themes; and the page that shows them all off. */
+/**
+ * Light, dark or the phone's own, and the seasonal themes. A choice shows
+ * itself across the whole app at once, which is all the preview it needs.
+ */
 function ThemeList(): React.JSX.Element {
   const { t } = useI18n();
   const { scheme, preference, setPreference } = useTheme();
   const { optedOut, setOptedOut } = useEventTheme();
-  const navigation = useNavigation<RootNavigation>();
   return (
     <>
       <SettingsSection first footer={t('appearance.currentlyScheme', { scheme: t(scheme === 'dark' ? 'appearance.scheme.dark' : 'appearance.scheme.light') })}>
@@ -105,7 +105,6 @@ function ThemeList(): React.JSX.Element {
       </SettingsSection>
       <SettingsSection>
         <SettingsSwitch icon="star" title={t('settings.eventThemes')} value={!optedOut} onValueChange={(on) => setOptedOut(!on)} />
-        <SettingsRow icon="palette" title={t('settings.appearance')} onPress={() => navigation.navigate('Appearance')} />
       </SettingsSection>
     </>
   );
@@ -155,13 +154,29 @@ function SoundsList(): React.JSX.Element {
   );
 }
 
+/**
+ * The account could not be read, so a choice cannot be shown as it is: what
+ * went wrong, and the way to ask again, rather than a switch that waits
+ * greyed out for ever.
+ */
+function NotRead({ failed, retry }: { failed: string; retry: () => void }): React.JSX.Element {
+  const { t } = useI18n();
+  return (
+    <>
+      <SettingsNote>{failed}</SettingsNote>
+      <SettingsRow icon="history" title={t('common.retry')} opens={false} onPress={retry} />
+    </>
+  );
+}
+
 /** In or out of the weekly leagues, and what a league is, said before it is chosen. */
 function LeaguesList(): React.JSX.Element {
   const { t } = useI18n();
-  const { leagues, minor, changeLeagues } = useMyAccount();
+  const { leagues, minor, failed, retry, changeLeagues } = useMyAccount();
   return (
     <SettingsSection first footer={t('settings.leagues.help')}>
       <SettingsSwitch icon="trophy" title={t('settings.leagues.toggle')} value={leagues === true} disabled={leagues === null} onValueChange={changeLeagues} />
+      {leagues === null && failed ? <NotRead failed={failed} retry={retry} /> : null}
       {minor ? <SettingsNote>{t('settings.leagues.minorHint')}</SettingsNote> : null}
     </SettingsSection>
   );
@@ -174,7 +189,7 @@ function LeaguesList(): React.JSX.Element {
  */
 function VisibilityList(): React.JSX.Element {
   const { t } = useI18n();
-  const { visibility, minor, changeVisibility } = useMyAccount();
+  const { visibility, minor, failed, retry, changeVisibility } = useMyAccount();
   return (
     <SettingsSection first>
       <SettingsChoice<Visibility>
@@ -186,6 +201,8 @@ function VisibilityList(): React.JSX.Element {
         isDisabled={(v) => !visibilityOffered(v, minor)}
         onChange={changeVisibility}
       />
+      {/* none of the four ticked is a page that has not been told which one it is */}
+      {visibility === null && failed ? <NotRead failed={failed} retry={retry} /> : null}
       {minor ? <SettingsNote>{t('settings.visibility.minorHint')}</SettingsNote> : null}
     </SettingsSection>
   );

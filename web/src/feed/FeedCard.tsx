@@ -11,6 +11,7 @@ import { dayLabel } from '../chat/messageGroups';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import type { FeedItem } from '../lib/types';
+import { useGrowsFrom, useGrowsInto } from '../lib/viewTransition';
 import { lastSeen } from '../social/time';
 
 import { CARD_LABEL_KEY, cardKind } from './postKinds';
@@ -75,6 +76,9 @@ export function FeedCard({
   const badge = cardKind(item);
   const pictures = cardImages(item);
   const words = Boolean(item.title || item.excerpt);
+  // on a wall the post is carried to its own page when its words or its comments are opened; on that page it is what arrives, and what goes back
+  const fromWall = useGrowsFrom(onPage ? null : `post:${item.key}`, { shape: 'card' });
+  const intoPage = useGrowsInto(onPage ? `post:${item.key}` : null, { shape: 'card' });
 
   async function remove(): Promise<void> {
     const path = item.targetType === 'image' ? `/images/${item.id}` : `/library/posts/${item.id}`;
@@ -100,7 +104,7 @@ export function FeedCard({
   );
 
   return (
-    <article className={`fcard fcard-${item.kind}${pictures.length > 0 ? ' has-pics' : ''}${onPage ? ' is-page' : ''}`}>
+    <article ref={onPage ? intoPage : fromWall} className={`fcard fcard-${item.kind}${pictures.length > 0 ? ' has-pics' : ''}${onPage ? ' is-page' : ''}`}>
       {/* one line: who (a way to their profile), what kind of post and when, and the ⋯ at the end */}
       <header className="fcard-head">
         <button

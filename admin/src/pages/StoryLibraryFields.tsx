@@ -182,7 +182,7 @@ export function LibraryFields({
   );
 }
 
-/** The cover: one of the shared backgrounds, or none (the apps then draw a quiet kilim band keyed by the category). */
+/** The cover: one of the shared backgrounds, or none (the apps then lay the story on one of the seven kilims, always the same one: shared `storyCoverFor`). */
 function CoverPicker({ value, onChange, problems }: { value: string | null; onChange: (cover: string | null) => void; problems: ProblemsAt }): React.JSX.Element {
   const ro = useContext(ReadOnly);
   const current = storyCover(value);
@@ -228,7 +228,7 @@ function CoverPicker({ value, onChange, problems }: { value: string | null; onCh
         {unknown && tile(unknown, unknown, 'not a picture the apps have', null)}
         {STORY_COVERS.map((c) => tile(c.key, c.en, c.ku, artSrc(storyCoverPath(c.key))))}
       </div>
-      <div className="subtle st-hint">The picture over the story’s title in the library and the reader. Without one, the apps draw a kilim band in the category’s colours.</div>
+      <div className="subtle st-hint">The picture over the story’s title in the library and the reader. Without one, the apps lay the story on one of the seven kilims, always the same one for this story.</div>
       <ProblemList id={`${fieldId('cover')}-problems`} problems={problems('cover')} />
     </div>
   );

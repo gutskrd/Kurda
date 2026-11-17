@@ -11,7 +11,7 @@ import { useAvailability, useGameDialect } from './soloRounds';
  *
  * Learn's Games page (pages/Games.tsx) lists every game in the registry this
  * app can open (here). Those with enough approved content in the learner's
- * variety right now (GET /games/availability) are cards on its shelf; the
+ * variety right now (GET /games/availability) are stamps on its shelf; the
  * rest are named under it as coming soon, seen but not opened, until their
  * content is published. Each wears the emblem drawn for it
  * (shared/src/art/games.ts).
@@ -25,9 +25,9 @@ import { useAvailability, useGameDialect } from './soloRounds';
 interface WebGame {
   href: string;
   nameKey: MessageKey;
-  /** one line for its card */
+  /** one line about it: said with its stamp to a screen reader, which sees no cover */
   lineKey: MessageKey;
-  /** what it is, said in full where there is room: the featured card */
+  /** what it is, said in full where there is room: under the stamp put forward, and where a game's ways in are offered */
   bodyKey: MessageKey;
   /** how it is played: alone, with friends, or either on the one page */
   modes: ReadonlyArray<'solo' | 'online'>;

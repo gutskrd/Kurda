@@ -7,7 +7,9 @@
  * deduction steps, the culprit and a solution that walks back through the
  * evidence. A round takes one case at the levels of the difficulty chosen,
  * one never met first; its items are the deduction steps and, last, the
- * accusation (shared detective/rules.ts).
+ * accusation (shared detective/rules.ts), whose suspects are shown in an
+ * order drawn for the round, so where a case lists its culprit gives nothing
+ * away.
  *
  * The board — the case, its suspects and its cards — is sent with the round
  * (`board`), but what a card means stays here until the player has found it:
@@ -81,6 +83,8 @@ export interface StepItem extends StoredItem {
 export interface AccuseItem extends StoredItem {
   kind: 'accuse';
   suspects: string[];
+  /** the suspects as shown, by their place: each one's place in `suspects` (absent in a round made before they were shuffled) */
+  shown?: number[];
   culprit: string;
   solution: Meanings;
   walk: NotebookEntry[];
@@ -182,6 +186,8 @@ export class DetectiveGame implements SoloEngine<CaseItem, DetectiveItemView, De
       repeat: seen.get(picked.key)?.recent === true,
       kind: 'accuse',
       suspects: c.suspects.map((s) => s.id),
+      // a case is written with its culprit anywhere, often first: the accusation is drawn in an order of its own
+      shown: drawFor(`${ask.seed}:suspects`).shuffle(c.suspects.map((_, i) => i)),
       culprit: c.culprit,
       solution: c.solution,
       walk: steps.map(entryOf),
@@ -257,13 +263,19 @@ export class DetectiveGame implements SoloEngine<CaseItem, DetectiveItemView, De
     return { ...meta, spent } as unknown as Record<string, unknown>;
   }
 
+  /** The accusation's suspects in the order they are shown: as drawn, or as written for a round made before the draw. */
+  private static shownSuspects(item: AccuseItem): string[] {
+    const shown = item.shown?.length === item.suspects.length ? item.shown : item.suspects.map((_, i) => i);
+    return shown.map((i) => item.suspects[i]!);
+  }
+
   view(item: CaseItem, index: number): DetectiveItemView {
-    if (item.kind === 'accuse') return { index, kind: 'accuse', suspects: item.suspects };
+    if (item.kind === 'accuse') return { index, kind: 'accuse', suspects: DetectiveGame.shownSuspects(item) };
     return { index, kind: 'step', prompt: item.prompt, options: item.shown.map((i) => item.options[i]!) };
   }
 
   grade(item: CaseItem, answer: DetectiveAnswer): boolean {
-    if (item.kind === 'accuse') return item.suspects[answer.choice] === item.culprit;
+    if (item.kind === 'accuse') return DetectiveGame.shownSuspects(item)[answer.choice] === item.culprit;
     return item.shown[answer.choice] === item.correctIndex;
   }
 
@@ -275,7 +287,7 @@ export class DetectiveGame implements SoloEngine<CaseItem, DetectiveItemView, De
     if (item.kind === 'accuse') {
       return {
         kind: 'accuse',
-        correctIndex: item.suspects.indexOf(item.culprit),
+        correctIndex: DetectiveGame.shownSuspects(item).indexOf(item.culprit),
         entry: null,
         evidence: item.evidence,
         culprit: item.culprit,

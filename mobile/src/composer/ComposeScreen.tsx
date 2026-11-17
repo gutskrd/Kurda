@@ -11,10 +11,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachReset } from '../theme/Pressable';
 import { PressableScale, heldDim } from '../theme/MotionParts';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
-import { Toggle } from '../theme/Toggle';
+import { ToggleRow } from '../theme/Toggle';
 import * as ImagePicker from 'expo-image-picker';
 import {
   POST_ALT_MAX,
@@ -474,7 +474,8 @@ export function ComposeScreen({
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
             style={({ pressed }) => [styles.cancel, pressed && heldDim]}
-            hitSlop={4}
+            // the way out stands alone at the bar's start, as a back button does, and reaches past every edge
+            reach="open"
           >
             <Text style={[styles.cancelText, { color: colors.textPrimary }]}>{t('common.cancel')}</Text>
           </Pressable>
@@ -597,17 +598,12 @@ export function ComposeScreen({
             ) : null}
 
             {state.pictures.length > 0 ? (
-              <View style={[styles.switchRow, { backgroundColor: colors.glassFill }]}>
-                <View style={styles.flex}>
-                  <Text style={[styles.switchTitle, { color: colors.textPrimary }]}>{t('composer.meme')}</Text>
-                  <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.memeHint')}</Text>
-                </View>
-                <Toggle
-                  value={state.draft.meme}
-                  onValueChange={(meme) => setState((s) => ({ ...s, draft: { ...s.draft, meme } }))}
-                  accessibilityLabel={t('composer.meme')}
-                />
-              </View>
+              <SwitchCard
+                title={t('composer.meme')}
+                hint={t('composer.memeHint')}
+                value={state.draft.meme}
+                onValueChange={(meme) => setState((s) => ({ ...s, draft: { ...s.draft, meme } }))}
+              />
             ) : null}
 
             {showSource ? (
@@ -656,23 +652,25 @@ export function ComposeScreen({
 
       {/* leaving with something written: keep it, throw it away, or stay */}
       <Modal visible={closing} transparent animationType="fade" onRequestClose={() => setClosing(false)}>
-        <View style={[styles.scrim, { backgroundColor: colors.scrim }]}>
-          <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
-            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
-              {mode === 'new' ? t('composer.close.title') : t('composer.close.editTitle')}
-            </Text>
-            {mode === 'new' ? (
-              <>
-                <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.close.body')}</Text>
-                <ClayButton label={t('composer.close.keep')} tone="primary" onPress={() => { setClosing(false); onExit(); }} />
-                <ClayButton label={t('composer.close.delete')} tone="danger" variant="outline" onPress={() => void deleteDraft()} />
-              </>
-            ) : (
-              <ClayButton label={t('composer.close.discard')} tone="danger" variant="outline" onPress={() => { setClosing(false); onExit(); }} />
-            )}
-            <ClayButton label={t('composer.close.stay')} onPress={() => setClosing(false)} />
+        <ReachReset>
+          <View style={[styles.scrim, { backgroundColor: colors.scrim }]}>
+            <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
+              <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
+                {mode === 'new' ? t('composer.close.title') : t('composer.close.editTitle')}
+              </Text>
+              {mode === 'new' ? (
+                <>
+                  <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.close.body')}</Text>
+                  <ClayButton label={t('composer.close.keep')} tone="primary" onPress={() => { setClosing(false); onExit(); }} />
+                  <ClayButton label={t('composer.close.delete')} tone="danger" variant="outline" onPress={() => void deleteDraft()} />
+                </>
+              ) : (
+                <ClayButton label={t('composer.close.discard')} tone="danger" variant="outline" onPress={() => { setClosing(false); onExit(); }} />
+              )}
+              <ClayButton label={t('composer.close.stay')} onPress={() => setClosing(false)} />
+            </View>
           </View>
-        </View>
+        </ReachReset>
       </Modal>
 
       {altPicture ? (
@@ -690,33 +688,35 @@ export function ComposeScreen({
       ) : null}
 
       <Modal visible={draftsOpen} transparent animationType="fade" onRequestClose={() => setDraftsOpen(false)}>
-        <View style={[styles.scrim, { backgroundColor: colors.scrim }]}>
-          <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
-            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
-              {t('composer.oldDraftsTitle')}
-            </Text>
-            <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.oldDraftsBody')}</Text>
-            {serverDrafts.map((d) => (
-              <PressableScale
-                key={d.id}
-                onPress={() => {
-                  setDraftsOpen(false);
-                  open(d, 'finish');
-                }}
-                accessibilityRole="button"
-                style={[styles.draftRow, { backgroundColor: colors.controlTrack }]}
-              >
-                <Text style={[styles.switchTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {d.title || d.body.slice(0, 60) || t('civak.kind.saying')}
-                </Text>
-                {d.title && d.body ? (
-                  <Text style={[styles.hint, { color: colors.textSecondary }]} numberOfLines={1}>{d.body}</Text>
-                ) : null}
-              </PressableScale>
-            ))}
-            <ClayButton label={t('common.close')} onPress={() => setDraftsOpen(false)} />
+        <ReachReset>
+          <View style={[styles.scrim, { backgroundColor: colors.scrim }]}>
+            <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
+              <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
+                {t('composer.oldDraftsTitle')}
+              </Text>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.oldDraftsBody')}</Text>
+              {serverDrafts.map((d) => (
+                <PressableScale
+                  key={d.id}
+                  onPress={() => {
+                    setDraftsOpen(false);
+                    open(d, 'finish');
+                  }}
+                  accessibilityRole="button"
+                  style={[styles.draftRow, { backgroundColor: colors.controlTrack }]}
+                >
+                  <Text style={[styles.switchTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {d.title || d.body.slice(0, 60) || t('civak.kind.saying')}
+                  </Text>
+                  {d.title && d.body ? (
+                    <Text style={[styles.hint, { color: colors.textSecondary }]} numberOfLines={1}>{d.body}</Text>
+                  ) : null}
+                </PressableScale>
+              ))}
+              <ClayButton label={t('common.close')} onPress={() => setDraftsOpen(false)} />
+            </View>
           </View>
-        </View>
+        </ReachReset>
       </Modal>
     </GradientBackground>
   );
@@ -761,6 +761,44 @@ function Tool({
     >
       <Icon name={icon} size={22} color={colors.primary} />
     </Pressable>
+  );
+}
+
+/**
+ * A switch on a card of its own, with its name and what it does under it.
+ * The whole card turns it: the words are the bigger target, and the one the
+ * eye goes to, where the switch alone was a 31pt target at the card's edge.
+ */
+function SwitchCard({
+  title,
+  hint,
+  value,
+  onValueChange,
+}: {
+  title: string;
+  hint: string;
+  value: boolean;
+  onValueChange: (on: boolean) => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <ToggleRow
+      label={title}
+      hint={hint}
+      value={value}
+      onValueChange={onValueChange}
+      style={({ pressed }) => [styles.switchRow, { backgroundColor: colors.glassFill }, pressed && heldDim]}
+    >
+      {(toggle) => (
+        <>
+          <View style={styles.flex}>
+            <Text style={[styles.switchTitle, { color: colors.textPrimary }]}>{title}</Text>
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>{hint}</Text>
+          </View>
+          {toggle}
+        </>
+      )}
+    </ToggleRow>
   );
 }
 
@@ -879,19 +917,12 @@ function AltSheet({
         <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.alt.hint')}</Text>
         {counter.show ? <Counter counter={counter} /> : null}
         {!picture.existing ? (
-          <View style={[styles.switchRow, { backgroundColor: colors.glassFill }]}>
-            <View style={styles.flex}>
-              <Text style={[styles.switchTitle, { color: colors.textPrimary }]}>{t('composer.ownWork')}</Text>
-              <Text style={[styles.hint, { color: colors.textSecondary }]}>
-                {picture.ownWork ? t('composer.ownWorkOn') : t('composer.ownWorkOff')}
-              </Text>
-            </View>
-            <Toggle
-              value={picture.ownWork}
-              onValueChange={(ownWork) => onChange({ ownWork })}
-              accessibilityLabel={t('composer.ownWork')}
-            />
-          </View>
+          <SwitchCard
+            title={t('composer.ownWork')}
+            hint={picture.ownWork ? t('composer.ownWorkOn') : t('composer.ownWorkOff')}
+            value={picture.ownWork}
+            onValueChange={(ownWork) => onChange({ ownWork })}
+          />
         ) : null}
         <ClayButton label={t('common.done')} tone="primary" onPress={onClose} />
       </SheetScrollView>

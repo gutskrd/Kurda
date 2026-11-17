@@ -39,13 +39,13 @@ function open({ league = null as { tier: string } | null } = {}) {
         streak: { current: 6, longest: 14, freezes: 1, lastActiveOn: null, daysLearned: 31 },
         profilePhotoUrl: null,
         createdAt: '2026-01-01T00:00:00.000Z',
-        achievements: 4,
       },
     }),
     'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
     'GET /friends?limit=1': ok({ friends: [], total: 23 }),
     'GET /me/inventory': ok({ items: [] }),
-    'GET /users/u1': ok({ ranks: [], league, badges: [], frameSku: null }),
+    // the badge count is the public profile's: `/me` does not send one
+    'GET /users/u1': ok({ ranks: [], league, badges: [], frameSku: null, achievements: 4 }),
     'GET /users/u1/activity': ok({ items: [] }),
   });
   renderWithProviders(
@@ -59,13 +59,13 @@ describe('your profile', () => {
   it('puts the face on its stage with the name, the handle and the year under it, then the numbers', async () => {
     open();
     expect(await screen.findByText('23')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'rojda' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Profile' })).toBeTruthy();
     expect(screen.getByText('Rojda')).toBeTruthy();
-    expect(screen.getByText(/@rojda\s+·\s+Joined 2026/)).toBeTruthy();
+    expect(screen.getByText(/@rojda\s+·\s+Joined\s2026/)).toBeTruthy();
     expect(screen.getByText('Fêrî Kurmancî dibim.')).toBeTruthy();
     // the three numbers, and the quiet line under them
     expect(screen.getByRole('button', { name: '23 Friends' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: '4 Badges' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: '4 Badges' })).toBeTruthy();
     expect(screen.getByLabelText('5 Level')).toBeTruthy();
     expect(screen.getByText('1,240 Zêr')).toBeTruthy();
   });
@@ -93,7 +93,7 @@ describe('your profile', () => {
     open();
     fireEvent.click(await screen.findByRole('button', { name: '23 Friends' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Friends');
-    fireEvent.click(screen.getByRole('button', { name: '4 Badges' }));
+    fireEvent.click(await screen.findByRole('button', { name: '4 Badges' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Badges');
     fireEvent.click(await screen.findByRole('button', { name: '6 Streak' }));
     expect(await screen.findByText('Longest streak')).toBeTruthy();
@@ -118,6 +118,38 @@ describe('your profile', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Friends');
     fireEvent.click(edit);
     expect(navigation.navigate).toHaveBeenCalledWith('EditProfile');
+  });
+
+  it('lets the two names take a second line rather than end in an ellipsis', async () => {
+    open();
+    const edit = await screen.findByTestId('profile-edit');
+    const share = screen.getByTestId('profile-share');
+    // the words alone, with no line limit, so "Profil bearbeiten" at 320 points wraps inside its button
+    for (const button of [edit, share]) {
+      expect(button.querySelector('svg')).toBeNull();
+      const label = button.querySelector('div[dir], div') ?? button;
+      const style = getComputedStyle(label);
+      expect(style.whiteSpace).not.toBe('nowrap');
+      expect(style.textOverflow).not.toBe('ellipsis');
+    }
+    expect(edit.textContent).toBe('Edit profile');
+    expect(share.textContent).toBe('Share profile');
+  });
+
+  it('shows a dash for the badges, not a made-up zero, when the public profile does not answer', async () => {
+    // no route for `/users/u1`: it fails as a server error would
+    testAuth.client = fakeClient({
+      'GET /me': ok({ user: { id: 'u1', username: 'rojda', displayName: null, bio: null, xp: 0, streak: null, profilePhotoUrl: null } }),
+      'GET /me/wallet': ok({ balances: { zer: 0 } }),
+      'GET /friends?limit=1': ok({ friends: [], total: 0 }),
+      'GET /me/inventory': ok({ items: [] }),
+    });
+    renderWithProviders(
+      <UnreadProvider>
+        <ProfileScreen />
+      </UnreadProvider>,
+    );
+    expect(await screen.findByRole('button', { name: '— Badges' })).toBeTruthy();
   });
 
   it('draws your own horizon behind your face', async () => {

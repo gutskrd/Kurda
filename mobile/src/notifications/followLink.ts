@@ -4,7 +4,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { acceptInvite } from '../play/api';
 import { GAME_NAME_KEY } from '../play/labels';
 import { lobbyRoute } from '../play/routes';
-import { badgeDef, isPlayGame } from '@kurda/shared';
+import { badgeDef, isPlayGame, letterNoticeOf } from '@kurda/shared';
 import { badgeName, isKnownBadge } from '../badges/format';
 import { knownTier, leagueName } from '../leagues/format';
 import { formatDay } from '../reports/sendErrors';
@@ -70,7 +70,13 @@ export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'
     return { title: t('play.notification.inviteTitle'), body: t('play.notification.inviteBody', { game: t(GAME_NAME_KEY[item.data.game]) }) };
   }
   if (item.data.kind === 'gift') return { title: t('play.notification.giftTitle'), body: t('play.notification.giftBody') };
-  if (item.data.kind === 'letter') return { title: t('letters.notify.title'), body: t('letters.notify.body') };
+  // your own bird home with an answer is said as that, so the tap promises what the window then shows
+  const letter = letterNoticeOf(item.data);
+  if (letter) {
+    return letter.how === 'home'
+      ? { title: t('letters.notify.homeTitle'), body: t('letters.notify.homeBody') }
+      : { title: t('letters.notify.title'), body: t('letters.notify.body') };
+  }
   const progress = progressText(item.data, t) ?? groupText(item.data, t, locale);
   if (progress) return progress;
   return { title: item.title, body: item.body };

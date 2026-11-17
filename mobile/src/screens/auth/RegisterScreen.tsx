@@ -19,6 +19,7 @@ import type { AuthStackParamList } from '../../navigation/authStack';
 import { LinkText } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
 import { AgreeLine } from '../../legal/links';
+import { useDirection } from '../../reports/direction';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
@@ -50,6 +51,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 export function RegisterScreen({ navigation }: Props) {
   const { register, stopForAge } = useAuth();
   const { colors } = useTheme();
+  const dir = useDirection();
   const { t, locale } = useI18n();
   const [username, setUsername] = useState('');
   const [age, setAge] = useState<number | null>(null);
@@ -204,8 +206,9 @@ export function RegisterScreen({ navigation }: Props) {
 
   const notice = mayHaveAccount ? (
     <View style={[styles.notice, { backgroundColor: colors.controlTrack }]} accessibilityLiveRegion="polite" testID="register-may-have-account">
-      <Text style={[styles.noticeText, { color: colors.textPrimary }]}>{t('error.code.registrationFailed')}</Text>
-      <View style={styles.noticeActions}>
+      <Text style={[styles.noticeText, dir.text, { color: colors.textPrimary }]}>{t('error.code.registrationFailed')}</Text>
+      {/* the two ways on, the first of them on the side the language starts from */}
+      <View style={[styles.noticeActions, { flexDirection: dir.row }]}>
         <ClayButton label={t('auth.login.submit')} tone="primary" onPress={() => navigation.navigate('Login', { email: cleanEmail(email) })} style={styles.noticeAction} />
         <ClayButton
           label={t('auth.reset.title')}
@@ -229,7 +232,7 @@ const styles = StyleSheet.create({
    */
   notice: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md, marginBottom: spacing.md },
   noticeText: { fontSize: typography.sizes.sm, lineHeight: 21 },
-  noticeActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  noticeActions: { flexWrap: 'wrap', gap: spacing.sm },
   noticeAction: { flexGrow: 1 },
   terms: { marginTop: spacing.lg },
 });

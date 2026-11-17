@@ -1,0 +1,132 @@
+/*
+ * The end of a word game (components/WordAnswer.tsx): the word a Peyvok was
+ * about with what it means, and the rhymes a round did not find. Quiet beside
+ * the result above it: the word is the one large thing, everything else is
+ * the page's secondary ink.
+ */
+
+/* ---- the answer, with its meaning and Save to vocabulary -------------------------------- */
+.wg-answer {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  width: min(100%, 34ch);
+  padding-block: var(--space-2) 0;
+  border-top: 1px solid var(--border);
+}
+.wg-answer-word {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.wg-answer-meaning {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  line-height: 1.4;
+  text-wrap: balance;
+}
+.wg-answer-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-1);
+}
+/* a saved word is on: the violet of everything chosen, as in the dictionary, and still where it was */
+.wg-answer-save.is-on,
+.wg-answer-save.is-on:disabled {
+  color: var(--primary);
+  opacity: 1;
+}
+.wg-answer-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-caption);
+}
+
+/* ---- a battle's "The word was …", with its meaning under it ----------------------------- */
+/* the results are spaced 18px apart; the meaning belongs to the sentence above it, so it sits close under it */
+.wg-meaning-line {
+  margin: calc(-1 * var(--space-3)) 0 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* ---- the rhymes a round left unfound ------------------------------------------------------ */
+.wg-missed {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  margin-top: var(--space-5);
+}
+.wg-missed-title {
+  margin: 0;
+  color: var(--ink-3);
+  /* a small label over the list, in the page's own letters rather than the display face of its headings */
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.wg-missed-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wg-missed-item {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  max-width: 100%;
+  padding: 6px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  background: transparent;
+}
+.wg-missed-word {
+  font-weight: 700;
+}
+.wg-missed-meaning {
+  min-width: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  overflow-wrap: anywhere;
+}
+/* the matches' results are centred, and so is what they missed */
+.match-results .wg-missed {
+  width: min(100%, 440px);
+  justify-items: center;
+  text-align: center;
+}
+.match-results .wg-missed-list {
+  justify-content: center;
+}
+
+/* ---- a variety that has no rhyme rounds yet: said on its chip, and in place of Start ---- */
+.wg-soon {
+  margin-inline-start: 6px;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.chip.active .wg-soon {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* a finger needs 44px: Save to vocabulary grows on touch screens, as the lobbies' small buttons do */
+@media (pointer: coarse) {
+  .wg-answer-save.btn-sm {
+    height: 44px;
+  }
+}

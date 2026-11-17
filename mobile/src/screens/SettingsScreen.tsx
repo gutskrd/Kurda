@@ -225,7 +225,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         },
         {
           key: 'theme',
-          terms: [t('appearance.theme'), theme, t('settings.eventThemes'), t('settings.appearance')],
+          terms: [t('appearance.theme'), theme, t('settings.eventThemes')],
           row: <SettingsRow icon="palette" title={t('appearance.theme')} value={theme} onPress={page('theme')} />,
         },
         {

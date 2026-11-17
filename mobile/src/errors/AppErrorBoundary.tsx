@@ -1,10 +1,11 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton } from '../theme/glass';
-import { Icon } from '../theme/Icon';
 import { spacing, typography } from '../theme/tokens';
+import unpluggedDark from '../../assets/empty/offline-dark.png';
+import unpluggedLight from '../../assets/empty/offline-light.png';
 import { display } from '../theme/fonts';
 import { useI18n } from '../i18n/I18nContext';
 import { reportRenderError } from './crashReporting';
@@ -51,7 +52,7 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, { error
  * theme and the translator, and those are hooks.
  */
 function CrashScreen({ error, onRetry }: { error: Error; onRetry: () => void }) {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
 
@@ -60,7 +61,20 @@ function CrashScreen({ error, onRetry }: { error: Error; onRetry: () => void }) 
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[styles.screen, { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xl }]}
     >
-      <Icon name="alert" size={72} color={colors.danger} />
+      {/*
+        The fawn with the cable come loose, as a screen that could not load
+        wears it (theme/EmptyState): the same news, and never the reader's
+        doing. A red alarm said otherwise, in the colour kept for a wrong
+        answer. Decoration: the words below say it all.
+      */}
+      <Image
+        source={scheme === 'dark' ? unpluggedDark : unpluggedLight}
+        style={styles.art}
+        resizeMode="contain"
+        accessibilityElementsHidden
+        importantForAccessibility="no"
+        testID="crash-art"
+      />
       <Text style={[styles.title, { color: colors.textPrimary }]}>{t('error.crash.title')}</Text>
       <Text style={[styles.body, { color: colors.textSecondary }]}>{t('error.crash.body')}</Text>
 
@@ -80,6 +94,8 @@ function CrashScreen({ error, onRetry }: { error: Error; onRetry: () => void }) 
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl, gap: spacing.md },
+  // the size the empty and offline states draw it at: 480 of source is exactly @3x
+  art: { width: 160, height: 135 },
   title: { ...display(typography.sizes.xxl), textAlign: 'center' },
   body: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
   detail: { fontSize: typography.sizes.xs, textAlign: 'center', fontStyle: 'italic' },

@@ -452,7 +452,7 @@ export function PhotoEditor({
                 if (m.key !== 'move') select(null);
               }}
             >
-              {m.icon} {t(m.labelKey)}
+              <span className="seg-btn-label">{m.icon} {t(m.labelKey)}</span>
             </button>
           ))}
         </div>
@@ -493,7 +493,7 @@ export function PhotoEditor({
                 aria-pressed={doc.aspectKey === a.key}
                 onClick={() => history.set(reshaped(a.key))}
               >
-                {t(a.labelKey)}
+                <span className="seg-btn-label">{t(a.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -627,7 +627,7 @@ export function PhotoEditor({
               aria-pressed={stickerTab === 'marks'}
               onClick={() => setStickerTab('marks')}
             >
-              {t('photo.marks')}
+              <span className="seg-btn-label">{t('photo.marks')}</span>
             </button>
             <button
               type="button"
@@ -635,7 +635,7 @@ export function PhotoEditor({
               aria-pressed={stickerTab === 'emoji'}
               onClick={() => setStickerTab('emoji')}
             >
-              {t('photo.emoji')}
+              <span className="seg-btn-label">{t('photo.emoji')}</span>
             </button>
           </div>
 
@@ -759,7 +759,7 @@ export function PhotoEditor({
                     style={{ fontFamily: f.stack }}
                     onClick={() => patch(selected.id, { font: f.key as FontKey })}
                   >
-                    {t(f.labelKey)}
+                    <span className="seg-btn-label">{t(f.labelKey)}</span>
                   </button>
                 ))}
               </div>

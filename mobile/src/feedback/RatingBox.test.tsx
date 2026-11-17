@@ -12,6 +12,8 @@ vi.mock('@react-navigation/native', async () => {
   const { createContext } = await import('react');
   return { NavigationContainerRefContext: createContext<unknown>(undefined) };
 });
+// every control noted as it is drawn, so its reach can be read
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { NavigationContainerRefContext } from '@react-navigation/native';
 import { Linking, Platform } from 'react-native';
@@ -26,6 +28,9 @@ import { leftResults, reportGameFinished, setRatingBoxInset, useRatingBoxInset }
 import { FeedbackSession } from './session';
 import { requestStoreReview } from './storeReview';
 import { APP_VERSION } from './appInfo';
+import { DARK, LIGHT } from '../theme/palette';
+import { ReachGroup } from '../theme/Pressable';
+import { forgetReach, reachLimitOf, reachOf } from '../testing/reach';
 
 patchReactNativeWeb({ reduceMotion: true });
 
@@ -35,7 +40,27 @@ beforeEach(() => {
   testAuth.user = { ...testAuth.user, id: 'me' };
   vi.mocked(requestStoreReview).mockClear();
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  forgetReach();
+});
+
+describe('RatingBox, as a choice is marked', () => {
+  // a rating given is a choice, so violet; gold is kept for what is earned
+  it('fills the chosen stars in violet, not gold, and marks a chosen topic with the violet wash', () => {
+    testAuth.client = fakeClient();
+    renderWithProviders(<RatingBox source="settings" onClose={() => undefined} />);
+    fireEvent.click(screen.getByRole('radio', { name: '4 stars' }));
+    const star = screen.getByRole('radio', { name: '1 star' }).querySelector('svg')!.outerHTML.toLowerCase();
+    expect([LIGHT.primary, DARK.primary].some((violet) => star.includes(violet.toLowerCase()))).toBe(true);
+    expect([LIGHT.gold, DARK.gold].some((gold) => star.includes(gold.toLowerCase()))).toBe(false);
+    const bugs = screen.getByRole('checkbox', { name: 'Bugs' });
+    fireEvent.click(bugs);
+    expect(bugs.getAttribute('aria-checked')).toBe('true');
+    // a wash is the violet with a little of it showing, not the solid
+    expect(getComputedStyle(bugs).backgroundColor).not.toBe(getComputedStyle(screen.getByRole('button', { name: 'Send' }).firstElementChild as HTMLElement).backgroundColor);
+  });
+});
 
 describe('RatingBox after a first game', () => {
   it('asks under three stars what could be better, and sends the stars, the chips and the words', async () => {
@@ -169,6 +194,21 @@ describe('Send feedback from Settings', () => {
     await screen.findByText('Thank you — we read every message.');
     expect(client.calls[0]?.body).toMatchObject({ categories: ['stories'], source: 'settings' });
     expect(client.calls[0]?.body).not.toHaveProperty('stars');
+  });
+
+  it('starts its sheet afresh from the settings’ own groups, with a close that reaches past every edge', async () => {
+    testAuth.client = fakeClient();
+    // the settings list's rows, as tightly grouped as a list can be: nothing of that reaches the sheet
+    renderWithProviders(
+      <ReachGroup gap={0} rowGap={0}>
+        <FeedbackSettingsRows os="ios" />
+      </ReachGroup>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Send feedback' }));
+    await screen.findByRole('checkbox', { name: 'Stories' });
+    expect(reachLimitOf('Close')).toBeNull();
+    // 44 and alone at the top of the sheet: 8 past every edge
+    expect(reachOf('Close')).toEqual({ top: 8, bottom: 8, left: 8, right: 8 });
   });
 
   it('opens the store page at its reviews once the address exists', async () => {

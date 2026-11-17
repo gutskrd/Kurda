@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { matchedParts } from '@kurda/shared';
-import { useNavigation, useScrollToTop } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, ReachGroup } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, REACH_OPEN, reachSlop } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Chips } from '../theme/Chips';
@@ -17,7 +18,8 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
+import { useScreenBottomInset } from '../navigation/tabBarLayout';
+import { BackButton } from '../navigation/BackButton';
 import { useDirection } from '../reports/direction';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { deviceStore } from '../keyboard/deviceStore';
@@ -40,6 +42,8 @@ interface UserRow {
   userId: string;
   username: string;
   displayName?: string | null;
+  /** their picture, as the server resolves it (an uploaded photo, else the avatar they chose): the face they have everywhere else */
+  avatarUrl?: string | null;
   /** on search results: already friends with whoever searched */
   friend?: boolean;
 }
@@ -52,6 +56,8 @@ interface Suggestion extends UserRow {
 /** Where the searches you made are kept, on this device only. */
 const RECENTS_KEY = 'hevalo_search_recents_v1';
 const SHOWN_RECENTS = 6;
+/** between two rows of a list on this page */
+const ROWS_GAP = 2;
 
 interface LessonRow {
   /** The lesson a tap opens; a skill with none is not offered. */
@@ -90,7 +96,7 @@ interface LessonRow {
  * phone only) and people you may know, so the first thing a new reader sees
  * is somewhere to start rather than an instruction.
  */
-export function SearchScreen(): React.JSX.Element {
+export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   /*
    * A guest searches the words, the lessons and the games, not the people:
@@ -104,11 +110,10 @@ export function SearchScreen(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
-  const topInset = useScreenTopInset();
-  const bottomInset = useTabBarInset();
+  const insets = useSafeAreaInsets();
+  // nothing floats over the foot of this page: its last row only has to clear the home indicator
+  const bottomInset = useScreenBottomInset(spacing.lg);
   const scrollRef = useRef<ScrollView>(null);
-  // tapping Search while on Search goes back to the top of the results
-  useScrollToTop(scrollRef);
 
   const [query, setQuery] = useState('');
   const [scope, setScope] = useState<Scope>('all');
@@ -352,14 +357,27 @@ export function SearchScreen(): React.JSX.Element {
 
   return (
     <GradientBackground>
-      <View style={[styles.controls, { paddingTop: topInset }]}>
-        <SearchField
-          value={query}
-          onChangeText={setQuery}
-          label={t('search.title')}
-          placeholder={t('search.placeholder')}
-          onSubmit={() => remember(query)}
-        />
+      <View style={[styles.controls, { paddingTop: insets.top + spacing.xs }]}>
+        {/*
+          The way back, and the field in the room the magnifier and the bell
+          had, in the same rounded shape: the page grows out of the magnifier
+          that was tapped (theme/origin), and the keyboard is up for it at
+          once.
+        */}
+        <View style={[styles.bar, { flexDirection: dir.row }]}>
+          <BackButton onPress={onExit} />
+          <View style={styles.fieldWrap}>
+            <SearchField
+              value={query}
+              onChangeText={setQuery}
+              label={t('search.title')}
+              placeholder={t('search.placeholder')}
+              onSubmit={() => remember(query)}
+              autoFocus
+              floating
+            />
+          </View>
+        </View>
         <Chips options={scopes} value={scope} onChange={setScope} labelOf={(s) => t(SCOPE_LABEL[s])} />
       </View>
 
@@ -380,28 +398,34 @@ export function SearchScreen(): React.JSX.Element {
                 onPress={forgetRecents}
                 accessibilityRole="button"
                 accessibilityLabel={t('search.clearRecent')}
-                // one 18-point line of words, caught at a fingertip's 44
-                hitSlop={13}
+                /*
+                 * One 18-point line of words, alone at the end of its line: it reaches a fingertip up into the room
+                 * above the list and to either side, and down only half of the 4 to the first recent search.
+                 */
+                hitSlop={reachSlop(null, 18, { edge: REACH_OPEN, limit: { bottom: spacing.xs / 2 } })}
                 style={({ pressed }) => pressed && heldDim}
               >
                 <Text style={[styles.sectionAction, { color: colors.textPrimary }]}>{t('search.clearRecent')}</Text>
               </Pressable>
             </View>
             <View style={styles.rows}>
-              {recents.slice(0, SHOWN_RECENTS).map((term) => (
-                <Pressable
-                  key={term}
-                  onPress={() => setQuery(term)}
-                  accessibilityRole="button"
-                  accessibilityLabel={term}
-                  style={({ pressed }) => [styles.recent, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack }]}
-                >
-                  <Icon name="history" size={20} color={colors.textSecondary} />
-                  <Text style={[styles.rowTitle, styles.rowMain, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {term}
-                  </Text>
-                </Pressable>
-              ))}
+              {/* each 44 tall and 2 apart: each reaches toward the next only half of that */}
+              <ReachGroup rowGap={ROWS_GAP}>
+                {recents.slice(0, SHOWN_RECENTS).map((term) => (
+                  <Pressable
+                    key={term}
+                    onPress={() => setQuery(term)}
+                    accessibilityRole="button"
+                    accessibilityLabel={term}
+                    style={({ pressed }) => [styles.recent, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack }]}
+                  >
+                    <Icon name="history" size={20} color={colors.textSecondary} />
+                    <Text style={[styles.rowTitle, styles.rowMain, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {term}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ReachGroup>
             </View>
           </View>
         ) : null}
@@ -412,7 +436,7 @@ export function SearchScreen(): React.JSX.Element {
               suggestions.slice(0, 5).map((u) =>
                 row(
                   's-' + u.userId,
-                  <InitialsAvatar name={u.username} id={u.userId} size={40} />,
+                  <InitialsAvatar name={u.username} id={u.userId} size={40} photoUrl={u.avatarUrl ?? undefined} />,
                   u.username,
                   u.mutualCount > 0 ? mutualText(t, u.mutualCount) : (u.displayName ?? null),
                   () => navigation.navigate('UserProfile', { userId: u.userId }),
@@ -438,7 +462,7 @@ export function SearchScreen(): React.JSX.Element {
           peopleShown.map((u) =>
             row(
               'p-' + u.userId,
-              <InitialsAvatar name={u.username} id={u.userId} size={40} />,
+              <InitialsAvatar name={u.username} id={u.userId} size={40} photoUrl={u.avatarUrl ?? undefined} />,
               u.username,
               // a friend says so, the way a list of people you follow does
               u.friend ? [u.displayName, t('search.friend')].filter(Boolean).join(' · ') : (u.displayName ?? null),
@@ -546,13 +570,15 @@ function RowsSkeleton({ rows, testID }: { rows: number; testID: string }): React
 
 const styles = StyleSheet.create({
   controls: { paddingHorizontal: layout.gutter, gap: spacing.md - 4, paddingBottom: spacing.xs },
+  bar: { alignItems: 'center', gap: spacing.sm },
+  fieldWrap: { flex: 1 },
   content: { paddingHorizontal: spacing.sm, paddingTop: spacing.md, gap: spacing.lg },
   section: { gap: spacing.xs },
   sectionHead: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.sm },
   sectionTitle: { ...sectionLabel, paddingHorizontal: spacing.sm },
   sectionTitleSkeleton: { paddingHorizontal: spacing.sm },
   sectionAction: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  rows: { gap: 2 },
+  rows: { gap: ROWS_GAP },
   // edge to edge, out past the list's own inset
   discover: { marginHorizontal: -spacing.sm },
   hidden: { display: 'none' },

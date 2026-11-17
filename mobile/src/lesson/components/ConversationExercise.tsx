@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
 import { isSoraniDialect, type ConversationLine, type ConversationSpeaker, type RecordingVoice } from '@kurda/shared';
-import { hitSlopFor } from '../../a11y/a11y';
 import { AAA_NORMAL } from '../../a11y/contrast';
 import { ensureContrast } from '../../a11y/ensureContrast';
 import { ConversationStage, conversationCast } from '../../characters/ConversationStage';
 import type { PlaybackClock } from '../../characters/voice';
 import { useI18n } from '../../i18n/I18nContext';
+import { formatNumber } from '../../i18n/format';
 import { AVATAR_COLORS, AVATAR_TEXT_COLOR, deriveInitials } from '../../profile/initials';
 import { useDirection } from '../../reports/direction';
 import { ClayButton } from '../../theme/glass';
@@ -46,7 +46,7 @@ const WASH = { light: '1F', dark: '3D' } as const;
 /** The initial beside each line. */
 const FACE = 40;
 
-/** The round play button in a bubble, drawn smaller than a fingertip and reaching one (`hitSlopFor`). */
+/** The round play button in a bubble, drawn smaller than a fingertip and reaching one: the Pressable works its reach out from the size its style says. */
 const PLAY = 36;
 
 const NONE: readonly never[] = [];
@@ -72,7 +72,7 @@ const NONE: readonly never[] = [];
  */
 export function ConversationExercise({ exercise, choice, onSelect, disabled, feedback = null, dialect }: Props) {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
   const speakers: readonly ConversationSpeaker[] = exercise.speakers ?? NONE;
@@ -177,8 +177,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
                   <Pressable
                     onPress={() => audio.playLine(i)}
                     accessibilityRole="button"
-                    accessibilityLabel={t('lesson.conversation.playLine', { n: i + 1, name })}
-                    hitSlop={hitSlopFor(PLAY, PLAY)}
+                    accessibilityLabel={t('lesson.conversation.playLine', { n: formatNumber(i + 1, locale), name })}
                     style={({ pressed }) => [
                       styles.play,
                       { backgroundColor: colors.controlTrack, borderColor: sounding ? colors.gold : 'transparent', opacity: pressed ? pressedDim : 1 },

@@ -298,11 +298,13 @@ describe('Dizê Bîrê', () => {
 });
 
 describe('Learn’s games list', () => {
-  it('lists Dizê Bîrê once it can be played', async () => {
+  // a game is a stamp, and a game with one way in is that stamp, pressed: there is no Play on it to look for
+  it('lists Dizê Bîrê as a stamp once it can be played, and the stamp opens it', async () => {
     server(session([item()]), () => ({}));
     renderApp(<Games />, ['/app/games']);
-    const card = (await screen.findByRole('heading', { name: 'Dizê Bîrê' })).closest('article')!;
-    expect(card).toHaveClass('gp-card');
-    expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/memory-thief');
+    const stamp = (await screen.findByRole('heading', { name: 'Dizê Bîrê' })).closest('article')!;
+    expect(stamp).toHaveClass('gp-stamp');
+    const way = await within(stamp).findByRole('link', { name: 'Dizê Bîrê, On your own. Study a real passage, then give back the words the thief took.' });
+    expect(way).toHaveAttribute('href', '/app/games/memory-thief');
   });
 });

@@ -3,9 +3,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import '@fontsource-variable/vazirmatn';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  categoryName,
+  isStoryDialect,
   storyQueryString,
+  storySpelling,
   storyTextDirection,
+  type GameDialect,
   type StoryCategory,
   type StoryDialect,
   type StoryGameSummary,
@@ -27,20 +29,38 @@ import { LearnHeader } from '../learn/LearnHeader';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import { STORIES_LIBRARY, gamePath, storyError } from './api';
 import { useStoryList } from './catalogue';
-import { categoryNames } from './labels';
+import { categoryLabel, categoryNames, categoryTitle } from './labels';
 import { LibraryFilterBar, NO_FILTERS, isPlain, queryOf, readFilters, writeFilters, type LibraryFilters } from './LibraryFilter';
-import { defaultVariety, rememberedExtraTime } from './prefs';
+import { rememberVariety, rememberedExtraTime, shownVariety } from './prefs';
 import { MODE_KEY, SetupSheet } from './SetupSheet';
 import { StoryCard } from './StoryCard';
 import { JoinCodeForm } from '../play/JoinCode';
-import { ShelfSwitch } from '../lore/LoreParts';
+import { ShelfSwitch, VarietySwitch } from '../lore/LoreParts';
 
 /** How many stories a filtered page brings, and how many more each "More" adds. */
 export const PAGE = 24;
 
+/** The category whose stories the server sends on a shelf of their own (`legends`), and which names that shelf. */
+const LEGEND_CATEGORY = 'legend';
+
+/** The stories' spelling of a variety in the games' (the switch the riddles and proverbs share speaks that one). */
+const GAME_SPELLING: Record<StoryDialect, GameDialect> = { kurmanci: 'kmr', sorani: 'ckb' };
+
 /**
  * The library (/app/learn/stories), Learn's Stories group: what there is to
  * read, and the ways in (design notes §5).
+ *
+ * One variety at a time, Kurmancî or Soranî, chosen by the switch at the top
+ * — the same switch the riddles and the proverbs have, and the same choice:
+ * the newest and the editors' picks, the legends' shelf, the categories and
+ * their counts, the levels in the filter, the search, "n of N stories", and
+ * the variety a game with friends is set up in all follow it. A legend told in
+ * both is one story with two tellings, on the shelf once. The switch opens on
+ * the choice made last on this device (prefs.ts `shownVariety`), and an
+ * address that names a variety (a link from before the switch) opens on that
+ * one without making it the reader's choice. Only the reader's own shelves —
+ * what they are reading, what they bookmarked — hold what they hold whatever
+ * its variety.
  *
  * `?id=<game>` is an invite link from before the stories moved here: the page
  * joins that game (if the join rule lets you) and opens it.
@@ -103,8 +123,17 @@ function OpenGame({ target }: { target: { id: string } | { code: string } }): Re
 // ---------------------------------------------------------------------------
 // what the page asks for
 
-/** `GET /stories/library`, asked again when the reader signs in (their rows join the shelves) and on demand. */
-function useLibrary(ready: boolean, signedIn: boolean): {
+/**
+ * `GET /stories/library?dialect=…`, one variety's front page: asked for when
+ * the variety changes, again when the reader signs in (their rows join the
+ * shelves), and on demand. A variety's page is kept once shown, so going back
+ * to it is at once while it is asked for again.
+ */
+function useLibrary(
+  ready: boolean,
+  signedIn: boolean,
+  dialect: StoryDialect,
+): {
   library: StoryLibrary | null;
   error: string | null;
   reload: () => void;
@@ -112,27 +141,30 @@ function useLibrary(ready: boolean, signedIn: boolean): {
 } {
   const { client } = useAuth();
   const t = useT();
-  const [library, setLibrary] = useState<StoryLibrary | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // by variety, and by whether they were asked for signed in: a visitor's page has none of the reader's rows
+  const key = `${dialect}:${signedIn ? 'in' : 'out'}`;
+  const [pages, setPages] = useState<Record<string, StoryLibrary>>({});
+  const [failed, setFailed] = useState<{ key: string; message: string } | null>(null);
   const [nonce, setNonce] = useState(0);
   useEffect(() => {
     if (!ready) return;
     let live = true;
-    setError(null);
-    void client.get<StoryLibrary>('/stories/library').then((res) => {
+    setFailed(null);
+    void client.get<StoryLibrary>(`/stories/library?dialect=${dialect}`).then((res) => {
       if (!live) return;
-      if (res.ok && Array.isArray(res.data.featured)) setLibrary(res.data);
-      else if (!res.ok) setError(describeError(res.error, t));
+      if (res.ok && Array.isArray(res.data.featured)) setPages((was) => ({ ...was, [key]: res.data }));
+      else if (!res.ok) setFailed({ key, message: describeError(res.error, t) });
     });
     return () => {
       live = false;
     };
-  }, [client, ready, signedIn, nonce, t]);
+  }, [client, ready, dialect, key, nonce, t]);
   return {
-    library,
-    error,
+    library: pages[key] ?? null,
+    error: failed?.key === key ? failed.message : null,
     reload: useCallback(() => setNonce((n) => n + 1), []),
-    patch: useCallback((fn) => setLibrary((l) => (l ? fn(l) : l)), []),
+    // a bookmark is the reader's on every page: each variety's kept page follows it
+    patch: useCallback((fn) => setPages((was) => Object.fromEntries(Object.entries(was).map(([k, l]) => [k, fn(l)]))), []),
   };
 }
 
@@ -214,10 +246,33 @@ function Library(): React.JSX.Element {
     setParams(writeFilters(settled, filters), { replace: true });
   }, [settled]); // the typed words alone: the other filters change through the panel and its chips
 
-  const { library, error, reload, patch } = useLibrary(status !== 'restoring', signedIn);
+  // which Kurdish: an address naming one opens on it, without making it the reader's choice; else the reader's own
+  const [dialect, setDialect] = useState<StoryDialect>(() => {
+    const asked = params.get('dialect');
+    return isStoryDialect(asked) ? asked : shownVariety(locale);
+  });
+  // the address's variety has been read: from here on the switch says which, so the address no longer does
+  useEffect(() => {
+    if (!params.has('dialect')) return;
+    setParams(
+      (p) => {
+        const out = new URLSearchParams(p);
+        out.delete('dialect');
+        return out;
+      },
+      { replace: true },
+    );
+  }, []); // once, as the page opens
+  const chooseVariety = (next: GameDialect): void => {
+    const spelled = storySpelling(next);
+    rememberVariety(spelled);
+    setDialect(spelled);
+  };
+
+  const { library, error, reload, patch } = useLibrary(status !== 'restoring', signedIn, dialect);
   const active = q.trim() !== '' || !isPlain(filters);
-  const results = useStoryResults(active ? queryOf(q, filters) : null);
-  const names = useMemo(() => categoryNames(library?.categories, locale), [library?.categories, locale]);
+  const results = useStoryResults(active ? queryOf(q, filters, dialect) : null);
+  const names = useMemo(() => categoryNames(library?.categories, locale, t), [library?.categories, locale, t]);
   const [games, setGames] = useState<StoryGameSummary[]>([]);
 
   useEffect(() => {
@@ -248,16 +303,37 @@ function Library(): React.JSX.Element {
           ? follow(l.bookmarks)
           : [marked, ...l.bookmarks]
         : l.bookmarks.filter((s) => s.id !== story.id);
-      return { ...l, featured: follow(l.featured), recent: follow(l.recent), continue: follow(l.continue), bookmarks };
+      return {
+        ...l,
+        featured: follow(l.featured),
+        legends: l.legends ? follow(l.legends) : l.legends,
+        recent: follow(l.recent),
+        continue: follow(l.continue),
+        bookmarks,
+      };
     });
 
-  // with no story published yet there is nothing to count, search or play together: the page says so, and only that
+  // with no story of this variety published yet there is nothing to count, search or play together: the page says so,
+  // and only that — under the switch, which is the way to the other variety
   const nothingYet = !active && library !== null && library.total === 0;
+  const variety = (
+    <div className="story-variety">
+      <VarietySwitch value={GAME_SPELLING[dialect]} onChange={chooseVariety} />
+    </div>
+  );
 
-  if (nothingYet) return <EmptyState title={t('stories.library.empty')} />;
+  if (nothingYet) {
+    return (
+      <>
+        {variety}
+        <EmptyState title={t('stories.library.empty')} />
+      </>
+    );
+  }
 
   return (
     <>
+      {variety}
       {signedIn && library?.me && <ProgressCard me={library.me} />}
       <LibraryFilterBar
         q={q}
@@ -265,6 +341,7 @@ function Library(): React.JSX.Element {
         onType={setTyped}
         value={filters}
         onChange={choose}
+        dialect={dialect}
         library={library}
         shownTotal={active && results.items ? results.total : null}
       />
@@ -281,15 +358,24 @@ function Library(): React.JSX.Element {
       ) : (
         <>
           {games.length > 0 && <UnfinishedGames games={games} />}
-          <Shelf id="continue" title="stories.library.continue" stories={library.continue} names={names} onBookmarked={bookmarked} />
-          <Shelf id="featured" title="stories.library.featured" stories={library.featured} names={names} onBookmarked={bookmarked} />
-          <Shelf id="recent" title="stories.library.recent" stories={library.recent} names={names} onBookmarked={bookmarked} />
+          <Shelf id="continue" title={t('stories.library.continue')} stories={library.continue} names={names} onBookmarked={bookmarked} />
+          <Shelf id="featured" title={t('stories.library.featured')} stories={library.featured} names={names} onBookmarked={bookmarked} />
+          {/* the legends, on a shelf of their own under their category's own name: no newer story pushes one off the page */}
+          <Shelf
+            id="legends"
+            title={categoryLabel(LEGEND_CATEGORY, library.categories, locale, t) ?? LEGEND_CATEGORY}
+            stories={library.legends ?? []}
+            names={names}
+            filed={false}
+            onBookmarked={bookmarked}
+          />
+          <Shelf id="recent" title={t('stories.library.recent')} stories={library.recent} names={names} onBookmarked={bookmarked} />
           <Categories categories={library.categories} onPick={(slug) => choose({ ...NO_FILTERS, category: slug })} />
-          <Shelf id="bookmarks" title="stories.library.bookmarks" stories={library.bookmarks} names={names} onBookmarked={bookmarked} />
+          <Shelf id="bookmarks" title={t('stories.library.bookmarks')} stories={library.bookmarks} names={names} onBookmarked={bookmarked} />
         </>
       )}
 
-      {signedIn && <PlayRow dialect={filters.dialect ?? defaultVariety(locale)} />}
+      {signedIn && <PlayRow dialect={dialect} />}
     </>
   );
 }
@@ -408,25 +494,28 @@ function Shelf({
   title,
   stories,
   names,
+  filed = true,
   onBookmarked,
 }: {
   id: string;
-  title: MessageKey;
+  /** in the reader's language */
+  title: string;
   stories: StoryListItem[];
   names: ReadonlyMap<string, string>;
+  /** false on a shelf that is one category's (the legends'): its name says the category once, and no card says it again */
+  filed?: boolean;
   onBookmarked: (story: StoryListItem, on: boolean) => void;
 }): React.JSX.Element | null {
-  const t = useT();
   if (stories.length === 0) return null;
   return (
     <section className="story-shelf" aria-labelledby={`story-shelf-${id}`}>
       <h2 className="story-section-title" id={`story-shelf-${id}`}>
-        {t(title)}
+        {title}
       </h2>
       <ul className="story-shelf-row">
         {stories.map((s) => (
           <li key={s.id}>
-            <StoryCard story={s} category={s.category ? (names.get(s.category) ?? null) : null} onBookmarked={onBookmarked} />
+            <StoryCard story={s} category={filed && s.category ? (names.get(s.category) ?? null) : null} onBookmarked={onBookmarked} />
           </li>
         ))}
       </ul>
@@ -448,7 +537,7 @@ function Categories({ categories, onPick }: { categories: Array<StoryCategory & 
       <div className="story-chip-row">
         {filled.map((c) => (
           <button key={c.slug} type="button" className="story-chip story-chip-category" onClick={() => onPick(c.slug)}>
-            {categoryName(c, locale)}
+            {categoryTitle(c, locale, t)}
             <span className="story-chip-count" aria-hidden="true">
               {c.count.toLocaleString(locale)}
             </span>

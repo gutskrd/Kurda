@@ -163,6 +163,31 @@ export function categoryName(category: StoryCategory, locale: string): string {
   return typeof own === 'string' && own.trim() !== '' ? own : category.name.en;
 }
 
+/*
+ * The categories the library was seeded with, which both apps name from their
+ * own catalogues in all nine interface languages. The library's list carries
+ * a name in English, Kurmancî and Soranî only, so a German reader met "Legends
+ * and history" over the legends and on every chip. A category an editor adds
+ * later has no key here and keeps its name from the list (`categoryName`).
+ */
+const CATEGORY_NAME_KEYS = {
+  folktale: 'stories.category.folktale',
+  fable: 'stories.category.fable',
+  legend: 'stories.category.legend',
+  family: 'stories.category.family',
+  village: 'stories.category.village',
+  nature: 'stories.category.nature',
+  everyday: 'stories.category.everyday',
+  celebrations: 'stories.category.celebrations',
+} as const;
+
+export type CategoryNameKey = (typeof CATEGORY_NAME_KEYS)[keyof typeof CATEGORY_NAME_KEYS];
+
+/** The catalogue key a category is named by in the apps, or null for a slug they do not know. */
+export function categoryNameKey(slug: string): CategoryNameKey | null {
+  return Object.hasOwn(CATEGORY_NAME_KEYS, slug) ? CATEGORY_NAME_KEYS[slug as keyof typeof CATEGORY_NAME_KEYS] : null;
+}
+
 /**
  * The text-length presets a host chooses from. A saga is a legend told in
  * sections (at least two headings), long enough to read over a sitting or two.
@@ -894,6 +919,8 @@ export interface StoryLibrary {
   featured: StoryListItem[];
   /** latest published first */
   recent: StoryListItem[];
+  /** the variety's legends, easiest first: a shelf of their own, so no newer story crowds one off the front page; absent from an older server */
+  legends?: StoryListItem[];
   /** started and not finished, latest read first */
   continue: StoryListItem[];
   bookmarks: StoryListItem[];

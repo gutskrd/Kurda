@@ -18,6 +18,7 @@ import { giftItem } from './gifts';
 import { SearchField } from '../theme/SearchField';
 import { Loading } from '../theme/Loading';
 import { heldDim, heldRow } from '../theme/MotionParts';
+import { useDirection } from '../reports/direction';
 
 interface Friend {
   userId: string;
@@ -50,6 +51,8 @@ export function GiftSheet({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  // each friend's face on the side the language starts from, their name lined up after it
+  const dir = useDirection();
 
   const [friends, setFriends] = useState<Friend[] | null>(null);
   const [query, setQuery] = useState('');
@@ -102,14 +105,14 @@ export function GiftSheet({
 
   return (
     <BottomSheet visible onClose={onClose} title={t('shop.giftTo', { name: item.name })}>
-      <Text style={[styles.note, { color: colors.textSecondary }]}>
+      <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>
         {t('shop.giftPaidByYou', { price: item.price, currency: item.currency })} {t('shop.giftFinal')}
       </Text>
 
       {friends === null ? (
         <Loading style={{ marginVertical: spacing.lg }} />
       ) : friends.length === 0 ? (
-        <Text style={[styles.note, { color: colors.textSecondary }]}>{t('shop.noFriendsToGift')}</Text>
+        <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('shop.noFriendsToGift')}</Text>
       ) : (
         <>
           <SearchField
@@ -127,10 +130,10 @@ export function GiftSheet({
                 accessibilityRole="button"
                 // each row names its friend: a screen reader heard "Send <item>" on every one
                 accessibilityLabel={t('gift.picker.titleFor', { name: f.displayName || f.username })}
-                style={({ pressed }) => [styles.row, pressed && heldRow(colors.controlTrack)]}
+                style={({ pressed }) => [styles.row, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
               >
                 <InitialsAvatar name={f.displayName || f.username} id={f.userId} size={34} photoUrl={f.avatarUrl} />
-                <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1}>
+                <Text style={[styles.who, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
                   {f.displayName || f.username}
                 </Text>
                 {busy === f.userId ? <Loading /> : null}
@@ -145,7 +148,7 @@ export function GiftSheet({
         // until when, and Account standing after this sheet has closed
         <SendErrorNotice error={error.error} onNavigate={onClose} style={styles.notice} />
       ) : error ? (
-        <Text style={[styles.note, { color: colors.danger }]} accessibilityLiveRegion="polite">
+        <Text style={[styles.note, dir.text, { color: colors.danger }]} accessibilityLiveRegion="polite">
           {shopGiftErrorText(error.error, error.name, t)}
         </Text>
       ) : null}
@@ -185,11 +188,9 @@ const styles = StyleSheet.create({
   search: { marginTop: spacing.xs },
   list: { marginTop: spacing.xs },
   row: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     paddingVertical: spacing.sm,
-
   },
   who: { flex: 1, fontSize: typography.sizes.md },
   cancel: { alignItems: 'center', paddingVertical: spacing.md },

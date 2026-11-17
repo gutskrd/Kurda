@@ -257,6 +257,7 @@
   gap: var(--space-2);
 }
 .imp-vote-options .btn,
+.imp-vote-unsure,
 .imp-guess-option {
   min-height: 48px;
 }

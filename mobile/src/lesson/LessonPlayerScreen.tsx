@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachReset } from '../theme/Pressable';
 import { feedbackKind, nextLaunch, pairKey, praiseFor, practisableMistakes, typedHint, type NewWord, type ResumeMemory, type TypedHint } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -34,6 +34,7 @@ import type { AnswerResult, RetryResult, SelfRating, SessionResults, SessionView
 import type { ApiClient } from '../api/client';
 import type { CourseMap } from '../coursemap/types';
 import { useI18n } from '../i18n/I18nContext';
+import { formatNumber } from '../i18n/format';
 import type { TranslationKey } from '../i18n/translations';
 import { deviceStore } from '../keyboard/deviceStore';
 import { useQuietInvites } from '../play/quietInvites';
@@ -283,7 +284,7 @@ function SessionPlayerBody({
   const { client, isGuest } = useAuth();
   const { colors } = useTheme();
   const valley = useValley();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const topInset = useScreenTopInset();
   const bottomInset = useScreenBottomInset(spacing.lg);
   // the way out and the bar read from the right in Soranî and Arabic, as every other screen's header does
@@ -584,6 +585,8 @@ function SessionPlayerBody({
           results={results}
           exercises={state.exercises}
           skipped={state.skipped.length}
+          // a lesson finished can be shared, by its name where the map gave it; a review is practice and is not
+          lesson={kind === 'lesson' ? { title: title ?? null } : null}
           moments={moments}
           offerReminders={offerReminders}
           next={next}
@@ -686,11 +689,11 @@ function SessionPlayerBody({
             </Pressable>
           ) : null}
         </View>
-        {reask ? <Text style={[styles.reask, { color: colors.textSecondary }]}>{t('lesson.secondTry')}</Text> : null}
+        {reask ? <Text style={[styles.reask, dir.text, { color: colors.textSecondary }]}>{t('lesson.secondTry')}</Text> : null}
 
       <BottomSheet visible={leaving} onClose={() => setLeaving(false)} title={t('lesson.leave.title')} testID="lesson-leave">
         <Text style={[styles.leaveBody, dir.text, { color: colors.textSecondary }]}>
-          {t('lesson.leave.body', { done: state.answeredCount, total: state.exercises.length })}
+          {t('lesson.leave.body', { done: formatNumber(state.answeredCount, locale), total: formatNumber(state.exercises.length, locale) })}
         </Text>
         <View style={styles.leaveActions}>
           <ClayButton label={t('lesson.leave.stay')} tone="primary" onPress={() => setLeaving(false)} />
@@ -700,7 +703,10 @@ function SessionPlayerBody({
 
       {view.grammarMd ? (
         <Modal visible={showTips} animationType="slide" onRequestClose={() => setShowTips(false)}>
-          <GrammarTips source={view.grammarMd} onClose={() => setShowTips(false)} />
+          {/* the tips are a screen of their own over the lesson: nothing in the lesson caps their reach */}
+          <ReachReset>
+            <GrammarTips source={view.grammarMd} onClose={() => setShowTips(false)} />
+          </ReachReset>
         </Modal>
       ) : null}
 

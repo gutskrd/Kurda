@@ -12,7 +12,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { Pressable } from './Pressable';
+import { Pressable, type Reach, type ReachSize } from './Pressable';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo, timing } from './animate';
@@ -122,6 +122,14 @@ export interface TileProps {
   testID?: string;
   ref?: Ref<View>;
   onLayout?: (e: LayoutChangeEvent) => void;
+  /**
+   * How far past its face it answers a finger (theme/Pressable.tsx). A tile
+   * is a fingertip tall with its lip, so by default it reaches nothing more;
+   * one drawn smaller says so with `reachSize`, and one with nothing near it
+   * may be `open`.
+   */
+  reach?: Reach;
+  reachSize?: ReachSize;
 }
 
 /**
@@ -155,6 +163,8 @@ export function Tile({
   testID,
   ref,
   onLayout,
+  reach,
+  reachSize,
 }: TileProps): React.JSX.Element {
   const { colors } = useTheme();
   const look = useContext(TileLookContext);
@@ -198,6 +208,8 @@ export function Tile({
       aria-selected={accessibilityRole === 'radio' ? undefined : (selected ?? state === 'picked')}
       onLayout={onLayout}
       testID={testID}
+      reach={reach}
+      reachSize={reachSize}
       style={[styles.tile, state === 'disabled' && styles.faded, style]}
     >
       <Chunk tone={tone} translateY={sink.translateY} faceStyle={faceStyle} onFaceLayout={sweep ? (e) => setWidth(e.nativeEvent.layout.width) : undefined}>
@@ -246,6 +258,8 @@ export function TileButton({
   disabled = false,
   accessibilityLabel,
   testID,
+  reach,
+  reachSize,
 }: {
   label: string;
   onPress: () => void;
@@ -254,6 +268,9 @@ export function TileButton({
   disabled?: boolean;
   accessibilityLabel?: string;
   testID?: string;
+  /** as a tile's: the button is 54 tall with its lip, past any reach it needs, unless a caller draws it smaller */
+  reach?: Reach;
+  reachSize?: ReachSize;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const look = useContext(TileLookContext);
@@ -271,6 +288,8 @@ export function TileButton({
       aria-disabled={off}
       aria-busy={busy}
       testID={testID}
+      reach={reach}
+      reachSize={reachSize}
       style={styles.tile}
     >
       <Chunk tone={tint} translateY={sink.translateY} faceStyle={styles.buttonFace}>

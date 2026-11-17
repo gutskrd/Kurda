@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachGroup } from '../theme/Pressable';
 import Svg, { Circle } from 'react-native-svg';
-import { categoryName, type StoryCategory, type StoryDialect, type StoryGameSummary, type StoryLibrary, type StoryListItem } from '@kurda/shared';
+import { STORY_DIALECTS, type StoryCategory, type StoryDialect, type StoryGameSummary, type StoryLibrary, type StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
@@ -18,7 +18,7 @@ import { JoinCodeSheet } from '../play/JoinByCode';
 import { useDirection } from '../reports/direction';
 import { useListEntrance } from '../theme/animate';
 import { display, sectionLabel } from '../theme/fonts';
-import { ClayButton, ErrorRetry } from '../theme/glass';
+import { ClayButton, ErrorRetry, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { PressableScale, Rise, heldDim } from '../theme/MotionParts';
 import { SearchField } from '../theme/SearchField';
@@ -27,9 +27,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { activeGames, getLibrary, listStories, searchStories, setBookmark } from './api';
 import { StoryCover } from './covers';
-import { MODE_KEY, categoryLabel, levelName } from './labels';
+import { DIALECT_NAME, MODE_KEY, categoryLabel, categoryTitle, levelName } from './labels';
 import { LibraryFilterChips, LibraryFilterSheet, NO_FILTER, activeParts, filterButtonLabel, isFiltering, isPlainFilter, libraryQuery, type LibraryFilter } from './LibraryFilter';
-import { useStoryPrefs } from './prefs';
+import { shownDialect, useStoryPrefs } from './prefs';
 import { SetupSheet } from './SetupSheet';
 import { storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
 import { COLUMN, Note, Pill } from './ui';
@@ -39,45 +39,56 @@ import { LoreEntry } from '../lore/LoreEntry';
 import { textIn } from '../lore/labels';
 import { metaFor } from './legend';
 
-/**
- * Which variety a game is set up in: Soranî when the interface is Soranî,
- * else the one chosen last time on this phone, else Kurmancî.
- */
-export function defaultDialect(locale: string, remembered: StoryDialect | null): StoryDialect {
-  if (locale === 'ckb') return 'sorani';
-  return remembered ?? 'kurmanci';
-}
-
 /** A story's row in every list it is in, with `me` changed: a bookmark flips everywhere at once. */
 function withMe(list: StoryListItem[], id: string, patch: (me: StoryListItem['me']) => StoryListItem['me']): StoryListItem[] {
   return list.map((s) => (s.id === id ? { ...s, me: patch(s.me) } : s));
 }
 
+/** The category whose stories the server sends on a shelf of their own (`legends`), and which names that shelf. */
+const LEGEND_CATEGORY = 'legend';
+
 /** How long typing is left alone before the list is asked for it. */
 const SEARCH_DEBOUNCE_MS = 300;
+
+/** The variety switch's height (the segmented control as a radio group: a fingertip, and its track's padding), for the bar that holds its place. */
+const VARIETY_SWITCH_HEIGHT = 46;
 
 /**
  * The library (Learn → Stories, and the Stories route): what to read, and a
  * way to find it.
  *
+ * One variety at a time. A switch over the search, Kurmancî | Soranî, says
+ * which, and everything under it follows: the newest and the editors' picks,
+ * the categories and their counts, the levels the filter offers, the search,
+ * "n of N stories read", and the variety a game with friends is set up in.
+ * A legend told in both varieties is one story with two tellings, so it
+ * stands on the shelf once and not twice side by side. The switch opens on
+ * the variety chosen last time on this phone (Soranî for a Soranî interface
+ * before any choice, otherwise Kurmancî) and keeps a new choice; the reader
+ * keeps the same choice (StoryReaderScreen). Only the reader's own shelves —
+ * what they are reading, what they bookmarked — hold what they hold whatever
+ * its variety. A variety's page is kept once it has been shown, so going back
+ * to it is at once, and it is asked for again behind what is on screen.
+ *
  * Signed in, the shelf opens on how the reading is going — stories finished
- * out of all published, the mean score on the checks — then the stories to go
- * back to, the editors' picks, the newest, the categories, and the ones
- * bookmarked. Anything typed in the search, or anything chosen in the sort
- * and filter sheet behind the funnel beside it (stories/LibraryFilter.tsx),
- * turns the shelves into one paged list of what matches, with "More" at its
- * foot; a chip under the search says each thing that is on. A guest sees the
- * same shelves without the personal rows, since the server keeps none for
- * them.
+ * out of the variety's published ones, the mean score on its checks — then
+ * the stories to go back to, the editors' picks, the legends (a shelf of
+ * their own, which no newer story can push a legend off), the newest, the
+ * categories, and the ones bookmarked. Anything typed in the search, or anything chosen
+ * in the sort and filter sheet behind the funnel beside it
+ * (stories/LibraryFilter.tsx), turns the shelves into one paged list of what
+ * matches, with "More" at its foot; a chip under the search says each thing
+ * that is on. A guest sees the same shelves without the personal rows, since
+ * the server keeps none for them.
  *
- * Each story is a card with its cover (the editor's picture, or a kilim in
- * its category's colours), its title and a line of its summary, its level
- * by its plain name, category and minutes, a headphones mark when it is read
- * aloud, a bookmark toggle that answers at once and asks the server after,
- * and a hairline of how far it has been read. Tapping a card opens the story's
- * overview (StoryReaderScreen).
+ * Each story is a card with its cover (the editor's picture, or the kilim the
+ * story is given when it has none: stories/covers.tsx), its title and a line
+ * of its summary, its level by its plain name, how long it takes, its
+ * category, a headphones mark when it is read aloud, a bookmark toggle that
+ * answers at once and asks the server after, and a hairline of how far it has
+ * been read. Tapping a card opens the story's overview (StoryReaderScreen).
  *
- * Above the search, the library's two companions: the riddles (Metelok) and
+ * Above the switch, the library's two companions: the riddles (Metelok) and
  * the proverbs (Gotinên pêşiyan), each a screen of its own (lore/), so the
  * three collections share one home without a new place in the tab bar.
  *
@@ -94,31 +105,41 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
   const { t, locale } = useI18n();
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
-  const { prefs } = useStoryPrefs();
+  const { prefs, ready, update } = useStoryPrefs();
   const { width } = useWindowDimensions();
+  // the one variety on show: what the switch says, which is what this phone remembers
+  const dialect = shownDialect(locale, prefs.dialect);
 
-  const [library, setLibrary] = useState<StoryLibrary | null>(null);
-  const [libraryError, setLibraryError] = useState<ApiError | null>(null);
+  // each variety's front page, kept once shown: going back to one is at once, with the new answer taking its place when it comes
+  const [libraries, setLibraries] = useState<Partial<Record<StoryDialect, StoryLibrary>>>({});
+  const [libraryFailed, setLibraryFailed] = useState<{ dialect: StoryDialect; error: ApiError } | null>(null);
   const [active, setActive] = useState<StoryGameSummary[]>([]);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<LibraryFilter>(NO_FILTER);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [results, setResults] = useState<{ stories: StoryListItem[]; total: number } | null>(null);
+  // a list belongs to the variety it was asked in: one from before the switch moved is not shown under the other's name
+  const [found, setFound] = useState<{ dialect: StoryDialect; stories: StoryListItem[]; total: number } | null>(null);
   const [resultsError, setResultsError] = useState<ApiError | null>(null);
   const [searching, setSearching] = useState(false);
   const [moreBusy, setMoreBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [setupOpen, setSetupOpen] = useState<StoryListItem[] | null>(null);
+  const [setupOpen, setSetupOpen] = useState<{ dialect: StoryDialect; stories: StoryListItem[] } | null>(null);
+  const [setupBusy, setSetupBusy] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
 
+  const library = libraries[dialect] ?? null;
+  const libraryError = libraryFailed?.dialect === dialect ? libraryFailed.error : null;
+  const results = found?.dialect === dialect ? found : null;
   const filtering = isFiltering(q, filter);
   const personal = !isGuest;
 
   const load = useCallback(() => {
-    setLibraryError(null);
-    const shelves = getLibrary(client).then((res) => {
-      if (res.ok) setLibrary(res.data);
-      else setLibraryError(res.error);
+    // which variety to ask for is not known until what this phone remembers has been read: a moment, and the shelves' shape meanwhile
+    if (!ready) return Promise.resolve();
+    setLibraryFailed(null);
+    const shelves = getLibrary(client, dialect).then((res) => {
+      if (res.ok) setLibraries((was) => ({ ...was, [dialect]: res.data }));
+      else setLibraryFailed({ dialect, error: res.error });
     });
     // a guest has no games to go back to, and the server refuses the question
     const games = isGuest
@@ -127,7 +148,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
           if (res.ok) setActive(res.data.games);
         });
     return Promise.all([shelves, games]);
-  }, [client, isGuest]);
+  }, [client, isGuest, dialect, ready]);
 
   // again on coming back: a story just finished leaves "Continue reading", a check just taken moves the average
   useFocusEffect(
@@ -138,11 +159,11 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
   // and when pulled down, as Learn's lessons are
   const pull = usePullRefresh(load);
 
-  // what was typed or chosen, after a short pause for more typing
+  // what was typed or chosen, in the variety on show, after a short pause for more typing
   const search = useRef(0);
   useEffect(() => {
-    if (!filtering) {
-      setResults(null);
+    if (!filtering || !ready) {
+      setFound(null);
       setResultsError(null);
       setSearching(false);
       return;
@@ -151,23 +172,41 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
     setSearching(true);
     setResultsError(null);
     const timer = setTimeout(() => {
-      void searchStories(client, libraryQuery(q, filter)).then((res) => {
+      void searchStories(client, libraryQuery(q, filter, dialect)).then((res) => {
         if (run !== search.current) return;
         setSearching(false);
-        if (res.ok) setResults(res.data);
+        if (res.ok) setFound({ dialect, ...res.data });
         else setResultsError(res.error);
       });
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [client, q, filter, filtering]);
+  }, [client, q, filter, filtering, dialect, ready]);
 
   const more = async (): Promise<void> => {
     if (!results || moreBusy) return;
+    const run = search.current;
     setMoreBusy(true);
-    const res = await searchStories(client, libraryQuery(q, filter, results.stories.length));
+    const res = await searchStories(client, libraryQuery(q, filter, dialect, results.stories.length));
     setMoreBusy(false);
-    if (res.ok) setResults({ stories: [...results.stories, ...res.data.stories], total: res.data.total });
-    else setNotice(describeError(res.error, t));
+    // the page after the list on show: let go if another list was asked for (new words, a filter, the switch) while it was on its way
+    if (run !== search.current) return;
+    if (!res.ok) {
+      setNotice(describeError(res.error, t));
+      return;
+    }
+    setFound((was) => {
+      if (!was) return was;
+      // a story published meanwhile moves every later one down a place: one already on the list is not listed twice
+      const have = new Set(was.stories.map((s) => s.id));
+      return { ...was, stories: [...was.stories, ...res.data.stories.filter((s) => !have.has(s.id))], total: res.data.total };
+    });
+  };
+
+  /** The switch: the other variety's page, and the choice kept on this phone for the library and the reader alike. */
+  const chooseDialect = (next: StoryDialect): void => {
+    if (next === dialect && prefs.dialect === next) return;
+    setNotice(null);
+    update({ dialect: next });
   };
 
   /** The shelf flips at once; the server is asked after, and a refusal flips it back and says why. */
@@ -185,20 +224,27 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
         total: me?.total ?? null,
         attemptsToday: me?.attemptsToday ?? 0,
       });
-      setResults((r) => (r ? { ...r, stories: withMe(r.stories, story.id, patch) } : r));
-      setLibrary((lib) => {
-        if (!lib) return lib;
-        const marked = { ...story, me: patch(story.me) };
-        const bookmarks = value
-          ? [marked, ...lib.bookmarks.filter((s) => s.id !== story.id)]
-          : lib.bookmarks.filter((s) => s.id !== story.id);
-        return {
-          ...lib,
-          featured: withMe(lib.featured, story.id, patch),
-          recent: withMe(lib.recent, story.id, patch),
-          continue: withMe(lib.continue, story.id, patch),
-          bookmarks,
-        };
+      setFound((r) => (r ? { ...r, stories: withMe(r.stories, story.id, patch) } : r));
+      // on both varieties' pages: the Bookmarks shelf is the reader's own, and holds the story whichever is on show
+      setLibraries((was) => {
+        const next: Partial<Record<StoryDialect, StoryLibrary>> = {};
+        for (const d of STORY_DIALECTS) {
+          const lib = was[d];
+          if (!lib) continue;
+          const marked = { ...story, me: patch(story.me) };
+          const bookmarks = value
+            ? [marked, ...lib.bookmarks.filter((s) => s.id !== story.id)]
+            : lib.bookmarks.filter((s) => s.id !== story.id);
+          next[d] = {
+            ...lib,
+            featured: withMe(lib.featured, story.id, patch),
+            legends: lib.legends ? withMe(lib.legends, story.id, patch) : lib.legends,
+            recent: withMe(lib.recent, story.id, patch),
+            continue: withMe(lib.continue, story.id, patch),
+            bookmarks,
+          };
+        }
+        return next;
       });
     };
     apply(on);
@@ -211,10 +257,20 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
 
   const open = (story: StoryListItem): void => navigation.navigate('StoryReader', { slug: story.slug });
 
-  /** The setup sheet wants one variety's stories; they are fetched as it opens, so the pick list is whole. */
-  const setupDialect = defaultDialect(locale, prefs.dialect);
+  /**
+   * A game with friends is set up in the variety on show. The setup sheet wants that variety's stories; they are
+   * fetched as it opens, so the pick list is whole — the button is busy meanwhile, and a list that does not come
+   * is said rather than opened empty.
+   */
   const openSetup = (): void => {
-    void listStories(client, { dialect: setupDialect }).then((res) => setSetupOpen(res.ok ? res.data.stories : []));
+    if (setupBusy) return;
+    setSetupBusy(true);
+    setNotice(null);
+    void listStories(client, { dialect }).then((res) => {
+      setSetupBusy(false);
+      if (res.ok) setSetupOpen({ dialect, stories: res.data.stories });
+      else setNotice(describeError(res.error, t));
+    });
   };
 
   // two to a row on a phone, three across a tablet, each as wide as its share of the column
@@ -224,11 +280,12 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
   const categories = library?.categories;
   const delayFor = useListEntrance(library !== null);
 
-  const grid = (stories: readonly StoryListItem[], from = 0): ReactNode => (
+  /** A shelf's cards; on a shelf that is one category's, the cards do not each say it again (`filed: false`). */
+  const grid = (stories: readonly StoryListItem[], from = 0, filed = true): ReactNode => (
     <View style={[styles.grid, { flexDirection: dir.row }]}>
       {stories.map((s, i) => (
         <Rise key={s.id} delay={delayFor(from + i)} style={{ width: cardWidth }}>
-          <StoryCard story={s} categories={categories} onOpen={() => open(s)} onBookmark={() => toggleBookmark(s)} />
+          <StoryCard story={s} categories={filed ? categories : undefined} filed={filed} onOpen={() => open(s)} onBookmark={() => toggleBookmark(s)} />
         </Rise>
       ))}
     </View>
@@ -253,7 +310,8 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
           </Text>
           {/* with two chips or more, their "Clear all" already says this */}
           {parts.length < 2 ? (
-            <Pressable onPress={startOver} accessibilityRole="button" style={({ pressed }) => [styles.clear, pressed && heldDim]} hitSlop={8}>
+            // a link at the end of the count's line, with nothing else beside it: it reaches past every edge
+            <Pressable onPress={startOver} accessibilityRole="button" reach="open" style={({ pressed }) => [styles.clear, pressed && heldDim]}>
               <Text style={[styles.clearText, { color: colors.primary }]}>{t('stories.library.clearFilters')}</Text>
             </Pressable>
           ) : null}
@@ -279,9 +337,11 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
   } else if (libraryError && !library) {
     body = <ErrorRetry message={describeError(libraryError, t)} onRetry={load} />;
   } else if (library) {
-    const shelves: Array<{ key: string; title: string; stories: StoryListItem[] }> = [
+    const shelves: Array<{ key: string; title: string; stories: StoryListItem[]; filed?: boolean }> = [
       ...(personal ? [{ key: 'continue', title: t('stories.library.continue'), stories: library.continue }] : []),
       { key: 'featured', title: t('stories.library.featured'), stories: library.featured },
+      // the legends, on a shelf of their own under their category's own name, so no newer story pushes one off the page
+      { key: 'legends', title: categoryLabel(LEGEND_CATEGORY, library.categories, locale, t) ?? '', stories: library.legends ?? [], filed: false },
       { key: 'recent', title: t('stories.library.recent'), stories: library.recent },
     ];
     let shown = 0;
@@ -308,22 +368,25 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
               <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
                 {shelf.title}
               </Text>
-              {grid(shelf.stories, from)}
+              {grid(shelf.stories, from, shelf.filed ?? true)}
             </View>
           );
         })}
-        {library.categories.length > 0 ? (
+        {library.total > 0 && library.categories.length > 0 ? (
           <View style={styles.section}>
             <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
               {t('stories.library.categories')}
             </Text>
             <View style={[styles.categories, { flexDirection: dir.row }]}>
-              <ShelfChip label={t('stories.library.all')} onPress={() => setFilter({ ...NO_FILTER, all: true })} count={library.total} />
-              {library.categories
-                .filter((c) => c.count > 0)
-                .map((c) => (
-                  <ShelfChip key={c.slug} label={categoryName(c, locale)} count={c.count} onPress={() => setFilter({ ...NO_FILTER, category: c.slug })} />
-                ))}
+              {/* the chips wrap onto rows as far apart as they are side by side: each reaches half that gap every way */}
+              <ReachGroup gap={CHIP_GAP} rowGap={CHIP_GAP}>
+                <ShelfChip label={t('stories.library.all')} onPress={() => setFilter({ ...NO_FILTER, all: true })} count={library.total} />
+                {library.categories
+                  .filter((c) => c.count > 0)
+                  .map((c) => (
+                    <ShelfChip key={c.slug} label={categoryTitle(c, locale, t)} count={c.count} onPress={() => setFilter({ ...NO_FILTER, category: c.slug })} />
+                  ))}
+              </ReachGroup>
             </View>
           </View>
         ) : null}
@@ -341,7 +404,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
               {t('stories.library.together')}
             </Text>
             <View style={styles.actions}>
-              <ClayButton label={t('stories.together.setup')} icon="user-plus" tone="primary" disabled={library.total === 0} onPress={openSetup} />
+              <ClayButton label={t('stories.together.setup')} icon="user-plus" tone="primary" disabled={library.total === 0} busy={setupBusy} onPress={openSetup} />
               <ClayButton label={t('stories.join.open')} icon="ticket" onPress={() => setJoinOpen(true)} />
             </View>
           </View>
@@ -360,16 +423,31 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
         refreshControl={pull}
       >
         <LoreEntry />
-        <View style={[styles.searchRow, { flexDirection: dir.row }]}>
-          {/* the app's one search field, in place of a copy of it built here */}
-          <SearchField value={q} onChangeText={setQ} label={t('stories.library.search')} style={styles.search} />
-          {/* sorting and narrowing is one button beside the search, filled while anything is on */}
-          <HeaderButton
-            icon={isPlainFilter(filter) ? 'filter' : 'filter-fill'}
-            label={filterButtonLabel(parts, t)}
-            onPress={() => setSheetOpen(true)}
-            testID="stories-filter"
+        {/* which Kurdish the library is in: everything below is this variety's; a bar of its height stands in for the instant its place is read */}
+        {ready ? (
+          <Segmented<StoryDialect>
+            options={STORY_DIALECTS}
+            value={dialect}
+            onChange={chooseDialect}
+            labelOf={(d) => DIALECT_NAME[d]}
+            groupLabel={t('stories.variety')}
           />
+        ) : (
+          <Skeleton width="100%" height={VARIETY_SWITCH_HEIGHT} radius={radii.pill} />
+        )}
+        <View style={[styles.searchRow, { flexDirection: dir.row }]}>
+          {/* the field's clear button sits at its end, a small gap from the filter, so the two share that gap rather than the filter's wider reach taking the clear button's edge */}
+          <ReachGroup gap={spacing.xs}>
+            {/* the app's one search field, in place of a copy of it built here */}
+            <SearchField value={q} onChangeText={setQ} label={t('stories.library.search')} style={styles.search} />
+            {/* sorting and narrowing is one button beside the search, filled while anything is on */}
+            <HeaderButton
+              icon={isPlainFilter(filter) ? 'filter' : 'filter-fill'}
+              label={filterButtonLabel(parts, t)}
+              onPress={() => setSheetOpen(true)}
+              testID="stories-filter"
+            />
+          </ReachGroup>
         </View>
         <LibraryFilterChips
           parts={parts}
@@ -383,8 +461,8 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
 
       {setupOpen ? (
         <SetupSheet
-          dialect={setupDialect}
-          stories={setupOpen}
+          dialect={setupOpen.dialect}
+          stories={setupOpen.stories}
           initialMode="duo"
           onClose={() => setSetupOpen(null)}
           onCreated={(view) => {
@@ -399,6 +477,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
         visible={sheetOpen}
         value={filter}
         q={q}
+        dialect={dialect}
         library={library}
         shownTotal={filtering && results && !searching ? results.total : null}
         onApply={setFilter}
@@ -420,8 +499,8 @@ function ShelfChip({ label, onPress, count }: { label: string; onPress: () => vo
       }}
       accessibilityRole="button"
       accessibilityLabel={`${label}, ${formatNumber(count, locale)}`}
-      // drawn 36 points tall, caught at a fingertip's 44
-      hitSlop={{ top: 4, bottom: 4 }}
+      // drawn 36 tall and as wide as its words, which are not known before it is drawn: `open` reaches past every edge, and the group caps it to the gap
+      reach="open"
       style={({ pressed }) => [styles.chip, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
     >
       <Text style={[styles.chipText, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -478,7 +557,8 @@ function ProgressCard({ me }: { me: NonNullable<StoryLibrary['me']> }): React.JS
       accessibilityLabel={`${t('stories.library.progressTitle')}. ${read}. ${t('stories.library.averageScore')}: ${score}`}
     >
       <View style={styles.ring}>
-        <Ring fraction={fraction} size={64} color={colors.gold} />
+        {/* how far along the reading is: the violet of progress, as the course's bar is (gold is for what is earned) */}
+        <Ring fraction={fraction} size={64} color={colors.primary} />
         <View style={styles.ringCenter} pointerEvents="none">
           <Text style={[styles.ringText, { color: colors.textPrimary }]} numberOfLines={1}>
             {formatNumber(percent, locale)}%
@@ -536,16 +616,20 @@ const COVER_RATIO = 0.625;
 
 /**
  * One story on the shelf. The title is read in the story's own language, its
- * facts in the app's; the bookmark is a button of its own on the cover.
+ * facts in the app's; the bookmark is a button of its own on the cover. On a
+ * shelf that is one category's (the legends') the card leaves its category
+ * out (`filed`): the shelf's name says it once for all of them.
  */
 export function StoryCard({
   story,
   categories,
+  filed = true,
   onOpen,
   onBookmark,
 }: {
   story: StoryListItem;
   categories: readonly StoryCategory[] | undefined;
+  filed?: boolean;
   onOpen: () => void;
   onBookmark: () => void;
 }): React.JSX.Element {
@@ -553,7 +637,7 @@ export function StoryCard({
   const { t, locale } = useI18n();
   const dir = useDirection();
   const minutes = t('stories.aboutMinutes', { count: story.readingMinutes });
-  const category = categoryLabel(story.category, categories, locale);
+  const category = filed ? categoryLabel(story.category, categories, locale, t) : null;
   const narrated = story.audioCoverage === 'full' ? t('stories.library.narrated') : story.audioCoverage === 'partial' ? t('stories.library.partlyNarrated') : null;
   const share = story.me?.finishedAt ? 1 : (story.me?.share ?? 0);
   const level = levelName(story.level, t);
@@ -574,10 +658,10 @@ export function StoryCard({
         style={styles.cardBody}
       >
         <View style={styles.coverBox}>
-          <StoryCover cover={story.cover} category={story.category} style={styles.cover} radius={radii.sm} />
+          <StoryCover slug={story.slug} cover={story.cover} style={styles.cover} radius={radii.sm} />
           {share > 0 ? (
             <View style={[styles.hairline, { backgroundColor: colors.scrim }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-              <View style={[styles.hairlineFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.gold }]} />
+              <View style={[styles.hairlineFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.primary }]} />
             </View>
           ) : null}
         </View>
@@ -585,7 +669,8 @@ export function StoryCard({
           {story.title}
         </Text>
         {meta?.title ? (
-          <Text {...textIn(meta.lang).props} style={[styles.titleTranslation, { color: colors.textSecondary }, textIn(meta.lang).style]} numberOfLines={1}>
+          // two lines, as the Kurdish title has: on one, "The Fortress of Dimdim and the Golden-Handed Khan" was "The Fortress of Dimdi…"
+          <Text {...textIn(meta.lang).props} style={[styles.titleTranslation, { color: colors.textSecondary }, textIn(meta.lang).style]} numberOfLines={2}>
             {meta.title}
           </Text>
         ) : null}
@@ -594,13 +679,25 @@ export function StoryCard({
             {story.summary}
           </Text>
         ) : null}
-        <View style={[styles.facts, storyRowStyle(story.dialect), { flexDirection: dir.row }]}>
-          <Pill label={level} tone="gold" />
-          <Text style={[styles.factText, { color: colors.textSecondary }]} numberOfLines={1}>
-            {[category, minutes].filter(Boolean).join(' · ')}
-          </Text>
-          {narrated ? <Icon name="headphones" size={14} color={colors.textSecondary} /> : null}
-          {story.me?.finishedAt ? <Icon name="check" size={14} color={colors.success} /> : null}
+        {/*
+          The level and the minutes on one row, which takes a second when a long level name leaves the minutes no room;
+          the category on a line of its own under them. Side by side in half a phone's width, the category was the part
+          that gave way, cut to "Legends …". The facts stand at the card's foot, so along a row of cards they are level
+          whatever the titles above them run to.
+        */}
+        <View style={styles.foot}>
+          <View style={[styles.facts, storyRowStyle(story.dialect), { flexDirection: dir.row }]}>
+            {/* a level is information, not a prize: the quiet pill */}
+            <Pill label={level} />
+            <Text style={[styles.factText, { color: colors.textSecondary }]}>{minutes}</Text>
+            {narrated ? <Icon name="headphones" size={14} color={colors.textSecondary} /> : null}
+            {story.me?.finishedAt ? <Icon name="check" size={14} color={colors.primary} /> : null}
+          </View>
+          {category ? (
+            <Text style={[styles.category, dir.text, { color: colors.textSecondary, textAlign: storyTextStyle(story.dialect).textAlign }]} numberOfLines={2}>
+              {category}
+            </Text>
+          ) : null}
         </View>
       </PressableScale>
       <Pressable
@@ -608,14 +705,18 @@ export function StoryCard({
         accessibilityRole="button"
         accessibilityLabel={bookmarked ? t('stories.library.bookmarked') : t('stories.library.bookmark')}
         accessibilityState={{ selected: bookmarked }}
-        hitSlop={6}
+        // drawn 32 over the cover, and answering over 48: 8 past every edge, still inside the card
         style={({ pressed }) => [styles.bookmark, { backgroundColor: colors.surface, opacity: pressed ? pressedDim : 1 }]}
       >
-        <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={18} color={bookmarked ? colors.gold : colors.textSecondary} />
+        {/* on is violet, as everything chosen is */}
+        <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={18} color={bookmarked ? colors.primary : colors.textSecondary} />
       </Pressable>
     </View>
   );
 }
+
+/** The space between the Categories shelf's chips, side by side and from row to row. */
+const CHIP_GAP = spacing.sm;
 
 /** display(17) sets 1.12 */
 const TITLE_LINE = Math.round(typography.sizes.md * typography.displayLineHeight);
@@ -632,9 +733,10 @@ function GridSkeleton({ cardWidth, count }: { cardWidth: number; count: number }
             <SkeletonText size={typography.sizes.md} lineHeight={TITLE_LINE} width={i % 2 ? '70%' : '85%'} />
             <SkeletonText size={typography.sizes.xs} lineHeight={18} width="92%" />
             <View style={styles.facts}>
-              <Skeleton width={34} height={lineOf(typography.sizes.xs) + 6} radius={radii.pill} />
-              <Skeleton width={72} height={lineOf(typography.sizes.xs)} />
+              <Skeleton width={56} height={lineOf(typography.sizes.xs) + 6} radius={radii.pill} />
+              <Skeleton width={44} height={lineOf(typography.sizes.xs)} />
             </View>
+            <SkeletonText size={typography.sizes.xs} lineHeight={18} width="55%" />
           </View>
         </View>
       ))}
@@ -687,13 +789,14 @@ const styles = StyleSheet.create({
   },
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   chipCount: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  categories: { flexWrap: 'wrap', gap: spacing.sm },
+  categories: { flexWrap: 'wrap', gap: CHIP_GAP },
   resultsHead: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   clear: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   clearText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   grid: { flexWrap: 'wrap', gap: layout.rowGap },
-  card: { borderRadius: radii.lg, position: 'relative' },
-  cardBody: { padding: spacing.sm, gap: spacing.xs },
+  // a row's cards are as tall as its tallest: each fills the place the row gives it, so their feet line up
+  card: { flexGrow: 1, borderRadius: radii.lg, position: 'relative' },
+  cardBody: { flexGrow: 1, padding: spacing.sm, gap: spacing.xs },
   coverBox: { position: 'relative' },
   cover: { width: '100%', aspectRatio: 1 / COVER_RATIO },
   hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 4, borderBottomLeftRadius: radii.sm, borderBottomRightRadius: radii.sm, overflow: 'hidden' },
@@ -701,8 +804,10 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.md), lineHeight: Math.round(typography.sizes.md * 1.2), marginTop: 2 },
   summary: { fontSize: typography.sizes.xs, lineHeight: 18 },
   titleTranslation: { fontSize: typography.sizes.xs, lineHeight: 18, fontWeight: typography.weights.semibold, marginTop: -2 },
-  facts: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
-  factText: { flexShrink: 1, fontSize: typography.sizes.xs },
+  foot: { marginTop: 'auto', gap: spacing.xs },
+  facts: { flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
+  factText: { fontSize: typography.sizes.xs },
+  category: { fontSize: typography.sizes.xs, lineHeight: 18 },
   bookmark: {
     position: 'absolute',
     top: spacing.sm + 6,

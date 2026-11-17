@@ -19,6 +19,13 @@
   padding-block: 4px;
   padding-inline: 4px 36px;
   margin: -4px -4px 12px;
+  /*
+   * The 4px above and below is also more than a tab needs for a press that
+   * lands just off it: drawn 44px tall, it would reach 2px each way where a
+   * finger is about. It is kept to that, because the fade's mask lifts the row
+   * over what is beside it, and room past the tabs takes the presses of
+   * whatever reaches down into it from above, such as the gift picker's "for".
+   */
   /* the row fades out at its end, so a tab cut off by a phone's edge reads as
      "there is more this way" rather than as the last one. Where every tab fits
      (a wide screen) the fade falls on empty space. */

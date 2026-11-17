@@ -6,8 +6,9 @@
  * They are cut-outs (cutout.ts), the family the cards of Letters and words
  * are drawn in: one object a child would know for each category — an apple
  * for the fruit, a tea glass for the drinks, a kilim's medallion for the
- * culture — in flat colour, lit from the upper left, its thickness showing
- * below it. A picture holds no text and no numerals: the numbers are counted
+ * culture, the Newroz fire for the celebrations, a def for the music, the
+ * flag for Kurdistan, Şahmaran for the legends — in flat colour, lit from
+ * the upper left, its thickness showing below it. A picture holds no text and no numerals: the numbers are counted
  * in beads, as the abacus counts them.
  *
  * A category is named by its slug (api/src/games/word-categories.ts lists the
@@ -275,25 +276,27 @@ const play: Draw = (dr) => {
   dr.add('<ellipse cx="42" cy="38" rx="9" ry="6" fill="#ffffff" fill-opacity="0.45" transform="rotate(-32 42 38)"/>');
 };
 
-/** Two notes on one beam. */
+/** A def, the frame drum: its wooden hoop, the skin stretched over it, the rings that shiver inside and a kilim diamond painted at its heart. */
 const music: Draw = (dr) => {
-  const ink = tones(PURPLE);
-  form(dr, 'M44 30L98 20V38L44 48Z', ink, 4, 2.4);
-  form(dr, rr(44, 34, 9, 56, 4.5), ink, 0, 2);
-  form(dr, rr(89, 24, 9, 56, 4.5), ink, 0, 2);
-  turned(dr, -18, 37, 90, () => form(dr, 'M22 90A15 11 0 1 0 52 90A15 11 0 1 0 22 90Z', ink, 4, 2.4));
-  turned(dr, -18, 82, 80, () => form(dr, 'M67 80A15 11 0 1 0 97 80A15 11 0 1 0 67 80Z', ink, 4, 2.4));
+  form(dr, ring(60, 56, 47), WOOD, 9, 2.8);
+  form(dr, ring(60, 56, 37), CREAM, 0, 2.2);
+  for (let i = 0; i < 8; i++) {
+    const a = (i * Math.PI) / 4 + Math.PI / 8;
+    line(dr, ring(60 + 31 * Math.cos(a), 56 + 31 * Math.sin(a), 3.4), STEEL, 2.2);
+  }
+  fill(dr, 'M60 38L78 56L60 74L42 56Z', tint(RED, -0.04));
+  fill(dr, 'M60 46L70 56L60 66L50 56Z', GOLD);
+  fill(dr, 'M60 52L64 56L60 60L56 56Z', tint(RED, -0.04));
 };
 
-/** A present, tied with a bow. */
+/** The Newroz fire: a stack of logs, its flames leaping, sparks flying off. */
 const celebrations: Draw = (dr) => {
-  form(dr, rr(24, 56, 72, 46, 8), tones(RED), 5, 2.6);
-  form(dr, rr(53, 56, 14, 46, 0), tones(GOLD), 0, 2);
-  form(dr, rr(16, 42, 88, 18, 7), tones(tint(RED, -0.1)), 4, 2.4);
-  form(dr, rr(53, 42, 14, 18, 0), tones(GOLD), 0, 2);
-  form(dr, 'M60 42C50 22 28 22 30 34C32 44 50 44 60 42Z', tones(GOLD), 2.4, 2);
-  form(dr, 'M60 42C70 22 92 22 90 34C88 44 70 44 60 42Z', tones(GOLD), 2.4, 2);
-  bead(dr, 60, 41, 6, tint(GOLD, -0.12), 2);
+  turned(dr, -15, 60, 98, () => form(dr, rr(20, 92, 80, 13, 6.5), WOOD, 3, 1.8));
+  turned(dr, 15, 60, 98, () => form(dr, rr(20, 92, 80, 13, 6.5), tones(tint(BROWN, 0.12)), 3, 1.8));
+  form(dr, 'M60 8C64 26 84 34 88 56C92 78 79 96 60 96C41 96 28 79 32 58C34 45 43 39 45 26C51 34 53 41 55 48C58 34 56 21 60 8Z', tones(RED), 0, 2.6);
+  form(dr, 'M61 32C64 45 77 53 77 69C77 84 70 92 60 92C50 92 43 84 43 71C43 62 49 57 51 49C54 55 56 59 57 62C60 53 59 43 61 32Z', tones(ORANGE), 0, 2.2);
+  form(dr, 'M60 58C62 66 69 70 69 79C69 86 65 91 60 91C55 91 51 86 51 80C51 73 56 70 57 65C58 68 59 69 60 70Z', tones(GOLD), 0, 1.6);
+  for (const [x, y, r] of [[28, 30, 2.8], [92, 22, 2.4], [99, 44, 2], [21, 52, 2]] as const) dot(dr, x, y, r, GOLD);
 };
 
 /** A hammer. */
@@ -463,6 +466,39 @@ const world: Draw = (dr) => {
   );
 };
 
+/** The flag of Kurdistan on its pole: red, white and green, the golden sun of twenty-one rays at its heart. */
+const kurdistan: Draw = (dr) => {
+  line(dr, 'M22 14V110', tint(BROWN, -0.18), 6);
+  dot(dr, 22, 12, 5.5, GOLD);
+  const cloth = 'M25 18C48 12 70 26 104 18V76C70 84 48 70 25 76Z';
+  fill(dr, cloth, tint(GREEN, -0.34), ' transform="translate(0 4)"');
+  fill(dr, 'M25 18C48 12 70 26 104 18V37C70 45 48 31 25 37Z', RED);
+  fill(dr, 'M25 37C48 31 70 45 104 37V57C70 65 48 51 25 57Z', WHITE.light);
+  fill(dr, 'M25 57C48 51 70 65 104 57V76C70 84 48 70 25 76Z', GREEN);
+  fill(dr, 'M25 19C48 13 70 27 104 19V22C70 30 48 16 25 22Z', tint(RED, 0.3));
+  const [cx, cy] = [64, 47];
+  for (let i = 0; i < 21; i++) {
+    const a = (i * 2 * Math.PI) / 21 - Math.PI / 2;
+    const p = (r: number, da: number): string => `${n(cx + r * Math.cos(a + da))} ${n(cy + r * Math.sin(a + da))}`;
+    fill(dr, `M${p(6, -0.13)}L${p(10.5, 0)}L${p(6, 0.13)}Z`, GOLD);
+  }
+  dot(dr, cx, cy, 6.4, GOLD);
+};
+
+/** Şahmaran, the queen of the snakes: a green snake coiled on itself, a crown on its head. */
+const legends: Draw = (dr) => {
+  const body = 'M18 96C34 106 72 106 88 94C102 84 94 68 76 68C58 68 46 70 40 60C33 49 43 38 60 38C69 38 74 34 76 28';
+  const skin = tones('#3c9a5f');
+  dr.add(`<path d="${body}" fill="none" stroke="${skin.shade}" stroke-width="17" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 3.5)"/>`);
+  line(dr, body, skin.base, 17);
+  dr.add(`<path d="${body}" fill="none" stroke="${skin.light}" stroke-width="3.6" stroke-linecap="round" transform="translate(-2.2 -4)"/>`);
+  for (const [x, y] of [[36, 101], [58, 102], [80, 97], [90, 80], [62, 69], [43, 58], [54, 40]] as const) fill(dr, `M${x} ${y - 3.4}L${x + 3} ${y}L${x} ${y + 3.4}L${x - 3} ${y}Z`, GOLD);
+  turned(dr, -14, 84, 26, () => form(dr, 'M71 26C71 18 78 15 85 15C93 15 99 20 99 26C99 32 93 37 85 37C78 37 71 34 71 26Z', skin, 3, 2));
+  dot(dr, 89, 23, 2.4, INK);
+  line(dr, 'M98 31L105 33M105 33L109 30M105 33L108 37', RED, 1.8);
+  form(dr, 'M73 15L75 3L80 9L85 0L90 9L95 3L97 15Z', tones(GOLD), 2, 1.6);
+};
+
 /** Three cards fanned out, a sparkle on the one in front: whatever comes. */
 const any: Draw = (dr) => {
   turned(dr, -20, 60, 104, () => form(dr, rr(38, 24, 44, 62, 8), tones(RED), 4, 2.4));
@@ -479,7 +515,7 @@ const label: Draw = (dr) => {
 
 const CATEGORIES: Readonly<Record<string, { draw: Draw; tone: string; title: string }>> = {
   animals: { draw: animals, tone: BROWN, title: 'Animals' },
-  food: { draw: food, tone: '#e0a352', title: 'Food' },
+  food: { draw: food, tone: '#e0a352', title: 'Food and drink' },
   fruit: { draw: fruit, tone: RED, title: 'Fruit' },
   vegetables: { draw: vegetables, tone: ORANGE, title: 'Vegetables' },
   drinks: { draw: drinks, tone: '#c8551f', title: 'Drinks' },
@@ -490,6 +526,7 @@ const CATEGORIES: Readonly<Record<string, { draw: Draw; tone: string; title: str
   jobs: { draw: jobs, tone: GOLD, title: 'Jobs' },
   nature: { draw: nature, tone: GREEN, title: 'Nature' },
   town: { draw: town, tone: PURPLE, title: 'Town' },
+  kurdistan: { draw: kurdistan, tone: RED, title: 'Kurdistan' },
   transport: { draw: transport, tone: RED, title: 'Transport' },
   colours: { draw: colours, tone: PINK, title: 'Colours' },
   school: { draw: school, tone: BLUE, title: 'School' },
@@ -507,6 +544,7 @@ const CATEGORIES: Readonly<Record<string, { draw: Draw; tone: string; title: str
   people: { draw: people, tone: TEAL, title: 'People' },
   taste: { draw: taste, tone: '#f4c430', title: 'Taste' },
   stories: { draw: stories, tone: GOLD, title: 'Stories' },
+  legends: { draw: legends, tone: '#3c9a5f', title: 'Legends' },
   money: { draw: money, tone: GOLD, title: 'Money' },
   qualities: { draw: qualities, tone: SKY, title: 'Qualities' },
   character: { draw: character, tone: '#ffc93c', title: 'Character' },

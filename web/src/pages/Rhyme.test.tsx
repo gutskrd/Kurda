@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Rhyme } from './Rhyme';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -140,5 +140,140 @@ describe('Rhyme (solo training)', () => {
       await waitFor(() => expect(heard).toEqual([{ game: 'rhyme', gaveUp: true }]));
       stop();
     });
+  });
+});
+
+/*
+ * A variety without enough curated prompts would open a round on the other
+ * variety's word, or on none: it keeps its chip, marked coming soon, and says
+ * so where Start would be.
+ */
+describe('Rhyme, in the varieties it is offered in', () => {
+  const answer = (sorani: boolean) => ({
+    dialects: { kurmanci: { prompts: 150, available: true }, sorani: { prompts: sorani ? 80 : 0, available: sorani } },
+    minimum: 40,
+  });
+
+  function stub(sorani: boolean): ReturnType<typeof vi.fn> {
+    const fetched = vi.fn(async (url: string) => {
+      if (url.includes('/rhyme/availability')) return jsonResponse(200, answer(sorani));
+      if (url.includes('/rhyme/training')) return jsonResponse(200, round);
+      return jsonResponse(200, {});
+    });
+    vi.stubGlobal('fetch', fetched);
+    return fetched;
+  }
+
+  it('marks a variety with no rounds yet as coming soon, and offers no Start in it', async () => {
+    const fetched = stub(false);
+    renderApp(<Rhyme />, ['/app/games/rhyme']);
+
+    const sorani = await screen.findByRole('tab', { name: /Soranî.*Coming soon/ });
+    expect(screen.getByRole('tab', { name: 'Kurmancî' })).toHaveAttribute('aria-selected', 'true');
+    await userEvent.click(sorani);
+
+    expect(sorani).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Rhyme games aren’t offered in this Kurdish yet.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Start' })).toBeNull();
+    expect(fetched.mock.calls.some(([url]) => String(url).includes('/rhyme/training'))).toBe(false);
+
+    // the other chip brings Start back
+    await userEvent.click(screen.getByRole('tab', { name: 'Kurmancî' }));
+    expect(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument();
+  });
+
+  it('opens on the variety a Soranî learner is learning once rounds are offered in it, and on Kurmancî before', async () => {
+    localStorage.setItem('hevalo.learn.courseDialect', 'sorani');
+    stub(false);
+    const before = renderApp(<Rhyme />, ['/app/games/rhyme']);
+    await waitFor(() => expect(screen.getByRole('tab', { name: 'Kurmancî' })).toHaveAttribute('aria-selected', 'true'));
+    expect(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument();
+    before.unmount();
+
+    stub(true);
+    renderApp(<Rhyme />, ['/app/games/rhyme']);
+    await screen.findByRole('tab', { name: 'Soranî' });
+    expect(screen.getByRole('tab', { name: 'Soranî' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByText(/Coming soon/)).toBeNull();
+  });
+
+  it('offers both, as before, when the server cannot say', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => (url.includes('/rhyme/availability') ? jsonResponse(500, { code: 'INTERNAL', message: 'x' }) : jsonResponse(200, {}))),
+    );
+    renderApp(<Rhyme />, ['/app/games/rhyme']);
+    await userEvent.click(await screen.findByRole('tab', { name: 'Soranî' }));
+    expect(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument();
+    expect(screen.queryByText(/Coming soon/)).toBeNull();
+  });
+});
+
+describe('Rhyme, once a round is over', () => {
+  const baran = { ...round, prompt: 'baran' };
+  const missed = [
+    { word: 'nan', meanings: { en: 'bread', fr: 'pain' } },
+    { word: 'jiyan', meanings: {} },
+  ];
+
+  it('lists the rhymes the round missed, each with what it means in the reader’s language', async () => {
+    localStorage.setItem('hevalo_locale', 'fr');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/rhyme/training/r1/end')) return jsonResponse(200, { game: { ...baran, remainingMs: 0, status: 'ended', missed } });
+        if (url.includes('/rhyme/training')) return jsonResponse(200, baran);
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Rhyme />, ['/app/games/rhyme']);
+    // the French words arrive with their catalogue, a moment after the page
+    await userEvent.click(await screen.findByRole('button', { name: 'Commencer' }));
+    // nothing of what was missed while the clock runs
+    await screen.findByText('baran');
+    expect(screen.queryByText('nan')).toBeNull();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Terminer la manche' }));
+    const list = await screen.findByRole('region', { name: 'Les rimes qui t’ont échappé' });
+    expect(within(list).getByText('nan')).toBeInTheDocument();
+    expect(within(list).getByText('pain')).toBeInTheDocument();
+    // a word nobody has written a meaning for is still a rhyme worth knowing
+    expect(within(list).getByText('jiyan')).toBeInTheDocument();
+    expect(within(list).getAllByRole('listitem')).toHaveLength(2);
+  });
+
+  it('shows no list when there is nothing the round missed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/rhyme/training/r1/end')) return jsonResponse(200, { game: { ...baran, remainingMs: 0, status: 'ended', missed: [] } });
+        if (url.includes('/rhyme/training')) return jsonResponse(200, baran);
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Rhyme />, ['/app/games/rhyme']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'End round' }));
+    await screen.findByRole('button', { name: 'Play again' });
+    expect(screen.queryByText('Rhymes you missed')).toBeNull();
+  });
+
+  it('turns away a word whose ending does all the rhyming, in general words', async () => {
+    // malan is mal with an ending: only the ending rhymes with baran
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/rhyme/training/r1/guesses')) {
+          return jsonResponse(200, { game: baran, result: { accepted: false, quality: 'none', points: 0, normalized: 'malan', reason: 'inflected' } });
+        }
+        if (url.includes('/rhyme/training')) return jsonResponse(200, baran);
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Rhyme />, ['/app/games/rhyme']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    await userEvent.type(await screen.findByLabelText('Your rhyme'), 'malan');
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
+    expect(await screen.findByText('Not accepted — try another.')).toBeInTheDocument();
   });
 });

@@ -122,6 +122,43 @@ describe('speaking on a phone', () => {
     expect(openSettings).toHaveBeenCalledTimes(1);
   });
 
+  it('tells nobody to allow anything after a refusal, and leaves nothing waiting on screen', async () => {
+    mic.answer = DENIED;
+    speaking();
+    await press('Start recording');
+
+    // where things stand, where that is changed, and that the exercise can be passed over
+    const said = screen.getByText(/The microphone is off for Hevalo/);
+    expect(said.textContent).toBe('The microphone is off for Hevalo. You can turn it on in your device settings, or skip this one.');
+    expect(said.textContent).not.toMatch(/allow/i);
+    // no spinner, no button left busy or switched off: the way to the settings answers, and so does the lesson's own skip
+    expect(screen.queryByRole('progressbar')).toBeNull();
+    for (const button of screen.getAllByRole('button')) {
+      expect(button.getAttribute('aria-busy'), button.textContent ?? '').not.toBe('true');
+      expect(button.getAttribute('aria-disabled'), button.textContent ?? '').not.toBe('true');
+    }
+    expect(felt).toEqual([]);
+  });
+
+  it('says so when the microphone cannot be asked for at all, and record is there to press again', async () => {
+    mic.failToAsk = true;
+    const { said } = speaking();
+    await press('Start recording');
+
+    expect(screen.getByText('Could not start recording. Please try again.')).toBeTruthy();
+    const record = screen.getByRole('button', { name: 'Start recording' });
+    expect(record.getAttribute('aria-busy')).not.toBe('true');
+    expect(record.getAttribute('aria-disabled')).not.toBe('true');
+    expect(mic.modes).toEqual([]);
+    expect(said.recorded).not.toContain(true);
+
+    // the next press asks again, and records
+    mic.failToAsk = false;
+    await press('Start recording');
+    expect(screen.getByRole('button', { name: 'Stop recording' })).toBeTruthy();
+    expect(mic.calls).toEqual(['ask', 'ask', 'prepare', 'record']);
+  });
+
   it('offers record again once the microphone has been allowed in the settings', async () => {
     mic.answer = DENIED;
     speaking();

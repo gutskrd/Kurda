@@ -5,14 +5,19 @@ vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
+vi.mock('./Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
+import { forgetReach, reachOf } from '../testing/reach';
 import { Tile, TileButton, TileLookScope, type TileLook } from './Tile';
 import type { TileState } from './tileTones';
 
 patchReactNativeWeb({ reduceMotion: true });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  forgetReach();
+});
 
 /** The face of the tile a button is: drawn last, over its lip. */
 function face(button: HTMLElement): HTMLElement {
@@ -117,5 +122,29 @@ describe('a place with a look of its own', () => {
     expect(lip.style.backgroundColor).toBe(rgb('#dccdb0'));
     expect(getComputedStyle(lip).borderTopLeftRadius).toBe('16px');
     expect(face(screen.getByRole('button', { name: 'Check' })).style.backgroundColor).toBe(rgb('#3d2a1f'));
+  });
+});
+
+describe('how far a tile answers a finger', () => {
+  it('reaches nothing past a tile or a lesson button, which are already a fingertip tall with their lips', () => {
+    renderWithProviders(
+      <>
+        <Tile label="sêv" onPress={() => undefined} />
+        <TileButton label="Check" onPress={() => undefined} />
+      </>,
+    );
+    expect(reachOf('sêv')).toBeUndefined();
+    expect(reachOf('Check')).toBeUndefined();
+  });
+
+  it('takes the reach a caller gives it, for a tile drawn smaller or standing alone', () => {
+    renderWithProviders(
+      <>
+        <Tile label="a" reachSize={{ width: 40, height: 40 }} onPress={() => undefined} />
+        <TileButton label="Skip" reach="open" onPress={() => undefined} />
+      </>,
+    );
+    expect(reachOf('a')).toEqual({ top: 4, bottom: 4, left: 4, right: 4 });
+    expect(reachOf('Skip')).toEqual({ top: 8, bottom: 8, left: 8, right: 8 });
   });
 });

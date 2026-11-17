@@ -119,6 +119,44 @@ function useBoard(round: Round): { board: Board | null; spend: (evidence?: strin
   return { board, spend, spending, error };
 }
 
+/** What a player thinks of a suspect while reading: Detective's in-between answer, theirs alone and kept for the round. */
+type SuspectNote = 'innocent' | 'suspicious' | 'unsure';
+const SUSPECT_NOTES: ReadonlyArray<{ id: SuspectNote; key: MessageKey }> = [
+  { id: 'innocent', key: 'games.detective.notes.innocent' },
+  { id: 'suspicious', key: 'games.detective.notes.suspicious' },
+  { id: 'unsure', key: 'games.detective.notes.unsure' },
+];
+
+/**
+ * The marks a player puts on the suspects, kept in this tab for as long as
+ * the case is open (they are notes, not answers: nothing is sent), and gone
+ * once the browser forgets the tab.
+ */
+function useSuspectNotes(caseKey: string): [Record<string, SuspectNote>, (suspect: string, note: SuspectNote) => void] {
+  const storeKey = `dt-notes:${caseKey}`;
+  const [notes, setNotes] = useState<Record<string, SuspectNote>>(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem(storeKey) ?? '{}') as Record<string, SuspectNote>;
+    } catch {
+      return {};
+    }
+  });
+  const toggle = (suspect: string, note: SuspectNote): void => {
+    setNotes((now) => {
+      const next = { ...now };
+      if (next[suspect] === note) delete next[suspect];
+      else next[suspect] = note;
+      try {
+        sessionStorage.setItem(storeKey, JSON.stringify(next));
+      } catch {
+        // a private window keeps the marks for this page only
+      }
+      return next;
+    });
+  };
+  return [notes, toggle];
+}
+
 function CaseFile({
   board,
   dialect,
@@ -137,18 +175,33 @@ function CaseFile({
   const name = (id: string | null) => board.suspects.find((s) => s.id === id)?.name ?? null;
   const canSpend = board.hintsLeft > 0 && !spending;
   const script = dialectDirection(dialect);
+  const [notes, note] = useSuspectNotes(board.suspects.map((s) => s.id).join('|') + '|' + (board.title?.en ?? ''));
   return (
     <section className="dt-board" aria-labelledby="dt-board-title">
       <h2 id="dt-board-title" className="dt-board-title">
         {t('games.detective.board')}
       </h2>
       <h3 className="dt-section">{t('games.detective.suspects')}</h3>
+      <p className="dt-muted dt-notes-hint">{t('games.detective.notes.hint')}</p>
       <ul className="dt-suspects">
         {board.suspects.map((s) => (
-          <li key={s.id} className="dt-suspect">
+          <li key={s.id} className={`dt-suspect${notes[s.id] ? ` is-${notes[s.id]}` : ''}`}>
             <Portrait suspect={s} />
             <span className="dt-suspect-name">{s.name}</span>
             <span className="dt-suspect-about">{meaningIn(s.about, locale) ?? s.about.en}</span>
+            <span className="dt-notes" role="group" aria-label={t('games.detective.notes.label', { name: s.name })}>
+              {SUSPECT_NOTES.map((n) => (
+                <button
+                  key={n.id}
+                  type="button"
+                  className={`dt-note is-${n.id}${notes[s.id] === n.id ? ' is-on' : ''}`}
+                  aria-pressed={notes[s.id] === n.id}
+                  onClick={() => note(s.id, n.id)}
+                >
+                  {t(n.key)}
+                </button>
+              ))}
+            </span>
           </li>
         ))}
       </ul>

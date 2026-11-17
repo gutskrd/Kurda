@@ -3,15 +3,16 @@
  * difficulty's levels, its deduction steps then the accusation; the board
  * holds no answer and no card's meaning until it is found or a hint buys it;
  * hints are counted on the round and cost XP at the finish; the accusation's
- * correction walks back through every deduction. The starter case in
- * api/content/games is made entirely of the course's own lines.
+ * correction walks back through every deduction, its suspects shown in an
+ * order drawn for the round. A case file's evidence is filled in from the
+ * course's own lines and the stories' own sentences (detective-cases.ts).
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DETECTIVE_HINTS, checkGameContent, type CaseFileContent, type SoloItemState } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { DetectiveGame, carriedHints, type CaseItem } from './detective.js';
-import { resolveStarterCase, type StarterCase, type StoredConversation } from './starters.js';
+import { resolveCase, type CaseConversation, type DetectiveCase } from './detective-cases.js';
 import type { PublishedContent, TrustedSources } from './sources.js';
 
 const en = (text: string) => ({ en: text });
@@ -128,51 +129,108 @@ describe('answers', () => {
     expect(game.hint(step)).toEqual({ look: ['advice'] });
     expect(game.correction(step)).toMatchObject({ kind: 'step', correctIndex: right, evidence: [{ id: 'advice', meanings: en('Honey at night is forbidden!') }] });
 
-    expect(game.grade(accuse, { choice: 0 })).toBe(true);
-    expect(game.grade(accuse, { choice: 2 })).toBe(false);
+    // the accusation is graded by the suspect in the place the player saw
+    const shown = (game.view(accuse, 2) as { suspects: string[] }).suspects;
+    expect([...shown].sort()).toEqual(['baran', 'hamo', 'hevalo']);
+    const culprit = shown.indexOf('hamo');
+    expect(game.grade(accuse, { choice: culprit })).toBe(true);
+    expect(game.grade(accuse, { choice: (culprit + 1) % 3 })).toBe(false);
     const solved = game.correction(accuse);
-    expect(solved).toMatchObject({ kind: 'accuse', correctIndex: 0, culprit: 'hamo', solution: en('Hamo ate the honey.') });
+    expect(solved).toMatchObject({ kind: 'accuse', correctIndex: culprit, culprit: 'hamo', solution: en('Hamo ate the honey.') });
     expect(solved.walk!.map((w) => w.answer)).toEqual([en('Honey at night'), en('Baran')]);
     expect(solved.evidence.map((e) => e.id)).toEqual(['advice', 'away']);
-    expect(game.view(accuse, 2)).toEqual({ index: 2, kind: 'accuse', suspects: ['hamo', 'hevalo', 'baran'] });
+  });
+
+  it('show the accusation’s suspects in an order drawn for the round, so the culprit is not always first', async () => {
+    const firsts = new Set<string>();
+    for (const seed of ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8']) {
+      const round = await game.build({ ...ask(), seed }, db);
+      const accuse = round!.items[2]!;
+      const shown = (game.view(accuse, 2) as { suspects: string[] }).suspects;
+      firsts.add(shown[0]!);
+      expect(game.grade(accuse, { choice: shown.indexOf('hamo') })).toBe(true);
+    }
+    expect(firsts.size).toBeGreaterThan(1);
+  });
+
+  it('read a round made before the order was drawn as the case wrote it', async () => {
+    const round = await game.build(ask(), db);
+    const old = { ...round!.items[2]!, shown: undefined } as CaseItem;
+    expect(game.view(old, 2)).toEqual({ index: 2, kind: 'accuse', suspects: ['hamo', 'hevalo', 'baran'] });
+    expect(game.grade(old, { choice: 0 })).toBe(true);
+    expect(game.correction(old)).toMatchObject({ correctIndex: 0 });
   });
 });
 
-describe('the starter case', () => {
-  // the course's conversations as the seeder finds them in the database: each exercise with its payload
-  const conversations = new Map<string, StoredConversation>();
-  const road = new URL('../../content/lessons/road/', import.meta.url);
-  for (const name of readdirSync(road).filter((n) => /^unit-\d+\.json$/.test(n))) {
-    const unit = JSON.parse(readFileSync(new URL(name, road), 'utf8')) as {
-      units: Array<{ skills: Array<{ lessons: Array<{ exercises: Array<{ type: string; payload: { id?: string } }> }> }> }>;
-    };
-    for (const u of unit.units)
-      for (const s of u.skills)
-        for (const l of s.lessons)
-          for (const e of l.exercises) if (e.type === 'conversation' && e.payload.id) conversations.set(e.payload.id, { exerciseId: `ex-${e.payload.id}`, payload: e.payload });
-  }
-  const file = JSON.parse(readFileSync(new URL('../../content/games/detective.json', import.meta.url), 'utf8')) as { cases: StarterCase[] };
+describe('a case file’s evidence', () => {
+  // a conversation as the seeder finds it in the database, and a story as published; stand-ins, never shown to a learner
+  const conversations = new Map<string, CaseConversation>([
+    [
+      'talktest1',
+      {
+        exerciseId: 'ex-talktest1',
+        payload: {
+          id: 'talktest1',
+          speakers: [{ character: 'hamo' }, { character: 'hevalo' }],
+          lines: [
+            { speaker: 0, text: 'Hingiv li ser simbêla te ye!', en: 'There’s honey on your moustache!' },
+            { speaker: 1, text: 'Ez tenê sêvan dixwim.', en: 'I only eat apples.' },
+          ],
+          prompt: 'Çi li ser simbêlê ye?',
+          options: ['Hingiv', 'Çay'],
+          correctIndex: 0,
+        },
+      },
+    ],
+  ]);
+  const stories = new Map([['ckb-key', { id: 'story-1', body: 'ژینۆ کلیلەکەی برد. ئینجا یاری کرد.\n\nدایکی پێکەنی.' }]]);
+  const kase: DetectiveCase = {
+    slug: 'kmr-test',
+    dialect: 'kmr',
+    level: 2,
+    title: en('A test'),
+    intro: en('A case of stand-in lines.'),
+    suspects: [
+      { id: 'hamo', name: 'Hamo', about: en('The uncle.') },
+      { id: 'hevalo', name: 'Hevalo', about: en('The deer.') },
+      { id: 'baran', name: 'Baran', about: en('A son.') },
+    ],
+    evidence: [
+      { id: 'moustache', kind: 'statement', line: { conversation: 'talktest1', en: "There's honey on your moustache!" } },
+      { id: 'took', kind: 'note', line: { story: 'ckb-key', paragraph: 0, sentence: 1, en: 'Then he played.', opens: 'ئینجا', meanings: { de: 'Dann spielte er.' } } },
+    ],
+    steps: [{ prompt: en('What is on the moustache?'), options: [en('Honey'), en('Tea'), en('Snow')], correctIndex: 0, evidence: ['moustache'] }],
+    culprit: 'hamo',
+    background: [],
+    solution: en('Hamo ate the honey.'),
+    hints: [],
+  };
 
-  it('finds every line it names in the course, and makes a case file that passes its checks', () => {
-    for (const starter of file.cases) {
-      const resolved = resolveStarterCase(starter, conversations);
-      if (!resolved.ok) throw new Error(resolved.missing.join('\n'));
-      const checked = checkGameContent('case_file', starter.dialect, resolved.payload);
-      if (!checked.ok) throw new Error(JSON.stringify(checked.issues));
-      const kase = checked.payload;
-      // every card's Kurdish is a line the course already has, copied with its own English
-      for (const e of kase.evidence) {
-        expect(e.origin?.type).toBe('conversation');
-        expect(e.recording).toBeTruthy();
-      }
-      expect(kase.suspects.find((s) => s.id === kase.culprit)).toBeTruthy();
-    }
+  it('copies a conversation line’s Kurdish, speaker and recording, found by its English', () => {
+    const resolved = resolveCase(kase, conversations, stories);
+    if (!resolved.ok) throw new Error(resolved.missing.join('\n'));
+    const [line, sentence] = (resolved.payload as { evidence: Array<Record<string, unknown>> }).evidence;
+    expect(line).toMatchObject({ id: 'moustache', ku: 'Hingiv li ser simbêla te ye!', speaker: 'hamo', origin: { type: 'conversation', ref: 'ex-talktest1:0' } });
+    expect(line!.meanings).toEqual({ en: 'There’s honey on your moustache!' });
+    expect(line!.recording).toBeTruthy();
+    // a story’s sentence by its place, with the case’s English and translations over it
+    expect(sentence).toMatchObject({ id: 'took', ku: 'ئینجا یاری کرد.', origin: { type: 'story', ref: 'story-1:0' }, meanings: { en: 'Then he played.', de: 'Dann spielte er.' } });
   });
 
-  it('waits when a line it names is not there', () => {
-    const starter = file.cases[0]!;
-    const resolved = resolveStarterCase({ ...starter, evidence: [{ ...starter.evidence[0]!, line: { conversation: 'nowhere', en: 'Nothing.' } }] }, conversations);
-    expect(resolved).toEqual({ ok: false, missing: ['nowhere: Nothing.'] });
+  it('waits when a line it names is not there, or a story sentence no longer opens as the case says', () => {
+    const lost = resolveCase({ ...kase, evidence: [{ ...kase.evidence[0]!, line: { conversation: 'nowhere', en: 'Nothing.' } }] }, conversations, stories);
+    expect(lost).toEqual({ ok: false, missing: ['nowhere: Nothing.'] });
+    const moved = resolveCase(
+      { ...kase, evidence: [{ id: 'took', kind: 'note', line: { story: 'ckb-key', paragraph: 0, sentence: 0, en: 'Then he played.', opens: 'ئینجا' } }] },
+      conversations,
+      stories,
+    );
+    expect(moved.ok).toBe(false);
+  });
+
+  it('leave the old starter file empty: the cases are kept in api/content/games/detective', () => {
+    const file = JSON.parse(readFileSync(new URL('../../content/games/detective.json', import.meta.url), 'utf8')) as { cases: unknown[] };
+    expect(file.cases).toEqual([]);
   });
 });
 

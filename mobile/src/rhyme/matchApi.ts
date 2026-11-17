@@ -2,10 +2,12 @@ import type { RatedState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import { joined } from '../play/joining';
+import type { RhymeHint } from '../wordle/WordAnswer';
 
 export type Dialect = 'kurmanci' | 'sorani';
 export type RhymeQuality = 'perfect' | 'near' | 'none';
-export type RhymeReject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane' | 'window-closed';
+/** `inflected`: a word whose ending does all the rhyming (malan for baran) */
+export type RhymeReject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane' | 'inflected' | 'window-closed';
 
 export interface ScoreEntry {
   /** the viewer's own id on their own entry, `seat:N` on everyone else's */
@@ -72,6 +74,8 @@ export interface MatchResults {
     xpAwarded: number | null;
     usedWords: string[];
   }>;
+  /** perfect rhymes nobody in the match found, with their meanings; absent from a server from before it */
+  missed?: RhymeHint[];
 }
 
 /**

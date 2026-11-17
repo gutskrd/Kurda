@@ -9,6 +9,7 @@ vi.mock('@react-native-community/netinfo', () => import('../reports/testing/neti
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { HUES } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -54,9 +55,21 @@ describe('the row of friends on Home', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('UserProfile', { userId: 'o' });
   });
 
+  // gold is for what is earned, and being in a game is not
+  it('rings a friend in a game in two of the shared hues, never in gold', async () => {
+    open([{ userId: 'p', username: 'azad', online: true, activity: { kind: 'race', since: '2026-10-21T10:00:00Z' } }]);
+    const face = await screen.findByRole('button', { name: 'azad, playing now' });
+    const stops = [...face.querySelectorAll('stop')].map((s) => s.getAttribute('stop-color'));
+    // whichever theme the harness draws in
+    const pairs = (['light', 'dark'] as const).map((scheme) => [HUES[scheme].orange.base, HUES[scheme].pink.base]);
+    expect(pairs).toContainEqual(stops);
+    expect(stops).not.toContain(HUES.light.gold.base);
+    expect(stops).not.toContain(HUES.dark.gold.base);
+  });
+
   it('offers to find friends when there are none yet', async () => {
     open([]);
     fireEvent.click(await screen.findByRole('button', { name: 'Find friends' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Search' });
+    expect(navigation.navigate).toHaveBeenCalledWith('Search');
   });
 });

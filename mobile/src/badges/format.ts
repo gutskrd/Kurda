@@ -129,6 +129,9 @@ export function tierKeyAt(n: number): BadgeTierKey {
   return BADGE_TIERS[Math.max(1, Math.min(4, n)) - 1]!;
 }
 
+/** How a count is written into a line: the reader's own digits, where the caller knows the reader's language. */
+type Numeral = (value: number) => string;
+
 /**
  * "7 / 30 days", and past halfway what is left ("3 days to go"), the smaller
  * part being the one that keeps people going; null once every tier is earned.
@@ -136,11 +139,12 @@ export function tierKeyAt(n: number): BadgeTierKey {
 export function progressText(
   t: Translate,
   view: Pick<BadgeView, 'progress' | 'next' | 'unit' | 'tier' | 'thresholds'> & { hidden?: boolean },
+  n: Numeral = String,
 ): string | null {
   if (view.next === null) return null;
   const left = badgeLeft({ ...view, hidden: view.hidden ?? false });
-  if (left !== null && left > 0) return t('badges.toGo', { count: left, unit: unitWord(t, view.unit, left) });
-  return t('badges.progress', { progress: Math.min(view.progress, view.next), next: view.next, unit: unitWord(t, view.unit, view.next) });
+  if (left !== null && left > 0) return t('badges.toGo', { count: n(left), unit: unitWord(t, view.unit, left) });
+  return t('badges.progress', { progress: n(Math.min(view.progress, view.next)), next: n(view.next), unit: unitWord(t, view.unit, view.next) });
 }
 
 /** 0…1 towards the next tier, from the last one reached. */
@@ -151,7 +155,7 @@ export const nextFraction = badgeViewFraction;
  * is in view the moment the last is reached: effort tends to drop once a badge
  * is won, and picks up again with the next in sight. Null for the last tier.
  */
-export function nextTierLine(t: Translate, key: string, tier: number): string | null {
+export function nextTierLine(t: Translate, key: string, tier: number, n: Numeral = String): string | null {
   const def = badgeDef(key);
   if (!def || tier >= def.tiers.length) return null;
   const need = def.tiers[tier]!;
@@ -159,7 +163,7 @@ export function nextTierLine(t: Translate, key: string, tier: number): string | 
   if (!tierKey) return null;
   const name = t(TIER_KEY[tierKey]);
   if (need === 'all') return t('badges.nextTierAll', { tier: name });
-  return t('badges.nextTier', { tier: name, count: need, unit: unitWord(t, def.unit, need) });
+  return t('badges.nextTier', { tier: name, count: n(need), unit: unitWord(t, def.unit, need) });
 }
 
 /** The badges in the families' order, each family's in the catalogue's. */
@@ -177,9 +181,9 @@ export function badgeLabel(t: Translate, view: Pick<BadgeView, 'key' | 'tier' | 
 }
 
 /** "12 % of learners" with a whole number, or "under 1 %". */
-export function rarityText(t: Translate, share: number): string {
+export function rarityText(t: Translate, share: number, n: Numeral = String): string {
   if (share < 1) return t('badges.rarityUnder');
-  return t('badges.rarity', { share: Math.round(share) });
+  return t('badges.rarity', { share: n(Math.round(share)) });
 }
 
 /** Whether a catalogue key is a badge (a notification's key may be from a later version). */

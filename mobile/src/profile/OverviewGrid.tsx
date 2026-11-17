@@ -1,11 +1,13 @@
 import { useState, type ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useCountUp, useListEntrance } from '../theme/animate';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
+import { useFontScale } from '../a11y/useFontScale';
+import { useDirection } from '../reports/direction';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 
@@ -33,14 +35,16 @@ export function OverviewGrid({ tiles }: { tiles: OverviewTile[] }): React.JSX.El
   const { colors } = useTheme();
   const { t } = useI18n();
   const entering = useListEntrance(true);
+  const cell = useCellStyle();
+  const dir = useDirection();
   return (
     <View style={styles.wrap}>
-      <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
+      <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
         {t('profile.overview')}
       </Text>
       <View style={styles.grid}>
         {tiles.map((tile, i) => (
-          <Rise key={tile.key} delay={entering(i)} style={styles.cell}>
+          <Rise key={tile.key} delay={entering(i)} style={cell}>
             <Tile tile={tile} />
           </Rise>
         ))}
@@ -51,12 +55,14 @@ export function OverviewGrid({ tiles }: { tiles: OverviewTile[] }): React.JSX.El
 
 /** The grid in grey, the shape it will take, while the profile's numbers are on their way. */
 export function OverviewSkeleton(): React.JSX.Element {
+  const cell = useCellStyle();
+  const dir = useDirection();
   return (
     <View style={styles.wrap}>
       <SkeletonText size={typography.sizes.xs} width={72} />
       <View style={styles.grid}>
         {[0, 1, 2, 3].map((i) => (
-          <View key={i} style={[styles.cell, styles.tile, styles.tileSkeleton]}>
+          <View key={i} style={[cell, styles.tile, styles.tileSkeleton, { flexDirection: dir.row }]}>
             <Skeleton width={ART} height={ART} radius={radii.pill} />
             <View style={styles.text}>
               <SkeletonText size={typography.sizes.lg} width={48} />
@@ -67,6 +73,35 @@ export function OverviewSkeleton(): React.JSX.Element {
       </View>
     </View>
   );
+}
+
+/**
+ * The widest word a tile is asked to hold, at the tile's size: a course or a
+ * league by name ("Kurmancî", "Okyanûs", "الكرمانجية") is about a hundred
+ * points at 22, wider than any count the tiles show.
+ */
+const WIDEST_WORD = 100;
+
+/**
+ * Two to a row where a tile's words fit beside its picture, and one to a row
+ * where they do not.
+ *
+ * Two to a row on every phone left "Kurmancî" as "Kur…" at 320 and at 360,
+ * which is the width of a great many phones, and on any phone whose reader
+ * had asked for larger text: half a narrow screen, less the picture, is
+ * seventy points. One to a row keeps the same tile, with all of its room.
+ * `width` is the window's, `fontScale` the reader's text size.
+ */
+export function overviewColumns(width: number, fontScale: number): 1 | 2 {
+  const content = Math.min(width, layout.column) - layout.gutter * 2;
+  const room = (content - GRID_GAP) / 2 - TILE_PAD * 2 - ART - TILE_GAP;
+  return room >= WIDEST_WORD * fontScale ? 2 : 1;
+}
+
+function useCellStyle() {
+  const { width } = useWindowDimensions();
+  const fontScale = useFontScale();
+  return overviewColumns(width, fontScale) === 2 ? styles.half : styles.whole;
 }
 
 /**
@@ -84,6 +119,8 @@ function useCountTo(to: number): number {
 function Tile({ tile }: { tile: OverviewTile }): React.JSX.Element {
   const { colors } = useTheme();
   const { locale } = useI18n();
+  // the picture on the side the language starts from, the words lined up after it
+  const dir = useDirection();
   const numeric = typeof tile.value === 'number';
   const count = useCountTo(numeric ? (tile.value as number) : 0);
   const shown = tile.value === null ? '—' : numeric ? formatNumber(count, locale) : String(tile.value);
@@ -92,10 +129,10 @@ function Tile({ tile }: { tile: OverviewTile }): React.JSX.Element {
     <>
       <View style={styles.art}>{tile.art}</View>
       <View style={styles.text}>
-        <Text style={[styles.value, { color: colors.textPrimary }]} numberOfLines={1}>
+        <Text style={[styles.value, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
           {shown}
         </Text>
-        <Text style={[styles.label, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
           {tile.label}
         </Text>
       </View>
@@ -103,15 +140,16 @@ function Tile({ tile }: { tile: OverviewTile }): React.JSX.Element {
   );
   // the number as it will be, not as it is mid-count, is what a screen reader is told
   const label = `${settled} ${tile.label}`;
+  const style = [styles.tile, { flexDirection: dir.row, backgroundColor: colors.controlTrack }];
   if (!tile.onPress) {
     return (
-      <View accessible accessibilityLabel={label} style={[styles.tile, { backgroundColor: colors.controlTrack }]}>
+      <View accessible accessibilityLabel={label} style={style}>
         {body}
       </View>
     );
   }
   return (
-    <PressableScale onPress={tile.onPress} accessibilityRole="button" accessibilityLabel={label} style={[styles.tile, { backgroundColor: colors.controlTrack }]}>
+    <PressableScale onPress={tile.onPress} accessibilityRole="button" accessibilityLabel={label} style={style}>
       {body}
     </PressableScale>
   );
@@ -119,13 +157,18 @@ function Tile({ tile }: { tile: OverviewTile }): React.JSX.Element {
 
 /** the box the picture is drawn in */
 const ART = 36;
+/** the room inside a tile, round it and beside its picture, and between two tiles */
+const TILE_PAD = spacing.sm + 4;
+const TILE_GAP = spacing.sm + 2;
+const GRID_GAP = spacing.sm;
 
 const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  // two to a row, however wide the phone, with the gap between them
-  cell: { flexBasis: '46%', flexGrow: 1 },
-  tile: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 2, borderRadius: radii.md, paddingHorizontal: spacing.sm + 4, paddingVertical: spacing.sm + 2, minHeight: 60 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP },
+  // two to a row with the gap between them, or one to a row (overviewColumns)
+  half: { flexBasis: '46%', flexGrow: 1 },
+  whole: { flexBasis: '100%' },
+  tile: { alignItems: 'center', gap: TILE_GAP, borderRadius: radii.md, paddingHorizontal: TILE_PAD, paddingVertical: spacing.sm + 2, minHeight: 60 },
   tileSkeleton: { minHeight: 60 },
   art: { width: ART, height: ART, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 1 },

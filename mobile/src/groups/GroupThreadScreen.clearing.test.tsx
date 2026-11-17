@@ -141,7 +141,7 @@ describe('clearing a group chat', () => {
     act(() => room.emit({ type: 'group_chat_cleared', groupId: 'g1', at: new Date().toISOString(), by: 'azad' }));
     expect(await screen.findByText('azad cleared the chat · just now')).toBeTruthy();
     expect(screen.queryByText('Spas')).toBeNull();
-    expect(screen.getByText('Say hello in Kurdish')).toBeTruthy();
+    expect(screen.getByText('Say hello')).toBeTruthy();
     // and what is said afterwards appears under the line
     act(() => room.emit({ type: 'group_msg', groupId: 'g1', message: message('m3', 'u2', 'azad', 'Dîsa silav', new Date().toISOString()) }));
     expect(await screen.findByText('Dîsa silav')).toBeTruthy();

@@ -7,7 +7,7 @@ Shared building blocks live in `mobile/src/a11y/`:
 
 - `a11yProps(role, label, hint?)` — consistent label / role / hint on every control.
 - `decorative()` — hide a purely decorative icon/image from VoiceOver.
-- `meetsTouchTarget(w, h)` / `hitSlopFor(w, h)` / `MIN_TOUCH_TARGET` (44pt).
+- `meetsTouchTarget(w, h)` / `MIN_TOUCH_TARGET` (44pt drawn) / `reachSlop(w, h, options)` / `MIN_REACH` (48pt that answers a finger).
 - `resolveMotion(spec, reduceMotion)` + `useReducedMotion()` — gate decorative animation.
 
 ## VoiceOver
@@ -40,7 +40,9 @@ Shared building blocks live in `mobile/src/a11y/`:
 
 ## Touch targets
 
-- [ ] Every tappable control is ≥ 44×44pt, or padded with `hitSlopFor(...)`.
+- [ ] Every tappable control is drawn ≥ 44×44pt where it can be, and answers over ≥ 48×48pt. The app's `Pressable` works the reach out from the size its style states (or `reachSize`), so a control states its size rather than a hand-written `hitSlop`.
+- [ ] Neighbours closer than their reach share the gap through `ReachGroup`; a control with nothing near it (back, close) uses `reach="open"`.
+- [ ] A `<Modal>`'s content sits in `ReachReset`, a horizontal scroller leaves `reachRoom`, and a switch beside its words is a `ToggleRow`. `node scripts/check-reach.mjs` (in `npm run lint`) holds these, and `--report` lists every control's reach.
 
 ## RTL (coordinate with the RTL issue, #267)
 

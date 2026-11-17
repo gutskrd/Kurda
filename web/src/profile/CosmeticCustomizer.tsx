@@ -404,7 +404,7 @@ function CosmeticTile({
         )}
       </figcaption>
       {tile.category === 'tag' ? (
-        // a tag is not worn from here: it is shown and hidden under Tags & badges, further down this page
+        // a tag is not worn from here: it is shown and hidden under Tags, further down this page
         <a href="#tags" className="btn btn-secondary btn-sm cosmetic-action">
           {t('edit.manageTags')}
         </a>

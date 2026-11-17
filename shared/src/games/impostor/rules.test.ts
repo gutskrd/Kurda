@@ -3,7 +3,10 @@ import {
   IMPOSTOR_CLUE_ROUNDS,
   IMPOSTOR_FIRST_TURN_EXTRA_MS,
   IMPOSTOR_POINTS,
+  IMPOSTOR_UNSURE_VOTE,
   impostorClueSlip,
+  impostorFirstSpeaker,
+  impostorTooClose,
   impostorRules as R,
   type ImpostorDeal,
   type ImpostorMove,
@@ -58,6 +61,17 @@ describe('the deal', () => {
     const again = R.init({ dialect: 'kmr', difficulty: 'beginner', clueSeconds: 20, deal: DEAL }, seats(5), { now: T0, seed: 'abc' });
     expect(again.impostor).toBe(s.impostor);
     expect(again.order).toEqual(s.order);
+  });
+
+  it('never lets the impostor speak first, and keeps who follows whom as it was drawn', () => {
+    for (const seed of Array.from({ length: 40 }, (_, i) => `seed-${i}`)) {
+      const s = R.init({ dialect: 'kmr', difficulty: 'beginner', clueSeconds: 30, deal: DEAL }, seats(4), { now: T0, seed });
+      expect(s.order[0]).not.toBe(s.impostor);
+      expect(s.turn!.seat).toBe(s.order[0]);
+    }
+    expect(impostorFirstSpeaker([3, 1, 4, 2], [3])).toEqual([1, 4, 2, 3]);
+    expect(impostorFirstSpeaker([3, 1, 4, 2], [3, 1])).toEqual([4, 2, 3, 1]);
+    expect(impostorFirstSpeaker([3, 1, 4, 2], [2])).toEqual([3, 1, 4, 2]);
   });
 
   it('ends at once without a deal, or with too few people', () => {
@@ -180,12 +194,56 @@ describe('the vote and the guess', () => {
     expect(R.viewFor(wrong, 1).accused).toEqual({ seat: 3, votes: 3 });
   });
 
+  it('says why the impostor got away: a shared top, the wrong seat voted out, or nobody named', () => {
+    const s = allClues(start(4, 2));
+    expect(R.viewFor(vote(s, { 1: 2, 2: 1, 3: 1, 4: 2 }), 1).reveal!.escape).toBe('tie');
+    expect(R.viewFor(vote(s, { 1: 3, 2: 3, 3: 1, 4: 3 }), 1).reveal!.escape).toBe('wrong-out');
+    const none = vote(s, { 1: IMPOSTOR_UNSURE_VOTE, 2: IMPOSTOR_UNSURE_VOTE, 3: IMPOSTOR_UNSURE_VOTE, 4: IMPOSTOR_UNSURE_VOTE });
+    expect(R.viewFor(none, 1).reveal).toMatchObject({ escape: 'no-votes', caught: false });
+    const caught = vote(s, { 1: 2, 2: 1, 3: 2, 4: 2 });
+    expect(R.viewFor(play(caught, 2, { kind: 'guess', option: 0 }), 1).reveal!.escape).toBeNull();
+  });
+
+  it('takes a vote from someone who is not sure, which counts for nobody and pays nothing', () => {
+    const s = allClues(start(4, 2));
+    const unsure = play(s, 1, { kind: 'vote', seat: IMPOSTOR_UNSURE_VOTE });
+    expect(R.viewFor(unsure, 1).vote!.mine).toBe(IMPOSTOR_UNSURE_VOTE);
+    expect(R.viewFor(unsure, 3).vote!.voted).toEqual([1]);
+    expect(R.waitingFor(unsure)).toEqual([2, 3, 4]);
+    // the other three decide: two for the impostor is the most votes alone at the top
+    const end = vote(unsure, { 2: 1, 3: 2, 4: 2 });
+    expect(end.phase).toBe('guess');
+    const done = play(end, 2, { kind: 'guess', option: end.options.indexOf('hesp') });
+    expect(R.viewFor(done, 1).reveal!.votes).toContainEqual({ seat: 1, for: IMPOSTOR_UNSURE_VOTE });
+    expect(R.places(done).find((p) => p.seat === 1)!.score).toBe(IMPOSTOR_POINTS.caught);
+    expect(R.places(done).find((p) => p.seat === 3)!.score).toBe(IMPOSTOR_POINTS.rightVote + IMPOSTOR_POINTS.caught);
+  });
+
   it('counts a vote nobody cast when its time runs out, and a guess never made as wrong', () => {
     const s = vote(allClues(start(3, 2)), { 1: 2, 3: 2 });
     const timed = R.timeout(s, [2], T0 + 100_000);
     expect(timed.votes.find((v) => v.seat === 2)).toEqual({ seat: 2, for: null });
     expect(timed.phase).toBe('guess');
     expect(R.timeout(timed, [2], T0 + 200_000).endedBy).toBe('caught');
+  });
+});
+
+describe('cards too close to share a round', () => {
+  it('are the same word give or take a short ending, or the same thing under another name', () => {
+    expect(impostorTooClose({ word: 'bizin' }, { word: 'bizinek' }, 'kmr')).toBe(true);
+    expect(impostorTooClose({ word: 'Pisik' }, { word: 'pisîk' }, 'kmr')).toBe(true);
+    expect(impostorTooClose({ word: 'مێشک' }, { word: 'مێشکی' }, 'ckb')).toBe(true);
+    expect(impostorTooClose({ word: 'jîr', meanings: { en: 'clever' } }, { word: 'zîrek', meanings: { en: 'clever, bright' } }, 'kmr')).toBe(true);
+    expect(impostorTooClose({ word: 'kok', meanings: { en: 'root' } }, { word: 'reh', meanings: { en: 'the root (of a plant)' } }, 'kmr')).toBe(true);
+  });
+
+  it('are not two words that only begin alike, or mean different things', () => {
+    expect(impostorTooClose({ word: 'dest', meanings: { en: 'hand' } }, { word: 'destmalek', meanings: { en: 'a towel' } }, 'kmr')).toBe(false);
+    expect(impostorTooClose({ word: 'ba', meanings: { en: 'wind' } }, { word: 'bahoz', meanings: { en: 'storm' } }, 'kmr')).toBe(false);
+    expect(impostorTooClose({ word: 'pisîk', meanings: { en: 'cat' } }, { word: 'kûçik', meanings: { en: 'dog' } }, 'kmr')).toBe(false);
+    expect(impostorTooClose({ word: 'kanî', meanings: { en: 'spring (of water)' } }, { word: 'çem', meanings: { en: 'river' } }, 'kmr')).toBe(false);
+    // the uncle on the father's side and the one on the mother's: one English word, two things the brackets tell apart
+    expect(impostorTooClose({ word: 'mam', meanings: { en: 'uncle (father’s brother)' } }, { word: 'xal', meanings: { en: 'uncle (mother’s brother)' } }, 'kmr')).toBe(false);
   });
 });
 

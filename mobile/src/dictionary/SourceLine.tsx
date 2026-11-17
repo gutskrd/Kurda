@@ -46,6 +46,8 @@ export function SourceLine() {
 const styles = StyleSheet.create({
   line: {
     fontSize: typography.sizes.xs,
+    // a link inside a line of text cannot reach past its own line, so the line is set taller than its type: each link answers over its full 24
+    lineHeight: 24,
     marginTop: spacing.lg,
     marginBottom: spacing.md,
   },

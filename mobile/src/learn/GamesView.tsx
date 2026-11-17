@@ -1,13 +1,15 @@
 import { useCallback, useState, type Ref } from 'react';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Pressable } from '../theme/Pressable';
-import { PressableScale } from '../theme/MotionParts';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { PressableScale, Rise } from '../theme/MotionParts';
+import { useListEntrance } from '../theme/animate';
 import { gameOfTheDay, type IncomingInvite, type MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { BottomSheet } from '../theme/BottomSheet';
+import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
@@ -30,9 +32,7 @@ import { useUserEvents } from '../realtime/useUserEvents';
 import { PHONE_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
 import { GAME_CARDS, GAME_MEANING, learnGameCard, type GameCard, type GameMode, type GameWay } from '../games/gameCards';
 import { GameArt } from '../games/GameArt';
-import { Cloth } from '../impostor/parts';
-import { haptic } from '../feedback/haptics';
-import { TABLE } from '../impostor/table';
+import { GameStamp } from '../games/GameStamp';
 
 type Mode = GameMode;
 type Way = GameWay;
@@ -42,33 +42,6 @@ const MODE_LABEL: Record<Mode, TranslationKey> = {
   friends: 'games.mode.friends',
   both: 'games.mode.both',
 };
-
-/**
- * The game put forward's Play: on the night it is shown on, in either theme,
- * the one light thing — white, with the night's own deep ink on it — sinking
- * a little under a finger. Every other Play is the app's solid button; the
- * covers carry the colour, the buttons stay one calm, consistent thing.
- */
-function HeroPlay({ label, onPress, testID }: { label: string; onPress: () => void; testID?: string }): React.JSX.Element {
-  return (
-    <Pressable
-      onPress={() => {
-        haptic('tap');
-        onPress();
-      }}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      testID={testID}
-      style={styles.heroPlay}
-    >
-      {({ pressed }) => (
-        <View style={[styles.heroPlayFace, pressed ? styles.heroPlayDown : null]}>
-          <Text style={styles.heroPlayText}>{label}</Text>
-        </View>
-      )}
-    </Pressable>
-  );
-}
 
 /**
  * The game the screen puts forward today: one of those that can be played,
@@ -86,19 +59,20 @@ export function featuredCard(cards: readonly GameCard[], now: number): GameCard 
  * At the top, small, the way into the rankings and the league — there for the
  * people who look for them, out of the way of the people who only came to
  * play. Then any game a friend has asked you into, because an invite runs out
- * and the games will still be here. Then the game put forward today, on the
- * night the party games are played on, and the way into a game a friend told
- * you the code of.
+ * and the games will still be here. Then the game put forward today, and the
+ * way into a game a friend told you the code of.
  *
- * Then the games themselves, each one card: its drawn cover, a line about
- * it, and a way in. A game with one way in opens
- * when its card is pressed; a game with a screen for playing alone and
- * another for playing a friend has a button for each, and so has Who Am I?,
- * played on this phone or with friends, so a game is one tap from here. Every
- * Play is the same solid button, and a second way in the quiet one: the
- * covers carry the colour. There is no filter: a handful of games,
- * each saying who it is played with, is read faster than a control that sorts
- * them. A game still short of approved content is only named, under the cards.
+ * Every game is a stamp (games/GameStamp.tsx): its drawn cover on paper of
+ * its own hue, its Kurdish name, and what the name means. The one put forward
+ * today is a large stamp on its own, with a line about it and its ways in
+ * under it, one tap from here. The rest stand two to a row, like a page of a
+ * collection. A stamp with one way in opens the game when it is pressed; a
+ * game with two — alone or with a friend, on this phone or with friends —
+ * opens a small sheet that says what the game is and offers each way, since
+ * two buttons do not fit on a stamp and half a row of them made the page a
+ * list of buttons. There is no filter: a handful of games is read faster
+ * than a control that sorts them. A game still short of approved content is
+ * only named, under the stamps.
  */
 export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
@@ -107,6 +81,17 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   const { t, locale } = useI18n();
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
+  const { width: windowWidth } = useWindowDimensions();
+  // two stamps to a row, three where there is room; the page is never wider than a column of reading,
+  // and never narrower than the narrowest phone, which is what a window says before it has been measured
+  const column = Math.max(NARROWEST, Math.min(windowWidth, layout.column)) - layout.gutter * 2;
+  const columns = column >= 560 ? 3 : 2;
+  const stampWidth = Math.floor((column - STAMP_GAP * (columns - 1)) / columns);
+  const heroWidth = Math.min(HERO_STAMP, column - spacing.xl * 2);
+  // the game whose ways in are being offered, while its sheet is up
+  const [choosing, setChoosing] = useState<GameCard | null>(null);
+  // the stamps are laid down one after another as the page arrives, and simply stand there on a later visit
+  const enter = useListEntrance(true);
   const [ranks, setRanks] = useState<MyRanks | null>(null);
   // the season's line under Ranks is held in grey until its answer, so the word above it does not jump
   const [ranksSettled, setRanksSettled] = useState(false);
@@ -195,6 +180,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
 
   const open = useCallback(
     (way: Way) => {
+      setChoosing(null);
       // only Who Am I?'s screen takes a way to open on; every other game has a screen for each of its ways
       if (way.route === 'WhoAmI' && way.params) navigation.navigate('WhoAmI', way.params);
       else navigation.navigate(way.route);
@@ -209,7 +195,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   const cooldown = ranks?.cooldownUntil ? new Date(ranks.cooldownUntil) : null;
   const cooling = cooldown !== null && cooldown.getTime() > Date.now();
 
-  return (
+  const page = (
     <ScrollView
       ref={scrollRef}
       contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
@@ -281,7 +267,6 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                   onPress={() => join(invite)}
                   accessibilityRole="button"
                   accessibilityLabel={t('play.banner.joinLabel', { name: invite.from.name, game })}
-                  hitSlop={JOIN_SLOP}
                   style={[styles.joinButton, { backgroundColor: colors.primary }]}
                 >
                   <Text style={[styles.joinText, { color: colors.textOnPrimary }]}>{t('play.banner.join')}</Text>
@@ -293,35 +278,35 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       ) : null}
 
       {featured ? (
-        <Cloth style={styles.hero}>
-          <GameArt game={featured.emblem} size={132} moving={watching} />
-          <Text style={styles.heroKicker}>{t('games.featured')}</Text>
-          <Text style={styles.heroName} accessibilityRole="header">
-            {t(featured.name)}
-          </Text>
-          {featuredMeaning ? <Text style={styles.heroMeaning}>{featuredMeaning}</Text> : null}
-          <Text style={styles.heroLine}>{t(featured.line)}</Text>
+        <View style={styles.hero}>
+          <Text style={[styles.heading, { color: colors.textSecondary }]}>{t('games.featured')}</Text>
+          <Rise delay={enter(0)} style={styles.heroStamp}>
+            <PressableScale
+              onPress={() => (featured.ways.length === 1 ? open(featured.ways[0]!) : setChoosing(featured))}
+              accessibilityRole="button"
+              accessibilityLabel={`${t(featured.name)}${featuredMeaning ? `, ${featuredMeaning}` : ''}. ${t(featured.line)}`}
+              testID="game-featured"
+            >
+              <GameStamp game={featured.emblem} name={t(featured.name)} meaning={featuredMeaning} width={heroWidth} large moving={watching} />
+            </PressableScale>
+          </Rise>
+          <Text style={[styles.heroLine, { color: colors.textSecondary }]}>{t(featured.line)}</Text>
           <View style={styles.heroWays}>
-            {featured.ways.map((way, i) =>
-              i === 0 ? (
-                // said with the game's name, as the other way beside it is: "Play" alone tells a screen reader nothing
-                <HeroPlay key={way.key} label={`${t(featured.name)}, ${t(way.label)}`} onPress={() => open(way)} testID={`game-${way.key}`} />
-              ) : (
-                <PressableScale
-                  key={way.key}
-                  onPress={() => open(way)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${t(featured.name)}, ${t(way.label)}`}
-                  testID={`game-${way.key}`}
-                  style={styles.heroOther}
-                >
-                  <Icon name="people" size={18} color={TABLE.ink} />
-                  <Text style={styles.heroOtherText}>{t(way.label)}</Text>
-                </PressableScale>
-              ),
-            )}
+            {featured.ways.map((way, i) => (
+              // said with the game's name, as the other way beside it is: "Play" alone tells a screen reader nothing
+              <ClayButton
+                key={way.key}
+                label={t(way.label)}
+                accessibilityLabel={`${t(featured.name)}, ${t(way.label)}`}
+                tone={i === 0 ? 'primary' : 'neutral'}
+                size="large"
+                icon={i === 0 ? undefined : 'people'}
+                onPress={() => open(way)}
+                testID={`game-${way.key}`}
+              />
+            ))}
           </View>
-        </Cloth>
+        </View>
       ) : null}
 
       {/* a code a friend read out or sent opens their game, whichever of the games it is */}
@@ -331,73 +316,26 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
         <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
           {t('nav.games')}
         </Text>
-        <View style={styles.cards}>
+        <View style={[styles.stamps, { flexDirection: dir.row }]}>
           {shelf.map((card, place) => {
             const name = t(card.name);
             const meaningKey = GAME_MEANING[card.emblem];
             // what the name means, unless the interface is Kurdish and the two are the same words
             const meaning = meaningKey && t(meaningKey) !== name ? t(meaningKey) : null;
             const single = card.ways.length === 1 ? card.ways[0]! : null;
-            const inside = (
-              <>
-                <View style={styles.cardArt}>
-                  {/* each card a little after the one before, so the list never moves as one */}
-                  <GameArt game={card.emblem} size={96} moving={watching} after={900 + place * 1300} />
-                </View>
-                <View style={styles.cardText}>
-                  <Text style={[styles.cardName, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
-                    {name}
-                  </Text>
-                  {meaning ? <Text style={[styles.cardMeaning, dir.text, { color: colors.textSecondary }]}>{meaning}</Text> : null}
-                  <Text style={[styles.cardLine, dir.text, { color: colors.textSecondary }]}>{t(card.line)}</Text>
-                  {single ? (
-                    <View style={[styles.cardFoot, { flexDirection: dir.row }]}>
-                      <View style={[styles.play, { backgroundColor: colors.primary }]}>
-                        <Text style={[styles.playText, { color: colors.textOnPrimary }]}>{t('games.play')}</Text>
-                      </View>
-                      <View style={[styles.mode, { flexDirection: dir.row }]}>
-                        <Icon name={card.mode === 'solo' ? 'person' : 'people'} size={13} color={colors.textSecondary} />
-                        <Text style={[styles.modeText, { color: colors.textSecondary }]} numberOfLines={2}>
-                          {t(MODE_LABEL[card.mode])}
-                        </Text>
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={[styles.cardFoot, { flexDirection: dir.row }]}>
-                      {card.ways.map((way, i) => (
-                        <PressableScale
-                          key={way.key}
-                          onPress={() => open(way)}
-                          accessibilityRole="button"
-                          accessibilityLabel={`${name}, ${t(way.label)}`}
-                          hitSlop={WAY_SLOP}
-                          testID={`game-${way.key}`}
-                          style={[styles.play, { backgroundColor: i === 0 ? colors.primary : colors.controlTrack }]}
-                        >
-                          <Text style={[styles.playText, { color: i === 0 ? colors.textOnPrimary : colors.textPrimary }]}>{t(way.label)}</Text>
-                        </PressableScale>
-                      ))}
-                    </View>
-                  )}
-                </View>
-              </>
-            );
-            // one way in: the whole card opens it. Two: the card holds a button for each, and is not itself pressed.
-            return single ? (
-              <PressableScale
-                key={card.key}
-                onPress={() => open(single)}
-                accessibilityRole="button"
-                accessibilityLabel={`${name}, ${t(MODE_LABEL[card.mode])}. ${t(card.line)}`}
-                testID={`game-${card.key}`}
-                style={[styles.card, { backgroundColor: colors.surface, flexDirection: dir.row }]}
-              >
-                {inside}
-              </PressableScale>
-            ) : (
-              <View key={card.key} testID={`card-${card.key}`} style={[styles.card, { backgroundColor: colors.surface, flexDirection: dir.row }]}>
-                {inside}
-              </View>
+            return (
+              <Rise key={card.key} delay={enter(place + 1)}>
+                <PressableScale
+                  onPress={() => (single ? open(single) : setChoosing(card))}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${name}, ${t(MODE_LABEL[card.mode])}. ${t(card.line)}`}
+                  // one way in: the stamp is the game. Two: the stamp is the card that offers them.
+                  testID={single ? `game-${card.key}` : `card-${card.key}`}
+                >
+                  {/* each cover a little after the one before, so the page never moves as one */}
+                  <GameStamp game={card.emblem} name={name} meaning={meaning} width={stampWidth} moving={watching} after={900 + place * 1300} />
+                </PressableScale>
+              </Rise>
             );
           })}
         </View>
@@ -415,7 +353,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                 accessible
                 accessibilityLabel={`${t(card.name)}, ${t('games.comingSoon')}`}
                 testID={`game-${card.key}`}
-                style={[styles.soon, { backgroundColor: colors.surface, flexDirection: dir.row }]}
+                style={[styles.soon, { backgroundColor: colors.surface, flexDirection: dir.row }, dir.row === 'row-reverse' && styles.soonMirrored]}
               >
                 <View style={styles.soonArt}>
                   <GameArt game={card.emblem} size={36} />
@@ -430,17 +368,68 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       ) : null}
     </ScrollView>
   );
+
+  return (
+    <>
+      {page}
+      {/* beside the page, not in it: a sheet among the page's rows would be given a row's gap of its own */}
+      <WaysSheet card={choosing} onClose={() => setChoosing(null)} onOpen={open} />
+    </>
+  );
+}
+
+/**
+ * The ways into a game that has more than one: what the game is, in a line,
+ * and a button for each way, the first of them the app's own. It opens from
+ * the stamp that was pressed and goes when a way is chosen or it is put away.
+ * It keeps the last game it showed while it leaves, so its words do not
+ * vanish before it has.
+ */
+function WaysSheet({ card, onClose, onOpen }: { card: GameCard | null; onClose: () => void; onOpen: (way: Way) => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  const [last, setLast] = useState<GameCard | null>(card);
+  if (card && card !== last) setLast(card);
+  const shown = card ?? last;
+  return (
+    <BottomSheet visible={card !== null} onClose={onClose} title={shown ? t(shown.name) : undefined} testID="game-ways">
+      {shown ? (
+        <View style={styles.ways}>
+          <View style={[styles.waysTop, { flexDirection: dir.row }]}>
+            <GameArt game={shown.emblem} size={72} />
+            <Text style={[styles.waysLine, dir.text, { color: colors.textSecondary }]}>{t(shown.line)}</Text>
+          </View>
+          {shown.ways.map((way, i) => (
+            <ClayButton
+              key={way.key}
+              label={t(way.label)}
+              accessibilityLabel={`${t(shown.name)}, ${t(way.label)}`}
+              tone={i === 0 ? 'primary' : 'neutral'}
+              size="large"
+              icon={way.label === 'games.mode.friends' ? 'people' : undefined}
+              onPress={() => onOpen(way)}
+              testID={`game-${way.key}`}
+            />
+          ))}
+        </View>
+      ) : null}
+    </BottomSheet>
+  );
 }
 
 /**
  * Join is drawn as tall as the avatar it shares a row with, and caught as a
- * full fingertip: the slop above and below makes up the difference.
+ * full fingertip: the Pressable reaches above and below it to make up the
+ * difference, inside the invite card's own padding.
  */
 const JOIN_HEIGHT = 36;
-const JOIN_SLOP = hitSlopFor(MIN_TOUCH_TARGET, JOIN_HEIGHT);
-/** A card's button is drawn a little shorter than a fingertip and caught as a whole one, as Join is. */
-const PLAY_HEIGHT = 36;
-const WAY_SLOP = hitSlopFor(MIN_TOUCH_TARGET, PLAY_HEIGHT);
+/** Between two stamps, across and down: room for each one's light to fade before the next begins. */
+const STAMP_GAP = 20;
+/** The stamp put forward today, at its widest. */
+const HERO_STAMP = 228;
+/** The narrowest screen the page is laid out for. */
+const NARROWEST = 320;
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.gutter, paddingTop: spacing.md, gap: spacing.lg },
@@ -467,48 +456,24 @@ const styles = StyleSheet.create({
   joinButton: { minHeight: JOIN_HEIGHT, paddingHorizontal: spacing.md, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   joinText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
 
-  // the game put forward: on the night the party games are played on, in the light theme and the dark alike
-  hero: { alignItems: 'center', gap: spacing.xs, borderRadius: radii.xl, paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.lg },
-  heroKicker: { marginTop: spacing.sm, color: TABLE.goldSoft, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase' },
-  heroName: { color: TABLE.ink, fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, textAlign: 'center' },
-  heroMeaning: { marginTop: -6, color: TABLE.inkSoft, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  heroLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
-  heroWays: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
-  heroOther: {
-    minHeight: MIN_TOUCH_TARGET + 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    borderRadius: radii.pill,
-    backgroundColor: TABLE.veil,
-  },
-  heroOtherText: { color: TABLE.ink, fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
+  // the game put forward: its stamp in the middle of the page, its line and its ways in under it
+  hero: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.xs },
+  heroStamp: { marginVertical: spacing.sm },
+  heroLine: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center', paddingHorizontal: spacing.md },
+  heroWays: { alignSelf: 'stretch', gap: spacing.sm },
 
-  // the game put forward's Play: the face in the game's colour on its lip, which it sinks onto when pressed
-  heroPlay: { alignSelf: 'stretch', borderRadius: radii.pill },
-  heroPlayFace: { minHeight: 56, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg, borderRadius: radii.pill, backgroundColor: '#ffffff' },
-  heroPlayDown: { transform: [{ scale: 0.98 }], opacity: 0.92 },
-  heroPlayText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: TABLE.nightDeep },
+  // a page of a collection: the stamps stand in rows, each row level, with air between for their light
+  stamps: { flexWrap: 'wrap', columnGap: STAMP_GAP, rowGap: STAMP_GAP + 4, paddingTop: spacing.sm },
 
-  cards: { gap: layout.rowGap },
-  // a card lies on its side, picture first, so its words have the width of the screen
-  card: { alignItems: 'stretch', gap: spacing.md, borderRadius: radii.lg, padding: spacing.sm + 2 },
-  cardArt: { alignItems: 'center', justifyContent: 'center' },
-  cardText: { flex: 1, justifyContent: 'center', gap: 4, paddingVertical: 2 },
-  cardName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  cardMeaning: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, marginTop: -2 },
-  cardLine: { fontSize: typography.sizes.sm, lineHeight: 19 },
-  cardFoot: { flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
-  play: { minHeight: PLAY_HEIGHT, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radii.pill },
-  playText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  mode: { flexShrink: 1, alignItems: 'center', gap: 4 },
-  // a long "Solo or with friends" wraps beside the button rather than running off the card
-  modeText: { flexShrink: 1, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  ways: { gap: spacing.sm, paddingBottom: spacing.sm },
+  waysTop: { alignItems: 'center', gap: spacing.md, marginBottom: spacing.sm },
+  waysLine: { flex: 1, fontSize: typography.sizes.md, lineHeight: 23 },
 
   // a game not open yet is only named: quieter than a card, and nothing to press
   soonRow: { flexWrap: 'wrap', gap: spacing.sm },
   soon: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.pill, paddingVertical: 6, paddingStart: 6, paddingEnd: spacing.md },
+  // mirrored by hand: the picture's side is the right, and keeps the narrow edge
+  soonMirrored: { paddingStart: spacing.md, paddingEnd: 6 },
   soonArt: { opacity: 0.7 },
   soonName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
 });

@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { dictionaryKey, letterKey } from '@kurda/shared';
-import { loadWordlePool } from './word-pool.js';
+import { loadWordlePool, recentTargets } from './word-pool.js';
 import { WordleService } from './wordle-service.js';
 import { WordleBattleService } from './wordle-battle-service.js';
 
@@ -129,5 +129,52 @@ describe.skipIf(!DATABASE_URL)('the Wordle word pool (integration)', () => {
         expect(await battles.create(userId, { difficulty: 'easy' })).toEqual({ ok: false, reason: 'empty-pool' });
       },
     );
+  });
+
+  it('leaves a name out of the answers: a headword written with a capital', async () => {
+    const words = await withPool(
+      [
+        ['mala', 'kurmanji'],
+        ['Amed', 'kurmanji'],
+      ],
+      (client) => loadWordlePool(client),
+    );
+    expect(words).toEqual(['mala']);
+  });
+
+  /** What a practice game and a battle's next round leave out: the words a player was set lately, alone or racing. */
+  it('lists a player’s latest words from their own games and the battles they raced, at most so many each', async () => {
+    const other = await pool.query<{ id: string }>(
+      `INSERT INTO users (email, username) VALUES ($1, $2) RETURNING id`,
+      [`wordpool_b_${suffix}@it.kurda.app`, `wordpool_b_${suffix}`],
+    );
+    const otherId = other.rows[0]!.id;
+    try {
+      const at = (minutes: number) => new Date(Date.UTC(2026, 7, 20, 12, minutes));
+      for (const [target, minute] of [['gulan', 1], ['bajar', 2], ['welat', 3]] as const) {
+        await pool.query(
+          `INSERT INTO wordle_games (user_id, mode, difficulty, target, target_length, started_at) VALUES ($1, 'practice', 'medium', $2, 5, $3)`,
+          [userId, target, at(minute)],
+        );
+      }
+      const battle = await pool.query<{ id: string }>(
+        `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, status, started_at)
+         VALUES ($1, 'medium', 'zarok', 5, 'finished', $2) RETURNING id`,
+        [otherId, at(4)],
+      );
+      await pool.query(`INSERT INTO wordle_battle_players (battle_id, user_id, seat) VALUES ($1, $2, 1), ($1, $3, 2)`, [
+        battle.rows[0]!.id,
+        otherId,
+        userId,
+      ]);
+      expect([...(await recentTargets(pool, [userId]))].sort()).toEqual(['bajar', 'gulan', 'welat', 'zarok']);
+      // the latest two only, by when each was set
+      expect([...(await recentTargets(pool, [userId], 2))].sort()).toEqual(['welat', 'zarok']);
+      expect([...(await recentTargets(pool, [otherId]))]).toEqual(['zarok']);
+      expect((await recentTargets(pool, [])).size).toBe(0);
+    } finally {
+      await pool.query(`DELETE FROM wordle_games WHERE user_id = $1`, [userId]);
+      await pool.query(`DELETE FROM users WHERE id = $1`, [otherId]);
+    }
   });
 });

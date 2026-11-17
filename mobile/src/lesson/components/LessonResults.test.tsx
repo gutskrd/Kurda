@@ -1,6 +1,23 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
-vi.mock('react-native', () => import('react-native-web'));
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+/*
+ * The web build, as everywhere else in these tests, until one says it is a
+ * phone: only a phone has notifications to ask about after a lesson.
+ */
+const device = vi.hoisted(() => ({ os: 'web' }));
+vi.mock('react-native', async () => {
+  // react-native-web ships no types
+  const rn = (await import('react-native-web')) as unknown as Record<string, object> & { Platform: object };
+  return {
+    ...rn,
+    Platform: {
+      ...rn.Platform,
+      get OS() {
+        return device.os;
+      },
+    },
+  };
+});
 vi.mock('react-native-svg', () => import('../../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../../reports/testing/stubs'));
@@ -11,12 +28,17 @@ vi.mock('../../auth/AuthContext', () => import('../../reports/testing/auth'));
 // a badge earned meanwhile waits on the celebration (badges/BadgeCelebrationHost.tsx)
 vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'));
 import type { ComponentProps } from 'react';
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen } from '@testing-library/react';
+import { Share } from 'react-native';
 import { WORD_PICTURES, type QuestDay } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../../reports/testing/auth';
+import { notificationsStub } from '../../reports/testing/stubs';
+import { deviceStore } from '../../keyboard/deviceStore';
+import { OFFER_KEY } from '../../push/permission';
 import { characterLayers } from '../../characters/layers';
+import { FakeAudio } from '../../characters/testing/audio';
 import { NO_MOMENTS } from '../moments';
 import type { SessionResults } from '../types';
 import { LessonResults } from './LessonResults';
@@ -154,9 +176,121 @@ describe('the way on', () => {
     expect(onNext).toHaveBeenCalledWith('l2');
     expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
   });
+
+  /*
+   * The phone's question about notifications, for an adult on a phone that
+   * has never been asked: the screen before it is the last of the moments,
+   * a screen of its own with one button, never a card among the results with
+   * the ways on beside it.
+   */
+  describe('by way of the phone’s question about notifications', () => {
+    const TITLE = 'Notifications from Hevalo';
+    /** Let what the results ask about come back: the phone's answer, the record, the account's age. */
+    const settle = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+
+    beforeEach(async () => {
+      device.os = 'ios';
+      // the phone remembers the screen was shown, and would not show it again the same week
+      await deviceStore.remove(OFFER_KEY);
+      notificationsStub.permission = { status: 'undetermined', granted: false, canAskAgain: true };
+      notificationsStub.afterRequest = { status: 'granted', granted: true, canAskAgain: true };
+      notificationsStub.requests = 0;
+      notificationsStub.failRequest = false;
+      notificationsStub.prompt = null;
+      testAuth.client = fakeClient({ 'GET /me': ok({ user: { minor: false } }), 'GET /me/quests': ok(day) });
+    });
+    afterEach(() => {
+      device.os = 'web';
+      testAuth.client = fakeClient();
+    });
+
+    it('comes last, after the streak and the quests, and the way on is taken when the phone is answered no', async () => {
+      notificationsStub.afterRequest = { status: 'denied', granted: false, canAskAgain: false };
+      const onNext = vi.fn();
+      show({
+        offerReminders: true,
+        moments: { ...NO_MOMENTS, streakKept: true },
+        results: { ...results, quests: [{ id: 'q:xp', kind: 'xp', target: 40, chest: 'rare', from: 0, to: 33, claimable: false }] },
+        next: { lessonId: 'l2', title: 'Malbat' },
+        onNext,
+      });
+      // the results say nothing about it: no card, no "Allow", no "Not now" beside the ways on
+      const next = await screen.findByRole('button', { name: 'Next lesson' });
+      await settle();
+      expect(screen.queryByText(TITLE)).toBeNull();
+      expect(screen.queryByRole('button', { name: /allow|not now/i })).toBeNull();
+
+      fireEvent.click(next);
+      expect(await screen.findByRole('heading', { name: '6 day streak' })).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+      expect(await screen.findByRole('heading', { name: 'Daily quests' })).toBeTruthy();
+      expect(await screen.findByLabelText('Earn 40 XP: 33 of 40')).toBeTruthy();
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+      // the screen before the phone's question: one button, and nothing asked until it is pressed
+      expect(await screen.findByRole('heading', { name: TITLE })).toBeTruthy();
+      expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Continue']);
+      expect(notificationsStub.requests).toBe(0);
+      expect(onNext).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+      await settle();
+      expect(notificationsStub.requests).toBe(1);
+      expect(onNext).toHaveBeenCalledTimes(1);
+      expect(onNext).toHaveBeenCalledWith('l2');
+    });
+
+    it('is the one moment on the way when the lesson kept no streak and moved no quest, and goes on when the phone is answered yes', async () => {
+      const onDone = vi.fn();
+      show({ offerReminders: true, onDone });
+      const done = await screen.findByRole('button', { name: 'Done' });
+      await settle();
+      fireEvent.click(done);
+      expect(await screen.findByRole('heading', { name: TITLE })).toBeTruthy();
+      expect(onDone).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+      await settle();
+      expect(notificationsStub.requests).toBe(1);
+      expect(onDone).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not follow practice, nor a lesson on a phone that has already answered', async () => {
+      const practice = vi.fn();
+      show({ onDone: practice });
+      const done = await screen.findByRole('button', { name: 'Done' });
+      await settle();
+      fireEvent.click(done);
+      expect(practice).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(TITLE)).toBeNull();
+      cleanup();
+
+      notificationsStub.permission = { status: 'denied', granted: false, canAskAgain: false };
+      const answered = vi.fn();
+      show({ offerReminders: true, onDone: answered });
+      const again = await screen.findByRole('button', { name: 'Done' });
+      await settle();
+      fireEvent.click(again);
+      expect(answered).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(TITLE)).toBeNull();
+      expect(notificationsStub.requests).toBe(0);
+    });
+
+    it('keeps nobody waiting to find out: a way on taken before the phone has said goes straight on', async () => {
+      // the account's age is still on its way from the server
+      testAuth.client = fakeClient({ 'GET /me': () => new Promise(() => undefined) });
+      const onDone = vi.fn();
+      show({ offerReminders: true, onDone });
+      fireEvent.click(await screen.findByRole('button', { name: 'Done' }));
+      expect(onDone).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(TITLE)).toBeNull();
+    });
+  });
 });
 
 describe('the mistakes', () => {
+  // an answer is set apart from the line it stands in, so it keeps its own way of reading in a line of the other way
+  const isolated = (answer: string): string => `\u2068${answer}\u2069`;
+
   // the server names a picture by its catalogue id, which is not always what the picture shows ("ewe" is a sheep)
   it('name a missed picture by what it shows', async () => {
     const [id, picture] = Object.entries(WORD_PICTURES).find(([key, p]) => key !== p.en)!;
@@ -167,8 +301,105 @@ describe('the mistakes', () => {
         { id: 'm1', type: 'multiple_choice', ask: 'meaning', prompt: 'Silav!', options: ['Hello!', 'No!'] },
       ],
     });
-    expect(await screen.findByText(picture.en)).toBeTruthy();
-    expect(screen.queryByText(id)).toBeNull();
-    expect(screen.getByText('Hello!')).toBeTruthy();
+    expect(await screen.findByText(isolated(picture.en))).toBeTruthy();
+    expect(screen.queryByText(isolated(id))).toBeNull();
+    expect(screen.getByText(isolated('Hello!'))).toBeTruthy();
+  });
+
+  // a listening item asks with a sound and no words, so its answer used to stand alone with nothing to say what it answered
+  it('put a missed listening clip beside its answer, to be heard again', async () => {
+    FakeAudio.made = [];
+    vi.stubGlobal('Audio', FakeAudio);
+    try {
+      const clip = 'https://media.test/birci.mp3';
+      show({
+        results: { ...results, mistakes: [{ exerciseId: 'l1', verdict: 'wrong', correction: 'Tu birçî yî?' }, { exerciseId: 'm1', verdict: 'wrong', prompt: 'Silav!', correction: 'Hello!' }] },
+        exercises: [
+          { id: 'l1', type: 'listening', ask: 'hear', audioUrl: clip, bank: ['Tu', 'birçî', 'yî?', 'germ'] },
+          { id: 'm1', type: 'multiple_choice', ask: 'meaning', prompt: 'Silav!', options: ['Hello!', 'No!'] },
+        ],
+      });
+      expect(await screen.findByText(isolated('Tu birçî yî?'))).toBeTruthy();
+      // the one clip, beside the listening answer and not beside the one asked in words
+      const hear = screen.getAllByRole('button', { name: 'Play audio' });
+      expect(hear).toHaveLength(1);
+      fireEvent.click(hear[0]!);
+      expect(FakeAudio.of(clip)?.paused).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+/*
+ * The quiet Share over the ways on of a lesson's results: the lesson by its
+ * name, an apple at the end of the line, and the lesson's own address on the
+ * site, with nothing of who is sharing. A review has none.
+ */
+describe('sharing the lesson', () => {
+  const asked = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].map((id) => ({ id, type: 'multiple_choice' as const }));
+  // six asked, the third missed the first time
+  const went: SessionResults = { ...results, correct: 5, total: 6, accuracy: 5 / 6, mistakes: [{ exerciseId: 'e3', verdict: 'wrong' }] };
+  const lesson = { title: 'Hello!' };
+  const sheet = () => vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
+  const said = (share: ReturnType<typeof sheet>): string => (share.mock.calls[0]?.[0] as { message: string } | undefined)?.message ?? '';
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('shares the lesson by its name, with the lesson’s own address under it', async () => {
+    const share = sheet();
+    show({ results: went, exercises: asked, lesson });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(share.mock.calls[0]?.[0]).toEqual({ message: 'I finished “Hello!” in Kurdish on Hevalo. 🍎\nhttps://hevalo.app/win/lesson' });
+  });
+
+  it('stands over the ways on, once, and leaves the main one the foot of the screen', async () => {
+    show({ results: went, exercises: asked, lesson, next: { lessonId: 'l2', title: 'Malbat' }, onNext: () => undefined, onPath: () => undefined });
+    const share = await screen.findByRole('button', { name: 'Share' });
+    expect(screen.getAllByRole('button', { name: 'Share' })).toHaveLength(1);
+    // beside "Back to the path", and before the button that goes on
+    const back = screen.getByRole('button', { name: 'Back to the path' });
+    const onward = screen.getByRole('button', { name: 'Next lesson' });
+    expect(back.parentElement).toBe(share.parentElement);
+    expect(share.compareDocumentPosition(onward) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // nothing comes after the way on in the bar
+    expect(onward.parentElement!.lastElementChild).toBe(onward);
+  });
+
+  it('shares nothing that says whose lesson it was', async () => {
+    const share = sheet();
+    show({ results: went, exercises: asked, lesson });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
+    const text = said(share);
+    expect(text.length).toBeGreaterThan(0);
+    const who = testAuth.user;
+    for (const theirs of [who.username, who.email, '/users/', '/profile', '@']) expect(text, theirs).not.toContain(theirs);
+    // one address, and it is the page of a lesson finished, which is about nobody
+    expect(text.match(/https?:\/\/\S+/g)).toEqual(['https://hevalo.app/win/lesson']);
+  });
+
+  it('says a Kurdish lesson when it has no name to give, and nothing of how the lesson went', async () => {
+    const share = sheet();
+    show({ results: { ...went, correct: 4, total: 5, accuracy: 0.8 }, exercises: asked, skipped: 1, lesson: { title: null } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
+    expect(said(share)).toBe('I finished a Kurdish lesson on Hevalo. 🍎\nhttps://hevalo.app/win/lesson');
+  });
+
+  it('is no way on: sharing opens neither the streak’s moment nor anything after it', async () => {
+    sheet();
+    const onDone = vi.fn();
+    show({ results: went, exercises: asked, lesson, moments: { ...NO_MOMENTS, streakKept: true }, onDone });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
+    expect(screen.queryByTestId('lesson-streak-day')).toBeNull();
+    expect(onDone).not.toHaveBeenCalled();
+    // and the results are still there, with their way on
+    expect(screen.getByRole('button', { name: 'Done' })).toBeTruthy();
+  });
+
+  it('offers no Share on a review: practice is not a lesson finished', async () => {
+    show({ results: went, exercises: asked });
+    await screen.findByRole('button', { name: 'Done' });
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
   });
 });

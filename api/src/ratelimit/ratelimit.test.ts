@@ -21,6 +21,7 @@ function limitedApp(): FastifyInstance {
       async () => ({ ok: true }),
     );
   route('/two', { max: 2, windowMs: 60_000 });
+  app.post('/two', { config: { rateLimit: { max: 1, windowMs: 60_000 } } as { rateLimit?: RateLimitOptions } }, async () => ({ ok: true }));
   route('/other', { max: 2, windowMs: 60_000 });
   route('/login', { max: 2, windowMs: 60_000, per: 'ip' });
   route('/slide', { max: 2, windowMs: 200 });
@@ -49,6 +50,23 @@ describe('rate limiting', () => {
     await a.inject({ url: '/two' });
     expect((await a.inject({ url: '/two' })).statusCode).toBe(429);
     expect((await a.inject({ url: '/other' })).statusCode).toBe(200);
+  });
+
+  it('gives reading and writing at the same address their own budgets', async () => {
+    const a = limitedApp();
+    // reading it twice does not use up the one write a minute
+    await a.inject({ url: '/two' });
+    await a.inject({ url: '/two' });
+    expect((await a.inject({ method: 'POST', url: '/two' })).statusCode).toBe(200);
+    expect((await a.inject({ method: 'POST', url: '/two' })).statusCode).toBe(429);
+  });
+
+  it('lets writing leave the reads at the same address as they were', async () => {
+    const a = limitedApp();
+    expect((await a.inject({ method: 'POST', url: '/two' })).statusCode).toBe(200);
+    expect((await a.inject({ url: '/two' })).statusCode).toBe(200);
+    expect((await a.inject({ url: '/two' })).statusCode).toBe(200);
+    expect((await a.inject({ url: '/two' })).statusCode).toBe(429);
   });
 
   it('keys by user when authenticated: shared IP, different users, separate budgets', async () => {

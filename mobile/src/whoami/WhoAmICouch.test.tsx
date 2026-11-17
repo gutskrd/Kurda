@@ -8,11 +8,13 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import type { WhoAmICouchOffer, WhoAmIDeal, WhoAmIIdentity } from '@kurda/shared';
+import type { WhoAmICouchOffer, WhoAmIDeal, WhoAmIFactValue, WhoAmIIdentity } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { backOut } from '../play/testing/navigation';
+import { onHaptic, resetHaptics } from '../feedback/haptics';
+import type { HapticEvent } from '../feedback/hapticPacing';
 import { WhoAmICouch } from './WhoAmICouch';
 
 /**
@@ -21,10 +23,11 @@ import { WhoAmICouch } from './WhoAmICouch';
  * hand with nothing to memorise first and no list of words to pick from, the
  * questions suggested with what they mean and asked by one tap, the question
  * read out, the friends' screen that alone shows the holder's card and takes
- * the answer, the card hidden again, the card's verdict and how the friends
- * did, a question of the holder's own, who they are said out loud and judged
- * by the friends, right and not yet, the points, another game for the same
- * room, and the way out that asks first.
+ * the answer (yes, could be, no or not sure), the card hidden again, the
+ * card's verdict and how the friends did, the way to say a card's answer
+ * looks wrong, a question of the holder's own, who they are said out loud and
+ * judged by the friends, right, close and not yet, the points, another game
+ * for the same room, and the way out that asks first.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -35,7 +38,7 @@ afterEach(() => {
 });
 
 // stand-in words for the cards and the questions, never shown to a learner
-const animal = (id: string, word: string, facts: Record<string, boolean>): WhoAmIIdentity => ({
+const animal = (id: string, word: string, facts: Record<string, WhoAmIFactValue>): WhoAmIIdentity => ({
   id,
   key: `w:${id}`,
   level: 1,
@@ -53,6 +56,9 @@ const QUESTIONS: WhoAmIDeal['questions'] = [
 ];
 // a question every animal answers the same way: once the card says it is an animal there is nothing to learn from it, so it is never suggested
 const ALIVE: WhoAmIDeal['questions'][number] = { id: 'alive', ku: 'Ew zindî ye?', meanings: { en: 'Is it alive?' }, fact: 'alive' };
+// a question the dog's card says "could be" to: it lives in the house with one family and in the yard with another
+const HOME: WhoAmIDeal['questions'][number] = { id: 'home', ku: 'Ew li malê tê dîtin?', meanings: { en: 'Do you find it at home?' }, fact: 'at-home' };
+const DOG = animal('dog', 'kûçik', { 'can-fly': false, 'at-home': 'sometimes' });
 /** A card dealt among two others that are nobody else's card, as the server deals a room. */
 const deal = (identity: WhoAmIIdentity, others: WhoAmIIdentity[], questions = QUESTIONS): WhoAmIDeal => ({
   identity,
@@ -68,13 +74,21 @@ const OFFER: WhoAmICouchOffer = { dialect: 'kmr', difficulties: ['beginner', 'in
 const DEAL = 'POST /games/who-am-i/couch/deal';
 const ASK_FLY = 'Ask: Ew dikare bifire? (Can it fly?)';
 
-/** A server that deals the room its cards: as many as it was asked for, in the order the room sits. */
-const dealing = (deals: WhoAmIDeal[] = DEALS) =>
+const REPORT = 'POST /games/who-am-i/report';
+
+/**
+ * A server that deals the room its cards: as many as it was asked for, in the order the room sits, for as many answers
+ * as the phone asked for (two when it asked for none, as the real one does). `older` is a server from before the four
+ * answers, which says nothing of them, and so deals a table of two.
+ */
+const dealing = (deals: WhoAmIDeal[] = DEALS, older = false) =>
   fakeClient({
     [DEAL]: (body) => {
-      const asked = body as { difficulty: string; players: number };
-      return ok({ dialect: 'kmr', difficulty: asked.difficulty, deals: deals.slice(0, asked.players) });
+      const asked = body as { difficulty: string; players: number; answers?: number };
+      const dealt = { dialect: 'kmr', difficulty: asked.difficulty, deals: deals.slice(0, asked.players) };
+      return ok(older ? dealt : { ...dealt, answers: asked.answers === 4 ? 4 : 2 });
     },
+    [REPORT]: ok({ counted: true }),
   });
 
 const press = (name: string | RegExp): void => {
@@ -120,7 +134,7 @@ async function toFriends(name: string, ask: string = ASK_FLY): Promise<void> {
 }
 
 /** Who they are said out loud, the phone turned to the friends, and the friends' verdict tapped. */
-async function sayWho(name: string, verdict: 'Yes, that’s it!' | 'Not yet'): Promise<void> {
+async function sayWho(name: string, verdict: 'Yes, that’s it!' | 'Close!' | 'Not yet'): Promise<void> {
   press('I know who I am!');
   await screen.findByRole('heading', { name: 'Say out loud who you are.' });
   await turnToFriends(name);
@@ -147,8 +161,19 @@ describe('the setup', () => {
     await start();
     expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeTruthy();
     expect(client.calls).toHaveLength(1);
-    expect(client.calls[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'intermediate', players: 3 });
+    // the friends are offered all four answers, so the cards are asked for with their "sometimes" rows
+    expect(client.calls[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'intermediate', players: 3, answers: 4 });
     expect(JSON.stringify(client.calls)).not.toContain('Azad');
+  });
+
+  it('says in its scoring note that a room allows one more miss, and how the answers in between score', async () => {
+    testAuth.client = dealing();
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    press(await screen.findByRole('button', { name: 'How it scores' }).then(() => 'How it scores'));
+    expect(await screen.findByText('After 3 wrong guesses you are out, but you keep answering for the others.')).toBeTruthy();
+    expect(screen.getByText('Every right answer you give about a friend’s card: +1, up to 6 a game.')).toBeTruthy();
+    expect(screen.getByText(/^When the card says “could be”, yes, no and could be all count as right\./)).toBeTruthy();
+    expect(screen.getByText('“Not sure” scores nothing and costs nothing.')).toBeTruthy();
   });
 
   it('takes two to six players, names an empty box for them, and wants no two names alike', async () => {
@@ -172,7 +197,7 @@ describe('the setup', () => {
     fireEvent.change(screen.getByLabelText('Player 2'), { target: { value: '' } });
     press('Deal the cards');
     expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeTruthy();
-    expect(client.calls[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'beginner', players: 2 });
+    expect(client.calls[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'beginner', players: 2, answers: 4 });
   });
 
   it('says so when the cards cannot be fetched, and starts nothing', async () => {
@@ -324,7 +349,8 @@ describe('a question from the list', () => {
     expect(screen.getByText('Ew dikare bifire?')).toBeTruthy();
     expect(screen.getByText('Can it fly?')).toBeTruthy();
     expect(screen.getByText('Is it true? Tap your answer.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Erê' })).toBeTruthy();
+    // four keys in the dialect's own words: yes, could be and no in a row, and not sure under them
+    for (const key of ['Erê', 'Dibe, could be', 'Na', 'Nizanim, not sure']) expect(screen.getByRole('button', { name: key })).toBeTruthy();
 
     // they tap their answer: the card is off the screen at once, and the card's own answer is on it
     press('Na');
@@ -410,7 +436,7 @@ describe('a question from the list', () => {
     expect(screen.getByRole('button', { name: 'Skip my turn' })).toBeTruthy();
   });
 
-  it('plays a Soranî room in Soranî, the friends answering and the card speaking in its own yes and no', async () => {
+  it('plays a Soranî room in Soranî, the friends answering and the card speaking in its own words', async () => {
     const pishile = animal('cat', 'پشیلە', { 'can-fly': false });
     const balinde = animal('bird', 'باڵندە', { 'can-fly': true });
     const flies: WhoAmIDeal['questions'] = [{ id: 'fly', ku: 'ئایا دەتوانێت بفڕێت؟', meanings: { en: 'Can it fly?' }, fact: 'can-fly' }];
@@ -418,6 +444,7 @@ describe('a question from the list', () => {
       [DEAL]: ok({
         dialect: 'ckb',
         difficulty: 'beginner',
+        answers: 4,
         deals: [
           deal(pishile, [animal('dog', 'سەگ', {}), animal('cow', 'مانگا', {})], flies),
           deal(balinde, [animal('fish', 'ماسی', {}), animal('duck', 'مراوی', {})], flies),
@@ -427,14 +454,97 @@ describe('a question from the list', () => {
     testAuth.client = client;
     renderWithProviders(<WhoAmICouch offer={{ dialect: 'ckb', difficulties: ['beginner'] }} onLeave={() => undefined} />);
     await start(['Azad', 'Berfîn']);
-    expect(client.calls[0]!.body).toEqual({ dialect: 'ckb', difficulty: 'beginner', players: 2 });
+    expect(client.calls[0]!.body).toEqual({ dialect: 'ckb', difficulty: 'beginner', players: 2, answers: 4 });
     press(await screen.findByRole('button', { name: 'I’m Azad' }).then(() => 'I’m Azad'));
     await toFriends('Azad', 'Ask: ئایا دەتوانێت بفڕێت؟ (Can it fly?)');
     expect(screen.getByText('پشیلە')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'بەڵێ' })).toBeTruthy();
+    // Soranî's own four answers, the two in between with what they mean
+    for (const key of ['بەڵێ', 'ڕەنگە, could be', 'نەخێر', 'نازانم, not sure']) {
+      expect(screen.getByRole('button', { name: key })).toBeTruthy();
+    }
     press('نەخێر');
     expect(await screen.findByLabelText('The card says: نەخێر')).toBeTruthy();
     expect(screen.getByText('Your friends got it right: +1 for each of them.')).toBeTruthy();
+  });
+
+  it('calls “could be” on a plain answer close and “not sure” no mistake, scores neither, and buzzes for neither', async () => {
+    testAuth.client = dealing();
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    await toFriends('Azad');
+    const felt: HapticEvent[] = [];
+    resetHaptics();
+    const stop = onHaptic((e) => felt.push(e));
+    try {
+      // a cat plainly does not fly: "could be" is close to that, felt as a light knock, and nobody is told it was wrong
+      press('Dibe, could be');
+      expect(await screen.findByLabelText('The card says: Na')).toBeTruthy();
+      expect(screen.getByText('Your friends said Dibe. Close, but the card says Na.')).toBeTruthy();
+      expect(felt).toEqual(['select', 'tap']);
+    } finally {
+      stop();
+    }
+    press('Next player');
+
+    // Berfîn's friends cannot tell from her card whether it flies: that is said kindly too
+    await take('Berfîn');
+    await toFriends('Berfîn');
+    press('Nizanim, not sure');
+    expect(await screen.findByLabelText('The card says: Erê')).toBeTruthy();
+    expect(screen.getByText('Your friends weren’t sure. The card says Erê.')).toBeTruthy();
+    // neither answer earned the room a point
+    expect(within(table()).getByLabelText('Azad, A hidden card, Points: 0, Questions: 1')).toBeTruthy();
+    expect(within(table()).getByLabelText('Berfîn, A hidden card, Points: 0, Questions: 1, On turn')).toBeTruthy();
+  });
+
+  it('shows an amber verdict that says what “could be” means where the card itself says it, and counts a yes right', async () => {
+    testAuth.client = dealing([deal(DOG, [animal('wolf', 'gur', {}), animal('fox', 'rovî', {})], [HOME]), DEALS[1]!]);
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    await toFriends('Azad', 'Ask: Ew li malê tê dîtin? (Do you find it at home?)');
+    expect(screen.getByText('kûçik')).toBeTruthy();
+    press('Erê');
+    expect(await screen.findByLabelText('The card says: Dibe')).toBeTruthy();
+    expect(screen.getByText('Sometimes yes, sometimes no.')).toBeTruthy();
+    // yes is right on a card that says it could be: whoever reasons it out never loses to the card
+    expect(screen.getByText('Your friends got it right: +1 for each of them.')).toBeTruthy();
+    // and what he knows now carries the card's own "could be"
+    const known = screen.getByRole('heading', { name: 'What you know so far' }).parentElement!;
+    expect(within(known).getByText('Dibe')).toBeTruthy();
+  });
+
+  it('lets the room say the card’s answer looks wrong, sending only the card and the question', async () => {
+    const client = dealing();
+    testAuth.client = client;
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    await toFriends('Azad');
+    press('Erê');
+    await screen.findByLabelText('The card says: Na');
+    press('Is this answer wrong?');
+    expect(await screen.findByText('Thanks! We’ll take a look at this card.')).toBeTruthy();
+    expect(client.calls.filter((c) => c.path === '/games/who-am-i/report').map((c) => c.body)).toEqual([{ identity: 'cat', question: 'fly' }]);
+    expect(screen.queryByRole('button', { name: 'Is this answer wrong?' })).toBeNull();
+    // the names in the room never leave the phone, and nothing on the screen gave the card away
+    expect(JSON.stringify(client.calls)).not.toContain('Azad');
+    expectNoWords();
+  });
+
+  it('offers yes and no alone when the server deals the room for two answers, as one from before the four does', async () => {
+    testAuth.client = dealing(DEALS, true);
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    await toFriends('Azad');
+    expect(screen.getByRole('button', { name: 'Erê' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Na' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Dibe, could be' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Nizanim, not sure' })).toBeNull();
+    press('Na');
+    expect(await screen.findByLabelText('The card says: Na')).toBeTruthy();
   });
 });
 
@@ -458,7 +568,7 @@ describe('a question of one’s own', () => {
     await turnToFriends('Azad');
     expect(screen.getByText('pisîk')).toBeTruthy();
     expect(screen.getByText('cat')).toBeTruthy();
-    expect(screen.getByText('Answer Azad out loud: yes (Erê) or no (Na).')).toBeTruthy();
+    expect(screen.getByText('Answer Azad out loud: yes (Erê), could be (Dibe), no (Na) or not sure (Nizanim).')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Erê' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Na' })).toBeNull();
     press('Done: hide the card');
@@ -537,6 +647,32 @@ describe('saying who you are', () => {
     // the friends' screen is gone; his card is on his own forehead now, for everyone
     expect(screen.queryByText('Did Azad get it right?')).toBeNull();
     expect(screen.getByText('pisîk')).toBeTruthy();
+  });
+
+  it('takes a guess the friends call close as no miss: no guess spent, the card still hidden, and the turn passed on', async () => {
+    testAuth.client = dealing();
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    press('I know who I am!');
+    await screen.findByRole('heading', { name: 'Say out loud who you are.' });
+    await turnToFriends('Azad');
+    // three keys for the friends' verdict: that is it, close, not yet
+    for (const key of ['Yes, that’s it!', 'Close!', 'Not yet']) expect(screen.getByRole('button', { name: key })).toBeTruthy();
+    // another word for the same thing (kitik for pisîk): the friends call it close
+    press('Close!');
+    expect(await screen.findByRole('heading', { name: 'Close! No guess is used up, and the turn passes on.' })).toBeTruthy();
+    expect(screen.getByText('Guesses left: 3')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Not yet!' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Azad is…' })).toBeNull();
+    expectNoWords();
+    press('Next');
+
+    // the turn has gone on to Berfîn, and back with Azad it cost him nothing
+    await take('Berfîn');
+    press('Skip my turn');
+    await take('Azad');
+    expect(screen.getByText('Points if you guess now: 10 · Guesses left: 3')).toBeTruthy();
   });
 
   it('takes the card off the friends’ screen when the app is no longer the one in front, and counts no guess', async () => {
@@ -653,8 +789,8 @@ describe('a game', () => {
     press('Play again');
     expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeTruthy();
     expect(client.calls.map((c) => c.body)).toEqual([
-      { dialect: 'kmr', difficulty: 'beginner', players: 3 },
-      { dialect: 'kmr', difficulty: 'beginner', players: 3 },
+      { dialect: 'kmr', difficulty: 'beginner', players: 3, answers: 4 },
+      { dialect: 'kmr', difficulty: 'beginner', players: 3, answers: 4 },
     ]);
     expect(JSON.stringify(client.calls)).not.toContain('Azad');
     expect(onLeave).not.toHaveBeenCalled();

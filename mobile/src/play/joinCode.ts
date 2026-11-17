@@ -9,13 +9,13 @@
  * (`normalizeJoinCode`). These rules are only about what the boxes show while
  * somebody types: the server still has the last word.
  */
-import { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH, type PlayGame } from '@kurda/shared';
+import { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH, hueSteps, playGameHue, type PlayGame } from '@kurda/shared';
 import { describeError, type Translate } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AA_NORMAL, contrastRatio } from '../a11y/contrast';
 import { ensureContrast } from '../a11y/ensureContrast';
 import type { Palette } from '../theme/palette';
-import { lipOf, type TileTone } from '../theme/tileTones';
+import { blend, lipOf, type TileTone } from '../theme/tileTones';
 
 /** The digits an Arabic or a Soranî keyboard types, as the digits they are. */
 function westernDigits(text: string): string {
@@ -98,28 +98,29 @@ export function shareMessage(
 }
 
 /**
- * Each game's own colour, from the palette as it stands: Peyvok Battle's is
- * the green of a letter in the right place, Rhyme Match's the sun's gold, a
- * story's the ink of the page it is read on.
+ * Each game's own colour: the hue its stamp is printed in on the games page
+ * (shared art/games.ts), so an invite looks like the game it asks you into,
+ * and the app's violet for a story game, which has no stamp. By day it is the
+ * hue halfway from its base down to its deep shade, about as strong as the
+ * violet and under white letters; by night its lifted base, under dark ones,
+ * as the violet is then. The games were drawn in the palette's green and
+ * gold, which in this app say a right answer and something earned.
  */
-const GAME_COLOUR: Record<PlayGame, 'success' | 'gold' | 'primary'> = {
-  'wordle-battle': 'success',
-  'rhyme-match': 'gold',
-  stories: 'primary',
-  'last-letter': 'primary',
-  impostor: 'gold',
-  'who-am-i': 'gold',
-};
-
 export function gameColour(colors: Palette, game: PlayGame): string {
-  return colors[GAME_COLOUR[game]];
+  const hue = playGameHue(game);
+  if (!hue) return colors.primary;
+  const steps = hueSteps(colors.scheme, hue);
+  return colors.scheme === 'dark' ? steps.base : blend(steps.deep, steps.base, DAY_DEPTH);
 }
+
+/** How far a game's colour sits from its base toward its deep shade by day: halfway, where white letters clear 5:1 on every one. */
+const DAY_DEPTH = 0.5;
 
 /**
  * A code's tile in its game's colour: the face filled with it, on a lip a step
  * darker, and the letters in whichever of the palette's two inks reads better
- * on it — then nudged until they clear 4.5:1, so a gold tile in the light
- * theme gets dark letters and a green one white.
+ * on it — then nudged until they clear 4.5:1, which a game's colour already
+ * does: white by day, the page's dark ink by night.
  */
 export function codeTone(colors: Palette, game: PlayGame): TileTone {
   return filledTone(colors, gameColour(colors, game));

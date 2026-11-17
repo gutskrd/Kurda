@@ -35,7 +35,7 @@ const availability = (games: Array<ReturnType<typeof game>>) => ok({ dialect: 'k
 
 /** The list, once the answer about the learning games has arrived and been drawn. */
 async function settled(client: ReturnType<typeof fakeClient>): Promise<void> {
-  expect(await screen.findByTestId('game-wordle')).toBeTruthy();
+  expect(await screen.findByTestId('card-wordle')).toBeTruthy();
   await waitFor(() => expect(client.calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
   await new Promise((resolve) => setTimeout(resolve, 20));
 }
@@ -141,7 +141,7 @@ describe('the games list', () => {
     expect(card.getAttribute('aria-label')).toBe('Dizê Bîrê, Solo. Study a real passage, then give back the words the thief took.');
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('MemoryThief');
-    expect(screen.getByTestId('game-wordle')).toBeTruthy();
+    expect(screen.getByTestId('card-wordle')).toBeTruthy();
   });
 
   it('leaves it out while there is not enough approved content: the phone lists what can be played', async () => {
@@ -157,8 +157,8 @@ describe('the games list', () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('memory-thief', false)]) });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
-    expect(await screen.findByTestId('game-wordle')).toBeTruthy();
-    // named under the cards, and nothing to press
+    expect(await screen.findByTestId('card-wordle')).toBeTruthy();
+    // named under the stamps, and nothing to press
     const card = await screen.findByTestId('game-memory-thief');
     expect(card.getAttribute('aria-label')).toBe('Dizê Bîrê, Coming soon');
     expect(card.getAttribute('role')).not.toBe('button');
@@ -221,42 +221,52 @@ describe('the games list', () => {
     expect(screen.queryByText('Typing Race')).toBeNull();
   });
 
-  it('gives Peyvok one card with a button for playing alone and one for playing a friend', async () => {
+  it('gives Peyvok one stamp, which offers playing alone and playing a friend', async () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([]) });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     await settled(client);
-    const solo = screen.getByTestId('game-wordle');
-    expect(solo.getAttribute('aria-label')).toBe('Peyvok, Solo');
-    fireEvent.click(solo);
-    expect(navigation.navigate).toHaveBeenCalledWith('Wordle');
-    const friends = screen.getByTestId('game-battle');
-    expect(friends.getAttribute('aria-label')).toBe('Peyvok, With friends');
-    fireEvent.click(friends);
-    expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle');
-    // one card for the game, not one for each way to play it
+    // one stamp for the game, not one for each way to play it, and nothing offered until it is pressed
     expect(screen.getAllByText('Peyvok')).toHaveLength(1);
     expect(screen.queryByText('Pêşbaziya Peyvan')).toBeNull();
+    expect(screen.queryByTestId('game-wordle')).toBeNull();
+    const stamp = screen.getByTestId('card-wordle');
+    expect(stamp.getAttribute('role')).toBe('button');
+    expect(stamp.getAttribute('aria-label')).toBe('Peyvok, Solo or with friends. Guess the Kurdish word in six tries.');
+    fireEvent.click(stamp);
+    const solo = await screen.findByTestId('game-wordle');
+    expect(solo.getAttribute('aria-label')).toBe('Peyvok, Solo');
+    expect(screen.getByTestId('game-battle').getAttribute('aria-label')).toBe('Peyvok, With friends');
+    // the sheet says what the game is, which the stamp has no room for
+    expect(screen.getByText('Guess the Kurdish word in six tries.')).toBeTruthy();
+    fireEvent.click(solo);
+    expect(navigation.navigate).toHaveBeenCalledWith('Wordle');
+    fireEvent.click(screen.getByTestId('card-wordle'));
+    fireEvent.click(await screen.findByTestId('game-battle'));
+    expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle');
   });
 
-  it('gives Ez kî me? one card with a button for this phone and one for friends, each opening its screen on that way', async () => {
+  it('gives Ez kî me? one stamp, which offers this phone and friends, each opening its screen on that way', async () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('who-am-i'), game('impostor')]) });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     await settled(client);
+    // one stamp for the game, no way to play it alone, and its ways offered once it is pressed
+    const stamp = await screen.findByTestId('card-who-am-i');
+    expect(screen.getAllByText('Ez kî me?')).toHaveLength(1);
+    expect(screen.queryByTestId('game-who-am-i')).toBeNull();
+    expect(screen.queryByTestId('game-who-am-i-phone')).toBeNull();
+    fireEvent.click(stamp);
     const phone = await screen.findByTestId('game-who-am-i-phone');
     expect(phone.getAttribute('aria-label')).toBe('Ez kî me?, On this phone');
     fireEvent.click(phone);
     expect(navigation.navigate).toHaveBeenCalledWith('WhoAmI', { way: 'phone' });
-    const friends = screen.getByTestId('game-who-am-i-friends');
+    fireEvent.click(screen.getByTestId('card-who-am-i'));
+    const friends = await screen.findByTestId('game-who-am-i-friends');
     expect(friends.getAttribute('aria-label')).toBe('Ez kî me?, With friends');
     fireEvent.click(friends);
     expect(navigation.navigate).toHaveBeenCalledWith('WhoAmI', { way: 'friends' });
-    // one card for the game, which is not itself pressed, and no way to play it alone
-    expect(screen.getAllByText('Ez kî me?')).toHaveLength(1);
-    expect(screen.getByTestId('card-who-am-i').getAttribute('role')).not.toBe('button');
-    expect(screen.queryByTestId('game-who-am-i')).toBeNull();
-    // Xapînok's own screen asks how to play: its card is the one way in
+    // Xapînok's own screen asks how to play: its stamp is the one way in
     fireEvent.click(screen.getByTestId('game-impostor'));
     expect(navigation.navigate).toHaveBeenCalledWith('Impostor');
   });
@@ -278,9 +288,9 @@ describe('the games list', () => {
   });
 
   /**
-   * Deliberately changed. The cards' Play was the party games' gold, beside
-   * grey second ways; every Play is now the app's own solid button, the
-   * covers carrying the colour, and there is no filter to work.
+   * Deliberately changed. A game was a card on its side with its buttons in
+   * it; it is a stamp now, pressed to open the game or to be offered its
+   * ways, and there is still no filter to work.
    */
   it('lists every game whoever it is played with, with no filter to work', async () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('memory-thief'), game('impostor')]) });

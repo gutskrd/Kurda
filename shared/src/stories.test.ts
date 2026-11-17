@@ -10,6 +10,7 @@ import {
   STORY_LEVELS,
   STORY_WORD_BANDS,
   categoryName,
+  categoryNameKey,
   cefrOf,
   countStoryWords,
   glossFor,
@@ -305,6 +306,13 @@ describe('categories', () => {
     expect(categoryName(folktale, 'de')).toBe('Folktales');
     // a prototype key is not a translation either
     expect(categoryName(folktale, 'constructor')).toBe('Folktales');
+  });
+
+  it('gives the categories the library was seeded with a catalogue key each, and none to a slug the apps do not know', () => {
+    const seeded = ['folktale', 'fable', 'legend', 'family', 'village', 'nature', 'everyday', 'celebrations'];
+    expect(seeded.map(categoryNameKey)).toEqual(seeded.map((slug) => `stories.category.${slug}`));
+    expect(categoryNameKey('poems')).toBeNull();
+    expect(categoryNameKey('constructor')).toBeNull();
   });
 });
 

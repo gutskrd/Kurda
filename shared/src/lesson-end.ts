@@ -56,10 +56,22 @@ export function streakSpeech(streak: { current: number; longest: number; daysLea
 /**
  * What follows the results, in order, on the way to whichever way on was
  * chosen: the streak's moment when this lesson kept it, then today's quests
- * when the lesson moved any. Each is shown once.
+ * when the lesson moved any, and last, where the phone's question about
+ * notifications is due (`remindersDue`, which only the phone app ever says),
+ * the screen that says what Hevalo would send before the phone asks. Last,
+ * so the lesson's own moments are never kept waiting behind a question. Each
+ * is shown once.
  */
-export type AfterResults = 'streak' | 'quests';
+export type AfterResults = 'streak' | 'quests' | 'reminders';
 
-export function afterResults({ streakKept, questsMoved }: { streakKept: boolean; questsMoved: boolean }): AfterResults[] {
-  return [...(streakKept ? (['streak'] as const) : []), ...(questsMoved ? (['quests'] as const) : [])];
+export function afterResults({
+  streakKept,
+  questsMoved,
+  remindersDue = false,
+}: {
+  streakKept: boolean;
+  questsMoved: boolean;
+  remindersDue?: boolean;
+}): AfterResults[] {
+  return [...(streakKept ? (['streak'] as const) : []), ...(questsMoved ? (['quests'] as const) : []), ...(remindersDue ? (['reminders'] as const) : [])];
 }

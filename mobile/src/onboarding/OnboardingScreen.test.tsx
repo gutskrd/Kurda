@@ -101,6 +101,26 @@ describe('OnboardingScreen', () => {
     expect(felt).toEqual(['select']);
   });
 
+  // the app is already speaking a language, and Continue keeps it: the list says which
+  it('shows the language the app is in as chosen before any is tapped', async () => {
+    renderWithProviders(<OnboardingScreen onComplete={() => undefined} />);
+    await settle();
+    expect(screen.getByRole('radio', { name: 'English' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getAllByRole('radio').filter((r) => r.getAttribute('aria-checked') === 'true')).toHaveLength(1);
+  });
+
+  it('lays the language rows, the dots and Skip, and the way on from the right in Soranî', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    renderWithProviders(<OnboardingScreen onComplete={() => undefined} />);
+    await settle();
+    const sorani = screen.getByRole('radio', { name: 'کوردی (سۆرانی)' });
+    expect(getComputedStyle(sorani).flexDirection).toBe('row-reverse');
+    expect(getComputedStyle(screen.getByRole('radio', { name: 'English' }).firstElementChild as HTMLElement).textAlign).toBe('right');
+    // the way on: its row starts from the right, so Continue closes it on the left
+    const onward = screen.getByRole('button', { name: TRANSLATIONS.ckb['common.continue'] });
+    expect(getComputedStyle(onward.parentElement as HTMLElement).flexDirection).toBe('row-reverse');
+  });
+
   it('turns on to Hevalo over the four lines in the language chosen, the language slide leaving to the start side, and back again to the end side', async () => {
     await device({ reduceMotion: true });
     renderWithProviders(<OnboardingScreen onComplete={() => undefined} />);

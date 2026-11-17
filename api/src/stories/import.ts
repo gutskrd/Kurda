@@ -22,7 +22,14 @@
  * is where it lives and the file no longer speaks for it. The review of each
  * translation stays as the reviewers left it, or unreviewed: publishing is
  * not a claim that a native speaker has checked the text.
+ *
+ * Some starters are one story told in both varieties (the legends). A file
+ * cannot say so, so the pairs are named here (`STARTER_STORY_VERSIONS`), and
+ * the seeding links each pair once, as an editor would in the panel: the
+ * reader then offers the other telling, and the library shows the story once
+ * per variety rather than twice side by side.
  */
+import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
 import type { FastifyBaseLogger } from 'fastify';
@@ -336,6 +343,90 @@ export const STARTER_STORY_FILES = ['kurmanci.json', 'sorani.json', 'road.json',
 
 const seedName = (slug: string): string => `stories:starter:${slug}`;
 
+/** Two starters that are one story: its Kurmancî telling's slug, then its Soranî one's. */
+export type StoryVersionPair = readonly [kurmanci: string, sorani: string];
+
+/**
+ * The starters that are one story told in both varieties: the five legends,
+ * each written twice in legends.json under the same tale, cover and English
+ * title.
+ *
+ * Only tellings of the same tale belong here. The everyday starters share
+ * themes across the two files — a ball in a stern neighbour's garden, a bus
+ * that fails on the way to the village, a first day at a new school — but
+ * each is a story of its own, with its own people, places and ending; linked,
+ * a reader who switched variety would land in a different story.
+ */
+export const STARTER_STORY_VERSIONS: readonly StoryVersionPair[] = [
+  ['kmr-kawaye-hesinkar', 'ckb-kaway-asinger'],
+  ['kmr-sahmaran', 'ckb-shamaran'],
+  ['kmr-mem-u-zin', 'ckb-mem-u-zin'],
+  ['kmr-siyabend-u-xece', 'ckb-siyabend-u-xece'],
+  ['kmr-kela-dimdime', 'ckb-qelay-dimdim'],
+];
+
+const versionsSeedName = (pair: StoryVersionPair): string => `stories:versions:${pair[0]}+${pair[1]}`;
+
+/**
+ * Link starters that are one story told in both varieties, each pair once:
+ * the two are given one translation group, as "same story as" does in the
+ * panel. A pair is linked when both starters are in the table and neither is
+ * in a group; either way it is then remembered in `content_seeds` and never
+ * looked at again, so a pair an editor unlinks, or links to something else,
+ * stays as the editor left it after the next start. A pair with a story still
+ * missing waits for a later start.
+ *
+ * An existing database had its legends linked by migration legend-versions;
+ * this is what links them on a new one, where the stories arrive after the
+ * migrations have run. Nothing else in this file writes a story's group, so
+ * bringing a starter up to its file leaves the link alone.
+ *
+ * Both rows are locked, in one order, before they are looked at: two
+ * instances starting together take turns, and the second finds the pair
+ * linked. Never throws.
+ */
+export async function linkStarterVersions(
+  pool: pg.Pool,
+  log: Pick<FastifyBaseLogger, 'info' | 'warn'>,
+  pairs: readonly StoryVersionPair[] = STARTER_STORY_VERSIONS,
+): Promise<StoryVersionPair[]> {
+  const linked: StoryVersionPair[] = [];
+  if (pairs.length === 0) return linked;
+  try {
+    const done = await pool.query<{ name: string }>(`SELECT name FROM content_seeds WHERE name = ANY($1::text[])`, [pairs.map(versionsSeedName)]);
+    const marked = new Set(done.rows.map((r) => r.name));
+    for (const pair of pairs) {
+      if (marked.has(versionsSeedName(pair))) continue;
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        // only the starters themselves: a story an editor wrote under one of these slugs is not a telling of the legend
+        const found = await client.query<{ id: string; translation_group: string | null }>(
+          `SELECT id, translation_group FROM stories WHERE slug = ANY($1::text[]) AND source = 'starter' ORDER BY slug FOR UPDATE`,
+          [[...pair]],
+        );
+        if (found.rows.length === 2) {
+          if (found.rows.every((r) => r.translation_group === null)) {
+            await client.query(`UPDATE stories SET translation_group = $2 WHERE id = ANY($1::uuid[])`, [found.rows.map((r) => r.id), randomUUID()]);
+            linked.push(pair);
+          }
+          await client.query(`INSERT INTO content_seeds (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`, [versionsSeedName(pair)]);
+        }
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => undefined);
+        log.warn({ err, pair }, 'starter stories could not be linked as one story');
+      } finally {
+        client.release();
+      }
+    }
+    if (linked.length > 0) log.info({ pairs: linked }, `linked ${linked.length} pairs of starter stories told in both varieties`);
+  } catch (err) {
+    log.warn({ err }, 'linking the starter stories told in both varieties failed');
+  }
+  return linked;
+}
+
 /**
  * Seed the starter stories, each once, and keep the ones nobody has changed
  * in the panel as their files say (see the top of the file). Runs at every
@@ -348,6 +439,10 @@ const seedName = (slug: string): string => `stories:starter:${slug}`;
  * a publish in the panel makes; a published one is brought up to its file
  * only by a file that still passes it, so learners never meet half a story.
  *
+ * Last, the starters that are one story told in both varieties are linked
+ * (`linkStarterVersions`): the pairs among `versions` whose two stories these
+ * files hold.
+ *
  * Two instances starting together (a deploy's overlap) both try the same
  * slugs; the insert skips a slug that exists, the marker insert skips a
  * marker that exists, and each story is brought up to its file under a row
@@ -358,6 +453,7 @@ export async function seedStarterStories(
   log: Pick<FastifyBaseLogger, 'info' | 'warn'>,
   files: readonly URL[] = STARTER_STORY_FILES,
   cache: Cache | null = null,
+  versions: readonly StoryVersionPair[] = STARTER_STORY_VERSIONS,
 ): Promise<{ seeded: string[]; refreshed: string[]; published: string[] }> {
   const seeded: string[] = [];
   const refreshed: string[] = [];
@@ -461,6 +557,9 @@ export async function seedStarterStories(
     if (published.length > 0) log.info({ stories: published }, `published ${published.length} starter stories`);
     // the library's cached lists were made before these were out or changed
     if (refreshed.length + published.length > 0) await bustStoryLists(cache);
+    // a story read by itself is never cached, so a link shows in the reader at once and no list has to be forgotten for it
+    const held = new Set(drafts.map((d) => d.slug));
+    await linkStarterVersions(pool, log, versions.filter(([kurmanci, sorani]) => held.has(kurmanci) && held.has(sorani)));
   } catch (err) {
     log.warn({ err }, 'seeding the starter stories failed');
   }

@@ -3,6 +3,7 @@ import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
+import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 import { forgetPartyOffers } from '../party/offer';
 import { forgetImpostorCategories } from './categories';
 import { ImpostorScreen } from './ImpostorScreen';
@@ -10,8 +11,9 @@ import { ImpostorScreen } from './ImpostorScreen';
 /**
  * Xapînok on the phone, phase by phase: the start where it is
  * offered and where not, the lobby, a clue turn with the slips the box sees,
- * the impostor's card without the word, the vote, the caught impostor's
- * guess, and the reveal.
+ * the impostor's card without the word, the vote (a "not sure" among it),
+ * the caught impostor's guess, the reveal and why an impostor got away, and
+ * the start in the learner's own Kurdish.
  */
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -112,6 +114,7 @@ describe('ImpostorScreen', () => {
     cleanup();
     forgetPartyOffers();
     forgetImpostorCategories();
+    resetCourseDialect();
   });
 
   it('says plainly where it is not offered, and explains the game where it is', async () => {
@@ -206,6 +209,21 @@ describe('ImpostorScreen', () => {
     expect(await screen.findByText('You voted for Rojda')).toBeTruthy();
   });
 
+  it('lets a player who cannot tell say so: a vote for nobody, that still counts as theirs', async () => {
+    const voting = { phase: 'vote', turn: null, yourTurn: false, yourVote: true, vote: { startedAt: iso(-1_000), endsAt: iso(40_000), voted: [], mine: null } };
+    const client = fakeClient({
+      ...quiet,
+      'GET /mp/impostor/g1': ok(active(voting)),
+      'POST /mp/impostor/g1/moves': ok({ view: active({ ...voting, yourVote: false, vote: { ...voting.vote, voted: [1], mine: 0 } }), outcome: { kind: 'vote', seat: 0 } }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<ImpostorScreen id="g1" onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'I’m not sure' }));
+    await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path.endsWith('/moves'))?.body).toEqual({ vote: 0 }));
+    expect(await screen.findByText('You said you’re not sure')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Vote for/ })).toBeNull();
+  });
+
   it('lets the caught impostor guess from four words', async () => {
     const guessing = active({
       phase: 'guess',
@@ -252,7 +270,60 @@ describe('ImpostorScreen', () => {
     expect(screen.getByText('The impostor slipped away.')).toBeTruthy();
     expect(screen.getByLabelText('Rojda: Impostor')).toBeTruthy();
     expect(screen.getByLabelText('Baran: pisîk')).toBeTruthy();
-    expect(screen.getByText('You voted for Baran')).toBeTruthy();
+    // the viewer's own vote reads with their name, as everyone else's does
+    expect(screen.getByText('rojda voted for Baran')).toBeTruthy();
     expect(screen.getByText('Points: 3')).toBeTruthy();
+  });
+
+  it('says why the impostor got away: the table voted out someone else, or the votes were tied', async () => {
+    const escaped = (accused: { seat: number; votes: number } | null, escape: string, votes: Array<{ seat: number; for: number | null }>) =>
+      ok(
+        room({
+          status: 'finished',
+          code: null,
+          players,
+          results: [1, 2, 3, 4].map((s) => ({ seat: s, place: s === 2 ? 1 : 2, score: s === 2 ? 3 : 0, xpAwarded: 15 })),
+          board: board({
+            phase: 'reveal',
+            turn: null,
+            yourTurn: false,
+            endedBy: 'escaped',
+            accused,
+            reveal: { impostor: 2, word: 'pisîk', meanings: { en: 'cat' }, caught: false, guessed: null, guessedRight: false, votes, escape },
+          }),
+        }),
+      );
+    testAuth.client = fakeClient({ ...quiet, 'GET /mp/impostor/g1': escaped({ seat: 3, votes: 2 }, 'wrong-out', [{ seat: 1, for: 3 }, { seat: 2, for: 3 }, { seat: 3, for: 0 }, { seat: 4, for: null }]) });
+    renderWithProviders(<ImpostorScreen id="g1" onExit={() => undefined} />);
+    expect(await screen.findByText('The players voted out Baran, but they weren’t the impostor.')).toBeTruthy();
+    expect(screen.getByText('The impostor slipped away.')).toBeTruthy();
+    // a vote of "not sure" is said as one, and a vote never cast as that
+    expect(screen.getByText('Baran wasn’t sure')).toBeTruthy();
+    expect(screen.getByText('Player 4 didn’t vote')).toBeTruthy();
+    cleanup();
+
+    testAuth.client = fakeClient({ ...quiet, 'GET /mp/impostor/g1': escaped(null, 'tie', [{ seat: 1, for: 3 }, { seat: 3, for: 1 }]) });
+    renderWithProviders(<ImpostorScreen id="g1" onExit={() => undefined} />);
+    expect(await screen.findByText('The votes were tied.')).toBeTruthy();
+  });
+
+  it('shows the categories of the learner’s own Kurdish on the start, where the game is offered in it', async () => {
+    rememberCourseDialect('ckb');
+    testAuth.client = fakeClient({
+      ...quiet,
+      'GET /games/availability?dialect=kmr': ok({ dialect: 'kmr', games: [{ id: 'impostor', available: true, difficulties: ['beginner'], levels: {}, levelled: true, minimum: 12 }] }),
+      'GET /games/availability?dialect=ckb': ok({ dialect: 'ckb', games: [{ id: 'impostor', available: true, difficulties: ['beginner'], levels: {}, levelled: true, minimum: 12 }] }),
+      'GET /games/impostor/couch?dialect=kmr': ok({
+        dialect: 'kmr',
+        difficulties: [{ difficulty: 'beginner', cards: 16, categories: [{ slug: 'animals', ku: 'heywan', meanings: { en: 'animal' }, cards: 8 }] }],
+      }),
+      'GET /games/impostor/couch?dialect=ckb': ok({
+        dialect: 'ckb',
+        difficulties: [{ difficulty: 'beginner', cards: 16, categories: [{ slug: 'animals', ku: 'ئاژەڵ', meanings: { en: 'animal' }, cards: 8 }] }],
+      }),
+    });
+    renderWithProviders(<ImpostorScreen onExit={() => undefined} />);
+    expect(await screen.findByRole('button', { name: 'ئاژەڵ · animal' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'heywan · animal' })).toBeNull();
   });
 });

@@ -249,3 +249,199 @@ describe('Peyvok and the keyboard in front of you', () => {
     expect(screen.getByRole('tab', { name: 'Hard' })).toHaveAttribute('aria-selected', 'true');
   });
 });
+
+/*
+ * The quiet Share under the result, as the phone's game has: the grid of
+ * squares with the score over it and the site's address under it. Squares and
+ * counts only, so neither a guess nor the word is in it.
+ */
+describe('Peyvok’s result, shared', () => {
+  const SITE = window.location.origin;
+
+  /** A device with a share sheet, and a game answered by `daily` or `practice`. */
+  function open(games: { daily?: unknown; practice?: unknown }): () => string {
+    const share = vi.fn(async (_data: ShareData) => undefined);
+    vi.stubGlobal('navigator', { ...navigator, share, clipboard: navigator.clipboard });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/wordle/daily')) return jsonResponse(200, games.daily ?? startedGame);
+        if (url.includes('/wordle/practice')) return jsonResponse(200, games.practice ?? startedGame);
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'u-4471', username: 'rojda', emailVerified: true } });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+    return () => (share.mock.calls[0]?.[0] as ShareData | undefined)?.text ?? '';
+  }
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('shares the day’s word as its score, its guesses as rows of fruit and the game’s address', async () => {
+    const said = open({ daily: wonGame });
+    await screen.findByText(/solved it/i);
+    const share = screen.getByRole('button', { name: 'Share' });
+    expect(share).toHaveClass('btn-secondary');
+    await userEvent.click(share);
+    expect(said()).toBe(`Hevalo Peyvok (Medium) 1/6\n\n🍏🍏🍏\n\n${SITE}/win/peyvok`);
+  });
+
+  it('gives nothing of the word away, and nothing of who played', async () => {
+    const said = open({ daily: wonGame });
+    await screen.findByText(/solved it/i);
+    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
+    const text = said();
+    expect(text.length).toBeGreaterThan(0);
+    // "kar" was the guess and the word
+    expect(text).not.toMatch(/kar/i);
+    for (const theirs of ['rojda', 'u-4471', '/users/', '@']) expect(text).not.toContain(theirs);
+    // one address, and it is the word game's own page, which is about nobody
+    expect(text.match(/https?:\/\/\S+/g)).toEqual([`${SITE}/win/peyvok`]);
+  });
+
+  it('shares a practice word that was not found the same way, with an X for the score, under the way to play again', async () => {
+    const miss = { guess: 'mal', letters: ['m', 'a', 'l'], feedback: ['gray', 'green', 'gray'] };
+    const lostGame = { ...startedGame, mode: 'practice', difficulty: 'hard', status: 'lost', guesses: Array.from({ length: 6 }, () => miss), remainingAttempts: 0, target: 'kar', xpAwarded: 0 };
+    localStorage.setItem('hevalo_peyvok_choice', JSON.stringify({ mode: 'practice', difficulty: 'hard' }));
+    const said = open({ practice: lostGame });
+    await screen.findByText(/out of tries/i);
+    // playing again stays the result's main button, and Share comes after it
+    const again = screen.getByRole('button', { name: 'Play again' });
+    const share = screen.getByRole('button', { name: 'Share' });
+    expect(again).toHaveClass('btn-primary');
+    expect(again.compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await userEvent.click(share);
+    expect(said()).toBe(`Hevalo Peyvok Practice (Hard) X/6\n\n${Array.from({ length: 6 }, () => '⚪🍏⚪').join('\n')}\n\n${SITE}/win/peyvok`);
+    expect(said()).not.toMatch(/kar/i);
+  });
+
+  it('offers no Share while the game is still being played', async () => {
+    open({ daily: startedGame });
+    await screen.findByRole('button', { name: 'k' });
+    expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
+  });
+});
+
+/*
+ * The result names the word and what it means, in the reader's language, from
+ * the word card for exactly that word; and Save to vocabulary saves it by the
+ * game, so the server keeps the word the game was about and counts it once.
+ */
+describe('Peyvok’s word, once the game is over', () => {
+  const card = { entryId: 'e-kar', meanings: { en: 'work', ku: 'kar', de: 'Arbeit' }, saved: false };
+
+  it('shows what the word means in the reader’s language, and saves it to the vocabulary by the game', async () => {
+    localStorage.setItem('hevalo_locale', 'de');
+    const saved: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/wordle/games/w1/save') && init?.method === 'POST') {
+          saved.push(url.slice(url.indexOf('/wordle/')));
+          return jsonResponse(200, { saved: true, scheduled: true, wordsLearned: 4 });
+        }
+        if (url.includes('/wordle/daily')) return jsonResponse(200, { ...wonGame, word: card });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+
+    expect(await screen.findByText('Arbeit')).toBeInTheDocument();
+    // the German words arrive with their catalogue, a moment after the page
+    const save = await screen.findByRole('button', { name: 'Zum Wortschatz hinzufügen' });
+    expect(save).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(save);
+
+    expect(saved).toEqual(['/wordle/games/w1/save']);
+    const done = await screen.findByRole('button', { name: 'Zum Wortschatz hinzugefügt' });
+    expect(done).toHaveAttribute('aria-pressed', 'true');
+    expect(done).toBeDisabled();
+  });
+
+  it('opens a word saved before as saved, and falls back to English where the reader’s language has no meaning', async () => {
+    localStorage.setItem('hevalo_locale', 'nl');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/wordle/daily')) return jsonResponse(200, { ...wonGame, word: { ...card, saved: true } });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+
+    expect(await screen.findByText('work')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Toegevoegd aan je woordenschat' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('never gives the word as its own meaning: a Kurmancî reader is shown the English instead', async () => {
+    localStorage.setItem('hevalo_locale', 'ku');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/wordle/daily')) return jsonResponse(200, { ...wonGame, word: card });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+
+    expect(await screen.findByText('work')).toBeInTheDocument();
+    expect(document.querySelector('.wg-answer-meaning')).toHaveTextContent('work');
+  });
+
+  it('names a word that was not found, with no meaning nobody wrote and no Save without a dictionary entry', async () => {
+    const miss = { guess: 'mal', letters: ['m', 'a', 'l'], feedback: ['gray', 'green', 'gray'] };
+    const lostGame = { ...startedGame, status: 'lost', guesses: Array.from({ length: 6 }, () => miss), remainingAttempts: 0, target: 'kar', xpAwarded: 0 };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/wordle/daily')) return jsonResponse(200, { ...lostGame, word: { entryId: null, meanings: {}, saved: false } });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+
+    expect(await screen.findByText(/out of tries\. the word was kar\./i)).toBeInTheDocument();
+    expect(document.querySelector('.wg-answer-word')).toHaveTextContent('kar');
+    expect(document.querySelector('.wg-answer-meaning')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save to vocabulary' })).toBeNull();
+  });
+
+  it('says why a save did not land, under the button, and keeps the button to try again', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/wordle/games/w1/save') && init?.method === 'POST') return jsonResponse(404, { code: 'NOT_FOUND', message: 'no such game' });
+        if (url.includes('/wordle/daily')) return jsonResponse(200, { ...wonGame, word: card });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Save to vocabulary' }));
+    expect(await screen.findByRole('status')).toHaveTextContent(/.+/);
+    expect(screen.getByRole('button', { name: 'Save to vocabulary' })).toBeEnabled();
+  });
+
+  it('shows the game of the chip pressed last, even when the one before it answers after it', async () => {
+    // every difficulty has its own daily now: a slow answer for Medium must not land under Hard
+    let answerMedium: (r: Response) => void = () => undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/wordle/daily')) {
+          const { difficulty } = JSON.parse(String(init?.body)) as { difficulty: string };
+          if (difficulty === 'medium') return new Promise<Response>((resolve) => (answerMedium = resolve));
+          return jsonResponse(200, { ...startedGame, id: 'w-hard', difficulty: 'hard', targetLength: 6 });
+        }
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+
+    await userEvent.click(await screen.findByRole('tab', { name: 'Hard' }));
+    await waitFor(() => expect(screen.getAllByRole('group', { name: 'Guess 1' })[0]!.children).toHaveLength(6));
+    answerMedium(jsonResponse(200, { ...startedGame, targetLength: 5 }));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.getAllByRole('group', { name: 'Guess 1' })[0]!.children).toHaveLength(6);
+  });
+});

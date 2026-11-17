@@ -15,6 +15,7 @@ import { makePurgeGuestsJob } from './guest-jobs.js';
 import { makeWalletReconcileJob } from './wallet-jobs.js';
 import { WalletReconciler } from '../wallet/reconcile.js';
 import { makePushSendJob } from './push-jobs.js';
+import { letterPushStillNews } from '../letters/notice.js';
 import { PushService } from '../push/service.js';
 import { DeviceTokenService } from '../push/tokens-service.js';
 import { createPushProvider } from '../push/provider.js';
@@ -70,13 +71,19 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
       createPushProvider(config, log),
       new NotificationPrefsService(pool),
     );
-    registry.register(makePushSendJob(push, new InboxService(pool)));
+    const queue = config.REDIS_URL ? JobQueue.create(config) : null;
+    // a letter's push that quiet hours hold back is queued again for when they end, and goes then only if the letter still waits
+    registry.register(
+      makePushSendJob(push, new InboxService(pool), {
+        later: queue ? async (payload, delayMs, key) => void (await queue.enqueue(makePushSendJob(push), payload, { delayMs, idempotencyKey: key })) : undefined,
+        stillNews: letterPushStillNews(pool),
+      }),
+    );
     // the league week (Monday's settle, Wednesday's merge) and the badges'
     // nightly rarity and daily push. Promotion news goes back through the
     // queue as ordinary pushes; a badge a settle unlocks is celebrated on the
     // API instances, told over the room bus
     const redis = config.REDIS_URL ? createRedis(config) : undefined;
-    const queue = config.REDIS_URL ? JobQueue.create(config) : null;
     const inbox = new InboxService(pool);
     const bus = redis ? new RedisRoomPublisher(redis) : null;
     const { leagues, badges } = createProgression(pool, {

@@ -38,6 +38,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { PlayWithButton } from '../play/PlayWithButton';
 import { useAnnouncer } from '../stories/ui';
+import { useDirection } from '../reports/direction';
 import { TicketSlip } from './FriendTicket';
 
 interface Profile {
@@ -109,6 +110,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  // in Soranî and Arabic the numbers start on the right, as the reading does
+  const dir = useDirection();
   const { width: windowWidth } = useWindowDimensions();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
@@ -188,7 +191,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   );
 
   const block = useCallback(() => {
-    Alert.alert(t('moderation.blockWhoTitle', { name: profile?.username ?? '' }), t('moderation.blockNote'), [
+    // named as the menu over it names them: the name they chose, else their handle
+    Alert.alert(t('moderation.blockWhoTitle', { name: profile?.displayName ?? profile?.username ?? '' }), t('moderation.blockNote'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('moderation.block'),
@@ -227,7 +231,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
     });
   }, [profile, name, share, act, block, t]);
   // nothing to end, report or block about yourself
-  const menu = profile && profile.friendStatus !== 'self' ? <HeaderButton icon="more" label={t('moderation.moreAbout', { name })} onPress={more} edge="end" testID="profile-more" /> : null;
+  const menu = profile && profile.friendStatus !== 'self' ? <HeaderButton icon="more" label={t('moderation.moreAbout', { name })} onPress={more} testID="profile-more" /> : null;
 
   if (notFound) {
     return (
@@ -285,7 +289,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           </Text>
           <Text style={[styles.display, { color: colors.textSecondary }]}>{`@${profile.username}`}</Text>
           {!profile.private && profile.country ? (
-            <View style={styles.country}>
+            <View style={[styles.country, { flexDirection: dir.row }]}>
               <Image source={{ uri: flagUrl(profile.country) }} style={styles.flag} resizeMode="contain" accessibilityElementsHidden />
               <Text style={[styles.countryName, { color: colors.textSecondary }]}>{countryName(profile.country, locale) ?? profile.country}</Text>
             </View>
@@ -329,7 +333,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
 
           {profile.private ? null : (
             <>
-              <View style={styles.stats}>
+              <View style={[styles.stats, { flexDirection: dir.row }]}>
                 {/* grouped, and in the reader's own digits, as the same numbers are on their own profile */}
                 <Stat label={t('profile.streak')} value={formatNumber(profile.streak ?? 0, locale)} fire={fireLevel(profile.streak ?? 0)} />
                 <Stat label={t('profile.stat.xp')} value={formatNumber(profile.level?.xp ?? profile.xp ?? 0, locale)} />
@@ -427,9 +431,10 @@ function Header({ onExit, right }: { onExit: () => void; right?: React.ReactNode
 /** A number and what it counts; `fire` puts the streak's fire before it, as big as their streak has grown it. */
 function Stat({ label, value, fire }: { label: string; value: string; fire?: FireLevel }) {
   const { colors } = useTheme();
+  const dir = useDirection();
   return (
     <View style={styles.stat}>
-      <View style={styles.statValueRow}>
+      <View style={[styles.statValueRow, { flexDirection: dir.row }]}>
         {fire ? <Fire size={18} level={fire} /> : null}
         <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
       </View>

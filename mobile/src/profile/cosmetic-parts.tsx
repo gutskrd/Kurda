@@ -4,6 +4,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { useDirection } from '../reports/direction';
 import type { ProfileBackground, ProfileIcon } from './types';
 
 /**
@@ -100,17 +101,23 @@ export function GiftedNote({
 }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const notes: string[] = [];
   if (background?.giftedBy) notes.push(t('profile.backgroundGiftedBy', { name: background.giftedBy.username }));
   if (icon?.giftedBy) notes.push(t('profile.iconGiftedBy', { name: icon.giftedBy.username }));
   if (notes.length === 0) return null;
 
+  /*
+   * A quiet line, its mark in the line's own grey: a gift is not something
+   * earned, which is what gold is kept for. Right to left, the mark leads on
+   * the right.
+   */
   return (
     <View style={styles.gifts}>
       {notes.map((text) => (
-        <View key={text} style={styles.gift}>
-          <Icon name="gem" size={14} color={colors.gold} />
-          <Text style={[styles.giftText, { color: colors.textSecondary }]}>{text}</Text>
+        <View key={text} style={[styles.gift, { flexDirection: dir.row }]}>
+          <Icon name="gift" size={14} color={colors.textSecondary} />
+          <Text style={[styles.giftText, dir.text, { color: colors.textSecondary }]}>{text}</Text>
         </View>
       ))}
     </View>
@@ -153,7 +160,7 @@ const styles = StyleSheet.create({
   premium: { borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
   premiumText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 0.5 },
   gifts: { gap: 2, marginTop: spacing.xs },
-  gift: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  gift: { alignItems: 'center', gap: spacing.xs },
   giftText: { fontSize: typography.sizes.xs },
   favorite: { alignSelf: 'stretch', gap: 2, marginTop: spacing.md },
   favoriteLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5 },

@@ -262,6 +262,19 @@ describe('Xapînok, the room', () => {
     expect(await screen.findByText('You voted for Rojda')).toBeInTheDocument();
   });
 
+  it('lets a player who cannot tell say so: a vote for nobody, that still counts as theirs', async () => {
+    const voting = { phase: 'vote', turn: null, yourTurn: false, yourVote: true, vote: { startedAt: iso(-1_000), endsAt: iso(40_000), voted: [], mine: null } };
+    const calls = serve({
+      '/mp/impostor/g1': active(voting),
+      'POST /mp/impostor/g1/moves': { view: active({ ...voting, yourVote: false, vote: { ...voting.vote, voted: [1], mine: 0 } }), outcome: { kind: 'vote', seat: 0 } },
+    });
+    renderPlay(<Impostor />, { route: '/app/games/impostor?id=g1' });
+    await userEvent.click(await screen.findByRole('button', { name: 'I’m not sure' }));
+    await waitFor(() => expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/moves'))?.body).toEqual({ vote: 0 }));
+    expect(await screen.findByText('You said you’re not sure')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Vote for/ })).toBeNull();
+  });
+
   it('gives the caught impostor four words to guess from, and the others the same to watch', async () => {
     const guessing = (mine: boolean) =>
       active({
@@ -313,9 +326,58 @@ describe('Xapînok, the room', () => {
     const cards = screen.getAllByRole('list', { name: 'The table' })[0]!;
     expect(within(cards).getByText('Impostor')).toBeInTheDocument();
     expect(within(cards).getAllByText('pisîk')).toHaveLength(3);
-    expect(screen.getByText('You voted for Rojda')).toBeInTheDocument();
+    // the viewer's own vote reads with their name, as everyone else's does
+    expect(await screen.findByText('Ada voted for Rojda')).toBeInTheDocument();
     expect(screen.getByText('Rojda didn’t vote')).toBeInTheDocument();
     expect(screen.getByText('no clue')).toBeInTheDocument();
     expect(within(screen.getByRole('list', { name: 'Results' })).getAllByText('Points: 3')).toHaveLength(2);
+  });
+
+  it('says why the impostor got away: the table voted out someone else, or the votes were tied', async () => {
+    const escaped = (accused: { seat: number; votes: number } | null, escape: string, votes: Array<{ seat: number; for: number | null }>) =>
+      room({
+        status: 'finished',
+        code: null,
+        players,
+        results: [1, 2, 3, 4].map((s) => ({ seat: s, place: s === 2 ? 1 : 2, score: s === 2 ? 3 : 0, xpAwarded: 15 })),
+        board: board({
+          phase: 'reveal',
+          turn: null,
+          yourTurn: false,
+          endedBy: 'escaped',
+          accused,
+          reveal: { impostor: 2, word: 'pisîk', meanings: { en: 'cat' }, caught: false, guessed: null, guessedRight: false, votes, escape },
+        }),
+      });
+    serve({ '/mp/impostor/g1': escaped({ seat: 3, votes: 2 }, 'wrong-out', [{ seat: 1, for: 3 }, { seat: 2, for: 3 }, { seat: 3, for: 0 }, { seat: 4, for: 1 }]) });
+    const first = renderPlay(<Impostor />, { route: '/app/games/impostor?id=g1' });
+    expect(await screen.findByText('The players voted out Baran, but they weren’t the impostor.')).toBeInTheDocument();
+    expect(screen.getByText('The impostor slipped away.')).toBeInTheDocument();
+    // a vote of "not sure" is said as one
+    expect(screen.getByText('Baran wasn’t sure')).toBeInTheDocument();
+    first.unmount();
+
+    serve({ '/mp/impostor/g1': escaped(null, 'tie', [{ seat: 1, for: 3 }, { seat: 3, for: 1 }]) });
+    renderPlay(<Impostor />, { route: '/app/games/impostor?id=g1' });
+    expect(await screen.findByText('The votes were tied.')).toBeInTheDocument();
+  });
+});
+
+describe('Xapînok, in the learner’s own Kurdish', () => {
+  it('shows the categories of the learner’s own Kurdish on the start, where the game is offered in it', async () => {
+    localStorage.setItem('hevalo.learn.courseDialect', 'sorani');
+    serve({
+      ...offered(true),
+      '/games/availability?dialect=ckb': { dialect: 'ckb', games: [{ id: 'impostor', available: true, difficulties: ['beginner'], levels: {}, levelled: true, minimum: 12 }] },
+      ...categories,
+      '/games/impostor/couch?dialect=ckb': {
+        dialect: 'ckb',
+        difficulties: [{ difficulty: 'beginner', cards: 16, categories: [{ slug: 'animals', ku: 'ئاژەڵ', meanings: { en: 'animal' }, cards: 8 }] }],
+      },
+    });
+    renderPlay(<Impostor />, { route: '/app/games/impostor' });
+    const shelf = await screen.findByRole('region', { name: 'Categories' });
+    expect(within(shelf).getByText('ئاژەڵ')).toHaveAttribute('lang', 'ckb');
+    expect(within(shelf).queryByText('heywan')).toBeNull();
   });
 });

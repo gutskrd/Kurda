@@ -52,8 +52,8 @@ describe('checking a player’s word', () => {
   ]);
 
   it('finds a word letter for letter, ê not being e', async () => {
-    expect(await checkWord(db, 'kmr', 'sêv')).toEqual({ found: true, meaning: 'apple' });
-    expect(await checkWord(db, 'kmr', 'sev')).toEqual({ found: true, meaning: null });
+    expect(await checkWord(db, 'kmr', 'sêv')).toEqual({ found: true, meaning: 'apple', meanings: { en: 'apple' }, spelling: null });
+    expect(await checkWord(db, 'kmr', 'sev')).toEqual({ found: true, meaning: null, meanings: null, spelling: null });
   });
 
   it('refuses a proper noun, a part of speech a chain does not take, and a word that is not there', async () => {
@@ -72,11 +72,46 @@ describe('checking a player’s word', () => {
   });
 
   it('finds a Soranî word the dictionary keeps in Kurdish letters', async () => {
-    expect(await checkWord(db, 'ckb', 'ھاتن')).toEqual({ found: true, meaning: 'to come' });
+    expect(await checkWord(db, 'ckb', 'ھاتن')).toEqual({ found: true, meaning: 'to come', meanings: { en: 'to come' }, spelling: null });
   });
 
   it('never looks in the other dialect', async () => {
     expect((await checkWord(db, 'ckb', 'sêv')).found).toBe(false);
+  });
+});
+
+describe('a word typed with a mark left off', () => {
+  const db = dictionary([
+    { headword: 'keçik', dialect: 'kurmanji', in_games: true, senses: noun('girl') },
+    { headword: 'çay', dialect: 'kurmanji', in_games: true, senses: noun('tea') },
+    { headword: 'şîr', dialect: 'kurmanji', in_games: true, senses: noun('milk') },
+    { headword: 'sîr', dialect: 'kurmanji', in_games: true, senses: noun('garlic') },
+  ]);
+  const state = (chain: string[] = []): LastLetterState => {
+    const s = lastLetterRules.init({ dialect: 'kmr', turnSeconds: 30 }, [{ seat: 1, team: null, bot: null }, { seat: 2, team: null, bot: null }], {
+      now: 0,
+      seed: 's',
+    });
+    return { ...s, chain: chain.map((w) => ({ seat: 2, word: w, meaning: null, at: 0 })), turn: { seat: 1, n: 1, startedAt: 0, endsAt: 30_000 } };
+  };
+
+  it('names the one word it could be', async () => {
+    expect((await checkWord(db, 'kmr', 'kecik')).spelling).toBe('keçik');
+    const p = await lastLetterModule.prepare(db, state(), 1, { raw: { word: 'kecik' }, text: null });
+    expect(p.move).toEqual({ key: 'kecik', verdict: 'spelling', meaning: null, suggestion: 'keçik' });
+  });
+
+  it('names none when it could be two words, and the word is struck as not found', async () => {
+    expect((await checkWord(db, 'kmr', 'sir')).spelling).toBeNull();
+    expect((await lastLetterModule.prepare(db, state(), 1, { raw: { word: 'sir' }, text: null })).move.verdict).toBe('not-a-word');
+  });
+
+  it('looks for it when the first letter is the one asked for with its mark left off', async () => {
+    // after "hîç" the word begins with ç, and cay is çay without its mark
+    const p = await lastLetterModule.prepare(db, state(['hîç']), 1, { raw: { word: 'cay' }, text: null });
+    expect(p.move).toMatchObject({ verdict: 'spelling', suggestion: 'çay' });
+    // any other wrong letter is struck without asking the dictionary
+    expect((await lastLetterModule.prepare(db, state(['hîç']), 1, { raw: { word: 'kecik' }, text: null })).move.verdict).toBe('ok');
   });
 });
 
@@ -92,7 +127,7 @@ describe('preparing a move', () => {
 
   it('keeps what was typed with the move, and decides with the dictionary', async () => {
     const p = await lastLetterModule.prepare(db, state(), 1, { raw: { word: ' Mal ' }, text: null });
-    expect(p).toEqual({ move: { key: 'mal', verdict: 'ok', meaning: 'house' }, text: 'Mal' });
+    expect(p).toEqual({ move: { key: 'mal', verdict: 'ok', meaning: 'house', meanings: { en: 'house' } }, text: 'Mal' });
   });
 
   it('marks what is not one word, and a word on the profanity list as an offense', async () => {
@@ -125,8 +160,14 @@ describe('Hevalo', () => {
   it('plays only a curated word that fits and was not played, never a name', async () => {
     for (let i = 0; i < 10; i++) {
       const move = await hevaloWord(db, { ...after('mal', ['lal']), seed: `s${i}`, turn: { seat: 2, n: 1, startedAt: 0, endsAt: 2_000 } });
-      if (move) expect(move).toEqual({ key: 'lêv', verdict: 'ok', meaning: 'lip' });
+      if (move) expect(move).toEqual({ key: 'lêv', verdict: 'ok', meaning: 'lip', meanings: { en: 'lip' } });
     }
+  });
+
+  it('plays the letter before a soft ending', async () => {
+    // after "gulî" the word begins with l, not î
+    const move = await hevaloWord(db, after('gulî', ['lal']));
+    expect(move?.key).toBe('lêv');
   });
 
   it('cannot think of a word when none fits', async () => {
@@ -144,7 +185,7 @@ describe('what a game against Hevalo pays', () => {
 
 describe('the words the course teaches', () => {
   /** A dictionary with the course's published word cards beside it, and a count of how often the cards were read. */
-  function withCards(entries: Entry[], cards: Array<{ word: string; en: string | null }>) {
+  function withCards(entries: Entry[], cards: Array<{ word: string; meanings: Record<string, string> | null }>) {
     const dict = dictionary(entries) as unknown as { query: (sql: string, params: unknown[]) => Promise<{ rows: unknown[]; rowCount: number }> };
     const reads = { cards: 0 };
     const db = {
@@ -167,31 +208,51 @@ describe('the words the course teaches', () => {
   beforeEach(() => forgetCourseWords());
 
   it('takes a word a lesson teaches though the dictionary does not have it, with the lesson’s meaning', async () => {
-    const { db } = withCards([], [{ word: 'sêv', en: 'apple' }, { word: 'Azad', en: 'a name' }, { word: 'du peyv', en: 'two words' }]);
-    expect(await checkWord(db, 'kmr', 'sêv')).toEqual({ found: true, meaning: 'apple' });
+    const { db } = withCards(
+      [],
+      [
+        { word: 'sêv', meanings: { en: 'apple', de: 'Apfel', tr: 'elma' } },
+        { word: 'Azad', meanings: { en: 'a name' } },
+        { word: 'du peyv', meanings: { en: 'two words' } },
+      ],
+    );
+    // with every language the lesson gives it in
+    expect(await checkWord(db, 'kmr', 'sêv')).toEqual({ found: true, meaning: 'apple', meanings: { en: 'apple', de: 'Apfel', tr: 'elma' }, spelling: null });
     // a name is no word of the chain, and neither is anything that is not one word
-    expect(await checkWord(db, 'kmr', 'azad')).toEqual({ found: false, meaning: null });
-    expect(await checkWord(db, 'kmr', 'xewn')).toEqual({ found: false, meaning: null });
+    expect(await checkWord(db, 'kmr', 'azad')).toEqual({ found: false, meaning: null, meanings: null, spelling: null });
+    expect(await checkWord(db, 'kmr', 'xewn')).toEqual({ found: false, meaning: null, meanings: null, spelling: null });
+    // and a word the course teaches is the one meant when its marks were left off
+    expect((await checkWord(db, 'kmr', 'sev')).spelling).toBe('sêv');
   });
 
   it('shows the lesson’s meaning beside a word the dictionary has and nobody glossed for the games', async () => {
-    const { db } = withCards([{ headword: 'nan', dialect: 'kurmanji', in_games: false, senses: noun('bread, a kind of food made of flour, water and yeast, baked') }], [{ word: 'nan', en: 'bread' }]);
-    expect(await checkWord(db, 'kmr', 'nan')).toEqual({ found: true, meaning: 'bread' });
+    const { db } = withCards(
+      [{ headword: 'nan', dialect: 'kurmanji', in_games: false, senses: noun('bread, a kind of food made of flour, water and yeast, baked') }],
+      [{ word: 'nan', meanings: { en: 'bread', fr: 'pain', nl: 'een soort voedsel gemaakt van meel, water en gist, gebakken' } }],
+    );
+    // a meaning too long for a card is left out
+    expect(await checkWord(db, 'kmr', 'nan')).toEqual({ found: true, meaning: 'bread', meanings: { en: 'bread', fr: 'pain' }, spelling: null });
   });
 
   it('lets Hevalo play a word the course teaches when it has no curated word that fits', async () => {
-    const { db } = withCards([], [{ word: 'lêv', en: 'lip' }, { word: 'mal', en: 'house' }, { word: 'li', en: 'at' }]);
+    const { db } = withCards([], [{ word: 'lêv', meanings: { en: 'lip' } }, { word: 'mal', meanings: { en: 'house' } }, { word: 'li', meanings: { en: 'at' } }]);
     // after "mal" the word begins with l: "lêv" fits, "mal" is played and does not, "li" is too short for a turn to read as a word
-    for (let i = 0; i < 6; i++) expect(await hevaloWord(db, state('mal'))).toEqual({ key: 'lêv', verdict: 'ok', meaning: 'lip' });
+    for (let i = 0; i < 6; i++) expect(await hevaloWord(db, state('mal'))).toEqual({ key: 'lêv', verdict: 'ok', meaning: 'lip', meanings: { en: 'lip' } });
   });
 
   it('counts the course’s words with the dictionary’s, for checking words and for Hevalo', async () => {
-    const { db } = withCards([{ headword: 'av', dialect: 'kurmanji', in_games: true, senses: noun('water') }], [{ word: 'sêv', en: 'apple' }, { word: 'nan', en: 'bread' }]);
+    const { db } = withCards(
+      [{ headword: 'av', dialect: 'kurmanji', in_games: true, senses: noun('water') }],
+      [
+        { word: 'sêv', meanings: { en: 'apple' } },
+        { word: 'nan', meanings: { en: 'bread' } },
+      ],
+    );
     expect(await lastLetterCounts(db, 'kmr')).toEqual({ words: 3, hevalo: 3 });
   });
 
   it('reads the cards once a minute, not on every word somebody types', async () => {
-    const { db, reads } = withCards([], [{ word: 'sêv', en: 'apple' }]);
+    const { db, reads } = withCards([], [{ word: 'sêv', meanings: { en: 'apple' } }]);
     const now = Date.now();
     await courseWords(db, 'kmr', now);
     await courseWords(db, 'kmr', now + 30_000);

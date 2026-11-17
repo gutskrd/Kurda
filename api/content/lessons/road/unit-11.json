@@ -15,7 +15,7 @@
           "position": 1,
           "titleKu": "Karê te çi ye?",
           "titleEn": "What’s your job?",
-          "grammarMd": "**Karê te çi ye?** What’s your job? — **Ez cotkar im.** I’m a farmer. Many jobs are a word with an ending: *kar* work → **karker** worker, *dikan* shop → **dikandar** shopkeeper, *nan* bread → **nanpêj** baker.\n\n- To become is *bûn*: *Ez dixwazim bibim mamoste.* I want to become a teacher. · *Ew ê bibe nivîskar.* He will become a writer.",
+          "grammarMd": "**Karê te çi ye?** What’s your job? — **Ez cotkar im.** I’m a farmer. Many job names are a word plus an ending: *kar* work → **karker** worker, *dikan* shop → **dikandar** shopkeeper, *nan* bread → **nanpêj** baker.\n\n- To become is *bûn*: *Ez dixwazim bibim mamoste.* I want to become a teacher. · *Ew ê bibe nivîskar.* He will become a writer.",
           "lessons": [
             {
               "key": "u11s1l1",
@@ -1241,9 +1241,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Pêr hemşîreya me hemû selik şûştin, û Dapîr dew çêkir.",
+                    "say": "Pêr hemşîreya me hemû selik şûştin, û Dapîrê dew çêkir.",
                     "voice": "hamo",
-                    "prompt": "Pêr hemşîreya me hemû selik şûştin, û Dapîr dew çêkir.",
+                    "prompt": "Pêr hemşîreya me hemû selik şûştin, û Dapîrê dew çêkir.",
                     "accepted": [
                       "The day before yesterday our nurse washed all the baskets, and Dapîr made ayran.",
                       "Two days ago our nurse washed all the baskets, and Dapîr made ayran.",
@@ -2068,7 +2068,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Dapîr bi ezmûna xwe got ku biryareke wêrek ne şaş e.",
+                        "text": "Dapîrê bi ezmûna xwe got ku biryareke wêrek ne şaş e.",
                         "en": "Dapîr, with all her experience, said that a brave decision is never a wrong one."
                       },
                       {
@@ -2380,7 +2380,7 @@
           "position": 3,
           "titleKu": "Ji ber ku…",
           "titleEn": "Because…",
-          "grammarMd": "**Ez dibezim, ji ber ku ez dereng im.** I’m running because I’m late. **ji ber ku** and **çimkî** say why; **loma** and **ji ber vê yekê** say what follows: *Baran ditirse, loma ew dihizire.*\n\n- **lê** and **lêbelê** but, however · **hem … hem** both … and: *hem sêv hem tirî*\n- **bêyî ku** + the bi- form: *bêyî ku tiştekî bibêje* without saying anything",
+          "grammarMd": "**Ez dibezim, ji ber ku ez dereng im.** I’m running because I’m late. **ji ber ku** and **çimkî** say why; **loma** and **ji ber vê yekê** say what follows: *Baran ditirse, loma ew bêdeng e.* Baran is afraid, so he is quiet.\n\n- **lê** and **lêbelê** but, however · **hem … hem** both … and: *hem sêv hem tirî*\n- **bêyî ku** + the bi- form: *bêyî ku tiştekî bibêje* without saying anything",
           "lessons": [
             {
               "key": "u11s3l1",
@@ -2962,8 +2962,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Bi kurtî, wekî ku tu diaxivî? Ev eşkere ye, ez ji vê ditirsim!",
-                    "reference": "Bi kurtî, wekî ku tu diaxivî? Ev eşkere ye, ez ji vê ditirsim!"
+                    "prompt": "Wekî ku tu diaxivî? Bi kurtî, eşkere ye: ez ji vê yekê ditirsim!",
+                    "reference": "Wekî ku tu diaxivî? Bi kurtî, eşkere ye: ez ji vê yekê ditirsim!"
                   }
                 }
               ]
@@ -3114,9 +3114,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Me hemû êvarê bi gotarê re derbas kir, û Dapîr li ber meşkê guhdarî kir.",
+                    "say": "Me hemû êvarê bi gotarê re derbas kir, û Dapîrê li ber meşkê guhdarî kir.",
                     "voice": "hamo",
-                    "prompt": "Me hemû êvarê bi gotarê re derbas kir, û Dapîr li ber meşkê guhdarî kir.",
+                    "prompt": "Me hemû êvarê bi gotarê re derbas kir, û Dapîrê li ber meşkê guhdarî kir.",
                     "accepted": [
                       "We spent the whole evening on the talk, and Dapîr listened by the churn.",
                       "We spent all evening on the talk, and Dapîr listened from beside the churn.",
@@ -3210,7 +3210,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Û Hevalo bêdeng ma, û di dawiyê de çepik lêxist!",
+                        "text": "Û Hevalo bêdeng ma, û di dawiyê de wî çepik lêxistin!",
                         "en": "And Hevalo stayed quiet, and at the end he clapped!"
                       },
                       {
@@ -3234,7 +3234,7 @@
                         "en": "Yes, in Xezal’s lesson. He’ll try, and that’s all anyone can do."
                       }
                     ],
-                    "prompt": "Kê di dawiyê de çepik lêxist?",
+                    "prompt": "Kê di dawiyê de çepik lêxistin?",
                     "options": [
                       "Hevalo.",
                       "Bozo.",
@@ -3476,7 +3476,7 @@
                     "voice": "hamo",
                     "prompt": "Îro çi qewimî?",
                     "options": [
-                      "Baran gotara xwe xwend bêyî ku bigirî, û her kes çepik lêxist!",
+                      "Baran gotara xwe xwend bêyî ku bigirî, û her kesî çepik lêxistin!",
                       "Wane dest pê kiriye.",
                       "Ji ber vê yekê ez birçî me."
                     ],
@@ -3504,8 +3504,8 @@
                     "voice": "hamo",
                     "prompt": "Baran picked up his notebook and told his adventure at home, twice!",
                     "accepted": [
-                      "Baran defterê xwe hilgirt û serpêhatiya xwe li malê du caran vegot!",
-                      "Baran defterê xwe hilgirt, û serpêhatiya xwe li malê du caran vegot!"
+                      "Baran deftera xwe hilgirt û serpêhatiya xwe li malê du caran vegot!",
+                      "Baran deftera xwe hilgirt, û serpêhatiya xwe li malê du caran vegot!"
                     ]
                   }
                 },
@@ -3845,7 +3845,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîk dibistanê ye.",
+                    "say": "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
                     "voice": "hamo",
                     "new": [
                       {
@@ -3853,7 +3853,7 @@
                         "en": "place, spot"
                       }
                     ],
-                    "prompt": "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîk dibistanê ye.",
+                    "prompt": "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
                     "options": [
                       "Xezal’s place in Hewlêr is small, but it’s near the school.",
                       "Xezal’s house in Hewlêr is big, but it’s far from the school.",
@@ -3893,7 +3893,7 @@
                     "voice": "hamo",
                     "prompt": "Cihê Xezalê çawa ye?",
                     "options": [
-                      "Biçûk e, lê nêzîk dibistanê ye.",
+                      "Biçûk e, lê nêzîkî dibistanê ye.",
                       "Ew ê her Înê telefon bike.",
                       "Ew ji Amedê ye."
                     ],
@@ -4409,7 +4409,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Baran defterê xwe aniye, û Hêvî ji gur nîgeran e.",
+                        "text": "Baran deftera xwe aniye, û Hêvî ji gur nîgeran e.",
                         "en": "Baran has brought his notebook, and Hêvî is worried about the wolf."
                       },
                       {
@@ -4645,7 +4645,7 @@
                     "prompt": "Rehên te li ku ne?",
                     "options": [
                       "Li welatê min, û herwiha li vir.",
-                      "Li ser banê.",
+                      "Li ser banî.",
                       "Di sindoqê de."
                     ],
                     "correctIndex": 0

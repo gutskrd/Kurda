@@ -9,6 +9,8 @@ export interface LessonNode {
   title: string;
   /** finished by this learner — this version of the lesson or an earlier one */
   completed: boolean;
+  /** how many times they have finished it, replays included; absent on older responses */
+  times?: number;
 }
 
 export interface SkillNode {
@@ -24,6 +26,9 @@ export interface SkillNode {
    * optional so a map kept from before they were sent still reads.
    */
   lessons?: LessonNode[];
+  /** full rounds of its lessons played (its stars) and its ring's pieces filled (shared `topicRounds`); absent on older responses */
+  rounds?: number;
+  pieces?: number;
 }
 
 export interface CourseUnit {
@@ -32,6 +37,8 @@ export interface CourseUnit {
   skills: SkillNode[];
   /** the story that closes a chapter of the road, once learners can read it; absent on older responses */
   story?: { slug: string; title: string } | null;
+  /** its level in the course plan ('A1'), which the path groups units into sections by; null or absent where there is none */
+  level?: string | null;
 }
 
 /** The unit after the last one out, while it is being made; `recordedBy` names who records it (the road's are Hamo's). */

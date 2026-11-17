@@ -4,6 +4,7 @@ import { Pressable } from '../../theme/Pressable';
 import { fireSizeToFit, runFireLevel, runMoment } from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useI18n } from '../../i18n/I18nContext';
+import { formatNumber } from '../../i18n/format';
 import { springTo, timing } from '../../theme/animate';
 import { SoftGlow } from '../../theme/CelebrationParts';
 import { Fire } from '../../theme/Fire';
@@ -22,7 +23,7 @@ import { spacing, typography } from '../../theme/tokens';
  */
 export function RunLabel({ count, end }: { count: number; end: boolean }): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const reduce = useReducedMotion();
   const scale = useRef(new Animated.Value(1)).current;
   const was = useRef(count);
@@ -38,7 +39,7 @@ export function RunLabel({ count, end }: { count: number; end: boolean }): React
   return (
     <Animated.View style={[styles.label, end ? styles.labelEnd : styles.labelStart, { transform: [{ scale }] }]} testID="lesson-in-a-row">
       <Fire size={16} level={runFireLevel(count)} />
-      <Text style={[styles.labelText, { color: colors.goldText }]}>{t('lesson.inARow', { count })}</Text>
+      <Text style={[styles.labelText, { color: colors.goldText }]}>{t('lesson.inARow', { count: formatNumber(count, locale) })}</Text>
     </Animated.View>
   );
 }
@@ -56,13 +57,13 @@ const RUN_FIRE = fireSizeToFit('blaze', 200, 200);
  */
 export function RunMoment({ count, onDone }: { count: number; onDone: () => void }): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const reduce = useReducedMotion();
   const [fire] = useState(() => runMoment(count));
   const p = useRef(new Animated.Value(0)).current;
   const done = useRef(onDone);
   done.current = onDone;
-  const words = t('lesson.run.milestone', { count });
+  const words = t('lesson.run.milestone', { count: formatNumber(count, locale) });
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(words);

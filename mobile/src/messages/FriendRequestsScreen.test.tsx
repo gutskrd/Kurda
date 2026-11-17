@@ -69,6 +69,15 @@ describe('friend requests', () => {
 });
 
 describe('friend requests, as friendship tickets', () => {
+  // somebody with no name of their own is named once, by their handle, and shown with their own picture
+  it('says who is asking once, with the face they have everywhere else', async () => {
+    open({ 'GET /friends/requests': ok({ requests: [{ userId: 'u3', username: 'rojin', avatarUrl: 'https://hevalo.app/cosmetics/avatars/default-01.png' }] }) });
+    expect(await screen.findByText('Wants to be friends')).toBeTruthy();
+    expect(screen.getAllByText('rojin')).toHaveLength(1);
+    expect(screen.queryByText('rojin wants to be friends')).toBeNull();
+    expect(document.querySelector('img[src="https://hevalo.app/cosmetics/avatars/default-01.png"]')).toBeTruthy();
+  });
+
   it('shows who wants to be friends, and stamps an accepted one "Friends" before it leaves', async () => {
     let posted = '';
     open({

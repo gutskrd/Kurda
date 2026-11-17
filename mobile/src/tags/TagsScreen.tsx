@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import { Toggle } from '../theme/Toggle';
+import { ToggleRow } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -21,7 +21,7 @@ import { EmptyState } from '../theme/EmptyState';
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * Tags & badges management (KUR-287): shows the user's effective main tag +
+ * Tags (KUR-287): shows the user's effective main tag +
  * claimable/auto tags, lets them claim self-claim tags (sensitive ones require
  * explicit consent, #109), show/hide claimed tags, and revoke them. Purchase
  * tags (e.g. Kurdish) link out to the Shop.
@@ -105,7 +105,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     [client, load],
   );
 
-  const header = <ScreenHeader title={t('tags.title')} onBack={onExit} />;
+  const header = <ScreenHeader title={t('tags.title')} onBack={onExit} browse />;
 
   const autos = profile ? profile.claimable.filter((t) => t.auto) : [];
   const toClaim = catalog ? claimableCatalog(catalog, claimed) : [];
@@ -150,14 +150,27 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             ) : (
               claimed.map((tag) => (
                 <View key={tag.key} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
-                  <View style={styles.rowMain}>
-                    <TagBadge label={tagLabel(tag)} />
-                    <Text style={[styles.sensitive, { color: colors.textSecondary }]}>
-                      {tag.displayed ? t('tags.shownOnProfile') : t('tags.hiddenStatus')}
-                      {tag.sensitive ? ` · ${t('tags.sensitive')}` : ''}
-                    </Text>
-                  </View>
-                  <Toggle value={tag.displayed} onValueChange={(v) => void toggleDisplay(tag, v)} accessibilityLabel={t('tags.showOnProfile', { tag: tag.label })} />
+                  {/* the tag and what it says turn the switch as well as the switch does: the words are the bigger target */}
+                  <ToggleRow
+                    label={t('tags.showOnProfile', { tag: tag.label })}
+                    hint={tag.sensitive ? t('tags.sensitive') : undefined}
+                    value={tag.displayed}
+                    onValueChange={(v) => void toggleDisplay(tag, v)}
+                    style={styles.rowSwitch}
+                  >
+                    {(toggle) => (
+                      <>
+                        <View style={styles.rowMain}>
+                          <TagBadge label={tagLabel(tag)} />
+                          <Text style={[styles.sensitive, { color: colors.textSecondary }]}>
+                            {tag.displayed ? t('tags.shownOnProfile') : t('tags.hiddenStatus')}
+                            {tag.sensitive ? ` · ${t('tags.sensitive')}` : ''}
+                          </Text>
+                        </View>
+                        {toggle}
+                      </>
+                    )}
+                  </ToggleRow>
                   {/*
                     Taking a tag off for good stands clear of the switch that
                     only hides it: a fingertip's square of its own, a gap away,
@@ -207,12 +220,17 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               maxLength={60}
             />
             {claiming.sensitive ? (
-              <View style={styles.consentRow}>
-                <Toggle value={consent} onValueChange={setConsent} />
-                <Text style={[styles.consentText, { color: colors.textSecondary }]}>
-                  {t('tags.sensitiveConsent')}
-                </Text>
-              </View>
+              // the sentence is what is agreed to, so it turns the switch too, and names it to a screen reader
+              <ToggleRow label={t('tags.sensitiveConsent')} value={consent} onValueChange={setConsent} style={styles.consentRow}>
+                {(toggle) => (
+                  <>
+                    {toggle}
+                    <Text style={[styles.consentText, { color: colors.textSecondary }]}>
+                      {t('tags.sensitiveConsent')}
+                    </Text>
+                  </>
+                )}
+              </ToggleRow>
             ) : null}
             <View style={styles.sheetActions}>
               <ClayButton label={t('common.cancel')} tone="neutral" onPress={() => setClaiming(null)} style={styles.flex} />
@@ -242,6 +260,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   buyBtn: { marginTop: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
+  rowSwitch: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   rowMain: { flex: 1, gap: 2 },
   remove: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.sm },
   sensitive: { fontSize: typography.sizes.xs },

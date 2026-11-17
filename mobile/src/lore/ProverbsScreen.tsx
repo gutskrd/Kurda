@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { isProverbTheme, type GameDialect, type ProverbList, type ProverbTheme, type ProverbView } from '@kurda/shared';
+import { PROVERB_ROUND_ITEMS, isProverbTheme, type GameDialect, type ProverbList, type ProverbTheme, type ProverbView } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { describeError } from '../api/errors';
@@ -98,9 +98,12 @@ export function ProverbsScreen({ dialect: asked, theme, onExit }: { dialect?: Ga
   } else if (list.proverbs.length === 0) {
     body = <Note icon="quotes">{t('lore.proverbs.empty', { variety: varietyName(dialect) })}</Note>;
   } else {
+    // a round is offered only when the server can build one: five proverbs, as the website asks
+    const roundable = list.proverbs.length >= PROVERB_ROUND_ITEMS;
     body = (
       <>
         {today ? <TodayProverb proverb={today} onOpen={() => open(today)} /> : null}
+        {roundable ? (
         <PressableScale
           onPress={() => navigation.navigate('ProverbRound', { dialect })}
           accessibilityRole="button"
@@ -118,6 +121,7 @@ export function ProverbsScreen({ dialect: asked, theme, onExit }: { dialect?: Ga
           </View>
           <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip ?? undefined} />
         </PressableScale>
+        ) : null}
 
         <View style={styles.group}>
           <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
@@ -145,7 +149,7 @@ export function ProverbsScreen({ dialect: asked, theme, onExit }: { dialect?: Ga
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('lore.proverbs.name')} onBack={onExit} />
+      <ScreenHeader title={t('lore.proverbs.name')} onBack={onExit} browse />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom + spacing.lg }]} showsVerticalScrollIndicator={false} refreshControl={pull}>
         <CollectionTitle kurmanci={PROVERBS_NAME} localized={t('lore.proverbs.name')} />
         <VarietySwitch value={dialect} onChange={switchDialect} />

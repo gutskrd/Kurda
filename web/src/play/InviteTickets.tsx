@@ -3,7 +3,7 @@ import type { PlayGame } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
 import { UsersIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
-import { Ticket } from '../ui/Ticket';
+import { Ticket, ticketToneClass } from '../ui/Ticket';
 
 /**
  * Asking friends into a game, as handing each of them a ticket (the invite
@@ -133,7 +133,7 @@ export function AdmitTray({
         people.map((p, i) => (
           <li key={p.id} className="admit-slot" data-id={p.id} style={fanStyle(i, people.length)}>
             <AdmitTicket game={game} person={p} className={flying ? 'is-flying' : returning.has(p.id) ? 'is-back' : undefined} />
-            {flying && <span className={`ticket-burst is-on ticket--${game}`} />}
+            {flying && <span className={`ticket-burst is-on ${ticketToneClass(game)}`} />}
           </li>
         ))
       )}
@@ -157,7 +157,7 @@ export function TicketsSent({ game, people, group }: { game: PlayGame; people: r
       : t('play.ticket.sentMany');
   return (
     <div className="admit-sent" role="status">
-      <div className={`admit-fan ticket--${game}`} aria-hidden="true">
+      <div className={`admit-fan ${ticketToneClass(game)}`} aria-hidden="true">
         {group ? (
           <div className="admit-dealt" style={fanStyle(0, 1)}>
             <GroupTicket game={game} name={group} pinned />

@@ -216,9 +216,13 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     expect(rebuilt.json().withoutRhymes).not.toContain(prompt);
   });
 
-  /** A one-letter word cannot share two final letters with anything but itself. */
-  it('gives a one-letter prompt no perfect rhymes', async () => {
-    const report = (await authed('GET', '/admin/dictionary/rhymes?word=a', editorToken)).json();
+  /**
+   * Soranî rhymes by its last two letters, and a one-letter word cannot share
+   * two with anything but itself. (Kurmancî rhymes by the rime instead, so a
+   * word that is one vowel rhymes with every word ending in it.)
+   */
+  it('gives a one-letter Soranî prompt no perfect rhymes', async () => {
+    const report = (await authed('GET', `/admin/dictionary/rhymes?word=${encodeURIComponent('و')}&dialect=sorani`, editorToken)).json();
     expect(report.total.perfect).toBe(0);
   });
 

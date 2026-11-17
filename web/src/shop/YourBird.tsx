@@ -9,6 +9,7 @@ import { Skeleton } from '../components/Skeleton';
 import { CheckIcon, ChevronIcon } from '../components/icons';
 import { BirdBadge } from '../letters/LetterParts';
 import { BIRD_NAMES } from '../letters/BirdPicker';
+import { LETTERS_HOME_PATH } from '../letters/useLettersHome';
 import { BuyConfirm } from './BuyConfirm';
 import './yours.css';
 
@@ -67,7 +68,8 @@ export function useLettersHome(): LettersHomeState {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    void client.get<LettersHome>('/letters').then((res) => {
+    // read as the window reads it: a plain read is an old app's, which takes the letter it would show as landed
+    void client.get<LettersHome>(LETTERS_HOME_PATH).then((res) => {
       if (cancelled) return;
       setLoading(false);
       if (res.ok) setData(isLettersHome(res.data) ? res.data : null);
@@ -174,7 +176,7 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
     // spent meanwhile, somewhere else: the Zêr there are now say how many are missing, and the dialog waits
     // for them; the same bird again is no change, and there is nothing to pay or to say
     if (res.error.code === 'INSUFFICIENT_FUNDS' || res.error.code === 'LETTER_BIRD_SAME') {
-      const again = await client.get<LettersHome>('/letters');
+      const again = await client.get<LettersHome>(LETTERS_HOME_PATH);
       setBusy(false);
       if (again.ok && isLettersHome(again.data)) {
         home.set(again.data);

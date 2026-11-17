@@ -5,6 +5,7 @@ import { preloadCatalogue } from './i18n/catalogues';
 import { applyTheme, watchSystemTheme } from './theme/theme';
 import { startArtOverrides } from './art/overrides';
 import { installPressFeedback } from './lib/press';
+import { watchOpeners } from './lib/opener';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -35,6 +36,8 @@ import './styles/ranks.css';
 import './styles/motion.css';
 // the shell's newer parts: the top bar and its menu, the bell, the five places' own pages
 import './styles/shell.css';
+// how far past its edges each control answers a press, after every control's own rules (lib/reach.ts)
+import './styles/reach.css';
 // Hevalo offline for a while: the screen in place of the app
 import './styles/maintenance.css';
 
@@ -61,6 +64,10 @@ watchSystemTheme();
 startArtOverrides();
 // a button shows pressed only for a real press, never for a finger that is scrolling (lib/press.ts)
 installPressFeedback();
+// where the last press was, so a dialog can grow out of what opened it (lib/opener.ts)
+watchOpeners();
+// while the page is being built, `?show-reach` in the address tints the area each control answers in (styles/reach.css)
+if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('show-reach')) document.documentElement.classList.add('show-reach');
 
 /*
  * The language before the app.

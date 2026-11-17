@@ -21,6 +21,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { Avatar } from '../components/Avatar';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 import type { SkillNode } from './types';
 
 /**
@@ -29,8 +30,8 @@ import type { SkillNode } from './types';
  * art/path-landmark.ts for the painted valley), as the phone draws it: each
  * unit's land under its stops with its road, the stretches walked so far in
  * warm dirt, the unit's landmark and its one small moving part, and the
- * learner's own picture standing on the stop to do now. The rail of units
- * beside the path is here too.
+ * learner's own picture standing on the stop to do now. The rail of units,
+ * in their sections, beside the path is here too.
  *
  * A unit far from the screen (`near` false) is only its ground's colour, so a
  * course of twelve units draws two or three lands at a time; the stylesheet
@@ -201,26 +202,6 @@ export function StopArt({ look, tone, dark, near }: { look: PathStopLook; tone: 
 export const STOP_ART_AT = { left: 36 - PATH_STOP_ART.cx, top: 30 - PATH_STOP_ART.cy, size: PATH_STOP_ART.box } as const;
 
 /**
- * The lights along the current stop's side, one for each of its lessons, lit
- * in gold as each is done; `moving` from `from` on, as a return from a lesson
- * shows it.
- */
-export function SideLights({ done, total }: { done: number; total: number }): React.JSX.Element | null {
-  const count = Math.min(total, 8);
-  if (count === 0) return null;
-  const gap = count > 1 ? Math.min(13, (2 * PATH_STOP_ART.rx - 22) / (count - 1)) : 0;
-  return (
-    <span className="lp-lights" aria-hidden="true">
-      {Array.from({ length: count }, (_, k) => {
-        const dx = (k - (count - 1) / 2) * gap;
-        const y = 30 + PATH_STOP_ART.ry * Math.sqrt(Math.max(0, 1 - (dx / PATH_STOP_ART.rx) ** 2)) + PATH_STOP_ART.raised / 2;
-        return <span key={k} className={`lp-light${k < done ? ' is-lit' : ''}`} style={{ left: 36 + dx - 4, top: y - 4, '--k': k } as React.CSSProperties} />;
-      })}
-    </span>
-  );
-}
-
-/**
  * The learner, standing on the stop to do now: their picture in a ring of the
  * unit's colour on a short stem. Coming back from a lesson that moved them
  * on, they hop there from the stop they finished (`hop`: how far across and
@@ -255,36 +236,54 @@ export interface RailUnit {
   here: boolean;
 }
 
+/** A section as the rail lists it: its number (null in a course of one section, which is not named), its level's plain name, and its units. */
+export interface RailSection {
+  number: number | null;
+  level: MessageKey | null;
+  units: RailUnit[];
+}
+
 /**
  * Every unit of the course as a milestone on a slim rail beside the path —
  * filled once the unit is done, ringed where the learner is — with its number
- * and its name; a press scrolls there. Sticky, so it is in reach however far
- * down the path the learner has scrolled; the stylesheet shows it only where
- * the page leaves room beside the path.
+ * and its name, under the name of its section where the course has more than
+ * one; a press opens its section and goes there. Sticky, so it is in reach
+ * however far down the path the learner has scrolled; the stylesheet shows it
+ * only where the page leaves room beside the path.
  */
-export function UnitRail({ units, onPick }: { units: RailUnit[]; onPick: (unitId: string) => void }): React.JSX.Element {
+export function UnitRail({ sections, onPick }: { sections: RailSection[]; onPick: (unitId: string) => void }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
+  const n = (v: number): string => new Intl.NumberFormat(locale).format(v);
   return (
     <nav className="lp-rail" aria-label={t('learn.openMap')}>
-      <ol>
-        {units.map((u) => {
-          const finished = u.total > 0 && u.done === u.total;
-          const number = t('coursemap.unit', { n: new Intl.NumberFormat(locale).format(u.number) });
-          return (
-            <li key={u.unitId} className={`lp-rail-unit lp-tone-${u.tone}${u.here ? ' is-here' : ''}${finished ? ' is-done' : ''}`}>
-              {/* its number and name said as one, as the unit's banner says them */}
-              <button type="button" onClick={() => onPick(u.unitId)} aria-current={u.here ? 'step' : undefined} aria-label={`${number}, ${u.title}`}>
-                <span className="lp-rail-dot" aria-hidden="true" />
-                <span className="lp-rail-words">
-                  <span className="lp-rail-number">{number}</span>
-                  <span className="lp-rail-title">{u.title}</span>
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
+      {sections.map((section, s) => (
+        <div key={section.number ?? s} className="lp-rail-section">
+          {section.number !== null && (
+            <p className="lp-rail-section-name">
+              {section.level ? `${t('coursemap.section', { n: n(section.number) })} · ${t(section.level)}` : t('coursemap.section', { n: n(section.number) })}
+            </p>
+          )}
+          <ol>
+            {section.units.map((u) => {
+              const finished = u.total > 0 && u.done === u.total;
+              const number = t('coursemap.unit', { n: n(u.number) });
+              return (
+                <li key={u.unitId} className={`lp-rail-unit lp-tone-${u.tone}${u.here ? ' is-here' : ''}${finished ? ' is-done' : ''}`}>
+                  {/* its number and name said as one, as the unit's heading says them */}
+                  <button type="button" onClick={() => onPick(u.unitId)} aria-current={u.here ? 'step' : undefined} aria-label={`${number}, ${u.title}`}>
+                    <span className="lp-rail-dot" aria-hidden="true" />
+                    <span className="lp-rail-words">
+                      <span className="lp-rail-number">{number}</span>
+                      <span className="lp-rail-title">{u.title}</span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ))}
     </nav>
   );
 }

@@ -3,6 +3,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { hueSteps } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { useI18n } from '../i18n/I18nContext';
@@ -26,7 +27,7 @@ const MOST = 20;
 
 /**
  * The row of faces at the top of the wall: you first, with a "+" to post
- * something, then your friends — those playing a game now with a gold ring,
+ * something, then your friends — those playing a game now with a warm ring,
  * those online with a green one, the rest as they are, the most recently
  * around first. A tap opens their profile.
  *
@@ -108,7 +109,7 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
           label={t('feed.friends.find')}
           spoken={t('feed.friends.find')}
           delay={entering(1)}
-          onPress={() => require('friends') && navigation.navigate('Tabs', { screen: 'Search' })}
+          onPress={() => require('friends') && navigation.navigate('Search')}
         >
           <View style={[styles.find, { backgroundColor: colors.controlTrack }]}>
             <Icon name="people" size={26} color={colors.textPrimary} />
@@ -129,10 +130,6 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
     </ScrollView>
   );
 }
-
-/** The warm ring round a friend who is playing now: the app's gold running into a coral. */
-const PLAYING_FROM = '#F5B400';
-const PLAYING_TO = '#F0533C';
 
 /**
  * A face springing in: from a little smaller, on the bouncy spring, `delay`
@@ -178,6 +175,13 @@ function Face({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const r = (CIRCLE - RING) / 2;
+  /*
+   * The warm ring round a friend who is playing now: orange running into
+   * pink, two of the shared hues. It was the app's gold running into a coral,
+   * and gold is kept for what is earned; being in a game is not.
+   */
+  const from = hueSteps(colors.scheme, 'orange').base;
+  const to = hueSteps(colors.scheme, 'pink').base;
   return (
     <Pressable
       onPress={onPress}
@@ -191,8 +195,8 @@ function Face({
           <Svg width={CIRCLE} height={CIRCLE} style={StyleSheet.absoluteFill} pointerEvents="none">
             <Defs>
               <LinearGradient id="playing" x1="0" y1="1" x2="1" y2="0">
-                <Stop offset="0" stopColor={PLAYING_FROM} />
-                <Stop offset="1" stopColor={PLAYING_TO} />
+                <Stop offset="0" stopColor={from} />
+                <Stop offset="1" stopColor={to} />
               </LinearGradient>
             </Defs>
             <Circle

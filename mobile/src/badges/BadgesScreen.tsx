@@ -15,9 +15,11 @@ import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
+import { useDirection } from '../reports/direction';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
+import { formatNumber } from '../i18n/format';
 import { Note, Sheet } from '../stories/ui';
 import { BadgeMedal } from '../ranks/art';
 import { useFreshBadges } from './BadgeCelebrationHost';
@@ -53,9 +55,10 @@ import { pressedDim } from '../theme/motion';
  * few nearest their next tier: people try hardest when a goal is close.
  */
 export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
+  const dir = useDirection();
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { width } = useWindowDimensions();
   const [data, setData] = useState<BadgesResponse | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -86,7 +89,7 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('badges.title')} onBack={onExit} />
+      <ScreenHeader title={t('badges.title')} onBack={onExit} browse />
       <AsyncBoundary loading={!data && !error} error={!data ? error : null} onRetry={load} skeleton={<BadgesSkeleton columns={columns} tile={tile} />}>
         {() =>
           data ? (
@@ -95,10 +98,10 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
               {nearest.length > 0 ? (
                 <View style={styles.family}>
-                  <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
+                  <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
                     {t('badges.nearest')}
                   </Text>
-                  <View style={styles.grid}>
+                  <View style={[styles.grid, { flexDirection: dir.row }]}>
                     {nearest.map((b) => (
                       <BadgeTile key={b.key} badge={b} width={tile} fresh={fresh.has(b.key)} onPress={() => setOpen(b)} />
                     ))}
@@ -108,23 +111,26 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
               {byFamily(data.badges).map((group) => (
                 <View key={group.family} style={styles.family}>
-                  <View style={styles.familyHead}>
-                    <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
+                  <View style={[styles.familyHead, { flexDirection: dir.row }]}>
+                    <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
                       {t(FAMILY_KEY[group.family])}
                     </Text>
                     <Text style={[styles.familyCount, { color: colors.textSecondary }]}>
-                      {t('badges.familyCount', { earned: group.badges.filter((b) => b.tier > 0).length, total: group.badges.length })}
+                      {t('badges.familyCount', {
+                        earned: formatNumber(group.badges.filter((b) => b.tier > 0).length, locale),
+                        total: formatNumber(group.badges.length, locale),
+                      })}
                     </Text>
                   </View>
                   {group.family === 'events' ? (
                     <MonthlyChallenge month={data.monthlyChallenge} />
                   ) : null}
                   {group.family === 'secret' ? (
-                    <Text style={[styles.secretLine, { color: colors.textSecondary }]}>
-                      {t('badges.secretsFound', { found: data.secretsFound, total: data.secretsTotal })}
+                    <Text style={[styles.secretLine, dir.text, { color: colors.textSecondary }]}>
+                      {t('badges.secretsFound', { found: formatNumber(data.secretsFound, locale), total: formatNumber(data.secretsTotal, locale) })}
                     </Text>
                   ) : null}
-                  <View style={styles.grid}>
+                  <View style={[styles.grid, { flexDirection: dir.row }]}>
                     {group.badges.map((b) => (
                       <BadgeTile key={b.key} badge={b} width={tile} fresh={fresh.has(b.key)} onPress={() => setOpen(b)} />
                     ))}
@@ -134,13 +140,13 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
               {data.legacy.length > 0 ? (
                 <View style={styles.family}>
-                  <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
+                  <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
                     {t('badges.legacy')}
                   </Text>
                   {data.legacy.map((l) => (
-                    <View key={l.key} style={[styles.legacy, { backgroundColor: colors.controlTrack }]}>
+                    <View key={l.key} style={[styles.legacy, { flexDirection: dir.row }, { backgroundColor: colors.controlTrack }]}>
                       <Icon name="trophy" size={20} color={colors.gold} />
-                      <Text style={[styles.legacyText, { color: colors.textPrimary }]}>{t('badges.legacy.tournamentWin')}</Text>
+                      <Text style={[styles.legacyText, dir.text, { color: colors.textPrimary }]}>{t('badges.legacy.tournamentWin')}</Text>
                     </View>
                   ))}
                 </View>
@@ -164,24 +170,43 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   );
 }
 
-/** The three on the profile, in their order, and the way to choose them. */
+/** A showcase place at its widest, the medal in it, and the round mark of an empty one. */
+const SLOT = 96;
+const SLOT_MEDAL = 84;
+const SLOT_EMPTY = 72;
+
+/**
+ * The three on the profile, in their order, and the way to choose them.
+ *
+ * Three to a row on any phone: each place a third of the row, at most the 96
+ * it is drawn at, with the medal sized to its place. They were 96 each
+ * whatever the width, which on a 360-point phone is wider than the card, and
+ * the third went off its edge.
+ */
 function Showcase({ data, onPick, onOpen }: { data: BadgesResponse; onPick: () => void; onOpen: (b: BadgeView) => void }): React.JSX.Element {
+  const dir = useDirection();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const [row, setRow] = useState(0);
+  const slot = row > 0 ? Math.min(SLOT, Math.floor(row / SHOWCASE_SIZE)) : SLOT;
+  const medal = Math.min(SLOT_MEDAL, slot - spacing.sm);
+  const empty = Math.min(SLOT_EMPTY, slot - spacing.sm * 2);
   const earned = data.badges.filter((b) => b.tier > 0).length;
   const chosen = data.showcase.map((k) => data.badges.find((b) => b.key === k)).filter((b): b is BadgeView => !!b);
   return (
     <GlassCard>
-      <View style={styles.showHead}>
+      <View style={[styles.showHead, { flexDirection: dir.row }]}>
         <View style={styles.flex}>
-          <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
+          <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
             {t('badges.showcase')}
           </Text>
-          <Text style={[styles.summary, { color: colors.textPrimary }]}>{t('badges.earnedCount', { count: earned, total: data.badges.length })}</Text>
+          <Text style={[styles.summary, dir.text, { color: colors.textPrimary }]}>
+            {t('badges.earnedCount', { count: formatNumber(earned, locale), total: formatNumber(data.badges.length, locale) })}
+          </Text>
         </View>
         <ClayButton label={t('badges.showcaseChoose')} variant="outline" onPress={onPick} disabled={earned === 0} />
       </View>
-      <View style={styles.slots}>
+      <View style={[styles.slots, { flexDirection: dir.row }]} onLayout={(e) => setRow(e.nativeEvent.layout.width)}>
         {Array.from({ length: SHOWCASE_SIZE }, (_, i) => {
           const b = chosen[i];
           if (!b) {
@@ -192,17 +217,17 @@ function Showcase({ data, onPick, onOpen }: { data: BadgesResponse; onPick: () =
                 disabled={earned === 0}
                 accessibilityRole="button"
                 accessibilityLabel={t('badges.showcaseEmpty')}
-                style={({ pressed }) => [styles.slot, { opacity: pressed ? pressedDim : 1 }]}
+                style={({ pressed }) => [styles.slot, { width: slot, opacity: pressed ? pressedDim : 1 }]}
               >
-                <View style={[styles.emptySlot, { backgroundColor: colors.controlTrack }]}>
+                <View style={[styles.emptySlot, { width: empty, height: empty, backgroundColor: colors.controlTrack }]}>
                   <Icon name="plus" size={20} color={colors.textSecondary} />
                 </View>
               </Pressable>
             );
           }
           return (
-            <PressableScale key={b.key} onPress={() => onOpen(b)} accessibilityRole="button" accessibilityLabel={badgeLabel(t, b)} style={styles.slot}>
-              <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={b.tierCount} size={84} label={badgeLabel(t, b)} shine="loop" />
+            <PressableScale key={b.key} onPress={() => onOpen(b)} accessibilityRole="button" accessibilityLabel={badgeLabel(t, b)} style={[styles.slot, { width: slot }]}>
+              <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={b.tierCount} size={medal} label={badgeLabel(t, b)} shine="loop" />
               <Text style={[styles.slotName, { color: colors.textPrimary }]} numberOfLines={1}>
                 {badgeName(t, b.key)}
               </Text>
@@ -210,21 +235,25 @@ function Showcase({ data, onPick, onOpen }: { data: BadgesResponse; onPick: () =
           );
         })}
       </View>
-      {earned === 0 ? <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('badges.showcaseNone')}</Text> : null}
+      {earned === 0 ? <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('badges.showcaseNone')}</Text> : null}
     </GlassCard>
   );
 }
 
 function MonthlyChallenge({ month }: { month: BadgesResponse['monthlyChallenge'] }): React.JSX.Element {
+  const dir = useDirection();
   const { colors, scheme } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const done = month.days >= month.goal;
   return (
     <View style={[styles.month, { backgroundColor: colors.controlTrack }]}>
-      <View style={styles.monthHead}>
+      <View style={[styles.monthHead, { flexDirection: dir.row }]}>
         <Icon name="calendar" size={16} color={colors.textSecondary} />
-        <Text style={[styles.monthText, { color: colors.textPrimary }]}>{t('badges.monthly', { days: Math.min(month.days, month.goal), goal: month.goal })}</Text>
-        {done ? <Icon name="seal-check" size={16} color={colors.success} /> : null}
+        <Text style={[styles.monthText, dir.text, { color: colors.textPrimary }]}>
+          {t('badges.monthly', { days: formatNumber(Math.min(month.days, month.goal), locale), goal: formatNumber(month.goal, locale) })}
+        </Text>
+        {/* the month's challenge met is something earned, in the gold of everything earned: it was a right answer's green */}
+        {done ? <Icon name="seal-check" size={16} color={colors.goldText} /> : null}
       </View>
       <Meter fraction={month.goal > 0 ? month.days / month.goal : 0} tint={badgeTint(3, scheme)} height={6} />
     </View>
@@ -238,6 +267,7 @@ function MonthlyChallenge({ month }: { month: BadgesResponse['monthlyChallenge']
  * their own grey.
  */
 function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): React.JSX.Element {
+  const dir = useDirection();
   const { t } = useI18n();
   const medal = Math.min(76, tile - spacing.sm * 2);
   const { height } = useWindowDimensions();
@@ -246,13 +276,13 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
   return (
     <View style={styles.content} accessibilityLabel={t('common.loading')}>
       <GlassCard>
-        <View style={styles.showHead}>
+        <View style={[styles.showHead, { flexDirection: dir.row }]}>
           <View style={styles.flex}>
             <SkeletonText size={typography.sizes.xs} width={96} />
             <SkeletonText size={typography.sizes.lg} lineHeight={SUMMARY_LINE} width="52%" />
           </View>
         </View>
-        <View style={styles.slots}>
+        <View style={[styles.slots, { flexDirection: dir.row }]}>
           {[0, 1, 2].map((i) => (
             <View key={i} style={styles.slot}>
               <Skeleton width={72} height={72} radius={radii.pill} style={styles.slotSkeleton} />
@@ -263,11 +293,11 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
       </GlassCard>
       {Array.from({ length: families }, (_, f) => (
         <View key={f} style={styles.family}>
-          <View style={styles.familyHead}>
+          <View style={[styles.familyHead, { flexDirection: dir.row }]}>
             <SkeletonText size={typography.sizes.xs} width={88} />
             <SkeletonText size={typography.sizes.xs} width={40} />
           </View>
-          <View style={styles.grid}>
+          <View style={[styles.grid, { flexDirection: dir.row }]}>
             {Array.from({ length: columns * 2 }, (_, i) => (
               <View key={i} style={[styles.tile, { width: tile }]}>
                 <Skeleton width={medal} height={medal} radius={radii.pill} />
@@ -292,11 +322,11 @@ const SUMMARY_LINE = Math.round(typography.sizes.lg * typography.displayLineHeig
 /** One badge in the grid; `fresh` is a badge earned since the app opened, which wears a "New" chip. */
 function BadgeTile({ badge, width, fresh = false, onPress }: { badge: BadgeView; width: number; fresh?: boolean; onPress: () => void }): React.JSX.Element {
   const { colors, scheme } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const label = badgeLabel(t, badge);
   const name = badge.hidden ? t('badges.secretName') : badgeName(t, badge.key);
   const tier = badge.hidden ? null : tierName(t, badge.tierKey, badge.tierCount);
-  const progress = badge.hidden ? null : progressText(t, badge);
+  const progress = badge.hidden ? null : progressText(t, badge, (v) => formatNumber(v, locale));
   const size = Math.min(76, width - spacing.sm * 2);
   return (
     <PressableScale
@@ -349,6 +379,7 @@ function BadgeSheet({
   onClose: () => void;
   onShowcase: (keys: string[]) => void;
 }): React.JSX.Element {
+  const dir = useDirection();
   const { client } = useAuth();
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
@@ -361,7 +392,8 @@ function BadgeSheet({
   const wash = washOf(badge);
   // when the tier it shows was earned; a badge not yet earned says how far there is to go instead
   const earned = badge.tier > 0 ? dateOf(badge.tierEarnedAt[badge.tier - 1] ?? badge.earnedAt, locale) : '';
-  const kicker = badge.hidden ? null : earned ? t('badges.earnedOn', { date: earned }) : badge.tier > 0 ? null : progressText(t, badge);
+  const num = (v: number): string => formatNumber(v, locale);
+  const kicker = badge.hidden ? null : earned ? t('badges.earnedOn', { date: earned }) : badge.tier > 0 ? null : progressText(t, badge, num);
 
   const toggle = async (): Promise<void> => {
     setBusy(true);
@@ -407,8 +439,8 @@ function BadgeSheet({
       {!badge.hidden && badge.next !== null ? (
         <View style={styles.sheetProgress}>
           {/* said once: over the name it is already said for a badge not yet earned */}
-          {badge.tier > 0 ? <Text style={[styles.sheetProgressText, { color: colors.textPrimary }]}>{progressText(t, badge)}</Text> : null}
-          <Meter fraction={nextFraction(badge)} tint={badgeTint(badge.tier + 1, scheme)} height={8} label={progressText(t, badge) ?? undefined} />
+          {badge.tier > 0 ? <Text style={[styles.sheetProgressText, dir.text, { color: colors.textPrimary }]}>{progressText(t, badge, num)}</Text> : null}
+          <Meter fraction={nextFraction(badge)} tint={badgeTint(badge.tier + 1, scheme)} height={8} label={progressText(t, badge, num) ?? undefined} />
         </View>
       ) : null}
       {!badge.hidden && badge.next === null && badge.tier > 0 ? (
@@ -424,21 +456,22 @@ function BadgeSheet({
             const when = badge.tierEarnedAt[i];
             const rare = badge.rarity?.[i];
             return (
-              <View key={n} style={[styles.rung, { backgroundColor: colors.controlTrack }]}>
+              <View key={n} style={[styles.rung, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
                 <BadgeMedal badgeKey={badge.key} tier={reached ? n : 0} tierCount={badge.tierCount} size={40} label={`${badgeName(t, badge.key)} · ${tierLabel(t, key)}`} />
                 <View style={styles.flex}>
-                  <Text style={[styles.rungName, { color: colors.textPrimary }]}>{tierLabel(t, key)}</Text>
-                  <Text style={[styles.rungFact, { color: colors.textSecondary }]}>
+                  <Text style={[styles.rungName, dir.text, { color: colors.textPrimary }]}>{tierLabel(t, key)}</Text>
+                  <Text style={[styles.rungFact, dir.text, { color: colors.textSecondary }]}>
                     {[
-                      threshold > 0 ? `${threshold} ${unitWord(t, badge.unit, threshold)}` : null,
+                      threshold > 0 ? `${num(threshold)} ${unitWord(t, badge.unit, threshold)}` : null,
                       reached && when ? t('badges.earnedOn', { date: dateOf(when, locale) }) : null,
-                      rare !== undefined ? rarityText(t, rare) : null,
+                      rare !== undefined ? rarityText(t, rare, num) : null,
                     ]
                       .filter(Boolean)
                       .join(' · ')}
                   </Text>
                 </View>
-                <Icon name={reached ? 'seal-check' : 'lock'} size={18} color={reached ? colors.success : colors.textSecondary} />
+                {/* a tier won is earned, in the gold of everything earned: it was a right answer's green */}
+                <Icon name={reached ? 'seal-check' : 'lock'} size={18} color={reached ? colors.goldText : colors.textSecondary} />
               </View>
             );
           })}
@@ -446,7 +479,7 @@ function BadgeSheet({
       ) : null}
 
       {!badge.hidden && badge.tierCount <= 1 && badge.rarity?.[0] !== undefined ? (
-        <Text style={[styles.hint, { color: colors.textSecondary }]}>{rarityText(t, badge.rarity[0]!)}</Text>
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>{rarityText(t, badge.rarity[0]!, num)}</Text>
       ) : null}
 
       {badge.tier > 0 && !badge.hidden ? (
@@ -471,9 +504,10 @@ function BadgeSheet({
 
 /** Choosing the profile's three, in order: tap to add, tap again to take out. */
 function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onClose: () => void; onSaved: (keys: string[]) => void }): React.JSX.Element {
+  const dir = useDirection();
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [keys, setKeys] = useState<string[]>(data.showcase);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -504,8 +538,8 @@ function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onCl
         </>
       }
     >
-      <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('badges.showcaseHint', { count: SHOWCASE_SIZE })}</Text>
-      <View style={styles.pickGrid}>
+      <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('badges.showcaseHint', { count: formatNumber(SHOWCASE_SIZE, locale) })}</Text>
+      <View style={[styles.pickGrid, { flexDirection: dir.row }]}>
         {earned.map((b) => {
           const at = keys.indexOf(b.key);
           const on = at !== -1;
@@ -518,7 +552,8 @@ function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onCl
               accessibilityLabel={badgeLabel(t, b)}
               style={({ pressed }) => [
                 styles.pick,
-                { backgroundColor: colors.controlTrack, borderColor: on ? colors.textPrimary : 'transparent', opacity: pressed ? pressedDim : !on && keys.length >= SHOWCASE_SIZE ? 0.5 : 1 },
+                // a badge taken is ringed in the violet of every choice, with its place in the violet beside it: the ring was the page's ink
+                { backgroundColor: colors.controlTrack, borderColor: on ? colors.primary : 'transparent', opacity: pressed ? pressedDim : !on && keys.length >= SHOWCASE_SIZE ? 0.5 : 1 },
               ]}
             >
               <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={b.tierCount} size={56} label={badgeLabel(t, b)} />
@@ -526,8 +561,8 @@ function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onCl
                 {badgeName(t, b.key)}
               </Text>
               {on ? (
-                <View style={[styles.order, { backgroundColor: colors.primary }]}>
-                  <Text style={[styles.orderText, { color: colors.textOnPrimary }]}>{at + 1}</Text>
+                <View style={[styles.order, dir.rtl ? styles.orderRtl : null, { backgroundColor: colors.primary }]}>
+                  <Text style={[styles.orderText, { color: colors.textOnPrimary }]}>{formatNumber(at + 1, locale)}</Text>
                 </View>
               ) : null}
             </Pressable>
@@ -550,8 +585,8 @@ const styles = StyleSheet.create({
   showHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   summary: { ...display(typography.sizes.lg) },
   slots: { flexDirection: 'row', justifyContent: 'space-around', marginTop: spacing.md },
-  slot: { alignItems: 'center', gap: spacing.xs, width: 96, minHeight: MIN_TOUCH_TARGET },
-  emptySlot: { width: 72, height: 72, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', margin: 6 },
+  slot: { alignItems: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET },
+  emptySlot: { borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', margin: 6 },
   slotName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   hint: { fontSize: typography.sizes.sm, lineHeight: 19, marginTop: spacing.sm },
   family: { gap: spacing.sm },
@@ -592,5 +627,7 @@ const styles = StyleSheet.create({
   pick: { width: '31%', alignItems: 'center', gap: spacing.xs, borderRadius: radii.md, borderWidth: 1.5, padding: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   pickName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   order: { position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  // the place's number in the corner the row starts from, on the right in Soranî and Arabic
+  orderRtl: { right: undefined, left: 6 },
   orderText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
 });

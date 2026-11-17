@@ -1,5 +1,7 @@
 import { lazy } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+// the browser's router, with each change of page carried instead of cut
+import { CarriedRouter } from './lib/viewTransition';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { arrivalHeld } from './auth/arrival';
 import { MarketingLayout } from './layouts/MarketingLayout';
@@ -34,6 +36,7 @@ const Saved = lazy(() => import('./pages/Saved').then((m) => ({ default: m.Saved
 const DimenPost = lazy(() => import('./pages/DimenPost').then((m) => ({ default: m.DimenPost })));
 const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games })));
 const InvitePage = lazy(() => import('./play/InvitePage').then((m) => ({ default: m.InvitePage })));
+const WinPage = lazy(() => import('./share/WinPage').then((m) => ({ default: m.WinPage })));
 const Wordle = lazy(() => import('./pages/Wordle').then((m) => ({ default: m.Wordle })));
 const LastLetter = lazy(() => import('./lastletter/LastLetter').then((m) => ({ default: m.LastLetter })));
 const Impostor = lazy(() => import('./impostor/Impostor').then((m) => ({ default: m.Impostor })));
@@ -202,6 +205,9 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="/how-hevalo-teaches" element={<HowHevaloTeaches />} />
         {/* a game's invite link from a message: what it is, and the way in (shared join-link.ts) */}
         <Route path="/join/:game/:code" element={<InvitePage />} />
+        {/* a win somebody shared: the postcard its link was drawn with, and the way in (shared win-link.ts) */}
+        <Route path="/win/:kind" element={<WinPage />} />
+        <Route path="/win/:kind/:detail" element={<WinPage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
       <Route path="/stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />
@@ -426,7 +432,7 @@ export function App(): React.JSX.Element {
       {/* inside both: it reads the signed-in account and sets the language */}
       <AccountLocale />
       <RealtimeProvider>
-      <BrowserRouter>
+      <CarriedRouter>
         <ProfileModalProvider>
         {/* inside the router: it reads the URL to know which chat is open */}
         <MessagesProvider>
@@ -449,7 +455,7 @@ export function App(): React.JSX.Element {
         </MaintenanceGate>
         </MessagesProvider>
         </ProfileModalProvider>
-      </BrowserRouter>
+      </CarriedRouter>
       </RealtimeProvider>
     </AuthProvider>
     </I18nProvider>

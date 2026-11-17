@@ -87,7 +87,7 @@ export function LeagueLine(): React.JSX.Element | null {
         </Text>
         <View style={[styles.subRow, { flexDirection: dir.row }]}>
           {league.safe ? <Icon name="seal-check" size={14} color={colors.success} /> : null}
-          <Text style={[styles.sub, dir.text, { color: league.safe ? colors.success : colors.textSecondary }]} numberOfLines={2}>
+          <Text style={[styles.sub, dir.text, { color: league.safe ? colors.success : colors.textSecondary }]} numberOfLines={3}>
             {sub}
           </Text>
         </View>

@@ -5,7 +5,6 @@ import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
-import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -27,6 +26,7 @@ import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
 import { WordleBoard, cellSizeFor } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
+import { WordMeaningLine } from './WordAnswer';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import {
   createBattle,
@@ -42,6 +42,8 @@ import {
   type Difficulty,
 } from './battleApi';
 import { Loading } from '../theme/Loading';
+import { GameArt } from '../games/GameArt';
+import { useDirection } from '../reports/direction';
 
 const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
 
@@ -112,32 +114,35 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
 
   return (
     <>
-      <GlassCard style={styles.card}>
-        <Icon name="people" size={44} tone="primary" />
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.battle.intro')}</Text>
-        <View style={styles.stretch}>
-          <Segmented<Difficulty>
-            options={DIFFICULTIES}
-            value={difficulty}
-            onChange={setDifficulty}
-            labelOf={(d) => t(DIFFICULTY_KEY[d])}
+      <GlassCard>
+        <View style={styles.card}>
+          {/* the game's own cover, as its stamp and the game alone show it: two people in the brand's violet said nothing of the game */}
+          <GameArt game="peyvok" size={72} />
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.battle.intro')}</Text>
+          <View style={styles.stretch}>
+            <Segmented<Difficulty>
+              options={DIFFICULTIES}
+              value={difficulty}
+              onChange={setDifficulty}
+              labelOf={(d) => t(DIFFICULTY_KEY[d])}
+            />
+          </View>
+          {/* Rated or Friendly, before the room exists: the host can still change it in the lobby */}
+          <View style={styles.stretch}>
+            <RatedChoice value={rated} onChange={setRated} />
+          </View>
+          <ClayButton
+            label={t('games.battle.create')}
+            // working on it: the button turns and takes no second press, and a screen reader is told what it is doing
+            accessibilityLabel={busy ? t('games.creating') : undefined}
+            busy={busy}
+            icon="play"
+            tone="primary"
+            onPress={() => void create()}
+            style={styles.stretch}
           />
+          {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
         </View>
-        {/* Rated or Friendly, before the room exists: the host can still change it in the lobby */}
-        <View style={styles.stretch}>
-          <RatedChoice value={rated} onChange={setRated} />
-        </View>
-        <ClayButton
-          label={t('games.battle.create')}
-          // working on it: the button turns and takes no second press, and a screen reader is told what it is doing
-          accessibilityLabel={busy ? t('games.creating') : undefined}
-          busy={busy}
-          icon="play"
-          tone="primary"
-          onPress={() => void create()}
-          style={styles.stretch}
-        />
-        {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
       </GlassCard>
 
       {/* a battle somebody else made: its code opens it, whichever game it turns out to be */}
@@ -163,6 +168,7 @@ function BattleRoom({
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
 
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [results, setResults] = useState<BattleResults | null>(null);
@@ -207,6 +213,24 @@ function BattleRoom({
     });
   }, [battle?.status, results, client, id]);
 
+  /*
+   * A battle played here to its end is a finished game for the rating box, as
+   * a rhyme match is, once its results are in; one opened already finished,
+   * from an old link, is not. It used to be told when the player's own board
+   * ended, and the box then sat over the board, the opponents' progress and
+   * "waiting for the others" while the battle was still being played.
+   */
+  const played = useRef(false);
+  useEffect(() => {
+    if (battle?.status === 'active' && battle.me) played.current = true;
+  }, [battle?.status, battle?.me]);
+  useEffect(() => {
+    if (!results || !played.current) return;
+    played.current = false;
+    const mine = results.ranking.find((r) => r.isMe ?? r.userId === user?.id);
+    if (mine) reportGameFinished({ moment: mine.rank === 1 ? 'won' : 'other' });
+  }, [results, user?.id]);
+
   const me = battle?.me ?? null;
   const active = battle?.status === 'active' && me != null && me.status === 'playing' && !me.solved;
   // an invite waits while a battle is on (the banner would sit over the board)
@@ -229,12 +253,9 @@ function BattleRoom({
     if (res.ok) {
       setBattle(res.data);
       setDraft([]);
-      // this guess finished your board (solved, or out of tries): a game played to its end
+      // this guess finished your board (solved, or out of tries): felt now; the battle itself is over when everyone's board is
       const after = res.data.me;
-      if (after && (after.solved || after.status !== 'playing')) {
-        haptic(after.solved ? 'correct' : 'wrong');
-        reportGameFinished({ moment: after.solved ? 'won' : 'other' });
-      }
+      if (after && (after.solved || after.status !== 'playing')) haptic(after.solved ? 'correct' : 'wrong');
     } else {
       // a rejected guess costs no attempt — the draft stays put, with a reason
       setNotice(guessMessage(res.error, t));
@@ -264,19 +285,23 @@ function BattleRoom({
   // called off by its host, or not here for this viewer any more: said plainly, with a battle of their own one tap away
   if (gone || battle?.status === 'cancelled') {
     return (
-      <GlassCard style={styles.card}>
-        <Text style={[styles.blurb, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
-          {gone ? t('stories.game.unavailable') : t('stories.game.cancelled')}
-        </Text>
-        <ClayButton label={t('games.battle.new')} tone="primary" onPress={onLeave} style={styles.stretch} />
+      <GlassCard>
+        <View style={styles.card}>
+          <Text style={[styles.blurb, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+            {gone ? t('stories.game.unavailable') : t('stories.game.cancelled')}
+          </Text>
+          <ClayButton label={t('games.battle.new')} tone="primary" onPress={onLeave} style={styles.stretch} />
+        </View>
       </GlassCard>
     );
   }
   if (error && !battle) {
     return (
-      <GlassCard style={styles.card}>
-        <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>
-        <ClayButton label={t('common.retry')} tone="primary" onPress={() => void load()} style={styles.stretch} />
+      <GlassCard>
+        <View style={styles.card}>
+          <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>
+          <ClayButton label={t('common.retry')} tone="primary" onPress={() => void load()} style={styles.stretch} />
+        </View>
       </GlassCard>
     );
   }
@@ -298,70 +323,72 @@ function BattleRoom({
             mode={battle.maxPlayers === 2 ? 'duo' : 'group'}
           />
         ) : null}
-        <GlassCard style={styles.card}>
-          <Text style={[styles.blurb, { color: colors.textSecondary }]}>
-            {t('games.lobbyWaiting', { count: playerCount })}
-          </Text>
-          {battle.me != null ? (
-            <LobbyPeople
-              game="wordle-battle"
-              lobbyId={id}
-              players={battle.players ?? []}
-              isHost={isHost}
-              onRemove={isHost ? (seat) => void act(() => removeFromBattle(client, id, seat)) : undefined}
-            />
-          ) : null}
-          {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
-          {battle.me != null ? (
-            <LobbyRated
-              game="wordle-battle"
-              lobbyId={id}
-              rated={battle.rated}
-              isHost={isHost}
-              players={playerCount}
-              seatName={seatNamer(battle.players ?? [], t)}
-              onChanged={() => void load()}
-            />
-          ) : battle.rated ? (
-            <RatedPill rated={battle.rated.rated} />
-          ) : null}
-          {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
-          {battle.me == null ? (
-            <ClayButton
-              label={t('games.battle.join')}
-              accessibilityLabel={busy ? t('games.joining') : undefined}
-              busy={busy}
-              tone="primary"
-              onPress={() => void act(() => joinBattle(client, id))}
-              style={styles.stretch}
-            />
-          ) : isHost && playerCount >= 2 ? (
-            <ClayButton
-              label={t('games.battle.start')}
-              accessibilityLabel={busy ? t('games.starting') : undefined}
-              busy={busy}
-              tone="primary"
-              onPress={() => {
-                haptic('tap');
-                void act(() => startBattle(client, id));
-              }}
-              style={styles.stretch}
-            />
-          ) : (
-            <Text style={[styles.waiting, { color: colors.textSecondary }]}>
-              {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
+        <GlassCard>
+          <View style={styles.card}>
+            <Text style={[styles.blurb, { color: colors.textSecondary }]}>
+              {t('games.lobbyWaiting', { count: playerCount })}
             </Text>
-          )}
-          {/* the lobby's own way out is the screen's back, which asks and then leaves (play/backOut) */}
-          {battle.me != null ? (
-            <ClayButton
-              label={isHost ? t('stories.lobby.cancelGame') : t('stories.lobby.leave')}
-              tone="danger"
-              variant="outline"
-              onPress={onExit}
-              style={styles.stretch}
-            />
-          ) : null}
+            {battle.me != null ? (
+              <LobbyPeople
+                game="wordle-battle"
+                lobbyId={id}
+                players={battle.players ?? []}
+                isHost={isHost}
+                onRemove={isHost ? (seat) => void act(() => removeFromBattle(client, id, seat)) : undefined}
+              />
+            ) : null}
+            {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
+            {battle.me != null ? (
+              <LobbyRated
+                game="wordle-battle"
+                lobbyId={id}
+                rated={battle.rated}
+                isHost={isHost}
+                players={playerCount}
+                seatName={seatNamer(battle.players ?? [], t)}
+                onChanged={() => void load()}
+              />
+            ) : battle.rated ? (
+              <RatedPill rated={battle.rated.rated} />
+            ) : null}
+            {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
+            {battle.me == null ? (
+              <ClayButton
+                label={t('games.battle.join')}
+                accessibilityLabel={busy ? t('games.joining') : undefined}
+                busy={busy}
+                tone="primary"
+                onPress={() => void act(() => joinBattle(client, id))}
+                style={styles.stretch}
+              />
+            ) : isHost && playerCount >= 2 ? (
+              <ClayButton
+                label={t('games.battle.start')}
+                accessibilityLabel={busy ? t('games.starting') : undefined}
+                busy={busy}
+                tone="primary"
+                onPress={() => {
+                  haptic('tap');
+                  void act(() => startBattle(client, id));
+                }}
+                style={styles.stretch}
+              />
+            ) : (
+              <Text style={[styles.waiting, { color: colors.textSecondary }]}>
+                {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
+              </Text>
+            )}
+            {/* the lobby's own way out is the screen's back, which asks and then leaves (play/backOut) */}
+            {battle.me != null ? (
+              <ClayButton
+                label={isHost ? t('stories.lobby.cancelGame') : t('stories.lobby.leave')}
+                tone="danger"
+                variant="outline"
+                onPress={onExit}
+                style={styles.stretch}
+              />
+            ) : null}
+          </View>
         </GlassCard>
       </>
     );
@@ -371,52 +398,56 @@ function BattleRoom({
   if (battle.status === 'finished') {
     const mine = results?.ranking.find((r) => r.userId === user?.id);
     return (
-      <GlassCard style={styles.card}>
-        <Verdict won={mine?.rank === 1}>{mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}</Verdict>
-        {/* what this game did to your rank, with its one plain reason — before the table */}
-        {battle.rated?.rated ? <RankResultPanel game="wordle-battle" gameRef={id} /> : null}
-        {results ? (
-          <>
-            <Text style={[styles.blurb, { color: colors.textSecondary }]}>
-              {t('games.wordle.theWordWas')} {results.target.toUpperCase()}
-            </Text>
-            <View style={styles.stretch}>
-              {results.ranking.map((r) => (
-                <View key={r.userId} style={styles.scoreLine}>
-                  <Text style={[styles.rank, { color: colors.textSecondary }]}>{r.rank}</Text>
-                  <Text style={[styles.scoreName, { color: colors.textPrimary }]}>
-                    {r.isMe ?? r.userId === user?.id ? t('games.you') : (r.name ?? t('games.opponent'))}
-                  </Text>
-                  <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>
-                    {r.solved
-                      ? t('games.battle.solvedIn', { count: r.guessCount })
-                      : t('games.battle.lettersProgress', { done: r.progress, total: results.target.length })}
-                  </Text>
-                  {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
-                  {/* anyone else in the game can be reported, by seat */}
-                  {r.userId !== user?.id && r.seat !== undefined ? (
-                    <PlayerReportButton game="wordle-battle" gameId={results.id} seat={r.seat} name={r.name ?? null} />
-                  ) : null}
-                </View>
-              ))}
-            </View>
-          </>
-        ) : (
-          <Loading />
-        )}
-        {/* play again with the same people: a rematch for two, the host's next round for more */}
-        <View style={styles.stretch}>
-          <RematchPanel
-            game="wordle-battle"
-            lobbyId={id}
-            isHost={isHost}
-            other={results?.ranking.find((r) => !(r.isMe ?? r.userId === user?.id))?.name ?? t('games.opponent')}
-            onOpen={onOpen}
-            onInviteOthers={() => setInviting(true)}
-          />
+      <GlassCard>
+        <View style={styles.card}>
+          <Verdict won={mine?.rank === 1}>{mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}</Verdict>
+          {/* what this game did to your rank, with its one plain reason — before the table */}
+          {battle.rated?.rated ? <RankResultPanel game="wordle-battle" gameRef={id} /> : null}
+          {results ? (
+            <>
+              <Text style={[styles.blurb, { color: colors.textSecondary }]}>
+                {t('games.wordle.theWordWas')} {results.target.toUpperCase()}
+              </Text>
+              {/* the word everyone raced for, and what it means: the one thing a battle teaches */}
+              <WordMeaningLine word={results.target} meanings={results.meanings} />
+              <View style={styles.stretch}>
+                {results.ranking.map((r) => (
+                  <View key={r.userId} style={[styles.scoreLine, { flexDirection: dir.row }]}>
+                    <Text style={[styles.rank, { color: colors.textSecondary }]}>{r.rank}</Text>
+                    <Text style={[styles.scoreName, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {r.isMe ?? r.userId === user?.id ? t('games.you') : (r.name ?? t('games.opponent'))}
+                    </Text>
+                    <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>
+                      {r.solved
+                        ? t('games.battle.solvedIn', { count: r.guessCount })
+                        : t('games.battle.lettersProgress', { done: r.progress, total: results.target.length })}
+                    </Text>
+                    {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
+                    {/* anyone else in the game can be reported, by seat */}
+                    {r.userId !== user?.id && r.seat !== undefined ? (
+                      <PlayerReportButton game="wordle-battle" gameId={results.id} seat={r.seat} name={r.name ?? null} />
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            </>
+          ) : (
+            <Loading />
+          )}
+          {/* play again with the same people: a rematch for two, the host's next round for more */}
+          <View style={styles.stretch}>
+            <RematchPanel
+              game="wordle-battle"
+              lobbyId={id}
+              isHost={isHost}
+              other={results?.ranking.find((r) => !(r.isMe ?? r.userId === user?.id))?.name ?? t('games.opponent')}
+              onOpen={onOpen}
+              onInviteOthers={() => setInviting(true)}
+            />
+          </View>
+          <ClayButton label={t('games.battle.new')} tone="neutral" onPress={onLeave} style={styles.stretch} />
+          {inviting ? <InviteSheet target={{ kind: 'new', game: 'wordle-battle' }} onClose={() => setInviting(false)} /> : null}
         </View>
-        <ClayButton label={t('games.battle.new')} tone="neutral" onPress={onLeave} style={styles.stretch} />
-        {inviting ? <InviteSheet target={{ kind: 'new', game: 'wordle-battle' }} onClose={() => setInviting(false)} /> : null}
       </GlassCard>
     );
   }
@@ -429,8 +460,9 @@ function BattleRoom({
       {battle.opponents.length > 0 ? (
         <View style={styles.opponents}>
           {battle.opponents.map((o, i) => (
-            <View key={o.userId} style={styles.opponent}>
-              <Text style={[styles.opponentName, { color: colors.textSecondary }]}>
+            <View key={o.userId} style={[styles.opponent, { flexDirection: dir.row }]}>
+              {/* one line: a long name is cut short rather than broken in the middle of a word */}
+              <Text style={[styles.opponentName, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
                 {o.name ?? (battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent'))}
               </Text>
               <View
@@ -447,7 +479,7 @@ function BattleRoom({
                   ]}
                 />
               </View>
-              <Text style={[styles.opponentState, { color: o.solved ? colors.success : colors.textSecondary }]}>
+              <Text style={[styles.opponentState, { textAlign: dir.rtl ? 'left' : 'right', color: o.solved ? colors.success : colors.textSecondary }]}>
                 {o.solved
                   ? t('games.battle.opponentSolved')
                   : o.finished
@@ -524,27 +556,22 @@ const styles = StyleSheet.create({
   // flex + centre so a long translated name shares the row with the back
   // button instead of wrapping over it: "Peyvok" is one word, "Peyvok
   // Battle" in some languages is three
+  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
   error: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   waiting: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
   loading: { marginTop: spacing.xxl },
-  scoreLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-
-    paddingVertical: spacing.sm,
-  },
+  scoreLine: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
   rank: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, width: 20 },
   scoreName: { flex: 1, fontSize: typography.sizes.md },
   scoreValue: { fontSize: typography.sizes.sm },
   xp: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   opponents: { gap: spacing.sm },
-  opponent: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  opponent: { alignItems: 'center', gap: spacing.sm },
   opponentName: { fontSize: typography.sizes.sm, width: 84 },
   track: { flex: 1, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   trackFill: { height: 6, borderRadius: radii.pill },
-  opponentState: { fontSize: typography.sizes.sm, minWidth: 72, textAlign: 'right' },
+  opponentState: { fontSize: typography.sizes.sm, minWidth: 72 },
 });

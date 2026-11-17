@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
@@ -9,6 +9,7 @@ import { spacing, typography } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { useDirection } from '../reports/direction';
 
 /** Enough to show who someone knows without turning a profile into a directory. */
 const SHOW = 12;
@@ -41,13 +42,17 @@ interface FriendOf {
  * on somebody's profile is a worse thing to publish than silence.
  *
  * Each face opens that person's own profile, which is how you get from one
- * person to the next without going back to search.
+ * person to the next without going back to search. In Soranî and Arabic the
+ * faces run from the right, and the row starts scrolled to that end.
  */
 export function ProfileFriends({ userId }: { userId: string }): React.JSX.Element | null {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
+  const mirrored = dir.row === 'row-reverse';
+  const scroller = useRef<ScrollView>(null);
 
   const [friends, setFriends] = useState<FriendOf[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -75,11 +80,20 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
 
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.heading, { color: colors.textSecondary }]}>
+      <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]}>
         {t('nav.friends')} {total}
       </Text>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <ScrollView
+        ref={scroller}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={[styles.row, { flexDirection: dir.row }]}
+        // right to left, the first face is on the right: start the row there
+        onContentSizeChange={() => {
+          if (mirrored) scroller.current?.scrollToEnd({ animated: false });
+        }}
+      >
         {friends.map((f) => (
           <PressableScale
             key={f.userId}
@@ -102,7 +116,7 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
       </ScrollView>
 
       {total > friends.length ? (
-        <Text style={[styles.more, { color: colors.textSecondary }]}>
+        <Text style={[styles.more, dir.text, { color: colors.textSecondary }]}>
           {t('profile.friendsMore', { count: total - friends.length })}
         </Text>
       ) : null}

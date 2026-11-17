@@ -1,10 +1,12 @@
 /**
  * Ez kî me? beside its table, and the cards made of picked words, against
  * real Postgres and Redis: the game on one phone (where it is offered, and a
- * card for everyone in the room), no round of it alone any more and what
- * becomes of one left open; the admin picking approved words for identities
- * without retyping the Kurdish; and the starter questions, drafts nobody
- * meets until they are approved.
+ * card for everyone in the room, with "sometimes" for a phone that has four
+ * answers and without it for one that has two), a wrong card reported from
+ * one phone, no round of it alone any more and what becomes of one left
+ * open; the admin picking approved words for identities without retyping
+ * the Kurdish; and the starter questions, drafts nobody meets until they are
+ * approved.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -25,7 +27,29 @@ import { removeCourses } from '../test/courses.js';
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
 
-const FACTS = ['alive', 'animal', 'person', 'edible', 'place', 'can-fly', 'lives-in-water', 'four-legs', 'bigger-than-person', 'at-home', 'sweet', 'uses-electricity'];
+// as many questions as the game needs before it is offered, every one of them answered by every card
+const FACTS = [
+  'alive',
+  'animal',
+  'person',
+  'edible',
+  'place',
+  'can-fly',
+  'lives-in-water',
+  'four-legs',
+  'bigger-than-person',
+  'at-home',
+  'wild',
+  'kept-by-people',
+  'gives-milk',
+  'lays-eggs',
+  'has-feathers',
+  'smaller-than-hand',
+  'in-village',
+  'makes-sound',
+  'works-outdoors',
+  'lifted-by-hand',
+];
 
 describe.skipIf(!DATABASE_URL || !REDIS_URL)('Ez kî me? and cards from picked words (integration)', () => {
   const config = loadConfig({ ...process.env, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
@@ -74,9 +98,10 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Ez kî me? and cards from picked w
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
 
-    // a dozen published identities, each with a full table in its own pattern, and a published question per fact
+    // a dozen published identities, each with a full table in its own pattern (every one honestly "sometimes" at home), and
+    // a published question per fact
     for (let i = 0; i < 12; i++) {
-      const facts = Object.fromEntries(FACTS.map((f, j) => [f, ((i >> (j % 4)) & 1) === 1]));
+      const facts = { ...Object.fromEntries(FACTS.map((f, j) => [f, ((i >> (j % 4)) & 1) === 1])), 'at-home': 'sometimes' };
       const r = await pool.query<{ id: string }>(
         `INSERT INTO game_content (kind, dialect, level, payload, status, review_status) VALUES ('identity', 'kmr', 1, $1::jsonb, 'published', 'approved') RETURNING id`,
         [JSON.stringify({ word: `${tag}id${letters(i)}`, meanings: { en: `identity ${i}` }, category: 'animal', facts })],
@@ -172,12 +197,55 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Ez kî me? and cards from picked w
         expect(d.candidates.some((c) => c.id === d.identity.id)).toBe(true);
         expect(d.candidates.some((c) => c.id !== d.identity.id && worn.includes(c.id))).toBe(false);
         expect(d.questions.length).toBeGreaterThanOrEqual(4);
-        // the phone answers a question from the card's own facts
+        // a phone that asked for nothing is one from before the four answers: every question it is dealt has a plain yes or no,
+        // and the card it is sent holds nothing else
         for (const q of d.questions) expect(typeof d.identity.facts[q.fact]).toBe('boolean');
+        expect(Object.values(d.identity.facts)).not.toContain('sometimes');
+        expect(d.questions.map((q) => q.fact)).not.toContain('at-home');
       }
+      expect(dealt.answers).toBe(2);
       // another room is dealt differently
       const again = (await call('POST', '/games/who-am-i/couch/deal', learner, { dialect: 'kmr', difficulty: 'beginner', players: 4 })).json() as WhoAmICouchDeals;
       expect(again.deals.map((d) => d.candidates.map((c) => c.id).join()).join('|')).not.toBe(dealt.deals.map((d) => d.candidates.map((c) => c.id).join()).join('|'));
+    });
+
+    it('deals a phone with four answers the cards as they are, "sometimes" and all', async () => {
+      const res = await call('POST', '/games/who-am-i/couch/deal', learner, { dialect: 'kmr', difficulty: 'beginner', players: 2, answers: 4 });
+      expect(res.statusCode, res.body).toBe(200);
+      const dealt = res.json() as WhoAmICouchDeals;
+      expect(dealt.answers).toBe(4);
+      for (const d of dealt.deals) {
+        expect(d.identity.facts['at-home']).toBe('sometimes');
+        for (const q of d.questions) expect([true, false, 'sometimes']).toContain(d.identity.facts[q.fact]);
+      }
+      expect((await call('POST', '/games/who-am-i/couch/deal', learner, { dialect: 'kmr', difficulty: 'beginner', players: 2, answers: 3 })).statusCode).toBe(400);
+    });
+
+    it('takes a report of a wrong card from the phone that holds it, counts it once a day, and changes nothing the card says', async () => {
+      const reporter = await register('waReporter');
+      const dealt = (await call('POST', '/games/who-am-i/couch/deal', reporter.token, { dialect: 'kmr', difficulty: 'beginner', players: 2, answers: 4 })).json() as WhoAmICouchDeals;
+      const deal = dealt.deals[0]!;
+      const question = deal.questions[0]!;
+      const before = (await pool.query<{ payload: unknown }>(`SELECT payload FROM game_content WHERE id = $1`, [deal.identity.id])).rows[0]!.payload;
+      const report = { identity: deal.identity.id, question: question.id };
+      const first = await call('POST', '/games/who-am-i/report', reporter.token, report);
+      expect(first.statusCode, first.body).toBe(200);
+      expect(first.json()).toEqual({ counted: true });
+      const row = (await pool.query<{ review_note: string; payload: unknown; status: string }>(`SELECT review_note, payload, status FROM game_content WHERE id = $1`, [deal.identity.id]))
+        .rows[0]!;
+      expect(row.review_note).toBe(`Players flagged an answer as wrong: ${question.fact} ×1.`);
+      expect(row).toMatchObject({ payload: before, status: 'published' });
+      // the same player saying it again is thanked, and not counted twice
+      expect((await call('POST', '/games/who-am-i/report', reporter.token, report)).json()).toEqual({ counted: false });
+      // another player is another report
+      expect((await call('POST', '/games/who-am-i/report', learner, report)).json()).toEqual({ counted: true });
+      expect((await pool.query<{ review_note: string }>(`SELECT review_note FROM game_content WHERE id = $1`, [deal.identity.id])).rows[0]!.review_note).toBe(
+        `Players flagged an answer as wrong: ${question.fact} ×2.`,
+      );
+      // nothing is said in a report but which card and which question, and only of a card and a question there are
+      expect((await call('POST', '/games/who-am-i/report', reporter.token, { ...report, note: 'this card is wrong' })).statusCode).toBe(400);
+      expect((await call('POST', '/games/who-am-i/report', reporter.token, { identity: question.id, question: question.id })).statusCode).toBe(404);
+      expect((await app.inject({ method: 'POST', url: '/games/who-am-i/report', payload: report })).statusCode).toBe(401);
     });
 
     it('refuses a room of one or of seven, a difficulty with nothing to deal, and anything else in the body', async () => {

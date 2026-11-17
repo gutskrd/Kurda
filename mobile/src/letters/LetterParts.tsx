@@ -79,7 +79,8 @@ export function LetterSheet({
   const plain = useRemovedPaper();
   let when = '';
   try {
-    when = new Date(letter.sentAt).toLocaleString(locale, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+    // the hour as a chat writes it, with no zero before it in a language that does not put one there
+    when = new Date(letter.sentAt).toLocaleString(locale, { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' });
   } catch {
     when = new Date(letter.sentAt).toLocaleString();
   }

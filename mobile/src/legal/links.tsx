@@ -77,11 +77,12 @@ export function AgreeLine({ style }: { style?: StyleProp<TextStyle> }): React.JS
       {parts.map((part, i) =>
         // the odd pieces are the placeholders' names
         i % 2 === 1 && (part === 'terms' || part === 'privacy') ? (
+          // a link is violet, as everything pressable is; the underline says so without the colour too
           <Text
             key={i}
             accessibilityRole="link"
             onPress={() => openLegal(part)}
-            style={[styles.link, { color: colors.textPrimary }]}
+            style={[styles.link, { color: colors.primary }]}
           >
             {t(part === 'terms' ? 'auth.legal.terms' : 'auth.legal.privacy')}
           </Text>
@@ -94,6 +95,7 @@ export function AgreeLine({ style }: { style?: StyleProp<TextStyle> }): React.JS
 }
 
 const styles = StyleSheet.create({
-  line: { fontSize: typography.sizes.xs, lineHeight: 18, textAlign: 'center' },
+  // a link inside a sentence takes no reach of its own, so its line is made taller instead: a finger a little high or low still lands on it
+  line: { fontSize: typography.sizes.xs, lineHeight: 24, textAlign: 'center' },
   link: { fontWeight: typography.weights.semibold, textDecorationLine: 'underline' },
 });

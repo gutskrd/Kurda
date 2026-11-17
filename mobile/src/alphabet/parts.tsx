@@ -28,9 +28,10 @@ import { pressedDim } from '../theme/motion';
  * with its sound picked out, a Kurdish word with its letter picked out, and
  * what the word means.
  *
- * Gold is the colour this app keeps for "notice this", so it marks exactly one
- * thing here, as on the website: the sound inside a comparison and the letter
- * inside the Kurdish word.
+ * The app's violet is its colour for "look at this", so it marks exactly one
+ * thing here: the sound inside a comparison and the letter inside the Kurdish
+ * word, underlined as well, so it is never said by colour alone. It was the
+ * sun's gold, which the app keeps for what is earned.
  */
 
 /**
@@ -48,10 +49,14 @@ export function scriptText(script: AlphabetScript): TextStyle {
 export const scriptLanguage = (script: AlphabetScript): string => (script === 'ckb' ? 'ckb' : 'ku');
 
 const BUTTON = { regular: MIN_TOUCH_TARGET, large: 52 } as const;
+/** How much of the violet a sounding button is, as the last two digits of its colour: the tab bar's own wash. */
+const ON_WASH = '1F';
 
 /**
  * A round button that plays one sound. Nothing at all when there is no clip,
  * or nothing to play it with: a button that does nothing is worse than none.
+ * Its style says how big it is drawn, and the Pressable reaches from that to
+ * a fingertip's 48: 2 past each edge of the regular one, none past the large.
  */
 export function PlayButton({
   src,
@@ -66,6 +71,7 @@ export function PlayButton({
 }): React.JSX.Element | null {
   const { colors } = useTheme();
   if (!src || !player.supported) return null;
+  // sounding: on, as a switch that is on is, in a wash of the violet with a violet edge
   const on = player.isPlaying(src);
   const side = BUTTON[size];
   return (
@@ -73,14 +79,19 @@ export function PlayButton({
       onPress={() => player.play(src)}
       accessibilityRole="button"
       accessibilityLabel={label}
-      hitSlop={size === 'regular' ? 4 : 0}
       style={({ pressed }) => [
         styles.play,
-        { width: side, height: side, backgroundColor: colors.controlTrack, borderColor: on ? colors.gold : 'transparent', opacity: pressed ? pressedDim : 1 },
+        {
+          width: side,
+          height: side,
+          backgroundColor: on ? `${colors.primary}${ON_WASH}` : colors.controlTrack,
+          borderColor: on ? colors.primary : 'transparent',
+          opacity: pressed ? pressedDim : 1,
+        },
       ]}
     >
       {/* the speaker points the same way in every language */}
-      <Icon name="speaker" size={size === 'large' ? 24 : 20} color={on ? colors.goldText : colors.primary} />
+      <Icon name="speaker" size={size === 'large' ? 24 : 20} color={colors.primary} />
     </Pressable>
   );
 }
@@ -144,7 +155,7 @@ export function Like({ like, style }: { like: SoundLikeness; style?: StyleProp<T
   return (
     <Text style={[styles.like, { color: colors.textPrimary }, style]}>
       {like.before}
-      {like.sound ? <Text style={[styles.mark, { color: colors.goldText, textDecorationColor: colors.gold }]}>{like.sound}</Text> : null}
+      {like.sound ? <Text style={[styles.mark, { color: colors.primary, textDecorationColor: colors.primary }]}>{like.sound}</Text> : null}
       {like.after}
     </Text>
   );
@@ -161,7 +172,7 @@ export function MarkedWord({ word, letter, style }: { word: string; letter: stri
       ) : (
         <>
           {word.slice(0, at)}
-          <Text style={[styles.mark, { color: colors.goldText, textDecorationColor: colors.gold }]}>{word.slice(at, at + letter.length)}</Text>
+          <Text style={[styles.mark, { color: colors.primary, textDecorationColor: colors.primary }]}>{word.slice(at, at + letter.length)}</Text>
           {word.slice(at + letter.length)}
         </>
       )}

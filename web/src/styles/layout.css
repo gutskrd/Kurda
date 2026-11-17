@@ -220,7 +220,7 @@ button.nav-link {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--gold);
+  background: var(--primary);
   box-shadow: 0 0 0 2px var(--nav-bg);
 }
 .nav-scrim {
@@ -373,6 +373,9 @@ button.nav-link {
  * at the end. The places fold into the menu, which drops from the bar as a
  * list across the screen — each a full-width row of glyph and word, 48px
  * tall, the page you are on lit — over a scrim that a press closes.
+ *
+ * This is the public pages' bar. Inside the app a phone has the phone app's
+ * chrome in its place, with the places along the bottom (shell.css).
  */
 @media (max-width: 768px) {
   .nav-inner {
@@ -662,6 +665,18 @@ button.nav-link {
 }
 .by-zagrosian:hover {
   color: var(--ink);
+}
+/*
+ * Where a finger is about, a finger's height, as the imprint beside it is. On
+ * a phone the bar wraps and this lands 10px under the imprint; at the height
+ * of its words alone, its reach (reach.css) would cross that gap and take the
+ * presses meant for the imprint's lower edge. At 44px it needs only 2px more
+ * each way.
+ */
+@media (any-pointer: coarse) {
+  .by-zagrosian {
+    min-height: 44px;
+  }
 }
 .by-zagrosian-mark {
   height: 17px;

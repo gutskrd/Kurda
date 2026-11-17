@@ -162,7 +162,7 @@ describe('the notification list', () => {
     // the one way on: finding the friends most of this list comes from
     await settle();
     fireEvent.click(screen.getByRole('button', { name: 'Find friends' }));
-    expect(navigate).toHaveBeenCalledWith('Tabs', { screen: 'Search' });
+    expect(navigate).toHaveBeenCalledWith('Search');
   });
 
   it('says it could not load without blaming anybody, and tries again', async () => {

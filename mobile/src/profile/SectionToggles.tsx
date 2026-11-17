@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Toggle } from '../theme/Toggle';
+import { ToggleRow } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { PROFILE_SECTIONS, type ProfileSection, type ProfileSections } from './sections';
 import { Loading } from '../theme/Loading';
+import { useDirection } from '../reports/direction';
 
 const COPY: Record<ProfileSection, { label: TranslationKey; hint: TranslationKey }> = {
   posts: { label: 'profile.tab.posts', hint: 'edit.sections.posts' },
@@ -38,6 +38,7 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
 
   const [sections, setSections] = useState<ProfileSections | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,34 +68,56 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
     });
   };
 
+  const heading = (
+    <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+      {t('edit.sections.title')}
+    </Text>
+  );
+
   if (sections === null) {
     return (
       <View style={styles.wrap}>
-        <Text style={[styles.heading, { color: colors.textSecondary }]}>{t('edit.sections.title')}</Text>
+        {heading}
         <Loading style={{ marginVertical: spacing.md }} />
       </View>
     );
   }
 
+  /*
+   * Each switch says which section it shows, with what the section holds as
+   * its hint: a row of five switches that a screen reader called only
+   * "switch" could not be told apart. Right to left, the words start on the
+   * right and the switch closes the row on the left.
+   *
+   * The whole row is the switch, words and all: the words are what the eye
+   * goes to, and the switch alone was a 31pt target at the row's edge.
+   */
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.heading, { color: colors.textSecondary }]}>{t('edit.sections.title')}</Text>
-      <Text style={[styles.help, { color: colors.textSecondary }]}>{t('edit.sections.help')}</Text>
+      {heading}
+      <Text style={[styles.help, dir.text, { color: colors.textSecondary }]}>{t('edit.sections.help')}</Text>
 
       {PROFILE_SECTIONS.map((key) => (
-        <View key={key} style={styles.row}>
+        <ToggleRow
+          key={key}
+          label={t(COPY[key].label)}
+          hint={t(COPY[key].hint)}
+          value={sections[key] !== false}
+          onValueChange={(next) => toggle(key, next)}
+          style={[styles.row, { borderBottomColor: colors.separator }]}
+        >
           <View style={styles.main}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>{t(COPY[key].label)}</Text>
-            <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(COPY[key].hint)}</Text>
+            <Text style={[styles.label, dir.text, { color: colors.textPrimary }]}>{t(COPY[key].label)}</Text>
+            <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t(COPY[key].hint)}</Text>
           </View>
-          <Toggle
-            value={sections[key] !== false}
-            onValueChange={(next) => toggle(key, next)}
-          />
-        </View>
+        </ToggleRow>
       ))}
 
-      {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+      {error ? (
+        <Text style={[styles.error, dir.text, { color: colors.danger }]} accessibilityLiveRegion="polite">
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -103,14 +126,8 @@ const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.xs },
   heading: { ...sectionLabel },
   help: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    minHeight: MIN_TOUCH_TARGET,
-    paddingVertical: 11,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
+  // ToggleRow lays the words and the switch out across the row and makes it at least a fingertip tall
+  row: { paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth },
   main: { flex: 1, gap: 2 },
   label: { fontSize: typography.ios.row },
   hint: { fontSize: typography.sizes.sm },

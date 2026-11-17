@@ -48,6 +48,23 @@ describe('resolveDeepLink', () => {
   });
 });
 
+describe('a letter’s notification', () => {
+  const T = '6f9b1c2e-1d2a-4b3c-8d4e-5f6a7b8c9d0e';
+
+  it('opens the window with its bird named, so the bird lands before the letter is read', () => {
+    expect(resolveDeepLink({ kind: 'letter', threadId: T, how: 'window' })).toEqual({ screen: 'Letters', params: { bird: T } });
+    expect(resolveDeepLink({ kind: 'letter', threadId: T, how: 'home', letterId: T })).toEqual({ screen: 'Letters', params: { bird: T } });
+    // from before `how`, a pen pal’s letter all the same
+    expect(resolveDeepLink({ kind: 'letter', threadId: T })).toEqual({ screen: 'Letters', params: { bird: T } });
+  });
+
+  it('opens just the window for a correspondence it cannot name, and never follows an id that is not one', () => {
+    expect(resolveDeepLink({ kind: 'letter' })).toEqual({ screen: 'Letters' });
+    expect(resolveDeepLink({ kind: 'letter', threadId: '../me' })).toEqual({ screen: 'Letters' });
+    expect(resolveDeepLink({ kind: 'letter', threadId: 'x'.repeat(36) })).toEqual({ screen: 'Letters' });
+  });
+});
+
 describe('a group’s notices about one’s place in it', () => {
   const group = '3c8d5b20-0000-4000-8000-000000000007';
 

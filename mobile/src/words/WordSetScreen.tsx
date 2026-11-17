@@ -130,7 +130,7 @@ export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; 
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <ScreenHeader title={t(SET_TITLE[set])} onBack={onExit} />
+        <ScreenHeader title={t(SET_TITLE[set])} onBack={onExit} browse />
         <ScrollView ref={scroller} style={styles.screen} contentContainerStyle={[styles.column, { paddingBottom: bottom }]} showsVerticalScrollIndicator={false}>
           <Segmented
             options={DIALECTS}
@@ -141,7 +141,8 @@ export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; 
           />
           <View style={styles.intro}>
             <Text style={[styles.summary, dir.text, { color: colors.textPrimary }]}>{summary}</Text>
-            <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('words.lead')}</Text>
+            {/* what a tap does here: the list's own lead ("Start with the letters…") is for the page the sets are on */}
+            <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('words.setLead')}</Text>
             <Progress explored={explored} total={order.length} />
           </View>
           {set === 'months' ? <SeasonLegend dialect={dialect} /> : null}
@@ -226,7 +227,8 @@ function WordTile({
   const label = today ? t('words.tileLabel', { word: said, meaning: glossIn(RELATIVE_DAYS.today, locale) }) : said;
   const arabic = dialect === 'ckb';
   // the tick sits where the script's line starts
-  const tick = seen ? <Icon name="check" size={12} color={colors.success} style={[styles.corner, arabic ? styles.right : styles.left]} /> : null;
+  // opened, in the violet of what is on: green is for a right answer
+  const tick = seen ? <Icon name="check" size={12} color={colors.primary} style={[styles.corner, arabic ? styles.right : styles.left]} /> : null;
   const press = { onPress, accessibilityRole: 'button' as const, accessibilityLabel: label };
 
   if (word.set === 'colours') return <ColourTile word={word} dialect={dialect} width={width} seen={seen} press={press} />;
@@ -294,7 +296,7 @@ function ColourTile({
         <Text style={[styles.chipText, scriptText(dialect), { color: colors.textPrimary }]} maxFontSizeMultiplier={1.6}>
           {wordIn(word, dialect)}
         </Text>
-        {seen ? <Icon name="check" size={12} color={colors.success} /> : null}
+        {seen ? <Icon name="check" size={12} color={colors.primary} /> : null}
       </View>
     </PressableScale>
   );

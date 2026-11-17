@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { Rise } from '../theme/MotionParts';
+import { Pressable } from '../theme/Pressable';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { Icon } from '../theme/Icon';
+import { Rise, heldDim } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
-import { layout, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import type { TabNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
@@ -15,9 +17,8 @@ import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { HeaderButton } from '../navigation/HeaderButton';
-import { NotificationBell } from '../notifications/NotificationBell';
+import { TabHeader } from '../navigation/TopBar';
 import { useUnread } from '../messages/unread';
 import { useDirection } from '../reports/direction';
 import { getFeed } from './api';
@@ -29,7 +30,6 @@ import {
   DEFAULT_FILTER,
   FeedFilterSheet,
   filterLabel,
-  filterSummary,
   isDefaultFilter,
   normalise,
   sortLabel,
@@ -69,7 +69,6 @@ export function CivakScreen(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
-  const topInset = useScreenTopInset();
   const { refresh: refreshBadges } = useUnread();
 
   const navigation = useNavigation<TabNavigation>();
@@ -214,25 +213,12 @@ export function CivakScreen(): React.JSX.Element {
   const plain = isDefaultFilter(filter);
   const narrowed = filterLabel(t, filter);
   const ordered = sortLabel(t, filter);
-  const summary = filterSummary(t, filter);
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
-        <View style={[styles.bar, { flexDirection: dir.row }]}>
-          <Text style={[styles.wordmark, dir.text, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={1}>
-            Hevalo
-          </Text>
-          {/* sorting and narrowing the wall is one button, out of the way until it is wanted, and filled while either is on */}
-          <HeaderButton
-            icon={plain ? 'filter' : 'filter-fill'}
-            label={summary ? t('feed.sortFilter.buttonOn', { what: summary }) : t('feed.sortFilter.button')}
-            onPress={() => setFiltering(true)}
-            testID="home-filter"
-          />
-          <HeaderButton icon="plus" label={t('post.open')} onPress={compose} testID="home-post" />
-          <NotificationBell />
-        </View>
+      <View style={styles.screen}>
+        {/* the app's own name where a tab's is, and the one thing only this tab does: write on the wall */}
+        <TabHeader title="Hevalo" action={<HeaderButton icon="plus" label={t('post.open')} onPress={compose} testID="home-post" />} />
 
         <FlatList
           ref={listRef}
@@ -249,7 +235,33 @@ export function CivakScreen(): React.JSX.Element {
           ListHeaderComponent={
             <>
               <FriendsRow refreshKey={pulls} />
-              {plain ? null : (
+              {plain ? (
+                /*
+                  Sorting and narrowing the wall, where the wall begins: one
+                  quiet chip over the first post, which says what it is in
+                  words. It was a bare funnel among the icons at the top,
+                  the third of three, and is only worth offering once there
+                  are posts to sort.
+                */
+                (items?.length ?? 0) > 0 ? (
+                  <View style={[styles.filterChips, { flexDirection: dir.row }]}>
+                    <Pressable
+                      onPress={() => setFiltering(true)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('feed.sortFilter.button')}
+                      testID="home-filter"
+                      // alone on its line, so it reaches a fingertip past every edge
+                      reach="open"
+                      style={({ pressed }) => [styles.sortChip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, pressed && heldDim]}
+                    >
+                      <Icon name="filter" size={16} color={colors.textSecondary} />
+                      <Text style={[styles.sortChipText, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {t('feed.sortFilter.button')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : null
+              ) : (
                 <FilterChips style={styles.filterChips}>
                   {ordered ? (
                     <FilterChip
@@ -314,14 +326,17 @@ export function CivakScreen(): React.JSX.Element {
   );
 }
 
+/** The sort chip: drawn a fingertip less a little tall; the Pressable makes up its reach. */
+const CHIP = MIN_TOUCH_TARGET - 8;
+
 /** A post's own name on the wall: a repost and the post it repeats are two. */
 const feedKey = (item: FeedItem): string => item.key;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  // the bell reaches past the gutter so its glyph, not its target, lines up with the name's edge
-  bar: { alignItems: 'center', paddingHorizontal: layout.gutter, minHeight: 44 },
-  wordmark: { ...display(typography.sizes.xl), flex: 1 },
+  // the way into sorting and narrowing: a fingertip tall, as wide as its words
+  sortChip: { alignItems: 'center', gap: spacing.xs + 2, minHeight: CHIP, paddingHorizontal: spacing.md - 4, borderRadius: radii.pill },
+  sortChipText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   waiting: { paddingHorizontal: layout.gutter },
   // the chips under the faces, inside the page's gutter
   filterChips: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },

@@ -20,7 +20,8 @@
 .couch-deal,
 .couch-clues,
 .couch-talk,
-.couch-vote {
+.couch-vote,
+.couch-second {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
@@ -597,6 +598,83 @@
   border-radius: var(--r-xl);
   background: var(--surface-solid);
 }
+.couch-votes-second {
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: var(--text-secondary);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* the room asked for an odd word and this card has none: said once, before any card is read */
+.couch-fallback {
+  justify-self: center;
+  max-width: 34ch;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-lg);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* the way back from a tap, for a moment: the line under it runs out as the moment does */
+.couch-undo {
+  justify-self: center;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: min(100%, 220px);
+}
+.couch-undo-btn {
+  min-width: 132px;
+  min-height: 44px;
+  gap: var(--space-2);
+}
+.couch-undo-time {
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--ink-3);
+  transform-origin: left center;
+  animation: couch-undo-time var(--undo-ms, 3000ms) linear forwards;
+}
+[dir='rtl'] .couch-undo-time {
+  transform-origin: right center;
+}
+/* a tap that would show something new waits here, saying what was chosen */
+.couch-held {
+  padding-block: var(--space-8);
+}
+.couch-held .couch-undo-time {
+  background: #f2b632;
+}
+.couch-held .couch-undo-btn {
+  border-color: rgba(244, 239, 255, 0.4);
+  background: transparent;
+  color: var(--night-ink);
+}
+
+/* the second vote: its clock above whoever has the phone, smaller than a turn's own */
+.couch-second-clock {
+  gap: var(--space-2);
+  padding-block: var(--space-4);
+}
+.couch-second-clock .couch-clock-left {
+  font-size: 40px;
+}
+
+/* the caught impostor's answer, asked once more */
+.couch .couch-confirm {
+  text-align: center;
+}
+.couch-confirm-word {
+  /* the word keeps its own direction inside a sentence that may run the other way */
+  unicode-bidi: isolate;
+  color: #b8860b;
+  font-family: var(--font-display);
+}
 
 @keyframes couch-turn {
   from {
@@ -606,6 +684,14 @@
   to {
     transform: perspective(700px) rotateY(0deg);
     opacity: 1;
+  }
+}
+@keyframes couch-undo-time {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
   }
 }
 @keyframes couch-ring {
@@ -625,7 +711,8 @@
 @media (prefers-reduced-motion: reduce) {
   .couch-card-back,
   .couch-card-face,
-  .couch-pass-disc {
+  .couch-pass-disc,
+  .couch-undo-time {
     animation: none;
   }
   .couch-hold,

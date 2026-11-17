@@ -6,9 +6,10 @@
  * without a renderer.
  */
 
-import type { Feedback } from './share.js';
+import type { LetterFeedback } from '@kurda/shared';
 
-export type { Feedback };
+/** How the server scored a letter: the same three marks the shared grid a result is shared as is drawn from (shared `win-share.ts`). */
+export type Feedback = LetterFeedback;
 
 export const MAX_ATTEMPTS = 6;
 

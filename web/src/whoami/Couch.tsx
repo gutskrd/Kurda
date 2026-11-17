@@ -20,6 +20,7 @@ import {
   type WhoAmICouchDeals,
   type WhoAmICouchOffer,
   type WhoAmIQuestion,
+  type WhoAmISays,
   type WhoAmITableBoard,
   type WhoAmITableCard,
   type WhoAmITableState,
@@ -31,6 +32,7 @@ import { Modal } from '../components/Modal';
 import { Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { useAsksBeforeLeaving } from '../layouts/BackButton';
 import { dialectName } from '../learn/map';
 import { haptic } from '../lib/haptics';
 import { useCelebrationMoment } from '../lib/motion';
@@ -41,11 +43,13 @@ import { useGameDialect } from '../games/soloRounds';
 import { CelebrationArt } from '../ranks/Celebration';
 import { RankList, RankRow } from '../ui/RankRow';
 import {
-  AnswerPanel,
+  AnswerKeys,
   ForeheadCard,
   Foreheads,
+  JudgeKeys,
   QuestionCard,
   QuestionList,
+  ReportAnswer,
   ScoringNote,
   SuggestedQuestions,
   VerdictCard,
@@ -53,9 +57,10 @@ import {
   WHO_AM_I_PATH,
   WithWord,
   WithWords,
+  answerWord,
   askedFirst,
   categoryName,
-  yesNo,
+  type Judged,
   type TableSeat,
 } from './WhoAmIStage';
 
@@ -68,14 +73,16 @@ import {
  * for each, and then goes from hand to hand, with nothing for anyone to
  * remember. Whoever holds it picks a question, one of the few the rules
  * suggest or any on their list, and reads it out; they turn the phone to
- * their friends, who see the card and the question together and tap yes or
- * no themselves; the phone hides the card and comes back with what the card
- * itself says; and the holder passes the phone on, or says they know who they
- * are. A player may also ask the room a question of their own: the friends
- * answer that one out loud, looking at the card, and the phone only counts
- * it. There is nothing to pick a guess from: a player who knows says who they
- * are out loud and turns the phone round once more, and the friends, reading
- * the card, tap whether that is it.
+ * their friends, who see the card and the question together and tap yes,
+ * could be, no or not sure themselves; the phone hides the card and comes
+ * back with what the card itself says; and the holder passes the phone on,
+ * or says they know who they are. A player may also ask the room a question
+ * of their own: the friends answer that one out loud, looking at the card,
+ * and the phone only counts it. There is nothing to pick a guess from: a
+ * player who knows says who they are out loud and turns the phone round once
+ * more, and the friends, reading the card, tap whether that is it, whether it
+ * is close (another word for the same thing, which costs no guess and passes
+ * the turn), or not yet.
  *
  * What it is careful about, because one screen is shared by people who must
  * not read their own card:
@@ -172,7 +179,7 @@ type Step =
   /** the phone is turned to the friends: the holder's card, and what they answer */
   | { at: 'friends'; said: Said }
   /** what came of a guess, before the phone moves on */
-  | { at: 'guessed'; seat: number; correct: boolean }
+  | { at: 'guessed'; seat: number; judged: Judged }
   | { at: 'end' };
 
 interface Game {
@@ -203,10 +210,17 @@ function askable(board: WhoAmITableBoard, id: string): WhoAmIQuestion | null {
   return mine.questions.find((q) => q.id === id) ?? null;
 }
 
-/** The dialect's own yes and no, for a line that tells the friends what to say out loud. */
-function sayYesNo(dialect: GameDialect, t: Translate): { yes: string; no: string } {
-  return { yes: yesNo(dialect, true, t), no: yesNo(dialect, false, t) };
+/** The dialect's own four answers, for a line that tells the friends what to say out loud. */
+function sayAnswers(dialect: GameDialect, t: Translate): Record<WhoAmISays, string> {
+  return { yes: answerWord(dialect, 'yes', t), sometimes: answerWord(dialect, 'sometimes', t), no: answerWord(dialect, 'no', t), unsure: answerWord(dialect, 'unsure', t) };
 }
+
+/** What the room's judgement of a guess said out loud is, as a move of the rules: close spends no guess and passes the turn. */
+const SAID: Record<Judged, { kind: 'said'; right: boolean; close?: true }> = {
+  right: { kind: 'said', right: true },
+  close: { kind: 'said', right: false, close: true },
+  wrong: { kind: 'said', right: false },
+};
 
 /** After a turn has ended: the hand-over to whoever is next, or the end. */
 function onward(state: WhoAmITableState): Step {
@@ -229,8 +243,9 @@ export function Couch(): React.JSX.Element {
     async (names: string[], dialect: GameDialect, difficulty: GameDifficulty): Promise<void> => {
       setBusy(true);
       setFailed(null);
-      // the room's size is all the server is told: the names stay on this phone
-      const res = await client.post<WhoAmICouchDeals>('/games/who-am-i/couch/deal', { dialect, difficulty, players: names.length });
+      // the room's size is all the server is told: the names stay on this phone. The friends are offered all four
+      // answers, so the cards come with their "sometimes" rows.
+      const res = await client.post<WhoAmICouchDeals>('/games/who-am-i/couch/deal', { dialect, difficulty, players: names.length, answers: 4 });
       setBusy(false);
       if (!res.ok || !Array.isArray(res.data?.deals) || res.data.deals.length !== names.length) {
         setFailed(!res.ok && res.error.status === 409 ? 'games.whoAmI.couch.noCards' : 'games.couch.failed');
@@ -249,6 +264,8 @@ export function Couch(): React.JSX.Element {
 
   const under = game !== null && game.step.at !== 'end';
   const head = <GameHead game="who-am-i" title={t('games.whoAmI.name')} meaning={t('games.whoAmI.meaning')} onBack={under ? () => setLeaving('/app/games') : undefined} />;
+  // the way back in a phone's top bar is asked the same question as the game's own
+  useAsksBeforeLeaving(under ? () => setLeaving('/app/games') : null);
 
   if (offers === null) {
     return (
@@ -283,14 +300,15 @@ export function Couch(): React.JSX.Element {
    * What the friends said to a guess spoken out loud: they are its judge, with the card in front of them. Whatever
    * the rules make of the move, the card is off the screen at once.
    */
-  const judged = (right: boolean): void => {
+  const judged = (judgement: Judged): void => {
     const seat = game?.state.turn ?? null;
     if (!game || seat === null) return;
-    const res = whoAmITableRules.apply(game.state, seat, { kind: 'said', right }, Date.now());
+    const res = whoAmITableRules.apply(game.state, seat, SAID[judgement], Date.now());
     if (!res.ok) return setGame({ ...game, step: { at: 'board' } });
-    // a miss is felt at once; a card found is felt as it lands, in its celebration
-    if (!right) haptic('wrong');
-    setGame({ ...game, state: res.state, step: { at: 'guessed', seat, correct: right } });
+    // A miss is felt at once; a card found is felt as it lands, in its celebration. Close is no miss: like "could be"
+    // and "not sure", it never buzzes.
+    if (judgement === 'wrong') haptic('wrong');
+    setGame({ ...game, state: res.state, step: { at: 'guessed', seat, judged: judgement } });
   };
 
   /** The turn passed on without a guess. */
@@ -307,12 +325,12 @@ export function Couch(): React.JSX.Element {
    * off the screen the moment it is answered: whatever the rules say, the
    * phone is back on the holder's board.
    */
-  const answer = (question: string, yes: boolean): void => {
+  const answer = (question: string, says: WhoAmISays): void => {
     const seat = game?.state.turn ?? null;
     if (!game || seat === null) return;
     const now = Date.now();
     const asked = whoAmITableRules.apply(game.state, seat, { kind: 'ask', question }, now);
-    setGame({ ...game, state: asked.ok ? roomAnswers(asked.state, yes, now) : game.state, step: { at: 'board' } });
+    setGame({ ...game, state: asked.ok ? roomAnswers(asked.state, says, now) : game.state, step: { at: 'board' } });
   };
 
   /** A question of the holder's own, asked and answered out loud: the rules only count it, and the card is hidden again. */
@@ -387,9 +405,9 @@ function Play({
   busy: boolean;
   failed: MessageKey | null;
   setGame: (next: Game | null) => void;
-  onJudged: (right: boolean) => void;
+  onJudged: (judged: Judged) => void;
   onPass: () => void;
-  onAnswer: (question: string, yes: boolean) => void;
+  onAnswer: (question: string, says: WhoAmISays) => void;
   onSpoken: () => void;
   onAgain: () => void;
   onLeave: () => void;
@@ -435,15 +453,15 @@ function Play({
           game={game}
           seat={turn}
           said={step.said}
-          onAnswer={(yes) => {
-            if (step.said.what === 'question') onAnswer(step.said.id, yes);
+          onAnswer={(says) => {
+            if (step.said.what === 'question') onAnswer(step.said.id, says);
           }}
           onSpoken={onSpoken}
           onJudged={onJudged}
           onHide={() => go({ at: 'say', said: step.said })}
         />
       )}
-      {step.at === 'guessed' && <Guessed game={game} seat={step.seat} correct={step.correct} onNext={() => go(onward(game.state))} />}
+      {step.at === 'guessed' && <Guessed game={game} seat={step.seat} judged={step.judged} onNext={() => go(onward(game.state))} />}
       {step.at === 'end' ? (
         <End game={game} busy={busy} failed={failed} onAgain={onAgain} onChange={() => setGame(null)} />
       ) : (
@@ -463,7 +481,8 @@ function announcement(game: Game, t: Translate): string {
   if (step.at === 'end') return t('play.room.over');
   if (step.at === 'guessed') {
     const mine = viewOf(game, step.seat).mine;
-    if (step.correct) return t('games.whoAmI.solved');
+    if (step.judged === 'right') return t('games.whoAmI.solved');
+    if (step.judged === 'close') return t('games.whoAmI.said.close');
     return mine?.out ? t('games.whoAmI.out') : `${t('games.whoAmI.couch.missed')} ${t('games.whoAmI.guessesLeft', { count: mine?.guessesLeft ?? 0 })}`;
   }
   if (state.turn === null) return '';
@@ -479,12 +498,12 @@ function announcement(game: Game, t: Translate): string {
       step.said.what === 'guess'
         ? t('games.whoAmI.couch.gotIt', { name })
         : step.said.what === 'own'
-          ? t('games.whoAmI.couch.ownAnswer', { name, ...sayYesNo(state.dialect, t) })
+          ? t('games.whoAmI.couch.ownAnswer', { name, ...sayAnswers(state.dialect, t) })
           : t('games.whoAmI.couch.isItTrue');
     return `${t('games.whoAmI.couch.is', { name })} ${asks}`;
   }
   // back on the holder's board: the card's verdict, or that the friends have answered
-  if (state.phase === 'decide') return state.told ? `${t('games.whoAmI.cardSays')} ${yesNo(state.dialect, state.told.truth, t)}` : t('games.whoAmI.couch.ownAnswered');
+  if (state.phase === 'decide') return state.told ? `${t('games.whoAmI.cardSays')} ${answerWord(state.dialect, state.told.verdict, t)}` : t('games.whoAmI.couch.ownAnswered');
   // or whose board it is, with what the board says when the turn is not simply a question to pick
   const mine = viewOf(game, state.turn).mine;
   return [t('games.whoAmI.couch.whoAreYou', { name }), mine ? boardNote(mine, t) : null].filter(Boolean).join(' ');
@@ -676,7 +695,9 @@ function Board({
   // verdict there; one asked out loud left nothing, since the card said nothing to it.
   const told = deciding && board.told?.seat === seat ? board.told : null;
   // the friends answer with one tap for all of them, so every answer on the table is the same one
-  const friends = told?.answers.find((a) => a.yes !== null) ?? null;
+  const friends = told?.answers.find((a) => a.says !== null) ?? null;
+  // the card the verdict came from, by its id on this phone's deal, for a friend who saw it to say its answer looks wrong
+  const card = game.state.seats.find((s) => s.seat === seat)?.deal?.identity.id ?? null;
   const beginner = board.difficulty === 'beginner';
   const suggested = mine.suggested.flatMap((id) => mine.questions.filter((q) => q.id === id));
   // With nothing suggested the list is the only place left to pick from, so it opens by itself; with everything on it
@@ -692,20 +713,22 @@ function Board({
   return (
     <div className="wa-board">
       {told && (
-        <VerdictCard dialect={board.dialect} by={t('games.whoAmI.theyAsked', { name })} question={told.question} truth={told.truth} shown>
-          {friends && (
+        <VerdictCard dialect={board.dialect} by={t('games.whoAmI.theyAsked', { name })} question={told.question} verdict={told.verdict} shown>
+          {friends?.says && (
             <p className="wa-verdict-you">
-              {friends.right ? (
+              {friends.mark === 'right' ? (
                 t('games.whoAmI.couch.friendsRight', { count: WHO_AM_I_HELP_POINTS })
               ) : (
                 <WithWords
-                  text={t('games.whoAmI.couch.friendsWrong')}
-                  words={{ said: yesNo(board.dialect, friends.yes === true, t), truth: yesNo(board.dialect, told.truth, t) }}
+                  // close and not sure are no mistake: only yes against no is called wrong
+                  text={t(friends.mark === 'close' ? 'games.whoAmI.couch.friendsClose' : friends.mark === 'unsure' ? 'games.whoAmI.couch.friendsUnsure' : 'games.whoAmI.couch.friendsWrong')}
+                  words={{ said: answerWord(board.dialect, friends.says, t), truth: answerWord(board.dialect, told.verdict, t) }}
                   dialect={board.dialect}
                 />
               )}
             </p>
           )}
+          {card && <ReportAnswer key={`${seat}:${told.question.id}`} body={{ identity: card, question: told.question.id }} />}
         </VerdictCard>
       )}
       <div className="wa-turn is-mine is-couch">
@@ -830,11 +853,12 @@ function Say({ game, seat, said, onFriends, onBack }: { game: Game; seat: number
  * The friends' screen, with the phone turned away from its holder: the
  * holder's card on the deer's forehead, large, so nobody has to remember a
  * card. For a question from the list it stands beside the question, and the
- * friends tap the dialect's yes or no themselves. For one the holder asked
- * out loud they answer out loud, in the same two words if they can, and tap
- * that they are done. For a guess said out loud they are its judge, and tap
- * whether that is who the holder is. Any of those taps takes the card off the
- * screen, and so does the page being hidden.
+ * friends tap the dialect's yes, could be, no or not sure themselves. For one
+ * the holder asked out loud they answer out loud, in the same words if they
+ * can, and tap that they are done. For a guess said out loud they are its
+ * judge, and tap whether that is who the holder is, close (another word for
+ * the same thing, say a region's own), or not yet. Any of those taps takes the
+ * card off the screen, and so does the page being hidden.
  */
 function Friends({
   game,
@@ -848,9 +872,9 @@ function Friends({
   game: Game;
   seat: number;
   said: Said;
-  onAnswer: (yes: boolean) => void;
+  onAnswer: (says: WhoAmISays) => void;
   onSpoken: () => void;
-  onJudged: (right: boolean) => void;
+  onJudged: (judged: Judged) => void;
   /** the page is no longer the one in front: back to the screen before, where no card is */
   onHide: () => void;
 }): React.JSX.Element | null {
@@ -884,19 +908,17 @@ function Friends({
           <p className="wa-night-shout">{t('games.whoAmI.couch.gotIt', { name })}</p>
         ) : (
           <p className="wa-night-shout">
-            <WithWords text={t('games.whoAmI.couch.ownAnswer', { name })} words={sayYesNo(board.dialect, t)} dialect={board.dialect} />
+            <WithWords text={t('games.whoAmI.couch.ownAnswer', { name })} words={sayAnswers(board.dialect, t)} dialect={board.dialect} />
           </p>
         )}
       </div>
       {picked ? (
-        <AnswerPanel dialect={board.dialect} label={t('games.whoAmI.couch.isItTrue')} disabled={false} onAnswer={onAnswer} />
+        <AnswerKeys dialect={board.dialect} label={t('games.whoAmI.couch.isItTrue')} answers={board.answers} disabled={false} onAnswer={onAnswer} />
       ) : said.what === 'guess' ? (
-        <AnswerPanel
-          dialect={board.dialect}
+        <JudgeKeys
           label={t('games.whoAmI.couch.gotIt', { name })}
-          disabled={false}
-          onAnswer={onJudged}
-          words={{ yes: t('games.whoAmI.couch.thatsIt'), no: t('games.whoAmI.notYet') }}
+          onJudge={onJudged}
+          words={{ right: t('games.whoAmI.couch.thatsIt'), close: t('games.whoAmI.judge.close'), wrong: t('games.whoAmI.notYet') }}
         />
       ) : (
         <Button size="lg" block onClick={onSpoken}>
@@ -926,23 +948,32 @@ function Cheer({ seed, children }: { seed: number; children: React.ReactNode }):
 /**
  * What came of a guess said out loud: the card coming off for a right one or
  * for the last wrong one, and for any other miss only that it was one and how
- * many guesses are left. There is no word to name in a miss: it was said, not
- * picked, and the phone never heard it.
+ * many guesses are left. A close one is no miss: it says so, that no guess was
+ * spent, and that the turn passes on, with the card still hidden. There is no
+ * word to name in either: it was said, not picked, and the phone never heard
+ * it.
  */
-function Guessed({ game, seat, correct, onNext }: { game: Game; seat: number; correct: boolean; onNext: () => void }): React.JSX.Element | null {
+function Guessed({ game, seat, judged, onNext }: { game: Game; seat: number; judged: Judged; onNext: () => void }): React.JSX.Element | null {
   const t = useT();
   const board = viewOf(game, seat);
   const mine = board.mine;
   if (!mine) return null;
   const name = game.names[seat]!;
+  const correct = judged === 'right';
   // the card is in the holder's view only once it is off: found, or out of guesses
   const identity = mine.identity;
   const card = identity && <ForeheadCard dialect={board.dialect} category={null} identity={identity} label={t('games.couch.cardOf', { name })} />;
   return (
     <div className="wa-night">
-      {identity ? (
+      {judged === 'close' && !identity ? (
         <>
-          {!correct && <p className="wa-night-kicker">{t('games.whoAmI.out')}</p>}
+          <h2 className="wa-night-lead">{t('games.whoAmI.said.close')}</h2>
+          <p className="wa-night-points">{t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}</p>
+        </>
+      ) : identity ? (
+        <>
+          {/* a card off without being found is off because its player is out, or because the game is over */}
+          {!correct && mine.out && <p className="wa-night-kicker">{t('games.whoAmI.out')}</p>}
           {correct ? <Cheer seed={seat * 31 + mine.points}>{card}</Cheer> : card}
           <h2 className="wa-night-title">
             <WithWord text={t(correct ? 'games.whoAmI.youAre' : 'games.whoAmI.youWere')} word={identity.word} dialect={board.dialect} />

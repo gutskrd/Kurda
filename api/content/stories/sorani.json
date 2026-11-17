@@ -76,11 +76,12 @@
         },
         {
           "kind": "detail",
-          "prompt": "ڕاستە یان هەڵە: دایکی هێمن دەبێت بچێتە سەر کار.",
-          "promptEn": "True or false: Hêmin’s mother has to go to work.",
+          "prompt": "ڕاستە، هەڵەیە، یان چیرۆکەکە ناڵێت؟ دایکی هێمن دەبێت بچێتە سەر کار.",
+          "promptEn": "True, false or not in the story: Hêmin’s mother has to go to work.",
           "options": [
             "ڕاستە",
-            "هەڵەیە"
+            "هەڵەیە",
+            "چیرۆکەکە ناڵێت"
           ],
           "correctIndex": 0,
           "explanation": "ڕاستە. دایکی لە پەلەدایە، چونکە دەبێت بچێتە سەر کار.",
@@ -100,6 +101,21 @@
           "correctIndex": 0,
           "explanation": "بەدوای شتێکدا گەڕان واتە هەوڵدان بۆ دۆزینەوەی. بۆیە سەیری سەر مێزەکە و ناو جانتاکە دەکەن.",
           "explanationEn": "To look for something means to try to find it. That is why they check the table and the bag.",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "ڕاستە، هەڵەیە، یان چیرۆکەکە ناڵێت؟ باوکی هێمن لە ماڵەوەیە.",
+          "promptEn": "True, false or not in the story? Hêmin’s father is at home.",
+          "options": [
+            "ڕاستە",
+            "هەڵەیە",
+            "چیرۆکەکە ناڵێت"
+          ],
+          "correctIndex": 2,
+          "explanation": "چیرۆکەکە باسی ئەمە ناکات.",
+          "explanationEn": "The story doesn’t say.",
           "evidenceParagraph": 2,
           "evidenceSentence": 0
         },
@@ -252,6 +268,21 @@
           "evidenceSentence": 0
         },
         {
+          "kind": "detail",
+          "prompt": "ڕاستە، هەڵەیە، یان چیرۆکەکە ناڵێت؟ ئاراس برای هەیە.",
+          "promptEn": "True, false or not in the story? Aras has a brother.",
+          "options": [
+            "ڕاستە",
+            "هەڵەیە",
+            "چیرۆکەکە ناڵێت"
+          ],
+          "correctIndex": 2,
+          "explanation": "چیرۆکەکە باسی ئەمە ناکات.",
+          "explanationEn": "The story doesn’t say.",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 0
+        },
+        {
           "kind": "vocabulary",
           "prompt": "«بۆنخۆش» واتای چییە؟",
           "promptEn": "What does «بۆنخۆش» mean?",
@@ -298,11 +329,12 @@
         },
         {
           "kind": "detail",
-          "prompt": "ڕاستە یان هەڵە: پارەکە لە گیرفانی ئاراسدا بوو.",
-          "promptEn": "True or false: The money was in Aras’s pocket.",
+          "prompt": "ڕاستە، هەڵەیە، یان چیرۆکەکە ناڵێت؟ پارەکە لە گیرفانی ئاراسدا بوو.",
+          "promptEn": "True, false or not in the story: The money was in Aras’s pocket.",
           "options": [
             "ڕاستە",
-            "هەڵەیە"
+            "هەڵەیە",
+            "چیرۆکەکە ناڵێت"
           ],
           "correctIndex": 1,
           "explanation": "هەڵەیە. ئاراس پارەکەی لە ماڵەوە بەجێ هێشتبوو.",
@@ -764,17 +796,33 @@
         },
         {
           "kind": "detail",
-          "prompt": "ڕاستە یان هەڵە: داپیرە وتی خۆی دۆڵمەکەی دروست کردووە.",
-          "promptEn": "True or false: Grandmother said she had made the dolma herself.",
+          "prompt": "ڕاستە، هەڵەیە، یان چیرۆکەکە ناڵێت؟ داپیرە وتی خۆی دۆڵمەکەی دروست کردووە.",
+          "promptEn": "True, false or not in the story: Grandmother said she had made the dolma herself.",
           "options": [
             "ڕاستە",
-            "هەڵەیە"
+            "هەڵەیە",
+            "چیرۆکەکە ناڵێت"
           ],
           "correctIndex": 1,
           "explanation": "هەڵەیە. داپیرە وتی: «ئەمجارە هێرۆ دروستی کردووە.»",
           "explanationEn": "False. Grandmother said: “This time Hêro made it.”",
           "evidenceParagraph": 6,
           "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "ڕاستە، هەڵەیە، یان چیرۆکەکە ناڵێت؟ پوورە زێڕین دۆڵمەکەی خوارد و پێی خۆش بوو.",
+          "promptEn": "True, false or not in the story? Aunt Zêrîn ate the dolma and liked it.",
+          "options": [
+            "ڕاستە",
+            "هەڵەیە",
+            "چیرۆکەکە ناڵێت"
+          ],
+          "correctIndex": 2,
+          "explanation": "چیرۆکەکە باسی ئەمە ناکات.",
+          "explanationEn": "The story doesn’t say.",
+          "evidenceParagraph": 6,
+          "evidenceSentence": 4
         }
       ]
     },
@@ -897,6 +945,21 @@
           "correctIndex": 2,
           "explanation": "ئەنجامەکە دوو بە دوو بوو و تەنیا یەک خولەک مابوو.",
           "explanationEn": "The score was two–two, with only one minute left.",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "ڕاستە، هەڵەیە، یان چیرۆکەکە ناڵێت؟ تیمەکەی سامان یارییەکەی بردەوە.",
+          "promptEn": "True, false or not in the story? Saman’s team won the game.",
+          "options": [
+            "ڕاستە",
+            "هەڵەیە",
+            "چیرۆکەکە ناڵێت"
+          ],
+          "correctIndex": 2,
+          "explanation": "چیرۆکەکە باسی ئەمە ناکات.",
+          "explanationEn": "The story doesn’t say.",
           "evidenceParagraph": 1,
           "evidenceSentence": 1
         },

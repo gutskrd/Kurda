@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { ART_LEAGUE_METAL, BURST, isLeagueTier, type LeagueWeekResult } from '@kurda/shared';
+import { ART_LEAGUE_METAL, BURST, isLeagueTier, leagueWin, type LeagueWeekResult } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import { LeagueEmblem } from '../ranks/art';
 import { Celebration, useCelebrationHold } from '../ranks/Celebration';
 import { leagueName, leagueNamed, withMeaning } from '../ranks/names';
+import { ShareWin } from '../share/ShareWin';
+import { leagueShare } from '../share/winText';
 
 const KEY = 'hevalo_league_celebrated';
 
@@ -28,6 +30,10 @@ function seenWeek(): string | null {
  * on the app's one celebration, and last week's line under it. Once per week
  * in this browser — the week is remembered when the celebration is closed —
  * and never for staying or going down, which the card says plainly by itself.
+ *
+ * Under the way on there is a quiet Share for a week that is good news to
+ * tell (shared `leagueWin`): the league moved up to, or a place in the first
+ * three. It says the league and the place and nothing of who else was in it.
  */
 export function LeagueMoment({ week }: { week: LeagueWeekResult | null | undefined }): React.JSX.Element | null {
   const t = useT();
@@ -46,6 +52,7 @@ export function LeagueMoment({ week }: { week: LeagueWeekResult | null | undefin
     }
   };
   const named = leagueNamed(t, tier);
+  const win = leagueWin(week);
   return (
     <Celebration
       open
@@ -59,6 +66,7 @@ export function LeagueMoment({ week }: { week: LeagueWeekResult | null | undefin
       flecks={BURST.league}
       seed={week.weekKey.length * 53 + tier.length}
       action={t('lesson.continue')}
+      below={win ? <ShareWin text={leagueShare(t, win, leagueNamed(t, win.tier).name)} /> : null}
       onClose={close}
     />
   );

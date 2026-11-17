@@ -48,6 +48,7 @@ import { seasonalLogo } from '../brand/season';
 import { Fire } from '../components/Fire';
 import { GiftBox } from '../gifts/GiftArt';
 import { prefersReducedMotion } from '../lib/motion';
+import { ticketToneClass, type TicketTone } from '../ui/Ticket';
 import { useSwipe } from './swipe';
 
 /**
@@ -415,17 +416,17 @@ function NoteRow({
 }
 
 /** An invitation's colour, as its ticket wears it: the game's for a game invite, a heart's for a friend request. */
-function noteTone(note: RailNotification, kind: NoteKind): string | null {
+function noteTone(note: RailNotification, kind: NoteKind): TicketTone | null {
   if (kind === 'friendRequest') return 'friend';
   if (kind === 'invite' && isPlayGame(note.data?.game)) return note.data.game;
   return null;
 }
 
 /** The face of whoever it is from, or Hevalo's own mark for news from Hevalo, with the kind on its corner. */
-function NoteFace({ kind, actor, tone }: { kind: NoteKind; actor: Actor | null; tone: string | null }): React.JSX.Element {
+function NoteFace({ kind, actor, tone }: { kind: NoteKind; actor: Actor | null; tone: TicketTone | null }): React.JSX.Element {
   const Glyph = KIND_ICON[kind];
   const face = useAvatarSrc(actor?.avatarUrl);
-  const toned = tone ? ` is-ticket ticket--${tone}` : '';
+  const toned = tone ? ` is-ticket ${ticketToneClass(tone)}` : '';
   return (
     <span className="note-face" aria-hidden="true">
       {actor ? (

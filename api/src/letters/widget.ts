@@ -16,7 +16,7 @@ import {
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { notBlockedSql } from '../friends/blocked.js';
-import { BIRD_SQL, NAME_SQL, personOf } from './service.js';
+import { BIRD_SQL, NAME_SQL, NOT_BANNED_SQL, YOUR_TURN_SQL, personOf } from './service.js';
 
 /**
  * The letter widget on a phone's home screen (shared/src/letter-paper.ts):
@@ -44,8 +44,14 @@ import { BIRD_SQL, NAME_SQL, personOf } from './service.js';
 const TOKEN_RE = /^hvw_[A-Za-z0-9_-]{43}$/;
 /** How often a token's last use is written down: the widget's use, not each request. */
 const LAST_USED_EVERY_MS = 5 * 60_000;
-/** How long a widget waits before it asks again, in seconds: the app asks it to reload at once when a letter comes or the choices change. */
-export const WIDGET_REFRESH = { newest: 30 * 60, pinned: 60 * 60 } as const;
+/**
+ * How long a widget waits before it asks again, in seconds. The app asks it to
+ * reload at once when a letter comes or the choices change, but only while the
+ * app runs; so a widget showing the newest letter asks twice as often while a
+ * letter may be on its way (your bird out, or a pen pal's turn to write), and
+ * a pinned one, which nothing new replaces, least often.
+ */
+export const WIDGET_REFRESH = { newest: 30 * 60, awaited: 15 * 60, pinned: 60 * 60 } as const;
 
 export const hashWidgetToken = (raw: string): string => createHash('sha256').update(raw).digest('hex');
 
@@ -78,7 +84,7 @@ interface ShownRow {
  * this file.
  */
 const SHOWABLE_SQL = (me: string): string => `l.recipient_id = ${me} AND l.thread_id IS NOT NULL AND l.status = 'delivered'
-     AND u.deleted_at IS NULL AND (u.banned_at IS NULL OR (u.banned_until IS NOT NULL AND u.banned_until <= now()))
+     AND u.deleted_at IS NULL AND ${NOT_BANNED_SQL('u')}
      AND ${notBlockedSql('l.sender_id', me)}`;
 
 const SHOWN_COLUMNS = `l.id, l.thread_id, l.body, l.decor, l.created_at, l.sender_id, ${NAME_SQL('u')} AS name, ${BIRD_SQL('u')} AS bird`;
@@ -129,7 +135,7 @@ export class LetterWidgetService {
          FROM letter_widget_tokens t JOIN users u ON u.id = t.user_id
         WHERE t.token_hash = $1 AND t.token_version = u.token_version
           AND u.deleted_at IS NULL AND NOT u.guest
-          AND (u.banned_at IS NULL OR (u.banned_until IS NOT NULL AND u.banned_until <= now()))`,
+          AND ${NOT_BANNED_SQL('u')}`,
       [hashWidgetToken(raw)],
     );
     const row = r.rows[0];
@@ -195,6 +201,17 @@ export class LetterWidgetService {
     };
   }
 
+  /** Whether a letter may be on its way to this person: their bird is out, or a pen pal owes them a letter. */
+  private async awaited(userId: string): Promise<boolean> {
+    const r = await this.pool.query<{ awaited: boolean }>(
+      `SELECT EXISTS (SELECT 1 FROM letters WHERE sender_id = $1 AND status = 'flying')
+           OR EXISTS (SELECT 1 FROM letter_threads t WHERE t.ended_at IS NULL AND (t.user_lo = $1 OR t.user_hi = $1)
+                        AND NOT ${YOUR_TURN_SQL('t.id', '$1::uuid')}) AS awaited`,
+      [userId],
+    );
+    return r.rows[0]?.awaited === true;
+  }
+
   /** What a widget is told each time it refreshes. */
   async feed(userId: string): Promise<WidgetFeed> {
     const prefs = await this.storedPrefs(userId);
@@ -203,7 +220,7 @@ export class LetterWidgetService {
       letter: row ? LetterWidgetService.letterOf(row, prefs.showWords) : null,
       pinned,
       showWords: prefs.showWords,
-      refreshAfter: pinned ? WIDGET_REFRESH.pinned : WIDGET_REFRESH.newest,
+      refreshAfter: pinned ? WIDGET_REFRESH.pinned : (await this.awaited(userId)) ? WIDGET_REFRESH.awaited : WIDGET_REFRESH.newest,
     };
   }
 

@@ -165,7 +165,8 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
 const styles = StyleSheet.create({
   methods: { gap: spacing.md },
   link: { marginTop: spacing.sm, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
-  linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  // centred on every line: "Hevalo erst ausprobieren, ohne Konto" takes two at 320, and its second sat against the edge
+  linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, textAlign: 'center' },
   agree: { marginTop: spacing.lg, paddingHorizontal: spacing.md },
   diag: { marginTop: spacing.xl, alignItems: 'center', gap: 2 },
   diagText: { fontSize: typography.sizes.xs },

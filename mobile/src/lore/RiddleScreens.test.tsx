@@ -170,6 +170,18 @@ describe('a riddle’s page', () => {
     expect(pageText()).not.toContain(ANSWER.answer);
   });
 
+  it('says a near guess is near, and sends the reader’s language so a guess in it can be told apart', async () => {
+    const client = server({ 'POST /riddles/kmr-mum/guess': ok({ correct: false, near: 'close' }) });
+    testAuth.client = client;
+    renderWithProviders(<RiddleScreen slug="kmr-mum" onExit={() => undefined} />);
+    const field = (await screen.findByLabelText('Your answer')) as HTMLInputElement;
+    fireEvent.change(field, { target: { value: 'mom' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    expect(await screen.findAllByText('Close, but not quite. Think again!')).toBeTruthy();
+    expect(posts(client).find((c) => c.path.endsWith('/guess'))!.body).toEqual({ guess: 'mom', locale: 'en' });
+    expect(pageText()).not.toContain(ANSWER.answer);
+  });
+
   it('celebrates a right guess quietly, with the XP the server paid, and goes on to why', async () => {
     testAuth.client = server();
     renderWithProviders(<RiddleScreen slug="kmr-mum" onExit={() => undefined} />);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
+import { ReachGroup } from '../theme/Pressable';
 import { CHARACTER_NAMES, type DictionaryAudio, type RecordingVoice } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useAudio } from '../lesson/useAudio';
@@ -86,25 +87,31 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
           <ScrollView contentContainerStyle={[styles.body, { paddingBottom: tabBarInset }]}>
             <View style={styles.headwordRow}>
               <Text style={[styles.headword, { color: colors.textPrimary }]}>{entry.headword}</Text>
-              {entry.audio.length > 0 && !voiced && audio.supported ? (
+              {/* the two round buttons have the row to themselves: each reaches 8 past its edges, and between them they share the gap */}
+              <ReachGroup gap={spacing.md}>
+                {entry.audio.length > 0 && !voiced && audio.supported ? (
+                  <PressableScale
+                    onPress={() => audio.play(1)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('dictionary.playPronunciation')}
+                    reach="open"
+                    style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
+                  >
+                    <Icon name="speaker" size={22} tone="primary" />
+                  </PressableScale>
+                ) : null}
                 <PressableScale
-                  onPress={() => audio.play(1)}
+                  onPress={toggleSave}
                   accessibilityRole="button"
-                  accessibilityLabel={t('dictionary.playPronunciation')}
+                  accessibilityLabel={saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
+                  accessibilityState={{ selected: saved }}
+                  reach="open"
                   style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
                 >
-                  <Icon name="speaker" size={22} tone="primary" />
+                  {/* a saved word is on, and on is violet, as a bookmarked story is */}
+                  <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={22} color={saved ? colors.primary : colors.textSecondary} />
                 </PressableScale>
-              ) : null}
-              <PressableScale
-                onPress={toggleSave}
-                accessibilityRole="button"
-                accessibilityLabel={saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
-                accessibilityState={{ selected: saved }}
-                style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
-              >
-                <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={22} color={saved ? colors.gold : colors.textSecondary} />
-              </PressableScale>
+              </ReachGroup>
             </View>
             <Text style={[styles.dialect, { color: colors.textSecondary }]}>{entry.dialect}</Text>
 

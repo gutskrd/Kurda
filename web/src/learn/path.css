@@ -4,48 +4,57 @@
  * Calm on purpose: soft colours, one line to follow, nothing that counts down.
  * Each unit takes a colour of its own (`lp-tone-*`, in the order
  * @kurda/shared's UNIT_TONES gives them) and everything in the unit is drawn
- * from it — the banner, the lessons done, the line walked so far. The gold of
- * the sun is kept for what was earned: a strong lesson's rim, a unit's trophy.
+ * from it — the heading pinned over it, the lessons done, the line walked so
+ * far. Gold is kept for what was earned: a finished topic's coin and its
+ * stars, a ring made whole three times, a chapter's story won; and the app's
+ * violet for where the learner is on the road, the pieces of a ring filling.
  *
- * Every tone has two sets of values. On the dark page the colours are light
- * and the words on them dark; on the light page the colours are deep and the
- * words on them white. Both pairs were checked: the words on a banner read at
- * 4.5:1 or better, and every filled stop stands 3:1 or better against the page.
+ * Every tone has two sets of values, cut from the app's hues. On the dark page
+ * the colours are light and the words on them dark; on the light page they are
+ * vivid and deep enough for white words, except saffron, which stays a gold and
+ * is written on in a dark brown. Both pairs were checked: the words on a banner
+ * read at 4.5:1 or better, and every filled stop stands 3:1 or better against
+ * the page.
  */
 
-.lp-tone-meadow { --u-fill: #7fcf9f; --u-lip: #4d9a6c; --u-ink: #0d1f15; --u-text: #8fdcad; }
-.lp-tone-river { --u-fill: #86bfe8; --u-lip: #4f88b3; --u-ink: #0b1a26; --u-text: #96c9ee; }
-.lp-tone-clay { --u-fill: #eda585; --u-lip: #b46e50; --u-ink: #2a120a; --u-text: #f2b59a; }
-.lp-tone-dusk { --u-fill: #b9aaf0; --u-lip: #8273bd; --u-ink: #18122e; --u-text: #c4b7f4; }
-.lp-tone-saffron { --u-fill: #f0c060; --u-lip: #b88a2a; --u-ink: #2a1d05; --u-text: #f3ca74; }
-.lp-tone-pine { --u-fill: #bcd283; --u-lip: #849a4f; --u-ink: #1a220a; --u-text: #c6da94; }
-.lp-tone-rose { --u-fill: #eda0bf; --u-lip: #b56a8a; --u-ink: #2b0f1b; --u-text: #f1b1ca; }
+.lp-tone-meadow { --u-fill: #78d694; --u-lip: #459b61; --u-ink: #011c0a; --u-text: #92dfa7; }
+.lp-tone-river { --u-fill: #91c1ff; --u-lip: #5188cd; --u-ink: #05162c; --u-text: #a8ceff; }
+.lp-tone-clay { --u-fill: #ffa47a; --u-lip: #c16d45; --u-ink: #280d02; --u-text: #ffb798; }
+.lp-tone-dusk { --u-fill: #aeb8fe; --u-lip: #767ecd; --u-ink: #11132c; --u-text: #bec6ff; }
+.lp-tone-saffron { --u-fill: #eeb154; --u-lip: #b07a20; --u-ink: #221200; --u-text: #f5c076; }
+.lp-tone-pine { --u-fill: #57d4d4; --u-lip: #009a9a; --u-ink: #001b1b; --u-text: #65e1e1; }
+.lp-tone-rose { --u-fill: #fd9ac6; --u-lip: #bc668e; --u-ink: #260b18; --u-text: #ffafd1; }
 
-:root[data-theme='light'] .lp-tone-meadow { --u-fill: #2e7a52; --u-lip: #1f5739; --u-ink: #ffffff; --u-text: #256843; }
-:root[data-theme='light'] .lp-tone-river { --u-fill: #2a6a93; --u-lip: #1c4c6b; --u-ink: #ffffff; --u-text: #235a7e; }
-:root[data-theme='light'] .lp-tone-clay { --u-fill: #a9532f; --u-lip: #7d3c21; --u-ink: #ffffff; --u-text: #934627; }
-:root[data-theme='light'] .lp-tone-dusk { --u-fill: #6551a6; --u-lip: #493a7d; --u-ink: #ffffff; --u-text: #57459a; }
-:root[data-theme='light'] .lp-tone-saffron { --u-fill: #9a6508; --u-lip: #6f4806; --u-ink: #ffffff; --u-text: #8a5a07; }
-:root[data-theme='light'] .lp-tone-pine { --u-fill: #56692b; --u-lip: #3e4c1e; --u-ink: #ffffff; --u-text: #4b5c25; }
-:root[data-theme='light'] .lp-tone-rose { --u-fill: #a3446b; --u-lip: #78304e; --u-ink: #ffffff; --u-text: #8f3b5d; }
+:root[data-theme='light'] .lp-tone-meadow { --u-fill: #058644; --u-lip: #006531; --u-ink: #ffffff; --u-text: #00783b; }
+:root[data-theme='light'] .lp-tone-river { --u-fill: #0073df; --u-lip: #0157ac; --u-ink: #ffffff; --u-text: #0161bd; }
+:root[data-theme='light'] .lp-tone-clay { --u-fill: #c45001; --u-lip: #973c00; --u-ink: #ffffff; --u-text: #a24102; }
+:root[data-theme='light'] .lp-tone-dusk { --u-fill: #6363eb; --u-lip: #4a47c0; --u-ink: #ffffff; --u-text: #504bd1; }
+:root[data-theme='light'] .lp-tone-saffron { --u-fill: #c37902; --u-lip: #8f5d04; --u-ink: #241600; --u-text: #885703; }
+:root[data-theme='light'] .lp-tone-pine { --u-fill: #008282; --u-lip: #006262; --u-ink: #ffffff; --u-text: #067272; }
+:root[data-theme='light'] .lp-tone-rose { --u-fill: #cd3688; --u-lip: #a51a6a; --u-ink: #ffffff; --u-text: #af0f6f; }
 
 .lp {
   /* the grey of what is not open yet, and of the line still ahead */
-  --lp-rest: #262a31;
-  --lp-rest-lip: #1a1d22;
+  --lp-rest: #2b283c;
+  --lp-rest-lip: #1a1828;
   --lp-rest-ink: rgba(255, 255, 255, 0.5);
   --lp-line: rgba(255, 255, 255, 0.2);
   /* the gold rim and the trophy: the sun, as everywhere else it marks something earned */
   --lp-gold-lip: #b88d1f;
   --lp-gold-ink: #3a2a00;
+  /* a topic's ring where it is not filled, and the edge under every piece of it (as the phone's coursemap/path.ts RING) */
+  --lp-ring-track: #2b283c;
+  --lp-ring-edge: rgba(6, 4, 16, 0.6);
   --node: 72px;
 }
 :root[data-theme='light'] .lp {
-  --lp-rest: #e4e4e1;
-  --lp-rest-lip: #c9c9c5;
-  --lp-rest-ink: #74767c;
-  --lp-line: rgba(17, 17, 17, 0.18);
+  --lp-rest: #e3e1ec;
+  --lp-rest-lip: #cac8d7;
+  --lp-rest-ink: #716e85;
+  --lp-line: rgba(20, 17, 46, 0.18);
   --lp-gold-lip: #b07f00;
+  --lp-ring-track: #fffaf0;
+  --lp-ring-edge: rgba(36, 24, 70, 0.32);
 }
 
 /* ---- the top of the page ---------------------------------------------------- */
@@ -92,65 +101,210 @@
 .lp-unit {
   display: grid;
 }
-.lp-banner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3) var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  border-radius: 18px;
-  /* the valley's paper by evening: a warm night card, its words light */
-  background: #2a231d;
-  color: #f1e8d8;
-  box-shadow: 0 4px 0 #1a1512;
-}
-:root[data-theme='light'] .lp-banner {
-  background: #fffaf0;
-  color: #3d2a1f;
-  box-shadow: 0 4px 0 #e6d6b4;
-}
-.lp-banner-text {
+/*
+ * The open section's heading, pinned under the bar as its units go by
+ * (learn/PathSections.tsx): "Section 1 · Chapter 2" over the name of the unit
+ * at the top of the window, in that unit's colour on its darker lip, with its
+ * guide as a book on the far side. Its colour turns as the next unit comes up
+ * under it, and simply changes for anyone who asked for less motion.
+ */
+.lp-open-section {
   display: grid;
-  gap: 2px;
   min-width: 0;
-  flex: 1 1 220px;
 }
-.lp-banner-eyebrow {
-  margin: 0;
-  font-size: var(--text-caption);
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  /* the chapter's own colour, deep on the cream card by day and light on the night card */
-  color: var(--u-text);
-}
-.lp-banner-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  line-height: 1.15;
-  color: inherit;
-}
-.lp-banner-topics {
-  margin: 2px 0 0;
-  font-size: var(--text-secondary);
-  color: #b8a892;
-}
-:root[data-theme='light'] .lp-banner-topics {
-  color: #7b6a58;
-}
-.lp-banner-side {
+.lp-pin {
+  position: sticky;
+  top: calc(var(--nav-bottom) + var(--space-2));
+  z-index: 8;
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex: none;
+  padding: var(--space-3) var(--space-2) var(--space-3) var(--space-5);
+  border-radius: 18px;
+  background: var(--u-fill);
+  color: var(--u-ink);
+  box-shadow: 0 4px 0 var(--u-lip);
 }
-.lp-banner-count {
+@media (prefers-reduced-motion: no-preference) {
+  .lp-pin {
+    transition:
+      background-color var(--dur) ease,
+      box-shadow var(--dur) ease,
+      color var(--dur) ease;
+  }
+}
+.lp-pin-words {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.lp-pin-eyebrow {
+  margin: 0;
+  font-size: var(--text-caption);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.lp-pin-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.lp-pin-button {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--u-ink) 12%, transparent);
+  color: inherit;
+  cursor: pointer;
+}
+.lp-pin-button:focus-visible {
+  outline: 2px solid var(--u-ink);
+  outline-offset: 2px;
+}
+
+/* between two units, a quiet line with the next one's number over its name, between two hairlines: its heading */
+.lp-divider {
+  margin: 0;
+  padding: var(--space-5) var(--space-2);
+  font: inherit;
+  text-align: center;
+}
+.lp-divider::before,
+.lp-divider::after {
+  content: '';
+  height: 1px;
+  background: var(--lp-line);
+}
+.lp-divider > span {
+  display: block;
+}
+.lp-divider-eyebrow {
   font-size: var(--text-caption);
   font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.lp-divider-title {
+  max-width: 24ch;
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--ink);
+}
+.lp-divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--space-3);
+}
+.lp-divider::before {
+  grid-row: 1 / 3;
+  grid-column: 1;
+  align-self: center;
+}
+.lp-divider::after {
+  grid-row: 1 / 3;
+  grid-column: 3;
+  align-self: center;
+}
+.lp-divider-eyebrow,
+.lp-divider-title {
+  grid-column: 2;
+}
+
+/*
+ * A section that is not open, as one card: its number, its level by the
+ * app's own name for it and what that is like, and where it stands. One done
+ * or begun opens when pressed; a shut one stays shut.
+ */
+.lp-scard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface-solid);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+}
+button.lp-scard {
+  cursor: pointer;
+}
+button.lp-scard:hover {
+  background: var(--surface-2);
+}
+button.lp-scard:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.lp-scard-badge {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
-  color: inherit;
+}
+/* what was won is gold; what is shut is the quiet grey */
+.lp-scard-badge.is-done {
+  background: var(--gold);
+  color: var(--lp-gold-ink);
+}
+.lp-scard-badge.is-locked {
+  background: var(--surface-2);
+  color: var(--ink-3);
+}
+.lp-scard-words {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.lp-scard-eyebrow {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.lp-scard-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  line-height: 1.2;
+}
+.lp-scard-line {
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.lp-scard-line.is-here {
+  color: var(--primary);
+  font-weight: 650;
+}
+.lp-scard-chevron {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid var(--ink-3);
+  border-inline-end: 2px solid var(--ink-3);
+  rotate: 45deg;
+}
+[dir='rtl'] .lp-scard-chevron {
+  rotate: -45deg;
 }
 /* ---- where the path stops for now ------------------------------------------- */
 /* the next unit, still being made: a signpost on up the road, and on the road Hamo beside it, recording */
@@ -272,6 +426,17 @@
   padding: 0;
   list-style: none;
 }
+.lp-rail-section + .lp-rail-section {
+  margin-top: var(--space-4);
+}
+.lp-rail-section-name {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
 /* the rail itself: a line through every milestone's middle */
 .lp-rail ol::before {
   content: '';
@@ -364,6 +529,12 @@
 :root[data-theme='light'] .lp-unit-rail {
   background: color-mix(in srgb, var(--u-lip) 55%, transparent);
 }
+/* where the rail stands beside the path, the heading needs no button for it (after the rule above, which would show it) */
+@media (min-width: 1100px) {
+  .lp-unit-rail {
+    display: none;
+  }
+}
 
 /* ---- the path --------------------------------------------------------------- */
 
@@ -378,13 +549,13 @@
  */
 .lp-path {
   position: relative;
-  margin: -14px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
-.lp-banner {
-  position: relative;
-  z-index: 6;
+/* the first unit's land runs a little under the heading pinned over it */
+.lp-path.is-first {
+  margin-top: -14px;
 }
 .lp-land {
   position: absolute;
@@ -468,12 +639,12 @@
 }
 .lp-art-face,
 .lp-node-glyph,
-.lp-lights {
+.lp-stars {
   transition: translate var(--dur-fast) var(--ease-out);
 }
 .lp-node:active .lp-art-face,
 .lp-node:active .lp-node-glyph,
-.lp-node:active .lp-lights {
+.lp-node:active .lp-stars {
   translate: 0 7px;
 }
 /* a unit far from the screen: its stops are plain rounds until it comes near */
@@ -555,7 +726,7 @@
   box-shadow: 0 0 0 2px var(--u-fill);
 }
 
-/* the stop to do now: in a soft pool of its unit's light, its lessons as lights along its side */
+/* the stop to do now: in a soft pool of its unit's light */
 .lp-glow {
   /* the stop's own base draws its ring of light on the road now */
   display: none;
@@ -568,26 +739,97 @@
   background: radial-gradient(closest-side, color-mix(in srgb, var(--u-fill) 60%, transparent), color-mix(in srgb, var(--u-fill) 25%, transparent) 55%, transparent);
   pointer-events: none;
 }
-.lp-lights {
+/*
+ * A topic's ring (learn/PathRing.tsx, the shape @kurda/shared's): a piece
+ * for each lesson round the stop, the quiet track until its lesson is
+ * finished in the round being played, the app's violet then, and the whole
+ * ring the app's gold once all three rounds are; each piece edged a step
+ * darker so it reads on any ground. Coming back from a lesson the new pieces
+ * fill one after another (`--d`). A right-to-left page fills it the other way
+ * round, as it mirrors the path.
+ */
+.lp-ring {
   position: absolute;
-  inset: 0;
+  left: -12px;
+  top: -12px;
+  width: 96px;
+  height: 96px;
+  overflow: visible;
   pointer-events: none;
 }
-[dir='rtl'] .lp-lights {
+[dir='rtl'] .lp-ring {
   scale: -1 1;
 }
-.lp-light {
+.lp-ring.is-faint {
+  opacity: 0.6;
+}
+.lp-ring-edge,
+.lp-ring-piece {
+  fill: none;
+  stroke-linecap: round;
+}
+.lp-ring-edge {
+  stroke: var(--lp-ring-edge);
+}
+.lp-ring-piece {
+  stroke: var(--lp-ring-track);
+}
+.lp-ring-piece.is-filled {
+  stroke: var(--primary);
+}
+.lp-ring.is-whole .lp-ring-piece {
+  stroke: var(--gold);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lp-map.is-returning .lp-ring-piece {
+    transition: stroke 160ms linear;
+    transition-delay: var(--d, 0ms);
+  }
+}
+
+/* a finished topic's stars on its coin: the valley's cream, edged in a deep gold */
+.lp-stars {
   position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.35);
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
 }
-:root[data-theme='light'] .lp-light {
-  background: rgba(58, 42, 18, 0.28);
+.lp-star {
+  fill: #fffaf0;
+  stroke: #a8691a;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
 }
-.lp-light.is-lit {
-  background: var(--gold);
+@media (prefers-reduced-motion: no-preference) {
+  .lp-star.is-earned {
+    animation: lp-star-in 280ms var(--ease-out) both;
+  }
+}
+@keyframes lp-star-in {
+  from {
+    opacity: 0;
+    translate: 0 -14px;
+    scale: 1.8;
+  }
+  70% {
+    opacity: 1;
+    scale: 0.92;
+  }
+}
+/* the stars in a topic's card, three in a row: gold for each round played */
+.lp-star-row {
+  display: inline-flex;
+  gap: 4px;
+}
+.lp-star-row path {
+  fill: var(--lp-ring-track);
+  stroke: var(--lp-ring-edge);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+.lp-star-row path.is-won {
+  fill: var(--gold);
+  stroke: #a8691a;
 }
 
 /*
@@ -728,8 +970,7 @@
     animation: lp-rise 380ms var(--ease-out) both;
     animation-delay: calc(var(--i, 0) * 45ms);
   }
-  .lp-unit.is-seen .lp-loop.is-kilim,
-  .lp-unit.is-seen .lp-loop.is-flag {
+  .lp-unit.is-seen .lp-loop.is-colours {
     transform-origin: 0 0;
     animation: lp-flutter 2.8s ease-in-out infinite;
   }
@@ -903,7 +1144,7 @@
   }
   .lp-art-face,
   .lp-node-glyph,
-  .lp-lights {
+  .lp-stars {
     transition: none;
   }
 }
@@ -992,7 +1233,21 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--u-fill);
+  /* a place on the road, not something won: the app's violet, as the ring's pieces are */
+  background: var(--primary);
+}
+/* the chapter complete, on its story's card: in gold, as what was won */
+.lp-pop-won {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-3);
+  border-radius: var(--r-pill);
+  background: var(--gold);
+  color: var(--lp-gold-ink);
+  font-size: var(--text-caption);
+  font-weight: 750;
 }
 .lp-pop-tips {
   justify-self: center;

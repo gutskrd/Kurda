@@ -234,6 +234,8 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 2px;
+  /* side by side 2px apart: each tool reaches half the gap toward its neighbour, so a press between two goes to the nearer */
+  --reach-room-x: 2px;
   min-width: 0;
   margin: 0;
   padding: 3px;
@@ -367,6 +369,9 @@
   display: inline-flex;
   flex-wrap: wrap;
   gap: 2px;
+  /* the pens wrap onto a second line on a narrow phone, so they share the gaps both ways */
+  --reach-room-x: 2px;
+  --reach-room-y: 2px;
   padding: 3px;
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
@@ -386,6 +391,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  /* the colours wrap into rows, and each reaches half the gap to the next one either way */
+  --reach-room-x: 4px;
+  --reach-room-y: 4px;
 }
 /* a colour: its dot on a ring of the paper it would be drawn on, ringed again in the page's ink once chosen */
 .paper-paint {
@@ -459,6 +467,7 @@
 .paper-history {
   display: inline-flex;
   gap: 4px;
+  --reach-room-x: 4px;
   margin-inline-start: auto;
 }
 .paper-icon-btn {

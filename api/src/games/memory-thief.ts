@@ -10,9 +10,21 @@
  * teaches. Each is matched exactly as the passage writes it, marks and
  * capitals kept — never a folded look-alike, nor a meaning another lesson
  * gives a word spelled alike (tê is not te, xwe is not xwê, Baran is not
- * baran) — so the meaning shown in the reveal is the passage's own.
+ * baran) — so the meaning shown in the reveal is the passage's own. The one
+ * capital forgiven is a sentence's first letter: a glossary term written in
+ * lower case is still the word where the passage only ever writes it with a
+ * capital at the start of a sentence (mîr, Mîr), because that capital is the
+ * sentence's and not the word's. A capital anywhere else marks a name.
  * Short words (two letters or fewer) and names are never taken; a word taken
- * from two places is one gap twice.
+ * from two places is one gap twice, and a word that vanished from one passage
+ * of a round is not taken from another while a different word can be, so a
+ * legend's mîr is a gap once a round, not five times.
+ *
+ * A story paragraph that ends in a colon introduces what follows it ("Gur
+ * got:"), so it is read together with the next paragraph of the story when
+ * the two still fit a passage's length. And the round stays calm: a passage
+ * with a word of killing, blood, boiling or death in it (`isCalmPassage`) is
+ * never one of its passages, though it stays in the story.
  *
  * A round is five passages at the difficulty's levels (stories by their own
  * level, conversations by how long their lines are), never-met passages
@@ -67,7 +79,7 @@ import {
 import { gradingKey } from '../content/exercises.js';
 import { drawFor } from './draw.js';
 import { freshestFirst, seenFor } from './seen.js';
-import { itemKey, type TrustedSources } from './sources.js';
+import { itemKey, type StoryPassage, type TrustedSources } from './sources.js';
 import type { RoundAsk, SoloEngine, StoredItem } from './solo.js';
 import { typedVerdict } from './typed.js';
 
@@ -172,11 +184,22 @@ function wordsOf(lines: readonly string[], dialect: GameDialect): Map<string, { 
 }
 
 /**
+ * Whether a lower-case term is the word a passage writes with a capital only
+ * where a sentence starts: every form it has is the term with its first
+ * letter raised, and none stands where no sentence starts (that is a name).
+ */
+function sentenceCapitalOnly(term: string, word: { forms: ReadonlySet<string>; name: boolean }): boolean {
+  if (word.name || term !== term.toLowerCase()) return false;
+  return [...word.forms].every((f) => f === term || f.toLowerCase() === term);
+}
+
+/**
  * The words a passage could lose, preferred first: its own glossary terms (a
  * story's, or a row's own hidden words), then the words its own lesson
  * teaches (`taught`, by each word exactly as written). Each is a single word
  * the passage has exactly as the glossary or the lesson writes it — marks and
- * capitals kept, so a word spelled alike is never taken for it — at least
+ * capitals kept, so a word spelled alike is never taken for it, save a
+ * glossary term the passage only capitalises to start a sentence — at least
  * three letters long, not a name, with a meaning (pure, for the tests).
  */
 export function candidatesIn(
@@ -191,7 +214,9 @@ export function candidatesIn(
   const keep = (exact: string, meanings: Partial<Meanings> | null | undefined, from: Candidate['from']): void => {
     const key = foldForDialect(exact, dialect);
     const word = words.get(key);
-    if (!word || !word.forms.has(exact) || word.name || taken.has(key) || !worthTaking(key) || !hasMeaning(meanings)) return;
+    if (!word || word.name || taken.has(key) || !worthTaking(key) || !hasMeaning(meanings)) return;
+    // a word the passage writes otherwise is not the word, unless the only difference is a capital a sentence start gives it
+    if (!word.forms.has(exact) && !(from === 'glossary' && sentenceCapitalOnly(exact, word))) return;
     taken.add(key);
     out.push({ term: exact, meanings, from });
   };
@@ -207,8 +232,11 @@ export function candidatesIn(
  * Which words vanish: `count` of the candidates (fewer when there are not
  * that many), glossary terms before taught words, a word met once before one
  * met twice, and none right beside another where that can be helped — two
- * gaps side by side are a guess, not a memory. Returned in the order they
- * stand in the passage, which is their gaps' order (pure, for the tests).
+ * gaps side by side are a guess, not a memory. A word already taken from
+ * another passage of the round (`taken`, by its strict key) comes last of
+ * all, used only when nothing else can make up the count. Returned in the
+ * order they stand in the passage, which is their gaps' order (pure, for the
+ * tests).
  */
 export function chooseHidden(
   lines: readonly string[],
@@ -216,6 +244,7 @@ export function chooseHidden(
   count: number,
   seed: string,
   dialect: GameDialect,
+  taken: ReadonlySet<string> = new Set(),
 ): Candidate[] {
   const words = wordsOf(lines, dialect);
   const at = (c: Candidate) => words.get(foldForDialect(c.term, dialect))?.at ?? [];
@@ -224,10 +253,14 @@ export function chooseHidden(
       .shuffle(candidates.filter((c) => c.from === from))
       .sort((a, b) => at(a).length - at(b).length),
   );
+  const fresh = ranked.filter((c) => !taken.has(foldForDialect(c.term, dialect)));
+  const again = ranked.filter((c) => taken.has(foldForDialect(c.term, dialect)));
   const chosen: Candidate[] = [];
   const near = (c: Candidate) => at(c).some((i) => chosen.some((d) => at(d).some((j) => Math.abs(i - j) <= 1)));
-  for (const c of ranked) if (chosen.length < count && !near(c)) chosen.push(c);
-  for (const c of ranked) if (chosen.length < count && !chosen.includes(c)) chosen.push(c);
+  for (const group of [fresh, again]) {
+    for (const c of group) if (chosen.length < count && !near(c)) chosen.push(c);
+    for (const c of group) if (chosen.length < count && !chosen.includes(c)) chosen.push(c);
+  }
   return chosen.sort((a, b) => (at(a)[0] ?? 0) - (at(b)[0] ?? 0));
 }
 
@@ -278,6 +311,165 @@ const fits = (lines: readonly string[]): boolean => {
   const n = lines.reduce((sum, l) => sum + gameWords(l).length, 0);
   return n >= MEMORY_PASSAGE_WORDS.min && n <= MEMORY_PASSAGE_WORDS.max;
 };
+
+/**
+ * Words that keep a passage out of a round, by variety: killing, blood,
+ * boiling and death, and the graves of the dead. The legends tell of all
+ * of them, and a story may; a memory game played for fun should not open on
+ * them, so a passage holding one is left out. Each is a whole word as written
+ * (mîr, a prince, is not mir, died; li gor, according to, is not gora, a
+ * grave), and a few that also mean a light or a fire going out are kept on
+ * the list because a passage too many left out costs nothing, and one too few
+ * puts a death in a child's round.
+ */
+export const UNCALM_WORDS: Readonly<Record<GameDialect, readonly string[]>> = {
+  kmr: [
+    // killing
+    'kuşt',
+    'kuştin',
+    'kuştibû',
+    'kuştî',
+    'kuştina',
+    'dikuşt',
+    'dikuje',
+    'dikujin',
+    'bikuje',
+    'bikujin',
+    'kujer',
+    'komkujî',
+    'komkujiyek',
+    // blood
+    'xwîn',
+    'xwînê',
+    'xwîna',
+    'xwînî',
+    // boiling
+    'kelandin',
+    'kelandî',
+    'kelî',
+    'dikelînin',
+    'bikelînin',
+    'serjê',
+    // death, the dead and their graves
+    'mir',
+    'mirin',
+    'mirinê',
+    'mirina',
+    'miribû',
+    'mirî',
+    'dimire',
+    'dimirin',
+    'bimirin',
+    'vemirî',
+    'cendek',
+    'darbest',
+    'darbesta',
+    'gora',
+    'goran',
+    'goristan',
+    'goristanê',
+  ],
+  ckb: [
+    // killing
+    'کوشت',
+    'کوشتن',
+    'کوشتی',
+    'کوشتیان',
+    'کوشتاری',
+    'کوژرا',
+    'کوژران',
+    'دەکوژێت',
+    'دەیکوژن',
+    'بیکوژن',
+    // blood
+    'خوێن',
+    'خوێنی',
+    'خوێنەکەی',
+    'خوێناوی',
+    // boiling
+    'کوڵا',
+    'کوڵاند',
+    'کوڵاندن',
+    'سەربڕین',
+    // death, the dead and their graves
+    'مرد',
+    'مردن',
+    'مردنی',
+    'مردبوو',
+    'مردووە',
+    'مردوویت',
+    'دەمرێت',
+    'دەمرن',
+    'مەرگ',
+    'مەرگدا',
+    'کوژایەوە',
+    'لاشە',
+    'تەرمەکەی',
+    'گۆڕەکەی',
+    'گۆڕەکەدا',
+    'گۆڕەکەیان',
+    'گۆڕستان',
+    'نێژرا',
+  ],
+};
+
+const uncalmKeys = new Map<GameDialect, Set<string>>();
+
+/** Whether a passage is calm enough for a round: none of its words is one of `UNCALM_WORDS` (pure, for the tests and the decks). */
+export function isCalmPassage(lines: readonly string[], dialect: GameDialect): boolean {
+  let keys = uncalmKeys.get(dialect);
+  if (!keys) {
+    keys = new Set(UNCALM_WORDS[dialect].map((w) => foldForDialect(w, dialect)));
+    uncalmKeys.set(dialect, keys);
+  }
+  return !lines.some((l) => gameWords(l).some((w) => keys.has(foldForDialect(w, dialect))));
+}
+
+/** A paragraph that hands over to the next one: "Gur got:". */
+const INTRODUCES = /:\s*$/u;
+
+/** A story's paragraphs as a round reads them: one passage each, or two read as one. */
+export interface StoryWindow {
+  storyId: string;
+  title: string;
+  level: number;
+  /** the paragraphs it is made of, in order */
+  paragraphs: number[];
+  /** one line per paragraph */
+  lines: string[];
+  glossary: Array<{ term: string; meanings: Partial<Meanings> }>;
+}
+
+/**
+ * A story's paragraphs as passages: each on its own, except that one ending
+ * in a colon is read together with the paragraph after it when the two still
+ * fit a passage's length — the words introducing a speech belong with the
+ * speech (pure, for the tests and for the word deck, which must cut the
+ * stories exactly as the game does).
+ */
+export function storyWindows(passages: readonly StoryPassage[]): StoryWindow[] {
+  const out: StoryWindow[] = [];
+  for (let i = 0; i < passages.length; i++) {
+    const p = passages[i]!;
+    const next = passages[i + 1];
+    const joins = next && next.storyId === p.storyId && next.paragraph === p.paragraph + 1 && INTRODUCES.test(p.text) && fits([p.text, next.text]);
+    if (joins) {
+      const known = new Set(p.glossary.map((g) => g.term));
+      out.push({
+        storyId: p.storyId,
+        title: p.title,
+        level: p.level,
+        paragraphs: [p.paragraph, next.paragraph],
+        lines: [p.text, next.text],
+        glossary: [...p.glossary, ...next.glossary.filter((g) => !known.has(g.term))],
+      });
+      i++;
+      continue;
+    }
+    out.push({ storyId: p.storyId, title: p.title, level: p.level, paragraphs: [p.paragraph], lines: [p.text], glossary: p.glossary });
+  }
+  return out;
+}
 
 /** Words looked at, at most, for decoys close in length to the vanished ones, before any length will do. */
 const DECOYS_LOOKED_AT = 800;
@@ -365,7 +557,7 @@ export class MemoryThiefGame implements SoloEngine<MemoryItem, MemoryThiefItemVi
       taught: ReadonlyMap<string, Partial<Meanings>> = none,
     ): void => {
       const texts = p.lines.map((l) => l.text);
-      if (!fits(texts)) return;
+      if (!fits(texts) || !isCalmPassage(texts, dialect)) return;
       const key = passageKey(dialect, texts);
       const candidates = candidatesIn(texts, glossary, taught, dialect);
       const had = byKey.get(key);
@@ -385,9 +577,9 @@ export class MemoryThiefGame implements SoloEngine<MemoryItem, MemoryThiefItemVi
         row.payload.hidden,
       );
     }
-    for (const s of stories) {
+    for (const s of storyWindows(stories)) {
       const level = Math.min(5, Math.max(1, s.level)) as GameLevel;
-      add({ kind: 'story', source: `story:${s.storyId}`, title: s.title, lines: [{ text: s.text, speaker: null }], level }, s.glossary);
+      add({ kind: 'story', source: `story:${s.storyId}`, title: s.title, lines: s.lines.map((text) => ({ text, speaker: null })), level }, s.glossary);
     }
     for (const c of conversations) {
       const taught = new Map((c.taught ?? []).map((t) => [t.word, t.meanings]));
@@ -436,7 +628,13 @@ export class MemoryThiefGame implements SoloEngine<MemoryItem, MemoryThiefItemVi
     // a round starts with its easier passages
     round.sort((a, b) => a.level - b.level);
 
-    const items = round.map((p, i) => this.item(p, i, ask, decoyWords, seen.get(p.key)?.recent === true));
+    // a word taken from one passage is not taken from the next while another can be
+    const taken = new Set<string>();
+    const items = round.map((p, i) => {
+      const item = this.item(p, i, ask, decoyWords, seen.get(p.key)?.recent === true, taken);
+      for (const h of item.hidden) taken.add(foldForDialect(h.term, ask.dialect));
+      return item;
+    });
     return { items, meta: { mode: memoryAnswerMode(ask.difficulty), begun: [] } };
   }
 
@@ -451,11 +649,11 @@ export class MemoryThiefGame implements SoloEngine<MemoryItem, MemoryThiefItemVi
     return { ...round.meta, begun: [...begun, index].sort((a, b) => a - b) };
   }
 
-  private item(p: PoolPassage, i: number, ask: RoundAsk, decoyWords: readonly string[], repeat: boolean): MemoryItem {
+  private item(p: PoolPassage, i: number, ask: RoundAsk, decoyWords: readonly string[], repeat: boolean, taken: ReadonlySet<string>): MemoryItem {
     const { dialect, difficulty } = ask;
     const lines = p.lines.map((l) => l.text);
     const want = Math.min(MEMORY_HIDDEN[difficulty].max, p.candidates.length);
-    const hidden = chooseHidden(lines, p.candidates, want, `${ask.seed}:${i}`, dialect);
+    const hidden = chooseHidden(lines, p.candidates, want, `${ask.seed}:${i}`, dialect, taken);
     const tiles = hidden.map((h) => tileOf(h.term, dialect));
     const inPassage = new Set(lines.flatMap((l) => gameWords(l)).map((w) => foldForDialect(w, dialect)));
     const mode = memoryAnswerMode(difficulty);

@@ -1107,18 +1107,26 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.line('M44 64C48 60 62 59 70 62C76 65 68 69 58 67', '#e0d9cb', 2.4);
   },
 
+  // a sindoq is the plain wooden chest a household keeps its linen and its keepsakes in: planks, two iron straps and a hasp, never a pirate's gold
   chest: (b) => {
+    const iron: Tone = ['#5b5552', '#3f3a38', '#7c7673'];
     b.ground(48, 62, 103);
-    b.fill(poly(88, 101, 88, 58, 104, 50, 104, 93), WOOD[1]);
-    b.fill(box(16, 58, 72, 43), WOOD[0]);
-    b.fill('M16 58C16 44 30 38 52 38C74 38 88 44 88 58L104 50C104 36 90 30 68 30C46 30 32 36 32 50Z', WOOD[2]);
-    b.fill('M88 58L104 50C104 44 102 40 98 37C92 40 88 46 88 58Z', WOOD[1]);
-    b.fill('M16 58C16 44 30 38 52 38C74 38 88 44 88 58Z', WOOD[0]);
-    b.fill(box(16, 56, 72, 5) + box(28, 58, 6, 43) + box(70, 58, 6, 43), GOLD[0]);
-    b.fill(poly(88, 58, 104, 50, 104, 54, 88, 62), GOLD[1]);
-    b.form(box(45, 60, 14, 17, 2), GOLD, 46, 61, 0.86);
-    b.fill('M52 64.5A2.4 2.4 0 1 1 51.99 64.5M50.6 66.5H53.4L54.2 72H49.8Z', INK);
-    b.fill(diamond(52, 89, 7, 6), VALLEY.red);
+    // the right end in shade, the front in the wood's face, the lid a little proud of both
+    b.fill(poly(88, 101, 88, 60, 104, 52, 104, 93), WOOD[1]);
+    b.fill(box(16, 60, 72, 41), WOOD[0]);
+    b.line('M16 74H88M16 88H88M88 74L104 66M88 88L104 80', WOOD[1], 1.4);
+    b.fill(poly(13, 50, 29, 42, 108, 42, 92, 50), WOOD[2]);
+    b.fill(box(13, 50, 79, 11, 1.5), WOOD[0]);
+    b.fill(poly(92, 50, 108, 42, 108, 52, 92, 61), WOOD[1]);
+    b.line('M15 60.4H91', WOOD[1], 1.2);
+    // two iron straps over the lid and down the front, each with its rivets
+    b.fill(box(28, 50, 7, 51) + box(69, 50, 7, 51), iron[0]);
+    b.fill(poly(28, 50, 44, 42, 51, 42, 35, 50) + poly(69, 50, 85, 42, 92, 42, 76, 50), iron[2]);
+    b.fill(box(33, 50, 2, 51) + box(74, 50, 2, 51), iron[1]);
+    b.fill([54, 66, 80, 94].flatMap((y) => [O(31.5, y, 1.1), O(72.5, y, 1.1)]).join(''), iron[2]);
+    // the hasp: a plain iron plate hanging from the lid over a staple
+    b.fill(box(48, 54, 9, 15, 1.5), iron[0]);
+    b.fill(box(50.5, 66, 4, 6, 1.5), iron[1]);
   },
 
   key: (b) => {
@@ -1906,26 +1914,38 @@ const PICTURES: Record<WordPictureId, Draw> = {
     eye(b, 70, 26, 2);
   },
 
-  // the kid is cream and patched, smooth-coated and hornless but for buds: never the dark bearded goat, the woolly lamb or the striped gazelle
+  // the kid is cream and patched, smooth-coated and hornless but for buds: never the dark bearded goat, the woolly lamb or the striped gazelle;
+  // a young goat is short in the leg and deep in the body for its size, with a goat's long muzzle and both ears out to the side, never a foal's long neck
   kid: (b) => {
     const t: Tone = ['#f3e4cc', '#d3bc98', '#fbf3e4'];
     const patch = '#a8703f';
-    b.ground(38, 64);
+    b.ground(36, 64);
     beast(b, {
       t,
-      body: [[37, 38], [42, 44], [48, 51], [60, 54], [74, 54], [84, 53], [90, 56], [91, 62], [87, 69], [78, 72], [64, 72], [54, 72], [48, 68], [44, 60], [40, 52], [35, 45]],
-      head: [[34, 29], [42, 31], [44, 37], [39, 42], [30, 46], [22, 48], [18, 45], [19, 40], [26, 33], [30, 30]],
-      fore: [51, 68, 6.5],
-      hind: [84, 64, 9.5],
+      body: [[40, 44], [45, 51], [54, 56], [68, 56], [80, 55], [88, 58], [91, 65], [88, 73], [80, 78], [66, 80], [54, 80], [47, 77], [43, 70], [41, 61], [37, 53]],
+      head: [[36, 33], [43, 36], [46, 42], [42, 48], [34, 53], [27, 57], [21, 57], [18, 53], [21, 47], [27, 40], [31, 35]],
+      fore: [53, 75, 7.5],
+      hind: [83, 71, 10.5],
+      far: [6, -5],
       foot: 'hoof',
-      behind: () => b.fill(shape([[88, 57], [93, 50], [96, 48], [95, 53], [91, 60]]), t[0]),
-      between: () => b.fill(shape([[64, 54], [76, 54], [79, 62], [71, 67], [64, 62]]), patch),
+      behind: () => {
+        b.fill(shape([[89, 59], [93, 52], [97, 50], [96, 55], [92, 62]]), t[0]);
+        // the far ear, out to the other side and a little forward
+        b.fill(shape([[33, 38], [26, 34], [22, 35], [25, 39], [32, 41]]), t[1]);
+      },
+      between: () => b.fill(shape([[62, 56], [75, 56], [78, 64], [70, 70], [62, 65]]), patch),
       front: () => {
-        b.fill(shape([[34, 30], [42, 31], [44, 37], [40, 41], [37, 35]]), patch);
-        b.fill(shape([[40, 33], [48, 36], [51, 41], [45, 41], [40, 38]]), patch);
-        b.fill(oval(35.5, 28.5, 1.7, 2.8, -15) + oval(39.5, 29, 1.7, 2.8, 0), '#d9c39b');
-        b.fill(O(18.5, 43, 1.4), '#8a6a5a');
-        eye(b, 29, 37, 1.8);
+        b.fill(shape([[36, 34], [43, 36], [46, 42], [43, 46], [39, 40]]), patch);
+        // the near ear, held out and a little down behind the eye, as a kid's are
+        b.fill(shape([[41, 39], [49, 39], [55, 43], [49, 45], [42, 44]]), t[0]);
+        b.fill(shape([[44, 40.6], [49.5, 40.8], [52.5, 43], [48.5, 43.6], [44, 42.6]]), '#e6b8a4');
+        // two buds where the horns will be
+        b.fill(oval(34.5, 33.6, 2, 2.6, -20) + oval(38.6, 34.2, 1.9, 2.4, 10), '#d9c39b');
+        // the long soft muzzle of a goat: paler at the lips, a nostril and the line of the mouth
+        b.fill(shape([[18.5, 50], [24, 49], [27, 53], [24, 57], [19.5, 56.5]]), t[2]);
+        b.fill(oval(19.8, 51.4, 1.4, 1, -20), '#8a6a5a');
+        b.line('M19.6 55.2C21.4 55.8 23.2 55.6 24.6 54.6', '#b59a7c', 1.1);
+        eye(b, 31, 43, 1.9);
       },
     });
   },
@@ -2049,6 +2069,113 @@ const PICTURES: Record<WordPictureId, Draw> = {
     });
   },
 };
+
+/**
+ * Animals drawn in the catalogue's own hand that are not words of it, for
+ * the book's scenes (art/book.ts lays them in as its spots): the road's
+ * golden doe Zerê, a deer with no antlers, larger ears and a slimmer neck;
+ * Dapîr's white goat with her long beard and the collar a clue hangs on;
+ * and a ram, curled horns and all. The catalogue's own deer, goat and sheep
+ * stay as they are, since each Kurdish word has one picture.
+ */
+const KIN = {
+  doe: (b) => {
+    const t: Tone = ['#d9a548', '#ad7a2c', '#eccb7f'];
+    b.ground(42, 64);
+    beast(b, {
+      t,
+      body: [[33, 27], [38, 34], [44, 45], [56, 50], [72, 50], [86, 48], [94, 50], [97, 56], [95, 64], [88, 70], [76, 72], [60, 72], [50, 71], [44, 66], [40, 57], [35.5, 45], [31, 35]],
+      head: [[30, 20], [38, 22], [40, 28], [34, 32], [24, 36], [16, 38], [12, 36], [13, 32], [20, 26], [26, 21]],
+      fore: [47, 66, 6],
+      hind: [88, 62, 9.5],
+      foot: 'hoof',
+      behind: () => b.fill(shape([[39, 23], [47, 12], [54, 9.5], [52.5, 17], [44, 26]]), t[1]),
+      between: () => {
+        b.fill(shape([[93, 51], [97, 56], [96, 63], [92, 62], [91, 56]]), '#f6eee2');
+        b.fill(shape([[33, 34], [38, 36], [42, 46], [39, 48], [34, 40]]), '#f2dcae');
+      },
+      front: () => {
+        // the ears a doe listens with: large, and lined pale inside
+        b.fill(shape([[33.5, 22], [39.5, 11], [47, 7.5], [47.5, 15], [40.5, 25]]), t[0]);
+        b.fill(shape([[37, 20.5], [41.5, 13], [45.5, 10.5], [45.5, 15.5], [40, 22.5]]), '#f4dcc0');
+        b.fill(shape([[14.5, 33], [20, 31], [22, 34.5], [17, 37.5], [13.5, 36]]), '#f2dcae');
+        b.fill(oval(12.5, 34.5, 2, 1.7, 0), INK);
+        eye(b, 28, 27, 2.1);
+      },
+    });
+  },
+
+  whiteGoat: (b) => {
+    const t: Tone = ['#f4efe6', '#d6ccbb', '#ffffff'];
+    const horn = '#cdb68a';
+    b.ground(42, 62);
+    beast(b, {
+      t,
+      body: [[32, 30], [38, 35], [44, 44], [56, 47], [72, 47], [86, 45], [94, 46], [99, 52], [98, 62], [92, 72], [80, 76], [62, 76], [50, 75], [42, 70], [37, 62], [33, 52], [28, 42], [27, 34]],
+      head: [[29, 24], [37, 28], [37, 37], [31, 43], [22, 49], [15, 51], [11, 48], [12, 42], [19, 32], [24, 26]],
+      fore: [45, 70, 8],
+      hind: [88, 66, 11.5],
+      legs: ['#ece5d8', '#cbc0ae'],
+      foot: 'hoof',
+      behind: () => {
+        b.fill(shape([[93, 48], [99, 40], [103, 37], [102, 43], [98, 50]]), t[0]);
+        b.fill(shape([[31, 26], [35, 17], [43, 11], [51, 11], [45, 15], [39, 21], [35, 28]]), '#b5a07a');
+      },
+      between: () => {
+        // her collar, and the clue rolled up and tied to it
+        b.line('M34 33C36 40 40 44 46 45', VALLEY.red, 3.4);
+        b.fill(box(38.5, 43, 5.5, 8, 1.4), PAPER[0]);
+        b.line('M39 46.5H43.5', PAPER[1], 1);
+      },
+      front: () => {
+        b.fill(shape([[27, 26], [30, 16], [38, 9], [47, 8], [41, 12], [35, 19], [32, 28]]), horn);
+        b.fill(shape([[33, 30], [42, 32], [47, 37], [41, 38], [33, 35]]), t[1]);
+        // the long beard she is proud of, finer than any moustache in the village
+        b.fill(shape([[12, 48], [19, 48], [21, 56], [19, 66], [16, 72], [13.5, 64], [12, 56]]), '#e3dccf');
+        b.line('M15 52C15.6 58 15.4 64 16 69', '#cfc6b6', 1.1);
+        eye(b, 25, 35, 1.6, '#e9b84a');
+      },
+    });
+  },
+
+  ram: (b) => {
+    const dark: Tone = ['#4a3a30', '#382b24', '#6a5648'];
+    const horn: Tone = ['#d4bf96', '#a8916a', '#ead9b8'];
+    b.ground(46, 62);
+    beast(b, {
+      t: WOOL,
+      wool: [66, 59, 28, 17, 12, 10.5],
+      head: [[33, 44], [38, 50], [35, 60], [27, 68], [19, 71], [14, 67], [15, 59], [22, 49], [28, 44]],
+      face: dark,
+      fore: [47, 71, 7],
+      hind: [84, 69, 9],
+      legs: [dark[0], dark[1]],
+      foot: 'hoof',
+      between: () => b.fill(shape([[34, 45], [43, 44], [46, 47], [40, 50], [34, 49]]), dark[1]),
+      front: () => {
+        b.fill(puffs(32, 44, 5.5, 3, 5, 4.4), WOOL[0]);
+        // the curled horn: back from the crown, round and down past the ear, its tip turned forward
+        const curl = 'M30 45C35 37 47 38 49 47C51 56 43 61 37 58C33 56 34 51 38 51';
+        b.line(curl, horn[1], 7.4);
+        b.line(curl, horn[0], 5.4, ' transform="translate(-0.6 -0.6)"');
+        b.line('M33 42C38 39 44 40 46 44', horn[2], 1.4);
+        eye(b, 22, 55, 1.6, '#e9dcc8');
+      },
+    });
+  },
+} as const satisfies Readonly<Record<string, Draw>>;
+
+/** An animal the book shows that is not a word of the catalogue. */
+export type WordPictureKin = keyof typeof KIN;
+
+/** One of them on the 120-unit canvas, as the markup a picture lays in: on its patch of shade, in the light card's colours. */
+export function wordPictureKinBody(kin: WordPictureKin): string {
+  const draw = Object.prototype.hasOwnProperty.call(KIN, kin) ? KIN[kin] : undefined;
+  if (!draw) throw new RangeError(`art: no animal called ${String(kin)}`);
+  const brush = new Brush(false);
+  draw(brush);
+  return String(brush);
+}
 
 export interface WordPictureOptions {
   id: WordPictureId;

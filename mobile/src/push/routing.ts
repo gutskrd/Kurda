@@ -1,3 +1,4 @@
+import { letterNoticeOf } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { RootNavigation } from '../navigation/rootStack';
 import { followDeepLink } from '../notifications/followLink';
@@ -10,8 +11,9 @@ import { isGroupNotice, resolveDeepLink, type DeepLink } from '../notifications/
  * lands where tapping the same line in the list would:
  *
  * - a badge → Badges; moving up a league, a Pêla week → the league;
- *   an invite → its game; a gift → the chat it is in; a report outcome,
- *   a decision on the account → where those are (notifications/inbox.ts);
+ *   an invite → its game; a gift → the chat it is in; a letter → the letters
+ *   window, with its bird named; a report outcome, a decision on the account
+ *   → where those are (notifications/inbox.ts);
  * - a streak reminder names no screen → the lessons, which is what it asks for;
  * - anything else (a test send, a kind this version does not know, a caring
  *   message, which is read in full in the list) → the notification list,
@@ -52,11 +54,17 @@ export interface RouteLike {
  * message, or a gift, in the chat being read. Its words are arriving there
  * anyway, so it is not shown again as a banner over them. News about one's
  * own place in a group (removed, banned) is not in the chat, and is shown.
+ *
+ * A letter is not shown over the letters window, which hears it and lands
+ * its bird itself, nor over the correspondence it came in, which reads
+ * itself again and shows it. Over any other correspondence it is shown.
  */
 export function isConversationOnScreen(data: Record<string, unknown> | null | undefined, route: RouteLike | undefined): boolean {
   if (!route || isGroupNotice(data ?? {})) return false;
-  const link = resolveDeepLink(data ?? {});
   const params = (route.params ?? {}) as Record<string, unknown>;
+  const letter = letterNoticeOf(data);
+  if (letter) return route.name === 'Letters' || (route.name === 'LetterThread' && letter.threadId !== null && params.threadId === letter.threadId);
+  const link = resolveDeepLink(data ?? {});
   if (link?.screen === 'Chat') return route.name === 'Chat' && params.userId === link.params.userId;
   if (link?.screen === 'GroupThread') return route.name === 'GroupThread' && params.groupId === link.params.groupId;
   return false;

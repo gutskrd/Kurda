@@ -60,6 +60,12 @@ describe('afterResults', () => {
     expect(afterResults({ streakKept: true, questsMoved: false })).toEqual(['streak']);
     expect(afterResults({ streakKept: false, questsMoved: false })).toEqual([]);
   });
+
+  it('puts the phone’s question about notifications last, and only where it is due', () => {
+    expect(afterResults({ streakKept: true, questsMoved: true, remindersDue: true })).toEqual(['streak', 'quests', 'reminders']);
+    expect(afterResults({ streakKept: false, questsMoved: false, remindersDue: true })).toEqual(['reminders']);
+    expect(afterResults({ streakKept: true, questsMoved: false, remindersDue: false })).toEqual(['streak']);
+  });
 });
 
 describe('resultsOutcome', () => {

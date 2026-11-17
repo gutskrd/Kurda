@@ -24,11 +24,22 @@ import {
   type GameDialect,
   type Meanings,
   type WhoAmIFact,
+  type WhoAmIFactValue,
 } from '@kurda/shared';
 import { candidatesIn, conversationLevel, conversationWindows } from './memory-thief.js';
 import type { TrustedSources } from './sources.js';
 import { STARTER_CATEGORIES, starterCategoryOf } from './word-categories.js';
 import { starterIdentityOf } from './starter-identities.js';
+
+/**
+ * Whether a word's English meaning says it is a form of a word rather than
+ * the word: "the kitchen" for aşxaneyê, "the bakery" for نانەواخانەکە. The
+ * course glosses an inflected form that way where a lesson teaches it whole,
+ * and a card made of it would show the form as if it were the word.
+ */
+export function inflectedGloss(en: string | undefined): boolean {
+  return typeof en === 'string' && /^\s*(the|a|an)\s/i.test(en);
+}
 
 /** A row ready to store: its level, its checked payload and where it came from. */
 export interface ContentDraft {
@@ -119,6 +130,8 @@ export async function wordCardDrafts(sources: TrustedSources, dialect: GameDiale
   for (const w of await sources.vocabulary(dialect)) {
     if (cards.length >= limit) break;
     const en = w.meanings.en?.trim();
+    // a form of a word ("the kitchen") is no card: the card would show the form as the word
+    if (inflectedGloss(en)) continue;
     const category = starterCategoryOf(en);
     if (!en || !category) continue;
     // the category's own name is the impostor's hint: as a card it would give its word away
@@ -142,13 +155,26 @@ export async function wordCardDrafts(sources: TrustedSources, dialect: GameDiale
   return { categories, cards };
 }
 
-/** A whole facts table from the few that are true of a thing: every other fact is a no. */
-export function factsTable(yes: readonly WhoAmIFact[]): Record<WhoAmIFact, boolean> {
-  return Object.fromEntries(WHO_AM_I_FACTS.map((f) => [f.key, yes.includes(f.key)])) as Record<WhoAmIFact, boolean>;
+/**
+ * A facts table from what is true of a thing and what is only sometimes
+ * true: every other fact it is asked about is a no. `asked` is the facts its
+ * questions make sense for (a cat is never asked whether it sells things):
+ * any other is left unset, so its question is never dealt beside the card.
+ * Without it, every fact the game knows is answered.
+ */
+export function factsTable(
+  yes: readonly WhoAmIFact[],
+  sometimes: readonly WhoAmIFact[] = [],
+  asked?: readonly WhoAmIFact[],
+): Partial<Record<WhoAmIFact, WhoAmIFactValue>> {
+  const keys = asked ? WHO_AM_I_FACTS.filter((f) => asked.includes(f.key) || yes.includes(f.key) || sometimes.includes(f.key)) : WHO_AM_I_FACTS;
+  return Object.fromEntries(keys.map((f) => [f.key, sometimes.includes(f.key) ? 'sometimes' : yes.includes(f.key)])) as Partial<Record<WhoAmIFact, WhoAmIFactValue>>;
 }
 
 /**
- * The level a starter identity is filed at. A level only says which
+ * The level a starter identity is filed at, for an identity made from the
+ * course's words rather than the curated deck (who-am-i-deck.ts, which files
+ * each card at the unit that teaches its word). A level only says which
  * difficulty hides the identity (the tiles around it come from every level),
  * and what makes a round harder is how many tiles there are, so the things
  * are spread evenly: every difficulty hides animals, food, objects, jobs and
@@ -164,24 +190,37 @@ export function identityLevel(thing: string): number {
 /**
  * Who Am I?'s starter identities: each word whose English meaning is one of
  * the things the starter table knows (starter-identities.ts) becomes an
- * identity — its word and meaning copied, and the table's answers to every
- * question as its facts. The table holds no Kurdish: which word says "cat" is
- * the course's to say.
+ * identity — its word and meaning copied, and the table's answers to the
+ * questions that make sense for its kind as its facts. The table holds no
+ * Kurdish: which word says "cat" is the course's to say.
+ *
+ * A word is taken once, by the course's own key for it, and a thing once: a
+ * word the course glosses twice ("chest" for the body and for a box) is still
+ * one word, and a second word for "cat" would be a second card with the same
+ * answers to every question. A meaning that gives a form of a word ("the
+ * kitchen") makes no card at all.
  */
 export async function identityDrafts(sources: TrustedSources, dialect: GameDialect, limit = 300): Promise<ContentDraft[]> {
   const drafts: ContentDraft[] = [];
-  const taken = new Set<string>();
+  const things = new Set<string>();
+  const words = new Set<string>();
   for (const w of await sources.vocabulary(dialect)) {
     if (drafts.length >= limit) break;
     const en = w.meanings.en?.trim();
+    if (!en || inflectedGloss(en) || words.has(w.key)) continue;
     const known = starterIdentityOf(en);
-    // one identity for each thing: a second word for "cat" would be a second card with the same answers to every question
-    if (!en || !known || taken.has(known.thing)) continue;
+    if (!known || things.has(known.thing)) continue;
     // a thing's name is a common noun: one the course happens to teach at the head of a sentence is written small here
-    const payload = { word: w.ku.toLocaleLowerCase('ku'), meanings: { ...w.meanings, en } as Meanings, category: known.category, facts: factsTable(known.yes) };
+    const payload = {
+      word: w.ku.toLocaleLowerCase('ku'),
+      meanings: { ...w.meanings, en } as Meanings,
+      category: known.category,
+      facts: factsTable(known.yes, known.sometimes, known.asked),
+    };
     const checked = checkGameContent('identity', dialect, payload);
     if (!checked.ok) continue;
-    taken.add(known.thing);
+    things.add(known.thing);
+    words.add(w.key);
     drafts.push({ level: identityLevel(known.thing), payload: checked.payload, origin: `vocabulary:${w.key}` });
   }
   return drafts;

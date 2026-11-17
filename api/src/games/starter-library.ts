@@ -14,6 +14,11 @@
  *   identity       Who Am I?                 the course's words for the things the starter table knows
  *   sentence       Build a Sentence  the lessons' sentences, for the lessons' practice
  *
+ * Who Am I?'s cards and questions then come from its curated deck
+ * (who-am-i-deck.ts), seeded right after the library: it replaces the cards
+ * made here that nobody has touched, and a variety whose deck is in is made
+ * no more cards from the course's glosses, however late its course arrives.
+ *
  * None of these rows holds Kurdish of its own. The words, lines and
  * paragraphs are copied from the course, as the admin panel's importers copy
  * them (content-drafts.ts makes both); the only Kurdish written for the games
@@ -47,6 +52,7 @@ import {
   type ContentDraft,
 } from './content-drafts.js';
 import { TrustedSources, bustGamePools } from './sources.js';
+import { readWhoAmIDeck, seedWhoAmIDeck, whoAmIDeckSeedName } from './who-am-i-deck.js';
 
 /** The library's version: a later one, with more in it, is seeded once more under its own name. */
 export const STARTER_LIBRARY_VERSION = 1;
@@ -87,14 +93,19 @@ export async function seedStarterLibrary(
 ): Promise<StarterLibraryResult[]> {
   const results: StarterLibraryResult[] = [];
   try {
-    const done = await pool.query<{ name: string }>(`SELECT name FROM content_seeds WHERE name = ANY($1::text[])`, [dialects.map(seedName)]);
+    // the curated deck's version, to know where its cards are in already (an unreadable deck is seeded nowhere)
+    const deck = await readWhoAmIDeck().catch(() => null);
+    const deckNames = deck?.ok ? dialects.map((d) => whoAmIDeckSeedName(deck.deck.version, d)) : [];
+    const done = await pool.query<{ name: string }>(`SELECT name FROM content_seeds WHERE name = ANY($1::text[])`, [[...dialects.map(seedName), ...deckNames]]);
     const marked = new Set(done.rows.map((r) => r.name));
     // the course as it stands, read afresh: nothing here is kept, so nothing a game reads is touched
     const sources = new TrustedSources(pool, null, Date.now, 'course');
     for (const dialect of dialects) {
       if (marked.has(seedName(dialect))) continue;
       try {
-        const kinds = await starterLibraryRows(sources, dialect);
+        const decked = deck?.ok === true && marked.has(whoAmIDeckSeedName(deck.deck.version, dialect));
+        // where the deck is in, its cards are the game's: none is made again from the course's English glosses
+        const kinds = (await starterLibraryRows(sources, dialect)).filter((k) => !(decked && k.kind === 'identity'));
         // a variety whose course has not been loaded yet has nothing to copy: it waits for a later start
         if (kinds.every((k) => k.rows.length === 0)) continue;
         const client = await pool.connect();
@@ -143,5 +154,7 @@ export async function seedStarterLibrary(
   } catch (err) {
     log.warn({ err }, 'the games’ starter library could not be seeded');
   }
+  // and Who Am I?'s curated deck, after the library, so that the cards it replaces are already there to be archived
+  await seedWhoAmIDeck(pool, log, cache, dialects);
   return results;
 }

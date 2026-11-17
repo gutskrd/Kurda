@@ -39,11 +39,24 @@ import {
   impostorWaySvg,
   impostorWayTone,
 } from './impostor.js';
-import { GAME_EMBLEMS, GAME_EMBLEM_SAMPLES, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, gameEmblemTone, isGameEmblem } from './games.js';
+import {
+  GAME_EMBLEMS,
+  GAME_EMBLEM_SAMPLES,
+  PLAY_GAME_EMBLEM,
+  gameEmblemHue,
+  gameEmblemLayers,
+  gameEmblemLoopMs,
+  gameEmblemSvg,
+  gameEmblemTone,
+  isGameEmblem,
+  playGameHue,
+} from './games.js';
+import { isHueName } from '../hues.js';
+import { PLAY_GAMES } from '../play.js';
 import { LETTERS, letter } from './ink.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
-import { PATH_STOP_ART, PATH_STOP_LOOKS, pathSignpostSvg, pathLandSvg, pathStonesSvg, pathStopSvg, type PathStopLook } from './path-land.js';
+import { PATH_STOP_ART, PATH_STOP_LOOKS, PATH_STOP_TONES, pathSignpostSvg, pathLandSvg, pathStonesSvg, pathStopSvg, type PathStopLook } from './path-land.js';
 import { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg } from './path-landmark.js';
 import { PATH_CAIRN_GROUNDS, PATH_LANDMARKS, PATH_LANDS, cairnBox, trailStones } from '../path-world.js';
 import { lessonPath } from '../lesson-path.js';
@@ -799,6 +812,13 @@ describe('rankEmblemSvg', () => {
 });
 
 describe('leagueEmblemSvg', () => {
+  // the lone drop stands on the canvas's foot at the smallest size, where its shadow's radius once came out below nought
+  it('never writes a gradient with a radius below nought, at any size', () => {
+    for (const tier of LEAGUE_TIERS) {
+      for (const size of [24, 32, 40, 56, 72, 96, 128, 160]) expect(leagueEmblemSvg({ tier, size }), `${tier} at ${size}`).not.toMatch(/<radialGradient[^>]*\sr="-/);
+    }
+  });
+
   it('draws every water tier, large and small, differently and deterministically', () => {
     const all = LEAGUE_TIERS.map((tier) => leagueEmblemSvg({ tier }));
     expect(new Set(all).size).toBe(6);
@@ -1152,6 +1172,25 @@ describe('the games’ emblems', () => {
     expect(new Set(tones).size).toBe(GAME_EMBLEMS.length);
   });
 
+  it('prints every game’s stamp in a hue of its own', () => {
+    const hues = GAME_EMBLEMS.map((game) => gameEmblemHue(game));
+    for (const hue of hues) expect(isHueName(hue)).toBe(true);
+    expect(new Set(hues).size).toBe(GAME_EMBLEMS.length);
+    expect(() => gameEmblemHue('toString' as never)).toThrow(RangeError);
+  });
+
+  it('gives every game played with friends its stamp’s hue, and a story game none', () => {
+    for (const game of PLAY_GAMES) {
+      const emblem = PLAY_GAME_EMBLEM[game];
+      expect(playGameHue(game)).toBe(emblem ? gameEmblemHue(emblem) : null);
+    }
+    expect(playGameHue('stories')).toBeNull();
+    expect(playGameHue('wordle-battle')).toBe('green');
+    expect(playGameHue('rhyme-match')).toBe('pink');
+    // every other game has a stamp of its own to take its colour from
+    expect(PLAY_GAMES.filter((game) => !PLAY_GAME_EMBLEM[game])).toEqual(['stories']);
+  });
+
   it('has a colour for every game’s card, and refuses a game it has never heard of', () => {
     for (const game of GAME_EMBLEMS) expect(gameEmblemTone(game)).toMatch(/^#[0-9a-f]{6}$/);
     expect(isGameEmblem('peyvok')).toBe(true);
@@ -1167,6 +1206,7 @@ describe('Xapînok’s pictures', () => {
     'animals', 'food', 'fruit', 'vegetables', 'drinks', 'family', 'body', 'clothes', 'home', 'jobs', 'nature', 'town', 'transport', 'colours',
     'school', 'time', 'kitchen', 'feelings', 'play', 'music', 'celebrations', 'tools', 'village', 'numbers', 'weather', 'health', 'people',
     'taste', 'stories', 'money', 'qualities', 'character', 'actions', 'culture', 'language', 'work', 'travel', 'things', 'sports', 'world',
+    'kurdistan', 'legends',
   ];
 
   it('draws a valid, self-contained picture for every category, way to play and emblem, small and large', () => {
@@ -1177,7 +1217,7 @@ describe('Xapînok’s pictures', () => {
     }
   });
 
-  it('has a picture of its own for each of the forty starter categories, and no two alike', () => {
+  it('has a picture of its own for each starter category, and no two alike', () => {
     expect([...IMPOSTOR_CATEGORY_PICTURES].sort()).toEqual([...STARTER].sort());
     const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id').replace(/<title[^>]*>[^<]*<\/title>/, '');
     const all = [null, ...IMPOSTOR_CATEGORY_PICTURES].map((category) => strip(impostorCategorySvg({ category })));
@@ -1589,8 +1629,9 @@ describe('the lesson path’s world', () => {
     // every look its own: the stop to do now in its chapter's colour, a finished one in gold
     const looks = PATH_STOP_LOOKS.map((look) => (['base', 'face'] as const).map((part) => pathStopSvg({ look, tone: 'clay', part, idPrefix: 's' })).join(''));
     expect(new Set(looks).size).toBe(PATH_STOP_LOOKS.length);
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain('#a9532f');
-    expect(pathStopSvg({ look: 'current', tone: 'river', part: 'face' })).toContain('#2a6a93');
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain(PATH_STOP_TONES.light.clay.fill);
+    expect(pathStopSvg({ look: 'current', tone: 'river', part: 'face' })).toContain(PATH_STOP_TONES.light.river.fill);
+    expect(PATH_STOP_TONES.light.clay.fill).not.toBe(PATH_STOP_TONES.light.river.fill);
     // gold is gold in every chapter: what was earned looks the same wherever it was earned
     expect(pathStopSvg({ look: 'done', tone: 'river', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
     expect(() => pathStopSvg({ look: 'gold' as PathStopLook, tone: 'clay', part: 'face' })).toThrow(RangeError);
@@ -1598,7 +1639,7 @@ describe('the lesson path’s world', () => {
 
   it('stands a cairn beside the road in the lands of open country, and nowhere else', () => {
     const skills = [0, 1, 2, 3].map((i) => ({ skillId: `k${i}`, title: 'S', state: (i === 0 ? 'unlocked' : 'locked') as 'unlocked' | 'locked', strength: 0, hasGrammar: i === 0, firstLessonId: `l${i}` }));
-    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills }] }, { guides: true }).units[0]!;
+    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills, story: { slug: 'road-01-tale', title: 'Tale' } }] }).units[0]!;
     const stops = unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
     const stones = trailStones(unit.stops);
     for (const land of PATH_LANDS) {
@@ -1622,7 +1663,7 @@ describe('the lesson path’s world', () => {
 
   it('draws each unit’s land within its budget, the same every time, and changes it with the season', () => {
     const skills = [0, 1, 2, 3].map((i) => ({ skillId: `k${i}`, title: 'S', state: (i === 0 ? 'unlocked' : 'locked') as 'unlocked' | 'locked', strength: 0, hasGrammar: i === 0, firstLessonId: `l${i}` }));
-    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills }] }, { guides: true }).units[0]!;
+    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills, story: { slug: 'road-01-tale', title: 'Tale' } }] }).units[0]!;
     const stops = unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
     const stones = trailStones(unit.stops);
     const drawings = new Set<string>();

@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import { storyHeadingTitle, type StoryDetail, type StoryGlossEntry } from '@kurda/shared';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { hueSteps, storyHeadingTitle, type HueScheme, type StoryDetail, type StoryGlossEntry } from '@kurda/shared';
+import { MIN_TOUCH_TARGET, REACH_OPEN, reachSlop } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { display, displayFont, sectionLabel } from '../theme/fonts';
@@ -28,11 +28,12 @@ export function storyLineHeight(fontSize: number): number {
 }
 
 /**
- * The band behind the sentence being read: the sun's gold, thinned to a tint
- * that leaves the words their contrast on either theme.
+ * The band behind the sentence being read: the violet's wash, as everything
+ * that says "here" is (gold is for what is earned). The words keep their ink
+ * on it, at 14:1 in the light and 11:1 in the dark.
  */
-export function readingTint(gold: string): string {
-  return `${gold}33`;
+export function readingTint(scheme: HueScheme): string {
+  return hueSteps(scheme, 'violet').wash;
 }
 
 export interface TextPoint {
@@ -52,11 +53,12 @@ export interface TextPoint {
  * for the reader's size only: scaling it again by the system factor spread
  * large text out to twice its spacing.
  *
- * Glossary words carry a dotted gold underline (not bold, which fights the
- * serif) and open their meaning when tapped. A word inside a paragraph
- * cannot be reached on its own with VoiceOver or TalkBack, which is why the
- * reader also lists them under "Key vocabulary" — that list is the
- * accessible way to the same meanings, not a duplicate.
+ * Glossary words carry a dotted violet underline (not bold, which fights the
+ * serif), the violet of what can be pressed, and open their meaning when
+ * tapped. A word inside a paragraph cannot be reached on its own with
+ * VoiceOver or TalkBack, which is why the reader also lists them under "Key
+ * vocabulary" — that list is the accessible way to the same meanings, not a
+ * duplicate.
  *
  * Under a paragraph, when the story has a translation in the reader's
  * language (or in English), a small "Translation" toggle shows that
@@ -71,11 +73,11 @@ export interface TextPoint {
  * and closed by a short rule, so the first chapter visibly begins after it.
  *
  * Tapping text never plays sound; a paragraph with recordings has its own
- * Listen button, and the sentence being read sits on a gold band — tapping
- * that band plays the sentence again. While a sentence an editor has given a
- * character to is read, that character says it beside its paragraph's Listen;
- * a paragraph with such a sentence keeps the room for it, so nothing moves
- * when it appears.
+ * Listen button, and the sentence being read sits on the violet's wash —
+ * tapping that band plays the sentence again. While a sentence an editor has
+ * given a character to is read, that character says it beside its
+ * paragraph's Listen; a paragraph with such a sentence keeps the room for it,
+ * so nothing moves when it appears.
  */
 export function StoryText({
   story,
@@ -121,12 +123,12 @@ export function StoryText({
   onToggleTranslation?: (paragraph: number) => void;
   onParagraphLayout?: (paragraph: number, y: number) => void;
 }): React.JSX.Element {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
   const lineHeight = storyLineHeight(fontSize);
   const textStyle = storyTextStyle(story.dialect);
   const textProps = storyTextProps(story.dialect);
-  const tint = readingTint(colors.gold);
+  const tint = readingTint(scheme);
   const translationEnglish = translation?.lang === 'en' && locale !== 'en';
   // each heading's chapter number, and where the introduction ends (the first heading), when the story has any
   const chapterOf = new Map<number, number>();
@@ -149,8 +151,9 @@ export function StoryText({
               style={[styles.chapter, pi > 0 && styles.chapterAfter]}
               testID={`story-chapter-${n}`}
             >
-              {pi === firstHeading && firstHeading > 0 ? <View style={[styles.rule, { backgroundColor: colors.gold }]} /> : null}
-              <Text style={[sectionLabel, styles.centred, { color: colors.goldText }]}>{t('stories.reader.chapterN', { n })}</Text>
+              {/* where the introduction ends: a quiet line, and the chapter's number in the page's own quiet ink */}
+              {pi === firstHeading && firstHeading > 0 ? <View style={[styles.rule, { backgroundColor: colors.textSecondary }]} /> : null}
+              <Text style={[sectionLabel, styles.centred, { color: colors.textSecondary }]}>{t('stories.reader.chapterN', { n })}</Text>
               <Text
                 {...textProps}
                 accessibilityRole="header"
@@ -218,7 +221,8 @@ export function StoryText({
                     <Text
                       key={si}
                       onPress={() => onGloss(entry)}
-                      style={[styles.gloss, { textDecorationColor: colors.gold, color: colors.textPrimary }, bg]}
+                      // a word that opens its meaning is tappable, so its dotted underline is the violet of what can be pressed
+                      style={[styles.gloss, { textDecorationColor: colors.primary, color: colors.textPrimary }, bg]}
                       suppressHighlighting={false}
                     >
                       {seg.text}
@@ -253,7 +257,7 @@ export function StoryText({
                   accessibilityRole="button"
                   accessibilityState={{ expanded: showTranslation }}
                   accessibilityLabel={showTranslation ? t('stories.reader.hideTranslationOf', { n: pi + 1 }) : t('stories.reader.translationOf', { n: pi + 1 })}
-                  hitSlop={6}
+                  hitSlop={TRANSLATION_TOGGLE_REACH}
                   style={({ pressed }) => [styles.translationToggle, pressed && heldDim]}
                 >
                   <Icon name="translate" size={14} color={colors.textSecondary} />
@@ -269,6 +273,18 @@ export function StoryText({
     </View>
   );
 }
+
+/** The translation's toggle is a small line under its paragraph, drawn this tall. */
+const TRANSLATION_TOGGLE_HEIGHT = 32;
+
+/**
+ * The toggle stands alone on its line, so it reaches 8 past its sides and its
+ * foot, where the next paragraph is a whole gap away. Above it, though, is the
+ * paragraph's last line (or its translation) only the paragraph's gap away,
+ * and a word there that opens its meaning cannot take a reach of its own: the
+ * toggle takes that gap and no more, so the word keeps its own taps.
+ */
+const TRANSLATION_TOGGLE_REACH = reachSlop(null, TRANSLATION_TOGGLE_HEIGHT, { edge: REACH_OPEN, limit: { top: spacing.xs } });
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.lg },
@@ -292,9 +308,10 @@ const styles = StyleSheet.create({
   chapter: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md },
   // a chapter starts a little further from what came before it than a paragraph does
   chapterAfter: { marginTop: spacing.md },
-  rule: { width: 32, height: 2, borderRadius: radii.pill, marginBottom: spacing.lg },
+  // the page's quiet ink, softened: about 2:1 on the paper by day and by night, seen without being a mark of its own (the separator's 7% was all but lost)
+  rule: { width: 32, height: 2, borderRadius: radii.pill, marginBottom: spacing.lg, opacity: 0.4 },
   chapterTranslation: { fontFamily: displayFont },
   centred: { textAlign: 'center' },
-  translationToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 32, paddingHorizontal: spacing.xs },
+  translationToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: TRANSLATION_TOGGLE_HEIGHT, paddingHorizontal: spacing.xs },
   translationToggleText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
 });

@@ -264,7 +264,8 @@ function SoraniCard({ letter, audio, player }: { letter: SoraniLetter; audio: Al
       <Head script="ckb" glyph={letter.char} ipa={letter.ipa} label={letter.char} sound={sound} word={word} audio={audio} player={player} />
       {locale === 'ar' && letter.kurdishOnly ? (
         <View style={[styles.badge, startOf(dir.row), { backgroundColor: colors.controlTrack }]}>
-          <Text style={[styles.badgeText, { color: colors.goldText }]}>{t('alphabet.notInArabic')}</Text>
+          {/* "look at this", in the app's violet */}
+          <Text style={[styles.badgeText, { color: colors.primary }]}>{t('alphabet.notInArabic')}</Text>
         </View>
       ) : null}
       {like ? (
@@ -324,6 +325,8 @@ function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Elemen
       onPress={() => onStep(by)}
       accessibilityRole="button"
       accessibilityLabel={label}
+      // each is alone at its end of the foot, with nothing near: it answers 8 past every edge
+      reach="open"
       style={({ pressed }) => [styles.step, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
     >
       <Icon name={icon} size={20} color={colors.primary} style={dir.flip ?? undefined} />

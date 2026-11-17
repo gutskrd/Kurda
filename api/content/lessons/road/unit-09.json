@@ -930,7 +930,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Şev bû. Li wir qelebalix tune bû, tenê Baran û stêrk.",
+                        "text": "Şev bû. Li wir qelebalix nebû, tenê Baran û stêrk.",
                         "en": "It was night. There was no crowd there, just Baran and the stars."
                       },
                       {
@@ -1209,7 +1209,7 @@
           "position": 2,
           "titleKu": "Berê",
           "titleEn": "In the old days",
-          "grammarMd": "**Dema ku ez zarok bûm, …** When I was a child, … *Dema ku* (when) starts a time in the past, and what happened then follows: *Dema ku ez vegeriyam, ew li malê bû.* When I came back, he was at home.\n\n- *duh* yesterday · *pêr* the day before · *par* last year · *berê* before, in the old days · *hefteya borî* last week",
+          "grammarMd": "**Dema ku ez zarok bûm, …** When I was a child, … *Dema ku* (when) starts a time in the past, and what happened then follows: *Dema ku ez vegeriyam, ew li malê bû.* When I came back, he was at home.\n\n- *duh* yesterday · *pêr* the day before yesterday · *par* last year · *berê* before, in the old days · *hefteya borî* last week",
           "lessons": [
             {
               "key": "u09s2l1",
@@ -1563,8 +1563,8 @@
                     ],
                     "prompt": "Şev tarî bû, û ez li pişt malê rûniştim.",
                     "options": [
-                      "It was a dark night, and I was sitting behind the house.",
-                      "It was a bright day, and I was sitting in the house.",
+                      "It was a dark night, and I sat down behind the house.",
+                      "It was a bright day, and I sat down in the house.",
                       "It was a dark night, and I was asleep in bed."
                     ],
                     "correctIndex": 0
@@ -3261,7 +3261,7 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Biryara min heye: îsal em ê bar bikin zozanan!",
+                        "text": "Biryara min ev e: îsal em ê bar bikin zozanan!",
                         "en": "I’ve made a decision: this year we’re moving up to the summer pastures!"
                       },
                       {
@@ -3470,8 +3470,8 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Hevalo bi tena serê xwe çû baxçe, û dema ku ew vegeriya, sêv tune bûn!",
-                      "Hevalo bi tena serê xwe çû baxçe û dema ku ew vegeriya, sêv tune bûn!"
+                      "Hevalo bi tena serê xwe çû baxçe, û dema ku ew vegeriya, sêv li wir nebûn!",
+                      "Hevalo bi tena serê xwe çû baxçe û dema ku ew vegeriya, sêv li wir nebûn!"
                     ]
                   }
                 },
@@ -3683,7 +3683,7 @@
                     "prompt": "Dapîr bi kelecan e! Çima?",
                     "options": [
                       "Biryara wê ev e: ew jî tê zozanan!",
-                      "Ew li hespê siwar bû.",
+                      "Ew li hespî siwar bû.",
                       "Ew bi hêrs e."
                     ],
                     "correctIndex": 0
@@ -3839,8 +3839,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Dema ku ew hejdeh salî bû, ew li hespê siwar bû û bi stranan ji çiyê daket.",
-                    "reference": "Dema ku ew hejdeh salî bû, ew li hespê siwar bû û bi stranan ji çiyê daket."
+                    "prompt": "Dema ku ew hejdeh salî bû, ew li hespî siwar bû û bi stranan ji çiyê daket.",
+                    "reference": "Dema ku ew hejdeh salî bû, ew li hespî siwar bû û bi stranan ji çiyê daket."
                   }
                 },
                 {
@@ -4421,7 +4421,7 @@
                     "options": [
                       "Li ber kaniyê, bi kera Ferhad re.",
                       "Li bazarê, bi Ferhad re.",
-                      "Li malê, li ser banê."
+                      "Li malê, li ser banî."
                     ],
                     "correctIndex": 0
                   }

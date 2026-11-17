@@ -6,6 +6,7 @@ import { useScript } from '../alphabet/script';
 import { lettersSeen } from '../alphabet/seen';
 import { ChevronIcon } from '../components/icons';
 import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
+import { useGrowsInto } from '../lib/viewTransition';
 import { formatNumber, scriptDir, scriptLang } from '../words/parts';
 import { seenCounts } from '../words/seen';
 import { LETTERS_NAME, SET_BODY, SET_NAME, SET_TITLE } from '../words/sets';
@@ -31,10 +32,12 @@ export function Words(): React.JSX.Element {
   const [dialect] = useScript(locale);
   const counts = useMemo(() => seenCounts(), []);
   const letters = useMemo(() => lettersSeen(dialect), [dialect]);
+  // where the tool's card on Learn lands when it is pressed, and what goes back to it
+  const head = useGrowsInto('learn:words', { shape: 'card' });
 
   return (
     <div className="container wd">
-      <div className="page-header">
+      <div className="page-header" ref={head}>
         <span className="eyebrow">{t('learn.tools.title')}</span>
         <h1 className="page-title">{t('words.title')}</h1>
         <p className="page-sub">{t('words.lead')}</p>

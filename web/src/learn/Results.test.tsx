@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NO_LESSON_MOMENTS, type LessonMoments, type QuestStep } from '@kurda/shared';
+import { NO_LESSON_MOMENTS, type DeliveredExercise, type LessonMoments, type QuestStep } from '@kurda/shared';
 import { jsonResponse, renderApp } from '../test/utils';
 import type { QuestDay } from '@kurda/shared';
 import { Results } from './Results';
@@ -263,5 +263,161 @@ describe('after the results', () => {
     show();
     expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
     expect(calls).not.toContain('GET /me/quests');
+  });
+});
+
+/*
+ * The quiet Share beside the way on: the lesson as it went on its results,
+ * the streak on its card on one of its big days, and none on a review. What
+ * goes out is a line, the squares and the site's address, and nothing of who
+ * is sharing.
+ */
+describe('sharing', () => {
+  const SITE = window.location.origin;
+  const exercises: DeliveredExercise[] = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].map((id, i) => ({ id, position: i + 1, type: 'multiple_choice' }));
+  // six asked, the third missed the first time
+  const lesson: Partial<SessionResults> = { correct: 5, total: 6, accuracy: 5 / 6, mistakes: [{ exerciseId: 'e3', verdict: 'wrong' }] };
+  const kept: LessonMoments = { ...NO_LESSON_MOMENTS, streakKept: true };
+  // somebody with a name and a country (a made-up one), neither of which a share may carry
+  const WHO = { id: 'u-4471', username: 'rojda', displayName: 'Rojda', country: 'DE', emailVerified: true };
+
+  function open(
+    over: Partial<SessionResults> = {},
+    {
+      moments = NO_LESSON_MOMENTS,
+      kind = 'lesson',
+      lessonName = 'Hello!',
+    }: { moments?: LessonMoments; kind?: 'lesson' | 'practice'; lessonName?: string | null } = {},
+  ): void {
+    renderApp(
+      <Results
+        title={lessonName ?? 'Lesson'}
+        lessonName={lessonName}
+        results={{ ...base, ...lesson, ...over }}
+        exercises={exercises}
+        kind={kind}
+        dialect="kurmanji"
+        moments={moments}
+        elapsedMs={112_000}
+        exitTo="/app/learn"
+        exitLabel="Back to Learn"
+        onNext={vi.fn()}
+        onPractise={vi.fn()}
+      />,
+      ['/app/learn/lesson/l1'],
+    );
+  }
+
+  /** A device with a share sheet: what it is handed is the test’s to read. */
+  function sheet(): { said: () => string; share: ReturnType<typeof vi.fn> } {
+    const share = vi.fn(async (_data: ShareData) => undefined);
+    vi.stubGlobal('navigator', { ...navigator, share, clipboard: navigator.clipboard });
+    return { share, said: () => (share.mock.calls[0]?.[0] as ShareData | undefined)?.text ?? '' };
+  }
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => (new URL(url).pathname === '/me' ? jsonResponse(200, { user: WHO }) : jsonResponse(404, { code: 'NOT_FOUND', message: 'no route' }))),
+    );
+  });
+
+  it('offers one quiet Share in the bar, beside the way on, which stays the bar’s one button', () => {
+    open();
+    const bar = document.querySelector('.lesson-bar') as HTMLElement;
+    const share = within(bar).getByRole('button', { name: 'Share' });
+    expect(share).toHaveClass('btn-secondary');
+    expect(share.closest('.lesson-bar-start')).not.toBeNull();
+    // the way on is still the last thing in the row, and the only one drawn as it
+    const row = bar.querySelector('.lesson-bar-row')!;
+    expect(row.lastElementChild).toHaveClass('lesson-bar-go');
+    expect(bar.querySelectorAll('.lesson-bar-go')).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Share' })).toHaveLength(1);
+  });
+
+  it('shares the lesson by its name, with the lesson’s own address under it', async () => {
+    const { share, said } = sheet();
+    open();
+    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(said()).toBe(`I finished “Hello!” in Kurdish on Hevalo. 🍎\n${SITE}/win/lesson`);
+  });
+
+  it('shares nothing that says whose lesson it was', async () => {
+    const { said } = sheet();
+    open();
+    // the account is read by now: it is on the page’s side, and stays there
+    await userEvent.click(await screen.findByRole('button', { name: 'Share' }));
+    const text = said();
+    expect(text.length).toBeGreaterThan(0);
+    for (const theirs of [WHO.id, WHO.username, WHO.displayName, WHO.country, '/users/', '/profile', '@']) expect(text, theirs).not.toContain(theirs);
+    // one address, and it is the page of a lesson finished, which is about nobody
+    expect(text.match(/https?:\/\/\S+/g)).toEqual([`${SITE}/win/lesson`]);
+  });
+
+  it('says nothing of how the lesson went: no score, and no row of squares', async () => {
+    const { said } = sheet();
+    open({ correct: 4, total: 5, accuracy: 0.8 });
+    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
+    expect(said().split('\n')).toHaveLength(2);
+    expect(said()).not.toMatch(/[🟩🟨🟧⬜]|\d+\s*\/\s*\d+|%/u);
+  });
+
+  it('says a Kurdish lesson was finished when the page was not told its name', async () => {
+    const { said } = sheet();
+    open({}, { lessonName: null });
+    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
+    expect(said().split('\n')[0]).toBe('I finished a Kurdish lesson on Hevalo. 🍎');
+  });
+
+  it('copies the message where the device has no sheet, and says so', async () => {
+    const writeText = vi.fn(async (_text: string) => undefined);
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    open();
+    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
+    expect(writeText).toHaveBeenCalledWith(`I finished “Hello!” in Kurdish on Hevalo. 🍎\n${SITE}/win/lesson`);
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+  });
+
+  it('offers no Share on a review: practice is not a lesson finished', () => {
+    open({}, { kind: 'practice' });
+    expect(screen.getByRole('heading', { name: 'Great work!' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
+  });
+
+  it('never stands in the way on: Enter still moves on, and shares nothing', async () => {
+    const { share } = sheet();
+    open({}, { moments: kept });
+    await screen.findByRole('heading', { name: 'Great work!' });
+    await userEvent.keyboard('{Enter}');
+    expect(await screen.findByRole('heading', { name: '4-day streak' })).toBeInTheDocument();
+    expect(share).not.toHaveBeenCalled();
+  });
+
+  it('offers the streak on the day it reaches a week: its days, the fire, and the address of that day’s card', async () => {
+    const { share, said } = sheet();
+    open({ streak: { ...base.streak, current: 7 } }, { moments: kept });
+    await screen.findByRole('heading', { name: 'Great work!' });
+    await userEvent.keyboard('{Enter}');
+    // the seventh day’s flame first, which has no bar and no Share
+    await screen.findByRole('heading', { name: '7-day streak' });
+    expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    await screen.findByText('Another day learned. See you again tomorrow!');
+
+    const bar = document.querySelector('.lesson-bar') as HTMLElement;
+    await userEvent.click(within(bar).getByRole('button', { name: 'Share' }));
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(said()).toBe(`7 days of Kurdish in a row. 🔥\n${SITE}/win/streak/7`);
+    for (const theirs of [WHO.id, WHO.username, WHO.displayName, '/users/']) expect(said()).not.toContain(theirs);
+    // the way on is still the bar’s one button
+    expect(bar.querySelector('.lesson-bar-row')!.lastElementChild).toHaveClass('lesson-bar-go');
+  });
+
+  it('offers no Share on the streak’s card on an ordinary day', async () => {
+    open({}, { moments: kept });
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('heading', { name: '4-day streak' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
   });
 });

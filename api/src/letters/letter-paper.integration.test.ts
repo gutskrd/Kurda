@@ -296,9 +296,10 @@ describe.skipIf(!DATABASE_URL)('letter paper and the letter widget (integration)
       expect((await call('POST', '/letters/call', b.token)).statusCode).toBe(200);
       expect((await feed(token)).letter).toBeNull();
       const met = (await answer(b, drawn)).json() as VisitorAnswer;
-      // her letter, answered, is the first a pen pal sent him
+      // her letter, answered, is the first a pen pal sent him; her next one is on its way, so the widget asks sooner
       const first = await feed(token);
       expect(first).toMatchObject({ pinned: false, showWords: true, letter: { threadId: met.threadId, from: { name: expect.any(String) }, excerpt: letter, paper, rtl: false, drawn: false } });
+      expect(first.refreshAfter).toBe(900);
       const firstId = first.letter!.id;
 
       // her next letter, unread, takes its place, and is still unread after the widget showed it
@@ -306,6 +307,8 @@ describe.skipIf(!DATABASE_URL)('letter paper and the letter widget (integration)
       expect((await write(a, met.threadId, drawn, long)).statusCode).toBe(200);
       const newest = await feed(token);
       expect(newest.letter!.id).not.toBe(firstId);
+      // his turn now, and no bird of his out: nothing is on its way to him
+      expect(newest.refreshAfter).toBe(1800);
       expect(newest.letter).toMatchObject({ drawn: true, paper: drawn.paper });
       expect([...newest.letter!.excerpt].length).toBeLessThanOrEqual(WIDGET_EXCERPT_MAX);
       expect(newest.letter!.excerpt.endsWith('…')).toBe(true);

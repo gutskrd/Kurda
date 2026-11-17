@@ -56,7 +56,8 @@ function sentences(parts: ReadonlyArray<string | null>): string {
 
 /**
  * The notification list (KUR-097): invites, gifts, letters, badges, the
- * league and news from Hevalo, newest first. Opened from the bell on Home.
+ * league and news from Hevalo, newest first. Opened from the bell beside
+ * search, at the top of every tab.
  *
  * Cut into Today, This week and Earlier, because a list of fifty with nothing
  * between them makes "what happened since I last looked" a job of reading
@@ -253,7 +254,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
         <ScreenHeader
           title={t('notifications.title')}
           onBack={onExit}
-          right={<HeaderButton icon="gear" label={t('settings.notifications')} onPress={() => navigation.navigate('Notifications')} edge="end" />}
+          right={<HeaderButton icon="gear" label={t('settings.notifications')} onPress={() => navigation.navigate('Notifications')} />}
         />
 
         <AsyncBoundary
@@ -267,7 +268,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
               title={t('notifications.allCaughtUp')}
               body={t('notifications.emptyBody')}
               // most of what arrives here comes from friends: an invite, a gift, a message
-              action={{ label: t('messages.findFriends'), onPress: () => navigation.navigate('Tabs', { screen: 'Search' }) }}
+              action={{ label: t('messages.findFriends'), onPress: () => navigation.navigate('Search') }}
             />
           }
         >

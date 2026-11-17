@@ -37,7 +37,8 @@ export function TableChoices({
   const [minutes, setMinutes] = useState<string>(String(WHO_AM_I_TABLE_DEFAULT_MINUTES));
   const chosen = difficulty && difficulties.includes(difficulty) ? difficulty : (difficulties[0] ?? null);
   useEffect(() => {
-    onChange(chosen ? { dialect, difficulty: chosen, minutes: Number(minutes) } : null);
+    // a table this app makes offers the friends all four answers (yes, could be, no, not sure); one without the count is a table of two
+    onChange(chosen ? { dialect, difficulty: chosen, minutes: Number(minutes), answers: 4 } : null);
   }, [dialect, chosen, minutes, onChange]);
   if (!chosen) return <Note icon="question">{t('games.whoAmI.notOffered')}</Note>;
   return (

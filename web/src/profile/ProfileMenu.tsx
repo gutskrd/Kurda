@@ -84,7 +84,7 @@ export function ProfileMenu(): React.JSX.Element {
         title={holds}
         onClick={() => setOpen((v) => !v)}
       >
-        {/* three dots, not three lines: on a phone the bar's menu above is the three lines */}
+        {/* three dots, not three lines: three lines are the menu a phone's bar folds into on the public pages */}
         <MoreIcon size={22} />
         {waiting && <span className="nav-bell-dot" aria-hidden="true" />}
       </button>

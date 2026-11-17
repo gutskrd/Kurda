@@ -3,6 +3,7 @@ import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import { joined } from '../play/joining';
 import type { Feedback, ScoredGuess } from './board';
+import type { WordMeanings } from './WordAnswer';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -58,6 +59,8 @@ export interface BattleState {
 export interface BattleResults {
   id: string;
   target: string;
+  /** what the word means, in every language a word card gives; absent from a server from before it */
+  meanings?: WordMeanings;
   difficulty: Difficulty;
   ranking: Array<{
     /** the viewer's own id on their own row, `seat:N` on everyone else's */

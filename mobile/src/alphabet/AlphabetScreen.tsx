@@ -66,7 +66,7 @@ interface TileData {
   small?: string;
   /** under the letter: the sound it is like, or its partner in the other script */
   hint: string | null;
-  /** a gold dot: a false friend, or a letter Arabic does not have */
+  /** a violet dot, "look at this": a false friend, or a letter Arabic does not have */
   dot: boolean;
 }
 
@@ -175,7 +175,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <ScreenHeader title={t('nav.alphabet')} onBack={onExit} />
+        <ScreenHeader title={t('nav.alphabet')} onBack={onExit} browse />
         <ScrollView
           ref={scroller}
           style={styles.screen}
@@ -229,7 +229,8 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
             <Text style={[styles.cardTitle, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
               {t('alphabet.next.title')}
             </Text>
-            <View style={[styles.links, { flexDirection: dir.row }]}>
+            {/* one under another, from the reading side: side by side, the longest ran out of the card in English and in German */}
+            <View style={[styles.links, { alignItems: dir.rtl ? 'flex-end' : 'flex-start' }]}>
               <ClayButton label={t('alphabet.next.dictionary')} icon="text" onPress={() => navigation.navigate('Dictionary')} />
               <ClayButton label={t('alphabet.next.wordle')} icon="grid" onPress={() => navigation.navigate('Wordle')} />
               <ClayButton label={t('words.fromAlphabet')} icon="palette" onPress={() => navigation.navigate('Words')} />
@@ -244,8 +245,13 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
 
 /**
  * One letter in the grid: the letter (and its small form), what it is like or
- * its partner underneath, a tick once it has been opened, and a gold dot on a
- * false friend. Read out the way the website labels it: "C, like j".
+ * its partner underneath, a tick once it has been opened, and a dot on a false
+ * friend. Read out the way the website labels it: "C, like j".
+ *
+ * The dot, the hint and the tick are in the app's violet, its colour for
+ * "look at this" and for what is on. They were gold, which is for what is
+ * earned, and green, which is for a right answer: opening a letter is
+ * neither.
  */
 function Tile({
   tile,
@@ -273,14 +279,14 @@ function Tile({
       accessibilityLabel={tile.hint ? t('alphabet.tileLabel', { letter: tile.glyph, hint: tile.hint }) : tile.glyph}
       style={[styles.tile, { width, backgroundColor: colors.surface }]}
     >
-      {seen ? <Icon name="check" size={12} color={colors.success} style={[styles.corner, startSide]} /> : null}
-      {tile.dot ? <View style={[styles.dot, styles.corner, endSide, { backgroundColor: colors.gold }]} /> : null}
+      {seen ? <Icon name="check" size={12} color={colors.primary} style={[styles.corner, startSide]} /> : null}
+      {tile.dot ? <View style={[styles.dot, styles.corner, endSide, { backgroundColor: colors.primary }]} /> : null}
       <Text style={[arabic ? styles.glyphArabic : styles.glyph, scriptText(script), { color: colors.textPrimary }]} maxFontSizeMultiplier={1.4}>
         {tile.glyph}
         {tile.small ? <Text style={[styles.glyphSmall, { color: colors.textSecondary }]}>{` ${tile.small}`}</Text> : null}
       </Text>
       {tile.hint ? (
-        <Text style={[styles.hint, { color: colors.goldText }]} numberOfLines={1} maxFontSizeMultiplier={1.4}>
+        <Text style={[styles.hint, { color: colors.primary }]} numberOfLines={1} maxFontSizeMultiplier={1.4}>
           {tile.hint}
         </Text>
       ) : null}
@@ -288,7 +294,7 @@ function Tile({
   );
 }
 
-/** How many of this alphabet's letters have been opened here: the small, honest kind of progress. */
+/** How many of this alphabet's letters have been opened here: the small, honest kind of progress, in the violet every bar of it is in. */
 function Progress({ explored, total }: { explored: number; total: number }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -300,9 +306,9 @@ function Progress({ explored, total }: { explored: number; total: number }): Rea
   return (
     <View style={[styles.progress, { flexDirection: dir.row }]}>
       <View style={[styles.track, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <View style={[styles.fill, { width: `${Math.round((explored / total) * 100)}%`, backgroundColor: colors.success }, dir.rtl && styles.fillEnd]} />
+        <View style={[styles.fill, { width: `${Math.round((explored / total) * 100)}%`, backgroundColor: colors.primary }, dir.rtl && styles.fillEnd]} />
       </View>
-      <Text style={[styles.progressText, { color: all ? colors.success : colors.textSecondary }, all && styles.progressDone]} accessibilityLiveRegion="polite">
+      <Text style={[styles.progressText, { color: all ? colors.primary : colors.textSecondary }, all && styles.progressDone]} accessibilityLiveRegion="polite">
         {words}
       </Text>
     </View>
@@ -318,12 +324,17 @@ function HatRule(): React.JSX.Element {
     <View style={[styles.pair, { flexDirection: scriptRow('kmr') }]}>
       <Text style={[styles.ruleGlyph, { color: colors.textPrimary }]}>{from}</Text>
       <Text style={[styles.arrow, { color: colors.textSecondary }]}>→</Text>
-      <Text style={[styles.ruleGlyph, { color: colors.goldText }]}>{to}</Text>
+      <Text style={[styles.ruleGlyph, { color: colors.primary }]}>{to}</Text>
     </View>
   );
   return (
     <View style={[styles.card, { backgroundColor: colors.surface }]}>
-      <View style={[styles.ruleDemo, { flexDirection: scriptRow('kmr') }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View
+        // the Latin letters keep their own order, at the reading side of the card
+        style={[styles.ruleDemo, { flexDirection: scriptRow('kmr'), justifyContent: dir.rtl ? 'flex-end' : 'flex-start' }]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
         {pair('i', 'î')}
         {pair('u', 'û')}
       </View>
@@ -351,7 +362,7 @@ function JoinDemo(): React.JSX.Element {
           ))}
         </View>
         <Text style={[styles.arrow, { color: colors.textSecondary }, dir.flip]}>→</Text>
-        <Text style={[styles.ruleArabic, scriptText('ckb'), { color: colors.goldText }]}>کوردی</Text>
+        <Text style={[styles.ruleArabic, scriptText('ckb'), { color: colors.primary }]}>کوردی</Text>
       </View>
       <Text style={[styles.cardTitle, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
         {t('alphabet.join.title')}
@@ -394,7 +405,7 @@ const styles = StyleSheet.create({
   ruleGlyph: { ...display(RULE_GLYPH), lineHeight: RULE_LINE },
   ruleArabic: { fontSize: RULE_GLYPH, lineHeight: Math.round(RULE_GLYPH * 1.5) },
   arrow: { fontSize: typography.sizes.md },
-  links: { flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
+  links: { gap: spacing.sm, marginTop: spacing.xs },
 
   group: { gap: spacing.sm },
   groupHead: { alignItems: 'baseline', gap: spacing.sm },

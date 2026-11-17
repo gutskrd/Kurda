@@ -14,14 +14,44 @@ used to follow users across other apps/sites.
 
 | Permission | iOS key | When it's asked | Source | Denied → |
 |---|---|---|---|---|
-| Photo library | `NSPhotoLibraryUsageDescription` | when you tap to set a profile picture (#180), a group's picture, or add a meme/image post (#291) | `expo-image-picker` plugin string | an alert explains why + points to Settings; the rest of the app works |
-| Microphone | `NSMicrophoneUsageDescription` | when you record a voice note (#282) or start a speaking exercise (#36) | `expo-audio` plugin string | the recorder shows the reason + offers Settings; text still works |
-| Notifications | (system prompt) | when you opt into reminders (#94/#95) | `expo-notifications` | reminders simply don't send |
+| Photo library | `NSPhotoLibraryUsageDescription` | never as a prompt: a profile picture (#180), a group's picture and a meme/image post (#291) are chosen in the system's own picker, which runs outside the app and hands back only what was chosen | `expo-image-picker` plugin string | nothing to deny; closing the picker leaves the screen as it was |
+| Microphone | `NSMicrophoneUsageDescription` | at the tap on record, for a voice note (#282) or a speaking exercise (#36), with no screen of ours before it | `expo-audio` plugin string | a speaking exercise says the microphone is off for Hevalo, offers the phone's settings, and is put off with "Can't do this now — skip"; a voice note says the same in an alert, and the comment is typed instead |
+| Notifications | (system prompt) | after a lesson, from a screen with one "Continue" button, or from the "Continue" row in Settings → Notification settings (#94/#95) | `expo-notifications` | the lesson's way on is taken exactly as if it had been allowed; nothing is sent; Settings says "Notifications are off" and offers the phone's settings |
 
 No **camera**, **location**, **contacts**, **speech-recognition**, or **tracking**
 permission is requested — the app never calls those APIs, so no usage string is
 declared for them (an unused permission prompt is an App Store rejection risk).
 Permissions are requested **in context** (on the action), never all at launch.
+
+### Our own screens in front of a system prompt
+
+The Human Interface Guidelines (Privacy → Requesting permission) read a screen
+of the app's own, shown before a system prompt, as part of the request, and an
+app is turned away for steering the answer there. What the code holds to:
+
+- **Two places lead to the notifications prompt, and no other of ours does:**
+  the screen after a lesson (`mobile/src/push/ReminderOffer.tsx`) and the row
+  in Settings → Notification settings (`mobile/src/push/DevicePushControl.tsx`).
+  The microphone prompt has no screen of ours before it at all.
+- **One button, titled "Continue".** Never "Allow", "Turn on" or "Not now":
+  the yes and the no belong to the system prompt. Nothing else on the screen
+  can be pressed, and there is no ✕, skip or back out of it (Android's back
+  stays on the screen), so it cannot be left without seeing the prompt.
+- **It says what is sent, and only that:** a reminder on a day the streak is
+  still waiting, word of a letter, word of a badge, which is what the server
+  pushes (`api/src/notifications/streak-reminder-service.ts`,
+  `api/src/letters/service.ts`, `api/src/badges/service.ts`). No reward for
+  saying yes, no picture of the prompt, no pointing at one of its buttons.
+- **Learn's banner about reminders appears only once the phone will not ask
+  again**, where its button opens the phone's settings and no prompt follows
+  (`shouldNudgeReminders` in `mobile/src/push/permission.ts`).
+- **After "Don't Allow" everything goes on:** no spinner and no button left
+  busy. The screen after a lesson takes the lesson's way on whatever the
+  answer, an error included.
+- **The sentence inside the prompt** (`mobile/app.json`, `mobile/locales/*.json`)
+  is one complete sentence in the active voice that says what Hevalo does:
+  it uploads the photos chosen, it records when record is tapped, and what
+  for. Never "… is needed for a better experience", never "Turn on …".
 
 ## App Privacy — data collected (App Store Connect answers)
 
@@ -83,5 +113,12 @@ whenever a native dependency is added or bumped.
 
 - [ ] Trigger each permission → the specific copy above appears.
 - [ ] Deny each → graceful degradation + Settings deep-link (#278), no crash.
+- [ ] After a first lesson on an adult account: the screen before the
+      notifications prompt has one button, "Continue", and nothing else to
+      press; it brings up the prompt; "Don't Allow" goes on to where the lesson
+      was going, with nothing left spinning. Learn's banner about reminders
+      never shows before the prompt has been answered; after a "Don't Allow"
+      it may show (a week after this screen, and no more than twice in all,
+      this screen counted), and its button opens the phone's settings.
 - [ ] Validate the generated `PrivacyInfo.xcprivacy` in the build; App Store Connect
       privacy answers match reality.

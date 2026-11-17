@@ -8,12 +8,13 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { useDirection } from '../reports/direction';
 import { describeError, isMaintenance } from '../api/errors';
 import { PlayWithButton } from '../play/PlayWithButton';
 import type { TranslationKey } from '../i18n/translations';
@@ -33,6 +34,8 @@ interface UserRow {
   userId: string;
   username: string;
   displayName?: string | null;
+  /** their picture, as the server resolves it (an uploaded photo, else the avatar they chose) */
+  avatarUrl?: string | null;
 }
 
 /** How long a suggestion says "Requested", its ticket handed over, before it moves to the requests you sent. */
@@ -59,6 +62,8 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   const { colors } = useTheme();
 
   const { t } = useI18n();
+  // in Soranî and Arabic the rows start on the right, as the friend request tickets above them already do
+  const dir = useDirection();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
@@ -217,7 +222,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     return (
       <PressableScale
         key={u.userId}
-        style={[styles.row, { backgroundColor: colors.controlTrack }]}
+        style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
         onPress={() => openProfile(u.userId)}
         accessibilityRole="button"
         accessibilityLabel={
@@ -226,10 +231,10 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             : t('friends.openProfile', { username: u.username })
         }
       >
-        <InitialsAvatar name={u.username} id={u.userId} size={36} />
+        <InitialsAvatar name={u.username} id={u.userId} size={36} photoUrl={u.avatarUrl ?? undefined} />
         <View style={styles.rowMain}>
-          <Text style={[styles.username, { color: colors.textPrimary }]}>{u.username}</Text>
-          {sub ? <Text style={[styles.display, { color: colors.textSecondary }]}>{sub}</Text> : null}
+          <Text style={[styles.username, dir.free, { color: colors.textPrimary }]}>{u.username}</Text>
+          {sub ? <Text style={[styles.display, dir.free, { color: colors.textSecondary }]}>{sub}</Text> : null}
         </View>
         {right}
       </PressableScale>
@@ -239,7 +244,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   /** Takes a key, not a word: the two headings here were plain English, and
       a label built at the call site is invisible to the i18n gate. */
   const section = (key: TranslationKey) => (
-    <Text style={[styles.section, { color: colors.textSecondary }]}>{t(key)}</Text>
+    <Text style={[styles.section, dir.text, { color: colors.textSecondary }]}>{t(key)}</Text>
   );
 
   const showingSearch = results !== null;
@@ -257,8 +262,8 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
           right={
             <Pressable
               onPress={() => navigation.navigate('Tabs', { screen: 'Messages' })}
-              hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
-              style={({ pressed }) => [styles.messagesLink, pressed && heldDim]}
+              reachSize={{ height: LINK_LINE }}
+              style={({ pressed }) => [styles.messagesLink, { flexDirection: dir.row }, pressed && heldDim]}
               accessibilityRole="button"
               accessibilityLabel={t('nav.messages')}
             >
@@ -274,6 +279,8 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             data={results}
             keyExtractor={(u) => u.userId}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
+            // the keyboard is up while the results come in: a tap on one opens it, rather than only putting the keyboard away
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => row(item)}
             ListEmptyComponent={
               searching ? (
@@ -290,6 +297,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             data={friends}
             keyExtractor={(u) => u.userId}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
+            keyboardShouldPersistTaps="handled"
             refreshControl={pull}
             ListHeaderComponent={
               <View>
@@ -319,7 +327,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
                         u,
                         <Pressable
                           onPress={() => withdraw(u)}
-                          hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
+                          reachSize={{ height: LINK_LINE }}
                           accessibilityRole="button"
                           accessibilityLabel={t('friends.cancelRequest', { name: u.displayName ?? u.username })}
                           style={({ pressed }) => pressed && heldDim}
@@ -350,7 +358,6 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
                         <PressableScale
                           onPress={() => addFriend(s.userId)}
                           disabled={requested}
-                          hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 36)}
                           style={[styles.accept, styles.add, { backgroundColor: requested ? colors.controlTrack : colors.primary }]}
                           accessibilityRole="button"
                           accessibilityLabel={requested ? t('friends.requested') : t('friends.add')}
@@ -375,6 +382,9 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     </GradientBackground>
   );
 }
+
+/** A line of words beside an 18pt glyph, as the Messages link and a request's Cancel are drawn: the Pressable reaches it to a fingertip. */
+const LINK_LINE = 22;
 
 /** People in grey, row for row: the face, the name and the line under it, the button at the end. */
 function PeopleSkeleton(): React.JSX.Element {

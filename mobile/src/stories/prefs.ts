@@ -16,8 +16,10 @@ import {
 
 /**
  * What Stories remembers on this phone: the reader's text size, the variety
- * and length last chosen, how "Quiz yourself" is set up, whether English is
- * shown under the questions, extra time, and the narration speed.
+ * chosen with the Kurmancî | Soranî switch (the library, the reader and a
+ * game's setup all follow it), the length last chosen, how "Quiz yourself" is
+ * set up, whether English is shown under the questions, extra time, and the
+ * narration speed.
  *
  * One small JSON value, stored the way the app's other preferences are
  * (keystore on a phone, localStorage on the web). Every read and write is
@@ -68,6 +70,17 @@ export const DEFAULT_PREFS: StoryPrefs = {
   extraTime: false,
   rate: 1,
 };
+
+/**
+ * The variety Stories shows — on the library, in the reader's switch, in a
+ * game's setup: the one chosen last time on this phone; with none chosen yet,
+ * Soranî when the interface is Soranî, otherwise Kurmancî. A choice is kept
+ * (`dialect`) only when the reader makes one with the switch; opening a story
+ * of the other variety from a link is not a choice.
+ */
+export function shownDialect(locale: string, chosen: StoryDialect | null): StoryDialect {
+  return chosen ?? (locale === 'ckb' ? 'sorani' : 'kurmanci');
+}
 
 /** Whatever was stored, checked field by field: anything unknown falls back to the default. */
 export function parsePrefs(raw: string | null | undefined): StoryPrefs {

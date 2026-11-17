@@ -178,7 +178,7 @@ function Card({ word, dialect, audio, player }: { word: SetWord; dialect: Alphab
                 accessibilityLabel={t('words.tileLabel', { word: `${wordIn(relative, dialect)} ${wordIn(day, dialect)}`, meaning: glossIn(relative, glossLocale) })}
               >
                 <View style={styles.relativeWhen}>
-                  <Text style={[styles.relativeWord, scriptText(dialect), { color: when === 'today' ? colors.goldText : colors.textPrimary }]}>
+                  <Text style={[styles.relativeWord, scriptText(dialect), { color: when === 'today' ? colors.primary : colors.textPrimary }]}>
                     {wordIn(relative, dialect)}
                   </Text>
                   <Text style={[styles.relativeGloss, { color: colors.textSecondary }]}>{glossIn(relative, glossLocale)}</Text>
@@ -284,6 +284,8 @@ function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Elemen
       }}
       accessibilityRole="button"
       accessibilityLabel={label}
+      // each is alone at its end of the foot, with nothing near: it answers 8 past every edge
+      reach="open"
       style={({ pressed }) => [styles.step, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
     >
       <Icon name={icon} size={20} color={colors.primary} style={dir.flip ?? undefined} />

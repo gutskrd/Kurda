@@ -5,6 +5,7 @@ import {
   lastLetterSlip,
   letterDirection,
   type LastLetterBoard,
+  type LastLetterChainWord,
   type LastLetterOutcome,
   type LastLetterStrikeReason,
   type LetterDialect,
@@ -17,6 +18,7 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
+import { KeyBar } from '../keyboard/KeyBar';
 import type { TranslationKey } from '../i18n/translations';
 import { multiSeatName } from '../play/GameRoom';
 import { useShake } from '../theme/animate';
@@ -63,6 +65,15 @@ function scriptStyle(dialect: LetterDialect): { writingDirection: 'rtl' | 'ltr';
  * strike. A strike shakes the seat that took it and buzzes the phone of the
  * one who did; with Reduce Motion nothing moves, the colour says it.
  */
+/**
+ * What a chain word means in the reader's language: the lesson or the
+ * dictionary may give it in several, and English stands in for the rest. A
+ * board from before meanings were kept in every language has only `meaning`.
+ */
+export function meaningIn(word: Pick<LastLetterChainWord, 'meaning' | 'meanings'>, locale: string): string | null {
+  return word.meanings?.[locale] ?? word.meanings?.en ?? word.meaning ?? null;
+}
+
 export function LastLetterBoardView({
   view,
   skew,
@@ -73,7 +84,7 @@ export function LastLetterBoardView({
   move: (body: unknown) => Promise<ApiResult<MultiMoveAnswer<LastLetterBoard | null, LastLetterOutcome>>>;
 }): React.JSX.Element | null {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const reduce = useReducedMotion();
   const board = view.board;
   const now = useServerNow(skew, view.status === 'active');
@@ -130,8 +141,18 @@ export function LastLetterBoardView({
             {board.yourTurn ? t('games.lastLetter.yourTurn') : turn ? t('games.lastLetter.theirTurn', { name: name(turn.seat) }) : ''}
           </Text>
           <Text style={[styles.starts, { color: colors.textSecondary }]}>
-            {board.required ? `${t('games.lastLetter.startsWith')} ${board.requiredSpellings.join(' · ')}` : t('games.lastLetter.firstWord')}
+            {board.required
+              ? `${t('games.lastLetter.startsWith')} ${board.requiredSpellings.join(' · ')}`
+              : board.openLetter
+                ? t('games.lastLetter.openLetter', { letter: board.openLetter })
+                : t('games.lastLetter.firstWord')}
           </Text>
+          {/* a soft ending passes on the letter before it: said once under the letter, so the ring never looks wrong */}
+          {board.required && board.requiredFrom ? (
+            <Text style={[styles.starts, { color: colors.textSecondary }]}>
+              {t('games.lastLetter.softEnding', { word: board.requiredFrom.word, vowel: board.requiredFrom.vowel, letter: board.required })}
+            </Text>
+          ) : null}
         </View>
       </View>
 
@@ -140,25 +161,31 @@ export function LastLetterBoardView({
           ref={chain}
           horizontal
           showsHorizontalScrollIndicator={false}
+          // beside the word field, which is up the whole game: as every list beside a field does,
+          // it lets a tap reach what it holds rather than spend it closing the keyboard
+          keyboardShouldPersistTaps="handled"
           accessibilityLabel={t('games.lastLetter.chain')}
           contentContainerStyle={styles.chain}
         >
-          {words.map((w, i) => (
+          {words.map((w, i) => {
+            const meaning = meaningIn(w, locale);
+            return (
             <View key={w.n} style={styles.cardRow}>
               {i > 0 ? <View style={[styles.link, { backgroundColor: colors.gold }]} /> : null}
               <View
                 accessible
-                accessibilityLabel={[w.word, w.meaning, name(w.seat)].filter(Boolean).join(', ')}
+                accessibilityLabel={[w.word, meaning, name(w.seat)].filter(Boolean).join(', ')}
                 style={[styles.card, { borderColor: w.seat === view.me?.seat ? colors.primary : colors.clayBorder, backgroundColor: colors.glassFill }]}
               >
                 <Text style={[styles.word, scriptStyle(board.dialect), { color: colors.textPrimary }]}>{w.word}</Text>
-                {w.meaning ? <Text style={[styles.meaning, { color: colors.textSecondary }]}>{w.meaning}</Text> : null}
+                {meaning ? <Text style={[styles.meaning, { color: colors.textSecondary }]}>{meaning}</Text> : null}
                 <Text style={[styles.by, { color: colors.textSecondary }]} numberOfLines={1}>
                   {name(w.seat)}
                 </Text>
               </View>
             </View>
-          ))}
+            );
+          })}
         </ScrollView>
       )}
 
@@ -210,6 +237,34 @@ export function LastLetterBoardView({
   );
 }
 
+/**
+ * Every word of a finished game, in the order it was played, with who played
+ * it and what it means: the game was a list of words, and its end is the
+ * moment to read them again.
+ */
+export function ChainReview({ board, name }: { board: LastLetterBoard; name: (seat: number) => string }): React.JSX.Element | null {
+  const { t, locale } = useI18n();
+  const { colors } = useTheme();
+  if (board.chain.length === 0) return null;
+  return (
+    <View style={styles.review}>
+      <Text accessibilityRole="header" style={[styles.reviewTitle, { color: colors.textPrimary }]}>
+        {t('games.lastLetter.review')}
+      </Text>
+      {board.chain.map((w) => {
+        const meaning = meaningIn(w, locale);
+        return (
+          <View key={w.n} accessible accessibilityLabel={[w.word, meaning, name(w.seat)].filter(Boolean).join(', ')} style={[styles.reviewRow, { borderBottomColor: colors.separator }]}>
+            <Text style={[styles.reviewWord, scriptStyle(board.dialect), { color: colors.textPrimary }]}>{w.word}</Text>
+            {meaning ? <Text style={[styles.meaning, { color: colors.textSecondary }]}>{meaning}</Text> : null}
+            <Text style={[styles.by, { color: colors.textSecondary }]}>{name(w.seat)}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 /** The ring around the next letter: full at the start of a turn, empty when its time is up. */
 export function TurnRing({ share, low, label, children }: { share: number; low: boolean; label: string; children: React.ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
@@ -250,6 +305,8 @@ function WordBox({
   const [word, setWord] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // a word the server took for a slip of a mark: no strike, and the word it most likely was offered in its place
+  const [didYouMean, setDidYouMean] = useState<string | null>(null);
   const slip = lastLetterSlip(board, word);
   const hint = !slip
     ? null
@@ -265,15 +322,23 @@ function WordBox({
     setError(null);
     const res = await move({ word });
     setBusy(false);
-    if (res.ok) setWord('');
-    else setError(describeError(res.error, t));
+    if (!res.ok) {
+      setError(describeError(res.error, t));
+      return;
+    }
+    const spelling = res.data.outcome?.spelling ?? null;
+    setDidYouMean(spelling);
+    setWord(spelling ?? '');
   };
 
   return (
     <View style={styles.compose}>
       <TextInput
         value={word}
-        onChangeText={setWord}
+        onChangeText={(text) => {
+          setWord(text);
+          setDidYouMean(null);
+        }}
         onSubmitEditing={() => void send()}
         placeholder={
           !board.required
@@ -292,9 +357,15 @@ function WordBox({
         style={[styles.input, scriptStyle(board.dialect), { color: colors.textPrimary, borderColor: slip ? colors.danger : colors.clayBorder }]}
       />
       <ClayButton label={busy ? '…' : t('games.lastLetter.send')} tone="primary" busy={busy} disabled={!word.trim() || slip !== null} onPress={() => void send()} />
-      {error ?? hint ? (
+      {/* the letters a keyboard may not have, typed at the end of the word */}
+      <KeyBar dialect={board.dialect === 'ckb' ? 'sorani' : 'kurmanci'} onKey={(letter) => setWord((w) => w + letter)} disabled={busy} />
+      {(error ?? hint) ? (
         <Text accessibilityLiveRegion="polite" style={[styles.hint, { color: colors.danger }]}>
           {error ?? hint}
+        </Text>
+      ) : didYouMean ? (
+        <Text accessibilityLiveRegion="polite" style={[styles.hint, { color: colors.textPrimary }]}>
+          {t('games.lastLetter.didYouMean', { word: didYouMean })}
         </Text>
       ) : null}
     </View>
@@ -335,4 +406,8 @@ const styles = StyleSheet.create({
   compose: { gap: spacing.sm },
   input: { minHeight: 48, fontSize: 20, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: 12 },
   hint: { fontSize: typography.sizes.sm },
+  review: { alignSelf: 'stretch', gap: spacing.xs, marginTop: spacing.sm },
+  reviewTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  reviewRow: { gap: 2, paddingVertical: spacing.xs, borderBottomWidth: StyleSheet.hairlineWidth },
+  reviewWord: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

@@ -5,7 +5,9 @@ import { Pressable } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { GradientBackground } from '../theme/glass';
+import { ErrorRetry, GradientBackground } from '../theme/glass';
+import type { ApiError } from '../api/types';
+import { useDirection } from '../reports/direction';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -16,12 +18,17 @@ import { usePullRefresh } from '../net/usePullRefresh';
 import { Loading } from '../theme/Loading';
 import { heldDim } from '../theme/MotionParts';
 
-/** "3 Sep" / "3 Sep 2024" — the year only when it is not this one. */
-function when(iso: string): string {
+/** "3 Sep" / "3 Sep 2024" — the year only when it is not this one — in the app's language, not the phone's. */
+function when(iso: string, locale: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   const sameYear = d.getFullYear() === new Date().getFullYear();
-  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) });
+  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) };
+  try {
+    return d.toLocaleDateString(locale, options);
+  } catch {
+    return d.toLocaleDateString(undefined, options);
+  }
 }
 
 /**
@@ -44,9 +51,12 @@ function when(iso: string): string {
 export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const dir = useDirection();
 
   const [list, setList] = useState<BlockedUser[] | null>(null);
+  // the list could not be read at all: said, with the way to ask again, rather than "you haven't blocked anyone"
+  const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -55,12 +65,14 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
     (offset = 0) =>
       blockedUsers(client, offset).then((res) => {
         if (!res.ok) {
-          setError(describeError(res.error, t));
-          if (offset === 0) setList([]);
+          // a first page that did not come is not an empty list; a later page that did not come is said over the rows already there
+          if (offset === 0) setLoadError(res.error);
+          else setError(describeError(res.error, t));
           return;
         }
         const page = res.data.blocked ?? [];
         setError(null);
+        setLoadError(null);
         setTotal(res.data.total ?? page.length);
         setList((prev) => (offset === 0 || prev === null ? page : [...prev, ...page]));
       }),
@@ -109,13 +121,15 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
       <View style={styles.screen}>
         <ScreenHeader title={t('settings.blocked.title')} onBack={onExit} />
 
-        {list === null ? (
+        {list === null && loadError ? (
+          <ErrorRetry message={describeError(loadError, t)} onRetry={() => void load(0)} />
+        ) : list === null ? (
           <Loading style={{ marginTop: spacing.xl }} />
         ) : (
           <ScrollView contentContainerStyle={styles.list} refreshControl={pull}>
-            <Text style={[styles.help, { color: colors.textSecondary }]}>{t('settings.blocked.help')}</Text>
+            <Text style={[styles.help, dir.text, { color: colors.textSecondary }]}>{t('settings.blocked.help')}</Text>
 
-            {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+            {error ? <Text style={[styles.error, dir.text, { color: colors.danger }]}>{error}</Text> : null}
 
             {list.length === 0 ? (
               <EmptyState title={t('settings.blocked.none')} />
@@ -124,7 +138,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                 {list.map((u) => (
                   <View
                     key={u.userId}
-                    style={[styles.row, { backgroundColor: colors.controlTrack }]}
+                    style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
                   >
                     <InitialsAvatar
                       name={u.displayName || u.username}
@@ -133,9 +147,9 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                       photoUrl={u.avatarUrl}
                     />
                     <View style={styles.main}>
-                      <Text style={[styles.name, { color: colors.textPrimary }]}>{u.displayName || u.username}</Text>
-                      <Text style={[styles.meta, { color: colors.textSecondary }]}>
-                        @{u.username} · {t('settings.blocked.since', { date: when(u.blockedAt) })}
+                      <Text style={[styles.name, dir.free, { color: colors.textPrimary }]}>{u.displayName || u.username}</Text>
+                      <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>
+                        @{u.username} · {t('settings.blocked.since', { date: when(u.blockedAt, locale) })}
                       </Text>
                     </View>
                     {busy === u.userId ? (
@@ -144,8 +158,9 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                       <Pressable
                         onPress={() => unblock(u)}
                         accessibilityRole="button"
-                        // one 18-point line of words, caught at a fingertip's 44
-                        hitSlop={13}
+                        // one 18-point line of words, caught at a fingertip, alone at the end of its row past words that are not a control
+                        reach="open"
+                        reachSize={{ height: 18 }}
                         style={({ pressed }) => pressed && heldDim}
                       >
                         <Text style={[styles.action, { color: colors.primary }]}>{t('settings.blocked.unblock')}</Text>
@@ -168,7 +183,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                   friendship, and it does put you back within reach of someone
                   you chose to get away from.
                 */}
-                <Text style={[styles.help, { color: colors.textSecondary, marginTop: spacing.lg }]}>
+                <Text style={[styles.help, dir.text, { color: colors.textSecondary, marginTop: spacing.lg }]}>
                   {t('settings.blocked.unblockHint')}
                 </Text>
               </>

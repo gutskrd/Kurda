@@ -66,8 +66,8 @@ const WASH_FADE_MS = 420;
  * a picture of what it is about where there is one: the badge, the league, the
  * game, the letter, the gift, the streak's fire.
  *
- * New is said three ways and never by colour alone: a small gold dot at its
- * start, a warm wash across the row (the sun's gold, faintly — the one warm
+ * New is said three ways and never by colour alone: a small violet dot at
+ * its start, a faint wash of the same violet across the row (the one tinted
  * thing in the list), and "Unread" in what a screen reader hears. Once read,
  * the wash and the dot fade rather than vanish.
  *
@@ -116,9 +116,9 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
     return () => run.stop();
   }, [unread, reduce, fresh]);
 
-  // gold at a tenth, as the website mixes it; the face's ring is the same colour made solid, so the badge sits on the row
-  const wash = `${colors.gold}1A`;
-  const ring = unread ? blend(colors.gold, colors.background, 0.1) : colors.background;
+  // the app's violet at a tenth, as the website mixes it; the face's ring is the same colour made solid, so the badge sits on the row
+  const wash = `${colors.primary}1A`;
+  const ring = unread ? blend(colors.primary, colors.background, 0.1) : colors.background;
   const deleteWhat = t('notifications.deleteWhat', { what: title });
 
   return (
@@ -133,7 +133,7 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
             <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: wash, opacity: fresh }]} />
             <Animated.View
               pointerEvents="none"
-              style={[styles.dot, mirrored ? styles.dotRight : styles.dotLeft, { backgroundColor: colors.gold, opacity: fresh, transform: [{ scale: fresh }] }]}
+              style={[styles.dot, mirrored ? styles.dotRight : styles.dotLeft, { backgroundColor: colors.primary, opacity: fresh, transform: [{ scale: fresh }] }]}
             />
             <Pressable
               onPress={() => {
@@ -174,11 +174,14 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
                 ) : null}
                 {action ? (
                   <View style={[styles.actionRow, { flexDirection: dir.row }]}>
+                    {/*
+                      Reaches a fingertip up and down from its 32 and stays inside the row around it, so a near miss
+                      does what the button says rather than opening the notification behind it.
+                    */}
                     <PressableScale
                       onPress={action.onPress}
                       accessibilityRole="button"
                       accessibilityLabel={action.label}
-                      hitSlop={(MIN_TOUCH_TARGET - ACTION_HEIGHT) / 2}
                       style={[styles.action, { backgroundColor: colors.primary }]}
                     >
                       <Text style={[styles.actionText, { color: colors.textOnPrimary }]} numberOfLines={1}>
@@ -387,7 +390,8 @@ export function NotificationHeading({ title, first, action }: { title: string; f
       </Text>
       {action ? (
         <Pressable onPress={action.onPress} accessibilityRole="button" accessibilityLabel={action.label} style={({ pressed }) => [styles.markAll, pressed && styles.pressed]}>
-          <Text style={[styles.markAllText, { color: colors.textPrimary }]} numberOfLines={1}>
+          {/* violet, as what can be pressed is: it is the one thing on the list's head that does something */}
+          <Text style={[styles.markAllText, { color: colors.primary }]} numberOfLines={1}>
             {action.label}
           </Text>
         </Pressable>

@@ -146,8 +146,9 @@ already through it.
       `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`. Without them the Google button is
       hidden, which is allowed, but it should be a choice.
 - [ ] `IAP_PURCHASES_OFF=true` for as long as nothing is sold.
-- [ ] The evidence bucket (`S3_EVIDENCE_BUCKET`) is writable, so data exports
-      and report evidence are kept off the public bucket.
+- [x] The evidence bucket (`S3_EVIDENCE_BUCKET`) is writable, so data exports
+      and report evidence are kept off the public bucket. Done: the server's
+      start-up log says "private storage ready".
 - [x] The server's plan does not sleep (a paid instance, checked 13 November
       2026): a reviewer who meets a cold start of half a minute on the first
       screen reports the app as not loading.

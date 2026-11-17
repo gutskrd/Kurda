@@ -98,6 +98,16 @@ describe('a legend in the reader', () => {
     expect(screen.getByRole('link', { name: 'Dimdim, Literary work' })).toBeTruthy();
   });
 
+  it('gives no chapter a title in another language where the interface is the story’s own', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ku');
+    testAuth.client = routes();
+    renderWithProviders(<StoryReaderScreen slug="kela-dimdime" onExit={() => undefined} />);
+    expect(await screen.findByTestId('chapter-row-c1')).toBeTruthy();
+    // a Kurmancî reader reads the Kurmancî chapter titles as they are: no English under them, as there is none under the title
+    expect(within(screen.getByTestId('chapter-row-c1')).queryByText('The fortress')).toBeNull();
+    expect(screen.queryByTestId('story-title-translation')).toBeNull();
+  });
+
   it('sets its headings as chapter titles, never as text with ## or a word to tap', async () => {
     testAuth.client = routes();
     renderWithProviders(<StoryReaderScreen slug="kela-dimdime" onExit={() => undefined} />);

@@ -253,7 +253,7 @@ export function SegmentedChoice<T extends string>({
       {options.map((o) => (
         <label key={o.value} className={`seg-btn${o.value === value ? ' is-active' : ''}`}>
           <input type="radio" name={name} value={o.value} checked={o.value === value} onChange={() => onChange(o.value)} />
-          <span>{o.label}</span>
+          <span className="seg-btn-label">{o.label}</span>
         </label>
       ))}
     </fieldset>

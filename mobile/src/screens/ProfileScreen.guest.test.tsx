@@ -46,7 +46,8 @@ describe('the Profile tab for a guest', () => {
         <ProfileScreen />
       </UnreadProvider>,
     );
-    expect(screen.getByRole('heading', { name: 'mevan_4821' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Profile' })).toBeTruthy();
+    expect(screen.getByText('mevan_4821')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'You’re learning as a guest' })).toBeTruthy();
     expect(screen.getByText('Keep your progress on every device')).toBeTruthy();
     expect(screen.getByText('Your own profile and name')).toBeTruthy();

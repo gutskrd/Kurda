@@ -430,7 +430,7 @@ describe('Shop', () => {
     const tag = (await screen.findByText('Kurdish Tag')).closest('figure')!;
     await userEvent.click(within(tag).getByRole('button', { name: 'Buy' }));
     await userEvent.click(within(await screen.findByRole('dialog', { name: 'Buy Kurdish Tag?' })).getByRole('button', { name: 'Buy' }));
-    expect(await screen.findByText('Kurdish Tag is yours. You’ll find it under Tags & badges in Edit profile.')).toBeInTheDocument();
+    expect(await screen.findByText('Kurdish Tag is yours. You’ll find it under Tags in Edit profile.')).toBeInTheDocument();
     expect(calls.find((c) => c.url.includes('/shop/purchase'))?.body).toMatchObject({ sku: 'tag_kurdish', expectedPrice: 500 });
   });
 
@@ -531,15 +531,15 @@ describe('Shop: your bird and your tree', () => {
    */
   function signedInShop(routes: Record<string, unknown>, { zer = 1200 }: { zer?: number } = {}) {
     localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
-    const calls: Array<{ method: string; path: string; body: unknown }> = [];
+    const calls: Array<{ method: string; path: string; search: string; body: unknown }> = [];
     const asked: Record<string, number> = {};
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string, init?: RequestInit) => {
-        const path = new URL(url, 'http://x').pathname;
+        const { pathname: path, search } = new URL(url, 'http://x');
         const method = init?.method ?? 'GET';
         const body = init?.body ? JSON.parse(String(init.body)) : undefined;
-        calls.push({ method, path, body });
+        calls.push({ method, path, search, body });
         const key = `${method} ${path}`;
         if (key === 'GET /me') return jsonResponse(200, { user: { id: 'u1', username: 'rojda', displayName: 'Rojda', locale: 'en' } });
         if (key === 'GET /shop') return jsonResponse(200, { items: CATALOGUE });
@@ -567,9 +567,11 @@ describe('Shop: your bird and your tree', () => {
 
   describe('the bird', () => {
     it('shows the eight birds as one group of radio buttons, the one that is yours ticked and said to be yours', async () => {
-      signedInShop({ 'GET /letters': ok(letters()) });
+      const calls = signedInShop({ 'GET /letters': ok(letters()) });
       renderApp(<Shop />, ['/app/shop']);
       expect(await screen.findByRole('heading', { name: 'Your pen pal bird' })).toBeInTheDocument();
+      // read as the window reads it, so looking at the shop never lands a letter the window has not shown
+      expect(calls.filter((c) => c.path === '/letters').map((c) => c.search)).toEqual(['?landings=1']);
       const group = screen.getByRole('radiogroup', { name: 'Choose a new bird' });
       expect(within(group).getAllByRole('radio')).toHaveLength(8);
       expect(within(group).getByRole('radio', { name: 'Pink bird, your bird now' })).toBeChecked();

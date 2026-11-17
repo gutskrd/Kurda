@@ -113,8 +113,11 @@ export {
   gameEmblemLayers,
   gameEmblemLoopMs,
   gameEmblemSvg,
+  gameEmblemHue,
   gameEmblemTone,
   isGameEmblem,
+  PLAY_GAME_EMBLEM,
+  playGameHue,
   type GameArtOptions,
   type GameEmblem,
   type GameEmblemLayer,
@@ -122,6 +125,27 @@ export {
 } from './games.js';
 export { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailArtOptions, type EmailPicture } from './email.js';
 export { TICKET_ART_BOX, TICKET_ART_OUTLINE, TICKET_ART_PERFORATION, TICKET_ART_STUB, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
+export {
+  STAMP_GLOW,
+  STAMP_GLOW_REACH,
+  STAMP_MEANING_INK,
+  STAMP_NIGHT_GLOW,
+  STAMP_NIGHT_REACH,
+  STAMP_SHAPE,
+  STAMP_SHELF_GLOW,
+  stampBox,
+  stampGlow,
+  stampLook,
+  stampOutline,
+  stampPerforations,
+  stampShapeFor,
+  stampSize,
+  stampSvg,
+  type StampLook,
+  type StampOptions,
+  type StampShape,
+} from './stamp.js';
+export { SHARE_CARD, SHARE_CARD_KINDS, isShareCardKind, shareCardSvg, type ShareCardKind, type ShareCardOptions } from './share-card.js';
 export {
   CHEST_BOX,
   CHEST_FOOT,
@@ -177,3 +201,28 @@ export {
 } from './path-land.js';
 export { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg, type PathLandmarkOptions, type PathLoop, type PathLoopKind, type PathLoopOptions } from './path-landmark.js';
 export { WORD_PICTURES, WORD_PICTURE_IDS, wordPictureSvg, type WordPictureId, type WordPictureOptions } from './word-pictures.js';
+export {
+  BOOK_APPLE_BITES,
+  BOOK_BACKDROP,
+  BOOK_PAINTS,
+  BOOK_POSES,
+  BOOK_SETTINGS,
+  BOOK_SPOTS,
+  bookAppleSvg,
+  bookBackdropSvg,
+  bookCastSvg,
+  bookPaintSvg,
+  bookPostmarkSvg,
+  bookRidgeAt,
+  bookSkyMarks,
+  bookSpotSvg,
+  type BookArtOptions,
+  type BookCastOptions,
+  type BookOrb,
+  type BookPaint,
+  type BookPose,
+  type BookSetting,
+  type BookSkyBox,
+  type BookSkyMark,
+  type BookSpot,
+} from './book.js';

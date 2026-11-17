@@ -18,8 +18,8 @@ function over(fill: string, behind: string): Rgb {
 }
 
 /**
- * WCAG AA contrast audit for the app palette (KUR-266). The monochrome scheme
- * must stay readable in both modes: body text hits AA (4.5:1) on the app
+ * WCAG AA contrast audit for the app palette (KUR-266). The palette must stay
+ * readable in both modes: body text hits AA (4.5:1) on the app
  * background and on primary buttons; secondary/muted text and the brand colour
  * (used mostly for large headings) hit at least AA large-text (3:1). Text sits
  * on translucent glass cards over the gradient, but the raw background is the
@@ -30,7 +30,7 @@ for (const p of [LIGHT, DARK]) {
     /*
      * A switch must be seen, on or off, wherever it is (WCAG 1.4.11): its
      * track against the page, a card and a raised surface, and its knob
-     * against its track. Ink, not green: green is for a right answer.
+     * against its track. Violet, not green: green is for a right answer.
      */
     it('a switch’s track and knob clear 3:1, on and off, on every surface', () => {
       for (const surface of [p.background, p.surface, p.surfaceRaised]) {
@@ -118,30 +118,37 @@ for (const p of [LIGHT, DARK]) {
     });
 
     /*
-     * The unread dot and the count on a tab are drawn in the gold that text
-     * uses — the fill gold is too pale to see on the light page — and the
-     * number on them in the colour a primary button's label is.
+     * The unread dot and the count on a tab are drawn in the app's violet, as
+     * everything that asks to be acted on is, and the number on them in the
+     * colour a primary button's label is.
      */
     it('the unread badge stands out from the page (3:1) and its count is legible (4.5:1)', () => {
-      expect(contrastRatio(p.goldText, p.background)).toBeGreaterThanOrEqual(AA_LARGE);
-      expect(contrastRatio(p.goldText, over(p.barFill, p.background))).toBeGreaterThanOrEqual(AA_LARGE);
-      expect(contrastRatio(p.textOnPrimary, p.goldText)).toBeGreaterThanOrEqual(AA_NORMAL);
+      expect(contrastRatio(p.primary, p.background)).toBeGreaterThanOrEqual(AA_LARGE);
+      expect(contrastRatio(p.primary, over(p.barFill, p.background))).toBeGreaterThanOrEqual(AA_LARGE);
+      expect(contrastRatio(p.textOnPrimary, p.primary)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
   });
 }
 
 describe('palette — the values the design settled on', () => {
-  it('keeps the dark page and its raised surfaces near-black', () => {
-    expect(DARK.background).toBe('#0B0D10');
-    expect(DARK.surface).toBe('#14171C');
-    expect(DARK.surfaceRaised).toBe('#1B1F26');
+  it('keeps the dark page and its raised surfaces the ink taken almost to black', () => {
+    expect(DARK.background).toBe('#100E1D');
+    expect(DARK.surface).toBe('#1B192B');
+    expect(DARK.surfaceRaised).toBe('#27243A');
     expect(DARK.gold).toBe('#F0C24A');
   });
 
-  it('keeps the light page near-white, with white surfaces and a darker gold for words', () => {
-    expect(LIGHT.background).toBe('#F6F6F5');
+  it('keeps the light page a white with a breath of violet, with white surfaces and a darker gold for words', () => {
+    expect(LIGHT.background).toBe('#F6F4FD');
     expect(LIGHT.surface).toBe('#FFFFFF');
     expect(LIGHT.goldText).toBe('#8A6400');
     expect(LIGHT.gold).toBe('#EBA905');
+  });
+
+  it('keeps the brand the icon’s violet, deep by day and lifted by night, and writes in indigo ink', () => {
+    expect(LIGHT.primary).toBe('#862BE2');
+    expect(DARK.primary).toBe('#BF9BFE');
+    expect(LIGHT.textPrimary).toBe('#14112E');
+    expect(DARK.textOnPrimary).toBe(LIGHT.textPrimary);
   });
 });

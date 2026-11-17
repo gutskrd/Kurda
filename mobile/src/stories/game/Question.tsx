@@ -30,15 +30,16 @@ export const OPTION_MIN_HEIGHT = 60;
 
 /**
  * Where the game is, under its "Question 2 of 5": one short line per
- * question, the ones behind and the one on screen in gold. Hidden from screen
- * readers, which hear the words above it.
+ * question, the ones behind and the one on screen in the violet that marks
+ * where you are (gold is for what is earned). Hidden from screen readers,
+ * which hear the words above it.
  */
 export function QuestionSteps({ index, total }: { index: number; total: number }): React.JSX.Element {
   const { colors } = useTheme();
   return (
     <View style={styles.steps} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="question-steps">
       {Array.from({ length: total }, (_, i) => (
-        <View key={i} style={[styles.step, { backgroundColor: i <= index ? colors.gold : colors.controlTrack }]} />
+        <View key={i} style={[styles.step, { backgroundColor: i <= index ? colors.primary : colors.controlTrack }]} />
       ))}
     </View>
   );
@@ -244,7 +245,8 @@ export function Question({
 
       {status ? (
         <View style={styles.statusRow}>
-          {locked ? <Icon name="check" size={16} color={colors.success} /> : null}
+          {/* sent, not yet judged: violet, so no tick says "right" before the reveal does */}
+          {locked ? <Icon name="check" size={16} color={colors.primary} /> : null}
           <Text style={[styles.status, { color: colors.textPrimary }]}>{status}</Text>
         </View>
       ) : null}

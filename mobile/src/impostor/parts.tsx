@@ -80,13 +80,17 @@ export function GoldButton({
   );
 }
 
-/** A step of a setup: its number in gold, and what it asks. */
+/**
+ * A step of a setup: its number on a disc of the page's ink, and what it asks.
+ * The setup is laid out on the app's own cards, off the table, where gold is
+ * kept for what is earned; the disc was gold.
+ */
 export function StepTitle({ n, children }: { n: number; children: string }): React.JSX.Element {
   const { colors } = useTheme();
   return (
     <View style={styles.step}>
-      <View style={styles.stepN} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Text style={styles.stepNText}>{n}</Text>
+      <View style={[styles.stepN, { backgroundColor: colors.textPrimary }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <Text style={[styles.stepNText, { color: colors.background }]}>{n}</Text>
       </View>
       <Text accessibilityRole="header" style={[styles.stepText, { color: colors.textPrimary }]}>
         {children}
@@ -260,8 +264,8 @@ const styles = StyleSheet.create({
   goldDown: { transform: [{ translateY: 3 }] },
   goldText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: TABLE.goldInk },
   step: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  stepN: { width: 28, height: 28, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: TABLE.gold },
-  stepNText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: TABLE.goldInk },
+  stepN: { width: 28, height: 28, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  stepNText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   stepText: { flex: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   tick: { width: 24, height: 24, borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   tickSmall: { width: 18, height: 18, borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },

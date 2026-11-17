@@ -209,7 +209,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
     expect(ok.body.outcome).toEqual({ accepted: true, reason: null, strikes: 0, out: false });
     expect(ok.body.view.board.required).toBe('r');
     // the word's short gloss from its curated entry, as the dictionary has it
-    expect(ok.body.view.board.chain).toEqual([{ n: 1, seat: expect.any(Number), word: 'qaxar', meaning: 'test word' }]);
+    expect(ok.body.view.board.chain).toEqual([{ n: 1, seat: expect.any(Number), word: 'qaxar', meaning: 'test word', meanings: { en: 'test word' } }]);
 
     // the second player's slip: a made-up word beginning with the right letter
     const bad = await word(second, id, 'rzzzt');

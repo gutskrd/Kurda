@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { UnseenBadge } from '@kurda/shared';
@@ -129,5 +129,52 @@ describe('BadgeCelebrations', () => {
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url.includes('/me/badges/unseen'))).toBe(true));
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});
+
+/*
+ * Under the way on, a quiet Share: the badge by its name and the site's
+ * address, and nothing of who earned it.
+ */
+describe('sharing a badge', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('offers one quiet Share under the way on, which stays the dialog’s main button', async () => {
+    mount([unseen('agir', 2)]);
+    const dialog = await screen.findByRole('dialog', { name: 'Agir (Fire)' });
+    const onward = within(dialog).getByRole('button', { name: en['rankResult.continue'] });
+    const share = within(dialog).getByRole('button', { name: 'Share' });
+    expect(onward).toHaveClass('btn-primary');
+    expect(share).toHaveClass('btn-secondary');
+    // after the way on, in the order they are read and reached
+    expect(onward.compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(dialog).getAllByRole('button', { name: 'Share' })).toHaveLength(1);
+  });
+
+  it('shares the badge by its name and the site’s address, and nothing of who earned it', async () => {
+    const share = vi.fn(async (_data: ShareData) => undefined);
+    const { fetchMock } = mount([unseen('agir', 2)]);
+    vi.stubGlobal('navigator', { ...navigator, share, clipboard: navigator.clipboard });
+    const dialog = await screen.findByRole('dialog', { name: 'Agir (Fire)' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Share' }));
+
+    expect(share).toHaveBeenCalledTimes(1);
+    const text = (share.mock.calls[0]![0] as ShareData).text!;
+    expect(text).toBe(`I earned the “Agir” badge on Hevalo. 🏅\n${window.location.origin}/win/badge`);
+    // the account is "rojda" (id "me"): neither is in it, nor a page about them
+    for (const theirs of ['rojda', '/users/', '/profile', '@']) expect(text).not.toContain(theirs);
+
+    // sharing is not the way on: the badge is still there, and not yet marked seen
+    expect(screen.getByRole('dialog', { name: 'Agir (Fire)' })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => url.includes('/me/badges/seen'))).toBe(false);
+  });
+
+  it('shares a secret badge by the name it has once it is found', async () => {
+    const share = vi.fn(async (_data: ShareData) => undefined);
+    mount([unseen('kewe-ciye', 1, { family: 'secret', secret: true, tierKey: 'zer' })]);
+    vi.stubGlobal('navigator', { ...navigator, share, clipboard: navigator.clipboard });
+    const dialog = await screen.findByRole('dialog', { name: 'Kewê çiyê (Mountain partridge)' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Share' }));
+    expect((share.mock.calls[0]![0] as ShareData).text).toBe(`I earned the “Kewê çiyê” badge on Hevalo. 🏅\n${window.location.origin}/win/badge`);
   });
 });

@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react
 import { Alert } from 'react-native';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { forgetReach, reachOf } from '../testing/reach';
 import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from '../play/testing/navigation';
 import { groupLimits } from '@kurda/shared';
@@ -19,6 +20,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 // the pull to refresh as a button: the web's control has nothing to pull
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 vi.mock('expo-image-picker', () => ({ launchImageLibraryAsync: vi.fn(async () => ({ canceled: true, assets: [] })) }));
@@ -28,9 +30,13 @@ type Button = { text: string; style?: string; onPress?: () => void };
 
 afterEach(() => {
   cleanup();
+  forgetReach();
   navigation.navigate.mockClear();
   vi.restoreAllMocks();
 });
+
+/** A fingertip past every edge: what a control with nothing close to it answers over. */
+const OPEN = { top: 8, bottom: 8, left: 8, right: 8 };
 
 describe('starting a group', () => {
   const sheet = (limit = groupLimits([]).create, onCreated = vi.fn(), onClose = vi.fn()) => {
@@ -113,6 +119,13 @@ describe('adding friends to a group', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('answers a finger a little off Add, alone at the end of its row', async () => {
+    testAuth.client = fakeClient({ 'GET /friends?limit=500': ok({ friends }) });
+    sheet();
+    await screen.findByRole('button', { name: 'Add roj' });
+    expect(reachOf('Add roj')).toEqual(OPEN);
+  });
+
   it('tells someone with no friends yet so in a sentence, with one button to find people', async () => {
     testAuth.client = fakeClient({ 'GET /friends?limit=500': ok({ friends: [] }) });
     const { onFindPeople } = sheet();
@@ -189,6 +202,15 @@ describe('a group’s own page', () => {
     expect(screen.getByText('Owner')).toBeTruthy();
     expect(screen.getByText('Admin')).toBeTruthy();
     expect(screen.getByText('rojda · You')).toBeTruthy();
+  });
+
+  it('answers a finger a little off a member’s ⋯, inside the row, rather than opening their profile', async () => {
+    testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
+    testAuth.client = fakeClient({ 'GET /groups/g1': detail('moderator') });
+    renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={() => undefined} onEdit={() => undefined} />);
+    await screen.findByText('berfin');
+    // drawn 44 and centred in a row at least 60 tall, so 8 past each edge stays inside it
+    expect(reachOf('Post options')).toEqual(OPEN);
   });
 
   it('offers each person only what you may do about them', async () => {
@@ -313,6 +335,15 @@ describe('editing a group', () => {
     expect(await screen.findByText('Some of those words aren’t allowed here. Try different ones.')).toBeTruthy();
   });
 
+  it('answers a finger a little off Save and the photo’s link, clear of the picture above it', async () => {
+    testAuth.client = fakeClient({ 'GET /groups/g1': detail('owner') });
+    renderWithProviders(<GroupEditScreen groupId="g1" onExit={() => undefined} />);
+    await screen.findByLabelText('Name');
+    expect(reachOf('group-save')).toEqual(OPEN);
+    // drawn 32 tall round its line and reached to 48; the 12 under the picture leaves the camera badge's 4 alone
+    expect(reachOf('group-photo-link')).toEqual({ top: 8, bottom: 8, left: 0, right: 0 });
+  });
+
   it('closes once saved', async () => {
     testAuth.client = fakeClient({ 'GET /groups/g1': detail('moderator'), 'PATCH /groups/g1': ok({ name: 'Hevalên Kurmancî', description: 'Nû' }) });
     const onExit = vi.fn();
@@ -322,5 +353,26 @@ describe('editing a group', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     });
     await waitFor(() => expect(onExit).toHaveBeenCalled());
+  });
+});
+
+describe('a group’s pages that could not be read', () => {
+  const down = fail({ kind: 'server', status: 500, message: 'down' });
+
+  it('says so on the group’s own page, with the way to ask again', async () => {
+    testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
+    let reads = 0;
+    testAuth.client = fakeClient({ 'GET /groups/g1': () => (reads++ === 0 ? down : detail('member')) });
+    renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={() => undefined} onEdit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('heading', { name: 'Hevalên Kurmancî' })).toBeTruthy();
+  });
+
+  it('says so on the edit page, with the way to ask again, and keeps nothing to save meanwhile', async () => {
+    let reads = 0;
+    testAuth.client = fakeClient({ 'GET /groups/g1': () => (reads++ === 0 ? down : detail('owner')) });
+    renderWithProviders(<GroupEditScreen groupId="g1" onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(await screen.findByLabelText('Name')).toBeTruthy();
   });
 });

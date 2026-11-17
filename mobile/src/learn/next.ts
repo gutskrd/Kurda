@@ -32,7 +32,10 @@ export type NextStep =
  * offers review beside it — so it does not take the card from the lesson the
  * learner is in the middle of. When nothing anywhere is finished, the card
  * says "Start your first lesson" rather than "Continue", which would be a
- * small lie to somebody on their first day.
+ * small lie to somebody on their first day. One lesson finished is enough to
+ * have begun: a skill is four lessons long, and "Start your first lesson"
+ * over the second, third and fourth of them was the same lie the other way,
+ * with the path's own bubble saying "Continue" under it.
  *
  * `done` and `total` count the skills of the course the step is in, so the bar
  * under it shows how far that course has come (and never resets to zero
@@ -44,7 +47,11 @@ export function nextStep(courses: readonly CourseEntry[]): NextStep | null {
   const id = firstCourse(courses);
   const entry = loaded.find((c) => c.course.id === id) ?? loaded[0]!;
   const path = lessonPath(entry.map);
-  const anyFinished = loaded.some((c) => lessonPath(c.map).done > 0);
+  // a skill finished, or a lesson of one still open
+  const anyFinished = loaded.some((c) => {
+    const p = lessonPath(c.map);
+    return p.done > 0 || p.units.some((u) => u.stops.some(({ stop }) => stop.kind === 'skill' && stop.lessonsDone > 0));
+  });
   const counts = { done: path.done, total: path.total };
 
   for (const unit of path.units) {

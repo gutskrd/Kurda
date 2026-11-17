@@ -50,39 +50,47 @@ export function PartyStart({
   if (offer === null) return <Loading style={styles.loading} />;
   if (offer.length === 0) {
     return (
-      <GlassCard style={styles.card}>
-        <Icon name={icon} size={40} tone="primary" />
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t(notOfferedKey)}</Text>
+      <GlassCard>
+        <View style={styles.card}>
+          <Icon name={icon} size={40} tone="primary" />
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t(notOfferedKey)}</Text>
+        </View>
       </GlassCard>
     );
   }
   return (
     <>
-      <GlassCard style={styles.card}>
-        <Icon name={icon} size={40} tone="primary" />
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t(introKey)}</Text>
-      </GlassCard>
-      <GlassCard style={styles.card}>
-        <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
-          {t('games.party.howTitle')}
-        </Text>
-        <View style={styles.steps}>
-          {steps.map((key, i) => (
-            <View key={key} style={styles.step}>
-              <View style={[styles.stepN, { backgroundColor: colors.gold }]}>
-                <Text style={[styles.stepNText, { color: colors.textOnGold }]}>{i + 1}</Text>
-              </View>
-              <Text style={[styles.stepText, { color: colors.textPrimary }]}>{t(key)}</Text>
-            </View>
-          ))}
+      <GlassCard>
+        <View style={styles.card}>
+          <Icon name={icon} size={40} tone="primary" />
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t(introKey)}</Text>
         </View>
       </GlassCard>
-      <GlassCard style={styles.card}>
-        <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
-          {t('games.party.withFriends')}
-        </Text>
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t(blurbKey)}</Text>
-        <ClayButton label={t('games.party.withFriends')} icon="people" tone="primary" onPress={() => setInviting(true)} style={styles.stretch} />
+      <GlassCard>
+        <View style={styles.card}>
+          <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
+            {t('games.party.howTitle')}
+          </Text>
+          <View style={styles.steps}>
+            {steps.map((key, i) => (
+              <View key={key} style={styles.step}>
+                <View style={[styles.stepN, { backgroundColor: colors.gold }]}>
+                  <Text style={[styles.stepNText, { color: colors.textOnGold }]}>{i + 1}</Text>
+                </View>
+                <Text style={[styles.stepText, { color: colors.textPrimary }]}>{t(key)}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </GlassCard>
+      <GlassCard>
+        <View style={styles.card}>
+          <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
+            {t('games.party.withFriends')}
+          </Text>
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t(blurbKey)}</Text>
+          <ClayButton label={t('games.party.withFriends')} icon="people" tone="primary" onPress={() => setInviting(true)} style={styles.stretch} />
+        </View>
       </GlassCard>
       {/* a game somebody else made: its code opens it, whichever game it turns out to be */}
       <JoinCodeCard />
@@ -92,6 +100,7 @@ export function PartyStart({
 }
 
 const styles = StyleSheet.create({
+  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   loading: { marginTop: spacing.xl },

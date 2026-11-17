@@ -172,4 +172,57 @@ describe('RhymeMatch', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Join next round' }));
     expect(joined).toBe(true);
   });
+
+  it('lists under the results the rhymes nobody found, each with its meaning', async () => {
+    const finished = { ...active, status: 'finished', prompt: 'baran' };
+    const results = {
+      id: 'rm1',
+      prompt: 'baran',
+      dialect: 'kurmanci',
+      ranking: [
+        { userId: 'me', seat: 1, name: null, avatarUrl: null, isMe: true, rank: 1, score: 10, accepted: 1, xpAwarded: 20, usedWords: ['jiyan'] },
+        { userId: 'seat:2', seat: 2, name: 'Rojda', avatarUrl: null, isMe: false, rank: 2, score: 0, accepted: 0, xpAwarded: 5, usedWords: [] },
+      ],
+      missed: [{ word: 'nan', meanings: { en: 'bread' } }, { word: 'ziman', meanings: {} }],
+    };
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/rhyme/matches/rm1/results')) return jsonResponse(200, results);
+        if (url.includes('/rhyme/matches/rm1')) return jsonResponse(200, finished);
+        if (url.includes('/me')) return jsonResponse(200, me);
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<RhymeMatch />, ['/app/games/rhyme-match?id=rm1']);
+
+    const list = await screen.findByRole('region', { name: 'Rhymes you missed' });
+    expect(within(list).getByText('nan')).toBeInTheDocument();
+    expect(within(list).getByText('bread')).toBeInTheDocument();
+    expect(within(list).getByText('ziman')).toBeInTheDocument();
+    // after the table's own results, not in place of them
+    expect(screen.getByText('The prompt was baran.').compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('turns away a word whose ending does all the rhyming, in general words', async () => {
+    // malan is mal with an ending: only the ending rhymes with baran
+    const baran = { ...active, prompt: 'baran' };
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/rhyme/matches/rm1/submissions') && init?.method === 'POST') {
+          return jsonResponse(200, { match: baran, result: { accepted: false, quality: 'none', points: 0, normalized: 'malan', reason: 'inflected' } });
+        }
+        if (url.includes('/rhyme/matches/rm1')) return jsonResponse(200, baran);
+        if (url.includes('/me')) return jsonResponse(200, me);
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<RhymeMatch />, ['/app/games/rhyme-match?id=rm1']);
+    await userEvent.type(await screen.findByLabelText('Your rhyme'), 'malan');
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
+    expect(await screen.findByText('Not accepted — try another.')).toBeInTheDocument();
+  });
 });

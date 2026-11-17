@@ -1,18 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { Pressable } from '../theme/Pressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
-import { spacing, radii, typography } from '../theme/tokens';
+import { spacing, typography } from '../theme/tokens';
 import { sectionLabel, display } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -32,10 +30,11 @@ import {
   typeLetter,
   type Feedback,
 } from './board';
-import { buildShareText } from './share';
+import { shareOut } from '../share/ShareWin';
+import { wordGameShare } from '../share/winText';
 import { WordleBoard, cellSizeFor, turnMs } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
-import type { SearchResult } from '../dictionary/types';
+import { WordAnswer, type WordCard } from './WordAnswer';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
@@ -43,7 +42,7 @@ import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
 import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
-import { heldDim } from '../theme/MotionParts';
+import { useDirection } from '../reports/direction';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -64,6 +63,12 @@ interface WordleGameView {
   keyboard: Record<string, Feedback>;
   remainingAttempts: number;
   target: string | null;
+  /**
+   * Once the game is finished: the answer's card, with its meanings in every
+   * language a word card gives and the dictionary entry to save it as. Null
+   * while it is played.
+   */
+  word?: WordCard | null;
 }
 
 interface WordleStats {
@@ -78,14 +83,6 @@ interface WordleStats {
   averageGuesses: number;
 }
 
-interface EduEntry {
-  entryId: string;
-  headword: string;
-  pos: string | null;
-  /** whichever definition the word has; most of the lexicon has only the Kurdish one */
-  definition: string | null;
-}
-
 const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
 
 const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
@@ -98,9 +95,22 @@ const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
  * Kurdish Peyvok (KUR-305). Server-authoritative: the screen never holds the
  * answer — it posts guesses to #304 and renders the scored feedback. Board and
  * keyboard are derived from the returned state (pure `board.ts`); the keyboard
- * carries upgrade-only colour memory. Win/lose reveals the word with an
- * educational card (dictionary #45) and a save-to-vocabulary action (#47), plus
- * a spoiler-safe share grid.
+ * carries upgrade-only colour memory. Win/lose reveals the word with what it
+ * means in the reader's language and Save to vocabulary (WordAnswer.tsx), plus
+ * a spoiler-safe share grid: the squares of the guesses with the score over
+ * them and the site's address under them, built by the shared builder so the
+ * website's game shares the same thing.
+ *
+ * The meaning comes with the finished game, from the word card for exactly
+ * this word. It used to be looked up in the dictionary afterwards, and when
+ * the search had no entry spelt exactly so, the first hit was shown instead:
+ * another word's meaning under the answer. Saving goes by the game for the
+ * same reason, so the server saves the word the game was about and counts it
+ * once toward the words learned.
+ *
+ * Each difficulty has a daily word of its own, so the difficulty can be
+ * changed on the result as well as at the start: the next daily or practice
+ * word is at the difficulty chosen there.
  *
  * Peyvok is played alone, so it earns no XP, daily or practice: XP is for
  * lessons, stories and games played online with other people. The result says
@@ -120,8 +130,12 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const [starting, setStarting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [stats, setStats] = useState<WordleStats | null>(null);
-  const [edu, setEdu] = useState<EduEntry | null>(null);
-  const [savedWord, setSavedWord] = useState(false);
+  // Save to vocabulary on the finished game's word: on its way, and why it did not land
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  // Only the game asked for last may land: a slow answer for the one asked before (another difficulty's daily,
+  // or a practice word) would otherwise put its board over the one pressed after it.
+  const asked = useRef(0);
   // the word was found by the guess just made, on this screen: the one time the result celebrates
   const [wonNow, setWonNow] = useState(false);
 
@@ -136,42 +150,25 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
 
   const start = async (mode: 'daily' | 'practice') => {
+    const ask = ++asked.current;
     // the rating box, if it came, belonged to the board this replaces
     leftResults();
     haptic('tap');
     setStarting(true);
     setNote(null);
     setDraft([]);
-    setEdu(null);
-    setSavedWord(false);
+    setSaving(false);
+    setSaveError(null);
     setWonNow(false);
     const res = await client.post<WordleGameView>(`/wordle/${mode}`, { difficulty });
+    if (ask !== asked.current) return;
     setStarting(false);
     if (res.ok) {
       setGame(res.data);
-      if (res.data.status !== 'playing') void fetchEducation(res.data.target);
     } else {
-      setNote(describeError(res.error, t));
+      setNote(res.error.code === 'EMPTY_POOL' ? t('games.emptyPool') : describeError(res.error, t));
     }
   };
-
-  const fetchEducation = useCallback(
-    async (target: string | null) => {
-      if (!target) return;
-      const res = await client.get<SearchResult>(`/dictionary/search?q=${encodeURIComponent(target)}`);
-      if (!res.ok) return;
-      const hit =
-        res.data.results.find((r) => r.headword.toLowerCase() === target.toLowerCase()) ?? res.data.results[0];
-      if (hit)
-        setEdu({
-          entryId: hit.entryId,
-          headword: hit.headword,
-          pos: hit.pos,
-          definition: hit.definitionEn ?? hit.definitionKu,
-        });
-    },
-    [client],
-  );
 
   const submit = useCallback(async () => {
     if (!game || game.status !== 'playing' || submitting) return;
@@ -192,7 +189,6 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
         if (res.data.status === 'won') setWonNow(true);
         else haptic('wrong');
         loadStats();
-        void fetchEducation(res.data.target);
         // this guess ended it — a daily reopened after it was played is not a finish
         reportGameFinished({ moment: res.data.status === 'won' ? 'won' : 'other' });
       }
@@ -208,7 +204,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       );
       shake.run();
     }
-  }, [client, game, draft, submitting, loadStats, fetchEducation, t]);
+  }, [client, game, draft, submitting, loadStats, t]);
 
   const onKey = useCallback(
     (key: string) => {
@@ -226,27 +222,30 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     [game, submit],
   );
 
-  const saveToVocab = () => {
-    if (!edu || savedWord) return;
-    setSavedWord(true); // optimistic
-    void client.put(`/dictionary/entries/${edu.entryId}/save`).then((res) => {
-      if (res.ok) return;
-      // not saved after all — a full vocabulary says so (limits/limitCopy.ts)
-      setSavedWord(false);
-      setNote(describeError(res.error, t));
-    });
+  /**
+   * The finished game's word into the player's vocabulary, by the game rather than by the entry: the server saves
+   * exactly the word the game was about, and counts it once toward the words learned however often it is pressed.
+   */
+  const saveWord = async () => {
+    const id = game?.id;
+    if (!id || !game.word?.entryId || game.word.saved || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    const res = await client.post<{ saved: boolean }>(`/wordle/games/${id}/save`);
+    setSaving(false);
+    if (res.ok) {
+      haptic('tap');
+      setGame((g) => (g && g.id === id && g.word ? { ...g, word: { ...g.word, saved: true } } : g));
+    } else {
+      // a full vocabulary (limits/limitCopy.ts), or the network: said under the button, which stays to try again
+      setSaveError(describeError(res.error, t));
+    }
   };
 
+  // the result as the grid of squares, with the score over it and the site's address under it: the same message the website sends (share/winText.ts)
   const shareResult = () => {
     if (!game || game.status === 'playing') return;
-    const text = buildShareText({
-      rows: game.guesses.map((g) => g.feedback),
-      solved: game.status === 'won',
-      maxAttempts: MAX_ATTEMPTS,
-      mode: game.mode,
-      difficulty: game.difficulty,
-    });
-    void Share.share({ message: text }).catch(() => undefined);
+    shareOut(wordGameShare(game, { practice: t('games.wordle.practice'), difficulty: t(DIFFICULTY_KEY[game.difficulty]) }));
   };
 
   // ---- render ----------------------------------------------------------------
@@ -299,9 +298,13 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                 game={game}
                 // once the last row has turned over, so the two do not play over each other
                 celebrateAfterMs={wonNow ? turnMs(game.targetLength, reduce) : null}
-                edu={edu}
-                savedWord={savedWord}
-                onSave={saveToVocab}
+                save={
+                  game.word?.entryId
+                    ? { saved: game.word.saved, busy: saving, onSave: () => void saveWord(), error: saveError }
+                    : undefined
+                }
+                difficulty={difficulty}
+                onDifficulty={setDifficulty}
                 onShare={shareResult}
                 onDaily={() => start('daily')}
                 onPractice={() => start('practice')}
@@ -325,13 +328,16 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   );
 }
 
-/** Win/lose result: reveal, the note that a game alone earns no XP, educational card + save, share, play again. */
+/**
+ * Win/lose result: the verdict, the note that a game alone earns no XP, the word with its meaning and Save, then the
+ * next word at the difficulty chosen here, the day's word and share.
+ */
 function ResultPanel({
   game,
   celebrateAfterMs,
-  edu,
-  savedWord,
-  onSave,
+  save,
+  difficulty,
+  onDifficulty,
   onShare,
   onDaily,
   onPractice,
@@ -340,9 +346,11 @@ function ResultPanel({
   game: WordleGameView;
   /** the word was found just now: its moment plays, this long after the panel appears; null for a result that is only shown */
   celebrateAfterMs: number | null;
-  edu: EduEntry | null;
-  savedWord: boolean;
-  onSave: () => void;
+  /** Save to vocabulary, when the dictionary has the word to save it as */
+  save: React.ComponentProps<typeof WordAnswer>['save'];
+  /** the difficulty the next word is played at: each one has a daily of its own */
+  difficulty: Difficulty;
+  onDifficulty: (d: Difficulty) => void;
   onShare: () => void;
   onDaily: () => void;
   onPractice: () => void;
@@ -350,81 +358,77 @@ function ResultPanel({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const won = game.status === 'won';
   return (
     <View style={styles.result}>
-      <GlassCard style={styles.resultCard}>
-        {/* the line used to open with a party popper; the spark is the app's own, in the colour of a right answer */}
-        {won ? (
-          celebrateAfterMs !== null ? (
-            <WinMoment delayMs={celebrateAfterMs} seed={game.guesses.length} />
+      <GlassCard>
+        <View style={styles.resultCard}>
+          {/* the line used to open with a party popper; the spark is the app's own, in the colour of a right answer */}
+          {won ? (
+            celebrateAfterMs !== null ? (
+              <WinMoment delayMs={celebrateAfterMs} seed={game.guesses.length} />
+            ) : (
+              <Icon name="sparkle" size={28} color={colors.success} style={styles.resultMark} />
+            )
+          ) : null}
+          <Text style={[styles.resultTitle, { color: won ? colors.success : colors.danger }]}>
+            {won ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
+          </Text>
+          {won ? (
+            <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
+              {t('games.wordle.solvedIn', { count: game.guesses.length, max: MAX_ATTEMPTS })}
+            </Text>
           ) : (
-            <Icon name="sparkle" size={28} color={colors.success} style={styles.resultMark} />
-          )
-        ) : null}
-        <Text style={[styles.resultTitle, { color: won ? colors.success : colors.danger }]}>
-          {won ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
-        </Text>
-        {won ? (
-          <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
-            {t('games.wordle.solvedIn', { count: game.guesses.length, max: MAX_ATTEMPTS })}
-          </Text>
-        ) : (
-          <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
-            {t('games.wordle.theWordWas')} <Text style={{ color: colors.textPrimary, fontWeight: typography.weights.bold }}>{(game.target ?? '').toUpperCase()}</Text>
-          </Text>
-        )}
-        <Text style={[styles.resultNote, { color: colors.textSecondary }]}>{t('games.noXpAlone')}</Text>
+            <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
+              {t('games.wordle.theWordWas')} <Text style={{ color: colors.textPrimary, fontWeight: typography.weights.bold }}>{(game.target ?? '').toUpperCase()}</Text>
+            </Text>
+          )}
+          <Text style={[styles.resultNote, { color: colors.textSecondary }]}>{t('games.noXpAlone')}</Text>
 
-        {edu ? (
-          <View style={[styles.edu, { backgroundColor: colors.controlTrack }]}>
-            <View style={styles.eduHead}>
-              <Icon name="text" size={18} color={colors.primary} />
-              <Text style={[styles.eduWord, { color: colors.textPrimary }]}>{edu.headword}</Text>
-              {edu.pos ? <Text style={[styles.eduPos, { color: colors.textSecondary }]}>{edu.pos}</Text> : null}
-            </View>
-            {edu.definition ? <Text style={[styles.eduDef, { color: colors.textSecondary }]}>{edu.definition}</Text> : null}
-            <Pressable
-              onPress={onSave}
-              accessibilityRole="button"
-              // one 20-point line, caught at a fingertip's 44
-              hitSlop={SAVE_SLOP}
-              style={({ pressed }) => [styles.saveRow, pressed && heldDim]}
-              disabled={savedWord}
-            >
-              <Icon name={savedWord ? 'check' : 'star'} size={16} color={colors.primary} />
-              <Text style={[styles.saveText, { color: colors.primary }]}>
-                {savedWord ? t('dictionary.savedWord') : t('dictionary.saveWord')}
-              </Text>
-            </Pressable>
+          {/* found or not, the word is the lesson: what it means, and a way to keep it */}
+          {game.target ? <WordAnswer word={game.target} meanings={game.word?.meanings} save={save} /> : null}
+
+          {/* the next word's difficulty, here as at the start: a daily of another difficulty is a word of its own */}
+          <View style={styles.nextDifficulty}>
+            <Segmented<Difficulty>
+              options={DIFFICULTIES}
+              value={difficulty}
+              onChange={onDifficulty}
+              labelOf={(d) => t(DIFFICULTY_KEY[d])}
+              groupLabel={t('games.difficulty')}
+            />
           </View>
-        ) : null}
 
-        <View style={styles.resultActions}>
-          <ClayButton label={t('share.title')} icon="share" tone="neutral" onPress={onShare} style={{ flex: 1 }} />
-          <GoldButton label={t('games.wordle.practice')} icon="bolt" onPress={onPractice} style={{ flex: 1 }} />
+          {/*
+            Another word is the one thing to press, and has the table's gold; the day's word and the share are the two quieter
+            ways on, side by side at one height. Share stood beside the gold button a third shorter than it.
+          */}
+          <GoldButton label={t('games.wordle.practice')} icon="bolt" onPress={onPractice} style={styles.again} />
+          <View style={[styles.resultActions, { flexDirection: dir.row }]}>
+            <ClayButton label={t('games.wordle.daily')} icon="star" tone="neutral" onPress={onDaily} style={styles.half} />
+            <ClayButton label={t('share.title')} icon="share" tone="neutral" onPress={onShare} style={styles.half} />
+          </View>
         </View>
-        <ClayButton label={t('games.wordle.daily')} icon="star" tone="neutral" onPress={onDaily} style={{ alignSelf: 'stretch', marginTop: spacing.sm }} />
       </GlassCard>
 
       {stats ? (
-        <GlassCard style={styles.statsCard}>
-          <Text style={[styles.statsTitle, { color: colors.textSecondary }]}>{t('games.wordle.statistics')}</Text>
-          <View style={styles.statsGrid}>
-            <Stat label={t('games.wordle.stat.played')} value={String(stats.played)} />
-            <Stat label={t('games.wordle.stat.winPct')} value={String(stats.winPercentage)} />
-            <Stat label={t('games.wordle.stat.streak')} value={String(stats.currentStreak)} />
-            <Stat label={t('games.wordle.stat.best')} value={String(stats.longestStreak)} />
-            <Stat label={t('games.wordle.stat.average')} value={stats.averageGuesses ? stats.averageGuesses.toFixed(1) : '—'} />
+        <GlassCard>
+          <View style={styles.statsCard}>
+            <Text style={[styles.statsTitle, { color: colors.textSecondary }]}>{t('games.wordle.statistics')}</Text>
+            <View style={[styles.statsGrid, { flexDirection: dir.row }]}>
+              <Stat label={t('games.wordle.stat.played')} value={String(stats.played)} />
+              <Stat label={t('games.wordle.stat.winPct')} value={String(stats.winPercentage)} />
+              <Stat label={t('games.wordle.stat.streak')} value={String(stats.currentStreak)} />
+              <Stat label={t('games.wordle.stat.best')} value={String(stats.longestStreak)} />
+              <Stat label={t('games.wordle.stat.average')} value={stats.averageGuesses ? stats.averageGuesses.toFixed(1) : '—'} />
+            </View>
           </View>
         </GlassCard>
       ) : null}
     </View>
   );
 }
-
-/** "Save word" is one 20-point line: this much above and below it makes a fingertip's 44. */
-const SAVE_SLOP = { top: 12, bottom: 12 };
 
 /** How big the spark's stage is: room for its ring to widen and its flecks to be thrown. */
 const WIN_STAGE = 96;
@@ -460,7 +464,8 @@ function Stat({ label, value }: { label: string; value: string }): React.JSX.Ele
   const { colors } = useTheme();
   return (
     <View style={styles.stat}>
-      <Text style={[styles.statValue, { color: colors.primary }]}>{value}</Text>
+      {/* a figure, not something to press: in the page's ink, where the violet said it could be tapped */}
+      <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
@@ -481,6 +486,7 @@ const styles = StyleSheet.create({
   startStats: { fontSize: typography.sizes.sm, textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   result: { gap: spacing.md, marginTop: spacing.md },
+  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
   resultCard: { gap: spacing.sm },
   resultMark: { alignSelf: 'center' },
   // the spark's own stage while it celebrates; the flecks may fly past its edges
@@ -488,18 +494,14 @@ const styles = StyleSheet.create({
   resultTitle: { ...display(typography.sizes.xl), textAlign: 'center' },
   resultLine: { fontSize: typography.sizes.md, textAlign: 'center' },
   resultNote: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },
-  edu: { borderRadius: radii.md, padding: spacing.md, gap: spacing.xs, marginTop: spacing.sm },
-  eduHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  eduWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  eduPos: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
-  eduDef: { fontSize: typography.sizes.md, lineHeight: 20 },
-  saveRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.xs },
-  saveText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  resultActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  nextDifficulty: { marginTop: spacing.sm },
+  again: { marginTop: spacing.sm },
+  resultActions: { gap: spacing.sm },
+  half: { flex: 1 },
   statsCard: { gap: spacing.sm },
   statsTitle: { ...sectionLabel },
   // five figures, three and two: spaced evenly, so the two under the three sit in the middle and not at the edges
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-evenly', rowGap: spacing.md },
+  statsGrid: { flexWrap: 'wrap', justifyContent: 'space-evenly', rowGap: spacing.md },
   stat: { width: '30%', alignItems: 'center' },
   statValue: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   statLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },

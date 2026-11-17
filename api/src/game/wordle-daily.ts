@@ -55,21 +55,44 @@ function seededShuffle<T>(items: readonly T[], seed: number): T[] {
   return arr;
 }
 
+/** A daily word is not set again within this many days, while the pool is big enough to allow it. */
+export const DAILY_REPEAT_DAYS = 180;
+
+/**
+ * How many days back a new daily word must not repeat: half a year, or one
+ * day less than the pool lasts when it is smaller than that (a pool of 120
+ * words can go 119 days without a repeat, and not 180).
+ */
+export function dailyRepeatWindow(poolSize: number): number {
+  return Math.max(0, Math.min(DAILY_REPEAT_DAYS, poolSize - 1));
+}
+
 /**
  * The daily word for a given UTC day + difficulty. Deterministic (so every
  * player gets the same word), and because it indexes a seeded permutation of
  * the pool by day, each word appears exactly once per `pool.length`-day cycle —
  * i.e. no repeat until the whole pool has been used. Returns null for an empty
  * pool (caller falls back a difficulty tier).
+ *
+ * `recent` are words set lately (the stored schedule, `wordle_daily`): the
+ * pick walks on through the permutation past them, so a pool that grew or
+ * shrank since — which reorders the permutation — still never brings back a
+ * word players saw a few days ago. If every word is recent it takes the day's
+ * own word anyway: a repeat is better than no game.
  */
 export function pickDailyWord(
   pool: readonly string[],
   dayIndex: number,
   difficulty: Difficulty,
+  recent: ReadonlySet<string> = new Set(),
 ): string | null {
   if (pool.length === 0) return null;
   const shuffled = seededShuffle(pool, hashString(difficulty) ^ 0x9e3779b9);
   const idx = ((dayIndex % shuffled.length) + shuffled.length) % shuffled.length;
+  for (let step = 0; step < shuffled.length; step++) {
+    const word = shuffled[(idx + step) % shuffled.length]!;
+    if (!recent.has(word)) return word;
+  }
   return shuffled[idx] ?? null;
 }
 
@@ -131,6 +154,12 @@ export interface WordleGameResult {
  * resets it to 1, and a loss breaks it. Practice games update the totals but
  * never the streak. No XP comes of either: Peyvok is played alone, and XP is
  * for lessons and for games online with other people.
+ *
+ * There is a daily word for each difficulty, and a day counts once: the first
+ * daily a player finishes on a day moves the streak, and any other daily the
+ * same day counts in the totals only. Otherwise a second word the same day
+ * would read as a gap and reset the streak to 1, or a lost hard word undo the
+ * easy one won that morning.
  */
 export function applyGameResult(stats: WordleStats, result: WordleGameResult): { stats: WordleStats } {
   const next: WordleStats = {
@@ -146,7 +175,8 @@ export function applyGameResult(stats: WordleStats, result: WordleGameResult): {
     next.fastestMs = stats.fastestMs === null ? result.timeMs : Math.min(stats.fastestMs, result.timeMs);
   }
 
-  if (result.daily && result.dayIndex !== undefined) {
+  const dayAlreadyCounted = result.daily && result.dayIndex !== undefined && stats.lastDailyDayIndex === result.dayIndex;
+  if (result.daily && result.dayIndex !== undefined && !dayAlreadyCounted) {
     if (result.won) {
       const consecutive = stats.lastDailyDayIndex === result.dayIndex - 1;
       next.currentStreak = consecutive ? stats.currentStreak + 1 : 1;

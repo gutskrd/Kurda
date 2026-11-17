@@ -15,7 +15,7 @@
           "position": 1,
           "titleKu": "Malbat û cîran",
           "titleEn": "Family and neighbours",
-          "grammarMd": "**Bavê min, diya min.** My father, my mother. A noun is joined to the word after it by a link: **-ê** for a masculine noun, **-a** for a feminine one: *bavê min*, *birayê min*; *diya min*, *xwişka min*, *navê wê* her name.\n\n- With **em** (we), **hûn** (you, more than one) and **ew** (they), “are” is **in**, or **ne** after a vowel: *Em malbat in.* · *Hûn cîran in.*\n- *Ew li Kobaniyê ne.* They are in Kobanî.",
+          "grammarMd": "**Bavê min, diya min.** My father, my mother. A noun is joined to the word after it by a link: **-ê** for a masculine noun, **-a** for a feminine one: *bavê min*, *birayê min*, *navê wê* (her name); *diya min*, *xwişka min* (*dê* becomes *diya*; after a vowel a *y* slips in: *birayê*).\n\n- With **em** (we), **hûn** (you, more than one) and **ew** (they), “are” is **in**, or **ne** after a vowel: *Em malbat in.* · *Hûn cîran in.*\n- *Ew li Kobaniyê ne.* They are in Kobanî.",
           "lessons": [
             {
               "key": "u02s1l1",
@@ -725,7 +725,7 @@
                       {
                         "speaker": 0,
                         "text": "Ev Nazê, Baran û Hêvî ne. Ew cîran in.",
-                        "en": "This is Nazê, Baran and Hêvî. They’re our neighbours."
+                        "en": "These are Nazê, Baran and Hêvî. They’re our neighbours."
                       },
                       {
                         "speaker": 1,
@@ -768,7 +768,7 @@
                         "en": "They’re well, thanks."
                       }
                     ],
-                    "prompt": "Is Hevalo a guest, says Hamo?",
+                    "prompt": "What does Hamo say: is Hevalo a guest?",
                     "options": [
                       "No, he just eats the apples",
                       "Yes, he is a guest",
@@ -1885,7 +1885,7 @@
                       {
                         "speaker": 0,
                         "text": "Erê! Hûn çend xwişk û bira ne?",
-                        "en": "He does! How many brothers and sisters are you?"
+                        "en": "He does! How many brothers and sisters do you have?"
                       },
                       {
                         "speaker": 1,
@@ -1905,7 +1905,7 @@
                       {
                         "speaker": 0,
                         "text": "Yek, didu, sisê, çar, pênc, şeş… gelek in!",
-                        "en": "One, two, three, four, five, six… lots! (Dapîr has run out of fingers)"
+                        "en": "One, two, three, four, five, six… lots! (Hamo counts for Dapîr, who has run out of fingers)"
                       }
                     ],
                     "prompt": "How many brothers and sisters are there in Hamo’s family?",
@@ -2295,8 +2295,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Yek, didu, sisê, çar, pênc, şeş!",
-                    "reference": "Yek, didu, sisê, çar, pênc, şeş!"
+                    "prompt": "Yek, didu, sisê, çar!",
+                    "reference": "Yek, didu, sisê, çar!"
                   }
                 }
               ]
@@ -2325,7 +2325,7 @@
                     "prompt": "Fermo, taştê!",
                     "options": [
                       "Here’s breakfast!",
-                      "Here’s supper!",
+                      "Here’s dinner!",
                       "Is breakfast ready?"
                     ],
                     "correctIndex": 0,
@@ -3444,8 +3444,8 @@
         {
           "position": 4,
           "titleKu": "Heye û tune",
-          "titleEn": "Having",
-          "grammarMd": "**Kerekî min heye.** I have a donkey (word for word: a donkey of mine is). The thing comes first, then its owner, then **heye**; **-ek** means “a”, and grows to **-ekî** (masculine) or **-eke** (feminine) before *min*.\n\n- **hene** for more than one: *Du birayên min hene.* I have two brothers.\n- **tune** for none: *Pisîka min tune.* I don’t have a cat.",
+          "titleEn": "There is, there isn’t",
+          "grammarMd": "**Kerekî min heye.** I have a donkey (word for word: a donkey of mine is). The thing comes first, then its owner, then **heye**; **-ek** means “a”, and grows to **-ekî** (masculine) or **-eke** (feminine) before *min*.\n\n- **hene** for more than one: *Du xwişkên min hene.* I have two sisters.\n- **tune** for none: *Pisîkeke min tune.* I don’t have a cat.",
           "lessons": [
             {
               "key": "u02s4l1",
@@ -3592,9 +3592,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Neh mirîşkên Dapîrê hene.",
+                    "say": "Deh mirîşkên Dapîrê hene.",
                     "voice": "hamo",
-                    "prompt": "Neh mirîşkên Dapîrê ___.",
+                    "prompt": "Deh mirîşkên Dapîrê ___.",
                     "options": [
                       "hene",
                       "heye",
@@ -4049,7 +4049,7 @@
                     "voice": "hamo",
                     "prompt": "Fermo, şîv!",
                     "options": [
-                      "Here’s supper!",
+                      "Here’s dinner!",
                       "Here’s breakfast!",
                       "Supper is cold!"
                     ],
@@ -4501,7 +4501,7 @@
                       },
                       {
                         "left": "şîv",
-                        "right": "supper"
+                        "right": "dinner"
                       }
                     ],
                     "voice": "hamo"
@@ -4556,8 +4556,8 @@
                     "voice": "hamo",
                     "prompt": "Şîv sar e? Na, germ e.",
                     "options": [
-                      "Is supper cold? No, it’s hot.",
-                      "Is supper hot? No, it’s cold.",
+                      "Is dinner cold? No, it’s hot.",
+                      "Is dinner hot? No, it’s cold.",
                       "Is the tea cold? No, it’s hot."
                     ],
                     "correctIndex": 0

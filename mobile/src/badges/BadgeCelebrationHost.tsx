@@ -6,11 +6,14 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { useUserEvents } from '../realtime/useUserEvents';
 import { ClayButton } from '../theme/glass';
 import { useI18n } from '../i18n/I18nContext';
+import { formatNumber } from '../i18n/format';
 import { BadgeMedal } from '../ranks/art';
 import { Celebration } from '../ranks/Celebration';
 import { FLECKS } from '../ranks/motion';
 import { badgeTint } from '../ranks/tint';
 import { getUnseenBadges, markBadgesSeen } from '../ranks/api';
+import { ShareWin } from '../share/ShareWin';
+import { badgeShare } from '../share/winText';
 import { badgeLabel, badgeMeaning, badgeName, badgeTextKey, nextTierLine, tierLabel, unitWord } from './format';
 import { enqueue, fromEvent, fromUnseen, seenId, type PendingBadge } from './queue';
 
@@ -62,6 +65,9 @@ const SETTLE_MS = 1200;
  * a time, the highest tier of a badge only, never while another celebration
  * holds them back; each is marked seen on the server when it is closed, so
  * the browser does not celebrate it a second time.
+ *
+ * Under the two ways on there is a quiet Share (share/ShareWin.tsx). Sharing
+ * neither closes the moment nor marks the badge seen: only the ways on do.
  */
 export function BadgeCelebrationHost({ children }: { children: ReactNode }): React.JSX.Element {
   const { client } = useAuth();
@@ -154,7 +160,8 @@ export function BadgeCelebrationHost({ children }: { children: ReactNode }): Rea
 
 function BadgeMoment({ badge, felt, onClose }: { badge: PendingBadge; felt: boolean; onClose: () => void }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const n = (v: number): string => formatNumber(v, locale);
   const def = badgeDef(badge.key)!;
   const tierCount = def.tiers.length;
   const name = badgeName(t, badge.key);
@@ -165,9 +172,9 @@ function BadgeMoment({ badge, felt, onClose }: { badge: PendingBadge; felt: bool
   const [light, strong] = badgeTint(tierCount > 1 ? badge.tier : 3, 'dark');
   // what this tier took: "30 days", "25 wins" (a single badge has no number to name)
   const threshold = tierCount > 1 ? def.tiers[badge.tier - 1] : undefined;
-  const reached = typeof threshold === 'number' ? `${threshold} ${unitWord(t, def.unit, threshold)}` : null;
+  const reached = typeof threshold === 'number' ? `${n(threshold)} ${unitWord(t, def.unit, threshold)}` : null;
   // and the tier after it, so a new goal is in view the moment this one is won
-  const next = badge.secret ? null : nextTierLine(t, badge.key, badge.tier);
+  const next = badge.secret ? null : nextTierLine(t, badge.key, badge.tier, n);
   return (
     <Celebration
       art={<BadgeMedal badgeKey={badge.key} tier={badge.tier} tierCount={tierCount} size={168} label={label} shine="once" />}
@@ -195,6 +202,8 @@ function BadgeMoment({ badge, felt, onClose }: { badge: PendingBadge; felt: bool
               navigation.navigate('Badges');
             }}
           />
+          {/* under the ways on, and quieter than either: the badge by its name and the site's address, nothing of who earned it */}
+          <ShareWin text={badgeShare(t, name)} testID="badge-share" />
         </>
       }
     />

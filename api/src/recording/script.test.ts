@@ -146,7 +146,7 @@ describe('the recording script', () => {
       ['lesson', 'Unit 1 · Lesson 1 · exercise 1 (translate)', 'published'],
       ['lesson', 'Unit 3 · Lesson 1 · exercise 2 (writing)', 'draft'],
       ['story', 'Story ‘Şorbeya Nîskê’ · paragraph 1, sentence 1', 'published'],
-      ['game', 'Ez kî me? · a question (not played aloud in the game yet)', 'draft'],
+      ['game', 'Ez kî me? · a question the player reads out loud', 'draft'],
     ]);
     expect(line!.live).toBe(true);
     expect(line!.section.id).toBe('kurmanji-road:1');

@@ -18,6 +18,7 @@ import { Pop, PressableScale } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ART, YoursRow, YoursRowSkeleton } from './YoursRow';
+import { LETTERS_HOME_PATH } from '../letters/homePath';
 
 /**
  * Your pen pal bird, in the Shop, as the website has it (web/src/shop/YourBird.tsx).
@@ -65,7 +66,7 @@ export function useLettersHome(): LettersHomeState {
       setState({ data: null, loading: false, error: null });
       return;
     }
-    const res = await client.get<LettersHome>('/letters');
+    const res = await client.get<LettersHome>(LETTERS_HOME_PATH);
     if (res.ok) setState({ data: isLettersHome(res.data) ? res.data : null, loading: false, error: null });
     else if (res.error.status === 404 || res.error.status === 403) setState({ data: null, loading: false, error: null });
     else setState((s) => ({ data: s.data, loading: false, error: s.data ? null : res.error }));
@@ -147,7 +148,7 @@ function BirdSheet({
     // spent meanwhile, somewhere else: the Zêr there are now say how many are missing; the same bird again
     // is no change, and there is nothing to pay or to say
     if (res.error.code === 'INSUFFICIENT_FUNDS' || res.error.code === 'LETTER_BIRD_SAME') {
-      const again = await client.get<LettersHome>('/letters');
+      const again = await client.get<LettersHome>(LETTERS_HOME_PATH);
       setBusy(false);
       if (again.ok && isLettersHome(again.data)) {
         home.set(again.data);
@@ -220,14 +221,14 @@ function BirdSheet({
               aria-checked={on}
               accessibilityLabel={mine ? t('letters.bird.yours', { name: name(bird) }) : name(bird)}
               testID={`shop-bird-${bird}`}
-              style={[styles.bird, { borderColor: on ? colors.textPrimary : 'transparent' }]}
+              style={[styles.bird, { borderColor: on ? colors.primary : 'transparent' }]}
             >
               <Pop when={done && on}>
                 <BirdBadge bird={bird} size={BIRD} />
               </Pop>
               {mine ? (
-                <View style={[styles.mine, { backgroundColor: colors.textPrimary, borderColor: colors.surface }]}>
-                  <Icon name="check" size={10} color={colors.background} />
+                <View style={[styles.mine, { backgroundColor: colors.primary, borderColor: colors.surface }]}>
+                  <Icon name="check" size={10} tone="onPrimary" />
                 </View>
               ) : null}
             </PressableScale>
@@ -236,7 +237,7 @@ function BirdSheet({
       </View>
       {/* the bird picked, by its colour; the one that is yours says so, and says it again once a new one is */}
       <View style={[styles.picked, { flexDirection: dir.row }]} accessibilityLiveRegion="polite">
-        {same ? <Icon name="check" size={18} color={colors.success} /> : null}
+        {same ? <Icon name="check" size={18} color={colors.primary} /> : null}
         <Text style={[styles.pickedText, { color: colors.textPrimary }]}>{same ? t('letters.bird.yours', { name: name(picked) }) : name(picked)}</Text>
       </View>
       {!same && missing > 0 ? <Text style={[styles.short, { color: colors.textPrimary }]}>{t('letters.bird.short', { count: number(missing) })}</Text> : null}
@@ -256,7 +257,7 @@ const styles = StyleSheet.create({
   lead: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
   // two even rows of four
   birds: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.md, alignSelf: 'center', maxWidth: 4 * (BIRD + 10) + 3 * spacing.md + 2 },
-  // each bird a round button; the one picked ringed in the ink colour
+  // each bird a round button; the one picked ringed in the violet every choice that is on wears
   bird: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', padding: 3, borderWidth: 2, borderRadius: radii.pill },
   // the bird that is yours, ticked, whichever is picked
   mine: { position: 'absolute', right: 0, bottom: 0, width: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderRadius: radii.pill },

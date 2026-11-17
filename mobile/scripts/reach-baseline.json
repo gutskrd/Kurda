@@ -1,0 +1,98 @@
+{
+  "auth/guide/GuideField.tsx": {
+    "hitSlop": 1
+  },
+  "auth/guide/StepFlow.tsx": {
+    "hitSlop": 1
+  },
+  "auth/guide/WaysOut.tsx": {
+    "hitSlop": 1
+  },
+  "comments/CommentList.tsx": {
+    "hitSlop": 5
+  },
+  "composer/PostPictures.tsx": {
+    "scroller": 1
+  },
+  "coursemap/SkillNodeView.tsx": {
+    "hitSlop": 2
+  },
+  "dictionary/SourceLine.tsx": {
+    "textOnPress": 1
+  },
+  "feed/FriendsRow.tsx": {
+    "scroller": 1
+  },
+  "feedback/RatingBox.tsx": {
+    "hitSlop": 1
+  },
+  "gifts/GiftArrivals.tsx": {
+    "hitSlop": 1
+  },
+  "gifts/GiftSentNote.tsx": {
+    "hitSlop": 1
+  },
+  "impostor/ImpostorStart.tsx": {
+    "scroller": 1
+  },
+  "impostor/parts.tsx": {
+    "scroller": 1
+  },
+  "lastletter/LastLetterBoard.tsx": {
+    "scroller": 1
+  },
+  "leagues/LeagueScreen.tsx": {
+    "scroller": 1
+  },
+  "legal/links.tsx": {
+    "textOnPress": 1
+  },
+  "lesson/components/FeedbackFooter.tsx": {
+    "hitSlop": 3
+  },
+  "lesson/components/LessonResults.tsx": {
+    "hitSlop": 1
+  },
+  "letters/LettersScreen.tsx": {
+    "hitSlop": 1
+  },
+  "letters/PaperTools.tsx": {
+    "scroller": 1
+  },
+  "library/AudioPlayer.tsx": {
+    "hitSlop": 1
+  },
+  "lore/RiddlesScreen.tsx": {
+    "hitSlop": 1
+  },
+  "profile/ProfileFriends.tsx": {
+    "scroller": 1
+  },
+  "profile/ProgressShowcase.tsx": {
+    "scroller": 1
+  },
+  "push/ReminderNudge.tsx": {
+    "hitSlop": 1
+  },
+  "reports/ReportSheet.tsx": {
+    "hitSlop": 1
+  },
+  "stories/LibraryFilter.tsx": {
+    "hitSlop": 1
+  },
+  "stories/StoryText.tsx": {
+    "textOnPress": 2
+  },
+  "stories/game/Question.tsx": {
+    "hitSlop": 1
+  },
+  "stories/game/Reveal.tsx": {
+    "hitSlop": 1
+  },
+  "theme/BottomSheet.tsx": {
+    "hitSlop": 1
+  },
+  "wordle/WordleKeyboard.tsx": {
+    "hitSlop": 1
+  }
+}

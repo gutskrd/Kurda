@@ -102,6 +102,33 @@ describe('checkGameContent', () => {
     if (res.ok) expect(kurdishTexts('word_card', res.payload).map((t) => t.path)).toEqual(['word', 'hint.ku', 'forms.0']);
     if (res.ok) expect(contentHeadline('word_card', res.payload)).toBe('pisîk');
   });
+
+  it('reviews a word card’s twin and a riddle’s near words with the rest of its Kurdish, in the row’s own script', () => {
+    const card = { word: 'pisîk', meanings: en('cat'), category: 'animals', hint: { ku: 'ajal', meanings: en('animal') }, twin: 'kûçik' };
+    const res = checkGameContent('word_card', 'kmr', card);
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(kurdishTexts('word_card', res.payload).map((t) => t.path)).toEqual(['word', 'hint.ku', 'twin']);
+    expect(checkGameContent('word_card', 'kmr', { ...card, twin: 'سەگ' }).ok).toBe(false);
+    const riddle = {
+      slug: 'kmr-roj',
+      difficulty: 'easy',
+      category: 'nature',
+      tradition: 'new',
+      question: 'Çi ye ku sibê tê û êvarê diçe?',
+      hints: ['Ew li asman e.'],
+      answer: 'Roj',
+      accepted: ['roj', 'tav'],
+      near: ['heyv', 'stêrk'],
+      explanation: 'Roj sibê hiltê û êvarê ava dibe.',
+    };
+    const lore = checkGameContent('riddle', 'kmr', riddle);
+    expect(lore.ok).toBe(true);
+    if (lore.ok) expect(kurdishTexts('riddle', lore.payload).map((t) => t.path)).toContain('near.1');
+    expect(checkGameContent('riddle', 'kmr', { ...riddle, near: ['مانگ'] }).ok).toBe(false);
+    // a riddle written before near words existed is stored as it was
+    const before = Object.fromEntries(Object.entries(riddle).filter(([k]) => k !== 'near'));
+    expect(checkGameContent('riddle', 'kmr', before).ok).toBe(true);
+  });
 });
 
 describe('sameWords and meaningIn', () => {

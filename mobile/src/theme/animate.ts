@@ -2,12 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 import { releaseVelocity, type DragSample } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { QUICK_RELEASE_MS } from './Pressable';
 import {
   CARD_TURN_MS,
   CARD_TURN_SETTLE,
   ENTRANCE,
   POP_SCALE,
   PRESS_SCALE,
+  RING_MS,
+  RING_STEPS,
   SHAKE_MS,
   SHAKE_STEPS,
   countAt,
@@ -104,10 +107,18 @@ export class DragSamples {
   }
 }
 
+/** How long the give takes on a press released at once: quick enough that the spring back still feels like the press. */
+const QUICK_DIP_MS = 70;
+
 /**
  * A press that gives a little under the finger and springs back: for
  * buttons, cards and tiles. Under Reduce Motion it does not move at all, and
  * the caller's own pressed-state dimming is the feedback.
+ *
+ * A release that comes straight after the press (`QUICK_RELEASE_MS`) would
+ * spring back from a give that never happened, so the press was accepted and
+ * nothing moved. It dips all the way first, quickly, and then springs back,
+ * so every press that counts is seen.
  */
 export function usePressScale(enabled = true): {
   scale: Animated.Value | number;
@@ -116,16 +127,23 @@ export function usePressScale(enabled = true): {
 } {
   const reduce = useReducedMotion();
   const value = useRef(new Animated.Value(1)).current;
+  const pressedAt = useRef(0);
   const live = enabled && !reduce;
   const onPressIn = useCallback(() => {
     if (!live) return;
+    pressedAt.current = Date.now();
     value.stopAnimation();
     timing(value, PRESS_SCALE, duration.quick - 20).start();
   }, [live, value]);
   const onPressOut = useCallback(() => {
     if (!live) return;
     // back on the interface's own spring: a button is used all day, and is itself again at once
-    springTo(value, 1, 'chrome').start();
+    if (Date.now() - pressedAt.current < QUICK_RELEASE_MS) {
+      value.stopAnimation();
+      Animated.sequence([timing(value, PRESS_SCALE, QUICK_DIP_MS), springTo(value, 1, 'chrome')]).start();
+    } else {
+      springTo(value, 1, 'chrome').start();
+    }
   }, [live, value]);
   return { scale: live ? value : 1, onPressIn, onPressOut };
 }
@@ -146,6 +164,31 @@ export function useShake(): { translateX: Animated.Value; run: () => void } {
     Animated.sequence(SHAKE_STEPS.slice(1).map((x) => timing(translateX, x, step, { easing: Easing.inOut(Easing.quad) }))).start();
   }, [reduce, translateX]);
   return { translateX, run };
+}
+
+/**
+ * Something with news: `ring` is a number that goes up as news arrives, and
+ * each time it does the thing swings once like a rung bell (`RING_STEPS`).
+ * Not as it is first drawn — what was already waiting is not news — and not
+ * at all under Reduce Motion, where the dot beside it says it alone.
+ * `rotate` is for a transform, with the origin at the top, where a bell hangs.
+ */
+export function useRing(ring: number): { rotate: Animated.AnimatedInterpolation<string> } {
+  const reduce = useReducedMotion();
+  const degrees = useRef(new Animated.Value(0)).current;
+  const heard = useRef(ring);
+  useEffect(() => {
+    const rose = ring > heard.current;
+    heard.current = ring;
+    if (!rose || reduce) return;
+    degrees.stopAnimation();
+    degrees.setValue(0);
+    const step = RING_MS / (RING_STEPS.length - 1);
+    const swing = Animated.sequence(RING_STEPS.slice(1).map((d) => timing(degrees, d, step, { easing: Easing.inOut(Easing.quad) })));
+    swing.start();
+    return () => swing.stop();
+  }, [ring, reduce, degrees]);
+  return { rotate: degrees.interpolate({ inputRange: [-90, 90], outputRange: ['-90deg', '90deg'] }) };
 }
 
 /** A right answer: a gentle pop, up a little and back on the spring. Nothing under Reduce Motion. */

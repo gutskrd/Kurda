@@ -70,6 +70,27 @@ describe('notificationText', () => {
     expect(notificationText({ title: 'x', body: 'y', data: { kind: 'gift' } }, t as never, 'de').title).toBe('play.notification.giftTitle');
     expect(notificationText({ title: 'Streak', body: 'Keep going', data: {} }, t as never, 'de')).toEqual({ title: 'Streak', body: 'Keep going' });
   });
+
+  it('says a bird home with an answer as that, and a pen pal’s bird as before', () => {
+    const T = '6f9b1c2e-1d2a-4b3c-8d4e-5f6a7b8c9d0e';
+    const home = { title: 'Your bird came home', body: 'It brought an answer to your letter.', data: { kind: 'letter', threadId: T, how: 'home' } };
+    expect(notificationText(home, t as never, 'ku')).toEqual({ title: 'letters.notify.homeTitle', body: 'letters.notify.homeBody' });
+    expect(notificationText({ ...home, data: { kind: 'letter', threadId: T, how: 'window' } }, t as never, 'ku')).toEqual({
+      title: 'letters.notify.title',
+      body: 'letters.notify.body',
+    });
+    // from before `how`: a pen pal’s letter
+    expect(notificationText({ ...home, data: { kind: 'letter', threadId: T } }, t as never, 'de').title).toBe('letters.notify.title');
+    // the server writes in the reader’s language now, and an English reader keeps its line
+    expect(notificationText(home, t as never, 'en')).toEqual({ title: 'Your bird came home', body: 'It brought an answer to your letter.' });
+  });
+
+  it('opens the window with the bird named, as a push does', async () => {
+    const T = '6f9b1c2e-1d2a-4b3c-8d4e-5f6a7b8c9d0e';
+    const f = fakes();
+    await followDeepLink(resolveDeepLink({ kind: 'letter', threadId: T })!, f.navigation, f.client);
+    expect(f.went).toEqual([['Letters', { bird: T }]]);
+  });
 });
 
 describe('progress notifications (contract 4)', () => {

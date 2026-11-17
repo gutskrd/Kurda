@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Animated, Modal, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Pressable } from './Pressable';
+import { Pressable, ReachReset, type Reach } from './Pressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { fontScaleCap, radii, spacing, typography } from './tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_REACH, MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from './ThemeProvider';
 import { Icon, type IconName } from './Icon';
 import { useI18n } from '../i18n/I18nContext';
@@ -14,6 +14,7 @@ import { springTo, usePressScale } from './animate';
 import { pressedDim } from './motion';
 import { MenuIn, heldRow, heldDim } from './MotionParts';
 import { EmptyState } from './EmptyState';
+import { tileTone } from './tileTones';
 
 /** Full-bleed spatial gradient backdrop for a screen. */
 export function GradientBackground({ children, style }: { children?: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
@@ -42,10 +43,18 @@ export function GradientBackground({ children, style }: { children?: ReactNode; 
 export function GlassCard({
   children,
   style,
+  contentStyle,
   padding = 'regular',
 }: {
   children: ReactNode;
+  /**
+   * The card as a whole: its place among its neighbours (margins, width,
+   * flex). It is the outer shadow's style, so alignment and gaps set here
+   * never reach what is inside: those go in `contentStyle`.
+   */
   style?: StyleProp<ViewStyle>;
+  /** How the card lays out its contents: alignment, gaps, a row. */
+  contentStyle?: StyleProp<ViewStyle>;
   /** 'tight' trims the vertical padding for dense row-lists (Settings). */
   padding?: 'regular' | 'tight';
 }): React.JSX.Element {
@@ -53,7 +62,7 @@ export function GlassCard({
   return (
     <View style={[styles.shadow, { shadowColor: colors.softShadow }, style]}>
       <View style={styles.clip}>
-        <View style={[styles.glassFace, padding === 'tight' && styles.glassFaceTight, { backgroundColor: colors.glassFill }]}>
+        <View style={[styles.glassFace, padding === 'tight' && styles.glassFaceTight, { backgroundColor: colors.glassFill }, contentStyle]}>
           {children}
         </View>
       </View>
@@ -94,21 +103,24 @@ export function GlassRow({
   destructive?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  // the row starts on the side the language is read from: its icon there, its chevron on the far side and pointing on
+  const dir = useDirection();
   const titleColor = destructive ? colors.danger : colors.textPrimary;
   const body = (pressed: boolean) => (
     <>
-      <View style={[styles.row, pressed && heldRow(colors.controlTrack)]}>
+      <View style={[styles.row, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}>
         {icon ? (
           <View style={styles.rowIcon}>
             <Icon name={icon} size={20} color={iconColor ?? (destructive ? colors.danger : colors.primary)} />
           </View>
         ) : null}
         <View style={styles.rowMain}>
-          <Text style={[styles.rowTitle, { color: titleColor }]} numberOfLines={1}>{title}</Text>
-          {subtitle ? <Text style={[styles.rowSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>{subtitle}</Text> : null}
+          {/* a name too long for one line takes a second: cut short, "Notification settings for…" names nothing */}
+          <Text style={[styles.rowTitle, dir.text, { color: titleColor }]} numberOfLines={2}>{title}</Text>
+          {subtitle ? <Text style={[styles.rowSubtitle, dir.text, { color: colors.textSecondary }]} numberOfLines={2}>{subtitle}</Text> : null}
         </View>
         {value ? <Text style={[styles.rowValue, { color: colors.textSecondary }]} numberOfLines={1}>{value}</Text> : null}
-        {trailing ?? (onPress ? <Icon name="chevron-right" size={16} color={colors.textSecondary} /> : null)}
+        {trailing ?? (onPress ? <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip} /> : null)}
       </View>
     </>
   );
@@ -123,6 +135,14 @@ export function GlassRow({
 /** What a button is for, and what colour that makes it. */
 export type ClayTone = 'neutral' | 'primary' | 'success' | 'danger';
 
+/**
+ * How tall a button's pill is drawn, for its reach: the pill is a view inside
+ * the Pressable, so the Pressable's own style does not say. A regular one
+ * reaches 2 past its top and bottom, to a fingertip's 48; a large one is
+ * already taller than that.
+ */
+const CLAY_SIZE = { regular: { height: MIN_TOUCH_TARGET }, large: { height: 50 } } as const;
+
 export function ClayButton({
   label,
   onPress,
@@ -136,6 +156,7 @@ export function ClayButton({
   accessibilityLabel,
   style,
   testID,
+  reach,
 }: {
   label: string;
   onPress: () => void;
@@ -183,6 +204,11 @@ export function ClayButton({
   style?: StyleProp<ViewStyle>;
   /** For a scripted walk of a screen, where the label changes with the language. */
   testID?: string;
+  /**
+   * How far past its pill it answers a finger (theme/Pressable.tsx): to a
+   * fingertip's reach by default, `open` for a button with nothing near it.
+   */
+  reach?: Reach;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const TONE: Record<ClayTone, string | null> = {
@@ -200,12 +226,16 @@ export function ClayButton({
       ? colors.textOnPrimary
       : colors.textPrimary;
   // the outline variant has no fill, so its rim is the whole button; a filled
-  // one already has a shape and a rim round it is just a rim
-  const edge = outline ? (toneColor ?? colors.glassBorder) : 'transparent';
+  // one already has a shape and a rim round it is just a rim. A neutral one's
+  // rim is a lesson tile's quiet edge, a step off the surface in both themes:
+  // the glass hairline it had was white, and by day left the button no shape.
+  const edge = outline ? (toneColor ?? tileTone(colors, 'idle').edge) : 'transparent';
   const off = busy || disabled;
   // gives a little under the finger and springs back (animate.ts); still under Reduce Motion, where it fades instead
   const press = usePressScale(!off);
   const reduce = useReducedMotion();
+  // the icon leads the label on the side the language starts from, and the badge closes it on the far one
+  const dir = useDirection();
   return (
     <Pressable
       onPress={onPress}
@@ -216,13 +246,15 @@ export function ClayButton({
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ busy, disabled: off }}
       testID={testID}
+      reach={reach}
+      reachSize={CLAY_SIZE[size]}
       style={({ pressed }) => [{ opacity: off ? 0.5 : pressed && reduce ? pressedDim : 1 }, style]}
     >
       <Animated.View
         style={[
           styles.clay,
           size === 'large' && styles.clayLarge,
-          { backgroundColor: fill, borderColor: edge, transform: [{ scale: press.scale }] },
+          { flexDirection: dir.row, backgroundColor: fill, borderColor: edge, transform: [{ scale: press.scale }] },
         ]}
       >
         {busy ? (
@@ -272,11 +304,18 @@ export function ErrorRetry({
 
 /** Inset of the travelling capsule from the edge of its track. */
 const SEG_PAD = 3;
-const SEG_SLOP = { top: 6, bottom: 6 };
+/** How much of the violet the capsule is, as the last two digits of its colour: the tab bar's own wash. */
+const SEG_WASH = '1F';
 
-/** A labelled (radio) segment's vertical padding: 3 + 11 + an 18pt line + 11 + 3 clears 44. */
+/**
+ * A labelled (radio) segment's vertical padding: 11 + an 18pt line + 11, so
+ * the segment is drawn 40 tall. This once counted the track's 3pt ring as
+ * well to make 44, but the ring was never part of any segment and a finger on
+ * it did nothing; every segment now reaches over the ring and on to
+ * `MIN_REACH`, so the ring answers too.
+ */
 const SEG_PAD_V_TALL = 11;
-/** A segment label's line, set rather than left to the platform where a label may take two (`wrap`). */
+/** A segment label's line, set on every label so a segment's height is known before it is drawn, and is its reach's to work from. */
 const SEG_LINE = 18;
 
 /**
@@ -287,10 +326,17 @@ const SEG_LINE = 18;
  * the chosen word, which it magnified and fringed with colour at the edges
  * of its letters. Up close that read as the word printed twice slightly out
  * of register, and the magnified label was the first to be cut off in a
- * longer language. The capsule is now a plain raised fill, the chosen word is
- * the same size as the others and heavier, and the slide is the only motion.
- * It is instant when the reader has asked for less motion, and mirrored in a
+ * longer language. The capsule is now a plain fill, the chosen word is the
+ * same size as the others and heavier, and the slide is the only motion. It
+ * is instant when the reader has asked for less motion, and mirrored in a
  * right-to-left language, where the first option is the one on the right.
+ *
+ * The capsule is a wash of the app's violet with the chosen word in the
+ * violet itself, exactly as the tab bar marks the place you are in: both say
+ * "here", and neither is something to press. The solid violet is kept for
+ * the button a screen is about, which often stands right under a switch. A
+ * white capsule on a grey track said "raised", which is what a card says,
+ * and left the one chosen thing on a page the palest thing on it.
  */
 export function Segmented<T extends string>({
   options,
@@ -339,6 +385,14 @@ export function Segmented<T extends string>({
   const seg = box.w > 0 ? (box.w - SEG_PAD * 2) / options.length : 0;
   const x = useRef(new Animated.Value(0)).current;
   const padV = groupLabel || size === 'large' ? SEG_PAD_V_TALL : 6;
+  /*
+   * Each segment's reach, written out because it is not the same on every
+   * side. Up and down it covers the track's ring and goes on to a fingertip's
+   * 48 (9 for a 30pt segment, 4 for a 40pt one), and never less than the ring.
+   * Across, the two end segments cover the ring at their end of the track and
+   * the ones between take nothing, because they touch.
+   */
+  const reachV = Math.max(SEG_PAD, (MIN_REACH - (padV * 2 + SEG_LINE)) / 2);
 
   useEffect(() => {
     if (seg <= 0) return;
@@ -363,14 +417,17 @@ export function Segmented<T extends string>({
           pointerEvents="none"
           style={[
             styles.segCapsule,
-            { width: seg, backgroundColor: colors.selectedFill, shadowColor: colors.softShadow, transform: [{ translateX: x }] },
+            { width: seg, backgroundColor: `${colors.primary}${SEG_WASH}`, transform: [{ translateX: x }] },
           ]}
         />
       ) : null}
 
-      {options.map((opt) => {
+      {options.map((opt, i) => {
         const active = opt === value;
         const label = labelOf(opt);
+        // the ends as they are drawn: right to left, the first option is the one on the right
+        const leftmost = i === (mirrored ? options.length - 1 : 0);
+        const rightmost = i === (mirrored ? 0 : options.length - 1);
         return (
           <Pressable
             key={opt}
@@ -382,21 +439,21 @@ export function Segmented<T extends string>({
             accessibilityRole={groupLabel ? 'radio' : 'button'}
             accessibilityState={groupLabel ? { checked: active } : { selected: active }}
             accessibilityLabel={label}
-            // a regular segment is drawn 32pt tall; the slop takes its touch to 44 without making it look bigger
-            hitSlop={padV < SEG_PAD_V_TALL ? SEG_SLOP : undefined}
+            hitSlop={{ top: reachV, bottom: reachV, left: leftmost ? SEG_PAD : 0, right: rightmost ? SEG_PAD : 0 }}
             // one line keeps the height it always had, and a second adds no more than its own height
             style={({ pressed }) => [styles.segItem, wrap ? { minHeight: padV * 2 + SEG_LINE, paddingVertical: SEG_PAD } : { paddingVertical: padV }, pressed && heldDim]}
           >
             <Text
               style={[
                 styles.segText,
-                { color: active ? colors.textPrimary : colors.textSecondary },
+                { color: active ? colors.primary : colors.textSecondary },
                 active && styles.segTextActive,
                 wrap && styles.segTextWrap,
               ]}
               numberOfLines={wrap ? 2 : 1}
-              adjustsFontSizeToFit={wrap}
-              minimumFontScale={wrap ? 0.8 : undefined}
+              // a label a little too long for its share ("Geschichten" in a third of a 320-point phone) is set a little smaller rather than cut
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
               // a segment is a share of the control's width: its label grows only as far as still fits one
               maxFontSizeMultiplier={fontScaleCap.fixedBox}
             >
@@ -450,38 +507,41 @@ export function GlassSelect<T extends string>({
         )}
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        {/* the palette's scrim, which is deeper by evening; a literal here dimmed the dark page too little */}
-        <Pressable style={[styles.selectBackdrop, { backgroundColor: colors.scrim }]} onPress={() => setOpen(false)}>
-          <Pressable onPress={() => undefined} style={styles.selectMenuWrap}>
-            {/* the menu grows in from just under its size as the scrim fades */}
-            <MenuIn>
-              <GlassCard style={styles.selectMenu}>
-                <Text style={[styles.selectMenuTitle, { color: colors.textSecondary }]}>{label}</Text>
-                {options.map((opt) => {
-                  const active = opt === value;
-                  return (
-                    <Pressable
-                      key={opt}
-                      onPress={() => {
-                        if (!active) haptic('select');
-                        onChange(opt);
-                        setOpen(false);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: active }}
-                      style={({ pressed }) => [styles.selectOption, pressed && heldRow(colors.controlTrack)]}
-                    >
-                      <Text style={[styles.selectOptionText, { color: active ? colors.primary : colors.textPrimary }, active && styles.selectOptionActive]}>
-                        {labelOf(opt)}
-                      </Text>
-                      {active ? <Icon name="check" size={18} color={colors.primary} /> : null}
-                    </Pressable>
-                  );
-                })}
-              </GlassCard>
-            </MenuIn>
+        {/* the menu is drawn over the screen, not beside the row that opened it, so the caps of that row's group stay behind */}
+        <ReachReset>
+          {/* the palette's scrim, which is deeper by evening; a literal here dimmed the dark page too little */}
+          <Pressable style={[styles.selectBackdrop, { backgroundColor: colors.scrim }]} onPress={() => setOpen(false)}>
+            <Pressable onPress={() => undefined} style={styles.selectMenuWrap}>
+              {/* the menu grows in from just under its size as the scrim fades */}
+              <MenuIn>
+                <GlassCard style={styles.selectMenu}>
+                  <Text style={[styles.selectMenuTitle, { color: colors.textSecondary }]}>{label}</Text>
+                  {options.map((opt) => {
+                    const active = opt === value;
+                    return (
+                      <Pressable
+                        key={opt}
+                        onPress={() => {
+                          if (!active) haptic('select');
+                          onChange(opt);
+                          setOpen(false);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                        style={({ pressed }) => [styles.selectOption, pressed && heldRow(colors.controlTrack)]}
+                      >
+                        <Text style={[styles.selectOptionText, { color: active ? colors.primary : colors.textPrimary }, active && styles.selectOptionActive]}>
+                          {labelOf(opt)}
+                        </Text>
+                        {active ? <Icon name="check" size={18} color={colors.primary} /> : null}
+                      </Pressable>
+                    );
+                  })}
+                </GlassCard>
+              </MenuIn>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </ReachReset>
       </Modal>
     </>
   );
@@ -508,8 +568,8 @@ const styles = StyleSheet.create({
   glassFaceTight: { paddingVertical: spacing.xs },
   sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '55%', opacity: 0.6 },
 
-  /** aligned with the title: the icon column plus the gap after it */
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET, paddingVertical: 11 },
+  /** aligned with the title: the icon column plus the gap after it; a fingertip's reach tall, since a row stands right against the next */
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_REACH, paddingVertical: 13 },
   rowIcon: { width: 26, alignItems: 'center' },
   rowMain: { flex: 1, gap: 2 },
   rowTitle: { fontSize: typography.ios.row, fontWeight: typography.weights.regular },
@@ -534,27 +594,25 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   // 50, which is what iOS gives the full-width button a screen is about
-  clayLarge: { minHeight: 50, alignSelf: 'stretch' },
-  clayText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
+  clayLarge: { minHeight: CLAY_SIZE.large.height, alignSelf: 'stretch' },
+  // a label longer than its button's room goes on to a second line inside it, centred, where it used to run out past the button's edge
+  clayText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
   clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   clayBadgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   segTrack: { borderRadius: radii.pill, padding: SEG_PAD },
   // absolute, so it can travel independently of the row it sits behind
+  // a wash, not a raised thing: a shadow under a see-through fill shows through it as a smudge
   segCapsule: {
     position: 'absolute',
     left: 0,
     top: SEG_PAD,
     bottom: SEG_PAD,
     borderRadius: radii.pill,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
-    elevation: 1,
   },
   segItem: { flex: 1, paddingVertical: 6, paddingHorizontal: spacing.xs, alignItems: 'center', justifyContent: 'center' },
-  segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, lineHeight: SEG_LINE },
   segTextActive: { fontWeight: typography.weights.semibold },
-  segTextWrap: { lineHeight: SEG_LINE, textAlign: 'center' },
+  segTextWrap: { textAlign: 'center' },
   selectBackdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   selectMenuWrap: { alignSelf: 'stretch' },
   selectMenu: { alignSelf: 'stretch', gap: spacing.xs },

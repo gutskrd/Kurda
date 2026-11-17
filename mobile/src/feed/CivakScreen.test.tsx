@@ -68,7 +68,7 @@ describe('Home', () => {
   it('has a bell with a dot while notifications are unread, which opens them', async () => {
     open({ unread: 2 });
     const bell = await screen.findByRole('button', { name: 'Notifications, 2 unread' });
-    expect(screen.getByTestId('home-bell-dot')).toBeTruthy();
+    expect(screen.getByTestId('top-bell-dot')).toBeTruthy();
     fireEvent.click(bell);
     expect(navigation.navigate).toHaveBeenCalledWith('NotificationCenter');
   });
@@ -76,7 +76,7 @@ describe('Home', () => {
   it('has no dot on the bell when everything is read', async () => {
     open({ unread: 0 });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Notifications' })).toBeTruthy());
-    expect(screen.queryByTestId('home-bell-dot')).toBeNull();
+    expect(screen.queryByTestId('top-bell-dot')).toBeNull();
   });
 
   it('posts from the "+" at the start of its header', async () => {
@@ -99,8 +99,8 @@ describe('Home', () => {
   });
 
   it('narrows the wall from the sort and filter sheet, only on Show posts, and goes back to everything from the ✕', async () => {
-    const client = open({ extra: { 'GET /feed?section=dimen&kind=mim&limit=20&offset=0': ok({ items: [post('m1')] }) } });
-    // no row of choices on the wall itself
+    const client = open({ items: [post('a')], extra: { 'GET /feed?section=dimen&kind=mim&limit=20&offset=0': ok({ items: [post('m1')] }) } });
+    // no row of choices on the wall itself: one quiet chip over the first post opens them
     expect(screen.queryByRole('button', { name: 'Writing' })).toBeNull();
     fireEvent.click(await screen.findByRole('button', { name: 'Sort and filter' }));
     const show = screen.getByRole('radiogroup', { name: 'Show' });
@@ -110,8 +110,8 @@ describe('Home', () => {
     expect(client.calls.some((c) => c.path.includes('kind=mim'))).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Show posts' }));
     await waitFor(() => expect(client.calls.some((c) => c.path === '/feed?section=dimen&kind=mim&limit=20&offset=0')).toBe(true));
-    // the button says what is on, and a chip under the faces says what is shown
-    expect(screen.getByRole('button', { name: 'Sort and filter — Pictures · Meme' })).toBeTruthy();
+    // a chip under the faces says what is shown, in place of the way in
+    expect(screen.queryByRole('button', { name: 'Sort and filter' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Pictures · Meme' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Show everything' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Sort and filter' })).toBeTruthy());
@@ -128,7 +128,6 @@ describe('Home', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show posts' }));
     expect(await screen.findByText('Post b')).toBeTruthy();
     expect(client.calls.some((c) => c.path === '/feed?section=all&sort=popular&period=week&limit=20&offset=0')).toBe(true);
-    expect(screen.getByRole('button', { name: 'Sort and filter — Most popular, This week' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Most popular · This week' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Back to newest' }));
     expect(await screen.findByText('Post a')).toBeTruthy();

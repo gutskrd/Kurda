@@ -184,7 +184,7 @@ export function Practice({
       {!queue ? (
         <>
           <Text style={[styles.body, dir.text, { color: colors.textSecondary }]}>{t('alphabet.practice.body')}</Text>
-          <ClayButton label={t('alphabet.practice.start')} tone="primary" onPress={() => start()} style={styles.action} />
+          <ClayButton label={t('alphabet.practice.start')} tone="primary" onPress={() => start()} style={[styles.action, dir.rtl && styles.actionEnd]} />
         </>
       ) : null}
 
@@ -197,7 +197,7 @@ export function Practice({
             />
             {item.retry ? (
               <View style={[styles.pill, { backgroundColor: colors.controlTrack }]}>
-                <Text style={[styles.pillText, { color: colors.goldText }]}>{t('alphabet.practice.retry')}</Text>
+                <Text style={[styles.pillText, { color: colors.primary }]}>{t('alphabet.practice.retry')}</Text>
               </View>
             ) : null}
           </View>
@@ -259,7 +259,7 @@ export function Practice({
                   setAt((n) => n + 1);
                   setChosen(null);
                 }}
-                style={styles.action}
+                style={[styles.action, dir.rtl && styles.actionEnd]}
               />
             </View>
           ) : null}
@@ -478,7 +478,9 @@ const styles = StyleSheet.create({
   card: { borderRadius: radii.lg, padding: spacing.md + 4, gap: spacing.sm + 4 },
   title: { ...display(typography.sizes.lg) },
   body: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  // at the reading side: the right, in Soranî and Arabic
   action: { alignSelf: 'flex-start' },
+  actionEnd: { alignSelf: 'flex-end' },
   flex: { flex: 1 },
 
   question: { gap: spacing.sm + 4 },

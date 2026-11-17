@@ -80,3 +80,34 @@ describe('the upload helpers', () => {
     }
   });
 });
+
+describe('a picture on the memes page', () => {
+  it('says who posted it, by their face and their name, not by letters of their account', async () => {
+    testAuth.client = fakeClient({
+      'GET /images?category=meme&sort=newest&limit=20&offset=0': ok({
+        posts: [
+          {
+            id: 'p1',
+            authorId: '2cd2b652-9e44-455a-9304-d0b18303aadc',
+            authorRole: 'user',
+            author: { id: '2cd2b652-9e44-455a-9304-d0b18303aadc', username: 'rojda', avatarUrl: 'https://hevalo.app/cosmetics/avatars/default-01.png' },
+            imageMediaId: 'm1',
+            imageUrl: null,
+            caption: 'Ev çi ye?',
+            category: 'meme',
+            language: null,
+            viewCount: 0,
+            reactionCount: 0,
+            commentCount: 0,
+            createdAt: '2026-11-16T10:00:00.000Z',
+            updatedAt: '2026-11-16T10:00:00.000Z',
+          },
+        ],
+      }),
+    });
+    renderWithProviders(<MemeFeedScreen onExit={() => undefined} />);
+    expect(await screen.findByText('rojda')).toBeTruthy();
+    expect(document.querySelector('img[src="https://hevalo.app/cosmetics/avatars/default-01.png"]')).toBeTruthy();
+    expect(screen.queryByText('2C')).toBeNull();
+  });
+});

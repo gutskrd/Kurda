@@ -36,6 +36,7 @@ import { PROVERBS_NAME, centred, kurdishIn, textIn, varietyName } from './labels
 const MODE_KEY: Record<ProverbRoundMode, { name: TranslationKey; line: TranslationKey; ask: TranslationKey }> = {
   meaning: { name: 'lore.round.meaning', line: 'lore.round.meaningLine', ask: 'lore.round.askMeaning' },
   situation: { name: 'lore.round.situation', line: 'lore.round.situationLine', ask: 'lore.round.askSituation' },
+  complete: { name: 'lore.round.mode.complete', line: 'lore.round.mode.completeLine', ask: 'lore.round.ask.complete' },
 };
 
 type Phase = 'intro' | 'round' | 'results';
@@ -349,6 +350,11 @@ function RoundItem({
       {item.mode === 'meaning' ? (
         <Text {...ku.props} style={[styles.proverb, { color: colors.textPrimary }, centred(ku.style)]} testID="proverb-round-prompt">
           {item.proverb}
+        </Text>
+      ) : item.mode === 'complete' ? (
+        // the missing word stays a gap until it is found, then shows in its place
+        <Text {...ku.props} style={[styles.proverb, { color: colors.textPrimary }, centred(ku.style)]} testID="proverb-round-prompt">
+          {`${item.before} ${correction ? item.options[correction.choice] : '…'}${item.after}`}
         </Text>
       ) : (
         <View style={[styles.scene, { backgroundColor: colors.surface }]}>

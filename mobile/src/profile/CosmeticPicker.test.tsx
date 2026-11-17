@@ -148,7 +148,7 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     open([...BACKGROUNDS, TAG]);
     fireEvent.click(await screen.findByRole('tab', { name: 'Tags, 1 item' }));
     expect(screen.getByText('Kurdish Tag')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Open Tags & badges' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Tags' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Tags');
   });
 

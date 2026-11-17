@@ -7,6 +7,7 @@ import { BookIcon, HomeIcon, SendIcon, UserIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
 import { learnPath } from '../learn/learnView';
+import { under } from './roots';
 import type { AppLocale } from '@kurda/shared';
 import type { NavItem } from '../components/TopNav';
 
@@ -41,9 +42,6 @@ export function publishedDictionary(locale: AppLocale): string {
   return locale === 'ku' ? '/ferheng/' : '/dictionary/';
 }
 
-/** `/app/x` and everything under it, but not `/app/xyz`. */
-const under = (pathname: string, base: string): boolean => pathname === base || pathname.startsWith(`${base}/`);
-
 /**
  * Which place a page belongs to, so the place stays lit on the pages inside
  * it.
@@ -51,10 +49,14 @@ const under = (pathname: string, base: string): boolean => pathname === base || 
  * Written out rather than derived from the links: the Games view is part of
  * Learn although its address is /app/games, Rankings is reached from it, and
  * Settings and the Shop live behind your profile. None of that is visible in
- * a URL prefix.
+ * a URL prefix. Letters by bird are the first row of Messages, and your tree
+ * is opened from your profile, so each is lit with the place that leads to
+ * it. The owner is also where the way back leads from a page opened cold
+ * (BackButton.tsx).
  *
  * Search has no entry: it is the field in the bar, which is there on every
- * page, so there is nothing to light.
+ * page, so there is nothing to light. Somebody else's profile has none
+ * either: it is reached from every place and belongs to none.
  */
 export const OWNS: Record<'home' | 'learn' | 'messages' | 'profile', (pathname: string) => boolean> = {
   home: (p) => p === '/app' || p === '/app/' || under(p, '/app/library') || under(p, '/app/dimen') || under(p, '/app/civak'),
@@ -62,9 +64,9 @@ export const OWNS: Record<'home' | 'learn' | 'messages' | 'profile', (pathname: 
     ['/app/learn', '/app/games', '/app/alphabet', '/app/dictionary', '/app/rankings', '/app/leagues', '/app/season', '/app/ranks'].some(
       (base) => under(p, base),
     ),
-  messages: (p) => under(p, '/app/messages') || under(p, '/app/friends'),
+  messages: (p) => ['/app/messages', '/app/friends', '/app/letters'].some((base) => under(p, base)),
   profile: (p) =>
-    ['/app/profile', '/app/settings', '/app/shop', '/app/saved', '/app/badges'].some((base) => under(p, base)),
+    ['/app/profile', '/app/settings', '/app/shop', '/app/saved', '/app/badges', '/app/tree'].some((base) => under(p, base)),
 };
 
 /**
@@ -73,8 +75,9 @@ export const OWNS: Record<'home' | 'learn' | 'messages' | 'profile', (pathname: 
  * not a link here.
  *
  * One list for every bar — the app's and the front page's, and on a phone the
- * menu the bar folds into — so a place is in the same position wherever you
- * meet it, and nothing moves under the cursor between pages. Dictionary,
+ * bar of places along the bottom of the app (PlacesBar.tsx) and the menu the
+ * public pages' bar folds into — so a place is in the same position wherever
+ * you meet it, and nothing moves under the cursor between pages. Dictionary,
  * Rankings, the Shop and Settings are not lost by leaving the bar: they are
  * inside the place they belong to (the tools in Learn, Rankings at the top of
  * its Games view, the rest in your profile's menu).

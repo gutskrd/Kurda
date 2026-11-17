@@ -215,6 +215,8 @@ describe('TagsCard', () => {
     vi.stubGlobal('fetch', tagServer({}).fetch);
     renderApp(<TagsCard />);
 
-    expect(await screen.findByRole('heading', { name: 'Tags & Abzeichen' })).toBeInTheDocument();
+    // the title is "Tags" in German too, so the lines under it show the language
+    expect(await screen.findByRole('heading', { name: 'Tags' })).toBeInTheDocument();
+    expect(await screen.findByText('Haupt-Tag')).toBeInTheDocument();
   });
 });

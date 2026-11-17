@@ -9,12 +9,13 @@ import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { GradientBackground } from '../theme/glass';
+import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { EmptyState } from '../theme/EmptyState';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { ActionPill, HeaderButton } from '../navigation/HeaderButton';
 import { GroupAvatar } from './GroupAvatar';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
@@ -46,7 +47,6 @@ import { ClearedLine, WelcomeCard } from './Welcome';
 import { StandingCard, type Banned } from './Standing';
 import { AddFriendsSheet } from './AddFriendsSheet';
 import { Loading } from '../theme/Loading';
-import { heldDim } from '../theme/MotionParts';
 
 const MAX_LEN = 2000;
 
@@ -96,7 +96,8 @@ function bannedFrom(error: ApiError): Banned | null {
  * as its owner or an admin, for everyone — and reports the group.
  *
  * An empty chat welcomes (Welcome.tsx); a chat an admin cleared says so at
- * the top of its history. A group made a moment ago opens with the sheet for
+ * the top of its history. A history that could not be read says that, with
+ * the way to ask again, and is never drawn as a group nobody has written in. A group made a moment ago opens with the sheet for
  * adding friends up (`addFriends`), since nobody else is in it until its
  * owner brings them.
  *
@@ -169,6 +170,8 @@ export function GroupThreadScreen({
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [exhausted, setExhausted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // the history could not be read at all: said, with the way to ask again, rather than passing for a group nobody has written in
+  const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [name, setName] = useState(nameParam);
   // null until the club says: its menu waits rather than flash a report button at its owner
@@ -251,9 +254,10 @@ export function GroupThreadScreen({
       setLoading(false);
       if (!res.ok) {
         if (isOutside(res.error)) goOutside(res.error);
-        else setError(describeError(res.error, t));
+        else setLoadError(res.error);
         return;
       }
+      setLoadError(null);
       readOnce.current = true;
       setCleared(res.data.cleared ?? null);
       setMessages(res.data.messages as Message[]);
@@ -527,30 +531,17 @@ export function GroupThreadScreen({
           onBack={onExit}
           hairline
           right={
-            <View style={styles.headerActions}>
-              {member ? (
-                <Pressable
-                  onPress={onOpenMembers}
-                  hitSlop={10}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('groups.info')}
-                  style={({ pressed }) => [styles.headerBtn, pressed && heldDim]}
-                >
-                  <Icon name="people" size={20} tone="primary" />
-                </Pressable>
-              ) : null}
-              {menu.length === 0 ? null : (
-                <Pressable
-                  onPress={() => showActions({ title: name, actions: menu, cancel: t('common.cancel') })}
-                  hitSlop={10}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('groups.chatOptions')}
-                  style={({ pressed }) => [styles.headerBtn, pressed && heldDim]}
-                >
-                  <Icon name="more" size={20} tone="secondary" />
-                </Pressable>
-              )}
-            </View>
+            // the group's people and its menu, one shape in the corner; either alone is the shape by itself
+            member && menu.length > 0 ? (
+              <ActionPill>
+                <HeaderButton icon="people" label={t('groups.info')} onPress={onOpenMembers} />
+                <HeaderButton icon="more" label={t('groups.chatOptions')} onPress={() => showActions({ title: name, actions: menu, cancel: t('common.cancel') })} />
+              </ActionPill>
+            ) : member ? (
+              <HeaderButton icon="people" label={t('groups.info')} onPress={onOpenMembers} />
+            ) : menu.length > 0 ? (
+              <HeaderButton icon="more" label={t('groups.chatOptions')} onPress={() => showActions({ title: name, actions: menu, cancel: t('common.cancel') })} />
+            ) : undefined
           }
         />
 
@@ -573,6 +564,16 @@ export function GroupThreadScreen({
             ) : (
               <Loading />
             )}
+          </ScrollView>
+        ) : loadError && messages.length === 0 ? (
+          <ScrollView contentContainerStyle={styles.centred}>
+            <ErrorRetry
+              message={describeError(loadError, t)}
+              onRetry={() => {
+                setLoading(true);
+                setReloadKey((k) => k + 1);
+              }}
+            />
           </ScrollView>
         ) : thread.length === 0 ? (
           <ScrollView contentContainerStyle={styles.welcome}>
@@ -773,8 +774,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   // the runs keep their own distance (chat/MessageRow.tsx); the tails reach a little into the margin
   list: { paddingHorizontal: spacing.md - 4, paddingVertical: spacing.md },
-  headerActions: { flexDirection: 'row', alignItems: 'center' },
-  headerBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   rowEnd: { alignSelf: 'flex-end' },
   rowStart: { alignSelf: 'flex-start' },
   // a card in the middle of what the chat would fill

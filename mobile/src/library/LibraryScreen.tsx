@@ -19,6 +19,7 @@ import { bodyPreview, postName, type LibraryPost, type PostType } from './types'
 import { onPostDeleted } from '../composer/postDeleted';
 import { useQuietRefocus } from '../feed/keep';
 import { useI18n } from '../i18n/I18nContext';
+import { useDirection } from '../reports/direction';
 import { EmptyState } from '../theme/EmptyState';
 import { Loading } from '../theme/Loading';
 
@@ -34,6 +35,8 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
+  // in Soranî and Arabic the cards and the button mirror, and a title keeps its own direction
+  const dir = useDirection();
 
   const [type, setType] = useState<PostType>('story');
   const [sort, setSort] = useState<'newest' | 'popular'>('newest');
@@ -132,22 +135,22 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           accessibilityRole="button"
           accessibilityLabel={t('library.readLabel', { title: postName(item) })}
         >
-          <View style={styles.cardHead}>
-            <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+          <View style={[styles.cardHead, { flexDirection: dir.row }]}>
+            <Text style={[styles.cardTitle, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
               {postName(item)}
             </Text>
             {item.audioUrl ? <Icon name="speaker" size={16} tone="primary" /> : null}
           </View>
-          <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={2}>
+          <Text style={[styles.preview, dir.free, { color: colors.textSecondary }]} numberOfLines={2}>
             {bodyPreview(item.body)}
           </Text>
           {/* how many have read it and how many have answered: the app's own glyphs, in the caption's colour */}
-          <View style={styles.cardFoot}>
-            <View style={styles.stat}>
+          <View style={[styles.cardFoot, { flexDirection: dir.row }]}>
+            <View style={[styles.stat, { flexDirection: dir.row }]}>
               <Icon name="eye" size={STAT_GLYPH} color={colors.textSecondary} />
               <Text style={[styles.statText, { color: colors.textSecondary }]}>{item.viewCount}</Text>
             </View>
-            <View style={styles.stat}>
+            <View style={[styles.stat, { flexDirection: dir.row }]}>
               <Icon name="chat" size={STAT_GLYPH} color={colors.textSecondary} />
               <Text style={[styles.statText, { color: colors.textSecondary }]}>{item.commentCount}</Text>
             </View>
@@ -155,12 +158,12 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
         </PressableScale>
       </Rise>
     ),
-    [navigation, colors, entering],
+    [navigation, colors, entering, dir, t],
   );
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('library.title')} onBack={onExit} />
+      <ScreenHeader title={t('library.title')} onBack={onExit} browse />
       <View style={styles.screen}>
 
         <View style={styles.filters}>
@@ -187,7 +190,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
             testID="library-list"
             onScroll={onScroll}
             scrollEventThrottle={64}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.textSecondary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListEmptyComponent={
@@ -200,7 +203,8 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           />
         </AsyncBoundary>
 
-        <View style={styles.fab}>
+        {/* at the end of the line, which is the left in Soranî and Arabic */}
+        <View style={[styles.fab, dir.row === 'row-reverse' ? styles.fabLeft : styles.fabRight]}>
           <ClayButton label={t('library.emptyAction')} tone="primary" onPress={() => navigation.navigate('Compose')} />
         </View>
       </View>
@@ -255,5 +259,7 @@ const styles = StyleSheet.create({
   cardFoot: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.xs },
   stat: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   statText: { fontSize: typography.sizes.sm },
-  fab: { position: 'absolute', right: spacing.lg, bottom: spacing.xl },
+  fab: { position: 'absolute', bottom: spacing.xl },
+  fabRight: { right: spacing.lg },
+  fabLeft: { left: spacing.lg },
 });

@@ -6,6 +6,19 @@
  * and so does letting the time run out; the turn passes either way. Three
  * strikes and you are out; the last player standing wins.
  *
+ * Two rules keep a chain from sticking on a letter. In Kurmancî a word that
+ * ends in a soft vowel (ê, î, û, i, u or o) passes on the letter before it
+ * (`softEnding`: azadî → d, êvarê → r), because hardly any word begins with î
+ * and many end in it; Soranî has no such rule. And in either variety, once
+ * every player still in has been struck in a row on the same letter (`stuck`),
+ * the next word may begin with any letter, so nobody is struck on it in turn
+ * until the game ends.
+ *
+ * A word typed with a mark left off (kecik for keçik) is not a strike when
+ * the dictionary or the course has exactly one word it could be: the server
+ * says so (`verdict: 'spelling'`), the state stays as it was, the turn and its
+ * clock go on, and only the player who typed it is asked "Did you mean …?".
+ *
  * These are the rules alone, pure (shared/src/games/multi/rules.ts): whether a
  * word is in the dictionary, and its meaning, are decided on the server before
  * a move reaches `apply` (api/src/mp/games/last-letter.ts), and Hevalo's words
@@ -17,7 +30,7 @@
  * ("not in the dictionary"), never the text, which goes back to the player who
  * typed it alone.
  */
-import { beginsWith, nextLetter, startSpellings, type LetterDialect } from '../letters.js';
+import { beginsWith, chainLetter, nextLetter, startSpellings, wordLetters, type LetterDialect } from '../letters.js';
 import type { ApplyResult, GameRules, Placed, RulesSeat, RulesStart } from '../multi/rules.js';
 
 export const LAST_LETTER_MIN_PLAYERS = 2;
@@ -40,15 +53,25 @@ export interface LastLetterSettings {
 /** Why a word was refused, or the time ran out. */
 export type LastLetterStrikeReason = 'not-a-word' | 'wrong-letter' | 'used' | 'not-allowed' | 'not-one-word' | 'time' | 'gone';
 
+/** A word's meanings by language (en, de, …), each short enough for a card. */
+export type LastLetterMeanings = Partial<Record<string, string>>;
+
 /**
  * A word as the server prepared it for `apply`: the dictionary's verdict, and
- * the meaning when an admin's curated entry gives one.
+ * the meaning when an admin's curated entry or a lesson gives one. `spelling`
+ * is a word typed with a mark left off that is exactly one known word, which
+ * `suggestion` names.
  */
 export interface LastLetterMove {
   /** the word in the dialect's letters (`wordKey`), or null when what was typed is not one word of the dialect */
   key: string | null;
-  verdict: 'ok' | 'not-a-word' | 'not-allowed';
+  verdict: 'ok' | 'not-a-word' | 'not-allowed' | 'spelling';
+  /** the English meaning, for boards and apps that read only that */
   meaning: string | null;
+  /** every language the meaning is known in, English among them */
+  meanings?: LastLetterMeanings | null;
+  /** with `verdict: 'spelling'`: the word the player most likely meant, in the dialect's letters */
+  suggestion?: string | null;
 }
 
 /** What the player who moved is told. */
@@ -57,6 +80,8 @@ export interface LastLetterOutcome {
   reason: LastLetterStrikeReason | null;
   strikes: number;
   out: boolean;
+  /** the word the player most likely meant: nothing was struck, and it is still their turn */
+  spelling?: string;
 }
 
 interface SeatState {
@@ -74,6 +99,8 @@ interface ChainWord {
   seat: number;
   word: string;
   meaning: string | null;
+  /** absent in a chain played before meanings were kept in every language */
+  meanings?: LastLetterMeanings | null;
   at: number;
 }
 
@@ -94,6 +121,8 @@ export interface LastLetterState {
   /** the most recent strikes, newest last */
   strikes: Strike[];
   outs: number;
+  /** strikes in a row since the last word was accepted; absent in a game saved before it was counted, which reads as 0 */
+  stuck?: number;
   finishedAt: number | null;
   endedBy: 'last-standing' | 'chain-full' | 'abandoned' | null;
 }
@@ -105,6 +134,8 @@ export interface LastLetterChainWord {
   seat: number;
   word: string;
   meaning: string | null;
+  /** the meaning in every language it is known in; an app shows its own language, else English */
+  meanings: LastLetterMeanings | null;
 }
 
 export interface LastLetterBoard {
@@ -116,6 +147,10 @@ export interface LastLetterBoard {
   required: string | null;
   /** how a word beginning with it is written at its start (Soranî: ا is written ئا) */
   requiredSpellings: string[];
+  /** when the letter comes from before a soft ending (azadî → d): the word and the ending passed over */
+  requiredFrom: { word: string; vowel: string } | null;
+  /** when everyone still in was struck on a letter in a row: that letter, and the next word may begin with any */
+  openLetter: string | null;
   /** the whole chain, oldest first */
   chain: LastLetterChainWord[];
   seats: Array<{ seat: number; strikes: number; words: number; out: boolean; left: boolean; bot: string | null }>;
@@ -173,10 +208,45 @@ function clone(state: LastLetterState): LastLetterState {
   };
 }
 
-/** The letter the next word must begin with, as a chain compares letters; null before the first word. */
-export function requiredLetter(state: Pick<LastLetterState, 'dialect' | 'chain'>): string | null {
+/** The vowels a Kurmancî word may end in that pass on the letter before them. */
+export const LAST_LETTER_SOFT_ENDINGS: ReadonlySet<string> = new Set(['ê', 'î', 'û', 'i', 'u', 'o']);
+
+/**
+ * The letter a word hands on, and the soft ending it passed over (null when
+ * none). In Kurmancî the vowels at the end of a word that are soft endings
+ * are walked back to the first other letter: azadî → d, derî → r, êvarê → r,
+ * xwê → w. A word that is nothing but such vowels hands on its last letter.
+ * Soranî hands on its last letter always (`nextLetter`). Null for something
+ * that is not one word of the dialect.
+ */
+export function softEnding(dialect: LetterDialect, word: string): { letter: string; vowel: string | null } | null {
+  const plain = nextLetter(dialect, word);
+  if (plain === null) return null;
+  if (dialect !== 'kmr') return { letter: plain, vowel: null };
+  const letters = wordLetters(dialect, word)!;
+  let i = letters.length - 1;
+  while (i >= 0 && LAST_LETTER_SOFT_ENDINGS.has(letters[i]!)) i--;
+  if (i < 0 || i === letters.length - 1) return { letter: plain, vowel: null };
+  return { letter: chainLetter(dialect, letters[i]!), vowel: letters.slice(i + 1).join('') };
+}
+
+/** Whether everyone still in has been struck in a row since the last word, so the next may begin with any letter. */
+function isOpen(state: Pick<LastLetterState, 'seats' | 'stuck'>): boolean {
+  const stuck = state.stuck ?? 0;
+  return stuck > 0 && stuck >= state.seats.filter(inGame).length;
+}
+
+/**
+ * The letter the next word must begin with, as a chain compares letters:
+ * null before the first word, and null once everyone still in has been
+ * struck on it in a row (any letter will do then). The server's checks,
+ * Hevalo's words and the apps' slip check all read it from here.
+ */
+export function requiredLetter(state: Pick<LastLetterState, 'dialect' | 'chain'> & Partial<Pick<LastLetterState, 'seats' | 'stuck'>>): string | null {
   const last = state.chain[state.chain.length - 1];
-  return last ? nextLetter(state.dialect, last.word) : null;
+  if (!last) return null;
+  if (state.seats && isOpen({ seats: state.seats, stuck: state.stuck })) return null;
+  return softEnding(state.dialect, last.word)?.letter ?? null;
 }
 
 function turnLength(state: LastLetterState, seat: number, n: number): number {
@@ -211,6 +281,7 @@ function finish(state: LastLetterState, now: number, why: NonNullable<LastLetter
 function strike(state: LastLetterState, seat: number, reason: LastLetterStrikeReason): SeatState {
   const s = state.seats.find((x) => x.seat === seat)!;
   s.strikes += 1;
+  state.stuck = (state.stuck ?? 0) + 1;
   state.strikes = [...state.strikes, { seat, reason, turn: state.turn?.n ?? 0 }].slice(-KEEP_STRIKES);
   if (s.strikes >= LAST_LETTER_MAX_STRIKES && inGame(s)) {
     state.outs += 1;
@@ -230,6 +301,7 @@ export const lastLetterRules: GameRules<LastLetterState, LastLetterMove, LastLet
       chain: [],
       strikes: [],
       outs: 0,
+      stuck: 0,
       finishedAt: null,
       endedBy: null,
     };
@@ -248,10 +320,17 @@ export const lastLetterRules: GameRules<LastLetterState, LastLetterMove, LastLet
     if (state.turn.seat !== seat) return { ok: false, reason: 'not-your-turn' };
     const next = clone(state);
     const required = requiredLetter(next);
+    // a mark left off a word that is exactly one known word: no strike, and the turn goes on as it was
+    const suggestion = move.verdict === 'spelling' ? move.suggestion : null;
+    if (suggestion && (required === null || beginsWith(next.dialect, suggestion, required)) && !next.chain.some((w) => w.word === suggestion)) {
+      const mover = next.seats.find((s) => s.seat === seat)!;
+      return { ok: true, state, outcome: { accepted: false, reason: null, strikes: mover.strikes, out: false, spelling: suggestion } };
+    }
     let reason: LastLetterStrikeReason | null = null;
     if (move.key === null) reason = 'not-one-word';
     else if (required !== null && !beginsWith(next.dialect, move.key, required)) reason = 'wrong-letter';
     else if (next.chain.some((w) => w.word === move.key)) reason = 'used';
+    else if (move.verdict === 'spelling') reason = 'not-a-word';
     else if (move.verdict !== 'ok') reason = move.verdict;
 
     let mover: SeatState;
@@ -260,7 +339,9 @@ export const lastLetterRules: GameRules<LastLetterState, LastLetterMove, LastLet
     } else {
       mover = next.seats.find((s) => s.seat === seat)!;
       mover.words += 1;
-      next.chain.push({ seat, word: move.key!, meaning: move.meaning, at: now });
+      next.stuck = 0;
+      const meanings = move.meanings ?? (move.meaning ? { en: move.meaning } : null);
+      next.chain.push({ seat, word: move.key!, meaning: move.meaning, meanings, at: now });
     }
     nextTurn(next, now);
     return {
@@ -317,6 +398,8 @@ export const lastLetterRules: GameRules<LastLetterState, LastLetterMove, LastLet
 
   viewFor(state: LastLetterState, seat: number | null): LastLetterBoard {
     const required = requiredLetter(state);
+    const last = state.chain[state.chain.length - 1];
+    const soft = last ? softEnding(state.dialect, last.word) : null;
     return {
       dialect: state.dialect,
       turnSeconds: Math.round(state.turnMs / 1000),
@@ -331,7 +414,15 @@ export const lastLetterRules: GameRules<LastLetterState, LastLetterMove, LastLet
         : null,
       required,
       requiredSpellings: required ? startSpellings(state.dialect, required) : [],
-      chain: state.chain.map((w, i) => ({ n: i + 1, seat: w.seat, word: w.word, meaning: w.meaning })),
+      requiredFrom: required && soft?.vowel ? { word: last!.word, vowel: soft.vowel } : null,
+      openLetter: required === null && soft ? soft.letter : null,
+      chain: state.chain.map((w, i) => ({
+        n: i + 1,
+        seat: w.seat,
+        word: w.word,
+        meaning: w.meaning,
+        meanings: w.meanings ?? (w.meaning ? { en: w.meaning } : null),
+      })),
       seats: state.seats.map((s) => ({
         seat: s.seat,
         strikes: s.strikes,

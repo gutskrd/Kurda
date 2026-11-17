@@ -129,7 +129,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
   return (
     <View style={styles.container}>
       <ExerciseHeadline>{headline ? t(headline.key, headline.params) : t('lesson.speak.prompt')}</ExerciseHeadline>
-      {exercise.prompt ? <Text style={[saidStyle(exercise.prompt), { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
+      {exercise.prompt ? <Text style={[saidStyle(exercise.prompt), dir.free, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       {model.supported && voice ? (
         // head to waist on its stage, saying the sentence; a tap on it says it again too
@@ -177,8 +177,8 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
           </View>
           <Pressable
             onPress={finish}
-            // drawn 36 points tall; its touch reaches a fingertip's 44
-            hitSlop={STOP_SLOP}
+            // the one thing to press while a take records, with nothing near it: it answers 8 past every edge
+            reach="open"
             style={({ pressed }) => [styles.stop, { backgroundColor: colors.textPrimary }, pressed && heldDim]}
             accessibilityRole="button"
             accessibilityLabel={t('lesson.speak.stop')}
@@ -217,9 +217,6 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
     </View>
   );
 }
-
-/** The Stop button is a 20-point line in 8 points of padding: four more each way makes a fingertip. */
-const STOP_SLOP = { top: 4, bottom: 4 };
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },

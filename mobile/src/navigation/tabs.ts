@@ -7,8 +7,7 @@ export interface TabDef {
   name: TabName;
   /**
    * The tab's name, looked up at render time so it follows the chosen
-   * language: what a screen reader says for the tab, and what shows above it
-   * while it is held. The bar itself draws only the icons.
+   * language: the word under its icon, and what a screen reader says for it.
    */
   labelKey: TranslationKey;
   /**
@@ -22,10 +21,10 @@ export interface TabDef {
   path: string;
 }
 
-export type TabName = 'Home' | 'Learn' | 'Messages' | 'Search' | 'Profile';
+export type TabName = 'Home' | 'Learn' | 'Messages' | 'Profile';
 
 /**
- * Five places, in the order a day with the app tends to go.
+ * Four places, in the order a day with the app tends to go.
  *
  *   Home is the community's wall — what everyone wrote and pictured — and is
  *   where you land.
@@ -39,21 +38,20 @@ export type TabName = 'Home' | 'Learn' | 'Messages' | 'Search' | 'Profile';
  *   Messages is conversations — with one person or with a group — and the
  *   friend requests waiting on you, at the top where they cannot sink.
  *
- *   Search finds people, words, lessons and games, and with nothing typed it
- *   shows what you looked for before and people you may know.
- *
  *   Profile is you: your picture is the tab, and settings, the shop and what
  *   you saved are behind its menu.
  *
  * What left: Play is Learn's Games view, and the old Inbox split in two — its
- * conversations and requests are Messages, its notifications are the bell at
- * the top of Home. `legacyTabPath` keeps the old links working.
+ * conversations and requests are Messages, its notifications are the bell.
+ * Search was the fifth tab and is the magnifier beside that bell now, at the
+ * top of every tab and of the pages behind them, as it is on the website: it
+ * is something done from wherever you are, not a place to go and stand in.
+ * `legacyTabPath` keeps the old links working.
  */
 export const TABS: readonly TabDef[] = [
   { name: 'Home', labelKey: 'nav.home', icon: 'home', activeIcon: 'home-fill', path: 'home' },
   { name: 'Learn', labelKey: 'nav.learn', icon: 'book', activeIcon: 'book-fill', path: 'learn' },
   { name: 'Messages', labelKey: 'nav.messages', icon: 'send', activeIcon: 'send-fill', path: 'messages' },
-  { name: 'Search', labelKey: 'nav.search', icon: 'search', activeIcon: 'search-bold', path: 'search' },
   // your picture is this tab; the glyph is only for before you are known
   { name: 'Profile', labelKey: 'nav.profile', icon: 'person', activeIcon: 'person', path: 'profile' },
 ] as const;

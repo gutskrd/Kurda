@@ -73,11 +73,12 @@
         },
         {
           "kind": "detail",
-          "prompt": "Rast an şaş? Rojîn li dibistana nû gelek zarokan nas dike.",
-          "promptEn": "True or false? Rojîn knows many children at the new school.",
+          "prompt": "Rast, şaş an çîrok nabêje? Rojîn li dibistana nû gelek zarokan nas dike.",
+          "promptEn": "True, false or not in the story? Rojîn knows many children at the new school.",
           "options": [
             "Rast",
-            "Şaş"
+            "Şaş",
+            "Çîrok nabêje"
           ],
           "correctIndex": 1,
           "explanation": "Şaş e. Çîrok dibêje: “Rojîn li wir kesî nas nake.”",
@@ -127,6 +128,21 @@
           "correctIndex": 0,
           "explanation": "Şîlan pênûseke şîn dide Rojînê, ji ber ku du pênûsên wê hene.",
           "explanationEn": "Şîlan gives Rojîn a blue pen, because she has two pens.",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast, şaş an çîrok nabêje? Rojîn ji rengê şîn hez dike.",
+          "promptEn": "True, false or not in the story? Rojîn likes the colour blue.",
+          "options": [
+            "Rast",
+            "Şaş",
+            "Çîrok nabêje"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok behsa vê nake.",
+          "explanationEn": "The story doesn’t say.",
           "evidenceParagraph": 2,
           "evidenceSentence": 2
         },
@@ -295,11 +311,12 @@
         },
         {
           "kind": "detail",
-          "prompt": "Rast an şaş? Cara yekem, Azad li bazarê nan jî dikire.",
-          "promptEn": "True or false? On his first trip, Azad buys bread at the market too.",
+          "prompt": "Rast, şaş an çîrok nabêje? Cara yekem, Azad li bazarê nan jî dikire.",
+          "promptEn": "True, false or not in the story? On his first trip, Azad buys bread at the market too.",
           "options": [
             "Rast",
-            "Şaş"
+            "Şaş",
+            "Çîrok nabêje"
           ],
           "correctIndex": 1,
           "explanation": "Şaş e. Ew tenê bacansor û penîr dikire; nan ji bîr dike.",
@@ -364,6 +381,21 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Ew sêva sor dide diya xwe.”",
           "explanationEn": "The story says: “He gives the red apple to his mother.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast, şaş an çîrok nabêje? Bazar nêzîkî mala Azad e.",
+          "promptEn": "True, false or not in the story? The market is close to Azad’s home.",
+          "options": [
+            "Rast",
+            "Şaş",
+            "Çîrok nabêje"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok behsa vê nake.",
+          "explanationEn": "The story doesn’t say.",
           "evidenceParagraph": 3,
           "evidenceSentence": 3
         },
@@ -598,7 +630,7 @@
       "readingMinutes": null,
       "title": "Şorbeya Nîskê",
       "summary": "Zana bi dapîra xwe re şorbeya nîskê çêdike, lê xwê pir dibe.",
-      "body": "Êvareke zivistanê ye. Li derve berf dibare. Zana diwanzdeh salî ye û bi dapîra xwe re li malê ye. Dapîr dibêje: “Zana, îro tu yê şorbeya nîskê çêkî. Ez ê alîkariya te bikim.”\n\nPêşî Zana nîskê di avê de dişo. Paşê ew pîvazekê hûr dike. Çavên wî tije hêsir dibin. Dapîr dikene: “Pîvaz her kesî digirîne.”\n\nDapîr dibêje: “Niha rûn têxe beroşê û pîvazê sor bike.” Zana pîvazê di rûn de sor dike. Bîneke xweş li malê belav dibe. Paşê ew nîskê û avê dixe beroşê. Piştî demekê şorbe dikele.\n\nDapîr dibêje: “Niha kevçiyek xwê bike nav şorbeyê.” Lê Zana sê kevçî xwê dike nav! Ew tama şorbeyê dike û rûyê xwe tirş dike: “Dapîrê, şorbe pir şor e!”\n\nDapîr aram e. Ew dibêje: “Xem neke. Em ê avê û nîskê zêde bikin.” Ew du kas av û kulmek nîsk dixe beroşê. Piştî nîv demjimêrê şorbe xweş dibe. Lê niha şorbe pir zêde ye!\n\nDapîr dibêje: “Here, gazî cîranan bike!” Wê êvarê Xaltîka Gulê û zarokên wê jî tên. Hemû bi hev re şorbeyê dixwin. Xaltîka Gulê dibêje: “Zana, tu aşpêjekî baş î!” Zana li Dapîrê dinêre û dikene. Herdu jî tiştekî li ser xwêyê nabêjin.",
+      "body": "Êvareke zivistanê ye. Li derve berf dibare. Zana diwanzdeh salî ye û bi dapîra xwe re li malê ye. Dapîr dibêje: “Zana, îro tu yê şorbeya nîskê çêkî. Ez ê alîkariya te bikim.”\n\nPêşî Zana nîskê di avê de dişo. Paşê ew pîvazekê hûr dike. Çavên wî tije hêsir dibin. Dapîr dikene: “Pîvaz her kesî digirîne.”\n\nDapîr dibêje: “Niha rûn têxe beroşê û pîvazê sor bike.” Zana pîvazê di rûn de sor dike. Bêhneke xweş li malê belav dibe. Paşê ew nîskê û avê dixe beroşê. Piştî demekê şorbe dikele.\n\nDapîr dibêje: “Niha kevçiyek xwê bike nav şorbeyê.” Lê Zana sê kevçî xwê dike nav! Ew tama şorbeyê dike û rûyê xwe tirş dike: “Dapîrê, şorbe pir şor e!”\n\nDapîr aram e. Ew dibêje: “Xem neke. Em ê avê û nîskê zêde bikin.” Ew du kas av û kulmek nîsk dixe beroşê. Piştî nîv demjimêrê şorbe xweş dibe. Lê niha şorbe pir zêde ye!\n\nDapîr dibêje: “Here, gazî cîranan bike!” Wê êvarê Xaltîka Gulê û zarokên wê jî tên. Hemû bi hev re şorbeyê dixwin. Xaltîka Gulê dibêje: “Zana, tu aşpêjekî baş î!” Zana li Dapîrê dinêre û dikene. Herdu jî tiştekî li ser xwêyê nabêjin.",
       "translations": {},
       "glossary": [
         {
@@ -817,6 +849,21 @@
           "evidenceSentence": 1
         },
         {
+          "kind": "detail",
+          "prompt": "Rast, şaş an çîrok nabêje? Zana ji şorbeya nîskê hez dike.",
+          "promptEn": "True, false or not in the story? Zana likes lentil soup.",
+          "options": [
+            "Rast",
+            "Şaş",
+            "Çîrok nabêje"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok behsa vê nake.",
+          "explanationEn": "The story doesn’t say.",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 2
+        },
+        {
           "kind": "inference",
           "prompt": "Xaltîka Gulê ji şorbeyê hez dike. Em vê yekê ji ku dizanin?",
           "promptEn": "Aunt Gulê likes the soup. How do we know?",
@@ -863,7 +910,7 @@
       "readingMinutes": null,
       "title": "Top û Apê Mehmûd",
       "summary": "Top dikeve baxçeyê cîranê herî hişk ê taxê. Kî dê biçe pey wê?",
-      "body": "Taxa me biçûk e, lê kolana wê dirêj e. Her êvar em zarokên taxê li wê kolanê futbol dilîzin. Navê min Zîlan e. Ez yazdeh salî me û ez dergevan im.\n\nDo Azad bi hêz li topê xist. Top di ser dîwar re firiya û ket baxçeyê Apê Mehmûd. Hemû zarok bêdeng man. Apê Mehmûd mirovekî pîr û hişk e. Kesî tu carî kenê wî nedîtiye, û zarok jê ditirsin.\n\nKesî nexwest biçe wir. Hingê min got: “Ez ê biçim.” Ez jî hinekî ditirsiyam, lê ez çûm û min li derî xist.\n\nApê Mehmûd derî vekir. Top di destê wî de bû. Min bi dengekî nizm got: “Bibore, Apo. Em ê careke din baldar bin.” Ew li min hêrs nebû. Wî li topê nêrî û got: “Di ciwaniya xwe de ez jî dergevan bûm. Ez dergevanê herî baş ê gund bûm!”\n\nPaşê Apê Mehmûd bi min re hat kolanê. Wî nîşanî me da ka dergevan çawa disekine û çawa topê digire. Zarok matmayî man. Wê êvarê Apê Mehmûd bû dadwer.\n\nDi dawiya lîstikê de Azad dîsa bi hêz li topê xist, lê vê carê min top girt! Apê Mehmûd ji dil kenî û li çepikan xist. Me cara yekem kenê wî dît. Niha her êvar ew li ber deriyê xwe rûdine û li me dinêre.",
+      "body": "Taxa me biçûk e, lê kolana wê dirêj e. Her êvar em zarokên taxê li wê kolanê futbol dilîzin. Navê min Zîlan e. Ez yazdeh salî me û ez dergevan im.\n\nDuh Azad bi hêz li topê xist. Top di ser dîwar re firiya û ket baxçeyê Apê Mehmûd. Hemû zarok bêdeng man. Apê Mehmûd mirovekî pîr û hişk e. Kesî tu carî kenê wî nedîtiye, û zarok jê ditirsin.\n\nKesî nexwest biçe wir. Hingê min got: “Ez ê biçim.” Ez jî hinekî ditirsiyam, lê ez çûm û min li derî xist.\n\nApê Mehmûd derî vekir. Top di destê wî de bû. Min bi dengekî nizm got: “Bibore, Apo. Em ê careke din baldar bin.” Ew li min hêrs nebû. Wî li topê nêrî û got: “Di ciwaniya xwe de ez jî dergevan bûm. Ez dergevanê herî baş ê gund bûm!”\n\nPaşê Apê Mehmûd bi min re hat kolanê. Wî nîşanî me da ka dergevan çawa disekine û çawa topê digire. Zarok matmayî man. Wê êvarê Apê Mehmûd bû dadwer.\n\nDi dawiya lîstikê de Azad dîsa bi hêz li topê xist, lê vê carê min top girt! Apê Mehmûd ji dil kenî û li çepikan xist. Me cara yekem kenê wî dît. Niha her êvar ew li ber deriyê xwe rûdine û li me dinêre.",
       "translations": {},
       "glossary": [
         {
@@ -938,13 +985,28 @@
           "options": [
             "Dadwer",
             "Dergevan",
-            "Binêr"
+            "Lîstikvan"
           ],
           "correctIndex": 1,
           "explanation": "Zîlan dibêje: “Ez dergevan im.”",
           "explanationEn": "Zîlan says: “I am the goalkeeper.”",
           "evidenceParagraph": 0,
           "evidenceSentence": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast, şaş an çîrok nabêje? Azad birayê Zîlanê ye.",
+          "promptEn": "True, false or not in the story? Azad is Zîlan’s brother.",
+          "options": [
+            "Rast",
+            "Şaş",
+            "Çîrok nabêje"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok behsa vê nake.",
+          "explanationEn": "The story doesn’t say.",
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -966,7 +1028,7 @@
           "prompt": "Çima zarok bêdeng man?",
           "promptEn": "Why did the children go quiet?",
           "options": [
-            "Ji ber ku Azad gol avêt",
+            "Ji ber ku Azad gol avêt û lîstik qediya",
             "Ji ber ku êvar bû û diçûn malê",
             "Ji ber ku ji Apê Mehmûd ditirsiyan"
           ],
@@ -1027,7 +1089,7 @@
           "promptEn": "What was Uncle Mehmûd when he was young?",
           "options": [
             "Dergevanê herî baş ê gund",
-            "Dadwerê lîstikên gund",
+            "Dadwerê hemû lîstikên gund",
             "Mamosteyê dibistana gund"
           ],
           "correctIndex": 0,
@@ -1101,7 +1163,7 @@
           "prompt": "“Me cara yekem kenê wî dît.” Ev çi nîşan dide?",
           "promptEn": "“Me cara yekem kenê wî dît.” What does this show?",
           "options": [
-            "Apê Mehmûd her roj dikenî",
+            "Apê Mehmûd her roj bi zarokan re dikenî",
             "Berê Apê Mehmûd tu carî nedikenî",
             "Zarok berê nediçûn kolanê"
           ],
@@ -1118,7 +1180,7 @@
           "options": [
             "Zîlan li bajêr dibe dergevaneke navdar.",
             "Cîranê ku zarok jê ditirsin dibe hevalê wan.",
-            "Azad topa xwe winda dike û yeke nû dikire."
+            "Azad topa xwe winda dike û yeke nû ji bazarê dikire."
           ],
           "correctIndex": 1,
           "explanation": "Ji ber topê Zîlan diçe ba Apê Mehmûd. Ew ne ewqas hişk derdikeve û dibe hevalê zarokan.",
@@ -1363,6 +1425,21 @@
         },
         {
           "kind": "detail",
+          "prompt": "Rast, şaş an çîrok nabêje? Diya Berfînê jî ket nav govendê.",
+          "promptEn": "True, false or not in the story? Berfîn’s mother joined the dance too.",
+          "options": [
+            "Rast",
+            "Şaş",
+            "Çîrok nabêje"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok behsa vê nake.",
+          "explanationEn": "The story doesn’t say.",
+          "evidenceParagraph": 4,
+          "evidenceSentence": 4
+        },
+        {
+          "kind": "detail",
           "prompt": "Êvarê kê xwe di ser agir re avêt?",
           "promptEn": "In the evening, who jumped over the fire?",
           "options": [
@@ -1423,7 +1500,7 @@
       "readingMinutes": null,
       "title": "Rêya Gund",
       "summary": "Otobûsa gund li ser rê têk diçe. Dilan û Rênas dê çawa bigihîjin mala dapîra xwe?",
-      "body": "Havîn bû û dibistan girtî bû. Dilan sêzdeh salî bû, birayê wê Rênas jî heft salî. Wê rojê ew bi diya xwe re ji bajêr çûn gundê Kaniyaspî, mala dapîra xwe. Rênas pir dilxweş bû, ji ber ku dapîra wan her havîn nanê tenûrê ji wan re çêdikir.\n\nEw siwarî otobûsa gund bûn. Rê dirêj û germ bû. Li ser rê wan gund, çem û çiyayên bilind dîtin. Rênas ji pencereyê li derve dinêrî û her pênc xulekan carekê dipirsî: “Em gihîştin?” Diya wî dikenî û digot: “Hê na, kurê min.”\n\nNêzî nîvro, li ser rêyeke teng di navbera çiyayan de, otobûs ji nişka ve sekinî. Dûmanek spî ji motorê derket. Ajovan daket, li motorê nêrî û serê xwe hejand. Wî got: “Motor têk çûye. Divê em li benda alîkariyê bimînin. Belkî heta êvarê.” Rêwiyên din jî daketin û li ber siya darekê rûniştin.\n\nRênas dest bi girî kir: “Ez naxwazim li vir bimînim! Ez birçî me!” Dilan jî xemgîn bû, lê wê destê birayê xwe girt û got: “Netirse, em ê rêyekê bibînin.”\n\nPiştî çend demjimêran, şivanekî pîr bi kerê xwe re hat ba wan. Navê wî Apê Xelîl bû. Wî pirsî: “Hûn diçin ku derê?” Diya Dilanê got: “Em diçin Kaniyaspî, mala Zelîxayê.” Şivan kenî: “Ez Zelîxayê baş nas dikim! Gund ne dûr e, bi peyatî demjimêrek e. Werin, ez ê rê nîşanî we bidim.”\n\nApê Xelîl çenteyên wan li ser pişta kerê xwe danîn. Rênas jî siwarî kerê Apê Xelîl bû û êdî negirî. Ew di nav zeviyên genim re meşiyan. Apê Xelîl navên kulîlk û çivîkan ji zarokan re digotin. Carinan wî bi bilûra xwe stranek jî lêdixist. Dilanê ji bîr kir ku ew westiyayî ye.\n\nDema roj diçû ava, ew gihîştin gund. Dapîra wan li ber derî li benda wan bû. Wê ew yek bi yek hembêz kirin û got: “Ez ji nîvro ve li benda we me!”\n\nBîna nanê tenûrê li hewşê belav bûbû. Rênas got: “Dapîrê, otobûs têk çû, lê kerê Apê Xelîl têk neçû!” Hemû kenîn. Wê şevê wan nanê germ bi penîr û hingiv xwar, û Apê Xelîl jî bû mêvanê wan.",
+      "body": "Havîn bû û dibistan girtî bû. Dilan sêzdeh salî bû, birayê wê Rênas jî heft salî. Wê rojê ew bi diya xwe re ji bajêr çûn gundê Kaniyaspî, mala dapîra xwe. Rênas pir dilxweş bû, ji ber ku dapîra wan her havîn nanê tenûrê ji wan re çêdikir.\n\nEw siwarî otobûsa gund bûn. Rê dirêj û germ bû. Li ser rê wan gund, çem û çiyayên bilind dîtin. Rênas ji pencereyê li derve dinêrî û her pênc xulekan carekê dipirsî: “Em gihîştin?” Diya wî dikenî û digot: “Hê na, kurê min.”\n\nNêzî nîvro, li ser rêyeke teng di navbera çiyayan de, otobûs ji nişka ve sekinî. Dûmanek spî ji motorê derket. Ajovan daket, li motorê nêrî û serê xwe hejand. Wî got: “Motor têk çûye. Divê em li benda alîkariyê bimînin. Belkî heta êvarê.” Rêwiyên din jî daketin û li ber siya darekê rûniştin.\n\nRênas dest bi girî kir: “Ez naxwazim li vir bimînim! Ez birçî me!” Dilan jî xemgîn bû, lê wê destê birayê xwe girt û got: “Netirse, em ê rêyekê bibînin.”\n\nPiştî çend demjimêran, şivanekî pîr bi kerê xwe re hat ba wan. Navê wî Apê Xelîl bû. Wî pirsî: “Hûn diçin ku derê?” Diya Dilanê got: “Em diçin Kaniyaspî, mala Zelîxayê.” Şivan kenî: “Ez Zelîxayê baş nas dikim! Gund ne dûr e, bi peyatî demjimêrek e. Werin, ez ê rê nîşanî we bidim.”\n\nApê Xelîl çenteyên wan li ser pişta kerê xwe danîn. Rênas jî siwarî kerê Apê Xelîl bû û êdî negirî. Ew di nav zeviyên genim re meşiyan. Apê Xelîl navên kulîlk û çivîkan ji zarokan re digotin. Carinan wî bi bilûra xwe stranek jî lêdixist. Dilanê ji bîr kir ku ew westiyayî ye.\n\nDema roj diçû ava, ew gihîştin gund. Dapîra wan li ber derî li benda wan bû. Wê ew yek bi yek hembêz kirin û got: “Ez ji nîvro ve li benda we me!”\n\nBêhna nanê tenûrê li hewşê belav bûbû. Rênas got: “Dapîrê, otobûs têk çû, lê kerê Apê Xelîl têk neçû!” Hemû kenîn. Wê şevê wan nanê germ bi penîr û hingiv xwar, û Apê Xelîl jî bû mêvanê wan.",
       "translations": {},
       "glossary": [
         {
@@ -1493,6 +1570,21 @@
         },
         {
           "kind": "detail",
+          "prompt": "Rast, şaş an çîrok nabêje? Bavê Dilanê jî bi wan re bû.",
+          "promptEn": "True, false or not in the story? Dilan’s father was with them too.",
+          "options": [
+            "Rast",
+            "Şaş",
+            "Çîrok nabêje"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok behsa vê nake.",
+          "explanationEn": "The story doesn’t say.",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
           "prompt": "Çima Rênas pir dilxweş bû?",
           "promptEn": "Why was Rênas very happy?",
           "options": [
@@ -1522,6 +1614,21 @@
           "evidenceSentence": 3
         },
         {
+          "kind": "detail",
+          "prompt": "Rast, şaş an çîrok nabêje? Otobûs heta gund çû.",
+          "promptEn": "True, false or not in the story? The bus went all the way to the village.",
+          "options": [
+            "Rast",
+            "Şaş",
+            "Çîrok nabêje"
+          ],
+          "correctIndex": 1,
+          "explanation": "Şaş e. Otobûs li ser rê sekinî: «Motor têk çûye.»",
+          "explanationEn": "False. The bus stopped on the way: “The engine has broken down.”",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
           "kind": "vocabulary",
           "prompt": "“Ajovan daket, li motorê nêrî.” “Ajovan” kî ye?",
           "promptEn": "“Ajovan daket, li motorê nêrî.” Who is the “ajovan”?",
@@ -1533,6 +1640,21 @@
           "correctIndex": 2,
           "explanation": "Ajovan ew kes e ku otobûsê dajo. Gava otobûs sekinî, ew daket û li motorê nêrî.",
           "explanationEn": "The “ajovan” is the person who drives the bus. When the bus stopped, he got out and looked at the engine.",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Piştî ku otobûs sekinî, pêşî çi bû?",
+          "promptEn": "After the bus stopped, what happened first?",
+          "options": [
+            "Ajovan daket û li motorê nêrî",
+            "Şivanekî pîr bi kerê xwe re hat ba wan",
+            "Dapîrê ew hembêz kirin"
+          ],
+          "correctIndex": 0,
+          "explanation": "Pêşî ajovan daket û li motorê nêrî; piştî çend demjimêran Apê Xelîl hat.",
+          "explanationEn": "First the driver got out and looked at the engine; a few hours later Apê Xelîl came.",
           "evidenceParagraph": 2,
           "evidenceSentence": 2
         },
@@ -1595,6 +1717,36 @@
           "explanationEn": "He said: “The village isn’t far, it’s an hour on foot.”",
           "evidenceParagraph": 4,
           "evidenceSentence": 5
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Rênas êdî negirî?",
+          "promptEn": "Why did Rênas stop crying?",
+          "options": [
+            "Ji ber ku ew siwarî kerê Apê Xelîl bû",
+            "Ji ber ku otobûs dîsa dest bi rê kir",
+            "Ji ber ku dapîra wî hat û ew hembêz kir"
+          ],
+          "correctIndex": 0,
+          "explanation": "«Rênas jî siwarî kerê Apê Xelîl bû û êdî negirî.»",
+          "explanationEn": "“Rênas rode Apê Xelîl’s donkey too, and stopped crying.”",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«Ew di nav zeviyên genim re meşiyan.» Zevî çi ye?",
+          "promptEn": "“They walked through the zevî of wheat.” What is a zevî?",
+          "options": [
+            "Erdê ku genim lê tê çandin",
+            "Ava sar a ku ji çiyayê bilind tê",
+            "Dara mezin a li ber gund"
+          ],
+          "correctIndex": 0,
+          "explanation": "Zevî erdê ku cotkar genim an tiştekî din lê diçîne ye.",
+          "explanationEn": "A zevî is a field, land where farmers grow wheat or other crops.",
+          "evidenceParagraph": 5,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -2027,8 +2179,8 @@
       "cover": null,
       "readingMinutes": 4,
       "title": "Şengê û Pengê",
-      "summary": "Dema ku dêya wan li zozanan e, gur tê ber derî û dixwaze Şengê û Pengê bixapîne. Gelo karik derî vedikin?",
-      "body": "Carekê, di gundekî de bizinek bi du karikên xwe, Şengê û Pengê, re dijiyan. Ew di xaniyekî biçûk de li ber çiyayan dijiyan.\n\nHer sibeh, dêya wan diçû zozanan da ku giya bixwe. Berî ku ji malê derkeve, ew her du karikên xwe gazî dikir û digot:\n\n«Zarokên min, ez ê biçim zozanan. Hûn li malê bimînin û derî ji kesî re venekin.»\n\nŞengê û Pengê digotin:\n\n«Baş e, dayê. Em ê derî ji kesî re venekin.»\n\nDêya wan got:\n\n«Dema ku ez vegerim, ez ê straneke taybet bibêjim. Hûn ê ji dengê min nas bikin.»\n\nPiştî ku dêya wan çû, gurêkî birçî ji nêzîkî xanî derbas bû. Wî gotinên dêya wan bihîstibû. Ew dizanibû ku du karik tenê li malê mane.\n\nGur nêzîkî derî bû û bi dengekî nerm got:\n\n«Şengê û Pengê, derî vekin! Dayika we hatiye.»\n\nLê Şengê got:\n\n«Na! Tu dêya me nînî. Dengê te cuda ye.»\n\nGur hinekî dûr çû û li ser gotina xwe hizirî. Piştre vegeriya û bi dengekî nermtir straneke mîna ya dêya wan got.\n\nPengê got:\n\n«Dibe ku dayika me be!»\n\nLê Şengê bersiv da:\n\n«Na, divê em pêşî baş guhdarî bikin. Dayika me gotiye ku em derî ji kesî re venekin.»\n\nGur dîsa hewl da, lê karik derî venekirin.\n\nDi vê navberê de, dêya wan ji zozanan vegeriya. Wê stranê xwe ya taybet got. Şengê û Pengê dengê wê nas kirin û bi dilxweşî derî vekirin.\n\nDêya wan wan di nav xwe de girt û pirsî:\n\n«Çima hûn derî ji min re venekirin?»\n\nŞengê got:\n\n«Gur hatibû, dayê. Ew dixwest me bixapîne.»\n\nDêya wan got:\n\n«We baş kir. Divê hûn her gav hişyar bin û gotinên min bi bîr bînin.»\n\nJi wê rojê pê ve, Şengê û Pengê fêr bûn ku divê mirov ji kesên ku nas nake re derî veneke û her gotinekê bê hizirîn bawer neke.\n\nDawî.",
+      "summary": "Dema ku diya wan li zozanan e, gur tê ber derî û dixwaze Şengê û Pengê bixapîne. Gelo karik derî vedikin?",
+      "body": "Carekê, di gundekî de bizinek bi du karikên xwe, Şengê û Pengê, re dijiyan. Ew di xaniyekî biçûk de li ber çiyayan dijiyan.\n\nHer sibeh, diya wan diçû zozanan da ku giya bixwe. Berî ku ji malê derkeve, ew her du karikên xwe gazî dikir û digot:\n\n«Zarokên min, ez ê biçim zozanan. Hûn li malê bimînin û derî ji kesî re venekin.»\n\nŞengê û Pengê digotin:\n\n«Baş e, dayê. Em ê derî ji kesî re venekin.»\n\nDiya wan got:\n\n«Dema ku ez vegerim, ez ê straneke taybet bibêjim. Hûn ê min ji dengê min nas bikin.»\n\nPiştî ku diya wan çû, gurekî birçî ji nêzîkî xanî derbas bû. Wî gotinên diya wan bihîstibû. Ew dizanibû ku du karik tenê li malê mane.\n\nGur nêzîkî derî bû û bi dengekî nerm got:\n\n«Şengê û Pengê, derî vekin! Dayika we hatiye.»\n\nLê Şengê got:\n\n«Na! Tu diya me nînî. Dengê te cuda ye.»\n\nGur hinekî dûr çû û li ser gotina xwe hizirî. Piştre vegeriya û bi dengekî nermtir straneke mîna ya diya wan got.\n\nPengê got:\n\n«Dibe ku dayika me be!»\n\nLê Şengê bersiv da:\n\n«Na, divê em pêşî baş guhdarî bikin. Dayika me gotiye ku em derî ji kesî re venekin.»\n\nGur dîsa hewl da, lê karik derî venekirin.\n\nDi vê navberê de, diya wan ji zozanan vegeriya. Wê strana xwe ya taybet got. Şengê û Pengê dengê wê nas kirin û bi dilxweşî derî vekirin.\n\nDiya wan wan di nav xwe de girt û pirsî:\n\n«Çima hûn derî ji min re venekirin?»\n\nŞengê got:\n\n«Gur hatibû, dayê. Ew dixwest me bixapîne.»\n\nDiya wan got:\n\n«We baş kir. Divê hûn her gav hişyar bin û gotinên min bi bîr bînin.»\n\nJi wê rojê pê ve, Şengê û Pengê fêr bûn ku divê mirov ji kesên ku nas nake re derî veneke û her gotinekê bê hizirîn bawer neke.\n\nDawî.",
       "translations": {
         "en": "Once upon a time, a mother goat lived in a village with her two little kids, Şengê and Pengê. They lived in a small house near the mountains.\n\nEvery morning, their mother went to the summer pastures to eat grass. Before leaving, she called her two children and said:\n\n“My children, I am going to the pastures. Stay at home and do not open the door to anyone.”\n\nŞengê and Pengê replied:\n\n“Okay, mother. We will not open the door to anyone.”\n\nTheir mother said:\n\n“When I return, I will sing a special song. You will recognize me by my voice.”\n\nAfter their mother left, a hungry wolf passed near the house. He had heard what their mother said. He knew that the two little goats were home alone.\n\nThe wolf approached the door and said softly:\n\n“Şengê and Pengê, open the door! Your mother has arrived.”\n\nBut Şengê said:\n\n“No! You are not our mother. Your voice is different.”\n\nThe wolf went a little farther away and thought about what to do. Then he returned and sang a song similar to their mother’s, using a softer voice.\n\nPengê said:\n\n“Maybe it is our mother!”\n\nBut Şengê replied:\n\n“No, we must listen carefully first. Our mother told us not to open the door to anyone.”\n\nThe wolf tried again, but the little goats did not open the door.\n\nMeanwhile, their mother returned from the pastures. She sang her special song. Şengê and Pengê recognized her voice and happily opened the door.\n\nTheir mother hugged them and asked:\n\n“Why didn’t you open the door for me?”\n\nŞengê said:\n\n“The wolf came, mother. He wanted to trick us.”\n\nTheir mother said:\n\n“You did well. You must always be careful and remember what I tell you.”\n\nFrom that day on, Şengê and Pengê learned that they should not open the door to strangers and should not believe everything without thinking.\n\nThe End."
       },
@@ -2131,18 +2283,18 @@
           "promptEn": "Who did Şengê and Pengê live with?",
           "options": [
             "Bi şivanekî re",
-            "Bi dêya xwe re",
+            "Bi diya xwe re",
             "Bi xaltîka xwe re"
           ],
           "correctIndex": 1,
-          "explanation": "Çîrok dibêje: «bizinek bi du karikên xwe, Şengê û Pengê, re dijiyan.» Bizin dêya wan e.",
+          "explanation": "Çîrok dibêje: «bizinek bi du karikên xwe, Şengê û Pengê, re dijiyan.» Bizin diya wan e.",
           "explanationEn": "The story says: “a goat lived with her two kids, Şengê and Pengê.” The goat is their mother.",
           "evidenceParagraph": 0,
           "evidenceSentence": 0
         },
         {
           "kind": "detail",
-          "prompt": "Dêya wan her sibeh çima diçû zozanan?",
+          "prompt": "Diya wan her sibeh çima diçû zozanan?",
           "promptEn": "Why did their mother go to the summer pastures every morning?",
           "options": [
             "Da ku giya bixwe",
@@ -2150,15 +2302,15 @@
             "Da ku hevalên xwe bibîne"
           ],
           "correctIndex": 0,
-          "explanation": "Çîrok dibêje: «dêya wan diçû zozanan da ku giya bixwe.»",
+          "explanation": "Çîrok dibêje: «diya wan diçû zozanan da ku giya bixwe.»",
           "explanationEn": "The story says: “their mother went to the pastures to eat grass.”",
           "evidenceParagraph": 1,
           "evidenceSentence": 0
         },
         {
           "kind": "vocabulary",
-          "prompt": "«Dêya wan diçû zozanan.» «Zozan» çi ye?",
-          "promptEn": "“Dêya wan diçû zozanan.” What is a “zozan”?",
+          "prompt": "«Diya wan diçû zozanan.» «Zozan» çi ye?",
+          "promptEn": "“Diya wan diçû zozanan.” What is a “zozan”?",
           "options": [
             "Bazara mezin a gundê cîran",
             "Odeya mezin a xaniyekî",
@@ -2186,6 +2338,21 @@
           "evidenceSentence": 1
         },
         {
+          "kind": "detail",
+          "prompt": "Dema ku dê vegere, ew ê çi bike?",
+          "promptEn": "When the mother comes back, what will she do?",
+          "options": [
+            "Ew ê straneke taybet bibêje",
+            "Ew ê bi hêz li derî bixe",
+            "Ew ê navên wan bi dengekî bilind bibêje"
+          ],
+          "correctIndex": 0,
+          "explanation": "Diya wan got: «Dema ku ez vegerim, ez ê straneke taybet bibêjim.»",
+          "explanationEn": "Their mother said: “When I come back, I will sing a special song.”",
+          "evidenceParagraph": 6,
+          "evidenceSentence": 0
+        },
+        {
           "kind": "vocabulary",
           "prompt": "Gur «birçî» bû. «Birçî» tê çi wateyê?",
           "promptEn": "The wolf was “birçî”. What does “birçî” mean?",
@@ -2205,13 +2372,28 @@
           "prompt": "Gur çawa dizanibû ku karik tenê li malê ne?",
           "promptEn": "How did the wolf know that the kids were home alone?",
           "options": [
-            "Wî gotinên dêya wan bihîstibû",
+            "Wî gotinên diya wan bihîstibû",
             "Karikan jê re gotibû",
             "Wî ji pencereyê li hundir nêrîbû"
           ],
           "correctIndex": 0,
-          "explanation": "Çîrok dibêje: «Wî gotinên dêya wan bihîstibû.»",
+          "explanation": "Çîrok dibêje: «Wî gotinên diya wan bihîstibû.»",
           "explanationEn": "The story says: “He had heard what their mother said.”",
+          "evidenceParagraph": 7,
+          "evidenceSentence": 1
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Kîjan pêşî rû da?",
+          "promptEn": "Which happened first?",
+          "options": [
+            "Gur gotinên diya wan bihîst",
+            "Pengê got: «Dibe ku dayika me be!»",
+            "Dê ji zozanan vegeriya"
+          ],
+          "correctIndex": 0,
+          "explanation": "Pêşî gur gotinên diya wan bihîst; paşê Pengê got «Dibe ku dayika me be!»; û di dawiyê de dê vegeriya.",
+          "explanationEn": "First the wolf heard their mother’s words; then Pengê said “Maybe it’s our mother!”; and last the mother came back.",
           "evidenceParagraph": 7,
           "evidenceSentence": 1
         },
@@ -2222,17 +2404,17 @@
           "options": [
             "Ji ber ku ew westiyayî bû",
             "Da ku cîran wî nebihîzin",
-            "Da ku dengê wî mîna dengê dêya wan be"
+            "Da ku dengê wî mîna dengê diya wan be"
           ],
           "correctIndex": 2,
-          "explanation": "Gur dixwest karik bawer bikin ku ew dêya wan e, loma dengê xwe nerm kir.",
+          "explanation": "Gur dixwest karik bawer bikin ku ew diya wan e, loma dengê xwe nerm kir.",
           "explanationEn": "The wolf wanted the kids to believe he was their mother, so he made his voice soft.",
           "evidenceParagraph": 8,
           "evidenceSentence": 0
         },
         {
           "kind": "detail",
-          "prompt": "Çima Şengê bawer nekir ku gur dêya wan e?",
+          "prompt": "Çima Şengê bawer nekir ku gur diya wan e?",
           "promptEn": "Why didn’t Şengê believe that the wolf was their mother?",
           "options": [
             "Ji ber ku wê gur ji pencereyê dît",
@@ -2240,7 +2422,7 @@
             "Ji ber ku Pengê jê re got"
           ],
           "correctIndex": 1,
-          "explanation": "Şengê got: «Tu dêya me nînî. Dengê te cuda ye.»",
+          "explanation": "Şengê got: «Tu diya me nînî. Dengê te cuda ye.»",
           "explanationEn": "Şengê said: “You are not our mother. Your voice is different.”",
           "evidenceParagraph": 11,
           "evidenceSentence": 2
@@ -2255,7 +2437,7 @@
             "Bi hêz li derî xist û ket hundir"
           ],
           "correctIndex": 0,
-          "explanation": "Çîrok dibêje: «Piştre vegeriya û bi dengekî nermtir straneke mîna ya dêya wan got.»",
+          "explanation": "Çîrok dibêje: «Piştre vegeriya û bi dengekî nermtir straneke mîna ya diya wan got.»",
           "explanationEn": "The story says: “Then he returned and sang a song similar to their mother’s, using a softer voice.”",
           "evidenceParagraph": 12,
           "evidenceSentence": 1
@@ -2277,15 +2459,60 @@
         },
         {
           "kind": "detail",
-          "prompt": "Dê çawa nîşan da ku ew bi rastî dêya wan e?",
+          "prompt": "Rast, şaş an çîrok nabêje? Şengê ji Pengê mezintir e.",
+          "promptEn": "True, false or not in the story? Şengê is older than Pengê.",
+          "options": [
+            "Rast",
+            "Şaş",
+            "Çîrok nabêje"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok behsa vê nake.",
+          "explanationEn": "The story doesn’t say.",
+          "evidenceParagraph": 15,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Şengê got: «Divê em pêşî baş guhdarî bikin»?",
+          "promptEn": "Why did Şengê say: “First we must listen carefully”?",
+          "options": [
+            "Ji ber ku wê dixwest dengê dayika xwe nas bike",
+            "Ji ber ku Pengê nexweş bû û nikaribû rabe",
+            "Ji ber ku gur ji dûr ve bi dengekî bilind diqîriya"
+          ],
+          "correctIndex": 0,
+          "explanation": "Dayika wan gotibû ku ew ê bi straneke taybet were, û Şengê dixwest dengê wê bi rastî nas bike.",
+          "explanationEn": "Their mother had said she would come with a special song, and Şengê wanted to be sure it was really her voice.",
+          "evidenceParagraph": 16,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast, şaş an çîrok nabêje? Gur ket hundirê xanî.",
+          "promptEn": "True, false or not in the story? The wolf got into the house.",
+          "options": [
+            "Rast",
+            "Şaş",
+            "Çîrok nabêje"
+          ],
+          "correctIndex": 1,
+          "explanation": "Şaş e. Çîrok dibêje: «Gur dîsa hewl da, lê karik derî venekirin.»",
+          "explanationEn": "False. The story says: “The wolf tried again, but the kids did not open the door.”",
+          "evidenceParagraph": 17,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Dê çawa nîşan da ku ew bi rastî diya wan e?",
           "promptEn": "How did the mother show that she really was their mother?",
           "options": [
             "Wê strana xwe ya taybet got",
-            "Wê navê karikan gazî kir",
+            "Wê navên karikan got",
             "Wê bi hêz li derî xist"
           ],
           "correctIndex": 0,
-          "explanation": "Çîrok dibêje: «Wê stranê xwe ya taybet got. Şengê û Pengê dengê wê nas kirin.»",
+          "explanation": "Çîrok dibêje: «Wê strana xwe ya taybet got. Şengê û Pengê dengê wê nas kirin.»",
           "explanationEn": "The story says: “She sang her special song. Şengê and Pengê recognized her voice.”",
           "evidenceParagraph": 18,
           "evidenceSentence": 1

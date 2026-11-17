@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Link } from 'react-router-dom';
 import { useT } from '../i18n/I18nProvider';
+import { useGrowsInto } from '../lib/viewTransition';
 import { EmptyState, ErrorState } from '../components/states';
 import { DictRowsSkeleton } from '../components/skeletons';
 import { BookmarkIcon, CloseIcon } from '../components/icons';
@@ -35,6 +36,8 @@ export function Dictionary(): React.JSX.Element {
   const [saved, setSaved] = useState<SavedWord[]>([]);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const debounced = useDebouncedValue(query, 250);
+  // where the tool's card on Learn lands when it is pressed, and what goes back to it
+  const head = useGrowsInto('learn:dictionary', { shape: 'card' });
 
   const loadSaved = useCallback(() => {
     void client.get<{ words: SavedWord[] }>('/me/saved-words').then((res) => {
@@ -96,7 +99,9 @@ export function Dictionary(): React.JSX.Element {
 
   return (
     <div className="container dict">
-      <h1 className="page-title">{t('nav.dictionary')}</h1>
+      <h1 className="page-title" ref={head}>
+        {t('nav.dictionary')}
+      </h1>
 
       <SearchField
         icon
@@ -110,7 +115,7 @@ export function Dictionary(): React.JSX.Element {
       />
 
       {idle && (
-        <Link to="/app/alphabet" className="doc-link dict-alphabet">
+        <Link to="/app/alphabet" className="doc-link reach-line dict-alphabet">
           {t('alphabet.link')}
         </Link>
       )}

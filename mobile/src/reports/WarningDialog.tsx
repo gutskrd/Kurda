@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AppState, Modal, StyleSheet, Text, View } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachReset } from '../theme/Pressable';
 import { useNavigation } from '@react-navigation/native';
 import type { StandingSanction } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -71,34 +71,36 @@ export function WarningDialog(): React.JSX.Element | null {
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={() => done()}>
-      <View style={[styles.backdrop, { backgroundColor: colors.scrim }]}>
-        <View style={[styles.card, { backgroundColor: colors.background }]} accessibilityViewIsModal accessibilityRole="alert">
-          <View style={[styles.mark, { backgroundColor: colors.controlTrack }]}>
-            <Icon name="shield" size={26} color={colors.textPrimary} />
+      <ReachReset>
+        <View style={[styles.backdrop, { backgroundColor: colors.scrim }]}>
+          <View style={[styles.card, { backgroundColor: colors.background }]} accessibilityViewIsModal accessibilityRole="alert">
+            <View style={[styles.mark, { backgroundColor: colors.controlTrack }]}>
+              <Icon name="shield" size={26} color={colors.textPrimary} />
+            </View>
+            <Text style={[styles.title, styles.center, { color: colors.textPrimary }]} accessibilityRole="header">
+              {t('warning.title')}
+            </Text>
+            <Text style={[styles.body, dir.text, { color: colors.textPrimary }]}>
+              {t('warning.body', { rule: t(CATEGORY_LABEL[first.policy]) })}
+            </Text>
+            {warnings.map((w) =>
+              w.statement ? (
+                <Text key={w.id} style={[styles.statement, dir.free, { color: colors.textSecondary }]}>
+                  {w.statement}
+                </Text>
+              ) : null,
+            )}
+            <ClayButton label={t('warning.ok')} tone="primary" size="large" onPress={() => done()} style={styles.stretch} />
+            <Pressable
+              onPress={() => done(() => navigation.navigate('AccountStanding'))}
+              accessibilityRole="link"
+              style={({ pressed }) => [styles.link, pressed && heldDim]}
+            >
+              <Text style={[styles.linkText, { color: colors.primary }]}>{t('restriction.seeStanding')}</Text>
+            </Pressable>
           </View>
-          <Text style={[styles.title, styles.center, { color: colors.textPrimary }]} accessibilityRole="header">
-            {t('warning.title')}
-          </Text>
-          <Text style={[styles.body, dir.text, { color: colors.textPrimary }]}>
-            {t('warning.body', { rule: t(CATEGORY_LABEL[first.policy]) })}
-          </Text>
-          {warnings.map((w) =>
-            w.statement ? (
-              <Text key={w.id} style={[styles.statement, dir.free, { color: colors.textSecondary }]}>
-                {w.statement}
-              </Text>
-            ) : null,
-          )}
-          <ClayButton label={t('warning.ok')} tone="primary" size="large" onPress={() => done()} style={styles.stretch} />
-          <Pressable
-            onPress={() => done(() => navigation.navigate('AccountStanding'))}
-            accessibilityRole="link"
-            style={({ pressed }) => [styles.link, pressed && heldDim]}
-          >
-            <Text style={[styles.linkText, { color: colors.primary }]}>{t('restriction.seeStanding')}</Text>
-          </Pressable>
         </View>
-      </View>
+      </ReachReset>
     </Modal>
   );
 }

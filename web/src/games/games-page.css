@@ -1,209 +1,122 @@
 /*
- * Learn's Games page (pages/Games.tsx): a shelf of games.
+ * Learn's Games page (pages/Games.tsx): a page of stamps.
  *
- * Every game is one card: its cover (an illustration with a ground of its
- * own, from shared/src/art/games.ts), a line about it, and a button for each
- * way it is played. The card's edge takes the game's colour (`--gp-tone`)
- * under a hand. The game put forward today is the same card
- * drawn large, on the night the party games are played in. A card lies on
- * its side, picture first, so its words have room at any width: one to a row
- * on a phone, two and then three where the page has the room for them.
+ * Every game is a stamp (games/GameStamp.tsx, game-stamp.css): paper of the
+ * game's own hue with its light round it, the cover, the name. This sheet is
+ * the page around them: the stamp put forward today alone in the middle,
+ * with what it is and its ways in under it; the shelf the others stand on,
+ * as many to a row as the page counted out; and what is laid over a stamp to
+ * be pressed. The page's own words are ink on the page; the colour is all in
+ * the stamps (`--hue-*`, styles/tokens.css), and a way in is the app's one
+ * button.
  *
- * Every game's Play is the same button, the app's own solid one, and a second
- * way in is the quiet one beside it: the covers carry the colour, and the
- * buttons stay one calm, consistent thing to press. The featured
- * cover acts for as long as it is in view; a shelf card's plays through once
- * as it arrives and again under a hand, then rests (games/GameArt.tsx). On
- * this page only transform, opacity and colour move, and nothing moves for a
- * reader who asked for less motion.
+ * A stamp's light reaches past its box, so nothing here cuts a stamp off, and
+ * the room between two stamps is theirs to glow into. The cover put forward
+ * acts for as long as it is in view; a shelf stamp's plays through once as it
+ * arrives and again under a hand, then rests (games/GameArt.tsx). On this
+ * page only transform and opacity move, and nothing moves for a reader who
+ * asked for less motion.
  */
 .gp {
   --gp-gap: var(--space-3);
-  /* the shelf counts its columns by the room the page gives it, which a side rail narrows on a wide screen */
-  container-type: inline-size;
 }
 
-/* ---- a card ------------------------------------------------------------------------ */
-.gp-card {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--space-4);
-  align-items: center;
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  transition:
-    border-color var(--dur-fast) ease,
-    transform var(--dur) var(--ease-out),
-    box-shadow var(--dur) var(--ease-out);
-}
-/* the cover is its own tile: nothing is put behind it, and it keeps its square whatever the card's height */
-.gp-card-art {
-  display: grid;
-  place-items: center;
-}
-.gp-card-text {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-  padding-block: 2px;
-}
-.gp-card-name {
+/* the small word over each part of the page: the game put forward, the shelf, what is on the way */
+.gp-label {
   margin: 0;
+  color: var(--ink-3);
   font-family: var(--font-sans);
-  font-size: 1.0625rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-}
-/* what the name means, in the reader's language: quiet, and close under the name it belongs to */
-.gp-card-meaning {
-  margin: -4px 0 0;
-  color: var(--ink-3);
   font-size: var(--text-caption);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.3;
-}
-.gp-card--hero .gp-card-meaning {
-  margin-top: -6px;
-  color: color-mix(in srgb, var(--night-ink) 72%, transparent);
-}
-.gp-card-body {
-  margin: 0;
-  color: var(--ink-3);
-  font-size: var(--text-secondary);
-  line-height: 1.4;
-  text-wrap: pretty;
-}
-.gp-company {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--ink-3);
-  font-size: var(--text-caption);
-  font-weight: 600;
-}
-.gp-company li {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.gp-ways {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: 4px;
-}
-.gp-ways .btn {
-  flex: 0 1 auto;
-}
-/* a game's Play: the app's solid button, a touch bolder than a plain one */
-.gp-play.btn {
-  font-weight: 700;
-}
-@media (hover: hover) {
-  .gp-card:hover {
-    border-color: color-mix(in srgb, var(--gp-tone) 55%, var(--border));
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
-  }
-  .gp-card--hero:hover {
-    transform: none;
-    box-shadow: none;
-  }
-}
-
-/* ---- the game put forward today ---------------------------------------------------- */
-.gp-card--hero {
-  --night: #2a2150;
-  --night-deep: #171231;
-  --night-ink: #f4efff;
-  grid-template-columns: minmax(0, 1fr);
-  justify-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-  padding: var(--space-6) var(--space-5) var(--space-5);
-  border: 0;
-  background:
-    radial-gradient(90% 70% at 50% 0%, color-mix(in srgb, var(--gp-tone) 42%, transparent) 0%, transparent 70%),
-    radial-gradient(120% 90% at 50% 0%, #3c2f78 0%, var(--night) 55%, var(--night-deep) 100%);
-  color: var(--night-ink);
-  text-align: center;
-  overflow: hidden;
-}
-/* on the night it stands a little off the card, as a book does on a dark shelf */
-.gp-card--hero .gp-art {
-  box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.7);
-}
-.gp-card--hero .gp-card-text {
-  justify-items: center;
-  gap: var(--space-2);
-  width: min(100%, 460px);
-}
-.gp-kicker {
-  margin: 0;
-  color: #f2c95a;
-  font-size: var(--text-caption);
-  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.gp-card--hero .gp-card-name {
-  /* a heading takes the page's own ink unless told: the hero is night in both themes */
-  color: var(--night-ink);
-  font-family: var(--font-display);
-  font-size: clamp(1.6rem, 6.4vw, 2.125rem);
-  line-height: 1.15;
-  text-wrap: balance;
+/* Arabic script is joined, and tracking pulls the joins apart */
+[dir='rtl'] .gp-label {
+  letter-spacing: normal;
 }
-.gp-card--hero .gp-card-body {
-  color: rgba(244, 239, 255, 0.78);
+
+/* ---- the game put forward today ---------------------------------------------------- */
+.gp-featured {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+  text-align: center;
+}
+/* its light has the room to fade out before the words above and below it */
+.gp-featured .gp-stamp {
+  margin-block: var(--space-2);
+}
+.gp-featured-body {
+  max-width: 44ch;
+  margin: 0;
+  color: var(--ink-3);
   font-size: var(--text-body);
+  line-height: 1.4;
   text-wrap: balance;
 }
-.gp-card--hero .gp-company {
+
+/* ---- a game's ways in --------------------------------------------------------------- */
+/* side by side where their words fit, one under the other where they do not; never wider than a button reads well */
+.gp-ways {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  color: rgba(244, 239, 255, 0.7);
-}
-.gp-card--hero .gp-ways {
-  justify-content: center;
+  gap: var(--space-2);
   width: 100%;
-  margin-top: var(--space-3);
 }
-.gp-card--hero .gp-ways .btn {
-  flex: 1 1 180px;
+.gp-ways .btn {
+  flex: 1 1 auto;
+  min-width: min(100%, 168px);
   max-width: 280px;
-  height: 52px;
-  font-size: 1.0625rem;
 }
-.gp-card--hero .gp-play.btn {
-  /* on the night the featured game is shown on, in either theme, Play is the one light thing */
-  border-color: #ffffff;
-  background: #ffffff;
-  color: var(--night-deep);
+
+/* ---- a stamp that is pressed -------------------------------------------------------- */
+.gp-stamp {
+  position: relative;
+  transition: transform var(--dur) var(--ease-out);
 }
-.gp-card--hero .gp-play.btn:hover {
-  border-color: #f1ecff;
-  background: #f1ecff;
+/* what is pressed lies over the whole stamp, beside its heading and not around it */
+.gp-stamp-press {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: none;
+  cursor: pointer;
 }
-.gp-card--hero .btn-secondary {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--night-ink);
+/*
+ * The keyboard's place, in the stamp's own ink: the app's violet ring would
+ * be lost in the light of a violet stamp, and the hue's deep shade is as
+ * strong against the page as it is against the paper. It stands off the
+ * perforations, in the stamp's light.
+ */
+.gp-stamp-press:focus-visible {
+  outline: 2px solid var(--hue-deep);
+  outline-offset: 4px;
 }
-.gp-card--hero .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.18);
+/* under a pointer a stamp lifts a little off the page, and under a press it gives, as a button does */
+.gp-stamp:hover {
+  transform: translateY(-3px);
 }
+.gp-stamp:has(.gp-stamp-press:active) {
+  transform: scale(var(--press-scale));
+  transition-duration: 80ms;
+}
+
 /* ---- the code and the rankings ------------------------------------------------------ */
 .gp-quick {
   display: grid;
   gap: var(--gp-gap);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-6);
 }
 .gp-quick > * {
   margin: 0;
@@ -213,23 +126,100 @@
 }
 
 /* ---- the shelf ---------------------------------------------------------------------- */
+/*
+ * A page of a collection: the stamps stand in rows, each row level, with air
+ * between for their light. How many to a row, how wide each is and how far
+ * apart they stand are counted out by the page, which draws each stamp for
+ * its width (`--gp-columns`, `--gp-stamp`, `--gp-stamp-gap`); a row that does
+ * not fill the page stands in the middle of it, and the shelf's own word
+ * stands over the first stamp of the row, wherever that is.
+ */
+.gp-games-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  max-width: calc(var(--gp-columns) * var(--gp-stamp) + (var(--gp-columns) - 1) * var(--gp-stamp-gap));
+  margin-inline: auto;
+}
+/*
+ * What a visitor is told, once, where the stamps begin: a press on any of
+ * them leads to signing in. A finger's height to press, without making the
+ * line it shares with the shelf's word any taller for it.
+ */
+.gp-signin {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  margin-block: calc(var(--space-3) * -1);
+  margin-inline-end: calc(var(--space-3) * -1);
+  padding-inline: var(--space-3);
+  border-radius: var(--r-pill);
+  color: var(--primary);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  transition: background var(--dur-fast) ease;
+}
+.gp-signin:hover {
+  background: var(--primary-soft);
+}
+[dir='rtl'] .gp-signin-go {
+  transform: scaleX(-1);
+}
+/* the first row's light fades out under the shelf's word, not over it */
 .gp-shelf {
   display: grid;
-  gap: var(--gp-gap);
+  grid-template-columns: repeat(var(--gp-columns), var(--gp-stamp));
+  justify-content: center;
+  gap: calc(var(--gp-stamp-gap) + var(--space-1)) var(--gp-stamp-gap);
+  padding-top: var(--space-5);
+}
+
+/* ---- a game's ways in, offered in a dialog ------------------------------------------ */
+.gp-offer {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  text-align: center;
+}
+.gp-offer-name {
+  margin-top: var(--space-3);
+  font-size: var(--text-title);
+  text-wrap: balance;
+}
+/* what the name means, in the reader's language: quiet, and close under the name it belongs to */
+.gp-offer-meaning {
+  margin-top: calc(var(--space-1) * -1);
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.gp-offer-body {
+  max-width: 34ch;
+  margin-block: var(--space-1) var(--space-4);
+  color: var(--ink-2);
+  font-size: var(--text-body);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+/* in a dialog each way has a row to itself, as wide as the dialog */
+.gp-offer .gp-ways {
+  flex-direction: column;
+}
+.gp-offer .gp-ways .btn {
+  max-width: none;
 }
 
 /* ---- on the way ---------------------------------------------------------------------- */
+/* clear of the light of the last row of stamps */
 .gp-soon {
-  margin-top: var(--space-6);
+  margin-top: var(--space-8);
 }
-.gp-soon-title {
-  margin: 0 0 var(--space-2);
-  color: var(--ink-3);
-  font-family: var(--font-sans);
-  font-size: var(--text-caption);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.gp-soon .gp-label {
+  margin-bottom: var(--space-2);
 }
 .gp-soon-list {
   display: flex;
@@ -243,7 +233,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 6px var(--space-4) 6px 6px;
+  /* the cover's end close, the name's end with room: whichever side each is on */
+  padding-block: 6px;
+  padding-inline: 6px var(--space-4);
   border: 1px dashed var(--border-strong);
   border-radius: var(--r-pill);
   color: var(--ink-3);
@@ -267,7 +259,10 @@
     overflow-x: auto;
     scroll-snap-type: x proximity;
     margin-inline: calc(var(--space-4) * -1);
-    padding: 2px var(--space-4) var(--space-3);
+    /* a scrolling row cuts off whatever reaches past it (reach.css): 8px more room above and below, given back by the margin */
+    margin-block: -8px;
+    padding-block: calc(2px + 8px) calc(var(--space-3) + 8px);
+    padding-inline: var(--space-4);
     scrollbar-width: none;
   }
   .gp .ranks-grid::-webkit-scrollbar {
@@ -280,39 +275,15 @@
 
 /* ---- wider screens ------------------------------------------------------------------- */
 @media (min-width: 720px) {
-  .gp-card--hero {
-    grid-template-columns: auto minmax(0, 1fr);
-    justify-items: start;
-    gap: var(--space-6);
-    padding: var(--space-6) var(--space-8);
-    text-align: start;
-  }
-  .gp-card--hero .gp-card-text {
-    justify-items: start;
-    width: auto;
-  }
-  .gp-card--hero .gp-company,
-  .gp-card--hero .gp-ways {
-    justify-content: flex-start;
-  }
   .gp-quick {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: stretch;
   }
 }
-@container (min-width: 600px) {
-  .gp-shelf {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@container (min-width: 1040px) {
-  .gp-shelf {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
-  .gp-card:hover {
+  .gp-stamp:hover,
+  .gp-stamp:has(.gp-stamp-press:active) {
     transform: none;
   }
 }

@@ -6,6 +6,7 @@ import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import type { InventoryItem } from '../profile/cosmetics';
 import { ClayButton } from '../theme/glass';
+import { ReachReset } from '../theme/Pressable';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
@@ -59,18 +60,20 @@ export function RefreshedNotice(): React.JSX.Element | null {
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={close}>
-      <View style={[styles.scrim, { backgroundColor: colors.scrim }]}>
-        <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
-          <View style={[styles.badge, { backgroundColor: colors.controlTrack }]}>
-            <Icon name="palette" size={28} tone="primary" />
+      <ReachReset>
+        <View style={[styles.scrim, { backgroundColor: colors.scrim }]}>
+          <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
+            <View style={[styles.badge, { backgroundColor: colors.controlTrack }]}>
+              <Icon name="palette" size={28} tone="primary" />
+            </View>
+            <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
+              {t('shop.refreshed.title')}
+            </Text>
+            <Text style={[styles.body, { color: colors.textSecondary }]}>{t('shop.refreshed.bodyKeep')}</Text>
+            <ClayButton label={t('shop.refreshed.ok')} tone="primary" onPress={close} />
           </View>
-          <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
-            {t('shop.refreshed.title')}
-          </Text>
-          <Text style={[styles.body, { color: colors.textSecondary }]}>{t('shop.refreshed.bodyKeep')}</Text>
-          <ClayButton label={t('shop.refreshed.ok')} tone="primary" onPress={close} />
         </View>
-      </View>
+      </ReachReset>
     </Modal>
   );
 }

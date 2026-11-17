@@ -93,11 +93,16 @@ export function dayLabel(date: Date, now: Date, words: DayWords): string {
   return written(date, words.locale, { day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }) });
 }
 
-/** The time on the clock, "14:05"; the language decides between twelve hours and twenty-four. */
+/**
+ * The time on the clock, "14:05" or "7:46 PM"; the language decides between
+ * twelve hours and twenty-four, and the hour is written as the list of
+ * conversations writes it (messages/list.ts), with no zero before it in a
+ * language that does not put one there.
+ */
 export function timeLabel(iso: string, locale?: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return written(d, locale, { hour: '2-digit', minute: '2-digit' });
+  return written(d, locale, { hour: 'numeric', minute: '2-digit' });
 }
 
 /**

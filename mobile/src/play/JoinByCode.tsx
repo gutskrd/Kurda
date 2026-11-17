@@ -365,9 +365,8 @@ export function JoinCodeCard({ style }: { style?: StyleProp<ViewStyle> }): React
           <Text style={[styles.cardTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
             {title}
           </Text>
-          <Text style={[styles.cardLine, dir.text, { color: colors.textSecondary }]} numberOfLines={3}>
-            {line}
-          </Text>
+          {/* as long as its language needs: cut short at three lines, the end of the sentence (what to do with the code) was lost in German */}
+          <Text style={[styles.cardLine, dir.text, { color: colors.textSecondary }]}>{line}</Text>
         </View>
         <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip} />
       </PressableScale>

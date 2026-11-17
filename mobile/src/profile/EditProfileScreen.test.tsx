@@ -41,10 +41,12 @@ vi.mock('expo-image-picker', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { forgetReach, reachOf } from '../testing/reach';
 import { EditProfileScreen } from './EditProfileScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -58,7 +60,10 @@ beforeEach(() => {
   nav.navigation.dispatch.mockClear();
   testAuth.client = fakeClient({ 'GET /me': ok({ user: ME }), 'GET /cosmetics/avatars': ok({ avatars: [] }) });
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  forgetReach();
+});
 
 async function openEdit(): Promise<void> {
   renderWithProviders(<EditProfileScreen onExit={() => nav.navigation.goBack()} />);
@@ -103,15 +108,51 @@ describe('leaving Edit profile', () => {
 });
 
 describe('the country', () => {
-  // the one chosen is what it is set to, not a button that does nothing; "none" next to it takes it off
+  // the one chosen is what it is set to, not a button that does nothing; Remove next to it takes it off
   it('shows the chosen country as its value, with one tap to take it off', async () => {
     await openEdit();
     expect(screen.getByText('Germany')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Germany' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: '— None —' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove, Germany' }));
     expect(screen.queryByText('Germany')).toBeNull();
-    expect(screen.queryByRole('button', { name: '— None —' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Remove/ })).toBeNull();
     expect(screen.getByText('— None —')).toBeTruthy();
+  });
+
+  // drawn 36 tall, each chip answers over 48; the found ones wrap onto rows a gap apart and share it
+  it('lets its chips answer a finger a little above and below, the found ones only to the middle of the gap', async () => {
+    await openEdit();
+    expect(reachOf('Remove, Germany')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
+    fireEvent.change(screen.getByLabelText('Find a country'), { target: { value: 'Ira' } });
+    expect(reachOf('Iraq')).toEqual({ top: 4, bottom: 4, left: 0, right: 0 });
+  });
+});
+
+describe('saving', () => {
+  /*
+   * Save sits under the fields and goes once there is nothing left to save:
+   * what it did is said where it was, and read out, not at the top of a page
+   * scrolled away from it.
+   */
+  it('says the profile was updated where Save was, and stops saying it once a field is typed in again', async () => {
+    testAuth.client = fakeClient({
+      'GET /me': ok({ user: ME }),
+      'GET /cosmetics/avatars': ok({ avatars: [] }),
+      'PATCH /me': ok({ user: { ...ME, displayName: 'Rojda Amed' } }),
+    });
+    await openEdit();
+    fireEvent.change(screen.getByDisplayValue('Rojda'), { target: { value: 'Rojda Amed' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Save changes' }));
+    const said = await screen.findByText('Profile updated.');
+    expect(said.getAttribute('aria-live')).toBe('polite');
+    // under the details, ahead of the avatars
+    const avatarHeading = screen.getByRole('heading', { name: 'Avatar' });
+    expect(said.compareDocumentPosition(avatarHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByDisplayValue('Rojda Amed').compareDocumentPosition(said) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Save changes' })).toBeNull();
+
+    fireEvent.change(screen.getByDisplayValue('Rojda Amed'), { target: { value: 'Rojda A.' } });
+    expect(screen.queryByText('Profile updated.')).toBeNull();
   });
 });
 
@@ -126,17 +167,19 @@ describe('choosing an avatar', () => {
     { key: 'lion', requiresPremium: true },
   ];
 
+  // each is named by its place, never by its key ("default-03")
   it('shows somebody without Hevalo+ only the avatars they can wear', async () => {
     testAuth.client = fakeClient({ 'GET /me': ok({ user: ME }), 'GET /cosmetics/avatars': ok({ avatars }) });
     await openEdit();
-    expect(await screen.findByRole('button', { name: 'deer' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'lion' })).toBeNull();
+    expect(await screen.findByRole('button', { name: 'Avatar 1' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Avatar 2' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'deer' })).toBeNull();
   });
 
   it('shows a member every avatar', async () => {
     testAuth.client = fakeClient({ 'GET /me': ok({ user: { ...ME, premium: true } }), 'GET /cosmetics/avatars': ok({ avatars }) });
     await openEdit();
-    expect(await screen.findByRole('button', { name: 'deer' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'lion' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Avatar 1' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Avatar 2' })).toBeTruthy();
   });
 });

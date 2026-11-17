@@ -104,7 +104,8 @@ function client(
     'GET /me': ok({ user: { streak } }),
     'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
     'GET /practice/due': ok(due),
-    'GET /stories/library': ok(LIBRARY),
+    // the library asks for one variety, and with nothing chosen and an English interface that is Kurmancî
+    'GET /stories/library?dialect=kurmanci': ok(LIBRARY),
     'GET /story-games/active': ok({ games: [] }),
     'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
     'GET /play/invites': ok({ incoming: [], outgoing: [] }),
@@ -261,7 +262,7 @@ describe('Learn', () => {
     await waitFor(() => expect(localStorage.getItem(LEARN_VIEW_KEY)).toBe('stories'));
 
     fireEvent.click(gamesTab());
-    expect(await screen.findByTestId('game-wordle')).toBeTruthy();
+    expect(await screen.findByTestId('game-featured')).toBeTruthy();
     expect(screen.queryByTestId('game-stories')).toBeNull();
   });
 
@@ -270,7 +271,7 @@ describe('Learn', () => {
     renderWithProviders(<LearnScreen />);
     fireEvent.click(gamesTab());
     expect(gamesTab().getAttribute('aria-selected')).toBe('true');
-    expect(await screen.findByTestId('game-wordle')).toBeTruthy();
+    expect(await screen.findByTestId('game-featured')).toBeTruthy();
     await waitFor(() => expect(localStorage.getItem(LEARN_VIEW_KEY)).toBe('games'));
 
     // the next time Learn opens, it opens where it was left
@@ -289,14 +290,18 @@ describe('Learn', () => {
     const shown = vi.fn();
     renderWithProviders(<LearnScreen view="games" onViewShown={shown} />);
     expect(gamesTab().getAttribute('aria-selected')).toBe('true');
-    expect(await screen.findByTestId('game-battle')).toBeTruthy();
+    expect(await screen.findByTestId('game-featured')).toBeTruthy();
     expect(shown).toHaveBeenCalled();
     expect(localStorage.getItem(LEARN_VIEW_KEY)).toBeNull();
   });
 
-  it('lists the games as cards with a button for each way they are played, one tap to open', async () => {
+  it('lists the games as stamps, and offers each way a game is played', async () => {
     client();
     renderWithProviders(<LearnScreen view="games" />);
+    await screen.findByTestId('game-featured');
+    // Peyvok's ways in are under its stamp on the day it is put forward, and behind its stamp on any other
+    const onShelf = screen.queryByTestId('card-wordle');
+    if (onShelf) fireEvent.click(onShelf);
     const battle = await screen.findByTestId('game-battle');
     expect(battle.getAttribute('aria-label')).toBe('Peyvok, With friends');
     fireEvent.click(battle);

@@ -98,7 +98,7 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
   it('lists each skill’s lessons, none finished yet', async () => {
     const res = await authed('GET', `/courses/${courseId}/map`);
     const skillA = res.json().units[0].skills[0];
-    expect(skillA.lessons).toEqual([{ lessonId: skillA.firstLessonId, position: 1, title: 'A1', completed: false }]);
+    expect(skillA.lessons).toEqual([{ lessonId: skillA.firstLessonId, position: 1, title: 'A1', completed: false, times: 0 }]);
   });
 
   it('completing skill A marks it completed and unlocks skill B', async () => {
@@ -131,13 +131,64 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
 
     const after = (await authed('GET', `/courses/${courseId}/map`)).json();
     const [skillA, skillB] = after.units[0].skills;
-    expect(skillA.lessons).toEqual([{ lessonId: corrected, position: 1, title: 'A1', completed: true }]);
+    expect(skillA.lessons).toEqual([{ lessonId: corrected, position: 1, title: 'A1', completed: true, times: 1 }]);
     expect(['completed', 'gold', 'decayed']).toContain(skillA.state);
     expect(skillB.state).toBe('unlocked');
   });
 
   it('says what comes next, and has no upcoming unit while every unit has a lesson out', async () => {
     expect((await authed('GET', `/courses/${courseId}/map`)).json()).toMatchObject({ upcoming: null, units: [{ title: 'Unit 1', story: null }] });
+  });
+
+  /** Play a lesson through: a session of its own, its one exercise answered, finished. */
+  async function play(lessonId: string, answer: string): Promise<void> {
+    const start = await authed('GET', `/lessons/${lessonId}/session`);
+    const sid = start.json().sessionId as string;
+    await authed('POST', `/sessions/${sid}/answers`, { exerciseId: start.json().exercises[0].id, answer: { text: answer } });
+    await authed('POST', `/sessions/${sid}/complete`);
+  }
+
+  /**
+   * Every finish of a lesson is a session of its own, so the map can count
+   * them: each lesson's times, replays and finishes of an earlier version
+   * included, and from them each skill's rounds and the pieces of its ring
+   * (shared `topicRounds`), counted in one read for the whole map.
+   */
+  it('counts every time a lesson is finished, an earlier version’s too, as its skill’s rounds and ring', async () => {
+    const before = (await authed('GET', `/courses/${courseId}/map`)).json();
+    const [skillA, skillB] = before.units[0].skills;
+    // finished once, on the version before the correction: the first round is whole
+    expect(skillA).toMatchObject({ rounds: 1, pieces: 0, lessons: [{ completed: true, times: 1 }] });
+    expect(skillB).toMatchObject({ rounds: 0, pieces: 0, lessons: [{ completed: false, times: 0 }] });
+
+    await play(skillA.lessons[0].lessonId, 'sêv');
+    expect((await authed('GET', `/courses/${courseId}/map`)).json().units[0].skills[0]).toMatchObject({ rounds: 2, pieces: 0, lessons: [{ times: 2 }] });
+
+    // the third round is the last: the ring stays whole from then on
+    await play(skillA.lessons[0].lessonId, 'sêv');
+    await play(skillA.lessons[0].lessonId, 'sêv');
+    const after = (await authed('GET', `/courses/${courseId}/map`)).json().units[0].skills;
+    expect(after[0]).toMatchObject({ rounds: 3, pieces: 1, lessons: [{ completed: true, times: 4 }] });
+    expect(after[1]).toMatchObject({ state: 'unlocked', rounds: 0, pieces: 0 });
+  });
+
+  it('counts the map in the same few reads however many lessons the learner has finished', async () => {
+    const queries: string[] = [];
+    const counting = { query: (text: string, values?: unknown[]) => (queries.push(text), pool.query(text, values)) } as unknown as pg.Pool;
+    await new CourseMapService(counting).forUser(userId, courseId);
+    const reads = queries.length;
+    const skillB = (await authed('GET', `/courses/${courseId}/map`)).json().units[0].skills[1];
+    await play(skillB.lessons[0].lessonId, 'av');
+    queries.length = 0;
+    await new CourseMapService(counting).forUser(userId, courseId);
+    expect(queries.length).toBe(reads);
+    expect(queries.filter((q) => q.includes('lesson_sessions'))).toHaveLength(1);
+  });
+
+  it('names each unit’s level in the course plan, and none for a unit whose course gives none', async () => {
+    expect((await authed('GET', `/courses/${courseId}/map`)).json().units[0].level).toBeNull();
+    await pool.query(`UPDATE units SET cefr = 'A1' WHERE course_id = $1`, [courseId]);
+    expect((await authed('GET', `/courses/${courseId}/map`)).json().units[0].level).toBe('A1');
   });
 
   /**

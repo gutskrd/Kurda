@@ -92,15 +92,16 @@ const IN_SIGHT = { top: 96, bottom: 168 } as const;
  * Every string from the story carries the story's own `lang` and `dir` — a
  * Soranî story reads right to left inside an English page, in a face made for
  * Arabic script, and a screen reader speaks it as Kurdish. Words from the
- * glossary are marked with a dotted gold line and open their meaning (in the
- * reader's language, else English, marked as English), the part of speech
- * and a pronunciation when the dictionary has them, and Save word when the
- * term is a dictionary headword.
+ * glossary are marked with a dotted violet line, the violet of what can be
+ * pressed, and open their meaning (in the reader's language, else English,
+ * marked as English), the part of speech and a pronunciation when the
+ * dictionary has them, and Save word when the term is a dictionary headword.
  *
  * Nothing plays by touching the text, with one exception: the sentence being
- * read aloud, on its gold band, says itself again when tapped (the player's
- * replay), and carries a small button for the same so a keyboard can ask
- * too. A paragraph with recordings has its own Listen button, and under it,
+ * read aloud, on the violet's wash, says itself again when tapped (the
+ * player's replay), and carries a small button for the same so a keyboard
+ * can ask too. The text wears the shared violet's steps (`hue-violet`), so
+ * that wash is the phone's to the digit. A paragraph with recordings has its own Listen button, and under it,
  * when the story has a translation in the reader's language, a Translation
  * toggle that shows the paragraph's own translation in secondary ink.
  *
@@ -186,7 +187,7 @@ export function StoryText({
 
   return (
     <div
-      className={`story-text${className ? ` ${className}` : ''}`}
+      className={`story-text hue-violet${className ? ` ${className}` : ''}`}
       style={{ '--story-size': `${TEXT_SIZES[textSize] ?? 1}` } as React.CSSProperties}
     >
       {cut.map((sentences, p) => {

@@ -102,13 +102,13 @@ export function SideMenu({
           {t(link.labelKey)}
         </Text>
         {link.badge ? (
-          <View style={[styles.badge, { backgroundColor: colors.goldText }]}>
+          <View style={[styles.badge, { backgroundColor: colors.primary }]}>
             <Text style={[styles.badgeText, { color: colors.textOnPrimary }]}>{link.badge}</Text>
           </View>
         ) : null}
       </Pressable>
     ),
-    [colors.controlTrack, colors.goldText, colors.textOnPrimary, colors.textPrimary, colors.textSecondary, dir, onClose, t],
+    [colors.controlTrack, colors.primary, colors.textOnPrimary, colors.textPrimary, colors.textSecondary, dir, onClose, t],
   );
 
   return (

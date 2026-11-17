@@ -9,14 +9,14 @@
  * art/valley-landmarks-1.ts and -2.ts. Here they are framed as pictures: on
  * the 120-unit canvas, decorative unless named. Each draws its moving part at
  * rest; the apps lay `pathLoopSvg` over it at `PATH_LANDMARK_LOOP` and move it
- * gently (a kilim or a flag in the wind, steam or smoke rising, a ripple, the
- * Newroz flame, a bee, the bus stop's sign), and hold it still under Reduce
- * Motion.
+ * gently (the flag of Kurdistan by the gate, over the bazaar, the school and
+ * Amed's tower in the wind, steam or smoke rising, a ripple, the Newroz flame, a bee, the bus
+ * stop's sign), and hold it still under Reduce Motion.
  */
 import type { PathGround, PathLandmark } from '../path-world.js';
 import { pathGroundShade } from './path-land.js';
 import { CANVAS, escapeXml, n2, prefixFor, seeded } from './svg.js';
-import { VALLEY, dusk, ellipsePath, fill, stroke, warm, type ValleyLandmark, type ValleyLoopKind } from './valley.js';
+import { KURDISTAN_FLAG, VALLEY, dusk, ellipsePath, fill, kurdistanFlag, stroke, warm, type ValleyLandmark, type ValleyLoopKind } from './valley.js';
 import { VALLEY_LANDMARKS_1 } from './valley-landmarks-1.js';
 import { VALLEY_LANDMARKS_2 } from './valley-landmarks-2.js';
 
@@ -46,6 +46,8 @@ export interface PathLandmarkOptions {
   title?: string;
   /** the land it stands on, whose own shade it casts; the meadow's by default */
   ground?: PathGround;
+  /** the colour of the shade it casts where it stands on a page of its own colour rather than on the path's land (a book's chapter opener, a stamp) */
+  shade?: string;
   idPrefix?: string;
 }
 
@@ -56,11 +58,18 @@ export function pathLandmarkSvg(opts: PathLandmarkOptions): string {
   if (!art) throw new RangeError(`art: no landmark ${String(landmark)}`);
   const size = opts.size ?? CANVAS;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
+  if (opts.shade !== undefined && !/^#[0-9a-f]{6}$/.test(opts.shade)) throw new RangeError(`art: a landmark's shade is a six-digit colour, not ${String(opts.shade)}`);
   const prefix = prefixFor(opts.idPrefix, 'landmark', landmark, dark);
   // drawn standing in the meadow's shade, then given the shade of the land it stands on, so a market's shadow is not grass
   const meadow = dusk(VALLEY.meadowShade, dark);
-  const shade = opts.ground ? pathGroundShade(opts.ground, dark) : meadow;
-  const body = art.draw(dark, seeded(`valley-landmark|${landmark}`)).split(`fill="${meadow}"`).join(`fill="${shade}"`);
+  const shade = opts.shade ?? (opts.ground ? pathGroundShade(opts.ground, dark) : meadow);
+  const body = art
+    .draw(dark, seeded(`valley-landmark|${landmark}`), opts.shade !== undefined)
+    .split(`fill="${meadow}"`)
+    .join(`fill="${shade}"`)
+    // a pole's shadow is a line of the meadow's shade, and on a page of its own colour it is that page's shade too, never a green stick
+    .split(`stroke="${meadow}"`)
+    .join(`stroke="${shade}"`);
   const label = opts.title
     ? ` role="img" aria-labelledby="${prefix}t"><title id="${prefix}t">${escapeXml(opts.title)}</title>`
     : ' aria-hidden="true" focusable="false">';
@@ -77,10 +86,9 @@ export interface PathLoopOptions {
 
 /** The sprite's own canvas for each kind: the sprite fills it, and the apps move it about its anchor. */
 const LOOP_VIEW: Record<PathLoopKind, { w: number; h: number }> = {
-  kilim: { w: 18, h: 22 },
   steam: { w: 16, h: 24 },
   water: { w: 30, h: 12 },
-  flag: { w: 20, h: 16 },
+  colours: { w: KURDISTAN_FLAG.w, h: KURDISTAN_FLAG.h },
   flame: { w: 26, h: 40 },
   smoke: { w: 16, h: 30 },
   bee: { w: 34, h: 34 },
@@ -100,17 +108,6 @@ export function pathLoopSvg(opts: PathLoopOptions): string {
   const c = (hex: string, amount?: number): string => dusk(hex, dark, amount);
   let body = '';
   switch (kind) {
-    case 'kilim':
-    case 'flag': {
-      // a kilim's madder field, a band of cream, an indigo lozenge, the free end a little ragged
-      const w = view.w;
-      const h = kind === 'flag' ? 13 : 20;
-      body += fill(`M1 1H${w - 1}V${h - 2}L${w - 4} ${h}L${w - 7} ${h - 2}L${w - 10} ${h}L${w - 13} ${h - 2}H1Z`, c(VALLEY.red, 0.2));
-      body += fill(`M1 ${h * 0.3}H${w - 1}V${h * 0.4}H1Z`, c('#f6e3b0', 0.2));
-      body += fill(`M${w / 2} ${h * 0.48}l3.6 ${h * 0.17}l-3.6 ${h * 0.17}l-3.6 ${-h * 0.17}Z`, c(VALLEY.indigo, 0.2));
-      body += fill(`M1 ${h * 0.84}H${w - 1}V${h * 0.9}H1Z`, warm(VALLEY.gold, dark));
-      break;
-    }
     case 'steam':
     case 'smoke': {
       const puff = kind === 'steam' ? (dark ? '#c9cfdc' : '#ffffff') : c(VALLEY.smoke, 0.3);
@@ -120,6 +117,10 @@ export function pathLoopSvg(opts: PathLoopOptions): string {
     case 'water':
       body += stroke(ellipsePath(15, 6, 11, 3.6), dark ? '#9fd2e6' : '#ffffff', 1.6);
       body += stroke(ellipsePath(15, 6, 5, 1.8), dark ? '#9fd2e6' : '#ffffff', 1.2);
+      break;
+    case 'colours':
+      // the school's flag of Kurdistan, the very cloth the school draws at rest, so the moving one lies exactly over it
+      body += kurdistanFlag(dark);
       break;
     case 'flame':
       body += fill('M13 2C19 12 24 20 21 30C19 37 7 37 5 30C2 22 9 16 9 9C11 13 12 12 13 2Z', warm(VALLEY.fire, dark));

@@ -560,6 +560,8 @@ export function SessionPlayer({
       <div className="lesson is-done">
         <Results
           title={heading}
+          // the name the map showed, where the page was handed it; a lesson opened by its address alone has none to share by
+          lessonName={kind === 'lesson' ? title : null}
           results={results}
           exercises={state.exercises}
           skipped={state.skipped.length}

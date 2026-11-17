@@ -5,6 +5,7 @@ vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
+vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 // Android's back, pressed by the test (`pressBack`)
 vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
@@ -16,6 +17,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { characterLayers } from '../characters/layers';
 import { FakeAudio, fakeFrames, type Frames } from '../characters/testing/audio';
 import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
+import { PALETTES } from '../theme/palette';
 import { EntryDetail } from './EntryDetail';
 import type { Entry } from './types';
 
@@ -96,6 +98,22 @@ describe('a dictionary entry’s pronunciations', () => {
     expect(await screen.findByRole('button', { name: 'Play pronunciation' })).toBeTruthy();
     expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();
     expect(screen.queryByText('Hamo')).toBeNull();
+  });
+});
+
+describe('a saved word', () => {
+  it('is marked in the violet of what is on, as a bookmarked story is, and in the page’s quiet ink when it is not', async () => {
+    testAuth.client = fakeClient({
+      'GET /dictionary/entries/e1': ok({ ...entry([]), saved: true }),
+      'DELETE /dictionary/entries/e1/save': ok({ saved: false }),
+    });
+    renderWithProviders(<EntryDetail entryId="e1" onBack={() => undefined} />);
+    // the app opens by night until the reader chooses otherwise, and nobody has here
+    const night = PALETTES.dark;
+    const mark = (name: string): string | null | undefined => screen.getByRole('button', { name }).querySelector('path')?.getAttribute('fill');
+    await waitFor(() => expect(mark('Remove bookmark')).toBe(night.primary));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
+    await waitFor(() => expect(mark('Bookmark word')).toBe(night.textSecondary));
   });
 });
 

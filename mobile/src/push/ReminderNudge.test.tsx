@@ -27,11 +27,16 @@ patchReactNativeWeb();
 const LINE = 'Turn on reminders to keep your streak safe';
 const openSettings = vi.fn(async () => undefined);
 (Linking as unknown as { openSettings: typeof openSettings }).openSettings = openSettings;
+const NEVER_ASKED = { status: 'undetermined', granted: false, canAskAgain: true } as const;
+const REFUSED_FOR_GOOD = { status: 'denied', granted: false, canAskAgain: false } as const;
 
 beforeEach(() => {
-  notificationsStub.permission = { status: 'undetermined', granted: false, canAskAgain: true };
+  // turned down, on a phone that will not ask again: the one case the banner is for
+  notificationsStub.permission = { ...REFUSED_FOR_GOOD };
   notificationsStub.afterRequest = { status: 'granted', granted: true, canAskAgain: true };
   notificationsStub.requests = 0;
+  notificationsStub.failRequest = false;
+  notificationsStub.prompt = null;
   openSettings.mockClear();
   testAuth.client = fakeClient({ 'GET /me': ok({ user: { minor: false } }) });
 });
@@ -41,28 +46,42 @@ afterEach(() => cleanup());
 const settle = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
 
 describe('the reminder banner on Learn', () => {
-  it('says what reminders are for and asks the phone only when Turn on is tapped', async () => {
+  it('says what reminders are for once the phone will not ask again, and opens the phone’s settings, then goes', async () => {
     const store = memoryStore();
-    renderWithProviders(<ReminderNudge hold={false} store={store} />);
+    const { container } = renderWithProviders(<ReminderNudge hold={false} store={store} />);
     expect(await screen.findByText(LINE)).toBeTruthy();
-    expect(notificationsStub.requests).toBe(0);
     await settle();
-    // seen once, out of the same budget as the card after a lesson
+    // seen once, out of the same budget as the screen after a lesson
     expect(JSON.parse(store.data.get(OFFER_KEY)!).shown).toBe(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Turn on' }));
-    expect(await screen.findByText('Notifications are on')).toBeTruthy();
-    expect(notificationsStub.requests).toBe(1);
-    expect(screen.queryByText(LINE)).toBeNull();
-  });
-
-  it('opens the phone settings when reminders were turned down, and goes', async () => {
-    notificationsStub.permission = { status: 'denied', granted: false, canAskAgain: false };
-    const { container } = renderWithProviders(<ReminderNudge hold={false} store={memoryStore()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Open phone settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open phone settings' }));
     expect(openSettings).toHaveBeenCalledTimes(1);
     expect(notificationsStub.requests).toBe(0);
     expect(container.textContent).toBe('');
+  });
+
+  it('never stands in front of the phone’s own question: nothing while the phone could still ask', async () => {
+    // never asked, and Android after one refusal, which would show its prompt again
+    for (const permission of [NEVER_ASKED, { status: 'denied', granted: false, canAskAgain: true } as const]) {
+      notificationsStub.permission = { ...permission };
+      const store = memoryStore();
+      const { container } = renderWithProviders(<ReminderNudge hold={false} store={store} />);
+      await settle();
+      expect(container.textContent, permission.status).toBe('');
+      // not shown, so not counted, and nothing asked of the phone
+      expect(store.data.has(OFFER_KEY)).toBe(false);
+      expect(notificationsStub.requests).toBe(0);
+      cleanup();
+    }
+  });
+
+  it('has two things to press, the phone’s settings and its cross, and neither of them asks the phone anything', async () => {
+    renderWithProviders(<ReminderNudge hold={false} store={memoryStore()} />);
+    await screen.findByText(LINE);
+    expect(screen.getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual(['Open phone settings', 'Close']);
+    // "Allow" and "Turn on" belonged to a banner that led to the phone's question
+    expect(screen.queryByRole('button', { name: /allow|turn on/i })).toBeNull();
+    expect(notificationsStub.requests).toBe(0);
   });
 
   it('closes on its cross without asking anything', async () => {
@@ -71,6 +90,7 @@ describe('the reminder banner on Learn', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(container.textContent).toBe('');
     expect(notificationsStub.requests).toBe(0);
+    expect(openSettings).not.toHaveBeenCalled();
   });
 
   it('waits while another moment has the visit, and is not counted until it shows', async () => {
@@ -83,8 +103,15 @@ describe('the reminder banner on Learn', () => {
     expect(await screen.findByText(LINE)).toBeTruthy();
   });
 
-  it('is never shown to a minor, once reminders are on, or past its budget', async () => {
+  it('is never shown to a minor, to a guest, once reminders are on, or past its budget', async () => {
     testAuth.client = fakeClient({ 'GET /me': ok({ user: { minor: true } }) });
+    renderWithProviders(<ReminderNudge hold={false} store={memoryStore()} />);
+    await settle();
+    expect(screen.queryByText(LINE)).toBeNull();
+    cleanup();
+
+    // a guest has no birth month, so the server does not call one a minor; nothing is sent to one either
+    testAuth.client = fakeClient({ 'GET /me': ok({ user: { minor: false, guest: true } }) });
     renderWithProviders(<ReminderNudge hold={false} store={memoryStore()} />);
     await settle();
     expect(screen.queryByText(LINE)).toBeNull();
@@ -97,7 +124,7 @@ describe('the reminder banner on Learn', () => {
     expect(screen.queryByText(LINE)).toBeNull();
     cleanup();
 
-    notificationsStub.permission = { status: 'undetermined', granted: false, canAskAgain: true };
+    notificationsStub.permission = { ...REFUSED_FOR_GOOD };
     const spent = memoryStore({ [OFFER_KEY]: JSON.stringify({ shown: 1, lastShownAt: new Date().toISOString() }) });
     renderWithProviders(<ReminderNudge hold={false} store={spent} />);
     await settle();

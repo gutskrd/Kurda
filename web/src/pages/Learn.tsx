@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { fireLevel } from '@kurda/shared';
 import { useApiGet, type ApiState } from '../lib/useApi';
+import { useGrowsFrom } from '../lib/viewTransition';
 import { LinkButton } from '../components/Button';
 import { ErrorState, EmptyState } from '../components/states';
 import { CourseGridSkeleton, CourseMapSkeleton } from '../components/skeletons';
@@ -193,8 +194,11 @@ function Tools({ due }: { due: ApiState<PracticeDue> | null }): React.JSX.Elemen
   // review is the learner's own, so what is due is only ever handed over for somebody signed in
   const signedIn = due !== null;
   const locale = useLocale();
+  // a tool's card becomes the head of the tool's page when it is pressed, and the head comes back to the card (lib/viewTransition.tsx)
+  const wordsCard = useGrowsFrom('learn:words', { shape: 'card' });
+  const dictionaryCard = useGrowsFrom('learn:dictionary', { shape: 'card' });
   const dictionary = signedIn ? (
-    <Link to="/app/dictionary" className="learn-tool learn-tool-link">
+    <Link ref={dictionaryCard} to="/app/dictionary" className="learn-tool learn-tool-link">
       <DictionaryIcon size={24} />
       <span className="learn-tool-title">{t('nav.dictionary')}</span>
       <span className="learn-tool-body">{t('learn.tools.dictionary')}</span>
@@ -214,7 +218,7 @@ function Tools({ due }: { due: ApiState<PracticeDue> | null }): React.JSX.Elemen
       <div className={`learn-tools${signedIn ? '' : ' is-guest'}`}>
         {due && <ReviewEntry due={due} />}
         {/* the letters every course is written in, and the first words after them: one way in (pages/Words.tsx) */}
-        <Link to="/app/learn/words" className="learn-tool learn-tool-link">
+        <Link ref={wordsCard} to="/app/learn/words" className="learn-tool learn-tool-link">
           <span className="learn-tool-letters" lang="ku" aria-hidden="true">
             {ALPHABET_TEASER}
           </span>

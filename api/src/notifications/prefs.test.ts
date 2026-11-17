@@ -4,6 +4,7 @@ import {
   defaultPrefs,
   inQuietHours,
   minuteOfDayInTz,
+  minutesToQuietEnd,
   type NotificationPrefs,
 } from './prefs.js';
 
@@ -70,5 +71,20 @@ describe('allows', () => {
     const p = prefs({ quietStartMin: 22 * 60, quietEndMin: 7 * 60 });
     expect(allows(p, 'streak', 23 * 60)).toBe(false);
     expect(allows(p, 'streak', 12 * 60)).toBe(true);
+  });
+});
+
+describe('minutesToQuietEnd', () => {
+  it('counts the minutes left in the quiet window, across midnight too', () => {
+    const p = prefs({ quietStartMin: 22 * 60, quietEndMin: 7 * 60 });
+    expect(minutesToQuietEnd(p, 23 * 60)).toBe(8 * 60);
+    expect(minutesToQuietEnd(p, 6 * 60 + 59)).toBe(1);
+    expect(minutesToQuietEnd(p, 12 * 60)).toBeNull();
+    expect(minutesToQuietEnd(prefs(), 12 * 60)).toBeNull();
+  });
+
+  it('gives letters a setting of their own, on for everybody at first', () => {
+    expect(defaultPrefs().letters).toBe(true);
+    expect(defaultPrefs({ minor: true }).letters).toBe(true);
   });
 });

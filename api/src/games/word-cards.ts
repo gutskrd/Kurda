@@ -38,6 +38,7 @@ import {
   type GameWordCandidate,
   type GameWordSource,
   type Meanings,
+  type WhoAmIFactValue,
   type WordCardKind,
 } from '@kurda/shared';
 import { requireAuth } from '../plugins/auth.js';
@@ -62,7 +63,7 @@ const fromWordBody = z.object({
   ref: z.string().refine(isWordRef, 'not a word to pick'),
   level: z.number().int().min(1).max(5),
   category: z.enum(WHO_AM_I_CATEGORIES).optional(),
-  facts: z.record(z.string().max(40), z.boolean()).optional(),
+  facts: z.record(z.string().max(40), z.union([z.boolean(), z.literal('sometimes')])).optional(),
 });
 
 /** The code a dictionary's Kurdish definition is filed under: the variety's own interface language. */
@@ -199,7 +200,7 @@ export class GameWordCards {
   }
 
   /** The payload a kind of card is made with from a word, as it will be stored, or why it cannot be. */
-  payloadFor(kind: WordCardKind, word: Omit<GameWordCandidate, 'made'>, extra: { category?: string; facts?: Record<string, boolean> }): unknown {
+  payloadFor(kind: WordCardKind, word: Omit<GameWordCandidate, 'made'>, extra: { category?: string; facts?: Record<string, WhoAmIFactValue> }): unknown {
     if (!word.meanings.en) throw new AppError('NO_MEANING', 422, 'this word has no English meaning to show beside it; pick another');
     // only the facts a question can ask: the table is the shared list, nothing typed beside it
     const facts = Object.fromEntries(Object.entries(extra.facts ?? {}).filter(([k]) => isWhoAmIFact(k)));

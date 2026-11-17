@@ -13,8 +13,10 @@ import {
   chooseHidden,
   conversationLevel,
   conversationWindows,
+  isCalmPassage,
   passageParts,
   pieces,
+  storyWindows,
   type MemoryItem,
 } from './memory-thief.js';
 import type { ConversationText, StoryPassage, TrustedSources, VocabularyWord } from './sources.js';
@@ -40,14 +42,28 @@ const glossary = [
 describe('the words a passage can lose', () => {
   it('are its glossary terms first, then taught words, each with a meaning, each exactly as written', () => {
     const c = candidatesIn(['Gund li ber çiya ye. Kanî li gund e û dar mezin e.'], glossary, lexicon, 'kmr');
+    // Kanî is kanî with the capital its sentence gives it, so the glossary term is taken
     expect(c.map((x) => [x.term, x.from])).toEqual([
       ['gund', 'glossary'],
+      ['kanî', 'glossary'],
       ['çiya', 'vocabulary'],
       ['dar', 'vocabulary'],
     ]);
-    // a glossary term without any meaning is never taken, nor one the passage writes only otherwise (Kanî for kanî)
+    // a glossary term without any meaning is never taken
     expect(c.map((x) => x.term)).not.toContain('nexşe');
-    expect(c.map((x) => x.term.toLowerCase())).not.toContain('kanî');
+  });
+
+  it('forgive only the capital a sentence start gives a glossary term: a capital anywhere else is a name', () => {
+    const terms = [
+      { term: 'mîr', meanings: { en: 'prince' } },
+      { term: 'baran', meanings: { en: 'rain' } },
+    ];
+    // Mîr opens both sentences, so it is mîr
+    expect(candidatesIn(['Mîr hat. Mîr li qesrê rûnişt.'], terms, new Map(), 'kmr').map((x) => x.term)).toEqual(['mîr']);
+    // Baran in the middle of a sentence is somebody called Baran, not rain
+    expect(candidatesIn(['Ez û Baran diçin bajêr.'], terms, new Map(), 'kmr')).toEqual([]);
+    // and a word the lessons teach is still matched exactly as written: no capital is forgiven there
+    expect(candidatesIn(['Dar mezin e.'], [], lexicon, 'kmr')).toEqual([]);
   });
 
   it('never take a meaning for a word spelled alike: marks, capitals and a word of another lesson are not the word', () => {
@@ -100,6 +116,54 @@ describe('the words that vanish', () => {
     const words = tight[0]!.split(' ').map((w) => w.replace(/\.$/, ''));
     const places = hidden.map((h) => words.indexOf(h.term));
     expect(Math.abs(places[0]! - places[1]!)).toBeGreaterThan(1);
+  });
+});
+
+describe('a round’s words, its passages and its calm', () => {
+  it('takes no word twice in a round while another word can be taken', () => {
+    const lines = ['Mîr li qesrê ye. Bajar mezin e û çiya bilind e.'];
+    const terms = [
+      { term: 'mîr', meanings: { en: 'prince' } },
+      { term: 'bajar', meanings: { en: 'city' } },
+      { term: 'çiya', meanings: { en: 'mountain' } },
+    ];
+    const c = candidatesIn(lines, terms, new Map(), 'kmr');
+    for (const seed of ['a', 'b', 'c', 'd']) {
+      expect(chooseHidden(lines, c, 2, seed, 'kmr', new Set(['mîr'])).map((h) => h.term)).not.toContain('mîr');
+    }
+    // with nothing else to make up the count, the word comes back
+    expect(chooseHidden(lines, c, 3, 'a', 'kmr', new Set(['mîr'])).map((h) => h.term)).toContain('mîr');
+  });
+
+  const passage = (paragraph: number, text: string, storyId = 's1'): StoryPassage => ({
+    key: `p:kmr:${storyId}:${paragraph}`,
+    storyId,
+    title: 'Çîrok',
+    level: 3,
+    paragraph,
+    text,
+    glossary: [],
+  });
+
+  it('reads a paragraph that ends in a colon together with the next, when the two still fit', () => {
+    const speech = 'Gur li ber derî sekinî û bi dengekî nerm û şîrîn got:';
+    const said = '«Ez diya we me, derî vekin, min ji we re şîr û nan aniye.»';
+    const windows = storyWindows([passage(0, speech), passage(1, said), passage(2, 'Karik li hev nêrîn û tiştek negotin, ji ber ku ew ditirsiyan.')]);
+    expect(windows.map((w) => w.paragraphs)).toEqual([[0, 1], [2]]);
+    expect(windows[0]!.lines).toEqual([speech, said]);
+    // never across two stories, and never past a passage’s length
+    expect(storyWindows([passage(0, speech, 'a'), passage(1, said, 'b')]).map((w) => w.paragraphs)).toEqual([[0], [1]]);
+    const long = Array.from({ length: 88 }, () => 'peyv').join(' ');
+    expect(storyWindows([passage(0, speech), passage(1, long)]).map((w) => w.paragraphs)).toEqual([[0], [1]]);
+  });
+
+  it('leaves out a passage with killing, blood or death in it, by whole words only', () => {
+    expect(isCalmPassage(['Mîr li qesrê rûniştibû.'], 'kmr')).toBe(true);
+    expect(isCalmPassage(['Li gor gotina wî, gund mezin e.'], 'kmr')).toBe(true);
+    expect(isCalmPassage(['Pîrê got: «Gur mir.»'], 'kmr')).toBe(false);
+    expect(isCalmPassage(['Ew bi xwînê sor bû.'], 'kmr')).toBe(false);
+    expect(isCalmPassage(['گوندەکە گەورەیە.'], 'ckb')).toBe(true);
+    expect(isCalmPassage(['پیاوەکە مرد.'], 'ckb')).toBe(false);
   });
 });
 

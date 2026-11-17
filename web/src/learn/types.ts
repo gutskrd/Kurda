@@ -24,6 +24,8 @@ export interface LessonNode {
   title: string;
   /** finished by this learner — this version of the lesson or an earlier one */
   completed: boolean;
+  /** how many times they have finished it, replays included (absent from an older server) */
+  times?: number;
 }
 
 export interface SkillNode {
@@ -36,13 +38,20 @@ export interface SkillNode {
   hasGrammar: boolean;
   firstLessonId: string | null;
   lessons: LessonNode[];
+  /** full rounds of its lessons played (its stars) and its ring's pieces filled, by the shared rule (absent from an older server) */
+  rounds?: number;
+  pieces?: number;
 }
 
 /** GET /courses/:id/map */
 export interface CourseMap {
   course: { id: string; title: string };
-  /** up to the last unit with a lesson out; each chapter of the road with the story that closes it, once learners can read it */
-  units: Array<{ unitId: string; title: string; skills: SkillNode[]; story?: { slug: string; title: string } | null }>;
+  /**
+   * Up to the last unit with a lesson out; each chapter of the road with the
+   * story that closes it, once learners can read it, and its level in the
+   * course plan ('A1'), which the path groups units into sections by.
+   */
+  units: Array<{ unitId: string; title: string; skills: SkillNode[]; story?: { slug: string; title: string } | null; level?: string | null }>;
   /** the unit after the last one out, while it is being made; `recordedBy` names who records it (the road's are Hamo's) */
   upcoming?: { number: number; title: string; recordedBy: 'hamo' | null } | null;
 }

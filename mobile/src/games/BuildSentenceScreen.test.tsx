@@ -132,7 +132,9 @@ describe('BuildSentenceScreen', () => {
     expect(await screen.findByText('Here is how it goes.')).toBeTruthy();
     expect(client.calls.filter((c) => c.path.endsWith('/answers'))[1]!.body).toEqual({ index: 0, answer: { order: [1, 0] }, attempt: 2 });
     expect(screen.getByText('home')).toBeTruthy();
-    expect(screen.getByLabelText('No meaning listed')).toBeTruthy();
+    // a word with no meaning listed says so to a screen reader, and draws no dash under itself
+    expect(screen.getByLabelText(/, No meaning listed$/)).toBeTruthy();
+    expect(screen.queryByText('—')).toBeNull();
     expect(screen.getByText(/the verb comes at the end/)).toBeTruthy();
   });
 
@@ -212,7 +214,8 @@ describe('Build a Sentence, as an exercise of the lessons', () => {
     });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
-    expect(await screen.findByTestId('game-wordle')).toBeTruthy();
+    // the game put forward is drawn with the list, whichever game it is today
+    expect(await screen.findByTestId('game-featured')).toBeTruthy();
     await waitFor(() => expect(client.calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByTestId('game-build-sentence')).toBeNull();

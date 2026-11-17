@@ -9,7 +9,9 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
+import { forgetReach, reachOf } from '../testing/reach';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -18,11 +20,15 @@ import type { NotificationPrefs } from './prefs';
 import { NotificationsScreen } from './NotificationsScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  forgetReach();
+});
 
 const PREFS: NotificationPrefs = {
   streak: true,
   friends: true,
+  letters: true,
   games: true,
   events: true,
   progress: true,
@@ -46,6 +52,19 @@ describe('notification settings', () => {
     expect(switchNamed('Streak reminders').getAttribute('aria-checked')).toBe('false');
     expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ streak: false });
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('gives letters a switch of their own, beside friends', async () => {
+    const client = fakeClient({ 'GET /me/notification-prefs': ok({ ...PREFS, letters: false }), 'PUT /me/notification-prefs': (body) => ok({ ...PREFS, ...(body as object) }) });
+    testAuth.client = client;
+    renderWithProviders(<NotificationsScreen onExit={() => undefined} />);
+    const letters = await screen.findByRole('switch', { name: 'Letters' });
+    expect(letters.getAttribute('aria-checked')).toBe('false');
+    expect(switchNamed('Friend activity').getAttribute('aria-checked')).toBe('true');
+    await act(async () => {
+      fireEvent.click(letters);
+    });
+    expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ letters: true });
   });
 
   /*
@@ -76,7 +95,26 @@ describe('notification settings', () => {
       fireEvent.click(earlier);
     });
     expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ quietStartMin: 21 * 60 + 30 });
-    expect(screen.getByText('21:30')).toBeTruthy();
+    // in the reader's own way of writing the time: English counts twelve hours
+    expect(screen.getByText(/^9:30\sPM$/)).toBeTruthy();
+  });
+
+  // each step is drawn 36 across with the time between the two: nothing close, so it reaches a fingertip past every edge
+  it('answers a finger a little off a quiet-hours step', async () => {
+    testAuth.client = fakeClient({ 'GET /me/notification-prefs': ok(PREFS) });
+    renderWithProviders(<NotificationsScreen onExit={() => undefined} />);
+    await screen.findByRole('button', { name: 'Start half an hour earlier' });
+    for (const step of ['Start half an hour earlier', 'Start half an hour later', 'End half an hour earlier', 'End half an hour later']) {
+      expect(reachOf(step)).toEqual({ top: 8, bottom: 8, left: 8, right: 8 });
+    }
+  });
+
+  // the list it is opened from is "Notifications": this page is named as the gear that opens it
+  it('is called by the name of the gear that opens it, not by the list’s', async () => {
+    testAuth.client = fakeClient({ 'GET /me/notification-prefs': ok(PREFS) });
+    renderWithProviders(<NotificationsScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Notification settings')).toBeTruthy();
+    expect(screen.queryByText('Notifications')).toBeNull();
   });
 
   it('puts quiet hours back too when turning them off did not save', async () => {
@@ -87,6 +125,6 @@ describe('notification settings', () => {
       fireEvent.click(quiet);
     });
     expect(switchNamed('Enable quiet hours').getAttribute('aria-checked')).toBe('true');
-    expect(screen.getByText('22:00')).toBeTruthy();
+    expect(screen.getByText(/^10:00\sPM$/)).toBeTruthy();
   });
 });

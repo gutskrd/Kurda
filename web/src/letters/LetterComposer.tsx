@@ -29,6 +29,7 @@ import { useMemoryOwner } from '../lib/useApi';
 import { BaselineProbe, PaperArt, noteStyle, sheetStyle, useBaseline, useScheme, useUnitsTall } from './PaperSheet';
 import { DrawPanel, PaperPanel, TextPanel, ToolSwitch, type Tool } from './PaperTools';
 import { DECOR_PROBLEM, NO_DRAWING, PAGE_FOOT, START_WIDTH, onPage, pagePoint, pointsLeft, rememberPaper, rememberedPaper, roomForNote, turnFor, widthFor, type Drawing } from './paper';
+import { draftOf, keepDraft } from './drafts';
 
 /**
  * Writing a letter on its own paper: the sheet, with the body typed on its
@@ -108,6 +109,7 @@ export function LetterComposer({
   autoFocus = false,
   paper: startPaper,
   canDraw,
+  draft: place,
 }: {
   label: string;
   /** what sending it is called, when it is not your own bird that takes it */
@@ -124,6 +126,12 @@ export function LetterComposer({
   paper?: LetterPaper;
   /** whether this letter may carry a drawing: not a first letter to a stranger */
   canDraw: boolean;
+  /**
+   * Where this letter is written from (letters/drafts.ts): what is on the
+   * paper is kept there as it is written, and the paper opens on it again.
+   * The page lets it go once the letter has been sent.
+   */
+  draft?: string;
 }): React.JSX.Element {
   const t = useT();
   const id = useId();
@@ -140,11 +148,13 @@ export function LetterComposer({
   const newNote = useRef<HTMLInputElement>(null);
   const noteButtons = useRef<Array<HTMLButtonElement | null>>([]);
 
-  const [body, setBody] = useState('');
+  // a letter left unsent here before opens as it was left: its words, its paper, and what was drawn and placed on it
+  const [kept] = useState(() => (place ? draftOf(who, place) : null));
+  const [body, setBody] = useState(kept?.body ?? '');
   const [tried, setTried] = useState(false);
   const [tool, setTool] = useState<Tool>('write');
-  const [paper, setPaper] = useState<LetterPaper>(() => startPaper ?? rememberedPaper(who));
-  const history = useHistory<Drawing>(NO_DRAWING);
+  const [paper, setPaper] = useState<LetterPaper>(() => kept?.paper ?? startPaper ?? rememberedPaper(who));
+  const history = useHistory<Drawing>(kept ? { strokes: canDraw ? kept.strokes : [], notes: kept.notes } : NO_DRAWING);
   const drawing = history.present;
   const [pen, setPen] = useState<DrawTool>('pen');
   // the colour drawn in follows the ink until another is chosen
@@ -181,6 +191,11 @@ export function LetterComposer({
     if (focusNote.index === null) newNote.current?.focus();
     else noteButtons.current[focusNote.index]?.focus({ preventScroll: true });
   }, [focusNote]);
+
+  // what is on the paper is kept as it is written, so nothing that changes on the page around it can lose it
+  useEffect(() => {
+    if (place) keepDraft(who, place, { body, paper, strokes: canDraw ? drawing.strokes : [], notes: drawing.notes });
+  }, [who, place, body, paper, drawing.strokes, drawing.notes, canDraw]);
 
   // ───────────────────────────────────────────────────────── drawing
 

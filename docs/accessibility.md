@@ -33,7 +33,9 @@ respects Reduce Motion, and meets WCAG AA contrast in light **and** dark.
       highlight slide, board/shake animations all do this).
 
 ## Touch targets
-- [ ] Interactive targets are ≥ 44×44 pt (use `hitSlop` to extend small icons).
+- [ ] Interactive targets are drawn ≥ 44×44 pt and answer over ≥ 48×48 pt. The app's
+      `Pressable` extends a small control from the size its style states; see
+      `a11y/a11y.ts` (`reachSlop`, `MIN_REACH`) and `theme/Pressable.tsx` (`ReachGroup`).
 
 ## Helpers in this repo
 - `a11y/contrast.ts` — `contrastRatio`, `checkContrast`, `AA_NORMAL`/`AA_LARGE`.
@@ -44,6 +46,7 @@ respects Reduce Motion, and meets WCAG AA contrast in light **and** dark.
 ## Known limitation
 React Native exposes no OS "High Contrast" reader
 (`AccessibilityInfo.isDarkerSystemColorsEnabled` is unavailable), so an explicit
-high-contrast theme toggle isn't wired. The monochrome palette already runs high
-contrast by design; revisit if RN adds the API. The full on-device VoiceOver +
+high-contrast theme toggle isn't wired. The palette already runs high contrast
+by design (indigo ink at 16.8:1 on the page, every text pair held to AA by
+`palette.contrast.test.ts`); revisit if RN adds the API. The full on-device VoiceOver +
 largest-Dynamic-Type sweep of every screen is a manual QA pass.

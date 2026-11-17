@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
+import { ReachReset } from '../theme/Pressable';
 import { SkeletonText } from '../theme/Skeleton';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -62,7 +63,10 @@ export function WordOfDayCard() {
         </Text>
       </PressableScale>
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
-        <EntryDetail entryId={word.entryId} onBack={() => setOpen(false)} />
+        {/* the entry is a screen of its own, not beside the Learn page's controls: their groups do not cap it */}
+        <ReachReset>
+          <EntryDetail entryId={word.entryId} onBack={() => setOpen(false)} />
+        </ReachReset>
       </Modal>
     </>
   );

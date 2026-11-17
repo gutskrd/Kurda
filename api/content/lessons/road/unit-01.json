@@ -1006,14 +1006,16 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Erê, ez baş im. Û tu?",
+                    "say": "Ez baş im, spas. Û tu?",
                     "voice": "hamo",
-                    "prompt": "Erê, ez baş im. Û tu?",
+                    "prompt": "Ez baş im, spas. Û tu?",
                     "accepted": [
-                      "Yes, I’m fine. And you?",
-                      "Yes, I am fine. And you?",
-                      "Yes, I am well. And you?",
-                      "Yes, I’m well. And you?"
+                      "I’m fine, thanks. And you?",
+                      "I am fine, thanks. And you?",
+                      "I’m fine, thank you. And you?",
+                      "I am fine, thank you. And you?",
+                      "I’m well, thanks. And you?",
+                      "I am well, thank you. And you?"
                     ]
                   }
                 },
@@ -1136,7 +1138,7 @@
           "position": 2,
           "titleKu": "Çay û nan",
           "titleEn": "Tea and bread",
-          "grammarMd": "**Ev çay e.** This is tea. “Is” is an ending too: **e** after a consonant, **ye** after a vowel.\n\n- *Ev nan e.* This is bread. · *Çay xweş e.* The tea is nice. · *Ev Hevalo ye.* This is Hevalo.\n- To ask, put **çi** (what) where the answer would be: *Ev çi ye?* What is this? — *Ev sêv e.*\n- *Av* → **Ez avê vedixwim.** I drink the water. *Çay* takes **-ê** too (*Ez çayê vedixwim*), but *nan* and *şîr* stay as they are: *Ez nan dixwim.* · *Ez şîr vedixwim.*",
+          "grammarMd": "**Ev çay e.** This is tea. “Is” is an ending too: **e** after a consonant, **ye** after a vowel.\n\n- *Ev nan e.* This is bread. · *Çay xweş e.* The tea is nice. · *Ev Hevalo ye.* This is Hevalo.\n- To ask, put **çi** (what) where the answer would be: *Ev çi ye?* What is this? — *Ev sêv e.*\n- *Av* → **Ez avê vedixwim.** I drink the water. *Çay* takes **-ê** too (*Ez çayê vedixwim*), but *nan* and *şîr* stay as they are (they are masculine): *Ez nan dixwim.* · *Ez şîr vedixwim.*",
           "lessons": [
             {
               "key": "u01s2l1",
@@ -3379,7 +3381,7 @@
           "position": 4,
           "titleKu": "Şev baş!",
           "titleEn": "Good night!",
-          "grammarMd": "Some Kurdish is best learnt whole, before its grammar. Kurdish puts the verb last, so what you want comes first:\n\n- **Ez nan dixwazim.** I want bread. · *Tu çi dixwazî?* What would you like? · *Hevalo sêvekê dixwaze.* Hevalo wants an apple.\n- **Nan heye?** Is there bread? — *Erê, heye.* · *Na, tune.* No, there isn’t. · **Were!** Come! · **Bixwe!** Eat! · **Vexwe!** Drink!",
+          "grammarMd": "Some Kurdish is best learnt whole, before its grammar. Kurdish puts the verb last, so what you want comes first:\n\n- **Ez nan dixwazim.** I want bread. · *Tu çi dixwazî?* What would you like? · *Hevalo sêvekê dixwaze.* Hevalo wants an apple.\n- **Nan heye?** Is there bread? — *Erê, heye.* Yes, there is. · *Na, tune.* No, there isn’t. · **Were!** Come! · **Bixwe!** Eat! · **Vexwe!** Drink!",
           "lessons": [
             {
               "key": "u01s4l1",
@@ -3986,7 +3988,7 @@
                     "new": [
                       {
                         "ku": "Roj baş!",
-                        "en": "Good day! Good morning!"
+                        "en": "Good morning! (word for word “good day”)"
                       }
                     ]
                   }

@@ -1,6 +1,12 @@
-import { Platform, Switch, type SwitchProps } from 'react-native';
+import type { ReactNode } from 'react';
+import { Platform, StyleSheet, Switch, Text, View, type StyleProp, type SwitchProps, type ViewStyle } from 'react-native';
+import { MIN_REACH } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
+import { useDirection } from '../reports/direction';
+import { pressedDim } from './motion';
+import { Pressable } from './Pressable';
 import { useTheme } from './ThemeProvider';
+import { spacing, typography } from './tokens';
 
 /**
  * The system switch, felt as it flips: the lightest tick there is, for a value
@@ -41,3 +47,94 @@ export function Toggle({ onValueChange, ...rest }: SwitchProps): React.JSX.Eleme
 function onKnob(knob: string, scheme: 'light' | 'dark'): string {
   return Platform.OS === 'ios' || scheme === 'light' ? knob : '#FFFFFF';
 }
+
+export interface ToggleRowProps {
+  /** what it turns on: the switch's name for a screen reader, and the row's words unless `children` draws its own */
+  label: string;
+  /** what turning it on means, under the label, and read out after it */
+  hint?: string;
+  value: boolean;
+  onValueChange: (on: boolean) => void;
+  disabled?: boolean;
+  /**
+   * The row's own content in place of the label and hint, with the switch
+   * after it; or a function that is handed the switch and places it itself,
+   * for a row that already has a slot for what ends it.
+   */
+  children?: ReactNode | ((toggle: ReactNode) => ReactNode);
+  /** the row's style; a function of `pressed` also takes over how the row looks while held */
+  style?: StyleProp<ViewStyle> | ((state: { pressed: boolean }) => StyleProp<ViewStyle>);
+  testID?: string;
+}
+
+/**
+ * A switch with its words, where the whole row turns it: the words are the
+ * bigger target and the one the eye goes to, and a switch alone is 31pt
+ * tall, under what a fingertip needs. The row is at least `MIN_REACH` tall.
+ *
+ * The row is the one control. It speaks as a switch, with its state, so a
+ * screen reader meets one control rather than a label and a switch, and the
+ * switch inside is hidden from it. The switch takes no touches of its own
+ * either, so a tap on it is the row's tap and flips the value once: in the
+ * browser build a click on the switch would otherwise reach the row too and
+ * flip it twice. The tick is felt here on every platform, because a value
+ * set from outside the system switch does not tick by itself.
+ */
+export function ToggleRow({ label, hint, value, onValueChange, disabled = false, children, style, testID }: ToggleRowProps): React.JSX.Element {
+  const { colors } = useTheme();
+  const dir = useDirection();
+  const toggle = (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden focusable={false} style={styles.inert}>
+      <Toggle value={value} disabled={disabled} />
+    </View>
+  );
+  const placesToggle = typeof children === 'function';
+  const content = placesToggle ? (
+    children(toggle)
+  ) : (
+    <>
+      {children ?? (
+        <View style={styles.words}>
+          <Text style={[styles.label, dir.text, { color: colors.textPrimary }]}>{label}</Text>
+          {hint ? <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{hint}</Text> : null}
+        </View>
+      )}
+      {toggle}
+    </>
+  );
+  return (
+    <Pressable
+      onPress={() => {
+        haptic('select');
+        onValueChange(!value);
+      }}
+      disabled={disabled}
+      accessibilityRole="switch"
+      accessibilityLabel={label}
+      accessibilityHint={hint}
+      accessibilityState={{ checked: value, disabled }}
+      // the same state again under the name the browser build reads
+      aria-checked={value}
+      testID={testID}
+      style={({ pressed }) => [
+        // a row that places the switch itself brings its own layout, and only needs to be tall enough
+        placesToggle ? styles.tall : [styles.row, { flexDirection: dir.row }],
+        typeof style === 'function' ? style({ pressed }) : [style, pressed && styles.held],
+        disabled && styles.disabled,
+      ]}
+    >
+      {content}
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  row: { alignItems: 'center', gap: spacing.md, minHeight: MIN_REACH },
+  tall: { minHeight: MIN_REACH },
+  words: { flex: 1, gap: 2 },
+  label: { fontSize: typography.sizes.md },
+  hint: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  inert: { pointerEvents: 'none' },
+  held: { opacity: pressedDim },
+  disabled: { opacity: 0.45 },
+});

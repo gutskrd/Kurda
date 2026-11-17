@@ -6,9 +6,11 @@ import {
   checkLoreTranslation,
   dailyLorePick,
   loreDayNumber,
+  oneEditApart,
   originalLocale,
   riddleGuessForms,
   riddleGuessMatches,
+  riddleGuessNear,
   riddleXp,
   translationLocales,
 } from './lore.js';
@@ -174,6 +176,42 @@ describe('what counts as solving a riddle', () => {
     const sorani = ['سێبەر'];
     for (const guess of ['سێبەر', 'سیبەر', 'سێبەرەکە', 'سێبەرێک', 'سێبەرە', 'ئەو سێبەرە']) expect(riddleGuessMatches(guess, sorani, 'ckb'), guess).toBe(true);
     expect(riddleGuessMatches('سێو', sorani, 'ckb')).toBe(false);
+  });
+
+  it('reads the Soranî definite form after a vowel, and ئەوە before it', () => {
+    for (const guess of ['دەرزییەکە', 'دەرزییەکەیە', 'ئەوە دەرزییە', 'ئەمە دەرزی']) expect(riddleGuessMatches(guess, ['دەرزی'], 'ckb'), guess).toBe(true);
+  });
+});
+
+describe('a guess that is near', () => {
+  const riddle = { answers: ['Fîncan', 'fîncana çayê'], near: ['piyale'], translated: ['the cup'] };
+
+  it('is close when the riddle lists it as near, with its endings and the words around it', () => {
+    expect(riddleGuessNear('piyale', riddle, 'kmr')).toBe('close');
+    expect(riddleGuessNear('ew piyaleye', riddle, 'kmr')).toBe('close');
+  });
+
+  it('is a spelling slip one letter from an answer of four letters or more, never from a shorter one', () => {
+    expect(riddleGuessNear('fincam', riddle, 'kmr')).toBe('spelling');
+    expect(riddleGuessNear('fîncn', riddle, 'kmr')).toBe('spelling');
+    expect(riddleGuessNear('sêv', { answers: ['sêl'] }, 'kmr')).toBeNull();
+  });
+
+  it('is the answer in the learner’s own language, with or without its article', () => {
+    expect(riddleGuessNear('Cup', riddle, 'kmr')).toBe('language');
+    expect(riddleGuessNear('the cup!', riddle, 'kmr')).toBe('language');
+  });
+
+  it('is nothing for a wild guess or an empty one', () => {
+    expect(riddleGuessNear('çiya', riddle, 'kmr')).toBeNull();
+    expect(riddleGuessNear('  ', riddle, 'kmr')).toBeNull();
+  });
+
+  it('counts one edit, letter by letter', () => {
+    expect(oneEditApart('qelem', 'qelam')).toBe(true);
+    expect(oneEditApart('qelem', 'qelemm')).toBe(true);
+    expect(oneEditApart('qelem', 'qlm')).toBe(false);
+    expect(oneEditApart('qelem', 'qelem')).toBe(false);
   });
 });
 

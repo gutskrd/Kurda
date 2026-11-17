@@ -169,11 +169,11 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
   it('writes one letter each in turn once a correspondence is open', async () => {
     const [a, b] = [await adult('turna'), await adult('turnb')];
     const met = await meet(a, b);
-    const write = (p: Person) => call('POST', `/letters/threads/${met.threadId}`, p.token, { body: 'Spas ji bo nameya te, hevalê min!' });
+    const write = (p: Person, body = 'Spas ji bo nameya te, hevalê min!') => call('POST', `/letters/threads/${met.threadId}`, p.token, { body });
     // he answered her bird: it is hers to write now, not his again
     expect((await write(b)).json()).toMatchObject({ code: 'NOT_YOUR_TURN' });
     expect((await write(a)).statusCode).toBe(200);
-    expect((await write(a)).json()).toMatchObject({ code: 'NOT_YOUR_TURN' });
+    expect((await write(a, 'Û tiştekî din jî heye.')).json()).toMatchObject({ code: 'NOT_YOUR_TURN' });
     expect((await write(b)).statusCode).toBe(200);
   });
 
@@ -269,7 +269,7 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
   it('sends one bird out at a time, and calls it home, from a window too', async () => {
     const [a, b] = [await adult('one'), await adult('oneb')];
     await out(a);
-    expect((await call('POST', '/letters/out', a.token, { body: letter })).json()).toMatchObject({ code: 'BIRD_OUT' });
+    expect((await call('POST', '/letters/out', a.token, { body: 'Nameyeke din, ji bo kesekî din.' })).json()).toMatchObject({ code: 'BIRD_OUT' });
     await callBird(b);
     expect((await call('DELETE', '/letters/out', a.token)).statusCode).toBe(204);
     expect((await home(a)).out).toBeNull();

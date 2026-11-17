@@ -1248,7 +1248,7 @@
           "position": 2,
           "titleKu": "Ez te dibînim",
           "titleEn": "I see you",
-          "grammarMd": "**Doktor min dibîne.** The doctor sees me. A pronoun as the object goes before the verb, in its short form, *min, te, wî, wê, me, we, wan*: *Ez te dibînim.* I see you. · *Tu wî nas dikî?* Do you know him?\n\n- **jê** is *ji* + him, her or it: *Ez jê hez dikim.* I like it. · *Jê bipirse!* Ask him!",
+          "grammarMd": "**Doktor min dibîne.** The doctor sees me. A pronoun as the object goes before the verb, in its other form, the one you know from *navê min*: *min, te, wî, wê, me, we, wan*: *Ez te dibînim.* I see you. · *Tu wî nas dikî?* Do you know him?\n\n- **jê** is *ji* + him, her or it: *Ez jê hez dikim.* I like it. · *Jê bipirse!* Ask him!",
           "lessons": [
             {
               "key": "u08s2l1",
@@ -2609,12 +2609,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ez telefonî Lorînê dikim û jê dipirsim kî şanzdeh salî ye, kî hivdeh.",
+                    "say": "Ez telefonî Lorînê dikim û jê dipirsim kîjan ji zarokên wê şanzdeh salî ye, kîjan hivdeh.",
                     "voice": "hamo",
-                    "prompt": "Ez telefonî Lorînê dikim û jê dipirsim kî şanzdeh salî ye, kî hivdeh.",
+                    "prompt": "Ez telefonî Lorînê dikim û jê dipirsim kîjan ji zarokên wê şanzdeh salî ye, kîjan hivdeh.",
                     "accepted": [
-                      "I phone Lorîn and ask her who is sixteen and who is seventeen.",
-                      "I call Lorîn and ask her which one is sixteen and which seventeen."
+                      "I phone Lorîn and ask her which of her children is sixteen and which seventeen.",
+                      "I call Lorîn and ask her which of her children is sixteen and which is seventeen.",
+                      "I phone Lorîn and ask her which of her kids is sixteen and which seventeen."
                     ]
                   }
                 },
@@ -3263,7 +3264,7 @@
                       {
                         "speaker": 0,
                         "text": "Û tu? Ji te re, simbêlê kê herî xweşik e?",
-                        "en": "And you? Whose moustache is the most beautiful, to you?"
+                        "en": "And you? Whose moustache do you think is the most beautiful?"
                       }
                     ],
                     "prompt": "Simbêlê kê dirêjtir e?",
@@ -3686,7 +3687,7 @@
           "position": 4,
           "titleKu": "Ez ditirsim",
           "titleEn": "I’m afraid",
-          "grammarMd": "**Ez ditirsim.** I’m afraid. Many feelings are verbs in Kurdish: *ditirsim* I’m afraid, *dihizirim* I think, *tê digihîjim* I understand.\n\n- **xwe** is oneself, whoever that is: *Ez li xwe dinêrim.* I look at myself. · *Ew li xwe dinêre.* He looks at himself.\n- **Guhdariya min bike!** Listen to me! (word for word: do my listening)",
+          "grammarMd": "**Ez ditirsim.** I’m afraid. Fear, thought and understanding are verbs in Kurdish, not adjectives: *ditirsim* I’m afraid, *dihizirim* I think, *tê digihîjim* I understand.\n\n- **xwe** is oneself, whoever that is: *Ez li xwe dinêrim.* I look at myself. · *Ew li xwe dinêre.* He looks at himself.\n- **Guhdariya min bike!** Listen to me! (word for word: do my listening)",
           "lessons": [
             {
               "key": "u08s4l1",
@@ -3703,7 +3704,7 @@
                     "voice": "hamo",
                     "prompt": "Baran her roj li ser gir baz dide. Îro ew dereng tê malê, û tiştekî nabêje.",
                     "options": [
-                      "Every day Baran is jumping about on the hill. Today he comes home late, and says nothing.",
+                      "Every day Baran runs about on the hill. Today he comes home late, and says nothing.",
                       "Every day Baran sleeps on the hill. Today he comes home early, and talks a lot.",
                       "Baran never goes to the hill. Today he is singing at home."
                     ],
@@ -3983,8 +3984,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Hêvî matmayî ye, û Baran ne bi kelecan e, lê ez ê bisekinim.",
-                    "reference": "Hêvî matmayî ye, û Baran ne bi kelecan e, lê ez ê bisekinim."
+                    "prompt": "Hêvî matmayî ye, Baran ne bi kelecan e, û ez ê bisekinim.",
+                    "reference": "Hêvî matmayî ye, Baran ne bi kelecan e, û ez ê bisekinim."
                   }
                 }
               ]
@@ -4438,8 +4439,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez heşt salî me, li çiyê, bi pezê bavê xwe re. Bavê min bilûrê lêdixe.",
-                        "en": "I’m eight years old, up on the mountain, with my father’s sheep. My father is playing his flute."
+                        "text": "Ez heşt salî me, li çiyê, bi pezê bavê xwe re. Bavê min her gav bilûrê lêdixe.",
+                        "en": "I’m eight years old, up on the mountain, with my father’s sheep. My father always plays the flute."
                       },
                       {
                         "speaker": 0,
@@ -4644,7 +4645,7 @@
               "key": "u08s4l4",
               "position": 4,
               "titleKu": "Sibe ez ê bibêjim",
-              "titleEn": "Tomorrow I’ll tell",
+              "titleEn": "I’ll tell you tomorrow",
               "exercises": [
                 {
                   "position": 1,

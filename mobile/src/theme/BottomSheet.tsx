@@ -10,6 +10,7 @@ import {
   Text,
   View,
   useWindowDimensions,
+  type GestureResponderEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type PanResponderGestureState,
@@ -18,10 +19,10 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { Pressable } from './Pressable';
+import { Pressable, ReachReset } from './Pressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReducedMotion } from '../a11y/useReducedMotion';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
@@ -50,15 +51,25 @@ interface SheetScroll {
 
 const SheetScrollContext = createContext<SheetScroll | null>(null);
 
-/** The grabber is drawn 17 points tall; its touch reaches a fingertip's 44. */
-const GRABBER_SLOP = { top: 14, bottom: 14 };
 /**
- * The ✕ and the ‹ are drawn as small circles, and caught as a full fingertip:
- * the slop is worked out from the circle rather than written beside it, where
- * it had been 6 a side, which made 42 of the 44 a finger needs.
+ * The grabber's box is 17 points tall across the sheet, and its top edge is
+ * the sheet's own, which cuts off anything reaching past it: the 14 it once
+ * reached upwards was never there. It reaches down only, 8 into the header,
+ * where the ‹ and the ✕ are drawn after it and still win where the two meet.
+ */
+const GRABBER_SLOP = { top: 0, bottom: 8, left: 0, right: 0 };
+/**
+ * The ✕ and the ‹ are drawn as small circles with nothing close beside them,
+ * so each reaches past its edges (`reach="open"`): 9 a side, a fingertip's 48.
  */
 const ROUND = 30;
-const ROUND_SLOP = hitSlopFor(ROUND, ROUND);
+/**
+ * How far above the sheet's top edge a tap on the dimmed page does nothing.
+ * A finger that meant the grabber or the header and landed a little high is
+ * not asking to close the sheet, and closing it would lose what was in it.
+ * Not a redirect: the tap is only not taken as a close.
+ */
+const SCRIM_GUARD = 12;
 
 /**
  * The ScrollView for content that can run longer than its sheet. The sheet
@@ -307,96 +318,121 @@ export function BottomSheet({
     settle(at > 0 ? stops[at - 1]! : lowest, 0);
   };
 
+  // where the sheet is laid out, in the same place the scrim starts from (both fill the screen's top-left)
+  const laidOut = useRef<{ x: number; y: number; width: number } | null>(null);
+  /*
+   * A tap on the dimmed page closes the sheet, unless it lands in the band
+   * `SCRIM_GUARD` deep just above the sheet's top edge, over the sheet's
+   * width. The edge is where the sheet rests: its laid-out top, lowered by
+   * whatever part of it is kept below the screen at its height. A tap beside
+   * a sheet narrower than the screen (a tablet's) still closes it, and so
+   * does one whose place is not known (a screen reader's, a key's).
+   */
+  const onScrim = (e: GestureResponderEvent): void => {
+    const { pageX, pageY } = e.nativeEvent;
+    const box = laidOut.current;
+    const placed = box !== null && typeof pageX === 'number' && typeof pageY === 'number';
+    if (placed && pageX >= box.x && pageX <= box.x + box.width && pageY >= box.y + rest.current - SCRIM_GUARD) return;
+    dismiss();
+  };
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={() => dismiss()} statusBarTranslucent>
-      <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Animated.View style={[styles.scrim, { backgroundColor: colors.scrim, opacity: dim }]}>
-          <Pressable style={styles.fill} onPress={() => dismiss()} accessibilityRole="button" accessibilityLabel={t('social.close')} />
-        </Animated.View>
-        <Animated.View
-          testID={testID}
-          accessibilityViewIsModal
-          onAccessibilityEscape={() => dismiss()}
-          onLayout={(e) => setMeasured(e.nativeEvent.layout.height)}
-          {...whole.panHandlers}
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: colors.background,
-              ...(tallest !== undefined ? { height: tallest } : { maxHeight: cap }),
-              paddingBottom: insets.bottom + spacing.md + hidden,
-              transform: [{ translateY: y }],
-            },
-          ]}
-        >
-          {/* the handle: the grabber and the header are where the sheet can always be dragged from */}
-          <View {...handle.panHandlers}>
-            {stops.length > 1 ? (
-              // with heights to move between, the grabber is a control: a tap moves to the next one
-              <Pressable
-                onPress={cycle}
-                style={({ pressed }) => [styles.grabberBox, pressed && heldDim]}
-                hitSlop={GRABBER_SLOP}
-                accessibilityRole="button"
-                accessibilityLabel={t(growing ? 'sheet.expand' : 'sheet.collapse')}
-                testID={testID ? `${testID}-grabber` : undefined}
-              >
-                <View style={[styles.grabber, { backgroundColor: colors.separator }]} />
-              </Pressable>
-            ) : (
-              <View style={styles.grabberBox}>
-                <View style={[styles.grabber, { backgroundColor: colors.separator }]} />
-              </View>
-            )}
-            <View style={[styles.header, { flexDirection: dir.row }]}>
-              {onBack ? (
+      {/* the sheet is not beside the controls of the screen it opened from, so no group of theirs caps its reach */}
+      <ReachReset>
+        <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <Animated.View style={[styles.scrim, { backgroundColor: colors.scrim, opacity: dim }]}>
+            <Pressable style={styles.fill} onPress={onScrim} accessibilityRole="button" accessibilityLabel={t('social.close')} />
+          </Animated.View>
+          <Animated.View
+            testID={testID}
+            accessibilityViewIsModal
+            onAccessibilityEscape={() => dismiss()}
+            onLayout={(e) => {
+              const { x, y, width, height } = e.nativeEvent.layout;
+              laidOut.current = { x, y, width };
+              setMeasured(height);
+            }}
+            {...whole.panHandlers}
+            style={[
+              styles.sheet,
+              {
+                backgroundColor: colors.background,
+                ...(tallest !== undefined ? { height: tallest } : { maxHeight: cap }),
+                paddingBottom: insets.bottom + spacing.md + hidden,
+                transform: [{ translateY: y }],
+              },
+            ]}
+          >
+            {/* the handle: the grabber and the header are where the sheet can always be dragged from */}
+            <View {...handle.panHandlers}>
+              {stops.length > 1 ? (
+                // with heights to move between, the grabber is a control: a tap moves to the next one
                 <Pressable
-                  onPress={onBack}
-                  style={({ pressed }) => [styles.round, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
-                  hitSlop={ROUND_SLOP}
+                  onPress={cycle}
+                  style={({ pressed }) => [styles.grabberBox, pressed && heldDim]}
+                  hitSlop={GRABBER_SLOP}
                   accessibilityRole="button"
-                  accessibilityLabel={t('common.back')}
+                  accessibilityLabel={t(growing ? 'sheet.expand' : 'sheet.collapse')}
+                  testID={testID ? `${testID}-grabber` : undefined}
                 >
-                  <Icon name="chevron-left" size={16} color={colors.textSecondary} style={dir.flip} />
+                  <View style={[styles.grabber, { backgroundColor: colors.separator }]} />
                 </Pressable>
-              ) : icon ? (
-                <Icon name={icon} size={18} color={colors.textSecondary} />
-              ) : null}
-              {title ? (
-                <Text
-                  style={[styles.title, dir.text, { color: colors.textPrimary }, titleLanguage?.style]}
-                  accessibilityRole="header"
-                  accessibilityLanguage={titleLanguage?.accessibilityLanguage}
-                  numberOfLines={2}
-                >
-                  {title}
-                </Text>
               ) : (
-                // no title: the content carries its own heading, and the ✕ stays on the closing side
-                <View style={styles.spacer} />
+                <View style={styles.grabberBox}>
+                  <View style={[styles.grabber, { backgroundColor: colors.separator }]} />
+                </View>
               )}
-              <Pressable
-                onPress={() => dismiss()}
-                disabled={!dismissible}
-                style={({ pressed }) => [
-                  styles.round,
-                  { backgroundColor: colors.controlTrack, opacity: !dismissible ? 0.4 : pressed ? pressedDim : 1 },
-                ]}
-                hitSlop={ROUND_SLOP}
-                accessibilityRole="button"
-                accessibilityLabel={t('social.close')}
-                accessibilityState={{ disabled: !dismissible }}
-                aria-disabled={!dismissible}
-              >
-                <Icon name="close" size={16} color={colors.textSecondary} />
-              </Pressable>
+              <View style={[styles.header, { flexDirection: dir.row }]}>
+                {onBack ? (
+                  <Pressable
+                    onPress={onBack}
+                    style={({ pressed }) => [styles.round, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+                    reach="open"
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.back')}
+                  >
+                    <Icon name="chevron-left" size={16} color={colors.textSecondary} style={dir.flip} />
+                  </Pressable>
+                ) : icon ? (
+                  <Icon name={icon} size={18} color={colors.textSecondary} />
+                ) : null}
+                {title ? (
+                  <Text
+                    style={[styles.title, dir.text, { color: colors.textPrimary }, titleLanguage?.style]}
+                    accessibilityRole="header"
+                    accessibilityLanguage={titleLanguage?.accessibilityLanguage}
+                    numberOfLines={2}
+                  >
+                    {title}
+                  </Text>
+                ) : (
+                  // no title: the content carries its own heading, and the ✕ stays on the closing side
+                  <View style={styles.spacer} />
+                )}
+                <Pressable
+                  onPress={() => dismiss()}
+                  disabled={!dismissible}
+                  style={({ pressed }) => [
+                    styles.round,
+                    { backgroundColor: colors.controlTrack, opacity: !dismissible ? 0.4 : pressed ? pressedDim : 1 },
+                  ]}
+                  reach="open"
+                  accessibilityRole="button"
+                  accessibilityLabel={t('social.close')}
+                  accessibilityState={{ disabled: !dismissible }}
+                  aria-disabled={!dismissible}
+                >
+                  <Icon name="close" size={16} color={colors.textSecondary} />
+                </Pressable>
+              </View>
             </View>
-          </View>
-          <SheetScrollContext.Provider value={bridge}>
-            <View style={[styles.content, contentStyle]}>{children}</View>
-          </SheetScrollContext.Provider>
-        </Animated.View>
-      </KeyboardAvoidingView>
+            <SheetScrollContext.Provider value={bridge}>
+              <View style={[styles.content, contentStyle]}>{children}</View>
+            </SheetScrollContext.Provider>
+          </Animated.View>
+        </KeyboardAvoidingView>
+      </ReachReset>
     </Modal>
   );
 }
@@ -427,7 +463,7 @@ const styles = StyleSheet.create({
   },
   title: { flex: 1, fontSize: typography.ios.row, fontWeight: typography.weights.semibold },
   spacer: { flex: 1 },
-  // the ✕ and the ‹: small circles, reaching 44 with their slop
+  // the ✕ and the ‹: small circles, reaching a fingertip's 48 past their edges
   round: { width: ROUND, height: ROUND, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   // gives way under the 90% cap, so a ScrollView inside scrolls instead of being cut off
   content: { flexShrink: 1, paddingHorizontal: layout.gutter, gap: spacing.sm },

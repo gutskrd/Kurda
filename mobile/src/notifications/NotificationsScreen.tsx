@@ -81,7 +81,8 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <ScreenHeader title={t('notifications.title')} onBack={onExit} />
+        {/* named as the gear that opens it and the row in Settings name it: the list it came from is "Notifications" */}
+        <ScreenHeader title={t('settings.notifications')} onBack={onExit} />
         <AsyncBoundary loading={!prefs} error={!prefs ? error : null} onRetry={load} skeleton={<PrefsSkeleton />}>
           {() => {
             if (!prefs) return null;
@@ -180,25 +181,27 @@ function SwitchSkeleton(): React.JSX.Element {
  */
 function TimeRow({ label, earlier, later, minute, onStep }: { label: string; earlier: string; later: string; minute: number; onStep: (dir: 1 | -1) => void }) {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   return (
     <SettingsRow
       title={label}
       trailing={
         <View style={styles.stepper}>
+          {/* each step stands alone, the time between them, so it reaches a fingertip past every edge, inside its row */}
           <PressableScale
             onPress={() => onStep(-1)}
             style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]}
-            hitSlop={8}
+            reach="open"
             accessibilityRole="button"
             accessibilityLabel={earlier}
           >
             <Text style={[styles.stepText, { color: colors.textPrimary }]}>−</Text>
           </PressableScale>
-          <Text style={[styles.time, { color: colors.textPrimary }]}>{formatMinute(minute)}</Text>
+          <Text style={[styles.time, { color: colors.textPrimary }]}>{formatMinute(minute, locale)}</Text>
           <PressableScale
             onPress={() => onStep(1)}
             style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]}
-            hitSlop={8}
+            reach="open"
             accessibilityRole="button"
             accessibilityLabel={later}
           >
@@ -221,5 +224,6 @@ const styles = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   stepBtn: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   stepText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  time: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, minWidth: 56, textAlign: 'center' },
+  // wide enough for "10:00 PM", so the steps of the two rows stand in line whatever the times are
+  time: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, minWidth: 80, textAlign: 'center', fontVariant: ['tabular-nums'] },
 });

@@ -31,6 +31,8 @@ export interface LibraryPost {
   meme?: boolean;
   /** "Source / credit", shown under the post */
   sourceCredit?: string | null;
+  /** who wrote it: a face and a name, as the wall shows them; an older API leaves it out */
+  author?: { id: string; username: string; avatarUrl: string | null } | null;
 }
 
 /** Threaded comment (text or audio), mirroring the API's library_comments. */

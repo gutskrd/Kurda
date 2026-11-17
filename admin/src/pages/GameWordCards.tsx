@@ -5,10 +5,12 @@ import {
   GAME_LEVELS,
   WHO_AM_I_CATEGORIES,
   WHO_AM_I_FACTS,
+  WHO_AM_I_MAX_SOMETIMES,
   dialectDirection,
   type GameDialect,
   type GameWordCandidate,
   type GameWordSource,
+  type WhoAmIFactValue,
   type WordCardKind,
 } from '@kurda/shared';
 import { go } from '../nav';
@@ -27,8 +29,8 @@ import './game-words.css';
  *   here, and each card is a draft until a reviewer approves it.
  * - The editors for those rows afterwards: the word and anything Kurdish read
  *   only, as it was copied; the meanings in the interface languages, an
- *   identity's category and its yes/no facts table, and the level, the
- *   editor's to set.
+ *   identity's category and its facts table (yes, no, sometimes, or not
+ *   said), and the level, the editor's to set.
  * - The editor for a question template: new Kurdish, so a draft for a native
  *   speaker, with the fact it asks and what it means.
  */
@@ -37,25 +39,41 @@ export const CATEGORY_NAME: Record<string, string> = {
   animal: 'Animal',
   object: 'Thing',
   profession: 'Job',
-  food: 'Food',
+  food: 'Food or drink',
   place: 'Place',
+  nature: 'Nature',
 };
 
 type Payload = Record<string, unknown>;
-type Facts = Record<string, boolean>;
+type Facts = Record<string, WhoAmIFactValue>;
 
-/** The facts table: every fact an identity can be asked about, yes, no or not said. */
+/** How a facts row reads in its select: the stored value's own word, or nothing when the row is not said. */
+function factChoice(value: WhoAmIFactValue | undefined): string {
+  return value === true ? 'yes' : value === false ? 'no' : value === 'sometimes' ? 'sometimes' : '';
+}
+
+/**
+ * The facts table: every fact an identity can be asked about, yes, no,
+ * sometimes (honest people would answer either way, as a dog is in one house
+ * and in the yard of another), or not said (the question is never asked of
+ * this card, as "Does it sell things?" is never asked of a cat).
+ */
 export function FactsTable({ facts, onChange, readOnly }: { facts: Facts; onChange: (f: Facts) => void; readOnly: boolean }): React.JSX.Element {
+  const sometimes = Object.values(facts).filter((v) => v === 'sometimes').length;
   const set = (key: string, value: string): void => {
     const next = { ...facts };
     if (value === 'yes') next[key] = true;
     else if (value === 'no') next[key] = false;
+    else if (value === 'sometimes') next[key] = 'sometimes';
     else delete next[key];
     onChange(next);
   };
   return (
     <table className="gc-facts">
-      <caption>Yes or no for each question a player can ask (at least four)</caption>
+      <caption>
+        The card’s answer to each question a player can ask: at least four said, and at most {WHO_AM_I_MAX_SOMETIMES} sometimes. Leave a question not said
+        when it makes no sense for this kind of thing.
+      </caption>
       <thead>
         <tr>
           <th scope="col">Fact</th>
@@ -67,15 +85,14 @@ export function FactsTable({ facts, onChange, readOnly }: { facts: Facts; onChan
           <tr key={f.key}>
             <th scope="row">{f.en}</th>
             <td>
-              <select
-                aria-label={f.en}
-                value={facts[f.key] === true ? 'yes' : facts[f.key] === false ? 'no' : ''}
-                disabled={readOnly}
-                onChange={(e) => set(f.key, e.target.value)}
-              >
+              <select aria-label={f.en} value={factChoice(facts[f.key])} disabled={readOnly} onChange={(e) => set(f.key, e.target.value)}>
                 <option value="">Not said</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
+                {/* once the card has its share of "sometimes", only a row that already says it keeps the choice */}
+                <option value="sometimes" disabled={sometimes >= WHO_AM_I_MAX_SOMETIMES && facts[f.key] !== 'sometimes'}>
+                  Sometimes
+                </option>
               </select>
             </td>
           </tr>

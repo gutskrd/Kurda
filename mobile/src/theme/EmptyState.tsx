@@ -1,5 +1,5 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { Pressable } from './Pressable';
+import { Pressable, ReachGroup } from './Pressable';
 import { PressableScale } from './MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -91,26 +91,34 @@ export function EmptyState({
       <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
       {body ? <Text style={[styles.body, { color: colors.textSecondary }]}>{body}</Text> : null}
 
-      {action ? (
-        <PressableScale
-          onPress={action.onPress}
-          accessibilityRole="button"
-          accessibilityLabel={action.label}
-          style={[styles.action, { backgroundColor: colors.primary }]}
-        >
-          <Text style={[styles.actionText, { color: colors.textOnPrimary }]}>{action.label}</Text>
-        </PressableScale>
-      ) : null}
-      {secondary ? (
-        <Pressable
-          onPress={secondary.onPress}
-          accessibilityRole="button"
-          accessibilityLabel={secondary.label}
-          style={({ pressed }) => [styles.secondary, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
-        >
-          <Text style={[styles.actionText, { color: colors.textPrimary }]}>{secondary.label}</Text>
-        </Pressable>
-      ) : null}
+      {/*
+       * The way out stands alone on an empty screen, so it reaches 8 past
+       * its edges; the two ways out are a gap apart, and share it half each.
+       */}
+      <ReachGroup rowGap={spacing.sm}>
+        {action ? (
+          <PressableScale
+            onPress={action.onPress}
+            accessibilityRole="button"
+            accessibilityLabel={action.label}
+            reach="open"
+            style={[styles.action, { backgroundColor: colors.primary }]}
+          >
+            <Text style={[styles.actionText, { color: colors.textOnPrimary }]}>{action.label}</Text>
+          </PressableScale>
+        ) : null}
+        {secondary ? (
+          <Pressable
+            onPress={secondary.onPress}
+            accessibilityRole="button"
+            accessibilityLabel={secondary.label}
+            reach="open"
+            style={({ pressed }) => [styles.secondary, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+          >
+            <Text style={[styles.actionText, { color: colors.textPrimary }]}>{secondary.label}</Text>
+          </Pressable>
+        ) : null}
+      </ReachGroup>
     </View>
   );
 }

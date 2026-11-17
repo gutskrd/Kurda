@@ -44,7 +44,11 @@ function server(opts: { signedIn?: boolean; detail?: Parameters<typeof riddleDet
       'GET /riddles/kmr-sih': { riddle: detail },
       'POST /riddles/kmr-sih/hint': (c: Call) => ({ hint: riddleHint((c.body as { index: number }).index) }),
       'POST /riddles/kmr-sih/guess': (c: Call) =>
-        (c.body as { guess: string }).guess === (opts.guessRight ?? 'sî') ? { correct: true, answer: riddleAnswer(), xp: 3 } : { correct: false },
+        (c.body as { guess: string }).guess === (opts.guessRight ?? 'sî')
+          ? { correct: true, answer: riddleAnswer(), xp: 3 }
+          : (c.body as { guess: string }).guess === 'sîh'
+            ? { correct: false, near: 'spelling' }
+            : { correct: false },
       'POST /riddles/kmr-sih/reveal': { answer: riddleAnswer() },
     },
     { signedIn: opts.signedIn ?? true },
@@ -176,8 +180,17 @@ describe('a riddle', () => {
     await userEvent.type(field, 'ba');
     await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
     expect(await screen.findByText('Not this one either. A hint might help.')).toBeInTheDocument();
-    expect(asked(calls, /\/guess$/).map((c) => c.body)).toEqual([{ guess: 'av' }, { guess: 'ba' }]);
+    expect(asked(calls, /\/guess$/).map((c) => c.body)).toEqual([{ guess: 'av', locale: 'en' }, { guess: 'ba', locale: 'en' }]);
     expect(markup()).not.toContain('ANSWERWORD');
+  });
+
+  it('says when a guess is nearly it, without giving the answer away', async () => {
+    server();
+    pages('/app/learn/riddles/kmr-sih');
+    const field = await screen.findByLabelText('Your answer');
+    await userEvent.type(field, 'sîh');
+    await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
+    expect(await screen.findByText('Almost: check the spelling.')).toBeInTheDocument();
   });
 
   it('a right guess opens the answer on the moment it was solved, with the XP the server paid', async () => {

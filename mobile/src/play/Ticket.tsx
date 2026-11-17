@@ -25,9 +25,9 @@ import { codeTone, filledTone } from './joinCode';
  * A ticket is paper with a coloured stub on the side a line starts from (the
  * right in Soranî and Arabic), torn along a perforation: a dashed rule with a
  * notch bitten out of each edge, the page showing through. The stub is in the
- * colour of what the ticket is for — a game's own colour (joinCode.ts:
- * Peyvok Battle's green, Rhyme Match's gold, a story's ink), or the brand's
- * ink for a friendship — and turns a quiet grey once the ticket is spent.
+ * colour of what the ticket is for — a game's own colour, the hue of its
+ * stamp on the games page (joinCode.ts), or the brand's violet for a story
+ * game and a friendship — and turns a quiet grey once the ticket is spent.
  *
  * The moments a ticket has are drawn here too, so each screen says what
  * happened rather than how it moves: the stub torn off (an invite taken up),

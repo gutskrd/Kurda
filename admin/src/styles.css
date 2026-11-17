@@ -1030,15 +1030,6 @@ button.st-cover.is-on { background: var(--surface-strong); border-color: var(--t
 .st-pv { border: 1px solid var(--hairline); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-strong); }
 .st-pv-cover { aspect-ratio: 16 / 5; max-height: 220px; background: var(--control); }
 .st-pv-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.st-pv-cover.is-kilim {
-  background:
-    repeating-linear-gradient(135deg, transparent 0 14px, rgba(255, 255, 255, 0.05) 14px 16px),
-    repeating-linear-gradient(45deg, transparent 0 14px, rgba(255, 255, 255, 0.05) 14px 16px),
-    linear-gradient(90deg, #7c3a2d, #b4652b 50%, #7c3a2d);
-}
-.st-pv-cover.is-kilim[data-category='nature'], .st-pv-cover.is-kilim[data-category='village'] { background-color: #3f6b3a; background-image: repeating-linear-gradient(135deg, transparent 0 14px, rgba(255, 255, 255, 0.05) 14px 16px), repeating-linear-gradient(45deg, transparent 0 14px, rgba(255, 255, 255, 0.05) 14px 16px), linear-gradient(90deg, #2f5a3a, #6d9a4a 50%, #2f5a3a); }
-.st-pv-cover.is-kilim[data-category='legend'], .st-pv-cover.is-kilim[data-category='celebrations'] { background-image: repeating-linear-gradient(135deg, transparent 0 14px, rgba(255, 255, 255, 0.05) 14px 16px), repeating-linear-gradient(45deg, transparent 0 14px, rgba(255, 255, 255, 0.05) 14px 16px), linear-gradient(90deg, #4a2f6b, #8a5ab8 50%, #4a2f6b); }
-.st-pv-cover.is-kilim[data-category='family'], .st-pv-cover.is-kilim[data-category='everyday'] { background-image: repeating-linear-gradient(135deg, transparent 0 14px, rgba(255, 255, 255, 0.05) 14px 16px), repeating-linear-gradient(45deg, transparent 0 14px, rgba(255, 255, 255, 0.05) 14px 16px), linear-gradient(90deg, #1f4e6b, #3c88a8 50%, #1f4e6b); }
 .st-pv-head { display: grid; gap: 8px; padding: 16px 20px 6px; }
 .st-pv-title { margin: 0; font-size: 26px; line-height: 1.2; letter-spacing: -0.01em; font-family: Georgia, 'Times New Roman', serif; }
 .st-pv-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0; color: var(--text-2); font-size: 13.5px; }

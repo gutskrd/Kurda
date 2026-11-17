@@ -7,16 +7,27 @@ import { describeError } from '../api/errors';
 import { listPosts } from '../library/api';
 import { postName, type LibraryPost } from '../library/types';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { FAVORITE_KINDS, clearFavorite, favoriteCopy, setFavorite, type FavoriteKind } from './favorites';
 import type { FavoriteRef } from './types';
 import { Loading } from '../theme/Loading';
+import { useDirection } from '../reports/direction';
+
+/** The violet wash an option that is on wears, as everywhere a choice is marked. */
+const CHOSEN_WASH = '1F';
 
 /** How many published posts to offer — the browser offers the same fifty. */
 const BROWSE = 50;
+
+/**
+ * Remove and Change are a line of words, about 22 points tall: said as their
+ * height, they answer a finger over 48 above and below, and only over their
+ * own width sideways, where they stand a gap from each other.
+ */
+const WORD = { height: 22 };
 
 /**
  * Choosing the poem and the story on your profile (KUR profile cosmetics).
@@ -40,10 +51,13 @@ export function FavoritesPicker({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
 
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.heading, { color: colors.textSecondary }]}>{t('favorites.title')}</Text>
+      <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+        {t('favorites.title')}
+      </Text>
       {FAVORITE_KINDS.map((kind) => (
         <Slot
           key={kind}
@@ -68,6 +82,8 @@ function Slot({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  // right to left, what is chosen is read first on the right and the way to change it closes the row on the left
+  const dir = useDirection();
   const copy = favoriteCopy(kind);
 
   const [open, setOpen] = useState(false);
@@ -124,11 +140,11 @@ function Slot({
 
   return (
     <View style={styles.slot}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>{t(copy.label)}</Text>
+      <Text style={[styles.label, dir.text, { color: colors.textSecondary }]}>{t(copy.label)}</Text>
 
-      <View style={styles.row}>
+      <View style={[styles.row, { flexDirection: dir.row }]}>
         <Text
-          style={[styles.value, { color: current ? colors.textPrimary : colors.textSecondary }]}
+          style={[styles.value, dir.free, { color: current ? colors.textPrimary : colors.textSecondary }]}
           numberOfLines={1}
         >
           {current ? current.title : t('favorites.none')}
@@ -137,7 +153,7 @@ function Slot({
         {current && !busy ? (
           <Pressable
             onPress={remove}
-            hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
+            reachSize={WORD}
             accessibilityRole="button"
             accessibilityLabel={t('common.remove')}
             style={({ pressed }) => pressed && heldDim}
@@ -147,7 +163,7 @@ function Slot({
         ) : null}
         <Pressable
           onPress={toggle}
-          hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
+          reachSize={WORD}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
           accessibilityLabel={open ? t('common.cancel') : t('favorites.change')}
@@ -163,7 +179,7 @@ function Slot({
         posts === null ? (
           <Loading style={styles.spinner} />
         ) : posts.length === 0 ? (
-          <Text style={[styles.empty, { color: colors.textSecondary }]}>{t(copy.empty)}</Text>
+          <Text style={[styles.empty, dir.text, { color: colors.textSecondary }]}>{t(copy.empty)}</Text>
         ) : (
           /* a plain map, not a list: this sits inside the edit screen's ScrollView */
           <View style={styles.options}>
@@ -177,16 +193,17 @@ function Slot({
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
                   accessibilityLabel={postName(p)}
+                  // the one already chosen in the violet wash and ink every choice that is on wears
                   style={[
                     styles.option,
                     {
-                      backgroundColor: colors.controlTrack,
+                      backgroundColor: on ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack,
                       borderWidth: 1,
-                      borderColor: on ? colors.textPrimary : colors.glassBorder,
+                      borderColor: on ? colors.primary : colors.glassBorder,
                     },
                   ]}
                 >
-                  <Text style={[styles.optionText, { color: colors.textPrimary }]} numberOfLines={1}>
+                  <Text style={[styles.optionText, dir.free, { color: on ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
                     {postName(p)}
                   </Text>
                 </PressableScale>
@@ -196,7 +213,11 @@ function Slot({
         )
       ) : null}
 
-      {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+      {error ? (
+        <Text style={[styles.error, dir.text, { color: colors.danger }]} accessibilityLiveRegion="polite">
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -206,7 +227,7 @@ const styles = StyleSheet.create({
   heading: { ...sectionLabel },
   slot: { gap: spacing.xs },
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET },
+  row: { alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET },
   value: { flex: 1, fontSize: typography.ios.row },
   action: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   spinner: { marginVertical: spacing.sm },

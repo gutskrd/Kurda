@@ -1,0 +1,87 @@
+/*
+ * Reach: the area that answers a press, a little past what is drawn.
+ *
+ * A finger that lands just beside a button should still press it. So every
+ * control named in lib/reach.ts carries an invisible `::before` that reaches
+ * out to the least area that answers (`--reach-min`, tokens.css): 44px with a
+ * mouse, 48px where a finger is about. A control already that size gains
+ * nothing; a smaller one reaches out by half the difference on each side. The
+ * area is part of the control, so a press on it is a press on the control,
+ * and nothing is drawn and nothing moves.
+ *
+ * Two neighbours must never reach into each other: where two areas cross, the
+ * later control takes the presses meant for the first. So no control reaches
+ * further than half the room beside it (`--reach-room-x` and
+ * `--reach-room-y`; 64px unless a row says otherwise, so at most 32px a
+ * side). A row whose controls stand closer than that sets the room to its own
+ * gap, and the two reaches meet exactly in the middle of it. A control with
+ * nothing near it, such as the way back or a close button, reaches a little
+ * further where a finger is about (`--reach-open`).
+ *
+ * Every selector sits inside `:where()`, so these rules weigh nothing: a
+ * control's own rules always win, its own `position` among them. The lists
+ * are written out from lib/reach.ts, and reach.test.ts holds the two together.
+ */
+
+:where(.btn, .icon-btn, .close-btn, .nav-back, .nav-bell, .chip, .seg-btn, .switch-btn, .rankings-tab, .note-filter, .story-chip, .ffilter-period, .key-bar-key, .wordle-key, .p3d-tab, .paper-paint, .paper-pen, .paper-tool, .paper-icon-btn, .chat-send, .chat-run-avatar, .chat-jump, .lore-toggle, .yours-link, .letter-sheet-report, .cmp-kind-option, .mkp-tab, .mkp-more, .mkp-bio-add, .msg-menu-btn, .link-btn, .link-button, .back-link, .lp-callout, .request-name.is-link, .byline-who, .ranks-untouched-game, .rank-card-more, .ab-sound, .settings-search-clear, .nav-search-clear, .lesson-leave, .lesson-play-round, .story-player-btn, .story-player-rate, .letters-change, .dt-note) {
+  position: relative;
+}
+:where(.btn, .icon-btn, .close-btn, .nav-back, .nav-bell, .chip, .seg-btn, .switch-btn, .rankings-tab, .note-filter, .story-chip, .ffilter-period, .key-bar-key, .wordle-key, .p3d-tab, .paper-paint, .paper-pen, .paper-tool, .paper-icon-btn, .chat-send, .chat-run-avatar, .chat-jump, .lore-toggle, .yours-link, .letter-sheet-report, .cmp-kind-option, .mkp-tab, .mkp-more, .mkp-bio-add, .msg-menu-btn, .link-btn, .link-button, .back-link, .lp-callout, .request-name.is-link, .byline-who, .ranks-untouched-game, .rank-card-more, .ab-sound, .settings-search-clear, .nav-search-clear, .lesson-leave, .lesson-play-round, .story-player-btn, .story-player-rate, .letters-change, .dt-note)::before {
+  content: '';
+  position: absolute;
+  /* each side: half of what the control lacks of the minimum, or the open reach if that is more, but never past half the room */
+  inset-block: max(calc(var(--reach-room-y, 64px) / -2), min(calc(-1 * var(--reach-open)), calc((100% - var(--reach-min)) / 2)));
+  inset-inline: max(calc(var(--reach-room-x, 64px) / -2), min(calc(-1 * var(--reach-open)), calc((100% - var(--reach-min)) / 2)));
+}
+
+@media (any-pointer: coarse) {
+  /* standing alone, so a finger can be given a little more */
+  :where(.close-btn, .nav-back) {
+    --reach-open: 8px;
+  }
+  /*
+   * The pill of search and the bell: its two halves meet in the middle with
+   * no gap, so neither reaches sideways, but both reach up and down as far as
+   * the way back beside them does.
+   */
+  :where(.nav-pill .nav-search-open, .nav-pill .nav-bell) {
+    --reach-room-x: 0px;
+    --reach-open: 8px;
+  }
+  /*
+   * Links on a line of their own: one box, so the area that answers is one
+   * rectangle round the words, however they wrap. Only where a finger is
+   * about; a mouse points at a link, it does not aim for it.
+   */
+  :where(.auth-alt a, .link, .by-zagrosian, .reach-line) {
+    display: inline-block;
+    position: relative;
+  }
+  :where(.auth-alt a, .link, .by-zagrosian, .reach-line)::before {
+    content: '';
+    position: absolute;
+    inset-block: max(calc(var(--reach-room-y, 64px) / -2), min(calc(-1 * var(--reach-open)), calc((100% - var(--reach-min)) / 2)));
+    inset-inline: max(calc(var(--reach-room-x, 64px) / -2), min(calc(-1 * var(--reach-open)), calc((100% - var(--reach-min)) / 2)));
+  }
+  /*
+   * A link inside a sentence takes the line's own leading, and no more: a
+   * wider area would cover the lines round it. A link on a line of its own has
+   * the reach above instead, and padding there would only make its line taller.
+   */
+  :where(.doc-link:not(.reach-line)) {
+    padding-block: 0.2em;
+  }
+}
+
+/* a dialog or a popover starts afresh: a row's room on the page does not reach into what opens over it */
+:where(dialog, [role='dialog'], .popover) {
+  --reach-room-x: initial;
+  --reach-room-y: initial;
+}
+
+/* for whoever is building the page: `?show-reach` in the address tints every area that answers (main.tsx) */
+:root.show-reach
+  :where(.btn, .icon-btn, .close-btn, .nav-back, .nav-bell, .chip, .seg-btn, .switch-btn, .rankings-tab, .note-filter, .story-chip, .ffilter-period, .key-bar-key, .wordle-key, .p3d-tab, .paper-paint, .paper-pen, .paper-tool, .paper-icon-btn, .chat-send, .chat-run-avatar, .chat-jump, .lore-toggle, .yours-link, .letter-sheet-report, .cmp-kind-option, .mkp-tab, .mkp-more, .mkp-bio-add, .msg-menu-btn, .link-btn, .link-button, .back-link, .lp-callout, .request-name.is-link, .byline-who, .ranks-untouched-game, .rank-card-more, .ab-sound, .settings-search-clear, .nav-search-clear, .lesson-leave, .lesson-play-round, .story-player-btn, .story-player-rate, .letters-change, .dt-note, .auth-alt a, .link, .by-zagrosian, .reach-line)::before {
+  background: rgb(255 0 128 / 0.16);
+  outline: 1px dashed rgb(255 0 128 / 0.6);
+}

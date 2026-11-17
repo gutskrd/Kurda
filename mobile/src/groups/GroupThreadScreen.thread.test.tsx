@@ -14,10 +14,10 @@ vi.mock('../realtime/useRoomEvents', () => ({
     room.emit = handler;
   },
 }));
-import { act, cleanup, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
-import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { GroupThreadScreen } from './GroupThreadScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -39,7 +39,7 @@ const said = (id: string, senderId: string, username: string, body: string, ago:
   ...more,
 });
 
-function open(messages: unknown[]) {
+function open(messages: unknown[], history?: () => unknown) {
   testAuth.client = fakeClient({
     'POST /groups/g1/chat/read': ok({ ok: true }),
     'GET /groups/g1': ok({
@@ -54,7 +54,7 @@ function open(messages: unknown[]) {
       members: [{ userId: 'me', username: 'rojda', avatarUrl: null, role: 'member', joinedAt: minutesAgo(600) }],
       standing: { kind: 'member', role: 'member' },
     }),
-    'GET /groups/g1/chat': ok({ messages, cleared: { forEveryone: null, forMe: null } }),
+    'GET /groups/g1/chat': history ?? ok({ messages, cleared: { forEveryone: null, forMe: null } }),
   } as never);
   testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
   renderWithProviders(
@@ -96,5 +96,25 @@ describe('a group’s thread as it is read', () => {
     // your own pings come back from the room, and are not shown to you
     act(() => room.emit({ type: 'group_typing', groupId: 'g1', userId: 'me', username: 'rojda' }));
     expect(screen.queryByText(/rojda/)).toBeNull();
+  });
+});
+
+describe('a group’s thread that could not be read', () => {
+  it('says so, with the way to ask again, rather than welcoming the reader to an empty group', async () => {
+    let reads = 0;
+    open([], () =>
+      reads++ === 0
+        ? fail({ kind: 'server', status: 500, message: 'down' })
+        : ok({ messages: [said('m1', 'u2', 'azad', 'Silav', 2)], cleared: { forEveryone: null, forMe: null } }),
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Silav')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
+  it('does not offer the greetings while the history is missing', async () => {
+    open([], () => fail({ kind: 'server', status: 500, message: 'down' }));
+    expect(await screen.findByRole('button', { name: 'Try again' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Rojbaş!' })).toBeNull();
   });
 });

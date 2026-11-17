@@ -4,7 +4,7 @@ import { contrastRatio } from '../a11y/contrast';
 import { interpolate } from '../i18n/format';
 import { LOCALES, TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { PALETTES } from '../theme/palette';
-import { REST, TONES, awayFrom, centredOffset, firstCourse, mix, stopLabel } from './path';
+import { REST, RING, TONES, awayFrom, centredOffset, firstCourse, levelWords, mix, ringAt, ringOf, stopLabel } from './path';
 import type { CourseEntry } from './node';
 import type { CourseMap, SkillNode } from './types';
 
@@ -75,11 +75,22 @@ describe('what a stop says', () => {
     );
     const said = path.units[0]!.stops.map((p) => say(stopLabel(p.stop, { number: 1, title: 'Basics' })));
     expect(said).toEqual([
-      'Silav, done, and strong, 2 of 2 lessons done',
+      // once it has a star, the round it is in rather than the lessons it has done
+      'Silav, done, and strong, round 2 of 3, 0 of 2 lessons',
       'Review, words ready: 4',
       'Malbat, you are here, 1 of 4 lessons done',
       'Hejmar, locked, 0 of 1 lessons done',
       'Chapter 1 trophy, not earned yet',
+    ]);
+  });
+
+  it('says the round a topic is in, and when all three are played', () => {
+    const played = (times: number[]) => skill({ skillId: `p${times.join('')}`, state: 'gold', lessons: times.map((t, i) => ({ ...lesson(`${i}`, true), times: t })) });
+    const path = lessonPath(map('c', [played([2, 2, 1, 2]), played([3, 3, 3, 3])]));
+    expect(path.units[0]!.stops.slice(0, 2).map((p) => say(stopLabel(p.stop, { number: 1, title: 'Basics' })))).toEqual([
+      // three of its four lessons played a second time: the second round, three pieces of it filled
+      'Silav, done, and strong, round 2 of 3, 3 of 4 lessons',
+      'Silav, done, and strong, all 3 rounds done',
     ]);
   });
 
@@ -100,6 +111,43 @@ describe('what a stop says', () => {
         expect(holes(copy), `${locale} ${key}`).toEqual(holes(TRANSLATIONS.en[key]));
       }
     }
+  });
+});
+
+describe('a topic’s ring', () => {
+  it('shows the round being played, and the whole ring once all three are', () => {
+    const path = lessonPath(
+      map('c', [
+        skill({ skillId: 'a', state: 'gold', lessons: [{ ...lesson('1', true), times: 2 }, { ...lesson('2', true), times: 1 }] }),
+        skill({ skillId: 'b', state: 'gold', lessons: [{ ...lesson('3', true), times: 3 }, { ...lesson('4', true), times: 5 }] }),
+        skill({ skillId: 'c', lessons: [lesson('5', true), lesson('6'), lesson('7')] }),
+      ]),
+    );
+    const [a, b, c, end] = path.units[0]!.stops.map((p) => p.stop);
+    expect(ringOf(a!)).toEqual({ of: 2, filled: 1, whole: false });
+    expect(ringOf(b!)).toEqual({ of: 2, filled: 2, whole: true });
+    expect(ringOf(c!)).toEqual({ of: 3, filled: 1, whole: false });
+    // the end of the unit wears none
+    expect(ringOf(end!)).toBeNull();
+    // and as it stood before a lesson
+    expect(ringAt({ lessonsTotal: 4 }, { rounds: 1, pieces: 3 })).toEqual({ of: 4, filled: 3, whole: false });
+    expect(ringAt({ lessonsTotal: 4 }, { rounds: 3, pieces: 0 })).toEqual({ of: 4, filled: 4, whole: true });
+  });
+
+  it('draws the ring’s track so it shows on the land by day and by evening', () => {
+    expect(contrastRatio(RING.light.track, '#e9d79c')).toBeGreaterThan(1.2);
+    expect(RING.dark.track).toBe(REST.dark.fill);
+  });
+});
+
+describe('a section’s level', () => {
+  it('is called by the app’s own names for its levels, never by a CEFR letter', () => {
+    expect(levelWords('A1')).toEqual({ name: 'level.name.1', hint: 'level.hint.1' });
+    expect(levelWords('B1')).toEqual({ name: 'level.name.3', hint: 'level.hint.3' });
+    expect(TRANSLATIONS.en[levelWords('A2')!.name]).toBe('Beginner');
+    // a level past the app's ladder, or none, leaves the section its number alone
+    expect(levelWords('C2')).toBeNull();
+    expect(levelWords(null)).toBeNull();
   });
 });
 

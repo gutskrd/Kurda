@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useFontScale } from '../a11y/useFontScale';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -9,7 +10,7 @@ import { useDirection } from '../reports/direction';
 import { GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { Toggle } from '../theme/Toggle';
+import { ToggleRow } from '../theme/Toggle';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 
 /**
@@ -79,23 +80,50 @@ interface RowLook {
   destructive?: boolean;
   /**
    * Wants something done (notifications blocked on the phone, an account
-   * that is limited): its icon, value and what is under it in gold, the colour
-   * this app keeps for "notice this". Only then; a row that is merely set to
-   * something stays in ink, so the one that is gold is seen.
+   * that is limited): its icon, value and what is under it in the app's
+   * violet, the colour this app keeps for what is to be acted on. Only then;
+   * a row that is merely set to something stays in ink, so the violet one is
+   * seen.
    */
   attention?: boolean;
+}
+
+/**
+ * How wide a letter of a row's name is taken to be, as a share of its size:
+ * a little over the average at 17 points in Latin script, and well over it in
+ * Arabic script, so an estimate errs on the side of the name.
+ */
+const LETTER = 0.6;
+
+/**
+ * The room a row's name keeps beside what the row is set to: its longest word.
+ *
+ * The value used to take up to 45% of the row whatever the name needed, and a
+ * name whose longest word did not fit what was left was broken inside the
+ * word — "Benutze/rname" and "Sichtbar/keit des Profils" at 320 points, the
+ * Soranî "ناوی بەکارهێنەر" in three pieces, Dutch's "Gebruikersnaam" even at
+ * 390. A phone cannot measure text before it is laid out, so the word is
+ * estimated from its letters; the value then takes what is left, and ends in
+ * an ellipsis rather than the name. Never more than three fifths of the row,
+ * so the value always keeps some of it.
+ */
+export function titleRoom(title: string, fontScale: number, rowWidth: number): number {
+  const longest = Math.max(0, ...title.split(/\s+/).map((word) => [...word].length));
+  return Math.min(Math.ceil(longest * typography.sizes.md * LETTER * fontScale), Math.floor(rowWidth * 0.6));
 }
 
 /** The inside of a row: icon, name and what is under it, then whatever ends the row. */
 function RowBody({ icon, title, subtitle, value, destructive, attention, end }: RowLook & { end?: ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
+  const fontScale = useFontScale();
+  const { width } = useWindowDimensions();
   const ink = destructive ? colors.danger : colors.textPrimary;
-  const note = attention ? colors.goldText : colors.textSecondary;
+  const note = attention ? colors.primary : colors.textSecondary;
   return (
     <View style={[styles.row, { flexDirection: dir.row }]}>
-      {icon ? <Icon name={icon} size={24} color={attention ? colors.goldText : ink} /> : null}
-      <View style={styles.words}>
+      {icon ? <Icon name={icon} size={24} color={attention ? colors.primary : ink} /> : null}
+      <View style={[styles.words, value ? { minWidth: titleRoom(title, fontScale, Math.min(width, layout.column) - layout.gutter * 2) } : null]}>
         <Text style={[styles.title, dir.text, { color: ink }]}>{title}</Text>
         {subtitle ? <Text style={[styles.subtitle, dir.text, { color: note }]}>{subtitle}</Text> : null}
       </View>
@@ -112,8 +140,8 @@ function RowBody({ icon, title, subtitle, value, destructive, attention, end }: 
 /**
  * One row. With `onPress` it is a button, with a chevron when it opens a page
  * (`opens`, the default) and none when it does something there and then. A
- * `badge` counts what waits behind it (requests to answer), in the gold of
- * "notice this", and is read out in words.
+ * `badge` counts what waits behind it (requests to answer), in the app's
+ * violet, the colour of what is to be acted on, and is read out in words.
  */
 export function SettingsRow({
   onPress,
@@ -137,7 +165,7 @@ export function SettingsRow({
   const dir = useDirection();
   const chevron = onPress && opens ? <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip ?? undefined} /> : null;
   const count = badge ? (
-    <View style={[styles.badge, { backgroundColor: colors.goldText }]}>
+    <View style={[styles.badge, { backgroundColor: colors.primary }]}>
       <Text style={[styles.badgeText, { color: colors.textOnPrimary }]}>{badge.count > 99 ? '99+' : badge.count}</Text>
     </View>
   ) : null;
@@ -164,7 +192,11 @@ export function SettingsRow({
   );
 }
 
-/** A row that is a switch: the whole row turns it, not only the switch at its end. */
+/**
+ * A row that is a switch: the whole row turns it, not only the switch at its
+ * end. It is the app's `ToggleRow`, laid out as every other settings row and
+ * as tall (56), with the switch where the row's end goes.
+ */
 export function SettingsSwitch({
   icon,
   title,
@@ -182,30 +214,16 @@ export function SettingsSwitch({
 }): React.JSX.Element {
   const { colors } = useTheme();
   return (
-    <Pressable
-      onPress={() => {
-        haptic('select');
-        onValueChange(!value);
-      }}
+    <ToggleRow
+      label={title}
+      hint={subtitle}
+      value={value}
+      onValueChange={onValueChange}
       disabled={disabled}
-      accessibilityRole="switch"
-      accessibilityLabel={title}
-      accessibilityHint={subtitle}
-      accessibilityState={{ checked: value, disabled }}
-      style={({ pressed }) => [pressed && { backgroundColor: colors.controlTrack }, disabled && styles.disabled]}
+      style={({ pressed }) => pressed && { backgroundColor: colors.controlTrack }}
     >
-      <RowBody
-        icon={icon}
-        title={title}
-        subtitle={subtitle}
-        end={
-          // the row speaks for the switch, so a screen reader meets one control, not two
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Toggle value={value} disabled={disabled} onValueChange={onValueChange} />
-          </View>
-        }
-      />
-    </Pressable>
+      {(toggle) => <RowBody icon={icon} title={title} subtitle={subtitle} end={toggle} />}
+    </ToggleRow>
   );
 }
 
@@ -257,7 +275,8 @@ export function SettingsChoice<T extends string>({
             <RowBody
               title={labelOf(option)}
               subtitle={hintOf?.(option)}
-              end={<View style={styles.check}>{chosen ? <Icon name="check" size={22} color={colors.textPrimary} /> : null}</View>}
+              // the choice that is on is ticked in the violet everything chosen wears
+              end={<View style={styles.check}>{chosen ? <Icon name="check" size={22} color={colors.primary} /> : null}</View>}
             />
           </Pressable>
         );

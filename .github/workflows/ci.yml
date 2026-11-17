@@ -73,6 +73,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # the book's export draws its pages and reads their words back with poppler, and its tests do too
+      - if: matrix.package == 'api'
+        run: sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
       - run: npm run lint --workspace ${{ matrix.package }}
       - run: npm run typecheck --workspace ${{ matrix.package }}
       - run: npm run test --workspace ${{ matrix.package }}
@@ -190,6 +193,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
       - run: npm run migrate:up --workspace api
       - run: npm run migrate:down --workspace api
       - run: npm run migrate:up --workspace api

@@ -66,7 +66,7 @@ export function Reflections({ story }: { story: Story }): React.JSX.Element | nu
           return (
             <View key={i} style={[styles.reflection, { flexDirection: dir.row }]}>
               <View style={[styles.number, { backgroundColor: colors.controlTrack }]}>
-                <Text style={[styles.numberText, { color: colors.goldText }]}>{i + 1}</Text>
+                <Text style={[styles.numberText, { color: colors.textSecondary }]}>{i + 1}</Text>
               </View>
               <View style={styles.flex}>
                 <Text {...ku.props} style={[styles.reflectionText, { color: colors.textPrimary }, ku.style]}>
@@ -136,7 +136,7 @@ export function StorySources({ story }: { story: Story }): React.JSX.Element | n
         {story.sources.map((s, i) => {
           const body = (
             <View style={styles.flex}>
-              <Text style={[styles.sourceType, dir.text, { color: colors.goldText }]}>{t(SOURCE_TYPE_KEY[s.type])}</Text>
+              <Text style={[styles.sourceType, dir.text, { color: colors.textSecondary }]}>{t(SOURCE_TYPE_KEY[s.type])}</Text>
               <Text style={[styles.sourceTitle, dir.free, { color: s.url ? colors.primary : colors.textPrimary }]}>{s.title}</Text>
               {s.author ? <Text style={[styles.sourceMeta, dir.free, { color: colors.textSecondary }]}>{s.author}</Text> : null}
               {s.note ? <Text style={[styles.sourceMeta, dir.free, { color: colors.textSecondary }]}>{s.note}</Text> : null}

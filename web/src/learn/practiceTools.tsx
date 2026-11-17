@@ -4,6 +4,7 @@ import { HeadphonesIcon, TilesIcon } from '../components/icons';
 import { useAvailability, useGameDialect } from '../games/soloRounds';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { useGrowsFrom } from '../lib/viewTransition';
 
 /**
  * The lessons' two exercises that were games once: Build a Sentence
@@ -35,27 +36,36 @@ export const WEB_LESSON_EXERCISES: Partial<Record<LearnGameId, WebExercise>> = {
 const PLAYABLE = Object.keys(WEB_LESSON_EXERCISES) as LearnGameId[];
 
 /**
+ * One exercise's card. A component of its own because the card is carried to
+ * the exercise's page when it is pressed, and each card names its own journey
+ * (lib/viewTransition.tsx; the page's end is games/SoloGameShell.tsx).
+ */
+function ExerciseTool({ id, web }: { id: LearnGameId; web: WebExercise }): React.JSX.Element {
+  const t = useT();
+  const card = useGrowsFrom(`learn:${id}`, { shape: 'card' });
+  const { Icon } = web;
+  return (
+    <Link ref={card} to={web.href} className="learn-tool learn-tool-link">
+      <Icon size={24} />
+      <span className="learn-tool-title">{t(web.nameKey)}</span>
+      <span className="learn-tool-body">{t(web.bodyKey)}</span>
+    </Link>
+  );
+}
+
+/**
  * The exercises' cards, to sit in the row of practice tools. For somebody
  * signed in only: a round is made and checked on the server against the
  * learner, so the caller does not draw this for a visitor.
  */
 export function ExerciseTools(): React.JSX.Element {
-  const t = useT();
   const dialect = useGameDialect();
   const offered = lessonExercises(useAvailability(dialect), PLAYABLE);
   return (
     <>
       {offered.map(({ id }) => {
         const web = WEB_LESSON_EXERCISES[id];
-        if (!web) return null;
-        const { Icon } = web;
-        return (
-          <Link key={id} to={web.href} className="learn-tool learn-tool-link">
-            <Icon size={24} />
-            <span className="learn-tool-title">{t(web.nameKey)}</span>
-            <span className="learn-tool-body">{t(web.bodyKey)}</span>
-          </Link>
-        );
+        return web ? <ExerciseTool key={id} id={id} web={web} /> : null;
       })}
     </>
   );

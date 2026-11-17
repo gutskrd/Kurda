@@ -19,6 +19,12 @@
  * word cards the server deals in a batch (api/src/games/couch.ts); the players'
  * names never leave the phone.
  *
+ * Two impostors are hunted one at a time: once the room catches the first
+ * (and the first has had their guess at the word), everyone else votes once
+ * more for the second, against a short clock, and an impostor still hidden
+ * after that is paid for it. Nobody speaks first holding no word: the order
+ * goes round from the first seat after the drawn one that is not an impostor.
+ *
  * Nothing is paid for a round played this way. The phone that holds every
  * card cannot be the judge of who won, so a round here earns no XP and moves
  * no rating: it is a game for the room, and that is all it is.
@@ -27,7 +33,7 @@ import type { Meanings } from '../content.js';
 import type { GameDialect } from '../dialect.js';
 import { seededUnit } from '../last-letter/rules.js';
 import { seededOrder } from '../multi/order.js';
-import { IMPOSTOR_GUESS_OPTIONS, IMPOSTOR_POINTS } from './rules.js';
+import { IMPOSTOR_GUESS_OPTIONS, IMPOSTOR_POINTS, impostorFirstSpeaker } from './rules.js';
 
 export const COUCH_MIN_PLAYERS = 3;
 export const COUCH_MAX_PLAYERS = 10;
@@ -50,6 +56,8 @@ export type CouchTalkSeconds = (typeof COUCH_TALK_SECONDS)[number];
 /** A vote each casts in private as the phone goes round, or one the room makes together by pointing. */
 export const COUCH_VOTES = ['secret', 'open'] as const;
 export type CouchVote = (typeof COUCH_VOTES)[number];
+/** The time the room has for its second vote, once one of two impostors is caught: short, since the arguing is done. */
+export const COUCH_SECOND_VOTE_SECONDS = 30;
 
 export interface CouchSettings {
   way: CouchWay;
@@ -79,6 +87,8 @@ export interface CouchCard {
 /** How many cards one request for a deck may ask for, and how many it gets when it does not say. */
 export const COUCH_DECK_MAX = 20;
 export const COUCH_DECK_DEFAULT = 10;
+/** How many words already played tonight a request for a deck may ask to be spared, so an evening does not repeat itself. */
+export const COUCH_DECK_EXCLUDE_MAX = 100;
 
 /** A category the game can be played in at one difficulty: its name as the cards give it, and how many cards it has. */
 export interface CouchCategory {
@@ -100,9 +110,24 @@ export interface CouchDeck {
   cards: CouchCard[];
 }
 
-export type CouchPhase = 'deal' | 'clues' | 'talk' | 'vote' | 'guess' | 'reveal';
+/** `second` is the room's vote for the other impostor, once one of two has been caught. */
+export type CouchPhase = 'deal' | 'clues' | 'talk' | 'vote' | 'guess' | 'second' | 'reveal';
 /** How a round ends: the impostor got away, was caught, or was caught and named the word. */
 export type CouchEnd = 'escaped' | 'caught' | 'guessed';
+/** Why the impostors got away: the top of the vote was shared, it landed on someone else, or nobody named anyone. */
+export type CouchEscape = 'tie' | 'wrong-out' | 'no-votes';
+
+/** The room's second vote, for the impostor still hidden once the other is caught. */
+export interface CouchSecondVote {
+  /** who votes, in seat order: everyone but the impostor already caught */
+  voters: number[];
+  /** a private vote: each voter's choice in `voters` order as far as it has got; null for one who would not choose */
+  votes: Array<number | null>;
+  /** the seat this vote landed on, once counted; null when it could not agree */
+  accused: number | null;
+  /** whether it has been counted */
+  done: boolean;
+}
 
 export interface CouchState {
   dialect: GameDialect;
@@ -126,7 +151,12 @@ export interface CouchState {
   accused: number | null;
   /** the option the caught impostor chose */
   guessed: number | null;
+  /** how the hunt for the first impostor ended; set once it has, which is before the reveal when a second vote follows */
   endedBy: CouchEnd | null;
+  /** the room asked for an odd word, and this card has none: the round is played the plain way (absent from a round started before this was kept) */
+  oddFallback?: boolean;
+  /** the second vote, in a round with two impostors once the first is caught; absent or null otherwise */
+  second?: CouchSecondVote | null;
 }
 
 /** What a seat's card shows when it is turned up. */
@@ -197,21 +227,30 @@ export function couchSettingsFor(players: number, card: Pick<CouchCard, 'twin'> 
   return settings;
 }
 
-/** A round, dealt: the impostors, the order and the guess's layout all drawn from the seed. */
+/**
+ * A round, dealt: the impostors, the order and the guess's layout all drawn
+ * from the seed. `wanted` is how the room set the game, passed afresh every
+ * round, so one card without a second word plays the plain way for that round
+ * alone (and says so in `oddFallback`) rather than for the rest of the evening.
+ */
 export function couchStart(dialect: GameDialect, players: readonly string[], wanted: CouchSettings, card: CouchCard, seed: string): CouchState {
   const settings = couchSettingsFor(players.length, card, wanted);
   const seats = players.map((_, i) => i);
+  const impostors = seededOrder(seed, 'impostor', seats)
+    .slice(0, settings.impostors)
+    .sort((a, b) => a - b);
   return {
     dialect,
     players: [...players],
     settings,
     card: { ...card, decoys: [...card.decoys] },
     options: seededOrder(seed, 'options', [card.word, ...card.decoys].slice(0, IMPOSTOR_GUESS_OPTIONS)),
-    impostors: seededOrder(seed, 'impostor', seats)
-      .slice(0, settings.impostors)
-      .sort((a, b) => a - b),
-    // the speaking order starts from a seat drawn by the seed and goes round the room from there, as people sit
-    order: seats.map((_, i) => (i + Math.floor(seededUnit(seed, 'first') * seats.length)) % seats.length),
+    impostors,
+    // the speaking order goes round the room as people sit, from a seat the seed draws, or the next one after it holding the word
+    order: impostorFirstSpeaker(
+      seats.map((_, i) => (i + Math.floor(seededUnit(seed, 'first') * seats.length)) % seats.length),
+      impostors,
+    ),
     phase: 'deal',
     dealt: 0,
     turn: 0,
@@ -219,6 +258,8 @@ export function couchStart(dialect: GameDialect, players: readonly string[], wan
     accused: null,
     guessed: null,
     endedBy: null,
+    oddFallback: wanted.way === 'odd' && settings.way !== 'odd',
+    second: null,
   };
 }
 
@@ -264,11 +305,41 @@ export function couchToVote(state: CouchState): CouchState {
 
 /** The seat whose private vote is awaited, in seat order; null for an open vote or once every vote is in. */
 export function couchVoter(state: CouchState): number | null {
-  return state.phase === 'vote' && state.settings.vote === 'secret' && state.votes.length < state.players.length ? state.votes.length : null;
+  if (state.settings.vote !== 'secret') return null;
+  if (state.phase === 'vote') return state.votes.length < state.players.length ? state.votes.length : null;
+  if (state.phase === 'second' && state.second) return state.second.voters[state.second.votes.length] ?? null;
+  return null;
 }
 
+/** The impostor the first vote did not catch, in a round with two; null when there is none. */
+export function couchStillHidden(state: CouchState): number | null {
+  if (state.impostors.length < 2 || state.accused === null || !state.impostors.includes(state.accused)) return null;
+  return state.impostors.find((seat) => seat !== state.accused) ?? null;
+}
+
+/** The seats the room may name now: anyone in the first vote, anyone but the impostor already caught in the second. */
+export function couchSuspects(state: CouchState): number[] {
+  const seats = state.players.map((_, seat) => seat);
+  return state.phase === 'second' ? seats.filter((seat) => seat !== state.accused) : seats;
+}
+
+/** The hunt for the first impostor is over: the reveal, or the second vote when another impostor is still hidden. */
 function finish(state: CouchState, endedBy: CouchEnd): CouchState {
-  return { ...state, phase: 'reveal', endedBy };
+  const next = { ...state, endedBy };
+  if (endedBy !== 'escaped' && couchStillHidden(next) !== null && !next.second) {
+    const voters = next.players.map((_, seat) => seat).filter((seat) => seat !== next.accused);
+    return { ...next, phase: 'second', second: { voters, votes: [], accused: null, done: false } };
+  }
+  return { ...next, phase: 'reveal' };
+}
+
+/** The seat a set of private votes lands on: the most votes, alone at the top; null when nobody chose or two share the top. */
+function tallied(votes: ReadonlyArray<number | null>): number | null {
+  const tally = new Map<number, number>();
+  for (const v of votes) if (v !== null) tally.set(v, (tally.get(v) ?? 0) + 1);
+  const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
+  const top = ranked[0];
+  return !top || (ranked[1] && ranked[1][1] === top[1]) ? null : top[0];
 }
 
 /** The room has chosen (or failed to): what follows. */
@@ -280,26 +351,44 @@ function accuse(state: CouchState, accused: number | null): CouchState {
   return { ...next, phase: 'guess' };
 }
 
-/** One private vote, for a seat other than the voter's own, or for nobody. */
+/** The second vote has landed (or the clock ran out): the reveal. */
+function settleSecond(state: CouchState, accused: number | null): CouchState {
+  return { ...state, phase: 'reveal', second: { ...state.second!, accused, done: true } };
+}
+
+/** Whether a seat can be named now by this voter (null for the room as a whole), or nobody (null) at all. */
+function nameable(state: CouchState, suspect: number | null, voter: number | null): boolean {
+  if (suspect === null) return true;
+  if (!Number.isInteger(suspect) || suspect === voter) return false;
+  return couchSuspects(state).includes(suspect);
+}
+
+/** One private vote, for a seat other than the voter's own, or for nobody; in the second vote, never the impostor already caught. */
 export function couchCastVote(state: CouchState, suspect: number | null): CouchState {
   const voter = couchVoter(state);
-  if (voter === null) return state;
-  if (suspect !== null && (suspect === voter || !Number.isInteger(suspect) || suspect < 0 || suspect >= state.players.length)) return state;
+  if (voter === null || !nameable(state, suspect, voter)) return state;
+  if (state.phase === 'second') {
+    const second = { ...state.second!, votes: [...state.second!.votes, suspect] };
+    const next = { ...state, second };
+    return second.votes.length < second.voters.length ? next : settleSecond(next, tallied(second.votes));
+  }
   const next = { ...state, votes: [...state.votes, suspect] };
   if (next.votes.length < next.players.length) return next;
-  const tally = new Map<number, number>();
-  for (const v of next.votes) if (v !== null) tally.set(v, (tally.get(v) ?? 0) + 1);
-  const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
-  const top = ranked[0];
   // nobody chose, or two share the top: the room could not agree
-  return accuse(next, !top || (ranked[1] && ranked[1][1] === top[1]) ? null : top[0]);
+  return accuse(next, tallied(next.votes));
 }
 
 /** The room's own choice, made by pointing: one seat, or nobody when it cannot agree. */
 export function couchPoint(state: CouchState, suspect: number | null): CouchState {
-  if (state.phase !== 'vote' || state.settings.vote !== 'open') return state;
-  if (suspect !== null && (!Number.isInteger(suspect) || suspect < 0 || suspect >= state.players.length)) return state;
-  return accuse(state, suspect);
+  if (state.settings.vote !== 'open' || (state.phase !== 'vote' && state.phase !== 'second')) return state;
+  if (!nameable(state, suspect, null)) return state;
+  return state.phase === 'second' ? settleSecond(state, suspect) : accuse(state, suspect);
+}
+
+/** The second vote's clock ran out: the votes cast so far decide, and an impostor nobody agreed on stays hidden. */
+export function couchSecondTimeUp(state: CouchState): CouchState {
+  if (state.phase !== 'second' || !state.second) return state;
+  return settleSecond(state, state.settings.vote === 'secret' ? tallied(state.second.votes) : null);
 }
 
 /** The caught impostor's one guess at the word. */
@@ -319,6 +408,15 @@ export function couchScores(state: CouchState): number[] {
   if (state.endedBy === 'escaped') for (const seat of state.impostors) scores[seat]! += IMPOSTOR_POINTS.escaped;
   else if (state.endedBy === 'guessed' && state.accused !== null) scores[state.accused]! += IMPOSTOR_POINTS.guessedWord;
   else state.players.forEach((_, seat) => { if (!hidden(seat)) scores[seat]! += IMPOSTOR_POINTS.caught; });
+  const second = state.second;
+  const other = couchStillHidden(state);
+  if (second?.done && other !== null) {
+    second.votes.forEach((suspect, i) => {
+      const voter = second.voters[i]!;
+      if (suspect === other && !hidden(voter)) scores[voter]! += IMPOSTOR_POINTS.rightVote;
+    });
+    if (second.accused !== other) scores[other]! += IMPOSTOR_POINTS.escaped;
+  }
   return scores;
 }
 
@@ -339,8 +437,19 @@ export function couchReveal(state: CouchState): {
   guessed: string | null;
   votes: Array<number | null>;
   endedBy: CouchEnd;
+  /** why the impostors got away; null when the first was caught */
+  escape: CouchEscape | null;
+  /** the second vote, in a round with two impostors once the first was caught: whom it landed on, and each vote by seat */
+  second: { accused: number | null; caught: boolean; votes: Array<{ seat: number; for: number | null }> } | null;
+  /** the impostor still hidden at the end, paid for it; null when there is none */
+  stillHidden: number | null;
 } | null {
   if (state.phase !== 'reveal' || !state.endedBy) return null;
+  const other = couchStillHidden(state);
+  const second = state.second?.done ? state.second : null;
+  // a room that points and names nobody could not agree, as a shared top of private votes is
+  const named = state.settings.vote === 'open' || state.votes.some((v) => v !== null);
+  const escape: CouchEscape | null = state.endedBy !== 'escaped' ? null : state.accused !== null ? 'wrong-out' : named ? 'tie' : 'no-votes';
   return {
     impostors: [...state.impostors],
     word: state.card.word,
@@ -351,5 +460,10 @@ export function couchReveal(state: CouchState): {
     guessed: state.guessed === null ? null : (state.options[state.guessed] ?? null),
     votes: [...state.votes],
     endedBy: state.endedBy,
+    escape,
+    second: second
+      ? { accused: second.accused, caught: second.accused === other, votes: second.votes.map((v, i) => ({ seat: second.voters[i]!, for: v })) }
+      : null,
+    stillHidden: other !== null && second && second.accused !== other ? other : null,
   };
 }

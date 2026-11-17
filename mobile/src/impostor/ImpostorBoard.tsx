@@ -3,6 +3,7 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import {
   IMPOSTOR_CLUE_LIMITS,
+  IMPOSTOR_UNSURE_VOTE,
   dialectDirection,
   impostorClueSlip,
   meaningIn,
@@ -13,6 +14,7 @@ import {
 } from '@kurda/shared';
 import type { ApiResult } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useAuth } from '../auth/AuthContext';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
@@ -64,7 +66,9 @@ export function kurdishStyle(dialect: ImpostorBoard['dialect']): { writingDirect
  * light (a soft pulse, still under Reduce Motion), your card on the tabletop
  * with the category everyone is shown and the word for all but the impostor,
  * the clues round by round, and the box for your part: a clue on your turn, a
- * vote, or the caught impostor's four words.
+ * vote, or the caught impostor's four words. The vote has a choice for each
+ * other player and one for not being sure, which names nobody and still
+ * counts as a vote, so the table is not kept waiting.
  */
 export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; skew: number; move: Move }): React.JSX.Element | null {
   const { colors } = useTheme();
@@ -134,14 +138,15 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
         accessibilityState={{ selected: lit }}
         style={[styles.seat, { opacity: s.left ? 0.5 : 1 }]}
       >
-        {lit ? <Animated.View style={[styles.light, { backgroundColor: colors.gold, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.22] }) }]} /> : null}
-        <View style={[styles.disc, { borderColor: lit ? colors.gold : p?.isMe ? colors.primary : colors.clayBorder, backgroundColor: lit ? colors.gold : colors.glassFill }]}>
-          <Text style={[styles.discText, { color: lit ? colors.textOnGold : colors.textPrimary }]}>{name(s.seat).slice(0, 1).toUpperCase()}</Text>
+        {/* who is speaking is lit in the violet that marks the place you are in: gold is kept for what is earned */}
+        {lit ? <Animated.View style={[styles.light, { backgroundColor: colors.primary, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.22] }) }]} /> : null}
+        <View style={[styles.disc, { borderColor: lit || p?.isMe ? colors.primary : colors.clayBorder, backgroundColor: lit ? colors.primary : colors.glassFill }]}>
+          <Text style={[styles.discText, { color: lit ? colors.textOnPrimary : colors.textPrimary }]}>{name(s.seat).slice(0, 1).toUpperCase()}</Text>
         </View>
         <Text style={[styles.seatName, { color: colors.textPrimary }]} numberOfLines={1}>
           {name(s.seat)}
         </Text>
-        <Text style={[styles.seatTag, { color: lit ? colors.goldText : voted.has(s.seat) ? colors.success : colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.seatTag, { color: lit ? colors.primary : colors.textSecondary }]} numberOfLines={1}>
           {tag}
         </Text>
       </View>
@@ -158,7 +163,7 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
               ? t('games.impostor.vote.phase')
               : t('games.impostor.guessPhase')}
         </Text>
-        <Text style={[styles.whose, { color: mine ? colors.goldText : colors.textPrimary }]}>{status}</Text>
+        <Text style={[styles.whose, { color: mine ? colors.primary : colors.textPrimary }]}>{status}</Text>
         {board.phase === 'guess' && board.accused ? (
           <Text style={[styles.caught, { color: colors.danger }]}>
             {board.accused.seat === view.me?.seat ? t('games.impostor.youCaught') : t('games.impostor.caught', { name: name(board.accused.seat) })}
@@ -249,6 +254,15 @@ function Vote({ view, board, name, move }: { view: ImpostorView; board: Impostor
   const [error, setError] = useState<string | null>(null);
   const others = board.seats.filter((s) => !s.left && s.seat !== view.me?.seat);
   const mine = board.vote?.mine ?? null;
+  // a seat, or IMPOSTOR_UNSURE_VOTE for "not sure"
+  const vote = async (seat: number): Promise<void> => {
+    haptic('select');
+    setBusy(true);
+    setError(null);
+    const res = await move({ vote: seat });
+    setBusy(false);
+    if (!res.ok) setError(partyTextError(res.error, t, 'games.impostor.slip.saysWord', locale));
+  };
   return (
     <View style={styles.section}>
       <Text accessibilityRole="header" style={[styles.sectionTitle, { color: colors.textPrimary }]}>
@@ -256,7 +270,7 @@ function Vote({ view, board, name, move }: { view: ImpostorView; board: Impostor
       </Text>
       {mine !== null ? (
         <Text accessibilityLiveRegion="polite" style={[styles.cast, { color: colors.textPrimary }]}>
-          {t('games.impostor.vote.cast', { name: name(mine) })}
+          {mine === IMPOSTOR_UNSURE_VOTE ? t('games.impostor.vote.castUnsure') : t('games.impostor.vote.cast', { name: name(mine) })}
         </Text>
       ) : board.yourVote ? (
         <View style={styles.options}>
@@ -266,19 +280,22 @@ function Vote({ view, board, name, move }: { view: ImpostorView; board: Impostor
               disabled={busy}
               accessibilityRole="button"
               accessibilityLabel={t('games.impostor.vote.pick', { name: name(s.seat) })}
-              onPress={async () => {
-                haptic('select');
-                setBusy(true);
-                setError(null);
-                const res = await move({ vote: s.seat });
-                setBusy(false);
-                if (!res.ok) setError(partyTextError(res.error, t, 'games.impostor.slip.saysWord', locale));
-              }}
+              onPress={() => void vote(s.seat)}
               style={({ pressed }) => [styles.option, { borderColor: colors.clayBorder, backgroundColor: colors.glassFill, opacity: pressed || busy ? 0.7 : 1 }]}
             >
               <Text style={[styles.optionText, { color: colors.textPrimary }]}>{t('games.impostor.vote.pick', { name: name(s.seat) })}</Text>
             </Pressable>
           ))}
+          {/* the quieter choice, set apart by its dashed edge: it names nobody, and still counts as this player's vote */}
+          <Pressable
+            disabled={busy}
+            accessibilityRole="button"
+            accessibilityLabel={t('games.impostor.vote.unsure')}
+            onPress={() => void vote(IMPOSTOR_UNSURE_VOTE)}
+            style={({ pressed }) => [styles.option, styles.unsure, { borderColor: colors.clayBorder, opacity: pressed || busy ? 0.7 : 1 }]}
+          >
+            <Text style={[styles.optionText, { color: colors.textSecondary }]}>{t('games.impostor.vote.unsure')}</Text>
+          </Pressable>
         </View>
       ) : null}
       <Text style={[styles.muted, { color: colors.textSecondary }]}>
@@ -308,7 +325,8 @@ function Guess({ board, move }: { board: ImpostorBoard; move: Move }): React.JSX
             setBusy(false);
             if (res.ok) haptic(res.data.outcome.kind === 'guess' && res.data.outcome.right ? 'correct' : 'wrong');
           }}
-          style={({ pressed }) => [styles.option, { borderColor: colors.gold, backgroundColor: colors.glassFill, opacity: !board.yourGuess ? 0.6 : pressed ? pressedDim : 1 }]}
+          // edged in the violet of what can be pressed, as the guess on one phone is: gold is kept for what is earned
+          style={({ pressed }) => [styles.option, { borderColor: colors.primary, backgroundColor: colors.glassFill, opacity: !board.yourGuess ? 0.6 : pressed ? pressedDim : 1 }]}
         >
           <Text style={[styles.guessText, script, { color: colors.textPrimary }]}>{o}</Text>
         </Pressable>
@@ -320,12 +338,14 @@ function Guess({ board, move }: { board: ImpostorBoard; move: Move }): React.JSX
 /**
  * The reveal on the phone: every seat's card turns over in turn — the
  * impostor's shows who they were, the rest the word (at once under Reduce
- * Motion) — then the word with its meaning, how it ended, every clue and who
- * voted for whom.
+ * Motion) — then the word with its meaning, how it ended (and, when the
+ * impostor got away, why: a tied vote, or the table voting out someone else),
+ * every clue and who voted for whom.
  */
 export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  const { user } = useAuth();
   const reduce = useReducedMotion();
   const board = view.board;
   const turn = useRef(new Animated.Value(reduce ? 1 : 0)).current;
@@ -343,6 +363,19 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
     return p ? multiSeatName(p, t) : t('stories.player', { seat });
   };
   const script = kurdishStyle(board.dialect);
+  // these lines are about someone, so they read with names, the viewer's own included (the room calls the viewer "You",
+  // so it comes from the account): "You" in their place reads wrongly in Kurdish, where the one who voted takes
+  // another form (te, not tu), and in English after "wasn't"
+  const mine = user ? user.displayName || user.username : null;
+  const named = (seat: number): string => (view.players.find((p) => p.seat === seat)?.isMe && mine ? mine : name(seat));
+  // a server from before the reasons were kept sends none, and the reveal simply says the impostor got away
+  const escape = reveal.escape ?? null;
+  const why =
+    escape === 'tie'
+      ? t('games.impostor.end.tie')
+      : escape === 'wrong-out' && board.accused
+        ? t('games.impostor.end.wrongOut', { name: named(board.accused.seat) })
+        : null;
   const scaleX = turn.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 1] });
   // the turn comes a touch past flat before it settles: the face is simply there by then
   const face = turn.interpolate({ inputRange: [0, 0.5, 0.51, 1], outputRange: [0, 0, 1, 1], extrapolate: 'clamp' });
@@ -380,6 +413,7 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
       <Text style={[styles.whoWas, { color: colors.textPrimary }]}>
         {reveal.impostor === view.me?.seat ? t('games.impostor.reveal.youWere') : t('games.impostor.reveal.impostor', { name: name(reveal.impostor) })}
       </Text>
+      {why ? <Text style={[styles.muted, { color: colors.textSecondary }]}>{why}</Text> : null}
       {board.endedBy ? <Text style={[styles.muted, { color: colors.textSecondary }]}>{t(IMPOSTOR_END_KEY[board.endedBy])}</Text> : null}
       {reveal.guessed ? (
         <Text style={[styles.muted, { color: colors.textSecondary }]}>
@@ -393,7 +427,11 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
           </Text>
           {reveal.votes.map((v) => (
             <Text key={v.seat} style={[styles.muted, { color: colors.textPrimary }]}>
-              {v.for === null ? t('games.impostor.noVote', { name: name(v.seat) }) : t('games.impostor.votedFor', { name: name(v.seat), target: name(v.for) })}
+              {v.for === null
+                ? t('games.impostor.noVote', { name: named(v.seat) })
+                : v.for === IMPOSTOR_UNSURE_VOTE
+                  ? t('games.impostor.votedUnsure', { name: named(v.seat) })
+                  : t('games.impostor.votedFor', { name: named(v.seat), target: named(v.for) })}
             </Text>
           ))}
         </View>
@@ -449,6 +487,7 @@ const styles = StyleSheet.create({
   options: { gap: spacing.sm },
   option: { minHeight: 48, borderWidth: 1.5, borderRadius: radii.md, paddingHorizontal: spacing.md, justifyContent: 'center' },
   optionText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  unsure: { borderStyle: 'dashed', backgroundColor: 'transparent' },
   guessText: { fontSize: 20, fontWeight: typography.weights.bold, textAlign: 'center' },
   cast: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   reveal: { alignSelf: 'stretch', gap: spacing.md },

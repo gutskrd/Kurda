@@ -183,7 +183,7 @@ export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialec
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('lore.riddles.name')} onBack={onExit} />
+      <ScreenHeader title={t('lore.riddles.name')} onBack={onExit} browse />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom + spacing.lg }]} showsVerticalScrollIndicator={false} refreshControl={pull}>
         <CollectionTitle kurmanci={RIDDLES_NAME} localized={t('lore.riddles.name')} line={solvedLine} />
         {list && list.total > 0 ? <SolvedBar solved={list.solved} total={list.total} /> : null}
@@ -196,7 +196,6 @@ export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialec
               <Pressable
                 onPress={() => navigation.navigate('ClaimAccount')}
                 accessibilityRole="button"
-                hitSlop={{ top: 8, bottom: 8 }}
                 style={({ pressed }) => [styles.guestLink, pressed && heldDim]}
               >
                 <Text style={[styles.guestLinkText, dir.text, { color: colors.primary }]}>{t('guest.createAccount')}</Text>
@@ -218,14 +217,14 @@ export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialec
   );
 }
 
-/** How far through the variety's riddles the reader is: a thin gold line, drawn once where it stands. */
+/** How far through the variety's riddles the reader is: a thin violet line, as all progress along a road is, drawn once where it stands. */
 function SolvedBar({ solved, total }: { solved: number; total: number }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   const share = total > 0 ? Math.min(1, solved / total) : 0;
   return (
     <View style={[styles.bar, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <View style={[styles.barFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.gold }]} />
+      <View style={[styles.barFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.primary }]} />
     </View>
   );
 }
@@ -253,9 +252,10 @@ function DailyRiddle({ riddle, translated, onOpen }: { riddle: RiddleCard; trans
       style={[styles.daily, { backgroundColor: colors.surface }]}
       testID="riddle-daily"
     >
+      {/* a label, in the page's quiet ink as the website has it: gold is for what is earned */}
       <View style={[styles.dailyKicker, { flexDirection: dir.row }]}>
-        <Icon name="calendar" size={14} color={colors.goldText} />
-        <Text style={[sectionLabel, { color: colors.goldText }]}>{t('lore.riddles.daily')}</Text>
+        <Icon name="calendar" size={14} color={colors.textSecondary} />
+        <Text style={[sectionLabel, { color: colors.textSecondary }]}>{t('lore.riddles.daily')}</Text>
       </View>
       <Text {...ku.props} style={[styles.dailyQuestion, { color: colors.textPrimary }, ku.style]}>
         {riddle.question}
@@ -266,7 +266,7 @@ function DailyRiddle({ riddle, translated, onOpen }: { riddle: RiddleCard; trans
         </Text>
       ) : null}
       <View style={[styles.dailyFoot, { flexDirection: dir.row }]}>
-        <Pill label={t(DIFFICULTY_KEY[riddle.difficulty])} tone="gold" />
+        <Pill label={t(DIFFICULTY_KEY[riddle.difficulty])} />
         {riddle.state !== 'new' ? <Pill label={t(STATE_KEY[riddle.state])} tone={riddle.state === 'solved' ? 'success' : 'plain'} /> : null}
         <View style={styles.flex} />
         <Text style={[styles.dailyGo, { color: colors.primary }]}>{riddle.state === 'solved' || riddle.state === 'revealed' ? t('lore.riddle.seeAnswer') : t('lore.riddles.go')}</Text>

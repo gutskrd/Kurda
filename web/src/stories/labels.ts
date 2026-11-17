@@ -4,7 +4,7 @@
  * the reader's language. Shared by the library's cards, its filter and the
  * story page, so none of them says the same thing two ways.
  */
-import { categoryName, levelHintKey, levelNameKey, type StoryCategory, type StoryLevel, type StoryListItem } from '@kurda/shared';
+import { categoryName, categoryNameKey, levelHintKey, levelNameKey, type StoryCategory, type StoryLevel, type StoryListItem } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
@@ -30,9 +30,29 @@ export function minutesLeft(story: Pick<StoryListItem, 'readingMinutes' | 'me'>)
   return Math.max(1, Math.ceil(story.readingMinutes * (1 - Math.min(1, me.share))));
 }
 
+/**
+ * A category's name in the reader's language. One the library was seeded
+ * with is named from the catalogue (`categoryNameKey`), in all nine
+ * languages, because the library's list names it in English, Kurmancî and
+ * Soranî only; one an editor added since is named from the list, English
+ * where it has no name in the reader's language.
+ */
+export function categoryTitle(category: StoryCategory, locale: string, t: Translate): string {
+  const key = categoryNameKey(category.slug);
+  return key ? t(key) : categoryName(category, locale);
+}
+
+/** The same for a category known only by its slug: null for one neither the catalogue nor the list knows. */
+export function categoryLabel(slug: string, categories: readonly StoryCategory[] | null | undefined, locale: string, t: Translate): string | null {
+  const key = categoryNameKey(slug);
+  if (key) return t(key);
+  const found = categories?.find((c) => c.slug === slug);
+  return found ? categoryName(found, locale) : null;
+}
+
 /** The categories by slug, each in the reader's language, for a card to name its own. */
-export function categoryNames(categories: readonly StoryCategory[] | undefined, locale: string): ReadonlyMap<string, string> {
-  return new Map((categories ?? []).map((c) => [c.slug, categoryName(c, locale)]));
+export function categoryNames(categories: readonly StoryCategory[] | undefined, locale: string, t: Translate): ReadonlyMap<string, string> {
+  return new Map((categories ?? []).map((c) => [c.slug, categoryTitle(c, locale, t)]));
 }
 
 /** Whether a story has anything to listen to: every sentence, or some. */

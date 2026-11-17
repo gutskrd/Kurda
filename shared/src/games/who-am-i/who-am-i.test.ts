@@ -1,15 +1,27 @@
 import { describe, expect, it } from 'vitest';
+import { checkGameContent } from '../content.js';
 import {
+  WHO_AM_I_CATEGORIES,
   WHO_AM_I_FACTS,
+  WHO_AM_I_MAX_SOMETIMES,
   WHO_AM_I_MIN_QUESTIONS,
+  WHO_AM_I_MIN_TEMPLATES,
   WHO_AM_I_ROOM_GUESSES,
+  WHO_AM_I_SAYS,
   WHO_AM_I_START_POINTS,
   answerFor,
+  asTwoAnswers,
+  askedVerdict,
   dealWhoAmI,
   isWhoAmIFact,
+  markOf,
   sharedCategory,
   suggestWhoAmIQuestions,
+  verdictFor,
   whoAmIPoints,
+  type WhoAmIAsked,
+  type WhoAmIDeal,
+  type WhoAmIFactValue,
   type WhoAmIIdentity,
   type WhoAmITemplate,
 } from './game.js';
@@ -18,7 +30,9 @@ import {
   WHO_AM_I_ANSWER_SECONDS,
   WHO_AM_I_ASK_SECONDS,
   WHO_AM_I_DECIDE_SECONDS,
+  WHO_AM_I_HELP_CAP,
   WHO_AM_I_HELP_POINTS,
+  whoAmISaysOf,
   whoAmITableRules as R,
   type WhoAmITableState,
 } from './rules.js';
@@ -26,7 +40,7 @@ import { FOREHEAD, deerSilhouetteSvg } from './silhouette.js';
 
 const T0 = 1_700_000_000_000;
 
-const animal = (id: string, word: string, facts: Record<string, boolean>): WhoAmIIdentity => ({
+const animal = (id: string, word: string, facts: Record<string, WhoAmIFactValue>): WhoAmIIdentity => ({
   id,
   key: `w:${id}`,
   level: 1,
@@ -200,8 +214,8 @@ describe('the table: a turn', () => {
     s = move(s, 2, { kind: 'answer', yes: !q.truth });
     s = move(s, 3, { kind: 'answer', yes: !q.truth });
     const view = R.viewFor(s, 1);
-    expect(view.mine!.asked).toEqual([{ question: q.id, answer: q.truth }]);
-    expect(view.told).toMatchObject({ seat: 1, truth: q.truth, answers: [{ seat: 2, right: false }, { seat: 3, right: false }] });
+    expect(view.mine!.asked).toEqual([{ question: q.id, answer: q.truth, verdict: q.truth ? 'yes' : 'no' }]);
+    expect(view.told).toMatchObject({ seat: 1, truth: q.truth, answers: [{ seat: 2, right: false, mark: 'wrong' }, { seat: 3, right: false, mark: 'wrong' }] });
     expect(view.seats.find((x) => x.seat === 2)!.helped).toBe(0);
   });
 
@@ -222,13 +236,13 @@ describe('the table: a turn', () => {
     s = move(s, 1, { kind: 'ask', question: q.id });
     s = move(s, 2, { kind: 'answer', yes: q.truth });
     const asker = R.viewFor(s, 1);
-    expect(asker.pending).toMatchObject({ seat: 1, answered: [2], waiting: [3], mine: null });
+    expect(asker.pending).toMatchObject({ seat: 1, answered: [2], waiting: [3], mine: null, says: null });
     expect(asker.told).toBeNull();
     expect(asker.mine!.asked).toEqual([]);
     // the one still to answer sees that seat 2 has, and not which way
-    expect(R.viewFor(s, 3).pending).toMatchObject({ answered: [2], mine: null });
-    expect(R.viewFor(s, 2).pending!.mine).toBe(q.truth);
-    expect(JSON.stringify(R.viewFor(s, 3).pending)).not.toContain('"yes"');
+    expect(R.viewFor(s, 3).pending).toMatchObject({ answered: [2], mine: null, says: null });
+    expect(R.viewFor(s, 2).pending).toMatchObject({ mine: q.truth, says: q.truth ? 'yes' : 'no' });
+    expect(JSON.stringify(R.viewFor(s, 3).pending)).not.toMatch(/"yes"|"no"/);
   });
 
   it('refuses a move out of turn, an answer to one’s own question, a second answer and a question asked twice', () => {
@@ -260,10 +274,10 @@ describe('the table: a turn', () => {
     s = R.timeout(s, [3], T0 + 30_000);
     expect(s.phase).toBe('decide');
     expect(R.viewFor(s, 1).told!.answers).toEqual([
-      { seat: 2, yes: q.truth, right: true },
-      { seat: 3, yes: null, right: false },
+      { seat: 2, yes: q.truth, says: q.truth ? 'yes' : 'no', right: true, mark: 'right' },
+      { seat: 3, yes: null, says: null, right: false, mark: 'none' },
     ]);
-    expect(R.viewFor(s, 1).mine!.asked).toEqual([{ question: q.id, answer: q.truth }]);
+    expect(R.viewFor(s, 1).mine!.asked).toEqual([{ question: q.id, answer: q.truth, verdict: q.truth ? 'yes' : 'no' }]);
   });
 
   it('passes the turn on when its player lets it run out', () => {
@@ -357,7 +371,7 @@ describe('the table: its end', () => {
     s = move(s, 2, { kind: 'answer', yes: q.truth });
     s = R.drop(s, 3, T0 + 2_000);
     expect(s.phase).toBe('decide');
-    expect(R.viewFor(s, 1).mine!.asked).toEqual([{ question: q.id, answer: q.truth }]);
+    expect(R.viewFor(s, 1).mine!.asked).toEqual([{ question: q.id, answer: q.truth, verdict: q.truth ? 'yes' : 'no' }]);
   });
 
   it('places by points, whoever left last, and nobody first at a table where nobody scored', () => {
@@ -416,7 +430,7 @@ describe('the table on one phone', () => {
     s = roomAnswers(s, !q.truth, T0 + 2_000);
     expect(s.phase).toBe('decide');
     expect(R.viewFor(s, 0).told).toMatchObject({ truth: q.truth, answers: [{ seat: 1, right: false }, { seat: 2, right: false }] });
-    expect(R.viewFor(s, 0).mine!.asked).toEqual([{ question: q.id, answer: q.truth }]);
+    expect(R.viewFor(s, 0).mine!.asked).toEqual([{ question: q.id, answer: q.truth, verdict: q.truth ? 'yes' : 'no' }]);
   });
 
   it('lets a player ask the room a question of their own: counted, and never answered by the card', () => {
@@ -551,7 +565,8 @@ describe('the questions suggested next', () => {
 
   it('skips what the kind on the card already says', () => {
     expect(suggestWhoAmIQuestions(all, [], 'animal')).toEqual(['q:edible', 'q:can-fly', 'q:four-legs']);
-    expect(suggestWhoAmIQuestions(all, [], 'food')).toEqual(['q:alive', 'q:sweet', 'q:can-fly']);
+    // food is food or drink: whether it is eaten is still worth asking, but nothing on a plate or in a glass is alive
+    expect(suggestWhoAmIQuestions(all, [], 'food')).toEqual(['q:edible', 'q:sweet', 'q:uses-electricity']);
   });
 
   it('is on every player’s view while they are still guessing, and reads nothing but their own answers', () => {
@@ -635,5 +650,443 @@ describe('tiles a question can tell apart', () => {
     });
     expect(R.viewFor(s, 1).mine!.category).toBeNull();
     expect(R.viewFor(s, 2).mine!.category).toBe('animal');
+  });
+});
+
+describe('four answers: what a friend says against what the card says', () => {
+  it('scores a friend who reasons well as right, a could-be on a plain card as close, and only yes against no as wrong', () => {
+    const table: Record<string, Record<string, string>> = {};
+    for (const says of WHO_AM_I_SAYS) table[says] = { yes: markOf(says, 'yes'), no: markOf(says, 'no'), sometimes: markOf(says, 'sometimes') };
+    expect(table).toEqual({
+      yes: { yes: 'right', no: 'wrong', sometimes: 'right' },
+      sometimes: { yes: 'close', no: 'close', sometimes: 'right' },
+      no: { yes: 'wrong', no: 'right', sometimes: 'right' },
+      unsure: { yes: 'unsure', no: 'unsure', sometimes: 'unsure' },
+    });
+  });
+
+  it('reads a card’s row as yes, no or sometimes, and keeps the yes-or-not reading for older callers', () => {
+    const dog = animal('dog', 'kûçik', { 'at-home': 'sometimes', 'four-legs': true, 'can-fly': false });
+    expect(['four-legs', 'can-fly', 'at-home', 'not-set'].map((fact) => verdictFor(dog, fact))).toEqual(['yes', 'no', 'sometimes', 'no']);
+    expect(answerFor(dog, 'at-home')).toBe(false);
+    expect(askedVerdict({ question: 'q', answer: true })).toBe('yes');
+    expect(askedVerdict({ question: 'q', answer: false, verdict: 'sometimes' })).toBe('sometimes');
+  });
+
+  it('reads an answer move in either form, and nothing an app does not send', () => {
+    expect(whoAmISaysOf({ says: 'sometimes' })).toBe('sometimes');
+    expect(whoAmISaysOf({ yes: true })).toBe('yes');
+    expect(whoAmISaysOf({ yes: false })).toBe('no');
+    expect(whoAmISaysOf({ says: 'maybe' })).toBeNull();
+    expect(whoAmISaysOf({})).toBeNull();
+  });
+
+  it('drops the sometimes rows for a table of two answers, and leaves a card without any as it is', () => {
+    const dog = animal('dog', 'kûçik', { 'at-home': 'sometimes', 'four-legs': true });
+    expect(asTwoAnswers(dog).facts).toEqual({ alive: true, animal: true, 'four-legs': true });
+    expect(asTwoAnswers(POOL[0]!)).toBe(POOL[0]);
+  });
+});
+
+const HOME = 'q-home';
+const LEGS = 'q-legs';
+
+/** A dog whose card says "sometimes" to being at home (HOME), worn on seat 1 at a table of four answers. */
+function sometimesTable(answers: 2 | 4 = 4): WhoAmITableState {
+  const dog = animal('dog', 'kûçik', { 'four-legs': true, 'can-fly': false, 'at-home': 'sometimes' });
+  const tile = (i: WhoAmIIdentity) => ({ id: i.id, word: i.word, meanings: i.meanings, category: i.category });
+  const ask = (id: string, fact: string) => ({ id, ku: `pirs ${id}?`, meanings: { en: id }, fact });
+  const deal: WhoAmIDeal = {
+    identity: dog,
+    candidates: [dog, POOL[2]!, POOL[4]!].map(tile),
+    questions: [ask(HOME, 'at-home'), ask(LEGS, 'four-legs'), ask('q-fly', 'can-fly'), ask('q-alive', 'alive')],
+  };
+  const others = [POOL[2]!, POOL[3]!, POOL[4]!].map((t, i) => ({
+    seat: i + 2,
+    deal: dealWhoAmI(t, POOL, TEMPLATES, { seed: 's', salt: `seat:${i + 2}`, want: 4 })!,
+  }));
+  return R.init(
+    { dialect: 'kmr', minutes: 15, difficulty: 'beginner', answers, deals: [{ seat: 1, deal }, ...others] },
+    [1, 2, 3, 4].map((seat) => ({ seat, team: null, bot: null })),
+    { now: T0, seed: 'r' },
+  );
+}
+
+describe('the table with four answers', () => {
+  it('scores yes, could be and no all right on a sometimes card, and tells the asker it is sometimes', () => {
+    let s = sometimesTable();
+    expect(R.viewFor(s, 1).answers).toBe(4);
+    s = move(s, 1, { kind: 'ask', question: HOME });
+    s = move(s, 2, { kind: 'answer', says: 'yes' });
+    s = move(s, 3, { kind: 'answer', says: 'sometimes' });
+    s = move(s, 4, { kind: 'answer', says: 'no' });
+    const view = R.viewFor(s, 1);
+    expect(view.told).toMatchObject({ truth: false, verdict: 'sometimes' });
+    expect(view.told!.answers).toEqual([
+      { seat: 2, yes: true, says: 'yes', right: true, mark: 'right' },
+      { seat: 3, yes: null, says: 'sometimes', right: true, mark: 'right' },
+      { seat: 4, yes: false, says: 'no', right: true, mark: 'right' },
+    ]);
+    expect(view.mine!.asked).toEqual([{ question: HOME, answer: false, verdict: 'sometimes' }]);
+    expect(view.seats.filter((x) => x.seat !== 1).map((x) => x.helped)).toEqual([1, 1, 1]);
+  });
+
+  it('marks a could-be on a plain card close and a not-sure unsure: neither scores, neither is wrong, and both took part', () => {
+    let s = sometimesTable();
+    s = move(s, 1, { kind: 'ask', question: LEGS });
+    s = move(s, 2, { kind: 'answer', says: 'sometimes' });
+    s = move(s, 3, { kind: 'answer', says: 'unsure' });
+    s = move(s, 4, { kind: 'answer', says: 'no' });
+    const view = R.viewFor(s, null);
+    expect(view.told).toMatchObject({ truth: true, verdict: 'yes' });
+    expect(view.told!.answers.map((a) => [a.mark, a.yes, a.right])).toEqual([
+      ['close', null, false],
+      ['unsure', null, false],
+      ['wrong', false, false],
+    ]);
+    expect(view.seats.map((x) => x.helped)).toEqual([0, 0, 0, 0]);
+    expect(s.seats.map((x) => x.answered)).toEqual([0, 1, 1, 1]);
+    // a not-sure is an answer: a game where one seat asked and the other only said it was not sure was played by both
+    let pair = R.drop(R.drop(sometimesTable(), 4, T0 + 100), 3, T0 + 200);
+    pair = move(pair, 1, { kind: 'ask', question: LEGS });
+    pair = move(pair, 2, { kind: 'answer', says: 'unsure' });
+    expect(R.counted!(R.timeout(pair, [1], pair.endsAt))).toBe(true);
+  });
+
+  it('shows a seat its own answer while the others are still answering, as it said it and as older apps read it', () => {
+    let s = sometimesTable();
+    s = move(s, 1, { kind: 'ask', question: HOME });
+    s = move(s, 2, { kind: 'answer', says: 'unsure' });
+    s = move(s, 3, { kind: 'answer', says: 'yes' });
+    expect(R.viewFor(s, 2).pending).toMatchObject({ says: 'unsure', mine: null });
+    expect(R.viewFor(s, 3).pending).toMatchObject({ says: 'yes', mine: true });
+    expect(R.viewFor(s, 4).pending).toMatchObject({ says: null, mine: null, answered: [2, 3] });
+  });
+
+  it('keeps every older field equal to the new one it stands for', () => {
+    let s = sometimesTable();
+    const check = (st: WhoAmITableState) => {
+      const told = R.viewFor(st, null).told!;
+      expect(told.truth).toBe(told.verdict === 'yes');
+      for (const a of told.answers) {
+        expect(a.yes).toBe(a.says === 'yes' ? true : a.says === 'no' ? false : null);
+        expect(a.right).toBe(a.mark === 'right');
+      }
+    };
+    s = move(s, 1, { kind: 'ask', question: HOME });
+    s = move(s, 2, { kind: 'answer', says: 'no' });
+    s = move(s, 3, { kind: 'answer', says: 'sometimes' });
+    s = R.timeout(s, [4], T0 + 40_000);
+    check(s);
+    s = move(s, 1, { kind: 'pass' }, T0 + 41_000);
+    for (const seat of [2, 3, 4]) s = move(s, seat, { kind: 'pass' }, T0 + 42_000);
+    s = move(s, 1, { kind: 'ask', question: LEGS }, T0 + 43_000);
+    for (const [seat, says] of [[2, 'yes'], [3, 'unsure'], [4, 'sometimes']] as const) s = move(s, seat, { kind: 'answer', says }, T0 + 44_000);
+    check(s);
+  });
+
+  it('offers a table of two answers yes and no alone, and takes no answer an app does not send', () => {
+    const two = sometimesTable(2);
+    expect(R.viewFor(two, 1).answers).toBe(2);
+    const asked = move(two, 1, { kind: 'ask', question: HOME });
+    expect(R.apply(asked, 2, { kind: 'answer', says: 'sometimes' }, T0)).toEqual({ ok: false, reason: 'not-offered' });
+    expect(R.apply(asked, 2, { kind: 'answer', says: 'unsure' }, T0)).toEqual({ ok: false, reason: 'not-offered' });
+    expect(R.apply(asked, 2, { kind: 'answer', says: 'maybe' } as never, T0)).toEqual({ ok: false, reason: 'no-such-answer' });
+    expect(R.apply(asked, 2, { kind: 'answer', says: 'yes' }, T0).ok).toBe(true);
+    // a table set up with no count of answers, as one made by an older app, is a table of two
+    expect(R.viewFor(table(), 1).answers).toBe(2);
+  });
+
+  it('takes an older app’s yes or no at a table of four, scored the same way', () => {
+    let s = sometimesTable();
+    s = move(s, 1, { kind: 'ask', question: HOME });
+    s = move(s, 2, { kind: 'answer', yes: true });
+    s = move(s, 3, { kind: 'answer', yes: false });
+    s = move(s, 4, { kind: 'answer', says: 'unsure' });
+    expect(R.viewFor(s, 1).told!.answers.map((a) => [a.says, a.mark])).toEqual([
+      ['yes', 'right'],
+      ['no', 'right'],
+      ['unsure', 'unsure'],
+    ]);
+  });
+});
+
+/** A state as a server from before the four answers saved it: answers as yes or no, no verdicts, no count of answers. */
+function saved(state: WhoAmITableState): WhoAmITableState {
+  const old = JSON.parse(JSON.stringify(state)) as Record<string, unknown> & {
+    pending: { answers: Array<Record<string, unknown>> } | null;
+    told: (Record<string, unknown> & { answers: Array<Record<string, unknown>> }) | null;
+    seats: Array<{ asked: Array<Record<string, unknown>> }>;
+  };
+  const back = (a: Record<string, unknown>) => ({ seat: a.seat, yes: a.says === 'yes' ? true : a.says === 'no' ? false : null });
+  delete old.answers;
+  if (old.pending) old.pending.answers = old.pending.answers.map(back);
+  if (old.told) {
+    delete old.told.verdict;
+    old.told.answers = old.told.answers.map(back);
+  }
+  for (const seat of old.seats) for (const a of seat.asked) delete a.verdict;
+  return old as unknown as WhoAmITableState;
+}
+
+describe('a game saved before the four answers', () => {
+  it('carries on: its answers are read as yes and no, and its board is the board it was', () => {
+    let s = table();
+    const q = firstQuestion(s, 1);
+    s = move(s, 1, { kind: 'ask', question: q.id });
+    s = move(s, 2, { kind: 'answer', yes: q.truth });
+    const old = saved(s);
+    expect(R.viewFor(old, 2).pending).toMatchObject({ mine: q.truth, says: q.truth ? 'yes' : 'no' });
+    const after = move(old, 3, { kind: 'answer', yes: !q.truth });
+    expect(after.answers).toBe(2);
+    const view = R.viewFor(after, 1);
+    expect(view.told).toMatchObject({ truth: q.truth, verdict: q.truth ? 'yes' : 'no' });
+    expect(view.told!.answers.map((a) => [a.seat, a.yes, a.right])).toEqual([
+      [2, q.truth, true],
+      [3, !q.truth, false],
+    ]);
+    expect(view.seats.find((x) => x.seat === 2)!.helped).toBe(1);
+  });
+
+  it('shows its last answer as it was, and goes on through a time-out and a player leaving', () => {
+    let s = table();
+    const q = firstQuestion(s, 1);
+    s = move(s, 1, { kind: 'ask', question: q.id });
+    s = move(s, 2, { kind: 'answer', yes: q.truth });
+    s = move(s, 3, { kind: 'answer', yes: q.truth });
+    const old = saved(s);
+    expect(R.viewFor(old, 1).told).toEqual(R.viewFor(s, 1).told);
+    // the older list has no verdicts: the card's word is read from its yes or no
+    expect(R.viewFor(old, 1).mine!.asked).toEqual([{ question: q.id, answer: q.truth }]);
+    expect(R.timeout(old, [1], T0 + 60_000)).toMatchObject({ turn: 2, phase: 'ask' });
+    let mid = move(s, 1, { kind: 'pass' });
+    const q2 = firstQuestion(mid, 2);
+    mid = move(mid, 2, { kind: 'ask', question: q2.id });
+    mid = move(mid, 1, { kind: 'answer', yes: q2.truth });
+    const left = R.drop(saved(mid), 3, T0 + 5_000);
+    expect(left.phase).toBe('decide');
+    expect(R.viewFor(left, 2).told!.answers).toEqual([{ seat: 1, yes: q2.truth, says: q2.truth ? 'yes' : 'no', right: true, mark: 'right' }]);
+  });
+});
+
+describe('what answering about other cards can add up to', () => {
+  it('stops at the cap, so helping never outscores finding one’s own card', () => {
+    const s = table();
+    s.seats[1]!.helped = WHO_AM_I_HELP_CAP + 4;
+    const view = R.viewFor(s, null);
+    expect(view.seats.find((x) => x.seat === 2)).toMatchObject({ helped: WHO_AM_I_HELP_CAP + 4, points: WHO_AM_I_HELP_CAP });
+    expect(WHO_AM_I_HELP_CAP).toBeLessThan(WHO_AM_I_START_POINTS);
+    expect(R.places(s).find((p) => p.seat === 2)!.score).toBe(WHO_AM_I_HELP_CAP);
+  });
+});
+
+describe('a guess said out loud that the room calls close', () => {
+  const dealt = () => ({
+    dialect: 'kmr' as const,
+    difficulty: 'beginner' as const,
+    deals: [POOL[0]!, POOL[2]!].map((target, i) => dealWhoAmI(target, POOL, TEMPLATES, { seed: 's', salt: `seat:${i}`, want: 4 })!),
+  });
+
+  it('spends no guess, keeps the card on, and passes the turn on', () => {
+    const s = startCouchTable(dealt(), T0, 'couch');
+    const r = R.apply(s, 0, { kind: 'said', right: false, close: true }, T0 + 1_000);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.outcome).toEqual({ kind: 'said', correct: null, close: true });
+    expect(r.state.turn).toBe(1);
+    expect(R.viewFor(r.state, 0).mine).toMatchObject({ guessesLeft: WHO_AM_I_ROOM_GUESSES, guesses: [], solved: false, out: false, identity: null });
+  });
+
+  it('is never both right and close, and is the room’s call only in one room', () => {
+    const s = startCouchTable(dealt(), T0, 'couch');
+    expect(R.apply(s, 0, { kind: 'said', right: true, close: true }, T0)).toEqual({ ok: false, reason: 'right-or-close' });
+    expect(R.apply(table(), 1, { kind: 'said', right: false, close: true }, T0)).toEqual({ ok: false, reason: 'not-here' });
+  });
+});
+
+describe('the table on one phone with four answers', () => {
+  it('takes the room’s one answer for everyone, in either form', () => {
+    const deals = [POOL[0]!, POOL[2]!, POOL[4]!].map((target, i) => dealWhoAmI(target, POOL, TEMPLATES, { seed: 's', salt: `seat:${i}`, want: 4 })!);
+    let s = startCouchTable({ dialect: 'kmr', difficulty: 'beginner', deals, answers: 4 }, T0, 'couch');
+    expect(R.viewFor(s, 0).answers).toBe(4);
+    const q = firstQuestion(s, 0);
+    s = move(s, 0, { kind: 'ask', question: q.id });
+    s = roomAnswers(s, 'unsure', T0 + 2_000);
+    expect(R.viewFor(s, 0).told!.answers.map((a) => a.mark)).toEqual(['unsure', 'unsure']);
+    // a phone from before the four answers deals a table of two, and taps yes or no
+    let old = startCouchTable({ dialect: 'kmr', difficulty: 'beginner', deals }, T0, 'couch');
+    expect(R.viewFor(old, 0).answers).toBe(2);
+    old = move(old, 0, { kind: 'ask', question: q.id });
+    expect(roomAnswers(old, 'sometimes', T0)).toBe(old);
+    old = roomAnswers(old, q.truth, T0 + 2_000);
+    expect(R.viewFor(old, 0).told!.answers.map((a) => a.mark)).toEqual(['right', 'right']);
+  });
+
+  it('names the kind of card to a beginner in one room even when the tiles are of several kinds, and to nobody else', () => {
+    const deal = dealWhoAmI(POOL[0]!, POOL, TEMPLATES, { seed: 's', salt: '0', want: 4 })!;
+    const cup = { id: 'cup', word: 'kasik', meanings: { en: 'cup' }, category: 'object' };
+    const mixed: WhoAmIDeal = { ...deal, candidates: [...deal.candidates.slice(0, 3), cup] };
+    const other = dealWhoAmI(POOL[2]!, POOL, TEMPLATES, { seed: 's', salt: '1', want: 4 })!;
+    const room = (difficulty: 'beginner' | 'intermediate') => startCouchTable({ dialect: 'kmr', difficulty, deals: [mixed, other], answers: 4 }, T0, 'couch');
+    expect(R.viewFor(room('beginner'), 0).mine!.category).toBe('animal');
+    expect(R.viewFor(room('intermediate'), 0).mine!.category).toBeNull();
+  });
+});
+
+describe('dealing with three answers', () => {
+  const food = (id: string, word: string, facts: Record<string, WhoAmIFactValue>): WhoAmIIdentity => ({
+    id,
+    key: `w:${id}`,
+    level: 1,
+    word,
+    meanings: { en: id },
+    category: 'food',
+    facts: { alive: false, animal: false, person: false, place: false, 'at-home': true, ...facts },
+  });
+  const FOODS = [
+    food('apple', 'sêv', { edible: true, sweet: true, drink: false, fruit: true, hot: false }),
+    food('pomegranate', 'hinar', { edible: true, sweet: 'sometimes', drink: false, fruit: true, hot: false }),
+    food('tea', 'çay', { edible: false, sweet: 'sometimes', drink: true, fruit: false, hot: true }),
+    food('milk', 'şîr', { edible: false, sweet: false, drink: true, fruit: false, hot: 'sometimes' }),
+    food('bread', 'nan', { edible: true, sweet: false, drink: false, fruit: false, hot: false }),
+  ];
+  /** A question template for each fact, as an approved list holds them. */
+  const asksOf = (facts: readonly string[]): WhoAmITemplate[] => facts.map((fact) => ({ id: `t:${fact}`, ku: `pirs ${fact}?`, meanings: { en: fact }, fact }));
+  const ASKS = asksOf(['alive', 'animal', 'person', 'place', 'edible', 'sweet', 'drink', 'fruit', 'hot', 'at-home']);
+  const factsOf = (deal: WhoAmIDeal) => deal.questions.map((q) => q.fact).sort();
+
+  it('deals the questions that tell the tiles apart, a sometimes being an answer of its own, and not those every tile answers alike', () => {
+    const deal = dealWhoAmI(FOODS[0]!, FOODS, ASKS, { seed: 's', salt: '0', want: 5 })!;
+    expect(deal.candidates).toHaveLength(5);
+    // the kind says it is not alive, an animal, a person or a place, so no wide question is left to deal
+    expect(factsOf(deal)).toEqual(['drink', 'edible', 'fruit', 'hot', 'sweet']);
+  });
+
+  it('keeps at most two wide questions that tell nothing, when the card names no kind', () => {
+    const thing = (id: string, category: string, facts: Record<string, WhoAmIFactValue>): WhoAmIIdentity => ({
+      id,
+      key: `w:${id}`,
+      level: 1,
+      word: id,
+      meanings: { en: id },
+      category,
+      facts: { alive: false, animal: false, person: false, place: false, ...facts },
+    });
+    const pool = [
+      thing('chair', 'object', { 'bigger-than-person': false, 'in-sky': false, 'made-of-wood': true, 'at-home': true }),
+      thing('door', 'object', { 'bigger-than-person': true, 'in-sky': false, 'made-of-wood': true, 'at-home': true }),
+      thing('cloud', 'nature', { 'bigger-than-person': true, 'in-sky': true, 'made-of-wood': false, 'at-home': false }),
+      thing('snow', 'nature', { 'bigger-than-person': 'sometimes', 'in-sky': 'sometimes', 'made-of-wood': false, 'at-home': false }),
+    ];
+    const asks = asksOf(['alive', 'animal', 'person', 'place', 'bigger-than-person', 'in-sky', 'made-of-wood', 'at-home']);
+    const deal = dealWhoAmI(pool[0]!, pool, asks, { seed: 's', salt: '0', want: 4 })!;
+    expect(sharedCategory('object', deal.candidates)).toBeNull();
+    expect(factsOf(deal)).toEqual(['alive', 'animal', 'at-home', 'bigger-than-person', 'in-sky', 'made-of-wood']);
+  });
+
+  it('makes the list up to the least a deal offers with what the card has not said, when too few questions tell the tiles apart', () => {
+    const pool = [
+      animal('a', 'a', { 'four-legs': true, 'can-fly': false, 'at-home': true, edible: false, person: false, place: false }),
+      animal('b', 'b', { 'four-legs': true, 'can-fly': false, 'at-home': false, edible: false, person: false, place: false }),
+      animal('c', 'c', { 'four-legs': false, 'can-fly': true, 'at-home': false, edible: false, person: false, place: false }),
+    ];
+    const asks = asksOf(['alive', 'animal', 'person', 'place', 'four-legs', 'can-fly', 'at-home', 'edible']);
+    const deal = dealWhoAmI(pool[0]!, pool, asks, { seed: 's', salt: '0', want: 3 })!;
+    expect(deal.questions).toHaveLength(WHO_AM_I_MIN_QUESTIONS);
+    expect(factsOf(deal)).toEqual(['at-home', 'can-fly', 'edible', 'four-legs']);
+  });
+
+  it('deals a table of two answers without the questions a sometimes row would have needed', () => {
+    const two = FOODS.map(asTwoAnswers);
+    const deal = dealWhoAmI(two[0]!, two, ASKS, { seed: 's', salt: '0', want: 5 })!;
+    // made up to four with a question the kind does not answer, never with one it does (alive)
+    expect(factsOf(deal)).toEqual(['at-home', 'drink', 'edible', 'fruit']);
+    for (const c of deal.candidates) {
+      const card = two.find((t) => t.id === c.id)!;
+      for (const q of deal.questions) expect(typeof card.facts[q.fact]).toBe('boolean');
+    }
+  });
+
+  it('tells apart two cards that differ only by a sometimes', () => {
+    const pool = [
+      animal('dog', 'kûçik', { 'four-legs': true, 'at-home': 'sometimes', 'can-fly': false }),
+      animal('cat', 'pisîk', { 'four-legs': true, 'at-home': true, 'can-fly': false }),
+      animal('bird', 'çûk', { 'four-legs': false, 'at-home': false, 'can-fly': true }),
+    ];
+    const deal = dealWhoAmI(pool[0]!, pool, TEMPLATES, { seed: 's', salt: '0', want: 3 })!;
+    expect(deal.candidates.map((c) => c.id).sort()).toEqual(['bird', 'cat', 'dog']);
+    expect(deal.questions.map((q) => q.fact)).toContain('at-home');
+  });
+});
+
+describe('suggestions with three answers and the new kinds', () => {
+  const Q = (facts: string[]): Array<{ id: string; fact: string }> => facts.map((fact) => ({ id: `q:${fact}`, fact }));
+  const all = Q(['can-fly', 'sweet', 'alive', 'works-outdoors', 'animal', 'place', 'four-legs', 'uses-electricity', 'edible', 'person']);
+  const asked = (fact: string, verdict: 'yes' | 'no' | 'sometimes'): WhoAmIAsked => ({ question: `q:${fact}`, answer: verdict === 'yes', verdict });
+
+  it('lets a sometimes answer its own question and settle nothing else', () => {
+    // a card that is sometimes an animal says nothing about being alive or a person
+    expect(suggestWhoAmIQuestions(all, [asked('animal', 'sometimes')], null)).toEqual(['q:alive', 'q:person', 'q:edible']);
+    // and never rules a kind out: with "alive" only sometimes, flying is still worth asking about
+    expect(suggestWhoAmIQuestions(all, [asked('alive', 'sometimes')], null, 10)).toEqual([
+      'q:animal',
+      'q:person',
+      'q:edible',
+      'q:place',
+      'q:can-fly',
+      'q:four-legs',
+      'q:sweet',
+      'q:uses-electricity',
+      'q:works-outdoors',
+    ]);
+  });
+
+  it('follows what a yes settles on to what that settles: a thing that lays eggs is an animal, and so alive', () => {
+    const list = Q(['lays-eggs', 'alive', 'animal', 'person', 'place', 'can-fly', 'has-feathers']);
+    expect(suggestWhoAmIQuestions(list, [asked('lays-eggs', 'yes')], null)).toEqual(['q:can-fly', 'q:has-feathers']);
+  });
+
+  it('keeps asking about taste for a drink, and leaves it for last once it is neither eaten nor drunk', () => {
+    const list = Q(['edible', 'drink', 'sweet', 'fruit', 'hot']);
+    expect(suggestWhoAmIQuestions(list, [asked('edible', 'no')], 'food')).toEqual(['q:drink', 'q:sweet', 'q:fruit']);
+    expect(suggestWhoAmIQuestions(list, [asked('edible', 'no'), asked('drink', 'yes')], 'food')).toEqual(['q:sweet', 'q:hot', 'q:fruit']);
+    expect(suggestWhoAmIQuestions(list, [asked('edible', 'no'), asked('drink', 'no')], 'food')).toEqual(['q:hot', 'q:sweet', 'q:fruit']);
+  });
+
+  it('asks a job what a job does, and nature nothing about animals or jobs', () => {
+    const list = Q(['alive', 'four-legs', 'works-with-hands', 'sells', 'in-sky', 'hot', 'green', 'works-outdoors']);
+    expect(suggestWhoAmIQuestions(list, [], 'profession')).toEqual(['q:works-with-hands', 'q:sells', 'q:works-outdoors']);
+    expect(suggestWhoAmIQuestions(list, [], 'nature', 10)).toEqual([
+      'q:alive',
+      'q:in-sky',
+      'q:hot',
+      'q:green',
+      'q:four-legs',
+      'q:works-with-hands',
+      'q:sells',
+      'q:works-outdoors',
+    ]);
+  });
+});
+
+describe('the facts and kinds a card can have', () => {
+  it('knows the new kind and every question the deck asks, each once', () => {
+    expect(WHO_AM_I_CATEGORIES).toContain('nature');
+    expect(WHO_AM_I_FACTS).toHaveLength(41);
+    expect(new Set(WHO_AM_I_FACTS.map((f) => f.key)).size).toBe(WHO_AM_I_FACTS.length);
+    expect(WHO_AM_I_MIN_TEMPLATES).toBe(20);
+    expect(WHO_AM_I_FACTS.slice(0, 5).map((f) => f.key)).toEqual(['alive', 'animal', 'person', 'edible', 'place']);
+  });
+
+  it('stores an identity whose table says sometimes, up to the most allowed', () => {
+    const card = (facts: Record<string, unknown>) => ({ word: 'kûçik', meanings: { en: 'dog' }, category: 'animal', facts });
+    const base = { alive: true, animal: true, person: false, place: false };
+    const ok = checkGameContent('identity', 'kmr', card({ ...base, 'at-home': 'sometimes', 'works-outdoors': 'sometimes' }));
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.payload.facts['at-home']).toBe('sometimes');
+    const many = Object.fromEntries(['at-home', 'works-outdoors', 'four-legs', 'wild'].slice(0, WHO_AM_I_MAX_SOMETIMES + 1).map((k) => [k, 'sometimes']));
+    expect(checkGameContent('identity', 'kmr', card({ ...base, ...many })).ok).toBe(false);
+    expect(checkGameContent('identity', 'kmr', card({ ...base, 'at-home': 'maybe' })).ok).toBe(false);
+    expect(checkGameContent('identity', 'kmr', card({ alive: true, animal: 'sometimes', person: false })).ok).toBe(false);
   });
 });

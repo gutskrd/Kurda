@@ -103,6 +103,17 @@ describe('progress', () => {
     expect(unitWord(t, 'seasons', 3)).toBe('seasons');
   });
 
+  // a Soranî reader's counts are in the digits the rest of the screen is in, and the singular is still chosen by the number
+  it('writes the counts in the reader’s own digits where it is given them', () => {
+    const tCkb = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.ckb[key] ?? key, vars);
+    const ckb = (v: number): string => new Intl.NumberFormat('ckb').format(v);
+    expect(progressText(tCkb, view(), ckb)).toContain('١٢');
+    expect(progressText(tCkb, view(), ckb)).toContain('٣٠');
+    expect(progressText(tCkb, view({ progress: 29 }), ckb)).toBe(progressText(tCkb, view({ progress: 29 }))!.replace('1', '١'));
+    expect(nextTierLine(tCkb, 'ders', 1, ckb)).toContain('٧٥');
+    expect(rarityText(tCkb, 12.4, ckb)).toContain('١٢');
+  });
+
   it('names the tier after the one just won', () => {
     expect(nextTierLine(t, 'ders', 1)).toBe('Next: Zîv at 75 lessons');
     expect(nextTierLine(t, 'rank-dest', 0)).toBe('Next: Sifir at 1 season');

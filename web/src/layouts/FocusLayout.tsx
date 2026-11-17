@@ -5,6 +5,7 @@ import { LessonPlaceholder } from '../learn/LessonPlaceholder';
 import { RailProvider } from '../social/RailProvider';
 import { PlayProvider } from '../play/PlayProvider';
 import { useT } from '../i18n/I18nProvider';
+import { useTrail } from './trail';
 
 /**
  * The shell for a lesson and a review: the lesson alone, with its own ✕, its
@@ -21,9 +22,14 @@ import { useT } from '../i18n/I18nProvider';
  * while a page's code is still arriving is not: every page here is a lesson
  * or leads to one, so it is the lesson's own frame (learn/LessonPlaceholder),
  * the same picture the page then keeps while its session is asked for.
+ *
+ * A lesson is noted as it is drawn (`useTrail`), so that the way back in a
+ * phone's top bar, on the page a lesson returns to, can pass over it: a
+ * lesson that has ended is no place to go back to.
  */
 export function FocusLayout(): React.JSX.Element {
   const t = useT();
+  useTrail();
   return (
     <RailProvider>
       <PlayProvider>

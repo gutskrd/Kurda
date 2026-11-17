@@ -3,7 +3,6 @@ import { AccessibilityInfo, Animated, StyleSheet, Text, View } from 'react-nativ
 import { fireLadder, fireLevel, fireSizeToFit, type FireLadderPlace, type StreakRepairOffer } from '@kurda/shared';
 import { describeError } from '../api/errors';
 import { useAuth } from '../auth/AuthContext';
-import { GOLD_INK } from '../coursemap/path';
 import { haptic } from '../feedback/haptics';
 import { formatDay, formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
@@ -276,6 +275,8 @@ const PLACE_WORDS: Record<FireLadderPlace, TranslationKey> = {
 /** Each stage's fire on the ladder, framed to fill a square this big (a spark as plain as the Newroz fire, each telling by what it has, and every row as tall), and the round it stands in. */
 const RUNG_FIRE = 44;
 const RUNG_ART = 52;
+/** How much of the violet the row you are on is, as the last two digits of its colour: the tab bar's own wash. */
+const NOW_WASH = '1F';
 
 /**
  * The fire's stages from the spark to the Newroz fire (shared `fireLadder`),
@@ -283,6 +284,12 @@ const RUNG_ART = 52;
  * burning with a check, the one burning now ringed and marked "Now", the
  * ones ahead standing still and dimmed — something to look forward to,
  * never greyed out. Each is one element to a screen reader, said in full.
+ *
+ * "Now" is where you stand on the ladder, so it is drawn as the place you
+ * are in is everywhere in the app: a wash of the violet over the row, the
+ * fire ringed in the violet and the word on a violet tag. It was all in the
+ * sun's gold, which is for what has been earned; the fires themselves still
+ * burn in theirs.
  */
 function FireLadder({ days }: { days: number }): React.JSX.Element {
   const { colors } = useTheme();
@@ -300,12 +307,12 @@ function FireLadder({ days }: { days: number }): React.JSX.Element {
         return (
           <View
             key={step.stage}
-            style={[styles.rung, { flexDirection: dir.row }, now && { backgroundColor: `${colors.gold}26` }]}
+            style={[styles.rung, { flexDirection: dir.row }, now && { backgroundColor: `${colors.primary}${NOW_WASH}` }]}
             accessible
             accessibilityLabel={t(PLACE_WORDS[step.place], { stage: name, count: day })}
             testID={`rung-${step.place}`}
           >
-            <View style={[styles.rungArt, now && { borderColor: colors.gold }, step.place === 'ahead' && styles.ahead]}>
+            <View style={[styles.rungArt, now && { borderColor: colors.primary }, step.place === 'ahead' && styles.ahead]}>
               <Fire size={fireSizeToFit(step.stage, RUNG_FIRE, RUNG_FIRE)} level={step.level} still={step.place === 'ahead'} framed />
             </View>
             <View style={styles.rungWords}>
@@ -316,8 +323,8 @@ function FireLadder({ days }: { days: number }): React.JSX.Element {
               <Text style={[styles.day, dir.text, { color: colors.textSecondary }]}>{t('fire.ladder.day', { count: day })}</Text>
             </View>
             {now ? (
-              <View style={[styles.now, { backgroundColor: colors.gold }]}>
-                <Text style={[styles.nowText, { color: GOLD_INK }]}>{t('fire.ladder.now')}</Text>
+              <View style={[styles.now, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.nowText, { color: colors.textOnPrimary }]}>{t('fire.ladder.now')}</Text>
               </View>
             ) : null}
           </View>

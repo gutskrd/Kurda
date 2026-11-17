@@ -3,6 +3,7 @@ import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } fr
 import { LinearGradient } from 'expo-linear-gradient';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from '../theme/ThemeProvider';
+import { useDirection } from '../reports/direction';
 import { radii } from '../theme/tokens';
 
 /**
@@ -10,7 +11,8 @@ import { radii } from '../theme/tokens';
  * the weekly goal. The fill is a gradient in the emblem's own metal and slides
  * in on the native driver (a transform, never a width), from `from` when it is
  * given — the bar after a game starts where the points were. Under Reduce
- * Motion it is simply at its value.
+ * Motion it is simply at its value. In Soranî and Arabic it fills from the
+ * right, the side the line is read from.
  */
 export function Meter({
   fraction,
@@ -37,6 +39,7 @@ export function Meter({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const reduce = useReducedMotion();
+  const dir = useDirection();
   const [width, setWidth] = useState(0);
   const clamp = (v: number) => Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
   const target = clamp(fraction);
@@ -60,7 +63,8 @@ export function Meter({
     return () => run.stop();
   }, [reduce, start, target, durationMs, delayMs, value]);
 
-  const translateX = value.interpolate({ inputRange: [0, 1], outputRange: [-width, 0] });
+  // the fill slides in from the side the line starts on: off to the left, or off to the right in a right-to-left language
+  const translateX = value.interpolate({ inputRange: [0, 1], outputRange: [dir.rtl ? width : -width, 0] });
   return (
     <View
       accessible={label !== undefined}
@@ -72,7 +76,8 @@ export function Meter({
     >
       {width > 0 ? (
         <Animated.View style={[styles.fill, { width, transform: [{ translateX }] }]}>
-          <LinearGradient colors={tint} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+          {/* its strong end at the front of the fill, whichever way it grows */}
+          <LinearGradient colors={tint} start={{ x: dir.rtl ? 1 : 0, y: 0 }} end={{ x: dir.rtl ? 0 : 1, y: 0 }} style={StyleSheet.absoluteFill} />
         </Animated.View>
       ) : null}
     </View>

@@ -2,8 +2,8 @@
 import { createElement } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { STORY_COVERS } from '@kurda/shared';
-import { StoryCover, coverUri, weaveFor } from './covers';
+import { STORY_COVERS, STORY_RUGS, storyRugFor } from '@kurda/shared';
+import { StoryCover } from './covers';
 
 // a picture that loads or fails on request: jsdom fetches no images, so the test says which happened
 vi.mock('react-native', async () => {
@@ -14,54 +14,61 @@ vi.mock('react-native', async () => {
       createElement('img', { src: source.uri, onError, 'data-testid': 'story-cover-picture' }),
   };
 });
-vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 
-describe('coverUri', () => {
-  it('finds a cover’s picture on the website, and nothing for no key or an unknown one', () => {
-    expect(coverUri('gola-sin')).toBe('https://hevalo.app/cosmetics/backgrounds/made-06-gola-sin.webp');
-    expect(coverUri('kilima-seve')).toBe('https://hevalo.app/cosmetics/backgrounds/made-27-kilima-seve.webp');
-    expect(coverUri(null)).toBeNull();
-    expect(coverUri('')).toBeNull();
-    expect(coverUri('mountains')).toBeNull();
-  });
-
-  it('knows every cover the admin offers', () => {
-    for (const c of STORY_COVERS) expect(coverUri(c.key)).toBe(`https://hevalo.app/cosmetics/backgrounds/${c.file}`);
-  });
-});
-
-describe('weaveFor', () => {
-  it('weaves each category in its own colours, and an unfiled story in warm stone', () => {
-    expect(weaveFor('folktale').band).not.toBe(weaveFor('fable').band);
-    expect(weaveFor(null)).toEqual(weaveFor('no-such-category'));
-  });
-});
+const SITE = 'https://hevalo.app/cosmetics/backgrounds';
+const picture = (): string | null => screen.queryByTestId('story-cover-picture')?.getAttribute('src') ?? null;
+/** The ground under the picture, as the browser reports a colour. */
+const ground = (): string => (screen.getByTestId('story-cover') as HTMLElement).style.backgroundColor;
+const rgb = (hex: string): string => `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(', ')})`;
 
 describe('StoryCover', () => {
   afterEach(cleanup);
 
-  it('shows the chosen picture, and the category’s kilim band in its place when it will not load', () => {
-    render(<StoryCover cover="berbang" category="folktale" />);
-    const picture = screen.getByTestId('story-cover-picture');
-    expect(picture.getAttribute('src')).toBe('https://hevalo.app/cosmetics/backgrounds/made-09-berbang.webp');
-    expect(screen.queryByTestId('story-cover-kilim')).toBeNull();
-    fireEvent.error(picture);
-    expect(screen.queryByTestId('story-cover-picture')).toBeNull();
-    expect(screen.getByTestId('story-cover-kilim')).toBeTruthy();
+  it('shows the picture the editor chose, from the website, for every cover the admin offers', () => {
+    for (const c of STORY_COVERS) {
+      render(<StoryCover slug="kmr-reya-gund" cover={c.key} />);
+      expect(picture()).toBe(`${SITE}/${c.file}`);
+      cleanup();
+    }
   });
 
-  it('weaves the band for a story without a picture, or with a key no list knows', () => {
-    const view = render(<StoryCover cover={null} category="nature" />);
-    expect(screen.getByTestId('story-cover-kilim')).toBeTruthy();
+  it('lays a story without a picture on one of the seven rugs, always the same one, over that rug’s own colour', () => {
+    const rug = storyRugFor('kmr-reya-gund');
+    const view = render(<StoryCover slug="kmr-reya-gund" cover={null} />);
+    expect(picture()).toBe(`${SITE}/${rug.file}`);
+    expect(ground()).toBe(rgb(rug.ground));
+    // a key no list knows is no picture either
+    view.rerender(<StoryCover slug="kmr-reya-gund" cover="mountains" />);
+    expect(picture()).toBe(`${SITE}/${rug.file}`);
+    // and a shelf of such stories is not one rug seven times
+    const seen = new Set<string>();
+    for (const slug of ['kmr-qelema-sin', 'kmr-bacansor-penir-nan', 'kmr-nameya-dapire', 'kmr-top-u-ape-mehmud', 'kmr-barana-newroze', 'kmr-reya-gund', 'kmr-rovi-u-hirc']) {
+      view.rerender(<StoryCover slug={slug} cover={null} />);
+      seen.add(picture()!);
+    }
+    expect(seen.size).toBeGreaterThanOrEqual(5);
+    for (const src of seen) expect(STORY_RUGS.map((r) => `${SITE}/${r.file}`)).toContain(src);
+  });
+
+  it('leaves the plain ground when the picture will not load, never a broken image', () => {
+    const rug = storyRugFor('kmr-reya-gund');
+    render(<StoryCover slug="kmr-reya-gund" cover={null} />);
+    fireEvent.error(screen.getByTestId('story-cover-picture'));
     expect(screen.queryByTestId('story-cover-picture')).toBeNull();
-    view.rerender(<StoryCover cover="mountains" category="nature" />);
-    expect(screen.getByTestId('story-cover-kilim')).toBeTruthy();
+    expect(ground()).toBe(rgb(rug.ground));
+    cleanup();
+    // a chosen picture that fails leaves the same quiet card, in the colour of the rug the story would have had
+    render(<StoryCover slug="kmr-reya-gund" cover="berbang" />);
+    expect(picture()).toBe(`${SITE}/made-09-berbang.webp`);
+    fireEvent.error(screen.getByTestId('story-cover-picture'));
+    expect(screen.queryByTestId('story-cover-picture')).toBeNull();
+    expect(ground()).toBe(rgb(rug.ground));
   });
 
   it('tries a new picture when the story is given another after one failed', () => {
-    const view = render(<StoryCover cover="mij" category={null} />);
+    const view = render(<StoryCover slug="kmr-reya-gund" cover="mij" />);
     fireEvent.error(screen.getByTestId('story-cover-picture'));
-    view.rerender(<StoryCover cover="bihar" category={null} />);
-    expect(screen.getByTestId('story-cover-picture').getAttribute('src')).toBe('https://hevalo.app/cosmetics/backgrounds/made-17-bihar.webp');
+    view.rerender(<StoryCover slug="kmr-reya-gund" cover="bihar" />);
+    expect(picture()).toBe(`${SITE}/made-17-bihar.webp`);
   });
 });

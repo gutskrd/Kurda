@@ -14,7 +14,9 @@ import {
   type GameDifficulty,
   type MultiMoveAnswer,
   type MultiView,
+  type WhoAmISays,
   type WhoAmITableBoard,
+  type WhoAmITableMark,
   type WhoAmITableMove,
   type WhoAmITableOutcome,
 } from '@kurda/shared';
@@ -38,19 +40,21 @@ import { DIFFICULTY_KEY, type TableOffer } from '../games/partyChoices';
 import { dialectName } from '../learn/map';
 import { Couch, useCouchOffers } from './Couch';
 import {
-  AnswerPanel,
+  AnswerKeys,
   ForeheadCard,
   Foreheads,
   GuessTiles,
+  MARK_KEY,
   QuestionCard,
   QuestionDeck,
+  ReportAnswer,
   ScoringNote,
   Stamp,
   VerdictCard,
   WHO_AM_I_END_KEY,
   WHO_AM_I_PATH,
   WithWord,
-  yesNo,
+  answerWord,
   type TableSeat,
 } from './WhoAmIStage';
 import '../learn/path.css';
@@ -65,11 +69,20 @@ type Translate = (key: MessageKey, vars?: Record<string, string | number>) => st
 /** How long each of a turn's three waits is given, for the bar that empties with it. */
 const PHASE_SECONDS: Record<Board['phase'], number> = { ask: WHO_AM_I_ASK_SECONDS, answer: WHO_AM_I_ANSWER_SECONDS, decide: WHO_AM_I_DECIDE_SECONDS };
 
+/** What the reader is told of their own answer, once the card has said what it says. */
+const YOU_KEY: Record<Exclude<WhoAmITableMark, 'right'>, MessageKey> = {
+  close: 'games.whoAmI.you.close',
+  wrong: 'games.whoAmI.you.wrong',
+  unsure: 'games.whoAmI.you.unsure',
+  none: 'games.whoAmI.you.none',
+};
+
 /**
  * Who Am I? (/app/games/who-am-i): everyone wears a card on their forehead
  * that everyone else can read and they cannot, and finds out who they are by
- * asking yes/no questions in Kurdish. It is never played alone. Three pages
- * in one:
+ * asking yes/no questions in Kurdish. The friends who read the card answer
+ * yes, could be, no or not sure, and the card's own answer is the judge of
+ * theirs. It is never played alone. Three pages in one:
  *
  *   /app/games/who-am-i            the start: the two ways to play
  *   /app/games/who-am-i?couch=1    one phone passed round a room (Couch.tsx)
@@ -357,7 +370,7 @@ function TableBoard({
               <p className="wa-turn-wait">{lines.wait}</p>
               {board.phase === 'decide' && board.told && (
                 <span className="sr-only">
-                  {t('games.whoAmI.cardSays')} {yesNo(board.dialect, board.told.truth, t)}
+                  {t('games.whoAmI.cardSays')} {answerWord(board.dialect, board.told.verdict, t)}
                 </span>
               )}
             </>
@@ -402,9 +415,9 @@ function TableBoard({
       {/* what the table is busy with now: a question being answered, or the card's verdict on it */}
       <div className="wa-news" ref={news}>
         {board.phase === 'answer' && board.pending && (
-          <Pending board={board} pending={board.pending} me={me} name={name} busy={busy} onAnswer={(yes) => void act({ kind: 'answer', yes })} />
+          <Pending board={board} pending={board.pending} me={me} name={name} busy={busy} onAnswer={(says) => void act({ kind: 'answer', says })} />
         )}
-        {board.phase === 'decide' && board.told && <Told board={board} told={board.told} me={me} name={name} />}
+        {board.phase === 'decide' && board.told && <Told game={view.id} board={board} told={board.told} me={me} name={name} />}
       </div>
 
       {mine && guessing && (
@@ -456,9 +469,9 @@ function TableBoard({
       )}
 
       {/* the last question stays on the table while the next player chooses theirs, for whoever had not read it yet */}
-      {board.phase === 'ask' && board.told && <Told board={board} told={board.told} me={me} name={name} />}
+      {board.phase === 'ask' && board.told && <Told game={view.id} board={board} told={board.told} me={me} name={name} />}
 
-      <ScoringNote />
+      <ScoringNote answers={board.answers} />
     </div>
   );
 }
@@ -486,7 +499,9 @@ function turnLines(board: Board, me: number | null, name: (seat: number) => stri
 /**
  * A question on the table: for whoever asked it, their question and who has
  * answered so far (never what); for everyone else, the asker's card beside
- * the question, and the dialect's yes and no until they have answered.
+ * the question, and the answer keys until they have answered (yes, could be,
+ * no and not sure, or yes and no at a table made for two), then what they
+ * said.
  */
 function Pending({
   board,
@@ -501,7 +516,7 @@ function Pending({
   me: number | null;
   name: (seat: number) => string;
   busy: boolean;
-  onAnswer: (yes: boolean) => void;
+  onAnswer: (says: WhoAmISays) => void;
 }): React.JSX.Element {
   const t = useT();
   const title = useId();
@@ -522,10 +537,10 @@ function Pending({
       {asker ? (
         <p className="wa-pending-note">{t('games.whoAmI.wait.answer.asker')}</p>
       ) : mayAnswer ? (
-        <AnswerPanel dialect={board.dialect} label={heading} disabled={busy} onAnswer={onAnswer} />
-      ) : pending.mine !== null ? (
+        <AnswerKeys dialect={board.dialect} label={heading} answers={board.answers} disabled={busy} onAnswer={onAnswer} />
+      ) : pending.says !== null ? (
         <p className="wa-pending-note">
-          {t('games.whoAmI.wait.answer.done')} <Stamp dialect={board.dialect} answer={pending.mine} />
+          {t('games.whoAmI.wait.answer.done')} <Stamp dialect={board.dialect} answer={pending.says} />
         </p>
       ) : null}
       <ul className="wa-who" aria-label={t('games.whoAmI.whoAnswered')}>
@@ -540,27 +555,42 @@ function Pending({
   );
 }
 
-/** The card's verdict on the last question, for everyone: what it said, and who answered right. */
-function Told({ board, told, me, name }: { board: Board; told: NonNullable<Board['told']>; me: number | null; name: (seat: number) => string }): React.JSX.Element {
+/**
+ * The card's verdict on the last question, for everyone: what it said, and how
+ * each friend's answer went by the card (right, close, wrong, not sure, or no
+ * answer in time). A reader who could see the card may say its answer looks
+ * wrong; the asker, who could not, is not asked to.
+ */
+function Told({
+  game,
+  board,
+  told,
+  me,
+  name,
+}: {
+  game: string;
+  board: Board;
+  told: NonNullable<Board['told']>;
+  me: number | null;
+  name: (seat: number) => string;
+}): React.JSX.Element {
   const t = useT();
   const own = told.answers.find((a) => a.seat === me);
+  // the asker's card is theirs to read only once it is off their forehead
+  const readsCard = me !== null && (told.seat !== me || board.mine?.identity != null);
   return (
-    <VerdictCard dialect={board.dialect} by={told.seat === me ? t('games.whoAmI.youAsked') : t('games.whoAmI.theyAsked', { name: name(told.seat) })} question={told.question} truth={told.truth}>
-      {own && (
-        <p className="wa-verdict-you">
-          {own.yes === null ? t('games.whoAmI.you.none') : own.right ? t('games.whoAmI.you.right', { count: WHO_AM_I_HELP_POINTS }) : t('games.whoAmI.you.wrong')}
-        </p>
-      )}
+    <VerdictCard dialect={board.dialect} by={told.seat === me ? t('games.whoAmI.youAsked') : t('games.whoAmI.theyAsked', { name: name(told.seat) })} question={told.question} verdict={told.verdict}>
+      {own && <p className="wa-verdict-you">{own.mark === 'right' ? t('games.whoAmI.you.right', { count: WHO_AM_I_HELP_POINTS }) : t(YOU_KEY[own.mark])}</p>}
       {told.answers.length > 0 && (
         <ul className="wa-answers" aria-label={t('games.whoAmI.answers')}>
           {told.answers.map((a) => (
-            <li key={a.seat} className={a.yes === null ? 'is-none' : a.right ? 'is-right' : 'is-wrong'}>
-              <span className="wa-answers-name">{name(a.seat)}</span>{' '}
-              <span className="wa-answers-mark">{a.yes === null ? t('games.whoAmI.noAnswer') : a.right ? t('games.whoAmI.right') : t('games.whoAmI.wrong')}</span>
+            <li key={a.seat} className={`is-${a.mark}`}>
+              <span className="wa-answers-name">{name(a.seat)}</span> <span className="wa-answers-mark">{t(MARK_KEY[a.mark])}</span>
             </li>
           ))}
         </ul>
       )}
+      {readsCard && <ReportAnswer key={`${told.seat}:${told.question.id}`} body={{ game, seat: told.seat, question: told.question.id }} />}
     </VerdictCard>
   );
 }

@@ -40,14 +40,16 @@ export function YoursRow({
       accessibilityRole="button"
       accessibilityLabel={`${label}, ${value}`}
       testID={testID}
-      style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}
+      // the wider padding on the chevron's side, which right to left is the left
+      style={[styles.row, dir.row === 'row-reverse' ? styles.rowMirrored : null, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}
     >
       <View style={styles.art}>{art}</View>
+      {/* both may take a second line: German's "Wähl deinen Brieffreund-Vogel" ended at "Wähl deinen …" at 320 */}
       <View style={styles.main}>
-        <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} numberOfLines={2}>
           {label}
         </Text>
-        <Text style={[styles.value, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+        <Text style={[styles.value, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
           {value}
         </Text>
       </View>
@@ -78,7 +80,8 @@ export function YoursRowSkeleton(): React.JSX.Element {
 export const ART = 48;
 
 const styles = StyleSheet.create({
-  row: { alignItems: 'center', gap: spacing.md, borderRadius: radii.md, padding: spacing.sm, paddingEnd: spacing.md, minHeight: 64 },
+  row: { alignItems: 'center', gap: spacing.md, borderRadius: radii.md, padding: spacing.sm, paddingRight: spacing.md, minHeight: 64 },
+  rowMirrored: { paddingRight: spacing.sm, paddingLeft: spacing.md },
   art: { width: 72, alignItems: 'center', justifyContent: 'center' },
   main: { flex: 1, gap: 2 },
   label: { ...sectionLabel },

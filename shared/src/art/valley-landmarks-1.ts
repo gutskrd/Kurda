@@ -16,7 +16,25 @@
  * generator the caller passes in, so a drawing is the same string every time.
  */
 import { n, type Pt } from './svg.js';
-import { VALLEY, blobPath, bush, dusk, earthHouse, ellipsePath, fill, foliage, roundTree, smoothPath, stroke, warm, type ValleyLandmark } from './valley.js';
+import {
+  VALLEY,
+  bark,
+  blobPath,
+  bush,
+  dusk,
+  earthHouse,
+  ellipsePath,
+  fill,
+  foliage,
+  grownTree,
+  kurdistanFlagAt,
+  orchardTree,
+  smoothPath,
+  stroke,
+  warm,
+  type TreeShape,
+  type ValleyLandmark,
+} from './valley.js';
 
 // ───────────────────────────────────────────────────────────── colours
 
@@ -40,6 +58,8 @@ const HAY = { top: '#f4dc90', face: '#e3c06a', side: '#c69e4c' } as const;
 const COPPER = { face: '#c97a3d', side: '#9a5326' } as const;
 /** The dark of an opening in a basalt wall: the gate's passage and the arrow slits. */
 const BASALT_DARK = '#34333b';
+/** A walnut's bark, silvery grey and paler than the valley's other trunks, and its side in shade. */
+const WALNUT_BARK = { face: '#b0a696', shade: '#8a8073' } as const;
 /** A window lit by evening, the same warm the valley's own houses use (`earthHouse`). */
 const LAMPLIGHT = '#f2c35c';
 
@@ -109,29 +129,6 @@ function castShadow(x: number, y: number, w: number, d: number, len: number, col
 }
 
 /**
- * A kilim hung from its top edge, filling its 18 × 22 box as the moving
- * sprite does: a madder field with its turned edge in shade, two cream bands,
- * the saffron "eye" diamond with its indigo heart and a small eye either side
- * (the commonest mark of Kurdish flat weaves), and the wool fringe below.
- */
-function kilim(x: number, y: number, dark: boolean): string {
-  const cx = x + 8.5;
-  const cy = y + 10.5;
-  const eye = (ex: number, ey: number, rx: number, ry: number): string =>
-    `M${f(ex)} ${f(ey - ry)}L${f(ex + rx)} ${f(ey)}L${f(ex)} ${f(ey + ry)}L${f(ex - rx)} ${f(ey)}Z`;
-  let fringe = '';
-  for (let k = 0; k < 6; k++) fringe += `M${f(x + 2.5 + k * 2.6)} ${f(y + 19.4)}v2`;
-  return (
-    stroke(fringe, dusk(VALLEY.woolShade, dark), 0.9) +
-    fill(box(x + 1, y + 1, 16, 18.6), dusk(VALLEY.red, dark)) +
-    fill(box(x + 14.4, y + 1, 2.6, 18.6), dusk(VALLEY.redDark, dark)) +
-    fill(box(x + 1, y + 3.6, 13.4, 1.6) + box(x + 1, y + 15.8, 13.4, 1.6), dusk(VALLEY.cream, dark)) +
-    fill(eye(cx, cy, 4.2, 5), dusk(VALLEY.gold, dark)) +
-    fill(eye(cx, cy, 1.7, 2.1) + eye(x + 3.3, cy, 1.3, 1.6) + eye(x + 13.4, cy, 1.3, 1.6), dusk(VALLEY.indigo, dark))
-  );
-}
-
-/**
  * Steam at rest over a samovar, in its 16 × 24 box: three soft puffs going up
  * from the box's foot. By evening it takes a little more of the dusk than a
  * solid thing would, because it is thin and the light comes through it.
@@ -145,16 +142,36 @@ function steam(x: number, y: number, dark: boolean, random: () => number): strin
 // ───────────────────────────────────────────────────────────── the landmarks
 
 /** The first six chapters' landmarks, by name. */
+/*
+ * Where the flag of Kurdistan flies in these chapters, each box's left edge on its pole: by Sêvan's gate to greet
+ * whoever comes up the road, over the bazaar's stalls, and over Amed's tower. The cloth the apps make stir is laid
+ * exactly over the one drawn.
+ */
+const GATE_FLAG: ValleyLandmark['loop'] = { kind: 'colours', x: 15, y: 50, w: 20, h: 16 };
+const BAZAAR_FLAG: ValleyLandmark['loop'] = { kind: 'colours', x: 96, y: 52, w: 20, h: 16 };
+const CITY_FLAG: ValleyLandmark['loop'] = { kind: 'colours', x: 71, y: 12, w: 20, h: 16 };
+
+/** A flagpole from the ground at (x, foot) up to the flag's box, with the gold knob at its top and its sliver of shadow. */
+function flagpole(box: ValleyLandmark['loop'], foot: number, dark: boolean, ground: string): string {
+  const x = box.x;
+  return (
+    fill(`M${f(x - 0.8)} ${f(foot - 0.6)}L${f(x + 6.4)} ${f(foot + 2.2)}L${f(x + 7)} ${f(foot + 1.2)}L${f(x + 0.8)} ${f(foot - 1.2)}Z`, ground) +
+    stroke(`M${f(x)} ${f(foot)}V${f(box.y)}`, dusk(VALLEY.trunk, dark), 1.6) +
+    fill(ellipsePath(x, box.y - 1, 1.4, 1.4), dusk(VALLEY.gold, dark)) +
+    kurdistanFlagAt(box, dark)
+  );
+}
+
 export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar' | 'busstop' | 'citywall', ValleyLandmark> = {
   /**
    * Sêvan's blue gate: a low earth wall across the picture, the gate's pier
    * standing a little forward of it with the blue double door in its arch,
    * two flat-roofed houses behind (apricots drying on the taller one's
-   * roof), an apricot tree over the wall, and a kilim hung on a post by the
-   * gate to greet whoever comes up the road.
+   * roof), an apricot tree over the wall, and the flag of Kurdistan on its
+   * pole by the gate to greet whoever comes up the road.
    */
   gate: {
-    loop: { kind: 'kilim', x: 16, y: 61, w: 18, h: 22 },
+    loop: GATE_FLAG,
     draw(dark, random) {
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
@@ -163,10 +180,8 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       // The far house goes down first so the near one overlaps it; the wall hides both their feet.
       out += earthHouse(66, 86, 30, 30, 12, { dark, ground, roofLine: VALLEY.fruit });
       out += earthHouse(20, 90, 30, 22, 12, { dark, ground });
-      // The apricots are placed by hand rather than scattered, so no two run together at phone size.
-      const apricots = [[-8, -26], [-1.5, -21], [5, -27.5], [8.5, -19], [-6.5, -17.5]] as const;
-      out += roundTree(97, 88, 0.9, foliage(dark), ground, random);
-      out += fill(apricots.map(([dx, dy]) => ellipsePath(97 + dx * 0.9, 88 + dy * 0.9, 1.6, 1.6)).join(''), c(VALLEY.fruit));
+      // The apricot over the wall forks into its limbs under the crown, and its fruit never runs together at phone size.
+      out += grownTree({ ...orchardTree(97, 88, 0.9, -0.6, random), dot: 1.3 }, foliage(dark, VALLEY.fruit), bark(dark), ground, random);
       // The wall's shadow goes down before the wall, whose lit top reads as the walk along it.
       out += castShadow(6, 110, 94, 8, 9, ground);
       out += block(6, 110, 94, 20, 8, earth);
@@ -179,10 +194,8 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += fill('M50 112V97A8 8 0 0 1 58 89V112Z', c(VALLEY.gate));
       out += fill('M66 112V97A8 8 0 0 0 58 89V112Z', c(VALLEY.gateLight));
       out += fill(ellipsePath(56.2, 102, 0.9, 0.9) + ellipsePath(59.8, 102, 0.9, 0.9), c(VALLEY.gold));
-      // The kilim hangs on its post by the gate, at rest where the moving sprite will lie.
-      out += stroke('M15 112l7 3', ground, 2.4);
-      out += stroke('M15 112V60M14 61.4H36', c(VALLEY.trunk), 1.8);
-      out += kilim(16, 61, dark);
+      // The flag of Kurdistan on its pole by the gate, at rest where the moving cloth will lie; the pole's shadow a thin sliver to the lower right.
+      out += flagpole(GATE_FLAG, 112, dark, ground);
       return out;
     },
   },
@@ -194,7 +207,7 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
    * the porch's edge, steam going up from its chimney.
    */
   teahouse: {
-    loop: { kind: 'steam', x: 41, y: 54, w: 16, h: 24 },
+    loop: { kind: 'steam', x: 41, y: 66, w: 16, h: 24 },
     draw(dark, random) {
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
@@ -228,10 +241,14 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += fill(smoothPath(vine, true), leaf.face);
       const lit = blobPath(27, 73.6, 9, 2.6, 8, 0.25, random) + blobPath(51, 72.4, 7, 2.2, 7, 0.25, random) + blobPath(12, 80, 4, 1.6, 6, 0.25, random);
       out += fill(lit, leaf.light);
-      const bunch = [[-1.3, 0], [1.3, 0], [0, 2.1], [-2.4, -1.9], [0, -1.9], [2.4, -1.9]] as const;
+      // three bunches hanging from the vine's edge, each of its own size and none quite like another
+      const bunch = [[-2.4, -1.9], [0, -1.9], [2.4, -1.9], [-1.3, 0], [1.3, 0], [0, 2.1], [-1.2, 4]] as const;
       let grapes = '';
-      for (const [gx, gy] of [[14, 87.5], [33, 87], [62, 85]] as const) {
-        for (const [dx, dy] of bunch) grapes += ellipsePath(gx + dx, gy + dy, 1.25, 1.25);
+      for (const [gx, gy, count] of [[14, 87.5, 6], [33, 87, 7], [62, 85, 5]] as const) {
+        for (const [dx, dy] of bunch.slice(0, count)) {
+          const r = 1.1 + random() * 0.3;
+          grapes += ellipsePath(gx + dx + (random() - 0.5) * 0.4, gy + dy, r, r);
+        }
       }
       out += fill(grapes, c(GRAPE));
       // The table stands at the vine's edge, two glasses of tea on their saucers either side of the samovar.
@@ -241,26 +258,30 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += fill(glasses.map(([x, y]) => ellipsePath(x, y, 2, 0.7)).join(''), c(VALLEY.cream));
       out += fill(glasses.map(([x, y]) => `M${f(x - 1)} ${f(y - 3)}h2l-.4 1.3l.4 1.5h-2l.4 -1.5Z`).join(''), c(TEA));
       out += fill(glasses.map(([x, y]) => box(x - 1, y - 3.7, 2, 0.8)).join(''), c(VALLEY.waterLight));
-      // The samovar: a brass foot, the red body with its shade on the right, a brass band and tap, and the teapot warming on its crown.
+      // The samovar: a brass foot, the red body with its shade on the right, a brass band and tap, and the teapot warming on its crown;
+      // half the height it was drawn at, so it stands on the table no taller than four of the glasses beside it.
       const cx = 48.5;
-      out += fill(`M${cx - 4.5} 101.6h9l-1.4 -2.6h-6.2Z`, c(VALLEY.gold));
-      out += fill(`M${cx - 5} 99C${cx - 7.4} 94 ${cx - 7.4} 88 ${cx - 4.6} 84.4H${cx + 4.6}C${cx + 7.4} 88 ${cx + 7.4} 94 ${cx + 5} 99Z`, c(VALLEY.red));
-      out += fill(
+      let samovar = '';
+      samovar += fill(`M${cx - 4.5} 101.6h9l-1.4 -2.6h-6.2Z`, c(VALLEY.gold));
+      samovar += fill(`M${cx - 5} 99C${cx - 7.4} 94 ${cx - 7.4} 88 ${cx - 4.6} 84.4H${cx + 4.6}C${cx + 7.4} 88 ${cx + 7.4} 94 ${cx + 5} 99Z`, c(VALLEY.red));
+      samovar += fill(
         `M${cx + 1.6} 84.4H${cx + 4.6}C${cx + 7.4} 88 ${cx + 7.4} 94 ${cx + 5} 99H${cx + 2.2}C${cx + 3.8} 94 ${cx + 3.8} 88 ${cx + 1.6} 84.4Z`,
         c(VALLEY.redDark),
       );
-      out += fill(box(cx - 6.5, 91, 13, 1.5) + box(cx - 5, 82.8, 10, 1.8) + `M${cx - 6.6} 94h-3.2v1.5h1.3v1.5h1.9Z`, c(VALLEY.gold));
+      samovar += fill(box(cx - 6.5, 91, 13, 1.5) + box(cx - 5, 82.8, 10, 1.8) + `M${cx - 6.6} 94h-3.2v1.5h1.3v1.5h1.9Z`, c(VALLEY.gold));
       const teapot = `M${cx - 3.6} 82.8c0 -2.8 1.6 -3.8 3.6 -3.8s3.6 1 3.6 3.8ZM${cx - 3.4} 81.4l-2.4 -1.6l.5 -.6l2.4 1Z`;
-      out += fill(teapot + box(cx - 0.7, 77.8, 1.4, 1.4), c(VALLEY.cream));
-      out += steam(41, 54, dark, random);
+      samovar += fill(teapot + box(cx - 0.7, 77.8, 1.4, 1.4), c(VALLEY.cream));
+      out += `<g transform="matrix(0.5 0 0 0.5 ${f(cx * 0.5)} ${f(101.6 * 0.5)})">${samovar}</g>`;
+      out += steam(41, 66, dark, random);
       return out;
     },
   },
 
   /**
    * The village spring under the walnut: a stone wall with an arched niche
-   * and a brass spout, water falling into a long stone trough, and the great
-   * walnut spreading over it all, its shade a cool patch round the trough.
+   * and a brass spout, water falling into a long stone trough and running
+   * off from its far end, and the great walnut behind it all on its short
+   * pale trunk, its limbs spreading into a crown that shades the spring.
    */
   spring: {
     loop: { kind: 'water', x: 41, y: 91, w: 30, h: 12 },
@@ -268,18 +289,35 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
       const stone = tones(STONE_TOP, VALLEY.stone, VALLEY.stoneSide, dark);
-      const leaf = foliage(dark);
       let out = '';
       // The walnut's shade is one broad patch under the whole scene, since the spring stands in it.
-      out += fill(blobPath(70, 104, 44, 10, 10, 0.12, random), ground);
-      out += fill('M86 96l2 -26c-4 -6 -10 -8 -14 -10l2 -2c5 2 9 4 13 8c2 -6 6 -10 10 -12l2 2c-4 3 -7 7 -8 12l1 28Z', c(VALLEY.trunk));
-      // The crown is two lobes, as an old walnut spreads, each with its shade, its face and the light on its upper left.
-      out += fill(blobPath(44, 40, 34, 22, 10, 0.16, random) + blobPath(84, 36, 28, 22, 10, 0.16, random), leaf.shade);
-      out += fill(blobPath(41, 37, 31, 19, 10, 0.16, random) + blobPath(80, 32, 25, 18, 10, 0.16, random), leaf.face);
-      out += fill(blobPath(32, 28, 16, 8, 8, 0.22, random) + blobPath(72, 22, 12, 6, 7, 0.25, random), leaf.light);
-      // The spring's wall has a slab along its top, an arched niche, and the brass spout in the niche.
+      out += fill(blobPath(66, 105.6, 50, 8.6, 10, 0.12, random), ground);
+      // The walnut: a short thick trunk that divides low into great limbs, each of them running up into the crown.
+      const walnut: TreeShape = {
+        foot: [93, 96],
+        base: 13,
+        fork: [91, 72],
+        limbs: [
+          { from: [91, 72], bend: [80, 62], to: [66, 50], width: 6.6 },
+          { from: [91, 72], bend: [90, 56], to: [86, 40], width: 6.2 },
+          { from: [91, 72], bend: [101, 62], to: [107, 50], width: 5.4 },
+          { from: [84, 66], bend: [68, 60], to: [48, 56], width: 3.6 },
+        ],
+        lobes: [
+          { x: 56, y: 48, rx: 23, ry: 14.4 },
+          { x: 40, y: 55, rx: 15.6, ry: 10.4 },
+          { x: 82, y: 33, rx: 22, ry: 16 },
+          { x: 103.4, y: 46, rx: 12.6, ry: 11.6 },
+          { x: 64, y: 30, rx: 14, ry: 10 },
+        ],
+        rough: 0.12,
+        shadow: false,
+      };
+      out += grownTree(walnut, foliage(dark), { face: c(WALNUT_BARK.face), shade: c(WALNUT_BARK.shade) }, ground, random);
+      // The spring's wall has a slab along its top, an arched niche, faint courses of stone, and the brass spout in the niche.
       out += block(36, 94, 40, 26, 8, stone);
       out += block(34, 69, 44, 3, 8, stone);
+      out += stroke('M36 81.4H46M66 80.6H76M36 87.6H46.4M65.6 88.4H76', c(VALLEY.stoneSide), 0.7);
       out += fill('M47 94V78a9 9 0 0 1 18 0V94Z', c(VALLEY.stoneSide));
       out += stroke('M56 78v4', c(VALLEY.goldDark), 2.2);
       // The trough's rim is lit and its water holds one patch of sky; the water falls into it where the ripple sprite sits.
@@ -289,9 +327,12 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += stroke('M56 83C56 88 56 92 56 96.6', c(VALLEY.water), 2.4);
       out += stroke('M55.5 84v10', c(VALLEY.waterLight), 0.9);
       out += stroke(ellipsePath(56, 97, 8, 2.4), c(VALLEY.waterLight), 1.2);
+      // What the trough cannot hold runs off from its far end in a little channel, darkening the ground it crosses.
+      out += fill(blobPath(108.6, 112.2, 8.6, 2.2, 8, 0.2, random), c(VALLEY.greenShade));
+      out += stroke('M101.4 107.6C104 110.2 107.6 111 113.4 112.4', c(VALLEY.water), 1.4);
       // A wet stone lies at the trough's foot.
-      out += fill(ellipsePath(100, 110, 3.4, 2), c(VALLEY.stoneSide));
-      out += fill(ellipsePath(99.4, 109.2, 2.6, 1.4), c(VALLEY.stone));
+      out += fill(ellipsePath(96.4, 111, 3.4, 2), c(VALLEY.stoneSide));
+      out += fill(ellipsePath(95.8, 110.2, 2.6, 1.4), c(VALLEY.stone));
       // A copper jug waits by the trough to be filled, which also gives the scene its scale.
       out += fill(ellipsePath(18, 111, 6, 2), ground);
       out += stroke('M18.4 99.6c3.6 -.4 4.6 3.6 1.8 6', c(COPPER.side), 1.1);
@@ -305,30 +346,34 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
   /**
    * Market day: two stalls under striped awnings, one madder and cream, one
    * blue, their counters heaped with apples, apricots and pomegranates,
-   * crates of fruit on the ground before them, and a kilim hung for sale on
-   * its own frame.
+   * crates of fruit on the ground before them, and the flag of Kurdistan
+   * flying over the stalls.
    */
   bazaar: {
-    loop: { kind: 'kilim', x: 95, y: 63, w: 18, h: 22 },
+    loop: BAZAAR_FLAG,
     draw(dark, random) {
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
       const wood = tones(WOOD.top, WOOD.face, WOOD.side, dark);
       let out = '';
-      /** A pile of round fruit on a counter or in a crate: the fruit, the shade on each, and one glint. */
+      /**
+       * A pile of round fruit on a counter or in a crate, heaped higher in the
+       * middle: each fruit a little bigger or smaller than the next and not
+       * quite in line, the shade on each, and a glint on some.
+       */
       const heap = (x: number, y: number, w: number, colour: string, shade: string): string => {
         let face = '';
         let shaded = '';
         let glint = '';
-        const rows = [[0, 0], [1, -2.6]] as const;
-        for (const [row, dy] of rows) {
-          const count = Math.floor((w - row * 3) / 3.4);
+        for (const [row, dy] of [[0, 0], [1, -2.5], [2, -4.8]] as const) {
+          const count = Math.floor((w - row * 4.6) / 3.4);
           for (let k = 0; k < count; k++) {
-            const fx = x + 1.8 + row * 1.7 + k * 3.4 + (random() - 0.5) * 0.4;
-            const fy = y + dy;
-            face += ellipsePath(fx, fy, 1.8, 1.8);
-            shaded += `M${f(fx + 1.8)} ${f(fy)}a1.8 1.8 0 0 1 -1.8 1.8a2.4 2.4 0 0 0 1.8 -1.8Z`;
-            if (row === 1 || k % 2 === 0) glint += ellipsePath(fx - 0.6, fy - 0.7, 0.5, 0.5);
+            const r = 1.55 + random() * 0.45;
+            const fx = x + 1.8 + row * 2.3 + k * 3.4 + (random() - 0.5) * 0.6;
+            const fy = y + dy + (random() - 0.5) * 0.5;
+            face += ellipsePath(fx, fy, r, r);
+            shaded += `M${f(fx + r)} ${f(fy)}a${f(r)} ${f(r)} 0 0 1 ${f(-r)} ${f(r)}a${f(r * 1.3)} ${f(r * 1.3)} 0 0 0 ${f(r)} ${f(-r)}Z`;
+            if (random() < 0.5) glint += ellipsePath(fx - r * 0.34, fy - r * 0.4, 0.5, 0.5);
           }
         }
         return fill(face, c(colour)) + fill(shaded, c(shade)) + fill(glint, c(VALLEY.cream));
@@ -374,10 +419,8 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       // Crates of apples and apricots stand on the ground before the first stall.
       out += castShadow(8, 112, 14, 6, 5, ground) + block(8, 112, 14, 7, 6, wood) + heap(9.5, 103.6, 13, VALLEY.apple, VALLEY.redDark);
       out += castShadow(24, 113, 12, 6, 5, ground) + block(24, 113, 12, 7, 6, wood) + heap(25, 104.6, 12, VALLEY.fruit, VALLEY.goldDark);
-      // The kilim for sale hangs on its own frame, at rest where the moving sprite will lie.
-      out += stroke('M94 108l6 3M114 106l4 2', ground, 2.4);
-      out += stroke('M94 108V62M114 106V62M93 63.4H115', c(VALLEY.trunk), 1.8);
-      out += kilim(95, 63, dark);
+      // The flag of Kurdistan over the stalls, at rest where the moving cloth will lie.
+      out += flagpole(BAZAAR_FLAG, 108, dark, ground);
       return out;
     },
   },
@@ -386,11 +429,14 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
    * The bus stop on the road out of the village: a little shelter with a
    * blue roof and a wooden bench, its concrete apron, the round sign hanging
    * from its post's arm, a white milestone with its red cap, and the
-   * stubble of the cut wheat behind with a few bales still in it.
+   * stubble of the cut wheat behind with a few bales still in it. On a page
+   * of its own colour (the book's chapter opener and its stamp) the field,
+   * its bales and the milestone belong to land that is not there: the
+   * shelter stands alone, with its bench and its sign.
    */
   busstop: {
     loop: { kind: 'sign', x: 16, y: 50, w: 18, h: 26 },
-    draw(dark) {
+    draw(dark, _random, page = false) {
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
       const stone = tones(STONE_TOP, VALLEY.stone, VALLEY.stoneSide, dark);
@@ -398,17 +444,20 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       const wood = tones(WOOD.top, WOOD.face, WOOD.side, dark);
       const straw = tones(HAY.top, HAY.face, HAY.side, dark);
       let out = '';
-      // The stubble field lies behind, as the preview's terraces do: a step of shade along its front, its face, the rows of cut stalks.
-      const field = (dy: number): string => softPoly([[4, 77 + dy], [72, 77 + dy], [114, 56 + dy], [46, 56 + dy]], 5);
-      out += fill(field(3), c(VALLEY.wheatShade)) + fill(field(0), c(VALLEY.wheat));
-      let rows = '';
-      for (const y of [60.2, 64.4, 68.6, 72.8]) {
-        const x0 = 4 + (77 - y) * 2 + 5;
-        const x1 = 72 + (77 - y) * 2 - 5;
-        rows += smoothPath([[x0, y], [(x0 + x1) / 2, y + 0.7], [x1, y]]);
+      if (!page) {
+        // The stubble field lies behind, as the preview's terraces do: a step of shade along its front, its face, the rows of cut stalks.
+        const field = (dy: number): string => softPoly([[4, 77 + dy], [72, 77 + dy], [114, 56 + dy], [46, 56 + dy]], 5);
+        out += fill(field(3), c(VALLEY.wheatShade)) + fill(field(0), c(VALLEY.wheat));
+        let rows = '';
+        for (const y of [60.2, 64.4, 68.6, 72.8]) {
+          const x0 = 4 + (77 - y) * 2 + 5;
+          const x1 = 72 + (77 - y) * 2 - 5;
+          rows += smoothPath([[x0, y], [(x0 + x1) / 2, y + 0.7], [x1, y]]);
+        }
+        out += stroke(rows, c(VALLEY.furrowWheat), 1.2);
+        // the bales lie where the baler dropped them, no two quite the same
+        out += block(60, 63, 10, 5.4, 5, straw) + block(89, 61.4, 8, 4.6, 4.4, straw) + block(29, 73.4, 9.4, 5, 5.4, straw);
       }
-      out += stroke(rows, c(VALLEY.furrowWheat), 1.2);
-      out += block(60, 63, 9, 5, 5, straw) + block(88, 62, 9, 5, 5, straw) + block(30, 73, 9, 5, 5, straw);
       // The shelter's shadow falls on its concrete apron, so it is the concrete's own darker edge colour.
       out += fill(poly([[34, 108], [94, 108], [108, 101], [48, 101]]), c(VALLEY.path));
       out += fill(box(34, 108, 60, 2), c(VALLEY.pathEdge));
@@ -420,13 +469,15 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += block(87, 104, 3, 26, 12, stone);
       // The roof is the gate's blue, the village's colour, carried out to the road.
       out += block(36, 80, 60, 4, 18, blue);
-      // The milestone is white with its red cap, as the road's stones are.
-      out += castShadow(100, 114, 6, 4, 4, ground);
-      out += block(100, 114, 6, 7, 4, stone);
-      const cap = poly([[100, 107], [106, 107], [106, 104.6], [103, 103.2], [100, 104.6]]) + poly([[106, 107], [110, 105], [110, 102.6], [106, 104.6]]);
-      out += fill(cap, c(VALLEY.red));
+      if (!page) {
+        // The milestone is white with its red cap, as the road's stones are.
+        out += castShadow(100, 114, 6, 4, 4, ground);
+        out += block(100, 114, 6, 7, 4, stone);
+        const cap = poly([[100, 107], [106, 107], [106, 104.6], [103, 103.2], [100, 104.6]]) + poly([[106, 107], [110, 105], [110, 102.6], [106, 104.6]]);
+        out += fill(cap, c(VALLEY.red));
+      }
       // The sign hangs from its post's arm, so the moving sprite can swing it; here it hangs still.
-      out += stroke('M14 112l7 3', ground, 2.4);
+      out += fill('M13.2 111.4L20.4 114.2L21 113.2L14.8 110.8Z', ground);
       out += stroke('M14 112V50.5H25', c(VALLEY.basaltLight), 2);
       out += stroke('M25 51v4', c(VALLEY.basaltLight), 1.4);
       out += fill(ellipsePath(25, 64, 8, 8), c(VALLEY.gateDark));
@@ -442,10 +493,11 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
   /**
    * Amed: a stretch of Diyarbakır's black basalt walls, crenellated, with
    * a round tower standing forward of them, arrow slits in its face, a gate
-   * in the wall with its old wooden doors, and a flag on the tower.
+   * in the wall with its old wooden doors, and the flag of Kurdistan flying
+   * from the tower.
    */
   citywall: {
-    loop: { kind: 'flag', x: 71, y: 12, w: 20, h: 16 },
+    loop: CITY_FLAG,
     draw(dark, random) {
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
@@ -502,11 +554,10 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
         else front += p;
       }
       out += fill(back, basalt.face) + fill(front, basalt.face) + fill(side, basalt.side);
-      // The flag is the moving sprite's own pennant, madder with a cream band and a saffron lozenge, so the two agree.
+      // The flag of Kurdistan on its pole from the tower's floor, a gold knob at its top, the very cloth the apps make stir over it.
       out += stroke('M71 42V12', c(VALLEY.hoof), 1.4);
-      out += fill('M72 13h18v12h-18Z', c(VALLEY.red));
-      out += fill(box(72, 17, 18, 2.4), c(VALLEY.cream));
-      out += fill('M81 19.6l2.4 2.4l-2.4 2.4l-2.4 -2.4Z', c(VALLEY.gold));
+      out += fill(ellipsePath(71, 11, 1.4, 1.4), c(VALLEY.gold));
+      out += kurdistanFlagAt(CITY_FLAG, dark);
       // Two bushes stand for the gardens below the walls and soften the foot of the basalt.
       out += bush(10, 112, 0.8, foliage(dark), ground, random);
       out += bush(106, 111, 0.6, foliage(dark), ground, random);

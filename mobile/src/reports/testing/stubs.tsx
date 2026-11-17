@@ -39,22 +39,35 @@ export function SafeAreaView({ children, style }: { children?: ReactNode; style?
 
 // expo-notifications: the phone's answer is whatever a test puts in
 // `notificationsStub`, and asking turns it into `afterRequest`, as the system
-// prompt would. Everything else listens to nothing and clears nothing.
+// prompt would. A test can also have the asking fail (`failRequest`), or hold
+// the prompt up until it says so (`prompt`, a promise the answer waits for:
+// one that never settles is a phone that never answers). Everything else
+// listens to nothing and clears nothing.
 interface PermissionAnswerStub {
   status: 'granted' | 'denied' | 'undetermined';
   granted: boolean;
   canAskAgain: boolean;
 }
-export const notificationsStub: { permission: PermissionAnswerStub; afterRequest: PermissionAnswerStub; requests: number } = {
+export const notificationsStub: {
+  permission: PermissionAnswerStub;
+  afterRequest: PermissionAnswerStub;
+  requests: number;
+  failRequest: boolean;
+  prompt: Promise<void> | null;
+} = {
   permission: { status: 'undetermined', granted: false, canAskAgain: true },
   afterRequest: { status: 'granted', granted: true, canAskAgain: true },
   requests: 0,
+  failRequest: false,
+  prompt: null,
 };
 export async function getPermissionsAsync(): Promise<PermissionAnswerStub> {
   return { ...notificationsStub.permission };
 }
 export async function requestPermissionsAsync(): Promise<PermissionAnswerStub> {
   notificationsStub.requests += 1;
+  if (notificationsStub.failRequest) throw new Error('the phone could not ask');
+  if (notificationsStub.prompt) await notificationsStub.prompt;
   notificationsStub.permission = { ...notificationsStub.afterRequest };
   return { ...notificationsStub.permission };
 }

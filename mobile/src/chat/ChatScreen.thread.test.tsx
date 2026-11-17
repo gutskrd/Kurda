@@ -17,7 +17,7 @@ vi.mock('./useChatSocket', () => ({
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
-import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { resetCourseDialect } from '../learn/courseDialect';
 import { ChatScreen } from './ChatScreen';
 
@@ -107,5 +107,20 @@ describe('a conversation nobody has written in yet', () => {
     // the greeting is the conversation now: the welcome has made way for it
     expect(await screen.findByText('Rojbaş!')).toBeTruthy();
     expect(screen.queryByText('This is the start of your conversation with rojda.')).toBeNull();
+  });
+});
+
+describe('a conversation that could not be read', () => {
+  it('says so, with the way to ask again, rather than offering a first hello', async () => {
+    let reads = 0;
+    open({
+      // the first read fails, the second finds what was said
+      'GET /chat/u2/messages': () => (reads++ === 0 ? fail({ kind: 'server', status: 500, message: 'down' }) : ok({ messages: [from('m1', 'u2', 'Silav', 1)] })),
+    });
+    expect(await screen.findByRole('button', { name: 'Try again' })).toBeTruthy();
+    expect(screen.queryByText('This is the start of your conversation with rojda.')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Silav')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
   });
 });

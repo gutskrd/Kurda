@@ -31,11 +31,13 @@ import { formatNumber } from '../i18n/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useDirection } from '../reports/direction';
 import { useEnter } from '../theme/animate';
+import { sectionLabel } from '../theme/fonts';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import type { TranslationKey } from '../i18n/translations';
 import type { ToneColors } from './path';
 import type { UpcomingUnit } from './types';
 import type { SkillNode } from './types';
@@ -46,8 +48,8 @@ import type { SkillNode } from './types';
  * each unit's land edge to edge under its stops, the stepping stones between
  * them, the unit's landmark with its one small moving part, the person of the
  * course who waits by the unit, the learner's own picture standing on the
- * stop to do now, and the rail of units that the unit banner's map button
- * opens.
+ * stop to do now, and the rail of units, in their sections, that a unit
+ * heading's map button opens.
  *
  * Cheap on purpose: a unit far from the screen (`near` false) is only its
  * ground's colour, so a course of twelve units draws two or three lands at a
@@ -127,7 +129,7 @@ function FreshStones({ xml, width, height }: { xml: string; width: number; heigh
   );
 }
 
-/** A unit's landmark, and over it its loop: a kilim or a flag stirring, steam or smoke rising, water rippling, the fire, a bee, a sign. */
+/** A unit's landmark, and over it its loop: the flag of Kurdistan stirring, steam or smoke rising, water rippling, the fire, a bee, a sign. */
 function Landmark({
   landmark,
   ground,
@@ -170,8 +172,7 @@ function Loop({ kind, xml, left, top, width, height, live }: { kind: string; xml
   const wave = t.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: [0, 1, 0, -1, 0] });
   const style = ((): object => {
     switch (kind) {
-      case 'kilim':
-      case 'flag':
+      case 'colours':
         return { transformOrigin: '0% 0%', transform: [{ rotate: wave.interpolate({ inputRange: [-1, 1], outputRange: ['-5deg', '5deg'] }) }, { scaleX: wave.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.9, 1, 0.94] }) }] };
       case 'steam':
       case 'smoke':
@@ -275,6 +276,14 @@ export function LearnerToken({
  * chapters go online one by one as Hamo records them, Hamo stands by the
  * sign and a small red light breathes beside "recording it now" — still, under
  * Reduce Motion. A picture with its words: read as one by a screen reader.
+ *
+ * The number and the name stand beside the picture, and the line about it
+ * runs under both, the card's whole width: beside the picture it had a
+ * third of a narrow phone to itself and broke into five lines of a word or
+ * two. The outline is dashed in the grey of what is not reached yet, which
+ * shows on the card in both themes (the white it was drawn in did not, by
+ * day). On a right-to-left page Hamo still stands against the sign, on its
+ * other side, rather than over the words.
  */
 export function UpcomingSign({ upcoming, live }: { upcoming: UpcomingUnit; live: boolean }): React.JSX.Element {
   const { colors, scheme } = useTheme();
@@ -301,27 +310,31 @@ export function UpcomingSign({ upcoming, live }: { upcoming: UpcomingUnit; live:
   const line = t(upcoming.recordedBy ? 'coursemap.path.upcomingRecording' : 'coursemap.path.upcomingSoon');
   return (
     <View
-      style={[styles.next, { flexDirection: dir.row, borderColor: colors.clayBorder, backgroundColor: colors.surface }]}
+      style={[styles.next, { borderColor: colors.lockedMark, backgroundColor: colors.surface }]}
       accessible
       accessibilityLabel={`${number}, ${upcoming.title}. ${line}`}
       testID="lp-upcoming"
     >
-      <View style={[styles.nextArt, { flexDirection: dir.row }]}>
-        {/* the sign points on toward the end of the line, which a right-to-left screen reads to the left */}
-        <SvgXml xml={sign} width={SIGN} height={SIGN} style={dir.rtl ? styles.mirrored : undefined} />
-        {upcoming.recordedBy ? (
-          <View style={styles.nextHost}>
-            <SpeakingCharacter speaker={upcoming.recordedBy} player={null} playing={false} crop="full" height={NEXT_HOST} />
-          </View>
-        ) : null}
-      </View>
-      <View style={styles.nextText}>
-        <Text style={[styles.nextEyebrow, dir.text, { color: colors.textSecondary }]}>{number}</Text>
-        <Text style={[styles.nextTitle, dir.text, { color: colors.textPrimary }]}>{upcoming.title}</Text>
-        <View style={[styles.nextLine, { flexDirection: dir.row }]}>
-          {upcoming.recordedBy ? <Animated.View style={[styles.rec, { opacity: pulse }]} /> : null}
-          <Text style={[styles.nextLineText, dir.text, { color: colors.textSecondary }]}>{line}</Text>
+      <View style={[styles.nextTop, { flexDirection: dir.row }]}>
+        <View style={[styles.nextArt, { flexDirection: dir.row }]}>
+          {/* the sign points on toward the end of the line, which a right-to-left screen reads to the left */}
+          <SvgXml xml={sign} width={SIGN} height={SIGN} style={dir.rtl ? styles.mirrored : undefined} />
+          {upcoming.recordedBy ? (
+            // against the sign, whichever side of him it is on
+            <View style={dir.row === 'row-reverse' ? styles.nextHostMirrored : styles.nextHost}>
+              <SpeakingCharacter speaker={upcoming.recordedBy} player={null} playing={false} crop="full" height={NEXT_HOST} />
+            </View>
+          ) : null}
         </View>
+        <View style={styles.nextText}>
+          <Text style={[styles.nextEyebrow, dir.text, { color: colors.textSecondary }]}>{number}</Text>
+          {/* the course's own words, read in their own direction */}
+          <Text style={[styles.nextTitle, dir.free, { color: colors.textPrimary }]}>{upcoming.title}</Text>
+        </View>
+      </View>
+      <View style={[styles.nextLine, { flexDirection: dir.row }]}>
+        {upcoming.recordedBy ? <Animated.View style={[styles.rec, { opacity: pulse }]} /> : null}
+        <Text style={[styles.nextLineText, dir.text, { color: colors.textSecondary }]}>{line}</Text>
       </View>
     </View>
   );
@@ -330,6 +343,9 @@ export function UpcomingSign({ upcoming, live }: { upcoming: UpcomingUnit; live:
 /** The signpost's size, and how tall Hamo stands by it: a little smaller than beside a unit, as he is further up the road. */
 const SIGN = 96;
 const NEXT_HOST = 104;
+/** The recording light, and the line of words it stands beside. */
+const REC = 10;
+const REC_LINE = 20;
 
 /** A unit as the rail lists it. */
 export interface RailUnit {
@@ -343,54 +359,76 @@ export interface RailUnit {
   here: boolean;
 }
 
+/** A section as the rail lists it: its number (null in a course of one section, which is not named), its level's plain name to look up, and its units. */
+export interface RailSection {
+  number: number | null;
+  level: TranslationKey | null;
+  units: RailUnit[];
+}
+
 /**
- * Every unit of the course on one rail, top to bottom, from the unit banner's
- * map button: a milestone each — filled once the unit is done, ringed where
- * the learner is — with its number and its name, and a tap goes there.
+ * Every unit of the course on one rail, top to bottom, from a unit heading's
+ * map button, under the name of its section where the course has more than
+ * one: a milestone each — filled once the unit is done, ringed where the
+ * learner is — with its number and its name, and a tap goes there (opening
+ * its section, or to a shut section's card).
  */
-export function UnitRailSheet({ units, open, onClose, onPick }: { units: RailUnit[]; open: boolean; onClose: () => void; onPick: (unitId: string) => void }): React.JSX.Element {
+export function UnitRailSheet({ sections, open, onClose, onPick }: { sections: RailSection[]; open: boolean; onClose: () => void; onPick: (unitId: string) => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
   return (
     <BottomSheet visible={open} onClose={onClose} title={t('learn.map.title')} icon="flag" detents={['medium', 'large']} testID="lp-rail">
       <SheetScrollView contentContainerStyle={styles.rail}>
-        {units.map((u, i) => {
-          const finished = u.total > 0 && u.done === u.total;
-          const number = t('coursemap.path.unit', { n: formatNumber(u.number, locale) });
-          return (
-            <Pressable
-              key={u.unitId}
-              onPress={() => onPick(u.unitId)}
-              accessibilityRole="button"
-              accessibilityLabel={`${number}, ${u.title}`}
-              accessibilityState={{ selected: u.here }}
-              // held, the row fills as a list row does (it has its own inset, so the fill is its own shape)
-              style={({ pressed }) => [styles.railRow, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack, borderRadius: radii.sm }]}
-            >
-              <View style={styles.railMark}>
-                {i > 0 ? <View style={[styles.railLine, styles.railLineUp, { backgroundColor: colors.separator }]} /> : null}
-                {i < units.length - 1 ? <View style={[styles.railLine, styles.railLineDown, { backgroundColor: colors.separator }]} /> : null}
-                <View
-                  style={[
-                    styles.railDot,
-                    u.here ? styles.railDotHere : null,
-                    { backgroundColor: finished || u.here ? u.tone.fill : colors.surface, borderColor: u.tone.lip },
-                  ]}
+        {sections.map((section, s) => (
+          <View key={section.number ?? s} style={styles.railSection}>
+            {section.number !== null ? (
+              <Text style={[styles.railSectionName, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+                {section.level
+                  ? `${t('coursemap.path.section', { n: formatNumber(section.number, locale) })} · ${t(section.level)}`
+                  : t('coursemap.path.section', { n: formatNumber(section.number, locale) })}
+              </Text>
+            ) : null}
+            {section.units.map((u, i) => {
+              const finished = u.total > 0 && u.done === u.total;
+              const number = t('coursemap.path.unit', { n: formatNumber(u.number, locale) });
+              return (
+                <Pressable
+                  key={u.unitId}
+                  onPress={() => onPick(u.unitId)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${number}, ${u.title}`}
+                  accessibilityState={{ selected: u.here }}
+                  // held, the row fills as a list row does (it has its own inset, so the fill is its own shape)
+                  style={({ pressed }) => [styles.railRow, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack, borderRadius: radii.sm }]}
                 >
-                  {finished ? <Icon name="check" size={14} color={u.tone.ink} /> : null}
-                </View>
-              </View>
-              <View style={styles.railWords}>
-                <Text style={[styles.railNumber, dir.text, { color: u.here ? u.tone.text : colors.textSecondary }]}>{number}</Text>
-                <Text style={[styles.railTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
-                  {u.title}
-                </Text>
-              </View>
-              <Text style={[styles.railCount, { color: colors.textSecondary }]}>{t('coursemap.path.unitDone', { done: u.done, total: u.total })}</Text>
-            </Pressable>
-          );
-        })}
+                  <View style={styles.railMark}>
+                    {i > 0 ? <View style={[styles.railLine, styles.railLineUp, { backgroundColor: colors.separator }]} /> : null}
+                    {i < section.units.length - 1 ? <View style={[styles.railLine, styles.railLineDown, { backgroundColor: colors.separator }]} /> : null}
+                    <View
+                      style={[
+                        styles.railDot,
+                        u.here ? styles.railDotHere : null,
+                        { backgroundColor: finished || u.here ? u.tone.fill : colors.surface, borderColor: u.tone.lip },
+                      ]}
+                    >
+                      {finished ? <Icon name="check" size={14} color={u.tone.ink} /> : null}
+                    </View>
+                  </View>
+                  <View style={styles.railWords}>
+                    <Text style={[styles.railNumber, dir.text, { color: u.here ? u.tone.text : colors.textSecondary }]}>{number}</Text>
+                    <Text style={[styles.railTitle, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
+                      {u.title}
+                    </Text>
+                  </View>
+                  <Text style={[styles.railCount, { color: colors.textSecondary }]}>
+                    {t('coursemap.path.unitDone', { done: formatNumber(u.done, locale), total: formatNumber(u.total, locale) })}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
       </SheetScrollView>
     </BottomSheet>
   );
@@ -398,24 +436,26 @@ export function UnitRailSheet({ units, open, onClose, onPick }: { units: RailUni
 
 const styles = StyleSheet.create({
   next: {
-    alignItems: 'flex-end',
-    gap: spacing.md,
+    gap: spacing.sm + 4,
     marginTop: spacing.xl,
-    marginHorizontal: spacing.md,
     padding: spacing.md,
     borderWidth: 2,
     borderStyle: 'dashed',
     borderRadius: radii.xl,
   },
+  nextTop: { alignItems: 'flex-end', gap: spacing.md },
   nextArt: { alignItems: 'flex-end' },
+  // he overlaps the sign a little, from the side he stands on
   nextHost: { marginStart: -24 },
+  nextHostMirrored: { marginEnd: -24 },
   mirrored: { transform: [{ scaleX: -1 }] },
   nextText: { flex: 1, gap: 2, paddingBottom: spacing.xs },
   nextEyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, letterSpacing: 0.8, textTransform: 'uppercase' },
   nextTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  nextLine: { alignItems: 'center', gap: spacing.xs, marginTop: 4 },
-  nextLineText: { flexShrink: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
-  rec: { width: 10, height: 10, borderRadius: radii.pill, backgroundColor: '#d6493a' },
+  nextLine: { alignItems: 'flex-start', gap: spacing.sm },
+  nextLineText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: REC_LINE },
+  // the recording light, level with the first line of the words beside it however many lines they take
+  rec: { width: REC, height: REC, borderRadius: radii.pill, backgroundColor: '#d6493a', marginTop: (REC_LINE - REC) / 2 },
   flat: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   landmark: { position: 'absolute' },
   loop: { position: 'absolute' },
@@ -423,7 +463,9 @@ const styles = StyleSheet.create({
   token: { position: 'absolute', alignItems: 'center' },
   tokenRing: { borderRadius: radii.pill, borderWidth: TOKEN.ring, padding: 1, overflow: 'hidden' },
   stem: { width: 4, height: TOKEN.stem, borderBottomLeftRadius: 2, borderBottomRightRadius: 2 },
-  rail: { paddingBottom: spacing.lg },
+  rail: { paddingBottom: spacing.lg, gap: spacing.md },
+  railSection: { gap: 0 },
+  railSectionName: { ...sectionLabel, paddingHorizontal: spacing.xs, marginBottom: spacing.xs },
   railRow: { alignItems: 'center', gap: spacing.sm + 4, minHeight: MIN_TOUCH_TARGET + 12, paddingHorizontal: spacing.xs },
   railMark: { width: 28, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   railLine: { position: 'absolute', width: 3, left: 12.5 },

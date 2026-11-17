@@ -6,7 +6,7 @@ import type { LearnView } from './tabs';
 import type { SettingsPageKey } from '../settings/SettingsPageScreen';
 
 /**
- * The five tabs and what each can be opened with.
+ * The four tabs and what each can be opened with.
  *
  * Learn takes the view to open on, which is how `hevalo://play` (and anything
  * else that means "the games") lands on Games rather than on the lessons.
@@ -15,7 +15,6 @@ export type TabParamList = {
   Home: undefined;
   Learn: { view?: LearnView } | undefined;
   Messages: undefined;
-  Search: undefined;
   Profile: undefined;
 };
 
@@ -31,6 +30,12 @@ export type RootStackParamList = {
    * own screens and its parents', never its children's.
    */
   Tabs: NavigatorScreenParams<TabParamList> | undefined;
+  /**
+   * Search, over wherever it was opened from: people, words, lessons and
+   * games. The magnifier at the top of every tab opens it (navigation/TopBar),
+   * and so does anything that says "find people".
+   */
+  Search: undefined;
   /**
    * `courseId`: the course the lesson was opened from, so its results can
    * offer the course's next lesson. A link to a lesson knows no course, and
@@ -74,8 +79,12 @@ export type RootStackParamList = {
   Chat: { userId: string; username: string; openGift?: string };
   /** The friend requests waiting on you, opened from the row at the top of Messages. */
   FriendRequests: undefined;
-  /** Letters by bird: your window, writing to somebody new, and your pen pals (letters/LettersScreen), from the row at the top of Messages. */
-  Letters: undefined;
+  /**
+   * Letters by bird: your window, writing to somebody new, and your pen pals
+   * (letters/LettersScreen), from the row at the top of Messages. A letter's
+   * notification names its correspondence (`bird`), whose bird lands first.
+   */
+  Letters: { bird?: string } | undefined;
   /** One correspondence with a pen pal (letters/LetterThreadScreen), from Letters or from a bird's arrival in the notifications. */
   LetterThread: { threadId: string };
   /** The home-screen letter widget's page (widget/LetterWidgetScreen), from the letters screen's header. */
@@ -91,7 +100,6 @@ export type RootStackParamList = {
   EventQuests: undefined;
   Notifications: undefined;
   NotificationCenter: undefined;
-  Appearance: undefined;
   Settings: undefined;
   /** One page of Settings behind a row: language, theme, sounds, keyboard, leagues, profile visibility, credits (settings/SettingsPageScreen). */
   SettingsPage: { page: SettingsPageKey };

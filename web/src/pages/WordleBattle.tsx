@@ -8,6 +8,7 @@ import { Button } from '../components/Button';
 import { GameHead, stageTone } from '../games/GameHead';
 import { TrophyIcon } from '../components/icons';
 import { WordleBoard, WordleKeyboard, useReveal } from '../components/WordleBoard';
+import { WordMeaningLine, type WordMeanings } from '../components/WordAnswer';
 import { useWordleKeys } from '../keyboard/wordleKeys';
 import { useRail } from '../social/RailProvider';
 import { PlayerChip } from '../ui/PlayerChip';
@@ -75,6 +76,8 @@ interface BattleState {
 interface BattleResults {
   id: string;
   target: string;
+  /** what the word means, in every language a word card gives; absent from a server from before it */
+  meanings?: WordMeanings;
   difficulty: Difficulty;
   ranking: Array<{
     /** yours on your own row, `seat:N` on everyone else's */
@@ -332,6 +335,8 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
         {results && (
           <>
             <p className="muted">{t('games.wordle.theWordWas', { word: results.target })}</p>
+            {/* the word everyone raced for, and what it means: the one thing a battle teaches */}
+            <WordMeaningLine word={results.target} meanings={results.meanings} />
             <RankList>
               {results.ranking.map((r) => {
                 const me = r.isMe;

@@ -61,8 +61,8 @@ function Where(): React.JSX.Element {
 }
 
 /** The real list of places, as the shells build it. */
-function RealNav({ joinOnPhone = true }: { joinOnPhone?: boolean }): React.JSX.Element {
-  return <TopNav links={useNavLinks()} joinOnPhone={joinOnPhone} />;
+function RealNav({ joinOnPhone = true, placesBelow = false }: { joinOnPhone?: boolean; placesBelow?: boolean }): React.JSX.Element {
+  return <TopNav links={useNavLinks()} joinOnPhone={joinOnPhone} placesBelow={placesBelow} />;
 }
 const showReal = (at = '/app', joinOnPhone = true) =>
   renderApp(
@@ -125,20 +125,35 @@ describe('TopNav', () => {
   it('keeps a place lit on the pages inside it', async () => {
     signIn();
     railFetch(you());
-    // the Games half and Rankings are Learn; Settings and the Shop are your profile
+    // the Games half and Rankings are Learn; Settings, the Shop and your tree are your profile; letters by bird are Messages
     for (const [at, place] of [
       ['/app/games', 'Learn'],
       ['/app/rankings', 'Learn'],
       ['/app/learn/course/c1', 'Learn'],
       ['/app/settings', 'Profile'],
       ['/app/shop', 'Profile'],
+      ['/app/tree', 'Profile'],
       ['/app/friends', 'Messages'],
+      ['/app/letters', 'Messages'],
+      ['/app/letters/t1', 'Messages'],
     ] as const) {
       const { unmount } = showReal(at);
       const link = await screen.findByRole('link', { name: place });
       expect(link, at).toHaveClass('active');
       expect(link, at).toHaveAttribute('aria-current', 'page');
       expect(screen.getByRole('link', { name: 'Home' }), at).not.toHaveClass('active');
+      unmount();
+    }
+  });
+
+  it('lights no place on a page that belongs to none: Search, and somebody else’s profile', async () => {
+    signIn();
+    railFetch(you());
+    for (const at of ['/app/search', '/app/users/u1']) {
+      const { unmount, container } = showReal(at);
+      await screen.findByRole('link', { name: 'Profile' });
+      expect(container.querySelector('.nav-link.active'), at).toBeNull();
+      expect(container.querySelector('.nav-links [aria-current]'), at).toBeNull();
       unmount();
     }
   });
@@ -235,14 +250,14 @@ describe('TopNav', () => {
     expect(screen.queryByRole('button', { name: /Notifications/ })).not.toBeInTheDocument();
   });
 
-  it('has no bar along the bottom: the top bar is the only one, at every width', async () => {
+  it('draws one bar and one list of the places: a phone’s bar along the bottom is the shell’s own, not a second one here', async () => {
     signIn();
     railFetch(you());
     showReal();
     await screen.findByRole('link', { name: 'Home' });
     expect(screen.getAllByRole('banner')).toHaveLength(1);
     expect(screen.getAllByRole('navigation')).toHaveLength(1);
-    expect(screen.queryByRole('navigation', { name: 'Main sections' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Learn' })).toHaveLength(1);
   });
 
   it('folds the places into a menu on a phone, which opens with the focus inside it', async () => {
@@ -389,5 +404,97 @@ describe('TopNav', () => {
     await waitFor(() => expect(container.querySelector('.nav-dot')).not.toBeNull());
     expect(container.querySelector('.nav-dot')!.closest('a')).toHaveAttribute('href', '/app/profile');
     expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/me/gifts/unseen'))).toBe(false);
+  });
+});
+
+/**
+ * Inside the app a phone has the places in a bar of their own along the
+ * bottom (layouts/PlacesBar.tsx), and the app's shell says so (`placesBelow`).
+ * The top is then the phone app's: the brand or the way back, and search and
+ * the bell in one pill.
+ */
+describe('TopNav on a phone', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** A window as wide as a phone's. */
+  const onPhone = () =>
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(max-width: 768px)', media: query, addEventListener() {}, removeEventListener() {} }));
+
+  const showPhone = (at: string, placesBelow = true) =>
+    renderApp(
+      <RailProvider>
+        <RealNav joinOnPhone={placesBelow} placesBelow={placesBelow} />
+        <Where />
+      </RailProvider>,
+      [at],
+    );
+
+  it('folds nothing away inside the app: the brand, and search and the bell together in one pill', async () => {
+    signIn();
+    railFetch(you());
+    onPhone();
+    const { container } = showPhone('/app');
+    const bar = container.querySelector<HTMLElement>('header.nav')!;
+    expect(bar).toHaveClass('nav-phone');
+    // once the session is back: somebody signed in stays inside the app
+    await waitFor(() => expect(within(bar).getByRole('link', { name: 'Hevalo home' })).toHaveAttribute('href', '/app'));
+    const pill = within(container.querySelector<HTMLElement>('.nav-pill')!);
+    expect(pill.getByRole('button', { name: 'Search' })).toBeInTheDocument();
+    expect(await pill.findByRole('button', { name: 'Notifications' })).toBeInTheDocument();
+    // search before the bell, as they are read
+    expect(container.querySelector('.nav-pill')!.firstElementChild).toHaveClass('nav-search');
+    // the places are the shell's bar along the bottom, and there is no menu to hold them or anything else
+    expect(within(bar).queryByRole('navigation')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Learn' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Menu/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Settings' })).toBeNull();
+    expect(screen.queryByTitle('Your Zêr and gems')).toBeNull();
+  });
+
+  it('has the way back in the brand’s place on a page you went into', async () => {
+    signIn();
+    railFetch(you());
+    onPhone();
+    const { container } = showPhone('/app/settings');
+    const bar = within(container.querySelector<HTMLElement>('header.nav')!);
+    const back = bar.getByRole('button', { name: 'Back' });
+    expect(bar.queryByRole('link', { name: 'Hevalo home' })).toBeNull();
+    // first at the top, before search and the bell
+    expect(container.querySelector('.nav-inner')!.firstElementChild).toBe(back);
+    // the bell is there once the session is back, and with the session the places a way back can lead to
+    await bar.findByRole('button', { name: 'Notifications' });
+    await userEvent.click(back);
+    // opened cold: to the root of the place Settings is behind
+    expect(screen.getByTestId('where').textContent).toBe('/app/profile');
+  });
+
+  it('keeps Get started for a visitor, and has no bell to show them', async () => {
+    railFetch(null);
+    onPhone();
+    const { container } = showPhone('/app');
+    const bar = within(container.querySelector<HTMLElement>('header.nav')!);
+    expect(bar.getByRole('link', { name: 'Get started' })).toHaveAttribute('href', '/register');
+    expect(bar.getByRole('link', { name: 'Hevalo home' })).toHaveAttribute('href', '/');
+    expect(bar.getByRole('button', { name: 'Search' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Notifications/ })).toBeNull();
+    // the way in besides Get started is the shell's, beside the places
+    expect(bar.queryByRole('link', { name: 'Sign in' })).toBeNull();
+  });
+
+  it('still folds the places into the menu on the public pages, which have no bar of places', async () => {
+    signIn();
+    railFetch(you());
+    onPhone();
+    const { container } = showPhone('/', false);
+    await screen.findByRole('link', { name: 'Home' });
+    expect(container.querySelector('header.nav')).not.toHaveClass('nav-phone');
+    expect(container.querySelector('.nav-pill')).toBeNull();
+    await userEvent.click(menuButton());
+    expect(container.querySelector('.nav-links')).toHaveClass('open');
+    const extras = within(container.querySelector<HTMLElement>('.nav-mobile-actions')!);
+    expect(extras.getByRole('link', { name: 'Friends' })).toHaveAttribute('href', '/app/friends');
+    expect(extras.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/app/settings');
   });
 });

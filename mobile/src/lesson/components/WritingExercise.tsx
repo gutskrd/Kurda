@@ -4,6 +4,7 @@ import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
 import { useI18n } from '../../i18n/I18nContext';
+import { useDirection } from '../../reports/direction';
 import { askHeadline } from '../asks';
 import { useAudio } from '../useAudio';
 import { AskScene, type GapState } from './AskParts';
@@ -32,6 +33,7 @@ interface Props {
 export function WritingExercise({ exercise, text, onChangeText, disabled, dialect, verdict = null }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const model = useAudio(exercise.ask ? exercise.modelAudioUrl : undefined);
   const headline = askHeadline(exercise, { dialect });
   const missing = exercise.ask === 'missing';
@@ -49,7 +51,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled, dialec
           gap={missing ? { word: typed || null, state: gap } : undefined}
         />
       ) : exercise.prompt ? (
-        <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text>
+        <Text style={[styles.prompt, dir.free, { color: colors.textPrimary }]}>{exercise.prompt}</Text>
       ) : null}
 
       <KurdishAnswerInput

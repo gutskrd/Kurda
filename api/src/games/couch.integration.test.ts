@@ -8,7 +8,16 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { COUCH_DECK_DEFAULT, COUCH_DECK_MAX, IMPOSTOR_GUESS_OPTIONS, learnGame, type CouchDeck, type CouchOffer } from '@kurda/shared';
+import {
+  COUCH_DECK_DEFAULT,
+  COUCH_DECK_EXCLUDE_MAX,
+  COUCH_DECK_MAX,
+  IMPOSTOR_CATEGORY_MIN,
+  IMPOSTOR_GUESS_OPTIONS,
+  learnGame,
+  type CouchDeck,
+  type CouchOffer,
+} from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
@@ -92,14 +101,16 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Xapînok on one phone (integration
     expect((await call(null, 'POST', '/games/impostor/couch/deck', { dialect: 'kmr', difficulty: 'beginner' })).status).toBe(401);
   });
 
-  it('says where it can be played: the difficulties with enough approved cards, and their categories', async () => {
+  it('says where it can be played: the difficulties with enough approved cards, and the categories large enough to deal from', async () => {
     const res = await call(token, 'GET', '/games/impostor/couch?dialect=kmr');
     expect(res.status).toBe(200);
     const offer = res.body as CouchOffer;
     const beginner = offer.difficulties.find((d) => d.difficulty === 'beginner')!;
     expect(beginner.cards).toBeGreaterThanOrEqual(MINIMUM + IMPOSTOR_GUESS_OPTIONS);
     expect(beginner.categories.find((c) => c.slug === large)).toEqual({ slug: large, ku: `${tag}kom`, meanings: { en: `a group of ${large}` }, cards: MINIMUM });
-    expect(beginner.categories.find((c) => c.slug === small)?.cards).toBe(IMPOSTOR_GUESS_OPTIONS);
+    // four cards are enough for the guess's options but too few for a fair round
+    expect(IMPOSTOR_GUESS_OPTIONS).toBeLessThan(IMPOSTOR_CATEGORY_MIN);
+    expect(beginner.categories.find((c) => c.slug === small)).toBeUndefined();
     expect((await call(token, 'GET', '/games/impostor/couch?dialect=xx')).status).toBe(400);
   });
 
@@ -131,10 +142,19 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Xapînok on one phone (integration
     expect(a.join() === b.join() && b.join() === c.join()).toBe(false);
   });
 
-  it('refuses a category with no cards, and a level with too few', async () => {
+  it('deals tonight’s words again only once every other word of the category has been dealt', async () => {
+    const all = ((await call(token, 'POST', '/games/impostor/couch/deck', { dialect: 'kmr', difficulty: 'beginner', category: large, count: COUCH_DECK_MAX })).body as CouchDeck).cards.map((c) => c.word);
+    const played = all.slice(0, 5);
+    const res = await call(token, 'POST', '/games/impostor/couch/deck', { dialect: 'kmr', difficulty: 'beginner', category: large, count: 3, exclude: played });
+    expect(res.status).toBe(200);
+    expect((res.body as CouchDeck).cards.map((c) => c.word).filter((w) => played.includes(w))).toEqual([]);
+  });
+
+  it('refuses a category with no cards, one too small to deal from, and a level with too few', async () => {
     const none = await call(token, 'POST', '/games/impostor/couch/deck', { dialect: 'kmr', difficulty: 'beginner', category: `${tag}-nowhere` });
     expect(none.status).toBe(409);
     expect(none.body.code).toBe('GAME_UNAVAILABLE');
+    expect((await call(token, 'POST', '/games/impostor/couch/deck', { dialect: 'kmr', difficulty: 'beginner', category: small })).status).toBe(409);
     expect((await call(token, 'POST', '/games/impostor/couch/deck', { dialect: 'ckb', difficulty: 'advanced', category: large })).status).toBe(409);
   });
 
@@ -147,6 +167,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Xapînok on one phone (integration
     expect((await call(who, 'POST', '/games/impostor/couch/deck', { ...base, category: 'Not A Slug' })).status).toBe(400);
     expect((await call(who, 'POST', '/games/impostor/couch/deck', { ...base, count: COUCH_DECK_MAX + 1 })).status).toBe(400);
     expect((await call(who, 'POST', '/games/impostor/couch/deck', { ...base, count: 0 })).status).toBe(400);
+    const tooMany = Array.from({ length: COUCH_DECK_EXCLUDE_MAX + 1 }, (_, i) => `peyv${i}`);
+    expect((await call(who, 'POST', '/games/impostor/couch/deck', { ...base, exclude: tooMany })).status).toBe(400);
   });
 
   it('pays nothing: a deck fetched and played leaves no XP and no game behind', async () => {

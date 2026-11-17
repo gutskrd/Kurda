@@ -2,16 +2,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   COUCH_CLUE_SECONDS,
+  COUCH_DECK_EXCLUDE_MAX,
   COUCH_DEFAULTS,
   COUCH_MAX_PLAYERS,
   COUCH_MIN_PLAYERS,
   COUCH_NAME_MAX,
   COUCH_ROUNDS,
+  COUCH_SECOND_VOTE_SECONDS,
   COUCH_TALK_SECONDS,
   COUCH_TWO_IMPOSTORS_FROM,
   COUCH_VOTES,
   COUCH_WAYS,
   GAME_DIALECTS,
+  IMPOSTOR_POINTS,
   couchCastVote,
   couchGuess,
   couchHand,
@@ -22,9 +25,11 @@ import {
   couchReader,
   couchReveal,
   couchScores,
+  couchSecondTimeUp,
   couchSeen,
   couchSpeaker,
   couchStart,
+  couchSuspects,
   couchToVote,
   couchTotals,
   couchVoter,
@@ -44,8 +49,9 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
-import { CaretDownIcon, ChatsIcon, CloseIcon, ImpostorIcon, PlusIcon, RedoIcon, SlidersIcon, TimerIcon } from '../components/icons';
+import { CaretDownIcon, ChatsIcon, CloseIcon, ImpostorIcon, PlusIcon, RedoIcon, SlidersIcon, TimerIcon, UndoIcon } from '../components/icons';
 import { Loading } from '../components/states';
+import { useGameDialect } from '../games/soloRounds';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { dialectName } from '../learn/map';
@@ -79,11 +85,28 @@ import './couch.css';
  *   with them, and are never sent anywhere;
  * - every draw comes from the browser's own random numbers, not a clock.
  *
+ * A tap that is easy to make by mistake can be taken back for a moment
+ * (UNDO_MS): going to the vote, and each vote. Taking one back must never
+ * show what it took back, so a tap that would show something new (who was
+ * caught, the cards turned over) waits out that moment before it is played,
+ * and one that shows nothing new is played at once with the way back beside
+ * it. The caught impostor's guess is asked once more instead, since it ends
+ * the round.
+ *
+ * With two impostors, catching one is not the end: the rest of the room
+ * votes once more for the other, against a short clock, and an impostor
+ * still hidden after that is paid for it. The game is set once for the
+ * evening, so a card with no second word plays one round the plain way and
+ * says so, and the next card is dealt the way the room chose again. A fresh
+ * batch of cards is asked for without the words already played tonight.
+ *
  * A round played here earns nothing: the phone holds every card, so nothing it
  * could report about who won would be worth believing.
  */
 
 const KEPT = 'hevalo.couch';
+/** How long a tap can be taken back: long enough to see the slip, short enough not to hold the room up. */
+const UNDO_MS = 3000;
 const VOTE_KEY: Record<CouchSettings['vote'], MessageKey> = { secret: 'games.couch.vote.secret', open: 'games.couch.vote.open' };
 const LEVEL_KEY: Record<GameDifficulty, MessageKey> = {
   beginner: 'games.solo.difficulty.beginner',
@@ -111,6 +134,12 @@ interface Evening {
   dialect: GameDialect;
   difficulty: GameDifficulty;
   category: string | null;
+  /**
+   * How the room set the game. Every round is dealt from this, not from the
+   * round before: a card with no second word plays one round the plain way,
+   * and the next card is played the way the room chose again.
+   */
+  wanted: CouchSettings;
   deck: CouchCard[];
   /** the card being played, by its place in the deck */
   at: number;
@@ -119,6 +148,23 @@ interface Evening {
   game: CouchState;
   /** the points before this round, by seat */
   totals: number[];
+}
+
+/** A tap the room may take back for a moment: the round before it and after it. */
+interface Take {
+  before: CouchState;
+  after: CouchState;
+  /** the tap shows something new, so it waits out the moment before it is played (see the header) */
+  held: boolean;
+  /** what was chosen, said while a held tap waits */
+  said: string;
+  /** when it was made, so a second tap starts its own moment */
+  at: number;
+}
+
+/** Whether a step shows the room something an undo could not take back: a vote counted, someone caught, the cards turned over. */
+function showsOutcome(before: CouchState, after: CouchState): boolean {
+  return after.phase !== before.phase && after.phase !== 'vote';
 }
 
 export function Couch(): React.JSX.Element {
@@ -132,6 +178,21 @@ export function Couch(): React.JSX.Element {
   const [evening, setEvening] = useState<Evening | null>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [take, setTake] = useState<Take | null>(null);
+  // a vote taken back opens again on the voter's own screen, not on the one that asks for the phone
+  const [resumed, setResumed] = useState(false);
+  // the words played on this page tonight, however often the game was changed: the next batch is dealt without them
+  const tonight = useRef<string[]>([]);
+
+  // the moment to take a tap back: once it is over, a held tap is played and any other simply stands
+  useEffect(() => {
+    if (!take) return;
+    const timer = window.setTimeout(() => {
+      setTake(null);
+      if (take.held) setEvening((e) => (e && e.game === take.before ? { ...e, game: take.after } : e));
+    }, UNDO_MS);
+    return () => window.clearTimeout(timer);
+  }, [take]);
 
   useEffect(() => {
     let alive = true;
@@ -143,12 +204,13 @@ export function Couch(): React.JSX.Element {
     };
   }, [client]);
 
-  /** An evening's cards, fetched; null when they could not be. */
+  /** An evening's cards, fetched without the words played tonight; null when they could not be. */
   const fetchDeck = useCallback(
     async (dialect: GameDialect, difficulty: GameDifficulty, category: string | null): Promise<CouchCard[] | null> => {
       setBusy(true);
       setFailed(false);
-      const res = await client.post<CouchDeck>('/games/impostor/couch/deck', { dialect, difficulty, category });
+      const exclude = tonight.current.slice(-COUCH_DECK_EXCLUDE_MAX);
+      const res = await client.post<CouchDeck>('/games/impostor/couch/deck', { dialect, difficulty, category, ...(exclude.length > 0 ? { exclude } : {}) });
       setBusy(false);
       if (res.ok && Array.isArray(res.data?.cards) && res.data.cards.length > 0) return res.data.cards;
       setFailed(true);
@@ -156,6 +218,12 @@ export function Couch(): React.JSX.Element {
     },
     [client],
   );
+
+  /** A round dealt from a card, the way the room set the game; its word is played tonight from now on. */
+  function deal(dialect: GameDialect, names: readonly string[], wanted: CouchSettings, card: CouchCard): CouchState {
+    tonight.current = [...tonight.current.filter((w) => w !== card.word), card.word].slice(-COUCH_DECK_EXCLUDE_MAX);
+    return couchStart(dialect, names, wanted, card, freshSeed());
+  }
 
   async function begin(names: string[], settings: CouchSettings, dialect: GameDialect, difficulty: GameDifficulty, category: string | null): Promise<void> {
     const deck = await fetchDeck(dialect, difficulty, category);
@@ -165,7 +233,8 @@ export function Couch(): React.JSX.Element {
     } catch {
       // a phone that will not keep them only asks for the names again next time
     }
-    setEvening({ dialect, difficulty, category, deck, at: 0, played: 1, game: couchStart(dialect, names, settings, deck[0]!, freshSeed()), totals: names.map(() => 0) });
+    setTake(null);
+    setEvening({ dialect, difficulty, category, wanted: settings, deck, at: 0, played: 1, game: deal(dialect, names, settings, deck[0]!), totals: names.map(() => 0) });
   }
 
   /** The round is over and the room wants another: the next card, or a fresh batch once these are played. */
@@ -180,7 +249,8 @@ export function Couch(): React.JSX.Element {
       deck = more;
       at = 0;
     }
-    setEvening({ ...evening, deck, at, played: evening.played + 1, totals, game: couchStart(evening.dialect, evening.game.players, evening.game.settings, deck[at]!, freshSeed()) });
+    setTake(null);
+    setEvening({ ...evening, deck, at, played: evening.played + 1, totals, game: deal(evening.dialect, evening.game.players, evening.wanted, deck[at]!) });
   }
 
   if (offers === null) return <Loading />;
@@ -198,11 +268,57 @@ export function Couch(): React.JSX.Element {
   if (!evening) {
     return <Setup offers={offers} busy={busy} failed={failed} askedWay={askedWay} askedCategory={askedCategory} onStart={(...args) => void begin(...args)} />;
   }
-  const play = (game: CouchState): void => setEvening({ ...evening, game });
+  /** A step of the round; with `undo`, one the room may take back for a moment (UNDO_MS), saying what was chosen. */
+  const play = (game: CouchState, undo?: { said: string }): void => {
+    setResumed(false);
+    if (!undo || game === evening.game) {
+      setTake(null);
+      setEvening({ ...evening, game });
+      return;
+    }
+    const held = showsOutcome(evening.game, game);
+    setTake({ before: evening.game, after: game, held, said: undo.said, at: Date.now() });
+    if (!held) setEvening({ ...evening, game });
+  };
+  const undo = (): void => {
+    if (!take) return;
+    setTake(null);
+    setResumed(true);
+    setEvening({ ...evening, game: take.before });
+  };
+  // the second vote's clock ran out: a vote already chosen, and waiting out its moment, still counts
+  const secondTimeUp = (): void => {
+    const base = take?.held ? take.after : evening.game;
+    setTake(null);
+    setEvening({ ...evening, game: couchSecondTimeUp(base) });
+  };
+  const game = evening.game;
   return (
     <div className="couch">
       <p className="couch-count">{t('games.couch.game', { n: evening.played })}</p>
-      <Round game={evening.game} totals={evening.totals} busy={busy} failed={failed} play={play} onAnother={() => void another()} onChange={() => setEvening(null)} />
+      {/* said before any card is read: the room asked for an odd word, and this card has none */}
+      {game.oddFallback && game.phase === 'deal' && (
+        <p className="couch-fallback" role="status">
+          {t('games.couch.oddFallback')}
+        </p>
+      )}
+      <Round
+        game={game}
+        totals={evening.totals}
+        busy={busy}
+        failed={failed}
+        held={take?.held ? take : null}
+        resumed={resumed}
+        play={play}
+        onUndo={undo}
+        onSecondTimeUp={secondTimeUp}
+        onAnother={() => void another()}
+        onChange={() => {
+          setTake(null);
+          setEvening(null);
+        }}
+      />
+      {take && !take.held && <UndoBar key={take.at} onUndo={undo} />}
     </div>
   );
 }
@@ -228,10 +344,12 @@ function Setup({
 }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
+  // the learner's own Kurdish first, where the game is offered in it
+  const preferred = useGameDialect();
   const [kept] = useState(readKept);
   const [names, setNames] = useState<string[]>(() => (kept && kept.names.length >= COUCH_MIN_PLAYERS ? kept.names : Array.from({ length: COUCH_MIN_PLAYERS + 1 }, () => '')));
   const [settings, setSettings] = useState<CouchSettings>(() => ({ ...(kept?.settings ?? COUCH_DEFAULTS), ...(askedWay ? { way: askedWay } : {}) }));
-  const [dialect, setDialect] = useState<GameDialect>(offers[0]!.dialect);
+  const [dialect, setDialect] = useState<GameDialect>(() => (offers.some((o) => o.dialect === preferred) ? preferred : offers[0]!.dialect));
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
   const [category, setCategory] = useState(askedCategory ?? '');
   const [slip, setSlip] = useState<MessageKey | null>(null);
@@ -426,7 +544,11 @@ function Round({
   totals,
   busy,
   failed,
+  held,
+  resumed,
   play,
+  onUndo,
+  onSecondTimeUp,
   onAnother,
   onChange,
 }: {
@@ -434,20 +556,76 @@ function Round({
   totals: readonly number[];
   busy: boolean;
   failed: boolean;
-  play: (next: CouchState) => void;
+  /** a tap waiting out its moment before it is played: said in place of the choice it was made on */
+  held: Take | null;
+  /** a vote was just taken back: the voter's own screen opens again at once */
+  resumed: boolean;
+  play: (next: CouchState, undo?: { said: string }) => void;
+  onUndo: () => void;
+  onSecondTimeUp: () => void;
   onAnother: () => void;
   onChange: () => void;
 }): React.JSX.Element {
+  const t = useT();
   const reader = couchReader(game);
+  const toVote = { said: t('games.couch.toVote') };
   if (game.phase === 'deal' && reader !== null) return <Deal key={reader} game={game} seat={reader} onSeen={() => play(couchSeen(game))} />;
-  if (game.phase === 'clues') return <Clues game={game} onNext={() => play(couchNextClue(game))} onVote={() => play(couchToVote(game))} />;
-  if (game.phase === 'talk') return <Talk game={game} onVote={() => play(couchToVote(game))} />;
-  if (game.phase === 'vote') {
+  if (game.phase === 'clues') return <Clues game={game} onNext={() => play(couchNextClue(game))} onVote={() => play(couchToVote(game), toVote)} />;
+  if (game.phase === 'talk') return <Talk game={game} onVote={() => play(couchToVote(game), toVote)} onTimeUp={() => play(couchToVote(game))} />;
+  if (game.phase === 'vote' || game.phase === 'second') {
     const voter = couchVoter(game);
-    return voter === null ? <OpenVote game={game} onPoint={(seat) => play(couchPoint(game, seat))} /> : <SecretVote key={voter} game={game} voter={voter} onVote={(seat) => play(couchCastVote(game, seat))} />;
+    const suspects = couchSuspects(game);
+    const second = game.phase === 'second' ? game.second : null;
+    const vote = held ? (
+      <Held key={held.at} said={held.said} onUndo={onUndo} />
+    ) : voter === null ? (
+      <OpenVote
+        names={game.players}
+        suspects={suspects}
+        onPoint={(seat) => play(couchPoint(game, seat), { said: seat === null ? t('games.couch.point.none') : game.players[seat]! })}
+      />
+    ) : (
+      <SecretVote
+        key={voter}
+        names={game.players}
+        voter={voter}
+        suspects={suspects}
+        done={second ? second.votes.length : game.votes.length}
+        of={second ? second.voters.length : game.players.length}
+        startOpen={resumed}
+        onVote={(seat) =>
+          play(couchCastVote(game, seat), { said: seat === null ? t('games.couch.noChoice') : t('games.impostor.vote.cast', { name: game.players[seat]! }) })
+        }
+      />
+    );
+    return second ? <SecondVote onTimeUp={onSecondTimeUp}>{vote}</SecondVote> : vote;
   }
   if (game.phase === 'guess') return <Guess game={game} onGuess={(option) => play(couchGuess(game, option))} />;
   return <Reveal game={game} totals={totals} busy={busy} failed={failed} onAnother={onAnother} onChange={onChange} />;
+}
+
+/** The way back from a tap that was played at once: a moment long, then gone. */
+function UndoBar({ onUndo }: { onUndo: () => void }): React.JSX.Element {
+  const t = useT();
+  return (
+    <div className="couch-undo">
+      <Button variant="secondary" size="sm" className="couch-undo-btn" onClick={onUndo}>
+        <UndoIcon size={16} />
+        {t('common.undo')}
+      </Button>
+      <span className="couch-undo-time" aria-hidden="true" style={{ ['--undo-ms' as string]: `${UNDO_MS}ms` }} />
+    </div>
+  );
+}
+
+/** A tap that would show something new, waiting out its moment: what was chosen, and the way back. */
+function Held({ said, onUndo }: { said: string; onUndo: () => void }): React.JSX.Element {
+  return (
+    <section className="couch-stage couch-held" aria-live="polite">
+      <p className="couch-speaker">{said}</p>
+      <UndoBar onUndo={onUndo} />
+    </section>
+  );
 }
 
 /** The screen between two players: nothing on it but whose turn it is to hold the phone. */
@@ -641,14 +819,14 @@ function Clues({ game, onNext, onVote }: { game: CouchState; onNext: () => void;
   );
 }
 
-function Talk({ game, onVote }: { game: CouchState; onVote: () => void }): React.JSX.Element {
+function Talk({ game, onVote, onTimeUp }: { game: CouchState; onVote: () => void; onTimeUp: () => void }): React.JSX.Element {
   const t = useT();
   return (
     <div className="couch-talk">
       <div className="couch-stage">
         <p className="couch-speaker">{t('games.couch.talk.title')}</p>
         <p className="couch-note">{t('games.couch.talk.note')}</p>
-        <Countdown seconds={game.settings.talkSeconds} onEnd={onVote} />
+        <Countdown seconds={game.settings.talkSeconds} onEnd={onTimeUp} />
       </div>
       <Button size="lg" block onClick={onVote}>
         {t('games.couch.toVote')}
@@ -657,32 +835,55 @@ function Talk({ game, onVote }: { game: CouchState; onVote: () => void }): React
   );
 }
 
-function SecretVote({ game, voter, onVote }: { game: CouchState; voter: number; onVote: (seat: number | null) => void }): React.JSX.Element {
+/**
+ * One private vote, with the phone passed to the voter first: a button for
+ * each seat they may name (never their own, nor in the second vote the
+ * impostor already caught), and one for not choosing anyone.
+ */
+function SecretVote({
+  names,
+  voter,
+  suspects,
+  done,
+  of,
+  startOpen,
+  onVote,
+}: {
+  names: readonly string[];
+  voter: number;
+  suspects: readonly number[];
+  /** how many of this vote's voters have voted, and how many it has */
+  done: number;
+  of: number;
+  /** the voter has the phone already (their vote was just taken back) */
+  startOpen: boolean;
+  onVote: (seat: number | null) => void;
+}): React.JSX.Element {
   const t = useT();
-  const [mine, setMine] = useState(false);
-  const name = game.players[voter]!;
+  const [mine, setMine] = useState(startOpen);
+  const name = names[voter]!;
   if (!mine) {
     return (
       <>
-        <Progress done={game.votes.length} of={game.players.length} />
+        <Progress done={done} of={of} />
         <PassTo name={name} onMine={() => setMine(true)} />
       </>
     );
   }
   return (
     <section className="couch-vote" aria-labelledby="couch-vote-title">
-      <Progress done={game.votes.length} of={game.players.length} />
+      <Progress done={done} of={of} />
       <h2 id="couch-vote-title" className="couch-speaker">
         {t('games.couch.voteOf', { name })}
       </h2>
       <div className="imp-vote-options">
-        {game.players.map((other, seat) =>
-          seat === voter ? null : (
+        {suspects
+          .filter((seat) => seat !== voter)
+          .map((seat) => (
             <Button key={seat} variant="secondary" onClick={() => onVote(seat)}>
-              {t('games.impostor.vote.pick', { name: other })}
+              {t('games.impostor.vote.pick', { name: names[seat]! })}
             </Button>
-          ),
-        )}
+          ))}
       </div>
       <Button variant="ghost" block onClick={() => onVote(null)}>
         {t('games.couch.noChoice')}
@@ -691,7 +892,8 @@ function SecretVote({ game, voter, onVote }: { game: CouchState; voter: number; 
   );
 }
 
-function OpenVote({ game, onPoint }: { game: CouchState; onPoint: (seat: number | null) => void }): React.JSX.Element {
+/** The room's one choice, made by pointing: a button for each seat it may name, and one for not agreeing. */
+function OpenVote({ names, suspects, onPoint }: { names: readonly string[]; suspects: readonly number[]; onPoint: (seat: number | null) => void }): React.JSX.Element {
   const t = useT();
   return (
     <section className="couch-vote" aria-labelledby="couch-point-title">
@@ -700,9 +902,9 @@ function OpenVote({ game, onPoint }: { game: CouchState; onPoint: (seat: number 
       </h2>
       <p className="couch-note muted">{t('games.couch.point.pick')}</p>
       <div className="imp-vote-options">
-        {game.players.map((name, seat) => (
+        {suspects.map((seat) => (
           <Button key={seat} variant="secondary" onClick={() => onPoint(seat)}>
-            {name}
+            {names[seat]}
           </Button>
         ))}
       </div>
@@ -713,9 +915,46 @@ function OpenVote({ game, onPoint }: { game: CouchState; onPoint: (seat: number 
   );
 }
 
+/**
+ * The room's second vote, once one of two impostors is caught: first what it
+ * is for, then the vote against COUCH_SECOND_VOTE_SECONDS. The clock starts
+ * when the room is ready, not while the caught impostor still holds the
+ * phone, and runs on through every voter's turn with it.
+ */
+function SecondVote({ onTimeUp, children }: { onTimeUp: () => void; children: React.ReactNode }): React.JSX.Element {
+  const t = useT();
+  const [ready, setReady] = useState(false);
+  if (!ready) {
+    return (
+      <section className="couch-talk" aria-labelledby="couch-second-title">
+        <div className="couch-stage">
+          <h2 id="couch-second-title" className="couch-speaker">
+            {t('games.couch.secondVote.title')}
+          </h2>
+          <p className="couch-note">{t('games.couch.secondVote.note', { count: COUCH_SECOND_VOTE_SECONDS })}</p>
+        </div>
+        <Button size="lg" block onClick={() => setReady(true)}>
+          {t('games.couch.toVote')}
+        </Button>
+      </section>
+    );
+  }
+  return (
+    <div className="couch-second">
+      <div className="couch-stage couch-second-clock">
+        <p className="couch-note">{t('games.couch.secondVote.title')}</p>
+        <Countdown seconds={COUCH_SECOND_VOTE_SECONDS} onEnd={onTimeUp} />
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** The caught impostor's one guess: handed the phone, they choose a word, and say once more that it is their answer. */
 function Guess({ game, onGuess }: { game: CouchState; onGuess: (option: number) => void }): React.JSX.Element {
   const t = useT();
   const [mine, setMine] = useState(false);
+  const [chosen, setChosen] = useState<number | null>(null);
   const script = dialectDirection(game.dialect);
   const name = game.players[game.accused ?? 0]!;
   if (!mine) {
@@ -728,6 +967,27 @@ function Guess({ game, onGuess }: { game: CouchState; onGuess: (option: number) 
       </div>
     );
   }
+  if (chosen !== null) {
+    // the word sits inside the sentence in its own script, whichever way the sentence runs
+    const [before, after] = t('games.couch.guessConfirm', { word: '\u0001' }).split('\u0001');
+    return (
+      <section className="imp-guess couch-confirm" aria-labelledby="couch-confirm-title">
+        <h2 id="couch-confirm-title" className="couch-speaker">
+          {before}
+          <span lang={script.lang} dir={script.dir} className="couch-confirm-word">
+            {game.options[chosen]}
+          </span>
+          {after}
+        </h2>
+        <Button size="lg" block onClick={() => onGuess(chosen)}>
+          {t('games.couch.guessConfirm.yes')}
+        </Button>
+        <Button variant="secondary" block onClick={() => setChosen(null)}>
+          {t('games.couch.guessConfirm.no')}
+        </Button>
+      </section>
+    );
+  }
   return (
     <section className="imp-guess" aria-labelledby="couch-guess-title">
       <h2 id="couch-guess-title" className="couch-speaker">
@@ -735,7 +995,7 @@ function Guess({ game, onGuess }: { game: CouchState; onGuess: (option: number) 
       </h2>
       <div className="imp-guess-options">
         {game.options.map((option, i) => (
-          <Button key={`${option}:${i}`} variant="secondary" className="imp-guess-option" onClick={() => onGuess(i)}>
+          <Button key={`${option}:${i}`} variant="secondary" className="imp-guess-option" onClick={() => setChosen(i)}>
             <span lang={script.lang} dir={script.dir}>
               {option}
             </span>
@@ -781,6 +1041,28 @@ function Reveal({
   const who = reveal.impostors.map((seat) => game.players[seat]!);
   const end: MessageKey =
     reveal.endedBy === 'escaped' ? 'games.impostor.end.escaped' : reveal.endedBy === 'guessed' ? 'games.impostor.end.guessed' : game.settings.way === 'odd' ? 'games.couch.end.oddCaught' : 'games.impostor.end.caught';
+  // why the impostors got away, said before that they did
+  const why =
+    reveal.escape === 'tie'
+      ? t('games.impostor.end.tie')
+      : reveal.escape === 'wrong-out' && game.accused !== null
+        ? t('games.impostor.end.wrongOut', { name: game.players[game.accused]! })
+        : null;
+  // the second vote, for the impostor the first did not catch: caught as well, or still hidden and paid for it
+  const other = reveal.second ? (reveal.impostors.find((seat) => seat !== game.accused) ?? null) : null;
+  const afterSecond: string[] = [];
+  if (reveal.second && other !== null) {
+    if (reveal.second.caught) afterSecond.push(t('games.impostor.caught', { name: game.players[other]! }));
+    else if (reveal.second.accused !== null) afterSecond.push(t('games.impostor.end.wrongOut', { name: game.players[reveal.second.accused]! }));
+  }
+  if (reveal.stillHidden !== null) afterSecond.push(t('games.couch.end.stillHidden', { name: game.players[reveal.stillHidden]!, count: IMPOSTOR_POINTS.escaped }));
+  // who chose nobody said so; in a private second vote, who had not voted when the clock ran out did not vote at all
+  const voteLine = (voter: number, suspect: number | null): string =>
+    suspect === null
+      ? t('games.impostor.votedUnsure', { name: game.players[voter]! })
+      : t('games.impostor.votedFor', { name: game.players[voter]!, target: game.players[suspect]! });
+  const secondVotes = reveal.second?.votes ?? [];
+  const missed = game.second?.done && game.settings.vote === 'secret' ? game.second.voters.slice(secondVotes.length) : [];
   return (
     <div className={`imp-reveal couch-reveal${still ? ' is-still' : ''}`}>
       <ol className="imp-reveal-cards" aria-label={t('games.impostor.table')}>
@@ -827,6 +1109,7 @@ function Reveal({
           · {meaningIn(reveal.twin.meanings, locale)}
         </p>
       )}
+      {why && <p className="muted">{why}</p>}
       <p className="muted">{t(end)}</p>
       {reveal.guessed && (
         <p className="muted">
@@ -836,18 +1119,36 @@ function Reveal({
           </span>
         </p>
       )}
-      {reveal.votes.length > 0 && (
+      {afterSecond.map((line) => (
+        <p key={line} className="muted">
+          {line}
+        </p>
+      ))}
+      {(reveal.votes.length > 0 || secondVotes.length > 0 || missed.length > 0) && (
         <section aria-labelledby="couch-votes-title">
           <h3 id="couch-votes-title" className="imp-section-title">
             {t('games.impostor.votes')}
           </h3>
-          <ul className="imp-votes">
-            {reveal.votes.map((suspect, voter) => (
-              <li key={voter}>
-                {suspect === null ? t('games.impostor.noVote', { name: game.players[voter]! }) : t('games.impostor.votedFor', { name: game.players[voter]!, target: game.players[suspect]! })}
-              </li>
-            ))}
-          </ul>
+          {reveal.votes.length > 0 && (
+            <ul className="imp-votes">
+              {reveal.votes.map((suspect, voter) => (
+                <li key={voter}>{voteLine(voter, suspect)}</li>
+              ))}
+            </ul>
+          )}
+          {(secondVotes.length > 0 || missed.length > 0) && (
+            <>
+              <h4 className="couch-votes-second">{t('games.couch.secondVote.title')}</h4>
+              <ul className="imp-votes">
+                {secondVotes.map((v) => (
+                  <li key={v.seat}>{voteLine(v.seat, v.for)}</li>
+                ))}
+                {missed.map((seat) => (
+                  <li key={seat}>{t('games.impostor.noVote', { name: game.players[seat]! })}</li>
+                ))}
+              </ul>
+            </>
+          )}
         </section>
       )}
       <div className="couch-score-wrap">

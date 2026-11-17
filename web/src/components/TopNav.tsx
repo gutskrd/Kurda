@@ -10,6 +10,9 @@ import { RailToggle } from '../social/RailToggle';
 import { NotificationsBell } from '../notifications/NotificationsBell';
 import { NavSearch } from '../search/NavSearch';
 import { useT } from '../i18n/I18nProvider';
+import { useMediaQuery } from '../lib/useMediaQuery';
+import { BackButton } from '../layouts/BackButton';
+import { PHONE_CHROME, isPlaceRoot } from '../layouts/roots';
 
 export interface NavItem {
   /** which place this is — tests and the menu find a place by it */
@@ -70,14 +73,15 @@ function matchesExactly(to: string, all: readonly NavItem[]): boolean {
  * while the page scrolls under it, on a solid ground with a hairline, so no
  * line of the page ever shows through a label.
  *
- * On a phone the bar keeps the brand, a search button and the bell, and the
- * places fold into a menu under a button at its end: one press opens it, a
- * second goes anywhere. The menu is a list down the screen with each place's
- * word beside its glyph, which on a small screen is easier to hit and to read
- * than five icons in a row, and it has room for what the wide bar shows
- * elsewhere — your Zêr and gems with the shop, your friends, Settings, or for
- * a visitor, the way in. Something waiting in it (an unread message, a gift)
- * shows on the button, so it is not hidden by being folded away.
+ * On a phone the bar keeps the brand, a search button and the bell. On the
+ * public pages the places fold into a menu under a button at its end: one
+ * press opens it, a second goes anywhere. The menu is a list down the screen
+ * with each place's word beside its glyph, and it has room for what the wide
+ * bar shows elsewhere — your Zêr and gems with the shop, your friends,
+ * Settings, or for a visitor, the way in. Something waiting in it (an unread
+ * message, a gift) shows on the button, so it is not hidden by being folded
+ * away. Inside the app a phone has the places along the bottom of the window
+ * instead, and no menu (`placesBelow`).
  *
  * In Arabic and Soranî the bar runs right to left with the page: the brand at
  * the right, the bell and the menu at the left, as a reader of those scripts
@@ -89,8 +93,22 @@ function matchesExactly(to: string, all: readonly NavItem[]): boolean {
  * `joinOnPhone` keeps "Get started" on a phone's bar for a visitor. Inside the
  * app it is the only invitation on most pages; the front page has its own, a
  * screen tall, and a second one in the bar would only compete with it.
+ *
+ * `placesBelow` is the app's shell saying that on a phone the places are in a
+ * bar of their own along the bottom of the window (layouts/PlacesBar.tsx).
+ * There this bar folds nothing away: it is drawn as the phone app's top is
+ * (`PhoneBar`, below). The public pages have no bar of places, and keep the
+ * menu.
  */
-export function TopNav({ links, joinOnPhone = false }: { links: NavItem[]; joinOnPhone?: boolean }): React.JSX.Element {
+export function TopNav({
+  links,
+  joinOnPhone = false,
+  placesBelow = false,
+}: {
+  links: NavItem[];
+  joinOnPhone?: boolean;
+  placesBelow?: boolean;
+}): React.JSX.Element {
   const { status } = useAuth();
   const [open, setOpen] = useState(false);
   const t = useT();
@@ -99,6 +117,7 @@ export function TopNav({ links, joinOnPhone = false }: { links: NavItem[]; joinO
   const toggleRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const signedIn = status === 'signedIn';
+  const phone = useMediaQuery(PHONE_CHROME);
 
   const close = (): void => setOpen(false);
 
@@ -141,6 +160,8 @@ export function TopNav({ links, joinOnPhone = false }: { links: NavItem[]; joinO
       : waiting
         ? t('nav.tabWaiting', { place: t('nav.menu') })
         : t('nav.menu');
+
+  if (placesBelow && phone) return <PhoneBar links={links} />;
 
   return (
     <header className={`nav${open ? ' is-menu-open' : ''}`} onBlur={onBlur}>
@@ -280,6 +301,55 @@ export function TopNav({ links, joinOnPhone = false }: { links: NavItem[]; joinO
       </div>
       {/* the page under an open menu steps back, and a press on it closes the menu */}
       {open && <div className="nav-scrim" onClick={close} aria-hidden="true" />}
+    </header>
+  );
+}
+
+/**
+ * The top of a phone's screen, inside the app: what the phone app has there
+ * (mobile/src/navigation/TopBar.tsx and ScreenHeader.tsx).
+ *
+ * At the reading edge, where you are: the brand on the root of a place, and
+ * on a page you went into, the way back in its place (`BackButton`). At the
+ * far end, the two things done from anywhere, looking for something and
+ * seeing what is new: search and the bell in one pill. One shape with two
+ * glyphs in it is read as one thing in the corner, where two discs side by
+ * side are two things to choose between, and it is in the same corner of
+ * every page, so neither has to be found twice.
+ *
+ * Nothing else. The places are in their own bar along the bottom
+ * (layouts/PlacesBar.tsx), and what the folded menu held besides them is in
+ * the place it belongs to: your friends, the shop and Settings in your
+ * profile's own menu (profile/ProfileMenu.tsx), and the requests waiting on
+ * you above your conversations. A visitor keeps "Get started" here on every
+ * page, and has Sign in beside the places.
+ *
+ * The shapes are solid, in the fill of what floats, and the bar behind them
+ * is the page's own ground with no line under it, so they read as shapes
+ * resting on the page and not as a strip across it (shell.css). In Arabic
+ * and Soranî the bar runs with the page: the way back on the right, the pill
+ * on the left.
+ */
+function PhoneBar({ links }: { links: NavItem[] }): React.JSX.Element {
+  const { status } = useAuth();
+  const t = useT();
+  const { pathname, search } = useLocation();
+  const signedIn = status === 'signedIn';
+  return (
+    <header className="nav nav-phone">
+      <div className="container nav-inner">
+        {isPlaceRoot(pathname, search) ? <Brand to={signedIn ? '/app' : '/'} /> : <BackButton links={links} />}
+        <div className="nav-pill">
+          <NavSearch />
+          {/* nothing for a visitor, whose pill is then the search alone */}
+          <NotificationsBell />
+        </div>
+        {!signedIn && (
+          <LinkButton to="/register" variant="primary" size="sm" className="nav-register">
+            {t('nav.register')}
+          </LinkButton>
+        )}
+      </div>
     </header>
   );
 }

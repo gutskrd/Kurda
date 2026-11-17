@@ -59,8 +59,8 @@
   height: 18px;
   padding: 0 5px;
   border-radius: var(--r-pill);
-  background: var(--gold);
-  color: #1a1408;
+  background: var(--primary);
+  color: var(--primary-ink);
   font-size: var(--text-tab);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -597,10 +597,11 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
+  /* over a phone's bar of places where there is one (`--bottom-chrome`, shell.css), and at the bottom edge where there is none */
   .rail-toasts {
     right: 12px;
     left: 12px;
-    bottom: 12px;
+    bottom: calc(12px + var(--bottom-chrome, 0px));
     max-width: none;
   }
 }

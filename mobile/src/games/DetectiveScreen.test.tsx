@@ -157,6 +157,28 @@ describe('DetectiveScreen', () => {
     expect(screen.getByText('Hints left: 2')).toBeTruthy();
   }, 20000);
 
+  it('lets the player mark each suspect while reading, a mark tapped again taken off, and sends none of it', async () => {
+    const client = routes([], [{ board: board() }]);
+    testAuth.client = client;
+    renderWithProviders(<DetectiveScreen onExit={() => undefined} />);
+    await ready();
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    expect(await screen.findByText('The empty jar', {}, { timeout: 15000 })).toBeTruthy();
+    expect(screen.getByText('As you read, mark what you think of each suspect.')).toBeTruthy();
+    const hamo = screen.getByLabelText('Your mark for Hamo');
+    const baran = screen.getByLabelText('Your mark for Baran');
+    fireEvent.click(within(hamo).getByRole('radio', { name: 'Suspicious' }));
+    expect(within(hamo).getByRole('radio', { name: 'Suspicious' }).getAttribute('aria-checked')).toBe('true');
+    // one suspect’s mark is not the other’s
+    expect(within(baran).getByRole('radio', { name: 'Suspicious' }).getAttribute('aria-checked')).toBe('false');
+    fireEvent.click(within(baran).getByRole('radio', { name: 'Not sure' }));
+    fireEvent.click(within(hamo).getByRole('radio', { name: 'Suspicious' }));
+    expect(within(hamo).getByRole('radio', { name: 'Suspicious' }).getAttribute('aria-checked')).toBe('false');
+    expect(within(baran).getByRole('radio', { name: 'Not sure' }).getAttribute('aria-checked')).toBe('true');
+    // the notebook is the player’s own: nothing is sent when a mark is set
+    expect(client.calls.filter((c) => c.method !== 'GET' && !c.path.endsWith('/sessions'))).toHaveLength(0);
+  }, 20000);
+
   it('notes a deduction, then solves the case: the day counts, one quiet line says where XP comes from, and none is shown', async () => {
     const client = routes([stepDone, accused], [], { correct: 2, total: 2, firstTry: 2, xp: 0, learningCounted: true, needed: 1, items: [], streak: 2 });
     testAuth.client = client;

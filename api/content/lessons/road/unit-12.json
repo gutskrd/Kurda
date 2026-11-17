@@ -667,7 +667,7 @@
                     "prompt": "Lîstik li ku ye?",
                     "options": [
                       "Li ber sobeyê.",
-                      "Li ser banê.",
+                      "Li ser banî.",
                       "Li Hewlêrê."
                     ],
                     "correctIndex": 0
@@ -929,7 +929,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Me êvareke xweş derbas kir, û Dapîr çepik lêxist. Xezal dê bêriya şanoyên me bike.",
+                        "text": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezal dê bêriya şanoyên me bike.",
                         "en": "We spent a lovely evening, and Dapîr clapped. Xezal will miss our plays."
                       }
                     ],
@@ -1189,7 +1189,7 @@
           "position": 2,
           "titleKu": "Mêvan hatin",
           "titleEn": "Guests have come",
-          "grammarMd": "**Wî got ku ew birçî ye.** He said he was hungry. Kurdish reports speech with **ku** and keeps the speaker’s own tense: *Wî got ku ew ê bê.* He said he would come.\n\n- A question is reported with **ka**: *Wê pirsî ka tu kengî têyî.* She asked when you were coming.\n- **gelo** I wonder: *Gelo ew kî ne?* I wonder who they are?",
+          "grammarMd": "**Wî got ku ew birçî ye.** He said he was hungry. Kurdish reports speech with **ku** and keeps the speaker’s own tense: *Wî got ku ew ê bê.* He said he would come.\n\n- A question is reported with **ka**: *Wê pirsî ka tu kengî têyî.* She asked when you were coming.\n- **gelo** I wonder: *Gelo ew kî ne?* I wonder who they are.",
           "lessons": [
             {
               "key": "u12s2l1",
@@ -1305,7 +1305,7 @@
                     "options": [
                       "Erê, werin rûnin!",
                       "Na, ev dek e.",
-                      "Erê, ew li ser banê ye."
+                      "Erê, ew li ser banî ye."
                     ],
                     "correctIndex": 0
                   }
@@ -2204,7 +2204,7 @@
                     "voice": "hamo",
                     "prompt": "Di Sibatê de berf sivik bû, paşê sekinî, û mêvan çûn.",
                     "options": [
-                      "In February the snow got light, then it stopped, and the guests left.",
+                      "In February the snow eased, then it stopped, and the guests left.",
                       "In February the snow got heavy, and the guests stayed.",
                       "In January the snow stopped, and the guests arrived."
                     ],
@@ -2375,7 +2375,7 @@
           "position": 3,
           "titleKu": "Gotinên pêşiyan",
           "titleEn": "Proverbs",
-          "grammarMd": "**Av dilop dilop dibe gol.** Drop by drop, water becomes a lake. Proverbs speak in the plain present, because they are true every day: *dibe* becomes, *derdixe* brings out.\n\n- **çiqas … be** however … it may be: *Çiya çiqas bilind be, wê rê pê keve.* However high the mountain, a road will cross it.\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.",
+          "grammarMd": "**Av dilop dilop dibe gol.** Drop by drop, water becomes a lake. Proverbs speak in the plain present, because they are true every day: *dibe* becomes, *derdixe* brings out.\n\n- **çiqas … be** however … it may be (often with **jî**: *çiqas bilind be jî*): *Çiya çiqas bilind be, wê rê pê keve.* However high the mountain, a road will cross it.\n- *Mêvan mêvanê Xwedê ye.* The guest is God’s guest.",
           "lessons": [
             {
               "key": "u12s3l1",
@@ -2433,9 +2433,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Rovî çi diçîne?",
+                    "say": "Rovî çi berhev dike?",
                     "voice": "hamo",
-                    "prompt": "Rovî çi diçîne?",
+                    "prompt": "Rovî çi berhev dike?",
                     "options": [
                       "Simbilan.",
                       "Nîvişkê.",
@@ -2895,8 +2895,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Dapîr got: av dilop dilop dibe gol.",
-                    "reference": "Dapîr got: av dilop dilop dibe gol."
+                    "prompt": "Dapîrê got: av dilop dilop dibe gol.",
+                    "reference": "Dapîrê got: av dilop dilop dibe gol."
                   }
                 },
                 {
@@ -3444,7 +3444,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Dapîr starts singing with my father.",
+                    "prompt": "Dapîr starts along with my father.",
                     "options": [
                       "Dapîr bi bavê min re dest pê dike.",
                       "Dapîr bi bavê min re dest pê dikim.",
@@ -4155,7 +4155,7 @@
             {
               "key": "u12s4l3",
               "position": 3,
-              "titleKu": "Li ber deriyê şîn",
+              "titleKu": "Li ber dergehê şîn",
               "titleEn": "At the blue gate",
               "exercises": [
                 {
@@ -4212,7 +4212,7 @@
                     "prompt": "Otobûs li ku ye?",
                     "options": [
                       "Li ber dergehê şîn e.",
-                      "Li ser banê ye.",
+                      "Li ser banî ye.",
                       "Li zozanan e."
                     ],
                     "correctIndex": 0
@@ -4345,13 +4345,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez jî dibêjim: rêya te vekirî be, Xezo! Xwedê ji te razî be!",
-                        "en": "And I say: safe journey, Xezo! May God be pleased with you!"
+                        "text": "Ez jî dibêjim: oxir be, Xezo! Rêya te vekirî be, Xwedê ji te razî be!",
+                        "en": "And I say: farewell, Xezo! Safe journey, and may God be pleased with you!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Û ew dibêje: oxir be, bi silametî bimînin! Dûrî ne tiştek e.",
-                        "en": "And she says: farewell, stay safe! Distance is nothing."
+                        "text": "Û ew dibêje: bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
+                        "en": "And she says: goodbye, stay well! Distance is nothing."
                       },
                       {
                         "speaker": 1,

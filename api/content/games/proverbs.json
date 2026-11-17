@@ -138,7 +138,7 @@
           "note": "Soranî form recorded by Alaaddin Sajadi, who explains that with a sweet tongue a person can get past every obstacle."
         }
       ],
-      "exampleKu": "Baran ji ber dengê bilind ê muzîkê bi hêrs li deriyê cîran xist, lê kesî derî venekir. Diya wî got: “Bi aramî silav bide û lava bike. Zimanê şîrîn mar ji qulê derdixe.” Baran careke din bi nermî li derî xist, û cîran bi rûkenî deng nizm kir.",
+      "exampleKu": "Baran ji ber dengê bilind ê muzîkê bi hêrs li deriyê cîran xist, lê kesî derî venekir. Diya wî got: “Bi aramî silav bide û rica bike. Zimanê şîrîn mar ji qulê derdixe.” Baran careke din bi nermî li derî xist, û cîran bi rûkenî deng nizm kir.",
       "translations": {
         "ckb": {
           "translation": "زمانی شیرین مار لە کون دەردەهێنێت.",
@@ -239,7 +239,7 @@
     {
       "slug": "kmr-ciya-ciqas-bilind",
       "dialect": "kmr",
-      "text": "Çiya çiqas bilind be, rê pê dikeve.",
+      "text": "Çiya çiqas bilind be, wê rê pê keve.",
       "themes": [
         "courage",
         "patience"
@@ -248,10 +248,10 @@
       "region": null,
       "variants": [
         {
-          "text": "Çiya çiqas bilind be, wê rê pê keve.",
+          "text": "Çiya çiqas bilind be, rê pê dikeve.",
           "dialect": "kmr",
           "region": null,
-          "note": "The same proverb with the future (wê … keve), from another Kurmancî list; the form the course teaches."
+          "note": "The same proverb in the present tense, the form other Kurmancî lists give."
         },
         {
           "text": "Çiya çiqas bilind be, dîsa rojekê riya mirov pê dikeve.",
@@ -260,7 +260,7 @@
           "note": "Amed Tîgrîs, entry 1038 (scanned text, normalised here): “one day a person’s road will still pass over it”."
         }
       ],
-      "exampleKu": "Xezal du caran ji ezmûna ajotinê derbas nebû û dixwaze dev jê berde. Bavê wê dibêje: “Keça min, çiya çiqas bilind be, rê pê dikeve. Hefteya bê dîsa biceribîne.”",
+      "exampleKu": "Xezal du caran ji ezmûna ajotinê derbas nebû û dixwaze dev jê berde. Bavê wê dibêje: “Keça min, çiya çiqas bilind be, wê rê pê keve. Hefteya bê dîsa biceribîne.”",
       "translations": {
         "ckb": {
           "translation": "چیا هەرچەندە بەرز بێت، ڕێگای پێدا دەکەوێت.",
@@ -686,60 +686,60 @@
           "note": "Another ending: “the tree would not fall”."
         }
       ],
-      "exampleKu": "Firoşkar nedizanî çima pere ji kasê winda dibin, heta ku dît ku şagirtê wî yê herî bawerpêkirî ye. Jina wî got: “Kurmê darê ne ji darê be, dar narize.”",
+      "exampleKu": "Firoşkar nedizanî çima pere ji kasê winda dibin, heta ku dît ku diz şagirtê wî yê herî bawerpêkirî bû. Jina wî got: “Kurmê darê ne ji darê be, dar narize.”",
       "translations": {
         "ckb": {
           "translation": "ئەگەر کرمی دار لە خودی دارەکە نەبێت، دار ناڕزێت.",
           "meaning": "خراپترین زیان لە ناوەوە دێت، لە یەکێک لە خۆت.",
-          "explanation": "دار زیاتر بە کرمێک دەڕووخێت کە لە ناو داری خۆیدا پەیدا دەبێت، نەک بە با. بۆ ناپاکیی خزمێک، هاوکارێک یان ئەندامێکی کۆمەڵ دەگوترێت، و زۆر جاریش بۆ ناکۆکییەکانی ناو خودی کوردان.",
+          "explanation": "دار زیاتر بە کرمێک دەڕووخێت کە لە ناو داری خۆیدا پەیدا دەبێت، نەک بە با. بۆ ناپاکیی خزمێک، هاوکارێک یان ئەندامێکی کۆمەڵ دەگوترێت.",
           "example": "فرۆشیارەکە تێناگات بۆچی پارە لە قاسەکە ون دەبێت، تا دەزانێت کە شاگردە هەرە متمانەپێکراوەکەی خۆیەتی. ژنەکەی دەڵێت: «ئەگەر کرمی دار لە خودی دارەکە نەبێت، دار ناڕزێت.»",
-          "context": "نووسەران زۆر جار کاتی باسکردنی ململانێی ناوخۆیی دەیهێننەوە؛ ستوونێکی ڕۆژنامەیەک تەنها ناوی «کرمی دار»ـە."
+          "context": "نووسەران زۆر جار کاتی باسکردنی ململانێی ناوخۆیی دەیهێننەوە."
         },
         "en": {
           "translation": "If the worm were not from the tree itself, the tree would not rot.",
           "literal": "If the tree’s worm is not from the tree, the tree does not rot.",
           "meaning": "The worst harm comes from within, from one of your own.",
-          "explanation": "A tree is not brought down by the wind so much as by the worm that grows inside its own wood. Kurds say it about betrayal by a relative, a colleague or a member of the community, and often about divisions among Kurds themselves.",
+          "explanation": "A tree is not brought down by the wind so much as by the worm that grows inside its own wood. Kurds say it about betrayal by a relative, a colleague or a member of the community.",
           "example": "The shopkeeper can’t understand why money keeps vanishing from the till, until he finds that it is his most trusted apprentice. His wife says: “If the worm were not from the tree itself, the tree would not rot.”",
-          "context": "Writers often quote it when describing internal conflict; a newspaper column is titled simply “Kurmê darê”."
+          "context": "Writers often quote it when describing internal conflict."
         },
         "nl": {
           "translation": "Als de worm niet uit de boom zelf kwam, zou de boom niet rotten.",
           "meaning": "De ergste schade komt van binnenuit, van iemand van je eigen kring.",
-          "explanation": "Een boom gaat niet zozeer door de wind ten onder als wel door de worm die in zijn eigen hout groeit. Koerden zeggen het over verraad door een familielid, collega of iemand uit de gemeenschap, en vaak over verdeeldheid onder Koerden zelf.",
+          "explanation": "Een boom gaat niet zozeer door de wind ten onder als wel door de worm die in zijn eigen hout groeit. Koerden zeggen het over verraad door een familielid, collega of iemand uit de gemeenschap.",
           "example": "De winkelier begrijpt niet waarom er steeds geld uit de kassa verdwijnt, tot hij ontdekt dat het zijn meest vertrouwde leerling is. Zijn vrouw zegt: “Als de worm niet uit de boom zelf kwam, zou de boom niet rotten.”"
         },
         "de": {
           "translation": "Käme der Wurm nicht aus dem Baum selbst, würde der Baum nicht faulen.",
           "meaning": "Der schlimmste Schaden kommt von innen, von einem der Eigenen.",
-          "explanation": "Ein Baum fällt weniger durch den Wind als durch den Wurm, der in seinem eigenen Holz wächst. Man sagt es über Verrat durch Verwandte, Kollegen oder jemanden aus der Gemeinschaft, oft auch über die Zerstrittenheit unter Kurden selbst.",
+          "explanation": "Ein Baum fällt weniger durch den Wind als durch den Wurm, der in seinem eigenen Holz wächst. Man sagt es über Verrat durch Verwandte, Kollegen oder jemanden aus der Gemeinschaft.",
           "example": "Der Ladenbesitzer versteht nicht, warum ständig Geld aus der Kasse verschwindet, bis er merkt, dass es sein vertrautester Lehrling ist. Seine Frau sagt: „Käme der Wurm nicht aus dem Baum selbst, würde der Baum nicht faulen.“"
         },
         "es": {
           "translation": "Si el gusano no saliera del propio árbol, el árbol no se pudriría.",
           "meaning": "El peor daño viene de dentro, de uno de los tuyos.",
-          "explanation": "A un árbol no lo derriba tanto el viento como el gusano que crece en su propia madera. Se dice de la traición de un pariente, un colega o alguien de la comunidad, y a menudo de las divisiones entre los propios kurdos.",
+          "explanation": "A un árbol no lo derriba tanto el viento como el gusano que crece en su propia madera. Se dice de la traición de un pariente, un colega o alguien de la comunidad.",
           "example": "El tendero no entiende por qué desaparece dinero de la caja, hasta que descubre que es su aprendiz de más confianza. Su mujer le dice: «Si el gusano no saliera del propio árbol, el árbol no se pudriría».",
           "equivalent": "No hay peor cuña que la del mismo palo."
         },
         "fr": {
           "translation": "Si le ver ne venait pas de l’arbre lui-même, l’arbre ne pourrirait pas.",
           "meaning": "Le pire mal vient de l’intérieur, de l’un des siens.",
-          "explanation": "Un arbre tombe moins sous le vent que sous le ver qui naît dans son propre bois. On le dit de la trahison d’un parent, d’un collègue ou d’un membre de la communauté, et souvent des divisions entre Kurdes eux-mêmes.",
+          "explanation": "Un arbre tombe moins sous le vent que sous le ver qui naît dans son propre bois. On le dit de la trahison d’un parent, d’un collègue ou d’un membre de la communauté.",
           "example": "Le commerçant ne comprend pas pourquoi l’argent disparaît de la caisse, jusqu’au jour où il découvre que c’est son apprenti le plus fidèle. Sa femme lui dit : « Si le ver ne venait pas de l’arbre lui-même, l’arbre ne pourrirait pas. »",
           "equivalent": "On n’est jamais trahi que par les siens."
         },
         "tr": {
           "translation": "Ağacın kurdu ağacın kendisinden olmasa, ağaç çürümez.",
           "meaning": "En büyük zarar içeriden, insanın kendi çevresinden gelir.",
-          "explanation": "Ağacı rüzgârdan çok kendi odununda türeyen kurt yıkar. Bir akrabanın, iş arkadaşının ya da topluluktan birinin ihaneti için, çoğu zaman da Kürtlerin kendi aralarındaki bölünmeler için söylenir.",
+          "explanation": "Ağacı rüzgârdan çok kendi odununda türeyen kurt yıkar. Bir akrabanın, iş arkadaşının ya da topluluktan birinin ihaneti için söylenir.",
           "example": "Dükkâncı kasadan neden sürekli para eksildiğini anlamıyor, ta ki en güvendiği çırağı olduğunu görene dek. Karısı diyor ki: “Ağacın kurdu ağacın kendisinden olmasa, ağaç çürümez.”",
           "equivalent": "Baltaya sap olmasa ağaç kesilmez."
         },
         "ar": {
           "translation": "لو لم تكن دودةُ الشجرةِ منها، لما نَخِرَت الشجرة.",
           "meaning": "أشدّ الأذى يأتي من الداخل، من أحد أهلك.",
-          "explanation": "لا تسقط الشجرة بالريح بقدر ما تسقط بالدودة التي تنشأ في خشبها. يقوله الكرد في خيانة قريب أو زميل أو فرد من الجماعة، وكثيرًا ما يقولونه في الانقسامات بين الكرد أنفسهم.",
+          "explanation": "لا تسقط الشجرة بالريح بقدر ما تسقط بالدودة التي تنشأ في خشبها. يقوله الكرد في خيانة قريب أو زميل أو فرد من الجماعة.",
           "example": "لا يفهم صاحب الدكان لماذا يختفي المال من الصندوق، حتى يكتشف أن الفاعل صبيّه الأكثر ثقة. تقول زوجته: «لو لم تكن دودة الشجرة منها، لما نخرت الشجرة.»",
           "equivalent": "حاميها حراميها."
         }
@@ -1208,7 +1208,8 @@
           "note": "Kurmancî proverb lists give “Bavê mirov pişta mirov e” next to “Bav ber bi zarok diçe…”, most likely in this appendix (section B)."
         }
       ],
-      "notes": "Weakest attribution in the set: the line came from a search summary that did not name its page. Confirm the saying and its source before publishing, or drop it."
+      "notes": "Weakest attribution in the set: the line came from a search summary that did not name its page. Confirm the saying and its source before publishing, or drop it.",
+      "status": "held"
     },
     {
       "slug": "kmr-keda-helal",
@@ -1310,7 +1311,7 @@
       "tradition": "traditional",
       "region": null,
       "variants": [],
-      "exampleKu": "Hemû havînê Berfînê li bostanê xebitî, dema ku hevalên wê li ber deryayê bûn. Zivistanê, dema ku wê bi pereyên xwe kompîturek kirî, diya wê got: “Destê xebitî li ser zikê têr e.”",
+      "exampleKu": "Hemû havînê Berfîn li bostanê xebitî, dema ku hevalên wê li ber deryayê bûn. Zivistanê, dema ku wê bi pereyên xwe kompîturek kirî, diya wê got: “Destê xebitî li ser zikê têr e.”",
       "translations": {
         "ckb": {
           "translation": "دەستی ماندوو لەسەر سکی تێرە.",
@@ -1732,7 +1733,8 @@
           "note": "Given as “Dinya guleke, bêhn bike û bide hevalê xwe” with a German rendering."
         }
       ],
-      "notes": "Single community-site witness; confirm the saying is known and that it is a folk proverb rather than a poet’s line."
+      "notes": "Single community-site witness; confirm the saying is known and that it is a folk proverb rather than a poet’s line.",
+      "status": "held"
     },
     {
       "slug": "kmr-mirov-bes-bi-axe",
@@ -1812,7 +1814,8 @@
           "note": "Row “مروڤ بەس ب ئاخێ تێر دبیت / mirov bes bi axê têr di bît”, English “People just by soil will be full” (read in full)"
         }
       ],
-      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. The main text is normalised to standard Latin Kurmancî. As recorded in Arabic script: مروڤ بەس ب ئاخێ تێر دبیت (Badînî form in Arabic script as recorded (Latin there: “mirov bes bi axê têr di bît”))."
+      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. The main text is normalised to standard Latin Kurmancî. As recorded in Arabic script: مروڤ بەس ب ئاخێ تێر دبیت (Badînî form in Arabic script as recorded (Latin there: “mirov bes bi axê têr di bît”)).",
+      "status": "held"
     },
     {
       "slug": "kmr-heta-niva-desti",
@@ -1894,7 +1897,8 @@
           "note": "Row “حەتا نیڤا دەستی رەش نە بیت، تاما دەڤی خوش نا بیت”, English “Until the middle of the hand is black, the taste of the mouth won’t be good” (read in full)"
         }
       ],
-      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. Normalised to standard Latin Kurmancî (bît → be, xoş → xweş). The walnut image in the explanation is mine; the proverb only says the palm is black. As recorded in Arabic script: حەتا نیڤا دەستی ڕەش نەبیت، تاما دەڤی خۆش نابیت (Badînî form in Arabic script as recorded (Latin there: “ḧeta nîva destî reş ne bît, tama devî xoş na bît”))."
+      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. Normalised to standard Latin Kurmancî (bît → be, xoş → xweş). The walnut image in the explanation is mine; the proverb only says the palm is black. As recorded in Arabic script: حەتا نیڤا دەستی ڕەش نەبیت، تاما دەڤی خۆش نابیت (Badînî form in Arabic script as recorded (Latin there: “ḧeta nîva destî reş ne bît, tama devî xoş na bît”)).",
+      "status": "held"
     },
     {
       "slug": "kmr-ezmane-direj",
@@ -1974,7 +1978,8 @@
           "note": "Row “ئەزمانێ درێژ داركوكێ سەرێ خودانییە / ezmanê dirêj darkukê serê xodanîye”, English “The long tongue is his own head’s woodpecker” (read in full)"
         }
       ],
-      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. Badînî words kept (ezman for ziman, darkuk for darkutk, xwedanî); only spelling of xodanî → xwedanî is normalised. The ckb rendering uses دارکوتکە; check the Soranî word for woodpecker. As recorded in Arabic script: ئەزمانێ درێژ دارکوکێ سەرێ خودانییە (Badînî form in Arabic script as recorded)."
+      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. Badînî words kept (ezman for ziman, darkuk for darkutk, xwedanî); only spelling of xodanî → xwedanî is normalised. The ckb rendering uses دارکوتکە; check the Soranî word for woodpecker. As recorded in Arabic script: ئەزمانێ درێژ دارکوکێ سەرێ خودانییە (Badînî form in Arabic script as recorded).",
+      "status": "held"
     },
     {
       "slug": "kmr-sam-sekir-e",
@@ -2052,7 +2057,8 @@
           "note": "Row “شام شەكرە بەلێ وەلات شرینترە / şam şekire belê welat şirîntire”, English “Damascus is sugar but homeland is sweeter” (read in full)"
         }
       ],
-      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. It is probably known well beyond Behdînan, but only this witness was read. Belê (but) kept as recorded; standard Kurmancî would say lê. The trade-route explanation of Şam is mine. As recorded in Arabic script: شام شەکرە بەلێ وەلات شرینترە (Badînî form in Arabic script as recorded (Latin there: “şam şekire belê welat şirîntire”))."
+      "notes": "Only witness is an openly licensed Behdînî dataset that names no original source and mixes folk proverbs with translated English sayings; this line reads as a genuine folk proverb, but a native speaker must confirm it before it is published. It is probably known well beyond Behdînan, but only this witness was read. Belê (but) kept as recorded; standard Kurmancî would say lê. The trade-route explanation of Şam is mine. As recorded in Arabic script: شام شەکرە بەلێ وەلات شرینترە (Badînî form in Arabic script as recorded (Latin there: “şam şekire belê welat şirîntire”)).",
+      "status": "held"
     },
     {
       "slug": "ckb-berd-le-cey-xoy",

@@ -24,7 +24,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { LessonPath, LessonPathSkeleton, PinnedUnit, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
 import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
-import { UnitRailSheet } from '../coursemap/PathWorld';
+import { UnitRailSheet, type RailSection } from '../coursemap/PathWorld';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
@@ -66,17 +66,20 @@ import { PressableScale } from '../theme/MotionParts';
  * (LearnBar), where it stays in sight while the path scrolls.
  *
  * The path is one course at a time, with a switch between courses when there
- * are several. It is told which of its units are near the screen, which can
- * be seen and which is in the middle of it, so it draws and moves only those;
- * and a unit banner's map button opens the rail of every unit, a tap on one
- * scrolling there. When it first appears it scrolls to the current skill, and a
- * button brings that back once it has been scrolled away. A course whose map
- * could not be loaded stays in the switch, saying so, with a way to try again.
+ * are several, and one section of the course at a time (the rest folded into
+ * cards round it). It is told which of its units are near the screen, which
+ * can be seen and which is in the middle of it, so it draws and moves only
+ * those; and a unit heading's map button opens the rail of every unit in its
+ * section, a tap on one opening its section and scrolling there. When it first
+ * appears it scrolls to the current skill, and a button brings that back once
+ * it has been scrolled away. A course whose map could not be loaded stays in
+ * the switch, saying so, with a way to try again.
  *
  * Learn's moments show here, one at a time: a freeze that kept the streak is
- * said once (`useKeptStreak`, from the `streak` the bar read), and while
- * reminders are off a slim banner offers them (ReminderNudge) — on a visit
- * that has no other moment.
+ * said once (`useKeptStreak`, from the `streak` the bar read), and once
+ * reminders have been turned down on a phone that will not ask again, a slim
+ * banner says where they are turned on (ReminderNudge) — on a visit that has
+ * no other moment.
  *
  * Pulled down, it reads the course again, and `onRefresh` has the bar read
  * the streak again with it.
@@ -282,14 +285,25 @@ export function LessonsView({
   const seenUnits = useMemo(() => (seenKey === null ? null : new Set(seenKey.split(','))), [seenKey]);
   const [rail, setRail] = useState(false);
   const openRail = useCallback(() => setRail(true), []);
+  // every unit of the course in its section, as the path tells it, for the rail
+  const [railSections, setRailSections] = useState<RailSection[]>([]);
+  // a unit picked on the rail: the path opens its section, then says where it is
+  const [reveal, setReveal] = useState<{ unitId: string; at: number } | null>(null);
   const toUnit = (unitId: string): void => {
     setRail(false);
-    const unit = units.find((u) => u.unitId === unitId);
-    if (unit && pathTopOnPage !== null) {
-      touched.current = true;
-      scroller.current?.scrollTo({ y: Math.max(0, pathTopOnPage + unit.top - spacing.sm), animated: !reduceMotion });
-    }
+    setReveal({ unitId, at: Date.now() });
   };
+  const pathTopRef = useRef(pathTopOnPage);
+  pathTopRef.current = pathTopOnPage;
+  const onReveal = useCallback(
+    (y: number) => {
+      const top = pathTopRef.current;
+      if (top === null) return;
+      touched.current = true;
+      scroller.current?.scrollTo({ y: Math.max(0, top + y - spacing.sm), animated: !reduceMotion });
+    },
+    [reduceMotion],
+  );
 
   const lastUnit = units[units.length - 1];
   const pinned =
@@ -353,7 +367,7 @@ export function LessonsView({
             />
             {/* the lessons' exercises with a screen of their own, while they can be done (practice/exercises.ts); the hub lists them too */}
             {exercises.map((e) => (
-              <ToolTile key={e.key} icon={e.icon} title={t(e.title)} titleLines={2} detail={t(e.detail)} onPress={() => navigation.navigate(e.route)} />
+              <ToolTile key={e.key} icon={e.icon} title={t(e.title)} detail={t(e.detail)} onPress={() => navigation.navigate(e.route)} />
             ))}
           </View>
           {/* today's three quests, slim, under the tools: a chest waiting shows here */}
@@ -379,13 +393,10 @@ export function LessonsView({
                       onPress={() => setChosen(c.course.id)}
                       accessibilityRole="button"
                       accessibilityState={{ selected: on }}
-                      style={({ pressed }) => [
-                        styles.chip,
-                        on ? styles.chipOn : null,
-                        { backgroundColor: on ? 'transparent' : colors.controlTrack, borderColor: colors.textPrimary, opacity: pressed ? pressedDim : 1 },
-                      ]}
+                      // the course you are on is a wash of the app's violet with its name in the violet, as the tab you are on is
+                      style={({ pressed }) => [styles.chip, { backgroundColor: on ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                     >
-                      <Text style={[styles.chipText, { color: on ? colors.textPrimary : colors.textSecondary }]} numberOfLines={1}>
+                      <Text style={[styles.chipText, dir.free, { color: on ? colors.primary : colors.textSecondary }]} numberOfLines={1}>
                         {c.map?.course.title ?? c.course.title}
                       </Text>
                     </Pressable>
@@ -394,7 +405,7 @@ export function LessonsView({
               </View>
             ) : null}
             {courses.length === 1 ? (
-              <Text style={[styles.courseTitle, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
+              <Text style={[styles.courseTitle, dir.free, { color: colors.textPrimary }]} accessibilityRole="header">
                 {entry?.map?.course.title ?? entry?.course.title}
               </Text>
             ) : null}
@@ -406,17 +417,20 @@ export function LessonsView({
                   due={due ?? 0}
                   onFocus={onFocus}
                   onUnits={setUnits}
+                  onCourse={setRailSections}
                   near={nearUnits}
                   seen={seenUnits}
                   inView={inView}
                   onOpenRail={openRail}
+                  reveal={reveal}
+                  onReveal={onReveal}
                 />
               </View>
             ) : entry?.map ? (
               // the path waits for the review count, which places review on it
               <LessonPathSkeleton />
             ) : entry && !entry.map ? (
-              <View style={styles.failed}>
+              <View style={[styles.failed, { alignItems: dir.rtl ? 'flex-end' : 'flex-start' }]}>
                 <Text style={[styles.failedText, dir.text, { color: colors.textSecondary }]}>{t('learn.mapFailed')}</Text>
                 <ClayButton label={t('common.retry')} variant="outline" onPress={() => setReloadKey((k) => k + 1)} />
               </View>
@@ -461,12 +475,7 @@ export function LessonsView({
         </View>
       ) : null}
 
-      <UnitRailSheet
-        open={rail}
-        units={units.map((u) => ({ unitId: u.unitId, number: u.number, title: u.title, tone: u.tone, done: u.done, total: u.total, here: u.here }))}
-        onClose={() => setRail(false)}
-        onPick={toUnit}
-      />
+      <UnitRailSheet open={rail} sections={railSections} onClose={() => setRail(false)} onPick={toUnit} />
 
       <KeptStreakSheet
         streak={kept.shown}
@@ -517,10 +526,11 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
 
   return (
     <View style={[styles.hero, { backgroundColor: colors.surface }]} testID="learn-continue">
-      <Text style={[styles.heroWhere, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+      {/* the course's own words, in whatever language it was written in: lined up with the page, read in their own direction */}
+      <Text style={[styles.heroWhere, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
         {where}
       </Text>
-      <Text style={[styles.heroTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2} accessibilityRole="header">
+      <Text style={[styles.heroTitle, step.kind === 'review' ? dir.text : dir.free, { color: colors.textPrimary }]} numberOfLines={2} accessibilityRole="header">
         {title}
       </Text>
       <View
@@ -530,7 +540,8 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
         accessibilityLabel={progress}
         accessibilityValue={{ min: 0, max: step.total, now: step.done }}
       >
-        <View style={[styles.barFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.gold }, dir.rtl && styles.barFillEnd]} />
+        {/* how far the course has come is a place on the road, not something won: the app's violet, as every other bar of progress */}
+        <View style={[styles.barFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.primary }, dir.rtl && styles.barFillEnd]} />
       </View>
       <Text style={[styles.heroProgress, dir.text, { color: colors.textSecondary }]}>{progress}</Text>
       <ClayButton label={button} tone="primary" size="large" onPress={go} style={styles.heroButton} />
@@ -600,6 +611,8 @@ function useStartEdge(): { alignItems: 'flex-start' | 'flex-end' } {
 const HERO_TITLE_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
 /** ClayButton's large size */
 const LARGE_BUTTON = 50;
+/** How much of the violet the chosen course's chip is, as the last two digits of its colour: the tab bar's own wash. */
+const CHOSEN_WASH = '1F';
 
 /** A few letters of each alphabet, in place of an icon: the alphabet's tile shows what it holds. */
 const LATIN_TEASER = { text: 'Aa Çç Êê', rtl: false } as const;
@@ -609,7 +622,6 @@ function ToolTile({
   icon,
   letters,
   title,
-  titleLines = 1,
   detail,
   highlight = false,
   onPress,
@@ -618,10 +630,8 @@ function ToolTile({
   /** letters to show where the icon would be */
   letters?: { text: string; rtl: boolean };
   title: string;
-  /** how many lines the title may take: an exercise's name is a phrase, which half a row cannot hold on one */
-  titleLines?: number;
   detail: string;
-  /** something is waiting in it (words due), said in gold as well as in words */
+  /** something is waiting in it (words due), said in the app's violet as well as in words */
   highlight?: boolean;
   onPress: () => void;
 }): React.JSX.Element {
@@ -641,7 +651,7 @@ function ToolTile({
     >
       {letters ? (
         <Text
-          style={[styles.tileLetters, { color: colors.goldText, writingDirection: letters.rtl ? 'rtl' : 'ltr' }]}
+          style={[styles.tileLetters, { color: colors.primary, writingDirection: letters.rtl ? 'rtl' : 'ltr' }]}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           maxFontSizeMultiplier={1.2}
@@ -651,11 +661,16 @@ function ToolTile({
       ) : icon ? (
         <Icon name={icon} size={24} color={colors.textPrimary} />
       ) : null}
-      <Text style={[styles.tileTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={titleLines}>
+      {/*
+        Half a row of a narrow phone holds "Letters and words" in few of the
+        nine languages on one line, and a name cut short is no name: a title
+        takes a second line and what is under it a third before either is cut.
+      */}
+      <Text style={[styles.tileTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
         {title}
       </Text>
       {detail ? (
-        <Text style={[styles.tileDetail, dir.text, { color: highlight ? colors.goldText : colors.textSecondary }]} numberOfLines={2}>
+        <Text style={[styles.tileDetail, dir.text, { color: highlight ? colors.primary : colors.textSecondary }]} numberOfLines={3}>
           {detail}
         </Text>
       ) : null}
@@ -696,10 +711,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   switcher: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.xs },
   chip: { minHeight: MIN_TOUCH_TARGET, maxWidth: '100%', paddingHorizontal: spacing.md, borderRadius: radii.pill, justifyContent: 'center' },
-  // the course you are in, drawn round, so it does not compete with the card's one button
-  chipOn: { borderWidth: 2 },
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  failed: { gap: spacing.sm, alignItems: 'flex-start', marginTop: spacing.xs },
+  failed: { gap: spacing.sm, marginTop: spacing.xs },
   failedText: { fontSize: typography.sizes.sm },
 
   pinned: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: spacing.xs, paddingHorizontal: layout.gutter },

@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Animated, AppState, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { GamesAvailability, PracticeHub, PracticeHubUnit, PracticeMode } from '@kurda/shared';
+import { hueSteps, type GamesAvailability, type PracticeHub, type PracticeHubUnit, type PracticeMode } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -27,20 +27,20 @@ import { useTheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { exercisesOf, type PhoneExercise } from './exercises';
-import { ROW_TONES, heroOf, heroTone, hubRows, practiceXpRange, type Hero, type HubRow, type Line } from './hub';
+import { ROW_HUES, heroOf, hubRows, practiceXpRange, type Hero, type HubRow, type Line } from './hub';
 
 /**
  * Practice's hub: the one thing most worth doing now, and every other kind of
  * practice a tap away.
  *
- * At the top, a card in colour with one button: the words due for review,
- * with how many; with none due, the unit finished last, to go back over; with
- * nothing to go back over, the hardest words again; and before any lesson,
- * the way to the lessons. Hamo stands at its end, glad to see you, and the
- * button says what a session pays. Under it, a row for each other kind —
- * mistakes, words, listening, speaking, a unit of your choice — its name and
- * one line, with a big badge in its own colour at the end that pops under the
- * finger. Two of the rows open an exercise with a screen of its own, Build a
+ * At the top, a card on the app's own pale violet with one button: the words
+ * due for review, with how many; with none due, the unit finished last, to go
+ * back over; with nothing to go back over, the hardest words again; and
+ * before any lesson, the way to the lessons. Hamo stands at its end, glad to
+ * see you, and the button says what a session pays. Under it, a row for each
+ * other kind — mistakes, words, listening, speaking, a unit of your choice —
+ * its name and one line, with a big badge in a hue of its own at the end that
+ * pops under the finger. Two of the rows open an exercise with a screen of its own, Build a
  * Kurdish Sentence after the words and Hear It, Find It after listening, each
  * there only while it can be done in the learner's Kurdish (exercises.ts).
  * The card and the rows rise in one after another as the hub arrives
@@ -129,7 +129,7 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('practice.title')} onBack={onExit} />
+      <ScreenHeader title={t('practice.title')} onBack={onExit} browse />
       <AsyncBoundary loading={!hub && !error} error={!hub ? error : null} onRetry={() => void load()} skeleton={<HubSkeleton />}>
         {() =>
           hub ? (
@@ -177,9 +177,12 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
 }
 
 /**
- * The card at the top, in the colour of what it offers (hub.ts `heroTone`):
- * what it is, how much, Hamo at its end, and one button that says what a
- * session pays. Hamo cheers as the card arrives and greets a tap; the words
+ * The card at the top, on the pale wash of the app's violet whatever it
+ * offers: what it is, how much, Hamo at its end, and one button that says
+ * what a session pays. It was painted in a colour of its own for each thing
+ * it could offer, a green one day and an ochre the next, with the button in a
+ * third colour on top; one quiet ground and the one violet button is the same
+ * card every day, and the button is what the eye goes to. Hamo cheers as the card arrives and greets a tap; the words
  * beside him say everything he would, so a screen reader passes him by. The
  * button pops once the card has settled: the way in, offered.
  */
@@ -192,10 +195,10 @@ function HeroCard({
   onStart: (mode: PracticeMode, unitId?: string) => void;
   onLessons: () => void;
 }): React.JSX.Element {
-  const { scheme } = useTheme();
+  const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
-  const tone = TONES[scheme][heroTone(hero)];
+  const violet = hueSteps(scheme, 'violet');
   const eyebrow = hero.kind === 'unit' ? t('practice.hub.unitReview', { n: formatNumber(hero.unit.number, locale) }) : hero.kind === 'none' ? null : t('learn.tools.review');
   const title =
     hero.kind === 'due'
@@ -228,18 +231,18 @@ function HeroCard({
   }, [pop.run]);
 
   return (
-    <View style={[styles.hero, { backgroundColor: tone.fill }]} testID="practice-hero">
+    <View style={[styles.hero, { backgroundColor: violet.wash }]} testID="practice-hero">
       <View style={[styles.heroTop, { flexDirection: dir.row }]}>
         <View style={styles.heroWords}>
           {eyebrow ? (
-            <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]} numberOfLines={1}>
+            <Text style={[styles.eyebrow, dir.text, { color: violet.deep }]} numberOfLines={1}>
               {eyebrow}
             </Text>
           ) : null}
-          <Text style={[styles.heroTitle, dir.text, { color: tone.ink }]} accessibilityRole="header">
+          <Text style={[styles.heroTitle, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
             {title}
           </Text>
-          <Text style={[styles.heroBody, dir.text, { color: tone.ink }]}>{body}</Text>
+          <Text style={[styles.heroBody, dir.text, { color: colors.textPrimary }]}>{body}</Text>
         </View>
         <View style={styles.heroCharacter} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <SpeakingCharacter speaker="hamo" player={null} playing={false} crop="half" height={CHARACTER_HEIGHT} flip={!dir.rtl} reaction="cheer" onPress={() => undefined} />
@@ -254,9 +257,10 @@ function HeroCard({
 
 /**
  * One kind of practice: its name and one line, and at the end a big badge in
- * its own colour with its glyph, which pops under the finger — the row
- * answers before the next screen does. A kind with nothing in it is dimmed,
- * its badge in grey. Memoised: the hub's rows are drawn again only when the
+ * its own hue — the hue's pale wash, with the glyph in its deep shade — which
+ * pops under the finger: the row answers before the next screen does. A kind
+ * with nothing in it is dimmed, its badge in grey. A line that says something
+ * is waiting is in the app's violet, as everything to be acted on is. Memoised: the hub's rows are drawn again only when the
  * hub changes, not as the screen's own state does.
  */
 const PracticeRow = memo(function PracticeRow({ row, detail, onPress }: { row: HubRow; detail: string; onPress: (row: HubRow) => void }): React.JSX.Element {
@@ -267,7 +271,7 @@ const PracticeRow = memo(function PracticeRow({ row, detail, onPress }: { row: H
   const off = row.action === null;
   const title = t(row.title);
   const glyph = Math.round(26 * scale);
-  const tone = TONES[scheme][ROW_TONES[row.key]];
+  const hue = hueSteps(scheme, ROW_HUES[row.key]);
   const rest = REST[scheme];
   const pop = usePop();
   return (
@@ -284,15 +288,15 @@ const PracticeRow = memo(function PracticeRow({ row, detail, onPress }: { row: H
     >
       <View style={styles.rowWords}>
         <Text style={[styles.rowTitle, dir.text, { color: off ? colors.textSecondary : colors.textPrimary }]}>{title}</Text>
-        <Text style={[styles.rowDetail, dir.text, { color: row.waiting ? colors.goldText : colors.textSecondary }]}>{detail}</Text>
+        <Text style={[styles.rowDetail, dir.text, { color: row.waiting ? colors.primary : colors.textSecondary }]}>{detail}</Text>
       </View>
       <Animated.View
         style={[
           styles.rowBadge,
-          { width: glyph + BADGE_ROOM, height: glyph + BADGE_ROOM, backgroundColor: off ? rest.fill : tone.fill, transform: [{ scale: pop.scale }] },
+          { width: glyph + BADGE_ROOM, height: glyph + BADGE_ROOM, backgroundColor: off ? rest.fill : hue.wash, transform: [{ scale: pop.scale }] },
         ]}
       >
-        <Icon name={row.icon} size={glyph} color={off ? rest.ink : tone.ink} />
+        <Icon name={row.icon} size={glyph} color={off ? rest.ink : hue.deep} />
       </Animated.View>
     </PressableScale>
   );
@@ -388,7 +392,7 @@ const styles = StyleSheet.create({
   heroWords: { flex: 1, gap: spacing.xs, alignSelf: 'center' },
   eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   heroTitle: { ...display(typography.sizes.lg) },
-  heroBody: { fontSize: typography.sizes.sm, lineHeight: 20, opacity: 0.9 },
+  heroBody: { fontSize: typography.sizes.sm, lineHeight: 20, opacity: 0.82 },
   // he stands at the card's foot, waist at its padding, so the button sits under his hands
   heroCharacter: { marginBottom: -(spacing.md + 4) + spacing.xs },
 

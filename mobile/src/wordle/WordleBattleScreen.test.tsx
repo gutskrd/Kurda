@@ -8,6 +8,7 @@ import type { BattleState } from './battleApi';
 import { WordleBattleScreen } from './WordleBattleScreen';
 import { backOut, navigation } from '../play/testing/navigation';
 import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
+import { reportGameFinished } from '../feedback/gameFinished';
 
 vi.mock('react-native', () => import('react-native-web'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -17,6 +18,16 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
+vi.mock('../feedback/gameFinished', () => ({ reportGameFinished: vi.fn(), leftResults: vi.fn() }));
+
+/** The events the battle listens to, sent by a test: what tells it the battle changed. */
+const userEvents = vi.hoisted(() => ({ listeners: new Set<(ev: Record<string, unknown>) => void>() }));
+vi.mock('../realtime/useUserEvents', () => ({
+  useUserEvents: (handler: (ev: Record<string, unknown>) => void) => {
+    userEvents.listeners.add(handler);
+  },
+}));
+const changed = (): void => userEvents.listeners.forEach((h) => h({ type: 'play_changed', game: 'wordle-battle', lobbyId: 'b1' }));
 
 /** Answers every dialog with the button that has this style (the one that acts, or the one that stays). */
 function answerAlerts(style: AlertButton['style']) {
@@ -204,6 +215,76 @@ describe('WordleBattleScreen', () => {
       expect(alert.mock.calls[0]?.[0]).toBe('Leave this game?');
       expect(alert.mock.calls[0]?.[1]).toBe('The game carries on without you.');
       expect(onExit).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  /*
+   * The rating box comes with the results, as a rhyme match's does: it used to
+   * be asked for when the player's own board ended, and sat over the board and
+   * the opponents' progress while the battle was still being played.
+   */
+  it('reports a battle played here as finished once its results are in, not when the player’s own board ends', async () => {
+    vi.mocked(reportGameFinished).mockClear();
+    const solvedNow = lobby({ status: 'active', code: null, me: { guesses: [], keyboard: {}, status: 'done', solved: true, remainingAttempts: 4 } });
+    let state: BattleState = lobby({ status: 'active', code: null });
+    const client = fakeClient({
+      'GET /wordle/battles/b1': () => ok(state),
+      'GET /wordle/battles/b1/results': ok({ id: 'b1', target: 'darê', difficulty: 'medium', ranking: [{ userId: 'me', isMe: true, rank: 1, solved: true, guessCount: 2, progress: 5, xpAwarded: 20 }] }),
+      'GET /play/invites': ok({ incoming: [], outgoing: [] }),
+      'GET /play/wordle-battle/b1/rematch': ok({ state: 'none' }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<WordleBattleScreen id="b1" onExit={() => undefined} />);
+    expect(await screen.findByLabelText('Kurdish keyboard')).toBeTruthy();
+    // the player's own board is done while the others play on: nothing is reported yet
+    state = solvedNow;
+    await act(async () => changed());
+    expect(await screen.findByText(/You solved it/)).toBeTruthy();
+    expect(reportGameFinished).not.toHaveBeenCalled();
+    // the battle ends, and its results arrive
+    state = { ...solvedNow, status: 'finished' };
+    await act(async () => changed());
+    expect(await screen.findByText('You won!')).toBeTruthy();
+    await waitFor(() => expect(reportGameFinished).toHaveBeenCalledWith({ moment: 'won' }));
+    expect(reportGameFinished).toHaveBeenCalledTimes(1);
+  });
+
+  /* The word everyone raced for is the one thing a battle teaches: what it means is said under it. */
+  describe('the word, once the battle is over', () => {
+    const finished = (meanings: Record<string, string> | undefined) => {
+      testAuth.client = fakeClient({
+        'GET /wordle/battles/b1': ok(lobby({ status: 'finished', code: null, target: 'kar' })),
+        'GET /wordle/battles/b1/results': ok({
+          id: 'b1',
+          target: 'kar',
+          ...(meanings ? { meanings } : {}),
+          difficulty: 'medium',
+          ranking: [{ userId: 'me', isMe: true, rank: 1, solved: true, guessCount: 3, progress: 3, xpAwarded: 20 }],
+        }),
+        'GET /play/invites': ok({ incoming: [], outgoing: [] }),
+        'GET /play/wordle-battle/b1/rematch': ok({ state: 'none' }),
+      });
+    };
+    afterEach(() => localStorage.removeItem('kurda_locale_v1'));
+
+    it('says under the word what it means, in the reader’s language', async () => {
+      localStorage.setItem('kurda_locale_v1', 'es');
+      finished({ en: 'work', es: 'trabajo' });
+      renderWithProviders(<WordleBattleScreen id="b1" onExit={() => undefined} />);
+      expect(await screen.findByText('trabajo')).toBeTruthy();
+      expect(screen.getByText(/KAR/)).toBeTruthy();
+    });
+
+    it('says nothing more than the word when nobody has written what it means, or the server sends none', async () => {
+      finished({});
+      renderWithProviders(<WordleBattleScreen id="b1" onExit={() => undefined} />);
+      expect(await screen.findByText(/KAR/)).toBeTruthy();
+      expect(screen.queryByTestId('word-meaning-line')).toBeNull();
+      cleanup();
+      finished(undefined);
+      renderWithProviders(<WordleBattleScreen id="b1" onExit={() => undefined} />);
+      expect(await screen.findByText(/KAR/)).toBeTruthy();
+      expect(screen.queryByTestId('word-meaning-line')).toBeNull();
     });
   });
 });

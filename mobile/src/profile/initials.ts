@@ -20,7 +20,9 @@ const tone = TONES.light;
  * is the river's deeper edge, where a navy was.
  *
  * The deep, by-day fills in both schemes, because the monogram on them is
- * white in both. Every one meets WCAG AA (4.5:1) against it, asserted in
+ * white in both. Saffron gives its deeper edge instead of its fill: the fill
+ * is a gold, which the path writes on in dark brown and white cannot be read
+ * on. Every one meets WCAG AA (4.5:1) against white, asserted in
  * initials.test.ts. The order and the count are what map an id to a colour:
  * changing either gives everybody a different one.
  */
@@ -29,7 +31,7 @@ export const AVATAR_COLORS = [
   tone.river.fill,
   tone.dusk.fill,
   tone.clay.fill,
-  tone.saffron.fill,
+  tone.saffron.lip,
   tone.river.lip,
   tone.pine.fill,
   tone.rose.fill,

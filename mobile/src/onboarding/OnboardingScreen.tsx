@@ -96,6 +96,9 @@ const HERO_HEIGHT = 200;
 /** The lines under his name follow each other a little further apart than rows in a list do: each is read, not scanned. */
 const LINE_STAGGER_MS = ENTRANCE.staggerMs * 2;
 
+/** Skip is drawn one line of the body size tall, about this. */
+const SKIP_LINE = { height: 20 };
+
 /**
  * The 3-slide first-launch intro (KUR-272/273), on the glass theme. `initialStep`
  * lets the auth Welcome choice re-open it partway (at the intro) so "‹ Back"
@@ -156,14 +159,16 @@ export function OnboardingScreen({
   return (
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.lg }]}>
-        <View style={styles.topBar}>
+        {/* the dots on the side the language starts from, Skip at the far end; the way on below is mirrored too */}
+        <View style={[styles.topBar, { flexDirection: dir.row }]}>
           <Dots count={ONBOARDING_STEPS.length} index={state.stepIndex} mirrored={dir.rtl} />
           {!isLastStep(state) ? (
             <Pressable
               onPress={() => end('skipped')}
               accessibilityRole="button"
-              // one 20-point line of words, caught at a fingertip's 44
-              hitSlop={12}
+              // one 20-point line of words alone at the bar's end: it answers over 48 of height and a little past its ends
+              reach="open"
+              reachSize={SKIP_LINE}
               style={({ pressed }) => pressed && heldDim}
             >
               <Text style={[styles.skip, { color: colors.textSecondary }]}>{t('common.skip')}</Text>
@@ -174,12 +179,13 @@ export function OnboardingScreen({
         </View>
 
         <SlideSwap id={step} direction={turned.current} mirrored={dir.rtl} style={styles.body}>
-          {step === 'language' && <LanguageSlide selected={state.selectedLanguage} onSelect={selectLanguage} arriving={arriving} mirrored={dir.rtl} />}
+          {/* the language the app is in until another is tapped: it is the one Continue keeps */}
+          {step === 'language' && <LanguageSlide selected={state.selectedLanguage ?? locale} onSelect={selectLanguage} arriving={arriving} mirrored={dir.rtl} />}
           {step === 'welcome' && <WelcomeSlide arriving={arriving} mirrored={dir.rtl} />}
           {step === 'notifications' && <NotificationsSlide arriving={arriving} mirrored={dir.rtl} />}
         </SlideSwap>
 
-        <View style={styles.nav}>
+        <View style={[styles.nav, { flexDirection: dir.row }]}>
           {!isFirstStep(state) ? (
             <Pressable onPress={() => dispatch({ type: 'back' })} accessibilityRole="button" style={({ pressed }) => [styles.back, pressed && heldDim]}>
               <Text style={[styles.backText, { color: colors.textSecondary }]}>{t('common.back')}</Text>
@@ -259,6 +265,8 @@ interface SlideArrival {
 function LanguageSlide({ selected, onSelect, arriving, mirrored }: { selected: string | null; onSelect: (l: Locale) => void } & SlideArrival): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  // each name read in its own direction, lined up with the page's; the tick closes the row on the far side
+  const dir = useDirection();
   return (
     <View style={styles.slide}>
       <Drift direction={arriving} mirrored={mirrored} style={styles.guideArt}>
@@ -282,10 +290,10 @@ function LanguageSlide({ selected, onSelect, arriving, mirrored }: { selected: s
               accessibilityLabel={LOCALE_LABEL[locale]}
               style={[
                 styles.langRow,
-                { backgroundColor: colors.controlTrack, borderColor: active ? colors.primary : colors.glassBorder },
+                { flexDirection: dir.row, backgroundColor: colors.controlTrack, borderColor: active ? colors.primary : colors.glassBorder },
               ]}
             >
-              <Text style={[styles.langLabel, { color: active ? colors.primary : colors.textPrimary }, active && styles.langLabelActive]}>
+              <Text style={[styles.langLabel, dir.free, { color: active ? colors.primary : colors.textPrimary }, active && styles.langLabelActive]}>
                 {/* each language in its own name and its own direction — nothing technical beside it */}
                 {LOCALE_LABEL[locale]}
               </Text>
@@ -349,10 +357,11 @@ function WelcomeSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
   );
 }
 
-/** Soft-ask notifications intro (KUR-095 onboarding). Informational — no OS
- *  prompt here, before there is anything to be reminded of. The system prompt
- *  comes after a lesson, from a card that can be turned down, or from the
- *  control at the top of Settings → Notification settings (push/). */
+/** Notifications intro (KUR-095 onboarding). Informational — no OS prompt
+ *  here or after it, before there is anything to be reminded of. The system
+ *  prompt comes after a lesson, by way of a screen whose one button leads to
+ *  it, or from the control at the top of Settings → Notification settings
+ *  (push/). */
 function NotificationsSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -372,7 +381,7 @@ function NotificationsSlide({ arriving, mirrored }: SlideArrival): React.JSX.Ele
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.lg },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 32 },
+  topBar: { alignItems: 'center', justifyContent: 'space-between', minHeight: 32 },
   dots: { flexDirection: 'row', gap: DOT_GAP },
   dotSlot: { width: DOT_SLOT, height: DOT, alignItems: 'center', justifyContent: 'center' },
   dot: { width: DOT, height: DOT, borderRadius: radii.pill },
@@ -393,7 +402,6 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
   langList: { alignSelf: 'stretch', marginTop: spacing.lg, maxHeight: 360 },
   langRow: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: spacing.md,
@@ -401,13 +409,13 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 1,
   },
-  langLabel: { flexShrink: 1, fontSize: typography.sizes.lg, writingDirection: 'auto' },
+  langLabel: { flexShrink: 1, fontSize: typography.sizes.lg },
   langLabelActive: { fontWeight: typography.weights.bold },
   brand: { ...display(typography.sizes.xxl) },
   tagline: { fontSize: typography.sizes.lg, marginTop: spacing.xs, fontStyle: 'italic', marginBottom: spacing.lg },
   propList: { marginTop: spacing.sm, gap: spacing.sm, alignItems: 'center', paddingHorizontal: spacing.lg },
   prop: { fontSize: typography.sizes.md, textAlign: 'center' },
-  nav: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.md },
+  nav: { alignItems: 'center', gap: spacing.md, marginTop: spacing.md },
   back: { paddingVertical: spacing.md, paddingHorizontal: spacing.lg },
   backText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
   next: { flex: 1 },

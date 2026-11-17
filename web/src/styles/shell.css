@@ -1,10 +1,11 @@
 /*
  * The shell's newer parts: the bell, search in the bar, the places' pages
  * (Learn's two halves, Search, Messages' list, your profile's menu), what
- * stays in place while a page scrolls, and the small shared pieces they are
- * built from — an icon button, a list row, a two-way switch. Everything here
- * is written against the tokens, so it is right in both schemes without
- * knowing which one is on.
+ * stays in place while a page scrolls, a phone's chrome inside the app (the
+ * top of its screen and the bar of places along the bottom), and the small
+ * shared pieces they are built from — an icon button, a list row, a two-way
+ * switch. Everything here is written against the tokens, so it is right in
+ * both schemes without knowing which one is on.
  */
 
 /* ---- small shared pieces ----------------------------------------------- */
@@ -200,7 +201,7 @@
   background: var(--surface-2);
   color: var(--ink);
 }
-/* something new: a dot in the sun's gold, with a ring of the bar's own colour so it reads on the glyph */
+/* something new: a dot in the app's violet, with a ring of the bar's own colour so it reads on the glyph */
 .nav-bell-dot {
   position: absolute;
   top: 9px;
@@ -208,7 +209,7 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--gold);
+  background: var(--primary);
   box-shadow: 0 0 0 2px var(--nav-bg);
 }
 .nav-bell:focus-visible {
@@ -363,10 +364,18 @@
   --note-ground: var(--panel-bg);
   padding-bottom: var(--space-2);
 }
+/*
+ * A scrolling row cuts off whatever reaches past it, so the row keeps 8px
+ * more above and below its filters than it shows, for the area that answers
+ * a finger (reach.css), and the negative margin gives the 8px back: the
+ * filters sit where they always did.
+ */
 .note-filters {
   display: flex;
   gap: 6px;
-  padding: var(--space-3) var(--space-4) var(--space-1);
+  padding-block: calc(var(--space-3) + 8px) calc(var(--space-1) + 8px);
+  padding-inline: var(--space-4);
+  margin-block: -8px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -458,15 +467,15 @@
 .note-slide.is-dragging {
   transition: none;
 }
-/* the wash is the gold of the bell's own dot, faintly: what is new is the one warm thing in the list */
+/* the wash is the violet of the bell's own dot, faintly: what is new is the one tinted thing in the list */
 .note-row.is-unread .note-slide {
-  background: linear-gradient(color-mix(in srgb, var(--gold) 10%, transparent), color-mix(in srgb, var(--gold) 10%, transparent)), var(--note-ground);
+  background: linear-gradient(color-mix(in srgb, var(--primary) 10%, transparent), color-mix(in srgb, var(--primary) 10%, transparent)), var(--note-ground);
 }
 .note-row.is-linked .note-slide:hover {
   background: linear-gradient(color-mix(in srgb, var(--ink) 4%, transparent), color-mix(in srgb, var(--ink) 4%, transparent)), var(--note-ground);
 }
 .note-row.is-unread.is-linked .note-slide:hover {
-  background: linear-gradient(color-mix(in srgb, var(--gold) 15%, transparent), color-mix(in srgb, var(--gold) 15%, transparent)), var(--note-ground);
+  background: linear-gradient(color-mix(in srgb, var(--primary) 15%, transparent), color-mix(in srgb, var(--primary) 15%, transparent)), var(--note-ground);
 }
 /* the whole row is the link; its ring goes round the row */
 .note-row:has(.note-link:focus-visible) .note-slide {
@@ -482,7 +491,7 @@
   height: 7px;
   margin-top: -3.5px;
   border-radius: 50%;
-  background: var(--gold);
+  background: var(--primary);
   animation: note-dot 300ms var(--ease-out) both;
 }
 
@@ -843,14 +852,15 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--gold);
+  background: var(--primary);
   box-shadow: 0 0 0 2px var(--nav-bg);
 }
 /*
  * On a phone the social column's parts all have a place of their own — the
  * requests and groups in Messages, notifications on the bell, your friends in
- * the menu — so its toggle leaves the bar, which keeps the brand, search, the
- * bell and the menu and nothing to mistake.
+ * your profile's menu (and on the public pages in the bar's own) — so its
+ * toggle leaves the bar, which keeps the brand, search and the bell and
+ * nothing to mistake.
  */
 @media (max-width: 768px) {
   .nav .rail-toggle {
@@ -858,21 +868,10 @@
   }
 }
 
-/* a visitor's "Get started", small enough to share a phone's bar with the brand */
+/* a visitor's "Get started", small enough to share a phone's bar with the brand; drawn at 36, it answers a finger at 48, as every button does (reach.css) */
 .nav-register {
   height: 36px;
   padding: 0 14px;
-}
-/* drawn at 36, but a finger gets the full 44: the press reaches 4px above and below it */
-@media (pointer: coarse) {
-  .nav-register {
-    position: relative;
-  }
-  .nav-register::after {
-    content: '';
-    position: absolute;
-    inset: -4px 0;
-  }
 }
 
 /* ---- search, in the bar ------------------------------------------------ */
@@ -1186,10 +1185,33 @@
     border-radius: 0;
     background: var(--app-bg);
     box-shadow: none;
-    animation: none;
+  }
+  /*
+   * It opens out of the button that asked for it. The field and the results
+   * under it grow from where the button is and fade in, as one sheet, so the
+   * search is seen to come from the corner it was called from, as the
+   * notifications drop from the bell. Where the button is comes from the
+   * button (`--search-from-x` and `-y`, measured by NavSearch as it opens),
+   * so it is right in either direction and whatever else the bar holds.
+   */
+  .nav-search.is-open .nav-search-bar,
+  .nav-search-panel {
+    animation: search-open var(--dur-slow) var(--ease-emphasis);
+  }
+  .nav-search.is-open .nav-search-bar {
+    transform-origin: calc(var(--search-from-x, 100%) - env(safe-area-inset-left, 0px)) calc(var(--search-from-y, 0px) - env(safe-area-inset-top, 0px));
+  }
+  .nav-search-panel {
+    transform-origin: var(--search-from-x, 100%) calc(var(--search-from-y, 0px) - var(--nav-bottom));
   }
   .nav-search-option {
     min-height: 56px;
+  }
+}
+@keyframes search-open {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
   }
 }
 
@@ -1270,6 +1292,18 @@
   }
   .switch-btn {
     height: 40px;
+  }
+  /* Learn's three share a phone's width: none may ask for more than its third, or the last pokes out of the pill */
+  .learn-head .switch-btn {
+    min-width: 0;
+    padding: 0 8px;
+  }
+}
+/* the narrowest phones: a long word ("Geschichten") still has to fit its third */
+@media (max-width: 360px) {
+  .learn-head .switch-btn {
+    padding: 0 4px;
+    font-size: var(--text-caption);
   }
 }
 
@@ -1405,7 +1439,7 @@
   font-size: 1.5rem;
   line-height: 1;
   letter-spacing: 0.04em;
-  color: var(--gold-ink);
+  color: var(--primary);
   direction: ltr;
 }
 .learn-tool.learn-review {
@@ -1666,7 +1700,7 @@
   color: var(--ink-2);
 }
 .chat-convo.is-unread .chat-convo-when {
-  color: var(--gold-ink);
+  color: var(--primary);
   font-weight: 600;
 }
 /* nothing open yet: what this half of the screen is for, and the way to start */
@@ -1767,15 +1801,335 @@
   }
 }
 
+/* ---- a phone's chrome, inside the app ----------------------------------- */
+/*
+ * On a phone the app wears the phone app's chrome (components/TopNav.tsx
+ * `PhoneBar`, layouts/PlacesBar.tsx): at the top the brand or the way back,
+ * with search and the bell in one pill opposite it, and along the bottom, on
+ * the root of each place, the places in a bar. Each is a solid shape in the
+ * fill of what floats (`--surface-solid`, white by day), clear of the
+ * window's edges and lifted off the page by a soft shadow, because on a
+ * near-white page a white shape is told from the page by very little.
+ *
+ * None of it sits under a width of its own. The shell draws these parts only
+ * at a phone's width (`PHONE_CHROME`, layouts/roots.ts), so their classes are
+ * the condition.
+ */
+:root {
+  /* the bar of places: its height, and how far above the window's bottom edge it floats — just over the
+     home indicator on a phone that has one, and a small margin up from the edge on one that has none */
+  --places-h: 64px;
+  --places-lift: max(env(safe-area-inset-bottom, 0px) - 8px, 12px);
+}
+
+/*
+ * The top is not a strip across the page here: it is the page's own ground
+ * with shapes resting on it, so it takes the page's colour and loses its
+ * line. It is solid and stays put as before, and the page passes under it.
+ */
+.nav-phone {
+  border-bottom-color: transparent;
+  background: var(--app-bg);
+}
+.nav-phone .nav-inner {
+  gap: var(--space-2);
+}
+/* the way back, and the pill of search and the bell: one fill, one shadow, a fingertip tall */
+.nav-back,
+.nav-pill {
+  flex: none;
+  height: 44px;
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-control);
+}
+.nav-back {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease-spring);
+}
+.nav-back:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/*
+ * At the far end. Its two halves are 46 wide, so they fill it from end to end
+ * and the glyphs stay clear of its curve; a press anywhere on the pill, its
+ * very ends included, is a press on one of them (reach.css).
+ */
+.nav-pill {
+  display: flex;
+  align-items: center;
+  margin-inline-start: auto;
+  padding-inline: 0;
+}
+.nav-pill .nav-search-open,
+.nav-pill .nav-bell {
+  width: 46px;
+}
+/* search first, as it is written: the place a phone's bar gives it (layout.css) is among the bar's own parts, not the pill's */
+.nav-pill .nav-search {
+  order: 0;
+}
+/* the pill is the shape, so a button in it draws none of its own until it is pointed at or pressed; its glyph is in the page's ink */
+.nav-pill .nav-search-open,
+.nav-pill .nav-bell {
+  color: var(--ink);
+}
+.nav-pill .nav-bell-dot {
+  box-shadow: 0 0 0 2px var(--surface-solid);
+}
+/* a visitor has no bell, and a pill of one is a disc: the same shape as the way back */
+.nav-pill:not(:has(.nav-bell)) .nav-search-open {
+  width: 44px;
+}
+/*
+ * Between a phone and the wide bar the notifications still open as a panel
+ * from the bell. There is no strip above for it to hang from here, so it is
+ * a card of its own under the pill, with a top edge and all four corners.
+ */
+@media (min-width: 561px) {
+  :root:has(.nav-phone) .bell-panel {
+    border-top: 1px solid var(--border);
+    border-radius: var(--r-lg);
+  }
+}
+/*
+ * One way back per page. Where a phone's top has the way back, a page does
+ * not draw a bare arrow of its own under it: two arrows a thumb apart that do
+ * one thing are one too many, and the one at the top is where the phone app
+ * has it. That is the arrow at the head of a conversation, of Impostor's
+ * page, of the ranks and of the season (`.chat-back`), and of every other
+ * game (`.gs-back`). Each only led where the bar's way back leads: out of
+ * the page, in one press (layouts/trail.ts keeps a game and the ranks one
+ * page however their address moved), and the one game that asks before it
+ * lets go is asked by the bar's as well (`useAsksBeforeLeaving`).
+ *
+ * Not drawn means not there: out of the Tab order and of what a screen
+ * reader is told. A wide screen has no way back in its bar, so there each of
+ * these is the page's own, as before; so is a conversation docked beside the
+ * social column, which is outside the page and has a way to close instead.
+ *
+ * A way back that says where it leads stays, on every screen: "All stories",
+ * "Letters", "Letters and words", "Settings", "Back to search". Each names a
+ * place, which the bar's arrow cannot, and is not a second arrow.
+ */
+.nav-phone:has(.nav-back) ~ .app-main :is(.chat-back, .gs-back) {
+  display: none;
+}
+/*
+ * Search, opened: the bar is the field, on the page's ground like the rest of
+ * a phone's top, and its way back and the field itself are two more of the
+ * same shapes. They stand at the page's own gutter, so the way back here is
+ * exactly where the way back of a page is (the bar is already inside a
+ * notch's safe area, as the page is).
+ */
+.nav-phone .nav-search.is-open .nav-search-bar {
+  gap: var(--space-2);
+  padding-inline: var(--space-4);
+  background: var(--app-bg);
+}
+.nav-phone .nav-search.is-open .nav-search-back {
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-control);
+  color: var(--ink);
+  transition: transform var(--dur) var(--ease-spring);
+}
+.nav-phone .nav-search-input,
+.nav-phone .nav-search-input:hover,
+.nav-phone .nav-search-input:focus {
+  border-color: transparent;
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-control);
+}
+@media (min-width: 641px) {
+  .nav-phone .nav-search.is-open .nav-search-bar {
+    padding-inline: var(--space-6);
+  }
+}
+
+/*
+ * The bar of places. It floats: in from the window's sides by the page's own
+ * gutter, so it lines up with the cards above it, and up from the bottom
+ * edge. Above the page and anything the page raises, and under the top bar
+ * and what hangs from it, so the search results and the notifications cover
+ * it as a screen opened over the places would.
+ */
+.places-bar {
+  --places-side: var(--space-4);
+  position: fixed;
+  z-index: 35;
+  left: calc(var(--places-side) + env(safe-area-inset-left, 0px));
+  right: calc(var(--places-side) + env(safe-area-inset-right, 0px));
+  bottom: var(--places-lift);
+  height: var(--places-h);
+  /* the air round the capsule behind the place you are on */
+  padding: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-raised);
+}
+@media (min-width: 641px) {
+  .places-bar {
+    --places-side: var(--space-6);
+  }
+}
+.places-row {
+  position: relative;
+  height: 100%;
+}
+.places-list {
+  position: relative;
+  display: flex;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.places-list > li {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+}
+/*
+ * Behind the place you are on: one shape, a place wide and as tall as the
+ * row, in the quiet tint a control's track has. It is moved along the bar on
+ * a transform (`--at` places from the reading edge), so a change of place is
+ * seen moving; it is only there once a place is chosen, so it arrives with no
+ * slide.
+ */
+.places-capsule {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: calc(100% / var(--places));
+  border-radius: var(--r-pill);
+  /* a faint wash of the violet the chosen place is written in, so capsule, glyph and word are one thing */
+  background: var(--primary-soft);
+  transform: translateX(calc(var(--at) * 100%));
+  transition: transform var(--dur) var(--ease-out);
+}
+[dir='rtl'] .places-capsule {
+  transform: translateX(calc(var(--at) * -100%));
+}
+/* a place: its whole share of the bar is the target, its glyph over its word */
+.places-link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+  font-size: var(--text-tab);
+  font-weight: 500;
+  line-height: 13px;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur) var(--ease-spring);
+}
+.places-link:hover {
+  color: var(--ink);
+}
+/* the one you are on: the app's violet, a step heavier. Its share of the bar is fixed, so the wider word moves nothing */
+.places-link.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+.places-link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+/* a box of one size for every glyph, so your face in place of an outline, or a count landing, moves nothing */
+.places-glyph {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+}
+/* the list's glyphs are drawn for the top bar; here they have the room to be a little larger */
+.places-glyph > svg {
+  width: 24px;
+  height: 24px;
+}
+.places-word {
+  max-width: 100%;
+  padding-inline: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* what is waiting, on the glyph's shoulder, ringed in the bar's own fill so it reads as sitting on the glyph */
+.places-glyph .nav-badge {
+  position: absolute;
+  top: -4px;
+  inset-inline-start: 15px;
+  margin: 0;
+  box-shadow: 0 0 0 2px var(--surface-solid);
+}
+.places-glyph .nav-dot {
+  box-shadow: 0 0 0 2px var(--surface-solid);
+}
+/* a shape gives under the finger as a button does, and springs back when let go */
+.nav-back:active,
+.nav-phone .nav-search.is-open .nav-search-back:active,
+.places-link:active {
+  transform: scale(var(--press-scale));
+  transition-duration: 80ms;
+}
+
+/*
+ * Room for the bar, on the pages that have it: the page's last row clears it
+ * with a little air over it, and whatever the browser brings into view stops
+ * above it. `--bottom-chrome` is the room the bar takes, and is there only
+ * while the bar is: what else is fixed to the bottom of the window (the
+ * rating box, the social column's toasts, the way back to your lesson) adds
+ * it to its own place, and so sits above the bar where there is one and at
+ * the bottom where there is none.
+ */
+:root:has(.places-bar) {
+  --bottom-chrome: calc(var(--places-h) + var(--places-lift));
+  scroll-padding-bottom: calc(var(--bottom-chrome) + var(--rb-space, 0px));
+}
+:root:has(.places-bar) .app-main {
+  padding-bottom: calc(var(--bottom-chrome) + var(--space-4) + var(--rb-space, 0px));
+}
+
 /* ---- motion, for those who asked for less ------------------------------ */
 @media (prefers-reduced-motion: reduce) {
   .bell-panel,
   .nav-links,
   .nav-scrim,
+  .nav-search.is-open .nav-search-bar,
   .nav-search-panel,
-  .nav-search-list.is-stale {
+  .nav-search-list.is-stale,
+  .places-capsule,
+  .places-link,
+  .nav-back,
+  .nav-phone .nav-search.is-open .nav-search-back {
     transition: none;
     animation: none;
+  }
+  /* the shapes stay their size, and answer a press in their ground as a row does */
+  .nav-back:active,
+  .nav-phone .nav-search.is-open .nav-search-back:active,
+  .places-link:active {
+    transform: none;
+  }
+  .nav-back:active,
+  .nav-phone .nav-search.is-open .nav-search-back:active {
+    background: var(--surface-3);
+  }
+  .places-link:active {
+    background: var(--surface-2);
   }
 }
 
@@ -1827,7 +2181,7 @@
   border-color: var(--surface-solid);
 }
 :root[data-theme='light'] .rail-dot.is-offline {
-  background: rgba(17, 17, 17, 0.28);
+  background: rgba(20, 17, 46, 0.28);
 }
 @media (min-width: 1180px) {
   :root[data-theme='light'] .app-main:has(.mkp-has-bg) ~ .social-rail {
@@ -1885,56 +2239,36 @@
     min-height: 44px;
   }
   /*
-   * Words that are pressed — a quiet link in a sentence, the way back above a
-   * heading — and the round buttons that sit in a line of text or inside a
-   * field keep their size: growing them would push the lines round them
-   * apart. What grows is the area that answers a finger, out past their edges
-   * to 44px (each is its own anchor for it: the `:where` rule under this
-   * block).
+   * Words that are pressed and the small round buttons in a line of text or
+   * inside a field keep their size, since growing them would push the lines
+   * round them apart; the area that answers a finger grows instead
+   * (reach.css). A story's replay is cut by hand: 24px, in the story's own
+   * line, it reaches 10px all round, which the words beside it allow.
    */
-  .link-btn::after,
-  .link-button::after,
-  .back-link::after,
-  .rank-card-more::after,
-  .story-replay::after,
-  .chat-jump::after,
-  .ab-sound::after,
-  .settings-search-clear::after,
-  .nav-search-clear::after {
+  .story-replay::after {
     content: '';
     position: absolute;
-    inset: -12px -8px;
-  }
-  /* 24px, in the story's own line */
-  .story-replay::after {
     inset: -10px;
   }
-  /* 32px tall, and already wide */
-  .chat-jump::after,
-  .rank-card-more::after {
-    inset: -6px 0;
-  }
-  /* 36px round */
-  .ab-sound::after,
-  .settings-search-clear::after {
-    inset: -4px;
-  }
-  /* 28px, in a letter's own row */
-  .ab-sound--sm::after {
-    inset: -8px;
-  }
-  /* 32px in the bar's field; 40px on a phone, where this is more than it needs and harms nothing */
-  .nav-search-clear::after {
-    inset: -6px;
+  /* its anchor, at no weight at all: a replay placed some other way by its own rule keeps that */
+  :where(.story-replay) {
+    position: relative;
   }
   .profile-progress-link {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
   }
-  /* the anchor for the wider area above, at no weight at all: a control placed some other way by its own rule keeps that */
-  :where(.link-btn, .link-button, .back-link, .rank-card-more, .story-replay, .chat-jump, .ab-sound) {
-    position: relative;
+  /*
+   * "Forgotten your password?" beside "Remember me": on a phone the two wrap
+   * onto lines 4px apart, and a line of text reaching up to a finger's 48 took
+   * the lower part of the box above. Drawn as tall as that box, it reaches only
+   * into the gap between them.
+   */
+  .auth-row .link-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
 }
 

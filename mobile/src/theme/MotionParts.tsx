@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Animated, View, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
-import { Pressable } from './Pressable';
+import { Pressable, type AppPressableProps } from './Pressable';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo, timing, useEnter, usePop, usePressScale, useShake } from './animate';
 import { ENTRANCE, duration, pressedDim } from './motion';
+import { usePressOrigin } from './origin';
 import { Icon } from './Icon';
 import { radii, spacing } from './tokens';
 
@@ -38,6 +39,9 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * label, the style and its layout — is exactly a Pressable's, so a card can
  * swap one for the other. Under Reduce Motion it does not move, and dims a
  * little while held instead.
+ *
+ * As it is pressed it says where it is (`usePressOrigin`), so a page it
+ * opens can grow out of it.
  */
 export function PressableScale({
   style,
@@ -47,16 +51,25 @@ export function PressableScale({
   disabled,
   ref,
   ...rest
-}: Omit<PressableProps, 'style' | 'children'> & { style?: StyleProp<ViewStyle>; children: ReactNode; ref?: Ref<View> }): React.JSX.Element {
+}: Omit<PressableProps, 'style' | 'children'> &
+  Pick<AppPressableProps, 'reach' | 'reachSize'> & { style?: StyleProp<ViewStyle>; children: ReactNode; ref?: Ref<View> }): React.JSX.Element {
   const reduce = useReducedMotion();
   const press = usePressScale(!disabled);
   const [held, setHeld] = useState(false);
+  const origin = usePressOrigin();
+  // one view, two holders: the caller's ref if it gave one, and the one a page grows from
+  const hold = (node: View | null): void => {
+    origin.ref.current = node;
+    if (typeof ref === 'function') ref(node);
+    else if (ref) ref.current = node;
+  };
   return (
     <AnimatedPressable
       {...rest}
-      ref={ref}
+      ref={hold}
       disabled={disabled}
       onPressIn={(e) => {
+        origin.note();
         press.onPressIn();
         if (reduce) setHeld(true);
         onPressIn?.(e);

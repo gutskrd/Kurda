@@ -8,7 +8,9 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { forgetReach, reachOf } from '../testing/reach';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -17,7 +19,11 @@ import { forgetLastLetterAvailability } from '../lastletter/availability';
 import { SearchScreen } from './SearchScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  forgetReach();
+  localStorage.clear();
+});
 
 describe('Search with nothing typed', () => {
   /*
@@ -28,7 +34,7 @@ describe('Search with nothing typed', () => {
   it('holds the place of people you may know while they load, rather than saying there is nothing', async () => {
     let answer: (v: unknown) => void = () => undefined;
     testAuth.client = fakeClient({ 'GET /friends/suggestions': () => new Promise((go) => (answer = go)) as never });
-    renderWithProviders(<SearchScreen />);
+    renderWithProviders(<SearchScreen onExit={() => {}} />);
     expect(screen.getAllByTestId('skeleton').length).toBeGreaterThanOrEqual(10);
     expect(screen.queryByText('Type to search across the app.')).toBeNull();
 
@@ -39,9 +45,25 @@ describe('Search with nothing typed', () => {
 
   it('says where to start once it knows there is nobody to suggest', async () => {
     testAuth.client = fakeClient({ 'GET /friends/suggestions': ok({ suggestions: [] }) });
-    renderWithProviders(<SearchScreen />);
+    renderWithProviders(<SearchScreen onExit={() => {}} />);
     expect(await screen.findByText('Type to search across the app.')).toBeTruthy();
     expect(screen.queryAllByTestId('skeleton')).toHaveLength(0);
+  });
+
+  /*
+   * Clear is one line of words over the recent searches, 4 above the first;
+   * the searches are 44 tall and 2 apart. Each reaches toward its neighbour
+   * only half of the gap between them, so a tap between two lands on the
+   * nearer one rather than on whichever comes later.
+   */
+  it('lets Clear and the recent searches share the gaps between them', async () => {
+    localStorage.setItem('hevalo_search_recents_v1', JSON.stringify(['dar', 'av']));
+    testAuth.client = fakeClient({ 'GET /friends/suggestions': ok({ suggestions: [] }) });
+    renderWithProviders(<SearchScreen onExit={() => {}} />);
+    await screen.findByRole('button', { name: 'Clear' });
+    expect(reachOf('Clear')).toEqual({ top: 15, bottom: 2, left: 8, right: 8 });
+    expect(reachOf('dar')).toEqual({ top: 1, bottom: 1, left: 0, right: 0 });
+    expect(reachOf('av')).toEqual({ top: 1, bottom: 1, left: 0, right: 0 });
   });
 });
 
@@ -57,7 +79,7 @@ describe('Search when the server cannot answer', () => {
           : ok({ results: [{ userId: 'u2', username: 'azad', displayName: null }] }),
       'GET /dictionary/search?q=azad': ok({ results: [] }),
     });
-    renderWithProviders(<SearchScreen />);
+    renderWithProviders(<SearchScreen onExit={() => {}} />);
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'azad' } });
     fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
     expect(screen.queryByText('Nothing found for “azad”.')).toBeNull();
@@ -87,7 +109,7 @@ describe('Search while it is looking', () => {
       'GET /users/search?q=azad': () => new Promise((go) => (answer = go)) as never,
       'GET /dictionary/search?q=azad': ok({ results: [] }),
     });
-    renderWithProviders(<SearchScreen />);
+    renderWithProviders(<SearchScreen onExit={() => {}} />);
     expect(await screen.findByText('Type to search across the app.')).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'azad' } });
     // at once: before the pause is over, before anything is asked
@@ -107,7 +129,7 @@ describe('Search while it is looking', () => {
   it('finds a lesson on the letter typed, without waiting for the pause or the server', async () => {
     const client = fakeClient({ 'GET /friends/suggestions': ok({ suggestions: [] }), ...course });
     testAuth.client = client;
-    renderWithProviders(<SearchScreen />);
+    renderWithProviders(<SearchScreen onExit={() => {}} />);
     await waitFor(() => expect(client.calls.some((c) => c.path === '/courses/c1/map')).toBe(true));
     await act(async () => undefined);
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 's' } });
@@ -125,7 +147,7 @@ describe('Search while it is looking', () => {
       'GET /users/search?q=azad': ok({ results: [{ userId: 'u2', username: 'azad', displayName: null }] }),
       'GET /dictionary/search?q=azad': ok({ results: [] }),
     });
-    renderWithProviders(<SearchScreen />);
+    renderWithProviders(<SearchScreen onExit={() => {}} />);
     const field = screen.getByLabelText('Search');
     fireEvent.change(field, { target: { value: 'az' } });
     await waitFor(() => expect(answers.az).toBeTruthy());
@@ -146,7 +168,7 @@ describe('Search for a person or a game', () => {
       'GET /dictionary/search?q=%40dilan': ok({ results: [] }),
     });
     testAuth.client = client;
-    renderWithProviders(<SearchScreen />);
+    renderWithProviders(<SearchScreen onExit={() => {}} />);
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: '@dilan' } });
     expect(await screen.findByRole('button', { name: 'dilan' })).toBeTruthy();
     expect(client.calls.some((c) => c.path.startsWith('/users/search?q=%40'))).toBe(false);
@@ -166,7 +188,7 @@ describe('Search for a person or a game', () => {
       'GET /mp/last-letter/availability': ok({ dialects: [] }),
     });
     testAuth.client = client;
-    renderWithProviders(<SearchScreen />);
+    renderWithProviders(<SearchScreen onExit={() => {}} />);
     await waitFor(() => expect(client.calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
     await act(async () => {
       await new Promise((r) => setTimeout(r, 20));

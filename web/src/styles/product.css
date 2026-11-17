@@ -498,7 +498,16 @@
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
+/*
+ * A row whose name is a link answers across the whole row, not only on the
+ * words: a finger that lands on the place, the face or the score still opens
+ * the profile. The link's own `::after` is stretched over the row, which is
+ * why the row is positioned and the name is not (the name clips its own
+ * overflow for the ellipsis, and would clip the stretch with it). Any other
+ * control in the row lies over the stretch and keeps its own presses.
+ */
 .rank-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -506,6 +515,16 @@
   padding: 8px 12px;
   border-radius: 12px;
   font-size: 0.92rem;
+}
+/* the row and half the 2px between rows, so a row of 46 answers across 48 and the rows' areas meet */
+a.rank-name::after {
+  content: '';
+  position: absolute;
+  inset: -1px 0;
+}
+.rank-row :is(a, button):not(.rank-name) {
+  position: relative;
+  z-index: 1;
 }
 .rank-pos {
   flex: none;

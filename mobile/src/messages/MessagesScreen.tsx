@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
-import { Animated, type FlatList, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { groupLimits, type LettersHome, type LimitDetails } from '@kurda/shared';
 import { PressableScale, Rise } from '../theme/MotionParts';
@@ -22,7 +22,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { useTabBarInset } from '../navigation/tabBarLayout';
-import { LargeTitle, TitleBar, useCollapsingTitle } from '../navigation/LargeTitle';
+import { TabHeader } from '../navigation/TopBar';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { useOpenSlide } from '../social/SocialSlide';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -46,11 +46,14 @@ import {
 } from './list';
 import { useUnread } from './unread';
 import { BirdBadge } from '../letters/LetterParts';
+import { LETTERS_HOME_PATH } from '../letters/homePath';
 
 interface RequestRow {
   userId: string;
   username: string;
   displayName?: string | null;
+  /** their picture, as the server resolves it (an uploaded photo, else the avatar they chose) */
+  avatarUrl?: string | null;
 }
 
 /**
@@ -75,8 +78,8 @@ interface RequestRow {
  * bringing friends in is the only way anyone else comes into it. There are
  * no groups to find and none to join.
  *
- * Notifications are not here any more. They are the bell on Home: what
- * arrived *about* you is not a conversation *with* anybody.
+ * Notifications are not here any more. They are the bell at the top of
+ * every tab: what arrived *about* you is not a conversation *with* anybody.
  */
 export function MessagesScreen(): React.JSX.Element {
   const { client } = useAuth();
@@ -88,7 +91,6 @@ export function MessagesScreen(): React.JSX.Element {
   const dir = useDirection();
   const openSlide = useOpenSlide();
   const bottomInset = useTabBarInset();
-  const title = useCollapsingTitle();
   const { report } = useUnread();
 
   const [filter, setFilter] = useState<MessageFilter>('all');
@@ -119,7 +121,8 @@ export function MessagesScreen(): React.JSX.Element {
       client.get<{ unread: { groupId: string; unread: number }[] }>('/me/groups/unread'),
       client.get<{ requests: RequestRow[] }>('/friends/requests'),
       client.get<{ notifications: InboxItem[] }>('/me/notifications'),
-      client.get<LettersHome>('/letters'),
+      // with the letters still to land, so listing them here never counts one as landed at the window (letters/homePath.ts)
+      client.get<LettersHome>(LETTERS_HOME_PATH),
     ]);
     // a server from before letters answers with nothing to show: the row is simply not drawn
     if (l.ok && Array.isArray(l.data?.penPals)) setLetters(l.data);
@@ -229,7 +232,7 @@ export function MessagesScreen(): React.JSX.Element {
           <View style={styles.faces}>
             {requests.slice(0, 2).map((r, i) => (
               <View key={r.userId} style={[styles.face, i > 0 && styles.faceBehind, { borderColor: colors.surface }]}>
-                <InitialsAvatar name={r.username} id={r.userId} size={32} />
+                <InitialsAvatar name={r.username} id={r.userId} size={32} photoUrl={r.avatarUrl ?? undefined} />
               </View>
             ))}
             {/* friend requests are tickets, as invites to play are: the glyph on the faces' corner */}
@@ -302,20 +305,12 @@ export function MessagesScreen(): React.JSX.Element {
   if (isGuest) {
     return (
       <GradientBackground>
-        <TitleBar
+        <TabHeader
           title={t('nav.messages')}
-          collapse={title}
-          right={<HeaderButton icon="compose" label={t('messages.new')} onPress={() => require('message')} edge="end" />}
+          action={<HeaderButton icon="compose" label={t('messages.new')} onPress={() => require('message')} />}
         />
-        <Animated.ScrollView
-          onScroll={title.onScroll}
-          scrollEventThrottle={16}
-          contentContainerStyle={[styles.list, { paddingBottom: bottomInset }]}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.head}>
-            <LargeTitle title={t('nav.messages')} collapse={title} />
-          </View>
+        {/* nothing here takes typing, but a keyboard still up from elsewhere must not swallow the first tap on the button */}
+        <ScrollView contentContainerStyle={[styles.list, { paddingBottom: bottomInset }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.guest} testID="messages-guest">
             <View style={[styles.guestMark, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <Icon name="send" size={30} tone="primary" />
@@ -332,21 +327,17 @@ export function MessagesScreen(): React.JSX.Element {
               style={styles.guestAction}
             />
           </View>
-        </Animated.ScrollView>
+        </ScrollView>
       </GradientBackground>
     );
   }
 
   return (
     <GradientBackground>
-      {/* the pencil stays in the bar, in reach however far the list goes; the name joins it once the large one has scrolled under */}
-      <TitleBar
-        title={t('nav.messages')}
-        collapse={title}
-        right={<HeaderButton icon="compose" label={t('messages.new')} onPress={openSlide} edge="end" />}
-      />
+      {/* the tab's name and its pencil stay at the top, in reach however far the list goes */}
+      <TabHeader title={t('nav.messages')} action={<HeaderButton icon="compose" label={t('messages.new')} onPress={openSlide} />} />
 
-      <Animated.FlatList
+      <FlatList
         ref={listRef}
         data={rows}
         keyExtractor={(r) => r.key}
@@ -355,12 +346,9 @@ export function MessagesScreen(): React.JSX.Element {
             <ConversationRow row={item} locale={locale} preview={preview} onPress={() => open(item)} />
           </Rise>
         )}
-        onScroll={title.onScroll}
-        scrollEventThrottle={16}
         ListHeaderComponent={
           <>
             <View style={styles.head}>
-              <LargeTitle title={t('nav.messages')} collapse={title} />
               {nothingAtAll && requests.length === 0 ? null : (
                 <>
                   <SearchField value={query} onChangeText={setQuery} label={t('messages.search')} returnKeyType="done" />
@@ -457,7 +445,7 @@ function ConversationRow({
             {line}
           </Text>
           {unread ? (
-            <View style={[styles.count, { backgroundColor: colors.goldText }]}>
+            <View style={[styles.count, { backgroundColor: colors.primary }]}>
               <Text style={[styles.countText, { color: colors.textOnPrimary }]}>{row.unread > 99 ? '99+' : row.unread}</Text>
             </View>
           ) : null}
@@ -539,7 +527,7 @@ function LettersRow({ home, onPress }: { home: LettersHome; onPress: () => void 
         </Text>
       </View>
       {unread > 0 ? (
-        <View style={[styles.count, { backgroundColor: colors.goldText }]}>
+        <View style={[styles.count, { backgroundColor: colors.primary }]}>
           <Text style={[styles.countText, { color: colors.textOnPrimary }]}>{unread > 99 ? '99+' : unread}</Text>
         </View>
       ) : null}

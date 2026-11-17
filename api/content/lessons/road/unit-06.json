@@ -15,7 +15,7 @@
           "position": 1,
           "titleKu": "Li bajêr",
           "titleEn": "In town",
-          "grammarMd": "**Li rastê, li çepê, rasterast.** On the right, on the left, straight on. *Kolan li rastê ye.* The street is on the right.\n\n- After a word of place, *bajar* changes its vowel: **li bajêr** in town, **ji bajêr** from town.\n- *Mal dûr e?* Is the house far? — *Na, nêzîk e.* No, it’s near.",
+          "grammarMd": "**Li rastê, li çepê, rasterast.** On the right, on the left, straight on. *Kolan li rastê ye.* The street is on the right.\n\n- After *li*, *ji* or *bi*, *bajar* becomes **bajêr**: **li bajêr** in town, **ji bajêr** from town. With a word after it, it stays *bajar*: *li bajarê min* in my town.\n- *Mal dûr e?* Is the house far? — *Na, nêzîk e.* No, it’s near.",
           "lessons": [
             {
               "key": "u06s1l1",
@@ -1230,7 +1230,7 @@
           "position": 2,
           "titleKu": "Werin, rûnin!",
           "titleEn": "Come in, sit down!",
-          "grammarMd": "**Werin, rûnin!** Come in, sit down! An order to one person ends in **-e**, to more than one in **-in**, and most take **bi-** in front: *bide / bidin* give, *bibêje / bibêjin* say, and *bixwe* eat, *vexwe* drink.\n\n- Some have no bi-: *were* come, *here* go, *rûne* sit, *derkeve* go out.\n- “Don’t!” is **ne-** in place of bi-: *neke!* don’t, *neçe!* don’t go, *netirse!* don’t be afraid.",
+          "grammarMd": "**Werin, rûnin!** Come in, sit down! An order to one person ends in **-e**, to more than one in **-in**, and most take **bi-** in front: *bide / bidin* give, *bibêje / bibêjin* say, and *bixwe* eat.\n\n- Some have no bi-: *were* come, *here* go, *rûne* sit, *derkeve* go out, *vexwe* drink.\n- “Don’t!” is **ne-** in place of bi-: *neke!* don’t, *neçe!* don’t go, *netirse!* don’t be afraid.",
           "lessons": [
             {
               "key": "u06s2l1",
@@ -1948,7 +1948,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nîvê wêneyê li cem Lorînê ye?",
+                    "say": "Nîvê wêneyî li cem Lorînê ye?",
                     "voice": "hamo",
                     "new": [
                       {
@@ -1956,7 +1956,7 @@
                         "en": "at (someone’s place), with"
                       }
                     ],
-                    "prompt": "Nîvê wêneyê li cem Lorînê ye?",
+                    "prompt": "Nîvê wêneyî li cem Lorînê ye?",
                     "options": [
                       "Is the other half of the photo at Lorîn’s?",
                       "Is the photo on the table?",
@@ -2029,7 +2029,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Were nêzîk. Nîvê wêneyê li cem Lorînê ye?",
+                        "text": "Were nêzîk. Nîvê wêneyî li cem Lorînê ye?",
                         "en": "Come closer. Is the other half of the photo with Lorîn?"
                       },
                       {
@@ -2056,7 +2056,7 @@
                     "prompt": "Edûl çi dibêje?",
                     "options": [
                       "Neke! Neçe!",
-                      "Bixwe! Vexwe!",
+                      "Bi xatirê te!",
                       "Xem neke!"
                     ],
                     "correctIndex": 0
@@ -2252,9 +2252,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Li ser wêneyê çêlekek jî heye!",
+                    "say": "Li ser wêneyî çêlekek jî heye!",
                     "voice": "hamo",
-                    "prompt": "Li ser wêneyê çêlekek jî heye!",
+                    "prompt": "Li ser wêneyî çêlekek jî heye!",
                     "options": [
                       "There’s a cow in the photo too!",
                       "There’s a goat in the photo too!",
@@ -2272,7 +2272,7 @@
                     "voice": "hamo",
                     "prompt": "Çima tu dikenî?",
                     "options": [
-                      "Çêlek jî li ser wêneyê ye!",
+                      "Çêlek jî li ser wêneyî ye!",
                       "Demjimêr diwanzdeh e.",
                       "Ez destên xwe dişom."
                     ],
@@ -2284,9 +2284,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Li pişt wêneyê, soza du zarokan heye.",
+                    "say": "Li pişt wêneyî, soza du zarokan heye.",
                     "voice": "hamo",
-                    "prompt": "Li pişt wêneyê, soza du zarokan heye.",
+                    "prompt": "Li pişt wêneyî, soza du zarokan heye.",
                     "options": [
                       "On the back of the photo is a promise from two children.",
                       "On the back of the photo is a letter from my mother.",
@@ -2313,7 +2313,7 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Ev kî ye, li ser wêneyê?",
+                        "text": "Ev kî ye, li ser wêneyî?",
                         "en": "Who is this, in the photo?"
                       },
                       {
@@ -2343,7 +2343,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Bavê te radibe û li wêneyê dinêre.",
+                        "text": "Bavê te radibe û li wêneyî dinêre.",
                         "en": "Your father gets up and looks at the photo."
                       },
                       {
@@ -2353,13 +2353,13 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Wêneyê bide min, ji kerema xwe!",
+                        "text": "Wêneyî bide min, ji kerema xwe!",
                         "en": "Give me the photo, please!"
                       },
                       {
                         "speaker": 0,
                         "text": "Fermo. Neke, hêdî!",
-                        "en": "Here you are. Careful, gently!"
+                        "en": "Here you are. Don’t! Gently!"
                       },
                       {
                         "speaker": 1,
@@ -2368,11 +2368,11 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Na, lê ev wêne sî salî ye!",
-                        "en": "No, but this photo is thirty years old!"
+                        "text": "Na, lê ev wêne çil salî ye!",
+                        "en": "No, but this photo is forty years old!"
                       }
                     ],
-                    "prompt": "Li ser wêneyê kî hene?",
+                    "prompt": "Li ser wêneyî kî hene?",
                     "options": [
                       "Ibrahîm û du zarok",
                       "Edûl û Lorîn",
@@ -2462,8 +2462,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Sî sal in ku ev wêne li cem Lorînê ye.",
-                    "reference": "Sî sal in ku ev wêne li cem Lorînê ye."
+                    "prompt": "Çil sal in ku ev wêne li cem Lorînê ye.",
+                    "reference": "Çil sal in ku ev wêne li cem Lorînê ye."
                   }
                 },
                 {
@@ -3491,9 +3491,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Divê em hemû bibêjin!",
+                    "say": "Divê em hemû bi wî re bibêjin!",
                     "voice": "hamo",
-                    "prompt": "Divê em hemû ___!",
+                    "prompt": "Divê em hemû bi wî re ___!",
                     "options": [
                       "bibêjin",
                       "dibêjin",
@@ -3523,9 +3523,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Xaltiya min li pirtûkê digere û dipirse: Ev ji ku ye?",
+                    "say": "Xaltiya min di pirtûkê de digere û dipirse: Ev ji ku ye?",
                     "voice": "hamo",
-                    "prompt": "Xaltiya min li pirtûkê digere û dipirse: Ev ji ku ye?",
+                    "prompt": "Xaltiya min di pirtûkê de digere û dipirse: Ev ji ku ye?",
                     "accepted": [
                       "My aunt looks through the book and asks: Where is this from?",
                       "My aunt looks through the book and asks: Where does this come from?",

@@ -13,7 +13,7 @@ export interface UnreadCounts {
   groups: number;
   /** friend requests waiting on an answer */
   requests: number;
-  /** notifications not yet opened (the bell on Home) */
+  /** notifications not yet opened (the bell at the top of every tab) */
   notifications: number;
   /** gifts not yet unwrapped (the dot on Profile) */
   gifts: number;
