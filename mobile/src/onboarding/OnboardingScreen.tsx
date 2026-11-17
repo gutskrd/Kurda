@@ -47,7 +47,7 @@ export function useOnboarding(): {
   /** Step to mount onboarding at when re-opened from the auth choice; null = normal start. */
   reopenStep: OnboardingStep | null;
   complete: (persisted: PersistedOnboarding) => void;
-  /** re-show the intro from the auth stack (e.g. "‹ Back" on the Welcome choice). */
+  /** Re-show the intro from the auth stack (e.g. "‹ Back" on the Welcome choice). */
   reopen: (step: OnboardingStep) => void;
 } {
   const [ready, setReady] = useState(false);

@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('expo-audio', () => import('../recording/testing/fakeMic'));
 vi.mock('expo-file-system/legacy', () => import('../recording/testing/fakeMic'));
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
-// a kept note is played by the shared player, which is not what these tests are about
+// A kept note is played by the shared player, which is not what these tests are about.
 vi.mock('./AudioPlayer', () => ({ AudioPlayer: () => null }));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { Alert } from 'react-native';
@@ -35,7 +35,7 @@ async function settle(): Promise<void> {
   await act(async () => undefined);
 }
 
-/** A voice note's recorder, and what it handed over, with the audio session as it stood at that moment. */
+/** A voice note recorder, what it handed over, and the audio session at that moment. */
 function noting(maxSeconds?: number) {
   const handed: Array<{ uri: string | null; session: Array<Record<string, unknown>> }> = [];
   renderWithProviders(<VoiceRecorder value={null} onChange={(uri) => handed.push({ uri, session: [...mic.modes] })} maxSeconds={maxSeconds} />);
@@ -53,7 +53,7 @@ describe('a voice note', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Stop recording' }));
     await settle();
     expect(handed).toEqual([{ uri: 'file:///cache/Audio/take-1.m4a', session: [RECORDING, PLAYBACK] }]);
-    // the note is the parent's to upload, not deleted from under it
+    // The note is the parent's to upload, not deleted from under it.
     expect(mic.deleted).toEqual([]);
   });
 
@@ -72,7 +72,7 @@ describe('a voice note', () => {
     const handed = noting();
     fireEvent.click(screen.getByRole('button', { name: 'Record a voice note' }));
     await settle();
-    // where things stand, where that is changed, and what can be done instead: nobody is told to allow anything
+    // The current state, where to change it and the alternative; nobody is told to allow anything.
     expect(alert).toHaveBeenCalledTimes(1);
     expect(alert).toHaveBeenCalledWith(
       'Microphone needed',
@@ -96,7 +96,7 @@ describe('a voice note', () => {
     expect(mic.calls).toEqual(['ask', 'ask']);
     expect(alert).toHaveBeenCalledTimes(2);
 
-    // turned on in the phone's settings meanwhile: the same button records
+    // Turned on in the phone's settings meanwhile: the same button records.
     mic.answer = GRANTED;
     fireEvent.click(screen.getByRole('button', { name: 'Record a voice note' }));
     await settle();

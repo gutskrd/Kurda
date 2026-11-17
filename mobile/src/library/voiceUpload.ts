@@ -7,21 +7,16 @@ import { describeUploadFailure, uploadWasLimited } from '../profile/photoUploadR
 export type VoiceUploadResult = { ok: true; audioMediaId: string; url: string } | { ok: false; error: string; limited?: boolean };
 
 /**
- * Upload a recorded voice note through the server (KUR-282): POST the raw audio
- * bytes to /media/voice; the server sniffs the real type, enforces the cost-safety
- * limits, stores it, and returns a media id to attach to a post narration or a
- * voice comment. Binary bodies can't go through ApiClient.request() (JSON-encodes),
- * so this streams the file with expo-file-system.
- *
- * The declared content-type routes the request to the server's audio body parser
- * (the server re-sniffs the bytes regardless). expo-audio HIGH_QUALITY records
- * .m4a → audio/mp4.
+ * Upload a recorded voice note: POST the raw audio to /media/voice, which sniffs the type, enforces size limits,
+ * stores it and returns a media id for a narration or voice comment. Binary bodies cannot go through
+ * ApiClient.request(), which JSON-encodes, so the file is streamed with expo-file-system. The declared content
+ * type routes the request to the server's audio parser; expo-audio HIGH_QUALITY records .m4a (audio/mp4).
  */
 export async function uploadVoiceNote(
   client: ApiClient,
   audio: { uri: string; contentType?: string },
   t: Translate,
-  /** the app's language, so a limit's end is said as the reader would say it */
+  /** The app's language, so a limit's end is said as the reader would say it. */
   locale?: string,
 ): Promise<VoiceUploadResult> {
   try {

@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the voice recorder and the player draw, but nothing here records or plays; a test can have the microphone refused
+// The voice recorder and player render, but nothing here records or plays; a test can have the microphone refused.
 const microphone = vi.hoisted(() => ({ granted: true }));
 vi.mock('expo-audio', () => ({
   RecordingPresets: { HIGH_QUALITY: {} },
@@ -138,9 +138,8 @@ describe('a comment’s author', () => {
     open({}, [comment('c1')]);
     const name = await screen.findByRole('button', { name: 'azad — open profile' });
     expect(name.textContent).toBe('azad');
-    // their own picture beside the name, not a monogram from the first letters of an id
-    // (the picture is hidden from a screen reader, which is given the name instead; react-native-web
-    // draws it as a box and, once it is loading, the browser's own image inside, both under that name)
+    // Their own picture beside the name, not a monogram. The picture is hidden from screen readers, which get the
+    // name; react-native-web draws it as a box and then the browser's image inside, both under that name.
     const photos = screen.getAllByRole('img', { name: 'azad avatar', hidden: true });
     expect(photos.map((p) => p.textContent)).toEqual(photos.map(() => ''));
     expect(photos.some((p) => p.getAttribute('src') === azad.avatarUrl)).toBe(true);
@@ -199,12 +198,12 @@ describe('posting a comment', () => {
     await screen.findByText('No comments yet. Be the first to say something.');
     fireEvent.click(screen.getByRole('button', { name: 'Record a voice note' }));
     await waitFor(() => expect(alert).toHaveBeenCalled());
-    // where things stand and what can be done instead; nobody is told to allow anything
+    // Where things stand and what can be done instead; nobody is told to allow anything.
     const said = shownAlert();
     expect(said.title).toBe('Microphone needed');
     expect(said.message).toBe('The microphone is off for Hevalo. You can turn it on in your phone’s settings, or write a comment instead.');
 
-    // nothing is left recording or busy, and the words go as they always did
+    // Nothing is left recording or busy, and the words go as they always did.
     expect(screen.getByRole('button', { name: 'Record a voice note' }).getAttribute('aria-disabled')).not.toBe('true');
     type('Spas!');
     send();
@@ -236,7 +235,7 @@ describe('replies', () => {
     );
     await screen.findByText('comment c1');
 
-    // ✕ goes back to commenting on the post
+    // ✕ goes back to commenting on the post.
     fireEvent.click(screen.getByRole('button', { name: 'Reply' }));
     expect(screen.getByText('Replying to @azad')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Cancel reply' }));
@@ -245,7 +244,7 @@ describe('replies', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reply' }));
     type('Erê, rast e');
     send();
-    // the branch opens with the reply in it, among the ones already there
+    // The branch opens with the reply in it, among the ones already there.
     expect(await screen.findByText('Erê, rast e')).toBeTruthy();
     expect(await screen.findByText('an older reply')).toBeTruthy();
     expect(screen.queryByText('Replying to @azad')).toBeNull();
@@ -289,7 +288,7 @@ describe('deleting your own comment', () => {
       ['Cancel', 'cancel'],
       ['Delete', 'destructive'],
     ]);
-    // nothing is sent until it is confirmed
+    // Nothing is sent until it is confirmed.
     expect(client.calls.some((c) => c.method === 'DELETE')).toBe(false);
 
     await act(async () => buttons.find((b) => b.style === 'destructive')?.onPress?.());

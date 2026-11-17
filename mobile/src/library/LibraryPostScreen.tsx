@@ -36,19 +36,16 @@ import { useDirection } from '../reports/direction';
 import { noticeTime } from '../notifications/inbox';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 
-/**
- * Read a library post (KUR-284): title + body, an inline audio player when it has
- * a narration ("listen"), and a comment thread with a composer.
- */
+/** Read a library post: title and body, an inline audio player when it has a narration, and a comment thread with a composer. */
 export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: () => void }): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const navigation = useNavigation<RootNavigation>();
   const dir = useDirection();
-  // the side a line starts on: the right in Soranî and Arabic
+  // The side a line starts on: the right in Soranî and Arabic.
   const edge = dir.row === 'row-reverse' ? 'flex-end' : 'flex-start';
-  // what is being reported, and whose it is (the Hevalo team's own posts offer no block)
+  // What is being reported, and whose it is (the Hevalo team's own posts offer no block).
   const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null; name?: string } | null>(null);
 
   const [post, setPost] = useState<LibraryPost | null>(null);
@@ -77,8 +74,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     void loadAll();
   }, [loadAll]);
 
-  // an edit made in the composer shows as soon as it is saved — and only
-  // then, since each read of the post counts a view
+  // An edit in the composer shows once saved, and only then, since each read of the post counts a view.
   useEffect(
     () =>
       onPostSaved((saved) => {
@@ -94,7 +90,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     setDraft('');
     setVoiceUri(null);
     const sent = await thread.send({ body: body || null, audioUrl: voice }, async (parentId) => {
-      // the voice note goes up first; the comment carries the id it comes back with
+      // The voice note goes up first; the comment carries the id it comes back with.
       let audioMediaId: string | undefined;
       if (voice) {
         const up = await uploadVoiceNote(client, { uri: voice }, t, locale);
@@ -104,7 +100,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
       const res = await addComment(client, postId, { body: body || undefined, audioMediaId, parentId });
       return res.ok ? { ok: true, comment: res.data } : { ok: false, title: t('comment.failed'), error: res.error };
     });
-    // a refused comment goes back into the composer, so nothing written is lost
+    // A refused comment goes back into the composer, so nothing written is lost.
     if (!sent) {
       setDraft((current) => current || body);
       setVoiceUri((current) => current ?? voice);
@@ -132,7 +128,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
 
   return (
     <GradientBackground>
-      {/* the screen starts at the top of the window, so the keyboard needs no offset; Android draws edge to edge and resizes nothing itself */}
+      {/* The screen starts at the window's top, so the keyboard needs no offset; Android draws edge to edge and resizes nothing itself. */}
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         {header}
         <View style={styles.screen}>
@@ -140,9 +136,9 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
             <PostSkeleton />
           ) : (
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-              {/* a gotin has no title; its pictures come first on its own page, words under them */}
+              {/* A gotin has no title; its pictures come first on its own page, words under them. */}
               {post.title ? <Text style={[styles.title, dir.free, { color: colors.textPrimary }]}>{post.title}</Text> : null}
-              {/* who wrote it and when, as the wall says it: a tap opens their profile */}
+              {/* Who wrote it and when, as the wall says it: a tap opens their profile. */}
               {post.author ? (
                 <Pressable
                   onPress={() => post.author && navigation.navigate('UserProfile', { userId: post.author.id })}
@@ -172,12 +168,12 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                       authorId: post.authorRole === 'user' ? post.authorId : null,
                     })
                   }
-                  // one line of small words with nothing beside it: it answers over 48 of height and a little past its ends
+                  // A single line of small text alone: it answers over 48 of height and a little past its ends.
                   reach="open"
                   reachSize={REPORT_LINE}
                   accessibilityRole="button"
                   accessibilityLabel={t('moderation.reportPost')}
-                  // the flag beside its words, on one line, at the reading edge
+                  // The flag beside its words, on one line, at the reading edge.
                   style={({ pressed }) => [styles.reportRow, { flexDirection: dir.row, alignSelf: edge }, pressed && heldDim]}
                 >
                   <Icon name="flag" size={14} color={colors.textSecondary} />
@@ -228,9 +224,8 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
 }
 
 /**
- * The page while it loads: the title, a page of the body at its own line
- * height, and the comments' heading — laid out by the page's own styles, so
- * the words arrive where the grey stood.
+ * The loading placeholder: title, a page of body at its line height and the comments heading, using the page's
+ * own styles so text lands where the grey stood.
  */
 function PostSkeleton(): React.JSX.Element {
   const { t } = useI18n();
@@ -243,7 +238,7 @@ function PostSkeleton(): React.JSX.Element {
           <SkeletonText key={i} size={typography.sizes.md} lineHeight={BODY_LINE} width={widths[i % widths.length]} />
         ))}
       </View>
-      {/* "Report this post", under it on anybody else's */}
+      {/* "Report this post", under it on anybody else's. */}
       <View>
         <Skeleton width={14} height={14} radius={radii.xs} />
         <SkeletonText size={typography.sizes.sm} width={112} />
@@ -254,7 +249,7 @@ function PostSkeleton(): React.JSX.Element {
   );
 }
 
-/** display(28) sets 1.12 */
+/** display(28) sets 1.12. */
 const TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
 const BODY_LINE = 24;
 
