@@ -11,6 +11,7 @@
  * gradients are the soft lights and the ground shadow.
  */
 import type { ChestTier } from '../quests.js';
+import { rad } from './geometry.js';
 import { CANVAS, escapeXml, linearAt, n, n2, prefixFor, radialAt, type Pt } from './svg.js';
 
 export type { ChestTier } from '../quests.js';
@@ -130,7 +131,6 @@ const BELT = { x0: 12, x1: 92, y0: 55, y1: 65 };
  */
 const LID = { x0: FRONT.x0, x1: FRONT.x1, foot: BELT.y0, rise: 24 };
 const THETA_TOP = Math.PI - Math.atan(LID.rise / (-DEPTH[1] / 2));
-const rad = (deg: number): number => (deg * Math.PI) / 180;
 /** The lid's plank seams, as angles round the barrel; they close up toward the top, where it turns away. */
 const LID_SEAMS: readonly number[] = [18, 36, 54, 72].map(rad);
 /** The light falls on the barrel from this angle round to the top. */

@@ -6,8 +6,8 @@
  * do not render SVG, so api/scripts/generate-email-art.ts writes the loop and still as images into web/public/email/;
  * this file draws them.
  */
-import { dab, form, ring, rr, type Tones } from './cutout.js';
-import { Drawing, checkSize, n, n2, prefixFor, tint } from './svg.js';
+import { bead, dot, form, line, ring, rr, tones, type Tones } from './cutout.js';
+import { Drawing, checkSize, n, n2, n3, prefixFor, tint } from './svg.js';
 
 export const EMAIL_PICTURES = ['letter', 'code', 'key', 'lock', 'shield', 'badge', 'device', 'hourglass', 'flag', 'document', 'scales', 'bell'] as const;
 export type EmailPicture = (typeof EMAIL_PICTURES)[number];
@@ -39,19 +39,9 @@ const CREAM: Tones = { light: '#fffaf1', base: '#f6ead6', shade: '#cdb898' };
 const WHITE: Tones = { light: '#ffffff', base: '#eef2f7', shade: '#bcc6d4' };
 const WOOD: Tones = { light: '#f3cf9c', base: '#dba869', shade: '#a2733c' };
 
-/** A colour as a form's three tones. */
-const tones = (hex: string): Tones => ({ light: tint(hex, 0.32), base: hex, shade: tint(hex, -0.32) });
 
 // ───────────────────────────────────────────────────────────── the pen
 
-const line = (dr: Drawing, d: string, hex: string, width: number, more = ''): void => {
-  dr.add(`<path d="${d}" fill="none" stroke="${hex}" stroke-width="${n(width)}" stroke-linecap="round" stroke-linejoin="round"${more}/>`);
-};
-const dot = (dr: Drawing, cx: number, cy: number, r: number, hex: string): void => {
-  dr.add(`<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="${hex}"/>`);
-};
-/** A round bead: a dab as wide as it is tall. */
-const bead = (dr: Drawing, cx: number, cy: number, r: number, hex: string, drop = 2.4): void => dab(dr, cx, cy, r, r, hex, drop);
 /** A tick in the light colour of what it is drawn on. */
 const tick = (dr: Drawing, cx: number, cy: number, k: number, hex = '#ffffff', width = 5): void => {
   line(dr, `M${n(cx - 7 * k)} ${n(cy + 0.5 * k)}L${n(cx - 2 * k)} ${n(cy + 5.5 * k)}L${n(cx + 7.5 * k)} ${n(cy - 5 * k)}`, hex, width);
@@ -83,7 +73,6 @@ const faded = (dr: Drawing, opacity: number, draw: () => void): void => {
   draw();
   dr.add('</g>');
 };
-const n3 = (v: number): string => String(Math.round(v * 1000) / 1000);
 const move = (dx: number, dy: number): string => `translate(${n(dx)} ${n(dy)})`;
 const turn = (degrees: number, cx: number, cy: number): string => `rotate(${n2(degrees)} ${n(cx)} ${n(cy)})`;
 const grow = (kx: number, ky: number, cx: number, cy: number): string => `translate(${n(cx)} ${n(cy)}) scale(${n3(kx)} ${n3(ky)}) translate(${n(-cx)} ${n(-cy)})`;

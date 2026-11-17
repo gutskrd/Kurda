@@ -18,6 +18,7 @@ import {
   grownTree,
   kurdistanFlagAt,
   orchardTree,
+  polygon,
   poplar,
   poplarLeaves,
   roundTree,
@@ -30,9 +31,6 @@ import {
 } from './valley.js';
 
 const f = (v: number): string => n(v);
-
-/** A closed polygon through the points. */
-const poly = (pts: readonly Pt[]): string => `M${pts.map(([x, y]) => `${f(x)} ${f(y)}`).join('L')}Z`;
 
 /** A smooth line run backwards, to close a band whose other edge was drawn forwards. */
 const back = (pts: readonly Pt[]): string => smoothPath([...pts].reverse()).replace(/^M/, 'L');
@@ -204,8 +202,8 @@ function rock(x: number, y: number, w: number, h: number, dark: boolean, ground:
   const c = (hex: string): string => dusk(hex, dark);
   const p = (pts: readonly (readonly [number, number])[]): Pt[] => pts.map(([u, v]) => [x + u * w, y - v * h] as Pt);
   let out = fill(ellipsePath(x + w * 0.3, y + 0.4, w * 0.6, Math.max(1.6, h * 0.22)), ground);
-  out += fill(poly(p([[-0.5, 0], [-0.44, 0.52], [-0.16, 0.96], [0.12, 1], [0.34, 0.72], [0.5, 0.34], [0.48, 0]])), c(VALLEY.stoneSide));
-  out += fill(poly(p([[-0.5, 0], [-0.44, 0.52], [-0.16, 0.96], [0.12, 1], [0.02, 0.5], [0.12, 0]])), c(VALLEY.stone));
+  out += fill(polygon(p([[-0.5, 0], [-0.44, 0.52], [-0.16, 0.96], [0.12, 1], [0.34, 0.72], [0.5, 0.34], [0.48, 0]])), c(VALLEY.stoneSide));
+  out += fill(polygon(p([[-0.5, 0], [-0.44, 0.52], [-0.16, 0.96], [0.12, 1], [0.02, 0.5], [0.12, 0]])), c(VALLEY.stone));
   return out;
 }
 
@@ -238,8 +236,8 @@ function bareTree(x: number, y: number, s: number, dark: boolean, ground: string
   const snow = dusk(VALLEY.snow, dark);
   const p = (pts: readonly Pt[]): Pt[] => pts.map(([dx, dy]) => [x + dx * s, y + dy * s] as Pt);
   let out = fill(ellipsePath(x + 6 * s, y + 1.5, 9 * s, 2.6 * s), ground);
-  out += fill(poly(p([[-3, 0], [-1.6, -24], [1.6, -24], [3, 0]])), bark);
-  out += fill(poly(p([[0.4, 0], [0.4, -24], [1.6, -24], [3, 0]])), barkShade);
+  out += fill(polygon(p([[-3, 0], [-1.6, -24], [1.6, -24], [3, 0]])), bark);
+  out += fill(polygon(p([[0.4, 0], [0.4, -24], [1.6, -24], [3, 0]])), barkShade);
   const boughs: [readonly Pt[], number][] = [
     [[[-0.8, -20], [-6, -31], [-10.5, -42]], 2.8],
     [[[-6, -31], [-11.5, -34], [-14, -40]], 1.5],
@@ -311,7 +309,7 @@ const HIVES_BEE: Box = { kind: 'bee', x: 43, y: 24, w: 34, h: 34 };
 function hive(x: number, y: number, w: number, h: number, boxes: number, tones: { face: string; side: string }, dark: boolean, stone = false): string {
   const c = (hex: string): string => dusk(hex, dark);
   const d = 7.4;
-  let out = fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d, y - d / 2 - h], [x + w, y - h]]), c(tones.side));
+  let out = fill(polygon([[x + w, y], [x + w + d, y - d / 2], [x + w + d, y - d / 2 - h], [x + w, y - h]]), c(tones.side));
   out += fill(`M${f(x)} ${f(y - h)}h${f(w)}v${f(h)}h${f(-w)}Z`, c(tones.face));
   let seams = '';
   for (let k = 1; k < boxes; k++) seams += `M${f(x)} ${f(y - (h * k) / boxes)}h${f(w)}l${f(d)} ${f(-d / 2)}`;
@@ -320,9 +318,9 @@ function hive(x: number, y: number, w: number, h: number, boxes: number, tones: 
   out += fill(`M${f(x + w * 0.18)} ${f(y - 1.4)}h${f(w * 0.64)}v1.4h${f(-w * 0.64)}Z`, c(HUE.woodLight));
   // The lid: its side, its front edge, its lit top.
   const t = y - h;
-  out += fill(poly([[x + w + 1, t], [x + w + 1 + d, t - d / 2], [x + w + 1 + d, t - d / 2 - 3], [x + w + 1, t - 3]]), c(VALLEY.wallSide));
+  out += fill(polygon([[x + w + 1, t], [x + w + 1 + d, t - d / 2], [x + w + 1 + d, t - d / 2 - 3], [x + w + 1, t - 3]]), c(VALLEY.wallSide));
   out += fill(`M${f(x - 1)} ${f(t - 3)}h${f(w + 2)}v3h${f(-(w + 2))}Z`, c(VALLEY.parapet));
-  out += fill(poly([[x - 1, t - 3], [x - 1 + d, t - 3 - d / 2], [x + w + 1 + d, t - 3 - d / 2], [x + w + 1, t - 3]]), c(VALLEY.roof));
+  out += fill(polygon([[x - 1, t - 3], [x - 1 + d, t - 3 - d / 2], [x + w + 1 + d, t - 3 - d / 2], [x + w + 1, t - 3]]), c(VALLEY.roof));
   if (stone) {
     const [sx, sy] = [x + w * 0.5 + d * 0.4, t - 3 - d * 0.22];
     out += fill(`M${f(sx - 5.4)} ${f(sy + 0.6)}C${f(sx - 5)} ${f(sy - 2.2)} ${f(sx + 3)} ${f(sy - 2.6)} ${f(sx + 5.6)} ${f(sy - 0.4)}C${f(sx + 5.8)} ${f(sy + 1)} ${f(sx - 4.6)} ${f(sy + 1.6)} ${f(sx - 5.4)} ${f(sy + 0.6)}Z`, c(VALLEY.stoneSide));
@@ -334,8 +332,8 @@ function hive(x: number, y: number, w: number, h: number, boxes: number, tones: 
 /** The two stones a hive stands on, and its shadow falling to the lower right. */
 function hiveStand(x: number, y: number, w: number, h: number, ground: string, dark: boolean): string {
   const c = (hex: string): string => dusk(hex, dark);
-  let out = fill(poly([[x + 1, y + 4], [x + w + 9, y + 4], [x + w + 16, y - 1], [x + 9, y - 1]]), ground);
-  out += fill(poly([[x + w, y], [x + w + 7.4, y - 3.7], [x + w + 7.4 + h * 0.3, y - 3.7 + h * 0.16], [x + w + h * 0.3, y + h * 0.16]]), ground);
+  let out = fill(polygon([[x + 1, y + 4], [x + w + 9, y + 4], [x + w + 16, y - 1], [x + 9, y - 1]]), ground);
+  out += fill(polygon([[x + w, y], [x + w + 7.4, y - 3.7], [x + w + 7.4 + h * 0.3, y - 3.7 + h * 0.16], [x + w + h * 0.3, y + h * 0.16]]), ground);
   for (const sx of [x + 1, x + w - 6]) out += fill(`M${f(sx)} ${f(y)}h6v4.6h-6Z`, c(VALLEY.stoneSide)) + fill(`M${f(sx)} ${f(y)}h4.2v4.6h-4.2Z`, c(VALLEY.stone));
   return out;
 }
@@ -401,7 +399,7 @@ function bridge(dark: boolean, random: () => number): string {
   out += poplar(12.6, 99, 0.76, poplarLeaves(dark), ground);
   out += grownTree(orchardTree(103.6, 98.4, 0.74, -0.4, random), foliage(dark), bark(dark), ground, random);
   // The bridge's shadow along its foot, falling to the lower right.
-  out += fill(poly([[8, 108], [112, 108], [116, 111], [14, 111.5]]), ground);
+  out += fill(polygon([[8, 108], [112, 108], [116, 111], [14, 111.5]]), ground);
   // The bridge: its face, and the parapet's lit top.
   const deck: Pt[] = [[4, 103.6], [18, 97.4], [33, 85], [47, 71.4], [60, 64.6], [73, 71.4], [87, 85], [102, 97.4], [116, 103.6]];
   out += fill(`${smoothPath(deck)}L116 109L4 109Z`, c(HUE.lime));
@@ -447,12 +445,12 @@ function tent(x: number, y: number, w: number, h: number, d: number, poles: read
   const rise = d * 0.5;
   const top = y - h;
   const ridgeY = top - d / 4 - rise;
-  let out = fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d + 8, y - d / 2 + 4], [x + w + 8, y + 4]]), c(VALLEY.meadowShade));
+  let out = fill(polygon([[x + w, y], [x + w + d, y - d / 2], [x + w + d + 8, y - d / 2 + 4], [x + w + 8, y + 4]]), c(VALLEY.meadowShade));
   out += fill(`M${f(x - 1)} ${f(y + 0.5)}h${f(w + 2)}l4 2.4h${f(-w - 2)}Z`, c(VALLEY.meadowShade));
   // The guy ropes out to their pegs.
   out += stroke(`M${f(x)} ${f(top + 1)}L${f(x - 4)} ${f(y + 1)}M${f(x + w + d)} ${f(top - d / 2 + 1)}L${f(x + w + d + 5)} ${f(y - d / 2 + 2)}`, c(HUE.rope), 0.7);
   // The right end in shade, with the gable the roof makes over it.
-  out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d, top - d / 2], [x + w + d / 2, ridgeY], [x + w, top]]), c(HUE.goatShade));
+  out += fill(polygon([[x + w, y], [x + w + d, y - d / 2], [x + w + d, top - d / 2], [x + w + d / 2, ridgeY], [x + w, top]]), c(HUE.goatShade));
   // The open front: the dark inside, the poles, and the reed screen with its woven band.
   out += fill(`M${f(x)} ${f(top)}h${f(w)}v${f(h)}h${f(-w)}Z`, c(HUE.goatInside));
   out += stroke(poles.map((p) => `M${f(x + p)} ${f(y)}V${f(top)}`).join(''), c(HUE.woodLight), 1.1);
@@ -543,10 +541,10 @@ function school(dark: boolean, random: () => number): string {
   out += fill(blobPath(60, 106.4, 55, 8.4, 12, 0.08, random), c(VALLEY.dirt));
   // The school's shadow, its shaded gable end, its front, the blue plinth, the windows and the door.
   out += `<path d="${ellipsePath(x + w + d * 0.6, y + 1.4, d, 2.6)}" fill="${c(VALLEY.dirtEdge)}" fill-opacity="0.6"/>`;
-  out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d, top - d / 2], [x + w + d / 2, ridgeY], [x + w, top]]), c(HUE.whitewashSide));
+  out += fill(polygon([[x + w, y], [x + w + d, y - d / 2], [x + w + d, top - d / 2], [x + w + d / 2, ridgeY], [x + w, top]]), c(HUE.whitewashSide));
   out += fill(`M${x} ${top}h${w}v${h}h${-w}Z`, c(HUE.whitewash));
   out += fill(`M${x} ${y - 3}h${w}v3h${-w}Z`, c(VALLEY.gate));
-  out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d, y - d / 2 - 3], [x + w, y - 3]]), c(VALLEY.gateDark));
+  out += fill(polygon([[x + w, y], [x + w + d, y - d / 2], [x + w + d, y - d / 2 - 3], [x + w, y - 3]]), c(VALLEY.gateDark));
   const lit = dark ? warm(HUE.lamp, true) : HUE.pane;
   for (let k = 0; k < 4; k++) {
     const wx = x + 6 + k * 11.5;
@@ -565,8 +563,8 @@ function school(dark: boolean, random: () => number): string {
     [x + w + d + 1.5, top - d / 2 + 2.6],
     [x + w + d / 2 + 1, ridgeY + 2.2],
   ];
-  out += fill(poly(verge), c(VALLEY.redDark));
-  out += fill(poly([[x - 2, top + 1], [x + w + 2, top + 1], [x + w + 2 + d / 2, ridgeY], [x - 2 + d / 2, ridgeY]]), c(VALLEY.red));
+  out += fill(polygon(verge), c(VALLEY.redDark));
+  out += fill(polygon([[x - 2, top + 1], [x + w + 2, top + 1], [x + w + 2 + d / 2, ridgeY], [x - 2 + d / 2, ridgeY]]), c(VALLEY.red));
   const ribs: string[] = [];
   for (let k = 1; k < 12; k++) {
     const rx = x - 2 + (k * (w + 4)) / 12;
@@ -616,7 +614,7 @@ function hearth(dark: boolean, random: () => number): string {
   const top = y - h;
   // The house's shadow lies soft on the snow, inside the drift.
   out += `<path d="${ellipsePath(x + w + d * 0.62, y + 1.4, d * 0.95, 2.4)}" fill="${snowShade}" fill-opacity="0.7"/>`;
-  out += fill(poly([[x + w, y], [x + w + d, y - d / 2], [x + w + d, top - d / 2], [x + w, top]]), c(VALLEY.wallSide));
+  out += fill(polygon([[x + w, y], [x + w + d, y - d / 2], [x + w + d, top - d / 2], [x + w, top]]), c(VALLEY.wallSide));
   out += fill(`M${x} ${top}h${w}v${h}h${-w}Z`, c(VALLEY.wall));
   out += fill(`M${x + 9} ${y}v-14a5.5 5.5 0 0 1 11 0v14Z`, c(VALLEY.gate));
   out += fill(`M${x + 14.5} ${y}v-19.5a5.5 5.5 0 0 1 5.5 5.5v14Z`, c(VALLEY.gateLight));
@@ -653,15 +651,15 @@ function hearth(dark: boolean, random: () => number): string {
   // The chimney, of the same earth, with its own cap of snow.
   const cx = HEARTH_SMOKE.x + 8;
   const cy = HEARTH_SMOKE.y + HEARTH_SMOKE.h;
-  out += fill(poly([[cx + 3, cy + 12], [cx + 5.5, cy + 10.8], [cx + 5.5, cy + 0.6], [cx + 3, cy + 1.6]]), c(VALLEY.wallSide));
+  out += fill(polygon([[cx + 3, cy + 12], [cx + 5.5, cy + 10.8], [cx + 5.5, cy + 0.6], [cx + 3, cy + 1.6]]), c(VALLEY.wallSide));
   out += fill(`M${cx - 3} ${cy + 1.6}h6v10.4h-6Z`, c(VALLEY.wall));
   out += fill(blobPath(cx + 1.4, cy + 0.9, 4.8, 2, 8, 0.12, random), snowShade);
   out += fill(blobPath(cx + 0.6, cy + 0.3, 4, 1.6, 8, 0.12, random), snow);
   // The woodpile against the wall: its shaded end, the bark behind, the cut ends of the logs, and snow along its top.
   const sx = 6;
   const sy = 106;
-  out += fill(poly([[sx + 22, sy], [sx + 27, sy - 2.5], [sx + 26, sy - 13], [sx + 19, sy - 15.5]]), c(HUE.woodShade));
-  out += fill(poly([[sx, sy], [sx + 23, sy], [sx + 21, sy - 14], [sx + 3, sy - 14]]), c(VALLEY.trunk));
+  out += fill(polygon([[sx + 22, sy], [sx + 27, sy - 2.5], [sx + 26, sy - 13], [sx + 19, sy - 15.5]]), c(HUE.woodShade));
+  out += fill(polygon([[sx, sy], [sx + 23, sy], [sx + 21, sy - 14], [sx + 3, sy - 14]]), c(VALLEY.trunk));
   let ends = '';
   let rings = '';
   const rows: [number, number, number][] = [

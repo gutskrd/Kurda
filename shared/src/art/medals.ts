@@ -5,7 +5,7 @@
  * Modelled like a badge (badges.ts), but with no tag or plate.
  */
 import { BADGE_GLYPHS, GLYPH_VIEWBOX } from './badge-glyphs.js';
-import { regular, roundPath } from './geometry.js';
+import { rad, regular, roundPath } from './geometry.js';
 import { circ } from './icons.js';
 import { leaf } from './paint.js';
 import type { Pt } from './svg.js';
@@ -24,8 +24,6 @@ const GOLD: MedalTone = { light: '#ffe596', mid: '#f8c84c', dark: '#eeb02c', dee
 /** The medal before it is lit: the same piece in the greys a badge not yet earned is drawn in. */
 const UNLIT: MedalTone = { light: '#dfe2e8', mid: '#c3c8d2', dark: '#a9b0bc', deep: '#8f96a4', ink: ['#8a91a0', '#6c7383'] };
 const ICE: MedalTone = { light: '#d6eeff', mid: '#9fd2f8', dark: '#6fb6ec', deep: '#3f8fd0', ink: ['#3d86c4', '#235f9a'] };
-
-const rad = (deg: number): number => (deg * Math.PI) / 180;
 
 /**
  * A laurel: two branches up the sides of a circle, leaves in pairs (one leaning out, a shorter one in) shrinking toward

@@ -22,6 +22,9 @@ export function n2(v: number): string {
   return String(Object.is(x, -0) ? 0 : x);
 }
 
+/** Three decimals, for faint opacities and fine scales, where hundredths would be off by a noticeable share. */
+export const n3 = (v: number): string => String(Math.round(v * 1000) / 1000);
+
 export type Pt = readonly [number, number];
 
 export const pt = (p: Pt): string => `${n(p[0])},${n(p[1])}`;

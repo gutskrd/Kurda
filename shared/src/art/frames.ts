@@ -5,6 +5,7 @@
  * travelling gleam, drawn separately (`seasonFrameShineSvg`) at the frame's size so apps can rotate it, or leave it
  * still under reduced motion; `shine: true` bakes one gleam into a still frame instead.
  */
+import { rad } from './geometry.js';
 import { circ } from './icons.js';
 import type { RankTier } from './keys.js';
 import { RANK_TIER_NAMES, RANK_TIERS } from './keys.js';
@@ -55,8 +56,6 @@ const LAUREL: Record<1 | 2 | 3, { from: number; to: number; leaves: number }> = 
   2: { from: 76, to: -6, leaves: 5 },
   3: { from: 78, to: -58, leaves: 8 },
 };
-
-const rad = (deg: number): number => (deg * Math.PI) / 180;
 
 /** The gleam: a soft band of light along the ring's upper left, fading at both ends, brightest a little past its middle. */
 function gleam(dr: Drawing, from = -158, to = -98): string {

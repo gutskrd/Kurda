@@ -7,7 +7,7 @@
  * redrawing anything.
  */
 import { roundPath } from './geometry.js';
-import { laurel, softStar } from './paint.js';
+import { capsule, laurel, softStar } from './paint.js';
 import type { Metal } from './palette.js';
 import type { Detail, Drawing, Pt } from './svg.js';
 import { linearAt, linearBox, mix, n, n2, radialAt } from './svg.js';
@@ -686,12 +686,6 @@ function keyhole([cx, cy]: Pt, s: number): string {
   );
 }
 
-/** A capsule centred on cx,cy. */
-function plate(cx: number, cy: number, w: number, h: number): string {
-  const r = h / 2;
-  return `M${n(cx - w / 2 + r)},${n(cy - r)}H${n(cx + w / 2 - r)}A${n(r)},${n(r)} 0 0 1 ${n(cx + w / 2 - r)},${n(cy + r)}H${n(cx - w / 2 + r)}A${n(r)},${n(r)} 0 0 1 ${n(cx - w / 2 + r)},${n(cy - r)}Z`;
-}
-
 /**
  * The division under a crest: a small plaque of the crest's metal with stones set in it, one lit for III, two for II,
  * three for I, the rest empty settings, distinct by shape and fill as well as colour.
@@ -704,8 +698,8 @@ export function divisionStones(dr: Drawing, gem: Metal, m: Metal, count: number,
   const metal = metalDown(dr, m);
   const x0 = cx - ((count - 1) * (w + gap)) / 2;
   const out = [
-    `<path d="${plate(cx, cy + 1.4, plateW, plateH)}" fill="${m.deep}" fill-opacity="0.5"/>`,
-    `<path d="${plate(cx, cy, plateW, plateH)}" fill="url(#${metal})" stroke="${m.deep}" stroke-width="1.2"/>`,
+    `<path d="${capsule(cx, cy + 1.4, plateW, plateH)}" fill="${m.deep}" fill-opacity="0.5"/>`,
+    `<path d="${capsule(cx, cy, plateW, plateH)}" fill="url(#${metal})" stroke="${m.deep}" stroke-width="1.2"/>`,
   ];
   for (let i = 0; i < count; i++) {
     const x = x0 + i * (w + gap);

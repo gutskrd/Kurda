@@ -4,6 +4,7 @@
  * where they turn to noise at 32 pixels.
  */
 import type { AccentName } from './palette.js';
+import { rad } from './geometry.js';
 import { n } from './svg.js';
 
 export type Part =
@@ -21,8 +22,6 @@ export type Part =
   | { k: 'h'; d: string; o?: number; tf?: string; fine?: boolean };
 
 // ─────────────────────────────────────────────────────────────── helpers
-
-const rad = (deg: number): number => (deg * Math.PI) / 180;
 
 /** A circle as two half arcs, which every renderer draws the same. */
 export const circ = (cx: number, cy: number, r: number): string =>

@@ -6,7 +6,7 @@
  * own tile tint (`impostorCategoryTone`).
  */
 import { GAME_NAMES } from '../games/names.js';
-import { dab, form, ring, rr, type Tones } from './cutout.js';
+import { bead, dot, fill, form, line, ring, rr, tones, turned, type Tones } from './cutout.js';
 import { Drawing, checkSize, n, prefixFor, tint } from './svg.js';
 
 export type ImpostorWay = 'classic' | 'blind' | 'odd';
@@ -41,26 +41,7 @@ const WHITE: Tones = { light: '#ffffff', base: '#eef2f7', shade: '#bcc6d4' };
 const WOOD: Tones = { light: '#f3cf9c', base: '#dba869', shade: '#a2733c' };
 const SKIN: Tones = { light: '#fbe3c8', base: '#f0c9a0', shade: '#c79a6c' };
 
-/** A colour as a form's three tones. */
-const tones = (hex: string): Tones => ({ light: tint(hex, 0.32), base: hex, shade: tint(hex, -0.32) });
 
-const line = (dr: Drawing, d: string, hex: string, width: number): void => {
-  dr.add(`<path d="${d}" fill="none" stroke="${hex}" stroke-width="${n(width)}" stroke-linecap="round" stroke-linejoin="round"/>`);
-};
-const fill = (dr: Drawing, d: string, hex: string, more = ''): void => {
-  dr.add(`<path d="${d}" fill="${hex}"${more}/>`);
-};
-const dot = (dr: Drawing, cx: number, cy: number, r: number, hex: string): void => {
-  dr.add(`<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="${hex}"/>`);
-};
-/** A round bead: a dab as wide as it is tall. */
-const bead = (dr: Drawing, cx: number, cy: number, r: number, hex: string, drop = 2.4): void => dab(dr, cx, cy, r, r, hex, drop);
-/** Runs `draw` inside a group turned `angle` degrees about a point. */
-function turned(dr: Drawing, angle: number, cx: number, cy: number, draw: () => void): void {
-  dr.add(`<g transform="rotate(${n(angle)} ${n(cx)} ${n(cy)})">`);
-  draw();
-  dr.add('</g>');
-}
 /** A four-pointed sparkle about a point, its arms `r` long. */
 const sparkle = (cx: number, cy: number, r: number): string => {
   const k = r * 0.16;
@@ -587,9 +568,9 @@ export function impostorCategorySvg(opts: ImpostorArtOptions & { category: strin
 
 // ────────────────────────────────────────────────────────── the ways to play
 
-/** The impostor's mask, with two eye holes. */
-const MASK = 'M-22 -7C-14 -14 -6 -10 0 -6C6 -10 14 -14 22 -7C24 4 16 12 8 8C4 6 2 2 0 2C-2 2 -4 6 -8 8C-16 12 -24 4 -22 -7Z';
-const MASK_EYES = 'M-13 -4.5A4.6 3.4 0 1 0 -3.8 -4.5A4.6 3.4 0 1 0 -13 -4.5ZM3.8 -4.5A4.6 3.4 0 1 0 13 -4.5A4.6 3.4 0 1 0 3.8 -4.5Z';
+/** The impostor's mask and its two eye holes, also worn on Impostor's game cover. */
+export const MASK = 'M-22 -7C-14 -14 -6 -10 0 -6C6 -10 14 -14 22 -7C24 4 16 12 8 8C4 6 2 2 0 2C-2 2 -4 6 -8 8C-16 12 -24 4 -22 -7Z';
+export const MASK_EYES = 'M-13 -4.5A4.6 3.4 0 1 0 -3.8 -4.5A4.6 3.4 0 1 0 -13 -4.5ZM3.8 -4.5A4.6 3.4 0 1 0 13 -4.5A4.6 3.4 0 1 0 3.8 -4.5Z';
 
 function mask(dr: Drawing, cx: number, cy: number, scale: number, hex: string): void {
   dr.add(`<g transform="translate(${n(cx)} ${n(cy)}) scale(${n(scale)})"><path d="${MASK}${MASK_EYES}" fill="${hex}" fill-rule="evenodd"/></g>`);

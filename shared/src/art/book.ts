@@ -22,33 +22,35 @@ import {
 } from '../characters/index.js';
 import { CANVAS, escapeXml, hashOf, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
 import { VALLEY, bark, blobPath, earthHouse, ellipsePath, foliage, grownTree, orchardTree, roundTree, type TreeShape } from './valley.js';
-import { wordPictureKinBody } from './word-pictures.js';
+// The word pictures' own tones and shapes, so an apple here matches the apple there.
+import {
+  BARK,
+  BLUE,
+  CLAY,
+  COPPER,
+  GLASS,
+  GRASS,
+  LEAF,
+  PAPER,
+  RED,
+  STRAW,
+  WATER,
+  WOOD,
+  box,
+  oval,
+  poly,
+  wordPictureKinBody,
+  type Tone,
+} from './word-pictures.js';
 
 // ───────────────────────────────────────────────────────────── colours
 
-/** A form's three tones: its face, its one step of shade, and its patch of light. */
-type Tone = readonly [face: string, shade: string, light: string];
-
-/** The word pictures' tones, so an apple here matches the apple there. */
-const RED: Tone = ['#e0503f', '#b5382c', '#f08b7e'];
-const LEAF: Tone = [VALLEY.leaf, VALLEY.leafShade, VALLEY.leafLight];
-const GRASS: Tone = ['#b3d184', '#93b566', '#cfe3a4'];
-const BARK: Tone = [VALLEY.trunk, '#664026', '#a8774e'];
-const WOOD: Tone = ['#b8804d', '#8a5a33', '#d6a46f'];
-const STRAW: Tone = ['#e3b866', '#b98b3c', '#f4d996'];
-const BLUE: Tone = [VALLEY.gate, VALLEY.gateDark, '#7fb4e2'];
-const GLASS: Tone = ['#e1eff5', '#b3cdd8', '#ffffff'];
-const WATER: Tone = ['#5aaee0', '#3a86bf', '#cdeaf6'];
-const PAPER: Tone = ['#fbf1dc', '#e2cfaa', '#fffaf0'];
-const COPPER: Tone = ['#cd7c3e', '#9a5326', '#eaa96d'];
 const IRON: Tone = [VALLEY.basalt, VALLEY.basaltSide, VALLEY.basaltLight];
 const BURLAP: Tone = ['#cdb07a', '#a88a54', '#e3cc9c'];
 /** A bitten apple's flesh, and the shade in a bite's hollow. */
 const FLESH: Tone = ['#f8e6b4', '#e3cb90', '#fff5d8'];
 /** Field stone and the lanes' dry-stone walls. */
 const STONE: Tone = ['#cbc3b2', '#a3998a', '#e2dccf'];
-/** Fired clay: a jug, a pot. */
-const CLAY: Tone = ['#d58f55', '#a6632f', '#ecb37f'];
 /** Brown leather, worn. */
 const LEATHER: Tone = ['#7a4a2c', '#57321d', '#9c6845'];
 /** An old photo's browns. */
@@ -69,32 +71,6 @@ const O = (cx: number, cy: number, r: number): string => {
   const q = Math.round(r * 10) / 10;
   return ellipsePath(cx, cy, q, q);
 };
-
-/** An ellipse turned `deg` degrees about its centre, as a path. */
-function oval(cx: number, cy: number, rx: number, ry: number, deg: number): string {
-  const a = (deg * Math.PI) / 180;
-  const [dx, dy] = [Math.cos(a) * rx, Math.sin(a) * rx];
-  const arc = `A${f(rx)} ${f(ry)} ${f(deg)} 1 0`;
-  return `M${f(cx - dx)} ${f(cy - dy)}${arc} ${f(cx + dx)} ${f(cy + dy)}${arc} ${f(cx - dx)} ${f(cy - dy)}Z`;
-}
-
-/** A rectangle with its corners rounded by `r`. */
-function box(x: number, y: number, w: number, h: number, r = 0): string {
-  if (r <= 0) return `M${f(x)} ${f(y)}v${f(h)}h${f(w)}v${f(-h)}Z`;
-  const q = Math.min(r, w / 2, h / 2);
-  const c = `a${f(q)} ${f(q)} 0 0 0`;
-  return (
-    `M${f(x + q)} ${f(y)}${c} ${f(-q)} ${f(q)}v${f(h - 2 * q)}${c} ${f(q)} ${f(q)}h${f(w - 2 * q)}` +
-    `${c} ${f(q)} ${f(-q)}v${f(-(h - 2 * q))}${c} ${f(-q)} ${f(-q)}Z`
-  );
-}
-
-/** A closed polygon through x, y pairs. */
-function poly(...xy: number[]): string {
-  let d = '';
-  for (let i = 0; i + 1 < xy.length; i += 2) d += `${i === 0 ? 'M' : 'L'}${f(xy[i]!)} ${f(xy[i + 1]!)}`;
-  return `${d}Z`;
-}
 
 /** A smooth closed Catmull-Rom outline through the points, as cubic Béziers. */
 function smooth(pts: readonly Pt[]): string {

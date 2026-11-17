@@ -6,10 +6,7 @@
  * fix a picture stamp's proportions and colours here, so the two apps cannot drift apart.
  */
 import { hueSteps, type HueName, type HueScheme } from '../hues.js';
-import { mix, n2 as num } from './svg.js';
-
-/** An opacity to the thousandth: a faint stroke's few hundredths would move by a quarter if rounded to hundredths. */
-const share = (v: number): string => String(Math.round(v * 1000) / 1000);
+import { mix, n2 as num, n3 } from './svg.js';
 
 export interface StampShape {
   /** The radius of one perforation. */
@@ -145,7 +142,7 @@ export function stampSvg(opts: StampOptions): string {
     strength > 0
       ? stampGlow(reach).map(
           (ring) =>
-            `<path d="${d}" fill="none" stroke="${glow}" stroke-width="${ring.width}" stroke-linejoin="round" stroke-opacity="${share(ring.opacity * strength)}"/>`,
+            `<path d="${d}" fill="none" stroke="${glow}" stroke-width="${ring.width}" stroke-linejoin="round" stroke-opacity="${n3(ring.opacity * strength)}"/>`,
         ).join('')
       : '';
   const line = edge ? `<path d="${d}" fill="none" stroke="${edge}" stroke-width="1" stroke-opacity="0.35"/>` : '';

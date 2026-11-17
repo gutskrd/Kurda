@@ -19,6 +19,7 @@ import {
   grownTree,
   kurdistanFlagAt,
   orchardTree,
+  polygon,
   smoothPath,
   stroke,
   warm,
@@ -60,9 +61,6 @@ const GROUND = VALLEY.meadowShade;
 /** A coordinate as written into a path: one decimal, as everywhere in the art. */
 const f = (v: number): string => n(v);
 
-/** A closed polygon through the points. */
-const poly = (pts: readonly Pt[]): string => `M${pts.map(([x, y]) => `${f(x)} ${f(y)}`).join('L')}Z`;
-
 /** A polygon with corners rounded by `r`, so a painted plot of land does not look ruled. */
 function softPoly(pts: readonly Pt[], r: number): string {
   let d = '';
@@ -98,9 +96,9 @@ const tones = (top: string, face: string, side: string, dark: boolean): Tones =>
 function block(x: number, y: number, w: number, h: number, d: number, t: Tones): string {
   const up = d / 2;
   return (
-    fill(poly([[x + w, y], [x + w + d, y - up], [x + w + d, y - h - up], [x + w, y - h]]), t.side) +
+    fill(polygon([[x + w, y], [x + w + d, y - up], [x + w + d, y - h - up], [x + w, y - h]]), t.side) +
     fill(box(x, y - h, w, h), t.face) +
-    fill(poly([[x, y - h], [x + d, y - h - up], [x + w + d, y - h - up], [x + w, y - h]]), t.top)
+    fill(polygon([[x, y - h], [x + d, y - h - up], [x + w + d, y - h - up], [x + w, y - h]]), t.top)
   );
 }
 
@@ -108,7 +106,7 @@ function block(x: number, y: number, w: number, h: number, d: number, t: Tones):
 function castShadow(x: number, y: number, w: number, d: number, len: number, colour: string): string {
   const up = d / 2;
   const dy = len * 0.5;
-  return fill(poly([[x, y], [x + len, y + dy], [x + w + len, y + dy], [x + w + d + len, y - up + dy], [x + w + d, y - up], [x + d, y - up]]), colour);
+  return fill(polygon([[x, y], [x + len, y + dy], [x + w + len, y + dy], [x + w + d + len, y - up + dy], [x + w + d, y - up], [x + d, y - up]]), colour);
 }
 
 /**
@@ -199,10 +197,10 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += fill('M80 96v-13a4.5 4.5 0 0 1 9 0v13Z', c(VALLEY.gate));
       out += fill(box(91.5, 78, 4, 6.4), dark ? warm(LAMPLIGHT, true) : VALLEY.window);
       // The vine's shade under the trellis, with the back posts and the cushioned bench in it.
-      out += fill(poly([[6, 111], [60, 111], [80, 101], [22, 101]]), ground);
+      out += fill(polygon([[6, 111], [60, 111], [80, 101], [22, 101]]), ground);
       out += stroke('M22 102V77M76 102V77', c(WOOD.side), 1.8);
       out += block(10, 103, 26, 5, 5, wood);
-      out += fill(poly([[11.5, 98], [34, 98], [36.5, 96.7], [14, 96.7]]) + box(11.5, 97.4, 22.5, 1.8), c(VALLEY.red));
+      out += fill(polygon([[11.5, 98], [34, 98], [36.5, 96.7], [14, 96.7]]) + box(11.5, 97.4, 22.5, 1.8), c(VALLEY.red));
       out += fill(box(15, 97.8, 2, 1.4) + box(22, 97.8, 2, 1.4) + box(29, 97.8, 2, 1.4), c(VALLEY.gold));
       // The front posts carry the trellis; the vine's old stem twists up the left one and the beam ends show either side.
       out += stroke('M6 111V85M58 111V85', c(WOOD.face), 2);
@@ -297,8 +295,8 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
       out += stroke('M56 78v4', c(VALLEY.goldDark), 2.2);
       // The trough: a lit rim and water holding one patch of sky; the water falls in where the ripple sprite sits.
       out += block(24, 110, 62, 10, 16, stone);
-      out += fill(poly([[28.5, 99], [39, 93.7], [84.5, 93.7], [74, 99]]), c(VALLEY.water));
-      out += fill(poly([[34, 98], [40, 95], [52, 95], [46, 98]]), c(VALLEY.waterLight));
+      out += fill(polygon([[28.5, 99], [39, 93.7], [84.5, 93.7], [74, 99]]), c(VALLEY.water));
+      out += fill(polygon([[34, 98], [40, 95], [52, 95], [46, 98]]), c(VALLEY.waterLight));
       out += stroke('M56 83C56 88 56 92 56 96.6', c(VALLEY.water), 2.4);
       out += stroke('M55.5 84v10', c(VALLEY.waterLight), 0.9);
       out += stroke(ellipsePath(56, 97, 8, 2.4), c(VALLEY.waterLight), 1.2);
@@ -362,7 +360,7 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
         for (let k = 0; k < stripes; k++) {
           const u0 = (k / stripes) * (w + 4) - 2;
           const u1 = ((k + 1) / stripes) * (w + 4) - 2;
-          const p = poly([[x + u0, top], [x + u1, top], [x + u1 + 14, back], [x + u0 + 14, back]]);
+          const p = polygon([[x + u0, top], [x + u1, top], [x + u1 + 14, back], [x + u0 + 14, back]]);
           if (k % 2 === 0) a += p;
           else b += p;
         }
@@ -424,9 +422,9 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
         out += block(60, 63, 10, 5.4, 5, straw) + block(89, 61.4, 8, 4.6, 4.4, straw) + block(29, 73.4, 9.4, 5, 5.4, straw);
       }
       // The shelter's shadow on its apron, in the concrete's darker edge colour.
-      out += fill(poly([[34, 108], [94, 108], [108, 101], [48, 101]]), c(VALLEY.path));
+      out += fill(polygon([[34, 108], [94, 108], [108, 101], [48, 101]]), c(VALLEY.path));
       out += fill(box(34, 108, 60, 2), c(VALLEY.pathEdge));
-      out += fill(poly([[90, 104], [96, 107], [108, 101], [102, 98]]), c(VALLEY.pathEdge));
+      out += fill(polygon([[90, 104], [96, 107], [108, 101], [102, 98]]), c(VALLEY.pathEdge));
       // The back wall in the roof's shade, the bench against it between the side walls.
       out += fill(box(52, 72, 50, 26), c(VALLEY.stoneSide));
       out += block(52, 100, 38, 4, 5, wood);
@@ -438,7 +436,7 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
         // The milestone, white with a red cap like the road's stones.
         out += castShadow(100, 114, 6, 4, 4, ground);
         out += block(100, 114, 6, 7, 4, stone);
-        const cap = poly([[100, 107], [106, 107], [106, 104.6], [103, 103.2], [100, 104.6]]) + poly([[106, 107], [110, 105], [110, 102.6], [106, 104.6]]);
+        const cap = polygon([[100, 107], [106, 107], [106, 104.6], [103, 103.2], [100, 104.6]]) + polygon([[106, 107], [110, 105], [110, 102.6], [106, 104.6]]);
         out += fill(cap, c(VALLEY.red));
       }
       // The sign hangs from its post's arm so the moving sprite can swing it; here it hangs still.
@@ -473,8 +471,8 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
         let sides = '';
         for (let x = x0; x + 4 <= x1 + 0.1; x += 7) {
           faces += box(x, y - 5, 4, 5);
-          tops += poly([[x, y - 5], [x + d, y - 5 - d / 2], [x + 4 + d, y - 5 - d / 2], [x + 4, y - 5]]);
-          sides += poly([[x + 4, y], [x + 4 + d, y - d / 2], [x + 4 + d, y - 5 - d / 2], [x + 4, y - 5]]);
+          tops += polygon([[x, y - 5], [x + d, y - 5 - d / 2], [x + 4 + d, y - 5 - d / 2], [x + 4, y - 5]]);
+          sides += polygon([[x + 4, y], [x + 4 + d, y - d / 2], [x + 4 + d, y - 5 - d / 2], [x + 4, y - 5]]);
         }
         return fill(sides, basalt.side) + fill(faces, basalt.face) + fill(tops, basalt.top);
       };

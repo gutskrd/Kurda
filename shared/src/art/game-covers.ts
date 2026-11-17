@@ -8,8 +8,9 @@
  */
 import { deerSilhouetteSvg } from '../games/who-am-i/silhouette.js';
 import { GAME_NAMES } from '../games/names.js';
-import { dab, form, ring, rr, type Tones } from './cutout.js';
+import { dab, dot, fill, form, line, ring, rr, tones, turned, type Tones } from './cutout.js';
 import type { Cover, Key, Part } from './game-acting.js';
+import { MASK, MASK_EYES } from './impostor.js';
 import { songbird } from './songbird.js';
 import { letter, letterWidth, oval } from './ink.js';
 import { Drawing, n, tint } from './svg.js';
@@ -32,20 +33,9 @@ const WOOD: Tones = { light: '#f3cf9c', base: '#dba869', shade: '#a2733c' };
 /** A line of writing on cream paper. */
 const WRITING = '#d9c8aa';
 
-/** A colour as a form's three tones. */
-const tones = (hex: string): Tones => ({ light: tint(hex, 0.32), base: hex, shade: tint(hex, -0.32) });
 
 // ───────────────────────────────────────────────────────────── the pen
 
-const fill = (dr: Drawing, d: string, hex: string, more = ''): void => {
-  dr.add(`<path d="${d}" fill="${hex}"${more}/>`);
-};
-const line = (dr: Drawing, d: string, hex: string, width: number, more = ''): void => {
-  dr.add(`<path d="${d}" fill="none" stroke="${hex}" stroke-width="${n(width)}" stroke-linecap="round" stroke-linejoin="round"${more}/>`);
-};
-const dot = (dr: Drawing, cx: number, cy: number, r: number, hex: string): void => {
-  dr.add(`<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="${hex}"/>`);
-};
 /** Every cover's first part: the square in the game's colour, a paler disc behind the subject, and its soft shadow. */
 function ground(dr: Drawing, hex: string, disc: readonly [number, number, number], floor?: readonly [number, number, number, number]): void {
   fill(dr, 'M0 0H120V120H0Z', hex);
@@ -58,12 +48,6 @@ const write = (dr: Drawing, ch: string, x: number, y: number, height: number, he
 /** Runs `draw` inside a group moved to (x, y), turned `angle` degrees and scaled (kx, ky) about its own origin. */
 function placed(dr: Drawing, x: number, y: number, angle: number, kx: number, draw: () => void, ky = Math.abs(kx)): void {
   dr.add(`<g transform="translate(${n(x)} ${n(y)}) rotate(${n(angle)}) scale(${String(kx)} ${String(ky)})">`);
-  draw();
-  dr.add('</g>');
-}
-/** Runs `draw` inside a group turned `angle` degrees about a point. */
-function turned(dr: Drawing, angle: number, cx: number, cy: number, draw: () => void): void {
-  dr.add(`<g transform="rotate(${n(angle)} ${n(cx)} ${n(cy)})">`);
   draw();
   dr.add('</g>');
 }
@@ -459,10 +443,6 @@ const lastLetter: Cover = {
 const MUSTARD = '#f5c451';
 /** The foot of the fan the cards are held in. */
 const FAN = [60, 118] as const;
-
-/** The impostor's mask, with two eye holes. */
-const MASK = 'M-22 -7C-14 -14 -6 -10 0 -6C6 -10 14 -14 22 -7C24 4 16 12 8 8C4 6 2 2 0 2C-2 2 -4 6 -8 8C-16 12 -24 4 -22 -7Z';
-const MASK_EYES = 'M-13 -4.5A4.6 3.4 0 1 0 -3.8 -4.5A4.6 3.4 0 1 0 -13 -4.5ZM3.8 -4.5A4.6 3.4 0 1 0 13 -4.5A4.6 3.4 0 1 0 3.8 -4.5Z';
 
 /** One card standing in the fan, turned `angle` about its foot. */
 function card(dr: Drawing, angle: number, face: Tones, mark: () => void): void {

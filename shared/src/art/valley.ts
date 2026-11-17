@@ -243,7 +243,7 @@ export function limbsReachCrown(t: TreeShape): boolean {
 }
 
 /** A closed polygon through the points. */
-const polygon = (pts: readonly Pt[]): string => `M${pts.map(([x, y]) => `${f(x)} ${f(y)}`).join('L')}Z`;
+export const polygon = (pts: readonly Pt[]): string => `M${pts.map(([x, y]) => `${f(x)} ${f(y)}`).join('L')}Z`;
 
 /** A limb as a filled shape thinning from `width` to a third of that, along a curve through its bend. */
 function limbPath(limb: TreeLimb): string {

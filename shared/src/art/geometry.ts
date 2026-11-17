@@ -6,6 +6,9 @@
 import type { Pt } from './svg.js';
 import { pt } from './svg.js';
 
+/** Degrees to radians. */
+export const rad = (deg: number): number => (deg * Math.PI) / 180;
+
 /** A regular polygon's vertices; `start` is the angle of the first one (−90° is straight up). */
 export function regular(cx: number, cy: number, r: number, sides: number, startDeg = -90): Pt[] {
   const out: Pt[] = [];
