@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { onBackFromBackground } from '../net/backFromBackground';
 import { resolveEventTheme, type ActiveEventLite, type EventThemePack } from './eventThemes.js';
 import { getThemeOptOut, setThemeOptOut } from './themePref.js';
 
@@ -25,9 +26,16 @@ const POLL_MS = 60_000;
 
 /**
  * Tracks the active event theme app-wide (KUR-092). Live events are re-polled on
- * mount, when the app returns to the foreground, and on a slow interval, so the
- * theme applies while an event runs and reverts cleanly once it ends — there is
- * no persisted theme state to leave stale. Opt-out short-circuits to null.
+ * mount, when the app comes back from the background, and on a slow interval
+ * while the app is not in the background, so the theme applies while an event
+ * runs and reverts cleanly once it ends — there is no persisted theme state to
+ * leave stale. Opt-out short-circuits to null.
+ *
+ * The interval stops in the background: a phone in a pocket shows no theme,
+ * and an Android app left open behind another kept asking once a minute for
+ * as long as the system let it run. Coming back asks at once and starts it
+ * again; a Control Centre swipe, which never stopped it, asks nothing
+ * (net/backFromBackground.ts).
  */
 export function EventThemeProvider({ children }: { children: ReactNode }) {
   const { client, status } = useAuth();
@@ -55,14 +63,29 @@ export function EventThemeProvider({ children }: { children: ReactNode }) {
   }, [client, status]);
 
   useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const stop = (): void => {
+      if (interval) clearInterval(interval);
+      interval = null;
+    };
+    const start = (): void => {
+      stop();
+      interval = setInterval(refresh, POLL_MS);
+    };
     refresh();
-    const interval = setInterval(refresh, POLL_MS);
-    const sub = AppState.addEventListener('change', (s: AppStateStatus) => {
-      if (s === 'active') refresh();
+    if (AppState.currentState !== 'background') start();
+    const away = AppState.addEventListener('change', (s: AppStateStatus) => {
+      if (s === 'background') stop();
+    });
+    const stopListening = onBackFromBackground(AppState, () => {
+      refresh();
+      start();
     });
     return () => {
-      clearInterval(interval);
-      sub.remove();
+      stop();
+      // react-native-web hands back nothing where the page cannot say whether it is visible
+      away?.remove();
+      stopListening();
     };
   }, [refresh]);
 

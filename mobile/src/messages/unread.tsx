@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useRealtimeListener, useRealtimeReconnect } from '../realtime/RealtimeProvider';
+import { onBackFromBackground } from '../net/backFromBackground';
 import { useUnseenGifts } from '../shop/useUnseenGifts';
 import { messagesUnread } from './list';
 
@@ -52,7 +53,9 @@ const FRESH_MS = 15_000;
  *
  * Four cheap counts — unread direct messages, unread group messages, friend
  * requests, unopened notifications — read when the shell first appears, when
- * the app comes back to the front, when the realtime connection comes back,
+ * the app comes back from the background (not from a Control Centre swipe,
+ * which leaves the connection open and hearing everything: net/backFromBackground.ts),
+ * when the realtime connection comes back,
  * when a direct message or a gift arrives on your own channel, and when a
  * screen that has just read something says so. No timer: a badge that is
  * wrong for a few seconds until you look is better than a phone asking the
@@ -109,11 +112,9 @@ export function UnreadProvider({ children }: { children: ReactNode }): React.JSX
       return;
     }
     load();
-    const foreground = AppState.addEventListener('change', (state) => {
-      if (state === 'active') refresh();
-    });
+    const stopListening = onBackFromBackground(AppState, () => refresh());
     return () => {
-      foreground.remove();
+      stopListening();
       if (timer.current) clearTimeout(timer.current);
     };
   }, [signedIn, load, refresh]);
