@@ -54,6 +54,12 @@ describe('a list row', () => {
     expect((row.lastElementChild as HTMLElement).style.transform).toMatch(/scaleX\(-1\)/);
   });
 
+  it('is a fingertip’s reach tall, 48, since a row stands right against the next', async () => {
+    renderWithProviders(<GlassRow title="Your reports" onPress={() => undefined} />);
+    await act(async () => undefined);
+    expect(getComputedStyle(rowOf(screen.getByRole('button', { name: 'Your reports' }))).minHeight).toBe('48px');
+  });
+
   it('is not a button, and has no chevron, where there is nothing to open', () => {
     renderWithProviders(<GlassRow title="Version" value="1.0" />);
     expect(screen.queryByRole('button')).toBeNull();

@@ -10,7 +10,7 @@ import { useDirection } from '../reports/direction';
 import { GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { Toggle } from '../theme/Toggle';
+import { ToggleRow } from '../theme/Toggle';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 
 /**
@@ -192,7 +192,11 @@ export function SettingsRow({
   );
 }
 
-/** A row that is a switch: the whole row turns it, not only the switch at its end. */
+/**
+ * A row that is a switch: the whole row turns it, not only the switch at its
+ * end. It is the app's `ToggleRow`, laid out as every other settings row and
+ * as tall (56), with the switch where the row's end goes.
+ */
 export function SettingsSwitch({
   icon,
   title,
@@ -210,30 +214,16 @@ export function SettingsSwitch({
 }): React.JSX.Element {
   const { colors } = useTheme();
   return (
-    <Pressable
-      onPress={() => {
-        haptic('select');
-        onValueChange(!value);
-      }}
+    <ToggleRow
+      label={title}
+      hint={subtitle}
+      value={value}
+      onValueChange={onValueChange}
       disabled={disabled}
-      accessibilityRole="switch"
-      accessibilityLabel={title}
-      accessibilityHint={subtitle}
-      accessibilityState={{ checked: value, disabled }}
-      style={({ pressed }) => [pressed && { backgroundColor: colors.controlTrack }, disabled && styles.disabled]}
+      style={({ pressed }) => pressed && { backgroundColor: colors.controlTrack }}
     >
-      <RowBody
-        icon={icon}
-        title={title}
-        subtitle={subtitle}
-        end={
-          // the row speaks for the switch, so a screen reader meets one control, not two
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Toggle value={value} disabled={disabled} onValueChange={onValueChange} />
-          </View>
-        }
-      />
-    </Pressable>
+      {(toggle) => <RowBody icon={icon} title={title} subtitle={subtitle} end={toggle} />}
+    </ToggleRow>
   );
 }
 

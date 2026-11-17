@@ -16,6 +16,7 @@ import { ConfettiBurst, GlowRing, SoftGlow } from '../theme/CelebrationParts';
 import { display, sectionLabel } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
 import { duration } from '../theme/motion';
+import { ReachReset } from '../theme/Pressable';
 import { DarkScheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ceremonyLine, leagueLabel, leagueMeaning, leagueName, moveUpRule, type Ceremony } from './format';
@@ -169,62 +170,65 @@ export function LeagueCeremony({
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <DarkScheme>
-        <View style={[styles.backdrop, { backgroundColor: STAGE }]} accessibilityViewIsModal>
-          <View style={[styles.column, { maxWidth: 420 }]}>
-            <View style={[styles.artStage, { width: stage, height: glowSize }]}>
-              <SoftGlow colour={strong} size={glowSize} id="league-glow" />
-              {plan.travel && burstKind ? <GlowRing progress={ring} colour={strong} size={glowSize * 0.62} testID="league-ring" /> : null}
-              {plan.travel && burstKind ? (
-                <ConfettiBurst
-                  progress={burst}
-                  count={BURST.league}
-                  seed={week.weekKey.length * 53 + now.length}
-                  colours={[light, strong, '#ffffff']}
-                  reach={Math.min(stage * 0.48, 190)}
-                  testID="league-burst"
-                />
-              ) : null}
-              <Animated.View style={[styles.strip, { flexDirection: dir.row, transform: [{ translateX }] }]} testID="league-strip">
-                {side(below, kind === 'promoted', false)}
-                <View style={[styles.slot, { width: slot }]}>
-                  <Animated.View style={{ transform: [{ scale: middleScale }] }}>
-                    <LeagueEmblem tier={now} size={BASE} label={leagueLabel(t, now)} />
-                  </Animated.View>
+      {/* drawn over the page, not beside its controls: their groups' caps stop here */}
+      <ReachReset>
+        <DarkScheme>
+          <View style={[styles.backdrop, { backgroundColor: STAGE }]} accessibilityViewIsModal>
+            <View style={[styles.column, { maxWidth: 420 }]}>
+              <View style={[styles.artStage, { width: stage, height: glowSize }]}>
+                <SoftGlow colour={strong} size={glowSize} id="league-glow" />
+                {plan.travel && burstKind ? <GlowRing progress={ring} colour={strong} size={glowSize * 0.62} testID="league-ring" /> : null}
+                {plan.travel && burstKind ? (
+                  <ConfettiBurst
+                    progress={burst}
+                    count={BURST.league}
+                    seed={week.weekKey.length * 53 + now.length}
+                    colours={[light, strong, '#ffffff']}
+                    reach={Math.min(stage * 0.48, 190)}
+                    testID="league-burst"
+                  />
+                ) : null}
+                <Animated.View style={[styles.strip, { flexDirection: dir.row, transform: [{ translateX }] }]} testID="league-strip">
+                  {side(below, kind === 'promoted', false)}
+                  <View style={[styles.slot, { width: slot }]}>
+                    <Animated.View style={{ transform: [{ scale: middleScale }] }}>
+                      <LeagueEmblem tier={now} size={BASE} label={leagueLabel(t, now)} />
+                    </Animated.View>
+                  </View>
+                  {side(above, kind === 'demoted', true)}
+                </Animated.View>
+              </View>
+
+              <Animated.View style={[styles.words, { opacity: words, transform: [{ translateY: lift }] }]}>
+                {beat === 1 ? (
+                  <>
+                    <Text style={[sectionLabel, styles.kicker, { color: light }]}>{kicker}</Text>
+                    <Text style={styles.line} accessibilityRole="header">
+                      {line}
+                    </Text>
+                    <View style={styles.detail}>
+                      <Text style={styles.detailText}>{detail}</Text>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <Text style={[sectionLabel, styles.kicker, { color: light }]}>{t('leagues.thisWeek')}</Text>
+                    <Text style={styles.title} accessibilityRole="header">
+                      {title}
+                    </Text>
+                    {meaning ? <Text style={styles.subtitle}>{meaning}</Text> : null}
+                    {rule ? <Text style={styles.rule}>{rule}</Text> : null}
+                  </>
+                )}
+                <View style={styles.actions}>
+                  <ClayButton label={t('common.continue')} tone="primary" size="large" onPress={beat === 1 ? () => setBeat(2) : onClose} />
+                  {beat === 1 && win ? <ShareWin text={leagueShare(t, win, leagueName(t, win.tier))} testID="league-share" /> : null}
                 </View>
-                {side(above, kind === 'demoted', true)}
               </Animated.View>
             </View>
-
-            <Animated.View style={[styles.words, { opacity: words, transform: [{ translateY: lift }] }]}>
-              {beat === 1 ? (
-                <>
-                  <Text style={[sectionLabel, styles.kicker, { color: light }]}>{kicker}</Text>
-                  <Text style={styles.line} accessibilityRole="header">
-                    {line}
-                  </Text>
-                  <View style={styles.detail}>
-                    <Text style={styles.detailText}>{detail}</Text>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <Text style={[sectionLabel, styles.kicker, { color: light }]}>{t('leagues.thisWeek')}</Text>
-                  <Text style={styles.title} accessibilityRole="header">
-                    {title}
-                  </Text>
-                  {meaning ? <Text style={styles.subtitle}>{meaning}</Text> : null}
-                  {rule ? <Text style={styles.rule}>{rule}</Text> : null}
-                </>
-              )}
-              <View style={styles.actions}>
-                <ClayButton label={t('common.continue')} tone="primary" size="large" onPress={beat === 1 ? () => setBeat(2) : onClose} />
-                {beat === 1 && win ? <ShareWin text={leagueShare(t, win, leagueName(t, win.tier))} testID="league-share" /> : null}
-              </View>
-            </Animated.View>
           </View>
-        </View>
-      </DarkScheme>
+        </DarkScheme>
+      </ReachReset>
     </Modal>
   );
 }

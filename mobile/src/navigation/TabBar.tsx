@@ -164,10 +164,14 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
                 navigation.navigate(route.name, route.params);
               }
             };
+            // counted from the left whichever way the tabs run, as the capsule is
+            const at = mirrored ? state.routes.length - 1 - i : i;
             return (
               <TabButton
                 key={route.key}
                 name={name}
+                leftmost={at === 0}
+                rightmost={at === state.routes.length - 1}
                 word={full}
                 spoken={spoken}
                 focused={focused}
@@ -219,9 +223,20 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   );
 }
 
-/** One tab: its whole share of the bar is the target; its glyph and word give under the finger as any button does (`usePressScale`), and do nothing more. */
+/**
+ * One tab: its whole share of the bar is the target; its glyph and word give
+ * under the finger as any button does (`usePressScale`), and do nothing more.
+ *
+ * The bar's own padding, the air round the capsule, answers too: every tab
+ * reaches across it to the bar's top and bottom edge, and the two end tabs to
+ * the bar's rounded ends, so no part of the bar a thumb lands on is dead.
+ * Between tabs nothing is added, since they already touch. All of it is
+ * inside the bar, which is clear of everything else on the screen.
+ */
 function TabButton({
   name,
+  leftmost,
+  rightmost,
   word,
   spoken,
   focused,
@@ -231,6 +246,9 @@ function TabButton({
   children,
 }: {
   name: TabName;
+  /** whether this tab is at the bar's left or right end as drawn, which in Soranî and Arabic is the other way round from the order of the tabs */
+  leftmost: boolean;
+  rightmost: boolean;
   /** the tab's name, under its glyph */
   word: string;
   spoken: string;
@@ -246,6 +264,7 @@ function TabButton({
     <Pressable
       // the tab bar is outside anything that scrolls, so it answers the moment it is touched
       pressDelay={0}
+      hitSlop={{ top: PAD, bottom: PAD, left: leftmost ? PAD : 0, right: rightmost ? PAD : 0 }}
       onPress={onPress}
       onLongPress={onLongPress}
       delayLongPress={400}

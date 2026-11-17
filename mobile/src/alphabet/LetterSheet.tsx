@@ -325,6 +325,8 @@ function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Elemen
       onPress={() => onStep(by)}
       accessibilityRole="button"
       accessibilityLabel={label}
+      // each is alone at its end of the foot, with nothing near: it answers 8 past every edge
+      reach="open"
       style={({ pressed }) => [styles.step, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
     >
       <Icon name={icon} size={20} color={colors.primary} style={dir.flip ?? undefined} />

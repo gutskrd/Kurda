@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
-import { hitSlopFor } from '../../a11y/a11y';
 import { spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AnswerMotion } from '../../theme/MotionParts';
@@ -103,7 +102,7 @@ export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled, f
                 onPress={say}
                 accessibilityRole="button"
                 accessibilityLabel={t('lesson.speak.playModel')}
-                hitSlop={hitSlopFor(SPEAKER, SPEAKER)}
+                reachSize={{ width: SPEAKER, height: SPEAKER }}
                 style={({ pressed }) => pressed && styles.pressed}
               >
                 <PlayDisc size={SPEAKER} playing={model.playing} />

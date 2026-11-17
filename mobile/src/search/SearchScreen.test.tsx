@@ -8,7 +8,9 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { forgetReach, reachOf } from '../testing/reach';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -17,7 +19,11 @@ import { forgetLastLetterAvailability } from '../lastletter/availability';
 import { SearchScreen } from './SearchScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  forgetReach();
+  localStorage.clear();
+});
 
 describe('Search with nothing typed', () => {
   /*
@@ -42,6 +48,22 @@ describe('Search with nothing typed', () => {
     renderWithProviders(<SearchScreen onExit={() => {}} />);
     expect(await screen.findByText('Type to search across the app.')).toBeTruthy();
     expect(screen.queryAllByTestId('skeleton')).toHaveLength(0);
+  });
+
+  /*
+   * Clear is one line of words over the recent searches, 4 above the first;
+   * the searches are 44 tall and 2 apart. Each reaches toward its neighbour
+   * only half of the gap between them, so a tap between two lands on the
+   * nearer one rather than on whichever comes later.
+   */
+  it('lets Clear and the recent searches share the gaps between them', async () => {
+    localStorage.setItem('hevalo_search_recents_v1', JSON.stringify(['dar', 'av']));
+    testAuth.client = fakeClient({ 'GET /friends/suggestions': ok({ suggestions: [] }) });
+    renderWithProviders(<SearchScreen onExit={() => {}} />);
+    await screen.findByRole('button', { name: 'Clear' });
+    expect(reachOf('Clear')).toEqual({ top: 15, bottom: 2, left: 8, right: 8 });
+    expect(reachOf('dar')).toEqual({ top: 1, bottom: 1, left: 0, right: 0 });
+    expect(reachOf('av')).toEqual({ top: 1, bottom: 1, left: 0, right: 0 });
   });
 });
 

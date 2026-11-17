@@ -666,6 +666,18 @@ button.nav-link {
 .by-zagrosian:hover {
   color: var(--ink);
 }
+/*
+ * Where a finger is about, a finger's height, as the imprint beside it is. On
+ * a phone the bar wraps and this lands 10px under the imprint; at the height
+ * of its words alone, its reach (reach.css) would cross that gap and take the
+ * presses meant for the imprint's lower edge. At 44px it needs only 2px more
+ * each way.
+ */
+@media (any-pointer: coarse) {
+  .by-zagrosian {
+    min-height: 44px;
+  }
+}
 .by-zagrosian-mark {
   height: 17px;
   width: auto;

@@ -11,7 +11,7 @@ import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchHit, SearchResult } from '../dictionary/types';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, reachSlop } from '../a11y/a11y';
 import { useDirection } from '../reports/direction';
 import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
@@ -114,6 +114,9 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
 
   const results = result?.results ?? [];
   const isEmpty = query.trim().length === 0;
+  // a saved word's ✕ is at the row's end: on the right, or on the left where the row is mirrored
+  const towardWord = dir.row === 'row-reverse' ? 'right' : 'left';
+  const removeReach = reachSlop(MIN_TOUCH_TARGET, MIN_TOUCH_TARGET, { edge: SAVED_ROW_REACH, limit: { [towardWord]: 0 } });
   const showRecents = isEmpty && recents.length > 0;
 
   return (
@@ -160,6 +163,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
                   style={({ pressed }) => [styles.savedMain, pressed && heldRow(colors.controlTrack)]}
                   onPress={() => setOpenEntry(w.entryId)}
                   accessibilityRole="button"
+                  hitSlop={SAVED_WORD_REACH}
                 >
                   <Text style={[styles.recentText, dir.free, { color: colors.primary }]}>{w.headword}</Text>
                   <Text style={[styles.hitDef, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -170,6 +174,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
                   onPress={() => removeSaved(w.entryId)}
                   accessibilityRole="button"
                   accessibilityLabel={t('dictionary.removeSaved', { word: w.headword })}
+                  hitSlop={removeReach}
                   style={({ pressed }) => [styles.removeButton, pressed && heldDim]}
                 >
                   <Icon name="close" size={18} color={colors.textSecondary} />
@@ -249,6 +254,17 @@ function HitsSkeleton(): React.JSX.Element {
     </View>
   );
 }
+
+/*
+ * A saved word and its ✕ share their row's height: both reach up and down
+ * through the row's padding and half the gap to the next row, so a tap
+ * along the row lands on one of the two and never on the row beside it. The
+ * word reaches as far to either side, and stops short of the ✕; the ✕
+ * reaches nothing toward the word, because a tap that falls between them
+ * must not remove a word somebody meant to open.
+ */
+const SAVED_ROW_REACH = spacing.sm + spacing.xs / 2;
+const SAVED_WORD_REACH = reachSlop(null, null, { edge: SAVED_ROW_REACH });
 
 const styles = StyleSheet.create({
   // the app's own gutter at the sides, so the field and the words line up with the way back above them

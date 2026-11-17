@@ -218,10 +218,12 @@ export function Field(props: {
             accessibilityRole="button"
             accessibilityLabel={reveal ? t('auth.hidePassword') : t('auth.showPassword')}
             accessibilityState={{ selected: reveal }}
-            hitSlop={8}
+            // the eye stands alone at the field's end, so it reaches past every edge, over the field's own padding
+            reach="open"
+            reachSize={AFFIX_SIZE}
             style={({ pressed }) => [styles.affix, mirrored ? styles.affixStart : styles.affixEnd, pressed && heldDim]}
           >
-            <Icon name={reveal ? 'eye-off' : 'eye'} size={20} color={colors.textSecondary} />
+            <Icon name={reveal ? 'eye-off' : 'eye'} size={AFFIX_ICON} color={colors.textSecondary} />
           </Pressable>
         ) : null}
       </Animated.View>
@@ -229,6 +231,10 @@ export function Field(props: {
     </View>
   );
 }
+
+/** The show-password eye: its glyph, and the box it is drawn in, the glyph and its padding wide and the field tall. */
+const AFFIX_ICON = 20;
+const AFFIX_SIZE = { width: AFFIX_ICON + spacing.xs * 2, height: MIN_TOUCH_TARGET };
 
 /** iOS wants its own vocabulary for the same four things Android names plainly. */
 const TEXT_CONTENT_TYPE = {

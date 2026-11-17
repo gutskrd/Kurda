@@ -259,7 +259,10 @@
     overflow-x: auto;
     scroll-snap-type: x proximity;
     margin-inline: calc(var(--space-4) * -1);
-    padding: 2px var(--space-4) var(--space-3);
+    /* a scrolling row cuts off whatever reaches past it (reach.css): 8px more room above and below, given back by the margin */
+    margin-block: -8px;
+    padding-block: calc(2px + 8px) calc(var(--space-3) + 8px);
+    padding-inline: var(--space-4);
     scrollbar-width: none;
   }
   .gp .ranks-grid::-webkit-scrollbar {

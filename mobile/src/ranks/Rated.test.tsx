@@ -82,10 +82,11 @@ describe('LobbyRated', () => {
     testAuth.client = client;
     const onChanged = vi.fn();
     renderWithProviders(<LobbyRated game="wordle-battle" lobbyId={LOBBY} rated={rated} isHost players={2} seatName={seatName} onChanged={onChanged} />);
-    // the app's own switch, which a screen reader hears as a switch that is on
-    const toggle = screen.getByRole('switch', { name: 'Rated game' }) as HTMLInputElement;
-    expect(toggle.checked).toBe(true);
-    fireEvent.click(toggle);
+    // the whole line is the switch, which a screen reader hears as one switch that is on
+    expect(screen.getAllByRole('switch')).toHaveLength(1);
+    expect(screen.getByRole('switch', { name: 'Rated game' }).getAttribute('aria-checked')).toBe('true');
+    // a tap on its words turns it, as a tap on the switch does
+    fireEvent.click(screen.getByText('Rated game'));
     await waitFor(() => expect(onChanged).toHaveBeenCalled());
     expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ rated: false });
   });

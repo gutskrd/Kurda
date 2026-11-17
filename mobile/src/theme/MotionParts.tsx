@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Animated, View, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
-import { Pressable } from './Pressable';
+import { Pressable, type AppPressableProps } from './Pressable';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo, timing, useEnter, usePop, usePressScale, useShake } from './animate';
 import { ENTRANCE, duration, pressedDim } from './motion';
@@ -51,7 +51,8 @@ export function PressableScale({
   disabled,
   ref,
   ...rest
-}: Omit<PressableProps, 'style' | 'children'> & { style?: StyleProp<ViewStyle>; children: ReactNode; ref?: Ref<View> }): React.JSX.Element {
+}: Omit<PressableProps, 'style' | 'children'> &
+  Pick<AppPressableProps, 'reach' | 'reachSize'> & { style?: StyleProp<ViewStyle>; children: ReactNode; ref?: Ref<View> }): React.JSX.Element {
   const reduce = useReducedMotion();
   const press = usePressScale(!disabled);
   const [held, setHeld] = useState(false);

@@ -6,15 +6,22 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
+vi.mock('./Pressable', () => import('../testing/reach'));
 import { Text } from 'react-native';
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { onHaptic, setHapticDriver } from '../feedback/haptics';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
+import { forgetReach, reachLimitOf, reachOf } from '../testing/reach';
 import { BottomSheet, SheetScrollView } from './BottomSheet';
+import { ReachGroup } from './Pressable';
+import { detentHeights } from './sheetMotion';
 
 patchReactNativeWeb({ reduceMotion: true });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  forgetReach();
+});
 
 // a phone's screen: jsdom's window has no height, and a sheet's heights are shares of it
 Object.defineProperty(window, 'visualViewport', { value: { height: 800, width: 390, scale: 1 }, configurable: true });
@@ -228,5 +235,111 @@ describe('the bottom sheet under a finger', () => {
       </BottomSheet>,
     );
     expect(screen.queryByRole('button', { name: 'Expand' })).toBeNull();
+  });
+});
+
+describe('how far the bottom sheet’s controls answer a finger', () => {
+  it('lets its ✕ and ‹ reach 9 past their 30pt circles, a fingertip’s 48', () => {
+    renderWithProviders(
+      <BottomSheet visible onClose={() => undefined} onBack={() => undefined} title="A gift">
+        <Text>What</Text>
+      </BottomSheet>,
+    );
+    const nine = { top: 9, bottom: 9, left: 9, right: 9 };
+    expect(reachOf('Back')).toEqual(nine);
+    // the dimmed page is named Close as well, and is drawn first: the name ends on the ✕
+    expect(reachOf('Close')).toEqual(nine);
+  });
+
+  it('lets its grabber reach down into the header only, since the sheet’s own edge cuts off anything above it', () => {
+    renderWithProviders(
+      <BottomSheet visible onClose={() => undefined} title="Filters" detents={['medium', 'large']} testID="filters">
+        <Text>Sort</Text>
+      </BottomSheet>,
+    );
+    expect(reachOf('filters-grabber')).toEqual({ top: 0, bottom: 8, left: 0, right: 0 });
+  });
+
+  it('starts afresh from the group of the screen it was opened from', () => {
+    renderWithProviders(
+      <ReachGroup gap={0} rowGap={0}>
+        <BottomSheet visible onClose={() => undefined} onBack={() => undefined} title="A gift">
+          <Text>What</Text>
+        </BottomSheet>
+      </ReachGroup>,
+    );
+    expect(reachLimitOf('Back')).toBeNull();
+    expect(reachOf('Back')).toEqual({ top: 9, bottom: 9, left: 9, right: 9 });
+  });
+});
+
+/**
+ * Lays the sheet out where a phone would. react-native-web reports a layout
+ * only through a ResizeObserver, which the test page does not have, so the
+ * layout handler it keeps on the element is handed the place itself.
+ */
+function layOut(sheet: HTMLElement, layout: { x: number; y: number; width: number; height: number }): void {
+  const handler = (sheet as unknown as { __reactLayoutHandler?: (e: unknown) => void }).__reactLayoutHandler;
+  if (!handler) throw new Error('the sheet reports no layout');
+  act(() => handler({ nativeEvent: { layout } }));
+}
+
+describe('a tap on the page just above the bottom sheet', () => {
+  it('does nothing within 12 points of the sheet’s top edge, and closes the sheet from higher up', () => {
+    const onClose = vi.fn();
+    renderWithProviders(
+      <BottomSheet visible onClose={onClose} title="New club" testID="sheet">
+        <Text>Name</Text>
+      </BottomSheet>,
+    );
+    layOut(screen.getByTestId('sheet'), { x: 0, y: 500, width: 390, height: 300 });
+    const scrim = screen.getAllByRole('button', { name: 'Close' })[0]!;
+    // a grabber tap that landed a little high
+    fireEvent.click(scrim, { clientX: 195, clientY: 492 });
+    fireEvent.click(scrim, { clientX: 195, clientY: 489 });
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(scrim, { clientX: 195, clientY: 480 });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('measures from where the sheet rests, at a shorter height with the rest of it below the screen', () => {
+    const onClose = vi.fn();
+    renderWithProviders(
+      <BottomSheet visible onClose={onClose} title="Filters" detents={['medium', 'large']} testID="sheet">
+        <Text>Sort</Text>
+      </BottomSheet>,
+    );
+    const [medium, large] = detentHeights(['medium', 'large'], 800);
+    // laid out at its full height, and resting at medium: what shows starts lower than where it was laid out
+    layOut(screen.getByTestId('sheet'), { x: 0, y: 800 - large!, width: 390, height: large! });
+    const scrim = screen.getAllByRole('button', { name: 'Close' })[0]!;
+    fireEvent.click(scrim, { clientX: 195, clientY: 800 - medium! - 6 });
+    expect(onClose).not.toHaveBeenCalled();
+    // above what shows, though below where the sheet was laid out: the page, and a close
+    fireEvent.click(scrim, { clientX: 195, clientY: 800 - large! + 20 });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('still closes a sheet narrower than the screen from beside it', () => {
+    const onClose = vi.fn();
+    renderWithProviders(
+      <BottomSheet visible onClose={onClose} title="New club" testID="sheet">
+        <Text>Name</Text>
+      </BottomSheet>,
+    );
+    layOut(screen.getByTestId('sheet'), { x: 200, y: 500, width: 600, height: 300 });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close' })[0]!, { clientX: 120, clientY: 600 });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes the sheet as before while it has not been laid out yet', () => {
+    const onClose = vi.fn();
+    renderWithProviders(
+      <BottomSheet visible onClose={onClose} title="New club">
+        <Text>Name</Text>
+      </BottomSheet>,
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close' })[0]!, { clientX: 195, clientY: 795 });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

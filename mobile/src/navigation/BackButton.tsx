@@ -22,6 +22,12 @@ import { floating } from '../theme/floating';
  * says "what is behind this is where you came from", the ✕ "this is on top
  * of what you were doing". In Soranî and Arabic the chevron points the other
  * way, which is the direction "back" is for a reader of those languages.
+ *
+ * It stands alone in its corner, so it answers a fingertip past its edge on
+ * every side (`reach="open"`): leaving a page is the one thing that should
+ * never take a second try. Where something pressable stands close beside it
+ * (a conversation's name in its bar), the group they share stops each at the
+ * middle of the gap between them.
  */
 export function BackButton({
   onPress,
@@ -42,6 +48,7 @@ export function BackButton({
       accessibilityRole="button"
       accessibilityLabel={label ?? (kind === 'close' ? t('common.cancel') : t('common.back'))}
       testID="header-back"
+      reach="open"
       style={[styles.button, floating.control, { backgroundColor: colors.barFill, shadowColor: colors.softShadow }]}
     >
       {kind === 'close' ? (

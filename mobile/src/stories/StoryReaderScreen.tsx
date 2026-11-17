@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachGroup } from '../theme/Pressable';
 import { heldRow, heldDim } from '../theme/MotionParts';
 import {
   CHARACTER_NAMES,
@@ -22,7 +22,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useClipPlayer } from '../alphabet/useClipPlayer';
 import { haptic } from '../feedback/haptics';
@@ -522,27 +522,30 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   const headerRight =
     mode === 'reading' ? (
       <View style={styles.sizeControls}>
-        <Pressable
-          onPress={() => resize(-1)}
-          disabled={scaleIndex <= 0}
-          accessibilityRole="button"
-          accessibilityLabel={t('stories.reader.smaller')}
-          accessibilityState={{ disabled: scaleIndex <= 0 }}
-          style={({ pressed }) => [styles.sizeButton, { opacity: scaleIndex <= 0 ? 0.35 : 1 }, pressed && heldDim]}
-        >
-          <Text style={[styles.sizeSmall, { color: colors.primary }]}>A</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => resize(1)}
-          disabled={scaleIndex >= TEXT_SCALES.length - 1}
-          accessibilityRole="button"
-          accessibilityLabel={t('stories.reader.larger')}
-          accessibilityState={{ disabled: scaleIndex >= TEXT_SCALES.length - 1 }}
-          style={({ pressed }) => [styles.sizeButton, { opacity: scaleIndex >= TEXT_SCALES.length - 1 ? 0.35 : 1 }, pressed && heldDim]}
-        >
-          <Text style={[styles.sizeLarge, { color: colors.primary }]}>A</Text>
-        </Pressable>
-        {bookmarkButton}
+        {/* three buttons with no gap between them: each reaches up and down, and none into the next */}
+        <ReachGroup gap={0}>
+          <Pressable
+            onPress={() => resize(-1)}
+            disabled={scaleIndex <= 0}
+            accessibilityRole="button"
+            accessibilityLabel={t('stories.reader.smaller')}
+            accessibilityState={{ disabled: scaleIndex <= 0 }}
+            style={({ pressed }) => [styles.sizeButton, { opacity: scaleIndex <= 0 ? 0.35 : 1 }, pressed && heldDim]}
+          >
+            <Text style={[styles.sizeSmall, { color: colors.primary }]}>A</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => resize(1)}
+            disabled={scaleIndex >= TEXT_SCALES.length - 1}
+            accessibilityRole="button"
+            accessibilityLabel={t('stories.reader.larger')}
+            accessibilityState={{ disabled: scaleIndex >= TEXT_SCALES.length - 1 }}
+            style={({ pressed }) => [styles.sizeButton, { opacity: scaleIndex >= TEXT_SCALES.length - 1 ? 0.35 : 1 }, pressed && heldDim]}
+          >
+            <Text style={[styles.sizeLarge, { color: colors.primary }]}>A</Text>
+          </Pressable>
+          {bookmarkButton}
+        </ReachGroup>
       </View>
     ) : story ? (
       bookmarkButton
@@ -1011,7 +1014,6 @@ function VocabularyRow({
           onPress={() => clips.play(url)}
           accessibilityRole="button"
           accessibilityLabel={t('stories.reader.playWord')}
-          hitSlop={WORD_BUTTON_SLOP}
           style={({ pressed }) => [styles.wordPlay, { backgroundColor: playing ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
         >
           <Icon name="speaker" size={18} color={playing ? colors.textOnPrimary : colors.primary} />
@@ -1024,7 +1026,6 @@ function VocabularyRow({
           // after the word itself, as the play button is: "Save word" needs no name repeated
           accessibilityLabel={saved ? t('stories.reader.saved') : t('stories.reader.saveWord')}
           accessibilityState={{ selected: saved }}
-          hitSlop={WORD_BUTTON_SLOP}
           style={({ pressed }) => [styles.wordPlay, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
         >
           <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={18} color={colors.primary} />
@@ -1245,12 +1246,12 @@ function OverviewSkeleton(): React.JSX.Element {
 const TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
 const COVER_HEIGHT = 180;
 /**
- * A word's play and save buttons are drawn at 40 so the row stays a row; the
- * touch reaches a fingertip's 44 past the edge, and the gap between the two
- * is wider than the slop, so neither takes the other's tap.
+ * A word's play and save buttons are drawn at 40 so the row stays a row. The
+ * Pressable makes each answer over 48, 4 past every edge: the two meet in the
+ * middle of the 8 between them, and the rows are 8 apart as well, so none
+ * takes another's tap.
  */
 const WORD_BUTTON = 40;
-const WORD_BUTTON_SLOP = hitSlopFor(WORD_BUTTON, WORD_BUTTON);
 const styles = StyleSheet.create({
   content: { ...COLUMN, padding: spacing.lg, gap: spacing.lg },
   cover: { width: '100%', height: COVER_HEIGHT },

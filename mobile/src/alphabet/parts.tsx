@@ -55,6 +55,8 @@ const ON_WASH = '1F';
 /**
  * A round button that plays one sound. Nothing at all when there is no clip,
  * or nothing to play it with: a button that does nothing is worse than none.
+ * Its style says how big it is drawn, and the Pressable reaches from that to
+ * a fingertip's 48: 2 past each edge of the regular one, none past the large.
  */
 export function PlayButton({
   src,
@@ -77,7 +79,6 @@ export function PlayButton({
       onPress={() => player.play(src)}
       accessibilityRole="button"
       accessibilityLabel={label}
-      hitSlop={size === 'regular' ? 4 : 0}
       style={({ pressed }) => [
         styles.play,
         {

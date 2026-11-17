@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Animated, Share, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachGroup } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
@@ -232,28 +232,49 @@ export const FeedCard = memo(function FeedCard({
 
   return (
     <View style={[styles.post, !standalone && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator }]}>
-      {/* one line: who, what kind of post and how long ago; the "⋯" at the end */}
+      {/*
+        One line: who, what kind of post and how long ago; the "⋯" at the end.
+        The picture, the name and the "⋯" each reach a fingertip up and down
+        and share the gaps between them, half each.
+      */}
       <View style={[styles.head, { flexDirection: dir.row }]}>
-        <Pressable onPress={openAuthor} accessibilityRole="button" accessibilityLabel={who} hitSlop={6} style={({ pressed }) => pressed && heldDim}>
-          <InitialsAvatar name={who} id={item.author.id} size={AUTHOR} photoUrl={item.author.avatarUrl} />
-        </Pressable>
-        <View style={[styles.byline, { flexDirection: dir.row }]}>
-          <Text style={[styles.who, dir.free, { color: colors.textPrimary }]} numberOfLines={1} onPress={openAuthor} accessibilityRole="link">
-            {who}
-          </Text>
-          <Text style={[styles.meta, { color: colors.textSecondary }]} numberOfLines={1}>
-            {`${badge} · ${when}`}
-          </Text>
-        </View>
-        <Pressable
-          onPress={menu.open ?? (() => setReporting(true))}
-          accessibilityRole="button"
-          accessibilityLabel={menu.open ? t('post.menu') : t('moderation.reportPost')}
-          hitSlop={6}
-          style={({ pressed }) => [styles.more, pressed && heldDim]}
-        >
-          <Icon name="more" size={22} color={colors.textPrimary} />
-        </Pressable>
+        <ReachGroup gap={spacing.sm}>
+          <Pressable
+            onPress={openAuthor}
+            accessibilityRole="button"
+            accessibilityLabel={who}
+            reachSize={{ width: AUTHOR, height: AUTHOR }}
+            style={({ pressed }) => pressed && heldDim}
+          >
+            <InitialsAvatar name={who} id={item.author.id} size={AUTHOR} photoUrl={item.author.avatarUrl} />
+          </Pressable>
+          <View style={[styles.byline, { flexDirection: dir.row }]}>
+            {/* a control of its own rather than a pressable run of text, which cannot reach past its letters */}
+            <Pressable
+              onPress={openAuthor}
+              accessibilityRole="link"
+              reachSize={{ height: NAME_LINE }}
+              testID="post-author"
+              style={({ pressed }) => [styles.whoLink, pressed && heldDim]}
+            >
+              <Text style={[styles.who, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
+                {who}
+              </Text>
+            </Pressable>
+            <Text style={[styles.meta, { color: colors.textSecondary }]} numberOfLines={1}>
+              {`${badge} · ${when}`}
+            </Text>
+          </View>
+          <Pressable
+            onPress={menu.open ?? (() => setReporting(true))}
+            accessibilityRole="button"
+            accessibilityLabel={menu.open ? t('post.menu') : t('moderation.reportPost')}
+            reach="open"
+            style={({ pressed }) => [styles.more, pressed && heldDim]}
+          >
+            <Icon name="more" size={22} color={colors.textPrimary} />
+          </Pressable>
+        </ReachGroup>
       </View>
 
       <Bloom fired={blooms}>
@@ -290,33 +311,36 @@ export const FeedCard = memo(function FeedCard({
       </Bloom>
 
       <View style={[styles.actions, { flexDirection: dir.row }]}>
-        <Action
-          icon={e.liked ? 'heart-fill' : 'heart'}
-          tint={e.liked ? colors.danger : undefined}
-          on={e.liked}
-          label={e.liked ? t('feed.unlike') : t('feed.like')}
-          count={count(e.likes)}
-          burst={likes}
-          onPress={like}
-        />
-        <Action icon="chat" label={t('feed.comments', { count: item.commentCount })} count={count(item.commentCount)} onPress={open} />
-        <Action
-          icon="repost"
-          on={e.reposted}
-          tint={e.reposted ? colors.success : undefined}
-          label={e.reposted ? t('repost.undo') : t('repost.do')}
-          count={count(e.reposts)}
-          onPress={() => act('repost')}
-        />
-        <View style={styles.spacer} />
-        {/* sharing has a glyph of its own: the paper plane is Messages and Send, and a post is not sent to anybody here */}
-        <Action icon="share" label={t('share.post')} onPress={() => void share()} />
-        <Action
-          icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
-          on={e.bookmarked}
-          label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}
-          onPress={() => act('bookmark')}
-        />
+        {/* the pills share the row's gap between them, and the 12 above them with what they are under */}
+        <ReachGroup gap={spacing.sm} rowGap={ACTIONS_ABOVE}>
+          <Action
+            icon={e.liked ? 'heart-fill' : 'heart'}
+            tint={e.liked ? colors.danger : undefined}
+            on={e.liked}
+            label={e.liked ? t('feed.unlike') : t('feed.like')}
+            count={count(e.likes)}
+            burst={likes}
+            onPress={like}
+          />
+          <Action icon="chat" label={t('feed.comments', { count: item.commentCount })} count={count(item.commentCount)} onPress={open} />
+          <Action
+            icon="repost"
+            on={e.reposted}
+            tint={e.reposted ? colors.success : undefined}
+            label={e.reposted ? t('repost.undo') : t('repost.do')}
+            count={count(e.reposts)}
+            onPress={() => act('repost')}
+          />
+          <View style={styles.spacer} />
+          {/* sharing has a glyph of its own: the paper plane is Messages and Send, and a post is not sent to anybody here */}
+          <Action icon="share" label={t('share.post')} onPress={() => void share()} />
+          <Action
+            icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
+            on={e.bookmarked}
+            label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}
+            onPress={() => act('bookmark')}
+          />
+        </ReachGroup>
       </View>
 
 
@@ -421,9 +445,21 @@ const WIDE = 600;
 /** a title is bold and a size up from what is under it, in the face the rest of the post is in */
 const TITLE_SIZE = 19;
 const TITLE_LINE = 25;
-/** a pill's height, and a round one's width: drawn at 36, reached at 44 each way (the row's 8-point gap is shared out between neighbours) */
+/**
+ * A pill's height, and a round one's width: drawn at 36 and reached at a
+ * fingertip's 48 up and down; across, the row's 8-point gap is shared out
+ * between neighbours, so 44.
+ */
 const PILL = 36;
-const PILL_SLOP = { top: (MIN_TOUCH_TARGET - PILL) / 2, bottom: (MIN_TOUCH_TARGET - PILL) / 2, left: (MIN_TOUCH_TARGET - PILL) / 2, right: (MIN_TOUCH_TARGET - PILL) / 2 };
+/**
+ * Between the words or pictures and the pills: 6 under the words, inside what
+ * opens the post, and the pills' row's own 6, which their reach takes. Were
+ * the row's share inside the words' box, the pills drawn after it would take
+ * the foot of the words' presses.
+ */
+const ACTIONS_ABOVE = spacing.sm + 4;
+/** the author's name: one line of the small size */
+const NAME_LINE = 18;
 
 /**
  * One soft pill in the row under a post: a 20pt glyph and its count when
@@ -463,7 +499,6 @@ function Action({
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
       accessibilityLabel={count ? `${label} (${count})` : label}
-      hitSlop={PILL_SLOP}
       style={({ pressed }) => [styles.pill, count ? styles.pillWide : null, { backgroundColor: colors.controlTrack }, pressed && styles.pressed]}
     >
       {burst !== undefined ? (
@@ -543,15 +578,17 @@ const styles = StyleSheet.create({
    * kind and the time go under the name rather than squeeze it to "wa…".
    */
   byline: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6 },
+  whoLink: { flexShrink: 1 },
   who: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   meta: { flexShrink: 1, fontSize: typography.sizes.sm },
   more: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginVertical: -6, marginEnd: -spacing.sm - 2 },
-  words: { paddingHorizontal: layout.gutter, gap: 6, paddingBottom: spacing.sm + 2 },
+  // the 12 between a post's words or pictures and its pills is half theirs and half the pills' row, so the pills reach into a gap of their own (ACTIONS_ABOVE)
+  words: { paddingHorizontal: layout.gutter, gap: 6, paddingBottom: spacing.xs + 2 },
   title: { fontSize: TITLE_SIZE, lineHeight: TITLE_LINE, fontWeight: typography.weights.bold },
   excerpt: { fontSize: typography.sizes.md, lineHeight: 23 },
-  pictures: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm + 2 },
+  pictures: { paddingHorizontal: layout.gutter, paddingBottom: spacing.xs + 2 },
   bloomLayer: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingTop: 2 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingTop: spacing.xs + 2 },
   spacer: { flex: 1 },
   pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minWidth: PILL, height: PILL, borderRadius: radii.pill },
   pillWide: { paddingHorizontal: spacing.sm + 4 },

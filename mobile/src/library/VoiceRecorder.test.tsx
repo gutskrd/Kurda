@@ -7,11 +7,15 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('expo-audio', () => import('../recording/testing/fakeMic'));
 vi.mock('expo-file-system/legacy', () => import('../recording/testing/fakeMic'));
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
+// a kept note is played by the shared player, which is not what these tests are about
+vi.mock('./AudioPlayer', () => ({ AudioPlayer: () => null }));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { Alert } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { DENIED, GRANTED, mic } from '../recording/testing/fakeMic';
+import { forgetReach, reachOf } from '../testing/reach';
 import { VoiceRecorder } from './VoiceRecorder';
 
 const RECORDING = { allowsRecording: true, playsInSilentMode: true };
@@ -23,6 +27,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  forgetReach();
   vi.restoreAllMocks();
 });
 
@@ -108,5 +113,20 @@ describe('a voice note', () => {
     expect(screen.getByRole('button', { name: 'Record a voice note' }).getAttribute('aria-disabled')).not.toBe('true');
     expect(mic.modes).toEqual([]);
     expect(handed).toEqual([]);
+  });
+});
+
+describe('the voice note’s controls', () => {
+  it('answer a finger 48 tall, the pill reaching only half the gap toward the row above it', async () => {
+    noting();
+    expect(reachOf('Record a voice note')).toEqual({ top: 4, bottom: 6, left: 0, right: 0 });
+    fireEvent.click(screen.getByRole('button', { name: 'Record a voice note' }));
+    await settle();
+    expect(reachOf('Stop recording')).toEqual({ top: 4, bottom: 6, left: 0, right: 0 });
+  });
+
+  it('take a kept note away from a line of words that answers over 48, and a little past its ends', () => {
+    renderWithProviders(<VoiceRecorder value="file:///cache/Audio/take-1.m4a" onChange={() => undefined} />);
+    expect(reachOf('Remove recording')).toEqual({ top: 15, bottom: 15, left: 8, right: 8 });
   });
 });

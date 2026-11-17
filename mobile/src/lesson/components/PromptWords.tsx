@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Modal, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type TextStyle } from 'react-native';
-import { Pressable } from '../../theme/Pressable';
+import { Pressable, ReachReset } from '../../theme/Pressable';
 import Svg, { Line } from 'react-native-svg';
 import { scriptDialect, type NewWord, type PromptToken } from '@kurda/shared';
+import { reachSlop, type HitSlop } from '../../a11y/a11y';
 import { useI18n } from '../../i18n/I18nContext';
 import { MenuIn, heldDim } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -14,8 +15,9 @@ import { aroundGap, glossTokens, type GlossToken } from '../asks';
 /** The popover's edge, and the rule between two meanings in it: the lesson's hairline. */
 const EDGE = CARD.edge;
 
-/** The dotted line under a word that can be asked about. */
+/** The dotted line under a word that can be asked about, and the space between it and the word. */
 const DOTS = 3;
+const DOTS_GAP = 1;
 
 /** The dots under a word the item brings in for the first time: a little heavier, closer set, in the gold of the badge that says so. */
 const FRESH_DOTS = { width: 2.5, dash: '3 3' } as const;
@@ -23,6 +25,22 @@ const DOTS_AS_EVER = { width: 2, dash: '2 4' } as const;
 
 /** The popover's arrow: a square turned to a point, half of it showing. */
 const ARROW = 12;
+
+/**
+ * How far a word answers past what it draws: a line of text and its dots
+ * under it. The words of a line touch, and a line that wraps lies right on
+ * the one above it, so a word reaches neither sideways nor up: the words of
+ * the line below come later, and a reach up from them would take the foot of
+ * every word over them, dots and all. It reaches down instead, by half of
+ * what a fingertip's 48 is missing. Under a line with another below it, that
+ * reach lies under the lower line's own words, which answer there
+ * themselves, so it only answers where nothing else does: below the last
+ * line, and beside a shorter line under it. Nothing, where the line's height
+ * is not known.
+ */
+function wordReach(lineHeight: number | undefined): HitSlop | undefined {
+  return lineHeight === undefined ? undefined : reachSlop(null, lineHeight + DOTS_GAP + DOTS, { limit: { top: 0 } });
+}
 
 interface Opened {
   index: number;
@@ -83,6 +101,7 @@ export function PromptWords({
     return around ? [...around.before, null, ...around.after] : glossed;
   }, [glossed, gap]);
   const hasGap = pieces.includes(null);
+  const reach = wordReach(StyleSheet.flatten(style)?.lineHeight);
 
   if (!hasGap && !glossed.some((token) => token.meanings && token.meanings.length > 0)) {
     return <Text style={[style, direction]}>{prompt}</Text>;
@@ -117,7 +136,7 @@ export function PromptWords({
               accessibilityRole="button"
               accessibilityLabel={token.text}
               accessibilityHint={token.meanings.join(', ')}
-              hitSlop={{ top: 8, bottom: 8 }}
+              hitSlop={reach}
               style={({ pressed }) => pressed && heldDim}
             >
               <Text style={[style, direction]}>{token.text}</Text>
@@ -146,28 +165,31 @@ export function PromptWords({
         )}
       </View>
       <Modal visible={open !== null} transparent animationType="none" onRequestClose={close}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel={t('common.close')} />
-        {open ? (
-          <View
-            style={[styles.popover, { top: open.y + open.h + ARROW / 2 + 2, left, opacity: width > 0 ? 1 : 0 }]}
-            onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
-            testID="prompt-meanings"
-          >
-            <MenuIn>
-              <View style={[styles.arrow, { left: arrowAt, backgroundColor: face, borderColor: edge }]} />
-              <View style={[styles.list, { backgroundColor: face, borderColor: edge }]}>
-                {meanings.map((meaning, i) => (
-                  <Text
-                    key={meaning}
-                    style={[styles.meaning, i > 0 && { borderTopWidth: EDGE, borderTopColor: edge }, { color: colors.textPrimary }]}
-                  >
-                    {meaning}
-                  </Text>
-                ))}
-              </View>
-            </MenuIn>
-          </View>
-        ) : null}
+        {/* the popover is drawn over the whole screen, not beside the lesson's controls, so no group round the prompt caps it */}
+        <ReachReset>
+          <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel={t('common.close')} />
+          {open ? (
+            <View
+              style={[styles.popover, { top: open.y + open.h + ARROW / 2 + 2, left, opacity: width > 0 ? 1 : 0 }]}
+              onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+              testID="prompt-meanings"
+            >
+              <MenuIn>
+                <View style={[styles.arrow, { left: arrowAt, backgroundColor: face, borderColor: edge }]} />
+                <View style={[styles.list, { backgroundColor: face, borderColor: edge }]}>
+                  {meanings.map((meaning, i) => (
+                    <Text
+                      key={meaning}
+                      style={[styles.meaning, i > 0 && { borderTopWidth: EDGE, borderTopColor: edge }, { color: colors.textPrimary }]}
+                    >
+                      {meaning}
+                    </Text>
+                  ))}
+                </View>
+              </MenuIn>
+            </View>
+          ) : null}
+        </ReachReset>
       </Modal>
     </>
   );
@@ -175,7 +197,7 @@ export function PromptWords({
 
 const styles = StyleSheet.create({
   words: { flexWrap: 'wrap', alignItems: 'flex-start' },
-  dots: { height: DOTS, marginTop: 1 },
+  dots: { height: DOTS, marginTop: DOTS_GAP },
   ltr: { writingDirection: 'ltr' },
   rtl: { writingDirection: 'rtl', textAlign: 'right' },
   popover: { position: 'absolute', maxWidth: 280, minWidth: 120 },

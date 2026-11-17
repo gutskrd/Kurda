@@ -307,7 +307,8 @@ export function MessagesScreen(): React.JSX.Element {
           title={t('nav.messages')}
           action={<HeaderButton icon="compose" label={t('messages.new')} onPress={() => require('message')} />}
         />
-        <ScrollView contentContainerStyle={[styles.list, { paddingBottom: bottomInset }]} showsVerticalScrollIndicator={false}>
+        {/* nothing here takes typing, but a keyboard still up from elsewhere must not swallow the first tap on the button */}
+        <ScrollView contentContainerStyle={[styles.list, { paddingBottom: bottomInset }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.guest} testID="messages-guest">
             <View style={[styles.guestMark, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <Icon name="send" size={30} tone="primary" />

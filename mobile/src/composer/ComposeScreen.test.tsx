@@ -250,7 +250,8 @@ describe('pictures', () => {
     await waitFor(() => expect(p.upload).toHaveBeenCalledOnce());
     // finished inside act(), so Post is enabled — and told so — before it is pressed (see "a post going up")
     await act(async () => p.done(0));
-    expect((screen.getByRole('switch', { name: 'Meme' }) as HTMLInputElement).checked).toBe(true);
+    // the whole card is the switch, so it says its state itself
+    expect(screen.getByRole('switch', { name: 'Meme' }).getAttribute('aria-checked')).toBe('true');
     expect(disabled(postButton())).toBe(false);
     fireEvent.click(postButton());
     await waitFor(() => expect(client.calls.find((c) => c.method === 'POST')?.body).toMatchObject({ meme: true }));

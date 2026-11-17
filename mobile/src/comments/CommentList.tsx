@@ -5,7 +5,7 @@ import { Pressable } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { SendButton } from '../chat/SendButton';
-import { MIN_TOUCH_TARGET, decorative } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, decorative, reachSlop } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
@@ -99,6 +99,18 @@ function CommentRow({
   const mine = c.authorId === user?.id;
   const size = nested ? REPLY_AVATAR : AVATAR;
   const loading = thread.loadingReplies.includes(c.id);
+  /*
+   * The picture and the words beside it share the gap between them, half
+   * each. The picture's other sides reach to a fingertip; a reply's picture
+   * sits just under the line of the comment it answers, whose Reply reaches
+   * down to meet it, so it reaches up only its half of that gap too. Reply
+   * is first on its line, so its own reach toward the picture is the other
+   * half. hitSlop is the physical left and right, so the sides follow the row.
+   */
+  const mirrored = dir.row === 'row-reverse';
+  const faceTop = nested ? SEAM : undefined;
+  const faceSlop = reachSlop(size, size, { limit: mirrored ? { left: SEAM, top: faceTop } : { right: SEAM, top: faceTop } });
+  const replySlop = mirrored ? { ...ACTION_SLOP, right: SEAM } : { ...ACTION_SLOP, left: SEAM };
 
   // your own name opens your own profile tab, not the page others see you on
   const openProfile = () =>
@@ -112,7 +124,14 @@ function CommentRow({
   return (
     <View style={[styles.comment, { flexDirection: dir.row }, c.pending ? styles.pending : null]}>
       {/* the picture opens them too, for a thumb; a screen reader is offered the name alone, not the same button twice */}
-      <Pressable onPress={openProfile} disabled={c.pending} hitSlop={(MIN_TOUCH_TARGET - size) / 2} {...decorative()} style={({ pressed }) => pressed && heldDim}>
+      <Pressable
+        onPress={openProfile}
+        disabled={c.pending}
+        hitSlop={faceSlop}
+        {...decorative()}
+        testID={`comment-face-${c.id}`}
+        style={({ pressed }) => pressed && heldDim}
+      >
         <InitialsAvatar name={author.username} id={author.id} size={size} photoUrl={author.avatarUrl} />
       </Pressable>
       <View style={styles.main}>
@@ -150,8 +169,9 @@ function CommentRow({
           <View style={[styles.actions, { flexDirection: dir.row }]}>
             <Pressable
               onPress={() => require('comment') && thread.reply(c)}
-              hitSlop={ACTION_SLOP}
+              hitSlop={replySlop}
               accessibilityRole="button"
+              testID={`comment-reply-${c.id}`}
               style={({ pressed }) => [styles.action, pressed && heldDim]}
             >
               <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('comments.reply')}</Text>
@@ -162,6 +182,7 @@ function CommentRow({
                 onPress={() => thread.confirmDelete(c)}
                 hitSlop={ACTION_SLOP}
                 accessibilityRole="button"
+                testID={`comment-delete-${c.id}`}
                 style={({ pressed }) => [styles.action, dir.row === 'row-reverse' ? styles.actionApartLeft : styles.actionApart, pressed && heldDim]}
               >
                 <Text style={[styles.actionText, { color: colors.danger }]}>{t('common.delete')}</Text>
@@ -172,6 +193,7 @@ function CommentRow({
                 hitSlop={ACTION_SLOP}
                 accessibilityRole="button"
                 accessibilityLabel={t('moderation.reportComment')}
+                testID={`comment-report-${c.id}`}
                 style={({ pressed }) => [styles.action, { flexDirection: dir.row }, pressed && heldDim]}
               >
                 <Icon name="flag" size={12} color={colors.textSecondary} />
@@ -185,9 +207,10 @@ function CommentRow({
           <Pressable
             onPress={() => void thread.showReplies(c.id)}
             disabled={loading}
-            hitSlop={ACTION_SLOP}
+            hitSlop={MORE_SLOP}
             accessibilityRole="button"
             accessibilityState={{ busy: loading }}
+            testID={`comment-more-${c.id}`}
             style={({ pressed }) => [styles.more, { flexDirection: dir.row, alignSelf: edge }, pressed && heldDim]}
           >
             <View style={[styles.moreRule, { backgroundColor: colors.separator }]} />
@@ -317,12 +340,32 @@ export function CommentsSkeleton(): React.JSX.Element {
   );
 }
 
-/** a line of small text is about 20pt tall; this takes its touch area to 44 */
-const ACTION_SLOP = { top: 12, bottom: 12, left: 8, right: 8 };
-const BYLINE_SLOP = { top: 12, bottom: 12, left: 4, right: 4 };
+/*
+ * A thread is the most crowded stack of controls in the app: a name, a line
+ * of Reply and Report, and "Show replies", over and over, a few points apart.
+ * No two reaches overlap, because where two do the later one takes the tap
+ * even from the control the finger was nearer; so each reaches into a gap
+ * only as far as its neighbour leaves it, and where there is room, to a
+ * fingertip's 44:
+ *
+ * - Reply and Report are 24 tall (a 16pt line and 4 above and below) and 16
+ *   apart; they reach 12 up into the words and 8 down, so 44, and 8 toward
+ *   each other, meeting in the middle.
+ * - The next comment starts 12 below the last line; that line reaches 8 of it
+ *   and the next name the other 4. The name reaches 12 down into the words
+ *   under it, which are not a control, and 4 to either side; the picture
+ *   beside it opens the same profile.
+ * - "Show replies" stands 18 below Reply (2 and its own 16), each reaching 8
+ *   toward the other, so 40 tall.
+ */
+/** half the 8 between a picture and the words beside it */
+const SEAM = spacing.sm / 2;
+const ACTION_SLOP = { top: 12, bottom: 8, left: 8, right: 8 };
+const BYLINE_SLOP = { top: SEAM, bottom: 12, left: SEAM, right: SEAM };
+const MORE_SLOP = { top: 8, bottom: 8 };
 
 const styles = StyleSheet.create({
-  comment: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.sm },
+  comment: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.sm + 4 },
   pending: { opacity: 0.6 },
   main: { flex: 1, gap: 2 },
   byline: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
@@ -333,11 +376,11 @@ const styles = StyleSheet.create({
   voice: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   voiceText: { flexShrink: 1 },
   actions: { flexDirection: 'row', gap: spacing.md, paddingTop: 2 },
-  action: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  action: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.xs },
   actionApart: { marginLeft: 'auto' },
   actionApartLeft: { marginRight: 'auto' },
   actionText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  more: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm, alignSelf: 'flex-start' },
+  more: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md, paddingVertical: spacing.xs, alignSelf: 'flex-start' },
   moreRule: { width: 24, height: StyleSheet.hairlineWidth },
   // under the words of the comment they answer, not under its picture
   replies: { marginLeft: AVATAR + spacing.sm },

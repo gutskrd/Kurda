@@ -174,11 +174,14 @@ export function NotificationRow(props: NoticeRowProps): React.JSX.Element {
                 ) : null}
                 {action ? (
                   <View style={[styles.actionRow, { flexDirection: dir.row }]}>
+                    {/*
+                      Reaches a fingertip up and down from its 32 and stays inside the row around it, so a near miss
+                      does what the button says rather than opening the notification behind it.
+                    */}
                     <PressableScale
                       onPress={action.onPress}
                       accessibilityRole="button"
                       accessibilityLabel={action.label}
-                      hitSlop={(MIN_TOUCH_TARGET - ACTION_HEIGHT) / 2}
                       style={[styles.action, { backgroundColor: colors.primary }]}
                     >
                       <Text style={[styles.actionText, { color: colors.textOnPrimary }]} numberOfLines={1}>

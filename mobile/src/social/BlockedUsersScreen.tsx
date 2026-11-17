@@ -158,8 +158,9 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                       <Pressable
                         onPress={() => unblock(u)}
                         accessibilityRole="button"
-                        // one 18-point line of words, caught at a fingertip's 44
-                        hitSlop={13}
+                        // one 18-point line of words, caught at a fingertip, alone at the end of its row past words that are not a control
+                        reach="open"
+                        reachSize={{ height: 18 }}
                         style={({ pressed }) => pressed && heldDim}
                       >
                         <Text style={[styles.action, { color: colors.primary }]}>{t('settings.blocked.unblock')}</Text>

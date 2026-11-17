@@ -5,9 +5,8 @@ import { haptic } from '../feedback/haptics';
 import type { ExpectedGains, RankedGame, RatedState } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
-import { Toggle } from '../theme/Toggle';
+import { ToggleRow } from '../theme/Toggle';
 import { useTheme } from '../theme/ThemeProvider';
 import { useDirection } from '../reports/direction';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -181,16 +180,11 @@ export function LobbyRated({
       </View>
 
       {isHost ? (
-        // the app's own switch, in its violet: the one drawn here was gold when on, and by day its white track was lost on the panel
-        <View style={[styles.switchRow, { flexDirection: dir.row }]}>
+        // the app's own switch, in its violet: the one drawn here was gold when on, and by day its white track was lost on the panel;
+        // the whole line turns it, its words as well as the switch
+        <ToggleRow label={t('ranks.lobby.ratedSwitch')} value={isRated} onValueChange={(next) => void change(next)} disabled={busy}>
           <Text style={[styles.switchLabel, dir.text, { color: colors.textPrimary }]}>{t('ranks.lobby.ratedSwitch')}</Text>
-          <Toggle
-            value={isRated}
-            onValueChange={(next) => void change(next)}
-            disabled={busy}
-            accessibilityLabel={t('ranks.lobby.ratedSwitch')}
-          />
-        </View>
+        </ToggleRow>
       ) : (
         <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('ranks.lobby.canLeave')}</Text>
       )}
@@ -267,7 +261,6 @@ const styles = StyleSheet.create({
   panel: { alignSelf: 'stretch', borderRadius: radii.md, padding: spacing.md, gap: spacing.sm, marginTop: spacing.sm },
   panelHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   panelHint: { flex: 1, fontSize: typography.sizes.sm },
-  switchRow: { alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: spacing.md },
   switchLabel: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   note: { fontSize: typography.sizes.sm, lineHeight: 19 },
   flex: { flex: 1 },

@@ -8,6 +8,7 @@ import { navigation } from '../play/testing/navigation';
 import { resetPrefsCache } from './prefs';
 import { NANE_GERM, gameView } from './testing/views';
 import { StoryReaderScreen, minutesLeft, readingPosition, translationFor } from './StoryReaderScreen';
+import { forgetReach, reachOf } from '../testing/reach';
 
 // jsdom has no matchMedia, and react-native-web reads the colour scheme and
 // Reduce Motion through it
@@ -29,6 +30,8 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// every control noted as it is drawn, so its reach can be read
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 // nothing is played in these tests; the narrator only needs a player to exist
 vi.mock('expo-audio', () => ({
   createAudioPlayer: () => ({
@@ -109,7 +112,26 @@ describe('StoryReaderScreen', () => {
     resetPrefsCache();
     navigation.navigate.mockClear();
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    forgetReach();
+  });
+
+  it('keeps the header’s three buttons out of each other’s reach, and gives a word’s save button a fingertip’s', async () => {
+    testAuth.client = routes(
+      { 'GET /me/saved-words': ok({ words: [] }) },
+      { ...NANE_GERM, glossary: [{ term: 'germ', meanings: { en: 'warm' }, entryId: 'e1' }] },
+    );
+    renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
+    await screen.findByRole('button', { name: 'germ' });
+    // drawn at 40 in a row of 44, the rows 8 apart and the play button 8 away: 4 every way reaches 48 and meets nobody else's
+    expect(reachOf('Save word')).toEqual({ top: 4, bottom: 4, left: 4, right: 4 });
+    // on the overview the bookmark stands alone in the header
+    expect(reachOf('Bookmark')).toEqual({ top: 2, bottom: 2, left: 2, right: 2 });
+    fireEvent.click(screen.getByRole('button', { name: 'Read' }));
+    // while reading it stands with the two text sizes and no gap between them: up and down, never into the next
+    for (const name of ['Smaller text', 'Larger text', 'Bookmark']) expect(reachOf(name)).toEqual({ top: 2, bottom: 2, left: 0, right: 0 });
+  });
 
   it('opens on the overview: the facts, the synopsis, where it comes from, and Read', async () => {
     testAuth.client = routes({}, { ...NANE_GERM, author: 'Hevalo', source: 'Written for Hevalo', audioCoverage: 'partial' });

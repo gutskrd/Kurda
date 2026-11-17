@@ -7,7 +7,9 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-import { cleanup, fireEvent, screen, within } from '@testing-library/react';
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { forgetReach, reachOf } from '../testing/reach';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -21,6 +23,8 @@ import { TABS } from './tabs';
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
   cleanup();
+  forgetReach();
+  localStorage.removeItem('kurda_locale_v1');
   vi.restoreAllMocks();
 });
 
@@ -160,5 +164,29 @@ describe('the tab bar', () => {
     } finally {
       stop();
     }
+  });
+
+  /*
+   * The air round the capsule is part of the bar a thumb lands on. Every tab
+   * answers across it to the bar’s top and bottom edge, and the two end tabs
+   * to its rounded ends; between tabs nothing is added, since they touch.
+   */
+  it('answers a thumb on the bar’s own edge, not only on the tabs inside it', async () => {
+    open();
+    await screen.findByRole('tablist');
+    expect(reachOf('tab-Home')).toEqual({ top: 6, bottom: 6, left: 6, right: 0 });
+    expect(reachOf('tab-Learn')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
+    expect(reachOf('tab-Messages')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
+    expect(reachOf('tab-Profile')).toEqual({ top: 6, bottom: 6, left: 0, right: 6 });
+  });
+
+  it('gives the bar’s ends to whichever tabs stand there in a mirrored bar', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    open();
+    await screen.findByRole('tablist');
+    // Home is on the right in Soranî, and Profile on the left
+    await waitFor(() => expect(reachOf('tab-Home')).toEqual({ top: 6, bottom: 6, left: 0, right: 6 }));
+    expect(reachOf('tab-Profile')).toEqual({ top: 6, bottom: 6, left: 6, right: 0 });
+    expect(reachOf('tab-Learn')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
   });
 });

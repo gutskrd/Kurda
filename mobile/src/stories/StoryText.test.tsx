@@ -5,11 +5,14 @@ import { hueSteps, type StoryGlossEntry } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { PALETTES } from '../theme/palette';
 import { STORY_BODY_SIZE, StoryText, storyLineHeight } from './StoryText';
+import { forgetReach, reachOf } from '../testing/reach';
 
 vi.mock('react-native', () => import('react-native-web'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
+// every control noted as it is drawn, so its reach can be read
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 
 const nan: StoryGlossEntry = { term: 'nan', meanings: { en: 'bread' } };
 
@@ -31,7 +34,23 @@ describe('storyLineHeight', () => {
 });
 
 describe('StoryText', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    forgetReach();
+  });
+
+  it('lets a paragraph’s translation toggle answer a finger past its edges, but not over the words above it', () => {
+    const translation = { paragraphs: ['My mother bakes bread. The bread is warm.', 'We eat bread.'], lang: 'en' };
+    const text = (shown: number[]) => (
+      <StoryText story={story} onGloss={() => undefined} translation={translation} translated={new Set(shown)} onToggleTranslation={() => undefined} />
+    );
+    const view = renderWithProviders(text([]));
+    // 32 tall and alone on its line: 8 past its sides and its foot, and only the paragraph's 4 up toward a word that opens its meaning
+    expect(reachOf('Translation of paragraph 1')).toEqual({ top: 4, bottom: 8, left: 8, right: 8 });
+    // the same with the translation shown above it
+    view.rerender(text([0]));
+    expect(reachOf('Hide the translation of paragraph 1')).toEqual({ top: 4, bottom: 8, left: 8, right: 8 });
+  });
 
   it('marks a glossary word the first time in each paragraph, and opens its meaning', () => {
     const onGloss = vi.fn();

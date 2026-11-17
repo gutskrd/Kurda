@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Toggle } from '../../theme/Toggle';
+import { ToggleRow } from '../../theme/Toggle';
 import type { StoryGameView } from '@kurda/shared';
 import { useAuth } from '../../auth/AuthContext';
 import type { ApiError, ApiResult } from '../../api/types';
-import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, typography } from '../../theme/tokens';
@@ -51,25 +50,28 @@ export function ExtraTimeSwitch({
     setBusy(false);
   };
 
+  // the whole row turns it, the words as well as the switch, and is one switch to a screen reader
   return (
-    <View style={styles.row}>
+    <ToggleRow
+      label={t('stories.extraTime')}
+      hint={t('stories.extraTimeHint')}
+      value={view.extraTime}
+      onValueChange={(on) => void toggle(on)}
+      disabled={busy}
+      style={styles.row}
+    >
       <Icon name="timer" size={18} color={colors.primary} />
       <View style={styles.text}>
         <Text style={[styles.label, { color: colors.textPrimary }]}>{t('stories.extraTime')}</Text>
         <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('stories.extraTimeHint')}</Text>
       </View>
-      <Toggle
-        value={view.extraTime}
-        onValueChange={(on) => void toggle(on)}
-        disabled={busy}
-        accessibilityLabel={t('stories.extraTime')}
-      />
-    </View>
+    </ToggleRow>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
+  // the icon sits close to its words; ToggleRow keeps the row a fingertip's reach tall
+  row: { gap: spacing.sm },
   text: { flex: 1 },
   label: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   hint: { fontSize: typography.sizes.xs },

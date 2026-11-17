@@ -419,13 +419,6 @@ html:has(.lesson-bar) {
   background: var(--vale-card);
   color: var(--vale-muted);
 }
-/* a fingertip's reach, a little past the drawn circle */
-.lesson-leave::after {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-}
 .lesson-leave:hover {
   border-color: var(--vale-edge);
   color: var(--ink);
@@ -1108,11 +1101,6 @@ html:has(.lesson-bar) {
 .lesson-bubble .lesson-play-round svg {
   width: 18px;
   height: 18px;
-}
-.lesson-bubble .lesson-play-round::after {
-  content: '';
-  position: absolute;
-  inset: -5px;
 }
 /* listening's bubble: the speaker and its waveform, in the red, level in the middle */
 .lesson-bubble.is-sound {

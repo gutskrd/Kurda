@@ -67,7 +67,7 @@ export function VarietySwitch({ value, onChange }: { value: GameDialect; onChang
       {GAME_DIALECTS.map((d) => (
         <label key={d} className={`seg-btn lore-variety-option${value === d ? ' is-active' : ''}`}>
           <input type="radio" name={name} value={d} checked={value === d} onChange={() => onChange(d)} />
-          <span>{dialectName(d)}</span>
+          <span className="seg-btn-label">{dialectName(d)}</span>
         </label>
       ))}
     </fieldset>

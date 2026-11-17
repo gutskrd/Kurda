@@ -23,6 +23,12 @@ export function RankList({ children, label }: { children: ReactNode; label?: str
   );
 }
 
+/**
+ * One row of a board. With `href` the name is a link, and the whole row
+ * answers as that link (product.css stretches it over the row): a finger that
+ * lands on the place, the face or the score still opens the profile. A
+ * control in `trailing` keeps its own presses.
+ */
 export function RankRow({
   rank,
   name,

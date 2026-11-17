@@ -8,7 +8,10 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
+import { StyleSheet } from 'react-native';
 import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { forgetReach, pressablePropsOf, reachOf } from '../testing/reach';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -22,6 +25,7 @@ patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => navigation.navigate.mockReset());
 afterEach(() => {
   cleanup();
+  forgetReach();
   vi.restoreAllMocks();
 });
 
@@ -33,7 +37,17 @@ function show(ui: React.JSX.Element, { unread = 0 } = {}) {
     'GET /me/notifications/unread-count': ok({ count: unread }),
     'GET /me/social': ok({ unread: {} }),
   });
-  renderWithProviders(<UnreadProvider>{ui}</UnreadProvider>);
+  const shown = renderWithProviders(<UnreadProvider>{ui}</UnreadProvider>);
+  return { again: (next: React.JSX.Element) => shown.rerender(<UnreadProvider>{next}</UnreadProvider>) };
+}
+
+/** A fingertip past every edge: what a control with nothing close to it answers over. */
+const OPEN = { top: 8, bottom: 8, left: 8, right: 8 };
+
+/** The width a pressable is drawn at, from the style it was given, at rest. */
+function drawnWidth(name: string): unknown {
+  const { style } = pressablePropsOf(name);
+  return StyleSheet.flatten(typeof style === 'function' ? style({ pressed: false }) : style)?.width;
 }
 
 describe('the top of a tab', () => {
@@ -77,6 +91,27 @@ describe('the top of a tab', () => {
     expect(screen.getByRole('button', { name: '3 day streak' })).toBeTruthy();
     expect(screen.queryByRole('heading')).toBeNull();
     expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
+  });
+
+  /*
+   * A thumb reaching for the corner of the screen lands a little short or a
+   * little wide. The pill’s two halves answer a fingertip above and below
+   * and meet exactly at its middle; its ends are theirs, not padding.
+   */
+  it('lets search and the bell answer a finger a little off them, and meet in the middle of the pill', () => {
+    show(<TabHeader title="Messages" />);
+    expect(reachOf('top-search')).toEqual({ top: 8, bottom: 8, left: 0, right: 0 });
+    expect(reachOf('top-bell')).toEqual({ top: 8, bottom: 8, left: 0, right: 0 });
+    // two halves as wide as the pill was with its padding, so the pill is the size it was
+    expect(drawnWidth('top-search')).toBe(46);
+    expect(drawnWidth('top-bell')).toBe(46);
+  });
+
+  it('lets the tab’s own action answer a fingertip past every edge, up to the pill beside it', () => {
+    show(<TabHeader title="Messages" action={<HeaderButton icon="compose" label="New message" onPress={() => undefined} />} />);
+    // the pill reaches nothing sideways, so the action’s reach across the gap between them is the whole of it
+    expect(reachOf('New message')).toEqual(OPEN);
+    expect(drawnWidth('New message')).toBe(44);
   });
 });
 
@@ -148,5 +183,71 @@ describe('the bar over a pushed page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
     expect(people).toHaveBeenCalledTimes(1);
     expect(more).toHaveBeenCalledTimes(1);
+  });
+
+  /*
+   * Leaving a page should never take a second try: with nothing pressable
+   * beside it, the way back answers a fingertip past every edge, and so
+   * does the action opposite it.
+   */
+  it('lets the way back and the page’s action answer a fingertip past every edge', () => {
+    show(<ScreenHeader title="Proverbs" onBack={() => undefined} right={<HeaderButton icon="share" label="Share" onPress={() => undefined} />} />);
+    expect(reachOf('header-back')).toEqual(OPEN);
+    expect(reachOf('Share')).toEqual(OPEN);
+  });
+
+  /*
+   * A conversation’s face and name open whoever it is with, one gap from the
+   * way back and one from the menu. The three share those gaps, each up to
+   * the middle, so a tap a little wide of the name opens the profile and one
+   * a little wide of the chevron still goes back.
+   */
+  it('shares the gaps beside a title that can be pressed, half to each side', () => {
+    show(
+      <ScreenHeader
+        title="Heval"
+        titleAvatar={<></>}
+        onTitlePress={() => undefined}
+        onBack={() => undefined}
+        right={<HeaderButton icon="more" label="More" onPress={() => undefined} />}
+      />,
+    );
+    const half = { top: 8, bottom: 8, left: 4, right: 4 };
+    expect(reachOf('header-back')).toEqual(half);
+    expect(reachOf('Heval')).toEqual(half);
+    expect(reachOf('More')).toEqual(half);
+  });
+
+  it('keeps a pill’s halves meeting in its middle beside a title that can be pressed', () => {
+    show(
+      <ScreenHeader
+        title="Club"
+        onTitlePress={() => undefined}
+        onBack={() => undefined}
+        right={
+          <ActionPill>
+            <HeaderButton icon="people" label="People" onPress={() => undefined} />
+            <HeaderButton icon="more" label="More" onPress={() => undefined} />
+          </ActionPill>
+        }
+      />,
+    );
+    expect(reachOf('People')).toEqual({ top: 8, bottom: 8, left: 0, right: 0 });
+    expect(reachOf('More')).toEqual({ top: 8, bottom: 8, left: 0, right: 0 });
+  });
+
+  /*
+   * A group’s name becomes a way in only once its people have loaded. What
+   * it and the way back answer over is the same before and after, because a
+   * reach that grew later would be cut off at the bar’s edge on a phone.
+   */
+  it('gives a title the same reach before it can be pressed as after', () => {
+    const header = (onTitlePress?: () => void) => <ScreenHeader title="Club" titleAvatar={<></>} onTitlePress={onTitlePress} onBack={() => undefined} />;
+    const { again } = show(header());
+    const before = { back: reachOf('header-back'), title: reachOf('Club') };
+    again(header(() => undefined));
+    expect(screen.getByRole('button', { name: 'Club' })).toBeTruthy();
+    expect({ back: reachOf('header-back'), title: reachOf('Club') }).toEqual(before);
+    expect(before.title).toEqual({ top: 8, bottom: 8, left: 4, right: 4 });
   });
 });

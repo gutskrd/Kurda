@@ -8,7 +8,7 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -262,7 +262,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
           right={
             <Pressable
               onPress={() => navigation.navigate('Tabs', { screen: 'Messages' })}
-              hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
+              reachSize={{ height: LINK_LINE }}
               style={({ pressed }) => [styles.messagesLink, { flexDirection: dir.row }, pressed && heldDim]}
               accessibilityRole="button"
               accessibilityLabel={t('nav.messages')}
@@ -279,6 +279,8 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             data={results}
             keyExtractor={(u) => u.userId}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
+            // the keyboard is up while the results come in: a tap on one opens it, rather than only putting the keyboard away
+            keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => row(item)}
             ListEmptyComponent={
               searching ? (
@@ -295,6 +297,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             data={friends}
             keyExtractor={(u) => u.userId}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
+            keyboardShouldPersistTaps="handled"
             refreshControl={pull}
             ListHeaderComponent={
               <View>
@@ -324,7 +327,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
                         u,
                         <Pressable
                           onPress={() => withdraw(u)}
-                          hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
+                          reachSize={{ height: LINK_LINE }}
                           accessibilityRole="button"
                           accessibilityLabel={t('friends.cancelRequest', { name: u.displayName ?? u.username })}
                           style={({ pressed }) => pressed && heldDim}
@@ -355,7 +358,6 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
                         <PressableScale
                           onPress={() => addFriend(s.userId)}
                           disabled={requested}
-                          hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 36)}
                           style={[styles.accept, styles.add, { backgroundColor: requested ? colors.controlTrack : colors.primary }]}
                           accessibilityRole="button"
                           accessibilityLabel={requested ? t('friends.requested') : t('friends.add')}
@@ -380,6 +382,9 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     </GradientBackground>
   );
 }
+
+/** A line of words beside an 18pt glyph, as the Messages link and a request's Cancel are drawn: the Pressable reaches it to a fingertip. */
+const LINK_LINE = 22;
 
 /** People in grey, row for row: the face, the name and the line under it, the button at the end. */
 function PeopleSkeleton(): React.JSX.Element {

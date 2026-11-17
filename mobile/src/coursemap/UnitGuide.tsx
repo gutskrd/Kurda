@@ -8,6 +8,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useDirection } from '../reports/direction';
 import { sectionLabel } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
+import { ReachReset } from '../theme/Pressable';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 import type { SkillNode } from './types';
@@ -45,32 +46,35 @@ export function UnitGuide({ guide, onClose }: { guide: { title: string; skills: 
 
   return (
     <Modal visible={guide !== null} animationType="slide" onRequestClose={onClose}>
-      <GradientBackground>
-        <View style={styles.screen}>
-          <ScreenHeader title={guide?.title} onBack={onClose} leading="close" hairline />
-          <ScrollView contentContainerStyle={styles.body}>
-            {guide?.skills.map((skill) => {
-              const note = notes[skill.skillId];
-              return (
-                <View key={skill.skillId} style={styles.section}>
-                  {guide.skills.length > 1 ? (
-                    <Text style={[styles.skill, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
-                      {skill.title}
-                    </Text>
-                  ) : null}
-                  {!note ? (
-                    <Loading />
-                  ) : 'error' in note ? (
-                    <Text style={[styles.error, dir.text, { color: colors.danger }]}>{note.error}</Text>
-                  ) : (
-                    <MarkdownView source={note.md} />
-                  )}
-                </View>
-              );
-            })}
-          </ScrollView>
-        </View>
-      </GradientBackground>
+      {/* a screen of its own over the path: nothing on the path below caps the reach of what is on it */}
+      <ReachReset>
+        <GradientBackground>
+          <View style={styles.screen}>
+            <ScreenHeader title={guide?.title} onBack={onClose} leading="close" hairline />
+            <ScrollView contentContainerStyle={styles.body}>
+              {guide?.skills.map((skill) => {
+                const note = notes[skill.skillId];
+                return (
+                  <View key={skill.skillId} style={styles.section}>
+                    {guide.skills.length > 1 ? (
+                      <Text style={[styles.skill, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+                        {skill.title}
+                      </Text>
+                    ) : null}
+                    {!note ? (
+                      <Loading />
+                    ) : 'error' in note ? (
+                      <Text style={[styles.error, dir.text, { color: colors.danger }]}>{note.error}</Text>
+                    ) : (
+                      <MarkdownView source={note.md} />
+                    )}
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </GradientBackground>
+      </ReachReset>
     </Modal>
   );
 }

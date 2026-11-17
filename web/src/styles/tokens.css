@@ -186,6 +186,18 @@
   /* how far a pressed button, card or tile gives under a finger */
   --press-scale: 0.97;
 
+  /*
+   * How much of the page answers a press on a control, past what is drawn
+   * (styles/reach.css, lib/reach.ts). The least area that answers is 44px
+   * with a mouse and 48px where any pointer is a finger (below), the size a
+   * fingertip covers; the phone app uses the same 48 (mobile/src/a11y/a11y.ts).
+   * `--reach-open` is the extra past every edge for a control with nothing
+   * near it, such as the way back or a close button; it is nothing until a
+   * finger is about, and nothing for a control that does not ask for it.
+   */
+  --reach-min: 44px;
+  --reach-open: 0px;
+
   /* depth: hairlines first; shadows only for what floats */
   --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
   --shadow: 0 10px 34px rgba(0, 0, 0, 0.4);
@@ -209,6 +221,13 @@
   --nav-bottom: calc(var(--nav-h) + env(safe-area-inset-top, 0px));
 
   color-scheme: dark;
+}
+
+/* a finger is broader than the tip of a mouse pointer, and is aimed less exactly */
+@media (any-pointer: coarse) {
+  :root {
+    --reach-min: 48px;
+  }
 }
 
 /*

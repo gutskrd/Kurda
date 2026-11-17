@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { ActivityIndicator, Image, RefreshControl, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachGroup } from '../theme/Pressable';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import { GuestBenefits, useAccountGate } from '../auth/AccountGate';
@@ -484,35 +484,40 @@ function AccountProfile() {
           at 320 points that left a label sixty, and "Profil bearbeiten",
           "Profîlê biguherîne" and both Soranî names ended in an ellipsis,
           with single words too long for a second line to save.
+
+          The three stand a gap apart and each reaches at most half of it
+          toward the next, so a tap between two goes to the nearer one.
         */}
         <View style={[styles.actions, { flexDirection: dir.row }]}>
-          <Pressable
-            onPress={() => navigation.navigate('EditProfile')}
-            accessibilityRole="button"
-            accessibilityLabel={t('profile.edit')}
-            testID="profile-edit"
-            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
-          >
-            <Text style={[styles.actionText, { color: colors.textPrimary }]}>{t('profile.edit')}</Text>
-          </Pressable>
-          <Pressable
-            onPress={share}
-            accessibilityRole="button"
-            accessibilityLabel={t('profile.share')}
-            testID="profile-share"
-            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
-          >
-            <Text style={[styles.actionText, { color: colors.textPrimary }]}>{t('profile.share')}</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => navigation.navigate('Friends')}
-            accessibilityRole="button"
-            accessibilityLabel={t('profile.addFriends')}
-            testID="profile-add-friends"
-            style={({ pressed }) => [styles.actionIcon, { backgroundColor: colors.primary, opacity: pressed ? pressedDim : 1 }]}
-          >
-            <Icon name="user-plus" size={20} tone="onPrimary" />
-          </Pressable>
+          <ReachGroup gap={spacing.sm}>
+            <Pressable
+              onPress={() => navigation.navigate('EditProfile')}
+              accessibilityRole="button"
+              accessibilityLabel={t('profile.edit')}
+              testID="profile-edit"
+              style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+            >
+              <Text style={[styles.actionText, { color: colors.textPrimary }]}>{t('profile.edit')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={share}
+              accessibilityRole="button"
+              accessibilityLabel={t('profile.share')}
+              testID="profile-share"
+              style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+            >
+              <Text style={[styles.actionText, { color: colors.textPrimary }]}>{t('profile.share')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => navigation.navigate('Friends')}
+              accessibilityRole="button"
+              accessibilityLabel={t('profile.addFriends')}
+              testID="profile-add-friends"
+              style={({ pressed }) => [styles.actionIcon, { backgroundColor: colors.primary, opacity: pressed ? pressedDim : 1 }]}
+            >
+              <Icon name="user-plus" size={20} tone="onPrimary" />
+            </Pressable>
+          </ReachGroup>
         </View>
 
         {/*

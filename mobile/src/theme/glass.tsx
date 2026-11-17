@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Animated, Modal, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Pressable } from './Pressable';
+import { Pressable, ReachReset, type Reach } from './Pressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { fontScaleCap, radii, spacing, typography } from './tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_REACH, MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from './ThemeProvider';
 import { Icon, type IconName } from './Icon';
 import { useI18n } from '../i18n/I18nContext';
@@ -135,6 +135,14 @@ export function GlassRow({
 /** What a button is for, and what colour that makes it. */
 export type ClayTone = 'neutral' | 'primary' | 'success' | 'danger';
 
+/**
+ * How tall a button's pill is drawn, for its reach: the pill is a view inside
+ * the Pressable, so the Pressable's own style does not say. A regular one
+ * reaches 2 past its top and bottom, to a fingertip's 48; a large one is
+ * already taller than that.
+ */
+const CLAY_SIZE = { regular: { height: MIN_TOUCH_TARGET }, large: { height: 50 } } as const;
+
 export function ClayButton({
   label,
   onPress,
@@ -148,6 +156,7 @@ export function ClayButton({
   accessibilityLabel,
   style,
   testID,
+  reach,
 }: {
   label: string;
   onPress: () => void;
@@ -195,6 +204,11 @@ export function ClayButton({
   style?: StyleProp<ViewStyle>;
   /** For a scripted walk of a screen, where the label changes with the language. */
   testID?: string;
+  /**
+   * How far past its pill it answers a finger (theme/Pressable.tsx): to a
+   * fingertip's reach by default, `open` for a button with nothing near it.
+   */
+  reach?: Reach;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const TONE: Record<ClayTone, string | null> = {
@@ -232,6 +246,8 @@ export function ClayButton({
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ busy, disabled: off }}
       testID={testID}
+      reach={reach}
+      reachSize={CLAY_SIZE[size]}
       style={({ pressed }) => [{ opacity: off ? 0.5 : pressed && reduce ? pressedDim : 1 }, style]}
     >
       <Animated.View
@@ -290,11 +306,16 @@ export function ErrorRetry({
 const SEG_PAD = 3;
 /** How much of the violet the capsule is, as the last two digits of its colour: the tab bar's own wash. */
 const SEG_WASH = '1F';
-const SEG_SLOP = { top: 6, bottom: 6 };
 
-/** A labelled (radio) segment's vertical padding: 3 + 11 + an 18pt line + 11 + 3 clears 44. */
+/**
+ * A labelled (radio) segment's vertical padding: 11 + an 18pt line + 11, so
+ * the segment is drawn 40 tall. This once counted the track's 3pt ring as
+ * well to make 44, but the ring was never part of any segment and a finger on
+ * it did nothing; every segment now reaches over the ring and on to
+ * `MIN_REACH`, so the ring answers too.
+ */
 const SEG_PAD_V_TALL = 11;
-/** A segment label's line, set rather than left to the platform where a label may take two (`wrap`). */
+/** A segment label's line, set on every label so a segment's height is known before it is drawn, and is its reach's to work from. */
 const SEG_LINE = 18;
 
 /**
@@ -364,6 +385,14 @@ export function Segmented<T extends string>({
   const seg = box.w > 0 ? (box.w - SEG_PAD * 2) / options.length : 0;
   const x = useRef(new Animated.Value(0)).current;
   const padV = groupLabel || size === 'large' ? SEG_PAD_V_TALL : 6;
+  /*
+   * Each segment's reach, written out because it is not the same on every
+   * side. Up and down it covers the track's ring and goes on to a fingertip's
+   * 48 (9 for a 30pt segment, 4 for a 40pt one), and never less than the ring.
+   * Across, the two end segments cover the ring at their end of the track and
+   * the ones between take nothing, because they touch.
+   */
+  const reachV = Math.max(SEG_PAD, (MIN_REACH - (padV * 2 + SEG_LINE)) / 2);
 
   useEffect(() => {
     if (seg <= 0) return;
@@ -393,9 +422,12 @@ export function Segmented<T extends string>({
         />
       ) : null}
 
-      {options.map((opt) => {
+      {options.map((opt, i) => {
         const active = opt === value;
         const label = labelOf(opt);
+        // the ends as they are drawn: right to left, the first option is the one on the right
+        const leftmost = i === (mirrored ? options.length - 1 : 0);
+        const rightmost = i === (mirrored ? 0 : options.length - 1);
         return (
           <Pressable
             key={opt}
@@ -407,8 +439,7 @@ export function Segmented<T extends string>({
             accessibilityRole={groupLabel ? 'radio' : 'button'}
             accessibilityState={groupLabel ? { checked: active } : { selected: active }}
             accessibilityLabel={label}
-            // a regular segment is drawn 32pt tall; the slop takes its touch to 44 without making it look bigger
-            hitSlop={padV < SEG_PAD_V_TALL ? SEG_SLOP : undefined}
+            hitSlop={{ top: reachV, bottom: reachV, left: leftmost ? SEG_PAD : 0, right: rightmost ? SEG_PAD : 0 }}
             // one line keeps the height it always had, and a second adds no more than its own height
             style={({ pressed }) => [styles.segItem, wrap ? { minHeight: padV * 2 + SEG_LINE, paddingVertical: SEG_PAD } : { paddingVertical: padV }, pressed && heldDim]}
           >
@@ -476,38 +507,41 @@ export function GlassSelect<T extends string>({
         )}
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        {/* the palette's scrim, which is deeper by evening; a literal here dimmed the dark page too little */}
-        <Pressable style={[styles.selectBackdrop, { backgroundColor: colors.scrim }]} onPress={() => setOpen(false)}>
-          <Pressable onPress={() => undefined} style={styles.selectMenuWrap}>
-            {/* the menu grows in from just under its size as the scrim fades */}
-            <MenuIn>
-              <GlassCard style={styles.selectMenu}>
-                <Text style={[styles.selectMenuTitle, { color: colors.textSecondary }]}>{label}</Text>
-                {options.map((opt) => {
-                  const active = opt === value;
-                  return (
-                    <Pressable
-                      key={opt}
-                      onPress={() => {
-                        if (!active) haptic('select');
-                        onChange(opt);
-                        setOpen(false);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: active }}
-                      style={({ pressed }) => [styles.selectOption, pressed && heldRow(colors.controlTrack)]}
-                    >
-                      <Text style={[styles.selectOptionText, { color: active ? colors.primary : colors.textPrimary }, active && styles.selectOptionActive]}>
-                        {labelOf(opt)}
-                      </Text>
-                      {active ? <Icon name="check" size={18} color={colors.primary} /> : null}
-                    </Pressable>
-                  );
-                })}
-              </GlassCard>
-            </MenuIn>
+        {/* the menu is drawn over the screen, not beside the row that opened it, so the caps of that row's group stay behind */}
+        <ReachReset>
+          {/* the palette's scrim, which is deeper by evening; a literal here dimmed the dark page too little */}
+          <Pressable style={[styles.selectBackdrop, { backgroundColor: colors.scrim }]} onPress={() => setOpen(false)}>
+            <Pressable onPress={() => undefined} style={styles.selectMenuWrap}>
+              {/* the menu grows in from just under its size as the scrim fades */}
+              <MenuIn>
+                <GlassCard style={styles.selectMenu}>
+                  <Text style={[styles.selectMenuTitle, { color: colors.textSecondary }]}>{label}</Text>
+                  {options.map((opt) => {
+                    const active = opt === value;
+                    return (
+                      <Pressable
+                        key={opt}
+                        onPress={() => {
+                          if (!active) haptic('select');
+                          onChange(opt);
+                          setOpen(false);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                        style={({ pressed }) => [styles.selectOption, pressed && heldRow(colors.controlTrack)]}
+                      >
+                        <Text style={[styles.selectOptionText, { color: active ? colors.primary : colors.textPrimary }, active && styles.selectOptionActive]}>
+                          {labelOf(opt)}
+                        </Text>
+                        {active ? <Icon name="check" size={18} color={colors.primary} /> : null}
+                      </Pressable>
+                    );
+                  })}
+                </GlassCard>
+              </MenuIn>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </ReachReset>
       </Modal>
     </>
   );
@@ -534,8 +568,8 @@ const styles = StyleSheet.create({
   glassFaceTight: { paddingVertical: spacing.xs },
   sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '55%', opacity: 0.6 },
 
-  /** aligned with the title: the icon column plus the gap after it */
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET, paddingVertical: 11 },
+  /** aligned with the title: the icon column plus the gap after it; a fingertip's reach tall, since a row stands right against the next */
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_REACH, paddingVertical: 13 },
   rowIcon: { width: 26, alignItems: 'center' },
   rowMain: { flex: 1, gap: 2 },
   rowTitle: { fontSize: typography.ios.row, fontWeight: typography.weights.regular },
@@ -560,7 +594,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   // 50, which is what iOS gives the full-width button a screen is about
-  clayLarge: { minHeight: 50, alignSelf: 'stretch' },
+  clayLarge: { minHeight: CLAY_SIZE.large.height, alignSelf: 'stretch' },
   // a label longer than its button's room goes on to a second line inside it, centred, where it used to run out past the button's edge
   clayText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
   clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
@@ -576,9 +610,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   segItem: { flex: 1, paddingVertical: 6, paddingHorizontal: spacing.xs, alignItems: 'center', justifyContent: 'center' },
-  segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, lineHeight: SEG_LINE },
   segTextActive: { fontWeight: typography.weights.semibold },
-  segTextWrap: { lineHeight: SEG_LINE, textAlign: 'center' },
+  segTextWrap: { textAlign: 'center' },
   selectBackdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   selectMenuWrap: { alignSelf: 'stretch' },
   selectMenu: { alignSelf: 'stretch', gap: spacing.xs },

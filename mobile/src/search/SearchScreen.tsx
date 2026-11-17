@@ -3,12 +3,12 @@ import { matchedParts } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachGroup } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, REACH_OPEN, reachSlop } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Chips } from '../theme/Chips';
@@ -56,6 +56,8 @@ interface Suggestion extends UserRow {
 /** Where the searches you made are kept, on this device only. */
 const RECENTS_KEY = 'hevalo_search_recents_v1';
 const SHOWN_RECENTS = 6;
+/** between two rows of a list on this page */
+const ROWS_GAP = 2;
 
 interface LessonRow {
   /** The lesson a tap opens; a skill with none is not offered. */
@@ -396,28 +398,34 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                 onPress={forgetRecents}
                 accessibilityRole="button"
                 accessibilityLabel={t('search.clearRecent')}
-                // one 18-point line of words, caught at a fingertip's 44
-                hitSlop={13}
+                /*
+                 * One 18-point line of words, alone at the end of its line: it reaches a fingertip up into the room
+                 * above the list and to either side, and down only half of the 4 to the first recent search.
+                 */
+                hitSlop={reachSlop(null, 18, { edge: REACH_OPEN, limit: { bottom: spacing.xs / 2 } })}
                 style={({ pressed }) => pressed && heldDim}
               >
                 <Text style={[styles.sectionAction, { color: colors.textPrimary }]}>{t('search.clearRecent')}</Text>
               </Pressable>
             </View>
             <View style={styles.rows}>
-              {recents.slice(0, SHOWN_RECENTS).map((term) => (
-                <Pressable
-                  key={term}
-                  onPress={() => setQuery(term)}
-                  accessibilityRole="button"
-                  accessibilityLabel={term}
-                  style={({ pressed }) => [styles.recent, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack }]}
-                >
-                  <Icon name="history" size={20} color={colors.textSecondary} />
-                  <Text style={[styles.rowTitle, styles.rowMain, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {term}
-                  </Text>
-                </Pressable>
-              ))}
+              {/* each 44 tall and 2 apart: each reaches toward the next only half of that */}
+              <ReachGroup rowGap={ROWS_GAP}>
+                {recents.slice(0, SHOWN_RECENTS).map((term) => (
+                  <Pressable
+                    key={term}
+                    onPress={() => setQuery(term)}
+                    accessibilityRole="button"
+                    accessibilityLabel={term}
+                    style={({ pressed }) => [styles.recent, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack }]}
+                  >
+                    <Icon name="history" size={20} color={colors.textSecondary} />
+                    <Text style={[styles.rowTitle, styles.rowMain, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {term}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ReachGroup>
             </View>
           </View>
         ) : null}
@@ -570,7 +578,7 @@ const styles = StyleSheet.create({
   sectionTitle: { ...sectionLabel, paddingHorizontal: spacing.sm },
   sectionTitleSkeleton: { paddingHorizontal: spacing.sm },
   sectionAction: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  rows: { gap: 2 },
+  rows: { gap: ROWS_GAP },
   // edge to edge, out past the list's own inset
   discover: { marginHorizontal: -spacing.sm },
   hidden: { display: 'none' },

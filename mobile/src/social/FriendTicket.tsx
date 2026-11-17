@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
-import { Pressable } from '../theme/Pressable';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { Pressable, ReachGroup } from '../theme/Pressable';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useI18n } from '../i18n/I18nContext';
 import { Ticket, TicketBurst, TicketStamp, ticketTone, TEAR_MS } from '../play/Ticket';
@@ -141,25 +141,27 @@ export function FriendRequestTicket({
           stamp
         ) : compact ? (
           <View style={[styles.compactActions, { flexDirection: dir.row }]}>
-            <PressableScale
-              onPress={onAccept}
-              disabled={answer !== null}
-              hitSlop={hitSlopFor(MIN_TOUCH_TARGET, ACCEPT_HEIGHT)}
-              style={[styles.accept, { backgroundColor: colors.primary }]}
-              accessibilityRole="button"
-              accessibilityLabel={acceptLabel}
-            >
-              <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>{t('friends.accept')}</Text>
-            </PressableScale>
-            <Pressable
-              onPress={onDecline}
-              disabled={answer !== null}
-              style={({ pressed }) => [styles.decline, pressed && heldDim]}
-              accessibilityRole="button"
-              accessibilityLabel={declineLabel}
-            >
-              <Icon name="close" size={18} color={colors.danger} />
-            </Pressable>
+            {/* Accept and Decline stand 4 apart: each reaches up and down to a fingertip, and toward the other only half of that */}
+            <ReachGroup gap={spacing.xs}>
+              <PressableScale
+                onPress={onAccept}
+                disabled={answer !== null}
+                style={[styles.accept, { backgroundColor: colors.primary }]}
+                accessibilityRole="button"
+                accessibilityLabel={acceptLabel}
+              >
+                <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>{t('friends.accept')}</Text>
+              </PressableScale>
+              <Pressable
+                onPress={onDecline}
+                disabled={answer !== null}
+                style={({ pressed }) => [styles.decline, pressed && heldDim]}
+                accessibilityRole="button"
+                accessibilityLabel={declineLabel}
+              >
+                <Icon name="close" size={18} color={colors.danger} />
+              </Pressable>
+            </ReachGroup>
           </View>
         ) : (
           <View style={[styles.actions, { flexDirection: dir.row }]}>
@@ -172,7 +174,7 @@ export function FriendRequestTicket({
   );
 }
 
-/** A row's Accept, a little under a fingertip's 44 and made up to it by its hit slop, so the row stays one line tall. */
+/** A row's Accept, a little under a fingertip's 44 and made up to it by its reach, so the row stays one line tall. */
 const ACCEPT_HEIGHT = 36;
 
 /** How long a slip takes to leave the button, or to come home to it. */

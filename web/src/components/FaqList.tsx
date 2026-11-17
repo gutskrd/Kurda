@@ -33,13 +33,14 @@ export function FaqList({
             </summary>
             <div className="faq-a">
               <p>{t(e.a)}</p>
+              {/* on a line of its own under the answer, so where a finger is about it answers a little above and below its words (styles/reach.css) */}
               {e.link &&
                 (e.link.external ? (
-                  <a className="doc-link" href={e.link.to} target="_blank" rel="noreferrer noopener">
+                  <a className="doc-link reach-line" href={e.link.to} target="_blank" rel="noreferrer noopener">
                     {t(e.link.label)}
                   </a>
                 ) : (
-                  <Link className="doc-link" to={e.link.to}>
+                  <Link className="doc-link reach-line" to={e.link.to}>
                     {t(e.link.label)}
                   </Link>
                 ))}

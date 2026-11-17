@@ -172,7 +172,9 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                       authorId: post.authorRole === 'user' ? post.authorId : null,
                     })
                   }
-                  hitSlop={13}
+                  // one line of small words with nothing beside it: it answers over 48 of height and a little past its ends
+                  reach="open"
+                  reachSize={REPORT_LINE}
                   accessibilityRole="button"
                   accessibilityLabel={t('moderation.reportPost')}
                   // the flag beside its words, on one line, at the reading edge
@@ -258,6 +260,9 @@ const BODY_LINE = 24;
 
 /** The face in the byline: as big as the wall's. */
 const BYLINE_FACE = 28;
+
+/** "Report this post" is drawn one line of the small words tall, about this. */
+const REPORT_LINE = { height: 20 };
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },

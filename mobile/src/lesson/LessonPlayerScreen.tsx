@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachReset } from '../theme/Pressable';
 import { feedbackKind, nextLaunch, pairKey, praiseFor, practisableMistakes, typedHint, type NewWord, type ResumeMemory, type TypedHint } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -703,7 +703,10 @@ function SessionPlayerBody({
 
       {view.grammarMd ? (
         <Modal visible={showTips} animationType="slide" onRequestClose={() => setShowTips(false)}>
-          <GrammarTips source={view.grammarMd} onClose={() => setShowTips(false)} />
+          {/* the tips are a screen of their own over the lesson: nothing in the lesson caps their reach */}
+          <ReachReset>
+            <GrammarTips source={view.grammarMd} onClose={() => setShowTips(false)} />
+          </ReachReset>
         </Modal>
       ) : null}
 

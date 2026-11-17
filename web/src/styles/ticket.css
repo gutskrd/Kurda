@@ -376,11 +376,34 @@ button.request-name:focus-visible {
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
+/*
+ * Their name opens their profile, and so does a press anywhere else on the
+ * ticket, the face on the stub among them: the name's area is stretched over
+ * the whole ticket, and only the two answers sit above it. The name is left
+ * unplaced, so the area is measured from the ticket's body rather than from
+ * the name, and the name's own `overflow: hidden`, which cuts a long name
+ * short, does not cut the area short with it. Its reach (reach.css) is then
+ * measured from the body as well, which is larger than any reach, so it comes
+ * to the body's own edges and no further.
+ */
+button.request-name {
+  position: static;
+}
+button.request-name::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  /* the body, and the stub before it, which is as wide as the ticket sets it */
+  width: calc(100% + var(--stub-w, 52px));
+}
 .request-sub {
   font-size: var(--text-caption);
   color: var(--t-ink);
 }
 .request-actions {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   gap: 6px;
   flex: none;

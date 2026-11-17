@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachGroup } from '../theme/Pressable';
 import { useNavigation, usePreventRemove, type NavigationAction } from '@react-navigation/native';
 import { PressableScale, heldDim } from '../theme/MotionParts';
 import { countriesIn, foldDiacritics } from '@kurda/shared';
@@ -290,17 +290,20 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
             </View>
             {countryMatches.length > 0 ? (
               <View style={[styles.countries, { flexDirection: dir.row }]}>
-                {countryMatches.map((c) => (
-                  <CountryChip
-                    key={c.code}
-                    label={c.name}
-                    on={false}
-                    onPress={() => {
-                      typed(setCountry)(c.code);
-                      setCountryQuery('');
-                    }}
-                  />
-                ))}
+                {/* the matches wrap onto rows a gap apart, so each reaches half of it toward the row above and below */}
+                <ReachGroup gap={spacing.sm} rowGap={spacing.sm}>
+                  {countryMatches.map((c) => (
+                    <CountryChip
+                      key={c.code}
+                      label={c.name}
+                      on={false}
+                      onPress={() => {
+                        typed(setCountry)(c.code);
+                        setCountryQuery('');
+                      }}
+                    />
+                  ))}
+                </ReachGroup>
               </View>
             ) : null}
 
@@ -406,6 +409,10 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
  * The one chosen is a wash of violet with violet ink, as an option that is on
  * is marked everywhere; solid violet said "press me" of a chip that does
  * nothing when pressed.
+ *
+ * It is drawn 36 tall and answers a finger over 48, from the height its
+ * style states; where the matches wrap onto rows, their group holds each to
+ * half the gap between the rows.
  */
 function CountryChip({
   label,
@@ -434,7 +441,6 @@ function CountryChip({
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
       accessibilityLabel={accessibilityLabel ?? label}
-      hitSlop={{ top: 4, bottom: 4 }}
       style={({ pressed }) => [styles.chip, { backgroundColor: fill }, pressed && heldDim]}
     >
       <Text style={[styles.chipText, { color: ink }]}>{label}</Text>

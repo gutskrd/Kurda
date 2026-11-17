@@ -378,7 +378,8 @@ function MemberRow({
       ) : onMore ? (
         <Pressable
           onPress={onMore}
-          hitSlop={4}
+          // a fingertip past its edges, still inside the row: a near miss opens the menu rather than the profile behind it
+          reach="open"
           accessibilityRole="button"
           accessibilityLabel={t('post.menu')}
           style={({ pressed }) => [styles.more, pressed && heldDim]}

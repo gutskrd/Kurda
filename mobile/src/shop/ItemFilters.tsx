@@ -9,11 +9,11 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachReset } from '../theme/Pressable';
 import { haptic } from '../feedback/haptics';
 import { ITEM_SORTS, itemCategory, type ItemCategory, type ItemSort } from '@kurda/shared';
 import { assetUrl } from '../api/env';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_REACH, MIN_TOUCH_TARGET, reachRoom } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { Icon, type IconName } from '../theme/Icon';
@@ -45,6 +45,13 @@ import { pressedDim } from '../theme/motion';
 /** The most that can be typed into a search of items: longer than any item's name, short enough that a slip of the thumb is not searched for. */
 export const SEARCH_MAX = 80;
 
+/**
+ * The room a row of chips leaves above and below itself, inside the scroller:
+ * a chip is drawn a fingertip tall and answers a finger this much past its
+ * top and bottom edges, which the scroller would otherwise cut off.
+ */
+const CHIP_ROOM = reachRoom((MIN_REACH - MIN_TOUCH_TARGET) / 2);
+
 /** A row of chips that scrolls sideways and starts on the reading side (right, in Soranî and Arabic). */
 function ChipRow({ children, inset = 0, style }: { children: ReactNode; inset?: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const dir = useDirection();
@@ -60,9 +67,9 @@ function ChipRow({ children, inset = 0, style }: { children: ReactNode; inset?: 
       horizontal
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      style={style}
+      style={[CHIP_ROOM.scroller, style]}
       // the row runs to the screen's edges and scrolls under them; `inset` lines its first chip up with the text above
-      contentContainerStyle={[styles.chipRow, { flexDirection: dir.row, paddingHorizontal: inset }]}
+      contentContainerStyle={[styles.chipRow, CHIP_ROOM.content, { flexDirection: dir.row, paddingHorizontal: inset }]}
       onLayout={(e) => {
         geometry.current.view = e.nativeEvent.layout.width;
       }}
@@ -223,55 +230,58 @@ export function SortChip({ value, onChange }: { value: ItemSort; onChange: (sort
         <Icon name="chevron-down" size={12} color={colors.textSecondary} />
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <View style={styles.menuWrap}>
-          {/* a sibling of the menu, not its parent: a pressable wrapping the options would read as one button */}
-          <Pressable
-            style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
-            onPress={() => setOpen(false)}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.cancel')}
-          />
-          <View
-            style={[styles.menu, { backgroundColor: colors.background }]}
-            accessibilityViewIsModal
-            onAccessibilityEscape={() => setOpen(false)}
-          >
-            <Text style={[styles.menuTitle, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
-              {t('shop.sort.title')}
-            </Text>
-            <View accessibilityRole="radiogroup" accessibilityLabel={t('shop.sort.title')}>
-              {ITEM_SORTS.map((s) => {
-                const on = s === value;
-                return (
-                  <Pressable
-                    key={s}
-                    onPress={() => {
-                      if (!on) haptic('select');
-                      onChange(s);
-                      setOpen(false);
-                    }}
-                    accessibilityRole="radio"
-                    accessibilityState={{ checked: on }}
-                    aria-checked={on}
-                    accessibilityLabel={t(SORT_LABEL[s])}
-                    style={({ pressed }) => [styles.menuOption, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
-                  >
-                    <Text
-                      style={[
-                        styles.menuText,
-                        dir.text,
-                        { color: on ? colors.primary : colors.textPrimary, fontWeight: on ? typography.weights.semibold : typography.weights.regular },
-                      ]}
+        {/* the menu is drawn over the screen, not beside the chips, so their row's caps stay behind */}
+        <ReachReset>
+          <View style={styles.menuWrap}>
+            {/* a sibling of the menu, not its parent: a pressable wrapping the options would read as one button */}
+            <Pressable
+              style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
+              onPress={() => setOpen(false)}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.cancel')}
+            />
+            <View
+              style={[styles.menu, { backgroundColor: colors.background }]}
+              accessibilityViewIsModal
+              onAccessibilityEscape={() => setOpen(false)}
+            >
+              <Text style={[styles.menuTitle, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+                {t('shop.sort.title')}
+              </Text>
+              <View accessibilityRole="radiogroup" accessibilityLabel={t('shop.sort.title')}>
+                {ITEM_SORTS.map((s) => {
+                  const on = s === value;
+                  return (
+                    <Pressable
+                      key={s}
+                      onPress={() => {
+                        if (!on) haptic('select');
+                        onChange(s);
+                        setOpen(false);
+                      }}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: on }}
+                      aria-checked={on}
+                      accessibilityLabel={t(SORT_LABEL[s])}
+                      style={({ pressed }) => [styles.menuOption, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
                     >
-                      {t(SORT_LABEL[s])}
-                    </Text>
-                    {on ? <Icon name="check" size={18} color={colors.primary} /> : null}
-                  </Pressable>
-                );
-              })}
+                      <Text
+                        style={[
+                          styles.menuText,
+                          dir.text,
+                          { color: on ? colors.primary : colors.textPrimary, fontWeight: on ? typography.weights.semibold : typography.weights.regular },
+                        ]}
+                      >
+                        {t(SORT_LABEL[s])}
+                      </Text>
+                      {on ? <Icon name="check" size={18} color={colors.primary} /> : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
           </View>
-        </View>
+        </ReachReset>
       </Modal>
     </>
   );

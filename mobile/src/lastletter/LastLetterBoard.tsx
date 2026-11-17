@@ -140,6 +140,9 @@ export function LastLetterBoardView({
           ref={chain}
           horizontal
           showsHorizontalScrollIndicator={false}
+          // beside the word field, which is up the whole game: as every list beside a field does,
+          // it lets a tap reach what it holds rather than spend it closing the keyboard
+          keyboardShouldPersistTaps="handled"
           accessibilityLabel={t('games.lastLetter.chain')}
           contentContainerStyle={styles.chain}
         >

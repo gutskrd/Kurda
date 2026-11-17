@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachGroup } from '../theme/Pressable';
 import Svg, { Circle } from 'react-native-svg';
 import { STORY_DIALECTS, type StoryCategory, type StoryDialect, type StoryGameSummary, type StoryLibrary, type StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -310,7 +310,8 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
           </Text>
           {/* with two chips or more, their "Clear all" already says this */}
           {parts.length < 2 ? (
-            <Pressable onPress={startOver} accessibilityRole="button" style={({ pressed }) => [styles.clear, pressed && heldDim]} hitSlop={8}>
+            // a link at the end of the count's line, with nothing else beside it: it reaches past every edge
+            <Pressable onPress={startOver} accessibilityRole="button" reach="open" style={({ pressed }) => [styles.clear, pressed && heldDim]}>
               <Text style={[styles.clearText, { color: colors.primary }]}>{t('stories.library.clearFilters')}</Text>
             </Pressable>
           ) : null}
@@ -377,12 +378,15 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
               {t('stories.library.categories')}
             </Text>
             <View style={[styles.categories, { flexDirection: dir.row }]}>
-              <ShelfChip label={t('stories.library.all')} onPress={() => setFilter({ ...NO_FILTER, all: true })} count={library.total} />
-              {library.categories
-                .filter((c) => c.count > 0)
-                .map((c) => (
-                  <ShelfChip key={c.slug} label={categoryTitle(c, locale, t)} count={c.count} onPress={() => setFilter({ ...NO_FILTER, category: c.slug })} />
-                ))}
+              {/* the chips wrap onto rows as far apart as they are side by side: each reaches half that gap every way */}
+              <ReachGroup gap={CHIP_GAP} rowGap={CHIP_GAP}>
+                <ShelfChip label={t('stories.library.all')} onPress={() => setFilter({ ...NO_FILTER, all: true })} count={library.total} />
+                {library.categories
+                  .filter((c) => c.count > 0)
+                  .map((c) => (
+                    <ShelfChip key={c.slug} label={categoryTitle(c, locale, t)} count={c.count} onPress={() => setFilter({ ...NO_FILTER, category: c.slug })} />
+                  ))}
+              </ReachGroup>
             </View>
           </View>
         ) : null}
@@ -432,15 +436,18 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
           <Skeleton width="100%" height={VARIETY_SWITCH_HEIGHT} radius={radii.pill} />
         )}
         <View style={[styles.searchRow, { flexDirection: dir.row }]}>
-          {/* the app's one search field, in place of a copy of it built here */}
-          <SearchField value={q} onChangeText={setQ} label={t('stories.library.search')} style={styles.search} />
-          {/* sorting and narrowing is one button beside the search, filled while anything is on */}
-          <HeaderButton
-            icon={isPlainFilter(filter) ? 'filter' : 'filter-fill'}
-            label={filterButtonLabel(parts, t)}
-            onPress={() => setSheetOpen(true)}
-            testID="stories-filter"
-          />
+          {/* the field's clear button sits at its end, a small gap from the filter, so the two share that gap rather than the filter's wider reach taking the clear button's edge */}
+          <ReachGroup gap={spacing.xs}>
+            {/* the app's one search field, in place of a copy of it built here */}
+            <SearchField value={q} onChangeText={setQ} label={t('stories.library.search')} style={styles.search} />
+            {/* sorting and narrowing is one button beside the search, filled while anything is on */}
+            <HeaderButton
+              icon={isPlainFilter(filter) ? 'filter' : 'filter-fill'}
+              label={filterButtonLabel(parts, t)}
+              onPress={() => setSheetOpen(true)}
+              testID="stories-filter"
+            />
+          </ReachGroup>
         </View>
         <LibraryFilterChips
           parts={parts}
@@ -492,8 +499,8 @@ function ShelfChip({ label, onPress, count }: { label: string; onPress: () => vo
       }}
       accessibilityRole="button"
       accessibilityLabel={`${label}, ${formatNumber(count, locale)}`}
-      // drawn 36 points tall, caught at a fingertip's 44
-      hitSlop={{ top: 4, bottom: 4 }}
+      // drawn 36 tall and as wide as its words, which are not known before it is drawn: `open` reaches past every edge, and the group caps it to the gap
+      reach="open"
       style={({ pressed }) => [styles.chip, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
     >
       <Text style={[styles.chipText, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -698,7 +705,7 @@ export function StoryCard({
         accessibilityRole="button"
         accessibilityLabel={bookmarked ? t('stories.library.bookmarked') : t('stories.library.bookmark')}
         accessibilityState={{ selected: bookmarked }}
-        hitSlop={6}
+        // drawn 32 over the cover, and answering over 48: 8 past every edge, still inside the card
         style={({ pressed }) => [styles.bookmark, { backgroundColor: colors.surface, opacity: pressed ? pressedDim : 1 }]}
       >
         {/* on is violet, as everything chosen is */}
@@ -707,6 +714,9 @@ export function StoryCard({
     </View>
   );
 }
+
+/** The space between the Categories shelf's chips, side by side and from row to row. */
+const CHIP_GAP = spacing.sm;
 
 /** display(17) sets 1.12 */
 const TITLE_LINE = Math.round(typography.sizes.md * typography.displayLineHeight);
@@ -779,7 +789,7 @@ const styles = StyleSheet.create({
   },
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   chipCount: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  categories: { flexWrap: 'wrap', gap: spacing.sm },
+  categories: { flexWrap: 'wrap', gap: CHIP_GAP },
   resultsHead: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   clear: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   clearText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },

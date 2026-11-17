@@ -2358,13 +2358,14 @@ button.chat-run-avatar:hover {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
+  /* the segments stand 2px apart, so a narrow one reaches 1px towards the next and their areas meet in the middle of the gap (reach.css) */
+  --reach-room-x: 2px;
 }
 .seg-btn {
   /* shrink before overflowing: a cramped label beats an unreachable button */
   min-width: 0;
   flex: 0 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* nothing clipped here: the area that answers reaches past the segment's edges (reach.css), so the label cuts its own words short instead */
   border: 0;
   background: transparent;
   color: var(--ink-3);
@@ -2381,6 +2382,14 @@ button.chat-run-avatar:hover {
     padding: 6px 9px;
     font-size: 0.8rem;
   }
+}
+/* a segment's words, which give up their end to an ellipsis when the segment has to shrink */
+.seg-btn-label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .seg-btn:hover {
   color: var(--ink);
@@ -2472,8 +2481,13 @@ button.chat-run-avatar:hover {
   overscroll-behavior-x: contain;
   scrollbar-width: none;
   border-bottom: 1px solid var(--separator);
-  margin-bottom: 10px;
-  padding-bottom: 8px;
+  /*
+   * A scrolling row cuts off whatever reaches past it, so the tabs keep room
+   * inside it above them, taken back by the margin so nothing moves. The 8px
+   * under them, over the line, was already there and is room enough below.
+   */
+  margin-block: -8px 10px;
+  padding-block: 8px;
 }
 .mkp-tabs::-webkit-scrollbar {
   display: none;
@@ -2518,6 +2532,8 @@ button.chat-run-avatar:hover {
   .mkp-tabs {
     justify-content: space-between;
     gap: 2px;
+    /* the tabs stand 2px apart here, so each reaches 1px into that gap and no further: the two meet in its middle (reach.css) */
+    --reach-room-x: 2px;
   }
   .mkp-tab {
     position: relative;
@@ -2807,10 +2823,18 @@ a.mkp-activity-row:hover {
   flex-direction: column;
   gap: 8px;
   align-items: center;
+  /*
+   * A key reaches half the gap to the next one and no further, so the areas
+   * that answer tile the board and no key takes a press meant for its
+   * neighbour (reach.css). The room follows each gap wherever it is set: the
+   * rows' here, the keys' on the row.
+   */
+  --reach-room-y: 8px;
 }
 .wordle-krow {
   display: flex;
   gap: 6px;
+  --reach-room-x: 6px;
   justify-content: center;
   width: 100%;
 }
@@ -2913,6 +2937,7 @@ a.mkp-activity-row:hover {
   }
   .wordle-keyboard {
     gap: 6px;
+    --reach-room-y: 6px;
   }
   .wordle-key {
     height: 48px;
@@ -2930,6 +2955,7 @@ a.mkp-activity-row:hover {
 }
 .is-desktop .wordle-keyboard {
   gap: 6px;
+  --reach-room-y: 6px;
 }
 .is-desktop .wordle-key {
   height: 46px;
@@ -3015,9 +3041,11 @@ a.mkp-activity-row:hover {
   }
   .wordle-keyboard {
     gap: 6px;
+    --reach-room-y: 6px;
   }
   .wordle-krow {
     gap: 4px;
+    --reach-room-x: 4px;
   }
   .wordle-key {
     height: 48px;
@@ -3852,6 +3880,8 @@ a.mkp-activity-row:hover {
 .text-tools .seg {
   align-self: flex-start;
   flex-wrap: wrap;
+  /* a second row stands 2px under the first, so the segments reach no further up or down than they do sideways */
+  --reach-room-y: 2px;
 }
 /*
  * A range plus its label and value. `min-width: 0` because a flex child will not
@@ -4005,6 +4035,8 @@ a.mkp-activity-row:hover {
 .editor-panel .seg {
   align-self: flex-start;
   flex-wrap: wrap;
+  /* a second row stands 2px under the first, so the segments reach no further up or down than they do sideways */
+  --reach-room-y: 2px;
 }
 .editor-panel-head {
   display: flex;

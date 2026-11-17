@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { PressableScale, heldDim } from '../theme/MotionParts';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_REACH, MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -187,7 +187,6 @@ export function NarrationBar({
           }}
           accessibilityRole="button"
           accessibilityLabel={t('stories.player.speed', { rate })}
-          hitSlop={RATE_SLOP}
           style={[styles.rate, { borderColor: onInk }]}
         >
           <Text style={[styles.rateText, { color: onInk }]}>{rateLabel(rate)}</Text>
@@ -205,16 +204,26 @@ export function NarrationBar({
 }
 
 /**
- * The speed is a small outlined pill beside controls a fingertip tall; it is
- * caught at their height, with the slop making up what the outline leaves.
+ * The speed is a small outlined pill beside controls a fingertip tall. The
+ * Pressable reaches past the outline by itself, 8 above and below it, which
+ * is as tall as the play button and so as the row it stands in.
  */
 const RATE_HEIGHT = 32;
-const RATE_SLOP = hitSlopFor(MIN_TOUCH_TARGET, RATE_HEIGHT);
+
+/**
+ * The line is drawn four points tall in a band of 32, and answers a finger
+ * 8 past the band's top and bottom, to `MIN_REACH`. Above it that reach is
+ * the bar's padding and the player's, and ends where the story's text does.
+ * Below it the times stand 8 further off than the bar's other rows, so the
+ * reach lies over empty bar: over the clock it would turn a tap meant for
+ * nothing into a jump in the story.
+ */
+const LINE_HEIGHT = MIN_TOUCH_TARGET - 12;
+const LINE_REACH = (MIN_REACH - LINE_HEIGHT) / 2;
 
 const styles = StyleSheet.create({
   bar: { borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: spacing.sm, gap: 2 },
-  // the line is four points tall and a fingertip's height to touch
-  line: { height: MIN_TOUCH_TARGET - 12, justifyContent: 'center', position: 'relative' },
+  line: { height: LINE_HEIGHT, marginBottom: LINE_REACH, justifyContent: 'center', position: 'relative' },
   track: { height: 4, borderRadius: radii.pill, opacity: 0.3 },
   fill: { position: 'absolute', left: 0, height: 4, borderRadius: radii.pill },
   knob: { position: 'absolute', width: 12, height: 12, borderRadius: radii.pill, marginLeft: -6 },

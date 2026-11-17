@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { AccessibilityInfo, Animated, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachReset } from '../theme/Pressable';
 import { DarkScheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -90,42 +90,45 @@ export function Celebration({
   return (
     // the scrim fades either way; under Reduce Motion the moment is that fade and nothing else
     <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <DarkScheme>
-        <View style={[styles.backdrop, { backgroundColor: STAGE }]} accessibilityViewIsModal>
-          <View style={[styles.column, { maxWidth: 420 }]}>
-            <Pressable
-              onPress={moment.playing ? moment.skip : undefined}
-              disabled={!moment.playing}
-              // a skip while it plays; afterwards only the picture, not a nameless button
-              accessible={moment.playing}
-              accessibilityRole={moment.playing ? 'button' : undefined}
-              accessibilityLabel={moment.playing ? t('common.skip') : undefined}
-              style={[styles.artStage, { width: stage, height: glowSize }]}
-            >
-              <SoftGlow colour={glow} size={glowSize} />
-              {moment.plan.travel ? <GlowRing progress={moment.ring} colour={glow} size={glowSize * 0.62} /> : null}
-              {moment.plan.travel ? (
-                <ConfettiBurst progress={moment.burst} count={flecks} seed={seed} colours={fleckColours} reach={Math.min(stage * 0.48, 190)} />
-              ) : null}
-              <Animated.View style={{ opacity, transform: [{ scale }] }}>{art}</Animated.View>
-            </Pressable>
-            <Animated.View style={[styles.words, { opacity: moment.details, transform: [{ translateY: lift }] }]}>
-              <Text style={[sectionLabel, styles.kicker, { color: glow }]}>{kicker}</Text>
-              <Text style={styles.title} accessibilityRole="header">
-                {title}
-              </Text>
-              {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-              {detail ? (
-                <View style={styles.detail}>
-                  <Text style={styles.detailText}>{detail}</Text>
-                </View>
-              ) : null}
-              {note ? <Text style={styles.note}>{note}</Text> : null}
-              <View style={styles.actions}>{actions}</View>
-            </Animated.View>
+      {/* drawn over the page, not beside its controls: their groups' caps stop here */}
+      <ReachReset>
+        <DarkScheme>
+          <View style={[styles.backdrop, { backgroundColor: STAGE }]} accessibilityViewIsModal>
+            <View style={[styles.column, { maxWidth: 420 }]}>
+              <Pressable
+                onPress={moment.playing ? moment.skip : undefined}
+                disabled={!moment.playing}
+                // a skip while it plays; afterwards only the picture, not a nameless button
+                accessible={moment.playing}
+                accessibilityRole={moment.playing ? 'button' : undefined}
+                accessibilityLabel={moment.playing ? t('common.skip') : undefined}
+                style={[styles.artStage, { width: stage, height: glowSize }]}
+              >
+                <SoftGlow colour={glow} size={glowSize} />
+                {moment.plan.travel ? <GlowRing progress={moment.ring} colour={glow} size={glowSize * 0.62} /> : null}
+                {moment.plan.travel ? (
+                  <ConfettiBurst progress={moment.burst} count={flecks} seed={seed} colours={fleckColours} reach={Math.min(stage * 0.48, 190)} />
+                ) : null}
+                <Animated.View style={{ opacity, transform: [{ scale }] }}>{art}</Animated.View>
+              </Pressable>
+              <Animated.View style={[styles.words, { opacity: moment.details, transform: [{ translateY: lift }] }]}>
+                <Text style={[sectionLabel, styles.kicker, { color: glow }]}>{kicker}</Text>
+                <Text style={styles.title} accessibilityRole="header">
+                  {title}
+                </Text>
+                {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+                {detail ? (
+                  <View style={styles.detail}>
+                    <Text style={styles.detailText}>{detail}</Text>
+                  </View>
+                ) : null}
+                {note ? <Text style={styles.note}>{note}</Text> : null}
+                <View style={styles.actions}>{actions}</View>
+              </Animated.View>
+            </View>
           </View>
-        </View>
-      </DarkScheme>
+        </DarkScheme>
+      </ReachReset>
     </Modal>
   );
 }

@@ -95,6 +95,7 @@ export function AgreeLine({ style }: { style?: StyleProp<TextStyle> }): React.JS
 }
 
 const styles = StyleSheet.create({
-  line: { fontSize: typography.sizes.xs, lineHeight: 18, textAlign: 'center' },
+  // a link inside a sentence takes no reach of its own, so its line is made taller instead: a finger a little high or low still lands on it
+  line: { fontSize: typography.sizes.xs, lineHeight: 24, textAlign: 'center' },
   link: { fontWeight: typography.weights.semibold, textDecorationLine: 'underline' },
 });

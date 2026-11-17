@@ -361,6 +361,19 @@
 .username-keys .key-bar {
   gap: 6px;
   margin: 0;
+  /*
+   * The keys are 36px tall, so where a finger is about each reaches 6px up
+   * and down (reach.css). The field above has no reach of its own, so a key
+   * may take the whole 7px gap to it (the field's gap, ui.css) but never
+   * reach into the field. Side by side each key reaches 3px, half its own
+   * 6px gap, so the keys meet in the middle and a press between two of them
+   * always lands on one. A reach is measured from inside a key's 1px border,
+   * so each of these is a pixel more than the gap it fills. The five keys fit
+   * on one line on any phone, so no row of keys stands under another.
+   */
+  --reach-open: 4px;
+  --reach-room-x: 8px;
+  --reach-room-y: 16px;
 }
 .username-keys .key-bar-key {
   min-width: 44px;

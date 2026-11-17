@@ -104,4 +104,13 @@ describe('Landing', () => {
     const learn = document.getElementById('learn')!;
     expect(within(learn).getByRole('img', { name: /a lesson exercise/i })).toBeInTheDocument();
   });
+
+  /** The links that stand on a line of their own answer a finger that lands just beside their words (styles/reach.css). */
+  it('gives the links on lines of their own the reach of a finger', () => {
+    show();
+    const learn = document.getElementById('learn')!;
+    const faq = document.getElementById('faq')!;
+    expect(within(learn).getByRole('link', { name: /alphabet/i })).toHaveClass('reach-line');
+    expect(within(faq).getByRole('link', { name: /all questions/i })).toHaveClass('reach-line');
+  });
 });

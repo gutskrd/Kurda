@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Pressable } from './Pressable';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { Pressable, ReachGroup, useReachLimit } from './Pressable';
+import { MIN_TOUCH_TARGET, reachSlop } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
 import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
@@ -9,7 +9,7 @@ import { BottomSheet, SheetScrollView } from './BottomSheet';
 import { ClayButton } from './glass';
 import { Icon, type IconName } from './Icon';
 import { useTheme } from './ThemeProvider';
-import { Toggle } from './Toggle';
+import { ToggleRow } from './Toggle';
 import { layout, radii, spacing, typography } from './tokens';
 import { pressedDim } from './motion';
 import { heldDim } from './MotionParts';
@@ -68,8 +68,10 @@ export function FilterSheet({
           onPress={onReset}
           disabled={resetDisabled}
           accessibilityRole="button"
+          accessibilityLabel={resetLabel}
           accessibilityState={{ disabled: resetDisabled }}
-          hitSlop={8}
+          // a word with room round it: it reaches past every edge, and stays clear of the button 16 away
+          reach="open"
           style={({ pressed }) => [styles.reset, pressed && heldDim]}
         >
           <Text style={[styles.resetText, { color: resetDisabled ? colors.textSecondary : colors.textPrimary }]}>{resetLabel}</Text>
@@ -146,7 +148,10 @@ export function FilterPills({ label, children }: { label: string; children: Reac
   const dir = useDirection();
   return (
     <View style={[styles.pills, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={label}>
-      {children}
+      {/* drawn 36 tall, each pill reaches halfway into the gap round it, so the row and the rows under it answer with no seam */}
+      <ReachGroup gap={spacing.sm} rowGap={spacing.sm}>
+        {children}
+      </ReachGroup>
     </View>
   );
 }
@@ -165,7 +170,6 @@ export function FilterPill({ label, count, on, onPress }: { label: string; count
       accessibilityRole="radio"
       accessibilityState={{ checked: on }}
       accessibilityLabel={count !== undefined ? `${label}, ${formatNumber(count, locale)}` : label}
-      hitSlop={{ top: 4, bottom: 4 }}
       style={({ pressed }) => [
         styles.pill,
         { flexDirection: dir.row, backgroundColor: on ? colors.textPrimary : colors.controlTrack },
@@ -180,25 +184,41 @@ export function FilterPill({ label, count, on, onPress }: { label: string; count
   );
 }
 
-/** A choice that is on or off: its words, and the system switch at the row's end. */
+/** A choice that is on or off: its words, and the system switch at the row's end; the whole row turns it, held as an option is. */
 export function FilterToggle({ label, hint, on, onChange }: { label: string; hint?: string; on: boolean; onChange: (on: boolean) => void }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   return (
-    <View style={[styles.toggle, { flexDirection: dir.row }]}>
+    <ToggleRow
+      label={label}
+      hint={hint}
+      value={on}
+      onValueChange={onChange}
+      style={({ pressed }) => [styles.toggle, pressed && { backgroundColor: colors.controlTrack }]}
+    >
       <View style={styles.optionWords}>
         <Text style={[styles.optionText, dir.text, { color: colors.textPrimary }, on && styles.optionOn]}>{label}</Text>
         {hint ? <Text style={[styles.optionHint, dir.text, { color: colors.textSecondary }]}>{hint}</Text> : null}
       </View>
-      <Toggle value={on} onValueChange={onChange} accessibilityLabel={label} accessibilityHint={hint} />
-    </View>
+    </ToggleRow>
   );
 }
+
+/** A filter chip's height, and its ✕'s: the ✕ sits inside the chip, 2 short of its top and bottom. */
+const CHIP_H = 36;
+const CLEAR = 32;
 
 /**
  * One thing a screen is set to, while it is not as it opens: a chip that says
  * so, opens the sheet again when tapped, and has a ✕ that undoes just that
  * part.
+ *
+ * The chip is two controls that touch, so their reaches are set as a pair:
+ * the words take the chip from its leading edge (its padding there is theirs,
+ * so a tap on the chip's end before the words opens it too) up to the ✕, and
+ * reach no further toward it; the ✕ reaches 8 past its circle on the other
+ * three sides, kept inside the half of the gap round the chip that its
+ * group allows, and nothing toward the words.
  */
 export function FilterChip({
   icon,
@@ -216,16 +236,26 @@ export function FilterChip({
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
+  const limit = useReachLimit();
+  // the words come before the ✕: on its left, or on its right where the row is mirrored
+  const mirrored = dir.row === 'row-reverse';
+  const toward = mirrored ? 'right' : 'left';
+  // the group caps the chip's edges; the ✕ is this far inside them, so it may reach that much further
+  const past = (cap: number | undefined, inside: number): number | undefined => (cap === undefined ? undefined : cap + inside);
+  const across = (side: 'left' | 'right'): number | undefined => (side === toward ? 0 : past(limit?.[side], spacing.xs));
+  const inset = (CHIP_H - CLEAR) / 2;
+  const clearReach = reachSlop(CLEAR, CLEAR, {
+    limit: { top: past(limit?.top, inset), bottom: past(limit?.bottom, inset), left: across('left'), right: across('right') },
+  });
   return (
-    <View style={[styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
+    <View style={[styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, mirrored ? styles.chipEndLeft : styles.chipEndRight]}>
       <Pressable
         onPress={onOpen}
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityHint={t('feed.sortFilter.button')}
-        // drawn 36 points tall, caught at a fingertip's 44
-        hitSlop={{ top: 4, bottom: 4 }}
-        style={({ pressed }) => [styles.chipMain, { flexDirection: dir.row }, pressed && heldDim]}
+        // drawn 36 points tall: it reaches up and down to a fingertip's 48, or to half the gap where its group says so
+        style={({ pressed }) => [styles.chipMain, { flexDirection: dir.row }, mirrored ? styles.chipLeadRight : styles.chipLeadLeft, pressed && heldDim]}
       >
         {icon ? <Icon name={icon} size={16} color={colors.textPrimary} /> : null}
         <Text style={[styles.chipText, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -236,7 +266,7 @@ export function FilterChip({
         onPress={onClear}
         accessibilityRole="button"
         accessibilityLabel={clearLabel}
-        hitSlop={8}
+        hitSlop={clearReach}
         style={({ pressed }) => [styles.chipClear, pressed && heldDim]}
       >
         <Icon name="close" size={14} color={colors.textSecondary} />
@@ -248,7 +278,14 @@ export function FilterChip({
 /** The chips side by side, wrapping when they will not fit; `style` places the row on its screen. */
 export function FilterChips({ style, children }: { style?: StyleProp<ViewStyle>; children: React.ReactNode }): React.JSX.Element {
   const dir = useDirection();
-  return <View style={[styles.chipRow, { flexDirection: dir.row }, style]}>{children}</View>;
+  return (
+    <View style={[styles.chipRow, { flexDirection: dir.row }, style]}>
+      {/* chips side by side and in rows share the gaps between them, half each */}
+      <ReachGroup gap={spacing.sm} rowGap={spacing.sm}>
+        {children}
+      </ReachGroup>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -266,14 +303,19 @@ const styles = StyleSheet.create({
   pillText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   pillCount: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   pressed: { opacity: pressedDim },
-  toggle: { alignItems: 'center', gap: spacing.sm + 2, minHeight: MIN_TOUCH_TARGET + 4, paddingHorizontal: spacing.sm, marginTop: spacing.sm },
+  toggle: { alignItems: 'center', gap: spacing.sm + 2, minHeight: MIN_TOUCH_TARGET + 4, paddingHorizontal: spacing.sm, marginTop: spacing.sm, borderRadius: radii.md },
   footer: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, paddingTop: spacing.sm + 4, borderTopWidth: StyleSheet.hairlineWidth, marginHorizontal: -layout.gutter, paddingHorizontal: layout.gutter },
   reset: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.xs },
   resetText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   apply: { flexGrow: 1, maxWidth: 260 },
   chipRow: { flexWrap: 'wrap', gap: spacing.sm },
-  chip: { alignItems: 'center', borderRadius: radii.pill, paddingStart: spacing.md, paddingEnd: spacing.xs, minHeight: 36, maxWidth: '100%' },
-  chipMain: { alignItems: 'center', gap: 6, minHeight: 36, flexShrink: 1 },
+  chip: { alignItems: 'center', borderRadius: radii.pill, minHeight: CHIP_H, maxWidth: '100%' },
+  // the chip's padding by the side it is drawn on, since the row is mirrored by hand: the ✕'s end, and the words' lead
+  chipEndRight: { paddingRight: spacing.xs },
+  chipEndLeft: { paddingLeft: spacing.xs },
+  chipMain: { alignItems: 'center', gap: 6, minHeight: CHIP_H, flexShrink: 1 },
+  chipLeadLeft: { paddingLeft: spacing.md },
+  chipLeadRight: { paddingRight: spacing.md },
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, flexShrink: 1 },
-  chipClear: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  chipClear: { width: CLEAR, height: CLEAR, alignItems: 'center', justifyContent: 'center' },
 });

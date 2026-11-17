@@ -9,7 +9,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachGroup } from '../theme/Pressable';
 import { haptic } from '../feedback/haptics';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
@@ -163,29 +163,34 @@ export function ChoiceChips<T extends string>({
   const violet = hueSteps(scheme, 'violet');
   return (
     <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={label}>
-      {options.map((opt) => {
-        const on = opt === value;
-        return (
-          <Pressable
-            key={opt}
-            onPress={() => {
-              if (!on) haptic('select');
-              onChange(opt);
-            }}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: on }}
-            accessibilityLabel={labelOf(opt)}
-            style={({ pressed }) => [
-              styles.chip,
-              { backgroundColor: on ? violet.wash : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
-            ]}
-          >
-            <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
-              {labelOf(opt)}
-            </Text>
-          </Pressable>
-        );
-      })}
+      {/* the chips wrap onto rows as far apart as they are side by side: each reaches half that gap every way */}
+      <ReachGroup gap={CHOICE_GAP} rowGap={CHOICE_GAP}>
+        {options.map((opt) => {
+          const on = opt === value;
+          return (
+            <Pressable
+              key={opt}
+              onPress={() => {
+                if (!on) haptic('select');
+                onChange(opt);
+              }}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={labelOf(opt)}
+              // as wide as its words, which are not known before it is drawn: `open` reaches past every edge, and the group caps it to the gap
+              reach="open"
+              style={({ pressed }) => [
+                styles.chip,
+                { backgroundColor: on ? violet.wash : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+              ]}
+            >
+              <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
+                {labelOf(opt)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ReachGroup>
     </View>
   );
 }
@@ -261,6 +266,9 @@ export function useFocusOn(ref: RefObject<View | Text | null>, key: string | num
   }, [ref, key]);
 }
 
+/** The space between choice chips, side by side and from row to row. */
+const CHOICE_GAP = spacing.sm;
+
 const styles = StyleSheet.create({
   cardBody: { gap: spacing.sm },
   // the body and the footer keep their own gutters, so the body scrolls edge to edge
@@ -276,7 +284,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   pillText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: CHOICE_GAP },
   chip: {
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.pill,

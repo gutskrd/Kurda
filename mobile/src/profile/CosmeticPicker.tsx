@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { Toggle } from '../theme/Toggle';
+import { ToggleRow } from '../theme/Toggle';
 import { countByCategory, itemCategory, matchesQuery, type ItemCategory } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -319,16 +319,10 @@ export function CosmeticPicker({
           {/*
             Showing it and owning it are different questions, so they are
             different controls: this hides the icon without giving it up.
+            The words turn it as well as the switch does.
           */}
           {current === 'icon' && ofKind.length > 0 ? (
-            <View style={[styles.toggleRow, { flexDirection: dir.row }]}>
-              <Text style={[styles.toggleLabel, dir.text, { color: colors.textPrimary }]}>{t('edit.showPremiumIcon')}</Text>
-              <Toggle
-                value={showIcon}
-                onValueChange={toggleIcon}
-                accessibilityLabel={t('edit.showPremiumIcon')}
-              />
-            </View>
+            <ToggleRow label={t('edit.showPremiumIcon')} value={showIcon} onValueChange={toggleIcon} />
           ) : null}
         </>
       )}
@@ -362,7 +356,5 @@ const styles = StyleSheet.create({
   empty: { fontSize: typography.sizes.sm, lineHeight: 19 },
   start: { alignSelf: 'flex-start' },
   end: { alignSelf: 'flex-end' },
-  toggleRow: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, minHeight: MIN_TOUCH_TARGET },
-  toggleLabel: { flex: 1, fontSize: typography.ios.row },
   error: { fontSize: typography.sizes.sm },
 });

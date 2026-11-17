@@ -250,7 +250,8 @@ export function CivakScreen(): React.JSX.Element {
                       accessibilityRole="button"
                       accessibilityLabel={t('feed.sortFilter.button')}
                       testID="home-filter"
-                      hitSlop={CHIP_SLOP}
+                      // alone on its line, so it reaches a fingertip past every edge
+                      reach="open"
                       style={({ pressed }) => [styles.sortChip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, pressed && heldDim]}
                     >
                       <Icon name="filter" size={16} color={colors.textSecondary} />
@@ -325,9 +326,8 @@ export function CivakScreen(): React.JSX.Element {
   );
 }
 
-/** The sort chip: drawn a fingertip less a little tall, and reaching above and below itself to a full fingertip. */
+/** The sort chip: drawn a fingertip less a little tall; the Pressable makes up its reach. */
 const CHIP = MIN_TOUCH_TARGET - 8;
-const CHIP_SLOP = { top: (MIN_TOUCH_TARGET - CHIP) / 2, bottom: (MIN_TOUCH_TARGET - CHIP) / 2 };
 
 /** A post's own name on the wall: a repost and the post it repeats are two. */
 const feedKey = (item: FeedItem): string => item.key;

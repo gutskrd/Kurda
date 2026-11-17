@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
 import { isSoraniDialect, type ConversationLine, type ConversationSpeaker, type RecordingVoice } from '@kurda/shared';
-import { hitSlopFor } from '../../a11y/a11y';
 import { AAA_NORMAL } from '../../a11y/contrast';
 import { ensureContrast } from '../../a11y/ensureContrast';
 import { ConversationStage, conversationCast } from '../../characters/ConversationStage';
@@ -47,7 +46,7 @@ const WASH = { light: '1F', dark: '3D' } as const;
 /** The initial beside each line. */
 const FACE = 40;
 
-/** The round play button in a bubble, drawn smaller than a fingertip and reaching one (`hitSlopFor`). */
+/** The round play button in a bubble, drawn smaller than a fingertip and reaching one: the Pressable works its reach out from the size its style says. */
 const PLAY = 36;
 
 const NONE: readonly never[] = [];
@@ -179,7 +178,6 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
                     onPress={() => audio.playLine(i)}
                     accessibilityRole="button"
                     accessibilityLabel={t('lesson.conversation.playLine', { n: formatNumber(i + 1, locale), name })}
-                    hitSlop={hitSlopFor(PLAY, PLAY)}
                     style={({ pressed }) => [
                       styles.play,
                       { backgroundColor: colors.controlTrack, borderColor: sounding ? colors.gold : 'transparent', opacity: pressed ? pressedDim : 1 },

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 import { releaseVelocity, type DragSample } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { QUICK_RELEASE_MS } from './Pressable';
 import {
   CARD_TURN_MS,
   CARD_TURN_SETTLE,
@@ -106,10 +107,18 @@ export class DragSamples {
   }
 }
 
+/** How long the give takes on a press released at once: quick enough that the spring back still feels like the press. */
+const QUICK_DIP_MS = 70;
+
 /**
  * A press that gives a little under the finger and springs back: for
  * buttons, cards and tiles. Under Reduce Motion it does not move at all, and
  * the caller's own pressed-state dimming is the feedback.
+ *
+ * A release that comes straight after the press (`QUICK_RELEASE_MS`) would
+ * spring back from a give that never happened, so the press was accepted and
+ * nothing moved. It dips all the way first, quickly, and then springs back,
+ * so every press that counts is seen.
  */
 export function usePressScale(enabled = true): {
   scale: Animated.Value | number;
@@ -118,16 +127,23 @@ export function usePressScale(enabled = true): {
 } {
   const reduce = useReducedMotion();
   const value = useRef(new Animated.Value(1)).current;
+  const pressedAt = useRef(0);
   const live = enabled && !reduce;
   const onPressIn = useCallback(() => {
     if (!live) return;
+    pressedAt.current = Date.now();
     value.stopAnimation();
     timing(value, PRESS_SCALE, duration.quick - 20).start();
   }, [live, value]);
   const onPressOut = useCallback(() => {
     if (!live) return;
     // back on the interface's own spring: a button is used all day, and is itself again at once
-    springTo(value, 1, 'chrome').start();
+    if (Date.now() - pressedAt.current < QUICK_RELEASE_MS) {
+      value.stopAnimation();
+      Animated.sequence([timing(value, PRESS_SCALE, QUICK_DIP_MS), springTo(value, 1, 'chrome')]).start();
+    } else {
+      springTo(value, 1, 'chrome').start();
+    }
   }, [live, value]);
   return { scale: live ? value : 1, onPressIn, onPressOut };
 }

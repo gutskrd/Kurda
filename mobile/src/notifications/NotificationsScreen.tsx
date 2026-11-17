@@ -187,10 +187,11 @@ function TimeRow({ label, earlier, later, minute, onStep }: { label: string; ear
       title={label}
       trailing={
         <View style={styles.stepper}>
+          {/* each step stands alone, the time between them, so it reaches a fingertip past every edge, inside its row */}
           <PressableScale
             onPress={() => onStep(-1)}
             style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]}
-            hitSlop={8}
+            reach="open"
             accessibilityRole="button"
             accessibilityLabel={earlier}
           >
@@ -200,7 +201,7 @@ function TimeRow({ label, earlier, later, minute, onStep }: { label: string; ear
           <PressableScale
             onPress={() => onStep(1)}
             style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]}
-            hitSlop={8}
+            reach="open"
             accessibilityRole="button"
             accessibilityLabel={later}
           >

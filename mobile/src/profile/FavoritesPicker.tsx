@@ -7,7 +7,7 @@ import { describeError } from '../api/errors';
 import { listPosts } from '../library/api';
 import { postName, type LibraryPost } from '../library/types';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -21,6 +21,13 @@ const CHOSEN_WASH = '1F';
 
 /** How many published posts to offer — the browser offers the same fifty. */
 const BROWSE = 50;
+
+/**
+ * Remove and Change are a line of words, about 22 points tall: said as their
+ * height, they answer a finger over 48 above and below, and only over their
+ * own width sideways, where they stand a gap from each other.
+ */
+const WORD = { height: 22 };
 
 /**
  * Choosing the poem and the story on your profile (KUR profile cosmetics).
@@ -146,7 +153,7 @@ function Slot({
         {current && !busy ? (
           <Pressable
             onPress={remove}
-            hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
+            reachSize={WORD}
             accessibilityRole="button"
             accessibilityLabel={t('common.remove')}
             style={({ pressed }) => pressed && heldDim}
@@ -156,7 +163,7 @@ function Slot({
         ) : null}
         <Pressable
           onPress={toggle}
-          hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
+          reachSize={WORD}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
           accessibilityLabel={open ? t('common.cancel') : t('favorites.change')}

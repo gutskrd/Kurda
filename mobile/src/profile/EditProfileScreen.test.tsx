@@ -41,10 +41,12 @@ vi.mock('expo-image-picker', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { forgetReach, reachOf } from '../testing/reach';
 import { EditProfileScreen } from './EditProfileScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -58,7 +60,10 @@ beforeEach(() => {
   nav.navigation.dispatch.mockClear();
   testAuth.client = fakeClient({ 'GET /me': ok({ user: ME }), 'GET /cosmetics/avatars': ok({ avatars: [] }) });
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  forgetReach();
+});
 
 async function openEdit(): Promise<void> {
   renderWithProviders(<EditProfileScreen onExit={() => nav.navigation.goBack()} />);
@@ -112,6 +117,14 @@ describe('the country', () => {
     expect(screen.queryByText('Germany')).toBeNull();
     expect(screen.queryByRole('button', { name: /^Remove/ })).toBeNull();
     expect(screen.getByText('— None —')).toBeTruthy();
+  });
+
+  // drawn 36 tall, each chip answers over 48; the found ones wrap onto rows a gap apart and share it
+  it('lets its chips answer a finger a little above and below, the found ones only to the middle of the gap', async () => {
+    await openEdit();
+    expect(reachOf('Remove, Germany')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
+    fireEvent.change(screen.getByLabelText('Find a country'), { target: { value: 'Ira' } });
+    expect(reachOf('Iraq')).toEqual({ top: 4, bottom: 4, left: 0, right: 0 });
   });
 });
 

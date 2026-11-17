@@ -364,10 +364,18 @@
   --note-ground: var(--panel-bg);
   padding-bottom: var(--space-2);
 }
+/*
+ * A scrolling row cuts off whatever reaches past it, so the row keeps 8px
+ * more above and below its filters than it shows, for the area that answers
+ * a finger (reach.css), and the negative margin gives the 8px back: the
+ * filters sit where they always did.
+ */
 .note-filters {
   display: flex;
   gap: 6px;
-  padding: var(--space-3) var(--space-4) var(--space-1);
+  padding-block: calc(var(--space-3) + 8px) calc(var(--space-1) + 8px);
+  padding-inline: var(--space-4);
+  margin-block: -8px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -860,21 +868,10 @@
   }
 }
 
-/* a visitor's "Get started", small enough to share a phone's bar with the brand */
+/* a visitor's "Get started", small enough to share a phone's bar with the brand; drawn at 36, it answers a finger at 48, as every button does (reach.css) */
 .nav-register {
   height: 36px;
   padding: 0 14px;
-}
-/* drawn at 36, but a finger gets the full 44: the press reaches 4px above and below it */
-@media (pointer: coarse) {
-  .nav-register {
-    position: relative;
-  }
-  .nav-register::after {
-    content: '';
-    position: absolute;
-    inset: -4px 0;
-  }
 }
 
 /* ---- search, in the bar ------------------------------------------------ */
@@ -1860,12 +1857,20 @@
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
-/* at the far end, with a little room at each end of it so the glyphs are not hard against its curve */
+/*
+ * At the far end. Its two halves are 46 wide, so they fill it from end to end
+ * and the glyphs stay clear of its curve; a press anywhere on the pill, its
+ * very ends included, is a press on one of them (reach.css).
+ */
 .nav-pill {
   display: flex;
   align-items: center;
   margin-inline-start: auto;
-  padding-inline: 2px;
+  padding-inline: 0;
+}
+.nav-pill .nav-search-open,
+.nav-pill .nav-bell {
+  width: 46px;
 }
 /* search first, as it is written: the place a phone's bar gives it (layout.css) is among the bar's own parts, not the pill's */
 .nav-pill .nav-search {
@@ -1880,8 +1885,8 @@
   box-shadow: 0 0 0 2px var(--surface-solid);
 }
 /* a visitor has no bell, and a pill of one is a disc: the same shape as the way back */
-.nav-pill:not(:has(.nav-bell)) {
-  padding-inline: 0;
+.nav-pill:not(:has(.nav-bell)) .nav-search-open {
+  width: 44px;
 }
 /*
  * Between a phone and the wide bar the notifications still open as a panel
@@ -2234,56 +2239,36 @@
     min-height: 44px;
   }
   /*
-   * Words that are pressed — a quiet link in a sentence, the way back above a
-   * heading — and the round buttons that sit in a line of text or inside a
-   * field keep their size: growing them would push the lines round them
-   * apart. What grows is the area that answers a finger, out past their edges
-   * to 44px (each is its own anchor for it: the `:where` rule under this
-   * block).
+   * Words that are pressed and the small round buttons in a line of text or
+   * inside a field keep their size, since growing them would push the lines
+   * round them apart; the area that answers a finger grows instead
+   * (reach.css). A story's replay is cut by hand: 24px, in the story's own
+   * line, it reaches 10px all round, which the words beside it allow.
    */
-  .link-btn::after,
-  .link-button::after,
-  .back-link::after,
-  .rank-card-more::after,
-  .story-replay::after,
-  .chat-jump::after,
-  .ab-sound::after,
-  .settings-search-clear::after,
-  .nav-search-clear::after {
+  .story-replay::after {
     content: '';
     position: absolute;
-    inset: -12px -8px;
-  }
-  /* 24px, in the story's own line */
-  .story-replay::after {
     inset: -10px;
   }
-  /* 32px tall, and already wide */
-  .chat-jump::after,
-  .rank-card-more::after {
-    inset: -6px 0;
-  }
-  /* 36px round */
-  .ab-sound::after,
-  .settings-search-clear::after {
-    inset: -4px;
-  }
-  /* 28px, in a letter's own row */
-  .ab-sound--sm::after {
-    inset: -8px;
-  }
-  /* 32px in the bar's field; 40px on a phone, where this is more than it needs and harms nothing */
-  .nav-search-clear::after {
-    inset: -6px;
+  /* its anchor, at no weight at all: a replay placed some other way by its own rule keeps that */
+  :where(.story-replay) {
+    position: relative;
   }
   .profile-progress-link {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
   }
-  /* the anchor for the wider area above, at no weight at all: a control placed some other way by its own rule keeps that */
-  :where(.link-btn, .link-button, .back-link, .rank-card-more, .story-replay, .chat-jump, .ab-sound) {
-    position: relative;
+  /*
+   * "Forgotten your password?" beside "Remember me": on a phone the two wrap
+   * onto lines 4px apart, and a line of text reaching up to a finger's 48 took
+   * the lower part of the box above. Drawn as tall as that box, it reaches only
+   * into the gap between them.
+   */
+  .auth-row .link-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
 }
 

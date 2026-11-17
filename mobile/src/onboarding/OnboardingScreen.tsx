@@ -96,6 +96,9 @@ const HERO_HEIGHT = 200;
 /** The lines under his name follow each other a little further apart than rows in a list do: each is read, not scanned. */
 const LINE_STAGGER_MS = ENTRANCE.staggerMs * 2;
 
+/** Skip is drawn one line of the body size tall, about this. */
+const SKIP_LINE = { height: 20 };
+
 /**
  * The 3-slide first-launch intro (KUR-272/273), on the glass theme. `initialStep`
  * lets the auth Welcome choice re-open it partway (at the intro) so "‹ Back"
@@ -163,8 +166,9 @@ export function OnboardingScreen({
             <Pressable
               onPress={() => end('skipped')}
               accessibilityRole="button"
-              // one 20-point line of words, caught at a fingertip's 44
-              hitSlop={12}
+              // one 20-point line of words alone at the bar's end: it answers over 48 of height and a little past its ends
+              reach="open"
+              reachSize={SKIP_LINE}
               style={({ pressed }) => pressed && heldDim}
             >
               <Text style={[styles.skip, { color: colors.textSecondary }]}>{t('common.skip')}</Text>

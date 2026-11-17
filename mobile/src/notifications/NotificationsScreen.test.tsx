@@ -9,7 +9,9 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
+import { forgetReach, reachOf } from '../testing/reach';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -18,7 +20,10 @@ import type { NotificationPrefs } from './prefs';
 import { NotificationsScreen } from './NotificationsScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  forgetReach();
+});
 
 const PREFS: NotificationPrefs = {
   streak: true,
@@ -78,6 +83,16 @@ describe('notification settings', () => {
     expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ quietStartMin: 21 * 60 + 30 });
     // in the reader's own way of writing the time: English counts twelve hours
     expect(screen.getByText(/^9:30\sPM$/)).toBeTruthy();
+  });
+
+  // each step is drawn 36 across with the time between the two: nothing close, so it reaches a fingertip past every edge
+  it('answers a finger a little off a quiet-hours step', async () => {
+    testAuth.client = fakeClient({ 'GET /me/notification-prefs': ok(PREFS) });
+    renderWithProviders(<NotificationsScreen onExit={() => undefined} />);
+    await screen.findByRole('button', { name: 'Start half an hour earlier' });
+    for (const step of ['Start half an hour earlier', 'Start half an hour later', 'End half an hour earlier', 'End half an hour later']) {
+      expect(reachOf(step)).toEqual({ top: 8, bottom: 8, left: 8, right: 8 });
+    }
   });
 
   // the list it is opened from is "Notifications": this page is named as the gear that opens it

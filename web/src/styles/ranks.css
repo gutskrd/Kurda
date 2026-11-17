@@ -460,6 +460,16 @@
   gap: 4px 14px;
   margin: 0;
   font-size: var(--text-secondary);
+  /* the names wrap onto lines of their own, so each reaches only half way to the next, side to side and line to line (reach.css) */
+  --reach-room-x: 14px;
+  --reach-room-y: 4px;
+}
+/* where a finger is about the lines stand a fingertip apart, so a name a line tall still answers over 48px without reaching into the next */
+@media (any-pointer: coarse) {
+  .ranks-untouched-names {
+    row-gap: 24px;
+    --reach-room-y: 24px;
+  }
 }
 .ranks-untouched-label {
   color: var(--ink-2);
@@ -1386,13 +1396,20 @@
 .league-week-left svg {
   flex: none;
 }
-/* the ladder: to the card's edges, sideways on a phone, spread out where there is room */
+/*
+ * The ladder: to the card's edges, sideways on a phone, spread out where there
+ * is room. A scrolling row cuts off whatever reaches past it (reach.css), so
+ * it keeps 8px more above and below than it shows, and the negative margin
+ * gives the 8px back: the leagues sit where they always did.
+ */
 .league-ladder {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 0 -18px;
-  padding: 4px 18px 6px;
+  margin-block: -8px;
+  margin-inline: -18px;
+  padding-block: calc(4px + 8px) calc(6px + 8px);
+  padding-inline: 18px;
   list-style: none;
   overflow-x: auto;
   scrollbar-width: none;
@@ -1654,8 +1671,9 @@
   font-size: clamp(1.9rem, 1.5rem + 1.6vw, 2.4rem);
 }
 .league-page .league-ladder {
-  margin: 0 calc(-1 * var(--league-edge));
-  padding: 6px var(--league-edge) 8px;
+  margin-inline: calc(-1 * var(--league-edge));
+  padding-block: calc(6px + 8px) calc(8px + 8px);
+  padding-inline: var(--league-edge);
 }
 .league-page .league-week-rule {
   margin: 0 calc(-1 * var(--league-edge));

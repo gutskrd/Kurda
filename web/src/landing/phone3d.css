@@ -360,11 +360,19 @@
   transform: none;
 }
 
+/*
+ * A tab reaches half the gap to the next one and no further (reach.css), so
+ * the areas that answer meet in the middle of it. Should the words of a
+ * language not fit on one line, the second row stands 12px under the first,
+ * room for both rows to reach the full 48px a finger is given.
+ */
 .p3d-tabs {
   display: inline-flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 4px;
+  gap: 12px 4px;
+  --reach-room-x: 4px;
+  --reach-room-y: 12px;
   max-width: 100%;
   padding: 4px;
   border: 1px solid var(--border);
@@ -383,7 +391,7 @@
   font-size: 0.84rem;
   font-weight: 650;
   cursor: pointer;
-  overflow: hidden;
+  /* nothing clipped: a tab holds one short word, and the area that answers reaches past its edges */
   transition:
     background var(--dur-fast) ease,
     color var(--dur-fast) ease;

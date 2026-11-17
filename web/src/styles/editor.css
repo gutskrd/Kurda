@@ -243,8 +243,13 @@
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
-  padding-bottom: 6px;
-  margin-bottom: 4px;
+  /*
+   * A scrolling row cuts off whatever reaches past it, so it keeps 8px of
+   * room above and below its thumbnails for a press that lands just off one,
+   * and takes the room back in its margins so nothing moves.
+   */
+  padding-block: 8px calc(6px + 8px);
+  margin-block: -8px calc(4px - 8px);
 }
 .filter-thumb {
   flex: none;

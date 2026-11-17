@@ -322,10 +322,18 @@
 .story-shelf {
   margin-bottom: 26px;
 }
+/*
+ * A scrolling row cuts off whatever reaches past it, so the shelf keeps 8px
+ * more above and below its cards than it shows, for the area that answers a
+ * finger (reach.css), and the negative margin gives the 8px back: the cards
+ * sit where they always did.
+ */
 .story-shelf-row {
   list-style: none;
-  margin: 0 -16px;
-  padding: 2px 16px 10px;
+  margin-block: -8px;
+  margin-inline: -16px;
+  padding-block: calc(2px + 8px) calc(10px + 8px);
+  padding-inline: 16px;
   display: flex;
   gap: 12px;
   overflow-x: auto;
@@ -339,8 +347,8 @@
 }
 @media (min-width: 760px) {
   .story-shelf-row {
-    margin: 0;
-    padding: 2px 0 10px;
+    margin-inline: 0;
+    padding-inline: 0;
     scroll-padding-inline: 0;
   }
   .story-shelf-row > li {
@@ -1652,9 +1660,11 @@
 }
 .story-player-seek {
   --seek: 0%;
+  /* the height the row gives the line; where a finger is about it answers across more (below) */
+  --seek-drawn: 28px;
   flex: 1;
   min-width: 0;
-  height: 28px;
+  height: var(--seek-drawn);
   margin: 0;
   appearance: none;
   -webkit-appearance: none;
@@ -1704,6 +1714,26 @@
 /* a right-to-left page reads the line from its right, as it reads everything */
 [dir='rtl'] .story-player-seek::-webkit-slider-runnable-track {
   background: linear-gradient(to left, var(--player-heard) var(--seek), var(--player-line) var(--seek));
+}
+/*
+ * Where a finger is about, the line answers across the least area a finger is
+ * given (tokens.css) rather than only its 28px: the input grows to that height
+ * and the negative margins give the growth back, so the row keeps its height.
+ * Its focus ring goes round the whole of that area, which is what answers.
+ * The track and the dot are drawn on their own pseudo-elements, centred in the
+ * input, so the line is drawn where it always was. The buttons are positioned
+ * so that they lie over the line: where the row wraps and the line sits under
+ * them, its taller area stops at their edge rather than taking their presses.
+ */
+@media (any-pointer: coarse) {
+  .story-player-seek {
+    height: var(--reach-min);
+    margin-block: calc((var(--seek-drawn) - var(--reach-min)) / 2);
+  }
+  .story-player-btn,
+  .story-player-rate {
+    position: relative;
+  }
 }
 .story-player-notes {
   display: flex;

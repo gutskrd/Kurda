@@ -55,7 +55,7 @@ export function BoardSwitch({ value, onChange }: { value: BoardType; onChange: (
         <label key={k.key} className={`seg-btn rank-by-btn${k.key === value ? ' is-active' : ''}`}>
           <input type="radio" name={name} value={k.key} checked={k.key === value} onChange={() => onChange(k.key)} />
           <KindIcon type={k.key} size={16} />
-          <span>{t(k.labelKey)}</span>
+          <span className="seg-btn-label">{t(k.labelKey)}</span>
         </label>
       ))}
     </fieldset>

@@ -157,9 +157,13 @@ export function VerifyEmailScreen(): React.JSX.Element {
           folder, then send a new code". The whole sentence is the button, a
           fingertip tall at the least: the bold words alone were a target
           twenty-two points high in the middle of a line.
+
+          It keeps its press while it waits and is only disabled (onResend
+          waits too): a press that came and went would take its reach with
+          it, and a reach that returns later is cut off at the footer's edge.
         */}
         <Pressable
-          onPress={cooldown > 0 ? undefined : () => void onResend()}
+          onPress={() => void onResend()}
           disabled={cooldown > 0}
           accessibilityRole="button"
           accessibilityLabel={cooldown > 0 ? t('auth.verify.sendNewIn', { seconds: cooldown }) : t('auth.verify.sendNew')}

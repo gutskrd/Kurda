@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachReset } from '../theme/Pressable';
 import { haptic } from '../feedback/haptics';
 import type { KeyboardPlatform, TypingDialect } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -90,155 +90,159 @@ export function KeyboardGuide({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={[styles.sheet, { backgroundColor: colors.background }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <View style={[styles.top, { paddingTop: Platform.OS === 'ios' ? spacing.sm : topInset }]}>
-          <Pressable
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.close')}
-            hitSlop={8}
-            style={({ pressed }) => [styles.close, pressed && heldDim]}
-          >
-            <Icon name="close" size={22} color={colors.textSecondary} />
-          </Pressable>
-        </View>
-        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-          <View style={styles.hero}>
-            <HevaloDeer size={150} board={{ kind: 'letters', letters: letters.join(' ') }} cheer={allIn} />
-          </View>
-          <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
-            {t(sorani ? 'keyboard.guide.titleSorani' : 'keyboard.guide.title')}
-          </Text>
-          <Text style={[styles.lead, { color: colors.textSecondary }]}>
-            {t(sorani ? 'keyboard.guide.leadSorani' : 'keyboard.guide.lead')}
-          </Text>
-
-          {/*
-            The other phone's steps only where the phone is not known (the
-            app run in a browser). On an iPhone, steps for Android and a
-            word about the Play Store are no help, and App Review reads
-            them as instructions for somebody else's platform.
-          */}
-          {ON_A_PHONE ? null : (
-            <View style={styles.platformRow} accessibilityRole="radiogroup">
-              {PHONES.map((p) => {
-                const on = p === platform;
-                return (
-                  <Pressable
-                    key={p}
-                    onPress={() => {
-                      if (!on) haptic('select');
-                      setPlatform(p);
-                    }}
-                    accessibilityRole="radio"
-                    accessibilityState={{ checked: on }}
-                    style={({ pressed }) => [
-                      styles.platform,
-                      { backgroundColor: on ? colors.primary : colors.controlTrack },
-                      pressed && heldDim,
-                    ]}
-                  >
-                    <Text style={[styles.platformText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>
-                      {t(PHONE_LABEL[p]!)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
-
-          <View style={styles.steps}>
-            {steps.map((step, i) => (
-              <View key={step.key} style={[styles.step, { flexDirection: dir.row }]}>
-                <View style={[styles.stepNo, { backgroundColor: colors.controlTrack }]}>
-                  <Text style={[styles.stepNoText, { color: colors.textPrimary }]}>{i + 1}</Text>
-                </View>
-                <Text style={[styles.stepText, dir.text, { color: colors.textPrimary }]}>
-                  {stepParts(step, t(step.key as TranslationKey)).map((part, j) =>
-                    part.ui ? (
-                      <Text key={j} style={styles.ui}>
-                        {part.text}
-                      </Text>
-                    ) : (
-                      part.text
-                    ),
-                  )}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={[styles.try, { backgroundColor: colors.glassFill }]}>
-            <Text style={[styles.tryTitle, dir.text, { color: colors.textPrimary }]}>
-              {t('keyboard.guide.tryIt', { letters: letters.join(' ') })}
-            </Text>
-            <View style={[styles.tryLetters, sorani && styles.rtl]}>
-              {letters.map((l) => {
-                const lit = typed.has(l);
-                return (
-                  <View
-                    key={l}
-                    style={[styles.tryLetter, { backgroundColor: lit ? colors.success : colors.controlTrack }]}
-                    accessibilityLabel={t(lit ? 'keyboard.guide.letterDone' : 'keyboard.guide.letterToGo', { letter: l })}
-                  >
-                    <Text style={[styles.tryLetterText, { color: lit ? colors.textOnPrimary : colors.textPrimary }]}>
-                      {l}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-            <TextInput
-              value={tried}
-              onChangeText={setTried}
-              autoCapitalize="none"
-              autoCorrect={false}
-              spellCheck={false}
-              placeholder={letters.join(' ')}
-              placeholderTextColor={colors.textSecondary}
-              accessibilityLabel={t('keyboard.guide.tryLabel')}
-              style={[
-                styles.tryInput,
-                { color: colors.textPrimary, backgroundColor: colors.controlTrack },
-                sorani && styles.tryInputRtl,
-              ]}
-            />
-            <Text
-              style={[styles.tryResult, { color: allIn ? colors.success : colors.textSecondary }]}
-              accessibilityLiveRegion="polite"
+      {/* a card of its own over the settings it was opened from: their groups do not cap what is on it */}
+      <ReachReset>
+        <KeyboardAvoidingView
+          style={[styles.sheet, { backgroundColor: colors.background }]}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={[styles.top, { paddingTop: Platform.OS === 'ios' ? spacing.sm : topInset }]}>
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close')}
+              // alone at the top of the card: it answers 8 past every edge
+              reach="open"
+              style={({ pressed }) => [styles.close, pressed && heldDim]}
             >
-              {allIn ? t('keyboard.guide.allIn') : t('keyboard.guide.progress', { done: typed.size, total: letters.length })}
-            </Text>
+              <Icon name="close" size={22} color={colors.textSecondary} />
+            </Pressable>
           </View>
+          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+            <View style={styles.hero}>
+              <HevaloDeer size={150} board={{ kind: 'letters', letters: letters.join(' ') }} cheer={allIn} />
+            </View>
+            <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
+              {t(sorani ? 'keyboard.guide.titleSorani' : 'keyboard.guide.title')}
+            </Text>
+            <Text style={[styles.lead, { color: colors.textSecondary }]}>
+              {t(sorani ? 'keyboard.guide.leadSorani' : 'keyboard.guide.lead')}
+            </Text>
 
-          <Text style={[styles.hatchLead, { color: colors.textSecondary }]}>{t('keyboard.guide.noTime')}</Text>
-          <View style={styles.hatches}>
-            <ClayButton
-              label={t('keyboard.guide.useKeys')}
-              icon="keyboard"
-              variant="outline"
-              onPress={() => {
-                setPrefs({ keyBar: true });
-                onClose();
-              }}
-            />
-            {prefs.accentMode !== 'forgiving' ? (
+            {/*
+              The other phone's steps only where the phone is not known (the
+              app run in a browser). On an iPhone, steps for Android and a
+              word about the Play Store are no help, and App Review reads
+              them as instructions for somebody else's platform.
+            */}
+            {ON_A_PHONE ? null : (
+              <View style={styles.platformRow} accessibilityRole="radiogroup">
+                {PHONES.map((p) => {
+                  const on = p === platform;
+                  return (
+                    <Pressable
+                      key={p}
+                      onPress={() => {
+                        if (!on) haptic('select');
+                        setPlatform(p);
+                      }}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: on }}
+                      style={({ pressed }) => [
+                        styles.platform,
+                        { backgroundColor: on ? colors.primary : colors.controlTrack },
+                        pressed && heldDim,
+                      ]}
+                    >
+                      <Text style={[styles.platformText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>
+                        {t(PHONE_LABEL[p]!)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+
+            <View style={styles.steps}>
+              {steps.map((step, i) => (
+                <View key={step.key} style={[styles.step, { flexDirection: dir.row }]}>
+                  <View style={[styles.stepNo, { backgroundColor: colors.controlTrack }]}>
+                    <Text style={[styles.stepNoText, { color: colors.textPrimary }]}>{i + 1}</Text>
+                  </View>
+                  <Text style={[styles.stepText, dir.text, { color: colors.textPrimary }]}>
+                    {stepParts(step, t(step.key as TranslationKey)).map((part, j) =>
+                      part.ui ? (
+                        <Text key={j} style={styles.ui}>
+                          {part.text}
+                        </Text>
+                      ) : (
+                        part.text
+                      ),
+                    )}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={[styles.try, { backgroundColor: colors.glassFill }]}>
+              <Text style={[styles.tryTitle, dir.text, { color: colors.textPrimary }]}>
+                {t('keyboard.guide.tryIt', { letters: letters.join(' ') })}
+              </Text>
+              <View style={[styles.tryLetters, sorani && styles.rtl]}>
+                {letters.map((l) => {
+                  const lit = typed.has(l);
+                  return (
+                    <View
+                      key={l}
+                      style={[styles.tryLetter, { backgroundColor: lit ? colors.success : colors.controlTrack }]}
+                      accessibilityLabel={t(lit ? 'keyboard.guide.letterDone' : 'keyboard.guide.letterToGo', { letter: l })}
+                    >
+                      <Text style={[styles.tryLetterText, { color: lit ? colors.textOnPrimary : colors.textPrimary }]}>
+                        {l}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <TextInput
+                value={tried}
+                onChangeText={setTried}
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+                placeholder={letters.join(' ')}
+                placeholderTextColor={colors.textSecondary}
+                accessibilityLabel={t('keyboard.guide.tryLabel')}
+                style={[
+                  styles.tryInput,
+                  { color: colors.textPrimary, backgroundColor: colors.controlTrack },
+                  sorani && styles.tryInputRtl,
+                ]}
+              />
+              <Text
+                style={[styles.tryResult, { color: allIn ? colors.success : colors.textSecondary }]}
+                accessibilityLiveRegion="polite"
+              >
+                {allIn ? t('keyboard.guide.allIn') : t('keyboard.guide.progress', { done: typed.size, total: letters.length })}
+              </Text>
+            </View>
+
+            <Text style={[styles.hatchLead, { color: colors.textSecondary }]}>{t('keyboard.guide.noTime')}</Text>
+            <View style={styles.hatches}>
               <ClayButton
-                label={t('keyboard.guide.forgiving')}
+                label={t('keyboard.guide.useKeys')}
+                icon="keyboard"
                 variant="outline"
                 onPress={() => {
-                  setPrefs({ accentMode: 'forgiving' });
+                  setPrefs({ keyBar: true });
                   onClose();
                 }}
               />
-            ) : null}
-          </View>
-          <ClayButton label={t('common.done')} tone="primary" size="large" onPress={onClose} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+              {prefs.accentMode !== 'forgiving' ? (
+                <ClayButton
+                  label={t('keyboard.guide.forgiving')}
+                  variant="outline"
+                  onPress={() => {
+                    setPrefs({ accentMode: 'forgiving' });
+                    onClose();
+                  }}
+                />
+              ) : null}
+            </View>
+            <ClayButton label={t('common.done')} tone="primary" size="large" onPress={onClose} />
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </ReachReset>
     </Modal>
   );
 }

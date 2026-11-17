@@ -102,9 +102,6 @@
   height: 44px;
   color: var(--ink);
 }
-.fcard-menu .msg-menu-btn::after {
-  content: none;
-}
 
 /* ---- the words: a bold title, then a few lines --------------------------- */
 .fcard-body {

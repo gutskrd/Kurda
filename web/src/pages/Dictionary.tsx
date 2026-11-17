@@ -115,7 +115,7 @@ export function Dictionary(): React.JSX.Element {
       />
 
       {idle && (
-        <Link to="/app/alphabet" className="doc-link dict-alphabet">
+        <Link to="/app/alphabet" className="doc-link reach-line dict-alphabet">
           {t('alphabet.link')}
         </Link>
       )}

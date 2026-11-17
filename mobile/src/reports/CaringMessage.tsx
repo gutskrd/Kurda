@@ -1,5 +1,5 @@
 import { Linking, Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Pressable } from '../theme/Pressable';
+import { Pressable, ReachReset } from '../theme/Pressable';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton } from '../theme/glass';
@@ -45,30 +45,32 @@ export function CaringMessageDialog({
   if (!message) return null;
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <View style={[styles.backdrop, { backgroundColor: colors.scrim }]}>
-        <View style={[styles.card, { backgroundColor: colors.background }]} accessibilityViewIsModal>
-          <View style={[styles.mark, { backgroundColor: colors.successFill }]}>
-            <Icon name="lifebuoy" size={26} color={colors.success} />
+      <ReachReset>
+        <View style={[styles.backdrop, { backgroundColor: colors.scrim }]}>
+          <View style={[styles.card, { backgroundColor: colors.background }]} accessibilityViewIsModal>
+            <View style={[styles.mark, { backgroundColor: colors.successFill }]}>
+              <Icon name="lifebuoy" size={26} color={colors.success} />
+            </View>
+            <Text style={[styles.title, styles.center, { color: colors.textPrimary }]} accessibilityRole="header">
+              {message.title}
+            </Text>
+            <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollBody}>
+              <Text style={[styles.body, dir.free, { color: colors.textPrimary }]}>{message.body}</Text>
+            </ScrollView>
+            <ClayButton
+              label={t('report.help.find')}
+              tone="success"
+              size="large"
+              icon="globe"
+              onPress={() => void Linking.openURL(message.helplineUrl)}
+              style={styles.stretch}
+            />
+            <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => [styles.close, pressed && heldDim]}>
+              <Text style={[styles.closeText, { color: colors.textSecondary }]}>{t('social.close')}</Text>
+            </Pressable>
           </View>
-          <Text style={[styles.title, styles.center, { color: colors.textPrimary }]} accessibilityRole="header">
-            {message.title}
-          </Text>
-          <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollBody}>
-            <Text style={[styles.body, dir.free, { color: colors.textPrimary }]}>{message.body}</Text>
-          </ScrollView>
-          <ClayButton
-            label={t('report.help.find')}
-            tone="success"
-            size="large"
-            icon="globe"
-            onPress={() => void Linking.openURL(message.helplineUrl)}
-            style={styles.stretch}
-          />
-          <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => [styles.close, pressed && heldDim]}>
-            <Text style={[styles.closeText, { color: colors.textSecondary }]}>{t('social.close')}</Text>
-          </Pressable>
         </View>
-      </View>
+      </ReachReset>
     </Modal>
   );
 }

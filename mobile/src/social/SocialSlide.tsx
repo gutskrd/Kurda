@@ -8,7 +8,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useEdgePanel } from '../navigation/edgePanel';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -173,8 +173,8 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
           </Text>
           <Pressable
             onPress={onClose}
-            // a 20-point glyph, caught at a fingertip's 44
-            hitSlop={hitSlopFor(20, 20)}
+            // a 20-point glyph, caught at a fingertip
+            reachSize={{ width: 20, height: 20 }}
             accessibilityRole="button"
             accessibilityLabel={t('rail.closePanel')}
             style={({ pressed }) => pressed && heldDim}

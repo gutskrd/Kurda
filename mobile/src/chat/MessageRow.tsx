@@ -83,6 +83,8 @@ export function MessageRow({
       <Pressable
         onLongPress={() => openMessageOptions(t, options)}
         delayLongPress={350}
+        // held, never tapped, and two points from the next bubble: a reach past its edges would only take the neighbour's hold
+        reach="none"
         accessible={whole}
         {...(whole ? messageA11y(t, options) : null)}
         // on its way: said to a screen reader as busy, and drawn fainter until the server has it

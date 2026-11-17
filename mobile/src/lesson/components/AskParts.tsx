@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 import type { NewWord } from '@kurda/shared';
 import { Pressable } from '../../theme/Pressable';
-import { hitSlopFor } from '../../a11y/a11y';
+import { reachSlop } from '../../a11y/a11y';
 import { useI18n } from '../../i18n/I18nContext';
 import { useDirection } from '../../reports/direction';
 import { knownVoice, type CharacterReaction } from '../../characters/SpeakingCharacter';
@@ -107,7 +107,7 @@ export function AskScene({
             onPress={say}
             accessibilityRole="button"
             accessibilityLabel={t('lesson.speak.playModel')}
-            hitSlop={hitSlopFor(SPEAKER, SPEAKER)}
+            reachSize={{ width: SPEAKER, height: SPEAKER }}
             style={({ pressed }) => [styles.play, pressed && styles.pressed]}
           >
             <PlayDisc size={SPEAKER} playing={playing && !slow} />
@@ -151,7 +151,7 @@ export function SlowButton({ onPress, disabled = false, lit = false }: { onPress
       accessibilityRole="button"
       accessibilityLabel={t('lesson.listen.playSlow')}
       accessibilityState={{ disabled }}
-      hitSlop={hitSlopFor(64, SLOW)}
+      hitSlop={SLOW_REACH}
       style={({ pressed }) => [styles.slow, { backgroundColor: lit ? valley.redWash : valley.chip }, (pressed || disabled) && styles.pressed]}
     >
       <Icon name="speaker-high" size={14} color={ink} />
@@ -225,6 +225,13 @@ export function NewWordBadge({ words }: { words: NewWord[] }): React.JSX.Element
 
 /** The slow chip's height: a fingertip with its reach. */
 const SLOW = 30;
+
+/*
+ * The slow chip reaches down to a fingertip's 48 but only 4 up: in a listening
+ * item the bubble over it, 4 above, is a button of its own (say the clip
+ * again), and the two reaches must not meet in that gap.
+ */
+const SLOW_REACH = reachSlop(null, SLOW, { limit: { top: spacing.xs } });
 
 /** The gap's least width, about a short word's: it grows with the word put in it. */
 const GAP_WIDTH = 64;

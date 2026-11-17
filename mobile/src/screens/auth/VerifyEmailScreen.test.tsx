@@ -8,11 +8,13 @@ vi.mock('react-native-safe-area-context', () => import('../../reports/testing/st
 vi.mock('expo-audio', () => import('../../reports/testing/stubs'));
 vi.mock('../../auth/AuthContext', () => import('../../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../../auth/guide/testing/navigation'));
+vi.mock('../../theme/Pressable', () => import('../../testing/reach'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { Alert } from 'react-native';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { fakeClient, testAuth } from '../../reports/testing/auth';
+import { forgetReach, reachOf } from '../../testing/reach';
 import { VerifyEmailScreen } from './VerifyEmailScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -48,6 +50,7 @@ const type = (code: string): void => {
 
 afterEach(() => {
   cleanup();
+  forgetReach();
   vi.restoreAllMocks();
 });
 
@@ -121,6 +124,18 @@ describe('confirming an address', () => {
     expect(screen.getByTestId('resend').textContent).toMatch(/send a new code \(\d+s\)/);
     fireEvent.click(screen.getByTestId('resend'));
     expect(session.resendVerificationCode).toHaveBeenCalledTimes(1);
+  });
+
+  // a reach that came and went with the wait would be cut off at the footer's edge once it came back
+  it('keeps the same reach while it waits to offer another code', async () => {
+    const session = unconfirmed();
+    renderWithProviders(<VerifyEmailScreen />);
+    expect(reachOf('resend')).toEqual({ top: 2, bottom: 2, left: 0, right: 0 });
+    fireEvent.click(screen.getByTestId('resend'));
+    await waitFor(() => expect(session.resendVerificationCode).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText('We sent a new code. It can take a minute to arrive.')).toBeTruthy();
+    expect(screen.getByTestId('resend').getAttribute('aria-disabled')).toBe('true');
+    expect(reachOf('resend')).toEqual({ top: 2, bottom: 2, left: 0, right: 0 });
   });
 
   // the bold words were a target twenty-two points tall in the middle of a line

@@ -3,6 +3,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { PressableScale, heldDim } from '../theme/MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
+import { reachSlop } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
 import { AudioPlayer } from './AudioPlayer';
@@ -54,8 +55,9 @@ export function VoiceRecorder({
         </View>
         <Pressable
           onPress={() => onChange(null)}
-          // one 18-point line of words, caught at a fingertip's 44
-          hitSlop={WORD_SLOP}
+          // one 18-point line of words beside the player, caught at 48 and a little past its ends
+          reach="open"
+          reachSize={WORD}
           accessibilityRole="button"
           accessibilityLabel={t('recorder.remove')}
           style={({ pressed }) => pressed && heldDim}
@@ -70,7 +72,7 @@ export function VoiceRecorder({
     return (
       <PressableScale
         onPress={() => void mic.stop()}
-        hitSlop={PILL_SLOP}
+        hitSlop={PILL_REACH}
         style={[styles.pill, { backgroundColor: colors.dangerFill, borderColor: colors.danger }]}
         accessibilityRole="button"
         accessibilityLabel={t('lesson.speak.stop')}
@@ -87,7 +89,7 @@ export function VoiceRecorder({
     <PressableScale
       onPress={() => void start()}
       disabled={mic.busy}
-      hitSlop={PILL_SLOP}
+      hitSlop={PILL_REACH}
       style={[styles.pill, { backgroundColor: colors.glassFill, opacity: mic.busy ? 0.5 : 1 }]}
       accessibilityRole="button"
       accessibilityLabel={t('recorder.startNote')}
@@ -98,10 +100,17 @@ export function VoiceRecorder({
   );
 }
 
-/** A line of small words is about 18 points tall: this much round it makes a fingertip's 44. */
-const WORD_SLOP = { top: 13, bottom: 13, left: 8, right: 8 };
-/** The pills are drawn 36 points tall, and caught at 44. */
-const PILL_SLOP = { top: 4, bottom: 4 };
+/** A line of small words is about 18 points tall. */
+const WORD = { height: 18 };
+/** The pills are drawn 36 points tall. */
+const PILL_HEIGHT = 36;
+/**
+ * The pills answer over 48 of height, but toward the top only half the gap
+ * the comment box leaves above them, where its "Replying to" row may sit
+ * with a close button of its own; below them is the field, which reaches
+ * nothing back.
+ */
+const PILL_REACH = reachSlop(null, PILL_HEIGHT, { limit: { top: spacing.sm / 2 } });
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

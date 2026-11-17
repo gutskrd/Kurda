@@ -28,7 +28,7 @@ import { ConfettiBurst, GlowRing, SoftGlow, useCelebration } from '../../theme/C
 import { BURST } from '../../theme/celebration';
 import { timing, useCountUp } from '../../theme/animate';
 import { duration, pressedDim } from '../../theme/motion';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { TONES, type ToneColors } from '../../coursemap/path';
 import { NO_MOMENTS, type LessonMoments } from '../moments';
 import { useDirection } from '../../reports/direction';
@@ -408,7 +408,7 @@ function HearAgain({ url }: { url: string }): React.JSX.Element | null {
       onPress={() => audio.play(1)}
       accessibilityRole="button"
       accessibilityLabel={t('lesson.listen.play')}
-      hitSlop={hitSlopFor(HEAR, HEAR)}
+      reachSize={{ width: HEAR, height: HEAR }}
       style={({ pressed }) => pressed && styles.pressed}
       testID="mistake-hear"
     >

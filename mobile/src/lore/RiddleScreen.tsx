@@ -220,7 +220,6 @@ export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => voi
                 onPress={() => setTranslated((v) => !v)}
                 accessibilityRole="button"
                 accessibilityState={{ expanded: translated }}
-                hitSlop={{ top: 6, bottom: 6 }}
                 style={({ pressed }) => [styles.translationToggle, { flexDirection: dir.row }, pressed && heldDim]}
               >
                 <Icon name="translate" size={14} color={colors.primary} />

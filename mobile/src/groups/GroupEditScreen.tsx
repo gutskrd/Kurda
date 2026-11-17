@@ -138,7 +138,8 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
               disabled={!canSave}
               accessibilityRole="button"
               accessibilityState={{ disabled: !canSave, busy: saving }}
-              hitSlop={8}
+              reach="open"
+              testID="group-save"
               style={({ pressed }) => [styles.save, pressed && heldDim]}
             >
               {saving ? (
@@ -176,7 +177,14 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
                   </View>
                 )}
               </Pressable>
-              <Pressable onPress={photoChoices} disabled={!editable || uploading} accessibilityRole="button" hitSlop={8} style={({ pressed }) => pressed && heldDim}>
+              {/* drawn 32 tall round its line, so the Pressable reaches it to a fingertip; 12 under the picture keeps it clear of the camera badge */}
+              <Pressable
+                onPress={photoChoices}
+                disabled={!editable || uploading}
+                accessibilityRole="button"
+                testID="group-photo-link"
+                style={({ pressed }) => [styles.photoLinkHit, pressed && heldDim]}
+              >
                 <Text style={[styles.photoLink, { color: colors.textPrimary }]}>{photoUrl ? t('groups.photo.change') : t('groups.photo.add')}</Text>
               </Pressable>
             </View>
@@ -260,7 +268,7 @@ const styles = StyleSheet.create({
   loading: { marginTop: spacing.xl },
   save: { minWidth: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xs },
   saveText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  photo: { alignItems: 'center', gap: spacing.sm, paddingTop: spacing.md },
+  photo: { alignItems: 'center', gap: spacing.sm + 4, paddingTop: spacing.md },
   uploading: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: Math.round(PHOTO * 0.22), alignItems: 'center', justifyContent: 'center' },
   // a small camera badge at the picture's corner: the picture is the button
   camera: {
@@ -274,6 +282,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  photoLinkHit: { minHeight: 32, justifyContent: 'center' },
   photoLink: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   field: { gap: spacing.xs },
   fieldTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },

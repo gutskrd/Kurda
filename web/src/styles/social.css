@@ -603,12 +603,13 @@
   background: transparent;
   color: var(--ink-3);
   cursor: pointer;
-}
-/* the visible dot stays small; the place to tap is a full 44px */
-.msg-menu-btn::after {
-  content: '';
-  position: absolute;
-  inset: -4px;
+  /*
+   * The visible dot stays small and the place to press is larger (reach.css):
+   * 4px past every edge, as far as it always reached. With a mouse that makes
+   * the 36px dot a 44px target; where a finger is about the dot itself grows
+   * to 44px (shell.css), and the area to 52px.
+   */
+  --reach-open: 4px;
 }
 .msg-menu-btn:hover,
 .msg-menu.is-open .msg-menu-btn {
@@ -748,7 +749,8 @@
   margin-inline-start: auto;
 }
 /* another player's chip in a game: the ⋯ sits at its end, clear of the meter,
-   drawn small so a name keeps its room on a phone — the place to tap stays 44px */
+   drawn small so a name keeps its room on a phone — the place to tap stays 44px,
+   since its reach (reach.css) makes up what the drawing lacks */
 .player .player-report {
   margin-inline-start: auto;
   margin-inline-end: -6px;
@@ -756,9 +758,6 @@
 .player .player-report .msg-menu-btn {
   width: 28px;
   height: 28px;
-}
-.player .player-report .msg-menu-btn::after {
-  inset: -8px;
 }
 .rank-row .msg-menu-list {
   top: auto;

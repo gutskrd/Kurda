@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldRow } from '../theme/MotionParts';
 import { haptic } from '../feedback/haptics';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
-import { Toggle } from '../theme/Toggle';
+import { ToggleRow } from '../theme/Toggle';
 import { ACCENT_MODES, type AccentMode, type TypingDialect } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GlassRow } from '../theme/glass';
@@ -83,30 +83,25 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
       </View>
       {/* a race keeps the mode it started in: what counts cannot change half way */}
       {midRace ? <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('keyboard.accent.nextRace')}</Text> : null}
-      <GlassRow
-        icon="keyboard"
-        title={t('keyboard.keyBar.title')}
-        subtitle={t('keyboard.keyBar.hint')}
-        trailing={
-          <Toggle
-            value={prefs.keyBar}
-            onValueChange={(on) => setPrefs({ keyBar: on })}
-            accessibilityLabel={t('keyboard.keyBar.title')}
-          />
-        }
-      />
-      <GlassRow
-        icon="text"
-        title={t('keyboard.backtick.title')}
-        subtitle={t('keyboard.backtick.hint')}
-        trailing={
-          <Toggle
-            value={prefs.backtick}
-            onValueChange={(on) => setPrefs({ backtick: on })}
-            accessibilityLabel={t('keyboard.backtick.title')}
-          />
-        }
-      />
+      {/* each switch is its whole row, words and all, held as a list row is */}
+      <ToggleRow
+        label={t('keyboard.keyBar.title')}
+        hint={t('keyboard.keyBar.hint')}
+        value={prefs.keyBar}
+        onValueChange={(on) => setPrefs({ keyBar: on })}
+        style={({ pressed }) => pressed && heldRow(colors.controlTrack)}
+      >
+        {(toggle) => <GlassRow icon="keyboard" title={t('keyboard.keyBar.title')} subtitle={t('keyboard.keyBar.hint')} trailing={toggle} />}
+      </ToggleRow>
+      <ToggleRow
+        label={t('keyboard.backtick.title')}
+        hint={t('keyboard.backtick.hint')}
+        value={prefs.backtick}
+        onValueChange={(on) => setPrefs({ backtick: on })}
+        style={({ pressed }) => pressed && heldRow(colors.controlTrack)}
+      >
+        {(toggle) => <GlassRow icon="text" title={t('keyboard.backtick.title')} subtitle={t('keyboard.backtick.hint')} trailing={toggle} />}
+      </ToggleRow>
     </>
   );
 }

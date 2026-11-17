@@ -370,7 +370,7 @@ export function Landing(): React.JSX.Element {
               ))}
             </ul>
             {/* the lessons need an account; the alphabet is open to everyone */}
-            <Link to="/app/alphabet" className="doc-link lp-alphabet">
+            <Link to="/app/alphabet" className="doc-link reach-line lp-alphabet">
               {t('alphabet.link')}
             </Link>
           </div>
@@ -444,7 +444,7 @@ export function Landing(): React.JSX.Element {
         <div className="container lp-faq-grid">
           <div>
             <SectionHead id="lp-faq" title="faq.title" lead="faq.lead" />
-            <Link to="/faq" className="doc-link lp-faq-all">
+            <Link to="/faq" className="doc-link reach-line lp-faq-all">
               {t('faq.all')}
             </Link>
           </div>

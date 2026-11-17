@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { hueSteps, storyHeadingTitle, type HueScheme, type StoryDetail, type StoryGlossEntry } from '@kurda/shared';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, REACH_OPEN, reachSlop } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { display, displayFont, sectionLabel } from '../theme/fonts';
@@ -257,7 +257,7 @@ export function StoryText({
                   accessibilityRole="button"
                   accessibilityState={{ expanded: showTranslation }}
                   accessibilityLabel={showTranslation ? t('stories.reader.hideTranslationOf', { n: pi + 1 }) : t('stories.reader.translationOf', { n: pi + 1 })}
-                  hitSlop={6}
+                  hitSlop={TRANSLATION_TOGGLE_REACH}
                   style={({ pressed }) => [styles.translationToggle, pressed && heldDim]}
                 >
                   <Icon name="translate" size={14} color={colors.textSecondary} />
@@ -273,6 +273,18 @@ export function StoryText({
     </View>
   );
 }
+
+/** The translation's toggle is a small line under its paragraph, drawn this tall. */
+const TRANSLATION_TOGGLE_HEIGHT = 32;
+
+/**
+ * The toggle stands alone on its line, so it reaches 8 past its sides and its
+ * foot, where the next paragraph is a whole gap away. Above it, though, is the
+ * paragraph's last line (or its translation) only the paragraph's gap away,
+ * and a word there that opens its meaning cannot take a reach of its own: the
+ * toggle takes that gap and no more, so the word keeps its own taps.
+ */
+const TRANSLATION_TOGGLE_REACH = reachSlop(null, TRANSLATION_TOGGLE_HEIGHT, { edge: REACH_OPEN, limit: { top: spacing.xs } });
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.lg },
@@ -300,6 +312,6 @@ const styles = StyleSheet.create({
   rule: { width: 32, height: 2, borderRadius: radii.pill, marginBottom: spacing.lg, opacity: 0.4 },
   chapterTranslation: { fontFamily: displayFont },
   centred: { textAlign: 'center' },
-  translationToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 32, paddingHorizontal: spacing.xs },
+  translationToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: TRANSLATION_TOGGLE_HEIGHT, paddingHorizontal: spacing.xs },
   translationToggleText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
 });

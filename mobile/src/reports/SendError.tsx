@@ -9,7 +9,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, reachSlop } from '../a11y/a11y';
 import { sendErrorOf, standingExplains } from './sendErrors';
 import { useDirection } from './direction';
 import { heldDim } from '../theme/MotionParts';
@@ -63,7 +63,7 @@ export function SendErrorNotice({
         {onDismiss ? (
           <Pressable
             onPress={onDismiss}
-            hitSlop={12}
+            hitSlop={DISMISS_REACH}
             accessibilityRole="button"
             accessibilityLabel={t('social.close')}
             style={({ pressed }) => [styles.dismiss, pressed && heldDim]}
@@ -129,6 +129,16 @@ function alertTextOf(
   const { message, restriction } = sendErrorOf(error, t, locale);
   return { message, standing: restriction !== null && standingExplains(restriction) };
 }
+
+/** The close cross is drawn this big: the glyph and the 2pt round it. */
+const DISMISS_SIZE = 16 + 2 * 2;
+
+/**
+ * It answers over 48 every way but up. Up, it stops half a gap past the
+ * notice's own top padding: the screens set the notice a gap (8) under the
+ * control above it, and the other half of that gap is the control's.
+ */
+const DISMISS_REACH = reachSlop(DISMISS_SIZE, DISMISS_SIZE, { limit: { top: spacing.sm + spacing.sm / 2 } });
 
 const styles = StyleSheet.create({
   notice: {

@@ -8,7 +8,9 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { forgetReach, reachOf } from '../testing/reach';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -26,6 +28,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  forgetReach();
   vi.restoreAllMocks();
 });
 
@@ -229,6 +232,28 @@ describe('a post in the chain', () => {
     expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
     await act(() => new Promise((r) => setTimeout(r, DOUBLE_TAP_MS + 30)));
     expect(navigation.navigate).not.toHaveBeenCalled();
+  });
+
+  /*
+   * The head is a 32pt picture, a line of words and the ⋯, 8 apart; the
+   * pills under the post are 36 tall and 8 apart. Each reaches a fingertip
+   * up and down and half of the gap toward its neighbours, so a finger a
+   * little off any of them still lands on it and never on the one beside it.
+   */
+  it('answers a finger a little off the head’s picture, name and ⋯, and off every pill', () => {
+    renderWithProviders(<FeedCard item={item({ commentCount: 3 })} />);
+    expect(reachOf('rojda')).toEqual({ top: 8, bottom: 8, left: 4, right: 4 });
+    expect(reachOf('post-author')).toEqual({ top: 15, bottom: 15, left: 0, right: 0 });
+    expect(reachOf('Post options')).toEqual({ top: 8, bottom: 8, left: 4, right: 4 });
+    for (const pill of ['Like', '3 comments (3)', 'Repost', 'Share this post', 'Save']) {
+      expect(reachOf(pill)).toEqual({ top: 6, bottom: 6, left: 4, right: 4 });
+    }
+  });
+
+  it('makes the author’s name a link of its own, which opens their profile', () => {
+    renderWithProviders(<FeedCard item={item({ author: { id: 'u-azad', username: 'azad', displayName: null, avatarUrl: null } })} />);
+    fireEvent.click(screen.getByRole('link', { name: 'azad' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('UserProfile', { userId: 'u-azad' });
   });
 
   it('opens the menu from the ⋯ on your own, and reporting from it on somebody else’s', () => {

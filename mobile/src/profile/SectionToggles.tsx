@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Toggle } from '../theme/Toggle';
+import { ToggleRow } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -89,6 +88,9 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
    * its hint: a row of five switches that a screen reader called only
    * "switch" could not be told apart. Right to left, the words start on the
    * right and the switch closes the row on the left.
+   *
+   * The whole row is the switch, words and all: the words are what the eye
+   * goes to, and the switch alone was a 31pt target at the row's edge.
    */
   return (
     <View style={styles.wrap}>
@@ -96,18 +98,19 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
       <Text style={[styles.help, dir.text, { color: colors.textSecondary }]}>{t('edit.sections.help')}</Text>
 
       {PROFILE_SECTIONS.map((key) => (
-        <View key={key} style={[styles.row, { flexDirection: dir.row, borderBottomColor: colors.separator }]}>
+        <ToggleRow
+          key={key}
+          label={t(COPY[key].label)}
+          hint={t(COPY[key].hint)}
+          value={sections[key] !== false}
+          onValueChange={(next) => toggle(key, next)}
+          style={[styles.row, { borderBottomColor: colors.separator }]}
+        >
           <View style={styles.main}>
             <Text style={[styles.label, dir.text, { color: colors.textPrimary }]}>{t(COPY[key].label)}</Text>
             <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t(COPY[key].hint)}</Text>
           </View>
-          <Toggle
-            value={sections[key] !== false}
-            onValueChange={(next) => toggle(key, next)}
-            accessibilityLabel={t(COPY[key].label)}
-            accessibilityHint={t(COPY[key].hint)}
-          />
-        </View>
+        </ToggleRow>
       ))}
 
       {error ? (
@@ -123,13 +126,8 @@ const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.xs },
   heading: { ...sectionLabel },
   help: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },
-  row: {
-    alignItems: 'center',
-    gap: spacing.md,
-    minHeight: MIN_TOUCH_TARGET,
-    paddingVertical: 11,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
+  // ToggleRow lays the words and the switch out across the row and makes it at least a fingertip tall
+  row: { paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth },
   main: { flex: 1, gap: 2 },
   label: { fontSize: typography.ios.row },
   hint: { fontSize: typography.sizes.sm },

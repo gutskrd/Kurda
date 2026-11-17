@@ -196,7 +196,6 @@ export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialec
               <Pressable
                 onPress={() => navigation.navigate('ClaimAccount')}
                 accessibilityRole="button"
-                hitSlop={{ top: 8, bottom: 8 }}
                 style={({ pressed }) => [styles.guestLink, pressed && heldDim]}
               >
                 <Text style={[styles.guestLinkText, dir.text, { color: colors.primary }]}>{t('guest.createAccount')}</Text>

@@ -183,8 +183,19 @@ function Notice({ title, text, onDismiss, onRetry }: { title?: string; text: str
           <Text style={[styles.noticeText, dir.text, { color: colors.danger }]}>{text}</Text>
         </View>
         {onDismiss ? (
-          <Pressable onPress={onDismiss} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('common.close')} style={({ pressed }) => pressed && heldDim}>
-            <Icon name="close" size={16} color={colors.textSecondary} />
+          /*
+           * The cross is drawn 16 across and answers over 48. Sideways that is
+           * the notice's own padding; up it reaches past the notice's top edge
+           * into the list's padding, since the notice is the first thing there.
+           */
+          <Pressable
+            onPress={onDismiss}
+            reachSize={CLOSE_SIZE}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            style={({ pressed }) => pressed && heldDim}
+          >
+            <Icon name="close" size={CLOSE_SIZE.width} color={colors.textSecondary} />
           </Pressable>
         ) : null}
       </View>
@@ -192,6 +203,9 @@ function Notice({ title, text, onDismiss, onRetry }: { title?: string; text: str
     </View>
   );
 }
+
+/** The notice's close cross, drawn without padding. */
+const CLOSE_SIZE = { width: 16, height: 16 };
 
 function QuestRow({ quest, busy, fresh, onClaim }: { quest: QuestView; busy: boolean; fresh: boolean; onClaim: () => void }) {
   const { t, locale } = useI18n();

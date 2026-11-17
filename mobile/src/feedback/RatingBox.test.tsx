@@ -12,6 +12,8 @@ vi.mock('@react-navigation/native', async () => {
   const { createContext } = await import('react');
   return { NavigationContainerRefContext: createContext<unknown>(undefined) };
 });
+// every control noted as it is drawn, so its reach can be read
+vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { NavigationContainerRefContext } from '@react-navigation/native';
 import { Linking, Platform } from 'react-native';
@@ -27,6 +29,8 @@ import { FeedbackSession } from './session';
 import { requestStoreReview } from './storeReview';
 import { APP_VERSION } from './appInfo';
 import { DARK, LIGHT } from '../theme/palette';
+import { ReachGroup } from '../theme/Pressable';
+import { forgetReach, reachLimitOf, reachOf } from '../testing/reach';
 
 patchReactNativeWeb({ reduceMotion: true });
 
@@ -36,7 +40,10 @@ beforeEach(() => {
   testAuth.user = { ...testAuth.user, id: 'me' };
   vi.mocked(requestStoreReview).mockClear();
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  forgetReach();
+});
 
 describe('RatingBox, as a choice is marked', () => {
   // a rating given is a choice, so violet; gold is kept for what is earned
@@ -187,6 +194,21 @@ describe('Send feedback from Settings', () => {
     await screen.findByText('Thank you — we read every message.');
     expect(client.calls[0]?.body).toMatchObject({ categories: ['stories'], source: 'settings' });
     expect(client.calls[0]?.body).not.toHaveProperty('stars');
+  });
+
+  it('starts its sheet afresh from the settings’ own groups, with a close that reaches past every edge', async () => {
+    testAuth.client = fakeClient();
+    // the settings list's rows, as tightly grouped as a list can be: nothing of that reaches the sheet
+    renderWithProviders(
+      <ReachGroup gap={0} rowGap={0}>
+        <FeedbackSettingsRows os="ios" />
+      </ReachGroup>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Send feedback' }));
+    await screen.findByRole('checkbox', { name: 'Stories' });
+    expect(reachLimitOf('Close')).toBeNull();
+    // 44 and alone at the top of the sheet: 8 past every edge
+    expect(reachOf('Close')).toEqual({ top: 8, bottom: 8, left: 8, right: 8 });
   });
 
   it('opens the store page at its reviews once the address exists', async () => {

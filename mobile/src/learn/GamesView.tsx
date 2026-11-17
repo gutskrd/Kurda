@@ -5,7 +5,7 @@ import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { gameOfTheDay, type IncomingInvite, type MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { BottomSheet } from '../theme/BottomSheet';
@@ -267,7 +267,6 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                   onPress={() => join(invite)}
                   accessibilityRole="button"
                   accessibilityLabel={t('play.banner.joinLabel', { name: invite.from.name, game })}
-                  hitSlop={JOIN_SLOP}
                   style={[styles.joinButton, { backgroundColor: colors.primary }]}
                 >
                   <Text style={[styles.joinText, { color: colors.textOnPrimary }]}>{t('play.banner.join')}</Text>
@@ -421,10 +420,10 @@ function WaysSheet({ card, onClose, onOpen }: { card: GameCard | null; onClose: 
 
 /**
  * Join is drawn as tall as the avatar it shares a row with, and caught as a
- * full fingertip: the slop above and below makes up the difference.
+ * full fingertip: the Pressable reaches above and below it to make up the
+ * difference, inside the invite card's own padding.
  */
 const JOIN_HEIGHT = 36;
-const JOIN_SLOP = hitSlopFor(MIN_TOUCH_TARGET, JOIN_HEIGHT);
 /** Between two stamps, across and down: room for each one's light to fade before the next begins. */
 const STAMP_GAP = 20;
 /** The stamp put forward today, at its widest. */
