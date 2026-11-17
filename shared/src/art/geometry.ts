@@ -1,62 +1,10 @@
 /**
- * Outlines as lists of points or as rounded corners, and what is done to
- * them: moving an outline in or out by a fixed distance, walking along it at
- * even steps, and writing a rounded outline as a short exact path.
- *
- * A rim is an outline and the same outline moved in by the rim's width; the
- * beads and kilim set into a rim are placed at even steps along the middle of
- * that band. A badge's body is kept as its corners and how round each is, so
- * it is written as a dozen curves however often it is drawn, and its inset
- * stays exact; the points are only for finding where along it things go.
+ * Outlines as point lists or rounded corners: regular polygons and stars, moving an outline in or out by a fixed
+ * distance, and writing a rounded outline as a short exact path. A badge body is kept as corners plus radii so its
+ * inset stays exact and it is written as a dozen curves however often it is drawn.
  */
 import type { Pt } from './svg.js';
 import { pt } from './svg.js';
-
-const TAU = Math.PI * 2;
-
-/** A circle, starting at the top and running clockwise on screen. */
-export function circle(cx: number, cy: number, r: number, count = 96): Pt[] {
-  const out: Pt[] = [];
-  for (let i = 0; i < count; i++) {
-    const a = (i / count) * TAU - Math.PI / 2;
-    out.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
-  }
-  return out;
-}
-
-/**
- * A polygon with its corners rounded: each corner becomes a short curve that
- * starts `radius` before the vertex and ends `radius` after it.
- */
-export function roundedPolygon(vertices: readonly Pt[], radius: number | readonly number[], segs = 6): Pt[] {
-  const out: Pt[] = [];
-  const count = vertices.length;
-  for (let i = 0; i < count; i++) {
-    const prev = vertices[(i - 1 + count) % count] as Pt;
-    const v = vertices[i] as Pt;
-    const next = vertices[(i + 1) % count] as Pt;
-    const r = typeof radius === 'number' ? radius : (radius[i] ?? 0);
-    if (r <= 0) {
-      out.push(v);
-      continue;
-    }
-    const la = Math.hypot(prev[0] - v[0], prev[1] - v[1]);
-    const lb = Math.hypot(next[0] - v[0], next[1] - v[1]);
-    const ta = Math.min(0.5, r / la);
-    const tb = Math.min(0.5, r / lb);
-    const a: Pt = [v[0] + (prev[0] - v[0]) * ta, v[1] + (prev[1] - v[1]) * ta];
-    const b: Pt = [v[0] + (next[0] - v[0]) * tb, v[1] + (next[1] - v[1]) * tb];
-    out.push(a);
-    // a quadratic through the vertex, sampled
-    for (let s = 1; s < segs; s++) {
-      const t = s / segs;
-      const u = 1 - t;
-      out.push([u * u * a[0] + 2 * u * t * v[0] + t * t * b[0], u * u * a[1] + 2 * u * t * v[1] + t * t * b[1]]);
-    }
-    out.push(b);
-  }
-  return dedupe(out);
-}
 
 /** A regular polygon's vertices; `start` is the angle of the first one (−90° is straight up). */
 export function regular(cx: number, cy: number, r: number, sides: number, startDeg = -90): Pt[] {
@@ -76,19 +24,6 @@ export function star(cx: number, cy: number, outer: number, inner: number, point
     const r = i % 2 === 0 ? outer : inner;
     out.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
   }
-  return out;
-}
-
-/** Drops points that sit on top of the previous one; a zero-length edge has no direction. */
-function dedupe(points: readonly Pt[]): Pt[] {
-  const out: Pt[] = [];
-  for (const p of points) {
-    const last = out[out.length - 1];
-    if (!last || Math.hypot(p[0] - last[0], p[1] - last[1]) > 1e-6) out.push(p);
-  }
-  const first = out[0];
-  const last = out[out.length - 1];
-  if (first && last && out.length > 1 && Math.hypot(first[0] - last[0], first[1] - last[1]) <= 1e-6) out.pop();
   return out;
 }
 
@@ -141,65 +76,6 @@ export function offset(points: readonly Pt[], d: number): Pt[] {
     }
     return [p[0] + mx * d, p[1] + my * d] as Pt;
   });
-}
-
-export function perimeter(points: readonly Pt[]): number {
-  let s = 0;
-  for (let i = 0; i < points.length; i++) {
-    const a = points[i] as Pt;
-    const b = points[(i + 1) % points.length] as Pt;
-    s += Math.hypot(b[0] - a[0], b[1] - a[1]);
-  }
-  return s;
-}
-
-export interface Station {
-  /** where on the outline */
-  p: Pt;
-  /** the unit normal pointing into the shape */
-  inward: Pt;
-  /** the direction of travel, in degrees */
-  angle: number;
-}
-
-/**
- * `count` points at even steps along a closed outline, each with the direction
- * it is travelling and which way is inside. `phase` (0–1) slides them along by
- * part of a step.
- */
-export function stations(points: readonly Pt[], count: number, phase = 0): Station[] {
-  const sign = signedArea(points) >= 0 ? 1 : -1;
-  const lengths: number[] = [];
-  let total = 0;
-  for (let i = 0; i < points.length; i++) {
-    const a = points[i] as Pt;
-    const b = points[(i + 1) % points.length] as Pt;
-    const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    lengths.push(l);
-    total += l;
-  }
-  const out: Station[] = [];
-  let seg = 0;
-  let start = 0;
-  for (let k = 0; k < count; k++) {
-    const s = (((k + phase) / count) % 1) * total;
-    while (seg < points.length - 1 && start + (lengths[seg] ?? 0) < s) {
-      start += lengths[seg] ?? 0;
-      seg += 1;
-    }
-    const a = points[seg] as Pt;
-    const b = points[(seg + 1) % points.length] as Pt;
-    const l = lengths[seg] || 1;
-    const t = (s - start) / l;
-    const tx = (b[0] - a[0]) / l;
-    const ty = (b[1] - a[1]) / l;
-    out.push({
-      p: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t],
-      inward: [-ty * sign, tx * sign],
-      angle: (Math.atan2(ty, tx) * 180) / Math.PI,
-    });
-  }
-  return out;
 }
 
 /** Points moved by a 2-D affine map: rotate by `deg` about the origin, scale, then translate. */

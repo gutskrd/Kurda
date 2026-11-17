@@ -42,8 +42,6 @@ export type RankTier = CatalogueRankTier;
 export const RANK_TIER_NAMES = Object.fromEntries(
   [...POINTS_TIERS, APEX_TIER].map((t) => [t.key, { ku: t.name, en: t.meaning }]),
 ) as Readonly<Record<RankTier, { ku: string; en: string }>>;
-/** Divisions within a tier: 3 is III (the lowest), 1 is I (the top). Stêrk has none. */
-export const RANK_DIVISIONS = [3, 2, 1] as const satisfies readonly Division[];
 export type RankDivision = Division;
 
 /** The seasons, in calendar order: Q1 Zivistan, Q2 Bihar, Q3 Havîn, Q4 Payîz (R5). */

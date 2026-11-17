@@ -12,7 +12,7 @@
  */
 import type { Metal } from './palette.js';
 import type { Drawing, Pt } from './svg.js';
-import { linearAt, linearBox, n, n2, pt, radialAt, radialBox } from './svg.js';
+import { linearAt, linearBox, n, n2, pt, radialBox } from './svg.js';
 import { roundPath } from './geometry.js';
 import { circ } from './icons.js';
 
@@ -81,31 +81,6 @@ export function lipMetal(dr: Drawing, m: Metal, cx: number, cy: number, r: numbe
     ),
   );
   return id;
-}
-
-/** An edge in the piece's own darkest tone: what holds a pale piece on a pale page. */
-export function edge(d: string, colour: string, width = 1.2, opacity = 0.85): string {
-  return `<path d="${d}" fill="none" stroke="${colour}" stroke-width="${n2(width)}" stroke-opacity="${n2(opacity)}" stroke-linejoin="round"/>`;
-}
-
-/** A halo of light behind a piece: a radial fade from `colour` to nothing. */
-export function halo(dr: Drawing, cx: number, cy: number, r: number, colour: string, opacity: number, core = 0): string {
-  const id = dr.id('o');
-  dr.def(
-    radialAt(
-      id,
-      [
-        [0, colour, opacity],
-        [Math.max(0.01, core), colour, opacity],
-        [0.6, colour, opacity * 0.4],
-        [1, colour, 0],
-      ],
-      cx,
-      cy,
-      r,
-    ),
-  );
-  return `<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="url(#${id})"/>`;
 }
 
 /** A small diamond, the kilim's commonest mark. */

@@ -260,15 +260,6 @@ function timed(play: {
 }
 
 /**
- * How a pigeon turns round, as a round bird does rather than a card: it is
- * seen three-quarters toward you for a moment, then facing you, then
- * three-quarters the other way, and then side on again. The side it faces
- * changes only in the middle of its facing you, where it looks the same
- * either way round. The time it shows each, in milliseconds.
- */
-export const LETTER_TURN = { quarter: 70, front: 90 } as const;
-
-/**
  * A pigeon's plays: before it goes, after it comes, at home on the sill while
  * nothing is happening, two for a bird at somebody's window (sent on, it
  * picks its own letter up again from where it laid it, `fetch`; answered,
