@@ -21,7 +21,7 @@
  */
 import { createRequire } from 'node:module';
 import PDFDocument from 'pdfkit';
-import SVGtoPDF from 'svg-to-pdfkit';
+import { svgToPdf } from './svg-to-pdf.js';
 
 const require = createRequire(import.meta.url);
 const font = (pkg: string, file: string): string => require.resolve(`@expo-google-fonts/${pkg}/${file}`);
@@ -329,7 +329,7 @@ export class Press {
     raw.addContent(`1 0 0 -1 0 ${h} cm`);
     raw._ctm = [1, 0, 0, -1, 0, h];
     try {
-      SVGtoPDF(this.doc, svg(), 0, 0, { width: w, height: h, preserveAspectRatio: 'xMidYMid meet' });
+      svgToPdf(this.doc, svg(), 0, 0, { width: w, height: h, preserveAspectRatio: 'xMidYMid meet' });
     } finally {
       raw.page = savedPage;
       raw._ctm = savedMatrix;
