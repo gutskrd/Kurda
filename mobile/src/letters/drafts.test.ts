@@ -20,7 +20,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** The app closed and opened again: what is in memory is gone, and the phone’s storage is read afresh. */
+/** Simulates an app restart: memory is cleared and storage is read afresh. */
 async function reopen(who: string): Promise<void> {
   vi.advanceTimersByTime(1000);
   setDraftStoreForTests(store);
@@ -65,7 +65,7 @@ describe('letters being written, kept on the phone', () => {
     keepDraft('me', visitorDraft('l10'), { ...words('Silav Azad'), strokes: [line] });
     expect(moveDraft('me', visitorDraft('l10'), threadDraft(T), { strokes: true })).toBe(true);
     expect(draftOf('me', threadDraft(T))?.strokes).toHaveLength(1);
-    // nothing written there: nothing to move
+    // Nothing written there, so nothing to move.
     expect(moveDraft('me', visitorDraft('l11'), NEW_LETTER, { strokes: false })).toBe(false);
   });
 

@@ -5,32 +5,23 @@ import type { ApiError } from '../api/types';
 import { reloadLetterWidget } from '../widget/reload';
 
 /**
- * Which letter is on your home-screen widget, from a correspondence
- * (LetterThreadScreen): a letter you were sent can be shown there for good —
- * "Show on my widget" — and taken off again, when the widget goes back to the
- * newest letter. The choice is the account's (shared WidgetPrefs), so every
- * phone with the widget follows it; this phone's widget is asked to catch up
- * at once (widget/reload.ts), the others at their next refresh. Whether the
- * widget shows the words stays as it was chosen in settings.
- *
- * Until the server has said what is pinned, nothing is offered: a choice made
- * without knowing it could unpin the letter somebody pinned on another phone.
- * The server answers with the widget's settings as they now are (shared
- * WidgetSettings, which holds the choices), and refuses a letter that cannot be
- * pinned (NOT_FOUND) or was taken down meanwhile (LETTER_REMOVED).
+ * Pins a received letter to the home-screen widget from a correspondence, or unpins it so the widget shows the
+ * newest. The choice belongs to the account (shared WidgetPrefs), so every phone follows it; this phone's widget
+ * reloads at once (widget/reload.ts). Nothing is offered until the server has said what is pinned, since acting
+ * without knowing could unpin a letter pinned on another phone. The server refuses NOT_FOUND and LETTER_REMOVED.
  */
-export const WIDGET_PREFS_PATH = '/letters/widget/prefs';
+const WIDGET_PREFS_PATH = '/letters/widget/prefs';
 
 const isPrefs = (v: unknown): v is WidgetPrefs =>
   typeof v === 'object' && v !== null && typeof (v as WidgetPrefs).showWords === 'boolean' && ((v as WidgetPrefs).pinnedLetterId === null || typeof (v as WidgetPrefs).pinnedLetterId === 'string');
 
 export function useWidgetPin(client: ApiClient): {
-  /** the letter pinned now, null for always the newest; undefined until the server has said */
+  /** The pinned letter, null for always the newest; undefined until the server has said. */
   pinned: string | null | undefined;
-  /** the letter being pinned or taken off right now */
+  /** The letter being pinned or unpinned right now. */
   busy: string | null;
   error: ApiError | null;
-  /** resolves to the server's refusal code when it said no (LETTER_REMOVED for a letter taken down, NOT_FOUND for one that cannot be pinned) */
+  /** Resolves to the server's refusal code when it says no (LETTER_REMOVED or NOT_FOUND). */
   toggle: (letterId: string) => Promise<string | undefined>;
 } {
   const [prefs, setPrefs] = useState<WidgetPrefs | null>(null);
@@ -60,7 +51,7 @@ export function useWidgetPin(client: ApiClient): {
         return res.error.code ?? 'FAILED';
       }
       setPrefs(isPrefs(res.data) ? { pinnedLetterId: res.data.pinnedLetterId, showWords: res.data.showWords } : next);
-      // the widget on this phone shows the change now rather than at its next refresh
+      // Reload this phone's widget now rather than at its next refresh.
       reloadLetterWidget();
       return undefined;
     },

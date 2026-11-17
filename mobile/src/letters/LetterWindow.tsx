@@ -36,54 +36,21 @@ import {
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { radii } from '../theme/tokens';
+import { HIDDEN } from './PaperSheet';
 
 /**
- * Your window on the letters screen (shared/src/art/letters.ts and
- * letter-sky.ts), as the website has it (web/src/letters/LetterWindow.tsx):
- * seen from inside the room, the hour's country through it, the birds out
- * there, and on the sill your own bird, and a bird called to your window when
- * there is one.
+ * Your window on the letters screen (shared art/letters.ts and letter-sky.ts), matching
+ * web/src/letters/LetterWindow.tsx: the room's window with the hour's landscape behind it, birds circling outside
+ * (`sky`), your own bird on the sill, and a visitor when one is called. Layers drift at different depths, and the
+ * birds act out the screen's news in the shared LETTER_PLAY plays; what to act (`scene`) comes from
+ * shared/src/letter-window.ts. Your bird can also be `here`: back on the sill with its letter, without a flight.
  *
- * The window is laid in its layers, so it has depth: the country behind the
- * frame drifts a little of itself, the near meadow more than the far
- * mountains; the clouds go slowly over; the casements stir and the plant in
- * the pot sways in the air coming in; the light on the sill brightens and
- * dims. Outside, the season goes past — petals, butterflies, seeds, leaves or
- * snow, and at night stars and fireflies — and the birds out with their
- * letters circle over the country, as many as are out (`sky`), waiting to be
- * called.
- *
- * What the birds do is the screen's news, so it is acted rather than written,
- * in the plays of the shared LETTER_PLAY, as on the website:
- *   - your own bird (`own`) at home on the sill, bobbing, pecking at the
- *     seeds, chirping and hopping round, or asleep at night; leaving with
- *     your letter, out through the window to wait with the others; away; or
- *     coming home with a letter, which it lays on the sill;
- *   - a bird called to your window (`visitor`) comes down from the sky,
- *     lands, lays its letter before it and stays, facing your bird, which has
- *     hopped aside to make room; answered, your letter drops onto the sill and
- *     it takes it home; sent on, it picks its own letter up again and goes;
- *   - when two people become pen pals, the two birds chirp to each other and
- *     a few notes of birdsong rise between them.
- * The pigeons' shadows, and their letters', are laid on the sill by
- * themselves: they stay there under a pigeon when it hops, fade as it rises
- * and come back as it lands.
- *
- * Only transform and opacity move, on the native driver, and the loops stop
- * while the screen is not in front. A reader who asked for less motion sees
- * the window still, nothing drifting past, and each play and flight as it
- * ends, at once. The whole picture is decoration: the screen says in words
- * what is happening.
- *
- * What it acts out (`scene`) is worked out by the shared window logic
- * (shared/src/letter-window.ts), for this screen and the website alike. Your
- * own bird can also be `here`: settled back on the sill with the letter it
- * brought, without a flight, as a bird that has landed once stays until its
- * letter is read.
+ * Only transform and opacity animate, on the native driver, and loops stop while the screen is not in front. Under
+ * Reduce Motion the window is still and each play shows its end at once. The picture is decorative; the screen says
+ * in words what is happening.
  */
 export type WindowScene = LetterWindowScene;
 
-const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
 const native = { useNativeDriver: true } as const;
 
 let drawings = 0;
@@ -92,42 +59,40 @@ function nextId(): string {
   return `hvw${drawings.toString(36)}`;
 }
 
-/** A spot's square on the sill of a window `size` wide, in points: its left, its top and its side. */
+/** A spot's square on the sill of a window `size` points wide: left, top and side. */
 function boxOn(spot: LetterSpot, size: number): { left: number; top: number; side: number } {
   const box = letterSillBox(spot);
   return { left: box.left * size, top: box.top * size, side: box.size * size };
 }
 
-/** Where a pigeon's feet are on its own square, as shares of it: what it leans and turns about. */
+/** A pigeon's feet on its own square, as fractions of it; it leans and turns about them. */
 const FEET = { x: LETTER_BIRD_FEET.x / 120, y: LETTER_BIRD_FEET.y / 120 } as const;
 
-/** The feet of a pigeon standing at a spot, on the window's square: what it, and its shadow, turn and grow about. */
+/** The feet of a pigeon at a spot, on the window's square; the pigeon and its shadow transform about them. */
 function feetOf(spot: LetterSpot): string {
   const box = letterSillBox(spot);
   return `${(box.left + box.size * FEET.x) * 100}% ${(box.top + box.size * FEET.y) * 100}%`;
 }
 
-/** The middle of a spot's square, on the window's square: what a flight from it turns about. */
+/** The centre of a spot's square, on the window's square; a flight from it turns about this. */
 function middleOf(spot: LetterSpot): string {
   const box = letterSillBox(spot);
   return `${(box.left + box.size / 2) * 100}% ${(box.top + box.size / 2) * 100}%`;
 }
 
-/** The moment a pigeon taking off leaves the sill (and, landing backwards, comes down on it): it stands until then. */
+/** When a departing pigeon leaves the sill (and a landing one touches it, run backwards); it stands until then. */
 const LIFT = LETTER_FLIGHT.keys[1]!.at;
 /**
- * How a flight goes over its time, as the website has it: a pigeon leaving
- * gathers speed, one coming in slows to land. The flight's clock is itself
- * eased, so everything moved on it — going behind the room, standing on the
- * sill — happens at the same place in the flight whichever way it goes.
+ * Flight easing, as on the website: a departure accelerates, a landing decelerates. The flight clock itself is
+ * eased, so everything keyed to it happens at the same point in either direction.
  */
 const FLIGHT_EASING = { out: Easing.bezier(0.5, 0, 0.75, 0.6), in: Easing.bezier(0.2, 0.6, 0.35, 1) } as const;
 
-/** Shown up to `at` of a clock and not after. */
+/** Visible up to `at` on a clock, and hidden after. */
 const until = (clock: Animated.Value, at: number): Animated.AnimatedInterpolation<number> =>
   clock.interpolate({ inputRange: [0, at, Math.min(1, at + 0.001), 1], outputRange: [1, 1, 0, 0] });
 
-/** A clock that goes from 0 to 1 and back for as long as the screen is in front, `ms` each way, starting `from` along. */
+/** A clock swinging 0 to 1 and back, `ms` each way and starting `from` along, while the screen is in front. */
 function useSwing(alive: boolean, ms: number, from = 0): Animated.Value {
   const value = useRef(new Animated.Value(from)).current;
   useEffect(() => {
@@ -141,9 +106,8 @@ function useSwing(alive: boolean, ms: number, from = 0): Animated.Value {
 }
 
 /**
- * A clock that goes round from 0 to 1, `ms` a round, evenly, for as long as
- * `alive` says. Each time it starts it starts from 0: a loop on the native
- * driver goes round from wherever it was started.
+ * A clock going round from 0 to 1 every `ms` while `alive`. It restarts from 0 each time, since a native-driver loop
+ * runs from wherever it started.
  */
 function useRound(alive: boolean, ms: number): Animated.Value {
   const value = useRef(new Animated.Value(0)).current;
@@ -157,7 +121,7 @@ function useRound(alive: boolean, ms: number): Animated.Value {
   return value;
 }
 
-/** A drawing laid on the window at a place and a size of its own, in points. */
+/** A drawing laid on the window at its own position and size, in points. */
 function Art({
   xml,
   left,
@@ -178,7 +142,7 @@ function Art({
   );
 }
 
-/** One picture of a pigeon on its square at a spot on the sill of a window `size` wide; its shadow is laid on the sill by itself (`Shade`). */
+/** One picture of a pigeon on its square at a sill spot; its shadow is drawn separately (`Shade`). */
 function Pose({
   bird,
   pose,
@@ -202,7 +166,7 @@ function Pose({
   return <Art xml={xml} left={box.left} top={box.top} side={box.side} style={style} />;
 }
 
-/** The shadow a pigeon casts on the sill, on its square at a spot, with the shadow of a letter in its beak (`letter`). */
+/** A pigeon's shadow on the sill, with its letter's shadow when it holds one (`letter`). */
 function Shade({
   pose = 'perched',
   letter = false,
@@ -246,14 +210,12 @@ function Asleep({ bird, spot, size }: { bird: number; spot: LetterSpot; size: nu
   );
 }
 
-/** Where a letter lies on the sill: its own square, as a share of a pigeon's, and how far down that square the bottom of the envelope is. */
+/** A letter's square on the sill, as a fraction of a pigeon's, and how far down it the envelope's bottom sits. */
 const SILL_LETTER = { share: 0.24, foot: 92 / 120 } as const;
 
 /**
- * A letter in its envelope lying on the sill over its shadow, `at` (shares of
- * the pigeon's square) in front of the feet of a pigeon standing at `spot` and
- * facing the way `dir` says, in a window `size` wide. The letter coming down
- * (`style`) and its shadow growing under it (`shadeStyle`) are moved by the play.
+ * An envelope on the sill over its shadow, `at` (fractions of the pigeon's square) in front of the feet of a pigeon
+ * at `spot` facing `dir`. The play animates the letter coming down (`style`) and its shadow growing (`shadeStyle`).
  */
 function SillLetter({
   at,
@@ -277,7 +239,7 @@ function SillLetter({
   const side = box.side * SILL_LETTER.share;
   const left = box.left + box.side * (FEET.x + at * dir) - side / 2;
   const top = box.top + box.side * FEET.y - side * SILL_LETTER.foot;
-  // lying down, it is seen a little from above
+  // Lying flat, it is seen a little from above.
   const lying = { transformOrigin: `50% ${SILL_LETTER.foot * 100}%`, transform: [{ scaleY: 0.62 }, { rotate: '-4deg' }] };
   return (
     <View style={[{ position: 'absolute', left, top, width: side, height: side }, lying]} pointerEvents="none" testID="letter-on-sill">
@@ -292,12 +254,9 @@ function SillLetter({
 }
 
 /**
- * A pigeon playing on the sill at its spot (LETTER_PLAY), as the website
- * plays it: every picture its play shows laid one on another and switched on
- * the play's own clock, the pigeon moved about its feet over its shadow on the
- * sill (letterPlayShadow), and a letter on the sill when the play has one. It
- * plays once and says so (`onEnd`), or, an idle play, round and round while
- * the screen is in front. A reader who asked for less motion sees how it ends.
+ * A pigeon playing at its spot (LETTER_PLAY), as on the website: every picture of the play stacked and switched on
+ * the play's clock, the pigeon moving about its feet over its shadow (letterPlayShadow), with any letter on the sill.
+ * It plays once and calls `onEnd`, or loops while the screen is in front if idle. Under Reduce Motion it shows its end.
  */
 function Playing({
   bird,
@@ -324,7 +283,7 @@ function Playing({
   const dir = facingLeft ? -1 : 1;
 
   useEffect(() => {
-    // a play that tells something runs whatever else is going on; one that only goes round waits for somebody to be looking
+    // A play that tells something always runs; an idle loop waits until the screen is in front.
     if (reduce || (play.loop && !alive)) {
       clock.setValue(play.loop ? 0 : 1);
       if (!play.loop) ended.current?.();
@@ -353,7 +312,7 @@ function Playing({
       { scaleY: clock.interpolate({ inputRange: at, outputRange: play.moves.map((m) => m.sy), ...ease }) },
     ],
   };
-  // the shadow keeps to the sill: it goes along under the pigeon but never up with it
+  // The shadow stays on the sill: it follows the pigeon along but never up.
   const shadeAt = shadow.moves.map((k) => k.at);
   const shaded = {
     transformOrigin: feet,
@@ -379,7 +338,7 @@ function Playing({
     : undefined;
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none" testID={`letter-pigeon-${play.loop ? 'home' : 'playing'}`}>
-      {/* the shadow's shape is switched with the pigeon's pictures: side on, turned or facing you, with the letter's while it holds one */}
+      {/* The shadow's shape switches with the pigeon's pictures, including the letter's while it holds one. */}
       <Animated.View style={[StyleSheet.absoluteFill, shaded]}>
         {shadow.shapes.map((shape) => (
           <Shade
@@ -412,9 +371,9 @@ function Playing({
   );
 }
 
-/** Where one bird's story on the sill has got to: standing, playing before it goes, flying, playing after it comes, or at home again after a letter. */
+/** Where a bird's sequence on the sill has reached: resting, playing before leaving, flying, playing after arriving, or settled. */
 type Phase = 'rest' | 'play' | 'flight' | 'after' | 'settled';
-/** One bird's part in the scene, the same for your own and a visitor. */
+/** One bird's part in the scene, the same for yours and a visitor. */
 type Life =
   | { kind: 'none' }
   | { kind: 'home'; bird: number }
@@ -422,20 +381,18 @@ type Life =
   | { kind: 'leaving'; bird: number; play: LetterPlay }
   | { kind: 'arriving'; bird: number };
 
-/** A bird's flight off the sill or onto it: the phase the bird is in, and the clocks its flight and its wings run on. */
+/** A bird's flight on or off the sill: its phase, and the clocks its flight and wings run on. */
 interface Flight {
   phase: Phase;
   setPhase: (p: Phase) => void;
-  /** 0 on the sill, 1 gone far off over the country; a bird coming in runs it backwards */
+  /** 0 on the sill, 1 far off over the landscape; an arriving bird runs it backwards. */
   clock: Animated.Value;
   beat: Animated.Value;
 }
 
 /**
- * A bird's story on the sill and its flight: a bird leaving plays first and
- * then flies, one coming flies first and then plays. The flight runs on one
- * eased clock, which both copies of the flying bird (`FlightCopy`) and its
- * shadow on the sill (`FlightShade`) are moved by.
+ * A bird's sequence and flight: a departing bird plays then flies, an arriving one flies then plays. One eased clock
+ * drives both copies of the flying bird (`FlightCopy`) and its shadow (`FlightShade`).
  */
 function useFlight(life: Life, onGone: () => void): Flight {
   const reduce = useReducedMotion();
@@ -444,7 +401,7 @@ function useFlight(life: Life, onGone: () => void): Flight {
   const beat = useRef(new Animated.Value(0)).current;
   const gone = useRef(onGone);
   gone.current = onGone;
-  // set before the next frame is drawn, so a bird coming in is never seen for a moment standing on the sill
+  // Set before the next frame, so an arriving bird is never seen standing on the sill for a moment.
   useLayoutEffect(() => {
     if (life.kind === 'arriving') clock.setValue(1);
     if (life.kind === 'leaving') clock.setValue(0);
@@ -483,9 +440,8 @@ function useFlight(life: Life, onGone: () => void): Flight {
 const birdOf = (life: Life): number | null => (life.kind === 'none' ? null : life.bird);
 
 /**
- * A pigeon in flight from its spot, one copy of it: moved over the window's
- * square on the flight's clock (letterFlightFrom), seen while `seen` says so,
- * standing to take off (or as it lands) and beating its wings between.
+ * One copy of a pigeon in flight from its spot, moved on the flight's clock (letterFlightFrom) while `seen`, standing
+ * at take-off and landing and beating its wings between.
  */
 function Flying({
   bird,
@@ -514,7 +470,7 @@ function Flying({
       { scale: clock.interpolate({ inputRange: at, outputRange: keys.map((k) => k.scale) }) },
     ],
   };
-  // it stands for the first moment of a take-off, and the last of a landing (the flight clock runs backwards for one coming in)
+  // It stands for the first moment of a take-off and the last of a landing (the clock runs backwards for arrivals).
   const standing = until(clock, LIFT);
   const winging = Animated.subtract(1, standing);
   const up = until(beat, 0.5);
@@ -528,10 +484,7 @@ function Flying({
   );
 }
 
-/**
- * One copy of a flying bird: the one in the room (`inside`) until it is
- * through the window, or the one outside, drawn behind the room, from then on.
- */
+/** One copy of a flying bird: the one in the room (`inside`) until it passes the window, then the one outside behind the room. */
 function FlightCopy({
   life,
   flight,
@@ -553,11 +506,7 @@ function FlightCopy({
   return <Flying bird={bird} spot={spot} facingLeft={facingLeft} size={size} flight={flight} seen={inside ? inRoom : Animated.subtract(1, inRoom)} />;
 }
 
-/**
- * How the shadow of a flight from a spot lies on the sill through it,
- * measured from the flight's own path: under the bird as it goes, smaller and
- * fainter as it rises.
- */
+/** Keyframes for a flight's shadow on the sill, from the flight's own path: under the bird, smaller and fainter as it rises. */
 function flightShadowKeys(spot: LetterSpot): Array<{ at: number; x: number; size: number; seen: number }> {
   const share = LETTER_SILL_SPOTS[spot].share;
   return letterFlightFrom(spot).map((k) => {
@@ -566,7 +515,7 @@ function flightShadowKeys(spot: LetterSpot): Array<{ at: number; x: number; size
   });
 }
 
-/** The shadow a flying bird leaves on the sill at its spot, on the same clock as its flight. */
+/** A flying bird's shadow on the sill, on the same clock as its flight. */
 function FlightShade({ flight, spot, facingLeft, size }: { flight: Flight; spot: LetterSpot; facingLeft: boolean; size: number }): React.JSX.Element | null {
   const keys = useMemo(() => flightShadowKeys(spot), [spot]);
   if (flight.phase !== 'flight') return null;
@@ -587,10 +536,8 @@ function FlightShade({ flight, spot, facingLeft, size }: { flight: Flight; spot:
 }
 
 /**
- * A bird on the sill, between its flights: standing (asleep at night if it
- * may sleep), playing, or settled again with the letter it brought. It
- * stands the way it landed; when it is to face the other way while it is on
- * the sill, it turns round on the spot first, through facing you.
+ * A bird on the sill between flights: standing (asleep at night if allowed), playing, or settled with its letter. It
+ * stands as it landed, and turns round through facing you when it must face the other way.
  */
 function OnSill({
   life,
@@ -606,14 +553,14 @@ function OnSill({
   spot: LetterSpot;
   facingLeft: boolean;
   asleep: boolean;
-  /** another bird is on the sill: it plays without turning round toward it */
+  /** Another bird is on the sill, so it plays without turning toward it. */
   beside: boolean;
   size: number;
 }): React.JSX.Element | null {
   const bird = birdOf(life);
   const { phase, setPhase } = flight;
   const [facing, setFacing] = useState(facingLeft);
-  // in the air it faces the way it flies, so it lands facing the way it is meant to
+  // In the air it faces its flight, so it lands facing the right way.
   useEffect(() => {
     if (phase === 'flight') setFacing(facingLeft);
   }, [phase, facingLeft]);
@@ -641,16 +588,13 @@ function OnSill({
   return <Playing key="idle" bird={bird} spot={spot} play={plays.idle} facingLeft={facingLeft} size={size} />;
 }
 
-/** How long your own bird's hop aside takes, and how it goes: off quickly, and settling. */
+/** Your bird's hop aside: duration, easing (quick off, settling) and lift. */
 const HOP = { ms: 650, easing: Easing.bezier(0.3, 0, 0.3, 1), rise: 0.04 } as const;
 
 /**
- * Your own bird's place on the sill, moved aside when a bird comes to visit
- * and back to the middle when it goes: the whole of it, its letter and its
- * shadow with it, hops from the one spot to the other about its feet. It is
- * drawn at its new spot from the moment the hop starts, moved back to where it
- * stood and brought across, a little up in the middle of the hop. A reader
- * who asked for less motion sees it at its new spot at once.
+ * Your bird's spot, moving aside when a visitor comes and back when it goes; bird, letter and shadow hop together
+ * about the feet. It is drawn at the new spot from the start of the hop and animated across from the old one. Under
+ * Reduce Motion it moves at once.
  */
 function useHop(spot: LetterSpot, size: number): { spot: LetterSpot; style: Animated.WithAnimatedValue<ViewStyle> | undefined } {
   const reduce = useReducedMotion();
@@ -709,10 +653,8 @@ function Layer({
 }
 
 /**
- * One small thing on the window's square, on its own path (LetterDrift): round
- * and round on a clock of its own while the screen is in front, started
- * `delay` of the way along it so a few of a kind are never in step; or, `once`,
- * a single time from the start. A butterfly's wings beat on `flap`.
+ * One small drifting thing on its own path (LetterDrift), looping while the screen is in front and started `delay`
+ * along so several of a kind are never in step; with `once`, a single pass. A butterfly's wings beat on `flap`.
  */
 function Drift({
   drift,
@@ -732,7 +674,7 @@ function Drift({
   const clock = useRef(new Animated.Value(0)).current;
   const xml = useMemo(() => letterSpriteSvg({ sprite: drift.sprite, size: 60, idPrefix: id }), [drift.sprite, id]);
   useEffect(() => {
-    // a single rise tells something and runs through; a loop waits for somebody to be looking
+    // A single pass tells something and always runs; a loop waits until the screen is in front.
     if (!once && !alive) return;
     clock.setValue(0);
     const round = Animated.timing(clock, { toValue: 1, duration: drift.ms, easing: Easing.linear, ...native });
@@ -763,11 +705,7 @@ function Drift({
   );
 }
 
-/**
- * Small things on the window's square, each on its own path (LetterDrift).
- * Nothing drifts for a reader who asked for less motion: then they are not
- * there at all.
- */
+/** Small drifting things on their paths (LetterDrift); not drawn at all under Reduce Motion. */
 function Drifts({
   drifts,
   size,
@@ -794,10 +732,8 @@ function Drifts({
 }
 
 /**
- * One bird out there, circling over the country with its letter on its own
- * round (LetterSkyBird), its wings beating on `beat`, turning suddenly, as a
- * bird turns, where its round says it faces the other way. For a reader who
- * asked for less motion it hangs still where its round starts.
+ * One bird circling over the landscape with its letter (LetterSkyBird), wings beating on `beat`, turning abruptly
+ * where its route reverses. Under Reduce Motion it hangs still at its route's start.
  */
 function SkyBird({ bird, route, size, alive, beat }: { bird: number; route: LetterSkyBird; size: number; alive: boolean; beat: Animated.Value }): React.JSX.Element {
   const clock = useRound(alive, route.ms);
@@ -806,7 +742,7 @@ function SkyBird({ bird, route, size, alive, beat }: { bird: number; route: Lett
   const wingsDown = useMemo(() => letterBirdSvg({ bird, pose: 'wings-down', letter: true, shadow: false, size: 120, idPrefix: `${id}d` }), [bird, id]);
   const moved = useMemo(() => {
     const at = route.keys.map((k) => k.at);
-    // a turn is sudden: its facing changes between two moments a hair apart
+    // A turn is abrupt: the facing changes between two nearly equal moments.
     const turnAt: number[] = [];
     const facing: number[] = [];
     route.keys.forEach((k, j) => {
@@ -840,10 +776,10 @@ function SkyBird({ bird, route, size, alive, beat }: { bird: number; route: Lett
   );
 }
 
-/** How far the birds out there move with the country's drift: between the clouds and the far mountains, as they fly. */
+/** How far the sky birds move with the landscape's drift: between the clouds and the far mountains. */
 const SKY_DEPTH = 0.016;
 
-/** The birds out there (LETTER_SKY), as many as there are rounds for, the next to come first; their wings all beat on one clock. */
+/** The birds outside (LETTER_SKY), one per route, the next to come first; their wings share one clock. */
 function SkyBirds({ birds, size, style }: { birds: readonly number[]; size: number; style?: Animated.WithAnimatedValue<ViewStyle> }): React.JSX.Element {
   const alive = useMotionAlive();
   const beat = useRound(alive, LETTER_FLIGHT.beatMs);
@@ -857,20 +793,20 @@ function SkyBirds({ birds, size, style }: { birds: readonly number[]; size: numb
   );
 }
 
-/** Your own bird's part in the scene, as a life on the sill. */
+/** Your bird's part in the scene, as a life on the sill. */
 function ownLife(own: WindowScene['own']): Life {
   if (own.kind === 'away') return { kind: 'none' };
   if (own.kind === 'leaving') return { kind: 'leaving', bird: own.bird, play: LETTER_PLAY.before };
   return own;
 }
-/** A visitor's part in the scene, as a life on the sill: answered, your letter drops before it and it takes it; sent on, it picks its own up again. */
+/** A visitor's part in the scene: answered, your letter drops before it and it takes it; sent on, it takes its own back. */
 function visitorLife(visitor: WindowScene['visitor']): Life {
   if (visitor.kind === 'none') return visitor;
   if (visitor.kind === 'leaving') return { kind: 'leaving', bird: visitor.bird, play: visitor.how === 'answered' ? LETTER_PLAY.take : LETTER_PLAY.fetch };
   return visitor;
 }
 
-/** How long the notes of birdsong are on the window once they have risen. */
+/** How long the birdsong notes stay once risen. */
 const SONG_MS = 2800;
 
 export function LetterWindow({
@@ -884,15 +820,15 @@ export function LetterWindow({
 }: {
   scene: WindowScene;
   size: number;
-  /** your bird has flown off through the window */
+  /** Your bird has flown off through the window. */
   onOwnGone?: () => void;
-  /** the visiting bird has flown off through the window */
+  /** The visiting bird has flown off through the window. */
   onVisitorGone?: () => void;
-  /** the bird in the visitor's spot, called or bringing a pen pal's letter, has landed and laid its letter down */
+  /** The bird in the visitor's spot has landed and laid its letter down. */
   onVisitorLanded?: () => void;
-  /** your own bird has flown home and laid the letter it brought on the sill */
+  /** Your bird has flown home and laid its letter on the sill. */
   onOwnLanded?: () => void;
-  /** a bird flying in has come down on the sill, in your own bird's spot or the visitor's: its letter is there from now on */
+  /** An arriving bird has touched down, in your bird's spot or the visitor's; its letter is there from now on. */
   onTouchdown?: (spot: 'own' | 'sill') => void;
 }): React.JSX.Element {
   const reduce = useReducedMotion();
@@ -901,7 +837,7 @@ export function LetterWindow({
   const sky = treeSkyAt(new Date().getHours());
   const own = useMemo(() => ownLife(scene.own), [scene.own]);
   const visitor = useMemo(() => visitorLife(scene.visitor), [scene.visitor]);
-  // with a bird visiting, your own stands aside, facing it
+  // With a visitor, your bird stands aside, facing it.
   const hop = useHop(visitor.kind === 'none' ? 'alone' : 'own', size);
   const ownSpot = hop.spot;
   const ownFlight = useFlight(own, () => onOwnGone?.());
@@ -911,15 +847,14 @@ export function LetterWindow({
   useEffect(() => {
     if (visitor.kind === 'arriving' && visitorFlight.phase === 'settled') landed.current?.();
   }, [visitor.kind, visitorFlight.phase]);
-  // your own bird home: said once it is down and has laid its letter, which is when the letter has landed (at once
-  // for a reader who asked for less motion, whose flight is seen as it ends)
+  // Reported once it is down and has laid its letter (at once under Reduce Motion, where the flight shows its end).
   const ownLanded = useRef(onOwnLanded);
   ownLanded.current = onOwnLanded;
   useEffect(() => {
     if (own.kind === 'arriving' && ownFlight.phase === 'settled') ownLanded.current?.();
   }, [own.kind, ownFlight.phase]);
-  // the moment a bird coming in is down, before it has laid its letter and looked about: a screen left during that
-  // play has still seen the bird land, so it is said then too
+  // The moment an arriving bird touches down, before it lays its letter: a screen left during that play has still
+  // seen it land.
   const touchdown = useRef(onTouchdown);
   touchdown.current = onTouchdown;
   useEffect(() => {
@@ -929,7 +864,7 @@ export function LetterWindow({
     if (visitor.kind === 'arriving' && visitorFlight.phase === 'after') touchdown.current?.('sill');
   }, [visitor.kind, visitorFlight.phase]);
   const drifts = useMemo(() => letterDrifts(treeSeasonAt(new Date()), sky), [sky]);
-  // the notes rise once each time two people become pen pals, and are gone again after
+  // The notes rise once each time two people become pen pals, then fade.
   const [song, setSong] = useState<number | null>(null);
   const seenSong = useRef(scene.song);
   useEffect(() => {
@@ -940,7 +875,7 @@ export function LetterWindow({
     return () => clearTimeout(done);
   }, [scene.song]);
 
-  // the country's drift, the clouds going over, the casements stirring, the plant swaying and the light breathing
+  // The landscape's drift, the clouds, the casements, the plant and the light.
   const drift = useSwing(alive, 16000, 0.5);
   const clouds = useSwing(alive, 46000, 0.5);
   const stir = useSwing(alive, 7000);
@@ -955,15 +890,15 @@ export function LetterWindow({
     transformOrigin: left ? '20% 50%' : '80% 50%',
     transform: [{ scaleX: stir.interpolate({ inputRange: [0, 1], outputRange: left ? [1, 0.92] : [0.92, 1] }) }],
   });
-  // the plant in the pot sways about the pot's rim, as far each way as the shared sway says
+  // The plant sways about the pot's rim, by the shared sway.
   const plant = {
     transformOrigin: `${(LETTER_PLANT_SWAY.x / 120) * 100}% ${(LETTER_PLANT_SWAY.y / 120) * 100}%`,
     transform: [{ rotate: sway.interpolate({ inputRange: [0, 1], outputRange: [`${-LETTER_PLANT_SWAY.turn}deg`, `${LETTER_PLANT_SWAY.turn}deg`] }) }],
   };
   const light = { opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) };
 
-  // a bird flies off to the right of the window, wherever it stood, and comes in facing the way it comes; your own stays
-  // facing the letter it brought home until that is read (`here`, once it has landed), and then turns round
+  // Birds leave to the right and arrive facing their way in; yours keeps facing its letter until it is read (`here`),
+  // then turns round.
   const ownBack = own.kind === 'arriving' || own.kind === 'here';
   const visitorBack = visitor.kind === 'arriving';
   return (
@@ -980,7 +915,7 @@ export function LetterWindow({
       <Layer part="left" sky={sky} size={size} id={id} style={casement(true)} />
       <Layer part="right" sky={sky} size={size} id={id} style={casement(false)} />
       <Layer part="plant" sky={sky} size={size} id={id} style={plant} />
-      {/* the light lies on the sill, so a pigeon standing there is over it, never under it */}
+      {/* The light lies on the sill, so a pigeon standing there is always over it. */}
       <Layer part="light" sky={sky} size={size} id={id} style={light} />
       <Animated.View style={[StyleSheet.absoluteFill, hop.style]} pointerEvents="none">
         <FlightShade flight={ownFlight} spot={ownSpot} facingLeft={ownBack} size={size} />
