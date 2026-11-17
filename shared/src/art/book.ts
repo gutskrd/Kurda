@@ -1,30 +1,8 @@
 /**
- * The drawings Hevalo's book is printed with, which nothing else in the app
- * had a use for.
- *
- * The book is the Kurmanji Road on paper, and its running joke is the road's
- * own: a young deer who is never hungry, he says, and an apple that is
- * smaller every time you look. So here is that apple, bite by bite down to
- * its core (`bookAppleSvg`: the book lays one in the corner of every page of
- * a chapter, a bite further on each page), and the small things the road's
- * scenes are told with and the word pictures did not have: Hamo's moustache,
- * his father's flute, half an old photo, the lake on the summer pastures,
- * the stove of the winter tales (`bookSpotSvg`); a dab of paint for each
- * colour word (`bookPaintSvg`); a sky and a hill for a scene to stand on
- * (`bookBackdropSvg`); and the postmark a finished chapter's stamp is
- * cancelled with (`bookPostmarkSvg`).
- *
- * They are painted as the word pictures are (art/word-pictures.ts): flat
- * planes on the 120-unit canvas with no outlines, each form one face and one
- * step of shade toward the lower right, at most one patch of light, standing
- * on a soft patch of shade on a clear ground. No gradient, blur, mask or
- * clip, so a PDF draws them exactly as a browser does.
- *
- * And the three friends, posed (`bookCastSvg`). A pose changes nothing of a
- * character: it is the rig's own layers put together another way — the
- * deer's pupils turned to the sky, an ear laid back, the head tilted; the
- * near end of Hamo's moustache lifted; Xezal's blush — with a prop laid over
- * or beside them: an apple in the deer's mouth, crumbs, a snore.
+ * Drawings used only by Hevalo's book: the apple that loses a bite on every page (`bookAppleSvg`), scene props
+ * (`bookSpotSvg`), colour-word paint dabs (`bookPaintSvg`), scene backdrops (`bookBackdropSvg`), the chapter stamp's
+ * postmark (`bookPostmarkSvg`) and the three friends posed (`bookCastSvg`; a pose only recombines the rig's layers).
+ * Painted like the word pictures with no gradient, blur, mask or clip, so a PDF draws them exactly as a browser does.
  */
 import {
   characterArt,
@@ -41,81 +19,57 @@ import {
 } from '../characters/index.js';
 import { CANVAS, escapeXml, hashOf, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
 import { VALLEY, bark, blobPath, earthHouse, ellipsePath, foliage, grownTree, orchardTree, roundTree, type TreeShape } from './valley.js';
-import { wordPictureKinBody } from './word-pictures.js';
+// The word pictures' own tones and shapes, so an apple here matches the apple there.
+import {
+  BARK,
+  BLUE,
+  CLAY,
+  COPPER,
+  GLASS,
+  GRASS,
+  LEAF,
+  PAPER,
+  RED,
+  STRAW,
+  WATER,
+  WOOD,
+  box,
+  oval,
+  poly,
+  wordPictureKinBody,
+  type Tone,
+} from './word-pictures.js';
 
 // ───────────────────────────────────────────────────────────── colours
 
-/** A form's three tones: its face, its one step of shade, and its patch of light. */
-type Tone = readonly [face: string, shade: string, light: string];
-
-/** The word pictures' own tones, so an apple here is the apple there. */
-const RED: Tone = ['#e0503f', '#b5382c', '#f08b7e'];
-const LEAF: Tone = [VALLEY.leaf, VALLEY.leafShade, VALLEY.leafLight];
-const GRASS: Tone = ['#b3d184', '#93b566', '#cfe3a4'];
-const BARK: Tone = [VALLEY.trunk, '#664026', '#a8774e'];
-const WOOD: Tone = ['#b8804d', '#8a5a33', '#d6a46f'];
-const STRAW: Tone = ['#e3b866', '#b98b3c', '#f4d996'];
-const BLUE: Tone = [VALLEY.gate, VALLEY.gateDark, '#7fb4e2'];
-const GLASS: Tone = ['#e1eff5', '#b3cdd8', '#ffffff'];
-const WATER: Tone = ['#5aaee0', '#3a86bf', '#cdeaf6'];
-const PAPER: Tone = ['#fbf1dc', '#e2cfaa', '#fffaf0'];
-const COPPER: Tone = ['#cd7c3e', '#9a5326', '#eaa96d'];
 const IRON: Tone = [VALLEY.basalt, VALLEY.basaltSide, VALLEY.basaltLight];
 const BURLAP: Tone = ['#cdb07a', '#a88a54', '#e3cc9c'];
-/** The flesh of a bitten apple, and the shade in the hollow of a bite. */
+/** A bitten apple's flesh, and the shade in a bite's hollow. */
 const FLESH: Tone = ['#f8e6b4', '#e3cb90', '#fff5d8'];
-/** Field stone and the dry-stone walls of the lanes. */
+/** Field stone and the lanes' dry-stone walls. */
 const STONE: Tone = ['#cbc3b2', '#a3998a', '#e2dccf'];
-/** Fired clay: a jug, a pot. */
-const CLAY: Tone = ['#d58f55', '#a6632f', '#ecb37f'];
 /** Brown leather, worn. */
 const LEATHER: Tone = ['#7a4a2c', '#57321d', '#9c6845'];
 /** An old photo's browns. */
 const SEPIA: Tone = ['#d9c39a', '#a98d5f', '#f1e3c4'];
-/** Hamo's moustache: his own black, never pure. */
+/** Hamo's moustache black, never pure. */
 const MOUSTACHE: Tone = ['#2a1c16', '#150d0a', '#5a4638'];
-/** The near-black of a seed, a hole, a pencil's lead. */
+/** The near-black of a seed, a hole, a pencil lead. */
 const INK = VALLEY.ink;
-/** The patch of shade every thing stands on, as under the word pictures. */
+/** The shade patch things stand on, as under the word pictures. */
 const GROUND = VALLEY.earthShade;
 
 // ───────────────────────────────────────────────────────────── shapes
 
 const f = n;
 const E = ellipsePath;
-/** A circle as a path, so many can share one element; its radius is rounded first, so the two arcs that draw it meet as one round. */
+/** A circle as a path, so many can share one element; the radius is rounded first so its two arcs meet exactly. */
 const O = (cx: number, cy: number, r: number): string => {
   const q = Math.round(r * 10) / 10;
   return ellipsePath(cx, cy, q, q);
 };
 
-/** An ellipse turned `deg` degrees about its centre, as a path. */
-function oval(cx: number, cy: number, rx: number, ry: number, deg: number): string {
-  const a = (deg * Math.PI) / 180;
-  const [dx, dy] = [Math.cos(a) * rx, Math.sin(a) * rx];
-  const arc = `A${f(rx)} ${f(ry)} ${f(deg)} 1 0`;
-  return `M${f(cx - dx)} ${f(cy - dy)}${arc} ${f(cx + dx)} ${f(cy + dy)}${arc} ${f(cx - dx)} ${f(cy - dy)}Z`;
-}
-
-/** A rectangle with its corners rounded by `r`. */
-function box(x: number, y: number, w: number, h: number, r = 0): string {
-  if (r <= 0) return `M${f(x)} ${f(y)}v${f(h)}h${f(w)}v${f(-h)}Z`;
-  const q = Math.min(r, w / 2, h / 2);
-  const c = `a${f(q)} ${f(q)} 0 0 0`;
-  return (
-    `M${f(x + q)} ${f(y)}${c} ${f(-q)} ${f(q)}v${f(h - 2 * q)}${c} ${f(q)} ${f(q)}h${f(w - 2 * q)}` +
-    `${c} ${f(q)} ${f(-q)}v${f(-(h - 2 * q))}${c} ${f(-q)} ${f(-q)}Z`
-  );
-}
-
-/** A closed polygon through x, y pairs. */
-function poly(...xy: number[]): string {
-  let d = '';
-  for (let i = 0; i + 1 < xy.length; i += 2) d += `${i === 0 ? 'M' : 'L'}${f(xy[i]!)} ${f(xy[i + 1]!)}`;
-  return `${d}Z`;
-}
-
-/** A smooth closed outline through the points (Catmull-Rom, as cubic Béziers). */
+/** A smooth closed Catmull-Rom outline through the points, as cubic Béziers. */
 function smooth(pts: readonly Pt[]): string {
   const m = pts.length;
   const at = (i: number): Pt => pts[((i % m) + m) % m]!;
@@ -140,15 +94,14 @@ class Brush {
     this.out += `<path d="${d}" fill="${hex}"${more}/>`;
   }
 
-  /** A line for a thing that is a line: a stalk, a string, a wire, a crumb's fall. */
+  /** A stroke for things that are lines: a stalk, a string, a wire, falling crumbs. */
   line(d: string, hex: string, width: number, more = ''): void {
     this.out += `<path d="${d}" fill="none" stroke="${hex}" stroke-width="${f(width)}" stroke-linecap="round" stroke-linejoin="round"${more}/>`;
   }
 
   /**
-   * A form in one face and one step of shade: the whole shape in its shade,
-   * and its face over it drawn `k` of its size toward (ax, ay), a point near
-   * its lit upper-left edge, so the shade shows as a band to the lower right.
+   * A form with one face and one step of shade: the whole shape in shade, and its face over it scaled `k` toward (ax, ay)
+   * near the lit upper-left edge, so the shade shows as a band to the lower right.
    */
   form(d: string, t: Tone, ax: number, ay: number, k = 0.88): void {
     this.fill(d, t[1]);
@@ -160,14 +113,14 @@ class Brush {
     this.out += `<path d="${E(cx, cy, rx, rx * 0.15)}" fill="${GROUND}" fill-opacity="0.45"/>`;
   }
 
-  /** What `draw` paints, moved or turned as one. */
+  /** Paints `draw` inside one transformed group. */
   group(transform: string, draw: () => void): void {
     this.out += `<g transform="${transform}">`;
     draw();
     this.out += '</g>';
   }
 
-  /** Markup made elsewhere in the valley's hand (a house, a tree). */
+  /** Markup made elsewhere in the valley style (a house, a tree). */
   add(markup: string): void {
     this.out += markup;
   }
@@ -177,7 +130,7 @@ class Brush {
   }
 }
 
-/** A picture on the 120-unit canvas: decorative and hidden from screen readers unless it is given a `title`. */
+/** A picture on the 120-unit canvas, decorative and hidden from screen readers unless given a `title`. */
 function picture(body: string, prefix: string, size: number | undefined, title: string | undefined, view = `0 0 ${CANVAS} ${CANVAS}`, ratio = 1): string {
   const width = size ?? CANVAS;
   if (!(width > 0) || !Number.isFinite(width)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
@@ -186,23 +139,19 @@ function picture(body: string, prefix: string, size: number | undefined, title: 
 }
 
 export interface BookArtOptions {
-  /** how wide it is drawn, in points or pixels; the canvas's own 120 by default */
+  /** Display width in points or pixels; the canvas's 120 by default. */
   size?: number;
-  /** its name for a screen reader; without one the picture is decorative and hidden */
+  /** The accessible label; without one the picture is decorative and hidden. */
   title?: string;
   idPrefix?: string;
 }
 
 // ───────────────────────────────────────────────────────────── the apple
 
-/** One cubic Bézier: its start, its two handles and its end. */
+/** One cubic Bézier: start, two handles, end. */
 type Cubic = readonly [Pt, Pt, Pt, Pt];
 
-/**
- * The word pictures' apple (the same outline, so a whole apple here and
- * there are one apple), as the six curves it is drawn with, from the dip
- * under its stalk round by the left, the bottom and the right.
- */
+/** The word pictures' apple outline as six cubics, from the dip under the stalk round by the left, bottom and right. */
 const APPLE: readonly Cubic[] = [
   [[60, 41], [49, 31], [22, 35], [22, 63]],
   [[22, 63], [22, 86], [39, 104], [51, 104]],
@@ -212,12 +161,12 @@ const APPLE: readonly Cubic[] = [
   [[98, 63], [98, 35], [71, 31], [60, 41]],
 ];
 
-/** The middle of the apple's flesh: a bite is taken toward it. */
+/** The middle of the apple's flesh, which bites are taken toward. */
 const HEART: Pt = [60, 72];
 
 const lerp = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 
-/** The part of a curve from `t0` to `t1` of its length, as a curve of its own (de Casteljau, twice). */
+/** The part of a cubic from `t0` to `t1` as its own cubic (de Casteljau subdivision, twice). */
 function part(c: Cubic, t0: number, t1: number): Cubic {
   const head = (q: Cubic, t: number): Cubic => {
     const ab = lerp(q[0], q[1], t);
@@ -242,15 +191,12 @@ function part(c: Cubic, t0: number, t1: number): Cubic {
 const p2 = (p: Pt): string => `${f(p[0])} ${f(p[1])}`;
 const curveTo = (c: Cubic): string => `C${p2(c[1])} ${p2(c[2])} ${p2(c[3])}`;
 
-/**
- * A bite out of the apple: from where on its outline to where (a curve's
- * number and how far along it, each), and how many teeth marks it leaves.
- */
+/** A bite out of the apple: where on the outline it starts and ends (curve index and position along it) and how many tooth marks it leaves. */
 interface Bite {
   from: readonly [curve: number, t: number];
   to: readonly [curve: number, t: number];
   dents: number;
-  /** how far its middle goes in toward the heart */
+  /** How far its middle reaches toward the heart. */
   depth: number;
 }
 
@@ -260,11 +206,7 @@ function deeper(p: Pt, by: number): Pt {
   return [p[0] + ((HEART[0] - p[0]) / reach) * by, p[1] + ((HEART[1] - p[1]) / reach) * by];
 }
 
-/**
- * Where the teeth went in between `a` and `b`: the ends of each mark, along
- * a line that sags `depth` toward the apple's heart, so a big bite is a
- * hollow and not a straight cut.
- */
+/** The tooth-mark endpoints between `a` and `b`, along a line sagging `depth` toward the heart, so a big bite is a hollow, not a straight cut. */
 function toothline(a: Pt, b: Pt, count: number, depth: number): Pt[] {
   const sag = deeper(lerp(a, b, 0.5), depth * 2);
   return Array.from({ length: count + 1 }, (_, k) => {
@@ -273,28 +215,26 @@ function toothline(a: Pt, b: Pt, count: number, depth: number): Pt[] {
   });
 }
 
-/** The round marks of the teeth through `pts`, each bulging toward the apple's heart, as arcs. */
+/** The round tooth marks through `pts`, each bulging toward the heart, as arcs. */
 function dents(pts: readonly Pt[]): string {
   let d = '';
   for (let k = 1; k < pts.length; k++) {
     const [a, b] = [pts[k - 1]!, pts[k]!];
     const r = Math.hypot(b[0] - a[0], b[1] - a[1]) * 0.56;
-    // an arc drawn with sweep 1 bulges to the left of the way it is going (the canvas's y runs down)
+    // An arc with sweep 1 bulges to the left of its direction, since the canvas's y runs down.
     const cross = (b[0] - a[0]) * (HEART[1] - a[1]) - (b[1] - a[1]) * (HEART[0] - a[0]);
     d += `A${f(r)} ${f(r)} 0 0 ${cross < 0 ? 1 : 0} ${p2(b)}`;
   }
   return d;
 }
 
-/** Where the apple's face is lit from: its shade is the whole apple, and its face the same apple drawn smaller toward this point. */
+/** The apple's light source: its shade is the whole apple and its face the same apple scaled toward this point. */
 const LIT: Pt = [32, 44];
 
 /**
- * The apple's outline with these bites out of it (in the order they come
- * round it), and the flesh each one shows. With `k` under 1 it is the
- * apple's lit face: the outline drawn `k` of its size toward `LIT`, but its
- * bites exactly where the whole apple's are, so the face never shows past
- * the edge of a bite.
+ * The apple's outline with these bites taken (in order round it), and the flesh each shows. With `k` below 1 it is the
+ * lit face: the outline scaled toward `LIT` but with the bites exactly where the whole apple's are, so the face never
+ * shows past a bite's edge.
  */
 function bitten(bites: readonly Bite[], k = 1): { skin: string; flesh: string } {
   const lit = (p: Pt): Pt => [LIT[0] + (p[0] - LIT[0]) * k, LIT[1] + (p[1] - LIT[1]) * k];
@@ -315,7 +255,7 @@ function bitten(bites: readonly Bite[], k = 1): { skin: string; flesh: string } 
     const b = part(APPLE[bite.to[0]]!, bite.to[1], 1)[0];
     const marks = toothline(a, b, bite.dents, bite.depth);
     skin += k === 1 ? dents(marks) : `L${p2(a)}${dents(marks)}L${p2(lit(b))}`;
-    // the flesh is the same row of marks set a little deeper into the apple and joined to the first: a band along the bite
+    // The flesh is the same row of marks set a little deeper and joined to the first: a band along the bite.
     const inner = marks.map((p) => deeper(p, 7)).reverse();
     flesh += `M${p2(a)}${dents(marks)}L${p2(inner[0]!)}${dents(inner)}Z`;
     at = bite.to;
@@ -324,7 +264,7 @@ function bitten(bites: readonly Bite[], k = 1): { skin: string; flesh: string } 
   return { skin: `${skin}Z`, flesh };
 }
 
-/** The apple with its bites, painted: its shade, its lit face, and the flesh of each bite. */
+/** The bitten apple painted: its shade, lit face, and each bite's flesh. */
 function bittenApple(b: Brush, bites: readonly Bite[]): void {
   const whole = bitten(bites);
   b.fill(whole.skin, RED[1]);
@@ -332,7 +272,7 @@ function bittenApple(b: Brush, bites: readonly Bite[]): void {
   if (whole.flesh) b.fill(whole.flesh, FLESH[0]);
 }
 
-/** The bites of each stage between the whole apple and its core: one, then a deeper one, then another from the other side. */
+/** The bites at each stage between the whole apple and the core: one, then a deeper one, then another from the other side. */
 const BITES: readonly (readonly Bite[])[] = [
   [],
   [{ from: [4, 0.9], to: [5, 0.42], dents: 3, depth: 5 }],
@@ -343,7 +283,7 @@ const BITES: readonly (readonly Bite[])[] = [
   ],
 ];
 
-/** How many bites the apple can lose: after the last there is only the core. */
+/** How many bites the apple can lose; after the last only the core is left. */
 export const BOOK_APPLE_BITES = 4;
 
 function stalk(b: Brush, leaf: boolean): void {
@@ -353,11 +293,11 @@ function stalk(b: Brush, leaf: boolean): void {
   b.line('M67 29C74 26 81 23 88 22', LEAF[2], 1.4);
 }
 
-/** What is left when Hevalo has finished: the two ends still in their skin, the flesh eaten to a waist between them, and two seeds. */
+/** The core: both ends still in skin, the flesh eaten to a waist between them, and two seeds. */
 function core(b: Brush): void {
   b.ground(22);
   stalk(b, false);
-  // the flesh first, so the skin of the two ends lies over where it meets them
+  // The flesh first, so the ends' skin lies over where it meets them.
   b.form('M40 52C50 60 52 68 50 76C48 84 44 90 42 94H78C76 90 72 84 70 76C68 68 70 60 80 52Z', FLESH, 44, 54, 0.9);
   b.fill('M60 41C52 33 36 36 31 48C36 55 44 58 50 56C54 59 57 59 60 57C63 59 66 59 70 56C76 58 84 55 89 48C84 36 68 33 60 41Z', RED[1]);
   b.fill('M60 41C52 33 36 36 31 48C36 54 43 56 49 53C53 56 57 56 60 54C63 56 66 55 69 53C73 52 76 46 74 40C69 36 64 37 60 41Z', RED[0]);
@@ -371,15 +311,11 @@ function apple(b: Brush, bites: number): void {
   b.ground(32 - bites * 2);
   stalk(b, true);
   bittenApple(b, BITES[bites]!);
-  // the patch of light sits where the third bite goes
+  // The patch of light sits where the third bite goes.
   if (bites < 3) b.fill(oval(39, 58, 5, 9, 20), RED[2]);
 }
 
-/**
- * Hevalo's apple after `bites` bites: 0 the whole apple, as the word
- * pictures draw it, and `BOOK_APPLE_BITES` the core. The book lays one in
- * the corner of each page of a chapter, and it is smaller on every page.
- */
+/** Hevalo's apple after `bites` bites: 0 is whole, as in the word pictures, and `BOOK_APPLE_BITES` is the core. */
 export function bookAppleSvg(opts: BookArtOptions & { bites: number }): string {
   const bites = Math.floor(opts.bites);
   if (!(bites >= 0 && bites <= BOOK_APPLE_BITES)) throw new RangeError(`art: an apple has 0 to ${BOOK_APPLE_BITES} bites out of it, not ${String(opts.bites)}`);
@@ -392,11 +328,11 @@ export function bookAppleSvg(opts: BookArtOptions & { bites: number }): string {
 
 type Draw = (b: Brush, random: () => number) => void;
 
-/** A house of the valley's own as a spot shows it: the shade it casts as soft as every other thing's, so it lies on any ground a scene has. */
+/** A valley house as a spot shows it, its cast shade softened like every other thing's so it suits any scene's ground. */
 const soft = (markup: string): string => markup.split(`fill="${GROUND}"`).join(`fill="${GROUND}" fill-opacity="0.45"`);
 
 const SPOTS = {
-  // Hamo's pride, on its own: full across the lip, and the two ends turned up, as he wears it when he is pleased
+  // Hamo's moustache alone: full across the lip with both ends turned up, as when he is pleased.
   moustache: (b) => {
     const half: Pt[] = [[60, 52], [70, 45], [84, 46], [97, 51], [106, 45], [111, 34], [110, 51], [101, 63], [87, 70], [73, 70], [64, 64], [60, 60]];
     const whole = smooth([...half, ...half.slice(1, -1).reverse().map(([x, y]): Pt => [120 - x, y])]);
@@ -404,7 +340,7 @@ const SPOTS = {
     b.line('M67 53C76 50 88 52 97 57M53 53C44 50 32 52 23 57', MOUSTACHE[2], 2.4);
   },
 
-  // the shepherd's flute: a plain wooden pipe, bound at both ends, six holes down it, lying where it was put down
+  // The shepherd's flute: a plain wooden pipe bound at both ends, six holes down it, lying where it was put down.
   flute: (b) => {
     b.ground(46, 60, 102);
     b.group('rotate(-7 60 92)', () => {
@@ -416,7 +352,7 @@ const SPOTS = {
     });
   },
 
-  // half of an old photo, torn down its right side and propped where it was found: two children by the walnut tree, gone brown with forty years
+  // Half of an old sepia photo, torn down its right side and propped up: two children by the walnut tree.
   photo: (b) => {
     b.ground(36, 60, 104);
     b.group('rotate(-5 56 100)', () => {
@@ -425,35 +361,35 @@ const SPOTS = {
       b.fill(poly(22, 30, ...edge, 22, 101), PAPER[2]);
       b.fill(poly(28, 36, 82, 36, 85, 43, 79, 49, 86, 57, 80, 65, 87, 74, 81, 82, 85, 91, 28, 91), SEPIA[2]);
       b.fill('M28 79C40 72 54 75 64 71C72 68 78 71 82 75L85 91H28Z', SEPIA[0]);
-      // the walnut tree behind them
+      // The walnut tree behind them.
       b.fill(box(35, 55, 3.5, 20), SEPIA[1]);
       b.fill(O(37, 50, 10), SEPIA[1]);
-      // the boy, and his sister beside him, half of her torn away with the other half of the photo
+      // The boy, and his sister beside him, half of her torn away.
       const child = (x: number, y: number, k: number): string => O(x, y, 3.6 * k) + box(x - 3.8 * k, y + 3.6 * k, 7.6 * k, 12 * k, 3 * k) + box(x - 2.6 * k, y + 15 * k, 2.2 * k, 6 * k) + box(x + 0.4 * k, y + 15 * k, 2.2 * k, 6 * k);
       b.fill(child(52, 58, 1.05) + child(71, 61, 0.92), '#7d6442');
       b.fill(O(51, 57, 2.4) + O(70.2, 60.2, 2.1), SEPIA[0]);
     });
   },
 
-  // the lake above the tents: still water in its green bank under the mountains, which it shows again upside down
+  // The lake above the tents: still water in its green bank, reflecting the mountains upside down.
   lake: (b, random) => {
     b.fill(poly(14, 74, 27, 54, 39, 46.6, 52, 30.4, 58.6, 37, 65, 34.8, 82, 41, 93.6, 55, 106, 74), '#9aa9c4');
-    // each peak's side away from the light, and the snow still lying near the tops
+    // Each peak's shaded side, and snow near the tops.
     b.fill(poly(52, 30.4, 58.6, 37, 56, 44, 61, 52, 54, 74, 50, 52, 54, 42) + poly(82, 41, 93.6, 55, 106, 74, 90, 74, 92, 60, 86, 50), '#7d8dac');
     b.fill(poly(47.6, 36.4, 52, 30.4, 56.4, 35.2, 53.4, 36, 51.6, 39.4, 49.4, 36.8) + poly(77.6, 43.4, 82, 41, 86.4, 45.4, 83.4, 45, 81.4, 47.2, 79.6, 44.8), VALLEY.snow);
     b.fill(blobPath(60, 84, 54, 19, 11, 0.12, random), GRASS[1]);
     b.fill(blobPath(59, 82.6, 52, 17.4, 11, 0.12, random), GRASS[0]);
-    // the water, its far edge holding the mountains' reflection, and two streaks of light on it
+    // The water, its far edge holding the mountains' reflection, with two streaks of light.
     b.fill('M26 82.6C28 77.8 40 75.4 58 75.6C76 75.8 90 77.2 94 81.4C96 85.6 86 89.4 66 90C46 90.6 27 88.4 26 82.6Z', WATER[0]);
     b.fill('M34 77.6C42 76.2 50 75.6 58 75.6C66 75.6 76 76 84 77.2L76 79.6L66 78.2L58 82.4L50 78.4L42 80.2Z', '#6f8fb8');
     b.line('M38 85.4H50M62 87H76', WATER[2], 1.6);
-    // reeds at the near bank, of different heights, and stones on the far side
+    // Reeds of different heights at the near bank, and stones on the far side.
     b.line('M15.6 89V75.4M18.6 90V79.6M21 88.6V77', LEAF[1], 1.4);
     b.fill(oval(15.6, 74.6, 1.1, 2.6, 0) + oval(21, 76.2, 1, 2.2, 0), BARK[1]);
     b.fill(ellipsePath(99.4, 88.4, 3.2, 2) + ellipsePath(104.4, 86, 2.2, 1.4), IRON[2]);
   },
 
-  // the iron stove of the winter evenings, its door glowing and the kettle on
+  // The iron stove of the winter evenings, its door glowing and the kettle on.
   stove: (b) => {
     b.ground(36);
     b.fill(box(68, 10, 10, 42), IRON[1]);
@@ -469,7 +405,7 @@ const SPOTS = {
     b.line('M39 33C40 24 52 24 53 33', COPPER[1], 2.2);
   },
 
-  // Dapîr's calendar by the stove, Saturday ringed in red
+  // Dapîr's calendar by the stove, Saturday ringed in red.
   calendar: (b) => {
     b.ground(30);
     b.line('M42 24L60 12L78 24', BARK[1], 1.6);
@@ -484,7 +420,7 @@ const SPOTS = {
     b.line(O(71, 63, 7.5), RED[1], 2);
   },
 
-  // Hamo's old notebook and the pencil he writes the summer down with
+  // Hamo's old notebook and pencil.
   notebook: (b) => {
     b.ground(38);
     b.group('rotate(-9 58 62)', () => {
@@ -503,7 +439,7 @@ const SPOTS = {
     });
   },
 
-  // the ladder of the apple harvest
+  // The apple-harvest ladder.
   ladder: (b) => {
     b.ground(30);
     const rail = (x0: number, x1: number, y: number): number => x0 + ((x1 - x0) * (100 - y)) / 86;
@@ -514,7 +450,7 @@ const SPOTS = {
     b.line('M41 96L49.4 18', WOOD[2], 1.6);
   },
 
-  // a sack of apples for the summer pastures: for Bişar, says Hamo
+  // A sack of apples for the summer pastures.
   sack: (b) => {
     b.ground(40);
     b.form(smooth([[38, 101], [29, 80], [34, 58], [48, 46], [60, 44], [72, 46], [86, 58], [91, 80], [82, 101], [60, 104]]), BURLAP, 32, 48, 0.92);
@@ -528,7 +464,7 @@ const SPOTS = {
     });
   },
 
-  // the lamp at the blue gate on the night before Newroz
+  // The lamp at the blue gate on the night before Newroz.
   lamp: (b) => {
     b.ground(26);
     b.line('M45 84C30 60 40 26 60 22C80 26 90 60 75 84', COPPER[1], 2.6);
@@ -541,9 +477,9 @@ const SPOTS = {
     b.line('M53 48C51 58 50 66 51 76', GLASS[2], 2);
   },
 
-  // the tracks Hevalo leaves: a walking line of small cloven prints, each two slim halves with a gap between them, left and right by turns
+  // Hevalo's tracks: a walking line of small cloven prints, each two slim halves with a gap, alternating left and right.
   hoofprints: (b) => {
-    // one half of a print: a slim teardrop, pointed at the toe and round at the heel
+    // One half of a print: a slim teardrop, pointed at the toe and round at the heel.
     const half = 'M0 -9C-2.8 -7.6 -4.2 -1.8 -3.6 3.4C-3.2 7 -1.6 8.4 0 8C0.6 3 0.8 -3 0 -9Z';
     const print = (x: number, y: number, turn: number, k: number): void =>
       b.group(`translate(${x} ${y}) rotate(${turn}) scale(${k})`, () => {
@@ -551,7 +487,8 @@ const SPOTS = {
         b.fill(half, VALLEY.wallSide, ' transform="translate(1.4 0) scale(-1 1)"');
         b.fill(E(-1.6, 6.2, 1.5, 1.1) + E(1.6, 6.2, 1.5, 1.1), VALLEY.earthShade);
       });
-    // the line bends a little as a walk does, each step its own size and angle, a step's length apart and left and right of the line by turns, so the prints never touch and read as a deer walking, not a row of beans
+    // The line bends a little as a walk does, each step varied in size and angle, a stride apart and alternating sides, so the
+    // prints never touch and read as a deer walking rather than a row of beans.
     print(27, 99, 40, 1.12);
     print(38, 78, 47, 1.08);
     print(60, 68, 37, 1.06);
@@ -559,15 +496,15 @@ const SPOTS = {
     print(93, 37, 39, 1);
   },
 
-  // Kobanî under Miştenûr: the flat roofs of Hamo's town, the fig tree in his father's yard, and the hill above them all, its foot lost among the houses
+  // Kobanî under Miştenûr: the flat roofs of Hamo's town, the fig tree in his father's yard, and the hill above them.
   town: (b, random) => {
     b.ground(54, 60, 104);
-    // Miştenûr: a long hill rising unevenly to a flat top, its right flank in shade, a path worn up its face; it ends behind the roofs, not on a line
+    // Miştenûr: a long hill rising unevenly to a flat top, its right flank shaded, a path up its face, ending behind the roofs.
     b.fill('M2 92C8 80 14 66 24 54C30 46 36 40 46 37.4C52 36 58 35.6 64 35.8C72 36 80 37.6 86 41.4C94 46.6 102 58 108 70C112 78 115 86 118 92C96 96 24 96 2 92Z', '#c9c6a2');
     b.fill('M86 41.4C94 46.6 102 58 108 70C112 78 115 86 118 92C110 93 102 93.6 96 94C95 76 90 58 81 39C83 39.6 84.6 40.4 86 41.4Z', '#b5b08a');
     b.fill('M42 39C48 37 56 36.2 64 36.2C70 36.2 75 36.8 79 37.8C71 38.4 57 38.6 42 39Z', '#dedbb8');
     b.line('M30 72C38 68 46 66 52 62C46 58 50 52 58 48C62 46 64 43 66 39', '#dedbb8', 1.4);
-    // the houses, each its own: two storeys, a parapet, a stair up the side, a ladder to the roof; the shade each casts is as soft as the rest
+    // The houses, each different: two storeys, a parapet, a side stair, a roof ladder; their cast shade is soft like the rest.
     const house = (x: number, y: number, w: number, h: number, d: number, more: { door?: string; roofLine?: string } = {}): void =>
       b.add(soft(earthHouse(x, y, w, h, d, { dark: false, ground: GROUND, ...more })));
     house(70, 78, 24, 24, 10, { roofLine: VALLEY.fruit });
@@ -578,14 +515,14 @@ const SPOTS = {
     b.fill(poly(34, 103, 46, 97, 46, 93, 34, 99), VALLEY.parapet);
     house(72, 104, 30, 22, 12, { door: VALLEY.gate });
     b.fill(box(70, 80, 34, 2.6, 1), VALLEY.parapet);
-    // the fig is small enough here that a round tree, its trunk well up inside its crown, says it with fewer curves
+    // At this size a round tree with its trunk well up inside the crown reads as a fig with fewer curves.
     b.add(soft(roundTree(58, 104, 0.62, foliage(false), GROUND, random)));
   },
 
 
-  // ── what a scene sets things on, and what stands in front of it
+  // ── What a scene sets things on, and what stands in front of it.
 
-  // a low round table of the guest room, its top seen a little from above: what is put on it stands on its middle
+  // A low round guest-room table seen a little from above; things put on it stand on its middle.
   lowTable: (b) => {
     b.ground(50, 60, 104);
     b.fill(box(31, 74, 6, 26, 2.5) + box(83, 74, 6, 26, 2.5), WOOD[1]);
@@ -596,7 +533,7 @@ const SPOTS = {
     b.fill(oval(42, 66.5, 20, 3.6, -4), WOOD[2]);
   },
 
-  // the round copper tray tea comes on, set down on the floor or the grass
+  // The round copper tea tray, set down on the floor or the grass.
   tray: (b) => {
     b.ground(54, 60, 104);
     b.fill(E(60, 100.5, 52, 8.6), COPPER[1]);
@@ -605,7 +542,7 @@ const SPOTS = {
     b.line('M24 95.4C36 91.6 52 90.6 66 91', COPPER[2], 1.8);
   },
 
-  // the meal cloth spread on the floor for breakfast or a guest's dinner: a woven red ground inside a pale border of lozenges
+  // The meal cloth spread on the floor: a woven red ground inside a pale border of lozenges.
   cloth: (b) => {
     const edge = (k: number, dy: number): string => {
       const [l, r, t, u] = [12 + k * 1.4, 108 - k * 1.4, 84 + k + dy, 104 - k + dy];
@@ -622,7 +559,7 @@ const SPOTS = {
     b.line('M36 90.4H84', mix(VALLEY.red, VALLEY.cream, 0.35), 1.2);
   },
 
-  // a flat-topped rock by the path, the kind a shepherd sets his tea glass on
+  // A flat-topped rock by the path, where a shepherd sets his tea glass.
   rock: (b) => {
     b.ground(50, 62, 104);
     b.form(smooth([[14, 103], [16, 88], [24, 74], [38, 67.4], [60, 66], [82, 67.4], [96, 74], [104, 88], [106, 103], [60, 105]]), STONE, 20, 70, 0.9);
@@ -631,7 +568,7 @@ const SPOTS = {
     b.fill(blobPath(84, 99, 9, 3.6, 7, 0.3, seeded('book-rock-moss')), GRASS[1]);
   },
 
-  // a dry-stone wall of the lanes, waist-high, its stones laid by hand and capped with flat ones: a scene's near edge, or a seat
+  // A waist-high dry-stone wall capped with flat stones: a scene's near edge, or a seat.
   stoneWall: (b, random) => {
     b.fill(box(0, 62, 120, 44), STONE[1]);
     let stones = '';
@@ -651,7 +588,7 @@ const SPOTS = {
     b.fill(blobPath(14, 105, 10, 3.4, 7, 0.4, random) + blobPath(98, 105, 12, 3.4, 7, 0.4, random), GRASS[1]);
   },
 
-  // a bed made up on the floor, as village houses make one: a thick mattress and a quilt patterned in the red and indigo of a kilim
+  // A village bed made up on the floor: a thick mattress and a quilt in kilim red and indigo.
   bedding: (b) => {
     b.ground(56, 60, 105);
     b.form(box(4, 84, 112, 20, 7), PAPER, 6, 85, 0.94);
@@ -661,15 +598,15 @@ const SPOTS = {
     b.fill([24, 42, 60, 78, 96].map((x) => poly(x, 72.6, x + 4, 76.6, x, 80.6, x - 4, 76.6)).join(''), VALLEY.indigo);
   },
 
-  // ── places a scene is set in, and what grows there
+  // ── Places a scene is set in, and what grows there.
 
-  // one of Hamo's apple trees, its fruit nearly ripe
+  // One of Hamo's apple trees, its fruit nearly ripe.
   appleTree: (b, random) => {
     b.ground(40, 66, 104);
     b.add(grownTree({ ...orchardTree(58, 104, 2.85, 0.9, random), shadow: false }, foliage(false, VALLEY.apple), bark(false), GROUND, random));
   },
 
-  // the old walnut tree: a thick pale trunk and a broad dark crown, the green nuts among the leaves
+  // The old walnut tree: a thick pale trunk, a broad dark crown, green nuts among the leaves.
   walnutTree: (b, random) => {
     const shape: TreeShape = {
       foot: [60, 104],
@@ -694,13 +631,13 @@ const SPOTS = {
     b.add(grownTree(shape, { face: '#5d8c44', light: '#82ad5e', shade: '#456b35', dots: '#a8c15c' }, { face: '#a39383', shade: '#7c6f63' }, GROUND, random));
   },
 
-  // a village house of mud brick under its flat roof, its blue door and a small window, as Sêvan's houses are
+  // A mud-brick village house under its flat roof, with a blue door and a small window.
   flatHouse: (b) => {
     b.add(soft(earthHouse(12, 104, 68, 46, 28, { dark: false, ground: GROUND, door: VALLEY.gate, roofLine: VALLEY.fruit })));
     b.fill(box(56, 66, 8, 7, 1.5), VALLEY.window);
   },
 
-  // the same house with the ladder up to its roof, where everyone sleeps in summer
+  // The same house with the ladder to its roof, where everyone sleeps in summer.
   houseLadder: (b) => {
     b.add(soft(earthHouse(8, 104, 66, 46, 28, { dark: false, ground: GROUND, door: VALLEY.gate })));
     b.line('M76 104L69 52M85 104L78 52', WOOD[0], 3);
@@ -708,7 +645,7 @@ const SPOTS = {
     b.line('M75.6 103L68.8 54', WOOD[2], 1);
   },
 
-  // the old stone house by the lake: its roof long gone, its walls broken down to different heights, a doorway and a window open to the sky
+  // The old roofless stone house by the lake: walls broken to different heights, a doorway and a window open to the sky.
   ruin: (b, random) => {
     b.ground(54, 62, 104);
     b.fill(poly(80, 104, 80, 60, 92, 54, 98, 60, 104, 57, 106, 96), STONE[1]);
@@ -719,16 +656,16 @@ const SPOTS = {
     b.fill(blobPath(46, 105, 10, 3, 7, 0.4, random) + blobPath(104, 104, 6, 2.4, 6, 0.4, random), GRASS[1]);
   },
 
-  // ── animals the word pictures do not have
+  // ── Animals the word pictures do not have.
 
-  // Zerê, the golden doe of the summer pastures: no antlers
+  // Zerê, the golden doe of the summer pastures: no antlers.
   doe: (b) => b.add(wordPictureKinBody('doe')),
-  // Dapîr's white goat, her long beard and her collar
+  // Dapîr's white goat, with her long beard and collar.
   whiteGoat: (b) => b.add(wordPictureKinBody('whiteGoat')),
-  // a ram, the curled horns of the flock
+  // A ram with curled horns.
   ram: (b) => b.add(wordPictureKinBody('ram')),
 
-  // a small bird in flight, its wings up: what crosses a scene's sky
+  // A small bird in flight, wings up, crossing a scene's sky.
   flyingBird: (b) => {
     const t: Tone = ['#a8703f', '#7c4f2a', '#cf9a64'];
     b.fill(smooth([[64, 58], [76, 38], [92, 26], [90, 38], [78, 56]]), t[1]);
@@ -740,7 +677,7 @@ const SPOTS = {
     b.fill(O(32, 58, 1.8), INK);
   },
 
-  // an eagle soaring, its wings spread wide and fingered at the tips: dark, with gold on its nape
+  // An eagle soaring, wings wide and fingered at the tips: dark, with gold on its nape.
   eagle: (b) => {
     const t: Tone = ['#5a4030', '#3d2b20', '#7a5a42'];
     const wing = (side: 1 | -1): string => {
@@ -756,9 +693,9 @@ const SPOTS = {
     b.fill(O(34, 53, 1.3), INK);
   },
 
-  // ── small things
+  // ── Small things.
 
-  // the rusty tin from under the walnut tree, its lid open on a handful of marbles
+  // The rusty tin from under the walnut tree, its lid open on a handful of marbles.
   tin: (b) => {
     const rust: Tone = ['#b8673a', '#8a4526', '#d98e5c'];
     b.ground(42, 62, 104);
@@ -774,7 +711,7 @@ const SPOTS = {
     b.line('M27 74H82', rust[2], 1.4);
   },
 
-  // Doctor Azad's bag: brown leather, a brass clasp along its mouth, a handle worn smooth
+  // Doctor Azad's bag: brown leather, a brass clasp along its mouth, a worn handle.
   doctorBag: (b) => {
     b.ground(46, 60, 104);
     b.line('M44 52C44 36 76 36 76 52', LEATHER[1], 5);
@@ -785,7 +722,7 @@ const SPOTS = {
     b.line('M24 90H96', LEATHER[2], 1.2, ' stroke-dasharray="2 2.6"');
   },
 
-  // Baran's boots, muddy to the ankles
+  // Baran's boots, muddy to the ankles.
   boots: (b) => {
     const boot = (x: number, t: Tone, mud: string): void => {
       b.fill(`M${x} 46H${x + 22}V86C${x + 30} 88 ${x + 38} 92 ${x + 38} 98V103H${x - 2}V60C${x - 2} 52 ${x} 48 ${x} 46Z`, t[0]);
@@ -798,7 +735,7 @@ const SPOTS = {
     b.fill(O(20, 98, 2.4) + O(96, 96, 2) + O(100, 101, 1.6), '#8a6a45');
   },
 
-  // a clay jug for milk or spring water, its handle on its shoulder
+  // A clay jug for milk or spring water, its handle on its shoulder.
   jug: (b) => {
     b.ground(34, 60, 104);
     b.line('M76 48C92 48 92 72 76 76', CLAY[1], 5);
@@ -808,7 +745,7 @@ const SPOTS = {
     b.fill([46, 54, 62, 70].map((x) => O(x + 2, 78, 1.5)).join(''), VALLEY.redDark);
   },
 
-  // the goatskin churn hanging from its three poles, where butter and ayran are rocked out of the milk
+  // The goatskin churn hanging from three poles, rocked to make butter and ayran.
   churn: (b) => {
     b.ground(50, 60, 104);
     b.line('M60 14L22 104M60 14L98 104', WOOD[1], 3.4);
@@ -819,7 +756,7 @@ const SPOTS = {
     b.line('M44 70C54 74 70 74 80 70', '#cba67a', 1.4);
   },
 
-  // the saj: a dome of iron over a low fire on three stones, a bread as thin as paper spread on it
+  // The saj: an iron dome over a low fire on three stones, with paper-thin bread spread on it.
   saj: (b) => {
     b.ground(48, 60, 104);
     b.fill(E(28, 97, 9, 7) + E(92, 97, 9, 7) + E(60, 100, 8, 5), STONE[0]);
@@ -830,7 +767,7 @@ const SPOTS = {
     b.fill(blobPath(52, 70, 5, 2, 6, 0.3, seeded('book-saj')) + blobPath(74, 74, 4, 1.6, 6, 0.3, seeded('book-saj-2')), STRAW[1]);
   },
 
-  // the snow deer Hevalo builds by the wall, an apple for its nose
+  // The snow deer Hevalo builds by the wall, with an apple for a nose.
   snowDeer: (b) => {
     const snow: Tone = [VALLEY.snow, VALLEY.snowShade, '#ffffff'];
     b.ground(40, 60, 104);
@@ -842,7 +779,7 @@ const SPOTS = {
     b.fill(O(58.4, 53.4, 1.6), RED[2]);
   },
 
-  // three photos in their frames on a wall: the family far away in Kobanî, a moustache in the middle
+  // Three framed photos on a wall: the family far away in Kobanî, a moustache in the middle.
   frames: (b) => {
     const frame = (x: number, y: number, w: number, h: number): void => {
       b.fill(box(x + 1, y + 1.4, w, h, 2), mix(WOOD[1], '#000000', 0.15));
@@ -858,13 +795,13 @@ const SPOTS = {
   },
 } as const satisfies Readonly<Record<string, Draw>>;
 
-/** A small thing the book's scenes are told with. */
+/** A small thing the book's scenes use. */
 export type BookSpot = keyof typeof SPOTS;
 
-/** Every spot, in the order they are drawn above. */
+/** Every spot, in the order defined above. */
 export const BOOK_SPOTS: readonly BookSpot[] = Object.freeze(Object.keys(SPOTS) as BookSpot[]);
 
-/** One of the book's small things on the 120-unit canvas, on a clear ground. */
+/** One of the book's spots on the 120-unit canvas, on a clear ground. */
 export function bookSpotSvg(opts: BookArtOptions & { spot: BookSpot }): string {
   const draw = Object.prototype.hasOwnProperty.call(SPOTS, opts.spot) ? SPOTS[opts.spot] : undefined;
   if (!draw) throw new RangeError(`art: no book spot ${String(opts.spot)}`);
@@ -875,7 +812,7 @@ export function bookSpotSvg(opts: BookArtOptions & { spot: BookSpot }): string {
 
 // ───────────────────────────────────────────────────────────── paint
 
-/** The colours the road teaches, as paint: what a dab of each looks like, its face, its shade and its light. */
+/** The colours the road teaches, as paint dabs: each one's face, shade and light. */
 const PAINTS = {
   red: RED,
   blue: BLUE,
@@ -890,12 +827,12 @@ export type BookPaint = keyof typeof PAINTS;
 
 export const BOOK_PAINTS: readonly BookPaint[] = Object.freeze(Object.keys(PAINTS) as BookPaint[]);
 
-/** A dab of paint in one of the road's colours, with the drop it let fall: the picture of a colour word. */
+/** A dab of paint in one of the road's colours with the drop it let fall: the picture for a colour word. */
 export function bookPaintSvg(opts: BookArtOptions & { colour: BookPaint }): string {
   const tone = Object.prototype.hasOwnProperty.call(PAINTS, opts.colour) ? PAINTS[opts.colour] : undefined;
   if (!tone) throw new RangeError(`art: no paint called ${String(opts.colour)}`);
   const brush = new Brush();
-  // every colour is a dab of the same size, each laid on by hand with its own edge, and the drop it let fall where it fell
+  // Every dab is the same size with its own hand-laid edge and its fallen drop.
   const random = seeded(`book-paint|${opts.colour}`);
   const dab = blobPath(58, 58, 38, 30, 9, 0.26, random, 0.4);
   brush.form(dab, tone, 26, 32, 0.92);
@@ -908,11 +845,7 @@ export function bookPaintSvg(opts: BookArtOptions & { colour: BookPaint }): stri
 
 // ───────────────────────────────────────────────────────────── the postmark
 
-/**
- * The postmark a finished chapter's stamp is cancelled with: two rings, a
- * bar across them where the date goes, and the wavy lines that run off over
- * the stamp, all in one ink.
- */
+/** The postmark a finished chapter's stamp is cancelled with: two rings, a date bar across them, and wavy lines running off over the stamp, in one ink. */
 export function bookPostmarkSvg(opts: BookArtOptions & { ink: string }): string {
   if (!/^#[0-9a-f]{6}$/.test(opts.ink)) throw new RangeError(`art: a postmark's ink is a six-digit colour, not ${String(opts.ink)}`);
   const brush = new Brush();
@@ -927,14 +860,14 @@ export function bookPostmarkSvg(opts: BookArtOptions & { ink: string }): string 
 
 // ───────────────────────────────────────────────────────────── a scene's ground
 
-/** Where a scene is set: by day, at dusk with the sun going down, by night under the moon and the stars, or in the snow. */
+/** A scene's setting: day, dusk with the sun going down, night under the moon and stars, or snow. */
 export const BOOK_SETTINGS = ['day', 'dusk', 'night', 'snow'] as const;
 export type BookSetting = (typeof BOOK_SETTINGS)[number];
 
-/** The backdrop's own canvas: wider than it is tall, as a panel of a comic is. */
+/** The backdrop's canvas: wider than tall, like a comic panel. */
 export const BOOK_BACKDROP = { w: 180, h: 100, horizon: 74 } as const;
 
-/** A box on the backdrop's canvas that its sky keeps clear of: where the scene stands someone or hangs something. */
+/** A box on the backdrop's canvas that its sky keeps clear, where the scene places a person or hangs something. */
 export interface BookSkyBox {
   x: number;
   y: number;
@@ -942,7 +875,7 @@ export interface BookSkyBox {
   h: number;
 }
 
-/** The sun by day or at dusk, or the moon by night, on the backdrop's canvas: its middle, its radius, and whether a moon is full. */
+/** The sun (day or dusk) or moon (night) on the backdrop's canvas: centre, radius, and whether a moon is full. */
 export interface BookOrb {
   x: number;
   y: number;
@@ -950,18 +883,18 @@ export interface BookOrb {
   full?: boolean;
 }
 
-/** A thing painted in a backdrop's sky (a star, a flake of snow, a cloud), as the box it takes. */
+/** A mark painted in a backdrop's sky (a star, a snowflake, a cloud), as the box it takes. */
 export interface BookSkyMark extends BookSkyBox {
   kind: 'star' | 'twinkle' | 'flake' | 'cloud';
 }
 
-/** Where the sun or the moon hangs when the scene does not say: the sun going down over the hills at dusk, and the moon high on the right at night. */
+/** The default sun or moon position: the sun setting over the hills at dusk, the moon high on the right at night. */
 const ORB: Readonly<Record<BookSetting, BookOrb | null>> = { day: null, dusk: { x: 118, y: 46, r: 11 }, night: { x: 150, y: 19, r: 9.5 }, snow: null };
 
-/** How far the sky's marks keep from the moon, from one another, and from what the scene puts in front of the sky. */
+/** How far sky marks keep from the moon, from each other, and from what the scene puts in front of the sky. */
 const CLEAR = { orb: 3.2, mark: 2.6, box: 1.6 } as const;
 
-/** The far mountains, the near hill, and the floor of the scene, on the backdrop's canvas: the same land in every scene, so a chapter's lessons share a valley. */
+/** The far mountains, the near hill and the scene's floor on the backdrop's canvas; the same land in every scene, so a chapter shares one valley. */
 const FAR: readonly Pt[] = [[0, 58], [14, 51], [30, 45.4], [44, 50.6], [58, 47], [78, 39.6], [96, 47.6], [110, 52.4], [128, 48.6], [144, 52], [160, 44.4], [172, 47.2], [180, 50.4]];
 /** The shaded side of each far peak, from its top down to the next fold. */
 const FAR_SHADE: readonly (readonly Pt[])[] = [
@@ -972,10 +905,10 @@ const FAR_SHADE: readonly (readonly Pt[])[] = [
 ];
 const MID: readonly Pt[] = [[0, 66.4], [22, 61.6], [50, 64.2], [80, 59.2], [108, 62.6], [136, 60.4], [160, 63.6], [180, 61.6]];
 const NEAR: readonly Pt[] = [[0, 77], [28, 72.2], [62, 74.2], [100, 70.8], [136, 74.6], [180, 70.4]];
-/** Where a stand of poplars may grow on the near hill, as they grow along its water: the first of these the scene leaves open. */
+/** Where poplar stands may grow on the near hill; the first one the scene leaves open is used. */
 const POPLAR_SPOTS = [100, 62, 132, 40, 152, 84] as const;
 
-/** Whether two boxes overlap, the first grown by `margin` all round. */
+/** Whether two boxes overlap, the first grown by `margin` on every side. */
 const overlaps = (a: BookSkyBox, b: BookSkyBox, margin: number): boolean =>
   a.x - margin < b.x + b.w && b.x < a.x + a.w + margin && a.y - margin < b.y + b.h && b.y < a.y + a.h + margin;
 
@@ -987,37 +920,31 @@ function nearOrb(box: BookSkyBox, orb: BookOrb, margin: number): boolean {
 }
 
 /**
- * How high the land stands at x on the backdrop's canvas: the far mountains
- * by default (the sky ends there, and a setting sun goes down behind them),
- * the back edge of the floor a scene's people and things stand on, so what
- * is set back stands on it rather than on the hill behind, or, indoors,
- * where a room's walls meet its floor.
+ * The land's height at x on the backdrop's canvas: the far mountains by default (where the sky ends and a setting sun
+ * goes down), `floor` for the back edge of the floor people and things stand on, or `room` for where a room's walls
+ * meet its floor.
  */
 export function bookRidgeAt(x: number, line: 'far' | 'floor' | 'room' = 'far'): number {
   return line === 'room' ? BOOK_ROOM_FLOOR : line === 'floor' ? heightOf(NEAR, x) : farTop(x);
 }
 
-/** Where the walls of a room meet its floor, on the backdrop's canvas: a scene set indoors stands its furniture there. */
+/** Where a room's walls meet its floor on the backdrop's canvas; indoor scenes stand furniture there. */
 const BOOK_ROOM_FLOOR = 70;
 
-/**
- * A room a scene is set in: the box of its one window on the backdrop's
- * canvas (the day, the dusk, the night or the snow outside shows through it;
- * none for a room without one), and whether a kilim lies on its floor.
- */
+/** A room a scene is set in: its window's box on the backdrop's canvas (none for no window), and whether a kilim lies on the floor. */
 export interface BookRoom {
   window: BookSkyBox | null;
   rug?: boolean;
 }
 
-/** A patch of shade on a scene's floor under someone standing there, on the backdrop's canvas: its middle and how wide it reaches each way. */
+/** A shade patch on the floor under someone standing there, on the backdrop's canvas: its centre and half-width. */
 export interface BookFloorShade {
   x: number;
   y: number;
   rx: number;
 }
 
-/** The colours a room is painted in by the light it is seen in: its plaster, the floor of beaten earth, and the poplar beams of its ceiling. */
+/** A room's colours in the setting's light: plaster, beaten-earth floor, and poplar ceiling beams. */
 function roomColours(setting: BookSetting, sky: string): { wall: string; shade: string; floor: string; floorShade: string; beam: string } {
   const plaster = setting === 'night' ? mix('#b78b5c', sky, 0.12) : setting === 'dusk' ? mix('#e6c99c', sky, 0.16) : mix('#f0e2c4', sky, setting === 'snow' ? 0.3 : 0.24);
   const floor = setting === 'night' ? mix('#7c5838', plaster, 0.2) : mix('#c39a6a', plaster, 0.22);
@@ -1025,10 +952,8 @@ function roomColours(setting: BookSetting, sky: string): { wall: string; shade: 
 }
 
 /**
- * A room's walls laid over the land outside, so the land shows only through
- * its window: plaster with the window cut out of it, the window's depth and
- * its blue frame and sill, the ends of the ceiling's beams along the top,
- * the floor of beaten earth, and a kilim on it.
+ * A room's walls over the land outside, so the land shows only through the window: plaster with the window cut out,
+ * the window's depth, blue frame and sill, the beam ends along the top, the beaten-earth floor and a kilim.
  */
 function paintRoom(brush: Brush, room: BookRoom, setting: BookSetting, sky: string): void {
   const { w, h } = BOOK_BACKDROP;
@@ -1039,27 +964,27 @@ function paintRoom(brush: Brush, room: BookRoom, setting: BookSetting, sky: stri
   brush.fill(`M0 0H${w}V${floorY}H0Z${hole}`, c.wall, ' fill-rule="evenodd"');
   if (win) {
     const { x, y, w: ww, h: wh } = win;
-    // the depth of the wall round the window: its far side and its foot in shade, its near side in the light
+    // The wall's depth round the window: far side and foot shaded, near side lit.
     brush.fill(poly(x + ww, y, x + ww - 3, y + 3, x + ww - 3, y + wh - 2, x + ww, y + wh) + poly(x, y + wh, x + 3, y + wh - 2, x + ww - 3, y + wh - 2, x + ww, y + wh), c.shade);
     brush.fill(poly(x, y, x + ww, y, x + ww - 3, y + 2.4, x + 3, y + 2.4), mix(c.shade, c.wall, 0.4));
-    // the blue frame and its bars, and the sill a thing can be set on
+    // The blue frame and bars, and the sill a thing can be set on.
     const frame = VALLEY.gate;
     brush.line(`M${f(x + 3)} ${f(y + 2.4)}H${f(x + ww - 3)}V${f(y + wh - 2)}H${f(x + 3)}Z`, frame, 1.6);
     brush.line(`M${f(x + ww / 2)} ${f(y + 2.4)}V${f(y + wh - 2)}M${f(x + 3)} ${f(y + wh * 0.46)}H${f(x + ww - 3)}`, frame, 1.2);
     brush.fill(box(x - 3, y + wh, ww + 6, 3.4, 1.2), mix(c.wall, '#ffffff', 0.3));
     brush.fill(box(x - 2, y + wh + 3.4, ww + 4, 1.4), c.shade);
   }
-  // the beams of the ceiling, end on, along the top of the wall
+  // The ceiling beams, end on, along the top of the wall.
   brush.fill(`M0 0H${w}V4.2H0Z`, c.beam);
   let ends = '';
   for (let x = 9; x < w; x += 21) ends += O(x, 5.2, 2.6);
   brush.fill(ends, mix(c.beam, c.wall, 0.35));
-  // the wall darkens a little where it meets the floor
+  // The wall darkens a little where it meets the floor.
   brush.fill(`M0 ${floorY - 3.4}H${w}V${floorY}H0Z`, c.shade);
   brush.fill(`M0 ${floorY}H${w}V${h}H0Z`, c.floor);
   brush.fill(`M0 ${floorY}H${w}V${floorY + 1.6}H0Z`, c.floorShade);
   if (room.rug) {
-    // a kilim on the floor, seen from where we stand: its border and a row of lozenges
+    // A kilim on the floor in perspective: its border and a row of lozenges.
     const rug = (k: number): string => poly(44 + k * 1.6, 76 + k, 136 - k * 1.6, 76 + k, 152 - k * 2, 99 - k, 28 + k * 2, 99 - k);
     brush.fill(rug(0), VALLEY.red);
     brush.fill(rug(2), VALLEY.cream);
@@ -1073,7 +998,7 @@ function paintRoom(brush: Brush, room: BookRoom, setting: BookSetting, sky: stri
   }
 }
 
-/** How high a line of the land stands at x, along its points. */
+/** A land line's height at x, interpolated along its points. */
 function heightOf(line: readonly Pt[], x: number): number {
   for (let i = 1; i < line.length; i++) {
     const [ax, ay] = line[i - 1]!;
@@ -1083,16 +1008,13 @@ function heightOf(line: readonly Pt[], x: number): number {
   return line.at(-1)![1];
 }
 
-/** The far mountains' height at x: the sky ends there. */
+/** The far mountains' height at x, where the sky ends. */
 const farTop = (x: number): number => heightOf(FAR, x);
 
 /**
- * What a backdrop paints in its sky, placed by hand from a seeded generator
- * and checked one by one: the stars of a night, two or three of them bright
- * enough to twinkle; the flakes of the snow; the clouds of a day. None comes
- * near the sun or the moon, near another mark, or into any box the scene
- * keeps clear, and stars keep above the mountains. By day and at dusk the
- * sky keeps clouds only where nothing hangs.
+ * The marks in a backdrop's sky, placed from a seeded generator and checked one by one: night stars (two or three
+ * bright enough to twinkle), snowflakes, or day clouds. None comes near the sun or moon, another mark, or any box the
+ * scene keeps clear, and stars stay above the mountains. By day and at dusk clouds go only where nothing hangs.
  */
 export function bookSkyMarks(opts: { setting: BookSetting; orb?: BookOrb | null; clear?: readonly BookSkyBox[]; seed?: string }): { orb: BookOrb | null; marks: BookSkyMark[] } {
   const orb = opts.orb === undefined ? ORB[opts.setting] : opts.orb;
@@ -1103,7 +1025,7 @@ export function bookSkyMarks(opts: { setting: BookSetting; orb?: BookOrb | null;
     !(orb && nearOrb(box, orb, CLEAR.orb)) && !clear.some((c) => overlaps(box, c, CLEAR.box)) && !marks.some((m) => overlaps(box, m, gap));
   const { w } = BOOK_BACKDROP;
   if (opts.setting === 'night') {
-    // more stars high up than down by the mountains, most of them faint, and a few bright enough to twinkle
+    // More stars high up than near the mountains, most faint, a few bright enough to twinkle.
     for (let tries = 0; marks.length < 26 && tries < 400; tries++) {
       const x = 4 + random() * (w - 8);
       const y = 3 + random() ** 1.5 * 46;
@@ -1122,7 +1044,7 @@ export function bookSkyMarks(opts: { setting: BookSetting; orb?: BookOrb | null;
       if (free(box, CLEAR.mark + random() * 5)) marks.push({ ...box, kind: 'flake' });
     }
   } else {
-    // a day's clouds, two of different sizes where they fit; at dusk one, low and long
+    // A day's clouds: two of different sizes where they fit; at dusk one, low and long.
     const most = opts.setting === 'dusk' ? 1 : 2;
     for (let tries = 0; marks.length < most && tries < 40; tries++) {
       const cw = (marks.length === 0 ? 26 : 18) + random() * 10;
@@ -1135,7 +1057,7 @@ export function bookSkyMarks(opts: { setting: BookSetting; orb?: BookOrb | null;
   return { orb, marks };
 }
 
-/** A flat cloud in the box it takes: a level foot and three rounds of different sizes along its top. */
+/** A flat cloud in its box: a level foot and three rounds of different sizes along its top. */
 function cloudPath(m: BookSkyBox): string {
   const foot = m.y + m.h;
   const r = (k: number): number => m.w * k;
@@ -1147,25 +1069,18 @@ function cloudPath(m: BookSkyBox): string {
   );
 }
 
-/** A star bright enough to twinkle: four points drawn in toward its middle. */
+/** A twinkling star: four points drawn in toward its middle. */
 function twinklePath(m: BookSkyBox): string {
   const [x, y, r] = [m.x + m.w / 2, m.y + m.h / 2, m.w / 2];
   return `M${f(x)} ${f(y - r)}Q${f(x)} ${f(y)} ${f(x + r)} ${f(y)}Q${f(x)} ${f(y)} ${f(x)} ${f(y + r)}Q${f(x)} ${f(y)} ${f(x - r)} ${f(y)}Q${f(x)} ${f(y)} ${f(x)} ${f(y - r)}Z`;
 }
 
 /**
- * What a scene of the book stands on, in the colours it is given (a
- * chapter's tint and its wash): a sky, the far mountains with each peak's
- * shaded side, a near hill with a stand of poplars, and the floor the people
- * and the props stand on. By day a cloud or two; at dusk the sky warms in
- * bands toward the hills and the sun sits low over them; by night the moon
- * and the stars; in the snow the flakes falling. Everything in it is a mix
- * of the colours given, so a scene is all of one chapter.
- *
- * The scene says where the sun or the moon hangs (`orb`; none by day unless
- * it is asked for) and what the sky is to keep clear of (`clear`): the
- * people and the things it lays over the sky, so that no star sits on a
- * head and nothing in the sky is ever drawn over the moon.
+ * The ground a book scene stands on, in a chapter's tint and wash: sky, far mountains with shaded peaks, a near hill
+ * with poplars, and the floor people and props stand on; clouds by day, warm bands and a low sun at dusk, moon and
+ * stars at night, falling flakes in snow. Every colour is a mix of the two given, so a scene belongs to its chapter.
+ * `orb` places the sun or moon (none by day unless asked) and `clear` lists what the scene lays over the sky, so no
+ * star sits on a head and nothing is drawn over the moon.
  */
 export function bookBackdropSvg(
   opts: BookArtOptions & {
@@ -1177,9 +1092,9 @@ export function bookBackdropSvg(
     orb?: BookOrb | null;
     clear?: readonly BookSkyBox[];
     seed?: string;
-    /** a room the scene is set in, the land outside showing through its window */
+    /** A room the scene is set in, the land outside showing through its window. */
     room?: BookRoom | null;
-    /** the shade on the floor under each of the people standing on it */
+    /** The floor shade under each person standing on it. */
     shadows?: readonly BookFloorShade[];
   },
 ): string {
@@ -1195,7 +1110,7 @@ export function bookBackdropSvg(
   const { orb, marks } = bookSkyMarks({ setting, orb: opts.orb, clear: opts.clear, seed: opts.seed });
   brush.fill(`M0 0H${w}V${h}H0Z`, sky);
   if (setting === 'dusk') {
-    // the sky warms toward the hills in three bands, each edge cut by hand
+    // The sky warms toward the hills in three bands, each edge hand-cut.
     [0.24, 0.46, 0.7].forEach((k, i) => {
       const top = 30 + i * 11;
       brush.fill(`${smoothLine([[0, top + 2], [44, top - 1.4], [96, top + 1.6], [140, top - 0.6], [180, top + 1.2]])}V${h}H0Z`, mix(sky, light, k));
@@ -1205,10 +1120,10 @@ export function bookBackdropSvg(
   if (orb && setting === 'night') {
     if (orb.full) {
       brush.fill(O(orb.x, orb.y, orb.r), light);
-      // the moon's seas, a step darker than its face
+      // The moon's seas, a step darker than its face.
       brush.fill(oval(orb.x - orb.r * 0.3, orb.y - orb.r * 0.18, orb.r * 0.32, orb.r * 0.22, -20) + oval(orb.x + orb.r * 0.28, orb.y + orb.r * 0.3, orb.r * 0.24, orb.r * 0.16, 15), mix(light, sky, 0.16));
     } else {
-      // a crescent: the part of one round that another, a little up and to the right, does not cover
+      // A crescent: the part of one circle that another, offset up and right, does not cover.
       const [x0, y0] = [orb.x + orb.r * 0.42, orb.y - orb.r * 0.9];
       const [x1, y1] = [orb.x + orb.r * 0.9, orb.y + orb.r * 0.42];
       brush.fill(`M${f(x0)} ${f(y0)}A${f(orb.r)} ${f(orb.r)} 0 1 0 ${f(x1)} ${f(y1)}A${f(orb.r * 0.8)} ${f(orb.r * 0.8)} 0 0 1 ${f(x0)} ${f(y0)}Z`, light);
@@ -1220,10 +1135,10 @@ export function bookBackdropSvg(
   if (twinkles) brush.fill(twinkles, light);
   const clouds = marks.filter((m) => m.kind === 'cloud').map(cloudPath).join('');
   if (clouds) brush.fill(clouds, mix(sky, light, setting === 'dusk' ? 0.6 : 0.55));
-  // the far mountains, each peak with its shaded side
+  // The far mountains, each peak with its shaded side.
   brush.fill(`${smoothLine(FAR)}V${h}H0Z`, far);
   brush.fill(FAR_SHADE.map((pts) => polygon(pts)).join(''), mix(far, ground, 0.22));
-  // the near hill, with a stand of poplars on it in the darkest of the land's colours, where the scene leaves them room to be seen
+  // The near hill, with poplars in the land's darkest colour where the scene leaves them room.
   brush.fill(`${smoothLine(MID)}V${h}H0Z`, mid);
   const tree = luminance(ground) < luminance(far) ? ground : far;
   const pick = seeded(`book-poplars|${opts.seed ?? setting}`);
@@ -1237,7 +1152,7 @@ export function bookBackdropSvg(
   }
   const flakes = marks.filter((m) => m.kind === 'flake').map((m) => O(m.x + m.w / 2, m.y + m.h / 2, m.w / 2)).join('');
   if (flakes) brush.fill(flakes, light);
-  // the floor of the scene, last, so whatever stands in it stands on it
+  // The scene's floor last, so whatever stands in it stands on it.
   brush.fill(`${smoothLine(NEAR)}V${h}H0Z`, ground);
   if (opts.room) paintRoom(brush, opts.room, setting, sky);
   const shadows = opts.shadows ?? [];
@@ -1267,7 +1182,7 @@ function luminance(hex: string): number {
   return 0.2126 * ((v >> 16) & 255) + 0.7152 * ((v >> 8) & 255) + 0.0722 * (v & 255);
 }
 
-/** A smooth open line through the points, from the first to the last (Catmull-Rom, as cubic Béziers). */
+/** A smooth open Catmull-Rom line through the points as cubic Béziers. */
 function smoothLine(pts: readonly Pt[]): string {
   const at = (i: number): Pt => pts[Math.max(0, Math.min(pts.length - 1, i))]!;
   let d = `M${f(at(0)[0])} ${f(at(0)[1])}`;
@@ -1292,24 +1207,24 @@ interface Pose {
   eyes?: EyeState;
   brows?: BrowState;
   blush?: boolean;
-  /** degrees the head tilts about the neck */
+  /** Head tilt about the neck, in degrees. */
   tilt?: number;
-  /** where the deer's pupils look, each way from -1 to 1 */
+  /** Where the deer's pupils look, each axis from -1 to 1. */
   look?: readonly [number, number];
-  /** each of the deer's ears lifted (up is positive), in degrees: left, right */
+  /** Each deer ear's lift in degrees (up is positive): left, right. */
   ears?: readonly [number, number];
-  /** degrees the near end of Hamo's moustache lifts */
+  /** Degrees the near end of Hamo's moustache lifts. */
   lift?: number;
-  /** what is laid over or beside the figure, in the figure's own units */
+  /** What is laid over or beside the figure, in the figure's own units. */
   prop?: 'apple' | 'crumbs' | 'core' | 'snore';
 }
 
 const POSES = {
   hevalo: {
     plain: {},
-    // caught with the apple in his mouth, a bite already gone
+    // Caught with the apple in his mouth, a bite already gone.
     caught: { eyes: 'wide', ears: [14, 14], prop: 'apple' },
-    // looking at the sky, as he does whenever apples are counted; the core lies beside him
+    // Looking at the sky, as he does whenever apples are counted; the core lies beside him.
     innocent: { look: [0.35, -1], mouth: 'u', ears: [-10, -10], tilt: -4, prop: 'core' },
     pleased: { eyes: 'happy', mouth: 'grin', ears: [8, 8] },
     munching: { eyes: 'happy', mouth: 'mbp', prop: 'crumbs' },
@@ -1319,10 +1234,10 @@ const POSES = {
   },
   hamo: {
     plain: {},
-    // pleased with you, or with himself: the near end of the moustache goes up
+    // Pleased with you or with himself: the near end of the moustache goes up.
     proud: { eyes: 'happy', lift: 7, brows: 'raised' },
     laughing: { eyes: 'happy', mouth: 'grin', brows: 'raised', lift: 4, tilt: -3 },
-    // a miss gets one raised eyebrow and a thoughtful look, never a cross word
+    // A miss gets one raised eyebrow and a thoughtful look, never a cross word.
     doubtful: { brows: 'one', mouth: 'mbp', tilt: 3 },
     shocked: { eyes: 'wide', brows: 'raised', mouth: 'o' },
     telling: { mouth: 'a', brows: 'raised' },
@@ -1347,7 +1262,7 @@ export type BookPose<K extends CharacterId = CharacterId> = K extends CharacterI
 const turned = (inner: string, deg: number, about: { x: number; y: number }): string =>
   deg === 0 ? inner : `<g transform="rotate(${n(deg)} ${n(about.x)} ${n(about.y)})">${inner}</g>`;
 
-/** A spot from this page, laid into a figure's own units: its 120-unit canvas `k` times as big, its middle at (x, y). */
+/** A spot laid into a figure's own units: its 120-unit canvas scaled `k` times, centred at (x, y). */
 function laid(draw: (b: Brush) => void, x: number, y: number, k: number, turn = 0): string {
   const brush = new Brush();
   draw(brush);
@@ -1355,7 +1270,7 @@ function laid(draw: (b: Brush) => void, x: number, y: number, k: number, turn = 
   return `<g transform="translate(${n(x - 60 * k)} ${n(y - 66 * k)}) scale(${n2(k)})${spin}">${String(brush)}</g>`;
 }
 
-/** Three "z"s rising beside a sleeper, each smaller than the last, in the ink of the page. */
+/** Three "z"s rising beside a sleeper, each smaller than the last, in the page's ink. */
 function snore(x: number, y: number, k: number): string {
   let d = '';
   [0, 1, 2].forEach((i) => {
@@ -1366,10 +1281,10 @@ function snore(x: number, y: number, k: number): string {
   return `<path d="${d}" fill="none" stroke="#7d76a6" stroke-width="${n(5 * k)}" stroke-linecap="round" stroke-linejoin="round"/>`;
 }
 
-/** What a pose lays over or beside the deer, in his own measure (his face is 512 across, his mouth near 255, 440; standing, his hooves are near 1530). */
+/** What a pose lays over or beside the deer, in his units (face 512 across, mouth near 255, 440; standing, hooves near 1530). */
 function deerProp(prop: Pose['prop'], crop: CharacterCrop): string {
   if (prop === 'apple') {
-    // the apple he was told was yours, held in his teeth below the nose, with the bite that gave him away
+    // The apple held in his teeth below the nose, showing the bite that gave him away.
     const crumbs = [[150, 470, 7], [128, 498, 5], [362, 462, 6], [386, 492, 4.5]].map(([x, y, r]) => O(x!, y!, r!)).join('');
     return (
       laid((b) => {
@@ -1379,7 +1294,7 @@ function deerProp(prop: Pose['prop'], crop: CharacterCrop): string {
     );
   }
   if (prop === 'crumbs') return `<path d="${[[188, 478, 7], [164, 500, 5], [322, 474, 6], [346, 498, 5], [255, 492, 5]].map(([x, y, r]) => O(x!, y!, r!)).join('')}" fill="${FLESH[1]}"/>`;
-  // the core lies beside him: by his cheek in a picture of his head, and by his hooves where he is drawn standing
+  // The core lies by his cheek in a head picture, and by his hooves when he is drawn standing.
   if (prop === 'core') return crop === 'full' ? laid(core, 446, 1462, 1.7, 14) : laid(core, 466, 438, 1.6, 14);
   if (prop === 'snore') return snore(436, 336, 1.15);
   return '';
@@ -1393,7 +1308,7 @@ function assemble(art: CharacterArt, pose: Pose, crop: CharacterCrop): string {
   let head: string;
   let extra = '';
   if (art.rig) {
-    // the deer: his ears and his pupils are layers of their own, and his lids lie over the open eyes
+    // The deer: his ears and pupils are separate layers, and his lids lie over the open eyes.
     const rig = art.rig;
     const [left, right] = pose.ears ?? [0, 0];
     const shift = pupilShift(art, { x: pose.look?.[0] ?? 0, y: pose.look?.[1] ?? 0 }, pose.look ? 1 : 0);
@@ -1426,15 +1341,15 @@ function assemble(art: CharacterArt, pose: Pose, crop: CharacterCrop): string {
 export interface BookCastOptions<K extends CharacterId = CharacterId> {
   who: K;
   pose: BookPose<K>;
-  /** the whole figure, head to waist, or head and shoulders (the default: a scene shows them from the chest up) */
+  /** The whole figure, head to waist, or head and shoulders (the default; scenes show them from the chest up). */
   crop?: Exclude<CharacterCrop, 'head'>;
-  /** how wide it is drawn; the crop's own width in drawing units by default */
+  /** Display width; the crop's own width in drawing units by default. */
   width?: number;
   title?: string;
   idPrefix?: string;
 }
 
-/** One of the three friends in one of the book's poses, as a picture of its own. */
+/** One of the three friends in one of the book's poses, as a standalone picture. */
 export function bookCastSvg<K extends CharacterId>(opts: BookCastOptions<K>): string {
   const poses = Object.prototype.hasOwnProperty.call(POSES, opts.who) ? (POSES[opts.who] as Readonly<Record<string, Pose>>) : undefined;
   const pose = poses && Object.prototype.hasOwnProperty.call(poses, opts.pose) ? poses[opts.pose as string] : undefined;

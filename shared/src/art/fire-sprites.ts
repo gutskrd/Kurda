@@ -1,11 +1,7 @@
 /**
- * The streak's fire's flame, painted: each burning stage's flame is a loop of
- * frames painted ahead of time (`scripts/generate-fire-sprites.mjs`) and laid
- * out on one sheet, which both apps play frame by frame — a simple cartoon
- * flame whose outline and nested tones breathe, wobble and sway as no shape
- * moved by transforms can. This is what the apps and the painter share: how the frames
- * lie on each sheet, how fast they play, and where the flame stands in the
- * fire's box (`FIRE_VIEW`) at each stage.
+ * Layout shared by both apps and the sprite painter (`scripts/generate-fire-sprites.mjs`) for the streak fire's
+ * flame: each burning stage is a loop of pre-painted frames on one sheet, played frame by frame. This module says how
+ * frames lie on a sheet, how fast they play, and where the flame stands in the fire's box (`FIRE_VIEW`).
  */
 import type { FireStage } from '../fire-stages.js';
 import type { Box } from './fire-shapes.js';
@@ -14,7 +10,7 @@ import type { Pt } from './svg.js';
 /** A stage that burns: every stage but cold logs. */
 type LitStage = Exclude<FireStage, 'cold'>;
 
-/** Frames in one loop of the flame, and how long the loop lasts: about 20 a second, a whole number of loops to the fire's clock (`FIRE_CYCLE_MS`). */
+/** Frames in one loop: about 20 a second, a whole number of loops per fire clock (`FIRE_CYCLE_MS`). */
 export const FIRE_SPRITE_FRAMES = 20;
 export const FIRE_SPRITE_MS = 960;
 /** How the frames lie on a sheet: left to right, then the next row down. */
@@ -25,10 +21,8 @@ export const FIRE_SPRITE_ROWS = 4;
 export const FIRE_ROOT: Pt = [100, 228];
 
 /**
- * How far each stage's flame reaches across, and up from its root, on the
- * day the stage is reached and on the day before the next: each a plain step
- * up from the one before, the Newroz fire filling the box at its fullest.
- * The screens were laid out round these.
+ * Each stage's flame width and height above its root, on the day the stage is reached and the day before the next.
+ * Screens are laid out round these values.
  */
 export const FIRE_FLAME_REACH: Readonly<Record<LitStage, { from: { w: number; h: number }; to: { w: number; h: number } }>> = {
   spark: { from: { w: 39, h: 46 }, to: { w: 41, h: 51 } },
@@ -40,26 +34,22 @@ export const FIRE_FLAME_REACH: Readonly<Record<LitStage, { from: { w: number; h:
   newroz: { from: { w: 131, h: 204 }, to: { w: 136, h: 220 } },
 };
 
-/** How far a frame reaches past the flame: across, for its sway; up, for the drop pinching off its tip; down, for its round foot behind the logs. */
+/** Room a frame keeps past the flame: across for its sway, up for the drop pinching off its tip, down for its foot behind the logs. */
 const SIDE_ROOM = 0.22;
 const TOP_ROOM = 0.15;
 const FOOT_ROOM = 6;
 
-/**
- * Pixels of sheet to a unit of the fire's box: about twice as sharp as the
- * fire is mostly shown, and sharper still for the young flames, which the
- * screens draw closer; more would only weigh more.
- */
+/** Sheet pixels per unit of the fire's box: about twice the usual display size, more for the young flames shown closer. */
 const SHARPNESS: Readonly<Record<LitStage, number>> = { spark: 2.4, kindling: 2, campfire: 1.6, bigfire: 1.4, bonfire: 1.3, blaze: 1.3, newroz: 1.3 };
 
 /** One stage's sheet. */
 export interface FireSprite {
   stage: LitStage;
-  /** its file, the same name in both apps' fire folder */
+  /** The file name, the same in both apps' fire folder. */
   file: string;
-  /** what each frame holds, in the fire's box: the flame at its fullest (the day before the next stage), standing on its root */
+  /** What each frame holds, in the fire's box: the flame at its fullest, standing on its root. */
   box: Box;
-  /** one frame, and the whole sheet, in pixels */
+  /** One frame and the whole sheet, in pixels. */
   frame: { w: number; h: number };
   sheet: { w: number; h: number };
 }

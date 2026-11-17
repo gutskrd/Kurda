@@ -1,9 +1,7 @@
 /**
- * The postcard a shared win is drawn with (art/share-card.ts). It is put
- * together from drawings that are each held to their own rules elsewhere, so
- * what is checked here is the putting together: one sound picture of the
- * right size, nothing in it that a link preview's renderer cannot draw,
- * nothing written, nothing named twice, and each win's own news on its stamp.
+ * The shared-win postcard (share-card.ts). Its parts are tested elsewhere, so this checks the assembly: one sound
+ * picture of the right size, only what link preview renderers draw, no text, no duplicate names, and each win's news on
+ * its stamp.
  */
 import { describe, expect, it } from 'vitest';
 import * as shared from '../index.js';
@@ -16,11 +14,7 @@ interface Tag {
   attrs: Record<string, string>;
 }
 
-/**
- * Every tag of a drawing in the order it opens, having seen each closed by
- * its own, every attribute quoted and said once, and nothing written between
- * them: enough to call the markup sound and to look at what it is made of.
- */
+/** Every tag in opening order, checking each is closed by its own, attributes quoted and unique, and no text between: enough to call the markup sound. */
 function tagsOf(svg: string): Tag[] {
   const tags: Tag[] = [];
   const open: string[] = [];
@@ -46,10 +40,10 @@ function tagsOf(svg: string): Tag[] {
   return tags;
 }
 
-/** Only what every renderer a card goes to draws the same: a browser, the phone, and the one that makes the picture files. */
+/** Only what every renderer a card goes to (browser, phone, the image file renderer) draws the same. */
 const DRAWN_ALIKE = new Set(['svg', 'defs', 'g', 'path', 'circle', 'ellipse', 'rect', 'linearGradient', 'radialGradient', 'stop', 'clipPath']);
 
-/** Every card there is: each kind, a streak with each of its days and without, a week in each league and in none. */
+/** Every card: each kind, a streak with and without days, a week in each league and in none. */
 const CARDS: ReadonlyArray<readonly [string, ShareCardOptions]> = [
   ['lesson', { kind: 'lesson' }],
   ['streak', { kind: 'streak' }],
@@ -77,7 +71,7 @@ describe('the postcard of a win', () => {
       expect(root.attrs.xmlns, what).toBe('http://www.w3.org/2000/svg');
       expect(root.attrs.viewBox, what).toBe(`0 0 ${SHARE_CARD.width} ${SHARE_CARD.height}`);
       expect([Number(root.attrs.width), Number(root.attrs.height)], what).toEqual([SHARE_CARD.width, SHARE_CARD.height]);
-      // 1200 by 630 is the shape every preview keeps whole
+      // 1200 by 630 is the shape every preview keeps whole.
       expect(SHARE_CARD.width / SHARE_CARD.height).toBeCloseTo(1.905, 2);
     }
   });
@@ -104,7 +98,7 @@ describe('the postcard of a win', () => {
         }
       }
       for (const ref of refs) expect(ids.has(ref), `${what}: url(#${ref}) points at nothing`).toBe(true);
-      // the namespace is said once, by the card, and by none of the pictures laid into it
+      // The namespace is declared once, by the card, and by none of the pictures laid into it.
       expect(tags.filter((tag) => 'xmlns' in tag.attrs), what).toHaveLength(1);
     }
   });
@@ -124,7 +118,7 @@ describe('the postcard of a win', () => {
     expect(named[0]!.attrs.role).toBe('img');
     expect(named[0]!.attrs['aria-label']).toBe('A postcard: a lesson finished');
     expect(named[0]!.attrs['aria-hidden']).toBeUndefined();
-    // the friends, the bird and the stamp are parts of it, with no names of their own
+    // The friends, the bird and the stamp are parts of it, with no names of their own.
     expect(named.filter((tag) => tag.attrs.role === 'img' || 'aria-labelledby' in tag.attrs || 'aria-label' in tag.attrs)).toHaveLength(1);
   });
 
@@ -139,7 +133,7 @@ describe('the postcard of a win', () => {
       const svg = shareCardSvg(opts);
       expect(shareCardSvg({ ...opts }), what).toBe(svg);
       for (const [other, was] of drawn) {
-        // a week in no named league is drawn as the first league's, to the letter
+        // A week in no named league is drawn exactly as the first league's.
         if ((what === 'league dilop' && other === 'league') || (what === 'league' && other === 'league dilop')) expect(svg, what).toBe(was);
         else expect(svg === was, `${what} is ${other}`).toBe(false);
       }
@@ -152,7 +146,7 @@ describe('the postcard of a win', () => {
     for (const days of [0, -4, Number.NaN, Number.POSITIVE_INFINITY]) expect(shareCardSvg({ kind: 'streak', days }), String(days)).toBe(fire);
     expect(shareCardSvg({ kind: 'streak', days: 7.9 })).toBe(shareCardSvg({ kind: 'streak', days: 7 }));
     expect(shareCardSvg({ kind: 'streak', days: 7 })).not.toBe(fire);
-    // more figures are more drawing, and a streak past four of them is drawn as the longest that fits
+    // More figures are more drawing, and a streak past four figures is drawn as the longest that fits.
     expect(shareCardSvg({ kind: 'streak', days: 1000 }).length).toBeGreaterThan(shareCardSvg({ kind: 'streak', days: 7 }).length);
     expect(shareCardSvg({ kind: 'streak', days: 123456 })).toBe(shareCardSvg({ kind: 'streak', days: 9999 }));
   });

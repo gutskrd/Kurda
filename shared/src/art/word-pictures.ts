@@ -1,35 +1,13 @@
 /**
- * The word pictures: one small painted picture for each everyday word a
- * lesson's "pick the picture" exercise can ask for. The bubble says the word
- * and the learner taps the one of three or four cards that shows it, so each
- * picture has to read at a glance at 72–96 px, for a child first and without
- * talking down to an adult.
- *
- * `WORD_PICTURES` is the catalogue the server's exercise schema and the road
- * checker read: an ascii id for each picture, the Kurmancî word it shows (in
- * the Hawar alphabet) and its English meaning.
- *
- * They are painted as the lesson road's valley is (art/valley.ts): flat
- * planes with no outlines, each form one face, one step of shade toward the
- * lower right and at most one patch of light, the light from the upper left.
- * Each thing stands alone in the middle of the 120-unit canvas on a soft
- * patch of shade, on a transparent ground, so the apps can lay it on any
- * card; what hangs in the sky (the sun, the moon, a star, a cloud, rain,
- * snow, an aeroplane) floats without one, and so do the parts of the body,
- * drawn gently and on their own, which a shadow would turn into things lying
- * on a table. Where a thing has a Kurdish shape it is drawn in it: tea in a
- * tulip glass on its saucer, flat bread from the tenûr, a kilim bag, a
- * knitted wool sock, the double teapot, a blue village door, the black tent
- * of the summer pastures, the wedding drum.
- *
- * By evening (a dark card) every colour is taken a little toward the dusk's
- * violet, and the darkest ones are lifted instead, so a black goat or a
- * phone still stands out from the card. Fire stays warm.
+ * One small painted picture per word the "pick the picture" exercise can ask for, legible at 72–96 px. `WORD_PICTURES`
+ * is the catalogue the server's exercise schema and the road checker read. Painted in the valley style (valley.ts),
+ * each thing centred on a soft shade patch over a transparent ground; sky things and body parts float without one, so
+ * they never read as objects on a table. On a dark card colours move toward the dusk violet and the darkest are lifted.
  */
 import { CANVAS, escapeXml, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
 import { VALLEY, blobPath, dusk, ellipsePath, warm } from './valley.js';
 
-/** Every word that has a picture: its Kurmancî word and its English meaning. */
+/** Every word with a picture: its Kurmancî word and English meaning. */
 export const WORD_PICTURES = {
   apple: { ku: 'sêv', en: 'apple' },
   tea: { ku: 'çay', en: 'tea' },
@@ -139,35 +117,35 @@ export const WORD_PICTURES = {
 /** A word that has a picture. */
 export type WordPictureId = keyof typeof WORD_PICTURES;
 
-/** Every word that has a picture, in the catalogue's order. */
+/** Every word with a picture, in catalogue order. */
 export const WORD_PICTURE_IDS: readonly WordPictureId[] = Object.freeze(Object.keys(WORD_PICTURES) as WordPictureId[]);
 
 // ───────────────────────────────────────────────────────────── colours
 
 /** A form's three tones: its face, its one step of shade, and its patch of light. */
-type Tone = readonly [face: string, shade: string, light: string];
+export type Tone = readonly [face: string, shade: string, light: string];
 
-const RED: Tone = ['#e0503f', '#b5382c', '#f08b7e'];
-const LEAF: Tone = [VALLEY.leaf, VALLEY.leafShade, VALLEY.leafLight];
-const GRASS: Tone = ['#b3d184', '#93b566', '#cfe3a4'];
-const BARK: Tone = [VALLEY.trunk, '#664026', '#a8774e'];
-const WOOD: Tone = ['#b8804d', '#8a5a33', '#d6a46f'];
-const STRAW: Tone = ['#e3b866', '#b98b3c', '#f4d996'];
-const CLAY: Tone = ['#d58f55', '#a6632f', '#ecb37f'];
+export const RED: Tone = ['#e0503f', '#b5382c', '#f08b7e'];
+export const LEAF: Tone = [VALLEY.leaf, VALLEY.leafShade, VALLEY.leafLight];
+export const GRASS: Tone = ['#b3d184', '#93b566', '#cfe3a4'];
+export const BARK: Tone = [VALLEY.trunk, '#664026', '#a8774e'];
+export const WOOD: Tone = ['#b8804d', '#8a5a33', '#d6a46f'];
+export const STRAW: Tone = ['#e3b866', '#b98b3c', '#f4d996'];
+export const CLAY: Tone = ['#d58f55', '#a6632f', '#ecb37f'];
 const WALL: Tone = [VALLEY.wall, VALLEY.wallSide, VALLEY.roof];
 const ROOF: Tone = [VALLEY.red, VALLEY.redDark, '#dc6b5c'];
 const GOLD: Tone = [VALLEY.gold, VALLEY.goldDark, VALLEY.goldLight];
 const SUN: Tone = ['#f7c63c', '#e29a24', '#fde49a'];
-const BLUE: Tone = [VALLEY.gate, VALLEY.gateDark, '#7fb4e2'];
-const GLASS: Tone = ['#e1eff5', '#b3cdd8', '#ffffff'];
-const WATER: Tone = ['#5aaee0', '#3a86bf', '#cdeaf6'];
+export const BLUE: Tone = [VALLEY.gate, VALLEY.gateDark, '#7fb4e2'];
+export const GLASS: Tone = ['#e1eff5', '#b3cdd8', '#ffffff'];
+export const WATER: Tone = ['#5aaee0', '#3a86bf', '#cdeaf6'];
 const WHITE: Tone = ['#f6f2ea', '#d6cdbd', '#ffffff'];
-const PAPER: Tone = ['#fbf1dc', '#e2cfaa', '#fffaf0'];
+export const PAPER: Tone = ['#fbf1dc', '#e2cfaa', '#fffaf0'];
 const STONE: Tone = ['#a9acb3', '#80848c', '#cdd0d5'];
-const COPPER: Tone = ['#cd7c3e', '#9a5326', '#eaa96d'];
+export const COPPER: Tone = ['#cd7c3e', '#9a5326', '#eaa96d'];
 const STEEL: Tone = ['#c5ccd5', '#949dab', '#eef1f5'];
 const WOOL: Tone = [VALLEY.wool, VALLEY.woolShade, '#ffffff'];
-/** The near-black of an animal's face and hooves, a phone, a pupil: never pure black. */
+/** The near-black of an animal's face and hooves, a phone, a pupil; never pure black. */
 const INK = VALLEY.ink;
 const PINK = '#f2b0a2';
 const TONGUE = '#e8798a';
@@ -176,7 +154,7 @@ const SKY_PANE = '#c4e4f1';
 /** A window lit by evening, as the valley's houses are. */
 const LAMP = '#f2c35c';
 
-/** The patch of shade every thing stands on: the valley's earth in shade, soft enough for any card. */
+/** The shade patch things stand on: the valley's shaded earth, soft enough for any card. */
 const GROUND = VALLEY.earthShade;
 
 /** How dark a colour looks, 0 (black) to 1 (white). */
@@ -185,11 +163,7 @@ function luma(hex: string): number {
   return (0.299 * ((v >> 16) & 255) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) / 255;
 }
 
-/**
- * A day colour as a dark card shows it: a little toward the dusk's violet,
- * as the valley goes by evening, and lifted toward a pale lilac when that
- * would leave it too dark to see on the card.
- */
+/** A day colour on a dark card: moved a little toward the dusk violet, and lifted toward a pale lilac if that would leave it too dark. */
 function night(hex: string): string {
   const m = dusk(hex, true, 0.18);
   const y = luma(m);
@@ -206,15 +180,15 @@ const O = (cx: number, cy: number, r: number): string => ellipsePath(cx, cy, r, 
 const E = ellipsePath;
 
 /** An ellipse turned `deg` degrees about its centre, as a path. */
-function oval(cx: number, cy: number, rx: number, ry: number, deg: number): string {
+export function oval(cx: number, cy: number, rx: number, ry: number, deg: number): string {
   const a = (deg * Math.PI) / 180;
   const [dx, dy] = [Math.cos(a) * rx, Math.sin(a) * rx];
   const arc = `A${f(rx)} ${f(ry)} ${f(deg)} 1 0`;
   return `M${f(cx - dx)} ${f(cy - dy)}${arc} ${f(cx + dx)} ${f(cy + dy)}${arc} ${f(cx - dx)} ${f(cy - dy)}Z`;
 }
 
-/** A rectangle with its corners rounded by `r`, drawn the way the circles are (anticlockwise), so the two join in one path. */
-function box(x: number, y: number, w: number, h: number, r = 0): string {
+/** A rectangle with corners rounded by `r`, wound anticlockwise like the circles so the two join in one path. */
+export function box(x: number, y: number, w: number, h: number, r = 0): string {
   if (r <= 0) return `M${f(x)} ${f(y)}v${f(h)}h${f(w)}v${f(-h)}Z`;
   const q = Math.min(r, w / 2, h / 2);
   const c = `a${f(q)} ${f(q)} 0 0 0`;
@@ -225,19 +199,19 @@ function box(x: number, y: number, w: number, h: number, r = 0): string {
 }
 
 /** A closed polygon through x, y pairs. */
-function poly(...xy: number[]): string {
+export function poly(...xy: number[]): string {
   let d = '';
   for (let i = 0; i + 1 < xy.length; i += 2) d += `${i === 0 ? 'M' : 'L'}${f(xy[i]!)} ${f(xy[i + 1]!)}`;
   return `${d}Z`;
 }
 
-/** A picture drawn `k` times its size about its foot (cx, cy), so a small thing fills its card as a large one does. */
+/** A transform scaling a picture `k` times about its foot (cx, cy), so a small thing fills its card as a large one does. */
 const grow = (k: number, cx = 60, cy = 104): string => `matrix(${n2(k)} 0 0 ${n2(k)} ${f(cx * (1 - k))} ${f(cy * (1 - k))})`;
 
 /** A diamond about a point: the lozenge of a kilim or a knitted band. */
 const diamond = (cx: number, cy: number, rx: number, ry: number): string => poly(cx, cy - ry, cx + rx, cy, cx, cy + ry, cx - rx, cy);
 
-/** Which way an arc goes round (cx, cy) from one point through another to a third: SVG's large-arc and sweep flags. */
+/** The large-arc and sweep flags for an arc round (cx, cy) from one point through another to a third. */
 function arcFlags(cx: number, cy: number, from: Pt, via: Pt, to: Pt): [number, number] {
   const turn = Math.PI * 2;
   const at = (p: Pt): number => Math.atan2(p[1] - cy, p[0] - cx);
@@ -247,7 +221,7 @@ function arcFlags(cx: number, cy: number, from: Pt, via: Pt, to: Pt): [number, n
   return [turn - span > Math.PI ? 1 : 0, 0];
 }
 
-/** The part of one circle that another does not cover: a crescent moon, or the shade on a ball. */
+/** The part of one circle another does not cover: a crescent moon, or the shade on a ball. */
 function lune(x1: number, y1: number, r1: number, x2: number, y2: number, r2: number): string {
   const d = Math.hypot(x2 - x1, y2 - y1);
   const [ux, uy] = [(x2 - x1) / d, (y2 - y1) / d];
@@ -262,7 +236,7 @@ function lune(x1: number, y1: number, r1: number, x2: number, y2: number, r2: nu
   return `M${p(i1)}A${f(r1)} ${f(r1)} 0 ${l1} ${s1} ${p(i2)}A${f(r2)} ${f(r2)} 0 ${l2} ${s2} ${p(i1)}Z`;
 }
 
-/** Round puffs set about an ellipse, and the ellipse filling their middle: wool, or a cloud. */
+/** Round puffs about an ellipse, with the ellipse filling their middle: wool, or a cloud. */
 function puffs(cx: number, cy: number, rx: number, ry: number, count: number, r: number, from = 0): string {
   let d = E(cx, cy, rx, ry);
   for (let i = 0; i < count; i++) {
@@ -272,7 +246,7 @@ function puffs(cx: number, cy: number, rx: number, ry: number, count: number, r:
   return d;
 }
 
-/** A five-pointed star about a point, its points `r` out and its inner corners `k` of that. */
+/** A five-pointed star's points about a centre: points `r` out, inner corners `k` of that. */
 function starPoints(cx: number, cy: number, r: number, k: number): Pt[] {
   const pts: Pt[] = [];
   for (let i = 0; i < 10; i++) {
@@ -285,10 +259,7 @@ function starPoints(cx: number, cy: number, r: number, k: number): Pt[] {
 
 // ───────────────────────────────────────────────────────────── the brush
 
-/**
- * What a picture is painted with: flat fills and round-ended lines, every
- * colour given as the day's and shown as the card's light asks.
- */
+/** What a picture is painted with: flat fills and round-ended lines, every colour given as the day's and shown as the card needs. */
 class Brush {
   private out = '';
 
@@ -308,32 +279,31 @@ class Brush {
     this.out += `<path d="${d}" fill="${warm(hex, this.dark)}"/>`;
   }
 
-  /** A window or a lamp: its day colour by day, and lit warm by evening. */
+  /** A window or lamp: its day colour by day, lit warm by evening. */
   lit(d: string, day: string, evening: string): void {
     this.out += `<path d="${d}" fill="${this.dark ? warm(evening, true) : day}"/>`;
   }
 
-  /** A filled shape with its corners softened by a line of its own colour round it: a sun's rays. */
+  /** A filled shape whose corners are softened by a stroke in its own colour: a sun's rays. */
   round(d: string, hex: string, width: number): void {
     const c = this.c(hex);
     this.out += `<path d="${d}" fill="${c}" stroke="${c}" stroke-width="${f(width)}" stroke-linejoin="round"/>`;
   }
 
-  /** A line for a thing that is a line: a stalk, a seam, a strap, a whisker, steam. */
+  /** A stroke for things that are lines: a stalk, seam, strap, whisker, steam. */
   line(d: string, hex: string, width: number, more = ''): void {
     this.out += `<path d="${d}" fill="none" stroke="${this.c(hex)}" stroke-width="${f(width)}" stroke-linecap="round" stroke-linejoin="round"${more}/>`;
   }
 
-  /** A run of short square-ended dashes along a line: weaving, a dotted route. */
+  /** Short square-ended dashes along a line: weaving, a dotted route. */
   dash(d: string, hex: string, width: number, on: number, off: number, offset = 0): void {
     const shift = offset ? ` stroke-dashoffset="${f(offset)}"` : '';
     this.out += `<path d="${d}" fill="none" stroke="${this.c(hex)}" stroke-width="${f(width)}" stroke-dasharray="${f(on)} ${f(off)}"${shift}/>`;
   }
 
   /**
-   * A form in one face and one step of shade: the whole shape in its shade,
-   * and its face over it drawn `k` of its size toward (ax, ay), a point near
-   * its lit upper-left edge, so the shade shows as a band to the lower right.
+   * A form with one face and one step of shade: the whole shape in shade, and its face over it scaled `k` toward (ax, ay)
+   * near the lit upper-left edge, so the shade shows as a band to the lower right.
    */
   form(d: string, t: Tone, ax: number, ay: number, k = 0.88, more = ''): void {
     this.fill(d, t[1], more);
@@ -341,17 +311,15 @@ class Brush {
   }
 
   /**
-   * A form whose parts stand close together (fingers, toes): its shade is the
-   * same shape set a little down and to the right, under its face, so every
-   * part keeps a crisp shadow edge on its far side and the gaps between them
-   * stay open.
+   * A form with closely spaced parts (fingers, toes): its shade is the same shape offset down and right, so every part
+   * keeps a crisp shadow edge and the gaps stay open.
    */
   cut(d: string, t: Tone, dx = 1.8, dy = 1.4): void {
     this.fill(d, t[1], ` transform="translate(${f(dx)} ${f(dy)})"`);
     this.fill(d, t[0]);
   }
 
-  /** A see-through darkening laid over a form of many colours (a ball, a folded map), its one step of shade. */
+  /** A translucent darkening over a many-coloured form (a ball, a folded map), as its step of shade. */
   shade(d: string, opacity = 0.16): void {
     this.out += `<path d="${d}" fill="${this.dark ? '#120e26' : '#3d2a1f'}" fill-opacity="${n2(opacity)}"/>`;
   }
@@ -362,7 +330,7 @@ class Brush {
     this.out += `<path d="${E(cx, cy, rx, rx * 0.15)}" fill="${colour}" fill-opacity="${this.dark ? '0.6' : '0.45'}"/>`;
   }
 
-  /** What `draw` paints, moved or turned as one. */
+  /** Paints `draw` inside one transformed group. */
   group(transform: string, draw: () => void): void {
     this.out += `<g transform="${transform}">`;
     draw();
@@ -378,7 +346,7 @@ type Draw = (b: Brush, random: Rand) => void;
 
 // ───────────────────────────────────────────────────────────── shared pieces
 
-/** A sugar cube or a block seen from above and to the left: its front-bottom corner (x, y), its edge `s`. */
+/** A sugar cube or block seen from above and to the left: front-bottom corner (x, y), edge `s`. */
 function cube(b: Brush, x: number, y: number, s: number, t: Tone): void {
   const w = s * 0.87;
   const h = s * 0.5;
@@ -387,7 +355,7 @@ function cube(b: Brush, x: number, y: number, s: number, t: Tone): void {
   b.fill(poly(x, y - s, x - w, y - h - s, x, y - 2 * h - s, x + w, y - h - s), t[2]);
 }
 
-/** A round-crowned fruit tree standing at (x, y): its trunk, its crown in shade, face and light, and its fruit. */
+/** A round-crowned fruit tree at (x, y): trunk, crown in shade, face and light, and fruit. */
 function fruitTree(b: Brush, random: Rand, x: number, y: number, rx: number, ry: number, fruit: string): void {
   const cy = y - ry - 22;
   b.fill(`M${f(x - 3.5)} ${f(y)}L${f(x - 2.5)} ${f(cy)}H${f(x + 2.5)}L${f(x + 3.5)} ${f(y)}Z`, BARK[0]);
@@ -403,7 +371,7 @@ function fruitTree(b: Brush, random: Rand, x: number, y: number, rx: number, ry:
   b.fill(dots, fruit);
 }
 
-/** A cloud of round puffs, in its shade and its face. */
+/** A cloud of round puffs: its shade and face. */
 function cloud(b: Brush, cx: number, cy: number, s: number, t: Tone): void {
   const d =
     O(cx - 28 * s, cy + 6 * s, 12 * s) + O(cx - 12 * s, cy - 5 * s, 17 * s) + O(cx + 10 * s, cy - 10 * s, 20 * s) + O(cx + 29 * s, cy + 3 * s, 14 * s) + E(cx, cy + 10 * s, 38 * s, 10 * s);
@@ -411,7 +379,7 @@ function cloud(b: Brush, cx: number, cy: number, s: number, t: Tone): void {
   b.fill(oval(cx + 2 * s, cy - 21 * s, 8 * s, 4.4 * s, -15), t[2]);
 }
 
-/** A poplar of the valley's river banks: lit down its left side. */
+/** A riverbank poplar, lit down its left side. */
 function poplar(b: Brush, x: number, y: number, s: number): void {
   b.fill(box(x - 1.4 * s, y - 8 * s, 2.8 * s, 8 * s), BARK[0]);
   const top = y - 46 * s;
@@ -421,7 +389,7 @@ function poplar(b: Brush, x: number, y: number, s: number): void {
 
 // ───────────────────────────────────────────────────────────── animals
 
-/** A joint of a limb: where it is, and how thick the limb is there. */
+/** A limb joint: its position and the limb's thickness there. */
 type Joint = readonly [x: number, y: number, w: number];
 
 /** The outline round a limb's joints, thick where they are thick, as one smooth closed shape. */
@@ -439,30 +407,28 @@ function limb(joints: readonly Joint[]): string {
   return shape([...left, ...right.reverse()], 1);
 }
 
-/** Where every animal stands: its feet on this line, its patch of shade just under them. */
+/** Every animal's feet stand on this line, with its shade patch just below. */
 const FEET = 102;
 
-/** A foreleg from the body at (x, top) to the ground: straight down past the knee, thinning to the foot, the pastern a little forward. */
+/** A foreleg from the body at (x, top) to the ground: straight down past the knee, thinning, the pastern slightly forward. */
 function foreLeg(x: number, top: number, w: number): Joint[] {
   return [[x + 1, top, w], [x, top + (FEET - top) * 0.52, w * 0.58], [x + 0.6, FEET - 6, w * 0.44], [x - 1, FEET - 1.2, w * 0.46]];
 }
 
-/** A hind leg: the thigh deep in the body at (x, top), back to the hock, then down and a little forward to the foot. */
+/** A hind leg: thigh deep in the body at (x, top), back to the hock, then down and slightly forward to the foot. */
 function hindLeg(x: number, top: number, w: number): Joint[] {
   return [[x, top, w], [x + w * 0.42, top + (FEET - top) * 0.5, w * 0.46], [x + w * 0.12, FEET - 6, w * 0.38], [x - 1, FEET - 1.2, w * 0.42]];
 }
 
-/** A hoof under a leg's last joint: small, its front sloping, in a dark tone of the leg. */
+/** A hoof under a leg's last joint: small, front sloping, in a dark tone of the leg. */
 const hoof = ([x, , w]: Joint): string => poly(x - w * 0.7, FEET - 3.6, x + w * 0.5, FEET - 3.6, x + w * 0.62, FEET, x - w * 0.9, FEET);
 
-/** A paw under a leg's last joint: round and a little forward. */
+/** A paw under a leg's last joint: round and slightly forward. */
 const paw = ([x, , w]: Joint): string => E(x - w * 0.3, FEET - 2.2, w * 0.72, 2.6);
 
 /**
- * A form lit from above and to the left: the whole shape in its shade, and
- * its face over it drawn a little shorter toward its top and a little
- * narrower toward its left, so the one shadow plane lies along its underside
- * and its far end, following the form, as a belly and a jaw are shaded.
+ * A form lit from the upper left: the whole shape in shade, and its face over it slightly shorter toward the top and
+ * narrower toward the left, so the shadow plane lies along its underside and far end, like a belly or jaw.
  */
 function underside(b: Brush, pts: readonly Pt[], t: Tone, k: number): void {
   const ax = Math.min(...pts.map((p) => p[0]));
@@ -473,7 +439,7 @@ function underside(b: Brush, pts: readonly Pt[], t: Tone, k: number): void {
   b.fill(d, t[0], ` transform="matrix(${n2(kx)} 0 0 ${n2(k)} ${f(ax * (1 - kx))} ${f(ay * (1 - k))})"`);
 }
 
-/** Numbers for a path, a tenth at most, each set apart only where SVG needs it (a minus sign is its own separator). */
+/** Path numbers to a tenth at most, separated only where SVG needs it (a minus sign is its own separator). */
 function nums(vs: readonly number[]): string {
   let out = '';
   for (const v of vs) {
@@ -484,11 +450,9 @@ function nums(vs: readonly number[]): string {
 }
 
 /**
- * A smooth closed outline through the points (Catmull-Rom, as cubic
- * Béziers), the same curve `smoothPath` draws but written in short relative
- * steps, each measured from where the rounded path has actually got to so
- * the rounding never adds up: an animal is a dozen of these, and this keeps
- * it light. A leg, thin and smooth, can be written in whole units (`step` 1).
+ * A smooth closed Catmull-Rom outline as cubic Béziers, like `smoothPath`, but written in short relative steps measured
+ * from where the rounded path actually is, so rounding never accumulates; an animal is a dozen of these, and this keeps
+ * it light. A thin smooth leg can use whole units (`step` 1).
  */
 function shape(pts: readonly Pt[], step = 0.1): string {
   const m = pts.length;
@@ -510,37 +474,34 @@ function shape(pts: readonly Pt[], step = 0.1): string {
 }
 
 /**
- * An animal standing side on, facing left, built the same way for every
- * one of them so they read as one family: the far legs a step darker and a
- * little apart from the near ones, the body and neck as one outline with its
- * underside in shade, the head, the near legs in the coat's own colour,
- * thick at the top, bent at the knee and the hock, thinning to a small dark
- * hoof or a round paw.
+ * An animal standing side on, facing left, built the same way for every animal so they read as a family: far legs a
+ * step darker and offset, body and neck as one outline with a shaded underside, the head, and near legs in the coat
+ * colour, thick at the top, bent at knee and hock, thinning to a small dark hoof or a round paw.
  */
 interface Beast {
-  /** the coat: its face, its one step of shade (the far legs and the underside) and its light */
+  /** The coat: its face, its one step of shade (far legs and underside) and its light. */
   t: Tone;
-  /** the torso and the neck as one outline; a woolly body is given as its puffs instead */
+  /** Torso and neck as one outline; a woolly body is given as puffs instead. */
   body?: readonly Pt[];
   wool?: readonly [cx: number, cy: number, rx: number, ry: number, count: number, r: number];
   head: readonly Pt[];
-  /** the head's own tones when they are not the coat's: a sheep's dark face */
+  /** The head's tones when they differ from the coat's, such as a sheep's dark face. */
   face?: Tone;
-  /** where each near leg meets the body, and how thick it is there: x, top, width */
+  /** Where each near leg meets the body and its thickness there: x, top, width. */
   fore: readonly [number, number, number];
   hind: readonly [number, number, number];
-  /** how far the far legs stand from the near ones */
+  /** How far the far legs stand from the near ones. */
   far?: readonly [number, number];
   foot: 'hoof' | 'paw';
-  /** legs of their own colour (a fox's dark stockings, a sheep's dark legs): near, far */
+  /** Legs in their own colour (a fox's dark stockings, a sheep's dark legs): near, far. */
   legs?: readonly [string, string];
-  /** how much of the body's height is left lit above its underside's shade */
+  /** How much of the body's height stays lit above the underside's shade. */
   under?: number;
-  /** drawn before the body: a tail behind it, a far ear or horn */
+  /** Drawn before the body: a tail behind it, a far ear or horn. */
   behind?: () => void;
-  /** drawn between the body and the head: what the head overlaps */
+  /** Drawn between body and head: what the head overlaps. */
   between?: () => void;
-  /** drawn last: ears, horns, eyes, a muzzle, markings */
+  /** Drawn last: ears, horns, eyes, a muzzle, markings. */
   front?: () => void;
 }
 
@@ -570,7 +531,7 @@ function beast(b: Brush, a: Beast): void {
   a.front?.();
 }
 
-/** An eye: small and dark, the same on every animal; on a dark face it is a pale ring round the dark. */
+/** An eye: small and dark on every animal; on a dark face, a pale ring round the dark. */
 function eye(b: Brush, x: number, y: number, r = 2, ring?: string): void {
   if (ring) b.fill(O(x, y, r + 0.9), ring);
   b.fill(O(x, y, r), INK);
@@ -590,7 +551,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.fill(oval(39, 58, 5, 9, 20), RED[2]);
   },
 
-  // tea is the tulip glass on its saucer, red and steaming; a cup has a handle and a drinking glass is straight and clear
+  // Tea is the tulip glass on its saucer, red and steaming; a cup has a handle and a drinking glass is straight and clear.
   tea: (b) => {
     b.ground(38, 60, 101);
     b.fill(E(60, 99, 37, 7.5), WHITE[1]);
@@ -605,7 +566,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.line('M53 24C49 19 57 15 53 9M67 24C63 19 71 15 67 9', '#d8d2c8', 3);
   },
 
-  // water is a drop falling into its own puddle, not a glass of it, so it never reads as qedeh (a drinking glass)
+  // Water is a drop falling into its own puddle, not a glass of it, so it never reads as qedeh (a drinking glass).
   water: (b) => {
     b.ground(40, 60, 104);
     b.fill(E(60, 103, 36, 6), WATER[2]);
@@ -618,10 +579,10 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.ground(44);
     const t: Tone = ['#ebe5d8', '#c2b8a3', '#fdfbf6'];
     const s = 24;
-    // a pile seen from above and to the left: four on the ground, one on them, back to front
+    // A pile seen from above and to the left: four on the ground, one on top, back to front.
     const at = (i: number, j: number, k: number): [number, number] => [60 + (i - j) * s * 0.87, 103 - (2 - i - j) * s * 0.5 - k * s];
     for (const [i, j, k] of [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0.5, 0.5, 1]] as const) {
-      // each a little smaller than its place in the pile, so a hairline of the card shows between them
+      // Each slightly smaller than its place, so a hairline of the card shows between them.
       const [x, y] = at(i, j, k);
       cube(b, x, y - 0.08 * s, 0.92 * s, t);
     }
@@ -663,7 +624,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
       foot: 'paw',
       behind: () => b.fill(shape([[90, 52], [98, 46], [103, 36], [102, 28], [98, 33], [95, 42], [88, 48]]), t[0]),
       between: () => {
-        // the collar round the neck, just under the head, its tag hanging at the throat
+        // The collar just under the head, its tag hanging at the throat.
         b.line('M55 44C50 51 42 55 33 56', VALLEY.red, 4.2);
         b.fill(O(34, 60.5, 2.8), GOLD[0]);
       },
@@ -713,7 +674,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
       },
       between: () => {
         b.fill(shape([[30, 27], [38, 31], [46, 41], [53, 46], [49, 48], [41, 41], [33, 34]]), dark);
-        // a kilim over its back, hanging the way the back curves
+        // A kilim over its back, following the curve of the back.
         b.fill('M56 46C64 45 74 45 82 44L83 62C76 63 64 63 56 63Z', VALLEY.red);
         b.fill('M56 51C64 50 74 50 82 49.5V53C74 53 64 53.4 56 54Z', CREAM);
         b.fill(diamond(69.5, 58.5, 4, 3.6), VALLEY.indigo);
@@ -997,7 +958,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
         b.fill(puffs(33, 38, 5, 2.4, 5, 3.8), t[0]);
         b.fill(oval(22, 56, 2.2, 1.6, 0), '#e8a7a0');
         eye(b, 31, 48, 1.9);
-        // a bell on a red band round its neck, hanging at the throat
+        // A bell on a red band round its neck, hanging at the throat.
         b.line('M47 51C46 57 43 61 38 63', VALLEY.red, 2.8);
         b.form(shape([[36, 63], [40, 63], [41.5, 68], [34.5, 68]]), GOLD, 36, 63, 0.8);
       },
@@ -1011,7 +972,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
       b.form(box(34, 10, 52, 92, 10), t, 36, 12, 0.96);
       b.fill(box(39, 20, 42, 72, 4), '#cfe7f3');
       b.fill(poly(39, 62, 81, 30, 81, 42, 39, 74), '#e3f2f8');
-      // a home screen of soft rounded tiles in the valley's own colours: a phone, and no one's in particular
+      // A generic home screen of soft rounded tiles in the valley's colours.
       const tile = (col: number, row: number): string => box(43 + col * 13, 27 + row * 13, 9.5, 9.5, 2.6);
       const tiles: readonly [string, readonly (readonly [number, number])[]][] = [
         [VALLEY.red, [[0, 0], [2, 2], [1, 4]]],
@@ -1082,7 +1043,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
   meat: (b) => {
     const meat: Tone = ['#cf4f45', '#9a332d', '#e47a6c'];
     b.ground(46);
-    // a cut of meat as it lies on the board: its cut face in its rim of fat, the cut bone in it, its thickness showing below
+    // A cut of meat on the board: its cut face in a rim of fat, the cut bone, and its thickness below.
     b.group('rotate(-10 60 62)', () => {
       const cut = shape([[12, 58], [18, 42], [36, 32], [60, 31], [84, 35], [102, 47], [106, 62], [98, 76], [78, 84], [52, 86], [28, 82], [14, 72]]);
       b.fill(cut, meat[1], ' transform="translate(0 7)"');
@@ -1098,7 +1059,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.ground(46);
     b.fill(E(60, 101, 18, 4), CLAY[1]);
     b.form('M16 64C16 88 36 102 60 102C84 102 104 88 104 64Z', CLAY, 28, 68, 0.94);
-    // the painted zig-zag of village pottery round the bowl
+    // The painted zigzag of village pottery round the bowl.
     let zig = 'M24 78';
     for (let i = 1; i <= 12; i++) zig += `L${24 + i * 6} ${i % 2 ? 82 : 78}`;
     b.line(zig, CREAM, 2.4);
@@ -1107,11 +1068,12 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.line('M44 64C48 60 62 59 70 62C76 65 68 69 58 67', '#e0d9cb', 2.4);
   },
 
-  // a sindoq is the plain wooden chest a household keeps its linen and its keepsakes in: planks, two iron straps and a hasp, never a pirate's gold
+  // A sindoq is the plain wooden chest a household keeps its linen and keepsakes in: planks, two iron straps and a hasp,
+  // never a pirate's gold.
   chest: (b) => {
     const iron: Tone = ['#5b5552', '#3f3a38', '#7c7673'];
     b.ground(48, 62, 103);
-    // the right end in shade, the front in the wood's face, the lid a little proud of both
+    // The right end in shade, the front in the wood's face, the lid a little proud of both.
     b.fill(poly(88, 101, 88, 60, 104, 52, 104, 93), WOOD[1]);
     b.fill(box(16, 60, 72, 41), WOOD[0]);
     b.line('M16 74H88M16 88H88M88 74L104 66M88 88L104 80', WOOD[1], 1.4);
@@ -1119,12 +1081,12 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.fill(box(13, 50, 79, 11, 1.5), WOOD[0]);
     b.fill(poly(92, 50, 108, 42, 108, 52, 92, 61), WOOD[1]);
     b.line('M15 60.4H91', WOOD[1], 1.2);
-    // two iron straps over the lid and down the front, each with its rivets
+    // Two iron straps over the lid and down the front, with rivets.
     b.fill(box(28, 50, 7, 51) + box(69, 50, 7, 51), iron[0]);
     b.fill(poly(28, 50, 44, 42, 51, 42, 35, 50) + poly(69, 50, 85, 42, 92, 42, 76, 50), iron[2]);
     b.fill(box(33, 50, 2, 51) + box(74, 50, 2, 51), iron[1]);
     b.fill([54, 66, 80, 94].flatMap((y) => [O(31.5, y, 1.1), O(72.5, y, 1.1)]).join(''), iron[2]);
-    // the hasp: a plain iron plate hanging from the lid over a staple
+    // The hasp: a plain iron plate hanging from the lid over a staple.
     b.fill(box(48, 54, 9, 15, 1.5), iron[0]);
     b.fill(box(50.5, 66, 4, 6, 1.5), iron[1]);
   },
@@ -1218,7 +1180,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.fill(O(63, 21, 4.6) + O(57, 13, 3.6), VALLEY.smoke, ' fill-opacity="0.9"');
   },
 
-  // the eye floats as the sky's things do: a shadow under it would make it an object on a table
+  // The eye floats like the sky's things: a shadow under it would make it an object on a table.
   eye: (b) => {
     b.line('M28 30C44 20 76 20 92 30', '#6b4a32', 5);
     b.form('M14 64C28 46 44 40 60 40C76 40 92 46 106 64C92 82 76 88 60 88C44 88 28 82 14 64Z', WHITE, 30, 52, 0.95);
@@ -1292,11 +1254,11 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.line('M14 102L10 92M18 102V90M22 102L26 93', LEAF[0], 2.4);
   },
 
-  // a spring is water running out of a cleft in the rocks into its pool
+  // A spring is water running from a cleft in the rocks into its pool.
   spring: (b) => {
     const wall: Tone = ['#ddd3bf', '#b9ab90', '#efe8da'];
     b.ground(52);
-    // the village spring: a stone front with an arched niche, the water falling from its spout into the trough below
+    // The village spring: a stone front with an arched niche, water falling from its spout into the trough.
     b.form('M12 84V34C12 28 16 24 22 24H98C104 24 108 28 108 34V84Z', wall, 14, 26, 0.97);
     b.line('M12 40H34M86 40H108M12 58H34M86 58H108M22 24V40M98 24V40M24 58V84M96 58V84', wall[1], 1.4);
     b.fill('M36 84V48C36 34 46 26 60 26C74 26 84 34 84 48V84Z', wall[1]);
@@ -1538,7 +1500,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
     });
   },
 
-  // the double teapot of a Kurdish house: the brew in the small pot, kept hot on the big kettle's steam
+  // The double teapot of a Kurdish house: the brew in the small pot, kept hot over the big kettle's steam.
   teapot: (b) => {
     b.ground(44);
     b.line('M30 82C18 80 14 72 10 64', COPPER[1], 6);
@@ -1570,7 +1532,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.fill(oval(48, 46, 9, 5, -40), SUN[2]);
   },
 
-  // a round crescent with its craters, the rest of the moon faintly there behind it, so it is the moon and never a slice of fruit
+  // A crescent with craters and the rest of the moon faintly behind it, so it reads as the moon, never a slice of fruit.
   moon: (b) => {
     const t: Tone = ['#f5df8f', '#ddb95a', '#fbefc4'];
     b.fill(O(56, 60, 40), '#ebe5d4');
@@ -1914,8 +1876,8 @@ const PICTURES: Record<WordPictureId, Draw> = {
     eye(b, 70, 26, 2);
   },
 
-  // the kid is cream and patched, smooth-coated and hornless but for buds: never the dark bearded goat, the woolly lamb or the striped gazelle;
-  // a young goat is short in the leg and deep in the body for its size, with a goat's long muzzle and both ears out to the side, never a foal's long neck
+  // The kid is cream and patched, smooth-coated, hornless but for buds, so it is never the bearded goat, the lamb or the
+  // gazelle; short-legged and deep-bodied, with a goat's long muzzle and ears out to the side, never a foal's long neck.
   kid: (b) => {
     const t: Tone = ['#f3e4cc', '#d3bc98', '#fbf3e4'];
     const patch = '#a8703f';
@@ -1930,18 +1892,18 @@ const PICTURES: Record<WordPictureId, Draw> = {
       foot: 'hoof',
       behind: () => {
         b.fill(shape([[89, 59], [93, 52], [97, 50], [96, 55], [92, 62]]), t[0]);
-        // the far ear, out to the other side and a little forward
+        // The far ear, out to the other side and slightly forward.
         b.fill(shape([[33, 38], [26, 34], [22, 35], [25, 39], [32, 41]]), t[1]);
       },
       between: () => b.fill(shape([[62, 56], [75, 56], [78, 64], [70, 70], [62, 65]]), patch),
       front: () => {
         b.fill(shape([[36, 34], [43, 36], [46, 42], [43, 46], [39, 40]]), patch);
-        // the near ear, held out and a little down behind the eye, as a kid's are
+        // The near ear, held out and slightly down behind the eye.
         b.fill(shape([[41, 39], [49, 39], [55, 43], [49, 45], [42, 44]]), t[0]);
         b.fill(shape([[44, 40.6], [49.5, 40.8], [52.5, 43], [48.5, 43.6], [44, 42.6]]), '#e6b8a4');
-        // two buds where the horns will be
+        // Two buds where the horns will be.
         b.fill(oval(34.5, 33.6, 2, 2.6, -20) + oval(38.6, 34.2, 1.9, 2.4, 10), '#d9c39b');
-        // the long soft muzzle of a goat: paler at the lips, a nostril and the line of the mouth
+        // A goat's long soft muzzle: paler at the lips, a nostril and the line of the mouth.
         b.fill(shape([[18.5, 50], [24, 49], [27, 53], [24, 57], [19.5, 56.5]]), t[2]);
         b.fill(oval(19.8, 51.4, 1.4, 1, -20), '#8a6a5a');
         b.line('M19.6 55.2C21.4 55.8 23.2 55.6 24.6 54.6', '#b59a7c', 1.1);
@@ -1950,7 +1912,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
     });
   },
 
-  // the black tent of the summer pastures, woven of goat hair, long and low on its poles and ropes
+  // The black goat-hair tent of the summer pastures, long and low on its poles and ropes.
   tent: (b) => {
     const t: Tone = ['#4a3e38', '#2e2622', '#76675c'];
     b.ground(52, 60, 100);
@@ -1959,7 +1921,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
     b.form('M12 98L16 64C30 56 44 58 60 52C76 58 90 56 104 60L108 98Z', t, 16, 60, 0.97);
     b.line('M17 74C40 68 80 68 105 72M15 86C40 82 80 82 107 86', t[2], 2);
     b.line('M17 64C30 57 44 59 60 53C76 59 90 57 103 61', '#8f7f72', 2.4);
-    // the open front, dark inside by day and lit by the lamp within by evening
+    // The open front: dark inside by day, lit by the lamp within by evening.
     b.lit('M42 98L47 72H75L80 98Z', '#2a221f', LAMP);
     b.fill(box(46, 90, 30, 8), VALLEY.red);
     b.fill(diamond(61, 94, 5, 3), GOLD[0]);
@@ -1968,7 +1930,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
 
   hand: (b) => {
     const skin: Tone = ['#e8b48a', '#c98d63', '#f5d0b0'];
-    // a left hand held up, palm to us: four fingers apart, the middle one longest, the thumb out from the lower palm, a sleeve at the wrist
+    // A left hand held up, palm out: four spread fingers (the middle longest), the thumb from the lower palm, a sleeve at the wrist.
     const fingers = box(26, 40, 10, 30, 5) + box(40, 24, 11, 42, 5.5) + box(55, 15, 11.5, 48, 5.75) + box(70.5, 22, 11, 42, 5.5);
     const palm = shape([[27, 60], [27, 76], [32, 90], [41, 99], [54, 102], [68, 100], [78, 92], [83, 80], [82, 64], [77, 57], [56, 55]]);
     b.cut(fingers + palm + oval(90, 75, 17, 8, -46) + box(40, 96, 34, 13), skin, 2, 1.4);
@@ -1984,7 +1946,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
 
   nose: (b) => {
     const skin: Tone = ['#e8b48a', '#c98d63', '#f5d0b0'];
-    // a nose seen three-quarters on: the bridge down to the round tip, the wing of one nostril behind it
+    // A nose in three-quarter view: the bridge down to the round tip, one nostril's wing behind it.
     b.fill(shape([[54, 10], [64, 10], [68, 30], [73, 52], [78, 64], [86, 70], [88, 82], [80, 91], [68, 92], [58, 90], [46, 92], [34, 90], [28, 80], [32, 70], [42, 58], [50, 34]]), skin[0]);
     b.fill(shape([[64, 10], [68, 30], [73, 52], [78, 64], [86, 70], [88, 82], [80, 91], [70, 91], [76, 82], [72, 72], [64, 66], [60, 50], [60, 28]]), skin[1]);
     b.fill(shape([[42, 88], [48, 84], [55, 85], [57, 89], [50, 91]]), '#a86e4c');
@@ -1998,7 +1960,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
 
   foot: (b) => {
     const skin: Tone = ['#e8b48a', '#c98d63', '#f5d0b0'];
-    // the sole of a bare foot: the toes joined on in an arc, the big toe largest, the arch drawn in on the inner side
+    // The sole of a bare foot: toes in an arc (the big toe largest), the arch drawn in on the inner side.
     const sole = shape([[40, 46], [40, 58], [45, 68], [47, 80], [44, 92], [45, 102], [52, 110], [62, 112], [72, 107], [78, 96], [82, 80], [88, 64], [93, 52], [86, 44], [72, 40], [56, 40]]);
     const toes = E(49, 33, 9.5, 12) + E(64, 34.5, 6.8, 8.6) + E(75, 37, 6.2, 7.6) + E(84.5, 42, 5.6, 6.6) + E(91, 49, 5, 5.8);
     b.group('rotate(-8 64 70)', () => b.cut(sole + toes, skin, 1.8, 1.4));
@@ -2040,7 +2002,7 @@ const PICTURES: Record<WordPictureId, Draw> = {
   wheat: (b) => {
     const t: Tone = ['#e7b752', '#bf8a2c', '#f6d88a'];
     b.ground(30);
-    // one ear, as the word is one: its grains in pairs up the stalk, each with its whisker
+    // One ear of wheat, since the word is singular: paired grains up the stalk, each with its whisker.
     b.line('M60 104C60 92 59 80 60 70', t[1], 3);
     let grains = '';
     let awns = '';
@@ -2071,12 +2033,10 @@ const PICTURES: Record<WordPictureId, Draw> = {
 };
 
 /**
- * Animals drawn in the catalogue's own hand that are not words of it, for
- * the book's scenes (art/book.ts lays them in as its spots): the road's
- * golden doe Zerê, a deer with no antlers, larger ears and a slimmer neck;
- * Dapîr's white goat with her long beard and the collar a clue hangs on;
- * and a ram, curled horns and all. The catalogue's own deer, goat and sheep
- * stay as they are, since each Kurdish word has one picture.
+ * Animals in the catalogue's style that are not catalogue words, for the book's scenes (book.ts): Zerê, the road's
+ * golden doe (no antlers, larger ears, slimmer neck); Dapîr's white goat with her long beard and the collar a clue
+ * hangs on; and a ram with curled horns. The catalogue's deer, goat and sheep stay as they are, since each word has one
+ * picture.
  */
 const KIN = {
   doe: (b) => {
@@ -2095,7 +2055,7 @@ const KIN = {
         b.fill(shape([[33, 34], [38, 36], [42, 46], [39, 48], [34, 40]]), '#f2dcae');
       },
       front: () => {
-        // the ears a doe listens with: large, and lined pale inside
+        // The large ears a doe listens with, lined pale inside.
         b.fill(shape([[33.5, 22], [39.5, 11], [47, 7.5], [47.5, 15], [40.5, 25]]), t[0]);
         b.fill(shape([[37, 20.5], [41.5, 13], [45.5, 10.5], [45.5, 15.5], [40, 22.5]]), '#f4dcc0');
         b.fill(shape([[14.5, 33], [20, 31], [22, 34.5], [17, 37.5], [13.5, 36]]), '#f2dcae');
@@ -2122,7 +2082,7 @@ const KIN = {
         b.fill(shape([[31, 26], [35, 17], [43, 11], [51, 11], [45, 15], [39, 21], [35, 28]]), '#b5a07a');
       },
       between: () => {
-        // her collar, and the clue rolled up and tied to it
+        // Her collar, with the clue rolled up and tied to it.
         b.line('M34 33C36 40 40 44 46 45', VALLEY.red, 3.4);
         b.fill(box(38.5, 43, 5.5, 8, 1.4), PAPER[0]);
         b.line('M39 46.5H43.5', PAPER[1], 1);
@@ -2130,7 +2090,7 @@ const KIN = {
       front: () => {
         b.fill(shape([[27, 26], [30, 16], [38, 9], [47, 8], [41, 12], [35, 19], [32, 28]]), horn);
         b.fill(shape([[33, 30], [42, 32], [47, 37], [41, 38], [33, 35]]), t[1]);
-        // the long beard she is proud of, finer than any moustache in the village
+        // Her long beard.
         b.fill(shape([[12, 48], [19, 48], [21, 56], [19, 66], [16, 72], [13.5, 64], [12, 56]]), '#e3dccf');
         b.line('M15 52C15.6 58 15.4 64 16 69', '#cfc6b6', 1.1);
         eye(b, 25, 35, 1.6, '#e9b84a');
@@ -2154,7 +2114,7 @@ const KIN = {
       between: () => b.fill(shape([[34, 45], [43, 44], [46, 47], [40, 50], [34, 49]]), dark[1]),
       front: () => {
         b.fill(puffs(32, 44, 5.5, 3, 5, 4.4), WOOL[0]);
-        // the curled horn: back from the crown, round and down past the ear, its tip turned forward
+        // The curled horn: back from the crown, round and down past the ear, its tip turned forward.
         const curl = 'M30 45C35 37 47 38 49 47C51 56 43 61 37 58C33 56 34 51 38 51';
         b.line(curl, horn[1], 7.4);
         b.line(curl, horn[0], 5.4, ' transform="translate(-0.6 -0.6)"');
@@ -2165,10 +2125,10 @@ const KIN = {
   },
 } as const satisfies Readonly<Record<string, Draw>>;
 
-/** An animal the book shows that is not a word of the catalogue. */
+/** An animal the book shows that is not a catalogue word. */
 export type WordPictureKin = keyof typeof KIN;
 
-/** One of them on the 120-unit canvas, as the markup a picture lays in: on its patch of shade, in the light card's colours. */
+/** One of them on the 120-unit canvas as embeddable markup, on its shade patch, in the light card's colours. */
 export function wordPictureKinBody(kin: WordPictureKin): string {
   const draw = Object.prototype.hasOwnProperty.call(KIN, kin) ? KIN[kin] : undefined;
   if (!draw) throw new RangeError(`art: no animal called ${String(kin)}`);
@@ -2181,15 +2141,14 @@ export interface WordPictureOptions {
   id: WordPictureId;
   dark?: boolean;
   size?: number;
-  /** its name for a screen reader; without one the picture is decorative and hidden */
+  /** The accessible label; without one the picture is decorative and hidden. */
   title?: string;
   idPrefix?: string;
 }
 
 /**
- * A word's picture on the 120-unit canvas: the thing in the middle on its
- * patch of shade, on a transparent ground. Decorative and hidden from screen
- * readers unless it is given a `title`, since the apps say the word beside it.
+ * A word's picture on the 120-unit canvas: the thing centred on its shade patch over a transparent ground. Decorative
+ * and hidden from screen readers unless given a `title`, since the apps say the word beside it.
  */
 export function wordPictureSvg(opts: WordPictureOptions): string {
   const { id, dark = false } = opts;

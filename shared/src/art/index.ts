@@ -1,10 +1,6 @@
 /**
- * Hevalo's badge, rank, league and season-frame art, drawn by code (contract 4,
- * B3). Every function returns an SVG string: the web inlines it, the phone
- * draws it with react-native-svg's `SvgXml`, and both show the same pixels.
- *
- * Deterministic — the same arguments give the same string — and self-contained:
- * no images, fonts or links, nothing fetched.
+ * The art kit's entry point. Every drawing function returns a deterministic, self-contained SVG string (no images,
+ * fonts or links): the web inlines it and the phone draws it with react-native-svg's `SvgXml`.
  */
 export * from './keys.js';
 export { badgeSvg, badgeShineSvg, badgeShines, badgeColour, SMALL_BADGE, type BadgeOptions, type BadgeShineOptions, type BadgeState } from './badges.js';
