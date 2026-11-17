@@ -7,7 +7,6 @@ import {
   type GameDialect,
   type ProverbRoundItemView,
   type ProverbRoundMode,
-  type SoloItemState,
   type SoloResults,
 } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -15,7 +14,7 @@ import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
-import { Stones } from '../games/SoloGameShell';
+import { Stones, nextOpen } from '../games/SoloGameShell';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -41,11 +40,6 @@ const MODE_KEY: Record<ProverbRoundMode, { name: TranslationKey; line: Translati
 };
 
 type Phase = 'intro' | 'round' | 'results';
-
-function nextOpen(states: readonly SoloItemState[]): number {
-  const at = states.findIndex((s) => !s.done);
-  return at < 0 ? states.length : at;
-}
 
 /**
  * A short round on the proverbs, in the way the games played alone go on
