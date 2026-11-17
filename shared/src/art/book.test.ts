@@ -1,10 +1,6 @@
 /**
- * The drawings of Hevalo's book (art/book.ts): the apple that is smaller on
- * every page, the small things the road's scenes are told with, a dab of
- * each colour, the postmark, the sky and hill a scene stands on, and the
- * three friends posed. Each is held to what its neighbours are held to:
- * well-formed and self-contained, flat in the word pictures' hand, the same
- * every time, and unwilling to draw what it was not asked for properly.
+ * The book's drawings (book.ts): the shrinking apple, the scene spots, paint dabs, the postmark, backdrops and posed
+ * characters. Each must be well-formed, self-contained, flat like the word pictures, deterministic, and refuse bad input.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -41,9 +37,8 @@ interface El {
 }
 
 /**
- * A strict little reader of a drawing's markup: every tag closed in order,
- * every attribute quoted and named once, nothing after the root. Enough to
- * say a drawing is well-formed and to walk its elements.
+ * A strict little markup reader: tags closed in order, attributes quoted and unique, nothing after the root. Enough to
+ * call a drawing well-formed and walk its elements.
  */
 function parse(xml: string): El {
   const root: El = { name: '#root', attrs: {}, text: '', children: [] };
@@ -89,10 +84,10 @@ function walk(el: El, visit: (e: El) => void): void {
   for (const c of el.children) walk(c, visit);
 }
 
-/** Only what every renderer the drawings go to draws the same: a browser, the phone, and the book's PDF. */
+/** Only what every renderer these drawings go to (browser, phone, the book's PDF) draws the same. */
 const ALLOWED = new Set(['svg', 'title', 'defs', 'g', 'path', 'circle', 'ellipse', 'rect', 'linearGradient', 'radialGradient', 'stop', 'clipPath']);
 
-/** What every drawing keeps to, whatever it is of; hands back its root. */
+/** The rules every drawing keeps; returns its root. */
 function checkDrawing(svg: string, what: string): El {
   const problems: string[] = [];
   const want = (ok: boolean, problem: string): void => {
@@ -127,7 +122,7 @@ function checkDrawing(svg: string, what: string): El {
 
 const SKY = { sky: '#dcecff', ground: '#b9d6f7', light: '#fffdf8' } as const;
 
-/** Every drawing of the book that is painted flat, each with what it is. */
+/** Every flat-painted book drawing, with a label. */
 const FLAT: ReadonlyArray<readonly [string, string]> = [
   ...Array.from({ length: BOOK_APPLE_BITES + 1 }, (_, bites) => [`apple ${bites}`, bookAppleSvg({ bites })] as const),
   ...BOOK_SPOTS.map((spot) => [`spot ${spot}`, bookSpotSvg({ spot })] as const),
@@ -163,7 +158,7 @@ describe('the drawings of Hevalo’s book', () => {
           const v = e.attrs[k];
           if (v !== undefined) expect(v, `${what} ${k}`).toMatch(/^(#[0-9a-f]{6}|none)$/);
         }
-        // a line is a thing that is a line; a filled shape only ever wears a line of its own colour
+        // A stroke only belongs to a line; a filled shape may only carry a stroke in its own colour.
         if (e.attrs.stroke && e.attrs.fill && e.attrs.fill !== 'none') expect(e.attrs.stroke, what).toBe(e.attrs.fill);
       });
     }
@@ -201,14 +196,14 @@ describe('the drawings of Hevalo’s book', () => {
   it('starts from the word pictures’ own apple and takes a bite at a time, down to the core', () => {
     const paths = (svg: string): string[] => [...svg.matchAll(/ d="([^"]+)"/g)].map((m) => m[1]!);
     const fills = (svg: string): string[] => [...svg.matchAll(/ fill="(#[0-9a-f]{6})"/g)].map((m) => m[1]!);
-    // the whole apple is the apple of "sêv": the same outline, stalk and leaf
+    // The whole apple is the apple of "sêv": the same outline, stalk and leaf.
     const whole = paths(bookAppleSvg({ bites: 0 }));
     const word = paths(wordPictureSvg({ id: 'apple' }));
     for (const d of new Set(word)) expect(whole, d).toContain(d);
     const flesh = '#f8e6b4';
     const leaf = fills(bookAppleSvg({ bites: 0 }))[1]!;
     expect(fills(bookAppleSvg({ bites: 0 }))).not.toContain(flesh);
-    // each bite shows the flesh, and the third stage has been bitten from both sides
+    // Each bite shows flesh, and the third stage is bitten from both sides.
     const bitten = [1, 2, 3].map((bites) => {
       const svg = bookAppleSvg({ bites });
       const at = [...svg.matchAll(/<path d="([^"]+)" fill="#f8e6b4"/g)];
@@ -217,13 +212,13 @@ describe('the drawings of Hevalo’s book', () => {
       return at[0]![1]!.split('M').length - 1;
     });
     expect(bitten).toEqual([1, 1, 2]);
-    // the core keeps its stalk and loses its leaf; and a bite is never a straight cut: every one is tooth marks, as arcs
+    // The core keeps its stalk but not its leaf, and every bite is tooth-mark arcs, never a straight cut.
     const core = bookAppleSvg({ bites: BOOK_APPLE_BITES });
     expect(fills(core)).toContain(flesh);
     expect(fills(core)).not.toContain(leaf);
     expect(core).toContain('M60 41C59 32 62 25 67 20');
     for (const bites of [1, 2, 3]) expect(bookAppleSvg({ bites }), `apple ${bites}`).toMatch(/A[\d.]+ [\d.]+ 0 0 [01] /);
-    // half a bite is no bite more
+    // A fractional bite rounds down.
     expect(bookAppleSvg({ bites: 2.7 })).toBe(bookAppleSvg({ bites: 2 }));
   });
 
@@ -252,7 +247,7 @@ describe('the drawings of Hevalo’s book', () => {
       expect(painted[0]!.attrs).toMatchObject({ d: `M0 0H${BOOK_BACKDROP.w}V${BOOK_BACKDROP.h}H0Z`, fill: SKY.sky });
       expect(painted.at(-1)!.attrs.fill).toBe(SKY.ground);
       expect(painted.at(-1)!.attrs.d).toMatch(new RegExp(`V${BOOK_BACKDROP.h}H0Z$`));
-      // and everything between is painted in mixes of the colours given, so a scene is all of its chapter
+      // Everything between is a mix of the given colours, so a scene belongs to its chapter.
       const given = Object.values(SKY).map(channels);
       for (const e of painted) {
         channels(e.attrs.fill!).forEach((v, i) => {
@@ -262,19 +257,19 @@ describe('the drawings of Hevalo’s book', () => {
       }
       expect(painted.length, setting).toBeGreaterThan(5);
     }
-    // the night has its stars, a few of them bright enough to twinkle, the snow more flakes than that, a day two clouds at most and dusk one
+    // Night has stars (a few twinkling), snow more flakes than that, day at most two clouds and dusk one.
     const marks = (setting: BookSetting): string[] => bookSkyMarks({ setting }).marks.map((m) => m.kind);
     expect(marks('night').filter((k) => k === 'star').length).toBeGreaterThan(14);
     expect(marks('night')).toContain('twinkle');
     expect(marks('snow').length).toBeGreaterThan(marks('night').length);
     expect(marks('day').every((k) => k === 'cloud') && marks('day').length <= 2).toBe(true);
     expect(marks('dusk').length).toBeLessThanOrEqual(1);
-    // the moon is up at night and the sun goes down at dusk by themselves; by day and in the snow the sun is there only when a scene asks for it
+    // The moon is up at night and the sun sets at dusk by default; by day and in snow the sun appears only when asked.
     expect(bookSkyMarks({ setting: 'night' }).orb).not.toBeNull();
     expect(bookSkyMarks({ setting: 'dusk' }).orb).not.toBeNull();
     expect(bookSkyMarks({ setting: 'day' }).orb).toBeNull();
     expect(bookSkyMarks({ setting: 'snow' }).orb).toBeNull();
-    // a scene's own sky: another lesson, other stars and other clouds
+    // A scene's own seed gives other stars and clouds.
     expect(bookBackdropSvg({ setting: 'night', ...SKY, seed: 'a' })).not.toBe(bookBackdropSvg({ setting: 'night', ...SKY, seed: 'b' }));
     expect(bookBackdropSvg({ setting: 'day', ...SKY, seed: 'a' })).toBe(bookBackdropSvg({ setting: 'day', ...SKY, seed: 'a' }));
   });
@@ -298,7 +293,7 @@ describe('the drawings of Hevalo’s book', () => {
               if (Math.hypot(dx, dy) < orb.r + 2) problems.push(`${where}: on the orb`);
               for (const c of clear) if (m.x < c.x + c.w && c.x < m.x + m.w && m.y < c.y + c.h && c.y < m.y + m.h) problems.push(`${where}: on a box kept clear`);
               if ((m.kind === 'star' || m.kind === 'twinkle') && m.y + m.h > bookRidgeAt(m.x + m.w / 2)) problems.push(`${where}: below the mountains`);
-              // and every mark is drawn where it says it is
+              // And every mark is drawn where it says it is.
               if (m.kind === 'star' || m.kind === 'flake') {
                 const r = Math.round((m.w / 2) * k) / k;
                 if (!svg.includes(`M${n(m.x + m.w / 2 - r)} ${n(m.y + m.h / 2)}a${n(r)} ${n(r)}`)) problems.push(`${where}: not drawn`);
@@ -322,13 +317,13 @@ describe('the drawings of Hevalo’s book', () => {
       for (const crop of ['bust', 'full'] as const) {
         const svg = bookCastSvg({ who, pose, crop } as Parameters<typeof bookCastSvg>[0]);
         const root = checkDrawing(svg, `${who} ${String(pose)} ${crop}`);
-        // every picture carries its own ids, so two on a page never share a gradient
+        // Every picture carries its own ids, so two on a page never share a gradient.
         const art = characterArt(who, prefixFor(undefined, 'book-cast', who, String(pose), crop));
         const frame = cropBox(art, crop);
         expect(root.attrs.viewBox).toBe(`${frame.x} ${frame.y} ${frame.w} ${frame.h}`);
         expect(root.attrs.role).toBe('img');
         expect(root.children[0]).toMatchObject({ name: 'title', text: art.name });
-        // the body is the rig's own, and so is every layer of the head a pose does not turn
+        // The body is the rig's own, as is every head layer the pose does not turn.
         expect(svg, `${who} ${String(pose)}`).toContain(cropBody(art, crop));
         if (art.rig) for (const layer of [art.rig.crown, art.rig.face, art.rig.look.whites, art.rig.ears.left.art, art.rig.ears.right.art]) expect(svg, `${who} ${String(pose)}`).toContain(layer);
         if (art.moustache) for (const layer of [art.moustache.body, art.moustache.end.art]) expect(svg, `${who} ${String(pose)}`).toContain(layer);
@@ -336,7 +331,7 @@ describe('the drawings of Hevalo’s book', () => {
         seen.add(svg);
       }
     }
-    // a pose is the same picture every time
+    // A pose is deterministic.
     expect(bookCastSvg({ who: 'hevalo', pose: 'caught' })).toBe(bookCastSvg({ who: 'hevalo', pose: 'caught' }));
     expect(bookCastSvg({ who: 'hamo', pose: 'proud', width: 90 })).toContain('width="90"');
   });
@@ -345,21 +340,21 @@ describe('the drawings of Hevalo’s book', () => {
     const plain = bookCastSvg({ who: 'hevalo', pose: 'plain' });
     const caught = bookCastSvg({ who: 'hevalo', pose: 'caught' });
     const innocent = bookCastSvg({ who: 'hevalo', pose: 'innocent' });
-    // caught: the bitten apple, in the apple's own red, and its crumbs; plain has neither
+    // Caught: the bitten apple in its own red and crumbs; plain has neither.
     expect(caught).toContain('fill="#e0503f"');
     expect(caught).toContain('fill="#f8e6b4"');
     expect(plain).not.toContain('fill="#e0503f"');
-    // innocent: the core lies beside him, and his pupils have moved from where they rest
+    // Innocent: the core beside him, and his pupils moved from rest.
     expect(innocent).toContain('fill="#f8e6b4"');
     const pupils = (svg: string): string[] => [...svg.matchAll(/<g transform="translate\(([^)]+)\)">/g)].map((m) => m[1]!);
     expect(pupils(plain).slice(0, 2)).toEqual(['0 0', '0 0']);
     expect(pupils(innocent).slice(0, 2)).not.toEqual(['0 0', '0 0']);
-    // Hamo, proud: the near end of the moustache turned about its own pivot, and nothing else of it touched
+    // Hamo, proud: the near end of the moustache turned about its own pivot, the rest of it untouched.
     const art = characterArt('hamo', prefixFor(undefined, 'book-cast', 'hamo', 'proud', 'bust'));
     const { x, y } = art.moustache!.end.pivot;
     expect(bookCastSvg({ who: 'hamo', pose: 'proud' })).toContain(`<g transform="rotate(7 ${n(x)} ${n(y)})">${art.moustache!.end.art}</g>`);
     expect(bookCastSvg({ who: 'hamo', pose: 'plain' })).not.toContain('rotate(7 ');
-    // a sleeper snores in three "z"s
+    // A sleeper snores in three "z"s.
     for (const who of ['hevalo', 'hamo'] as const) expect(bookCastSvg({ who, pose: 'asleep' })).toMatch(/stroke="#7d76a6"/);
   });
 
