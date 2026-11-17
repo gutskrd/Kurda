@@ -505,7 +505,8 @@ function Result({
         {/* the card's style dresses its outside; what is in it is laid out here */}
         <View style={styles.card}>
           <Text
-            style={[styles.verdict, { color: result.implausible ? colors.danger : colors.primary }]}
+            // the result's heading in the page's ink: violet is for what can be pressed, and this is the race's outcome
+            style={[styles.verdict, { color: result.implausible ? colors.danger : colors.textPrimary }]}
             accessibilityRole="header"
             accessibilityLiveRegion="polite"
           >
@@ -567,7 +568,8 @@ function Figure({ value, label }: { value: string; label: string }): React.JSX.E
   const { colors } = useTheme();
   return (
     <View style={styles.figure}>
-      <Text style={[styles.figureValue, { color: colors.primary }]}>{value}</Text>
+      {/* a figure, not something to press: in the page's ink */}
+      <Text style={[styles.figureValue, { color: colors.textPrimary }]}>{value}</Text>
       <Text style={[styles.figureLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
