@@ -84,7 +84,7 @@ export const VALLEY = {
   smoke: '#e7e3dc',
 } as const;
 
-/** The evening's violet, as the village's dusk (art/kingdom/pen.ts). */
+/** The evening violet that `dusk` and `warm` blend toward. */
 const DUSK = '#2a2448';
 
 /** A day colour as the evening shows it: taken `amount` toward the dusk; fire and lit things are passed through `warm`. */
