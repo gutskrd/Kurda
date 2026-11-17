@@ -50,7 +50,7 @@ export class StreakReminderService {
            SELECT mode() WITHIN GROUP (
              ORDER BY EXTRACT(HOUR FROM x.created_at AT TIME ZONE tz.zone)::int
            )
-           FROM xp_ledger x WHERE x.user_id = s.user_id
+           FROM xp_ledger x WHERE x.user_id = s.user_id AND x.created_at > $1::timestamptz - interval '90 days'
          ) AS historical_hour
        FROM user_streaks s
        JOIN users u ON u.id = s.user_id
@@ -61,6 +61,11 @@ export class StreakReminderService {
        CROSS JOIN LATERAL (SELECT COALESCE(known.name, 'UTC') AS zone) tz
        LEFT JOIN notification_prefs p ON p.user_id = s.user_id
        WHERE s.current_streak >= 1 AND s.last_active_on IS NOT NULL
+         -- Not practised today, and the run still alive: missed days are settled only when the learner is next
+         -- seen, so a stored streak can have ended already. It lives while the missed days fit the freezes held
+         -- (settle, in streaks/streak-logic.ts).
+         AND s.last_active_on < ($1::timestamptz AT TIME ZONE tz.zone)::date
+         AND ($1::timestamptz AT TIME ZONE tz.zone)::date - s.last_active_on <= 1 + s.freezes
          -- an account on its way to deletion is not coaxed back to a streak it
          -- asked to have erased (signing in again cancels the deletion, and the
          -- reminders come back with it); nor is one already closed
