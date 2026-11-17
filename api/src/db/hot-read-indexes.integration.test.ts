@@ -1,7 +1,8 @@
 /**
- * The busiest reads use the indexes made for them (migrations 1751000630000
- * and 1751000640000), on tables filled enough to plan as a full database
- * would; everything, statistics included, is rolled back.
+ * The busiest reads use the indexes made for them (migrations
+ * `dm-messages-either-side` and `exercises-by-review-item`), on tables filled
+ * enough to plan as a full database would; everything, statistics included, is
+ * rolled back.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
