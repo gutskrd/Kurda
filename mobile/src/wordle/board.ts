@@ -111,9 +111,6 @@ export const ALPHABET_ROWS: readonly (readonly string[])[] = [
   [ENTER, 'u', 'û', 'v', 'w', 'x', 'y', 'z', DEL],
 ];
 
-/** The QWERTY rows, under the name the screens and tests have always used. */
-export const KEYBOARD_ROWS = QWERTY_ROWS;
-
 export function keyboardRows(layout: 'qwerty' | 'alphabet'): readonly (readonly string[])[] {
   return layout === 'alphabet' ? ALPHABET_ROWS : QWERTY_ROWS;
 }

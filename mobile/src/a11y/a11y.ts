@@ -1,49 +1,7 @@
 /**
- * Accessibility prop helpers (KUR-266). Small pure builders so every
- * interactive element gets a consistent label / role / hint, decorative
- * imagery is hidden from VoiceOver, touch-target sizing can be asserted in
- * tests, and a control's reach (the area that answers a finger, past what is
- * drawn) is worked out in one place. React Native components spread the
- * returned props.
- *
- * The role union is defined locally (rather than imported from react-native)
- * so this module stays free of native imports and runs under plain vitest.
+ * Accessibility helpers: hiding decorative art from screen readers, the minimum touch target, and a control's
+ * reach (the area that answers a finger, past what is drawn). No native imports, so it runs under plain vitest.
  */
-
-/** The accessibility roles Kurda uses; a subset of RN's AccessibilityRole. */
-export type A11yRole =
-  | 'button'
-  | 'link'
-  | 'header'
-  | 'image'
-  | 'text'
-  | 'adjustable'
-  | 'summary'
-  | 'switch'
-  | 'none';
-
-export interface A11yProps {
-  accessible: true;
-  accessibilityRole: A11yRole;
-  accessibilityLabel: string;
-  accessibilityHint?: string;
-}
-
-/**
- * Build the accessibility props for an interactive element. The hint is only
- * included when provided so we never announce an empty string.
- */
-export function a11yProps(role: A11yRole, label: string, hint?: string): A11yProps {
-  const props: A11yProps = {
-    accessible: true,
-    accessibilityRole: role,
-    accessibilityLabel: label,
-  };
-  if (hint && hint.trim().length > 0) {
-    props.accessibilityHint = hint;
-  }
-  return props;
-}
 
 export interface DecorativeProps {
   accessible: false;
@@ -62,11 +20,6 @@ export function decorative(): DecorativeProps {
 
 /** Apple HIG / WCAG minimum interactive target, in points. */
 export const MIN_TOUCH_TARGET = 44;
-
-/** True when a control already meets the minimum tappable size. */
-export function meetsTouchTarget(width: number, height: number): boolean {
-  return width >= MIN_TOUCH_TARGET && height >= MIN_TOUCH_TARGET;
-}
 
 export interface HitSlop {
   top: number;

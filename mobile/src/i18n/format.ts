@@ -39,21 +39,6 @@ export function formatCompact(value: number, locale: Locale): string {
   }
 }
 
-/** Localized date+time in the device's local timezone (or an explicit tz). */
-export function formatDateTime(iso: string, locale: Locale, timeZone?: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  try {
-    return new Intl.DateTimeFormat(locale, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      ...(timeZone ? { timeZone } : {}),
-    }).format(date);
-  } catch {
-    return date.toISOString();
-  }
-}
-
 /**
  * A day named in full in the reader's language — "Thursday, 12 November" — in
  * the device's time zone (or an explicit one). For saying which day something

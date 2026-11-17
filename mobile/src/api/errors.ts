@@ -218,15 +218,6 @@ export function isMaintenance(error: ApiError): boolean {
   return error.code === MAINTENANCE_CODE;
 }
 
-/**
- * Was this call refused because the account is a guest's? The offer to create
- * an account is already up (the client told the gate), so a screen does not
- * answer it with an alert of its own on top.
- */
-export function isGuestRefusal(error: ApiError): boolean {
-  return error.code === GUEST_ACCOUNT_CODE;
-}
-
 /** Does this failure look like lost connectivity? Drives the offline banner. */
 export function isOffline(error: ApiError): boolean {
   return error.kind === 'network';

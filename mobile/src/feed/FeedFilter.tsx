@@ -63,17 +63,6 @@ export function sortLabel(t: (key: TranslationKey) => string, value: Pick<FeedFi
   return sortRanks(value.sort) && value.period !== DEFAULT_FEED_PERIOD ? `${word} · ${t(PERIOD_WORD[value.period])}` : word;
 }
 
-/** Everything that is not as the wall opens, for the button's name: "Most popular, This week, Pictures · Meme". */
-export function filterSummary(t: (key: TranslationKey) => string, value: FeedFilterValue): string | null {
-  const n = normalise(value);
-  const parts = [
-    n.sort === DEFAULT_FEED_SORT ? null : t(SORT_WORD[n.sort]),
-    sortRanks(n.sort) && n.period !== DEFAULT_FEED_PERIOD ? t(PERIOD_WORD[n.period]) : null,
-    filterLabel(t, n),
-  ].filter((p): p is string => !!p);
-  return parts.length ? parts.join(', ') : null;
-}
-
 /**
  * Sort and filter the wall, in one sheet: in what order (newest, oldest, most
  * popular, most discussed), from how far back for the two that rank, and which

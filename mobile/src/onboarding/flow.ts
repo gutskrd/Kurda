@@ -95,19 +95,3 @@ export interface PersistedOnboarding {
   completed: boolean;
   preferredLanguage: string | null;
 }
-
-export function persistedFromState(state: OnboardingState): PersistedOnboarding {
-  return {
-    completed: state.status === 'completed',
-    preferredLanguage: state.selectedLanguage,
-  };
-}
-
-/**
- * First-launch gate. Show onboarding when nothing is persisted yet (fresh
- * install) or the stored flag says it was never completed. Resetting from
- * Settings (#270) clears the record, so the next launch shows it again.
- */
-export function shouldShowOnboarding(persisted: PersistedOnboarding | null): boolean {
-  return !persisted || !persisted.completed;
-}

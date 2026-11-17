@@ -28,8 +28,6 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { MemeFeedScreen } from './MemeFeedScreen';
-import { uploadMemeImage } from './api';
-import { uploadPostImage } from './imageUpload';
 import { uploadProfilePhoto } from '../profile/photoUpload';
 import { uploadVoiceNote } from '../library/voiceUpload';
 import { formatUntil } from '../reports/sendErrors';
@@ -71,8 +69,6 @@ describe('the upload helpers', () => {
     const photo = { uri: 'file:///pic.jpg', contentType: 'image/jpeg' };
     const expected = interpolate(TRANSLATIONS.de['restriction.mediaUntil'], { time: formatUntil(until, 'de') });
     for (const result of [
-      await uploadMemeImage(client, photo, t, 'de'),
-      await uploadPostImage(client, photo, t, 'de'),
       await uploadProfilePhoto(client, photo, t, 'de'),
       await uploadVoiceNote(client, { uri: 'file:///note.m4a' }, t, 'de'),
     ]) {

@@ -49,13 +49,3 @@ export async function saveWidgetPrefs(client: ApiClient, prefs: Partial<WidgetPr
   const settings = asSettings(res.data);
   return settings && isRecord(res.data) && 'letter' in res.data ? { ok: true, data: settings } : loadWidgetSettings(client);
 }
-
-/**
- * "Show on my widget" (a letter's id) and "Take off my widget" (null), from a
- * letter you were sent: the choice of words stays as it is. Only a letter a
- * pen pal sent you can be pinned: another is refused (404 NOT_FOUND), and one
- * that was taken down too (409 LETTER_REMOVED).
- */
-export function pinLetterToWidget(client: ApiClient, letterId: string | null): Promise<ApiResult<WidgetSettings>> {
-  return saveWidgetPrefs(client, { pinnedLetterId: letterId });
-}

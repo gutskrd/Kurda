@@ -47,9 +47,3 @@ export function useSoundPref(): [boolean, (next: boolean) => void] {
   }, []);
   return [value, (next) => void setSounds(next)];
 }
-
-/** Back to a phone that has never been told anything — for tests. */
-export function resetSoundPref(): void {
-  on = true;
-  loaded = null;
-}
