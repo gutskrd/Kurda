@@ -9,8 +9,8 @@
  * art/valley-landmarks-1.ts and -2.ts. Here they are framed as pictures: on
  * the 120-unit canvas, decorative unless named. Each draws its moving part at
  * rest; the apps lay `pathLoopSvg` over it at `PATH_LANDMARK_LOOP` and move it
- * gently (a kilim, the castle's pennant or the school's flag of Kurdistan in
- * the wind, steam or smoke rising, a ripple, the Newroz flame, a bee, the bus
+ * gently (a kilim or the flag of Kurdistan over the school and Amed's tower
+ * in the wind, steam or smoke rising, a ripple, the Newroz flame, a bee, the bus
  * stop's sign), and hold it still under Reduce Motion.
  */
 import type { PathGround, PathLandmark } from '../path-world.js';
@@ -89,7 +89,6 @@ const LOOP_VIEW: Record<PathLoopKind, { w: number; h: number }> = {
   kilim: { w: 18, h: 22 },
   steam: { w: 16, h: 24 },
   water: { w: 30, h: 12 },
-  flag: { w: 20, h: 16 },
   colours: { w: KURDISTAN_FLAG.w, h: KURDISTAN_FLAG.h },
   flame: { w: 26, h: 40 },
   smoke: { w: 16, h: 30 },
@@ -110,11 +109,10 @@ export function pathLoopSvg(opts: PathLoopOptions): string {
   const c = (hex: string, amount?: number): string => dusk(hex, dark, amount);
   let body = '';
   switch (kind) {
-    case 'kilim':
-    case 'flag': {
+    case 'kilim': {
       // a kilim's madder field, a band of cream, an indigo lozenge, the free end a little ragged
       const w = view.w;
-      const h = kind === 'flag' ? 13 : 20;
+      const h = 20;
       body += fill(`M1 1H${w - 1}V${h - 2}L${w - 4} ${h}L${w - 7} ${h - 2}L${w - 10} ${h}L${w - 13} ${h - 2}H1Z`, c(VALLEY.red, 0.2));
       body += fill(`M1 ${h * 0.3}H${w - 1}V${h * 0.4}H1Z`, c('#f6e3b0', 0.2));
       body += fill(`M${w / 2} ${h * 0.48}l3.6 ${h * 0.17}l-3.6 ${h * 0.17}l-3.6 ${-h * 0.17}Z`, c(VALLEY.indigo, 0.2));

@@ -6,9 +6,9 @@
  * otherwise, and the older round trees and poplars, which the lesson path
  * still plants, are measured from what they draw. The Newroz fire burns on
  * its ring of stones on a green mound, its flame at rest in the box the apps
- * make it flicker in. The school flies the flag of Kurdistan, true to the
- * flag, and the apps make the very same cloth stir over it, while the
- * castle keeps its own pennant. And a landmark laid on a page of its own
+ * make it flicker in. The school and Amed's tower fly the flag of
+ * Kurdistan, true to the flag, and the apps make the very same cloth stir
+ * over it; no other flag flies. And a landmark laid on a page of its own
  * colour casts that page's shade, not the meadow's.
  */
 import { describe, expect, it } from 'vitest';
@@ -187,10 +187,21 @@ describe('the school’s flag', () => {
     expect(kurdistanFlag(true)).not.toBe(kurdistanFlag(false));
   });
 
-  it('leaves the castle’s pennant on its tower as it was, madder with a cream band', () => {
-    expect(PATH_LANDMARK_LOOP.citywall.kind).toBe('flag');
-    const pennant = pathLoopSvg({ kind: 'flag' });
-    expect(pennant).toContain(`fill="${VALLEY.red}"`);
-    expect(pennant).not.toContain(kurdistanFlag(false));
+  it('flies the flag of Kurdistan over Amed’s tower too, the same cloth at rest that the apps make stir', () => {
+    const loop = PATH_LANDMARK_LOOP.citywall;
+    expect(loop.kind).toBe('colours');
+    expect(loop.w / loop.h).toBeCloseTo(KURDISTAN_FLAG.w / KURDISTAN_FLAG.h, 2);
+    for (const dark of [false, true]) {
+      expect(pathLandmarkSvg({ landmark: 'citywall', dark })).toContain(`<g transform="translate(${loop.x} ${loop.y}) scale(${loop.w / KURDISTAN_FLAG.w})">${kurdistanFlag(dark)}</g>`);
+    }
+  });
+
+  it('flies no flag but Kurdistan’s on any landmark', () => {
+    // every cloth on a pole is the flag of Kurdistan; the kilims on their arms are weaving, not flags
+    for (const [landmark, loop] of Object.entries(PATH_LANDMARK_LOOP)) {
+      if (loop.kind !== 'colours') continue;
+      expect(pathLandmarkSvg({ landmark: landmark as keyof typeof PATH_LANDMARK_LOOP, dark: false }), landmark).toContain(kurdistanFlag(false));
+    }
+    expect(Object.entries(PATH_LANDMARK_LOOP).filter(([, l]) => l.kind === 'colours').map(([k]) => k).sort()).toEqual(['citywall', 'school']);
   });
 });

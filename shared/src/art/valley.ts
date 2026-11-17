@@ -433,11 +433,11 @@ export function poplarLeaves(dark: boolean): Foliage {
 
 /**
  * The one small moving thing of a landmark, which the apps lay over it and
- * move gently (`pathLoopSvg`): a kilim, the castle's pennant (`flag`) or the
- * school's flag of Kurdistan (`colours`) stirring, steam or smoke rising,
+ * move gently (`pathLoopSvg`): a kilim or the flag of Kurdistan (`colours`,
+ * over the school's yard and Amed's tower) stirring, steam or smoke rising,
  * water rippling, the Newroz flame, a bee, the bus stop's sign.
  */
-export type ValleyLoopKind = 'kilim' | 'steam' | 'water' | 'flag' | 'colours' | 'flame' | 'smoke' | 'bee' | 'sign';
+export type ValleyLoopKind = 'kilim' | 'steam' | 'water' | 'colours' | 'flame' | 'smoke' | 'bee' | 'sign';
 
 /**
  * A chapter's landmark in the painted valley, on the 120-unit canvas: its
@@ -557,4 +557,9 @@ export function kurdistanFlag(dark: boolean): string {
   }
   out += `<g transform="translate(${f(sun.x)} ${f(sun.y)}) scale(0.1)">${fill(polygon(pts), c(FLAG.sun))}</g>`;
   return out;
+}
+
+/** The flag of Kurdistan at rest in a landmark's loop box, flying from the pole at the box's left edge: the very cloth the apps make stir in the wind over it. */
+export function kurdistanFlagAt(box: { x: number; y: number; w: number }, dark: boolean): string {
+  return `<g transform="translate(${f(box.x)} ${f(box.y)}) scale(${n(box.w / KURDISTAN_FLAG.w)})">${kurdistanFlag(dark)}</g>`;
 }

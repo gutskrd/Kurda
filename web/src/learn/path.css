@@ -971,7 +971,6 @@ button.lp-scard:focus-visible {
     animation-delay: calc(var(--i, 0) * 45ms);
   }
   .lp-unit.is-seen .lp-loop.is-kilim,
-  .lp-unit.is-seen .lp-loop.is-flag,
   .lp-unit.is-seen .lp-loop.is-colours {
     transform-origin: 0 0;
     animation: lp-flutter 2.8s ease-in-out infinite;

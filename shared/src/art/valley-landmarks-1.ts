@@ -16,7 +16,25 @@
  * generator the caller passes in, so a drawing is the same string every time.
  */
 import { n, type Pt } from './svg.js';
-import { VALLEY, bark, blobPath, bush, dusk, earthHouse, ellipsePath, fill, foliage, grownTree, orchardTree, smoothPath, stroke, warm, type TreeShape, type ValleyLandmark } from './valley.js';
+import {
+  VALLEY,
+  bark,
+  blobPath,
+  bush,
+  dusk,
+  earthHouse,
+  ellipsePath,
+  fill,
+  foliage,
+  grownTree,
+  kurdistanFlagAt,
+  orchardTree,
+  smoothPath,
+  stroke,
+  warm,
+  type TreeShape,
+  type ValleyLandmark,
+} from './valley.js';
 
 // ───────────────────────────────────────────────────────────── colours
 
@@ -147,6 +165,9 @@ function steam(x: number, y: number, dark: boolean, random: () => number): strin
 // ───────────────────────────────────────────────────────────── the landmarks
 
 /** The first six chapters' landmarks, by name. */
+/** Where the flag of Kurdistan flies over Amed's tower: its pole at x 71, the cloth the apps make stir laid exactly over the one drawn. */
+const CITY_FLAG: ValleyLandmark['loop'] = { kind: 'colours', x: 71, y: 12, w: 20, h: 16 };
+
 export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar' | 'busstop' | 'citywall', ValleyLandmark> = {
   /**
    * Sêvan's blue gate: a low earth wall across the picture, the gate's pier
@@ -484,10 +505,11 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
   /**
    * Amed: a stretch of Diyarbakır's black basalt walls, crenellated, with
    * a round tower standing forward of them, arrow slits in its face, a gate
-   * in the wall with its old wooden doors, and a flag on the tower.
+   * in the wall with its old wooden doors, and the flag of Kurdistan flying
+   * from the tower.
    */
   citywall: {
-    loop: { kind: 'flag', x: 71, y: 12, w: 20, h: 16 },
+    loop: CITY_FLAG,
     draw(dark, random) {
       const c = (hex: string): string => dusk(hex, dark);
       const ground = c(GROUND);
@@ -544,11 +566,10 @@ export const VALLEY_LANDMARKS_1: Record<'gate' | 'teahouse' | 'spring' | 'bazaar
         else front += p;
       }
       out += fill(back, basalt.face) + fill(front, basalt.face) + fill(side, basalt.side);
-      // The flag is the moving sprite's own pennant, madder with a cream band and a saffron lozenge, so the two agree.
+      // The flag of Kurdistan on its pole from the tower's floor, a gold knob at its top, the very cloth the apps make stir over it.
       out += stroke('M71 42V12', c(VALLEY.hoof), 1.4);
-      out += fill('M72 13h18v12h-18Z', c(VALLEY.red));
-      out += fill(box(72, 17, 18, 2.4), c(VALLEY.cream));
-      out += fill('M81 19.6l2.4 2.4l-2.4 2.4l-2.4 -2.4Z', c(VALLEY.gold));
+      out += fill(ellipsePath(71, 11, 1.4, 1.4), c(VALLEY.gold));
+      out += kurdistanFlagAt(CITY_FLAG, dark);
       // Two bushes stand for the gardens below the walls and soften the foot of the basalt.
       out += bush(10, 112, 0.8, foliage(dark), ground, random);
       out += bush(106, 111, 0.6, foliage(dark), ground, random);

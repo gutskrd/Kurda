@@ -19,7 +19,6 @@
  */
 import { n, type Pt } from './svg.js';
 import {
-  KURDISTAN_FLAG,
   VALLEY,
   blobPath,
   dusk,
@@ -29,7 +28,7 @@ import {
   foliage,
   bark,
   grownTree,
-  kurdistanFlag,
+  kurdistanFlagAt,
   orchardTree,
   poplar,
   poplarLeaves,
@@ -206,11 +205,6 @@ function restSmoke(box: Box, face: string, shade: string): string {
     out += `<path d="${lobes(0.5 * s, 0.5 * s)}" fill="${shade}" fill-opacity="${alpha}"/><path d="${lobes(0, 0)}" fill="${face}" fill-opacity="${alpha}"/>`;
   }
   return out;
-}
-
-/** The flag of Kurdistan flying from the pole at the box's left edge: the very cloth the apps make stir in the wind over it. */
-function restColours(box: Box, dark: boolean): string {
-  return `<g transform="translate(${f(box.x)} ${f(box.y)}) scale(${n(box.w / KURDISTAN_FLAG.w)})">${kurdistanFlag(dark)}</g>`;
 }
 
 // ─────────────────────────────────────────────────────────── small brushes of these chapters
@@ -630,7 +624,7 @@ function school(dark: boolean, random: () => number): string {
   out += fill(`M${px - 3} 110.5v-3h6v3Z`, c(VALLEY.stoneSide)) + fill(`M${px - 3} 107.5l1.5 -1h6l-1.5 1Z`, c(VALLEY.stone));
   out += stroke(`M${px} 107V${SCHOOL_FLAG.y}`, c(HUE.pole), 1.5);
   out += fill(ellipsePath(px, SCHOOL_FLAG.y - 1, 1.5, 1.5), c(VALLEY.gold));
-  out += restColours(SCHOOL_FLAG, dark);
+  out += kurdistanFlagAt(SCHOOL_FLAG, dark);
   // fallen leaves on the yard
   let leaves = '';
   for (let k = 0; k < 10; k++) leaves += ellipsePath(22 + random() * 84, 106 + random() * 7, 1.2, 0.8);
