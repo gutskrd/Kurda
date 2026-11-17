@@ -50,6 +50,7 @@ function open({ unread = 0, items = [] as unknown[], extra = {} as Record<string
     'GET /friends/requests': ok({ requests: [] }),
     'GET /me/notifications/unread-count': ok({ count: unread }),
     'GET /me/social': ok({ unread: { gifts: 0 } }),
+    'GET /me/gifts/unseen': ok({ unseen: 0 }),
   });
   testAuth.client = client;
   renderWithProviders(

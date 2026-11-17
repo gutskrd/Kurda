@@ -35,7 +35,7 @@ function show(ui: React.JSX.Element, { unread = 0 } = {}) {
     'GET /me/groups/unread': ok({ unread: [] }),
     'GET /friends/requests': ok({ requests: [] }),
     'GET /me/notifications/unread-count': ok({ count: unread }),
-    'GET /me/social': ok({ unread: {} }),
+    'GET /me/gifts/unseen': ok({ unseen: 0 }),
   });
   const shown = renderWithProviders(<UnreadProvider>{ui}</UnreadProvider>);
   return { again: (next: React.JSX.Element) => shown.rerender(<UnreadProvider>{next}</UnreadProvider>) };

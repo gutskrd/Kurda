@@ -218,13 +218,10 @@ export function registerShopRoutes(
   }));
 
   /**
-   * Just the count.
-   *
-   * Every signed-in tab asked for this once a minute to draw the badge, and the
-   * full list joins shop_items and users for up to fifty rows to answer a
-   * question that is really "any?". The count now rides on `/me/social`
-   * (`unread.gifts`), which the apps already poll; this stays for the phone
-   * builds in people's hands that still ask here.
+   * Just the count, for the phone's gift badge. The browser reads it off
+   * `/me/social` (`unread.gifts`), which its social rail polls anyway; the
+   * phone has no such poll, and the full list joins shop_items and users for
+   * up to fifty rows to answer what is really "any?".
    */
   app.get('/me/gifts/unseen', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => ({
     unseen: await shop.unseenGiftCount(req.user!.id),
