@@ -12,7 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { useHardwareBack } from '../navigation/hardwareBack';
+import { useGameBack } from '../navigation/hardwareBack';
 import { LobbyPeople, seatNamer, useLobbyRefresh } from '../play/lobby';
 import { askLeaveGame, useLeaveLobbyOnBack } from '../play/backOut';
 import { LobbyRated, RatedChoice, RatedPill } from '../ranks/Rated';
@@ -274,9 +274,9 @@ function MatchRoom({
   // an invite waits while a match is on (the banner would sit over the clock)
   useQuietInvites(match?.status === 'active');
   const isHost = match ? (match.isHost ?? match.createdBy === user?.id) : false;
-  // backing out of the lobby leaves it, asked first; Android's back while the clock runs asks before it leaves the round
+  // backing out of the lobby leaves it, asked first; while the clock runs Android's back asks and the iOS swipe is off
   useLeaveLobbyOnBack(!gone && match?.status === 'lobby' && match.me != null, isHost, () => leaveMatch(client, id));
-  useHardwareBack(active ? () => askLeaveGame(t, onExit) : null);
+  useGameBack(active ? () => askLeaveGame(t, onExit) : null);
 
   const submit = useCallback(async () => {
     const typed = word.trim();
