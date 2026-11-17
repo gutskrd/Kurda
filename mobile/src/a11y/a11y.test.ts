@@ -24,7 +24,7 @@ describe('reach', () => {
   it('pads each side by half of what a control lacks of the reach', () => {
     expect(reachSlop(36, 36)).toEqual(even(6));
     expect(reachSlop(44, 44)).toEqual(even(2));
-    // and so a padded control answers over exactly the reach
+    // And so a padded control answers over exactly the reach.
     const slop = reachSlop(30, 30);
     expect(30 + slop.left + slop.right).toBe(MIN_REACH);
   });
@@ -37,7 +37,7 @@ describe('reach', () => {
 
   it('reaches past every edge of a control that stands alone, at least by the open reach', () => {
     expect(reachSlop(44, 44, { edge: REACH_OPEN })).toEqual(even(8));
-    // a small one still grows to the reach, which is further
+    // A small one still grows to the reach, which is further.
     expect(reachSlop(30, 30, { edge: REACH_OPEN })).toEqual(even(9));
     expect(reachSlop(56, 56, { edge: REACH_OPEN })).toEqual(even(8));
   });
@@ -50,7 +50,7 @@ describe('reach', () => {
   it('guesses nothing for a side whose size is not known', () => {
     expect(reachSlop(null, null)).toEqual(even(0));
     expect(reachSlop(null, 36)).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
-    // the open reach does not depend on the size, so it still holds
+    // The open reach does not depend on the size, so it still holds.
     expect(reachSlop(null, null, { edge: REACH_OPEN })).toEqual(even(8));
   });
 
@@ -58,7 +58,7 @@ describe('reach', () => {
     expect(reachSlop(30, 30, { limit: { left: 2, right: 2 } })).toEqual({ top: 9, bottom: 9, left: 2, right: 2 });
     expect(reachSlop(30, 30, { limit: { top: 0 } })).toEqual({ top: 0, bottom: 9, left: 9, right: 9 });
     expect(reachSlop(30, 30, { limit: null })).toEqual(even(9));
-    // a cap never makes a reach larger
+    // A cap never makes a reach larger.
     expect(reachSlop(44, 44, { limit: { top: 20 } })).toEqual(even(2));
   });
 

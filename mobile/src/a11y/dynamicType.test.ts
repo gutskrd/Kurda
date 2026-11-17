@@ -9,7 +9,7 @@ describe('clampFontScale', () => {
 
   it('caps oversized OS scales so layouts survive', () => {
     expect(clampFontScale(2)).toBe(MAX_FONT_SCALE);
-    expect(clampFontScale(3.1)).toBe(MAX_FONT_SCALE); // iOS largest accessibility sizes
+    expect(clampFontScale(3.1)).toBe(MAX_FONT_SCALE); // iOS largest accessibility sizes.
   });
 
   it('floors tiny scales', () => {
@@ -36,7 +36,7 @@ describe('scaledFontSize', () => {
   it('scales a base size by the clamped OS scale, rounded to a whole px', () => {
     expect(scaledFontSize(16, 1)).toBe(16);
     expect(scaledFontSize(16, 1.25)).toBe(20);
-    expect(scaledFontSize(17, 1.1)).toBe(19); // 18.7 → 19
+    expect(scaledFontSize(17, 1.1)).toBe(19); // 18.7 → 19.
   });
 
   it('respects the clamp when scaling', () => {
