@@ -1,8 +1,4 @@
-/**
- * Your password and the devices signed in to your account: the calls, and
- * the words a row of the device list is made of. No React Native in here, so
- * the tests can hold it to what the server sends.
- */
+/** Password and signed-in device calls, and the text of a device row. No React Native, so tests check it against the server's shapes. */
 import type { ApiClient } from '../api/client';
 import type { Translate } from '../api/errors';
 import type { ApiResult } from '../api/types';
@@ -12,27 +8,24 @@ import { MONTH_KEYS } from '../auth/birthMonth';
 /** One signed-in device: a live session, as GET /me/sessions lists it. */
 export interface DeviceSession {
   id: string;
-  /** what the app called the device when it signed in; null for one that said nothing */
+  /** What the app called the device when it signed in; null for one that said nothing. */
   deviceName: string | null;
   startedAt: string;
   lastSeenAt: string;
-  /** the session this request was made with */
+  /** The session this request was made with. */
   current: boolean;
 }
 
 export interface PasswordChanged {
   changed: true;
-  /** for this session, which carries on; null when the request had no session to keep */
+  /** For this session, which carries on; null when the request had no session to keep. */
   accessToken: string | null;
   accessExpiresInSeconds: number;
 }
 
 /**
- * Change the password while signed in, the current one first.
- *
- * The server ends every other session, and ends this one's access token with
- * them (the version bump), so it hands back a fresh one: stored in place of
- * the old, with the refresh token kept, and this phone carries on signed in.
+ * Change the password while signed in. The server ends every other session and this one's access token (the
+ * version bump) and returns a fresh token, which replaces the old one; the refresh token is kept.
  */
 export async function changePassword(client: ApiClient, currentPassword: string, newPassword: string): Promise<ApiResult<PasswordChanged>> {
   const res = await client.post<PasswordChanged>('/me/password', { currentPassword, newPassword });
@@ -44,7 +37,7 @@ export function listSessions(client: ApiClient): Promise<ApiResult<{ sessions: D
   return client.get('/me/sessions');
 }
 
-/** Sign one device out. `current` says it was this one, which must then sign out here too. */
+/** Sign one device out. `current` means it was this device, which must then sign out locally too. */
 export function signOutSession(client: ApiClient, id: string): Promise<ApiResult<{ revoked: true; current: boolean }>> {
   return client.delete(`/me/sessions/${encodeURIComponent(id)}`);
 }
@@ -61,13 +54,10 @@ export function orderSessions(sessions: readonly DeviceSession[]): DeviceSession
 }
 
 /**
- * The picture beside a device, read from its name.
- *
- * The phone names itself "iPhone", "iPad", "Android phone (…)" or "Android
- * tablet (…)" (auth/deviceName.ts); the browser names itself after the browser
- * and the system it runs on; an older build of the app, which named nothing,
- * is "Hevalo app on iOS" or "… on Android", read by the server. Anything that is neither a phone nor a tablet
- * is a computer, and a session that never said gets the pair of devices.
+ * The icon for a device, from its name: the app names itself "iPhone", "iPad", "Android phone (…)" or "Android
+ * tablet (…)" (auth/deviceName.ts), a browser after the browser and system, and older app builds "Hevalo app on
+ * iOS" or "… on Android" (named by the server). Anything else is a computer, and an unnamed session gets the pair
+ * of devices.
  */
 export function deviceIcon(name: string | null): IconName {
   if (!name?.trim()) return 'devices';
@@ -90,14 +80,13 @@ export function lastActive(iso: string, t: Translate, locale: string, now: numbe
   let date: string;
   const when = new Date(at);
   if (locale === 'ku' || locale === 'ckb') {
-    // phones have no Kurdish date data and would name the month in English,
-    // so the month comes from the catalogue, as on the birth-month picker
+    // Phones lack Kurdish date data and would name the month in English, so the month comes from the catalogue.
     date = `${when.getDate()} ${t(MONTH_KEYS[when.getMonth()]!)} ${when.getFullYear()}`;
   } else {
     try {
       date = when.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
     } catch {
-      // a locale the runtime does not know falls back to the device's own
+      // A locale the runtime does not know falls back to the device's own.
       date = when.toLocaleDateString();
     }
   }
@@ -106,7 +95,7 @@ export function lastActive(iso: string, t: Translate, locale: string, now: numbe
 
 /** "Signed out of 3 other devices", after signing them out. */
 export function sessionsEnded(count: number, t: Translate): string {
-  // the others had already gone by the time the request landed
+  // The others had already gone by the time the request landed.
   if (count <= 0) return t('security.devices.onlyThis');
   return count === 1 ? t('security.devices.endedOne') : t('security.devices.endedMany', { count });
 }

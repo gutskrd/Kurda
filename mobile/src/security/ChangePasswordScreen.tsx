@@ -17,24 +17,19 @@ import { changePassword } from './api';
 type Errors = { current?: string | null; next?: string | null; confirm?: string | null };
 
 /**
- * Change the password while signed in (POST /me/password).
+ * Change the password while signed in (POST /me/password): the current password, then the new one twice. Each
+ * refusal shows on its field: a wrong current password on the first, a rule broken or a leaked password on the
+ * second. The server ends every other session; this one continues with the fresh access token it returns.
  *
- * The current password first, then the new one twice. Each refusal is said
- * on the field it is about: a current password that is not right on the
- * first, a new one that breaks a rule or has turned up in a data leak on the
- * second. The server ends every other session when it changes; this one
- * carries on, with the fresh access token it hands back.
- *
- * An account made with Google or Apple has no password to change: the
- * server says so (NO_PASSWORD), and the screen offers the reset link instead,
- * which is how such an account gets one.
+ * An account made with Google or Apple has no password (NO_PASSWORD), so the screen offers the reset link, which
+ * is how such an account gets one.
  */
 export function ChangePasswordScreen({
   onExit,
   onSetPassword,
 }: {
   onExit: () => void;
-  /** into the forgot-password flow, with the account's address filled in */
+  /** Into the forgot-password flow, with the account's address filled in. */
   onSetPassword: (email: string) => void;
 }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -54,11 +49,7 @@ export function ChangePasswordScreen({
   const nextRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
 
-  /**
-   * Typing in a field takes away the line that refused what was in it: the
-   * answer it was about is no longer the answer. It used to stay, red, under a
-   * password being put right, until the button was pressed again.
-   */
+  /** Editing a field clears the error about what was in it. */
   const edit = (field: keyof Errors, set: (value: string) => void) => (value: string) => {
     set(value);
     setErrors((e) => (e[field] ? { ...e, [field]: null } : e));
@@ -80,7 +71,7 @@ export function ChangePasswordScreen({
     const res = await changePassword(client, current, next);
     setBusy(false);
     if (res.ok) {
-      // nothing typed here stays in memory once it has done its job
+      // Nothing typed here stays in memory once it has done its job.
       setCurrent('');
       setNext('');
       setConfirm('');
@@ -191,10 +182,10 @@ export function ChangePasswordScreen({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  // one column on a tablet, on the same 16pt gutter as every other screen on a phone
+  // One column on a tablet, on the same 16pt gutter as every other screen on a phone.
   column: { width: '100%', maxWidth: layout.column, alignSelf: 'center', paddingHorizontal: layout.gutter, gap: spacing.md },
   intro: { fontSize: typography.sizes.sm, lineHeight: 21 },
-  // the rules line sits under its field like the field's own error would
+  // The rules line sits under its field like the field's own error would.
   hint: { fontSize: typography.sizes.xs, marginTop: -spacing.sm, marginBottom: spacing.md },
   submit: { marginTop: spacing.xs },
   notice: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, padding: spacing.md },

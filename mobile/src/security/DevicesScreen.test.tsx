@@ -72,7 +72,7 @@ describe('the signed-in devices', () => {
     renderWithProviders(<DevicesScreen onExit={() => undefined} />);
     expect(screen.getByLabelText('Loading…')).toBeTruthy();
     expect(screen.getAllByTestId('skeleton').length).toBeGreaterThanOrEqual(9);
-    // the sentence above the list is there from the start, so nothing moves under it
+    // The sentence above the list is there from the start, so nothing moves under it.
     expect(screen.getByText(/Where your account is signed in right now/)).toBeTruthy();
   });
 
@@ -87,10 +87,10 @@ describe('the signed-in devices', () => {
     expect(pixel!.textContent).toContain('Last active 2 hours ago');
     expect(old!.textContent).toContain('Unknown device');
     expect(old!.textContent).toContain('Last active 3 days ago');
-    // a phone is drawn as a phone, and a device that never said as the pair
+    // A phone is drawn as a phone, and a device that never said as the pair.
     expect(pathsIn(here!)).toEqual(expect.arrayContaining([...ICON_PATHS['device-phone']]));
     expect(pathsIn(old!)).toEqual(expect.arrayContaining([...ICON_PATHS.devices]));
-    // each Sign out says which device it is for
+    // Each Sign out says which device it is for.
     expect(within(pixel!).getByRole('button', { name: 'Sign out Android phone (Google Pixel 8)' })).toBeTruthy();
     expect(within(here!).getByRole('button', { name: 'Sign out iPhone' })).toBeTruthy();
   });
@@ -156,7 +156,7 @@ describe('the signed-in devices', () => {
     expect((await screen.findByTestId('devices-notice')).textContent).toBe('Signed out of 2 other devices.');
     await waitFor(() => expect(rows()).toHaveLength(1));
     expect(client.calls.filter((c) => c.method === 'GET' && c.path === '/me/sessions')).toHaveLength(2);
-    // the one keeping everyone else out was never signed out, and is not offered again
+    // The device keeping everyone else out was not signed out and is not offered again.
     expect(logout).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: 'Sign out everywhere else' })).toBeNull();
     expect(screen.getByText('You’re not signed in anywhere else.')).toBeTruthy();
@@ -180,7 +180,7 @@ describe('the signed-in devices', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign out Android phone (Google Pixel 8)' }));
     expect((await screen.findByTestId('devices-notice')).textContent).toBe('That device is already signed out.');
     expect(screen.queryByText('Android phone (Google Pixel 8)')).toBeNull();
-    // nothing went wrong that is in the way, so nothing buzzes
+    // Nothing went wrong that is in the way, so nothing buzzes.
     expect(felt).toEqual([]);
   });
 
