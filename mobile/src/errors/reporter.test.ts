@@ -68,7 +68,7 @@ describe('the crash reporter', () => {
     expect(sent).toHaveLength(1);
     expect(sent[0]!.reports).toHaveLength(1);
     expect(sent[0]!.reports[0]!.count).toBe(50);
-    // and once it has been sent, the same error adds nothing for the rest of the launch
+    // And once it has been sent, the same error adds nothing for the rest of the launch.
     r.capture(thrown('loop'), { kind: 'render', fatal: false });
     await vi.advanceTimersByTimeAsync(REPORT_MIN_GAP_MS * 2);
     expect(sent).toHaveLength(1);
@@ -99,7 +99,7 @@ describe('the crash reporter', () => {
     await vi.advanceTimersByTimeAsync(REPORT_BATCH_DELAY_MS);
     await vi.advanceTimersByTimeAsync(REPORT_MIN_GAP_MS * 3);
     expect(spy).toHaveBeenCalledTimes(1);
-    // and the reporter still works afterwards
+    // And the reporter still works afterwards.
     r.capture(thrown('second'), { kind: 'uncaught', fatal: false });
     await vi.advanceTimersByTimeAsync(REPORT_MIN_GAP_MS);
     expect(spy).toHaveBeenCalledTimes(2);

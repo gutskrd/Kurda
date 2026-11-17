@@ -11,15 +11,10 @@ import { useI18n } from '../i18n/I18nContext';
 import { reportRenderError } from './crashReporting';
 
 /**
- * A render that throws unmounts the entire React tree — that is React's design,
- * because it cannot know which state is still consistent. In a browser the user
- * presses reload; on a phone there is no reload, so without a boundary the app
- * becomes a white screen that only a force-quit escapes.
- *
- * Mounted once, around the screens, inside the providers: the fallback needs the
- * palette and the translator, and it needs to be under the NavigationContainer
- * so that recovering re-enters the navigator at its initial route rather than
- * straight back into the screen that just threw.
+ * Catches render errors so a throw shows a recovery screen instead of a blank app; a phone has no reload button.
+ * Mounted once around the screens, inside the providers (the fallback needs the palette and translator) and under
+ * the NavigationContainer, so recovering re-enters the navigator at its initial route rather than the screen that
+ * threw.
  */
 export class AppErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state: { error: Error | null } = { error: null };
@@ -28,11 +23,7 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, { error
     return { error };
   }
 
-  /*
-   * The crash screen tells the person; this tells the owner. The component
-   * stack is the part worth having: React does not put it in the error, and
-   * it says which screen and which part of it was rendering.
-   */
+  /* Report the crash with the component stack, which React leaves out of the error and which names what was rendering. */
   componentDidCatch(error: Error, info: ErrorInfo): void {
     reportRenderError(error, info.componentStack);
   }
@@ -46,11 +37,7 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, { error
   }
 }
 
-/**
- * Deliberately a separate function component: the boundary itself has to be a
- * class (no hook catches a render error), but the screen it shows wants the
- * theme and the translator, and those are hooks.
- */
+/** A function component so the fallback can use the theme and translator hooks; the boundary itself must be a class. */
 function CrashScreen({ error, onRetry }: { error: Error; onRetry: () => void }) {
   const { colors, scheme } = useTheme();
   const { t } = useI18n();
@@ -61,12 +48,7 @@ function CrashScreen({ error, onRetry }: { error: Error; onRetry: () => void }) 
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[styles.screen, { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xl }]}
     >
-      {/*
-        The fawn with the cable come loose, as a screen that could not load
-        wears it (theme/EmptyState): the same news, and never the reader's
-        doing. A red alarm said otherwise, in the colour kept for a wrong
-        answer. Decoration: the words below say it all.
-      */}
+      {/* The fawn with the loose cable, as on a failed load (theme/EmptyState): decoration, since the text says it all. */}
       <Image
         source={scheme === 'dark' ? unpluggedDark : unpluggedLight}
         style={styles.art}
@@ -78,15 +60,10 @@ function CrashScreen({ error, onRetry }: { error: Error; onRetry: () => void }) 
       <Text style={[styles.title, { color: colors.textPrimary }]}>{t('error.crash.title')}</Text>
       <Text style={[styles.body, { color: colors.textSecondary }]}>{t('error.crash.body')}</Text>
 
-      {/*
-        The message is for whoever is holding the debugger, not for whoever is
-        holding the phone: it names internals, and a released build shows it to
-        strangers. `__DEV__` is false in every store build, so this line simply
-        is not there in the one that ships.
-      */}
+      {/* The error message names internals, so it is shown only in development (`__DEV__` is false in store builds). */}
       {__DEV__ ? <Text style={[styles.detail, { color: colors.textSecondary }]}>{String(error.message)}</Text> : null}
 
-      {/* the app's own primary button: the boundary sits inside the providers, so the palette it needs is there */}
+      {/* The app's primary button; the boundary sits inside the providers, so the palette is available. */}
       <ClayButton label={t('common.retry')} tone="primary" size="large" onPress={onRetry} style={styles.buttonWrap} testID="crash-retry" />
     </ScrollView>
   );
@@ -94,7 +71,7 @@ function CrashScreen({ error, onRetry }: { error: Error; onRetry: () => void }) 
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl, gap: spacing.md },
-  // the size the empty and offline states draw it at: 480 of source is exactly @3x
+  // The size the empty and offline states draw it at: 480 of source is exactly @3x.
   art: { width: 160, height: 135 },
   title: { ...display(typography.sizes.xxl), textAlign: 'center' },
   body: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
