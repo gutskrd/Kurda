@@ -27,7 +27,8 @@ interface CandidateRow {
  * nudge at 22:00 for streaks ≥ 7. The send log makes it idempotent, and the
  * per-timezone local-hour match means there's no single global blast. Users who
  * already practiced today are never notified, and nor is anyone who has turned
- * streak reminders off — which a minor has until they turn them on.
+ * streak reminders off — which a minor has until they turn them on — or whose
+ * account is waiting to be deleted.
  */
 export class StreakReminderService {
   constructor(
@@ -55,6 +56,10 @@ export class StreakReminderService {
        JOIN users u ON u.id = s.user_id
        LEFT JOIN notification_prefs p ON p.user_id = s.user_id
        WHERE s.current_streak >= 1 AND s.last_active_on IS NOT NULL
+         -- an account on its way to deletion is not coaxed back to a streak it
+         -- asked to have erased (signing in again cancels the deletion, and the
+         -- reminders come back with it); nor is one already closed
+         AND u.deletion_requested_at IS NULL AND u.deleted_at IS NULL
          -- reminders turned off, or never turned on by a minor (off by default
          -- for them, read from age now, and for an account whose age is not on
          -- record yet): nothing to queue

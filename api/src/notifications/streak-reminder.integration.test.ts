@@ -141,6 +141,17 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
     await pool.query(`DELETE FROM notification_prefs WHERE user_id = $1`, [atRisk]);
   });
 
+  it('sends nothing to an account waiting to be deleted, and sends again once the deletion is called off', async () => {
+    await pool.query(`UPDATE users SET deletion_requested_at = now() WHERE id = $1`, [atRisk]);
+    sent.length = 0;
+    await service.runHourly(new Date('2026-06-19T08:30:00Z'));
+    expect(sent.some((s) => s.userId === atRisk)).toBe(false);
+    // signed in again: the deletion is off, and the reminders with it
+    await pool.query(`UPDATE users SET deletion_requested_at = NULL WHERE id = $1`, [atRisk]);
+    await service.runHourly(new Date('2026-06-20T08:30:00Z'));
+    expect(sent.some((s) => s.userId === atRisk)).toBe(true);
+  });
+
   it('does not fire the primary reminder outside the practice hour', async () => {
     sent.length = 0;
     await service.runHourly(new Date('2026-06-15T15:30:00Z')); // local hour 15 ≠ 8

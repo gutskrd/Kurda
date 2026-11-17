@@ -71,6 +71,13 @@ interface RequestOptions {
    */
   rawBody?: ArrayBuffer;
   headers?: Record<string, string>;
+  /**
+   * Send this with the session as it stands, and never renew it: for the last
+   * request a session makes on this phone, as it signs out. A renewal that
+   * finished after the sign-out had cleared the session would write a session
+   * back onto the phone. A 401 comes back as the refusal it is.
+   */
+  once?: boolean;
 }
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -217,7 +224,7 @@ export class ApiClient {
       // an unauthenticated request is the endpoint answering — a wrong password,
       // most often — and its body says which, so it must not be thrown away for
       // a refresh that has nothing to refresh. The browser already does this.
-      if (res.status === 401 && tokens) return 'unauthorized';
+      if (res.status === 401 && tokens && !options.once) return 'unauthorized';
       return this.toResult<T>(res);
     };
 
