@@ -7,11 +7,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-navigation/native', () => import('../auth/guide/testing/navigation'));
-/*
- * The timings a slide leaves on, held until the test lets each finish: under
- * test every animation otherwise ends the moment it begins, and a slide on
- * its way out would never be seen on its way.
- */
+/* Hold each slide's exit timing until the test releases it; otherwise every animation ends as it starts and an exit is never seen. */
 const held = vi.hoisted(() => ({ runs: [] as { to: number; finish: () => void }[] }));
 vi.mock('../theme/animate', async (original) => ({
   ...(await original<typeof import('../theme/animate')>()),
@@ -37,11 +33,9 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { OnboardingScreen } from './OnboardingScreen';
 
 /*
- * The intro: the languages offered as a choice that ticks when it changes;
- * the slides turning the way the reader goes, the one leaving to the start
- * side going on and to the end side going back, the dots' capsule sliding
- * with them; and the welcome slide with Hevalo himself over all four lines
- * about the app at once, in the language just chosen.
+ * The intro: the language choice ticks when it changes; slides turn in the reading direction (forward leaves to
+ * the start side, back to the end side) with the dots' capsule sliding along; and the welcome slide shows Hevalo
+ * over all four lines at once, in the language just chosen.
  */
 
 let felt: HapticEvent[] = [];
@@ -49,7 +43,7 @@ let stop: () => void = () => undefined;
 
 beforeEach(() => {
   patchReactNativeWeb({ reduceMotion: true });
-  // a language chosen in one test is saved as the app's, and must not be the next test's
+  // A language chosen in one test is saved as the app's, and must not be the next test's.
   globalThis.localStorage?.clear();
   resetHaptics();
   felt = [];
@@ -65,12 +59,12 @@ async function settle(): Promise<void> {
   await act(async () => undefined);
 }
 
-/** every held animation runs to its end */
+/** Every held animation runs to its end. */
 function finishAll(): void {
   act(() => held.runs.splice(0).forEach((run) => run.finish()));
 }
 
-/** a device that has said whether it wants motion, known from the intro's first frame */
+/** A device that has said whether it wants motion, known from the intro's first frame. */
 async function device({ reduceMotion }: { reduceMotion: boolean }): Promise<void> {
   patchReactNativeWeb({ reduceMotion });
   renderWithProviders(<OnboardingScreen onComplete={() => undefined} />).unmount();
@@ -79,7 +73,7 @@ async function device({ reduceMotion }: { reduceMotion: boolean }): Promise<void
   held.runs = [];
 }
 
-/** how far along the dots the capsule sits, in points */
+/** How far along the dots the capsule sits, in points. */
 const capsuleAt = (): number => Number(/translateX\((-?[\d.e-]+)px\)/.exec(screen.getByTestId('onboarding-dots-active').style.transform)?.[1] ?? 0);
 
 const en = TRANSLATIONS.en;
@@ -101,7 +95,7 @@ describe('OnboardingScreen', () => {
     expect(felt).toEqual(['select']);
   });
 
-  // the app is already speaking a language, and Continue keeps it: the list says which
+  // The app is already speaking a language, and Continue keeps it: the list says which.
   it('shows the language the app is in as chosen before any is tapped', async () => {
     renderWithProviders(<OnboardingScreen onComplete={() => undefined} />);
     await settle();
@@ -116,7 +110,7 @@ describe('OnboardingScreen', () => {
     const sorani = screen.getByRole('radio', { name: 'کوردی (سۆرانی)' });
     expect(getComputedStyle(sorani).flexDirection).toBe('row-reverse');
     expect(getComputedStyle(screen.getByRole('radio', { name: 'English' }).firstElementChild as HTMLElement).textAlign).toBe('right');
-    // the way on: its row starts from the right, so Continue closes it on the left
+    // The way on: its row starts from the right, so Continue closes it on the left.
     const onward = screen.getByRole('button', { name: TRANSLATIONS.ckb['common.continue'] });
     expect(getComputedStyle(onward.parentElement as HTMLElement).flexDirection).toBe('row-reverse');
   });
@@ -130,7 +124,7 @@ describe('OnboardingScreen', () => {
     await settle();
     fireEvent.click(screen.getByRole('button', { name: de['common.continue'] }));
     await settle();
-    // the language list on its way out, a still of itself; Hevalo and all four lines in
+    // The language list on its way out, a still of itself; Hevalo and all four lines in.
     const leaving = screen.getByTestId('slide-out-start');
     expect(leaving.textContent).toContain(de['onboarding.language.title']);
     expect(screen.getByRole('img', { name: /Hevalo/ })).toBeTruthy();
@@ -139,7 +133,7 @@ describe('OnboardingScreen', () => {
     }
     expect(capsuleAt()).toBeGreaterThan(0);
     const second = capsuleAt();
-    // the cross-fade done, the list is gone
+    // The cross-fade done, the list is gone.
     finishAll();
     expect(screen.queryByTestId('slide-out-start')).toBeNull();
     expect(screen.queryByText(de['onboarding.language.title'])).toBeNull();
@@ -154,7 +148,7 @@ describe('OnboardingScreen', () => {
     finishAll();
     fireEvent.click(screen.getByRole('button', { name: de['common.continue'] }));
     await settle();
-    // the last slide: the bell, and the capsule a slot further on
+    // The last slide: the bell, and the capsule a slot further on.
     expect(screen.getByText(de['onboarding.notify.title'])).toBeTruthy();
     expect(capsuleAt()).toBeCloseTo(second * 2);
   });

@@ -49,9 +49,8 @@ describe('navigation', () => {
   });
 
   /*
-   * The slides turn the way the reader is going: on to a later slide the old
-   * one leaves to the start side, back to an earlier one it leaves to the
-   * end side. A step that goes nowhere (next on the last slide) turns on.
+   * Slides turn in the reading direction: forward leaves to the start side, back to the end side, and a step that
+   * goes nowhere counts as forward.
    */
   it('knows which way it is turning', () => {
     expect(slideDirection(0, 1)).toBe('forward');

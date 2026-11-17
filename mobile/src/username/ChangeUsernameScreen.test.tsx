@@ -42,10 +42,7 @@ async function tryName(routes: Routes, options: { password?: string | null } = {
 const refusal = (error: Record<string, unknown>): ApiResult<never> => ({ ok: false, error: { kind: 'client', status: 400, message: 'refused', ...error } }) as ApiResult<never>;
 
 describe('changing the username', () => {
-  /*
-   * Without the current name nothing can be compared and Save never enables:
-   * the screen says it did not load and asks again, rather than waiting on "…".
-   */
+  /* Without the current name Save can never enable, so the screen reports the failed load and offers a retry. */
   it('says the current name did not load and asks again, instead of waiting for ever', async () => {
     let status: ApiResult<unknown> = { ok: false, error: { kind: 'network', message: 'Network request failed' } };
     testAuth.client = fakeClient({ 'GET /me/username': () => status });
@@ -69,7 +66,7 @@ describe('changing the username', () => {
     const client = await tryName({ 'POST /me/username': ok({ user: { username: NAME }, changed: true, status: { ...STATUS, username: NAME } }) });
     const sent = client.calls.filter((c) => c.method === 'POST');
     expect(sent).toEqual([{ method: 'POST', path: '/me/username', body: { username: NAME, currentPassword: 'a-strong-password1' } }]);
-    // never through the profile update, which no longer takes a username
+    // Never through the profile update, which does not take a username.
     expect(client.calls.some((c) => c.method === 'PATCH')).toBe(false);
     expect(screen.getByRole('button', { name: 'Saved ✓' })).toBeTruthy();
     expect(testAuth.refreshUser).toHaveBeenCalled();
@@ -163,7 +160,7 @@ describe('changing the username', () => {
     fireEvent.change(field, { target: { value: 'ROJDA_Amed' } });
     expect(field.value).toBe(NAME);
     expect(await screen.findByText('This username is free.')).toBeTruthy();
-    // one's own name in capitals is one's own name
+    // One's own name in capitals is one's own name.
     fireEvent.change(field, { target: { value: 'ROJDA' } });
     expect(screen.getByText('That’s already your username.')).toBeTruthy();
   });

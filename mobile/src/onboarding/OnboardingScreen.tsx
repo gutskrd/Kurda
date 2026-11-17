@@ -38,17 +38,16 @@ import { createOnboardingStorage } from './storage';
 const storage = createOnboardingStorage();
 
 /**
- * First-launch gate (KUR-271): reads the persisted onboarding record once and
- * exposes `complete()` so the app root can show onboarding before auth and never
- * again after. Mirrors the AuthProvider restore pattern.
+ * The first-launch gate: reads the stored onboarding record once and exposes `complete()`, so the root shows
+ * onboarding before auth and never again. Follows the AuthProvider restore pattern.
  */
 export function useOnboarding(): {
   ready: boolean;
   needsOnboarding: boolean;
-  /** step to mount onboarding at when re-opened from the auth choice; null = normal start */
+  /** Step to mount onboarding at when re-opened from the auth choice; null = normal start. */
   reopenStep: OnboardingStep | null;
   complete: (persisted: PersistedOnboarding) => void;
-  /** re-show the intro from the auth stack (e.g. "‹ Back" on the Welcome choice) */
+  /** re-show the intro from the auth stack (e.g. "‹ Back" on the Welcome choice). */
   reopen: (step: OnboardingStep) => void;
 } {
   const [ready, setReady] = useState(false);
@@ -81,8 +80,7 @@ export function useOnboarding(): {
   return { ready, needsOnboarding, reopenStep, complete, reopen };
 }
 
-/** What the app is, one line to a slide. Keys, so the intro speaks the
- *  language chosen on the slide before it. */
+/** What the app is, one line per slide, as keys so the intro uses the language chosen on the slide before. */
 const VALUE_PROPS: readonly TranslationKey[] = [
   'onboarding.prop.learn',
   'onboarding.prop.play',
@@ -93,25 +91,19 @@ const VALUE_PROPS: readonly TranslationKey[] = [
 /** How tall Hevalo stands on the welcome slide, head to the tops of his legs. */
 const HERO_HEIGHT = 200;
 
-/** The lines under his name follow each other a little further apart than rows in a list do: each is read, not scanned. */
+/** The lines under his name sit a little further apart than list rows: each is read, not scanned. */
 const LINE_STAGGER_MS = ENTRANCE.staggerMs * 2;
 
 /** Skip is drawn one line of the body size tall, about this. */
 const SKIP_LINE = { height: 20 };
 
 /**
- * The 3-slide first-launch intro (KUR-272/273), on the glass theme. `initialStep`
- * lets the auth Welcome choice re-open it partway (at the intro) so "‹ Back"
- * walks all the way back to the language chooser.
+ * The three-slide first-launch intro on the glass theme. `initialStep` lets the auth Welcome screen reopen it at
+ * the intro, so "‹ Back" still walks back to the language chooser.
  *
- * The slides turn rather than swap: the one leaving moves out the way the
- * reader is going and the next rises into its place (SlideSwap), and the
- * dots at the top say where they are with a capsule that slides along them.
- *
- * Hevalo is the guide through them: on each slide he says its line, his
- * mouth moving with the words (auth/guide), and each slide's art floats and
- * arrives a little further than the words, so the intro has depth rather
- * than being three still cards. All of it stops under Reduce Motion.
+ * Slides turn rather than swap (SlideSwap), and a capsule slides along the dots at the top. Hevalo says each
+ * slide's line with lip-sync (auth/guide), and each slide's art floats and arrives a little after the text. All
+ * motion stops under Reduce Motion.
  */
 export function OnboardingScreen({
   onComplete,
@@ -132,10 +124,10 @@ export function OnboardingScreen({
   const { locale, setLocale } = useI18n();
   const step = currentStep(state);
 
-  // which way the last turn went, for the slide leaving: told from the slide before it
+  // Which way the last turn went, for the slide leaving: told from the slide before it.
   const shown = useRef(state.stepIndex);
   const turned = useRef<SlideDirection>('forward');
-  // whether any slide has turned yet: the first one's art is simply there, the later ones' arrive with the turn
+  // Whether any slide has turned yet: the first slide's art is just there, later ones arrive with the turn.
   const turns = useRef(0);
   if (shown.current !== state.stepIndex) {
     turned.current = slideDirection(shown.current, state.stepIndex);
@@ -145,28 +137,28 @@ export function OnboardingScreen({
   const arriving = turns.current > 0 ? turned.current : null;
 
   const end = (via: CompletedVia): void => {
-    // compute the record from the current state (dispatch only marks it inert);
-    // fall back to the live app locale so re-opening never wipes the language
+    // Build the record from the current state (dispatch only makes it inert), falling back to the live app locale
+    // so reopening never wipes the language.
     onComplete({ completed: true, preferredLanguage: state.selectedLanguage ?? locale });
     dispatch(via === 'skipped' ? { type: 'skip' } : { type: 'finish' });
   };
 
   const selectLanguage = (locale: Locale): void => {
     dispatch({ type: 'selectLanguage', locale });
-    setLocale(locale); // live preview + persists the app language (#184)
+    setLocale(locale); // Live preview; also saves the app language.
   };
 
   return (
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.lg }]}>
-        {/* the dots on the side the language starts from, Skip at the far end; the way on below is mirrored too */}
+        {/* The dots sit on the reading-start side and Skip at the far end; the controls below are mirrored too. */}
         <View style={[styles.topBar, { flexDirection: dir.row }]}>
           <Dots count={ONBOARDING_STEPS.length} index={state.stepIndex} mirrored={dir.rtl} />
           {!isLastStep(state) ? (
             <Pressable
               onPress={() => end('skipped')}
               accessibilityRole="button"
-              // one 20-point line of words alone at the bar's end: it answers over 48 of height and a little past its ends
+              // A single 20 pt line of text at the bar's end answers over 48 of height and a little past its ends.
               reach="open"
               reachSize={SKIP_LINE}
               style={({ pressed }) => pressed && heldDim}
@@ -179,7 +171,7 @@ export function OnboardingScreen({
         </View>
 
         <SlideSwap id={step} direction={turned.current} mirrored={dir.rtl} style={styles.body}>
-          {/* the language the app is in until another is tapped: it is the one Continue keeps */}
+          {/* The language the app is in until another is tapped: it is the one Continue keeps. */}
           {step === 'language' && <LanguageSlide selected={state.selectedLanguage ?? locale} onSelect={selectLanguage} arriving={arriving} mirrored={dir.rtl} />}
           {step === 'welcome' && <WelcomeSlide arriving={arriving} mirrored={dir.rtl} />}
           {step === 'notifications' && <NotificationsSlide arriving={arriving} mirrored={dir.rtl} />}
@@ -215,14 +207,9 @@ function dotSlotX(index: number, count: number, mirrored: boolean): number {
 }
 
 /**
- * Which slide this is, of how many: a dot for each, and over the one showing
- * a capsule in the brand's colour that slides along to the next.
- *
- * The capsule used to be the dot itself, drawn wider — which jumped from one
- * dot to the next, since a width is laid out and not moved. The capsule is
- * its own shape of one width, and travels on a transform, the way the
- * segmented control's does: on the native driver, and simply there under
- * Reduce Motion. Decorative: the slides say what they are.
+ * Which slide of how many: a dot for each, with a brand-coloured capsule that slides to the current one. The
+ * capsule moves by transform on the native driver, like the segmented control's, and jumps under Reduce Motion.
+ * Decorative: the slides say what they are.
  */
 function Dots({ count, index, mirrored }: { count: number; index: number; mirrored: boolean }): React.JSX.Element {
   const { colors } = useTheme();
@@ -250,22 +237,20 @@ function Dots({ count, index, mirrored }: { count: number; index: number; mirror
   );
 }
 
-/** How a slide arrived, for its art: the way it turned in, or null for the slide the intro opened on. */
+/** How a slide arrived, for its art: the direction it turned in, or null for the slide the intro opened on. */
 interface SlideArrival {
   arriving: SlideDirection | null;
   mirrored: boolean;
 }
 
 /**
- * The language choice, with Hevalo at the top asking which language to talk
- * in — in the language of the moment, so the question changes under him as
- * a language is tapped, and he says the new one. A globe stood here, breathing;
- * the app's own guide is who should ask the first question.
+ * The language choice, with Hevalo asking which language to use, in the selected language, so the question
+ * changes as a language is tapped.
  */
 function LanguageSlide({ selected, onSelect, arriving, mirrored }: { selected: string | null; onSelect: (l: Locale) => void } & SlideArrival): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
-  // each name read in its own direction, lined up with the page's; the tick closes the row on the far side
+  // Each name in its own direction, aligned with the page; the tick closes the row on the far side.
   const dir = useDirection();
   return (
     <View style={styles.slide}>
@@ -278,7 +263,7 @@ function LanguageSlide({ selected, onSelect, arriving, mirrored }: { selected: s
         {LOCALES.map((locale) => {
           const active = selected === locale;
           return (
-            // gives a little under the finger, and ticks when the choice changes
+            // Gives a little under the finger, and ticks when the choice changes.
             <PressableScale
               key={locale}
               onPress={() => {
@@ -294,7 +279,7 @@ function LanguageSlide({ selected, onSelect, arriving, mirrored }: { selected: s
               ]}
             >
               <Text style={[styles.langLabel, dir.free, { color: active ? colors.primary : colors.textPrimary }, active && styles.langLabelActive]}>
-                {/* each language in its own name and its own direction — nothing technical beside it */}
+                {/* Each language in its own name and its own direction — nothing technical beside it. */}
                 {LOCALE_LABEL[locale]}
               </Text>
               {active ? <Icon name="check" size={22} color={colors.primary} /> : null}
@@ -310,16 +295,9 @@ function LanguageSlide({ selected, onSelect, arriving, mirrored }: { selected: s
 const greeted = (): void => undefined;
 
 /**
- * Hevalo himself, with his name and what the app is in four lines.
- *
- * A book glyph used to stand here, and the four lines took turns, one every
- * two and a half seconds — which meant reading at the slide's pace rather
- * than one's own, and seeing one line only unless one waited. Now all four
- * are there, rising in one after another as the slide arrives, and Hevalo
- * stands over them, alive: he breathes, blinks, glances about, greets a
- * tap, and says hello — a bubble over his head, his mouth moving with the
- * words — while he floats a little, as the art of every slide does. Under
- * Reduce Motion the lines are simply there and he stands still.
+ * Hevalo with his name and what the app is in four lines. The lines rise in one after another as the slide
+ * arrives, and Hevalo breathes, blinks, glances, greets a tap and says hello with lip-sync while floating like
+ * every slide's art. Under Reduce Motion the lines are just there and he stands still.
  */
 function WelcomeSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
   const { colors } = useTheme();
@@ -357,18 +335,18 @@ function WelcomeSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
   );
 }
 
-/** Notifications intro (KUR-095 onboarding). Informational — no OS prompt
- *  here or after it, before there is anything to be reminded of. The system
- *  prompt comes after a lesson, by way of a screen whose one button leads to
- *  it, or from the control at the top of Settings → Notification settings
- *  (push/). */
+/**
+ * The notifications intro, informational only: no OS prompt here. The system prompt comes after a lesson, from a
+ * screen whose one button leads to it, or from the control at the top of Settings → Notification settings
+ * (push/).
+ */
 function NotificationsSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   return (
     <View style={[styles.slide, styles.centered]}>
       <HevaloGuide says={t('guide.intro.notify.says')} style={styles.guideArt} />
-      {/* one breath as the slide arrives, then still but for the float: there are three lines to read under it */}
+      {/* One breath as the slide arrives, then still apart from the float: there are three lines to read under it. */}
       <Drift direction={arriving} mirrored={mirrored} style={styles.notifArt}>
         <BreathingIcon name="bell" size={56} tone="primary" breaths={1} />
       </Drift>
@@ -385,13 +363,13 @@ const styles = StyleSheet.create({
   dots: { flexDirection: 'row', gap: DOT_GAP },
   dotSlot: { width: DOT_SLOT, height: DOT, alignItems: 'center', justifyContent: 'center' },
   dot: { width: DOT, height: DOT, borderRadius: radii.pill },
-  // over the dots, free to travel between them
+  // Over the dots, free to travel between them.
   dotActive: { position: 'absolute', left: 0, top: 0, width: DOT_SLOT, height: DOT, borderRadius: radii.pill },
   skip: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
   body: { flex: 1, justifyContent: 'center' },
   slide: { flex: 1, justifyContent: 'center' },
   centered: { alignItems: 'center' },
-  // Hevalo and his bubble take the slide's width, as a row; the art under him floats in the middle
+  // Hevalo and his bubble take the slide's width, as a row; the art under him floats in the middle.
   guideArt: { alignSelf: 'stretch', alignItems: 'stretch', marginBottom: spacing.lg },
   notifArt: { marginTop: spacing.sm },
   heroBubble: { marginBottom: spacing.md, maxWidth: 300 },

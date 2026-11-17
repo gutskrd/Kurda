@@ -1,11 +1,7 @@
 /**
- * First-launch onboarding flow (KUR-271). Pure state machine for the 3-slide
- * intro (Language → Welcome → Notifications) plus the first-launch gating and
- * the shape that gets persisted. The sign-in method choice lives on the auth
- * stack's Welcome screen, so the intro flows straight into it (and back out
- * again). No storage, no navigation, no React here — the app root feeds actions
- * in and reads state out, so the whole flow is unit-testable. The slides
- * themselves are KUR-272 / 273; storage lives in ./storage.ts.
+ * The first-launch intro (Language → Welcome → Notifications) as a pure state machine, plus the shape that is
+ * stored. The sign-in choice lives on the auth stack's Welcome screen, which the intro flows into and back out
+ * of. Storage is in ./storage.ts.
  */
 
 export type OnboardingStep = 'language' | 'welcome' | 'notifications';
@@ -17,12 +13,12 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = ['language', 'welcome
 export type CompletedVia = 'finished' | 'skipped';
 
 export interface OnboardingState {
-  /** index into ONBOARDING_STEPS. */
+  /** Index into ONBOARDING_STEPS. */
   stepIndex: number;
-  /** locale code chosen on the language slide (#272); null until chosen. */
+  /** Locale chosen on the language slide; null until chosen. */
   selectedLanguage: string | null;
   status: 'active' | 'completed';
-  /** set once completed; null while active. */
+  /** Set once completed; null while active. */
   completedVia: CompletedVia | null;
 }
 
@@ -40,10 +36,8 @@ export function initOnboardingState(): OnboardingState {
 const LAST_INDEX = ONBOARDING_STEPS.length - 1;
 
 /**
- * Advance the flow. Once completed the flow is inert — every action is a no-op
- * so a late dispatch (e.g. an in-flight animation) can never re-open a
- * finished onboarding. `next` clamps at the last slide (the UI shows Finish
- * there, which dispatches `finish`); `back` clamps at the first.
+ * Advance the flow. Once completed every action is a no-op, so a late dispatch (from an animation, say) cannot
+ * reopen it. `next` clamps at the last slide, where the UI shows Finish, and `back` at the first.
  */
 export function onboardingReducer(
   state: OnboardingState,
@@ -68,8 +62,7 @@ export function onboardingReducer(
 }
 
 export function currentStep(state: OnboardingState): OnboardingStep {
-  // stepIndex is always clamped in-range by the reducer; the literal fallback
-  // just satisfies noUncheckedIndexedAccess.
+  // The reducer keeps stepIndex in range; the fallback only satisfies noUncheckedIndexedAccess.
   return ONBOARDING_STEPS[state.stepIndex] ?? 'language';
 }
 
@@ -81,16 +74,12 @@ export function isLastStep(state: OnboardingState): boolean {
   return state.stepIndex === LAST_INDEX;
 }
 
-/** Which way the intro turns between two slides: on to a later one, or back to an earlier (staying put counts as on). */
+/** Which way the intro turns between two slides; staying put counts as forward. */
 export function slideDirection(from: number, to: number): 'forward' | 'back' {
   return to >= from ? 'forward' : 'back';
 }
 
-/**
- * What persists once onboarding ends: the completed flag (so it never shows
- * again) and the chosen language (saved as the preferred app language, #184).
- * Skipping still records completion — and any language picked before skipping.
- */
+/** What is stored once onboarding ends: the completed flag and the chosen language. Skipping still records both. */
 export interface PersistedOnboarding {
   completed: boolean;
   preferredLanguage: string | null;
