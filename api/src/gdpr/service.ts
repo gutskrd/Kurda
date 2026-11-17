@@ -3,7 +3,7 @@ import type pg from 'pg';
 import { sendEmailJob } from '../jobs/email.js';
 import { emailLocaleFor } from '../email/templates.js';
 import type { JobQueue } from '../jobs/queue.js';
-import { mediaKey, type MediaStorage } from '../media/storage.js';
+import { PrivateStorageUnavailable, mediaKey, type MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
 import { lockPersonFor } from '../limits/limits.js';
 import { inTransaction } from '../moderation/tx.js';
@@ -442,7 +442,10 @@ export class GdprService {
    * everything (each is a full build and a file in storage).
    */
   async requestExport(userId: string): Promise<string> {
-    if (!this.deps.storage) {
+    // an export is kept only in a bucket nobody can read without its signed
+    // link (media/storage.ts `putPrivate`); with none, the app says it could
+    // not be asked for, rather than that one is on its way
+    if (!this.deps.storage?.hasPrivateBucket) {
       throw new AppError('EXPORT_NOT_AVAILABLE', 503, 'data export is not available right now');
     }
     return inTransaction(this.pool, async (client) => {
@@ -603,7 +606,16 @@ export class GdprService {
     };
   }
 
-  /** Worker-side fulfillment: build, upload, mark completed. */
+  /**
+   * Worker-side fulfillment: build, upload, mark completed, and delete the
+   * person's earlier export files.
+   *
+   * Without a private bucket that takes writes, the export is not made at all
+   * (PrivateStorageUnavailable), never written to the public bucket instead.
+   * The request is withdrawn as the job fails, so GET /me/export does not go
+   * on saying one is on its way, and the person may ask again once there is
+   * somewhere to keep it.
+   */
   async fulfillExport(exportId: string): Promise<void> {
     if (!this.deps.storage) throw new Error('storage not configured');
     const row = await this.pool.query<{ user_id: string; completed_at: Date | null }>(
@@ -612,6 +624,10 @@ export class GdprService {
     );
     const record = row.rows[0];
     if (!record || record.completed_at) return; // idempotent
+    if (!this.deps.storage.hasPrivateBucket) {
+      await this.pool.query(`DELETE FROM user_exports WHERE id = $1 AND completed_at IS NULL`, [exportId]);
+      throw new PrivateStorageUnavailable();
+    }
 
     const body = Buffer.from(JSON.stringify(await this.buildExport(record.user_id), null, 2));
     const sha256Hex = createHash('sha256').update(body).digest('hex');
@@ -632,6 +648,32 @@ export class GdprService {
       `UPDATE user_exports SET storage_key = $2, completed_at = now() WHERE id = $1`,
       [exportId, key],
     );
+    await this.deleteEarlierExports(record.user_id, exportId, key);
+  }
+
+  /**
+   * Once a newer export is ready, the files of the person's earlier ones are
+   * deleted: only the newest is ever offered (`exportStatus`), and an old copy
+   * of somebody's account kept for nobody is one more to lose. One that cannot
+   * be deleted now keeps its key, and is tried again when the next export is
+   * ready or the account is closed (`eraseAccountData`).
+   */
+  private async deleteEarlierExports(userId: string, exportId: string, kept: string): Promise<void> {
+    const earlier = await this.pool.query<{ id: string; storage_key: string }>(
+      `SELECT id, storage_key FROM user_exports WHERE user_id = $1 AND id <> $2 AND storage_key IS NOT NULL`,
+      [userId, exportId],
+    );
+    const deleted: string[] = [];
+    for (const old of earlier.rows) {
+      try {
+        // the same bytes have the same key: that file is the new export's too
+        if (old.storage_key !== kept) await this.deps.storage!.delete(old.storage_key);
+        deleted.push(old.id);
+      } catch (err) {
+        this.deps.log?.warn({ err, userId }, 'could not delete an earlier data export; it is tried again with the next one');
+      }
+    }
+    if (deleted.length > 0) await this.pool.query(`UPDATE user_exports SET storage_key = NULL WHERE id = ANY($1::uuid[])`, [deleted]);
   }
 
   /** Latest export status + fresh signed URL when ready. */

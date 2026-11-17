@@ -64,6 +64,19 @@ const isPrivateKey = (key: string): boolean => PRIVATE_PREFIXES.some((prefix) =>
 const refusedPrivateBuckets = new Set<string>();
 
 /**
+ * There is no private bucket that takes writes, so one person's file is not
+ * kept at all: a data export is never written to the public bucket instead.
+ * That bucket is served through the CDN to anyone with an address, so the
+ * short-lived signed link handed to its owner would protect nothing.
+ */
+export class PrivateStorageUnavailable extends Error {
+  constructor() {
+    super('no private bucket takes writes (S3_EVIDENCE_BUCKET), and a data export is never written to the public bucket');
+    this.name = 'PrivateStorageUnavailable';
+  }
+}
+
+/**
  * Asks the CDN in front of the public bucket to forget some URLs; true when it
  * accepted. A deleted object is otherwise served from the edge for as long as
  * its year-long `immutable` cache lasts.
@@ -74,9 +87,9 @@ export interface MediaStorageOptions {
   /**
    * A bucket that is NOT publicly readable, for what moderation keeps as
    * evidence and for people's data exports (PRIVATE_PREFIXES). Without one,
-   * they go to unguessable keys in the public bucket, written `private,
+   * evidence goes to unguessable keys in the public bucket, written `private,
    * no-store` — never listed and never cached, but readable by anyone who has
-   * the address.
+   * the address — and no data export is made at all (`putPrivate`).
    */
   evidenceBucket?: string;
   purge?: CdnPurge;
@@ -256,10 +269,14 @@ export class MediaStorage {
    * private.
    *
    * `private, no-store` tells the CDN and every proxy in between not to keep a
-   * copy. The right long-term answer is a second bucket that is not public at
-   * all; this is the part that does not need one.
+   * copy, and the file goes only to the private bucket, which is not public at
+   * all. With none, or one that refused a write, it is not stored anywhere
+   * (PrivateStorageUnavailable): an unguessable key in the public bucket was
+   * still a file anyone holding the address could read, for as long as it was
+   * kept, which made the signed link's fifteen minutes mean nothing.
    */
   async putPrivate(key: string, body: Buffer, contentType: string): Promise<void> {
+    if (!this.hasPrivateBucket) throw new PrivateStorageUnavailable();
     await this.s3.send(
       new PutObjectCommand({
         Bucket: this.privateBucket,
@@ -333,8 +350,8 @@ export class MediaStorage {
       return { ok: true };
     } catch (err) {
       const e = err as { name?: string; message?: string };
-      // until the next start, private files are kept as they were before
-      // there was a private bucket, rather than not kept at all
+      // until the next start, evidence is kept as it was before there was a
+      // private bucket, rather than not kept at all; data exports are refused
       refusedPrivateBuckets.add(own);
       return { ok: false, error: e.name ?? e.message ?? 'unknown error' };
     }
@@ -412,7 +429,8 @@ export function cloudflarePurge(zoneId: string, apiToken: string, fetchFn: typeo
 /**
  * At start-up, with a private bucket configured: prove it takes a write, then
  * move what was kept privately in the public bucket into it. Neither holds up
- * the start, and a refusal leaves private files where they always went.
+ * the start. A refusal leaves evidence where it always went, and data exports
+ * are refused until a start finds the bucket taking writes.
  */
 export async function preparePrivateStorage(
   storage: MediaStorage,
@@ -423,7 +441,7 @@ export async function preparePrivateStorage(
   if (!check.ok) {
     log.error(
       { error: check.error },
-      'private storage refused a write: evidence and data exports stay in the public bucket under unguessable keys until the token can write to S3_EVIDENCE_BUCKET',
+      'private storage refused a write: evidence stays in the public bucket under unguessable keys, and data exports are refused, until the token can write to S3_EVIDENCE_BUCKET',
     );
     return;
   }
