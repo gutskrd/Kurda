@@ -34,9 +34,12 @@ by the account holder.
 
 ## 1. Accounts and agreements (owner)
 
-- [ ] Apple Developer Program membership is active for the business
-      (Zagrosian, KvK 42217689), enrolled as an organisation so the store
-      shows the business, not a private name, as the seller.
+- [x] Apple Developer Program membership is active (it renews each August).
+      Zagrosian (KvK 42217689) is an eenmanszaak, and Apple takes only legal
+      entities as organisations, so the membership is the owner's own, as an
+      individual: the store names the owner as the seller and Hevalo as the
+      app. Having Zagrosian named as the seller needs a legal entity, such as
+      a BV, and the membership moved to it through Apple's developer support.
 - [ ] App Store Connect → Business: the free apps agreement is accepted. The
       **Paid Apps** agreement, with bank and tax details, is only needed once
       something is sold; nothing is in 1.0.0. When it is, the bank details are
@@ -189,9 +192,10 @@ The first build asks for the Apple account once and makes the certificates,
 the provisioning profile and the push notification key itself.
 
 - [ ] **owner**: once the app record exists, put its Apple ID (App Store
-      Connect → App Information → Apple ID) and the team id (Developer account
-      → Membership) under `submit.production.ios` in `mobile/eas.json` as
-      `ascAppId` and `appleTeamId`, so later submissions do not ask for them.
+      Connect → App Information → Apple ID) next to the team id under
+      `submit.production.ios` in `mobile/eas.json`, as `ascAppId`, so later
+      submissions do not ask for it. The team id (`appleTeamId`) is already
+      there, from the developer account's membership page.
 - [ ] Tried once on an iPad as well: App Review opens iPhone apps on an iPad,
       and every screen has to work in that window.
 
@@ -218,10 +222,11 @@ the provisioning profile and the push notification key itself.
 The same build makes the Android app (`app.hevalo.mobile`). Play asks for
 much of what the App Store does, in its own words.
 
-- [ ] A Play Console developer account for the business, registered as an
-      organisation with the trade-register details (`shared/src/provider.ts`),
-      so the store shows Zagrosian as the developer. Play checks the
-      organisation's identity before the first release.
+- [ ] A Play Console developer account. Google offers organisation accounts
+      to businesses with a D-U-N-S number, checked against the trade-register
+      details (`shared/src/provider.ts`), and then shows Zagrosian as the
+      developer; ask for the number for the eenmanszaak first. If Google does
+      not take it, a personal account names the owner, as on the App Store.
 - [ ] **Push on Android**: Android phones get their notification token through
       Firebase. Create a Firebase project for `app.hevalo.mobile`, download its
       `google-services.json`, and add it to the build service as a file
