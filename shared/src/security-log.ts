@@ -1,18 +1,9 @@
 /**
- * The security log's vocabulary: every kind of event the API records about who
- * is getting in, who is being kept out, and who changed what about access, with
- * how serious each one is and how the admin panel names it. One list, so the
- * server that records an event and the panel that shows it cannot disagree.
- *
- * Severity says what the panel does with an event:
- * - info: kept for the record (a normal sign-in)
- * - notice: worth seeing when looking into something (a wrong password)
- * - warning: put on the "Needs attention" list until someone marks it reviewed
- * - critical: on that list, and emailed to the superadmins straight away
- *
- * An event about a staff account is one step more serious when its kind says
- * so (`staffEscalates`): a wrong password on an ordinary account is a typo, on
- * the owner's account it may be someone trying to get in.
+ * The security log's vocabulary: every kind of event the API records about getting in, being kept out and changing access,
+ * with its severity and how the admin panel names it. Severity decides what the panel does: info is kept for the record,
+ * notice is worth seeing when investigating, warning goes on "Needs attention" until reviewed, and critical also emails the
+ * superadmins at once. A kind marked `staffEscalates` is one step more serious for a staff account: a wrong password is a
+ * typo on an ordinary account and may be an attack on the owner's.
  */
 
 export const SECURITY_SEVERITIES = ['info', 'notice', 'warning', 'critical'] as const;
@@ -41,7 +32,7 @@ export interface SecurityEventInfo {
   staffEscalates?: boolean;
   /** recorded at most once in this many seconds for the same `dedupeBy` */
   dedupeSeconds?: number;
-  /** what makes two events of a once-in-a-while kind the same one */
+  /** what makes two events of a deduplicated kind the same one */
   dedupeBy?: ReadonlyArray<'account' | 'network' | 'route'>;
 }
 
@@ -289,7 +280,7 @@ export function isSecurityEventKind(kind: string): kind is SecurityEventKind {
   return Object.prototype.hasOwnProperty.call(SECURITY_EVENTS, kind);
 }
 
-/** What the panel shows for a kind, including one it does not know (a newer server's). */
+/** What the panel shows for a kind, including one it does not know from a newer server. */
 export function securityEventInfo(kind: string): SecurityEventInfo {
   return isSecurityEventKind(kind)
     ? SECURITY_EVENTS[kind]
@@ -309,5 +300,5 @@ export function needsAttention(severity: SecuritySeverity): boolean {
   return severity === 'warning' || severity === 'critical';
 }
 
-/** How long the sealed address an event came from is kept before it is forgotten. */
+/** How long the sealed address an event came from is kept. */
 export const SECURITY_ADDRESS_DAYS = 30;

@@ -1,18 +1,9 @@
 /**
- * How big the streak's fire burns: a fire that grows the longer the streak
- * is kept, drawn the same by the phone and the website.
- *
- * Kept from nothing: cold logs on day 0, a spark caught on the first day, a
- * little flame by the third, a campfire at a week, then a big fire, a
- * bonfire at a month, a blaze at a hundred days, and the Newroz fire, the
- * biggest there is, at a year. The steps come quickly at first, so the first
- * days each show the fire coming alive, and further apart later, so each one
- * after a month is something to look forward to. Between steps the fire
- * still grows a little every day (`growth`), so no kept day leaves it as it
- * was.
- *
- * A run of right answers in a lesson grows the same fire, faster and only so
- * far: the Newroz fire is a year's streak and nothing else.
+ * How big the streak's fire burns, drawn the same by both apps: cold logs on day 0, a spark on the first day, a little
+ * flame by the third, a campfire at a week, then a big fire, a bonfire at a month, a blaze at a hundred days and the
+ * Newroz fire at a year. Steps come quickly at first and further apart later, and the fire still grows a little each day
+ * between them (`growth`). A run of right answers grows the same fire faster but only so far: the Newroz fire is a year's
+ * streak and nothing else.
  */
 
 /** The fire's stages, smallest first. */
@@ -51,11 +42,7 @@ export interface FireLevel {
 /** A fire not burning: a streak of 0. */
 export const COLD_FIRE: FireLevel = { stage: 'cold', growth: 0 };
 
-/**
- * The fire growing into its new stage, on the day it grew: how long after it
- * appears the growth starts, and how long it takes to reach its new size.
- * Whatever is said of the new stage lands as the growth ends.
- */
+/** The fire growing into its new stage on the day it grew: the delay after it appears and the growth's length; what is said lands as it ends. */
 export const FIRE_GROW = { delayMs: 600, ms: 1100 } as const;
 
 /** The stage's place in `FIRE_STAGES`: 0 for cold, 7 for the Newroz fire. */
@@ -76,7 +63,7 @@ function levelOn(ladder: readonly (readonly [FireStage, number])[], n: number, a
 
 const STREAK_LADDER = FIRE_STAGES.map((s) => [s, FIRE_STAGE_DAYS[s]] as const);
 
-/** The fire for a streak of `days`. The Newroz fire grows on through its first year, and is full from two years on. */
+/** The fire for a streak of `days`; the Newroz fire keeps growing through its first year and is full from two years on. */
 export function fireLevel(days: number): FireLevel {
   return levelOn(STREAK_LADDER, whole(days), 365);
 }
@@ -86,14 +73,14 @@ export function runFireLevel(run: number): FireLevel {
   return levelOn(RUN_STAGE_AT, whole(run), 10);
 }
 
-/** The stage a streak of `days` reached today, when today is the day it grew (the 1st, the 3rd, the 7th...); null on any other day. */
+/** The stage a streak of `days` reached today when today is a growth day (the 1st, the 3rd, the 7th…); null otherwise. */
 export function fireGrewToday(days: number): FireStage | null {
   const d = whole(days);
   if (d === 0) return null;
   return FIRE_STAGES.find((s) => FIRE_STAGE_DAYS[s] === d) ?? null;
 }
 
-/** The next stage a streak of `days` grows into, and the day it does; null once it is the Newroz fire. */
+/** The next stage a streak of `days` grows into and the day it does; null once it is the Newroz fire. */
 export function nextFireStage(days: number): { stage: FireStage; at: number } | null {
   const d = whole(days);
   const stage = FIRE_STAGES.find((s) => FIRE_STAGE_DAYS[s] > d);

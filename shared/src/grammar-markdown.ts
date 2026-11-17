@@ -1,14 +1,8 @@
 /**
- * Tiny, dependency-free markdown parser for grammar notes (KUR-038).
- * Supports headings (#..###), paragraphs, bullet lists (- / *), fenced code
- * blocks (```), and inline **bold**, *italic* and `code`. Pure, so it's
- * unit-testable. The course's notes set every Kurdish example in italics, so
- * an italic the parser did not know would reach the learner as asterisks.
- *
- * It lived in the phone app; the browser shows the same notes (a skill's
- * "Tips"), and two parsers would read the same note two ways. It returns
- * blocks and spans rather than HTML, so each client draws them with its own
- * elements and nothing an editor writes is ever set as markup.
+ * A small dependency-free markdown parser for grammar notes ("Tips"), shared so both apps read a note the same way:
+ * headings (# to ###), paragraphs, bullet lists (- or *), fenced code blocks and inline **bold**, *italic* and `code`. The
+ * notes set every Kurdish example in italics, so an unknown italic would reach the learner as asterisks. It returns blocks
+ * and spans rather than HTML, so each client draws them itself and nothing an editor writes becomes markup.
  */
 
 export interface Span {
@@ -43,8 +37,7 @@ export function parseInline(text: string): Span[] {
         continue;
       }
     }
-    // a single asterisk opens an italic when a word follows it and one closes it, as markdown reads it:
-    // "2 * 3" or a lone "*" stays as it is
+    // A single asterisk opens an italic when a word follows and one closes it, as markdown reads it: "2 * 3" or a lone "*" stays.
     if (text[i] === '*' && text[i + 1] !== undefined && text[i + 1] !== '*' && !/\s/.test(text[i + 1]!)) {
       let end = text.indexOf('*', i + 1);
       while (end !== -1 && (text[end + 1] === '*' || /\s/.test(text[end - 1]!))) end = text.indexOf('*', end + 2);

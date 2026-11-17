@@ -1,40 +1,22 @@
 /**
- * The kept streak's card coming alive, the same on both apps.
- *
- * The card opens on yesterday: the medal unlit, in grey, and the streak's
- * number as it was, quietly. Then the medal takes its turn, the way a thing
- * with weight does: it gathers itself (squashes flat), hops (stretches up off
- * the card), turns to gold at the top of the hop as the app's one
- * celebration bursts out of it, and lands with a little give. As it lands
- * the number rolls on to today's and the words take their full ink. Only
- * then does the rest arrive, one thing after another so that each is read:
- * the word for the day, the week (its days one by one, today's last), what
- * stands under the card, and last the way on.
- *
- * Nothing waits on it: a tap on the card finishes it at once, and the way on
- * answers to its key from the first frame. Under reduced motion nothing
- * squashes, hops or travels: the grey medal cross-fades to the gold one, the
- * number changes where it is, and everything else is simply there.
- *
- * Leaving, the card goes the way it came, fast: its words fade and the medal
- * gathers itself once more and is gone, before the next screen.
+ * The kept streak's card coming alive, alike on both apps. It opens on yesterday with the medal grey and the old number.
+ * The medal squashes, hops, turns gold at the top of the hop as the celebration bursts from it, and lands; the number rolls
+ * to today's, then the word for the day, the week's days one by one (today last), what stands under the card and the way
+ * on arrive in turn. A tap finishes it at once and the way on answers its key from the first frame. Under reduced motion
+ * the medal cross-fades and everything else is simply there. Leaving, the card fades and the medal squashes away quickly.
  */
 
-/** The medal at one point of its turn: how wide and how tall it is, about its foot, and how far it is off the card. */
+/** The medal at one point of its turn: its width and height about its foot, and how far it is off the card. */
 export interface MedalPose {
   /** when, as a share of the turn */
   at: number;
   sx: number;
   sy: number;
-  /** how far it is lifted, as a share of its own height: below zero is up */
+  /** how far it is lifted, as a share of its own height; below zero is up */
   lift: number;
 }
 
-/**
- * The medal's turn. A squash keeps about as much medal as there was, wider
- * as it is flatter; the hop is narrower as it is taller; and it lands a
- * little flat before it stands.
- */
+/** The medal's turn: a squash keeps about its area, a hop is narrower as it is taller, and it lands a little flat before standing. */
 const POSES: readonly MedalPose[] = [
   { at: 0, sx: 1, sy: 1, lift: 0 },
   { at: 0.14, sx: 1.18, sy: 0.62, lift: 0 },
@@ -47,10 +29,8 @@ const POSES: readonly MedalPose[] = [
 ];
 
 /**
- * The medal's turn, drawn finely enough for something that only joins one
- * pose to the next with a straight line (the phone's animation driver, which
- * runs it off the main thread): between each pose and the next, `steps`
- * poses, eased in and out the way the website's own turn is.
+ * The turn sampled finely enough for a driver that joins poses with straight lines (the phone's off-thread animation):
+ * `steps` poses between each pair, eased in and out like the website's turn.
  */
 export function smoothPoses(poses: readonly MedalPose[], steps = 4): MedalPose[] {
   const fine: MedalPose[] = poses.slice(0, 1);
@@ -59,7 +39,7 @@ export function smoothPoses(poses: readonly MedalPose[], steps = 4): MedalPose[]
     const b = poses[i]!;
     for (let k = 1; k <= steps; k++) {
       const u = k / steps;
-      // in and out, as a sine does it: slow away from a pose and slow into the next
+      // Sine easing: slow away from one pose and into the next.
       const e = 0.5 - Math.cos(Math.PI * u) / 2;
       const between = (from: number, to: number): number => from + (to - from) * e;
       fine.push({ at: a.at + (b.at - a.at) * u, sx: between(a.sx, b.sx), sy: between(a.sy, b.sy), lift: between(a.lift, b.lift) });
@@ -69,7 +49,7 @@ export function smoothPoses(poses: readonly MedalPose[], steps = 4): MedalPose[]
 }
 
 export interface StreakReveal {
-  /** whether anything squashes, hops or travels, rather than fades */
+  /** whether anything squashes, hops or travels rather than fades */
   travel: boolean;
   /** when the medal's turn begins, and how long it takes */
   medalAtMs: number;
@@ -78,13 +58,13 @@ export interface StreakReveal {
   /** when it turns from grey to gold, and how long the turning takes */
   lightAtMs: number;
   lightMs: number;
-  /** when the celebration bursts out of it, and when that is felt and heard */
+  /** when the celebration bursts from it, and when that is felt and heard */
   burstAtMs: number;
   /** when the number rolls on to today's and the words take their ink */
   countAtMs: number;
   /** when the word for the day arrives */
   wordsAtMs: number;
-  /** when the week's first day arrives, and how long after one day the next does; today's is last */
+  /** when the week's first day arrives, and the gap between days; today's is last */
   weekAtMs: number;
   dayStepMs: number;
   /** when what stands under the card arrives */
@@ -95,30 +75,26 @@ export interface StreakReveal {
   overMs: number;
 }
 
-/** How long the card takes to leave, once the way on is taken; nothing under reduced motion. */
+/** How long the card takes to leave once the way on is taken; nothing under reduced motion. */
 export const STREAK_LEAVE_MS = 220;
 
 /** The medal as it leaves: gathered flat, and smaller, until it is gone. */
 export const STREAK_LEAVE_POSE = { sx: 1.3, sy: 0.3, scale: 0.4 } as const;
 
-/** The seven days of a week, the last of them today's place in the order they arrive. */
+/** The days of a week, today's last in the order they arrive. */
 const DAYS = 7;
 
-/**
- * When each part of the card arrives, in ms from when the card appears.
- * `reduce` is a reader who asked for less motion: one short cross-fade, and
- * everything there at once.
- */
+/** When each part of the card arrives, in ms from its appearance; `reduce` gives one short cross-fade with everything there at once. */
 export function streakReveal(reduce: boolean): StreakReveal {
   if (reduce) {
     return { travel: false, medalAtMs: 0, medalMs: 0, poses: [], lightAtMs: 150, lightMs: 240, burstAtMs: 150, countAtMs: 150, wordsAtMs: 0, weekAtMs: 0, dayStepMs: 0, afterAtMs: 0, onwardAtMs: 0, overMs: 390 };
   }
   const medalAtMs = 480;
   const medalMs = 920;
-  // gold at the top of the hop, which is where the burst comes out of it
+  // Gold at the top of the hop, where the burst comes out.
   const lightAtMs = medalAtMs + Math.round(medalMs * 0.44);
   const burstAtMs = medalAtMs + Math.round(medalMs * 0.52);
-  // the number turns as the medal comes down
+  // The number turns as the medal comes down.
   const countAtMs = medalAtMs + Math.round(medalMs * 0.7);
   const wordsAtMs = medalAtMs + medalMs + 60;
   const weekAtMs = wordsAtMs + 200;

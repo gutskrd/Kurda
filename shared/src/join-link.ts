@@ -1,29 +1,18 @@
 /**
- * A game's join code as a link: what Share hands to a message outside Hevalo.
+ * A game's join code as a link, what Share hands to a message outside Hevalo:
  *
  *   https://hevalo.app/join/<game>/<CODE>?from=<the host's user id>
  *
- * A code alone is something to read out across a room. Sent in a message it
- * is a sentence with nothing to tap and no picture, and a friend who has
- * never opened Hevalo has to find Games, then "Join with a code", then type
- * it. The link carries the same code to a page that says which game it is,
- * shows it, and joins with one tap (web: play/InvitePage.tsx), and whatever
- * unfurls it draws the game's own card (web: worker.ts). The code is still in
- * the message beside it, for the friend sitting across the room.
+ * A bare code is for reading out across a room; a link opens a page that names the game and joins with one tap (web:
+ * play/InvitePage.tsx), and chats unfurl it with the game's card (web: worker.ts). The game is in the path, so neither
+ * has to ask the server what a code belongs to and nobody can enumerate codes. The link grants nothing: a tap is the same
+ * `POST /play/join` as typing the code, with the same rule about who may join, and names the host so a friend who is not
+ * one yet can ask to be.
  *
- * The link says everything a page or a preview needs by itself: the game is
- * in its path, so neither has to ask the server what a code belongs to, and
- * nobody can walk through codes by asking. What it does not carry is any
- * right to join: a tap on it is the same `POST /play/join` as typing the
- * code, with the same rule about who may (a friends game takes the host's
- * friends), which is why the host is named in it: a friend who is not one
- * yet can ask to be.
- *
- * A file of its own, with nothing imported: the website's edge script reads
- * links with it, and must not carry the rest of the package for that.
+ * Nothing is imported: the website's edge script reads links with this file and must not carry the rest of the package.
  */
 
-/** The games a code can join, by the word each has in an address (the same one its lobby's address has). */
+/** The games a code can join, by their address word, the same as their lobby's. */
 export const JOIN_LINK_SEGMENTS = {
   'peyvok-battle': 'wordle-battle',
   'rhyme-match': 'rhyme-match',
@@ -36,7 +25,7 @@ export const JOIN_LINK_SEGMENTS = {
 export type JoinLinkSegment = keyof typeof JOIN_LINK_SEGMENTS;
 export type JoinLinkGame = (typeof JOIN_LINK_SEGMENTS)[JoinLinkSegment];
 
-/** A code as a link holds it: six characters of the join alphabet (no 0/O, no 1/I/L), with nothing between them. */
+/** A code as a link holds it: six characters of the join alphabet (no 0/O, no 1/I/L) with nothing between. */
 const CODE = /^[A-HJKMNP-Z2-9]{6}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -52,7 +41,7 @@ function segmentOf(game: JoinLinkGame): JoinLinkSegment {
   return (Object.keys(JOIN_LINK_SEGMENTS) as JoinLinkSegment[]).find((s) => JOIN_LINK_SEGMENTS[s] === game)!;
 }
 
-/** `/join/<game>/<CODE>`, with `?from=` when the sharer is known. A code that is not one gives null: nothing is shared rather than a link to nowhere. */
+/** `/join/<game>/<CODE>`, with `?from=` when the sharer is known; null for an invalid code, so nothing links to nowhere. */
 export function joinLinkPath(game: JoinLinkGame, code: string, from?: string | null): string | null {
   const clean = code.replace(/[\s-]/g, '').toUpperCase();
   if (!CODE.test(clean)) return null;
@@ -60,17 +49,15 @@ export function joinLinkPath(game: JoinLinkGame, code: string, from?: string | n
   return `/join/${segmentOf(game)}/${clean}${who}`;
 }
 
-/** The whole address. `origin` lets the browser use the deploy it is on. */
+/** The whole address; `origin` lets the browser use the deploy it is on. */
 export function buildJoinLink(game: JoinLinkGame, code: string, opts: { from?: string | null; origin?: string } = {}): string | null {
   const path = joinLinkPath(game, code, opts.from);
   return path === null ? null : `${opts.origin ?? 'https://hevalo.app'}${path}`;
 }
 
 /**
- * What a path says, or null for anything that is not one of these links.
- * Only this exact shape is read: a game's word from the table, a code that
- * could be a code, and a sharer only when it is a user id. Whatever else a
- * link carries is ignored, so nothing from an address reaches a page as text.
+ * What a path says, or null for anything else. Only this exact shape is read (a known game word, a plausible code, a
+ * sharer only when it is a user id), and everything else is ignored, so nothing from an address reaches a page as text.
  */
 export function parseJoinLink(pathname: string, search = ''): JoinLink | null {
   const m = /^\/join\/([a-z-]+)\/([A-Za-z0-9]+)\/?$/.exec(pathname);
