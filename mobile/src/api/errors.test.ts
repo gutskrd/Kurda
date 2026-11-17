@@ -6,13 +6,7 @@ import { interpolate } from '../i18n/format';
 
 const err = (e: Partial<ApiError> & Pick<ApiError, 'kind'>): ApiError => ({ message: 'raw technical detail', ...e });
 
-/**
- * A real translator over the real catalogue, not a stub.
- *
- * A stub that answers with the key would pass while every sentence was
- * missing — which is the failure this whole module exists to prevent. Reading
- * the catalogue means a key that is not there fails the test.
- */
+/** A real translator over the real catalogue, so a missing key fails the test rather than passing as a stub would. */
 const translator =
   (locale: 'en' | 'ku') =>
   (key: TranslationKey, vars?: Record<string, string | number>): string => {
@@ -31,11 +25,11 @@ describe('describeError', () => {
   });
 
   it('says plainly when the server does not have something yet, instead of "route not found"', () => {
-    // an API older than the app, e.g. a game invite before the play routes are deployed
+    // An API older than the app, e.g. a game invite before the play routes are deployed.
     const missing = err({ kind: 'client', status: 404, code: 'NOT_FOUND', message: 'route not found' });
     expect(describeError(missing, t)).toBe(TRANSLATIONS.en['error.notOnServer']);
     expect(describeError(missing, translator('ku'))).toBe(TRANSLATIONS.ku['error.notOnServer']);
-    // any other NOT_FOUND keeps the server's own words
+    // Any other NOT_FOUND keeps the server's own words.
     expect(describeError({ ...missing, message: 'no such image' }, t)).toBe('no such image');
   });
 
@@ -81,7 +75,7 @@ describe('describeError', () => {
 
 describe('describeErrorOr', () => {
   it('says the screen’s own sentence where the server’s words would have passed through', () => {
-    // a refusal with no code the phone can read: "request failed (409)" is no sentence for a reader
+    // A refusal with no code the phone can read: "request failed (409)" is no sentence for a reader.
     const uncoded = err({ kind: 'client', status: 409, message: 'request failed (409)' });
     expect(describeErrorOr(uncoded, t, 'error.code.oauthFailed')).toBe(TRANSLATIONS.en['error.code.oauthFailed']);
     expect(describeErrorOr(uncoded, translator('ku'), 'error.code.oauthFailed')).toBe(TRANSLATIONS.ku['error.code.oauthFailed']);
@@ -128,12 +122,7 @@ describe('isOffline / isRetryable', () => {
 });
 
 describe('CODE_COPY', () => {
-  /**
-   * Every 4xx the API raises carries an English message, and this module's
-   * last line handed it straight to the reader — so a wrong password said
-   * "invalid email or password" in all nine languages. These are the codes
-   * that now answer in the reader's own.
-   */
+  /** Codes that are answered in the reader's own language instead of the server's English message. */
   it('answers every mapped code in both languages, and never with the server\'s English', () => {
     for (const [code, key] of Object.entries(CODE_COPY)) {
       for (const locale of ['en', 'ku'] as const) {
@@ -149,16 +138,9 @@ describe('CODE_COPY', () => {
     expect(describeError(wrong, translator('ku'))).toBe(TRANSLATIONS.ku['error.code.invalidCredentials']);
   });
 
-  /**
-   * 105 codes are not in the table, and 17 of those carry several different
-   * messages apiece, so the code alone cannot say which. The server's own
-   * sentence is the honest thing to show for them.
-   */
   /*
-   * Every refusal the sign-up, sign-in and email-check routes can give
-   * (api/src/auth/routes.ts and service.ts), with the details the server
-   * sends: none of them may reach the reader as the server's English or as
-   * "Something went wrong".
+   * Every refusal the sign-up, sign-in and email-check routes can give (api/src/auth/routes.ts and service.ts),
+   * with their details: none may show as the server's English or "Something went wrong".
    */
   it('answers every sign-up, sign-in and verification refusal in the reader\'s words', () => {
     const refusals: ApiError[] = [
@@ -197,9 +179,8 @@ describe('CODE_COPY', () => {
   });
 
   /*
-   * The server will not say whether an address has an account, so neither
-   * does the phone: the sentence is the same whether it has one or not, and
-   * it names both ways on.
+   * The server does not say whether an address has an account, so neither does the phone: one sentence either
+   * way, naming both ways forward.
    */
   it('words an address that may already have an account without confirming it', () => {
     const said = describeError(err({ kind: 'client', status: 409, code: 'REGISTRATION_FAILED', message: 'unable to register with these details' }), t);
@@ -211,7 +192,7 @@ describe('CODE_COPY', () => {
     expect(describeError(err({ kind: 'client', code: 'WEAK_PASSWORD', details: { reason: 'needs-letter' } }), t)).toBe(
       TRANSLATIONS.en['field.passwordNeedsLetter'],
     );
-    // the username's in the words the phone's own check says them in (username/validate.ts)
+    // The username's in the words the phone's own check says them in (username/validate.ts).
     expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'numbers-only' } }), t)).toBe(
       TRANSLATIONS.en['username.rule.numbersOnly'],
     );
@@ -220,7 +201,7 @@ describe('CODE_COPY', () => {
     );
     expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'too-long' } }), t)).toBe('At most 30 characters.');
     expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'edge-punctuation' } }), t)).toBe(TRANSLATIONS.en['username.rule.edge']);
-    // the characters the server would not take are named
+    // The characters the server would not take are named.
     expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'invalid-chars', chars: ['#', ' '] } }), t)).toBe('“#” can’t be in a username.');
   });
 
@@ -237,10 +218,7 @@ describe('CODE_COPY', () => {
     expect(describeError(err({ kind: 'client', code: 'BAD_ROSTER', status: 409 }), t)).toBe('raw technical detail');
   });
 
-  /**
-   * A rate limiter's wait: a long one in minutes and a short one in seconds,
-   * because "try again in 792s" is accurate and unreadable.
-   */
+  /** A rate limiter's wait: long ones in minutes, short ones in seconds, since "try again in 792s" is unreadable. */
   it('counts a long wait in minutes and a short one in seconds', () => {
     const limited = (retryAfterSec: number) => err({ kind: 'rate_limited', code: 'RATE_LIMITED', retryAfterSec, status: 429 });
     expect(describeError(limited(792), t)).toBe(
@@ -256,9 +234,8 @@ describe('CODE_COPY', () => {
 });
 
 /*
- * A sign-in locked after failed attempts says how long, in words a person
- * uses — "about 15 minutes" — and never a count of seconds, whichever of the
- * body and the Retry-After header carried it.
+ * A sign-in locked after failed attempts says how long in words ("about 15 minutes"), never seconds, whether the
+ * body or Retry-After carried it.
  */
 describe('a locked sign-in', () => {
   const locked = (over: Partial<ApiError> = {}) => err({ kind: 'rate_limited', code: 'LOCKED', status: 429, ...over });
@@ -267,7 +244,7 @@ describe('a locked sign-in', () => {
     expect(describeError(locked({ details: { retryAfterSec: 900 } }), t)).toBe(
       'There have been several failed sign-in attempts. For your safety, wait about 15 minutes and try again, or reset your password.',
     );
-    // what is left of a lock rounds up to the next five minutes past ten
+    // What is left of a lock rounds up to the next five minutes past ten.
     expect(describeError(locked({ details: { retryAfterSec: 792 } }), t)).toBe(
       'There have been several failed sign-in attempts. For your safety, wait about 15 minutes and try again, or reset your password.',
     );
@@ -312,10 +289,7 @@ describe('signing in safely', () => {
     expect(describeError(breached, t)).toBe('This password has shown up in a data leak, so it isn’t safe. Choose a different one.');
   });
 
-  /*
-   * No challenge is configured yet, so there is nothing to solve: the answer
-   * is a pause and a way round it, whichever count asked for it.
-   */
+  /* No challenge is configured yet, so the answer is a pause and a way round it, whichever count asked for it. */
   it('asks calmly for a pause, or a reset, when sign-in wants the challenge', () => {
     for (const reason of ['attempts', 'network', 'surge']) {
       const said = describeError(err({ kind: 'client', status: 403, code: 'CAPTCHA_REQUIRED', details: { captchaRequired: true, reason } }), t);
@@ -329,10 +303,7 @@ describe('signing in safely', () => {
     expect(describeError(err({ kind: 'client', status: 404, code: 'SESSION_NOT_FOUND' }), t)).toBe('That device is already signed out.');
   });
 
-  /*
-   * A wrong address and a wrong password are one answer: anything else tells
-   * a stranger which addresses have accounts.
-   */
+  /* A wrong address and a wrong password get one answer; anything else reveals which addresses have accounts. */
   it('never says which of the email and the password was wrong', () => {
     const wrongEmail = describeError(err({ kind: 'client', status: 401, code: 'INVALID_CREDENTIALS', message: 'no such user' }), t);
     const wrongPassword = describeError(err({ kind: 'client', status: 401, code: 'INVALID_CREDENTIALS', message: 'wrong password' }), t);
@@ -348,7 +319,7 @@ describe('signing in safely', () => {
         expect(said, `${locale} ${code}`).not.toBe('raw technical detail');
       }
     }
-    // and none is English left standing in another language
+    // And none is English left standing in another language.
     for (const locale of Object.keys(TRANSLATIONS) as Array<keyof typeof TRANSLATIONS>) {
       if (locale === 'en') continue;
       for (const code of ['PASSWORD_BREACHED', 'CAPTCHA_REQUIRED', 'WRONG_PASSWORD', 'NO_PASSWORD', 'SESSION_NOT_FOUND']) {

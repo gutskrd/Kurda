@@ -1,9 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { apiBaseUrl, assetUrl, defaultApiBaseUrl } from './env.js';
 
-// __DEV__ is a bundler-injected global (RN/Metro) — not defined under vitest,
-// so set it explicitly per test via a typed cast (RN declares it as a bare var,
-// not a globalThis property).
+// __DEV__ is injected by the bundler and undefined under vitest, so each test sets it through a typed cast.
 const g = globalThis as typeof globalThis & { __DEV__?: boolean };
 afterEach(() => {
   delete g.__DEV__;

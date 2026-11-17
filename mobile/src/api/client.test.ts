@@ -38,9 +38,8 @@ describe('ApiClient', () => {
   });
 
   /**
-   * Signing in is a 401 on a request that carried no token. Treating that as
-   * an expired session threw away the server's code and told the reader their
-   * session had expired, when what had happened was a wrong password.
+   * Signing in is a 401 on a request without a token; it must keep the server's code (a wrong password) rather
+   * than read as an expired session.
    */
   it('surfaces a 401 from an unauthenticated request rather than calling it an expired session', async () => {
     const fetchFn = vi
@@ -55,8 +54,7 @@ describe('ApiClient', () => {
     if (res.ok) return;
     expect(res.error.code).toBe('INVALID_CREDENTIALS');
     expect(res.error.message).not.toBe('session expired');
-    // no refresh was attempted, and nobody was signed out of a session they
-    // were never in
+    // No refresh was attempted, and nobody was signed out of a session they were never in.
     expect(fetchFn).toHaveBeenCalledTimes(1);
     expect(onLogout).not.toHaveBeenCalled();
   });
@@ -76,7 +74,7 @@ describe('ApiClient', () => {
     const firstKey = fetchFn.mock.calls[0]![1].headers['idempotency-key'];
     const replayKey = fetchFn.mock.calls[2]![1].headers['idempotency-key'];
     expect(firstKey).toBe('key-1');
-    expect(replayKey).toBe(firstKey); // no double-apply on the server
+    expect(replayKey).toBe(firstKey); // No double-apply on the server.
     expect(fetchFn.mock.calls[2]![1].headers.authorization).toBe('Bearer acc-2');
     expect((await storage.get())?.accessToken).toBe('acc-2');
   });
@@ -108,7 +106,7 @@ describe('ApiClient', () => {
     const res = await client.get('/me');
     expect(res.ok).toBe(false);
     expect(onLogout).toHaveBeenCalledTimes(1);
-    expect(fetchFn).toHaveBeenCalledTimes(3); // no fourth attempt
+    expect(fetchFn).toHaveBeenCalledTimes(3); // No fourth attempt.
   });
 
   it('shares one refresh across concurrent 401s (single-flight)', async () => {
@@ -140,8 +138,7 @@ describe('ApiClient', () => {
   });
 
   it('stamps a real idempotency key on POST even with no global crypto (Hermes)', async () => {
-    // React Native/Hermes has no global crypto — the default id generator must
-    // NOT throw (that silently killed every POST, e.g. sign-in).
+    // React Native/Hermes has no global crypto, and the default id generator must not throw (that broke every POST).
     const saved = (globalThis as { crypto?: unknown }).crypto;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (globalThis as any).crypto;
@@ -164,8 +161,7 @@ describe('ApiClient', () => {
   });
 
   it('times out a hanging request as a network error (unreachable API)', async () => {
-    // a fetch that never resolves on its own, but rejects when aborted —
-    // models an unreachable host. Without the client timeout this would hang.
+    // A fetch that never resolves but rejects when aborted, like an unreachable host; without the client timeout it would hang.
     const fetchFn = vi.fn(
       (_url: string, init: RequestInit) =>
         new Promise<Response>((_, reject) => {
@@ -257,9 +253,8 @@ describe('ApiClient', () => {
   });
 
   /**
-   * A ban revokes the session, so the phone hears of it at its next refresh —
-   * which must hand the reasons and the appeal token to the suspension screen
-   * before signing out, not read as a session that simply ran out.
+   * A ban revokes the session, so the phone learns of it at the next refresh, which must pass the reasons and
+   * appeal token to the suspension screen before signing out.
    */
   it('passes a suspension on refresh to onSuspended, then signs out', async () => {
     const details = { until: null, policy: 'harassment', statement: 'Repeated bullying.', appealable: true, appealToken: 'appeal-1' };
@@ -299,9 +294,8 @@ describe('ApiClient', () => {
   });
 
   /*
-   * A guest refused something only an account may do (403 GUEST_ACCOUNT) is
-   * told to the account gate, which makes the offer of one; the call still
-   * comes back as the refusal, and no other 403 is mistaken for it.
+   * A guest refused something only an account may do (403 GUEST_ACCOUNT) is reported to the account gate; the
+   * call still returns the refusal, and no other 403 is mistaken for it.
    */
   it('passes a guest’s refusal to onGuestRefused, and keeps the refusal, and no other 403', async () => {
     const fetchFn = vi
@@ -317,7 +311,7 @@ describe('ApiClient', () => {
     expect(onGuestRefused).toHaveBeenCalledTimes(1);
     await client.delete('/library/posts/p1');
     expect(onGuestRefused).toHaveBeenCalledTimes(1);
-    // the session is untouched: a guest refused is still signed in
+    // The session is untouched: a guest refused is still signed in.
     expect(await storage.get()).toEqual({ accessToken: 'acc-1', refreshToken: 'ref-1' });
   });
 
@@ -327,7 +321,7 @@ describe('ApiClient', () => {
     await ready;
 
     await client.endSession();
-    // sign-out clears the phone's copy straight after; the request already has the token
+    // sign-out clears the phone's copy straight after; the request already has the token.
     await storage.clear();
 
     expect(fetchFn).toHaveBeenCalledTimes(1);
@@ -354,9 +348,8 @@ describe('ApiClient', () => {
 });
 
 /*
- * The server keeps a separate budget of failed sign-ins for a device that has
- * signed in before, and emails the owner about one it has not seen: both read
- * x-device-id, so every request carries it, the refresh and the sign-out too.
+ * The server budgets failed sign-ins per known device and emails the owner about an unknown one, both from
+ * x-device-id, so every request carries it, refresh and sign-out included.
  */
 describe('the device id', () => {
   function withDevice(fetchFn: ReturnType<typeof vi.fn>, deviceId: () => Promise<string | null>) {
@@ -404,9 +397,8 @@ describe('the device id', () => {
 });
 
 /**
- * Hevalo taken offline from the admin console: every call but a few is
- * answered 503 MAINTENANCE with what people are to see. The notice goes up
- * over the app; the session is not the problem and is left exactly as it was.
+ * Maintenance: every call but a few is answered 503 MAINTENANCE with a notice. The notice goes up over the app
+ * and the session is left exactly as it was.
  */
 describe('Hevalo offline for a while', () => {
   const notice = { title: 'Back soon', message: 'New lessons on the way.', pictureUrl: null, since: '2026-10-27T09:00:00.000Z', backBy: '2026-10-27T11:00:00.000Z' };
@@ -429,7 +421,7 @@ describe('Hevalo offline for a while', () => {
     expect(res.ok).toBe(false);
     if (res.ok) return;
     expect(res.error).toMatchObject({ kind: 'server', code: 'MAINTENANCE', status: 503 });
-    // not an expired session: no refresh, nobody signed out, the tokens where they were
+    // Not an expired session: no refresh, nobody signed out, tokens untouched.
     expect(fetchFn).toHaveBeenCalledTimes(1);
     expect(onLogout).not.toHaveBeenCalled();
     expect(await storage.get()).toEqual({ accessToken: 'acc-1', refreshToken: 'ref-1' });
@@ -460,7 +452,7 @@ describe('Hevalo offline for a while', () => {
 });
 
 describe('replacing the access token', () => {
-  /* what a password change hands back: this session carries on, its refresh token unchanged */
+  /* What a password change hands back: this session carries on, its refresh token unchanged. */
   it('keeps the refresh token', async () => {
     const fetchFn = vi.fn().mockImplementation(async () => jsonResponse(200, {}));
     const { client, storage, ready } = makeClient(fetchFn);

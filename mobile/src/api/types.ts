@@ -11,10 +11,8 @@ export interface ApiError {
   requestId?: string;
   status?: number;
   /**
-   * The envelope's `details`, as the server sent them. Most refusals have
-   * none; the ones that say *until when* do — 403 MUTED (shared
-   * `MutedErrorDetails`) and 403 ACCOUNT_SUSPENDED (`SuspendedErrorDetails`) —
-   * and a calm answer needs them (see `moderation/sendErrors.ts`).
+   * The envelope's `details`. Refusals that say until when carry them, 403 MUTED (shared `MutedErrorDetails`) and
+   * 403 ACCOUNT_SUSPENDED (`SuspendedErrorDetails`), and a calm answer needs them (see `reports/sendErrors.ts`).
    */
   details?: unknown;
 }
@@ -24,11 +22,7 @@ export interface TokenPair {
   refreshToken: string;
 }
 
-/**
- * Token persistence seam. The secure implementation (expo-secure-store /
- * Keychain / Keystore) lands with the auth screens (KUR-021, #21);
- * MemoryTokenStorage backs tests and development.
- */
+/** Token storage. The app uses expo-secure-store (Keychain / Keystore); MemoryTokenStorage backs tests and development. */
 export interface TokenStorage {
   get(): Promise<TokenPair | null>;
   set(tokens: TokenPair): Promise<void>;
