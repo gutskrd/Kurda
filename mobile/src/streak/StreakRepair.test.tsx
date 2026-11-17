@@ -6,7 +6,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-// the fire as its props: which stage burns, whoever draws it
+// The fire as its props: which stage burns, whoever draws it.
 vi.mock('../theme/Fire', () => import('../theme/testing/fireProbe'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -19,14 +19,12 @@ import type { Streak } from './format';
 import { StreakSheet } from './StreakSheet';
 
 /*
- * A streak that ended, in the streak's sheet: one calm sentence saying which
- * streak and through which day it can be brought back, one button with what
- * that costs, and — once it is pressed — the streak back, with the app's own
- * celebration. The server decides everything; the sheet sends a request with
- * nothing in it and reads the answer.
+ * An ended streak in the streak sheet: one sentence naming the streak and the last day it can be restored, one
+ * button with the cost, and after a restore the streak back with the app's celebration. The server decides; the
+ * request has no body.
  */
 
-// full motion here, so the celebration is seen to play; one test asks for none
+// Full motion here, so the celebration is seen to play; one test asks for none.
 patchReactNativeWeb();
 afterEach(() => {
   cleanup();
@@ -79,10 +77,10 @@ describe('a streak that can be restored', () => {
     const restore = screen.getByRole('button', { name: 'Restore for 50 gems' });
     await waitFor(() => expect(client.calls.map((c) => `${c.method} ${c.path}`)).toEqual(['GET /me/wallet']));
     expect(restore.getAttribute('aria-disabled')).not.toBe('true');
-    // enough gems: nothing about the balance, and nothing is said that hurries
+    // Enough gems: nothing about the balance, and nothing is said that hurries.
     expect(screen.queryByText(/^Your gems:/)).toBeNull();
     expect(screen.queryByText(/hurry|lose|last chance|hours? left|minutes? left/i)).toBeNull();
-    // the streak's own story is still all there under it
+    // The streak's own story is still all there under it.
     expect(screen.getByText('A lesson today starts a streak')).toBeTruthy();
     expect(screen.getByLabelText('12 Longest streak')).toBeTruthy();
     expect(screen.getByTestId('fire-ladder')).toBeTruthy();
@@ -93,7 +91,7 @@ describe('a streak that can be restored', () => {
     open(ended(null));
     expect(screen.queryByTestId('streak-repair')).toBeNull();
     cleanup();
-    // an older server says nothing at all about restoring
+    // An older server says nothing at all about restoring.
     open({ current: 0, longest: 12, freezes: 0, lastActiveOn: '2026-11-07' });
     expect(screen.queryByTestId('streak-repair')).toBeNull();
   });
@@ -107,11 +105,11 @@ describe('a streak that can be restored', () => {
       fireEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
       expect(await screen.findByRole('heading', { name: 'Your 12-day streak is back' })).toBeTruthy();
       expect(screen.getByText('The days you missed are kept. It goes on with your next lesson.')).toBeTruthy();
-      // the offer is gone, the fire is the restored streak's, and the numbers and the ladder are its own
+      // The offer is gone, the fire is the restored streak's, and the numbers and the ladder are its own.
       expect(screen.queryByTestId('streak-repair')).toBeNull();
       expect(screen.getAllByTestId('fire')[0]!.dataset.stage).toBe('campfire');
       expect(screen.getByTestId('rung-now').getAttribute('aria-label')).toBe('Campfire, from day 7, your fire now');
-      // the celebration the app already has: its burst, and the success buzz, once
+      // The celebration the app already has: its burst, and the success buzz, once.
       expect(screen.getByTestId('streak-restored-burst')).toBeTruthy();
       await waitFor(() => expect(felt).toEqual(['celebrate']));
     });
@@ -129,7 +127,7 @@ describe('a streak that can be restored', () => {
         fireEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
         expect(await screen.findByRole('heading', { name: 'Your 12-day streak is back' })).toBeTruthy();
         await waitFor(() => expect(screen.queryByTestId('streak-restored-burst')).toBeNull());
-        // still felt: Reduce Motion is about what moves, not about the buzz
+        // Still felt: Reduce Motion is about what moves, not about the buzz.
         await waitFor(() => expect(felt).toEqual(['celebrate']));
       });
     } finally {
@@ -147,7 +145,7 @@ describe('a streak that can be restored', () => {
     expect(restore.getAttribute('aria-disabled')).toBe('true');
     fireEvent.click(restore);
     expect(client.calls.some((c) => c.method === 'POST')).toBe(false);
-    // and nothing about buying any
+    // And nothing about buying any.
     expect(screen.queryByText(/buy|purchase/i)).toBeNull();
   });
 
@@ -167,7 +165,7 @@ describe('a streak that can be restored', () => {
     const client = fakeClient({
       'GET /me/wallet': () => wallet(gems),
       'POST /me/streak/repair': () => {
-        gems = 10; // spent somewhere else since the sheet opened
+        gems = 10; // Spent somewhere else since the sheet opened.
         return fail({ code: 'INSUFFICIENT_FUNDS', status: 402, message: 'not enough Gems' });
       },
     });
@@ -179,7 +177,7 @@ describe('a streak that can be restored', () => {
       expect(screen.getByRole('button', { name: 'Restore for 50 gems' }).getAttribute('aria-disabled')).toBe('true');
       expect(felt).toEqual(['error']);
     });
-    // the offer stays: it is still theirs to take once the gems are there
+    // The offer stays: it is still theirs to take once the gems are there.
     expect(screen.getByTestId('streak-repair')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: /is back$/ })).toBeNull();
   });
@@ -192,7 +190,7 @@ describe('a streak that can be restored', () => {
     open(ended(paid));
     fireEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
     expect(await screen.findByText('This streak can no longer be brought back.')).toBeTruthy();
-    // in the catalogue's words, not the server's, and with nothing left to press that could only fail again
+    // In the catalogue's words, not the server's, with nothing left to press that could only fail again.
     expect(screen.queryByText(/have passed/)).toBeNull();
     expect(screen.queryByRole('button', { name: /^Restore/ })).toBeNull();
     expect(screen.queryByText(/^Your 12-day streak ended/)).toBeNull();

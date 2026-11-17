@@ -22,21 +22,14 @@ import { freezeSlots } from './kept';
 import { gemsShort, repairLastDay, repairRefusal, type RepairResult } from './repair';
 
 /**
- * The streak's whole story, in a sheet: how long it is, and beside it the
- * three numbers a missed day never takes away — the longest run, the days
- * learned in all, and the freezes learning has earned, with what one costs —
- * and under them the ladder of the fire's stages, what lies ahead.
+ * The streak in a sheet: its length, beside it the numbers a missed day never resets (longest run, days learned,
+ * freezes earned with their cost), and under them the ladder of fire stages. The streak never stands alone, since
+ * it is the number most likely to discourage after a lapse. Opened from Learn's fire and the profile; `streak`
+ * null keeps it closed.
  *
- * The streak is the number most likely to make somebody stop just after a
- * lapse, so it never stands here alone. Opened from the fire in Learn's
- * corner and from the streak on your profile; `streak` null keeps it closed.
- *
- * While a streak that ended can still be restored (`streak.repair`), the sheet
- * says so under the streak's words: which streak, the last day it can be
- * brought back on, and one button with what that costs. It is said once, in
- * plain words, here and nowhere else: no countdown, nothing about what will be
- * lost, and nothing that follows the learner out of the sheet. `onRestored`
- * hands the restored streak to whoever opened the sheet.
+ * While an ended streak can be restored (`streak.repair`), the sheet says so once, plainly: which streak, the
+ * last day, and one button with the cost. No countdown and nothing about loss. `onRestored` passes the restored
+ * streak to the opener.
  */
 export function StreakSheet({ streak, onClose, onRestored }: { streak: Streak | null; onClose: () => void; onRestored?: (streak: Streak) => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -47,10 +40,7 @@ export function StreakSheet({ streak, onClose, onRestored }: { streak: Streak | 
   );
 }
 
-/**
- * What the open sheet shows. Mounted only while it is open, so what it
- * remembers — that the streak was just restored — is forgotten when it closes.
- */
+/** The open sheet's content, mounted only while open, so the just-restored state is forgotten on close. */
 function StreakBody({ streak, onRestored }: { streak: Streak; onRestored?: (streak: Streak) => void }): React.JSX.Element {
   const [restored, setRestored] = useState<Streak | null>(null);
   const shown = restored ?? streak;
@@ -93,19 +83,11 @@ function StreakHead({ streak }: { streak: Streak }): React.JSX.Element {
 }
 
 /**
- * The offer to bring back the streak that ended: one sentence saying which
- * streak and through which day, and one button with the price in gems — or
- * that it is free, for a Hevalo+ member's restore of the month.
- *
- * When the gems are known to be short the button is there but cannot be
- * pressed, and above it are the balance and the one line the shop says about
- * where gems come from. Nothing is sold here, and nothing is said about time
- * running out beyond the day itself.
- *
- * The server decides: the request carries nothing, and a refusal is read for
- * what it means (`repairRefusal`) — the balance read again if the gems were
- * short after all, and, if the streak can no longer be restored, a plain
- * sentence in place of the offer, with no button left to press.
+ * The offer to restore an ended streak: one sentence naming the streak and the last day, and one button with the
+ * gem price, or free for a Hevalo+ member's monthly restore. When gems are known to be short the button is
+ * disabled, with the balance and the shop's one line on earning gems above it. The server decides: a refusal is
+ * read by `repairRefusal`, reloading the balance if gems were short after all, or replacing the offer with a
+ * sentence if the streak can no longer be restored.
  */
 function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestored: (streak: Streak) => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -122,7 +104,7 @@ function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestor
     if (res.ok) setGems(res.data.balances.gems);
   }, [client]);
 
-  // a free restore needs no balance; a priced one says it only when the gems are short
+  // A free restore needs no balance; a priced one says it only when the gems are short.
   useEffect(() => {
     if (!offer.free) void readGems();
   }, [offer.free, readGems]);
@@ -136,7 +118,7 @@ function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestor
       onRestored(res.data.streak);
       return;
     }
-    // asked for and refused: felt as the error it is, and said in words
+    // Asked for and refused: felt as the error it is, and said in words.
     haptic('error');
     const why = repairRefusal(res.error.code);
     if (why === 'short') await readGems();
@@ -193,10 +175,8 @@ const BACK_FIRE = 72;
 const BACK_STAGE = 132;
 
 /**
- * The streak, back: its fire arriving the way anything earned arrives here
- * (`useCelebration` — the art springs in, a ring widens once, a few flecks,
- * the success buzz and the reward chime), then the words. Under Reduce Motion
- * the fire fades in and nothing travels. The headline is read out as it lands.
+ * The restored streak: its fire arrives with `useCelebration` (spring, ring, flecks, success haptic and chime),
+ * then the text. Under Reduce Motion the fire fades in. The headline is announced as it lands.
  */
 function Restored({ streak }: { streak: Streak }): React.JSX.Element {
   const { colors } = useTheme();
@@ -207,7 +187,7 @@ function Restored({ streak }: { streak: Streak }): React.JSX.Element {
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.(title);
-    // said once, as it arrives
+    // Said once, as it arrives.
   }, []);
 
   const scale = moment.plan.travel ? moment.art.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) : 1;
@@ -237,7 +217,7 @@ function StreakNumbers({ streak }: { streak: Streak }): React.JSX.Element {
   const { t, locale } = useI18n();
   const dir = useDirection();
   const stats = learningStats(streak);
-  // a Hevalo+ member has room for a second freeze, and the hint says how many rather than "one"
+  // A Hevalo+ member has room for a second freeze, and the hint says how many rather than "one".
   const room = freezeSlots(streak).max;
   const cells = [
     { label: t('profile.stat.longestStreak'), value: stats.longest },
@@ -272,24 +252,17 @@ const PLACE_WORDS: Record<FireLadderPlace, TranslationKey> = {
   ahead: 'fire.ladder.ahead',
 };
 
-/** Each stage's fire on the ladder, framed to fill a square this big (a spark as plain as the Newroz fire, each telling by what it has, and every row as tall), and the round it stands in. */
+/** The square each ladder fire is framed to fill (so every stage reads and every row is as tall), and the disc it stands on. */
 const RUNG_FIRE = 44;
 const RUNG_ART = 52;
-/** How much of the violet the row you are on is, as the last two digits of its colour: the tab bar's own wash. */
+/** Hex alpha suffix for the current row's violet wash, as the tab bar uses. */
 const NOW_WASH = '1F';
 
 /**
- * The fire's stages from the spark to the Newroz fire (shared `fireLadder`),
- * each a small fire with its name and the day it comes: the ones reached
- * burning with a check, the one burning now ringed and marked "Now", the
- * ones ahead standing still and dimmed — something to look forward to,
- * never greyed out. Each is one element to a screen reader, said in full.
- *
- * "Now" is where you stand on the ladder, so it is drawn as the place you
- * are in is everywhere in the app: a wash of the violet over the row, the
- * fire ringed in the violet and the word on a violet tag. It was all in the
- * sun's gold, which is for what has been earned; the fires themselves still
- * burn in theirs.
+ * The fire stages from spark to Newroz fire (shared `fireLadder`), each a small fire with its name and day:
+ * reached ones burning with a check, the current one ringed and tagged "Now", later ones still and dimmed but
+ * never greyed. Each is one element for screen readers. "Now" uses the app's violet for the current place; the
+ * fires keep their gold.
  */
 function FireLadder({ days }: { days: number }): React.JSX.Element {
   const { colors } = useTheme();
@@ -358,7 +331,7 @@ const styles = StyleSheet.create({
   ladderTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, marginBottom: spacing.xs },
   rung: { alignItems: 'center', gap: spacing.sm + 4, minHeight: RUNG_ART + 4, padding: 2, borderRadius: radii.lg },
   rungArt: { width: RUNG_ART, height: RUNG_ART, borderRadius: radii.pill, borderWidth: 2, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
-  // still to come: quieter, never grey
+  // Still to come: quieter, never grey.
   ahead: { opacity: 0.5 },
   rungWords: { flex: 1, gap: 1 },
   rungName: { alignItems: 'center', gap: spacing.xs + 2 },

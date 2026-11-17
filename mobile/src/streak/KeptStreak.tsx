@@ -21,22 +21,15 @@ import type { Streak } from './format';
 import { freezeSlots, keptKey, keptTitle, nextFreeze, streakKept } from './kept';
 import { pressedDim } from '../theme/motion';
 
-/**
- * It waits until the path has settled — the page scrolled to the lesson, and
- * anything a lesson just changed on it shown — so the two never play at once.
- */
+/** Wait until the path has settled (scrolled to the lesson, recent changes shown), so the two never animate at once. */
 export const KEPT_AFTER_MS = PATH_RETURN.bubbleAtMs + PATH_RETURN.bubbleMs;
 
 /**
- * Whether a freeze has kept the streak since this phone last said so, and the
- * sheet that says it: shown once, after `ready` (the screen has the lesson its
- * button opens), with the system's success buzz and the headline read out.
+ * Whether a freeze has kept the streak since this device last said so, and the sheet that says it: shown once
+ * after `ready` (the screen has the lesson its button opens), with the success haptic and the headline announced.
  *
- * `pending` is true until it is known whether the sheet will show (the streak
- * and what this phone said last both read), while it is going to, and once it
- * has: it is this visit's moment, and Learn's other offers wait for another
- * visit (one moment at a time). A badge earned meanwhile waits too, until the
- * sheet is closed.
+ * `pending` is true until it is known whether the sheet will show, while it is about to, and once it has. Learn's
+ * other offers wait for another visit, and a badge earned meanwhile waits until the sheet closes.
  */
 export function useKeptStreak(
   streak: Streak | null,
@@ -46,7 +39,7 @@ export function useKeptStreak(
   const { user } = useAuth();
   const { t, locale } = useI18n();
   const userId = user?.id ?? null;
-  // the last kept day said on this phone; undefined until it has been read
+  // The last kept day said on this phone; undefined until it has been read.
   const [said, setSaid] = useState<{ userId: string; day: string | null } | undefined>(undefined);
   const [shown, setShown] = useState<Streak | null>(null);
   const [had, setHad] = useState(false);
@@ -68,7 +61,7 @@ export function useKeptStreak(
     if (!due || !ready || !streak?.freezeUsedOn || !userId) return;
     const day = streak.freezeUsedOn;
     const id = setTimeout(() => {
-      // said once: remembered as it is shown, not when it is closed
+      // Said once: remembered as it is shown, not when it is closed.
       void store.set(keptKey(userId), day);
       setSaid({ userId, day });
       setHad(true);
@@ -88,15 +81,10 @@ export function useKeptStreak(
 }
 
 /**
- * "Your 6-day streak was kept by a freeze": what happened, the freezes held of
- * the places there are for them (filled, or an empty dashed place), how the
- * next one is earned, and one thing to do — a lesson, the way Continue opens
- * it — with "Not now" beside it. Nothing to buy: freezes are earned by
- * learning.
- *
- * The art is the streak's fire, still burning, on a round of ice the colour
- * of the river unit with a freeze's snowflake on it (the river holds 4.5:1
- * for its glyphs in both schemes, coursemap/path.ts).
+ * "Your 6-day streak was kept by a freeze": what happened, the freezes held out of the slots available, how the
+ * next one is earned, and one action (a lesson, as Continue opens it) with "Not now" beside it. Nothing to buy:
+ * freezes are earned by learning. The art is the streak's fire on a disc of ice in the river unit's colour with a
+ * snowflake (the river keeps 4.5:1 for its glyphs in both schemes, coursemap/path.ts).
  */
 export function KeptStreakSheet({ streak, onStart, onClose }: { streak: Streak | null; onStart: () => void; onClose: () => void }): React.JSX.Element {
   return (
@@ -179,7 +167,7 @@ const styles = StyleSheet.create({
   line: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
   slots: { flexDirection: 'row', gap: spacing.sm, marginVertical: spacing.xs },
   slot: { width: SLOT, height: SLOT, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  // an empty place: the outline of a freeze not held
+  // An empty place: the outline of a freeze not held.
   slotEmpty: { borderWidth: 2, borderStyle: 'dashed' },
   stretch: { alignSelf: 'stretch', marginTop: spacing.xs },
   notNow: { minHeight: MIN_TOUCH_TARGET, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
