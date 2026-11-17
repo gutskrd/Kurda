@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { onBackFromBackground } from '../net/backFromBackground';
 
 /**
  * How many gifts are waiting to be opened.
@@ -13,10 +14,16 @@ import { useAuth } from '../auth/AuthContext';
  * It used to ask `/me/gifts/unseen` every minute, from every signed-in phone,
  * whether anything had arrived. Now a gift says so itself: it arrives on your
  * own channel (`gift_received`, which GiftArrivals passes on with
- * `refreshGiftBadge`), and the count is read from `/me/social` — the one
- * request the social panel already makes — when the badge is first drawn,
- * when the app comes back to the front, and when a gift arrives or is opened.
- * No timer.
+ * `refreshGiftBadge`), and the count is read when the badge is first drawn,
+ * when the app comes back from the background (net/backFromBackground.ts),
+ * and when a gift arrives or is opened. No timer.
+ *
+ * It is read from `/me/gifts/unseen`, which counts the gifts and nothing
+ * else. It was read from `/me/social` for a while, the social panel's
+ * summary, which reads the whole friend list with who is playing what, the
+ * requests, the groups and the notifications to answer it — among the most
+ * expensive requests the app makes, made at every start and every return to
+ * the app for one number on a badge.
  */
 
 /**
@@ -40,13 +47,13 @@ export const refreshGiftBadge = giftsWereOpened;
 export function useUnseenGifts(): number {
   const { client, user, isGuest } = useAuth();
   const [count, setCount] = useState(0);
-  // a guest gets no gifts, and the social summary is refused to one: zero without asking
+  // a guest gets no gifts, and the count is refused to one: zero without asking
   const signedIn = Boolean(user) && !isGuest;
 
   const refresh = useCallback(() => {
     if (!signedIn) return;
-    void client.get<{ unread?: { gifts?: number } }>('/me/social').then((res) => {
-      if (res.ok) setCount(res.data.unread?.gifts ?? 0);
+    void client.get<{ unseen?: number }>('/me/gifts/unseen').then((res) => {
+      if (res.ok) setCount(res.data.unseen ?? 0);
     });
   }, [client, signedIn]);
 
@@ -57,12 +64,10 @@ export function useUnseenGifts(): number {
     }
     refresh();
     watchers.add(refresh);
-    const foreground = AppState.addEventListener('change', (state) => {
-      if (state === 'active') refresh();
-    });
+    const stopListening = onBackFromBackground(AppState, refresh);
     return () => {
       watchers.delete(refresh);
-      foreground.remove();
+      stopListening();
     };
   }, [signedIn, refresh]);
 
