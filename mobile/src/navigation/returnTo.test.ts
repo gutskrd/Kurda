@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 // the router itself, as the app's native stacks run it (pure: no React Native in it)
 import { CommonActions, StackActions, StackRouter, type NavigationAction, type ParamListBase, type StackNavigationState } from '@react-navigation/routers';
-import { chatRouteId } from './rootStack';
+import { chatRouteId, userProfileRouteId } from './rootStack';
 import { authRouter, rootRouter, returningTo, ROOT_PLACES } from './returnTo';
 
 type State = StackNavigationState<ParamListBase>;
@@ -13,7 +13,10 @@ function stack(routeNames: string[], router: (original: never) => object = rootR
   const options = {
     routeNames,
     routeParamList: {},
-    routeGetIdList: { Chat: chatRouteId as (o: { params?: object }) => string },
+    routeGetIdList: {
+      Chat: chatRouteId as (o: { params?: object }) => string,
+      UserProfile: userProfileRouteId as (o: { params?: object }) => string,
+    },
   };
   let state = r.getInitialState(options) as State;
   const go = (action: NavigationAction): State => {
@@ -99,6 +102,16 @@ describe('opening a screen that is not open yet', () => {
     go(CommonActions.navigate('Search'));
     go(CommonActions.navigate('UserProfile', { userId: 'u2' }));
     expect(names()).toEqual(['Tabs', 'UserProfile', 'Search', 'UserProfile']);
+  });
+
+  it('pushes a friend’s profile opened from a profile, so Back returns to the first', () => {
+    const { go, names, top } = stack(ROOT);
+    go(CommonActions.navigate('UserProfile', { userId: 'u1' }));
+    const first = top();
+    go(CommonActions.navigate('UserProfile', { userId: 'u2' }));
+    expect(names()).toEqual(['Tabs', 'UserProfile', 'UserProfile']);
+    expect(top()?.params).toEqual({ userId: 'u2' });
+    expect(top()?.key).not.toBe(first?.key);
   });
 
   it('leaves the conversations to their own ids', () => {

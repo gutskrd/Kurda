@@ -34,6 +34,7 @@ import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
 import {
   chatRouteId,
   groupThreadRouteId,
+  userProfileRouteId,
   type RootNavigation,
   type RootStackParamList,
   type TabParamList,
@@ -492,7 +493,8 @@ function SignedInRoot() {
       <RootStack.Screen name="Tree" options={card}>
         {({ navigation }) => <TreeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="UserProfile" options={card}>
+      {/* one page per person, as per conversation (rootStack.userProfileRouteId) */}
+      <RootStack.Screen name="UserProfile" options={card} getId={userProfileRouteId}>
         {({ route, navigation }) => (
           <PublicProfileScreen userId={route.params.userId} onExit={() => navigation.goBack()} />
         )}
