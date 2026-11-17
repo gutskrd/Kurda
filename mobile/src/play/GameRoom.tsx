@@ -22,47 +22,42 @@ import type { GameViewHandle } from './useGameView';
 import { Verdict } from './Verdict';
 import { Loading } from '../theme/Loading';
 
-/** "You", Hevalo, a friend's name, or "Player 3": how a seat of a multiplayer learning game is named. */
+/** How a seat of a multiplayer learning game is named: "You", Hevalo, a friend's name, or "Player 3". */
 export function multiSeatName(p: Pick<MultiSeat, 'seat' | 'name' | 'isMe' | 'bot'>, t: Translate): string {
   if (p.isMe) return t('games.you');
   if (p.bot) return t('play.room.hevalo');
   return p.name ?? t('stories.player', { seat: p.seat });
 }
 
-export interface GameRoomProps<Board> {
+interface GameRoomProps<Board> {
   game: MultiGame;
   id: string;
   room: GameViewHandle<Board>;
-  /** a new game of this kind (the start of this screen) */
+  /** Starts a new game of this kind (the start of this screen). */
   onNew: () => void;
-  /** the next game of a rematch or round */
+  /** Opens the next game of a rematch or round. */
   onOpen: (id: string) => void;
   newLabel: string;
-  /** what the lobby says about the game's settings */
+  /** The lobby's note on the game's settings. */
   lobbyNote?: (view: MultiView<Board>) => ReactNode;
-  /** the game itself, while it is under way */
+  /** The game itself, while under way. */
   playing: (view: MultiView<Board>) => ReactNode;
-  /** the game's own word on how it ended */
+  /** The game's own word on how it ended. */
   ending?: (view: MultiView<Board>) => ReactNode;
   scoreOf: (result: MultiResult, view: MultiView<Board>) => string;
-  /** why the lobby cannot start as it stands (a team too small), in the reader's words; null when it can */
+  /** Why the lobby cannot start as it stands (a team too small), in the reader's words; null when it can. */
   startProblem?: (view: MultiView<Board>) => string | null;
-  /** what a team game says about its teams, inside the team picker */
+  /** A team game's note about its teams, inside the team picker. */
   teamNote?: (view: MultiView<Board>) => ReactNode;
 }
 
 /**
- * The room around any multiplayer learning game, on the phone — the same
- * room as the website's (web/src/play/MultiRoom.tsx), made of the phone's own
- * play parts: the code on its ticket with Invite friends, who is in it by seat
- * with a report beside each other player, Rated or Friendly, Join, Start, and
- * after the game its places, what it did to your rank, and Play again. The
- * game draws only its own staging.
+ * The room around any multiplayer learning game, matching web/src/play/MultiRoom.tsx: the code ticket with Invite
+ * friends, players by seat with report buttons, Rated or Friendly, Join, Start, and afterwards the places, the
+ * rank change and Play again. The game draws only its own staging.
  *
- * The places show XP beside whoever earned some, and nothing beside whoever
- * did not: never a zero. A game played against Hevalo alone earns none (XP is
- * for lessons, stories and games played online with other people), and its
- * results say so in one quiet line.
+ * Places show XP only beside players who earned some, never a zero. A game against Hevalo alone earns none, and
+ * its results say so.
  */
 export function GameRoom<Board>({
   game,
@@ -88,7 +83,7 @@ export function GameRoom<Board>({
   const view = load.state === 'ready' ? load.view : null;
   useQuietInvites(view?.status === 'active');
 
-  // a game played here to its end is a finished game for the rating box; one opened already finished is not
+  // A game played to its end here counts as finished for the rating box; one opened already finished does not.
   const played = useRef(false);
   useEffect(() => {
     if (view?.status === 'active' && view.me) played.current = true;
@@ -114,7 +109,7 @@ export function GameRoom<Board>({
   }
 
   if (load.state === 'gone' || view?.status === 'cancelled') {
-    // not found, not allowed, removed: one answer, as the server gives one
+    // Not found, not allowed and removed share one message, as the server gives one answer.
     const key = load.state === 'gone' && load.why === 'started' ? 'stories.join.started' : view?.status === 'cancelled' ? 'stories.game.cancelled' : 'play.card.unavailable';
     return (
       <GlassCard>
@@ -230,7 +225,7 @@ export function GameRoom<Board>({
     );
   }
 
-  // finished
+  // Finished.
   const mine = view.results?.find((r) => r.seat === view.me?.seat);
   const other = view.players.find((p) => !p.isMe && !p.bot);
   return (
@@ -276,7 +271,7 @@ export function GameRoom<Board>({
 }
 
 const styles = StyleSheet.create({
-  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
+  // Content is laid out on an inner View: a GlassCard's own style dresses only its outside.
   card: { alignItems: 'center', gap: spacing.sm },
   verdict: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },

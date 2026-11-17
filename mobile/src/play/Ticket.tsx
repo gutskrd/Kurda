@@ -17,55 +17,40 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { codeTone, filledTone } from './joinCode';
 
 /**
- * The ticket every invitation is drawn as: a game's join code in its lobby,
- * an invite to play sent or received, a game posted in a chat, the friends a
- * host has asked, and a friend request. One shell, so they cannot drift into
- * five kinds of ticket.
+ * The ticket every invitation is drawn as (join codes, invites, chat game cards, the host's invited list, friend
+ * requests), so they cannot drift apart. Paper with a coloured stub on the line-start side, torn along a
+ * perforation with a notch on each edge. The stub takes the colour of what it is for (a game's colour from
+ * joinCode.ts, or the violet for story games and friendships) and turns grey once spent.
  *
- * A ticket is paper with a coloured stub on the side a line starts from (the
- * right in Soranî and Arabic), torn along a perforation: a dashed rule with a
- * notch bitten out of each edge, the page showing through. The stub is in the
- * colour of what the ticket is for — a game's own colour, the hue of its
- * stamp on the games page (joinCode.ts), or the brand's violet for a story
- * game and a friendship — and turns a quiet grey once the ticket is spent.
- *
- * The moments a ticket has are drawn here too, so each screen says what
- * happened rather than how it moves: the stub torn off (an invite taken up),
- * a stamp landing on it ("Joined", "Friends"), a hole punched through the
- * stub (a game that is over), and a gentle light crossing a ticket still
- * waiting for an answer — only while the screen is in front. Under Reduce
- * Motion nothing travels: a torn stub is simply gone, a stamp is simply
- * there, and nothing crosses a waiting ticket.
- *
- * The stub and the paper are cut separately, each holding its half of the
- * two notches, so a stub can leave the paper when it is torn off rather than
- * being clipped where it stood.
+ * Its moments are drawn here too: the stub torn off, a stamp landing, a punched hole, and a shine crossing a
+ * waiting ticket while the screen is in front. Under Reduce Motion nothing travels. Stub and paper are cut
+ * separately, each with half of each notch, so the stub can leave when torn.
  */
 
 /** What a ticket is for: a game, by its colour, or a friendship. */
-export type TicketTone = PlayGame | 'friend';
+type TicketTone = PlayGame | 'friend';
 
-/** The stub's fill and the ink on it; a spent ticket's stub is the quiet grey of a button with nothing to press. */
+/** The stub's fill and ink; a spent stub is the grey of a button with nothing to press. */
 export function ticketTone(colors: Palette, tone: TicketTone, muted = false): TileTone {
   if (muted) return tileButtonTone(colors, 'primary', false);
   return tone === 'friend' ? filledTone(colors, colors.primary) : codeTone(colors, tone);
 }
 
-/** The perforation's dashed rule, in the quiet grey of an idle tile's edge (theme/tileTones). */
-export function ticketRule(colors: Palette): string {
+/** The perforation's dashed rule, in an idle tile's edge grey (theme/tileTones). */
+function ticketRule(colors: Palette): string {
   return tileTone(colors, 'idle').edge;
 }
 
 /** How long a stub takes to come off. */
 export const TEAR_MS = 380;
 
-/** Each size's measurements: the stub's width, the notch, the corner, the punched hole. */
+/** Per-size measurements: stub width, notch, corner and punched hole. */
 const SIZE = {
   regular: { stub: 60, notch: 22, radius: radii.lg, hole: 10, dash: '6 6', pad: spacing.md },
   mini: { stub: 44, notch: 12, radius: radii.md, hole: 6, dash: '4 4', pad: spacing.sm },
 } as const;
 
-export type TicketSize = keyof typeof SIZE;
+type TicketSize = keyof typeof SIZE;
 
 export function Ticket({
   tone,
@@ -85,25 +70,25 @@ export function Ticket({
   ...rest
 }: ViewProps & {
   tone: TicketTone;
-  /** what the stub carries — a game's glyph, a friend's face — given the stub's own colours */
+  /** What the stub carries (a game's glyph, a friend's face), given the stub's colours. */
   stub: ReactNode | ((ink: TileTone) => ReactNode);
   children: ReactNode;
   size?: TicketSize;
-  /** spent: answered, run out, over */
+  /** Spent: answered, expired or over. */
   muted?: boolean;
-  /** still waiting: drawn as an outline in its colour rather than filled */
+  /** Still waiting: drawn as an outline in its colour rather than filled. */
   outlined?: boolean;
-  /** a hole through the stub, as a conductor punches a used ticket */
+  /** A hole punched through the stub. */
   punched?: boolean;
-  /** the stub comes off along the perforation */
+  /** The stub comes off along the perforation. */
   torn?: boolean;
-  /** a light that crosses the paper every few seconds, for a ticket waiting on somebody */
+  /** A shine crossing the paper every few seconds, for a ticket waiting on someone. */
   shimmer?: boolean;
-  /** floating over the screen rather than lying in a list */
+  /** Floating over the screen rather than lying in a list. */
   lifted?: boolean;
-  /** the paper, where the ticket lies on something other than the page */
+  /** The paper colour, where the ticket lies on something other than the page. */
   paper?: string;
-  /** what shows through the notches: whatever the ticket lies on */
+  /** What shows through the notches: whatever the ticket lies on. */
   ground?: string;
   style?: StyleProp<ViewStyle>;
   bodyStyle?: StyleProp<ViewStyle>;
@@ -117,7 +102,7 @@ export function Ticket({
   const face = paper ?? colors.surface;
   const page = ground ?? colors.background;
 
-  // the stub coming off: a short pull away from the paper, turning as it goes
+  // The stub coming off: a short pull away from the paper, turning as it goes.
   const rip = useRef(new Animated.Value(torn ? 1 : 0)).current;
   useEffect(() => {
     if (!torn) {
@@ -150,11 +135,11 @@ export function Ticket({
       ? { borderTopLeftRadius: m.radius, borderBottomLeftRadius: m.radius }
       : { borderTopRightRadius: m.radius, borderBottomRightRadius: m.radius };
   };
-  // the side of each part that meets the perforation
+  // The side of each part that meets the perforation.
   const stubSeam = mirror ? 'left' : 'right';
   const bodySeam = mirror ? 'right' : 'left';
   const outline = outlined ? { borderWidth: 2, borderColor: fill.face } : null;
-  // on an outlined stub the glyph is in the ticket's colour, darkened (or lightened) until it reads on the paper
+  // On an outlined stub the glyph uses the ticket's colour, adjusted until it reads on the paper.
   const outlineInk = ensureContrast(fill.face, face, AA_LARGE);
   const notch = { width: m.notch, height: m.notch, backgroundColor: page };
 
@@ -204,7 +189,7 @@ export function Ticket({
   );
 }
 
-/** A dashed rule, down the paper's edge where the stub meets it, or across it (TicketTear). */
+/** A dashed rule, down the stub's edge or across the paper (TicketTear). */
 function Perforation({ vertical = false, dash, style }: { vertical?: boolean; dash: string; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const { colors } = useTheme();
   const rule = ticketRule(colors);
@@ -228,11 +213,9 @@ function Perforation({ vertical = false, dash, style }: { vertical?: boolean; da
 }
 
 /**
- * The tear line across a ticket that is one piece of paper top to bottom (the
- * join code's): a notch cut from each side and the dashed rule between them.
- * `inset` is the padding of the surface it crosses, so the notches reach its
- * edges; the notches are the page showing through, so they are drawn in the
- * page's colour.
+ * The tear line across a ticket that is one piece top to bottom (the join code's): a notch on each side with the
+ * dashed rule between. `inset` is the surface's padding so the notches reach its edges; they are drawn in the
+ * page's colour, as the page showing through.
  */
 export function TicketTear({ inset = spacing.lg, ground }: { inset?: number; ground?: string }): React.JSX.Element {
   const { colors } = useTheme();
@@ -249,15 +232,11 @@ export function TicketTear({ inset = spacing.lg, ground }: { inset?: number; gro
   );
 }
 
-/** How often the light crosses a waiting ticket, and how long it takes to cross. */
+/** How often the shine crosses a waiting ticket, and how long it takes. */
 const SHIMMER_EVERY_MS = 2600;
 const SHIMMER_MS = 1300;
 
-/**
- * The light over a ticket still waiting for an answer: a soft band in the
- * ticket's own colour, every few seconds. It rests while the screen is not
- * in front, and under Reduce Motion it never starts.
- */
+/** The shine over a waiting ticket: a soft band in its colour every few seconds, paused off screen and never under Reduce Motion. */
 function Shimmer({ colour }: { colour: string }): React.JSX.Element {
   const alive = useMotionAlive();
   const [width, setWidth] = useState(0);
@@ -297,11 +276,9 @@ function Shimmer({ colour }: { colour: string }): React.JSX.Element {
 }
 
 /**
- * Whether `value` has changed since the component first had it — from the
- * first render, or from the first one where `ready` (the data has arrived).
- * A stamp that lands while somebody watches lands with a thump, and one that
- * was already there when they arrived is simply there: a chat scrolled
- * through does not thump at every card.
+ * Whether `value` has changed since the component first had it (from the first render, or the first where `ready`).
+ * A stamp that lands while someone watches thumps; one already there is simply shown, so scrolling a chat does not
+ * thump at every card.
  */
 export function useChangedSinceMount<T>(value: T, ready = true): boolean {
   const first = useRef<{ value: T } | null>(null);
@@ -310,10 +287,8 @@ export function useChangedSinceMount<T>(value: T, ready = true): boolean {
 }
 
 /**
- * A rubber stamp on a ticket — "Joined", "Friends", "Finished" — in the
- * colour of what it says: the green of something done, or the quiet grey of
- * something over. `land` brings it down from above with a small thump; under
- * Reduce Motion, and when it was already there, it is simply there.
+ * A rubber stamp on a ticket ("Joined", "Friends", "Finished"), success green or muted grey. `land` brings it down
+ * with a small thump; under Reduce Motion, or when already there, it is simply shown.
  */
 export function TicketStamp({ label, tone, land = false }: { label: string; tone: 'success' | 'muted'; land?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
@@ -328,7 +303,7 @@ export function TicketStamp({ label, tone, land = false }: { label: string; tone
     const run = springTo(v, 1, 'bouncy', 60);
     run.start();
     return () => run.stop();
-    // once, as it lands
+    // Only once, as it lands.
   }, []);
   const colour = tone === 'success' ? colors.success : colors.textSecondary;
   return (
@@ -359,9 +334,8 @@ const SPARKS = Array.from({ length: 8 }, (_, i) => {
 });
 
 /**
- * A small burst of sparks from the middle of whatever it is laid over: a
- * ticket handed over, a friendship accepted. Played each time `fired` goes
- * up; nothing under Reduce Motion, where the change itself says it.
+ * A small burst of sparks from the centre of what it overlays (a ticket handed over, a friendship accepted), played
+ * each time `fired` increases. Nothing under Reduce Motion, where the change itself says it.
  */
 export function TicketBurst({ fired, colour, reach = 44 }: { fired: number; colour: string; reach?: number }): React.JSX.Element | null {
   const reduce = useReducedMotion();
@@ -398,10 +372,7 @@ export function TicketBurst({ fired, colour, reach = 44 }: { fired: number; colo
   );
 }
 
-/**
- * The ticket glyph on a small disc in the ticket's colour, ringed in what it
- * sits on: the corner of a face in a list, to say this row is an invitation.
- */
+/** The ticket glyph on a small disc in the ticket's colour, on the corner of a face in a list, marking an invitation row. */
 export function TicketBadge({ tone, size = 18, ring }: { tone: TicketTone; size?: number; ring: string }): React.JSX.Element {
   const { colors } = useTheme();
   const fill = ticketTone(colors, tone);

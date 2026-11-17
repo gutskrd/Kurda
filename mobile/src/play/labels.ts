@@ -24,28 +24,26 @@ export const GAME_ICON: Record<PlayGame, IconName> = {
   'who-am-i': 'question',
 };
 
-const DIFFICULTY_KEY: Record<string, TranslationKey> = {
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
+/** A word battle's difficulty, by name. */
+export const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
   easy: 'games.difficulty.easy',
   medium: 'games.difficulty.medium',
   hard: 'games.difficulty.hard',
 };
 
 /**
- * What an invite or a game card is for, short enough for a banner:
- * "Hard", "Soranî", "“Dayika min” · 5 questions". Each game fills only its
- * own fields of the summary; anything unknown is left out rather than shown raw.
+ * What an invite or game card is for, short enough for a banner: "Hard", "Soranî", "“Dayika min” · 5 questions".
+ * Unknown values are left out rather than shown raw.
  */
 export function summaryParts(summary: InviteSummary, t: Translate): string[] {
   const parts: string[] = [];
-  if (summary.difficulty && DIFFICULTY_KEY[summary.difficulty]) parts.push(t(DIFFICULTY_KEY[summary.difficulty]!));
+  const difficulty = summary.difficulty ? (DIFFICULTY_KEY as Record<string, TranslationKey | undefined>)[summary.difficulty] : undefined;
+  if (difficulty) parts.push(t(difficulty));
   if (summary.storyTitle) parts.push(quoted(summary.storyTitle, isStoryDialect(summary.dialect) ? summary.dialect : 'kurmanci'));
   else if (summary.length && isStoryLength(summary.length)) parts.push(t(LENGTH_KEY[summary.length]));
   if (summary.dialect && isStoryDialect(summary.dialect)) parts.push(DIALECT_NAME[summary.dialect]);
   if (typeof summary.questionCount === 'number') parts.push(t('stories.questionsCount', { count: summary.questionCount }));
   return parts;
-}
-
-/** "Peyvok Battle · Hard" */
-export function gameLine(game: PlayGame, summary: InviteSummary, t: Translate): string {
-  return [t(GAME_NAME_KEY[game]), ...summaryParts(summary, t)].join(' · ');
 }

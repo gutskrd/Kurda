@@ -93,7 +93,7 @@ describe('InviteBanner', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Hide for now' }));
     expect(screen.queryByRole('button', { name: 'Join Rojda’s game' })).toBeNull();
     expect(screen.getByText('Game invites: 2')).toBeTruthy();
-    // the host hears nothing about it being put aside
+    // The host hears nothing about it being hidden.
     expect(client.calls.filter((c) => c.method !== 'GET')).toEqual([]);
     fireEvent.click(screen.getByRole('button', { name: 'Rojda invited you to Pêşbaziya Peyvan' }));
     expect(screen.getByRole('button', { name: 'Join Rojda’s game' })).toBeTruthy();
@@ -138,7 +138,7 @@ describe('InviteBanner', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Join Rojda’s game' }));
     expect(await screen.findByText(/Can’t reach Hevalo right now/)).toBeTruthy();
     expect(screen.queryByText('That game can’t be joined any more.')).toBeNull();
-    // react-native-web hands a Pressable its new `disabled` in an effect: let it learn Join is free again
+    // react-native-web passes a Pressable its new `disabled` in an effect, so let it see Join is enabled again.
     await act(async () => undefined);
     fireEvent.click(screen.getByRole('button', { name: 'Join Rojda’s game' }));
     await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'lobby-1' }));
@@ -155,7 +155,7 @@ describe('InviteBanner', () => {
       fireEvent.click(await screen.findByRole('button', { name: 'Join Rojda’s game' }));
       expect(await screen.findByText('That game can’t be joined any more.')).toBeTruthy();
       expect(screen.queryByRole('button', { name: 'Join Rojda’s game' })).toBeNull();
-      // let the effect that sets the removal timer run before the clock moves past it
+      // Let the effect that sets the removal timer run before the clock passes it.
       await act(async () => undefined);
       await act(async () => {
         await vi.advanceTimersByTimeAsync(4_100);
@@ -216,7 +216,7 @@ describe('InviteBanner', () => {
         'GET /play/invites': () => {
           gets += 1;
           if (gets === 1) return ok({ incoming: [invite], outgoing: [] });
-          // the list a reconnect asked for, read before the answer below reached the server
+          // The list a reconnect requested, read before the answer below reached the server.
           return new Promise((resolve) => {
             answerLate = () => resolve(ok({ incoming: [invite], outgoing: [] }));
           });
@@ -264,7 +264,7 @@ describe('InviteBanner', () => {
   it('sits above the tab bar only where there is one', () => {
     expect(rootIsTabs({ getRootState: () => ({ index: 0, routes: [{ name: 'Tabs' }] }) })).toBe(true);
     expect(rootIsTabs({ getRootState: () => ({ index: 1, routes: [{ name: 'Tabs' }, { name: 'StoriesHub' }] }) })).toBe(false);
-    // before the navigator has a state, the first screen is the tabs
+    // Before the navigator has state, the first screen is the tabs.
     expect(rootIsTabs({ getRootState: () => undefined })).toBe(true);
     expect(rootIsTabs({})).toBe(true);
   });
@@ -285,7 +285,7 @@ describe('InviteBanner, as a ticket', () => {
     patchReactNativeWeb({ reduceMotion: true });
   });
   const tick = () => act(async () => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-  // the banner asks the system about Reduce Motion as it appears: the answer is in before anybody taps
+  // The banner queries Reduce Motion as it appears; let the answer arrive before tapping.
   const ready = async (name: string) => {
     await screen.findByRole('button', { name });
     await tick();
@@ -309,7 +309,7 @@ describe('InviteBanner, as a ticket', () => {
     renderWithProviders(<InviteBanner />);
     fireEvent.click(await ready('Join Rojda’s game'));
     await tick();
-    // taken up: felt at once, and the lobby opens once the stub is off
+    // Accepted: a haptic at once, and the lobby opens once the stub is off.
     expect(client.calls.some((c) => c.path === '/play/invites/inv-1/accept')).toBe(true);
     expect(felt).toEqual(['tap']);
     expect(navigation.navigate).not.toHaveBeenCalled();
@@ -329,9 +329,9 @@ describe('InviteBanner, as a ticket', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Later' }));
     await tick();
     expect(client.calls.find((c) => c.path === '/play/invites/inv-1/decline')?.body).toEqual({ reason: 'later' });
-    // still folding away …
+    // Still folding away…
     expect(screen.getByText('Rojda invited you to Pêşbaziya Peyvan')).toBeTruthy();
-    // … and then gone
+    // …and then gone.
     await waitFor(() => expect(screen.queryByText('Rojda invited you to Pêşbaziya Peyvan')).toBeNull());
   });
 
@@ -353,7 +353,7 @@ describe('InviteBanner, as a ticket', () => {
     testAuth.client = fakeClient({ 'GET /play/invites': ok({ incoming: [invite, second, third], outgoing: [] }) });
     renderWithProviders(<InviteBanner />);
     expect(await screen.findByText('More invites waiting: 2')).toBeTruthy();
-    // only the one in front can be answered from here
+    // Only the front invite can be answered here.
     expect(screen.getAllByRole('button', { name: /^Join / })).toHaveLength(1);
   });
 });

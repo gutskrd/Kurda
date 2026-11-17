@@ -30,7 +30,6 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
-import type { TranslationKey } from '../i18n/translations';
 import { useCourseDialect } from '../learn/courseDialect';
 import { listStories } from '../stories/api';
 import { DIALECT_NAME } from '../stories/labels';
@@ -39,7 +38,7 @@ import { changeSetup, initialSetup, inviteSettings, type SetupState } from '../s
 import { shownDialect, useStoryPrefs } from '../stories/prefs';
 import { Note, SectionLabel, Sheet } from '../stories/ui';
 import { createLobby, inviteFriends, listFriends, listInvites, type FriendSummary } from './api';
-import { GAME_ICON, GAME_NAME_KEY } from './labels';
+import { DIFFICULTY_KEY, GAME_ICON, GAME_NAME_KEY, type Difficulty } from './labels';
 import { lobbyRoute } from './routes';
 import { PickedTickets, SentFan, flightMs, type SendPhase, type TicketHolder } from './SentTickets';
 import { SendErrorNotice } from '../reports/SendError';
@@ -57,34 +56,23 @@ import { groupDialects, useMpAvailability } from '../games/mpAvailability';
 import { TableChoices } from '../games/partyChoices';
 import { pressedDim } from '../theme/motion';
 
-type Difficulty = 'easy' | 'medium' | 'hard';
-const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
-  easy: 'games.difficulty.easy',
-  medium: 'games.difficulty.medium',
-  hard: 'games.difficulty.hard',
-};
-
 /** Where the sheet was opened from, which decides what it makes and where a card goes. */
 export type InviteTarget =
-  /** a new game: from a profile, the friends list, a game page, a results screen */
+  /** A new game: from a profile, the friends list, a game page or a results screen. */
   | { kind: 'new'; game?: PlayGame; friendId?: string }
-  /** a new game from a DM: that friend is invited, and the card goes in the DM */
+  /** A new game from a DM: that friend is invited and the card goes in the DM. */
   | { kind: 'dm'; friendId: string }
-  /** a new game from a group chat: its card goes in the group, friends may be asked too */
+  /** A new game from a group chat: its card goes in the group, and friends may be asked too. */
   | { kind: 'group'; groupId: string }
-  /** more friends into a lobby that exists */
+  /** More friends into an existing lobby. */
   | { kind: 'lobby'; game: PlayGame; lobbyId: string; mode?: 'duo' | 'group' };
 
-/**
- * Friends who came into one of your games lately, newest first: the invites
- * they accepted. An invite that was turned down or ran out is not "played
- * with", so it does not put anybody at the top.
- */
+/** Friends who recently joined your games through an accepted invite, newest first; declined or expired invites do not count. */
 export function recentPlayers(lists: InviteLists): string[] {
   return lists.outgoing.flatMap((o) => o.invitees.filter((i) => i.status === 'accepted').map((i) => i.userId));
 }
 
-/** Friends shown first: the ones played with most recently, newest first, then everyone by name. */
+/** Friends ordered: most recently played with first, then everyone by name. */
 export function orderFriends(friends: readonly FriendSummary[], recentIds: readonly string[], query: string): {
   recent: FriendSummary[];
   rest: FriendSummary[];
@@ -109,10 +97,7 @@ function inviteError(error: ApiError, t: Translate): string {
   return describeError(error, t);
 }
 
-/**
- * What the sent tickets say: the one friend by name, how many otherwise, and
- * a game posted in a group with nobody else asked as posted there.
- */
+/** What the sent tickets say: the one friend by name, otherwise how many, or "posted" for a group game with nobody else asked. */
 export function sentText(going: readonly TicketHolder[], invited: number, t: Translate): string {
   const friends = going.filter((h) => !h.group);
   if (invited === 0 && going.some((h) => h.group)) return t('play.sheet.posted');
@@ -120,27 +105,23 @@ export function sentText(going: readonly TicketHolder[], invited: number, t: Tra
   return t('play.sheet.sent', { count: invited });
 }
 
-/** How long "sent" stays on a sheet that closes into the new game's lobby, to be seen before it goes. */
+/** How long "sent" stays on a sheet that closes into the new lobby, so it is seen. */
 const SENT_HOLD_MS = 900;
 
 /**
- * The Kurdish a sheet opens on: the one Stories shows when the learner chose
- * it with its switch, else the learner's own (the course on their path).
- * The course reads as Kurmancî both when it is and while nothing is known
- * yet, so only a Soranî course is taken from it, and otherwise the interface
- * decides as it did before.
+ * The Kurdish variety a sheet opens on: the one Stories shows if chosen with its switch, else the learner's course.
+ * The course reads as Kurmancî both when it is and while unknown, so only a Soranî course is taken from it;
+ * otherwise the interface decides.
  */
-export function openingVariety(chosen: StoryDialect | null, course: 'kmr' | 'ckb', locale: string): StoryDialect {
+function openingVariety(chosen: StoryDialect | null, course: 'kmr' | 'ckb', locale: string): StoryDialect {
   return chosen ?? (course === 'ckb' ? 'sorani' : shownDialect(locale, null));
 }
 
 const RHYME_DIALECTS: readonly StoryDialect[] = ['kurmanci', 'sorani'];
 
 /**
- * The varieties a Rhyme Match can be made in now (`GET /rhyme/availability`):
- * a variety without enough curated prompts cannot start a match, so it is not
- * offered. Until the server answers, or when it cannot say, both are offered,
- * as they were before it could.
+ * The varieties a Rhyme Match can be made in now (`GET /rhyme/availability`), since one without enough curated
+ * prompts cannot start. Both are offered until the server answers, or if it cannot say.
  */
 function useRhymeDialects(enabled: boolean): readonly StoryDialect[] {
   const { client } = useAuth();
@@ -162,18 +143,13 @@ function useRhymeDialects(enabled: boolean): readonly StoryDialect[] {
 }
 
 /**
- * "Invite to play" (contract §B1): every place a game with friends starts —
- * a friend's profile, the friends list, the chat composer, a game's lobby,
- * the end of a game — opens this one sheet: the game, its presets, and
- * friends to ask (search, the ones played with lately first, who is online).
+ * "Invite to play" (contract §B1): the one sheet every game with friends starts from (profile, friends list, chat
+ * composer, lobby, end of a game), with the game, its presets, and friends to ask (search, recent first, online).
+ * Making the game puts the host in its lobby and invites the picked friends; from a chat the card is posted there.
+ * For an existing lobby it skips the game and presets.
  *
- * Making the game puts the host in its lobby and invites the friends picked;
- * from a chat the game's card is posted in that chat. Inviting more people
- * into a lobby that exists skips the game and its presets.
- *
- * Each friend picked is a ticket written out for them, and Send hands them
- * over (SentTickets.tsx): they fly off, the sheet says who they went to, and
- * then it closes into the lobby — or, in a lobby, stays for more.
+ * Each picked friend is a ticket, and Send hands them over (SentTickets.tsx); the sheet then says who they went to
+ * and closes into the lobby, or stays open in a lobby for more.
  */
 export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -186,18 +162,18 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const fixedGame = target.kind === 'lobby' ? target.game : target.kind === 'new' ? target.game : undefined;
   const [game, setGame] = useState<PlayGame>(fixedGame ?? 'stories');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  // the variety Stories is showing (the one chosen with its switch, which a Soranî interface does not overrule), else the
-  // learner's own; until the host picks one, it follows them as they are read
+  // The variety Stories shows (chosen with its switch, which a Soranî interface does not overrule), else the learner's
+  // own; it follows these until the host picks one.
   const course = useCourseDialect();
   const [pickedDialect, setDialect] = useState<StoryDialect | null>(null);
   const dialect = pickedDialect ?? openingVariety(prefs.dialect, course, locale);
-  // The Last Letter, in the dialects whose dictionary can check players' words (asked only where it could be offered)
+  // The Last Letter, in dialects whose dictionary can check words (only asked where it could be offered).
   const letterDialects = offeredDialects(useLastLetterAvailability(target.kind !== 'lobby'), 'group');
-  // Impostor, in the varieties and at the levels its approved cards allow
+  // Impostor, in the varieties and levels its approved cards allow.
   const impostorOffer = usePartyOffer('impostor', target.kind !== 'lobby') ?? [];
-  // a table of Who Am I?, where its content lets it be played
+  // A Who Am I? table, where its content allows.
   const tableOffers = useMpAvailability('who-am-i', target.kind !== 'lobby');
-  // a Rhyme Match is made in a variety with enough prompts for one: the chosen one when it has them
+  // A Rhyme Match needs a variety with enough prompts: the chosen one when it has them.
   const rhymeDialects = useRhymeDialects(target.kind !== 'lobby' && game === 'rhyme-match');
   const rhymeDialect: StoryDialect = rhymeDialects.includes(dialect) ? dialect : rhymeDialects[0]!;
   const offeredGames = PLAY_GAMES.filter(
@@ -209,9 +185,9 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   );
   const [partyLevel, setPartyLevel] = useState<GameDifficulty>('beginner');
   const [clueSeconds, setClueSeconds] = useState<string>(String(IMPOSTOR_DEFAULT_CLUE_SECONDS));
-  // the category Impostor's word is drawn from: '' for any
+  // The category Impostor's word is drawn from; '' for any.
   const [category, setCategory] = useState('');
-  // Who Am I?'s choices, handed up by its own fields; null when the game cannot be made in the Kurdish chosen
+  // Who Am I?'s choices from its own fields; null when it cannot be made in the chosen Kurdish.
   const [partySettings, setPartySettings] = useState<Record<string, unknown> | null>(null);
   const [stories, setStories] = useState<StoryListItem[]>([]);
   const [story, setStory] = useState<SetupState>(() => initialSetup({ mode: 'duo', dialect, length: 'short' }));
@@ -219,18 +195,15 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const [recentIds, setRecentIds] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const preselected = target.kind === 'dm' ? target.friendId : target.kind === 'new' ? target.friendId : undefined;
-  /*
-   * From a DM the game is with that friend: the server invites them (and
-   * posts the card in the DM) from `chat`, whatever else is picked, so the
-   * sheet keeps them picked rather than show a choice it would not honour.
-   */
+  // From a DM the server invites that friend via `chat` regardless of picks, so they stay picked rather than offer a
+  // choice that would not be honoured.
   const lockedId = target.kind === 'dm' ? target.friendId : null;
   const [picked, setPicked] = useState<string[]>(preselected ? [preselected] : []);
-  // Rated or Friendly for the game being made, where the host last left it for that game
+  // Rated or Friendly for this game, as the host last left it.
   const [rated, setRated] = useRatedChoice(game);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** a limit on the account (a chat mute stops game cards too): said as every send path says it, with Account standing */
+  /** An account limit (a chat mute blocks game cards too), shown as every send path shows it, with Account standing. */
   const [refusal, setRefusal] = useState<ApiError | null>(null);
   const refused = (e: ApiError): void => {
     if (restrictionOf(e)) setRefusal(e);
@@ -239,12 +212,9 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const reduce = useReducedMotion();
   const [phase, setPhase] = useState<SendPhase>('picking');
   const [refusals, setRefusals] = useState(0);
-  /** the tickets just handed over, and what they say */
+  /** The tickets just handed over, and what they say. */
   const [sent, setSent] = useState<{ holders: TicketHolder[]; text: string } | null>(null);
-  /*
-   * What waits for the tickets to fly. Going to a new game's lobby is never
-   * dropped: a sheet closed while "sent" is still showing goes there at once.
-   */
+  // Pending follow-ups while the tickets fly. Going to a new lobby is never dropped: closing early goes there at once.
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const goToLobby = useRef<(() => void) | null>(null);
   useEffect(
@@ -259,7 +229,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     else timers.current.push(setTimeout(then, ms));
   };
 
-  // a duo (and a battle or a match for two) invites one friend; a group up to seven
+  // A duo (and a two-player battle or match) invites one friend; a group up to seven.
   const single = target.kind === 'lobby' ? target.mode === 'duo' : game === 'stories' && story.mode === 'duo';
   const limit = single ? 1 : MAX_INVITEES_PER_REQUEST;
 
@@ -276,7 +246,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     };
   }, [client]);
 
-  // the variety's published stories, for the lengths and the pick list
+  // The variety's published stories, for the lengths and the story list.
   useEffect(() => {
     if (game !== 'stories' || target.kind === 'lobby') return;
     let live = true;
@@ -297,12 +267,12 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const others = useMemo(() => (friends ?? []).filter((f) => f.userId !== lockedId), [friends, lockedId]);
   const lockedFriend = lockedId ? (friends ?? []).find((f) => f.userId === lockedId) : undefined;
   const { recent, rest } = useMemo(() => orderFriends(others, recentIds, query), [others, recentIds, query]);
-  // a game for two from a DM is with that friend, and nobody else is offered
+  // A two-player game from a DM is with that friend, so nobody else is offered.
   const offerOthers = !(lockedId && single);
 
   const toggle = (id: string): void => {
     if (id === lockedId || phase !== 'picking') return;
-    // picking again after a send starts the next tickets
+    // Picking again after a send starts the next set of tickets.
     setSent(null);
     setPicked((list) => {
       if (list.includes(id)) return list.filter((x) => x !== id);
@@ -311,7 +281,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     });
   };
 
-  /** An Impostor lobby: a variety it is offered in (the chosen one when it is), at a level offered there. */
+  /** An Impostor lobby's variety (the chosen one when offered) and a level offered there. */
   const partyChoice = (): { dialect: GameDialect; levels: GameDifficulty[]; level: GameDifficulty } => {
     const wanted: GameDialect = dialect === 'sorani' ? 'ckb' : 'kmr';
     const here = impostorOffer.find((o) => o.dialect === wanted) ?? impostorOffer[0];
@@ -319,7 +289,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     return { dialect: here?.dialect ?? wanted, levels, level: levels.includes(partyLevel) ? partyLevel : (levels[0] ?? 'beginner') };
   };
 
-  // Impostor's word may come from one category: those with enough approved cards at the level chosen, or any
+  // Impostor's word may come from one category with enough approved cards at the chosen level, or any.
   const impostorParty = game === 'impostor' && target.kind !== 'lobby' ? partyChoice() : null;
   const impostorCategories = categoriesAt(useImpostorCategories(impostorParty && impostorOffer.length > 0 ? impostorParty.dialect : null), impostorParty?.level);
   const categoryNow = impostorCategories.some((c) => c.slug === category) ? category : '';
@@ -331,7 +301,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
       return { dialect: party.dialect, difficulty: party.level, clueSeconds: Number(clueSeconds), category: categoryNow || null, rated };
     }
     if (game === 'last-letter') {
-      // a Last Letter lobby is in one dialect the dictionary can check: the chosen one if it is offered
+      // A Last Letter lobby uses one dialect the dictionary can check: the chosen one if offered.
       const wanted = dialect === 'sorani' ? 'ckb' : 'kmr';
       return { dialect: letterDialects.includes(wanted) || letterDialects.length === 0 ? wanted : letterDialects[0], rated };
     }
@@ -339,7 +309,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     return { ...inviteSettings({ ...story, dialect }), rated };
   };
 
-  // whom the tickets are written out for: the group a game is posted in, and each friend picked
+  // Who the tickets are for: the group a game is posted in, and each picked friend.
   const holders = useMemo((): TicketHolder[] => {
     const byId = new Map((friends ?? []).map((f) => [f.userId, f]));
     const people = picked
@@ -358,14 +328,14 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     setPhase('sending');
     const going = holders;
     const chat = target.kind === 'dm' ? { userId: target.friendId } : target.kind === 'group' ? { groupId: target.groupId } : undefined;
-    // the DM's friend is invited by `chat` (that is what posts the card in the DM)
+    // The DM's friend is invited by `chat`, which is what posts the card in the DM.
     const invite = picked.filter((id) => !(target.kind === 'dm' && id === target.friendId));
     const res =
       target.kind === 'lobby'
         ? await inviteFriends(client, target.game, target.lobbyId, picked)
         : await createLobby(client, { game, settings: settings(), invite: invite.length ? invite : undefined, chat });
     if (!res.ok) {
-      // the tickets are set back down, with a shake, beside the reason
+      // The tickets are set down with a shake, beside the reason.
       setBusy(false);
       setPhase('picking');
       setRefusals((n) => n + 1);
@@ -381,7 +351,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     after(flightMs(going.length, reduce), () => {
       setPhase('picking');
       setSent({ holders: going, text });
-      // the line under the sent tickets is a polite live region on Android; iOS is told once
+      // The line under the sent tickets is a polite live region on Android; iOS is told once.
       if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(text);
       if (!created) {
         setBusy(false);
@@ -516,7 +486,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
               />
             </View>
           ) : game === 'rhyme-match' ? (
-            // a Rhyme Match offers only the varieties it can be made in, and asks nothing while there is one
+            // A Rhyme Match offers only its available varieties, and asks nothing when there is one.
             rhymeDialects.length > 1 ? (
               <View style={styles.field}>
                 <SectionLabel>{t('stories.variety')}</SectionLabel>
@@ -653,7 +623,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
 const styles = StyleSheet.create({
   notice: { marginHorizontal: 0, marginBottom: 0 },
   field: { gap: spacing.sm },
-  // eight games and more: four to a row, so each name still has room
+  // Four games to a row, so each name has room.
   games: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   gameTile: {
     flexGrow: 1,

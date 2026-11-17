@@ -8,19 +8,19 @@ import { useUserEvents } from '../realtime/useUserEvents';
 import { joined } from './joining';
 
 /** Waits between failed long-polls: quick at first, never hammering. */
-export const VIEW_BACKOFF_MS = [1_000, 2_000, 5_000] as const;
+const VIEW_BACKOFF_MS = [1_000, 2_000, 5_000] as const;
 /** The least time between two long-polls that brought nothing new. */
-export const VIEW_POLL_FLOOR_MS = 1_000;
-/** The least time between any two long-polls: a server answering at once over and over is never asked in a tight loop. */
-export const VIEW_POLL_MIN_GAP_MS = 250;
+const VIEW_POLL_FLOOR_MS = 1_000;
+/** The least time between any two long-polls, so a server answering instantly is never asked in a tight loop. */
+const VIEW_POLL_MIN_GAP_MS = 250;
 /** How long the connection may be down before the long-poll takes over. */
-export const LONG_POLL_GRACE_MS = 1_500;
-/** A read when nothing has said anything for this long, while connected and in front. */
-export const VIEW_SAFETY_MS = 20_000;
-/** How long after a deadline the game is asked about, so the server has settled it. */
-export const DEADLINE_SLACK_MS = 600;
+const LONG_POLL_GRACE_MS = 1_500;
+/** A safety read after this long without any event, while connected and in front. */
+const VIEW_SAFETY_MS = 20_000;
+/** How long after a deadline the game is read, so the server has settled it. */
+const DEADLINE_SLACK_MS = 600;
 
-export type GameViewLoad<Board> =
+type GameViewLoad<Board> =
   | { state: 'loading' }
   | { state: 'ready'; view: MultiView<Board> }
   | { state: 'gone'; why: 'gone' | 'started' }
@@ -28,14 +28,14 @@ export type GameViewLoad<Board> =
 
 export interface GameViewHandle<Board, Outcome = unknown> {
   load: GameViewLoad<Board>;
-  /** milliseconds to add to Date.now() for the server's time */
+  /** Milliseconds to add to Date.now() for the server's time. */
   skew: number;
   refresh: () => void;
   act: (path: string, body?: unknown) => Promise<ApiResult<MultiView<Board>>>;
   move: (body: unknown) => Promise<ApiResult<MultiMoveAnswer<Board, Outcome>>>;
 }
 
-/** A long-poll the server let go answers with an empty object. */
+/** A long-poll that timed out answers with an empty object. */
 type NoView = { [key: string]: never };
 
 const live = (status: string): boolean => status === 'lobby' || status === 'active';
@@ -50,20 +50,15 @@ const wait = (ms: number, stopped: () => boolean): Promise<void> =>
   });
 
 /**
- * One multiplayer learning game, kept current on the phone — the same rules
- * as the website's hook (web/src/play/useGameView.ts):
+ * One multiplayer learning game, kept current with the same rules as web/src/play/useGameView.ts:
  *
- * - With the realtime connection up, `play_changed` for this game reads it
- *   again; reads are single-flight (a burst of events is one more read), and
- *   an older version never replaces a newer one. A slow read every 20 s while
- *   the app is in front covers a lost event; coming back to the app, or the
- *   connection coming back, reads at once.
- * - With the connection down for more than a moment, the versioned long-poll
- *   takes over (`?v=`): the server answers when the game moves on, after 20 s,
- *   or just after its next deadline. Never in the background.
- * - Just after a turn's deadline (`deadlineOf`) the game is asked once with its
- *   version, so the server settles what is due before it answers.
- * - The server's clock counts: `serverNow` gives the offset for every countdown.
+ * - With the realtime connection up, `play_changed` triggers a single-flight read, and an older version never
+ *   replaces a newer one. A safety read every 20 s covers a lost event; returning to the app or reconnecting reads
+ *   at once.
+ * - With the connection down for more than a moment, the versioned long-poll (`?v=`) takes over: the server answers
+ *   when the game moves on, after 20 s, or just after its next deadline. Never in the background.
+ * - Just after a turn's deadline (`deadlineOf`) the game is read once with its version, so the server settles it.
+ * - `serverNow` gives the server-clock offset for every countdown.
  */
 export function useGameView<Board, Outcome = unknown>(
   game: MultiGame,
@@ -112,7 +107,7 @@ export function useGameView<Board, Outcome = unknown>(
 
   const read = useCallback(
     async (path: string): Promise<boolean> => {
-      // an invite to it accepted a moment ago is let land first: until it has, this is nobody's game (play/joining.ts)
+      // An invite accepted a moment ago must land first; until then this is nobody's game (play/joining.ts).
       await joined(id);
       const res = await client.get<MultiView<Board> | NoView>(path);
       if (!alive.current) return false;

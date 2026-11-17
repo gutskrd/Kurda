@@ -14,17 +14,12 @@ import { LobbyInvites } from './LobbyInvites';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { heldDim } from '../theme/MotionParts';
 
-/**
- * How often a battle or a match asks the server when nothing has told it to:
- * the fallback under `play_changed`, which is what moves the screen now. It
- * used to ask every 1.5–1.8 s, lobby and all, for as long as it was open.
- */
-export const FALLBACK_POLL_MS = 10_000;
+/** How often a battle or match polls when nothing has prompted it; `play_changed` events drive the screen otherwise. */
+const FALLBACK_POLL_MS = 10_000;
 
 /**
- * Keep a game screen current: on `play_changed` (or a rematch update) for
- * this lobby on your own channel, after the connection comes back, and every
- * FALLBACK_POLL_MS in case an event was missed — never in the background.
+ * Keeps a game screen current: on `play_changed` (or a rematch update) for this lobby, after reconnecting, and every
+ * FALLBACK_POLL_MS in case an event was missed. Never in the background.
  */
 export function useLobbyRefresh(game: PlayGame, lobbyId: string, refresh: () => void, active: boolean): void {
   const ref = useRef(refresh);
@@ -53,7 +48,7 @@ export function useLobbyRefresh(game: PlayGame, lobbyId: string, refresh: () => 
   }, [active, foreground]);
 }
 
-/** A seat's name as this viewer may see it — a friend's name, or "Player 3" — for lines that name players by seat. */
+/** A seat's name as this viewer may see it: a friend's name, or "Player 3". */
 export function seatNamer(
   players: readonly Pick<LobbySeat, 'seat' | 'name'>[],
   t: (key: 'stories.player', vars: { seat: number }) => string,
@@ -61,7 +56,7 @@ export function seatNamer(
   return (seat) => players.find((p) => p.seat === seat)?.name ?? t('stories.player', { seat });
 }
 
-export interface LobbySeat {
+interface LobbySeat {
   seat: number;
   name: string | null;
   avatarUrl: string | null;
@@ -71,15 +66,10 @@ export interface LobbySeat {
 }
 
 /**
- * A battle's or a match's lobby beyond its code: who is in it (a friend by
- * name, anyone else as "Player N" — the identity rule), each other player
- * with a flag to report them by seat, and, for the host, where each invite
- * stands. Invite friends is on the code's ticket (CodeTicket `LobbyShare`),
- * beside the other way of bringing people in.
- *
- * With `onRemove`, the host can take another player out by seat, asked first
- * as a story game's lobby asks (stories/game/Lobby): it cannot be taken back,
- * since a player removed cannot join that lobby again.
+ * A battle's or match's lobby beyond its code: who is in it (friends by name, others as "Player N"), a report flag
+ * per other player, and for the host each invite's state. Inviting friends is on the code's ticket (CodeTicket
+ * `LobbyShare`). With `onRemove`, the host can remove a player by seat after confirming, as a story lobby does; a
+ * removed player cannot rejoin.
  */
 export function LobbyPeople({
   game,
@@ -92,7 +82,7 @@ export function LobbyPeople({
   lobbyId: string;
   players: readonly LobbySeat[];
   isHost: boolean;
-  /** the host's remove, by seat; left out, nobody is offered it */
+  /** The host's remove action, by seat; omitted, nobody is offered it. */
   onRemove?: (seat: number) => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -116,9 +106,9 @@ export function LobbyPeople({
                   <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
                     {name}
                   </Text>
-                  {/* who hosts, in the quiet ink of a detail: gold is kept for what is earned */}
+                  {/* The host's crown in the quiet detail ink; gold is for what is earned. */}
                   {p.isHost ? <Icon name="crown" size={14} color={colors.textSecondary} /> : null}
-                  {/* anyone else in the lobby can be reported, by seat */}
+                  {/* Anyone else in the lobby can be reported, by seat. */}
                   {!p.isMe ? <PlayerReportButton game={game} gameId={lobbyId} seat={p.seat} name={p.name ?? null} /> : null}
                   {onRemove && isHost && !p.isMe && !p.isHost ? (
                     <Pressable
