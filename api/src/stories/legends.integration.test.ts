@@ -124,6 +124,25 @@ describe.skipIf(!DATABASE_URL)('stories that hold a legend (integration)', () =>
   });
 
   describe('a saga as the reader gets it', () => {
+    /*
+     * The app opens a source's address in the browser when it is tapped, so
+     * only an https one may be saved; one stored before that rule still reads,
+     * and the app shows it as plain text rather than a link.
+     */
+    it('takes a source’s address over https only, and still reads one stored before', async () => {
+      for (const [i, url] of ['http://example.org/tale', 'javascript:alert(1)', 'example.org/tale'].entries()) {
+        const res = await call('POST', '/admin/stories', legend(`srcurl${i}`, { sources: [{ title: 'Kitêb', type: 'literary', url }] }));
+        expect(res.statusCode, url).toBe(422);
+        expect(res.json().details.errors.map((e: { code: string }) => e.code), url).toContain('SOURCE_ENTRY_URL');
+      }
+      const { id } = await published('oldsource');
+      const older = [{ title: 'Kitêb', type: 'literary', url: 'http://example.org/tale' }];
+      await pool.query(`UPDATE stories SET sources = $2 WHERE id = $1`, [id, JSON.stringify(older)]);
+      const read = await call('GET', `/stories/${slug('oldsource')}`, undefined, null);
+      expect(read.statusCode, read.body).toBe(200);
+      expect((read.json() as StoryDetail).sources).toEqual(older);
+    });
+
     it('sends its sections, reflections, notes, sources and translated title, and never who reviewed what', async () => {
       const { id } = await published('read');
       const res = await call('GET', `/stories/${slug('read')}`, undefined, null);
