@@ -12,11 +12,11 @@ vi.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate, goBack: vi.fn() }),
   useFocusEffect: () => undefined,
 }));
-// the phone's picture library: one picture, chosen
+// The phone's picture library: one picture, chosen.
 vi.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: async () => ({ canceled: false, assets: [{ uri: 'file:///pic.jpg', mimeType: 'image/jpeg' }] }),
 }));
-// the upload streams the file itself, past the client; the test says what the server answers
+// The upload streams the file itself, past the client; the test says what the server answers.
 const upload = vi.hoisted(() => ({ status: 200, body: '{}' }));
 vi.mock('expo-file-system/legacy', () => ({
   FileSystemUploadType: { BINARY_CONTENT: 0 },

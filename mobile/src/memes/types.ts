@@ -1,5 +1,4 @@
-/** Shared types + pure helpers for the meme/image feed (KUR-291). Native-free so
- *  the helpers are unit-testable. */
+/** Types and pure helpers for the meme and image feed. */
 
 import type { Translate } from '../api/errors';
 import type { CommentAuthor } from '../comments/thread';
@@ -11,7 +10,7 @@ export interface ImagePost {
   id: string;
   authorId: string;
   authorRole: AuthorRole;
-  /** who posted it: a face and a name; older APIs leave it out */
+  /** Who posted it: a face and a name; older APIs leave it out. */
   author?: { id: string; username: string; avatarUrl: string | null } | null;
   imageMediaId: string;
   imageUrl: string | null;
@@ -30,7 +29,7 @@ export interface Comment {
   postId: string;
   authorId: string;
   authorRole: AuthorRole;
-  /** who wrote it: a face and a name, rather than an id */
+  /** Who wrote it: a face and a name, rather than an id. */
   author?: CommentAuthor;
   parentCommentId: string | null;
   depth: number;
@@ -41,12 +40,7 @@ export interface Comment {
   updatedAt: string;
 }
 
-/**
- * A tombstoned comment renders as a placeholder rather than empty.
- *
- * Takes a translator because the other case passes through: the body is
- * whatever the commenter wrote, in whatever language they wrote it.
- */
+/** A deleted comment renders as a placeholder; otherwise the body passes through in whatever language it was written. */
 export function commentText(c: Comment, t: Translate): string {
   if (c.status === 'removed') return t('comments.removed');
   return c.body ?? '';

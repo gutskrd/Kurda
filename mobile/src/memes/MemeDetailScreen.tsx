@@ -19,20 +19,15 @@ import type { ImagePost } from './types';
 const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
 
 /**
- * A picture post on a page of its own: the post exactly as it is on the wall
- * — whoever posted it and its "⋯", the picture from edge to edge, the heart
- * and the rest of the row with their counts, the caption and how long ago —
- * and its conversation under it, with a composer at the foot.
- *
- * A heart is the one reaction there is; the row of emoji this page had is
- * gone. Its numbers come from GET /posts/image/:id/engagement, so a post
- * opened from a link counts the same as one opened from the wall.
+ * A picture post on its own page, drawn as on the wall (author and "⋯", the picture edge to edge, the heart row
+ * with counts, caption and time), with its comments and a composer below. Counts come from GET
+ * /posts/image/:id/engagement, so a post opened from a link counts the same as one opened from the wall.
  */
 export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  // what is being reported, and whose it is (the Hevalo team's own posts offer no block)
+  // What is being reported, and whose it is (the Hevalo team's own posts offer no block).
   const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null; name?: string } | null>(null);
 
   const [post, setPost] = useState<ImagePost | null>(null);
@@ -55,7 +50,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
       return;
     }
     setPost(p.data);
-    // numbers that did not come are shown as none rather than holding the picture back
+    // Numbers that did not come are shown as none rather than holding the picture back.
     setEngagement(e.ok && e.data.engagement ? e.data.engagement : NO_ENGAGEMENT);
   }, [client, postId, loadComments]);
 
@@ -71,11 +66,11 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
       const res = await addComment(client, postId, body, parentId);
       return res.ok ? { ok: true, comment: res.data } : { ok: false, title: t('comment.failed'), error: res.error };
     });
-    // a refused comment goes back into the composer, so nothing written is lost
+    // A refused comment goes back into the composer, so nothing written is lost.
     if (!sent) setDraft((current) => current || body);
   }, [client, postId, draft, thread, t]);
 
-  // the post as the wall shows it, so the page and the wall are one thing
+  // The post as the wall shows it, so the page and the wall are one thing.
   const item = useMemo(() => (post && engagement ? asFeedItem(post, engagement) : null), [post, engagement]);
 
   if (failed && !post) {
@@ -91,7 +86,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
 
   return (
     <GradientBackground>
-      {/* the screen starts at the top of the window, so the keyboard needs no offset; Android draws edge to edge and resizes nothing itself */}
+      {/* The screen starts at the window's top, so the keyboard needs no offset; Android draws edge to edge and resizes nothing itself. */}
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Header onExit={onExit} />
         <View style={styles.screen}>
@@ -141,7 +136,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
   );
 }
 
-/** The page while it loads: the post's head, the square picture, its row, and the comments under it. */
+/** The loading placeholder: the post's header, the square picture, its row and the comments. */
 function MemeSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   return (
@@ -191,7 +186,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1 },
   body: { paddingBottom: spacing.xl },
-  // the picture runs to the edges, as on the wall; the conversation keeps the gutter
+  // The picture runs to the edges, as on the wall; the conversation keeps the gutter.
   image: { width: '100%', aspectRatio: 1 },
   skeletonHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingVertical: spacing.sm },
   comments: { paddingHorizontal: layout.gutter, gap: spacing.md },

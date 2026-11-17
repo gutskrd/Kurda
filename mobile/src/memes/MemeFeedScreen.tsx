@@ -34,11 +34,7 @@ import { useDirection } from '../reports/direction';
 
 const PAGE = 20;
 
-/**
- * Meme/image feed (KUR-291). Browses published posts (filter meme/image, sort
- * newest/popular) and infinite-scrolls; posting opens the composer. Tapping a
- * post opens the post on a page of its own, with its likes and comments under it.
- */
+/** The meme and image feed: published posts with filter and sort, infinite scroll, and a page per post. Posting opens the composer. */
 export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
@@ -69,11 +65,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     [client, category, sort, posts],
   );
 
-  /*
-   * Come back to from a picture, the list is as it was left — every page that
-   * was loaded, at the same place — and is brought up to date quietly
-   * (feed/keep.ts). It used to be replaced by its first page each time.
-   */
+  /* Returning from a picture keeps the list as it was, every loaded page at the same place, and refreshes it quietly (feed/keep.ts). */
   const first = useCallback(() => listPosts(client, { category, sort, limit: PAGE, offset: 0 }), [client, category, sort]);
   const { onScroll, forget } = useQuietRefocus<ImagePost>({
     loaded: posts !== null,
@@ -88,7 +80,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     retry: error ? () => void load() : undefined,
   });
 
-  // the list as it first opens, and again whenever the filters change
+  // The list as it first opens, and again whenever the filters change.
   useEffect(() => {
     let active = true;
     forget();
@@ -106,10 +98,10 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     return () => {
       active = false;
     };
-    // `forget` is the same function for as long as the screen is there
+    // `forget` is the same function for as long as the screen is there.
   }, [first]);
 
-  // a picture deleted on its own page is gone from here before the list reloads
+  // A picture deleted on its own page is gone from here before the list reloads.
   useEffect(
     () =>
       onPostDeleted((gone) => {
@@ -120,11 +112,11 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
-    // read afresh from its top: nothing is held back for the list before
+    // Read afresh from its top: nothing is held back for the list before.
     forget();
     await load();
     setRefreshing(false);
-    // `forget` is the same function for as long as the screen is there
+    // `forget` is the same function for as long as the screen is there.
   }, [load]);
 
   const loadMore = useCallback(async () => {
@@ -134,14 +126,10 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     setLoadingMore(false);
   }, [load, loadingMore, end, posts]);
 
-  /**
-   * Posting here opens the one composer, as everywhere else: words first, and a
-   * picture whenever it is wanted. What is posted from the memes is a meme once
-   * a picture is in it.
-   */
+  /** Posting opens the shared composer; a post from here becomes a meme once it has a picture. */
   const compose = useCallback(() => navigation.navigate('Compose', { meme: true }), [navigation]);
 
-  // the first screenful rises in once, as the list arrives
+  // The first screenful rises in once, as the list arrives.
   const entering = useListEntrance(!!posts && posts.length > 0);
   const renderItem = useCallback(
     ({ item, index }: { item: ImagePost; index: number }) => (
@@ -152,7 +140,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
           accessibilityRole="button"
           accessibilityLabel={item.caption ? t('memes.openPostCaption', { caption: item.caption }) : t('memes.openPost')}
         >
-          {/* who posted it — their face and their name, as on the wall — and when; an older server that sends no author shows only when */}
+          {/* The author's picture and name, as on the wall, and the time; an older server with no author shows only the time. */}
           <View style={[styles.cardHead, { flexDirection: dir.row }]}>
             {item.author ? (
               <View style={[styles.who, { flexDirection: dir.row }]}>
@@ -174,7 +162,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
             </View>
           )}
           {item.caption ? <Text style={[styles.caption, dir.free, { color: colors.textPrimary }]}>{item.caption}</Text> : null}
-          {/* a heart is the one reaction there is, counted on the post itself; here, how many have said something */}
+          {/* The heart is the only reaction and is counted on the post; this is the comment count. */}
           {item.commentCount > 0 ? (
             <View style={[styles.cardFoot, { flexDirection: dir.row }]}>
               <Icon name="chat" size={16} color={colors.textSecondary} />
@@ -228,7 +216,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
           />
         </AsyncBoundary>
 
-        {/* at the end of the line, which is the left in Soranî and Arabic */}
+        {/* At the end of the line, which is the left in Soranî and Arabic. */}
         <View style={[styles.fab, dir.row === 'row-reverse' ? styles.fabLeft : styles.fabRight, { bottom: spacing.xl }]}>
           <ClayButton label={t('memes.post')} icon="plus" tone="primary" onPress={compose} />
         </View>

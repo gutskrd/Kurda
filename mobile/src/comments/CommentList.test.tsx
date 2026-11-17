@@ -31,10 +31,8 @@ afterEach(() => {
 });
 
 /*
- * The gaps a thread is laid out with, which the reaches share between them:
- * Reply to Report along a line, the picture to the words beside it, the top
- * of a comment to the last line of the one before, and the words' column's
- * own 2 between its lines.
+ * The gaps a thread is laid out with, which reaches share: Reply to Report, picture to text, one comment to the
+ * next, and the text column's 2 between lines.
  */
 const ACTIONS_GAP = 16;
 const FACE_GAP = 8;
@@ -97,7 +95,7 @@ describe('a comment’s controls', () => {
     const report = slop('comment-report-c1');
     expect(reply).toEqual({ top: 12, bottom: 8, left: FACE_GAP / 2, right: 8 });
     expect(report).toEqual({ top: 12, bottom: 8, left: 8, right: 8 });
-    // a 16pt line drawn 4 taller above and below, then reached to 44
+    // A 16pt line drawn 4 taller above and below, then reached to 44.
     expect(drawn('comment-reply-c1').paddingVertical).toBe(4);
     expect(16 + 2 * 4 + reply.top + reply.bottom).toBe(44);
     expect(reply.right + report.left).toBe(ACTIONS_GAP);
@@ -109,7 +107,7 @@ describe('a comment’s controls', () => {
     expect(more).toEqual({ top: 8, bottom: 8, left: 0, right: 0 });
     const apart = LINE_GAP + Number(drawn('comment-more-c1').marginTop);
     expect(slop('comment-reply-c1').bottom + more.top).toBeLessThanOrEqual(apart);
-    // drawn 24 tall (its line and 4 above and below), reached to 40
+    // Drawn 24 tall (its line and 4 above and below), reached to 40.
     expect(16 + 2 * Number(drawn('comment-more-c1').paddingVertical) + more.top + more.bottom).toBe(40);
   });
 
@@ -117,7 +115,7 @@ describe('a comment’s controls', () => {
     show({ top: [comment()], replies: {} });
     const face = slop('comment-face-c1');
     const name = slop('rojda — open profile');
-    // a 32pt picture, a fingertip up and down and away from the words; half the gap toward them
+    // A 32pt picture, a fingertip up and down and away from the words; half the gap toward them.
     expect(face).toEqual({ top: 8, bottom: 8, left: 8, right: FACE_GAP / 2 });
     expect(name).toEqual({ top: 4, bottom: 12, left: 4, right: 4 });
     expect(face.right + name.left).toBe(FACE_GAP);
@@ -129,12 +127,12 @@ describe('a comment’s controls', () => {
       top: [comment({ replyCount: 1 }), comment({ id: 'c2', author: { id: 'u3', username: 'azad', avatarUrl: null }, authorId: 'u3' })],
       replies: { c1: [comment({ id: 'r1', parentCommentId: 'c1', depth: 1 })] },
     });
-    // the reply's picture sits under the line of Reply and Report it answers
+    // The reply's picture sits under the line of Reply and Report it answers.
     expect(slop('comment-face-r1')).toEqual({ top: 4, bottom: 12, left: 12, right: FACE_GAP / 2 });
     expect(slop('comment-reply-c1').bottom + slop('comment-face-r1').top).toBe(COMMENT_TOP);
-    // the next comment's name, under the reply's last line
+    // The next comment's name, under the reply's last line.
     expect(slop('comment-reply-r1').bottom + slop('azad — open profile').top).toBe(COMMENT_TOP);
-    // a reply's open branch has no “Show replies” of its own
+    // A reply's open branch has no “Show replies” of its own.
     expect(() => reachOf('comment-more-c1')).toThrow();
   });
 
