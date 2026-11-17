@@ -234,10 +234,12 @@ struct LetterOnPaper: View {
     VStack(alignment: .leading, spacing: 0) {
       VStack(alignment: .leading, spacing: 2) {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
+          // who wrote, and below what they wrote, are hidden while the phone is locked (StandBy, the Lock Screen)
           Text(sealed ? Words.text("sealed", locale: locale, ["name": letter.from.name]) : letter.from.name)
             .font(.system(size: family == .systemSmall ? 14 : 15, weight: sealed ? .semibold : .bold))
             .lineLimit(sealed ? 3 : 1)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .privacySensitive()
           if pinned {
             Image(systemName: "pin.fill")
               .font(.system(size: 11, weight: .semibold))
@@ -250,6 +252,7 @@ struct LetterOnPaper: View {
             .lineSpacing(family == .systemLarge ? 4 : 2)
             .lineLimit(family == .systemLarge ? 7 : 3)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .privacySensitive()
         }
       }
       .padding(6)
