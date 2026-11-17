@@ -24,14 +24,9 @@ import { groupError } from './groupError';
 import { heldRow } from '../theme/MotionParts';
 
 /**
- * The requests to come back to a group, for its owner and admins, oldest
- * first: who asks, what they wrote, when, and how many times they were
- * turned down before — then Approve or Decline.
- *
- * Approving lifts the ban and adds them back where every usual rule allows
- * (the server says whether it could); declining asks once more, and can stop
- * that person's requests here for good. An answered request leaves the list
- * at once, and comes back if the answer did not get through.
+ * The requests to come back to a group, oldest first, for its owner and admins: who asks, what they wrote, when, and
+ * how many times they were turned down, with Approve or Decline. Approving lifts the ban and adds them back where the
+ * usual rules allow. An answered request leaves the list at once, and returns if the answer did not get through.
  */
 export function GroupRequestsScreen({ groupId, onExit }: { groupId: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -57,7 +52,7 @@ export function GroupRequestsScreen({ groupId, onExit }: { groupId: string; onEx
       return () => {
         live = false;
       };
-      // a retry asks again
+      // A retry asks again.
     }, [client, groupId, attempt]),
   );
 
@@ -112,7 +107,7 @@ export function GroupRequestsScreen({ groupId, onExit }: { groupId: string; onEx
               onPress={() => navigation.navigate('UserProfile', { userId: r.userId })}
               accessibilityRole="button"
               accessibilityLabel={`${r.username}, ${noticeTime(r.sentAt, t, locale)}`}
-              // held, the row fills as a list row does: who they are opens their profile
+              // Held, the row fills as a list row does; it opens their profile.
               style={({ pressed }) => [styles.who, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
             >
               <InitialsAvatar name={r.username} id={r.userId} size={44} photoUrl={r.avatarUrl} />
@@ -163,9 +158,8 @@ export function GroupRequestsScreen({ groupId, onExit }: { groupId: string; onEx
 }
 
 /**
- * Turning a request down, asked once more: how long they will wait before
- * they may ask again (each request turned down makes it longer), and a switch
- * to stop their requests to this group altogether.
+ * Turning a request down: how long until they may ask again (longer after each refusal), and a switch to stop their
+ * requests to this group altogether.
  */
 function DeclineSheet({
   groupId,
@@ -239,6 +233,6 @@ const styles = StyleSheet.create({
   actions: { gap: spacing.sm },
   action: { flex: 1 },
   sheetText: { fontSize: typography.sizes.sm, lineHeight: 20 },
-  // a list row inside the sheet runs edge to edge, as one in Settings does
+  // A list row inside the sheet runs edge to edge, as in Settings.
   edge: { marginHorizontal: -layout.gutter },
 });

@@ -22,10 +22,8 @@ import { groupError } from './groupError';
 import { heldRow } from '../theme/MotionParts';
 
 /**
- * Who is banned from a group, for its owner and admins, newest first: until
- * when (or for good), the reason they were given, who banned them, and
- * whether their requests to come back were stopped. Unban asks first, and
- * says it does not add them back — they can join, or be added, again.
+ * Who is banned from a group, newest first, for its owner and admins: until when, the reason, who banned them, and
+ * whether their requests to come back were stopped. Unban asks first, and does not add them back.
  */
 export function GroupBansScreen({ groupId, onExit }: { groupId: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -50,7 +48,7 @@ export function GroupBansScreen({ groupId, onExit }: { groupId: string; onExit: 
       return () => {
         live = false;
       };
-      // a retry asks again
+      // A retry asks again.
     }, [client, groupId, attempt]),
   );
 
@@ -107,7 +105,7 @@ export function GroupBansScreen({ groupId, onExit }: { groupId: string; onExit: 
                 onPress={() => navigation.navigate('UserProfile', { userId: b.userId })}
                 accessibilityRole="button"
                 accessibilityLabel={`${b.username}, ${until}`}
-                // held, the row fills as a list row does: who they are opens their profile
+                // Held, the row fills as a list row does; it opens their profile.
                 style={({ pressed }) => [styles.who, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
               >
                 <InitialsAvatar name={b.username} id={b.userId} size={44} photoUrl={b.avatarUrl} />

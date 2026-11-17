@@ -15,18 +15,9 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { createGroup } from './api';
 
 /**
- * Starting a group, from Messages: a name, and Create.
- *
- * A name is all a group needs; what it is about can be said here or later,
- * from its page. There is nothing to choose about who may find it or come in,
- * because every group is private: the line under the fields says so, and the
- * group's chat opens next with the sheet for adding friends, which is how
- * anyone else gets into it (`onCreated`).
- *
- * The shared bottom sheet, so it moves up out of the keyboard's way while the
- * name is typed. At a group limit (`limit`, counted from the reader's own
- * groups as the server counts them) it says which one and what makes room,
- * and has nothing to send.
+ * Starting a group from Messages: a name, and Create. Every group is private, so there is nothing to choose about who
+ * may find it; its chat opens next with the sheet for adding friends (`onCreated`). At a group limit (`limit`) it says
+ * which and what makes room, and has nothing to send.
  */
 export function NewGroupSheet({
   open,

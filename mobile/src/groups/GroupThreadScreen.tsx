@@ -51,7 +51,7 @@ import { Loading } from '../theme/Loading';
 const MAX_LEN = 2000;
 
 type Message = Omit<GroupMessage, 'body'> & ChatMessage & {
-  /** sent from here and not yet answered for by the server (chat/sending.ts) */
+  /** Sent from here and not yet answered by the server (chat/sending.ts). */
   pending?: boolean;
 };
 
@@ -61,10 +61,7 @@ const isOutside = (error: ApiError): boolean => error.code === 'NOT_A_MEMBER' ||
 /** The group's own page refused as not found: deleted, or private and the reader is neither in it nor banned from it. */
 const isMissing = (error: ApiError): boolean => error.code === 'GROUP_NOT_FOUND' || error.status === 404;
 
-/**
- * The ban a refusal tells of, when the group's page did not say: until when,
- * from the refusal itself. Null for any other refusal.
- */
+/** The ban a refusal tells of, when the group's page did not say. Null for any other refusal. */
 function bannedFrom(error: ApiError): Banned | null {
   if (error.code !== 'GROUP_BANNED') return null;
   const until = (error.details as { until?: unknown } | undefined)?.until;
@@ -72,40 +69,16 @@ function bannedFrom(error: ApiError): Banned | null {
 }
 
 /**
- * A group channel (KUR-085).
+ * A group channel, drawn like the DM thread (both use chat/MessageRow.tsx) except that each run of a member's messages
+ * has their name over it and their face at its foot. History pages backwards on `before`, the oldest message held.
  *
- * The same thread the browser shows, and deliberately the same shape as the DM
- * screen next door (both draw chat/MessageRow.tsx) — with the one difference
- * a room forces: a message carries who sent it. Two people need no names;
- * twenty do, so each run of one member's messages has their name over it and
- * their face at its foot. Whoever is writing shows as a bubble of dots under
- * the newest message, with their name over it.
+ * A gift here reaches the room as a card that is nobody's in particular; each recipient's own card arrives on their
+ * channel (`gift_received`) and is swapped in, and when one is opened (`group_msg_gift_opened`) the card is fetched
+ * again, since it is drawn per viewer.
  *
- * History pages backwards on `before`, which is the oldest message held. The
- * window is the server's, not ours.
- *
- * Gifts: the gift button gives something to your friends among the members
- * (only friends can be given anything); a gift posted here reaches the room
- * as a card that is nobody's in particular, and each recipient's own card —
- * theirs to unwrap — comes on their own channel (`gift_received`) and is
- * swapped in. When one is opened the room is told (`group_msg_gift_opened`)
- * and the card is fetched again, since it is drawn per viewer.
- *
- * Pressing and holding a message offers its options (Copy, and Report for
- * someone else's). The ⋯ in the header clears the chat — for the reader, or,
- * as its owner or an admin, for everyone — and reports the group.
- *
- * An empty chat welcomes (Welcome.tsx); a chat an admin cleared says so at
- * the top of its history. A history that could not be read says that, with
- * the way to ask again, and is never drawn as a group nobody has written in. A group made a moment ago opens with the sheet for
- * adding friends up (`addFriends`), since nobody else is in it until its
- * owner brings them.
- *
- * A group is private, so only its members see it here. Someone removed or
- * banned while it is open finds, at the next read or send, where they stand
- * in place of the chat (Standing.tsx), never a raw error; someone banned who
- * opens it sees the same card. Anyone else is told there is no such group,
- * which is all the server tells them.
+ * An empty chat welcomes (Welcome.tsx); a new group opens with the add-friends sheet up (`addFriends`). Someone removed
+ * or banned while it is open sees where they stand (Standing.tsx) in place of the chat, never a raw error; anyone else
+ * is told there is no such group.
  */
 export function GroupThreadScreen({
   groupId,
@@ -118,21 +91,21 @@ export function GroupThreadScreen({
   onFindPeople,
 }: {
   groupId: string;
-  /** '' when the way in only knew the id: looked up */
+  /** '' when the way in only knew the id; looked up. */
   name: string;
   openGift?: string;
-  /** open with the add-friends sheet up: the group was made a moment ago */
+  /** Open with the add-friends sheet up: the group was just made. */
   addFriends?: boolean;
   onExit: () => void;
   onOpenMembers: () => void;
-  /** left the group from a report's done screen */
+  /** Left the group from a report's done screen. */
   onLeft: () => void;
-  /** to where people are found, from the add-friends sheet of someone with no friends yet */
+  /** To where people are found, from the add-friends sheet of someone with no friends yet. */
   onFindPeople: () => void;
 }): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
-  // mirrored in Soranî and Arabic, as a chat with one friend is
+  // Mirrored in right-to-left languages, as a chat with one friend is.
   const dir = useDirection();
   const bottom = useScreenBottomInset(spacing.md);
   const { t, locale } = useI18n();
@@ -140,10 +113,10 @@ export function GroupThreadScreen({
   const me = user?.id ?? '';
 
   const [messages, setMessages] = useState<Message[]>([]);
-  // what the room's listener (made once) reads: the messages held now
+  // What the room's listener (made once) reads: the messages held now.
   const held = useRef<Message[]>([]);
   held.current = messages;
-  // the messages sent from here that the server has not answered for yet, drawn after the ones it has
+  // Messages sent from here that the server has not answered for yet, drawn after the ones it has.
   const { outgoing, begin, settle, echoed } = useOutgoing();
   const thread = useMemo<Message[]>(
     () => [
@@ -154,9 +127,9 @@ export function GroupThreadScreen({
     ],
     [messages, outgoing, me, user?.username],
   );
-  // newest first, for the inverted list — once per change to the thread, not per keystroke
+  // Newest first, for the inverted list; once per change to the thread, not per keystroke.
   const newestFirst = useMemo<Message[]>(() => [...thread].reverse(), [thread]);
-  // where each message sits: its day, its place in its run, whether it says the time
+  // Where each message sits: its day, its place in its run, whether it shows the time.
   const places = useMemo(
     () => placeMessages(thread, new Date(), { locale, today: t('chat.day.today'), yesterday: t('chat.day.yesterday'), earlier: t('chat.day.earlier') }),
     [thread, locale, t],
@@ -170,21 +143,22 @@ export function GroupThreadScreen({
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [exhausted, setExhausted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // the history could not be read at all: said, with the way to ask again, rather than passing for a group nobody has written in
+  // The history could not be read at all: said, with the way to ask again, rather than passing for an empty group.
   const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [name, setName] = useState(nameParam);
-  // null until the club says: its menu waits rather than flash a report button at its owner
+  // Null until the group is read: its menu waits rather than flash a report button at its owner.
   const [detail, setDetail] = useState<GroupDetail | null>(null);
   const [cleared, setCleared] = useState<GroupChatCleared | null>(null);
-  // a read or a send refused because the reader is not in the group; `left` when they were in it as this screen showed it
+  // A read or send refused because the reader is not in the group; `left` when they were in it as this screen showed
+  // it.
   const [outside, setOutside] = useState<{ left: boolean; error: ApiError } | null>(null);
-  // the group's own page answered that there is no such group for this reader
+  // The group's page answered that there is no such group for this reader.
   const [missing, setMissing] = useState(false);
-  // false once the server said the reader may not post here (muted, restricted): the greetings go
+  // False once the server said the reader may not post here (muted, restricted); the greetings go.
   const [canPost, setCanPost] = useState(true);
   const [addingFriends, setAddingFriends] = useState(addFriends);
-  // asks for the history again: when the reader turns out to be back in the group the card said they were out of
+  // Asks for the history again, when the reader turns out to be back in the group.
   const [reloadKey, setReloadKey] = useState(0);
   const outsideNow = useRef(false);
   outsideNow.current = outside !== null;
@@ -192,23 +166,21 @@ export function GroupThreadScreen({
   const [friends, setFriends] = useState<GiftFriend[] | null>(null);
   const [picking, setPicking] = useState(false);
   const [flying, setFlying] = useState<{ tier: GiftTier; count: number; key: number } | null>(null);
-  // a group gift that reached some of them: who it did not reach, and why
+  // A group gift that reached only some of them: who it did not reach, and why.
   const [giftNote, setGiftNote] = useState<string | null>(null);
   const [unwrapping, setUnwrapping] = useState<UnwrapTarget | null>(null);
   const [reporting, setReporting] = useState<{ target: ReportTarget; senderId?: string; sender?: string } | null>(null);
   const { typing, note } = useTypingWatch();
-  // a recipient's own card can arrive before the room's message does
+  // A recipient's own card can arrive before the room's message does.
   const pendingCards = useRef(new Map<string, GiftCard>());
-  // by id, as in the DM thread: a second gift here from a banner unwraps too
+  // By id, as in the DM thread, so a second gift here from a banner unwraps too.
   const autoOpened = useRef<string | null>(null);
   useOpenChat({ kind: 'group', groupId });
 
   /**
-   * The group's name, picture, roster and where the reader stands with it —
-   * asked each time the thread comes back into view, so a rename made on its
-   * info page shows here at once, and again when a refusal says the reader
-   * is out of it. "Not found" is an answer too: what was read before is kept,
-   * for the name and picture of a group they were just taken out of.
+   * The group's name, picture, roster and the reader's standing, asked each time the thread comes into view (so a
+   * rename shows at once) and when a refusal says the reader is out. On "not found" what was read before is kept, for
+   * the name and picture.
    */
   const loadDetail = useCallback(() => {
     let active = true;
@@ -217,7 +189,7 @@ export function GroupThreadScreen({
       if (!res.ok) {
         if (isMissing(res.error)) {
           setMissing(true);
-          // read as a member a moment ago, and now there is no such group for them: taken out (or the group is gone)
+          // Read as a member a moment ago, and now there is no such group for them: taken out, or the group is gone.
           if (readOnce.current) setOutside((was) => was ?? { left: true, error: res.error });
         }
         return;
@@ -225,7 +197,7 @@ export function GroupThreadScreen({
       setMissing(false);
       setDetail(res.data);
       setName(res.data.name);
-      // a member again (added back, or a request approved) while the card stood in for the chat: the chat returns
+      // A member again (added back, or a request approved) while the card stood in for the chat: the chat returns.
       if (res.data.myRole && outsideNow.current) {
         setOutside(null);
         setLoading(true);
@@ -238,7 +210,7 @@ export function GroupThreadScreen({
   }, [client, groupId]);
   useFocusEffect(loadDetail);
 
-  /** Not in the group (any more): the chat gives way to where the reader stands. */
+  /** Not in the group any more: the chat gives way to where the reader stands. */
   const goOutside = useCallback(
     (refusal: ApiError) => {
       setOutside({ left: readOnce.current, error: refusal });
@@ -268,7 +240,7 @@ export function GroupThreadScreen({
     };
   }, [client, groupId, t, goOutside, reloadKey]);
 
-  // what was said while the connection was away, and the card of a game started from here
+  // What was said while the connection was away, and the card of a game started from here.
   useCatchUp(
     useCallback(() => {
       void groupHistory(client, groupId).then((res) => {
@@ -276,7 +248,7 @@ export function GroupThreadScreen({
           if (isOutside(res.error)) goOutside(res.error);
           return;
         }
-        // cleared while away: what is held from before it goes too
+        // Cleared while away: what is held from before it goes too.
         const since = clearedSince(res.data.cleared);
         setCleared(res.data.cleared ?? null);
         setMessages((prev) => mergeLatest(afterClear(prev, since), res.data.messages as Message[]));
@@ -285,20 +257,19 @@ export function GroupThreadScreen({
     }, [client, groupId, goOutside]),
   );
 
-  /** A clear made on this phone (here or on the group's info page): what is held from before it goes at once. */
+  /** A clear made on this phone (here or on the group's page): what is held from before it goes at once. */
   const applyCleared = useCallback((next: GroupChatCleared) => {
     setCleared(next);
     setMessages((prev) => afterClear(prev, clearedSince(next)));
-    // nothing older is left to page back to
+    // Nothing older is left to page back to.
     setExhausted(true);
   }, []);
   useClearedHere(groupId, applyCleared);
   const clearChat = useClearChat(groupId, detail?.memberCount ?? 0, setError);
 
   /**
-   * Who here can be given a gift: your friends among the members, as the
-   * roster shows them. Asked when the picker opens, not before — most visits
-   * to a thread give nothing.
+   * Who here can be given a gift: your friends among the members. Asked when the picker opens, since most visits give
+   * nothing.
    */
   const loadFriends = useCallback(async () => {
     const [roster, mine] = await Promise.all([
@@ -337,14 +308,8 @@ export function GroupThreadScreen({
   }, [client, groupId, messages, loadingOlder, exhausted, goOutside]);
 
   /**
-   * The room, which this screen used to have no connection to at all.
-   *
-   * History loaded once on mount and nothing after it, so a reply to a group
-   * message did not appear until you left the thread and came back — the browser
-   * has joined `group:{id}` and listened for these three since the thread was
-   * built. Our own send is in the thread at once, as one on its way
-   * (chat/sending.ts), and takes the server's copy from whichever arrives
-   * first, the send's answer or the room's echo: the other is dropped by id.
+   * The room's live events. Our own send shows at once as on its way (chat/sending.ts) and takes the server's copy from
+   * whichever arrives first, the send's answer or the room's echo; the other is dropped by id.
    */
   useRoomEvents(
     `group:${groupId}`,
@@ -356,10 +321,11 @@ export function GroupThreadScreen({
           if (!message?.id) return;
           const own = message.gift ? pendingCards.current.get(message.gift.batchId) : undefined;
           const shown = own ? { ...message, gift: own } : message;
-          // our own words back from the room before the send was answered: the one drawn as on its way gives them its place
+          // Our own words echoed by the room before the send was answered: the copy drawn as on its way gives them its
+          // place.
           if (message.senderId === me && message.body && !held.current.some((m) => m.id === message.id)) echoed(message.body);
           setMessages((prev) => (prev.some((m) => m.id === shown.id) ? prev : [...prev, shown]));
-          // it is on screen, so it counts as read
+          // It is on screen, so it counts as read.
           void markGroupRead(client, groupId);
           return;
         }
@@ -368,13 +334,13 @@ export function GroupThreadScreen({
           setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deleted: true, body: '' } : m)));
           return;
         }
-        // someone banned with their messages: each keeps its place, emptied, as one deleted does
+        // Someone banned with their messages: each keeps its place, emptied, as a deleted one does.
         if (ev.type === 'group_msgs_deleted' && typeof ev.senderId === 'string') {
           const sender = ev.senderId;
           setMessages((prev) => prev.map((m) => (m.senderId === sender ? { ...m, deleted: true, body: '' } : m)));
           return;
         }
-        // an admin cleared the chat for everyone: gone from this view at once, and the line says who
+        // An admin cleared the chat for everyone: gone from this view at once, and the line says who.
         if (ev.type === 'group_chat_cleared' && typeof ev.at === 'string') {
           const at = ev.at;
           const by = typeof ev.by === 'string' ? ev.by : null;
@@ -383,12 +349,12 @@ export function GroupThreadScreen({
           setExhausted(true);
           return;
         }
-        // a gift here was opened: each member's card is their own, so fetch it again
+        // A gift here was opened: each member's card is their own, so fetch it again.
         if (ev.type === 'group_msg_gift_opened' && typeof ev.batchId === 'string') {
           void giftBatchCard(client, ev.batchId).then((res) => res.ok && setMessages((prev) => withCard(prev, res.data.card)));
           return;
         }
-        // the room includes us, so our own pings come back — ignore those
+        // The room includes us, so our own typing pings come back; ignore those.
         if (ev.type === 'group_typing' && typeof ev.username === 'string' && ev.userId !== me) {
           note(ev.username);
         }
@@ -397,7 +363,7 @@ export function GroupThreadScreen({
     ),
   );
 
-  // your own card for a gift posted here (the room's names nobody as "me")
+  // Your own card for a gift posted here (the room's names nobody as "me").
   useGiftEvents((ev) => {
     if (ev.type !== 'gift_received' || ev.chat.kind !== 'group' || ev.chat.groupId !== groupId) return;
     pendingCards.current.set(ev.batchId, ev.card);
@@ -413,7 +379,7 @@ export function GroupThreadScreen({
       }
       void openGiftApi(client, giftId).then((res) => {
         if (res.ok) setUnwrapping({ giftId, card: res.data.card, fromName: '' });
-        // a gift that cannot be opened now says so, rather than the tap doing nothing
+        // A gift that cannot be opened now says so, rather than the tap doing nothing.
         else if (!isMaintenance(res.error)) Alert.alert(t('error.generic'), describeError(res.error, t));
       });
     },
@@ -430,15 +396,15 @@ export function GroupThreadScreen({
     useCallback(() => void sendGroupTyping(client, groupId), [client, groupId]),
   );
 
-  /** Send words into the room: null when they went, else the refusal, for whoever asked to say. */
+  /** Send words into the room: null when they went, else the refusal. */
   const post = useCallback(
     async (body: string): Promise<ApiError | null> => {
-      // in the thread at once, as one on its way; the server's copy takes its place, or it is taken out
+      // In the thread at once as on its way; the server's copy takes its place, or it is taken out.
       const sending = begin(body);
       const res = await sendToGroup(client, groupId, body);
       settle(sending);
       if (!res.ok) return res.error;
-      // once: the room may have echoed it already
+      // Once: the room may have echoed it already.
       setMessages((prev) => appendOnce(prev, res.data as Message));
       return null;
     },
@@ -446,10 +412,8 @@ export function GroupThreadScreen({
   );
 
   /**
-   * A message the server would not take: out of the group, the card that says
-   * where the reader stands; a limit on the account, what and until when, with
-   * the way to Account standing (and no more greetings to tap); anything else
-   * as it always did.
+   * A message the server would not take: out of the group, the standing card; a limit on the account, what and until
+   * when with the way to Account standing (and no more greetings); anything else as usual.
    */
   const refusedSend = useCallback(
     (refused: ApiError) => {
@@ -472,12 +436,12 @@ export function GroupThreadScreen({
     setError(null);
     setSendError(null);
     haptic('tap');
-    // sending is what takes you back down to the newest message, wherever you were reading
+    // Sending scrolls back down to the newest message.
     toLatest();
     const refused = await post(body);
     if (!refused) return;
     haptic('error');
-    // the draft comes back when the message did not go, before anything typed since, so nothing is lost
+    // The draft comes back when the message did not go, before anything typed since, so nothing is lost.
     setDraft((now) => restoredDraft(body, now));
     refusedSend(refused);
   }, [draft, post, refusedSend, toLatest]);
@@ -503,7 +467,10 @@ export function GroupThreadScreen({
 
   const role = detail?.myRole ?? null;
   const member = role !== null && !outside && !missing;
-  /** The ⋯ in the header, a member's: report the group (not its owner), clear the chat (for everyone, its owner and admins). */
+  /**
+   * The ⋯ in the header, a member's: report the group (not its owner), and clear the chat (for everyone: owner and
+   * admins).
+   */
   const menu = member
     ? [
         ...(role !== 'owner' ? [{ label: t('groups.report'), onPress: () => setReporting({ target: { type: 'group' as const, groupId } }) }] : []),
@@ -513,11 +480,11 @@ export function GroupThreadScreen({
     : [];
   const view = clearedView(cleared);
   const group = { id: groupId, name, photoUrl: detail?.photoUrl ?? null };
-  // out of the group: banned, as its page says (or, before it has answered, the refusal alone)
+  // Out of the group: banned, as its page says (or, until it answers, the refusal alone).
   const banned: Banned | null = !outside || missing ? null : detail?.standing?.kind === 'banned' ? detail.standing : bannedFrom(outside.error);
-  // there is no such group for this reader, and they were not in it a moment ago
+  // There is no such group for this reader, and they were not in it a moment ago.
   const notFound = missing && !outside?.left;
-  // the owner or an admin with nobody else in the group yet: the welcome offers the way to bring people in
+  // The owner or an admin with nobody else in the group yet: the welcome offers to bring people in.
   const staff = member && canModerateGroup(role);
   const lonely = staff && detail !== null && detail.memberCount <= 1;
 
@@ -527,13 +494,13 @@ export function GroupThreadScreen({
         <ScreenHeader
           title={notFound ? t('groups.missing.title') : name}
           titleAvatar={notFound ? undefined : <GroupAvatar name={name} id={groupId} size={30} photoUrl={group.photoUrl} />}
-          // the group's page is its members': out of it, the name is only a name
+          // The group's page is its members': out of it, the name is only a name.
           onTitlePress={member ? onOpenMembers : undefined}
           titleHint={member ? t('groups.info') : undefined}
           onBack={onExit}
           hairline
           right={
-            // the group's people and its menu, one shape in the corner; either alone is the shape by itself
+            // The group's people and its menu share one pill; either alone is the shape by itself.
             member && menu.length > 0 ? (
               <ActionPill>
                 <HeaderButton icon="people" label={t('groups.info')} onPress={onOpenMembers} />
@@ -602,9 +569,9 @@ export function GroupThreadScreen({
               scrollEventThrottle={64}
               onEndReached={loadOlder}
               onEndReachedThreshold={0.4}
-              // under the newest message, where theirs is about to land (the head of an inverted list is its foot)
+              // Under the newest message, where theirs is about to land (an inverted list's head is its foot).
               ListHeaderComponent={<TypingBubble names={typing} named />}
-              // the top of the history: older messages on their way, or above all that is held, who cleared the chat
+              // The top of the history: older messages on their way, or above everything held, who cleared the chat.
               ListFooterComponent={
                 loadingOlder ? (
                   <Loading style={{ marginVertical: spacing.md }} />
@@ -636,7 +603,7 @@ export function GroupThreadScreen({
         ) : null}
         <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} />
 
-        {/* out of the group, there is nothing to send: the card says where they stand */}
+        {/* Out of the group there is nothing to send: the card says where they stand. */}
         {outside || missing ? null : (
           <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
             <Pressable
@@ -721,7 +688,7 @@ export function GroupThreadScreen({
         target={reporting?.target ?? { type: 'group', groupId }}
         name={reporting?.target.type === 'group' ? name : null}
         blockable={reporting?.senderId && reporting.senderId !== me ? { userId: reporting.senderId, name: reporting.sender ?? null } : null}
-        // its owner cannot leave a club (the server says so in English): not offered
+        // Its owner cannot leave a group, so it is not offered.
         leavable={member && role !== 'owner' ? { groupId, name } : null}
         onClose={() => setReporting(null)}
         onLeftGroup={() => {
@@ -733,11 +700,7 @@ export function GroupThreadScreen({
   );
 }
 
-/**
- * The thread while it loads: the members' bubbles at the start with a face
- * and a name over them, yours at the end, sitting on the composer where the
- * newest are — the shapes the thread is about to draw.
- */
+/** The thread while it loads, in the shapes it is about to draw. */
 function ClubThreadSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
@@ -774,25 +737,25 @@ const styles = StyleSheet.create({
   skeletonMain: { flexShrink: 1 },
   senderSkeleton: { marginBottom: 2, marginHorizontal: spacing.xs },
   screen: { flex: 1 },
-  // the runs keep their own distance (chat/MessageRow.tsx); the tails reach a little into the margin
+  // The runs keep their own distance (chat/MessageRow.tsx); the tails reach a little into the margin.
   list: { paddingHorizontal: spacing.md - 4, paddingVertical: spacing.md },
   rowEnd: { alignSelf: 'flex-end' },
   rowStart: { alignSelf: 'flex-start' },
-  // a card in the middle of what the chat would fill
+  // A card in the middle of what the chat would fill.
   centred: { flexGrow: 1, justifyContent: 'center', padding: spacing.md },
   welcome: { flexGrow: 1, paddingTop: spacing.sm },
   error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   giftNote: { textAlign: 'center', fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   inputRow: {
     flexDirection: 'row',
-    // the buttons stay by the last line as a long message grows the field upwards
+    // The buttons stay by the last line as a long message grows the field upwards.
     alignItems: 'flex-end',
     gap: spacing.xs,
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  // a plain glyph beside the field, as the tools by a message field are; the touch is still 44pt
+  // A plain glyph beside the field, as the tools by a message field are; the touch target is still 44pt.
   giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   picking: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
 });

@@ -68,7 +68,7 @@ function alerts(): Array<{ title: string; message?: string; buttons: AlertButton
   return shown;
 }
 const press = (buttons: AlertButton[], text: string) => act(async () => buttons.find((b) => b.text === text)!.onPress?.());
-/** berfin's ⋯, the second row an admin may act on after the owner's. */
+/** Berfin's ⋯, the second row an admin may act on after the owner's. */
 const berfinMenu = () => fireEvent.click(screen.getAllByRole('button', { name: 'Post options' })[1]!);
 
 describe('removing or banning a member', () => {
@@ -93,7 +93,7 @@ describe('removing or banning a member', () => {
     const shown = alerts();
     berfinMenu();
     await press(shown[0]!.buttons, 'Ban…');
-    // how long, as one clear choice of three, a day to begin with
+    // How long, as one choice of three, a day to begin with.
     expect(await screen.findByRole('radiogroup', { name: 'How long' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: '1 day' }).getAttribute('aria-checked')).toBe('true');
     fireEvent.click(screen.getByRole('radio', { name: '1 week' }));
@@ -111,7 +111,7 @@ describe('removing or banning a member', () => {
     expect(client.calls.find((c) => c.path === '/groups/g1/bans')?.body).toEqual({ userId: 'u-member', duration: '7d', reason: 'Spam', deleteMessages: true });
     expect(felt).toContain('correct');
     expect(announce).toHaveBeenCalledWith('berfin is banned');
-    // the sheet goes, and the page asks for the group again
+    // The sheet goes, and the page asks for the group again.
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Ban berfin' })).toBeNull());
     expect(client.calls.filter((c) => c.path === '/groups/g1').length).toBe(2);
   });
@@ -187,7 +187,7 @@ describe('requests to come back', () => {
     const client = open({ 'POST /groups/g1/requests/u5/decline': ok({ ok: true }) });
     fireEvent.click(await screen.findByRole('button', { name: 'Decline kawa’s request' }));
     expect(await screen.findByText('Decline kawa’s request?')).toBeTruthy();
-    // turned down once already, so the next wait is the second step
+    // Turned down once already, so the next wait is the second step.
     expect(screen.getByText('kawa can ask again in 7 days.')).toBeTruthy();
     fireEvent.click(screen.getByRole('switch', { name: 'Stop requests from kawa' }));
     expect(screen.getByText('kawa won’t be able to ask to come back to this group again.')).toBeTruthy();

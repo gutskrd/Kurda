@@ -6,8 +6,8 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-// the catch-up when the screen comes back into focus (realtime/catchUp) is not under test here
-// a focus effect runs once, as the screen comes into view
+// The catch-up on refocus (realtime/catchUp) is not under test here; a focus effect runs once, as the screen comes into
+// view.
 vi.mock('@react-navigation/native', async () => {
   const { useEffect } = await import('react');
   return {
@@ -15,7 +15,7 @@ vi.mock('@react-navigation/native', async () => {
     useFocusEffect: (effect: () => void | (() => void)) => useEffect(effect, [effect]),
   };
 });
-// the room's live events are not under test here
+// The room's live events are not under test here.
 vi.mock('../realtime/useRoomEvents', () => ({ useRoomEvents: () => undefined }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { Alert, type AlertButton } from 'react-native';
@@ -45,7 +45,7 @@ describe('GroupThreadScreen gifts', () => {
       'GET /groups/g1/chat': ok({ messages: [] }),
       'POST /groups/g1/chat/read': ok({ ok: true }),
       'GET /groups/g1': ok({ id: 'g1', name: 'Newroz club', members: [{ userId: 'me' }, { userId: 'u2' }, { userId: 'u3' }, { userId: 'u9' }] }),
-      // u9 is a member but not a friend; u4 is a friend but not a member
+      // u9 is a member but not a friend; u4 is a friend but not a member.
       'GET /friends?limit=500': ok({
         friends: [
           { userId: 'u2', username: 'shilan', displayName: 'Şîlan' },
@@ -62,18 +62,18 @@ describe('GroupThreadScreen gifts', () => {
     );
     fireEvent.click(await screen.findByRole('button', { name: 'Send a gift' }));
     fireEvent.click(await screen.findByRole('checkbox', { name: 'All my friends here' }));
-    // only friends who are members are offered
+    // Only friends who are members are offered.
     expect(screen.getByRole('checkbox', { name: 'Şîlan' })).toBeTruthy();
     expect(screen.getByRole('checkbox', { name: 'azad' })).toBeTruthy();
     expect(screen.queryByRole('checkbox', { name: 'kawa' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    // the gifts are fetched as the step opens, behind the group's own reads: give a busy run time to draw them
+    // The gifts are fetched as the step opens, behind the group's own reads: give a busy run time to draw them.
     fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }, { timeout: 3000 }));
     fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr' }));
-    // it reached Şîlan; Azad is named, with why, under the thread
+    // It reached Şîlan; Azad is named, with why, under the thread.
     expect(await screen.findByText('azad already has it.')).toBeTruthy();
     await waitFor(() => expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ toUserIds: ['u2', 'u3'] }));
-    // typing again clears it
+    // Typing again clears it.
     fireEvent.change(screen.getByLabelText('Message…'), { target: { value: 'spas' } });
     expect(screen.queryByText('azad already has it.')).toBeNull();
   });
@@ -135,18 +135,18 @@ describe('GroupThreadScreen reports', () => {
       }),
     });
 
-  // react-native-web wires a pressable's handlers in an effect, so a press the
-  // moment a sheet appears can land before they exist; let it settle first
+  // React-native-web wires a pressable's handlers in an effect, so a press the moment a sheet appears can land before
+  // they exist; let it settle first.
   const settle = () => act(async () => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 
   const reportTheMessage = async (): Promise<void> => {
-    // a hold opens the message's options, the system's sheet (an alert here): Copy, and Report last
+    // A hold opens the message's options (an alert here): Copy, and Report last.
     const sheets: AlertButton[][] = [];
     vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
       sheets.push(buttons ?? []);
     });
     fireEvent.mouseDown(await screen.findByText('silav'), { button: 0, buttons: 1 });
-    // a hold is a real long press, so wait longer than findBy's default second
+    // A hold is a real long press, so wait longer than findBy's default second.
     await waitFor(() => expect(sheets).toHaveLength(1), { timeout: 3000 });
     expect(sheets[0]!.map((b) => b.text)).toEqual(['Copy', 'Report', 'Cancel']);
     act(() => sheets[0]!.find((b) => b.text === 'Report')!.onPress?.());

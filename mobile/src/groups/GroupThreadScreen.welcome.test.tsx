@@ -7,7 +7,7 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the room's live events are under test in GroupThreadScreen.clearing.test.tsx
+// The room's live events are under test in GroupThreadScreen.clearing.test.tsx.
 vi.mock('../realtime/useRoomEvents', () => ({ useRoomEvents: () => undefined }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -72,13 +72,13 @@ describe('an empty group chat', () => {
     expect(screen.getByRole('heading', { name: 'Newroz club' })).toBeTruthy();
     expect(screen.getByText('Say hello')).toBeTruthy();
     const chips = ['Silav! 👋', 'Rojbaş!', 'Çawa yî?'].map((g) => screen.getByRole('button', { name: g }));
-    // read in Kurmancî by a screen reader, whatever language the app is in
+    // Read in Kurmancî by a screen reader, whatever language the app is in.
     expect(chips[0]!.getAttribute('lang')).toBe('ku');
     await act(async () => {
       fireEvent.click(chips[1]!);
     });
     expect(client.calls.find((c) => c.method === 'POST' && c.path === '/groups/g1/chat')?.body).toEqual({ body: 'Rojbaş!' });
-    // said, so the chat is no longer empty
+    // Said, so the chat is no longer empty.
     expect(await screen.findByText('Rojbaş!')).toBeTruthy();
     expect(screen.queryByText('Say hello')).toBeNull();
   });
@@ -90,7 +90,7 @@ describe('an empty group chat', () => {
       'POST /groups/g1/chat': () => new Promise((resolve) => (answer = resolve)),
     });
     fireEvent.click(await screen.findByRole('button', { name: 'Rojbaş!' }));
-    // said, before the server has answered: the welcome gives way to the thread, with the message marked as on its way
+    // Before the server has answered, the welcome gives way to the thread with the message marked as on its way.
     const sending = await screen.findByTestId('message-sending');
     expect(sending.textContent).toContain('Rojbaş!');
     expect(screen.queryByText('Say hello')).toBeNull();
@@ -108,7 +108,7 @@ describe('an empty group chat', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Rojbaş!' }));
     expect(await screen.findByTestId('message-sending')).toBeTruthy();
     await act(async () => answer(fail({ message: 'Could not send.' })));
-    // never left looking sent: the chat is empty again, and says why
+    // Never left looking sent: the chat is empty again, and says why.
     expect(screen.queryByTestId('message-sending')).toBeNull();
     expect(screen.getByText('Could not send.')).toBeTruthy();
   });
@@ -211,7 +211,7 @@ describe('bringing friends into a group', () => {
       { 'GET /groups/g1/chat': ok({ messages: [] }), 'GET /groups/g1': lonely('owner'), 'GET /friends?limit=500': friends, 'POST /groups/g1/invite': ok({ ok: true }) },
       { addFriends: true },
     );
-    // nothing was tapped: the sheet is up, the friends in it
+    // Nothing was tapped: the sheet is up, with the friends in it.
     const add = await screen.findByRole('button', { name: 'Add azad' });
     expect(screen.getByRole('button', { name: 'Add berfin' })).toBeTruthy();
     await act(async () => {
@@ -223,7 +223,7 @@ describe('bringing friends into a group', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     });
-    // closing reads the group again, for whoever was added, and leaves its chat
+    // Closing reads the group again, for whoever was added, and leaves its chat.
     await waitFor(() => expect(asked()).toBe(before + 1));
     expect(screen.getByText('This is the start of Newroz club')).toBeTruthy();
     expect(screen.getByLabelText('Message…')).toBeTruthy();

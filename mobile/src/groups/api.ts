@@ -1,6 +1,6 @@
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
-// one definition of the hierarchy, shared with the API and the browser
+// One definition of the hierarchy, shared with the API and the browser.
 export type { Role } from '@kurda/shared';
 import type {
   ChatMessageExtras,
@@ -14,9 +14,8 @@ import type {
 } from '@kurda/shared';
 
 /**
- * A group the reader belongs to, with the role they hold in it. Every group
- * is private: its members see it, and the only way in is to be added by its
- * owner or an admin who is your friend.
+ * A group the reader belongs to, with their role. Every group is private: the only way in is to be added by its owner
+ * or an admin who is your friend.
  */
 export interface Group {
   id: string;
@@ -25,40 +24,30 @@ export interface Group {
   ownerId: string | null;
   archivedAt: string | null;
   memberCount: number;
-  /** the group's own picture, or null for its initials */
+  /** The group's own picture, or null for its initials. */
   photoUrl?: string | null;
   myRole: Role;
 }
 
 /**
- * A message in a group channel.
- *
- * Unlike a DM this carries who sent it: a room has more than two people in it,
- * so the name and the face are part of the message rather than part of the
- * screen. `avatarUrl` is resolved server-side — an uploaded photo or the chosen
- * avatar — so the roster shows real faces and not initials.
+ * A message in a group channel. Unlike a DM it carries who sent it; `avatarUrl` is resolved server-side to an uploaded
+ * photo or the chosen avatar.
  */
 export interface GroupMessage extends Partial<ChatMessageExtras> {
   id: string;
   senderId: string;
   username: string;
   avatarUrl: string | null;
-  /** null for a gift or a game card; '' once deleted */
+  /** Null for a gift or a game card; '' once deleted. */
   body: string | null;
   createdAt: string;
   deleted: boolean;
 }
 
 /**
- * A page of history, newest last. `before` is the oldest message already held,
- * which is how the server pages backwards; the window is 30 and set by it.
- *
- * Authorization is checked on every fetch rather than only on send, so someone
- * removed from a group loses the history at once — a cached page is the only
- * thing they keep, and reopening the screen takes even that.
- *
- * Nothing from before the chat was last cleared for this reader (for everyone,
- * or by them for themselves) is in it; `cleared` says when and by whom.
+ * A page of history, newest last. `before` is the oldest message already held; the server sets the window (30).
+ * Membership is checked on every fetch, so someone removed loses the history at once. Nothing from before the reader's
+ * latest clear is included; `cleared` says when and by whom.
  */
 export function groupHistory(
   client: ApiClient,
@@ -70,9 +59,8 @@ export function groupHistory(
 }
 
 /**
- * Clear the chat: `me` from the reader's own view (any member; it is marked
- * read too), or `everyone` (the owner and admins: the messages so far are
- * deleted, and the chat says who cleared it).
+ * Clear the chat: `me` from the reader's own view (any member; also marks it read), or `everyone` (owner and admins:
+ * the messages so far are deleted and the chat says who cleared it).
  */
 export function clearGroupChat(client: ApiClient, groupId: string, scope: 'me' | 'everyone'): Promise<ApiResult<{ cleared: GroupChatCleared }>> {
   return client.post<{ cleared: GroupChatCleared }>(`/groups/${groupId}/chat/clear`, { for: scope });
@@ -90,31 +78,29 @@ export function leaveGroup(client: ApiClient, groupId: string): Promise<ApiResul
   return client.post<{ ok: true }>(`/groups/${groupId}/leave`);
 }
 
-/** Start a group: a name is all it needs. Whoever makes it owns it, and adds their friends from its chat. */
+/** Start a group: a name is all it needs. Its maker owns it and adds friends from its chat. */
 export function createGroup(client: ApiClient, input: { name: string; description?: string }): Promise<ApiResult<{ id: string }>> {
   return client.post<{ id: string }>('/groups', input);
 }
 
 /**
- * A group's roster, with the reader's own role in it. Only a member is given
- * it whole. Someone banned gets the name, the picture and where they stand,
- * with everything else empty; anyone else is answered 404 GROUP_NOT_FOUND, as
- * for a group that does not exist.
+ * A group's roster with the reader's own role. Only a member gets it whole; someone banned gets the name, picture and
+ * standing with everything else empty; anyone else gets 404 GROUP_NOT_FOUND.
  */
 export interface GroupDetail extends Omit<Group, 'myRole'> {
   members: GroupMember[];
-  /** null for someone banned, the only non-member who is answered at all */
+  /** Null for someone banned, the only non-member answered at all. */
   myRole: Role | null;
-  /** where the reader stands: a member, or banned */
+  /** Where the reader stands: a member, or banned. */
   standing?: GroupStanding;
-  /** requests to come back waiting on an answer, for the owner and admins */
+  /** Requests to come back awaiting an answer, for the owner and admins. */
   pendingRequests?: number;
 }
 
 export interface GroupMember {
   userId: string;
   username: string;
-  /** resolved server-side, so the roster shows real faces and not initials */
+  /** Resolved server-side to a photo or the chosen avatar. */
   avatarUrl: string | null;
   role: Role;
   joinedAt: string;
@@ -139,9 +125,8 @@ export function removeMember(client: ApiClient, groupId: string, userId: string)
 }
 
 /**
- * Change the group's name and/or description, as its owner or an admin. Only
- * what changed is sent; an empty description clears it. The server cleans the
- * text, holds it to the lengths and refuses words that are not allowed here.
+ * Change the group's name and/or description, as its owner or an admin. Only what changed is sent; an empty description
+ * clears it. The server cleans the text and enforces lengths and word rules.
  */
 export function updateGroup(
   client: ApiClient,
@@ -157,17 +142,16 @@ export function clearGroupPhoto(client: ApiClient, groupId: string): Promise<Api
 }
 
 /**
- * Add a friend to a group, as its owner or an admin: the only way anyone gets
- * into one. Someone banned from it is refused (409 MEMBER_BANNED) until they
- * are unbanned.
+ * Add a friend to a group, as its owner or an admin: the only way into one. Someone banned is refused (409
+ * MEMBER_BANNED) until unbanned.
  */
 export function addToGroup(client: ApiClient, groupId: string, userId: string): Promise<ApiResult<{ ok: true }>> {
   return client.post<{ ok: true }>(`/groups/${groupId}/invite`, { userId });
 }
 
 /**
- * Ban someone: out of the group, and unable to come back by themselves for
- * `duration` — though they can ask. Optionally their messages here go too.
+ * Ban someone for `duration`: they cannot come back by themselves, though they can ask. Optionally their messages here
+ * go too.
  */
 export function banMember(
   client: ApiClient,
@@ -217,7 +201,7 @@ export function deleteGroup(client: ApiClient, groupId: string): Promise<ApiResu
   return client.delete<{ ok: true }>(`/groups/${groupId}`);
 }
 
-/** Hand the club over. The old owner becomes a moderator and cannot undo it. */
+/** Hand the group over. The old owner becomes a moderator and cannot undo it. */
 export function transferOwnership(
   client: ApiClient,
   groupId: string,
@@ -227,11 +211,8 @@ export function transferOwnership(
 }
 
 /**
- * "I am typing" in a group thread.
- *
- * Fire and forget: the gateway fans it out to the room and nothing depends on the
- * reply, so a failed ping is not worth telling anybody about — the indicator on
- * the other side expires by itself either way.
+ * "I am typing" in a group thread. Fire and forget: the indicator on the other side expires by itself, so a failed ping
+ * is not worth reporting.
  */
 export const sendGroupTyping = (client: ApiClient, groupId: string): void => {
   void client.post(`/groups/${groupId}/chat/typing`).catch(() => undefined);
