@@ -72,12 +72,10 @@ import {
   storySentences,
   type StoryDialect,
   type StoryGlossEntry,
-  type StoryLanguage,
   type StoryLength,
   type StoryMetaTranslation,
   type StoryNoteTranslation,
   type StoryQuestionTranslation,
-  type StoryTradition,
   type StoryTranslationReviewEntry,
 } from './stories.js';
 
@@ -326,16 +324,6 @@ export function tidyStoryCompanions(
       return { title: trimmed(src?.title), type: trimmed(src?.type), ...(author ? { author } : {}), ...(url ? { url } : {}), ...(note ? { note } : {}) };
     }),
   };
-}
-
-/** The language a story is in, read from its input: 'ku' unless it says otherwise. */
-export function storyLanguageOf(story: Pick<StoryLibraryInput, 'language'>): StoryLanguage {
-  return isStoryLanguage(story.language) ? story.language : 'ku';
-}
-
-/** The tradition a story claims, read from its input: 'original' unless it says a valid other. */
-export function storyTraditionOf(story: Pick<StoryLibraryInput, 'tradition'>): StoryTradition {
-  return isStoryTradition(story.tradition) ? story.tradition : 'original';
 }
 
 export interface StoryProblem {

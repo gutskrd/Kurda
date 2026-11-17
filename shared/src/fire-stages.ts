@@ -92,11 +92,6 @@ export function fireGrewToday(days: number): FireStage | null {
   return FIRE_STAGES.find((s) => FIRE_STAGE_DAYS[s] === d) ?? null;
 }
 
-/** The stage before `stage`: what the fire grew from. */
-export function stageBefore(stage: FireStage): FireStage {
-  return FIRE_STAGES[Math.max(0, fireStageIndex(stage) - 1)] as FireStage;
-}
-
 /** The next stage a streak of `days` grows into, and the day it does; null once it is the Newroz fire. */
 export function nextFireStage(days: number): { stage: FireStage; at: number } | null {
   const d = whole(days);

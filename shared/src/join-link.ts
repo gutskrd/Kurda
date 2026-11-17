@@ -40,9 +40,6 @@ export type JoinLinkGame = (typeof JOIN_LINK_SEGMENTS)[JoinLinkSegment];
 const CODE = /^[A-HJKMNP-Z2-9]{6}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** The route's own shape, for a router: the game's word, then the code. */
-export const JOIN_LINK_ROUTE = 'join/:game/:code';
-
 export interface JoinLink {
   game: JoinLinkGame;
   /** the code, upper case, as the server reads it */

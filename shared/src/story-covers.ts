@@ -108,10 +108,6 @@ export function storyCover(key: string | null | undefined): StoryCover | null {
   return key ? (byKey.get(key) ?? null) : null;
 }
 
-export function isStoryCover(key: unknown): key is string {
-  return typeof key === 'string' && byKey.has(key);
-}
-
 /** The site path of a cover's picture (`/cosmetics/backgrounds/made-06-gola-sin.webp`), or null for a key that is not one. */
 export function storyCoverPath(key: string | null | undefined): string | null {
   const c = storyCover(key);

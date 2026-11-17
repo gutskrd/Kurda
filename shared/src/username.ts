@@ -177,42 +177,6 @@ export function handleName(text: string): string {
     .trim();
 }
 
-/** One username written into a text as @name: who, and where the @name stands. */
-export interface Mention {
-  username: string;
-  /** where the "@" is */
-  start: number;
-  /** just after the last character of the name */
-  end: number;
-}
-
-/** An "@" and what may follow it; whether that is a username is `checkUsername`'s to say. */
-const HANDLE = /@([\p{L}\p{N}_.]+)/gu;
-/** What may not stand right before a mention's "@": part of a word, or of an email address. */
-const PART_OF_A_WORD = /[\p{L}\p{N}_.@]/u;
-
-/**
- * The usernames mentioned in a text, in order. A mention is an "@" at the
- * start or after something that is not part of a word, so an email address is
- * none; the name is what follows, less any dots or underscores it ends on,
- * since no username ends on one ("well done @hamo." mentions hamo, and the
- * full stop is the sentence's). Capitals are read as their lowercase letters,
- * and what is not a username by the rule is not a mention.
- */
-export function findMentions(text: string): Mention[] {
-  const found: Mention[] = [];
-  for (const match of String(text ?? '').matchAll(HANDLE)) {
-    const start = match.index;
-    const before = start > 0 ? text.charAt(start - 1) : '';
-    if (before !== '' && PART_OF_A_WORD.test(before)) continue;
-    const written = match[1]!.replace(/[._]+$/, '');
-    const check = checkUsername(written);
-    if (!check.ok) continue;
-    found.push({ username: check.value, start, end: start + 1 + written.length });
-  }
-  return found;
-}
-
 // ───────────────────────────────────────────────────────────── names made for people
 
 /** Letters other alphabets put marks on or join, as the plain letters a username can hold. */

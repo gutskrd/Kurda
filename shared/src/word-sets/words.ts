@@ -342,7 +342,7 @@ export const KURDISH_MONTHS: readonly KurdishMonth[] = (
   to: { month: to[0], day: to[1] },
 }));
 
-export const MONTHS: readonly Month[] = [...CALENDAR_MONTHS, ...KURDISH_MONTHS];
+const MONTHS: readonly Month[] = [...CALENDAR_MONTHS, ...KURDISH_MONTHS];
 
 /** A set's words, in the order its page shows them. */
 export function wordSet(set: WordSetId): readonly SetWord[] {

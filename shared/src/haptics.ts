@@ -40,7 +40,7 @@ export const PACING: PacingRules = {
  * How much each kind of buzz says, for the one case where it matters: two
  * arriving at once, where the one that says more is kept.
  */
-export const WEIGHT: Readonly<Record<HapticEvent, number>> = {
+const WEIGHT: Readonly<Record<HapticEvent, number>> = {
   select: 0,
   tap: 1,
   correct: 2,

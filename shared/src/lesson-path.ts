@@ -599,14 +599,6 @@ function frontier<S extends PathSkill>(units: PathUnit<S>[]): string | null {
 }
 
 /**
- * A stop's neighbours in reading order, for moving along the path with the
- * arrow keys: every stop of every unit, top to bottom.
- */
-export function stopKeys<S extends PathSkill>(path: LessonPath<S>): string[] {
-  return path.units.flatMap((u) => u.stops.map((p) => p.stop.key));
-}
-
-/**
  * The lesson "Next lesson" opens when a lesson is finished: the one the
  * current skill's button opens, read from the map fetched after the lesson
  * (so a skill just finished hands on to the one it opened). Null when there

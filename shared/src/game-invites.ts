@@ -71,11 +71,6 @@ export function inviteRoutePath(type: GameInviteType): string {
   return invitePath({ type, id: 'x' }).replace(/^\//, '').split('?')[0]!;
 }
 
-/** An absolute, shareable URL. `origin` lets the browser use the current deploy. */
-export function buildInviteUrl(type: GameInviteType, id: string, origin = 'https://hevalo.app'): string {
-  return `${origin}${invitePath({ type, id })}`;
-}
-
 // matches "/app/games/<segment>?id=<id>" anywhere in a string, any origin (or none)
 const INVITE_RE = new RegExp(String.raw`/app/games/(${SEGMENTS})\?id=([A-Za-z0-9][A-Za-z0-9-]{5,63})`);
 

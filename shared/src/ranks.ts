@@ -198,11 +198,6 @@ export function progressToNext(points: number): Progress {
   };
 }
 
-/** The catalogue key a tier's name is translated under (every app keeps its own catalogue). */
-export function tierNameKey(tier: RankTier): string {
-  return `ranks.tier.${tier}`;
-}
-
 // ---------------------------------------------------------------------------
 // seasons
 // ---------------------------------------------------------------------------
@@ -298,7 +293,6 @@ export const SEASON_REWARD_GEMS: Readonly<Record<RankTier, number>> = {
 export function seasonFrameSku(tier: RankTier): string {
   return tier === 'lutke' || tier === 'sterk' ? `frame_rank_${tier}_animated` : `frame_rank_${tier}`;
 }
-export const SEASON_FRAME_SKUS: readonly string[] = RANK_TIER_KEYS.map(seasonFrameSku);
 
 // ---------------------------------------------------------------------------
 // rated or friendly

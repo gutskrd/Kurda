@@ -15,7 +15,6 @@
  * Shared so the API, the browser and the phone agree on the names, the states
  * and the limits.
  */
-import type { GameAccess } from './stories.js';
 import { MULTI_GAMES } from './games/multi/games.js';
 
 /**
@@ -44,8 +43,6 @@ export function isPlayGame(v: unknown): v is PlayGame {
   return (PLAY_GAMES as readonly unknown[]).includes(v);
 }
 
-export type { GameAccess };
-
 /** Where an invite is in its life. */
 export const INVITE_STATUSES = ['pending', 'accepted', 'declined', 'cancelled', 'expired'] as const;
 export type InviteStatus = (typeof INVITE_STATUSES)[number];
@@ -57,10 +54,6 @@ export type InviteStatus = (typeof INVITE_STATUSES)[number];
  */
 export const DECLINE_REASONS = ['later', 'not_this_game'] as const;
 export type DeclineReason = (typeof DECLINE_REASONS)[number];
-
-export function isDeclineReason(v: unknown): v is DeclineReason {
-  return v === 'later' || v === 'not_this_game';
-}
 
 /**
  * A live invite lasts this long at most. It also ends as soon as the lobby
@@ -95,18 +88,6 @@ export const ROUTE_NOT_FOUND_MESSAGE = 'route not found';
 export function isMissingRoute(error: { code?: string; message?: string }): boolean {
   return error.code === 'NOT_FOUND' && error.message === ROUTE_NOT_FOUND_MESSAGE;
 }
-
-/**
- * Who may join a lobby, the same rule for every game:
- * - 'friends' (default): the host's accepted friends, and — when the host
- *   shared the game into a group chat — members of that group;
- * - 'open': any known adult with the link or code; only a known-adult host can
- *   open a game, and a minor or an account of unknown age can never join one.
- * In both: nobody with a block either way against any player, and nobody the
- * host removed. Every refusal that could tell someone something about another
- * person looks the same as "not found".
- */
-export const DEFAULT_ACCESS: GameAccess = 'friends';
 
 /** The person who sent an invite, as the invitee sees them (always a friend). */
 export interface InvitePerson {

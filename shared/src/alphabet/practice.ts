@@ -58,8 +58,6 @@ export type Question =
   | { kind: 'script'; prompt: Option; options: Option[]; answer: string; topic: Topic }
   | { kind: 'form'; prompt: string; position: 'start' | 'middle' | 'end'; options: Option[]; answer: string; topic: Topic };
 
-export const ROUND = 8;
-
 /** Letters people actually confuse, nearest first. */
 const CONFUSE: Record<string, readonly string[]> = {
   c: ['ç', 'j'], ç: ['c', 'ş'], j: ['c', 'ş'], ş: ['s', 'ç'], s: ['ş', 'z'], z: ['s', 'j'],

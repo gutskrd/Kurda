@@ -33,7 +33,3 @@ export const VISEMES = [
 ] as const;
 
 export type Viseme = (typeof VISEMES)[number];
-
-export function isViseme(value: unknown): value is Viseme {
-  return typeof value === 'string' && (VISEMES as readonly string[]).includes(value);
-}

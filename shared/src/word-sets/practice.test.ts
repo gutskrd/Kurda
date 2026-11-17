@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { APP_LOCALES } from '../locales.js';
-import { WORD_ROUND, askWordAgain, makeWordRound, type WordQuestion } from './practice.js';
+import { askWordAgain, makeWordRound, type WordQuestion } from './practice.js';
 import { wordClipKey, wordSetSounds, type WordSetSounds } from './sounds.js';
 import { WORD_SET_IDS, dayAfter, monthAfter, wordGloss, wordIn, wordSet, type SetWord } from './words.js';
 
@@ -38,7 +38,7 @@ describe('check yourself, with words', () => {
         for (const sounds of [RECORDED, SILENT]) {
           for (let seed = 1; seed <= 40; seed++) {
             const round = makeWordRound(set, dialect, null, seeded(seed), sounds);
-            expect(round, `${set} ${dialect} ${seed}`).toHaveLength(WORD_ROUND);
+            expect(round, `${set} ${dialect} ${seed}`).toHaveLength(8);
             for (const q of round) {
               const ids = q.options.map((o) => o.id);
               const faces = q.options.map((o) => face(q, o, dialect));
@@ -131,13 +131,13 @@ describe('check yourself, with words', () => {
       for (const q of makeWordRound('days', 'ckb', ['fri'], seeded(seed), SILENT)) expect(q.answer).toBe('fri');
       // a Kurdish month has no meaning to show: it is followed instead
       const solar = makeWordRound('months', 'kmr', ['rezber'], seeded(seed), SILENT);
-      expect(solar).toHaveLength(WORD_ROUND);
+      expect(solar).toHaveLength(8);
       for (const q of solar) expect(q.answer).toBe('rezber');
     }
   });
 
   it('builds a round for every reader the same way, whatever their language', () => {
-    for (const { code } of APP_LOCALES) expect(makeWordRound('days', code === 'ckb' ? 'ckb' : 'kmr', null, seeded(3))).toHaveLength(WORD_ROUND);
+    for (const { code } of APP_LOCALES) expect(makeWordRound('days', code === 'ckb' ? 'ckb' : 'kmr', null, seeded(3))).toHaveLength(8);
   });
 
   it('asks a missed question again with the same answer', () => {

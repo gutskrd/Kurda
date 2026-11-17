@@ -80,8 +80,6 @@ export const TROPHY_PLACES = 3;
  * demoted: met it, and you are safe. The API's own setting can change it.
  */
 export const DEFAULT_WEEKLY_GOAL_XP = 150;
-/** Gems for moving up, once per tier per season (no farming by going down and up again). */
-export const PROMOTION_GEMS = 10;
 /** At each new season everyone moves down this many tiers (never below Dilop), so the top stays reachable. */
 export const SEASON_TIER_DROP = 2;
 /** Groups still under `LEAGUE_GROUP_MIN` at this UTC weekday (3 = Wednesday), 00:00, are merged. */

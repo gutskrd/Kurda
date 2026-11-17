@@ -404,17 +404,9 @@ export function isTextDuring(v: unknown): v is TextDuring {
 export const GAME_ACCESS = ['friends', 'open'] as const;
 export type GameAccess = (typeof GAME_ACCESS)[number];
 
-export function isGameAccess(v: unknown): v is GameAccess {
-  return v === 'friends' || v === 'open';
-}
-
 /** Alone, with one other person, or with a group. */
 export const STORY_GAME_MODES = ['solo', 'duo', 'group'] as const;
 export type StoryGameMode = (typeof STORY_GAME_MODES)[number];
-
-export function isStoryGameMode(v: unknown): v is StoryGameMode {
-  return v === 'solo' || v === 'duo' || v === 'group';
-}
 
 export const MAX_PLAYERS: Readonly<Record<StoryGameMode, number>> = { solo: 1, duo: 2, group: 8 };
 export const MIN_PLAYERS_TO_START: Readonly<Record<StoryGameMode, number>> = { solo: 1, duo: 2, group: 2 };
@@ -769,9 +761,6 @@ export interface StoryTranslationReviewEntry {
   at?: string;
   note?: string;
 }
-
-/** Per interface language. Kept for editors only: learners are never sent it. */
-export type StoryTranslationReview = Partial<Record<AppLocale, StoryTranslationReviewEntry>>;
 
 // ---------------------------------------------------------------------------
 // API shapes. The API returns these; the web and phone apps render them.

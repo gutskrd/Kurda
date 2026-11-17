@@ -17,7 +17,6 @@ import {
   foldAccent,
   isAccentMode,
   isTypeable,
-  keyboardStepText,
   kurmanciLetter,
   normalizeTyping,
   scriptDialect,
@@ -25,8 +24,14 @@ import {
   typingDialectOf,
   typingLanguage,
   type CharState,
+  type KeyboardStep,
   type TypingComparison,
 } from './typing.js';
+
+/** A guide step's English with its screen names put in, as the apps show it. */
+function keyboardStepText(step: KeyboardStep): string {
+  return step.en.replace(/\{(\d+)\}/g, (whole, n: string) => step.ui?.[Number(n)] ?? whole);
+}
 
 /** The marks as one string, so a test can show what a racer would see: o a X . */
 function marks(r: TypingComparison): string {
@@ -762,12 +767,6 @@ describe('keyboard guides', () => {
     // and says what to do when it is not in the list
     expect(KEYBOARD_GUIDES.ios.kurmanci.at(-1)!.key).toBe('keyboardGuide.ios.noLatin');
     expect(KEYBOARD_GUIDES.windows.kurmanci.at(-1)!.key).toBe('keyboardGuide.windows.noLatin');
-  });
-
-  it('puts a translated sentence’s placeholders back the same way', () => {
-    const step = KEYBOARD_GUIDES.android.kurmanci[1]!;
-    expect(keyboardStepText(step)).toBe('Go to Languages → Add keyboard.');
-    expect(keyboardStepText(step, 'Here {1} then {0}')).toBe('Here Add keyboard then Languages');
   });
 });
 

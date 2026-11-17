@@ -68,11 +68,6 @@ export function learnerPart(): ConversationSpeaker {
   return { name: 'Tu', character: null, learner: true };
 }
 
-/** Whether a part is the learner's own. */
-export function isLearnerPart(speaker: unknown): boolean {
-  return isRecord(speaker) && speaker.learner === true;
-}
-
 /**
  * The characters who stand on a conversation's stage, in their parts' order:
  * every part but the learner's, who is the one they face. Null when a part
@@ -189,16 +184,6 @@ export function conversationClips(payload: unknown): ConversationClip[] {
     });
   });
   return out;
-}
-
-/**
- * Each line's recording for a learner, by the line's place: the URL, or null
- * for a line not recorded yet (which is shown, and read, without sound).
- */
-export interface ConversationAudio {
-  lineAudio: Array<string | null>;
-  /** who says each recording, and how their mouth moves; null where there is none */
-  lineVoices: Array<RecordingVoice | null>;
 }
 
 /**

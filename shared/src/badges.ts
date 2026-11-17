@@ -61,17 +61,6 @@
 export const BADGE_FAMILIES = ['learning', 'habit', 'games', 'ranked', 'friends', 'events', 'secret'] as const;
 export type BadgeFamily = (typeof BADGE_FAMILIES)[number];
 
-/** The medallion shape of each family (drawn by `shared/src/art`). */
-export const BADGE_FAMILY_SHAPE: Readonly<Record<BadgeFamily, string>> = {
-  learning: 'circle',
-  habit: 'rounded-square',
-  games: 'hexagon',
-  ranked: 'shield',
-  friends: 'leaf',
-  events: 'eight-point-star',
-  secret: 'diamond',
-};
-
 /** Tier 1 … 4, low to high. */
 export const BADGE_TIERS = ['sifir', 'ziv', 'zer', 'firuze'] as const;
 export type BadgeTierKey = (typeof BADGE_TIERS)[number];
@@ -282,37 +271,10 @@ export function badgeDef(key: string): BadgeDef | undefined {
   return BY_KEY.get(key);
 }
 
-export function isBadgeKey(key: unknown): key is string {
-  return typeof key === 'string' && BY_KEY.has(key);
-}
-
 /** How many badges may be shown on a profile. */
 export const SHOWCASE_SIZE = 3;
 /** Rarity is shown only once this many people are active: below it, a percentage is noise. */
 export const RARITY_MIN_ACTIVE_USERS = 500;
-
-/**
- * Where each achievement of the old system went (contract 4 §B1). A tier here is
- * a floor the badge never falls below (0: the badge's own count already holds
- * what the achievement stood for); `null` keeps the old row as a legacy award
- * with nothing to map to.
- *
- * - streak-30 → Agir tier 2 (30 days).
- * - first-perfect → Bêkêmasî progress: one perfect lesson counts, as it always would.
- * - first-game-win → Peyvzan / Helbestvan progress: wins are counted from the
- *   games themselves, so nothing is invented for a win nobody recorded.
- * - newroz-2026 → the Newroz badge, tier 1.
- * - words-1000 → Peyvên min tier 3 (1000, still its gold mark).
- * - tournament-win → retired: owners keep it, shown as a legacy award.
- */
-export const LEGACY_ACHIEVEMENTS: Readonly<Record<string, { badge: string; floorTier: number } | null>> = {
-  'streak-30': { badge: 'agir', floorTier: 2 },
-  'first-perfect': { badge: 'bekemasi', floorTier: 0 },
-  'first-game-win': { badge: 'peyvzan', floorTier: 0 },
-  'newroz-2026': { badge: 'newroz', floorTier: 1 },
-  'words-1000': { badge: 'peyven-min', floorTier: 3 },
-  'tournament-win': null,
-};
 
 // ---- progress, the same sums everywhere -----------------------------------------
 
@@ -337,27 +299,6 @@ export function badgeTierFor(def: BadgeDef, progress: number, allTarget?: number
     else break;
   }
   return tier;
-}
-
-export interface BadgeProgress {
-  tier: number;
-  /** the threshold of the next tier, or null once the last is reached */
-  next: number | null;
-  /** 0 … 1 towards the next tier, from the last one reached (1 when complete) */
-  fraction: number;
-}
-
-/** "7 / 30 days": how far a learner is towards the next tier. */
-export function badgeProgress(def: BadgeDef, progress: number, allTarget?: number): BadgeProgress {
-  const thresholds = resolveThresholds(def, allTarget);
-  const tier = badgeTierFor(def, progress, allTarget);
-  const next = tier < thresholds.length ? thresholds[tier]! : null;
-  if (next === null) return { tier, next: null, fraction: 1 };
-  // an 'all' tier whose size is not known yet cannot be measured towards
-  if (!Number.isFinite(next)) return { tier, next: null, fraction: 0 };
-  const from = tier === 0 ? 0 : thresholds[tier - 1]!;
-  const span = next - from;
-  return { tier, next, fraction: span > 0 ? Math.max(0, Math.min(1, (progress - from) / span)) : 0 };
 }
 
 /** 0 … 1 along the way from a view's last tier to its next (1 once complete). */

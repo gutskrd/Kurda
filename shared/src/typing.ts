@@ -915,15 +915,6 @@ export function findUntypeable(text: string, dialect: TypingDialect): Untypeable
 /** 1 short, 2 medium, 3 long — the lengths an admin curates race texts at. */
 export type RaceLength = 1 | 2 | 3;
 
-/** `POST /race`: a race in a variety, at a length (any when left out), in an accent mode. */
-export interface RaceStartRequest {
-  length?: RaceLength;
-  /** default Kurmancî */
-  dialect?: TypingDialect;
-  /** default `DEFAULT_ACCENT_MODE` */
-  accentMode?: AccentMode;
-}
-
 /** What `POST /race` answers: the text to type, and the race it is for. */
 export interface RaceGameView {
   id: string;
@@ -1224,11 +1215,6 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
     ],
   },
 };
-
-/** A guide step's English with its screen names put in. */
-export function keyboardStepText(step: KeyboardStep, sentence: string = step.en): string {
-  return sentence.replace(/\{(\d+)\}/g, (whole, n: string) => step.ui?.[Number(n)] ?? whole);
-}
 
 /**
  * Which guide to show: from React Native's `Platform.OS` on a phone, else from

@@ -37,8 +37,3 @@ export function stripControlChars(input: string): string {
   }
   return out;
 }
-
-/** True if escaping the value changes it — i.e. it contains HTML-significant chars. */
-export function hasHtmlSpecialChars(input: string): boolean {
-  return /[&<>"']/.test(input);
-}

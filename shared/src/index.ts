@@ -12,11 +12,10 @@ export * from './username.js';
 export { matchedParts, type TextPart } from './search-highlight.js';
 export { plan, toLexicon, type Chunk, type ConvertedEntry, type SourceEntry } from './ferheng.js';
 export { FERHENG_LANGS, publishedFerheng, type FerhengSource, type Manifest } from './ferheng-source.js';
-export { escapeHtml, stripControlChars, hasHtmlSpecialChars } from './sanitize.js';
+export { escapeHtml, stripControlChars } from './sanitize.js';
 export { XSS_PAYLOADS } from './xss-corpus.js';
 export { COUNTRIES, countriesIn, countryName, type Country } from './countries.js';
 export {
-  buildInviteUrl,
   invitePath,
   inviteLinkPattern,
   parseInvite,
@@ -192,7 +191,6 @@ export {
   nextLaunch,
   pathChanges,
   pathSnapshot,
-  stopKeys,
   type Finish,
   type LessonPath,
   type LessonState,
@@ -432,7 +430,6 @@ export {
   type SoraniLetter,
 } from './alphabet/letters.js';
 export {
-  ROUND as ALPHABET_ROUND,
   again as askAgain,
   makeRound as alphabetRound,
   type Option as AlphabetOption,
@@ -683,7 +680,6 @@ export {
   type MedalOptions,
   rankEmblemSvg,
   placementEmblemSvg,
-  PLACEMENT_GAMES,
   leagueEmblemSvg,
   seasonFrameSvg,
   seasonFrameShineSvg,
@@ -967,7 +963,6 @@ export {
   fireStageIndex,
   nextFireStage,
   runFireLevel,
-  stageBefore,
   type FireLevel,
   type FireStage,
 } from './fire-stages.js';

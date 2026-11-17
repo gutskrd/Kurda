@@ -218,33 +218,6 @@ export interface FeedImage {
 }
 
 /**
- * The codes `POST`/`PATCH /library/posts` (and `POST /images`) answer with when
- * a post is refused, beyond the shape problems above:
- *
- * - INVALID_MEDIA: a picture that is not the author's own upload for a post,
- *   or one the scan did not clear (with `mediaKey`);
- * - MEDIA_IN_USE: an upload already on a post, or twice in this one (with
- *   `mediaKey`). One upload is one post's: to post the same picture again,
- *   upload it again (a file already posted comes back as a new upload);
- * - INVALID_POST: the old picture route's answer for an unusable picture;
- * - TRUST_VELOCITY (429): posting faster than the account may yet;
- * - AUTO_MODERATED (403): the account was just restricted for spam.
- */
-export const POST_ERROR_CODES = [
-  'EMPTY_POST',
-  'TITLE_REQUIRED',
-  'TOO_LONG',
-  'TOO_MANY_PICTURES',
-  'MEME_NEEDS_PICTURE',
-  'INVALID_MEDIA',
-  'MEDIA_IN_USE',
-  'INVALID_POST',
-  'TRUST_VELOCITY',
-  'AUTO_MODERATED',
-] as const;
-export type PostErrorCode = (typeof POST_ERROR_CODES)[number];
-
-/**
  * Where to upload a picture for a post.
  *
  * "I made this" (on unless switched off) puts the small Hevalo signature with

@@ -166,10 +166,6 @@ export const REPORT_TARGET_TYPES = [
 ] as const;
 export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
 
-export function isReportTargetType(value: unknown): value is ReportTargetType {
-  return typeof value === 'string' && (REPORT_TARGET_TYPES as readonly string[]).includes(value);
-}
-
 /** The games whose players can be reported by seat. */
 export type ReportableGame = PlayGame;
 

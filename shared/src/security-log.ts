@@ -285,8 +285,6 @@ export const SECURITY_EVENTS = {
 
 export type SecurityEventKind = keyof typeof SECURITY_EVENTS;
 
-export const SECURITY_EVENT_KINDS = Object.keys(SECURITY_EVENTS) as SecurityEventKind[];
-
 export function isSecurityEventKind(kind: string): kind is SecurityEventKind {
   return Object.prototype.hasOwnProperty.call(SECURITY_EVENTS, kind);
 }
@@ -310,9 +308,6 @@ export function securitySeverity(kind: SecurityEventKind, staff = false): Securi
 export function needsAttention(severity: SecuritySeverity): boolean {
   return severity === 'warning' || severity === 'critical';
 }
-
-/** How long the log keeps an event (the database enforces the same): the serious ones a year. */
-export const SECURITY_RETENTION_DAYS: Record<SecuritySeverity, number> = { info: 90, notice: 90, warning: 365, critical: 365 };
 
 /** How long the sealed address an event came from is kept before it is forgotten. */
 export const SECURITY_ADDRESS_DAYS = 30;

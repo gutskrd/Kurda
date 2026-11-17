@@ -48,8 +48,6 @@ export interface WordQuestion {
   topic: SetWord;
 }
 
-export const WORD_ROUND = 8;
-
 const PATTERN: Record<WordSetId, readonly WordQuestionKind[]> = {
   colours: ['hear', 'see', 'read', 'hear', 'see', 'read', 'hear', 'see'],
   numbers: ['hear', 'see', 'read', 'hear', 'see', 'read', 'hear', 'read'],

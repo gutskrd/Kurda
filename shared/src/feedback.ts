@@ -33,10 +33,6 @@ export const APP_FEEDBACK_CATEGORIES = [
 ] as const;
 export type AppFeedbackCategory = (typeof APP_FEEDBACK_CATEGORIES)[number];
 
-export function isAppFeedbackCategory(v: unknown): v is AppFeedbackCategory {
-  return (APP_FEEDBACK_CATEGORIES as readonly unknown[]).includes(v);
-}
-
 /** Where an answer came from: the one-time box after a game, or Settings → Send feedback. */
 export const APP_FEEDBACK_SOURCES = ['first_game', 'settings'] as const;
 export type AppFeedbackSource = (typeof APP_FEEDBACK_SOURCES)[number];
@@ -121,11 +117,6 @@ export interface AppFeedbackRequest {
   appVersion: string;
   /** the interface language the answer was written in; the account's when left out */
   locale?: string;
-}
-
-/** `POST /me/store-review/prompted`: the phone has just called the native prompt for this version. */
-export interface StoreReviewPromptedRequest {
-  appVersion: string;
 }
 
 /** One answer in `GET /admin/feedback`. */
